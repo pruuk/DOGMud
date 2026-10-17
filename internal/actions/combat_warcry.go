@@ -72,7 +72,7 @@ func ExecuteWarcry(actor Actor) WarcryResult {
 
 	// Set combat wait if in combat (matches player + mob behavior).
 	if char.CombatPhase != nil {
-		char.SetRoundsWaiting(1)
+		char.SpendRoundOnAction()
 	}
 
 	// Rhetoric progression lives here rather than in the callers, matching the

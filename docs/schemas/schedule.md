@@ -25,7 +25,20 @@ segments: [<segment>, ...]        # must cover all 24 hours, no overlaps
   idlecommands:                   # mob's idle pool while in this segment
     - emote <text>
     - say <text>
+  offshift_line: <string>         # optional: what a shopkeeper says when
+                                  # asked to trade while off shift here
 ```
+
+Off shift (owner ruling 2026-10-17): a shopkeeper's shop belongs to their
+home room. A scheduled keeper who is awake and either away from home or in
+a segment whose `target_room` is another room is off shift (`Mob.OffShift`):
+`rooms.FindMerchant` leaves them out, and list, buy, sell, offer and
+appraise answer through `actions.RefuseIfShopClosed` with the segment's
+`offshift_line`, or "Not here. Come and find me at my shop." when it sets
+none. The order is: no merchant at all, then a sleeping keeper, then an
+off-shift keeper, then the dim-light check. `offshift_line` may not hold a
+`;` and may not sit on a sleeping segment (a sleeper answers with the
+asleep line).
 
 Wrap-around: when `start > end`, the segment covers `[start, 24)`
 and `[0, end)`. Example: `start: 22 end: 6` covers 22-5.

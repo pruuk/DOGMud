@@ -19,6 +19,7 @@ segments:
     end: 13
     target_room: 5722
     activity: ""
+    offshift_line: "I'm on my break. Find me at the lab after."
     idlecommands:
       - emote draws a cup of water from the craftwell and stands in the square
         for a moment, eyes on nothing, letting the focus rest.

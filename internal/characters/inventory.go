@@ -159,11 +159,20 @@ func (c *Character) SetKey(lockId string, sequence string) {
 	}
 }
 
-func (c *Character) GetRandomItem() (items.Item, bool) {
-	if len(c.Items) == 0 {
+// GetRandomStealableItem picks a random carried item a thief may take. A
+// NeverDrops item never qualifies: it is gear that exists only on its mob, and
+// a crit disarm can knock one into the pack (death skips it the same way).
+func (c *Character) GetRandomStealableItem() (items.Item, bool) {
+	stealable := make([]items.Item, 0, len(c.Items))
+	for _, i := range c.Items {
+		if !i.GetSpec().NeverDrops {
+			stealable = append(stealable, i)
+		}
+	}
+	if len(stealable) == 0 {
 		return items.Item{}, false
 	}
-	return c.Items[util.Rand(len(c.Items))], true
+	return stealable[util.Rand(len(stealable))], true
 }
 
 func (c *Character) StoreItem(i items.Item) bool {

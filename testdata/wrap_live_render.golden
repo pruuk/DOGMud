@@ -7,8 +7,8 @@
  └─────────────────────────────────────────────────────────────────────────────┘
  ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Vitals</ansi> ──────────────────────────────────────────────────────────────────┐
  │ <ansi fg="yellow">Health:     </ansi><ansi fg="green">full</ansi>         <ansi fg="yellow">Stamina:    </ansi><ansi fg="green">full</ansi>         <ansi fg="yellow">Conviction: </ansi><ansi fg="green">full</ansi>          │
- │ <ansi fg="yellow">Reserved:   </ansi><ansi fg="green">none</ansi>                     <ansi fg="green">none</ansi>                     <ansi fg="green">none</ansi>          │
- │ <ansi fg="yellow">Toxicity:   </ansi><ansi fg="green">clear</ansi>        <ansi fg="yellow">Encumbrance:</ansi><ansi fg="green">light</ansi>                                  │
+ │ <ansi fg="yellow">HP reserve: </ansi><ansi fg="green">none</ansi>         <ansi fg="yellow">SP reserve: </ansi><ansi fg="green">none</ansi>         <ansi fg="yellow">CP reserve: </ansi><ansi fg="green">none</ansi>          │
+ │ <ansi fg="yellow">Toxicity:   </ansi><ansi fg="green">clear</ansi>        <ansi fg="yellow">Encumbrance: </ansi><ansi fg="green">light</ansi>                                 │
  └─────────────────────────────────────────────────────────────────────────────┘
  ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Defenses</ansi> ────────────────────────────────────────────────────────────────┐
  │ <ansi fg="yellow">Physical:   </ansi>none         <ansi fg="yellow">Magical:    </ansi>none         <ansi fg="yellow">Conviction: </ansi>none          │
@@ -16,18 +16,18 @@
  ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi> ────────────────────────────────────────────────────────────────────┐
  │ <ansi fg="yellow">Species:    </ansi>Ghostly Spirit<ansi fg="yellow">Gold:       </ansi>250          <ansi fg="yellow">Bank:       </ansi>100           │
  └─────────────────────────────────────────────────────────────────────────────┘
- <ansi fg="yellow">Submission policy:</ansi> subdue    <ansi fg="yellow">Surrender policy:</ansi> auto-tap-below 15.
+ <ansi fg="yellow">Submission policy:</ansi> subdue    <ansi fg="yellow">Surrender policy:</ansi> tap out below 15% health.
 </ansi>
 === item list (CategorySystem) ===
 <ansi fg="system"> <ansi fg="red-bold">1</ansi>. <ansi fg="yellow-bold">Iron Sword</ansi>       <ansi fg="red-bold">2</ansi>. <ansi fg="yellow-bold">Healing Draught</ansi> 
  <ansi fg="red-bold">3</ansi>. <ansi fg="yellow-bold">Leather Boots</ansi>    <ansi fg="red-bold">4</ansi>. <ansi fg="yellow-bold">Silver Ring</ansi>     
  <ansi fg="red-bold">5</ansi>. <ansi fg="yellow-bold">Oak Shield</ansi>       <ansi fg="red-bold">6</ansi>. <ansi fg="yellow-bold">Bronze Dagger.</ansi>   </ansi>
 === motd (CategoryBroadcast) ===
-<ansi fg="broadcast"><ansi fg="yellow"> ╔═════════════════════════════════════════════════════╗
+<ansi fg="broadcast"><ansi fg="yellow"> ╔════════════════════════════════════════════════════╗
  ║  <ansi fg="cyan-bold">.:  M E S S A G E   O F   T H E   D A Y</ansi>           ║
- ╠═════════════════════════════════════════════════════╣
+ ╠════════════════════════════════════════════════════╣
  ║ Welcome to Delusions of Grandeur. Read the rules,  ║
  ║ mind the newbie zone hazards, and ask a mod if     ║
  ║ anything looks broken.                             ║
- ╚═════════════════════════════════════════════════════╝</ansi>
+ ╚════════════════════════════════════════════════════╝</ansi>
 </ansi>

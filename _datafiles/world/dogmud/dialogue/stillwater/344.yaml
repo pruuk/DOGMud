@@ -68,7 +68,7 @@ tree:
       # === Post-quest: full ===
       - questRequired: ["20-end"]
         text: "The matter of Elgar Voss. So that is laid open at last.
-          Vella was his sister; I should have known they shared the
+          Vella was his sister. I should have known they shared the
           burden differently. Walk in peace."
 
   nodes:

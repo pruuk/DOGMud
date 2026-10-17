@@ -48,6 +48,21 @@ func unlockExit(user *users.UserRecord, room *rooms.Room, exitName string, exitI
 	room.SetExitLock(exitName, false)
 }
 
+// questGateRefuses runs the quest engine's room_gate triggers for a step from
+// room into destRoom and reports whether one refused it. A room_gate trigger
+// fires BEFORE the move; its actions narrate the refusal and the player stays
+// where they are. Its conditions are read with the player still in room, so
+// in_room names the side the gate stands on. destRoom matches by its template
+// id, as room_enter does.
+func questGateRefuses(user *users.UserRecord, room *rooms.Room, destRoom *rooms.Room) bool {
+	matchRoom, _ := rooms.OriginalRoomId(destRoom.RoomId)
+	bridge := questengine.NewGameBridge(user, room.RoomId)
+	return questengine.GetEngine().Notify("room_gate", questengine.EventDetails{
+		UserId: user.UserId,
+		RoomId: matchRoom,
+	}, bridge, bridge).Handled
+}
+
 func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	exitResult := actions.FindExit(room, rest)
@@ -190,6 +205,16 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				}
 			}
 
+		}
+
+		// A quest gate refuses the step before anything moves: no exit
+		// message, no movement cost, no departure line, no arrival, so the
+		// destination's creatures never notice a player who never arrived.
+		// It used to be a room_enter trigger that teleported the player back,
+		// so the player read the refusal, then "You head downward.", then the
+		// destination's detection line (#558, 2026-10-17 playtest).
+		if questGateRefuses(user, room, destRoom) {
+			return true, nil
 		}
 
 		if exitInfo.ExitMessage != `` && !flags.Has(events.CmdIsRequeue) {

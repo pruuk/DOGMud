@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -197,7 +198,7 @@ func validatePurchase(
 		tradeItemName = tradeItm.Name()
 		if _, found := char.FindInBackpack(tradeItemName); !found {
 			if buyer.IsPlayer() {
-				buyer.SendText(messaging.CategoryError, fmt.Sprintf(`You must have a <ansi fg="itemname">%s</ansi> to trade for that.`, tradeItm.DisplayName()))
+				buyer.SendText(messaging.CategoryError, fmt.Sprintf(`You must have %s <ansi fg="itemname">%s</ansi> to trade for that.`, items.IndefiniteArticle(tradeItm.DisplayName()), tradeItm.DisplayName()))
 			}
 			return purchaseContext{}, BuyReasonMissingTradeItem, false
 		}
@@ -238,7 +239,7 @@ func validatePurchase(
 
 	tradeInString := ""
 	if price > 0 {
-		tradeInString = fmt.Sprintf(`<ansi fg="gold">%d gold</ansi>`, price)
+		tradeInString = fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(price))
 	}
 	if tradeItemName != "" {
 		if itm, found := char.FindInBackpack(tradeItemName); found {
@@ -258,9 +259,9 @@ func validatePurchase(
 			}
 
 			if tradeInString != "" {
-				tradeInString += fmt.Sprintf(` and a <ansi fg="itemname">%s</ansi>`, itm.DisplayName())
+				tradeInString += fmt.Sprintf(` and %s <ansi fg="itemname">%s</ansi>`, items.IndefiniteArticle(itm.DisplayName()), itm.DisplayName())
 			} else {
-				tradeInString = fmt.Sprintf(`a <ansi fg="itemname">%s</ansi>`, itm.DisplayName())
+				tradeInString = fmt.Sprintf(`%s <ansi fg="itemname">%s</ansi>`, items.IndefiniteArticle(itm.DisplayName()), itm.DisplayName())
 			}
 		}
 	}
@@ -337,7 +338,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 				buyer.SendText(messaging.CategoryError, "You can't buy from yourself.")
 				return BuyResult{Reason: BuyReasonSelfTarget, Requested: quantity}
 			}
-			buyer.SendText(messaging.CategoryRefusal, "Visit a merchant to purchase objects or services.")
+			refusal.NoMerchant(buyer)
 			return BuyResult{Reason: BuyReasonNoMerchant, Requested: quantity}
 		} else {
 			return BuyResult{Reason: BuyReasonNoMerchant, Requested: quantity}
@@ -349,7 +350,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 
 	if len(merchantPlayers) == 0 && len(merchantMobs) == 0 {
 		if buyer.IsPlayer() {
-			buyer.SendText(messaging.CategoryRefusal, "Visit a merchant to purchase objects or services.")
+			refusal.NoMerchant(buyer)
 		}
 		return BuyResult{Reason: BuyReasonNoMerchant, Requested: quantity}
 	}
@@ -731,7 +732,7 @@ func tryPurchaseFromInventory(buyer Actor, request string, shopMob *mobs.Mob, sh
 	}
 	shopSaved = true
 
-	tradeInString := fmt.Sprintf(`<ansi fg="gold">%d gold</ansi>`, matched.price)
+	tradeInString := fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(matched.price))
 	if matched.price == 0 {
 		tradeInString = "nothing"
 	}
@@ -771,7 +772,7 @@ func executePurchaseItem(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRec
 	if shopMob != nil {
 		if buyer.IsPlayer() {
 			if u := users.GetByUserId(buyer.GetUserId()); u != nil {
-				u.EventLog.Add(`shop`, fmt.Sprintf(`Purchased a <ansi fg="itemname">%s</ansi> from <ansi fg="mobname">%s</ansi> for %s`, newItm.DisplayName(), shopMob.Character.Name, tradeInString))
+				u.EventLog.Add(`shop`, fmt.Sprintf(`Purchased %s <ansi fg="itemname">%s</ansi> from <ansi fg="mobname">%s</ansi> for %s`, items.IndefiniteArticle(newItm.DisplayName()), newItm.DisplayName(), shopMob.Character.Name, tradeInString))
 			}
 		}
 		buyer.SendText(messaging.CategoryLoot, fmt.Sprintf(`You purchase the <ansi fg="itemname">%s</ansi> from <ansi fg="mobname">%s</ansi> for %s.`, newItm.DisplayName(), shopMob.Character.Name, tradeInString))
@@ -781,7 +782,7 @@ func executePurchaseItem(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRec
 	} else if shopUser != nil {
 		if buyer.IsPlayer() {
 			if u := users.GetByUserId(buyer.GetUserId()); u != nil {
-				u.EventLog.Add(`shop`, fmt.Sprintf(`Purchased a <ansi fg="itemname">%s</ansi> from <ansi fg="username">%s</ansi> for %s.`, newItm.DisplayName(), shopUser.Character.Name, tradeInString))
+				u.EventLog.Add(`shop`, fmt.Sprintf(`Purchased %s <ansi fg="itemname">%s</ansi> from <ansi fg="username">%s</ansi> for %s.`, items.IndefiniteArticle(newItm.DisplayName()), newItm.DisplayName(), shopUser.Character.Name, tradeInString))
 			}
 		}
 		buyer.SendText(messaging.CategoryLoot, fmt.Sprintf(`You purchase the <ansi fg="itemname">%s</ansi> from <ansi fg="username">%s</ansi> for %s.`, newItm.DisplayName(), shopUser.Character.Name, tradeInString))

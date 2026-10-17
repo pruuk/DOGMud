@@ -8,3 +8,5 @@ current quest step. Useful when you're not sure what to do next.
   <ansi fg="command">hint</ansi>              Show hint for your most recent quest
   <ansi fg="command">hint [name]</ansi>       Show hint for a specific quest
   <ansi fg="command">hint [number]</ansi>     Show hint for a quest by ID
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help quests</ansi>

@@ -69,7 +69,7 @@ tree:
         questExcluded: ["51-end"]
         text: "Still at it. The scout holds the sounding floor, one
           chamber north of the Narrows. Stand in the Narrows and put a
-          shot across the exit -- fire scout north. It will charge; stand
+          shot across the exit -- fire scout north. It will charge. Stand
           and finish it. Come back when it is down."
         hints: "Go north to the Echoing Narrows. Type fire scout north to
           shoot across the exit, then finish the scout when it charges.
@@ -133,7 +133,7 @@ tree:
       grantsQuest: "51-end"
       text: "Reached across the slot and stood when it came. That is the
         canyon, learned. Take this -- a hand crossbow and a case of
-        bolts; heavier than the sling and it hits like it. You will want
+        bolts. Heavier than the sling and it hits like it. You will want
         it above. Skell is on the overlook, and he is the last of it.
         Ask me about the overlook when your nerve is up."
       hints: "Quest complete. Type ask bryn overlook when you are ready
@@ -178,7 +178,7 @@ tree:
         scout north -- to shoot through the exit into the next room. And
         kiting: a foe that shoots and backs away, opening the range as
         you close. Beat it by out-shooting it, or by closing faster than
-        it can retreat. Mind your ammo; the weapon feeds itself, but the
+        it can retreat. Mind your ammo. The weapon feeds itself, but the
         pouch does not."
       hints: "Cross-room shot: fire <target> <direction>. Against a
         kiter, out-shoot it or close fast, and keep ammo on you."

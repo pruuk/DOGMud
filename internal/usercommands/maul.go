@@ -39,11 +39,11 @@ func Maul(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if res.OnCooldown {
-		refusal.Cooldown(user, "maul")
+		refusal.CooldownAfterCost(user, "maul", res.Cost)
 		return true, nil
 	}
 	if res.NoTarget {
-		refusal.NoTarget(user, "maul")
+		refusal.NoTargetAfterCost(user, "maul", res.Cost)
 		return true, nil
 	}
 

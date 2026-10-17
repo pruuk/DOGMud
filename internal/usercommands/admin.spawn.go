@@ -74,10 +74,10 @@ func Spawn(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			room.Gold += goldAmt
 
 			user.SendText(messaging.CategoryAdmin,
-				fmt.Sprintf(`You wave your hands and <ansi fg="gold">%d gold</ansi> appears.`, goldAmt),
+				fmt.Sprintf(`You wave your hands and <ansi fg="gold">%s gold</ansi> appears.`, util.FormatNumber(goldAmt)),
 			)
 			room.SendTextVisual(messaging.CategoryMobEmote,
-				fmt.Sprintf(`<ansi fg="username">%s</ansi> waves their hands and <ansi fg="gold">%d gold</ansi> appears.`, user.Character.Name, goldAmt),
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> waves their hands and <ansi fg="gold">%s gold</ansi> appears.`, user.Character.Name, util.FormatNumber(goldAmt)),
 				user.UserId,
 			)
 

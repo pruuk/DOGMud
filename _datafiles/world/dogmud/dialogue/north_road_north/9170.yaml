@@ -39,7 +39,7 @@ tree:
       triggers: ["quest", "task", "dispatch", "delivery", "courier"]
       questRequired: ["60-start"]
       questExcluded: ["60-end"]
-      text: "Still carrying my dispatch? Good. Severin Pell at Hartcharn is your first stop -- the ferry agent. He will counter-sign it and send you on. North up the road; you cannot miss the town."
+      text: "Still carrying my dispatch? Good. Severin Pell at Hartcharn is your first stop -- the ferry agent. He will counter-sign it and send you on. North up the road. You cannot miss the town."
       hints: "Give the sealed dispatch to Severin Pell, the ferry agent at Hartcharn, north up the road."
 
     - id: lost_report

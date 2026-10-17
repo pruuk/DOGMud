@@ -1266,7 +1266,10 @@ Design: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.5-mutations
 - Player shops and merchant NPCs
 - Clan membership support
 - Pet ownership and management
-- Quest progress tracking
+- Quest progress tracking. `GetFocusQuestId()` picks the quest that `hint`, the
+  web Quests panel and the minimap marker resolve against. It never returns a
+  secret quest, and `GiveQuestToken` does not move `LastQuestId` onto one.
+  `IsSecretQuest(questId)` is the shared check for other quest surfaces.
 
 ## Shop Inventory Decoupling (Living Economy)
 
@@ -1868,6 +1871,10 @@ HP% drops below `HpPctThreshold`). Default for players:
 `DefaultPlayerSurrenderPolicy` (AutoTap at 15) is the policy `New()` gives a
 character and the one `Validate` gives a save whose policy is the zero value
 (#284).
+
+`String()` is the `set surrender` syntax (`auto-tap-below 15`) that
+`ParseSurrenderPolicy` reads back; `Describe()` is the plain-words form the
+status sheet prints (`tap out below 15% health`).
 
 Persisted: `yaml:"surrender_policy,omitempty"`.
 

@@ -24,6 +24,7 @@ const (
 	LookExitShapes                     // an exit too dark to see through, whose occupants heat shows as shapes (lighting plan 6)
 	LookOther                          // anything else: each wrapper's own objects, in its own order
 	LookOwnGearByTouch                 // sees nothing, but names an item it wears or carries: known by touch (#218)
+	LookFigure                         // a player at shapes names a figure by the aim word (`look figure`, `look 2.shape`)
 )
 
 // LookResolution carries every sight rule of both looks (slice 5a).
@@ -33,10 +34,13 @@ type LookResolution struct {
 	// NamesCreatures is Sight == SightFull: only then is a creature or a pet
 	// named, so a shapes-only looker cannot confirm who is standing there.
 	NamesCreatures bool
-	Target         Actor  // LookCreature
-	LookAt         string // the target, after a direction alias resolved to an exit
-	ExitName       string // the LookExit kinds
-	ExitRoomId     int    // LookExit, LookExitShapes
+	Target         Actor // LookCreature, LookFigure (never named to the looker for LookFigure)
+	// TargetSight is what a player Target makes out of the room (LookFigure
+	// only), so the wrapper names the looker to them at their sight.
+	TargetSight messaging.SightDecision
+	LookAt      string // the target, after a direction alias resolved to an exit
+	ExitName    string // the LookExit kinds
+	ExitRoomId  int    // LookExit, LookExitShapes
 	// PetUserId is the owner of a pet the looker may name here (clear sight
 	// only), 0 otherwise. It is not a kind because the player resolves the
 	// pet AFTER carried items and room nouns; each wrapper reads it at its
@@ -48,7 +52,8 @@ type LookResolution struct {
 }
 
 // ResolveLook is the shared look resolution for players and mobs. Order is
-// the player's: sight, no target, creature (resolved with the looker as
+// the player's: sight, no target, a figure by the aim word for a player at
+// shapes (LookFigure), creature (resolved with the looker as
 // viewer, so a creature it does not perceive cannot be named), then a sealed
 // crate or a known container defers to the wrapper (LookOther) before any
 // exit does, then the exit (with direction aliases), through-sight, lock.
@@ -81,6 +86,24 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 	if lookAt == `` {
 		res.Kind = LookRoom
 		return res
+	}
+
+	// A player who makes out shapes looks at a figure by the word the room
+	// shows it by, as they aim at one (AimBySight's figures, owner ruling
+	// 2026-10-17). It is resolved for no name: the wrapper words what shapes
+	// show. A count past the last figure falls through, to the shapes refusal.
+	if res.Sight == messaging.SightShapes && actor.IsPlayer() {
+		if n := aimShapeIndex(lookAt); n > 0 {
+			if figures := aimFigures(char, actor.GetUserId(), room); n <= len(figures) {
+				if target, err := ResolveTargetActor(room, figures[n-1], ResolveTargetOptions{Viewer: char}); err == nil {
+					res.Kind, res.Target = LookFigure, target
+					if target.IsPlayer() {
+						res.TargetSight = messaging.ParticipantSight(target.GetCharacter(), room)
+					}
+					return res
+				}
+			}
+		}
 	}
 
 	if res.NamesCreatures {

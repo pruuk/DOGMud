@@ -14,7 +14,7 @@ patterns:
       - "Forage these woods for the things the towns can't grow
         in their own gardens — moonpetal, oak-bark, pine-pitch,
         the odd bundle of shadowcap when the season turns. The
-        caravan picks up what I gather when it passes; I don't
+        caravan picks up what I gather when it passes. I don't
         haul it through the bandits myself."
 
   - keywords: ["caravan", "north road", "meeting", "delivery"]
@@ -41,7 +41,7 @@ patterns:
   - keywords: ["thornwall", "stillwater", "town"]
     responses:
       - "Don't go to either much. Both apothecaries pay fair
-        rates for what I bring; both get it through the
+        rates for what I bring. Both get it through the
         caravan. Keeps me out of the towns and them out of
         my woods."
 

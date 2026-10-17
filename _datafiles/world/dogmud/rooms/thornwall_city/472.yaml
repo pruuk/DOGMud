@@ -6,8 +6,9 @@ description: A low-ceilinged tavern tucked into the south end of the Craftsmen's
   reference to the flooding that plagued this district before the drainage channels
   were built. The interior is dim, smoky, and comfortable in the way of places that
   have soaked up decades of conversation and spilled ale. Mismatched tables fill the
-  room, and the <ansi fg="itemname">bar</ansi> is a single slab of scarred oak on trestle legs. A staircase
-  leads down to a cellar. Past the far
+  room, and the <ansi fg="itemname">bar</ansi> is a single slab of scarred oak on trestle legs. A doorway
+  to the west opens on the kitchen, where a trapdoor leads down to the cellar.
+  Past the far
   end of the bar, a moth-eaten curtain half-hides a back corner where the old
   regulars hold court. The tavern has the feel of a place where people come to
   talk seriously over cheap drinks.
@@ -38,10 +39,11 @@ nouns:
     sagging rope, half-screening a cramped alcove where three old men sit
     around a battered table. The space looks like it has been claimed for
     decades. No one else would dare sit there.
-  cellar: A narrow staircase descends into darkness. The air rising from below is
-    cool and damp, smelling of old stone and stagnant water. The cellar serves
-    as storage, but the dampness suggests the flooding that gave the tavern its
-    name has not entirely been conquered. The stairs look sturdy but steep.
+  cellar: The cellar lies beneath the kitchen to the west, reached by a trapdoor
+    there. Cool, damp air seeps up between the floorboards, smelling of old
+    stone and stagnant water. The cellar serves as storage, but the dampness
+    suggests the flooding that gave the tavern its name has not entirely been
+    conquered.
 spawninfo:
 - mobid: 96
 - mobid: 117

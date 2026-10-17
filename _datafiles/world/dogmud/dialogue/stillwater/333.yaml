@@ -32,7 +32,7 @@ patterns:
 
   - keywords: ["bandits", "road", "north", "soren"]
     responses:
-      - "Quieter than it was. Soren's lot was the worst of it; the bounty cleared most of them. Drunn does the town credit on that score. Ketil's crew still keeps a sword on the wagon, and Marta is not for show."
+      - "Quieter than it was. Soren's lot was the worst of it. The bounty cleared most of them. Drunn does the town credit on that score. Ketil's crew still keeps a sword on the wagon, and Marta is not for show."
 
   - keywords: ["lake", "fish", "catch", "decline"]
     responses:
@@ -87,7 +87,7 @@ tree:
         usual run -- bottles for the apothecary, lake-iron stock for
         Brindle, thread-spool for Edda. Lars runs around the square
         with a slate-list trying to read his father's handwriting.
-        Sometimes a letter from Maren in Thornwall for Ulla; Ketil
+        Sometimes a letter from Maren in Thornwall for Ulla. Ketil
         doesn't open them, which is why I trust him."
 
     # ============================================================

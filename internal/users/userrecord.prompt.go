@@ -631,11 +631,13 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 			case `{pos}`:
 				// Combat position prompt. Chunk 4b R6: FSM-driven (14 states
 				// — Standing / Prone / Supine / 11 grapples). Hidden when
-				// Standing to keep the prompt short.
+				// Standing to keep the prompt short. The token carries its own
+				// leading space, so it never glues to the bar before it
+				// ("CP:##########Prone") and a standing player gets no gap.
 				if !u.Character.IsStanding() && u.Character.Position != nil {
 					s := u.Character.Position.State()
 					promptOut.WriteString(fmt.Sprintf(
-						`<ansi fg="%s">%s</ansi>`,
+						` <ansi fg="%s">%s</ansi>`,
 						positionPromptColor(s),
 						positionPromptAbbrev(s),
 					))
@@ -735,7 +737,31 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 		}
 	}
 
-	return promptOut.String()
+	return collapseEmptyPromptSlots(promptOut.String())
+}
+
+var (
+	// promptTagsExpr matches any run of ansi tags, which carry no visible
+	// width, between a bracket and a slot separator.
+	promptTagsExpr       = `((?:</?ansi[^>]*>)*)`
+	promptEmptyLeftSlot  = regexp.MustCompile(`\[` + promptTagsExpr + `\|`)
+	promptEmptyRightSlot = regexp.MustCompile(`\|` + promptTagsExpr + `\]`)
+	promptEmptyGroup     = regexp.MustCompile(`\[` + promptTagsExpr + `\]`)
+)
+
+// collapseEmptyPromptSlots tidies a rendered prompt's `[a|b]` groups when a
+// token in them rendered nothing: `[|bruised]` (a standing target has no
+// position) reads `[bruised]`, `[Prone|]` reads `[Prone]`, and a group with
+// both slots empty (a target the player cannot see) is dropped. The colour
+// tags around the slots are kept. This runs on the rendered text, so it
+// covers the shipped fight prompt, the toggle-built one and a player's own.
+func collapseEmptyPromptSlots(s string) string {
+	if !strings.Contains(s, "|") && !strings.Contains(s, "[") {
+		return s
+	}
+	s = promptEmptyLeftSlot.ReplaceAllString(s, `[$1`)
+	s = promptEmptyRightSlot.ReplaceAllString(s, `$1]`)
+	return promptEmptyGroup.ReplaceAllString(s, `$1`)
 }
 
 // positionPromptColor returns the ANSI color name for the {pos}

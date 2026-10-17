@@ -42,9 +42,12 @@ func Fine(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, "Your sentence is all but served. You'll be released shortly.")
 		return true, nil
 	}
+	// Two lines: CategorySystem is never wrapped by the pipeline, so one
+	// sentence pair ran past 80 columns (#250).
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(
-		`Your fine to walk free now is <ansi fg="gold">%d gold</ansi>.`+
-			` It drops the longer you sit. Pay it with <ansi fg="command">payfine</ansi>.`, fine))
+		`Your fine to walk free now is <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(fine)))
+	user.SendText(messaging.CategorySystem,
+		`It drops the longer you sit. Pay it with <ansi fg="command">payfine</ansi>.`)
 	return true, nil
 }
 
@@ -64,8 +67,8 @@ func PayFine(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	total := user.Character.Gold + user.Character.Bank
 	if total < fine {
 		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
-			`You can't pay the <ansi fg="gold">%d gold</ansi> fine, even with your bank.`+
-				` You must serve your time.`, fine))
+			`You can't pay the <ansi fg="gold">%s gold</ansi> fine, even with your bank.`, util.FormatNumber(fine)))
+		user.SendText(messaging.CategoryRefusal, `You must serve your time.`)
 		return true, nil
 	}
 	// On-person gold first, bank as fallback.
@@ -82,7 +85,7 @@ func PayFine(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	// door here — the Jailed condition's end_user_text owns that line (avoids the
 	// double door message; 5.1c smoke BUG-01).
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(
-		`You count out <ansi fg="gold">%d gold</ansi> and settle your fine with the guards.`, fine))
+		`You count out <ansi fg="gold">%s gold</ansi> and settle your fine with the guards.`, util.FormatNumber(fine)))
 	justice.ResolveDetention(user.Character, user.UserId)
 	return true, nil
 }

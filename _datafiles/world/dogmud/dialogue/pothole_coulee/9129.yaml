@@ -118,8 +118,8 @@ tree:
       questExcluded: ["39-start", "39-end"]
       grantsQuest: "39-start"
       givesItem: 30058
-      text: "Right. Here -- take this firebomb. Ceramic, packed tight;
-        it bursts into flame where it lands. You throw it in a fight:
+      text: "Right. Here -- take this firebomb. Ceramic, packed tight.
+        It bursts into flame where it lands. You throw it in a fight:
         type throw firebomb while you are in combat. But mind this --
         a thrown firebomb, a cast spell, and a special move all pull
         from the same well. Use one and you wait a few breaths before

@@ -3,7 +3,6 @@ package dice
 import (
 	"fmt"
 	"math"
-	"math/rand"
 	"sync"
 )
 
@@ -85,7 +84,7 @@ func Roll(mean, stdDev float64) RollResult {
 			Description: fmt.Sprintf("Normal(%.2f, 0.00) [deterministic]", mean),
 		}
 	}
-	value := rand.NormFloat64()*stdDev + mean
+	value := normFloat64()*stdDev + mean
 	zScore := (value - mean) / stdDev
 	percentile := normalCDF(zScore) * 100
 
@@ -230,13 +229,13 @@ func RollWithCriticals(mean, stdDev, critThreshold, fumbleThreshold float64) (Ro
 // chance: the percentage chance of success (0-100)
 // Returns (success, actualRoll)
 func Percentile(chance float64) (bool, float64) {
-	roll := rand.Float64() * 100
+	roll := Float64() * 100
 	return roll <= chance, roll
 }
 
 // RollBetween generates a random float between min and max
 func RollBetween(min, max float64) float64 {
-	return min + rand.Float64()*(max-min)
+	return min + Float64()*(max-min)
 }
 
 // RollBetweenInt generates a random integer between min and max (inclusive)
@@ -247,7 +246,7 @@ func RollBetweenInt(min, max int) int {
 	if min == max {
 		return min
 	}
-	return min + rand.Intn(max-min+1)
+	return min + Intn(max-min+1)
 }
 
 // RollTable rolls on a weighted table
@@ -263,7 +262,7 @@ func RollTable(weights []int) int {
 		total += w
 	}
 
-	roll := rand.Intn(total)
+	roll := Intn(total)
 	cumulative := 0
 
 	for i, weight := range weights {

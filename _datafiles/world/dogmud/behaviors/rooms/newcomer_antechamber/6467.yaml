@@ -32,9 +32,40 @@ tree:
     - type: sequence
       event: room_command
       children:
-        - type: condition
-          check: command_matches
-          commands: [talk, say, ask]
+        # Only a talk, say or ask the command itself would carry out counts.
+        # A bare verb (`talk`, `say`, `ask dewey`) or a name that is not
+        # Dewey falls through to the command, which refuses it, the same
+        # rule quest 28 applies to its earlier steps by listening for
+        # success.
+        - type: selector
+          children:
+            - type: sequence
+              children:
+                - type: condition
+                  check: command_matches
+                  commands: [talk]
+                - type: condition
+                  check: command_names_mob
+                  mob_id: 9491
+            - type: sequence
+              children:
+                - type: condition
+                  check: command_matches
+                  commands: [ask]
+                - type: condition
+                  check: command_rest_words
+                  min: 2
+                - type: condition
+                  check: command_names_mob
+                  mob_id: 9491
+            - type: sequence
+              children:
+                - type: condition
+                  check: command_matches
+                  commands: [say]
+                - type: condition
+                  check: command_rest_words
+                  min: 1
         - type: condition
           check: player_missing_quest
           quest: "28-end"

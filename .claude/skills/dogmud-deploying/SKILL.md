@@ -87,7 +87,7 @@ sentence, and prune every push: the MOTD is a rolling snapshot of the latest
 release, not a cumulative changelog. Older detail belongs in
 `PATCH_NOTES.md`. End with two links, always on the final lines, never in the
 middle: the novel
-(`https://github.com/pruuk/DOGMud/blob/master/what_the_moons_keep.md`) and the
+(`https://github.com/pruuk/DOGMud/blob/master/novel/what_the_moons_keep.md`) and the
 full patch notes
 (`https://github.com/pruuk/DOGMud/blob/master/PATCH_NOTES.md`).
 [[feedback_motd_format]]

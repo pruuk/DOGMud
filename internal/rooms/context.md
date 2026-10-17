@@ -110,7 +110,11 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   viewer's `ParticipantSight` in the room. At clear sight (or a nil viewer, a
   system lookup) by name, newest first, as before. Below it every corpse, mob
   or player, answers only to the word "corpse", newest first and countable
-  (`2.corpse`), so typing a name cannot confirm whose corpse it is.
+  (`2.corpse`), so typing a name cannot confirm whose corpse it is. At every
+  sight the word the corpse line shows, `RemainsWord` ("remains", `corpse.go`),
+  stands for "corpse" (`look remains`, `2.remains`; `corpseSearchName`
+  rewrites it), so the word a player reads reaches the corpse. A room noun
+  named `remains` (room 5300) still wins in `look`, which checks nouns first.
 - **Corpse decay line (#276):** "The corpse of <name> crumbles to dust." goes
   out through `SendTextVisualHidingNames` with `ObservedName()` and the dead
   one's name hidden, the same shape as every other corpse line: a shapes
@@ -433,6 +437,8 @@ question).
 - **Spawn configuration**: Mob templates, items, gold, and containers
 - **Respawn mechanics**: Time-based respawning with configurable rates
 - **Spawn customization**: Level modifications, hostility, scripting overrides
+- **InstanceTier** (`yaml:"-" json:"-"`): the authored stat-pool multiplier
+  kept by `ScaleSpawnStatPools`; picks a paid-instance mob's gold rate
 - **Quest integration**: Quest flags and condition assignments for spawned entities
 
 ### Container System (`container.go`)
@@ -463,18 +469,39 @@ func CreateZoneInstanceWithOpts(
     authorizedUsers []int,
     overworldRoomId int,
     opts          ZoneInstanceOpts,
-) (int, bool)
+) (*ZoneInstance, error)
 ```
 
-- Returns the ephemeral entry room ID and `true` on success.
+- Returns the registered `*ZoneInstance` (its `EntryRoomId` is the
+  ephemeral entry room) or an error.
 - `ZoneInstanceOpts{SuppressReturnPortal bool}` — when `true`, the
   auto-added "return portal" exit is **not** created. Use this for
   confinement instances (e.g. instanced jail cells) where the occupant
   must not be able to walk out; lifetime is controlled by explicit
   teardown rather than portal expiry.
-- `CreateZoneInstance(zoneName, goldPaid, ownerUserId, overworldRoomId)`
+- `CreateZoneInstance(zoneName, goldPaid, ownerUserId, authorizedUsers, overworldRoomId)`
   passes a zero-value `ZoneInstanceOpts` (i.e. portal created as before),
   so all existing callers are unaffected.
+
+**Gold-paid scaling (`ScaleSpawnStatPools`, `InstanceMobGold`):**
+Every ephemeral room of an instance (cloned zones and the Planar Oasis cube
+from `GenerateOasisCube` alike) goes through `ScaleSpawnStatPools`, which
+REPLACES each spawn's `StatPool` (authored as a tier multiplier: 1 regular,
+2 tough, 4 boss) with `goldPaid * mult`, capped at `InstanceStatPoolCap`, and
+keeps the multiplier on the runtime-only `SpawnInfo.InstanceTier`. Each room
+is then stamped with `gold_paid` and `instance_gold` temp data, the latter
+copied from the zone-config's opt-in `InstanceGold` (`instance_gold: true`,
+set today on `instance_arena` and `instance_planar_oasis` only). At spawn,
+`Room.Prepare` sees `gold_paid > 0` with `instance_gold` true and sets the
+mob's gold to `InstanceMobGold(goldPaid, InstanceTier)`, replacing template
+gold and any gold a mob instance save restored: `InstanceGoldPer100Regular/Tough/Boss` gold per 100 paid (tier 1 or
+less, 2-3, 4+), with the entry clamped to `InstanceStatPoolCap / tier`,
+rolled within `+-InstanceGoldVariancePct` via `util.Rand` (so
+`util.SetRandForTest` replays it), never below 1 when the base is at least 1.
+Rooms without `gold_paid`, and paid rooms of a zone that does not opt in
+(Crash Site Interior, the jail cell), keep template gold. The opt-in is not
+on the GMCP zone editor form; `buildZoneUpdate` copies the loaded config
+before applying form fields, so a save keeps it.
 
 **Confinement zones and `CheckPortalTimers`:**
 A zone whose YAML sets `portal_duration: none` is **skipped** by
@@ -573,7 +600,7 @@ When writing hidden noun descriptions:
 | `save_and_load.go` | Room YAML + instance-save persistence, `restoreSkipTaggedFields` |
 | `prose_wrap.go` | Re-folds long prose into wrapped `>` block scalars on template save |
 | `roomdetails.go` | Assembled per-look detail payload |
-| `zoneconfig.go` | Per-zone `zone-config.yaml` (including `non_cartesian`) |
+| `zoneconfig.go` | Per-zone `zone-config.yaml` (including `non_cartesian` and the `instance_gold` opt-in) |
 | `zone_lifecycle.go` | Zone create/delete lifecycle |
 | `zone_rename.go` | Zone renaming and the reference rewrites it implies |
 | `zone_activity.go` | Per-zone activity/occupancy tracking |

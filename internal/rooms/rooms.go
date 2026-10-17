@@ -1157,6 +1157,15 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 
 				// Instance loot: generate and equip affixed items from loot pool
 				if goldPaid, ok := r.GetTempData("gold_paid").(int); ok && goldPaid > 0 {
+					// Paid-instance gold replaces the template's (and any
+					// gold a stale mob instance save restored), scaled by
+					// the entry and the spawn's tier, in zones that opt in
+					// (zone-config instance_gold, stamped at instance
+					// creation). Other zones keep template gold.
+					if optIn, _ := r.GetTempData("instance_gold").(bool); optIn {
+						mob.Character.Gold = InstanceMobGold(goldPaid, spawnInfo.InstanceTier)
+					}
+
 					if len(mob.LootPool) > 0 {
 						scalar := float64(configs.GetBalanceConfig().LootBudgetScalar)
 						goldPerPoint := float64(configs.GetBalanceConfig().GoldPerAffixPoint)
@@ -1587,8 +1596,11 @@ func (r *Room) FindCorpse(searchName string, viewer *characters.Character) (Corp
 // name that matched would confirm whose corpse it is: below SightFull each
 // corpse, mob or player, answers only to the word "corpse", newest first and
 // countable ("2.corpse"). A nil viewer (a system lookup, a test) matches by
-// name as clear sight does.
+// name as clear sight does. At every sight the word the corpse line shows,
+// RemainsWord, stands for "corpse" (`look remains`, `2.remains`).
 func (r *Room) FindCorpseIndex(searchName string, viewer *characters.Character) int {
+
+	searchName = corpseSearchName(searchName)
 
 	if viewer != nil && messaging.ParticipantSight(viewer, r) != messaging.SightFull {
 		candidates := []string{}
@@ -1817,7 +1829,11 @@ func (r *Room) GetMobs(findTypes ...FindFlag) []int {
 			continue
 		}
 
-		if typeFlag&FindMerchant == FindMerchant && mob.HasShop() {
+		// An off-shift keeper (mobs.OffShift: Kerra at the tavern of an
+		// evening) is not a merchant there: no list, buy, sell, offer or
+		// appraise finds her, so her stock never mixes into another keeper's
+		// shop. actions.RefuseIfShopClosed still finds her, to say so.
+		if typeFlag&FindMerchant == FindMerchant && mob.HasShop() && !mob.OffShift() {
 			mobMatches = append(mobMatches, mobId)
 			continue
 		}

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -139,6 +140,33 @@ func TestTemplateFreeze_StatusReadsTheBrokenLimbRecord(t *testing.T) {
 	out, err := templates.Process("character/status", user, user.UserId)
 	require.NoError(t, err)
 	assert.Contains(t, out, "Broken limb", "status reads .Character.Conditions.HasCondition and .TriggersLeft")
+}
+
+// 2026-10-17 pre-deploy playtest: the status sheet printed the `set surrender`
+// syntax ("auto-tap-below 15"), ran "Encumbrance:" into its value, and left the
+// stamina and conviction reserve cells unlabeled.
+func TestTemplateFreeze_StatusReadsInPlainWords(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	useDogmudTemplates(t)
+
+	user, _ := getTestUserAndRoom(t)
+	user.Character.SurrenderPolicy = characters.DefaultPlayerSurrenderPolicy
+
+	out, err := templates.Process("character/status", user, user.UserId)
+	require.NoError(t, err)
+	plain := regexp.MustCompile(`</?ansi[^>]*>`).ReplaceAllString(out, "")
+
+	assert.NotContains(t, plain, "auto-tap-below", "status must not print the set-surrender syntax")
+	assert.Contains(t, plain, "Surrender policy: tap out below 15% health")
+	assert.Contains(t, plain, "Encumbrance: ", "the label needs a space before its value")
+	for _, label := range []string{"HP reserve:", "SP reserve:", "CP reserve:"} {
+		assert.Contains(t, plain, label, "every reserve cell carries its pool's label")
+	}
+	for i, line := range strings.Split(plain, "\n") {
+		line = strings.TrimRight(line, "\r")
+		assert.LessOrEqual(t, utf8.RuneCountInString(line), 80, "status line %d is wider than 80 columns: %q", i+1, line)
+	}
 }
 
 // #465: the status sheet's Defenses row describes effective mitigation. 75

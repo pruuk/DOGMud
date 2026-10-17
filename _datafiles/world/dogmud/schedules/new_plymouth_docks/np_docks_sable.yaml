@@ -16,6 +16,7 @@ segments:
     end: 14
     target_room: 5516
     activity: ""
+    offshift_line: "Not over my dinner. Come to the counter after."
     idlecommands:
       - emote takes a corner table, eats without hurry, and watches whoever comes through the cookshop door before they see her watching.
       - say People talk at table. I am here for the meal. The rest is incidental.

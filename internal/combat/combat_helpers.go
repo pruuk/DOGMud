@@ -1077,6 +1077,28 @@ func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, 
 // call buildAttackMessages. Today that is exactly one: the double fumble. See
 // handleDoubleFumble.
 func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, openingStrike bool) hitResolution {
+	return resolveDefenseOutcomeWithFloors(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit, openingStrike,
+		AttackCritFloor(), DefenseCritFloor(), nil)
+}
+
+// swingFeint carries what a defensive crit needs to roll and narrate its
+// feint (U6 Task 14: a defensive crit is a true zero-damage outcome, so a
+// skilled attacker may read it as a deliberate feint). The swing loop passes
+// one per swing; nil skips the roll, which is how unit tests of the resolver
+// keep a fixed outcome.
+type swingFeint struct {
+	skill         int // the swinging weapon's skill (#564)
+	weaponSubType items.ItemSubType
+	srcType       SourceTarget
+	tgtType       SourceTarget
+	openingStrike bool
+}
+
+// resolveDefenseOutcomeWithFloors is resolveDefenseOutcome with the two crit
+// floors and the feint roll passed in. The swing loop calls it with the
+// configured floors and its swingFeint; a test passes floor 0 and nil to drive
+// the full resolve-floor-narrate sequence without a random promotion or feint.
+func resolveDefenseOutcomeWithFloors(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, openingStrike bool, attackFloor, defenseFloor float64, feint *swingFeint) hitResolution {
 	res := resolveDefenseOutcomeCore(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit, openingStrike)
 
 	// Chunk 5.11e: crit floors run HERE, after every branch above has settled
@@ -1085,7 +1107,10 @@ func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceC
 	// second hit floor. That used to leak through MinDefenseChance; U6 deleted
 	// that knob, and the contest floor now lives inside RunContest, but the
 	// one-application-point rule still holds. See applyCritFloors.
-	applyCritFloors(&res, result, best, AttackCritFloor(), DefenseCritFloor())
+	applyCritFloors(&res, result, best, attackFloor, defenseFloor)
+
+	// Narration reads the settled verdict, so it follows the floors.
+	narrateDefenceOutcome(result, res, best, sourceChar, targetChar, isThirdParty, openingStrike, feint)
 
 	return res
 }
@@ -1293,7 +1318,7 @@ func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, so
 			res.defenseCrit = true
 			res.damageMult = 0.0
 			setDefenseCritFlags(result, best)
-			sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty, false, defenceBand{crit: true})
+			// Narrated by narrateDefenceOutcome once the crit floors settle.
 			mudlog.Debug("DefenseCrit", "defZ", fmt.Sprintf("%.2f", best.defRoll.ZScore),
 				"source", sourceChar.Name, "target", targetChar.Name)
 			return res
@@ -1320,10 +1345,52 @@ func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, so
 	res.hit = true
 	res.defended = true
 	res.damageMult = 1.0 - DefenceMitigation(defMargin)
-	// partial == true: the swing deals partial damage, so buildAttackMessages
-	// owns the two personal lines; only the room narration is sent here.
-	sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty, true, defenceBand{margin: defMargin})
+	// Narrated by narrateDefenceOutcome once the crit floors settle: the
+	// defence-crit floor can still promote this deflection to a full negation.
 	return res
+}
+
+// narrateDefenceOutcome sends the defence narration for one swing, from the
+// swing's FINAL verdict. It runs after applyCritFloors, never before.
+//
+// It used to run inside resolveDefenseOutcomeInner, before the floors. A
+// deflection the defence-crit floor then promoted had already sent its
+// partial-band room line, and buildAttackMessages added a miss-pool line on
+// top, so the room heard two lines from two pools for one swing.
+//
+// A defensive crit owns every audience's line for its swing: the swing loop
+// skips buildAttackMessages on res.defenseCrit, so the defender is not told
+// the parry crushed the blow and then that the swing missed entirely (the
+// 2026-10-17 playtest's "Your armor shrugs off the pitiful strike with ease!"
+// followed by "Mire Brute's clumsy swing catches nothing but air!").
+//
+// The feint roll a defensive crit carried on master survives: before this
+// function existed, buildAttackMessages rolled checkFeint on every
+// zero-damage, non-fumble swing, and a defensive crit was the main such
+// swing (U6 Task 14). That roll now lives here, at the same rate and under
+// the same conditions (not against a target already dying, whose swings
+// narrate as a coup de grace). A feint is still one line per audience: its
+// lines stand in for the defence lines, while the defence's side effects
+// (DefenseUsed, the entangled note) are kept.
+//
+// A deflection (res.defended) sends the room line only; buildAttackMessages
+// owns its two personal lines. Every other outcome sends nothing here.
+func narrateDefenceOutcome(result *AttackResult, res hitResolution, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, isThirdParty bool, openingStrike bool, feint *swingFeint) {
+	switch {
+	case res.defenseCrit:
+		if feint != nil && !IsDying(targetChar) && checkFeint(feint.skill) {
+			result.DefenseUsed = best.defenseType
+			sendFeintLines(result, sourceChar, targetChar, *feint)
+			sendEntangledDefenceNote(result, best, isThirdParty)
+			return
+		}
+		sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty, false, defenceBand{crit: true, openingStrike: openingStrike})
+	case res.defended:
+		// partial == true: the swing deals partial damage, so
+		// buildAttackMessages owns the two personal lines; only the room
+		// narration is sent here.
+		sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty, true, defenceBand{margin: meleeDefenceMargin(best)})
+	}
 }
 
 // setDefenseCritFlags marks parry/dodge/block crit flags on the result.
@@ -1348,6 +1415,12 @@ func setDefenseCritFlags(result *AttackResult, best bestDefenseResult) {
 type defenceBand struct {
 	crit   bool
 	margin float64 // normalized, defence-positive; 0 when floored
+	// openingStrike marks a defensive crit that answered the ONE opening
+	// strike of an ambush (U10d). That swing skips buildAttackMessages, which
+	// is where every other opener line is routed through
+	// messaging.CategorySurpriseAttack, so the defence lines carry the
+	// category instead. Only read when crit is true.
+	openingStrike bool
 }
 
 // meleeDefenceMargin is the ONE derivation of a melee defence's normalized,
@@ -1474,6 +1547,9 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 		toRoomMsg := triad.ToRoom
 
 		defCat := CategoryForDefenseVerb(defenseVerb)
+		if !partial && band.crit && band.openingStrike {
+			defCat = messaging.CategorySurpriseAttack
+		}
 		if !partial {
 			result.sendSwingToTarget(defCat, string(toDefenderMsg))
 			result.sendSwingToSource(defCat, string(toAttackerMsg))
@@ -1484,6 +1560,9 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 		}
 	} else {
 		defCat := CategoryForDefenseVerb(defenseVerb)
+		if !partial && band.crit && band.openingStrike {
+			defCat = messaging.CategorySurpriseAttack
+		}
 		if !partial {
 			result.sendSwingToSource(defCat, fmt.Sprintf(`<ansi fg="attack-bad">%s %ss your attack!</ansi>`, targetChar.Name, defenseVerb))
 			result.sendSwingToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
@@ -1494,10 +1573,52 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 		}
 	}
 
-	// Stage 8.5: Add third-party context if applicable
+	sendEntangledDefenceNote(result, best, isThirdParty)
+}
+
+// sendEntangledDefenceNote is the Stage 8.5 third-party context: a defender
+// who won while entangled in someone else's grapple is told so. Shared by
+// sendDefenseMessages and the feint that stands in for a defensive crit's
+// lines (narrateDefenceOutcome).
+func sendEntangledDefenceNote(result *AttackResult, best bestDefenseResult, isThirdParty bool) {
 	if isThirdParty {
-		result.SendToTarget(CategoryForDefenseVerb(defenseVerb), fmt.Sprintf(
-			`<ansi fg="yellow">(Despite being entangled in a grapple!)</ansi>`))
+		result.SendToTarget(CategoryForDefenseVerb(string(best.defenseType)),
+			`<ansi fg="yellow">(Despite being entangled in a grapple!)</ansi>`)
+	}
+}
+
+// sendFeintLines narrates a swing as a deliberate feint, one coordinated
+// feintMessages variant for the attacker, the defender and the room. These
+// are the lines buildAttackMessages swapped in on master; the categories,
+// the per-swing line marks (for a sightless reader's swap) and the opening
+// strike banner and category follow that same path.
+func sendFeintLines(result *AttackResult, sourceChar, targetChar *characters.Character, f swingFeint) {
+	actor, actee := sourceChar.Name, targetChar.Name
+	if f.srcType == Mob {
+		actor = sourceChar.GetMobName(0).String()
+	}
+	if f.tgtType == Mob {
+		actee = targetChar.GetMobName(0).String()
+	}
+	tokens := items.TokenStrings(map[items.TokenName]string{
+		items.TokenActor:     actor,
+		items.TokenActorType: string(f.srcType) + `name`,
+		items.TokenActee:     actee,
+		items.TokenActeeType: string(f.tgtType) + `name`,
+	})
+	fm := getFeintMessage()
+	prefix := ``
+	cat := CategoryForWeaponSubtype(f.weaponSubType)
+	if f.openingStrike {
+		prefix = surpriseAttackBanner
+		cat = messaging.CategorySurpriseAttack
+	}
+	result.sendSwingToSource(cat, prefix+narration.Substitute(fm.toAttacker, tokens))
+	result.sendSwingToTarget(cat, prefix+narration.Substitute(fm.toDefender, tokens))
+	room := prefix + narration.Substitute(fm.toRoom, tokens)
+	result.SendToSourceRoom(cat, room)
+	if sourceChar.RoomId != targetChar.RoomId {
+		result.SendToTargetRoom(cat, room)
 	}
 }
 
@@ -1761,11 +1882,14 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		msgs = items.GetAttackMessage(displaySubtype, attackMessagePct(int(pctDamage), result.Crit))
 		// Feint check: skilled attackers can turn misses into deliberate-looking
 		// feints. Decision (U6 Task 14): this gate stays on true zero-damage
-		// outcomes (defensive crits, uncontested misses). Pre-U6 it also fired
+		// outcomes. A defensive crit no longer reaches this branch (the swing
+		// loop skips buildAttackMessages on it, 2026-10-17); its feint roll
+		// moved with its narration to narrateDefenceOutcome, at the same
+		// rate. Pre-U6 it also fired
 		// on defended swings, but a deflected swing now deals real damage and
 		// takes the branch above instead — do not "fix" this back.
 		if int(pctDamage) == 0 && !result.Fumble {
-			isFeint = checkFeint(sourceChar.GetCombatSkillLevel())
+			isFeint = checkFeint(sourceChar.GetCombatSkillLevelFor(ws.weapon))
 		}
 	}
 
@@ -1791,8 +1915,10 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		items.TokenBodyPart:     GetRandomBodyPart(),
 	}
 
-	// Get source character's weapon skill level for message selection
-	skillLevel := sourceChar.GetCombatSkillLevel()
+	// The skill of the weapon THIS swing used (#564): an off-hand fist swung
+	// beside a mastered spear narrates at the fist's tier, not the spear's.
+	// GetCombatSkillLevel() resolves from the main hand only.
+	skillLevel := sourceChar.GetCombatSkillLevelFor(ws.weapon)
 
 	if srcType == Mob {
 		tokenReplacements[items.TokenActor] = sourceChar.GetMobName(0).String()

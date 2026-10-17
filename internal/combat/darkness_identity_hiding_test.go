@@ -235,8 +235,8 @@ func TestHideIdentitiesInPersonalLines_HidesAttackersPetFromBlindDefender(t *tes
 }
 
 // buildDeflectedSwing drives the REAL production composers for a deflected
-// swing -- resolveDefenseOutcomeCore (which stamps DefenseUsed and sends the
-// room defence line) followed by buildAttackMessages (which builds the one
+// swing -- resolveDefenseOutcomeWithFloors at floor 0 (which stamps
+// DefenseUsed and sends the room defence line) followed by buildAttackMessages (which builds the one
 // composite personal line each side gets, via deflectedSwingLines) -- exactly
 // the two-call sequence calculateCombat's swing loop uses. Chosen over a full
 // calculateCombat round because deflectedSwingLines is a pure Go format
@@ -256,7 +256,7 @@ func buildDeflectedSwing(t *testing.T, srcName, tgtName string) *AttackResult {
 	result := &AttackResult{}
 	best := defenceWinBest(15*math.Sqrt2, 15) // dodge, plain defensive win
 
-	res := resolveDefenseOutcomeCore(result, best, src, tgt, 2.0, false, false, false)
+	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, false, 0, 0, nil)
 	if !res.defended {
 		t.Fatal("fixture did not produce a deflection")
 	}
@@ -275,7 +275,7 @@ func buildDeflectedSwing(t *testing.T, srcName, tgtName string) *AttackResult {
 }
 
 // TestCalculateCombat_HidesIdentitiesInPersonalLines drives the REAL
-// production composers a deflected swing uses -- resolveDefenseOutcomeCore +
+// production composers a deflected swing uses -- resolveDefenseOutcomeWithFloors +
 // buildAttackMessages, the same pair calculateCombat's swing loop calls, not
 // a label fixture -- then applies hideIdentitiesInPersonalLines exactly as
 // calculateCombat does at its tail, and proves the composed personal lines

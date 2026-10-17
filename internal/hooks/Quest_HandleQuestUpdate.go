@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // skillGrant is one parsed skill reward (skill tag + target level).
@@ -277,8 +278,11 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		if room := rooms.LoadRoom(questUser.Character.RoomId); room != nil {
 			rewardRoom = room
 		}
+		// CategorySystem is never wrapped by the pipeline, so the completing
+		// player's line wraps itself to their width (as justice/arrest.go
+		// does, #430); reward lines are authored prose and run long.
 		messaging.SendTrio(messaging.Trio{
-			Actor:    messaging.Say(messaging.CategorySystem, rewardLines.Actor),
+			Actor:    messaging.Say(messaging.CategorySystem, messaging.WrapAnsi(rewardLines.Actor, questUser.GetLineWidth())),
 			Actee:    messaging.NoLine,
 			Observer: messaging.Say(messaging.CategoryEmote, rewardLines.Observer),
 		}, messaging.Audience{
@@ -299,7 +303,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		}
 		// Gold reward?
 		if questInfo.Rewards.Gold > 0 {
-			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="gold">%d gold</ansi>!`, questInfo.Rewards.Gold))
+			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="gold">%s gold</ansi>!`, util.FormatNumber(questInfo.Rewards.Gold)))
 			questUser.Character.Gold += questInfo.Rewards.Gold
 
 			events.AddToQueue(events.EquipmentChange{
@@ -311,7 +315,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		// Item reward?
 		if questInfo.Rewards.ItemId > 0 {
 			newItm := items.New(questInfo.Rewards.ItemId)
-			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive a <ansi fg="itemname">%s</ansi>!`, newItm.DisplayName()))
+			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s <ansi fg="itemname">%s</ansi>!`, items.IndefiniteArticle(newItm.DisplayName()), newItm.DisplayName()))
 			questUser.Character.StoreItem(newItm)
 
 			iSpec := newItm.GetSpec()
@@ -348,7 +352,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			if granted > 1 {
 				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="itemname">%s</ansi> (x%d)!`, firstName, granted))
 			} else {
-				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive a <ansi fg="itemname">%s</ansi>!`, firstName))
+				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s <ansi fg="itemname">%s</ansi>!`, items.IndefiniteArticle(firstName), firstName))
 			}
 		}
 		// Condition reward?

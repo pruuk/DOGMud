@@ -12,7 +12,7 @@ patterns:
   # System mention: pack tactics (fits caravan master's risk-assessment voice)
   - keywords: ["wolves", "pack", "bandits", "travel dangers", "road danger"]
     responses:
-      - "I've lost wagons to packs. Never one wolf, never one bandit — always three, four, more. They hear each other. They come. A lone traveler is a fool; a lone merchant is a dead fool."
+      - "I've lost wagons to packs. Never one wolf, never one bandit — always three, four, more. They hear each other. They come. A lone traveler is a fool. A lone merchant is a dead fool."
       - "On the road you watch treelines and ridges, not just the path. Where one of them shows itself, the rest are positioning."
     moodChange: friendly
 

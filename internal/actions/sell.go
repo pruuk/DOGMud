@@ -136,18 +136,10 @@ func resolveMerchant(room *rooms.Room, probe items.Item, playerSale bool) (*mobs
 			continue
 		}
 		shopInv := shops.GetShopInventory(mob.Zone, int(mob.MobId), mob.HomeRoomId)
-		var probeValue int
-		if probe.Affixed {
-			probeValue = affixedSellPrice(probe, shops.PricingConfigFromBalance())
-		} else if shopInv != nil {
-			cfg := shops.PricingConfigFromBalance()
-			wornItems := mob.Character.Equipment.GetAllItemsWithEmptySlots()
-			offer := shops.EvaluateBuyRules(probe, shopInv, mob.CrafterSkill, mob.BuysGeneral, cfg, wornItems)
-			probeValue = offer.Price
-		} else {
-			probeValue = mob.GetSellPrice(probe)
-		}
-		if probeValue > 0 {
+		// Interest only: no seller (no barter bonus, which cannot turn a
+		// refusal into a price) and no purse check (a broke merchant still
+		// takes the sale and says it cannot pay, as it always has).
+		if QuoteSale(nil, room, mob, shopInv, probe, false).Price > 0 {
 			return mob, shopInv
 		}
 	}
@@ -188,19 +180,13 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 		}
 		return SellResult{Reason: SellStopRejected}
 	}
-	mob, shopInv := resolveMerchant(room, probe, seller.IsPlayer())
+	// No WILLING merchant still routes through sellOneToMerchant when a
+	// merchant is present (SaleMerchant), so the merchant says why it won't
+	// buy and we return SellStopRejected / SellStopMerchantBroke rather than
+	// the misleading SellStopNoMerchant ("There's no merchant here.").
+	mob, shopInv := SaleMerchant(room, probe, seller.IsPlayer())
 	if mob == nil {
-		// No WILLING merchant. Distinguish "no merchant present at all" from
-		// "a merchant is here but won't buy this item." For the latter, route
-		// through sellOneToMerchant so the merchant gives the right spoken
-		// refusal ("I'm not interested in that." / "I can't afford that right
-		// now.") and we return SellStopRejected / SellStopMerchantBroke —
-		// rather than the misleading SellStopNoMerchant ("There's no merchant
-		// here.").
-		mob, shopInv = firstMerchantInRoom(room)
-		if mob == nil {
-			return SellResult{Reason: SellStopNoMerchant}
-		}
+		return SellResult{Reason: SellStopNoMerchant}
 	}
 	var out SellResult
 	out.Reason = SellStopSoldAll
@@ -220,10 +206,10 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 			// A real item after a bauble gets its own merchant too, not
 			// the bauble's buyer; until then real items keep the probe's.
 			if out.Sold > 0 && (next.IsBauble() || baubleSold) {
-				if m, inv := resolveMerchant(room, next, seller.IsPlayer()); m != nil {
+				// SaleMerchant falls back to the first merchant present,
+				// who says why nobody will buy it.
+				if m, inv := SaleMerchant(room, next, seller.IsPlayer()); m != nil {
 					mob, shopInv = m, inv
-				} else if m, inv := firstMerchantInRoom(room); m != nil {
-					mob, shopInv = m, inv // says why nobody will buy it
 				}
 			}
 		}
@@ -302,74 +288,40 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 	if !found {
 		return 0, SellStopNoItem
 	}
-	itemSpec := item.GetSpec()
-	if itemSpec.ItemId < 1 {
-		return 0, SellStopRejected
-	}
-	if itemSpec.QuestToken != "" {
+	// The one quote offer and appraise also say (QuoteSale): price, the
+	// merchant's refusal line, and for a player the purse check.
+	quote := QuoteSale(char, room, mob, shopInv, item, seller.IsPlayer())
+	if quote.Tell != "" {
 		if seller.IsPlayer() {
-			seller.SendText(messaging.CategoryRefusal, "Quest items cannot be sold!")
+			seller.SendText(messaging.CategoryRefusal, quote.Tell)
 		}
 		return 0, SellStopRejected
 	}
+	if quote.Price <= 0 && quote.Say == "" {
+		return 0, SellStopRejected // no spec: nothing to deal over
+	}
 
 	char.CancelConditionsWithFlag(conditions.Hidden)
+	if quote.Price <= 0 {
+		merchantSay(room, mob, quote.Say)
+		if quote.Broke {
+			return 0, SellStopMerchantBroke
+		}
+		return 0, SellStopRejected
+	}
+	sellValue := quote.Price
+	buyReason := quote.buyReason
+
 	// Baubles (docs/baubles): catalog-priced; a player's average or rare one
 	// goes on a living shop's shelf, the rest leave the world. See
 	// sell_bauble.go.
 	if item.IsBauble() {
-		return sellBaubleToMerchant(seller, item, room, mob, shopInv, awardProgression)
-	}
-	// Affixed instance loot is sellable despite carrying a per-instance Spec;
-	// every other custom-spec item (enchanted / blob / uses) stays blocked.
-	if item.IsSpecial() && !item.Affixed {
-		merchantSay(room, mob, "I'm afraid I don't buy those.")
-		return 0, SellStopRejected
+		return sellBaubleToMerchant(seller, item, sellValue, mob, shopInv, awardProgression)
 	}
 
-	var sellValue int
-	var buyReason string
-	if item.Affixed {
-		// Unique affix-scaled loot: fixed spread off its stamped value, bypassing
-		// scarcity pricing and the legacy 25% cap.
-		sellValue = affixedSellPrice(item, shops.PricingConfigFromBalance())
-	} else if shopInv != nil {
-		cfg := shops.PricingConfigFromBalance()
-		wornItems := mob.Character.Equipment.GetAllItemsWithEmptySlots()
-		offer := shops.EvaluateBuyRules(item, shopInv, mob.CrafterSkill, mob.BuysGeneral, cfg, wornItems)
-		sellValue = offer.Price
-		buyReason = offer.Reason
-		if sellValue > 0 {
-			// A dazzled seller bargains worse (lighting plan 5b): barterDiscount
-			// folds SightMult into the same BarterMaxBonus-at-skill-50 cap.
-			// Balance numbers come from config.yaml, never a Go literal: the
-			// sell-side cap is Balance.BarterMaxBonus (buy.go reads
-			// BarterMaxDiscount instead, see tryPurchaseFromInventory).
-			barterMaxBonus := float64(configs.GetBalanceConfig().BarterMaxBonus)
-			if bonus := barterDiscount(char, room, barterMaxBonus); bonus > 0 {
-				sellValue = shops.ApplyBarterBuyBonus(sellValue, bonus)
-			}
-		}
-	} else {
-		sellValue = mob.GetSellPrice(item)
-	}
-
-	if sellValue <= 0 {
-		merchantSay(room, mob, "I'm not interested in that.")
-		return 0, SellStopRejected
-	}
-
-	// Gold-model gate: only players are constrained by — and draw down —
-	// the merchant's gold. Mob sales mint the seller's payout.
+	// Only players draw down the merchant's gold (QuoteSale checked they
+	// can pay). Mob sales mint the seller's payout.
 	if seller.IsPlayer() {
-		merchantGold := mob.Character.Gold
-		if shopInv != nil {
-			merchantGold = shopInv.Gold
-		}
-		if merchantGold < sellValue {
-			merchantSay(room, mob, "I can't afford that right now.")
-			return 0, SellStopMerchantBroke
-		}
 		if shopInv != nil {
 			shopInv.Gold -= sellValue
 		} else {

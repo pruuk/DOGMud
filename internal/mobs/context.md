@@ -1103,7 +1103,12 @@ Mobs with `schedule_id:` set follow daily routines authored in
 
 - `schedule.go`: `Schedule`, `ScheduleSegment`, `GetSchedule`,
   `CurrentSegment`, `applyScheduleSpawnOverride`, test helpers
-  (`RegisterScheduleForTest`, `UnregisterScheduleForTest`).
+  (`RegisterScheduleForTest`, `UnregisterScheduleForTest`), and
+  `(*Mob).OffShift()` / `(*Mob).OffShiftLine()` (owner ruling 2026-10-17:
+  an awake scheduled mob away from its home room, or in a segment whose
+  `target_room` is another room, is off shift and does not trade;
+  `rooms.FindMerchant` leaves it out and `actions.RefuseIfShopClosed`
+  answers with the segment's `offshift_line`).
 - `schedule_loader.go`: `LoadSchedules`, `validateScheduleStandalone`,
   `validateScheduleAgainstWorld`, `SetScheduleWorldValidator` (DI
   injection used in main.go to break the `mobs ← rooms` import cycle).

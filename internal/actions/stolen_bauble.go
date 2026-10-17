@@ -245,7 +245,7 @@ func ownerRecognizes(carrier Actor, m *mobs.Mob, itm items.Item, room *rooms.Roo
 	carrier.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(
 		`<ansi fg="mobname">%s</ansi> stares at the <ansi fg="itemname">%s</ansi> you are carrying. "That's mine! Thief!"`,
 		m.Character.Name, name)))
-	who := `a figure`
+	who := messaging.UnseenNoun(messaging.SightShapes)
 	if messaging.CanSeeClearly(&m.Character, room) {
 		who = fmt.Sprintf(`<ansi fg="username">%s</ansi>`, carrier.GetCharacter().Name)
 	}

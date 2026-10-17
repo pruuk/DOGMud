@@ -83,7 +83,7 @@ func Give(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			}
 
 			targetUser.SendText(messaging.CategoryLoot,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> gives you <ansi fg="gold">%d gold</ansi>.`, mob.Character.Name, giveGoldAmount),
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> gives you <ansi fg="gold">%s gold</ansi>.`, mob.Character.Name, util.FormatNumber(giveGoldAmount)),
 			)
 
 		}

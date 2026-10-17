@@ -117,7 +117,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		})
 
 		container.Gold += goldAmt
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You place <ansi fg="gold">%d gold</ansi> into the <ansi fg="container">%s</ansi>`, goldAmt, containerName))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You place <ansi fg="gold">%s gold</ansi> into the <ansi fg="container">%s</ansi>`, util.FormatNumber(goldAmt), containerName))
 		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> places some <ansi fg="gold">gold</ansi> into the <ansi fg="container">%s</ansi>`, user.Character.Name, containerName), user.UserId)
 	}
 
@@ -152,7 +152,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 
 			container.RemoveItem(oopsItem)
-			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is too full and a <ansi fg="itemname">%s</ansi> falls out and onto the floor.`, containerName, oopsItem.DisplayName()))
+			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is too full and %s <ansi fg="itemname">%s</ansi> falls out and onto the floor.`, containerName, items.IndefiniteArticle(oopsItem.DisplayName()), oopsItem.DisplayName()))
 			room.AddItem(oopsItem, false)
 		}
 	}

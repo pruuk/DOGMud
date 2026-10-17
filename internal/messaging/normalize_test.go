@@ -48,6 +48,27 @@ func TestNormalizeSkipsBannersWithBoxRule(t *testing.T) {
 	}
 }
 
+// TestNormalizeSkipsBoxAndTableBottoms is #460: a stop was appended after a
+// box or table's closing edge. Every drawn border is exempt; prose is not.
+func TestNormalizeSkipsBoxAndTableBottoms(t *testing.T) {
+	for _, in := range []string{
+		" ┌─ Cooldowns ─┐\n  bash   soon\n └─────────────┘",
+		"│ a │ b │\n└───┴───┘</ansi>\n",
+		"╚═════╝",
+		"+------+",
+		"| Toxicity: clear |",
+		"----------",
+		"HP: ▓▓▓▒▒░",
+	} {
+		if got := Normalize(CategorySystem, in); got != in {
+			t.Errorf("border line gained punctuation: %q -> %q", in, got)
+		}
+	}
+	if got := Normalize(CategorySystem, "you strike deeply"); got != "You strike deeply." {
+		t.Errorf("prose must still end with a stop, got %q", got)
+	}
+}
+
 func TestNormalizeDoesNotDoublePunctuate(t *testing.T) {
 	in := "You strike deeply."
 	got := Normalize(CategoryHitMelee, in)

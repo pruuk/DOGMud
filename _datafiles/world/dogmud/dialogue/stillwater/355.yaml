@@ -49,7 +49,7 @@ patterns:
 tree:
   root:
     text: "Welcome. I am Mistress Thorne. State the trouble or the
-      question; I will help if I can."
+      question. I will help if I can."
     hints: "You could ask Vella about her tinctures, the temple priest,
       or her brother Elgar."
     variants:
@@ -81,7 +81,7 @@ tree:
         questExcluded: ["20-brindle_confession"]
         text: "You are looking for something about my brother. I can
           see it on you. I have nothing to say to a stranger about
-          Elgar -- not yet. Speak to Brindle the smith first; he was
+          Elgar -- not yet. Speak to Brindle the smith first. He was
           Elgar's friend. Then come back to me."
         hints: "Speak to Smith Brindle at the smithy in town first."
 

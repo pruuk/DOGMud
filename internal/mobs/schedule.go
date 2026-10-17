@@ -1,6 +1,11 @@
 package mobs
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/gametime"
+)
 
 // Schedule is a daily routine attached to NPCs via Mob.ScheduleId.
 // Loaded from _datafiles/world/dogmud/schedules/<zone>/<id>.yaml at startup.
@@ -19,6 +24,45 @@ type ScheduleSegment struct {
 	Activity     string   `yaml:"activity,omitempty"`    // "" | "craft" | "sleeping" | "patrol"
 	PatrolId     string   `yaml:"patrol_id,omitempty"`   // chunk 3.4: required when activity is "patrol"
 	IdleCommands []string `yaml:"idlecommands,omitempty"`
+	// OffShiftLine is what a shopkeeper says, in their own voice, when asked
+	// to trade during this segment while off shift (see Mob.OffShift). Empty
+	// uses the generic line. No ';' (validated): it is spoken text.
+	OffShiftLine string `yaml:"offshift_line,omitempty"`
+}
+
+// OffShift reports whether a scheduled mob is away from the work its home
+// room holds (owner ruling 2026-10-17: an off-shift shopkeeper does not
+// trade). A mob's shop is keyed to its home room, so it is off shift when it
+// is awake and either somewhere other than its home room or in a segment
+// whose target_room is another room (the forge closes when Kerra leaves for
+// the tavern, before she is out of the door). A sleeping mob is not off
+// shift: sleep refuses trade on its own, with its own line. A mob with no
+// schedule is never off shift.
+func (m *Mob) OffShift() bool {
+	return m.offShiftAt(gametime.GetDate().Hour24)
+}
+
+func (m *Mob) offShiftAt(hour24 int) bool {
+	if m == nil || m.ScheduleId == "" || m.Character.HasConditionFlag(conditions.Sleeping) {
+		return false
+	}
+	if m.Character.RoomId != m.HomeRoomId {
+		return true
+	}
+	seg := GetSchedule(m.ScheduleId).CurrentSegment(hour24)
+	return seg != nil && seg.Activity != "patrol" && seg.TargetRoom != 0 && seg.TargetRoom != m.HomeRoomId
+}
+
+// OffShiftLine is the line an off-shift mob answers a trade with: its
+// current segment's offshift_line, or "" when the segment sets none.
+func (m *Mob) OffShiftLine() string {
+	if m == nil || m.ScheduleId == "" {
+		return ""
+	}
+	if seg := GetSchedule(m.ScheduleId).CurrentSegment(gametime.GetDate().Hour24); seg != nil {
+		return seg.OffShiftLine
+	}
+	return ""
 }
 
 // Package-level registry, populated by LoadSchedules at startup.

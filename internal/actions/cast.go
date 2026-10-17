@@ -29,7 +29,10 @@ type CastResult struct {
 	InvalidSpell   bool // spell not found by ID or name
 	SpellNotKnown  bool // actor does not know the spell (player check only)
 	AlreadyCasting bool // character already has an Activity cast in progress
-	OnCooldown     bool // special-move cooldown blocked the cast
+	OnCooldown     bool // special-move (or conjure) cooldown blocked the cast
+	// SharedCooldown is true when OnCooldown came from the shared special-move
+	// timer, not the conjure one, so the refusal can say why (#264).
+	SharedCooldown bool
 	NoTarget       bool // required target could not be resolved
 
 	// RefusalExplained is set alongside NoTarget when the refusal has ALREADY
@@ -384,7 +387,8 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 			cooldownRounds = int(cfg.ConjureCooldown)
 		}
 		if !char.TryCooldown(cooldownKey, fmt.Sprintf(`%d rounds`, cooldownRounds)) {
-			return CastResult{SpellInfo: spellInfo, OnCooldown: true}
+			return CastResult{SpellInfo: spellInfo, OnCooldown: true,
+				SharedCooldown: cooldownKey == SpecialMoveCooldownTag}
 		}
 	}
 

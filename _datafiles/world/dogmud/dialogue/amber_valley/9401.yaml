@@ -32,5 +32,5 @@ tree:
         underpins his claim."
     - id: right
       triggers: ["right", "old", "tradition", "claim", "law", "share"]
-      text: "There's an old water-right, older than any deed in the valley — the head-ground holds the first share. It's not something I invented to win an argument; ask any grandfather here and he'll tell you the same. Fenn knows it perfectly well. He just doesn't LIKE it, and lately he's decided not liking a thing is the same as it being unjust. The man's always wanted more than his portion. A dry year only showed everyone what he is. I keep to the right. The right's all that's kept this valley's water from open war these hundred years."
+      text: "There's an old water-right, older than any deed in the valley — the head-ground holds the first share. It's not something I invented to win an argument. Ask any grandfather here and he'll tell you the same. Fenn knows it perfectly well. He just doesn't LIKE it, and lately he's decided not liking a thing is the same as it being unjust. The man's always wanted more than his portion. A dry year only showed everyone what he is. I keep to the right. The right's all that's kept this valley's water from open war these hundred years."
       hints: "You could ask Ayres about the dispute, or about his farm upstream."

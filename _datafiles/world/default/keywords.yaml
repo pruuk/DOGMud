@@ -203,8 +203,6 @@ command-aliases:
   'bank withdraw':    ['withdraw']
   'storage add':      ['store']
   'storage remove':   ['unstore']
-  'rank back':        ['backrank']
-  'rank front':       ['frontrank']
   'help about':       ['about']
   'set screenreader': ['screenreader']
   title:              ['jobs', 'job', 'profession', 'class', 'titles']

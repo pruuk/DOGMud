@@ -25,7 +25,7 @@ ability to dodge, parry, and block incoming attacks.
   <ansi fg="stat">Effect:</ansi> Improves dodge, parry, and block
   <ansi fg="stat">Duration:</ansi> Moderate
   <ansi fg="stat">Scaling:</ansi> Rhetoric skill and Charisma
-  <ansi fg="stat">Cooldown:</ansi> Shared with bash, trip, kick, and taunt
+  <ansi fg="stat">Cooldown:</ansi> Shared by every special move. See <ansi fg="command">help special</ansi>.
   <ansi fg="stat">Skill:</ansi> Progresses Rhetoric and Charisma
 
 Rally spends Conviction and requires full payment before any ally receives the

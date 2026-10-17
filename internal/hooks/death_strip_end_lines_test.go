@@ -72,7 +72,7 @@ func TestDeathStrip_ExpiredRecordsDoNotNarrateAfterRespawn(t *testing.T) {
 	holderLines = append(holderLines, drainPlain(1)...)
 	roomLines = append(roomLines, drainPlain(2)...)
 
-	assert.Equal(t, 0, countContaining(holderLines, "Your wounds stop bleeding."),
+	assert.Equal(t, 0, countContaining(holderLines, "The seeping blood clots and stops."),
 		"the respawned player must not read the stripped bleed's end line")
 	assert.Equal(t, 0, countContaining(holderLines, "Conviction Ward fades"),
 		"nor the stripped shield's")
@@ -90,7 +90,7 @@ func TestDeathStrip_NaturalExpiryStillNarrates(t *testing.T) {
 	drainPlain(1)
 
 	PruneConditions(events.NewTurn{TurnNumber: 1})
-	assert.Equal(t, 1, countContaining(drainPlain(1), "Your wounds stop bleeding."))
+	assert.Equal(t, 1, countContaining(drainPlain(1), "The seeping blood clots and stops."))
 }
 
 // Control: a strip that is not a death (the same All cancel, on a living

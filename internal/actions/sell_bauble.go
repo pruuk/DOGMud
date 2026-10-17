@@ -206,8 +206,10 @@ func merchantZone(mob *mobs.Mob) string {
 	return mob.Zone
 }
 
-// BaubleOfferFrom is baubleOfferFor for a merchant mob, resolving its shop.
-// Used by the offer and appraise commands.
+// BaubleOfferFrom is baubleOfferFor for a merchant mob, resolving its shop:
+// the merchant's interest and price, without the purse check. The offer and
+// appraise commands say QuoteSale instead, which adds that check, so they
+// never quote what sell would refuse.
 func BaubleOfferFrom(item items.Item, mob *mobs.Mob) BaubleOffer {
 	if mob == nil || !item.IsBauble() {
 		return BaubleOffer{Refusal: baubleSayUnknown}
@@ -217,32 +219,19 @@ func BaubleOfferFrom(item items.Item, mob *mobs.Mob) BaubleOffer {
 }
 
 // sellBaubleToMerchant is sellOneToMerchant's branch for a bauble. item has
-// already been found in the seller's inventory and is known to be a bauble.
-func sellBaubleToMerchant(seller Actor, item items.Item, room *rooms.Room,
+// already been found in the seller's inventory, is known to be a bauble, and
+// sellValue is its QuoteSale price (above zero, and for a player one the
+// merchant can pay).
+func sellBaubleToMerchant(seller Actor, item items.Item, sellValue int,
 	mob *mobs.Mob, shopInv *shops.ShopInventory,
 	awardProgression bool) (soldValue int, res SellStopReason) {
 
 	char := seller.GetCharacter()
 
-	offer := baubleOfferFor(item, shopInv, IsFence(mob), room.Zone)
-	if offer.Price <= 0 {
-		merchantSay(room, mob, offer.Refusal)
-		if offer.Broke {
-			return 0, SellStopMerchantBroke
-		}
-		return 0, SellStopRejected
-	}
-	sellValue := offer.Price
-
-	// Gold-model gate, exactly as for every other item: only players are
-	// constrained by, and draw down, the merchant's gold. A fence is a
-	// shopkeeper like any other and pays from its shop's gold.
+	// Gold-model gate, exactly as for every other item: only players draw
+	// down the merchant's gold. A fence is a shopkeeper like any other and
+	// pays from its shop's gold.
 	if seller.IsPlayer() {
-		merchantGold := baubleMerchantGold(mob, shopInv)
-		if merchantGold < sellValue {
-			merchantSay(room, mob, baubleSayCantAfford)
-			return 0, SellStopMerchantBroke
-		}
 		if shopInv != nil {
 			shopInv.Gold -= sellValue
 		} else {

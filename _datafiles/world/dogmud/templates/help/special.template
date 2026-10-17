@@ -11,22 +11,22 @@ same window.
   <ansi fg="command">taunt</ansi>, <ansi fg="command">warcry</ansi>, <ansi fg="command">rally</ansi>
               - Shouts and rallying cries; the voice spends from the
                 same well of focus.
-  <ansi fg="command">cast</ansi>      - Initiates spellcasting. Counts as a special move on
-              initiation.
-  <ansi fg="command">reload</ansi>    - Working a ranged weapon's mechanism takes the same
-              burst of focus.
-  <ansi fg="command">shoot</ansi>     - Only a shot fired from hiding. An ordinary shot does
-              not spend the cooldown; the ambush does. Note that reload
-              above spends the same window, so reloading and then hiding
-              can leave you with no ambush ready.
+  <ansi fg="command">throw</ansi>     - Hurling a grenade or other throwable item.
+  <ansi fg="command">cast</ansi>      - Starting most spells. Spells that summon a helper out
+              of nothing use their own, longer recovery instead.
   <ansi fg="command">consider</ansi>  - Sizes up a fight. Uses your special-move recovery.
               See <ansi fg="command">help consider</ansi>.
+  <ansi fg="command">fire</ansi>      - Every shot starts the cooldown, so a shot leaves your
+              other special moves recovering. A spent cooldown never
+              stops a shot, or an ambush shot. See <ansi fg="command">help fire</ansi>.
   <ansi fg="command">attack</ansi>    - Only when you engage from hiding. That opening blow is
               an ambush and spends the cooldown. Ordinary swings do not.
               See <ansi fg="command">help ambush</ansi>.
-  <ansi fg="command">gore</ansi>, <ansi fg="command">maul</ansi>, <ansi fg="command">rake</ansi>, <ansi fg="command">pounce</ansi>, <ansi fg="command">throttle</ansi>, <ansi fg="command">hamstring</ansi>, <ansi fg="command">drain</ansi>
+  <ansi fg="command">gore</ansi>, <ansi fg="command">maul</ansi>, <ansi fg="command">rake</ansi>, <ansi fg="command">pounce</ansi>, <ansi fg="command">throttle</ansi>, <ansi fg="command">drain</ansi>
               - Natural-weapon moves for bodies shaped to use them.
   Mutation abilities (<ansi fg="command">venom-coat</ansi>, <ansi fg="command">cocoon</ansi>) share it too.
+  The <ansi fg="command">kick</ansi> variants <ansi fg="command">stomp</ansi> and <ansi fg="command">knee</ansi>, and <ansi fg="command">tailsweep</ansi> for <ansi fg="command">trip</ansi>,
+  are the same moves under another name.
 
 Submissions (chokes, joint locks) fire automatically when you
 have dominant control in a grapple; no command needed. See

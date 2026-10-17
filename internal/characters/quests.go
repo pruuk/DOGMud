@@ -8,6 +8,20 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// questIsSecret reports whether questId is a secret quest (a hidden progress
+// marker the player is never shown). A package variable so tests can stand in
+// for the quest registry, which a characters test binary never loads.
+var questIsSecret = func(questId int) bool {
+	q := quests.GetQuestById(questId)
+	return q != nil && q.Secret
+}
+
+// IsSecretQuest reports whether questId is a secret quest. Player-facing
+// quest surfaces (hint, the Quests panel) use it to keep hidden markers out.
+func IsSecretQuest(questId int) bool {
+	return questIsSecret(questId)
+}
+
 func (c *Character) GetMemoryCapacity() int {
 	// Map is now a free command; memory capacity based on Perception
 	memCap := (c.Stats.Perception.ValueAdj >> 1)
@@ -97,7 +111,12 @@ func (c *Character) GiveQuestToken(questToken string) bool {
 
 	if quests.IsTokenAfter(currentToken, questToken) {
 		c.QuestProgress[questId] = newStep
-		c.LastQuestId = questId
+		// A secret quest is a hidden marker the player never sees, so it must
+		// not steal the focus (hint, Quests panel, minimap marker) from the
+		// quest the player is actually working on.
+		if !questIsSecret(questId) {
+			c.LastQuestId = questId
+		}
 		return true
 	}
 
@@ -219,8 +238,18 @@ func miscDataToUint64(v any) uint64 {
 // is not yet complete, then to the lowest-id quest of any kind, then 0. The
 // determinism matters: the marker re-resolves on every emit, so a random
 // fallback would make the focus jitter between quests. Pure — never mutates.
+//
+// Secret quests are never the focus, on any path: they are hidden markers
+// (quest 21, Newcomer's Path, is one) that `quests` does not list, so naming
+// one in hint or the panel would show the player a quest they do not have.
+// When every quest in progress is secret the result is 0.
 func (c *Character) GetFocusQuestId() int {
 	prog := c.GetQuestProgress()
+	for questId := range prog {
+		if questIsSecret(questId) {
+			delete(prog, questId)
+		}
+	}
 	if len(prog) == 0 {
 		return 0
 	}

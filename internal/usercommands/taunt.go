@@ -44,12 +44,12 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	if result.OnCooldown {
-		refusal.Cooldown(user, "taunt")
+		refusal.CooldownAfterCost(user, "taunt", result.Cost)
 		return true, nil
 	}
 
 	if result.NoTarget {
-		refusal.NoTarget(user, "taunt")
+		refusal.NoTargetAfterCost(user, "taunt", result.Cost)
 		return true, nil
 	}
 

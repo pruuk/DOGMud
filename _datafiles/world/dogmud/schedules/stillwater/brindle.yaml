@@ -21,6 +21,7 @@ segments:
     end: 22
     target_room: 4103
     activity: ""
+    offshift_line: "The forge is cold for the night. Come by in the morning."
     idlecommands:
       - emote nurses a single tankard in the corner.
       - say Long enough day. No need to make it longer.

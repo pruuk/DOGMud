@@ -7,7 +7,7 @@ patterns:
     responses:
       - "Eyes up. You walk like the canyon floor -- heavy. Up here we
           learn to be still. What do you need?"
-      - "Mind the chalk-marks; those are distances. Speak."
+      - "Mind the chalk-marks. Those are distances. Speak."
 
   - keywords: ["shoot", "sling", "bow", "range", "learn", "teach", "quest", "task"]
     responses:
@@ -25,7 +25,7 @@ patterns:
   - keywords: ["reload", "ammo", "shot", "equip", "load"]
     responses:
       - "Type equip and the weapon's name to ready it, then fire to
-          loose. Your hands find the next round on their own; you only
+          loose. Your hands find the next round on their own. You only
           stop when the pouch is empty. Out of shot? Ask me."
 
   - keywords: ["perception", "stat", "eyesight"]
@@ -108,7 +108,7 @@ tree:
       questExcluded: ["50-end"]
       givesItem: 30064
       text: "Shot for the sling -- a pouch of smooth river stones. Take
-        it. Each shot draws one from the pouch on its own; when the pouch
+        it. Each shot draws one from the pouch on its own. When the pouch
         runs dry the sling will tell you, and so will I if you ask. No
         one learns the eye on an empty sling."
       hints: "You received a pouch of shot. Go east to the Long Terrace
@@ -150,7 +150,7 @@ tree:
       text: "Out in the open and again from cover, and the straw has your
         mark in it both times. You felt the difference. That second one is
         the shot you save for when it matters, because you only get it
-        once. The sling and the shot are yours; the eye is yours too,
+        once. The sling and the shot are yours. The eye is yours too,
         though it will want feeding. North to the canyon when you are
         ready. Bryn will teach you the rest."
       hints: "Quest complete. Head north into the canyon and find Scout

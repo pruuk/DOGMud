@@ -58,8 +58,7 @@ idlemessages:
   table without looking up or offering assistance.
 - From somewhere behind the back wall, a sound, movement, or
   a voice kept deliberately low, surfaces briefly and stops.
-- The footbridge to the north catches afternoon light at a
-  particular angle; the far end remains in shadow.
+- The footbridge to the north runs off into shadow at its far end.
 spawninfo:
   - mobid: 9305
     respawnrate: "30 real minutes"

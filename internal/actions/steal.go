@@ -319,7 +319,7 @@ func takeFromMob(actor Actor, m *mobs.Mob, extra []items.Item) StealResult {
 				actor.GetCharacter().Gold += goldStolen
 				result.StoleGold = goldStolen
 				stolenStuff = append(stolenStuff,
-					fmt.Sprintf(`<ansi fg="yellow-bold">%d gold</ansi>`, goldStolen))
+					fmt.Sprintf(`<ansi fg="yellow-bold">%s gold</ansi>`, util.FormatNumber(goldStolen)))
 
 				if actor.IsPlayer() {
 					events.AddToQueue(events.EquipmentChange{
@@ -330,7 +330,7 @@ func takeFromMob(actor Actor, m *mobs.Mob, extra []items.Item) StealResult {
 			}
 		}
 
-		if itemStolen, found := m.Character.GetRandomItem(); found {
+		if itemStolen, found := m.Character.GetRandomStealableItem(); found {
 			m.Character.RemoveItem(itemStolen)
 			actor.GetCharacter().StoreItem(itemStolen)
 			if itemStolen.IsBauble() && actor.IsPlayer() {
@@ -518,8 +518,8 @@ func stealFromPlayer(actor Actor, targetUserId int, t theftAttempt) StealResult 
 		if detected {
 			targetUser.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> lifts `+
-					`<ansi fg="yellow-bold">%d gold</ansi> from your pocket!`,
-				actor.GetName(), result.StoleGold)))
+					`<ansi fg="yellow-bold">%s gold</ansi> from your pocket!`,
+				actor.GetName(), util.FormatNumber(result.StoleGold))))
 			result.Detected = true
 		}
 	}
@@ -649,9 +649,9 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 			}
 
 			actor.SendText(messaging.CategoryLoot, fmt.Sprintf(
-				`You quietly lift <ansi fg="yellow-bold">%d gold</ansi> `+
+				`You quietly lift <ansi fg="yellow-bold">%s gold</ansi> `+
 					`from the <ansi fg="itemname">%s</ansi>.`,
-				goldStolen, containerName))
+				util.FormatNumber(goldStolen), containerName))
 		}
 	}
 

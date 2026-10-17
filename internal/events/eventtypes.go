@@ -44,8 +44,9 @@ type Condition struct {
 	LifeEpoch uint64
 	// Caster is who cast the condition (messaging M6 slice 1). ApplyConditions
 	// stamps it on the record, a damage-over-time tick credits it with the
-	// harm, and the start lines name it. Zero for a potion, hazard, mutation
-	// or anything else nobody cast.
+	// harm, and the start lines name it. An on-hit mutation condition names
+	// the attacker who landed the hit. Zero for a potion, hazard or anything
+	// else nobody cast.
 	Caster state.ActorRef
 	// CasterCrit puts the critical marker on the caster's start line, which
 	// replaces the spell's own "takes effect" line (owner ruling R11).

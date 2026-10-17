@@ -1,5 +1,31 @@
 # DOGMud Patch Notes
 
+## 2026-10-17: Clearer in the dim, fairer in the arena
+
+- Foes in the Arena and the Planar Oasis now carry gold in step with what
+  you paid to enter. Tougher foes carry more, bosses carry the most, and
+  each purse varies a little.
+- Arena fighters carry the blades their stories describe, and they no
+  longer scatter like a pack when a rival falls.
+- In dim light the room shows "a figure", and figure is now the word you
+  type to aim at one. Remains answer to "remains" as well as "corpse".
+- The tutorial counts a step only when you actually do it, and hint no
+  longer points at a quest you cannot see.
+- offer now quotes exactly what sell will pay, and a merchant who will not
+  buy something tells you why.
+- A refused move no longer says you moved, and a refused special move
+  tells you when its effort was already spent.
+- A blocked blow reads as one line, bleeding stops when the wound you were
+  told about stops, and a warcry shouted alone no longer calls on allies.
+- ASCII mode now converts every symbol the game sends, maps keep shore and
+  deep water apart, and tables no longer end in a stray period.
+- help death, help list, help combat and the special move help now say
+  what the game actually does.
+- Room descriptions and idle lines written for noon now hold true at any
+  hour.
+- Gold amounts show thousands separators, the weather command speaks in
+  words, and craft lists name the ingredients you need.
+
 ## 2026-10-16: Creatures fight the way their bodies do
 
 - Elementals of water, air, fire, magma, sand, storm and ice now strike
@@ -75,7 +101,7 @@
 - Wraiths and spectres now fight with a chilling touch that pulls the life out
   of you, and their blows read that way.
 
-## Unreleased: Fighting blind, and plainer combat words
+## 2026-10-12: Fighting blind, and plainer combat words
 
 - `consider` now tells you what a fight would really cost you, from "they
   won't lay a finger on you" to "you have zero chance", and how long each of
@@ -183,7 +209,7 @@
   their plain-text forms. `help map` lists each map symbol in both forms.
 - `trade` and `tutorial` now appear in the `help` list.
 
-## Unreleased: Wards, heals and who cast them
+## 2026-10-10: Wards, heals and who cast them
 
 - There are now three wards, and each says what it stops. Conviction Ward
   turns aside physical blows only. The new Conviction Bulwark also blunts

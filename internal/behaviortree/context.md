@@ -817,6 +817,8 @@ These conditions were added alongside the room behavior tree system:
 |-----------|--------|-------------|
 | `command_matches` | `commands` (list of strings) | Matches the `Command` field of a `room_command` event. Case-insensitive. |
 | `command_rest_contains` | `keywords` (list of strings) | Matches any keyword against the `Rest` field of a `room_command` event. Case-insensitive. |
+| `command_rest_words` | `min` (int) | `Rest` of a `room_command` event holds at least `min` words (quotes respected), so a bare verb the command refuses is not intercepted. |
+| `command_names_mob` | `mob_id` (int) | The first argument (after an optional `to`) names a mob of that template in the room, resolved for the typing player as `talk` and `ask` resolve it (`actions.AimBySight`, then `actions.ResolveTargetActor`). |
 | `mob_in_room` | `mob_id` (int) | At least one mob with the given template ID is present in the room. |
 
 ---

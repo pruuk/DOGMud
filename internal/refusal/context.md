@@ -30,6 +30,9 @@ in the room.
 
 - Sight-gated helpers (`NotHereCreature`, `NotHereThing`, `NothingToAim`)
   take no name at all, so they cannot echo.
+- `NoMerchant` (`NoMerchantLine`, "There's no merchant here.") is the one
+  answer every shop verb (list, buy, sell, offer, appraise) gives where no
+  merchant is present.
 - `NotCarrying`, `NotWearing`, `NotInStorage` (the player's own belongings)
   and `NotPartyMember` (their own party) echo, through `echo`: ANSI
   tags stripped, trimmed, truncated by display width to 24 columns plus
@@ -61,6 +64,8 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `NotCarrying(u, "")` | You aren't carrying that. Try **inventory**. |
 | `NoTarget(u, "kick")` / `NoTargetText` | You have no target. Try **kick &lt;name&gt;**. |
 | `Cooldown(u, "kick")` / `CooldownText` | You need a moment to recover before you can kick. |
+| `NoTargetAfterCost(u, "taunt", cost)` / `NoTargetSpentText` | Your target is gone before you can taunt, and the effort is spent. (NoTarget when nothing was charged) |
+| `CooldownAfterCost(u, "kick", cost)` / `CooldownSpentText` | You need a moment to recover before you can kick, and the effort is spent. (Cooldown when nothing was charged) |
 | `WhileFighting(u, "steal")` / `WhileFightingText` | You can't steal while fighting. |
 | `NotInGuild` / `NotInGuildText` | You aren't in a guild. Try **guild create &lt;TAG&gt; &lt;name&gt;**. |
 | `NoCompanion` / `NoCompanionLine` | You have no companion travelling with you. |
@@ -80,8 +85,19 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `NotGuildOfficer(u, "invite")` / `NotGuildOfficerText` | Only guild officers and the leader can invite. |
 | `CompanionsFull` / `CompanionsFullLine` | You are already sustaining as many companions as your will can hold. |
 | `NotPartyMember(u, "Bob")` / `NotPartyMemberText` | No one in your party is called 'Bob'. |
+| `NoRemainsLine` (no send) | There are no suitable remains here to raise. |
+| `NoRemainsMatchingLine` (no send) | You cannot find suitable remains matching that description. |
+| `RemainsHoldLootLine` (no send) | Those remains still hold spoils. Clear the loot from them first, then raise what's left. |
+| `RemainsTooFaintLine` (no send) | Those remains are too faint to hold a bound spirit. |
+| `RemainsAlreadyRaisedLine` (no send) | Those remains were already animated once; there is nothing left to raise. |
 | `Failed(u, "", err)` / `FailedText` | That didn't work. The error has been logged. |
 | `Failed(u, "salvage", err)` | That salvage didn't work. The error has been logged. |
+
+The five raise lines (`remains.go`) answer a raise spell that found no
+corpse it could animate. `actions.RaiseCorpseRefusal` picks one from the
+corpse selection's reason, and both raise gates (cast start in
+`usercommands.Cast`, resolution in `hooks.resolveCompanionSummon`) send it on
+`CategoryRefusal`, before the reservation gate (#282).
 
 `WhileBusy` covers casting, crafting and salvaging alike (`cancel` ends any
 of them); `usercommands.refuseWhileBusy` and the special moves send it.
@@ -123,7 +139,10 @@ questions that wait for an answer (`cmdPrompt.Ask`, e.g. mail's "Send mail
 to whom?") are not prompts in this sense and stay where they are.
 
 `Cooldown` takes what the player tried ("kick", "consider anyone"), never a
-duration. `NotPartyLeader` with an empty action reads "do that".
+duration. A cast blocked by the shared special-move timer
+(`actions.CastResult.SharedCooldown`) follows it with
+`CastSharesSpecialMoveText` ("Casting counts as a special move, so it shares
+their recovery time."); the conjure timer gets the plain line only. `NotPartyLeader` with an empty action reads "do that".
 
 ## Failed
 

@@ -23,7 +23,7 @@ in-game prompt. The fight prompt (<ansi fg="command">fprompt</ansi>) appears dur
   <ansi fg="magenta">target</ansi>        Target name
   <ansi fg="magenta">targethealth</ansi>  Target health description (healthy/bruised/wounded/etc)
   <ansi fg="magenta">targetpos</ansi>     Target's current combat position
-  <ansi fg="magenta">tank</ansi>          Party front-rank tank name and health bar
+  <ansi fg="magenta">tank</ansi>          Name and health bar of the ally your target is fighting
 
   Example: <ansi fg="command">set fprompt tog tank</ansi>  → hides the tank block when soloing
 
@@ -63,7 +63,7 @@ in-game prompt. The fight prompt (<ansi fg="command">fprompt</ansi>) appears dur
     <ansi fg="magenta">{target}</ansi>       Your current target's name
     <ansi fg="magenta">{targethealth}</ansi> Target health: healthy/bruised/wounded/badly wounded/near death/dead
     <ansi fg="magenta">{targetpos}</ansi>    Target's combat position
-    <ansi fg="magenta">{tank}</ansi>         Party front-rank tank's name
+    <ansi fg="magenta">{tank}</ansi>         Name of the ally your target is fighting
     <ansi fg="magenta">{tankpos}</ansi>      Tank's combat position
     <ansi fg="magenta">{tankbar}</ansi>      Tank's health bar
 

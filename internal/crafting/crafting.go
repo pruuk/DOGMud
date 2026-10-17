@@ -233,6 +233,27 @@ func GetAllForSkill(skill string) []*RecipeSpec {
 	return result
 }
 
+// IsIngredientForSkill reports whether item is an ingredient of at least one
+// recipe of skill, matched by component tag as HasIngredients matches. The
+// eat command uses it to tell a player that raw meat is for cooking.
+func IsIngredientForSkill(item items.Item, skill string) bool {
+	tag := componentTagOf(item)
+	if tag == "" {
+		return false
+	}
+	for _, r := range allRecipes {
+		if r.Skill != skill {
+			continue
+		}
+		for _, ing := range r.Ingredients {
+			if ing.ItemTag == tag {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // componentTagOf returns the ComponentTag of item's spec, or "" if the item
 // isn't tagged as a crafting component/material. Shared matcher used by
 // HasIngredients, ConsumeIngredients, and CheckOwnComponents so tag-matching

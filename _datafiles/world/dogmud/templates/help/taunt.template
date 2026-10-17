@@ -22,7 +22,7 @@ damage. It attacks their will to fight rather than their body.
   <ansi fg="stat">Damage:</ansi> Based on Charisma, Rhetoric skill, and target's
     conviction mitigation
   <ansi fg="stat">Damage Type:</ansi> Conviction (mental/social)
-  <ansi fg="stat">Cooldown:</ansi> Shared with bash, trip, and kick
+  <ansi fg="stat">Cooldown:</ansi> Shared by every special move. See <ansi fg="command">help special</ansi>.
   <ansi fg="stat">Skill:</ansi> Progresses Rhetoric
 
 Taunting spends Conviction and requires full payment before the contest or

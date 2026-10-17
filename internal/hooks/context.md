@@ -1268,7 +1268,9 @@ room through `mobSubjectName` and `sendVisualElseAudible`.
 remains lie where they fell." to full-sight readers and "Some remains lie
 where they fell." to shapes readers (nothing at no sight), judged per player
 by `messaging.ReaderSight`. "Remains", not "body", so the line fits
-wreckage, elementals, orbs and slimes. An empty identity sends the anonymous
+wreckage, elementals, orbs and slimes. The noun is `rooms.RemainsWord`,
+which `Room.FindCorpseIndex` takes as "corpse", so `look remains` reaches
+the corpse the line announced. An empty identity sends the anonymous
 line to full sight too; `dropMobLootAndSetCorpse` passes one for a mob with
 an authored `corpse_name`. Called only where a corpse is created
 (`dropMobLootAndSetCorpse` inside `CorpsesEnabled`, `wirePlayerCorpse`), after
@@ -1407,7 +1409,8 @@ Cross-machine cleanup that fires on two Life transitions:
   cancelled and pruned before the death still narrates; anything still
   expired-but-held at respawn is removed silently. Pinned by
   `death_strip_end_lines_test.go`.
-- Refills all resource pools to 5% of max
+- Refills all resource pools to `GamePlay.Death.RespawnPoolFraction` of max
+  (ships at 0.05). Pinned by `TestDie_RespawnPoolsFollowRespawnPoolFraction`.
 - Applies `NoAggroTarget` grace condition (#81)
 - Clears live `PlayerDamage` map (snapshot already in `DeadData`)
 - Queues `CharacterVitalsChanged` event
@@ -2223,6 +2226,12 @@ separately so a player at their companion limit is not wrongly told they lack
 conviction. Summon reserve is derived from the spell's
 `SummonPetMultiplier` through `characters.CompanionReserveBase`; charm passes 0,
 meaning unscaled, so charm's price did not move.
+
+For a raise, `resolveCompanionSummon` runs the corpse gate
+(`actions.FindRaiseCorpse`) FIRST, before the count cap, the ceiling and the
+component (#282): selection spends nothing, so a raise with no usable corpse
+names the corpse and keeps its component. The corpse itself is removed only
+after every gate passes. `usercommands.Cast` runs the same gate at cast start.
 
 U10c renamed the charm arm from `resolveCharmSpell` to `applyMobEffect_charm`
 and moved it into the effect dispatcher (now `applySpellEffect`), because the old function ran a

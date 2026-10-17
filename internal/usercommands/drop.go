@@ -95,7 +95,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 
 		if dropAmt > user.Character.Gold {
-			user.SendText(messaging.CategoryRefusal, fmt.Sprintf("You don't have %d gold to drop.", dropAmt))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf("You don't have %s gold to drop.", util.FormatNumber(dropAmt)))
 			return true, nil
 		}
 
@@ -112,10 +112,10 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		})
 
 		user.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`You drop <ansi fg="gold">%d gold</ansi> on the floor.`, dropAmt),
+			fmt.Sprintf(`You drop <ansi fg="gold">%s gold</ansi> on the floor.`, util.FormatNumber(dropAmt)),
 		)
 		room.SendTextVisual(messaging.CategoryLoot,
-			fmt.Sprintf(`<ansi fg="username">%s</ansi> drops <ansi fg="gold">%d gold</ansi>.`, user.Character.Name, dropAmt),
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> drops <ansi fg="gold">%s gold</ansi>.`, user.Character.Name, util.FormatNumber(dropAmt)),
 			user.UserId,
 		)
 

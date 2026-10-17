@@ -33,6 +33,8 @@ func init() {
 	conditionRegistry["multiple_enemies"] = condMultipleEnemies
 	conditionRegistry["command_matches"] = condCommandMatches
 	conditionRegistry["command_rest_contains"] = condCommandRestContains
+	conditionRegistry["command_rest_words"] = condCommandRestWords
+	conditionRegistry["command_names_mob"] = condCommandNamesMob
 	conditionRegistry["mob_in_room"] = condMobInRoom
 	conditionRegistry["target_is_casting"] = condTargetIsCasting
 	conditionRegistry["target_aggro_not_on_me"] = condTargetAggroNotOnMe

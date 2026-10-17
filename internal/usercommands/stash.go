@@ -12,6 +12,11 @@ import (
 
 func Stash(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	if rest == `` {
+		refusal.Prompt(user, `stash`, refusal.What, `stash <item>`)
+		return true, nil
+	}
+
 	// Check whether the user has an item in their inventory that matches
 	matchItem, found := user.Character.FindInBackpack(rest)
 

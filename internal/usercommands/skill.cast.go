@@ -170,6 +170,20 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 	}
 
+	// 6a. A raise needs a usable corpse. Checked before the binding gates
+	// below (#282): selection spends nothing, and a player at the reservation
+	// ceiling with no usable corpse must hear about the corpse, not free up
+	// reserve only to fail again for it. Refused here, at initiation, so a
+	// raise that cannot land never channels or spends (U7b admission rule).
+	// Raise spells target self, so InitiateCast hands targetName on as the
+	// SpellRest that resolution's backstop gate reads; both parse it alike.
+	if spellInfo.SummonRequiresCorpse {
+		if idx, _, refusalLine := actions.FindRaiseCorpse(room, spellInfo, targetName); idx < 0 {
+			user.SendText(messaging.CategoryRefusal, refusalLine)
+			return true, nil
+		}
+	}
+
 	// 6b. U7b: refuse an unsustainable binding at INITIATION, before any
 	// conviction moves.
 	//
@@ -233,6 +247,9 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	switch {
 	case result.OnCooldown:
 		refusal.Cooldown(user, "cast")
+		if result.SharedCooldown {
+			user.SendText(messaging.CategoryRefusal, refusal.CastSharesSpecialMoveText)
+		}
 		return true, nil
 	case result.NoTarget:
 		// The refusal may already have been narrated with a specific reason -- a
@@ -362,11 +379,14 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Quest engine: command notification — the cast successfully initiated.
 	// Lets quests gate a step on the `cast` command (the newbie Folding
 	// spoke's "cast at the practice mark" beat). Mirrors forage/drink/throw.
+	// Noun is the canonical spell id, so a step can ask for one spell
+	// whichever alias the player typed; a trigger with no noun matches any.
 	bridge := questengine.NewGameBridge(user, room.RoomId)
 	questengine.GetEngine().Notify("command", questengine.EventDetails{
 		UserId:  user.UserId,
 		RoomId:  room.RoomId,
 		Command: "cast",
+		Noun:    spellInfo.SpellId,
 	}, bridge, bridge)
 
 	return true, nil

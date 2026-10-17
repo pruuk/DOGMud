@@ -83,11 +83,21 @@ func handleCombatWaitRound(
 	// U12c-2: the guard and the decrement are ONE call now, so they cannot
 	// drift apart. Note the debug line logs the value AFTER the decrement,
 	// where it used to log before.
+	// Read before the consume, which clears it with the last waiting round.
+	spentByAction := attackerChar.RoundSpentByAction()
 	if attackerChar.CombatPhase == nil || !attackerChar.ConsumeRoundWaiting() {
 		return false
 	}
 	mudlog.Debug(`RoundsWaiting`, `User`, attackerChar.Name,
 		`Rounds`, attackerChar.RoundsWaiting())
+
+	// A round an action already spent and narrated (a special move, a shout,
+	// standing up) is consumed without a wait line: "You watch X closely,
+	// waiting for the perfect moment." right after a landed kick told the
+	// player they were still waiting after they had acted.
+	if spentByAction {
+		return true
+	}
 
 	roundResult := combat.GetWaitMessages(items.Wait, attackerChar, defenderChar, roleSource, roleTarget)
 

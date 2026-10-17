@@ -108,14 +108,19 @@ func parseStealArgs(args []string, room *rooms.Room, user *users.UserRecord) *ac
 	// Try a bauble on the floor that belongs to this room's household
 	// (found by searching their home). Only those: anything else on the
 	// floor is simply picked up with get. Every word is used, so a bauble
-	// is found by any word of its name ("steal small doll").
-	if itm, ok := householdBaubleNamed(room, strings.Join(args, " ")); ok {
-		return &actions.StealOptions{HouseholdItem: itm}
+	// is found by any word of its name ("steal small doll"). Named only to
+	// one who can see the floor, as `get` does (TooDarkToGet, #553): in the
+	// dark a bauble that is there answers as a name that is not.
+	tooDark := actions.TooDarkToGet(&actions.UserActor{User: user, Room: room})
+	if !tooDark {
+		if itm, ok := householdBaubleNamed(room, strings.Join(args, " ")); ok {
+			return &actions.StealOptions{HouseholdItem: itm}
+		}
 	}
 
 	// A fixture is part of the room: nothing to steal (lighting 5e). Named
 	// only to one who can see the floor, as `get` does (TooDarkToGet).
-	if !actions.TooDarkToGet(&actions.UserActor{User: user, Room: room}) {
+	if !tooDark {
 		if itm, ok := actions.FindTakeableOnFloor(room, strings.Join(args, " "), false); ok && itm.IsFixture() {
 			fixedInPlace(user, itm)
 			return nil

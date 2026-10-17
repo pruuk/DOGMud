@@ -507,7 +507,7 @@
   // ---- triggers ---------------------------------------------------------
 
   var EVENT_FILTERS = {
-    room_enter: ["room"], item_give: ["mob", "item"], skill_use: ["skill"],
+    room_enter: ["room"], room_gate: ["room"], item_give: ["mob", "item"], skill_use: ["skill"],
     mob_death: ["mob", "room"], command: ["command", "room"],
     command_issued: ["command", "room"], item_gain: ["item"],
     dialogue: ["mob", "topic"], quest_granted: ["quest_token"],

@@ -408,7 +408,7 @@ room 4195 biome=swamp light=23
 room 4196 biome=water light=34
 room 4197 biome=forest light=26
 room 4198 biome=swamp light=23
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=50
 room 5002 biome=interior light=50
 room 5003 biome=ether light=52
@@ -1714,7 +1714,7 @@ room 4195 biome=swamp light=23
 room 4196 biome=water light=34
 room 4197 biome=forest light=25
 room 4198 biome=swamp light=23
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=50
 room 5002 biome=interior light=50
 room 5003 biome=ether light=52
@@ -3020,7 +3020,7 @@ room 4195 biome=swamp light=51
 room 4196 biome=water light=63
 room 4197 biome=forest light=54
 room 4198 biome=swamp light=51
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=54
 room 5002 biome=interior light=54
 room 5003 biome=ether light=52
@@ -4326,7 +4326,7 @@ room 4195 biome=swamp light=20
 room 4196 biome=water light=31
 room 4197 biome=forest light=23
 room 4198 biome=swamp light=20
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=50
 room 5002 biome=interior light=50
 room 5003 biome=ether light=52
@@ -5632,7 +5632,7 @@ room 4195 biome=swamp light=12
 room 4196 biome=water light=21
 room 4197 biome=forest light=14
 room 4198 biome=swamp light=12
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=50
 room 5002 biome=interior light=50
 room 5003 biome=ether light=52
@@ -6938,7 +6938,7 @@ room 4195 biome=swamp light=12
 room 4196 biome=water light=22
 room 4197 biome=forest light=14
 room 4198 biome=swamp light=12
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=50
 room 5002 biome=interior light=50
 room 5003 biome=ether light=52
@@ -8244,7 +8244,7 @@ room 4195 biome=swamp light=58
 room 4196 biome=water light=70
 room 4197 biome=forest light=61
 room 4198 biome=swamp light=58
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=57
 room 5002 biome=interior light=57
 room 5003 biome=ether light=52
@@ -9550,7 +9550,7 @@ room 4195 biome=swamp light=16
 room 4196 biome=water light=26
 room 4197 biome=forest light=18
 room 4198 biome=swamp light=16
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=50
 room 5002 biome=interior light=50
 room 5003 biome=ether light=52
@@ -10856,7 +10856,7 @@ room 4195 biome=swamp light=20
 room 4196 biome=water light=31
 room 4197 biome=forest light=22
 room 4198 biome=swamp light=20
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=50
 room 5002 biome=interior light=50
 room 5003 biome=ether light=52
@@ -12162,7 +12162,7 @@ room 4195 biome=swamp light=49
 room 4196 biome=water light=61
 room 4197 biome=forest light=52
 room 4198 biome=swamp light=49
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=54
 room 5002 biome=interior light=54
 room 5003 biome=ether light=52
@@ -13468,7 +13468,7 @@ room 4195 biome=swamp light=62
 room 4196 biome=water light=74
 room 4197 biome=forest light=64
 room 4198 biome=swamp light=62
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=59
 room 5002 biome=interior light=59
 room 5003 biome=ether light=52
@@ -14774,7 +14774,7 @@ room 4195 biome=swamp light=49
 room 4196 biome=water light=61
 room 4197 biome=forest light=52
 room 4198 biome=swamp light=49
-room 5000 biome=dungeon light=38
+room 5000 biome=dungeon light=63
 room 5001 biome=interior light=54
 room 5002 biome=interior light=54
 room 5003 biome=ether light=52

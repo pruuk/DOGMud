@@ -51,11 +51,11 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		return true, nil
 	}
 	if res.OnCooldown {
-		refusal.Cooldown(user, "throttle")
+		refusal.CooldownAfterCost(user, "throttle", res.Cost)
 		return true, nil
 	}
 	if res.NoTarget {
-		refusal.NoTarget(user, "throttle")
+		refusal.NoTargetAfterCost(user, "throttle", res.Cost)
 		return true, nil
 	}
 

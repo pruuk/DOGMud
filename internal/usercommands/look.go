@@ -152,6 +152,35 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		return true, nil
 
+	case actions.LookFigure:
+		// A figure at shapes (owner ruling 2026-10-17): read as a corpse is
+		// read there, naming no one to the looker. The looked-at player and
+		// the room read the looker as their own sight allows, as the
+		// clear-sight creature look tells them.
+		fig := messaging.UnseenFigure(messaging.SightShapes)
+		user.SendText(messaging.CategoryRoomDescription, fmt.Sprintf(`You look at %s.`, fig))
+		user.SendText(messaging.CategoryRoomDescription, lookShapeOnlyLine)
+		if !isSneaking {
+			targetName := res.Target.GetCharacter().Name
+			tag := `mobname`
+			skip := []int{user.UserId}
+			if res.Target.IsPlayer() {
+				tag = `username`
+				u := res.Target.(*actions.UserActor).User
+				skip = append(skip, u.UserId)
+				// A look is seen, not heard: one who sees nothing is not told.
+				if d := res.TargetSight; d != messaging.SightNone {
+					u.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(messaging.HideNames(
+						fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at you.`, user.Character.Name),
+						[]string{user.Character.Name}, d)))
+				}
+			}
+			room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at <ansi fg="%s">%s</ansi>.`, user.Character.Name, tag, targetName),
+				[]string{user.Character.Name, targetName}, skip...)
+		}
+		return true, nil
+
 	case actions.LookExitTooDark:
 		user.SendText(messaging.CategoryRefusal, `It's too dark to see anything in that direction.`)
 		return true, nil
@@ -221,8 +250,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 
 		if container.Gold > 0 {
-			itemNames = append(itemNames, fmt.Sprintf(`%d gold`, container.Gold))
-			itemNamesFormatted = append(itemNamesFormatted, fmt.Sprintf(`<ansi fg="gold">%d gold</ansi>`, container.Gold))
+			itemNames = append(itemNames, fmt.Sprintf(`%s gold`, util.FormatNumber(container.Gold)))
+			itemNamesFormatted = append(itemNamesFormatted, fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(container.Gold)))
 		}
 
 		for _, item := range container.Items {
@@ -476,7 +505,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at the <ansi fg="%s">%s</ansi>.`, user.Character.Name, corpseColor, observedCorpse), hidden, user.UserId)
 
 			if sight != messaging.SightFull {
-				user.SendText(messaging.CategoryRoomDescription, `You can make out no more than its shape.`)
+				user.SendText(messaging.CategoryRoomDescription, lookShapeOnlyLine)
 			} else if corpse.CorpseDescription != "" {
 				user.SendText(messaging.CategoryRoomDescription, corpse.CorpseDescription)
 			} else {
@@ -492,8 +521,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				itemNamesFormatted := []string{}
 
 				if corpse.Loot.Gold > 0 {
-					itemNames = append(itemNames, fmt.Sprintf(`%d gold`, corpse.Loot.Gold))
-					itemNamesFormatted = append(itemNamesFormatted, fmt.Sprintf(`<ansi fg="gold">%d gold</ansi>`, corpse.Loot.Gold))
+					itemNames = append(itemNames, fmt.Sprintf(`%s gold`, util.FormatNumber(corpse.Loot.Gold)))
+					itemNamesFormatted = append(itemNamesFormatted, fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(corpse.Loot.Gold)))
 				}
 
 				for _, item := range corpse.Loot.Items {
@@ -546,6 +575,10 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	return true, nil
 
 }
+
+// lookShapeOnlyLine is what a looker below clear sight reads of what they
+// looked at: a corpse, or a figure (`look figure`, owner ruling 2026-10-17).
+const lookShapeOnlyLine = `You can make out no more than its shape.`
 
 // noSightRefusal words the refusal of a looker who sees nothing here. A
 // looker in the dark is told that light, or other eyes,
@@ -682,6 +715,12 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 			c.OverrideSymbol(roomId, '@', `You`)
 
 			output := zMapper.GetLimitedMap(room.RoomId, c)
+			legend := output.GetLegend(keywords.GetAllLegendAliases(room.Zone))
+			if user.AsciiMode {
+				// Same map cell forms as the map command (mapper.AsciiMapSymbol).
+				output.AsciiCells()
+				legend = mapper.AsciiLegend(legend)
+			}
 			tinyMap := []string{}
 			tinyMap = append(tinyMap, `╔═════╗`)
 			for _, mapLine := range output.Render {
@@ -695,8 +734,6 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 				youLine[3] = '@'
 				tinyMap[3] = string(youLine)
 			}
-
-			legend := output.GetLegend(keywords.GetAllLegendAliases(room.Zone))
 
 			for i := 1; i <= c.Height; i++ {
 				tinyMap[i] = mapper.ColorizeLegendLine(tinyMap[i], legend)
@@ -800,7 +837,7 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	}
 
 	if room.Gold > 0 {
-		groundStuff = append(groundStuff, fmt.Sprintf(`<ansi fg="gold">%d gold</ansi>`, room.Gold))
+		groundStuff = append(groundStuff, fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(room.Gold)))
 	}
 
 	// Stack identical floor items for display

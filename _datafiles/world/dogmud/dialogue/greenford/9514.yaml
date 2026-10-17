@@ -23,7 +23,7 @@ tree:
     text: "Third year at the university -- survey methods and
       applied cartography, which sounds dry until you're
       actually in the field. The university's at the top of
-      the hill; I'm on my way up now. Ask me something while
+      the hill. I'm on my way up now. Ask me something while
       I'm still here."
     hints: "You could ask about studies and what's taught at
       the university, about the university itself and the
@@ -37,12 +37,12 @@ tree:
         Survey methods is the core of it this year --
         measurement, triangulation, how to read and make a
         useful map rather than a decorative one. Last year was
-        natural philosophy and mathematics; the year before
+        natural philosophy and mathematics. The year before
         was history and legal texts, which I liked less. The
         university covers a lot of ground across three years
         before you specialize. Most people find something they
         want to keep going with. I found the field work. The
-        indoor study is fine; the outdoor study is why I came.
+        indoor study is fine. The outdoor study is why I came.
       hints: "You could ask about the university and the hill,
         or about Greenford and the town."
     - id: university
@@ -55,7 +55,7 @@ tree:
         work on the upper courses, a library wing that went
         up two generations ago and is still the best bit. The
         tower you can see from the square is the original
-        structure; there are students who've been here three
+        structure. There are students who've been here three
         years without going up it. I went up in my first week.
         Worth it. The lecture halls are in the low building
         beside the tower -- you can hear the lecturers from

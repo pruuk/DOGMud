@@ -100,3 +100,37 @@ func TestDropMobLootAndSetCorpse_NeverDropsSkipsEquippedItem(t *testing.T) {
 	assert.True(t, droppedIds[2], "a normal equipped item should still drop")
 	assert.True(t, droppedIds[3], "carried (guaranteed loot) Items must still drop even when other equipped gear is NeverDrops")
 }
+
+// TestDropMobLootAndSetCorpse_NeverDropsSkipsCarriedItem closes the disarm
+// path: a crit disarm returns the weapon to the mob's pack (ReturnToPack), so
+// a NeverDrops weapon can sit in carried Items when the mob dies. It must
+// still never drop, while an ordinary carried item drops as usual.
+func TestDropMobLootAndSetCorpse_NeverDropsSkipsCarriedItem(t *testing.T) {
+	cleanup := items.SeedItemsForTest(map[int]*items.ItemSpec{
+		1: {ItemId: 1, Name: "Pit Knife", Type: items.Weapon, NeverDrops: true},
+		3: {ItemId: 3, Name: "Reward Trinket"},
+	})
+	defer cleanup()
+
+	biomesCleanup := rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
+		"default": {BiomeId: "default", Name: "Default"},
+	})
+	defer biomesCleanup()
+
+	m := &mobs.Mob{}
+	m.Character = characters.Character{}
+	m.Character.Items = []items.Item{{ItemId: 1}, {ItemId: 3}}
+	m.ItemDropChance = 100
+
+	room := &rooms.Room{RoomId: 12345, Biome: "default"}
+
+	dropMobLootAndSetCorpse(m, room)
+
+	droppedIds := map[int]bool{}
+	for _, itm := range room.Items {
+		droppedIds[itm.ItemId] = true
+	}
+
+	assert.False(t, droppedIds[1], "a NeverDrops item knocked into the pack must never drop")
+	assert.True(t, droppedIds[3], "an ordinary carried item should still drop")
+}

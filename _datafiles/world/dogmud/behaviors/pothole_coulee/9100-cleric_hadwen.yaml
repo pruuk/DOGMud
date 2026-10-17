@@ -87,10 +87,11 @@ tree:
         - type: action
           do: say
           text: >-
-            The pool woke the capacity, not the shape. Nothing has
-            changed in you yet -- and that is right. Type
-            <ansi fg="command">mutations</ansi> whenever you like to
-            watch it come. What comes, you earn the slow way: by how you
+            The pool woke the capacity, not the shape. A change may
+            already have found you, and more will come in their own
+            time. Type <ansi fg="command">mutations</ansi> whenever you
+            like to see what has taken hold. What comes, you earn the
+            slow way: by how you
             fight, what you endure, and who you decide to be.
           delay: 26.0
         - type: action

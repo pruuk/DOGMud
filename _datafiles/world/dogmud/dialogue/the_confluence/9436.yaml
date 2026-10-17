@@ -13,7 +13,7 @@ patterns:
       "rate", "price", "cost", "how much"]
     responses:
       - "Rooms on the river side and the square side. River side
-        is quieter after the sixth hour; square side gets the
+        is quieter after the sixth hour. Square side gets the
         crier's bell at sunrise, which some guests find useful."
   - keywords: ["food", "eat", "meal", "drink", "wine", "ale",
       "bread", "menu", "kitchen", "what", "serve", "have",
@@ -48,8 +48,8 @@ tree:
         "meal", "drink", "wine", "ale", "bread", "kitchen",
         "price", "rate", "cost", "serve", "menu", "what",
         "fish", "night", "sleep", "side"]
-      text: "Rooms by the night or the week. River side is quieter;
-        square side gets the town crier's bell at sunrise, which
+      text: "Rooms by the night or the week. River side is quieter.
+        Square side gets the town crier's bell at sunrise, which
         some guests find useful and others find grounds for
         complaint. Kitchen serves morning through late evening --
         bread and broth always, river fish when the boats have

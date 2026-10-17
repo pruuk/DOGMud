@@ -116,17 +116,17 @@ func TestCastSight_ShapesOnlyRefusesANameWithAHint(t *testing.T) {
 	a, _ := castSightScene(t, "cave")
 	giveCasterInfrared(t, a)
 	requireRefused(t, a, InitiateCast(a, "sight-heal", "witness"), "You can only make out shapes here.")
-	assert.True(t, a.told("cast sight-heal shape"))
+	assert.True(t, a.told("cast sight-heal figure"))
 }
 
 func TestCastSight_ShapesOnlyAimsAtAShape(t *testing.T) {
-	for _, name := range []string{"shape", "2.shape", "shape#2"} {
+	for _, name := range []string{"figure", "2.figure", "figure#2", "shape", "2.shape", "shape#2"} {
 		a, _ := castSightScene(t, "cave")
 		giveCasterInfrared(t, a)
 		r := InitiateCast(a, "sight-heal", name)
 		require.True(t, r.Initiated, "%q should initiate", name)
 		want := 7812
-		if name != "shape" {
+		if name != "shape" && name != "figure" {
 			want = 7813
 		}
 		assert.Equal(t, []int{want}, r.TargetUserIds, "%q", name)

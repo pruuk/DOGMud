@@ -34,7 +34,7 @@ tree:
         the Long Market — Crafting district first, then the central
         market in Merchant, then Temple on the far end for what the
         healers and scholars need. On the return I branch south into the
-        Common quarter; that one's the longest leg, most stops. Full
+        Common quarter. That one's the longest leg, most stops. Full
         circuit takes until late afternoon if nothing unusual happens.
         Something unusual usually happens."
       hints: "You could ask Dobb what each district is currently short on,
@@ -47,11 +47,11 @@ tree:
                  "district"]
       text: "Crafting is always low on iron — Halvard uses it faster than
         it comes in, which is Dunmar's problem not mine. The Common
-        quarter this week is out of salt; the cookshop and Tova's
+        quarter this week is out of salt. The cookshop and Tova's
         rooming house both flagged it when I passed. Temple wants lamp
         oil and wouldn't say why, which usually means something
         ceremonial is approaching. The central market is well stocked
-        right now — good week for them. The docks need nothing; we have
+        right now — good week for them. The docks need nothing. We have
         the source."
       hints: "You could ask Dobb about what he hears around the city."
       unlocks: ["gossip"]

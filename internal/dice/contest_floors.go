@@ -1,9 +1,5 @@
 package dice
 
-import (
-	"math/rand"
-)
-
 // Last-resort floors for opposed contests (roadmap chunk 5.9a).
 //
 // Combat has bounded both ends of its hit/avoid contest since the balance work
@@ -84,9 +80,9 @@ func OpposedRollStatWithFloors(atk, def, floorSuccess, floorResist float64) (boo
 	floorResist = clampFloor(floorResist)
 
 	switch {
-	case !success && floorSuccess > 0 && rand.Float64() < floorSuccess:
+	case !success && floorSuccess > 0 && Float64() < floorSuccess:
 		success, margin = true, 1
-	case success && floorResist > 0 && rand.Float64() < floorResist:
+	case success && floorResist > 0 && Float64() < floorResist:
 		success, margin = false, -1
 	default:
 		return success, margin, attackRoll, defenseRoll

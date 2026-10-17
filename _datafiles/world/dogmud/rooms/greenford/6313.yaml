@@ -51,8 +51,8 @@ spawninfo:
     respawnrate: "20 real minutes"
 idlemessages:
 - A robin works the edge of the nearest bed, systematic and unhurried.
-- Morning light clears the east wall and crosses the garden beds at low angle.
-- The stone bench holds the night's cold; no one is sitting on it yet.
+- A breeze clears the east wall and stirs the garden beds.
+- The stone bench holds a deep cold; no one is sitting on it.
 x: 23
 y: 89
 z: 2

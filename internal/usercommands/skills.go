@@ -15,6 +15,21 @@ type SkillsOptions struct {
 	SkillList      map[string]int
 	SkillCooldowns map[string]int
 	SkillBlurbs    map[string]string
+	// NameWidth is the padded width of the name column: the longest name the
+	// player holds, and never under 12, so the rank column lines up even for
+	// "blacksmithing" and "unarmed-combat".
+	NameWidth int
+}
+
+// skillNameWidth is the name column width for a skill list.
+func skillNameWidth(list map[string]int) int {
+	w := 12
+	for name := range list {
+		if len(name) > w {
+			w = len(name)
+		}
+	}
+	return w
 }
 
 func Skills(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -31,6 +46,7 @@ func Skills(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		SkillList:      allSkills, // name to level
 		SkillCooldowns: allCooldowns,
 		SkillBlurbs:    blurbs,
+		NameWidth:      skillNameWidth(allSkills),
 	}
 
 	skillTxt, _ := templates.Process("character/skills", skillData, user.UserId)

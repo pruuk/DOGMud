@@ -55,8 +55,10 @@ The defense that wins by the widest margin is used:
 
 <ansi fg="yellow">━━━ Defense Crits ━━━</ansi>
 
-A rare, exceptional defense -- reading the attack almost before it lands --
-triggers a powerful counter-move against the attacker:
+An exceptional defense, one that reads the attack almost before it lands,
+triggers a powerful counter-move against the attacker. Between evenly
+matched fighters this is uncommon. It happens often when the attacker is
+badly outmatched, or is swinging from the ground after a fall:
 
   <ansi fg="cyan-bold">⚔ Parry Crit → RIPOSTE:</ansi> Free counter-attack with reduced damage.
     Your blade turns their strike aside and bites back.

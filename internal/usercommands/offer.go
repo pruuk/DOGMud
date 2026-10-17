@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // merchantSay makes the merchant speak a line to the room synchronously. The
@@ -28,10 +29,28 @@ func merchantSay(room *rooms.Room, mob *mobs.Mob, line string) {
 
 func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	// Offer deals only with a merchant mob. With none here it says so at
+	// every light (it used to say nothing at all when lit, and the sight
+	// refusal when dim, which hinted at a merchant who was not there). A
+	// keeper here asleep or off shift says so first (actions.RefuseIfShopClosed,
+	// the gate list, buy, sell and appraise share).
+	if actions.RefuseIfShopClosed(room, user) {
+		return true, nil
+	}
+	if len(room.GetMobs(rooms.FindMerchant)) == 0 {
+		refusal.NoMerchant(user)
+		return true, nil
+	}
+
 	// Below the faces band you can't make out the goods (lighting plan 5b,
 	// #272): asking for an offer is dealing, as list, buy and sell are.
 	if actions.ShopSightRefusal(user.Character, room) {
 		user.SendText(messaging.CategoryRefusal, actions.ShopSightRefusalText)
+		return true, nil
+	}
+
+	if rest == "" {
+		refusal.Prompt(user, "offer", refusal.What, "offer <item>")
 		return true, nil
 	}
 
@@ -41,51 +60,32 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	itemSpec := item.GetSpec()
-	if itemSpec.ItemId < 1 {
+	if item.GetSpec().ItemId < 1 {
 		return true, nil
 	}
 
-	for _, mobId := range room.GetMobs(rooms.FindMerchant) {
-
-		mob := mobs.GetInstance(mobId)
-		if mob == nil {
-			continue
-		}
-
-		user.Character.CancelConditionsWithFlag(conditions.Hidden)
-
-		// Baubles are priced from their catalog record (docs/baubles).
-		if item.IsBauble() {
-			offer := actions.BaubleOfferFrom(item, mob)
-			if offer.Price <= 0 {
-				merchantSay(room, mob, offer.Refusal)
-				continue
-			}
-			merchantSay(room, mob, fmt.Sprintf(`I can give you <ansi fg="gold">%d gold</ansi> for that <ansi fg="itemname">%s</ansi>.`, offer.Price, item.DisplayName()))
-			break
-		}
-
-		if item.IsSpecial() {
-
-			merchantSay(room, mob, "I'm afraid I don't buy those.")
-
-			continue
-		}
-
-		sellValue := mob.GetSellPrice(item)
-
-		if sellValue <= 0 {
-
-			merchantSay(room, mob, "I'm not interested in that.")
-
-			continue
-		}
-
-		merchantSay(room, mob, fmt.Sprintf(`I can give you <ansi fg="gold">%d gold</ansi> for that <ansi fg="itemname">%s</ansi>.`, sellValue, item.DisplayName()))
-
-		break
+	// The merchant sell would deal with, and the quote sell would pay
+	// (actions.QuoteSale), so offer never names a price sell then refuses.
+	mob, shopInv := actions.SaleMerchant(room, item, true)
+	if mob == nil {
+		refusal.NoMerchant(user)
+		return true, nil
 	}
+
+	quote := actions.QuoteSale(user.Character, room, mob, shopInv, item, true)
+	if quote.Tell != "" {
+		user.SendText(messaging.CategoryRefusal, quote.Tell)
+		return true, nil
+	}
+
+	user.Character.CancelConditionsWithFlag(conditions.Hidden)
+
+	if quote.Price <= 0 {
+		merchantSay(room, mob, quote.Say)
+		return true, nil
+	}
+
+	merchantSay(room, mob, fmt.Sprintf(`I can give you <ansi fg="gold">%s gold</ansi> for that <ansi fg="itemname">%s</ansi>.`, util.FormatNumber(quote.Price), item.DisplayName()))
 
 	return true, nil
 }

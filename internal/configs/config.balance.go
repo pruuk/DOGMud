@@ -965,6 +965,13 @@ type Balance struct {
 
 	// ── INSTANCES ────────────────────────────────────────────────────────────
 	InstanceStatPoolCap ConfigInt `yaml:"InstanceStatPoolCap"` // Max stat pool per mob in instances (default 50000, 0=uncapped)
+	// Gold a paid-instance mob carries, per 100 gold of entry, by tier (the
+	// spawn's stat-pool multiplier: 1 or less regular, 2-3 tough, 4+ boss).
+	// The entry is clamped to what InstanceStatPoolCap lets the mob grow by.
+	InstanceGoldPer100Regular ConfigFloat `yaml:"InstanceGoldPer100Regular"` // default 2
+	InstanceGoldPer100Tough   ConfigFloat `yaml:"InstanceGoldPer100Tough"`   // default 3
+	InstanceGoldPer100Boss    ConfigFloat `yaml:"InstanceGoldPer100Boss"`    // default 5
+	InstanceGoldVariancePct   ConfigFloat `yaml:"InstanceGoldVariancePct"`   // uniform +-% roll on that gold (default 25, max 100)
 
 	// ── CRASH SITE (#22) ─────────────────────────────────────────────────────
 	CrashSiteSuppressionFactor ConfigFloat `yaml:"CrashSiteSuppressionFactor"` // inside the buried hull (#22), spell power and mutation combat bonuses are scaled to this fraction; 0=fully suppressed, 1=no effect (default 0.35)

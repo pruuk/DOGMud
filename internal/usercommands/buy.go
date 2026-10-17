@@ -19,8 +19,9 @@ func Buy(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	// A shop whose every keeper is asleep is shut. 113 of 132 schedules put the
 	// NPC to sleep IN their own workplace, so without this a player could trade
 	// at 3am with the keeper snoring in the corner.
-	if asleep := actions.ShopClosedForSleep(room); asleep != nil {
-		actions.RefuseMobIfAsleep(asleep, user)
+	// An off-shift keeper does not trade either (owner ruling 2026-10-17);
+	// actions.RefuseIfShopClosed is the one gate for both.
+	if actions.RefuseIfShopClosed(room, user) {
 		return true, nil
 	}
 

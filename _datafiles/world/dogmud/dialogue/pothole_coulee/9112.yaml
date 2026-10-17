@@ -22,7 +22,7 @@ defaultMood: neutral
 
 greetings:
   - text: >-
-      You are not one of theirs. Good. Sit if you need to; I am not
+      You are not one of theirs. Good. Sit if you need to. I am not
       going anywhere on this arm.
     moods: ["friendly", "neutral"]
 
@@ -43,7 +43,7 @@ tree:
       Garve. Road guard -- was road guard, until the ambush. My convoy
       made Squatter's Hollow two nights back and the bandits were
       waiting in the wash. Most of the caravan pushed through. I did
-      not. This arm says I hold the hollow; it does not say I clear
+      not. This arm says I hold the hollow. It does not say I clear
       the wash alone.
     hints: >-
       You could ask about the wash, the ambush, or what he needs. His
@@ -88,7 +88,7 @@ tree:
           the scout holds the bend and the squatter is back by the
           cistern. If a fight turns on you, flee -- I mean it, not
           as advice but as the correct move. Fall and you wake at
-          the Mending Hut; that is how the coulee works, not the
+          the Mending Hut. That is how the coulee works, not the
           end of anything.
         hints: >-
           Head east into the wash. Type flee if a fight goes badly.
@@ -129,7 +129,7 @@ tree:
           Whatever the captain was guarding is the coulee's problem
           now, not just mine -- and that is a better class of problem.
           You came in raw this morning. You are not raw anymore. The
-          road out runs east when you want it; until then, the coulee
+          road out runs east when you want it. Until then, the coulee
           is glad to have you.
         hints: >-
           You have cleared Spoke A. The way deeper into the world runs
@@ -182,7 +182,7 @@ tree:
         let myself believe yet. The hollow is holdable now.
         Take this -- it came off the last guard the convoy lost
         and it fits better on legs that are still moving. The
-        coin is mine; I can spare it.
+        coin is mine. I can spare it.
         The tower further up the wash still stands. I will have
         a clearer read on it once I can think past this arm.
         Come back when you want to look in that direction.
@@ -267,9 +267,9 @@ tree:
       text: >-
         Two nights back. We were moving through after dark --
         foolish, but the schedule was tight -- and the bandits
-        had the bend already. Four wagons. Three pushed through;
-        one did not. I was riding the tailgate of the third
-        when the block happened. I covered the gap; the wagons
+        had the bend already. Four wagons. Three pushed through.
+        One did not. I was riding the tailgate of the third
+        when the block happened. I covered the gap. The wagons
         made it. I did not make it far.
       hints: >-
         You could ask about the wash, the arm, or his eyes.

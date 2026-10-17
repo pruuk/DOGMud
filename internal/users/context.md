@@ -662,7 +662,9 @@ if found {
 }
 ```
 `Character` has no `GiveItem` method; the equivalent is `StoreItem`.
-`SendText` takes a `messaging.Category`, not just a string.
+`SendText` takes a `messaging.Category`, not just a string. An empty string
+sends nothing (the pipeline renders it as nothing); a screen that needs a
+blank line puts the newline in its own text.
 
 ### Messaging System
 ```go

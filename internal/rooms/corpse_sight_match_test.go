@@ -50,6 +50,43 @@ func TestFindCorpse_BelowClearSightMatchesOnlyTheWordCorpse(t *testing.T) {
 	}
 }
 
+// The corpse line says "Some remains lie where they fell." (hooks
+// announceCorpse), so the word it shows reaches the corpse as "corpse" does,
+// at every sight that reads the line (2026-10-17 pre-deploy playtest: `look
+// remains` failed while `look corpse` worked).
+func TestFindCorpse_TheShownWordRemainsReachesACorpse(t *testing.T) {
+	r, viewer := detailsCorpseRoom(t)
+	if !viewer.Character.Conditions.AddCondition(sightTestInfraredConditionId, true) {
+		t.Fatal("precondition: the viewer should now carry infrared")
+	}
+	if got := messaging.ParticipantSight(viewer.Character, r); got != messaging.SightShapes {
+		t.Fatalf("precondition: viewer sight = %v, want SightShapes", got)
+	}
+	for typed, want := range map[string]int{"remains": 2, "Remains": 2, "2.remains": 1, "remains#2": 1} {
+		if idx := r.FindCorpseIndex(typed, viewer.Character); idx != want {
+			t.Errorf("shapes: FindCorpseIndex(%q) = %d, want %d", typed, idx, want)
+		}
+	}
+	if idx := r.FindCorpseIndex("deadric remains", viewer.Character); idx != -1 {
+		t.Errorf(`shapes: FindCorpseIndex("deadric remains") = %d, want -1: the name confirms whose it is`, idx)
+	}
+
+	lamp := 90
+	r.Lamp = &lamp
+	if got := messaging.ParticipantSight(viewer.Character, r); got != messaging.SightFull {
+		t.Fatalf("precondition: viewer sight = %v, want SightFull", got)
+	}
+	for typed, want := range map[string]int{"remains": 2, "deadric remains": 2, "beggar remains": 1} {
+		if idx := r.FindCorpseIndex(typed, viewer.Character); idx != want {
+			t.Errorf("clear: FindCorpseIndex(%q) = %d, want %d", typed, idx, want)
+		}
+	}
+	// A count reads as it does with "corpse" at clear sight, whatever that is.
+	if got, want := r.FindCorpseIndex("2.remains", viewer.Character), r.FindCorpseIndex("2.corpse", viewer.Character); got != want {
+		t.Errorf(`clear: FindCorpseIndex("2.remains") = %d, want %d as "2.corpse"`, got, want)
+	}
+}
+
 func TestFindCorpse_ClearSightMatchesByName(t *testing.T) {
 	r, viewer := detailsCorpseRoom(t)
 	lamp := 90

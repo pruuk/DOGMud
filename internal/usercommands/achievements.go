@@ -50,7 +50,10 @@ func Achievements(rest string, user *users.UserRecord, room *rooms.Room, flags e
 	}
 	earnedPoints := achievements.PointsFor(char.Achievements)
 
-	user.SendText(messaging.CategorySystem,
+	// The list is a laid-out screen (a summary, bare category headings and
+	// rows), so it rides CategoryScreen: on CategorySystem the normalizer
+	// put a stop after every heading ("Combat.").
+	user.SendText(messaging.CategoryScreen,
 		fmt.Sprintf(`<ansi fg="yellow-bold">Achievements</ansi>: earned <ansi fg="white-bold">%d/%d</ansi>, <ansi fg="yellow">%d points</ansi>`,
 			earnedCount, len(defs), earnedPoints))
 
@@ -70,16 +73,17 @@ func Achievements(rest string, user *users.UserRecord, room *rooms.Room, flags e
 			continue
 		}
 
-		user.SendText(messaging.CategorySystem, ``)
-		user.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`<ansi fg="cyan-bold">%s%s</ansi>`, strings.ToUpper(cat[:1]), cat[1:]))
+		// The blank line rides in the heading's own text: an empty SendText
+		// delivers nothing.
+		user.SendText(messaging.CategoryScreen,
+			fmt.Sprintf("\n"+`<ansi fg="cyan-bold">%s%s</ansi>`, strings.ToUpper(cat[:1]), cat[1:]))
 
 		for _, d := range inCat {
 			if char.HasAchievement(d.Id) {
-				user.SendText(messaging.CategorySystem,
+				user.SendText(messaging.CategoryScreen,
 					fmt.Sprintf(`  <ansi fg="green">[x] %s</ansi> <ansi fg="yellow">(%d)</ansi>: %s`, d.Name, d.Points, d.Description))
 			} else {
-				user.SendText(messaging.CategorySystem,
+				user.SendText(messaging.CategoryScreen,
 					fmt.Sprintf(`  <ansi fg="black-bold">[ ] %s (%d): %s</ansi>  <ansi fg="white">(%s)</ansi>`,
 						d.Name, d.Points, d.Description, achievementProgressHint(d, char)))
 			}

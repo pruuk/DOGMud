@@ -26,6 +26,10 @@ the recipient's connection.
    (`pet.go`: "You pet %s."). A line that ends in text the stage must
    not touch ends in a terminator it already honours (`.!?,)]"'*`): the
    afk message is quoted and the report's vital bars are bracketed.
+   A line that ends on a drawn border (box drawing U+2500 to U+257F,
+   block elements U+2580 to U+259F, or ASCII `+ | -`) is a table or box
+   bottom and gets no stop (`isBorderRune`, #460); the root test
+   `TestBoxedScreensEndWithoutAStop` renders the boxed screens to prove it.
 3. **Sight gate** (visual channel only) — per-recipient: CanSeeClearly,
    CanSeeShapes, or skip-visual-deliver-audio. Consumes the chunk-6
    Perception FSM (see `internal/state/perception/`).
@@ -164,6 +168,14 @@ Types and constants:
     keep narration off it: `system_recipient_guard_test.go` (inside a command
     handler it reaches only a parameter) and `system_subject_guard_test.go`
     (a line opening with another creature and addressing "you" is narration).
+- `CategoryScreen` (2026-10-17), appended after `CategoryGroup`: a laid-out
+  screen whose lines are headings, legends and rows, not sentences (the
+  `map` command and the `achievements` list). It skips every normalise
+  stage, as `CategorySplash` does, so the map legend's last name and a bare
+  category heading get no stop. Alias `screen` is 8 (the `system` value) and
+  it is not in `shouldWrap`, so otherwise it looks as `CategorySystem` did.
+  Pinned by `category_screen_test.go`; the map by
+  `usercommands.TestMapLegendEndsWithoutAStop`.
 - `Verbosity`, `ParseVerbosity`, `(Verbosity).Suppresses` — combat-text
   verbosity primitives in `verbosity.go`. The allowlists
   (`suppressibleAtMedium`, `suppressibleAtLight`) declare which
@@ -484,6 +496,11 @@ Functions:
   it, so a caller may pass formatted names through the seam without leaking
   "(dead)" or "(♥friend)". A match inside tag markup itself is never
   replaced.
+- `FigureWord` (const, "figure"): the one word every line shows a creature by
+  to a shapes-only reader. `UnseenNoun`, `SpeakerNoun` and `Anonymize` build
+  "a figure" from it, and `actions.AimBySight` takes it as the aim word
+  (`consider figure`, `2.figure`), so the word the room shows is the word a
+  player can type (2026-10-17 pre-deploy playtest). Change it here only.
 - `UnseenNoun(d SightDecision) string`: the word `HideNames` substitutes, "a
   figure" at shapes and "something" otherwise. `UnseenFigure(d)` is the same
   word in the `combat-anon` tag, for a list entry that stands alone; the room

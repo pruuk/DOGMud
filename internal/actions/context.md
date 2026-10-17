@@ -93,6 +93,8 @@ command was a separate copy with no toxicity, no aging or crafter scaling and
 no special potions. `usercommands.Drink` and `mobcommands.Drink` are now thin
 wrappers, and the repo-root `drink_wrapper_guard_test.go`
 (`TestDrinkWrappersDoNotReFork`) fails if either grows drink rules again.
+A bare `drink` (nothing named) gets the prompt "Drink what? Try **drink
+&lt;item&gt;**." and `DrinkRefuseNotFound`, before any other check.
 
 - **`DrinkActor`** is `Actor` plus `AddConditionScaled` and
   `AddConditionMagnitude`. It is its own interface, not two new `Actor`
@@ -523,7 +525,15 @@ perceive can be named), then a sealed crate or a known room container
 (`lookNamesAnObject`, `:116`), then an exit (direction alias resolved, then
 through-sight, then lock). `LookKind` (`:12`) is `LookBlind`, `LookTooDark`,
 `LookRoom`, `LookCreature`, `LookExit`, `LookExitTooDark`, `LookExitLocked`,
-`LookExitShapes`, `LookOther`, `LookOwnGearByTouch`. `LookExitShapes` (lighting plan 6, owner
+`LookExitShapes`, `LookOther`, `LookOwnGearByTouch`, `LookFigure`. `LookFigure` (owner
+ruling 2026-10-17) is a player at shapes naming a figure by the aim word
+(`look figure`, `look 2.shape`, AimBySight's figures), checked before the
+creature step and never for a mob looker; the player wrapper reads it as a
+corpse at shapes ("You can make out no more than its shape.", one constant
+in `usercommands/look.go`) and names no one; a looked-at player reads
+"<looker> is looking at you." at `LookResolution.TargetSight` (nothing when
+they see nothing), the room by sight. A count past the last figure
+falls through to "You can only make out shapes here.". `LookExitShapes` (lighting plan 6, owner
 ruling O6) is an exit the light here is too poor to see through
 (`messaging.SeesThroughExit` false) whose next room heat still reaches
 (`messaging.SensesHeatThroughExit`); a locked exit under heat is still
@@ -692,13 +702,15 @@ word on its own line (#430).
   and the `*`, `*mob`, `*user` pools skip what `viewer` does not perceive.
 - **`AimBySight(viewer, selfUserId, room, name, verb) (string, string)`**
   (`sight_aim.go`, #454): the one rule for a creature name a player types.
-  Clear sight admits the name as typed; shapes only admits `shape` /
-  `N.shape` / `shape#N` (rewritten to the figure's `@<userId>` or
-  `#<mobInstanceId>`; figures are perceived players then mobs, in room
-  order), an id form (`@N`, `#N`, what party auto-assist types) and an empty
+  Clear sight admits the name as typed; shapes only admits the aim word
+  `figure` / `N.figure` / `figure#N` (`messaging.FigureWord`, the word the
+  room shows: "Also here: a figure"; the older `shape` is still accepted as
+  an alias, and the hint names `figure` only) (rewritten to the figure's
+  `@<userId>` or `#<mobInstanceId>`; figures are perceived players then
+  mobs, in room order; the rewrite applies at clear sight too), an id form (`@N`, `#N`, what party auto-assist types) and an empty
   name, and answers any other name with `AimShapesHint(verb)`; no sight
-  admits nothing (`refusal.NothingToAimLine` for a shape or no name,
-  `refusal.NotHereCreatureLine` for a name; an out-of-range `N.shape` also
+  admits nothing (`refusal.NothingToAimLine` for an aim word or no name,
+  `refusal.NotHereCreatureLine` for a name; an out-of-range `N.figure` also
   answers `refusal.NotHereCreatureLine`). The constants moved to
   `internal/refusal` in M7 slice 1 (`AimNothingLine` and `AimNotHereLine`
   are gone); see `internal/refusal/context.md`. It returns the name to
@@ -722,6 +734,13 @@ word on its own line (#430).
 - **`RefuseIfAsleep` / `RefuseMobIfAsleep`** (`sleeping_target.go`) hide the
   sleeper's name at the player's sight in their own room ("A figure is fast
   asleep."), since an `ask` or `give` aimed at a shape never learned it.
+- **`RefuseIfShopClosed(room, user) bool`** (`sleeping_target.go`) is the one
+  closed-shop gate of list, buy, sell, offer and appraise: no merchant at all
+  answers false (the caller says no merchant); every keeper asleep gives the
+  asleep line (`ShopClosedForSleep`); a keeper here only off shift
+  (`OffShiftMerchant`, `mobs.Mob.OffShift`) says their segment's
+  `offshift_line` or `OffShiftFallbackLine`, name hidden at the player's
+  sight. The dim-light check runs after it.
 - **`ShotSight(viewer, room, rest) messaging.SightDecision`**
   (`combat_fire.go`): what a shooter makes out of the room a shot is aimed
   into, parsing `rest` as `ExecuteFire` does: their own room, or `scanReach`
@@ -767,6 +786,31 @@ word on its own line (#430).
   `hooks`'s two round-driver retarget sites and `mobcommands`'s
   mob-departure retarget, since neither package is importable from the
   other but both import `actions`.
+
+## Raise corpse gate (`cast_raise_corpse.go`, #282)
+
+A raise spell (`SummonRequiresCorpse`) needs a usable corpse. The one gate
+both raise sites run is `FindRaiseCorpse(room, spellInfo, spellRest)`,
+returning the corpse's index in `room.Corpses` and its pool, or -1 and the
+refusal line. It changes nothing; the caller removes the corpse only once
+every other gate has passed. `usercommands.Cast` runs it at cast start and
+`hooks.resolveCompanionSummon` at resolution (the backstop for a corpse that
+went away mid-channel). Both run it BEFORE the companion-count and reservation
+gates, and resolution also before consuming the component: selection spends
+nothing, so a player at the ceiling with no usable corpse hears about the
+corpse, not about reserve they would free up only to fail again.
+
+- `ParseRaiseTarget(spellRest)`: "corpse", "2.corpse", "corpse#2" match by
+  index; any other word is the name filter with its index stripped
+  ("2.goblin" filters on "goblin").
+- `SelectRaiseCorpse(corpses, nameFilter, targetIndex, minPool)`: the
+  targetIndex-th valid mob corpse; on none, the most actionable
+  `RaiseSkipReason` among name-matching near misses (`RaiseHasLoot` over
+  `RaiseTooWeak` over `RaiseWasCharmed` over `RaiseNoMatch`). Player corpses
+  and prunable remains never count. A corpse scores by `StatPoolTotal`, the
+  number `assess` reports.
+- `RaiseCorpseRefusal(reason, nameFilter)`: the `refusal.Remains*` /
+  `refusal.NoRemains*` line, sent on `CategoryRefusal` by both sites.
 
 ## Skill Actions
 
@@ -1595,6 +1639,24 @@ type SellResult struct {
 speech lines synchronously (not via the mob's async command queue — see
 `merchantSay` in `sell.go`). Mob sellers receive no feedback text.
 
+**One quote (`sell_quote.go`, 2026-10-17).** `QuoteSale(char, room, mob,
+shopInv, item, playerSale) SaleQuote` is the one price a merchant puts on an
+item: `sellOneToMerchant` pays it, and the `offer` and `appraise` commands
+say it, so offer never quotes what sell refuses (offer used to price through
+`mobs.GetSellPrice` while sell asked `shops.EvaluateBuyRules`). It covers
+quest items (`Tell`, a seller-only line), baubles (`baubleOfferFor` plus the
+purse check), non-affixed custom specs, affixed loot, the living-economy
+shop (`EvaluateBuyRules`, then the barter bonus; a nil `char` skips the
+bonus) and the legacy `GetSellPrice`, then for a player the merchant's
+purse. A refusal's `Say` says why in player words: `shops.BuyOffer.Refused`
+maps to "That has no value to a trader. No shop will buy it." (no
+`vendor_categories`), "I don't deal in that sort of thing. Another trader
+might buy it." (wrong `craft_support`), the overstock, spoiled-potion and
+can't-afford lines (`buyRefusalLine`). `Broke` marks the gold refusals,
+which stop a sale as `SellStopMerchantBroke`. `SaleMerchant(room, item,
+playerSale)` is `resolveMerchant` falling back to `firstMerchantInRoom`: the
+merchant sell deals with, which offer also answers for.
+
 **Progression:** Triggers `seller.OnSkillUse("bartering")` and
 `mob.Character.OnStatUse("charisma")` on each successful sale.
 
@@ -1636,8 +1698,9 @@ above. `sellOneToMerchant` hands it to `sellBaubleToMerchant`, and
   in the same heat area, the zone or its `BaubleHeatAreas` group; read
   through the `baubleNowForSale` clock; a shop that buys no trinkets says so
   first) and buys it anywhere else, or once cooled, at the honest price.
-  `baubleOfferFor(item, shopInv, fence, zone)`: the sale room's zone, or
-  `merchantZone(mob)` for `offer`/`appraise`; `resolveMerchant(room, probe,
+  `baubleOfferFor(item, shopInv, fence, zone)`: the sale room's zone (the
+  room `QuoteSale` is given, for sell, offer and appraise alike), or
+  `merchantZone(mob)` for `BaubleOfferFrom`; `resolveMerchant(room, probe,
   playerSale)` sends a bauble to the best offer in the room that the
   merchant can pay (`bestBaubleMerchant`; a merchant's gold constrains only
   a player's sale), and `sellNamed` picks the buyer again for each bauble.
@@ -1656,8 +1719,9 @@ above. `sellOneToMerchant` hands it to `sellBaubleToMerchant`, and
   bauble in the buyer's own view (`NameFor`, `DisplayNameFor` on the
   buyer's line), trims the listed cap lazily, rolls back with
   `RestoreAffixedStock`, and calls `baubles.MarkBought` on a buyback.
-- `BaubleOfferFrom(item, mob)` is the same offer for the `offer` and
-  `appraise` commands. `mobs.GetSellPrice` returns 0 for any bauble.
+- `BaubleOfferFrom(item, mob)` is the same offer for one merchant, without
+  the purse check; `offer` and `appraise` say `QuoteSale` instead, which
+  adds it. `mobs.GetSellPrice` returns 0 for any bauble.
 - `sellNamed` names each sale by the item actually sold (not the probe), and
   sets `SellResult.Mixed` when they differ, so `sell all bauble` reports
   "3 items" rather than pluralising one bauble's name.
@@ -1678,8 +1742,14 @@ the free supply-handoff paths — these are NOT routed through `actions.Sell`.
   `Sell` check it only once a merchant is confirmed present in the room
   (`SellStopNoSight` / `BuyReasonNoSight`), so "there's no merchant here"
   still wins over a sight refusal, and a nil-Mob `MobActor` test fixture
-  (no merchant path) never calls `GetCharacter()` unguarded. `usercommands.List`
-  checks it directly, right after its own sleep gate.
+  (no merchant path) never calls `GetCharacter()` unguarded. The player
+  verbs keep the same order: `usercommands.List` checks it right after its
+  own sleep gate and only when **`MerchantHere(room, selfUserId) bool`**
+  (a merchant mob, or a merchant player other than self) is true;
+  `Appraise` and `Offer` check it after their own "no merchant mob here"
+  refusal. So an empty dim room answers with the verb's no-merchant line,
+  never a sight refusal that hints at an unseen merchant (2026-10-17
+  pre-deploy playtest).
 - **`ShopSightRefusalText`**, the one line every refusing verb prints:
   "You can't make out the goods well enough to deal."
 - **Content keeps every shop above the gate at night** (merchants slice,
@@ -1855,7 +1925,10 @@ reads `*_actor`; at cast start a player target other than the caster reads
 `cast_actee`, for a `TargetSingle` spell only; the room reads `*_observer` or
 a random line of the generic pool (`spells.CastRoomLine`), by sight only. A
 hidden caster's lines skip the players who do not perceive them, and at cast
-start those players hear one `cast_started_unseen` line. Root guard
+start those players hear one `cast_started_unseen` line. A room line that
+names a hidden player target (`{actee}`) reads "something" in its place to
+each player who does not perceive that target (`UnseenBy`, #504), as a
+hidden mob target reads. Root guard
 `spell_phase_narration_guard_test.go` keeps every other site from sending
 these lines itself.
 
@@ -2015,12 +2088,12 @@ the rest are ordinary verbs.
 | Targeting | `target_resolution.go`, `target_helpers.go`, `melee_target.go`, `sleeping_target.go` |
 | Shared helpers | `combat_helpers.go`, `skill_helpers.go`, `mutation_helpers.go`, `aggression.go`, `bleed.go` (`bleedPerRound`) |
 | Combat specials | `combat_attack.go`, `combat_bash.go`, `combat_counter.go`, `combat_drain.go`, `combat_fire.go`, `combat_gore.go`, `combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`, `combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_reload.go`, `combat_taunt.go`, `combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` |
-| Casting | `cast.go`, `cast_interrupt.go` |
+| Casting | `cast.go`, `cast_interrupt.go`, `cast_admission.go`, `cast_raise_corpse.go` (the raise corpse gate) |
 | Flee | `flee.go`, `relocate_mob.go` |
 | Mutation actives | `mutation_cocoon.go`, `mutation_venom_coat.go` |
 | Room roster | `roster.go` (`RenderRoster`: the "Also here:" line from `descriptions/who`, wrapped to the reader's width because neither of its categories is pipeline-wrapped; `look` and a search's find both send it; `RenderGround` does the same for the "On the Ground:" list from `descriptions/ontheground`, and a guard test keeps every ground send on it) |
 | Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `search_bauble.go` (roll and delayed delivery), `search_feature.go` (`search <feature>`), `scan.go`, `track.go`, `steal.go`, `steal_pocket.go` (a player's pickpocket pause and bauble) |
-| Items & economy | `get.go` (`GetItemFromFloor` refuses a household's bauble (`BaubleBelongsTo`) with `ErrHouseholdBauble`, the item found and nothing moved, for every taker: a player's `get`, a mob's, a companion's, a scavenger's (owner ruling 2026-09-29); its gates sit in one early-return block), `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `sell_bauble.go`, `stolen_bauble.go` (heat, recognition, returns), `remove_equip.go`, `shop_sight.go`, `drink.go` |
+| Items & economy | `get.go` (`GetItemFromFloor` refuses a household's bauble (`BaubleBelongsTo`) with `ErrHouseholdBauble`, the item found and nothing moved, for every taker: a player's `get`, a mob's, a companion's, a scavenger's (owner ruling 2026-09-29); its gates sit in one early-return block), `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `sell_quote.go` (`QuoteSale`, `SaleMerchant`: the one quote sell, offer and appraise share), `sell_bauble.go`, `stolen_bauble.go` (heat, recognition, returns), `remove_equip.go`, `shop_sight.go`, `drink.go` |
 | Trades | `craft.go`, `salvage.go`, `forage.go`, `plant.go`, `defuse.go` |
 | Movement & state | `go.go`, `sleep.go`, `consider.go`, `map_visit.go` (`MarkRoomMappedIfSeen`: puts a room on the fog-of-war map by its template id only when the character makes anything out there; a room walked in the dark stays off until seen, #252 ruling R5; `usercommands.Go` and gmcp's `SightBandChanged` handler call it) |
 | Social | `say.go`, `emote.go`, `emote_aliases.go` |

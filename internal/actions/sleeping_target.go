@@ -100,6 +100,68 @@ func ShopClosedForSleep(room *rooms.Room) *mobs.Mob {
 	return asleep
 }
 
+// OffShiftFallbackLine is what an off-shift keeper says when their schedule
+// segment sets no offshift_line of its own.
+const OffShiftFallbackLine = `Not here. Come and find me at my shop.`
+
+// OffShiftMerchant returns a shopkeeper standing in this room off shift
+// (mobs.OffShift), or nil. rooms.FindMerchant leaves such a keeper out, so
+// this scans the room's mobs itself.
+func OffShiftMerchant(room *rooms.Room) *mobs.Mob {
+	if room == nil {
+		return nil
+	}
+	for _, mobId := range room.GetMobs(rooms.FindAll) {
+		if m := mobs.GetInstance(mobId); m != nil && m.HasShop() && m.OffShift() {
+			return m
+		}
+	}
+	return nil
+}
+
+// RefuseIfShopClosed is the one closed-shop gate list, buy, sell, offer and
+// appraise pass before they deal. It reports true, having told the player,
+// when the room's shop is shut. The order (owner ruling 2026-10-17):
+//
+//  1. No merchant at all: false, so the caller's refusal.NoMerchant (or the
+//     away-asleep line) answers.
+//  2. Every merchant here asleep: the asleep line (ShopClosedForSleep).
+//  3. No merchant on shift but a keeper here off shift (Kerra at the tavern
+//     of an evening): the keeper says their segment's offshift_line, or
+//     OffShiftFallbackLine.
+//
+// The dim-light check (ShopSightRefusal) comes after, in the caller.
+func RefuseIfShopClosed(room *rooms.Room, user *users.UserRecord) bool {
+	if room == nil {
+		return false
+	}
+	if asleep := ShopClosedForSleep(room); asleep != nil {
+		RefuseMobIfAsleep(asleep, user)
+		return true
+	}
+	if len(room.GetMobs(rooms.FindMerchant)) > 0 {
+		return false // a keeper here is awake and on shift
+	}
+	off := OffShiftMerchant(room)
+	if off == nil {
+		return false
+	}
+	if user != nil {
+		text := off.OffShiftLine()
+		if text == `` {
+			text = OffShiftFallbackLine
+		}
+		line := `<ansi fg="mobname">` + off.Character.Name + `</ansi> says, "` + text + `"`
+		// As for a sleeper: a player who cannot see faces never learned the
+		// keeper's name (#454).
+		if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+			line = messaging.HideNames(line, []string{off.Character.Name}, messaging.ParticipantSight(user.Character, r))
+		}
+		user.SendText(messaging.CategoryRefusal, line)
+	}
+	return true
+}
+
 // MerchantAwayAsleep returns a merchant whose HOME room is this one but who is
 // currently asleep somewhere else — the shopkeeper who has gone to the back
 // room or upstairs for the night.

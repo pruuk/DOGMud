@@ -34,6 +34,14 @@ The items system is built around two main components:
 - Token replacement system for personalized combat text
 - Separate messages for attacker, defender, and room observers
 
+**Item name articles (`article.go`):**
+- `IndefiniteArticle(name) string` returns "some" for a name that reads as
+  plural (last word ends in "s" but not "ss", "us" or "is": Iron Lockpicks,
+  Leather Boots), else "an" before a vowel and "a" otherwise. Every line that
+  puts an indefinite article before one item's name uses it (sell, buy
+  trade-ins, forage, quest and dialogue rewards, give, put, use, removing from
+  a pet), so none reads "an Iron Lockpicks".
+
 ## Key Features
 
 ### 1. **Hierarchical Item Classification**
@@ -732,6 +740,13 @@ out at a 50% speed reduction (skill approximately 100+).
 `IsSpoiledFood` is the eat-side question: an item whose spec ages, made at a
 known `CraftedRound`, past `PhaseSpoiled` at bottle speed 1.0. Player and mob
 `eat` both ask it; no shipped food carries `aging:` yet.
+
+### Component tag names
+`ComponentTagName(tag)` is the player-facing name of a component tag, used
+by every `craft` line that names an ingredient: the item's `Name` when
+exactly one spec carries the tag, else the tag with spaces for dashes (a
+shared tag such as `bottle`, or an unknown one). `FindSpecByComponentTag` is
+the resolver for creating or pricing an item; do not use it for display.
 
 ### Bottle Tiers
 All four bottles share `component_tag: bottle`; crafting consumes whichever

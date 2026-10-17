@@ -34,7 +34,8 @@ var fixtureDaycycleRooms = []int{4111, 5000}
 //
 // Expected shape: 4111 reads its sky by day and the sky combined with the
 // lantern's 52 at night (midwinter midnight 34 becomes 54: shapes to
-// faces); 5000 is a dungeon with no sky, so it reads 40 to 45 at every hour,
+// faces); 5000 is a dungeon with no sky, so it reads 63 to 64 at every hour
+// (its lamp is 63 since the owner ruling of 2026-10-17; it read 40 to 45 at 38),
 // whatever round the sample lands on in the stone's twelve-round pulse.
 func TestLightingFixtureDayCycle(t *testing.T) {
 	loadItemBehaviourWorld(t)

@@ -12,7 +12,7 @@ patterns:
   - keywords: ["hello", "hi"]
     moods: ["grateful"]
     responses:
-      - "You are back. Sit on the bollard if you like; the lake is being civil today."
+      - "You are back. Sit on the bollard if you like. The lake is being civil today."
 
   - keywords: ["who", "you", "yourself", "arn"]
     responses:

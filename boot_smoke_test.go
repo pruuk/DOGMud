@@ -218,6 +218,84 @@ func TestSmoke_AllDialogueFilesParse(t *testing.T) {
 	t.Logf("dialogue files parsed cleanly: %d (failed: %d, with greetings: %d)", checked, failed, greetingFiles)
 }
 
+// TestSmoke_ShippedDialoguePassesTheEditorValidator runs the dialogue editor's
+// own save validator (dialogue.ValidateDialogueFile, with the registry-backed
+// validators) over every shipped dialogue file.
+//
+// That validator only ran when a builder saved through the web editor, so a
+// file written by hand never met it: Hadwen's 9100.yaml shipped a ';' in
+// spoken text, which the command splitter treats as a separator, cutting his
+// answer short in play. Errors here are the same errors that would block a
+// save in the editor.
+func TestSmoke_ShippedDialoguePassesTheEditorValidator(t *testing.T) {
+	if os.Getenv(bootSmokeEnvVar) == `` {
+		t.Skipf("set %s=1 to run the shipped-dialogue validator sweep", bootSmokeEnvVar)
+	}
+
+	mudlog.SetupLogger(nil, `LOW`, ``, false)
+	if err := configs.ReloadConfig(); err != nil {
+		t.Fatalf("ReloadConfig failed: %v", err)
+	}
+
+	func() {
+		defer func() { _ = recover() }() // boot failures are the boot test's job
+		loadAllDataFiles(false)
+	}()
+	if len(quests.GetAllQuests()) == 0 {
+		t.Fatal("no quests loaded; the quest-token checks would all fail for the wrong reason")
+	}
+
+	files, err := filepath.Glob(filepath.Join(`_datafiles`, `world`, `dogmud`, `dialogue`, `*`, `*.yaml`))
+	if err != nil || len(files) == 0 {
+		t.Fatalf("found no dialogue files (err %v); the sweep cannot run", err)
+	}
+
+	v := dialogue.RegistryValidators()
+	novel, baselined := 0, 0
+	seen := map[string]bool{}
+	for _, f := range files {
+		raw, err := os.ReadFile(f)
+		if err != nil {
+			t.Errorf("%s: unreadable: %v", f, err)
+			continue
+		}
+		var df dialogue.DialogueFile
+		if err := yaml.Unmarshal(raw, &df); err != nil {
+			continue // parse failures are TestSmoke_AllDialogueFilesParse's job
+		}
+		errs, _ := dialogue.ValidateDialogueFile(df, v)
+		for _, e := range errs {
+			line := filepath.ToSlash(f) + ": " + e
+			key := dialogueFindingKey(line)
+			if knownDialogueValidatorFindings[key] && !strings.Contains(e, "semicolons") {
+				baselined++
+				seen[key] = true
+				continue
+			}
+			novel++
+			t.Errorf("%s", line)
+		}
+	}
+	for key := range knownDialogueValidatorFindings {
+		if !seen[key] {
+			t.Logf("baseline entry no longer reported, delete it from knownDialogueValidatorFindings: %s", key)
+		}
+	}
+	t.Logf("dialogue files validated: %d (new findings: %d, baselined: %d)", len(files), novel, baselined)
+}
+
+// dialogueFindingKey cuts a reported finding before its first non-ASCII
+// character, so a baseline key is the file, the place and the rule, not the
+// explanatory tail the validator adds after a dash.
+func dialogueFindingKey(line string) string {
+	for i, r := range line {
+		if r > 127 {
+			return strings.TrimRight(line[:i], " ")
+		}
+	}
+	return line
+}
+
 // knownIgnoredDialogueKeys is the accepted baseline of dialogue YAML keys
 // ("field|type", matching the drift gate's key shape) that map to no field.
 // It starts EMPTY: the one historical entry (greetings, 186 files) was

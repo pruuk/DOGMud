@@ -189,6 +189,41 @@ func TestSell_SingleItem_VowelNameGetsAn(t *testing.T) {
 	assert.NotContains(t, all, `You sell a <ansi`)
 }
 
+// TestSell_SingleItem_PluralNameGetsSome: a name that reads as plural takes
+// "some", never "a" (which the normalizer turned into "You sell an Iron
+// Lockpicks", seen in the 2026-10-17 playtest).
+func TestSell_SingleItem_PluralNameGetsSome(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+
+	spec := items.GetItemSpec(testSellItemId)
+	require.NotNil(t, spec)
+	oldName := spec.Name
+	spec.Name = "Iron Lockpicks"
+	defer func() { spec.Name = oldName }()
+
+	user, room := getTestUserAndRoom(t)
+	_, merchantCleanup := seedMerchantInRoom(t, user, 1000)
+	defer merchantCleanup()
+
+	require.True(t, user.Character.StoreItem(items.New(testSellItemId)))
+
+	msgs, stop := captureAllMessages(t)
+	handled, err := Sell("iron lockpicks", user, room, 0)
+	stop()
+	require.True(t, handled)
+	require.NoError(t, err)
+
+	var mine []string
+	for _, m := range *msgs {
+		if m.UserId == user.UserId {
+			mine = append(mine, m.Text)
+		}
+	}
+	all := strings.Join(mine, "")
+	assert.Contains(t, all, `You sell some <ansi fg="itemname">Iron Lockpicks</ansi>`)
+}
+
 // TestSell_Quantity_SellFive_HaveSeven verifies "sell 5 iron sword" with 7
 // items: exactly 5 sold, exactly 2 remain, gold increases.
 func TestSell_Quantity_SellFive_HaveSeven(t *testing.T) {

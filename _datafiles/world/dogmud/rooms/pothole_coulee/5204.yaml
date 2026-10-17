@@ -5,11 +5,12 @@ description: >
   A short run of awnings and stall-fronts crowds the lane here, strung
   between the inn at the west end and the provisions store at the east.
   The awnings are patched canvas and salvaged sailcloth, slung from the
-  eaves to throw shade across the goods laid out beneath them, and they
+  eaves to keep the weather off the goods laid out beneath them, and they
   snap and belly whenever the coulee breeze comes down the bowl. This is
-  the town's barter-artery: the air carries the haggle-murmur of folk
-  talking prices, the clink of coin changing hands, the smell of smoked
-  fish and tallow and sun-warmed dust. Even between customers the stalls
+  the town's barter-artery, and the air holds what trade leaves behind:
+  the smell of smoked fish and tallow and trodden dust, and on most
+  days the haggle-murmur of folk talking prices and the clink of coin
+  changing hands. Even between customers the stalls
   hold their wares out hopeful, waiting for the next pair of boots to
   slow. South the lane runs on toward a humming arch the town keeps at
   its threshold.
@@ -42,10 +43,10 @@ nouns:
   awnings: The awnings are a motley of patched canvas and faded
     sailcloth, lashed from the house-eaves out to leaning poles to keep
     sun and squall off the goods. They sag where the rain has pooled and
-    belly out when the wind funnels down the coulee. Their shade falls in
-    long bright-edged stripes across the lane.
+    belly out when the wind funnels down the coulee. Beneath them the lane
+    runs in long bands, covered and open by turns.
 idlemessages:
 - An awning bellies and snaps overhead as the breeze gusts down the bowl.
-- Somewhere down the row two voices fall into the easy back-and-forth of haggling.
+- Somewhere down the row a cover is tugged tighter over a stall's wares.
 x: 44
 y: 21

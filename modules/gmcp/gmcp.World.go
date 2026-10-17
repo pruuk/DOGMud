@@ -32,22 +32,37 @@ type GMCPWorldUpdate struct {
 
 func (g GMCPWorldUpdate) Type() string { return `GMCPWorldUpdate` }
 
-// timeOfDayLabel converts a 24-hour value to a qualitative time-of-day label.
-func timeOfDayLabel(hour24 int) string {
-	switch {
-	case hour24 >= 5 && hour24 <= 7:
-		return "Dawn"
-	case hour24 >= 8 && hour24 <= 11:
-		return "Morning"
-	case hour24 >= 12 && hour24 <= 13:
-		return "Midday"
-	case hour24 >= 14 && hour24 <= 17:
-		return "Afternoon"
-	case hour24 >= 18 && hour24 <= 20:
-		return "Evening"
-	default:
+// timeOfDayLabel names the part of the day for World.Time from the same sun
+// state the game uses (gametime.DayPeriod, which the `time` command reads):
+// "Night" exactly while it is night, "Dawn" or "Evening" while the lamps are
+// lit before night ends or after the sun is too low to show faces, and a
+// clock word through the lit day. It used fixed clock hours before, while
+// night is seasonal, so a midwinter 4PM sent "Afternoon" beside
+// "is_night": true (2026-10-17 playtest).
+func timeOfDayLabel(night bool, lampsLit bool, hour24 int) string {
+	switch gametime.DayPeriod(night, lampsLit, hour24) {
+	case "night":
 		return "Night"
+	case "dawn":
+		return "Dawn"
+	case "dusk":
+		return "Evening"
 	}
+	switch {
+	case hour24 < 12:
+		return "Morning"
+	case hour24 < 14:
+		return "Midday"
+	case hour24 < 18:
+		return "Afternoon"
+	default:
+		return "Evening"
+	}
+}
+
+// currentTimeOfDayLabel is timeOfDayLabel on the current round.
+func currentTimeOfDayLabel(gd gametime.GameDate) string {
+	return timeOfDayLabel(gd.Night, gametime.LampsLit(), gd.Hour24)
 }
 
 func (g *GMCPWorldModule) playerSpawnHandler(e events.Event) events.ListenerReturn {
@@ -77,7 +92,7 @@ func (g *GMCPWorldModule) newRoundHandler(e events.Event) events.ListenerReturn 
 	}
 
 	gd := gametime.GetDate()
-	tod := timeOfDayLabel(gd.Hour24)
+	tod := currentTimeOfDayLabel(gd)
 
 	// Only broadcast when the qualitative time-of-day label changes.
 	if tod == g.lastTimeOfDay {
@@ -122,7 +137,7 @@ func (g *GMCPWorldModule) buildAndSendGMCPPayload(e events.Event) events.Listene
 		Year:      gd.Year,
 		Month:     gd.Month,
 		Day:       gd.Day,
-		TimeOfDay: timeOfDayLabel(gd.Hour24),
+		TimeOfDay: currentTimeOfDayLabel(gd),
 		IsNight:   gd.Night,
 	}
 

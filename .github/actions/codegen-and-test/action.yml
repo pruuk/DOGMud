@@ -54,7 +54,18 @@ runs:
       shell: bash
       env:
         DOGMUD_BOOT_SMOKE: "1"
-      run: go test -run "TestSmoke_ServerBootsCleanWithRealData|TestSmoke_AllDialogueFilesParse|TestSmoke_NoNewSilentlyIgnoredYAMLKeys" -timeout 300s .
+      run: go test -run "TestSmoke_ServerBootsCleanWithRealData|TestSmoke_AllDialogueFilesParse|TestSmoke_ShippedDialoguePassesTheEditorValidator|TestSmoke_NoNewSilentlyIgnoredYAMLKeys" -timeout 300s .
+
+    # #536: the two melee statistical sweeps were about 330s of internal/combat's
+    # 390 to 405s under -race (local Docker, 2026-10-17), and runner variance took
+    # the package to the 900s timeout in CI. They are single-goroutine, so the
+    # race detector has nothing to find in them; a -race build skips them
+    # (skipStatSweepUnderRace in internal/combat) and they run here instead,
+    # about 26s without -race. A sweep that calls that helper must be named in
+    # this pattern, or it runs nowhere in CI.
+    - name: Statistical sweeps
+      shell: bash
+      run: go test -run "^(TestMeleeParityDamagePerSwing|TestMeleePredictionMatchesCombat)$" -timeout 300s ./internal/combat/
 
     # -timeout is PER TEST BINARY, not for the whole run. internal/combat sits
     # at roughly 250 to 360 seconds under -race depending on runner speed, so a
@@ -65,6 +76,7 @@ runs:
     #
     # The real fix is to make internal/combat cheaper or split it; this only
     # stops a green suite reporting red. If a package ever approaches 900s,
-    # split it rather than raising this again.
+    # split it rather than raising this again. (#536 did that for combat: see
+    # the "Statistical sweeps" step above.)
     - run: go test -timeout 900s -race -coverprofile=coverage.out ./...
       shell: bash

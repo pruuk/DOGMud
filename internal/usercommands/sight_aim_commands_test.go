@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -83,7 +84,7 @@ func TestAttackSight_ShapesHintsANameAndTakesAShape(t *testing.T) {
 	_, _ = Attack("skeleton", user, room, events.EventFlag(0))
 	told := aimTold(1)
 	assert.Contains(t, told, "You can only make out shapes here.")
-	assert.Contains(t, told, "attack shape")
+	assert.Contains(t, told, "attack figure")
 	assert.Equal(t, 0, user.Character.CurrentCombatTarget().MobInstanceId, "a typed name engaged at shapes")
 
 	_, _ = Attack("2.shape", user, room, events.EventFlag(0))
@@ -114,7 +115,7 @@ func TestMeleeStageSight_KickAtEachBand(t *testing.T) {
 	user, room = aimScene(t, aimShapes)
 	_, handled = actions.StageMeleeTarget(user, room, "skeleton", actions.MeleeTargetOpts{Verb: "kick"})
 	assert.True(t, handled)
-	assert.Contains(t, aimTold(1), "kick 2.shape")
+	assert.Contains(t, aimTold(1), "kick 2.figure")
 	_, handled = actions.StageMeleeTarget(user, room, "2.shape", actions.MeleeTargetOpts{Verb: "kick"})
 	assert.False(t, handled, "a shape stages at shapes")
 
@@ -147,7 +148,7 @@ func TestGiveSight_ShapesHintsANameAndHidesNamesAfterAShape(t *testing.T) {
 	user.Character.Gold = 50
 	_, _ = Give("10 gold bobrick", user, room, events.EventFlag(0))
 	told := aimTold(1)
-	assert.Contains(t, told, "give 10 gold shape")
+	assert.Contains(t, told, "give 10 gold figure")
 	assert.Equal(t, 50, user.Character.Gold, "a typed name was given to at shapes")
 
 	_, _ = Give("10 gold 1.shape", user, room, events.EventFlag(0))
@@ -186,7 +187,7 @@ func TestStealSight_EachBand(t *testing.T) {
 
 	user, room = aimScene(t, aimShapes)
 	assert.Nil(t, parseStealArgs([]string{"skeleton"}, room, user))
-	assert.Contains(t, aimTold(1), "steal 2.shape")
+	assert.Contains(t, aimTold(1), "steal 2.figure")
 	opts = parseStealArgs([]string{"2.shape"}, room, user)
 	require.NotNil(t, opts, "a shape is stolen from at shapes")
 	assert.Equal(t, 100, opts.TargetMobInstanceId)
@@ -207,7 +208,7 @@ func TestPlantSight_EachBand(t *testing.T) {
 	user, room = aimScene(t, aimShapes)
 	_, ok = parsePlantArgs([]string{"sword", "skeleton"}, room, user)
 	assert.False(t, ok, "a typed name was planted on at shapes")
-	assert.Contains(t, aimTold(1), "plant sword on 2.shape")
+	assert.Contains(t, aimTold(1), "plant sword on 2.figure")
 	opts, ok = parsePlantArgs([]string{"sword", "on", "2.shape"}, room, user)
 	require.True(t, ok, "a shape is planted on at shapes")
 	assert.Equal(t, 100, opts.TargetMobInstanceId)
@@ -239,7 +240,7 @@ func TestShadowSight_EachBand(t *testing.T) {
 	user, room = setup(aimShapes)
 	_, _ = Shadow("skeleton", user, room, events.EventFlag(0))
 	told := aimTold(1)
-	assert.Contains(t, told, "shadow 2.shape")
+	assert.Contains(t, told, "shadow 2.figure")
 	assert.NotContains(t, told, reached, "a typed name resolved at shapes")
 	_, _ = Shadow("2.shape", user, room, events.EventFlag(0))
 	assert.Contains(t, aimTold(1), reached, "a shape resolves at shapes")
@@ -272,7 +273,7 @@ func TestTalkAskSight_NoSightResolvesNothing(t *testing.T) {
 func TestTalkSight_ShapesHintsAName(t *testing.T) {
 	user, room := aimScene(t, aimShapes)
 	_, _ = Talk("skeleton", user, room, events.EventFlag(0))
-	assert.Contains(t, aimTold(1), "talk 2.shape")
+	assert.Contains(t, aimTold(1), "talk 2.figure")
 }
 
 func TestPartyInviteSight_EachBand(t *testing.T) {
@@ -538,4 +539,69 @@ func TestGiveSight_OwnPetByNameAtShapes(t *testing.T) {
 	_, _ = Give("sword fang", user, room, events.EventFlag(0))
 	assert.Len(t, user.Character.Pet.Items, 1, "the own pet by name was refused at shapes")
 	assert.NotContains(t, aimTold(1), "make out shapes")
+}
+
+// #557: a trip or grapple refusal about the target names it at the player's
+// sight, as StageMeleeTarget's own refusals do. A player who aimed at a shape
+// reads "A figure", never the creature's name.
+func TestSpecialMoveRefusals_NameTheTargetAtSight(t *testing.T) {
+	for _, tc := range []struct {
+		verb string
+		pos  position.State
+		run  func(string, *users.UserRecord, *rooms.Room, events.EventFlag) (bool, error)
+		line string
+	}{
+		{"trip", position.Prone, Trip, "is already on the ground."},
+		{"grapple", position.Clinch, Grapple, "is already grappling."},
+	} {
+		for _, band := range []aimBand{aimFull, aimShapes} {
+			user, room := aimScene(t, band)
+			t.Cleanup(seedSpecialMoveSpecies())
+			user.Character.SpeciesId = 11 // humanoid: arms and legs
+			skeleton := mobs.GetInstance(100)
+			require.NotNil(t, skeleton)
+			setCombatPositionParallel(&skeleton.Character, tc.pos)
+			target := "skeleton"
+			if band == aimShapes {
+				target = "2.figure"
+			}
+			_, err := tc.run(target, user, room, events.EventFlag(0))
+			require.NoError(t, err)
+			told := aimTold(1)
+			if band == aimFull {
+				assert.Contains(t, told, "Skeleton "+tc.line, "%s at clear sight", tc.verb)
+			} else {
+				assert.Contains(t, told, "A figure "+tc.line, "%s at shapes", tc.verb)
+				assert.NotContains(t, told, "Skeleton", "%s at shapes named the shape", tc.verb)
+			}
+		}
+	}
+}
+
+// Owner ruling 2026-10-17: in dim light `look figure` (and `look shape`, and
+// the counted forms) finds the figure and reads as `look corpse` does there:
+// "You can make out no more than its shape." It names no one. A count past
+// the last figure, or a typed name, still reads "You can only make out
+// shapes here."
+func TestLookSight_ShapesLooksAtAFigure(t *testing.T) {
+	for _, rest := range []string{"figure", "2.figure", "shape", "shape#2"} {
+		user, room := aimScene(t, aimShapes)
+		_, err := Look(rest, user, room, events.EventFlag(0))
+		require.NoError(t, err)
+		told := aimTold(1)
+		assert.Contains(t, told, "You look at a figure.", "%q", rest)
+		assert.Contains(t, told, lookShapeOnlyLine, "%q", rest)
+		assert.NotContains(t, told, "You can only make out shapes here.", "%q", rest)
+		assert.NotContains(t, told, "Skeleton", "%q", rest)
+		assert.NotContains(t, told, "Bobrick", "%q", rest)
+		assert.NotContains(t, aimTold(2), "Aliceia", "%q: Bobrick sees nothing in the dark", rest)
+	}
+	for _, rest := range []string{"3.figure", "skeleton"} {
+		user, room := aimScene(t, aimShapes)
+		_, err := Look(rest, user, room, events.EventFlag(0))
+		require.NoError(t, err)
+		told := aimTold(1)
+		assert.Contains(t, told, "You can only make out shapes here.", "%q", rest)
+		assert.NotContains(t, told, lookShapeOnlyLine, "%q", rest)
+	}
 }

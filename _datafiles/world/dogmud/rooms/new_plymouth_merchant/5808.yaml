@@ -72,7 +72,7 @@ idlemessages:
   goes through the side door.
 - The auction-block is empty but has the quality of
   something about to be used.
-- A lot from the morning's session remains under the
+- A lot from the last session remains under the
   block, a cloth-wrapped parcel, tagged and waiting.
 spawninfo:
   - mobid: 9345

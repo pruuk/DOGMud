@@ -53,6 +53,49 @@ func TestClearQuestToken_KeepsUnrelatedFocus(t *testing.T) {
 	assert.Equal(t, 65, c.LastQuestId, "focus on a different quest is preserved")
 }
 
+// stubSecretQuests makes the listed quest ids secret for one test.
+func stubSecretQuests(t *testing.T, ids ...int) {
+	t.Helper()
+	prev := questIsSecret
+	secret := map[int]bool{}
+	for _, id := range ids {
+		secret[id] = true
+	}
+	questIsSecret = func(questId int) bool { return secret[questId] }
+	t.Cleanup(func() { questIsSecret = prev })
+}
+
+func TestGetFocusQuestId_NeverASecretQuest(t *testing.T) {
+	// 2026-10-17 playtest: hint showed "Newcomer's Path" (secret quest 21)
+	// because granting its token set LastQuestId and the fallback never
+	// skipped secret quests.
+	stubSecretQuests(t, 21)
+
+	// LastQuestId at the secret quest: focus goes to the visible active one.
+	c := &Character{LastQuestId: 21, QuestProgress: map[int]string{21: "start", 31: "start"}}
+	assert.Equal(t, 31, c.GetFocusQuestId())
+
+	// Fallback: the secret quest has the lowest id but is skipped.
+	c = &Character{LastQuestId: 0, QuestProgress: map[int]string{21: "start", 28: "start"}}
+	assert.Equal(t, 28, c.GetFocusQuestId())
+
+	// Only a secret quest in progress: no focus at all.
+	c = &Character{LastQuestId: 21, QuestProgress: map[int]string{21: "start"}}
+	assert.Equal(t, 0, c.GetFocusQuestId())
+
+	// The input map is not mutated by the filtering.
+	assert.Contains(t, c.QuestProgress, 21)
+}
+
+func TestGiveQuestToken_SecretQuestKeepsFocus(t *testing.T) {
+	stubSecretQuests(t, 21)
+	c := &Character{LastQuestId: 28, QuestProgress: map[int]string{28: "start"}}
+	assert.True(t, c.GiveQuestToken("21-start"))
+	assert.Equal(t, 28, c.LastQuestId, "a secret quest token must not take the focus")
+	assert.True(t, c.GiveQuestToken("31-start"))
+	assert.Equal(t, 31, c.LastQuestId, "a visible quest token still takes the focus")
+}
+
 func TestGetFocusQuestId_SkipsCompletedLastQuest(t *testing.T) {
 	// LastQuestId points at a quest that just completed ("end"). Focus must
 	// move to the active quest, not stay on the finished one (the Two Roads ->

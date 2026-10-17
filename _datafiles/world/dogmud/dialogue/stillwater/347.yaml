@@ -123,7 +123,7 @@ tree:
       - questRequired: ["20-start"]
         questExcluded: ["20-brindle_confession"]
         text: "Have you found anything in his things? Take your time. I
-          have waited twelve years; I can wait a little longer."
+          have waited twelve years. I can wait a little longer."
         hints: "Continue investigating. The spiral motif Elgar marked is
           carried at six places across town -- find them all and the
           shape of what he was doing should come clear."

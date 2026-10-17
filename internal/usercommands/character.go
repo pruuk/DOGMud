@@ -386,7 +386,7 @@ func cmdCharacterHire(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 
 		mudlog.Debug(`Hire Alt`, `UserId`, user.UserId, `alt-name`, char.Name, `gear-value`, gearValue, `skill-ranks`, char.GetTotalSkillRanks(), `total`, charValue)
 
-		question := cmdPrompt.Ask(fmt.Sprintf(`<ansi fg="51">The price to hire <ansi fg="username">%s</ansi> is <ansi fg="gold">%d gold</ansi>. Are you sure?</ansi>`, char.Name, charValue), []string{`yes`, `no`}, `no`)
+		question := cmdPrompt.Ask(fmt.Sprintf(`<ansi fg="51">The price to hire <ansi fg="username">%s</ansi> is <ansi fg="gold">%s gold</ansi>. Are you sure?</ansi>`, char.Name, util.FormatNumber(charValue)), []string{`yes`, `no`}, `no`)
 		if !question.Done {
 			return true, nil
 		}
@@ -397,7 +397,7 @@ func cmdCharacterHire(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 		}
 
 		if user.Character.Gold < charValue {
-			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You only have <ansi fg="gold">%d gold</ansi> and it would cost <ansi fg="gold">%d gold</ansi> to hire <ansi fg="username">%s</ansi>.`, user.Character.Gold, charValue, char.Name))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You only have <ansi fg="gold">%s gold</ansi> and it would cost <ansi fg="gold">%s gold</ansi> to hire <ansi fg="username">%s</ansi>.`, util.FormatNumber(user.Character.Gold), util.FormatNumber(charValue), char.Name))
 			user.ClearPrompt()
 			return true, nil
 		}

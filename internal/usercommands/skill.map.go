@@ -135,7 +135,7 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	// First check for a premade map.
 	if mapTxt, err := templates.Process("maps/"+rooms.ZoneNameSanitize(zone), zone); err == nil {
-		user.SendText(messaging.CategorySystem, mapTxt)
+		sendMapScreen(user, mapTxt)
 		return true, nil
 	}
 
@@ -181,6 +181,12 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	mapOutput := zMapper.GetLimitedMap(roomId, c)
 
 	legend := mapOutput.GetLegend(keywords.GetAllLegendAliases(room.Zone))
+	if user.AsciiMode {
+		// Map cells take the map's own ASCII forms, so two legend entries
+		// never read as one character (Shore and Deep Water were both "~").
+		mapOutput.AsciiCells()
+		legend = mapper.AsciiLegend(legend)
+	}
 
 	width := 0
 
@@ -193,8 +199,29 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		displayLines[i] = mapper.ColorizeLegendLine(displayLines[i], legend)
 	}
 
-	mapData := map[string]any{
-		"Title":        room.Zone,
+	mapTxt, err := templates.Process("maps/map", mapScreenData(room.Zone, displayLines, width, legend), user.UserId)
+	if err != nil {
+		refusal.Failed(user, "map", err, "userId", user.UserId)
+		return true, err
+	}
+
+	sendMapScreen(user, mapTxt)
+
+	return true, nil
+}
+
+// sendMapScreen delivers a drawn map. A map is a laid-out screen, not a
+// sentence: on CategorySystem the normalizer put a full stop after the
+// legend's last name ("[~ Shore."), so it rides CategoryScreen.
+func sendMapScreen(user *users.UserRecord, mapTxt string) {
+	user.SendText(messaging.CategoryScreen, mapTxt)
+}
+
+// mapScreenData is the maps/map template's data: the drawn lines, the legend
+// and the frame.
+func mapScreenData(title string, displayLines []string, width int, legend map[rune]string) map[string]any {
+	return map[string]any{
+		"Title":        title,
 		"DisplayLines": displayLines,
 		"Height":       len(displayLines),
 		"Width":        width,
@@ -215,14 +242,4 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			"Bottom": "`-._.-'",
 		},
 	}
-
-	mapTxt, err := templates.Process("maps/map", mapData, user.UserId)
-	if err != nil {
-		refusal.Failed(user, "map", err, "userId", user.UserId)
-		return true, err
-	}
-
-	user.SendText(messaging.CategorySystem, mapTxt)
-
-	return true, nil
 }

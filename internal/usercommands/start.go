@@ -93,13 +93,15 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// New eyes catch what ours miss, and Gaius is still being built — so ask
 		// every new player, once on the way in, to send bugs and ideas (Malia's
 		// 2026-07-18 feedback). Route-agnostic: runs for all three onboarding paths.
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`%s<ansi fg="magenta-bold">One quick thing before you go.</ansi> Gaius is still being built, and your `+
+		// CategorySystem is never wrapped by the pipeline, so the line wraps
+		// itself to the reader's width (as justice/arrest.go does, #430).
+		user.SendText(messaging.CategorySystem, term.CRLFStr+messaging.WrapAnsi(
+			`<ansi fg="magenta-bold">One quick thing before you go.</ansi> Gaius is still being built, and your `+
 				`eyes are new, and that makes them valuable. If something breaks or reads `+
 				`wrong, type <ansi fg="command">bug</ansi> and tell us what happened. If you `+
 				`think of something that would make the world better, type `+
-				`<ansi fg="command">suggest</ansi>. We read every one.%s`,
-			term.CRLFStr, term.CRLFStr))
+				`<ansi fg="command">suggest</ansi>. We read every one.`,
+			user.GetLineWidth())+term.CRLFStr)
 	}
 
 	switch onboardingRoute(question.Response) {

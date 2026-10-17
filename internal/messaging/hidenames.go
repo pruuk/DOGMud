@@ -23,13 +23,23 @@ var identityOpenTag = regexp.MustCompile(`^<ansi fg="(?:(?:username|mobname)(?:-
 // the closing tag.
 var identityCloseAfterName = regexp.MustCompile(`^(?: #\d+)?</ansi>`)
 
+// FigureWord is the one word every line shows a creature by to a reader who
+// makes out shapes only ("Also here: a figure", "A figure says, ...", the
+// corpse of a figure). It is also the word that player aims at it with
+// (actions.AimBySight: `consider figure`, `ask 2.figure arena`), so what the
+// room shows and what the player may type cannot drift apart.
+const FigureWord = "figure"
+
+// figureNoun is FigureWord with its article, as a sentence carries it.
+const figureNoun = "a " + FigureWord
+
 // UnseenNoun is what a reader at d calls a party it cannot make out: "a
 // figure" at shapes, "something" otherwise. It is the one spelling HideNames
 // and the room roster (rooms.GetDetails) share. Meaningless at SightFull,
 // where the reader sees the name; callers only ask below it.
 func UnseenNoun(d SightDecision) string {
 	if d == SightShapes {
-		return "a figure"
+		return figureNoun
 	}
 	return "something"
 }
@@ -76,7 +86,7 @@ type NameHider func(text string, names []string, d SightDecision) string
 // sight gates slice 5b).
 func SpeakerNoun(d SightDecision) string {
 	if d == SightShapes {
-		return "a figure"
+		return figureNoun
 	}
 	return "someone"
 }

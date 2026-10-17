@@ -365,7 +365,7 @@ type ItemSpec struct {
 	MaterialTier     int      `yaml:"material_tier,omitempty"`
 	VendorCategories []string `yaml:"vendor_categories,omitempty"` // Disciplines that buy/sell this item; mirrors shops.ValidCraftSupports minus "general"
 	NotSalable       bool     `yaml:"not_salable,omitempty"`       // True for lore / flavor / legacy items excluded from vendor economy validation
-	NeverDrops       bool     `yaml:"never_drops,omitempty"`       // Equipped-only: this item is skipped entirely by mob death-loot drops (boss-only gear that must never reach players). Does not affect carried Character.Items — use a separate mechanism (loot_pool / character.items) for guaranteed loot on the same mob.
+	NeverDrops       bool     `yaml:"never_drops,omitempty"`       // Mob-only gear: this item is skipped entirely by mob death-loot drops, worn or carried (a disarm puts a weapon in the pack), so it never reaches players. Other carried Character.Items still drop; use loot_pool / character.items for guaranteed loot on the same mob.
 	Restricted       bool     `yaml:"restricted,omitempty"`        // Contraband: bid on by the auction Official (The Crown Assessor, econ #2.5). Interest tag only — no other mechanics.
 
 	// Behavior names the item's behaviour tree,
@@ -864,6 +864,32 @@ func FindSpecByComponentTag(tag string) *ItemSpec {
 		}
 	}
 	return best
+}
+
+// ComponentTagName is the player-facing name for a crafting component tag
+// (#530). A tag exactly one item carries reads as that item's name
+// ("healers-root" is "Healer's Root", as inventory shows it). A tag several
+// items share ("bottle": Clay Flask, Glass Vial, ...) or none carries reads
+// as the tag itself with spaces for dashes, never a dashed id. It does not
+// use FindSpecByComponentTag, because naming the cheapest bottle would tell
+// the player only that one bottle counts.
+func ComponentTagName(tag string) string {
+	var only *ItemSpec
+	n := 0
+	for _, spec := range items {
+		if spec == nil || spec.ComponentTag != tag {
+			continue
+		}
+		n++
+		only = spec
+		if n > 1 {
+			break
+		}
+	}
+	if n == 1 && only.Name != `` {
+		return only.Name
+	}
+	return strings.ReplaceAll(tag, `-`, ` `)
 }
 
 // LoadDataFiles loads every item spec and the combat and defense message

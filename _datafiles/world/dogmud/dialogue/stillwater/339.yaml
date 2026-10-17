@@ -27,8 +27,8 @@ patterns:
 
   - keywords: ["maren", "thornwall", "weaver"]
     responses:
-      - "Maren is a finer weaver than I am. I know it; she knows it;
-        the work shows it. She trained under a guild-master in
+      - "Maren is a finer weaver than I am. I know it. She knows it.
+        The work shows it. She trained under a guild-master in
         Thornwall City and I learned at my mother's loom. Different
         foundations. I am not ashamed of mine. She writes to her
         aunt Ulla sometimes -- Ketil carries the letters. She has
@@ -46,7 +46,7 @@ patterns:
     responses:
       - "Ulla weaves too -- or she did, before things went quiet in
         her cottage. I have left her be. Some people come to the
-        loom for company; some come to the loom to be alone with
+        loom for company. Some come to the loom to be alone with
         themselves. I do not knock on a door that is not open."
 
   - keywords: ["caravan", "ketil", "thread", "spool"]
@@ -84,14 +84,14 @@ tree:
         spring and autumn, the wool for the cold months. The dye is
         lake-natural: grey, green, the dark brown of reed-bark. Not
         fashionable by Thornwall standards. Practical by Stillwater
-        ones. I sell finished work and raw material both; either is
+        ones. I sell finished work and raw material both. Either is
         priced fairly."
 
     - id: maren_comparison
       triggers: ["maren", "thornwall", "guild", "finer", "better"]
       text: "Maren trained under the guild and her work is guild-grade.
         I learned here, worked here, sell here. She makes cloth for
-        people who wear it to be seen; I make cloth for people who
+        people who wear it to be seen. I make cloth for people who
         wear it to stay warm. Neither of us is wrong. I would rather
         be known for work that holds than for work that dazzles -- but
         I will not pretend I do not look at her finished pieces when

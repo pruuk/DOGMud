@@ -47,10 +47,10 @@ tree:
       text: "Standard registrations -- land, trade licenses,
         residency -- are processed here same-day if the
         paperwork is in order. Deed transfers require the
-        notary's seal in addition to the hall's; for those,
+        notary's seal in addition to the hall's. For those,
         you'll want Pellan at the Notary's Office on Civic
-        Lane. Petitions to the council are logged and queued;
-        turnaround on those depends on the council's calendar,
+        Lane. Petitions to the council are logged and queued.
+        Turnaround on those depends on the council's calendar,
         which is not something I control."
       hints: "You could ask Orvin about the notation map on
         the wall, or about the hall's administration."
@@ -78,7 +78,7 @@ tree:
       text: "The Municipal Hall is the Confluence's administrative
         center -- land registry, civic licensing, council
         correspondence, official seals. The council chamber is
-        on the upper floor; the council sits infrequently.
+        on the upper floor. The council sits infrequently.
         Most governance runs through the permanent staff, which
         is to say, through this desk."
       hints: "You could ask Orvin about civic records, or

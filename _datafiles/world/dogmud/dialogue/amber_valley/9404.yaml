@@ -10,7 +10,7 @@ patterns:
       - "Hello there! Lovely day for it, whatever 'it' turns out to be."
   - keywords: ["market", "buy", "stall", "goods"]
     responses:
-      - "Stalls are just down the lane. Tell them Sela sent you; won't get you a discount, but it's nice to be mentioned."
+      - "Stalls are just down the lane. Tell them Sela sent you. Won't get you a discount, but it's nice to be mentioned."
   - keywords: [""]
     responses:
       - "Ask me again? I was watching that gull and lost the thread entirely."

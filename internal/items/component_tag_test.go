@@ -72,3 +72,25 @@ func TestFindSpecByComponentTagUnknownTag(t *testing.T) {
 		t.Fatalf("resolved %v for an unknown tag; want nil", got)
 	}
 }
+
+// TestComponentTagNameNeverShowsADashedId pins #530 part 1: craft lists named
+// ingredients by component id ("2x healers-root"). A tag one item carries reads
+// as that item's name; a shared or unknown tag reads as plain words.
+func TestComponentTagNameNeverShowsADashedId(t *testing.T) {
+	defer SeedItemsForTest(map[int]*ItemSpec{
+		40004: {ItemId: 40004, Name: "Healer's Root", ComponentTag: "healers-root"},
+		40043: {ItemId: 40043, Name: "clay flask", ComponentTag: "bottle"},
+		40006: {ItemId: 40006, Name: "glass vial", ComponentTag: "bottle"},
+	})()
+
+	cases := map[string]string{
+		"healers-root":   "Healer's Root",
+		"bottle":         "bottle",
+		"bitter-thistle": "bitter thistle",
+	}
+	for tag, want := range cases {
+		if got := ComponentTagName(tag); got != want {
+			t.Errorf("ComponentTagName(%q) = %q, want %q", tag, got, want)
+		}
+	}
+}

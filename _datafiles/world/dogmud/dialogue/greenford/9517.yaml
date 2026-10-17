@@ -24,7 +24,7 @@ tree:
       The Archive. I know where everything is -- say what
       you want and I will tell you if we have it. The eastern
       surveys are on the upper tier if that is what you are
-      looking for. The restricted collection is east; that
+      looking for. The restricted collection is east. That
       requires the provost's written leave.
     hints: "You could ask Tess about the eastern surveys and
       Reth's filed survey, about the mark in the survey margins,
@@ -39,7 +39,7 @@ tree:
         The eastern surveys are on the upper tier, far right --
         organized by year of expedition. Reth's filed report is
         the thin one, three expeditions back. I have left it on
-        the reading-stand; someone has been asking after it for
+        the reading-stand. Someone has been asking after it for
         some time now. That is all it is: a filed survey. Read
         it yourself -- examine the filed-survey on the stand.
       hints: "You could examine the filed-survey on the reading-
@@ -67,7 +67,7 @@ tree:
         Box-files by region and date, portfolios in the same
         sequence. The card-index on the reading-stand bracket
         covers everything in the open holdings. Oldest tier is
-        the top tier; recent work is below. If you know the
+        the top tier. Recent work is below. If you know the
         region and approximate date I can find what you need
         in a moment. If you do not, tell me what you are
         looking for and I will find the right section.
@@ -96,7 +96,7 @@ tree:
       text: |
         We keep the source records and ask the questions that
         the official accounts consider settled. I keep the
-        archive; what I find and what I catalogue is the work.
+        archive. What I find and what I catalogue is the work.
         The Margin does not shout about what it finds. We file
         carefully and we wait. That is most of what keeping
         an archive amounts to, in the end.

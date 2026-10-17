@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/pets"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -30,14 +31,15 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	listedSomething := false
 
-	// Shut for the night — see buy.go.
-	if asleep := actions.ShopClosedForSleep(room); asleep != nil {
-		actions.RefuseMobIfAsleep(asleep, user)
+	// Shut for the night or off shift: see buy.go.
+	if actions.RefuseIfShopClosed(room, user) {
 		return true, nil
 	}
 
 	// Below the faces band you can't make out the goods (lighting plan 5b).
-	if actions.ShopSightRefusal(user.Character, room) {
+	// Only with a merchant here: with nobody to deal with, the no-merchant
+	// line below answers at every light.
+	if actions.MerchantHere(room, user.UserId) && actions.ShopSightRefusal(user.Character, room) {
 		user.SendText(messaging.CategoryRefusal, actions.ShopSightRefusalText)
 		return true, nil
 	}
@@ -115,7 +117,7 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					`Come back in the morning, or make some noise.`, away.Character.Name))
 			return true, nil
 		}
-		user.SendText(messaging.CategoryRefusal, "Visit a merchant to list and buy objects.")
+		refusal.NoMerchant(user)
 		return true, nil
 	}
 

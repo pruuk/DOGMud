@@ -35,8 +35,13 @@ func dropMobLootAndSetCorpse(m *mobs.Mob, room *rooms.Room) {
 	if !m.Character.HasConditionFlag(conditions.PermaGear) {
 
 		// Carried items: 100% base drop chance (per-item DropChance
-		// still applies via ShouldDrop).
+		// still applies via ShouldDrop). A NeverDrops item is skipped here
+		// too: a crit disarm returns the weapon to the pack (ReturnToPack),
+		// so mob-only gear can be carried, not worn, when the mob dies.
 		for _, item := range m.Character.Items {
+			if item.GetSpec().NeverDrops {
+				continue
+			}
 			if !item.ShouldDrop(100) {
 				continue
 			}
@@ -50,8 +55,8 @@ func dropMobLootAndSetCorpse(m *mobs.Mob, room *rooms.Room) {
 			// NeverDrops (e.g. boss-only stat-boost gear like the Core
 			// Guardian's Hull Plating / Core Matrix) is skipped entirely —
 			// distinct from PermaGear, which also suppresses this mob's
-			// carried Items + Gold. NeverDrops only touches equipped gear,
-			// leaving the mob's intended carried-item loot untouched.
+			// carried Items + Gold. NeverDrops only touches items flagged
+			// with it, leaving the mob's intended carried-item loot untouched.
 			if item.GetSpec().NeverDrops {
 				continue
 			}
@@ -119,8 +124,8 @@ func dropMobLootAndSetCorpse(m *mobs.Mob, room *rooms.Room) {
 
 	if loot.Gold > 0 {
 		msg := fmt.Sprintf(
-			`<ansi fg="yellow-bold">%d gold</ansi> drops to the ground.`,
-			loot.Gold,
+			`<ansi fg="yellow-bold">%s gold</ansi> drops to the ground.`,
+			util.FormatNumber(loot.Gold),
 		)
 		room.SendTextVisual(messaging.CategoryLoot, msg)
 		room.Gold += loot.Gold
@@ -175,7 +180,7 @@ func autoLootGold(playerDamage map[int]int, gold int) int {
 		// membership change or `party gold split`.
 		if u := users.GetByUserId(topDamager(playerDamage)); u != nil {
 			u.SendText(messaging.CategoryLoot,
-				fmt.Sprintf(`<ansi fg="yellow-bold">%d gold</ansi> goes into the party pool.`, plan.amount))
+				fmt.Sprintf(`<ansi fg="yellow-bold">%s gold</ansi> goes into the party pool.`, util.FormatNumber(plan.amount)))
 		}
 		return plan.amount
 	}
@@ -187,6 +192,6 @@ func autoLootGold(playerDamage map[int]int, gold int) int {
 	u.Character.Gold += plan.amount
 	events.AddToQueue(events.EquipmentChange{UserId: plan.userId, GoldChange: plan.amount})
 	u.SendText(messaging.CategoryLoot,
-		fmt.Sprintf(`You collect <ansi fg="yellow-bold">%d gold</ansi>.`, plan.amount))
+		fmt.Sprintf(`You collect <ansi fg="yellow-bold">%s gold</ansi>.`, util.FormatNumber(plan.amount)))
 	return plan.amount
 }

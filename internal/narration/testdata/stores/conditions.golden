@@ -268,7 +268,7 @@ condition|107|end_actee => Warmth returns and the frost releases your limbs.
 condition|108|start_actee => A jolt snaps through you, scrambling your nerves.
 condition|108|start_observer => Aliceia jerks as a charge arcs through them.
 condition|108|end_actee => The buzzing charge drains away and your nerves settle.
-condition|109|start_actee => Your blow rebounds off a skin of telekinetic force, and you stagger!
+condition|109|start_actee => An unseen force throws your blow back at you, and you stagger!
 condition|109|start_observer => Aliceia staggers as their own blow rebounds on them.
 condition|109|end_actee => You recover your footing.
 condition|110|start_actee => Clinging residue smears across you, dragging at every move.
@@ -283,13 +283,13 @@ condition|112|end_actee => The field thins and your limbs move freely again.
 condition|112|end_observer => The smothering field around <ansi fg="username">Aliceia</ansi> thins and lifts.
 condition|113|start_actee => A radiant presence blazes at your side. You feel lifted beyond yourself.
 condition|113|end_actee => The radiant presence dims, and you settle back into yourself.
-condition|114|start_actee => A cold, watching malice settles over you. Your aim wavers and your guard sags.
-condition|114|start_observer => Aliceia falters under an unseen, baleful gaze.
-condition|114|end_actee => The watching malice lifts, and your focus returns.
+condition|114|start_actee => something's cold, watching gaze settles on you. Your aim wavers and your guard sags.
+condition|114|start_observer => Aliceia falters under something's baleful gaze.
+condition|114|end_actee => The watching gaze lifts, and your focus returns.
 condition|115|start_actee => Ragged claw-wounds tear open across you, bleeding freely!
 condition|115|start_observer => Aliceia is raked open, blood welling from ragged claw-wounds.
 condition|115|trigger_actee => Your torn wounds keep bleeding.
-condition|115|end_actee => The bleeding finally slows and clots.
+condition|115|end_actee => Your torn claw-wounds finally clot.
 condition|116|start_actee => A primal dread rolls over you and every instinct says run.
 condition|116|start_observer => Aliceia shrinks back, gripped by a sudden animal dread.
 condition|116|end_actee => The dread loosens its grip on you.
@@ -303,7 +303,7 @@ condition|120|end_actee => The healing magic in your wounds runs its course.
 condition|121|trigger_actee => <ansi fg="green">The poison burns through your veins!</ansi>
 condition|121|end_actee => The poison in your veins finally burns itself out.
 condition|122|trigger_actee => <ansi fg="red">Blood seeps from your wounds!</ansi>
-condition|122|end_actee => Your wounds stop bleeding.
+condition|122|end_actee => The seeping blood clots and stops.
 condition|123|start_actee => The severed bond leaves a hollow in you that will take time to fill.
 condition|123|end_actee => The hollow the severed bond left in you has finally closed.
 condition|128|start_actor => <ansi fg="username">Aliceia</ansi>'s eyes sharpen to see in faint light.

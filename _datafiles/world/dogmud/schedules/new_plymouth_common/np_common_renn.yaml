@@ -27,6 +27,7 @@ segments:
     end: 14
     target_room: 5602
     activity: ""
+    offshift_line: "Not now, friend. I'm eating. Come back to the Bowl after."
     idlecommands:
       - emote stands at the edge of the well-crowd at the Rise, says little, and
         leaves knowing three things she did not arrive knowing.

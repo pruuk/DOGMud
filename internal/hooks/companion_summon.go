@@ -1,9 +1,7 @@
 package hooks
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/targeting"
-	"strings"
-
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -11,30 +9,41 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // resolveCompanionSummon handles YAML-driven companion summoning spells.
 // It replaces 13 nearly-identical JS onMagic scripts with one parameterized
 // Go function. Called when spellData.SummonMobId > 0.
 //
-// Steps: companion cap check, optional component consumption, optional corpse
-// consumption, stat scaling, mob spawn, charm, companion registration.
+// Steps: corpse selection, companion cap check, optional component
+// consumption, corpse consumption, stat scaling, mob spawn, charm, companion
+// registration.
 //
 // Returns true on success, false on failure (error already sent to user).
 func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData, spellRest string, room *rooms.Room) bool {
 
-	// Handle corpse targeting: "corpse", "2.corpse", "corpse#2", etc.
-	// Use the engine's standard disambiguation parser.
-	targetWord, targetIndex := util.GetMatchNumber(spellRest)
-	genericTargets := map[string]bool{"corpse": true, "remains": true, "body": true, "corpses": true, "bones": true, "": true}
-	if genericTargets[targetWord] {
-		spellRest = "" // Generic word — match by index, not name
-	}
-	// targetIndex: 1 = first valid, 2 = second valid, etc.
-
 	ch := user.Character
+
+	// ── 0. Corpse selection (if required) ───────────────────────────────
+	// Selection spends nothing, so it runs before the reservation gate and
+	// before the component is consumed (#282): a raise with no usable corpse
+	// names the corpse, not a reservation the player would free up only to
+	// fail again, and it keeps the component. The corpse is removed in step 3,
+	// once every other gate has passed. The same gate runs at cast start
+	// (usercommands.Cast); this one is the backstop for a corpse that went
+	// away while the cast channelled.
+	corpseIdx := -1
+	var corpsePool int
+	if spellData.SummonRequiresCorpse {
+		idx, pool, refusalLine := actions.FindRaiseCorpse(room, spellData, spellRest)
+		if idx < 0 {
+			user.SendText(messaging.CategoryRefusal, refusalLine)
+			return false
+		}
+		corpseIdx, corpsePool = idx, pool
+	}
 
 	// ── 1. Reservation + budget gate ────────────────────────────────────
 	// Reservation is DERIVED from the pet multiplier (D9), never authored.
@@ -71,20 +80,9 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 	}
 
 	// ── 3. Corpse consumption (if required) ─────────────────────────────
-	var corpsePool int
-
-	if spellData.SummonRequiresCorpse {
-		targetIdx, pool, reason := selectRaiseCorpse(room.Corpses, spellRest, targetIndex, int(spellData.SummonMinCorpsePool))
-		if targetIdx < 0 {
-			// Specific, actionable message (e.g. "still holds loot") rather than
-			// a blanket "no suitable remains".
-			user.SendText(messaging.CategorySpellManifestation, raiseFailureMessage(reason, spellRest))
-			return false
-		}
-		corpsePool = pool
-
-		// Remove the corpse
-		room.Corpses = append(room.Corpses[:targetIdx], room.Corpses[targetIdx+1:]...)
+	// Selected in step 0; nothing since then touches room.Corpses.
+	if corpseIdx >= 0 {
+		room.Corpses = append(room.Corpses[:corpseIdx], room.Corpses[corpseIdx+1:]...)
 	}
 
 	// ── 4. Stat scaling ─────────────────────────────────────────────────
@@ -152,100 +150,4 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 	}
 
 	return true
-}
-
-// raiseSkipReason explains why no corpse could be raised, so the failure
-// message can be specific and actionable instead of a blanket "no remains".
-type raiseSkipReason int
-
-const (
-	raiseNoMatch    raiseSkipReason = iota // no name/type-matching corpse present
-	raiseWasCharmed                        // matched, but it was already a companion
-	raiseTooWeak                           // matched, but its essence is too faint
-	raiseHasLoot                           // matched, but it still holds loot
-)
-
-// raisePriority ranks reasons by how actionable they are; the most actionable
-// (HasLoot — just loot it and retry) wins when several near-matches apply.
-func raisePriority(r raiseSkipReason) int {
-	switch r {
-	case raiseHasLoot:
-		return 3
-	case raiseTooWeak:
-		return 2
-	case raiseWasCharmed:
-		return 1
-	default:
-		return 0
-	}
-}
-
-func worseReason(a, b raiseSkipReason) raiseSkipReason {
-	if raisePriority(b) > raisePriority(a) {
-		return b
-	}
-	return a
-}
-
-// corpseRaisePool is the stat metric the raise spell scores a corpse by — the
-// same number `assess` reports, so the two agree on a corpse's worth. That
-// invariant is now enforced by both calling StatPoolTotal rather than by two
-// copies of the same sum staying in step.
-func corpseRaisePool(c rooms.Corpse) int {
-	return c.Character.StatPoolTotal()
-}
-
-// selectRaiseCorpse picks the targetIndex-th valid mob corpse to raise (1-based
-// among valid candidates). Returns (-1, 0, reason) when none qualifies, where
-// reason describes why the best name/type-matching corpse was rejected — so the
-// caller can show a helpful message. minPool <= 0 disables the stat-pool gate.
-func selectRaiseCorpse(corpses []rooms.Corpse, nameFilter string, targetIndex, minPool int) (idx int, pool int, reason raiseSkipReason) {
-	reason = raiseNoMatch
-	validCount := 0
-	for i, c := range corpses {
-		// Not a raisable mob corpse at all — never counts as a near-match.
-		if c.Prunable || c.UserId != 0 {
-			continue
-		}
-		// Name filter: a non-matching corpse isn't what the player asked for.
-		if nameFilter != "" && !strings.Contains(strings.ToLower(c.Character.Name), strings.ToLower(nameFilter)) {
-			continue
-		}
-		// From here the corpse matched name/type; rejections carry a reason.
-		if c.WasCharmed {
-			reason = worseReason(reason, raiseWasCharmed)
-			continue
-		}
-		if c.HasLoot() {
-			reason = worseReason(reason, raiseHasLoot)
-			continue
-		}
-		p := corpseRaisePool(c)
-		if minPool > 0 && p < minPool {
-			reason = worseReason(reason, raiseTooWeak)
-			continue
-		}
-		validCount++
-		if validCount == targetIndex {
-			return i, p, raiseNoMatch
-		}
-	}
-	return -1, 0, reason
-}
-
-// raiseFailureMessage renders the player-facing reason a raise found no corpse.
-func raiseFailureMessage(reason raiseSkipReason, nameFilter string) string {
-	switch reason {
-	case raiseHasLoot:
-		return "Those remains still hold spoils. Clear the loot from them first, then raise what's left."
-	case raiseTooWeak:
-		return "Those remains are too faint to hold a bound spirit."
-	case raiseWasCharmed:
-		return "Those remains were already animated once; there is nothing left to raise."
-	default:
-		if nameFilter != "" {
-			return "You cannot find suitable remains matching that description."
-		}
-		return "There are no suitable remains here to raise."
-	}
 }

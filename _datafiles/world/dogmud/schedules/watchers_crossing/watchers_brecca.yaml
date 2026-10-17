@@ -14,6 +14,7 @@ segments:
     end: 22
     target_room: 423
     activity: ""
+    offshift_line: "The post is shut for the night. Come by in the morning."
     idlecommands:
       - emote takes a corner table at the inn, ledger still tucked under her arm.
       - say One cup. I've got numbers to balance before I sleep.

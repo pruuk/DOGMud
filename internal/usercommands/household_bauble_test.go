@@ -4,7 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/baubles"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,6 +58,44 @@ func TestHouseholdBauble_GetRefusesAndStealFindsIt(t *testing.T) {
 	opts := parseStealArgs([]string{"small", "doll"}, room, user)
 	require.NotNil(t, opts)
 	assert.Equal(t, rec.Id, opts.HouseholdItem.Bauble)
+}
+
+// #553: in a room too dark to `get`, `steal <bauble>` cannot find a
+// household's bauble on the floor, and answers exactly as for a name that
+// matches nothing, so a thief cannot probe the dark floor for names.
+func TestHouseholdBauble_StealFindsNothingInTheDark(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreItems := items.SeedItemsForTest(map[int]*items.ItemSpec{
+		items.BaubleItemId: {ItemId: items.BaubleItemId, Name: "Curious Trinket", NameSimple: "trinket",
+			Type: items.Object, Subtype: items.Mundane, Weight: 0.2, Value: 1, NotSalable: true},
+	})
+	defer restoreItems()
+	baubles.SetDirForTest(t.TempDir())
+	defer items.SetBaubleResolver(nil)
+
+	user, room := getTestUserAndRoom(t)
+	rec, err := baubles.Create(baubles.Record{
+		Name: "Small Child's Doll", NameSimple: "doll", Tier: baubles.TierCheap, Value: 3, WeightLbs: 0.5,
+		Description: "A rag doll with one button eye.", Status: baubles.StatusReady,
+	})
+	require.NoError(t, err)
+	theirs := items.New(items.BaubleItemId)
+	theirs.Bauble = rec.Id
+	theirs.LeaveBaubleAt("on the shelf", room.RoomId, time.Now())
+	room.AddItem(theirs, false)
+	defer room.RemoveItem(theirs, false)
+
+	room.Lamp = nil
+	room.Biome = "cave"
+	require.True(t, actions.TooDarkToGet(&actions.UserActor{User: user, Room: room}), "precondition: too dark to get")
+	events.DrainQueuedMessagesForTest(user.UserId)
+
+	assert.Nil(t, parseStealArgs([]string{"small", "doll"}, room, user), "a household bauble was named in the dark")
+	hit := events.DrainQueuedMessagesForTest(user.UserId)
+	assert.Nil(t, parseStealArgs([]string{"no", "such", "thing"}, room, user))
+	miss := events.DrainQueuedMessagesForTest(user.UserId)
+	assert.Equal(t, miss, hit, "a bauble that is there answers as a name that is not")
 }
 
 // `get all trinket` with a household's trinket listed first and the

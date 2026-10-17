@@ -27,6 +27,7 @@ segments:
     end: 15
     target_room: 5619
     activity: ""
+    offshift_line: "Not out here. Come to the clinic in a little while."
     idlecommands:
       - emote stands in the alley a while under the brittle herb-bunch, eyes
         half-closed, taking the one part of the day she lets herself stop.

@@ -22,7 +22,7 @@ tree:
   nodes:
     - id: trade
       triggers: ["trade", "leather", "hide", "tan", "tanning", "work"]
-      text: "It's slow, patient work and most folk don't want to know the half of it — there's soaking and scraping and curing that'd turn your stomach, and weeks of it before a single belt comes out the far end. But valley folk need boots and harness and bindings same as anyone, so somebody's got to stand in the stink. I've made my peace with it. The leather's good. That's what lasts; the smell washes off, mostly."
+      text: "It's slow, patient work and most folk don't want to know the half of it — there's soaking and scraping and curing that'd turn your stomach, and weeks of it before a single belt comes out the far end. But valley folk need boots and harness and bindings same as anyone, so somebody's got to stand in the stink. I've made my peace with it. The leather's good. That's what lasts. The smell washes off, mostly."
       hints: "You could ask Hollin about the valley, or about life here."
     - id: valley
       triggers: ["valley", "amber", "lane", "place", "village"]

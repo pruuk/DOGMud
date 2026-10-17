@@ -46,7 +46,7 @@ tree:
       text: >-
         The loft is up the stairs -- pallets, blankets, no charge
         while you are learning the town. Lie down and type
-        <ansi fg="command">sleep</ansi>; the body mends itself faster
+        <ansi fg="command">sleep</ansi>. The body mends itself faster
         asleep than any salve can manage, and
         <ansi fg="command">stand</ansi> wakes you when you have had
         enough. One honest warning, love: a sleeper is soft. Anything
@@ -63,7 +63,7 @@ tree:
         Stew is whatever the coulee gave us this week, and the taps
         pour fair. Eating keeps your strength honest -- a hungry body
         mends slow and swings slower. Onna sells trail rations for
-        the road; my stew is for the table, and the table is better
+        the road. My stew is for the table, and the table is better
         company.
       hints: >-
         You could ask about sleeping in the loft, or the inn's name.

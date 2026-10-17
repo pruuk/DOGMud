@@ -39,11 +39,11 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 	if res.OnCooldown {
-		refusal.Cooldown(user, "drain")
+		refusal.CooldownAfterCost(user, "drain", res.Cost)
 		return true, nil
 	}
 	if res.NoTarget {
-		refusal.NoTarget(user, "drain")
+		refusal.NoTargetAfterCost(user, "drain", res.Cost)
 		return true, nil
 	}
 

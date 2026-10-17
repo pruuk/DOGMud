@@ -32,7 +32,7 @@ tree:
       moodChange: friendly
     - id: valley
       triggers: ["valley", "amber", "ahead", "chrysalis", "rite"]
-      text: "Amber Valley's a soft landing after this hard road. Warm folk, green fields, and they make a festival of the Chrysalis Rite — they'll tell you a mutation's a gift the body gives itself. Strange to some, but I've seen worse manners in places that called themselves refined. Ask for the Golden Bough when you're down there; Hesper sets a finer table than mine, though I'll deny saying it."
+      text: "Amber Valley's a soft landing after this hard road. Warm folk, green fields, and they make a festival of the Chrysalis Rite — they'll tell you a mutation's a gift the body gives itself. Strange to some, but I've seen worse manners in places that called themselves refined. Ask for the Golden Bough when you're down there. Hesper sets a finer table than mine, though I'll deny saying it."
       hints: "You could ask Bram about the inn and the road, or about the travellers
         he sees come through."
       moodChange: friendly

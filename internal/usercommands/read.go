@@ -13,6 +13,11 @@ import (
 
 func Read(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	if rest == `` {
+		refusal.Prompt(user, `read`, refusal.What, `read <item>`)
+		return true, nil
+	}
+
 	// Check whether the user has an item in their inventory that matches
 
 	foundItemName := ""

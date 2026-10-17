@@ -204,6 +204,14 @@ func validateScheduleStandalone(s *Schedule) error {
 			return fmt.Errorf("schedule %q segment %d: activity is \"patrol\" but patrol_id is empty",
 				s.Id, i)
 		}
+		if strings.Contains(seg.OffShiftLine, ";") {
+			return fmt.Errorf("schedule %q segment %d: offshift_line holds a ';', the command separator, which cuts spoken text",
+				s.Id, i)
+		}
+		if seg.OffShiftLine != "" && seg.Activity == "sleeping" {
+			return fmt.Errorf("schedule %q segment %d: offshift_line on a sleeping segment never shows (a sleeper refuses with the asleep line)",
+				s.Id, i)
+		}
 	}
 
 	// Coverage check: walk all 24 hours and ensure each hour is claimed by

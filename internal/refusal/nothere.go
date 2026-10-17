@@ -13,8 +13,13 @@ const (
 	// NothingToAimLine answers a player who sees nothing and named a shape,
 	// or named nothing at all.
 	NothingToAimLine = `You can't see anything to aim at.`
+	// NoMerchantLine answers every shop verb (list, buy, sell, offer,
+	// appraise) used where no merchant is present. One wording for all of
+	// them (2026-10-17 playtest found four).
+	NoMerchantLine = `There's no merchant here.`
 )
 
 func NotHereCreature(to Recipient) { send(to, NotHereCreatureLine) }
 func NotHereThing(to Recipient)    { send(to, NotHereThingLine) }
 func NothingToAim(to Recipient)    { send(to, NothingToAimLine) }
+func NoMerchant(to Recipient)      { send(to, NoMerchantLine) }

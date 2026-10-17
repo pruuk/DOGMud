@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"math/rand"
+	"math/bits"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -22,6 +22,7 @@ import (
 
 	"crypto/md5"
 
+	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/mattn/go-runewidth"
@@ -202,30 +203,23 @@ func (t *Accumulator) Record(nextValue float64) {
 	}
 }
 
-// randSource is where Rand draws: the math/rand global, unless a test has
-// swapped in a seeded source with SetRandForTest. Atomic so a -race run
-// sees no data race on the swap.
-var randSource atomic.Pointer[func(int) int]
-
+// Rand returns a uniform int in [0, maxInt), or 0 when maxInt < 1. It draws
+// from the dice source (internal/dice/source.go): the math/rand global in
+// production, or the seeded generator a test installed with SetRandForTest.
 func Rand(maxInt int) int {
 	if maxInt < 1 {
 		return 0
 	}
-	if src := randSource.Load(); src != nil {
-		return (*src)(maxInt)
-	}
-	return rand.Intn(maxInt)
+	return dice.Intn(maxInt)
 }
 
-// SetRandForTest makes Rand draw from a source seeded with seed, so a test
-// can replay every random draw a run makes (item behaviour slice 2, spec
-// X19). Returns a restore func. The seeded source is not safe for
-// concurrent draws: use it only in a test that draws from one goroutine.
+// SetRandForTest seeds the one random source that Rand AND every dice roll
+// draw from (dice.SetRandForTest), so a test can replay every random draw a
+// run makes (item behaviour slice 2, spec X19; #576, #524). Returns a
+// restore func. Draws are mutex-guarded, so concurrent draws are race-free,
+// but only a single-goroutine test replays the same sequence every time.
 func SetRandForTest(seed int64) func() {
-	r := rand.New(rand.NewSource(seed))
-	draw := func(n int) int { return r.Intn(n) }
-	prev := randSource.Swap(&draw)
-	return func() { randSource.Store(prev) }
+	return dice.SetRandForTest(seed)
 }
 
 func LogRoll(name string, rollResult int, targetNumber int) {
@@ -1235,7 +1229,7 @@ func ConvertToAscii(s string) string {
 
 		repl, ok := unicodeToAscii[r]
 		if !ok {
-			repl = string(r)
+			repl = asciiFallback(r)
 		}
 
 		if repl == "" {
@@ -1250,6 +1244,30 @@ func ConvertToAscii(s string) string {
 		trim()
 	}
 	return string(buf)
+}
+
+// asciiFallback converts a rune the table does not name. Braille cells (the
+// goodbye art) become a shade by how many dots they set; any other box-drawing
+// piece becomes "+". Every other rune passes through unchanged: the table is
+// the list of glyphs the game emits, and TestAsciiModeCoversEveryShippedGlyph
+// fails when a template, config string or Go literal brings in one it lacks.
+func asciiFallback(r rune) string {
+	switch {
+	case r >= 0x2800 && r <= 0x28FF:
+		switch dots := bits.OnesCount8(uint8(r - 0x2800)); {
+		case dots == 0:
+			return " "
+		case dots <= 2:
+			return "."
+		case dots <= 5:
+			return ":"
+		default:
+			return "#"
+		}
+	case r >= 0x2500 && r <= 0x257F:
+		return "+"
+	}
+	return string(r)
 }
 
 // unicodeToAscii maps decorative Unicode runes to ASCII string equivalents.
@@ -1270,9 +1288,41 @@ var unicodeToAscii = map[rune]string{
 	'╞': "+", '╡': "+", '╤': "+", '╧': "+", '╪': "+",
 	'╓': "+", '╖': "+", '╙': "+", '╜': "+",
 	'╟': "+", '╢': "+", '╥': "+", '╨': "+", '╫': "+",
+	// Box-drawing: the half strokes and mixed-weight pieces the splash art
+	// uses (spring's sprouts are ╿).
+	'╿': "|", '╽': "|", '╼': "-", '╾': "-",
 	// Block elements
 	'█': "#", '▓': "#", '▒': ":", '░': ".",
 	'▄': "-", '▀': "_", '▌': "|", '▐': "|",
+	// Block elements: the eighth-height bars that draw the sunrise, sunset and
+	// season wave lines (▂▃▄▅▆▇), rising low to high, and the eighth-width bars.
+	'▁': "_", '▂': "_", '▃': "-", '▅': "=", '▆': "=", '▇': "#",
+	'▉': "#", '▊': "#", '▋': "|", '▍': "|", '▎': "|", '▏': "|",
+	'▔': "-", '▕': "|",
+	// Block elements: quadrants (the season splash ground lines). A lone low
+	// quadrant is a dot, a lone high one a tick, three quadrants are solid,
+	// and the two diagonal pairs lean the way they are drawn.
+	'▖': ".", '▗': ".", '▘': "'", '▝': "'",
+	'▙': "#", '▛': "#", '▜': "#", '▟': "#",
+	'▚': "\\", '▞': "/",
+	// Small dots: the star fields in the sunrise, sunset, moon and mutation
+	// banners.
+	'·': ".", '˙': "'",
+	// Flowers and sparkles in the season and weather splashes.
+	'❀': "*", '❁': "*", '✿': "*", '☘': "*", '✳': "*",
+	// The combat prompt's target pointer.
+	'»': ">", '«': "<",
+	// The shield-slam and block-crit lines (combat and help combat): dropped,
+	// the words SHIELD SLAM beside it say it.
+	'🛡': "",
+	// The storm splash's lightning stroke.
+	'⟍': "\\",
+	// Map help legend: the storage marker.
+	'▢': "#",
+	// Text glyphs in admin and help text.
+	'←': "<-", '↔': "<->", '⇒': "=>", '≥': ">=", '≤': "<=", '−': "-",
+	'∈': "in", '’': "'", '‘': "'", '“': "\"", '”': "\"", 'σ': "s",
+	'【': "[", '】': "]", '§': "S",
 	// Bullet / misc
 	'•': "*",
 	// Diagonal lines

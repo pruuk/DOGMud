@@ -75,7 +75,7 @@ tree:
       text: "I carry ingots for smiths and finished blades for people
         who want something ready to use — iron and steel both, in a
         few lengths and weights. The steel blades are Halvard's work
-        from the Crafting Quarter; the iron pieces come through the
+        from the Crafting Quarter. The iron pieces come through the
         docks warehouse. I grade everything that comes in. Nothing
         on that rack is there by accident."
       hints: "You could ask about the supply chain from the docks and
@@ -88,7 +88,7 @@ tree:
                  "dunmar", "circuit", "runner", "quarter"]
       text: "The raw iron comes from Dunmar's warehouse on the docks —
         bulk import, standard grade. That goes to Halvard's forge in
-        the Crafting Quarter; he turns it into something worth selling.
+        the Crafting Quarter. He turns it into something worth selling.
         His better blades come up to me on a regular schedule — I move
         them at a proper price rather than the craft-district rate.
         He gets a fair split and I get quality stock. The arrangement

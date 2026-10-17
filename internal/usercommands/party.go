@@ -309,7 +309,9 @@ func cmdPartyDecline(user *users.UserRecord, currentParty *parties.Party) (bool,
 }
 
 func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
-	headers := []string{"Name", "Status", "Health", "Location", "Position"}
+	// No rank column: party ranks (Party.Position, GetRank) are hidden until
+	// positioning is designed (#295, #600). No command can set one.
+	headers := []string{"Name", "Status", "Health", "Location"}
 	formatting := [][]string{}
 
 	rows := [][]string{}
@@ -340,13 +342,11 @@ func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
 			uHealthPct := int(math.Floor((float64(u.Character.Health) / float64(u.Character.HealthMax.Value)) * 100))
 			uHealthPctStr := fmt.Sprintf(`%d%%`, uHealthPct)
 			uLoc := uRoom.Title
-			rank := currentParty.GetRank(u.UserId)
 			healthClass := util.HealthClass(u.Character.Health, u.Character.HealthMax.Value)
 
 			if isInvited {
 				uLoc = `-`
 				uHealthPctStr = `-`
-				rank = `-`
 				healthClass = `black-bold`
 			}
 
@@ -355,14 +355,12 @@ func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
 				uStatus,
 				uHealthPctStr,
 				uLoc,
-				rank,
 			})
 
 			rowFormat := []string{`<ansi fg="username">%s</ansi>`,
 				`<ansi fg="white-bold">%s</ansi>`,
 				`<ansi fg="` + healthClass + `">%s</ansi>`,
-				`<ansi fg="magenta-bold">%s</ansi>`,
-				`<ansi fg="white-bold">%s</ansi>`}
+				`<ansi fg="magenta-bold">%s</ansi>`}
 
 			formatting = append(formatting, rowFormat)
 
@@ -392,14 +390,12 @@ func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
 				`♥friend`,
 				fmt.Sprintf(`%d%%`, mHealthPct),
 				mRoom.Title,
-				`-`,
 			})
 
 			rowFormat := []string{`<ansi fg="username">%s</ansi>`,
 				`<ansi fg="white-bold">%s</ansi>`,
 				`<ansi fg="` + util.HealthClass(m.Character.Health, m.Character.HealthMax.Value) + `">%s</ansi>`,
-				`<ansi fg="magenta-bold">%s</ansi>`,
-				`<ansi fg="white-bold">%s</ansi>`}
+				`<ansi fg="magenta-bold">%s</ansi>`}
 
 			formatting = append(formatting, rowFormat)
 		}
@@ -428,13 +424,11 @@ func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
 					`♦companion`,
 					fmt.Sprintf(`%d%%`, mHealthPct),
 					mRoom.Title,
-					`-`,
 				})
 				rowFormat := []string{`<ansi fg="cyan">%s</ansi>`,
 					`<ansi fg="cyan">%s</ansi>`,
 					`<ansi fg="` + util.HealthClass(m.Character.Health, m.Character.HealthMax.Value) + `">%s</ansi>`,
-					`<ansi fg="magenta-bold">%s</ansi>`,
-					`<ansi fg="white-bold">%s</ansi>`}
+					`<ansi fg="magenta-bold">%s</ansi>`}
 				formatting = append(formatting, rowFormat)
 			}
 		}
@@ -449,14 +443,12 @@ func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
 				`Invited`,
 				`-`,
 				`-`,
-				`-`,
 			})
 
 			rowFormat := []string{`<ansi fg="username">%s</ansi>`,
 				`<ansi fg="white-bold">%s</ansi>`,
 				`<ansi fg="black-bold">%s</ansi>`,
-				`<ansi fg="magenta-bold">%s</ansi>`,
-				`<ansi fg="white-bold">%s</ansi>`}
+				`<ansi fg="magenta-bold">%s</ansi>`}
 
 			formatting = append(formatting, rowFormat)
 
@@ -779,7 +771,7 @@ func settlePartyGold(currentParty *parties.Party) int {
 			GoldChange: -amount,
 		})
 		u.SendText(messaging.CategoryLoot,
-			fmt.Sprintf(`Your share of the party pool: <ansi fg="yellow-bold">%d gold</ansi>.`, amount))
+			fmt.Sprintf(`Your share of the party pool: <ansi fg="yellow-bold">%s gold</ansi>.`, util.FormatNumber(amount)))
 	}
 	currentParty.GoldPool += reserved // conserve: undistributed shares stay pooled
 	return total
@@ -801,7 +793,7 @@ func cmdPartyGold(user *users.UserRecord, currentParty *parties.Party, rest stri
 	}
 
 	user.SendText(messaging.CategorySystem,
-		fmt.Sprintf(`The party pool holds <ansi fg="yellow-bold">%d gold</ansi>.`, currentParty.GoldPool))
+		fmt.Sprintf(`The party pool holds <ansi fg="yellow-bold">%s gold</ansi>.`, util.FormatNumber(currentParty.GoldPool)))
 	user.SendText(messaging.CategorySystem, `Type <ansi fg="command">party gold split</ansi> to divide it among members.`)
 	return true, nil
 }

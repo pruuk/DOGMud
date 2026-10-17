@@ -56,6 +56,22 @@ func TestRoundsWaiting_DecrementStopsAtZero(t *testing.T) {
 	assert.Zero(t, m.RoundsWaiting(), "and it must not go negative")
 }
 
+// SpendRoundOnAction is a one-round budget whose wait round consumes
+// silently. The mark lasts exactly as long as that round: consuming it, or
+// any later SetRoundsWaiting (an engagement wind-up), clears it.
+func TestRoundsWaiting_SpendRoundOnActionMarksOnlyThatRound(t *testing.T) {
+	m := NewMachine()
+	m.SpendRoundOnAction()
+	assert.Equal(t, 1, m.RoundsWaiting())
+	assert.True(t, m.RoundSpentByAction())
+	assert.True(t, m.ConsumeRoundWaiting())
+	assert.False(t, m.RoundSpentByAction(), "the spent round is gone, so is the mark")
+
+	m.SpendRoundOnAction()
+	m.SetRoundsWaiting(2)
+	assert.False(t, m.RoundSpentByAction(), "an ordinary wait replaces the spent round and narrates")
+}
+
 func TestRoundsWaiting_NegativeSeedClampsToZero(t *testing.T) {
 	m := NewMachine()
 	m.SetRoundsWaiting(-4)

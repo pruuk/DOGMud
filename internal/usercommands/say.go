@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -43,6 +44,16 @@ func Say(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	selfMsg := fmt.Sprintf(`You say, "<ansi fg="saytext">%s</ansi>"`, result.Text)
 	user.SendText(messaging.CategorySpeech, util.SplitStringNL(selfMsg, 80))
+
+	// Quest engine: command notification, sent only once something was
+	// actually said. The tutorial's "type say hello" step listens here rather
+	// than on command_issued, which a refused bare `say` also fires.
+	bridge := questengine.NewGameBridge(user, room.RoomId)
+	questengine.GetEngine().Notify("command", questengine.EventDetails{
+		UserId:  user.UserId,
+		RoomId:  room.RoomId,
+		Command: "say",
+	}, bridge, bridge)
 
 	return true, nil
 }
