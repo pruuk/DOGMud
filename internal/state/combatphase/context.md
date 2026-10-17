@@ -89,6 +89,24 @@ state: decrements `RoundsUntil` and advances to `Engaged` when it hits
 zero. In `Engaged` and `Disengaging`: no-op (those states are driven
 externally by the combat resolution and flee logic).
 
+### Round budget
+
+```go
+func (m *Machine) RoundsWaiting() int
+func (m *Machine) SetRoundsWaiting(n int)
+func (m *Machine) SpendRoundOnAction()
+func (m *Machine) RoundSpentByAction() bool
+func (m *Machine) ConsumeRoundWaiting() bool
+```
+
+The actor's round budget, consumed by `handleCombatWaitRound` (hooks). A
+wait seeded by `SetRoundsWaiting` (engagement wind-up, spell casting)
+narrates its rounds with the wait-pool line. An action that spends the round
+and narrates itself (every special move, warcry, rally, taunt, throw, stand,
+a failed target switch) calls `SpendRoundOnAction` instead, and its round
+is consumed with no wait line (2026-10-17). `SetRoundsWaiting` and consuming
+the last round both clear the mark. `Character` wraps all five.
+
 ### Flee resolution
 
 ```go

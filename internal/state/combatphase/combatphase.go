@@ -128,7 +128,11 @@ type Machine struct {
 	vetoes                   vetoChain
 	tickEventListeners       []func(name string, r state.TransitionReason)
 	roundsWaiting            int // see the two-counter note above
-	openingUnspent           bool
+	// roundSpentByAction marks a round budget that an action spent and
+	// already narrated (a special move, a shout, standing up). Its wait
+	// round is consumed silently. See SpendRoundOnAction.
+	roundSpentByAction bool
+	openingUnspent     bool
 }
 
 // OpeningUnspent reports whether this engagement still carries its ambush
@@ -162,6 +166,28 @@ func (m *Machine) SetRoundsWaiting(n int) {
 		n = 0
 	}
 	m.roundsWaiting = n
+	m.roundSpentByAction = false
+}
+
+// SpendRoundOnAction sets a one-round budget for an action that took this
+// actor's round and narrated itself: a special move, a shout, a throw,
+// standing up, a failed target switch. The wait round that follows is then
+// consumed without the "You watch X closely, waiting for the perfect
+// moment." line, which used to print right after a landed kick or bash
+// (2026-10-17 playtest) and told the player they were still waiting after
+// they had just acted.
+//
+// The engagement wind-up and spell casting keep SetRoundsWaiting: those
+// rounds are waits, and the wait line is how they are narrated.
+func (m *Machine) SpendRoundOnAction() {
+	m.roundsWaiting = 1
+	m.roundSpentByAction = true
+}
+
+// RoundSpentByAction reports whether the current round budget was set by
+// SpendRoundOnAction, so its wait round is consumed silently.
+func (m *Machine) RoundSpentByAction() bool {
+	return m.roundSpentByAction && m.roundsWaiting > 0
 }
 
 // ConsumeRoundWaiting decrements the budget by one and reports whether this
@@ -175,6 +201,9 @@ func (m *Machine) ConsumeRoundWaiting() bool {
 		return false
 	}
 	m.roundsWaiting--
+	if m.roundsWaiting == 0 {
+		m.roundSpentByAction = false
+	}
 	return true
 }
 

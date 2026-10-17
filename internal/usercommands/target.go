@@ -258,7 +258,7 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		// Still costs a round (set the round budget to 1)
 		if user.Character.CombatPhase != nil {
-			user.Character.SetRoundsWaiting(1)
+			user.Character.SpendRoundOnAction()
 		}
 	}
 
