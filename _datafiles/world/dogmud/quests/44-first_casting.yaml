@@ -73,5 +73,5 @@ triggers:
       - actor: >-
           Your spell leaves you and breaks against the mote in a flare of
           folded light; the mote draws inward and reknits, unharmed. That is
-          casting -- will shaped to a purpose and let go. Return to Grieve in
-          the hall below and tell him it is done.
+          casting -- will shaped to a purpose and let go. Go back south to
+          Adept Grieve in the Observatory Hall and type ask grieve done.
