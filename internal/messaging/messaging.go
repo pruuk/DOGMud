@@ -152,6 +152,16 @@ const (
 	// rides CategoryBroadcast, where channel chat rides.
 	CategoryGroup
 
+	// A laid-out screen a command draws whose lines are headings, legends
+	// and rows rather than sentences: the map (its legend ends on a name)
+	// and the achievements list (its headings are bare category names).
+	// Every normalize stage is skipped, as for CategorySplash, so no stop
+	// lands after "Shore" or "Combat" and no map cell is recased or
+	// collapsed. Never wrapped and coloured as CategorySystem (alias screen
+	// at system's value), where these lines rode. Appended so no existing
+	// value shifts.
+	CategoryScreen
+
 	// categoryMax is the exclusive upper bound of the Category enum.
 	// Used by tests to iterate the full range; do not consume in
 	// production code.
@@ -298,6 +308,8 @@ func (c Category) String() string {
 		return "admin"
 	case CategoryGroup:
 		return "group"
+	case CategoryScreen:
+		return "screen"
 	}
 	return "Unknown"
 }

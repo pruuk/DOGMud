@@ -159,6 +159,7 @@ func TestMixedAndPreformattedCategoriesNeverWrap(t *testing.T) {
 		CategoryEmote:           "already wrapped at a hardcoded 80 by reply.go, ignoring LineWidth",
 		CategoryDefault:         "the fail-safe default: an unclassified category keeps today's behavior",
 		CategoryRefusal:         "refusals rode CategorySystem, which never wraps (M7, #371)",
+		CategoryScreen:          "a laid-out screen (the map, the achievements list) that rode CategorySystem",
 	}
 
 	for cat, reason := range neverWrap {

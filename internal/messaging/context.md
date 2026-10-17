@@ -168,6 +168,14 @@ Types and constants:
     keep narration off it: `system_recipient_guard_test.go` (inside a command
     handler it reaches only a parameter) and `system_subject_guard_test.go`
     (a line opening with another creature and addressing "you" is narration).
+- `CategoryScreen` (2026-10-17), appended after `CategoryGroup`: a laid-out
+  screen whose lines are headings, legends and rows, not sentences (the
+  `map` command and the `achievements` list). It skips every normalise
+  stage, as `CategorySplash` does, so the map legend's last name and a bare
+  category heading get no stop. Alias `screen` is 8 (the `system` value) and
+  it is not in `shouldWrap`, so otherwise it looks as `CategorySystem` did.
+  Pinned by `category_screen_test.go`; the map by
+  `usercommands.TestMapLegendEndsWithoutAStop`.
 - `Verbosity`, `ParseVerbosity`, `(Verbosity).Suppresses` — combat-text
   verbosity primitives in `verbosity.go`. The allowlists
   (`suppressibleAtMedium`, `suppressibleAtLight`) declare which

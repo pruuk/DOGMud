@@ -39,6 +39,7 @@ func skipStages(cat Category) normalizeStage {
 		CategorySpeech, CategoryWhisper, CategoryShout, CategoryEmote,
 		CategoryCraftSeen, // rode CategoryEmote / CategoryMobIdle (owner ruling C)
 		CategoryBroadcast,
+		CategoryScreen,        // headings, legends and rows, not sentences
 		CategorySkillProgress: // banner has its own formatting
 		// CategoryBroadcast has exactly two production senders and
 		// neither wants the server rewriting its text: the MOTD box

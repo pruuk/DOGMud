@@ -301,3 +301,8 @@ colors:
   usage: 8
   admin: 8
   group: 8
+
+# Laid-out screens whose lines are not sentences: the map and the
+# achievements list. Same value as `system`, the category these lines rode,
+# so moving them only stops the normalizer adding a full stop to them.
+  screen: 8
