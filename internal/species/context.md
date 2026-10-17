@@ -124,7 +124,7 @@ each file's lines say what that body does and stay within 80 columns:
 | `slam` | earth elemental 37 "stone fists", automaton 45 "servo-driven fists" | heavy bodies pound with fists and drive their weight |
 | `trample` | horse 26 "hooves" | kicks, rears, stamps; may name hooves, legs, head, chest |
 | `lash` | fungal colony 15 "spore tendrils", slime 16 "pseudopods" | whips, smothers, engulfs; names no feet, head, chest or shoulder |
-| `blast` | water 36, air 38, fire 39, magma 40, sand 41, storm 42, ice 43 elementals | the element strikes through its own `unarmedname`; no body parts they lack |
+| `blast` | water 36 "watery surge", air 38 "slicing gust", fire 39 "scorching fists", magma 40 "molten fists", sand 41 "abrasive whirl", storm 42 "coruscating fists", ice 43 "crystalline fists" | the element strikes through its own `unarmedname`; no body parts they lack. Lines read for a singular force and for plural fists alike, and the 17-character names set blast's width budget |
 
 The smoke elemental (44) left slam for `claws` ("smoke-wrought claws"): it
 materialises claws and rakes. Its signature `smother` special move lands in
