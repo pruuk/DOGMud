@@ -523,7 +523,15 @@ perceive can be named), then a sealed crate or a known room container
 (`lookNamesAnObject`, `:116`), then an exit (direction alias resolved, then
 through-sight, then lock). `LookKind` (`:12`) is `LookBlind`, `LookTooDark`,
 `LookRoom`, `LookCreature`, `LookExit`, `LookExitTooDark`, `LookExitLocked`,
-`LookExitShapes`, `LookOther`, `LookOwnGearByTouch`. `LookExitShapes` (lighting plan 6, owner
+`LookExitShapes`, `LookOther`, `LookOwnGearByTouch`, `LookFigure`. `LookFigure` (owner
+ruling 2026-10-17) is a player at shapes naming a figure by the aim word
+(`look figure`, `look 2.shape`, AimBySight's figures), checked before the
+creature step and never for a mob looker; the player wrapper reads it as a
+corpse at shapes ("You can make out no more than its shape.", one constant
+in `usercommands/look.go`) and names no one; a looked-at player reads
+"<looker> is looking at you." at `LookResolution.TargetSight` (nothing when
+they see nothing), the room by sight. A count past the last figure
+falls through to "You can only make out shapes here.". `LookExitShapes` (lighting plan 6, owner
 ruling O6) is an exit the light here is too poor to see through
 (`messaging.SeesThroughExit` false) whose next room heat still reaches
 (`messaging.SensesHeatThroughExit`); a locked exit under heat is still

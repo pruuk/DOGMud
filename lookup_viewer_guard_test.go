@@ -37,7 +37,7 @@ var lookupRegistry = map[string]lookupEntry{
 	"internal/actions/cast.go|InitiateCast":                            {viewer: 4},
 	"internal/actions/combat_attack.go|FindAttackTarget":               {viewer: 1},
 	"internal/actions/combat_fire.go|ExecuteFire":                      {viewer: 2},
-	"internal/actions/look.go|ResolveLook":                             {viewer: 1},
+	"internal/actions/look.go|ResolveLook":                             {viewer: 2},
 	"internal/actions/melee_target.go|StageMeleeTarget":                {viewer: 1, plain: 1, why: whySelf},
 	"internal/actions/target_resolution.go|ResolveTargetActor":         {viewer: 1},
 	"internal/actions/track.go|Track":                                  {viewer: 1},

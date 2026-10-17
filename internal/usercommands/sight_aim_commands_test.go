@@ -577,3 +577,31 @@ func TestSpecialMoveRefusals_NameTheTargetAtSight(t *testing.T) {
 		}
 	}
 }
+
+// Owner ruling 2026-10-17: in dim light `look figure` (and `look shape`, and
+// the counted forms) finds the figure and reads as `look corpse` does there:
+// "You can make out no more than its shape." It names no one. A count past
+// the last figure, or a typed name, still reads "You can only make out
+// shapes here."
+func TestLookSight_ShapesLooksAtAFigure(t *testing.T) {
+	for _, rest := range []string{"figure", "2.figure", "shape", "shape#2"} {
+		user, room := aimScene(t, aimShapes)
+		_, err := Look(rest, user, room, events.EventFlag(0))
+		require.NoError(t, err)
+		told := aimTold(1)
+		assert.Contains(t, told, "You look at a figure.", "%q", rest)
+		assert.Contains(t, told, lookShapeOnlyLine, "%q", rest)
+		assert.NotContains(t, told, "You can only make out shapes here.", "%q", rest)
+		assert.NotContains(t, told, "Skeleton", "%q", rest)
+		assert.NotContains(t, told, "Bobrick", "%q", rest)
+		assert.NotContains(t, aimTold(2), "Aliceia", "%q: Bobrick sees nothing in the dark", rest)
+	}
+	for _, rest := range []string{"3.figure", "skeleton"} {
+		user, room := aimScene(t, aimShapes)
+		_, err := Look(rest, user, room, events.EventFlag(0))
+		require.NoError(t, err)
+		told := aimTold(1)
+		assert.Contains(t, told, "You can only make out shapes here.", "%q", rest)
+		assert.NotContains(t, told, lookShapeOnlyLine, "%q", rest)
+	}
+}
