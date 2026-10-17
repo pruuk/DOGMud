@@ -53,7 +53,7 @@ character:
   gold: 1000
   equipment:
     light:
-      itemid: 40038
+      itemid: 20134
   skills:
     jewelcrafting: 1
   stats:
