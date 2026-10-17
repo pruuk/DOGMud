@@ -1266,7 +1266,10 @@ Design: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.5-mutations
 - Player shops and merchant NPCs
 - Clan membership support
 - Pet ownership and management
-- Quest progress tracking
+- Quest progress tracking. `GetFocusQuestId()` picks the quest that `hint`, the
+  web Quests panel and the minimap marker resolve against. It never returns a
+  secret quest, and `GiveQuestToken` does not move `LastQuestId` onto one.
+  `IsSecretQuest(questId)` is the shared check for other quest surfaces.
 
 ## Shop Inventory Decoupling (Living Economy)
 

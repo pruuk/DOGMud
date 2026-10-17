@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
@@ -15,6 +16,14 @@ import (
 func Hint(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	allProgress := user.Character.GetQuestProgress()
+
+	// Secret quests are hidden markers that `quests` never lists, so hint must
+	// not name one by any route (no argument, a number, or a partial name).
+	for questId := range allProgress {
+		if characters.IsSecretQuest(questId) {
+			delete(allProgress, questId)
+		}
+	}
 
 	if len(allProgress) == 0 {
 		user.SendText(messaging.CategoryTip, `You don't have any active quests.`)

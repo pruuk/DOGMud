@@ -56,6 +56,16 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 	if res.TargetOnFloor {
 		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("%s is already on the ground.", res.Target.Name))
+		// The trip is refused, but what it is for (the target on the ground)
+		// already holds, so the quest engine hears it as a trip. Without this
+		// the tutorial's trip step could not be finished while an automatic
+		// SWEEP keeps the effigy prone. Every other refusal stays silent.
+		bridge := questengine.NewGameBridge(user, room.RoomId)
+		questengine.GetEngine().Notify("command", questengine.EventDetails{
+			UserId:  user.UserId,
+			RoomId:  room.RoomId,
+			Command: "trip",
+		}, bridge, bridge)
 		return true, nil
 	}
 

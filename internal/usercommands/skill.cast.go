@@ -362,11 +362,14 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Quest engine: command notification — the cast successfully initiated.
 	// Lets quests gate a step on the `cast` command (the newbie Folding
 	// spoke's "cast at the practice mark" beat). Mirrors forage/drink/throw.
+	// Noun is the canonical spell id, so a step can ask for one spell
+	// whichever alias the player typed; a trigger with no noun matches any.
 	bridge := questengine.NewGameBridge(user, room.RoomId)
 	questengine.GetEngine().Notify("command", questengine.EventDetails{
 		UserId:  user.UserId,
 		RoomId:  room.RoomId,
 		Command: "cast",
+		Noun:    spellInfo.SpellId,
 	}, bridge, bridge)
 
 	return true, nil
