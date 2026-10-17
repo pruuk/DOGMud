@@ -1,0 +1,48 @@
+# Slam split (#541): the DEFENDER.
+#
+# You start in The Junction Vault (6408) beside A Culvert Slime. It is hostile.
+# You are the one being lashed. Your partner is a plain onlooker; THEY report
+# what the room was told, you report what you were told, and the pair is
+# compared.
+#
+# The change under test: slimes now attack with new `lash` lines (whips,
+# smothers, engulfs) instead of the old `slam` lines. Each blow should read as
+# the same moment to you and to anyone watching, and the watcher's line names
+# you as the target.
+#
+# QUOTE LINES VERBATIM. A paraphrase is useless: the whole question is whether
+# two sentences describe the same moment.
+#
+# 3 commands per round on the AI port and the overflow is dropped. Read every
+# line before sending more.
+#
+# KNOWN NON-BUGS, do not refile: damage is words and never numbers; corpses
+# persist for hours.
+
+ephemeral:
+  profile: mid
+  start_room: 6408
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    SET UP. Form a party with your partner (`party invite <their name>`; they
+    accept). Wait until they confirm on the party channel that their party
+    auto-attack is OFF. If the slime attacks first, fight it anyway.
+  - >-
+    FIGHT. `remove` your longsword so the fight lasts, then `attack slime`.
+    Keep fighting for at least four rounds. After EVERY round, put each combat
+    line you were given on the party channel word for word: first the slime's
+    line to you, then your own line. Do not batch rounds.
+  - >-
+    JUDGE THE SLIME LINES. A slime has no body parts but its pseudopods. Any
+    line naming a fist, claw, tooth, hand or limb is a finding. Say whether
+    each line reads as one clear sentence an English learner would follow.
+  - >-
+    DO NOT DIE. If your health drops below a third, drink your Healing Salve
+    or flee. A finished comparison is worth more than a kill.
+  - >-
+    ADVERSARIAL PASS. Report any literal curly-brace token, any doubled or
+    missing name, any sentence starting lowercase, and any EMPTY line where a
+    blow should be.
