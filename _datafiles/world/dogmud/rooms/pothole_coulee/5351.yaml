@@ -12,7 +12,16 @@ description: >
   shelf learns to read wind as a fact of the shot rather than an excuse
   for missing. Below the terrace edge, the coulee drops away to the
   lake and the town, both looking smaller than they did from the stair.
+  Iron fire-baskets on posts along the bluff wall keep the range lit
+  after dark.
 biome: cliffs
+# Newbie-area audit 2026-10-17 (B1): the range is lit for night practice, so a
+# First Shot student with normal sight reads faces here at every hour and can
+# see the butt. The bluff wall shades part of the sky (skylight below 1), which
+# keeps the lamp from tipping a clear midsummer noon into dazzle.
+# TestLongTerraceReadsFacesAtEveryHour (repo root).
+skylight: 0.7
+lamp: 50
 coord:
   x: 48
   y: -3
