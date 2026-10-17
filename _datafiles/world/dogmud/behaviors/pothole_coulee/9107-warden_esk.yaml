@@ -1,7 +1,9 @@
 # Warden Esk (9107) — portal warden at the Threshold House (room 5215).
 #
-# The permanent way out of Pothole Coulee (and back in, by walking the
-# long way -- the arch is one-way outbound). Gated on quest token
+# The permanent way out of Pothole Coulee. The arch itself is one-way
+# outbound; the way back in is the `portal` exit in the Thornwall temple
+# (468 -> 5215, owner ruling 2026-10-17), open to anyone, since entering
+# the coulee skips no gate. Gated on quest token
 # 30-end: only the Opened may cross. The teleport rides the hardened
 # move_player action with a static delay so the transit lines land
 # first. Destination: Thornwall Temple Interior (room 468) -- the same
@@ -37,10 +39,10 @@ tree:
         - type: action
           do: say
           text: >-
-            Thornwall sits on the far side -- temple stone, city noise,
+            Thornwall sits on the far side. Temple stone, city noise,
             more people than you have ever needed. Walk through. The
-            arch keeps no count and no grudge; come back whenever you
-            please, by the long road or not at all.
+            arch keeps no count and no grudge. You can come back
+            through the portal in the Thornwall temple.
           delay: 5.5
         - type: action
           do: emote

@@ -30,7 +30,8 @@ tree:
             You step into the arch. The air goes taut around you, then
             silvers -- a held breath, a long blink -- and the coulee is
             gone: temple stone underfoot, candle-warmth, city sounds
-            beyond thick walls.
+            beyond thick walls. A portal of dark basalt beside the
+            temple door leads back to the coulee.
         - type: action
           do: move_player
           room_id: 468
