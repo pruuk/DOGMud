@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -72,29 +73,54 @@ func (m *weatherModule) cmdWeather(rest string, user *users.UserRecord, room *ro
 // printLocalWeather shows the weather where the user stands (the player view).
 func (m *weatherModule) printLocalWeather(user *users.UserRecord, room *rooms.Room) {
 	if !m.simReady || room == nil {
-		sendLine(user, messaging.CategorySystem, "The weather seems entirely unremarkable.")
+		sendLine(user, messaging.CategoryWeather, "The weather seems entirely unremarkable.")
 		return
 	}
 	w := m.state.Weather[room.Zone]
 	if w == "" {
 		w = sim.Clear
 	}
-	sendLine(user, messaging.CategorySystem, fmt.Sprintf("The weather in %s is %s.", room.Zone, w))
+	sendLine(user, messaging.CategoryWeather, fmt.Sprintf("The weather in %s is %s.", room.Zone, w))
 	if m.seasonsOn {
 		if zs, ok := m.zoneSeasons[room.Zone]; ok {
-			sendLine(user, messaging.CategorySystem, fmt.Sprintf("The season here is %s.", zs.Season))
+			sendLine(user, messaging.CategoryWeather, fmt.Sprintf("The season here is %s.", zs.Season))
 		}
 	}
 	if covers := sim.Covering(m.graph, m.state.Fronts, m.simCfg, room.Zone); len(covers) > 0 {
 		c := covers[0]
-		where := "centered here"
-		if c.Hops > 0 {
-			where = fmt.Sprintf("%d zone(s) away", c.Hops)
-		}
-		sendLine(user, messaging.CategorySystem, fmt.Sprintf("  A %s system (front #%d) is %s — intensity %.2f, felt here at %.2f.",
-			c.Front.Type, c.Front.Id, where, c.Front.Intensity, c.Effective))
+		strength := frontStrengthWord(c.Effective, float64(configs.GetBalanceConfig().WeatherStrongFeltThreshold))
+		sendLine(user, messaging.CategoryWeather, frontLine(c.Front.Type, strength, c.Hops))
 	}
 }
+
+// frontStrengthWord turns how strongly a front is felt here into a word for
+// the player view. It bands on the same knob the weather emotes use
+// (Balance.WeatherStrongFeltThreshold), so "strong" here means the same thing
+// as the Strong emote pool. Staff see the raw numbers in `weather fronts`.
+func frontStrengthWord(felt, strongFeltThreshold float64) string {
+	if felt >= strongFeltThreshold {
+		return "strong"
+	}
+	return "mild"
+}
+
+// frontLine is the player's one-line description of the nearest front: its
+// type, a strength word and its distance in words. It never shows the
+// front's id or intensity numbers (#561).
+func frontLine(wtype sim.WeatherType, strength string, hops int) string {
+	switch {
+	case hops <= 0:
+		return fmt.Sprintf("  A %s %s system is right over you.", strength, wtype)
+	case hops == 1:
+		return fmt.Sprintf("  A %s %s system is one region away.", strength, wtype)
+	case hops < len(regionCountWords):
+		return fmt.Sprintf("  A %s %s system is %s regions away.", strength, wtype, regionCountWords[hops])
+	default:
+		return fmt.Sprintf("  A %s %s system is far away.", strength, wtype)
+	}
+}
+
+var regionCountWords = []string{"", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"}
 
 func (m *weatherModule) printZones(user *users.UserRecord) {
 	if !m.simReady {

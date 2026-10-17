@@ -38,7 +38,10 @@ goroutine — no synchronization needed.
   (cheap; called per-tick, from onSave, and from every command/export mutation path). `onSave` (plugins.Save hook).
   `scheduleEmote` (±25% jitter so ambience doesn't metronome).
 - **weather_commands.go**: bare `weather` shows local conditions (player view;
-  includes the dominant front via `sim.Covering`). Subcommands `zones`, `fronts`,
+  includes the dominant front via `sim.Covering`, on `CategoryWeather`). The
+  front line is words only (`frontLine`, `frontStrengthWord` banded on
+  `WeatherStrongFeltThreshold`): no front id, no intensity numbers; staff read
+  those in `weather fronts`. Subcommands `zones`, `fronts`,
   `spawn <type> <zone> [intensity]`, `clear [zone]`, `graph [zone]`, `rebuild`,
   `status` are admin/mod-gated via `HasRolePermission("weather", true)`. `spawn`
   and `clear` call `sim.ForceSpawn`/`sim.ClearZones` then `engine.Reconcile` +
