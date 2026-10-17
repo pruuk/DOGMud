@@ -89,6 +89,22 @@ func (p SurrenderPolicy) String() string {
 	}
 }
 
+// Describe is the policy in plain words for the status sheet. String stays
+// the `set surrender` syntax (and what ParseSurrenderPolicy reads back), which
+// is command jargon on a sheet a new player reads.
+func (p SurrenderPolicy) Describe() string {
+	switch p.Mode {
+	case SurrenderNever:
+		return "never tap out"
+	case SurrenderAlways:
+		return "always tap out"
+	case SurrenderAutoTap:
+		return fmt.Sprintf("tap out below %d%% health", p.HpPctThreshold)
+	default:
+		return "unknown"
+	}
+}
+
 // ParseSurrenderPolicy parses "never" / "always" / "auto-tap-below <N>".
 // Returns (policy, true) on success; (zero, false) on parse failure or
 // out-of-range threshold.

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	_ "github.com/GoMudEngine/GoMud/internal/hooks" // wire init() Life observers
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
@@ -56,5 +57,36 @@ func TestDie_ZeroUserIdStaysDead(t *testing.T) {
 	}
 	if !c.IsDead() {
 		t.Errorf("a userId-0 character should remain Dead after Die(); got %v", c.Life.State())
+	}
+}
+
+// TestDie_RespawnPoolsFollowRespawnPoolFraction pins that the respawn cascade
+// reads GamePlay.Death.RespawnPoolFraction instead of a hard-coded fraction.
+// The knob shipped unread for a long time while Life_Cascades restored max/20,
+// so retuning it in config.yaml silently did nothing.
+func TestDie_RespawnPoolsFollowRespawnPoolFraction(t *testing.T) {
+	before := configs.GetGamePlayConfig().Death.RespawnPoolFraction
+	if err := configs.AddOverlayOverrides(map[string]any{"GamePlay.Death.RespawnPoolFraction": 0.5}); err != nil {
+		t.Fatalf("set RespawnPoolFraction: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = configs.AddOverlayOverrides(map[string]any{"GamePlay.Death.RespawnPoolFraction": float64(before)})
+	})
+
+	c := characters.New()
+	c.SetUserId(4243)
+	c.HealthMax.Value = 100
+	c.StaminaMax.Value = 80
+	c.ConvictionMax.Value = 60
+	c.Health = 0
+
+	c.Die(state.ActorRef{}, life.TriggerHealthZero)
+
+	if !c.IsAlive() {
+		t.Fatalf("player must respawn to Alive; got %v", c.Life.State())
+	}
+	if c.Health != 50 || c.Stamina != 40 || c.Conviction != 30 {
+		t.Errorf("respawn pools at RespawnPoolFraction 0.5: want HP 50 SP 40 CP 30, got HP %d SP %d CP %d",
+			c.Health, c.Stamina, c.Conviction)
 	}
 }

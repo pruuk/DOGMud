@@ -1,33 +1,33 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">death</ansi>
 
-When your hitpoints fall to zero or less, you'll drop to the ground and begin
-to bleed out. While bleeding out, each round you'll fall more and more into
-the negative range. Any spells you were casting are lost.
-
-Once you reach -10 hitpoints, you will die!
+When your hitpoints fall to zero, you die at once. There is no downed or
+bleeding-out stage, so nobody can save you after the blow lands. Any spell
+you were casting is lost, and every condition on you ends, good or bad.
 
 <ansi fg="yellow-bold">Death Penalties:</ansi>
-  - One of your core attributes will permanently weaken slightly.
-  - Skills you haven't practiced recently may grow rusty and diminish.
-  - You'll be transported home with all pools restored.
+  - One of your core attributes, picked at random, may permanently weaken
+    slightly.
+  - One of your skills, picked at random, may grow rusty and lose a little.
+    Any skill can be picked, even one you use every day.
+  - You wake at your home point with your health, stamina and conviction
+    nearly empty. Rest and recover before you go back out.
 
 <ansi fg="yellow-bold">A Word on Early Forgiveness:</ansi>
-  While you are still finding your feet, falling costs you nothing extra --
-  the penalties above do not bite until you have trained enough to have
-  something worth losing. Do not let that early mercy fool you into thinking
-  death is free. Once you have grown, it costs, and it does not warn you the
-  day the grace runs out. Learn to <ansi fg="command">flee</ansi> now, while the lesson is cheap.
+  Only your first few lessons are protected. Until you have trained a
+  handful of skill ranks, death takes no attributes and no skills. That
+  point comes quickly, often within your first few fights, and the game
+  does not warn you when the grace runs out. Learn to <ansi fg="command">flee</ansi> now,
+  while the lesson is cheap.
 
 The best defense against death is staying aware of your health and knowing
-when to <ansi fg="command">flee</ansi>. Skills and attributes you use regularly are protected
-from decay -- keep training and they'll endure.
+when to <ansi fg="command">flee</ansi>.
 
 <ansi fg="yellow-bold">Submission Exception:</ansi>
   If you were knocked out by a grapple submission (subdue or
-  cripple outcome), you wake at the temple with NO stat decay —
-  your opponent chose not to kill you. A cripple submission also
-  leaves a broken limb that persists for around an hour of play
-  time before recovering naturally.
+  cripple outcome), you wake at the temple with NO attribute or
+  skill loss, because your opponent chose not to kill you. A
+  cripple submission also leaves a broken limb that persists for
+  around an hour of play time before recovering naturally.
   A portion of your carried gold is transferred to your opponent
   in either case.
   See <ansi fg="command">help submission</ansi>.

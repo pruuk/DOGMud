@@ -4,7 +4,7 @@ Hurl a throwable item at all hostile creatures in the room.
 The projectile detonates on impact, potentially hitting
 every enemy. Throwable items are consumed on use.
 
-Each target is rolled against independently -- some may
+Each target is rolled against independently, so some may
 dodge while others are caught in the blast. A badly
 fumbled throw can backfire and hit you instead.
 
@@ -19,8 +19,8 @@ Throwable items include grenades crafted through alchemy:
 
 You can throw to open a fight as well as during one. A
 throw that connects draws the creatures it hit onto you.
-Shares a cooldown with other
-special moves (bash, trip, kick). Uses the
+Shares one cooldown with every other
+special move (see <ansi fg="command">help special</ansi>). Uses the
 <ansi fg="skill">Skullduggery</ansi> skill and progresses
 <ansi fg="stat">Dexterity</ansi>.
 

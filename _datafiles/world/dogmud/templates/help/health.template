@@ -23,9 +23,8 @@ The colors run from the first of those to the last as you
 take punishment. Judge a fight by the color, not by counting:
 that is the whole point of showing it this way.
 
-When your Health drops to zero, you collapse and begin
-bleeding out. If you are not aided in time, you will die --
-but death on Gaius does not delete your character. You wake
+When your Health drops to zero, you die at once. Death on
+Gaius does not delete your character. You wake
 at your home point, weakened by the brush with death, and
 your gear stays with you. See <ansi fg="command">help death</ansi> for what a
 fall truly costs and how to avoid paying it.
