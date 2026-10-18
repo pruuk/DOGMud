@@ -107,7 +107,8 @@ steps:
     map_target: -1  # action step (command/skill) — no travel destination
     description: "You read your conditions. They can be good or bad."
     hint: "Big moves need time to rest after you use them. Type cooldowns to
-      see which ones are resting. For more, type help cooldowns."
+      see which ones are resting. An empty list means they have all rested.
+      For more, type help cooldowns."
   - id: checked_cooldowns
     map_target: -1  # action step (command/skill) — no travel destination
     description: "You checked your cooldowns. Your big moves share one
@@ -461,7 +462,8 @@ triggers:
           lines:
             - {delay: 0, text: "Shouting used one of your big moves. Big moves
                 need time to rest after you use them. Type cooldowns to see
-                what is resting."}
+                what is resting. If the list is empty, your shout has rested
+                already."}
 
   - event: command_issued
     command: cooldowns
