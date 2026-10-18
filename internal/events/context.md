@@ -605,6 +605,9 @@ same way (spell effects slice 3b); zero drains them all.
 `DrainQueuedCharacterDiedForTest()` and `DrainQueuedMobDeathsForTest()` drain
 every queued `CharacterDied` and `MobDeath` event; the second lets a test
 assert on the damaging-players list the `MobDeath_*` hooks read.
+`DrainQueuedQuestsForTest()` drains every queued `Quest` event, so a test can
+see a grant whose quest definition is not loaded (the token step fails, the
+event still queues).
 `DrainQueuedMessageEventsForTest(userId)` (sight gates slice 5b) is
 `DrainQueuedMessagesForTest` returning the whole `Message`, not just its
 text, so a test can also read `IsCommunication`. It matches on

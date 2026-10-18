@@ -843,7 +843,7 @@ These actions were added alongside the room behavior tree system:
 | `send_user_text` | `text` (string) | Sends raw text to the triggering player (no mob prefix). |
 | `send_room_text` | `text` (string) | Sends raw text to all players in the room. |
 | `remove_condition` | `condition_id` (int) | Removes the specified condition from the triggering player. |
-| `move_player` | `room_id` (int) | Teleports the triggering player to the target room. |
+| `move_player` | `room_id` (int) | Teleports the triggering player to the target room, only while they are still with the mob (mob tree) or in the room (room tree). A player who has left, or any other failure, drops the evaluation's not-yet-fired delayed actions (`EvalContext.run`, `dropDelayedRun`), so grants queued behind a delayed transit never fire. |
 
 ### Command Control
 

@@ -174,43 +174,14 @@ func (n *ActionNode) Evaluate(ctx *EvalContext) Result {
 			delaySec = float64(v)
 		}
 		if delaySec > 0 {
-			params := n.Params
-			fn := n.Fn
-			evalCtx := &EvalContext{
-				Event:       ctx.Event,
-				MobState:    ctx.MobState,
-				MobId:       ctx.MobId,
-				InstanceId:  ctx.InstanceId,
-				RoomId:      ctx.RoomId,
-				MobName:     ctx.MobName,
-				Intercepted: ctx.Intercepted,
-				Item:        ctx.Item,
-			}
-			dur := time.Duration(delaySec * float64(time.Second))
-			GetEngine().QueueDelayed(dur, func() {
-				fn(params, evalCtx)
-			})
+			n.queueDelayed(ctx, time.Duration(delaySec*float64(time.Second)))
 			return Success
 		}
 	}
 	if delayedActions[n.Name] {
 		delay := calcReactionDelay(ctx.InstanceId)
 		if delay > 0 {
-			params := n.Params
-			fn := n.Fn
-			evalCtx := &EvalContext{
-				Event:       ctx.Event,
-				MobState:    ctx.MobState,
-				MobId:       ctx.MobId,
-				InstanceId:  ctx.InstanceId,
-				RoomId:      ctx.RoomId,
-				MobName:     ctx.MobName,
-				Intercepted: ctx.Intercepted,
-				Item:        ctx.Item,
-			}
-			GetEngine().QueueDelayed(delay, func() {
-				fn(params, evalCtx)
-			})
+			n.queueDelayed(ctx, delay)
 			return Success
 		}
 	}
@@ -218,6 +189,34 @@ func (n *ActionNode) Evaluate(ctx *EvalContext) Result {
 		ctx.node = n.Name
 	}
 	return n.Fn(n.Params, ctx)
+}
+
+// queueDelayed runs the action after dur on a copy of the context. Every
+// delayed action of one evaluation shares ctx.run, so one that drops the
+// run (a move_player whose player has left) skips the rest.
+func (n *ActionNode) queueDelayed(ctx *EvalContext, dur time.Duration) {
+	if ctx.run == nil {
+		ctx.run = &delayedRun{}
+	}
+	params := n.Params
+	fn := n.Fn
+	evalCtx := &EvalContext{
+		Event:       ctx.Event,
+		MobState:    ctx.MobState,
+		MobId:       ctx.MobId,
+		InstanceId:  ctx.InstanceId,
+		RoomId:      ctx.RoomId,
+		MobName:     ctx.MobName,
+		Intercepted: ctx.Intercepted,
+		Item:        ctx.Item,
+		run:         ctx.run,
+	}
+	GetEngine().QueueDelayed(dur, func() {
+		if evalCtx.run.dropped.Load() {
+			return
+		}
+		fn(params, evalCtx)
+	})
 }
 
 // ActionNames returns every registered name sorted — the 5d editor enums.

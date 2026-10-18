@@ -307,6 +307,29 @@ func DrainQueuedMobDeathsForTest() []MobDeath {
 	return found
 }
 
+// DrainQueuedQuestsForTest removes all Quest events from the global queue
+// and returns them.
+//
+// FOR TEST USE ONLY. Mutates the queue. Call it once to discard leftovers from
+// an earlier test, then again to assert on what the code under test queued.
+func DrainQueuedQuestsForTest() []Quest {
+	qLock.Lock()
+	defer qLock.Unlock()
+
+	var found []Quest
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		if q, ok := pe.event.(Quest); ok {
+			found = append(found, q)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
 // DrainQueuedInputsForTest removes all Input events from the global queue for
 // the given mob instance id and returns their InputText values.
 //
