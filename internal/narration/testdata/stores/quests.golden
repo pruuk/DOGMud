@@ -76,7 +76,7 @@ quest|31|trigger2|action1|actor => Trader Onna nods as the coin changes hands. "
 quest|31|trigger3|action1|actor => You settle the shirt across your shoulders. That is the whole of it: buy the gear, wear the gear, and the coulee bites a little less. Next, find The Drowned Lantern: from Coulee Provisions go west twice.
 quest|31|trigger4|action1|actor => The keeper of the Drowned Lantern tips you a nod as you step in. "First one is on the house -- the coulee's welcome. Rest while it is still being gentle with you." Now go back to Crier Toke in Hub Square, east and then north, and type ask toke footing.
 quest|32|rewards|actor => Vorn turns your performance over in his head for a long moment, the way a smith eyes a finished blade for flaws. Then he nods once, short, like it costs him something. "Passable. You did not freeze, you did not panic, and you remembered to think between swings. That is more than most manage on the first day." He presses a few coins into your hand. "Go north, then east along the wash. Find Garve. He will put that edge to use."
-quest|32|rewards|observer => Vorn nods at you with a gruff, brief approval.
+quest|32|rewards|observer => Vorn nods at <ansi fg="username">Aliceia</ansi> with a gruff, brief approval.
 quest|32|trigger0|action1|actor => The cudgel sits in your hand. Now fight the training dummy: type attack dummy.
 quest|32|trigger1|action1|actor => The training dummy shudders and goes still. Your arms remember the rhythm of it: weight, angle, follow through. A new dummy stands up soon. When it does, type kick dummy.
 quest|32|trigger2|action1|actor => That is a special move. Now read your opponent: type consider dummy.
@@ -90,7 +90,7 @@ quest|34|rewards|actor => The watch room goes quiet. Whatever the captain was ho
 quest|34|trigger0|action2|actor => The fight leaves something behind in your arms and back -- a settled, permanent strength, earned the hard way at the top of a tower.
 quest|34|trigger1|action2|actor => The fight leaves something behind in your hands and feet -- a settled, permanent quickness, earned the hard way at the top of a tower.
 quest|35|rewards|actor => Rusk takes the dagger and turns it slowly, checking the edge with one thumbnail. The grey forearm catches the forge light. After a moment she sets it back on the anvil and looks at you, not at the blade, with the measuring expression of a smith deciding whether a piece of iron is worth tempering. "Straight seam. Weight is forward where it belongs. You did not rush the quench." She presses coins into your hand with the finality of a door closing. "North through the Quench Shed, then west to the talus. Find Ovell in the Collapsed Cut, south of the Lower Talus. He pulled himself out of a cave-in and has been waiting for someone to notice. Do not make him wait longer."
-quest|35|rewards|observer => Rusk examines the dagger briefly, nods once, and presses a few coins into your hand.
+quest|35|rewards|observer => Rusk examines the dagger briefly, nods once, and presses a few coins into <ansi fg="username">Aliceia</ansi>'s hand.
 quest|35|trigger0|action1|actor => Those are Rusk's goods. The dagger needs an iron ingot and a leather strip. Type buy iron ingot.
 quest|35|trigger1|action1|actor => You have an iron ingot. Now the grip. Type buy leather strip.
 quest|35|trigger2|action1|actor => You have the leather strip. That is everything the dagger needs. At the forge, type craft iron dagger.

@@ -259,17 +259,15 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			questUser.SendText(messaging.CategorySystem, questUpTxt)
 		}
 
-		// Reward messages, through the quest store's door. Shipped rewards
-		// carry no token, so substitution changes nothing today.
+		// Reward messages, through the quest store's door.
 		//
-		// Delivered through SendTrio (M4d Task 6): text-identical, because no
-		// shipped reward's actor or observer line carries {actor}, {actee},
-		// {actor_plain} or {actee_plain} (verified against all 79 quest files'
-		// rewards blocks) -- the observer line instead narrates the questgiver
-		// NPC by their own literal name, which is not the Actor or Actee this
-		// Audience names, so SendTrio's HideNames has nothing of the reader's
-		// to match. The actor line has no actee to hide from it either: a
-		// quest has no second party.
+		// Delivered through SendTrio (M4d Task 6). An observer line may name
+		// the completing player with {actor} (quests 32 and 35 since
+		// 2026-10-17, which had said "you" to the watcher); SendTrio hides
+		// that name from a watcher who cannot see them. The questgiver NPC
+		// is narrated by their own literal name, which is not the Actor or
+		// Actee this Audience names. The actor line has no actee to hide
+		// from it: a quest has no second party.
 		rewardLines := questInfo.Rewards.Narrate(textutil.TokenContext{
 			ActorName:      questUser.Character.GetCharacterName(true),
 			ActorPlainName: questUser.Character.GetCharacterName(false),

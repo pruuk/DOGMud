@@ -72,7 +72,7 @@ rewards:
     of the Lower Talus. He pulled himself out of a cave-in and has
     been waiting for someone to notice. Do not make him wait longer."
   observer: "Rusk examines the dagger briefly, nods once, and
-    presses a few coins into your hand."
+    presses a few coins into {actor}'s hand."
 
 triggers:
   # ── LIST RUSK'S GOODS (she trades in the smithy, room 5245) ─────

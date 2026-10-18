@@ -65,7 +65,7 @@ rewards:
     swings. That is more than most manage on the first day." He
     presses a few coins into your hand. "Go north, then east along
     the wash. Find Garve. He will put that edge to use."
-  observer: "Vorn nods at you with a gruff, brief approval."
+  observer: "Vorn nods at {actor} with a gruff, brief approval."
 
 triggers:
   # ── WIELD: the cudgel (10043); the equip event names its item ──
