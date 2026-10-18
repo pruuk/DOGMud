@@ -236,6 +236,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js"></script>
@@ -429,6 +430,19 @@
         const fitAddon = new window.FitAddon.FitAddon();
         term.loadAddon(fitAddon);
         term.open(document.getElementById('terminal'));
+
+        // Keep the feed's text from sliding out of view sideways (playtest
+        // 2026-10-17). See static/js/feedscroll.js for the causes it covers.
+        if (window.FeedScroll) {
+            var _feedTerm = document.getElementById('terminal');
+            var _feedPanelEl = document.getElementById('panel-feed');
+            window.FeedScroll.install({
+                terminal: _feedTerm,
+                viewport: _feedTerm.querySelector('.xterm-viewport'),
+                body: _feedPanelEl ? _feedPanelEl.querySelector('.dash-panel-body') : null,
+                panel: _feedPanelEl
+            });
+        }
 
         // Auto-size the font so ~80 columns always fit the feed panel. All MUD
         // content is fixed-80 (room text + the inline ASCII minimap), so if the
@@ -681,9 +695,9 @@
                 }
 
                 // Populate session strip with character name when available
-                if ( obj.Name ) {
+                if ( charDisplayName(obj) ) {
                     var sessName = document.getElementById('sess-name');
-                    if (sessName) sessName.textContent = obj.Name;
+                    if (sessName) sessName.textContent = charDisplayName(obj);
                 }
 
                 updateStatusPanel();
@@ -828,40 +842,7 @@
             // Server replied to a Char.Action.Try: fire→dequeue, deferred→increment attempts,
             // rejected→dequeue silently. Re-arm interrupted casts for automatic retry.
             "Char.Action.Result": function() {
-                var r = ((GMCPStructs["Char"] || {}).Action || {}).Result || {};
-                if (!queueInFlight || r.id !== queueInFlight.triggerId) return;
-                var entry = queueInFlight;
-                queueInFlight = null;
-                if (r.status === "fired") {
-                    // Pace the NEXT release to the next round (see drainQueue).
-                    queueFiredThisRound = true;
-                    queueFiredAt = Date.now();
-                    actionQueue.shift();
-                    if (entry.isCast) {
-                        queueRearm = { triggerId: entry.triggerId, spell: entry.spell, attempts: entry.attempts };
-                        queueRearmAge = 0;
-                    }
-                    renderAutomation();
-                    drainQueue();
-                } else if (r.status === "rejected") {
-                    actionQueue.shift();          // server already showed the real error once
-                    renderAutomation();
-                    drainQueue();
-                } else {                          // "deferred" — transiently blocked, retry next round
-                    // A deferral consumes this round's attempt too, which is what the
-                    // line below always claimed but never enforced: the 500ms drain
-                    // interval re-fired the Try immediately because queueInFlight was
-                    // already null, so a blocked head re-sent ~8 Trys per round.
-                    queueFiredThisRound = true;
-                    queueFiredAt = Date.now();
-                    entry.attempts++;
-                    if (entry.attempts >= QUEUE_STALENESS_ROUNDS) {
-                        actionQueue.shift();      // give up quietly after staleness window
-                        console.log("[queue] dropped (staleness):", entry.name);
-                    }
-                    renderAutomation();
-                    // do not re-send now; Commands.State per-round tick re-drains
-                }
+                handleActionResult(((GMCPStructs["Char"] || {}).Action || {}).Result || {});
             },
             // Server reports a cast was interrupted — re-enqueue the spell at the front
             // for one automatic retry, provided we still have a rearm candidate and budget.
@@ -1632,7 +1613,7 @@
                 stalled.attempts = (stalled.attempts || 0) + 1;
                 console.log("[queue] no reply within " + QUEUE_INFLIGHT_TIMEOUT_MS + "ms, retrying:", stalled.name);
                 if (stalled.attempts >= QUEUE_STALENESS_ROUNDS) {
-                    if (actionQueue.length && actionQueue[0] === stalled) actionQueue.shift();
+                    removeQueueEntry(stalled);
                     console.log("[queue] dropped (no reply):", stalled.name);
                 }
                 renderAutomation();
@@ -1646,6 +1627,61 @@
             queueInFlight = entry;
             queueInFlightAt = Date.now();
             SendGMCP("Char.Action.Try", { id: entry.triggerId, cmd: cmd });
+        }
+
+        // Take one entry out of the queue by IDENTITY, wherever it now sits.
+        //
+        // ⚠️ Never actionQueue.shift() to retire the entry a Result answers. A
+        // "front" trigger that fires while a Try is in flight (the round-start
+        // burst does exactly this: Commands.State drains the head while the
+        // round's combat lines run the triggers) is spliced in AHEAD of the
+        // in-flight entry. shift() then removed the front entry instead, so it
+        // vanished unsent while the in-flight entry stayed queued and fired a
+        // second time. That was "queue at front does not queue" (playtest
+        // 2026-10-17); "back" never hit it because it appends.
+        function removeQueueEntry(entry) {
+            var idx = actionQueue.indexOf(entry);
+            if (idx >= 0) actionQueue.splice(idx, 1);
+        }
+
+        // Server replied to a Char.Action.Try: fired -> dequeue, deferred -> count
+        // an attempt and retry next round, rejected -> dequeue silently. A fired
+        // cast becomes the interruption re-arm candidate.
+        function handleActionResult(r) {
+            r = r || {};
+            if (!queueInFlight || r.id !== queueInFlight.triggerId) return;
+            var entry = queueInFlight;
+            queueInFlight = null;
+            if (r.status === "fired") {
+                // Pace the NEXT release to the next round (see drainQueue).
+                queueFiredThisRound = true;
+                queueFiredAt = Date.now();
+                removeQueueEntry(entry);
+                if (entry.isCast) {
+                    queueRearm = { triggerId: entry.triggerId, spell: entry.spell, attempts: entry.attempts };
+                    queueRearmAge = 0;
+                }
+                renderAutomation();
+                drainQueue();
+            } else if (r.status === "rejected") {
+                removeQueueEntry(entry);      // server already showed the real error once
+                renderAutomation();
+                drainQueue();
+            } else {                          // "deferred": transiently blocked, retry next round
+                // A deferral consumes this round's attempt too, which is what the
+                // line below always claimed but never enforced: the 500ms drain
+                // interval re-fired the Try immediately because queueInFlight was
+                // already null, so a blocked head re-sent ~8 Trys per round.
+                queueFiredThisRound = true;
+                queueFiredAt = Date.now();
+                entry.attempts++;
+                if (entry.attempts >= QUEUE_STALENESS_ROUNDS) {
+                    removeQueueEntry(entry);  // give up quietly after staleness window
+                    console.log("[queue] dropped (staleness):", entry.name);
+                }
+                renderAutomation();
+                // do not re-send now; Commands.State per-round tick re-drains
+            }
         }
 
         // Clear the entire action queue (manual Clear button + death signal).
@@ -1888,18 +1924,29 @@
             }
         }
 
+        // The character's name as the server sends it: Char.Info.name. The
+        // Char package has no top-level Name, so reading charObj.Name always
+        // fell through to the 'You' placeholder; in a party the panel then
+        // never matched the viewer's own Party.Vitals row and showed them
+        // twice, once as "You" and once by name (playtest 2026-10-17).
+        function charDisplayName(charObj) {
+            if (!charObj) return '';
+            if (charObj.Info && charObj.Info.name) return charObj.Info.name;
+            return charObj.Name || '';
+        }
+
         function updateVitalsWindow() {
             var charObj = GMCPStructs["Char"];
             if ( !charObj || !charObj.Vitals ) return;
 
             // Compute self vitals from exact Char.Vitals data
             var v = charObj.Vitals;
-            var selfName = charObj.Name || 'You';
+            var selfName = charDisplayName(charObj) || 'You';
 
             // Populate session strip name whenever we have it
-            if (charObj.Name) {
+            if (charDisplayName(charObj)) {
                 var sessName = document.getElementById('sess-name');
-                if (sessName) sessName.textContent = charObj.Name;
+                if (sessName) sessName.textContent = charDisplayName(charObj);
             }
 
             // Percent of the USABLE (unreserved) pool, so the bar fill + its
@@ -2188,7 +2235,7 @@
             var html = '';
 
             // Optional top line: name (Race Class)
-            var charName = charObj.Name || '';
+            var charName = charDisplayName(charObj);
             var info = charObj.Info || null;
             if (charName || info) {
                 var suffix = '';

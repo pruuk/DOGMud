@@ -206,12 +206,15 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				}
 			}
 
-			// Quest engine: command notification
+			// Quest engine: command notification. ItemId names what was put
+			// on, so a step can ask for one item (`item:` on the trigger):
+			// First Shot's "ready the sling" must not finish on a cudgel.
 			bridge := questengine.NewGameBridge(user, room.RoomId)
 			questengine.GetEngine().Notify("command", questengine.EventDetails{
 				UserId:  user.UserId,
 				RoomId:  room.RoomId,
 				Command: "equip",
+				ItemId:  result.Item.ItemId,
 			}, bridge, bridge)
 
 		} else if result.Found {

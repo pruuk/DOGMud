@@ -7,7 +7,14 @@ description: >
   has made a world of it: runs pressed low through the base of the
   thorns, pellets, tufts of fur snagged on barbs. The thorns catch
   at sleeves and skin as you press through, drawing thin lines of red.
+  The hunters from the hollow below keep a shuttered lantern hung on a
+  stake at the mouth of the main run, and it burns through every night.
 biome: land
+# 2026-10-17 newbie quest audit (B2): quests 42 and 56 attack a pronghorn here,
+# and attacking a mob that is not hostile needs full sight. The hunters'
+# lantern (see the description) lights the brake to full sight for a normal
+# observer at every hour. TestNewbieQuestTargetRoomsGiveFullSightAtEveryHour.
+lamp: 50
 coord:
   x: 42
   y: 6
@@ -19,9 +26,13 @@ exits:
     roomid: 5290
 spawninfo:
 - mobid: 9139
+  respawnrate: 2 real minutes
 nouns:
   thorns: Stiff, hooked barbs that catch on anything soft and hold it,
     patient as a trap.
+  lantern: A tin lantern with a shuttered face, hung from a stake driven
+    deep into the ground where the main run enters the thorns. Its flame
+    burns low and steady, and the hunters keep it filled with oil.
   game: Signs of small animals everywhere, runs, pellets, tufts of
     fur, the pressed-flat shapes of resting bodies.
 idlemessages:

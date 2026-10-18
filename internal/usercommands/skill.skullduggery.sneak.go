@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -52,6 +53,8 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	switch {
 	case result.AlreadyHidden:
 		user.SendText(messaging.CategoryRefusal, "You're already hidden!")
+		// The goal holds: the player is hidden (as warcry and trip do).
+		notifySneakQuest(user, room)
 		return true, nil
 
 	case result.InCombat:
@@ -62,6 +65,7 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// Already hidden by a weaker Empathic Shroud: the sneak took the hide
 		// over with no roll (#444), so there is nothing to practise.
 		user.SendText(messaging.CategorySystem, `You let the shroud fall away and slip into the shadows on your own.`)
+		notifySneakQuest(user, room)
 		return true, nil
 
 	case result.SpottedBy != nil:
@@ -107,5 +111,21 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			user.Character.CandidateFor(string(skills.Skullduggery)))
 	}
 
+	notifySneakQuest(user, room)
 	return true, nil
+}
+
+// notifySneakQuest tells the quest engine the player is now hidden, on the
+// `command` success event. First Shot's (quest 50) sneak step listens for it;
+// before 2026-10-17 sneak sent no command event at all, so that step could not
+// be finished. Sent only when the player ends up hidden: a refusal or a
+// spotted sneak sends nothing. The skill_use event AwardResolved emits is a
+// different event and does not reach a `command` trigger.
+func notifySneakQuest(user *users.UserRecord, room *rooms.Room) {
+	bridge := questengine.NewGameBridge(user, room.RoomId)
+	questengine.GetEngine().Notify("command", questengine.EventDetails{
+		UserId:  user.UserId,
+		RoomId:  room.RoomId,
+		Command: "sneak",
+	}, bridge, bridge)
 }

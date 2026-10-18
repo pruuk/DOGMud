@@ -85,6 +85,24 @@ func checkQuestGate(questRequired, questExcluded []string, requiresItem int, fla
 // checkQuestGate in the same call, so the gold check and the charge happen
 // in one step of the player's input. Nil ps keeps the package's skip-checks
 // contract; a nil ChargeGold fails closed.
+// itemExcludedBlocks reports whether an itemExcluded gate hides an entry: the
+// player already carries the item, so a handout node does not give a second
+// one while the quest is open. CarriesItem (anywhere on the player) is
+// preferred; a PlayerState without it falls back to HasItem (the backpack).
+// A nil PlayerState skips the check, as every other gate does.
+func itemExcludedBlocks(itemId int, ps *PlayerState) bool {
+	if itemId <= 0 || ps == nil {
+		return false
+	}
+	if ps.CarriesItem != nil {
+		return ps.CarriesItem(itemId)
+	}
+	if ps.HasItem != nil {
+		return ps.HasItem(itemId)
+	}
+	return false
+}
+
 func tryCharge(amount int, ps *PlayerState) bool {
 	if amount <= 0 || ps == nil {
 		return true
@@ -188,7 +206,7 @@ func MatchWithFallbackInfo(df *DialogueFile, mobInstanceId int, topic string, ps
 		}
 
 		// Apply quest/item gate
-		if !checkQuestGate(p.QuestRequired, p.QuestExcluded, p.RequiresItem, p.QuestFlagRequired, p.QuestFlagExcluded, p.MasterworkRequired, p.GoldRequired, ps) {
+		if !checkQuestGate(p.QuestRequired, p.QuestExcluded, p.RequiresItem, p.QuestFlagRequired, p.QuestFlagExcluded, p.MasterworkRequired, p.GoldRequired, ps) || itemExcludedBlocks(p.ItemExcluded, ps) {
 			continue
 		}
 
@@ -282,7 +300,7 @@ func TreeAdvance(df *DialogueFile, mobInstanceId, userId int, topic string, ps *
 		}
 
 		// Enforce quest/item gate
-		if !checkQuestGate(node.QuestRequired, node.QuestExcluded, node.RequiresItem, node.QuestFlagRequired, node.QuestFlagExcluded, node.MasterworkRequired, node.GoldRequired, ps) {
+		if !checkQuestGate(node.QuestRequired, node.QuestExcluded, node.RequiresItem, node.QuestFlagRequired, node.QuestFlagExcluded, node.MasterworkRequired, node.GoldRequired, ps) || itemExcludedBlocks(node.ItemExcluded, ps) {
 			continue
 		}
 
@@ -331,7 +349,7 @@ func Greet(df *DialogueFile, mobInstanceId, userId int, ps *PlayerState) (string
 	// Check quest-variant greetings first
 	if ps != nil {
 		for _, v := range df.Tree.Root.Variants {
-			if checkQuestGate(v.QuestRequired, v.QuestExcluded, 0, v.QuestFlagRequired, v.QuestFlagExcluded, v.MasterworkRequired, v.GoldRequired, ps) && tryCharge(v.ChargesGold, ps) {
+			if checkQuestGate(v.QuestRequired, v.QuestExcluded, 0, v.QuestFlagRequired, v.QuestFlagExcluded, v.MasterworkRequired, v.GoldRequired, ps) && !itemExcludedBlocks(v.ItemExcluded, ps) && tryCharge(v.ChargesGold, ps) {
 				applyPaidEffects(v.ChargesGold, v.GrantsQuest, v.RequiresItem, v.GivesItem, v.SetsQuestFlag, v.BumpsRep, v.GivesGold, ps)
 				return v.Text, v.Hints, true
 			}

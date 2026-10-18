@@ -1,21 +1,32 @@
 # Quest 39 — Wade the Marsh (Pothole Coulee, Spoke C / Alchemy middle ring)
 #
-# Token flow:
+# Token flow (one command per step, owner ruling 2026-10-17):
 #   39-start  — granted by Fenwalker Falv's marsh_offer dialogue node (requires
 #               38-end). The SAME node hands the player a firebomb (givesItem
 #               30058) and teaches the throw command + the shared special-move
 #               cooldown (throw / cast / special moves all share one timer).
 #   39-leech  — mob_death on a Marsh Leech (9130). The combat beat.
-#   39-throw  — command trigger on throw (in combat). The grenade/cooldown beat.
-#   39-forage — command trigger on forage in the marsh (rooms 5270 / 5273).
-#   39-end    — granted by Falv's marsh_turnin dialogue node.
+#   39-throw:  command trigger on throw, once the leech is down. The
+#              grenade/cooldown beat.
+#   39-forage: command trigger on forage in the marsh (rooms 5270 / 5273),
+#              once the firebomb is thrown. A forage that finds nothing
+#              still counts: the player foraged.
+#   39-end:    granted by Falv's marsh_turnin dialogue node (needs 39-forage).
+#
+# The three objectives run IN ORDER, leech, throw, forage: the order Falv
+# gives them and the quest description lists them. They used to complete in
+# any order, which this engine cannot do: a character holds ONE current step
+# per quest, so a throw done first jumped the player past the leech step. A
+# player saved on any step resumes from it: the next trigger gates on that
+# step's token.
 #
 # Design: this is Spoke C's owner of the parent-spec "shared cooldown + grenade"
 # Tier-2 lesson. Falv gives one firebomb so the player can throw without first
 # being able to brew one (firebomb is a skill_minimum 25 recipe). The reward is
 # the potion bandolier (item 20059) + a usable mid recipe (ironhide-brew, skill
-# 8) and the firebomb formula to grow into. Falv has a firebomb recovery node in
-# case the player loses the grenade before throwing it.
+# 8) and the firebomb formula to grow into. Falv has a firebomb recovery node
+# (only while the player carries none) in case the player loses or spends the
+# grenade before the throw step.
 
 questid: 39
 name: Wade the Marsh
@@ -29,45 +40,43 @@ secret: false
 
 steps:
   - id: start
-    map_target: -1  # -1: bundled objectives, rooms [5270, 5273]; Phase 2 split review
+    map_target: 5269
     description: >-
-      Falv has handed you a firebomb and set you loose in the marsh. Put
-      down a marsh leech, throw the firebomb at something in a fight, and
-      forage the marsh herbs.
-    hint: >-
-      Head south into the reeds. Attack a marsh leech to start a fight
-      (type attack leech), and put it down. Then -- while you are IN a
-      fight -- type throw firebomb to hurl it. Remember a thrown firebomb,
-      a cast spell, and a special move all share one cooldown, so you
-      get one such trick every few breaths. Type forage in the marsh to
-      gather herbs. If the fight turns bad, type flee -- you wake at the
+      Falv has handed you a firebomb and set you loose in the marsh. First
+      put down a marsh leech. Keep the firebomb for after the leech is
+      down. If a fight turns bad, type flee: if you fall, you wake at the
       Mending Hut, not in the mud.
+    hint: >-
+      Go west from Falv's camp to the Reed Beds and type attack leech. If
+      it is dark, type cast chrysalis-glow first.
   - id: leech
-    map_target: -1  # -1: no single resolved destination; Phase 2 review
+    map_target: 5272
     description: >-
-      One marsh leech is down. Now learn the firebomb: get into a fight
-      and throw it.
+      One marsh leech is down. Now the firebomb: throw it where a foe can
+      feel it, and the fight starts with a burst of flame. A thrown
+      firebomb, a cast spell and a special move all share one cooldown,
+      so you get one such trick every few breaths. Another leech waits at
+      the Black Pool, and the reed lurker hunts the Mudflat south of Falv's
+      camp.
     hint: >-
-      Find another foe -- the reed lurker waits in the cattails on the
-      mudflat. Get into the fight, then type throw firebomb. (Throw,
-      cast, and special moves share one cooldown.)
+      With a foe in the room, type throw firebomb.
   - id: throw
-    map_target: -1  # -1: bundled objectives, rooms [5270, 5273]; Phase 2 split review
+    map_target: 5270
     description: >-
-      The firebomb burst exactly where you wanted it. Now forage the
-      marsh herbs Falv asked for.
+      The firebomb burst where you wanted it. Now forage the marsh herbs
+      Falv asked for. The Sunken Path and the Black Pool south of it grow
+      the best of them. Some days your hands come up empty, and the
+      search still counts.
     hint: >-
-      Type forage while standing in the marsh -- the sunken path and the
-      black pool grow the best herbs -- to gather cattail, willow-bark,
-      and mint.
+      On the Sunken Path or at the Black Pool, type forage.
   - id: forage
     map_target: 5271
     description: >-
       You have blooded yourself, thrown the firebomb, and worked the
       marsh for herbs. Report back to Falv at his camp.
     hint: >-
-      Walk back to Fenwalker Falv at the cattail stand -- type ask falv
-      report.
+      Go back to Fenwalker Falv at the Cattail Stand and type ask falv
+      done.
   - id: end
     description: >-
       Falv has named you marsh-worthy and given you a bandolier for your
@@ -103,44 +112,47 @@ triggers:
       - grant: "39-leech"
       - actor: >-
           The marsh leech goes limp in the water. First blood in the
-          marsh. Now the firebomb -- get into a fight and throw it.
+          marsh. Now the firebomb. With a foe in the room, type throw
+          firebomb.
 
-  # ── THROW: hurl the firebomb in combat ───────────────────────────────
-  # Gated only on 39-start (not 39-leech) so throwing the firebomb AT the
-  # leech during the first fight still counts — the three objectives
-  # (leech / throw / forage) complete in any order; the turn-in needs all.
+  # ── THROW: hurl the firebomb, after the leech ────────────────────────
   - event: command
     command: throw
     conditions:
-      has: ["39-start"]
+      has: ["39-leech"]
       missing: ["39-throw"]
     actions:
       - grant: "39-throw"
       - actor: >-
           The firebomb bursts in a gout of flame right where you aimed it.
-          Now you feel the cost -- no second trick for a few breaths.
-          That cooldown is shared by spells and special moves too.
+          Now you feel the cost: no second trick for a few breaths. That
+          cooldown is shared by spells and special moves too. Next, on the
+          Sunken Path or at the Black Pool, type forage.
 
-  # ── FORAGE: gather marsh herbs (rooms 5270 / 5273) ──────────────────
+  # ── FORAGE: search the marsh (rooms 5270 / 5273), after the throw ────
+  # A forage that turns up nothing still counts, so these lines do not
+  # claim a find.
   - event: command
     command: forage
     room: 5270
     conditions:
-      has: ["39-start"]
+      has: ["39-throw"]
       missing: ["39-forage"]
     actions:
       - grant: "39-forage"
       - actor: >-
-          You work cattail and herb free of the marsh. Good brewing
-          stock. Report back to Falv at his camp.
+          That is foraging the marsh: working the firm ground between the
+          cattails for what grows there. Some days it gives little, and
+          that is part of it. Go back to Falv and type ask falv done.
   - event: command
     command: forage
     room: 5273
     conditions:
-      has: ["39-start"]
+      has: ["39-throw"]
       missing: ["39-forage"]
     actions:
       - grant: "39-forage"
       - actor: >-
-          The black pool grows the best of it -- willow-bark and mint,
-          thick at the waterline. Report back to Falv at his camp.
+          The black pool's waterline is the richest ground in the marsh,
+          even on a day it gives up little. Go back to Falv and type ask
+          falv done.

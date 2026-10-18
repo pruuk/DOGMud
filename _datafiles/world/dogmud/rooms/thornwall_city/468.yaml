@@ -8,7 +8,8 @@ description: The interior of the temple is a single vaulted nave, its ceiling lo
   walls, their light warm but insufficient to reach the upper darkness. At the far
   end, a simple stone altar holds a brass bowl that smokes gently with incense. The
   temple serves no single deity. It is a place for contemplation, community, and
-  the management of tithes.
+  the management of tithes. Beside the door stands a ring of dark basalt, and
+  the air inside it shimmers silver. It is a portal back to the Pothole Coulee.
 biome: interior
 coord:
   x: 2
@@ -21,6 +22,13 @@ exits:
     roomid: 467
   up:
     roomid: 5103
+  # The way back to the newbie area (owner ruling 2026-10-17). Warden Esk's
+  # arch in the Pothole Coulee sends the Opened here (5215 -> 468); this
+  # portal takes anyone back to his Threshold House. A named exit has no
+  # map delta, so the mapper and the consistency check skip it.
+  portal:
+    roomid: 5215
+    zone: Pothole Coulee
 nouns:
   altar: A plain stone altar, unadorned except for a brass incense bowl and a pair
     of candlesticks. The altar has been scrubbed so many times that the stone has
@@ -32,6 +40,15 @@ nouns:
   candles: Iron candle stands line the walls, each holding a thick tallow candle.
     The wax has dripped and pooled at the bases, building up in layered formations.
     The light they give is steady and warm.
+  portal: A ring of dark basalt stands on the slate beside the door, as tall
+    as a person and smooth as river stone. The air inside it shimmers silver
+    and hums faintly. It is made of the same stone as the old arch in the
+    Pothole Coulee, and it leads back to that arch, where Warden Esk keeps
+    watch. Type <ansi fg="command">enter portal</ansi> to go through.
+  ring: A ring of dark basalt stands on the slate beside the door, as tall
+    as a person and smooth as river stone. The air inside it shimmers silver
+    and hums faintly. It is a portal back to the Pothole Coulee. Type
+    <ansi fg="command">enter portal</ansi> to go through.
 spawninfo:
 - mobid: 95
 idlemessages:

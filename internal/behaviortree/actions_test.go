@@ -550,7 +550,7 @@ func TestActMovePlayer_TeleportsUser(t *testing.T) {
 		t.Fatalf("precondition: expected user in room 1, got %d", user.Character.RoomId)
 	}
 
-	ctx := &EvalContext{Event: EventContext{UserId: 1}}
+	ctx := &EvalContext{Event: EventContext{UserId: 1}, RoomId: 1}
 	if result := fn(map[string]any{"room_id": 2}, ctx); result != Success {
 		t.Fatalf("expected Success, got %v", result)
 	}

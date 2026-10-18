@@ -18,13 +18,17 @@ import (
 // words, and each name in the line, the speaker's and the addressee's, reads
 // "a figure" at shapes and "someone" when the listener sees nothing (sight
 // gates 5b ruling 3). Authored NPC speech, so never deafen-filtered (ruling 6).
+// Both helpers wrap at 80 columns, as a plain NPC say does
+// (actions.FormatSayText).
 func sayToRoom(room *rooms.Room, line string, names []string, excludeUserIds ...int) {
+	line = util.SplitStringNL(line, 80)
 	room.SendTextHidingNames(messaging.CategorySpeech, line, names, messaging.HideSpeakerNames, excludeUserIds...)
 }
 
 // sayToUser sends the addressee its own line, the speaker's name hidden at the
 // addressee's sight: a blinded player spoken to hears "Someone says to you".
 func sayToUser(toUser *users.UserRecord, room *rooms.Room, line, speaker string) {
+	line = util.SplitStringNL(line, 80)
 	toUser.SendText(messaging.CategorySpeech,
 		messaging.HideSpeakerNames(line, []string{speaker}, messaging.ParticipantSight(toUser.Character, room)))
 }

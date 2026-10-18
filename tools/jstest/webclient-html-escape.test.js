@@ -60,6 +60,7 @@ function makeEnv(gmcp) {
         funcSrc('escapeHTML'),
         funcSrc('writeQuestsHTML'),
         funcSrc('renderQuests'),
+        funcSrc('charDisplayName'),
         funcSrc('updateStatusPanel'),
         'return { escapeHTML: escapeHTML, renderQuests: renderQuests, updateStatusPanel: updateStatusPanel };'
     ].join('\n'));
@@ -117,7 +118,8 @@ function noMarkupFrom(html) {
     var env = makeEnv({
         Char: {
             Name: BOTH,
-            Info: { race: BOTH, 'class': BOTH },
+            // The name the panel shows comes from Info.name (charDisplayName).
+            Info: { name: BOTH, race: BOTH, 'class': BOTH },
             Conditions: cond
         }
     });

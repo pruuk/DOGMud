@@ -1,18 +1,19 @@
 # Quest 33 — Hold the Wash (Pothole Coulee, combat spoke)
 #
-# Token flow:
+# Token flow (one command per step, in order; owner ruling 2026-10-17):
 #   33-start    — granted by Caravan Guard Garve's dialogue (wash_offer
 #                 node). Requires 32-end (First Blood). Teaches: real
 #                 combat against hostile foes, the flee command, and the
 #                 death-wake-at-Mending-Hut loop as a designed lesson.
 #   33-scout    — mob_death trigger on Bandit Scout (9110). Requires
-#                 33-start. Scouts hold the lower wash (rooms 5232/5233/
-#                 5236).
+#                 33-start. Scouts hold the Lower Wash (5232, north of
+#                 Garve's hollow), Gravel Bend (5233) and Upper Wash (5236).
 #   33-squatter — mob_death trigger on Bandit Squatter (9111). Requires
-#                 33-start. Squatter camps deeper in the cistern
-#                 (rooms 5235/5236).
-#   33-end      — granted by Garve's dialogue (wash_turnin node) after
-#                 both 33-scout and 33-squatter are held.
+#                 33-scout: Garve's order is scout first, squatter second.
+#                 The squatter camps in the Cracked Cistern (5235, east of
+#                 the hollow) and the Upper Wash (5236).
+#   33-end:       granted by Garve's dialogue (wash_turnin node), which
+#                 gates on 33-squatter.
 #
 # Design intent: the wash CAN kill a careless newbie. That is intentional.
 # The death loop (fall → wake at Mending Hut → walk back) is a taught
@@ -22,45 +23,45 @@
 questid: 33
 name: Hold the Wash
 description: >-
-  Caravan Guard Garve's convoy was ambushed in Squatter's Hollow. His
-  sword arm is out of action and he cannot clear the wash alone. He has
-  asked you to drive out a bandit scout and a bandit squatter so the
-  hollow is safe enough to hold. If the fight turns against you, flee --
-  and if you fall, you will wake at the Mending Hut, not in a grave.
+  Caravan Guard Garve's convoy was ambushed in the wash, and he holds
+  Squatter's Hollow with a wounded sword arm. He has asked you to drive
+  out a bandit scout and then a bandit squatter so the hollow is safe
+  enough to hold.
 secret: false
 
 steps:
   - id: start
-    map_target: -1  # -1: no single resolved destination (near [5234]); Phase 2 review
+    map_target: 5232  # Lower Wash, north of Squatter's Hollow: Bandit Scout (mob 9110)
     description: >-
-      Garve needs the wash cleared: a bandit scout and a bandit squatter.
-      He told you to flee if it turns against you, and that falling just
-      wakes you at the Mending Hut.
+      Garve needs the wash cleared: a bandit scout first, then a bandit
+      squatter. The nearest scout is in the Lower Wash, just north of
+      Squatter's Hollow. If a fight goes badly, type flee to get away. If
+      you fall, you wake at the Mending Hut, not in a grave, and you can
+      walk back and try again.
     hint: >-
-      Head east from Squatter's Hollow into the lower wash to find a
-      scout. The squatter camps deeper in, toward the cistern. Type flee
-      to pull back if a fight goes badly -- you will wake at the Mending
-      Hut if you fall. Come back to Garve when both are down.
+      Go north from Squatter's Hollow to the Lower Wash and type attack
+      scout. If it is dark, type cast chrysalis-glow first.
   - id: scout
-    map_target: 5235  # Cracked Cistern — Bandit Squatter (mob 9111); narrows to one direction
+    map_target: 5235  # Cracked Cistern: Bandit Squatter (mob 9111)
     description: >-
-      One bandit scout is down. The squatter still camps deeper in the
-      wash, toward the cistern.
+      One bandit scout is down. The squatter camps in the Cracked
+      Cistern, east of Squatter's Hollow. Type flee if the fight turns
+      against you. When a bandit falls, its gear stays on the corpse:
+      type loot corpse to take it.
     hint: >-
-      Push deeper east toward the cistern to find the bandit squatter.
-      Type flee to pull back if the fight turns against you.
+      From Squatter's Hollow, go east to the Cracked Cistern and type
+      attack squatter.
   - id: squatter
     map_target: 5234
     description: >-
-      The bandit squatter is down too. Report back to Garve in
-      Squatter's Hollow.
+      The bandit squatter is down too. Garve waits in Squatter's Hollow,
+      west of the Cracked Cistern.
     hint: >-
-      Walk back west to Squatter's Hollow and tell Garve the wash is
-      clear. Try ask garve report.
+      Go back to Garve in Squatter's Hollow and type ask garve report.
   - id: end
     description: >-
       Garve can hold the wash now. He mentioned the bandits still hold
-      a tower further up -- come back when you are ready.
+      a tower further up. Come back to him when you are ready.
     hint: >-
       The wash behind you is clear. Garve hinted the bandit tower up
       ahead may have more work waiting.
@@ -86,20 +87,19 @@ triggers:
       - grant: "33-scout"
       - actor: >-
           The bandit scout goes down. His gear stays on the body until
-          you take it -- type loot corpse (or get all corpse) to strip
-          it, then wear any armor you pull. One threat in the wash is
-          done. Push deeper toward the cistern for the squatter.
+          you take it: type loot corpse to strip it. Next is the
+          squatter. From Squatter's Hollow, go east to the Cracked
+          Cistern and type attack squatter.
 
-  # ── SQUATTER: defeat a bandit squatter (mob 9111) ───────────────────
+  # ── SQUATTER: defeat a bandit squatter (mob 9111), after the scout ──
   - event: mob_death
     mob: 9111
     conditions:
-      has: ["33-start"]
+      has: ["33-scout"]
       missing: ["33-squatter"]
     actions:
       - grant: "33-squatter"
       - actor: >-
-          The bandit squatter drops -- and he was wearing something
-          worth having. Loot the corpse before you go, then walk back
-          and give Garve the word. The wash is clear down to the
-          cistern.
+          The bandit squatter drops, and he was wearing something worth
+          having. Loot the corpse before you go. Then go back to Garve
+          in Squatter's Hollow and type ask garve report.

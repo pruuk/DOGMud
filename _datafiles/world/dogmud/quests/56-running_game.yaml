@@ -1,11 +1,18 @@
 # Quest 56 — Running Game (Pothole Coulee, Spoke D repeatable)
 #
-# Token flow:
+# Token flow (one command per step, owner ruling 2026-10-17):
 #   56-start — granted by Hunter Delk's dialogue (game_loop_offer node).
 #              Requires 43-end (Break the Pack). Repeatable with cooldown.
-#   56-hunt  — mob_death trigger on Fringe Pronghorn (9139). Requires 56-start.
-#   56-end   — command trigger on forage in the fringe camp room (5284).
+#   56-hunt: mob_death trigger on a Pronghorn (9139). Requires 56-start.
+#   56-end:  command trigger on forage on the Open Steppe (5284).
 #              Requires 56-hunt. Auto-grants reward + clears for repeat.
+#
+# The run finishes on the forage itself, with no visit back to Delk, and the
+# forage counts only on the Open Steppe. The hints used to send the player to
+# forage "at the camp" (Delk's camp is Hunter's Hollow, 5290, where the
+# trigger does not listen) and to "come back to Delk", which completes
+# nothing. They now say what completes each step. Step ids are unchanged, so
+# a player saved on start or hunt resumes as before.
 
 questid: 56
 name: Running Game
@@ -19,22 +26,23 @@ cooldown_rounds: 300
 
 steps:
   - id: start
-    map_target: -1  # -1: no single resolved destination (near [5290]); Phase 2 review
+    map_target: 5289
     description: >-
-      Delk wants you to bring down a pronghorn and forage the fringe
-      before you lose the feel for the country.
+      Delk wants you to bring down a pronghorn and then forage the Open
+      Steppe before you lose the feel for the country. Pronghorn graze the
+      Thornbrake, north of his camp, and the Carrion Flat, south of the Game
+      Trail.
     hint: >-
-      Head out onto the fringe and hunt a pronghorn. After the kill,
-      type forage at the camp to finish. Come back to Delk when
-      both are done.
+      In the Thornbrake, north of Delk's camp, type attack pronghorn. If it
+      is dark, type cast chrysalis-glow first.
   - id: hunt
     map_target: 5284
     description: >-
-      One pronghorn down. Now forage the fringe at the camp to
-      finish what Delk sent you out for.
+      One pronghorn down. Forage the Open Steppe, north of the Steppe Fringe,
+      to finish the run. The forage ends it; you do not need to go back to
+      the camp.
     hint: >-
-      Type forage at the fringe camp to pull what the country gives
-      up. Then come back to Delk.
+      On the Open Steppe, type forage.
   - id: end
     description: >-
       You took game and worked the land. Delk will have another run
@@ -44,10 +52,10 @@ rewards:
   gold: 6
   skillinfo: "search:1"
   actor: >-
-    Delk takes a look at what you brought back and gives a short nod.
-    "Good run. Clean kill, eyes open. The fringe teaches you different
-    things each pass -- come back when you are ready to listen again."
-  observer: "Delk inspects your haul with a hunter's brief, approving eye."
+    The run is done: clean kill, eyes open, and the land worked after it.
+    The fringe teaches you different things each pass. When you want
+    another run, ask Delk for work.
+  observer: ""
 
 triggers:
   - event: mob_death
@@ -58,8 +66,8 @@ triggers:
     actions:
       - grant: "56-hunt"
       - actor: >-
-          The pronghorn goes down clean. Now forage the camp --
-          the fringe always gives something to a patient hand.
+          The pronghorn goes down clean. Now, on the Open Steppe, type
+          forage.
 
   - event: command
     command: forage
@@ -70,6 +78,5 @@ triggers:
     actions:
       - grant: "56-end"
       - actor: >-
-          You pull what the fringe was holding -- root, bark, and
-          something the morning left. That is what Delk meant.
-          Head back to him.
+          You work the steppe for what it gives. Some days that is little,
+          and the run still counts.

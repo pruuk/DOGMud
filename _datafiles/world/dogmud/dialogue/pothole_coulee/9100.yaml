@@ -56,9 +56,9 @@ tree:
       questExcluded: ["21-end"]
       text: >-
         The pool woke something in you -- a capacity, not yet a shape.
-        A change may already have found you, and more will come with time
-        and hard use. Type mutations whenever you like to see what has
-        taken hold. And hear this, for it is the law of Gaius and it
+        As you grow, the chrysalis changes you, and each change it makes
+        is called a mutation. It may have changed you already. Type
+        mutations to see what has changed in you. And hear this, for it is the law of Gaius and it
         surprises newcomers: there are no levels here, and no experience to grind.
         You grow by doing, and only by doing. Swing a blade and your blade-arm sharpens.
         Study, and your mind does. Type skills to see what you can do,
@@ -117,6 +117,7 @@ tree:
       triggers: ["mutations", "mutation", "change", "changed", "woke"]
       questRequired: ["30-end"]
       text: >-
+        A mutation is a change the chrysalis makes in you as you grow.
         Type <ansi fg="command">mutations</ansi> and the truth of
         yourself is listed plainly -- which is more than most worlds
         offer. Each one woke because of something you did or survived.

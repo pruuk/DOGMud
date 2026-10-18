@@ -3,6 +3,27 @@ zone: Newcomer Antechamber
 defaultMood: friendly
 
 patterns:
+  # Quest 28's ask step (`ask dewey world`). The quest's dialogue trigger
+  # grants 28-asked before this reply is chosen, so these two answer the
+  # asking question itself and end with the way north, the next step. Said
+  # as one line, the answer cannot fall behind the prompt (2026-10-17).
+  # They stop once the player walks into the ring (28-proving_prompt).
+  - keywords: ["world", "gaius", "outside", "beyond"]
+    questRequired: ["28-asked"]
+    questExcluded: ["28-proving_prompt"]
+    responses:
+      - "Gaius. A whole living world: a city, roads, people who lie and help
+          and everything between. It changes while you're not looking. That's
+          how you'll learn half of what matters out there, by asking. The way
+          north is open."
+
+  - keywords: [""]
+    questRequired: ["28-asked"]
+    questExcluded: ["28-proving_prompt"]
+    responses:
+      - "Good question. That's how you'll learn half of what matters out
+          there, by asking. The way north is open."
+
   - keywords: ["hello", "hi", "greet", "hey", "hail"]
     responses:
       - "Hello yourself. Ask me anything while you've got me -- the world, the

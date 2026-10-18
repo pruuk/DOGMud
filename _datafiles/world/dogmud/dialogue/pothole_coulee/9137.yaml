@@ -24,10 +24,10 @@ patterns:
 
   - keywords: ["sleep", "rest", "cook", "fire", "meat"]
     responses:
-      - "Rest mends you faster than walking does -- type sleep when you
-          are safe, stand to rise. Cook your kill at my fire: type craft
-          and the meal's name. A hot meal carries you further than cold
-          meat ever will."
+      - "Rest mends you faster than walking does. Type sleep when you
+          are safe. The next thing you do wakes you. Cook your kill at my
+          fire: type craft and the meal's name. A hot meal carries you
+          further than cold meat ever will."
 
   - keywords: ["pack", "alpha", "wolves", "den"]
     responses:
@@ -63,15 +63,41 @@ tree:
           me for the hunt when you are ready to work."
         hints: "Type ask delk hunt to take on the hunter's loop."
 
-      # ── Mid quest 42 ─────────────────────────────────────
+      # ── Mid quest 42, one variant per step (one command each) ─
       - questRequired: ["42-start"]
+        questExcluded: ["42-track", "42-end"]
+        text: "Still at it. First the line. Pronghorn graze the Thornbrake,
+          just north of my camp. Read the ground for one before you go
+          at it."
+        hints: "In the Thornbrake, north of Delk's camp, type track
+          pronghorn."
+      - questRequired: ["42-track"]
+        questExcluded: ["42-hunt", "42-end"]
+        text: "You have its line. Now bring it down. A pronghorn will not
+          start the fight, so you pick the moment."
+        hints: "Type attack pronghorn."
+      - questRequired: ["42-hunt"]
+        questExcluded: ["42-meat", "42-end"]
+        text: "You made the kill. The meat stays on the carcass until you
+          take it. Take it, or you killed for nothing."
+        hints: "Type loot corpse."
+      - questRequired: ["42-meat"]
+        questExcluded: ["42-rest", "42-end"]
+        text: "You have meat. Before you cook, rest. Bed down where nothing
+          hostile is near and let the field mend you."
+        hints: "Type sleep."
+      - questRequired: ["42-rest"]
+        questExcluded: ["42-cook", "42-end"]
+        text: "Rested. Now the fire, here in my camp. The meat and the salt
+          become a meal. Burn it and the meat is gone, so bring down another
+          pronghorn and try again. Lost the salt? Ask me for salt."
+        hints: "At Delk's camp fire in Hunter's Hollow, type craft grilled
+          meat."
+      - questRequired: ["42-cook"]
         questExcluded: ["42-end"]
-        text: "Still at it. Bring down a pronghorn for its meat, sleep
-          rough to keep your strength, and cook grilled meat at my fire.
-          Lost the salt I gave you? Ask. Come back when it is done."
-        hints: "Hunt a pronghorn (it drops meat -- pick it up); type sleep
-          to rest; type craft grilled meat at the camp fire. If you lost
-          the salt, ask delk salt. Then ask delk report."
+        text: "You have the look of someone who ate what they killed. Tell
+          me how it went."
+        hints: "Type ask delk report."
 
       # ── Ready for quest 43 ───────────────────────────────
       - questRequired: ["42-end"]
@@ -81,15 +107,27 @@ tree:
           the pack when your nerve is up."
         hints: "Type ask delk pack when you are ready for the final task."
 
-      # ── Mid quest 43 ─────────────────────────────────────
+      # ── Mid quest 43 (one step: the alpha) ──────────────
       - questRequired: ["43-start"]
         questExcluded: ["43-end"]
         text: "It is still out there. Carry food, fight through the
           hounds, and take the alpha in its den. Do not let them get
-          behind you. South, through the killing ground."
-        hints: "Head south through the killing ground and bone field to
-          the den; fight through the pack and defeat the alpha
-          pack-leader."
+          behind you. From the Game Trail, go south through the Killing
+          Ground and the Bone Field."
+        hints: "In the Den, south of the Bone Field, type attack alpha."
+
+      # ── Mid quest 56 (repeatable run), one variant per step ─
+      - questRequired: ["56-start"]
+        questExcluded: ["56-hunt", "56-end"]
+        text: "The run is on. Bring a pronghorn down first. The Thornbrake,
+          just north of my camp, usually has one."
+        hints: "In the Thornbrake, north of Delk's camp, type attack
+          pronghorn."
+      - questRequired: ["56-hunt"]
+        questExcluded: ["56-end"]
+        text: "One down. Now work the Open Steppe for what it gives. The
+          forage finishes the run. You need not come back to me."
+        hints: "On the Open Steppe, type forage."
 
       # ── Quest 43 complete ────────────────────────────────
       - questRequired: ["43-end"]
@@ -108,32 +146,41 @@ tree:
       grantsQuest: "42-start"
       givesItem: 40017
       text: "Right. Here -- a salt-pouch. You will want it for the fire.
-        The loop is this. First, take meat: track and kill a pronghorn
-        out on the fringe -- it drops raw meat, so pick it up. Second,
-        rest rough: type sleep where it is safe and the field mends you
-        faster than walking does. Type stand to rise. Third, cook it: at
-        my fire here, type craft grilled meat -- the meat and the salt
-        become a meal. Do all three and come back."
-      hints: "You received a salt-pouch. Hunt a pronghorn (get the meat it
-        drops). Type sleep to rest in the field. At Delk's camp fire type
-        craft grilled meat. Then ask delk report."
+        The loop is this. First, take meat: track a pronghorn in the
+        Thornbrake, just north of here, bring it down, and take the meat
+        off the carcass. Second, rest rough: sleep where it is safe and
+        the field mends you faster than walking does. Third, cook it: at
+        my fire here, the meat and the salt become grilled meat. Do all
+        three and come back."
+      hints: "You received a salt-pouch. In the Thornbrake, north of
+        Delk's camp, type track pronghorn."
 
-    # ── SALT RECOVERY ─────────────────────────────────────────
+    # ── SALT RECOVERY (S8: one handout, never a second) ───────
+    # itemExcluded hides the handout while the player carries a salt-pouch
+    # anywhere (pack or component pouch); the node after it answers instead.
     - id: salt_recovery
       triggers: ["salt", "lost", "another", "pouch"]
       questRequired: ["42-start"]
       questExcluded: ["42-cook"]
+      itemExcluded: 40017
       givesItem: 40017
       text: "Lost your salt? Here. Last pinch I am sparing. You need it
         and raw meat to cook grilled meat at the fire -- do not lose this
         one."
       hints: "You received a salt-pouch. With raw meat, type craft grilled
         meat at the camp fire."
+    - id: salt_have
+      triggers: ["salt", "lost", "another", "pouch"]
+      questRequired: ["42-start"]
+      questExcluded: ["42-cook"]
+      text: "You already have salt. Check your pack and your pouch. One
+        pinch is all a cut of meat needs."
+      hints: "Type inventory to see what you carry."
 
     # ── QUEST 42 TURN-IN ──────────────────────────────────────
     - id: hunt_turnin
       triggers: ["report", "done", "ready", "finished", "quest", "task"]
-      questRequired: ["42-hunt", "42-rest", "42-cook"]
+      questRequired: ["42-cook"]
       questExcluded: ["42-end"]
       grantsQuest: "42-end"
       text: "Killed clean, rested rough, ate what you took. That is the
@@ -155,21 +202,100 @@ tree:
         time -- that is how a pack kills, and it is how this one will try
         to kill you. Cook a meal and carry it. Fight through the hounds,
         keep your back clear, and do not stop until you reach the den.
-        The alpha is in there. Put it down and the pack comes apart. Go."
-      hints: "Cook and carry food first. Head south through the killing
-        ground and bone field to the den; fight through the pack and
-        defeat the alpha pack-leader."
+        From the Game Trail, east of my camp, it is south all the way,
+        through the Killing Ground and the Bone Field. The alpha is in
+        the den. Put it down and the pack comes apart. Go."
+      hints: "In the Den, south of the Bone Field, type attack alpha."
+
+    # ── MID QUEST 42 (S10): the hunt's own words ──────────────
+    # Placed after the offers and the turn-in, so "quest" at the last step
+    # still reaches hunt_turnin. Each answer names the player's step.
+    - id: hunt_progress_start
+      triggers: ["quest", "task", "help", "how", "next", "hunt", "done",
+        "report", "ready"]
+      questRequired: ["42-start"]
+      questExcluded: ["42-track", "42-end"]
+      text: "Not yet. First the line: read the ground for a pronghorn.
+        The Thornbrake, just north of my camp, is where they graze."
+      hints: "In the Thornbrake, north of Delk's camp, type track
+        pronghorn."
+    - id: hunt_progress_track
+      triggers: ["quest", "task", "help", "how", "next", "hunt", "done",
+        "report", "ready"]
+      questRequired: ["42-track"]
+      questExcluded: ["42-hunt", "42-end"]
+      text: "Not yet. You have its line. Now bring it down."
+      hints: "Type attack pronghorn."
+    - id: hunt_progress_hunt
+      triggers: ["quest", "task", "help", "how", "next", "hunt", "done",
+        "report", "ready"]
+      questRequired: ["42-hunt"]
+      questExcluded: ["42-meat", "42-end"]
+      text: "Not yet. The meat is still on the carcass. Take it. If you
+        took it from an earlier kill, bring down another and take that
+        one."
+      hints: "Type loot corpse."
+    - id: hunt_progress_meat
+      triggers: ["quest", "task", "help", "how", "next", "hunt", "done",
+        "report", "ready"]
+      questRequired: ["42-meat"]
+      questExcluded: ["42-rest", "42-end"]
+      text: "Not yet. You have meat. Rest before you cook it."
+      hints: "Type sleep."
+    - id: hunt_progress_rest
+      triggers: ["quest", "task", "help", "how", "next", "hunt", "done",
+        "report", "ready"]
+      questRequired: ["42-rest"]
+      questExcluded: ["42-cook", "42-end"]
+      text: "Not yet. You rested. Now cook the kill at my fire. If it
+        burns, the meat is lost: bring down another pronghorn and cook
+        that one."
+      hints: "At Delk's camp fire in Hunter's Hollow, type craft grilled
+        meat."
+
+    - id: hunt_prey
+      triggers: ["pronghorn", "track", "prey", "attack"]
+      questRequired: ["42-start"]
+      questExcluded: ["42-end"]
+      text: "Pronghorn graze the Thornbrake, just north of my camp, and the
+        Carrion Flat, south of the Game Trail. Track one to read its line:
+        type track and the beast's name. Then bring it down. It will not
+        start the fight, so you choose the moment."
+      hints: "In the Thornbrake, north of Delk's camp, type track
+        pronghorn. Then type attack pronghorn."
+
+    - id: hunt_meat
+      triggers: ["meat", "corpse", "carcass", "loot"]
+      questRequired: ["42-start"]
+      questExcluded: ["42-end"]
+      text: "A pronghorn always leaves meat on the carcass, and it stays
+        there until you take it. Loot the corpse where it fell. Raw meat
+        and salt, at my fire, make grilled meat."
+      hints: "Where the pronghorn fell, type loot corpse."
 
     # ── SLEEP / COOK HELP ─────────────────────────────────────
     - id: hunt_help
       triggers: ["sleep", "rest", "cook", "fire", "help"]
-      text: "Two field skills. Rest: type sleep where it is safe and your
-        body mends fast -- type stand to wake, and know any harm wakes you
-        the hard way. Cooking: stand at my fire and type craft followed by
-        the meal -- craft grilled meat with raw meat and salt. A rested,
-        fed hunter outlasts a stronger one who is neither."
-      hints: "Type sleep to rest (stand to wake). At a cooking fire type
-        craft grilled meat (needs raw meat + salt)."
+      text: "Two field skills. Rest: type sleep where nothing hostile is
+        near and your body mends fast. The next thing you do wakes you,
+        and any harm wakes you the hard way. Cooking: stand at my fire
+        and type craft followed by the meal: craft grilled meat with
+        raw meat and salt. A rested, fed hunter outlasts a stronger one
+        who is neither."
+      hints: "Type sleep to rest. At a cooking fire type craft grilled
+        meat (needs raw meat + salt)."
+
+    # ── MID QUEST 43 (S10) ────────────────────────────────────
+    - id: pack_progress
+      triggers: ["quest", "task", "help", "how", "next", "alpha", "den",
+        "pack", "way", "done", "report", "ready"]
+      questRequired: ["43-start"]
+      questExcluded: ["43-end"]
+      text: "The alpha is in the den. From the Game Trail, east of my camp,
+        go south through the Killing Ground and the Bone Field. Carry a
+        cooked meal, and if a fight turns against you, flee and come back
+        stronger."
+      hints: "In the Den, south of the Bone Field, type attack alpha."
 
     # ── REPEATABLE HUNT LOOP OFFER ────────────────────────────
     - id: game_loop_offer
@@ -178,10 +304,29 @@ tree:
       grantsQuest: "56-start"
       questExcluded: ["56-start", "56-hunt", "56-end"]
       text: "The fringe is always running game. Go out and bring one
-        down, then forage the camp -- keep your hand in. Come back
-        when it is done."
-      hints: "You could take another run through the fringe -- type
-        ask delk work."
+        down, then forage the Open Steppe. Keep your hand in. The
+        forage finishes the run."
+      hints: "In the Thornbrake, north of Delk's camp, type attack
+        pronghorn."
+
+    # ── MID QUEST 56 (S10): one answer per step ───────────────
+    - id: game_progress_start
+      triggers: ["quest", "task", "help", "how", "next", "work", "hunt",
+        "pronghorn", "done", "report", "ready"]
+      questRequired: ["56-start"]
+      questExcluded: ["56-hunt", "56-end"]
+      text: "The run is on. Bring a pronghorn down first. The Thornbrake,
+        just north of my camp, usually has one."
+      hints: "In the Thornbrake, north of Delk's camp, type attack
+        pronghorn."
+    - id: game_progress_hunt
+      triggers: ["quest", "task", "help", "how", "next", "work", "hunt",
+        "forage", "done", "report", "ready"]
+      questRequired: ["56-hunt"]
+      questExcluded: ["56-end"]
+      text: "One down. Now work the Open Steppe for what it gives. The
+        forage finishes the run. You need not come back to me."
+      hints: "On the Open Steppe, type forage."
 
 memory:
   expiryPeriod: ""

@@ -35,11 +35,19 @@ flags:
 steps:
   - id: start
     map_target: 5242
-    description: "Garve has set you on the tower. Climb the wash to the ruined watchtower and defeat the bandit captain in the watch room at the top."
-    hint: "Head east up the wash past the cistern to the broken gate, then climb the tower stairs to the watch room. Defeat the bandit captain. Type consider on a foe first if you want to size it up."
+    description: >-
+      Garve has set you on the tower. From Squatter's Hollow, go east to
+      the Cracked Cistern, northeast to the Upper Wash, then east twice to
+      the Broken Gate. Go north to the Tower Base and up twice to the Watch
+      Room, where the bandit captain waits. A bruiser holds the Broken
+      Gate, and a lieutenant waits in the barracks east of it. Type consider on a foe first to size it up, and type
+      flee if a fight turns against you.
+    hint: >-
+      In the Watch Room at the top of the tower, type attack captain.
+      If it is dark, type cast chrysalis-glow first.
   - id: end
     description: "The captain has fallen and the tower is yours. The coulee is a harder place for bandits than it was this morning."
-    hint: "You have taken the tower. Speak with Garve in the hollow if you want to hear what it means -- and the road onward."
+    hint: "You have taken the tower. Speak with Garve in the hollow if you want to hear what it means and where the road goes next."
 
 rewards:
   itemid: 10044

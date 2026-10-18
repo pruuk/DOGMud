@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -38,7 +39,75 @@ func init() {
 	events.RegisterListener(PartyUpdateVitals{}, g.onUpdateVitals)
 	events.RegisterListener(events.CharacterVitalsChanged{}, g.vitalsChangedHandler)
 	events.RegisterListener(events.SightBandChanged{}, g.sightBandChangedHandler)
+	events.RegisterListener(events.PlayerSpawn{}, g.playerSpawnHandler)
+	events.RegisterListener(events.NewRound{}, g.newRoundHandler)
 
+}
+
+// pendingPartySpawnRefresh holds users who spawned while in a party. A
+// reconnect inside the zombie window keeps the character, and so its party,
+// in the world, but the full Party package only went out on PartyUpdated.
+// The fresh client then got Party.Vitals with no Members list, and the web
+// client's Vitals window fell back to its solo layout: the viewer once at the
+// top as themself and again among the party rows (playtest 2026-10-17). The
+// spawn push covers clients already negotiated; the next-round re-push
+// covers a web client whose GMCP hello raced the login burst, the same
+// pattern as pendingCharSpawnRefresh in gmcp.Char.go.
+var (
+	pendingPartySpawnRefresh   = map[int]struct{}{}
+	pendingPartySpawnRefreshMu sync.Mutex
+)
+
+func (g *GMCPPartyModule) playerSpawnHandler(e events.Event) events.ListenerReturn {
+	evt, typeOk := e.(events.PlayerSpawn)
+	if !typeOk || evt.UserId == 0 {
+		return events.Continue
+	}
+	if !g.sendFullParty(evt.UserId) {
+		return events.Continue
+	}
+	pendingPartySpawnRefreshMu.Lock()
+	pendingPartySpawnRefresh[evt.UserId] = struct{}{}
+	pendingPartySpawnRefreshMu.Unlock()
+	return events.Continue
+}
+
+func (g *GMCPPartyModule) newRoundHandler(e events.Event) events.ListenerReturn {
+	if _, typeOk := e.(events.NewRound); !typeOk {
+		return events.Continue
+	}
+	pendingPartySpawnRefreshMu.Lock()
+	if len(pendingPartySpawnRefresh) == 0 {
+		pendingPartySpawnRefreshMu.Unlock()
+		return events.Continue
+	}
+	userIds := make([]int, 0, len(pendingPartySpawnRefresh))
+	for userId := range pendingPartySpawnRefresh {
+		userIds = append(userIds, userId)
+	}
+	pendingPartySpawnRefresh = map[int]struct{}{}
+	pendingPartySpawnRefreshMu.Unlock()
+
+	for _, userId := range userIds {
+		g.sendFullParty(userId)
+	}
+	return events.Continue
+}
+
+// sendFullParty queues the full Party package to one user, if they are in a
+// party or invited to one. It reports whether anything was queued.
+func (g *GMCPPartyModule) sendFullParty(userId int) bool {
+	party := parties.Get(userId)
+	if party == nil {
+		return false
+	}
+	payload, moduleName := g.GetPartyNode(party, `Party`)
+	events.AddToQueue(GMCPOut{
+		UserId:  userId,
+		Module:  moduleName,
+		Payload: payload,
+	})
+	return true
 }
 
 type GMCPPartyModule struct {

@@ -1,6 +1,7 @@
 # Crier Toke — town crier, Hub Square (5203). Grants and closes
 # quest 31 (Find Your Footing). The mid-quest beats are quest-engine
-# triggers (room_enter 5213/5205, list/buy at 5207) — see
+# triggers (room_enter 5213, list then buy at 5207, equip, room_enter
+# 5205; one command per step, in order). See
 # quests/31-find_your_footing.yaml.
 
 mobid: 9106
@@ -41,15 +42,47 @@ tree:
         hints: >-
           You could ask Hadwen about the rite at the Awakening Pool,
           north of the square.
+      # Quest 31 mid-quest: one variant per step, in order, each naming
+      # that step's one command (owner ruling 2026-10-17).
       - questRequired: ["31-start"]
+        questExcluded: ["31-school", "31-end"]
+        text: >-
+          Still walking the town? Good. The slates first: the Chrysalis
+          School Hall, up past the pool and the basalt stair. I will
+          still be shouting when you get back.
+        hints: >-
+          Go north past the Awakening Pool and keep north up the basalt
+          stair to the school hall. Walking in is enough.
+      - questRequired: ["31-school"]
+        questExcluded: ["31-list", "31-end"]
+        text: >-
+          Seen the slates? Good. Now the shelves: Trader Onna's, in
+          Coulee Provisions. See what she has before you spend.
+        hints: >-
+          Go south to Market Row, then east into Coulee Provisions, and
+          type list.
+      - questRequired: ["31-list"]
+        questExcluded: ["31-shop", "31-end"]
+        text: >-
+          Looked over Onna's shelves, have you? The cotton shirt is the
+          one. You have coin enough for it.
+        hints: >-
+          At Coulee Provisions, type buy cotton shirt.
+      - questRequired: ["31-shop"]
+        questExcluded: ["31-equip", "31-end"]
+        text: >-
+          A new shirt, still folded in your pack? It keeps nobody warm
+          there. Put it on.
+        hints: >-
+          Type equip cotton shirt.
+      - questRequired: ["31-equip"]
         questExcluded: ["31-lantern", "31-end"]
         text: >-
-          Still walking the town? Good. The slates, the shelves, and
-          the taps -- in that order. Type
-          <ansi fg="command">quest</ansi> if you lose your place. I
-          will still be shouting when you get back.
+          Dressed for the coulee! Now the taps: The Drowned Lantern,
+          the inn off Market Row. Put your head in the door.
         hints: >-
-          Type quests to see your next stop.
+          Go south to Market Row, then west into The Drowned Lantern.
+          Walking in is enough.
       - questRequired: ["31-lantern"]
         questExcluded: ["31-end"]
         text: >-
@@ -68,6 +101,51 @@ tree:
           You could ask about the seven mouths, or the day's news.
 
   nodes:
+    # ── THE WAY TO THE DRILL YARD AND THE LONG TERRACE ──────────
+    # Quests 32 and 50 send a newcomer to these two yards, and nothing
+    # gave the way from the square (2026-10-17 newbie-duo playtest). First
+    # in the list so "where is the drill yard" is answered here, not by a
+    # footing step node that also listens for "where". Routes walked in
+    # the room data: 5203 north 5200, east 5202, east 5209, east 5220,
+    # east 5227; and 5209 north 5226, up 5347, north 5348, north 5349, up
+    # 5350, east 5351.
+    - id: way_drill_yard
+      triggers: ["drill", "yard", "vorn", "dummy"]
+      text: >-
+        The Drill Yard? Easy walking. From this square go north to the
+        pool, then east four times: the shore path, the Mending Hut, the
+        dry coulee mouth, and the yard itself. Drillmaster Vorn will be
+        the one shouting.
+      hints: >-
+        From Hub Square: north, then east four times.
+
+    - id: way_long_terrace
+      triggers: ["terrace", "iden", "range", "butt", "sling"]
+      text: >-
+        The terraces are up on the bluff. From this square go north to
+        the pool, east twice to the Mending Hut, then north to the Bluff
+        Steps. Climb up, go north twice, and up once more to the Firing
+        Range, where Marksman Iden keeps watch. The Long Terrace is just
+        east of her.
+      hints: >-
+        From Hub Square: north, east, east, north, up, north, north, up,
+        then east to the Long Terrace.
+
+    # ── THE WAY TO SCOUT TARN AND THE STEPPE ────────────────────
+    # Quest 41 sends a newcomer to the Open Steppe "south of Scout Tarn",
+    # and nothing gave the way to Tarn (2026-10-17 newbie-duo verify2).
+    # Route walked in the room data: 5203 west 5216, west 5223, south
+    # 5282, south 5283 (Steppe Edge, Tarn 9136), south 5284.
+    - id: way_scout_tarn
+      triggers: ["tarn", "scout", "steppe"]
+      text: >-
+        Scout Tarn? She keeps to the Steppe Edge, out past the scrub.
+        From this square go west twice, along the stilt-house walk and
+        into the scrub draw, then south twice through the scrub mouth.
+        The Open Steppe is one more step south of her.
+      hints: >-
+        From Hub Square: west, west, south, south to the Steppe Edge.
+
     - id: newcomer_players
       triggers: ["people", "players", "player", "others", "talk", "say", "who",
         "tell", "whisper", "chat", "speak", "everyone", "quest", "task"]
@@ -100,13 +178,13 @@ tree:
         Onna's shelves in Coulee Provisions -- buy a shirt and put it
         on. And last The Drowned Lantern, the inn with the best taps in
         the coulee. Do it in that order and come tell me what you saw. I
-        will hear about it anyway, but I like it firsthand.
+        will hear about it anyway, but I like it firsthand. And if you
+        lose your place, the <ansi fg="command">hint</ansi> command
+        tells you the next stop, and <ansi fg="command">quests</ansi>
+        lists everything you have taken on.
       hints: >-
-        Go north past the Awakening Pool and up the basalt stair to the
-        school hall. Two commands keep you oriented from here on: type
-        <ansi fg="command">hint</ansi> any time for a nudge on what to do next
-        in your current quest, and <ansi fg="command">quests</ansi> to see
-        everything you've taken on.
+        Go north past the Awakening Pool and keep north up the basalt
+        stair to the Chrysalis School Hall. Walking in is enough.
       moodChange: friendly
 
     - id: footing_unopened
@@ -143,6 +221,97 @@ tree:
         have found.
       moodChange: friendly
 
+    # ── Quest 31 mid-quest questions (2026-10-17 audit S10) ──
+    # A player partway through Find Your Footing who asks about any word the
+    # quest invites gets the current step, not the catch-all. One node per
+    # step, in order, gated like the root variants above; same triggers on
+    # each so only the step gate picks the answer.
+    - id: footing_step_school
+      triggers: ["footing", "task", "quest", "done", "finished", "next", "help",
+        "how", "where", "lost", "map", "school", "slate", "shop", "shelves",
+        "provisions", "onna", "list", "buy", "shirt", "cotton", "equip", "wear",
+        "lantern", "inn", "taps"]
+      questRequired: ["31-start"]
+      questExcluded: ["31-school", "31-end"]
+      text: >-
+        Not done yet, friend, and the order matters. Slates first: the
+        Chrysalis School Hall, up past the pool and the basalt stair.
+        Shelves and taps after that. If you get turned around, the map
+        command shows where your feet have been.
+      hints: >-
+        Go north past the Awakening Pool and keep north up the basalt
+        stair to the school hall. Walking in is enough.
+
+    - id: footing_step_list
+      triggers: ["footing", "task", "quest", "done", "finished", "next", "help",
+        "how", "where", "lost", "map", "school", "slate", "shop", "shelves",
+        "provisions", "onna", "list", "buy", "shirt", "cotton", "equip", "wear",
+        "lantern", "inn", "taps"]
+      questRequired: ["31-school"]
+      questExcluded: ["31-list", "31-end"]
+      text: >-
+        Slates done, so the shelves are next. Trader Onna keeps Coulee
+        Provisions, off Market Row. Look over her stock before you spend:
+        a buyer who looks first pays less for regret.
+      hints: >-
+        Go south to Market Row, then east into Coulee Provisions, and
+        type list.
+
+    - id: footing_step_buy
+      triggers: ["footing", "task", "quest", "done", "finished", "next", "help",
+        "how", "where", "lost", "map", "school", "slate", "shop", "shelves",
+        "provisions", "onna", "list", "buy", "shirt", "cotton", "equip", "wear",
+        "lantern", "inn", "taps"]
+      questRequired: ["31-list"]
+      questExcluded: ["31-shop", "31-end"]
+      text: >-
+        You have seen Onna's stock. The cotton shirt is the one: cheap,
+        warm, and better than bare skin. You have coin enough.
+      hints: >-
+        At Coulee Provisions, type buy cotton shirt.
+
+    - id: footing_step_equip
+      triggers: ["footing", "task", "quest", "done", "finished", "next", "help",
+        "how", "where", "lost", "map", "school", "slate", "shop", "shelves",
+        "provisions", "onna", "list", "buy", "shirt", "cotton", "equip", "wear",
+        "lantern", "inn", "taps"]
+      questRequired: ["31-shop"]
+      questExcluded: ["31-equip", "31-end"]
+      text: >-
+        A shirt in your pack is a shirt keeping nobody warm. Put it on.
+        Gear only works when you wear it.
+      hints: >-
+        Type equip cotton shirt.
+
+    - id: footing_step_lantern
+      triggers: ["footing", "task", "quest", "done", "finished", "next", "help",
+        "how", "where", "lost", "map", "school", "slate", "shop", "shelves",
+        "provisions", "onna", "list", "buy", "shirt", "cotton", "equip", "wear",
+        "lantern", "inn", "taps"]
+      questRequired: ["31-equip"]
+      questExcluded: ["31-lantern", "31-end"]
+      text: >-
+        Dressed and ready! Last stop is the taps: The Drowned Lantern,
+        the inn off Market Row. Put your head in the door and come back
+        to me.
+      hints: >-
+        Go south to Market Row, then west into The Drowned Lantern.
+        Walking in is enough.
+
+    # All four stops done: footing, done, finished, quest and task reach
+    # footing_turnin above; every other quest word lands here.
+    - id: footing_step_report
+      triggers: ["next", "help", "how", "where", "lost", "map", "school", "slate",
+        "shop", "shelves", "provisions", "onna", "list", "buy", "shirt", "cotton",
+        "equip", "wear", "lantern", "inn", "taps"]
+      questRequired: ["31-lantern"]
+      questExcluded: ["31-end"]
+      text: >-
+        School, shelves, and taps, all three! You have walked the whole
+        hub. Say the word footing and we will call it done.
+      hints: >-
+        Type ask toke footing to finish the task.
+
     - id: mouths
       triggers: ["mouths", "mouth", "seven", "coulee", "rim", "spokes", "trails", "trials", "paths", "path"]
       text: >-
@@ -155,7 +324,8 @@ tree:
         if your boots hold.
       hints: >-
         The mouths open off the edges of town. The map command shows
-        what you have found so far.
+        what you have found so far. You could ask the way to the drill
+        yard, the terrace or the steppe.
 
     - id: news
       triggers: ["news", "word", "day", "notice", "happened"]

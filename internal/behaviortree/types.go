@@ -1,6 +1,8 @@
 package behaviortree
 
 import (
+	"sync/atomic"
+
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
 )
@@ -72,6 +74,27 @@ type EvalContext struct {
 	// node is the name of the condition or action evaluating now, so a
 	// recovered panic can name it (TryItemBehavior, Rule 14).
 	node string
+
+	// run links every action one evaluation queued with a delay, so an
+	// action that finds its premise gone can drop the rest. A delayed
+	// move_player whose player has left the room drops the grants queued
+	// behind it (Warden Esk's passage, 2026-10-17). Nil until the first
+	// delayed action is queued.
+	run *delayedRun
+}
+
+// delayedRun is the shared fate of the delayed actions one evaluation
+// queued. Once dropped, every later one is skipped quietly.
+type delayedRun struct {
+	dropped atomic.Bool
+}
+
+// dropDelayedRun skips every delayed action this evaluation queued that has
+// not fired yet. A no-op for an undelayed evaluation.
+func (ctx *EvalContext) dropDelayedRun() {
+	if ctx != nil && ctx.run != nil {
+		ctx.run.dropped.Store(true)
+	}
 }
 
 // NodeDef is the raw YAML definition of a node, parsed before

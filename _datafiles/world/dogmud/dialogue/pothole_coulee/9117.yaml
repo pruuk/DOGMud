@@ -2,21 +2,36 @@
 # Prospector caught in a cave-in; dug himself halfway out before
 # the rock settled again. Bad leg keeps him off the high scree.
 # Quartz-white right eye (Opened) that reads the dark. Grants and
-# closes quest 36 (Pick the Vein). Non-combatant.
+# closes quest 36 (Pick the Vein), grants 37 (Into the Vein) and the
+# repeatable 54 (Back to the Forge). Non-combatant.
+#
+# Routes from here (rooms.txt): north -> Lower Talus 5249; west -> Ore
+# Pocket 5252. Lower Talus west -> Scree Field 5250, east -> The Last
+# Worked Stone 5248 -> east Quench Shed 5247 -> south Coulee Smithy 5245.
+# Scree Field west -> Upper Talus 5253 -> west Mine Mouth 5254, then
+# down, west, down, west, west to The Den 5260.
 #
 # Variant order (first match wins):
 #   1. Not Opened (no 30-end)              → redirect to Hadwen
 #   2. Opened, not forged (no 35-end)      → redirect to Smith Rusk
 #   3. Pre-offer, ready (no 36-start)      → prompt ask ovell vein
-#   4. Mid-quest (36-start, no 36-end)     → remind: clear + forage,
-#                                            flee is fine, Mending Hut
-#   5. Completed (36-end)                  → thanks + mine dark-hook
+#   4. Quest 36, one variant per step      → that step's one command
+#      (start, scavenger, lurker, ore)       (owner ruling 2026-10-17)
+#   5. Completed 36, no 37 yet             → mine offer prompt
+#   6. Quest 37 in progress                → the Den and the beast
+#   7. Quest 54 in progress                → craft at the forge
+#   8. Completed 37                        → thanks
 #
 # Tree nodes:
-#   vein_offer   — grants 36-start; triggers include quest/task (SOP)
-#   vein_turnin  — grants 36-end; triggers include quest/task (SOP)
-#   bag_help     — component pouch / sort / salvage explainer
-#   dark_help    — mine darkness warning, chrysalis-glow reminder
+#   vein_offer:       grants 36-start; triggers include quest/task (SOP)
+#   vein_turnin:      grants 36-end, gated on 36-ore (the last step)
+#   vein_*_help:      quest 36 mid-quest questions, one node per step (S10)
+#   bag_help:         component pouch / sort / salvage explainer
+#   mine_offer:       grants 37-start
+#   beast_help:       quest 37 mid-quest questions (S10)
+#   dark_help:        mine darkness warning, chrysalis-glow reminder
+#   forge_loop_offer: grants 54-start
+#   forge_loop_help:  quest 54 mid-quest questions (S10)
 
 mobid: 9117
 zone: Pothole Coulee
@@ -67,14 +82,15 @@ tree:
         questExcluded: ["35-end"]
         text: >-
           Opened, good. But the slope is not a kind place to find
-          your footing for the first time. There is a smith at the
-          forge -- Rusk, east of the market -- who can put some
-          edge on your hands before you come up here. Work with
-          him first. Then come back.
+          your footing for the first time. There is a smith, Rusk,
+          at the Coulee Smithy who can put some edge on your hands
+          before you come up here. From here it is north, east,
+          east, then south. Work with her first. Then come back.
         hints: >-
-          Find Smith Rusk at the forge east of the market in
-          Pothole Coulee and complete his work before tackling
-          the talus slope.
+          Find Smith Rusk at the Coulee Smithy and complete her
+          work before tackling the talus slope. From the Collapsed
+          Cut go north, east, east, then south. From the Awakening
+          Pool, follow the path west five times.
       - questRequired: ["35-end"]
         questExcluded: ["36-start", "36-end"]
         text: >-
@@ -82,25 +98,42 @@ tree:
           that. The vein is still there. The company is not good.
           If you want the work, I can point you at it.
         hints: >-
-          Ask Ovell about the vein or the slope if you want the
-          full picture. Try ask ovell vein.
+          Ovell has work on the slope. Type ask ovell vein.
+
+      # ── Quest 36, one variant per step ──────────────────────
       - questRequired: ["36-start"]
+        questExcluded: ["36-scavenger", "36-end"]
+        text: >-
+          The scavenger first. One works the Lower Talus, just north
+          of me. Put it down. If it turns against you, flee and come
+          back. The Mending Hut will have you if you fall.
+        hints: >-
+          Go north to the Lower Talus and type attack scavenger.
+      - questRequired: ["36-scavenger"]
+        questExcluded: ["36-lurker", "36-end"]
+        text: >-
+          Good. Now the lurker. It holds the Ore Pocket, just west of
+          me, and another ranges the Upper Talus. It is tougher than
+          the scavenger. Flee if you must.
+        hints: >-
+          Go west into the Ore Pocket and type attack lurker.
+      - questRequired: ["36-lurker"]
+        questExcluded: ["36-ore", "36-end"]
+        text: >-
+          The way is open. Now work the vein yourself. It runs through
+          the rubble in the Ore Pocket and shows in the bluff above
+          the Scree Field. Forage it, same as anything else on the
+          slope.
+        hints: >-
+          In the Ore Pocket or on the Scree Field, type forage.
+      - questRequired: ["36-ore"]
         questExcluded: ["36-end"]
         text: >-
-          Still out there? The scavengers run in the lower scree
-          and the lurker holds the pocket -- they will not give
-          ground easy. If it turns against you, flee and come
-          back down. The Mending Hut will have you if you fall.
-          That is the coulee's way of saying you are not done
-          just because you went down. And the vein -- you forage
-          it, same as anything else on the slope. Type forage
-          when you are standing on the scree.
+          You are back, and the slope sounds different. Tell me how
+          it went.
         hints: >-
-          Head up the slope from here. Type flee if a fight turns
-          against you -- you wake at the Mending Hut, not for
-          good. Clear a scree scavenger and a talus lurker, then
-          type forage on the scree field to pull the ore. Come
-          back when all three are done.
+          Type ask ovell done.
+
       - questRequired: ["36-end"]
         questExcluded: ["37-start", "37-end"]
         text: >-
@@ -115,22 +148,31 @@ tree:
           time: cast your glow before you descend. Go blind down there
           and you will not come back up.
         hints: >-
-          Ovell is offering the mine. Type ask ovell descend (or ask
-          ovell beast) for the full picture. Cast chrysalis-glow
-          before you go down -- the mine is pitch black.
+          Ovell is offering the mine. Type ask ovell descend.
       - questRequired: ["37-start"]
         questExcluded: ["37-end"]
         text: >-
-          The beast is still down there in the deep dark. Light your
-          glow -- cast chrysalis-glow -- before you take the descent,
-          then fight your way down past the workings and put the thing
-          down in its den at the bottom. Flee back up if you must. The
-          Mending Hut holds, same as ever.
+          The beast is still down there in the deep dark. The Mine
+          Mouth is west of the Upper Talus. From there it is down,
+          west, down, then west twice to the Den. Light your glow
+          before you go down, and put the thing down in its den.
+          Flee back up if you must. The Mending Hut holds, same as
+          ever.
         hints: >-
-          Type cast chrysalis-glow, then descend the mine mouth below
-          the slope. Fight down to the Den at the bottom and defeat
-          the stone-blooded beast. Type flee if a fight turns against
-          you.
+          In the Den at the bottom of the mine, type attack beast.
+          If it is dark, type cast chrysalis-glow first.
+      - questRequired: ["54-start"]
+        questExcluded: ["54-end"]
+        text: >-
+          Go on, then. The forge is north, east, east, then south
+          from here. Put something through the fire. The iron dagger
+          will do. Rusk sells the ingot and the strip. A craft can
+          fail. If it does, buy the ingot and the strip again and
+          retry.
+        hints: >-
+          At the forge in the Coulee Smithy, type craft iron dagger.
+          A craft can fail. If it does, buy an iron ingot and a
+          leather strip again and retry.
       - questRequired: ["37-end"]
         text: >-
           You took the mine. I felt the deep go quiet through the
@@ -141,7 +183,8 @@ tree:
         hints: >-
           You have cleared Spoke B. You carry the forged blade, the
           strength the work put in your arms, and the recipe to make
-          more of the dark ore's edges.
+          more of the dark ore's edges. For more forge work, type
+          ask ovell work.
 
   nodes:
     - id: vein_offer
@@ -152,40 +195,36 @@ tree:
       grantsQuest: "36-start"
       text: >-
         Right. Here is what I am asking. There is a scree scavenger
-        working the lower rock field -- you will hear it before you
-        see it. Higher up, where the slope opens into the ore pocket,
-        a talus lurker has settled in. It also ranges the high
-        shoulder when it is not in the pocket. Both of them need to
-        go before anyone can work that seam safely.
-        And I want you to pull the ore yourself -- not just clear
-        the way but actually work the vein. Type forage when you are
-        standing on the scree field. The rock will give up what it
-        has.
+        working the Lower Talus, just north of me. You will hear it
+        before you see it. More of them crawl the Scree Field and the
+        Upper Talus beyond. West of me, in the Ore Pocket, a talus
+        lurker has settled in. Another ranges the high shoulder, up
+        on the Upper Talus. Both kinds need to go before anyone can
+        work that seam safely. The scavenger first, then the lurker.
+        And then I want you to work the vein yourself, not just clear
+        the way. Forage in the Ore Pocket or on the Scree Field. The
+        rock will give up what it has.
         If a fight turns against you up there, flee. I mean it. You
         wake at the Mending Hut if you go down. The slope does not
         get to keep you. Come back, try again. The rock is patient.
         Check what they drop and put it on if it fits -- armor is
         armor up here.
       hints: >-
-        Head up the talus slope from here. Kill a scree scavenger
-        on the lower scree and a talus lurker in the ore pocket or
-        on the high shoulder. Type forage on the scree field to
-        pull basalt-iron from the vein. Type flee if a fight turns
-        against you -- you will wake at the Mending Hut. Loot and
-        type wear on any armor you find.
+        Go north to the Lower Talus and type attack scavenger.
       moodChange: neutral
 
     - id: vein_turnin
       triggers: ["report", "done", "cleared", "finished", "ore",
                  "back", "quest", "task", "both", "down"]
-      questRequired: ["36-scavenger", "36-lurker", "36-ore"]
+      questRequired: ["36-ore"]
       questExcluded: ["36-end"]
       grantsQuest: "36-end"
       text: >-
         You actually did it. The pocket is clear -- I can hear the
         difference in how the wind moves up there. And you worked
-        the vein. The ore you pulled is better than it looks raw.
-        It forges dark and holds an edge longer than standard iron.
+        the vein. Whatever it gave you is better than it looks raw.
+        Basalt-iron forges dark and holds an edge longer than
+        standard iron.
         Take this. I carried it out of three claim sites and it
         has never been empty long. Your materials will find it on
         their own -- anything flagged as a component routes to it
@@ -200,6 +239,92 @@ tree:
         gather loose ones already in your pack. Type salvage item
         to break unwanted gear back into materials.
       moodChange: friendly
+
+    # The other grant nodes sit up here with the first two: the editor
+    # validator wants every quest-grant node before any plain node, so an
+    # ungated help node can never shadow a grant.
+    - id: mine_offer
+      triggers: ["descend", "beast", "deep", "monster", "stone-blooded",
+                 "ready", "quest", "task"]
+      questRequired: ["36-end"]
+      questExcluded: ["37-start", "37-end"]
+      grantsQuest: "37-start"
+      text: >-
+        Then here it is. The mine mouth is at the head of the slope,
+        west of the upper talus -- a black adit cut straight into the
+        basalt. From the mouth it is down, west, down, then west
+        twice to the bottom. Below the first landing there is no light
+        at all, so cast chrysalis-glow before you go down and keep it up. The
+        workings run deep and there are things in them that have never
+        seen the sun, but the one that matters is at the bottom, in
+        the Den -- the stone-blooded beast. End it. Bring back what
+        you learn down there, and the blade off the floor of that den
+        if it is worth carrying. The deep vein is the reward, and it
+        is a good one.
+      hints: >-
+        In the Den at the bottom of the mine, type attack beast.
+        If it is dark, type cast chrysalis-glow first.
+      moodChange: neutral
+
+    - id: forge_loop_offer
+      triggers: ["work", "again", "more", "forge", "job", "quest", "task"]
+      questRequired: ["37-end"]
+      grantsQuest: "54-start"
+      questExcluded: ["54-start", "54-end"]
+      text: >-
+        The vein does not stop giving just because you stopped
+        swinging. Go back to the forge and put something through
+        the fire. I want to know the skill is still sharp in
+        you. The iron dagger will do, and Rusk sells what it
+        takes. A craft can fail. If it does, buy the ingot and the
+        strip again and retry. I will hear it ring from here.
+      hints: >-
+        At the forge in the Coulee Smithy, type craft iron dagger.
+        A craft can fail. If it does, buy an iron ingot and a
+        leather strip again and retry.
+
+    # ── QUEST 36 MID-QUEST QUESTIONS, one node per step (S10) ──
+    # A mid-quest player asking about the quest's own words gets the
+    # current step's command instead of the catch-all. They sit after
+    # vein_turnin, which owns ore/done/report once the forage is done.
+    - id: vein_scavenger_help
+      triggers: ["vein", "slope", "ore", "help", "how", "next",
+                 "clear", "scavenger", "lurker", "forage", "basalt",
+                 "iron", "fight", "kill", "where", "report", "done",
+                 "quest", "task"]
+      questRequired: ["36-start"]
+      questExcluded: ["36-scavenger", "36-end"]
+      text: >-
+        The scavenger first. One works the Lower Talus, just north of
+        me. The lurker and the vein can wait until it is down.
+      hints: >-
+        Go north to the Lower Talus and type attack scavenger.
+    - id: vein_lurker_help
+      triggers: ["vein", "slope", "ore", "help", "how", "next",
+                 "clear", "scavenger", "lurker", "forage", "basalt",
+                 "iron", "fight", "kill", "where", "report", "done",
+                 "quest", "task"]
+      questRequired: ["36-scavenger"]
+      questExcluded: ["36-lurker", "36-end"]
+      text: >-
+        The scavenger is done. The lurker next. It holds the Ore
+        Pocket, just west of me. Leave the vein until it is down.
+      hints: >-
+        Go west into the Ore Pocket and type attack lurker.
+    - id: vein_forage_help
+      triggers: ["vein", "slope", "ore", "help", "how", "next",
+                 "clear", "scavenger", "lurker", "forage", "basalt",
+                 "iron", "fight", "kill", "where", "report", "done",
+                 "quest", "task"]
+      questRequired: ["36-lurker"]
+      questExcluded: ["36-ore", "36-end"]
+      text: >-
+        Both are down. Now the vein. It runs through the rubble in
+        the Ore Pocket and shows in the bluff above the Scree Field.
+        Forage it. Some days the rock gives a lot and some days a
+        little, but working it is what I asked for.
+      hints: >-
+        In the Ore Pocket or on the Scree Field, type forage.
 
     - id: bag_help
       triggers: ["pouch", "bag", "component", "sort", "salvage",
@@ -221,29 +346,22 @@ tree:
         Type sort to migrate loose ones from your pack. Type
         salvage item-name to recover materials from worn gear.
 
-    - id: mine_offer
+    # ── QUEST 37 MID-QUEST QUESTIONS (S10) ──────────────────────
+    - id: beast_help
       triggers: ["descend", "beast", "deep", "monster", "stone-blooded",
-                 "ready", "quest", "task"]
-      questRequired: ["36-end"]
-      questExcluded: ["37-start", "37-end"]
-      grantsQuest: "37-start"
+                 "den", "vein", "help", "how", "where", "next", "ready",
+                 "quest", "task"]
+      questRequired: ["37-start"]
+      questExcluded: ["37-end"]
       text: >-
-        Then here it is. The mine mouth is at the head of the slope,
-        past the upper talus -- a black adit cut straight into the
-        basalt. Below the first landing there is no light at all, so
-        cast chrysalis-glow before you go down and keep it up. The
-        workings run deep and there are things in them that have never
-        seen the sun, but the one that matters is at the bottom, in
-        the Den -- the stone-blooded beast. End it. Bring back what
-        you learn down there, and the blade off the floor of that den
-        if it is worth carrying. The deep vein is the reward, and it
-        is a good one.
+        The beast waits in the Den at the bottom of the mine. The
+        mouth is west of the Upper Talus. From there it is down, west,
+        down, then west twice. Light your glow before you go down.
+        The things in the workings are only in the way. The beast is
+        the one that matters.
       hints: >-
-        Cast chrysalis-glow, then descend the mine mouth at the head
-        of the slope. Fight down through the workings to the Den at
-        the bottom and defeat the stone-blooded beast. Keep your glow
-        up -- the dark will blind you without it.
-      moodChange: neutral
+        In the Den at the bottom of the mine, type attack beast.
+        If it is dark, type cast chrysalis-glow first.
 
     - id: dark_help
       triggers: ["dark", "mine", "light", "glow", "black", "see",
@@ -265,16 +383,21 @@ tree:
         the only reliable light source you have at this stage.
         Do not go down without it.
 
-    - id: forge_loop_offer
-      triggers: ["work", "again", "more", "forge", "job", "quest", "task"]
-      questRequired: ["37-end"]
-      grantsQuest: "54-start"
-      questExcluded: ["54-start", "54-end"]
+    # ── QUEST 54 MID-QUEST QUESTIONS (S10) ──────────────────────
+    - id: forge_loop_help
+      triggers: ["work", "again", "more", "forge", "job", "craft",
+                 "dagger", "iron", "help", "how", "where", "done",
+                 "report", "quest", "task"]
+      questRequired: ["54-start"]
+      questExcluded: ["54-end"]
       text: >-
-        The vein does not stop giving just because you stopped
-        swinging. Go back to the forge and put something through
-        the fire -- I want to know the skill is still sharp in
-        you. Come back when you have.
+        The forge is north, east, east, then south from here. Put
+        something through the fire there. The iron dagger will do,
+        and Rusk sells the ingot and the strip. A craft can fail. If
+        it does, buy the ingot and the strip again and retry. I will
+        hear it ring from here. You do not need to come back to tell
+        me.
       hints: >-
-        You could head back to the forge for another run -- type
-        ask ovell work.
+        At the forge in the Coulee Smithy, type craft iron dagger.
+        A craft can fail. If it does, buy an iron ingot and a
+        leather strip again and retry.

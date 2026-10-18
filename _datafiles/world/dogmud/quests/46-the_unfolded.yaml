@@ -2,6 +2,10 @@
 #
 # Token flow:
 #   46-start — granted by Keeper Orrin's scab_offer node (after quest 45).
+#              Route from Orrin (5309), verified 2026-10-17 against the room
+#              exits: west, north, north to the Grove Heart (5313), then west
+#              (Veil Tear 5314), up, north (Folded Distance 5316), west, north
+#              (The Unraveling 5319), east to the Thinnest Place (5320).
 #   46-end   — granted by the boss-kill trigger (mob_death 9152, The Unfolded).
 #              Rewards fire on 46-end: a Willpower bump (stat_info), the heal
 #              spell (Mend Flesh, via spellid), and gold. Turn-in is automatic
@@ -25,14 +29,15 @@ steps:
   - id: start
     map_target: 5320
     description: >-
-      Orrin has set you against the Unfolded. Cross the scabland east and
-      up, through the warped and the unraveling ground, and defeat the
-      Unfolded in the thinnest place.
+      Orrin has set you against the Unfolded. Climb out of the grove through
+      the Veil Tear, cross the Folded Distance and the Unraveling, and defeat
+      the Unfolded in the Thinnest Place. It casts at you from across the
+      room, so cast back and keep casting until it falls.
     hint: >-
-      Go up from the Grove Heart into the scabland, then east through the
-      folded distance and the unraveling to the thinnest place. The Unfolded
-      casts at range -- cast back, and heal yourself if you learn how. Defeat
-      it in the thinnest place.
+      If it is dark, type cast chrysalis-glow first. From Keeper Orrin, go
+      west, north and north to the Grove Heart, then west, up, north, west,
+      north and east to the Thinnest Place, and type cast conviction-spike
+      unfolded.
   - id: end
     description: >-
       The Unfolded is undone, and the thinnest place is quiet for the first

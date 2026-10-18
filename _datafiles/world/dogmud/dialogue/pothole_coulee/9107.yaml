@@ -50,8 +50,8 @@ tree:
           every road in the Marches eventually. Say the word and the
           arch will say the rest.
         hints: >-
-          Type ask esk passage when you are ready to cross. The way
-          back is the long road, so go provisioned.
+          Type ask esk passage when you are ready to cross. To come
+          back, enter the portal in the Thornwall temple.
 
   nodes:
     - id: watching

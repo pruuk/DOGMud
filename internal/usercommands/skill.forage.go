@@ -16,9 +16,15 @@ func Forage(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 	actor := &actions.UserActor{User: user, Room: room}
-	_ = actions.Forage(actor, actions.ForageOptions{})
+	result := actions.Forage(actor, actions.ForageOptions{})
 
-	// Quest engine: command notification (preserved from prior behavior).
+	// Quest engine: the forage ran. A forage refused for the ground or the
+	// cooldown sends nothing, so a quest step cannot finish on a refusal
+	// (owner ruling 2026-10-17). A search that turns up nothing still counts:
+	// the player did forage.
+	if !result.RollHappened {
+		return true, nil
+	}
 	bridge := questengine.NewGameBridge(user, room.RoomId)
 	questengine.GetEngine().Notify("command", questengine.EventDetails{
 		UserId:  user.UserId,

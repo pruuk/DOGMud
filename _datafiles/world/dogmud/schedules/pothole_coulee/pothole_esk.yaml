@@ -22,7 +22,7 @@ segments:
     target_room: 5215
     activity: ""
     idlecommands:
-      - emote keeps the stool by the arch as the light fails, lighting no lamp -- the ember behind his eyes is enough to see by.
+      - emote keeps the stool by the arch as the light fails, his belt lantern burning low and steady at his side.
       - say Evening or not, the way out stays open. Say the word when you are ready to take it.
       - emote sets the driftwood stick aside and folds his hands, watchful in the gloom.
   - start: 22

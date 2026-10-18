@@ -259,17 +259,15 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			questUser.SendText(messaging.CategorySystem, questUpTxt)
 		}
 
-		// Reward messages, through the quest store's door. Shipped rewards
-		// carry no token, so substitution changes nothing today.
+		// Reward messages, through the quest store's door.
 		//
-		// Delivered through SendTrio (M4d Task 6): text-identical, because no
-		// shipped reward's actor or observer line carries {actor}, {actee},
-		// {actor_plain} or {actee_plain} (verified against all 79 quest files'
-		// rewards blocks) -- the observer line instead narrates the questgiver
-		// NPC by their own literal name, which is not the Actor or Actee this
-		// Audience names, so SendTrio's HideNames has nothing of the reader's
-		// to match. The actor line has no actee to hide from it either: a
-		// quest has no second party.
+		// Delivered through SendTrio (M4d Task 6). An observer line may name
+		// the completing player with {actor} (quests 32 and 35 since
+		// 2026-10-17, which had said "you" to the watcher); SendTrio hides
+		// that name from a watcher who cannot see them. The questgiver NPC
+		// is narrated by their own literal name, which is not the Actor or
+		// Actee this Audience names. The actor line has no actee to hide
+		// from it: a quest has no second party.
 		rewardLines := questInfo.Rewards.Narrate(textutil.TokenContext{
 			ActorName:      questUser.Character.GetCharacterName(true),
 			ActorPlainName: questUser.Character.GetCharacterName(false),
@@ -280,11 +278,14 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		}
 		// CategorySystem is never wrapped by the pipeline, so the completing
 		// player's line wraps itself to their width (as justice/arrest.go
-		// does, #430); reward lines are authored prose and run long.
+		// does, #430); reward lines are authored prose and run long. The
+		// room's line rides CategoryEmote, which the pipeline does not wrap
+		// either, so it wraps at the 80-column rule (2026-10-17 newbie-duo
+		// playtest: Tarn's quest 41 line read 83 wide).
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.Say(messaging.CategorySystem, messaging.WrapAnsi(rewardLines.Actor, questUser.GetLineWidth())),
 			Actee:    messaging.NoLine,
-			Observer: messaging.Say(messaging.CategoryEmote, rewardLines.Observer),
+			Observer: messaging.Say(messaging.CategoryEmote, messaging.WrapAnsi(rewardLines.Observer, 80)),
 		}, messaging.Audience{
 			Actor:     questUser,
 			ActorId:   questUser.UserId,
@@ -315,7 +316,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		// Item reward?
 		if questInfo.Rewards.ItemId > 0 {
 			newItm := items.New(questInfo.Rewards.ItemId)
-			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s <ansi fg="itemname">%s</ansi>!`, items.IndefiniteArticle(newItm.DisplayName()), newItm.DisplayName()))
+			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>!`, items.ArticlePrefix(newItm.DisplayName()), newItm.DisplayName()))
 			questUser.Character.StoreItem(newItm)
 
 			iSpec := newItm.GetSpec()
@@ -352,7 +353,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			if granted > 1 {
 				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="itemname">%s</ansi> (x%d)!`, firstName, granted))
 			} else {
-				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s <ansi fg="itemname">%s</ansi>!`, items.IndefiniteArticle(firstName), firstName))
+				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>!`, items.ArticlePrefix(firstName), firstName))
 			}
 		}
 		// Condition reward?

@@ -57,14 +57,22 @@ tree:
           me about tracking if you mean to learn."
         hints: "Type ask tarn track to learn to read the ground."
 
-      # ── Mid quest 41 ─────────────────────────────────────
+      # ── Mid quest 41, one variant per step (one command each) ─
       - questRequired: ["41-start"]
+        questExcluded: ["41-track", "41-end"]
+        text: "Still learning. First the tracks. A hare has crossed the
+          Open Steppe, just south of here. Read the ground for it."
+        hints: "On the Open Steppe, type track hare."
+      - questRequired: ["41-track"]
+        questExcluded: ["41-forage", "41-end"]
+        text: "You read the ground. Now the scrub. It looks dead and is
+          not. See what your hands turn up."
+        hints: "Type forage."
+      - questRequired: ["41-forage"]
         questExcluded: ["41-end"]
-        text: "Still learning. Track a hare across the Open Steppe -- type
-          track hare and follow the line. Forage the scrub while you are
-          out. Come back when you have done both."
-        hints: "On the Open Steppe type track hare; type forage on the
-          steppe to gather plants. Then ask tarn done."
+        text: "You are back, and you have the look of someone who worked
+          the ground. Tell me how it went."
+        hints: "Type ask tarn done."
 
       # ── Quest 41 complete ────────────────────────────────
       - questRequired: ["41-end"]
@@ -83,20 +91,16 @@ tree:
       questRequired: ["30-end"]
       questExcluded: ["41-start", "41-end"]
       grantsQuest: "41-start"
-      text: "Right. Here is the first of it. Out on the Open Steppe a hare
-        has left a trail -- type track hare and you will pick up its line
-        and follow it across the ground. That is tracking: you read what
-        passed and where it went. While you are out there, type forage on
-        the steppe -- the scrub feeds those who know how to ask. Do both
-        and come back to me."
-      hints: "Go to the Open Steppe. Type track hare to follow its trail.
-        Type forage on the steppe (or the Sage Flat) to gather plants.
-        Come back to Tarn when you have done both -- ask tarn done."
+      text: "Right. Here is the first of it. Out on the Open Steppe, just
+        south of here, a hare has left a trail. Read the ground for it.
+        That is tracking: you read what passed and where it went. When
+        you have, I will show you what the scrub can feed you."
+      hints: "On the Open Steppe, type track hare."
 
     # ── QUEST 41 TURN-IN ──────────────────────────────────────
     - id: sign_turnin
       triggers: ["report", "done", "ready", "finished", "quest", "task"]
-      questRequired: ["41-track", "41-forage"]
+      questRequired: ["41-forage"]
       questExcluded: ["41-end"]
       grantsQuest: "41-end"
       text: "You followed the line and you worked the scrub. That is the
@@ -107,9 +111,33 @@ tree:
       hints: "Quest complete. Head south into the fringe and type ask delk
         to find Hunter Delk."
 
+    # ── MID QUEST 41 (S10): one answer per step ───────────────
+    # After the offer and the turn-in, so a fresh player still reaches the
+    # offer and a player on the forage step still reaches the turn-in.
+    - id: sign_progress_start
+      triggers: ["quest", "task", "help", "how", "next", "done",
+        "report", "ready", "finished"]
+      questRequired: ["41-start"]
+      questExcluded: ["41-track", "41-end"]
+      text: "Not yet. First the tracks. A hare has crossed the Open
+        Steppe, just south of here. Read the ground for it."
+      hints: "On the Open Steppe, type track hare."
+    - id: sign_progress_track
+      triggers: ["quest", "task", "help", "how", "next", "done",
+        "report", "ready", "finished"]
+      questRequired: ["41-track"]
+      questExcluded: ["41-forage", "41-end"]
+      text: "Not yet. You read the ground. Now the scrub. See what your
+        hands turn up."
+      hints: "Type forage."
+
     # ── TRACK / FORAGE HELP ───────────────────────────────────
+    # "track" and "trail" are here so a player who already took the lesson
+    # gets help, not the "ask me and I will set you a trail" pattern; the
+    # offer above still answers them first for a player who has not.
     - id: sign_help
-      triggers: ["hare", "forage", "plants", "help", "follow"]
+      triggers: ["hare", "forage", "plants", "help", "follow", "track",
+        "trail"]
       text: "Two things. Tracking: type track and a creature's name to
         pick up its trail -- track hare out on the open ground. Foraging:
         type forage where things grow, and your hands and your luck decide

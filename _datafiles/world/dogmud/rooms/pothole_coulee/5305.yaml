@@ -7,12 +7,19 @@ description: >
   into the stone: a circle within a circle, runes pressed into the inner
   ring at the cardinal points. The mark was made to stand in, and the
   stone inside it has been worn to a different shade by those who did.
-  Around the outer ring, the floor tells the history of the place in small
-  damage: scorch shadows where something very hot passed close, a rind
-  of frost still clinging in the northern quarter, a branching crack where
+  The runes give off a soft, steady glow that never fades, so the whole
+  chamber is lit at any hour of the day or night. Around the outer ring,
+  the floor tells the history of the place in small damage: scorch
+  shadows where something very hot passed close, a rind of frost still
+  clinging in the northern quarter, a branching crack where
   lightning or something like it once skipped across the floor. A thousand
   practiced spells have left their signatures here.
 biome: fort
+# 2026-10-17 newbie quest audit (B1): quest 44 casts at the mote here, and an
+# aimed cast needs full sight. The glowing runes (see the description) light
+# the chamber to full sight for a normal observer at every hour, the sky
+# notwithstanding. TestNewbieQuestTargetRoomsGiveFullSightAtEveryHour.
+lamp: 50
 coord:
   x: 44
   y: -3
@@ -32,6 +39,9 @@ nouns:
     than the surrounding floor, worn by the pressure of feet, season
     after season, student after student standing here and reaching for
     something that isn't quite in the world.
+  runes: The runes are pressed deep into the inner ring, one at each
+    cardinal point. Each holds a soft, cold light of its own, steady as
+    a lamp, and the light does not flicker or fade.
   chamber: The curved walls catch and return sound in a way that flat
     walls don't. Your own breath comes back to you half a beat after
     you take it. The chamber was built to hold focus, to let nothing

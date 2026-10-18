@@ -63,7 +63,7 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			room.PlaySound(`change`, `other`)
 
 			user.SendBlankLine(messaging.CategorySystem)
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> produces %s <ansi fg="itemname">%s</ansi>!`, containerName, items.IndefiniteArticle(newItem.DisplayName()), newItem.DisplayName()))
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> produces %s<ansi fg="itemname">%s</ansi>!`, containerName, items.ArticlePrefix(newItem.DisplayName()), newItem.DisplayName()))
 			user.SendBlankLine(messaging.CategorySystem)
 
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> does something with the <ansi fg="container">%s</ansi>.`, user.Character.Name, containerName), user.UserId)

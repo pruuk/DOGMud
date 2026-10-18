@@ -6,13 +6,49 @@
 #     plays the paced rite sequence, and fires 30-end (the "Opened" token).
 #     Blank-slate Awakening: the rite grants NO starter mutation — mutations
 #     are earned afterward through use-based drift.
-# Token gating makes the rite single-shot: 30-end is granted at eval
-# time, so a re-ask falls through to dialogue (which has a gentle
-# refusal node). Pattern follows behaviors/rooms/sanctum_basin/113.yaml.
+# Single-shot: 30-end is granted at the CLOSE of the rite (a delayed
+# action), so for the ~41 s the rite runs the asker still lacks 30-end
+# and token gating alone would let a second `ask hadwen begin` queue a
+# second rite (2026-10-17 audit S6). The `rite_running` state flag closes
+# that window, the way The Landing's tree holds `leaving`
+# (behaviors/rooms/newcomer_antechamber/6467.yaml): set instantly when the
+# rite starts, checked by the rite and by the mid-rite answer below. 6467
+# never clears its flag; Hadwen serves every newcomer, so his clear is a
+# delayed action queued with the rite itself. Queued closures run whether
+# or not the asker is still online, and BehaviorState is not saved
+# (mobs.Mob.BTreeState is yaml:"-"), so a logout or a reboot mid-rite
+# cannot leave the flag stuck. After the rite, a re-ask falls through to
+# dialogue (which has a gentle refusal node).
+# The flag is PER PLAYER (`per_player: true`, BehaviorState key
+# "rite_running:<user id>"): the 2026-10-17 newbie-duo playtest had two
+# newcomers ask at once, and a mob-wide flag hushed the second one and left
+# them un-Opened. Each asker now gets their own rite, and every spoken line
+# is addressed to its own asker (`to_actor: true`, sayto: "says to you" for
+# them, "says to <name>" for the room), so two interleaved rites both read.
+# Test: internal/behaviortree/hadwen_rite_guard_test.go.
 
 tree:
   type: selector
   children:
+
+    # ── MID-RITE: ask hadwen begin while the rite is already running ──
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [begin, ready]
+        - type: condition
+          check: state_equals
+          key: rite_running
+          per_player: true
+          value: "1"
+        - type: action
+          do: say
+          to_actor: true
+          text: >-
+            Hush, now. The pool is still speaking, and it will not be
+            hurried. Let it finish.
 
     # ── THE RITE: ask hadwen begin (30-start held, not yet opened) ──
     - type: sequence
@@ -27,24 +63,40 @@ tree:
         - type: condition
           check: player_missing_quest
           quest: "30-end"
+        - type: condition
+          check: state_equals
+          key: rite_running
+          per_player: true
+          value: ""
+        - type: action
+          do: set_state
+          key: rite_running
+          per_player: true
+          value: "1"
         - type: action
           do: say
+          to_actor: true
           text: Then we begin. Step to the edge with me.
           delay: 1.0
         - type: action
-          do: emote
-          text: >-
-            wades into the shallows and turns. The pale plates along his
-            jaw catch the light coming up off the water.
+          do: respond
+          user_text: >-
+            {actor} wades into the shallows and turns to face you. The pale
+            plates along his jaw catch the light coming up off the water.
+          room_text: >-
+            {actor} wades into the shallows and turns to face the one
+            beside him.
           delay: 3.0
         - type: action
           do: say
+          to_actor: true
           text: >-
             Gaius is made of belief. The land believes itself into
             shape. So does everything that lives on it. So will you.
           delay: 6.0
         - type: action
           do: say
+          to_actor: true
           text: >-
             Most worlds let you stay what you arrived as. This one will
             not. The body answers effort, conflict, fear, wanting -- it
@@ -53,6 +105,7 @@ tree:
           delay: 9.5
         - type: action
           do: say
+          to_actor: true
           text: >-
             The pool answers first. It is older than the town and more
             patient than I am. Look into the water.
@@ -82,28 +135,68 @@ tree:
           delay: 20.0
         - type: action
           do: say
+          to_actor: true
           text: It is done. You will feel it settle for a while. That is normal.
           delay: 23.0
+        # What a mutation is, said to each player as it is true for them
+        # (owner ruling 2026-10-17: a mutation can fire mid-tutorial, in
+        # Dewey's rooms, as long as Hadwen explains it). Checked when the
+        # rite starts; either branch queues its one line and succeeds, so
+        # the rite goes on.
+        - type: selector
+          children:
+            - type: sequence
+              children:
+                - type: condition
+                  check: player_has_mutation
+                - type: action
+                  do: say
+                  to_actor: true
+                  text: >-
+                    The chrysalis has already changed you. The spores in
+                    you answer how you live, and each change they make is
+                    called a mutation. Type <ansi fg="command">mutations</ansi>
+                    to see what has changed in you, and
+                    <ansi fg="command">help mutations</ansi> to read more.
+                    The rest you earn the slow way: by how you fight, what
+                    you endure, and who you decide to be.
+                  delay: 26.0
+            - type: action
+              do: say
+              to_actor: true
+              text: >-
+                In time the chrysalis will change you. The spores in you
+                answer how you live, and each change they make is called a
+                mutation. Type <ansi fg="command">mutations</ansi> to see
+                what has changed in you, and
+                <ansi fg="command">help mutations</ansi> to read more. You
+                earn them the slow way: by how you fight, what you endure,
+                and who you decide to be.
+              delay: 26.0
         - type: action
           do: say
-          text: >-
-            The pool woke the capacity, not the shape. A change may
-            already have found you, and more will come in their own
-            time. Type <ansi fg="command">mutations</ansi> whenever you
-            like to see what has taken hold. What comes, you earn the
-            slow way: by how you
-            fight, what you endure, and who you decide to be.
-          delay: 26.0
-        - type: action
-          do: say
+          to_actor: true
           text: >-
             If the name you carried here no longer fits the shape of
             you, <ansi fg="command">rename</ansi> lets you choose a
             truer one. And <ansi fg="command">help</ansi> answers most
             questions with more patience than I have.
           delay: 29.5
+        # The light spell, for both roads (2026-10-17 audit B3: a player
+        # who leaves through Esk never hears Toke's hub lessons).
         - type: action
           do: say
+          to_actor: true
+          text: >-
+            One gift more, and you carry it from today: a light of your
+            own. Gaius keeps true dark in its caves and mines, and the
+            dark will blind you. When it does, type
+            <ansi fg="command">cast chrysalis-glow</ansi> and the spores
+            in you will answer.
+          delay: 33.0
+        - type: action
+          do: say
+          to_actor: true
           text: >-
             Now -- two roads from here, and both are good ones. Check
             what you carry first with <ansi fg="command">inv</ansi> --
@@ -113,26 +206,27 @@ tree:
             Toke you need your footing:
             <ansi fg="command">ask toke footing</ansi>. He will walk
             you through the town properly.
-          delay: 33.0
+          delay: 36.5
         - type: action
           do: say
+          to_actor: true
           text: >-
             And if you already know this world and only needed the
             pool, Warden Esk keeps the way out -- south through the
             market to the Threshold House, then
             <ansi fg="command">ask esk passage</ansi>. The coulee will
             still be here either way.
-          delay: 36.5
+          delay: 40.0
         # Blank-slate Awakening: no starter mutation is granted during the rite.
         # The pool opens the capacity; every mutation is earned afterward through
         # use-based drift (see the mutation-graph acquisition design). The quest
-        # completion is the FINAL beat, after the last send-off line at 36.5 --
+        # completion is the FINAL beat, after the last send-off line at 40.0 --
         # otherwise the "quest complete" banner fires at t=0 and spoils the rite.
         # This action honors the static `delay` param (behaviortree/actions.go).
         - type: action
           do: grant_quest
           quest: "30-end"
-          delay: 37.0
+          delay: 40.5
         # Immediately hand the freshly-Opened player a persistent objective so
         # they are never left adrift: "Two Roads" (quest 29) names both onward
         # paths -- Crier Toke (learn the town) and Warden Esk (leave). Granted
@@ -142,7 +236,16 @@ tree:
         - type: action
           do: grant_quest
           quest: "29-start"
-          delay: 37.5
+          delay: 41.0
+        # The rite is over: clear the flag so the next newcomer can begin.
+        # Queued after both grants (the queue runs in order), so by the time
+        # a re-ask can pass the flag the asker already holds 30-end.
+        - type: action
+          do: set_state
+          key: rite_running
+          per_player: true
+          value: ""
+          delay: 41.0
 
     # ── GREETING: an un-Opened player arrives (incl. FIRST SPAWN —
     #    HandleJoin emits player_enter once per brand-new character).

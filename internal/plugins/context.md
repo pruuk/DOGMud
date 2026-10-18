@@ -139,6 +139,11 @@ first plugin's matching embedded file — `pluginRegistry` implements
 `fs.ReadFileFS`, plus `NavLinks`, `HandleIAC`, `WebRequest`, and
 `AllFileSubSystems`, which together satisfy the `web.WebPlugin` interface so
 web pages can be served straight out of a module's embedded FS.
+Every lookup goes through `PluginFiles.embedPath`, which turns the name to
+forward slashes first: callers build names with `util.FilePath` (the OS
+separator) while embed keys always use `/`, so on Windows every module help
+topic, keyword overlay and config overlay used to miss (2026-10-17, found
+as "there is no `help follow`").
 
 ### Web pages
 

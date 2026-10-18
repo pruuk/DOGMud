@@ -605,6 +605,9 @@ same way (spell effects slice 3b); zero drains them all.
 `DrainQueuedCharacterDiedForTest()` and `DrainQueuedMobDeathsForTest()` drain
 every queued `CharacterDied` and `MobDeath` event; the second lets a test
 assert on the damaging-players list the `MobDeath_*` hooks read.
+`DrainQueuedQuestsForTest()` drains every queued `Quest` event, so a test can
+see a grant whose quest definition is not loaded (the token step fails, the
+event still queues).
 `DrainQueuedMessageEventsForTest(userId)` (sight gates slice 5b) is
 `DrainQueuedMessagesForTest` returning the whole `Message`, not just its
 text, so a test can also read `IsCommunication`. It matches on
@@ -620,6 +623,11 @@ restore func, so a test can run a real registration such as
 `hooks.RegisterListeners` through `DoListeners` and put the previous registry
 (including `init()`-registered listeners) back afterwards. Unlike
 `ClearListeners`, it loses nothing for later tests.
+
+`DrainQueuedByTypeForTest(typeName)` drains every queued event whose `Type()`
+is `typeName`, for event types declared outside this package that no typed
+drain can name (`modules/gmcp`'s `GMCPOut`, say). It returns them in heap
+order, not delivery order.
 
 `DrainQueuedUserInputsForTest(userId)` (parity slice 6) drains the `Input`
 events `UserRecord.Command` queued for a player (`MobInstanceId` 0, matched on

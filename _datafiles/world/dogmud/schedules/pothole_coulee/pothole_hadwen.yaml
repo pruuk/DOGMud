@@ -16,7 +16,10 @@ segments:
     idlecommands:
       - emote tends the lanterns ringing the pool with unhurried care.
       - emote trails a hand through the water, eyes half-closed and listening.
-      - say When you are ready to be Opened, come to the water.
+      # Not "When you are ready to be Opened": a schedule idle line cannot
+      # be gated, and it was said to Opened players (2026-10-17). The tree's
+      # mob_idle backstop invites the un-Opened only.
+      - say The pool is patient. So am I.
   - start: 18
     end: 22
     target_room: 5200

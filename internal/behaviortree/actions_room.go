@@ -6,6 +6,7 @@ package behaviortree
 import (
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -90,6 +91,13 @@ func actAddTempExit(params map[string]any, ctx *EvalContext) Result {
 // Failure (not Success) on a bad destination or missing player keeps
 // btree sequences honest: portal NPCs sequence say-lines before this
 // action, and a Failure stops anything wired after the teleport.
+//
+// The player must still be where the tree runs: with the mob for a mob tree,
+// in the room for a room tree. A transit is usually delayed so its lines
+// land first, and the player may walk away meanwhile (Warden Esk pulled an
+// asker out of another room 37 seconds later, 2026-10-17). A player who has
+// left is not moved, and the run is dropped so the grants queued behind the
+// move do not fire either. Any failure drops the run for the same reason.
 // params: room_id (int)
 func actMovePlayer(params map[string]any, ctx *EvalContext) Result {
 	if ctx.Event.UserId <= 0 {
@@ -97,9 +105,15 @@ func actMovePlayer(params map[string]any, ctx *EvalContext) Result {
 	}
 	roomId := getIntParam(params, "room_id")
 	if roomId == 0 {
+		ctx.dropDelayedRun()
+		return Failure
+	}
+	if !playerStillPresent(ctx) {
+		ctx.dropDelayedRun()
 		return Failure
 	}
 	if err := rooms.MoveToRoom(ctx.Event.UserId, roomId); err != nil {
+		ctx.dropDelayedRun()
 		return Failure
 	}
 	// Show the destination room. MoveToRoom does not auto-describe, so a
@@ -110,6 +124,25 @@ func actMovePlayer(params map[string]any, ctx *EvalContext) Result {
 		u.Command("look")
 	}
 	return Success
+}
+
+// playerStillPresent reports whether the triggering player is still in the
+// room of the tree's subject: the mob's current room for a mob tree, else
+// the room the tree ran for. A mob that is gone has no one to send.
+func playerStillPresent(ctx *EvalContext) bool {
+	user := users.GetByUserId(ctx.Event.UserId)
+	if user == nil {
+		return false
+	}
+	want := ctx.RoomId
+	if ctx.InstanceId > 0 {
+		mob := mobs.GetInstance(ctx.InstanceId)
+		if mob == nil {
+			return false
+		}
+		want = mob.Character.RoomId
+	}
+	return want != 0 && user.Character.RoomId == want
 }
 
 // actIntercept marks the event as intercepted, preventing the default command

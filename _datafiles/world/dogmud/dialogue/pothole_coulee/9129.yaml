@@ -55,8 +55,9 @@ tree:
           the pool and learn to brew first -- out here a salve in your
           pack is the difference between walking home and not. Come
           find me when you can make one."
-        hints: "Return north to Herbalist Birna at the sheltered pool
-          and complete her brewing lesson before coming to Falv."
+        hints: "Go west to the Reed Beds, then north twice to Herbalist
+          Birna at the Sheltered Pool, and finish her brewing lesson
+          before coming back to Falv."
 
       # ── Ready for quest 39 ────────────────────────────────
       - questRequired: ["38-end"]
@@ -67,16 +68,31 @@ tree:
           are ready to wade in."
         hints: "Type ask falv marsh to take on the marsh."
 
-      # ── Mid quest 39 ──────────────────────────────────────
+      # ── Mid quest 39, one variant per step (one command each) ─
       - questRequired: ["39-start"]
+        questExcluded: ["39-leech", "39-end"]
+        text: "Still dry, I see. First the water. Leeches sit in the
+          Reed Beds just west of my fire. Put one down. Keep the
+          firebomb for after."
+        hints: "Go west to the Reed Beds and type attack leech."
+      - questRequired: ["39-leech"]
+        questExcluded: ["39-throw", "39-end"]
+        text: "One leech down. Now the firebomb. Find something else
+          that wants to bite you, another leech at the Black Pool or
+          the lurker on the Mudflat south of here, and throw it. One
+          trick every few breaths, remember."
+        hints: "With a foe in the room, type throw firebomb."
+      - questRequired: ["39-throw"]
+        questExcluded: ["39-forage", "39-end"]
+        text: "You threw clean. Now the herbs. The Sunken Path and the
+          Black Pool south of it grow the best of them. Some days your
+          hands come up empty. That still counts."
+        hints: "On the Sunken Path or at the Black Pool, type forage."
+      - questRequired: ["39-forage"]
         questExcluded: ["39-end"]
-        text: "Still wading. Put a leech down, throw the firebomb at
-          something in a fight -- remember, one trick every few
-          breaths -- and forage the herbs while you are out there.
-          Come back when it is done."
-        hints: "Kill a marsh leech, then type throw firebomb while in a
-          fight, then type forage in the marsh. If you lost the
-          firebomb, type ask falv firebomb. Then type ask falv report."
+        text: "You have the look of the marsh on you. Tell me how it
+          went."
+        hints: "Type ask falv done."
 
       # ── Ready for quest 40 ────────────────────────────────
       - questRequired: ["39-end"]
@@ -93,11 +109,25 @@ tree:
       - questRequired: ["40-start"]
         questExcluded: ["40-end"]
         text: "It is still down there. Brew your kit, fill the
-          bandolier, and go put the spirit of the swamp down. South
-          past the miasma, then the sinkhole takes you under."
-        hints: "Head south past the miasma edge, take the sinkhole
-          down, and defeat the spirit of the swamp at the heart of the
-          mire."
+          bandolier, and go put the spirit of the swamp down. Past the
+          Black Pool and the Miasma Edge, keep south to the Sulphur
+          Flats. The sinkhole there takes you under."
+        hints: "Go down the sinkhole at the Sulphur Flats, then south
+          to the Heart of the Mire, and type attack spirit."
+
+      # ── Another Brew (55), one variant per step ───────────
+      # Before the 40-end greeting, which matches every finished player.
+      - questRequired: ["55-start"]
+        questExcluded: ["55-brew", "55-end"]
+        text: "Back to the bench with you. Make something. A healing
+          salve will do. A craft can fail. If yours does, buy the
+          ingredients again and go at it once more."
+        hints: "At the alchemy bench, type craft healing salve. A craft
+          can fail. If it does, buy the ingredients again and retry."
+      - questRequired: ["55-brew"]
+        questExcluded: ["55-end"]
+        text: "You brewed. Now drink it. That is all I need to know."
+        hints: "Type drink healing salve."
 
       # ── Quest 40 complete ─────────────────────────────────
       - questRequired: ["40-end"]
@@ -107,7 +137,7 @@ tree:
           than you know. Go on, then. The world is bigger than this
           mud."
         hints: "You have cleared the marsh and the mire. The Alchemy
-          spoke is done."
+          spoke is done. You could ask Falv for more work at the bench."
 
   nodes:
     # ── QUEST 39 OFFER (hands the firebomb) ────────────────────
@@ -123,35 +153,45 @@ tree:
         type throw firebomb while you are in combat. But mind this --
         a thrown firebomb, a cast spell, and a special move all pull
         from the same well. Use one and you wait a few breaths before
-        the next. So make it count. Now go wade in: put a marsh leech
-        down to learn the water, throw the firebomb at something in a
-        fight, and forage the herbs while you are out there. Type
-        flee if a fight turns -- you wake at the Mending Hut, not in
-        the mud. Lost the firebomb before you threw it? Ask me for
-        another."
-      hints: "You received a firebomb. Attack a marsh leech and kill it,
-        then -- in a fight -- type throw firebomb (throw, cast, and
-        special moves share one cooldown). Type forage in the marsh to
-        gather herbs. If you lose the firebomb, type ask falv firebomb.
-        Then type ask falv report."
+        the next. So make it count. Now go wade in, in this order: put
+        a marsh leech down in the Reed Beds west of here to learn the
+        water, then throw the firebomb at the next thing that wants to
+        bite you, then forage the herbs on the Sunken Path or at the
+        Black Pool. Type flee if a fight turns. If you fall, you wake
+        at the Mending Hut, not in the mud. Lost the firebomb before you threw
+        it? Ask me for another."
+      hints: "You received a firebomb. Go west to the Reed Beds and type
+        attack leech."
 
     # ── FIREPOT RECOVERY (replace a lost grenade) ─────────────
+    # itemExcluded: only a player who carries no firebomb gets one; the
+    # node after it answers the same words for a player who still has one.
     - id: firebomb_recovery
       triggers: ["firebomb", "grenade", "lost", "another", "replace"]
       questRequired: ["39-start"]
       questExcluded: ["39-throw"]
+      itemExcluded: 30058
       givesItem: 30058
       text: "Lost it already? Here. Last one I am giving free. Throw
-        this one -- type throw firebomb while you are in a fight. Do
+        this one: type throw firebomb with a foe in front of you. Do
         not just carry it around."
-      hints: "You received another firebomb. Get into a fight and type
-        throw firebomb."
+      hints: "You received another firebomb. With a foe in the room,
+        type throw firebomb."
+    - id: firebomb_already_have
+      triggers: ["firebomb", "grenade", "lost", "another", "replace"]
+      questRequired: ["39-start"]
+      questExcluded: ["39-throw"]
+      text: "You already have one. I can see it on you. Put a leech
+        down first, then throw that one at the next thing that comes at
+        you. I do not hand out a second while the first is still in
+        your pack."
+      hints: "You still carry the firebomb Falv gave you."
 
     # ── QUEST 39 TURN-IN ──────────────────────────────────────
     - id: marsh_turnin
       triggers: ["report", "done", "ready", "finished", "quest",
         "task"]
-      questRequired: ["39-leech", "39-throw", "39-forage"]
+      questRequired: ["39-forage"]
       questExcluded: ["39-end"]
       grantsQuest: "39-end"
       text: "Leech down, firebomb thrown, herbs in your pack. That is
@@ -163,6 +203,66 @@ tree:
         up."
       hints: "Quest complete. Type ask falv mire when you are ready for
         the final task."
+
+    # ── MID QUEST 39 QUESTIONS, one node per step ─────────────
+    # A player mid-quest who asks about the leech, the firebomb, the
+    # forage or the herbs gets the step they are on, not the catch-all.
+    # The firebomb handout pair above answers "firebomb" first until the
+    # throw is done.
+    - id: marsh_step_leech
+      triggers: ["leech", "firebomb", "bomb", "throw", "forage", "herb",
+        "fight", "marsh", "reed", "help", "how", "next", "where", "quest",
+        "task", "done", "report", "ready", "finished"]
+      questRequired: ["39-start"]
+      questExcluded: ["39-leech", "39-end"]
+      text: "Leech first. They sit in the Reed Beds, just west of my
+        fire, fat and slow. Put one down and the marsh will know you.
+        Keep the firebomb until after."
+      hints: "Go west to the Reed Beds and type attack leech."
+    - id: marsh_step_throw
+      triggers: ["leech", "firebomb", "bomb", "throw", "forage", "herb",
+        "fight", "marsh", "reed", "help", "how", "next", "where", "quest",
+        "task", "done", "report", "ready", "finished"]
+      questRequired: ["39-leech"]
+      questExcluded: ["39-throw", "39-end"]
+      text: "Now the firebomb. Find a foe: another leech at the Black
+        Pool, or the lurker out on the Mudflat south of here. Throw it
+        and the fight starts in flame. Then you wait a few breaths
+        before your next trick. Spells and special moves share that
+        wait."
+      hints: "With a foe in the room, type throw firebomb."
+    - id: marsh_step_forage
+      triggers: ["leech", "firebomb", "bomb", "throw", "forage", "herb",
+        "fight", "marsh", "reed", "help", "how", "next", "where", "quest",
+        "task", "done", "report", "ready", "finished"]
+      questRequired: ["39-throw"]
+      questExcluded: ["39-forage", "39-end"]
+      text: "Herbs. The Sunken Path and the Black Pool just south of it
+        grow the best in the marsh: cattail, willow-bark, mint. You will
+        not always find something. The looking is the lesson."
+      hints: "On the Sunken Path or at the Black Pool, type forage."
+    - id: marsh_step_report
+      triggers: ["leech", "firebomb", "bomb", "throw", "forage", "herb",
+        "fight", "marsh", "reed", "help", "how", "next", "where"]
+      questRequired: ["39-forage"]
+      questExcluded: ["39-end"]
+      text: "You have done all three. Tell me it is done and I will
+        settle up."
+      hints: "Type ask falv done."
+
+    # ── MID QUEST 40 QUESTIONS ────────────────────────────────
+    - id: mire_step_help
+      triggers: ["mire", "heart", "spirit", "swamp", "sinkhole",
+        "miasma", "where", "how", "help", "way", "quest", "task", "done",
+        "report"]
+      questRequired: ["40-start"]
+      questExcluded: ["40-end"]
+      text: "From the Black Pool, south past the Miasma Edge and the
+        Fenrot Approach to the Sulphur Flats. There is a sinkhole in
+        the crust. Drop down it into the hollow, then go south past the
+        Black Mere. The spirit waits at the heart. Bring salves."
+      hints: "Go down the sinkhole at the Sulphur Flats, then south to
+        the Heart of the Mire, and type attack spirit."
 
     # ── QUEST 40 OFFER ────────────────────────────────────────
     - id: mire_offer
@@ -177,12 +277,11 @@ tree:
         the water has gathered into something with a will. A spirit,
         an aberration, I do not have the word. It is the worst thing
         in this country. Brew your salves, fill the bandolier, carry
-        firebombs. Go south, take the sinkhole down, and put it down.
+        firebombs. From the Black Pool go south past the Miasma Edge to
+        the Sulphur Flats, take the sinkhole down, and put it down.
         Do not go in light."
-      hints: "Head south past the miasma edge into the poison swamp,
-        take the sinkhole down into the sunken hollow, and defeat the
-        spirit of the swamp at the heart of the mire. Brew and carry
-        salves and firebombs first."
+      hints: "Go down the sinkhole at the Sulphur Flats, then south to
+        the Heart of the Mire, and type attack spirit."
 
     # ── THROW / COOLDOWN HELP ─────────────────────────────────
     - id: cooldown_help
@@ -205,8 +304,35 @@ tree:
       grantsQuest: "55-start"
       questExcluded: ["55-start", "55-brew", "55-end"]
       text: "The marsh does not care when you last brewed. Get back to
-        the bench, make something, drink it. Come find me after."
-      hints: "You could take on another brew run -- type ask falv work."
+        the bench at Birna's pool, make something, drink it. A healing
+        salve will do. A craft can fail. If yours does, buy the
+        ingredients again and go at it once more. No need to come tell
+        me. I will know."
+      hints: "At the alchemy bench, type craft healing salve. A craft
+        can fail. If it does, buy the ingredients again and retry."
+
+    # ── MID QUEST 55 QUESTIONS, one node per step ─────────────
+    - id: brew_loop_step_craft
+      triggers: ["work", "again", "more", "brew", "job", "quest", "task",
+        "craft", "bench", "salve", "drink", "help", "how", "done",
+        "report"]
+      questRequired: ["55-start"]
+      questExcluded: ["55-brew", "55-end"]
+      text: "Bench first. The one at Birna's pool, or the one on her
+        Drying Racks. Make something. A healing salve will do. A craft
+        can fail. If yours does, buy the ingredients again and go at it
+        once more."
+      hints: "At the alchemy bench, type craft healing salve. A craft
+        can fail. If it does, buy the ingredients again and retry."
+    - id: brew_loop_step_drink
+      triggers: ["work", "again", "more", "brew", "job", "quest", "task",
+        "craft", "bench", "salve", "drink", "help", "how", "done",
+        "report"]
+      questRequired: ["55-brew"]
+      questExcluded: ["55-end"]
+      text: "You brewed. Now drink it down. That is the whole job. You
+        do not need to come tell me."
+      hints: "Type drink healing salve."
 
 memory:
   expiryPeriod: ""

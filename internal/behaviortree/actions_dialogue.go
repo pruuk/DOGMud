@@ -66,6 +66,14 @@ func actSay(params map[string]any, ctx *EvalContext) Result {
 	if text == "" {
 		return Failure
 	}
+	// `to_actor: true` addresses the line to the triggering player through
+	// sayto: they read "says to you", the room reads "says to <name>" (names
+	// hidden at each listener's sight). Two players in the same paced
+	// sequence (Cleric Hadwen's rite) then each read whose line is whose.
+	if getBoolParam(params, "to_actor") && ctx.Event.UserId > 0 {
+		mob.Command(fmt.Sprintf("sayto @%d %s", ctx.Event.UserId, text))
+		return Success
+	}
 	mob.Command("say " + text)
 	return Success
 }

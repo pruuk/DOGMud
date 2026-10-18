@@ -1,29 +1,43 @@
 # Quest 50 — First Shot (Pothole Coulee, Spoke G / Ranged inner ring, cert)
 #
-# Token flow:
-#   50-start  — granted by Marksman Iden's shoot_offer node (requires 30-end);
-#               also hands the player a sling (givesItem 10038). A separate
-#               supply node hands the pouch of shot (30064).
-#   50-shoot  — command trigger on `fire` at the Long Terrace (5351): loose a
-#               stone at the practice butt (9163).
-#   50-ambush — command trigger on `sneak` at the Long Terrace: the player
-#               learns to take cover, and the shot that follows is an ambush.
-#   50-end    — granted by Iden's shoot_turnin node (needs 50-shoot + 50-ambush).
+# Token flow (one command per step, owner ruling 2026-10-17):
+#   50-start      — granted by Marksman Iden's shoot_offer node (requires 30-end),
+#                   which also hands the player a sling (givesItem 10038), or by
+#                   Crier Toke's quest 31 send-off. A quest_granted trigger
+#                   below hands over a pouch of shot (30064) unless the player
+#                   already carries one (Toke's send-off gives one).
+#   50-equip      — command trigger on `equip` of the sling (item 10038).
+#   50-shoot      — command trigger on `fire` at the Long Terrace (5351): loose a
+#                   stone at the practice butt (9163).
+#   50-ambush     — command trigger on `sneak` at the Long Terrace: take cover.
+#   50-cover_shot — command trigger on `fire` at the Long Terrace once hidden:
+#                   the shot from cover.
+#   50-end        — granted by Iden's shoot_turnin node (needs 50-cover_shot).
 #
-# Design: teach the ranged loop, which is now ONE verb — equip a ranged weapon
-# and `fire`. The weapon readies its own next round, so there is no reload beat
-# left to teach, and the freed beat teaches the ambush instead: the part of
-# ranged worth knowing, which nothing else in the game points at.
+# Design: teach the ranged loop, which is ONE verb: equip a ranged weapon and
+# `fire`. The weapon readies its own next round, so there is no reload beat to
+# teach, and the freed beat teaches the ambush instead: the part of ranged
+# worth knowing, which nothing else in the game points at.
 #
-# The ambush beat triggers on `sneak` rather than on the shot that follows it.
-# The quest engine's command event carries only the command NAME, so it cannot
-# tell that a shot was an ambush; granting on the hide keeps the trigger inside
-# what the engine can actually see, and the ambush damage is its own reward.
+# The ambush used to be one step that asked for sneak AND a second shot, and
+# its hint asked for both. It is now two steps, each with one command. The
+# command event carries only the command NAME, so the engine cannot tell a
+# shot from cover from any other shot; the cover-shot step is simply the shot
+# that follows the sneak step. Sneak sends its `command` event only when the
+# player ends up hidden (skill.skullduggery.sneak.go).
 #
-# Every character can sneak from creation — initAllSkills seeds every skill at
-# rank 1 — so this asks nothing the student cannot do. The practice butt is
-# durable and harmless, so the loop can be practised freely. ranged-combat is a
-# Perception skill; the cert seeds the first rank.
+# The fire at the start of the range is gated on 50-start, not on 50-equip,
+# so a player who already wields the sling (an older save, or one who equipped
+# it before asking) is never held on the equip step: the shot counts.
+#
+# Every character can sneak from creation: initAllSkills seeds every skill at
+# rank 1. The practice butt dies to a stone or two and respawns after 5 rounds
+# (room 5351 spawninfo), so two students sharing the range do not wait long.
+# ranged-combat is a Perception skill; the cert seeds the first rank.
+#
+# Mid-quest saves: start, shoot and ambush keep their ids. A player saved on
+# `shoot` is asked to sneak; one saved on `ambush` is asked for the shot from
+# cover, which the turn-in now needs.
 
 questid: 50
 name: First Shot
@@ -36,37 +50,48 @@ secret: false
 
 steps:
   - id: start
+    map_target: 5350
+    description: >-
+      You have a sling and a pouch of shot. First, ready the sling.
+      Marksman Iden keeps the range.
+    hint: >-
+      Type equip sling.
+  - id: equip
     map_target: 5351
     description: >-
-      You have a sling -- equip it, get a pouch of shot, and loose a stone at
-      the practice butt down-range on the Long Terrace. Marksman Iden keeps
-      the range.
+      The sling is in your hand. The practice butt stands down-range on the
+      Long Terrace, east of Marksman Iden on the Firing Range. From Hub
+      Square, go north to the Awakening Pool, east twice to the Mending Hut,
+      north to the Bluff Steps, up, north twice, and up to the Firing Range.
+      Crier Toke knows the way too: ask toke terrace.
     hint: >-
-      Type ask iden shot to get ammunition. Type equip sling to ready it.
-      Then go east to the Long Terrace and type fire butt. Sneak and fire
-      once more to see what a shot from cover is worth. Return west to
-      Marksman Iden -- type ask iden done.
+      Go east from the Firing Range to the Long Terrace and type fire butt.
   - id: shoot
     map_target: 5351
     description: >-
       You put a stone into the butt, and the sling readied itself without
       being told. Iden wants you to try it once more from cover.
     hint: >-
-      Type sneak on the Long Terrace to slip out of sight, then type fire
-      butt again. Report to Marksman Iden afterward -- type ask iden done.
+      Type sneak.
   - id: ambush
     map_target: 5351
     description: >-
       You are out of sight. A shot taken from cover lands far harder than one
       the target saw coming, and it gives your place away when it lands.
     hint: >-
-      Type fire butt while hidden to feel the difference. Then report to
-      Marksman Iden -- type ask iden done.
+      Type fire butt.
+  - id: cover_shot
+    map_target: 5350
+    description: >-
+      You shot from cover and felt the difference. Marksman Iden is waiting
+      on the Firing Range, west of the Long Terrace.
+    hint: >-
+      Go west to Marksman Iden and type ask iden done.
   - id: end
     description: >-
-      Iden has named your eye sound. North, the canyon opens, where a scout
-      named Bryn will teach you to shoot a thing you cannot reach with your
-      hands.
+      Iden has named your eye sound. Scout Bryn, at the Canyon Mouth, will
+      teach you to shoot a thing you cannot reach with your hands. From the
+      Firing Range, go east twice to the High Terrace, then north.
 
 rewards:
   skillinfo: "ranged-combat:1"
@@ -85,6 +110,32 @@ rewards:
   observer: "Marksman Iden nods as the newcomer's shot finds the straw."
 
 triggers:
+  # ── SHOT: a pouch to feed the sling, unless the player already has one ──
+  # Fires on the grant from either road in (Iden's offer or Toke's quest 31
+  # send-off). Toke's send-off gives the pouch in the same action list, before
+  # this chained trigger runs, so missing_item keeps it to one pouch.
+  - event: quest_granted
+    quest_token: 50-start
+    conditions:
+      missing_item: 30064
+    actions:
+      - give_item: 30064
+
+  # ── EQUIP: ready the sling ─────────────────────────────────────────────
+  # item: the equip event names what was put on, so only the sling (10038)
+  # counts; a wielded cudgel used to finish this step (2026-10-17).
+  - event: command
+    command: equip
+    item: 10038
+    conditions:
+      has: ["50-start"]
+      missing: ["50-equip"]
+    actions:
+      - grant: "50-equip"
+      - actor: >-
+          The sling settles in your hand, a stone already in its cradle. Go
+          to the Long Terrace, east of the Firing Range, and type fire butt.
+
   # ── FIRST SHOT: loose at the practice butt down-range (5351) ───────────
   - event: command
     command: fire
@@ -97,13 +148,10 @@ triggers:
       - actor: >-
           The stone leaves the sling and strikes the straw with a solid thud.
           Your hand has already found another and settled it in the cradle.
-          Iden calls down the range: "Now do it again, but from where it
-          cannot see you coming. Type sneak first."
+          Iden calls down the range: "Now again, from where it cannot see you
+          coming. Once the butt is down, type sneak."
 
-  # ── AMBUSH: learn to take cover; the shot that follows is the payoff ───
-  # Triggers on `sneak`, not on the shot after it: the command event carries
-  # only the command name, so the engine cannot tell that a shot WAS an
-  # ambush. Granting on the hide keeps the trigger inside what it can see.
+  # ── AMBUSH: take cover ─────────────────────────────────────────────────
   - event: command
     command: sneak
     room: 5351
@@ -114,5 +162,18 @@ triggers:
       - grant: "50-ambush"
       - actor: >-
           You settle out of sight behind the butts. The sling is already
-          loaded, because it loaded itself. Fire from here and see what a shot
-          is worth when nothing is expecting it.
+          loaded, because it loaded itself. Type fire butt and see what a
+          shot is worth when nothing is expecting it.
+
+  # ── COVER SHOT: the shot that follows the sneak ────────────────────────
+  - event: command
+    command: fire
+    room: 5351
+    conditions:
+      has: ["50-ambush"]
+      missing: ["50-cover_shot"]
+    actions:
+      - grant: "50-cover_shot"
+      - actor: >-
+          The stone takes the butt dead center, harder than any shot before
+          it. Go west to Marksman Iden and type ask iden done.

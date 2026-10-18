@@ -1,51 +1,59 @@
 # Quest 41 — First Sign (Pothole Coulee, Spoke D / Wilderness inner ring, cert)
 #
-# Token flow:
+# Token flow (one command per step, owner ruling 2026-10-17):
 #   41-start  — granted by Scout Tarn's sign_offer dialogue node (requires 30-end).
 #   41-track  — command trigger on `track` in the Open Steppe (5284).
-#   41-forage — command trigger on `forage` in the steppe (5284 / 5285).
-#   41-end    — granted by Tarn's sign_turnin node (needs track + forage).
+#   41-forage — command trigger on `forage` in the steppe (5284 / 5285), once
+#               the track is done.
+#   41-end    — granted by Tarn's sign_turnin node (needs 41-forage).
 #
 # Design: teach reading sign. track + forage both advance the Search skill, so
-# the reward is search:1 + a scout's cloak. The two objectives complete in any
-# order (each gates only on 41-start); the turn-in needs both.
+# the reward is search:1 + a scout's cloak.
+#
+# The two objectives run IN ORDER, track then forage. They used to complete in
+# any order, which this engine cannot do: a character holds ONE current step
+# per quest, and holding a later step counts as holding every earlier one. A
+# forage done first jumped the player past the track step without tracking,
+# and the shared hint had to say "if you have not yet..." for both. Each step
+# now names the one command it waits for. A player saved on `track` or
+# `forage` before the change resumes from that step unchanged.
+#
+# Both triggers listen on `command`, which forage and track send only when the
+# command ran (not on a cooldown, a wrong-ground refusal, or `track stop`).
 
 questid: 41
 name: First Sign
 description: >-
   Scout Tarn keeps watch over the scrub steppe south of the coulee, and
   the ground there is a book if you can read it. Pick up the trail of a
-  steppe hare and track it, and forage the steppe for what it offers.
+  steppe hare and track it, then forage the steppe for what it offers.
 secret: false
 
 steps:
   - id: start
     map_target: 5284
     description: >-
-      The steppe is your first lesson in reading the ground. Track a
-      steppe hare across the open steppe, and forage the scrub for
-      plants. Scout Tarn watches the steppe.
+      The steppe is your first lesson in reading the ground. Start with the
+      tracks: a steppe hare has crossed the Open Steppe, south of Scout Tarn.
+      From Hub Square: west, west, south, south to Tarn on the Steppe Edge,
+      then south once more.
     hint: >-
-      On the Open Steppe, type track hare to pick up its trail and
-      follow it. Type forage on the steppe (the Open Steppe or the Sage
-      Flat) to gather plants. Then report back to Tarn.
+      On the Open Steppe, type track hare. If it is dark, type cast
+      chrysalis-glow first.
   - id: track
     map_target: 5284
     description: >-
-      You picked up the hare's trail and followed it across the steppe.
-      Forage the scrub if you have not yet.
+      You read the ground for the hare's trail. Next, see what the scrub
+      will give you.
     hint: >-
-      When you have both, report to Scout Tarn -- type ask tarn done. If
-      you have not foraged yet, type forage on the Open Steppe or the
-      Sage Flat first.
+      Type forage.
   - id: forage
-    map_target: 5284
+    map_target: 5283
     description: >-
-      You worked the steppe for forage. Track a hare if you have not yet.
+      You tracked and you foraged. Scout Tarn is waiting at the Steppe Edge,
+      north of the Open Steppe.
     hint: >-
-      When you have both, report to Scout Tarn -- type ask tarn done. If
-      you have not tracked a hare yet, type track hare on the Open
-      Steppe first.
+      Go back to Scout Tarn on the Steppe Edge and type ask tarn done.
   - id: end
     description: >-
       Tarn has named you fit to read the ground. South of the steppe the
@@ -67,7 +75,7 @@ rewards:
     a rolled traveling cloak."
 
 triggers:
-  # ── TRACK: follow the hare's trail (room 5284, Open Steppe) ──────────
+  # ── TRACK: read the ground for the hare (room 5284, Open Steppe) ─────
   - event: command
     command: track
     room: 5284
@@ -77,30 +85,32 @@ triggers:
     actions:
       - grant: "41-track"
       - actor: >-
-          That is tracking -- reading what passed and where it went. The
-          skill sharpens every time you use it, so keep at it. Forage the
-          scrub if you have not yet, then see Tarn.
+          That is tracking: reading the ground for what passed and where it
+          went. The skill gets better each time you use it. Next, type
+          forage.
 
-  # ── FORAGE: gather on the steppe (5284 / 5285) ──────────────────────
+  # ── FORAGE: gather on the steppe (5284 / 5285), after the track ─────
   - event: command
     command: forage
     room: 5284
     conditions:
-      has: ["41-start"]
+      has: ["41-track"]
       missing: ["41-forage"]
     actions:
       - grant: "41-forage"
       - actor: >-
-          You work the scrub and turn up usable plants. Good steppe
-          forage. Track a hare if you have not, then report to Tarn.
+          That is foraging: searching the scrub for what grows there. Some
+          days your hands come up empty, and that is part of it. Go north to
+          Scout Tarn and type ask tarn done.
   - event: command
     command: forage
     room: 5285
     conditions:
-      has: ["41-start"]
+      has: ["41-track"]
       missing: ["41-forage"]
     actions:
       - grant: "41-forage"
       - actor: >-
-          The sage flat gives up roots and herbs to a patient hand.
-          Track a hare if you have not, then report to Tarn.
+          The sage flat rewards a patient hand, even on a day it gives up
+          little. Go back to Scout Tarn on the Steppe Edge and type ask tarn
+          done.

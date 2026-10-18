@@ -280,7 +280,8 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 	if totalNight == 0 {
 		t.Fatal("no awake night sample was taken: the guard checked nothing")
 	}
-	// Nine scheduled keepers carry the Oil Lantern and sleep (spec C3).
+	// Scheduled keepers carry a keeper_lantern light (the Oil Lantern, or the
+	// coulee's Keeper's Lantern) and sleep (spec C3).
 	if treedSamples == 0 || asleepSamples == 0 {
 		t.Fatalf("the keepers' lantern tree ran at %d samples, %d of them asleep: the 5e check saw nothing", treedSamples, asleepSamples)
 	}

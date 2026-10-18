@@ -12,9 +12,12 @@ import (
 )
 
 func condStateEquals(params map[string]any, ctx *EvalContext) Result {
-	key := getStringParam(params, "key")
 	value := getStringParam(params, "value")
 	if ctx.MobState == nil {
+		return Failure
+	}
+	key, ok := stateKey(params, ctx)
+	if !ok {
 		return Failure
 	}
 	if ctx.MobState.GetString(key) == value {

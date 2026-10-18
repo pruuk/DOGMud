@@ -93,11 +93,12 @@ var (
 		"steal":          {Steal, false},
 		"suicide":        {Suicide, true},
 		//		"stash":  {Stash, false},
-		"track":  {Track, false},
-		"trip":   {Trip, false},
-		"unlock": {Unlock, false},
-		"warcry": {Warcry, false},
-		"wander": {Wander, false},
+		"track":   {Track, false},
+		"trip":    {Trip, false},
+		"unlock":  {Unlock, false},
+		"warcry":  {Warcry, false},
+		"wander":  {Wander, false},
+		"whisper": {Whisper, true},
 	}
 )
 

@@ -153,10 +153,28 @@ own, unrelated action param.)
   on a refusal too, so a step whose command can be refused listens on
   `command` (quest 28 does for say, warcry, cast, trip and flee). Each handler
   sends its own `command`; a few cases worth knowing: `cast` carries the
-  canonical spell id as `Noun`; `trip` also sends it when the target is
+  canonical spell id as `Noun`; `equip` (and its aliases wear, wield, hold)
+  carries the item put on as `ItemId`, so a step filters it with `item:`
+  (quests 31, 32 and 50 do); `trip` also sends it when the target is
   already on the ground, and `warcry` when one is already riding the player
   (the goal holds); `flee` is sent by the round hook once the player has
-  arrived, from the room fled into.
+  arrived, from the room fled into. `forage` is sent only when the forage
+  rolled (not on a wrong-ground or cooldown refusal; finding nothing still
+  counts), `track` not for `track stop` or a cooldown refusal, and `sneak`
+  only when the player ends up hidden (already hidden counts).
+- **An `npc_say` line with `whisper: true` reaches the triggering player
+  alone.** `npcCommand` turns it into the mob command `whisper @<userId>`,
+  framed in asterisks so it stands out from combat text; the room hears
+  nothing, so the line prints once. Quest 28 whispers Dewey's lines during the
+  effigy fight. A line with `emote: true` ignores `whisper`.
+- **A quest holds ONE current step, so objectives cannot run in any order.**
+  `characters.HasQuest(t)` is true for the current step and every step before
+  it, and a grant only moves forward. Two triggers that each gate only on
+  `-start` let the later objective, done first, mark the earlier one done
+  without doing it. Gate each trigger on the previous step's token. Newbie
+  quests also ask for one command per step, each hint naming it plainly
+  (owner ruling 2026-10-17; `newbie_one_command_steps_test.go` walks quests
+  41 and 50 and checks the cert hints).
 - **`room_gate` refuses a walk before it happens; `room_enter` fires after.**
   `usercommands.Go` notifies `room_gate` (filter `room`, the destination's
   template id) after the lock check and before the exit message, the move
@@ -170,6 +188,15 @@ own, unrelated action param.)
   detection line (#558); do not write a gate that way.
 - **Ephemeral (instance) rooms match their TEMPLATE room id** in `room:`
   triggers, not their runtime id.
+- **`craft`, `sleep` and `search` send `command` on success only** (owner,
+  2026-10-17: a quest step advances only when the action succeeds). `craft`
+  goes out when a craft COMPLETES and succeeded, never when it begins: a timed
+  craft's contest runs at its last round, so the round hook
+  (`hooks.tickUserCrafting`) sends it then, from the crafter's room, and a
+  failed craft or an enchant that could not land sends nothing; an instant
+  recipe sends it at once (`usercommands.notifyCraftQuest`). `sleep` is sent
+  only when the player is asleep (not on a refusal in combat), `search` not on
+  a cooldown refusal.
 - **Every quest `observer` line must contain `{actor}`, and `quests.Quest.Validate`
   refuses a quest whose line does not**, including lines nested in a sequence's
   `on_complete`. `Validate` runs on every quest file parse at boot AND before an

@@ -52,6 +52,7 @@ var lookupRegistry = map[string]lookupEntry{
 	"internal/mobcommands/sayto.go|ReplyTo":                            {plain: 1, why: whyMob},
 	"internal/mobcommands/sayto.go|SayTo":                              {plain: 1, why: whyMob},
 	"internal/mobcommands/sayto.go|SayToOnly":                          {plain: 1, why: whyMob},
+	"internal/mobcommands/whisper.go|Whisper":                          {plain: 1, why: whyMob},
 	"internal/mobcommands/shadow.go|Shadow":                            {plain: 1, why: whyMob},
 	"internal/mobcommands/show.go|Show":                                {plain: 1, why: whyMob},
 	"internal/mobcommands/steal.go|parseMobStealArgs":                  {plain: 1, why: whyMob},

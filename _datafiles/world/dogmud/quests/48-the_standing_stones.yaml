@@ -28,16 +28,15 @@ steps:
       squared up against old Ferd and will not be reasoned down -- so do not
       reason. Put a hard word on him: taunt him, and break his nerve.
     hint: >-
-      Go to the Mustering Green within the stone ring. Type taunt garrow to face
-      the belligerent farmhand down with words alone. Then return to Loresinger
-      Hale at the stone circle -- ask hale done.
+      Go north from the Stone Circle to the Mustering Green and type taunt
+      garrow.
   - id: taunt
     map_target: 5333
     description: >-
       Your words did what reason could not -- Garrow's bluster broke and he quit
       the green. Return to Hale.
     hint: >-
-      Report back to Loresinger Hale at the stone circle -- ask hale done.
+      Go south to Loresinger Hale at the Stone Circle and type ask hale done.
   - id: end
     description: >-
       Hale has taken your measure and found it sound. North, past the ring, the
@@ -57,7 +56,7 @@ rewards:
     small enough to carry. Read it when you have the patience. The oldest end is
     the part none of us can, any longer." He looks north, to where the ground
     rises past the ring. "There is a thing the bone only points at. Sere keeps
-    it, at the old shrine. Go up and see."
+    it, at the old shrine past the Tall Stone. Go and see."
   observer: ""
 
 triggers:
@@ -74,4 +73,5 @@ triggers:
           Your words find the gap in his bluster and go straight through it. The
           fight goes out of Garrow all at once -- he throws up his heavy hands,
           mutters a surrender, and quits the green. Old Ferd lets out a breath he
-          has been holding for days. Return to Hale; it is done.
+          has been holding for days. Go south to Hale at the Stone Circle and
+          type ask hale done.

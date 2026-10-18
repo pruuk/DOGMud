@@ -23,6 +23,7 @@ exits:
     roomid: 5271
 spawninfo:
 - mobid: 9130
+  respawnrate: 2 real minutes
 nouns:
   reeds: Tall marsh reeds packed shoulder-to-shoulder, their stems pale
     gold at the base and darkening to deep green higher up. The feathered

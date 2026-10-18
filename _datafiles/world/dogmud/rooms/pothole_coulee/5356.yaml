@@ -6,7 +6,9 @@ description: >
   to a stretch of bare pale stone worn smooth by the passage of water
   that no longer comes. Every sound in this chamber finds the walls and
   comes back changed: a single footstep returns as four or five, the
-  source confused, the direction scrambled. The sightline south through
+  source confused, the direction scrambled. The pale crystal veins of the
+  narrows spread wide through the walls here, and their cold, even glow
+  lights the whole floor at any hour. The sightline south through
   the narrows is open and long: the mouth of the canyon is a bright
   slot at the end of it, and anything entering from that direction will
   be visible the moment they clear the pinch. The sightline north is
@@ -16,6 +18,11 @@ description: >
   chamber offers no good cover, only the walls themselves, and reaching
   them means crossing open ground that carries every sound you make.
 biome: cliffs
+# 2026-10-17 newbie quest audit (B1): the canyon scout here is the target of
+# quests 51 and 59, and an aimed shot needs full sight. The crystal veins (see
+# the description) light the floor to full sight for a normal observer at
+# every hour. TestNewbieQuestTargetRoomsGiveFullSightAtEveryHour.
+lamp: 50
 coord:
   x: 49
   y: -6
@@ -27,7 +34,11 @@ exits:
     roomid: 5357
 spawninfo:
 - mobid: 9165
+  respawnrate: 2 real minutes
 nouns:
+  veins: The crystal veins branch through the walls like frost on a
+    window, pale and finger-thin. Their glow is cold and steady, the same
+    at noon as at midnight, and it leaves no corner of the floor dark.
   floor: The stone floor is smooth and pale, worn by old water into a
     nearly flat surface that tilts perhaps two degrees south. It is clean
     of debris, and anything dropped here would be immediately visible, and

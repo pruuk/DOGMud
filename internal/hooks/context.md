@@ -1428,7 +1428,7 @@ Cross-machine cleanup that fires on two Life transitions:
 | `Death_MobInstanceCleanup.go` | `creditMobKill`, then `DeleteMobInstance`, `DestroyInstance`, `CleanupMobSpawns`, `RemoveMob` |
 | `Death_MobBroadcast.go` | Room "X has died" broadcast, Guide tempdata, worldevents `MobKilledByPlayer` |
 | `Death_MobBehaviorTree.go` | Fires `mob_die` btree event with primary killer's `UserId` |
-| `Death_MobKillCredit.go` | `creditMobKill`: releases killers still targeting the mob, `KD.AddMobKill`, party kill credit. Not an observer of its own: `scheduleMobDespawnFromLife` calls it before the instance is destroyed, because an observer registered after `Death_MobInstanceCleanup.go` found the instance gone and credited nobody (#468) |
+| `Death_MobKillCredit.go` | `creditMobKill`: releases killers still targeting the mob, `KD.AddMobKill` for `killCreditUserIds` (every damager, plus each party member of theirs in the mob's room, each once; owner ruling 2026-10-17, which `MobDeathQuestNotify` shares for quest `mob_death`; bounty, faction rep, loot and progression do not read it). Not an observer of its own: `scheduleMobDespawnFromLife` calls it before the instance is destroyed, because an observer registered after `Death_MobInstanceCleanup.go` found the instance gone and credited nobody (#468) |
 | `Death_MobCharmCleanup.go` | `TrackRecentDeath`, `RemoveCharm`, reverse-track player `TrackCharmed` |
 | `MobDeath_TrackingCleanup.go` | Clears `tracking-mob` / `tracking-display-count` + condition 86, and drops any shadow on the dying mob through `actions.ClearShadow` (found with `actions.ShadowTargetOf`; no cooldown, no line), on every player and mob (chunk 2.8; parity slice 6) |
 

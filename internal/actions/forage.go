@@ -160,7 +160,7 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 	}
 	if actor.IsPlayer() {
 		actor.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`You find %s <ansi fg="itemname">%s</ansi>.`, items.IndefiniteArticle(newItem.DisplayName()), newItem.DisplayName()))
+			fmt.Sprintf(`You find %s<ansi fg="itemname">%s</ansi>.`, items.ArticlePrefix(newItem.DisplayName()), newItem.DisplayName()))
 	}
 
 	result.Found = true

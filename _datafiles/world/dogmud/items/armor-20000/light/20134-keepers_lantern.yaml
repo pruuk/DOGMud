@@ -1,0 +1,22 @@
+# Keeper's Lantern: the Oil Lantern's light (condition 125) and tree
+# (keeper_lantern, dark while its holder sleeps) on mob-only gear. Owner
+# ruling 2026-10-17: every Pothole Coulee NPC and quest giver carries a light
+# so a new player can address them by name at any hour. never_drops keeps the
+# new-player area from becoming a free lantern farm; the sold Oil Lantern
+# (40038) stays as it was. Guarded by coulee_npc_light_guard_test.go.
+itemid: 20134
+name: Keeper's Lantern
+namesimple: lantern
+description: A plain tin lantern on a short leather strap, its wick trimmed
+  low and steady. Coulee folk keep one lit at the belt so a stranger can
+  always find them, and they hand it to no one. It goes dark while its
+  bearer sleeps.
+type: light
+subtype: wearable
+weight: 0.1
+value: 0
+never_drops: true
+not_salable: true
+wornconditionids:
+  - 125
+behavior: keeper_lantern

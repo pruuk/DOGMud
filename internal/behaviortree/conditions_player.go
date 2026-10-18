@@ -81,6 +81,31 @@ func condPlayerHasFlag(params map[string]any, ctx *EvalContext) Result {
 	return Failure
 }
 
+// condPlayerHasMutation succeeds when the triggering player holds the named
+// mutation, or with no `mutation` param, any mutation at all. Cleric Hadwen
+// (9100) tells a player the chrysalis has already changed them, or that it
+// will in time (owner ruling 2026-10-17: a mutation can fire mid-tutorial,
+// as long as Hadwen explains it).
+// params: mutation (string, optional)
+func condPlayerHasMutation(params map[string]any, ctx *EvalContext) Result {
+	user := users.GetByUserId(ctx.Event.UserId)
+	if user == nil {
+		return Failure
+	}
+	if id := getStringParam(params, "mutation"); id != "" {
+		if user.Character.Mutations[id] > 0 {
+			return Success
+		}
+		return Failure
+	}
+	for _, rank := range user.Character.Mutations {
+		if rank > 0 {
+			return Success
+		}
+	}
+	return Failure
+}
+
 func condPlayerHasSpell(params map[string]any, ctx *EvalContext) Result {
 	user := users.GetByUserId(ctx.Event.UserId)
 	if user == nil {

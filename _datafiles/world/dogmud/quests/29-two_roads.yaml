@@ -17,7 +17,9 @@
 #              Either way the signpost is done and drops out of the quest panel.
 #
 # map_target 5203 (Hub Square, where Crier Toke stands) aims the web minimap
-# marker at the recommended new-player road; the hint names both roads in words.
+# marker at the recommended new-player road. The hint names one command, Toke's
+# (owner ruling 2026-10-17: one command per hint); Esk's road is described in
+# the step description.
 
 questid: 29
 name: Two Roads
@@ -32,13 +34,14 @@ steps:
     map_target_mob: 9106  # follow Crier Toke (schedule pothole_toke) — a fixed room is wrong for part of the day
     description: >-
       Freshly Opened, you stand at a fork. Crier Toke waits in Hub Square, just
-      south of the pool, ready to teach you the town. Warden Esk keeps the arch
-      out of the coulee, south again through the market. Either road is yours.
+      south of the pool, ready to teach you the town. That is the road for
+      anyone new to Gaius. The other road leaves the coulee at once: Warden Esk
+      keeps the arch in the Threshold House, south from Hub Square through
+      Market Row, and asking him for passage takes you out to the wider world.
+      Either road is yours.
     hint: >-
-      Two roads, both south from the pool. To learn the town, go south to Hub
-      Square, find Crier Toke at the notice post, and type ask toke footing. To
-      leave the coulee for the wider world, go south through the market to the
-      Threshold House, find Warden Esk at the arch, and type ask esk passage.
+      New to Gaius? From the pool go south to Hub Square, find Crier Toke at
+      the notice post, and type ask toke footing.
   - id: end
     description: >-
       You have chosen your road out of the coulee.
@@ -55,6 +58,10 @@ triggers:
     actions:
       - grant: 29-end
   # ── ESK'S ROAD: passing through the arch into Thornwall (468) closes it.
+  #    The arch is a move_player teleport, which raises no room_enter, so
+  #    both arch transits (Esk's behavior tree 9107 and the room tree 5215)
+  #    grant 29-end themselves under this same gate. This trigger covers a
+  #    player who reaches 468 on foot instead.
   - event: room_enter
     room: 468
     conditions:
