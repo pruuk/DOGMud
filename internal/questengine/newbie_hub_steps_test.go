@@ -54,7 +54,12 @@ func TestQuest31FindYourFooting_OneCommandPerStep(t *testing.T) {
 		w.notify("room_enter", EventDetails{RoomId: lantern})
 		require.Equal(t, "shop", w.p.current, "the inn before equip must not skip the equip step")
 
-		w.notify("command", EventDetails{Command: "equip", RoomId: provisions})
+		// Putting on anything but the shirt is not this lesson (the equip
+		// event names its item; 2026-10-17 newbie-duo playtest).
+		w.notify("command", EventDetails{Command: "equip", RoomId: provisions, ItemId: 10043})
+		require.Equal(t, "shop", w.p.current, "equipping the cudgel must not finish the shirt step")
+
+		w.notify("command", EventDetails{Command: "equip", RoomId: provisions, ItemId: cottonShirt})
 		require.Equal(t, "equip", w.p.current)
 		require.False(t, holdsAll(w.p, turnIn), "turn-in must wait for the inn")
 
@@ -80,7 +85,7 @@ func TestQuest31FindYourFooting_OneCommandPerStep(t *testing.T) {
 
 	t.Run("player saved on shop resumes with equip", func(t *testing.T) {
 		w := newQuestWalker(q).at("shop")
-		w.notify("command", EventDetails{Command: "equip", RoomId: hubSquare})
+		w.notify("command", EventDetails{Command: "equip", RoomId: hubSquare, ItemId: cottonShirt})
 		require.Equal(t, "equip", w.p.current)
 	})
 

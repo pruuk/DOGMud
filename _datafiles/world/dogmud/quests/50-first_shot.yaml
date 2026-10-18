@@ -6,7 +6,7 @@
 #                   Crier Toke's quest 31 send-off. A quest_granted trigger
 #                   below hands over a pouch of shot (30064) unless the player
 #                   already carries one (Toke's send-off gives one).
-#   50-equip      — command trigger on `equip` (ready the sling).
+#   50-equip      — command trigger on `equip` of the sling (item 10038).
 #   50-shoot      — command trigger on `fire` at the Long Terrace (5351): loose a
 #                   stone at the practice butt (9163).
 #   50-ambush     — command trigger on `sneak` at the Long Terrace: take cover.
@@ -119,8 +119,11 @@ triggers:
       - give_item: 30064
 
   # ── EQUIP: ready the sling ─────────────────────────────────────────────
+  # item: the equip event names what was put on, so only the sling (10038)
+  # counts; a wielded cudgel used to finish this step (2026-10-17).
   - event: command
     command: equip
+    item: 10038
     conditions:
       has: ["50-start"]
       missing: ["50-equip"]

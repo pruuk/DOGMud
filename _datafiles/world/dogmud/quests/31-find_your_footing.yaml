@@ -101,8 +101,10 @@ triggers:
           in your pack." Type equip cotton shirt.
 
   # ── EQUIP: wear the shirt — teaches `equip` ──
+  #    item: the cotton shirt (20008) only; the equip event names its item.
   - event: command
     command: equip
+    item: 20008
     conditions:
       has: [31-shop]
       missing: [31-equip]

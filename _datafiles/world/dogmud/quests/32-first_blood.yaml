@@ -66,9 +66,10 @@ rewards:
   observer: "Vorn nods at you with a gruff, brief approval."
 
 triggers:
-  # ── WIELD: equip anything (equip carries no item name) ──
+  # ── WIELD: the cudgel (10043); the equip event names its item ──
   - event: command
     command: equip
+    item: 10043
     conditions:
       has: ["32-start"]
       missing: ["32-wield"]

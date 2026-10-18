@@ -422,7 +422,11 @@ func TestQuest50FirstShot_OneCommandPerStep(t *testing.T) {
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
 
-		w.notify("command", EventDetails{Command: "equip", RoomId: 5350})
+		// The equip event names its item (2026-10-17 newbie-duo playtest:
+		// `wield cudgel` printed "The sling settles in your hand").
+		w.notify("command", EventDetails{Command: "equip", RoomId: 5350, ItemId: 10043})
+		require.Equal(t, "start", w.p.current, "wielding the cudgel must not finish the sling step")
+		w.notify("command", EventDetails{Command: "equip", RoomId: 5350, ItemId: 10038})
 		require.Equal(t, "equip", w.p.current)
 
 		w.notify("command", EventDetails{Command: "fire", RoomId: terrace})

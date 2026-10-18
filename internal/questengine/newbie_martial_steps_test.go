@@ -134,7 +134,11 @@ func TestQuest32FirstBlood_OneCommandPerStep(t *testing.T) {
 
 		w.notify("mob_death", kill)
 		require.Equal(t, "start", w.p.current, "a kill before wielding must not skip the wield step")
-		w.notify("command", cmd("equip"))
+		// The equip event names its item (2026-10-17 newbie-duo playtest):
+		// wielding the sling is not wielding the cudgel.
+		w.notify("command", EventDetails{Command: "equip", RoomId: martialDrillYard, ItemId: 10038})
+		require.Equal(t, "start", w.p.current, "wielding the sling must not finish the cudgel step")
+		w.notify("command", EventDetails{Command: "equip", RoomId: martialDrillYard, ItemId: martialCudgel})
 		require.Equal(t, "wield", w.p.current)
 
 		w.notify("command", cmd("kick"))
@@ -176,7 +180,7 @@ func TestQuest32FirstBlood_OneCommandPerStep(t *testing.T) {
 
 	t.Run("players saved on each old step resume", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
-		w.notify("command", cmd("equip"))
+		w.notify("command", EventDetails{Command: "equip", RoomId: martialDrillYard, ItemId: martialCudgel})
 		require.Equal(t, "wield", w.p.current, "saved on start: the hint says wield, and wielding advances")
 
 		w = newQuestWalker(q).at("strike")

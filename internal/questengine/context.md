@@ -153,7 +153,9 @@ own, unrelated action param.)
   on a refusal too, so a step whose command can be refused listens on
   `command` (quest 28 does for say, warcry, cast, trip and flee). Each handler
   sends its own `command`; a few cases worth knowing: `cast` carries the
-  canonical spell id as `Noun`; `trip` also sends it when the target is
+  canonical spell id as `Noun`; `equip` (and its aliases wear, wield, hold)
+  carries the item put on as `ItemId`, so a step filters it with `item:`
+  (quests 31, 32 and 50 do); `trip` also sends it when the target is
   already on the ground, and `warcry` when one is already riding the player
   (the goal holds); `flee` is sent by the round hook once the player has
   arrived, from the room fled into. `forage` is sent only when the forage
