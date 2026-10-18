@@ -90,11 +90,12 @@ tree:
       # ── Quest 50 complete ────────────────────────────────
       - questRequired: ["50-end"]
         text: "You have the eye. I knew it when your first stone found
-          the straw and you did not flinch at the noise. North, to the
-          canyon -- Bryn holds the slot, and he will teach you the part
-          I cannot from a safe terrace: shooting a thing that shoots
-          back."
-        hints: "Head north into the canyon and find Scout Bryn."
+          the straw and you did not flinch at the noise. East along the
+          terraces and north into the canyon -- Bryn holds the slot, and
+          he will teach you the part I cannot from a safe terrace:
+          shooting a thing that shoots back."
+        hints: "Go east twice to the High Terrace, then north to the Canyon
+          Mouth, where Scout Bryn waits."
 
   nodes:
     # ── QUEST 50 OFFER (hands the sling) ──────────────────────
@@ -183,10 +184,10 @@ tree:
         mark in it both times. You felt the difference. That second one is
         the shot you save for when it matters, because you only get it
         once. The sling and the shot are yours. The eye is yours too,
-        though it will want feeding. North to the canyon when you are
-        ready. Bryn will teach you the rest."
-      hints: "Quest complete. Head north into the canyon and find Scout
-        Bryn."
+        though it will want feeding. East along the terraces and north to
+        the canyon when you are ready. Bryn will teach you the rest."
+      hints: "Quest complete. Go east twice to the High Terrace, then north
+        to the Canyon Mouth, where Scout Bryn waits."
 
     # ── QUEST 50 MID-QUEST COACH (one node per step) ──────────
     # The words a student reaches for mid-lesson (done, quest, sling,

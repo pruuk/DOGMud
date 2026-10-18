@@ -86,9 +86,9 @@ steps:
       Go west to Marksman Iden and type ask iden done.
   - id: end
     description: >-
-      Iden has named your eye sound. North, the canyon opens, where a scout
-      named Bryn will teach you to shoot a thing you cannot reach with your
-      hands.
+      Iden has named your eye sound. Scout Bryn, at the Canyon Mouth, will
+      teach you to shoot a thing you cannot reach with your hands. From the
+      Firing Range, go east twice to the High Terrace, then north.
 
 rewards:
   skillinfo: "ranged-combat:1"
