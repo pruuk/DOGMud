@@ -35,6 +35,8 @@ steps:
     description: >-
       The steppe is your first lesson in reading the ground. Start with the
       tracks: a steppe hare has crossed the Open Steppe, south of Scout Tarn.
+      From Hub Square: west, west, south, south to Tarn on the Steppe Edge,
+      then south once more.
     hint: >-
       On the Open Steppe, type track hare. If it is dark, type cast
       chrysalis-glow first.

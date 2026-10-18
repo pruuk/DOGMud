@@ -131,6 +131,21 @@ tree:
         From Hub Square: north, east, east, north, up, north, north, up,
         then east to the Long Terrace.
 
+    # ── THE WAY TO SCOUT TARN AND THE STEPPE ────────────────────
+    # Quest 41 sends a newcomer to the Open Steppe "south of Scout Tarn",
+    # and nothing gave the way to Tarn (2026-10-17 newbie-duo verify2).
+    # Route walked in the room data: 5203 west 5216, west 5223, south
+    # 5282, south 5283 (Steppe Edge, Tarn 9136), south 5284.
+    - id: way_scout_tarn
+      triggers: ["tarn", "scout", "steppe"]
+      text: >-
+        Scout Tarn? She keeps to the Steppe Edge, out past the scrub.
+        From this square go west twice, along the stilt-house walk and
+        into the scrub draw, then south twice through the scrub mouth.
+        The Open Steppe is one more step south of her.
+      hints: >-
+        From Hub Square: west, west, south, south to the Steppe Edge.
+
     - id: newcomer_players
       triggers: ["people", "players", "player", "others", "talk", "say", "who",
         "tell", "whisper", "chat", "speak", "everyone", "quest", "task"]
@@ -310,7 +325,7 @@ tree:
       hints: >-
         The mouths open off the edges of town. The map command shows
         what you have found so far. You could ask the way to the drill
-        yard or the terrace.
+        yard, the terrace or the steppe.
 
     - id: news
       triggers: ["news", "word", "day", "notice", "happened"]
