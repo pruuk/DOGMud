@@ -43,6 +43,8 @@
   targets and wild game come back much sooner.
 - You can follow someone by their light even if you carry none, and you
   can use follow inside a party. There is a new help follow.
+- In a party, everyone in the room gets credit for a kill toward their
+  quests and their kill tally.
 - A portal in the Thornwall temple leads back to the Pothole Coulee.
 - The web client's vitals update as they change, a party no longer shows
   you twice, and actions queued at the front now run.
