@@ -19,8 +19,11 @@ steps:
   - id: wield
     map_target: 5227
     description: "The cudgel is in your hand. Now fight the training dummy
-      in the Drill Yard until it falls."
-    hint: "Type attack dummy."
+      in the Drill Yard until it falls. From Hub Square, go north to the
+      Awakening Pool, then east four times to the Drill Yard. Crier Toke
+      knows the way too: ask toke yard."
+    hint: "From Hub Square, go north, then east four times to the Drill
+      Yard. Type attack dummy."
   - id: strike
     map_target: 5227
     description: "You beat the training dummy. A new dummy stands up in the

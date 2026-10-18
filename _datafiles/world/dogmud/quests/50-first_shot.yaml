@@ -60,9 +60,12 @@ steps:
     map_target: 5351
     description: >-
       The sling is in your hand. The practice butt stands down-range on the
-      Long Terrace, east of Marksman Iden.
+      Long Terrace, east of Marksman Iden on the Firing Range. From Hub
+      Square, go north to the Awakening Pool, east twice to the Mending Hut,
+      north to the Bluff Steps, up, north twice, and up to the Firing Range.
+      Crier Toke knows the way too: ask toke terrace.
     hint: >-
-      Go east to the Long Terrace and type fire butt.
+      Go east from the Firing Range to the Long Terrace and type fire butt.
   - id: shoot
     map_target: 5351
     description: >-
@@ -131,7 +134,7 @@ triggers:
       - grant: "50-equip"
       - actor: >-
           The sling settles in your hand, a stone already in its cradle. Go
-          east to the Long Terrace and type fire butt.
+          to the Long Terrace, east of the Firing Range, and type fire butt.
 
   # ── FIRST SHOT: loose at the practice butt down-range (5351) ───────────
   - event: command

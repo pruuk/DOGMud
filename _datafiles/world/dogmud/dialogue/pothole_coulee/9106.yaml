@@ -101,6 +101,36 @@ tree:
           You could ask about the seven mouths, or the day's news.
 
   nodes:
+    # ── THE WAY TO THE DRILL YARD AND THE LONG TERRACE ──────────
+    # Quests 32 and 50 send a newcomer to these two yards, and nothing
+    # gave the way from the square (2026-10-17 newbie-duo playtest). First
+    # in the list so "where is the drill yard" is answered here, not by a
+    # footing step node that also listens for "where". Routes walked in
+    # the room data: 5203 north 5200, east 5202, east 5209, east 5220,
+    # east 5227; and 5209 north 5226, up 5347, north 5348, north 5349, up
+    # 5350, east 5351.
+    - id: way_drill_yard
+      triggers: ["drill", "yard", "vorn", "dummy"]
+      text: >-
+        The Drill Yard? Easy walking. From this square go north to the
+        pool, then east four times: the shore path, the Mending Hut, the
+        dry coulee mouth, and the yard itself. Drillmaster Vorn will be
+        the one shouting.
+      hints: >-
+        From Hub Square: north, then east four times.
+
+    - id: way_long_terrace
+      triggers: ["terrace", "iden", "range", "butt", "sling"]
+      text: >-
+        The terraces are up on the bluff. From this square go north to
+        the pool, east twice to the Mending Hut, then north to the Bluff
+        Steps. Climb up, go north twice, and up once more to the Firing
+        Range, where Marksman Iden keeps watch. The Long Terrace is just
+        east of her.
+      hints: >-
+        From Hub Square: north, east, east, north, up, north, north, up,
+        then east to the Long Terrace.
+
     - id: newcomer_players
       triggers: ["people", "players", "player", "others", "talk", "say", "who",
         "tell", "whisper", "chat", "speak", "everyone", "quest", "task"]
@@ -279,7 +309,8 @@ tree:
         if your boots hold.
       hints: >-
         The mouths open off the edges of town. The map command shows
-        what you have found so far.
+        what you have found so far. You could ask the way to the drill
+        yard or the terrace.
 
     - id: news
       triggers: ["news", "word", "day", "notice", "happened"]
