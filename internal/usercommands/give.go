@@ -134,7 +134,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					[]string{user.Character.Name}, recipientSight),
 				)
 				room.SendTextVisual(messaging.CategoryLoot,
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> gives <ansi fg="username">%s</ansi> %s <ansi fg="itemname">%s</ansi>.`, user.Character.Name, targetUser.Character.Name, items.IndefiniteArticle(result.Item.NameSimple()), result.Item.NameSimple()),
+					fmt.Sprintf(`<ansi fg="username">%s</ansi> gives <ansi fg="username">%s</ansi> %s<ansi fg="itemname">%s</ansi>.`, user.Character.Name, targetUser.Character.Name, items.ArticlePrefix(result.Item.NameSimple()), result.Item.NameSimple()),
 					user.UserId,
 					targetUser.UserId)
 

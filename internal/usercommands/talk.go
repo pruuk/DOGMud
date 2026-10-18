@@ -214,7 +214,7 @@ func buildPlayerState(user *users.UserRecord) *dialogue.PlayerState {
 					"userId", user.UserId, "itemId", itemId)
 				return false
 			}
-			user.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s <ansi fg="itemname">%s</ansi>.`, items.IndefiniteArticle(newItem.DisplayName()), newItem.DisplayName()))
+			user.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>.`, items.ArticlePrefix(newItem.DisplayName()), newItem.DisplayName()))
 			events.AddToQueue(events.ItemOwnership{
 				UserId: user.UserId,
 				Item:   newItem,

@@ -150,7 +150,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 
 			container.RemoveItem(oopsItem)
-			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is too full and %s <ansi fg="itemname">%s</ansi> falls out and onto the floor.`, containerName, items.IndefiniteArticle(oopsItem.DisplayName()), oopsItem.DisplayName()))
+			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is too full and %s<ansi fg="itemname">%s</ansi> falls out and onto the floor.`, containerName, items.ArticlePrefix(oopsItem.DisplayName()), oopsItem.DisplayName()))
 			room.AddItem(oopsItem, false)
 		}
 	}

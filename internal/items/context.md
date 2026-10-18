@@ -35,12 +35,16 @@ The items system is built around two main components:
 - Separate messages for attacker, defender, and room observers
 
 **Item name articles (`article.go`):**
-- `IndefiniteArticle(name) string` returns "some" for a name that reads as
-  plural (last word ends in "s" but not "ss", "us" or "is": Iron Lockpicks,
-  Leather Boots), else "an" before a vowel and "a" otherwise. Every line that
-  puts an indefinite article before one item's name uses it (sell, buy
-  trade-ins, forage, quest and dialogue rewards, give, put, use, removing from
-  a pet), so none reads "an Iron Lockpicks".
+- `ArticlePrefix(name) string` returns what goes before one item's name,
+  trailing space included (callers write `%s<ansi ...>%s`): "" for a name
+  that already starts with an article ("A Sheaf of Gleaned Grain", An, The,
+  Some), "some " for a name that reads as plural (last word ends in "s" but
+  not "ss", "us" or "is": Iron Lockpicks, Leather Boots), else "an " before
+  a vowel and "a " otherwise. Every line that puts an indefinite article
+  before one item's name uses it (sell, buy trade-ins, forage, quest and
+  dialogue rewards, give, put, use, removing from a pet), so none reads "an
+  Iron Lockpicks" or "an A Sheaf". It replaced `IndefiniteArticle`
+  (2026-10-17), which returned the bare word and could not return nothing.
 
 ## Key Features
 
