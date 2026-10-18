@@ -138,17 +138,41 @@ tree:
           to_actor: true
           text: It is done. You will feel it settle for a while. That is normal.
           delay: 23.0
-        - type: action
-          do: say
-          to_actor: true
-          text: >-
-            The pool woke the capacity, not the shape. A change may
-            already have found you, and more will come in their own
-            time. Type <ansi fg="command">mutations</ansi> whenever you
-            like to see what has taken hold. What comes, you earn the
-            slow way: by how you
-            fight, what you endure, and who you decide to be.
-          delay: 26.0
+        # What a mutation is, said to each player as it is true for them
+        # (owner ruling 2026-10-17: a mutation can fire mid-tutorial, in
+        # Dewey's rooms, as long as Hadwen explains it). Checked when the
+        # rite starts; either branch queues its one line and succeeds, so
+        # the rite goes on.
+        - type: selector
+          children:
+            - type: sequence
+              children:
+                - type: condition
+                  check: player_has_mutation
+                - type: action
+                  do: say
+                  to_actor: true
+                  text: >-
+                    The chrysalis has already changed you. The spores in
+                    you answer how you live, and each change they make is
+                    called a mutation. Type <ansi fg="command">mutations</ansi>
+                    to see what has changed in you, and
+                    <ansi fg="command">help mutations</ansi> to read more.
+                    The rest you earn the slow way: by how you fight, what
+                    you endure, and who you decide to be.
+                  delay: 26.0
+            - type: action
+              do: say
+              to_actor: true
+              text: >-
+                In time the chrysalis will change you. The spores in you
+                answer how you live, and each change they make is called a
+                mutation. Type <ansi fg="command">mutations</ansi> to see
+                what has changed in you, and
+                <ansi fg="command">help mutations</ansi> to read more. You
+                earn them the slow way: by how you fight, what you endure,
+                and who you decide to be.
+              delay: 26.0
         - type: action
           do: say
           to_actor: true

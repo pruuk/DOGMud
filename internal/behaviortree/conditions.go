@@ -28,6 +28,7 @@ func init() {
 	conditionRegistry["item_matches"] = condItemMatches
 	conditionRegistry["mob_has_condition"] = condMobHasCondition
 	conditionRegistry["player_has_spell"] = condPlayerHasSpell
+	conditionRegistry["player_has_mutation"] = condPlayerHasMutation
 	conditionRegistry["player_has_misc_data"] = condPlayerHasMiscData
 	conditionRegistry["state_greater_than"] = condStateGreaterThan
 	conditionRegistry["multiple_enemies"] = condMultipleEnemies

@@ -232,6 +232,7 @@ Condition nodes use `type: condition` with `check: <name>`.
 | `player_has_gold` | `amount` (int) | Player has at least N gold. |
 | `player_has_flag` | `flag_key`, `flag_value` (strings) | Quest flag matches. |
 | `player_has_spell` | `spell` (string) | Player knows the named spell. |
+| `player_has_mutation` | `mutation` (string, optional) | Player holds the named mutation, or any mutation when `mutation` is omitted. |
 | `player_has_misc_data` | `key`, `value` (strings) | Misc data key equals value. |
 
 ### Mob State

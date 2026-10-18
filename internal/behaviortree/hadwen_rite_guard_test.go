@@ -3,6 +3,7 @@ package behaviortree
 import (
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -53,6 +54,50 @@ func askHadwenAs(state *BehaviorState, userId int, text string) int {
 		EventType: "player_ask", UserId: userId, Text: text, RoomId: 5200,
 	}, state)
 	return hadwenQueueLen() - before
+}
+
+// Owner ruling 2026-10-17: a mutation can fire mid-tutorial, as long as
+// Hadwen explains it. His mutation line reads one way to a player the
+// chrysalis has already changed and another to one it has not, and both
+// point at the mutations command.
+func TestHadwenRiteExplainsMutationsEitherWay(t *testing.T) {
+	said := map[int][]string{}
+	origSay := actionRegistry["say"]
+	actionRegistry["say"] = func(params map[string]any, ctx *EvalContext) Result {
+		said[ctx.Event.UserId] = append(said[ctx.Event.UserId], getStringParam(params, "text"))
+		return Success
+	}
+	t.Cleanup(func() { actionRegistry["say"] = origSay })
+	loadHadwenTree(t)
+
+	changed := users.NewTestUser(8144, "vey", "Vey", 98144)
+	changed.Character.RoomId = 5200
+	changed.Character.QuestProgress = map[int]string{30: "start"}
+	changed.Character.Mutations = map[string]int{"hollow-bones": 1}
+	fresh := users.NewTestUser(8145, "pell", "Pell", 98145)
+	fresh.Character.RoomId = 5200
+	fresh.Character.QuestProgress = map[int]string{30: "start"}
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{8144: changed, 8145: fresh}))
+	DrainAllDelayedActionsForTest(t)
+	state := NewBehaviorState()
+
+	askHadwenAs(state, 8144, "begin")
+	askHadwenAs(state, 8145, "begin")
+	DrainAllDelayedActionsForTest(t)
+
+	line := func(uid int) string {
+		for _, s := range said[uid] {
+			if strings.Contains(s, "mutations</ansi>") {
+				return s
+			}
+		}
+		return ""
+	}
+	require.Contains(t, line(8144), "The chrysalis has already changed you", "a player with a mutation hears that it has happened")
+	require.Contains(t, line(8145), "In time the chrysalis will change you", "a player with none hears that it will")
+	for _, uid := range []int{8144, 8145} {
+		require.NotContains(t, line(uid), "A change may already have found you", "the vague line is retired")
+	}
 }
 
 // The guard is per player (2026-10-17 newbie-duo playtest): two newcomers
