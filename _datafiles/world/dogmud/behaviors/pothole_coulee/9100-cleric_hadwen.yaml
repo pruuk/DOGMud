@@ -19,6 +19,12 @@
 # (mobs.Mob.BTreeState is yaml:"-"), so a logout or a reboot mid-rite
 # cannot leave the flag stuck. After the rite, a re-ask falls through to
 # dialogue (which has a gentle refusal node).
+# The flag is PER PLAYER (`per_player: true`, BehaviorState key
+# "rite_running:<user id>"): the 2026-10-17 newbie-duo playtest had two
+# newcomers ask at once, and a mob-wide flag hushed the second one and left
+# them un-Opened. Each asker now gets their own rite, and every spoken line
+# is addressed to its own asker (`to_actor: true`, sayto: "says to you" for
+# them, "says to <name>" for the room), so two interleaved rites both read.
 # Test: internal/behaviortree/hadwen_rite_guard_test.go.
 
 tree:
@@ -35,9 +41,11 @@ tree:
         - type: condition
           check: state_equals
           key: rite_running
+          per_player: true
           value: "1"
         - type: action
           do: say
+          to_actor: true
           text: >-
             Hush, now. The pool is still speaking, and it will not be
             hurried. Let it finish.
@@ -58,29 +66,37 @@ tree:
         - type: condition
           check: state_equals
           key: rite_running
+          per_player: true
           value: ""
         - type: action
           do: set_state
           key: rite_running
+          per_player: true
           value: "1"
         - type: action
           do: say
+          to_actor: true
           text: Then we begin. Step to the edge with me.
           delay: 1.0
         - type: action
-          do: emote
-          text: >-
-            wades into the shallows and turns. The pale plates along his
-            jaw catch the light coming up off the water.
+          do: respond
+          user_text: >-
+            {actor} wades into the shallows and turns to face you. The pale
+            plates along his jaw catch the light coming up off the water.
+          room_text: >-
+            {actor} wades into the shallows and turns to face the one
+            beside him.
           delay: 3.0
         - type: action
           do: say
+          to_actor: true
           text: >-
             Gaius is made of belief. The land believes itself into
             shape. So does everything that lives on it. So will you.
           delay: 6.0
         - type: action
           do: say
+          to_actor: true
           text: >-
             Most worlds let you stay what you arrived as. This one will
             not. The body answers effort, conflict, fear, wanting -- it
@@ -89,6 +105,7 @@ tree:
           delay: 9.5
         - type: action
           do: say
+          to_actor: true
           text: >-
             The pool answers first. It is older than the town and more
             patient than I am. Look into the water.
@@ -118,10 +135,12 @@ tree:
           delay: 20.0
         - type: action
           do: say
+          to_actor: true
           text: It is done. You will feel it settle for a while. That is normal.
           delay: 23.0
         - type: action
           do: say
+          to_actor: true
           text: >-
             The pool woke the capacity, not the shape. A change may
             already have found you, and more will come in their own
@@ -132,6 +151,7 @@ tree:
           delay: 26.0
         - type: action
           do: say
+          to_actor: true
           text: >-
             If the name you carried here no longer fits the shape of
             you, <ansi fg="command">rename</ansi> lets you choose a
@@ -142,6 +162,7 @@ tree:
         # who leaves through Esk never hears Toke's hub lessons).
         - type: action
           do: say
+          to_actor: true
           text: >-
             One gift more, and you carry it from today: a light of your
             own. Gaius keeps true dark in its caves and mines, and the
@@ -151,6 +172,7 @@ tree:
           delay: 33.0
         - type: action
           do: say
+          to_actor: true
           text: >-
             Now -- two roads from here, and both are good ones. Check
             what you carry first with <ansi fg="command">inv</ansi> --
@@ -163,6 +185,7 @@ tree:
           delay: 36.5
         - type: action
           do: say
+          to_actor: true
           text: >-
             And if you already know this world and only needed the
             pool, Warden Esk keeps the way out -- south through the
@@ -196,6 +219,7 @@ tree:
         - type: action
           do: set_state
           key: rite_running
+          per_player: true
           value: ""
           delay: 41.0
 

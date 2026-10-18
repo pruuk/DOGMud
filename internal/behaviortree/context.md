@@ -243,7 +243,7 @@ Condition nodes use `type: condition` with `check: <name>`.
 | `mob_at_home` | none | Mob is in its home room. |
 | `mob_at_target_room` | none | Success when mob is at its current schedule segment's target_room; Failure when no schedule, no current segment, or in transit. |
 | `mob_has_condition` | `condition_id` (int) | Mob currently has the condition. |
-| `state_equals` | `key`, `value` (strings) | BehaviorState string equals. |
+| `state_equals` | `key`, `value` (strings), `per_player` (bool, optional) | BehaviorState string equals. With `per_player: true` the key is kept once per triggering player (`<key>:<user id>`, `stateKey` in `actions_state.go`); with no triggering player it fails. |
 | `state_greater_than` | `key` (string), `value` (int) | BehaviorState int > value. |
 | `forager_state_is_foraging` | none | True when forager state machine is in Foraging state (chunk 2.9). |
 
@@ -373,7 +373,7 @@ are subject to perception-scaled reaction delays (see below).
 |--------|--------|-------------|
 | ⚠️ `try_reload` was REMOVED. Firing chambers its own next round, so an archer never needs a turn to reload. The node also made a skullduggery-capable archer `sneak` into cover first, which was the only place an archer took cover on its own; re-adding a "take cover" beat is worth more than it used to be, since hiding before a shot now earns the ambush. Left for the behaviour arc. | | |
 | `respond` | `user_text` (string), `room_text` (optional), `hints` (optional) | Sends text to triggering player; `room_text` to others; `hints` shown as a hint line. |
-| `say` | `text` (string) | Mob says text to the whole room. |
+| `say` | `text` (string), `to_actor` (bool, optional) | Mob says text to the whole room. With `to_actor: true` it is addressed to the triggering player via `sayto @<id>` ("says to you" for them, "says to <name>" for the room). |
 | `emote` | `text` (string) | Mob emotes (no "says" prefix). |
 
 ### Quest & Flags — instant
@@ -492,7 +492,7 @@ without standing inert for a full round.
 
 | Action | Params | Description |
 |--------|--------|-------------|
-| `set_state` | `key` (string), `value` (any) | Sets a BehaviorState key. |
+| `set_state` | `key` (string), `value` (any), `per_player` (bool, optional) | Sets a BehaviorState key; `per_player: true` keys it by the triggering player, as `state_equals` reads it. |
 | `increment_state` | `key` (string), `amount` (int, default 1) | Adds N to a numeric BehaviorState key. |
 | `decrement_state` | `key` (string), `amount` (int, default 1) | Subtracts N from a numeric BehaviorState key. |
 | `set_misc_data` | `key` (string), `value` (string) | Sets misc data on the triggering player. |

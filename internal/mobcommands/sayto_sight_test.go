@@ -1,6 +1,7 @@
 package mobcommands
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -58,6 +59,30 @@ func TestMobSayToOnly_BlindedAddresseeHearsNoSpeakerName(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{`Someone says to you, "a secret"`}, mobSpeechHeard(2))
 	require.Empty(t, mobSpeechHeard(1), "sayto-only reaches the addressee alone")
+}
+
+// An addressed line wraps at 80 columns the way a plain NPC say does
+// (actions.FormatSayText): Cleric Hadwen's rite (9100) speaks long lines
+// through sayto, one to each asker, since the 2026-10-17 newbie-duo fix.
+func TestMobSayTo_LongLineWrapsAt80(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	mob, room := mobSpeechRoom(t)
+
+	long := "the pool answers first, it is older than the town and more patient than I am, so look into the water and wait"
+	_, err := SayTo("alice "+long, mob, room)
+	require.NoError(t, err)
+	_, err = SayTo("bob "+long, mob, room)
+	require.NoError(t, err)
+	for _, uid := range []int{1, 2} {
+		heard := mobSpeechHeard(uid)
+		require.NotEmpty(t, heard)
+		for _, msg := range heard {
+			for _, line := range strings.Split(strings.ReplaceAll(msg, "\r", ""), "\n") {
+				require.LessOrEqual(t, len(line), 80, "user %d heard an unwrapped line: %q", uid, line)
+			}
+		}
+	}
 }
 
 func TestMobReplyTo_BlindedListenersHearNoNames(t *testing.T) {
