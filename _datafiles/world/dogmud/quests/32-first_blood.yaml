@@ -12,7 +12,7 @@ secret: false
 steps:
   - id: start
     map_target: 5227
-    description: "Drillmaster Vorn gave you a cudgel. Hold it in your hand
+    description: "You were given a cudgel. Hold it in your hand
       before you fight. If you already hold it, type remove cudgel, then
       wield it again."
     hint: "Type wield cudgel."
@@ -48,8 +48,7 @@ steps:
     map_target: 5227
     description: "You chose your combat detail. You can change it at any
       time. The Drill Yard has taught you what it can."
-    hint: "Go back to Drillmaster Vorn in the Drill Yard and type ask vorn
-      report."
+    hint: "Drillmaster Vorn waits in the Drill Yard. Type ask vorn report."
   - id: end
     description: "Drillmaster Vorn has signed off on your first fight. Go
       north to the Sparring Circle, east three times to the Lower Wash,
@@ -146,5 +145,5 @@ triggers:
       missing: ["32-verbosity"]
     actions:
       - grant: "32-verbosity"
-      - actor: "Your combat detail is set. Go back to Vorn and type ask
-          vorn report."
+      - actor: "Your combat detail is set. Report to Drillmaster Vorn: type
+          ask vorn report."

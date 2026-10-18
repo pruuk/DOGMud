@@ -41,9 +41,9 @@ that pool is not coming back until you set something down.
 On a plain text client the three parts show as <ansi fg="white">#</ansi> for carried,
 <ansi fg="white">.</ansi> for spent, and <ansi fg="white">:</ansi> for held in reserve.
 
-Type <ansi fg="command">status</ansi> and look at the Reserved line under your pools. Each pool
-gets a word of its own, and each word measures how close you are to the
-limit rather than to your whole pool:
+Type <ansi fg="command">status</ansi> and look at the reserve line under your pools: HP reserve,
+SP reserve and CP reserve. Each pool gets a word of its own, and each word
+measures how close you are to the limit rather than to your whole pool:
 
   <ansi fg="green">none</ansi> or <ansi fg="green">slight</ansi>    Nothing worth worrying about.
   <ansi fg="green">modest</ansi>            A real cost, comfortably borne.
