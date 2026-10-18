@@ -238,7 +238,9 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 		// The invitation is words from a person: "Someone" to a reader who
 		// cannot see who, as speech reads (HideSpeakerNames).
 		invitedUser.SendText(messaging.CategoryGroup, messaging.HideSpeakerNames(
-			fmt.Sprintf(`<ansi fg="username">%s</ansi> invited you to their party. Type <ansi fg="command">party accept</ansi> or <ansi fg="command">party decline</ansi> to respond.`, user.Character.Name),
+			// Two lines: CategoryGroup is not wrapped by the pipeline, and
+			// as one line it ran past 80 columns (2026-10-17).
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> invited you to their party.`+"\n"+`Type <ansi fg="command">party accept</ansi> or <ansi fg="command">party decline</ansi> to respond.`, user.Character.Name),
 			[]string{user.Character.Name}, messaging.ParticipantSight(invitedUser.Character, room)))
 	} else {
 		// Backstop: do not leave behind a party this call created.
