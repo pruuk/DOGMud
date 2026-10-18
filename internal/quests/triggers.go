@@ -111,7 +111,7 @@ type NpcSayDef struct {
 // SayLineDef can be a simple string or a {delay, text, speaker} struct.
 type SayLineDef struct {
 	Text    string `yaml:"text" json:"text"`
-	Delay   int    `yaml:"delay,omitempty" json:"delay,omitempty"`     // delay in seconds before this line
+	Delay   int    `yaml:"delay,omitempty" json:"delay,omitempty"`     // seconds before this line, counted from the line before it for npc_say (mobs.Mob.Command schedules after the mob's last queued command)
 	Speaker int    `yaml:"speaker,omitempty" json:"speaker,omitempty"` // mob ID override (0 = use parent NpcSayDef.Mob)
 	Emote   bool   `yaml:"emote,omitempty" json:"emote,omitempty"`     // true = emote instead of say
 	// Whisper sends the line to the triggering player alone, framed as a

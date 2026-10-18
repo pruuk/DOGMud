@@ -8,6 +8,13 @@ secret: false
 
 # Hint style (owner ruling 2026-10-17): one command per step. Say what the
 # thing IS first, then the command, then the help topic to read for more.
+#
+# Pacing: an npc_say line's delay counts from the line before it, not from
+# the trigger (each line goes through mobs.Mob.Command, which schedules from
+# the mob's last queued command), so delays of 0, 3, 8 and 13 put the last
+# line 24 seconds out. Keep each step's lines short and the next-step prompt
+# last, said within a few seconds (2026-10-17 newbie-duo playtest; test:
+# internal/questengine/quest28_pacing_test.go).
 
 steps:
   - id: start
@@ -154,7 +161,7 @@ triggers:
           lines:
             - {delay: 1, text: "There you are, waking up at last. Easy, now.
                 Nothing here can harm you."}
-            - {delay: 3, text: "I have marked your path already. The hint
+            - {delay: 2, text: "I have marked your path already. The hint
                 command names your next step, any time you need it. Type
                 hint. I will be right here."}
 
@@ -254,16 +261,16 @@ triggers:
           lines:
             - {delay: 0, text: "There you are, all of you on one page. You
                 grow by use, not by any level."}
-            - {delay: 3, text: "The three pools matter most. Health keeps you
+            - {delay: 2, text: "The three pools matter most. Health keeps you
                 alive. Stamina pays for swings and other moves of the body.
                 Conviction pays for spells and shouts. All three refill with
                 time and rest."}
-            - {delay: 8, text: "Some things you keep, like a companion or a
+            - {delay: 2, text: "Some things you keep, like a companion or a
                 piece of enchanted gear, hold part of a pool back for as
                 long as you keep them. That is called reservation. Rest
                 does not bring it back, and status shows how much is held.
                 Type help reservation to learn more."}
-            - {delay: 13, text: "Next, your skills. Skills are the things you
+            - {delay: 2, text: "Next, your skills. Skills are the things you
                 get better at by doing them. Type skills."}
 
   - event: command_issued
@@ -399,6 +406,11 @@ triggers:
                 something. Type ask dewey world."}
 
   # The question has to reach Dewey: a bare `ask` or `ask world` is refused.
+  # No npc_say here: this trigger runs before Dewey's reply is queued, so its
+  # line would land ahead of the answer. The way north is the end of the
+  # answer itself, in Dewey's dialogue (dialogue/newcomer_antechamber/
+  # 9491.yaml, the patterns gated on 28-asked), which reads the token this
+  # trigger has just granted.
   - event: dialogue
     mob: 9491
     conditions:
@@ -406,11 +418,6 @@ triggers:
       missing: [28-asked]
     actions:
       - grant: 28-asked
-      - npc_say:
-          mob: 9491
-          lines:
-            - {delay: 0, text: "That's how you'll learn half of what matters
-                out there. The way north is open."}
 
   # ── 6262 The Proving: warcry, conditions, cooldowns, consider, attack,
   #    cast, trip, flee ──
@@ -483,7 +490,7 @@ triggers:
             - {delay: 0, text: "Your instincts speak true. That thing is
                 woven too tight for anyone to break. Remember the feeling
                 of a fight you cannot win. It will matter in a moment."}
-            - {delay: 5, text: "But this ring is safe. Its blows are too
+            - {delay: 2, text: "But this ring is safe. Its blows are too
                 soft to matter. So fight anyway. Type attack effigy."}
 
   # From here until the flee, the effigy fight is running and its text
@@ -542,10 +549,10 @@ triggers:
             - {delay: 1, whisper: true, text: "That is the body's way. When a
                 trip lands, the foe goes down wearing a condition of its
                 own. Voice, belief, and body: all yours."}
-            - {delay: 4, whisper: true, text: "Out here you grow by doing.
+            - {delay: 2, whisper: true, text: "Out here you grow by doing.
                 Belief deepens your Willpower, and blades sharpen your
                 Dexterity. You earn it. You never pick it."}
-            - {delay: 8, whisper: true, text: "Now the last lesson, the one
+            - {delay: 2, whisper: true, text: "Now the last lesson, the one
                 your instincts already gave you. This fight cannot be won.
                 Flee breaks you out of a fight. Type flee to break away and
                 live."}
