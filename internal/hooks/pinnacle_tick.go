@@ -246,11 +246,14 @@ func tickMutationItems(user *users.UserRecord, worn []items.Item, now uint64) {
 // mechanical cost. We do NOT touch the toxicity path — ambient conditions never
 // apply toxicity by construction.
 //
-// "Always-on" semantics, precisely: the !HasCondition guard RE-ADDS a condition after it
-// expires (and is pruned); it does not refresh duration while active. Because
-// prune runs on the turn tick, an ambient condition can lapse for up to one round
-// between expiry and re-application. Accepted — matches WornConditionIds semantics;
-// a per-tick unconditional refresh would cost a Validate() per player per round.
+// "Always-on" semantics: an attuned condition is held as a PERMANENT record, the
+// way WornConditionIds are (holdAmbient), so it never counts down and never ends
+// while its potion stays slotted. Before 2026-10-19 it was added with the potion's
+// own duration and re-added after each expiry, so the web client's timer cycled
+// and the end line printed while the effect never really fell off. The
+// permanent-condition rebuild (Character.reapplyPermanentConditions) sources
+// these from the attuned set through Character.AmbientBandolierConditions,
+// so an equip or login Validate keeps them, and taking the belt off drops them.
 
 // bandolierFingerprint is a stable string of belt itemId + sorted potion
 // itemIds. Changes iff the player-visible bandolier contents change.
@@ -280,14 +283,14 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 		// Flag-off common path: no fingerprint work at all. Revoke any
 		// lingering ambience from a previously-worn ambient bandolier and
 		// clear the stored fingerprint so re-equipping one re-attunes.
-		if applied := readMiscIntSlice(c.GetMiscData("pinnacle_bandolier_conditions")); len(applied) > 0 {
+		if applied := readMiscIntSlice(c.GetMiscData(characters.AmbientBandolierMiscKey)); len(applied) > 0 {
 			revokeAmbient(c, applied)
 			c.SetMiscData("pinnacle_bandolier_fingerprint", nil)
 		}
 		return
 	}
 
-	applied := readMiscIntSlice(c.GetMiscData("pinnacle_bandolier_conditions"))
+	applied := readMiscIntSlice(c.GetMiscData(characters.AmbientBandolierMiscKey))
 	appliedSet := map[int]bool{}
 	for _, id := range applied {
 		appliedSet[id] = true
@@ -327,7 +330,7 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 				`<ansi fg="magenta">The %s stirs, drawing in the essence of what you have slotted; it will take a moment to attune.</ansi>`,
 				spec.Name))
 		}
-		c.SetMiscData("pinnacle_bandolier_conditions", kept)
+		c.SetMiscData(characters.AmbientBandolierMiscKey, kept)
 		return
 	}
 
@@ -335,23 +338,21 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 	// already-active conditions refreshed but hold the pending one back.
 	if attune, ok := characters.MiscRound(c.GetMiscData("pinnacle_bandolier_attune_round")); ok && now < attune {
 		for _, id := range applied {
-			if desired[id] && !c.Conditions.HasCondition(id) {
-				_ = c.AddConditionScaled(id, 1.30)
+			if desired[id] {
+				holdAmbient(c, id)
 			}
 		}
 		return
 	}
 
-	// Attuned (or nothing pending): apply/refresh every slotted potion's condition at
-	// Peak potency (1.30). Announce completion once when a new effect just landed.
+	// Attuned (or nothing pending): hold every slotted potion's condition.
+	// Announce completion once when a new effect just landed.
 	newlyApplied := false
 	for id := range desired {
 		if !appliedSet[id] {
 			newlyApplied = true
 		}
-		if !c.Conditions.HasCondition(id) {
-			_ = c.AddConditionScaled(id, 1.30)
-		}
+		holdAmbient(c, id)
 	}
 	if _, ok := characters.MiscRound(c.GetMiscData("pinnacle_bandolier_attune_round")); ok {
 		if newlyApplied {
@@ -366,7 +367,20 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 	for id := range desired {
 		ids = append(ids, id)
 	}
-	c.SetMiscData("pinnacle_bandolier_conditions", ids)
+	c.SetMiscData(characters.AmbientBandolierMiscKey, ids)
+}
+
+// holdAmbient makes sure the character holds conditionId as a permanent record.
+// A record already permanent is left alone, so the per-round cost is a lookup;
+// a timed record (one applied before 2026-10-19, or the potion drunk by hand)
+// is turned permanent in place.
+func holdAmbient(c *characters.Character, conditionId int) {
+	for _, held := range c.Conditions.GetConditions(conditionId) {
+		if held.Permanent {
+			return
+		}
+	}
+	_ = c.AddCondition(conditionId, true)
 }
 
 // desiredAmbientConditions is the set of condition ids emitted by the potions currently
@@ -388,6 +402,6 @@ func revokeAmbient(c *characters.Character, applied []int) {
 		c.RemoveCondition(id)
 	}
 	if len(applied) > 0 {
-		c.SetMiscData("pinnacle_bandolier_conditions", []int{})
+		c.SetMiscData(characters.AmbientBandolierMiscKey, []int{})
 	}
 }

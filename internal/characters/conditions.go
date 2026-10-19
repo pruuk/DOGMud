@@ -325,6 +325,32 @@ func (c *Character) RemovePermanentCondition(conditionId int) {
 	c.permanentConditionIds = kept
 }
 
+// AmbientBandolierMiscKey is the MiscData key holding the condition ids an
+// ambient-potions bandolier has attuned (hooks.tickAmbientPotions writes it).
+const AmbientBandolierMiscKey = "pinnacle_bandolier_conditions"
+
+// AmbientBandolierConditions returns the attuned ambient condition ids while
+// an ambient-potions belt is worn, else nil. A persisted []int comes back from
+// yaml as []any, so both shapes are read.
+func (c *Character) AmbientBandolierConditions() []int {
+	if !c.Equipment.Belt.GetSpec().AmbientPotions {
+		return nil
+	}
+	switch s := c.GetMiscData(AmbientBandolierMiscKey).(type) {
+	case []int:
+		return s
+	case []any:
+		out := make([]int, 0, len(s))
+		for _, e := range s {
+			if n, ok := MiscRound(e); ok {
+				out = append(out, int(n))
+			}
+		}
+		return out
+	}
+	return nil
+}
+
 // reapplyPermanentConditions refreshes item, species, pet and permanent
 // conditions against what the character has NOW. It builds one map of
 // condition id to "this condition still has a source": the permanent-id list,
@@ -381,6 +407,13 @@ func (c *Character) reapplyPermanentConditions() {
 		for _, conditionId := range itm.GetSpec().WornConditionIds {
 			hasSource[conditionId] = true
 		}
+	}
+
+	// An ambient-potions bandolier (Vitalis Bandolier) holds its attuned
+	// potions' conditions as permanent records while it is worn
+	// (hooks.tickAmbientPotions). The attuned set is the one the tick keeps.
+	for _, conditionId := range c.AmbientBandolierConditions() {
+		hasSource[conditionId] = true
 	}
 
 	for conditionId, sourced := range hasSource {
