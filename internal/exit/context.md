@@ -12,7 +12,10 @@ The `internal/exit` package provides data structures for managing room exits in 
   directions (#430). `FromPhrase(name)` gives "from above" / "from below" /
   `from the <exit>` (coloured); `TowardPhrase(name)` gives "up" / "down" /
   "toward the <exit>" (uncoloured, for the peer lines); `DeparturePhrase(name)`
-  gives "upward" / "downward" / `towards the <exit> exit` (coloured). Used by
+  gives "upward" / "downward" / `towards the <exit> exit` (coloured).
+  `EntryPhrase(backExit, plural)` is the arrival verb and origin: "enters
+  " + FromPhrase, or plain "arrives" when no exit leads back (a one-way way
+  in such as the temple portal, #620). Used by
   the player and mob movement lines (`usercommands/go.go`,
   `actions.RelocateMob`) and the look lines (`usercommands/look.go`,
   `mobcommands/look.go`). `PhraseVerticalExits(line, exitNames...)` rewrites

@@ -1213,6 +1213,21 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 					listMobInRoom(r, mob.InstanceId)
 				}
 
+				// A respawn (the entry had a tracked despawn) narrates its
+				// spawn entry's message to whoever is in the room, the way
+				// the Drill Yard's "A fresh straw dummy is hauled out" was
+				// written to read (#620: the field was parsed and never
+				// sent). A first spawn (boot, room load) stays quiet, as
+				// does one listed elsewhere by its schedule or spawned
+				// hidden. Players walking in meet the mob already there:
+				// MoveToRoom prepares the room before adding them. Only an
+				// entry marked narraterespawn speaks (owner, #620): most
+				// messages were written as scenery, not as arrivals.
+				if spawnInfo.NarrateRespawn && spawnInfo.DespawnedRound > 0 && spawnInfo.Message != `` &&
+					mob.Character.RoomId == r.RoomId && !mob.Character.IsHidden() {
+					r.SendTextVisual(messaging.CategoryRoomEntry, spawnInfo.Message)
+				}
+
 				spawnInfo.InstanceId = mob.InstanceId
 				spawnInfo.DespawnedRound = 0
 

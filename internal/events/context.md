@@ -262,6 +262,7 @@ const (
     CmdBlockInput              EventFlag = 0b00001000  // Block user input
     CmdUnBlockInput            EventFlag = 0b00010000  // Unblock user input
     CmdBlockInputUntilComplete EventFlag = CmdBlockInput | CmdUnBlockInput
+    CmdFollowStep              EventFlag = 0b00100000  // Party member's step after the leader: no light-notice check first (#620)
 )
 ```
 

@@ -21,7 +21,6 @@ help:
       - character
       - companion
       - conditions
-      - cooldowns
       - death
       - dismiss
       - encumbrance
@@ -114,7 +113,6 @@ help:
       - craft
       - disenchant
       - forage
-      - salvage
     information:
       - biome
       - exits
@@ -122,8 +120,10 @@ help:
       - hint
       - history
       - look
+      - map
       - online
       - species
+      - track
       - weather
     items:
       - drink
@@ -159,7 +159,6 @@ help:
       - oasis
       - payfine
       - petition
-      - online
       - quit
       - scan
       - suggest
@@ -175,16 +174,15 @@ help:
       - lock
       - picklock
       - unlock
+  # Only names in skills.GetAllSkillNames belong here, and every topic is
+  # listed once across the whole help map: a second listing overwrites the
+  # first at load, so the topic shows in one list chosen at random (#620).
+  # Held by internal/keywords/keywords_help_lists_test.go.
   skill:
     all:
-      - cast
-      - map
       - search
-      - sneak
-      - track
       - blacksmithing
       - alchemy
-      - foraging
       - tailoring
       - cooking
       - jewelcrafting
@@ -219,7 +217,9 @@ help:
       - questdebug
       - questtoken
       - redescribe
-      - reload
+      # No `reload` here: the player weapon topic of that name (command/combat)
+      # shares the key, and a second listing overwrote it, hiding it from
+      # players (#620). `help reload` already showed the player page.
       - renameitem
       - room
       - server

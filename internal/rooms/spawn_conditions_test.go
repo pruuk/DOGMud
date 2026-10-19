@@ -1,10 +1,12 @@
 package rooms
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 )
 
@@ -40,5 +42,45 @@ func TestARoomSpawnEntrysConditionsApplyAtSpawn(t *testing.T) {
 	}
 	if !m.Character.IsHidden() {
 		t.Error("a room spawn entry with conditionids [9] must spawn a hidden mob")
+	}
+}
+
+// A spawn entry's message is narrated when its mob RESPAWNS in front of
+// players (#620: "A fresh straw dummy is hauled out" in the Drill Yard was
+// parsed and never sent). A first spawn stays quiet.
+func TestARoomSpawnEntrysMessageNarratesARespawn(t *testing.T) {
+	const mobId = 7853
+	const line = "A fresh straw dummy is hauled out and set on the pivot, ready for work."
+	t.Cleanup(mobs.SeedMobsForTest(map[int]*mobs.Mob{
+		mobId: {MobId: mobId, Zone: "TestZone", Character: characters.Character{Name: "Training Dummy"}},
+	}, map[int]*mobs.Mob{}))
+
+	// Only an entry marked narraterespawn speaks (owner, #620): most of the
+	// shipped messages were written as scenery and stay quiet.
+	for _, c := range []struct {
+		name      string
+		narrate   bool
+		despawned uint64
+		want      []string
+	}{
+		{"marked respawn", true, 10, []string{line}},
+		{"unmarked respawn", false, 10, []string{}},
+		{"marked first spawn", true, 0, []string{}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			r := sightTestRoom(t, "city")
+			r.SkyLight, r.Lamp = SkyLightPtr(0), LampPtr(60)
+			r.SpawnInfo = []SpawnInfo{{MobId: mobId, Message: line, NarrateRespawn: c.narrate, RespawnRate: "5 rounds", DespawnedRound: c.despawned}}
+			r.Prepare(false)
+			ids := r.GetMobs()
+			if len(ids) != 1 {
+				t.Fatalf("the room spawned %d mobs, want 1", len(ids))
+			}
+			t.Cleanup(func() { mobs.SetInstanceForTest(ids[0], nil) })
+
+			if got := sightTestPlain(events.DrainQueuedMessagesForTest(7411)); !reflect.DeepEqual(got, c.want) {
+				t.Errorf("player read %q, want %q", got, c.want)
+			}
+		})
 	}
 }

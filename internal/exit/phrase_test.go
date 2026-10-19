@@ -27,6 +27,26 @@ func TestPhrasesRenderUpAndDownNaturally(t *testing.T) {
 	}
 }
 
+// An arrival with no exit leading back (the Thornwall temple portal into the
+// Threshold House) reads "arrives", never "enters from somewhere" (#620).
+func TestEntryPhrase(t *testing.T) {
+	cases := []struct {
+		back   string
+		plural bool
+		want   string
+	}{
+		{"", false, "arrives"},
+		{"", true, "arrive"},
+		{"up", false, "enters from above"},
+		{"north", true, `enter from the <ansi fg="exit">north</ansi>`},
+	}
+	for _, c := range cases {
+		if got := EntryPhrase(c.back, c.plural); got != c.want {
+			t.Errorf("EntryPhrase(%q, %v) = %q, want %q", c.back, c.plural, got, c.want)
+		}
+	}
+}
+
 // Combat and shooting templates put the exit name after "the": "A shot from
 // the {entrancename} finds you", "towards the {exitname} direction", "from
 // beyond the {exitname}". PhraseVerticalExits rewrites those phrases once the

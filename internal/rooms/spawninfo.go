@@ -8,12 +8,19 @@ package rooms
 // trap for anyone writing client code against it. The yaml tags remain the
 // authored on-disk shape and are unaffected.
 type SpawnInfo struct {
-	MobId        int      `yaml:"mobid,omitempty" json:"mobId,omitempty"`                    // Mob template Id to spawn
-	InstanceId   int      `yaml:"-" json:"instanceId,omitempty"`                             // Mob instance Id that was spawned (tracks whether exists currently)
-	Container    string   `yaml:"container,omitempty" json:"container,omitempty"`            // If set, any item or gold spawned will go into the container.
-	ItemId       int      `yaml:"itemid,omitempty" json:"itemId,omitempty"`                  // Item template Id to spawn on the floor
-	Gold         int      `yaml:"gold,omitempty" json:"gold,omitempty"`                      // How much gold to spawn on the floor
-	Message      string   `yaml:"message,omitempty" json:"message,omitempty"`                // (optional) message to display to the room when this creature spawns, instead of a default
+	MobId      int    `yaml:"mobid,omitempty" json:"mobId,omitempty"`         // Mob template Id to spawn
+	InstanceId int    `yaml:"-" json:"instanceId,omitempty"`                  // Mob instance Id that was spawned (tracks whether exists currently)
+	Container  string `yaml:"container,omitempty" json:"container,omitempty"` // If set, any item or gold spawned will go into the container.
+	ItemId     int    `yaml:"itemid,omitempty" json:"itemId,omitempty"`       // Item template Id to spawn on the floor
+	Gold       int    `yaml:"gold,omitempty" json:"gold,omitempty"`           // How much gold to spawn on the floor
+	Message    string `yaml:"message,omitempty" json:"message,omitempty"`     // (optional) line narrated (sight-gated) to the room when this mob RESPAWNS, only if NarrateRespawn; a first spawn is quiet (#620)
+
+	// NarrateRespawn opts this entry's Message in to being narrated on a
+	// respawn (owner, #620). Off by default: 79 messages were written over
+	// the years as scene-setting and were never sent, so each is turned on
+	// only once it has been read as an arrival line (#628).
+	NarrateRespawn bool `yaml:"narraterespawn,omitempty" json:"narrateRespawn,omitempty"`
+
 	Name         string   `yaml:"name,omitempty" json:"name,omitempty"`                      // (optional) if set, will override the mob's name
 	ForceHostile bool     `yaml:"forcehostile,omitempty" json:"forceHostile,omitempty"`      // (optional) if true, forces the mob to be hostile.
 	MaxWander    int      `yaml:"maxwander,omitempty" json:"maxWander,omitempty"`            // (optional) if set, will override the mob's max wander distance

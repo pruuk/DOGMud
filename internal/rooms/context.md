@@ -448,6 +448,13 @@ question).
 - **SpawnInfo**: Comprehensive mob and item spawning system
 - **Spawn configuration**: Mob templates, items, gold, and containers
 - **Respawn mechanics**: Time-based respawning with configurable rates
+- **Message**: a mob entry's `message` is sent (`SendTextVisual`,
+  `CategoryRoomEntry`) when that mob RESPAWNS in `Prepare` with players in
+  the room, ONLY if the entry sets `narraterespawn: true` (owner, #620: most
+  shipped messages were written as scenery; opt each in once it reads as an
+  arrival); a first spawn, a mob placed elsewhere by its schedule, and a
+  hidden spawn stay quiet. Item and gold entries never send it. Until #620
+  the field was parsed and read by nothing.
 - **Spawn customization**: Level modifications, hostility, scripting overrides
 - **InstanceTier** (`yaml:"-" json:"-"`): the authored stat-pool multiplier
   kept by `ScaleSpawnStatPools`; picks a paid-instance mob's gold rate

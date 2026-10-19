@@ -38,3 +38,22 @@ func ArticlePrefix(name string) string {
 	}
 	return `a `
 }
+
+// MidSentenceName returns name as it reads after ArticlePrefix: a name that
+// opens with its own article ("A Sheaf of Gleaned Grain") has that article
+// lowercased, so the line reads "You find a Sheaf of Gleaned Grain." rather
+// than "You find A Sheaf..." (2026-10-17 newbie-duo playtest, #620). Only
+// the article words ArticlePrefix recognises change; every other capital may
+// be part of a proper name and stays. Callers pair it with ArticlePrefix:
+// `"You find %s%s", ArticlePrefix(n), MidSentenceName(n)`.
+func MidSentenceName(name string) string {
+	first, rest, ok := strings.Cut(name, ` `)
+	if !ok || strings.TrimSpace(rest) == `` {
+		return name
+	}
+	switch strings.ToLower(first) {
+	case `a`, `an`, `the`, `some`:
+		return strings.ToLower(first) + ` ` + rest
+	}
+	return name
+}

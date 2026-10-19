@@ -45,6 +45,10 @@ The items system is built around two main components:
   dialogue rewards, give, put, use, removing from a pet), so none reads "an
   Iron Lockpicks" or "an A Sheaf". It replaced `IndefiniteArticle`
   (2026-10-17), which returned the bare word and could not return nothing.
+- `MidSentenceName(name) string` is the name half of that pair: a leading
+  article of the name's own (A, An, The, Some) is lowercased, every other
+  capital stays. Every `ArticlePrefix` caller passes the name through it, so
+  a forage line reads "You find a Sheaf of Gleaned Grain." (#620).
 
 ## Key Features
 

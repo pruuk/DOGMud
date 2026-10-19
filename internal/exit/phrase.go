@@ -36,6 +36,25 @@ func FromPhrase(exitName string) string {
 	return fmt.Sprintf(`from the <ansi fg="exit">%s</ansi>`, exitName)
 }
 
+// EntryPhrase is what follows a mover's name on an arrival line. backExit is
+// the exit in the arrival room that leads back where they came from: "enters
+// from the north", "enters from above". With no such exit (a one-way way in,
+// such as the Thornwall temple portal into the Threshold House) the mover
+// simply "arrives": "enters from somewhere" read like a fault (#620). plural
+// is for a mover with a pet ("Kael and his dog enter from the north").
+func EntryPhrase(backExit string, plural bool) string {
+	if backExit == "" {
+		if plural {
+			return "arrive"
+		}
+		return "arrives"
+	}
+	if plural {
+		return "enter " + FromPhrase(backExit)
+	}
+	return "enters " + FromPhrase(backExit)
+}
+
 // TowardPhrase is the direction of a look: "up", "down", or "toward the
 // <exit>" (uncoloured, as the peer lines have always been).
 func TowardPhrase(exitName string) string {

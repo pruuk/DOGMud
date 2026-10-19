@@ -102,7 +102,7 @@ tree:
         Type <ansi fg="command">ask hadwen begin</ansi> when you are ready. There is no hurry.
 
     - id: rite_done
-      triggers: ["rite", "awakening", "again", "another", "quest", "task"]
+      triggers: ["rite", "awakening", "pool", "opened", "again", "another", "quest", "task"]
       questRequired: ["30-end"]
       text: >-
         The pool opens a person once. After that, the opening is yours
