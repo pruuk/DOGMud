@@ -166,8 +166,14 @@ type Balance struct {
 	// +0.196 at every parity tier.
 	GrappleAggressorDriftBonus ConfigFloat `yaml:"GrappleAggressorDriftBonus"` // Multiplier on the grapple aggressor's whole drift score (default 1.038)
 
-	StandStaminaCost         ConfigFloat `yaml:"StandStaminaCost"`         // Fraction of max stamina to stand up (default 0.15)
-	StandMinStamina          ConfigFloat `yaml:"StandMinStamina"`          // Minimum fraction of max SP to stand (default 0.15)
+	StandStaminaCost ConfigFloat `yaml:"StandStaminaCost"` // Fraction of max stamina to stand up (default 0.15)
+	StandMinStamina  ConfigFloat `yaml:"StandMinStamina"`  // Minimum fraction of max SP to stand (default 0.15)
+	// ProneAutoStandRounds stands a prone or supine character (player or mob)
+	// automatically once they have spent this many round ticks in one
+	// knockdown, regardless of the recovery contest or MinRecoveryRounds
+	// (#398). 0 is a legal off-switch, so an absent key is told apart by the
+	// -1 sentinel seeded in newUnloadedConfig.
+	ProneAutoStandRounds     ConfigInt   `yaml:"ProneAutoStandRounds"`     // Rounds on the floor before an automatic stand (default 5; 0 disables, absent key still defaults via the -1 sentinel)
 	ThirdPartyGrapplePenalty ConfigFloat `yaml:"ThirdPartyGrapplePenalty"` // Defense multiplier when grappled vs third party (default 0.70)
 	ClinchDodgePenalty       ConfigFloat `yaml:"ClinchDodgePenalty"`       // Dodge score multiplier while clinched (default 0.80)
 	ClinchParryPenalty       ConfigFloat `yaml:"ClinchParryPenalty"`       // Parry score multiplier while clinched (default 0.83)

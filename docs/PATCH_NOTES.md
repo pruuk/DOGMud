@@ -1,5 +1,13 @@
 # DOGMud Patch Notes
 
+## 2026-10-19: Back on your feet
+
+- Nobody stays knocked down for long any more. After a few rounds on the
+  ground you get back to your feet on your own, however strong the foe
+  holding you down. Creatures follow the same rule, so a slime you have
+  knocked over will not stay down forever either. A grapple still has to
+  be escaped.
+
 ## 2026-10-19: Every creature squares up its own way
 
 - When a fight begins, the first line now shows how your foe gets ready,

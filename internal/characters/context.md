@@ -1061,6 +1061,13 @@ func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
         return false, false
     }
 
+    // #398 auto-stand guard: counts every tick on the floor, fires before
+    // the MinRecoveryRounds gate and the contest.
+    roundsDown := c.Position.CountRoundDown()
+    if limit := int(configs.GetBalanceConfig().ProneAutoStandRounds); limit > 0 && roundsDown >= limit {
+        return c.standFromRecovery()
+    }
+
     // MinRecoveryRounds gate, read from ProneData/SupineData, unchanged.
     if minRounds > 0 {
         c.Position.ConsumeRecoveryRound()
@@ -1075,14 +1082,25 @@ func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
     }
 
     if success {
-        c.Position.TransitionToStanding(state.TransitionReason{Trigger: position.TriggerRecoveryRoll})
-    } else {
-        _ = c.AddConditionMagnitude(conditions.ConditionIdRecovering, 1, 0, "prone recovery")
+        return c.standFromRecovery() // TransitionToStanding(TriggerRecoveryRoll)
     }
-
-    return true, success
+    _ = c.AddConditionMagnitude(conditions.ConditionIdRecovering, 1, 0, "prone recovery")
+    return true, false
 }
 ```
+
+**Auto-stand guard (#398, owner 2026-10-05 and 2026-10-19).** After
+`ProneAutoStandRounds` round ticks in one knockdown (shipped 5 in
+`config.yaml`; 0 turns it off), the character stands through the same
+`standFromRecovery` a won recovery uses and the call returns `(true, true)`,
+so both round ticks print their ordinary won-recovery lines. It lives here so
+players and mobs share it. The count is `ProneData/SupineData.RoundsDown`,
+bumped by `Position.CountRoundDown()` on every tick on the floor, including
+`MinRecoveryRounds` and stomp extensions; a fresh knockdown starts it over.
+No contest runs, so no progression is awarded. A grappled character is not
+Prone or Supine and never reaches the guard; a dying player is skipped by
+`UserRoundTick` and a dying mob by `MobRoundTick` before the call; a mob in
+an idle zone is not ticked at all, so its count waits with it.
 
 **The recovery penalty is a record, and it bites.** Condition 118 Recovering carries
 `attacks_cap: 1` as a LITERAL, so the `magnitude` argument above is unused and

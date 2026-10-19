@@ -749,6 +749,13 @@ Balance:
   # StandMinStamina: must have at least this fraction of max SP to attempt standing.
   #   Example: StaminaMax 400, min 0.15 → need at least 60 SP.
   StandMinStamina: 0.15
+  # ProneAutoStandRounds: a prone or supine character, player or mob, stands
+  #   up automatically after this many rounds in one knockdown, whatever the
+  #   recovery roll says (#398). Ends the knockdown death spiral against a
+  #   much stronger holder (sewer slimes almost never won the roll). Counts
+  #   every round on the floor, including MinRecoveryRounds and stomp
+  #   extensions. 0 turns the guard off.
+  ProneAutoStandRounds: 5
   #
   # FleeStaminaCost: base stamina charged for breaking off to flee. Charged
   #   partially, never refused: fleeing is the only player-initiated disengage

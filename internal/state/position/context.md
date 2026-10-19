@@ -203,6 +203,7 @@ type ProneData struct {
     Reason            state.TransitionReason
     MinRecoveryRounds int            // replaces legacy PositionRoundsMin; 0 = can stand immediately
     KnockdownSource   state.ActorRef // who knocked us down
+    RoundsDown        int            // recovery ticks spent in this knockdown so far (#398)
 }
 ```
 
@@ -211,6 +212,15 @@ paths, recovery difficulty, and back-take vulnerability differ.
 `MinRecoveryRounds` gates auto-recovery attempts and replaces the legacy
 `PositionRoundsMin` field on `Character`.
 
+`RoundsDown` counts up, unlike `MinRecoveryRounds`, which counts down and
+which stomp extends. `Machine.CountRoundDown() int` bumps it on the current
+Prone or Supine slot and returns the new value (0 and a no-op in any other
+state); `AttemptRecovery` calls it once per round tick and stands the
+character when it reaches `ProneAutoStandRounds`. It is per knockdown with
+no reset bookkeeping: Prone and Supine have no edge to each other or to
+themselves, so every knockdown stores fresh data, and leaving the floor
+clears the slot.
+
 ### SupineData
 
 ```go
@@ -218,6 +228,7 @@ type SupineData struct {
     Reason            state.TransitionReason
     MinRecoveryRounds int
     KnockdownSource   state.ActorRef
+    RoundsDown        int // see ProneData.RoundsDown
 }
 ```
 
