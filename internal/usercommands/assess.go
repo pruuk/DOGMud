@@ -25,14 +25,24 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 
-	corpse, found := room.FindCorpse(rest, user.Character)
-	if !found {
+	// The index, not FindCorpse's copy: the assessed-by mark below must land
+	// on r.Corpses[idx] (the loot path does the same).
+	corpseIdx := room.FindCorpseIndex(rest, user.Character)
+	if corpseIdx < 0 {
 		refusal.NotHereThing(user)
 		return true, nil
 	}
+	corpse := room.Corpses[corpseIdx]
 
 	if corpse.Character.IsCharmed() {
 		user.SendText(messaging.CategorySystem, `These remains were bound to a master. The essence is spent. There is nothing left to raise.`)
+		return true, nil
+	}
+
+	// #617: one reading per player per corpse. A repeat would train
+	// Manifestation again from the same remains every cooldown.
+	if corpse.WasAssessedBy(user.UserId) {
+		user.SendText(messaging.CategorySystem, `You have already studied these remains. They have nothing more to tell you.`)
 		return true, nil
 	}
 
@@ -40,6 +50,8 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		refusal.Cooldown(user, "assess again")
 		return true, nil
 	}
+
+	room.Corpses[corpseIdx].MarkAssessedBy(user.UserId)
 
 	// StatPoolTotal is "how much creature is there" — the authored stat pool
 	// plus everything progression added, with the species baseline and
