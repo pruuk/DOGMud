@@ -499,7 +499,7 @@ func craftCraftableNow(user *users.UserRecord, room *rooms.Room) bool {
 	}
 
 	user.SendBlankLine(messaging.CategorySystem)
-	user.SendText(messaging.CategorySystem, `<ansi fg="green-bold"> .:. Ready to Craft .:.</ansi>`)
+	user.SendText(messaging.CategoryScreen, `<ansi fg="green-bold"> .:. Ready to Craft .:.</ansi>`)
 
 	if ready == 0 {
 		user.SendBlankLine(messaging.CategorySystem)
@@ -518,11 +518,11 @@ func craftCraftableNow(user *users.UserRecord, room *rooms.Room) bool {
 		recipes := bySkill[skillName]
 		sort.SliceStable(recipes, func(i, j int) bool { return recipes[i].Name < recipes[j].Name })
 		user.SendBlankLine(messaging.CategorySystem)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+		user.SendText(messaging.CategoryScreen, fmt.Sprintf(
 			`<ansi fg="yellow">%s</ansi>`,
 			titleCase(strings.ReplaceAll(skillName, "-", " "))))
 		for _, r := range recipes {
-			user.SendText(messaging.CategorySystem, craftRecipeRow(r))
+			user.SendText(messaging.CategoryScreen, craftRecipeRow(r))
 		}
 	}
 
@@ -589,7 +589,7 @@ func craftList(user *users.UserRecord, room *rooms.Room) bool {
 	}
 
 	user.SendBlankLine(messaging.CategorySystem)
-	user.SendText(messaging.CategorySystem, `<ansi fg="cyan-bold"> .:. Crafting Recipes .:.</ansi>`)
+	user.SendText(messaging.CategoryScreen, `<ansi fg="cyan-bold"> .:. Crafting Recipes .:.</ansi>`)
 
 	// Ordered sections, actionable ones first.
 	sections := []struct {
@@ -607,7 +607,7 @@ func craftList(user *users.UserRecord, room *rooms.Room) bool {
 			continue
 		}
 		user.SendBlankLine(messaging.CategorySystem)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(` %s`, sec.header))
+		user.SendText(messaging.CategoryScreen, fmt.Sprintf(` %s`, sec.header))
 
 		// Sort skill names within the section for stable output.
 		skillNames := make([]string, 0, len(b.bySkill))
@@ -622,7 +622,7 @@ func craftList(user *users.UserRecord, room *rooms.Room) bool {
 			recipes := b.bySkill[skillName]
 			sort.SliceStable(recipes, func(i, j int) bool { return recipes[i].Name < recipes[j].Name })
 
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryScreen, fmt.Sprintf(
 				`  <ansi fg="yellow">%s</ansi> <ansi fg="white">(%s)</ansi>`,
 				titleCase(strings.ReplaceAll(skillName, "-", " ")), skills.GetSkillRankDescription(skillLevel)))
 
@@ -640,11 +640,11 @@ func craftList(user *users.UserRecord, room *rooms.Room) bool {
 					displayName = fmt.Sprintf("%s (%s)", r.Name, r.TargetType)
 				}
 				if reason != "" {
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(
+					user.SendText(messaging.CategoryScreen, fmt.Sprintf(
 						`    <ansi fg="red">[%s]</ansi> <ansi fg="white">%-26s</ansi>: %s  <ansi fg="red">%s</ansi><ansi fg="dark-cyan">%s, %s</ansi>`,
 						indicator, displayName, ingredientList, reason, stationStr, craftTimeDesc(r.TimeRounds)))
 				} else {
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(
+					user.SendText(messaging.CategoryScreen, fmt.Sprintf(
 						`    <ansi fg="green">[%s]</ansi> <ansi fg="white">%-26s</ansi>: %s  <ansi fg="dark-cyan">%s, %s</ansi>`,
 						indicator, displayName, ingredientList, stationStr, craftTimeDesc(r.TimeRounds)))
 				}
@@ -655,7 +655,7 @@ func craftList(user *users.UserRecord, room *rooms.Room) bool {
 	// Overall completion
 	overallDesc := recipeCompletionTier(totalKnown, grandTotal)
 	user.SendBlankLine(messaging.CategorySystem)
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="cyan">Overall recipe knowledge: %s</ansi>`, overallDesc))
+	user.SendText(messaging.CategoryScreen, fmt.Sprintf(`<ansi fg="cyan">Overall recipe knowledge: %s</ansi>`, overallDesc))
 	user.SendBlankLine(messaging.CategorySystem)
 	return true
 }
