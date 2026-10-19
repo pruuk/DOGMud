@@ -30,7 +30,7 @@ func Inbox(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	border := `<ansi fg="mail-border">` + strings.Repeat(`_`, user.GetLineWidth()) + `</ansi>`
-	user.SendText(messaging.CategorySystem, border)
+	user.SendText(messaging.CategoryScreen, border)
 
 	for idx, msg := range user.Inbox {
 
@@ -43,9 +43,9 @@ func Inbox(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 
 		tplTxt, _ := templates.Process("mail/message", msg, user.UserId)
-		user.SendText(messaging.CategorySystem, tplTxt)
+		user.SendText(messaging.CategoryScreen, tplTxt)
 
-		user.SendText(messaging.CategorySystem, border)
+		user.SendText(messaging.CategoryScreen, border)
 
 		if !msg.Read {
 			if !applyMailReceipt(user, &user.Inbox[idx]) {
