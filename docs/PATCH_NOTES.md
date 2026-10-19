@@ -20,6 +20,17 @@
 - Help pages, status, quests, craft lists, scan, guild and companion
   screens, channels, macros, mail and many other screens no longer end in
   a stray period or a blank line, and what you typed shows as you typed it.
+- When a practice dummy, effigy, mote or archery butt is replaced, you see
+  a fresh one set out.
+- Following a lit leader no longer warns you about losing the light at
+  every step.
+- Warden Esk's arch now opens before you step through it, and arriving
+  through a portal reads as an arrival.
+- Item names no longer capitalize their own "a" or "the" mid-sentence.
+- cooldowns calls the shared timer "special moves", an empty quest list
+  says so, and help lists each command once, with only real skills under
+  Skills.
+- Small fixes to Toke's and Hadwen's lines and the Drill Yard.
 
 ## 2026-10-17: Clearer in the dim, fairer in the arena
 
