@@ -1,0 +1,35 @@
+# Verify 2026-10-17 batch 2 before deploy.
+#
+# Changed: blank lines are back on screens such as look, set, craft and
+# scan; a target that is not there answers "You can't find them here." or
+# "You can't find that here." (dim light included); the achievements screen
+# says "Achievements are not tracked on this account." for staff and AI
+# accounts; Kael on the Ironwind Steppe greets by quest 11 state; more quest
+# givers answer `ask <npc> quest`.
+#
+# You are an admin (achievements are not tracked for you). Use `teleport
+# <roomid>` to move. 3 commands per round on the AI port; pace your commands.
+# Quote every odd line VERBATIM.
+
+ephemeral:
+  profile: admin
+  start_room: 462
+  budgets:
+    wall_clock: 20m
+
+goals:
+  - >-
+    Type `look`, `set`, `skills`, `inventory` and `achievements`. Quote each
+    screen in full. Report any doubled or missing blank lines, any line that
+    ends with a stray full stop it should not have, and whether achievements
+    says it is not tracked on this account.
+  - >-
+    Type `look xyzzy`, `consider xyzzy`, `get xyzzy`. Then `server set
+    night`, go to room 477 and type `look figure`, `look 2.figure`, `look
+    xyzzy`, `consider 2.figure`. Quote every reply.
+  - >-
+    Teleport to room 3040 (Ironwind Steppe), where Kael spawns. `look`, then
+    greet him with `talk kael` and `ask kael quest`. Quote what he says.
+  - >-
+    Report any raw token like {actor}, any line wider than one screen line,
+    and anything that reads wrong.

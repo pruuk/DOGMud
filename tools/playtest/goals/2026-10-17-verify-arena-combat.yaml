@@ -1,0 +1,42 @@
+# Verify 2026-10-17 pre-deploy fixes: arena gold and combat lines.
+#
+# Fixed today: arena and oasis foes carry gold in step with the entry (about
+# 2 gold per 100 entry for regular foes, 3 for tough, 5 for bosses, varying a
+# little); arena fighters wield the weapons their text names and no longer
+# scatter as a pack; a blocked blow prints one line, not a block line plus a
+# miss line; bleeding stops when the named wound stops; a solo warcry names no
+# allies; no "waiting for the perfect moment" right after a special; a paid
+# special that cannot land says the effort is spent.
+#
+# Sable is in Rift Chamber 5000: `ask sable arena <gold>`.
+#
+# 3 commands per round on the AI port; the overflow is dropped. Pace your
+# commands. Quote every odd line VERBATIM.
+
+ephemeral:
+  profile: veteran
+  start_room: 462
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    Note your gold, then `ask sable arena 100` and kill at least four arena
+    foes; note your gold after each kill. Leave, then `ask sable arena 1000`
+    and do the same. Report gold per kill at each entry and which foes you
+    killed. Do not try the Champion at 1000 unless you are winning easily.
+  - >-
+    Quote the arena fighters' attack lines: do the Cutthroat and the Veterans
+    attack with blades? When one fighter dies, do the others scatter?
+  - >-
+    In fights, quote any round where a blocked or dodged blow printed two
+    lines that disagree (for example "shrugs off" and then "missing you
+    entirely"). Quote any bleeding start and end lines.
+  - >-
+    Out of a party, use `warcry` alone and quote it. Use specials (`help
+    special`) and report whether a "waiting for the perfect moment" line
+    follows one that landed, and what a special says when it is refused after
+    you paid for it.
+  - >-
+    Report any raw number for damage or durations, any raw token like
+    {actor}, and any line wider than one screen line.

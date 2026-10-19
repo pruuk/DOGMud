@@ -1,0 +1,47 @@
+# Pre-deploy sweep 2026-10-17: Thornwall after dark.
+#
+# Owed since #207 (2026-09-30): an in-game night check that the street
+# shopkeepers carry their oil lanterns, that indoor shops are lit, and that
+# trade works at night. Also covers graded lighting, sight gates and the
+# bauble secondhand shelf together, none of which has been deployed.
+#
+# You are an admin. Use `server set night` once at the start to jump to
+# night. Do not use other admin commands unless a goal says so.
+#
+# 3 commands per round on the AI port; the overflow is dropped. Pace your
+# commands. Quote every odd line VERBATIM.
+
+ephemeral:
+  profile: admin
+  start_room: 462
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    Type `server set night`, then `look`. Say how well you can see. Walk
+    the main streets of Thornwall and look at every room you enter. Report
+    any room where the description, the light you are told about, and who
+    you can see disagree with each other (for example you are told it is
+    pitch dark but you can read the room, or a person is named in a room
+    you cannot see).
+  - >-
+    Find at least four shopkeepers at night, including at least two on an
+    outdoor street. For each, say whether they carry a light and whether
+    `list` works. Buy one cheap item and sell one item at two of them.
+    Quote any refusal.
+  - >-
+    At one shop, look for a "Secondhand goods" section in `list`. Report
+    what it shows (it may be empty; say so).
+  - >-
+    In a dark street room, try `search` a few times, then `look` at
+    anything you found. Report whether found items are named or described
+    sensibly for how dark it is.
+  - >-
+    Walk into a fully dark room (an alley, a cellar, the tunnels) with no
+    light of your own if you can, and try `look`, `consider` on a name you
+    saw earlier, and `get all`. Then light or hold a light if you have one
+    and try again. Report what changed.
+  - >-
+    General adversarial pass: anything that reads wrong, renders oddly, or
+    contradicts its own help text is a finding.

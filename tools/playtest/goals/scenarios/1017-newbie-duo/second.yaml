@@ -1,0 +1,46 @@
+# 1017-newbie-duo: second actor (follower).
+name: 1017-newbie-duo-second
+summary: >
+  A second brand-new player takes the guided tutorial at the same time, then
+  joins the first player's party in the Pothole Coulee and works the same
+  quests.
+personality_notes: bug-finder, but play as a confused first-timer; follow only what the game tells you.
+
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    The run verifies the new-player path, which only a freshly created
+    character walks.
+
+goals:
+  - id: tutorial
+    do: >-
+      Create a character. When offered numbered starting paths, pick the
+      FIRST option. Do the tutorial with Dewey using only hint. Report any
+      sign that another player's actions affected your tutorial (for example
+      the token already taken).
+    verify: >-
+      Tutorial finished in a private copy; token available.
+  - id: join-and-follow
+    do: >-
+      In the coulee, wait for blackboard 'first-ready', find the first actor,
+      and accept their party invite. Do NOT cast any light. Follow the leader
+      as they walk; run look after each move. Then type follow <leader name>
+      and quote the reply.
+    verify: >-
+      You moved with the lit leader while unlit; follow inside the party
+      answers that you already follow.
+  - id: quests
+    do: >-
+      Do quests 31, 32 and 50 alongside the leader in the same rooms at the
+      same time. Note every wait for the training dummy or practice butt to
+      return, with the respawn line verbatim. Then ask Cleric Hadwen, Warden
+      Esk and three other coulee NPCs a question by name at night.
+    verify: >-
+      Shared targets came back quickly; every coulee NPC answered by name.
+  - id: copy
+    do: >-
+      Report any line over one screen line, any raw token like {actor}, any
+      stray full stop after a table, and anything confusing to a first-timer.
+    verify: >-
+      Findings quoted verbatim with the room.

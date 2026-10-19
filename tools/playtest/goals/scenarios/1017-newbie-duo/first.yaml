@@ -1,0 +1,48 @@
+# 1017-newbie-duo: first actor (party leader).
+name: 1017-newbie-duo-first
+summary: >
+  A brand-new player takes the guided tutorial, then leads a second new
+  player through the first Pothole Coulee quests.
+personality_notes: bug-finder, but play as a confused first-timer; follow only what the game tells you.
+
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    The run verifies the new-player path, which only a freshly created
+    character walks.
+
+goals:
+  - id: tutorial
+    do: >-
+      Create a character. When offered numbered starting paths, pick the
+      FIRST option. Follow Dewey and the hint command step by step until he
+      sends you on. Quote every Dewey line and every hint. Try one refused
+      command per room (for example a bare say) and report whether a step
+      advanced on it.
+    verify: >-
+      Tutorial finished; each step advanced only on the real command; Dewey's
+      fight lines were whispered to you and easy to see.
+  - id: meet-and-party
+    do: >-
+      In the coulee, write blackboard signal 'first-ready' with your
+      character name. When the second actor arrives, invite them with party
+      invite <name>. Cast chrysalis-glow and lead them three rooms using
+      party say callouts.
+    verify: >-
+      Party formed; the second actor reports following you while unlit.
+  - id: quests
+    do: >-
+      Do quest 31 (Crier Toke, ask toke footing), then quests 32 (Drillmaster
+      Vorn) and 50 (Marksman Iden) together with the second actor, then 41
+      (Scout Tarn). Use only hint and what NPCs tell you. At night, use
+      chrysalis-glow when told.
+    verify: >-
+      For every step: the hint quoted, the command typed, whether it advanced.
+      Any wrong direction, NPC you could not address by name, or step that
+      would not advance is a finding.
+  - id: portal
+    do: >-
+      If you reach Warden Esk and his passage opens, take it, then in the
+      Thornwall temple type look and enter portal.
+    verify: >-
+      The portal returns you to Esk; quest Two Roads is complete.
