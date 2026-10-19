@@ -91,7 +91,9 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 			u := target.(*actions.UserActor).User
 
-			if !isSneaking {
+			// Looking at yourself (#606) tells no one: "X is looking at
+			// you." would go to X.
+			if !isSneaking && u.UserId != user.UserId {
 				u.SendText(messaging.CategoryMobEmote,
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at you.`, user.Character.Name),
 				)
