@@ -14,6 +14,13 @@ import (
 // against every other verb's configured value with nothing able to notice.
 const SpecialMoveCooldownTag = "special-move"
 
+// SpecialMoveCooldownLabel is how the `cooldowns` list names the shared
+// timer: the words `help cooldowns` and `help special` use. The record
+// cannot name the move that claimed it (a warcry, a bash, a spell) without
+// a new field threaded through every ClaimSpecialMove caller, so the list
+// names the pool instead of showing the raw key (#620).
+const SpecialMoveCooldownLabel = "special moves"
+
 // SpecialMoveReady reports whether the shared special-move cooldown is free.
 //
 // ⚠️ Use this ONLY to decide what to OFFER or DISPLAY -- an AI weighing a move,

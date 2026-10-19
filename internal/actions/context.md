@@ -1993,7 +1993,8 @@ Skullduggery actions (Sneak, Steal, Plant) share a single cooldown key
 (`special_move_cooldown.go`), never by hand.** The tag used to be typed at 56
 call sites in five idioms, and they had already drifted: one path ran a
 hardcoded `"1 rounds"` against everyone else's configured value, and nothing
-could see it.
+could see it. The `cooldowns` command shows it as `SpecialMoveCooldownLabel`
+("special moves"); the record does not know which move claimed it (#620).
 
 `ExecuteFire` claims it on **every shot**, ordinary or not, because firing
 chambers its own next round. That is not a rate change: before the fold, the

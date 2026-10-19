@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -4781,6 +4782,21 @@ func TestCooldownsWithData(t *testing.T) {
 		assert.NoError(t, err)
 		delete(user.Character.Cooldowns, "kick")
 	})
+}
+
+// TestCooldownsNameTheSharedTimer: the cooldowns list names the shared
+// special-move timer in player words, never the raw key (#620), and leaves
+// every other timer as it is.
+func TestCooldownsNameTheSharedTimer(t *testing.T) {
+	got := cooldownsForDisplay(map[string]int{
+		actions.SpecialMoveCooldownTag: 3,
+		"forage":                       2,
+	})
+	assert.Equal(t, map[string]int{
+		actions.SpecialMoveCooldownLabel: 3,
+		"forage":                         2,
+	}, got)
+	assert.NotContains(t, got, "special-move")
 }
 
 // ─── Deeper Coverage: Emote aliases via TryCommand ──────────────────────────
