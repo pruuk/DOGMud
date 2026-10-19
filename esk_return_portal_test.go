@@ -8,8 +8,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -119,12 +121,12 @@ func TestThornwallTemplePortalLeadsBackToEsk(t *testing.T) {
 }
 
 // TestEskPassageClosesTwoRoads: quest 29 "Two Roads" closes when the player
-// takes Esk's road. Its own room_enter trigger on 468 never fires for the
-// arch, because a move_player teleport does not raise room_enter (only a
-// walk, a login and a start do), so both arch transits grant 29-end
-// themselves, under the same gate as that trigger: holds 29-start, lacks
-// 29-end. A player who already chose Toke's road, or never held quest 29,
-// crosses with no second "completed" banner.
+// takes Esk's road, through its own room_enter trigger on 468: the arch's
+// move_player teleport queues a RoomChange, and hooks.QuestRoomEnter raises
+// room_enter from it (#619; before that, both arch transits granted 29-end
+// themselves). The trigger's gate (holds 29-start, lacks 29-end) means a
+// player who already chose Toke's road, or never held quest 29, crosses with
+// no second "completed" banner.
 func TestEskPassageClosesTwoRoads(t *testing.T) {
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
 	configs.SetConfigForTest(t, configs.GetConfig())
@@ -135,6 +137,12 @@ func TestEskPassageClosesTwoRoads(t *testing.T) {
 	if q := quests.GetQuest("29-start"); q == nil || q.Name != "Two Roads" {
 		t.Fatalf("quest 29 is %+v, want the shipped Two Roads", q)
 	}
+	// The shipped triggers, and the listener that raises room_enter on a
+	// move, as the server wires them at boot (main.go).
+	t.Cleanup(questengine.ResetEngineForTest())
+	questengine.LoadDataFiles()
+	roomEnterId := events.RegisterListener(events.RoomChange{}, hooks.QuestRoomEnter)
+	t.Cleanup(func() { events.UnregisterListener(events.RoomChange{}, roomEnterId) })
 
 	behaviors := filepath.Join("_datafiles", "world", "dogmud", "behaviors")
 	transits := []struct {

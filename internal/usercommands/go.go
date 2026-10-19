@@ -290,19 +290,8 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			return true, nil
 		} else {
 
-			// Quest engine: room_enter notification. For an ephemeral room
-			// (tutorial antechamber, dungeons) the trigger must match the
-			// TEMPLATE id -- the ephemeral id is generated and unauthorable.
-			// OriginalRoomId returns the room's own id for non-ephemeral rooms,
-			// so this is a no-op there. The bridge keeps the REAL room id so
-			// npc_say and other actions resolve mobs/exits in the instance the
-			// player is actually in.
-			matchRoom, _ := rooms.OriginalRoomId(destRoom.RoomId)
-			bridge := questengine.NewGameBridge(user, destRoom.RoomId)
-			questengine.GetEngine().Notify("room_enter", questengine.EventDetails{
-				UserId: user.UserId,
-				RoomId: matchRoom,
-			}, bridge, bridge)
+			// The quest engine's room_enter is raised for every player move
+			// by hooks.QuestRoomEnter, off the RoomChange MoveToRoom queues.
 
 			// Record this room on the fog-of-war web map, by its template id,
 			// only if the player can make anything out there: a room walked

@@ -37,12 +37,26 @@ func questGrantsFor(userId int) []string {
 	return tokens
 }
 
+// arrivalsAt reports whether a RoomChange for the user into roomId is queued.
+// That event is what raises the quest engine's room_enter
+// (hooks.QuestRoomEnter), which closes quest 29 on Esk's road (#619).
+func arrivalsAt(userId, roomId int) int {
+	n := 0
+	for _, e := range events.DrainQueuedByTypeForTest(events.RoomChange{}.Type()) {
+		if rc, ok := e.(events.RoomChange); ok && rc.UserId == userId && rc.ToRoomId == roomId {
+			n++
+		}
+	}
+	return n
+}
+
 func seedEskPassage(t *testing.T) {
 	t.Helper()
-	// Start from an empty delayed queue and quest queue so only this
-	// evaluation's actions count.
+	// Start from an empty delayed queue, quest queue and move queue so only
+	// this evaluation's actions count.
 	DrainAllDelayedActionsForTest(t)
 	events.DrainQueuedQuestsForTest()
+	events.DrainQueuedByTypeForTest(events.RoomChange{}.Type())
 
 	cleanRooms := rooms.SeedRoomsForTest(map[int]*rooms.Room{
 		eskRoom:     {RoomId: eskRoom, Zone: "TestZone", Title: "Threshold", Exits: map[string]exit.RoomExit{}},
@@ -93,9 +107,14 @@ func TestEskPassage_AskerLeft_NoMoveNoGrant(t *testing.T) {
 	if got := questGrantsFor(1); len(got) != 0 {
 		t.Errorf("asker who left was granted %v, want nothing", got)
 	}
+	if n := arrivalsAt(1, eskDestRoom); n != 0 {
+		t.Errorf("asker who left arrived in %d %d times, want 0", eskDestRoom, n)
+	}
 }
 
-func TestEskPassage_AskerStayed_MovedAndGranted(t *testing.T) {
+// Quest 29 closes through its own room_enter trigger on 468, not a grant in
+// Esk's tree, so the tree grants nothing and the arrival is what counts.
+func TestEskPassage_AskerStayed_MovedAndArrives(t *testing.T) {
 	seedEskPassage(t)
 	u := requireUser(t, 1)
 
@@ -104,8 +123,11 @@ func TestEskPassage_AskerStayed_MovedAndGranted(t *testing.T) {
 	if u.Character.RoomId != eskDestRoom {
 		t.Errorf("asker who stayed: in room %d, want %d", u.Character.RoomId, eskDestRoom)
 	}
-	if got := questGrantsFor(1); len(got) != 1 || got[0] != "29-end" {
-		t.Errorf("asker who stayed: grants %v, want [29-end]", got)
+	if got := questGrantsFor(1); len(got) != 0 {
+		t.Errorf("asker who stayed: tree granted %v, want nothing (room_enter on %d closes quest 29)", got, eskDestRoom)
+	}
+	if n := arrivalsAt(1, eskDestRoom); n != 1 {
+		t.Errorf("asker who stayed arrived in %d %d times, want 1", eskDestRoom, n)
 	}
 }
 
