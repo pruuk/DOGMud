@@ -9,6 +9,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
 
 // Spec 2026-10-16 #541 section 1: one weapon-type rule. The main-hand
@@ -114,6 +116,80 @@ func TestGetWaitMessages_WolfWaitsWithItsBite(t *testing.T) {
 		line := strings.TrimSpace(slamSplitTag.ReplaceAllString(msg.Text, ``))
 		if !matchesAnyRe(line, actee) {
 			t.Fatalf("wolf wait line is not from bite.yaml: %q", line)
+		}
+	}
+}
+
+// A bare-handed humanoid waits from unarmed.yaml, the file its swings use,
+// on the unarmed hit band. Generic is seeded too, so the old fallback (an
+// empty main-hand subtype falling to generic on CategoryHitMelee) is
+// reachable and would be caught.
+func TestGetWaitMessages_BareHandedHumanoidWaitsFromUnarmed(t *testing.T) {
+	unarmed := slamSplitLoadFile(t, items.Unarmed)
+	t.Cleanup(items.SeedAttackMessagesForTest(map[items.ItemSubType]*items.WeaponAttackMessageGroup{
+		items.Unarmed: unarmed,
+		items.Generic: slamSplitLoadFile(t, items.Generic),
+	}))
+	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
+		9104: {SpeciesId: 9104, Name: "testhuman", UnarmedName: "fists"},
+	}))
+	actee := preAttackMatchers(t, unarmed, items.Wait, func(m items.TogetherMessages) items.SkillTieredMessages { return m.ToDefender })
+
+	for range 20 {
+		brawler := characters.New()
+		brawler.SpeciesId = 9104
+		brawler.Name = "Brawler"
+		selka := characters.New()
+		selka.Name = "Selka"
+		res := GetWaitMessages(items.Wait, brawler, selka, User, User)
+		if len(res.MessagesToTarget) == 0 {
+			t.Fatal("the brawler sent its target no wait line")
+		}
+		msg := res.MessagesToTarget[0]
+		if msg.Category != messaging.CategoryHitUnarmed {
+			t.Errorf("wait line category = %v, want CategoryHitUnarmed", msg.Category)
+		}
+		line := strings.TrimSpace(slamSplitTag.ReplaceAllString(msg.Text, ``))
+		if !matchesAnyRe(line, actee) {
+			t.Fatalf("bare-handed wait line is not from unarmed.yaml: %q", line)
+		}
+	}
+}
+
+// The "too entangled to defend" lines (filterDefensesForThirdParty) ride
+// the attacker's own hit band: a wolf jumping on a grappled target sends
+// them on bite's CategoryHitNaturalSharp, not the main-hand-only melee band.
+func TestFilterDefensesForThirdParty_WolfEntangledLinesUseBiteBand(t *testing.T) {
+	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
+		9105: {SpeciesId: 9105, Name: "testwolf", UnarmedName: "jaws", NaturalAttack: items.Bite},
+	}))
+	wolf := characters.New()
+	wolf.SetUserId(1)
+	wolf.SpeciesId = 9105
+	wolf.Name = "Wolf"
+	other := characters.New()
+	other.SetUserId(42)
+	tgt := characters.New()
+	tgt.SetUserId(2)
+	tgt.Name = "Selka"
+	if err := tgt.Position.TransitionToClinch(
+		position.GrappleData{Partner: state.ActorRef{UserId: other.GetUserId()}},
+		state.TransitionReason{Trigger: position.TriggerGrappleEntry},
+	); err != nil {
+		t.Fatalf("clinch: %v", err)
+	}
+
+	var res AttackResult
+	filtered, third := filterDefensesForThirdParty(&res, wolf, tgt, nil)
+	if !third || len(filtered) != 0 {
+		t.Fatalf("fixture is not a defenceless third-party attack: third=%v filtered=%v", third, filtered)
+	}
+	if len(res.MessagesToTarget) == 0 || len(res.MessagesToSource) == 0 {
+		t.Fatal("no entangled lines were sent")
+	}
+	for _, m := range append(res.MessagesToTarget, res.MessagesToSource...) {
+		if m.Category != messaging.CategoryHitNaturalSharp {
+			t.Errorf("entangled line %q category = %v, want CategoryHitNaturalSharp", m.Text, m.Category)
 		}
 	}
 }
