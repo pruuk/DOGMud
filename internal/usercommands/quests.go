@@ -105,10 +105,28 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return allQuests[i].Id < allQuests[j].Id
 	})
 
+	if line := questsNoneShownLine(qInfo.QuestsFound, qInfo.QuestsTotal); line != `` {
+		user.SendText(messaging.CategorySystem, line)
+		return true, nil
+	}
+
 	questTxt, _ := templates.Process("character/quests", qInfo, user.UserId)
 	user.SendText(messaging.CategoryScreen, questTxt)
 
 	return true, nil
+}
+
+// questsNoneShownLine is the plain line `quests` prints in place of an empty
+// box when nothing is shown (#620: an empty "( 0 out of 2 shown )" box after
+// both finished tutorial quests), or "" when there is a list to show.
+func questsNoneShownLine(found, total int) string {
+	if found > 0 {
+		return ``
+	}
+	if total > 0 {
+		return `You have no quests in progress. To see the ones you have finished, type <ansi fg="command">quests all</ansi>.`
+	}
+	return `You have no quests yet.`
 }
 
 // questsShowHidden reports whether `quests all+`, which lists every quest

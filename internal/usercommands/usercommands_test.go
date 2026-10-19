@@ -5608,6 +5608,16 @@ func TestQuestsDeep(t *testing.T) {
 	})
 }
 
+// TestQuestsNoneShownLine: with nothing to list, `quests` prints a sentence
+// rather than an empty "( 0 out of 2 shown )" box (#620), and points at
+// `quests all` only when finished quests exist to see there.
+func TestQuestsNoneShownLine(t *testing.T) {
+	assert.Equal(t, ``, questsNoneShownLine(1, 2), "a list to show keeps the box")
+	assert.Contains(t, questsNoneShownLine(0, 2), "no quests in progress")
+	assert.Contains(t, questsNoneShownLine(0, 2), "quests all")
+	assert.Equal(t, `You have no quests yet.`, questsNoneShownLine(0, 0))
+}
+
 // ─── Deeper Show branches ───────────────────────────────────────────────────
 
 func TestShowDeep(t *testing.T) {
