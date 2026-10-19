@@ -185,6 +185,60 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	}
 }
 
+// TestDrain_HealStopsAtReservedCeiling (#285): drain's lifesteal fills a
+// reserved health pool to the reserved ceiling (raw max less reservation), not
+// the raw max. Same near-certain-hit fixture as TestDrain_HealAndBleed.
+func TestDrain_HealStopsAtReservedCeiling(t *testing.T) {
+	defer species.SeedSpeciesForTest(map[int]*species.Species{
+		6003: {SpeciesId: 6003, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true, BeastMoves: []string{"drain"}},
+	})()
+	defer conditions.SeedConditionRecordsForTest()()
+	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
+		999288: {ItemId: 999288, Name: "grasping torc", Type: items.Neck, ReserveHealthPct: 0.25},
+	})()
+
+	targetMob := &mobs.Mob{InstanceId: 6198}
+	targetMob.Character.Name = "Target"
+	targetMob.Character.HealthMax.Value = 500
+	targetMob.Character.Health = 500
+	targetMob.Character.Stats.Dexterity.ValueAdj = 1
+	targetMob.Character.Conditions = conditions.New()
+	setCombatPositionParallel(&targetMob.Character, position.Standing)
+	mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
+	defer mobs.SetInstanceForTest(targetMob.InstanceId, nil)
+
+	char := characters.New()
+	char.SpeciesId = 6003
+	char.Stats.Strength.ValueAdj = 500
+	char.HealthMax.Base = 200
+	char.HealthMax.Value = 200
+	char.Equipment.Neck = items.New(999288)
+	fundSpecialMove(char)
+	ceiling := char.PoolCeiling(characters.PoolHealth)
+	if ceiling != 150 {
+		t.Fatalf("setup: ceiling %d, want 150 (200 less 25%%)", ceiling)
+	}
+
+	hitSeen := false
+	for i := 0; i < 100; i++ {
+		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
+		char.Cooldowns = characters.Cooldowns{}
+		char.Health = ceiling - 1
+		targetMob.Character.Health = 500
+		res := ExecuteDrain(&idStubActor{stubActor: newStubActor(char, newTestRoom()), mobInstanceId: 4242})
+		if res.Executed && res.MoveResult.Damage > 0 {
+			hitSeen = true
+			assert.Equal(t, 1, res.Healed, "the heal reports only what fit under the ceiling")
+			break
+		}
+	}
+	if !hitSeen {
+		t.Fatal("no damaging drain in 100 attempts; expected ~85% per attempt")
+	}
+	assert.Equal(t, ceiling, char.Health,
+		"drain lifesteal must stop at the reserved ceiling, not the raw max 200")
+}
+
 // TestDrain_PartialDamageHealsWithoutBleed pins the one real behavior change
 // from Task 13b: lifesteal now reads the damage actually dealt, including a
 // DEFENDED attempt that still lands partial damage, while the bleed

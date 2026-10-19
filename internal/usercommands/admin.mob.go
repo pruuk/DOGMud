@@ -96,9 +96,9 @@ func mob_Heal(args []string, user *users.UserRecord, room *rooms.Room, _ events.
 		healed := 0
 		for _, mobInstId := range room.GetMobs() {
 			if m := mobs.GetInstance(mobInstId); m != nil {
-				m.Character.Health = m.Character.HealthMax.Value
-				m.Character.Stamina = m.Character.StaminaMax.Value
-				m.Character.Conviction = m.Character.ConvictionMax.Value
+				m.Character.SetPoolFraction(characters.PoolHealth, 1.0)
+				m.Character.SetPoolFraction(characters.PoolStamina, 1.0)
+				m.Character.SetPoolFraction(characters.PoolConviction, 1.0)
 				healed++
 			}
 		}
@@ -123,9 +123,9 @@ func mob_Heal(args []string, user *users.UserRecord, room *rooms.Room, _ events.
 		return true, nil
 	}
 
-	m.Character.Health = m.Character.HealthMax.Value
-	m.Character.Stamina = m.Character.StaminaMax.Value
-	m.Character.Conviction = m.Character.ConvictionMax.Value
+	m.Character.SetPoolFraction(characters.PoolHealth, 1.0)
+	m.Character.SetPoolFraction(characters.PoolStamina, 1.0)
+	m.Character.SetPoolFraction(characters.PoolConviction, 1.0)
 
 	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Healed <ansi fg="mobname">%s</ansi> (instance %d) to full.`, m.Character.Name, instId))
 	return true, nil

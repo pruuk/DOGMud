@@ -365,17 +365,6 @@ func (c *Character) ApplyHealthChange(healthChange int, source state.ActorRef) i
 	return applied
 }
 
-func (c *Character) Heal(hp int) int {
-	startHP := c.Health
-
-	c.Health += hp
-	if c.Health > c.HealthMax.Value {
-		c.Health = c.HealthMax.Value
-	}
-
-	return c.Health - startHP
-}
-
 func (c *Character) HealthPerRound() int {
 	b := configs.GetBalanceConfig()
 	pct := float64(b.PlayerHealthRegenPct)

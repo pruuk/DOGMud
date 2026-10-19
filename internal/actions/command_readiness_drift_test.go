@@ -185,7 +185,7 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 		}, []string{"combat.ExecuteSkillMove", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_drain.go", "ExecuteDrain", "DrainResult", "costs.ActionDrain", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!combat.SpeciesHasBeastMove(char, \"drain\")", "NotLifeDrainer"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddConditionMagnitudeBy", "char.Heal", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddConditionMagnitudeBy", "char.ApplyRestore", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_throttle.go", "ExecuteThrottle", "ThrottleResult", "costs.ActionThrottle", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesHasBeastMove(char, \"throttle\")", "NotFanged"},

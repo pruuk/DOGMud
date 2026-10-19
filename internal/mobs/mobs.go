@@ -667,9 +667,9 @@ func newMobByIdInternal(mobId MobId, homeRoomId int, skipInstanceLoad bool, forc
 			mob.StaminaMaxOverride,
 			mob.CarryCapacityOverride,
 		)
-		mob.Character.Health = mob.Character.HealthMax.Value
-		mob.Character.Stamina = mob.Character.StaminaMax.Value
-		mob.Character.Conviction = mob.Character.ConvictionMax.Value
+		mob.Character.SetPoolFraction(characters.PoolHealth, 1.0)
+		mob.Character.SetPoolFraction(characters.PoolStamina, 1.0)
+		mob.Character.SetPoolFraction(characters.PoolConviction, 1.0)
 		// Movement parity 4b: a spawn starts with full action points, settled
 		// at the current turn. Nothing else ever set a mob's points, so every
 		// live mob held 0.

@@ -3,6 +3,7 @@ package usercommands
 import (
 	"errors"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -42,7 +43,7 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		// consumed, and kill them anyway — defeating the condition outright.
 		user.Character.DeathQueued = false
 
-		user.Character.Health = user.Character.HealthMax.Value
+		user.Character.SetPoolFraction(characters.PoolHealth, 1.0)
 		user.SendText(messaging.CategoryConditionApply, `You are revived in a shower of magical sparks!`)
 		room.SendTextVisual(messaging.CategoryConditionApply,
 			`<ansi fg="username">`+user.Character.Name+`</ansi> is suddenly revived in a shower of sparks!`,

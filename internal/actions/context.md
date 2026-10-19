@@ -242,7 +242,7 @@ gated by its `beast_moves` listing alone), so armed undead still drain.
 | `ExecuteMaul` | lists `maul`, no hands | Heavier damage + bleed stack |
 | `ExecutePounce` | lists `pounce`, no hands, legs, not grappling | Knockdown + damage (no bleed) |
 | `ExecuteGore` | lists `gore`, no hands | Damage + knockback |
-| `ExecuteDrain` | lists `drain` (the species also has the `LifeDrain` flag) | Damage + heal attacker (`damage × DrainHealRatio`) via `Character.Heal` |
+| `ExecuteDrain` | lists `drain` (the species also has the `LifeDrain` flag) | Damage + heal attacker (`damage × DrainHealRatio`) via `Character.ApplyRestore(PoolHealth, ...)`, capped at the reserved ceiling |
 | `ExecuteThrottle` | lists `throttle`, no hands | Damage + bleed stack + Throttled condition #89 (stamina DoT) + cast interrupt via `chokeCastInterrupt` |
 | `ExecuteSmother` | lists `smother`, no hands (mob-only: the smoke elemental, #541 slice 2) | On a hit: damage + cast interrupt via `chokeCastInterrupt` (run first, so the caster's hold is judged sighted, as throttle's is) + Blinded (3) + Smothered (`conditions.ConditionIdSmothered`, 144, stamina DoT); a partial or miss applies nothing; no bleed. `SmotherResult.NotSmoke` is the identity refusal; `SmotherResult.ActeeSightBefore` is the target's `ParticipantSight` taken before the blinding, which the mob command judges the target's hit and cast_interrupt lines at (owner rule 2026-10-05) |
 

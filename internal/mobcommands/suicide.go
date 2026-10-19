@@ -1,6 +1,7 @@
 package mobcommands
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -20,7 +21,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// afterwards and kill the revived mob anyway.
 		mob.Character.DeathQueued = false
 
-		mob.Character.Health = mob.Character.HealthMax.Value
+		mob.Character.SetPoolFraction(characters.PoolHealth, 1.0)
 		room.SendTextVisual(messaging.CategoryConditionApply,
 			`<ansi fg="mobname">`+mob.Character.Name+`</ansi> is suddenly revived in a shower of sparks!`,
 		)
