@@ -1,0 +1,43 @@
+# Pre-deploy sweep 2026-10-17: the new-player path.
+#
+# Nothing has been deployed since 59e1871fd (2026-09-07). Since then the
+# messaging arc (M3-M7) rewrote combat, refusal and room copy, sight gates
+# and graded lighting landed, and shops, baubles and crafting changed. This
+# run plays the first half hour as a real new player would see it after the
+# deploy. Fresh character, no hints, no admin commands.
+#
+# 3 commands per round on the AI port; the overflow is dropped. Pace your
+# commands. Quote every odd line VERBATIM.
+
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    The deploy ships to live players who will create characters; the real
+    creation and onboarding path is what this run must exercise, with no
+    seeded kit that could mask a broken step.
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    Create a character and get through whatever the game puts in front of
+    you first, as a new player who has never played a MUD would. Report
+    every prompt that was confusing, every step where you did not know what
+    to do next, and every line that looked broken (raw tokens like {actor}
+    or <name>, doubled lines, words run together, lines wider than one
+    screen line).
+  - >-
+    Once you are free to move, find a shop, look at what it sells, buy
+    something cheap, and sell something back. Report any price or stock
+    that looks absurd and any refusal that did not tell you what to do
+    instead.
+  - >-
+    Fight one weak creature you find. Report whether the combat lines read
+    clearly, whether you could tell who was hitting whom, and whether any
+    line showed raw numbers for damage or durations.
+  - >-
+    Use `help` and two help topics that the game itself pointed you at.
+    Report anything the help says that the game then contradicted.
+  - >-
+    General adversarial pass: anything that reads wrong, renders oddly, or
+    contradicts its own help text is a finding.

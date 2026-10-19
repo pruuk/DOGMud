@@ -1,0 +1,44 @@
+# Pre-deploy sweep 2026-10-17: combat as it ships.
+#
+# Combat copy was rewritten across M3-M6, refusals in M7, creature attacks
+# were corrected (#568) and slam was split into slam, trample, lash and
+# blast (#571). None of it is deployed. This run fights a spread of
+# creatures and reads every line.
+#
+# A reliable long fight: Sable in Rift Chamber 5000, `ask sable arena
+# <gold>` (the gold amount sets the difficulty). Wolves, boars and slimes
+# roam the wilds and sewers around Thornwall.
+#
+# 3 commands per round on the AI port; the overflow is dropped. Pace your
+# commands. Quote every odd line VERBATIM.
+
+ephemeral:
+  profile: mid
+  start_room: 462
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    Fight at least three different kinds of creature (an animal, a slime or
+    other odd creature, and a person or humanoid if you can find one). For
+    each, quote two or three of its attack lines and say whether you could
+    tell what it did to you. Report any attack that makes no sense for that
+    creature (a slime that kicks, a wolf that punches).
+  - >-
+    Use `help special` and try each special move you have at least once in
+    a fight. Quote the lines. Report any move that refuses without telling
+    you why, or reads wrong.
+  - >-
+    Start a fight and `flee` from it. Quote what you and the room are told.
+  - >-
+    Use `consider` on three creatures before fighting them. Report whether
+    the result matched how the fight went.
+  - >-
+    Report any combat line that shows a raw number for damage, healing,
+    armor or a duration, any raw token like {actor} or <name>, any line
+    wider than one screen line, and any line that names a creature you
+    could not see.
+  - >-
+    General adversarial pass: anything that reads wrong, renders oddly, or
+    contradicts its own help text is a finding.
