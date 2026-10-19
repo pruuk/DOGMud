@@ -104,7 +104,11 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   name hider rewrites (`SendTextVisualHidingNames`, `messaging.SendTrio`)
   with `Character.Name` among the hidden names: "corpse of <name>", or the
   special `CorpseName`. A mob-corpse or user-corpse tag is not an identity
-  tag, so `Anonymize` never hides a corpse name; pass the name.
+  tag, so `Anonymize` never hides a corpse name; pass the name. A name with
+  its own article (#572): `DisplayName()`, the ground listing and
+  `FindCorpseIndex` share `corpseStem`, which drops it ("2 Culvert Slime
+  corpses"); `ObservedName()` lowercases it ("corpse of a Culvert Slime"),
+  which the name hiders also match.
 - **Corpse matching by sight (#435):** `FindCorpseIndex(searchName, viewer)`
   and its value-copy twin `FindCorpse(searchName, viewer)` match at the
   viewer's `ParticipantSight` in the room. At clear sight (or a nil viewer, a

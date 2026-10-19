@@ -91,6 +91,10 @@ func Normalize(cat Category, text string) string {
 	}
 	skip := skipStages(cat)
 
+	// 0. A creature name's own article reads lowercase mid-sentence (#572).
+	// Never skipped: see LowerMidSentenceNameArticles.
+	text = LowerMidSentenceNameArticles(text)
+
 	// 1. Sentence-start capitalization.
 	if skip&stageCapitalize == 0 {
 		text = CapitalizeStart(text)

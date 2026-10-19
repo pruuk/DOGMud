@@ -49,7 +49,12 @@ The items system is built around two main components:
 - `MidSentenceName(name) string` is the name half of that pair: a leading
   article of the name's own (A, An, The, Some) is lowercased, every other
   capital stays. Every `ArticlePrefix` caller passes the name through it, so
-  a forage line reads "You find a Sheaf of Gleaned Grain." (#620).
+  a forage line reads "You find a Sheaf of Gleaned Grain." (#620). The
+  messaging pipeline applies the same rule to every creature name that
+  stands mid-sentence (`messaging.LowerMidSentenceNameArticles`, #572).
+- `NameWithoutArticle(name) string` drops that leading article, for a
+  compound noun that brings its own article or count: a corpse reads "the
+  Culvert Slime corpse" and "4 Culvert Slime corpses" (#572).
 
 ## Key Features
 

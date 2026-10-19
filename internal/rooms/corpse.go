@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -100,23 +101,33 @@ func (c *Corpse) HasLoot() bool {
 
 // DisplayName returns the rendered corpse name. If CorpseName is set
 // (Stage 3.4 special mobs), returns it directly. Otherwise returns
-// the standard "<Name> corpse" form.
+// the standard "<Name> corpse" form, the name's own article dropped (#572):
+// every line puts "the" or a count before a corpse, and "the A Culvert Slime
+// corpse" doubled the article.
 func (c Corpse) DisplayName() string {
 	if c.CorpseName != "" {
 		return c.CorpseName
 	}
-	return c.Character.Name + " corpse"
+	return corpseStem(c.Character.Name)
+}
+
+// corpseStem is "<name> corpse" with the name's own leading article dropped,
+// the one spelling the corpse listing, DisplayName and FindCorpseIndex share.
+func corpseStem(name string) string {
+	return items.NameWithoutArticle(name) + ` corpse`
 }
 
 // ObservedName is the corpse's name for a line that a name hider rewrites per
 // reader (SendTextVisualHidingNames, SendTrio) with Character.Name among the
 // hidden names. A corpse without a CorpseName reads "corpse of <name>", so the
-// hidden form reads "corpse of a figure" and not "a figure corpse".
+// hidden form reads "corpse of a figure" and not "a figure corpse". The name's
+// own article reads lowercase there ("corpse of a Culvert Slime", #572); the
+// name hiders match that spelling too (messaging.longestFirst).
 func (c Corpse) ObservedName() string {
 	if c.CorpseName != "" {
 		return c.CorpseName
 	}
-	return `corpse of ` + c.Character.Name
+	return `corpse of ` + items.MidSentenceName(c.Character.Name)
 }
 
 // NameAt is what a reader at sight d calls this corpse in a line written for

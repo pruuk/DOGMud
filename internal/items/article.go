@@ -47,13 +47,33 @@ func ArticlePrefix(name string) string {
 // be part of a proper name and stays. Callers pair it with ArticlePrefix:
 // `"You find %s%s", ArticlePrefix(n), MidSentenceName(n)`.
 func MidSentenceName(name string) string {
-	first, rest, ok := strings.Cut(name, ` `)
-	if !ok || strings.TrimSpace(rest) == `` {
-		return name
-	}
-	switch strings.ToLower(first) {
-	case `a`, `an`, `the`, `some`:
+	if first, rest, ok := leadingArticle(name); ok {
 		return strings.ToLower(first) + ` ` + rest
 	}
 	return name
+}
+
+// NameWithoutArticle returns name with its own leading article dropped, for a
+// compound noun that brings its own article or count: a corpse reads "the
+// Culvert Slime corpse" and "4 Culvert Slime corpses", never "the A Culvert
+// Slime corpse" (#572). The article words are MidSentenceName's.
+func NameWithoutArticle(name string) string {
+	if _, rest, ok := leadingArticle(name); ok {
+		return rest
+	}
+	return name
+}
+
+// leadingArticle splits off the article a name opens with, if any. A name
+// that is nothing but the word ("A", "The") has no article to split.
+func leadingArticle(name string) (first, rest string, ok bool) {
+	first, rest, ok = strings.Cut(name, ` `)
+	if !ok || strings.TrimSpace(rest) == `` {
+		return ``, ``, false
+	}
+	switch strings.ToLower(first) {
+	case `a`, `an`, `the`, `some`:
+		return first, rest, true
+	}
+	return ``, ``, false
 }
