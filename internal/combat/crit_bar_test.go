@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
 // pinCritBarConfig pins the three crit-bar knobs at their shipped values so
@@ -62,6 +63,27 @@ func TestCritBarFor_ZeroCeilingIsUncapped(t *testing.T) {
 	}
 }
 
+// #578 (owner 2026-10-19): the bar reads the skill of the hand that swings.
+// A swordsman with weapon-combat 40 and an untrained fist (unarmed-combat 1)
+// against a defender at 20: the sword swing pins at the floor, the off-hand
+// punch sits near the ceiling. Before the fix both read the sword's 40.
+func TestCalcCritThreshold_ReadsTheSwingingHand(t *testing.T) {
+	pinCritBarConfig(t, 0.05, 1.5, 3.0)
+	atk := characters.New()
+	atk.Skills["weapon-combat"] = 40
+	atk.Skills["unarmed-combat"] = 1
+	sword := items.Item{ItemId: 999578} // no spec: a plain weapon, weapon-combat
+	atk.Equipment.Weapon = sword
+	def := barChar(t, 20)
+
+	if got := calcCritThreshold(atk, def, sword); got != 1.5 {
+		t.Errorf("sword swing bar = %v, want 1.5 (weapon-combat 40 vs 20, floored)", got)
+	}
+	if got, want := calcCritThreshold(atk, def, items.Item{}), 2.0+0.05*19; got != want {
+		t.Errorf("off-hand punch bar = %v, want %v (unarmed-combat 1 vs 20), not the sword's", got, want)
+	}
+}
+
 // Melee routes through the same function on its combat-skill pair. Identical
 // to the old bar at and below 3.0; ABOVE 3.0 the new ceiling binds — the named
 // melee change (a stat-rich skill-1 mob vs a veteran now caps at 3.0 instead
@@ -80,7 +102,7 @@ func TestCalcCritThreshold_MeleePair(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			atk, def := barChar(t, tc.atkSkill), barChar(t, tc.defSkill)
-			if got := calcCritThreshold(atk, def); got != tc.want {
+			if got := calcCritThreshold(atk, def, atk.Equipment.Weapon); got != tc.want {
 				t.Errorf("calcCritThreshold=%v want %v", got, tc.want)
 			}
 		})

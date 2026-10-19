@@ -664,8 +664,13 @@ func calcAttackScore(sourceChar *characters.Character, targetChar *characters.Ch
 // Chunk 5.11c: position-based crit modifiers live in calcAttackScore, not
 // here. Do not reintroduce them. The old Accuracy/Blink condition branches were
 // DELETED by U6b — upstream stowaways no shipped content ever granted.
-func calcCritThreshold(sourceChar *characters.Character, targetChar *characters.Character) float64 {
-	return CritBarFor(sourceChar.GetCombatSkillLevel(), targetChar.GetCombatSkillLevel())
+//
+// The attacker's side reads the skill of the weapon being swung (#578, owner
+// 2026-10-19), as calcAttackScore does: an off-hand punch beside a sword
+// crits at unarmed-combat, not at the sword's weapon-combat. The defender's
+// side is its main-hand skill.
+func calcCritThreshold(sourceChar *characters.Character, targetChar *characters.Character, weapon items.Item) float64 {
+	return CritBarFor(sourceChar.GetCombatSkillLevelFor(weapon), targetChar.GetCombatSkillLevel())
 }
 
 // filterDefensesForThirdParty removes active defenses when the target is in a grapple

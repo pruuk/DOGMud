@@ -138,11 +138,11 @@ func TestGrapple_GroundBeatsStanding_NoSelfCancellation(t *testing.T) {
 // nets -0.2 under the old code, so it can actually detect the removal.
 func TestGrapple_CritThresholdNoLongerPositional(t *testing.T) {
 	plainA, plainB := newGrappleChar(1), newGrappleChar(2)
-	base := calcCritThreshold(plainA, plainB)
+	base := calcCritThreshold(plainA, plainB, plainA.Equipment.Weapon)
 
 	a, b := newGrappleChar(1), newGrappleChar(2)
 	clinch(t, a, b)
-	grappled := calcCritThreshold(a, b)
+	grappled := calcCritThreshold(a, b, a.Equipment.Weapon)
 
 	assert.Equal(t, base, grappled,
 		"calcCritThreshold must ignore grapple position after chunk 5.11c")
@@ -152,11 +152,11 @@ func TestGrapple_CritThresholdNoLongerPositional(t *testing.T) {
 // separate test so the two failure modes stay distinguishable.
 func TestGrapple_CritThresholdIgnoresGroundGrapple(t *testing.T) {
 	plainA, plainB := newGrappleChar(1), newGrappleChar(2)
-	base := calcCritThreshold(plainA, plainB)
+	base := calcCritThreshold(plainA, plainB, plainA.Equipment.Weapon)
 
 	a, b := newGrappleChar(1), newGrappleChar(2)
 	mount(t, a, b)
 
-	assert.Equal(t, base, calcCritThreshold(a, b),
+	assert.Equal(t, base, calcCritThreshold(a, b, a.Equipment.Weapon),
 		"calcCritThreshold must ignore ground grapple after chunk 5.11c")
 }
