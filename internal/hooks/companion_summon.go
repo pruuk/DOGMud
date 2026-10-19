@@ -37,7 +37,7 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 	corpseIdx := -1
 	var corpsePool int
 	if spellData.SummonRequiresCorpse {
-		idx, pool, refusalLine := actions.FindRaiseCorpse(room, spellData, spellRest)
+		idx, pool, refusalLine := actions.FindRaiseCorpse(room, ch, spellData, spellRest)
 		if idx < 0 {
 			user.SendText(messaging.CategoryRefusal, refusalLine)
 			return false

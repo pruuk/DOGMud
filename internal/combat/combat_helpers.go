@@ -499,8 +499,9 @@ func buildWeaponSetup(sourceChar *characters.Character, targetChar *characters.C
 	} else {
 		// Natural-attack path (mob unarmed, species DamageMultiplier).
 		// Apply reach-utility directly: mob claws/bite/fist are short-reach
-		// and stay effective in grapples, so this is mostly a correctness
-		// guard — the numbers don't change for natural attacks in practice.
+		// and stay effective in grapples. Siphon is the exception: its
+		// spectral pull has long reach (#570), so a grappling wraith is cut
+		// to the reach floor.
 		naturalReach := items.ResolveNaturalReach(ws.weaponSubType)
 		posRadius := 0.0 // default: no grapple penalty if Position not initialized
 		if sourceChar.Position != nil {

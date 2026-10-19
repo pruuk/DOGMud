@@ -24,10 +24,14 @@ the same crawl.
   (`map` and the `look` minimap call them after `GetLegend`). The
   `asciiMapSymbols` table holds only glyphs whose shared `ConvertToAscii`
   form would read the same as another legend entry: Deep Water `≈` is `D`
-  (Shore is `~`), the town and road biomes' `•` is `o` (Desert is `*`) and
-  Snow `❄` is `n`. UTF-8 players and every other use of those runes are
-  untouched. `usercommands`' `TestMapLegendAsciiFormsAreDistinct` scans every
-  biome, room mapsymbol and marker and fails on a collision.
+  (Shore is `~`), the town and road biomes' `•` is `o` (Desert is `*`),
+  Snow `❄` is `n` and Cliffs `▼` is `c` (the down-exit arrow is `v`, #593).
+  UTF-8 players and every other use of those runes are untouched.
+  `usercommands`' `TestMapLegendAsciiFormsAreDistinct` scans every biome,
+  room mapsymbol, marker and exit arrow (`ExitArrow`) and fails on a
+  collision; `TestMapLegendOverridesNameDrawnSymbols` fails on a
+  keywords.yaml `legend-overrides` entry for a symbol nothing draws or a
+  zone that does not exist.
 - **mapper.config.go** — `Config` (render options) and `SymbolOverride`.
 - **mapper.path.go** — A\* pathfinding, the path cache, and `GetPath`/`NextStep`.
 - **mapper.consistency.go** — the Cartesian consistency engine (see below).
@@ -58,6 +62,7 @@ func IsValidExitDirection(exitName string) bool
 func IsCompassDirection(exitName string) bool
 func IsValidDirection(directionName string) bool
 func GetDirectionDeltaNames() []string
+func ExitArrow(directionName string) (rune, bool)
 func AdjustExitName(exitName string) (newExitName, newExitDirection string, err error)
 ```
 

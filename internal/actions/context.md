@@ -800,9 +800,12 @@ word on its own line (#430).
 ## Raise corpse gate (`cast_raise_corpse.go`, #282)
 
 A raise spell (`SummonRequiresCorpse`) needs a usable corpse. The one gate
-both raise sites run is `FindRaiseCorpse(room, spellInfo, spellRest)`,
+both raise sites run is `FindRaiseCorpse(room, caster, spellInfo, spellRest)`,
 returning the corpse's index in `room.Corpses` and its pool, or -1 and the
-refusal line. It changes nothing; the caller removes the corpse only once
+refusal line. The match follows the caster's sight as `rooms.FindCorpseIndex`
+does (#587): below clear sight a named raise gets the plain no-match line,
+and only the generic word ("corpse", "2.remains") reaches a corpse; a nil
+caster reads as clear sight. It changes nothing; the caller removes the corpse only once
 every other gate has passed. `usercommands.Cast` runs it at cast start and
 `hooks.resolveCompanionSummon` at resolution (the backstop for a corpse that
 went away mid-channel). Both run it BEFORE the companion-count and reservation

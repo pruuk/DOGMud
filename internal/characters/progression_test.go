@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
@@ -228,6 +229,26 @@ func TestGetCombatSkillTag_NoWeapon(t *testing.T) {
 	c := New()
 	if got := c.GetCombatSkillTag(); got != skills.UnarmedCombat {
 		t.Errorf("Expected UnarmedCombat with no weapon, got %s", got)
+	}
+}
+
+// #527: a species that disables the weapon slot (bear, boar, feline) leaves
+// items.ItemDisabledSlot (ItemId -1) in the main hand and attacks with its
+// natural weapon, so every main-hand reader must read unarmed-combat, the
+// skill the swing itself rolls and trains.
+func TestGetCombatSkillLevel_DisabledWeaponSlotReadsUnarmed(t *testing.T) {
+	c := New()
+	c.Equipment.Weapon = items.ItemDisabledSlot
+	c.Skills["unarmed-combat"] = 80
+	c.Skills["weapon-combat"] = 5
+	if got := CombatSkillTagForItem(items.ItemDisabledSlot); got != skills.UnarmedCombat {
+		t.Errorf("CombatSkillTagForItem(disabled slot) = %s, want unarmed-combat", got)
+	}
+	if got := c.GetCombatSkillTag(); got != skills.UnarmedCombat {
+		t.Errorf("GetCombatSkillTag = %s, want unarmed-combat", got)
+	}
+	if got := c.GetCombatSkillLevel(); got != 80 {
+		t.Errorf("GetCombatSkillLevel = %d, want 80 (unarmed-combat)", got)
 	}
 }
 

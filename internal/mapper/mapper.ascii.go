@@ -20,6 +20,10 @@ var asciiMapSymbols = map[rune]rune{
 	'•': 'o',
 	// Snow: ConvertToAscii makes ❄ a "*" too.
 	'❄': 'n',
+	// Cliffs: ConvertToAscii makes ▼ a "v", which is the down-exit arrow
+	// (#593). C is taken by a room mapsymbol, so the lowercase initial, as
+	// Dense Forest F and Forest f share one letter in two cases.
+	'▼': 'c',
 }
 
 // AsciiMapSymbol is the one ASCII character an ASCII-mode map draws for r:

@@ -43,6 +43,15 @@
   says so, and help lists each command once, with only real skills under
   Skills.
 - Small fixes to Toke's and Hadwen's lines and the Drill Yard.
+- look now finds the creature you named before your own name, and looking
+  at yourself no longer tells you that you are looking at you.
+- Each player can study a corpse with assess once.
+- In the dark, raise only reaches remains you can make out by name; raise
+  corpse still works.
+- On the ASCII map, cliffs now show as c, so they no longer look like a way
+  down.
+- Wraiths and spectres fight poorly once they are grappling up close.
+- The sewer slimes' idle lines read more cleanly.
 
 ## 2026-10-17: Clearer in the dim, fairer in the arena
 

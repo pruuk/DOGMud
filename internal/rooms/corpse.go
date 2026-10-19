@@ -65,6 +65,29 @@ type Corpse struct {
 	// maps to the leader. Layered on top of ownership (LootAllowed) via
 	// CanTakeItem.
 	RRAssignee map[string]int
+
+	// AssessedBy lists the players who have already assessed these remains
+	// (#617). Assess trains Manifestation, so a corpse that could be read
+	// again every cooldown was a progression farm. Same shape as
+	// OwnerUserIds: a short per-corpse list of user ids.
+	AssessedBy []int
+}
+
+// WasAssessedBy reports whether userId has already assessed this corpse.
+func (c *Corpse) WasAssessedBy(userId int) bool {
+	for _, id := range c.AssessedBy {
+		if id == userId {
+			return true
+		}
+	}
+	return false
+}
+
+// MarkAssessedBy records that userId has assessed this corpse.
+func (c *Corpse) MarkAssessedBy(userId int) {
+	if !c.WasAssessedBy(userId) {
+		c.AssessedBy = append(c.AssessedBy, userId)
+	}
 }
 
 // CanTakeItem reports whether userId may take this item now, layering loot-mode

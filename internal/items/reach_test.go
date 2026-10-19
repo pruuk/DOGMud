@@ -19,6 +19,7 @@ func TestDefaultReachForSubtype_KnownSubtypes(t *testing.T) {
 		Lash:        0.3,
 		Blast:       0.3,
 		Gore:        0.4,
+		Siphon:      10, // owner ruling on #570
 		Whipping:    0.5,
 		Stabbing:    0.3,
 		Slashing:    1.0,

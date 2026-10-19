@@ -72,6 +72,18 @@ func shippedLegendGlyphs(t *testing.T) []legendGlyph {
 	// keywords.yaml legend-overrides are not glyphs of their own: they only
 	// rename the legend of a symbol something above already draws.
 
+	// Exit arrows carry no legend name but sit on the same grid, so an ASCII
+	// arrow must not read as a room symbol either (#593: the down arrow v
+	// and Cliffs, whose ▼ ConvertToAscii makes a "v"). Keyed by the ASCII
+	// form: north-x3 draws '|' where north draws '│', one meaning.
+	dirs := mapper.GetDirectionDeltaNames()
+	sort.Strings(dirs)
+	for _, dir := range dirs {
+		if arrow, ok := mapper.ExitArrow(dir); ok {
+			a := mapper.AsciiMapSymbol(arrow)
+			out = append(out, legendGlyph{a, "exit arrow", "mapper", a})
+		}
+	}
 	add(string(mapper.SecretSymbol), "Secret", "mapper")
 	add(string(mapper.LockedSymbol), "Locked", "mapper")
 	add("@", "You", "map command")
@@ -121,6 +133,64 @@ func TestMapLegendAsciiFormsAreDistinct(t *testing.T) {
 	sort.Strings(bad)
 	if len(bad) > 0 {
 		t.Errorf("%d ASCII map glyphs are drawn for different legend entries:\n%s", len(bad), strings.Join(bad, "\n"))
+	}
+}
+
+// TestMapLegendOverridesNameDrawnSymbols (#593): a keywords.yaml
+// legend-overrides entry only renames the legend of a symbol a map already
+// draws, in a zone that exists ('*' is every zone). One that names a symbol
+// nothing draws, or a zone the world does not have, is dead text that reads
+// as if the world had shops marked "$" or a Frostfang throne room.
+func TestMapLegendOverridesNameDrawnSymbols(t *testing.T) {
+	_, file, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	world := filepath.Join(filepath.Dir(file), "..", "..", "_datafiles", "world", "dogmud")
+
+	drawn := map[rune]bool{}
+	for _, g := range shippedLegendGlyphs(t) {
+		drawn[g.symbol] = true
+		if g.ascii != 0 {
+			drawn[g.ascii] = true
+		}
+	}
+
+	zones := map[string]bool{"*": true}
+	configs, err := filepath.Glob(filepath.Join(world, "rooms", "*", "zone-config.yaml"))
+	require.NoError(t, err)
+	require.NotEmpty(t, configs)
+	for _, f := range configs {
+		b, err := os.ReadFile(f)
+		require.NoError(t, err)
+		var zc struct {
+			Name string `yaml:"name"`
+		}
+		require.NoError(t, yaml.Unmarshal(b, &zc), f)
+		zones[strings.ToLower(zc.Name)] = true
+	}
+
+	b, err := os.ReadFile(filepath.Join(world, "keywords.yaml"))
+	require.NoError(t, err)
+	var kw struct {
+		Overrides map[string]map[string]string `yaml:"legend-overrides"`
+	}
+	require.NoError(t, yaml.Unmarshal(b, &kw))
+	require.NotEmpty(t, kw.Overrides, "fixture: keywords.yaml must parse to some legend-overrides")
+
+	var bad []string
+	for zone, entries := range kw.Overrides {
+		if !zones[strings.ToLower(zone)] {
+			bad = append(bad, fmt.Sprintf("zone %q does not exist", zone))
+			continue
+		}
+		for sym, name := range entries {
+			if r := []rune(sym); len(r) == 0 || !drawn[r[0]] {
+				bad = append(bad, fmt.Sprintf("%q (%s) in %q is drawn by nothing", sym, name, zone))
+			}
+		}
+	}
+	sort.Strings(bad)
+	if len(bad) > 0 {
+		t.Errorf("%d dead legend-overrides in keywords.yaml:\n%s", len(bad), strings.Join(bad, "\n"))
 	}
 }
 

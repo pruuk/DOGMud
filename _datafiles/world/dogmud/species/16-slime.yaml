@@ -15,8 +15,8 @@ selectable: false
 tameable: false
 speech: false
 angrycommands:
-  - emote quivers and extends a glistening pseudopod toward its foe.
-  - emote bubbles and hisses, its surface roiling with caustic slime.
+  - emote quivers and extends a glistening pseudopod toward the foe.
+  - emote bubbles and hisses, the surface roiling with caustic slime.
 stats:
   strength:
     base: 70

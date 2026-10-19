@@ -11,12 +11,12 @@ groups:
 idlecommands:
   - 'emote lies across the silt like a drift of the current
     itself, colorless, betrayed only by the slow light turning
-    over in its depths.'
+    over deep inside.'
   - ''
-  - 'emote works its way a span against the flow, combing the
-    silt beneath it clean of everything living.'
+  - 'emote works a span against the flow, combing the silt below
+    clean of everything living.'
   - ''
-  - 'emote pulses once, deep in its mass, a soft glow that
+  - 'emote pulses once, deep in the mass, a soft glow that
     swells, crests, and dies like a heartbeat made of light.'
   - ''
 combatcommands:
@@ -24,9 +24,9 @@ combatcommands:
     comes down.'
   - ''
   - 'emote closes around a limb with the slow certainty of a
-    tide, and the light in its depths beats faster.'
+    tide, and the light deep inside beats faster.'
   - ''
-  - 'emote spreads itself wider across the passage, patient,
+  - 'emote spreads wider across the passage, patient,
     leaving less and less of anywhere to stand.'
   - ''
 activitylevel: 20

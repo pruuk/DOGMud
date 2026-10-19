@@ -115,6 +115,11 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   stands for "corpse" (`look remains`, `2.remains`; `corpseSearchName`
   rewrites it), so the word a player reads reaches the corpse. A room noun
   named `remains` (room 5300) still wins in `look`, which checks nouns first.
+- **One assess per player (#617):** `Corpse.AssessedBy` lists the user ids
+  that have assessed a corpse; `WasAssessedBy(userId)` and
+  `MarkAssessedBy(userId)` read and set it. `usercommands.Assess` refuses a
+  repeat, because each reading trains Manifestation. Mark through
+  `r.Corpses[idx]`, never a `FindCorpse` copy.
 - **Corpse decay line (#276):** "The corpse of <name> crumbles to dust." goes
   out through `SendTextVisualHidingNames` with `ObservedName()` and the dead
   one's name hidden, the same shape as every other corpse line: a shapes
