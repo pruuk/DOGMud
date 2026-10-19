@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
@@ -81,6 +82,28 @@ func TestSmother_HitBlindsAndSmothers_OtherwiseNothing(t *testing.T) {
 	}
 	require.True(t, sawHit, "no hit in 200 tries: the fixture is broken")
 	require.True(t, sawOther, "no partial or miss in 200 tries: the fixture is broken")
+}
+
+// Owner rule (2026-10-05): the hit line is judged at the target's sight from
+// BEFORE the smoke. ActeeSightBefore must be taken before Blinded lands, or
+// the mob command would judge a sighted target's hit line blind.
+func TestSmother_ActeeSightBeforeIsTakenBeforeTheBlinding(t *testing.T) {
+	target := seedSmotherFixture(t, 7463, 1)
+	for i := 0; i < 100; i++ {
+		target.Character.Conditions = conditions.New()
+		target.Character.Perception = characters.New().Perception
+		res := ExecuteSmother(newStubActor(newSmoke(7463), nil))
+		require.True(t, res.Executed)
+		if !res.MoveResult.Hit {
+			continue
+		}
+		require.Equal(t, messaging.SightNone, messaging.ParticipantSight(&target.Character, nil),
+			"fixture: the hit must leave the target blind")
+		assert.Equal(t, messaging.SightFull, res.ActeeSightBefore,
+			"the actee's sight must be judged before the smoke blinds them")
+		return
+	}
+	t.Fatal("no hit in 100 tries: the fixture is broken")
 }
 
 // Appendix A: the cast interrupt rides the shared special-move cooldown, so

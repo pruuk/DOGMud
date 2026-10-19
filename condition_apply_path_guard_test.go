@@ -115,8 +115,8 @@ var conditionApplyPathAllowlist = map[string]string{
 
 	// ── silent-start conditions whose applier narrates the moment itself ────
 	"internal/actions/combat_throttle.go|145": "condition 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
-	"internal/actions/combat_smother.go|88":   "Blinded (3) carries spell start lines; the smother hit line narrates the blinding, and it must land in the same tick so the target's next line is judged blind",
-	"internal/actions/combat_smother.go|89":   "condition 144 is silent-start; the smother move narrates the smoke as it lands and must apply it in the same tick",
+	"internal/actions/combat_smother.go|103":  "Blinded (3) carries spell start lines; the smother hit line narrates the blinding instead, judged at the target's sight from before the hit (SmotherResult.ActeeSightBefore), and the blindness lands in the same tick so the target's following lines are judged blind",
+	"internal/actions/combat_smother.go|104":  "condition 144 is silent-start; the smother move narrates the smoke as it lands and must apply it in the same tick",
 	"internal/actions/sleep.go|59":            "condition 15 is silent-start; Sleep reads the Sleeping flag back for its own idempotence check, so it sends the start line itself",
 
 	// ── former combat conditions: warcry and rally are now one record each,

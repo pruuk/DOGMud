@@ -72,12 +72,19 @@ func Smother(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	damageTokens := map[string]string{movenarration.TokenDamage: dmgDesc}
 
 	if result.Hit {
-		sendMoveEvent("smother", "hit", ids, aud, messaging.CategoryHitNaturalSharp, damageTokens)
+		// The hit blinds the target, so the actee's lines are judged at the
+		// sight they had before the smoke (res.ActeeSightBefore; owner rule
+		// 2026-10-05), not at the blindness the hit has just caused.
+		if roles, ok := renderMoveEvent("smother", "hit", ids, damageTokens); ok {
+			sendMoveRolesJudgedBefore(roles, aud, messaging.CategoryHitNaturalSharp, res.ActeeSightBefore)
+		}
 
 		// Cast-interrupt detail line riding on the hit above; an observer who
 		// sees nothing hears the chant break off, as for throttle.
 		if res.InterruptedCast {
-			sendMoveEvent("smother", "cast_interrupt", ids, aud, messaging.CategorySpellDisruption, nil, messaging.SoundChantBreaksOff)
+			if roles, ok := renderMoveEvent("smother", "cast_interrupt", ids, nil); ok {
+				sendMoveRolesJudgedBefore(roles, aud, messaging.CategorySpellDisruption, res.ActeeSightBefore, messaging.SoundChantBreaksOff)
+			}
 		}
 	} else if result.Damage > 0 {
 		// Defended-partial: the actee line carries the damage from the store;

@@ -244,7 +244,7 @@ gated), so armed undead still drain.
 | `ExecuteGore` | horned | Damage + knockback |
 | `ExecuteDrain` | `LifeDrain` flag | Damage + heal attacker (`damage × DrainHealRatio`) via `Character.Heal` |
 | `ExecuteThrottle` | fanged | Damage + bleed stack + Throttled condition #89 (stamina DoT) + cast interrupt via `chokeCastInterrupt` |
-| `ExecuteSmother` | lists `smother`, no hands (mob-only: the smoke elemental, #541 slice 2) | On a hit: damage + Blinded (3) + Smothered (`conditions.ConditionIdSmothered`, 144, stamina DoT) + cast interrupt via `chokeCastInterrupt`; a partial or miss applies nothing; no bleed. `SmotherResult.NotSmoke` is the identity refusal |
+| `ExecuteSmother` | lists `smother`, no hands (mob-only: the smoke elemental, #541 slice 2) | On a hit: damage + cast interrupt via `chokeCastInterrupt` (run first, so the caster's hold is judged sighted, as throttle's is) + Blinded (3) + Smothered (`conditions.ConditionIdSmothered`, 144, stamina DoT); a partial or miss applies nothing; no bleed. `SmotherResult.NotSmoke` is the identity refusal; `SmotherResult.ActeeSightBefore` is the target's `ParticipantSight` taken before the blinding, which the mob command judges the target's hit and cast_interrupt lines at (owner rule 2026-10-05) |
 
 **Bleeds stack (slice 1b, owner ruling 2026-09-14).** Rake, maul, hamstring,
 drain (`ExecuteDrain` and each landed target of `ExecuteDrainArea`) and throttle each add one

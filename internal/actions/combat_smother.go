@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -27,6 +28,11 @@ type SmotherResult struct {
 	// combatcommands or btree dispatch; CanUseSmother gates the AI path.
 	NotSmoke        bool
 	InterruptedCast bool
+	// ActeeSightBefore is the target's ParticipantSight judged before the
+	// hit blinded them. The mob command judges the target's hit and
+	// cast_interrupt lines at it (owner rule 2026-10-05: a line announcing a
+	// change is judged against the state before it resolves).
+	ActeeSightBefore messaging.SightDecision
 }
 
 // ExecuteSmother is the smoke elemental's special move (Appendix A of spec
@@ -81,15 +87,22 @@ func ExecuteSmother(actor Actor) SmotherResult {
 	})
 	counter := counterSkillMoveExit(actor, target.Char, result, combatvocab.Melee(combatvocab.TargetSingle), true)
 
+	// The target's sight as the smoke reaches it, taken before the hit blinds
+	// them: the hit and cast_interrupt lines announce the blinding, so the
+	// target reads them at this sight (owner rule 2026-10-05).
+	acteeSightBefore := messaging.ParticipantSight(target.Char, sightRoom)
+
 	interrupted := false
 	if result.Hit {
+		// The contest runs before the smoke blinds the caster, so their hold
+		// takes the sight ramp of the room as it was, exactly as throttle's
+		// does; blinding first would make smother's interrupt stronger.
+		interrupted = chokeCastInterrupt(actor, char, target.Char, sightRoom)
 		// Both apply synchronously, narrated by the hit line (Blinded's own
 		// start lines speak of a spell; Smothered is silent-start).
 		_ = target.Char.AddCondition(perception.ConditionIdBlinded, false)
 		_ = target.Char.AddCondition(conditions.ConditionIdSmothered, false)
-		interrupted = chokeCastInterrupt(actor, char, target.Char, sightRoom)
 	}
-
 	sourceType := combat.User
 	if !actor.IsPlayer() {
 		sourceType = combat.Mob
@@ -108,11 +121,12 @@ func ExecuteSmother(actor Actor) SmotherResult {
 	actor.AwardResolved(result.Hit, actor.GetCharacter().CandidateFor(string(skills.UnarmedCombat)))
 
 	return SmotherResult{
-		Cost:            cost,
-		Target:          target,
-		MoveResult:      result,
-		Counter:         counter,
-		Executed:        true,
-		InterruptedCast: interrupted,
+		Cost:             cost,
+		Target:           target,
+		MoveResult:       result,
+		Counter:          counter,
+		Executed:         true,
+		InterruptedCast:  interrupted,
+		ActeeSightBefore: acteeSightBefore,
 	}
 }

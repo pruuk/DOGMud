@@ -4,9 +4,14 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/state/perception"
+	"github.com/stretchr/testify/require"
 )
 
 // beastMoveGates is every CanUse* gate that species data decides.
@@ -66,10 +71,34 @@ func TestBeastMoveGates_TableExamples(t *testing.T) {
 }
 
 func TestScoreSmother_FavoursCastersAndSightedTargets(t *testing.T) {
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		perception.ConditionIdBlinded: {ConditionId: perception.ConditionIdBlinded, Name: "Blinded", TriggerCount: 3, RoundInterval: 1},
+	}))
 	mob := &mobs.Mob{}
 	sighted := characters.New()
-	if ScoreSmother(mob, sighted) <= 0 {
+	base := ScoreSmother(mob, sighted)
+	if base <= 0 {
 		t.Fatal("smother must score against a sighted target")
+	}
+
+	caster := characters.New()
+	if caster.Activity == nil {
+		caster.Activity = activity.NewMachine()
+	}
+	require.NoError(t, caster.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: "test-spell", FoldsNeeded: 3},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+	require.True(t, caster.IsCasting(), "fixture: the caster must be casting")
+	if got := ScoreSmother(mob, caster); got <= base {
+		t.Errorf("a casting target scores %d, a non-casting one %d: casting must score higher", got, base)
+	}
+
+	blind := characters.New()
+	blind.Conditions = conditions.New()
+	require.NoError(t, blind.AddCondition(perception.ConditionIdBlinded, false))
+	require.True(t, blind.HasAnyBlindSource(), "fixture: the target must be blind")
+	if got := ScoreSmother(mob, blind); got >= base {
+		t.Errorf("a blind target scores %d, a sighted one %d: blind must score lower", got, base)
 	}
 }
 
