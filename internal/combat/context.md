@@ -96,6 +96,14 @@ room line when it is empty, and keep their `engaged`, `!isSneaking` and
 `alreadyFighting` double-announce gates. The token map is shared with
 `GetWaitMessages` through `preAttackTokens` (`combat.go`).
 
+**What was retired with it (#541 slice 2).** The `separate` split (the
+cross-room blow) left the store, its type, its decoder and both render
+branches: round combat releases a target in another room before any line is
+drawn, so it could never render. Every combat-message file now has one
+`together` pool per intensity. `shooting.yaml` keeps only `prepare` and
+`wait`, because `items.MeleeSwingNarratedAs` makes a Shooting swing borrow
+Bludgeoning's lines (see "Bludgeon narration" and "Combat Messaging System" below).
+
 **The slam split (#541).** `trample` (horse), `lash` (slime, fungal colony)
 and `blast` (the water, air, fire, magma, sand, storm and ice elementals)
 were split off `slam`, which keeps the earth elemental and automaton.
@@ -877,8 +885,8 @@ Beast moves are decided by `SpeciesHasBeastMove` (the species' `beast_moves`); t
 | `maul` | no hands | Heavier damage + stronger bleed (`maul.yaml`) |
 | `pounce` | no hands, legs, not already grappling | Leap opener: knockdown + damage, no bleed (`pounce.yaml`) |
 | `gore` | no hands (`horns` body part load-validated for a gore-listing species) | Charge: damage + knockback (`gore.yaml`) |
-| `drain` | nothing else (`lifedrain: true` load-validated) | Lifesteal: bleed target, heal attacker = `damage × DrainHealRatio` (0.75) via `Character.Heal` (`drain.yaml`) |
-| `throttle` | no hands | Damage + the Bleeding record (condition 122) + Throttled condition #89 (stamina DoT) + a cast interrupt gated by an opposed concentration contest (U10): throttler's grip (`Dex + unarmed-combat×SkillWeight`) vs. the target's hold (`Wil + spellcasting×SkillWeight`) via `combat.RunConcentrationContest`, floored only by `ConcentrationFloor` (0.02); the old flat `ThrottleInterruptChance` coin flip is deleted. A lost contest calls the shared `actions.InterruptTargetCast` helper, which reuses the engine's existing `activity.TriggerCastCancel` cancel path (+ conviction refund); a held contest fires success-only spellcasting progression for the target instead. No new silence flag. (`throttle.yaml`) |
+| `drain` | nothing else (`lifedrain: true` load-validated) | Lifesteal: bleed target, heal attacker = `damage × DrainHealRatio` (0.75) via `Character.Heal` (`narration/special-moves/drain.yaml`) |
+| `throttle` | no hands | Damage + the Bleeding record (condition 122) + Throttled condition #89 (stamina DoT) + a cast interrupt gated by an opposed concentration contest (U10): throttler's grip (`Dex + unarmed-combat×SkillWeight`) vs. the target's hold (`Wil + spellcasting×SkillWeight`) via `combat.RunConcentrationContest`, floored only by `ConcentrationFloor` (0.02); the old flat `ThrottleInterruptChance` coin flip is deleted. A lost contest calls the shared `actions.InterruptTargetCast` helper, which reuses the engine's existing `activity.TriggerCastCancel` cancel path (+ conviction refund); a held contest fires success-only spellcasting progression for the target instead. No new silence flag. (`narration/special-moves/throttle.yaml`) A cat lists throttle in `beast_moves`, so the gate allows it, but `ambush_predator` carries no throttle weight (D4, #574), so a cat rarely chooses it. |
 | `smother` | no hands (mob-only; the smoke elemental, species 44, #541 slice 2) | `CanUseSmother` / `ScoreSmother` (base 50, +30 against a caster, -30 against a target with `HasAnyBlindSource`). On a hit: damage + Blinded (3) + Smothered (144, stamina DoT) + the same cast-interrupt contest as throttle (`actions.chokeCastInterrupt`); no bleed. (`narration/special-moves/smother.yaml`) |
 
 **New species field:** `LifeDrain bool` (yaml `lifedrain`). Vampire

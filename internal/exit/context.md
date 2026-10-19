@@ -25,10 +25,10 @@ The `internal/exit` package provides data structures for managing room exits in 
   becomes "upward", "on/watching the up" becomes "on/watching the way up".
   It only touches a phrase whose direction is one of the passed exit names,
   so "from the north" and "through the trapdoor" stay as rendered. Called by
-  `items.SeparateMessages.Render` (every cross-room combat-messages line, with
-  `{exitname}` and `{entrancename}`) and by `renderMoveEvent` in
-  `usercommands/move_narration.go` and `mobcommands/move_narration.go` (the
-  shoot store's `{exitname}` lines). Lines of the form "the <exit> exit"
+  `renderMoveEvent` in `usercommands/move_narration.go` and
+  `mobcommands/move_narration.go` (the shoot store's `{exitname}` lines).
+  Since #541 slice 2 it has no `items` caller: the cross-room
+  `separate` combat-messages lines that used it were retired. Lines of the form "the <exit> exit"
   (lock, unlock, flee) read correctly for up and down and use none of these.
 
 ### Key Structures

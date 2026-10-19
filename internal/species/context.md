@@ -135,13 +135,14 @@ slice 2 (Appendix A of
 `species_slam_split_test.go` (`TestSlamSplitAssignments`) pins every row.
 Spec: `docs/superpowers/specs/completed/2026-10-16-slam-split-design.md`.
 
-### Bears maul, cats pounce (#541 slice 2, owner ruling D)
+### Bears and cats (#541 slice 2, owner ruling D)
 
 Bear 3 ("claws and teeth") sets `natural_attack: maul` and feline 11
 ("claws and fangs") sets `natural_attack: pounce`, so their ordinary swings
 read from `maul.yaml` and `pounce.yaml` instead of `claws.yaml`. Both are
-wired like `trample` (step 3 below). `species_maul_pounce_test.go`
-(`TestBearsMaulAndCatsPounce`) pins them.
+natural-sharp (`CategoryForWeaponSubtype` puts them in the same hit band as
+claws and bite) and wired like `trample` (step 3 below).
+`species_maul_pounce_test.go` (`TestBearsMaulAndCatsPounce`) pins them.
 
 ### Choosing a natural attack for a new species
 
@@ -160,32 +161,56 @@ wired like `trample` (step 3 below). `species_maul_pounce_test.go`
    `combat.CategoryForWeaponSubtype` (`internal/combat/attackresult.go`); the
    `naturalWeaponPools` list in `internal/items/natural_weapon_agreement_test.go`;
    and a reach case in `items.DefaultReachForSubtype` (`internal/items/reach.go`).
-   `siphon` (#538) and the slam split (#541) are the worked examples.
+   `siphon` (#538), the slam split and `maul` and `pounce` (#541) are the
+   worked examples. The list above now has eleven natural attacks to copy
+   from.
 
 ### Beast moves (`beast_moves`, #541 slice 2)
 
 `BeastMoves []string` (YAML: `beast_moves: [rake, pounce]`) lists the
 special moves a species can use. It is the special-move half of the
-principle above: `natural_attack` is the ordinary swing, `beast_moves` the
-rarer moves and finishers. The reviewed table (spec section 5) is pinned by
-`species_beast_moves_test.go` (`proposedBeastMoves`); a species absent from
-it has no beast moves.
+principle above (owner ruling E): `natural_attack` is the default, the
+ordinary swing, and `beast_moves` are the special moves, the rarer moves and
+finishers. A species absent from the table has no beast moves. The reviewed
+table (spec section 5) is pinned by `species_beast_moves_test.go`
+(`proposedBeastMoves`):
+
+| Species | `beast_moves` |
+|---|---|
+| canine 2 | maul, throttle, pounce, hamstring |
+| bear 3 | rake |
+| boar 6, deer 7 | gore |
+| raptor 9 | rake, pounce |
+| rodent 10 | hamstring |
+| feline 11 | rake, pounce, hamstring, throttle |
+| arachnid 17 | pounce |
+| reptile 21 | maul |
+| bat 22 | rake |
+| mustelid 24 | throttle, pounce |
+| wraith 32, spectre 33, vampire 34 | drain |
+| smoke elemental 44 | smother |
 
 `beastMoveBodies` in `species.go` names every move the list may hold and
-what body each needs: `rake`, `maul`, `throttle`, `smother` need no hands;
-`pounce` and `hamstring` also need legs; `gore` also needs horns; `drain`
-needs `lifedrain: true` and allows hands (armed undead drain, so the
-vampire 34 lists it). `charge` is not a beast move: it has no AI gate and
-stays scripted through mob `combatcommands`.
+what body each needs. Every move but `drain` needs a body without hands
+(`rake`, `maul`, `throttle`, `smother`); `pounce` and `hamstring` also need
+legs; `gore` also needs horns; `drain` needs `lifedrain: true` and allows
+hands (armed undead drain, so the vampire 34 lists it). `charge` is not a
+beast move: it has no AI gate and stays scripted through mob
+`combatcommands`.
 
 `LoadDataFiles` panics through `validateBeastMoves` on an unknown move, a
 move listed twice, or a move whose body the species lacks. The validator
 reads `BodyParts` the way `characters.Character.HasBodyPart` does (no list
 means no parts), not the fail-open `Species.HasBodyPart`, so the load check
 and the runtime anatomy gate cannot disagree. `(*Species).HasBeastMove(move)`
-is the nil-safe lookup. The combat gates switch from the attack-family
-predicates to this list in a later task of the same slice; until then the
-list is data only and play is unchanged.
+is the nil-safe lookup; the combat gates and the action entries read it
+through `combat.SpeciesHasBeastMove`.
+
+**Adding a species.** Pick the default attack by body (steps 1 and 2
+above), then list only the moves the creature really makes, then run
+`go test ./internal/species/`: the validator fails the load on a move the
+body cannot make, and the table test fails until the new species is added
+to `proposedBeastMoves`.
 
 ---
 
@@ -197,6 +222,7 @@ list is data only and play is unchanged.
 | `species_test.go` | Unit tests for body-part logic |
 | `species_slam_split_test.go` | Pins each former slam species to its type after the slam split (#541) |
 | `species_beast_moves_test.go` | Pins each species' `beast_moves` to the reviewed table and proves `validateBeastMoves` can fail per rule (#541) |
+| `species_maul_pounce_test.go` | Pins bear 3 to `maul` and feline 11 to `pounce` (#541) |
 | `test_helpers.go` | Test utilities |
 | `testing_support.go` | `SetSpeciesForTest` / `LoadForTest` — scoped roster swaps |
 | `context.md` | This file — package overview for Claude Code |

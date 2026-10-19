@@ -32,7 +32,8 @@ The items system is built around two main components:
 - Dynamic combat message generation based on weapon subtypes
 - Intensity-based message selection (miss, weak, normal, heavy, critical)
 - Token replacement system for personalized combat text
-- Separate messages for attacker, defender, and room observers
+- One record per blow carries the attacker, defender and room observer lines
+  (`together` is the only split; `separate` is retired, #541)
 
 **Item name articles (`article.go`):**
 - `ArticlePrefix(name) string` returns what goes before one item's name,
