@@ -45,6 +45,13 @@ func GetDamageDescription(damageAmount int, targetMaxHP int) string {
 	}
 }
 
+// damageTag is the parenthesised wound words a hit line ends with, "(light
+// wounds)", in the damage colour: the form the deflected, opening-strike and
+// special-move stores author as `(<ansi fg="damage">{damage}</ansi>)`.
+func damageTag(dmgDesc string) string {
+	return `(<ansi fg="damage">` + dmgDesc + `</ansi>)`
+}
+
 // GetHealDescription converts a numeric healing amount into a descriptive phrase,
 // scaled relative to the target's maximum HP. Mirrors GetDamageDescription so that
 // neither function leaks raw numbers into player-facing messages.

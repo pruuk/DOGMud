@@ -1746,7 +1746,7 @@ func deflectedSwingLines(defense combatvocab.Defence, sourceName, targetName, dm
 		return a, d
 	}
 
-	dmg := `(<ansi fg="damage">` + dmgDesc + `</ansi>)`
+	dmg := damageTag(dmgDesc)
 
 	var verbYou, verbThey string
 	switch defense {
@@ -1974,6 +1974,17 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		toAttackerMsg = items.ItemMessage(roles.Actor)
 		toDefenderMsg = items.ItemMessage(roles.Actee)
 		toAttackerRoomMsg = items.ItemMessage(roles.Observer)
+
+		// The one who was hit reads how badly (#572, owner ruling
+		// 2026-10-19): every incoming pool hit, weapon or natural attack,
+		// ends with its wound words, as the deflected and special-move lines
+		// already did. No pool line authors {damage}, so it is appended here
+		// once rather than in 22 files. A swing that dealt nothing (a miss
+		// band) gets none, and room lines carry no damage, as everywhere in
+		// this package.
+		if attackTargetDamage > 0 && toDefenderMsg != `` {
+			toDefenderMsg += items.ItemMessage(` ` + damageTag(tokenReplacements[items.TokenDamage]))
+		}
 
 		rendered = true
 	}

@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-10-19: Names and wounds read right
+
+- A creature whose name starts with "A", "An" or "The" now reads with a
+  small letter in the middle of a sentence: "You attack a Culvert Slime."
+  Its corpse reads "the Culvert Slime corpse", and several of them read
+  "2 Culvert Slime corpses".
+- When a creature hits you, the line now tells you how badly it hurt, for
+  bites, claws and other natural attacks as well as weapons, even when you
+  cannot see who hit you.
+
 ## 2026-10-19: Every creature squares up its own way
 
 - When a fight begins, the first line now shows how your foe gets ready,
