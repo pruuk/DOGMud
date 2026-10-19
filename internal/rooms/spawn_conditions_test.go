@@ -55,18 +55,22 @@ func TestARoomSpawnEntrysMessageNarratesARespawn(t *testing.T) {
 		mobId: {MobId: mobId, Zone: "TestZone", Character: characters.Character{Name: "Training Dummy"}},
 	}, map[int]*mobs.Mob{}))
 
+	// Only an entry marked narraterespawn speaks (owner, #620): most of the
+	// shipped messages were written as scenery and stay quiet.
 	for _, c := range []struct {
 		name      string
+		narrate   bool
 		despawned uint64
 		want      []string
 	}{
-		{"respawn", 10, []string{line}},
-		{"first spawn", 0, []string{}},
+		{"marked respawn", true, 10, []string{line}},
+		{"unmarked respawn", false, 10, []string{}},
+		{"marked first spawn", true, 0, []string{}},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			r := sightTestRoom(t, "city")
 			r.SkyLight, r.Lamp = SkyLightPtr(0), LampPtr(60)
-			r.SpawnInfo = []SpawnInfo{{MobId: mobId, Message: line, RespawnRate: "5 rounds", DespawnedRound: c.despawned}}
+			r.SpawnInfo = []SpawnInfo{{MobId: mobId, Message: line, NarrateRespawn: c.narrate, RespawnRate: "5 rounds", DespawnedRound: c.despawned}}
 			r.Prepare(false)
 			ids := r.GetMobs()
 			if len(ids) != 1 {

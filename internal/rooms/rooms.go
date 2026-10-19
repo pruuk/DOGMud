@@ -1220,8 +1220,10 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 				// sent). A first spawn (boot, room load) stays quiet, as
 				// does one listed elsewhere by its schedule or spawned
 				// hidden. Players walking in meet the mob already there:
-				// MoveToRoom prepares the room before adding them.
-				if spawnInfo.DespawnedRound > 0 && spawnInfo.Message != `` &&
+				// MoveToRoom prepares the room before adding them. Only an
+				// entry marked narraterespawn speaks (owner, #620): most
+				// messages were written as scenery, not as arrivals.
+				if spawnInfo.NarrateRespawn && spawnInfo.DespawnedRound > 0 && spawnInfo.Message != `` &&
 					mob.Character.RoomId == r.RoomId && !mob.Character.IsHidden() {
 					r.SendTextVisual(messaging.CategoryRoomEntry, spawnInfo.Message)
 				}

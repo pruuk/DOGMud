@@ -36,6 +36,7 @@ exits:
 spawninfo:
 - mobid: 9163
   message: A fresh practice butt is hauled out and lashed to the post at the end of the range.
+  narraterespawn: true
   respawnrate: 5 rounds
 nouns:
   shelf: The shelf is the bluff's natural upper ledge, widened and

@@ -42,6 +42,7 @@ spawninfo:
 - mobid: 9108
 - mobid: 9109
   message: A fresh straw dummy is hauled out and set on the pivot, ready for work.
+  narraterespawn: true
   respawnrate: 1 real minute
 # The tutorial's Straw Effigy, ADDED alongside the fragile Training Dummy
 # rather than replacing it. 9109 has ~15 vitality on purpose so quest 32's
@@ -56,6 +57,7 @@ spawninfo:
 # still gives a kill. The two names do not collide.
 - mobid: 9614
   message: A straw effigy is lashed to the far post, faceless and patient.
+  narraterespawn: true
   respawnrate: 1 real minute
 idlemessages:
 - The <ansi fg="itemname">dummy</ansi> creaks a slow half-turn on its weighted pivot, then settles still again.
