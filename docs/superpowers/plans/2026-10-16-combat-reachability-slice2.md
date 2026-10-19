@@ -57,6 +57,16 @@ Every row was read from the worktree `C:/tmp/dogmud-slam` at that SHA. "Spec" ma
 
 Spec facts 14 and 15 (the PR #208 species corrections) belong to slice 1, which shipped in #568, and are not re-verified here.
 
+### Re-verified 2026-10-19 on master `d3b7f9774` (rows above kept as written on 10-16)
+
+All 34 rows were re-checked against the slice 2 worktree. 20 hold, 11 drifted in line numbers only, 3 changed in substance. Read current line numbers from source when executing a step; the deltas that matter:
+
+- **Row 22 CHANGED (Task 11 code):** `combat_throttle.go:216-219` consumes the round with `char.SpendRoundOnAction()` (16b8362db), not `SetRoundsWaiting(1)`. The round hook consumes such a round with no wait line (`NewRound_DoCombat_resolution.go:87,97-99`), and `TestSpecialMoveAdmissionOrdering` counts only that call (`command_readiness_drift_test.go:297-305`). Task 11's smother code is updated to match. `ClaimSpecialMove` is now `special_move_cooldown.go:45`; throttle knobs `config.yaml:843-845`.
+- **Row 4 CHANGED (Task 14 expectation):** a round right after a special move prints NO wait line (16b8362db). The playtest must not expect a wait line on the round after maul, pounce or smother. `GetWaitMessages` keeps its signature and lines; its one caller is now `NewRound_DoCombat_resolution.go:102`.
+- **Row 20 CHANGED (Task 2 list):** add `shipped_narration_data_guard_test.go:327` (`"todefenderroom": "remote_observer"`) to Task 2's list of `separate` users; check whether movenarration still needs the alias before deleting it. The swing separate render is now `combat_helpers.go:1959-1998`. The new feint path (`sendFeintLines`, `:1625-1627`) sends a cross-room room line but does not read the `Separate` pool, so Task 2's shape holds.
+- **Task 1 is not partly done:** e88c7f7af changed only which SKILL sets a swing's message tier and feint (`GetCombatSkillLevelFor(ws.weapon)`, `combat_helpers.go:1897,1926`); `buildWeaponSetup`'s subtype logic (`:430-462`) is unchanged. The entangled-defence reader is now `:691-694`.
+- **Drift only:** fumble and coup de grace callers `combat_helpers.go:1863,1873`; `meleeDisplaySubtype :1710` (caller `:1856`, comment list `:1707-1709`); sharp band `attackresult.go:267-268`; charge `divergences.go:187`; drain EXEMPT note `combat/context.md:888-893`; predicate docs `actions/context.md:224-225`, `combat/context.md:844-848`; drift-test ranges `TestSpecialMoveAdmissionOrdering` 149-317, `TestSpecialMoveWrapperAdmission` 596-705 (mob list 598), `runExecuteAndReadExecuted` 728-760, `runExecuteAndReadFlag` 1456; banner guard empty-file check `:159-161`. Condition id 144 is still free (`id_inventory --alloc conditions 1`).
+
 ## Owner decisions (decided 2026-10-16; Task 0 Step 1 records them)
 
 Every task below is written to these rulings. Each entry gives the question, the ruling and the reason.
@@ -2111,8 +2121,11 @@ func ExecuteSmother(actor Actor) SmotherResult {
 	}
 	combat.RecordSpecialMove(sourceType, targetType, "smother", result.Hit, result.Damage, char, target.Char, util.GetRoundCount())
 
+	// Re-verified 2026-10-19 (16b8362db): a special move consumes its round
+	// with SpendRoundOnAction, which the round hook consumes silently, and
+	// TestSpecialMoveAdmissionOrdering counts only that call.
 	if char.CombatPhase != nil {
-		char.SetRoundsWaiting(1)
+		char.SpendRoundOnAction()
 	}
 	actor.AwardResolved(result.Hit, actor.GetCharacter().CandidateFor(string(skills.UnarmedCombat)))
 
