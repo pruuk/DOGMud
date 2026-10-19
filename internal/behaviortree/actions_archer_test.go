@@ -51,6 +51,21 @@ func seedTargetMob(t *testing.T, instanceId, roomId int) *mobs.Mob {
 	return target
 }
 
+// seedLitRooms seeds rooms on a lamp-lit biome. try_fire refuses to claim a
+// round with a shot the fire rule would refuse for darkness (#265), and a bare
+// test room under an unpinned clock reads as night. A lamp pins the light
+// whatever the round, as in sightScene.
+func seedLitRooms(t *testing.T, rs map[int]*rooms.Room) {
+	t.Helper()
+	t.Cleanup(rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
+		"archer_lit": {BiomeId: "archer_lit", Lamp: rooms.LampPtr(90)},
+	}))
+	for _, r := range rs {
+		r.Biome = "archer_lit"
+	}
+	t.Cleanup(rooms.SeedRoomsForTest(rs, map[string]*rooms.ZoneConfig{}))
+}
+
 func queuedCmds(instanceId int) []string {
 	return events.DrainQueuedInputsForTest(instanceId)
 }
@@ -78,6 +93,7 @@ func TestArcherActions_Registered(t *testing.T) {
 
 func TestActTryFire_SameRoomLoaded_FiresAndSucceeds(t *testing.T) {
 	const room = 10
+	seedLitRooms(t, map[int]*rooms.Room{room: {RoomId: room, Zone: "test"}})
 	target := seedTargetMob(t, 401, room)
 
 	mob := newTestMob(t)
@@ -92,6 +108,34 @@ func TestActTryFire_SameRoomLoaded_FiresAndSucceeds(t *testing.T) {
 	}
 	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, "shoot Target") {
 		t.Errorf("expected 'shoot Target' queued, got %v", cmds)
+	}
+}
+
+// An archer that cannot see to aim must not claim the round: the fire rule
+// would refuse the shot (TooDarkToAim) and the mob would do nothing at all.
+// Failure lets the selector fall through to melee (#265).
+func TestActTryFire_TooDarkToAim_Fails(t *testing.T) {
+	const room = 10
+	t.Cleanup(rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
+		"cave": {BiomeId: "cave", SkyLight: rooms.SkyLightPtr(0.0)},
+	}))
+	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{
+		room: {RoomId: room, Zone: "test", Biome: "cave"},
+	}, map[string]*rooms.ZoneConfig{}))
+	target := seedTargetMob(t, 404, room)
+
+	mob := newTestMob(t)
+	mob.Character.RoomId = room
+	mob.Character.Equipment.Weapon = rangedBow(true)
+	mob.Character.SetAggro(0, target.InstanceId, characters.DefaultAttack)
+	queuedCmds(mob.InstanceId) // clear
+
+	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: room}
+	if got := LookupAction("try_fire")(nil, ctx); got != Failure {
+		t.Errorf("try_fire in an unlit cave = %v, want Failure", got)
+	}
+	if cmds := queuedCmds(mob.InstanceId); len(cmds) != 0 {
+		t.Errorf("no shot may be queued in the dark, got %v", cmds)
 	}
 }
 
@@ -124,15 +168,14 @@ func TestActTryFire_NoAggro_Fails(t *testing.T) {
 
 func TestActTryFire_CrossRoomAdjacent_FiresDirectional(t *testing.T) {
 	const here, there = 10, 11
-	cleanup := rooms.SeedRoomsForTest(map[int]*rooms.Room{
+	seedLitRooms(t, map[int]*rooms.Room{
 		here: {RoomId: here, Zone: "test", Exits: map[string]exit.RoomExit{
 			"north": {RoomId: there},
 		}},
 		there: {RoomId: there, Zone: "test", Exits: map[string]exit.RoomExit{
 			"south": {RoomId: here},
 		}},
-	}, map[string]*rooms.ZoneConfig{})
-	defer cleanup()
+	})
 
 	target := seedTargetMob(t, 403, there) // one exit (north) away
 
@@ -153,6 +196,7 @@ func TestActTryFire_CrossRoomAdjacent_FiresDirectional(t *testing.T) {
 
 func TestActTryFire_NoAggroSameRoomMemory_FiresViaFallback(t *testing.T) {
 	const room = 10
+	seedLitRooms(t, map[int]*rooms.Room{room: {RoomId: room, Zone: "test"}})
 	target := seedTargetMob(t, 410, room)
 
 	mob := newTestMob(t)
@@ -173,15 +217,14 @@ func TestActTryFire_NoAggroSameRoomMemory_FiresViaFallback(t *testing.T) {
 
 func TestActTryFire_NoAggroCrossRoomMemory_FiresDirectional(t *testing.T) {
 	const here, there = 10, 11
-	cleanup := rooms.SeedRoomsForTest(map[int]*rooms.Room{
+	seedLitRooms(t, map[int]*rooms.Room{
 		here: {RoomId: here, Zone: "test", Exits: map[string]exit.RoomExit{
 			"north": {RoomId: there},
 		}},
 		there: {RoomId: there, Zone: "test", Exits: map[string]exit.RoomExit{
 			"south": {RoomId: here},
 		}},
-	}, map[string]*rooms.ZoneConfig{})
-	defer cleanup()
+	})
 
 	target := seedTargetMob(t, 411, there) // pursuer one exit (north) away
 

@@ -25,6 +25,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -173,9 +174,9 @@ func hpPercent(char *characters.Character) float64 {
 // actTryFire fires a loaded ranged weapon at the mob's aggro target. Same-room
 // targets get an immediate `shoot <name>`; a target exactly one exit away gets
 // a directional `shoot <name> <dir>` (the shoot mob command resolves the rest).
-// Returns Failure when there is nothing loaded, no target, or the target is not
-// reachable by a single shot — so the surrounding selector can try try_reload /
-// the melee fallback instead.
+// Returns Failure when there is nothing loaded, no target, the target is not
+// reachable by a single shot, or the mob cannot see clearly enough to aim into
+// the target's room — so the surrounding selector can fall back to melee.
 //
 // Target resolution prefers the LIVE aggro target, then falls back to
 // CombatMemory: after keep_distance retreats the archer one exit, the round
@@ -200,6 +201,16 @@ func actTryFire(params map[string]any, ctx *EvalContext) Result {
 		if !ok {
 			return Failure
 		}
+	}
+
+	// An aimed shot needs the shooter to see clearly into the target's room:
+	// actions.ExecuteFire refuses it (TooDarkToAim / Blinded) on this same
+	// predicate. Claiming the round with a shot the fire rule will refuse
+	// leaves the mob doing nothing at all, so fail here and let the selector
+	// fall through to the melee cascade, which has no sight gate (#265).
+	targetRoom := rooms.LoadRoom(targetRoomId)
+	if targetRoom == nil || !messaging.CanSeeClearly(&mob.Character, targetRoom) {
+		return Failure
 	}
 
 	// (a) Same-room target — fire straight away.

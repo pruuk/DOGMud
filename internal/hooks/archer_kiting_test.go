@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -64,6 +65,15 @@ func TestHandleMobCombat_ArcherKitesAndFiresAfterAggroLoss(t *testing.T) {
 	behaviortree.LoadArchetypeForTest(t, "archer", archerArchetypeYAML)
 
 	const roomA, roomB = 1, 2 // archer fled A -> B; target still stands in A
+
+	// The archer must see into room A to aim (try_fire refuses a shot the fire
+	// rule would refuse as TooDarkToAim, #265), and room A's bare "city" biome
+	// reads as night under an unpinned test clock. A lamp pins it lit. A defer,
+	// not t.Cleanup, so it unwinds before seedAllRegistries' own restore.
+	restoreBiomes := rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
+		"city": {BiomeId: "city", Name: "City", Symbol: "#", MovementCost: 1.0, Lamp: rooms.LampPtr(90)},
+	})
+	defer restoreBiomes()
 
 	weapon := items.Item{
 		ItemId: 1,
