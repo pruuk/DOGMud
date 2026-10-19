@@ -371,14 +371,14 @@ options:
     # messages for when they are in the same room
     together:
       beginner:
-      - actor: 'Your jaws <ansi fg="red-bold">FUMBLE</ansi> as your snap goes completely wild!'
+      - actor: 'Your snap goes completely wild, and you <ansi fg="red-bold">FUMBLE</ansi> it!'
         actee: '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their snap in an embarrassing display!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s jaws <ansi fg="red-bold">FUMBLE</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their snap wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
       - actor: 'You <ansi fg="red-bold">FUMBLE</ansi> and stumble off-balance!'
         actee: '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their balance!'
         observer: '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their bite at <ansi fg="{acteetype}">{actee}</ansi> and stumbles!'
       - actor: 'You <ansi fg="red-bold">FUMBLE</ansi> your <ansi fg="item">{itemname}</ansi> awkwardly, leaving you vulnerable!'
-        actee: '<ansi fg="{actortype}">{actor}</ansi>''s jaws <ansi fg="red-bold">FUMBLE</ansi> pathetically as they overextend!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> overextends and <ansi fg="red-bold">FUMBLES</ansi> their snap pathetically!'
         observer: '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their snap at <ansi fg="{acteetype}">{actee}</ansi> in a clumsy overextension!'
       - actor: 'You misjudge the distance and your attack <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         actee: '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and their attack <ansi fg="red-bold">FUMBLES</ansi> hopelessly!'

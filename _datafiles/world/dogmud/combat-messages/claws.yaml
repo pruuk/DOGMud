@@ -20,9 +20,9 @@ options:
       - actor: 'You flex your <ansi fg="item">{itemname}</ansi> menacingly at <ansi fg="{acteetype}">{actee}</ansi>.'
         actee: '<ansi fg="{actortype}">{actor}</ansi> flexes their <ansi fg="item">{itemname}</ansi> menacingly at you.'
         observer: '<ansi fg="{actortype}">{actor}</ansi> flexes their <ansi fg="item">{itemname}</ansi> tightly, facing off against <ansi fg="{acteetype}">{actee}</ansi>.'
-      - actor: 'You let out a low growl, preparing to pounce on <ansi fg="{acteetype}">{actee}</ansi>.'
-        actee: '<ansi fg="{actortype}">{actor}</ansi> lets out a low growl, preparing to pounce on you.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> lets out a low growl, preparing to pounce on <ansi fg="{acteetype}">{actee}</ansi>.'
+      - actor: 'You let out a low growl, preparing to strike at <ansi fg="{acteetype}">{actee}</ansi>.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> lets out a low growl, preparing to strike at you.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> lets out a low growl, preparing to strike at <ansi fg="{acteetype}">{actee}</ansi>.'
       - actor: 'You bare your <ansi fg="item">{itemname}</ansi>, hissing with barely contained rage.'
         actee: '<ansi fg="{actortype}">{actor}</ansi> bares their <ansi fg="item">{itemname}</ansi>, hissing with barely contained rage.'
         observer: '<ansi fg="{actortype}">{actor}</ansi> bares their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, hissing with barely contained rage.'
@@ -57,7 +57,7 @@ options:
     together:
       beginner:
       - actor: 'You watch <ansi fg="{acteetype}">{actee}</ansi> closely, waiting for the perfect moment to strike.'
-        actee: '<ansi fg="{actortype}">{actor}</ansi> watches you intently, waiting to pounce.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> watches you intently, waiting for the perfect moment to strike.'
         observer: '<ansi fg="{actortype}">{actor}</ansi> watches <ansi fg="{acteetype}">{actee}</ansi> intently, waiting for the perfect moment to strike.'
       - actor: 'You circle around <ansi fg="{acteetype}">{actee}</ansi>, claws at the ready.'
         actee: '<ansi fg="{actortype}">{actor}</ansi> circles dangerously.'
@@ -65,9 +65,9 @@ options:
       - actor: 'You aim carefully at <ansi fg="{acteetype}">{actee}</ansi>, trembling with anticipation.'
         actee: '<ansi fg="{actortype}">{actor}</ansi> aims carefully at you, trembling with anticipation.'
         observer: '<ansi fg="{actortype}">{actor}</ansi> aims carefully at <ansi fg="{acteetype}">{actee}</ansi>, trembling with anticipation.'
-      - actor: 'You hiss softly, looking for an opening to pounce.'
-        actee: '<ansi fg="{actortype}">{actor}</ansi> hisses softly, looking for an opening.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> hisses softly at <ansi fg="{acteetype}">{actee}</ansi>, looking for an opening to pounce.'
+      - actor: 'You hiss softly, looking for an opening to strike.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> hisses softly, looking for an opening to strike.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> hisses softly at <ansi fg="{acteetype}">{actee}</ansi>, looking for an opening to strike.'
       expert:
       - actor: 'From your {stance} stance, you stand {position}, eyeing <ansi fg="{acteetype}">{actee}</ansi> for weakness.'
         actee: '<ansi fg="{actortype}">{actor}</ansi> holds their <ansi fg="item">{itemname}</ansi> ready, eyes fixed on you.'
@@ -380,13 +380,13 @@ options:
     # messages for when they are in the same room
     together:
       beginner:
-      - actor: 'Your claws <ansi fg="red-bold">FUMBLE</ansi> as your swipe goes completely wild!'
-        actee: '<ansi fg="{actortype}">{actor}</ansi>''s claws <ansi fg="red-bold">FUMBLE</ansi> pathetically as they stumble!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s claws <ansi fg="red-bold">FUMBLE</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'Your swipe goes completely wild, and you <ansi fg="red-bold">FUMBLE</ansi> and stumble!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s swipe goes completely wild, and they <ansi fg="red-bold">FUMBLE</ansi> and stumble!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s swipe at <ansi fg="{acteetype}">{actee}</ansi> goes completely wild, and they <ansi fg="red-bold">FUMBLE</ansi> and stumble!'
       - actor: 'You <ansi fg="red-bold">FUMBLE</ansi> and stumble off-balance!'
         actee: '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their balance!'
         observer: '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their attack at <ansi fg="{acteetype}">{actee}</ansi> and stumbles!'
-      - actor: 'Your claws <ansi fg="red-bold">FUMBLE</ansi> awkwardly, leaving you vulnerable!'
+      - actor: 'You <ansi fg="red-bold">FUMBLE</ansi> your swipe awkwardly, leaving you vulnerable!'
         actee: '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their swipe in an embarrassing display!'
         observer: '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their swipe at <ansi fg="{acteetype}">{actee}</ansi> in a clumsy manner!'
       - actor: 'You lose your grip and your attack <ansi fg="red-bold">FUMBLES</ansi> pathetically!'

@@ -148,6 +148,54 @@ func TestNaturalWeaponPoolsNeverPutAVerbAfterTheWeapon(t *testing.T) {
 	}
 }
 
+// bodyPartBeforeBanner finds a natural-weapon word written out in the pool
+// (not {itemname}) as the subject of a FUMBLE banner: "A figure's claws
+// FUMBLE pathetically as they stumble!" (#631). The pool's word is wrong for
+// some species that render through it (a bat's "wings and fangs" through
+// claws), and the #455 rule holds either way: the attacker fumbles, the
+// weapon does not.
+var bodyPartBeforeBanner = regexp.MustCompile(`\b(claws|jaws|fangs|teeth|talons|horns?|tail|stinger|beak|maw|fists?)\s+(<ansi[^>]*>)?FUMBLES?\b`)
+
+func TestBodyPartBeforeBanner_CanFail(t *testing.T) {
+	if !bodyPartBeforeBanner.MatchString(`{actor}''s claws <ansi fg="red-bold">FUMBLE</ansi> pathetically as they stumble!`) {
+		t.Error("missed the shipped #631 line")
+	}
+	if bodyPartBeforeBanner.MatchString(`You <ansi fg="red-bold">FUMBLE</ansi> your <ansi fg="item">{itemname}</ansi> awkwardly!`) {
+		t.Error("flagged a line where the attacker fumbles")
+	}
+}
+
+func TestNaturalWeaponPoolsNeverMakeABodyPartFumble(t *testing.T) {
+	for _, f := range naturalWeaponPoolFiles(t) {
+		raw, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatalf("read %s: %v", f, err)
+		}
+		for i, line := range strings.Split(string(raw), "\n") {
+			if bodyPartBeforeBanner.MatchString(line) {
+				t.Errorf("%s:%d: a body part fumbles, not the attacker: %s", f, i+1, strings.TrimSpace(line))
+			}
+		}
+	}
+}
+
+// #631: claws.yaml narrates every species whose natural attack is claws,
+// among them birds, bats, skeletons and the smoke-wrought Elemental Prince,
+// none of which can pounce. Pounce is a beast move with its own pool; the
+// claws pool promises a strike instead.
+func TestClawsPoolPromisesNoPounce(t *testing.T) {
+	f := filepath.Join("..", "..", "_datafiles", "world", "dogmud", "combat-messages", "claws.yaml")
+	raw, err := os.ReadFile(f)
+	if err != nil {
+		t.Fatalf("read %s: %v", f, err)
+	}
+	for i, line := range strings.Split(string(raw), "\n") {
+		if strings.Contains(strings.ToLower(line), "pounc") {
+			t.Errorf("%s:%d: promises a pounce: %s", f, i+1, strings.TrimSpace(line))
+		}
+	}
+}
+
 // An actor is "they/their" everywhere in player copy, never "it/its", and a
 // natural weapon is the actor's: "{actor} rakes their {itemname}", not "its".
 // Task 6 of M6 slice 2 ruled this; the verb-agreement rewrite once put "its"
