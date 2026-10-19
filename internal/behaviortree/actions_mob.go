@@ -230,10 +230,12 @@ func actCommandBestOf(params map[string]any, ctx *EvalContext) Result {
 	return Failure
 }
 
-// beastMoves is the set of special-move names that are anatomy/identity-gated
-// to true beasts (no-hands natural-weapon attackers). Humanoid mobs can never
-// satisfy those gates, so filtering on this set ensures the tactical cascade
-// (command_best_of bash/grapple/trip) still fires for humanoids.
+// beastMoves is the set of special-move names gated by the species'
+// beast_moves list. Every one but drain also requires a body without hands,
+// so a humanoid mob passes none of them unless its species lists drain (the
+// vampire has hands and drains). Filtering on this set lets the tactical
+// cascade (command_best_of bash/grapple/trip) still fire for a humanoid
+// whose species lists no beast move.
 var beastMoves = map[string]bool{
 	"rake":      true,
 	"maul":      true,
