@@ -33,6 +33,7 @@ exits:
     roomid: 5306
 spawninfo:
 - mobid: 9146
+  message: A new practice mote folds out of the air above the mark and begins to turn.
 nouns:
   mark: The scribed circle is broad enough that you could stand in it
     with your arms spread wide. The stone inside the inner ring is lighter

@@ -13,6 +13,7 @@ exits:
 spawninfo:
   - mobid: 9491
   - mobid: 9614
+    message: A fresh straw effigy is set on the post, faceless and patient.
 nouns:
   effigy: >-
     A man-shape of bound straw on a fixed post, charcoal smudges for eyes. It
