@@ -178,7 +178,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Raise spells target self, so InitiateCast hands targetName on as the
 	// SpellRest that resolution's backstop gate reads; both parse it alike.
 	if spellInfo.SummonRequiresCorpse {
-		if idx, _, refusalLine := actions.FindRaiseCorpse(room, spellInfo, targetName); idx < 0 {
+		if idx, _, refusalLine := actions.FindRaiseCorpse(room, user.Character, spellInfo, targetName); idx < 0 {
 			user.SendText(messaging.CategoryRefusal, refusalLine)
 			return true, nil
 		}

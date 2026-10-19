@@ -319,8 +319,11 @@ func (c *Character) GetCombatSkillTag() skills.SkillTag {
 }
 
 // CombatSkillTagForItem returns the combat skill tag for a specific weapon item.
+// An empty slot (ItemId 0) and a species-disabled slot (items.ItemDisabledSlot,
+// ItemId -1: bears, boars, felines) both mean the creature attacks with its
+// body, so both read unarmed-combat (#527).
 func CombatSkillTagForItem(weapon items.Item) skills.SkillTag {
-	if weapon.ItemId == 0 {
+	if weapon.ItemId <= 0 {
 		return skills.UnarmedCombat
 	}
 	spec := weapon.GetSpec()

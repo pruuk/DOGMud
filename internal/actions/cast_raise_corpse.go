@@ -3,6 +3,8 @@ package actions
 import (
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -128,12 +130,22 @@ func RaiseCorpseRefusal(reason RaiseSkipReason, nameFilter string) string {
 // chosen corpse's index in room.Corpses and its pool, or idx -1 and the
 // refusal line to send. It changes nothing; the caller removes the corpse
 // only once every other gate has passed.
-func FindRaiseCorpse(room *rooms.Room, spellInfo *spells.SpellData, spellRest string) (idx int, pool int, refusalLine string) {
+//
+// The match follows the caster's sight in the room, as FindCorpseIndex does
+// for look, loot and get (#435): below clear sight a corpse answers only to
+// the generic word, so a named raise gets the plain no-match line and never
+// a refusal that confirms what lies there (#587). A nil caster reads as clear
+// sight.
+func FindRaiseCorpse(room *rooms.Room, caster *characters.Character, spellInfo *spells.SpellData, spellRest string) (idx int, pool int, refusalLine string) {
 	var corpses []rooms.Corpse
 	if room != nil {
 		corpses = room.Corpses
 	}
 	nameFilter, targetIndex := ParseRaiseTarget(spellRest)
+	if nameFilter != "" && caster != nil && room != nil &&
+		messaging.ParticipantSight(caster, room) != messaging.SightFull {
+		return -1, 0, RaiseCorpseRefusal(RaiseNoMatch, nameFilter)
+	}
 	idx, pool, reason := SelectRaiseCorpse(corpses, nameFilter, targetIndex, spellInfo.SummonMinCorpsePool)
 	if idx < 0 {
 		return -1, 0, RaiseCorpseRefusal(reason, nameFilter)
