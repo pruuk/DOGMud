@@ -624,6 +624,16 @@ from `deflectedSwingLines`, which draws one index from the winning defence's
 defence has none) through `items.RenderDeflectedSwing`. With no store loaded it
 returns the literal sentences, which equal variant 0 of each pool.
 
+Every incoming hit tells the one hit how badly (#572, owner ruling
+2026-10-19). No combat-messages pool line authors `{damage}`, so
+`buildAttackMessages` appends `damageTag` ("(light wounds)", the
+`GetDamageDescription` band, in the damage colour) to the defender's pool hit
+line whenever the swing dealt damage, weapon or natural attack alike, inside a
+crit's banner. The attacker's and room's lines carry none. A blind defender's
+dark line (`darkLines`) gets the same words for a hit, crit or deflected
+swing. The deflected, opening-strike and special-move lines already carried
+them.
+
 Before this, a defensive win was zero damage while `TrySpellDeflection` and
 `TryStoicResolve` produced a flat 0.5 or 0.0 for spells and taunts: two
 mechanisms answering one question. Task 12 folded those channels onto this curve

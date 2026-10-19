@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/companionai"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -108,7 +109,8 @@ func TransportCompanions(owner *users.UserRecord, oldRoomId, newRoomId int) {
 
 		// Inform owner. Owner-private channel — owner-knowable companion
 		// name is fine over audio (no infrared / blind observer to leak to).
-		owner.SendText(messaging.CategorySystem, fmt.Sprintf("Your %s rejoins you.", mob.Character.Name))
+		// "Your" brings the article, so the name's own goes (#572).
+		owner.SendText(messaging.CategorySystem, fmt.Sprintf("Your %s rejoins you.", items.NameWithoutArticle(mob.Character.Name)))
 
 		// End aggro if the current target is no longer in the destination room.
 		clearAggroIfTargetAbsent(mob, destRoom)
@@ -220,7 +222,7 @@ func PushCompanionsToRoom(owner *users.UserRecord, destRoomId int) {
 
 		// Inform owner. Owner-private channel — owner-knowable companion
 		// name is fine over audio (no infrared / blind observer to leak to).
-		owner.SendText(messaging.CategorySystem, fmt.Sprintf("Your %s is swept away!", mob.Character.Name))
+		owner.SendText(messaging.CategorySystem, fmt.Sprintf("Your %s is swept away!", items.NameWithoutArticle(mob.Character.Name)))
 
 		// End aggro if the current target is no longer in the destination room.
 		clearAggroIfTargetAbsent(mob, destRoom)

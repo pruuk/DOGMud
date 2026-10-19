@@ -741,6 +741,10 @@ because no predicate applied after the unmarshal can tell an explicit 0 from an
 absent key. Before flagging a `< 0 || > 1.0` validator, check whether the field
 is seeded in `newUnloadedConfig`; if it is, the shape is correct and load-bearing.
 
+Seeded knobs today: `ProgressionFailureFraction` and `ProneAutoStandRounds`
+(#398; `< 0` restores the default 5 in `config.balance.misc.go`, 0 turns the
+auto-stand guard off, `config_proneautostand_test.go` covers the load path).
+
 ### Gotcha: the special-move cooldown comments are stale in two places
 
 `SpecialMoveCooldown` (`config.balance.go:246`) is commented

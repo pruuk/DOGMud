@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -56,6 +57,19 @@ func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
 		return false, false
 	}
 
+	// #398 auto-stand guard: after ProneAutoStandRounds round ticks in one
+	// knockdown, stand as a won recovery does, whatever MinRecoveryRounds or
+	// the contest would say. Players and mobs both reach this through their
+	// round tick, so the guard lives here once. Every tick on the floor
+	// counts, including MinRecoveryRounds and stomp extensions: a stomp loop
+	// is the same death spiral as a lost-roll loop. No contest ran, so no
+	// progression is awarded (the free-stand rule below). A grappled
+	// character is not Prone or Supine and never reaches this.
+	roundsDown := c.Position.CountRoundDown()
+	if limit := int(configs.GetBalanceConfig().ProneAutoStandRounds); limit > 0 && roundsDown >= limit {
+		return c.standFromRecovery()
+	}
+
 	// Read MinRecoveryRounds from the appropriate per-state data slot.
 	var minRounds int
 	if c.IsProne() {
@@ -92,18 +106,25 @@ func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
 	}
 
 	if success {
-		if err := c.Position.TransitionToStanding(state.TransitionReason{Trigger: position.TriggerRecoveryRoll}); err != nil {
-			// Should never happen — Prone→Standing and Supine→Standing are
-			// both valid edges. Log and report the attempt as a failure.
-			mudlog.Warn("AttemptRecovery: TransitionToStanding failed", "err", err)
-			_ = c.AddConditionMagnitude(conditions.ConditionIdRecovering, 1, 0, "prone recovery")
-			return true, false
-		}
-	} else {
-		_ = c.AddConditionMagnitude(conditions.ConditionIdRecovering, 1, 0, "prone recovery")
+		return c.standFromRecovery()
 	}
+	_ = c.AddConditionMagnitude(conditions.ConditionIdRecovering, 1, 0, "prone recovery")
+	return true, false
+}
 
-	return true, success
+// standFromRecovery is the one successful-recovery stand, shared by a won
+// or free recovery and the #398 auto-stand guard so both fire the same
+// transition and report the same (attemptMade, success) to the caller's
+// narration.
+func (c *Character) standFromRecovery() (bool, bool) {
+	if err := c.Position.TransitionToStanding(state.TransitionReason{Trigger: position.TriggerRecoveryRoll}); err != nil {
+		// Should never happen: Prone→Standing and Supine→Standing are
+		// both valid edges. Log and report the attempt as a failure.
+		mudlog.Warn("AttemptRecovery: TransitionToStanding failed", "err", err)
+		_ = c.AddConditionMagnitude(conditions.ConditionIdRecovering, 1, 0, "prone recovery")
+		return true, false
+	}
+	return true, true
 }
 
 func (c *Character) GetSkills() map[string]int {

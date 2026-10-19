@@ -457,7 +457,8 @@ func rejectHarmTarget(actor Actor, mobInstanceId int) bool {
 		// The name is only the caster.s to hear if they can make the mob out.
 		// A shapes-only caster aimed at `3.shape` and must not be handed
 		// "Skeleton" back by the refusal (follow-up slice A).
-		line := fmt.Sprintf("You can't target %s with a harmful spell.", m.Character.Name)
+		// Tagged, so a name's own article reads lowercase here (#572).
+		line := fmt.Sprintf(`You can't target <ansi fg="mobname">%s</ansi> with a harmful spell.`, m.Character.Name)
 		if room := actor.GetRoom(); room != nil {
 			line = messaging.HideNames(line, []string{m.Character.Name},
 				messaging.ParticipantSight(actor.GetCharacter(), room))

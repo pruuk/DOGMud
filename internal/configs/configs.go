@@ -496,6 +496,7 @@ func overridePathFor(dataFiles string) string {
 func newUnloadedConfig() Config {
 	c := Config{}
 	c.Balance.ProgressionFailureFraction = -1
+	c.Balance.ProneAutoStandRounds = -1
 	return c
 }
 

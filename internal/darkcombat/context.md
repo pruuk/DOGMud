@@ -13,7 +13,10 @@ room must not read "in the dark". Shapes readers (infravision) keep the
 composed line with "a figure".
 
 Go holds no wording: `_datafiles/world/dogmud/narration/dark-combat/`
-`attacker.yaml` and `defender.yaml`, one list per `Outcome`.
+`attacker.yaml` and `defender.yaml`, one list per `Outcome`. The one
+addition is the wound words `internal/combat.darkLines` appends to a
+defender line for a swing that dealt damage (#572), as every lit incoming hit
+carries; the pool lines themselves stay token-free.
 
 | Symbol | Use |
 |---|---|

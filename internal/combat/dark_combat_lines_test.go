@@ -2,6 +2,7 @@ package combat
 
 import (
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"slices"
 	"strings"
@@ -55,7 +56,7 @@ func TestDarkOutcome_Buckets(t *testing.T) {
 func TestDarkLines_CategoriesMatchTheRetiredFunction(t *testing.T) {
 	loadDarkCombatForTest(t)
 	events := []SwingEvent{{Defended: true}, {Hit: true, Damage: 2}, {DoubleFumble: true, Fumble: true}}
-	got := darkLines(events, darkcombat.Defender)
+	got := darkLines(events, darkcombat.Defender, 100)
 	if len(got) != 2 {
 		t.Fatalf("got %d lines, want 2 (the double fumble says nothing)", len(got))
 	}
@@ -65,8 +66,46 @@ func TestDarkLines_CategoriesMatchTheRetiredFunction(t *testing.T) {
 	if !slices.Contains(darkcombat.Pool(darkcombat.Defender, darkcombat.Defended), got[0].Text) {
 		t.Fatalf("line 0 %q is not from defender/defended", got[0].Text)
 	}
-	if !slices.Contains(darkcombat.Pool(darkcombat.Defender, darkcombat.Hit), got[1].Text) {
-		t.Fatalf("line 1 %q is not from defender/hit", got[1].Text)
+	// A hit that dealt damage ends with its wound words (#572), after the
+	// pool line.
+	hitTag := ` ` + damageTag(GetDamageDescription(2, 100))
+	hitLine, tagged := strings.CutSuffix(got[1].Text, hitTag)
+	if !tagged {
+		t.Fatalf("line 1 %q does not end with the wound words %q", got[1].Text, hitTag)
+	}
+	if !slices.Contains(darkcombat.Pool(darkcombat.Defender, darkcombat.Hit), hitLine) {
+		t.Fatalf("line 1 %q is not from defender/hit", hitLine)
+	}
+}
+
+// #572: every incoming hit a blind defender feels carries its wound words, a
+// crit's inside its banner; a clean defence carries none, and the attacker's
+// dark lines are unchanged.
+func TestDarkLines_DefenderHitsCarryWoundWords(t *testing.T) {
+	loadDarkCombatForTest(t)
+	events := []SwingEvent{
+		{Hit: true, Crit: true, Damage: 40},
+		{Defended: true, Damage: 3},
+		{Defended: true},
+	}
+	got := darkLines(events, darkcombat.Defender, 100)
+	if len(got) != 3 {
+		t.Fatalf("got %d lines, want 3", len(got))
+	}
+	critTag := damageTag(GetDamageDescription(40, 100))
+	if !strings.HasSuffix(got[0].Text, critTag+` `+darkCritClose) {
+		t.Errorf("crit line %q lacks %q inside its banner", got[0].Text, critTag)
+	}
+	if !strings.HasSuffix(got[1].Text, ` `+damageTag(GetDamageDescription(3, 100))) {
+		t.Errorf("deflected line %q lacks its wound words", got[1].Text)
+	}
+	if strings.Contains(got[2].Text, `fg="damage"`) {
+		t.Errorf("clean defence line %q carries wound words", got[2].Text)
+	}
+	for _, l := range darkLines(events, darkcombat.Attacker, 100) {
+		if strings.Contains(l.Text, `fg="damage"`) {
+			t.Errorf("attacker dark line %q gained wound words", l.Text)
+		}
 	}
 }
 
@@ -94,7 +133,7 @@ func TestHideIdentities_BlindDefenderKeepsThePetLineNameHidden(t *testing.T) {
 	if len(r.MessagesToTarget) != 3 {
 		t.Fatalf("want dark line + pet line + system line, got %d: %v", len(r.MessagesToTarget), r.MessagesToTarget)
 	}
-	if !slices.Contains(darkcombat.Pool(darkcombat.Defender, darkcombat.Hit), r.MessagesToTarget[0].Text) {
+	if !slices.Contains(darkcombat.Pool(darkcombat.Defender, darkcombat.Hit), withoutWoundWords(t, r.MessagesToTarget[0].Text)) {
 		t.Fatalf("line 0 %q is not a defender/hit dark line", r.MessagesToTarget[0].Text)
 	}
 	pet := r.MessagesToTarget[1]
@@ -157,7 +196,11 @@ func TestHideIdentities_BlindDefenderReadsDeflectedAndDefendedPools(t *testing.T
 			t.Fatalf("%s: got %d lines, want 1", c.name, len(r.MessagesToTarget))
 		}
 		m := r.MessagesToTarget[0]
-		if !slices.Contains(darkcombat.Pool(darkcombat.Defender, c.outcome), m.Text) {
+		poolLine := m.Text
+		if c.se.Damage > 0 {
+			poolLine = withoutWoundWords(t, m.Text)
+		}
+		if !slices.Contains(darkcombat.Pool(darkcombat.Defender, c.outcome), poolLine) {
 			t.Errorf("%s: %q is not from defender/%s", c.name, m.Text, c.outcome)
 		}
 		if m.Category != c.cat {
@@ -222,9 +265,30 @@ func TestHideIdentities_DarkRoomDefenderReadsADarkLine(t *testing.T) {
 
 	r := darkResult()
 	hideIdentitiesInPersonalLines(r, atk, def, ctx)
-	if !slices.Contains(darkcombat.Pool(darkcombat.Defender, darkcombat.Hit), r.MessagesToTarget[0].Text) {
+	if !slices.Contains(darkcombat.Pool(darkcombat.Defender, darkcombat.Hit), withoutWoundWords(t, r.MessagesToTarget[0].Text)) {
 		t.Fatalf("defender in the dark read %q, want a defender/hit dark line", r.MessagesToTarget[0].Text)
 	}
+}
+
+// withoutWoundWords is a dark defender line with the wound words a damaging
+// swing ends with (#572) taken off, so it can be found in its pool. A line
+// without them fails the test: every damaging swing must carry them.
+func withoutWoundWords(t *testing.T, text string) string {
+	t.Helper()
+	stripped := stripWoundWords(text)
+	if stripped == text {
+		t.Fatalf("dark defender line %q has no wound words", text)
+	}
+	return stripped
+}
+
+// woundWordsTag matches the wound words damageTag appends, with its space.
+var woundWordsTag = regexp.MustCompile(` \(<ansi fg="damage">[^<]*</ansi>\)`)
+
+// stripWoundWords takes the wound words off a line wherever they stand (a
+// crit's sit inside its banner) and returns any other line unchanged.
+func stripWoundWords(text string) string {
+	return woundWordsTag.ReplaceAllString(text, ``)
 }
 
 func TestHideIdentities_ShapesReaderKeepsTheComposedLine(t *testing.T) {

@@ -3,6 +3,7 @@ package combat
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
@@ -696,7 +697,12 @@ func darkOutcome(se SwingEvent) (darkcombat.Outcome, bool) {
 // CategoryDodge; every other bucket, a deflected swing included, is
 // CategoryHitMelee, so the damage-to-viewer verbosity floor still applies.
 // Empty when the store is unloaded or there is no swing to narrate.
-func darkLines(events []SwingEvent, v darkcombat.Viewpoint) []TaggedMessage {
+//
+// The defender feels a blow land even unseen, so a defender line for a swing
+// that dealt damage ends with its wound words, as every lit incoming hit does
+// (#572); defenderMaxHP scales them. The words go inside a crit's banner, as
+// they do on a lit crit.
+func darkLines(events []SwingEvent, v darkcombat.Viewpoint, defenderMaxHP int) []TaggedMessage {
 	var out []TaggedMessage
 	for _, se := range events {
 		o, ok := darkOutcome(se)
@@ -707,6 +713,14 @@ func darkLines(events []SwingEvent, v darkcombat.Viewpoint) []TaggedMessage {
 		if !ok {
 			return nil
 		}
+		if v == darkcombat.Defender && se.Damage > 0 && o != darkcombat.Defended {
+			tag := ` ` + damageTag(GetDamageDescription(se.Damage, defenderMaxHP))
+			if body, found := strings.CutSuffix(text, ` `+darkCritClose); found {
+				text = body + tag + ` ` + darkCritClose
+			} else {
+				text += tag
+			}
+		}
 		cat := messaging.CategoryHitMelee
 		if o == darkcombat.Defended {
 			cat = messaging.CategoryDodge
@@ -715,6 +729,9 @@ func darkLines(events []SwingEvent, v darkcombat.Viewpoint) []TaggedMessage {
 	}
 	return out
 }
+
+// darkCritClose is the closing banner the dark-combat crit lines author.
+const darkCritClose = `<ansi fg="crit-text">***</ansi>`
 
 // hideIdentitiesInPersonalLines hides each side's counterpart from that
 // side's own personal lines, judged by that reader's own sight verdict
@@ -796,11 +813,11 @@ func hideIdentitiesInPersonalLines(result *AttackResult, sourceChar, targetChar 
 	}
 	if ctx.sourceOptics == messaging.SightNone {
 		result.MessagesToSource = swapSwingLines(result.MessagesToSource, result.swingSourceLines,
-			darkLines(result.SwingEvents, darkcombat.Attacker))
+			darkLines(result.SwingEvents, darkcombat.Attacker, targetChar.HealthMax.Value))
 	}
 	if ctx.targetOptics == messaging.SightNone {
 		result.MessagesToTarget = swapSwingLines(result.MessagesToTarget, result.swingTargetLines,
-			darkLines(result.SwingEvents, darkcombat.Defender))
+			darkLines(result.SwingEvents, darkcombat.Defender, targetChar.HealthMax.Value))
 	}
 }
 

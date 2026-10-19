@@ -396,19 +396,21 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 	}
 
+	// corpseStem drops the name's own article: "4 Culvert Slime corpses",
+	// not "4 A Culvert Slime corpses" (#572).
 	for name, qty := range playerCorpses {
 		if qty == 1 {
-			details.VisibleCorpses = append(details.VisibleCorpses, fmt.Sprintf(`<ansi fg="user-corpse">%s corpse</ansi>`, name))
+			details.VisibleCorpses = append(details.VisibleCorpses, fmt.Sprintf(`<ansi fg="user-corpse">%s</ansi>`, corpseStem(name)))
 		} else {
-			details.VisibleCorpses = append(details.VisibleCorpses, fmt.Sprintf(`<ansi fg="user-corpse">%d %s corpses</ansi>`, qty, name))
+			details.VisibleCorpses = append(details.VisibleCorpses, fmt.Sprintf(`<ansi fg="user-corpse">%d %ss</ansi>`, qty, corpseStem(name)))
 		}
 	}
 
 	for name, qty := range mobCorpses {
 		if qty == 1 {
-			details.VisibleCorpses = append(details.VisibleCorpses, fmt.Sprintf(`<ansi fg="mob-corpse">%s corpse</ansi>`, name))
+			details.VisibleCorpses = append(details.VisibleCorpses, fmt.Sprintf(`<ansi fg="mob-corpse">%s</ansi>`, corpseStem(name)))
 		} else {
-			details.VisibleCorpses = append(details.VisibleCorpses, fmt.Sprintf(`<ansi fg="mob-corpse">%d %s corpses</ansi>`, qty, name))
+			details.VisibleCorpses = append(details.VisibleCorpses, fmt.Sprintf(`<ansi fg="mob-corpse">%d %ss</ansi>`, qty, corpseStem(name)))
 		}
 	}
 

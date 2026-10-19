@@ -75,7 +75,7 @@ func openingStrikeDefendedLines(defense combatvocab.Defence, sourceName, targetN
 		return toAttacker, toDefender, toRoom
 	}
 
-	dmg := `(<ansi fg="damage">` + dmgDesc + `</ansi>)`
+	dmg := damageTag(dmgDesc)
 	toAttacker = items.ItemMessage(fmt.Sprintf(
 		`%s %s most of your opening blow! %s`, targetName, verbThey, dmg))
 	toDefender = items.ItemMessage(fmt.Sprintf(
