@@ -1,0 +1,53 @@
+# Combat reachability slice 2 (#541): wolf, bear and smoke elemental from the
+# defender's seat.
+#
+# - Steppe Wolf (205, canine, natural attack bite; beast moves maul, throttle,
+#   pounce, hamstring): its swings are bite lines; any of its four moves is
+#   expected.
+# - The Pass-Apex (9541, bear, natural attack maul; beast moves rake; scripts
+#   charge and bash): its swings are maul lines; it rakes and charges and never
+#   pounces or hamstrings.
+# - Elemental Prince (322, the only smoke elemental; beast moves smother): it
+#   can pour itself into your eyes and lungs, blinding you and choking you for
+#   a short time, and its smoke can choke off a spell you are casting.
+#
+# Single agent with the admin profile, because spawning is the only way to meet
+# the bear and the Prince on demand. The two-seat run
+# `scenarios/beast-moves.yaml` checks the room's lines for a cat and a rat.
+#
+# 3 commands per round on the AI port and the overflow is dropped.
+
+ephemeral:
+  profile: admin
+  start_room: 4160
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    WOLF. `mob spawn 205` and `look` to confirm it. `remove` your sword, then
+    let it fight you (or `attack wolf`) for at least six rounds. Quote,
+    verbatim, every line it sends you with its round number, starting with the
+    first line when the fight begins, and every special move. `mob heal` keeps
+    it up. Kill it or let it die before the next spawn.
+  - >-
+    BEAR. `mob spawn 9541` (The Pass-Apex) and repeat for six rounds. Its blows
+    should read as a bear's claws and teeth and weight. Quote every special
+    move: a rake or charge is expected; a pounce or hamstring is a finding.
+  - >-
+    SMOKE. `mob spawn 322` (the Elemental Prince) and `look` to confirm it
+    spawned here. If `attack prince` is refused, report the refusal as the
+    finding and skip the rest of this goal. Otherwise fight up to twelve rounds
+    with `mob heal` as needed. Quote every smother line, say whether you were
+    told you are blinded and choking, quote the line each round while it lasts,
+    and say whether a second smother landed within a few rounds of the first.
+    Cast any spell you know mid-fight to see whether the smoke chokes it off.
+  - >-
+    JUDGE EVERY LINE. Say whether each reads as one clear sentence an English
+    learner would follow, and whether the creature does the action (never the
+    weapon acting on its own, as in "its claws strike"). The line that tells you
+    the smoke blinded you must still name the Prince.
+  - >-
+    ADVERSARIAL PASS. Report any curly-brace token, doubled or missing name,
+    lowercase sentence start, EMPTY line where a blow should be, or a line that
+    wraps oddly mid-word.

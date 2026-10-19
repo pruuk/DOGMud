@@ -41,7 +41,7 @@ func TestDrain_OnCooldown(t *testing.T) {
 	actor := newStubActor(char, room)
 
 	prepareSpecialMoveCooldown(t, char, 7907, 7907, &species.Species{
-		SpeciesId: 7907, Name: "cooldown-vampire", BodyParts: []string{"mouth"}, LifeDrain: true,
+		SpeciesId: 7907, Name: "cooldown-vampire", BodyParts: []string{"mouth"}, LifeDrain: true, BeastMoves: []string{"drain"},
 	})
 
 	result := ExecuteDrain(actor)
@@ -57,7 +57,7 @@ func TestDrain_NotLifeDrainer(t *testing.T) {
 	// Seed two species: one normal (no LifeDrain), one vampire (LifeDrain).
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
 		6001: {SpeciesId: 6001, Name: "human", BodyParts: []string{"arms", "hands", "legs"}},
-		6002: {SpeciesId: 6002, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true},
+		6002: {SpeciesId: 6002, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true, BeastMoves: []string{"drain"}},
 	})
 	defer cleanup()
 
@@ -102,7 +102,7 @@ func TestDrain_NotLifeDrainer(t *testing.T) {
 func TestDrain_HealAndBleed(t *testing.T) {
 	// Seed a vampire species with LifeDrain.
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		6003: {SpeciesId: 6003, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true},
+		6003: {SpeciesId: 6003, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true, BeastMoves: []string{"drain"}},
 	})
 	defer cleanup()
 	defer conditions.SeedConditionRecordsForTest()()
@@ -198,7 +198,7 @@ func TestDrain_HealAndBleed(t *testing.T) {
 // never be observed at that calibration.
 func TestDrain_PartialDamageHealsWithoutBleed(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		6004: {SpeciesId: 6004, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true},
+		6004: {SpeciesId: 6004, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true, BeastMoves: []string{"drain"}},
 	})
 	defer cleanup()
 	defer conditions.SeedConditionRecordsForTest()()

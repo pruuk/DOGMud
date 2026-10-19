@@ -92,6 +92,43 @@ func sendMoveEvent(verb string, event movenarration.EventKey, ids moveIdentities
 	}, aud)
 }
 
+// sendMoveRolesJudgedBefore delivers rendered move roles as sendMoveEvent
+// does, except that the actee's line is judged at acteeSightBefore, the sight
+// the actee had before the move changed it, rather than at their sight now.
+// Owner rule (2026-10-05): a line announcing a change is judged against the
+// state before it resolves. Smother blinds its target in the same tick as the
+// hit, so judged now, a sighted target would read "Something pours into your
+// eyes" from a mob they watched strike.
+//
+// The actee line is hidden here, the sanctioned exception acteeDefenceLine
+// (skill_move_defence.go) also uses: SendTrio is handed text already hidden
+// by the reader's sight verdict, and that send carries NoName for the actor
+// so SendTrio does not judge it a second time at the new sight. Every other
+// role goes through SendTrio as usual, each observer judged by their own
+// sight now (the move changed the actee's sight, not theirs).
+func sendMoveRolesJudgedBefore(roles narration.Roles, aud messaging.Audience, cat messaging.Category, acteeSightBefore messaging.SightDecision, observerSound ...string) {
+	if roles.Actee != "" {
+		acteeAud := aud
+		acteeAud.ActorName = messaging.NoName
+		messaging.SendTrio(messaging.Trio{
+			Actor:    messaging.NoLine,
+			Actee:    messaging.Say(cat, messaging.HideNames(roles.Actee, []string{aud.ActorName}, acteeSightBefore)),
+			Observer: messaging.NoLine,
+		}, acteeAud)
+	}
+	sound := messaging.NoLine
+	if len(observerSound) > 0 {
+		sound = lineOrNone(cat, observerSound[0])
+	}
+	messaging.SendTrio(messaging.Trio{
+		Actor:          lineOrNone(cat, roles.Actor),
+		Actee:          messaging.NoLine,
+		Observer:       lineOrNone(cat, roles.Observer),
+		RemoteObserver: lineOrNone(cat, roles.ActeeObserver),
+		ObserverSound:  sound,
+	}, aud)
+}
+
 // lineOrNone keeps an unauthored role silent rather than sending an empty line.
 func lineOrNone(cat messaging.Category, text string) messaging.Line {
 	if text == "" {

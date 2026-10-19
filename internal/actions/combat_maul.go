@@ -41,9 +41,9 @@ type MaulResult struct {
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
-	// NotFanged is true when the actor's species lacks a fanged natural attack.
-	// Reachable via a direct player command or a btree/combatcommands dispatch
-	// to a non-fanged mob. Unreachable via the AI path (CanUseMaul gates it).
+	// NotFanged is true when the species does not list maul in beast_moves, or
+	// the body lacks what it needs (hands). Reachable via a direct command or a
+	// btree/combatcommands dispatch. Unreachable via the AI path (CanUseMaul).
 	NotFanged bool
 
 	// BleedDmg is the per-round amount of the bleed stack added on a hit.
@@ -76,11 +76,11 @@ func ExecuteMaul(actor Actor) MaulResult {
 		return MaulResult{NoTarget: true}
 	}
 
-	// Anatomy/identity gate (defense-in-depth): only handless fanged creatures
-	// maul. Unreachable via the AI path (CanUseMaul gates it) but reachable
-	// via a direct player command or a btree/combatcommands dispatch to a
-	// non-fanged or tool-using mob.
-	if char.HasBodyPart("hands") || !combat.SpeciesIsFanged(char) {
+	// Anatomy/identity gate (defense-in-depth): only a handless species that
+	// lists maul in beast_moves mauls. Unreachable via the AI path (CanUseMaul
+	// gates it) but reachable via a direct player command or a
+	// btree/combatcommands dispatch to an unlisted or tool-using mob.
+	if char.HasBodyPart("hands") || !combat.SpeciesHasBeastMove(char, "maul") {
 		return MaulResult{NotFanged: true}
 	}
 

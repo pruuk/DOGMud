@@ -197,7 +197,6 @@ type AttackResult struct {
 	MessagesToSource        []TaggedMessage
 	MessagesToTarget        []TaggedMessage
 	MessagesToSourceRoom    []TaggedMessage
-	MessagesToTargetRoom    []TaggedMessage
 	MessagesToRoomOld       []TaggedMessage
 
 	// SwingDefences carries the per-swing defence that the round's SINGLE
@@ -240,10 +239,6 @@ func (a *AttackResult) SendToSourceRoom(cat messaging.Category, msg string) {
 	a.MessagesToSourceRoom = append(a.MessagesToSourceRoom, TaggedMessage{Category: cat, Text: msg})
 }
 
-func (a *AttackResult) SendToTargetRoom(cat messaging.Category, msg string) {
-	a.MessagesToTargetRoom = append(a.MessagesToTargetRoom, TaggedMessage{Category: cat, Text: msg})
-}
-
 func (a *AttackResult) SendToRoomOld(cat messaging.Category, msg string) {
 	a.MessagesToRoomOld = append(a.MessagesToRoomOld, TaggedMessage{Category: cat, Text: msg})
 }
@@ -264,7 +259,7 @@ func CategoryForWeaponSubtype(sub items.ItemSubType) messaging.Category {
 		return messaging.CategoryHitBlunt
 	case items.Cleaving, items.Stabbing, items.Slashing, "piercing":
 		return messaging.CategoryHitMelee
-	case items.Claws, items.Bite, items.Sting, items.Gore:
+	case items.Claws, items.Bite, items.Sting, items.Gore, items.Maul, items.Pounce:
 		return messaging.CategoryHitNaturalSharp
 	case items.Shooting, items.Whipping:
 		return messaging.CategoryHitRanged

@@ -16,7 +16,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/narration"
-	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -425,6 +424,28 @@ func calcDualWieldPenalty(sourceChar *characters.Character, weapIdx, totalWeaps 
 	return penalty
 }
 
+// AttackSubtype is the one weapon-type rule (spec 2026-10-16 #541 section 1):
+// the main-hand weapon's subtype, else the species' natural attack, else
+// items.Unarmed. The swing path, the wait and engage lines, and the
+// fumble and coup de grace lookups (through buildWeaponSetup) all read it, so
+// a creature squares up, waits and swings with the same thing.
+func AttackSubtype(char *characters.Character) items.ItemSubType {
+	return attackSubtypeWith(char, char.Equipment.Weapon)
+}
+
+// attackSubtypeWith is the rule for one weapon slot. buildWeaponSetup asks it
+// once per slot, so an off-hand dagger swings as stabbing beside a main-hand
+// sword, and an empty slot (ItemId 0) falls to the species attack.
+func attackSubtypeWith(char *characters.Character, weapon items.Item) items.ItemSubType {
+	if weapon.ItemId > 0 {
+		return weapon.GetSpec().Subtype
+	}
+	if sp := species.GetSpecies(char.SpeciesId); sp != nil && sp.NaturalAttack != "" {
+		return sp.NaturalAttack
+	}
+	return items.Unarmed
+}
+
 // buildWeaponSetup pre-computes weapon info for a single weapon in the attack sequence.
 // Note: swing count is now computed separately by calcSwingCount, not here.
 func buildWeaponSetup(sourceChar *characters.Character, targetChar *characters.Character, weapon items.Item, idx, total int) weaponSetup {
@@ -440,7 +461,7 @@ func buildWeaponSetup(sourceChar *characters.Character, targetChar *characters.C
 	ws := weaponSetup{
 		weapon:        weapon,
 		weaponName:    unarmedName,
-		weaponSubType: items.Unarmed,
+		weaponSubType: attackSubtypeWith(sourceChar, weapon),
 		weaponSpeed:   float64(bal.UnarmedSpeedMultiplier),
 		isOffhand:     idx > 0,
 		penalty:       calcDualWieldPenalty(sourceChar, idx, total),
@@ -448,18 +469,9 @@ func buildWeaponSetup(sourceChar *characters.Character, targetChar *characters.C
 
 	ws.attacks, ws.baseDmg, ws.dmgVariance, ws.critConditions = sourceChar.GetDefaultDistributionDamage()
 
-	// Non-human basic attacks render through the species' natural-attack
-	// subtype (bite/claws/slam/...) instead of generic. A real equipped weapon
-	// overrides this below. Humanoids leave NaturalAttack empty and stay on
-	// Unarmed -> generic.
-	if raceInfo != nil && raceInfo.NaturalAttack != "" {
-		ws.weaponSubType = raceInfo.NaturalAttack
-	}
-
 	if weapon.ItemId > 0 {
 		itemSpec := weapon.GetSpec()
 		ws.weaponName = weapon.DisplayName()
-		ws.weaponSubType = itemSpec.Subtype
 		ws.attacks, ws.baseDmg, ws.dmgVariance, ws.critConditions = weapon.GetDistributionDamage()
 		ws.weaponSpeed = itemSpec.GetSpeedMultiplier()
 
@@ -688,10 +700,7 @@ func filterDefensesForThirdParty(result *AttackResult, sourceChar *characters.Ch
 	// If no defenses remain, send vulnerability messages and auto-hit.
 	// Vulnerability prose is hit-prep — the swing is about to land.
 	if len(filteredDefenses) == 0 {
-		hitCat := messaging.CategoryHitMelee
-		if sourceChar.Equipment.Weapon.ItemId > 0 {
-			hitCat = CategoryForWeaponSubtype(sourceChar.Equipment.Weapon.GetSpec().Subtype)
-		}
+		hitCat := CategoryForWeaponSubtype(AttackSubtype(sourceChar))
 		result.SendToTarget(hitCat, fmt.Sprintf(
 			`<ansi fg="red">You're too entangled to defend against %s's attack!</ansi>`,
 			sourceChar.Name))
@@ -1560,9 +1569,6 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 			result.sendSwingToSource(defCat, string(toAttackerMsg))
 		}
 		result.SendToSourceRoom(defCat, string(toRoomMsg))
-		if sourceChar.RoomId != targetChar.RoomId {
-			result.SendToTargetRoom(defCat, string(toRoomMsg))
-		}
 	} else {
 		defCat := CategoryForDefenseVerb(defenseVerb)
 		if !partial && band.crit && band.openingStrike {
@@ -1573,10 +1579,10 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 			result.sendSwingToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
 		}
 		result.SendToSourceRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss %s's attack.</ansi>`, targetChar.Name, defenseVerb, sourceChar.Name))
-		if sourceChar.RoomId != targetChar.RoomId {
-			result.SendToTargetRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss an attack.</ansi>`, targetChar.Name, defenseVerb))
-		}
 	}
+	// No defender-room line: round combat releases a target in another room
+	// before any line is drawn (hooks.resolveCombatTarget), so the defender
+	// always shares the attacker's room here (#541).
 
 	sendEntangledDefenceNote(result, best, isThirdParty)
 }
@@ -1620,11 +1626,9 @@ func sendFeintLines(result *AttackResult, sourceChar, targetChar *characters.Cha
 	}
 	result.sendSwingToSource(cat, prefix+narration.Substitute(fm.toAttacker, tokens))
 	result.sendSwingToTarget(cat, prefix+narration.Substitute(fm.toDefender, tokens))
-	room := prefix + narration.Substitute(fm.toRoom, tokens)
-	result.SendToSourceRoom(cat, room)
-	if sourceChar.RoomId != targetChar.RoomId {
-		result.SendToTargetRoom(cat, room)
-	}
+	// One room line: the participants share a room (#541, see
+	// sendDefenseMessages).
+	result.SendToSourceRoom(cat, prefix+narration.Substitute(fm.toRoom, tokens))
 }
 
 // U6 Task 8 deleted sendFloorDefenseMessages. It narrated the MinDefenseChance
@@ -1694,22 +1698,24 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 // meleeDisplaySubtype computes the subtype used to select AUTO-ATTACK melee
 // swing narration. Two rules apply, in order:
 //
-//  1. Shooting-subtype weapons (bows/crossbows/slings/guns) ALWAYS narrate as
-//     improvised Bludgeoning in the melee path — a swung bow is a club, never
-//     "fires/snipes/arrow". The deliberate SHOOT path (actions.ExecuteFire /
-//     combat_fire.go) has its own messages and never routes through here, so
-//     this is unconditional regardless of grapple position.
+//  1. A subtype items.MeleeSwingNarratedAs re-narrates ALWAYS borrows that
+//     subtype's swing lines in the melee path. Today that is Shooting
+//     (bows/crossbows/slings/guns) as improvised Bludgeoning: a swung bow is
+//     a club, never "fires/snipes/arrow". The deliberate SHOOT path
+//     (actions.ExecuteFire / combat_fire.go) has its own messages and never
+//     routes through here, so this is unconditional regardless of grapple
+//     position. shooting.yaml authors only prepare and wait.
 //  2. Otherwise, when ShouldBludgeon fires (weapon reach exceeds the grapple
 //     radius of the attacker's position), bladed subtypes (Slashing, Cleaving,
 //     Stabbing) narrate as Bludgeoning — the fiction tracks the pommel/hilt
 //     strike that the reach damage penalty already reflects.
 //
 // Natural-blunt subtypes (Fist, Claws, Bite, Sting, Slam, Trample, Lash,
-// Blast, Gore, Whipping) and caster subtypes (Wand, Sceptre, Staff) keep their
-// own vocabulary.
+// Blast, Gore, Maul, Pounce, Whipping) and caster subtypes (Wand, Sceptre,
+// Staff) keep their own vocabulary.
 func meleeDisplaySubtype(weaponSubType items.ItemSubType, weaponReach, posRadius float64) items.ItemSubType {
-	if weaponSubType == items.Shooting {
-		return items.Bludgeoning
+	if as, ok := items.MeleeSwingNarratedAs(weaponSubType); ok {
+		return as
 	}
 	if ShouldBludgeon(weaponReach, posRadius) {
 		switch weaponSubType {
@@ -1898,26 +1904,24 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		}
 	}
 
-	var toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg items.ItemMessage
+	var toAttackerMsg, toDefenderMsg, toAttackerRoomMsg items.ItemMessage
 
 	// Set once the message-pool branch has rendered, because Render
 	// substitutes tokens itself and the other branches still need the loop.
 	rendered := false
 
 	tokenReplacements := map[items.TokenName]string{
-		items.TokenItemName:     ws.weaponName,
-		items.TokenActor:        sourceChar.Name,
-		items.TokenActorType:    string(srcType) + `name`,
-		items.TokenActee:        targetChar.Name,
-		items.TokenActeeType:    string(tgtType) + `name`,
-		items.TokenUsesLeft:     `[Invalid]`,
-		items.TokenDamage:       GetDamageDescription(attackTargetDamage, targetChar.HealthMax.Value),
-		items.TokenEntranceName: `unknown`,
-		items.TokenExitName:     `unknown`,
-		items.TokenStance:       sourceChar.CalculateStanceString(),
-		items.TokenPosition:     sourceChar.CalculatePositionString(),
-		items.TokenMomentum:     sourceChar.CalculateMomentumString(),
-		items.TokenBodyPart:     GetRandomBodyPart(),
+		items.TokenItemName:  ws.weaponName,
+		items.TokenActor:     sourceChar.Name,
+		items.TokenActorType: string(srcType) + `name`,
+		items.TokenActee:     targetChar.Name,
+		items.TokenActeeType: string(tgtType) + `name`,
+		items.TokenUsesLeft:  `[Invalid]`,
+		items.TokenDamage:    GetDamageDescription(attackTargetDamage, targetChar.HealthMax.Value),
+		items.TokenStance:    sourceChar.CalculateStanceString(),
+		items.TokenPosition:  sourceChar.CalculatePositionString(),
+		items.TokenMomentum:  sourceChar.CalculateMomentumString(),
+		items.TokenBodyPart:  GetRandomBodyPart(),
 	}
 
 	// The skill of the weapon THIS swing used (#564): an off-hand fist swung
@@ -1957,45 +1961,19 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 			tokenReplacements[items.TokenActee],
 			tokenReplacements[items.TokenDamage])
 	} else {
-		together := sourceChar.RoomId == targetChar.RoomId
-
-		if !together {
-			// Find the exit that leads to the target from the source (if any)
-			if atkRoom := rooms.LoadRoom(sourceChar.RoomId); atkRoom != nil {
-				for exitName, exit := range atkRoom.Exits {
-					if exit.RoomId == targetChar.RoomId {
-						tokenReplacements[items.TokenExitName] = exitName
-						break
-					}
-				}
-			}
-			// find the exit that leads to the source from the target (if any)
-			if defRoom := rooms.LoadRoom(targetChar.RoomId); defRoom != nil {
-				for exitName, exit := range defRoom.Exits {
-					if exit.RoomId == sourceChar.RoomId {
-						tokenReplacements[items.TokenEntranceName] = exitName
-						break
-					}
-				}
-			}
-		}
-
 		// ONE coordinated draw for every audience. Selection happens after the
-		// exit tokens are resolved, because Render substitutes as it renders.
+		// token map is complete, because Render substitutes as it renders.
 		// This used to be three or four independent GetForSkillLevel calls, so
 		// a single sword blow could be a laceration to the attacker, a
 		// devastating hit to the defender and a critical strike to the room.
-		var roles narration.Roles
-		if together {
-			roles = msgs.Together.Render(skillLevel, tokenReplacements, nil)
-		} else {
-			roles = msgs.Separate.Render(skillLevel, tokenReplacements, nil)
-		}
+		// Only the together pool exists: round combat releases a target in
+		// another room before the swing (hooks.resolveCombatTarget), so the
+		// participants always share a room here (#541, separate retired).
+		roles := msgs.Together.Render(skillLevel, tokenReplacements, nil)
 
 		toAttackerMsg = items.ItemMessage(roles.Actor)
 		toDefenderMsg = items.ItemMessage(roles.Actee)
 		toAttackerRoomMsg = items.ItemMessage(roles.Observer)
-		toDefenderRoomMsg = items.ItemMessage(roles.ActeeObserver)
 
 		rendered = true
 	}
@@ -2015,9 +1993,6 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		toAttackerMsg = items.ItemMessage(narration.Substitute(string(toAttackerMsg), tokens))
 		toDefenderMsg = items.ItemMessage(narration.Substitute(string(toDefenderMsg), tokens))
 		toAttackerRoomMsg = items.ItemMessage(narration.Substitute(string(toAttackerRoomMsg), tokens))
-		if len(string(toDefenderRoomMsg)) > 0 {
-			toDefenderRoomMsg = items.ItemMessage(narration.Substitute(string(toDefenderRoomMsg), tokens))
-		}
 	}
 
 	// Feint: replace miss messages with feint-flavored text for skilled
@@ -2036,27 +2011,18 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		toAttackerMsg = items.ItemMessage(critBannerOpen + string(toAttackerMsg) + critBannerClose)
 		toDefenderMsg = items.ItemMessage(critBannerOpen + string(toDefenderMsg) + critBannerClose)
 		toAttackerRoomMsg = items.ItemMessage(critBannerOpen + string(toAttackerRoomMsg) + critBannerClose)
-		if len(string(toDefenderRoomMsg)) > 0 {
-			toDefenderRoomMsg = items.ItemMessage(critBannerOpen + string(toDefenderRoomMsg) + critBannerClose)
-		}
 	}
 
 	if result.Fumble {
 		toAttackerMsg = items.ItemMessage(`<ansi fg="fumble-text">!!!</ansi> ` + string(toAttackerMsg) + ` <ansi fg="fumble-text">!!!</ansi>`)
 		toDefenderMsg = items.ItemMessage(`<ansi fg="fumble-text">!!!</ansi> ` + string(toDefenderMsg) + ` <ansi fg="fumble-text">!!!</ansi>`)
 		toAttackerRoomMsg = items.ItemMessage(`<ansi fg="fumble-text">!!!</ansi> ` + string(toAttackerRoomMsg) + ` <ansi fg="fumble-text">!!!</ansi>`)
-		if len(string(toDefenderRoomMsg)) > 0 {
-			toDefenderRoomMsg = items.ItemMessage(`<ansi fg="fumble-text">!!!</ansi> ` + string(toDefenderRoomMsg) + ` <ansi fg="fumble-text">!!!</ansi>`)
-		}
 	}
 
 	if len(prefix) > 0 {
 		toAttackerMsg = items.ItemMessage(prefix + string(toAttackerMsg))
 		toDefenderMsg = items.ItemMessage(prefix + string(toDefenderMsg))
 		toAttackerRoomMsg = items.ItemMessage(prefix + string(toAttackerRoomMsg))
-		if len(string(toDefenderRoomMsg)) > 0 {
-			toDefenderRoomMsg = items.ItemMessage(prefix + string(toDefenderRoomMsg))
-		}
 	}
 
 	// Per-swing hit-band Category from the weapon subtype.
@@ -2111,11 +2077,6 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	// forward.
 	if !deflected {
 		result.SendToSourceRoom(hitCat, string(toAttackerRoomMsg))
-	}
-
-	// Send to defender room if separate
-	if len(string(toDefenderRoomMsg)) > 0 {
-		result.SendToTargetRoom(hitCat, string(toDefenderRoomMsg))
 	}
 }
 
@@ -2184,9 +2145,6 @@ func applyPetDamage(result *AttackResult, sourceChar *characters.Character, targ
 
 		toAttackerRoomMsg := fmt.Sprintf(`%s jumps into the fray and deals <ansi fg="damage">%s</ansi> to <ansi fg="%sname">%s</ansi>!`, sourceChar.Pet.DisplayName(), GetDamageDescription(attackTargetDamage, targetChar.HealthMax.Value), string(tgtType), targetChar.Name)
 		result.SendToSourceRoom(petCat, toAttackerRoomMsg)
-		if sourceChar.RoomId != targetChar.RoomId {
-			result.SendToTargetRoom(petCat, toAttackerRoomMsg)
-		}
 	}
 }
 

@@ -42,7 +42,7 @@ func TestThrottle_OnCooldown(t *testing.T) {
 	actor := newStubActor(char, room)
 
 	prepareSpecialMoveCooldown(t, char, 7908, 7908, &species.Species{
-		SpeciesId: 7908, Name: "cooldown-wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite,
+		SpeciesId: 7908, Name: "cooldown-wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"},
 	})
 
 	result := ExecuteThrottle(actor)
@@ -57,8 +57,8 @@ func TestThrottle_OnCooldown(t *testing.T) {
 func TestThrottle_NotFanged(t *testing.T) {
 	// Seed two species: one clawed (not fanged), one fanged.
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		7001: {SpeciesId: 7001, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws},
-		7002: {SpeciesId: 7002, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		7001: {SpeciesId: 7001, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws, BeastMoves: []string{"rake", "pounce", "hamstring"}},
+		7002: {SpeciesId: 7002, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 	})
 	defer cleanup()
 
@@ -108,7 +108,7 @@ func TestThrottle_Executed_BleedAndCondition(t *testing.T) {
 
 	// Seed a fanged species.
 	speciesCleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		7003: {SpeciesId: 7003, Name: "fanged-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		7003: {SpeciesId: 7003, Name: "fanged-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 	})
 	defer speciesCleanup()
 
@@ -219,7 +219,7 @@ func TestThrottle_CastInterrupt(t *testing.T) {
 
 	// Seed a fanged species.
 	speciesCleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		7004: {SpeciesId: 7004, Name: "fanged-cast-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		7004: {SpeciesId: 7004, Name: "fanged-cast-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 	})
 	defer speciesCleanup()
 
@@ -339,7 +339,7 @@ func TestThrottle_CastInterrupt_OverwhelmingCaster(t *testing.T) {
 	defer conditionCleanup()
 
 	speciesCleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		7005: {SpeciesId: 7005, Name: "fanged-overwhelmed-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		7005: {SpeciesId: 7005, Name: "fanged-overwhelmed-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 	})
 	defer speciesCleanup()
 

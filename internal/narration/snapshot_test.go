@@ -9,8 +9,9 @@ package narration_test
 //
 // Store inventory verified against source 2026-09-07 (file counts; re-check
 // before trusting these if this comment gets stale):
-//   - _datafiles/world/dogmud/combat-messages/     23 files (weapon subtypes;
-//     the slam split, #541, added trample, lash and blast on 2026-10-16)
+//   - _datafiles/world/dogmud/combat-messages/     22 files (weapon subtypes;
+//     the slam split, #541, added trample, lash and blast on 2026-10-16;
+//     slice 2 removed throttle on 2026-10-19)
 //   - _datafiles/world/dogmud/defense-messages/     9 files (defense types)
 //   - _datafiles/world/dogmud/taunt-messages/        1 file  (rhetoric.yaml)
 //   - _datafiles/world/dogmud/messaging/             2 files (grapple_outcomes.yaml,
@@ -37,8 +38,8 @@ package narration_test
 //
 // Dimensions swept per store (see the header written into each golden file
 // for the authoritative, in-file record):
-//   - combat-messages: subtype x intensity(8) x section(together always,
-//     separate for generic+shooting only) x role x tier(beginner/expert/master).
+//   - combat-messages: subtype x intensity(8) x section(together; separate
+//     retired, #541) x role x tier(beginner/expert/master).
 //     PLUS a small "derived-selection" section exercising
 //     SkillTieredMessages.GetForSkillLevelWith directly (the seam production
 //     actually calls) at 3 representative skill levels, to freeze that its
@@ -257,21 +258,19 @@ func firstDiffLine(want, got string) string {
 // something on its own -- a defence row reading "Attacker" still says which
 // participant it names without the reader consulting the role mapping.
 var tokenStandins = map[items.TokenName]string{
-	items.TokenItemName:     "Weapon",
-	items.TokenActor:        "Source",
-	items.TokenActorType:    "User",
-	items.TokenActee:        "Target",
-	items.TokenActeeType:    "Mob",
-	items.TokenUsesLeft:     "3",
-	items.TokenDamage:       "ModerateWounds",
-	items.TokenEntranceName: "South",
-	items.TokenExitName:     "North",
-	items.TokenWeapon:       "Weapon",
-	items.TokenAttack:       "Strike",
-	items.TokenStance:       "Balanced",
-	items.TokenPosition:     "Standing",
-	items.TokenMomentum:     "InControl",
-	items.TokenBodyPart:     "Arm",
+	items.TokenItemName:  "Weapon",
+	items.TokenActor:     "Source",
+	items.TokenActorType: "User",
+	items.TokenActee:     "Target",
+	items.TokenActeeType: "Mob",
+	items.TokenUsesLeft:  "3",
+	items.TokenDamage:    "ModerateWounds",
+	items.TokenWeapon:    "Weapon",
+	items.TokenAttack:    "Strike",
+	items.TokenStance:    "Balanced",
+	items.TokenPosition:  "Standing",
+	items.TokenMomentum:  "InControl",
+	items.TokenBodyPart:  "Arm",
 }
 
 // defenseStandins is the defence store's half of the same vocabulary. Same
@@ -336,7 +335,7 @@ func buildCombatMessagesGolden(t *testing.T) string {
 	fmt.Fprintf(&b, "# subtype files at time of writing: %d\n", len(subtypes))
 	fmt.Fprintf(&b, "# subtypes: %s\n", strings.Join(subtypes, ","))
 	fmt.Fprintf(&b, "# dimensions: subtype x intensity x section x role x tier x index, every authored line exactly once\n")
-	fmt.Fprintf(&b, "# separate section present only for: generic, shooting (per source at time of writing)\n")
+	fmt.Fprintf(&b, "# separate sections retired (spec 2026-10-16 #541 section 3): round combat never crosses rooms\n")
 	fmt.Fprintf(&b, "# coupdegrace recorded for generic only: it is authored nowhere else, and every\n")
 	fmt.Fprintf(&b, "# other subtype reaches it through GetPreAttackMessage's fallback to Generic\n")
 	fmt.Fprintf(&b, "# PR 1 of M3 item 8 widened this from index 0 only; PR 2 re-keys it to coordinated rows\n\n")
@@ -358,18 +357,6 @@ func buildCombatMessagesGolden(t *testing.T) string {
 		{"actee", func(m items.TogetherMessages) items.SkillTieredMessages { return m.ToDefender }},
 		{"observer", func(m items.TogetherMessages) items.SkillTieredMessages { return m.ToRoom }},
 	}
-	separateRoles := []struct {
-		name string
-		get  func(items.SeparateMessages) items.SkillTieredMessages
-	}{
-		{"actor", func(m items.SeparateMessages) items.SkillTieredMessages { return m.ToAttacker }},
-		{"actee", func(m items.SeparateMessages) items.SkillTieredMessages { return m.ToDefender }},
-		{"observer", func(m items.SeparateMessages) items.SkillTieredMessages { return m.ToAttackerRoom }},
-		{"remote_observer", func(m items.SeparateMessages) items.SkillTieredMessages { return m.ToDefenderRoom }},
-	}
-
-	hasSeparate := map[string]bool{"generic": true, "shooting": true}
-
 	// messageTexts renders one tier's pool with tokens substituted.
 	messageTexts := func(mo items.MessageOptions) []string {
 		out := make([]string, len(mo))
@@ -397,6 +384,12 @@ func buildCombatMessagesGolden(t *testing.T) string {
 		}
 
 		for _, intensity := range intensityList {
+			// A re-narrated subtype authors no swing lines; GetPreAttackMessage
+			// would hand back generic's and record them twice.
+			if _, reNarrated := items.MeleeSwingNarratedAs(items.ItemSubType(subtype)); reNarrated &&
+				intensity != items.Prepare && intensity != items.Wait {
+				continue
+			}
 			opts := items.GetPreAttackMessage(items.ItemSubType(subtype), intensity)
 
 			// One row per COORDINATED VARIANT, with every role on it. The
@@ -426,27 +419,6 @@ func buildCombatMessagesGolden(t *testing.T) string {
 						fmt.Fprintf(&b, " %s=%s", role.name, poolAt(pools[role.name], idx))
 					}
 					fmt.Fprintf(&b, "\n")
-				}
-			}
-
-			if hasSeparate[subtype] {
-				for _, tier := range tiers {
-					pools := map[string][]string{}
-					widest := 0
-					for _, role := range separateRoles {
-						pool := messageTexts(tier.get(role.get(opts.Separate)))
-						pools[role.name] = pool
-						if len(pool) > widest {
-							widest = len(pool)
-						}
-					}
-					for idx := 0; idx < widest; idx++ {
-						fmt.Fprintf(&b, "%s|%s|separate|%s|%d =>", subtype, intensity, tier.name, idx)
-						for _, role := range separateRoles {
-							fmt.Fprintf(&b, " %s=%s", role.name, poolAt(pools[role.name], idx))
-						}
-						fmt.Fprintf(&b, "\n")
-					}
 				}
 			}
 		}

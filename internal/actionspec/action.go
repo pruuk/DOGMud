@@ -46,6 +46,7 @@ const (
 	ActionGore            Action = `gore`
 	ActionDrain           Action = `drain`
 	ActionThrottle        Action = `throttle`
+	ActionSmother         Action = `smother`
 	ActionThrow           Action = `throw`
 	ActionSneak           Action = `sneak`
 	ActionTaunt           Action = `taunt`
@@ -123,6 +124,7 @@ var registry = map[Action]Spec{
 	ActionGore:            {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
 	ActionDrain:           {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
 	ActionThrottle:        {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
+	ActionSmother:         {Skill: skills.UnarmedCombat, SkillSource: SkillFixed, Physical: true},
 	ActionThrow:           {Skill: skills.Skullduggery, SkillSource: SkillFixed, Physical: true},
 	ActionSneak:           {Skill: skills.Skullduggery, SkillSource: SkillFixed, Physical: true},
 	ActionTaunt:           {Skill: skills.Rhetoric, SkillSource: SkillFixed},

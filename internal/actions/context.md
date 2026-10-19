@@ -220,30 +220,31 @@ Phase-1 basic attack for fanged species (species `NaturalAttack`).
 
 ### Beast Special Moves (Phase 3)
 
-Six new `Execute*` actions gated by exported species-identity predicates
-from `internal/combat` (`SpeciesIsFanged`, `SpeciesIsClawed`,
-`SpeciesIsHorned`, `SpeciesHasLifeDrain`, `SpeciesIsQuadrupedPredator`).
-Each action checks the predicate at entry as defense-in-depth and returns
-a `Not<Identity>` result if the caller's species doesn't qualify. The
-same predicate is checked in `ai.go` (`CanUse*`) and
+Six new `Execute*` actions gated by the species' `beast_moves` list, read
+through `combat.SpeciesHasBeastMove` (#541 slice 2; the attack-family
+predicates that gated them before were deleted). Each action checks the
+list at entry as defense-in-depth and returns a `Not<Identity>` result if
+the caller's species does not list the move or its body lacks what the
+move needs. The same read is made in `ai.go` (`CanUse*`) and
 `command_readiness.go`; drift rows in `command_readiness_drift_test.go`
-keep all three sync points in agreement.
+(including the `*_notlisted` rows) keep all three sync points in agreement.
 
 **Phase 4 — the `hands` gate.** Each of the six beast actions (incl.
 `ExecuteHamstring`, which gained an explicit identity gate in Phase 4)
 ALSO rejects an actor with a `hands` body part at the entry — beast
 natural-weapon moves are for true beasts, not tool-using humanoids. The
 `*_hashands` drift rows pin it. `ExecuteDrain` is EXEMPT (LifeDrain-flag
-gated), so armed undead still drain.
+gated by its `beast_moves` listing alone), so armed undead still drain.
 
 | Action | Gate | Effects |
 |--------|------|---------|
-| `ExecuteRake` | clawed | Damage + bleed stack |
-| `ExecuteMaul` | fanged | Heavier damage + bleed stack |
-| `ExecutePounce` | quadruped predator, not grappling | Knockdown + damage (no bleed) |
-| `ExecuteGore` | horned | Damage + knockback |
-| `ExecuteDrain` | `LifeDrain` flag | Damage + heal attacker (`damage × DrainHealRatio`) via `Character.Heal` |
-| `ExecuteThrottle` | fanged | Damage + bleed stack + Throttled condition #89 (stamina DoT) + cast interrupt via `InterruptTargetCast` |
+| `ExecuteRake` | lists `rake`, no hands | Damage + bleed stack |
+| `ExecuteMaul` | lists `maul`, no hands | Heavier damage + bleed stack |
+| `ExecutePounce` | lists `pounce`, no hands, legs, not grappling | Knockdown + damage (no bleed) |
+| `ExecuteGore` | lists `gore`, no hands | Damage + knockback |
+| `ExecuteDrain` | lists `drain` (the species also has the `LifeDrain` flag) | Damage + heal attacker (`damage × DrainHealRatio`) via `Character.Heal` |
+| `ExecuteThrottle` | lists `throttle`, no hands | Damage + bleed stack + Throttled condition #89 (stamina DoT) + cast interrupt via `chokeCastInterrupt` |
+| `ExecuteSmother` | lists `smother`, no hands (mob-only: the smoke elemental, #541 slice 2) | On a hit: damage + cast interrupt via `chokeCastInterrupt` (run first, so the caster's hold is judged sighted, as throttle's is) + Blinded (3) + Smothered (`conditions.ConditionIdSmothered`, 144, stamina DoT); a partial or miss applies nothing; no bleed. `SmotherResult.NotSmoke` is the identity refusal; `SmotherResult.ActeeSightBefore` is the target's `ParticipantSight` taken before the blinding, which the mob command judges the target's hit and cast_interrupt lines at (owner rule 2026-10-05) |
 
 **Bleeds stack (slice 1b, owner ruling 2026-09-14).** Rake, maul, hamstring,
 drain (`ExecuteDrain` and each landed target of `ExecuteDrainArea`) and throttle each add one
@@ -261,7 +262,10 @@ amount of the stack just added, and nothing outside this package reads it.
 **`InterruptTargetCast`** is a shared helper that reuses the engine's
 existing `activity.TriggerCastCancel` cast-cancel path (conviction
 refund included). No new silence flag is introduced. `ExecuteThrottle`
-gates the call behind an opposed concentration contest (U10): the
+and `ExecuteSmother` reach it through one helper, `chokeCastInterrupt`
+(`choke_interrupt.go`), run on a hit only, after `ClaimSpecialMove`, so it
+fires at most once per special-move cooldown window. It gates the call
+behind an opposed concentration contest (U10): the
 throttler's grip (`Dex + unarmed-combat×SkillWeight`) against the
 target's hold (`Wil + spellcasting×SkillWeight`) via
 `combat.RunConcentrationContest`, floored only by `ConcentrationFloor`
@@ -2094,7 +2098,7 @@ the rest are ordinary verbs.
 | Readiness gates | `action_readiness.go`, `command_readiness.go` |
 | Targeting | `target_resolution.go`, `target_helpers.go`, `melee_target.go`, `sleeping_target.go` |
 | Shared helpers | `combat_helpers.go`, `skill_helpers.go`, `mutation_helpers.go`, `aggression.go`, `bleed.go` (`bleedPerRound`) |
-| Combat specials | `combat_attack.go`, `combat_bash.go`, `combat_counter.go`, `combat_drain.go`, `combat_fire.go`, `combat_gore.go`, `combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`, `combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_reload.go`, `combat_taunt.go`, `combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` |
+| Combat specials | `combat_attack.go`, `combat_bash.go`, `combat_counter.go`, `combat_drain.go`, `combat_fire.go`, `combat_gore.go`, `combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`, `combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_reload.go`, `combat_smother.go`, `choke_interrupt.go`, `combat_taunt.go`, `combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` |
 | Casting | `cast.go`, `cast_interrupt.go`, `cast_admission.go`, `cast_raise_corpse.go` (the raise corpse gate) |
 | Flee | `flee.go`, `relocate_mob.go` |
 | Mutation actives | `mutation_cocoon.go`, `mutation_venom_coat.go` |

@@ -32,16 +32,26 @@ The `internal/mobcommands` package implements the AI command system for non-play
   The dedicated `bite` command was **retired** — biting is now the basic
   attack for fanged species (see `internal/combat` Natural-Attack Subtype
   Resolution). `toxic-bite` (mutation) is unaffected.
-- **Beast moves (Phase 3)**: `rake` (clawed), `maul` (fanged), `pounce`
-  (quadruped predator, not grappling), `gore` (horned), `drain` (lifedrain
-  species flag), `throttle` (fanged) — registered as both mob and user
+- **Beast moves (Phase 3)**: `rake`, `maul`, `pounce` (not grappling),
+  `gore`, `drain`, `throttle`, registered as both mob and user
   commands for full parity. Selected by `combat.ChooseSpecialMove` via the
   new `predator`, `ambush_predator`, and `brute` AI profiles (also weighted
-  in `default`/`aggressive`). Each is gated by the exported predicates
-  `combat.SpeciesIsFanged` / `SpeciesIsClawed` / `SpeciesIsHorned` /
-  `SpeciesHasLifeDrain` / `SpeciesIsQuadrupedPredator` at three sync points:
+  in `default`/`aggressive`). Each is gated by the species' `beast_moves`
+  list, read through `combat.SpeciesHasBeastMove`, at three sync points:
   `CanUse*` in `ai.go`, `CommandIsReady`, and the action entry. Drift rows
   in `command_readiness_drift_test.go` keep all three in sync.
+- **`smother`** (`smother.go`, #541 slice 2): the smoke elemental's
+  mob-only special move, wrapping `actions.ExecuteSmother` on the throttle
+  shape. Events `hit`, `cast_interrupt` (on `CategorySpellDisruption` with
+  `SoundChantBreaksOff`), `partial` and `miss` from
+  `narration/special-moves/smother.yaml`, which authors no `actor` role (a
+  mob has no client); the defence label is `rolling smoke`. Listed in
+  `mobOnlyCommands` (`internal/actions/divergences.go`): no user twin.
+  The hit blinds the target, so its `hit` and `cast_interrupt` lines go
+  through `sendMoveRolesJudgedBefore` (`move_narration.go`), which judges
+  the actee's line at `SmotherResult.ActeeSightBefore` (the sight before
+  the smoke; owner rule 2026-10-05) using the pre-hidden-text exception
+  `acteeDefenceLine` also uses; observers are judged by their own sight now.
 - **Taunt pools**: `Taunt` and `Howl` each run `executeTauntAction` and its refusal checks, then hand the result to `narrateMobTaunt(mob, room, result, pool, command, legacy, aggroLine)` (`taunt.go`), the one narration flow. `Taunt` reads `mob.Character.TauntPool()` (wordless for a speechless species, else rhetoric); `Howl` always reads `combat.TauntPoolHowl` (`howl.yaml`) and re-renders its damage text with `TauntResult.WithWordlessDamageText`, so a howl names no speech whatever the species. `sendMobTauntTriad` takes the pool first. `mobTauntLegacy` holds the empty-store literals per command.
 - **Rhetoric**: `taunt` and its wolf-flavoured `howl` variant use the shared
   coordinated Defy renderer when defended. Its attacker, defender, and room

@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-10-19: Every creature squares up its own way
+
+- When a fight begins, the first line now shows how your foe gets ready,
+  with its own weapon, teeth or claws, and everyone watching reads the same
+  moment.
+- A creature waiting for an opening now waits in its own way.
+- Bears now maul and big cats pounce in their ordinary attacks.
+- Each kind of beast now has its own special moves. Wolves can go for the
+  throat, rats nip at ankles, and snakes simply bite.
+- The smoke elemental can pour itself into your eyes and lungs, blinding and
+  choking you for a short time, and its smoke can choke off a spell.
+
 ## 2026-10-19: Breathing room
 
 - In Dewey's practice ring, he now waits for your shout and your spell to

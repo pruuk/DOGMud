@@ -10,6 +10,8 @@ func TestDefaultReachForSubtype_KnownSubtypes(t *testing.T) {
 	cases := map[ItemSubType]float64{
 		Fist:        0.1,
 		Claws:       0.15,
+		Maul:        0.15,
+		Pounce:      0.15,
 		Bite:        0.15,
 		Sting:       0.2,
 		Slam:        0.3,

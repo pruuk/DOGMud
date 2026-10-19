@@ -198,6 +198,7 @@ var mobOnlyCommands = map[string]string{
 	"replyto":        "mob-ai",
 	"sayto":          "mob-ai",
 	"saytoonly":      "mob-ai",
+	"smother":        "mob-ai: the smoke elemental's special move; no player can be a smoke elemental",
 	"wander":         "mob-ai",
 
 	// --- AI companion (modules/aicompanion): the few things a bonded

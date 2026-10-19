@@ -36,6 +36,7 @@ func TestSpecForCompleteActionMatrix(t *testing.T) {
 		{ActionGore, "gore", skills.UnarmedCombat, SkillFixed, true},
 		{ActionDrain, "drain", skills.UnarmedCombat, SkillFixed, true},
 		{ActionThrottle, "throttle", skills.UnarmedCombat, SkillFixed, true},
+		{ActionSmother, "smother", skills.UnarmedCombat, SkillFixed, true},
 		{ActionThrow, "throw", skills.Skullduggery, SkillFixed, true},
 		{ActionSneak, "sneak", skills.Skullduggery, SkillFixed, true},
 		{ActionTaunt, "taunt", skills.Rhetoric, SkillFixed, false},

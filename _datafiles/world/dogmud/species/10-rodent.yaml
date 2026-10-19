@@ -5,8 +5,9 @@ body_parts: [legs, eyes, mouth, skin, tail]
 intrinsic_mutations:
   tail: 1
 size: small
-unarmedname: teeth and nails
+unarmedname: teeth
 natural_attack: bite
+beast_moves: [hamstring]
 angrycommands: [emote squeeks angrily.]
 damage:
   basedamage: 1

@@ -1,0 +1,69 @@
+# Combat reachability slice 2 (#541) two-seat gate: beasts from both readers.
+#
+# Slice 2 draws every creature line from one weapon-type rule: the engage line
+# (from `prepare`), the wait lines and the swings all come from the weapon,
+# else the species' natural attack, else bare hands. Big cats now swing from
+# `pounce.yaml`, and which special moves a creature has is species data
+# (`beast_moves`). Goldens and guards prove the records load; neither can tell
+# whether the defender's sentence and the room's sentence read as one moment.
+#
+# Fixture: Trampled Outskirts (3001, Ironwind Steppe) spawns a Feral Cat (202,
+# feline, natural attack pounce, beast moves rake, pounce, hamstring, throttle)
+# and a Steppe Rat (200, rodent, beast moves hamstring only). Both are hostile
+# and go for whoever is in the room first, so the witness starts one room
+# north (3002) and walks south once the fight is on. The steppe is outdoors;
+# the defender carries a torch in case the run lands at night.
+#
+# The wolf, the bear and the smoke elemental are in the admin run
+# `goals/2026-10-19-beast-moves-admin.yaml`.
+#
+# D4 (#574): a cat's gate allows throttle but its AI profile has no throttle
+# weight, so a cat rarely throttles. Report one if it happens; never report
+# its absence.
+name: beast-moves
+mode: party
+summary: >-
+  A player fights a feral cat and then a steppe rat while a plain witness
+  stands in the room. Every round both quote what they were told so the
+  defender's line and the room's line for the same moment can be compared.
+on_actor_stop: continue
+budgets:
+  wall_clock: 40m
+requires:
+  max_connections: 20
+roster:
+  - id: defender
+    personality: bug-finder
+    goals: goals/scenarios/beast-moves/defender.yaml
+  - id: witness
+    personality: bug-finder
+    goals: goals/scenarios/beast-moves/witness.yaml
+
+group_goals:
+  - id: one-moment-both-seats
+    do: >-
+      The defender fights the Feral Cat for at least six rounds, then the
+      Steppe Rat for at least four, while the witness stands in the room doing
+      nothing. After each round both record every line verbatim with its round
+      number, including the first line when each fight begins.
+    verify: >-
+      The opening line, each waiting line and each blow read as ONE moment to
+      the defender and to the room: same action, same result, same banner. The
+      room line names the defender. Judge round by round.
+  - id: lines-fit-the-creature
+    do: Read every cat and rat line.
+    verify: >-
+      The cat's lines are leaps, claws and fangs; the rat's are bites. No line
+      names a weapon, hand or fist the creature does not have.
+  - id: special-moves-by-species
+    do: Quote every special move with its round.
+    verify: >-
+      The rat never throttles, mauls or pounces (any one is a finding). A cat's
+      rake, pounce or hamstring is expected. A cat throttle is allowed but not
+      required: report one if seen, never report its absence.
+  - id: no-token-or-blank-leaks
+    do: Watch every line in every round.
+    verify: >-
+      A literal curly-brace token, a doubled or missing name, a lowercase
+      sentence start, an EMPTY combat line, or a line that wraps oddly mid-word
+      is a finding.

@@ -57,6 +57,16 @@ Every row was read from the worktree `C:/tmp/dogmud-slam` at that SHA. "Spec" ma
 
 Spec facts 14 and 15 (the PR #208 species corrections) belong to slice 1, which shipped in #568, and are not re-verified here.
 
+### Re-verified 2026-10-19 on master `d3b7f9774` (rows above kept as written on 10-16)
+
+All 34 rows were re-checked against the slice 2 worktree. 20 hold, 11 drifted in line numbers only, 3 changed in substance. Read current line numbers from source when executing a step; the deltas that matter:
+
+- **Row 22 CHANGED (Task 11 code):** `combat_throttle.go:216-219` consumes the round with `char.SpendRoundOnAction()` (16b8362db), not `SetRoundsWaiting(1)`. The round hook consumes such a round with no wait line (`NewRound_DoCombat_resolution.go:87,97-99`), and `TestSpecialMoveAdmissionOrdering` counts only that call (`command_readiness_drift_test.go:297-305`). Task 11's smother code is updated to match. `ClaimSpecialMove` is now `special_move_cooldown.go:45`; throttle knobs `config.yaml:843-845`.
+- **Row 4 CHANGED (Task 14 expectation):** a round right after a special move prints NO wait line (16b8362db). The playtest must not expect a wait line on the round after maul, pounce or smother. `GetWaitMessages` keeps its signature and lines; its one caller is now `NewRound_DoCombat_resolution.go:102`.
+- **Row 20 CHANGED (Task 2 list):** add `shipped_narration_data_guard_test.go:327` (`"todefenderroom": "remote_observer"`) to Task 2's list of `separate` users; check whether movenarration still needs the alias before deleting it. The swing separate render is now `combat_helpers.go:1959-1998`. The new feint path (`sendFeintLines`, `:1625-1627`) sends a cross-room room line but does not read the `Separate` pool, so Task 2's shape holds.
+- **Task 1 is not partly done:** e88c7f7af changed only which SKILL sets a swing's message tier and feint (`GetCombatSkillLevelFor(ws.weapon)`, `combat_helpers.go:1897,1926`); `buildWeaponSetup`'s subtype logic (`:430-462`) is unchanged. The entangled-defence reader is now `:691-694`.
+- **Drift only:** fumble and coup de grace callers `combat_helpers.go:1863,1873`; `meleeDisplaySubtype :1710` (caller `:1856`, comment list `:1707-1709`); sharp band `attackresult.go:267-268`; charge `divergences.go:187`; drain EXEMPT note `combat/context.md:888-893`; predicate docs `actions/context.md:224-225`, `combat/context.md:844-848`; drift-test ranges `TestSpecialMoveAdmissionOrdering` 149-317, `TestSpecialMoveWrapperAdmission` 596-705 (mob list 598), `runExecuteAndReadExecuted` 728-760, `runExecuteAndReadFlag` 1456; banner guard empty-file check `:159-161`. Condition id 144 is still free (`id_inventory --alloc conditions 1`).
+
 ## Owner decisions (decided 2026-10-16; Task 0 Step 1 records them)
 
 Every task below is written to these rulings. Each entry gives the question, the ruling and the reason.
@@ -67,7 +77,7 @@ Every task below is written to these rulings. Each entry gives the question, the
 - **D4. Cats' throttle weight. DECIDED: do NOT change the `ambush_predator` AI profile in this slice.** Filed as #574, a sub-issue of the behaviour arc parent #374. Reason: tuning which move a mob picks belongs to the behaviour arc, not to a data-reachability slice. Consequence: cats list throttle in `beast_moves` and the gate allows it, but with no profile weight the AI will rarely pick it (Fact 28). The tests check the gate (`CanUseThrottle` passes for a feline and fails for a rodent, Task 7); the playtest checks that a rat never throttles and does not require a cat to throttle (Task 14).
 - **D5. Smother's defence label. APPROVED: `rolling smoke`** (renders "You dodge the Elemental Prince's rolling smoke"). Reason: it reuses the approved miss lines' own words. Applied in Task 11.
 - **D6. The attack-family predicates. DECIDED (b): DELETE `SpeciesIsFanged`, `SpeciesIsClawed`, `SpeciesIsHorned` and `SpeciesHasLifeDrain`** (and `SpeciesIsQuadrupedPredator`, deleted under either option) once the gates read `beast_moves`. Reason: no production caller remains (Fact 18), and #563 (anatomy-aware combat text) will want a proper anatomy model rather than attack-family predicates. The same reason covers `SpeciesNaturalAttack`, whose only production callers are those predicates (`ai.go:255,258,261`), so it goes with them. **This supersedes spec section 4's bullet that the predicates "describe the body".** Applied in Task 7 Step 6 and Task 9.
-- **D7. maul and pounce width. DECIDED (b): rewrite every `maul.yaml` and `pounce.yaml` line over 80 visible columns IN THIS SLICE,** through an owner review table, before bears and cats switch to them. Reason: the 80-column hard wrap is a rule for player copy, and these two files go live for the first time in this slice; shipping them over width would ship a known defect. Re-measured: `maul.yaml` 149 of 345 role lines over 80, `pounce.yaml` 121 of 345 (Fact 30). Applied in Task 8; the width guard lands in Task 9.
+- **D7. maul and pounce width. AMENDED 2026-10-19: NO width rewrite; `maul.yaml` and `pounce.yaml` ship as written.** The owner reviewed both files and ruled them good enough. Reason: every combat hit category is wrapped by the message pipeline at the player's line width (`shouldWrap`, `internal/messaging/pipeline.go:134-138`), so a line over 80 columns wraps onto a second line rather than breaking. (Superseded ruling, 2026-10-16: (b), rewrite every line over 80 through an owner review table; `maul.yaml` 149 of 345 role lines over 80, `pounce.yaml` 121 of 345, Fact 30.) Consequence: Task 8 shrinks to D3's one record plus the natural-weapon guard check, and Task 9 does not add maul and pounce to the slam split's width guard.
 - **D8. Patch note copy (Task 12 Step 5). APPROVED,** with the throat bullet naming wolves only (owner confirmed 2026-10-16), since under D4 cats rarely throttle.
 
 ---
@@ -1555,7 +1565,15 @@ Docs that name them (Fact 18): `internal/combat/context.md:832-836` becomes one 
 - [ ] **Step 7: Bears' charge (spec section 5).** Already scripted on 9541 and 9547 (Fact 14); no data change. `TestScriptedBeastMovesAreInTheSpeciesList` is the record.
 - [ ] **Step 8: Run** the full suite; PASS. Commit `feat(combat): beast-move gates read species beast_moves (#541)` with the files above named; body: the three sync points, the drift rows added, D6 (the attack-family predicates and `SpeciesNaturalAttack` deleted, no production caller left, superseding spec section 4's "describe the body" bullet), D4 (no AI profile change, #574), the bird and serpent losing their family moves per the table.
 
-## Task 8: `maul.yaml` and `pounce.yaml` fit 80 columns (D7 (b), D3)
+## Task 8: `pounce.yaml`'s D3 record (D3; D7 amended)
+
+**D7 AMENDED 2026-10-19: Steps 1 to 5 below (measure, draft, check, owner gate, apply) are NOT run.** The owner reviewed `maul.yaml` and `pounce.yaml` and ships them as written (see D7). What remains of this task:
+
+- [ ] **Step A: D3.** Replace `pounce.yaml`'s normal/master record (today's lines 240-242; re-locate by content, "flash") with the D3-approved YAML shown in Step 2 below, by Edit. Nothing else in either file changes.
+- [ ] **Step B: The `forward` false positive.** Fact 29: `pounce.yaml`'s heavy/master line "drive your {itemname} forward" trips `TestNaturalWeaponPoolsNeverPutAVerbAfterTheWeapon` once cats use pounce (Task 9). Add `"forward": true,` to `weaponNotSubject` beside `"home"` (a direction word, like "down" and "up") and add `` `You drive your {itemname} forward and crash in!` `` to the no-verb list of `TestSubjectVerbAfterItemName_CatchesShippedDefects` so the entry is exercised. Re-run the scratch replica of `subjectVerbAfterItemName` over both files: any OTHER hit goes to the owner as a copy question, never into the allowlist.
+- [ ] **Step C: Goldens and commit.** Steps 6 to 8 below apply, with the commit message `content(combat): pounce's flashing record names the creature, not its claws (#541, D3)` and a body naming the D3 record and the `forward` guard word.
+
+(The original steps follow for the record; skip Steps 1 to 5.)
 
 Modelled on the slam split's copy process (`docs/superpowers/plans/completed/2026-10-16-slam-split.md` Tasks 1 to 3: agents draft, controller checks, owner reviews one table per file, then the approved copy lands with a width guard). It runs before Task 9 switches bears and cats onto these files, so no player ever reads an over-width maul or pounce line.
 
@@ -1707,7 +1725,7 @@ func TestMaulAndPounceRenderFromTheirOwnFiles(t *testing.T) {
 
 Add `Maul: 0.15, Pounce: 0.15` to the table in `reach_test.go`.
 
-The width guard (D7): in `internal/items/slam_split_copy_test.go` set `var slamSplitFiles = []ItemSubType{Slam, Trample, Lash, Blast, Maul, Pounce}` and its comment to `the four files the split wrote or rewrote, and maul and pounce, rewritten to 80 columns before bears and cats used them (#541 slice 2, owner ruling D7)`. The guard is generic (Fact 30): it measures each listed file with the longest `unarmedname` of the species using it, so after Step 2 it reads "claws and teeth" for maul and "claws and fangs" for pounce from species data. Its can-fail probe already exists (`TestSlamSplitWidthCheck_CanFail`, `:151-156`); the pre-rewrite files were the live proof (Task 8 Step 1: 149 and 121 over). Before Step 2 this guard also fails, with `no dogmud species uses "maul"`, so it is part of the failing set.
+**D7 AMENDED 2026-10-19: skip this paragraph; maul and pounce are NOT added to the width guard, and Step 3 runs `TestNaturalWeaponPoolsNeverPutAVerbAfterTheWeapon` only.** The width guard (D7): in `internal/items/slam_split_copy_test.go` set `var slamSplitFiles = []ItemSubType{Slam, Trample, Lash, Blast, Maul, Pounce}` and its comment to `the four files the split wrote or rewrote, and maul and pounce, rewritten to 80 columns before bears and cats used them (#541 slice 2, owner ruling D7)`. The guard is generic (Fact 30): it measures each listed file with the longest `unarmedname` of the species using it, so after Step 2 it reads "claws and teeth" for maul and "claws and fangs" for pounce from species data. Its can-fail probe already exists (`TestSlamSplitWidthCheck_CanFail`, `:151-156`); the pre-rewrite files were the live proof (Task 8 Step 1: 149 and 121 over). Before Step 2 this guard also fails, with `no dogmud species uses "maul"`, so it is part of the failing set.
 
 Run: FAIL (`undefined: items.Maul`).
 
@@ -2103,8 +2121,11 @@ func ExecuteSmother(actor Actor) SmotherResult {
 	}
 	combat.RecordSpecialMove(sourceType, targetType, "smother", result.Hit, result.Damage, char, target.Char, util.GetRoundCount())
 
+	// Re-verified 2026-10-19 (16b8362db): a special move consumes its round
+	// with SpendRoundOnAction, which the round hook consumes silently, and
+	// TestSpecialMoveAdmissionOrdering counts only that call.
 	if char.CombatPhase != nil {
-		char.SetRoundsWaiting(1)
+		char.SpendRoundOnAction()
 	}
 	actor.AwardResolved(result.Hit, actor.GetCharacter().CandidateFor(string(skills.UnarmedCombat)))
 
@@ -2274,9 +2295,9 @@ gh pr create --repo pruuk/DOGMud --base master --head feature/combat-reachabilit
 | Refactoring throttle's cast interrupt into a helper changes a guarded file | The helper is a move of the same code; throttle's tests and the drift test's callee row catch a drift; allowlist line keys for `combat_throttle.go:146,149` do not move |
 | The Prince spawned outside its instance may behave oddly or refuse an attack | The admin goal checks the spawn and the attack first and reports a refusal as the finding; the unit tests cover smother regardless |
 | Cats rarely throttle: the gate allows it but `ambush_predator` has no throttle weight (Fact 28) | D4: the profile is not changed in this slice; the tuning is #574 under the behaviour arc #374. Tests prove the gate, the playtest does not require a cat throttle, and the patch note stops promising it (D8, confirmed) |
-| maul.yaml and pounce.yaml exceed 80 columns at 20-character names (149 and 121 of 345 role lines, Fact 30) | D7 (b): Task 8 rewrites every over-width record through an owner review before Task 9 switches bears and cats, and Task 9 extends the generic width guard to both files |
+| maul.yaml and pounce.yaml exceed 80 columns at 20-character names (149 and 121 of 345 role lines, Fact 30) | D7 AMENDED 2026-10-19: accepted. The owner ships both files as written; combat hit categories wrap at the player's line width (`shouldWrap`), so an over-80 line wraps rather than breaks. (Was D7 (b): rewrite through an owner review and extend the width guard.) |
 | Deleting the predicates removes something #563 might have reused | D6 (b): #563 wants a proper anatomy model, not attack-family predicates; Task 7 Step 6 greps (with a pre-deletion proof the pattern matches) that no caller remains, and the root guard keeps the names from returning to a gate |
-| The D7 rewrite drifts from a record's one moment or reintroduces a #455 defect | Task 8 Step 3 checks each draft by the same rules the guards apply (width, subject-verb, banner, idiom, dashes) before the owner sees it; Task 9 Step 3 runs the real natural-weapon guard once cats use pounce |
+| The D7 rewrite drifts from a record's one moment or reintroduces a #455 defect (moot after the 2026-10-19 D7 amendment: no rewrite) | Task 8 Step 3 checks each draft by the same rules the guards apply (width, subject-verb, banner, idiom, dashes) before the owner sees it; Task 9 Step 3 runs the real natural-weapon guard once cats use pounce |
 
 ## Self-review
 

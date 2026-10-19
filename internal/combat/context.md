@@ -2,7 +2,7 @@
 
 ## Overview
 
-The DOGMud combat system provides comprehensive turn-based combat mechanics with support for player vs player, player vs mob, and mob vs mob encounters. It features skill-based damage calculations, layered defenses (dodge/parry/block), dual wielding, critical hits, special combat moves with knockdown mechanics, prone condition system, backstab mechanics, pet participation, alignment-based consequences, and detailed combat messaging with cross-room attack support.
+The DOGMud combat system provides comprehensive turn-based combat mechanics with support for player vs player, player vs mob, and mob vs mob encounters. It features skill-based damage calculations, layered defenses (dodge/parry/block), dual wielding, critical hits, special combat moves with knockdown mechanics, prone condition system, backstab mechanics, pet participation, alignment-based consequences, and detailed combat messaging.
 
 **DOGMud Differences from upstream GoMud:**
 - Combat uses skill ranks (weapon-combat, unarmed-combat, ranged-combat) instead of character Level
@@ -30,7 +30,8 @@ The combat system is built around several key components:
 **Attack Result System:**
 - Comprehensive result tracking for damage, hits, and effects
 - Multi-target messaging system for attacker, defender, and rooms
-- Support for cross-room combat with directional messaging
+- Round combat never crosses rooms: a target in another room is released
+  before any line is drawn, so swing and wait lines are same-room only (#541)
 - Condition application tracking for combat effects
 
 **Combat Calculations (`calculations.go`):**
@@ -63,16 +64,45 @@ The combat system is built around several key components:
 
 ### Natural-Attack Subtype Resolution
 
-When an attacker has no equipped weapon, `buildWeaponSetup`
-(`combat_helpers.go`) resolves the attack-message subtype from the
-attacker's species `NaturalAttack` field (via `species.GetSpecies`).
-If non-empty, that subtype (`bite`, `claws`, `slam`, `gore`, `sting`, `siphon`,
-`trample`, `lash`, `blast`)
-drives message selection instead of the generic-punch fallback
-(`items.Unarmed`). An equipped weapon's own `Subtype` always takes
-precedence — this path only fires when the weapon slot is empty. This
-is what makes non-human mobs' basic attacks read as bites or claws
-instead of punches.
+One function holds the weapon-type rule (#541 slice 2):
+`AttackSubtype(char)` (`combat_helpers.go`) returns the main-hand weapon's
+subtype, else the species' `NaturalAttack` (via `species.GetSpecies`), else
+`items.Unarmed`. `buildWeaponSetup` asks the same rule per weapon slot through
+`attackSubtypeWith(char, weapon)`, so an empty off-hand on an armed wolf still
+bites. `GetWaitMessages` draws its wait pool and hit band from
+`AttackSubtype`, and the "too entangled to defend" lines take their category
+from it, so a creature waits and swings with the same thing. The natural
+subtypes are `bite`, `claws`, `slam`, `gore`, `sting`, `siphon`, `trample`,
+`lash`, `blast`, `maul` and `pounce`. An equipped weapon's own `Subtype` always takes
+precedence. This is what makes non-human mobs' basic attacks and wait rounds
+read as bites or claws instead of punches.
+
+**Engage lines (#541 slice 2, owner ruling A).** The moment an attack
+command starts a fight is one coordinated draw from the attacker's
+`prepare` pool: `EngageMessages(attacker, defender, attackerType,
+defenderType)` (`engage_messages.go`) returns `EngageLines` (actor, actee
+and observer line plus the hit band from `CategoryForWeaponSubtype`). The
+pool comes from `AttackSubtype` directly, never `meleeDisplaySubtype`, so a
+bow user squares up with `shooting.yaml`'s own prepare lines. It does not
+call `IncrementAttackCount`. `EngageLineFor(sight, authored, plain, names)`
+is what a participant reads (owner ruling D2): the authored line only at
+`messaging.SightFull`, otherwise the plain hand-written line with the other
+party's name hidden by `messaging.HideNames`, because an authored line names
+the weapon. An empty authored line (store not loaded, as in command tests)
+also falls back to the plain line. The callers are the attack commands
+(`usercommands/attack.go`, `mobcommands/attack.go`); they send the observer
+line through `Room.SendTextVisualHidingNames`, falling back to the plain
+room line when it is empty, and keep their `engaged`, `!isSneaking` and
+`alreadyFighting` double-announce gates. The token map is shared with
+`GetWaitMessages` through `preAttackTokens` (`combat.go`).
+
+**What was retired with it (#541 slice 2).** The `separate` split (the
+cross-room blow) left the store, its type, its decoder and both render
+branches: round combat releases a target in another room before any line is
+drawn, so it could never render. Every combat-message file now has one
+`together` pool per intensity. `shooting.yaml` keeps only `prepare` and
+`wait`, because `items.MeleeSwingNarratedAs` makes a Shooting swing borrow
+Bludgeoning's lines (see "Bludgeon narration" and "Combat Messaging System" below).
 
 **The slam split (#541).** `trample` (horse), `lash` (slime, fungal colony)
 and `blast` (the water, air, fire, magma, sand, storm and ice elementals)
@@ -85,6 +115,14 @@ pins the bands; `slam_split_render_test.go` proves a slime, a horse, a sand
 elemental and an automaton each render from their own file. The groups and
 how to choose a type: `internal/species/context.md`.
 
+**Maul and pounce as default attacks (#541 slice 2, owner ruling D).**
+Bears (`natural_attack: maul`) swing from `maul.yaml` and cats
+(`natural_attack: pounce`) from `pounce.yaml` in ordinary combat.
+`CategoryForWeaponSubtype` puts both in `CategoryHitNaturalSharp` with
+`claws`, and `meleeDisplaySubtype` leaves them their own vocabulary.
+`maul_pounce_render_test.go` proves a bear and a cat each render from their
+own file.
+
 ## Key Features
 
 ### Advanced Combat Mechanics
@@ -92,7 +130,6 @@ how to choose a type: `internal/species/context.md`.
 - Dual wielding with skill-based penalties
 - Surprise attack: one contested opening strike per engagement (U10d)
 - Pet participation in combat (20% chance)
-- Cross-room combat support with directional messaging
 
 ### Hit Calculation System
 ```go
@@ -840,22 +877,17 @@ same pattern as Phase 2: the AI `CanUse*` viability check in `ai.go`,
 `Execute*` (defense-in-depth, unreachable for ordinary humanoid players).
 `command_readiness_drift_test.go` rows assert all three sites agree.
 
-**Exported identity predicates** (single source of truth, `combat/ai.go`):
-- `SpeciesIsFanged` — species has a `bite`/`fangs` natural attack
-- `SpeciesIsClawed` — species has a `claws` natural attack
-- `SpeciesIsHorned` — species has `horns` in its `body_parts`
-- `SpeciesHasLifeDrain` — species carries `lifedrain: true`
-- `SpeciesIsQuadrupedPredator` — has `legs` AND (fanged OR clawed);
-  the gate for `pounce`
+Beast moves are decided by `SpeciesHasBeastMove` (the species' `beast_moves`); the attack-family predicates were deleted in #541 slice 2 (D6): #563 will want a proper anatomy model. Every gate pairs that list read with its runtime anatomy check; `species.validateBeastMoves` refuses at load a listed move whose body the species lacks. The root guard `beast_move_gate_guard_test.go` fails any gate that reads the attack family, and fails a mob that scripts a beast move its species does not list.
 
-| Move | Gate | Mechanic |
+| Move | Gate (listed in `beast_moves`, plus) | Mechanic |
 |------|------|----------|
-| `rake` | clawed | Damage + short bleed (`claws.yaml` messages reused) |
-| `maul` | fanged | Heavier damage + stronger bleed (`maul.yaml`) |
-| `pounce` | quadruped predator, not already grappling | Leap opener: knockdown + damage, no bleed (`pounce.yaml`) |
-| `gore` | horned (`horns` body part — load-validated) | Charge: damage + knockback (`gore.yaml`) |
-| `drain` | `LifeDrain` flag (vampire) | Lifesteal: bleed target, heal attacker = `damage × DrainHealRatio` (0.75) via `Character.Heal` (`drain.yaml`) |
-| `throttle` | fanged | Damage + the Bleeding record (condition 122) + Throttled condition #89 (stamina DoT) + a cast interrupt gated by an opposed concentration contest (U10): throttler's grip (`Dex + unarmed-combat×SkillWeight`) vs. the target's hold (`Wil + spellcasting×SkillWeight`) via `combat.RunConcentrationContest`, floored only by `ConcentrationFloor` (0.02) — not the old flat `ThrottleInterruptChance` coin flip, which is deleted. A lost contest calls the shared `actions.InterruptTargetCast` helper, which reuses the engine's existing `activity.TriggerCastCancel` cancel path (+ conviction refund); a held contest fires success-only spellcasting progression for the target instead. No new silence flag. (`throttle.yaml`) |
+| `rake` | no hands | Damage + short bleed (`claws.yaml` messages reused) |
+| `maul` | no hands | Heavier damage + stronger bleed (`maul.yaml`) |
+| `pounce` | no hands, legs, not already grappling | Leap opener: knockdown + damage, no bleed (`pounce.yaml`) |
+| `gore` | no hands (`horns` body part load-validated for a gore-listing species) | Charge: damage + knockback (`gore.yaml`) |
+| `drain` | nothing else (`lifedrain: true` load-validated) | Lifesteal: bleed target, heal attacker = `damage × DrainHealRatio` (0.75) via `Character.Heal` (`narration/special-moves/drain.yaml`) |
+| `throttle` | no hands | Damage + the Bleeding record (condition 122) + Throttled condition #89 (stamina DoT) + a cast interrupt gated by an opposed concentration contest (U10): throttler's grip (`Dex + unarmed-combat×SkillWeight`) vs. the target's hold (`Wil + spellcasting×SkillWeight`) via `combat.RunConcentrationContest`, floored only by `ConcentrationFloor` (0.02); the old flat `ThrottleInterruptChance` coin flip is deleted. A lost contest calls the shared `actions.InterruptTargetCast` helper, which reuses the engine's existing `activity.TriggerCastCancel` cancel path (+ conviction refund); a held contest fires success-only spellcasting progression for the target instead. No new silence flag. (`narration/special-moves/throttle.yaml`) A cat lists throttle in `beast_moves`, so the gate allows it, but `ambush_predator` carries no throttle weight (D4, #574), so a cat rarely chooses it. |
+| `smother` | no hands (mob-only; the smoke elemental, species 44, #541 slice 2) | `CanUseSmother` / `ScoreSmother` (base 50, +30 against a caster, -30 against a target with `HasAnyBlindSource`). On a hit: damage + Blinded (3) + Smothered (144, stamina DoT) + the same cast-interrupt contest as throttle (`actions.chokeCastInterrupt`); no bleed. (`narration/special-moves/smother.yaml`) |
 
 **New species field:** `LifeDrain bool` (yaml `lifedrain`). Vampire
 (species 34) carries `lifedrain: true`; the boar (species 6) received
@@ -887,9 +919,9 @@ is the symmetric counterpart to Phase 2's "humanoid technique moves require
 Effect: tool-using (monster-)humanoids that carry a beast `natural_attack`
 (goblin/skeleton/vampire — they have `hands`) keep grapple/bash + their
 claw/bite BASIC-attack messaging but can NOT rake/pounce/etc.; **bears** (`arms`
-but no `hands`) stay maulers. **`drain` is EXEMPT** — it is `LifeDrain`-flag
-gated, not anatomy/`natural_attack` gated, so armed undead (vampire, wraith,
-spectre) still drain.
+but no `hands`) pass the hands check. **`drain` is EXEMPT**: it is gated by
+the `beast_moves` list alone (the loader requires `lifedrain: true` for it),
+not by anatomy, so armed undead (vampire, wraith, spectre) still drain.
 
 **New AI profiles:** `skirmisher` (small fanged vermin — rats/insects:
 hamstring/trip dominant, light maul) and `serpent` (legless fanged —
@@ -930,7 +962,8 @@ Players can switch combat targets mid-fight using `attack <new-target>`:
 ## Combat Messaging System
 - Dynamic message selection based on damage percentage
 - Token-based message customization ({actor}, {actee}, {weapon}, etc.)
-- Separate messaging for same-room vs cross-room combat
+- One `together` pool per intensity: the cross-room `separate` split was
+  retired in #541 because round combat never renders it
 - Critical hit and backstab message highlighting
 
 ## Power Scoring & Gear Contribution
@@ -1296,10 +1329,20 @@ entry), a PvP wait-round room echo now excludes BOTH combatants; the old
 called with, so this migration also fixed a PvP self-echo gap, not only the
 name leak.
 
+Since #541 the `RemoteObserver`/`RemoteRoom` half is gone from this call: the
+`separate` split it carried was retired, because round combat releases a
+target in another room (`hooks.resolveCombatTarget`) before the wait round.
+The `Trio` now carries the one room's `Observer` line. The swing path
+(`buildAttackMessages`, `combat_helpers.go`) dropped its defender-room line
+for the same reason.
+
 `internal/hooks`' `handleCombatWaitRound` no longer drains
 `roundResult.MessagesToSourceRoom`/`MessagesToTargetRoom` — `GetWaitMessages`
 never populates them now, so the old drain loop was removed rather than left
-as dead code (see `internal/hooks/context.md`).
+as dead code (see `internal/hooks/context.md`). Since #541 nothing wrote
+`MessagesToTargetRoom` at all, so it and its `SendToTargetRoom` method were
+removed; `MessagesToSourceRoom` is the only room-line field left, drained
+once into the attacker's room by `dispatchCritAndMessaging`.
 
 ## Dependencies
 
@@ -1314,7 +1357,7 @@ as dead code (see `internal/hooks/context.md`).
 - `internal/conditions` - Status effects that modify combat
 - `internal/skills` - Skill system for combat skills and dual wielding
 - `internal/species` - Species bonuses and unarmed combat specifications
-- `internal/rooms` - Room management for cross-room combat
+- `internal/rooms` - Room lookup for room-line delivery
 - `internal/util` - Dice rolling and random number generation
 - `internal/configs` - Configuration for combat behavior and messaging
 
@@ -1945,7 +1988,7 @@ values directly.
 | File | Contents |
 |------|----------|
 | `combat/combat.go` | `calculateCombat()` orchestrator (~80 lines), `AttackPlayerVsMob`, `AttackPlayerVsPlayer`, `AttackMobVsPlayer`, `AttackMobVsMob`, `GetWaitMessages` |
-| `combat/combat_helpers.go` | Extracted helpers: `calcAttackCount`, `collectAttackWeapons`, `buildWeaponSetup`, `buildDamageParams`, `calcAttackScore`, `calcCritThreshold`, `calcDualWieldPenalty`, `filterDefensesForThirdParty`, `runBestOfAllDefense`, `resolveDefenseOutcome`, `calcHitDamage`, `buildAttackMessages`, `applyPetDamage` |
+| `combat/combat_helpers.go` | Extracted helpers: `AttackSubtype` (the one weapon-type rule), `attackSubtypeWith` (that rule for one weapon slot), `calcAttackCount`, `collectAttackWeapons`, `buildWeaponSetup`, `buildDamageParams`, `calcAttackScore`, `calcCritThreshold`, `calcDualWieldPenalty`, `filterDefensesForThirdParty`, `runBestOfAllDefense`, `resolveDefenseOutcome`, `calcHitDamage`, `buildAttackMessages`, `applyPetDamage` |
 | `combat/damage_pipeline.go` | `CalcRawDamage`, `ApplyMitigation`, `SkillMultiplier`, `ResourceMultiplier`, `MitigationCurveFor`, `EffectiveMitigationFor`, `DamageScale`; `GetConvictionDamageDescription` (third person, "their resolve") and `GetConvictionDamageDescriptionToTarget` (the same bands in second person, "your resolve", for the line the taunted or countered player reads, #262); `GetWordlessConvictionDamageDescription` and `GetWordlessConvictionDamageDescriptionToTarget` (the same two readings for a taunt made without words, where the insult bands read as fear and dread instead, M6 slice 3) |
 | `combat/crit_damage.go` | `CritDamageMultiplier`, `CritOrMitigatedDamage`, `CritOrMitigatedDamageScaled` (crit reduced by the curve's overflow, #465) |
 | `combat/mitigation_curve.go` | `MitigationCurve`, `EffectiveMitigation`, `MitigationCurve.CritReduction` (#465) |
@@ -2087,10 +2130,14 @@ the bandit's ribs" instead of slashing narration. Damage math is unchanged;
 the swap is cosmetic only.
 
 **Exempt subtypes (no swap):**
-- Natural-blunt: Fist, Claws, Bite, Sting, Slam, Trample, Lash, Blast, Gore, Whipping
+- Natural-blunt: Fist, Claws, Bite, Sting, Slam, Trample, Lash, Blast, Gore, Maul, Pounce, Whipping
 - Caster: Wand, Sceptre, Staff
 
-**Affected subtypes (swap fires):** Slashing, Cleaving, Stabbing, Shooting.
+**Affected subtypes (swap fires):** Slashing, Cleaving, Stabbing.
+
+**Always swapped:** a subtype `items.MeleeSwingNarratedAs` re-narrates borrows
+that subtype's swing lines regardless of reach. Today that is Shooting, as
+Bludgeoning, so `shooting.yaml` authors only `prepare` and `wait` (#541).
 
 ### Balance knobs (`Balance` section in config)
 
@@ -2330,6 +2377,7 @@ own identical terms (converging that is not Task 17's mandate).
 |------|---------|
 | `combat.go` | Round resolution entry points. `resolveCombatRound` builds and admits one aggregate attack plan before resolution, then passes the committed short state into hit scoring. **`calculateCombat` takes both combatants as POINTERS (U7 Task 1). See the gotcha under "Contest core"; value parameters silently switched the whole melee defence cost model off.** Each of the four call sites builds its `combatContext` with `newCombatContext` (`combat_helpers.go`): `sourceSight`/`targetSight` from `messaging.ReaderSight` and the comfort fields `sourceDark`/`sourceBright`/`targetDark`/`targetBright` from `messaging.ComfortDistance`, once per side; see "Sight: the verdict and the ramp". |
 | `combat_helpers.go` | Extracted helpers, including the immutable-ish `attackPlan` snapshot consumed by `calculateCombat`. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** `combatContext` itself lives here: its `sourceSight`/`targetSight` verdicts only hide names, and the attack and defence scores multiply by `messaging.SightScoreMultiplier` on its comfort fields; see "Sight: the verdict and the ramp". |
+| `engage_messages.go` | `EngageLines`, `EngageMessages` (the engage moment drawn from the attacker's `prepare` pool) and `EngageLineFor` (the authored line at full sight, else the plain line with names hidden). See "Engage lines" under "Natural-Attack Subtype Resolution" |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `mitigation_curve.go` | The mitigation curve (#465): `MitigationCurve`, `EffectiveMitigation`, `CritReduction`. See "Mitigation curve (#465)" |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |

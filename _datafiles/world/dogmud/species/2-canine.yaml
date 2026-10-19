@@ -12,6 +12,7 @@ conditionids:
 size: medium
 unarmedname: jaws
 natural_attack: bite
+beast_moves: [maul, throttle, pounce, hamstring]
 selectable: false
 tameable: true
 speech: false

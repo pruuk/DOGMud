@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -91,17 +92,22 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 			if engaged && !isSneaking && !alreadyFighting {
 
-				// attack.go makes zero messaging.SendTrio calls, so there is
-				// no pipeline to hide the mob's identity automatically: the
-				// substitution has to happen here, by the reader's own
-				// three-tier sight verdict.
-				personalText := fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight you!`, mob.Character.Name)
+				// The engage moment is one draw from the mob's prepare pool
+				// (spec 2026-10-16 #541 section 2). attack.go makes no
+				// SendTrio call, so each reader's sight is applied here: the
+				// victim reads the authored line only at full sight (D2).
+				engage := combat.EngageMessages(&mob.Character, u.Character, combat.Mob, combat.User)
 				sight := messaging.ParticipantSight(u.Character, room)
-				u.SendText(messaging.CategoryHitMelee, messaging.HideNames(personalText, []string{mob.Character.Name}, sight))
+				u.SendText(engage.Category, combat.EngageLineFor(sight, engage.Actee,
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight you!`, mob.Character.Name),
+					[]string{mob.Character.Name}))
 
-				room.SendTextVisual(messaging.CategoryHitMelee,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="username">%s</ansi>.`, mob.Character.Name, u.Character.Name),
-					u.UserId)
+				roomLine := engage.Observer
+				if roomLine == `` {
+					roomLine = fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="username">%s</ansi>.`, mob.Character.Name, u.Character.Name)
+				}
+				room.SendTextVisualHidingNames(engage.Category, roomLine,
+					[]string{mob.Character.Name, u.Character.Name}, u.UserId)
 
 			}
 		}
@@ -149,8 +155,13 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				targeting.ReasonForAggroType(mobAggroType))
 
 			if engaged && !isSneaking && !alreadyFighting {
-				room.SendTextVisual(messaging.CategoryHitMelee,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="mobname">%s</ansi>.`, mob.Character.Name, m.Character.Name))
+				engage := combat.EngageMessages(&mob.Character, &m.Character, combat.Mob, combat.Mob)
+				roomLine := engage.Observer
+				if roomLine == `` {
+					roomLine = fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="mobname">%s</ansi>.`, mob.Character.Name, m.Character.Name)
+				}
+				room.SendTextVisualHidingNames(engage.Category, roomLine,
+					[]string{mob.Character.Name, m.Character.Name})
 			}
 
 		}

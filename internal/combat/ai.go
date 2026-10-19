@@ -3,7 +3,6 @@ package combat
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
-	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -168,6 +167,10 @@ func SelectSpecialMove(mob *mobs.Mob, target *characters.Character) string {
 		moveScores["throttle"] = ScoreThrottle(mob, target)
 	}
 
+	if CanUseSmother(&mob.Character) {
+		moveScores["smother"] = ScoreSmother(mob, target)
+	}
+
 	// No viable moves
 	if len(moveScores) == 0 {
 		return ""
@@ -241,31 +244,26 @@ func GetAIProfile(profileName string, customPreferences map[string]int) map[stri
 	return result
 }
 
-// --- Beast-identity predicates (single source of truth for beast-move gating) ---
-// Exported so the actions package can use them for defense-in-depth gates at
-// the action-entry and CommandIsReady sync points without duplicating logic.
+// --- Beast-move species read (single source of truth for beast-move gating) ---
+// The attack-family predicates that once gated beast moves were deleted in
+// #541 slice 2 (D6); every gate reads the species' beast_moves list instead.
 
-func SpeciesNaturalAttack(char *characters.Character) items.ItemSubType {
-	if sp := species.GetSpecies(char.SpeciesId); sp != nil {
-		return sp.NaturalAttack
-	}
-	return ""
-}
-func SpeciesIsFanged(char *characters.Character) bool {
-	return SpeciesNaturalAttack(char) == items.Bite
-}
-func SpeciesIsClawed(char *characters.Character) bool {
-	return SpeciesNaturalAttack(char) == items.Claws
-}
-func SpeciesIsHorned(char *characters.Character) bool {
-	return SpeciesNaturalAttack(char) == items.Gore
-}
-func SpeciesHasLifeDrain(char *characters.Character) bool {
-	sp := species.GetSpecies(char.SpeciesId)
-	return sp != nil && sp.LifeDrain
+// SpeciesHasBeastMove reports whether the character's species lists move in
+// beast_moves. It is the only species read a beast-move gate makes; no gate
+// decides a move by attack family. Exported for the readiness and
+// action-entry gates in internal/actions.
+func SpeciesHasBeastMove(char *characters.Character, move string) bool {
+	return species.GetSpecies(char.SpeciesId).HasBeastMove(move)
 }
 
 // --- Viability checks ---
+//
+// Beast moves (rake, maul, pounce, gore, throttle, hamstring, drain,
+// smother) come from species data, Species.BeastMoves, never from the attack
+// family: a default attack is what a creature does most of the time and a
+// special move is its rarer flourish (spec 2026-10-16 #541, rulings E and
+// F). Each gate keeps its runtime anatomy check (no hands, legs) beside the
+// list. beast_move_gate_guard_test.go fails a gate that reads the family.
 //
 // ⚠️ THE COOLDOWN CHECKS BELOW DELIBERATELY DO NOT USE actions.SpecialMoveReady.
 //
@@ -381,23 +379,16 @@ func CanUseSubmit(char *characters.Character) bool {
 
 // CanUseHamstring reports whether the actor can hamstring a target. Hamstring
 // is a beast move — a low slash/bite to the leg tendons that slows the prey —
-// so it requires legs to lunge with and a fanged or clawed natural attack.
+// so it requires legs to lunge with, no hands, and hamstring listed in the
+// species' beast_moves.
 func CanUseHamstring(char *characters.Character) bool {
 	if _, exists := char.Cooldowns["special-move"]; exists {
 		return false
 	}
-	// Beast move: needs legs to cut, and a fanged/clawed natural attack.
-	if !char.HasBodyPart("legs") {
-		return false
-	}
-	if char.HasBodyPart("hands") {
+	if !char.HasBodyPart("legs") || char.HasBodyPart("hands") {
 		return false // beast natural-weapon moves are for true beasts, not tool-users
 	}
-	sp := species.GetSpecies(char.SpeciesId)
-	if sp == nil {
-		return false
-	}
-	return sp.NaturalAttack == items.Bite || sp.NaturalAttack == items.Claws
+	return SpeciesHasBeastMove(char, "hamstring")
 }
 
 // --- Scoring functions ---
@@ -523,9 +514,9 @@ func ScoreHamstring(mob *mobs.Mob, target *characters.Character) int {
 	return score
 }
 
-// CanUseRake reports whether the actor can rake a target. Rake is a clawed
-// beast move — a raking slash that opens bleeding wounds — so it requires a
-// clawed natural attack.
+// CanUseRake reports whether the actor can rake a target. Rake is a beast
+// move (a raking slash that opens bleeding wounds), so it requires no hands
+// and rake listed in the species' beast_moves.
 func CanUseRake(char *characters.Character) bool {
 	if _, exists := char.Cooldowns["special-move"]; exists {
 		return false
@@ -533,7 +524,7 @@ func CanUseRake(char *characters.Character) bool {
 	if char.HasBodyPart("hands") {
 		return false // beast natural-weapon moves are for true beasts, not tool-users
 	}
-	return SpeciesIsClawed(char)
+	return SpeciesHasBeastMove(char, "rake")
 }
 
 func ScoreRake(mob *mobs.Mob, target *characters.Character) int {
@@ -549,9 +540,10 @@ func ScoreRake(mob *mobs.Mob, target *characters.Character) int {
 	return score
 }
 
-// CanUseMaul reports whether the actor can maul a target. Maul is a fanged
-// beast move — a savage tearing flurry that deals heavy damage and opens deep
-// bleeding wounds — so it requires a fanged natural attack.
+// CanUseMaul reports whether the actor can maul a target. Maul is a beast
+// move (a savage tearing flurry that deals heavy damage and opens deep
+// bleeding wounds), so it requires no hands and maul listed in the species'
+// beast_moves.
 func CanUseMaul(char *characters.Character) bool {
 	if _, exists := char.Cooldowns["special-move"]; exists {
 		return false
@@ -559,21 +551,13 @@ func CanUseMaul(char *characters.Character) bool {
 	if char.HasBodyPart("hands") {
 		return false // beast natural-weapon moves are for true beasts, not tool-users
 	}
-	return SpeciesIsFanged(char)
-}
-
-// SpeciesIsQuadrupedPredator reports a legged fanged-or-clawed beast — the
-// gate for pounce (a leaping knockdown opener). Exported so the actions
-// package can use it for defense-in-depth gates at the action-entry and
-// CommandIsReady sync points without duplicating logic.
-func SpeciesIsQuadrupedPredator(char *characters.Character) bool {
-	return !char.HasBodyPart("hands") && char.HasBodyPart("legs") && (SpeciesIsFanged(char) || SpeciesIsClawed(char))
+	return SpeciesHasBeastMove(char, "maul")
 }
 
 // CanUsePounce reports whether the actor can pounce on a target. Pounce is
-// a quadruped predator's leaping opener — a knockdown strike that requires
-// legs, a fanged or clawed natural attack, and a non-grappled stance
-// (can't leap from a clinch).
+// a predator's leaping opener: a knockdown strike that requires legs, no
+// hands, pounce listed in the species' beast_moves, and a non-grappled
+// stance (can't leap from a clinch).
 func CanUsePounce(char *characters.Character) bool {
 	if _, exists := char.Cooldowns["special-move"]; exists {
 		return false
@@ -581,7 +565,10 @@ func CanUsePounce(char *characters.Character) bool {
 	if char.IsGrappling() {
 		return false // can't leap from a clinch
 	}
-	return SpeciesIsQuadrupedPredator(char)
+	if char.HasBodyPart("hands") || !char.HasBodyPart("legs") {
+		return false
+	}
+	return SpeciesHasBeastMove(char, "pounce")
 }
 
 func ScorePounce(mob *mobs.Mob, target *characters.Character) int {
@@ -670,7 +657,8 @@ func ScoreGrapple(mob *mobs.Mob, target *characters.Character) int {
 
 // CanUseGore reports whether the actor can gore a target. Gore is a horned
 // beast move — a charging strike that drives the target backward — so it
-// requires a gore natural attack (i.e. the species is horned).
+// requires no hands and gore listed in the species' beast_moves (the loader
+// checks a gore-listing species has horns).
 func CanUseGore(char *characters.Character) bool {
 	if _, exists := char.Cooldowns["special-move"]; exists {
 		return false
@@ -678,7 +666,7 @@ func CanUseGore(char *characters.Character) bool {
 	if char.HasBodyPart("hands") {
 		return false // beast natural-weapon moves are for true beasts, not tool-users
 	}
-	return SpeciesIsHorned(char)
+	return SpeciesHasBeastMove(char, "gore")
 }
 
 func ScoreGore(mob *mobs.Mob, target *characters.Character) int {
@@ -698,12 +686,14 @@ func ScoreGore(mob *mobs.Mob, target *characters.Character) int {
 
 // CanUseDrain reports whether the actor can drain a target. Drain is a vampire
 // ability — a lifesteal strike that saps vitality and heals the attacker —
-// so it requires the LifeDrain species flag.
+// so it requires drain listed in the species' beast_moves (the loader checks
+// a drain-listing species has the LifeDrain flag). No hands check: drain is
+// exempt from the beast hands rule.
 func CanUseDrain(char *characters.Character) bool {
 	if _, exists := char.Cooldowns["special-move"]; exists {
 		return false
 	}
-	return SpeciesHasLifeDrain(char)
+	return SpeciesHasBeastMove(char, "drain")
 }
 
 func ScoreDrain(mob *mobs.Mob, target *characters.Character) int {
@@ -813,8 +803,8 @@ func ScoreSubmit(mob *mobs.Mob, target *characters.Character) int {
 }
 
 // CanUseThrottle reports whether the actor can throttle a target. Throttle is
-// a fanged beast's choke — clamping the windpipe to cut off air — so it
-// requires a fanged natural attack.
+// a beast's choke (clamping the windpipe to cut off air), so it requires no
+// hands and throttle listed in the species' beast_moves.
 func CanUseThrottle(char *characters.Character) bool {
 	if _, exists := char.Cooldowns["special-move"]; exists {
 		return false
@@ -822,7 +812,7 @@ func CanUseThrottle(char *characters.Character) bool {
 	if char.HasBodyPart("hands") {
 		return false // beast natural-weapon moves are for true beasts, not tool-users
 	}
-	return SpeciesIsFanged(char)
+	return SpeciesHasBeastMove(char, "throttle")
 }
 
 // ScoreThrottle returns the AI priority for using throttle against the target.
@@ -841,6 +831,34 @@ func ScoreThrottle(mob *mobs.Mob, target *characters.Character) int {
 		score += 20
 	}
 
+	if score < 0 {
+		score = 0
+	}
+	return score
+}
+
+// CanUseSmother reports whether the actor can smother a target: the smoke
+// elemental's special move, listed in its species' beast_moves.
+func CanUseSmother(char *characters.Character) bool {
+	if _, exists := char.Cooldowns["special-move"]; exists {
+		return false
+	}
+	if char.HasBodyPart("hands") {
+		return false
+	}
+	return SpeciesHasBeastMove(char, "smother")
+}
+
+// ScoreSmother is the AI priority for smother: highest against a caster (the
+// smoke can choke the spell off) and lowest against a target already blind.
+func ScoreSmother(mob *mobs.Mob, target *characters.Character) int {
+	score := 50
+	if target.IsCasting() {
+		score += 30
+	}
+	if target.HasAnyBlindSource() {
+		score -= 30
+	}
 	if score < 0 {
 		score = 0
 	}

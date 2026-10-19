@@ -1,0 +1,17 @@
+conditionid: 144
+name: Smothered
+description: Smoke fills your lungs, and you can barely breathe.
+start_actee: Smoke pours down your throat and you choke on it.
+trigger_actee: You cough up smoke and fight for breath.
+end_actee: You cough out the last of the smoke and breathe freely again.
+triggerrate: 1 round
+triggercount: 3
+tick_pool: stamina
+tick_percent: -0.06
+tick_min: 2
+flags:
+  # The smother combat move narrates the smoke as it lands, and it has to
+  # apply the condition synchronously, so Condition_ApplyConditions never
+  # sees this condition and the start_actee line above is not its own line
+  # to send.
+  - silent-start

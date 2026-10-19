@@ -316,9 +316,10 @@ func TestHamstring_InCombat(t *testing.T) {
 
 	// Hamstring is a beast move (Phase-4 hands rule): the default test mob is a
 	// humanoid (SpeciesId 1, has hands). Give it a fanged, no-hands beast species
-	// so it qualifies.
+	// that lists hamstring so it qualifies.
 	spCleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		2: {SpeciesId: 2, Name: "testbeast", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		2: {SpeciesId: 2, Name: "testbeast", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite,
+			BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 	})
 	defer spCleanup()
 	mob.Character.SpeciesId = 2

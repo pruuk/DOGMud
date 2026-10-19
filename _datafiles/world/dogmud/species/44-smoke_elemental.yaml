@@ -8,6 +8,7 @@ description: A lithe, shifting shape of smoke and flickering embers,
 size: medium
 unarmedname: smoke-wrought claws
 natural_attack: claws
+beast_moves: [smother]
 selectable: false
 tameable: false
 speech: false

@@ -324,6 +324,9 @@ var legacyRoleKeysAnyStore = map[string]string{
 	"todefender":     "actee",
 	"toroom":         "observer",
 	"toattackerroom": "observer",
+	// The combat split that read this key is retired (#541), but the ban on
+	// the old spelling stays, and remote_observer is still live in the
+	// movenarration store (shoot's arrival events).
 	"todefenderroom": "remote_observer",
 
 	// grapple and position_control sides (620188c7f, 93fbc3ccc)
@@ -908,8 +911,9 @@ var observerIdentityGuardRoots = []string{
 // THE KEY IS THE PATH RELATIVE TO shippedWorldRoot ("conditions/9-hidden.yaml",
 // "narration/special-moves/drain.yaml", "defense-messages/dodge.yaml"), never a
 // bare basename. combat-messages and narration/special-moves both ship a
-// gore.yaml, maul.yaml, pounce.yaml and throttle.yaml (its drain.yaml became
-// siphon.yaml, so special-moves drain.yaml has no twin now); a
+// gore.yaml, maul.yaml and pounce.yaml (throttle.yaml left combat-messages in
+// #541 slice 2; its drain.yaml became siphon.yaml, so special-moves
+// drain.yaml has no twin now); a
 // basename-only key would let marking the special-moves twin safe silently
 // also exempt the combat-messages twin, which earns its safety a completely
 // different way (its own ansi tagging, not SendTrio) and was never meant to
@@ -1121,7 +1125,7 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"conditions/131-chrysalis_pall.yaml": true,
 	// Special moves: messaging.SendTrio hides Audience ActorName and ActeeName
 	// from every reader by that reader's ParticipantSight. Applies to all
-	// fourteen shipped files, not only the two that author a `_plain` token;
+	// fifteen shipped files, not only the two that author a `_plain` token;
 	// see the doc comment above. The store-relative key is what keeps these
 	// five from colliding with their combat-messages basename twins.
 	"narration/special-moves/bash.yaml":      true,
@@ -1135,6 +1139,7 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"narration/special-moves/pounce.yaml":    true,
 	"narration/special-moves/rake.yaml":      true,
 	"narration/special-moves/shoot.yaml":     true,
+	"narration/special-moves/smother.yaml":   true,
 	"narration/special-moves/throttle.yaml":  true,
 	"narration/special-moves/throw.yaml":     true, // SendTrio hides both Audience names by reader sight; the interrupt event stopped passing NoName in M5 PR 1 Task 2
 	"narration/special-moves/trip.yaml":      true,

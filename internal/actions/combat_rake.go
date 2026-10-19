@@ -41,9 +41,9 @@ type RakeResult struct {
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
-	// NotClawed is true when the actor's species lacks a clawed natural attack.
-	// Reachable via a direct player command or a btree/combatcommands dispatch
-	// to a non-clawed mob. Unreachable via the AI path (CanUseRake gates it).
+	// NotClawed is true when the species does not list rake in beast_moves, or
+	// the body lacks what it needs (hands). Reachable via a direct command or a
+	// btree/combatcommands dispatch. Unreachable via the AI path (CanUseRake).
 	NotClawed bool
 
 	// BleedDmg is the per-round amount of the bleed stack added on a hit.
@@ -76,11 +76,11 @@ func ExecuteRake(actor Actor) RakeResult {
 		return RakeResult{NoTarget: true}
 	}
 
-	// Anatomy/identity gate (defense-in-depth): only handless clawed creatures
-	// rake. Unreachable via the AI path (CanUseRake gates it) but reachable
-	// via a direct player command or a btree/combatcommands dispatch to a
-	// non-clawed or tool-using mob.
-	if char.HasBodyPart("hands") || !combat.SpeciesIsClawed(char) {
+	// Anatomy/identity gate (defense-in-depth): only a handless species that
+	// lists rake in beast_moves rakes. Unreachable via the AI path (CanUseRake
+	// gates it) but reachable via a direct player command or a
+	// btree/combatcommands dispatch to an unlisted or tool-using mob.
+	if char.HasBodyPart("hands") || !combat.SpeciesHasBeastMove(char, "rake") {
 		return RakeResult{NotClawed: true}
 	}
 

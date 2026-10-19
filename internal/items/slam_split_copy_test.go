@@ -30,17 +30,15 @@ const slamSplitMaxColumns = 80
 // package can be imported here, so the longest values are written out.
 // {itemname} is filled per file from the species that use it.
 var slamSplitWidestTokens = map[string]string{
-	`{actor}`:        strings.Repeat(`A`, 20),
-	`{actee}`:        strings.Repeat(`E`, 20),
-	`{actortype}`:    `user`,
-	`{acteetype}`:    `user`,
-	`{stance}`:       `aggressive`,
-	`{position}`:     `grappling on the ground`,
-	`{momentum}`:     `on the defensive`,
-	`{bodypart}`:     `right shoulder`,
-	`{damage}`:       `999`,
-	`{exitname}`:     `northwest`,
-	`{entrancename}`: `northwest`,
+	`{actor}`:     strings.Repeat(`A`, 20),
+	`{actee}`:     strings.Repeat(`E`, 20),
+	`{actortype}`: `user`,
+	`{acteetype}`: `user`,
+	`{stance}`:    `aggressive`,
+	`{position}`:  `grappling on the ground`,
+	`{momentum}`:  `on the defensive`,
+	`{bodypart}`:  `right shoulder`,
+	`{damage}`:    `999`,
 }
 
 var slamSplitTag = regexp.MustCompile(`</?ansi[^>]*>`)

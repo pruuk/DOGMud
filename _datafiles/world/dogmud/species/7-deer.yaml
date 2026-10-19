@@ -10,6 +10,7 @@ intrinsic_mutations:
 size: medium
 unarmedname: antlers
 natural_attack: gore
+beast_moves: [gore]
 selectable: false
 tameable: true
 speech: false

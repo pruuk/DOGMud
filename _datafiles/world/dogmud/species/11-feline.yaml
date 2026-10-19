@@ -11,7 +11,8 @@ conditionids:
   - 29 # Night Vision
 size: medium
 unarmedname: claws and fangs
-natural_attack: claws
+natural_attack: pounce
+beast_moves: [rake, pounce, hamstring, throttle]
 selectable: false
 tameable: true
 speech: false

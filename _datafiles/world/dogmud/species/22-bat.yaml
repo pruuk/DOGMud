@@ -8,6 +8,7 @@ intrinsic_mutations:
 size: small
 unarmedname: wings and fangs
 natural_attack: claws
+beast_moves: [rake]
 angrycommands: [emote shrieks and beats its wings furiously.]
 damage:
   basedamage: 1

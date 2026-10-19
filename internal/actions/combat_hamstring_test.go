@@ -18,7 +18,7 @@ import (
 // dice.
 func TestHamstring_BleedNamesAttacker(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		7313: {SpeciesId: 7313, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		7313: {SpeciesId: 7313, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 	})
 	defer cleanup()
 	defer conditions.SeedConditionRecordsForTest()()

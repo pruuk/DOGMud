@@ -177,7 +177,11 @@ as they do on the swing path; only clear sight reads the authored text.
 so `handleCombatWaitRound` no longer drains
 `roundResult.MessagesToSourceRoom`/`MessagesToTargetRoom` — that drain was
 removed as dead code rather than kept as a no-op, because `GetWaitMessages`
-never populates those fields on any branch any more.
+never populates those fields on any branch any more. Since #541
+`MessagesToTargetRoom` no longer exists: round combat releases a target in
+another room (`resolveCombatTarget`) before any line is drawn, so
+`dispatchCritAndMessaging` and `handleCombatWaitRound` drain and sound only
+the attacker's room.
 
 ### Combat Round Processing
 ```go

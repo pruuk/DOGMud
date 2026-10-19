@@ -165,31 +165,35 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 		}, []string{"combat.ExecuteGrappleMove", "RecordAndWait", "actor.AwardResolved"}, false},
 		{"combat_hamstring.go", "ExecuteHamstring", "HamstringResult", "costs.ActionHamstring", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!char.HasBodyPart(\"legs\")", "NoLegs"},
-			{"sp == nil || (sp.NaturalAttack != items.Bite && sp.NaturalAttack != items.Claws) || char.HasBodyPart(\"hands\")", "NotBeast"},
+			{"char.HasBodyPart(\"hands\") || !combat.SpeciesHasBeastMove(char, \"hamstring\")", "NotBeast"},
 		}, []string{"combat.ExecuteSkillMove", "target.Char.AddConditionMagnitudeBy", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_rake.go", "ExecuteRake", "RakeResult", "costs.ActionRake", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
-			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsClawed(char)", "NotClawed"},
+			{"char.HasBodyPart(\"hands\") || !combat.SpeciesHasBeastMove(char, \"rake\")", "NotClawed"},
 		}, []string{"combat.ExecuteSkillMove", "target.Char.AddConditionMagnitudeBy", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_maul.go", "ExecuteMaul", "MaulResult", "costs.ActionMaul", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
-			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsFanged(char)", "NotFanged"},
+			{"char.HasBodyPart(\"hands\") || !combat.SpeciesHasBeastMove(char, \"maul\")", "NotFanged"},
 		}, []string{"combat.ExecuteSkillMove", "target.Char.AddConditionMagnitudeBy", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_pounce.go", "ExecutePounce", "PounceResult", "costs.ActionPounce", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"char.IsGrappling()", "Grappling"},
-			{"!combat.SpeciesIsQuadrupedPredator(char)", "NotPredator"},
+			{"char.HasBodyPart(\"hands\") || !char.HasBodyPart(\"legs\") || !combat.SpeciesHasBeastMove(char, \"pounce\")", "NotPredator"},
 		}, []string{"combat.ExecuteSkillMove", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_gore.go", "ExecuteGore", "GoreResult", "costs.ActionGore", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
-			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsHorned(char)", "NotHorned"},
+			{"char.HasBodyPart(\"hands\") || !combat.SpeciesHasBeastMove(char, \"gore\")", "NotHorned"},
 		}, []string{"combat.ExecuteSkillMove", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_drain.go", "ExecuteDrain", "DrainResult", "costs.ActionDrain", []specialMoveEarlyReturn{
-			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!combat.SpeciesHasLifeDrain(char)", "NotLifeDrainer"},
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!combat.SpeciesHasBeastMove(char, \"drain\")", "NotLifeDrainer"},
 		}, []string{"combat.ExecuteSkillMove", "target.Char.AddConditionMagnitudeBy", "char.Heal", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_throttle.go", "ExecuteThrottle", "ThrottleResult", "costs.ActionThrottle", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
-			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsFanged(char)", "NotFanged"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddConditionMagnitudeBy", "target.Char.AddCondition", "InterruptTargetCast", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
+			{"char.HasBodyPart(\"hands\") || !combat.SpeciesHasBeastMove(char, \"throttle\")", "NotFanged"},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddConditionMagnitudeBy", "target.Char.AddCondition", "chokeCastInterrupt", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
+		{"combat_smother.go", "ExecuteSmother", "SmotherResult", "costs.ActionSmother", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
+			{"char.HasBodyPart(\"hands\") || !combat.SpeciesHasBeastMove(char, \"smother\")", "NotSmoke"},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "chokeCastInterrupt", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 	}
 
 	_, thisFile, _, ok := runtime.Caller(0)
@@ -595,7 +599,7 @@ func nodeHasCall(node ast.Node, name string) bool {
 // and immediately return without text.
 func TestSpecialMoveWrapperAdmission(t *testing.T) {
 	playerWrappers := []string{"bash", "trip", "kick", "grapple", "rake", "maul", "pounce", "gore", "drain", "throttle"}
-	mobWrappers := []string{"bash", "charge", "trip", "kick", "grapple", "hamstring", "rake", "maul", "pounce", "gore", "drain", "throttle"}
+	mobWrappers := []string{"bash", "charge", "trip", "kick", "grapple", "hamstring", "rake", "maul", "pounce", "gore", "drain", "throttle", "smother"}
 	_, thisFile, _, ok := runtime.Caller(0)
 	require.True(t, ok)
 	repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..")
@@ -693,7 +697,7 @@ func TestSpecialMoveWrapperAdmission(t *testing.T) {
 			function := map[string]string{
 				"bash": "Bash", "charge": "Charge", "trip": "Trip", "kick": "Kick", "grapple": "Grapple",
 				"hamstring": "Hamstring", "rake": "Rake", "maul": "Maul", "pounce": "Pounce", "gore": "Gore",
-				"drain": "Drain", "throttle": "Throttle",
+				"drain": "Drain", "throttle": "Throttle", "smother": "Smother",
 			}[name]
 			resultName := "res"
 			if name == "bash" {
@@ -755,6 +759,8 @@ func runExecuteAndReadExecuted(cmd string, actor Actor) bool {
 		return ExecuteDrain(actor).Executed
 	case "throttle":
 		return ExecuteThrottle(actor).Executed
+	case "smother":
+		return ExecuteSmother(actor).Executed
 	}
 	return false
 }
@@ -786,20 +792,35 @@ func TestCommandReadinessDrift(t *testing.T) {
 	// SpeciesId 0 is intentionally left unseeded so the no_legs rows below can
 	// rely on the nil-species → no-legs behavior.
 	// SpeciesId 7304 is a clawed species for the rake_ready / rake_notclawed rows.
+	// Beast moves come from each species' BeastMoves list (#541 slice 2); the
+	// NaturalAttack stays so 7314 can prove the family alone opens nothing.
 	speciesCleanup := species.SeedSpeciesForTest(map[int]*species.Species{
 		7300: {SpeciesId: 7300, Name: "legged-test", BodyParts: []string{"legs"}},
-		7304: {SpeciesId: 7304, Name: "clawed-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Claws},
-		7305: {SpeciesId: 7305, Name: "fanged-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
-		7306: {SpeciesId: 7306, Name: "horned-test", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore},
-		7307: {SpeciesId: 7307, Name: "vampire-test", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true},
+		7304: {SpeciesId: 7304, Name: "clawed-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Claws,
+			BeastMoves: []string{"rake", "pounce", "hamstring"}},
+		7305: {SpeciesId: 7305, Name: "fanged-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite,
+			BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
+		7306: {SpeciesId: 7306, Name: "horned-test", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore,
+			BeastMoves: []string{"gore"}},
+		7307: {SpeciesId: 7307, Name: "vampire-test", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true,
+			BeastMoves: []string{"drain"}},
 		7308: {SpeciesId: 7308, Name: "natural-basher-test", BodyParts: []string{"arms", "legs"}, NaturalBash: true},
-		7309: {SpeciesId: 7309, Name: "legless-fanged-test", BodyParts: []string{"mouth"}, NaturalAttack: items.Bite},
+		7309: {SpeciesId: 7309, Name: "legless-fanged-test", BodyParts: []string{"mouth"}, NaturalAttack: items.Bite,
+			BeastMoves: []string{"maul", "throttle"}},
 		// Hands-bearing beast-identity species for the _hashands drift rows.
-		// These have the correct identity (clawed/fanged/horned) but also have
-		// "hands", so all beast natural-weapon moves must be blocked.
-		7310: {SpeciesId: 7310, Name: "hands-clawed-test", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws},
-		7311: {SpeciesId: 7311, Name: "hands-fanged-test", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Bite},
-		7312: {SpeciesId: 7312, Name: "hands-horned-test", BodyParts: []string{"arms", "hands", "legs", "mouth", "horns"}, NaturalAttack: items.Gore},
+		// These list the moves of their identity (clawed/fanged/horned) but also
+		// have "hands", so all beast natural-weapon moves must be blocked.
+		7310: {SpeciesId: 7310, Name: "hands-clawed-test", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws,
+			BeastMoves: []string{"rake", "pounce", "hamstring"}},
+		7311: {SpeciesId: 7311, Name: "hands-fanged-test", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Bite,
+			BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
+		7312: {SpeciesId: 7312, Name: "hands-horned-test", BodyParts: []string{"arms", "hands", "legs", "mouth", "horns"}, NaturalAttack: items.Gore,
+			BeastMoves: []string{"gore"}},
+		// A legged, handless clawed species that lists no beast move: the
+		// _notlisted rows prove the attack family alone opens no gate.
+		7314: {SpeciesId: 7314, Name: "unlisted-clawed-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Claws},
+		// A bodiless smoke species for the smother rows (#541 slice 2).
+		7313: {SpeciesId: 7313, Name: "smoke-test", BodyParts: []string{}, BeastMoves: []string{"smother"}},
 	})
 	defer speciesCleanup()
 
@@ -1300,6 +1321,42 @@ func TestCommandReadinessDrift(t *testing.T) {
 			},
 			false, "NotFanged"},
 
+		// ─── smother ──────────────────────────────────────────────────────────
+		// smother_ready: the bodiless smoke species lists smother.
+		{"smother_ready", "smother",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7313 // smoke-test seeded above
+				setDriftAggroMobTarget(m, 245)
+			},
+			true, ""},
+		{"smother_crafting", "smother", func(m *mobs.Mob) { setCraftingForTest(m) }, false, "Crafting"},
+		{"smother_cooldown", "smother",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7313
+				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+				setDriftAggroMobTarget(m, 246)
+			},
+			false, "OnCooldown"},
+		{"smother_no_aggro", "smother",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7313
+				m.Character.EndAggro()
+			},
+			false, "NoTarget"},
+		// smother_notlisted: a handless clawed species that does not list
+		// smother; a registered target lets ExecuteSmother reach the NotSmoke
+		// gate before admission.
+		{"smother_notlisted", "smother",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7304 // clawed-test: lists rake, pounce, hamstring
+				targetMob := &mobs.Mob{InstanceId: 247}
+				targetMob.Character.Name = "Target"
+				setCombatPositionParallel(&targetMob.Character, position.Standing)
+				mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
+				m.Character.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
+			},
+			false, "NotSmoke"},
+
 		// ─── hamstring ────────────────────────────────────────────────────────
 		{"hamstring_ready", "hamstring",
 			func(m *mobs.Mob) {
@@ -1386,6 +1443,43 @@ func TestCommandReadinessDrift(t *testing.T) {
 				m.Character.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 			},
 			false, "NotPredator"},
+
+		// ─── _notlisted rows ──────────────────────────────────────────────────
+		// SpeciesId 7314 has the body and the clawed family that used to open
+		// rake, pounce and hamstring, but lists none of them in BeastMoves, so
+		// CommandIsReady must return false and Execute* its Not<Identity> flag.
+		{"rake_notlisted", "rake",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7314 // unlisted-clawed-test
+				targetMob := &mobs.Mob{InstanceId: 203}
+				targetMob.Character.Name = "Target"
+				setCombatPositionParallel(&targetMob.Character, position.Standing)
+				mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
+				m.Character.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
+			},
+			false, "NotClawed"},
+
+		{"pounce_notlisted", "pounce",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7314 // unlisted-clawed-test
+				targetMob := &mobs.Mob{InstanceId: 243}
+				targetMob.Character.Name = "Target"
+				setCombatPositionParallel(&targetMob.Character, position.Standing)
+				mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
+				m.Character.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
+			},
+			false, "NotPredator"},
+
+		{"hamstring_notlisted", "hamstring",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7314 // unlisted-clawed-test
+				targetMob := &mobs.Mob{InstanceId: 244}
+				targetMob.Character.Name = "Target"
+				setCombatPositionParallel(&targetMob.Character, position.Standing)
+				mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
+				m.Character.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
+			},
+			false, "NotBeast"},
 	}
 
 	for _, tc := range cases {
@@ -1394,7 +1488,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			// The mutate function may set up target mobs via
 			// mobs.SetInstanceForTest; we clean them all up here.
 			defer func() {
-				for id := 200; id <= 242; id++ {
+				for id := 200; id <= 247; id++ {
 					mobs.SetInstanceForTest(id, nil)
 				}
 			}()
@@ -1425,6 +1519,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			physicalSpecial := map[string]bool{
 				"bash": true, "trip": true, "kick": true, "grapple": true, "hamstring": true,
 				"rake": true, "maul": true, "pounce": true, "gore": true, "drain": true, "throttle": true,
+				"smother": true,
 			}
 			if physicalSpecial[tc.cmd] {
 				assert.Equal(t, staminaBefore, mob.Character.Stamina,
@@ -1607,6 +1702,18 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 		case "NotFanged":
 			return r.NotFanged
 		}
+	case "smother":
+		r := ExecuteSmother(actor)
+		switch flag {
+		case "Crafting":
+			return r.Crafting
+		case "OnCooldown":
+			return r.OnCooldown
+		case "NoTarget":
+			return r.NoTarget
+		case "NotSmoke":
+			return r.NotSmoke
+		}
 	case "hamstring":
 		r := ExecuteHamstring(actor)
 		switch flag {
@@ -1649,7 +1756,7 @@ func TestSpecialMoves_NoProgressionAwardSitsInsideAHitGate(t *testing.T) {
 	files := []string{
 		"combat_bash.go", "combat_drain.go", "combat_gore.go", "combat_grapple.go",
 		"combat_hamstring.go", "combat_kick.go", "combat_maul.go", "combat_pounce.go",
-		"combat_rake.go", "combat_throttle.go", "combat_trip.go",
+		"combat_rake.go", "combat_smother.go", "combat_throttle.go", "combat_trip.go",
 	}
 
 	_, thisFile, _, ok := runtime.Caller(0)

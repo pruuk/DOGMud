@@ -1,0 +1,53 @@
+# Combat reachability slice 2 (#541): the DEFENDER.
+#
+# You start in Trampled Outskirts (3001) beside a Feral Cat and a Steppe Rat.
+# Both are hostile. You are the one being attacked. Your partner is a plain
+# onlooker who walks in once the fight is on; THEY report what the room was
+# told, you report what you were told, and the pair is compared.
+#
+# The change under test: a creature's first line when a fight begins, its
+# waiting lines and its blows now all come from its own attack. A cat leaps
+# with claws and fangs. Each moment should read the same to you and to anyone
+# watching, and the watcher's line names you.
+#
+# QUOTE LINES VERBATIM, each with its round number. A paraphrase is useless:
+# the whole question is whether two sentences describe the same moment.
+#
+# 3 commands per round on the AI port and the overflow is dropped. Read every
+# line before sending more.
+#
+# KNOWN NON-BUGS, do not refile: damage is words and never numbers; corpses
+# persist for hours; a cat that never throttles is expected.
+
+ephemeral:
+  profile: mid
+  start_room: 3001
+  overlays:
+    grant_items: [20096]
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    LIGHT. `wear torch` before anything else, then `remove` your weapon so the
+    fights last.
+  - >-
+    CAT. Fight the Feral Cat (`attack cat` if it has not attacked you) for at
+    least six rounds after your partner arrives. Record every line you are
+    given, word for word, with its round number, starting with the line when
+    the fight begins. Quote every special move it makes.
+  - >-
+    RAT. Then fight the Steppe Rat for at least four rounds the same way. A rat
+    that throttles, mauls or pounces is a finding.
+  - >-
+    JUDGE THE LINES. A cat has claws and fangs and no hands; a rat has teeth.
+    Any line naming a fist, hand or weapon the creature lacks is a finding. Say
+    whether each line reads as one clear sentence an English learner would
+    follow.
+  - >-
+    DO NOT DIE. Watch your health every round. Below a third, drink your
+    Healing Salve or flee. A finished comparison is worth more than a kill.
+  - >-
+    ADVERSARIAL PASS. Report any literal curly-brace token, any doubled or
+    missing name, any sentence starting lowercase, and any EMPTY line where a
+    blow should be.

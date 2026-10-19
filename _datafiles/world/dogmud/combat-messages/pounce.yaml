@@ -5,8 +5,6 @@
 # {actee}      - name of mob or user e.g. 'goblin'
 # {acteetype}  - 'user' or 'mob'
 # {damage}      - damage dealt as an integer e.g. '5'
-# {exitname}    - name of exit for attack e.g. 'north'
-# {entrancename}- name of entrance for attack e.g. 'south'
 # {stance}      - combat stance: 'aggressive', 'defensive', 'balanced', 'reckless' (Stage 9.4)
 # {position}    - combat position: 'standing', 'prone', 'locked in close combat', 'grappling on the ground' (Stage 9.4)
 # {momentum}    - combat momentum: 'on the offensive', 'on the defensive', 'in control', 'pressured' (Stage 9.4)
@@ -237,9 +235,9 @@ options:
       - actor: 'You capitalize on momentum and strike with perfect timing!'
         actee: '<ansi fg="{actortype}">{actor}</ansi> capitalizes on their momentum with perfect timing!'
         observer: '<ansi fg="{actortype}">{actor}</ansi> capitalizes on momentum and strikes <ansi fg="{acteetype}">{actee}</ansi> with perfect timing!'
-      - actor: 'Your <ansi fg="item">{itemname}</ansi> flash as you maintain the burst with masterful control!'
-        actee: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> flash as they maintain the burst!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> flash as they maintain the burst on <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'You press <ansi fg="{acteetype}">{actee}</ansi> with masterful control, <ansi fg="item">{itemname}</ansi> flashing!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> presses you hard, <ansi fg="item">{itemname}</ansi> flashing!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> presses <ansi fg="{acteetype}">{actee}</ansi>, <ansi fg="item">{itemname}</ansi> flashing!'
       - actor: 'Reading <ansi fg="{acteetype}">{actee}</ansi>''s stance, you pounce with predator precision!'
         actee: '<ansi fg="{actortype}">{actor}</ansi> reads your stance and pounces with predator precision!'
         observer: '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s stance and pounces with predator precision!'

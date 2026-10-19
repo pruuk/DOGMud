@@ -990,6 +990,7 @@ func TestActTrySpecialMove_BeastMobReturnsSuccess(t *testing.T) {
 			Name:          "test_wolf",
 			BodyParts:     []string{"legs", "mouth"},
 			NaturalAttack: items.Bite,
+			BeastMoves:    []string{"maul", "throttle", "pounce", "hamstring"},
 		},
 	})
 	defer cleanupSp()

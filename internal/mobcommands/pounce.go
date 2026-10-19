@@ -14,8 +14,8 @@ import (
 )
 
 // Pounce is a quadruped predator's leaping opener: it deals bonus damage and
-// attempts to knock the target backward (Supine). Requires legs and a
-// fanged or clawed natural attack.
+// attempts to knock the target backward (Supine). Requires legs, no hands,
+// and pounce listed in the species' beast_moves.
 func Pounce(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	// Must be in combat to use pounce; silently skip if not in combat.

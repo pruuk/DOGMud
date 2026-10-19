@@ -13,11 +13,7 @@ import (
 // naturalWeaponPools are the combat-message pools a natural weapon renders
 // through: the natural-attack subtypes, plus every species natural_attack
 // value found in either world.
-var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam, Siphon, Trample, Lash, Blast}
-
-// naturalWeaponSpecialPools are the special-attack pools whose {itemname} is
-// the same natural weapon, so they follow the same rule (M6 slice 2 review).
-var naturalWeaponSpecialPools = []string{"throttle", "maul"}
+var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam, Siphon, Trample, Lash, Blast, Maul, Pounce}
 
 // afterItemName finds each {itemname} and the text that follows it.
 var afterItemName = regexp.MustCompile(`\{itemname\}(.*)`)
@@ -36,6 +32,8 @@ var weaponNotSubject = map[string]bool{
 	"toward": true, "towards": true, "to": true, "but": true, "as": true,
 	"from": true, "on": true, "off": true, "across": true, "against": true,
 	"over": true, "home": true, "shut": true,
+	// A direction word, like "down" and "up" ("drive your {itemname} forward").
+	"forward": true,
 	// Modal and place words that take no verb ending ("before your {itemname}
 	// can close", "clamp your {itemname} around the throat").
 	"can": true, "around": true, "tight": true,
@@ -84,6 +82,7 @@ func TestSubjectVerbAfterItemName_CatchesShippedDefects(t *testing.T) {
 		`It glares at you, <ansi fg="item">{itemname}</ansi> ready to snap.`,
 		`It swipes with its <ansi fg="item">{itemname}</ansi> but misses.`,
 		`It circles, <ansi fg="item">{itemname}</ansi> menacingly at you.`,
+		`You drive your {itemname} forward and crash in!`,
 	} {
 		if v := subjectVerbAfterItemName(line); v != `` {
 			t.Errorf("flagged %q in %q, which has no verb after the weapon", v, line)
@@ -97,9 +96,6 @@ func naturalWeaponPoolFiles(t *testing.T) []string {
 	pools := map[string]bool{}
 	for _, p := range naturalWeaponPools {
 		pools[string(p)] = true
-	}
-	for _, p := range naturalWeaponSpecialPools {
-		pools[p] = true
 	}
 	species, err := filepath.Glob(filepath.Join("..", "..", "_datafiles", "world", "*", "species", "*.yaml"))
 	if err != nil || len(species) == 0 {

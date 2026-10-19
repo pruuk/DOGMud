@@ -7,9 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
-	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
-	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -45,8 +43,8 @@ type HamstringResult struct {
 	// NoLegs is true when the actor lacks the anatomy needed to hamstring.
 	NoLegs bool
 
-	// NotBeast is true when the actor lacks the beast anatomy required for
-	// hamstring (not fanged-or-clawed, or has "hands" marking it as a
+	// NotBeast is true when the species does not list hamstring in
+	// beast_moves, or the body lacks what it needs ("hands" marks a
 	// tool-user). Returned by the defense-in-depth identity gate; the AI path
 	// is pre-gated by CanUseHamstring so this fires only on direct dispatch.
 	NotBeast bool
@@ -84,12 +82,12 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 		return HamstringResult{NoLegs: true}
 	}
 
-	// Beast identity gate (defense-in-depth): only handless fanged/clawed
-	// creatures hamstring. Unreachable via the AI path (CanUseHamstring gates
-	// it) but reachable via a direct player command or btree dispatch to a
-	// non-beast mob.
-	sp := species.GetSpecies(char.SpeciesId)
-	if sp == nil || (sp.NaturalAttack != items.Bite && sp.NaturalAttack != items.Claws) || char.HasBodyPart("hands") {
+	// Beast identity gate (defense-in-depth): only a handless species that
+	// lists hamstring in beast_moves hamstrings (legs are checked above).
+	// Unreachable via the AI path (CanUseHamstring gates it) but reachable via
+	// a direct player command or btree dispatch to an unlisted or tool-using
+	// mob.
+	if char.HasBodyPart("hands") || !combat.SpeciesHasBeastMove(char, "hamstring") {
 		return HamstringResult{NotBeast: true}
 	}
 

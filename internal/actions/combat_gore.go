@@ -40,10 +40,10 @@ type GoreResult struct {
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
-	// NotHorned is true when the actor's species is not horned (requires
-	// a gore natural attack). Reachable via a direct player command or a
-	// btree/combatcommands dispatch to a non-horned mob. Unreachable via
-	// the AI path (CanUseGore gates it).
+	// NotHorned is true when the species does not list gore in beast_moves,
+	// or the body lacks what it needs (hands). Reachable via a direct player
+	// command or a btree/combatcommands dispatch to an unlisted mob.
+	// Unreachable via the AI path (CanUseGore gates it).
 	NotHorned bool
 }
 
@@ -51,7 +51,7 @@ type GoreResult struct {
 // mob callers. It handles:
 //   - Special-move cooldown (using SpecialMoveCooldown from balance config)
 //   - Target resolution via ResolveAggroTarget
-//   - Horned-species gate: SpeciesIsHorned (gore natural attack)
+//   - Species gate: gore listed in beast_moves (combat.SpeciesHasBeastMove)
 //   - ExecuteSkillMove via combat package (UnarmedCombat skill, Strength
 //     attack stat, Dexterity defense stat, KickDamagePercent,
 //     BashKnockdownFactor, KnockdownToSupine=true — forward charge knockback)
@@ -72,10 +72,10 @@ func ExecuteGore(actor Actor) GoreResult {
 		return GoreResult{NoTarget: true}
 	}
 
-	// Horned gate (defense-in-depth): only handless horned creatures gore.
-	// Unreachable via the AI path (CanUseGore gates it) but reachable via a
-	// direct player command or btree dispatch to a non-horned or tool-using mob.
-	if char.HasBodyPart("hands") || !combat.SpeciesIsHorned(char) {
+	// Species gate (defense-in-depth): only a handless species listing gore
+	// gores. Unreachable via the AI path (CanUseGore gates it) but reachable via
+	// a direct player command or btree dispatch to an unlisted or tool-using mob.
+	if char.HasBodyPart("hands") || !combat.SpeciesHasBeastMove(char, "gore") {
 		return GoreResult{NotHorned: true}
 	}
 

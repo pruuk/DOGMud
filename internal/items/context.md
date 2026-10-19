@@ -32,7 +32,8 @@ The items system is built around two main components:
 - Dynamic combat message generation based on weapon subtypes
 - Intensity-based message selection (miss, weak, normal, heavy, critical)
 - Token replacement system for personalized combat text
-- Separate messages for attacker, defender, and room observers
+- One record per blow carries the attacker, defender and room observer lines
+  (`together` is the only split; `separate` is retired, #541)
 
 **Item name articles (`article.go`):**
 - `ArticlePrefix(name) string` returns what goes before one item's name,
@@ -518,8 +519,7 @@ type WeaponAttackMessageGroup struct {
 type AttackTypes map[Intensity]AttackOptions
 
 type AttackOptions struct {
-    Together TogetherMessages  // Same room messages
-    Separate SeparateMessages  // Different room messages
+    Together TogetherMessages  // Same room messages (the only split; see below)
 }
 
 type TogetherMessages struct {
@@ -531,20 +531,28 @@ type TogetherMessages struct {
 
 ### Combat-messages record layout (#370, M6 rows 26-27)
 
-In `_datafiles/world/dogmud/combat-messages/*.yaml`, each split (`together`,
-`separate`) holds tier -> list of records. A record is one blow and carries
-every role's line for it: `actor`, `actee` and `observer` under `together`,
-and those plus `remote_observer` under `separate`. Moving a record moves all
-of its roles, so a reorder can no longer narrate different blows to different
-audiences. Tiers are `beginner`, `expert` and `master`.
+In `_datafiles/world/dogmud/combat-messages/*.yaml`, each intensity holds one
+split, `together`, which holds tier -> list of records. A record is one blow
+and carries every role's line for it: `actor`, `actee` and `observer`. Moving
+a record moves all of its roles, so a reorder can no longer narrate different
+blows to different audiences. Tiers are `beginner`, `expert` and `master`.
+
+**`separate` is retired (#541, owner ruling C).** It was the cross-room split
+(a fourth `remote_observer` role and the `{exitname}`/`{entrancename}`
+tokens). Round combat releases a target in another room before the wait round
+or the swing (`hooks.resolveCombatTarget`), so no separate line could ever
+render. `AttackOptions.UnmarshalYAML` rejects any key but `together` at load
+(`unknown key "separate" (only together; separate is retired)`), and the root
+guard `TestCombatMessagesHaveNoSeparateBlock`
+(`combat_message_reachability_guard_test.go`) names the file and line of a
+separate block or exit token that comes back.
 
 `attack_records.go` holds the decoder. `decodeTieredRecords` reads one split
 and returns the per-role `SkillTieredMessages` pools; it rejects an unknown
 key, a mix of role keys and tier keys, a record with a missing role and an
-empty line. `TogetherMessages.UnmarshalYAML` and `SeparateMessages.UnmarshalYAML`
-map the roles onto `ToAttacker`, `ToDefender`, `ToRoom` (and `ToAttackerRoom`,
-`ToDefenderRoom` for separate), so `PoolFor` and `Render` are unchanged.
-`AttackTypes.UnmarshalYAML` decodes each intensity through `attackOptionsCapture`,
+empty line. `TogetherMessages.UnmarshalYAML` maps the roles onto
+`ToAttacker`, `ToDefender` and `ToRoom`, so `PoolFor` and `Render` are
+unchanged. `AttackTypes.UnmarshalYAML` decodes each intensity through `attackOptionsCapture`,
 which keeps the original unmarshal func so strict decoding, exact scalar text
 and true line numbers survive (a marshal and re-parse would lose them).
 
@@ -1296,6 +1304,8 @@ fires (pommel/hilt strike narration). Full design spec and formula:
 |-------------|-----------|------------------------------------------|
 | Fist        | 0.10      | Punch length                             |
 | Claws       | 0.15      | Fingers extended                         |
+| Maul        | 0.15      | Bears; strikes with claws (#541)         |
+| Pounce      | 0.15      | Big cats; strikes with claws (#541)      |
 | Bite        | 0.15      | Head-mounted, neck-length                |
 | Sting       | 0.20      | Abdomen/tail-tip                         |
 | Slam        | 0.30      | Bull rush, shoulder-check                |
@@ -1357,7 +1367,7 @@ species whose `natural_attack` is `siphon` instead needs `lifedrain: true`
 ### Natural-attack subtypes: live for mob basic attacks
 
 The natural-attack `ItemSubType`s (`bite`, `claws`, `slam`, `gore`,
-`sting`, `siphon`, `trample`, `lash` and `blast`) and their combat-message
+`sting`, `siphon`, `trample`, `lash`, `blast`, `maul` and `pounce`) and their combat-message
 files are now the standard
 rendering path for non-human mob melee (Phase 1 non-human attack
 messaging). When a species YAML sets `natural_attack:`, `buildWeaponSetup`
@@ -1454,27 +1464,23 @@ id range, so a materials item filed elsewhere will not load.
 ```go
 func (stm SkillTieredMessages) PoolFor(skillLevel int) []string
 func (m TogetherMessages) Render(skillLevel int, tokens map[TokenName]string, pick narration.Picker) narration.Roles
-func (m SeparateMessages) Render(skillLevel int, tokens map[TokenName]string, pick narration.Picker) narration.Roles
 ```
 
 `PoolFor` assembles the cumulative tier union (beginner always, plus expert at
 skill 34, plus master at 67) and hands it to the core as plain strings.
 Assembly stays here; the core only coordinates the index and substitutes
-tokens. `SeparateMessages.Render` then passes each role through
-`exit.PhraseVerticalExits` with the `{exitname}` and `{entrancename}` values,
-so a blow through an up or down exit reads "from above" or "upward" rather
-than "from the up" (#430).
+tokens.
 
 Role mapping, and getting it wrong inverts every combat message in the game:
 
 | Split | Actor | Actee | Observer | ActeeObserver |
 |---|---|---|---|---|
 | `together` | `ToAttacker` | `ToDefender` | `ToRoom` | *(absent, one observer audience)* |
-| `separate` | `ToAttacker` | `ToDefender` | `ToAttackerRoom` | `ToDefenderRoom` |
 
 Those are the GO FIELD names, and they lag the YAML. M4b-1 renamed the authored
 keys to the canonical role vocabulary, so a data file now says `actor`,
-`actee`, `observer` and, in the `separate` split only, `remote_observer`.
+`actee` and `observer` (the retired `separate` split also had
+`remote_observer`; see the record layout section).
 `toattacker`/`todefender`/`toroom`/`toattackerroom`/`todefenderroom` are the
 old spellings; since #370 a file using them fails to load with an unknown key
 error (it no longer loads silently empty). `toattackerroom` became plain
@@ -1491,8 +1497,17 @@ taunt PR #115) and was live in this store until M3 item 8.
 equal totals.** The union is cumulative, so equal totals with unequal tiers
 still pair an expert line against a master one at the same index. Per-tier
 equality is exactly equivalent to union equality at all three skill levels.
-`minVariants` is 1, not the defence store's 5: 414 of 534 shipped groups hold
-fewer than five, and the smallest holds one.
+`minVariants` is 1, not the defence store's 5: 399 of 537 shipped groups hold
+fewer than five, and the smallest holds two (2026-10-19).
+
+**`Validate` requires the swing intensities (miss to fumble) only of a subtype
+that swings with its own lines.** `MeleeSwingNarratedAs(sub)` names the
+subtype whose swing lines `sub` always borrows; today only `Shooting`, which
+narrates as `Bludgeoning` (a bow swung in melee is a club). The renderer
+(`combat.meleeDisplaySubtype`) and `Validate` both read it, so they cannot
+drift, and `shooting.yaml` authors only `prepare` and `wait` (#541, owner
+ruling C). The root guard `TestShootingKeepsOnlyPrepareAndWait` fails if its
+swing intensities come back.
 
 `tools/combat_message_pool_audit.py` reports any group whose pools are
 unequal; `tools/combat_message_pad_check.py` proves a content change deleted
@@ -1508,7 +1523,7 @@ returns.
 natural weapon renders as the species' `unarmedname`, singular for some
 ("maw", "abrasive whirl") and plural for most ("claws", "pseudopods"), so
 no verb can agree with it. In the `claws`, `bite`, `sting`, `gore`,
-`slam`, `trample`, `lash` and `blast` pools (and any other species
+`slam`, `trample`, `lash`, `blast`, `maul` and `pounce` pools (and any other species
 `natural_attack` pool) the attacker
 does the verb: "You rake X with your {itemname}". In both worlds,
 `natural_weapon_agreement_test.go` fails any line where a word other than a

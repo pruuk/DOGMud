@@ -14,8 +14,8 @@ func DefaultReachForSubtype(s ItemSubType) float64 {
 	// Natural attacks
 	case Fist:
 		return 0.1
-	case Claws:
-		return 0.15
+	case Claws, Maul, Pounce:
+		return 0.15 // maul and pounce strike with claws too (#541 slice 2)
 	case Bite:
 		return 0.15
 	case Sting:

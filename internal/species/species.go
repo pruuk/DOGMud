@@ -3,6 +3,7 @@ package species
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -55,9 +56,17 @@ type Species struct {
 	Stats            stats.Statistics // Base stats for this species.
 	NaturalArmor     int              `yaml:"naturalarmor,omitempty"` // Innate damage reduction (chitin, thick hide, etc.)
 	DisabledSlots    []string         `yaml:"disabledslots,omitempty"`
-	NaturalBash      bool             `yaml:"naturalbash,omitempty"`   // Can bash without a shield (elementals, golems)
-	LifeDrain        bool             `yaml:"lifedrain,omitempty"`     // Drains life on its `drain` special (vampires, parasites)
-	ReturnDamage     int              `yaml:"return_damage,omitempty"` // % of melee damage returned to attacker (fire elemental, etc.)
+	NaturalBash      bool             `yaml:"naturalbash,omitempty"` // Can bash without a shield (elementals, golems)
+	LifeDrain        bool             `yaml:"lifedrain,omitempty"`   // Drains life on its `drain` special (vampires, parasites)
+	// BeastMoves is the special moves this species can use, AI and player
+	// alike. A default attack is what a creature does most of the time; a
+	// beast move is rarer or a finisher (rulings E and F). The reviewed table
+	// is spec 2026-10-16 #541 section 5, pinned by
+	// species_beast_moves_test.go. Every beast-move gate (combat.CanUse*,
+	// actions.CommandIsReady, each Execute* entry) reads this list, never the
+	// attack family; validateBeastMoves checks each move's body at load.
+	BeastMoves   []string `yaml:"beast_moves,omitempty"`
+	ReturnDamage int      `yaml:"return_damage,omitempty"` // % of melee damage returned to attacker (fire elemental, etc.)
 	// Chunk 5.11f: which of the ATTACKER's mitigation pools answers this
 	// species' return damage. "magical" for elemental backlash; empty or
 	// anything else means physical, so existing content needs no data change.
@@ -221,6 +230,8 @@ var validNaturalAttacks = map[items.ItemSubType]struct{}{
 	items.Trample: {},
 	items.Lash:    {},
 	items.Blast:   {},
+	items.Maul:    {},
+	items.Pounce:  {},
 }
 
 // validateGoreHasHorns returns an error if a gore (horned) species does not
@@ -257,6 +268,63 @@ func validateNaturalAttack(s *Species) error {
 	return nil
 }
 
+// beastMoveBody is what a body needs for one beast move: each move keeps the
+// anatomy check its gate has always made. drain needs lifedrain and allows
+// hands, because armed undead drain (combat/context.md, the hands rule).
+type beastMoveBody struct {
+	noHands, legs, horns, lifeDrain bool
+}
+
+// beastMoveBodies names every move beast_moves may list. charge is absent on
+// purpose: it has no AI gate and stays scripted through combatcommands
+// (spec section 5).
+var beastMoveBodies = map[string]beastMoveBody{
+	"rake":      {noHands: true},
+	"maul":      {noHands: true},
+	"throttle":  {noHands: true},
+	"smother":   {noHands: true},
+	"pounce":    {noHands: true, legs: true},
+	"hamstring": {noHands: true, legs: true},
+	"gore":      {noHands: true, horns: true},
+	"drain":     {lifeDrain: true},
+}
+
+// validateBeastMoves rejects an unknown move, a repeated one, and a move
+// whose body this species lacks. It reads BodyParts the way
+// characters.Character.HasBodyPart does (no list means no parts), so the
+// load check and the runtime gate cannot disagree.
+func validateBeastMoves(s *Species) error {
+	seen := map[string]bool{}
+	for _, move := range s.BeastMoves {
+		body, ok := beastMoveBodies[move]
+		if !ok {
+			return fmt.Errorf("species %d (%s): unknown beast move %q", s.SpeciesId, s.Name, move)
+		}
+		if seen[move] {
+			return fmt.Errorf("species %d (%s): beast move %q listed twice", s.SpeciesId, s.Name, move)
+		}
+		seen[move] = true
+		has := func(part string) bool { return slices.Contains(s.BodyParts, part) }
+		switch {
+		case body.noHands && has("hands"):
+			return fmt.Errorf("species %d (%s): beast move %q needs a body without hands", s.SpeciesId, s.Name, move)
+		case body.legs && !has("legs"):
+			return fmt.Errorf("species %d (%s): beast move %q needs legs", s.SpeciesId, s.Name, move)
+		case body.horns && !has("horns"):
+			return fmt.Errorf("species %d (%s): beast move %q needs horns", s.SpeciesId, s.Name, move)
+		case body.lifeDrain && !s.LifeDrain:
+			return fmt.Errorf("species %d (%s): beast move %q needs lifedrain: true", s.SpeciesId, s.Name, move)
+		}
+	}
+	return nil
+}
+
+// HasBeastMove reports whether this species lists move in beast_moves. A nil
+// species lists nothing.
+func (s *Species) HasBeastMove(move string) bool {
+	return s != nil && slices.Contains(s.BeastMoves, move)
+}
+
 // file self loads due to init()
 func LoadDataFiles() {
 
@@ -278,6 +346,9 @@ func LoadDataFiles() {
 			panic(err)
 		}
 		if err := validateSiphonHasLifeDrain(s); err != nil {
+			panic(err)
+		}
+		if err := validateBeastMoves(s); err != nil {
 			panic(err)
 		}
 	}

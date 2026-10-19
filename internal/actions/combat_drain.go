@@ -43,9 +43,9 @@ type DrainResult struct {
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
-	// NotLifeDrainer is true when the actor's species lacks the LifeDrain flag.
-	// Reachable via a direct player command or a btree/combatcommands dispatch
-	// to a non-lifedrain mob. Unreachable via the AI path (CanUseDrain gates it).
+	// NotLifeDrainer is true when the species does not list drain in
+	// beast_moves. Reachable via a direct player command or a btree dispatch
+	// to an unlisted mob. Unreachable via the AI path (CanUseDrain gates it).
 	NotLifeDrainer bool
 
 	// Healed is the amount of HP the attacker actually recovered from the
@@ -63,7 +63,7 @@ type DrainResult struct {
 // callers. It handles:
 //   - Special-move cooldown (using SpecialMoveCooldown from balance config)
 //   - Target resolution via ResolveAggroTarget
-//   - Species identity gate: SpeciesHasLifeDrain
+//   - Species gate: drain listed in beast_moves (combat.SpeciesHasBeastMove)
 //   - ExecuteSkillMove via combat package (UnarmedCombat skill, Strength
 //     attack stat, Dexterity defense stat, TripDamagePercent, Strength damage
 //     stat, no knockdown)
@@ -89,11 +89,11 @@ func ExecuteDrain(actor Actor) DrainResult {
 		return DrainResult{NoTarget: true}
 	}
 
-	// Identity gate (defense-in-depth): only LifeDrain species can drain.
+	// Identity gate (defense-in-depth): only a species listing drain in
+	// beast_moves can drain (the loader requires it to have lifedrain).
 	// Unreachable via the AI path (CanUseDrain gates it) but reachable via a
-	// direct player command or a btree/combatcommands dispatch to a non-lifedrain
-	// mob.
-	if !combat.SpeciesHasLifeDrain(char) {
+	// direct player command or a btree/combatcommands dispatch to an unlisted mob.
+	if !combat.SpeciesHasBeastMove(char, "drain") {
 		return DrainResult{NotLifeDrainer: true}
 	}
 
@@ -250,7 +250,7 @@ type DrainAreaResult struct {
 // sum(damage_i)) — the per-result accumulation is what lets this loop also
 // report per-player damage for messaging.
 //
-// Unlike ExecuteDrain, this is NOT gated by SpeciesHasLifeDrain / aggro / the
+// Unlike ExecuteDrain, this is NOT gated by the beast_moves list / aggro / the
 // special-move cooldown — those are defense-in-depth for the single-target
 // player/mob "drain" command entry point. ExecuteDrainArea is a boss-ability
 // primitive meant to be invoked once, at the moment a fold-cast spell

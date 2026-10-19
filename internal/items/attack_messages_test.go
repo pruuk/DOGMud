@@ -3,6 +3,7 @@ package items
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -67,32 +68,6 @@ func TestTogetherRenderCoordinatesOneIndexAcrossRoles(t *testing.T) {
 	}
 }
 
-// TestSeparateRenderMapsFourRoles pins the role mapping for the ranged case.
-// Swapping Actor and Actee here would invert every combat message in the game,
-// and three same-shaped pools as adjacent struct fields is exactly how that
-// mistake gets made.
-func TestSeparateRenderMapsFourRoles(t *testing.T) {
-	m := SeparateMessages{
-		ToAttacker:     SkillTieredMessages{Beginner: MessageOptions{"atk"}},
-		ToDefender:     SkillTieredMessages{Beginner: MessageOptions{"def"}},
-		ToAttackerRoom: SkillTieredMessages{Beginner: MessageOptions{"atkroom"}},
-		ToDefenderRoom: SkillTieredMessages{Beginner: MessageOptions{"defroom"}},
-	}
-	roles := m.Render(10, nil, firstPickerForTest)
-	if roles.Actor != "atk" {
-		t.Errorf("Actor = %q, want %q (toattacker ACTS, so it is the Actor)", roles.Actor, "atk")
-	}
-	if roles.Actee != "def" {
-		t.Errorf("Actee = %q, want %q (todefender is ACTED UPON)", roles.Actee, "def")
-	}
-	if roles.Observer != "atkroom" {
-		t.Errorf("Observer = %q, want %q (observers where the attacker is)", roles.Observer, "atkroom")
-	}
-	if roles.ActeeObserver != "defroom" {
-		t.Errorf("ActeeObserver = %q, want %q (observers where the defender is)", roles.ActeeObserver, "defroom")
-	}
-}
-
 func TestRenderSubstitutesTokens(t *testing.T) {
 	m := TogetherMessages{
 		ToAttacker: SkillTieredMessages{Beginner: MessageOptions{"You hit {actee}!"}},
@@ -115,7 +90,7 @@ func TestRenderSubstitutesTokens(t *testing.T) {
 }
 
 // TestRenderTakesExactlyOneDrawPerMessage pins the draw count. It was three
-// draws for together and four for separate, one per audience. The count is
+// draws, one per audience. The count is
 // load-bearing twice over: it IS the coordination guarantee, and it is what
 // shifts the global random stream when this lands.
 func TestRenderTakesExactlyOneDrawPerMessage(t *testing.T) {
@@ -130,18 +105,6 @@ func TestRenderTakesExactlyOneDrawPerMessage(t *testing.T) {
 	together.Render(10, nil, counting)
 	if draws != 1 {
 		t.Errorf("together took %d draws, want exactly 1; a draw per role is the defect this migration removes", draws)
-	}
-
-	draws = 0
-	separate := SeparateMessages{
-		ToAttacker:     SkillTieredMessages{Beginner: MessageOptions{"a0", "a1"}},
-		ToDefender:     SkillTieredMessages{Beginner: MessageOptions{"d0", "d1"}},
-		ToAttackerRoom: SkillTieredMessages{Beginner: MessageOptions{"ar0", "ar1"}},
-		ToDefenderRoom: SkillTieredMessages{Beginner: MessageOptions{"dr0", "dr1"}},
-	}
-	separate.Render(10, nil, counting)
-	if draws != 1 {
-		t.Errorf("separate took %d draws, want exactly 1", draws)
 	}
 }
 
@@ -232,26 +195,24 @@ func TestValidateChecksEachTierSeparately(t *testing.T) {
 	}
 }
 
-// TestValidateAllowsAnAbsentSeparateBlock: most weapons have no separate
-// block at all, and that is not the same as one that lost its roles.
-func TestValidateAllowsAnAbsentSeparateBlock(t *testing.T) {
-	if err := balancedGroup().Validate(); err != nil {
-		t.Fatalf("a group with no separate block must validate, got %v", err)
+// Ruling C: a swing with a re-narrated subtype borrows another file's lines,
+// so its own file needs only prepare and wait. The validator reads the same
+// function the renderer does.
+func TestValidateExemptsReNarratedSwingIntensities(t *testing.T) {
+	if as, ok := MeleeSwingNarratedAs(Shooting); !ok || as != Bludgeoning {
+		t.Fatalf("MeleeSwingNarratedAs(shooting) = %q, %v; want bludgeoning, true", as, ok)
 	}
-}
-
-func TestValidateRejectsAPartialSeparateBlock(t *testing.T) {
-	g := balancedGroup()
-	partial := g.Options[Miss]
-	partial.Separate = SeparateMessages{
-		ToAttacker:     SkillTieredMessages{Beginner: MessageOptions{"a"}},
-		ToDefender:     SkillTieredMessages{Beginner: MessageOptions{"d"}},
-		ToAttackerRoom: SkillTieredMessages{Beginner: MessageOptions{"ar"}},
-		// ToDefenderRoom deliberately missing: this is shooting.yaml's old
-		// `todefenderroom: null`, which the pad filled in.
+	if _, ok := MeleeSwingNarratedAs(Slashing); ok {
+		t.Fatal("slashing swings with its own lines")
 	}
-	g.Options[Miss] = partial
-	if err := g.Validate(); err == nil {
-		t.Fatal("Validate accepted a separate block missing todefenderroom")
+	one := SkillTieredMessages{Beginner: MessageOptions{"x"}}
+	opts := AttackOptions{Together: TogetherMessages{ToAttacker: one, ToDefender: one, ToRoom: one}}
+	bow := &WeaponAttackMessageGroup{OptionId: Shooting, Options: AttackTypes{Prepare: opts, Wait: opts}}
+	if err := bow.Validate(); err != nil {
+		t.Errorf("shooting with prepare and wait only must validate: %v", err)
+	}
+	sword := &WeaponAttackMessageGroup{OptionId: Slashing, Options: AttackTypes{Prepare: opts, Wait: opts}}
+	if err := sword.Validate(); err == nil || !strings.Contains(err.Error(), "`miss`") {
+		t.Errorf("slashing without its swing intensities must fail naming `miss`, got: %v", err)
 	}
 }

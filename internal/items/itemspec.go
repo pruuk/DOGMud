@@ -109,6 +109,8 @@ func ItemSubtypes() []ItemTypeInfo {
 		{string(Trample), `A hoofed beast's kicks, stamps and trampling weight.`, 0, 0, 0},
 		{string(Lash), `An amorphous creature's whipping pseudopods or tendrils.`, 0, 0, 0},
 		{string(Blast), `An energy elemental's strike with its own element.`, 0, 0, 0},
+		{string(Maul), `A bear's swiping claws and crushing bite.`, 0, 0, 0},
+		{string(Pounce), `A big cat's leaping claws and fangs.`, 0, 0, 0},
 		// Miscellaneous data
 		{string(BlobContent), `Can store blob content in the item data.`, 0, 0, 0},
 	}
@@ -182,6 +184,8 @@ const (
 	Trample     ItemSubType = "trample" // hooves: kicks, rears and tramples (slam split, #541)
 	Lash        ItemSubType = "lash"    // amorphous bodies: pseudopods and tendrils (#541)
 	Blast       ItemSubType = "blast"   // energy elementals strike with their element (#541)
+	Maul        ItemSubType = "maul"    // bears: a swipe and a crushing bite (#541 slice 2)
+	Pounce      ItemSubType = "pounce"  // big cats: leaping claws and fangs (#541 slice 2)
 
 	BlobContent ItemSubType = "blobcontent"
 
@@ -224,20 +228,18 @@ const (
 	// respelled here, so the two vocabularies cannot drift apart again. The
 	// type tokens have no core counterpart: they carry an ansi colour class,
 	// not a name.
-	TokenActor        TokenName = narration.TokenActor
-	TokenActorType    TokenName = "{actortype}" // will be 'user' or 'mob'
-	TokenActee        TokenName = narration.TokenActee
-	TokenActeeType    TokenName = "{acteetype}" // will be 'user' or 'mob'
-	TokenUsesLeft     TokenName = "{usesleft}"
-	TokenDamage       TokenName = "{damage}"
-	TokenEntranceName TokenName = "{entrancename}"
-	TokenExitName     TokenName = "{exitname}"
-	TokenWeapon       TokenName = "{weapon}"   // Stage 9.3: defensive action messages
-	TokenAttack       TokenName = "{attack}"   // Generic "strike"/"blow" for unarmed, weapon name for armed
-	TokenStance       TokenName = "{stance}"   // Stage 9.4: combat stance (aggressive/defensive/balanced/reckless)
-	TokenPosition     TokenName = "{position}" // Stage 9.4: combat position (standing/prone/clinched/grounded)
-	TokenMomentum     TokenName = "{momentum}" // Stage 9.4: combat momentum (offensive/defensive/pressured/in control)
-	TokenBodyPart     TokenName = "{bodypart}" // Stage 42.4: random body part for hit location flavor
+	TokenActor     TokenName = narration.TokenActor
+	TokenActorType TokenName = "{actortype}" // will be 'user' or 'mob'
+	TokenActee     TokenName = narration.TokenActee
+	TokenActeeType TokenName = "{acteetype}" // will be 'user' or 'mob'
+	TokenUsesLeft  TokenName = "{usesleft}"
+	TokenDamage    TokenName = "{damage}"
+	TokenWeapon    TokenName = "{weapon}"   // Stage 9.3: defensive action messages
+	TokenAttack    TokenName = "{attack}"   // Generic "strike"/"blow" for unarmed, weapon name for armed
+	TokenStance    TokenName = "{stance}"   // Stage 9.4: combat stance (aggressive/defensive/balanced/reckless)
+	TokenPosition  TokenName = "{position}" // Stage 9.4: combat position (standing/prone/clinched/grounded)
+	TokenMomentum  TokenName = "{momentum}" // Stage 9.4: combat momentum (offensive/defensive/pressured/in control)
+	TokenBodyPart  TokenName = "{bodypart}" // Stage 42.4: random body part for hit location flavor
 
 	POVUser  = 0
 	POVOther = 1

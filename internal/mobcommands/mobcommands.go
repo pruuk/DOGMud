@@ -71,6 +71,7 @@ var (
 		"gore":           {Gore, false},
 		"maul":           {Maul, false},
 		"throttle":       {Throttle, false},
+		"smother":        {Smother, false},
 		"pounce":         {Pounce, false},
 		"rake":           {Rake, false},
 		"rally":          {Rally, false},

@@ -1,0 +1,43 @@
+# Combat reachability slice 2 (#541): the WITNESS.
+#
+# You are the instrument of this run. A creature's moves are narrated to the
+# one attacked and to everyone else in the room. The creature cannot report
+# its own line, so the ROOM's line exists in this run only if you write it
+# down.
+#
+# You start one room north of Trampled Outskirts. The cat and rat there are
+# hostile and go for whoever is in the room first, so walk in only once they
+# are already fighting your partner. Your partner carries a torch.
+#
+# QUOTE, DO NOT SUMMARISE. Record each line word for word with the round it
+# arrived in.
+#
+# DO NOT FIGHT. If a creature turns on you, say so, step back north and return
+# once it is fighting your partner again.
+#
+# 3 commands per round on the AI port and the overflow is dropped.
+
+ephemeral:
+  # m2-witness: plain senses, enough health to stand beside a fight.
+  profile: m2-witness
+  start_room: 3002
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    WAIT, THEN WALK IN. Give your partner a few rounds to light a torch and
+    start fighting, then go `south` into Trampled Outskirts.
+  - >-
+    STAND AND READ. While your partner fights the Feral Cat and then the
+    Steppe Rat, do nothing but quote. Record every line you are given,
+    verbatim, with its round number, including the first line when each fight
+    begins.
+  - >-
+    COMPARE. For each round, set your line beside your partner's line for the
+    same moment and say plainly SAME or DIFFERENT: same action, same result,
+    same banner. Say whether your line named your partner.
+  - >-
+    ADVERSARIAL PASS. Flag any curly-brace token, doubled or missing name,
+    lowercase sentence start, a body part the creature does not have, or an
+    EMPTY line where a blow should be.
