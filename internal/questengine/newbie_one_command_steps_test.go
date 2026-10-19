@@ -339,6 +339,11 @@ func TestNewbieQuestTriggersGateOnThePreviousStep(t *testing.T) {
 				if id != q.QuestId {
 					continue
 				}
+				if retiredSteps[strings.ToLower(a.Grant)] {
+					t.Errorf("quest %d (%s): %s is retired (kept for saved players) but a trigger still grants it",
+						q.QuestId, q.Name, a.Grant)
+					continue
+				}
 				gi, ok := idx[strings.ToLower(step)]
 				if !ok || gi <= 1 {
 					continue // start, or the first step after it
@@ -346,7 +351,11 @@ func TestNewbieQuestTriggersGateOnThePreviousStep(t *testing.T) {
 				if lenientGrants[a.Grant] {
 					continue
 				}
-				prev := strings.ToLower(q.Steps[gi-1].Id)
+				pi := gi - 1
+				for pi > 0 && retiredSteps[fmt.Sprintf("%d-%s", q.QuestId, strings.ToLower(q.Steps[pi].Id))] {
+					pi--
+				}
+				prev := strings.ToLower(q.Steps[pi].Id)
 				want := fmt.Sprintf("%d-%s", q.QuestId, prev)
 				has := false
 				for _, h := range tr.Conditions.Has {
@@ -372,6 +381,13 @@ var lenientGrants = map[string]bool{
 	"50-shoot": true, // fire needs the sling readied (the equip step)
 	"35-craft": true, // crafting the dagger needs the bought ingot and strip
 	"38-brew":  true, // brewing the salve needs the bought vial and roots
+}
+
+// retiredSteps are steps no trigger grants any more. Each stays in its
+// quest's step list only so a character saved on it resumes, so the step
+// gate skips over it when it looks for the step before a grant.
+var retiredSteps = map[string]bool{
+	"32-consider": true, // consider moved ahead of the fight as sized_up (owner 2026-10-19)
 }
 
 func TestQuest41FirstSign_OneCommandPerStep(t *testing.T) {

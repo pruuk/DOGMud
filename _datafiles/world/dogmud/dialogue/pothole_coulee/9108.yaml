@@ -63,8 +63,14 @@ tree:
           away and take it up again so I can see you do it."
         hints: "Type wield cudgel."
       - questRequired: ["32-wield"]
+        questExcluded: ["32-sized_up", "32-end"]
+        text: "The cudgel is in your hand. Before you swing it,
+          look at what you are swinging at. Read the dummy and see
+          what it tells you."
+        hints: "Type consider dummy."
+      - questRequired: ["32-sized_up"]
         questExcluded: ["32-strike", "32-end"]
-        text: "The cudgel is in your hand. Now use it. Hit the
+        text: "Now you know what you face. Use the cudgel. Hit the
           dummy until it stops hitting back."
         hints: "Type attack dummy."
       - questRequired: ["32-strike"]
@@ -73,12 +79,9 @@ tree:
           one, or trip it if you like. If it is still down, wait
           for it to stand up."
         hints: "Type kick dummy."
+      # Also answers a player saved on the old consider step, which
+      # comes after special.
       - questRequired: ["32-special"]
-        questExcluded: ["32-consider", "32-end"]
-        text: "Good. Now look before you swing. Read the dummy
-          and see what it tells you."
-        hints: "Type consider dummy."
-      - questRequired: ["32-consider"]
         questExcluded: ["32-verbosity", "32-end"]
         text: "Last thing. Choose how much of a fight you see.
           Start on full. Change it when you know what you are
@@ -180,6 +183,15 @@ tree:
         "task", "dummy", "attack", "help", "how", "next", "what",
         "train", "drill", "fight"]
       questRequired: ["32-wield"]
+      questExcluded: ["32-sized_up", "32-end"]
+      text: "Not yet. Look at the dummy before you swing. Consider
+        tells you how dangerous a thing is."
+      hints: "Type consider dummy."
+    - id: progress_sized_up
+      triggers: ["report", "done", "ready", "finished", "quest",
+        "task", "dummy", "attack", "help", "how", "next", "what",
+        "train", "drill", "fight"]
+      questRequired: ["32-sized_up"]
       questExcluded: ["32-strike", "32-end"]
       text: "Not yet. The dummy is right there. Hit it until it
         stops hitting back."
@@ -199,15 +211,6 @@ tree:
         "task", "dummy", "attack", "help", "how", "next", "what",
         "train", "drill", "fight"]
       questRequired: ["32-special"]
-      questExcluded: ["32-consider", "32-end"]
-      text: "Not yet. Look at the dummy before you swing again.
-        Consider tells you how dangerous a thing is."
-      hints: "Type consider dummy."
-    - id: progress_consider
-      triggers: ["report", "done", "ready", "finished", "quest",
-        "task", "dummy", "attack", "help", "how", "next", "what",
-        "train", "drill", "fight"]
-      questRequired: ["32-consider"]
       questExcluded: ["32-verbosity", "32-end"]
       text: "Almost. Choose how much of a fight you see. Full
         shows everything. Start there."
