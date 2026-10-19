@@ -1,5 +1,19 @@
 # DOGMud Patch Notes
 
+## 2026-10-19: Breathing room
+
+- In Dewey's practice ring, he now waits for your shout and your spell to
+  rest before he asks for the next big move, and tells you why.
+- First Blood now has you size up the training dummy before you fight it.
+- Arriving somewhere by portal, recall or any other magic now counts for a
+  quest step that asks you to reach that place, the same as walking in.
+- The Vitalis Bandolier's effects now show as sustained and no longer
+  announce that they are wearing off.
+- The set screen shows each setting and its value on one line, with no
+  stray periods. Long prompts wrap neatly.
+- The skills and inventory screens no longer leave a blank line behind
+  them, and an empty pack says you are carrying nothing.
+
 ## 2026-10-17: Clearer in the dim, fairer in the arena
 
 - Foes in the Arena and the Planar Oasis now carry gold in step with what
