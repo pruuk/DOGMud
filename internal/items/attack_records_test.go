@@ -24,11 +24,6 @@ options:
         beginner: ['R0', 'R1']
         expert: ['RE']
         master: ['R2']
-    separate:
-      actor: {beginner: ['SA0']}
-      actee: {beginner: ['SD0']}
-      observer: {beginner: ['SR0']}
-      remote_observer: {beginner: ['SX0']}
 `
 
 const recordDoc = `
@@ -43,9 +38,6 @@ options:
       - {actor: 'AE', actee: 'DE', observer: 'RE'}
       master:
       - {actor: 'A2', actee: 'D2', observer: 'R2'}
-    separate:
-      beginner:
-      - {actor: 'SA0', actee: 'SD0', observer: 'SR0', remote_observer: 'SX0'}
 `
 
 func decodeGroup(t *testing.T, doc string) (WeaponAttackMessageGroup, error) {
@@ -64,8 +56,8 @@ func TestRecordLayoutDecodes(t *testing.T) {
 	if got := strings.Join(o.Together.ToAttacker.PoolFor(0), "|"); got != "A0|A1" {
 		t.Errorf("together actor pool = %q", got)
 	}
-	if got := strings.Join(o.Separate.ToDefenderRoom.PoolFor(0), "|"); got != "SX0" {
-		t.Errorf("separate remote_observer pool = %q", got)
+	if got := strings.Join(o.Together.ToRoom.PoolFor(100), "|"); got != "R0|R1|RE|R2" {
+		t.Errorf("together observer pool = %q", got)
 	}
 }
 
@@ -106,14 +98,14 @@ options:
       beginner:
       - {actor: 'A', acter: 'D', actee: 'D', observer: 'R'}
 `, "option[`weak`]: together: beginner record 0: unknown key \"acter\""},
-		"separate needs remote_observer": {`
+		"separate is retired": {`
 optionid: test
 options:
   weak:
     separate:
       beginner:
-      - {actor: 'A', actee: 'D', observer: 'R'}
-`, "option[`weak`]: separate: beginner record 0: missing role \"remote_observer\""},
+      - {actor: 'A', actee: 'D', observer: 'R', remote_observer: 'X'}
+`, "option[`weak`]: unknown key \"separate\""},
 		"mixed layout": {`
 optionid: test
 options:

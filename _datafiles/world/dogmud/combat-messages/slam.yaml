@@ -14,8 +14,6 @@
 # {actee}      - name of mob or user e.g. 'goblin'
 # {acteetype}  - 'user' or 'mob'
 # {damage}      - damage dealt as an integer e.g. '5'
-# {exitname}    - name of exit for attack e.g. 'north'
-# {entrancename}- name of entrance for attack e.g. 'south'
 # {stance}      - combat stance: 'aggressive', 'defensive', 'balanced', 'reckless' (Stage 9.4)
 # {position}    - combat position: 'standing', 'prone', 'locked in close combat', 'grappling on the ground' (Stage 9.4)
 # {momentum}    - combat momentum: 'on the offensive', 'on the defensive', 'in control', 'pressured' (Stage 9.4)

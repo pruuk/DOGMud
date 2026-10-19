@@ -324,6 +324,9 @@ var legacyRoleKeysAnyStore = map[string]string{
 	"todefender":     "actee",
 	"toroom":         "observer",
 	"toattackerroom": "observer",
+	// The combat split that read this key is retired (#541), but the ban on
+	// the old spelling stays, and remote_observer is still live in the
+	// movenarration store (shoot's arrival events).
 	"todefenderroom": "remote_observer",
 
 	// grapple and position_control sides (620188c7f, 93fbc3ccc)

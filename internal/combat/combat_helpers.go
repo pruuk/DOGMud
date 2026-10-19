@@ -16,7 +16,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/narration"
-	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -1908,7 +1907,7 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		}
 	}
 
-	var toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg items.ItemMessage
+	var toAttackerMsg, toDefenderMsg, toAttackerRoomMsg items.ItemMessage
 
 	// Set once the message-pool branch has rendered, because Render
 	// substitutes tokens itself and the other branches still need the loop.
@@ -1967,45 +1966,19 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 			tokenReplacements[items.TokenActee],
 			tokenReplacements[items.TokenDamage])
 	} else {
-		together := sourceChar.RoomId == targetChar.RoomId
-
-		if !together {
-			// Find the exit that leads to the target from the source (if any)
-			if atkRoom := rooms.LoadRoom(sourceChar.RoomId); atkRoom != nil {
-				for exitName, exit := range atkRoom.Exits {
-					if exit.RoomId == targetChar.RoomId {
-						tokenReplacements[items.TokenExitName] = exitName
-						break
-					}
-				}
-			}
-			// find the exit that leads to the source from the target (if any)
-			if defRoom := rooms.LoadRoom(targetChar.RoomId); defRoom != nil {
-				for exitName, exit := range defRoom.Exits {
-					if exit.RoomId == sourceChar.RoomId {
-						tokenReplacements[items.TokenEntranceName] = exitName
-						break
-					}
-				}
-			}
-		}
-
 		// ONE coordinated draw for every audience. Selection happens after the
-		// exit tokens are resolved, because Render substitutes as it renders.
+		// token map is complete, because Render substitutes as it renders.
 		// This used to be three or four independent GetForSkillLevel calls, so
 		// a single sword blow could be a laceration to the attacker, a
 		// devastating hit to the defender and a critical strike to the room.
-		var roles narration.Roles
-		if together {
-			roles = msgs.Together.Render(skillLevel, tokenReplacements, nil)
-		} else {
-			roles = msgs.Separate.Render(skillLevel, tokenReplacements, nil)
-		}
+		// Only the together pool exists: round combat releases a target in
+		// another room before the swing (hooks.resolveCombatTarget), so the
+		// participants always share a room here (#541, separate retired).
+		roles := msgs.Together.Render(skillLevel, tokenReplacements, nil)
 
 		toAttackerMsg = items.ItemMessage(roles.Actor)
 		toDefenderMsg = items.ItemMessage(roles.Actee)
 		toAttackerRoomMsg = items.ItemMessage(roles.Observer)
-		toDefenderRoomMsg = items.ItemMessage(roles.ActeeObserver)
 
 		rendered = true
 	}
@@ -2025,9 +1998,6 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		toAttackerMsg = items.ItemMessage(narration.Substitute(string(toAttackerMsg), tokens))
 		toDefenderMsg = items.ItemMessage(narration.Substitute(string(toDefenderMsg), tokens))
 		toAttackerRoomMsg = items.ItemMessage(narration.Substitute(string(toAttackerRoomMsg), tokens))
-		if len(string(toDefenderRoomMsg)) > 0 {
-			toDefenderRoomMsg = items.ItemMessage(narration.Substitute(string(toDefenderRoomMsg), tokens))
-		}
 	}
 
 	// Feint: replace miss messages with feint-flavored text for skilled
@@ -2046,27 +2016,18 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		toAttackerMsg = items.ItemMessage(critBannerOpen + string(toAttackerMsg) + critBannerClose)
 		toDefenderMsg = items.ItemMessage(critBannerOpen + string(toDefenderMsg) + critBannerClose)
 		toAttackerRoomMsg = items.ItemMessage(critBannerOpen + string(toAttackerRoomMsg) + critBannerClose)
-		if len(string(toDefenderRoomMsg)) > 0 {
-			toDefenderRoomMsg = items.ItemMessage(critBannerOpen + string(toDefenderRoomMsg) + critBannerClose)
-		}
 	}
 
 	if result.Fumble {
 		toAttackerMsg = items.ItemMessage(`<ansi fg="fumble-text">!!!</ansi> ` + string(toAttackerMsg) + ` <ansi fg="fumble-text">!!!</ansi>`)
 		toDefenderMsg = items.ItemMessage(`<ansi fg="fumble-text">!!!</ansi> ` + string(toDefenderMsg) + ` <ansi fg="fumble-text">!!!</ansi>`)
 		toAttackerRoomMsg = items.ItemMessage(`<ansi fg="fumble-text">!!!</ansi> ` + string(toAttackerRoomMsg) + ` <ansi fg="fumble-text">!!!</ansi>`)
-		if len(string(toDefenderRoomMsg)) > 0 {
-			toDefenderRoomMsg = items.ItemMessage(`<ansi fg="fumble-text">!!!</ansi> ` + string(toDefenderRoomMsg) + ` <ansi fg="fumble-text">!!!</ansi>`)
-		}
 	}
 
 	if len(prefix) > 0 {
 		toAttackerMsg = items.ItemMessage(prefix + string(toAttackerMsg))
 		toDefenderMsg = items.ItemMessage(prefix + string(toDefenderMsg))
 		toAttackerRoomMsg = items.ItemMessage(prefix + string(toAttackerRoomMsg))
-		if len(string(toDefenderRoomMsg)) > 0 {
-			toDefenderRoomMsg = items.ItemMessage(prefix + string(toDefenderRoomMsg))
-		}
 	}
 
 	// Per-swing hit-band Category from the weapon subtype.
@@ -2121,11 +2082,6 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	// forward.
 	if !deflected {
 		result.SendToSourceRoom(hitCat, string(toAttackerRoomMsg))
-	}
-
-	// Send to defender room if separate
-	if len(string(toDefenderRoomMsg)) > 0 {
-		result.SendToTargetRoom(hitCat, string(toDefenderRoomMsg))
 	}
 }
 

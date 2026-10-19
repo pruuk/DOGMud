@@ -99,12 +99,6 @@ func MinimalCombatMessageFixture() map[ItemSubType]*WeaponAttackMessageGroup {
 			ToDefender: tieredAll,
 			ToRoom:     tieredAll,
 		},
-		Separate: SeparateMessages{
-			ToAttacker:     tieredAll,
-			ToDefender:     tieredAll,
-			ToAttackerRoom: tieredAll,
-			ToDefenderRoom: tieredAll,
-		},
 	}
 	return map[ItemSubType]*WeaponAttackMessageGroup{
 		Generic: {

@@ -20,7 +20,6 @@ import (
 var (
 	tierNames     = []string{"beginner", "expert", "master"}
 	togetherRoles = []string{"actor", "actee", "observer"}
-	separateRoles = []string{"actor", "actee", "observer", "remote_observer"}
 )
 
 func isOneOf(s string, set []string) bool {
@@ -129,14 +128,33 @@ func (m *TogetherMessages) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	return nil
 }
 
-// UnmarshalYAML accepts only the record layout.
-func (m *SeparateMessages) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	pools, err := decodeTieredRecords(unmarshal, separateRoles)
-	if err != nil {
-		return fmt.Errorf("separate: %w", err)
+// UnmarshalYAML accepts only `together`. A `separate` block (a blow whose
+// participants stand in different rooms) can never render: round combat
+// releases a target in another room before the wait round or the swing
+// (hooks.resolveCombatTarget), so it is rejected at load rather than shipped
+// as dead copy (owner ruling C, spec 2026-10-16 #541 section 3).
+func (a *AttackOptions) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var probe map[string]interface{}
+	if err := unmarshal(&probe); err != nil {
+		return err
 	}
-	m.ToAttacker, m.ToDefender = pools["actor"], pools["actee"]
-	m.ToAttackerRoom, m.ToDefenderRoom = pools["observer"], pools["remote_observer"]
+	keys := make([]string, 0, len(probe))
+	for k := range probe {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		if k != "together" {
+			return fmt.Errorf("unknown key %q (only together; separate is retired)", k)
+		}
+	}
+	var raw struct {
+		Together TogetherMessages `yaml:"together"`
+	}
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+	a.Together = raw.Together
 	return nil
 }
 

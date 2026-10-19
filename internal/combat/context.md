@@ -2,7 +2,7 @@
 
 ## Overview
 
-The DOGMud combat system provides comprehensive turn-based combat mechanics with support for player vs player, player vs mob, and mob vs mob encounters. It features skill-based damage calculations, layered defenses (dodge/parry/block), dual wielding, critical hits, special combat moves with knockdown mechanics, prone condition system, backstab mechanics, pet participation, alignment-based consequences, and detailed combat messaging with cross-room attack support.
+The DOGMud combat system provides comprehensive turn-based combat mechanics with support for player vs player, player vs mob, and mob vs mob encounters. It features skill-based damage calculations, layered defenses (dodge/parry/block), dual wielding, critical hits, special combat moves with knockdown mechanics, prone condition system, backstab mechanics, pet participation, alignment-based consequences, and detailed combat messaging.
 
 **DOGMud Differences from upstream GoMud:**
 - Combat uses skill ranks (weapon-combat, unarmed-combat, ranged-combat) instead of character Level
@@ -30,7 +30,8 @@ The combat system is built around several key components:
 **Attack Result System:**
 - Comprehensive result tracking for damage, hits, and effects
 - Multi-target messaging system for attacker, defender, and rooms
-- Support for cross-room combat with directional messaging
+- Round combat never crosses rooms: a target in another room is released
+  before any line is drawn, so swing and wait lines are same-room only (#541)
 - Condition application tracking for combat effects
 
 **Combat Calculations (`calculations.go`):**
@@ -94,7 +95,6 @@ how to choose a type: `internal/species/context.md`.
 - Dual wielding with skill-based penalties
 - Surprise attack: one contested opening strike per engagement (U10d)
 - Pet participation in combat (20% chance)
-- Cross-room combat support with directional messaging
 
 ### Hit Calculation System
 ```go
@@ -932,7 +932,8 @@ Players can switch combat targets mid-fight using `attack <new-target>`:
 ## Combat Messaging System
 - Dynamic message selection based on damage percentage
 - Token-based message customization ({actor}, {actee}, {weapon}, etc.)
-- Separate messaging for same-room vs cross-room combat
+- One `together` pool per intensity: the cross-room `separate` split was
+  retired in #541 because round combat never renders it
 - Critical hit and backstab message highlighting
 
 ## Power Scoring & Gear Contribution
@@ -1298,6 +1299,13 @@ entry), a PvP wait-round room echo now excludes BOTH combatants; the old
 called with, so this migration also fixed a PvP self-echo gap, not only the
 name leak.
 
+Since #541 the `RemoteObserver`/`RemoteRoom` half is gone from this call: the
+`separate` split it carried was retired, because round combat releases a
+target in another room (`hooks.resolveCombatTarget`) before the wait round.
+The `Trio` now carries the one room's `Observer` line. The swing path
+(`buildAttackMessages`, `combat_helpers.go`) dropped its defender-room line
+for the same reason.
+
 `internal/hooks`' `handleCombatWaitRound` no longer drains
 `roundResult.MessagesToSourceRoom`/`MessagesToTargetRoom` — `GetWaitMessages`
 never populates them now, so the old drain loop was removed rather than left
@@ -1316,7 +1324,7 @@ as dead code (see `internal/hooks/context.md`).
 - `internal/conditions` - Status effects that modify combat
 - `internal/skills` - Skill system for combat skills and dual wielding
 - `internal/species` - Species bonuses and unarmed combat specifications
-- `internal/rooms` - Room management for cross-room combat
+- `internal/rooms` - Room lookup for room-line delivery
 - `internal/util` - Dice rolling and random number generation
 - `internal/configs` - Configuration for combat behavior and messaging
 

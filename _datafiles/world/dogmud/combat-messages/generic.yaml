@@ -5,8 +5,6 @@
 # {actee}      - name of mob or user e.g. 'goblin'
 # {acteetype}  - 'user' or 'mob'
 # {damage}      - damage dealt as an integer e.g. '5'
-# {exitname}    - name of exit for attack e.g. 'north'
-# {entrancename}- name of entrance for attack e.g. 'south'
 # {stance}      - combat stance: 'aggressive', 'defensive', 'balanced', 'reckless' (Stage 9.4)
 # {position}    - combat position: 'standing', 'prone', 'locked in close combat', 'grappling on the ground' (Stage 9.4)
 # {momentum}    - combat momentum: 'on the offensive', 'on the defensive', 'in control', 'pressured' (Stage 9.4)
@@ -44,34 +42,6 @@ options:
       - actor: 'You flow into your {stance} fighting stance with fluid precision.'
         actee: 'With flowing grace, <ansi fg="{actortype}">{actor}</ansi> prepares to attack.'
         observer: '<ansi fg="{actortype}">{actor}</ansi> flows into a {stance} stance with fluid precision, facing <ansi fg="{acteetype}">{actee}</ansi>.'
-    separate:
-      beginner:
-      - actor: 'You prepare to attack <ansi fg="{acteetype}">{actee}</ansi> from a distance.'
-        actee: 'You sense that someone is preparing to attack you from afar.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> prepares to attack towards the <ansi fg="exit">{exitname}</ansi>.'
-        remote_observer: 'A feeling of unease passes through the room, and <ansi fg="{acteetype}">{actee}</ansi> looks around warily.'
-      - actor: 'You ready yourself for a ranged assault on <ansi fg="{acteetype}">{actee}</ansi>.'
-        actee: 'A prickling sensation warns you of danger from a distance.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> readies themselves to attack towards the <ansi fg="exit">{exitname}</ansi>.'
-        remote_observer: 'The room feels charged with nervous energy as <ansi fg="{acteetype}">{actee}</ansi> senses danger.'
-      expert:
-      - actor: 'You prepare to attack from your {stance} position.'
-        actee: 'You detect a threat from the <ansi fg="exit">{entrancename}</ansi>.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> takes a {stance} stance, preparing to strike through the <ansi fg="exit">{exitname}</ansi>.'
-        remote_observer: 'The atmosphere shifts as danger approaches <ansi fg="{acteetype}">{actee}</ansi> from the <ansi fg="exit">{entrancename}</ansi>.'
-      - actor: 'From your {stance} stance, you ready a calculated strike from afar.'
-        actee: 'Your instincts alert you to danger from the <ansi fg="exit">{entrancename}</ansi> direction.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> prepares a calculated strike towards the <ansi fg="exit">{exitname}</ansi> direction.'
-        remote_observer: 'A tension fills the air as <ansi fg="{acteetype}">{actee}</ansi> senses danger from the <ansi fg="exit">{entrancename}</ansi>.'
-      master:
-      - actor: '{momentum}, you prepare a perfect attack from afar.'
-        actee: 'Your honed senses detect a masterful combatant preparing to strike.'
-        observer: 'With perfect precision, <ansi fg="{actortype}">{actor}</ansi> prepares to strike.'
-        remote_observer: 'The air around <ansi fg="{acteetype}">{actee}</ansi> seems to anticipate the coming conflict.'
-      - actor: 'You read the distance and prepare a flawless ranged strike.'
-        actee: 'You sense a capable fighter readying a ranged assault on you.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> assumes perfect form, readying a strike towards the <ansi fg="exit">{exitname}</ansi>.'
-        remote_observer: 'An uncanny stillness settles around <ansi fg="{acteetype}">{actee}</ansi> before the storm.'
   wait:
     together:
       beginner:
@@ -95,34 +65,6 @@ options:
       - actor: 'While {position}, you anticipate <ansi fg="{acteetype}">{actee}</ansi>''s next move with clarity.'
         actee: '<ansi fg="{actortype}">{actor}</ansi> anticipates your next move with unsettling clarity.'
         observer: '<ansi fg="{actortype}">{actor}</ansi> anticipates <ansi fg="{acteetype}">{actee}</ansi>''s next move with clarity.'
-    separate:
-      beginner:
-      - actor: 'You wait for the right moment to attack from afar.'
-        actee: 'You sense danger lurking nearby.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> waits for an opportunity towards the <ansi fg="exit">{exitname}</ansi>.'
-        remote_observer: 'The room feels tense, and <ansi fg="{acteetype}">{actee}</ansi> glances around uneasily.'
-      - actor: 'You hold position, watching <ansi fg="{acteetype}">{actee}</ansi> from a distance.'
-        actee: 'You remain wary, sensing a lurking threat from afar.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> holds position, watching towards the <ansi fg="exit">{exitname}</ansi>.'
-        remote_observer: 'An eerie quiet settles over the room around <ansi fg="{acteetype}">{actee}</ansi>.'
-      expert:
-      - actor: 'From your {stance} position, you wait to strike.'
-        actee: 'Your instincts warn of a distant threat.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> maintains a {stance} stance, watching the <ansi fg="exit">{exitname}</ansi>.'
-        remote_observer: 'The atmosphere around <ansi fg="{acteetype}">{actee}</ansi> crackles with potential violence.'
-      - actor: 'In your {stance} stance, you wait for the right moment to strike from afar.'
-        actee: 'Your heightened senses track the distant threat.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> bides their time, focused on the <ansi fg="exit">{exitname}</ansi> direction.'
-        remote_observer: 'The tension around <ansi fg="{acteetype}">{actee}</ansi> builds quietly.'
-      master:
-      - actor: '{momentum}, you read the distant battle with perfect clarity.'
-        actee: 'Your honed senses track the distant attacker''s every move.'
-        observer: 'With masterful patience, <ansi fg="{actortype}">{actor}</ansi> awaits the perfect moment.'
-        remote_observer: 'The air around <ansi fg="{acteetype}">{actee}</ansi> seems to hold its breath.'
-      - actor: '{momentum}, you wait with perfect patience for the ideal opportunity.'
-        actee: 'Your masterful awareness keeps perfect track of the distant threat.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> waits with perfect patience, eyes on the <ansi fg="exit">{exitname}</ansi>.'
-        remote_observer: 'A predatory stillness hangs over <ansi fg="{acteetype}">{actee}</ansi>.'
   miss:
     together:
       beginner:
@@ -146,34 +88,6 @@ options:
       - actor: '{momentum}, your flowing attack is barely parried away!'
         actee: '<ansi fg="{actortype}">{actor}</ansi>, {momentum}, sends a flowing attack you barely parry away!'
         observer: '<ansi fg="{actortype}">{actor}</ansi>, {momentum}, sends a flowing attack that <ansi fg="{acteetype}">{actee}</ansi> barely parries away!'
-    separate:
-      beginner:
-      - actor: 'Your attack misses!'
-        actee: 'An attack from afar misses you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> attacks but misses!'
-        remote_observer: 'An attack from afar misses <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Your attack from afar misses!'
-        actee: 'A distant attack barely misses you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> attacks but their shot misses!'
-        remote_observer: 'A distant attack barely misses <ansi fg="{acteetype}">{actee}</ansi>!'
-      expert:
-      - actor: 'Your calculated strike misses!'
-        actee: 'You evade an attack from afar!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s calculated strike misses!'
-        remote_observer: '<ansi fg="{acteetype}">{actee}</ansi> evades a calculated attack from afar!'
-      - actor: 'Your calculated ranged strike fails to connect!'
-        actee: 'You sidestep a ranged attack from afar!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s calculated ranged attack misses!'
-        remote_observer: '<ansi fg="{acteetype}">{actee}</ansi> sidesteps a calculated ranged attack from afar!'
-      master:
-      - actor: 'Your flawless attack is countered!'
-        actee: 'Your masterful awareness lets you evade the strike!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s perfect strike is evaded!'
-        remote_observer: '<ansi fg="{acteetype}">{actee}</ansi> evades a masterful strike from afar!'
-      - actor: 'Even your perfect aim fails to connect!'
-        actee: 'Your masterful evasion turns aside the ranged strike!'
-        observer: 'Even <ansi fg="{actortype}">{actor}</ansi>''s perfect aim fails to connect!'
-        remote_observer: '<ansi fg="{acteetype}">{actee}</ansi> turns aside a masterful ranged strike!'
   weak:
     together:
       beginner:
@@ -197,34 +111,6 @@ options:
       - actor: 'You find a small opening and deliver a shallow strike.'
         actee: '<ansi fg="{actortype}">{actor}</ansi> finds a small opening and strikes you.'
         observer: '<ansi fg="{actortype}">{actor}</ansi> finds a small opening and strikes <ansi fg="{acteetype}">{actee}</ansi>.'
-    separate:
-      beginner:
-      - actor: 'Your attack grazes <ansi fg="{acteetype}">{actee}</ansi>!'
-        actee: 'An attack from afar grazes you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> attacks, hitting lightly!'
-        remote_observer: 'An attack from afar grazes <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Your distant attack barely wounds <ansi fg="{acteetype}">{actee}</ansi>!'
-        actee: 'A ranged attack from afar lightly wounds you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> attacks from afar, landing a light hit!'
-        remote_observer: 'A distant attack lightly wounds <ansi fg="{acteetype}">{actee}</ansi>!'
-      expert:
-      - actor: 'Your calculated strike hits!'
-        actee: 'A calculated strike hits you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s calculated strike hits!'
-        remote_observer: 'A calculated strike from afar hits <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Your tactical ranged strike connects lightly!'
-        actee: 'A calculated strike from distance barely scratches you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s ranged attack grazes their target!'
-        remote_observer: 'A calculated distant attack barely scratches <ansi fg="{acteetype}">{actee}</ansi>!'
-      master:
-      - actor: 'Your perfect aim scores a light hit!'
-        actee: 'A perfect strike grazes you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s perfect aim scores a hit!'
-        remote_observer: 'A perfect strike from afar grazes <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Your perfect aim lands a light but precise hit!'
-        actee: 'A masterfully aimed attack grazes you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s precise aim lands a light wound!'
-        remote_observer: 'A masterful ranged strike grazes <ansi fg="{acteetype}">{actee}</ansi>!'
   normal:
     together:
       beginner:
@@ -260,34 +146,6 @@ options:
       - actor: 'Your <ansi fg="item">{itemname}</ansi> connects with <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
         actee: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> connects with your {bodypart}!'
         observer: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> connects with <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
-    separate:
-      beginner:
-      - actor: 'Your attack hits <ansi fg="{acteetype}">{actee}</ansi>!'
-        actee: 'An attack from afar hits you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> attacks, hitting solidly!'
-        remote_observer: 'An attack from afar hits <ansi fg="{acteetype}">{actee}</ansi> solidly!'
-      - actor: 'Your ranged attack wounds <ansi fg="{acteetype}">{actee}</ansi>!'
-        actee: 'You are struck by a ranged attack from afar!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> attacks from afar, dealing solid damage!'
-        remote_observer: 'A ranged attack from afar wounds <ansi fg="{acteetype}">{actee}</ansi>!'
-      expert:
-      - actor: 'Your calculated strike connects!'
-        actee: 'A calculated strike wounds you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s calculated strike hits!'
-        remote_observer: 'A calculated attack from afar wounds <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Your tactical strike wounds <ansi fg="{acteetype}">{actee}</ansi>!'
-        actee: 'A tactical strike from distance wounds you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s calculated strike connects solidly!'
-        remote_observer: 'A calculated distant attack wounds <ansi fg="{acteetype}">{actee}</ansi>!'
-      master:
-      - actor: 'Your perfect aim delivers a solid hit!'
-        actee: 'A perfect strike hits you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s perfect aim scores a solid hit!'
-        remote_observer: 'A masterful strike delivers a solid hit to <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: '{momentum}, you strike with devastating accuracy!'
-        actee: 'A masterfully aimed attack strikes you squarely!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s perfect aim deals a solid blow!'
-        remote_observer: 'A masterful ranged strike hits <ansi fg="{acteetype}">{actee}</ansi> squarely!'
   heavy:
     together:
       beginner:
@@ -320,34 +178,6 @@ options:
       - actor: 'From your {stance} stance, {momentum}, you deliver a devastating strike while {position}!'
         actee: 'From <ansi fg="{actortype}">{actor}</ansi>''s {stance} stance, {momentum}, they deliver a devastating strike while {position}!'
         observer: 'From a {stance} stance, {momentum}, <ansi fg="{actortype}">{actor}</ansi> devastates <ansi fg="{acteetype}">{actee}</ansi> while {position}!'
-    separate:
-      beginner:
-      - actor: 'Your attack hits <ansi fg="{acteetype}">{actee}</ansi> hard!'
-        actee: 'A powerful attack from afar hits you hard!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> attacks, hitting hard!'
-        remote_observer: 'A powerful attack from afar hits <ansi fg="{acteetype}">{actee}</ansi> hard!'
-      - actor: 'Your distant attack hits <ansi fg="{acteetype}">{actee}</ansi> with tremendous force!'
-        actee: 'A ranged attack from afar strikes you with tremendous force!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> attacks powerfully from afar!'
-        remote_observer: 'A ranged attack from afar strikes <ansi fg="{acteetype}">{actee}</ansi> with tremendous force!'
-      expert:
-      - actor: 'Your calculated strike hits with tremendous force!'
-        actee: 'A devastating strike wounds you badly!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s devastating strike hits with force!'
-        remote_observer: 'A devastating attack from afar wounds <ansi fg="{acteetype}">{actee}</ansi> badly!'
-      - actor: 'From your {stance} position, you deliver a devastating blow!'
-        actee: 'A devastating ranged strike wounds you badly!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s powerful ranged strike hits with force!'
-        remote_observer: 'A devastating ranged strike wounds <ansi fg="{acteetype}">{actee}</ansi> badly!'
-      master:
-      - actor: 'Your perfect aim delivers a crushing hit!'
-        actee: 'A perfect strike hits you with overwhelming force!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s perfect aim scores a devastating hit!'
-        remote_observer: 'A masterful strike delivers a crushing blow to <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: '{momentum}, you strike with overwhelming power!'
-        actee: 'A masterfully aimed attack hits you with crushing force!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s perfect aim delivers a crushing blow!'
-        remote_observer: 'A masterful ranged strike delivers a crushing blow to <ansi fg="{acteetype}">{actee}</ansi>!'
   critical:
     together:
       beginner:
@@ -389,58 +219,6 @@ options:
       - actor: 'From the perfect angle, you land a <ansi fg="cyan-bold">FLAWLESS CRITICAL</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         actee: 'There is no defense against it: <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">FLAWLESS CRITICAL</ansi> on you!'
         observer: 'There is no defense against it: <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">FLAWLESS CRITICAL</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
-    separate:
-      beginner:
-      - actor: 'Your attack <ansi fg="cyan-bold">CRITICALLY HITS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        actee: 'An attack from afar <ansi fg="cyan-bold">CRITICALLY HITS</ansi> you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> attacks with a <ansi fg="cyan-bold">CRITICAL HIT</ansi>!'
-        remote_observer: 'An attack from afar <ansi fg="cyan-bold">CRITICALLY HITS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'From afar, you deliver a <ansi fg="cyan-bold">CRITICAL HIT</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
-        actee: 'A <ansi fg="cyan-bold">CRITICAL HIT</ansi> from afar strikes you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL HIT</ansi> from afar!'
-        remote_observer: 'A <ansi fg="cyan-bold">CRITICAL HIT</ansi> from afar strikes <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'A lucky shot <ansi fg="cyan-bold">CRITICALLY HITS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        actee: 'A lucky shot from afar <ansi fg="cyan-bold">CRITICALLY HITS</ansi> you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> gets a lucky <ansi fg="cyan-bold">CRITICAL HIT</ansi> from afar!'
-        remote_observer: 'A lucky <ansi fg="cyan-bold">CRITICAL HIT</ansi> from afar lands on <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Your desperate shot finds a <ansi fg="cyan-bold">CRITICAL OPENING</ansi> in <ansi fg="{acteetype}">{actee}</ansi>''s guard!'
-        actee: 'Luck finds a <ansi fg="cyan-bold">CRITICAL OPENING</ansi> in your guard from a distance!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s desperate shot finds a <ansi fg="cyan-bold">CRITICAL OPENING</ansi>!'
-        remote_observer: 'A desperate shot from afar finds a <ansi fg="cyan-bold">CRITICAL OPENING</ansi> in <ansi fg="{acteetype}">{actee}</ansi>''s guard!'
-      expert:
-      - actor: 'Your perfect aim <ansi fg="cyan-bold">ANNIHILATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        actee: 'A perfect strike <ansi fg="cyan-bold">ANNIHILATES</ansi> you!'
-        observer: '<ansi fg="{actortype}">{actor}''s</ansi> perfect aim <ansi fg="cyan-bold">ANNIHILATES</ansi>!'
-        remote_observer: 'A perfect strike from afar <ansi fg="cyan-bold">ANNIHILATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Your tactical brilliance <ansi fg="cyan-bold">ANNIHILATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> from afar!'
-        actee: 'A skilled strike from afar <ansi fg="cyan-bold">ANNIHILATES</ansi> you!'
-        observer: '<ansi fg="{actortype}">{actor}''s</ansi> perfect aim <ansi fg="cyan-bold">ANNIHILATES</ansi> from afar!'
-        remote_observer: 'A perfect ranged strike <ansi fg="cyan-bold">ANNIHILATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Your well timed shot lands a <ansi fg="cyan-bold">TELLING BLOW</ansi> on <ansi fg="{acteetype}">{actee}</ansi> from afar!'
-        actee: 'A well timed shot lands a <ansi fg="cyan-bold">TELLING BLOW</ansi> on you from afar!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> times a shot perfectly for a <ansi fg="cyan-bold">TELLING BLOW</ansi>!'
-        remote_observer: 'A perfectly timed shot lands a <ansi fg="cyan-bold">TELLING BLOW</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'You time the shot perfectly and deliver a <ansi fg="cyan-bold">DECISIVE HIT</ansi> from a distance!'
-        actee: 'A perfectly timed shot from a distance delivers a <ansi fg="cyan-bold">DECISIVE HIT</ansi> to you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> times a shot perfectly for a <ansi fg="cyan-bold">DECISIVE HIT</ansi>!'
-        remote_observer: 'A perfectly timed shot delivers a <ansi fg="cyan-bold">DECISIVE HIT</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
-      master:
-      - actor: 'Your masterful strike <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        actee: 'A masterful strike <ansi fg="cyan-bold">OBLITERATES</ansi> you!'
-        observer: '<ansi fg="{actortype}">{actor}''s</ansi> masterful strike <ansi fg="cyan-bold">OBLITERATES</ansi>!'
-        remote_observer: 'A masterful strike from afar <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'With perfect precision, you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> from afar!'
-        actee: 'A legendary strike from the distance <ansi fg="cyan-bold">OBLITERATES</ansi> you!'
-        observer: '<ansi fg="{actortype}">{actor}''s</ansi> masterful strike <ansi fg="cyan-bold">OBLITERATES</ansi> from afar!'
-        remote_observer: 'A masterful ranged strike <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Reading the distance flawlessly, you land a <ansi fg="cyan-bold">PERFECT CRITICAL</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
-        actee: 'A flawlessly read shot lands a <ansi fg="cyan-bold">PERFECT CRITICAL</ansi> on you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> reads the distance flawlessly for a <ansi fg="cyan-bold">PERFECT CRITICAL</ansi>!'
-        remote_observer: 'A flawlessly read shot lands a <ansi fg="cyan-bold">PERFECT CRITICAL</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Your flawless aim <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> from afar!'
-        actee: 'A flawless shot <ansi fg="cyan-bold">DEVASTATES</ansi> you from afar!'
-        observer: '<ansi fg="{actortype}">{actor}''s</ansi> flawless aim <ansi fg="cyan-bold">DEVASTATES</ansi> from afar!'
-        remote_observer: 'A flawless shot <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> from afar!'
   fumble:
     together:
       beginner:
@@ -482,58 +260,6 @@ options:
       - actor: 'For one unguarded moment, you <ansi fg="red-bold">FUMBLE</ansi> despite your flawless form!'
         actee: 'For one unguarded moment, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> despite their flawless form!'
         observer: 'For one unguarded moment, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their attack on <ansi fg="{acteetype}">{actee}</ansi>!'
-    separate:
-      beginner:
-      - actor: 'Your attack <ansi fg="red-bold">FUMBLES</ansi> badly!'
-        actee: 'An attack from afar <ansi fg="red-bold">FUMBLES</ansi>!'
-        observer: '<ansi fg="{actortype}">{actor}''s</ansi> attack <ansi fg="red-bold">FUMBLES</ansi>!'
-        remote_observer: 'An attack from afar on <ansi fg="{acteetype}">{actee}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-      - actor: 'Your ranged attack <ansi fg="red-bold">FUMBLES</ansi> completely!'
-        actee: 'A clumsy attack from afar <ansi fg="red-bold">FUMBLES</ansi> past you!'
-        observer: '<ansi fg="{actortype}">{actor}''s</ansi> ranged attack <ansi fg="red-bold">FUMBLES</ansi>!'
-        remote_observer: 'A clumsy attack from afar <ansi fg="red-bold">FUMBLES</ansi> past <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'You lose your balance and your shot <ansi fg="red-bold">FUMBLES</ansi> wide!'
-        actee: 'A clumsy shot from afar <ansi fg="red-bold">FUMBLES</ansi> wide of you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> loses their balance and the shot <ansi fg="red-bold">FUMBLES</ansi> wide!'
-        remote_observer: 'A clumsy shot from afar <ansi fg="red-bold">FUMBLES</ansi> wide of <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Your desperate shot goes wrong and <ansi fg="red-bold">FUMBLES</ansi>!'
-        actee: 'A wayward attack from a distance <ansi fg="red-bold">FUMBLES</ansi> harmlessly!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s desperate shot goes wrong and <ansi fg="red-bold">FUMBLES</ansi>!'
-        remote_observer: 'A wayward attack from a distance <ansi fg="red-bold">FUMBLES</ansi> harmlessly near <ansi fg="{acteetype}">{actee}</ansi>!'
-      expert:
-      - actor: 'Your calculated strike <ansi fg="red-bold">FUMBLES</ansi>!'
-        actee: 'A calculated strike <ansi fg="red-bold">FUMBLES</ansi>!'
-        observer: '<ansi fg="{actortype}">{actor}''s</ansi> calculated strike <ansi fg="red-bold">FUMBLES</ansi>!'
-        remote_observer: 'A calculated attack on <ansi fg="{acteetype}">{actee}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-      - actor: 'Your precise ranged attack <ansi fg="red-bold">FUMBLES</ansi> horribly!'
-        actee: 'A skilled attack from the distance <ansi fg="red-bold">FUMBLES</ansi>!'
-        observer: '<ansi fg="{actortype}">{actor}''s</ansi> precise attack <ansi fg="red-bold">FUMBLES</ansi> badly!'
-        remote_observer: 'A calculated attack from afar <ansi fg="red-bold">FUMBLES</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'You misjudge the wind and your shot <ansi fg="red-bold">FUMBLES</ansi>!'
-        actee: 'A misjudged shot from the distance <ansi fg="red-bold">FUMBLES</ansi>!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> misjudges the wind and the shot <ansi fg="red-bold">FUMBLES</ansi>!'
-        remote_observer: 'A misjudged shot from the distance <ansi fg="red-bold">FUMBLES</ansi> past <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Your careful aim falters and the shot <ansi fg="red-bold">FUMBLES</ansi>!'
-        actee: 'A carefully aimed shot falters and <ansi fg="red-bold">FUMBLES</ansi>!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s careful aim falters and the shot <ansi fg="red-bold">FUMBLES</ansi>!'
-        remote_observer: 'A carefully aimed attack on <ansi fg="{acteetype}">{actee}</ansi> falters and <ansi fg="red-bold">FUMBLES</ansi>!'
-      master:
-      - actor: 'Despite perfect aim, you <ansi fg="red-bold">FUMBLE</ansi>!'
-        actee: 'The perfect strike <ansi fg="red-bold">FUMBLES</ansi>!'
-        observer: 'Despite perfect aim, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-        remote_observer: 'A masterful strike on <ansi fg="{acteetype}">{actee}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-      - actor: 'Even your masterful form can''t prevent the <ansi fg="red-bold">FUMBLE</ansi>!'
-        actee: 'Even a masterful ranged strike <ansi fg="red-bold">FUMBLES</ansi> against you!'
-        observer: 'Despite perfect form, <ansi fg="{actortype}">{actor}''s</ansi> attack <ansi fg="red-bold">FUMBLES</ansi>!'
-        remote_observer: 'A masterful ranged strike <ansi fg="red-bold">FUMBLES</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'An unseen gust forces your perfect shot to <ansi fg="red-bold">FUMBLE</ansi>!'
-        actee: 'Even a masterfully aimed shot <ansi fg="red-bold">FUMBLES</ansi> wide of you!'
-        observer: 'An unseen gust forces <ansi fg="{actortype}">{actor}''s</ansi> perfect shot to <ansi fg="red-bold">FUMBLE</ansi>!'
-        remote_observer: 'An unseen gust forces a perfect shot to <ansi fg="red-bold">FUMBLE</ansi> wide of <ansi fg="{acteetype}">{actee}</ansi>!'
-      - actor: 'Even your flawless technique cannot stop the shot from <ansi fg="red-bold">FUMBLING</ansi>!'
-        actee: 'A near flawless shot still <ansi fg="red-bold">FUMBLES</ansi> against you!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi>''s flawless technique cannot stop the shot from <ansi fg="red-bold">FUMBLING</ansi>!'
-        remote_observer: 'A near flawless ranged strike still <ansi fg="red-bold">FUMBLES</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
   # U5c: sent when a hit lands on a target that is ALREADY DYING; it has taken
   # its lethal blow and the attributed death is queued but not yet resolved.
   # These fire instead of ordinary hit text, and never alongside a second kill
@@ -562,19 +288,3 @@ options:
       - actor: 'Your <ansi fg="item">{itemname}</ansi> finds <ansi fg="{acteetype}">{actee}</ansi> again, and again after that.'
         actee: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> finds you again, and again after that.'
         observer: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> finds <ansi fg="{acteetype}">{actee}</ansi> again, and again after that.'
-    separate:
-      beginner:
-      - actor: 'Your shot finds <ansi fg="{acteetype}">{actee}</ansi> as they fall.'
-        actee: 'A shot from the {entrancename} finds you as you fall.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> fires on <ansi fg="{acteetype}">{actee}</ansi> as they fall.'
-        remote_observer: 'A shot from the {entrancename} strikes <ansi fg="{acteetype}">{actee}</ansi> as they fall.'
-      expert:
-      - actor: 'Your shot finds <ansi fg="{acteetype}">{actee}</ansi> as they fall.'
-        actee: 'A shot from the {entrancename} finds you as you fall.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> fires on <ansi fg="{acteetype}">{actee}</ansi> as they fall.'
-        remote_observer: 'A shot from the {entrancename} strikes <ansi fg="{acteetype}">{actee}</ansi> as they fall.'
-      master:
-      - actor: 'Your shot punches into <ansi fg="{acteetype}">{actee}</ansi> as they go down.'
-        actee: 'A shot from the {entrancename} punches into you as you go down.'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> puts another shot into <ansi fg="{acteetype}">{actee}</ansi> as they go down.'
-        remote_observer: 'A shot from the {entrancename} puts <ansi fg="{acteetype}">{actee}</ansi> down for good.'

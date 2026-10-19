@@ -5,8 +5,6 @@
 # {actee}      - name of mob or user e.g. 'goblin'
 # {acteetype}  - 'user' or 'mob'
 # {damage}      - damage dealt as an integer e.g. '5'
-# {exitname}    - name of exit for attack e.g. 'north'
-# {entrancename}- name of entrance for attack e.g. 'south'
 # {stance}      - combat stance
 # {position}    - combat position
 # {momentum}    - combat momentum

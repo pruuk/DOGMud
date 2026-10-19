@@ -101,8 +101,6 @@ func TestGenericYamlDefinesCoupDeGrace(t *testing.T) {
 		{"together.actor", cdg.Together.ToAttacker.Beginner},
 		{"together.actee", cdg.Together.ToDefender.Beginner},
 		{"together.observer", cdg.Together.ToRoom.Beginner},
-		{"separate.actor", cdg.Separate.ToAttacker.Beginner},
-		{"separate.actee", cdg.Separate.ToDefender.Beginner},
 	}
 	for _, p := range pools {
 		if len(p.got) == 0 {

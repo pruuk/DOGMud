@@ -218,7 +218,7 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 	subtype := AttackSubtype(sourceChar)
 	msgs := items.GetPreAttackMessage(subtype, stepType)
 
-	var toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg items.ItemMessage
+	var toAttackerMsg, toDefenderMsg, toAttackerRoomMsg items.ItemMessage
 
 	// Stage 9.4: Track attack for stance calculation
 	sourceChar.IncrementAttackCount()
@@ -247,32 +247,6 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 	// Get source character's weapon skill level for message selection
 	skillLevel := sourceChar.GetCombatSkillLevel()
 
-	together := sourceChar.RoomId == targetChar.RoomId
-
-	if !together {
-
-		// Find the exit that leads to the target from the source (if any)
-		if atkRoom := rooms.LoadRoom(sourceChar.RoomId); atkRoom != nil {
-			tokenReplacements[items.TokenExitName] = `unknown`
-			for exitName, exit := range atkRoom.Exits {
-				if exit.RoomId == targetChar.RoomId {
-					tokenReplacements[items.TokenExitName] = exitName
-					break
-				}
-			}
-		}
-		// find the exit that leads to the source from the target (if any)
-		if defRoom := rooms.LoadRoom(targetChar.RoomId); defRoom != nil {
-			tokenReplacements[items.TokenEntranceName] = `unknown`
-			for exitName, exit := range defRoom.Exits {
-				if exit.RoomId == sourceChar.RoomId {
-					tokenReplacements[items.TokenEntranceName] = exitName
-					break
-				}
-			}
-		}
-	}
-
 	if sourceChar.Equipment.Weapon.ItemId > 0 {
 		tokenReplacements[items.TokenItemName] = sourceChar.Equipment.Weapon.DisplayName()
 	}
@@ -289,17 +263,14 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 	// the token map is complete, because Render substitutes as it renders.
 	// This used to be three or four independent GetForSkillLevel calls, one
 	// per viewpoint, which narrated a different moment to each of them.
-	var roles narration.Roles
-	if together {
-		roles = msgs.Together.Render(skillLevel, tokenReplacements, nil)
-	} else {
-		roles = msgs.Separate.Render(skillLevel, tokenReplacements, nil)
-	}
+	// Only the together pool exists: round combat releases a target in
+	// another room before the wait round (hooks.resolveCombatTarget), so the
+	// participants always share a room here (#541, separate retired).
+	roles := msgs.Together.Render(skillLevel, tokenReplacements, nil)
 
 	toAttackerMsg = items.ItemMessage(roles.Actor)
 	toDefenderMsg = items.ItemMessage(roles.Actee)
 	toAttackerRoomMsg = items.ItemMessage(roles.Observer)
-	toDefenderRoomMsg = items.ItemMessage(roles.ActeeObserver)
 
 	// Wait-round lines ride the attack's own hit band, the swing path's rule.
 	waitCat := CategoryForWeaponSubtype(subtype)
@@ -314,49 +285,35 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 			attackResult.SendToTarget(waitCat, string(toDefenderMsg))
 		}
 
-		// Room lines go through messaging.SendTrio rather than the raw
-		// AttackResult accumulation the personal lines above use (and that
-		// this function itself used to use for these two lines). SendTrio's
-		// Room/RemoteRoom branches always call Room.SendTextVisualHidingNames,
-		// which runs messaging.HideNames over the line for a shapes-only
-		// reader; the raw path these replaced went through
-		// Room.SendTextVisual/SendTextVisualToUser instead, which only ever
-		// apply tag-based messaging.Anonymize and, by that function's own
-		// docstring, never touch a bare (untagged) name. Both rooms are
-		// seated here, not just the defender's: routing only the second room
-		// through the seam and leaving the attacker's room on the old raw
-		// path would leave the two inconsistently protected for no reason,
-		// since both lines can equally name a real combatant.
+		// The room line goes through messaging.SendTrio rather than the raw
+		// AttackResult accumulation the personal lines above use. SendTrio's
+		// Room branch always calls Room.SendTextVisualHidingNames, which runs
+		// messaging.HideNames over the line for a shapes-only reader; the raw
+		// path went through Room.SendTextVisual/SendTextVisualToUser instead,
+		// which only ever apply tag-based messaging.Anonymize and, by that
+		// function's own docstring, never touch a bare (untagged) name.
 		//
-		// RemoteRoom is the defender's room, and is only set when it is a
-		// SEPARATE room from the attacker's -- the same guard that used to
-		// wrap the old SendToTargetRoom call, now expressed as "is there a
-		// second room at all" rather than "should this text be sent".
-		var room, remoteRoom messaging.Broadcaster
+		// The trio carries the one room's observer line: the participants
+		// share a room, so there is no remote audience (#541, separate
+		// retired).
+		var room messaging.Broadcaster
 		if atkRoom := rooms.LoadRoom(sourceChar.RoomId); atkRoom != nil {
 			room = atkRoom
-		}
-		if sourceChar.RoomId != targetChar.RoomId {
-			if defRoom := rooms.LoadRoom(targetChar.RoomId); defRoom != nil {
-				remoteRoom = defRoom
-			}
 		}
 		messaging.SendTrio(messaging.Trio{
 			// Actor and Actee are deliberately silent here: the personal
 			// wait-round lines (toAttackerMsg / toDefenderMsg) were already
 			// sent above via attackResult.SendToSource/SendToTarget, so this
-			// Trio carries only the two room roles.
-			Actor:          messaging.NoLine,
-			Actee:          messaging.NoLine,
-			Observer:       messaging.Say(waitCat, string(toAttackerRoomMsg)),
-			RemoteObserver: messaging.Say(waitCat, string(toDefenderRoomMsg)),
+			// Trio carries only the room's observer line.
+			Actor:    messaging.NoLine,
+			Actee:    messaging.NoLine,
+			Observer: messaging.Say(waitCat, string(toAttackerRoomMsg)),
 		}, messaging.Audience{
-			ActorId:    sourceChar.GetUserId(),
-			ActorName:  sourceChar.Name,
-			ActeeId:    targetChar.GetUserId(),
-			ActeeName:  targetChar.Name,
-			Room:       room,
-			RemoteRoom: remoteRoom,
+			ActorId:   sourceChar.GetUserId(),
+			ActorName: sourceChar.Name,
+			ActeeId:   targetChar.GetUserId(),
+			ActeeName: targetChar.Name,
+			Room:      room,
 		})
 
 	}

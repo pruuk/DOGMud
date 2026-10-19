@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/narration"
 )
 
@@ -30,7 +29,6 @@ type AttackTypes map[Intensity]AttackOptions
 
 type AttackOptions struct {
 	Together TogetherMessages `yaml:"together"`
-	Separate SeparateMessages `yaml:"separate"`
 }
 
 // TogetherMessages is the authored shape of a blow whose participants share a
@@ -43,21 +41,6 @@ type TogetherMessages struct {
 	ToAttacker SkillTieredMessages `yaml:"actor"`
 	ToDefender SkillTieredMessages `yaml:"actee"`
 	ToRoom     SkillTieredMessages `yaml:"observer"`
-}
-
-// SeparateMessages is the authored shape of a ranged blow whose participants
-// are in different rooms, so there are two observer audiences: the one
-// standing with the actor, and the REMOTE one standing with the actee.
-//
-// That second audience is why `toattackerroom` became plain `observer` while
-// `todefenderroom` became `remote_observer`: the core has always called the
-// observers with the actor the observer, and the far-room audience is the one
-// that needs a name of its own (narration.Roles.ActeeObserver).
-type SeparateMessages struct {
-	ToAttacker     SkillTieredMessages `yaml:"actor"`
-	ToDefender     SkillTieredMessages `yaml:"actee"`
-	ToAttackerRoom SkillTieredMessages `yaml:"observer"`
-	ToDefenderRoom SkillTieredMessages `yaml:"remote_observer"`
 }
 
 type SkillTieredMessages struct {
@@ -156,39 +139,6 @@ func (m TogetherMessages) Render(skillLevel int, tokenReplacements map[TokenName
 	)
 }
 
-// Render renders one coordinated quartet for a ranged blow where attacker and
-// defender are in different rooms, so there are genuinely two observer
-// audiences. ActeeObserver is the observers where the DEFENDER is; this is the
-// case narration.Roles grew its fourth field for
-// (internal/narration/render.go:35-38).
-//
-// The two room roles are different audiences seeing different things and must
-// never be treated as interchangeable.
-//
-// The lines put the exit after "the" ("from the {entrancename} direction"),
-// so each role goes through exit.PhraseVerticalExits and an up or down exit
-// reads "from above" or "upward" rather than "from the up" (#430).
-//
-// A nil picker means production behaviour (narration.DefaultPicker).
-func (m SeparateMessages) Render(skillLevel int, tokenReplacements map[TokenName]string, pick narration.Picker) narration.Roles {
-	roles := narration.Render(
-		narration.Variants{
-			Actor:         m.ToAttacker.PoolFor(skillLevel),
-			Actee:         m.ToDefender.PoolFor(skillLevel),
-			Observer:      m.ToAttackerRoom.PoolFor(skillLevel),
-			ActeeObserver: m.ToDefenderRoom.PoolFor(skillLevel),
-		},
-		TokenStrings(tokenReplacements),
-		pick,
-	)
-	exits := []string{tokenReplacements[TokenExitName], tokenReplacements[TokenEntranceName]}
-	roles.Actor = exit.PhraseVerticalExits(roles.Actor, exits...)
-	roles.Actee = exit.PhraseVerticalExits(roles.Actee, exits...)
-	roles.Observer = exit.PhraseVerticalExits(roles.Observer, exits...)
-	roles.ActeeObserver = exit.PhraseVerticalExits(roles.ActeeObserver, exits...)
-	return roles
-}
-
 // Presumably to ensure the datafile hasn't messed something up.
 func (w *WeaponAttackMessageGroup) Id() ItemSubType {
 	return w.OptionId
@@ -206,9 +156,10 @@ func (w *WeaponAttackMessageGroup) Id() ItemSubType {
 // the same index. Per-tier equality is exactly equivalent to union equality at
 // all three skill levels.
 //
-// minVariants is 1, not the defence store's 5: the smallest authored group in
-// the shipped store is generic/coupdegrace/separate/beginner at one line, and
-// 414 of 534 groups hold fewer than five.
+// minVariants is 1, not the defence store's 5: 410 of the 555 authored
+// together groups in the shipped store hold fewer than five, and the smallest
+// hold two (counted from combat_messages.golden, 2026-10-19, after #541
+// retired the separate split, whose smallest group held one).
 //
 // The attack store had none of this until M3 item 8. It checked intensity
 // presence and nothing else, while the defence sibling next door
@@ -256,31 +207,16 @@ func (w *WeaponAttackMessageGroup) Validate() error {
 					return fmt.Errorf("%s option[`%s`].together.%s: %w", w.OptionId, intensity, tier.name, err)
 				}
 			}
-
-			separate := narration.Variants{
-				Actor:         messageStrings(tier.get(opts.Separate.ToAttacker)),
-				Actee:         messageStrings(tier.get(opts.Separate.ToDefender)),
-				Observer:      messageStrings(tier.get(opts.Separate.ToAttackerRoom)),
-				ActeeObserver: messageStrings(tier.get(opts.Separate.ToDefenderRoom)),
-			}
-			if anyPool(separate) {
-				if err := narration.ValidateVariants(separate, 1,
-					narration.RoleActor, narration.RoleActee,
-					narration.RoleObserver, narration.RoleActeeObserver); err != nil {
-					return fmt.Errorf("%s option[`%s`].separate.%s: %w", w.OptionId, intensity, tier.name, err)
-				}
-			}
 		}
 	}
 
 	return nil
 }
 
-// anyPool reports whether a group was authored at all, so a subtype with no
-// separate block is skipped rather than reported as four missing roles.
+// anyPool reports whether a group was authored at all, so an intensity with
+// no together block is skipped rather than reported as three missing roles.
 func anyPool(v narration.Variants) bool {
-	return len(v.Actor) > 0 || len(v.Actee) > 0 ||
-		len(v.Observer) > 0 || len(v.ActeeObserver) > 0
+	return len(v.Actor) > 0 || len(v.Actee) > 0 || len(v.Observer) > 0
 }
 
 func (w *WeaponAttackMessageGroup) Filepath() string {
