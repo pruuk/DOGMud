@@ -63,16 +63,18 @@ The combat system is built around several key components:
 
 ### Natural-Attack Subtype Resolution
 
-When an attacker has no equipped weapon, `buildWeaponSetup`
-(`combat_helpers.go`) resolves the attack-message subtype from the
-attacker's species `NaturalAttack` field (via `species.GetSpecies`).
-If non-empty, that subtype (`bite`, `claws`, `slam`, `gore`, `sting`, `siphon`,
-`trample`, `lash`, `blast`)
-drives message selection instead of the generic-punch fallback
-(`items.Unarmed`). An equipped weapon's own `Subtype` always takes
-precedence — this path only fires when the weapon slot is empty. This
-is what makes non-human mobs' basic attacks read as bites or claws
-instead of punches.
+One function holds the weapon-type rule (#541 slice 2):
+`AttackSubtype(char)` (`combat_helpers.go`) returns the main-hand weapon's
+subtype, else the species' `NaturalAttack` (via `species.GetSpecies`), else
+`items.Unarmed`. `buildWeaponSetup` asks the same rule per weapon slot through
+`attackSubtypeWith(char, weapon)`, so an empty off-hand on an armed wolf still
+bites. `GetWaitMessages` draws its wait pool and hit band from
+`AttackSubtype`, and the "too entangled to defend" lines take their category
+from it, so a creature waits and swings with the same thing. The natural
+subtypes are `bite`, `claws`, `slam`, `gore`, `sting`, `siphon`, `trample`,
+`lash` and `blast`. An equipped weapon's own `Subtype` always takes
+precedence. This is what makes non-human mobs' basic attacks and wait rounds
+read as bites or claws instead of punches.
 
 **The slam split (#541).** `trample` (horse), `lash` (slime, fungal colony)
 and `blast` (the water, air, fire, magma, sand, storm and ice elementals)
