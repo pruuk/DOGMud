@@ -69,7 +69,6 @@ func expectedSwings(src, tgt *characters.Character, srcType SourceTarget) []swin
 	plan := buildAttackPlan(src, tgt)
 	statModBonus := src.StatMod(`damage`)
 	ctx := neutralCtx()
-	bar := calcCritThreshold(src, tgt)
 	out := make([]swingExpectation, 0, len(plan.weapons))
 	for _, ws := range plan.weapons {
 		sdp := buildDamageParams(src, tgt, ws, statModBonus, srcType)
@@ -78,7 +77,7 @@ func expectedSwings(src, tgt *characters.Character, srcType SourceTarget) []swin
 			attackScore: calcAttackScore(src, tgt, ws.weapon, ws.penalty, ctx) * applyPositionHitModifiers(src, tgt),
 			dmgMean:     sdp.dmgMean,
 			critMean:    sdp.rawDmgForCrit * sdp.critDmgMult * (1 - sdp.critReduction),
-			critBar:     bar,
+			critBar:     calcCritThreshold(src, tgt, ws.weapon),
 		})
 	}
 	return out

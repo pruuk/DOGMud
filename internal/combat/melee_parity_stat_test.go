@@ -392,7 +392,7 @@ func TestMeleeParityDamagePerSwing(t *testing.T) {
 			if math.Abs(defScore-wantScore) > 1e-9 {
 				t.Fatalf("dodge score = %.4f, want %.4f", defScore, wantScore)
 			}
-			if got := calcCritThreshold(attacker, defender); got != 2.0 {
+			if got := calcCritThreshold(attacker, defender, attacker.Equipment.Weapon); got != 2.0 {
 				t.Fatalf("parity crit bar = %v, want 2.0 — CritBarFor leaked", got)
 			}
 
