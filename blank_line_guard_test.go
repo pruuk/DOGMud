@@ -67,7 +67,6 @@ var blankLineSendAllowlist = map[string]struct {
 	"internal/usercommands/mutations.go":             {3, "mutations screen"},
 	"internal/usercommands/picklock.go":              {9, "picklock screen: the lock display and its result"},
 	"internal/usercommands/pvp.go":                   {2, "pvp status screen"},
-	"internal/usercommands/set.go":                   {12, "set status and set fprompt screens"},
 	"internal/usercommands/setdesc.go":               {1, "setdesc screen"},
 	"internal/usercommands/sethome.go":               {1, "sethome screen"},
 	"internal/usercommands/start.go":                 {1, "start screen"},
