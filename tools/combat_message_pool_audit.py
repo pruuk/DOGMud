@@ -58,7 +58,7 @@ def groups(path):
                     yield verb, split, tier, counts
                 continue
             # An explicitly-null role is a present role with an empty pool,
-            # not an absent one: shooting.yaml nulls todefenderroom.
+            # not an absent one.
             roles = {
                 role: (body if isinstance(body, dict) else {})
                 for role, body in split_body.items()

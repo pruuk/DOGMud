@@ -3,6 +3,7 @@ package items
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -211,7 +212,7 @@ func TestValidateExemptsReNarratedSwingIntensities(t *testing.T) {
 		t.Errorf("shooting with prepare and wait only must validate: %v", err)
 	}
 	sword := &WeaponAttackMessageGroup{OptionId: Slashing, Options: AttackTypes{Prepare: opts, Wait: opts}}
-	if err := sword.Validate(); err == nil {
-		t.Error("slashing without its swing intensities must fail")
+	if err := sword.Validate(); err == nil || !strings.Contains(err.Error(), "`miss`") {
+		t.Errorf("slashing without its swing intensities must fail naming `miss`, got: %v", err)
 	}
 }
