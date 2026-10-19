@@ -183,7 +183,7 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	question = cmdPrompt.Ask(fmt.Sprintf(`Send this mail to <ansi fg="username">%s</ansi>?`, recipientName), []string{`Yes`, `No`}, `No`)
 	if !question.Done {
 		tplTxt, _ := templates.Process("mail/message", msg, user.UserId)
-		user.SendText(messaging.CategorySystem, tplTxt)
+		user.SendText(messaging.CategoryScreen, tplTxt)
 		return true, nil
 	}
 	user.ClearPrompt()

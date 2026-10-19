@@ -14,10 +14,10 @@ func SetDesc(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	if rest == "" {
 		current := user.Character.GetDescription()
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Your current description:\n%s", current))
+		user.SendText(messaging.CategoryScreen, fmt.Sprintf("Your current description:\n%s", current))
 		user.SendBlankLine(messaging.CategorySystem)
-		user.SendText(messaging.CategorySystem, `To set a new description: <ansi fg="command">setdesc <your description></ansi>`)
-		user.SendText(messaging.CategorySystem, `To clear: <ansi fg="command">setdesc clear</ansi>`)
+		user.SendText(messaging.CategoryScreen, `To set a new description: <ansi fg="command">setdesc <your description></ansi>`)
+		user.SendText(messaging.CategoryScreen, `To clear: <ansi fg="command">setdesc clear</ansi>`)
 		return true, nil
 	}
 

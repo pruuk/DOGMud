@@ -78,13 +78,13 @@ func Channels(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	args := strings.Fields(rest)
 
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Channels</ansi> <ansi fg="8">(channels &lt;name&gt; to toggle):</ansi>`)
+		user.SendText(messaging.CategoryScreen, `<ansi fg="yellow">Channels</ansi> <ansi fg="8">(channels &lt;name&gt; to toggle):</ansi>`)
 		for _, ch := range channels.All() {
 			state := `<ansi fg="red">off</ansi>`
 			if channels.Enabled(user.GetConfigOption(ch.ConfigKey)) {
 				state = `<ansi fg="green">on</ansi>`
 			}
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="%s">%s</ansi>: %s`, ch.Color, ch.Name, state))
+			user.SendText(messaging.CategoryScreen, fmt.Sprintf(`  <ansi fg="%s">%s</ansi>: %s`, ch.Color, ch.Name, state))
 		}
 		return true, nil
 	}

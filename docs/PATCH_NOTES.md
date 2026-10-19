@@ -17,6 +17,9 @@
   stray periods. Long prompts wrap neatly.
 - The skills and inventory screens no longer leave a blank line behind
   them, and an empty pack says you are carrying nothing.
+- Help pages, status, quests, craft lists, scan, guild and companion
+  screens, channels, macros, mail and many other screens no longer end in
+  a stray period or a blank line, and what you typed shows as you typed it.
 
 ## 2026-10-17: Clearer in the dim, fairer in the arena
 

@@ -71,6 +71,7 @@ var blankLineSendAllowlist = map[string]struct {
 	"internal/usercommands/sethome.go":               {1, "sethome screen"},
 	"internal/usercommands/start.go":                 {1, "start screen"},
 	"internal/usercommands/use.go":                   {2, "use screen: the blank lines around what a container produces"},
+	"modules/gmcp/gmcp.Mudlet.go":                    {1, "mudletui status screen: the blank line above its heading (#614)"},
 }
 
 // blankLineForwarders are the files whose SendBlankLine call passes its own

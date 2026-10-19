@@ -602,16 +602,23 @@ func (g *GMCPMudletModule) sendUICommand(rest string, user *users.UserRecord, ro
 			promptStatus = "<ansi fg=\"green\">ENABLED</ansi>"
 		}
 
-		user.SendText(messaging.CategorySystem, "\n<ansi fg=\"cyan-bold\">"+mudName+" Mudlet UI Management</ansi>\n")
-		user.SendText(messaging.CategorySystem, "<ansi fg=\"yellow-bold\">Status:</ansi>\n")
-		user.SendText(messaging.CategorySystem, "  Login message display: "+promptStatus+"\n")
-		user.SendText(messaging.CategorySystem, "<ansi fg=\"yellow-bold\">Available Commands:</ansi>\n")
-		user.SendText(messaging.CategorySystem, "  <ansi fg=\"command\">mudletui install</ansi> - Install the Mudlet UI package\n")
-		user.SendText(messaging.CategorySystem, "  <ansi fg=\"command\">mudletui remove</ansi>  - Remove the Mudlet UI package\n")
-		user.SendText(messaging.CategorySystem, "  <ansi fg=\"command\">mudletui update</ansi>  - Manually check for updates to the Mudlet UI package\n")
-		user.SendText(messaging.CategorySystem, "  <ansi fg=\"command\">mudletui hide</ansi>    - Hide login messages\n")
-		user.SendText(messaging.CategorySystem, "  <ansi fg=\"command\">mudletui show</ansi>    - Enable login messages\n\n")
-		user.SendText(messaging.CategorySystem, "For more information, type <ansi fg=\"command\">help mudletui</ansi>\n")
+		// One screen, single line breaks: each row once ended in its own
+		// "\n" on top of the line break every send adds, which printed the
+		// screen double spaced, and the normalizer stopped the last row.
+		user.SendBlankLine(messaging.CategorySystem)
+		user.SendText(messaging.CategoryScreen, strings.Join([]string{
+			"<ansi fg=\"cyan-bold\">" + mudName + " Mudlet UI Management</ansi>",
+			"<ansi fg=\"yellow-bold\">Status:</ansi>",
+			"  Login message display: " + promptStatus,
+			"<ansi fg=\"yellow-bold\">Available Commands:</ansi>",
+			"  <ansi fg=\"command\">mudletui install</ansi> - Install the Mudlet UI package",
+			"  <ansi fg=\"command\">mudletui remove</ansi>  - Remove the Mudlet UI package",
+			"  <ansi fg=\"command\">mudletui update</ansi>  - Manually check for updates to the Mudlet UI package",
+			"  <ansi fg=\"command\">mudletui hide</ansi>    - Hide login messages",
+			"  <ansi fg=\"command\">mudletui show</ansi>    - Enable login messages",
+			"",
+			"For more information, type <ansi fg=\"command\">help mudletui</ansi>.",
+		}, "\n"))
 		return true, nil
 	}
 

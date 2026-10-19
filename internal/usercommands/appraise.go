@@ -139,7 +139,7 @@ func appraiseBauble(item items.Item, user *users.UserRecord, room *rooms.Room, m
 	if rec.Region != `` {
 		fmt.Fprintf(&b, "  Found in: %s\r\n", rec.Region)
 	}
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryScreen, b.String())
 
 	// The quote sell would pay this merchant (actions.QuoteSale), purse
 	// check included, so appraise never names a price sell then refuses.
