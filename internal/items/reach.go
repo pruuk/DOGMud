@@ -24,6 +24,11 @@ func DefaultReachForSubtype(s ItemSubType) float64 {
 		return 0.3 // the slam split (#541) kept slam's reach for every body it split off
 	case Gore:
 		return 0.4
+	case Siphon:
+		// A spectral pull works at range, so it has far more reach than any
+		// body attack and suffers the full grapple reach penalty (owner ruling
+		// on #570: "significant reach, something like 10").
+		return 10
 	case Whipping:
 		return 0.5 // hand-held whip; mob tail-weapon would override
 
