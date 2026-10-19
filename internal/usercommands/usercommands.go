@@ -327,8 +327,12 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 
 	// Tell the player about any light crossing since they last acted, before
 	// this command's own output. It runs before scripts, behaviour trees and
-	// quest intercepts so an intercepted command still gets it.
-	lightnotice.Check(user, lightnotice.TriggerCommand)
+	// quest intercepts so an intercepted command still gets it. A party
+	// member's follow step skips it: the light that just left was the
+	// leader's, and the member walks on with it (#620).
+	if !flags.Has(events.CmdFollowStep) {
+		lightnotice.Check(user, lightnotice.TriggerCommand)
+	}
 
 	// Do not allow scripts to intercept server commands
 	if cmd != `server` {

@@ -107,7 +107,7 @@ queues nothing; `Forget` clears it with the record.
 
 | Seam | File | Trigger / call |
 |---|---|---|
-| Before every command | `internal/usercommands/usercommands.go` (`TryCommand`) | `lightnotice.Check(user, lightnotice.TriggerCommand)`, before scripts, behaviour trees and quest intercepts |
+| Before every command | `internal/usercommands/usercommands.go` (`TryCommand`) | `lightnotice.Check(user, lightnotice.TriggerCommand)`, before scripts, behaviour trees and quest intercepts; skipped for a party member's follow step (`events.CmdFollowStep`, #620), whose room lost only the leader's light they walk on with |
 | Each combat round | `internal/hooks/NewRound_DoCombat.go` | `lightnotice.Check(user, lightnotice.TriggerCombatRound)`, after aggro validation and retarget, before the round's attacks |
 | Arriving in a room | `internal/hooks/LightNotice_Triggers.go` (`LightNoticeOnMove`), on `events.RoomChange` | `TriggerMove`; players only (`MobInstanceId == 0`) |
 | Login | `LightNoticeOnSpawn`, on `events.PlayerSpawn` | `TriggerQuiet` |

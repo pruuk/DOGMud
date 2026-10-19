@@ -24,4 +24,9 @@ const (
 	CmdBlockInput              EventFlag = 0b00001000                      // This command when started sets user input to blocking all commands that don't AllowWhenDowned.
 	CmdUnBlockInput            EventFlag = 0b00010000                      // When this command finishes, it will make sure user input is not blocked.
 	CmdBlockInputUntilComplete EventFlag = CmdBlockInput | CmdUnBlockInput // SHortcut to include both in one command
+	// A party member's step after their leader. The member saw by the
+	// leader's light (owner ruling 2026-10-17), and that light left only
+	// because the leader stepped first, so TryCommand skips the light-notice
+	// check before this step (#620).
+	CmdFollowStep EventFlag = 0b00100000
 )

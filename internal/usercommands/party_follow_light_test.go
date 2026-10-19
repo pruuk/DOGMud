@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/lightnotice"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -77,6 +78,36 @@ func TestPartyFollow_UnlitMemberFollowsALitLeader(t *testing.T) {
 	require.Contains(t, told, "You follow the party leader.")
 	runQueuedInputs(t, 2)
 	require.Equal(t, 2, member.Character.RoomId, "an unlit member follows a leader who carries a light")
+}
+
+// #620: an unlit member stepping after a lit leader is not told the light
+// left the room they are leaving ("Without the carried light, you can see
+// nothing."). They see by the leader's light, and it left only because the
+// leader stepped first.
+func TestPartyFollow_StepAfterALitLeaderAnnouncesNoLostLight(t *testing.T) {
+	leader, member, room := partyFollowScene(t, true)
+	require.NoError(t, lightnotice.LoadFrom("../../_datafiles/world/dogmud/narration/light-notices"))
+	t.Cleanup(lightnotice.ResetForTest)
+	lightnotice.Check(member, lightnotice.TriggerQuiet) // the member sees by the leader's lantern
+
+	handled, err := Go("north", leader, room, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+	events.DrainQueuedMessagesForTest(2)
+
+	var step *events.Input
+	for _, e := range events.DrainQueuedByTypeForTest(events.Input{}.Type()) {
+		if in, ok := e.(events.Input); ok && in.UserId == 2 {
+			step = &in
+		}
+	}
+	require.NotNil(t, step, "a follow step is queued for the member")
+	cmd, rest, _ := strings.Cut(step.InputText, " ")
+	_, err = TryCommand(cmd, rest, 2, step.Flags)
+	require.NoError(t, err)
+	require.Equal(t, 2, member.Character.RoomId, "the member followed")
+	require.Empty(t, lightNoticeLines(events.DrainQueuedMessageEventsForTest(2), 2),
+		"the follow step announces no lost light")
 }
 
 func TestPartyFollow_NobodyFollowsAnUnlitLeaderInTrueDarkness(t *testing.T) {
