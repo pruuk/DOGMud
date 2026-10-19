@@ -68,7 +68,7 @@ func TestResolveDefenseOutcome_FloorReachesACrittingDefender(t *testing.T) {
 
 	attacker, defender := hopelessMatchup()
 	ctx := combatContext{sourceSight: messaging.SightFull, targetSight: messaging.SightFull}
-	critThreshold := calcCritThreshold(attacker, defender)
+	critThreshold := calcCritThreshold(attacker, defender, attacker.Equipment.Weapon)
 
 	hits := 0
 	for i := 0; i < iterations; i++ {
@@ -108,7 +108,7 @@ func TestResolveDefenseOutcome_FlooredOutcomesNeverCrit(t *testing.T) {
 
 	attacker, defender := hopelessMatchup()
 	ctx := combatContext{sourceSight: messaging.SightFull, targetSight: messaging.SightFull}
-	critThreshold := calcCritThreshold(attacker, defender)
+	critThreshold := calcCritThreshold(attacker, defender, attacker.Equipment.Weapon)
 
 	floored := 0
 	for i := 0; i < iterations; i++ {

@@ -7,7 +7,9 @@ description: A length of pine wrapped in pitch-soaked rag. It burns hot
 type: light
 subtype: wearable
 weight: 0.5
-value: 1
+# A price ladder with the Oil Lantern (8) and Hooded Lantern (20): at 1 a
+# torch sold back for full price, so light cost nothing (owner, #583).
+value: 3
 rarity_tier: 50
 vendor_categories:
 - blacksmithing
