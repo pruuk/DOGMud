@@ -1,0 +1,37 @@
+# Verify 2026-10-17 pre-deploy fixes: the new-player path, played fresh.
+#
+# This morning's run found: a bare `say` and a refused `trip` advanced the
+# tutorial, `hint` named a quest you could not see, help death promised full
+# pools and forgiveness it did not give, Dewey's flee line came before the
+# flee, Hadwen said nothing had changed after a mutation, long system lines
+# ran past one screen line, boxes ended in a stray period, and ASCII mode
+# leaked symbols. Play as a new player and report what you see.
+#
+# 3 commands per round on the AI port; the overflow is dropped. Pace your
+# commands. Quote every odd line VERBATIM.
+
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    The fixes under test are on the creation and tutorial path, which only a
+    fresh character walks.
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    Create a character, type `set charset` until it says ASCII, and play the
+    tutorial. When Dewey asks you to say something, first type `say` alone,
+    then a real message. When he asks you to trip, try `trip` even if the
+    target is already down. Report whether each step advanced only when it
+    should, and quote Dewey's lines.
+  - >-
+    Type `hint` several times during the tutorial and after it. Report every
+    quest name it shows and whether `quests all` lists that quest.
+  - >-
+    Read `help death`. Then die once if it happens naturally (do not force
+    it). Report whether what happened matched the help text.
+  - >-
+    Report any line wider than one screen line, any box or table bottom that
+    ends with a period, any non-ASCII symbol after you chose ASCII, and any
+    raw token like {actor}.

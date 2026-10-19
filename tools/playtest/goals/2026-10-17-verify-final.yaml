@@ -1,0 +1,30 @@
+# Final pre-deploy smoke, 2026-10-17: the last four fixes on batch 3.
+#
+# Changed: Esk's passage only moves you if you are still with him; quest
+# observer lines name the player; Toke gives the route to Scout Tarn; and a
+# behaviour-tree change cancels a delayed sequence when its player leaves.
+# You are an admin. Use `teleport <roomid>`. 3 commands per round on the AI
+# port; pace your commands. Quote every odd line VERBATIM.
+
+ephemeral:
+  profile: admin
+  start_room: 5203
+  budgets:
+    wall_clock: 20m
+
+goals:
+  - >-
+    In Hub Square (5203) type `ask toke tarn` and follow the route he gives.
+    Report whether it reaches the Steppe Edge with Scout Tarn.
+  - >-
+    Teleport to 5215 (Warden Esk). Type `ask esk passage` and stay put.
+    Quote everything until you arrive somewhere, and give the room. Then
+    `enter portal` back to 5215.
+  - >-
+    In 5215 type `ask esk passage` again, then at once walk out (any exit)
+    and keep walking a few rooms. Wait 40 seconds. Report whether you were
+    moved anywhere without walking, and quote any lines.
+  - >-
+    Visit Cleric Hadwen (5200), Crier Toke (5203) and two other NPCs; talk to
+    each and ask them something. Report anything odd, anything that never
+    answers, and any line that arrives long after you left the room.

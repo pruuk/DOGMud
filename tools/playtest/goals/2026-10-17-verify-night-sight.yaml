@@ -1,0 +1,45 @@
+# Verify 2026-10-17 pre-deploy fixes: dim light and shops at night.
+#
+# Fixed today: the room shows "a figure" and `figure` now targets it
+# (consider figure, look figure, 2.figure); "Some remains" now answer to
+# `look remains`; `list`, `offer` and `appraise` in an empty dim room say there
+# is no merchant; offer quotes exactly what sell pays and a refusing merchant
+# says why; the Tavern Cellar `down` is refused without "You head downward";
+# night idle lines no longer mention noon or sunlight; table bottoms carry no
+# stray period.
+#
+# You are an admin. Use `server set night` once at the start. Avoid other
+# admin commands unless a goal says so.
+#
+# 3 commands per round on the AI port; the overflow is dropped. Pace your
+# commands. Quote every odd line VERBATIM.
+
+ephemeral:
+  profile: admin
+  start_room: 462
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    `server set night`, then find a dim room where `look` shows "a figure"
+    (backstreets like 474 or 477 at night). Type `consider figure`, `look
+    figure`, `consider 2.figure` and `look shape`. Quote every reply.
+  - >-
+    Kill something weak in a dim room if you can, then `look remains` and
+    `look corpse`. Quote both.
+  - >-
+    In a dim room with no merchant (470 Craftsmen's Quarter East at night,
+    with the smith away), type `list`, `offer sword`, `appraise sword`. Quote
+    them.
+  - >-
+    At two shops, `offer` three different items you carry, then `sell` each
+    one. Report any case where offer quoted a price sell did not pay, or a
+    refusal that did not say why. Note whether gold amounts over 999 show a
+    thousands separator.
+  - >-
+    Go to the Tavern Cellar (485, down from the kitchen) and type `down`.
+    Quote everything. Report whether you moved (`look`).
+  - >-
+    Sit idle for two minutes in 462 and in 472. Quote every idle line and say
+    whether any mentions noon, the sun or daylight while it is night.

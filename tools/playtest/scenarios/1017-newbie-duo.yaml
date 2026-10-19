@@ -1,0 +1,45 @@
+# 2026-10-17 batch 3 verification: two brand-new players through the
+# new-player areas at the same time, in a shared world.
+#
+# Covers the owner's playtest notes and the newbie-area audit: Dewey's new
+# lessons (look a highlighted word, skills, spells, chrysalis-glow, the pools
+# line, whispered fight lines); one command per quest step with plain hints;
+# coulee NPCs carrying lanterns; lit target rooms; fast respawns for shared
+# targets (training dummy, practice butt); party follow keyed off the
+# leader's light; the temple portal back to the coulee.
+
+name: 1017-newbie-duo
+mode: party
+summary: >-
+  Two brand-new characters each take the guided tutorial (the first offered
+  starting path), then meet in the Pothole Coulee, party up, and work the
+  same beginner quests side by side.
+on_actor_stop: continue
+budgets:
+  wall_clock: 50m
+requires:
+  max_connections: 20
+roster:
+  - id: first
+    personality: bug-finder
+    goals: goals/scenarios/1017-newbie-duo/first.yaml
+  - id: second
+    personality: bug-finder
+    goals: goals/scenarios/1017-newbie-duo/second.yaml
+
+group_goals:
+  - id: shared-targets
+    do: >-
+      Both actors work quest 32 (the Drill Yard training dummy) and quest 50
+      (the practice butt on the Long Terrace) at the same time. Note how long
+      either waits for a target to come back.
+    verify: >-
+      Each actor reports any wait, verbatim respawn lines, and whether both
+      finished each quest step.
+  - id: follow-the-light
+    do: >-
+      Party up. The leader casts chrysalis-glow and walks three rooms; the
+      follower stays unlit. Then the follower types follow <leader name>.
+    verify: >-
+      The unlit follower moves with the lit leader, and follow inside the
+      party answers that they already follow.

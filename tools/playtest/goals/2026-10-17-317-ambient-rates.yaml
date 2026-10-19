@@ -1,0 +1,19 @@
+# #317: measure ambient text per room-minute before retuning.
+#
+# Driver-scripted, not an exploration run: an admin sits idle in four rooms
+# for about ten minutes each and the driver counts every unprompted line
+# against the Playtest.Round beacons. Rooms: 465 Market Square Center (seven
+# NPCs with idle commands), 472 the tavern (Barmaid Dal), 462 a quiet street,
+# and an outdoor wild room with no NPCs. `server set day` first so the
+# merchants are awake.
+
+ephemeral:
+  profile: admin
+  start_room: 465
+  budgets:
+    wall_clock: 55m
+
+goals:
+  - >-
+    Sit idle in each room for ten minutes. Send nothing but the goto that
+    moves you between rooms and one `look` on arrival.
