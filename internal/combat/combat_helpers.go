@@ -425,6 +425,28 @@ func calcDualWieldPenalty(sourceChar *characters.Character, weapIdx, totalWeaps 
 	return penalty
 }
 
+// AttackSubtype is the one weapon-type rule (spec 2026-10-16 #541 section 1):
+// the main-hand weapon's subtype, else the species' natural attack, else
+// items.Unarmed. The swing path, the wait and engage lines, and the
+// fumble and coup de grace lookups (through buildWeaponSetup) all read it, so
+// a creature squares up, waits and swings with the same thing.
+func AttackSubtype(char *characters.Character) items.ItemSubType {
+	return attackSubtypeWith(char, char.Equipment.Weapon)
+}
+
+// attackSubtypeWith is the rule for one weapon slot. buildWeaponSetup asks it
+// once per slot, so an off-hand dagger swings as stabbing beside a main-hand
+// sword, and an empty slot (ItemId 0) falls to the species attack.
+func attackSubtypeWith(char *characters.Character, weapon items.Item) items.ItemSubType {
+	if weapon.ItemId > 0 {
+		return weapon.GetSpec().Subtype
+	}
+	if sp := species.GetSpecies(char.SpeciesId); sp != nil && sp.NaturalAttack != "" {
+		return sp.NaturalAttack
+	}
+	return items.Unarmed
+}
+
 // buildWeaponSetup pre-computes weapon info for a single weapon in the attack sequence.
 // Note: swing count is now computed separately by calcSwingCount, not here.
 func buildWeaponSetup(sourceChar *characters.Character, targetChar *characters.Character, weapon items.Item, idx, total int) weaponSetup {
@@ -440,7 +462,7 @@ func buildWeaponSetup(sourceChar *characters.Character, targetChar *characters.C
 	ws := weaponSetup{
 		weapon:        weapon,
 		weaponName:    unarmedName,
-		weaponSubType: items.Unarmed,
+		weaponSubType: attackSubtypeWith(sourceChar, weapon),
 		weaponSpeed:   float64(bal.UnarmedSpeedMultiplier),
 		isOffhand:     idx > 0,
 		penalty:       calcDualWieldPenalty(sourceChar, idx, total),
@@ -448,18 +470,9 @@ func buildWeaponSetup(sourceChar *characters.Character, targetChar *characters.C
 
 	ws.attacks, ws.baseDmg, ws.dmgVariance, ws.critConditions = sourceChar.GetDefaultDistributionDamage()
 
-	// Non-human basic attacks render through the species' natural-attack
-	// subtype (bite/claws/slam/...) instead of generic. A real equipped weapon
-	// overrides this below. Humanoids leave NaturalAttack empty and stay on
-	// Unarmed -> generic.
-	if raceInfo != nil && raceInfo.NaturalAttack != "" {
-		ws.weaponSubType = raceInfo.NaturalAttack
-	}
-
 	if weapon.ItemId > 0 {
 		itemSpec := weapon.GetSpec()
 		ws.weaponName = weapon.DisplayName()
-		ws.weaponSubType = itemSpec.Subtype
 		ws.attacks, ws.baseDmg, ws.dmgVariance, ws.critConditions = weapon.GetDistributionDamage()
 		ws.weaponSpeed = itemSpec.GetSpeedMultiplier()
 
@@ -688,10 +701,7 @@ func filterDefensesForThirdParty(result *AttackResult, sourceChar *characters.Ch
 	// If no defenses remain, send vulnerability messages and auto-hit.
 	// Vulnerability prose is hit-prep — the swing is about to land.
 	if len(filteredDefenses) == 0 {
-		hitCat := messaging.CategoryHitMelee
-		if sourceChar.Equipment.Weapon.ItemId > 0 {
-			hitCat = CategoryForWeaponSubtype(sourceChar.Equipment.Weapon.GetSpec().Subtype)
-		}
+		hitCat := CategoryForWeaponSubtype(AttackSubtype(sourceChar))
 		result.SendToTarget(hitCat, fmt.Sprintf(
 			`<ansi fg="red">You're too entangled to defend against %s's attack!</ansi>`,
 			sourceChar.Name))

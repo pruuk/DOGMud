@@ -215,7 +215,8 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 
 	attackResult := AttackResult{}
 
-	msgs := items.GetPreAttackMessage(sourceChar.Equipment.Weapon.GetSpec().Subtype, stepType)
+	subtype := AttackSubtype(sourceChar)
+	msgs := items.GetPreAttackMessage(subtype, stepType)
 
 	var toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg items.ItemMessage
 
@@ -300,12 +301,8 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 	toAttackerRoomMsg = items.ItemMessage(roles.Observer)
 	toDefenderRoomMsg = items.ItemMessage(roles.ActeeObserver)
 
-	// Wait-round messages: source's weapon category for hit-band
-	// color; falls back to CategoryHitMelee if no main weapon.
-	waitCat := messaging.CategoryHitMelee
-	if sourceChar.Equipment.Weapon.ItemId > 0 {
-		waitCat = CategoryForWeaponSubtype(sourceChar.Equipment.Weapon.GetSpec().Subtype)
-	}
+	// Wait-round lines ride the attack's own hit band, the swing path's rule.
+	waitCat := CategoryForWeaponSubtype(subtype)
 
 	if string(toAttackerMsg) != `` {
 		attackResult.SendToSource(waitCat, string(toAttackerMsg))
