@@ -10,23 +10,22 @@ groups:
   - slime
 idlecommands:
   - 'emote lies against the waterline like a fold of wet mortar,
-    distinguishable from the wall only when it shifts.'
+    distinguishable from the wall only when the mass shifts.'
   - ''
-  - 'emote pours itself a hand-width along the stonework, pauses,
-    and settles as though it had never moved.'
+  - 'emote pours a hand-width along the stonework, pauses, and
+    settles as though nothing had moved.'
   - ''
   - 'emote draws something small out of the confluence and closes
     over it without hurry.'
   - ''
 combatcommands:
-  - 'emote heaves its whole mass forward in a slow, committed
+  - 'emote heaves the whole mass forward in a slow, committed
     surge.'
   - ''
-  - 'emote folds around what it touches, gripping with a cold,
-    even, mindless pressure.'
+  - 'emote folds around whatever is in reach, gripping with a
+    cold, even, mindless pressure.'
   - ''
-  - 'emote pulls back into itself and comes on again, heavier than
-    before.'
+  - 'emote draws back and comes on again, heavier than before.'
   - ''
 activitylevel: 20
 character:
