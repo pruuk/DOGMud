@@ -91,10 +91,7 @@ func ClearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 // slice 6, owner ruling D1); the movement sounds play for both, as they do
 // on the player path.
 func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.Room, sneaking bool) {
-	enterFrom := `from somewhere`
-	if back := dest.FindExitTo(from.RoomId); back != `` {
-		enterFrom = exit.FromPhrase(back)
-	}
+	enterPhrase := exit.EntryPhrase(dest.FindExitTo(from.RoomId), false)
 
 	// #456, owner ruling 2026-10-09: a mover is seen by the light they carry
 	// on their own way out, so the exit line is judged by the room before
@@ -120,7 +117,7 @@ func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.R
 
 		dest.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
 			fmt.Sprintf(string(c.EnterRoomMessageWrapper),
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> enters %s.`, mob.Character.Name, enterFrom),
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> %s.`, mob.Character.Name, enterPhrase),
 			),
 			`You hear footsteps approaching.`)
 

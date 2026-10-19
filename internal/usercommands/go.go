@@ -250,10 +250,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		}
 
 		// Grab the exit in the target room that leads to this room (if any).
-		// enterFrom is the whole "from ..." phrase: "from above" reads
-		// where "from the up" did not (#430).
+		// exit.EntryPhrase turns it into the arrival words: "enters from
+		// above" where "from the up" did not read (#430), and "arrives" when
+		// no exit leads back (#620).
 		enterFromExit := destRoom.FindExitTo(room.RoomId)
-		enterFrom := "from somewhere"
 
 		if len(enterFromExit) > 0 {
 
@@ -263,8 +263,6 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				exitInfo.Lock.SetUnlocked()
 				destRoom.SetExitLock(enterFromExit, false)
 			}
-
-			enterFrom = exit.FromPhrase(enterFromExit)
 		}
 
 		behaviortree.TryRoomBehavior(room.RoomId, behaviortree.EventContext{
@@ -346,7 +344,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 					// disagreed about the same event.
 					destRoom.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
 						fmt.Sprintf(string(c.EnterRoomMessageWrapper),
-							fmt.Sprintf(`<ansi fg="username">%s</ansi> and %s enter %s.`, user.Character.Name, user.Character.Pet.DisplayName(), enterFrom),
+							fmt.Sprintf(`<ansi fg="username">%s</ansi> and %s %s.`, user.Character.Name, user.Character.Pet.DisplayName(), exit.EntryPhrase(enterFromExit, true)),
 						),
 						`You hear someone enter the room.`,
 						user.UserId)
@@ -356,7 +354,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 					// Tell the new room they have arrived
 					destRoom.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
 						fmt.Sprintf(string(c.EnterRoomMessageWrapper),
-							fmt.Sprintf(`<ansi fg="username">%s</ansi> enters %s.`, user.Character.Name, enterFrom),
+							fmt.Sprintf(`<ansi fg="username">%s</ansi> %s.`, user.Character.Name, exit.EntryPhrase(enterFromExit, false)),
 						),
 						`You hear someone enter the room.`,
 						user.UserId)
