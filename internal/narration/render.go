@@ -33,9 +33,11 @@ type Variants struct {
 // delivery-side roles must not drift apart.
 //
 // ActeeObserver is observers where the ACTEE is, and is empty whenever the
-// participants share a room. It exists for combat-messages' `separate` case,
-// where a ranged attacker and defender are not co-located and there are
-// genuinely two observer audiences.
+// participants share a room. Its only live producer is the movenarration store
+// (internal/movenarration), whose `remote_observer` role carries shoot's
+// arrival lines: a shot crosses rooms, so there are genuinely two observer
+// audiences. Combat-messages' `separate` split also filled it until #541
+// retired that split, since round combat never crosses rooms.
 type Roles struct {
 	Actor         string
 	Actee         string

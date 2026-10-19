@@ -3,6 +3,7 @@ package combat
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -10,6 +11,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"gopkg.in/yaml.v2"
 )
+
+// critBannerWrapTag strips every markup tag so a wrapped line can be compared
+// as the text a player reads.
+var critBannerWrapTag = regexp.MustCompile(`<[^>]*>`)
 
 // seedShippedGenericForBannerTest installs the shipped generic.yaml as the
 // only attack message pool, so a crit swing builds real lines.
@@ -62,7 +67,7 @@ func TestBuildAttackMessages_CritBannerCloseStaysWithTheLastWord(t *testing.T) {
 		// Wrapped at every width from 20 to 80, no line is the banner alone.
 		for width := 20; width <= 80; width++ {
 			for _, line := range strings.Split(messaging.WrapAnsi(m.Text, width), "\n") {
-				if strings.TrimSpace(slamSplitTag.ReplaceAllString(line, "")) == "***" {
+				if strings.TrimSpace(critBannerWrapTag.ReplaceAllString(line, "")) == "***" {
 					t.Errorf("at width %d the closing *** wrapped onto a line of its own: %q", width, m.Text)
 				}
 			}

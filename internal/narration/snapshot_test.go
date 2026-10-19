@@ -257,21 +257,19 @@ func firstDiffLine(want, got string) string {
 // something on its own -- a defence row reading "Attacker" still says which
 // participant it names without the reader consulting the role mapping.
 var tokenStandins = map[items.TokenName]string{
-	items.TokenItemName:     "Weapon",
-	items.TokenActor:        "Source",
-	items.TokenActorType:    "User",
-	items.TokenActee:        "Target",
-	items.TokenActeeType:    "Mob",
-	items.TokenUsesLeft:     "3",
-	items.TokenDamage:       "ModerateWounds",
-	items.TokenEntranceName: "South",
-	items.TokenExitName:     "North",
-	items.TokenWeapon:       "Weapon",
-	items.TokenAttack:       "Strike",
-	items.TokenStance:       "Balanced",
-	items.TokenPosition:     "Standing",
-	items.TokenMomentum:     "InControl",
-	items.TokenBodyPart:     "Arm",
+	items.TokenItemName:  "Weapon",
+	items.TokenActor:     "Source",
+	items.TokenActorType: "User",
+	items.TokenActee:     "Target",
+	items.TokenActeeType: "Mob",
+	items.TokenUsesLeft:  "3",
+	items.TokenDamage:    "ModerateWounds",
+	items.TokenWeapon:    "Weapon",
+	items.TokenAttack:    "Strike",
+	items.TokenStance:    "Balanced",
+	items.TokenPosition:  "Standing",
+	items.TokenMomentum:  "InControl",
+	items.TokenBodyPart:  "Arm",
 }
 
 // defenseStandins is the defence store's half of the same vocabulary. Same

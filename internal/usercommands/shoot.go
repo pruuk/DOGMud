@@ -309,8 +309,9 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 //
 // ⚠️ These live in Go rather than in that YAML on purpose. The file's schema is
 // map[Intensity]AttackOptions, which has no slot for an ammo tag, so a
-// `recovery:` block added there would be SILENTLY DISCARDED by the loader --
-// the same shape of bug as a mob YAML key that binds to no field. The
+// `recovery:` block added there fails to load at boot: the AttackOptions
+// decoder rejects every key but `together` (#541), and a top-level block
+// trips the strict-decode probe in boot_smoke_test.go. The
 // narration copy guard in shoot_narration_test.go covers every constant here,
 // so these get the 80-column and no-raw-numbers checks for free.
 func shotRecoveryLine(ammoTag string) string {

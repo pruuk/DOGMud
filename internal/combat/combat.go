@@ -230,18 +230,16 @@ func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character,
 	}
 
 	tokenReplacements := map[items.TokenName]string{
-		items.TokenItemName:     unarmedName,
-		items.TokenActor:        sourceChar.Name,
-		items.TokenActorType:    string(sourceType) + `name`,
-		items.TokenActee:        targetChar.Name,
-		items.TokenActeeType:    string(targetType) + `name`,
-		items.TokenUsesLeft:     `[Invalid]`,
-		items.TokenDamage:       `[Invalid]`,
-		items.TokenEntranceName: `unknown`,
-		items.TokenExitName:     `unknown`,
-		items.TokenStance:       sourceChar.CalculateStanceString(),
-		items.TokenPosition:     sourceChar.CalculatePositionString(),
-		items.TokenMomentum:     sourceChar.CalculateMomentumString(),
+		items.TokenItemName:  unarmedName,
+		items.TokenActor:     sourceChar.Name,
+		items.TokenActorType: string(sourceType) + `name`,
+		items.TokenActee:     targetChar.Name,
+		items.TokenActeeType: string(targetType) + `name`,
+		items.TokenUsesLeft:  `[Invalid]`,
+		items.TokenDamage:    `[Invalid]`,
+		items.TokenStance:    sourceChar.CalculateStanceString(),
+		items.TokenPosition:  sourceChar.CalculatePositionString(),
+		items.TokenMomentum:  sourceChar.CalculateMomentumString(),
 	}
 
 	// Get source character's weapon skill level for message selection

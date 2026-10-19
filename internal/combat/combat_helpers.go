@@ -1569,9 +1569,6 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 			result.sendSwingToSource(defCat, string(toAttackerMsg))
 		}
 		result.SendToSourceRoom(defCat, string(toRoomMsg))
-		if sourceChar.RoomId != targetChar.RoomId {
-			result.SendToTargetRoom(defCat, string(toRoomMsg))
-		}
 	} else {
 		defCat := CategoryForDefenseVerb(defenseVerb)
 		if !partial && band.crit && band.openingStrike {
@@ -1582,10 +1579,10 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 			result.sendSwingToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
 		}
 		result.SendToSourceRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss %s's attack.</ansi>`, targetChar.Name, defenseVerb, sourceChar.Name))
-		if sourceChar.RoomId != targetChar.RoomId {
-			result.SendToTargetRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss an attack.</ansi>`, targetChar.Name, defenseVerb))
-		}
 	}
+	// No defender-room line: round combat releases a target in another room
+	// before any line is drawn (hooks.resolveCombatTarget), so the defender
+	// always shares the attacker's room here (#541).
 
 	sendEntangledDefenceNote(result, best, isThirdParty)
 }
@@ -1629,11 +1626,9 @@ func sendFeintLines(result *AttackResult, sourceChar, targetChar *characters.Cha
 	}
 	result.sendSwingToSource(cat, prefix+narration.Substitute(fm.toAttacker, tokens))
 	result.sendSwingToTarget(cat, prefix+narration.Substitute(fm.toDefender, tokens))
-	room := prefix + narration.Substitute(fm.toRoom, tokens)
-	result.SendToSourceRoom(cat, room)
-	if sourceChar.RoomId != targetChar.RoomId {
-		result.SendToTargetRoom(cat, room)
-	}
+	// One room line: the participants share a room (#541, see
+	// sendDefenseMessages).
+	result.SendToSourceRoom(cat, prefix+narration.Substitute(fm.toRoom, tokens))
 }
 
 // U6 Task 8 deleted sendFloorDefenseMessages. It narrated the MinDefenseChance
@@ -1914,19 +1909,17 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	rendered := false
 
 	tokenReplacements := map[items.TokenName]string{
-		items.TokenItemName:     ws.weaponName,
-		items.TokenActor:        sourceChar.Name,
-		items.TokenActorType:    string(srcType) + `name`,
-		items.TokenActee:        targetChar.Name,
-		items.TokenActeeType:    string(tgtType) + `name`,
-		items.TokenUsesLeft:     `[Invalid]`,
-		items.TokenDamage:       GetDamageDescription(attackTargetDamage, targetChar.HealthMax.Value),
-		items.TokenEntranceName: `unknown`,
-		items.TokenExitName:     `unknown`,
-		items.TokenStance:       sourceChar.CalculateStanceString(),
-		items.TokenPosition:     sourceChar.CalculatePositionString(),
-		items.TokenMomentum:     sourceChar.CalculateMomentumString(),
-		items.TokenBodyPart:     GetRandomBodyPart(),
+		items.TokenItemName:  ws.weaponName,
+		items.TokenActor:     sourceChar.Name,
+		items.TokenActorType: string(srcType) + `name`,
+		items.TokenActee:     targetChar.Name,
+		items.TokenActeeType: string(tgtType) + `name`,
+		items.TokenUsesLeft:  `[Invalid]`,
+		items.TokenDamage:    GetDamageDescription(attackTargetDamage, targetChar.HealthMax.Value),
+		items.TokenStance:    sourceChar.CalculateStanceString(),
+		items.TokenPosition:  sourceChar.CalculatePositionString(),
+		items.TokenMomentum:  sourceChar.CalculateMomentumString(),
+		items.TokenBodyPart:  GetRandomBodyPart(),
 	}
 
 	// The skill of the weapon THIS swing used (#564): an off-hand fist swung
@@ -2150,9 +2143,6 @@ func applyPetDamage(result *AttackResult, sourceChar *characters.Character, targ
 
 		toAttackerRoomMsg := fmt.Sprintf(`%s jumps into the fray and deals <ansi fg="damage">%s</ansi> to <ansi fg="%sname">%s</ansi>!`, sourceChar.Pet.DisplayName(), GetDamageDescription(attackTargetDamage, targetChar.HealthMax.Value), string(tgtType), targetChar.Name)
 		result.SendToSourceRoom(petCat, toAttackerRoomMsg)
-		if sourceChar.RoomId != targetChar.RoomId {
-			result.SendToTargetRoom(petCat, toAttackerRoomMsg)
-		}
 	}
 }
 

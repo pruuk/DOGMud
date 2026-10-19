@@ -224,20 +224,18 @@ const (
 	// respelled here, so the two vocabularies cannot drift apart again. The
 	// type tokens have no core counterpart: they carry an ansi colour class,
 	// not a name.
-	TokenActor        TokenName = narration.TokenActor
-	TokenActorType    TokenName = "{actortype}" // will be 'user' or 'mob'
-	TokenActee        TokenName = narration.TokenActee
-	TokenActeeType    TokenName = "{acteetype}" // will be 'user' or 'mob'
-	TokenUsesLeft     TokenName = "{usesleft}"
-	TokenDamage       TokenName = "{damage}"
-	TokenEntranceName TokenName = "{entrancename}"
-	TokenExitName     TokenName = "{exitname}"
-	TokenWeapon       TokenName = "{weapon}"   // Stage 9.3: defensive action messages
-	TokenAttack       TokenName = "{attack}"   // Generic "strike"/"blow" for unarmed, weapon name for armed
-	TokenStance       TokenName = "{stance}"   // Stage 9.4: combat stance (aggressive/defensive/balanced/reckless)
-	TokenPosition     TokenName = "{position}" // Stage 9.4: combat position (standing/prone/clinched/grounded)
-	TokenMomentum     TokenName = "{momentum}" // Stage 9.4: combat momentum (offensive/defensive/pressured/in control)
-	TokenBodyPart     TokenName = "{bodypart}" // Stage 42.4: random body part for hit location flavor
+	TokenActor     TokenName = narration.TokenActor
+	TokenActorType TokenName = "{actortype}" // will be 'user' or 'mob'
+	TokenActee     TokenName = narration.TokenActee
+	TokenActeeType TokenName = "{acteetype}" // will be 'user' or 'mob'
+	TokenUsesLeft  TokenName = "{usesleft}"
+	TokenDamage    TokenName = "{damage}"
+	TokenWeapon    TokenName = "{weapon}"   // Stage 9.3: defensive action messages
+	TokenAttack    TokenName = "{attack}"   // Generic "strike"/"blow" for unarmed, weapon name for armed
+	TokenStance    TokenName = "{stance}"   // Stage 9.4: combat stance (aggressive/defensive/balanced/reckless)
+	TokenPosition  TokenName = "{position}" // Stage 9.4: combat position (standing/prone/clinched/grounded)
+	TokenMomentum  TokenName = "{momentum}" // Stage 9.4: combat momentum (offensive/defensive/pressured/in control)
+	TokenBodyPart  TokenName = "{bodypart}" // Stage 42.4: random body part for hit location flavor
 
 	POVUser  = 0
 	POVOther = 1
