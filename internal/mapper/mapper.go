@@ -187,6 +187,14 @@ func GetDirectionDeltaNames() []string {
 	return ret
 }
 
+// ExitArrow is the glyph a map draws for an exit in directionName (`─` east,
+// `v` down), and false for a name with no position delta. Exported for the
+// legend tests, which check that no ASCII exit arrow reads as a room symbol.
+func ExitArrow(directionName string) (rune, bool) {
+	delta, ok := posDeltas[directionName]
+	return delta.arrow, ok
+}
+
 func IsValidDirection(directionName string) bool {
 	_, ok := posDeltas[directionName]
 	return ok
