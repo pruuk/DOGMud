@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // newSecretExitRoom builds a room whose only feature is one secret exit, so a
@@ -126,14 +127,21 @@ func TestSearchTierPaysTheSearchersEyes(t *testing.T) {
 // rolledAgainstSomething, so in a room whose only feature is a found exit the
 // second search must resolve against nothing and train nothing.
 func TestSearch_AFoundSecretExitIsNotRolledAgain(t *testing.T) {
+	// Seeded (#630): contest.AgainstDifficulty has no floor and no ceiling,
+	// so perception 400 made the first find very likely but not certain, and
+	// the fixture missed once in a full-suite run. One seed pins every dice
+	// draw Search makes, so the first find either always lands or always
+	// fails loudly below; it can no longer fail at random.
+	t.Cleanup(util.SetRandForTest(630))
+
 	room := newSecretExitRoom(9600)
 	actor := newSearchFakeActor("FarmSearcher", room, false, 0)
-	actor.char.Stats.Perception.ValueAdj = 400 // find it on the first attempt
+	actor.char.Stats.Perception.ValueAdj = 400
 
 	first := Search(actor, SearchOptions{})
 	if len(first.HiddenExitsFound) == 0 {
-		t.Fatal("fixture failed to find the exit at perception 400; the rest of " +
-			"this test asserts nothing")
+		t.Fatal("fixture failed to find the exit under seed 630; pick a seed " +
+			"whose first search finds it, or the rest of this test asserts nothing")
 	}
 	if len(actor.awards) != 1 {
 		t.Fatalf("first search produced %d awards, want 1", len(actor.awards))

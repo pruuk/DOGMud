@@ -377,13 +377,8 @@ direction-aliases:
 # Special map symbols that will always show this exact text if found on a map.
 # Group under zone names.
 # '*' entries apply everywhere, unless overridden by a zone entry
+# An entry only renames a symbol a map already draws, in a zone that exists;
+# TestMapLegendOverridesNameDrawnSymbols fails on one that names neither.
 legend-overrides:
   '*':
-    '$': 'Shop'
-    '★': 'Bank'
-    'G': 'Gate'
-    '✗': 'Target'
-    '%': 'Trainer'
     '?': 'Secret'
-  'Frostfang':
-    '!': 'Throne Room'

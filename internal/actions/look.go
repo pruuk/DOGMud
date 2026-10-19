@@ -108,7 +108,16 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 	}
 
 	if res.NamesCreatures {
-		if target, err := ResolveTargetActor(room, lookAt, ResolveTargetOptions{Viewer: char}); err == nil {
+		// Someone else first (#606): ResolveTargetActor prefers players over
+		// mobs, so a looker whose name shares a word with a mob in the room
+		// matched themselves ahead of it. Excluded the way consider and the
+		// melee target excludes the actor; the looker is the fallback, so
+		// looking at yourself by name still works.
+		target, err := ResolveTargetActor(room, lookAt, ResolveTargetOptions{ExcludeUserId: actor.GetUserId(), Viewer: char})
+		if err != nil && actor.GetUserId() > 0 {
+			target, err = ResolveTargetActor(room, lookAt, ResolveTargetOptions{Viewer: char})
+		}
+		if err == nil {
 			res.Kind, res.Target = LookCreature, target
 			return res
 		}
