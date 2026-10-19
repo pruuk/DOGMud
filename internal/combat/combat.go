@@ -737,7 +737,7 @@ func darkLines(events []SwingEvent, v darkcombat.Viewpoint) []TaggedMessage {
 // their own line, precisely so a regression that widened the hide list would
 // be caught even though no real template could ever trigger it.
 //
-// MessagesToSourceRoom / MessagesToTargetRoom are NOT touched here. Room
+// MessagesToSourceRoom is NOT touched here. Room
 // (spectator) lines are sight-judged per viewer downstream, in
 // internal/hooks (sendVisualRoomText / drainSpectatorLines), the same as
 // before this change -- replaceDarknessMessages never touched them either.

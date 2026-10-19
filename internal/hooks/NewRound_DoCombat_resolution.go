@@ -131,17 +131,15 @@ func handleCombatWaitRound(
 		}
 	}
 
-	// No MessagesToSourceRoom/MessagesToTargetRoom drain here: wait-round
-	// room lines are delivered by combat.GetWaitMessages itself, through
-	// messaging.SendTrio's Observer/RemoteObserver seats, so each reader's
-	// own sight can hide names -- a raw drain through sendVisualRoomText
-	// could not do that. That is why a room-line handler has no room-line
-	// handling of its own here.
+	// No MessagesToSourceRoom drain here: wait-round room lines are delivered
+	// by combat.GetWaitMessages itself, through messaging.SendTrio's Observer
+	// seat, so each reader's own sight can hide names -- a raw drain through
+	// sendVisualRoomText could not do that. That is why a room-line handler
+	// has no room-line handling of its own here. The sound goes to the one
+	// room: resolveCombatTarget releases a target in another room before the
+	// wait round.
 	excludes := playerExcludeIdsFromUsers(attackerUser, defenderUser)
 	sendUnsightedCombatSound(attackerRoom, excludes...)
-	if defenderRoom != attackerRoom {
-		sendUnsightedCombatSound(defenderRoom, excludes...)
-	}
 	return true
 }
 

@@ -197,7 +197,6 @@ type AttackResult struct {
 	MessagesToSource        []TaggedMessage
 	MessagesToTarget        []TaggedMessage
 	MessagesToSourceRoom    []TaggedMessage
-	MessagesToTargetRoom    []TaggedMessage
 	MessagesToRoomOld       []TaggedMessage
 
 	// SwingDefences carries the per-swing defence that the round's SINGLE
@@ -238,10 +237,6 @@ func (a *AttackResult) sendSwingToTarget(cat messaging.Category, msg string) {
 
 func (a *AttackResult) SendToSourceRoom(cat messaging.Category, msg string) {
 	a.MessagesToSourceRoom = append(a.MessagesToSourceRoom, TaggedMessage{Category: cat, Text: msg})
-}
-
-func (a *AttackResult) SendToTargetRoom(cat messaging.Category, msg string) {
-	a.MessagesToTargetRoom = append(a.MessagesToTargetRoom, TaggedMessage{Category: cat, Text: msg})
 }
 
 func (a *AttackResult) SendToRoomOld(cat messaging.Category, msg string) {

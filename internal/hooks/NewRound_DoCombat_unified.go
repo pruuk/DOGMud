@@ -614,13 +614,11 @@ func dispatchCritAndMessaging(atk, def actions.Actor, res *combat.AttackResult) 
 
 	// Room broadcasts, per-spectator gated one step below their setting.
 	excludes := playerExcludeIds(atk, def)
+	// One room only: resolveCombatTarget released any target in another room
+	// before this round drew a line.
 	drainSpectatorLines(atkRoom, res.MessagesToSourceRoom, excludes)
-	drainSpectatorLines(defRoom, res.MessagesToTargetRoom, excludes)
 	recordSpectatorTallies(atkRoom, defRoom, atk, def, res, excludes)
 	sendUnsightedCombatSound(atkRoom, excludes...)
-	if defRoom != atkRoom {
-		sendUnsightedCombatSound(defRoom, excludes...)
-	}
 }
 
 // ────────────────────────────────────────────────────────────────────────

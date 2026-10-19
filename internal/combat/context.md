@@ -1339,7 +1339,10 @@ for the same reason.
 `internal/hooks`' `handleCombatWaitRound` no longer drains
 `roundResult.MessagesToSourceRoom`/`MessagesToTargetRoom` — `GetWaitMessages`
 never populates them now, so the old drain loop was removed rather than left
-as dead code (see `internal/hooks/context.md`).
+as dead code (see `internal/hooks/context.md`). Since #541 nothing wrote
+`MessagesToTargetRoom` at all, so it and its `SendToTargetRoom` method were
+removed; `MessagesToSourceRoom` is the only room-line field left, drained
+once into the attacker's room by `dispatchCritAndMessaging`.
 
 ## Dependencies
 

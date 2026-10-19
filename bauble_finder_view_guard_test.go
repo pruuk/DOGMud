@@ -93,7 +93,7 @@ var finderViewSelectors = map[string]bool{
 // the receiver: the room sends, actions.SendCounterTrio, discord's
 // SendMessage (the only SendMessage in internal/ and modules/), a mob's
 // Command (a `say`), merchantSay. isSendToRoom adds every SendTo...Room
-// method (combat.AttackResult SendToSourceRoom, SendToTargetRoom).
+// method (today combat.AttackResult SendToSourceRoom).
 var beyondReaderCalls = map[string]bool{
 	"SendTextCommunication": true, "SendTextVisual": true, "SendTextVisualHidingNames": true,
 	"SendTextVisualWithAudio": true, "SendTextVisualToSnapshot": true, "SendTextVisualWithAudioToSnapshot": true,
@@ -459,7 +459,6 @@ func Countered(room *rooms.Room, itm items.Item, uid int) {
 
 func Relayed(ar *combat.AttackResult, itm items.Item, uid int) {
 	ar.SendToSourceRoom(1, itm.NameFor(uid))
-	ar.SendToTargetRoom(1, itm.NameFor(uid))
 }
 
 func Posted(itm items.Item, uid int) { discord.SendMessage(itm.NameFor(uid)) }
@@ -472,7 +471,7 @@ func Posted(itm items.Item, uid int) { discord.SendMessage(itm.NameFor(uid)) }
 
 	wantCalls := map[string]int{
 		"Shout": 1, "Mine": 1, "ToAnother": 1, "Chained": 1, "Says": 2, "Queued": 1,
-		"Alias": 1, "Targeted": 1, "Announced": 1, "Chatted": 2, "Countered": 1, "Relayed": 2, "Posted": 1,
+		"Alias": 1, "Targeted": 1, "Announced": 1, "Chatted": 2, "Countered": 1, "Relayed": 1, "Posted": 1,
 	}
 	if len(calls) != len(wantCalls) {
 		t.Errorf("every reference counted, per function: want %v, got %v", wantCalls, calls)
@@ -487,7 +486,7 @@ func Posted(itm items.Item, uid int) { discord.SendMessage(itm.NameFor(uid)) }
 	// from the same root identifier as actor.GetUserId(), so it is not a
 	// leak here, and only its count stands between it and a real leak.
 	want := []string{"Alias", "Announced", "Chained", "Chatted", "Chatted", "Countered", "Posted",
-		"Queued", "Relayed", "Relayed", "Says", "Says", "Shout", "ToAnother"}
+		"Queued", "Relayed", "Says", "Says", "Shout", "ToAnother"}
 	leakFn := regexp.MustCompile(` in probe\.go\|(\w+):`)
 	var got []string
 	for _, l := range leaks {
