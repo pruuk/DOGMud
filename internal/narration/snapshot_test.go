@@ -9,8 +9,9 @@ package narration_test
 //
 // Store inventory verified against source 2026-09-07 (file counts; re-check
 // before trusting these if this comment gets stale):
-//   - _datafiles/world/dogmud/combat-messages/     23 files (weapon subtypes;
-//     the slam split, #541, added trample, lash and blast on 2026-10-16)
+//   - _datafiles/world/dogmud/combat-messages/     22 files (weapon subtypes;
+//     the slam split, #541, added trample, lash and blast on 2026-10-16;
+//     slice 2 removed throttle on 2026-10-19)
 //   - _datafiles/world/dogmud/defense-messages/     9 files (defense types)
 //   - _datafiles/world/dogmud/taunt-messages/        1 file  (rhetoric.yaml)
 //   - _datafiles/world/dogmud/messaging/             2 files (grapple_outcomes.yaml,

@@ -17,7 +17,7 @@ var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam, Siphon, T
 
 // naturalWeaponSpecialPools are the special-attack pools whose {itemname} is
 // the same natural weapon, so they follow the same rule (M6 slice 2 review).
-var naturalWeaponSpecialPools = []string{"throttle", "maul"}
+var naturalWeaponSpecialPools = []string{"maul"}
 
 // afterItemName finds each {itemname} and the text that follows it.
 var afterItemName = regexp.MustCompile(`\{itemname\}(.*)`)

@@ -19,9 +19,10 @@ import (
 // roles of a slot.
 
 // bannerGuardFileCount is how many files the store holds. The guard fails on
-// any other count so an empty or partial glob cannot pass. 23 since the slam
-// split (#541) added trample, lash and blast to the 20 before it.
-const bannerGuardFileCount = 23
+// any other count so an empty or partial glob cannot pass. 22 since the slam
+// split (#541) added trample, lash and blast and slice 2 retired the
+// default-attack throttle.yaml.
+const bannerGuardFileCount = 22
 
 // bannerGuardFiles globs every combat-message file in the store, names
 // without extension.

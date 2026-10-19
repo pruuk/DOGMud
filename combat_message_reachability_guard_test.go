@@ -77,3 +77,13 @@ func TestShootingKeepsOnlyPrepareAndWait(t *testing.T) {
 		require.Contains(t, []string{"prepare", "wait"}, k, "shooting.yaml authors %q, which never renders", k)
 	}
 }
+
+// Ruling D: throttle is a special move only. No species attacks with it, so
+// a default-attack throttle.yaml could never render; its special-move
+// narration stays.
+func TestThrottleIsASpecialMoveOnly(t *testing.T) {
+	_, err := os.Stat(filepath.Join("_datafiles", "world", "dogmud", "combat-messages", "throttle.yaml"))
+	require.True(t, os.IsNotExist(err), "combat-messages/throttle.yaml must not exist")
+	_, err = os.Stat(filepath.Join("_datafiles", "world", "dogmud", "narration", "special-moves", "throttle.yaml"))
+	require.NoError(t, err, "the throttle special move keeps its narration")
+}
