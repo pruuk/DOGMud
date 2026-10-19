@@ -3,5 +3,5 @@
    <ansi fg="white-bold">{{ splitstring $qInfo.Description 72 "   " }}</ansi>{{ if lt $idx $nlLen }}{{ "\n" }}{{ end }}
  {{ end -}}
  └──────────────────────────────────────────────────────────────────────────┘
- {{ if ne .QuestsFound .QuestsTotal }}<ansi fg="240">To see all quests (including completed), use <ansi fg="command">quests all</ansi></ansi>
+ {{ if ne .QuestsFound .QuestsTotal }}<ansi fg="240">To see all quests (including completed), use <ansi fg="command">quests all</ansi>.</ansi>
  {{ end }}

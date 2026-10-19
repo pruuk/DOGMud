@@ -1,5 +1,7 @@
 package messaging
 
+import "strings"
+
 // Channel discriminates the broadcast path. Audio bypasses the sight
 // gate and the anonymizer; visual runs the full per-recipient
 // pipeline. Both channels run style normalization, color, and wrap.
@@ -51,7 +53,17 @@ const (
 //
 // Each stub stage is a no-op until its task lands. Order is locked.
 func RenderForRecipient(in RenderInput) string {
-	text := in.Text
+	// Stage 1b: a message carries no trailing line break. Every deliverer
+	// (UserRecord.SendText, the Room sends) ends the message with its own
+	// "\n", so a text that already ended in one (a template's last line,
+	// 466 help pages among them) printed a stray blank line after it
+	// (#614). A blank line is sent on purpose with SendBlankLine or not at
+	// all (#610). A text of nothing but line breaks comes out empty and is
+	// not delivered.
+	text := strings.TrimRight(in.Text, "\r\n")
+	if text == "" {
+		return ""
+	}
 
 	// Stage 2: normalize (stubbed; T8 lands the implementation).
 	text = normalize(in.Category, text)

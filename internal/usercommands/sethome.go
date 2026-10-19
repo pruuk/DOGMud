@@ -31,7 +31,7 @@ func SetHome(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			`<ansi fg="yellow-bold">Current home:</ansi> %s`,
 			currentName))
 		user.SendBlankLine(messaging.CategorySystem)
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">Available locations:</ansi>`)
+		user.SendText(messaging.CategoryScreen, `<ansi fg="yellow-bold">Available locations:</ansi>`)
 		for key, name := range characters.HomeLocationNames {
 			marker := ""
 			if key == current {

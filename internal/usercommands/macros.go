@@ -25,12 +25,12 @@ func Macros(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 	sort.Strings(sortedKeys)
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="226">Your macros:</ansi>`)
+	user.SendText(messaging.CategoryScreen, `<ansi fg="226">Your macros:</ansi>`)
 	for _, macro := range sortedKeys {
 		macroCommand := user.Macros[macro]
 		user.SendBlankLine(messaging.CategorySystem)
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="228">%s</ansi>:`, macro))
+		user.SendText(messaging.CategoryScreen, fmt.Sprintf(`  <ansi fg="228">%s</ansi>:`, macro))
 
 		commandParts := strings.Split(macroCommand, `;`)
 
@@ -43,7 +43,7 @@ func Macros(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				cmdRest = strings.Join(cmdParts[1:], ` `)
 			}
 
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`      %s) <ansi fg="command">%s</ansi> %s`, string(rune(97+i)), cmdAlone, cmdRest))
+			user.SendText(messaging.CategoryScreen, fmt.Sprintf(`      %s) <ansi fg="command">%s</ansi> %s`, string(rune(97+i)), cmdAlone, cmdRest))
 		}
 	}
 	user.SendBlankLine(messaging.CategorySystem)

@@ -143,7 +143,7 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			sight, reaches := scanReach(viewer, room, rooms.LoadRoom(s.RoomId))
 			dirLabel := fmt.Sprintf(`<ansi fg="exit">%s</ansi>`, s.ExitName)
 			if s.Locked && reaches {
-				actor.SendText(messaging.CategorySystem,
+				actor.SendText(messaging.CategoryScreen,
 					fmt.Sprintf(`  %s: the exit is locked`, dirLabel))
 				continue
 			}
@@ -172,13 +172,13 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 					dirLabel, s.RoomTitle)
 			}
 			if sight == messaging.SightNone {
-				actor.SendText(messaging.CategorySystem,
+				actor.SendText(messaging.CategoryScreen,
 					fmt.Sprintf(`  %s: too dark to make anything out`, label))
 			} else if len(parts) > 0 {
-				actor.SendText(messaging.CategorySystem,
+				actor.SendText(messaging.CategoryScreen,
 					fmt.Sprintf(`  %s: %s`, label, strings.Join(parts, `, `)))
 			} else {
-				actor.SendText(messaging.CategorySystem,
+				actor.SendText(messaging.CategoryScreen,
 					fmt.Sprintf(`  %s: nothing of interest`, label))
 			}
 		}

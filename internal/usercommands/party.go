@@ -927,7 +927,7 @@ func cmdPartyAdminShow(user *users.UserRecord, idStr string) {
 		helpStr = strconv.Itoa(found.HelpRoomId)
 	}
 
-	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Party #%d`, found.PartyIdInternal()))
+	user.SendText(messaging.CategoryScreen, fmt.Sprintf(`Party #%d`, found.PartyIdInternal()))
 
 	if found.Leader != nil {
 		leaderRoom := 0
@@ -953,7 +953,7 @@ func cmdPartyAdminShow(user *users.UserRecord, idStr string) {
 		user.SendText(messaging.CategoryAdmin, `  Leader: (none)`)
 	}
 
-	user.SendText(messaging.CategoryAdmin, `  Members:`)
+	user.SendText(messaging.CategoryScreen, `  Members:`)
 	for _, m := range found.Members {
 		memberRoom := 0
 		if r := m.GetRoom(); r != nil {
@@ -976,6 +976,6 @@ func cmdPartyAdminShow(user *users.UserRecord, idStr string) {
 		}
 	}
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`  Home room: %s`, homeStr))
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`  Help room: %s`, helpStr))
+	user.SendText(messaging.CategoryScreen, fmt.Sprintf(`  Home room: %s`, homeStr))
+	user.SendText(messaging.CategoryScreen, fmt.Sprintf(`  Help room: %s`, helpStr))
 }
