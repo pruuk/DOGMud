@@ -177,12 +177,12 @@ func Companion(rest string, user *users.UserRecord,
 
 	if mob == nil {
 		user.SendText(messaging.CategorySystem, `  This companion is not currently present.`)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`  Auto-Assist: %s`, assistStr))
+		user.SendText(messaging.CategoryScreen, fmt.Sprintf(`  Auto-Assist: %s`, assistStr))
 		return true, nil
 	}
 
 	// Vitals descriptions (no hard numbers)
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(
+	user.SendText(messaging.CategoryScreen, fmt.Sprintf(
 		`  Health: %-10s Stamina: %-10s Conviction: %s`,
 		vitalDesc(mob.Character.Health, mob.Character.HealthMax.Value),
 		vitalDesc(mob.Character.Stamina, mob.Character.StaminaMax.Value),
@@ -190,13 +190,13 @@ func Companion(rest string, user *users.UserRecord,
 	))
 
 	// Stat descriptions using the same tiers as the player status command
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(
+	user.SendText(messaging.CategoryScreen, fmt.Sprintf(
 		`  <ansi fg="yellow">Strength:</ansi>   %-13s <ansi fg="yellow">Dexterity:</ansi>  %-13s <ansi fg="yellow">Perception:</ansi> %s`,
 		statQualityDesc(mob.Character.Stats.Strength.ValueAdj),
 		statQualityDesc(mob.Character.Stats.Dexterity.ValueAdj),
 		statQualityDesc(mob.Character.Stats.Perception.ValueAdj),
 	))
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(
+	user.SendText(messaging.CategoryScreen, fmt.Sprintf(
 		`  <ansi fg="yellow">Vitality:</ansi>   %-13s <ansi fg="yellow">Willpower:</ansi>  %-13s <ansi fg="yellow">Charisma:</ansi>   %s`,
 		statQualityDesc(mob.Character.Stats.Vitality.ValueAdj),
 		statQualityDesc(mob.Character.Stats.Willpower.ValueAdj),
@@ -204,10 +204,10 @@ func Companion(rest string, user *users.UserRecord,
 	))
 
 	if mutList := formatCompanionMutations(mob.Character.Mutations); mutList != "" {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="yellow">Mutations:</ansi>  %s`, mutList))
+		user.SendText(messaging.CategoryScreen, fmt.Sprintf(`  <ansi fg="yellow">Mutations:</ansi>  %s`, mutList))
 	}
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`  Auto-Assist: %s`, assistStr))
+	user.SendText(messaging.CategoryScreen, fmt.Sprintf(`  Auto-Assist: %s`, assistStr))
 
 	return true, nil
 }
