@@ -8,7 +8,8 @@ description: A battered tin lantern with a wire bail handle, half-full of
 type: light
 subtype: wearable
 weight: 0.1
-value: 1
+# Between the Torch (3) and the Hooded Lantern (20) (owner, #583).
+value: 8
 wornconditionids:
   - 125
 vendor_categories:
