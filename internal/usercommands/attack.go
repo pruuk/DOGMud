@@ -287,8 +287,13 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			// The engage moment is one draw from the attacker's prepare
 			// pool (spec 2026-10-16 #541 section 2). The plain lines below
 			// are what a reader below full sight reads (D2), and what
-			// everyone reads when the store is not loaded.
-			engage := combat.EngageMessages(user.Character, &m.Character, combat.User, combat.Mob)
+			// everyone reads when the store is not loaded. Drawn only when
+			// a line below will be sent, so a refused, sneaking attack
+			// spends no draw.
+			var engage combat.EngageLines
+			if engaged || !isSneaking {
+				engage = combat.EngageMessages(user.Character, &m.Character, combat.User, combat.Mob)
+			}
 
 			if engaged {
 				user.SendText(engage.Category, combat.EngageLineFor(attackerSight, engage.Actor,
