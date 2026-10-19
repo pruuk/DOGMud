@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -283,19 +284,27 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				}
 			}
 
+			// The engage moment is one draw from the attacker's prepare
+			// pool (spec 2026-10-16 #541 section 2). The plain lines below
+			// are what a reader below full sight reads (D2), and what
+			// everyone reads when the store is not loaded.
+			engage := combat.EngageMessages(user.Character, &m.Character, combat.User, combat.Mob)
+
 			if engaged {
-				user.SendText(messaging.CategoryHitMelee, messaging.HideNames(
+				user.SendText(engage.Category, combat.EngageLineFor(attackerSight, engage.Actor,
 					fmt.Sprintf(`You prepare to enter into mortal combat with %s.`, mName),
-					[]string{m.Character.Name}, attackerSight))
+					[]string{m.Character.Name}))
 			}
 
 			sendMeleeAmbushDenial(user, ambushDenied)
 
 			if !isSneaking {
-				room.SendTextVisual(messaging.CategoryHitMelee,
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> prepares to fight %s.`, user.Character.Name, mName),
-					user.UserId,
-				)
+				roomLine := engage.Observer
+				if roomLine == `` {
+					roomLine = fmt.Sprintf(`<ansi fg="username">%s</ansi> prepares to fight %s.`, user.Character.Name, mName)
+				}
+				room.SendTextVisualHidingNames(engage.Category, roomLine,
+					[]string{user.Character.Name, m.Character.Name}, user.UserId)
 			}
 
 			for _, instId := range room.GetMobs(rooms.FindCharmed) {
@@ -374,25 +383,29 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				state.ActorRef{UserId: attackPlayerId},
 				targeting.ReasonForAggroType(pvpAggroType))
 
+			engage := combat.EngageMessages(user.Character, p.Character, combat.User, combat.User)
+
 			// #214: each side's own line hides the other's name at the
-			// READER's sight, as target.go's shift-focus lines do.
-			user.SendText(messaging.CategoryHitMelee, messaging.HideNames(
+			// READER's sight, as target.go's shift-focus lines do. D2: only
+			// a reader at full sight reads the authored line, which names
+			// the weapon.
+			user.SendText(engage.Category, combat.EngageLineFor(messaging.ParticipantSight(user.Character, room), engage.Actor,
 				fmt.Sprintf(`You prepare to enter into mortal combat with <ansi fg="username">%s</ansi>.`, p.Character.Name),
-				[]string{p.Character.Name},
-				messaging.ParticipantSight(user.Character, room)))
+				[]string{p.Character.Name}))
 
 			sendMeleeAmbushDenial(user, pvpAmbushDenied)
 
 			if !isSneaking {
-
-				p.SendText(messaging.CategoryHitMelee, messaging.HideNames(
+				p.SendText(engage.Category, combat.EngageLineFor(messaging.ParticipantSight(p.Character, room), engage.Actee,
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> prepares to fight you!`, user.Character.Name),
-					[]string{user.Character.Name},
-					messaging.ParticipantSight(p.Character, room)))
+					[]string{user.Character.Name}))
 
-				room.SendTextVisual(messaging.CategoryHitMelee,
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> prepares to fight <ansi fg="mobname">%s</ansi>.`, user.Character.Name, p.Character.Name),
-					user.UserId, attackPlayerId)
+				roomLine := engage.Observer
+				if roomLine == `` {
+					roomLine = fmt.Sprintf(`<ansi fg="username">%s</ansi> prepares to fight <ansi fg="username">%s</ansi>.`, user.Character.Name, p.Character.Name)
+				}
+				room.SendTextVisualHidingNames(engage.Category, roomLine,
+					[]string{user.Character.Name, p.Character.Name}, user.UserId, attackPlayerId)
 			}
 
 			for _, instId := range room.GetMobs(rooms.FindCharmed) {

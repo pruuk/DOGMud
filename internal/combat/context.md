@@ -77,6 +77,25 @@ subtypes are `bite`, `claws`, `slam`, `gore`, `sting`, `siphon`, `trample`,
 precedence. This is what makes non-human mobs' basic attacks and wait rounds
 read as bites or claws instead of punches.
 
+**Engage lines (#541 slice 2, owner ruling A).** The moment an attack
+command starts a fight is one coordinated draw from the attacker's
+`prepare` pool: `EngageMessages(attacker, defender, attackerType,
+defenderType)` (`engage_messages.go`) returns `EngageLines` (actor, actee
+and observer line plus the hit band from `CategoryForWeaponSubtype`). The
+pool comes from `AttackSubtype` directly, never `meleeDisplaySubtype`, so a
+bow user squares up with `shooting.yaml`'s own prepare lines. It does not
+call `IncrementAttackCount`. `EngageLineFor(sight, authored, plain, names)`
+is what a participant reads (owner ruling D2): the authored line only at
+`messaging.SightFull`, otherwise the plain hand-written line with the other
+party's name hidden by `messaging.HideNames`, because an authored line names
+the weapon. An empty authored line (store not loaded, as in command tests)
+also falls back to the plain line. The callers are the attack commands
+(`usercommands/attack.go`, `mobcommands/attack.go`); they send the observer
+line through `Room.SendTextVisualHidingNames`, falling back to the plain
+room line when it is empty, and keep their `engaged`, `!isSneaking` and
+`alreadyFighting` double-announce gates. The token map is shared with
+`GetWaitMessages` through `preAttackTokens` (`combat.go`).
+
 **The slam split (#541).** `trample` (horse), `lash` (slime, fungal colony)
 and `blast` (the water, air, fire, magma, sand, storm and ice elementals)
 were split off `slam`, which keeps the earth elemental and automaton.
@@ -2344,6 +2363,7 @@ own identical terms (converging that is not Task 17's mandate).
 |------|---------|
 | `combat.go` | Round resolution entry points. `resolveCombatRound` builds and admits one aggregate attack plan before resolution, then passes the committed short state into hit scoring. **`calculateCombat` takes both combatants as POINTERS (U7 Task 1). See the gotcha under "Contest core"; value parameters silently switched the whole melee defence cost model off.** Each of the four call sites builds its `combatContext` with `newCombatContext` (`combat_helpers.go`): `sourceSight`/`targetSight` from `messaging.ReaderSight` and the comfort fields `sourceDark`/`sourceBright`/`targetDark`/`targetBright` from `messaging.ComfortDistance`, once per side; see "Sight: the verdict and the ramp". |
 | `combat_helpers.go` | Extracted helpers, including the immutable-ish `attackPlan` snapshot consumed by `calculateCombat`. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** `combatContext` itself lives here: its `sourceSight`/`targetSight` verdicts only hide names, and the attack and defence scores multiply by `messaging.SightScoreMultiplier` on its comfort fields; see "Sight: the verdict and the ramp". |
+| `engage_messages.go` | `EngageLines`, `EngageMessages` (the engage moment drawn from the attacker's `prepare` pool) and `EngageLineFor` (the authored line at full sight, else the plain line with names hidden). See "Engage lines" under "Natural-Attack Subtype Resolution" |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `mitigation_curve.go` | The mitigation curve (#465): `MitigationCurve`, `EffectiveMitigation`, `CritReduction`. See "Mitigation curve (#465)" |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
