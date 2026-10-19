@@ -1711,8 +1711,8 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 //     strike that the reach damage penalty already reflects.
 //
 // Natural-blunt subtypes (Fist, Claws, Bite, Sting, Slam, Trample, Lash,
-// Blast, Gore, Maul, Pounce, Whipping) and caster subtypes (Wand, Sceptre, Staff) keep their
-// own vocabulary.
+// Blast, Gore, Maul, Pounce, Whipping) and caster subtypes (Wand, Sceptre,
+// Staff) keep their own vocabulary.
 func meleeDisplaySubtype(weaponSubType items.ItemSubType, weaponReach, posRadius float64) items.ItemSubType {
 	if as, ok := items.MeleeSwingNarratedAs(weaponSubType); ok {
 		return as
