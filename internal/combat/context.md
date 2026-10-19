@@ -2100,7 +2100,11 @@ the swap is cosmetic only.
 - Natural-blunt: Fist, Claws, Bite, Sting, Slam, Trample, Lash, Blast, Gore, Whipping
 - Caster: Wand, Sceptre, Staff
 
-**Affected subtypes (swap fires):** Slashing, Cleaving, Stabbing, Shooting.
+**Affected subtypes (swap fires):** Slashing, Cleaving, Stabbing.
+
+**Always swapped:** a subtype `items.MeleeSwingNarratedAs` re-narrates borrows
+that subtype's swing lines regardless of reach. Today that is Shooting, as
+Bludgeoning, so `shooting.yaml` authors only `prepare` and `wait` (#541).
 
 ### Balance knobs (`Balance` section in config)
 

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 // Owner ruling C (spec 2026-10-16 #541 section 3): round combat releases a
@@ -58,5 +59,21 @@ func TestUnreachableCombatLine_CanFail(t *testing.T) {
 	}
 	if hit := unreachableCombatLine("# {exitname} - a header comment\noptions:\n"); hit != "" {
 		t.Errorf("flagged a comment: %s", hit)
+	}
+}
+
+// shooting.yaml's swing intensities can never render: a bow swung in melee
+// narrates as bludgeoning (items.MeleeSwingNarratedAs).
+func TestShootingKeepsOnlyPrepareAndWait(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("_datafiles", "world", "dogmud", "combat-messages", "shooting.yaml"))
+	require.NoError(t, err)
+	var g struct {
+		Options map[string]any `yaml:"options"`
+	}
+	require.NoError(t, yaml.Unmarshal(raw, &g))
+	require.Contains(t, g.Options, "prepare")
+	require.Contains(t, g.Options, "wait")
+	for k := range g.Options {
+		require.Contains(t, []string{"prepare", "wait"}, k, "shooting.yaml authors %q, which never renders", k)
 	}
 }

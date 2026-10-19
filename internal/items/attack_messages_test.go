@@ -193,3 +193,25 @@ func TestValidateChecksEachTierSeparately(t *testing.T) {
 		t.Fatal("Validate accepted equal TOTALS with unequal tiers; equality must be per tier")
 	}
 }
+
+// Ruling C: a swing with a re-narrated subtype borrows another file's lines,
+// so its own file needs only prepare and wait. The validator reads the same
+// function the renderer does.
+func TestValidateExemptsReNarratedSwingIntensities(t *testing.T) {
+	if as, ok := MeleeSwingNarratedAs(Shooting); !ok || as != Bludgeoning {
+		t.Fatalf("MeleeSwingNarratedAs(shooting) = %q, %v; want bludgeoning, true", as, ok)
+	}
+	if _, ok := MeleeSwingNarratedAs(Slashing); ok {
+		t.Fatal("slashing swings with its own lines")
+	}
+	one := SkillTieredMessages{Beginner: MessageOptions{"x"}}
+	opts := AttackOptions{Together: TogetherMessages{ToAttacker: one, ToDefender: one, ToRoom: one}}
+	bow := &WeaponAttackMessageGroup{OptionId: Shooting, Options: AttackTypes{Prepare: opts, Wait: opts}}
+	if err := bow.Validate(); err != nil {
+		t.Errorf("shooting with prepare and wait only must validate: %v", err)
+	}
+	sword := &WeaponAttackMessageGroup{OptionId: Slashing, Options: AttackTypes{Prepare: opts, Wait: opts}}
+	if err := sword.Validate(); err == nil {
+		t.Error("slashing without its swing intensities must fail")
+	}
+}

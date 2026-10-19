@@ -144,6 +144,24 @@ func (w *WeaponAttackMessageGroup) Id() ItemSubType {
 	return w.OptionId
 }
 
+// MeleeSwingNarratedAs reports the subtype whose swing lines a melee swing
+// with sub always borrows, and true; or "", false when sub swings with its
+// own lines. A bow, crossbow, sling or gun swung in melee is a club, so
+// combat.meleeDisplaySubtype narrates it as bludgeoning and shooting.yaml
+// keeps only prepare and wait (owner ruling C, spec 2026-10-16 #541
+// section 3). Validate reads this same function, so the renderer and the
+// validator cannot drift.
+func MeleeSwingNarratedAs(sub ItemSubType) (ItemSubType, bool) {
+	if sub == Shooting {
+		return Bludgeoning, true
+	}
+	return "", false
+}
+
+// swingIntensities are the intensities a swing renders. A subtype that
+// MeleeSwingNarratedAs re-narrates may omit them.
+var swingIntensities = []Intensity{Miss, Weak, Normal, Heavy, Critical, Fumble}
+
 // Validate checks that every required intensity is present and that every
 // authored group can be rendered from ONE coordinated index.
 //
@@ -156,10 +174,14 @@ func (w *WeaponAttackMessageGroup) Id() ItemSubType {
 // the same index. Per-tier equality is exactly equivalent to union equality at
 // all three skill levels.
 //
-// minVariants is 1, not the defence store's 5: 410 of the 555 authored
+// minVariants is 1, not the defence store's 5: 399 of the 537 authored
 // together groups in the shipped store hold fewer than five, and the smallest
 // hold two (counted from combat_messages.golden, 2026-10-19, after #541
-// retired the separate split, whose smallest group held one).
+// retired the separate split, whose smallest group held one, and cut
+// shooting.yaml to prepare and wait).
+//
+// A subtype MeleeSwingNarratedAs re-narrates needs only prepare and wait: its
+// swings borrow another file's lines, so its own would never render.
 //
 // The attack store had none of this until M3 item 8. It checked intensity
 // presence and nothing else, while the defence sibling next door
@@ -167,7 +189,10 @@ func (w *WeaponAttackMessageGroup) Id() ItemSubType {
 func (w *WeaponAttackMessageGroup) Validate() error {
 
 	// Make sure all important options are present.
-	optionsToCheck := []Intensity{Prepare, Wait, Miss, Weak, Normal, Heavy, Critical, Fumble}
+	optionsToCheck := []Intensity{Prepare, Wait}
+	if _, reNarrated := MeleeSwingNarratedAs(w.OptionId); !reNarrated {
+		optionsToCheck = append(optionsToCheck, swingIntensities...)
+	}
 	for _, option := range optionsToCheck {
 		if _, ok := w.Options[option]; !ok {
 			return fmt.Errorf("missing option[`%s`] for %s", option, w.OptionId)

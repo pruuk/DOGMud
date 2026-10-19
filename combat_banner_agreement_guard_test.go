@@ -140,7 +140,9 @@ func TestCombatBannerWordsAgreeAcrossRoles(t *testing.T) {
 		for _, f := range bannerFailures(name, &g) {
 			t.Errorf("banner mismatch: %s", f)
 		}
-		if n := bannerRecordCount(&g); n == 0 {
+		// A file that never swings (shooting.yaml, items.MeleeSwingNarratedAs)
+		// authors no banner words, so only a swinging file must carry one.
+		if _, swings := g.Options[items.Critical]; swings && bannerRecordCount(&g) == 0 {
 			t.Errorf("%s: no record carries a banner word, the guard checked nothing", name)
 		}
 	}

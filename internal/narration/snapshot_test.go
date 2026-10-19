@@ -383,6 +383,12 @@ func buildCombatMessagesGolden(t *testing.T) string {
 		}
 
 		for _, intensity := range intensityList {
+			// A re-narrated subtype authors no swing lines; GetPreAttackMessage
+			// would hand back generic's and record them twice.
+			if _, reNarrated := items.MeleeSwingNarratedAs(items.ItemSubType(subtype)); reNarrated &&
+				intensity != items.Prepare && intensity != items.Wait {
+				continue
+			}
 			opts := items.GetPreAttackMessage(items.ItemSubType(subtype), intensity)
 
 			// One row per COORDINATED VARIANT, with every role on it. The

@@ -1698,11 +1698,13 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 // meleeDisplaySubtype computes the subtype used to select AUTO-ATTACK melee
 // swing narration. Two rules apply, in order:
 //
-//  1. Shooting-subtype weapons (bows/crossbows/slings/guns) ALWAYS narrate as
-//     improvised Bludgeoning in the melee path — a swung bow is a club, never
-//     "fires/snipes/arrow". The deliberate SHOOT path (actions.ExecuteFire /
-//     combat_fire.go) has its own messages and never routes through here, so
-//     this is unconditional regardless of grapple position.
+//  1. A subtype items.MeleeSwingNarratedAs re-narrates ALWAYS borrows that
+//     subtype's swing lines in the melee path. Today that is Shooting
+//     (bows/crossbows/slings/guns) as improvised Bludgeoning: a swung bow is
+//     a club, never "fires/snipes/arrow". The deliberate SHOOT path
+//     (actions.ExecuteFire / combat_fire.go) has its own messages and never
+//     routes through here, so this is unconditional regardless of grapple
+//     position. shooting.yaml authors only prepare and wait.
 //  2. Otherwise, when ShouldBludgeon fires (weapon reach exceeds the grapple
 //     radius of the attacker's position), bladed subtypes (Slashing, Cleaving,
 //     Stabbing) narrate as Bludgeoning — the fiction tracks the pommel/hilt
@@ -1712,8 +1714,8 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 // Blast, Gore, Whipping) and caster subtypes (Wand, Sceptre, Staff) keep their
 // own vocabulary.
 func meleeDisplaySubtype(weaponSubType items.ItemSubType, weaponReach, posRadius float64) items.ItemSubType {
-	if weaponSubType == items.Shooting {
-		return items.Bludgeoning
+	if as, ok := items.MeleeSwingNarratedAs(weaponSubType); ok {
+		return as
 	}
 	if ShouldBludgeon(weaponReach, posRadius) {
 		switch weaponSubType {

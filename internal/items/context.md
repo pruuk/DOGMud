@@ -1494,8 +1494,17 @@ taunt PR #115) and was live in this store until M3 item 8.
 equal totals.** The union is cumulative, so equal totals with unequal tiers
 still pair an expert line against a master one at the same index. Per-tier
 equality is exactly equivalent to union equality at all three skill levels.
-`minVariants` is 1, not the defence store's 5: 414 of 534 shipped groups hold
-fewer than five, and the smallest holds one.
+`minVariants` is 1, not the defence store's 5: 399 of 537 shipped groups hold
+fewer than five, and the smallest holds two (2026-10-19).
+
+**`Validate` requires the swing intensities (miss to fumble) only of a subtype
+that swings with its own lines.** `MeleeSwingNarratedAs(sub)` names the
+subtype whose swing lines `sub` always borrows; today only `Shooting`, which
+narrates as `Bludgeoning` (a bow swung in melee is a club). The renderer
+(`combat.meleeDisplaySubtype`) and `Validate` both read it, so they cannot
+drift, and `shooting.yaml` authors only `prepare` and `wait` (#541, owner
+ruling C). The root guard `TestShootingKeepsOnlyPrepareAndWait` fails if its
+swing intensities come back.
 
 `tools/combat_message_pool_audit.py` reports any group whose pools are
 unequal; `tools/combat_message_pad_check.py` proves a content change deleted
