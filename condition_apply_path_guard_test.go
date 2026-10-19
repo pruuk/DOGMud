@@ -148,8 +148,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/hooks/Awareness_Cascades.go|76": "condition 9 must be applied PERMANENT so the awareness state machine owns its lifecycle; the event path has no permanent form, and the transition callback holds only a Character",
 
 	// ── routing would narrate the wrong thing, or narrate it repeatedly ─────
-	"internal/hooks/pinnacle_tick.go|339": "the bandolier continuously re-applies any slotted potion condition that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
-	"internal/hooks/pinnacle_tick.go|353": "the bandolier continuously re-applies any slotted potion condition that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
+	"internal/hooks/pinnacle_tick.go|383": "holdAmbient holds a slotted potion's condition as a permanent record while the bandolier is worn, as worn items' conditions are; the pinnacle announces attunement once itself, so the potion's own start line is not wanted",
 	"internal/justice/arrest.go|645":      "RestoreJailOnLogin re-applies an already-running sentence after the RemoveCondition above, so the hook would read it as a fresh application and clang the cell door shut on every login",
 
 	// ── the condition must be in place before the function returns ─────────

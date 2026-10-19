@@ -77,11 +77,11 @@ quest|31|trigger3|action1|actor => You settle the shirt across your shoulders. T
 quest|31|trigger4|action1|actor => The keeper of the Drowned Lantern tips you a nod as you step in. "First one is on the house -- the coulee's welcome. Rest while it is still being gentle with you." Now go back to Crier Toke in Hub Square, east and then north, and type ask toke footing.
 quest|32|rewards|actor => Vorn turns your performance over in his head for a long moment, the way a smith eyes a finished blade for flaws. Then he nods once, short, like it costs him something. "Passable. You did not freeze, you did not panic, and you remembered to think between swings. That is more than most manage on the first day." He presses a few coins into your hand. "Go north, then east along the wash. Find Garve. He will put that edge to use."
 quest|32|rewards|observer => Vorn nods at <ansi fg="username">Aliceia</ansi> with a gruff, brief approval.
-quest|32|trigger0|action1|actor => The cudgel sits in your hand. Now fight the training dummy: type attack dummy.
-quest|32|trigger1|action1|actor => The training dummy shudders and goes still. Your arms remember the rhythm of it: weight, angle, follow through. A new dummy stands up soon. When it does, type kick dummy.
-quest|32|trigger2|action1|actor => That is a special move. Now read your opponent: type consider dummy.
-quest|32|trigger3|action1|actor => That is a special move. Now read your opponent: type consider dummy.
-quest|32|trigger4|action1|actor => Now choose how much combat detail you see: type set combatverbosity full.
+quest|32|trigger0|action1|actor => The cudgel sits in your hand. Before you fight, size up the training dummy: type consider dummy.
+quest|32|trigger1|action1|actor => Now you know what you face. Fight it: type attack dummy.
+quest|32|trigger2|action1|actor => The training dummy shudders and goes still. Your arms remember the rhythm of it: weight, angle, follow through. A new dummy stands up soon. When it does, type kick dummy.
+quest|32|trigger3|action1|actor => That is a special move. Now choose how much combat detail you see: type set combatverbosity full.
+quest|32|trigger4|action1|actor => That is a special move. Now choose how much combat detail you see: type set combatverbosity full.
 quest|32|trigger5|action1|actor => Your combat detail is set. Report to Drillmaster Vorn: type ask vorn report.
 quest|33|rewards|actor => Garve presses a purse into your hand and holds your gaze a moment longer than is strictly necessary -- the look of someone revising their estimate upward. The leggings he slides from the pack beside him are well-made, cut for movement, and they fit.
 quest|33|trigger0|action1|actor => The bandit scout goes down. His gear stays on the body until you take it: type loot corpse to strip it. Next is the squatter. From Squatter's Hollow, go east to the Cracked Cistern and type attack squatter.
