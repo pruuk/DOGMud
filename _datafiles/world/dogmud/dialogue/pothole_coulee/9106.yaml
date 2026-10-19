@@ -12,7 +12,7 @@ greetings:
   # Greetings fire once per mob per player per boot with no quest or visit
   # gate, so a returning character hears this too: it must not call them
   # new (#620).
-  - text: "Hoy there! I never forget a face -- faces are half my stock in trade."
+  - text: "Hoy there! I never forget a face. Faces are half my stock in trade."
     moods: ["friendly", "neutral"]
 
 patterns:
