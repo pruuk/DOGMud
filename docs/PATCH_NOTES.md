@@ -9,6 +9,10 @@
   quest step that asks you to reach that place, the same as walking in.
 - The Vitalis Bandolier's effects now show as sustained and no longer
   announce that they are wearing off.
+- A swing from your off hand now lands critical hits as well as that hand
+  is trained, rather than borrowing your main hand's skill.
+- Torches and oil lanterns cost a little more, so selling one back is no
+  longer free light.
 - The set screen shows each setting and its value on one line, with no
   stray periods. Long prompts wrap neatly.
 - The skills and inventory screens no longer leave a blank line behind
