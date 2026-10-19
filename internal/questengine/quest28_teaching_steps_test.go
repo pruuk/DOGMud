@@ -209,7 +209,7 @@ func TestQuest28_FightLinesAreWhispered(t *testing.T) {
 			}
 		}
 	}
-	require.Equal(t, 6, seen, "attacked 1 + cast_spike 2 + tripped 3 lines")
+	require.Equal(t, 8, seen, "attacked 2 + cast_spike 3 + tripped 3 lines")
 }
 
 // TestQuest28_LookLessonIsAHighlightedNoun: the room-noun lesson (owner
