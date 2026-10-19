@@ -13,11 +13,7 @@ import (
 // naturalWeaponPools are the combat-message pools a natural weapon renders
 // through: the natural-attack subtypes, plus every species natural_attack
 // value found in either world.
-var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam, Siphon, Trample, Lash, Blast}
-
-// naturalWeaponSpecialPools are the special-attack pools whose {itemname} is
-// the same natural weapon, so they follow the same rule (M6 slice 2 review).
-var naturalWeaponSpecialPools = []string{"maul"}
+var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam, Siphon, Trample, Lash, Blast, Maul, Pounce}
 
 // afterItemName finds each {itemname} and the text that follows it.
 var afterItemName = regexp.MustCompile(`\{itemname\}(.*)`)
@@ -100,9 +96,6 @@ func naturalWeaponPoolFiles(t *testing.T) []string {
 	pools := map[string]bool{}
 	for _, p := range naturalWeaponPools {
 		pools[string(p)] = true
-	}
-	for _, p := range naturalWeaponSpecialPools {
-		pools[p] = true
 	}
 	species, err := filepath.Glob(filepath.Join("..", "..", "_datafiles", "world", "*", "species", "*.yaml"))
 	if err != nil || len(species) == 0 {

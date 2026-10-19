@@ -264,7 +264,7 @@ func CategoryForWeaponSubtype(sub items.ItemSubType) messaging.Category {
 		return messaging.CategoryHitBlunt
 	case items.Cleaving, items.Stabbing, items.Slashing, "piercing":
 		return messaging.CategoryHitMelee
-	case items.Claws, items.Bite, items.Sting, items.Gore:
+	case items.Claws, items.Bite, items.Sting, items.Gore, items.Maul, items.Pounce:
 		return messaging.CategoryHitNaturalSharp
 	case items.Shooting, items.Whipping:
 		return messaging.CategoryHitRanged

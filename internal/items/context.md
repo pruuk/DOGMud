@@ -1303,6 +1303,8 @@ fires (pommel/hilt strike narration). Full design spec and formula:
 |-------------|-----------|------------------------------------------|
 | Fist        | 0.10      | Punch length                             |
 | Claws       | 0.15      | Fingers extended                         |
+| Maul        | 0.15      | Bears; strikes with claws (#541)         |
+| Pounce      | 0.15      | Big cats; strikes with claws (#541)      |
 | Bite        | 0.15      | Head-mounted, neck-length                |
 | Sting       | 0.20      | Abdomen/tail-tip                         |
 | Slam        | 0.30      | Bull rush, shoulder-check                |
@@ -1364,7 +1366,7 @@ species whose `natural_attack` is `siphon` instead needs `lifedrain: true`
 ### Natural-attack subtypes: live for mob basic attacks
 
 The natural-attack `ItemSubType`s (`bite`, `claws`, `slam`, `gore`,
-`sting`, `siphon`, `trample`, `lash` and `blast`) and their combat-message
+`sting`, `siphon`, `trample`, `lash`, `blast`, `maul` and `pounce`) and their combat-message
 files are now the standard
 rendering path for non-human mob melee (Phase 1 non-human attack
 messaging). When a species YAML sets `natural_attack:`, `buildWeaponSetup`
@@ -1520,7 +1522,7 @@ returns.
 natural weapon renders as the species' `unarmedname`, singular for some
 ("maw", "abrasive whirl") and plural for most ("claws", "pseudopods"), so
 no verb can agree with it. In the `claws`, `bite`, `sting`, `gore`,
-`slam`, `trample`, `lash` and `blast` pools (and any other species
+`slam`, `trample`, `lash`, `blast`, `maul` and `pounce` pools (and any other species
 `natural_attack` pool) the attacker
 does the verb: "You rake X with your {itemname}". In both worlds,
 `natural_weapon_agreement_test.go` fails any line where a word other than a

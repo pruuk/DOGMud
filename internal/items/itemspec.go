@@ -109,6 +109,8 @@ func ItemSubtypes() []ItemTypeInfo {
 		{string(Trample), `A hoofed beast's kicks, stamps and trampling weight.`, 0, 0, 0},
 		{string(Lash), `An amorphous creature's whipping pseudopods or tendrils.`, 0, 0, 0},
 		{string(Blast), `An energy elemental's strike with its own element.`, 0, 0, 0},
+		{string(Maul), `A bear's swiping claws and crushing bite.`, 0, 0, 0},
+		{string(Pounce), `A big cat's leaping claws and fangs.`, 0, 0, 0},
 		// Miscellaneous data
 		{string(BlobContent), `Can store blob content in the item data.`, 0, 0, 0},
 	}
@@ -182,6 +184,8 @@ const (
 	Trample     ItemSubType = "trample" // hooves: kicks, rears and tramples (slam split, #541)
 	Lash        ItemSubType = "lash"    // amorphous bodies: pseudopods and tendrils (#541)
 	Blast       ItemSubType = "blast"   // energy elementals strike with their element (#541)
+	Maul        ItemSubType = "maul"    // bears: a swipe and a crushing bite (#541 slice 2)
+	Pounce      ItemSubType = "pounce"  // big cats: leaping claws and fangs (#541 slice 2)
 
 	BlobContent ItemSubType = "blobcontent"
 

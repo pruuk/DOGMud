@@ -230,6 +230,8 @@ var validNaturalAttacks = map[items.ItemSubType]struct{}{
 	items.Trample: {},
 	items.Lash:    {},
 	items.Blast:   {},
+	items.Maul:    {},
+	items.Pounce:  {},
 }
 
 // validateGoreHasHorns returns an error if a gore (horned) species does not

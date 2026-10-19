@@ -31,7 +31,7 @@ contains:
 - `intrinsic_mutations` — natural traits (chunk 2.5)
 - `natural_attack` — `ItemSubType` used for BASIC unarmed attack
   combat messages (`bite`, `claws`, `slam`, `gore`, `sting`, `siphon`,
-  `trample`, `lash`, `blast`). Empty
+  `trample`, `lash`, `blast`, `maul`, `pounce`). Empty
   means the humanoid default (generic-punch messaging). Validated at
   load by `validateNaturalAttack`; panics on unknown values.
 - `beast_moves`: `BeastMoves []string`, the special moves this species can
@@ -85,7 +85,7 @@ Non-human species declare their BASIC unarmed attack messaging style via
 selects the combat-message file used when the mob has no equipped weapon.
 
 Valid values: `bite`, `claws`, `slam`, `gore`, `sting`, `siphon`, `trample`,
-`lash`, `blast` (the keys of `validNaturalAttacks` in `species.go`). An empty string
+`lash`, `blast`, `maul`, `pounce` (the keys of `validNaturalAttacks` in `species.go`). An empty string
 falls back to the humanoid default (generic-punch messaging). Unknown
 values cause a startup panic via `validateNaturalAttack`. `siphon` also
 requires `lifedrain: true` on the species (`validateSiphonHasLifeDrain`,
@@ -134,6 +134,14 @@ slice 2 (Appendix A of
 `docs/superpowers/specs/2026-10-16-combat-message-reachability-design.md`).
 `species_slam_split_test.go` (`TestSlamSplitAssignments`) pins every row.
 Spec: `docs/superpowers/specs/completed/2026-10-16-slam-split-design.md`.
+
+### Bears maul, cats pounce (#541 slice 2, owner ruling D)
+
+Bear 3 ("claws and teeth") sets `natural_attack: maul` and feline 11
+("claws and fangs") sets `natural_attack: pounce`, so their ordinary swings
+read from `maul.yaml` and `pounce.yaml` instead of `claws.yaml`. Both are
+wired like `trample` (step 3 below). `species_maul_pounce_test.go`
+(`TestBearsMaulAndCatsPounce`) pins them.
 
 ### Choosing a natural attack for a new species
 

@@ -73,7 +73,7 @@ bites. `GetWaitMessages` draws its wait pool and hit band from
 `AttackSubtype`, and the "too entangled to defend" lines take their category
 from it, so a creature waits and swings with the same thing. The natural
 subtypes are `bite`, `claws`, `slam`, `gore`, `sting`, `siphon`, `trample`,
-`lash` and `blast`. An equipped weapon's own `Subtype` always takes
+`lash`, `blast`, `maul` and `pounce`. An equipped weapon's own `Subtype` always takes
 precedence. This is what makes non-human mobs' basic attacks and wait rounds
 read as bites or claws instead of punches.
 
@@ -106,6 +106,14 @@ in `CategoryHitBlunt` with `slam`, and `blast` in `CategoryHitCaster` with
 pins the bands; `slam_split_render_test.go` proves a slime, a horse, a sand
 elemental and an automaton each render from their own file. The groups and
 how to choose a type: `internal/species/context.md`.
+
+**Maul and pounce as default attacks (#541 slice 2, owner ruling D).**
+Bears (`natural_attack: maul`) swing from `maul.yaml` and cats
+(`natural_attack: pounce`) from `pounce.yaml` in ordinary combat.
+`CategoryForWeaponSubtype` puts both in `CategoryHitNaturalSharp` with
+`claws`, and `meleeDisplaySubtype` leaves them their own vocabulary.
+`maul_pounce_render_test.go` proves a bear and a cat each render from their
+own file.
 
 ## Key Features
 
@@ -2110,7 +2118,7 @@ the bandit's ribs" instead of slashing narration. Damage math is unchanged;
 the swap is cosmetic only.
 
 **Exempt subtypes (no swap):**
-- Natural-blunt: Fist, Claws, Bite, Sting, Slam, Trample, Lash, Blast, Gore, Whipping
+- Natural-blunt: Fist, Claws, Bite, Sting, Slam, Trample, Lash, Blast, Gore, Maul, Pounce, Whipping
 - Caster: Wand, Sceptre, Staff
 
 **Affected subtypes (swap fires):** Slashing, Cleaving, Stabbing.
