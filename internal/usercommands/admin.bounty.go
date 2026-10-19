@@ -146,7 +146,7 @@ func bountyAdminList(args []string, user *users.UserRecord) (bool, error) {
 			bountyTruncate(bountyTargetLabel(r.Target), 15),
 			r.GoldReward, r.RepReward, r.DeclaredReason)
 	}
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryScreen, b.String())
 	return true, nil
 }
 
@@ -185,7 +185,7 @@ func bountyAdminShow(args []string, user *users.UserRecord) (bool, error) {
 		fmt.Fprintf(&sb, "  Claimed:   round %d by %s:%d\r\n",
 			b.ClaimedRound, b.ClaimedBy.Type, b.ClaimedBy.Id)
 	}
-	user.SendText(messaging.CategorySystem, sb.String())
+	user.SendText(messaging.CategoryScreen, sb.String())
 	return true, nil
 }
 

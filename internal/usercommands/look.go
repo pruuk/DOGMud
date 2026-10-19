@@ -278,7 +278,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				user.SendBlankLine(messaging.CategorySystem)
 
 				finalItem := items.New(finalItemId)
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`    <ansi fg="230">To receive 1 <ansi fg="itemname">%s</ansi>:</ansi> `, finalItem.DisplayName()))
+				user.SendText(messaging.CategoryScreen, fmt.Sprintf(`    <ansi fg="230">To receive 1 <ansi fg="itemname">%s</ansi>:</ansi> `, finalItem.DisplayName()))
 
 				for inputItemId, qtyNeeded := range neededItems {
 					tmpItem := items.New(inputItemId)
@@ -289,7 +289,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					} else if totalContained > 0 {
 						colorClass = "3"
 					}
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(`        <ansi fg="%s">[%d/%d]</ansi> <ansi fg="itemname">%s</ansi>`, colorClass, totalContained, qtyNeeded, tmpItem.DisplayName()))
+					user.SendText(messaging.CategoryScreen, fmt.Sprintf(`        <ansi fg="%s">[%d/%d]</ansi> <ansi fg="itemname">%s</ansi>`, colorClass, totalContained, qtyNeeded, tmpItem.DisplayName()))
 				}
 
 			}

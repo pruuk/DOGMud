@@ -27,10 +27,10 @@ func Alias(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			addedAlias, deletedAlias := user.AddCommandAlias(aliasName, aliasVal)
 
 			if addedAlias != `` {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">Custom Alias Added:</ansi> <ansi fg="command">%s</ansi>=<ansi fg="command">%s</ansi>`, addedAlias, aliasVal))
+				user.SendText(messaging.CategoryScreen, fmt.Sprintf(`<ansi fg="yellow">Custom Alias Added:</ansi> <ansi fg="command">%s</ansi>=<ansi fg="command">%s</ansi>`, addedAlias, aliasVal))
 			}
 			if deletedAlias != `` {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">Custom Alias Removed:</ansi> <ansi fg="command">%s</ansi>`, deletedAlias))
+				user.SendText(messaging.CategoryScreen, fmt.Sprintf(`<ansi fg="yellow">Custom Alias Removed:</ansi> <ansi fg="command">%s</ansi>`, deletedAlias))
 			}
 
 			events.AddToQueue(events.AutomationChanged{UserId: user.UserId})
