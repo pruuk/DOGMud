@@ -96,7 +96,7 @@ func Help(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	}
 
-	user.SendText(messaging.CategorySystem, helpTxt)
+	user.SendText(messaging.CategoryScreen, helpTxt)
 
 	// Quest engine: command notification — the newbie Lore spoke reinforces the
 	// in-game help system (Tier-1 teaching beat). Fires on a successful help

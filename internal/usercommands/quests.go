@@ -106,7 +106,7 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	})
 
 	questTxt, _ := templates.Process("character/quests", qInfo, user.UserId)
-	user.SendText(messaging.CategorySystem, questTxt)
+	user.SendText(messaging.CategoryScreen, questTxt)
 
 	return true, nil
 }

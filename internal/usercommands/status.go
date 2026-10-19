@@ -11,7 +11,7 @@ import (
 func Status(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	tplTxt, _ := templates.Process("character/status", user, user.UserId)
-	user.SendText(messaging.CategorySystem, tplTxt)
+	user.SendText(messaging.CategoryScreen, tplTxt)
 
 	return true, nil
 }
