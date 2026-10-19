@@ -11,6 +11,7 @@ naturalarmor: 8
 size: large
 unarmedname: claws and teeth
 natural_attack: claws
+beast_moves: [rake]
 selectable: false
 tameable: true
 speech: false

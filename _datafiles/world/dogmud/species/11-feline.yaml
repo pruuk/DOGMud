@@ -12,6 +12,7 @@ conditionids:
 size: medium
 unarmedname: claws and fangs
 natural_attack: claws
+beast_moves: [rake, pounce, hamstring, throttle]
 selectable: false
 tameable: true
 speech: false

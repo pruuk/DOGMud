@@ -14,6 +14,7 @@ conditionids:
 size: small
 unarmedname: jaws
 natural_attack: bite
+beast_moves: [throttle, pounce]
 selectable: false
 tameable: false
 speech: false

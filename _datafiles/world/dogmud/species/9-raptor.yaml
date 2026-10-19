@@ -12,6 +12,7 @@ conditionids:
 size: small
 unarmedname: talons and beak
 natural_attack: claws
+beast_moves: [rake, pounce]
 selectable: false
 tameable: true
 speech: false

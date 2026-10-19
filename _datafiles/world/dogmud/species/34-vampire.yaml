@@ -12,6 +12,7 @@ intrinsic_mutations:
 size: medium
 unarmedname: claws
 natural_attack: claws
+beast_moves: [drain]
 lifedrain: true
 selectable: false
 tameable: false

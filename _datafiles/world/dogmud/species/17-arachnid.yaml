@@ -13,6 +13,7 @@ conditionids:
 size: small
 unarmedname: fangs
 natural_attack: bite
+beast_moves: [pounce]
 selectable: false
 tameable: true
 speech: false

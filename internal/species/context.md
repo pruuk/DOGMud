@@ -34,6 +34,8 @@ contains:
   `trample`, `lash`, `blast`). Empty
   means the humanoid default (generic-punch messaging). Validated at
   load by `validateNaturalAttack`; panics on unknown values.
+- `beast_moves`: `BeastMoves []string`, the special moves this species can
+  use (see "Beast moves" below). Validated at load by `validateBeastMoves`.
 - `speech` — `*bool`; `speech: false` marks a species with no voice (beasts,
   slimes, elementals, constructs). Absent means it speaks. Read through
   `(*Species).CanSpeak()`; `characters.SpeechState` is the consumer.
@@ -152,6 +154,31 @@ Spec: `docs/superpowers/specs/completed/2026-10-16-slam-split-design.md`.
    and a reach case in `items.DefaultReachForSubtype` (`internal/items/reach.go`).
    `siphon` (#538) and the slam split (#541) are the worked examples.
 
+### Beast moves (`beast_moves`, #541 slice 2)
+
+`BeastMoves []string` (YAML: `beast_moves: [rake, pounce]`) lists the
+special moves a species can use. It is the special-move half of the
+principle above: `natural_attack` is the ordinary swing, `beast_moves` the
+rarer moves and finishers. The reviewed table (spec section 5) is pinned by
+`species_beast_moves_test.go` (`proposedBeastMoves`); a species absent from
+it has no beast moves.
+
+`beastMoveBodies` in `species.go` names every move the list may hold and
+what body each needs: `rake`, `maul`, `throttle`, `smother` need no hands;
+`pounce` and `hamstring` also need legs; `gore` also needs horns; `drain`
+needs `lifedrain: true` and allows hands (armed undead drain, so the
+vampire 34 lists it). `charge` is not a beast move: it has no AI gate and
+stays scripted through mob `combatcommands`.
+
+`LoadDataFiles` panics through `validateBeastMoves` on an unknown move, a
+move listed twice, or a move whose body the species lacks. The validator
+reads `BodyParts` the way `characters.Character.HasBodyPart` does (no list
+means no parts), not the fail-open `Species.HasBodyPart`, so the load check
+and the runtime anatomy gate cannot disagree. `(*Species).HasBeastMove(move)`
+is the nil-safe lookup. The combat gates switch from the attack-family
+predicates to this list in a later task of the same slice; until then the
+list is data only and play is unchanged.
+
 ---
 
 ## Files in This Package
@@ -161,6 +188,7 @@ Spec: `docs/superpowers/specs/completed/2026-10-16-slam-split-design.md`.
 | `species.go` | Structs, registry, loader, body-part validation |
 | `species_test.go` | Unit tests for body-part logic |
 | `species_slam_split_test.go` | Pins each former slam species to its type after the slam split (#541) |
+| `species_beast_moves_test.go` | Pins each species' `beast_moves` to the reviewed table and proves `validateBeastMoves` can fail per rule (#541) |
 | `test_helpers.go` | Test utilities |
 | `testing_support.go` | `SetSpeciesForTest` / `LoadForTest` — scoped roster swaps |
 | `context.md` | This file — package overview for Claude Code |
