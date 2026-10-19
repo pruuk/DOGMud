@@ -316,7 +316,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		// Item reward?
 		if questInfo.Rewards.ItemId > 0 {
 			newItm := items.New(questInfo.Rewards.ItemId)
-			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>!`, items.ArticlePrefix(newItm.DisplayName()), newItm.DisplayName()))
+			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>!`, items.ArticlePrefix(newItm.DisplayName()), items.MidSentenceName(newItm.DisplayName())))
 			questUser.Character.StoreItem(newItm)
 
 			iSpec := newItm.GetSpec()
@@ -353,7 +353,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			if granted > 1 {
 				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="itemname">%s</ansi> (x%d)!`, firstName, granted))
 			} else {
-				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>!`, items.ArticlePrefix(firstName), firstName))
+				questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>!`, items.ArticlePrefix(firstName), items.MidSentenceName(firstName)))
 			}
 		}
 		// Condition reward?

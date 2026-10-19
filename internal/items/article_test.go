@@ -29,3 +29,30 @@ func TestArticlePrefix(t *testing.T) {
 		}
 	}
 }
+
+// TestMidSentenceName: an item's own leading article reads lowercase after
+// "You find" (#620: "You find A Sheaf of Gleaned Grain."), and every other
+// capital stays.
+func TestMidSentenceName(t *testing.T) {
+	for name, want := range map[string]string{
+		"A Sheaf of Gleaned Grain": "a Sheaf of Gleaned Grain",
+		"An Old Map":               "an Old Map",
+		"The Crown of Ash":         "the Crown of Ash",
+		"Some Dried Herbs":         "some Dried Herbs",
+		"the Crown of Ash":         "the Crown of Ash",
+		"Iron Sword":               "Iron Sword",
+		"Anvil":                    "Anvil",
+		"Theodric's Pick":          "Theodric's Pick",
+		"A":                        "A",
+		"":                         "",
+	} {
+		if got := MidSentenceName(name); got != want {
+			t.Errorf("MidSentenceName(%q) = %q, want %q", name, got, want)
+		}
+	}
+	// The pair reads as one clean phrase.
+	n := "A Sheaf of Gleaned Grain"
+	if got := ArticlePrefix(n) + MidSentenceName(n); got != "a Sheaf of Gleaned Grain" {
+		t.Errorf("ArticlePrefix+MidSentenceName = %q", got)
+	}
+}

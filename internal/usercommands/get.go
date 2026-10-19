@@ -473,10 +473,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 					})
 
 					user.SendText(messaging.CategorySystem,
-						fmt.Sprintf(`You remove %s<ansi fg="itemname">%s</ansi> from %s.`, items.ArticlePrefix(matchItem.DisplayName()), matchItem.DisplayName(), user.Character.Pet.DisplayName()),
+						fmt.Sprintf(`You remove %s<ansi fg="itemname">%s</ansi> from %s.`, items.ArticlePrefix(matchItem.DisplayName()), items.MidSentenceName(matchItem.DisplayName()), user.Character.Pet.DisplayName()),
 					)
 					room.SendTextVisual(messaging.CategoryLoot,
-						fmt.Sprintf(`<ansi fg="username">%s</ansi> removes %s<ansi fg="itemname">%s</ansi> from %s...`, user.Character.Name, items.ArticlePrefix(matchItem.DisplayName()), matchItem.DisplayName(), user.Character.Pet.DisplayName()),
+						fmt.Sprintf(`<ansi fg="username">%s</ansi> removes %s<ansi fg="itemname">%s</ansi> from %s...`, user.Character.Name, items.ArticlePrefix(matchItem.DisplayName()), items.MidSentenceName(matchItem.DisplayName()), user.Character.Pet.DisplayName()),
 						user.UserId,
 					)
 

@@ -99,9 +99,9 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	displayName := res.LastItemName
 	if res.Sold == 1 {
 		user.EventLog.Add(`shop`, fmt.Sprintf(`Sold your <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%s gold</ansi>`, displayName, util.FormatNumber(res.TotalGold)))
-		article := items.ArticlePrefix(displayName)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You sell %s<ansi fg="itemname">%s</ansi> for <ansi fg="gold">%s gold</ansi>.`, article, displayName, util.FormatNumber(res.TotalGold)))
-		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> sells %s<ansi fg="itemname">%s</ansi>.`, user.Character.Name, article, displayName), user.UserId)
+		article, midName := items.ArticlePrefix(displayName), items.MidSentenceName(displayName)
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You sell %s<ansi fg="itemname">%s</ansi> for <ansi fg="gold">%s gold</ansi>.`, article, midName, util.FormatNumber(res.TotalGold)))
+		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> sells %s<ansi fg="itemname">%s</ansi>.`, user.Character.Name, article, midName), user.UserId)
 	} else if res.Mixed {
 		// Different things (every bauble has its own name): count them
 		// rather than pluralising the last one.
