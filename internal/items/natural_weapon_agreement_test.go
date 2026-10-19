@@ -36,6 +36,8 @@ var weaponNotSubject = map[string]bool{
 	"toward": true, "towards": true, "to": true, "but": true, "as": true,
 	"from": true, "on": true, "off": true, "across": true, "against": true,
 	"over": true, "home": true, "shut": true,
+	// A direction word, like "down" and "up" ("drive your {itemname} forward").
+	"forward": true,
 	// Modal and place words that take no verb ending ("before your {itemname}
 	// can close", "clamp your {itemname} around the throat").
 	"can": true, "around": true, "tight": true,
@@ -84,6 +86,7 @@ func TestSubjectVerbAfterItemName_CatchesShippedDefects(t *testing.T) {
 		`It glares at you, <ansi fg="item">{itemname}</ansi> ready to snap.`,
 		`It swipes with its <ansi fg="item">{itemname}</ansi> but misses.`,
 		`It circles, <ansi fg="item">{itemname}</ansi> menacingly at you.`,
+		`You drive your {itemname} forward and crash in!`,
 	} {
 		if v := subjectVerbAfterItemName(line); v != `` {
 			t.Errorf("flagged %q in %q, which has no verb after the weapon", v, line)
