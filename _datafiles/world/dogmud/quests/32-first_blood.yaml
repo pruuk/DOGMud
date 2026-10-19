@@ -6,9 +6,15 @@ description: A cudgel, a training dummy, and Drillmaster Vorn's Drill Yard.
 secret: false
 
 # One command per step, in order (owner ruling 2026-10-17). Each trigger
-# gates on the step before it. Step ids start, strike, special, consider
-# and verbosity are what saved characters hold; wield was inserted between
-# start and strike, so a player saved on start is told to wield and resumes.
+# gates on the step before it. Step ids start, wield, strike, special,
+# consider and verbosity are what saved characters hold, so each keeps its
+# place in the order. wield was inserted between start and strike, so a
+# player saved on start is told to wield and resumes.
+#
+# Consider comes first, before the fight (owner 2026-10-19): sized_up was
+# inserted after wield. The old consider step (after special) is no longer
+# granted; it stays so a player saved on it resumes, and the verbosity step
+# gates on special, which a player on consider also holds.
 steps:
   - id: start
     map_target: 5227
@@ -18,12 +24,19 @@ steps:
     hint: "Type wield cudgel."
   - id: wield
     map_target: 5227
-    description: "The cudgel is in your hand. Now fight the training dummy
-      in the Drill Yard until it falls. From Hub Square, go north to the
+    description: "The cudgel is in your hand. Before you fight, size up the
+      training dummy in the Drill Yard. From Hub Square, go north to the
       Awakening Pool, then east four times to the Drill Yard. Crier Toke
       knows the way too: ask toke yard."
     hint: "From Hub Square, go north, then east four times to the Drill
-      Yard. Type attack dummy."
+      Yard. Consider tells you how hard a foe is before you fight it. Type
+      consider dummy."
+  - id: sized_up
+    map_target: 5227
+    description: "You sized up the training dummy. Consider tells you how
+      dangerous a foe is before you start a fight. Now fight the dummy
+      until it falls."
+    hint: "Type attack dummy."
   - id: strike
     map_target: 5227
     description: "You beat the training dummy. A new dummy stands up in the
@@ -34,8 +47,12 @@ steps:
   - id: special
     map_target: 5227
     description: "You used a special move. Kicks and trips cost stamina,
-      so use them when they help most."
-    hint: "Type consider dummy."
+      so use them when they help most. Next, choose how much combat detail
+      you see: full shows every swing, medium shows only the hits, and
+      light shows one line a round."
+    hint: "Combat verbosity sets how much fight text you see. Type set
+      combatverbosity full. For more, type help combatverbosity."
+  # No longer granted (see the note above steps); kept for saved players.
   - id: consider
     map_target: 5227
     description: "You sized up the training dummy. Consider tells you how
@@ -77,14 +94,26 @@ triggers:
       missing: ["32-wield"]
     actions:
       - grant: "32-wield"
-      - actor: "The cudgel sits in your hand. Now fight the training
-          dummy: type attack dummy."
+      - actor: "The cudgel sits in your hand. Before you fight, size up
+          the training dummy: type consider dummy."
+
+  # ── CONSIDER, before the fight ────────────────────────
+  # event: command: consider sends it only once its target resolves, so
+  # `consider dummy` while the dummy is down does not count.
+  - event: command
+    command: consider
+    conditions:
+      has: ["32-wield"]
+      missing: ["32-sized_up"]
+    actions:
+      - grant: "32-sized_up"
+      - actor: "Now you know what you face. Fight it: type attack dummy."
 
   # ── DUMMY DEFEATED (mob 9109) ─────────────────────────
   - event: mob_death
     mob: 9109
     conditions:
-      has: ["32-wield"]
+      has: ["32-sized_up"]
       missing: ["32-strike"]
     actions:
       - grant: "32-strike"
@@ -108,8 +137,8 @@ triggers:
       missing: ["32-special"]
     actions:
       - grant: "32-special"
-      - actor: "That is a special move. Now read your opponent: type
-          consider dummy."
+      - actor: "That is a special move. Now choose how much combat detail
+          you see: type set combatverbosity full."
 
   - event: command
     command: trip
@@ -118,30 +147,17 @@ triggers:
       missing: ["32-special"]
     actions:
       - grant: "32-special"
-      - actor: "That is a special move. Now read your opponent: type
-          consider dummy."
-
-  # ── CONSIDER ──────────────────────────────────────────
-  # event: command: consider sends it only once its target resolves, so
-  # `consider dummy` while the dummy is down does not count. Same respawn
-  # dependency as the special move above.
-  - event: command
-    command: consider
-    conditions:
-      has: ["32-special"]
-      missing: ["32-consider"]
-    actions:
-      - grant: "32-consider"
-      - actor: "Now choose how much combat detail you see: type set
-          combatverbosity full."
+      - actor: "That is a special move. Now choose how much combat detail
+          you see: type set combatverbosity full."
 
   # ── COMBATVERBOSITY ───────────────────────────────────
   # Reached via `set combatverbosity`, which fires a logical
-  # "combatverbosity" command event (set.go).
+  # "combatverbosity" command event (set.go). Gates on special, so a player
+  # saved on the old consider step (after special) resumes here too.
   - event: command
     command: combatverbosity
     conditions:
-      has: ["32-consider"]
+      has: ["32-special"]
       missing: ["32-verbosity"]
     actions:
       - grant: "32-verbosity"

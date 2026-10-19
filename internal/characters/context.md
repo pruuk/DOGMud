@@ -312,7 +312,9 @@ sent; `progression_notifier_guard_test.go` asserts the boot registration and
 - **Item management**: Worn item tracking and validation
 - **Permanent-condition refresh**: `reapplyPermanentConditions()` takes no
   arguments since plan 5a. It builds one `map[int]bool` of "this condition still
-  has a source" (permanent ids, species, pet, every item still worn) and removes
+  has a source" (permanent ids, species, pet, every item still worn, and an
+  ambient-potions bandolier's attuned conditions via
+  `AmbientBandolierConditions`, keyed `AmbientBandolierMiscKey`) and removes
   a held permanent record nothing sources. The old `removedItems` parameter
   subtracted a displaced item a second time and could strip a condition the new
   item still granted.

@@ -11,7 +11,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -189,17 +188,8 @@ func startInCoulee(user *users.UserRecord) {
 				RoomId:    destRoom.RoomId,
 			})
 		}
-		// The onboarding vortex is a direct MoveToRoom, not a login/spawn, so it
-		// bypasses the HandleJoin room_enter notification that the Awakening
-		// quest's room-enter trigger relies on — leaving a brand-new player at
-		// 5200 without 30-start, so `ask hadwen begin` (the room's own suggested
-		// command) silently no-ops. Grant it explicitly here (idempotent: the
-		// room_enter trigger is gated on `missing: [30-start, 30-end]`), matching
-		// how autoAwaken seeds the veteran path's token.
-		events.AddToQueue(events.Quest{
-			UserId:     user.UserId,
-			QuestToken: "30-start",
-		})
+		// The Awakening's 30-start comes from its room_enter trigger on 5200,
+		// raised by hooks.QuestRoomEnter for this move like any other.
 	}
 }
 
@@ -240,20 +230,9 @@ func startInAntechamber(user *users.UserRecord) bool {
 	if r := rooms.LoadRoom(created[first]); r != nil {
 		Look("", user, r, events.CmdSecretly)
 	}
-	// The player is PLACED here (not walked in via `go`), so the movement
-	// path's room_enter dispatch never fires for room 1. Fire the quest engine's
-	// room_enter explicitly so quest 28 (Waking to Gaius) grants 28-start and
-	// Dewey speaks his opening line on arrival, exactly as in the later rooms the
-	// player walks into. The room is ephemeral, so the trigger must match the
-	// TEMPLATE id (OriginalRoomId); the bridge keeps the real ephemeral id so
-	// npc_say finds Dewey in this instance. Fired after the arrival Look so his
-	// delayed line lands just beneath the room description.
-	matchRoom, _ := rooms.OriginalRoomId(created[first])
-	qbridge := questengine.NewGameBridge(user, created[first])
-	questengine.GetEngine().Notify("room_enter", questengine.EventDetails{
-		UserId: user.UserId,
-		RoomId: matchRoom,
-	}, qbridge, qbridge)
+	// Quest 28's 28-start and Dewey's opening line come from its room_enter
+	// trigger, raised by hooks.QuestRoomEnter for this move once this command
+	// returns, so his line lands beneath the arrival look.
 	return true
 }
 

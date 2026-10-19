@@ -15,6 +15,12 @@ secret: false
 # line 24 seconds out. Keep each step's lines short and the next-step prompt
 # last, said within a few seconds (2026-10-17 newbie-duo playtest; test:
 # internal/questengine/quest28_pacing_test.go).
+#
+# Two steps wait on purpose: warcry, cast and trip share the special-move
+# cooldown (Balance.SpecialMoveCooldown rounds of Timing.RoundSeconds, 16
+# seconds as shipped), so the cast spike and trip prompts come one cooldown
+# plus a second after the move before them (owner, #621). The same test
+# checks those two steps against the shipped knobs.
 
 steps:
   - id: start
@@ -125,12 +131,13 @@ steps:
     description: "You closed with the effigy. Your swings keep going on
       their own."
     hint: "Conviction Spike is a spell that strikes your foe with the force
-      of belief. Type cast spike. For more, type help conviction-spike."
+      of belief. Once your shout has rested, type cast spike. For more, type
+      help conviction-spike."
   - id: cast_spike
     map_target: -1  # action step (command/skill) — no travel destination
     description: "You loosed a spike of conviction. Belief is a weapon here."
-    hint: "A trip knocks your foe to the ground. When your spike lands, type
-      trip. For more, type help trip."
+    hint: "A trip knocks your foe to the ground. Once your spike has rested,
+      type trip. For more, type help trip."
   - id: tripped
     map_target: -1  # action step (command/skill) — no travel destination
     description: "You put the effigy down: voice, belief, and body, all
@@ -512,9 +519,11 @@ triggers:
           mob: 9491
           lines:
             - {delay: 0, whisper: true, text: "You keep swinging on your own
-                while the fight goes on. Now strike with belief too.
-                Conviction Spike is a spell that hits with force. Type cast
-                spike."}
+                while the fight goes on. Your shout is still resting, so
+                watch a few blows land first."}
+            - {delay: 17, whisper: true, text: "Rested. Now strike with belief
+                too. Conviction Spike is a spell that hits with force. Type
+                cast spike."}
 
   # Noun is the canonical spell id on the cast success event, so `cast spike`
   # and `cast conviction-spike` both count and a refused cast does not.
@@ -531,9 +540,10 @@ triggers:
           lines:
             - {delay: 0, whisper: true, text: "Spells take a moment to
                 gather. Watch it build."}
-            - {delay: 8, whisper: true, text: "When your spike lands, knock
-                the effigy down. A trip sweeps a foe off its feet. Type
-                trip."}
+            - {delay: 8, whisper: true, text: "There. A spell is a big move
+                too, so it rests the way your shout did. Wait for it."}
+            - {delay: 9, whisper: true, text: "Rested. Now knock the effigy
+                down. A trip sweeps a foe off its feet. Type trip."}
 
   # A trip that is carried out, landed or not, counts. So does the refusal
   # "already on the ground": an automatic SWEEP often drops the effigy first,

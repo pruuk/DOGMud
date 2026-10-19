@@ -54,30 +54,8 @@ tree:
           do: move_player
           room_id: 468
           delay: 11.0
-        # Close quest 29 "Two Roads" on Esk's road. Its room_enter trigger on
-        # 468 never fires here: a move_player teleport raises no room_enter.
-        # Same gate as that trigger (has 29-start, lacks 29-end), so a player
-        # who already took Toke's road sees no second completion banner. The
-        # fallback branch keeps this sequence a Success either way (30-end is
-        # already proven above), so the ask never falls through to dialogue.
-        # Delay 12.0 lands the banner after the arrival look.
-        - type: selector
-          children:
-            - type: sequence
-              children:
-                - type: condition
-                  check: player_has_quest
-                  quest: "29-start"
-                - type: condition
-                  check: player_missing_quest
-                  quest: "29-end"
-                - type: action
-                  do: grant_quest
-                  quest: "29-end"
-                  delay: 12.0
-            - type: condition
-              check: player_has_quest
-              quest: "30-end"
+        # Quest 29 "Two Roads" closes on arrival through its own room_enter
+        # trigger on 468, which a move_player teleport raises (#619).
 
     # ── NOT YET: an unopened player asks to cross ──
     - type: sequence

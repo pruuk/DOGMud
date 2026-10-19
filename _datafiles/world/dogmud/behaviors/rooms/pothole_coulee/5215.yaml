@@ -35,26 +35,8 @@ tree:
         - type: action
           do: move_player
           room_id: 468
-        # Close quest 29 "Two Roads", as Esk's own transit does (see
-        # behaviors/pothole_coulee/9107-warden_esk.yaml): a move_player
-        # teleport raises no room_enter, so quest 29's trigger on 468 never
-        # fires. The fallback branch keeps the sequence going to intercept.
-        - type: selector
-          children:
-            - type: sequence
-              children:
-                - type: condition
-                  check: player_has_quest
-                  quest: "29-start"
-                - type: condition
-                  check: player_missing_quest
-                  quest: "29-end"
-                - type: action
-                  do: grant_quest
-                  quest: "29-end"
-            - type: condition
-              check: player_has_quest
-              quest: "30-end"
+        # Quest 29 "Two Roads" closes on arrival through its own room_enter
+        # trigger on 468, which a move_player teleport raises (#619).
         - type: action
           do: intercept
 

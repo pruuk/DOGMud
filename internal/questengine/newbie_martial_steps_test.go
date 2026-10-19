@@ -120,8 +120,11 @@ func martialStepsKept(t *testing.T, q *QuestDef, old []string) []string {
 
 func TestQuest32FirstBlood_OneCommandPerStep(t *testing.T) {
 	q := loadShippedQuest(t, "32-first_blood.yaml", 32)
-	steps := martialStepsKept(t, q, []string{"start", "strike", "special", "consider", "verbosity", "end"})
-	require.Equal(t, []string{"start", "wield", "strike", "special", "consider", "verbosity", "end"}, steps)
+	steps := martialStepsKept(t, q, []string{"start", "wield", "strike", "special", "consider", "verbosity", "end"})
+	// Consider comes before the fight (owner 2026-10-19): sized_up is the
+	// new consider step. The old consider step is no longer granted and stays
+	// only so a player saved on it resumes.
+	require.Equal(t, []string{"start", "wield", "sized_up", "strike", "special", "consider", "verbosity", "end"}, steps)
 	turnIn := turnInRequires(t, "9108.yaml", "train_turnin")
 	require.Equal(t, []string{"32-verbosity"}, turnIn, "the turn-in gates on the last step's token")
 	vorn := martialLoadDialogue(t, "9108.yaml")
@@ -141,22 +144,26 @@ func TestQuest32FirstBlood_OneCommandPerStep(t *testing.T) {
 		w.notify("command", EventDetails{Command: "equip", RoomId: martialDrillYard, ItemId: martialCudgel})
 		require.Equal(t, "wield", w.p.current)
 
+		w.notify("mob_death", kill)
+		require.Equal(t, "wield", w.p.current, "a kill before consider must not skip it")
 		w.notify("command", cmd("kick"))
-		require.Equal(t, "wield", w.p.current, "a kick before the kill must not skip the fight")
+		require.Equal(t, "wield", w.p.current, "a kick before consider must not skip it")
+		w.notify("command", cmd("consider"))
+		require.Equal(t, "sized_up", w.p.current)
+
+		w.notify("command", cmd("kick"))
+		require.Equal(t, "sized_up", w.p.current, "a kick before the kill must not skip the fight")
 		w.notify("mob_death", kill)
 		require.Equal(t, "strike", w.p.current)
 
-		w.notify("command", cmd("consider"))
-		require.Equal(t, "strike", w.p.current, "consider before the special move must not skip it")
+		w.notify("command", cmd("combatverbosity"))
+		require.Equal(t, "strike", w.p.current, "verbosity before the special move must not skip it")
 		w.notify("command", cmd("kick"))
 		require.Equal(t, "special", w.p.current)
-
-		w.notify("command", cmd("combatverbosity"))
-		require.Equal(t, "special", w.p.current, "verbosity before consider must not skip it")
-		w.notify("command", cmd("consider"))
-		require.Equal(t, "consider", w.p.current)
 		require.False(t, holdsAll(w.p, turnIn), "turn-in must wait for the verbosity step")
 
+		w.notify("command", cmd("consider"))
+		require.Equal(t, "special", w.p.current, "a second consider grants nothing")
 		w.notify("command", cmd("combatverbosity"))
 		require.Equal(t, "verbosity", w.p.current)
 		require.True(t, holdsAll(w.p, turnIn), "turn-in opens after the last step")
@@ -173,9 +180,9 @@ func TestQuest32FirstBlood_OneCommandPerStep(t *testing.T) {
 		w.notify("command_issued", cmd("kick"))
 		w.notify("command_issued", cmd("trip"))
 		require.Equal(t, "strike", w.p.current, "command_issued fires on refusals too")
-		w = newQuestWalker(q).at("special")
+		w = newQuestWalker(q).at("wield")
 		w.notify("command_issued", cmd("consider"))
-		require.Equal(t, "special", w.p.current)
+		require.Equal(t, "wield", w.p.current)
 	})
 
 	t.Run("players saved on each old step resume", func(t *testing.T) {
@@ -183,13 +190,19 @@ func TestQuest32FirstBlood_OneCommandPerStep(t *testing.T) {
 		w.notify("command", EventDetails{Command: "equip", RoomId: martialDrillYard, ItemId: martialCudgel})
 		require.Equal(t, "wield", w.p.current, "saved on start: the hint says wield, and wielding advances")
 
+		// Saved on wield before consider moved first: the hint now says
+		// consider, and the fight waits for it.
+		w = newQuestWalker(q).at("wield")
+		w.notify("command", cmd("consider"))
+		require.Equal(t, "sized_up", w.p.current)
+
 		w = newQuestWalker(q).at("strike")
 		w.notify("command", cmd("kick"))
 		require.Equal(t, "special", w.p.current)
 
 		w = newQuestWalker(q).at("special")
-		w.notify("command", cmd("consider"))
-		require.Equal(t, "consider", w.p.current)
+		w.notify("command", cmd("combatverbosity"))
+		require.Equal(t, "verbosity", w.p.current)
 
 		w = newQuestWalker(q).at("consider")
 		w.notify("command", cmd("combatverbosity"))
@@ -202,9 +215,10 @@ func TestQuest32FirstBlood_OneCommandPerStep(t *testing.T) {
 	t.Run("Vorn's greeting names the step's one command", func(t *testing.T) {
 		for _, c := range []struct{ step, command string }{
 			{"start", "wield cudgel"},
-			{"wield", "attack dummy"},
+			{"wield", "consider dummy"},
+			{"sized_up", "attack dummy"},
 			{"strike", "kick dummy"},
-			{"special", "consider dummy"},
+			{"special", "set combatverbosity"},
 			{"consider", "set combatverbosity"},
 			{"verbosity", "ask vorn report"},
 		} {
@@ -213,7 +227,7 @@ func TestQuest32FirstBlood_OneCommandPerStep(t *testing.T) {
 	})
 
 	t.Run("mid-quest questions get a quest answer", func(t *testing.T) {
-		for _, step := range []string{"start", "wield", "strike", "special", "consider"} {
+		for _, step := range []string{"start", "wield", "sized_up", "strike", "special", "consider"} {
 			for _, topic := range []string{"kick", "trip", "dummy", "cudgel", "help", "how", "report", "quest", "consider", "attack"} {
 				w := newQuestWalker(q).at(step).martialDone("30-end")
 				w.p.items[martialCudgel] = true

@@ -43,6 +43,7 @@ func RegisterListeners() {
 	events.RegisterListener(events.RoomChange{}, MobRoomChangeFactsAutoWithdraw)
 	events.RegisterListener(events.RoomChange{}, RoomChangeShadowFollow)
 	events.RegisterListener(events.RoomChange{}, PresencePlayerEntry)
+	events.RegisterListener(events.RoomChange{}, QuestRoomEnter)
 	events.RegisterListener(events.RoomChange{}, LightNoticeOnMove)
 	events.RegisterListener(events.RoomChange{}, StolenBaubleRecognition)
 	events.RegisterListener(events.RoomChange{}, justice.LapseArrestStampOnMove)

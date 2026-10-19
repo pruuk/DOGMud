@@ -442,8 +442,9 @@ func Inventory(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		`EncumbranceColor`:        encColor,
 	}
 
+	// A laid-out screen, sent as the skills screen is (#614).
 	tplTxt, _ := templates.Process("character/inventory", invData, user.UserId)
-	user.SendText(messaging.CategorySystem, tplTxt)
+	user.SendText(messaging.CategoryScreen, strings.TrimRight(tplTxt, "\r\n"))
 
 	return true, nil
 }

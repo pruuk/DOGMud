@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -49,13 +50,16 @@ func Skills(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		NameWidth:      skillNameWidth(allSkills),
 	}
 
+	// A laid-out screen: CategoryScreen, so no row gains a stop, and the
+	// template's trailing newline trimmed, since SendText ends the message
+	// itself and a blank line is sent on purpose or not at all (#614).
 	skillTxt, _ := templates.Process("character/skills", skillData, user.UserId)
-	user.SendText(messaging.CategorySystem, skillTxt)
+	user.SendText(messaging.CategoryScreen, strings.TrimRight(skillTxt, "\r\n"))
 
 	if rest == `extra` {
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Cooldown Tracking:</ansi>`)
+		user.SendText(messaging.CategoryScreen, `<ansi fg="yellow">Cooldown Tracking:</ansi>`)
 		for name, rnds := range user.Character.GetAllCooldowns() {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(` <ansi fg="yellow">%s</ansi>: <ansi fg="red">%d</ansi>`, name, rnds))
+			user.SendText(messaging.CategoryScreen, fmt.Sprintf(` <ansi fg="yellow">%s</ansi>: <ansi fg="red">%d</ansi>`, name, rnds))
 		}
 	}
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -70,82 +71,106 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	return true, nil
 }
 
+// setScreenWidth is the width the set status screen lays itself out to. The
+// screen rides CategoryScreen, which neither normalizes nor wraps, so it
+// wraps its own long values (the description, a long fight prompt).
+const setScreenWidth = 80
+
+// wrapPrompt wraps a raw prompt string to width, breaking only at a space or
+// just before a `{` so no {token} is split across lines. Continuation lines
+// start with indent. A single piece wider than width stays whole.
+func wrapPrompt(prompt string, width int, indent string) string {
+	var pieces []string
+	start := 0
+	for i := 1; i < len(prompt); i++ {
+		if prompt[i] == '{' || prompt[i-1] == ' ' {
+			pieces = append(pieces, prompt[start:i])
+			start = i
+		}
+	}
+	pieces = append(pieces, prompt[start:])
+
+	var lines []string
+	cur := ``
+	for _, p := range pieces {
+		if cur != `` && utf8.RuneCountInString(cur)+utf8.RuneCountInString(p) > width {
+			lines = append(lines, strings.TrimRight(cur, ` `))
+			cur = ``
+		}
+		cur += p
+	}
+	lines = append(lines, cur)
+	return strings.Join(lines, "\n"+indent)
+}
+
+// displaySetStatus is the `set` status screen: one "label: value" row per
+// setting, sent as one block on CategoryScreen (#614). On CategorySystem the
+// normalizer stopped every label and value ("ScreenReader:.", "OFF.") and
+// each sat on its own line.
 func displaySetStatus(user *users.UserRecord) {
 	c := configs.GetTextFormatsConfig()
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">description:</ansi>`)
-	user.SendText(messaging.CategorySystem, `<ansi fg="yellow">`+util.SplitStringNL(user.Character.Description, 80)+`</ansi>`)
-	user.SendBlankLine(messaging.CategorySystem)
-
-	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">ScreenReader:</ansi> `)
-	if user.ScreenReader {
-		user.SendText(messaging.CategorySystem, `<ansi fg="green">ON</ansi>`)
-	} else {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">OFF</ansi>`)
+	var rows []string
+	row := func(label, value string) {
+		rows = append(rows, `<ansi fg="yellow-bold">`+label+`:</ansi> `+value)
 	}
-	user.SendBlankLine(messaging.CategorySystem)
+	promptRow := func(label, prompt string) {
+		indent := strings.Repeat(` `, len(label)+2)
+		row(label, wrapPrompt(prompt, setScreenWidth-len(indent), indent))
+	}
+	onOff := func(on bool) string {
+		if on {
+			return `<ansi fg="green">ON</ansi>`
+		}
+		return `<ansi fg="red">OFF</ansi>`
+	}
+	boolSetting := func(settingName string) {
+		on := user.GetConfigOption(settingName)
+		row(settingName, onOff(on == nil || on.(bool)))
+	}
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">charset:</ansi> `)
+	rows = append(rows, `<ansi fg="yellow-bold">description:</ansi>`)
+	if user.Character.Description != `` {
+		rows = append(rows, `<ansi fg="yellow">`+util.SplitStringNL(user.Character.Description, setScreenWidth)+`</ansi>`)
+	}
+	rows = append(rows, ``)
+
+	row(`ScreenReader`, onOff(user.ScreenReader))
 	if user.AsciiMode {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">ASCII</ansi> (legacy client mode)`)
+		row(`charset`, `<ansi fg="red">ASCII</ansi> (legacy client mode)`)
 	} else {
-		user.SendText(messaging.CategorySystem, `<ansi fg="green">UTF-8</ansi>`)
+		row(`charset`, `<ansi fg="green">UTF-8</ansi>`)
 	}
-	user.SendBlankLine(messaging.CategorySystem)
 
-	displayBoolSetting(user, `auction`, `auction`)
-	displayBoolSetting(user, `shortadjectives`, `shortadjectives`)
-	displayBoolSetting(user, `tinymap`, `tinymap`)
-	displayBoolSetting(user, `tips`, `tips`)
+	boolSetting(`auction`)
+	boolSetting(`shortadjectives`)
+	boolSetting(`tinymap`)
+	boolSetting(`tips`)
 
 	currentPrompt := user.GetConfigOption(`prompt`)
 	if currentPrompt == nil {
 		currentPrompt = c.Prompt.String()
 	}
-	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">prompt: </ansi> `)
-	user.SendText(messaging.CategorySystem, currentPrompt.(string))
-	user.SendBlankLine(messaging.CategorySystem)
+	promptRow(`prompt`, currentPrompt.(string))
 
 	currentPrompt = user.GetConfigOption(`fprompt`)
 	if currentPrompt == nil {
 		currentPrompt = c.FightPrompt.String()
 	}
-	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">fprompt:</ansi> `)
-	user.SendText(messaging.CategorySystem, currentPrompt.(string))
-	user.SendBlankLine(messaging.CategorySystem)
+	promptRow(`fprompt`, currentPrompt.(string))
 
 	currentWimpy := user.GetConfigOption(`wimpy`)
 	if currentWimpy == nil {
 		currentWimpy = 0
 	}
-	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">wimpy:</ansi> `)
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`%d%%`, currentWimpy.(int)))
-	user.SendBlankLine(messaging.CategorySystem)
+	row(`wimpy`, fmt.Sprintf(`%d%%`, currentWimpy.(int)))
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">submission:</ansi> `)
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.Character.SubmissionPolicy))
-	user.SendBlankLine(messaging.CategorySystem)
+	row(`submission`, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.Character.SubmissionPolicy))
+	row(`surrender`, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.Character.SurrenderPolicy))
+	row(`combatverbosity`, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.GetCombatVerbosity().String()))
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">surrender:</ansi> `)
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.Character.SurrenderPolicy))
-	user.SendBlankLine(messaging.CategorySystem)
-
-	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">combatverbosity:</ansi> `)
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.GetCombatVerbosity().String()))
-	user.SendBlankLine(messaging.CategorySystem)
-
-	user.SendText(messaging.CategorySystem, `See: <ansi fg="command">help set</ansi>`)
-}
-
-func displayBoolSetting(user *users.UserRecord, settingName string, label string) {
-	on := user.GetConfigOption(settingName)
-	onTxt := `<ansi fg="red">OFF</ansi>`
-	if on == nil || on.(bool) {
-		onTxt = `<ansi fg="green">ON</ansi>`
-	}
-	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">`+label+`:</ansi> `)
-	user.SendText(messaging.CategorySystem, onTxt)
-	user.SendBlankLine(messaging.CategorySystem)
+	rows = append(rows, ``, `See: <ansi fg="command">help set</ansi>`)
+	user.SendText(messaging.CategoryScreen, strings.Join(rows, "\n"))
 }
 
 func cmdSetDescription(user *users.UserRecord, rest string, setTarget string) (bool, error) {
@@ -249,15 +274,15 @@ func cmdSetPrompt(user *users.UserRecord, rest string, setTarget string, args []
 func cmdSetFprompt(user *users.UserRecord, rest string, setTarget string, args []string) (bool, error) {
 
 	if len(args) < 1 {
+		// One block on CategoryScreen, as the set status screen (#614).
 		customPrompt := user.GetConfigOption(`fprompt`)
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">Fight Prompt:</ansi>`)
+		rows := []string{`<ansi fg="yellow-bold">Fight Prompt:</ansi>`}
 		if customPrompt == nil {
-			user.SendText(messaging.CategorySystem, `  <ansi fg="8">[system default - toggle-driven]</ansi>`)
+			rows = append(rows, `  <ansi fg="8">[system default - toggle-driven]</ansi>`)
 		} else {
-			user.SendText(messaging.CategorySystem, `  `+customPrompt.(string))
+			rows = append(rows, `  `+wrapPrompt(customPrompt.(string), setScreenWidth-2, `  `))
 		}
-		user.SendBlankLine(messaging.CategorySystem)
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Toggle Settings</ansi> <ansi fg="8">(set fprompt tog <name> to change):</ansi>`)
+		rows = append(rows, ``, `<ansi fg="yellow">Toggle Settings</ansi> <ansi fg="8">(set fprompt tog <name> to change):</ansi>`)
 		toggleList := []struct{ name, desc string }{
 			{"bars", "HP/SP/CP vital bars"},
 			{"pos", "Your combat position"},
@@ -273,10 +298,10 @@ func cmdSetFprompt(user *users.UserRecord, rest string, setTarget string, args [
 			if !on {
 				state = `<ansi fg="red">[OFF]</ansi>`
 			}
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="magenta">%-14s</ansi> %s %s`, t.name, state, t.desc))
+			rows = append(rows, fmt.Sprintf(`  <ansi fg="magenta">%-14s</ansi> %s %s`, t.name, state, t.desc))
 		}
-		user.SendBlankLine(messaging.CategorySystem)
-		user.SendText(messaging.CategorySystem, `Type <ansi fg="command">help set-prompt</ansi> for more info on customizing prompts.`)
+		rows = append(rows, ``, `Type <ansi fg="command">help set-prompt</ansi> for more info on customizing prompts.`)
+		user.SendText(messaging.CategoryScreen, strings.Join(rows, "\n"))
 		return true, nil
 	}
 
