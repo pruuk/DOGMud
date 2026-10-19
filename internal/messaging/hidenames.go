@@ -6,6 +6,8 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
 // NoName marks a side of an Audience with nobody on it: a salvaged corpse, a
@@ -120,12 +122,19 @@ func HideSpeakerNames(text string, names []string, d SightDecision) string {
 }
 
 // longestFirst is names without NoName, longest first, so a longer name is
-// hidden before a shorter one it contains.
+// hidden before a shorter one it contains. A name that opens with its own
+// article is hidden in its mid-sentence spelling too ("A Culvert Slime" and
+// "a Culvert Slime"): a corpse line names the dead one that way
+// (rooms.Corpse.ObservedName, #572), and a hider that knew only the capital
+// would leak the name to a reader who cannot see it.
 func longestFirst(names []string) []string {
 	ordered := make([]string, 0, len(names))
 	for _, n := range names {
 		if n != NoName {
 			ordered = append(ordered, n)
+			if mid := items.MidSentenceName(n); mid != n {
+				ordered = append(ordered, mid)
+			}
 		}
 	}
 	sort.SliceStable(ordered, func(i, j int) bool { return len(ordered[i]) > len(ordered[j]) })

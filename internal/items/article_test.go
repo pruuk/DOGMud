@@ -56,3 +56,21 @@ func TestMidSentenceName(t *testing.T) {
 		t.Errorf("ArticlePrefix+MidSentenceName = %q", got)
 	}
 }
+
+// TestNameWithoutArticle: a compound noun that brings its own article or count
+// drops the name's ("4 Culvert Slime corpses", #572).
+func TestNameWithoutArticle(t *testing.T) {
+	for name, want := range map[string]string{
+		"A Culvert Slime": "Culvert Slime",
+		"An Ox":           "Ox",
+		"The Old White":   "Old White",
+		"Sewer Rat":       "Sewer Rat",
+		"Anvil":           "Anvil",
+		"The":             "The",
+		"":                "",
+	} {
+		if got := NameWithoutArticle(name); got != want {
+			t.Errorf("NameWithoutArticle(%q) = %q, want %q", name, got, want)
+		}
+	}
+}

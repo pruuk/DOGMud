@@ -18,6 +18,13 @@ the recipient's connection.
    `CategoryMobEmote` skips every stage except sentence-end punctuation,
    so authored mob emotes keep their own words but end with a stop
    (#455); the player-typed `CategoryEmote` skips every stage.
+   One stage runs for every category and is never skipped:
+   `LowerMidSentenceNameArticles` lowercases the article a creature's own
+   name opens with ("A Culvert Slime", "The Pass-Apex") inside a
+   `username`/`mobname` identity tag that stands mid-sentence, and leaves
+   it capital at a sentence start (`atSentenceStart`, the test `HideNames`
+   uses) (#572). Mob data keeps the capital; this is the one chokepoint
+   every tagged name passes. Untagged prose and pet names are untouched.
    The stop goes INSIDE any trailing `</ansi>` closers, which is right
    for a coloured clause or a whole-line wrapper (the stop keeps the
    clause's colour) and wrong for a trailing name span. The stage cannot
@@ -537,6 +544,10 @@ Functions:
   (hooks, #453, #458); a player
   holder's `GetCharacterName(true)` carries no span to begin with.
 - `Normalize(cat Category, text string) string`
+- `LowerMidSentenceNameArticles(text string) string`: Normalize's first
+  stage (#572), described under Pipeline Stages. `HideNames` and
+  `HideSpeakerNames` also hide a name's mid-sentence spelling ("a Culvert
+  Slime") when handed the data spelling, since a corpse line uses it.
 - `CapitalizeStart(text string) string`: the normalizer's capitalize stage,
   uppercasing the first character after any leading `<ansi>` tags. A sender
   on a category that skips that stage (`CategoryNPCDialogue`) calls it on a

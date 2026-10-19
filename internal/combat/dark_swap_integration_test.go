@@ -70,7 +70,9 @@ func TestDarkSwap_RealComposersBlindReader(t *testing.T) {
 				}
 				gotDark := 0
 				for _, m := range c.lines(&res) {
-					if slices.Contains(pool, m.Text) {
+					// A defender's damaging swing ends with wound words (#572)
+					// after its pool line.
+					if slices.Contains(pool, stripWoundWords(m.Text)) {
 						gotDark++
 						continue
 					}

@@ -1654,7 +1654,7 @@ func (r *Room) FindCorpseIndex(searchName string, viewer *characters.Character) 
 		}
 
 		if c.UserId > 0 {
-			name := c.Character.Name + ` corpse`
+			name := corpseStem(c.Character.Name)
 			if _, ok := playerCorpseLookup[name]; !ok {
 				playerCorpseLookup[name] = idx
 				playerCorpses = append(playerCorpses, name)
@@ -1662,7 +1662,7 @@ func (r *Room) FindCorpseIndex(searchName string, viewer *characters.Character) 
 		}
 
 		if c.MobId > 0 {
-			name := c.Character.Name + ` corpse`
+			name := corpseStem(c.Character.Name)
 			if _, ok := mobCorpseLookup[name]; !ok {
 				mobCorpseLookup[name] = idx
 				mobCorpses = append(mobCorpses, name)

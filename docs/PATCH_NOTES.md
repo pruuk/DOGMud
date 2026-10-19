@@ -1,13 +1,5 @@
 # DOGMud Patch Notes
 
-## 2026-10-19: Back on your feet
-
-- Nobody stays knocked down for long any more. After a few rounds on the
-  ground you get back to your feet on your own, however strong the foe
-  holding you down. Creatures follow the same rule, so a slime you have
-  knocked over will not stay down forever either. A grapple still has to
-  be escaped.
-
 ## 2026-10-19: Every creature squares up its own way
 
 - When a fight begins, the first line now shows how your foe gets ready,
@@ -60,6 +52,18 @@
   down.
 - Wraiths and spectres fight poorly once they are grappling up close.
 - The sewer slimes' idle lines read more cleanly.
+- Nobody stays knocked down for long any more. After a few rounds on the
+  ground you get back to your feet on your own, however strong the foe
+  holding you down. Creatures follow the same rule, so a slime you have
+  knocked over will not stay down forever either. A grapple still has to
+  be escaped.
+- A creature whose name starts with "A", "An" or "The" now reads with a
+  small letter in the middle of a sentence: "You attack a Culvert Slime."
+  Its corpse reads "the Culvert Slime corpse", and several of them read
+  "2 Culvert Slime corpses".
+- When a creature hits you, the line now tells you how badly it hurt, for
+  bites, claws and other natural attacks as well as weapons, even when you
+  cannot see who hit you.
 
 ## 2026-10-17: Clearer in the dim, fairer in the arena
 
