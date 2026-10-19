@@ -180,6 +180,12 @@ func (b *Balance) validateMisc() {
 	if b.StandMinStamina <= 0 || b.StandMinStamina > 1.0 {
 		b.StandMinStamina = 0.15
 	}
+	// 0 is the off-switch (so not `<= 0`); an absent key still reaches the
+	// default through the -1 sentinel seeded in newUnloadedConfig, the
+	// ProgressionFailureFraction idiom.
+	if b.ProneAutoStandRounds < 0 {
+		b.ProneAutoStandRounds = 5
+	}
 
 	// ── GLOBAL DAMAGE ────────────────────────────────────────────────────────
 	if b.GlobalDamageMultiplier <= 0 {

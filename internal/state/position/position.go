@@ -80,6 +80,7 @@ type ProneData struct {
 	Reason            state.TransitionReason
 	MinRecoveryRounds int            // replaces legacy PositionRoundsMin; 0 = can stand immediately
 	KnockdownSource   state.ActorRef // who knocked us down
+	RoundsDown        int            // recovery ticks spent in this knockdown so far; counted by CountRoundDown (#398)
 }
 
 // SupineData — face-up knockdown, alone. Same shape as ProneData
@@ -89,6 +90,7 @@ type SupineData struct {
 	Reason            state.TransitionReason
 	MinRecoveryRounds int
 	KnockdownSource   state.ActorRef
+	RoundsDown        int // see ProneData.RoundsDown
 }
 
 // GrappleData — shared across all 11 grapple states. 4a does not
@@ -235,6 +237,27 @@ func (m *Machine) ConsumeRecoveryRound() {
 	if m.IsSupine() && m.supine != nil && m.supine.MinRecoveryRounds > 0 {
 		m.supine.MinRecoveryRounds--
 	}
+}
+
+// CountRoundDown adds one round to RoundsDown on the current ProneData or
+// SupineData and returns the new count. Called by AttemptRecovery once per
+// round tick while the character is on the floor, so the count is "rounds
+// spent in THIS knockdown": every TransitionToProne / TransitionToSupine
+// stores fresh data (Prone and Supine have no edge to each other or to
+// themselves, so a new knockdown always comes from another state), and
+// leaving the floor clears the slot. Read by the auto-stand guard (#398).
+//
+// Returns 0 and does nothing if not in Prone or Supine.
+func (m *Machine) CountRoundDown() int {
+	if m.IsProne() && m.prone != nil {
+		m.prone.RoundsDown++
+		return m.prone.RoundsDown
+	}
+	if m.IsSupine() && m.supine != nil {
+		m.supine.RoundsDown++
+		return m.supine.RoundsDown
+	}
+	return 0
 }
 
 // ExtendRecoveryRound increments MinRecoveryRounds on the current
