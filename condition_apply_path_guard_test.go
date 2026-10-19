@@ -114,7 +114,9 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/hooks/Condition_ApplyConditions.go|127": "this IS the hook the event feeds; it is where every routed condition is finally applied",
 
 	// ── silent-start conditions whose applier narrates the moment itself ────
-	"internal/actions/combat_throttle.go|149": "condition 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
+	"internal/actions/combat_throttle.go|145": "condition 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
+	"internal/actions/combat_smother.go|88":   "Blinded (3) carries spell start lines; the smother hit line narrates the blinding, and it must land in the same tick so the target's next line is judged blind",
+	"internal/actions/combat_smother.go|89":   "condition 144 is silent-start; the smother move narrates the smoke as it lands and must apply it in the same tick",
 	"internal/actions/sleep.go|59":            "condition 15 is silent-start; Sleep reads the Sleeping flag back for its own idempotence check, so it sends the start line itself",
 
 	// ── former combat conditions: warcry and rally are now one record each,
@@ -252,7 +254,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/actions/combat_hamstring.go|136":       "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_maul.go|132":            "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_rake.go|132":            "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/actions/combat_throttle.go|146":        "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_throttle.go|142":        "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/behaviortree/actions_item_proc.go|359": "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
 }
 

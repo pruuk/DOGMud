@@ -243,7 +243,8 @@ gated), so armed undead still drain.
 | `ExecutePounce` | quadruped predator, not grappling | Knockdown + damage (no bleed) |
 | `ExecuteGore` | horned | Damage + knockback |
 | `ExecuteDrain` | `LifeDrain` flag | Damage + heal attacker (`damage × DrainHealRatio`) via `Character.Heal` |
-| `ExecuteThrottle` | fanged | Damage + bleed stack + Throttled condition #89 (stamina DoT) + cast interrupt via `InterruptTargetCast` |
+| `ExecuteThrottle` | fanged | Damage + bleed stack + Throttled condition #89 (stamina DoT) + cast interrupt via `chokeCastInterrupt` |
+| `ExecuteSmother` | lists `smother`, no hands (mob-only: the smoke elemental, #541 slice 2) | On a hit: damage + Blinded (3) + Smothered (`conditions.ConditionIdSmothered`, 144, stamina DoT) + cast interrupt via `chokeCastInterrupt`; a partial or miss applies nothing; no bleed. `SmotherResult.NotSmoke` is the identity refusal |
 
 **Bleeds stack (slice 1b, owner ruling 2026-09-14).** Rake, maul, hamstring,
 drain (`ExecuteDrain` and each landed target of `ExecuteDrainArea`) and throttle each add one
@@ -261,7 +262,10 @@ amount of the stack just added, and nothing outside this package reads it.
 **`InterruptTargetCast`** is a shared helper that reuses the engine's
 existing `activity.TriggerCastCancel` cast-cancel path (conviction
 refund included). No new silence flag is introduced. `ExecuteThrottle`
-gates the call behind an opposed concentration contest (U10): the
+and `ExecuteSmother` reach it through one helper, `chokeCastInterrupt`
+(`choke_interrupt.go`), run on a hit only, after `ClaimSpecialMove`, so it
+fires at most once per special-move cooldown window. It gates the call
+behind an opposed concentration contest (U10): the
 throttler's grip (`Dex + unarmed-combat×SkillWeight`) against the
 target's hold (`Wil + spellcasting×SkillWeight`) via
 `combat.RunConcentrationContest`, floored only by `ConcentrationFloor`
@@ -2094,7 +2098,7 @@ the rest are ordinary verbs.
 | Readiness gates | `action_readiness.go`, `command_readiness.go` |
 | Targeting | `target_resolution.go`, `target_helpers.go`, `melee_target.go`, `sleeping_target.go` |
 | Shared helpers | `combat_helpers.go`, `skill_helpers.go`, `mutation_helpers.go`, `aggression.go`, `bleed.go` (`bleedPerRound`) |
-| Combat specials | `combat_attack.go`, `combat_bash.go`, `combat_counter.go`, `combat_drain.go`, `combat_fire.go`, `combat_gore.go`, `combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`, `combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_reload.go`, `combat_taunt.go`, `combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` |
+| Combat specials | `combat_attack.go`, `combat_bash.go`, `combat_counter.go`, `combat_drain.go`, `combat_fire.go`, `combat_gore.go`, `combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`, `combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_reload.go`, `combat_smother.go`, `choke_interrupt.go`, `combat_taunt.go`, `combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` |
 | Casting | `cast.go`, `cast_interrupt.go`, `cast_admission.go`, `cast_raise_corpse.go` (the raise corpse gate) |
 | Flee | `flee.go`, `relocate_mob.go` |
 | Mutation actives | `mutation_cocoon.go`, `mutation_venom_coat.go` |

@@ -23,6 +23,7 @@ func TestCommandIsReadyNamesAreMobCommands(t *testing.T) {
 	// internal/actions/command_readiness.go.
 	supported := []string{
 		"taunt", "rally", "warcry", "trip", "bash", "grapple", "kick", "rake", "maul", "pounce", "gore", "drain", "throttle",
+		"smother",
 	}
 
 	// Verify each name IS in the mob command dispatcher.

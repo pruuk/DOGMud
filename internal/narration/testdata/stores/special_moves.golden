@@ -642,6 +642,62 @@ shoot|surprise_miss|0|actor= Your shot from cover flies past <ansi fg="username"
 shoot|surprise_miss|0|actee= 
 shoot|surprise_miss|0|observer= 
 shoot|surprise_miss|0|remote_observer= 
+smother|cast_interrupt|0|actor= 
+smother|cast_interrupt|0|actee= <ansi fg="mobname">ACTOR</ansi>'s smoke chokes your spell off mid-word!
+smother|cast_interrupt|0|observer= <ansi fg="mobname">ACTOR</ansi>'s smoke chokes <ansi fg="username">ACTEE</ansi>'s spell off mid-word!
+smother|cast_interrupt|0|remote_observer= 
+smother|cast_interrupt|1|actor= 
+smother|cast_interrupt|1|actee= Your spell collapses as you cough and gasp!
+smother|cast_interrupt|1|observer= <ansi fg="username">ACTEE</ansi> coughs and gasps, and their spell collapses!
+smother|cast_interrupt|1|remote_observer= 
+smother|hit|0|actor= 
+smother|hit|0|actee= <ansi fg="mobname">ACTOR</ansi> pours into your eyes and lungs! (<ansi fg="damage">DAMAGE</ansi>)
+smother|hit|0|observer= <ansi fg="mobname">ACTOR</ansi> pours into <ansi fg="username">ACTEE</ansi>'s eyes and lungs!
+smother|hit|0|remote_observer= 
+smother|hit|1|actor= 
+smother|hit|1|actee= <ansi fg="mobname">ACTOR</ansi> fills your eyes and throat with smoke! (<ansi fg="damage">DAMAGE</ansi>)
+smother|hit|1|observer= <ansi fg="mobname">ACTOR</ansi> fills <ansi fg="username">ACTEE</ansi>'s eyes and throat with smoke!
+smother|hit|1|remote_observer= 
+smother|hit|2|actor= 
+smother|hit|2|actee= <ansi fg="mobname">ACTOR</ansi> wraps you in choking, blinding smoke! (<ansi fg="damage">DAMAGE</ansi>)
+smother|hit|2|observer= <ansi fg="mobname">ACTOR</ansi> wraps <ansi fg="username">ACTEE</ansi> in choking, blinding smoke!
+smother|hit|2|remote_observer= 
+smother|hit|3|actor= 
+smother|hit|3|actee= <ansi fg="mobname">ACTOR</ansi>'s embers blind you as you choke! (<ansi fg="damage">DAMAGE</ansi>)
+smother|hit|3|observer= <ansi fg="mobname">ACTOR</ansi>'s embers blind <ansi fg="username">ACTEE</ansi>, who chokes!
+smother|hit|3|remote_observer= 
+smother|hit|4|actor= 
+smother|hit|4|actee= <ansi fg="mobname">ACTOR</ansi> smothers you. You gasp, blinded! (<ansi fg="damage">DAMAGE</ansi>)
+smother|hit|4|observer= <ansi fg="mobname">ACTOR</ansi> smothers <ansi fg="username">ACTEE</ansi>, who gasps, blinded!
+smother|hit|4|remote_observer= 
+smother|miss|0|actor= 
+smother|miss|0|actee= <ansi fg="mobname">ACTOR</ansi> billows toward your face, but misses!
+smother|miss|0|observer= <ansi fg="mobname">ACTOR</ansi> billows toward <ansi fg="username">ACTEE</ansi>'s face, but misses!
+smother|miss|0|remote_observer= 
+smother|miss|1|actor= 
+smother|miss|1|actee= <ansi fg="mobname">ACTOR</ansi>'s smoke drifts past you!
+smother|miss|1|observer= <ansi fg="mobname">ACTOR</ansi>'s smoke drifts past <ansi fg="username">ACTEE</ansi>!
+smother|miss|1|remote_observer= 
+smother|miss|2|actor= 
+smother|miss|2|actee= You duck under <ansi fg="mobname">ACTOR</ansi>'s rolling smoke!
+smother|miss|2|observer= <ansi fg="username">ACTEE</ansi> ducks under <ansi fg="mobname">ACTOR</ansi>'s rolling smoke!
+smother|miss|2|remote_observer= 
+smother|miss|3|actor= 
+smother|miss|3|actee= You step clear before <ansi fg="mobname">ACTOR</ansi> can engulf you!
+smother|miss|3|observer= <ansi fg="username">ACTEE</ansi> steps clear before <ansi fg="mobname">ACTOR</ansi> can engulf them!
+smother|miss|3|remote_observer= 
+smother|partial|0|actor= 
+smother|partial|0|actee= You turn aside, but <ansi fg="mobname">ACTOR</ansi>'s embers sting! (<ansi fg="damage">DAMAGE</ansi>)
+smother|partial|0|observer= <ansi fg="username">ACTEE</ansi> turns aside, but <ansi fg="mobname">ACTOR</ansi>'s embers sting!
+smother|partial|0|remote_observer= 
+smother|partial|1|actor= 
+smother|partial|1|actee= You hold your breath; <ansi fg="mobname">ACTOR</ansi> still stings! (<ansi fg="damage">DAMAGE</ansi>)
+smother|partial|1|observer= <ansi fg="username">ACTEE</ansi> holds their breath, but <ansi fg="mobname">ACTOR</ansi> still stings!
+smother|partial|1|remote_observer= 
+smother|partial|2|actor= 
+smother|partial|2|actee= You twist away, but <ansi fg="mobname">ACTOR</ansi> singes you! (<ansi fg="damage">DAMAGE</ansi>)
+smother|partial|2|observer= <ansi fg="username">ACTEE</ansi> twists away, but <ansi fg="mobname">ACTOR</ansi> singes them!
+smother|partial|2|remote_observer= 
 throttle|cast_interrupt|0|actor= Your choke breaks <ansi fg="username">ACTEE</ansi>'s concentration, and their spell collapses!
 throttle|cast_interrupt|0|actee= <ansi fg="mobname">ACTOR</ansi>'s choke shatters your concentration. Your spell collapses!
 throttle|cast_interrupt|0|observer= <ansi fg="mobname">ACTOR</ansi>'s choke breaks <ansi fg="username">ACTEE</ansi>'s concentration, and the spell collapses!

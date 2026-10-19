@@ -189,7 +189,11 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 		{"combat_throttle.go", "ExecuteThrottle", "ThrottleResult", "costs.ActionThrottle", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesHasBeastMove(char, \"throttle\")", "NotFanged"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddConditionMagnitudeBy", "target.Char.AddCondition", "InterruptTargetCast", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddConditionMagnitudeBy", "target.Char.AddCondition", "chokeCastInterrupt", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
+		{"combat_smother.go", "ExecuteSmother", "SmotherResult", "costs.ActionSmother", []specialMoveEarlyReturn{
+			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
+			{"char.HasBodyPart(\"hands\") || !combat.SpeciesHasBeastMove(char, \"smother\")", "NotSmoke"},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "chokeCastInterrupt", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 	}
 
 	_, thisFile, _, ok := runtime.Caller(0)
@@ -595,7 +599,7 @@ func nodeHasCall(node ast.Node, name string) bool {
 // and immediately return without text.
 func TestSpecialMoveWrapperAdmission(t *testing.T) {
 	playerWrappers := []string{"bash", "trip", "kick", "grapple", "rake", "maul", "pounce", "gore", "drain", "throttle"}
-	mobWrappers := []string{"bash", "charge", "trip", "kick", "grapple", "hamstring", "rake", "maul", "pounce", "gore", "drain", "throttle"}
+	mobWrappers := []string{"bash", "charge", "trip", "kick", "grapple", "hamstring", "rake", "maul", "pounce", "gore", "drain", "throttle", "smother"}
 	_, thisFile, _, ok := runtime.Caller(0)
 	require.True(t, ok)
 	repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..")
@@ -693,7 +697,7 @@ func TestSpecialMoveWrapperAdmission(t *testing.T) {
 			function := map[string]string{
 				"bash": "Bash", "charge": "Charge", "trip": "Trip", "kick": "Kick", "grapple": "Grapple",
 				"hamstring": "Hamstring", "rake": "Rake", "maul": "Maul", "pounce": "Pounce", "gore": "Gore",
-				"drain": "Drain", "throttle": "Throttle",
+				"drain": "Drain", "throttle": "Throttle", "smother": "Smother",
 			}[name]
 			resultName := "res"
 			if name == "bash" {
@@ -755,6 +759,8 @@ func runExecuteAndReadExecuted(cmd string, actor Actor) bool {
 		return ExecuteDrain(actor).Executed
 	case "throttle":
 		return ExecuteThrottle(actor).Executed
+	case "smother":
+		return ExecuteSmother(actor).Executed
 	}
 	return false
 }
@@ -813,6 +819,8 @@ func TestCommandReadinessDrift(t *testing.T) {
 		// A legged, handless clawed species that lists no beast move: the
 		// _notlisted rows prove the attack family alone opens no gate.
 		7314: {SpeciesId: 7314, Name: "unlisted-clawed-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Claws},
+		// A bodiless smoke species for the smother rows (#541 slice 2).
+		7313: {SpeciesId: 7313, Name: "smoke-test", BodyParts: []string{}, BeastMoves: []string{"smother"}},
 	})
 	defer speciesCleanup()
 
@@ -1313,6 +1321,42 @@ func TestCommandReadinessDrift(t *testing.T) {
 			},
 			false, "NotFanged"},
 
+		// ─── smother ──────────────────────────────────────────────────────────
+		// smother_ready: the bodiless smoke species lists smother.
+		{"smother_ready", "smother",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7313 // smoke-test seeded above
+				setDriftAggroMobTarget(m, 245)
+			},
+			true, ""},
+		{"smother_crafting", "smother", func(m *mobs.Mob) { setCraftingForTest(m) }, false, "Crafting"},
+		{"smother_cooldown", "smother",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7313
+				m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+				setDriftAggroMobTarget(m, 246)
+			},
+			false, "OnCooldown"},
+		{"smother_no_aggro", "smother",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7313
+				m.Character.EndAggro()
+			},
+			false, "NoTarget"},
+		// smother_notlisted: a handless clawed species that does not list
+		// smother; a registered target lets ExecuteSmother reach the NotSmoke
+		// gate before admission.
+		{"smother_notlisted", "smother",
+			func(m *mobs.Mob) {
+				m.Character.SpeciesId = 7304 // clawed-test: lists rake, pounce, hamstring
+				targetMob := &mobs.Mob{InstanceId: 247}
+				targetMob.Character.Name = "Target"
+				setCombatPositionParallel(&targetMob.Character, position.Standing)
+				mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
+				m.Character.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
+			},
+			false, "NotSmoke"},
+
 		// ─── hamstring ────────────────────────────────────────────────────────
 		{"hamstring_ready", "hamstring",
 			func(m *mobs.Mob) {
@@ -1444,7 +1488,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			// The mutate function may set up target mobs via
 			// mobs.SetInstanceForTest; we clean them all up here.
 			defer func() {
-				for id := 200; id <= 244; id++ {
+				for id := 200; id <= 247; id++ {
 					mobs.SetInstanceForTest(id, nil)
 				}
 			}()
@@ -1475,6 +1519,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			physicalSpecial := map[string]bool{
 				"bash": true, "trip": true, "kick": true, "grapple": true, "hamstring": true,
 				"rake": true, "maul": true, "pounce": true, "gore": true, "drain": true, "throttle": true,
+				"smother": true,
 			}
 			if physicalSpecial[tc.cmd] {
 				assert.Equal(t, staminaBefore, mob.Character.Stamina,
@@ -1657,6 +1702,18 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 		case "NotFanged":
 			return r.NotFanged
 		}
+	case "smother":
+		r := ExecuteSmother(actor)
+		switch flag {
+		case "Crafting":
+			return r.Crafting
+		case "OnCooldown":
+			return r.OnCooldown
+		case "NoTarget":
+			return r.NoTarget
+		case "NotSmoke":
+			return r.NotSmoke
+		}
 	case "hamstring":
 		r := ExecuteHamstring(actor)
 		switch flag {
@@ -1699,7 +1756,7 @@ func TestSpecialMoves_NoProgressionAwardSitsInsideAHitGate(t *testing.T) {
 	files := []string{
 		"combat_bash.go", "combat_drain.go", "combat_gore.go", "combat_grapple.go",
 		"combat_hamstring.go", "combat_kick.go", "combat_maul.go", "combat_pounce.go",
-		"combat_rake.go", "combat_throttle.go", "combat_trip.go",
+		"combat_rake.go", "combat_smother.go", "combat_throttle.go", "combat_trip.go",
 	}
 
 	_, thisFile, _, ok := runtime.Caller(0)

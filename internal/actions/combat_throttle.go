@@ -7,10 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
-	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/skills"
-	"github.com/GoMudEngine/GoMud/internal/spells"
-	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -67,11 +64,10 @@ type ThrottleResult struct {
 //   - On hit: add a Bleeding stack (ThrottleBleedRounds,
 //     ThrottleBleedStrengthDivisor, ThrottleBleedMin) sourced as "throttle"
 //   - On hit: apply Throttled DoT condition (id 89) for stamina drain
-//   - On hit: an opposed contest through the concentration seam
-//     (combat.RunConcentrationContest) between the target's hold and the
-//     throttler's grip; a lost hold interrupts via InterruptTargetCast
-//     (engine's standard cast-cancel path)
-//   - combat.RecordSpecialMove for analytics + RoundsWaiting = 1
+//   - On hit: the choke contest (chokeCastInterrupt) between the target's
+//     hold and the throttler's grip; a lost hold interrupts via
+//     InterruptTargetCast (engine's standard cast-cancel path)
+//   - combat.RecordSpecialMove for analytics; SpendRoundOnAction
 //   - OnSkillUse(UnarmedCombat) on hit for progression
 //
 // Callers are responsible for all messaging and any combat-initiation logic.
@@ -148,53 +144,9 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 		// Stamina-over-time: apply the Throttled DoT condition (id 89).
 		_ = target.Char.AddCondition(89, false)
 
-		// Cast interrupt (U10): an opposed contest through the
-		// concentration seam — the caster's hold (attack side, as in every
-		// concentration contest) against the throttler's grip, floored at
-		// ConcentrationFloor per the owner's 2% ruling. Telegraphed
-		// NoDamageInterrupt casts are not contestable, matching both
-		// concentration paths (deliberate small fix: the old flat coin
-		// ignored the flag; throttle is mob-only by anatomy, so no player
-		// counter-play is lost).
-		if target.Char.IsCasting() {
-			interruptible := true
-			if cs, ok := target.Char.Activity.CastingData(); ok {
-				if sd := spells.GetSpell(cs.SpellId); sd != nil && sd.NoDamageInterrupt {
-					interruptible = false
-				}
-			}
-			if interruptible {
-				w := float64(cfg.SkillWeight)
-				grip := float64(char.Stats.Dexterity.ValueAdj) +
-					float64(char.GetSkillLevel(skills.UnarmedCombat))*w
-				hold := float64(target.Char.Stats.Willpower.ValueAdj) +
-					float64(target.Char.GetSkillLevel(skills.Spellcasting))*w
-				// sight ramp (plan 5b): the caster needs to see to hold the
-				// weave; the choke is felt, not seen, so grip takes none.
-				hold *= messaging.SightMult(target.Char, sightRoom)
-				res := combat.RunConcentrationContest(hold, grip)
-				// U10b-1 Task 12: the DEFENDER's concentration award, win or
-				// lose, fired before the branch because the loss arm has its
-				// own work to do. It was previously success-only and sat in
-				// the else. res.Success is the caster's win -- hold is passed
-				// as the attack side of the contest.
-				//
-				// The throttler's own progression came from the move's hit
-				// resolution; this is not a second attacker event.
-				target.Char.AwardResolved(
-					target.Char.GetUserId(), res.Success,
-					target.Char.CandidateFor(string(skills.Spellcasting)))
-				if !res.Success {
-					var attackerRef state.ActorRef
-					if actor.IsPlayer() {
-						attackerRef = state.ActorRef{UserId: actor.GetUserId()}
-					} else {
-						attackerRef = state.ActorRef{MobInstanceId: actor.GetMobInstanceId()}
-					}
-					interrupted = InterruptTargetCast(target.Char, attackerRef)
-				}
-			}
-		}
+		// Cast interrupt (U10): the choke contest throttle shares with
+		// smother, at most once per special-move cooldown window.
+		interrupted = chokeCastInterrupt(actor, char, target.Char, sightRoom)
 	}
 
 	// Determine source/target types for analytics.

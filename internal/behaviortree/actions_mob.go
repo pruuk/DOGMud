@@ -244,6 +244,7 @@ var beastMoves = map[string]bool{
 	"throttle":  true,
 	"hamstring": true,
 	"drain":     true,
+	"smother":   true,
 }
 
 // actTrySpecialMove delegates to combat.SelectSpecialMove (the chance-gate-free

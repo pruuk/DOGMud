@@ -1125,7 +1125,7 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"conditions/131-chrysalis_pall.yaml": true,
 	// Special moves: messaging.SendTrio hides Audience ActorName and ActeeName
 	// from every reader by that reader's ParticipantSight. Applies to all
-	// fourteen shipped files, not only the two that author a `_plain` token;
+	// fifteen shipped files, not only the two that author a `_plain` token;
 	// see the doc comment above. The store-relative key is what keeps these
 	// five from colliding with their combat-messages basename twins.
 	"narration/special-moves/bash.yaml":      true,
@@ -1139,6 +1139,7 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"narration/special-moves/pounce.yaml":    true,
 	"narration/special-moves/rake.yaml":      true,
 	"narration/special-moves/shoot.yaml":     true,
+	"narration/special-moves/smother.yaml":   true,
 	"narration/special-moves/throttle.yaml":  true,
 	"narration/special-moves/throw.yaml":     true, // SendTrio hides both Audience names by reader sight; the interrupt event stopped passing NoName in M5 PR 1 Task 2
 	"narration/special-moves/trip.yaml":      true,

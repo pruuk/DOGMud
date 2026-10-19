@@ -18,4 +18,5 @@ const (
 	ConditionIdPoisoned          = 121 // the spell dot; Venom (39) and Spore Toxin (40) are their own records
 	ConditionIdBleeding          = 122
 	ConditionIdEnchantWithdrawal = 123
+	ConditionIdSmothered         = 144 // smoke in the lungs; the smother move applies it (#541 slice 2)
 )

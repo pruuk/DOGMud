@@ -167,6 +167,10 @@ func SelectSpecialMove(mob *mobs.Mob, target *characters.Character) string {
 		moveScores["throttle"] = ScoreThrottle(mob, target)
 	}
 
+	if CanUseSmother(&mob.Character) {
+		moveScores["smother"] = ScoreSmother(mob, target)
+	}
+
 	// No viable moves
 	if len(moveScores) == 0 {
 		return ""
@@ -827,6 +831,34 @@ func ScoreThrottle(mob *mobs.Mob, target *characters.Character) int {
 		score += 20
 	}
 
+	if score < 0 {
+		score = 0
+	}
+	return score
+}
+
+// CanUseSmother reports whether the actor can smother a target: the smoke
+// elemental's special move, listed in its species' beast_moves.
+func CanUseSmother(char *characters.Character) bool {
+	if _, exists := char.Cooldowns["special-move"]; exists {
+		return false
+	}
+	if char.HasBodyPart("hands") {
+		return false
+	}
+	return SpeciesHasBeastMove(char, "smother")
+}
+
+// ScoreSmother is the AI priority for smother: highest against a caster (the
+// smoke can choke the spell off) and lowest against a target already blind.
+func ScoreSmother(mob *mobs.Mob, target *characters.Character) int {
+	score := 50
+	if target.IsCasting() {
+		score += 30
+	}
+	if target.HasAnyBlindSource() {
+		score -= 30
+	}
 	if score < 0 {
 		score = 0
 	}

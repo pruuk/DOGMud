@@ -58,6 +58,7 @@ func TestNewlyDefendableAttackNamesRenderTriads(t *testing.T) {
 		{"claw rake", meleeDefences},
 		{"draining grasp", meleeDefences},
 		{"throttle lunge", meleeDefences},
+		{"rolling smoke", meleeDefences},
 		{"aimed shot", rangedDefences},
 		{"firebomb", rangedDefences},
 		// Spell/taunt exemplars: a spell name must read naturally through

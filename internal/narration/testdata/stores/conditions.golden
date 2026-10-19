@@ -364,3 +364,6 @@ condition|143|start_actee => something's spell sets your blood boiling in your v
 condition|143|start_observer => something's spell sets <ansi fg="username">Aliceia</ansi>'s blood boiling.
 condition|143|trigger_actee => <ansi fg="red">Your blood boils and seeps from your skin!</ansi>
 condition|143|end_actee => Your blood cools at last and stops seeping.
+condition|144|trigger_actee => You cough up smoke and fight for breath.
+condition|144|end_actee => You cough out the last of the smoke and breathe freely again.
+condition|144|authored_start_line => Smoke pours down your throat and you choke on it.

@@ -19,8 +19,9 @@ import (
 // Task 12 (messaging M4e-1): the guards that keep the special-move migration
 // from silently rotting.
 //
-// Thirteen internal/mobcommands special-move files (bash, charge, drain,
-// gore, grapple, hamstring, kick, maul, pounce, rake, shoot, throttle, trip)
+// Fourteen internal/mobcommands special-move files (bash, charge, drain,
+// gore, grapple, hamstring, kick, maul, pounce, rake, shoot, smother,
+// throttle, trip)
 // now read every line they narrate from
 // _datafiles/world/dogmud/narration/special-moves/*.yaml through
 // internal/movenarration, via the sendMoveEvent/renderMoveEvent helpers in
@@ -39,7 +40,7 @@ import (
 //     clean (TestMoveEventRoleSetsAgree).
 // ---------------------------------------------------------------------------
 
-// migratedNarrationLiteralFiles is the thirteen mob special-move files whose
+// migratedNarrationLiteralFiles is the fourteen mob special-move files whose
 // wording moved to the movenarration store. This is deliberately the same
 // file list that came OUT of m2RoutingFiles and m2FrozenFiles as each was
 // migrated (see those vars' comments in m2_routing_guard_test.go and
@@ -57,6 +58,7 @@ var migratedNarrationLiteralFiles = []string{
 	"internal/mobcommands/pounce.go",
 	"internal/mobcommands/rake.go",
 	"internal/mobcommands/shoot.go",
+	"internal/mobcommands/smother.go",
 	"internal/mobcommands/throttle.go",
 	"internal/mobcommands/trip.go",
 	// The twelve player twins, migrated by M4e PR 1b. With these added the

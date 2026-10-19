@@ -61,6 +61,7 @@ const (
 	ActionGore            Action = `gore`
 	ActionDrain           Action = `drain`
 	ActionThrottle        Action = `throttle`
+	ActionSmother         Action = `smother`
 	ActionThrow           Action = `throw`
 	ActionSneak           Action = `sneak`
 	ActionTaunt           Action = `taunt`

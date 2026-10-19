@@ -1,0 +1,51 @@
+moveid: smother
+# Mob-only: the smoke elemental's special move (slam split spec, section 3).
+# No actor role: a mob has no client (as charge.yaml and hamstring.yaml).
+# Variant N of every role describes one moment. On a hit the target is
+# Blinded (condition 3) and Smothered (144); the hit lines say both.
+# The attacker has no body: smoke and embers only.
+events:
+  hit:
+    actee:
+      - '{actor} pours into your eyes and lungs! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} fills your eyes and throat with smoke! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} wraps you in choking, blinding smoke! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s embers blind you as you choke! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} smothers you. You gasp, blinded! (<ansi fg="damage">{damage}</ansi>)'
+    observer:
+      - '{actor} pours into {actee}''s eyes and lungs!'
+      - '{actor} fills {actee}''s eyes and throat with smoke!'
+      - '{actor} wraps {actee} in choking, blinding smoke!'
+      - '{actor}''s embers blind {actee}, who chokes!'
+      - '{actor} smothers {actee}, who gasps, blinded!'
+  # Smoke chokes a spell off mid-cast, as throttle does (combat_throttle.go).
+  # It rides the shared special-move cooldown, so at most once per window.
+  cast_interrupt:
+    actee:
+      - '{actor}''s smoke chokes your spell off mid-word!'
+      - 'Your spell collapses as you cough and gasp!'
+    observer:
+      - '{actor}''s smoke chokes {actee}''s spell off mid-word!'
+      - '{actee} coughs and gasps, and their spell collapses!'
+  # A partial applies no condition (conditions ride on hit only),
+  # so these lines claim neither blindness nor choking.
+  partial:
+    actee:
+      - 'You turn aside, but {actor}''s embers sting! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You hold your breath; {actor} still stings! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You twist away, but {actor} singes you! (<ansi fg="damage">{damage}</ansi>)'
+    observer:
+      - '{actee} turns aside, but {actor}''s embers sting!'
+      - '{actee} holds their breath, but {actor} still stings!'
+      - '{actee} twists away, but {actor} singes them!'
+  miss:
+    actee:
+      - '{actor} billows toward your face, but misses!'
+      - '{actor}''s smoke drifts past you!'
+      - 'You duck under {actor}''s rolling smoke!'
+      - 'You step clear before {actor} can engulf you!'
+    observer:
+      - '{actor} billows toward {actee}''s face, but misses!'
+      - '{actor}''s smoke drifts past {actee}!'
+      - '{actee} ducks under {actor}''s rolling smoke!'
+      - '{actee} steps clear before {actor} can engulf them!'

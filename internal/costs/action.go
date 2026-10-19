@@ -44,6 +44,7 @@ const (
 	ActionGore            = actionspec.ActionGore
 	ActionDrain           = actionspec.ActionDrain
 	ActionThrottle        = actionspec.ActionThrottle
+	ActionSmother         = actionspec.ActionSmother
 	ActionThrow           = actionspec.ActionThrow
 	ActionSneak           = actionspec.ActionSneak
 	ActionTaunt           = actionspec.ActionTaunt

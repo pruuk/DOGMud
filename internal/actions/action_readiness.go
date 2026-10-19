@@ -29,7 +29,7 @@ type ReadinessResult struct {
 var specialMoveVerbs = map[string]bool{
 	"taunt": true, "rally": true, "warcry": true, "trip": true, "bash": true,
 	"grapple": true, "kick": true, "rake": true, "maul": true, "throttle": true,
-	"pounce": true, "gore": true, "hamstring": true, "drain": true,
+	"pounce": true, "gore": true, "hamstring": true, "drain": true, "smother": true,
 }
 
 func splitVerb(cmd string) (verb, rest string) {

@@ -127,6 +127,9 @@ func CommandIsReady(actor Actor, cmd string) bool {
 
 	case "drain":
 		return char.IsInCombat() && combat.SpeciesHasBeastMove(char, "drain")
+
+	case "smother":
+		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesHasBeastMove(char, "smother")
 	}
 
 	return false

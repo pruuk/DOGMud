@@ -36,6 +36,7 @@ var u8SharedActionFunctions = []u8SharedActionFunction{
 	{file: "combat_gore.go", name: "ExecuteGore"},
 	{file: "combat_drain.go", name: "ExecuteDrain"},
 	{file: "combat_throttle.go", name: "ExecuteThrottle"},
+	{file: "combat_smother.go", name: "ExecuteSmother"},
 	{file: "combat_fire.go", name: "ExecuteFire"},
 	{file: "combat_reload.go", name: "ExecuteReload"},
 	{file: "sneak.go", name: "Sneak"},

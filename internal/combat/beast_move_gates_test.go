@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/species"
 )
 
@@ -12,13 +13,14 @@ import (
 var beastMoveGates = map[string]func(*characters.Character) bool{
 	"rake": CanUseRake, "maul": CanUseMaul, "pounce": CanUsePounce, "gore": CanUseGore,
 	"throttle": CanUseThrottle, "hamstring": CanUseHamstring, "drain": CanUseDrain,
+	"smother": CanUseSmother,
 }
 
 // Spec section 6: a species whose list omits a move cannot use it even with
 // the matching attack family, and a listed move opens the gate. Both halves,
 // so the test fails whichever way a gate stops reading the list.
 func TestBeastMoveGatesReadTheSpeciesList(t *testing.T) {
-	all := []string{"rake", "maul", "pounce", "gore", "throttle", "hamstring", "drain"}
+	all := []string{"rake", "maul", "pounce", "gore", "throttle", "hamstring", "drain", "smother"}
 	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
 		9401: {SpeciesId: 9401, Name: "unlisted", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Bite, LifeDrain: true},
 		9402: {SpeciesId: 9402, Name: "listed", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Bite, LifeDrain: true, BeastMoves: all},
@@ -60,5 +62,27 @@ func TestBeastMoveGates_TableExamples(t *testing.T) {
 		if gate(snake) {
 			t.Errorf("a serpent must not %s", move)
 		}
+	}
+}
+
+func TestScoreSmother_FavoursCastersAndSightedTargets(t *testing.T) {
+	mob := &mobs.Mob{}
+	sighted := characters.New()
+	if ScoreSmother(mob, sighted) <= 0 {
+		t.Fatal("smother must score against a sighted target")
+	}
+}
+
+// The Elemental Prince (322) has no aiprofile, so it runs "default", which
+// carries no smother weight: smother falls back to weight 10 and, being the
+// only move a bodiless smoke species can make, is still the one selected.
+func TestSelectSpecialMove_SmokeSpeciesPicksSmother(t *testing.T) {
+	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
+		9444: {SpeciesId: 9444, Name: "smoke", BodyParts: []string{}, NaturalAttack: items.Claws, BeastMoves: []string{"smother"}},
+	}))
+	mob := &mobs.Mob{}
+	mob.Character.SpeciesId = 9444
+	if got := SelectSpecialMove(mob, characters.New()); got != "smother" {
+		t.Fatalf("SelectSpecialMove = %q, want smother", got)
 	}
 }
