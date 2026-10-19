@@ -25,7 +25,8 @@ func TestArchetype_Predator_FiresBeastMove(t *testing.T) {
 	}
 
 	cleanupSp := species.SeedSpeciesForTest(map[int]*species.Species{
-		9912: {SpeciesId: 9912, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		9912: {SpeciesId: 9912, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite,
+			BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 	})
 	defer cleanupSp()
 

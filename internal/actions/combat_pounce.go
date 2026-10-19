@@ -48,10 +48,10 @@ type PounceResult struct {
 	// (CanUsePounce gates it).
 	Grappling bool
 
-	// NotPredator is true when the actor's species is not a quadruped predator
-	// (requires legs AND fanged-or-clawed). Reachable via a direct player
-	// command or a btree/combatcommands dispatch to a non-predator mob.
-	// Unreachable via the AI path (CanUsePounce gates it).
+	// NotPredator is true when the species does not list pounce in
+	// beast_moves, or the body lacks what it needs (legs, no hands). Reachable
+	// via a direct player command or a btree/combatcommands dispatch to an
+	// unlisted mob. Unreachable via the AI path (CanUsePounce gates it).
 	NotPredator bool
 }
 
@@ -59,7 +59,7 @@ type PounceResult struct {
 // mob callers. It handles:
 //   - Special-move cooldown (using SpecialMoveCooldown from balance config)
 //   - Target resolution via ResolveAggroTarget
-//   - Compound predator gate: legs AND (fanged OR clawed)
+//   - Species gate: legs, no hands, and pounce listed in beast_moves
 //   - ExecuteSkillMove via combat package (UnarmedCombat skill, Dexterity
 //     attack stat, Dexterity defense stat, BashDamagePercent, Strength damage
 //     stat, BashKnockdownFactor, KnockdownToSupine=true — backward knockdown)
@@ -87,10 +87,10 @@ func ExecutePounce(actor Actor) PounceResult {
 		return PounceResult{Grappling: true}
 	}
 
-	// Compound predator gate (defense-in-depth): only legged fanged-or-clawed
-	// creatures pounce. Unreachable via the AI path (CanUsePounce gates it) but
-	// reachable via a direct player command or btree dispatch to a non-predator.
-	if !combat.SpeciesIsQuadrupedPredator(char) {
+	// Species gate (defense-in-depth): only a legged, handless species listing
+	// pounce pounces. Unreachable via the AI path (CanUsePounce gates it) but
+	// reachable via a direct player command or btree dispatch to an unlisted mob.
+	if char.HasBodyPart("hands") || !char.HasBodyPart("legs") || !combat.SpeciesHasBeastMove(char, "pounce") {
 		return PounceResult{NotPredator: true}
 	}
 

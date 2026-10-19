@@ -220,14 +220,14 @@ Phase-1 basic attack for fanged species (species `NaturalAttack`).
 
 ### Beast Special Moves (Phase 3)
 
-Six new `Execute*` actions gated by exported species-identity predicates
-from `internal/combat` (`SpeciesIsFanged`, `SpeciesIsClawed`,
-`SpeciesIsHorned`, `SpeciesHasLifeDrain`, `SpeciesIsQuadrupedPredator`).
-Each action checks the predicate at entry as defense-in-depth and returns
-a `Not<Identity>` result if the caller's species doesn't qualify. The
-same predicate is checked in `ai.go` (`CanUse*`) and
+Six new `Execute*` actions gated by the species' `beast_moves` list, read
+through `combat.SpeciesHasBeastMove` (#541 slice 2; the attack-family
+predicates that gated them before were deleted). Each action checks the
+list at entry as defense-in-depth and returns a `Not<Identity>` result if
+the caller's species does not list the move or its body lacks what the
+move needs. The same read is made in `ai.go` (`CanUse*`) and
 `command_readiness.go`; drift rows in `command_readiness_drift_test.go`
-keep all three sync points in agreement.
+(including the `*_notlisted` rows) keep all three sync points in agreement.
 
 **Phase 4 — the `hands` gate.** Each of the six beast actions (incl.
 `ExecuteHamstring`, which gained an explicit identity gate in Phase 4)

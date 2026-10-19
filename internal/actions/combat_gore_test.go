@@ -37,7 +37,7 @@ func TestGore_OnCooldown(t *testing.T) {
 	actor := newStubActor(char, room)
 
 	prepareSpecialMoveCooldown(t, char, 7906, 7906, &species.Species{
-		SpeciesId: 7906, Name: "cooldown-boar", BodyParts: []string{"legs", "horns"}, NaturalAttack: items.Gore,
+		SpeciesId: 7906, Name: "cooldown-boar", BodyParts: []string{"legs", "horns"}, NaturalAttack: items.Gore, BeastMoves: []string{"gore"},
 	})
 
 	result := ExecuteGore(actor)
@@ -50,7 +50,7 @@ func TestGore_OnCooldown(t *testing.T) {
 // with a valid target gets NotHorned=true and Executed=false.
 func TestGore_NotHorned(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		7401: {SpeciesId: 7401, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		7401: {SpeciesId: 7401, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 		7402: {SpeciesId: 7402, Name: "human", BodyParts: []string{"arms", "hands", "legs"}},
 	})
 	defer cleanup()
@@ -92,7 +92,7 @@ func TestGore_NotHorned(t *testing.T) {
 // target executes the gore (Executed=true, NotHorned=false).
 func TestGore_Executed(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		7501: {SpeciesId: 7501, Name: "boar", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore},
+		7501: {SpeciesId: 7501, Name: "boar", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore, BeastMoves: []string{"gore"}},
 	})
 	defer cleanup()
 

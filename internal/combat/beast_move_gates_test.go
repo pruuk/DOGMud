@@ -1,0 +1,64 @@
+package combat
+
+import (
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/species"
+)
+
+// beastMoveGates is every CanUse* gate that species data decides.
+var beastMoveGates = map[string]func(*characters.Character) bool{
+	"rake": CanUseRake, "maul": CanUseMaul, "pounce": CanUsePounce, "gore": CanUseGore,
+	"throttle": CanUseThrottle, "hamstring": CanUseHamstring, "drain": CanUseDrain,
+}
+
+// Spec section 6: a species whose list omits a move cannot use it even with
+// the matching attack family, and a listed move opens the gate. Both halves,
+// so the test fails whichever way a gate stops reading the list.
+func TestBeastMoveGatesReadTheSpeciesList(t *testing.T) {
+	all := []string{"rake", "maul", "pounce", "gore", "throttle", "hamstring", "drain"}
+	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
+		9401: {SpeciesId: 9401, Name: "unlisted", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Bite, LifeDrain: true},
+		9402: {SpeciesId: 9402, Name: "listed", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Bite, LifeDrain: true, BeastMoves: all},
+	}))
+	unlisted := &characters.Character{SpeciesId: 9401}
+	listed := &characters.Character{SpeciesId: 9402}
+	for move, gate := range beastMoveGates {
+		if gate(unlisted) {
+			t.Errorf("%s: a species that does not list it can use it", move)
+		}
+		if !gate(listed) {
+			t.Errorf("%s: a species that lists it, with the body for it, cannot use it", move)
+		}
+	}
+}
+
+// The table in practice: the gate lets a cat throttle and refuses a rat, a
+// bear no longer pounces, a serpent does nothing but bite. (D4: whether the
+// cat's AI ever picks throttle is profile tuning, #574; this tests the gate.)
+func TestBeastMoveGates_TableExamples(t *testing.T) {
+	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
+		11: {SpeciesId: 11, Name: "feline", BodyParts: []string{"legs", "eyes", "mouth", "skin", "tail"}, NaturalAttack: items.Claws,
+			BeastMoves: []string{"rake", "pounce", "hamstring", "throttle"}},
+		10: {SpeciesId: 10, Name: "rodent", BodyParts: []string{"legs", "eyes", "mouth", "skin", "tail"}, NaturalAttack: items.Bite,
+			BeastMoves: []string{"hamstring"}},
+		3: {SpeciesId: 3, Name: "bear", BodyParts: []string{"arms", "legs", "eyes", "mouth", "skin"}, NaturalAttack: items.Claws,
+			BeastMoves: []string{"rake"}},
+		8: {SpeciesId: 8, Name: "serpent", BodyParts: []string{"eyes", "mouth", "skin"}, NaturalAttack: items.Bite},
+	}))
+	cat, rat, bear, snake := &characters.Character{SpeciesId: 11}, &characters.Character{SpeciesId: 10},
+		&characters.Character{SpeciesId: 3}, &characters.Character{SpeciesId: 8}
+	if !CanUseThrottle(cat) || CanUseThrottle(rat) {
+		t.Error("the gate must allow a cat's throttle and refuse a rat's")
+	}
+	if CanUsePounce(bear) || CanUseHamstring(bear) || !CanUseRake(bear) {
+		t.Error("a bear rakes; it does not pounce or hamstring")
+	}
+	for move, gate := range beastMoveGates {
+		if gate(snake) {
+			t.Errorf("a serpent must not %s", move)
+		}
+	}
+}

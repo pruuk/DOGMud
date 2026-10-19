@@ -249,7 +249,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// drain-area counter field and its exit call were deleted) ───────────
 	"internal/actions/combat_drain.go|147":           "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_drain.go|314":           "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/actions/combat_hamstring.go|138":       "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_hamstring.go|136":       "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_maul.go|132":            "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_rake.go|132":            "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_throttle.go|146":        "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",

@@ -271,9 +271,9 @@ func TestCanUseSubmit(t *testing.T) {
 
 func TestCanUseHamstring_FangedOrClawedWithLegs(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		7501: {SpeciesId: 7501, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		7501: {SpeciesId: 7501, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 		7502: {SpeciesId: 7502, Name: "human", BodyParts: []string{"arms", "hands", "legs", "mouth"}},
-		7503: {SpeciesId: 7503, Name: "serpent", BodyParts: []string{"mouth", "skin"}, NaturalAttack: items.Bite},
+		7503: {SpeciesId: 7503, Name: "serpent", BodyParts: []string{"mouth", "skin"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle"}},
 	})
 	defer cleanup()
 
@@ -588,40 +588,12 @@ func TestCanUseTrip_RequiresLegs(t *testing.T) {
 	}
 }
 
-// ─── Beast-identity predicates ──────────────────────────────────────────────
-
-func TestBeastIdentityPredicates(t *testing.T) {
-	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		8001: {SpeciesId: 8001, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
-		8002: {SpeciesId: 8002, Name: "feline", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Claws},
-		8003: {SpeciesId: 8003, Name: "boar", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore},
-		8004: {SpeciesId: 8004, Name: "vampire", BodyParts: []string{"arms", "hands", "legs"}, NaturalAttack: items.Claws, LifeDrain: true},
-	})
-	defer cleanup()
-	wolf := &characters.Character{SpeciesId: 8001}
-	feline := &characters.Character{SpeciesId: 8002}
-	boar := &characters.Character{SpeciesId: 8003}
-	vamp := &characters.Character{SpeciesId: 8004}
-	if !SpeciesIsFanged(wolf) || SpeciesIsFanged(feline) {
-		t.Error("fanged predicate wrong")
-	}
-	if !SpeciesIsClawed(feline) || SpeciesIsClawed(wolf) {
-		t.Error("clawed predicate wrong")
-	}
-	if !SpeciesIsHorned(boar) || SpeciesIsHorned(wolf) {
-		t.Error("horned predicate wrong")
-	}
-	if !SpeciesHasLifeDrain(vamp) || SpeciesHasLifeDrain(wolf) {
-		t.Error("lifedrain predicate wrong")
-	}
-}
-
 // ─── CanUseRake ─────────────────────────────────────────────────────────────
 
 func TestCanUseRake_ClawedTrueOthersFalse(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		9001: {SpeciesId: 9001, Name: "feline", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Claws},
-		9002: {SpeciesId: 9002, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		9001: {SpeciesId: 9001, Name: "feline", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Claws, BeastMoves: []string{"rake", "pounce", "hamstring"}},
+		9002: {SpeciesId: 9002, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 		9003: {SpeciesId: 9003, Name: "human", BodyParts: []string{"arms", "hands", "legs", "mouth"}},
 	})
 	defer cleanup()
@@ -646,8 +618,8 @@ func TestCanUseRake_ClawedTrueOthersFalse(t *testing.T) {
 
 func TestCanUseMaul_FangedTrueOthersFalse(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		9101: {SpeciesId: 9101, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
-		9102: {SpeciesId: 9102, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws},
+		9101: {SpeciesId: 9101, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
+		9102: {SpeciesId: 9102, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws, BeastMoves: []string{"rake", "pounce", "hamstring"}},
 		9103: {SpeciesId: 9103, Name: "human", BodyParts: []string{"arms", "hands", "legs", "mouth"}},
 	})
 	defer cleanup()
@@ -692,8 +664,8 @@ func TestCanUseGrapple_RequiresArms(t *testing.T) {
 
 func TestCanUseDrain_LifeDrainTrueOthersFalse(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		9401: {SpeciesId: 9401, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true},
-		9402: {SpeciesId: 9402, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		9401: {SpeciesId: 9401, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true, BeastMoves: []string{"drain"}},
+		9402: {SpeciesId: 9402, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 		9403: {SpeciesId: 9403, Name: "human", BodyParts: []string{"arms", "hands", "legs", "mouth"}},
 	})
 	defer cleanup()
@@ -718,9 +690,9 @@ func TestCanUseDrain_LifeDrainTrueOthersFalse(t *testing.T) {
 
 func TestCanUseGore_HornedTrueOthersFalse(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		9301: {SpeciesId: 9301, Name: "boar", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore},
-		9302: {SpeciesId: 9302, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
-		9303: {SpeciesId: 9303, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws},
+		9301: {SpeciesId: 9301, Name: "boar", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore, BeastMoves: []string{"gore"}},
+		9302: {SpeciesId: 9302, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
+		9303: {SpeciesId: 9303, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws, BeastMoves: []string{"rake", "pounce", "hamstring"}},
 	})
 	defer cleanup()
 
@@ -744,10 +716,10 @@ func TestCanUseGore_HornedTrueOthersFalse(t *testing.T) {
 
 func TestCanUsePounce(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		9201: {SpeciesId: 9201, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
-		9202: {SpeciesId: 9202, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws},
+		9201: {SpeciesId: 9201, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
+		9202: {SpeciesId: 9202, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws, BeastMoves: []string{"rake", "pounce", "hamstring"}},
 		9203: {SpeciesId: 9203, Name: "human", BodyParts: []string{"arms", "hands", "legs", "mouth"}},
-		9204: {SpeciesId: 9204, Name: "serpent", BodyParts: []string{"mouth"}, NaturalAttack: items.Bite},
+		9204: {SpeciesId: 9204, Name: "serpent", BodyParts: []string{"mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle"}},
 	})
 	defer cleanup()
 
@@ -824,7 +796,7 @@ func TestChooseSpecialMove_SerpentNeverPounces(t *testing.T) {
 	// A legless fanged serpent on the serpent profile: maul/throttle only,
 	// never pounce/hamstring (anatomy gates them out).
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		9920: {SpeciesId: 9920, Name: "serpent", BodyParts: []string{"mouth", "skin"}, NaturalAttack: items.Bite},
+		9920: {SpeciesId: 9920, Name: "serpent", BodyParts: []string{"mouth", "skin"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle"}},
 	})
 	defer cleanup()
 	mob := &mobs.Mob{}
@@ -855,6 +827,7 @@ func TestChooseSpecialMove_PredatorProfile_NeverGrapple(t *testing.T) {
 			Name:          "wolf",
 			BodyParts:     []string{"legs", "mouth"},
 			NaturalAttack: items.Bite,
+			BeastMoves:    []string{"maul", "throttle", "pounce", "hamstring"},
 		},
 	})
 	defer cleanup()
@@ -914,6 +887,7 @@ func TestChooseSpecialMove_AmbushPredatorProfile_ClawedRakeNotMaul(t *testing.T)
 			Name:          "feline",
 			BodyParts:     []string{"legs", "paws"},
 			NaturalAttack: items.Claws,
+			BeastMoves:    []string{"rake", "pounce", "hamstring"},
 		},
 	})
 	defer cleanup()
@@ -926,8 +900,8 @@ func TestChooseSpecialMove_AmbushPredatorProfile_ClawedRakeNotMaul(t *testing.T)
 
 func TestCanUseThrottle_FangedTrueClawedFalse(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		9301: {SpeciesId: 9301, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
-		9302: {SpeciesId: 9302, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws},
+		9301: {SpeciesId: 9301, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
+		9302: {SpeciesId: 9302, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws, BeastMoves: []string{"rake", "pounce", "hamstring"}},
 		9303: {SpeciesId: 9303, Name: "human", BodyParts: []string{"arms", "hands", "legs", "mouth"}},
 	})
 	defer cleanup()
@@ -958,16 +932,20 @@ func TestCanUseThrottle_FangedTrueClawedFalse(t *testing.T) {
 func TestBeastMoves_RequireNoHands(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
 		// Hands-bearing humanoid-identity creatures — must be blocked from beast moves.
-		9001: {SpeciesId: 9001, Name: "goblinoid", BodyParts: []string{"arms", "hands", "legs", "mouth", "horns"}, NaturalAttack: items.Claws},
-		9002: {SpeciesId: 9002, Name: "fangedhumanoid", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Bite},
+		9001: {SpeciesId: 9001, Name: "goblinoid", BodyParts: []string{"arms", "hands", "legs", "mouth", "horns"}, NaturalAttack: items.Claws,
+			BeastMoves: []string{"rake", "pounce", "hamstring"}},
+		9002: {SpeciesId: 9002, Name: "fangedhumanoid", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Bite,
+			BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 		// Clawed bear: has arms but NO hands — must still rake.
-		9003: {SpeciesId: 9003, Name: "bear_clawed", BodyParts: []string{"arms", "legs", "mouth"}, NaturalAttack: items.Claws},
+		9003: {SpeciesId: 9003, Name: "bear_clawed", BodyParts: []string{"arms", "legs", "mouth"}, NaturalAttack: items.Claws,
+			BeastMoves: []string{"rake", "pounce", "hamstring"}},
 		// Fanged bear: has arms but NO hands — must still maul/throttle.
-		9006: {SpeciesId: 9006, Name: "bear_fanged", BodyParts: []string{"arms", "legs", "mouth"}, NaturalAttack: items.Bite},
+		9006: {SpeciesId: 9006, Name: "bear_fanged", BodyParts: []string{"arms", "legs", "mouth"}, NaturalAttack: items.Bite,
+			BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 		// Handless horned beast — must still gore.
-		9004: {SpeciesId: 9004, Name: "hornedbeast", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore},
+		9004: {SpeciesId: 9004, Name: "hornedbeast", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore, BeastMoves: []string{"gore"}},
 		// Hands-bearing LifeDrain vampire — drain must stay exempt from the hands rule.
-		9005: {SpeciesId: 9005, Name: "vamp", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true},
+		9005: {SpeciesId: 9005, Name: "vamp", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true, BeastMoves: []string{"drain"}},
 	})
 	defer cleanup()
 	gob := &characters.Character{SpeciesId: 9001}
@@ -1014,6 +992,7 @@ func TestSelectSpecialMove_NoChanceRoll(t *testing.T) {
 			Name:          "wolf",
 			BodyParts:     []string{"legs", "mouth"},
 			NaturalAttack: items.Bite,
+			BeastMoves:    []string{"maul", "throttle", "pounce", "hamstring"},
 		},
 	})
 	defer cleanup()

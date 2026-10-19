@@ -37,7 +37,7 @@ func TestPounce_OnCooldown(t *testing.T) {
 	actor := newStubActor(char, room)
 
 	prepareSpecialMoveCooldown(t, char, 7905, 7905, &species.Species{
-		SpeciesId: 7905, Name: "cooldown-predator", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite,
+		SpeciesId: 7905, Name: "cooldown-predator", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"},
 	})
 
 	result := ExecutePounce(actor)
@@ -53,9 +53,9 @@ func TestPounce_NotPredator(t *testing.T) {
 	// Seed three species: no-legs fanged (not predator), legged no-attack
 	// (not predator), and legged fanged (predator).
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		6001: {SpeciesId: 6001, Name: "serpent", BodyParts: []string{"mouth"}, NaturalAttack: items.Bite},
+		6001: {SpeciesId: 6001, Name: "serpent", BodyParts: []string{"mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle"}},
 		6002: {SpeciesId: 6002, Name: "human", BodyParts: []string{"arms", "hands", "legs"}},
-		6003: {SpeciesId: 6003, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		6003: {SpeciesId: 6003, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 	})
 	defer cleanup()
 
@@ -108,7 +108,7 @@ func TestPounce_NotPredator(t *testing.T) {
 // Grappling=true and Executed=false — can't leap from a clinch.
 func TestPounce_Grappling(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		6201: {SpeciesId: 6201, Name: "grappling-wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		6201: {SpeciesId: 6201, Name: "grappling-wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 	})
 	defer cleanup()
 
@@ -139,7 +139,7 @@ func TestPounce_Grappling(t *testing.T) {
 // valid target executes the pounce (Executed=true, NotPredator=false).
 func TestPounce_Executed(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		6101: {SpeciesId: 6101, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws},
+		6101: {SpeciesId: 6101, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws, BeastMoves: []string{"rake", "pounce", "hamstring"}},
 	})
 	defer cleanup()
 

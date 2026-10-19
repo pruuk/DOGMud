@@ -76,10 +76,14 @@ func seedSpecialMoveAdmissionSpecies() func() {
 	return species.SeedSpeciesForTest(map[int]*species.Species{
 		8101: {SpeciesId: 8101, Name: "natural basher", BodyParts: []string{"arms", "legs"}, NaturalBash: true},
 		8102: {SpeciesId: 8102, Name: "humanoid", BodyParts: []string{"arms", "hands", "legs"}},
-		8103: {SpeciesId: 8103, Name: "fanged beast", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
-		8104: {SpeciesId: 8104, Name: "clawed beast", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Claws},
-		8105: {SpeciesId: 8105, Name: "horned beast", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore},
-		8106: {SpeciesId: 8106, Name: "life drainer", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true},
+		8103: {SpeciesId: 8103, Name: "fanged beast", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite,
+			BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
+		8104: {SpeciesId: 8104, Name: "clawed beast", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Claws,
+			BeastMoves: []string{"rake", "pounce", "hamstring"}},
+		8105: {SpeciesId: 8105, Name: "horned beast", BodyParts: []string{"legs", "mouth", "horns"}, NaturalAttack: items.Gore,
+			BeastMoves: []string{"gore"}},
+		8106: {SpeciesId: 8106, Name: "life drainer", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true,
+			BeastMoves: []string{"drain"}},
 		8107: {SpeciesId: 8107, Name: "legless armless", BodyParts: []string{"mouth"}},
 	})
 }

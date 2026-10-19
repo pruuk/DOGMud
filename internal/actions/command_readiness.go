@@ -100,36 +100,33 @@ func CommandIsReady(actor Actor, cmd string) bool {
 		}
 		return char.HasBodyPart("legs")
 
+	// Beast moves: each reads the species' beast_moves list
+	// (combat.SpeciesHasBeastMove) beside its anatomy check, never the
+	// attack family.
 	case "rake":
-		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesIsClawed(char)
+		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesHasBeastMove(char, "rake")
 
 	case "maul":
-		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesIsFanged(char)
+		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesHasBeastMove(char, "maul")
 
 	case "throttle":
-		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesIsFanged(char)
+		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesHasBeastMove(char, "throttle")
 
 	case "pounce":
-		// SpeciesIsQuadrupedPredator already incorporates the !hands gate.
-		return char.IsInCombat() && !char.IsGrappling() && combat.SpeciesIsQuadrupedPredator(char)
+		return char.IsInCombat() && !char.IsGrappling() && !char.HasBodyPart("hands") &&
+			char.HasBodyPart("legs") && combat.SpeciesHasBeastMove(char, "pounce")
 
 	case "gore":
-		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesIsHorned(char)
+		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesHasBeastMove(char, "gore")
 
 	case "hamstring":
-		if !char.IsInCombat() {
+		if !char.IsInCombat() || !char.HasBodyPart("legs") || char.HasBodyPart("hands") {
 			return false
 		}
-		if !char.HasBodyPart("legs") {
-			return false
-		}
-		if char.HasBodyPart("hands") {
-			return false
-		}
-		return combat.SpeciesIsFanged(char) || combat.SpeciesIsClawed(char)
+		return combat.SpeciesHasBeastMove(char, "hamstring")
 
 	case "drain":
-		return char.IsInCombat() && combat.SpeciesHasLifeDrain(char)
+		return char.IsInCombat() && combat.SpeciesHasBeastMove(char, "drain")
 	}
 
 	return false

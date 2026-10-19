@@ -91,10 +91,14 @@ func seedSpecialMoveSpecies() func() {
 		0:  {SpeciesId: 0, Name: "featureless", BodyParts: nil},
 		10: {SpeciesId: 10, Name: "living ram", NaturalBash: true, BodyParts: []string{"arms", "legs"}},
 		11: {SpeciesId: 11, Name: "humanoid", BodyParts: []string{"arms", "hands", "legs"}},
-		12: {SpeciesId: 12, Name: "clawed beast", NaturalAttack: items.Claws, BodyParts: []string{"legs", "mouth"}},
-		13: {SpeciesId: 13, Name: "fanged beast", NaturalAttack: items.Bite, BodyParts: []string{"legs", "mouth"}},
-		14: {SpeciesId: 14, Name: "horned beast", NaturalAttack: items.Gore, BodyParts: []string{"legs", "horns"}},
-		15: {SpeciesId: 15, Name: "life drainer", LifeDrain: true, BodyParts: []string{"mouth"}},
+		12: {SpeciesId: 12, Name: "clawed beast", NaturalAttack: items.Claws, BodyParts: []string{"legs", "mouth"},
+			BeastMoves: []string{"rake", "pounce", "hamstring"}},
+		13: {SpeciesId: 13, Name: "fanged beast", NaturalAttack: items.Bite, BodyParts: []string{"legs", "mouth"},
+			BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
+		14: {SpeciesId: 14, Name: "horned beast", NaturalAttack: items.Gore, BodyParts: []string{"legs", "horns"},
+			BeastMoves: []string{"gore"}},
+		15: {SpeciesId: 15, Name: "life drainer", LifeDrain: true, BodyParts: []string{"mouth"},
+			BeastMoves: []string{"drain"}},
 	})
 }
 

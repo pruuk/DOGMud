@@ -861,22 +861,16 @@ same pattern as Phase 2: the AI `CanUse*` viability check in `ai.go`,
 `Execute*` (defense-in-depth, unreachable for ordinary humanoid players).
 `command_readiness_drift_test.go` rows assert all three sites agree.
 
-**Exported identity predicates** (single source of truth, `combat/ai.go`):
-- `SpeciesIsFanged` — species has a `bite`/`fangs` natural attack
-- `SpeciesIsClawed` — species has a `claws` natural attack
-- `SpeciesIsHorned` — species has `horns` in its `body_parts`
-- `SpeciesHasLifeDrain` — species carries `lifedrain: true`
-- `SpeciesIsQuadrupedPredator` — has `legs` AND (fanged OR clawed);
-  the gate for `pounce`
+Beast moves are decided by `SpeciesHasBeastMove` (the species' `beast_moves`); the attack-family predicates were deleted in #541 slice 2 (D6): #563 will want a proper anatomy model. Every gate pairs that list read with its runtime anatomy check; `species.validateBeastMoves` refuses at load a listed move whose body the species lacks. The root guard `beast_move_gate_guard_test.go` fails any gate that reads the attack family, and fails a mob that scripts a beast move its species does not list.
 
-| Move | Gate | Mechanic |
+| Move | Gate (listed in `beast_moves`, plus) | Mechanic |
 |------|------|----------|
-| `rake` | clawed | Damage + short bleed (`claws.yaml` messages reused) |
-| `maul` | fanged | Heavier damage + stronger bleed (`maul.yaml`) |
-| `pounce` | quadruped predator, not already grappling | Leap opener: knockdown + damage, no bleed (`pounce.yaml`) |
-| `gore` | horned (`horns` body part — load-validated) | Charge: damage + knockback (`gore.yaml`) |
-| `drain` | `LifeDrain` flag (vampire) | Lifesteal: bleed target, heal attacker = `damage × DrainHealRatio` (0.75) via `Character.Heal` (`drain.yaml`) |
-| `throttle` | fanged | Damage + the Bleeding record (condition 122) + Throttled condition #89 (stamina DoT) + a cast interrupt gated by an opposed concentration contest (U10): throttler's grip (`Dex + unarmed-combat×SkillWeight`) vs. the target's hold (`Wil + spellcasting×SkillWeight`) via `combat.RunConcentrationContest`, floored only by `ConcentrationFloor` (0.02) — not the old flat `ThrottleInterruptChance` coin flip, which is deleted. A lost contest calls the shared `actions.InterruptTargetCast` helper, which reuses the engine's existing `activity.TriggerCastCancel` cancel path (+ conviction refund); a held contest fires success-only spellcasting progression for the target instead. No new silence flag. (`throttle.yaml`) |
+| `rake` | no hands | Damage + short bleed (`claws.yaml` messages reused) |
+| `maul` | no hands | Heavier damage + stronger bleed (`maul.yaml`) |
+| `pounce` | no hands, legs, not already grappling | Leap opener: knockdown + damage, no bleed (`pounce.yaml`) |
+| `gore` | no hands (`horns` body part load-validated for a gore-listing species) | Charge: damage + knockback (`gore.yaml`) |
+| `drain` | nothing else (`lifedrain: true` load-validated) | Lifesteal: bleed target, heal attacker = `damage × DrainHealRatio` (0.75) via `Character.Heal` (`drain.yaml`) |
+| `throttle` | no hands | Damage + the Bleeding record (condition 122) + Throttled condition #89 (stamina DoT) + a cast interrupt gated by an opposed concentration contest (U10): throttler's grip (`Dex + unarmed-combat×SkillWeight`) vs. the target's hold (`Wil + spellcasting×SkillWeight`) via `combat.RunConcentrationContest`, floored only by `ConcentrationFloor` (0.02); the old flat `ThrottleInterruptChance` coin flip is deleted. A lost contest calls the shared `actions.InterruptTargetCast` helper, which reuses the engine's existing `activity.TriggerCastCancel` cancel path (+ conviction refund); a held contest fires success-only spellcasting progression for the target instead. No new silence flag. (`throttle.yaml`) |
 
 **New species field:** `LifeDrain bool` (yaml `lifedrain`). Vampire
 (species 34) carries `lifedrain: true`; the boar (species 6) received
@@ -908,9 +902,9 @@ is the symmetric counterpart to Phase 2's "humanoid technique moves require
 Effect: tool-using (monster-)humanoids that carry a beast `natural_attack`
 (goblin/skeleton/vampire — they have `hands`) keep grapple/bash + their
 claw/bite BASIC-attack messaging but can NOT rake/pounce/etc.; **bears** (`arms`
-but no `hands`) stay maulers. **`drain` is EXEMPT** — it is `LifeDrain`-flag
-gated, not anatomy/`natural_attack` gated, so armed undead (vampire, wraith,
-spectre) still drain.
+but no `hands`) pass the hands check. **`drain` is EXEMPT**: it is gated by
+the `beast_moves` list alone (the loader requires `lifedrain: true` for it),
+not by anatomy, so armed undead (vampire, wraith, spectre) still drain.
 
 **New AI profiles:** `skirmisher` (small fanged vermin — rats/insects:
 hamstring/trip dominant, light maul) and `serpent` (legless fanged —

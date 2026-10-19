@@ -44,9 +44,9 @@ type ThrottleResult struct {
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
-	// NotFanged is true when the actor's species lacks a fanged natural attack.
-	// Reachable via a direct player command or a btree/combatcommands dispatch
-	// to a non-fanged mob. Unreachable via the AI path (CanUseThrottle gates it).
+	// NotFanged is true when the species does not list throttle in beast_moves,
+	// or the body lacks what it needs (hands). Reachable via a direct command or
+	// a btree/combatcommands dispatch. Unreachable via the AI path (CanUseThrottle).
 	NotFanged bool
 
 	// InterruptedCast is true when the hit triggered the cast-cancel path and
@@ -88,11 +88,11 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 		return ThrottleResult{NoTarget: true}
 	}
 
-	// Anatomy/identity gate (defense-in-depth): only handless fanged creatures
-	// throttle. Unreachable via the AI path (CanUseThrottle gates it) but
-	// reachable via a direct player command or a btree/combatcommands dispatch
-	// to a non-fanged or tool-using mob.
-	if char.HasBodyPart("hands") || !combat.SpeciesIsFanged(char) {
+	// Anatomy/identity gate (defense-in-depth): only a handless species that
+	// lists throttle in beast_moves throttles. Unreachable via the AI path
+	// (CanUseThrottle gates it) but reachable via a direct player command or a
+	// btree/combatcommands dispatch to an unlisted or tool-using mob.
+	if char.HasBodyPart("hands") || !combat.SpeciesHasBeastMove(char, "throttle") {
 		return ThrottleResult{NotFanged: true}
 	}
 

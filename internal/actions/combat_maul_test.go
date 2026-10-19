@@ -38,7 +38,7 @@ func TestMaul_OnCooldown(t *testing.T) {
 	actor := newStubActor(char, room)
 
 	prepareSpecialMoveCooldown(t, char, 7904, 7904, &species.Species{
-		SpeciesId: 7904, Name: "cooldown-wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite,
+		SpeciesId: 7904, Name: "cooldown-wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"},
 	})
 
 	result := ExecuteMaul(actor)
@@ -53,8 +53,8 @@ func TestMaul_OnCooldown(t *testing.T) {
 func TestMaul_NotFanged(t *testing.T) {
 	// Seed two species: one clawed (not fanged), one fanged.
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		5001: {SpeciesId: 5001, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws},
-		5002: {SpeciesId: 5002, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		5001: {SpeciesId: 5001, Name: "feline", BodyParts: []string{"legs", "paws"}, NaturalAttack: items.Claws, BeastMoves: []string{"rake", "pounce", "hamstring"}},
+		5002: {SpeciesId: 5002, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 	})
 	defer cleanup()
 
@@ -116,7 +116,7 @@ func TestMaul_TargetGone(t *testing.T) {
 // hit lands (extreme Dexterity vs 1) rather than mocking the dice.
 func TestMaul_BleedNamesAttacker(t *testing.T) {
 	cleanup := species.SeedSpeciesForTest(map[int]*species.Species{
-		7312: {SpeciesId: 7312, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite},
+		7312: {SpeciesId: 7312, Name: "wolf", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Bite, BeastMoves: []string{"maul", "throttle", "pounce", "hamstring"}},
 	})
 	defer cleanup()
 	defer conditions.SeedConditionRecordsForTest()()
