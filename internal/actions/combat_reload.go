@@ -39,6 +39,20 @@ func findRangedWeaponSlot(actor Actor) *items.Item {
 	return nil
 }
 
+// findAmmoBundle returns the index in char.Items of the first ammo bundle
+// with Uses left that matches ammoTag, or -1. chamberNextRound draws from it,
+// and CommandIsReady asks it so a shot with nothing to chamber reads not
+// ready, the same answer ExecuteFire gives (NotLoaded).
+func findAmmoBundle(char *characters.Character, ammoTag string) int {
+	for idx := range char.Items {
+		spec := char.Items[idx].GetSpec()
+		if char.Items[idx].Uses > 0 && spec.Type == items.Ammo && spec.AmmoTag == ammoTag {
+			return idx
+		}
+	}
+	return -1
+}
+
 // chamberNextRound readies the next projectile in the actor's equipped ranged
 // weapon (main hand first, then offhand), consuming one Use from a matching
 // ammo bundle.
@@ -76,14 +90,7 @@ func chamberNextRound(actor Actor) ReloadResult {
 	ammoTag := weapon.GetSpec().AmmoTag
 
 	// Find a matching ammo bundle in the backpack.
-	bundleIdx := -1
-	for idx := range char.Items {
-		spec := char.Items[idx].GetSpec()
-		if char.Items[idx].Uses > 0 && spec.Type == items.Ammo && spec.AmmoTag == ammoTag {
-			bundleIdx = idx
-			break
-		}
-	}
+	bundleIdx := findAmmoBundle(char, ammoTag)
 	if bundleIdx < 0 {
 		return ReloadResult{WeaponName: weapon.DisplayName(), AmmoTag: ammoTag, NoAmmo: true}
 	}

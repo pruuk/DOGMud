@@ -407,6 +407,48 @@ func TestFire_ConsumesSpecialMoveCooldown(t *testing.T) {
 		"firing must consume the special-move cooldown")
 }
 
+// TestCommandIsReady_ShotWaitsForTheCooldown: readiness agrees with the fire
+// rule (#265). A caller that asks CommandIsReady before issuing a shot (the
+// behaviour tree's command_best_of, the AI companion, gmcp CharOp) must hear
+// "not ready" while the shared special-move cooldown runs, so it never issues
+// a shot ExecuteFire would refuse, and "ready" once it clears.
+func TestCommandIsReady_ShotWaitsForTheCooldown(t *testing.T) {
+	_, cleanup := seedFireMobInRoom(t, 1, 1_000_000)
+	defer cleanup()
+
+	char := fireAttacker()
+	char.Equipment.Weapon = fireRangedWeapon(1, 1.0, true)
+	char.Items = []items.Item{reloadAmmoBundle(3, "arrows", 20)}
+	actor := newStubActor(char, rooms.LoadRoom(1))
+
+	for _, verb := range []string{"fire", "shoot"} {
+		require.True(t, CommandIsReady(actor, verb), "%s is ready on a free timer", verb)
+		require.Equal(t, ActionReady, ActionReadiness(actor, verb+" skeleton").Status, verb)
+	}
+	require.True(t, ExecuteFire(actor, "skeleton").Executed, "the shot fires and claims the timer")
+
+	for _, verb := range []string{"fire", "shoot"} {
+		assert.False(t, CommandIsReady(actor, verb), "%s is not ready while the cooldown runs", verb)
+		assert.Equal(t, ActionDeferred, ActionReadiness(actor, verb+" skeleton").Status,
+			"%s is deferred, not rejected, while the cooldown runs", verb)
+	}
+	assert.True(t, ExecuteFire(actor, "skeleton").OnCooldown, "the fire rule agrees: refused")
+
+	ReleaseSpecialMove(char) // the timer clears
+	for _, verb := range []string{"fire", "shoot"} {
+		assert.True(t, CommandIsReady(actor, verb), "%s is ready once the cooldown clears", verb)
+	}
+	assert.True(t, ExecuteFire(actor, "skeleton").Executed, "the fire rule agrees: it fires")
+
+	// An empty weapon with arrows in the pack is ready (firing chambers);
+	// with nothing to chamber it is not, as ExecuteFire answers NotLoaded.
+	ReleaseSpecialMove(char)
+	char.Equipment.Weapon.Loaded = false
+	assert.True(t, CommandIsReady(actor, "fire"), "an empty bow with arrows to chamber is ready")
+	char.Items = nil
+	assert.False(t, CommandIsReady(actor, "fire"), "an empty bow with nothing to chamber is not")
+}
+
 // TestFire_SecondShotInsideTheCooldownIsRefused pins owner ruling 2026-10-19
 // (#265): a bow fires on the shared special-move cooldown. A second shot while
 // the first shot's timer runs is refused before any cost, so it spends no

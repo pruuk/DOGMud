@@ -2016,6 +2016,12 @@ player `fire`/`shoot` command answers `OnCooldown` with
 `refusal.CooldownAfterCost(user, "shoot", cost)`; the mob command is silent.
 Chambering (`chamberNextRound`, the retired `reload`) neither asks nor claims:
 the shot's one claim covers the whole fire-and-chamber action.
+`CommandIsReady` and `specialMoveVerbs` carry `fire` and its alias `shoot`, so
+a caller that asks first (behaviour-tree `command_best_of`, the AI companion,
+gmcp CharOp) hears not-ready while the timer runs (`ActionDeferred`), and
+not-ready with no ranged weapon, or an empty one with nothing to chamber
+(`findAmmoBundle`, the lookup `chamberNextRound` draws from). Target, sight
+and range ride on the words after the verb and stay with `ExecuteFire`.
 
 The ambush is gated like any shot. In practice the opener rarely meets a
 running timer: `sneak` refuses in combat, so a hidden shooter's first shot
