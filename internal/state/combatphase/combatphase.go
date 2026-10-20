@@ -217,6 +217,16 @@ func NewMachine() *Machine {
 // State returns the current state.
 func (m *Machine) State() State { return m.inner.State() }
 
+// RegisterObserver installs an observer fired after every transition.
+// Mirrors presence.Machine.RegisterObserver; internal/characters uses it so
+// an open menu closes the moment the player becomes busy (#375).
+func (m *Machine) RegisterObserver(name string, obs func(from, to State, r state.TransitionReason)) {
+	if m == nil || m.inner == nil {
+		return
+	}
+	m.inner.Subscribe(name, obs)
+}
+
 // EngagingData returns the Engaging state's data if currently Engaging.
 func (m *Machine) EngagingData() (EngagingData, bool) {
 	if m.State() != Engaging || m.engaging == nil {
