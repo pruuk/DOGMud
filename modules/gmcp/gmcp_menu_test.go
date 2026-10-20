@@ -84,6 +84,36 @@ func TestMenuChanged_FrameIsDispatchedBeforeTheMenuText(t *testing.T) {
 		"Char.Menu open must pop ahead of the menu text")
 }
 
+// Every Char.Menu frame shares one priority, so a spawn re-push and a later
+// close keep their queue order and the client cannot be left stale-open. A
+// Message queued before the spawn push is the marker: both frames must pop
+// ahead of it (a priority-0 spawn frame would pop after it).
+func TestPlayerSpawn_FrameSharesTheMenuChangedPriority(t *testing.T) {
+	u := menuTestUser(t, 9826, 98826, true)
+	events.DrainQueuedByTypeForTest(`Message`)
+	t.Cleanup(func() {
+		events.DrainQueuedByTypeForTest(`Message`)
+		menuSpawnPendingMu.Lock()
+		menuSpawnPending = map[int]struct{}{}
+		menuSpawnPendingMu.Unlock()
+	})
+	u.StartPrompt(`test`, ``)
+	events.DrainQueuedByTypeForTest(`GMCPOut`)
+	events.DrainQueuedByTypeForTest(`MenuChanged`)
+
+	events.AddToQueue(events.Message{UserId: u.UserId, Text: "marker"})
+	menuPlayerSpawnHandler(events.PlayerSpawn{UserId: u.UserId})
+	menuChangedHandler(events.MenuChanged{UserId: u.UserId, Open: false})
+
+	var order []string
+	for _, ty := range events.QueuedTypesInOrderForTest() {
+		if ty == `Message` || ty == `GMCPOut` {
+			order = append(order, ty)
+		}
+	}
+	require.Equal(t, []string{`GMCPOut`, `GMCPOut`, `Message`}, order)
+}
+
 func TestMenuChanged_SendsNothingWithoutGMCPOrUser(t *testing.T) {
 	u := menuTestUser(t, 9822, 98822, false)
 

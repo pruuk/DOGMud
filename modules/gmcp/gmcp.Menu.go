@@ -61,11 +61,13 @@ func sendMenuIfOpen(userId int) {
 	if user == nil || !user.MenuOrPromptOpen() || !isGMCPEnabled(user.ConnectionId()) {
 		return
 	}
+	// Same priority as menuChangedHandler's frames (-1), so a close that races
+	// this re-push cannot pop ahead of it and leave the client stale-open.
 	events.AddToQueue(GMCPOut{
 		UserId:  userId,
 		Module:  `Char.Menu`,
 		Payload: map[string]bool{"open": true},
-	})
+	}, -1)
 }
 
 func menuChangedHandler(e events.Event) events.ListenerReturn {
