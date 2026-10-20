@@ -2,7 +2,7 @@
 
 Part of #541 (combat-message reachability), under #385. It is its own slice
 between slice 1 (species corrections, #568) and slice 2 (reachability and
-beast moves) of `docs/superpowers/specs/2026-10-16-combat-message-reachability-design.md`.
+beast moves) of `docs/superpowers/specs/completed/2026-10-16-combat-message-reachability-design.md`.
 It replaces that plan's "slam lines that only fit fists" follow-up (D6).
 Owner rulings 2026-10-16.
 

@@ -10,7 +10,7 @@
 
 **Tech Stack:** Go (`internal/combat`, `internal/items`, `internal/species`, `internal/actions`, `internal/mobcommands`, `internal/usercommands`, `internal/behaviortree`, `internal/actionspec`, `internal/costs`, `internal/conditions`), YAML world data (`_datafiles/world/dogmud/`), root-package guards, the narration store goldens, the playtest harness.
 
-**Spec:** `docs/superpowers/specs/2026-10-16-combat-message-reachability-design.md` (#541, #539; owner rulings A to H; Appendix A). Section 0 (slice 1) shipped in #568 and is not planned here. The slam split (#569, PR #571, `docs/superpowers/specs/completed/2026-10-16-slam-split-design.md`) merges first; this plan is written against its HEAD.
+**Spec:** `docs/superpowers/specs/completed/2026-10-16-combat-message-reachability-design.md` (#541, #539; owner rulings A to H; Appendix A). Section 0 (slice 1) shipped in #568 and is not planned here. The slam split (#569, PR #571, `docs/superpowers/specs/completed/2026-10-16-slam-split-design.md`) merges first; this plan is written against its HEAD.
 
 ---
 

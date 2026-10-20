@@ -10,7 +10,7 @@
 
 **Tech Stack:** YAML world data, Go tests in `internal/species`.
 
-**Spec:** `docs/superpowers/specs/2026-10-16-combat-message-reachability-design.md`, section 0 and rulings G and H. Source: PR #208 (FinalTwist, open), review worktree `C:/tmp/dogmud-pr208-review` at `3ce674451`, base `c696c117a`.
+**Spec:** `docs/superpowers/specs/completed/2026-10-16-combat-message-reachability-design.md`, section 0 and rulings G and H. Source: PR #208 (FinalTwist, open), review worktree `C:/tmp/dogmud-pr208-review` at `3ce674451`, base `c696c117a`.
 
 ---
 

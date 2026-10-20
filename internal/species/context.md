@@ -98,7 +98,7 @@ precedence.
 (`natural_attack`) is the attack it makes most of the time. Its special
 moves are rarer, or finishing moves. Pick the default attack for what the
 creature does in an ordinary fight, and give the flourish to a special move.
-Spec: `docs/superpowers/specs/2026-10-16-combat-message-reachability-design.md`.
+Spec: `docs/superpowers/specs/completed/2026-10-16-combat-message-reachability-design.md`.
 
 **A creature is the species it looks like.** A wolf is `canine`, a crow or
 a heron `bird`, a hawk `raptor` (birds that hunt), an otter `mustelid`. The
@@ -129,9 +129,9 @@ each file's lines say what that body does and stay within 80 columns:
 | `blast` | water 36 "watery surge", air 38 "slicing gust", fire 39 "scorching fists", magma 40 "molten fists", sand 41 "abrasive whirl", storm 42 "coruscating fists", ice 43 "crystalline fists" | the element strikes through its own `unarmedname`; no body parts they lack. Lines read for a singular force and for plural fists alike, and the 17-character names set blast's width budget |
 
 The smoke elemental (44) left slam for `claws` ("smoke-wrought claws"): it
-materialises claws and rakes. Its signature `smother` special move lands in
+materialises claws and rakes. Its signature `smother` special move landed in
 slice 2 (Appendix A of
-`docs/superpowers/specs/2026-10-16-combat-message-reachability-design.md`).
+`docs/superpowers/specs/completed/2026-10-16-combat-message-reachability-design.md`).
 `species_slam_split_test.go` (`TestSlamSplitAssignments`) pins every row.
 Spec: `docs/superpowers/specs/completed/2026-10-16-slam-split-design.md`.
 
