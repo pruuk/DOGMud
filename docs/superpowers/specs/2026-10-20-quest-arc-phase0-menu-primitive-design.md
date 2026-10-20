@@ -30,6 +30,11 @@
 | `talk` and `ask` are registered as allowed in combat | `internal/usercommands/usercommands.go:59,227` |
 | Rounds are 4 s | `_datafiles/config.yaml:193` |
 | No shared busy predicate exists; filed as #640 | #640 |
+| Ticks and triggers run in the web client, not the server. Ticks are `setInterval` timers that call `SendData` directly | `_datafiles/html/public/webclient-pure.html:1393-1421` |
+| Triggers fire immediately (`fireTriggerCommands`, lines 1723, 1809) or go to the action queue (`enqueueTriggerAction`, line 1721) | `webclient-pure.html:1500,1535` |
+| The action queue already holds during the login burst (`queueLoginSettled`, released by the first `Commands.State` push or a 2.5 s fallback); ticks and immediate triggers have no such hold | `webclient-pure.html:1526,1561-1571,829-835` |
+| `socket.onclose` never clears the tick timers, so after a reconnect they keep sending commands into the name and password prompts | `webclient-pure.html:2582` |
+| Automation reaches the client as `Char.Automation`, pushed on `PlayerSpawn` (so only after login) and on `AutomationChanged` | `modules/gmcp/gmcp.Automation.go:32,44`, `internal/events/eventtypes.go:75` |
 
 ## Goal
 
@@ -54,6 +59,9 @@ input, one set of interrupt rules. Phase 1 builds `talk` on it.
 9. Menu language conventions (below), including speaking in the NPC's manner where it fits.
 10. A shared busy check is future work (#640); this phase builds its gate from the same
     sources and moves onto #640 when it lands.
+11. Ticks and triggers pause while a menu is open. Anything that would have fired is queued,
+    and the queue does not start releasing until the menu closes.
+12. Ticks and triggers never fire while the player is logging in.
 
 ## Non-goals
 
@@ -216,7 +224,35 @@ follow reason sends:
 - Confirms adopt rule 7 wording where the action cannot be undone (guild disband, character
   delete, account delete, leadership transfer).
 
-### 7. Menu language conventions
+### 7. Automation pause (web client ticks and triggers)
+
+Why it matters beyond comfort: game menus are non-modal, so a tick's command arriving while a
+menu is open would close the menu as "another command".
+
+**Server signal.** A new `events.MenuChanged{UserId, Open bool}` fires whenever a game menu or
+a builder prompt opens or closes (the last one closing sends `Open: false`). The gmcp module
+pushes it as `Char.Menu {"open": true|false}`, following the `AutomationChanged` pattern in
+`modules/gmcp/gmcp.Automation.go`. Telnet clients with GMCP can use the same signal in their
+own scripts.
+
+**While a menu or prompt is open:**
+- A tick that comes due goes to the action queue instead of `SendData` (one entry per tick,
+  deduplicated by id like triggers, within the existing cap of 10).
+- A trigger that matches, immediate or queued, goes to the action queue with its resolved
+  commands.
+- `drainQueue` releases nothing.
+
+**When it closes:** the queue resumes at its normal pace (one action per round, released by
+`Commands.State`), so a backlog never bursts out at once.
+
+**Login:**
+- `socket.onclose` clears every tick timer, resets `tickTimersSig`, empties the action
+  queue and sets `queueLoginSettled = false`.
+- Ticks start only after the first `Char.Automation` push of the session (sent on
+  `PlayerSpawn`, so only once the character is in the world), and triggers do not fire before
+  it either. Nothing fires at the name or password prompt, on first connect or on reconnect.
+
+### 8. Menu language conventions
 
 Recorded in `dogmud-player-copy` and `internal/menu/context.md`:
 
@@ -252,11 +288,19 @@ Every guard ships with a fixture proving it can fail.
 - **Guard test:** fails on any `numbered-list` template render, or any menu-index `Atoi`
   parse, outside `internal/menu`.
 - **Label lint:** the conventions check rejects a fixture per checkable rule.
+- **Automation pause (JS tests in `tools/jstest/`, beside `webclient-action-queue.test.js`):**
+  a tick due while `Char.Menu` is open is queued, not sent; a trigger match while open is
+  queued; nothing drains until the close push; after close the queue releases one action per
+  round; a socket close clears every timer and the queue; no tick or trigger sends before the
+  first `Char.Automation` of a session.
+- **Server signal:** opening and closing a game menu or builder prompt fires `MenuChanged`
+  with the right `Open` value, including closes caused by interrupts and follow pulls.
 
 ## Docs
 
 - New `internal/menu/context.md`.
-- Update `internal/prompt/context.md`, `internal/users/context.md` (menu session),
+- Update `modules/gmcp/context.md` (`Char.Menu`),
+  `internal/prompt/context.md`, `internal/users/context.md` (menu session),
   `internal/state/context.md` (the five observer methods), `modules/follow/context.md`.
 - Menu-language section in `.claude/skills/dogmud-player-copy`.
 - `docs/README.md` lists this spec.
@@ -268,6 +312,8 @@ Every guard ships with a fixture proving it can fail.
 - Game menus close on every interrupt within the event that causes it, and refuse to open
   while one holds.
 - Queued commands never answer menus or prompts.
+- Web client ticks and triggers queue while a menu or prompt is open, resume paced after it
+  closes, and never fire during login.
 - Builders behave as before, driven by number or name.
 - All tests above pass on the full suite.
 

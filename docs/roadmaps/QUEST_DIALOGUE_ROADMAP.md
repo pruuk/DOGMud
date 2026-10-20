@@ -129,6 +129,10 @@ source     authored | llm
   left behind ("Mira breaks off a talk with Kael and follows Brannoc."), all through the
   sight rules. Other interrupts give one line naming the cause.
 - Input session: built on `UserRecord.StartPrompt`; callers never touch `prompt` directly.
+- Automation pause (owner 2026-10-20): web client ticks and triggers queue while a menu or
+  prompt is open (server pushes `Char.Menu`), the queue resumes paced after it closes, and
+  nothing fires during login (tick timers are cleared on disconnect and start only after the
+  session's first `Char.Automation`).
 - Migrate every fixed choice onto it (owner 2026-10-20): the admin builders' 6 copied menu-index
   parse blocks and 19 `numbered-list` renders, the 27 fixed-option prompts (yes/no confirms
   in character, guild, mail, rename, auctions, start and the builders), the `character` menu

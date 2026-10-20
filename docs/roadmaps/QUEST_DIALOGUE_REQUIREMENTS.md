@@ -104,6 +104,8 @@ sees it break.
 - [ ] **Code guards.** Tests that fail if a numbered-menu parse appears outside the menu
       package, if `ask` grows topic handling again, or if `room_interact` returns.
 - [ ] **Dash guards** cover dialogue, quests and conversations with no exemptions.
+- [ ] **Automation pause.** Web client ticks and triggers queue while a menu or prompt is open,
+      resume paced after it closes, and never fire during login.
 - [ ] **Builder round trip.** Everything the builder can save loads unchanged at boot.
 
 ## Not in this arc
