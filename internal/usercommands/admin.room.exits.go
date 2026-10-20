@@ -59,6 +59,7 @@ func room_Edit_Exits(rest string, user *users.UserRecord, room *rooms.Room, flag
 	currentlyEditing := ExitEdit{}
 
 	cmdPrompt, _ := user.StartPrompt(`room edit exits`, rest)
+	cmdPrompt.RoomBound = true // edits this room; a move cancels it (#375)
 
 	question := cmdPrompt.Ask(`Choose one:`, []string{`new`}, `new`)
 	if !question.Done {

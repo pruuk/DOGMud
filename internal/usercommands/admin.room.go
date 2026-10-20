@@ -141,6 +141,7 @@ func room_Edit_Containers(rest string, user *users.UserRecord, room *rooms.Room,
 	currentlyEditing := ContainerEdit{}
 
 	cmdPrompt, _ := user.StartPrompt(`room edit containers`, rest)
+	cmdPrompt.RoomBound = true // edits this room; a move cancels it (#375)
 
 	question := cmdPrompt.Ask(`Choose one:`, []string{`new`}, `new`)
 	if !question.Done {
@@ -731,6 +732,7 @@ func room_Edit_Mutators(rest string, user *users.UserRecord, room *rooms.Room, f
 	}
 
 	cmdPrompt, _ := user.StartPrompt(`room edit mutators`, rest)
+	cmdPrompt.RoomBound = true // edits this room; a move cancels it (#375)
 
 	selectedMutatorList := []string{}
 	if muts, ok := cmdPrompt.Recall(`mutators`); ok {

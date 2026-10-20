@@ -310,7 +310,8 @@ func (u *UserRecord) SetLastInputRound(rdNum uint64) {
 	// Note: the Idle/AFK → Active wake fires from usercommands.TryCommand
 	// (per-command entry point) so it can branch on which command is
 	// being dispatched. The `afk` command toggles its own state and must
-	// not be auto-cleared before its handler runs.
+	// not be auto-cleared before its handler runs. The wake itself is
+	// WakePresence; a line a game menu consumes goes through NoteActivity.
 }
 
 func (u *UserRecord) GetLastInputRound() uint64 {

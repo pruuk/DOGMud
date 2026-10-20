@@ -101,6 +101,7 @@ func zone_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	}
 
 	cmdPrompt, _ := user.StartPrompt(`zone edit`, rest)
+	cmdPrompt.RoomBound = true // edits this room's zone; a move cancels it (#375)
 
 	selectedMutatorList := []string{}
 	if muts, ok := cmdPrompt.Recall(`mutators`); ok {

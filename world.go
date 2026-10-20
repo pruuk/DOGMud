@@ -977,6 +977,13 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 	// A typed line goes to an open game menu first (#375). A line the menu
 	// does not recognise has closed it and runs below as a command.
 	if user.RouteMenuInput(inputText, typed) {
+		// The line never reaches TryCommand, so record it as activity here
+		// (a player in a menu must not idle out), and redraw the prompt line
+		// so a telnet player gets one after a silent close.
+		if strings.TrimSpace(inputText) != `` {
+			user.NoteActivity()
+		}
+		connections.SendTo([]byte(templates.AnsiParse(user.GetCommandPrompt())), user.ConnectionId())
 		return
 	}
 

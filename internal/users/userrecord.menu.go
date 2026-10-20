@@ -204,9 +204,27 @@ func (u *UserRecord) CheckMenuInterrupts() {
 }
 
 // CloseMenusForRoomChange is the room-change rule: any move closes the open
-// game menu and any non-modal prompt.
+// game menu, any non-modal prompt, and a RoomBound builder prompt (its next
+// answer would otherwise edit the new room).
 func (u *UserRecord) CloseMenusForRoomChange() {
+	if u.takeRoomBoundPrompt() {
+		u.SendText(messaging.CategoryAdmin, "You left the room, so the edit is cancelled.")
+	}
 	u.closeForRule(menu.CloseRoomChange)
+}
+
+// takeRoomBoundPrompt clears the open prompt only if it is RoomBound,
+// signalling the change, and reports whether it did.
+func (u *UserRecord) takeRoomBoundPrompt() bool {
+	u.sessionMu.Lock()
+	defer u.sessionMu.Unlock()
+	if u.activePrompt == nil || !u.activePrompt.RoomBound {
+		return false
+	}
+	wasOpen := u.menuOrPromptOpenLocked()
+	u.activePrompt = nil
+	u.signalMenuStateLocked(wasOpen)
+	return true
 }
 
 func (u *UserRecord) closeForRule(r menu.CloseReason) {

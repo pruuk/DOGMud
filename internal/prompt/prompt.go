@@ -53,6 +53,10 @@ type Prompt struct {
 	// closes the prompt and the line runs as a command, and game interrupts
 	// close it. Player flows set it; builders stay modal (#375).
 	NonModal bool
+	// RoomBound: the prompt edits the room (or zone) the player stands in,
+	// so a room change cancels it even though it is modal; otherwise the
+	// next answer would act on the new room (#375).
+	RoomBound bool
 }
 
 func New(command string, rest string) *Prompt {

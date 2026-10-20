@@ -1,8 +1,10 @@
 package users
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/menu"
 )
 
@@ -80,6 +82,58 @@ func TestRoutePromptInput_FinishedPromptIsClearedAndTheLineRuns(t *testing.T) {
 	next, had := u.RoutePromptInput("look", true)
 	if next != "look" || !had || u.GetPrompt() != nil {
 		t.Fatalf("next %q had %v prompt %v", next, had, u.GetPrompt())
+	}
+}
+
+func TestRoutePromptInput_FreeTextQuestionTakesTheTypedLineAndReruns(t *testing.T) {
+	u := menuUser()
+	p, _ := u.StartPrompt("mail", "bob")
+	p.Ask("Subject?", nil)
+	next, had := u.RoutePromptInput("  Hello there  ", true)
+	if next != "mail bob" || !had {
+		t.Fatalf("next %q had %v", next, had)
+	}
+	if q := u.GetPrompt().Questions[0]; !q.Done || q.Response != "Hello there" {
+		t.Fatalf("done %v response %q", q.Done, q.Response)
+	}
+}
+
+func TestRoutePromptInput_NoCommandRerunsNothing(t *testing.T) {
+	u := menuUser()
+	p, _ := u.StartPrompt("", "")
+	p.Ask("Name?", nil)
+	next, had := u.RoutePromptInput("Bob", true)
+	if next != "" || !had {
+		t.Fatalf("next %q had %v", next, had)
+	}
+}
+
+func TestRoutePromptInput_NoSuchNumberSaysSo(t *testing.T) {
+	u := menuUser()
+	builderPrompt(u)
+	events.DrainQueuedMessagesForTest(u.UserId)
+	u.RoutePromptInput("7", true)
+	msgs := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), "")
+	if !strings.Contains(msgs, "There is no choice 7.") {
+		t.Fatalf("messages %q", msgs)
+	}
+	if u.GetPrompt().Questions[0].Done {
+		t.Fatal("a bad number answered the question")
+	}
+}
+
+func TestRoutePromptInput_AmbiguousNamesTheMatches(t *testing.T) {
+	u := menuUser()
+	p, _ := u.StartPrompt("room", "edit exits")
+	p.AskMenu(menu.Menu{Heading: "Exit?", Prefix: true, Entries: []menu.Entry{{Id: "north", Label: "north"}, {Id: "northeast", Label: "northeast"}}})
+	events.DrainQueuedMessagesForTest(u.UserId)
+	u.RoutePromptInput("nor", true)
+	msgs := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), "")
+	if !strings.Contains(msgs, "Which one? north, northeast.") {
+		t.Fatalf("messages %q", msgs)
+	}
+	if u.GetPrompt().Questions[0].Done {
+		t.Fatal("an ambiguous prefix answered the question")
 	}
 }
 

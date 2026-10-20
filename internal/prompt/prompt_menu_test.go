@@ -52,6 +52,15 @@ func TestAskMenu_SameHeadingReplacesTheMenu(t *testing.T) {
 	}
 }
 
+func TestAskMenu_AcceptTextTakesAnUnmatchedLine(t *testing.T) {
+	p := New("x", "")
+	q := p.AskMenu(menu.Menu{Heading: "h", Entries: []menu.Entry{{Id: "a", Label: "a"}}, AcceptText: true})
+	q.Answer("  a brass key  ")
+	if !q.Done || q.Response != "a brass key" || q.LastResult != menu.Text {
+		t.Fatalf("done %v response %q last %v", q.Done, q.Response, q.LastResult)
+	}
+}
+
 func TestAskConfirm(t *testing.T) {
 	p := New("guild", "")
 	q := p.AskConfirm("Disband?", "Yes, disband it", "No, keep it")
