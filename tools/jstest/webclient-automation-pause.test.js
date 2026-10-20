@@ -28,8 +28,10 @@ function lift(name) {
         .replace('"' + name + '": function() {', 'function __' + name.replace(/\./g, '_') + '() {') + '\n}\n';
 }
 
-// Interval stub: clearInterval really stops a timer, so a disconnect that
-// fails to clear one is caught by fireTicks.
+// Interval stub: clearInterval nulls the timer's slot, so the disconnect
+// checks can see directly that every timer was cleared. The tick callback's
+// own automationReady check is proven separately, by calling a callback
+// captured before the disconnect.
 var sentData = [], sentGMCP = [], intervals = [];
 global.GMCPStructs = { Char: {} };
 global.renderAutomation = function () {};
@@ -97,7 +99,13 @@ reply(2, 'fired');
 // Socket close: everything stops and resets.
 sentData = []; sentGMCP = [];
 setMenu(true);
+var liveTicks = intervals.filter(function (fn) { return fn; });
+var capturedTick = liveTicks[liveTicks.length - 1];
+check('a tick timer is running before the disconnect', liveTicks.length >= 1, String(liveTicks.length));
 (0, eval)('stopAutomation();');
+check('disconnect clears every tick timer', intervals.every(function (fn) { return fn === null; }), JSON.stringify(intervals.map(function (fn) { return fn ? 'live' : null; })));
+capturedTick();
+check('a tick callback that outlives the disconnect sends nothing', sentData.length === 0 && q().length === 0, JSON.stringify([sentData, q()]));
 fireTicks();
 runTriggers('You are hungry.', later());
 check('nothing fires after a disconnect', sentData.length === 0 && sentGMCP.length === 0, JSON.stringify([sentData, sentGMCP]));
