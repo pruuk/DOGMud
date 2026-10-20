@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
@@ -116,8 +117,29 @@ func TestRefreshMarkers_QueuesTheNpcListUpdate(t *testing.T) {
 	conversation.RefreshMarkers(77)
 	require.Equal(t, []events.NpcMarkersChanged{{UserId: 77}}, events.DrainQueuedNpcMarkersChangedForTest(0))
 
-	// The module answers with the Npcs sub-update.
+	// The module answers a GMCP user with the Npcs sub-update.
 	events.DrainQueuedNpcMarkersChangedForTest(0)
+	const connId = uint64(97701)
+	u := users.NewTestUser(77, "markers", "Markers", connId)
+	defer users.SeedUsersForTest(map[int]*users.UserRecord{77: u})()
+	gmcpModule.cache.Add(connId, GMCPSettings{GMCPAccepted: true, HelloReceived: true})
+	defer gmcpModule.cache.Remove(connId)
+	events.DrainQueuedByTypeForTest(`GMCPRoomUpdate`)
+
 	res := (&GMCPRoomModule{}).npcMarkersChangedHandler(events.NpcMarkersChanged{UserId: 77})
 	require.Equal(t, events.Continue, res)
+	require.Equal(t, []events.Event{GMCPRoomUpdate{UserId: 77, Identifier: `Room.Info.Contents.Npcs`}},
+		events.DrainQueuedByTypeForTest(`GMCPRoomUpdate`))
+}
+
+// A player without GMCP gets no Room update queued for them.
+func TestRefreshMarkers_NoGMCPQueuesNothing(t *testing.T) {
+	u := users.NewTestUser(78, "plain", "Plain", 97801)
+	defer users.SeedUsersForTest(map[int]*users.UserRecord{78: u})()
+	gmcpModule.cache.Remove(uint64(97801))
+	events.DrainQueuedByTypeForTest(`GMCPRoomUpdate`)
+
+	res := (&GMCPRoomModule{}).npcMarkersChangedHandler(events.NpcMarkersChanged{UserId: 78})
+	require.Equal(t, events.Continue, res)
+	require.Empty(t, events.DrainQueuedByTypeForTest(`GMCPRoomUpdate`))
 }

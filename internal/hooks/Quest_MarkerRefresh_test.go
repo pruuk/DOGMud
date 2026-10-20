@@ -22,7 +22,14 @@ func TestHandleQuestUpdate_TokenLandingRefreshesNpcMarkers(t *testing.T) {
 	got := events.DrainQueuedNpcMarkersChangedForTest(0)
 	require.Equal(t, []events.NpcMarkersChanged{{UserId: 511}}, got)
 
-	// A MarkerOnly event changes no token, so it queues nothing.
+	// A MarkerOnly event follows a step the quest engine already set
+	// synchronously (GameBridge.GrantQuest), so the markers must refresh
+	// here too: nothing else refreshes them for an engine-advanced step.
 	require.Equal(t, events.Continue, HandleQuestUpdate(events.Quest{UserId: 511, QuestToken: "999001-end", MarkerOnly: true}))
-	require.Empty(t, events.DrainQueuedNpcMarkersChangedForTest(0))
+	require.Equal(t, []events.NpcMarkersChanged{{UserId: 511}}, events.DrainQueuedNpcMarkersChangedForTest(0))
+
+	// Removing a token changes the markers too.
+	require.Equal(t, events.Continue, HandleQuestUpdate(events.Quest{UserId: 511, QuestToken: "-999001-start"}))
+	require.False(t, u.Character.HasQuest("999001-start"))
+	require.Equal(t, []events.NpcMarkersChanged{{UserId: 511}}, events.DrainQueuedNpcMarkersChangedForTest(0))
 }

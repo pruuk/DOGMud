@@ -249,6 +249,19 @@ returns the queued `MenuChanged` events for one user;
 `QueuedTypesInOrderForTest()` returns the `Type()` of every queued event in
 queue order.
 
+### Talk Marker Events (#375 R9)
+
+`npcmarkers.go` holds `NpcMarkersChanged{UserId}`: the talk markers a player
+sees on NPCs may have changed (a quest token landed or was removed, a topic
+was heard). `internal/conversation.RefreshMarkers` queues it; `modules/gmcp`
+answers a GMCP player with `Room.Info.Contents.Npcs`. It is a unique event
+(`UniqueID` is `NpcMarkersChanged-<userId>`), so the two refreshes of one
+hand-in (the topic, then its token landing) merge into one.
+
+Test helper (same file): `DrainQueuedNpcMarkersChangedForTest(userId)` removes
+and returns the queued events for one user (0 for all) and frees their unique
+slots, as `ProcessEvents` does, so a later refresh queues again.
+
 ### Unique Events
 
 **Events with automatic deduplication:**

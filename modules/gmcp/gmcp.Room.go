@@ -53,6 +53,12 @@ func (g *GMCPRoomModule) npcMarkersChangedHandler(e events.Event) events.Listene
 	if evt.UserId < 1 {
 		return events.Continue
 	}
+	// Only a GMCP client reads the NPC list; the payload builder makes the
+	// same check.
+	user := users.GetByUserId(evt.UserId)
+	if user == nil || !isGMCPEnabled(user.ConnectionId()) {
+		return events.Continue
+	}
 	events.AddToQueue(GMCPRoomUpdate{
 		UserId:     evt.UserId,
 		Identifier: `Room.Info.Contents.Npcs`,

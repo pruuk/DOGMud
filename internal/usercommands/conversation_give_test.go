@@ -114,10 +114,34 @@ func TestGiveResolve_WantedButIneligibleIsHandedBack(t *testing.T) {
 
 	require.True(t, conversation.Give(user, mustRoom(t, user), mob, itm))
 	require.Contains(t, drained(1), "hands it back")
+	require.Empty(t, drained(2), "the hand-back is private")
 	require.Equal(t, 1, countBackpack(user, 10001))
 	require.False(t, mobHolds(mob, 10001))
 	require.Empty(t, questTokensFor(1))
 	require.False(t, user.HasOpenMenu())
+}
+
+// An offer that takes an item still pitches and asks first (R6): giving
+// the item is the same as choosing the offer from the menu (R8).
+func TestGiveResolve_OfferWantingTheItemShowsTheCard(t *testing.T) {
+	user, mob, done := fixtureWith(t, itemOfferFixtureYAML)
+	defer done()
+	itm := giveItem(t, user, 10001)
+
+	require.True(t, conversation.Give(user, mustRoom(t, user), mob, itm))
+	mine, theirs := drained(1), drained(2)
+	require.Contains(t, theirs, "Can I ride the ferry?")
+	require.Contains(t, theirs, "Leave your sword with me as surety.")
+	require.Contains(t, mine, "Accept")
+	require.NotContains(t, mine, "You give the")
+	require.True(t, user.HasOpenMenu(), "the card is open")
+	require.Equal(t, 1, countBackpack(user, 10001), "nothing is taken before Accept")
+	require.Empty(t, questTokensFor(1), "nothing is granted before Accept")
+
+	require.True(t, user.RouteMenuInput("1", true), "1 is Accept")
+	require.Contains(t, drained(1), `You give the <ansi fg="item">Iron Sword</ansi>`)
+	require.Equal(t, 0, countBackpack(user, 10001))
+	require.Equal(t, []string{"5-start"}, questTokensFor(1))
 }
 
 func TestGiveResolve_UnwantedItemIsNotHandled(t *testing.T) {

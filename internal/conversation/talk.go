@@ -180,6 +180,14 @@ func choose(user *users.UserRecord, mobInstanceId int, key string) {
 		openMenu(user, mobInstanceId, "")
 		return
 	}
+	resolve(user, room, mob, df, t, ps, buf)
+}
+
+// resolve runs an eligible topic, the one path for a menu choice and for a
+// give (R8): an offer pitches and shows its Accept / Leave card (R6), and
+// takes nothing until Accept; any other topic plays and the menu is
+// re-shown.
+func resolve(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic, ps *dialogue.PlayerState, buf *lineBuffer) {
 	if t.Kind == dialogue.KindOffer {
 		playerSay(user, room, t.PlayerLine)
 		npcSay(mob, room, t.Text)
@@ -188,7 +196,7 @@ func choose(user *users.UserRecord, mobInstanceId int, key string) {
 		return
 	}
 	granted := play(user, room, mob, df, t, ps, buf)
-	openMenu(user, mobInstanceId, granted)
+	openMenu(user, mob.InstanceId, granted)
 }
 
 // play speaks and applies an info or hand-in topic: the player's line, the
