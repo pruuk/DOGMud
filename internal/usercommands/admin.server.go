@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -306,9 +307,6 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 
 	if isNew {
 		user.SendBlankLine(messaging.CategoryAdmin)
-		menuOptions, _ := getConfigOptions("")
-		tplTxt, _ := templates.Process("tables/numbered-list", menuOptions, user.UserId)
-		user.SendText(messaging.CategoryAdmin, tplTxt)
 	}
 
 	configPrefix := ""
@@ -346,8 +344,12 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 		}
 	}
 
-	question := cmdPrompt.Ask(`Choose a config option, or "quit":`, []string{``}, ``)
+	// The menu lists the level the admin stands on, so a number picks from
+	// what was last drawn.
+	levelOptions, _ := getConfigOptions(configPrefix)
+	question := cmdPrompt.AskMenu(configMenu(levelOptions), `quit`)
 	if !question.Done {
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return true, nil
 	}
 
@@ -372,7 +374,9 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 	menuOptions, ok := getConfigOptions(fullPath)
 	if !ok {
 		question.RejectResponse()
-		menuOptions, _ = getConfigOptions("")
+		// Stay on the current level and show its options (this used to show
+		// the top level while still standing on configPrefix).
+		menuOptions = levelOptions
 		fullPath = strings.ToLower(configPrefix)
 	} else {
 
@@ -405,12 +409,30 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 		user.SendText(messaging.CategoryAdmin, `   [<ansi fg="6">`+fullPath+`</ansi>]`)
 	}
 
-	tplTxt, _ := templates.Process("tables/numbered-list", menuOptions, user.UserId)
-	user.SendText(messaging.CategoryAdmin, tplTxt)
-
 	question.RejectResponse()
 
+	// Re-ask so the stored menu is the level just drawn.
+	question = cmdPrompt.AskMenu(configMenu(menuOptions), `quit`)
+	user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+
 	return true, nil
+}
+
+// configMenu lists one level of the config tree. An entry's Id is its path
+// segment (the option's Name; getConfigOptions keeps the full path in Id),
+// because server_Config appends the answer to the current prefix. A typed
+// dotted path still resolves as text, and Quit (or Enter) answers "quit".
+func configMenu(opts []templates.NameDescription) menu.Menu {
+	m := menu.Menu{
+		Heading:    `Choose a config option, or "quit":`,
+		Leave:      `Quit`,
+		Prefix:     true,
+		AcceptText: true,
+	}
+	for _, o := range opts {
+		m.Entries = append(m.Entries, menu.Entry{Id: o.Name, Label: o.Name, Detail: o.Description})
+	}
+	return m
 }
 
 // isEditAllowed asks configs.IsLocked, the same rule SetVal enforces, so the

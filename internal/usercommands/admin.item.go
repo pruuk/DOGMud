@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -190,19 +191,15 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 			})
 		}
 
-		question := cmdPrompt.Ask(`What Type of item will it be?`, []string{string(newItemSpec.Type)}, string(newItemSpec.Type))
+		typeMenu := optionsMenu(`What Type of item will it be?`, typeOptions, 1)
+		typeMenu.Default = string(newItemSpec.Type)
+		question := cmdPrompt.AskMenu(typeMenu)
 		if !question.Done {
-			tplTxt, _ := templates.Process("tables/numbered-list", typeOptions, user.UserId)
-			user.SendText(messaging.CategoryAdmin, tplTxt)
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
 		typeNameSelection := question.Response
-		if restNum, err := strconv.Atoi(typeNameSelection); err == nil {
-			if restNum > 0 && restNum <= len(typeOptions) {
-				typeNameSelection = typeOptions[restNum-1].Name
-			}
-		}
 
 		for _, t := range allTypes {
 			if strings.EqualFold(t.Type, typeNameSelection) {
@@ -213,8 +210,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		if newItemSpec.Type == `` {
 			question.RejectResponse()
 
-			tplTxt, _ := templates.Process("tables/numbered-list", typeOptions, user.UserId)
-			user.SendText(messaging.CategoryAdmin, tplTxt)
+			user.SendText(messaging.CategoryAdmin, menu.Render(typeMenu))
 
 			return true, nil
 		}
@@ -339,10 +335,12 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 			})
 		}
 
-		question := cmdPrompt.Ask(`What Subtype of item will it be?`, []string{string(newItemSpec.Subtype)}, string(newItemSpec.Subtype))
+		subTypeMenu := optionsMenu(`What Subtype of item will it be?`, subTypeOptions, 1)
+		subTypeMenu.Default = string(newItemSpec.Subtype)
+		subTypeMenu.Leave = `Cancel`
+		question := cmdPrompt.AskMenu(subTypeMenu, ``)
 		if !question.Done {
-			tplTxt, _ := templates.Process("tables/numbered-list", subTypeOptions, user.UserId)
-			user.SendText(messaging.CategoryAdmin, tplTxt)
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
@@ -353,11 +351,6 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		}
 
 		typeNameSelection := question.Response
-		if restNum, err := strconv.Atoi(typeNameSelection); err == nil {
-			if restNum > 0 && restNum <= len(subTypeOptions) {
-				typeNameSelection = subTypeOptions[restNum-1].Name
-			}
-		}
 
 		for _, t := range allSubTypes {
 			if strings.EqualFold(t.Type, typeNameSelection) {
@@ -368,8 +361,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		if newItemSpec.Subtype == `` {
 			question.RejectResponse()
 
-			tplTxt, _ := templates.Process("tables/numbered-list", subTypeOptions, user.UserId)
-			user.SendText(messaging.CategoryAdmin, tplTxt)
+			user.SendText(messaging.CategoryAdmin, menu.Render(subTypeMenu))
 
 			return true, nil
 		}

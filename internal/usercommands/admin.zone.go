@@ -3,11 +3,11 @@ package usercommands
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutators"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -15,6 +15,13 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+// zoneMutatorMenu toggles zone mutators; Done (or Enter) answers "0".
+func zoneMutatorMenu(mutatorOptions []templates.NameDescription) menu.Menu {
+	m := optionsMenu(`Select a mutator to add/remove, or nothing to continue:`, mutatorOptions, 2)
+	m.Leave = `Done`
+	return m
+}
 
 /*
 * Role Permissions:
@@ -136,10 +143,9 @@ func zone_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		return mutatorOptions[i].Name < mutatorOptions[j].Name
 	})
 
-	question := cmdPrompt.Ask(`Select a mutator to add/remove, or nothing to continue:`, []string{}, `0`)
+	question := cmdPrompt.AskMenu(zoneMutatorMenu(mutatorOptions), `0`)
 	if !question.Done {
-		tplTxt, _ := templates.Process("tables/numbered-list-doubled", mutatorOptions, user.UserId)
-		user.SendText(messaging.CategoryAdmin, tplTxt)
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return true, nil
 	}
 
@@ -147,22 +153,9 @@ func zone_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 		mutatorSelected := ``
 
-		if restNum, err := strconv.Atoi(question.Response); err == nil {
-			if restNum > 0 && restNum <= len(mutatorOptions) {
-				if id, ok := mutatorOptions[restNum-1].Id.(string); ok {
-					mutatorSelected = id
-				}
-			}
-		}
-
-		if mutatorSelected == `` {
-			for _, b := range mutatorOptions {
-				if strings.EqualFold(b.Name, question.Response) {
-					if id, ok := b.Id.(string); ok {
-						mutatorSelected = id
-					}
-					break
-				}
+		if b, ok := optionByResponse(mutatorOptions, question.Response); ok {
+			if id, ok := b.Id.(string); ok {
+				mutatorSelected = id
 			}
 		}
 
@@ -171,8 +164,7 @@ func zone_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags even
 			user.SendText(messaging.CategoryAdmin, "Invalid selection.")
 			question.RejectResponse()
 
-			tplTxt, _ := templates.Process("tables/numbered-list-doubled", mutatorOptions, user.UserId)
-			user.SendText(messaging.CategoryAdmin, tplTxt)
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
@@ -202,8 +194,9 @@ func zone_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags even
 			mutatorOptions[idx] = data
 		}
 
-		tplTxt, _ := templates.Process("tables/numbered-list-doubled", mutatorOptions, user.UserId)
-		user.SendText(messaging.CategoryAdmin, tplTxt)
+		// Re-ask so the stored menu carries the updated [x] marks.
+		question = cmdPrompt.AskMenu(zoneMutatorMenu(mutatorOptions), `0`)
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return true, nil
 
 	}
