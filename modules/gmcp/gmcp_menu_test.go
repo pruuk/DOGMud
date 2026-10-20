@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -94,20 +96,31 @@ func TestActionTry_DefersWhileAPromptIsOpen(t *testing.T) {
 	require.Equal(t, "menu open", result.Reason)
 	require.Empty(t, events.DrainQueuedByTypeForTest(`Input`), "the command must not run")
 
-	// With nothing open the same call is not deferred. A bare test user has no
-	// room, so readiness may panic; the point is only that the guard is passed.
+	// With nothing open the same call reaches ActionReadiness and gets a real
+	// reply that is not the menu deferral. That needs a room and keyword aliases.
+	t.Cleanup(keywords.SeedKeywordsForTest())
+	const roomId = 9823
+	t.Cleanup(rooms.SeedRoomsForTest(
+		map[int]*rooms.Room{roomId: {RoomId: roomId}},
+		map[string]*rooms.ZoneConfig{}))
+	u.Character.RoomId = roomId
 	u.ClearPrompt()
 	require.False(t, u.MenuOrPromptOpen())
 	events.DrainQueuedByTypeForTest(`GMCPOut`)
-	func() {
-		defer func() { _ = recover() }()
-		try()
-	}()
+	events.DrainQueuedByTypeForTest(`Input`)
+
+	try()
+	result = nil
 	for _, o := range drainGMCPOut(t) {
 		if o.Module == `Char.Action.Result` {
-			require.NotEqual(t, "deferred", o.Payload.(GMCPAction_Result).Status)
+			r := o.Payload.(GMCPAction_Result)
+			result = &r
 		}
 	}
+	require.NotNil(t, result, "a Try with no menu open must still be answered")
+	require.Equal(t, 7, result.Id)
+	require.NotEqual(t, "deferred", result.Status)
+	require.NotEqual(t, "menu open", result.Reason)
 }
 
 // A reconnect reuses the user record, so an open prompt survives it. The fresh
