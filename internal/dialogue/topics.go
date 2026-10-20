@@ -153,3 +153,26 @@ func (df *DialogueFile) ItemTopic(itemId int, ps *PlayerState) (t *Topic, wanted
 	}
 	return nil, wanted
 }
+
+// Apply takes a chosen topic's price and runs its effects in the engine's
+// fixed order (delivery first, then the rest; see applyQuestEffects), and
+// records an info topic as heard once its effects landed. It reports false,
+// with nothing changed and any charge refunded, when the price could not be
+// taken or an item could not be delivered. It does not check eligibility:
+// the caller re-checks right before.
+func (df *DialogueFile) Apply(t *Topic, ps *PlayerState) bool {
+	if df == nil || t == nil {
+		return false
+	}
+	if !tryCharge(t.ChargesGold, ps) {
+		return false
+	}
+	if !applyPaidEffects(t.ChargesGold, t.GrantsQuest, t.RequiresItem, t.GivesItem,
+		t.SetsQuestFlag, t.BumpsRep, t.GivesGold, ps) {
+		return false
+	}
+	if t.Kind == KindInfo && ps != nil && ps.MarkHeard != nil {
+		ps.MarkHeard(HeardKey(df.MobId, t.Key))
+	}
+	return true
+}
