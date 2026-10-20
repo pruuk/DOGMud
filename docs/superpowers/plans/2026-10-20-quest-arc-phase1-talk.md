@@ -2761,6 +2761,18 @@ EOF
 
 (The module change only takes effect once Task 19 installs `AskForOwner` as the asker; until then the old asker receives a key, which is harmless because the module is off by default. If a module test drives the old asker end to end, move Step 4's `actions.go` edit into Task 19.)
 
+### Task 12b: Ferry and instance-zone actions take topic parameters (R14)
+
+**Why:** `actBoardFerry` (`internal/behaviortree/actions_ferry.go`) finds the destination by substring in `Event.Text`, and `actOpenInstancePortal` (`actions_mob.go`, around line 440) parses `"<zone> <gold>"` from it. Under `player_topic`, `Text` is a bare topic key (`^[a-z0-9_]+$`), so both would silently stop working after Task 17 (Task 7 review finding).
+
+**Files:** `internal/behaviortree/actions_ferry.go`, `internal/behaviortree/actions_mob.go`, a new player-facing amount prompt (see below), tests beside each.
+
+- **Ferry:** `board_ferry` gains an optional `destination: <keyword>` param. When set it is used instead of scanning `Event.Text`; it must name a key of `routes` (else Failure with an error log). Task 17 gives each ferry hand one topic per destination ("Take me to Stillwater.", key `to_stillwater`) and one branch per topic with `destination:`. Test: a `player_topic` event with `destination: stillwater` boards the stillwater route; an unknown destination fails; the old Text path still works for any remaining caller.
+- **Instance zones:** `open_instance_portal` gains an optional `zone: <shortname>` param. With `zone` set and no amount in `Event.Text`, it does not open anything: it starts a private amount prompt for the player through the existing prompt flow (`users.(*UserRecord).StartPrompt(command, rest)` re-runs a command with the answer: read `internal/users/userrecord.go:791` and `internal/prompt/prompt.go` first, and follow how an existing player command asks a free-text question). The question shows the zone's `guidance` param (authored text, several lines) and asks "How much gold will you stake?". A whole number at or above `min_gold` opens the portal exactly as today (same charge, clone, exit, lines, gold scaling); anything else gets one refusal line and closes the prompt. Factor the existing open-portal body into one function both paths call, so the typed path and the prompt path cannot drift. Check open issue #641 (free-text prompt steps swallow typed commands): the amount prompt must not swallow a movement command; a non-numeric answer closes the prompt and, if it is a known command, runs as a command (match whatever #641's fix direction is if it has landed; otherwise close and run, and test it).
+- Tests: a `player_topic` with `zone: arena` and no amount starts the prompt and shows the guidance; answering `250` opens the arena with the same charge and lines as the typed path; answering `north` closes the prompt and runs `north`; an amount below `min_gold` refuses.
+- Task 17 then writes, per zone, the topic ("Open a way to the arena.") and its `guidance:` text: arena, Planar Oasis (owner's ranges: 100 to 300 midgame solo, 300 to 600 endgame solo, 600 and up for only the bravest solo players or for groups) and the crash site. Guidance for the arena and the crash site is drafted in the owner's style and shown to the owner as samples.
+- Commit: `feat(behaviortree): ferry destination and instance-zone amount prompt for talk topics (#375 R14)`.
+
 # Stage B: convert the content on the branch
 
 Stage B never runs the converted files in the game: the commands still use the old engine until Task 19. The converted files are written into the repo in Task 15 only after the zone passes, and land with Stage C.
@@ -2944,6 +2956,8 @@ One subagent per zone batch (34 zone folders; batch the small ones: about 8 batc
   - speech-only branch: delete it (its text now lives in the topic);
   - `grant_quest` branch: delete it (now an offer topic);
   - action branch: `event: player_ask` becomes `event: player_topic`, the `keyword_match` condition becomes `check: topic_is` with `topic: <key>`, and the branch's `say`/`respond` action that the topic's `text` now speaks is removed so the NPC does not speak twice. Keep every other condition and action.
+  - ferry branches: one topic and one branch per destination, with `destination:` on `board_ferry` (Task 12b).
+  - instance-zone branches (Sable 315, Threshold Keeper 9553): one topic per zone, with `zone:` and `guidance:` on `open_instance_portal` (Task 12b, R14); guidance drafts go to the owner as samples.
 - [ ] Update the comment in `behaviors/archetypes/noncombat_questgiver.yaml` that mentions `player_ask`.
 - [ ] Then `grep -rn "player_ask" _datafiles/world/dogmud` must be empty, and every `topic_is` key must name a topic on that mob (Task 18's validator checks this at boot).
 - [ ] **Commit the content** (Tasks 15 to 17) by named paths: `git add _datafiles/world/dogmud/dialogue _datafiles/world/dogmud/quests/<each edited file> _datafiles/world/dogmud/behaviors/<each edited file>`, then `git diff --cached --stat` and check the file count against the report (302 dialogue files plus any new ones, 24 quest files, 1 quest file for the `dialogue` trigger if separate, 12 behavior files plus the archetype comment).

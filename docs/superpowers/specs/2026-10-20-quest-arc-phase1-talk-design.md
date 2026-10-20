@@ -72,6 +72,14 @@ spec; line numbers were read from the files at that commit.
 - **R11 Talk flow** as in section 4; the menu is re-shown after every answer.
 - **R12 Behavior-tree `ask` branches become topics** (raised while planning; section 4.1). A topic
   may name a `behavior` key; choosing it fires the tree with that key.
+- **R14 Instance zone buy-ins are an amount prompt** (owner 2026-10-20, raised while
+  executing). Sable 315 (arena, Planar Oasis) and the Threshold Keeper 9553 (crash site) open
+  instance zones for a player-chosen buy-in. Choosing the zone's topic asks "How much gold
+  will you stake?" with authored guidance on what the ranges mean for that zone (owner's
+  example for the Elemental Oasis: 100 to 300 a midgame solo run, 300 to 600 endgame solo,
+  600 and up for only the bravest solo players or for groups). These are instance zones;
+  "rift" is FinalTwist's separate micro-instance system in #208. Ferries need no prompt: one
+  topic per destination, the destination a fixed action parameter.
 - **R13 AI companion** (section 4.2): `ask` on the player's own bonded companion still routes to
   the module; `companion-ask` picks one of the NPC's eligible info topics by key, never an offer
   or hand-in. (Planning simplified the mechanism: the owner's words pick the topic at command
