@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 // Markers carried in the 4-wide marker column. The symbol carries the
@@ -46,7 +47,7 @@ type Menu struct {
 	Leave      string // label of the final numbered leave entry; "" for none
 	Default    string // Id chosen on Enter; "" for none
 	Footer     string // overrides the computed footer
-	Columns    int    // 2 lays name-only lists side by side (long admin lists)
+	Columns    int    // 2 lays name-only lists side by side (long admin lists); Detail is not shown in this mode
 	Prefix     bool   // a unique label prefix resolves (builders only)
 	AcceptText bool   // an unmatched line resolves as Text (free-text builders)
 }
@@ -94,7 +95,7 @@ func markerText(marker string) string {
 		return strings.Repeat(" ", markerColumn)
 	}
 	return fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, markerColor, marker) +
-		strings.Repeat(" ", markerColumn-len(marker))
+		strings.Repeat(" ", max(0, markerColumn-utf8.RuneCountInString(marker)))
 }
 
 func labelText(e Entry) string {
@@ -124,19 +125,21 @@ func renderEntry(b *strings.Builder, n, numW int, e Entry) {
 
 func renderColumns(b *strings.Builder, entries []Entry) {
 	numW := len(strconv.Itoa(len(entries)))
-	labelW := columnWidth - numW - 2 - markerColumn
+	// One column is reserved as a separator so a full-width label never
+	// touches the next cell's number.
+	labelW := columnWidth - numW - 2 - markerColumn - 1
 	for i, e := range entries {
 		if i%2 == 0 {
 			b.WriteString(leftMargin)
 		}
 		label := e.Label
-		if len(label) > labelW {
-			label = label[:labelW]
+		if rs := []rune(label); len(rs) > labelW {
+			label = string(rs[:labelW])
 		}
 		cell := numberText(i+1, numW) + " " + markerText(e.Marker) + labelText(Entry{Label: label, Dim: e.Dim})
 		b.WriteString(cell)
 		if i%2 == 0 && i+1 < len(entries) {
-			b.WriteString(strings.Repeat(" ", columnWidth-(numW+2+markerColumn+len(label))))
+			b.WriteString(strings.Repeat(" ", columnWidth-(numW+2+markerColumn+utf8.RuneCountInString(label))))
 		} else {
 			b.WriteString("\n")
 		}
@@ -165,15 +168,20 @@ func footer(m Menu) string {
 func wrap(text string, width int) []string {
 	var lines []string
 	var cur strings.Builder
+	curLen := 0 // runes in cur
 	for _, word := range strings.Fields(text) {
-		if cur.Len() > 0 && cur.Len()+1+len(word) > width {
+		wl := utf8.RuneCountInString(word)
+		if curLen > 0 && curLen+1+wl > width {
 			lines = append(lines, cur.String())
 			cur.Reset()
+			curLen = 0
 		}
-		if cur.Len() > 0 {
+		if curLen > 0 {
 			cur.WriteString(" ")
+			curLen++
 		}
 		cur.WriteString(word)
+		curLen += wl
 	}
 	if cur.Len() > 0 {
 		lines = append(lines, cur.String())

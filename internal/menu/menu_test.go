@@ -87,6 +87,78 @@ func TestRender_TwoColumns(t *testing.T) {
 	}
 }
 
+var col2Re = regexp.MustCompile(`^\s*\d+\. `)
+
+// assertCol2 checks every two-cell row puts column 2's number block at visible
+// column 2+39, with a separating space before it, and no row exceeds 80.
+func assertCol2(t *testing.T, m Menu) {
+	t.Helper()
+	for _, line := range strings.Split(plain(Render(m)), "\n") {
+		r := []rune(line)
+		if len(r) > 80 {
+			t.Fatalf("line over 80 columns: %q", line)
+		}
+		if len(r) <= 41 || !strings.Contains(string(r[41:]), ". ") {
+			continue
+		}
+		if r[40] != ' ' {
+			t.Fatalf("no separator before column 2: %q", line)
+		}
+		if !col2Re.MatchString(string(r[41:])) {
+			t.Fatalf("column 2 number not at column 41: %q", line)
+		}
+	}
+}
+
+func TestRender_TwoColumnsAlignAndSeparate(t *testing.T) {
+	full := strings.Repeat("w", 31)
+	m := Menu{Columns: 2, Entries: []Entry{
+		{Id: "a", Label: full}, {Id: "b", Label: "beta"},
+		{Id: "c", Label: strings.Repeat("w", 45)}, {Id: "d", Label: "delta"},
+		{Id: "e", Label: "café"}, {Id: "f", Label: "zeta"},
+	}}
+	assertCol2(t, m)
+	lines := strings.Split(plain(Render(m)), "\n")
+	if !strings.HasPrefix(lines[1], "  3.     "+full+" ") {
+		t.Fatalf("long label not truncated to 31 with a gap: %q", lines[1])
+	}
+}
+
+func TestRender_TwoColumnsTenPlusEntries(t *testing.T) {
+	m := Menu{Columns: 2}
+	for i := 0; i < 12; i++ {
+		m.Entries = append(m.Entries, Entry{Id: string(rune('a' + i)), Label: strings.Repeat("n", 20+i)})
+	}
+	assertCol2(t, m)
+}
+
+func TestRender_TwoColumnsCountRunesNotBytes(t *testing.T) {
+	m := Menu{Columns: 2, Entries: []Entry{
+		{Id: "a", Label: "café"}, {Id: "b", Label: "b"},
+		{Id: "c", Label: strings.Repeat("é", 40)}, {Id: "d", Label: "d"},
+	}}
+	assertCol2(t, m)
+	lines := strings.Split(plain(Render(m)), "\n")
+	if !strings.HasPrefix(lines[1], "  3.     "+strings.Repeat("é", 31)+" ") {
+		t.Fatalf("accented label not cut to 31 runes: %q", lines[1])
+	}
+}
+
+func TestRender_WrapCountsRunesNotBytes(t *testing.T) {
+	m := Menu{Entries: []Entry{{Id: "a", Label: "A", Detail: strings.Repeat("éé ", 40)}}}
+	lines := strings.Split(plain(Render(m)), "\n")
+	if n := len([]rune(lines[1])); n < 78 || n > 80 {
+		t.Fatalf("first detail line is %d runes, want 78..80: %q", n, lines[1])
+	}
+}
+
+func TestRender_LongMarkerDoesNotPanic(t *testing.T) {
+	out := plain(Render(Menu{Entries: []Entry{{Id: "a", Marker: "[long]", Label: "x"}}}))
+	if !strings.Contains(out, "[long]x") {
+		t.Fatalf("long marker: %q", out)
+	}
+}
+
 func TestRender_FooterVariants(t *testing.T) {
 	noLeave := Menu{Entries: []Entry{{Id: "a", Label: "A"}}}
 	if !strings.HasSuffix(plain(Render(noLeave)), "Type a number.") {

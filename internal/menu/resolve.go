@@ -49,8 +49,9 @@ func Resolve(m Menu, input string) Result {
 		return Result{Kind: Empty}
 	}
 
-	if n, err := strconv.Atoi(in); err == nil {
-		if n < 1 || n > len(all) {
+	if allDigits(in) {
+		n, err := strconv.Atoi(in)
+		if err != nil || n < 1 || n > len(all) {
 			return Result{Kind: NoSuchNumber}
 		}
 		if m.Leave != "" && n == len(all) {
@@ -90,6 +91,9 @@ func Resolve(m Menu, input string) Result {
 		case len(matches) == 0 && leaveMatch:
 			return Result{Kind: Leave}
 		case len(matches) > 1 || (len(matches) == 1 && leaveMatch):
+			if leaveMatch {
+				matches = append(matches, Entry{Label: m.Leave})
+			}
 			return Result{Kind: Ambiguous, Matches: matches}
 		}
 	}
@@ -98,6 +102,20 @@ func Resolve(m Menu, input string) Result {
 		return Result{Kind: Text, Text: in}
 	}
 	return Result{Kind: NotAnAnswer}
+}
+
+// allDigits reports whether s is non-empty and made only of ASCII digits, so
+// "+2" and "-1" are text, not numbers.
+func allDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // Confirm builds the two-entry yes/no menu. No is the way out and Enter picks

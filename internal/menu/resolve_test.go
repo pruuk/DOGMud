@@ -29,6 +29,9 @@ func TestResolve(t *testing.T) {
 			t.Errorf("%s: kind %v, want %v", c.name, r.Kind, c.kind)
 			continue
 		}
+		if c.kind == Leave && r.Entry != nil {
+			t.Errorf("%s: Leave result carries entry %+v", c.name, r.Entry)
+		}
 		if c.id != "" && (r.Entry == nil || r.Entry.Id != c.id) {
 			t.Errorf("%s: entry %+v, want id %q", c.name, r.Entry, c.id)
 		}
@@ -43,6 +46,30 @@ func TestResolve_PrefixInBuilderMenus(t *testing.T) {
 	r := Resolve(m, "we")
 	if r.Kind != Ambiguous || len(r.Matches) != 2 {
 		t.Fatalf("ambiguous prefix: %+v", r)
+	}
+}
+
+func TestResolve_PrefixMatchingEntryAndLeaveListsBoth(t *testing.T) {
+	m := Menu{Prefix: true, Entries: []Entry{{Id: "cancel", Label: "cancel order"}}, Leave: "Cancel"}
+	r := Resolve(m, "can")
+	if r.Kind != Ambiguous || len(r.Matches) != 2 {
+		t.Fatalf("want ambiguous with 2 matches: %+v", r)
+	}
+	if r.Matches[1].Label != "Cancel" {
+		t.Fatalf("leave not listed: %+v", r.Matches)
+	}
+}
+
+func TestResolve_NumberEdgeCases(t *testing.T) {
+	m := talkMenu()
+	if r := Resolve(m, "99999999999999999999999"); r.Kind != NoSuchNumber {
+		t.Errorf("overflow: %+v", r)
+	}
+	if r := Resolve(m, "+2"); r.Kind != NotAnAnswer {
+		t.Errorf("+2 must not choose: %+v", r)
+	}
+	if r := Resolve(m, "-1"); r.Kind != NotAnAnswer {
+		t.Errorf("-1: %+v", r)
 	}
 }
 
