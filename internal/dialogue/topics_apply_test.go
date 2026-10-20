@@ -7,9 +7,19 @@ import (
 )
 
 func TestApply_InfoRecordsHeardAndGrants(t *testing.T) {
-	df, f := loadFixture(t, menuFixtureYAML), newFake()
-	require.True(t, df.Apply(df.FindTopic("rumor"), f.ps()))
-	require.True(t, f.heard["50.rumor"])
+	df := loadFixture(t, `mobid: 56
+zone: testzone
+topics:
+  - key: clue
+    kind: info
+    label: "Any clues?"
+    text: "Look under the bridge."
+    grantsQuest: 4-clue
+`)
+	f := newFake()
+	require.True(t, df.Apply(df.FindTopic("clue"), f.ps()))
+	require.True(t, f.tokens["4-clue"], "grant landed")
+	require.True(t, f.heard["56.clue"], "heard recorded")
 }
 
 func TestApply_OfferIsNotRecordedAsHeard(t *testing.T) {
@@ -39,6 +49,7 @@ topics:
 	require.True(t, df.Apply(df.FindTopic("purse"), f.ps()))
 	require.False(t, f.items[77])
 	require.True(t, f.tokens["9-end"])
+	require.False(t, f.heard["52.purse"], "only info topics are recorded as heard")
 }
 
 func TestApply_FailedChargeChangesNothing(t *testing.T) {

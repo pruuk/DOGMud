@@ -125,6 +125,40 @@ func TestMarker_PriorityHandInOverOfferOverInfo(t *testing.T) {
 	require.Equal(t, "", df.Marker(f.ps()), "everything heard or done")
 }
 
+func TestMarker_HandInBeatsEligibleOfferAndMarkedInfo(t *testing.T) {
+	df := loadFixture(t, `mobid: 55
+zone: testzone
+topics:
+  - key: tip
+    kind: info
+    label: "Any news?"
+    text: "None."
+    marked: true
+  - key: new_job
+    kind: offer
+    quest: 8
+    label: "A New Job"
+    playerLine: "Got work?"
+    text: "Yes."
+    questExcluded: [8-start]
+    grantsQuest: 8-start
+  - key: old_job
+    kind: handin
+    quest: 6
+    label: "The Old Job"
+    playerLine: "It is done."
+    text: "Good."
+    questRequired: [6-done]
+    questExcluded: [6-end]
+    grantsQuest: 6-end
+`)
+	f := newFake()
+	f.tokens["6-done"] = true
+	require.Equal(t, menu.MarkerHandIn, df.Marker(f.ps()), "hand-in outranks offer and info")
+	f.tokens["6-end"] = true
+	require.Equal(t, menu.MarkerQuest, df.Marker(f.ps()), "offer outranks info")
+}
+
 func TestOpenerFor_FirstPassingVariantElseRoot(t *testing.T) {
 	df, f := loadFixture(t, menuFixtureYAML), newFake()
 	text, _ := df.OpenerFor(f.ps())
@@ -166,6 +200,12 @@ func TestItemTopic_EligibleFirstElseWanted(t *testing.T) {
 	df := loadFixture(t, `mobid: 51
 zone: testzone
 topics:
+  - key: first_try
+    kind: info
+    label: "Is this your purse?"
+    text: "Not yet either."
+    questRequired: [9-never]
+    requiresItem: 77
   - key: early
     kind: info
     label: "Here is the purse."
@@ -183,6 +223,7 @@ topics:
 	f.tokens["9-start"] = true
 	tp, wanted = df.ItemTopic(77, f.ps())
 	require.NotNil(t, tp)
+	require.Equal(t, "early", tp.Key, "skips the ineligible topic listed first")
 	require.True(t, wanted)
 	tp, wanted = df.ItemTopic(78, f.ps())
 	require.Nil(t, tp)
@@ -193,6 +234,10 @@ func TestNilFileIsSafe(t *testing.T) {
 	var df *DialogueFile
 	require.Equal(t, "", df.Marker(newFake().ps()))
 	require.Nil(t, df.FindTopic("x"))
+	require.Equal(t, "", df.TopicMarker(nil, nil))
+	require.Equal(t, "", df.TopicMarker(&Topic{Kind: KindOffer}, nil))
+	live := loadFixture(t, menuFixtureYAML)
+	require.Equal(t, "", live.TopicMarker(nil, nil))
 	text, hints := df.OpenerFor(nil)
 	require.Equal(t, "", text+hints)
 }

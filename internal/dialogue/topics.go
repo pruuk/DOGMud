@@ -43,6 +43,9 @@ func (df *DialogueFile) Eligible(t *Topic, ps *PlayerState) bool {
 
 // TopicMarker is the marker on an eligible topic's menu line.
 func (df *DialogueFile) TopicMarker(t *Topic, ps *PlayerState) string {
+	if df == nil || t == nil {
+		return ""
+	}
 	switch t.Kind {
 	case KindHandIn:
 		return menu.MarkerHandIn
@@ -159,7 +162,8 @@ func (df *DialogueFile) ItemTopic(itemId int, ps *PlayerState) (t *Topic, wanted
 // records an info topic as heard once its effects landed. It reports false,
 // with nothing changed and any charge refunded, when the price could not be
 // taken or an item could not be delivered. It does not check eligibility:
-// the caller re-checks right before.
+// the caller re-checks right before. A topic's moodChange is the caller's job
+// (dialogue.ShiftMood), because Apply has no mob instance.
 func (df *DialogueFile) Apply(t *Topic, ps *PlayerState) bool {
 	if df == nil || t == nil {
 		return false
