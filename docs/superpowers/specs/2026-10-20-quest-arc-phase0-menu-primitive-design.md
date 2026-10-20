@@ -201,7 +201,7 @@ follow reason sends:
 - Names go through the existing sight and anonymize rules for each reader (a follower in the
   dark reads as "someone"; the NPC's name only when the reader sees the NPC by name).
 - In phase 0 the "talk with Kael" part comes from the session's subject string; a non-talk
-  game menu uses the generic form ("You stop what you were choosing to follow Brannoc.").
+  game menu uses the generic form ("You stop what you were doing to follow Brannoc.").
 
 ### 5. Builder session
 
