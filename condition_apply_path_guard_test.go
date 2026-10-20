@@ -137,7 +137,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/usercommands/skill.disenchant.go|71": "former combat condition (withdrawal): the disenchant command narrates; must apply synchronously so Validate clamps the pool now",
 
 	// ── mob holders: no client, so no line could reach anyone ───────────────
-	"internal/usercommands/character.go|424":         "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
+	"internal/usercommands/character.go|437":         "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
 	"internal/behaviortree/actions_item_proc.go|419": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
 	"internal/hooks/manifester_companions.go|40":     "the holder is a MOB (a summoned companion), not a player",
 
