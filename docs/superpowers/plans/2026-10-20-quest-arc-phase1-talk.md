@@ -2407,6 +2407,8 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 EOF
 ```
 
+**Follow-ups from the Task 11 review, to apply once the Task 9 fixes land (they touch `talk.go`):** charmed NPCs offer no topics (controller ruling, matching the marker's charm exclusion): `conversation.Talk` on a charmed mob opens nothing beyond today's approach line and nod, and `conversation.Give` returns false for a charmed mob; test both. After `MarkHeard` and after a grant in the talk flow, call `conversation.RefreshMarkers(user.UserId)` so the GMCP NPC marker is not stale.
+
 ### Task 10: `give` resolves as the topic
 
 **Files:**
