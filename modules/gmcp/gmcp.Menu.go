@@ -77,10 +77,13 @@ func menuChangedHandler(e events.Event) events.ListenerReturn {
 	if user == nil || !isGMCPEnabled(user.ConnectionId()) {
 		return events.Continue
 	}
+	// Priority -1 (lower pops first): internal/users queues MenuChanged and then
+	// the menu text, so a default-priority frame would land after the text and a
+	// client trigger matching the text could fire before it knows a menu is open.
 	events.AddToQueue(GMCPOut{
 		UserId:  evt.UserId,
 		Module:  `Char.Menu`,
 		Payload: map[string]bool{"open": evt.Open},
-	})
+	}, -1)
 	return events.Continue
 }

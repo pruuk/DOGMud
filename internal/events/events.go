@@ -846,6 +846,20 @@ func DrainQueuedByTypeForTest(typeName string) []Event {
 	return found
 }
 
+// QueuedTypesInOrderForTest returns the Type() of every queued event in the
+// order ProcessEvents would pop them, without removing anything.
+func QueuedTypesInOrderForTest() []string {
+	qLock.Lock()
+	defer qLock.Unlock()
+	cp := make(priorityQueue, len(globalQueue))
+	copy(cp, globalQueue)
+	var order []string
+	for cp.Len() > 0 {
+		order = append(order, heap.Pop(&cp).(*prioritizedEvent).event.Type())
+	}
+	return order
+}
+
 // Initialize the priority queue.
 func init() {
 	heap.Init(&globalQueue)

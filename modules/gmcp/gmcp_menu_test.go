@@ -52,6 +52,29 @@ func TestMenuChanged_PushesCharMenuToAGMCPClient(t *testing.T) {
 	}
 }
 
+// internal/users queues MenuChanged and then the menu text. The Char.Menu frame
+// the handler queues must pop before that text, or a client trigger matching
+// the text fires before it knows a menu is open (#375).
+func TestMenuChanged_FrameIsDispatchedBeforeTheMenuText(t *testing.T) {
+	u := menuTestUser(t, 9825, 98825, true)
+	events.DrainQueuedByTypeForTest(`Message`)
+	t.Cleanup(func() { events.DrainQueuedByTypeForTest(`Message`) })
+
+	events.AddToQueue(events.MenuChanged{UserId: u.UserId, Open: true})
+	events.AddToQueue(events.Message{UserId: u.UserId, Text: "1. First\n2. Second"})
+
+	// Run the first pop the way ProcessEvents would: MenuChanged is handled
+	// before the Message, and the handler queues the frame.
+	require.Equal(t, `MenuChanged`, events.QueuedTypesInOrderForTest()[0])
+	for _, e := range events.DrainQueuedByTypeForTest(`MenuChanged`) {
+		menuChangedHandler(e)
+	}
+
+	order := events.QueuedTypesInOrderForTest()
+	require.Equal(t, []string{`GMCPOut`, `Message`}, order,
+		"Char.Menu open must pop ahead of the menu text")
+}
+
 func TestMenuChanged_SendsNothingWithoutGMCPOrUser(t *testing.T) {
 	u := menuTestUser(t, 9822, 98822, false)
 
