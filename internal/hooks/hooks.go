@@ -47,6 +47,7 @@ func RegisterListeners() {
 	events.RegisterListener(events.RoomChange{}, LightNoticeOnMove)
 	events.RegisterListener(events.RoomChange{}, StolenBaubleRecognition)
 	events.RegisterListener(events.RoomChange{}, justice.LapseArrestStampOnMove)
+	events.RegisterListener(events.RoomChange{}, MenuCloseOnRoomChange)
 
 	// NewRound Listeners
 	events.RegisterListener(events.NewRound{}, InactivePlayers)
