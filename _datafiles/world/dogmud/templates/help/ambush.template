@@ -52,14 +52,17 @@ Take care, because this is the expensive mistake. Closing in from hiding
 gives your position away whether the ambush was ready or not. A denied
 opener costs you your cover and returns nothing for it.
 
-<ansi fg="yellow">━━━ A Shot From Cover Always Lands ━━━</ansi>
+<ansi fg="yellow">━━━ Shooting From Cover ━━━</ansi>
 
-Shooting is different. If you are hidden, the shot is an ambush, and no
-cooldown can take that away from you. Hide, then <ansi fg="command">fire</ansi>.
+Every shot waits for the shared special move cooldown, so a shot from
+cover does too. If the cooldown has not recovered, you do not shoot at
+all: you are told to wait, you stay hidden, and it costs you nothing.
+When the shot goes, a hidden shot is always an ambush. Hide, then <ansi fg="command">fire</ansi>.
 
-What limits it is the hiding itself. The shot gives your place away, and
-you cannot slip out of sight again while something is fighting you, so
-you get one opener per fight rather than one per recovery.
+You can only hide before a fight starts, so your cooldown has usually
+recovered by the time you open. The shot gives your place away, and you
+cannot slip out of sight again while something is fighting you, so you
+get one opener per fight.
 
 <ansi fg="yellow">━━━ Shooting Into the Next Room ━━━</ansi>
 

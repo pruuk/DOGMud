@@ -384,7 +384,7 @@ func TestFire_UnseenTargetIsRejectedBeforeAdmission(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 6. Fire does NOT consume the special-move cooldown
+// 6. Fire consumes, and waits for, the special-move cooldown
 // ---------------------------------------------------------------------------
 
 // ⚠️ INVERTED DELIBERATELY. Firing used to leave the timer alone because the
@@ -407,6 +407,52 @@ func TestFire_ConsumesSpecialMoveCooldown(t *testing.T) {
 		"firing must consume the special-move cooldown")
 }
 
+// TestFire_SecondShotInsideTheCooldownIsRefused pins owner ruling 2026-10-19
+// (#265): a bow fires on the shared special-move cooldown. A second shot while
+// the first shot's timer runs is refused before any cost, so it spends no
+// stamina, no arrow, and no round, and the target is untouched. Once the timer
+// clears the next shot goes through.
+func TestFire_SecondShotInsideTheCooldownIsRefused(t *testing.T) {
+	_, cleanup := seedFireMobInRoom(t, 1, 1_000_000)
+	defer cleanup()
+
+	char := fireAttacker()
+	char.Equipment.Weapon = fireRangedWeapon(1, 1.0, true)
+	char.Items = []items.Item{reloadAmmoBundle(3, "arrows", 20)}
+	actor := newStubActor(char, rooms.LoadRoom(1))
+	target := mobs.GetInstance(500)
+	require.NotNil(t, target)
+
+	first := ExecuteFire(actor, "skeleton")
+	require.True(t, first.Executed, "the first shot fires on a free timer")
+	require.False(t, first.OnCooldown)
+	require.Positive(t, char.Cooldowns["special-move"], "the first shot claims the timer")
+	require.True(t, char.Equipment.Weapon.Loaded, "the first shot chambers the next arrow")
+
+	staminaBefore := char.Stamina
+	arrowsBefore := char.Items[0].Uses
+	roundsBefore := char.RoundsWaiting()
+	healthBefore := target.Character.Health
+	cooldownsBefore := maps.Clone(char.Cooldowns)
+
+	second := ExecuteFire(actor, "skeleton")
+	assert.True(t, second.OnCooldown, "a shot inside the cooldown is refused")
+	assert.False(t, second.Executed)
+	assert.Equal(t, characters.CostCommitResult{}, second.Cost, "no cost is admitted for a refused shot")
+	assert.Equal(t, staminaBefore, char.Stamina, "a refused shot spends no stamina")
+	assert.Equal(t, arrowsBefore, char.Items[0].Uses, "a refused shot spends no arrow")
+	assert.True(t, char.Equipment.Weapon.Loaded, "a refused shot keeps its arrow nocked")
+	assert.Equal(t, roundsBefore, char.RoundsWaiting(), "a refused shot does not spend the round")
+	assert.Equal(t, healthBefore, target.Character.Health)
+	assert.Equal(t, cooldownsBefore, char.Cooldowns, "a refused shot does not extend the timer")
+
+	// The timer clears: the next shot fires.
+	ReleaseSpecialMove(char)
+	third := ExecuteFire(actor, "skeleton")
+	assert.False(t, third.OnCooldown)
+	assert.True(t, third.Executed, "once the cooldown clears the shot fires again")
+}
+
 // TestFire_RefusedCostIsAtomic catches admission being omitted or moved after
 // unloading, round consumption, ammunition mutation, or ranged resolution.
 func TestFire_RefusedCostIsAtomic(t *testing.T) {
@@ -419,7 +465,10 @@ func TestFire_RefusedCostIsAtomic(t *testing.T) {
 	char.Equipment.Weapon = fireRangedWeapon(1, 1.0, true)
 	char.Items = []items.Item{reloadAmmoBundle(3, "arrows", 20)}
 	char.SetAggro(0, 500, characters.DefaultAttack)
-	char.Cooldowns = characters.Cooldowns{"special-move": 3, "other": 7}
+	// The special-move timer is FREE: a running timer now refuses the shot
+	// before admission (#265), which would leave nothing for this test to
+	// prove. A cost-refused shot must leave the free timer unclaimed.
+	char.Cooldowns = characters.Cooldowns{"other": 7}
 	targetMob := mobs.GetInstance(500)
 	require.NotNil(t, targetMob)
 	healthBefore := targetMob.Character.Health
@@ -455,7 +504,6 @@ func TestFire_AffordableMissPaysUnloadsAndConsumesRound(t *testing.T) {
 	char.Equipment.Weapon = fireRangedWeapon(1, 1.0, true)
 	char.Items = []items.Item{reloadAmmoBundle(3, "arrows", 20)}
 	char.SetAggro(0, 500, characters.DefaultAttack)
-	char.Cooldowns = characters.Cooldowns{"special-move": 3}
 	targetMob := mobs.GetInstance(500)
 	require.NotNil(t, targetMob)
 	healthBefore := targetMob.Character.Health
@@ -479,9 +527,10 @@ func TestFire_AffordableMissPaysUnloadsAndConsumesRound(t *testing.T) {
 		"2 for the shot and 1 for the chambering: the same total a shot plus a "+
 			"reload cost before they were folded together")
 
-	// The pre-existing cooldown is left as found: it was already running, so the
-	// shot's claim cannot extend it, and chambering never touches it.
-	assert.Equal(t, characters.Cooldowns{"special-move": 3}, char.Cooldowns)
+	// A miss is still a shot: it claims the shared timer (#265), and
+	// chambering adds no claim of its own.
+	assert.Positive(t, char.Cooldowns["special-move"], "a missed shot still claims the shared timer")
+	assert.Len(t, char.Cooldowns, 1, "chambering claims nothing of its own")
 }
 
 // TestFire_StaleWeaponAfterAdmissionDoesNotUnloadReplacement catches a paid
@@ -605,18 +654,25 @@ func TestFireAdmissionOrdering(t *testing.T) {
 	})
 	require.Len(t, unloads, 1)
 
-	// U10d narrowed this from "shoot must neither query nor mutate any
-	// cooldown" to EXACTLY ONE claim, the same-room surprise opener's. An
-	// ORDINARY shot still touches no timer (pinned behaviourally by
-	// TestFire_DoesNotConsumeSpecialMoveCooldown and
-	// TestFireSurprise_OrdinaryShotDoesNotBurnTheCooldown); what this guard
-	// keeps is that there is no SECOND cooldown site and that the one claim
-	// cannot fire before admission, which would let a refused shot burn the
-	// shared special-move timer.
-	require.Len(t, cooldownCalls, 1, "exactly one cooldown site: the single per-shot claim")
-	assert.Equal(t, "ClaimSpecialMove(char)", cooldownCalls[0],
+	// Owner ruling 2026-10-19 (#265): a shot waits for the shared special-move
+	// cooldown, so ExecuteFire has EXACTLY TWO cooldown sites, the ask and the
+	// take, in the order every special move uses. The ask (SpecialMoveReady)
+	// must come before the auto-chamber and before admission, so a shot refused
+	// for the timer spends no stamina and no arrow. The take (ClaimSpecialMove)
+	// must come after admission, so a cost-refused shot never burns the timer.
+	require.Len(t, cooldownCalls, 2, "exactly two cooldown sites: the ask and the per-shot claim, got %v", cooldownCalls)
+	assert.Equal(t, "SpecialMoveReady(char)", cooldownCalls[0],
+		"the shot must ASK through the shared helper first, got %q", cooldownCalls[0])
+	assert.Equal(t, "ClaimSpecialMove(char)", cooldownCalls[1],
 		"the shot must claim through the shared helper, which is what sizes it by "+
-			"the knob rather than a literal, got %q", cooldownCalls[0])
+			"the knob rather than a literal, got %q", cooldownCalls[1])
+	chamber := exactCallPositions(t, fset, body, "chamberNextRound", true)
+	require.NotEmpty(t, chamber)
+	assert.Less(t, int(cooldownPos[0]), int(chamber[0]),
+		"the ask must precede the auto-chamber, or a refused shot spends an arrow")
+	assert.Less(t, int(cooldownPos[0]), int(admit[0]),
+		"the ask must precede admission, or a refused shot spends stamina")
+	cooldownPos = cooldownPos[1:] // the claim, checked below
 	assert.Less(t, int(roomVisibility[0]), int(admit[0]))
 	assert.Less(t, int(hiddenTarget[0]), int(admit[0]))
 	assert.Less(t, int(admit[0]), int(cooldownPos[0]),

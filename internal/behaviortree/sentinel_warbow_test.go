@@ -122,4 +122,24 @@ func TestTheSentinelFiresItsWarbow(t *testing.T) {
 	require.False(t, res.TooDarkToAim || res.Blinded, "the Sentinel must see to aim in its own vault: %+v", res)
 	require.True(t, res.Executed, "the shot was taken: %+v", res)
 	require.True(t, res.Chambered.Loaded, "firing chambers the next arrow from the quiver")
+
+	// A shot waits for the shared special-move cooldown, players and mobs
+	// alike (owner ruling 2026-10-19, #265). While it runs the tree must NOT
+	// claim the round, so the round driver falls through to the Sentinel's
+	// combat commands and melee swing; once it clears, the Sentinel fires again.
+	cooldown := int(configs.GetBalanceConfig().SpecialMoveCooldown)
+	require.Positive(t, cooldown)
+	held := 0
+	for round := 0; round < cooldown+2 && !actions.SpecialMoveReady(&sentinel.Character); round++ {
+		require.False(t, TryMobBehavior(sentinel.InstanceId, EventContext{EventType: "mob_combat_round"}),
+			"round %d inside the cooldown: the tree must leave the round to melee", round)
+		require.Empty(t, queuedCmds(sentinel.InstanceId), "no shot inside the cooldown")
+		held++
+		sentinel.Character.Cooldowns.RoundTick()
+		sentinel.Character.Cooldowns.Prune()
+	}
+	require.Equal(t, cooldown, held, "the Sentinel holds its bow for exactly the shared cooldown")
+	require.True(t, TryMobBehavior(sentinel.InstanceId, EventContext{EventType: "mob_combat_round"}),
+		"once the cooldown clears the Sentinel fires again")
+	require.Contains(t, queuedCmds(sentinel.InstanceId), "shoot Target")
 }

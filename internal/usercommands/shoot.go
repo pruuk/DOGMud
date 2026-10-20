@@ -27,8 +27,8 @@ import (
 
 // Shoot fires a loaded ranged weapon at a target. The shot resolves
 // immediately (one shot per command) — same-room `shoot <target>` or
-// cross-room `shoot <target> <direction>`. Firing unloads the weapon;
-// callers must `reload` to fire again.
+// cross-room `shoot <target> <direction>`. Firing chambers the next round
+// itself, and a shot waits for the shared special-move cooldown (#265).
 //
 // This is the loaded-weapon model (ranged-weapons T6). It REPLACES the
 // legacy remote-aggro behavior where a single `shoot` set up a continuous
@@ -113,6 +113,12 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// --- Early exits (no shot fired) ---
 	if result.Crafting {
 		refusal.WhileBusy(user, "shoot")
+		return true, nil
+	}
+	if result.OnCooldown {
+		// A shot waits for the shared special-move timer (#265), so it gets
+		// the same refusal bash and trip give.
+		refusal.CooldownAfterCost(user, "shoot", result.Cost)
 		return true, nil
 	}
 	if result.NoWeapon {

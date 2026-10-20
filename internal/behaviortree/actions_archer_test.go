@@ -3,6 +3,7 @@ package behaviortree
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
@@ -136,6 +137,35 @@ func TestActTryFire_TooDarkToAim_Fails(t *testing.T) {
 	}
 	if cmds := queuedCmds(mob.InstanceId); len(cmds) != 0 {
 		t.Errorf("no shot may be queued in the dark, got %v", cmds)
+	}
+}
+
+// A shot waits for the shared special-move cooldown (owner ruling 2026-10-19,
+// #265). While it runs try_fire must not claim the round with a shot the fire
+// rule will refuse; Failure lets the archer melee in between.
+func TestActTryFire_OnCooldown_Fails(t *testing.T) {
+	const room = 10
+	seedLitRooms(t, map[int]*rooms.Room{room: {RoomId: room, Zone: "test"}})
+	target := seedTargetMob(t, 407, room)
+
+	mob := newTestMob(t)
+	mob.Character.RoomId = room
+	mob.Character.Equipment.Weapon = rangedBow(true)
+	mob.Character.SetAggro(0, target.InstanceId, characters.DefaultAttack)
+	mob.Character.Cooldowns = characters.Cooldowns{actions.SpecialMoveCooldownTag: 2}
+	queuedCmds(mob.InstanceId) // clear
+
+	ctx := &EvalContext{InstanceId: mob.InstanceId, RoomId: room}
+	if got := LookupAction("try_fire")(nil, ctx); got != Failure {
+		t.Errorf("try_fire on the special-move cooldown = %v, want Failure", got)
+	}
+	if cmds := queuedCmds(mob.InstanceId); len(cmds) != 0 {
+		t.Errorf("no shot may be queued on the cooldown, got %v", cmds)
+	}
+
+	delete(mob.Character.Cooldowns, actions.SpecialMoveCooldownTag) // the timer clears
+	if got := LookupAction("try_fire")(nil, ctx); got != Success {
+		t.Errorf("try_fire once the cooldown clears = %v, want Success", got)
 	}
 }
 

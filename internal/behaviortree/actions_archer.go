@@ -174,7 +174,8 @@ func hpPercent(char *characters.Character) float64 {
 // actTryFire fires a loaded ranged weapon at the mob's aggro target. Same-room
 // targets get an immediate `shoot <name>`; a target exactly one exit away gets
 // a directional `shoot <name> <dir>` (the shoot mob command resolves the rest).
-// Returns Failure when there is nothing loaded, no target, the target is not
+// Returns Failure when there is nothing loaded, the shared special-move
+// cooldown is running (a shot waits for it, #265), no target, the target is not
 // reachable by a single shot, or the mob cannot see clearly enough to aim into
 // the target's room — so the surrounding selector can fall back to melee.
 //
@@ -190,6 +191,13 @@ func actTryFire(params map[string]any, ctx *EvalContext) Result {
 	}
 	if loadedRangedWeapon(&mob.Character) == nil {
 		return Failure // nothing chambered to fire
+	}
+	// A shot waits for the shared special-move cooldown (owner ruling
+	// 2026-10-19, #265), and actions.ExecuteFire refuses it on this same
+	// helper. Fail rather than claim the round with a shot the fire rule will
+	// refuse, so the mob melees and uses its other moves between shots.
+	if !actions.SpecialMoveReady(&mob.Character) {
+		return Failure
 	}
 	name, targetRoomId, ok := archerTarget(&mob.Character)
 	if !ok {
