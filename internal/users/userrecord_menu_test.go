@@ -184,10 +184,10 @@ func TestCheckMenuInterrupts_ClosesOnBusy(t *testing.T) {
 	}
 }
 
-// TestMenuGate_SeizedReadsControlledNotOffFeet: every grapple position is
-// off the feet, so the controlled rule must come before the off-feet rule
-// for a seized player to read "as you are seized".
-func TestMenuGate_SeizedReadsControlledNotOffFeet(t *testing.T) {
+// TestMenuGate_ControlledCharacterIsGated: a character seized in a grapple is
+// off its feet too, and still reads "as you are seized". Control gates it,
+// position does not.
+func TestMenuGate_ControlledCharacterIsGated(t *testing.T) {
 	u := menuUser()
 	u.Character.Control = control.NewMachine()
 	if err := u.Character.Control.TransitionToControlled(state.TransitionReason{}); err != nil {
@@ -196,11 +196,50 @@ func TestMenuGate_SeizedReadsControlledNotOffFeet(t *testing.T) {
 	if err := u.Character.Position.Inner().TransitionTo(position.Sitting, state.TransitionReason{}); err != nil {
 		t.Fatalf("transition to Sitting: %v", err)
 	}
-	if u.Character.IsStanding() {
-		t.Fatal("fixture still standing; the test would not reach the order question")
-	}
 	if r := menuGate(u.Character); r != menu.CloseControlled {
 		t.Fatalf("gate %v, want CloseControlled", r)
+	}
+}
+
+// Owner ruling 2026-10-20: off their feet is not a gate for audio
+// interactions (talking, menus).
+func TestOpenMenu_AllowedWhileOffTheirFeet(t *testing.T) {
+	for _, pos := range []position.State{position.Sitting, position.Prone} {
+		u, r := menuUser(), &rec{}
+		if err := u.Character.Position.Inner().TransitionTo(pos, state.TransitionReason{}); err != nil {
+			t.Fatalf("transition to %v: %v", pos, err)
+		}
+		if u.Character.IsStanding() {
+			t.Fatalf("fixture still standing at %v", pos)
+		}
+		if reason, ok := u.OpenMenu(testMenu(), r.session()); !ok || reason != menu.CloseNone {
+			t.Fatalf("%v: ok %v reason %v", pos, ok, reason)
+		}
+	}
+}
+
+func TestCheckMenuInterrupts_SittingDownKeepsTheMenu(t *testing.T) {
+	u, r := menuUser(), &rec{}
+	u.OpenMenu(testMenu(), r.session())
+	if err := u.Character.Position.Inner().TransitionTo(position.Sitting, state.TransitionReason{}); err != nil {
+		t.Fatalf("transition to Sitting: %v", err)
+	}
+	u.CheckMenuInterrupts()
+	if !u.HasOpenMenu() || len(r.closed) != 0 {
+		t.Fatalf("open %v closed %v", u.HasOpenMenu(), r.closed)
+	}
+}
+
+func TestCheckMenuInterrupts_SittingDownKeepsANonModalPrompt(t *testing.T) {
+	u := menuUser()
+	p, _ := u.StartPrompt("guild", "")
+	p.NonModal = true
+	if err := u.Character.Position.Inner().TransitionTo(position.Sitting, state.TransitionReason{}); err != nil {
+		t.Fatalf("transition to Sitting: %v", err)
+	}
+	u.CheckMenuInterrupts()
+	if u.GetPrompt() == nil {
+		t.Fatal("non-modal prompt closed because the player sat down")
 	}
 }
 

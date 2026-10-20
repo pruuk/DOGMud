@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
 
 func goCrafting(t *testing.T, c *Character) {
@@ -26,6 +27,25 @@ func TestBusyObservers_NotifyTheUserOnTransition(t *testing.T) {
 	goCrafting(t, c)
 	if len(got) != 1 || got[0] != 7 {
 		t.Fatalf("notified %v, want [7]", got)
+	}
+}
+
+// Owner ruling 2026-10-20: position is not a menu gate, so a position
+// change tells nobody.
+func TestBusyObservers_PositionChangeNotifiesNobody(t *testing.T) {
+	n := 0
+	old := BusyStateChanged
+	BusyStateChanged = func(int) { n++ }
+	defer func() { BusyStateChanged = old }()
+
+	c := New()
+	c.SetUserId(7)
+	c.WireBusyObservers()
+	if err := c.Position.Inner().TransitionTo(position.Sitting, state.TransitionReason{}); err != nil {
+		t.Fatalf("transition: %v", err)
+	}
+	if n != 0 {
+		t.Fatalf("notified %d times, want 0", n)
 	}
 }
 

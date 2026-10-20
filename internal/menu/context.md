@@ -89,7 +89,7 @@ the action ("Yes, disband it" / "No, keep it"); otherwise pass "Yes" and "No".
 
 - `CloseReason` says why an open menu closed: `CloseNone` (no rule holds),
   `CloseChosen`, `CloseLeft`, `CloseOtherCommand`, `CloseReplaced`,
-  `CloseCombat`, `CloseBusy`, `CloseDead`, `CloseAsleep`, `CloseOffFeet`,
+  `CloseCombat`, `CloseBusy`, `CloseDead`, `CloseAsleep`,
   `CloseControlled`, `CloseQuitting`, `CloseRoomChange`, `CloseFollow`,
   `CloseContextLost`.
 - `InterruptLine(reason, topic)` is the one line the player reads when an

@@ -122,7 +122,8 @@ source     authored | llm
 - Interrupts (owner 2026-10-20): a game menu cannot open, and an open one closes, while the
   player is in combat, casting, crafting or salvaging, dead or respawning, asleep, off their
   feet or controlled, or quitting; any room change closes it (walked, fled, or pulled by a
-  leader). Closing listens to the `internal/state` machines' observers and the condition
+  leader). (Owner 2026-10-20: off their feet is not a gate for audio interactions, so that
+  rule is dropped.) Closing listens to the `internal/state` machines' observers and the condition
   path, and every choice re-checks the whole rule set before acting. The gate is built from
   the same sources as the future shared busy check (#640) and moves onto it when it lands.
 - Talk menus also close when the NPC leaves, dies or stops being visible by name. A leader

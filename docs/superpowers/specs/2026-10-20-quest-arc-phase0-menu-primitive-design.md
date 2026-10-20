@@ -48,8 +48,9 @@ input, one set of interrupt rules. Phase 1 builds `talk` on it.
 3. Game menus are non-modal: a number, a name or Enter goes to the menu; anything else closes
    it and runs as a command.
 4. A game menu cannot open, and an open one closes, while the player is in combat, casting,
-   crafting or salvaging, dead or respawning, asleep, off their feet or controlled, or
-   quitting. Any room change closes it.
+   crafting or salvaging, dead or respawning, asleep, controlled, or
+   quitting. Any room change closes it. (Owner 2026-10-20: off their feet is not a gate for
+   audio interactions.)
 5. A leader pulling a follower away closes the follower's menu with three lines (follower,
    leader, room left behind), through the sight rules.
 6. Every fixed choice moves onto the primitive, including yes/no confirms.
@@ -171,12 +172,13 @@ The standard game rule set, checked at open, on every choice, and pushed by even
 | In combat | `CombatPhase` not Idle | new `RegisterObserver` on combatphase |
 | Casting, crafting, salvaging | `Activity` not Free | new `RegisterObserver` on activity |
 | Dead or respawning | `Life` not Alive | new `RegisterObserver` on life |
-| Off their feet | `Position` not Standing | new `RegisterObserver` on position |
 | Controlled | `Control` Controlled or BecomingControlled | new `RegisterObserver` on control |
 | Asleep | `HasConditionFlag(conditions.Sleeping)` | `ApplyConditions` notifies the session when a condition lands |
 | Quitting | the `quitting` condition | same |
 | Room change | `events.RoomChange` for the user | event listener |
 
+- Off their feet (`Position` not Standing) is not a rule (owner 2026-10-20: off their feet is
+  not a gate for audio interactions).
 - The five new `RegisterObserver` methods copy `presence.go:169` exactly.
 - Observers are registered when a menu opens and are inert when no menu is open, so an idle
   player pays nothing; the plan settles whether to register once per character instead.

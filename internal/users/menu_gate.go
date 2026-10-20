@@ -28,13 +28,12 @@ func menuGate(c *characters.Character) menu.CloseReason {
 		return menu.CloseAsleep
 	case c.HasCondition(quitConditionId):
 		return menu.CloseQuitting
-	// Controlled before off feet: every grapple position is off the feet, so
-	// a seized player must read "as you are seized". Control is nil for a
-	// character loaded from a save; both checks are nil-safe.
+	// Owner ruling 2026-10-20: being off their feet (sitting, prone, supine,
+	// any non-standing position) is not a gate for audio interactions such as
+	// talking and menus. Combat and grapple control still are. Control is nil
+	// for a character loaded from a save; both checks are nil-safe.
 	case c.IsBeingControlled(), c.Control != nil && c.Control.State() == control.BecomingControlled:
 		return menu.CloseControlled
-	case !c.IsStanding():
-		return menu.CloseOffFeet
 	}
 	return menu.CloseNone
 }

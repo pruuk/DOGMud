@@ -512,8 +512,9 @@ func (m *Machine) RegisterObserver(name string, obs func(from, to State, r state
 ```
 
 Installs an observer fired after every transition (nil-safe passthrough to
-`Subscribe`). `Character.WireBusyObservers` uses it so an open game menu closes
-when a player goes off their feet (`CloseOffFeet`) (#375 phase 0).
+`Subscribe`). Position is not a menu gate: off their feet is not a gate for
+audio interactions (owner 2026-10-20), so `Character.WireBusyObservers` does
+not observe it.
 
 ### Inner
 

@@ -179,9 +179,12 @@ func TestMenuGate_Rules(t *testing.T) {
 				t.Fatal("fixture: quit condition not added")
 			}
 		}, menu.CloseQuitting},
-		{"off feet", func(t *testing.T, u *UserRecord) {
+		{"sitting is not a gate", func(t *testing.T, u *UserRecord) {
 			must(t, u.Character.Position.Inner().TransitionTo(position.Sitting, state.TransitionReason{}))
-		}, menu.CloseOffFeet},
+		}, menu.CloseNone},
+		{"prone is not a gate", func(t *testing.T, u *UserRecord) {
+			must(t, u.Character.Position.Inner().TransitionTo(position.Prone, state.TransitionReason{}))
+		}, menu.CloseNone},
 		{"controlled", func(t *testing.T, u *UserRecord) {
 			u.Character.Control = control.NewMachine()
 			must(t, u.Character.Control.TransitionToControlled(state.TransitionReason{}))

@@ -72,29 +72,28 @@ func TestNonModalPrompt_OpenedSittingClosesWhenCombatStarts(t *testing.T) {
 	}
 }
 
-func TestNonModalPrompt_OpenedStandingClosesOnSitting(t *testing.T) {
+// Owner ruling 2026-10-20: off their feet is not a gate for audio
+// interactions, so sitting down never closes a prompt.
+func TestNonModalPrompt_OpenedStandingSurvivesSitting(t *testing.T) {
 	u := menuUser()
 	nonModalPrompt(u)
 	sitDown(t, u)
 	u.CheckMenuInterrupts()
-	if u.GetPrompt() != nil {
-		t.Fatal("sitting is a new interrupt for a prompt opened standing")
+	if u.GetPrompt() == nil {
+		t.Fatal("sitting is not an interrupt")
 	}
 }
 
-func TestNonModalPrompt_StandAndSitAgainIsANewInterrupt(t *testing.T) {
+func TestNonModalPrompt_StandAndSitAgainIsNotAnInterrupt(t *testing.T) {
 	u := menuUser()
 	sitDown(t, u)
 	nonModalPrompt(u)
 	standUp(t, u)
 	u.CheckMenuInterrupts()
-	if u.GetPrompt() == nil {
-		t.Fatal("standing up is not an interrupt")
-	}
 	sitDown(t, u)
 	u.CheckMenuInterrupts()
-	if u.GetPrompt() != nil {
-		t.Fatal("sitting down again after standing is a new interrupt")
+	if u.GetPrompt() == nil {
+		t.Fatal("sitting down again after standing is not an interrupt")
 	}
 }
 

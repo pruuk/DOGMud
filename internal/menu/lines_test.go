@@ -6,7 +6,6 @@ func TestInterruptLine(t *testing.T) {
 	cases := map[CloseReason][2]string{
 		CloseCombat:      {"You break off as the fight begins.", "You break off your talk with Kael as the fight begins."},
 		CloseBusy:        {"You break off to focus on your work.", "You break off your talk with Kael to focus on your work."},
-		CloseOffFeet:     {"You break off as you go down.", "You break off your talk with Kael as you go down."},
 		CloseControlled:  {"You break off as you are seized.", "You break off your talk with Kael as you are seized."},
 		CloseAsleep:      {"You break off as you fall asleep.", "You break off your talk with Kael as you fall asleep."},
 		CloseQuitting:    {"You break off to meditate.", "You break off your talk with Kael to meditate."},

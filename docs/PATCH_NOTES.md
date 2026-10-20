@@ -10,8 +10,8 @@
   When the action can't be undone, the line says what it does, such as
   "Yes, disband it". You can still type y or n.
 - Typing any other command while a choice is open sets the choice aside
-  and runs your command. A fight starting, falling asleep, being knocked
-  down or walking away also ends the choice, with a line saying why.
+  and runs your command. A fight starting, falling asleep or walking
+  away also ends the choice, with a line saying why.
 - If you are following someone and they leave, you break off what you
   were choosing and follow them, and they see that you did.
 - An unsent letter is set aside with a note if you leave the mail

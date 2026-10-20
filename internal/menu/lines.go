@@ -13,7 +13,6 @@ const (
 	CloseBusy // casting, crafting or salvaging
 	CloseDead // dead or respawning
 	CloseAsleep
-	CloseOffFeet
 	CloseControlled
 	CloseQuitting
 	CloseRoomChange
@@ -24,7 +23,6 @@ const (
 var interruptTail = map[CloseReason]string{
 	CloseCombat:      " as the fight begins",
 	CloseBusy:        " to focus on your work",
-	CloseOffFeet:     " as you go down",
 	CloseControlled:  " as you are seized",
 	CloseAsleep:      " as you fall asleep",
 	CloseQuitting:    " to meditate",

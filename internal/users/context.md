@@ -581,9 +581,10 @@ menu itself (rendering, resolving) is `internal/menu`; see its `context.md`.
 - `CloseMenu(reason)`: closes and speaks the interrupt line.
 - `CheckMenuInterrupts()`: closes the menu when `menuGate` holds, and a
   non-modal prompt only on a NEW interrupt: `StartPrompt` records the rule
-  already holding as `Prompt.OpenedUnder` (mail opened while resting, picklock
-  in a fight), and that same rule does not close it. When no rule holds the
-  record is cleared, so sitting down again after standing does close it.
+  already holding as `Prompt.OpenedUnder` (picklock in a fight), and that same
+  rule does not close it. When no rule holds the record is cleared, so the
+  same rule starting again does close it. Sitting is not a rule, so mail opened
+  while resting, or a player sitting down, never closes a prompt.
   Room changes and follow pulls always close a non-modal prompt. A closed
   prompt's `SetAsideLine` is spoken after the interrupt line. Pushed by the busy observers (`characters.BusyStateChanged`),
   `hooks` condition changes, and `actions.Sleep`; also called on every choice.
@@ -604,10 +605,10 @@ menu itself (rendering, resolving) is `internal/menu`; see its `context.md`.
 
 **`menuGate` rules** (first match wins, `CloseNone` when none holds): dead
 (`CloseDead`), in combat, acting (casting, crafting, salvaging: `CloseBusy`),
-asleep, the quit timer (`CloseQuitting`), controlled, not standing
-(`CloseOffFeet`). Controlled is checked before off-feet because every grapple
-position is off the feet, so a seized player must read "as you are seized".
-The quit timer is condition 0 (`quitConditionId`, "Meditating"). The gate is
+asleep, the quit timer (`CloseQuitting`), controlled (`CloseControlled`).
+Being off their feet (sitting, prone, supine, any non-standing position) is
+not a gate (owner 2026-10-20: off their feet is not a gate for audio
+interactions); a seized player is gated by control, not position. The quit timer is condition 0 (`quitConditionId`, "Meditating"). The gate is
 built from the same sources as the shared busy check filed as #640; move it
 onto that check when it lands.
 

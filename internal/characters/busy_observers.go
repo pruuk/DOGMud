@@ -6,7 +6,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"github.com/GoMudEngine/GoMud/internal/state/control"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
-	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
 
 // BusyStateChanged, when set, is told a player's user id whenever one of the
@@ -22,9 +21,11 @@ type busyWiring struct {
 	combat   *combatphase.Machine
 	life     *life.Machine
 	activity *activity.Machine
-	position *position.Machine
 	control  *control.Machine
 }
+
+// Position is deliberately not observed: off their feet is not a menu gate
+// (owner ruling 2026-10-20). A grapple moves the Control machine too.
 
 // WireBusyObservers registers the busy observer on each present machine not
 // yet wired. Safe to call repeatedly; Validate calls it (and New goes through
@@ -47,10 +48,6 @@ func (c *Character) WireBusyObservers() {
 	if c.Activity != nil && c.busyWired.activity != c.Activity {
 		c.busyWired.activity = c.Activity
 		c.Activity.RegisterObserver(name, func(_, _ activity.State, _ state.TransitionReason) { notify() })
-	}
-	if c.Position != nil && c.busyWired.position != c.Position {
-		c.busyWired.position = c.Position
-		c.Position.RegisterObserver(name, func(_, _ position.State, _ state.TransitionReason) { notify() })
 	}
 	if c.Control != nil && c.busyWired.control != c.Control {
 		c.busyWired.control = c.Control
