@@ -35,6 +35,12 @@ type PlayerState struct {
 	// chargesGold, which is paid in the same step that matches the entry
 	// and before any of its other effects. Nil fails the charge closed.
 	ChargeGold func(amount int) bool
+	// HasHeard reports whether the player has heard a topic, by HeardKey.
+	// It backs heardRequired and the Dim / [*] state. Nil fails
+	// heardRequired closed and treats every topic as unheard.
+	HasHeard func(key string) bool
+	// MarkHeard records a heard info topic on the character (saved).
+	MarkHeard func(key string)
 }
 
 // QuestFlagSet describes a single key/value flag to write on the player's character.
@@ -161,6 +167,8 @@ type DialogueFile struct {
 	Zone        string       `yaml:"zone" json:"zone,omitempty"`
 	DefaultMood string       `yaml:"defaultMood" json:"defaultMood,omitempty"`
 	Greetings   []Greeting   `yaml:"greetings,omitempty" json:"greetings,omitempty"`
+	Opener      *Opener      `yaml:"opener,omitempty" json:"opener,omitempty"`
+	Topics      []Topic      `yaml:"topics,omitempty" json:"topics,omitempty"`
 	Patterns    []Pattern    `yaml:"patterns" json:"patterns,omitempty"`
 	Tree        *Tree        `yaml:"tree,omitempty" json:"tree,omitempty"`
 	Memory      MemoryConfig `yaml:"memory" json:"memory,omitempty"`
