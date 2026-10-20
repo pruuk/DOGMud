@@ -668,6 +668,8 @@ func (c *Character) Validate(recalcPermanentConditions ...bool) error {
 		// the unconditional overwrite matches the Presence pattern.
 		c.Perception = perception.NewMachine()
 	}
+	// Menu busy gate (#375): idempotent, wires only machines not yet wired.
+	c.WireBusyObservers()
 	// A save written before surrender_policy existed loads the zero value,
 	// auto-tap below 0, which no player can choose and which status printed
 	// as "auto-tap-below 0" (#284). Mobs set their own policy at spawn.
