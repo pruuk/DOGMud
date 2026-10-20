@@ -65,6 +65,33 @@ func TestMissingPartialRoles_CanFail(t *testing.T) {
 	require.Equal(t, []string{"partial lacks observer"}, got)
 }
 
+// defenceWordInPartial finds a word that names or implies one particular
+// defence (or a plain miss) in a partial line. A partial is one tier told for
+// every defence that can blunt the move, dodge, block, parry, quell or defy
+// alike, so its lines say the move was blunted ("gets mostly clear", "stops
+// most of it", "only half lands") and never how (#631, owner ruling
+// 2026-10-19, option A).
+var defenceWordInPartial = regexp.MustCompile(`(?i)\b(dodg\w*|sidestep\w*|duck\w*|parr(y|ies|ied|ying)|block\w*|twist\w*|roll(s|ed|ing)?|guard\w*|deflect\w*|evad\w*|slip\w*|swerv\w*|weav\w*|shield\w*|quell\w*|defie[sd]|defy\w*|turns? aside|miss(es|ed)?|flies past|pull(s|ed)? (mostly )?free|breath)\b`)
+
+func TestDefenceWordInPartial_CanFail(t *testing.T) {
+	for _, line := range []string{
+		`{actor} lunges at {actee}'s legs, who mostly dodges but still gets caught!`,
+		`You roll aside, but {actor}'s foot still catches you!`,
+		`{actee} blocks most of your knee, but it still lands!`,
+		`Your fangs mostly miss {actee}, but still tear a shallow gash!`,
+		`You turn aside, but {actor}'s embers sting!`,
+	} {
+		require.NotEmpty(t, defenceWordInPartial.FindString(line), "missed the defence in %q", line)
+	}
+	for _, line := range []string{
+		`{actor} lunges low at {actee}, who avoids the worst of it but still gets caught!`,
+		`You stop most of {actor}'s kick, but it barely gets through!`,
+		`{actor} rakes their claws at {actee}; the rake only half lands, but still scratches!`,
+	} {
+		require.Empty(t, defenceWordInPartial.FindString(line), "flagged a neutral line %q", line)
+	}
+}
+
 // partialVerbs lists the store each sendPartialMove call site in both
 // command packages narrates from, read from the source so a new call site is
 // covered without editing this test.
@@ -106,9 +133,15 @@ func TestSpecialMoveStoresCarryEveryTierTheRuleDraws(t *testing.T) {
 		for _, miss := range missingPartialRoles(g.Events) {
 			t.Errorf("%s: %s", filepath.Base(f), miss)
 		}
-		for key := range g.Events {
-			if strings.HasSuffix(string(key), "partial") {
-				hasPartial[g.MoveId] = true
+		for key, ev := range g.Events {
+			if !strings.Contains(string(key), "partial") || ev == nil {
+				continue
+			}
+			hasPartial[g.MoveId] = true
+			for _, line := range append(append(append(append([]string{}, ev.Actor...), ev.Actee...), ev.Observer...), ev.RemoteObserver...) {
+				if w := defenceWordInPartial.FindString(line); w != "" {
+					t.Errorf("%s %s names a defence (%q): %s", filepath.Base(f), key, w, line)
+				}
 			}
 		}
 	}
@@ -134,10 +167,6 @@ var partialExempt = map[string]string{
 	// through the fire and arrival events, and each target line is chosen
 	// per reader (sneak, cross-room). Nothing is swapped.
 	"shoot": "no observer role; per-target composition",
-	// A firebomb's partial_hit authors only the thrower's line; the room
-	// still reads the defence triad. Not a beast move, so outside the #631
-	// ruling; reported to the owner as the one sibling left.
-	"throw": "actor-only partial_hit; outside the #631 beast-move ruling",
 }
 
 func TestPartialMovesNarrateThroughTheRule(t *testing.T) {
@@ -160,8 +189,8 @@ func TestPartialMovesNarrateThroughTheRule(t *testing.T) {
 			}
 		}
 	}
-	// 12 mob moves and 9 player moves (#631).
-	require.GreaterOrEqual(t, sites, 21, "only %d sendPartialMove call sites", sites)
+	// 12 mob moves, 9 player moves and the firebomb (#631).
+	require.GreaterOrEqual(t, sites, 22, "only %d sendPartialMove call sites", sites)
 }
 
 // ─── Behaviour: a partial reads the partial tier in every role ─────────────

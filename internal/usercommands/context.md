@@ -83,7 +83,10 @@ The `internal/usercommands` package implements the complete command system for p
   (`skill_move_defence.go`): every role reads the store's partial event,
   and only the defender's shortage note comes from `moveDefenceLines`. The
   defence triad narrates only a defence that stopped the move outright.
-  The mobcommands twin applies the same rule;
+  The firebomb (`throw.go`, event `partial_hit`) follows it too. Partial
+  lines name no defence: they must read true for dodge, block, parry,
+  quell or defy alike (`defenceWordInPartial` in mobcommands'
+  `partial_rule_test.go`). The mobcommands twin applies the same rule;
   `TestPartialMovesNarrateThroughTheRule` (mobcommands) holds every call
   site in both packages to it.
 

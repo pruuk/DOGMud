@@ -41,17 +41,17 @@ events:
       - '{actor}''s charge catches {actee} with their horns, drawing a pained grunt!'
   partial:
     actor:
-      - 'Your horns still graze {actee} as they sidestep! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your charge at {actee} mostly misses, but your horns still graze them! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actee} dodges the worst of your charge, but your horns still catch them! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your horns still graze {actee} as they get mostly clear! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your charge at {actee} is mostly stopped, but your horns still graze them! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} takes only part of your charge, but your horns still catch them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} charges you and you sidestep most of it, but the horns still catch you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} charges you and you sidestep most of it, but the horns still catch you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} thunders toward you; you dodge most of the gore, but not all! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} charges you and you get mostly clear, but the horns still graze you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} charges you and you stop most of it, but the horns still graze you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} thunders toward you; you avoid most of the gore, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} charges {actee}, who mostly dodges but still gets grazed by the horns!'
-      - '{actor} charges {actee}, who mostly dodges but still gets grazed by the horns!'
-      - '{actor} charges {actee}, who dodges the worst of it but still gets caught by the horns!'
+      - '{actor} charges {actee}, who gets mostly clear but still gets grazed by the horns!'
+      - '{actor} charges {actee}, who stops most of it but still gets grazed by the horns!'
+      - '{actor} charges {actee}, who takes only part of it but still gets caught by the horns!'
   # DIVERGENT (Task 4b Step 3, owner-approved 2026-09-21): variants 1 to 3
   # (the player's original lines) describe different feels -- target
   # sidesteps / target dodges / charge carries past -- one feel per variant

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -86,6 +88,50 @@ func TestPlayerPartialMove_EveryRoleReadsThePartialTier(t *testing.T) {
 			partialRuleVariants(t, tokens, func(r narration.Roles) string { return r.Actor }), "the attacker")
 		requirePartialLine(t, events.DrainQueuedMessagesForTest(2),
 			partialRuleVariants(t, tokens, func(r narration.Roles) string { return r.Observer }), "the room")
+	})
+
+	t.Run("firebomb: thrower and room, through the real Throw", func(t *testing.T) {
+		user, room, targets := seedThrowSeamFixture(t, 1, 0, 0)
+		room.Lamp = rooms.LampPtr(60)
+		witness := users.NewTestUser(79064, "witness", "Witness", 0)
+		witness.Character.RoomId = room.RoomId
+		t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{user.UserId: user, witness.UserId: witness}))
+		room.AddPlayer(user.UserId)
+		room.AddPlayer(witness.UserId)
+		require.Equal(t, messaging.SightFull, messaging.ParticipantSight(witness.Character, room))
+		// A bare defensive win: the defence takes most of the blast and the
+		// splash still clips the target.
+		restore := combat.SetChannelAttackContestRunnerForTest(func(atkScore float64, entries []contest.Entry) contest.Result {
+			return throwSeamResult(atkScore, entries, -0.5, 0.5)
+		})
+		defer restore()
+		events.DrainQueuedMessagesForTest(user.UserId)
+		events.DrainQueuedMessagesForTest(witness.UserId)
+
+		_, err := Throw("bomb", user, room, 0)
+		require.NoError(t, err)
+		require.Less(t, targets[0].Character.Health, 500, "fixture: the splash must clip the defended target")
+
+		g := movenarration.GetMove("throw")
+		require.NotNil(t, g)
+		v, ok := g.Variants("partial_hit")
+		require.True(t, ok)
+		tokens := map[string]string{
+			narration.TokenActor: `<ansi fg="username">Thrower</ansi>`, narration.TokenActorPlain: "Thrower",
+			narration.TokenActee: `<ansi fg="mobname">Target</ansi>`, narration.TokenActeePlain: "Target",
+		}
+		var actor, observer []string
+		for i := 0; i < v.Len(); i++ {
+			r := narration.Render(v, tokens, nil, i)
+			// The damage words vary with the roll; match the text before them.
+			actor = append(actor, partialRulePlain(strings.SplitN(r.Actor, "(", 2)[0]))
+			observer = append(observer, partialRulePlain(r.Observer))
+		}
+		requirePartialLine(t, events.DrainQueuedMessagesForTest(user.UserId), actor, "the thrower")
+		seen := events.DrainQueuedMessagesForTest(witness.UserId)
+		requirePartialLine(t, seen, observer, "the room")
+		require.NotContains(t, partialRulePlain(strings.Join(seen, " ")), "dodge",
+			"the room must not read the defence triad on a partial")
 	})
 
 	t.Run("defender, against a player", func(t *testing.T) {

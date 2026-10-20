@@ -12,9 +12,9 @@ events:
       - '{actor} charges into {actee}, but they stay on their feet!'
   partial:
     actee:
-      - '{actor} charges and you dodge the worst of it, but the impact still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} charges and you avoid the worst of it, but the impact still catches you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} charges at {actee}, who mostly dodges but is still barely hit!'
+      - '{actor} charges at {actee}, who avoids the worst of it but still gets caught!'
   miss:
     actee:
       - '{actor} charges past you, missing entirely!'

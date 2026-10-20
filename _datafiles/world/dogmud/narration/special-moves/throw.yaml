@@ -26,8 +26,12 @@ events:
       - '<ansi fg="cyan-bold">The blast shatters {actee_plain}''s concentration and its spell collapses!</ansi>'
     observer:
       - '<ansi fg="cyan">{actee_plain}''s spell collapses as the blast strikes!</ansi>'
-  # Actor only: the room's line for a defended throw always comes from the
-  # channel defence triad (sourced outside this store), not from here.
+  # A defended throw that still did damage (#631, owner ruling 2026-10-19):
+  # the thrower and the room both read this tier through sendPartialMove;
+  # the channel defence triad speaks only when the defence took it all. The
+  # room line names no defence and carries no damage words.
   partial_hit:
     actor:
       - 'The edge of the blast still catches {actee}! (<ansi fg="damage">{damage}</ansi>)'
+    observer:
+      - 'The edge of {actor}''s blast still catches {actee}!'
