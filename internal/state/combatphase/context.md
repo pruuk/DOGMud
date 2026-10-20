@@ -523,3 +523,10 @@ exercises one cell of the state × trigger × veto matrix.
 
 All tests use local `Machine` instances with injected veto closures;
 no server / database setup required.
+
+## RegisterObserver (#375 phase 0)
+
+`func (m *Machine) RegisterObserver(name string, obs func(from, to State, r state.TransitionReason))`
+installs an observer fired after every transition (a nil-safe passthrough to
+the inner machine's `Subscribe`). `Character.WireBusyObservers` uses it so an
+open game menu closes the moment a player enters combat (`CloseCombat`).

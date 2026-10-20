@@ -357,6 +357,19 @@ Hand candidates (`handCandidates`): a two-hander only offers whole pairs, ordere
   bandolier. Exact on purpose: `look` runs it before item matching, and a prefix
   would let "hood" shadow an item named "hooded lantern".
 
+### Busy observers (`busy_observers.go`, #375 phase 0)
+
+`characters.BusyStateChanged` is a `func(userId int)` hook that `internal/users`
+sets at init. `Character.WireBusyObservers()` registers one observer
+(`menu_busy_gate`) on each of the CombatPhase, Life, Activity, Position and
+Control machines, via their `RegisterObserver`, and calls the hook with the
+player's user id on every transition. The hook lands on
+`UserRecord.CheckMenuInterrupts`, so an open game menu closes the moment its
+player becomes busy. Wiring is idempotent per machine instance (a replaced
+machine is wired again), `Validate` calls it, and mob characters (user id 0)
+notify nothing. The hook is the push half of the menu gate; the shared busy
+check filed as #640 replaces the gate.
+
 ### Character States and Modifiers
 - 🔑 **Timed state is `Character.Conditions` and nothing else.** Read
   `internal/conditions/context.md` before adding, reading or displaying anything

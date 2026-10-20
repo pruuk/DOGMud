@@ -51,6 +51,38 @@ type Prompt struct {
 }
 ```
 
+### Menu questions (#375 phase 0)
+
+A question can be a menu from `internal/menu` instead of free text. See
+`internal/menu/context.md` for the menu itself.
+
+- `Question.Menu *menu.Menu`: set by `AskMenu`. When set, `Answer` resolves the
+  line with `menu.Resolve`, and `String()` prints only the bare prompt mark
+  because the menu text was already drawn.
+- `Question.LastResult menu.ResultKind`: what the last `Answer` meant to the
+  menu, so the caller can say why a line was refused (`NoSuchNumber`,
+  `Ambiguous`).
+- `Prompt.AskMenu(m, leaveResponse...)`: asks a menu question. The menu's
+  `Heading` identifies the question, and each call replaces the stored menu so
+  a toggled marker shows on the next render. `leaveResponse` is the `Response`
+  when the player picks the Leave entry. A chosen entry sets `Response` to its
+  `Id`; a `Text` result (menus with `AcceptText`) sets it to the typed text.
+- `Prompt.AskConfirm(question, yesLabel, noLabel)`: a two-entry menu from
+  `menu.Confirm`; `Response` is `yes` or `no`, and Enter picks `no`.
+- `Question.Resolve(line)`: what a line would mean, without answering. A
+  non-menu question reports `menu.Text` for any line.
+- `Prompt.NonModal`: a menu question that gets a line it does not recognise
+  closes the prompt and the line runs as a command; game interrupts close it
+  too. Player flows set it; builders stay modal.
+- `Prompt.RoomBound`: the prompt edits the room or zone the player stands in,
+  so a room change cancels it even though it is modal.
+
+**Typed-only answers.** Only a line the player typed may answer a prompt. A
+queued line (follow step, script, macro the engine expanded from untyped input)
+never answers one; it runs as a command. The routing lives in
+`users.UserRecord.RoutePromptInput` (see `internal/users/context.md`) and keys
+off `events.CmdTyped`.
+
 ## Key Features
 
 ### 1. **Session Management**

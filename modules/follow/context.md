@@ -90,6 +90,17 @@ stands is not moved.
 and is indexed under `parties` by `files/data-overlays/keywords.yaml`; it
 and `help party` link to each other.
 
+## Menu pull (#375 phase 0)
+
+When a follower who is a player is about to step after their leader, and
+passes the sight check above, the module calls
+`actions.BreakOffMenuToFollow(user, moverCharacter(evt), evt.UserId, fromRoom)`
+before queuing the follower's step command. An open game menu or non-modal
+prompt closes and the three break-off lines are spoken, judged with the
+leader's own light. A follower who lost sight of the leader never reaches this
+call: the follow ends instead. Party auto-follow in `usercommands.Go` makes the
+same call for party members.
+
 ## Gotchas
 
 - **Any new way for an actor to leave the world needs a listener here.**

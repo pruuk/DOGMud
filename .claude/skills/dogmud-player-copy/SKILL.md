@@ -67,6 +67,31 @@ Player-facing copy follows the global no-dash rule in `~/.claude/CLAUDE.md`
 ("Writing"): no em or en dashes, `&mdash;`/`&ndash;` in web copy included;
 hyphens in compound words are fine.
 
+## Menu language
+
+Numbered menus (NPC conversations, builder lists, confirms) are drawn by
+`internal/menu`. Its full reference is `internal/menu/context.md`. The rules
+for the text in them:
+
+1. An info label is what the player says, in the player's voice, usually a
+   question. A quest entry's label is the quest's title, and its `Detail` line
+   is what the player says: a new quest offers help ("Do you want help settling
+   the feud at the well?"), a hand-in reports the result ("I've settled the
+   feud at the well.").
+2. Never name the NPC in the third person and never use narrator voice in a
+   label or a player line.
+3. One line each, at most 50 characters for a label and 70 for a `Detail` line.
+4. ESL-clear: plain words, no idioms, no em or en dashes, no raw numbers for
+   stats or rewards.
+5. Specific, not generic. No two labels in one menu read alike.
+6. Leave lines may be in character ("Goodbye.") and default to "Leave".
+7. Confirms are two entries; for actions that cannot be undone, the entries
+   name the action.
+8. Speak in the NPC's manner where it fits: gruff and plain, educated and
+   pretentious.
+9. Validators enforce the checkable rules (length, no dashes, no duplicate
+   labels in one menu, no "Ask:" / "Task:" prefix): `menu.LintLabels`.
+
 ## Sources
 
 - [[feedback_esl_clear_language_player_copy]]

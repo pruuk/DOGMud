@@ -505,6 +505,16 @@ func (m *Machine) GrappleData() (GrappleData, bool)
 Return the per-state context while the machine is in the matching state.
 Return zero value + `false` otherwise.
 
+### RegisterObserver
+
+```go
+func (m *Machine) RegisterObserver(name string, obs func(from, to State, r state.TransitionReason))
+```
+
+Installs an observer fired after every transition (nil-safe passthrough to
+`Subscribe`). `Character.WireBusyObservers` uses it so an open game menu closes
+when a player goes off their feet (`CloseOffFeet`) (#375 phase 0).
+
 ### Inner
 
 ```go

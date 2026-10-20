@@ -92,6 +92,15 @@ func (m *Machine[S]) Subscribe(name string, h ObserverHandler[S])
 All three accept a `name` string used in debug output and veto error
 messages. Registration order is preserved; later additions run last.
 
+Each domain machine wrapper also exposes a typed passthrough to `Subscribe`,
+a `RegisterObserver(name, obs)` method on its own `Machine` type (in the
+domain package, not here) where `obs` takes `(from, to State, r
+state.TransitionReason)`. `presence`, `perception`, `combatphase`, `activity`, `life`, `position` and
+`control` all have it (the last five were added for #375 phase 0). It is nil
+safe. `internal/characters` registers one observer named `menu_busy_gate` on
+each of the last five (`Character.WireBusyObservers`) so an open game menu
+closes the moment its player becomes busy.
+
 ### Scheduled transitions
 
 ```go

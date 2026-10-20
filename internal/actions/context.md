@@ -1446,6 +1446,21 @@ not sent at all for a hidden actor (#274, owner R3). A hidden player who sits
 or stands also gets `HiddenPostureNote` ("No one sees it; you are hidden.");
 the combat leap sends no note.
 
+## Menu follow pull (`menu_follow.go`, #375 phase 0)
+
+`BreakOffMenuToFollow(follower *users.UserRecord, leader *characters.Character,
+leaderUserId int, room *rooms.Room)` closes the follower's game menu or
+non-modal prompt (`UserRecord.CloseMenuForFollow`) because a leader is pulling
+them away, and does nothing when nothing was open. Call it before queuing the
+follower's step. It then speaks the three `menu.FollowLines`: to the follower,
+to the leader (when a player), and to the room left behind. Each reader sees
+it through the sight rules: names are hidden with `messaging.HideNames` per
+`room.DepartureSight` for the follower and the leader, and the room line goes
+out with `room.SendTextVisualToSnapshot(room.DepartureSnapshot(leader), ...)`,
+so every reader is judged with the leader's own carried light counted (a mover
+is seen by their own light on the way out). Callers: `modules/follow`
+(`follow <name>`) and party auto-follow in `usercommands.Go`.
+
 ## Sleep Action (chunk 3.3)
 
 ### Sleep
@@ -1464,6 +1479,11 @@ actor already has the Sleeping condition, returns `SleepResult.AlreadyAsleep
   goes to the room only.
 - **Progression:** No stat/skill progression triggered.
 - **Cooldown:** None.
+
+**Menu interrupt (#375 phase 0):** `Sleep` adds condition 15 directly, which
+bypasses `hooks.ApplyConditions`, so for a player actor it calls
+`UserRecord.CheckMenuInterrupts()` itself after the add. An open game menu
+closes with "as you fall asleep".
 
 Entry points that call `Sleep`:
 - `usercommands/sleep.go` — player `sleep` command
