@@ -1,0 +1,13 @@
+# TestConvert_TreelessOpener: no tree; the greeting becomes the opener.
+mobid: 7006
+zone: Fixture Zone
+defaultMood: friendly
+patterns:
+  - keywords: [""]
+    responses:
+      - "Needle's in my hand, so speak plain."
+  - keywords: ["hello", "hi", "greet"]
+    moods: ["neutral", "friendly"]
+    responses:
+      - "Sit a moment. What tore this time?"
+      - "Bex. Cloth or leather, I can fix it."

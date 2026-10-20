@@ -1,0 +1,12 @@
+# TestConvert_ItemGiveWithNoTopicCreatesOne: nothing here wants item 10009.
+mobid: 9116
+zone: Fixture Zone
+defaultMood: neutral
+patterns: []
+tree:
+  root:
+    text: "Forge is hot."
+  nodes:
+    - id: forge
+      triggers: ["forge"]
+      text: "Mind the sparks."

@@ -1,0 +1,5 @@
+questid: 40
+name: The Ferryman's Errand
+steps:
+  - id: start
+  - id: end

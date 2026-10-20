@@ -1,0 +1,11 @@
+# A room tree under behaviors/rooms: never read as a mob's tree, even though
+# its name starts with a number and a dash.
+tree:
+  type: selector
+  children:
+    - type: sequence
+      event: player_ask
+      children:
+        - type: action
+          do: say
+          text: The room should not speak through mob 7001.

@@ -1,0 +1,24 @@
+# TestConvert_RootAndVariants: a plain variant stays on the opener; the
+# granting variant leaves it and becomes an offer topic.
+mobid: 7004
+zone: Fixture Zone
+defaultMood: neutral
+patterns: []
+tree:
+  root:
+    text: "Welcome to the mill."
+    hints: "Ask about the grain."
+    variants:
+      - questRequired: ["7-start"]
+        questExcluded: ["7-end"]
+        text: "Back about the field?"
+        hints: "Tell me about the pelts."
+      - questExcluded: ["7-start", "7-end"]
+        grantsQuest: "7-start"
+        text: "You look like you need work. The field needs saving."
+  nodes:
+    - id: grain
+      triggers: ["grain"]
+      text: "We grind what we get."
+memory:
+  expiryPeriod: ""

@@ -1,0 +1,14 @@
+# TestConvert_ChargesGetGoldRequired: a priced node with no gold gate.
+mobid: 7007
+zone: Fixture Zone
+defaultMood: neutral
+patterns: []
+tree:
+  root:
+    text: "Maps for sale."
+  nodes:
+    - id: buy_map
+      triggers: ["map"]
+      chargesGold: 10
+      givesItem: 77
+      text: "Here is your map."

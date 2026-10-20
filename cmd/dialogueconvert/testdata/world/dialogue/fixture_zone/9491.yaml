@@ -1,0 +1,14 @@
+# TestConvert_DialogueTrigger: quest 28's dialogue trigger lands here. The
+# "world" pattern is gated on the token that trigger grants.
+mobid: 9491
+zone: Fixture Zone
+defaultMood: friendly
+patterns:
+  - keywords: ["world", "gaius"]
+    questRequired: ["28-asked"]
+    responses:
+      - "Gaius. A whole living world. The way north is open."
+tree:
+  root:
+    text: "Ask me anything."
+  nodes: []

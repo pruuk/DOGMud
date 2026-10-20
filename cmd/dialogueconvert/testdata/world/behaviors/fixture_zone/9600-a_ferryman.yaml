@@ -1,0 +1,35 @@
+# TestConvert_BehaviorGrantQuestBecomesOffer: a grant_quest branch, and an
+# action branch gated on a quest.
+tree:
+  type: selector
+  children:
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [work, errand]
+        - type: action
+          do: say
+          text: Carry this to the far pier for me.
+        - type: action
+          do: grant_quest
+          quest: "40-start"
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [pier]
+        - type: condition
+          check: player_has_quest
+          quest: "40-start"
+        - type: condition
+          check: player_missing_quest
+          quest: "40-end"
+        - type: action
+          do: say
+          text: Step aboard, then.
+        - type: action
+          do: move_player
+          room_id: 468

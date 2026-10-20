@@ -1,0 +1,16 @@
+# TestConvert_InstanceZoneBranches: a disc-gated instance portal.
+tree:
+  type: selector
+  children:
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: player_has_item
+          item_id: 40168
+        - type: action
+          do: open_instance_portal
+          min_gold: 200
+          exit_expires: "30 real minutes"
+          zones:
+            crash: "Crash Site Interior"

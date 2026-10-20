@@ -1,0 +1,9 @@
+# TestConvert_UnmappableActionsAreReported: the give trigger carries `actor`.
+mobid: 9360
+zone: Fixture Zone
+defaultMood: neutral
+patterns: []
+tree:
+  root:
+    text: "Dross does not look up."
+  nodes: []
