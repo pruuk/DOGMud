@@ -71,6 +71,10 @@ to the next.
 - [ ] The web builder cross-links quests, rooms, zones, items and mobs, and teaches the topic
       fields with mouseover hints.
 - [ ] Every zone pass has passed its adversarial playtest.
+- [ ] Players are taught the system: the Pothole Coulee opening explains the markers and the
+      `talk` menu in play, and the `talk`, `ask` and `quests` help files
+      (`templates/help/talk.template`, `ask.template`, `quests.template`) describe it.
+- [ ] Every package the arc touches has an up-to-date `context.md`, and new packages ship one.
 - [ ] Sub-issues of #375 are closed: #290, #315, #588, #613, #616, #625.
 
 ### Tests and guards (belt and suspenders)

@@ -31,7 +31,10 @@ Every phase spec re-verifies the facts it builds on; this table is the starting 
 | Quest 21 (Newcomer's Path) is a secret quest with no triggers, used only as a marker | `quests/21-newcomers_path.yaml` |
 | The nine pinnacle recipe quests are 79 to 87 ("Secret of the ...") | `quests/79-*.yaml` to `87-*.yaml` |
 | Existing menu code: `internal/prompt` (per-user Q&A session, input taken before commands) and `tables/numbered-list` templates over `templates.NameDescription`, admin builders only | `internal/prompt/prompt.go`, `internal/users/userrecord.go:784`, `internal/templates/name_description.go:4` |
-| The admin builders copy one "render list, Atoi, range check, index, fall back to name" block; 18 `Atoi(...Response/Selected/Selection)` sites | grep of `internal`, `modules` |
+| The admin builders copy one "render list, Atoi, range check, index, fall back to name" block: 6 menu-index parses (`admin.item.go:201,356`, `admin.room.go:423,592,779`, `admin.zone.go:149`) behind 19 `numbered-list` renders. (The other 12 `Atoi(...Response)` sites parse typed numbers, not menu choices.) | grep of `internal`, `modules` |
+| Choice prompts with fixed options: 27 `prompt.Ask` calls with a literal option list (yes/no, y/n, UP/DOWN/quit), 13 of them in admin builders | grep of `internal`, `modules` |
+| Only `presence` and `perception` expose `Subscribe` on their machine wrappers; `combatphase`, `activity`, `life`, `position`, `control` keep `inner *state.Machine` private | `internal/state/*/*.go` |
+| Rounds are 4 s (`RoundSeconds: 4`) | `_datafiles/config.yaml:193` |
 | No `[!]`, `[?]`, `[*]`, `[i]` or `[+]` marker is in use in templates or Go | grep |
 | The web client quest tracker gets its data over GMCP | `modules/gmcp/gmcp.Quest.go`, `gmcp.Quest_refs.go` |
 | Dash count waiting on this arc: dialogue 75 files / 430 lines, quests 43 / 104, conversations 6 / 6 | #375 comment, 2026-10-17 |
@@ -60,6 +63,9 @@ Every phase spec re-verifies the facts it builds on; this table is the starting 
   (`IsTokenAfter`). Chains are declared quest to quest (a "next quest" field); steps keep their
   order inside each quest. Renaming or removing a shipped step id strands players on it, so
   step ids are covered by the stable-id manifest guard.
+- **Docs ship with each phase.** Every phase updates the `context.md` of each package it
+  touches (new packages ship one) and the player help it changes (`templates/help/talk`,
+  `ask`, `quests`). The Pothole Coulee pass teaches the markers and the menu in play.
 - **Every zone pass ends in an adversarial playtest** (`dogmud-playtesting`), and its findings
   are filed as issues before the pass closes.
 
@@ -68,7 +74,8 @@ Every phase spec re-verifies the facts it builds on; this table is the starting 
 ```
 key        stable id, unique within the NPC ("directions")
 kind       info | quest
-label      menu text ("Ask: How do I reach the steppe?")
+label      menu text in natural language, no "Ask:"/"Task:" prefix
+           ("How do I reach the steppe?")
 text       what the NPC says (quest: the pitch)
 marked     info only: lights [*] until heard
 gates      the existing gating fields (questRequired, questExcluded, quest flags,
@@ -105,12 +112,29 @@ source     authored | llm
 - New package (name settled in the spec) owning: entries (number, marker, label, optional
   second line, id, enabled or dimmed), one-column rendering at the 80-character wrap,
   choice resolution by number or by name, Enter to leave, and an invalid-choice reply.
-- Web client: entries render as clickable links that send the choice, the way `[train]`
-  does today. The spec checks how `[train]` is wired and reuses it.
-- Input session: built on `UserRecord.StartPrompt` so menu input is taken before commands;
-  callers never touch `prompt` directly.
-- Migrate every existing numbered menu (the admin builders' 18 copied parse blocks and their
-  `numbered-list` renders) onto it, and delete the copies.
+- No clicking (owner 2026-10-20): menus are typed in every client. DOGMud's terminal is
+  xterm.js 4.19 with no link provider, and typing a number is as fast as a click.
+- Game menus are non-modal: a number, an option name or Enter goes to the menu; any other
+  input closes it and runs as a normal command. Admin builder menus stay modal (their steps
+  mix menus with free-text answers) and ignore game interrupts unless they opt in.
+- Interrupts (owner 2026-10-20): a game menu cannot open, and an open one closes, while the
+  player is in combat, casting, crafting or salvaging, dead or respawning, asleep, off their
+  feet or controlled, or quitting; any room change closes it (walked, fled, or pulled by a
+  leader). Closing listens to the `internal/state` machines' observers and the condition
+  path, and every choice re-checks the whole rule set before acting. The gate is built from
+  the same sources as the future shared busy check (#640) and moves onto it when it lands.
+- Talk menus also close when the NPC leaves, dies or stops being visible by name. A leader
+  pulling a follower away tells the follower ("You break off your talk with Kael to follow
+  Brannoc."), the leader ("Mira breaks off a talk with Kael to follow you.") and the room
+  left behind ("Mira breaks off a talk with Kael and follows Brannoc."), all through the
+  sight rules. Other interrupts give one line naming the cause.
+- Input session: built on `UserRecord.StartPrompt`; callers never touch `prompt` directly.
+- Migrate every fixed choice onto it (owner 2026-10-20): the admin builders' 6 copied menu-index
+  parse blocks and 19 `numbered-list` renders, the 27 fixed-option prompts (yes/no confirms
+  in character, guild, mail, rename, auctions, start and the builders), the `character` menu
+  and picklock's UP/DOWN/quit. A confirm
+  becomes `1. Yes` / `2. No` and still accepts `yes` or `y` by name. Free-text questions
+  (mail body, passwords) stay on `prompt`.
 
 **Exit.** No `Atoi`-and-index menu block remains outside the package; admin builders behave
 as before; tests cover number, name, Enter, out-of-range and a stale menu.
@@ -219,7 +243,11 @@ look-alike; #588 closed.
 
 **Approach.**
 - `quest abandon <quest>` and `quest focus <quest>` commands, and right-click Abandon / Focus
-  in the web client quest panel (GMCP).
+  in the web client quest panel. Reuse what exists: a left-click on a quest row already sends
+  `Char.Quests.Focus` (`webclient-pure.html:986`, handled in `modules/gmcp/gmcp.CharOp.go:129`),
+  and the inventory and automation panels already have right-click menus
+  (`webclient-pure.html:3514,3672`) to copy for the quest panel. This panel is the only
+  clicking the arc adds.
 - Abandon hides the quest from the active log, keeps its progress token, and restores the
   giver's `[!]`; re-accepting resumes at the saved step. Mid-quest rewards already granted are
   not granted again.
