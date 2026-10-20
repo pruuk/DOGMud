@@ -21,15 +21,26 @@ import (
 // Refusal lines the sit command sends a player. A mob actor's SendText does
 // nothing, so a mob is refused silently.
 const (
-	SitRefuseAsleep     = `You're asleep. Type stand to wake up.`
+	// SitRefuseAsleep: `wake` is a command alias of noop, so typing it runs
+	// the player dispatcher's cancel-on-action wake. sit and rest are exempt
+	// from that wake (usercommands.keepsSleep), or this line could never be
+	// reached by a player (owner ruling 2026-10-19).
+	SitRefuseAsleep     = `You're asleep. Type 'wake' to wake up.`
 	SitRefuseSitting    = `You're already sitting.`
 	SitRefuseGrappled   = `You're locked in a grapple. You'll need to break free first.`
 	SitRefuseOnTheFloor = `You're on the ground. Stand up first.`
 )
 
+// HiddenPostureNote tells a hidden actor that their sit or stand reached no
+// one, the posture twin of the emote command's note: the room line goes
+// through SendSeen, which is silent for a hidden actor (#274, owner R3).
+const HiddenPostureNote = `No one sees it; you are hidden.`
+
 // Sit seats actor: Standing to Sitting, with the actor's line and a sight-aware
-// room line. Returns whether the actor sat. Refused while asleep, already
-// sitting, fighting, grappled, or down on the floor.
+// room line. Returns whether the actor sat. Refused, players and mobs alike,
+// while asleep (sit does not wake a sleeper, owner ruling 2026-10-19), busy
+// (casting, crafting, salvaging), already sitting, fighting, grappled, or
+// down on the floor.
 func Sit(actor Actor) bool {
 	c := actor.GetCharacter()
 	if c == nil || c.Position == nil {
@@ -38,6 +49,9 @@ func Sit(actor Actor) bool {
 	switch {
 	case c.HasConditionFlag(conditions.Sleeping):
 		actor.SendText(messaging.CategoryRefusal, SitRefuseAsleep)
+		return false
+	case c.IsActing():
+		refusal.WhileBusy(actor, "sit")
 		return false
 	case c.IsSitting():
 		actor.SendText(messaging.CategoryRefusal, SitRefuseSitting)
@@ -59,7 +73,7 @@ func Sit(actor Actor) bool {
 		refusal.Failed(actor, "sit", err, "userId", actor.GetUserId(), "mobInstanceId", actor.GetMobInstanceId())
 		return false
 	}
-	narratePosture(actor, `You sit down.`, `%s sits down.`)
+	narratePosture(actor, `You sit down.`, `%s sits down.`, true)
 	return true
 }
 
@@ -79,42 +93,33 @@ func StandFromSitting(actor Actor) bool {
 			"mobInstanceId", actor.GetMobInstanceId(), "err", err)
 		return false
 	}
-	narratePosture(actor, `You stand up.`, `%s stands up.`)
+	narratePosture(actor, `You stand up.`, `%s stands up.`, true)
 	return true
 }
 
 // NarrateCombatRise tells the room a sitter leapt up because a fight reached
 // them. The transition itself is Character.RiseForCombat; the hooks package
-// calls this from its Position observer on position.TriggerCombatRise.
+// calls this from its Position observer on position.TriggerCombatRise. A
+// sitter still hidden when it rises (an area attack does not reveal) leaps up
+// unseen, with no note: the fight is the news, not the posture.
 func NarrateCombatRise(actor Actor) {
-	narratePosture(actor, `You leap to your feet!`, `%s leaps up!`)
+	narratePosture(actor, `You leap to your feet!`, `%s leaps up!`, false)
 }
 
 // narratePosture sends one posture change: the actor's own line, and the room
-// line with the actor's name hidden from a reader who cannot see them
-// (messaging.SendTrio). observerFmt takes the tagged name once.
-func narratePosture(actor Actor, actorLine, observerFmt string) {
+// line through SendSeen, which hides the name from a reader who cannot see the
+// actor and sends nothing at all for a hidden actor. hiddenNote adds
+// HiddenPostureNote for a hidden actor so the silence is not a mystery.
+// observerFmt takes the tagged name once.
+func narratePosture(actor Actor, actorLine, observerFmt string, hiddenNote bool) {
 	nameTag := "mobname"
 	if actor.IsPlayer() {
 		nameTag = "username"
 	}
-	trio := messaging.Trio{
-		Actor: messaging.Say(messaging.CategorySystem, actorLine),
-		// Nobody is acted upon: a posture change is the actor's alone.
-		Actee: messaging.NoLine,
-		Observer: messaging.Say(messaging.CategoryMobEmote, fmt.Sprintf(observerFmt,
-			fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, nameTag, actor.GetName()))),
+	actor.SendText(messaging.CategorySystem, actorLine)
+	SendSeen(actor, messaging.CategoryMobEmote, fmt.Sprintf(observerFmt,
+		fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, nameTag, actor.GetName())), false)
+	if c := actor.GetCharacter(); hiddenNote && c != nil && c.IsHidden() {
+		actor.SendText(messaging.CategorySystem, HiddenPostureNote)
 	}
-	aud := messaging.Audience{
-		Actor:     actor,
-		ActorId:   actor.GetUserId(),
-		ActorName: actor.GetName(),
-		ActeeName: messaging.NoName,
-	}
-	// A nil *rooms.Room must not reach the Broadcaster interface as a typed
-	// nil, so the room is assigned only when there is one.
-	if room := actor.GetRoom(); room != nil {
-		aud.Room = room
-	}
-	messaging.SendTrio(trio, aud)
 }

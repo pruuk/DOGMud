@@ -18,6 +18,9 @@ no free critical hit on you.
 
   - In a fight.
   - While asleep, knocked down, or locked in a grapple.
+  - While casting, crafting or salvaging.
+
+If you are asleep, type <ansi fg="command">wake</ansi> first.
 
 <ansi fg="yellow">See Also:</ansi>
 

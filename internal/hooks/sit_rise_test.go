@@ -7,6 +7,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -120,6 +122,29 @@ func TestSitMove_SeatedMobMovedArrivesStanding(t *testing.T) {
 	require.True(t, actions.Sit(actor))
 	require.True(t, teleportActor(actor, 2))
 	require.True(t, recalled.Character.IsStanding(), "a teleported sitter mob must arrive standing, state %v", recalled.Character.Position.State())
+}
+
+// Being attacked reveals a hidden sitter BEFORE they rise, so the room reads
+// one coherent sequence: the leap names a defender already revealed.
+func TestSitRise_HiddenSitterIsRevealedBeforeTheLeap(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	_, _, room := sitRiseScene(t)
+
+	mob := newLiveMob(t, 7832, room.RoomId, 40)
+	mob.Character.Name = "Lurker"
+	require.True(t, actions.Sit(actions.NewMobActorInRoom(mob, room)))
+	reason := state.TransitionReason{Trigger: "sit_hidden_rise_test"}
+	require.NoError(t, mob.Character.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason))
+	mob.Character.Awareness.ResolveConcealment(true, reason)
+	require.True(t, mob.Character.IsHidden())
+	drainPlain(2)
+
+	mob.Character.RevealForCombat()
+	require.False(t, mob.Character.IsHidden())
+	require.True(t, mob.Character.IsStanding())
+	require.Equal(t, 1, countContaining(drainPlain(2), "Lurker leaps up!"),
+		"the leap is narrated after the reveal, naming the now-visible defender")
 }
 
 // Standing by command is narrated by the command, not by the combat-rise

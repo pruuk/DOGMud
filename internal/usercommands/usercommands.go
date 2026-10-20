@@ -52,6 +52,18 @@ func AddFunctionExporter(f FunctionExporter) {
 var (
 	functionExporters = []FunctionExporter{}
 
+	// keepsSleep names the registered commands that do NOT run the
+	// dispatcher's cancel-on-action wake (CancelConditionsWithFlag(
+	// CancelOnAction) in TryCommand), keyed by the command after alias
+	// expansion, so `rest` (an alias of sit) is covered by `sit`. Owner ruling
+	// 2026-10-19: a sleeping player who types sit or rest stays asleep and is
+	// told to type 'wake' (actions.SitRefuseAsleep); without this exemption
+	// the wake would run first and that refusal could never be reached. Keep
+	// it to sit: every other command still wakes a sleeper.
+	keepsSleep = map[string]bool{
+		`sit`: true,
+	}
+
 	userCommands map[string]CommandAccess = map[string]CommandAccess{
 		`alias`:           {Alias, true, true, false},
 		`afk`:             {AFK, true, true, false},
@@ -402,8 +414,11 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 
 	}
 
-	// Cancel any conditions they have that get cancelled based on them doing anything at all
-	user.Character.CancelConditionsWithFlag(conditions.CancelOnAction)
+	// Cancel any conditions they have that get cancelled based on them doing
+	// anything at all, except for the commands keepsSleep exempts.
+	if !keepsSleep[cmd] {
+		user.Character.CancelConditionsWithFlag(conditions.CancelOnAction)
+	}
 
 	// Fold-casting intercept: while holding folds, most action commands are blocked.
 	// Informational commands (AllowedWhenDowned=true) pass through.

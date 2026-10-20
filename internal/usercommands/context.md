@@ -23,7 +23,11 @@ The `internal/usercommands` package implements the complete command system for p
   `keywords.yaml` command-aliases) wraps `actions.Sit`; `stand` gets a sitter
   up for free through `actions.StandFromSitting` before its paid knockdown
   path. `sit` is refused in combat by its registry flag (`AllowedInCombat`
-  false); `stand` is allowed.
+  false); `stand` is allowed. The asleep and busy refusals live in
+  `actions.Sit`, shared with mobs; this wrapper adds nothing. `sit` is the
+  one command in `keepsSleep` (`usercommands.go`): the dispatcher's
+  cancel-on-action wake skips it, so a sleeping player who types sit or rest
+  stays asleep and is told to type `wake` (owner ruling 2026-10-19).
 - **Communication**: `say`, `shout`, `whisper`, `emote`, `broadcast` - Player communication
 - **Observation**: `look`, `inspect`, `consider`, `online` (`who` is its alias in `keywords.yaml`, #421) - Information gathering.
   The admin `online` table swaps Title for UserId, Zone and RoomId, and

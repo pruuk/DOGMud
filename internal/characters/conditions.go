@@ -123,8 +123,11 @@ func (c *Character) CancelCombatConditions() {
 // case. The transition carries position.TriggerCombatRise, which the hooks
 // package narrates ("You leap to your feet!"). Players and mobs share it.
 //
-// Two callers: RevealForCombat (being attacked) and the CombatPhase
-// Idle-to-Engaging observer in internal/hooks (entering combat). Deliberately
+// Two callers: RevealForCombat (being attacked by a melee round, a
+// single-target move, a grapple or a taunt) and the CombatPhase
+// Idle-to-Engaging observer in internal/hooks (entering combat). An area
+// attack, which skips RevealForCombat, leaves a sitter it clips seated (owner
+// ruling 2026-10-19: working as intended). Deliberately
 // NOT CancelCombatConditions, which a death also runs: a dying sitter must not
 // be narrated leaping up. Death's own cascade stands them silently.
 func (c *Character) RiseForCombat() bool {
@@ -153,9 +156,9 @@ func (c *Character) StandForMove() bool {
 	}) == nil
 }
 
-// RevealForCombat is what being attacked does to a defender: a sitter stands
-// (RiseForCombat), its combat-cancel conditions strip, and a hidden defender
-// is forced visible.
+// RevealForCombat is what being attacked does to a defender: its
+// combat-cancel conditions strip, a hidden defender is forced visible, and
+// then a sitter stands (RiseForCombat).
 // handleCombatRound calls it before a melee swing's lines; the special-move
 // seams (combat.ExecuteSkillMove, combat.ExecuteGrappleMove) and the taunt
 // call it before theirs, so no attack names a mob the room cannot see.
@@ -168,13 +171,15 @@ func (c *Character) StandForMove() bool {
 // if the condition strip left it stale; the cascade re-strips the condition
 // (a no-op, since it is already gone).
 func (c *Character) RevealForCombat() {
-	c.RiseForCombat()
 	c.CancelCombatConditions()
 	if c.Awareness != nil && c.IsHidden() {
 		c.Awareness.ForceVisible(state.TransitionReason{
 			Trigger: awareness.TriggerCombatEntered,
 		})
 	}
+	// Last, so a hidden sitter is revealed before the room reads that they
+	// leap up: one coherent sequence, never a named leap from a hider.
+	c.RiseForCombat()
 }
 
 func (c *Character) HasCondition(conditionId int) bool {
