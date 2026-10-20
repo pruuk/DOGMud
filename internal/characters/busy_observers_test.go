@@ -62,6 +62,42 @@ func TestBusyObservers_ReplacedMachineIsRewired(t *testing.T) {
 	}
 }
 
+// The production paths never call WireBusyObservers themselves: a loaded
+// save and a mob instance both reach it through Validate.
+func TestBusyObservers_LoadPathWiresThroughValidate(t *testing.T) {
+	for name, build := range map[string]func() *Character{
+		"bare struct then Validate": func() *Character {
+			c := &Character{}
+			c.Validate()
+			return c
+		},
+		"mob instance reset then Validate": func() *Character {
+			c := New()
+			c.ResetForMobInstance()
+			c.Validate()
+			return c
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			n := 0
+			old := BusyStateChanged
+			BusyStateChanged = func(id int) {
+				if id == 7 {
+					n++
+				}
+			}
+			defer func() { BusyStateChanged = old }()
+
+			c := build()
+			c.SetUserId(7)
+			goCrafting(t, c)
+			if n != 1 {
+				t.Fatalf("notified %d times, want 1", n)
+			}
+		})
+	}
+}
+
 func TestBusyObservers_MobCharacterIsSilent(t *testing.T) {
 	n := 0
 	old := BusyStateChanged

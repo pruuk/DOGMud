@@ -147,6 +147,7 @@ func (c *Character) SetAggroWithTrigger(userId int, mobInstanceId int, aggroType
 	// Validate builds the machine.
 	if c.CombatPhase == nil {
 		c.CombatPhase = combatphase.NewMachine()
+		c.WireBusyObservers()
 	}
 
 	// U12c-0b: the transition DECIDES. It used to run after the Aggro write
