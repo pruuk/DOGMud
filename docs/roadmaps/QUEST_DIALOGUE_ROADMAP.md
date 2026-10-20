@@ -74,8 +74,10 @@ Every phase spec re-verifies the facts it builds on; this table is the starting 
 ```
 key        stable id, unique within the NPC ("directions")
 kind       info | quest
-label      menu text in natural language, no "Ask:"/"Task:" prefix
-           ("How do I reach the steppe?")
+label      menu text in natural language, no "Ask:"/"Task:" prefix. Info: the player's
+           line ("How do I reach the steppe?"). Quest: the quest title.
+playerLine quest only: what the player says, shown under the title and spoken aloud
+           ("Do you want help settling the feud at the well?")
 text       what the NPC says (quest: the pitch)
 marked     info only: lights [*] until heard
 gates      the existing gating fields (questRequired, questExcluded, quest flags,
@@ -159,8 +161,10 @@ as before; tests cover number, name, Enter, out-of-range and a stale menu.
   on hearing a `marked` info topic.
 - Markers: computed per viewer, shown in the room's mob list and on menu lines; only when the
   NPC is visible by name.
-- Observers: "X asks Kael about <label>" plus the NPC's spoken line; accept, decline and
-  reward lines are private.
+- Observers see a conversation, never a menu (owner 2026-10-20): choosing a topic makes the
+  player say its player line (an info label, or a quest entry's `Detail` line) and the NPC
+  answer, both as ordinary speech the room hears, for info and quests alike. The menu, the
+  objective and reward summary, and the Accept / Leave prompt are private to the player.
 - `give` of an asked-for item resolves as choosing that topic, with the same output.
 - `ask` becomes a redirect line. The tree's free-text triggers stop being the entry point.
 - LLM path: generated replies are stored as `source: llm` topics on that NPC and then served

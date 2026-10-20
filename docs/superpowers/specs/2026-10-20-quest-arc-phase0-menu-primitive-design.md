@@ -108,8 +108,8 @@ func Confirm(question, yesLabel, noLabel string) Menu
 ```
 Kael sets down his whittling. "Ask what you like, I'll answer plain."
 
-  1. [!] The feud at the well
-         Two families, one well, and I am tired of the shouting.
+  1. [!] The Feud at the Well
+         Do you want help settling the feud at the well?
   2. [*] How do I reach the high pass?
   3.     What do you carve?
   4.     Leave
@@ -245,7 +245,17 @@ own scripts.
 **When it closes:** the queue resumes at its normal pace (one action per round, released by
 `Commands.State`), so a backlog never bursts out at once.
 
+**Queue audit first.** The owner suspects the action queue misbehaves in some cases,
+"front" mode especially. Before the pause is built on it, the plan writes JS tests for the
+existing queue: front entries ahead of back entries, front-after-front ordering, dedup, the
+cap, deferral and staleness, the in-flight timeout, death clearing, and the login hold. Every
+defect those tests find is fixed in this phase. The pause then gets its own tests on top.
+
 **Login:**
+- Automation is dropped, not paused, during login (owner 2026-10-20: paused would be nicer
+  only if it works reliably). There is nothing correct to queue: the client does not know the
+  arriving character's ticks and triggers until `Char.Automation` arrives, and after a
+  reconnect it still holds the previous session's set.
 - `socket.onclose` clears every tick timer, resets `tickTimersSig`, empties the action
   queue and sets `queueLoginSettled = false`.
 - Ticks start only after the first `Char.Automation` push of the session (sent on
@@ -256,10 +266,13 @@ own scripts.
 
 Recorded in `dogmud-player-copy` and `internal/menu/context.md`:
 
-1. A label is what the player says, in the player's voice. Info labels are questions; new
-   quest labels raise the NPC's problem or offer help; hand-in labels report the result.
-2. Never name the NPC in the third person and never use narrator voice in a label.
-3. One line, at most 50 characters; a quest's summary goes in `Detail`.
+1. An info label is what the player says, in the player's voice, usually a question. A quest
+   entry's label is the quest's title, and its `Detail` line is what the player says: a new
+   quest offers help ("Do you want help settling the feud at the well?"), a hand-in reports
+   the result ("I've settled the feud at the well.").
+2. Never name the NPC in the third person and never use narrator voice in a label or a
+   player line.
+3. One line each, at most 50 characters for a label and 72 for a `Detail` line.
 4. ESL-clear: plain words, no idioms, no em or en dashes, no raw numbers for stats or rewards.
 5. Specific, not generic. No two labels in one menu read alike.
 6. Leave lines may be in character ("Goodbye.") and default to "Leave".
@@ -288,6 +301,8 @@ Every guard ships with a fixture proving it can fail.
 - **Guard test:** fails on any `numbered-list` template render, or any menu-index `Atoi`
   parse, outside `internal/menu`.
 - **Label lint:** the conventions check rejects a fixture per checkable rule.
+- **Queue audit (JS):** the existing queue's behaviors listed in section 7, each with a test,
+  front mode in every ordering case; a red test is a defect fixed in this phase.
 - **Automation pause (JS tests in `tools/jstest/`, beside `webclient-action-queue.test.js`):**
   a tick due while `Char.Menu` is open is queued, not sent; a trigger match while open is
   queued; nothing drains until the close push; after close the queue releases one action per

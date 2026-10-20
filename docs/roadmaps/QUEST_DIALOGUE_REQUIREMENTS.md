@@ -15,8 +15,9 @@ to the next.
 1. An NPC with something new shows a marker before their name: `[!]` new quest,
    `[?]` ready to hand in, `[*]` new info.
 2. `talk <npc>` shows a numbered menu, each line led by its marker.
-3. Pick a number. Info: the NPC answers, and the room hears both sides. Quest: the pitch,
-   the objective, the reward, then Accept or Leave.
+3. Pick a number. The player says their line and the NPC answers, and the room hears it as
+   a conversation, for info and quests alike. Only the player sees menus. For a quest, the
+   player then also sees the objective, the reward, and Accept or Leave.
 4. Come back to hand in. Finishing offers the next quest in the chain.
 5. Once taken or heard, a topic stops marking but can always be heard again.
 6. Abandon or focus a quest by command or by right-click in the web client quest panel.
