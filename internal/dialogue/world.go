@@ -36,11 +36,14 @@ type World struct {
 	QuestOfToken func(token string) (QuestInfo, bool)
 	FlagDeclared func(key, value string) bool
 	ItemExists   func(id int) bool
-	// BehaviorTopics lists the topic_is keys in a mob's behavior tree.
-	// Nil skips the behavior checks (no trees in this world).
-	BehaviorTopics func(mobId int) []string
+	// BehaviorTopics maps a mob id to the topic_is keys in its behavior
+	// tree. Nil skips the behavior checks (no trees in this world). A mob id
+	// with no dialogue file is itself a problem.
+	BehaviorTopics map[int][]string
 	// ItemGiveGrants names quest item_give triggers that carry a grant
-	// action ("quest 10 trigger 2"). Hand-ins are NPC topics (R7).
+	// action ("quest 10 trigger 2"). Hand-ins are NPC topics (R7). The
+	// trigger index counts all of the quest's triggers from 0, not only the
+	// item_give ones.
 	ItemGiveGrants []string
 }
 
@@ -53,10 +56,24 @@ var dashRunes = string([]rune{0x2014, 0x2013})
 // ValidateWorld runs every dialogue rule over every file in w.
 func ValidateWorld(w World) []Problem {
 	var out []Problem
+	fileMobs := map[int]bool{}
 	for _, df := range w.Files {
+		fileMobs[df.MobId] = true
 		out = append(out, validateTopicFile(w, df)...)
 	}
-	for _, where := range w.ItemGiveGrants {
+	mobIds := make([]int, 0, len(w.BehaviorTopics))
+	for id := range w.BehaviorTopics {
+		mobIds = append(mobIds, id)
+	}
+	sort.Ints(mobIds)
+	for _, id := range mobIds {
+		if !fileMobs[id] {
+			out = append(out, Problem{MobId: id, Where: "behavior tree", Msg: "topic_is on mob " + fmt.Sprint(id) + ", which has no dialogue file"})
+		}
+	}
+	grants := append([]string(nil), w.ItemGiveGrants...)
+	sort.Strings(grants)
+	for _, where := range grants {
 		out = append(out, Problem{Where: where, Msg: "item_give triggers may not grant a quest token: hand-ins are NPC topics"})
 	}
 	return out
@@ -85,10 +102,17 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 		}
 	}
 
+	norm := func(s string) string { return strings.ToLower(strings.TrimSpace(s)) }
 	keys, infoKeys, infoLabels := map[string]bool{}, map[string]bool{}, map[string]string{}
+	questTitles := map[string]string{} // normalized offer/handin label -> topic key
 	for _, t := range df.Topics {
-		if t.Kind == KindInfo {
+		switch t.Kind {
+		case KindInfo:
 			infoKeys[t.Key] = true
+		case KindOffer, KindHandIn:
+			if _, seen := questTitles[norm(t.Label)]; !seen {
+				questTitles[norm(t.Label)] = t.Key
+			}
 		}
 	}
 	for i := range df.Topics {
@@ -110,11 +134,14 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 			if t.Breadcrumb != "" {
 				add(where, "breadcrumb belongs on offer topics only")
 			}
-			lower := strings.ToLower(t.Label)
+			lower := norm(t.Label)
 			if prev, dup := infoLabels[lower]; dup {
 				add(where, "label repeats topic %q", prev)
 			} else {
 				infoLabels[lower] = t.Key
+			}
+			if other, clash := questTitles[lower]; clash {
+				add(where, "label repeats the quest title of topic %q", other)
 			}
 		case KindOffer, KindHandIn:
 			if t.Quest == 0 || t.PlayerLine == "" {
@@ -151,6 +178,8 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 		if strings.ContainsAny(t.Breadcrumb, dashRunes) {
 			add(where+" breadcrumb", "no em or en dash in new text")
 		}
+		semi(where+" label", t.Label)
+		semi(where+" playerLine", t.PlayerLine)
 		semi(where+" text", t.Text)
 		semi(where+" breadcrumb", t.Breadcrumb)
 		for _, k := range t.HeardRequired {
@@ -170,7 +199,7 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 
 	if w.BehaviorTopics != nil {
 		tree := map[string]bool{}
-		for _, k := range w.BehaviorTopics(df.MobId) {
+		for _, k := range w.BehaviorTopics[df.MobId] {
 			tree[k] = true
 		}
 		for _, t := range df.Topics {
@@ -269,8 +298,7 @@ func heardCycle(df *DialogueFile) string {
 		deps[t.Key] = t.HeardRequired
 	}
 	const (
-		unseen = iota
-		active
+		active = iota + 1
 		done
 	)
 	state := map[string]int{}
