@@ -29,4 +29,10 @@ const (
 	// because the leader stepped first, so TryCommand skips the light-notice
 	// check before this step (#620).
 	CmdFollowStep EventFlag = 0b00100000
+
+	// A line the player typed (telnet or web client), set only by the world
+	// input worker and kept on the player's own macro expansions. Only a
+	// typed line may answer a menu or a prompt; an engine-queued command
+	// (follow steps, scripts, user.Command) always runs as a command (#375).
+	CmdTyped EventFlag = 0b01000000
 )

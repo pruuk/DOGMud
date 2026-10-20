@@ -958,6 +958,7 @@ loop:
 				UserId:    wi.FromId,
 				InputText: wi.InputText,
 				ReadyTurn: util.GetTurnCount(),
+				Flags:     events.CmdTyped,
 			})
 
 		}
@@ -1020,6 +1021,7 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 						UserId:    userId,
 						InputText: newCmd,
 						ReadyTurn: readyTurn,
+						Flags:     flags & events.CmdTyped,
 					})
 
 					readyTurn++
