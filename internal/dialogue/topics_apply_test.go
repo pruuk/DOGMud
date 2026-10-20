@@ -52,6 +52,13 @@ topics:
 	require.False(t, f.heard["52.purse"], "only info topics are recorded as heard")
 }
 
+func TestApply_CarriesItemIsNotTaken(t *testing.T) {
+	df, f := loadFixture(t, carriesFixtureYAML), newFake()
+	f.items[77] = true
+	require.True(t, df.Apply(df.FindTopic("open_crash"), f.ps()))
+	require.True(t, f.items[77], "carriesItem is a key, never taken")
+}
+
 func TestApply_FailedChargeChangesNothing(t *testing.T) {
 	df := loadFixture(t, `mobid: 53
 zone: testzone

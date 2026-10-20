@@ -19,6 +19,7 @@ type Gates struct {
 	QuestFlagExcluded  map[string]string `yaml:"questFlagExcluded,omitempty" json:"questFlagExcluded,omitempty"`
 	RequiresItem       int               `yaml:"requiresItem,omitempty" json:"requiresItem,omitempty"`
 	ItemExcluded       int               `yaml:"itemExcluded,omitempty" json:"itemExcluded,omitempty"`
+	CarriesItem        int               `yaml:"carriesItem,omitempty" json:"carriesItem,omitempty"` // carried anywhere, never taken (a reusable key)
 	GoldRequired       int               `yaml:"goldRequired,omitempty" json:"goldRequired,omitempty"`
 	MasterworkRequired int               `yaml:"masterworkRequired,omitempty" json:"masterworkRequired,omitempty"`
 }
@@ -28,7 +29,23 @@ type Gates struct {
 func (g Gates) pass(ps *PlayerState) bool {
 	return checkQuestGate(g.QuestRequired, g.QuestExcluded, g.RequiresItem,
 		g.QuestFlagRequired, g.QuestFlagExcluded, g.MasterworkRequired, g.GoldRequired, ps) &&
-		!itemExcludedBlocks(g.ItemExcluded, ps)
+		!itemExcludedBlocks(g.ItemExcluded, ps) && carriesItemPasses(g.CarriesItem, ps)
+}
+
+// carriesItemPasses reports whether the player carries itemId anywhere
+// (CarriesItem, falling back to HasItem). A nil PlayerState skips the gate;
+// no item callback at all fails it closed.
+func carriesItemPasses(itemId int, ps *PlayerState) bool {
+	if itemId <= 0 || ps == nil {
+		return true
+	}
+	if ps.CarriesItem != nil {
+		return ps.CarriesItem(itemId)
+	}
+	if ps.HasItem != nil {
+		return ps.HasItem(itemId)
+	}
+	return false
 }
 
 // Effects is what choosing a topic changes. requiresItem (a gate) is also

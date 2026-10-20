@@ -283,7 +283,7 @@ func gateRefProblems(w World, mobId int, where string, g Gates, e Effects) []Pro
 	if e.SetsQuestFlag != nil && !flag(e.SetsQuestFlag.Key, e.SetsQuestFlag.Value) {
 		add("setsQuestFlag %q=%q is not declared by any quest", e.SetsQuestFlag.Key, e.SetsQuestFlag.Value)
 	}
-	for _, id := range []int{g.RequiresItem, g.ItemExcluded, e.GivesItem} {
+	for _, id := range []int{g.RequiresItem, g.ItemExcluded, g.CarriesItem, e.GivesItem} {
 		if id != 0 && (w.ItemExists == nil || !w.ItemExists(id)) {
 			add("item %d does not exist", id)
 		}

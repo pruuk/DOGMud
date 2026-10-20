@@ -106,6 +106,34 @@ func TestEligible_GatesAndHeardRequired(t *testing.T) {
 	require.False(t, df.Eligible(hunt, f.ps()), "questExcluded once started")
 }
 
+const carriesFixtureYAML = `mobid: 57
+zone: testzone
+topics:
+  - key: open_crash
+    kind: info
+    label: "Open the way down."
+    text: "Then hold the disc up."
+    carriesItem: 77
+`
+
+func TestEligible_CarriesItemNeedsTheItemAnywhere(t *testing.T) {
+	df := loadFixture(t, carriesFixtureYAML)
+	tp := df.FindTopic("open_crash")
+	f := newFake()
+	require.False(t, df.Eligible(tp, f.ps()), "hidden without the item")
+	f.items[77] = true
+	require.True(t, df.Eligible(tp, f.ps()), "HasItem stands in when CarriesItem is nil")
+
+	worn := newFake().ps()
+	worn.CarriesItem = func(id int) bool { return id == 77 }
+	require.True(t, df.Eligible(tp, worn), "CarriesItem counts worn and pouched items")
+
+	none := newFake().ps()
+	none.HasItem, none.CarriesItem = nil, nil
+	require.False(t, df.Eligible(tp, none), "no item callback fails closed")
+	require.True(t, df.Eligible(tp, nil), "a nil PlayerState skips the gates")
+}
+
 func TestEligible_NilHasHeardFailsHeardRequiredClosed(t *testing.T) {
 	df := loadFixture(t, menuFixtureYAML)
 	ps := newFake().ps()

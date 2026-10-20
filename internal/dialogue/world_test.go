@@ -91,6 +91,7 @@ func TestValidateWorld_Rules(t *testing.T) {
 		{"bad token in grantsQuest", breakFixture("grantsQuest: 7-start", "grantsQuest: 7-nope"), `quest token "7-nope" does not exist`},
 		{"bad token in questExcluded", breakFixture("questExcluded: [7-end]", "questExcluded: [7-nope, 7-end]"), `quest token "7-nope" does not exist`},
 		{"unknown itemExcluded", breakFixture("    goldRequired: 5\n", "    goldRequired: 5\n    itemExcluded: 4243\n"), `item 4243 does not exist`},
+		{"unknown carriesItem", breakFixture("    goldRequired: 5\n", "    goldRequired: 5\n    carriesItem: 4244\n"), `item 4244 does not exist`},
 		{"unknown givesItem", breakFixture("    goldRequired: 5\n", "    goldRequired: 5\n    givesItem: 4244\n"), `item 4244 does not exist`},
 		{"undeclared questFlagExcluded", breakFixture("    text: \"Wet.\"", "    text: \"Wet.\"\n    questFlagExcluded: {7-mood: furious}"), `quest flag "7-mood"="furious" is not declared`},
 		{"undeclared setsQuestFlag", breakFixture("    text: \"Wet.\"", "    text: \"Wet.\"\n    setsQuestFlag: {key: 7-mood, value: gone}"), `setsQuestFlag "7-mood"="gone" is not declared`},

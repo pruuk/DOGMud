@@ -63,6 +63,16 @@ entry is hidden while the player carries the item anywhere
 giver's handout to one item while the quest is open; put the refusal in a
 later entry with the same triggers and no gate (2026-10-17).
 
+Topics and opener variants (`topic.go`) share one `Gates` struct:
+`questRequired`, `questExcluded`, `questFlagRequired`, `questFlagExcluded`,
+`requiresItem` (taken when the effects apply), `itemExcluded` (hidden while
+carried), `carriesItem` (shown only while the player carries the item anywhere,
+`PlayerState.CarriesItem` falling back to `HasItem`, never taken: a reusable
+key such as the Threshold Keeper's disc), `goldRequired` and
+`masterworkRequired`. `Gates.pass` checks them all; a nil `PlayerState` skips
+them, and `carriesItem` with no item callback fails closed. `ValidateWorld`
+checks every item id they name.
+
 ```go
 func checkQuestGate(questRequired, questExcluded []string, requiresItem int,
     flagRequired, flagExcluded map[string]string, masterworkRequired, goldRequired int,
