@@ -308,6 +308,22 @@ func TestCloseMenuForFollow_ReturnsTopicAndClosesSilently(t *testing.T) {
 	}
 }
 
+func TestMenuBlockedReason_ReportsTheGateAndAnOpenPrompt(t *testing.T) {
+	u := menuUser()
+	if r, p := u.MenuBlockedReason(); r != menu.CloseNone || p {
+		t.Fatalf("free user blocked: %v %v", r, p)
+	}
+	u.StartPrompt("build", "")
+	if r, p := u.MenuBlockedReason(); r != menu.CloseNone || !p {
+		t.Fatalf("prompt not reported: %v %v", r, p)
+	}
+	u.ClearPrompt()
+	startCrafting(t, u)
+	if r, p := u.MenuBlockedReason(); r != menu.CloseBusy || p {
+		t.Fatalf("busy not reported: %v %v", r, p)
+	}
+}
+
 func TestMenuOpenState_TracksMenusAndPrompts(t *testing.T) {
 	u, r := menuUser(), &rec{}
 	if u.MenuOrPromptOpen() {

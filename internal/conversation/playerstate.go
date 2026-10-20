@@ -16,6 +16,14 @@ import (
 // PlayerState creates a PlayerState from the user's character for
 // quest/item gating in dialogue calls.
 func PlayerState(user *users.UserRecord) *dialogue.PlayerState {
+	return playerState(user, user.SendText)
+}
+
+// playerState is PlayerState with the callbacks' private lines (a delivery,
+// gold received or paid, a refusal) sent through send. The talk flow passes
+// a lineBuffer's add so those lines land after the handover line and before
+// the NPC's reply.
+func playerState(user *users.UserRecord, send func(messaging.Category, string)) *dialogue.PlayerState {
 	return &dialogue.PlayerState{
 		HasQuest: user.Character.HasQuest,
 		HasItem: func(itemId int) bool {
@@ -43,9 +51,20 @@ func PlayerState(user *users.UserRecord) *dialogue.PlayerState {
 		},
 		RemoveItem: func(itemId int) bool {
 			for _, itm := range user.Character.GetAllBackpackItems() {
-				if itm.ItemId == itemId {
-					return user.Character.RemoveItem(itm)
+				if itm.ItemId != itemId {
+					continue
 				}
+				if !user.Character.RemoveItem(itm) {
+					return false
+				}
+				// The same loss event give.go queues when a hand-in is
+				// consumed, so item-loss listeners see a talk hand-in too.
+				events.AddToQueue(events.ItemOwnership{
+					UserId: user.UserId,
+					Item:   itm,
+					Gained: false,
+				})
+				return true
 			}
 			return false
 		},
@@ -71,14 +90,14 @@ func PlayerState(user *users.UserRecord) *dialogue.PlayerState {
 			// quest triggers and auto-grants QuestTokens, advanced quest
 			// state on an item the player never received.
 			if !user.Character.StoreItem(newItem) {
-				user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+				send(messaging.CategoryRefusal, fmt.Sprintf(
 					`You can't carry the <ansi fg="itemname">%s</ansi>. `+
 						`Drop something, then ask again.`, newItem.DisplayName()))
 				mudlog.Warn("conversation.GiveItem", "msg", "player could not carry dialogue item",
 					"userId", user.UserId, "itemId", itemId)
 				return false
 			}
-			user.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>.`, items.ArticlePrefix(newItem.DisplayName()), items.MidSentenceName(newItem.DisplayName())))
+			send(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>.`, items.ArticlePrefix(newItem.DisplayName()), items.MidSentenceName(newItem.DisplayName())))
 			events.AddToQueue(events.ItemOwnership{
 				UserId: user.UserId,
 				Item:   newItem,
@@ -97,7 +116,7 @@ func PlayerState(user *users.UserRecord) *dialogue.PlayerState {
 		},
 		GiveGold: func(amount int) {
 			user.Character.Gold += amount
-			user.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(amount)))
+			send(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(amount)))
 			events.AddToQueue(events.EquipmentChange{
 				UserId:     user.UserId,
 				GoldChange: amount,
@@ -116,7 +135,7 @@ func PlayerState(user *users.UserRecord) *dialogue.PlayerState {
 				return false
 			}
 			user.Character.Gold -= amount
-			user.SendText(messaging.CategoryLoot, fmt.Sprintf(`You pay <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(amount)))
+			send(messaging.CategoryLoot, fmt.Sprintf(`You pay <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(amount)))
 			events.AddToQueue(events.EquipmentChange{
 				UserId:     user.UserId,
 				GoldChange: -amount,

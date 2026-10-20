@@ -1,9 +1,12 @@
 package usercommands
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/conversation"
@@ -13,6 +16,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -303,4 +308,253 @@ func TestHandIn_LineThenHandoverThenReply(t *testing.T) {
 	}
 	require.Equal(t, []string{"9-end"}, questTokensFor(1))
 	require.Contains(t, drained(2), "gave their")
+}
+
+func backpackHas(u *users.UserRecord, itemId int) bool {
+	for _, itm := range u.Character.GetAllBackpackItems() {
+		if itm.ItemId == itemId {
+			return true
+		}
+	}
+	return false
+}
+
+// spec 4 item 1: the gate runs before anyone speaks. A blocked player gets
+// one private line and the room hears nothing.
+func TestTalk_BusyRefusesPrivatelyBeforeAnyoneSpeaks(t *testing.T) {
+	user, mob, done := talkFixture(t)
+	defer done()
+	user.Character.Activity = activity.NewMachine()
+	require.NoError(t, user.Character.Activity.Inner().TransitionTo(activity.Crafting, state.TransitionReason{}))
+
+	conversation.Talk(user, mustRoom(t, user), mob)
+	mine, theirs := drained(1), drained(2)
+	require.Contains(t, mine, "You are too busy to start a conversation.")
+	require.NotContains(t, mine, "Rattle.")
+	require.Empty(t, theirs, "the room hears nothing")
+	require.False(t, user.HasOpenMenu())
+}
+
+func TestTalk_OpenPromptRefusesPrivately(t *testing.T) {
+	user, mob, done := talkFixture(t)
+	defer done()
+	user.StartPrompt("build", "")
+	defer user.ClearPrompt()
+
+	conversation.Talk(user, mustRoom(t, user), mob)
+	mine, theirs := drained(1), drained(2)
+	require.Contains(t, mine, "Finish what you have open before you start a conversation.")
+	require.Empty(t, theirs)
+	require.False(t, user.HasOpenMenu())
+}
+
+const rewardFixtureYAML = `mobid: 1
+zone: TestZone
+topics:
+  - key: purse
+    kind: handin
+    quest: 9
+    label: "The Lost Purse"
+    playerLine: "Here is the purse you were looking for."
+    text: "Take this for your trouble."
+    requiresItem: 10001
+    givesItem: 30001
+    questExcluded: [9-end]
+    grantsQuest: 9-end
+`
+
+// The callbacks' private lines (here "You receive") come after the handover
+// and before the NPC's reply.
+func TestHandIn_RewardLineFollowsTheHandover(t *testing.T) {
+	user, mob, done := fixtureWith(t, rewardFixtureYAML)
+	defer done()
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+	conversation.Talk(user, mustRoom(t, user), mob)
+	drained(1)
+
+	require.True(t, user.RouteMenuInput("1", true))
+	mine := drained(1)
+	say := strings.Index(mine, `You say, "<ansi fg="saytext">Here is the purse`)
+	give := strings.Index(mine, "You give the")
+	receive := strings.Index(mine, "You receive")
+	reply := strings.Index(mine, "Take this for your trouble.")
+	require.GreaterOrEqual(t, say, 0, mine)
+	require.Greater(t, give, say, mine)
+	require.Greater(t, receive, give, "the reward line follows the handover")
+	require.Greater(t, reply, receive, "the NPC replies last")
+	require.True(t, backpackHas(user, 30001))
+}
+
+func TestHandIn_QueuesTheItemLoss(t *testing.T) {
+	user, mob, done := offerFixture(t)
+	defer done()
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+	conversation.Talk(user, mustRoom(t, user), mob)
+	events.DrainQueuedItemOwnershipForTest(1)
+
+	require.True(t, user.RouteMenuInput("2", true))
+	got := events.DrainQueuedItemOwnershipForTest(1)
+	require.Len(t, got, 1)
+	require.False(t, got[0].Gained)
+	require.Equal(t, 10001, got[0].Item.ItemId)
+}
+
+const chargeFixtureYAML = `mobid: 1
+zone: TestZone
+topics:
+  - key: map
+    kind: info
+    label: "Will you trade your map for my sword?"
+    text: "Here it is."
+    requiresItem: 10001
+    chargesGold: 50
+`
+
+func TestTalk_RefusedChargeGivesNoHandoverAndNoReply(t *testing.T) {
+	user, mob, done := fixtureWith(t, chargeFixtureYAML)
+	defer done()
+	user.Character.Gold = 0
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+	conversation.Talk(user, mustRoom(t, user), mob)
+	drained(1)
+	drained(2)
+
+	require.True(t, user.RouteMenuInput("1", true))
+	mine, theirs := drained(1), drained(2)
+	require.Contains(t, theirs, "Will you trade your map for my sword?")
+	require.NotContains(t, theirs, "gave their")
+	require.NotContains(t, theirs, "Here it is.")
+	require.NotContains(t, mine, "You give the")
+	require.NotContains(t, mine, "Here it is.")
+	require.Contains(t, mine, "You don't have enough gold for that.")
+	require.True(t, backpackHas(user, 10001), "the item stays with the player")
+	require.False(t, user.Character.HasHeard("1.map"))
+}
+
+const itemOfferFixtureYAML = `mobid: 1
+zone: TestZone
+topics:
+  - key: ferry
+    kind: offer
+    quest: 5
+    label: "The Ferry Fare"
+    playerLine: "Can I ride the ferry?"
+    text: "Leave your sword with me as surety."
+    requiresItem: 10001
+    questExcluded: [5-start]
+    grantsQuest: 5-start
+`
+
+func TestOffer_AcceptWithAnItemPrintsTheHandover(t *testing.T) {
+	user, mob, done := fixtureWith(t, itemOfferFixtureYAML)
+	defer done()
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+	conversation.Talk(user, mustRoom(t, user), mob)
+	require.True(t, user.RouteMenuInput("1", true))
+	drained(1)
+	drained(2)
+
+	require.True(t, user.RouteMenuInput("1", true), "1 is Accept")
+	require.Contains(t, drained(1), `You give the <ansi fg="item">Iron Sword</ansi>`)
+	require.Contains(t, drained(2), "gave their")
+	require.False(t, backpackHas(user, 10001))
+	require.Equal(t, []string{"5-start"}, questTokensFor(1))
+}
+
+func TestTalk_DarkRoomEndsTheConversation(t *testing.T) {
+	user, mob, done := talkFixture(t)
+	defer done()
+	conversation.Talk(user, mustRoom(t, user), mob)
+	drained(1)
+	drained(2)
+
+	user.Character.RoomId = 2
+	mob.Character.RoomId = 2
+	dark := rooms.LoadRoom(2)
+	require.NotNil(t, dark)
+	require.NotEqual(t, messaging.SightFull, messaging.ParticipantSight(user.Character, dark),
+		"precondition: room 2 is too dark to see names")
+
+	require.True(t, user.RouteMenuInput("1", true))
+	require.False(t, user.HasOpenMenu())
+	require.False(t, user.Character.HasHeard("1.bones"))
+	require.NotContains(t, drained(1), "Old age.")
+}
+
+const behaviorFixtureYAML = `mobid: 1
+zone: TestZone
+topics:
+  - key: ring
+    kind: info
+    label: "Will you ring the bell?"
+    text: "I will."
+    behavior: true
+  - key: knock
+    kind: info
+    label: "Will you knock on the door?"
+    text: "I will."
+    behavior: true
+`
+
+func TestTalk_BehaviorTopicFiresTheTreeWithItsKey(t *testing.T) {
+	user, mob, done := fixtureWith(t, behaviorFixtureYAML)
+	defer done()
+	tree := `tree:
+  type: sequence
+  event: player_topic
+  children:
+    - type: condition
+      check: topic_is
+      topic: ring
+    - type: action
+      do: set_state
+      key: rung
+      value: 1
+`
+	path := filepath.Join(t.TempDir(), "1-skeleton.yaml")
+	require.NoError(t, os.WriteFile(path, []byte(tree), 0644))
+	require.NoError(t, behaviortree.GetEngine().LoadTree(int(mob.MobId), path))
+	st := behaviortree.EnsureBTreeState(mob)
+	st.Set("rung", 0)
+
+	conversation.Talk(user, mustRoom(t, user), mob)
+	require.True(t, user.RouteMenuInput("2", true), "knock")
+	require.Equal(t, 0, st.GetInt("rung"), "knock carries its own key, not ring")
+	require.True(t, user.RouteMenuInput("1", true), "ring")
+	require.Equal(t, 1, st.GetInt("rung"))
+}
+
+func TestTalk_NoDialogueFileNodsAndOpensNoMenu(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	user, room := getTestUserAndRoom(t)
+	mob := mobs.GetInstance(100)
+	require.NotNil(t, mob)
+	mob.Zone = "TestZone"
+	require.Nil(t, dialogue.Load(1, "TestZone"), "precondition: no file for the Skeleton")
+	drained(1)
+	drained(2)
+	events.DrainQueuedInputsForTest(100)
+
+	conversation.Talk(user, room, mob)
+	mine, theirs := drained(1), drained(2)
+	require.Contains(t, theirs, "approaches")
+	require.NotContains(t, theirs, "says,")
+	require.NotContains(t, mine, "Talking with")
+	require.False(t, user.HasOpenMenu())
+	require.Contains(t, events.DrainQueuedInputsForTest(100), "emote nods.")
+}
+
+func TestTalk_ReshownMenuStaysPrivate(t *testing.T) {
+	user, mob, done := talkFixture(t)
+	defer done()
+	conversation.Talk(user, mustRoom(t, user), mob)
+	drained(1)
+	drained(2)
+
+	require.True(t, user.RouteMenuInput("2", true))
+	require.True(t, user.HasOpenMenu())
+	theirs := drained(2)
+	require.NotContains(t, theirs, "Talking with")
+	require.NotContains(t, theirs, "What lies under the altar?")
 }

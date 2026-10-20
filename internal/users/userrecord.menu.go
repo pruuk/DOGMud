@@ -87,6 +87,18 @@ func (u *UserRecord) releaseMenuSignal() {
 	}
 }
 
+// MenuBlockedReason reports what would stop OpenMenu right now: the
+// interrupt rule that holds (menu.CloseNone when none does), and whether a
+// prompt is open. A caller checks it before speaking any lines that lead
+// into a menu, so a refused menu never leaves half a conversation behind.
+func (u *UserRecord) MenuBlockedReason() (reason menu.CloseReason, promptOpen bool) {
+	reason = menuGate(u.Character)
+	u.sessionMu.Lock()
+	promptOpen = u.activePrompt != nil
+	u.sessionMu.Unlock()
+	return reason, promptOpen
+}
+
 // OpenMenu opens a game menu and sends it. It refuses, returning the gate's
 // reason, while an interrupt rule holds, and refuses (menu.CloseNone, false)
 // while a prompt is open. An open game menu is replaced.

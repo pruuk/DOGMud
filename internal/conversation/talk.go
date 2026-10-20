@@ -17,7 +17,13 @@ import (
 // Talk opens a conversation with mob: the approach line and the NPC's
 // opener and breadcrumbs as speech the room hears, then the private menu.
 // The caller has already resolved mob by sight and refused a sleeping one.
+// When the menu could not open (spec 4 item 1), the player gets one private
+// line and nobody speaks.
 func Talk(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob) {
+	if line := blockedLine(user); line != "" {
+		user.SendText(messaging.CategoryRefusal, line)
+		return
+	}
 	room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
 		`<ansi fg="username">%s</ansi> approaches <ansi fg="mobname">%s</ansi> for a conversation.`,
 		user.Character.Name, mob.Character.Name), user.UserId)
@@ -37,6 +43,72 @@ func Talk(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob) {
 	}
 	sendHints(user, hints)
 	openMenu(user, mob.InstanceId, "")
+}
+
+// blockedLines name why a conversation cannot start, one per menu gate rule.
+var blockedLines = map[menu.CloseReason]string{
+	menu.CloseCombat:     "You can't start a conversation in the middle of a fight.",
+	menu.CloseBusy:       "You are too busy to start a conversation.",
+	menu.CloseAsleep:     "You can't start a conversation while you are asleep.",
+	menu.CloseControlled: "You can't start a conversation while you are held.",
+	menu.CloseQuitting:   "You can't start a conversation while you meditate.",
+	menu.CloseDead:       "You can't start a conversation while you are dead.",
+}
+
+const promptOpenLine = "Finish what you have open before you start a conversation."
+
+// blockedLine is the refusal when the talk menu could not open now, or "".
+func blockedLine(user *users.UserRecord) string {
+	reason, promptOpen := user.MenuBlockedReason()
+	if reason != menu.CloseNone {
+		if line, ok := blockedLines[reason]; ok {
+			return line
+		}
+		return "You can't start a conversation right now."
+	}
+	if promptOpen {
+		return promptOpenLine
+	}
+	return ""
+}
+
+// lineBuffer holds the private lines the PlayerState callbacks send during a
+// choice (a delivery, gold received or paid, a refusal), so they land after
+// the handover line and before the NPC's reply.
+type lineBuffer struct {
+	user  *users.UserRecord
+	lines []bufferedLine
+}
+
+type bufferedLine struct {
+	cat  messaging.Category
+	text string
+}
+
+func (b *lineBuffer) add(cat messaging.Category, text string) {
+	b.lines = append(b.lines, bufferedLine{cat, text})
+}
+
+func (b *lineBuffer) flush() {
+	for _, l := range b.lines {
+		b.user.SendText(l.cat, l.text)
+	}
+	b.lines = nil
+}
+
+// talkState is PlayerState for a choice: its private lines go to buf, and a
+// price the player cannot pay says so (the shared callback is silent).
+func talkState(user *users.UserRecord, buf *lineBuffer) *dialogue.PlayerState {
+	ps := playerState(user, buf.add)
+	charge := ps.ChargeGold
+	ps.ChargeGold = func(amount int) bool {
+		if charge(amount) {
+			return true
+		}
+		buf.add(messaging.CategoryRefusal, "You don't have enough gold for that.")
+		return false
+	}
+	return ps
 }
 
 // heldAlso is ps with granted counted as held. GiveQuest only queues the
@@ -100,7 +172,8 @@ func choose(user *users.UserRecord, mobInstanceId int, key string) {
 		return
 	}
 	df := dialogue.Load(int(mob.MobId), mob.Zone)
-	ps := PlayerState(user)
+	buf := &lineBuffer{user: user}
+	ps := talkState(user, buf)
 	t := df.FindTopic(key)
 	if t == nil || !df.Eligible(t, ps) {
 		openMenu(user, mobInstanceId, "")
@@ -113,33 +186,41 @@ func choose(user *users.UserRecord, mobInstanceId int, key string) {
 		offerCard(user, mob, t)
 		return
 	}
-	granted := play(user, room, mob, df, t, ps)
+	granted := play(user, room, mob, df, t, ps, buf)
 	openMenu(user, mobInstanceId, granted)
 }
 
 // play speaks and applies an info or hand-in topic: the player's line, the
-// handover when it takes an item, the NPC's reply, then mood and any
-// behavior. When Apply refuses (a price or a delivery failed) the NPC says
-// nothing more; the refusal line came from the PlayerState callback. It
-// returns the quest token the topic granted, or "".
-func play(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic, ps *dialogue.PlayerState) string {
+// handover when it takes an item, the callbacks' private lines, the NPC's
+// reply, then mood and any behavior. When Apply refuses (a price or a
+// delivery failed) the player reads the refusal and the NPC says nothing
+// more. It returns the quest token the topic granted, or "".
+func play(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic, ps *dialogue.PlayerState, buf *lineBuffer) string {
 	line := t.Label
 	if t.Kind == dialogue.KindHandIn {
 		line = t.PlayerLine
 	}
 	playerSay(user, room, line)
-	// Read before Apply, which takes the item.
-	itemName := backpackItemName(user, t.RequiresItem)
-	if !df.Apply(t, ps) {
+	if !applyWithHandover(user, room, mob, df, t, ps, buf) {
 		return ""
-	}
-	if itemName != "" {
-		handoverLines(user, room, mob, itemName)
 	}
 	npcSay(mob, room, t.Text)
 	sendHints(user, t.Hints)
 	after(user, room, mob, df, t)
 	return t.GrantsQuest
+}
+
+// applyWithHandover applies t and, when it took an item, prints the handover
+// lines; then it flushes the callbacks' private lines, refused or not.
+func applyWithHandover(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic, ps *dialogue.PlayerState, buf *lineBuffer) bool {
+	// Read before Apply, which takes the item.
+	itemName := backpackItemName(user, t.RequiresItem)
+	ok := df.Apply(t, ps)
+	if ok && itemName != "" {
+		handoverLines(user, room, mob, itemName)
+	}
+	buf.flush()
+	return ok
 }
 
 // after shifts the NPC's mood and fires a behavior topic's tree.
@@ -178,13 +259,14 @@ func accept(user *users.UserRecord, mobInstanceId int, key string) string {
 		return ""
 	}
 	df := dialogue.Load(int(mob.MobId), mob.Zone)
-	ps := PlayerState(user)
+	buf := &lineBuffer{user: user}
+	ps := talkState(user, buf)
 	t := df.FindTopic(key)
 	if t == nil || !df.Eligible(t, ps) {
 		user.SendText(messaging.CategoryRefusal, `That offer is no longer open.`)
 		return ""
 	}
-	if !df.Apply(t, ps) {
+	if !applyWithHandover(user, room, mob, df, t, ps, buf) {
 		return ""
 	}
 	after(user, room, mob, df, t)

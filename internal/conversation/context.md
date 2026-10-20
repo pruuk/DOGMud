@@ -30,3 +30,13 @@ package owns everything that needs a user, a room or a mob.
   it the re-shown menu still lists an offer the player just accepted.
 - An NPC with no eligible topic left opens no menu: once the last topic is
   used up the conversation simply ends.
+- `Talk` checks `users.(*UserRecord).MenuBlockedReason` before anyone speaks:
+  a gate rule or an open prompt gets one private refusal line and the room
+  hears nothing.
+- During a choice the PlayerState callbacks' private lines (delivery, gold
+  received or paid, refusals) are buffered (`talkState`, `lineBuffer`) and
+  flushed after the handover line and before the NPC reply, also when Apply
+  refuses. `PlayerState(user)` itself still sends at once for other callers.
+  A price the player cannot pay says so in the talk flow only.
+- `RemoveItem` queues `events.ItemOwnership{Gained: false}` for the taken
+  item, as `give.go` does for a consumed hand-in.
