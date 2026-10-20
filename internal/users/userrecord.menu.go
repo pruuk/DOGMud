@@ -13,10 +13,12 @@ import (
 // openMenu is the game menu a player has open and the session it came with.
 //
 // Lock discipline: activeMenu and activePrompt change only under sessionMu,
-// and the open/closed state is read before and after each change inside the
-// same critical section. Callbacks (OnChoose, OnClose), SendText and the
-// MenuChanged event all run after sessionMu is released, so a callback may
-// open another menu or read the user without deadlocking.
+// and MenuChanged is queued inside the same critical section as the change
+// (sessionMu then the events queue lock; queue listeners run with neither
+// held), so two goroutines can never queue the signals out of order.
+// Callbacks (OnChoose, OnClose) and SendText run after sessionMu is
+// released, so a callback may open another menu or read the user without
+// deadlocking.
 type openMenu struct {
 	m menu.Menu
 	s menu.Session
@@ -52,11 +54,38 @@ func (u *UserRecord) HasOpenMenu() bool {
 	return u.activeMenu != nil
 }
 
-// notifyMenuState queues MenuChanged when a change flipped the open state.
-// Call it with sessionMu released.
-func (u *UserRecord) notifyMenuState(wasOpen, nowOpen bool) {
-	if wasOpen != nowOpen {
-		events.AddToQueue(events.MenuChanged{UserId: u.UserId, Open: nowOpen})
+// signalMenuStateLocked queues MenuChanged when the open state now differs
+// from wasOpen. While a choice holds the signal (holdMenuSignalLocked) it
+// does nothing; the release compares against the state before the choice.
+// The caller holds sessionMu.
+func (u *UserRecord) signalMenuStateLocked(wasOpen bool) {
+	if u.menuSignalHold > 0 {
+		return
+	}
+	if now := u.menuOrPromptOpenLocked(); now != wasOpen {
+		events.AddToQueue(events.MenuChanged{UserId: u.UserId, Open: now})
+	}
+}
+
+// holdMenuSignalLocked defers MenuChanged until the matching release, so a
+// choice whose OnChoose opens the next menu never tells the client the menu
+// closed in between. wasOpen is the state before the choice. The caller
+// holds sessionMu.
+func (u *UserRecord) holdMenuSignalLocked(wasOpen bool) {
+	if u.menuSignalHold == 0 {
+		u.menuSignalBase = wasOpen
+	}
+	u.menuSignalHold++
+}
+
+// releaseMenuSignal ends a hold and, at the outermost release, signals any
+// change against the state before the hold began.
+func (u *UserRecord) releaseMenuSignal() {
+	u.sessionMu.Lock()
+	defer u.sessionMu.Unlock()
+	u.menuSignalHold--
+	if u.menuSignalHold == 0 {
+		u.signalMenuStateLocked(u.menuSignalBase)
 	}
 }
 
@@ -75,37 +104,37 @@ func (u *UserRecord) OpenMenu(m menu.Menu, s menu.Session) (menu.CloseReason, bo
 	wasOpen := u.menuOrPromptOpenLocked()
 	old := u.activeMenu
 	u.activeMenu = &openMenu{m: m, s: s}
+	u.signalMenuStateLocked(wasOpen)
 	u.sessionMu.Unlock()
 
 	if old != nil && old.s.OnClose != nil {
 		old.s.OnClose(menu.CloseReplaced)
 	}
 	u.SendText(messaging.CategoryScreen, menu.Render(m))
-	u.notifyMenuState(wasOpen, true)
 	return menu.CloseNone, true
 }
 
-// takeMenu removes om if it is still the open menu and reports whether it
-// was, with the open state before and after.
-func (u *UserRecord) takeMenu(om *openMenu) (taken, wasOpen, nowOpen bool) {
-	u.sessionMu.Lock()
-	defer u.sessionMu.Unlock()
-	if om == nil || u.activeMenu != om {
-		return false, false, false
-	}
-	wasOpen = u.menuOrPromptOpenLocked()
-	u.activeMenu = nil
-	return true, wasOpen, u.menuOrPromptOpenLocked()
-}
-
-// closeMenuWith closes om if it is still the open menu, then speaks the
-// interrupt line (when announce), runs OnClose and queues MenuChanged, all
-// with sessionMu released. It reports whether om was closed by this call.
+// closeMenuWith closes om if it is still the open menu (signalling under the
+// lock), then speaks the interrupt line (when announce) and runs OnClose with
+// sessionMu released. It reports whether om was closed by this call.
 func (u *UserRecord) closeMenuWith(om *openMenu, r menu.CloseReason, announce bool) bool {
-	taken, wasOpen, nowOpen := u.takeMenu(om)
-	if !taken {
+	u.sessionMu.Lock()
+	if om == nil || u.activeMenu != om {
+		u.sessionMu.Unlock()
 		return false
 	}
+	wasOpen := u.menuOrPromptOpenLocked()
+	u.activeMenu = nil
+	u.signalMenuStateLocked(wasOpen)
+	u.sessionMu.Unlock()
+
+	u.afterMenuClosed(om, r, announce)
+	return true
+}
+
+// afterMenuClosed speaks the interrupt line (when announce) and runs OnClose
+// for a menu already taken off the user. Call it with sessionMu released.
+func (u *UserRecord) afterMenuClosed(om *openMenu, r menu.CloseReason, announce bool) {
 	if announce {
 		if line := menu.InterruptLine(r, om.s.Topic); line != "" {
 			u.SendText(messaging.CategoryRefusal, line)
@@ -114,8 +143,6 @@ func (u *UserRecord) closeMenuWith(om *openMenu, r menu.CloseReason, announce bo
 	if om.s.OnClose != nil {
 		om.s.OnClose(r)
 	}
-	u.notifyMenuState(wasOpen, nowOpen)
-	return true
 }
 
 func (u *UserRecord) currentMenu() *openMenu {
@@ -124,20 +151,27 @@ func (u *UserRecord) currentMenu() *openMenu {
 	return u.activeMenu
 }
 
-// clearNonModalPrompt clears the open prompt only if it is non-modal, in one
-// critical section so a prompt opened in between is never the one cleared.
-func (u *UserRecord) clearNonModalPrompt() bool {
-	u.sessionMu.Lock()
+// clearNonModalPromptLocked clears the open prompt only if it is non-modal
+// and reports whether it did. The caller holds sessionMu and signals.
+func (u *UserRecord) clearNonModalPromptLocked() bool {
 	if u.activePrompt == nil || !u.activePrompt.NonModal {
-		u.sessionMu.Unlock()
 		return false
 	}
-	wasOpen := u.menuOrPromptOpenLocked()
 	u.activePrompt = nil
-	nowOpen := u.menuOrPromptOpenLocked()
-	u.sessionMu.Unlock()
-	u.notifyMenuState(wasOpen, nowOpen)
 	return true
+}
+
+// takeMenuAndNonModalPrompt removes the open game menu and any non-modal
+// prompt in one critical section, signalling once, and returns what it took.
+func (u *UserRecord) takeMenuAndNonModalPrompt() (om *openMenu, promptCleared bool) {
+	u.sessionMu.Lock()
+	defer u.sessionMu.Unlock()
+	wasOpen := u.menuOrPromptOpenLocked()
+	om = u.activeMenu
+	u.activeMenu = nil
+	promptCleared = u.clearNonModalPromptLocked()
+	u.signalMenuStateLocked(wasOpen)
+	return om, promptCleared
 }
 
 // CloseMenu closes the open game menu, if any, announcing an interrupt reason.
@@ -150,13 +184,12 @@ func (u *UserRecord) CloseMenu(r menu.CloseReason) {
 // topic, its names, and whether anything was open. The caller speaks the
 // three follow lines (actions.BreakOffMenuToFollow).
 func (u *UserRecord) CloseMenuForFollow() (topic string, names []string, had bool) {
-	if om := u.currentMenu(); om != nil && u.closeMenuWith(om, menu.CloseFollow, false) {
+	om, promptCleared := u.takeMenuAndNonModalPrompt()
+	if om != nil {
+		u.afterMenuClosed(om, menu.CloseFollow, false)
 		return om.s.Topic, om.s.TopicNames, true
 	}
-	if u.clearNonModalPrompt() {
-		return "", nil, true
-	}
-	return "", nil, false
+	return "", nil, promptCleared
 }
 
 // CheckMenuInterrupts closes the open game menu and any non-modal prompt when
@@ -177,14 +210,38 @@ func (u *UserRecord) CloseMenusForRoomChange() {
 }
 
 func (u *UserRecord) closeForRule(r menu.CloseReason) {
-	if om := u.currentMenu(); om != nil {
-		u.closeMenuWith(om, r, true)
+	om, promptCleared := u.takeMenuAndNonModalPrompt()
+	if om != nil {
+		u.afterMenuClosed(om, r, true)
 	}
-	if u.clearNonModalPrompt() {
+	if promptCleared {
 		if line := menu.InterruptLine(r, ""); line != "" {
 			u.SendText(messaging.CategoryRefusal, line)
 		}
 	}
+}
+
+// choose closes om as chosen and runs its callbacks, holding MenuChanged
+// until OnChoose returns so a choice that opens the next menu never reads as
+// closed in between. It reports false when om was no longer the open menu.
+func (u *UserRecord) choose(om *openMenu, e menu.Entry) bool {
+	u.sessionMu.Lock()
+	if u.activeMenu != om {
+		u.sessionMu.Unlock()
+		return false
+	}
+	u.holdMenuSignalLocked(u.menuOrPromptOpenLocked())
+	u.activeMenu = nil
+	u.sessionMu.Unlock()
+	defer u.releaseMenuSignal()
+
+	if om.s.OnClose != nil {
+		om.s.OnClose(menu.CloseChosen)
+	}
+	if om.s.OnChoose != nil {
+		om.s.OnChoose(e)
+	}
+	return true
 }
 
 // RouteMenuInput offers a line to the open game menu. It returns true when
@@ -210,13 +267,9 @@ func (u *UserRecord) RouteMenuInput(line string, typed bool) bool {
 			u.closeMenuWith(om, menu.CloseContextLost, true)
 			return true
 		}
-		if !u.closeMenuWith(om, menu.CloseChosen, false) {
-			// Closed or replaced since we looked: the choice is stale.
-			return true
-		}
-		if om.s.OnChoose != nil {
-			om.s.OnChoose(*res.Entry)
-		}
+		// A false return means the menu closed or was replaced since we
+		// looked: the choice is stale and is dropped.
+		u.choose(om, *res.Entry)
 		return true
 	case menu.Leave:
 		u.closeMenuWith(om, menu.CloseLeft, false)

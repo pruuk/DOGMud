@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
@@ -75,8 +76,12 @@ type UserRecord struct {
 	tempDataStore  map[string]any
 	activePrompt   *prompt.Prompt
 	activeMenu     *openMenu // the open game menu (#375); guarded by sessionMu
-	isZombie       bool      // are they a zombie currently?
-	inputBlocked   bool      // Whether input is currently intentionally turned off (for a certain category of commands)
+	// menuSignalHold and menuSignalBase defer MenuChanged across a menu
+	// choice (userrecord.menu.go choose); guarded by sessionMu.
+	menuSignalHold int
+	menuSignalBase bool
+	isZombie       bool // are they a zombie currently?
+	inputBlocked   bool // Whether input is currently intentionally turned off (for a certain category of commands)
 }
 
 // UserTick is a user-defined real-time-second timer that fires commands from
@@ -794,13 +799,19 @@ func (u *UserRecord) StartPrompt(command string, rest string) (*prompt.Prompt, b
 		}
 	}
 
-	// If no prompt found or it seems like a new prompt, create a new one and replace the old
+	// If no prompt found or it seems like a new prompt, create a new one and replace the old.
+	// A prompt replaces an open game menu (#375): one signal, OnClose after unlock.
 	wasOpen := u.menuOrPromptOpenLocked()
+	replaced := u.activeMenu
+	u.activeMenu = nil
 	u.activePrompt = prompt.New(command, rest)
 	p := u.activePrompt
+	u.signalMenuStateLocked(wasOpen)
 	u.sessionMu.Unlock()
 
-	u.notifyMenuState(wasOpen, true)
+	if replaced != nil {
+		u.afterMenuClosed(replaced, menu.CloseReplaced, false)
+	}
 	return p, true
 }
 
@@ -814,12 +825,10 @@ func (u *UserRecord) GetPrompt() *prompt.Prompt {
 
 func (u *UserRecord) ClearPrompt() {
 	u.sessionMu.Lock()
+	defer u.sessionMu.Unlock()
 	wasOpen := u.menuOrPromptOpenLocked()
 	u.activePrompt = nil
-	nowOpen := u.menuOrPromptOpenLocked()
-	u.sessionMu.Unlock()
-
-	u.notifyMenuState(wasOpen, nowOpen)
+	u.signalMenuStateLocked(wasOpen)
 }
 
 func (u *UserRecord) GetOnlineInfo() OnlineInfo {
