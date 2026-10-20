@@ -41,6 +41,9 @@ it. You still get one attack while scrambling up.
 
 If you are sleeping, <ansi fg="command">stand</ansi> will wake you up.
 
+If you are sitting, <ansi fg="command">stand</ansi> gets you up for free. See
+<ansi fg="command">help sit</ansi>.
+
 <ansi fg="yellow">See Also:</ansi>
 
   <ansi fg="command">help prone</ansi>, <ansi fg="command">help bash</ansi>,

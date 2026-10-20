@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
+	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
 
 func (c *Character) IsDisabled() bool {
@@ -116,8 +117,45 @@ func (c *Character) CancelCombatConditions() {
 	c.CancelConditionsWithFlag(conditions.CancelIfCombat)
 }
 
-// RevealForCombat is what being attacked does to a defender: its
-// combat-cancel conditions strip, and a hidden defender is forced visible.
+// RiseForCombat stands a sitter who is attacked or enters combat (#637), and
+// reports whether it did. Sitting is an out-of-combat rest posture: a fight
+// never runs against a seated character, so no combat reader needs a Sitting
+// case. The transition carries position.TriggerCombatRise, which the hooks
+// package narrates ("You leap to your feet!"). Players and mobs share it.
+//
+// Two callers: RevealForCombat (being attacked) and the CombatPhase
+// Idle-to-Engaging observer in internal/hooks (entering combat). Deliberately
+// NOT CancelCombatConditions, which a death also runs: a dying sitter must not
+// be narrated leaping up. Death's own cascade stands them silently.
+func (c *Character) RiseForCombat() bool {
+	if c.Position == nil || !c.Position.IsSitting() {
+		return false
+	}
+	return c.Position.TransitionToStanding(state.TransitionReason{
+		Trigger: position.TriggerCombatRise,
+		Actor:   c.Position.Self(),
+	}) == nil
+}
+
+// StandForMove stands a sitter who changes rooms, silently, and reports
+// whether it did (#637). The room-move choke points call it for every move:
+// rooms.MoveToRoom for a player (walking, flee, recall, teleport, summon,
+// quest and script moves, respawn, ferries) and Room.AddMob for a mob. It
+// narrates nothing: the move has its own lines, and TriggerMoveStand is not
+// the combat-rise trigger the hooks observer narrates.
+func (c *Character) StandForMove() bool {
+	if c.Position == nil || !c.Position.IsSitting() {
+		return false
+	}
+	return c.Position.TransitionToStanding(state.TransitionReason{
+		Trigger: position.TriggerMoveStand,
+		Actor:   c.Position.Self(),
+	}) == nil
+}
+
+// RevealForCombat is what being attacked does to a defender: a sitter stands
+// (RiseForCombat), its combat-cancel conditions strip, and a hidden defender
+// is forced visible.
 // handleCombatRound calls it before a melee swing's lines; the special-move
 // seams (combat.ExecuteSkillMove, combat.ExecuteGrappleMove) and the taunt
 // call it before theirs, so no attack names a mob the room cannot see.
@@ -130,6 +168,7 @@ func (c *Character) CancelCombatConditions() {
 // if the condition strip left it stale; the cascade re-strips the condition
 // (a no-op, since it is already gone).
 func (c *Character) RevealForCombat() {
+	c.RiseForCombat()
 	c.CancelCombatConditions()
 	if c.Awareness != nil && c.IsHidden() {
 		c.Awareness.ForceVisible(state.TransitionReason{

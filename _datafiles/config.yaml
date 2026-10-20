@@ -1304,6 +1304,16 @@ Balance:
   MobHealthRegenPct: 0.01        # NPC HP regen per tick (1% of HealthMax)
   MobStaminaRegenPct: 0.02       # NPC stamina regen per tick (raised to match players)
   MobConvictionRegenPct: 0.02    # NPC conviction regen per tick (raised to match players)
+  # Resting boosts on the rates above, for players and mobs alike. They never
+  # stack: a sleeper who is also sitting regenerates at the sleep rate.
+  # SleepRegenMultiplier: regen multiplier while asleep (the sleep command).
+  #   Shipped here so the live value is visible; it was the 5.0 Go default.
+  SleepRegenMultiplier: 5.0
+  # SitRegenMultiplier: regen multiplier while sitting (sit or rest, #637).
+  #   Owner ruling 2026-10-19: like sleep but by less, so keep it below
+  #   SleepRegenMultiplier. Sitting is safe where sleep is not: no free
+  #   critical hit, and being attacked stands you up.
+  SitRegenMultiplier: 2.0
 
   # ── STAMINA & CONVICTION ────────────────────────────────────────────────────
   # SneakBaseStaminaCost is the configured base before load and Skullduggery.

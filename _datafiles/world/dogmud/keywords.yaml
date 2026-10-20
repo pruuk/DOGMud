@@ -34,6 +34,7 @@ help:
       - rep
       - reservation
       - skills
+      - sit
       - sleep
       - spells
       - status
@@ -252,6 +253,7 @@ help-aliases:
   quell:            [spell-defense, spell defense, magic defense]
   defy:             [social-defense, taunt defense, resist taunt]
   prone:            [knockdown, knocked-down, knocked down]
+  sit:              [rest, sitting, resting]
   trip:             [tailsweep]
   companion:        [companions]
   reservation:      [reserved, reserve, set aside]
@@ -350,6 +352,7 @@ command-aliases:
   put:                ['place']
   history:            ['log']
   noop:               ['wake']
+  sit:                ['rest']
   syslogs:            ['syslog']
   'party chat':       ['pchat', 'psay']
   'bank deposit':     ['deposit']

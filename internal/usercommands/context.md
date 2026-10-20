@@ -17,7 +17,13 @@ The `internal/usercommands` package implements the complete command system for p
 ### Command Categories
 
 #### **Basic Interaction Commands**
-- **Movement**: `go`, `flee` - Navigation and escape mechanics
+- **Movement**: `go`, `flee` - Navigation and escape mechanics. A sitter
+  who moves is stood silently by `rooms.MoveToRoom` (#637), not here.
+- **Posture** (#637): `sit` (`sit.go`; `rest` is its alias in
+  `keywords.yaml` command-aliases) wraps `actions.Sit`; `stand` gets a sitter
+  up for free through `actions.StandFromSitting` before its paid knockdown
+  path. `sit` is refused in combat by its registry flag (`AllowedInCombat`
+  false); `stand` is allowed.
 - **Communication**: `say`, `shout`, `whisper`, `emote`, `broadcast` - Player communication
 - **Observation**: `look`, `inspect`, `consider`, `online` (`who` is its alias in `keywords.yaml`, #421) - Information gathering.
   The admin `online` table swaps Title for UserId, Zone and RoomId, and

@@ -1,7 +1,8 @@
 // Package position defines the Position state machine — the fifth
 // consumer of internal/state, after combatphase, awareness, life,
 // and activity. Models body position + grapple geometry using the
-// full BJJ/MMA position taxonomy (14 states).
+// full BJJ/MMA position taxonomy (14 states), plus Sitting, the one
+// chosen rest posture (#637).
 //
 // Chunk 4a ships this scaffold DORMANT — no production code
 // transitions the machine. 4b cuts over command-site writers.
@@ -33,6 +34,14 @@ const (
 	HalfGuard          // ground transitional, one leg trapped
 	Guard              // ground bottom-active, legs around opponent
 	Turtle             // ground defensive, curled exposing back
+
+	// Sitting is a chosen rest posture, not a knockdown and not a grapple
+	// (#637). Appended last so no existing value renumbers. It lives
+	// out of combat only: entering combat or being attacked stands the
+	// sitter (Character.RiseForCombat), so combat math never meets it
+	// except through a knockdown that lands on a sitter (Sitting has
+	// edges to Prone and Supine).
+	Sitting
 )
 
 // String for logging / debugging.
@@ -66,6 +75,8 @@ func (s State) String() string {
 		return "Guard"
 	case Turtle:
 		return "Turtle"
+	case Sitting:
+		return "Sitting"
 	}
 	return "Unknown"
 }
@@ -145,6 +156,7 @@ func (m *Machine) IsBackGround() bool   { return m.State() == BackGround }
 func (m *Machine) IsHalfGuard() bool    { return m.State() == HalfGuard }
 func (m *Machine) IsGuard() bool        { return m.State() == Guard }
 func (m *Machine) IsTurtle() bool       { return m.State() == Turtle }
+func (m *Machine) IsSitting() bool      { return m.State() == Sitting }
 
 // === Rollup predicates ===
 

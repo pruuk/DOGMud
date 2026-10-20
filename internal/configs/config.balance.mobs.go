@@ -32,6 +32,9 @@ func (b *Balance) validateMobs() {
 	if b.SleepRegenMultiplier <= 0 {
 		b.SleepRegenMultiplier = 5.0
 	}
+	if b.SitRegenMultiplier <= 0 {
+		b.SitRegenMultiplier = 2.0
+	}
 	if b.ScheduleWakeGraceRounds < 1 {
 		b.ScheduleWakeGraceRounds = 50
 	}

@@ -60,7 +60,6 @@ var EmoteAliases = map[string]string{
 	"shush":    "shushes everyone.",
 	"sigh":     "sighs deeply.",
 	"sing":     "sings a tune.",
-	"sit":      "sits down for a think.",
 	"skip":     "skips joyfully.",
 	"slap":     "slaps their forehead.",
 	"slouch":   "slouches lazily.",

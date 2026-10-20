@@ -36,6 +36,15 @@ func (c *Character) IsSupine() bool {
 	return c.Position.IsSupine()
 }
 
+// IsSitting returns true when the character has sat down to rest (#637).
+// Not a knockdown: IsOnFloor and the recovery guards ignore it.
+func (c *Character) IsSitting() bool {
+	if c.Position == nil {
+		return false
+	}
+	return c.Position.IsSitting()
+}
+
 // IsClinch returns true when the character is in a standing grapple (clinch).
 func (c *Character) IsClinch() bool {
 	if c.Position == nil {
@@ -197,7 +206,7 @@ func (c *Character) IsBeingControlled() bool {
 // Mapping (matches the legacy enum's intent; Turtle joins Prone/Supine
 // because a balled-up defender swings just as poorly):
 //
-//	Standing                  → 1.0
+//	Standing / Sitting        → 1.0
 //	Prone / Supine / Turtle   → 0.5
 //	Clinch / BackStanding     → 0.6
 //	Ground grapples (9 states) → 0.3
@@ -206,7 +215,10 @@ func (c *Character) GetPositionSpeedMultiplier() float64 {
 		return 1.0
 	}
 	switch c.Position.State() {
-	case position.Standing:
+	case position.Standing, position.Sitting:
+		// Sitting (#637) never swings: combat stands a sitter before its
+		// first round (RiseForCombat). Listed so it cannot fall to the
+		// ground-grapple default below.
 		return 1.0
 	case position.Prone, position.Supine, position.Turtle:
 		return 0.5

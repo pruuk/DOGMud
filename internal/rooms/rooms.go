@@ -1361,6 +1361,12 @@ func (r *Room) AddMob(mobInstanceId int) {
 	mob.Character.RoomId = r.RoomId
 	mob.Character.Zone = r.Zone
 
+	// #637: nobody arrives seated. Every mob room entry ends here (walking,
+	// flee, recall, teleport, companion follow and summon, caravans, ferries,
+	// admin and quest moves), so a sitter stands silently; MoveToRoom is the
+	// player twin.
+	mob.Character.StandForMove()
+
 	// Chunk 4.3: record zone visits for the visit-zone goal type.
 	// Lazily initialize the map; nil counts as "no zones visited".
 	if r.Zone != "" {
