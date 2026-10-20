@@ -164,10 +164,6 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			return true, nil
 		}
 
-		// A sitter gets up to walk off (#637), after the step is paid so a
-		// refused step leaves it seated. The player go does the same.
-		actions.StandFromSitting(mover)
-
 		sneaking := actions.MobIsSneaking(mob)
 
 		actions.RelocateMob(mob, room, exitName, destRoom, sneaking)

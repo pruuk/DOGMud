@@ -15,7 +15,8 @@ import (
 // one command, shared by players and mobs. A sitter regenerates faster
 // (Balance.SitRegenMultiplier, below sleep), stands with `stand` at no cost,
 // and is stood up by combat (Character.RiseForCombat, narrated by
-// NarrateCombatRise) or by walking off (StandFromSitting in the go wrappers).
+// NarrateCombatRise) or, silently, by any room move
+// (Character.StandForMove in rooms.MoveToRoom and Room.AddMob).
 
 // Refusal lines the sit command sends a player. A mob actor's SendText does
 // nothing, so a mob is refused silently.
@@ -62,9 +63,9 @@ func Sit(actor Actor) bool {
 	return true
 }
 
-// StandFromSitting stands a sitter for free: the stand command's Sitting
-// branch, and a sitter who walks off. Returns false, saying nothing, when the
-// actor is not sitting.
+// StandFromSitting stands a sitter for free, narrated: the Sitting branch of
+// both stand commands. Returns false, saying nothing, when the actor is not
+// sitting. A room move stands a sitter silently instead (StandForMove).
 func StandFromSitting(actor Actor) bool {
 	c := actor.GetCharacter()
 	if c == nil || c.Position == nil || !c.IsSitting() {

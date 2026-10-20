@@ -473,6 +473,12 @@ func MoveToRoom(userId int, toRoomId int, isSpawn ...bool) error {
 	user.Character.Zone = newRoom.Zone
 	user.Character.RememberRoom(newRoom.RoomId) // Mark this room as remembered.
 
+	// #637: nobody arrives seated. Every player move ends here (walking,
+	// flee, recall, teleport, summon, quest and script moves, respawn), so
+	// a sitter stands silently once the move is committed; Room.AddMob is
+	// the mob twin.
+	user.Character.StandForMove()
+
 	playerCt := newRoom.AddPlayer(userId)
 	roomManager.roomsWithUsers[newRoom.RoomId] = playerCt
 

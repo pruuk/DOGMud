@@ -131,8 +131,10 @@ Grapple helpfile softened to match. Chunk 4 (Position) is now **CLOSED**.
 | `Sitting` | A chosen rest posture (`sit` / `rest`), not a knockdown and not a grapple. No per-state data. |
 
 Edges: `Standing → Sitting` (`TriggerSitCommand`); `Sitting → Standing`
-(`TriggerStandCommand` from the stand command or walking off,
-`TriggerCombatRise` when combat stands the sitter); `Sitting → Prone /
+(`TriggerStandCommand` from the stand command, `TriggerCombatRise` when
+combat stands the sitter, `TriggerMoveStand` when any room move stands them
+silently through `Character.StandForMove` in `rooms.MoveToRoom` and
+`Room.AddMob`); `Sitting → Prone /
 Supine` (a knockdown landing on a sitter). No edge from the floor or a
 grapple, and none from Sitting into a grapple: a grapple attempt stands its
 target first.
@@ -395,10 +397,11 @@ toward `Standing`.
 
 ## Trigger Constants
 
-28 named trigger constants in `transitions.go` (the table below, plus
-`TriggerSitCommand` `"sit_command"` Standing → Sitting and
+29 named trigger constants in `transitions.go` (the table below, plus
+`TriggerSitCommand` `"sit_command"` Standing → Sitting,
 `TriggerCombatRise` `"combat_rise"` Sitting → Standing when combat stands a
-sitter, #637). Use these constants
+sitter, and `TriggerMoveStand` `"move_stand"` Sitting → Standing, silent,
+on any room move, #637). Use these constants
 instead of inline string literals for stable identifiers.
 
 | Constant | Value | Purpose |

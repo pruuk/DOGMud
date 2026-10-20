@@ -1429,8 +1429,8 @@ and a guard in `actions_test.go` keeps `sit` and `rest` out of
 - `StandFromSitting(actor) bool` stands a sitter for free
   (`TriggerStandCommand`), "You stand up." / "X stands up."; false and silent
   for anyone not sitting. Called by both `stand` commands before their
-  knockdown path, and by both `go` wrappers after the step is paid, so a
-  sitter who walks off gets up first.
+  knockdown path. A room move (walking included) stands a sitter silently
+  in the rooms choke points instead (`Character.StandForMove`).
 - `NarrateCombatRise(actor)` is "You leap to your feet!" / "X leaps up!",
   called by the hooks Position observer when combat stands a sitter
   (`Character.RiseForCombat`).

@@ -1562,6 +1562,12 @@ so a sitter who starts a fight stands too. It is deliberately not inside
 `CancelCombatConditions`, which a death also runs: a dying sitter must not be
 narrated leaping up. The hooks Position observer narrates the rise.
 
+`StandForMove() bool` is the silent twin for a room move
+(`TriggerMoveStand`): `rooms.MoveToRoom` calls it for every player move and
+`Room.AddMob` for every mob room entry, so walking, flee, recall, teleport,
+summon, follow, quest and script moves and respawn all arrive Standing with
+no line of their own.
+
 **Sitting is not a knockdown.** `AttemptRecovery` gates on `IsProne() ||
 IsSupine()`, so a sitter is never recovered, counted or auto-stood by the
 #398 guard (`sitting_test.go` pins it).

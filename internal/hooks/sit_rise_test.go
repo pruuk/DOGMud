@@ -66,6 +66,62 @@ func TestSitRise_AttackedMobLeapsUp(t *testing.T) {
 	require.Empty(t, drainPlain(2))
 }
 
+// Nobody arrives seated: every room move stands a sitter silently through the
+// choke points, rooms.MoveToRoom (players) and Room.AddMob (mobs). Recall and
+// teleport go through teleportActor; a mob's walk and flee through
+// actions.RelocateMob.
+
+func TestSitMove_SeatedPlayerTeleportedArrivesStandingSilently(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	u1, _, room := sitRiseScene(t)
+
+	require.True(t, actions.Sit(actions.NewUserActorInRoom(u1, room)))
+	drainPlain(1)
+	drainPlain(2)
+
+	require.NoError(t, rooms.MoveToRoom(u1.UserId, 2))
+	require.Equal(t, 2, u1.Character.RoomId)
+	require.True(t, u1.Character.IsStanding(), "a teleported sitter must arrive standing, state %v", u1.Character.Position.State())
+	for _, line := range append(drainPlain(1), drainPlain(2)...) {
+		require.NotContains(t, line, "leap", "a forced move is not a combat rise")
+		require.NotContains(t, line, "stand", "a forced move stands the sitter silently")
+	}
+}
+
+func TestSitMove_SeatedPlayerRecalledArrivesStanding(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	u1, _, room := sitRiseScene(t)
+
+	actor := actions.NewUserActorInRoom(u1, room)
+	require.True(t, actions.Sit(actor))
+	require.True(t, teleportActor(actor, 2), "recall's teleport refused")
+	require.True(t, u1.Character.IsStanding(), "a recalled sitter must arrive standing, state %v", u1.Character.Position.State())
+}
+
+func TestSitMove_SeatedMobMovedArrivesStanding(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	_, _, room := sitRiseScene(t)
+	dest := rooms.LoadRoom(2)
+	require.NotNil(t, dest)
+
+	walker := newLiveMob(t, 7821, room.RoomId, 40)
+	room.AddMob(walker.InstanceId)
+	require.True(t, actions.Sit(actions.NewMobActorInRoom(walker, room)))
+	actions.RelocateMob(walker, room, "north", dest, false)
+	require.Equal(t, 2, walker.Character.RoomId)
+	require.True(t, walker.Character.IsStanding(), "a walking sitter mob must arrive standing, state %v", walker.Character.Position.State())
+
+	recalled := newLiveMob(t, 7822, room.RoomId, 40)
+	room.AddMob(recalled.InstanceId)
+	actor := actions.NewMobActorInRoom(recalled, room)
+	require.True(t, actions.Sit(actor))
+	require.True(t, teleportActor(actor, 2))
+	require.True(t, recalled.Character.IsStanding(), "a teleported sitter mob must arrive standing, state %v", recalled.Character.Position.State())
+}
+
 // Standing by command is narrated by the command, not by the combat-rise
 // observer: one line each, never "leaps up".
 func TestSitRise_StandCommandIsNotACombatRise(t *testing.T) {

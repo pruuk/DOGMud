@@ -17,8 +17,8 @@ The `internal/usercommands` package implements the complete command system for p
 ### Command Categories
 
 #### **Basic Interaction Commands**
-- **Movement**: `go`, `flee` - Navigation and escape mechanics. `go` stands
-  a sitter (`actions.StandFromSitting`) after the step is paid.
+- **Movement**: `go`, `flee` - Navigation and escape mechanics. A sitter
+  who moves is stood silently by `rooms.MoveToRoom` (#637), not here.
 - **Posture** (#637): `sit` (`sit.go`; `rest` is its alias in
   `keywords.yaml` command-aliases) wraps `actions.Sit`; `stand` gets a sitter
   up for free through `actions.StandFromSitting` before its paid knockdown

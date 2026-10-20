@@ -18,8 +18,9 @@ The `internal/mobcommands` package implements the AI command system for non-play
 
 #### **Posture (#637)**
 - `sit` and `rest` (both registered, `sit.go`) wrap `actions.Sit`; `stand`
-  gets a sitter up for free through `actions.StandFromSitting`; `go` stands a
-  sitter after the step is paid. Same rules and lines as the player commands.
+  gets a sitter up for free through `actions.StandFromSitting`. Any room move
+  stands a sitter silently in `rooms.Room.AddMob`. Same rules and lines as the
+  player commands.
 
 #### **Combat Intelligence**
 - **Threat assessment**: `lookfortrouble` - Advanced hostility detection and target selection

@@ -104,6 +104,7 @@ const (
 	// Sitting (#637)
 	TriggerSitCommand = "sit_command" // Standing → Sitting (sit / rest)
 	TriggerCombatRise = "combat_rise" // Sitting → Standing (entering combat or being attacked)
+	TriggerMoveStand  = "move_stand"  // Sitting → Standing, silently, on any room move (rooms.MoveToRoom / Room.AddMob)
 
 	// Grapple entry / break
 	TriggerGrappleEntry = "grapple_entry" // Standing → Clinch

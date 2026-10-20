@@ -137,6 +137,22 @@ func (c *Character) RiseForCombat() bool {
 	}) == nil
 }
 
+// StandForMove stands a sitter who changes rooms, silently, and reports
+// whether it did (#637). The room-move choke points call it for every move:
+// rooms.MoveToRoom for a player (walking, flee, recall, teleport, summon,
+// quest and script moves, respawn, ferries) and Room.AddMob for a mob. It
+// narrates nothing: the move has its own lines, and TriggerMoveStand is not
+// the combat-rise trigger the hooks observer narrates.
+func (c *Character) StandForMove() bool {
+	if c.Position == nil || !c.Position.IsSitting() {
+		return false
+	}
+	return c.Position.TransitionToStanding(state.TransitionReason{
+		Trigger: position.TriggerMoveStand,
+		Actor:   c.Position.Self(),
+	}) == nil
+}
+
 // RevealForCombat is what being attacked does to a defender: a sitter stands
 // (RiseForCombat), its combat-cancel conditions strip, and a hidden defender
 // is forced visible.
