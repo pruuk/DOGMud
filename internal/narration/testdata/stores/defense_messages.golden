@@ -18,7 +18,7 @@ block|normal|actor => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> block
 block|normal|observer => <ansi fg="combat"><ansi fg="mob">Defender</ansi> blocks <ansi fg="user">Attacker</ansi>'s attack.</ansi>
 block|heavy|actee => <ansi fg="defense-good">You effortlessly block <ansi fg="user">Attacker</ansi>'s feeble attack!</ansi>
 block|heavy|actor => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> effortlessly blocks your feeble attack!</ansi>
-block|heavy|observer => <ansi fg="combat"><ansi fg="mob">Defender</ansi> effortlessly blocks the feeble attack.</ansi>
+block|heavy|observer => <ansi fg="combat"><ansi fg="mob">Defender</ansi> effortlessly blocks <ansi fg="user">Attacker</ansi>'s feeble attack.</ansi>
 counter-block|weak|actee => <ansi fg="defense-good">You take it on your guard and shove in, but Attacker gives ground in time.</ansi>
 counter-block|weak|actor => <ansi fg="attack-bad">Defender takes it on their guard and shoves in, but you give ground in time.</ansi>
 counter-block|weak|observer => <ansi fg="combat">Defender takes it on the guard and shoves in, but Attacker gives ground.</ansi>
@@ -90,7 +90,7 @@ dodge|normal|actor => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> dodge
 dodge|normal|observer => <ansi fg="combat"><ansi fg="mob">Defender</ansi> dodges <ansi fg="user">Attacker</ansi>'s attack.</ansi>
 dodge|heavy|actee => <ansi fg="defense-good">You sidestep <ansi fg="user">Attacker</ansi>'s clumsy <ansi fg="item">Strike</ansi> with ease!</ansi>
 dodge|heavy|actor => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> sidesteps your clumsy <ansi fg="item">Strike</ansi> with ease!</ansi>
-dodge|heavy|observer => <ansi fg="combat"><ansi fg="mob">Defender</ansi> sidesteps the clumsy <ansi fg="item">Strike</ansi> with ease.</ansi>
+dodge|heavy|observer => <ansi fg="combat"><ansi fg="mob">Defender</ansi> sidesteps <ansi fg="user">Attacker</ansi>'s clumsy <ansi fg="item">Strike</ansi> with ease.</ansi>
 parry|weak|actee => <ansi fg="defense-good">You barely parry <ansi fg="user">Attacker</ansi>'s attack!</ansi>
 parry|weak|actor => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> barely parries your attack!</ansi>
 parry|weak|observer => <ansi fg="combat"><ansi fg="mob">Defender</ansi> barely parries <ansi fg="user">Attacker</ansi>'s attack.</ansi>
@@ -99,7 +99,7 @@ parry|normal|actor => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> parri
 parry|normal|observer => <ansi fg="combat"><ansi fg="mob">Defender</ansi> parries <ansi fg="user">Attacker</ansi>'s attack.</ansi>
 parry|heavy|actee => <ansi fg="defense-good">You effortlessly parry <ansi fg="user">Attacker</ansi>'s clumsy attack!</ansi>
 parry|heavy|actor => <ansi fg="attack-bad"><ansi fg="mob">Defender</ansi> effortlessly parries your clumsy attack!</ansi>
-parry|heavy|observer => <ansi fg="combat"><ansi fg="mob">Defender</ansi> effortlessly parries the clumsy attack.</ansi>
+parry|heavy|observer => <ansi fg="combat"><ansi fg="mob">Defender</ansi> effortlessly parries <ansi fg="user">Attacker</ansi>'s clumsy attack.</ansi>
 quell|weak|actee => <ansi fg="defense-good">You catch the edge of Attacker's Strike, dulling its force.</ansi>
 quell|weak|actor => <ansi fg="attack-bad">Defender catches the edge of your Strike, dulling its force.</ansi>
 quell|weak|observer => <ansi fg="combat">Defender catches the edge of Attacker's Strike.</ansi>
