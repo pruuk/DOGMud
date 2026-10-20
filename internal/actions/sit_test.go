@@ -6,8 +6,38 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
+
+// Sit never wakes a sleeper (owner ruling 2026-10-19): a sleeping actor,
+// player or mob, is refused and stays asleep.
+func TestSit_SleeperIsRefusedAndStaysAsleep(t *testing.T) {
+	// Condition 15's shipped flags (15-sleeping.yaml), cancel-on-action
+	// included, so a stray wake would show.
+	cleanup := conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		15: {ConditionId: 15, Name: "Sleeping", TriggerCount: 1000000,
+			Flags: []conditions.Flag{conditions.Sleeping, conditions.CancelOnAction, conditions.CancelOnDamage}},
+	})
+	defer cleanup()
+	for _, isPlayer := range []bool{true, false} {
+		a := newSitActor(t, isPlayer)
+		_ = a.char.AddCondition(15, false)
+		if !a.char.HasConditionFlag(conditions.Sleeping) {
+			t.Fatal("fixture: the sleeper is not asleep")
+		}
+		if Sit(a) {
+			t.Fatalf("player=%v: Sit seated a sleeper", isPlayer)
+		}
+		if !a.char.HasConditionFlag(conditions.Sleeping) || !a.char.IsStanding() {
+			t.Fatalf("player=%v: after Sit asleep=%v state=%v, want still asleep and Standing",
+				isPlayer, a.char.HasConditionFlag(conditions.Sleeping), a.char.Position.State())
+		}
+		if got := lastLine(a); got != SitRefuseAsleep {
+			t.Errorf("player=%v: refusal %q, want %q", isPlayer, got, SitRefuseAsleep)
+		}
+	}
+}
 
 // Sit and StandFromSitting (#637), shared by players and mobs. The fake actor
 // captures the actor's own lines; the room has no players, so the observer
@@ -82,9 +112,11 @@ func TestSit_Refusals(t *testing.T) {
 		{"already sitting", func(a *sleepFakeActor) {
 			_ = a.char.Position.TransitionToSitting(state.TransitionReason{Trigger: position.TriggerSitCommand})
 		}, SitRefuseSitting, position.Sitting},
-		{"asleep", func(a *sleepFakeActor) {
-			_ = a.char.AddCondition(15, false)
-		}, SitRefuseAsleep, position.Standing},
+		{"casting", func(a *sleepFakeActor) {
+			a.char.Activity = activity.NewMachine()
+			_ = a.char.Activity.TransitionToCasting(activity.CastingData{SpellId: "sparks", FoldsNeeded: 4},
+				state.TransitionReason{Trigger: activity.TriggerCastBegin})
+		}, refusal.WhileBusyText("sit"), position.Standing},
 		{"in combat", func(a *sleepFakeActor) {
 			a.char.SetAggro(0, 9001, 0)
 		}, refusal.WhileFightingText("sit"), position.Standing},
@@ -101,9 +133,6 @@ func TestSit_Refusals(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			a := newSitActor(t, true)
 			tc.setup(a)
-			if !a.char.HasConditionFlag(conditions.Sleeping) && tc.name == "asleep" {
-				t.Fatal("fixture: the sleeper is not asleep")
-			}
 			if Sit(a) {
 				t.Fatalf("Sit accepted a character who is %s", tc.name)
 			}

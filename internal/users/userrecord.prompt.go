@@ -629,8 +629,9 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 				promptOut.WriteString(hiddenFlag)
 
 			case `{pos}`:
-				// Combat position prompt. Chunk 4b R6: FSM-driven (14 states
-				// — Standing / Prone / Supine / 11 grapples). Hidden when
+				// Position prompt. Chunk 4b R6: FSM-driven (15 states:
+				// Standing, Prone, Supine, 11 grapples, and Sitting, which
+				// shows as "Sitting" in white, #637). Hidden when
 				// Standing to keep the prompt short. The token carries its own
 				// leading space, so it never glues to the bar before it
 				// ("CP:##########Prone") and a standing player gets no gap.

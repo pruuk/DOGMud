@@ -1558,8 +1558,7 @@ while keeping the Awareness machine as the canonical state source.
 ### Being attacked reveals: RevealForCombat()
 
 `RevealForCombat()` (`conditions.go`) is what being attacked does to a
-defender: `RiseForCombat()` stands a sitter (#637), then
-`CancelCombatConditions()`, then a hidden character is forced
+defender: `CancelCombatConditions()`, then a hidden character is forced
 visible (`ForceVisible`, trigger `TriggerCombatEntered`). It is the one reveal
 for every attack: `handleCombatRound` calls it on the defender, and so do the
 special-move seams `combat.ExecuteSkillMove` and `combat.ExecuteGrappleMove`
@@ -1570,9 +1569,12 @@ one out, so a hidden player it clips stays hidden and keeps its conditions.
 
 `RiseForCombat() bool` moves a `Sitting` character to `Standing` under
 `position.TriggerCombatRise` and reports whether it did; it is a no-op for
-anyone not sitting (a knockdown is untouched). Its other caller is the
-CombatPhase Idle-to-Engaging observer in `internal/hooks/Position_SitRise.go`,
-so a sitter who starts a fight stands too. It is deliberately not inside
+anyone not sitting (a knockdown is untouched). `RevealForCombat` calls it
+LAST, after the reveal, so a hidden sitter's leap is narrated only once they
+are visible. Its other caller is the CombatPhase Idle-to-Engaging observer
+in `internal/hooks/Position_SitRise.go`, so a sitter who starts a fight
+stands. An area attack does not stand a sitter it clips (no RevealForCombat
+for an area shape; owner ruling 2026-10-19: working as intended). It is deliberately not inside
 `CancelCombatConditions`, which a death also runs: a dying sitter must not be
 narrated leaping up. The hooks Position observer narrates the rise.
 

@@ -9,8 +9,11 @@
   you up too.
 - If a fight comes to you, you leap to your feet. You can't sit down in a
   fight.
-- Everyone in the room can see who is sitting. Creatures sit and rest by
-  the same rules.
+- Everyone in the room can see who is sitting, and if your prompt shows
+  your position it now reads "Sitting" while you sit. Creatures sit and
+  rest by the same rules.
+- You can't sit while asleep (type wake first), or while casting or
+  crafting.
 
 ## 2026-10-19: Every creature squares up its own way
 

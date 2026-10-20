@@ -11,9 +11,7 @@ import (
 // command-aliases in keywords.yaml. Delegates to actions.Sit, shared with
 // mobs, which moves the Position machine to Sitting and narrates it.
 func Sit(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	if refuseWhileBusy(user, `sit`) {
-		return true, nil
-	}
+	// The busy refusal lives in actions.Sit, shared with mobs.
 	actions.Sit(actions.NewUserActorInRoom(user, room))
 	return true, nil
 }

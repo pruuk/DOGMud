@@ -1421,7 +1421,12 @@ and a guard in `actions_test.go` keeps `sit` and `rest` out of
 `EmoteAliases`).
 
 - `Sit(actor) bool` moves Standing to Sitting (`TriggerSitCommand`). It
-  refuses, in order: asleep (`SitRefuseAsleep`), already sitting
+  refuses, in order: asleep (`SitRefuseAsleep`, "You're asleep. Type 'wake'
+  to wake up."; sit never wakes a sleeper, owner ruling 2026-10-19, and the
+  player dispatcher's cancel-on-action wake skips sit through
+  `usercommands.keepsSleep` so a player can reach this line), busy
+  (`refusal.WhileBusy(actor, "sit")`, casting, crafting or salvaging, for
+  players and mobs alike), already sitting
   (`SitRefuseSitting`), in combat (`refusal.WhileFighting(actor, "sit")`),
   grappled (`SitRefuseGrappled`), any other non-standing state
   (`SitRefuseOnTheFloor`). A mob's refusal is silent (its `SendText` does
@@ -1435,8 +1440,11 @@ and a guard in `actions_test.go` keeps `sit` and `rest` out of
   called by the hooks Position observer when combat stands a sitter
   (`Character.RiseForCombat`).
 
-Every line goes through `messaging.SendTrio` with no actee: the observer line
-is sight-gated and hides the actor's name from a reader who cannot see them.
+The actor gets its own line; the observer line goes through `SendSeen`, so it
+is sight-gated, hides the name from a reader who cannot see the actor, and is
+not sent at all for a hidden actor (#274, owner R3). A hidden player who sits
+or stands also gets `HiddenPostureNote` ("No one sees it; you are hidden.");
+the combat leap sends no note.
 
 ## Sleep Action (chunk 3.3)
 
