@@ -408,7 +408,10 @@ func collectReferencedMoveEvents(t *testing.T, dirs []string) map[moveEventPair]
 						return true
 					}
 					switch ident.Name {
-					case "sendMoveEvent", "renderMoveEvent":
+					// sendPartialMove (#631) takes verb and event in the
+					// same two leading positions and sends through
+					// sendMoveEvent.
+					case "sendMoveEvent", "renderMoveEvent", "sendPartialMove":
 						if len(call.Args) < 2 {
 							return true
 						}

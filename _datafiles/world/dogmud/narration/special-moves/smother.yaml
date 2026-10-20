@@ -31,13 +31,13 @@ events:
   # so these lines claim neither blindness nor choking.
   partial:
     actee:
-      - 'You turn aside, but {actor}''s embers sting! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You hold your breath; {actor} still stings! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You twist away, but {actor} singes you! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You keep out most of {actor}''s smoke, but the embers still sting! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You take only part of {actor}''s smoke, but it still stings! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Most of {actor}''s smoke falls short, but it still singes you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actee} turns aside, but {actor}''s embers sting!'
-      - '{actee} holds their breath, but {actor} still stings!'
-      - '{actee} twists away, but {actor} singes them!'
+      - '{actee} keeps out most of {actor}''s smoke, but the embers still sting!'
+      - '{actee} takes only part of {actor}''s smoke, but it still stings!'
+      - 'Most of {actor}''s smoke falls short of {actee}, but it still singes them!'
   miss:
     actee:
       - '{actor} billows toward your face, but misses!'

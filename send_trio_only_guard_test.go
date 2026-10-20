@@ -136,8 +136,10 @@ var sendTrioOnlyCategoryRE = regexp.MustCompile(
 // Say or the zero-value NoLine. moveCategories{...} (M4e-1b,
 // internal/usercommands/move_narration.go) is the player-side helper's
 // per-role category literal, consumed only by sendMoveEvent/lineOrNone the
-// same way; it never sends a category anywhere else.
-var sendTrioOnlyProducerRE = regexp.MustCompile(`messaging\.Say\(|acteeDefenceLine\(|sendMoveEvent\(|lineOrNone\(|moveCategories\{`)
+// same way; it never sends a category anywhere else. sendPartialMove (#631,
+// both command packages' skill_move_defence.go) hands its category only to
+// messaging.Say and sendMoveEvent.
+var sendTrioOnlyProducerRE = regexp.MustCompile(`messaging\.Say\(|acteeDefenceLine\(|sendMoveEvent\(|sendPartialMove\(|lineOrNone\(|moveCategories\{`)
 
 func TestNarrationTrioOnlyCategoriesLeaveOnlyThroughSendTrio(t *testing.T) {
 	seen := map[string]bool{}

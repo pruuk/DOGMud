@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/movenarration"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -63,6 +64,25 @@ func moveDefenceLines(mob *mobs.Mob, room *rooms.Room, target actions.AggroTarge
 func sendMoveDefenceShortage(note messaging.Line, aud messaging.Audience) {
 	// Private to the defender: the room is not told the defender ran short.
 	messaging.SendTrio(messaging.Trio{Actor: messaging.NoLine, Actee: note, Observer: messaging.NoLine}, aud)
+}
+
+// sendPartialMove narrates a special move that a defence blunted but did not
+// stop: it still dealt damage. THE RULE (#631, owner ruling 2026-10-19): one
+// outcome is told in one tier, so every role reads the move store's partial
+// event, the same tier the defender's damage line comes from. The defence
+// triad narrates only a defence that stopped the move outright. Swapping the
+// room line for the triad's (as every move did until #631) told the room
+// "Ordel Quist smoothly sweeps aside the fumbled low lunge." while the
+// defender read that the lunge still caught them.
+//
+// shortage is the defender's resource note from moveDefenceLines, empty when
+// no defence fired or nothing ran short. The usercommands twin applies the
+// same rule.
+func sendPartialMove(verb string, event movenarration.EventKey, ids moveIdentities, aud messaging.Audience, cat messaging.Category, tokens map[string]string, shortage string) {
+	if shortage != "" {
+		sendMoveDefenceShortage(messaging.Say(cat, shortage), aud)
+	}
+	sendMoveEvent(verb, event, ids, aud, cat, tokens)
 }
 
 // acteeDefenceLine renders the defender's personal defence line with the

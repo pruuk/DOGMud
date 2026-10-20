@@ -127,8 +127,7 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 		}
 	} else if result.Damage > 0 {
-		// Defended-partial: personal lines carry the damage; the room line
-		// names the defence that blunted the move (U6b Task 9).
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
 		var tripAttack string
 		var partialEvent movenarration.EventKey
 		if hasTail {
@@ -138,20 +137,8 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			tripAttack = "trip"
 			partialEvent = "trip_partial"
 		}
-		roles, _ := renderMoveEvent("trip", partialEvent, ids, damageTokens)
-		defence, defended := moveDefenceLines(user, room, target, result.Defence, tripAttack)
-		if defended {
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryTrip, defence.Shortage), aud)
-		}
-		observer := lineOrNone(messaging.CategoryTrip, roles.Observer)
-		if defended {
-			observer = messaging.Say(messaging.CategoryTrip, defence.ToRoom)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(tripCategories.Actor, roles.Actor),
-			Actee:    lineOrNone(tripCategories.Actee, roles.Actee),
-			Observer: observer,
-		}, aud)
+		defence, _ := moveDefenceLines(user, room, target, result.Defence, tripAttack)
+		sendPartialMove("trip", partialEvent, ids, aud, tripCategories, damageTokens, defence.Shortage)
 	} else {
 		// Fully stopped: speak the triad naming the winning defence; fall
 		// back to plain miss text when there is no defence to narrate (a

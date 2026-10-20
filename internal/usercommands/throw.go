@@ -179,6 +179,19 @@ func throwInterruptAudience(base messaging.Audience, mobName string) messaging.A
 	return base
 }
 
+// throwPartialCategories carries a firebomb's defended partial (#631): the
+// thrower's damage line and the room's line both ride the ranged-hit
+// category, as the thrower's partial line always did.
+var throwPartialCategories = moveCategories{Actor: messaging.CategoryHitRanged, Actee: messaging.CategoryHitRanged, Observer: messaging.CategoryHitRanged}
+
+// throwPartialIds names the thrower and one blast target for the
+// partial_hit event.
+func throwPartialIds(thrower moveIdentities, mobName string) moveIdentities {
+	thrower.Actee = fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, mobName)
+	thrower.ActeePlain = mobName
+	return thrower
+}
+
 func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	if refuseWhileBusy(user, `throw anything`) {
 		return true, nil
@@ -424,38 +437,27 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			}
 		}
 
-		if out.Defended {
-			// U6b Task 9/15: a defended throw speaks the channel defence
-			// triad (dodge, or block behind a shield), naming what actually
-			// stopped or blunted it. Room lines never carry damage; when the
-			// blast still clipped the defender, the thrower's own line
-			// carries the tier instead of the triad's attacker line.
+		if out.Defended && dmg > 0 {
+			// Defended partial (#631, owner ruling 2026-10-19): the blast
+			// still clipped the defender, so the thrower and the room both
+			// read the firebomb's partial tier (sendPartialMove). The target
+			// is a mob and has no client. Room lines never carry damage.
+			sendPartialMove("throw", "partial_hit", throwPartialIds(playerIds, mob.Character.Name),
+				throwInterruptAudience(aud, mob.Character.Name), throwPartialCategories,
+				map[string]string{movenarration.TokenDamage: combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)}, "")
+		} else if out.Defended {
+			// U6b Task 9/15: a defence that took the whole blast speaks the
+			// channel defence triad (dodge, or block behind a shield), naming
+			// what stopped it.
 			triad := combat.RenderChannelDefenceMessages(out, combat.ChannelDefenceIdentities{
 				Attacker: user.Character.GetPlayerName(user.UserId).String(),
 				Defender: mob.Character.GetMobNameIndexed(user.UserId,
 					room.GetMobDuplicateIndex(mob.InstanceId)).String(),
 			}, "firebomb")
-			// The actor line and the room line are independently conditional
-			// here, so both are built before the single send rather than the
-			// event being split across two.
-			throwerLine := messaging.NoLine
-			if dmg > 0 {
-				dmgDesc := combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)
-				partialRoles, _ := renderMoveEvent("throw", "partial_hit",
-					moveIdentities{Actee: fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, mob.Character.Name)},
-					map[string]string{movenarration.TokenDamage: dmgDesc})
-				throwerLine = lineOrNone(messaging.CategoryHitRanged, partialRoles.Actor)
-			} else if triad.ToAttacker != "" {
-				throwerLine = messaging.Say(messaging.CategoryDodge, string(triad.ToAttacker))
-			}
-			dodgeRoomLine := messaging.NoLine
-			if triad.ToRoom != "" {
-				dodgeRoomLine = messaging.Say(messaging.CategoryDodge, string(triad.ToRoom))
-			}
 			messaging.SendTrio(messaging.Trio{
-				Actor:    throwerLine,
+				Actor:    lineOrNone(messaging.CategoryDodge, string(triad.ToAttacker)),
 				Actee:    messaging.NoLine,
-				Observer: dodgeRoomLine,
+				Observer: lineOrNone(messaging.CategoryDodge, string(triad.ToRoom)),
 			}, aud)
 		}
 

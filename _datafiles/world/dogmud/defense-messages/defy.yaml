@@ -5,10 +5,10 @@ options:
     together:
       actee:
       - '<ansi fg="defense-good">You defy {actor}''s {attack}, taking some of its sting.</ansi>'
-      - '<ansi fg="defense-good">You set your jaw against the {attack}, though it still bites.</ansi>'
+      - '<ansi fg="defense-good">You set your jaw against {actor}''s {attack}, though it still bites.</ansi>'
       - '<ansi fg="defense-good">You refuse to rise fully to {actor}''s {attack}.</ansi>'
-      - '<ansi fg="defense-good">You hold onto your nerve as the {attack} finds a narrow purchase.</ansi>'
-      - '<ansi fg="defense-good">You answer the {attack} with stubborn silence, blunting its edge.</ansi>'
+      - '<ansi fg="defense-good">You hold onto your nerve as {actor}''s {attack} finds a narrow purchase.</ansi>'
+      - '<ansi fg="defense-good">You answer {actor}''s {attack} with stubborn silence, blunting its edge.</ansi>'
       actor:
       - '<ansi fg="attack-bad">{actee} defies your {attack}, taking some of its sting.</ansi>'
       - '<ansi fg="attack-bad">{actee} sets their jaw, though your {attack} still bites.</ansi>'
@@ -17,18 +17,18 @@ options:
       - '<ansi fg="attack-bad">{actee} answers your {attack} with silence, blunting its edge.</ansi>'
       observer:
       - '<ansi fg="combat">{actee} defies {actor}''s {attack}, taking some of its sting.</ansi>'
-      - '<ansi fg="combat">{actee} sets their jaw, though the {attack} still bites.</ansi>'
+      - '<ansi fg="combat">{actee} sets their jaw, though {actor}''s {attack} still bites.</ansi>'
       - '<ansi fg="combat">{actee} refuses to rise fully to {actor}''s {attack}.</ansi>'
-      - '<ansi fg="combat">{actor}''s {attack} finds only a narrow purchase.</ansi>'
-      - '<ansi fg="combat">{actee} answers the {attack} with stubborn silence.</ansi>'
+      - '<ansi fg="combat">{actor}''s {attack} finds only a narrow purchase on {actee}.</ansi>'
+      - '<ansi fg="combat">{actee} answers {actor}''s {attack} with stubborn silence.</ansi>'
   normal:
     together:
       actee:
       - '<ansi fg="defense-good">You defy {actor}''s {attack}, stripping away most of its force.</ansi>'
-      - '<ansi fg="defense-good">You meet the {attack} with cold refusal, though a faint sting remains.</ansi>'
+      - '<ansi fg="defense-good">You meet {actor}''s {attack} with cold refusal, though a faint sting remains.</ansi>'
       - '<ansi fg="defense-good">You see through {actor}''s provocation and dull most of its sting.</ansi>'
-      - '<ansi fg="defense-good">You turn the {attack} aside with a steady stare, leaving little sting.</ansi>'
-      - '<ansi fg="defense-good">Your resolve holds firm, though the {attack} leaves a faint sting.</ansi>'
+      - '<ansi fg="defense-good">You turn {actor}''s {attack} aside with a steady stare, leaving little sting.</ansi>'
+      - '<ansi fg="defense-good">Your resolve holds firm against {actor}, though the {attack} leaves a faint sting.</ansi>'
       actor:
       - '<ansi fg="attack-bad">{actee} defies your {attack}, stripping away most of its force.</ansi>'
       - '<ansi fg="attack-bad">{actee} meets your {attack} with cold refusal, though some sting remains.</ansi>'
@@ -38,16 +38,16 @@ options:
       observer:
       - '<ansi fg="combat">{actee} defies {actor}''s {attack}, stripping away most of its force.</ansi>'
       - '<ansi fg="combat">{actee} meets {actor}''s {attack} with cold refusal, though some sting remains.</ansi>'
-      - '<ansi fg="combat">{actee} sees through the provocation and dulls most of its sting.</ansi>'
-      - '<ansi fg="combat">{actee} turns most of the {attack} aside with a steady stare.</ansi>'
+      - '<ansi fg="combat">{actee} sees through {actor}''s provocation and dulls most of its sting.</ansi>'
+      - '<ansi fg="combat">{actee} turns most of {actor}''s {attack} aside with a steady stare.</ansi>'
       - '<ansi fg="combat">{actee} holds firm, though {actor}''s {attack} leaves a faint sting.</ansi>'
   heavy:
     together:
       actee:
       - '<ansi fg="defense-good">You take no conviction harm from {actor}''s {attack}, though it still draws your attention.</ansi>'
-      - '<ansi fg="defense-good">The {attack} causes no conviction injury, even as its challenge pulls your focus.</ansi>'
+      - '<ansi fg="defense-good">{actor}''s {attack} causes no conviction injury, even as its challenge pulls your focus.</ansi>'
       - '<ansi fg="defense-good">Your resolve prevents all conviction harm from {actor}, though you still answer the challenge.</ansi>'
-      - '<ansi fg="defense-good">You suffer no conviction injury from the {attack}, though it can still redirect your attention.</ansi>'
+      - '<ansi fg="defense-good">You suffer no conviction injury from {actor}''s {attack}, though it can still redirect your attention.</ansi>'
       - '<ansi fg="defense-good">{actor}''s {attack} deals no conviction harm, while its demand still reaches you.</ansi>'
       actor:
       - '<ansi fg="attack-bad">{actee} takes no conviction harm from your {attack}, though it still draws their attention.</ansi>'
@@ -57,7 +57,7 @@ options:
       - '<ansi fg="attack-bad">Your {attack} deals {actee} no conviction harm, while its demand still reaches them.</ansi>'
       observer:
       - '<ansi fg="combat">{actee} takes no conviction harm from {actor}''s {attack}, though it still draws their attention.</ansi>'
-      - '<ansi fg="combat">The {attack} causes {actee} no conviction injury, even as its challenge pulls their focus.</ansi>'
+      - '<ansi fg="combat">{actor}''s {attack} causes {actee} no conviction injury, even as its challenge pulls their focus.</ansi>'
       - '<ansi fg="combat">{actee} prevents all conviction harm from {actor}, though they still answer the challenge.</ansi>'
-      - '<ansi fg="combat">{actee} suffers no conviction injury from the {attack}, though it can still redirect their attention.</ansi>'
+      - '<ansi fg="combat">{actee} suffers no conviction injury from {actor}''s {attack}, though it can still redirect their attention.</ansi>'
       - '<ansi fg="combat">{actor}''s {attack} deals {actee} no conviction harm, while its demand still reaches them.</ansi>'

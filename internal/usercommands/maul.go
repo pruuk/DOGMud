@@ -84,21 +84,9 @@ func Maul(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if res.MoveResult.Hit {
 		sendMoveEvent("maul", "hit", ids, aud, maulCategories, damageTokens)
 	} else if res.MoveResult.Damage > 0 {
-		// Defended-partial: the personal lines carry the damage, and the room
-		// line names the defence that blunted the maul (U6b Task 9), falling
-		// back to the squared partial text when there was no defence to name.
-		roles, _ := renderMoveEvent("maul", "partial", ids, damageTokens)
-		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "savage bite")
-		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
-		if defended {
-			observer = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(maulCategories.Actor, roles.Actor),
-			Actee:    lineOrNone(maulCategories.Actee, roles.Actee),
-			Observer: observer,
-		}, aud)
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
+		defence, _ := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "savage bite")
+		sendPartialMove("maul", "partial", ids, aud, maulCategories, damageTokens, defence.Shortage)
 	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "savage bite"); defended {
 		// A defence stopped it outright: all three lines come from the triad.
 		sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)

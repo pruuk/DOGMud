@@ -25,17 +25,17 @@ events:
       - '{actor}''s brutal mauling drives fangs deep into {actee}!'
   partial:
     actor:
-      - 'Your fangs still tear {actee} as they twist mostly free! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your fangs mostly miss {actee}, but still tear a shallow gash! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actee} twists free of your bite, but your fangs still rake them! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your fangs still tear {actee} as they get mostly clear! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your bite only half lands on {actee}, but still tears a shallow gash! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} avoids the worst of your bite, but your fangs still rake them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} snaps at you and you dodge most of it, but the fangs still tear you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} snaps at you, and you dodge most of it, but the fangs still tear you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} lunges to maul you; you twist free of most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} snaps at you and you get mostly clear, but the fangs still tear you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} snaps at you; the bite only half lands, but the fangs still tear you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} lunges to maul you; you avoid most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} snaps at {actee}, who twists mostly free but still gets torn!'
-      - '{actor} lunges to maul {actee}, who twists mostly free but still gets torn!'
-      - '{actor} lunges to maul {actee}, who twists free of most of it but not all!'
+      - '{actor} snaps at {actee}, who gets mostly clear but still gets torn!'
+      - '{actor} lunges to maul {actee}; the bite only half lands, but still tears them!'
+      - '{actor} lunges to maul {actee}, who avoids most of it but not all!'
   # DIVERGENT (Task 3, owner-approved 2026-09-21): variants 1 to 3 (the
   # player's original lines) describe different feels -- bite misses / snap
   # and dodge / lunge glances off -- one feel per variant across all three

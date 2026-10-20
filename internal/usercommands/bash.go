@@ -108,21 +108,9 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			sendMoveEvent("bash", "hit", ids, aud, bashCategories, damageTokens)
 		}
 	} else if result.Damage > 0 {
-		// Defended-partial: the personal lines carry the damage, and the room
-		// line names the defence that blunted the bash (U6b Task 9), falling
-		// back to plain stagger text when there was no defence to name.
-		roles, _ := renderMoveEvent("bash", "partial", ids, damageTokens)
-		defence, defended := moveDefenceLines(user, room, target, result.Defence, "shield bash")
-		observer := lineOrNone(messaging.CategoryBash, roles.Observer)
-		if defended {
-			observer = messaging.Say(messaging.CategoryBash, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryBash, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(bashCategories.Actor, roles.Actor),
-			Actee:    lineOrNone(bashCategories.Actee, roles.Actee),
-			Observer: observer,
-		}, aud)
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
+		defence, _ := moveDefenceLines(user, room, target, result.Defence, "shield bash")
+		sendPartialMove("bash", "partial", ids, aud, bashCategories, damageTokens, defence.Shortage)
 	} else if defence, defended := moveDefenceLines(user, room, target, result.Defence, "shield bash"); defended {
 		// A defence stopped it outright: all three lines come from the triad.
 		sendMoveDefenceShortage(messaging.Say(messaging.CategoryBash, defence.Shortage), aud)

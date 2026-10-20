@@ -25,17 +25,17 @@ events:
       - '{actor}''s vicious rake of claws shreds {actee}!'
   partial:
     actor:
-      - 'Your claws still scratch {actee} as they dodge! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your raking claws mostly miss {actee}, but still leave a shallow scratch! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actee} dodges most of your swipe, but your claws still catch them! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your claws still scratch {actee} as they get mostly clear! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your raking claws only half land on {actee}, but still leave a shallow scratch! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} stops most of your swipe, but your claws still catch them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor}''s claws still scratch you as you dodge! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} rakes their claws at you, and you dodge most of it, but they still scratch you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} swipes at you; you dodge most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s claws still scratch you as you get mostly clear! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} rakes their claws at you; the rake only half lands, but still scratches you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} swipes at you; you stop most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor}''s claws still scratch {actee}, who mostly dodges!'
-      - '{actor} rakes their claws at {actee}, who mostly dodges but still gets scratched!'
-      - '{actor} swipes at {actee}, who dodges most of it but not all!'
+      - '{actor}''s claws still scratch {actee}, who gets mostly clear!'
+      - '{actor} rakes their claws at {actee}; the rake only half lands, but still scratches!'
+      - '{actor} swipes at {actee}, who stops most of it but not all!'
   # DIVERGENT (Task 3, owner-approved 2026-09-21): variants 1 to 3 (the
   # player's original lines) describe different feels -- plain miss / dodge
   # / rake glances off -- one feel per variant across all three roles.

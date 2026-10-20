@@ -88,6 +88,17 @@ The `internal/usercommands` package implements the complete command system for p
   `Not<Identity>` result for ineligible callers. See
   `internal/combat/context.md` "Beast Moveset (Phase 3)" for full
   gate and mechanic details.
+- **Defended partial (#631)**: a special move a defence blunted but did
+  not stop (it still dealt damage) narrates through `sendPartialMove`
+  (`skill_move_defence.go`): every role reads the store's partial event,
+  and only the defender's shortage note comes from `moveDefenceLines`. The
+  defence triad narrates only a defence that stopped the move outright.
+  The firebomb (`throw.go`, event `partial_hit`) follows it too. Partial
+  lines name no defence: they must read true for dodge, block, parry,
+  quell or defy alike (`defenceWordInPartial` in mobcommands'
+  `partial_rule_test.go`). The mobcommands twin applies the same rule;
+  `TestPartialMovesNarrateThroughTheRule` (mobcommands) holds every call
+  site in both packages to it.
 
 #### **Naming a creature in the dark (#454)**
 Every command that names a creature in the room runs the typed name through

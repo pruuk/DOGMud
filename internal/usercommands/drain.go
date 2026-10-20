@@ -96,21 +96,9 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			sendMoveEvent("drain", "hit_heal", ids, aud, drainCategories, healTokens)
 		}
 	} else if res.MoveResult.Damage > 0 {
-		// Defended-partial: the personal lines carry the damage, and the room
-		// line names the defence that blunted the drain (U6b Task 9), falling
-		// back to the squared partial text when there was no defence to name.
-		roles, _ := renderMoveEvent("drain", "partial", ids, damageTokens)
-		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "draining grasp")
-		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
-		if defended {
-			observer = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(drainCategories.Actor, roles.Actor),
-			Actee:    lineOrNone(drainCategories.Actee, roles.Actee),
-			Observer: observer,
-		}, aud)
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
+		defence, _ := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "draining grasp")
+		sendPartialMove("drain", "partial", ids, aud, drainCategories, damageTokens, defence.Shortage)
 
 		// Lifesteal scales on damage actually applied, so a partial drain can
 		// still heal the attacker a little. Actor-only, same ruling as above.
