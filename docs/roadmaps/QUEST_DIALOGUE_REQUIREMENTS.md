@@ -48,8 +48,9 @@ to the next.
     rare and logs a warning.
 16. Pinnacle recipes are sold, not quested. Info that cannot be a closed loop is a topic, not
     a quest.
-17. LLM dialogue (forks only; DOGMud keeps it off) uses the same topic structure and behaves
-    like written dialogue.
+17. LLM dialogue is out of this arc. A later hook may generate topics, then small quests, from
+    an NPC's profile; they use the same topic structure and pass the same validators (#643;
+    owner 2026-10-20).
 
 ## The arc is done when
 

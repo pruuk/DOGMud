@@ -44,9 +44,11 @@ Every phase spec re-verifies the facts it builds on; this table is the starting 
 - **Engine first, then content zone by zone.** Phases 0 to 5 build mechanisms and keep every
   existing NPC and quest working. Phase 7 then ports content one zone at a time, applying
   everything at once, so each zone is touched once and playtested once.
-- **Extend, don't replace.** The topic structure wraps today's dialogue entries and reuses
-  their gating fields. Existing NPCs appear in the menu from phase 1 with fallback labels;
-  the zone pass gives them real ones.
+- **Dialogue is converted once, not extended** (owner 2026-10-20, reversing the earlier
+  "extend, don't replace"). Phase 1 rewrites every dialogue file into keyed, labelled topics
+  that reuse today's gating fields, and deletes patterns, the tree and trigger words. There
+  are no fallback labels: labels are written in the conversion. Quests keep the
+  extend-in-place approach.
 - **Reuse before inventing.** The menu primitive absorbs `prompt` and the numbered-list
   templates; quest state stays in quest tokens; repeat frequency stays on `cooldown_rounds`.
 - **Validators enforce the rules.** Each requirement that can be checked at boot is a
@@ -73,25 +75,26 @@ Every phase spec re-verifies the facts it builds on; this table is the starting 
 
 ```
 key        stable id, unique within the NPC ("directions")
-kind       info | quest
+kind       info | offer | handin (phase 1 spec, owner 2026-10-20)
 label      menu text in natural language, no "Ask:"/"Task:" prefix. Info: the player's
-           line ("How do I reach the steppe?"). Quest: the quest title.
-playerLine quest only: what the player says, shown under the title and spoken aloud
+           line ("How do I reach the steppe?"). Offer and hand-in: the quest title.
+playerLine offer and hand-in: what the player says, shown under the title and spoken aloud
            ("Do you want help settling the feud at the well?")
-text       what the NPC says (quest: the pitch)
+text       what the NPC says (offer: the pitch)
 marked     info only: lights [*] until heard
+heardRequired  info keys in the same NPC that must be heard first
 gates      the existing gating fields (questRequired, questExcluded, quest flags,
-           itemExcluded, goldRequired, masterworkRequired...) plus new skill/stat gates
-quest      quest only: quest id; offer and hand-in state come from tokens
-breadcrumb shown while a quest topic is hidden for ineligibility
-source     authored | llm
+           requiresItem, itemExcluded, goldRequired, masterworkRequired...) plus later
+           skill/stat gates
+quest      offer and hand-in: quest id; offer and hand-in state come from tokens
+breadcrumb offer only: spoken while the offer is hidden for ineligibility
 ```
 
 - Heard info is saved on the character as a set of `<mob template id>.<key>` strings. Menu
   numbers are display order only.
 - Quest topics derive their marker from tokens: `[!]` eligible and not started, `[?]` final
   step reached and ready to hand in. No second record to drift.
-- LLM topics get a generated key when stored and are then indistinguishable from authored ones.
+- LLM topics are out of this arc (#643); a later hook would produce this same structure.
 
 ## Build order
 
@@ -152,43 +155,47 @@ as before; tests cover number, name, Enter, out-of-range and a stale menu.
 
 **Goal.** `talk <npc>` is the only way to converse, through the menu.
 
+**Spec:** `docs/superpowers/specs/2026-10-20-quest-arc-phase1-talk-design.md` (owner rulings
+R1 to R11 there).
+
 **Approach.**
-- Introduce the topic structure. Adapt today's patterns and tree nodes into topics at load
-  time; a missing label falls back to the first trigger word, a missing key to a derived one
-  (the validator lists every fallback so phase 7 can clear them).
-- Menu content: eligible topics in authored order, quest topics first. Hidden quest topics
-  show their breadcrumb if they have one.
-- Heard set on the character (new saved field, through `dogmud-persistence` rules). Writes
-  on hearing a `marked` info topic.
-- Markers: computed per viewer, shown in the room's mob list and on menu lines; only when the
-  NPC is visible by name.
-- Observers see a conversation, never a menu (owner 2026-10-20): choosing a topic makes the
-  player say its player line (an info label, or a quest entry's `Detail` line) and the NPC
-  answer, both as ordinary speech the room hears, for info and quests alike. The menu, the
-  objective and reward summary, and the Accept / Leave prompt are private to the player.
-- `give` of an asked-for item resolves as choosing that topic, with the same output.
-- `ask` becomes a redirect line. The tree's free-text triggers stop being the entry point.
-- LLM path: generated replies are stored as `source: llm` topics on that NPC and then served
-  like any other.
-- Dialogue validators take a proposed world (loaded world plus pending edits), per the
-  approach section, so phase 6's whole-world save check needs no rework.
+- Convert once: a one-time converter plus zone subagents rewrite all 302 dialogue files into
+  `topics:` (`kind` info, offer or handin) with real labels; the old format and its engine are
+  deleted. `requires` becomes `heardRequired`, read from the saved heard set.
+- Menu content: offers and hand-ins first, then info, in authored order. Hidden offers have
+  their breadcrumb spoken after the opener. The menu is re-shown after every answer.
+- Heard set on the character (new saved field) records every info topic heard; heard topics
+  render Dim.
+- Offers end in a bare private Accept / Leave; the grant happens only on Accept. Hand-ins
+  complete on choice.
+- Item hand-ins are topic-only: quest `item_give` hand-in triggers fold into their NPC's
+  topic and are deleted. `give` resolves as choosing that topic, with the same output; a
+  wanted item given at the wrong time is handed back before it moves.
+- Markers are computed per viewer and replace the unused upstream `★` quest star in the same
+  name slot (text roster, GMCP), only when the NPC is visible by name.
+- Observers see a conversation, never a menu (owner 2026-10-20).
+- `ask` becomes a redirect line. LLM calls leave `talk` and `ask`. The admin dialogue editor
+  is switched off until phase 6.
+- Dialogue validators take a proposed world and are hard failures from phase 1, since the
+  conversion clears the backlog in one pass.
 - Start the topic-key manifest and its guard test here.
 
 **Exit.** Every NPC with dialogue answers `talk` with a menu; heard state survives logout and
-restart; markers clear and return correctly; `ask` redirects.
+restart; markers clear and return correctly; `ask` redirects; every pre-conversion grant maps
+to exactly one topic.
 
-**Spec questions.** Where LLM topics are stored; how tree nodes that unlock other nodes
-(`UnlockedNodes`) map onto topics.
+**Spec questions (answered).** LLM topic storage is moot (LLM is out of the arc, #643);
+`UnlockedNodes` maps onto `heardRequired`.
 
-**Status:** not started.
+**Status:** spec written 2026-10-20.
 
 ## Phase 2: Quest offer, hand-in and the closed loop
 
 **Goal.** Every quest is offered, accepted, finished and chained through the menu.
 
 **Approach.**
-- Offer card: pitch, objective (current step's description), reward summary in words where
-  the player-copy rules require it, then Accept / Leave.
+- Offer card: extends phase 1's bare Accept / Leave with the objective (current step's
+  description) and a reward summary in words where the player-copy rules require it.
 - Finish line on the giver for a quest at its hand-in step; completion pays out as today and
   then offers the chain's next quest in the same menu.
 - Chain declaration on the quest (next quest id), so the hand-in offer and the validator
