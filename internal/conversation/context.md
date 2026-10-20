@@ -14,6 +14,7 @@ package owns everything that needs a user, a room or a mob.
 |---|---|
 | `playerstate.go` | `PlayerState(user)`: the `dialogue.PlayerState` callbacks over a character |
 | `marker.go` | `Marker(viewerUserId, mob)`: the viewer's talk marker (`[?]`, `[!]`, `[*]` or empty); its `init` installs it as `rooms.NpcMarker`, which the room roster and the GMCP `Room.Info` NPC list call |
+| `give.go` | `Give(user, room, mob, itm) bool`: `give <item> <npc>` resolved against the NPC's topics before any transfer (R8). An eligible topic wanting the item plays through the same path as a menu choice; a wanted item with no eligible topic is handed back; false (nothing changed) when no topic wants it or the NPC is charmed |
 | `talk.go` | `Talk(user, room, mob)`: the approach line, opener and breadcrumbs, then the private talk menu; info and hand-in choices (player line, handover line, NPC reply, then the menu re-shown), the offer pitch and its Accept / Leave card, and `player_topic` for `behavior` topics |
 
 ## Rules
@@ -38,5 +39,10 @@ package owns everything that needs a user, a room or a mob.
   flushed after the handover line and before the NPC reply, also when Apply
   refuses. `PlayerState(user)` itself still sends at once for other callers.
   A price the player cannot pay says so in the talk flow only.
+- Charmed NPCs offer no topics: `Talk` gives the approach line and a nod,
+  `Give` returns false, and `Marker` is empty.
+- `Give` does not check `MenuBlockedReason`: give is a plain command with its
+  own refusals in `give.go`. The menu it re-shows afterwards is withheld by
+  `OpenMenu` itself while a gate rule holds or a prompt is open.
 - `RemoveItem` queues `events.ItemOwnership{Gained: false}` for the taken
   item, as `give.go` does for a consumed hand-in.

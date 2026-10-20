@@ -29,7 +29,8 @@ func Talk(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob) {
 		user.Character.Name, mob.Character.Name), user.UserId)
 
 	df := dialogue.Load(int(mob.MobId), mob.Zone)
-	if df == nil {
+	// Charmed NPCs offer no topics (the marker skips them too).
+	if df == nil || mob.Character.IsCharmed() {
 		mob.Command(`emote nods.`)
 		return
 	}

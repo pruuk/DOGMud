@@ -545,6 +545,23 @@ func TestTalk_NoDialogueFileNodsAndOpensNoMenu(t *testing.T) {
 	require.Contains(t, events.DrainQueuedInputsForTest(100), "emote nods.")
 }
 
+// Charmed NPCs offer no topics: the approach line and a nod, nothing more.
+func TestTalk_CharmedMobOnlyNods(t *testing.T) {
+	user, mob, done := talkFixture(t)
+	defer done()
+	mob.Character.Charmed = characters.NewCharm(2, characters.CharmPermanent, "")
+	events.DrainQueuedInputsForTest(100)
+
+	conversation.Talk(user, mustRoom(t, user), mob)
+	mine, theirs := drained(1), drained(2)
+	require.Contains(t, theirs, "approaches")
+	require.NotContains(t, theirs, "Rattle.")
+	require.NotContains(t, mine, "Rattle.")
+	require.NotContains(t, mine, "Talking with")
+	require.False(t, user.HasOpenMenu())
+	require.Contains(t, events.DrainQueuedInputsForTest(100), "emote nods.")
+}
+
 func TestTalk_ReshownMenuStaysPrivate(t *testing.T) {
 	user, mob, done := talkFixture(t)
 	defer done()
