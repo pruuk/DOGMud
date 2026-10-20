@@ -3,6 +3,7 @@ package usercommands
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -24,6 +25,12 @@ func Stand(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	if user.Character.HasConditionFlag(conditions.Sleeping) {
 		user.Character.CancelConditionsWithFlag(conditions.Sleeping)
 		mobs.OnSleeperWoken(user.Character)
+	}
+
+	// A sitter stands for free: no stamina, no round (#637). Sitting is a
+	// rest posture, not a knockdown.
+	if actions.StandFromSitting(actions.NewUserActorInRoom(user, room)) {
+		return true, nil
 	}
 
 	// Gate on the Position FSM. Only Prone/Supine can "stand"; a grapple lock

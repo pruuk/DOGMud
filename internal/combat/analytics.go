@@ -190,7 +190,8 @@ func positionFields(char *characters.Character) (string, bool) {
 // fails if a new State is added without a bucket here.
 func positionBucket(pos string) string {
 	switch pos {
-	case position.Standing.String():
+	case position.Standing.String(), position.Sitting.String():
+		// Sitting (#637) is stood up before a fight reaches it.
 		return "standing"
 	case position.Prone.String(), position.Supine.String():
 		return "prone"

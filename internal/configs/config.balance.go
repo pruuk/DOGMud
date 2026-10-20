@@ -729,6 +729,14 @@ type Balance struct {
 	// dominant recovery mechanic. Chunk 3.3.
 	SleepRegenMultiplier ConfigFloat `yaml:"SleepRegenMultiplier"`
 
+	// SitRegenMultiplier multiplies HP/SP/CP per-round percentage regen
+	// while the bearer is Sitting (the sit / rest command, #637). Owner
+	// ruling 2026-10-19: sitting raises regen like sleep but by less, so
+	// keep it below SleepRegenMultiplier. Never stacks with sleep: a
+	// sleeping sitter gets the sleep rate. Default 2.0; players and mobs
+	// share it.
+	SitRegenMultiplier ConfigFloat `yaml:"SitRegenMultiplier"`
+
 	// ScheduleWakeGraceRounds is the cooldown (in rounds) during which a
 	// scheduled mob will not re-sleep after a forced wake. Prevents the
 	// schedule executor from immediately re-applying Sleeping when the

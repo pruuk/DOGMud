@@ -1629,6 +1629,22 @@ directly. Those legacy fields no longer exist (T21 sunset).
 - PO-039: Guard at death → cascades to Standing
 - PO-040: BackGround at death → cascades to Standing
 
+### Position_SitRise.go (#637)
+
+Keeps `position.Sitting` out of combat, wired through
+`characters.OnCharacterCreated(wireSitRise)`, players and mobs alike:
+
+- `sit_rise_on_combat` on the CombatPhase machine: Idle to Engaging calls
+  `Character.RiseForCombat()`, so a sitter who starts or joins a fight stands.
+  Being attacked first is covered by `RevealForCombat`, which calls the same
+  method.
+- `sit_rise_narration` on the Position machine: Sitting to Standing under
+  `position.TriggerCombatRise` resolves the character to an `actions.Actor`
+  in its current room and calls `actions.NarrateCombatRise`. The stand
+  command and walking off use `TriggerStandCommand` and narrate themselves.
+
+Tests: `sit_rise_test.go`.
+
 ### Position_GrappleTick.go (chunk 4b / 4b-fixup-2)
 
 Per-round grapple observer registered via `events.RegisterListener`

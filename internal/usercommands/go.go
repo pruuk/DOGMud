@@ -249,6 +249,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			user.SendText(messaging.CategorySystem, "<ansi fg=\"yellow\">You're feeling winded. Consider resting to recover your stamina.</ansi>")
 		}
 
+		// A sitter gets up to walk off (#637), after the step is paid so a
+		// refused step leaves them seated. The mob go does the same.
+		actions.StandFromSitting(actions.NewUserActorInRoom(user, room))
+
 		// Grab the exit in the target room that leads to this room (if any).
 		// exit.EntryPhrase turns it into the arrival words: "enters from
 		// above" where "from the up" did not read (#430), and "arrives" when

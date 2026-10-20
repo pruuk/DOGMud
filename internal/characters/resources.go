@@ -391,11 +391,33 @@ func (c *Character) HealthPerRound() int {
 	if base < 1 {
 		base = 1
 	}
-	// Chunk 3.3: 5× regen while sleeping.
-	if c.HasConditionFlag(conditions.Sleeping) {
+	return c.applyRestRegen(base)
+}
+
+// RestRegenMultiplier is the resting boost on per-round HP/SP/CP regen:
+// Balance.SleepRegenMultiplier while the Sleeping flag is held (chunk 3.3),
+// else Balance.SitRegenMultiplier while Sitting (#637), else 1. The two never
+// stack: a sitter who falls asleep regenerates at the sleep rate. A knob at
+// zero or below is treated as off (1). Players and mobs share it.
+func (c *Character) RestRegenMultiplier() float64 {
+	b := configs.GetBalanceConfig()
+	switch {
+	case c.HasConditionFlag(conditions.Sleeping):
 		if mult := float64(b.SleepRegenMultiplier); mult > 0 {
-			base = int(float64(base) * mult)
+			return mult
 		}
+	case c.IsSitting():
+		if mult := float64(b.SitRegenMultiplier); mult > 0 {
+			return mult
+		}
+	}
+	return 1
+}
+
+// applyRestRegen scales one pool's per-round regen by RestRegenMultiplier.
+func (c *Character) applyRestRegen(base int) int {
+	if mult := c.RestRegenMultiplier(); mult != 1 {
+		return int(float64(base) * mult)
 	}
 	return base
 }
@@ -431,13 +453,8 @@ func (c *Character) StaminaPerRound() int {
 			base = 1
 		}
 	}
-	// Chunk 3.3: 5× regen while sleeping (composes on top of mutation modifier).
-	if c.HasConditionFlag(conditions.Sleeping) {
-		if mult := float64(b.SleepRegenMultiplier); mult > 0 {
-			base = int(float64(base) * mult)
-		}
-	}
-	return base
+	// Sleep or sit boost (composes on top of mutation modifier).
+	return c.applyRestRegen(base)
 }
 
 func (c *Character) ConvictionPerRound() int {
@@ -452,13 +469,7 @@ func (c *Character) ConvictionPerRound() int {
 	if base < 1 {
 		base = 1
 	}
-	// Chunk 3.3: 5× regen while sleeping.
-	if c.HasConditionFlag(conditions.Sleeping) {
-		if mult := float64(b.SleepRegenMultiplier); mult > 0 {
-			base = int(float64(base) * mult)
-		}
-	}
-	return base
+	return c.applyRestRegen(base)
 }
 
 // GetToxicityMax returns the maximum toxicity this character can handle.

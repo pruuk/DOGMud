@@ -1413,6 +1413,31 @@ type SearchResult struct {
 
 ---
 
+## Sit Action (#637)
+
+`sit.go`, shared by players and mobs. Sitting is the `position.Sitting`
+state, not a condition and not an emote (the old `sit` emote alias is gone,
+and a guard in `actions_test.go` keeps `sit` and `rest` out of
+`EmoteAliases`).
+
+- `Sit(actor) bool` moves Standing to Sitting (`TriggerSitCommand`). It
+  refuses, in order: asleep (`SitRefuseAsleep`), already sitting
+  (`SitRefuseSitting`), in combat (`refusal.WhileFighting(actor, "sit")`),
+  grappled (`SitRefuseGrappled`), any other non-standing state
+  (`SitRefuseOnTheFloor`). A mob's refusal is silent (its `SendText` does
+  nothing). Lines: "You sit down." / "X sits down.".
+- `StandFromSitting(actor) bool` stands a sitter for free
+  (`TriggerStandCommand`), "You stand up." / "X stands up."; false and silent
+  for anyone not sitting. Called by both `stand` commands before their
+  knockdown path, and by both `go` wrappers after the step is paid, so a
+  sitter who walks off gets up first.
+- `NarrateCombatRise(actor)` is "You leap to your feet!" / "X leaps up!",
+  called by the hooks Position observer when combat stands a sitter
+  (`Character.RiseForCombat`).
+
+Every line goes through `messaging.SendTrio` with no actee: the observer line
+is sight-gated and hides the actor's name from a reader who cannot see them.
+
 ## Sleep Action (chunk 3.3)
 
 ### Sleep
@@ -2109,7 +2134,7 @@ the rest are ordinary verbs.
 | Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `search_bauble.go` (roll and delayed delivery), `search_feature.go` (`search <feature>`), `scan.go`, `track.go`, `steal.go`, `steal_pocket.go` (a player's pickpocket pause and bauble) |
 | Items & economy | `get.go` (`GetItemFromFloor` refuses a household's bauble (`BaubleBelongsTo`) with `ErrHouseholdBauble`, the item found and nothing moved, for every taker: a player's `get`, a mob's, a companion's, a scavenger's (owner ruling 2026-09-29); its gates sit in one early-return block), `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `sell_quote.go` (`QuoteSale`, `SaleMerchant`: the one quote sell, offer and appraise share), `sell_bauble.go`, `stolen_bauble.go` (heat, recognition, returns), `remove_equip.go`, `shop_sight.go`, `drink.go` |
 | Trades | `craft.go`, `salvage.go`, `forage.go`, `plant.go`, `defuse.go` |
-| Movement & state | `go.go`, `sleep.go`, `consider.go`, `map_visit.go` (`MarkRoomMappedIfSeen`: puts a room on the fog-of-war map by its template id only when the character makes anything out there; a room walked in the dark stays off until seen, #252 ruling R5; `usercommands.Go` and gmcp's `SightBandChanged` handler call it) |
+| Movement & state | `go.go`, `sleep.go`, `sit.go` (sit / rest and standing from a seat, #637), `consider.go`, `map_visit.go` (`MarkRoomMappedIfSeen`: puts a room on the fog-of-war map by its template id only when the character makes anything out there; a room walked in the dark stays off until seen, #252 ruling R5; `usercommands.Go` and gmcp's `SightBandChanged` handler call it) |
 | Social | `say.go`, `emote.go`, `emote_aliases.go` |
 | Divergences | `divergences.go` — deliberate departures from upstream behaviour |
 

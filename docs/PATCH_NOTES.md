@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-10-19: Take a seat
+
+- You can now sit down to rest. Type sit, or rest, which does the same.
+  While you sit, your health, stamina and conviction come back faster than
+  standing, though not as fast as sleep, and you stay awake.
+- Type stand to get up. Getting up from a seat is free. Walking away gets
+  you up too.
+- If a fight comes to you, you leap to your feet. You can't sit down in a
+  fight.
+- Everyone in the room can see who is sitting. Creatures sit and rest by
+  the same rules.
+
 ## 2026-10-19: Every creature squares up its own way
 
 - When a fight begins, the first line now shows how your foe gets ready,

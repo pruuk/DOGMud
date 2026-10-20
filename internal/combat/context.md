@@ -743,7 +743,11 @@ penalty profile via `IsProne() || IsSupine()` reads in
    is live when `DoCombat` reads it, for players and mobs alike (players since
    slice 1b).
 
-2. **Manual recovery** — `stand` command (`internal/usercommands/stand.go`)
+2. **Manual recovery** — `stand` command (`internal/usercommands/stand.go`).
+   A sitter (`position.Sitting`, #637) is not knocked down: `stand` gets
+   them up for free through `actions.StandFromSitting` before any of the
+   knockdown rules below apply. `positionBucket` files Sitting under
+   "standing" (combat stands a sitter before it swings).
    - Costs `StandStaminaCost` (config, 15% of max). Requires
      `StandMinStamina` remaining.
    - Bypasses `MinRecoveryRounds`. Fires

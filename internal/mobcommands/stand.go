@@ -3,6 +3,7 @@ package mobcommands
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -26,6 +27,11 @@ func Stand(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if mob.Character.HasConditionFlag(conditions.Sleeping) {
 		mob.Character.CancelConditionsWithFlag(conditions.Sleeping)
 		mobs.OnSleeperWoken(&mob.Character)
+	}
+
+	// A sitter stands for free (#637), as a player does.
+	if actions.StandFromSitting(actions.NewMobActorInRoom(mob, room)) {
+		return true, nil
 	}
 
 	// Position-state bail: already standing → no-op.

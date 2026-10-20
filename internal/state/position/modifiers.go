@@ -22,7 +22,7 @@ import (
 // Higher = easier to hit a target in that position.
 func TargetSideHitModifier(pos State, role control.State) float64 {
 	switch pos {
-	case Standing:
+	case Standing, Sitting: // a sitter is stood before any swing reaches it (#637)
 		return 1.0
 	case Prone:
 		return 1.10
@@ -90,7 +90,7 @@ func TargetSideHitModifier(pos State, role control.State) float64 {
 // helps you swing; lower = your position hurts.
 func AttackerSelfHitModifier(pos State, role control.State) float64 {
 	switch pos {
-	case Standing:
+	case Standing, Sitting: // entering combat stands a sitter first (#637)
 		return 1.0
 	case Prone:
 		return 0.75

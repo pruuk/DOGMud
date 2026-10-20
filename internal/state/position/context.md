@@ -97,7 +97,8 @@ Grapple helpfile softened to match. Chunk 4 (Position) is now **CLOSED**.
 
 ### Core Files
 
-- **position.go** — `State` enum (14 values), per-state data structs
+- **position.go** — `State` enum (15 values: the 14 below plus `Sitting`,
+  appended last), per-state data structs
   (`StandingData`, `ProneData`, `SupineData`, `GrappleData`), `Machine`
   wrapper with predicate methods, machine registry.
 - **outcomes.go** — `OutcomeTier` enum, `ResolveOutcome` dispatcher,
@@ -108,18 +109,42 @@ Grapple helpfile softened to match. Chunk 4 (Position) is now **CLOSED**.
 - **pair.go** — `TransitionPair`, `ValidateGrapplePair`,
   `DefaultEscapeTarget`, `isSymmetricGrapple`.
 - **rules.go** — `TransitionToStanding`, 11 `TransitionToXxx(GrappleData)`
-  methods, `TransitionToProne`, `TransitionToSupine`, `ForceStanding`
-  admin helper.
+  methods, `TransitionToProne`, `TransitionToSupine`, `TransitionToSitting`,
+  `ForceStanding` admin helper.
 - **submissions.go** — `SubmissionType` enum (8 values), role-split pools
   (`TopSubmissionsForPosition`, `BottomSubmissionsForPosition`),
   `IsTopSubEligible`, `IsBottomSubEligible`.
 - **position_test.go** — Behavior Matrix tests PO-001 through PO-045.
+- **sitting_test.go** — Sitting's edges, its refusal of floor and grapple
+  entries, `CountRoundDown` ignoring it, and its neutral combat tables.
 
 ---
 
 ## States
 
-14 states grouped by category:
+14 combat states grouped by category, plus Sitting (below):
+
+### Sitting (#637)
+
+| State | Description |
+|-------|-------------|
+| `Sitting` | A chosen rest posture (`sit` / `rest`), not a knockdown and not a grapple. No per-state data. |
+
+Edges: `Standing → Sitting` (`TriggerSitCommand`); `Sitting → Standing`
+(`TriggerStandCommand` from the stand command or walking off,
+`TriggerCombatRise` when combat stands the sitter); `Sitting → Prone /
+Supine` (a knockdown landing on a sitter). No edge from the floor or a
+grapple, and none from Sitting into a grapple: a grapple attempt stands its
+target first.
+
+Sitting is out of combat by construction. `Character.RiseForCombat` stands a
+sitter who is attacked (`RevealForCombat`) or who enters combat (the
+CombatPhase Idle-to-Engaging observer in `internal/hooks/Position_SitRise.go`).
+So the combat tables give it neutral values (`TargetSideHitModifier` and
+`AttackerSelfHitModifier` 1.0, `PositionDisruptionDmgEquiv` 0: a sitter casts
+undisturbed). `IsOnFloor` is false for it and `CountRoundDown` returns 0, so
+the #398 auto-stand guard never counts a sitter. The regen boost is
+`Balance.SitRegenMultiplier`, read by `Character.RestRegenMultiplier`.
 
 ### Upright (3)
 
@@ -370,7 +395,10 @@ toward `Standing`.
 
 ## Trigger Constants
 
-26 named trigger constants in `transitions.go`. Use these constants
+28 named trigger constants in `transitions.go` (the table below, plus
+`TriggerSitCommand` `"sit_command"` Standing → Sitting and
+`TriggerCombatRise` `"combat_rise"` Sitting → Standing when combat stands a
+sitter, #637). Use these constants
 instead of inline string literals for stable identifiers.
 
 | Constant | Value | Purpose |
@@ -488,7 +516,7 @@ caller API.
 
 ## Character API — Predicates
 
-`internal/characters/position_predicates.go` exposes 19 nil-guarded
+`internal/characters/position_predicates.go` exposes 20 nil-guarded
 predicates on `Character`. Each delegates to the underlying
 `c.Position.IsXxx()` method.
 
@@ -510,6 +538,7 @@ predicates on `Character`. Each delegates to the underlying
 | `IsHalfGuard()` | Position == HalfGuard |
 | `IsGuard()` | Position == Guard |
 | `IsTurtle()` | Position == Turtle |
+| `IsSitting()` | Position == Sitting (#637; added beside the 14) |
 
 ### Rollup (5)
 

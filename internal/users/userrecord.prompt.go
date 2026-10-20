@@ -769,7 +769,7 @@ func collapseEmptyPromptSlots(s string) string {
 // CombatPosition.GetPositionColor (sunset in chunk 4b S5).
 func positionPromptColor(s position.State) string {
 	switch s {
-	case position.Standing:
+	case position.Standing, position.Sitting: // Sitting is a chosen rest (#637), not a danger
 		return "white"
 	case position.Prone, position.Supine:
 		return "yellow"

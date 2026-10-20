@@ -8,6 +8,14 @@ import "github.com/GoMudEngine/GoMud/internal/state"
 var validTransitions = state.TransitionTable[State]{
 	Standing: {
 		Prone, Supine, Clinch,
+		Sitting, // sit / rest (#637)
+	},
+	// Sitting (#637): stand back up (the stand command, or combat
+	// standing the sitter), or be knocked flat where you sit. No grapple
+	// edge: a grapple attempt stands its target first (RevealForCombat).
+	Sitting: {
+		Standing,
+		Prone, Supine,
 	},
 	Prone: {
 		Standing,
@@ -91,7 +99,11 @@ const (
 
 	// Recovery
 	TriggerRecoveryRoll = "recovery_roll" // → Standing (auto, gated by MinRecoveryRounds)
-	TriggerStandCommand = "stand_command" // → Standing (explicit, stamina cost, bypasses min)
+	TriggerStandCommand = "stand_command" // → Standing (explicit, stamina cost, bypasses min; free from Sitting)
+
+	// Sitting (#637)
+	TriggerSitCommand = "sit_command" // Standing → Sitting (sit / rest)
+	TriggerCombatRise = "combat_rise" // Sitting → Standing (entering combat or being attacked)
 
 	// Grapple entry / break
 	TriggerGrappleEntry = "grapple_entry" // Standing → Clinch

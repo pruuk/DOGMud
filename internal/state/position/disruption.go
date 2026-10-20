@@ -23,7 +23,7 @@ import (
 // combat.RunConcentrationContest in processFoldRound.
 func PositionDisruptionDmgEquiv(pos State, role control.State) int {
 	switch pos {
-	case Standing:
+	case Standing, Sitting: // a sitter casts undisturbed (#637)
 		return 0
 	case Prone:
 		return 30

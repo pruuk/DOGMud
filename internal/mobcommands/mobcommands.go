@@ -88,6 +88,8 @@ var (
 		"shout":          {Shout, true},
 		"fire":           {Fire, false},
 		"show":           {Show, false},
+		"sit":            {Sit, false},
+		"rest":           {Sit, false}, // synonym of sit (#637)
 		"sleep":          {Sleep, false},
 		"sneak":          {Sneak, false},
 		"stand":          {Stand, false},

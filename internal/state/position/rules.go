@@ -51,6 +51,19 @@ func (m *Machine) TransitionToSupine(d SupineData, r state.TransitionReason) err
 	return nil
 }
 
+// TransitionToSitting moves to Sitting (#637). Sitting carries no
+// per-state data; every slot is already clear because the only edge in
+// is from Standing.
+func (m *Machine) TransitionToSitting(r state.TransitionReason) error {
+	if err := m.inner.TransitionTo(Sitting, r); err != nil {
+		return err
+	}
+	m.prone = nil
+	m.supine = nil
+	m.grapple = nil
+	return nil
+}
+
 // transitionGrapple is the shared body for all 11 grapple TransitionTo* methods.
 // Validates Partner (non-zero except for Turtle), stores data with
 // the Reason field populated, fires the inner transition with rollback

@@ -641,11 +641,14 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   default (players 0.02 vs default 0.01 each); the mob rates ship unchanged
   from their defaults (`MobHealthRegenPct` 0.01, `MobStaminaRegenPct` and
   `MobConvictionRegenPct` 0.02).
-- **Sleeping multiplies the per-round result, not the percentage.** All three
-  `*PerRound` methods apply `Balance.SleepRegenMultiplier` (ships at the Go
-  default, 5.0) to the already-floored base when `HasConditionFlag(conditions.Sleeping)`
-  is set, then truncate again. This is the same 5x named in the Sleep
-  Mechanics section of the root `CLAUDE.md`; it is one mechanism, applied here.
+- **Resting multiplies the per-round result, not the percentage.** All three
+  `*PerRound` methods scale the already-floored base by
+  `RestRegenMultiplier()` (through `applyRestRegen`), then truncate again.
+  It is `Balance.SleepRegenMultiplier` (shipped 5.0 in `config.yaml`) while
+  `HasConditionFlag(conditions.Sleeping)`, else `Balance.SitRegenMultiplier`
+  (shipped 2.0, #637) while `IsSitting()`, else 1. The two never stack: a
+  sleeping sitter gets the sleep rate. Owner ruling 2026-10-19: sitting stays
+  below sleep (`internal/configs/config_sitregen_test.go` pins it).
 - **Mutation regen multipliers are NOT uniformly wired.** `stamina_regen_multiplier`
   (`mutations.GetStaminaRegenMultiplier`) is applied inside `StaminaPerRound()`
   itself. `health_regen_multiplier` and `health_regen_if_lit_multiplier`
@@ -1541,7 +1544,8 @@ while keeping the Awareness machine as the canonical state source.
 ### Being attacked reveals: RevealForCombat()
 
 `RevealForCombat()` (`conditions.go`) is what being attacked does to a
-defender: `CancelCombatConditions()`, then a hidden character is forced
+defender: `RiseForCombat()` stands a sitter (#637), then
+`CancelCombatConditions()`, then a hidden character is forced
 visible (`ForceVisible`, trigger `TriggerCombatEntered`). It is the one reveal
 for every attack: `handleCombatRound` calls it on the defender, and so do the
 special-move seams `combat.ExecuteSkillMove` and `combat.ExecuteGrappleMove`
@@ -1549,6 +1553,18 @@ and `actions.ExecuteTaunt`, before any line names the target (#382).
 `ExecuteSkillMove` skips it for an area shape (`Shape.Targeting ==
 TargetArea`, the boss area drain `actions.ExecuteDrainArea`): a sweep picks no
 one out, so a hidden player it clips stays hidden and keeps its conditions.
+
+`RiseForCombat() bool` moves a `Sitting` character to `Standing` under
+`position.TriggerCombatRise` and reports whether it did; it is a no-op for
+anyone not sitting (a knockdown is untouched). Its other caller is the
+CombatPhase Idle-to-Engaging observer in `internal/hooks/Position_SitRise.go`,
+so a sitter who starts a fight stands too. It is deliberately not inside
+`CancelCombatConditions`, which a death also runs: a dying sitter must not be
+narrated leaping up. The hooks Position observer narrates the rise.
+
+**Sitting is not a knockdown.** `AttemptRecovery` gates on `IsProne() ||
+IsSupine()`, so a sitter is never recovered, counted or auto-stood by the
+#398 guard (`sitting_test.go` pins it).
 
 ### Hidden movement stamina scaling
 
