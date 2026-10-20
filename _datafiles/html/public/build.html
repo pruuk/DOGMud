@@ -724,7 +724,7 @@
     // Spawns — mobs/items/gold this room spawns. rooms.SpawnInfo now carries
     // explicit json tags, so the wire keys are plain camelCase (mobId,
     // itemId, gold, container, respawnRate, message, name, forceHostile,
-    // maxWander, idleCommands, scriptTag, questFlags, conditionIds, statPool,
+    // maxWander, idleCommands, scriptTag, conditionIds, statPool,
     // statPoolMod) — the same convention as every other buildRoomDetail
     // field. instanceId/despawnedRound are runtime tracking the server
     // preserves on save; the client never sends them.
@@ -920,7 +920,6 @@
         };
       }
       var gatherIdle = textListField("Idle commands override", s.idleCommands);
-      var gatherQuestFlags = textListField("Quest flags applied to mob", s.questFlags);
 
       var conditionBox = ce("div", {});
       function conditionRow(v) {
@@ -963,7 +962,6 @@
           statPool: parseInt(statPoolInput.value, 10) || 0,
           statPoolMod: parseInt(statPoolModInput.value, 10) || 0,
           idleCommands: gatherIdle(),
-          questFlags: gatherQuestFlags(),
           conditionIds: Array.prototype.map.call(conditionBox.children, function (r) { return parseInt(r._v.value, 10) || 0; })
             .filter(function (n) { return n > 0; })
         };

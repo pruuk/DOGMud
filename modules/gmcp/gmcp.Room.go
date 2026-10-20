@@ -396,13 +396,8 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 				Aggro:      mob.Character.IsInCombat(),
 			}
 
-			if len(mob.QuestFlags) > 0 {
-				for _, qFlag := range mob.QuestFlags {
-					if user.Character.HasQuest(qFlag) || (len(qFlag) >= 5 && qFlag[len(qFlag)-5:] == `start`) {
-						c.QuestFlag = true
-						break
-					}
-				}
+			if rooms.NpcMarker != nil {
+				c.Marker = rooms.NpcMarker(user.UserId, mob)
 			}
 
 			payload.Contents.Npcs = append(payload.Contents.Npcs, c)
@@ -610,7 +605,7 @@ type GMCPRoomModule_Payload_Contents_Character struct {
 	Name       string   `json:"name"`
 	Adjectives []string `json:"adjectives"`
 	Aggro      bool     `json:"aggro"`
-	QuestFlag  bool     `json:"quest_flag"`
+	Marker     string   `json:"marker"`
 }
 
 type GMCPRoomModule_Payload_Contents_Item struct {

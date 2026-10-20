@@ -291,11 +291,8 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 				mobName.DuplicateIndex = mobNameIndex[mob.Character.Name]
 			}
 
-			for _, qFlag := range mob.QuestFlags {
-				if user.Character.HasQuest(qFlag) || (len(qFlag) >= 5 && qFlag[len(qFlag)-5:] == `start`) {
-					mobName.QuestAlert = true
-					break
-				}
+			if NpcMarker != nil {
+				mobName.Marker = NpcMarker(user.UserId, mob)
 			}
 
 			// Build the mob name string once, then optionally decorate.

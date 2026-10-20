@@ -43,7 +43,7 @@ func MobSeenName(mob *mobs.Mob, room *rooms.Room, viewingUserId int) string {
 	dupIdx := room.GetMobDuplicateIndex(mob.InstanceId)
 	f := mob.Character.GetMobNameIndexed(viewingUserId, dupIdx)
 	f.Adjectives = nil
-	f.QuestAlert = false
+	f.Marker = ``
 	f.PetName = ``
 	return f.String()
 }

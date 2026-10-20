@@ -1136,10 +1136,6 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 					mob.ScriptTag = spawnInfo.ScriptTag
 				}
 
-				if len(spawnInfo.QuestFlags) > 0 {
-					mob.QuestFlags = spawnInfo.QuestFlags
-				}
-
 				// Does this mob have a special name?
 				if len(spawnInfo.Name) > 0 {
 					mob.Character.Name = spawnInfo.Name

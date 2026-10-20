@@ -13,6 +13,7 @@ package owns everything that needs a user, a room or a mob.
 | File | What it holds |
 |---|---|
 | `playerstate.go` | `PlayerState(user)`: the `dialogue.PlayerState` callbacks over a character |
+| `marker.go` | `Marker(viewerUserId, mob)`: the viewer's talk marker (`[?]`, `[!]`, `[*]` or empty); its `init` installs it as `rooms.NpcMarker`, which the room roster and the GMCP `Room.Info` NPC list call |
 | `talk.go` | `Talk(user, room, mob)`: the approach line, opener and breadcrumbs, then the private talk menu; info and hand-in choices (player line, handover line, NPC reply, then the menu re-shown), the offer pitch and its Accept / Leave card, and `player_topic` for `behavior` topics |
 
 ## Rules
