@@ -258,6 +258,9 @@ var (
 		// Special command only used upon creating a new account
 		`start`:     {Start, false, true, false},
 		`zombieact`: {ZombieAct, false, true, false},
+		// `portalstake` (hidden, #375 R14) registers in portalstake.go's
+		// init: its handler reads this map, which a literal entry here
+		// would make an initialization cycle.
 	}
 
 	selfKeywords = []string{

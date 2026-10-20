@@ -434,6 +434,13 @@ func actCreateInstance(params map[string]any, ctx *EvalContext) Result {
 //	zones        (map: shortname → template zone name, e.g. arena: "Instance Arena")
 //	min_gold     (int, default 100)
 //	exit_expires (string, default "30 real minutes")
+//	zone         (string, optional: a zones key, for a talk topic; #375 R14)
+//	guidance     (string, optional: shown above the amount question)
+//
+// With zone set, the ask text is not parsed for a zone: the player is asked
+// for the stake through a private amount prompt (startStakePrompt), unless
+// the text is already "<zone> <gold>". A zone that is not a key of zones
+// logs an error and fails. Both paths open through openInstancePortal.
 //
 // On success the mob says the portal-open message and returns Success.
 // On any validation or creation failure the mob says an explanation and
@@ -446,6 +453,25 @@ func actOpenInstancePortal(params map[string]any, ctx *EvalContext) Result {
 	user := users.GetByUserId(ctx.Event.UserId)
 	if user == nil {
 		return Failure
+	}
+
+	// A talk topic names its zone as a param (#375 R14). Under player_topic,
+	// Text is the bare topic key, so the player names the stake through a
+	// private amount prompt (portal_stake.go).
+	if zone := strings.ToLower(strings.TrimSpace(getStringParam(params, "zone"))); zone != "" {
+		req, ok := portalRequestFor(params, zone)
+		if !ok {
+			mudlog.Error("actOpenInstancePortal", "error", "zone is not a key of zones", "zone", zone, "mobId", ctx.MobId)
+			return Failure
+		}
+		if parts := splitTwo(ctx.Event.Text); len(parts) == 2 && strings.EqualFold(parts[0], zone) {
+			if goldAmount := parseIntStr(parts[1]); goldAmount > 0 {
+				openInstancePortal(user, mob, ctx.RoomId, req, goldAmount)
+				return Success
+			}
+		}
+		startStakePrompt(user, mob, ctx.RoomId, req, getStringParam(params, "guidance"))
+		return Success
 	}
 
 	text := ctx.Event.Text
@@ -462,7 +488,28 @@ func actOpenInstancePortal(params map[string]any, ctx *EvalContext) Result {
 		return Success
 	}
 
-	// Resolve zone short name → template name.
+	req, ok := portalRequestFor(params, zoneName)
+	if !ok {
+		return Failure // unrecognized zone name: fall through to other branches
+	}
+	openInstancePortal(user, mob, ctx.RoomId, req, goldAmount)
+	return Success
+}
+
+// portalRequest is a resolved instance-zone buy-in: everything the open
+// needs except the stake, so the typed path and the amount prompt carry
+// the same values to openInstancePortal.
+type portalRequest struct {
+	Zone         string // short name, the zones key ("arena")
+	TemplateZone string // the zone cloned ("Instance Arena")
+	MinGold      int
+	Expires      string
+}
+
+// portalRequestFor resolves a zones key against the action's params,
+// applying the min_gold and exit_expires defaults. It reports false when
+// zoneName is not a key of zones.
+func portalRequestFor(params map[string]any, zoneName string) (portalRequest, bool) {
 	templateZone := ""
 	if zonesRaw, ok := params["zones"]; ok {
 		switch zm := zonesRaw.(type) {
@@ -479,20 +526,33 @@ func actOpenInstancePortal(params map[string]any, ctx *EvalContext) Result {
 		}
 	}
 	if templateZone == "" {
-		return Failure // unrecognized zone name — fall through to other branches
+		return portalRequest{}, false
 	}
 
 	minGold := getIntParam(params, "min_gold")
 	if minGold <= 0 {
 		minGold = 100
 	}
+	expires := getStringParam(params, "exit_expires")
+	if expires == "" {
+		expires = "30 real minutes"
+	}
+	return portalRequest{Zone: zoneName, TemplateZone: templateZone, MinGold: minGold, Expires: expires}, true
+}
+
+// openInstancePortal is the one open-portal body both the typed path and
+// the amount prompt run: the minimum and purse checks, the charge, the
+// clone (scaled by the stake), the temporary exit and the mob's lines.
+// Every outcome is spoken by the mob; failures refund.
+func openInstancePortal(user *users.UserRecord, mob *mobs.Mob, roomId int, req portalRequest, goldAmount int) {
+	zoneName, templateZone, minGold := req.Zone, req.TemplateZone, req.MinGold
 	if goldAmount < minGold {
 		mob.Command(fmt.Sprintf("say That barely covers the runes. I need at least %s gold.", util.FormatNumber(minGold)))
-		return Success
+		return
 	}
 	if user.Character.Gold < goldAmount {
 		mob.Command("say You do not have that much gold.")
-		return Success
+		return
 	}
 
 	// Charge gold before creating the instance.
@@ -507,43 +567,38 @@ func actOpenInstancePortal(params map[string]any, ctx *EvalContext) Result {
 		}
 	}
 
-	inst, err := rooms.CreateZoneInstance(templateZone, goldAmount, user.UserId, authorizedUsers, ctx.RoomId)
+	inst, err := createZoneInstance(templateZone, goldAmount, user.UserId, authorizedUsers, roomId)
 	if err != nil {
 		mudlog.Error("actOpenInstancePortal", "zone", templateZone, "userId", user.UserId, "error", err)
 		user.Character.Gold += goldAmount // refund
 		mob.Command("say The planes resist me. Your gold is returned.")
-		return Success
+		return
 	}
 
-	expires := getStringParam(params, "exit_expires")
-	if expires == "" {
-		expires = "30 real minutes"
-	}
 	exitKey := zoneName + "-" + fmt.Sprintf("%d", user.UserId)
-	room := rooms.LoadRoom(ctx.RoomId)
+	room := rooms.LoadRoom(roomId)
 	if room == nil {
 		user.Character.Gold += goldAmount // refund
-		mudlog.Error("actOpenInstancePortal", "zone", templateZone, "userId", user.UserId, "error", "room did not load", "roomId", ctx.RoomId)
+		mudlog.Error("actOpenInstancePortal", "zone", templateZone, "userId", user.UserId, "error", "room did not load", "roomId", roomId)
 		mob.Command("say The way will not open. Your gold is returned.")
-		return Success
+		return
 	}
 	added := room.AddTemporaryExit(exitKey, exit.TemporaryRoomExit{
 		RoomId:  inst.EntryRoomId,
 		Title:   exitKey + " rift",
 		UserId:  user.UserId,
-		Expires: expires,
+		Expires: req.Expires,
 	})
 	if !added {
 		user.Character.Gold += goldAmount // refund
 		mob.Command("say The archway is already sustaining too many rifts. Your gold is returned.")
-		return Success
+		return
 	}
 
 	mob.Command("say The rift is open. Type " + exitKey + " to enter.")
 	mob.Command("say It will hold for a time. Do not tarry.")
 	room.SendTextToExits("You hear someone talking.", true)
 	room.SendText(messaging.CategoryMobEmote, "The stone archway flares with energy. A shimmering portal appears.")
-	return Success
 }
 
 // splitTwo splits a string on the first whitespace run, returning up to 2 parts.

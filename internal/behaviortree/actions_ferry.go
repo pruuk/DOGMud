@@ -6,16 +6,25 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/ferry"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
+
+// boardFerry is the boarding flow; a variable so tests can record the
+// route chosen without a live schedule.
+var boardFerry = ferry.Board
 
 // actBoardFerry handles "ask <agent> passage <destination>". Params:
 //
 //	routes:            # destination keyword → routeid
 //	  plymouth: stillwater_np_packet
 //	  confluence: stillwater_confluence_barge
+//	destination: plymouth   # optional: a key of routes (#375 R14)
 //
-// Resolves the destination word from the ask text, then delegates the
+// With destination set (a talk topic per destination, where Text is the
+// bare topic key), that route is boarded and the text is not read; a
+// destination that is not a key of routes logs an error and fails.
+// Otherwise it resolves the destination word from the ask text, then delegates the
 // entire boarding flow (schedule check, fare, move, messaging) to
 // ferry.Board. Returns Failure when params are unusable so other tree
 // branches can try; returns Success (with mob dialogue) on every handled
@@ -67,6 +76,20 @@ func actBoardFerry(params map[string]any, ctx *EvalContext) Result {
 	}
 	sort.Strings(dests)
 
+	// A talk topic names its destination as a param (#375 R14): under
+	// player_topic, Text is a bare topic key, not the player's words.
+	if dest := strings.ToLower(strings.TrimSpace(getStringParam(params, "destination"))); dest != `` {
+		routeId, ok := routesMap[dest]
+		if !ok {
+			mudlog.Error("actBoardFerry", "error", "destination is not a key of routes", "destination", dest, "mobId", ctx.MobId)
+			return Failure
+		}
+		if boardFerry(user, mob, ctx.RoomId, routeId) == ferry.BoardNotAtPort {
+			return Failure
+		}
+		return Success
+	}
+
 	text := strings.ToLower(ctx.Event.Text)
 	routeId := ``
 	for _, keyword := range dests {
@@ -81,7 +104,7 @@ func actBoardFerry(params map[string]any, ctx *EvalContext) Result {
 		return Success
 	}
 
-	if ferry.Board(user, mob, ctx.RoomId, routeId) == ferry.BoardNotAtPort {
+	if boardFerry(user, mob, ctx.RoomId, routeId) == ferry.BoardNotAtPort {
 		return Failure // fall through to other tree branches
 	}
 	return Success

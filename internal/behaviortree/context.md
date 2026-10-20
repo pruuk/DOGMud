@@ -856,7 +856,23 @@ These actions were added alongside the room behavior tree system:
 | Action | Params | Description |
 |--------|--------|-------------|
 | `create_instance` | `zone_name` (string), `gold_amount` (int), `state_key` (string, default `"instance_entry_room_id"`) | Clones an instanced zone and stores the entry room ID in BehaviorState. Use `add_temp_exit` with no `room_id` param to consume it. |
-| `open_instance_portal` | `zones` (map), `min_gold` (int, default 100), `exit_expires` (string, default `"30 real minutes"`) | Full portal-vendor flow: parses `"<zone> <gold>"` from ask text, validates, charges gold, creates instance, adds temp exit. Returns Failure if text doesn't match pattern; returns Success with mob dialogue on all other outcomes (success or error). |
+| `open_instance_portal` | `zones` (map), `min_gold` (int, default 100), `exit_expires` (string, default `"30 real minutes"`), `zone` (string, optional), `guidance` (string, optional) | Full portal-vendor flow: parses `"<zone> <gold>"` from ask text, validates, charges gold, creates instance, adds temp exit. Returns Failure if text doesn't match pattern; returns Success with mob dialogue on all other outcomes (success or error). With `zone` set (a talk topic, #375 R14) the text is not parsed for a zone: the player gets the private amount prompt below. A `zone` that is not a key of `zones` logs an error and fails. |
+| `board_ferry` | `routes` (map: keyword to route id), `destination` (string, optional) | Boards the route the ask text names (`ferry.Board` does schedule, fare and move). With `destination` set (one talk topic per destination, #375 R14) that key of `routes` is boarded and the text is not read; an unknown key logs an error and fails. |
+
+**Amount prompt** (`portal_stake.go`, #375 R14). With `zone` set,
+`open_instance_portal` sends the `guidance` text to the player alone and
+opens a non-modal free-text prompt, "How much gold will you stake?", through
+`users.StartPrompt(PortalStakeCommand, "")`. The input loop gives the next
+typed line to it and re-runs the hidden user command `portalstake`
+(`usercommands/portalstake.go`, registered in its `init`), which calls
+`AnswerStake`. A whole number (commas allowed) opens the portal through
+`openInstancePortal`, the one body the typed path also runs (minimum and
+purse checks, charge, clone scaled by the stake, exit, lines), once the mob is
+still in the room the prompt opened in with the player. Anything else closes
+the prompt with one line; if it is a known command (a registered command after
+aliases, or an exit) the command then runs, so free-text #641 does not bite
+here. Only the mob's presence is re-checked at answer time, not the tree's
+other gates. Tests swap `createZoneInstance` and `boardFerry`.
 
 The `zones` param is a YAML mapping of short names to template zone names:
 ```yaml
@@ -1002,7 +1018,7 @@ Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tact
 | Events | `events.go` |
 | Actions — generic | `actions.go`, `actions_mob.go`, `actions_state.go`, `actions_room.go`, `actions_party.go`, `actions_goal.go` |
 | Actions — combat | `actions_combat.go`, `action_cast_best_in_category.go`, `actions_archer.go` |
-| Actions — economy | `actions_forager.go`, `actions_forager_verbs.go`, `actions_forager_storage.go`, `actions_wagon.go`, `actions_ferry.go`, `caravan_reset.go` |
+| Actions — economy | `actions_forager.go`, `actions_forager_verbs.go`, `actions_forager_storage.go`, `actions_wagon.go`, `actions_ferry.go`, `portal_stake.go`, `caravan_reset.go` |
 | Actions — other | `actions_dialogue.go`, `actions_quest.go`, `actions_progression.go`, `actions_mutation.go`, `actions_scout.go`, `actions_skullduggery.go` |
 | Conditions | `conditions.go`, `conditions_combat.go`, `conditions_mob.go`, `conditions_player.go`, `conditions_party.go`, `conditions_position.go`, `conditions_room.go`, `conditions_state.go`, `conditions_scout.go`, `conditions_forager.go`, `conditions_skullduggery.go`, `conditions_submission.go` |
 | Misc | `archetype_shift.go`, `room_state.go` |

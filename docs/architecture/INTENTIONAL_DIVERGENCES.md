@@ -120,6 +120,7 @@ Commands that implement systems that do not exist for mob AI.
 | target | Targeting UI — mobs use AI targeting logic |
 | start | Character creation entry point |
 | zombieact | Zombie player state handling |
+| portalstake | Hidden: re-run by the instance-zone amount prompt (#375 R14) |
 
 ---
 
