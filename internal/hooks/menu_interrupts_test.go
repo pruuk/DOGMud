@@ -24,10 +24,17 @@ func TestMenuCloseOnRoomChange_ClosesTheMoversMenu(t *testing.T) {
 
 func TestMenuCloseOnRoomChange_IgnoresMobsAndSameRoom(t *testing.T) {
 	u := users.NewTestUser(42, "stayer", "Ilo", 0)
-	defer users.SeedUsersForTest(map[int]*users.UserRecord{42: u})()
+	// A user whose id equals the mob instance id: a handler that wrongly keyed
+	// off MobInstanceId would close this menu.
+	bystander := users.NewTestUser(9, "bystander", "Oro", 0)
+	defer users.SeedUsersForTest(map[int]*users.UserRecord{42: u, 9: bystander})()
 	u.OpenMenu(menu.Menu{Entries: []menu.Entry{{Id: "a", Label: "A"}}}, menu.Session{})
+	bystander.OpenMenu(menu.Menu{Entries: []menu.Entry{{Id: "a", Label: "A"}}}, menu.Session{})
 
 	MenuCloseOnRoomChange(events.RoomChange{MobInstanceId: 9, FromRoomId: 1, ToRoomId: 2})
+	if !bystander.HasOpenMenu() {
+		t.Fatal("menu closed by a mob move")
+	}
 	MenuCloseOnRoomChange(events.RoomChange{UserId: 42, FromRoomId: 3, ToRoomId: 3})
 
 	if !u.HasOpenMenu() {

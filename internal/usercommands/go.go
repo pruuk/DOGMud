@@ -389,6 +389,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 								// CmdFollowStep: the room they leave has just
 								// lost the leader's light, which they walk on
 								// with, so it must not be announced (#620).
+								actions.BreakOffMenuToFollow(partyUser, user.Character, user.UserId, room)
 								partyUser.CommandFlagged(rest, events.CmdFollowStep)
 							}
 						}

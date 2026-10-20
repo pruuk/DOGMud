@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // SleepOptions is reserved for future authoring knobs (bed-item
@@ -62,6 +63,14 @@ func Sleep(actor Actor, opts SleepOptions) SleepResult {
 		// SendText does nothing, so the log is all a mob sleeper leaves.
 		refusal.Failed(actor, "sleep", err, "userId", actor.GetUserId())
 		return SleepResult{Success: false, Reason: err.Error()}
+	}
+
+	// This add bypasses hooks.ApplyConditions, so a player's open menu is
+	// closed here (#375 phase 0).
+	if actor.IsPlayer() {
+		if u := users.GetByUserId(actor.GetUserId()); u != nil {
+			u.CheckMenuInterrupts()
+		}
 	}
 
 	// The start line the silent-start flag makes ours to send. Read through

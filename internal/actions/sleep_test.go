@@ -6,8 +6,10 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // ---------------------------------------------------------------------------
@@ -104,6 +106,28 @@ func TestSleep_AppliesConditionOnSuccess(t *testing.T) {
 	}
 	if !actor.char.HasConditionFlag(conditions.Sleeping) {
 		t.Errorf("expected Sleeping flag applied after Sleep()")
+	}
+}
+
+// TestSleep_PlayerWithOpenMenuClosesItAsleep covers the synchronous sleep
+// path, which bypasses hooks.ApplyConditions: a scripted sleep must still
+// close an open game menu (#375 phase 0).
+func TestSleep_PlayerWithOpenMenuClosesItAsleep(t *testing.T) {
+	defer seedSleepCondition(t)()
+	u := users.NewTestUser(8961, "napper", "Napper", 98961)
+	defer users.SeedUsersForTest(map[int]*users.UserRecord{8961: u})()
+	closed := menu.CloseNone
+	u.OpenMenu(menu.Menu{Entries: []menu.Entry{{Id: "a", Label: "A"}}},
+		menu.Session{OnClose: func(r menu.CloseReason) { closed = r }})
+	actor := &sleepFakeActor{char: u.Character, room: &rooms.Room{RoomId: 9900}, isPlayer: true, userId: 8961}
+
+	res := Sleep(actor, SleepOptions{})
+
+	if !res.Success {
+		t.Fatalf("expected Success, got %+v", res)
+	}
+	if u.HasOpenMenu() || closed != menu.CloseAsleep {
+		t.Fatalf("open %v closed %v", u.HasOpenMenu(), closed)
 	}
 }
 
