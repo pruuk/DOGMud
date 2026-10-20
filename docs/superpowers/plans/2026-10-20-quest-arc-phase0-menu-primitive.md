@@ -867,7 +867,7 @@ import (
 
 const (
 	maxLabel  = 50
-	maxDetail = 72
+	maxDetail = 70 // review fix: a Detail starts at column 9 or 10
 )
 
 // LintLabels checks the menu language conventions a machine can check:

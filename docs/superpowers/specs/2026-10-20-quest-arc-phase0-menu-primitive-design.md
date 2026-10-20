@@ -272,7 +272,8 @@ Recorded in `dogmud-player-copy` and `internal/menu/context.md`:
    the result ("I've settled the feud at the well.").
 2. Never name the NPC in the third person and never use narrator voice in a label or a
    player line.
-3. One line each, at most 50 characters for a label and 72 for a `Detail` line.
+3. One line each, at most 50 characters for a label and 70 for a `Detail` line
+   (a `Detail` starts at column 9 or 10, so 70 always fits in 80).
 4. ESL-clear: plain words, no idioms, no em or en dashes, no raw numbers for stats or rewards.
 5. Specific, not generic. No two labels in one menu read alike.
 6. Leave lines may be in character ("Goodbye.") and default to "Leave".
