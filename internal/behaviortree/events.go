@@ -34,7 +34,6 @@ var KnownBehaviorEvents = map[string]bool{
 	"player_attack_rejected": true, // a player's attack on this mob was rejected (e.g. non-combatant)
 	"player_enter":           true, // a player entered the mob's room
 	"player_give":            true, // a player gave this mob an item
-	"player_topic":           true, // a player chose a behavior talk topic on this mob (Text = topic key)
 	"room_command":           true, // room trees: a command typed in the room (interception)
 	"room_enter":             true, // room trees: someone entered the room
 	"room_exit":              true, // room trees: someone left the room

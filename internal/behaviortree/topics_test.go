@@ -16,10 +16,6 @@ func TestTopicIs_MatchesTheEventKeyOnly(t *testing.T) {
 	require.Equal(t, Failure, condTopicIs(map[string]any{"topic": "ferry"}, ctx), "only player_topic carries a key")
 }
 
-func TestPlayerTopicIsAKnownEvent(t *testing.T) {
-	require.True(t, KnownBehaviorEvents["player_topic"])
-}
-
 func TestTopicKeysInFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "9574-a_weathered_deckhand.yaml")
 	require.NoError(t, os.WriteFile(path, []byte(`tree:
