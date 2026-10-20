@@ -81,22 +81,9 @@ func Drain(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// Note: the mob heals itself; no message needed (player cannot see the
 		// vampire's inner restoration without additional flavor investment).
 	} else if result.Damage > 0 {
-		// Defended-partial: the actee line still carries the damage from the
-		// store; the room line names the defence that blunted the drain, so it
-		// is swapped for the defence triad's ToRoom text when a defence
-		// actually fired.
-		roles, _ := renderMoveEvent("drain", "partial", ids, damageTokens)
-		defence, defended := moveDefenceLines(mob, room, target, result.Defence, "draining grasp")
-		partialObserver := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
-		if defended {
-			partialObserver = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    messaging.NoLine,
-			Actee:    lineOrNone(messaging.CategoryHitNaturalSharp, roles.Actee),
-			Observer: partialObserver,
-		}, aud)
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
+		defence, _ := moveDefenceLines(mob, room, target, result.Defence, "draining grasp")
+		sendPartialMove("drain", "partial", ids, aud, messaging.CategoryHitNaturalSharp, damageTokens, defence.Shortage)
 
 		// Note: the mob heals itself; no message needed (matches the hit case).
 	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, "draining grasp"); defended {

@@ -25,11 +25,9 @@ type moveIdentities struct {
 // without delivering it.
 //
 // sendMoveEvent covers the ordinary case, where every role goes out as
-// rendered. It is not enough for a channel-defended partial: the actee line
-// still comes from the store, but the observer line is replaced by the
-// defence triad's ToRoom text when a defence actually fired. That call site
-// needs the rendered roles to build its own Trio, so the render step is
-// split out here rather than folded into sendMoveEvent.
+// rendered, and that includes a defended partial (sendPartialMove, #631). A
+// call site that must compose its own Trio (shoot's per-target lines,
+// smother's judged-before actee line) renders here first.
 func renderMoveEvent(verb string, event movenarration.EventKey, ids moveIdentities, extra map[string]string) (narration.Roles, bool) {
 	g := movenarration.GetMove(verb)
 	if g == nil {

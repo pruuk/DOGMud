@@ -111,8 +111,7 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 		}
 	} else if result.Damage > 0 {
-		// Defended-partial: personal lines carry the damage; the room line
-		// names the defence that blunted the kick (U6b Task 9).
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
 		var partialEvent movenarration.EventKey
 		switch res.Variant {
 		case actions.KickStomp:
@@ -122,18 +121,8 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		default: // KickStandard
 			partialEvent = "standard_partial"
 		}
-		roles, _ := renderMoveEvent("kick", partialEvent, ids, damageTokens)
-		defence, defended := moveDefenceLines(user, room, target, result.Defence, attackName)
-		observer := lineOrNone(messaging.CategoryKick, roles.Observer)
-		if defended {
-			observer = messaging.Say(messaging.CategoryKick, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryKick, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(kickCategories.Actor, roles.Actor),
-			Actee:    lineOrNone(kickCategories.Actee, roles.Actee),
-			Observer: observer,
-		}, aud)
+		defence, _ := moveDefenceLines(user, room, target, result.Defence, attackName)
+		sendPartialMove("kick", partialEvent, ids, aud, kickCategories, damageTokens, defence.Shortage)
 	} else if defence, defended := moveDefenceLines(user, room, target, result.Defence, attackName); defended {
 		// A defence stopped it outright: all three lines come from the triad.
 		sendMoveDefenceShortage(messaging.Say(messaging.CategoryKick, defence.Shortage), aud)

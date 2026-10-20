@@ -77,22 +77,9 @@ func Hamstring(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if result.Hit {
 		sendMoveEvent("hamstring", "hit", ids, aud, messaging.CategoryHitNaturalSharp, damageTokens)
 	} else if result.Damage > 0 {
-		// Defended-partial: the actee line still carries the damage from the
-		// store; the room line names the defence that blunted the hamstring,
-		// so it is swapped for the defence triad's ToRoom text when a defence
-		// actually fired.
-		roles, _ := renderMoveEvent("hamstring", "partial", ids, damageTokens)
-		defence, defended := moveDefenceLines(mob, room, target, result.Defence, hamstringAttack)
-		partialObserver := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
-		if defended {
-			partialObserver = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    messaging.NoLine,
-			Actee:    lineOrNone(messaging.CategoryHitNaturalSharp, roles.Actee),
-			Observer: partialObserver,
-		}, aud)
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
+		defence, _ := moveDefenceLines(mob, room, target, result.Defence, hamstringAttack)
+		sendPartialMove("hamstring", "partial", ids, aud, messaging.CategoryHitNaturalSharp, damageTokens, defence.Shortage)
 	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, hamstringAttack); defended {
 		// A defence stopped it outright: the defender's line and the room line
 		// both come from the triad.
