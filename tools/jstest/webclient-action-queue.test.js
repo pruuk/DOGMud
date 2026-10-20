@@ -102,5 +102,111 @@ enqueueTriggerAction(trig(3, 'B2', 'back'), 'trip'); // eslint-disable-line no-u
 reply(1, 'fired');
 check('back: B2 remains after B1 fires', JSON.stringify(names()) === '["B2"]', JSON.stringify(names()));
 
+// ---- Audit (#375 phase 0): every queue behaviour the pause will rely on ----
+// Cases are labelled A2.. to avoid clashing with the numbered cases above.
+
+// A2. Front after front: both ahead of back, in arrival order.
+reset();
+enqueueTriggerAction(trig(10, 'B', 'back'), 'kick');   // in flight
+enqueueTriggerAction(trig(11, 'F1', 'front'), 'bash');
+enqueueTriggerAction(trig(12, 'F2', 'front'), 'trip');
+check('A2 front entries keep arrival order ahead of back', JSON.stringify(names()) === '["F1","F2","B"]', JSON.stringify(names()));
+
+// A3. Front arriving while a FRONT entry is in flight.
+reset();
+enqueueTriggerAction(trig(20, 'F1', 'front'), 'bash'); // in flight
+enqueueTriggerAction(trig(21, 'F2', 'front'), 'trip');
+reply(20, 'fired');
+check('A3 in-flight front retires by identity, F2 stays', JSON.stringify(names()) === '["F2"]', JSON.stringify(names()));
+
+// A4. Dedup: one entry per trigger.
+reset();
+enqueueTriggerAction(trig(30, 'B', 'back'), 'kick');
+enqueueTriggerAction(trig(30, 'B', 'back'), 'kick');
+check('A4 a trigger queues once', names().length === 1, JSON.stringify(names()));
+
+// A5. Cap of 10, quiet drop.
+reset();
+for (var i = 0; i < 12; i++) { enqueueTriggerAction(trig(100 + i, 'Q' + i, 'back'), 'kick'); }
+check('A5 queue caps at 10', names().length === 10, String(names().length));
+
+// A6. Rejected leaves the queue.
+reset();
+enqueueTriggerAction(trig(40, 'B', 'back'), 'kick');
+reply(40, 'rejected');
+check('A6 rejected entry leaves', names().length === 0, JSON.stringify(names()));
+
+// A7. Deferred retries next round and drops after the staleness window.
+reset();
+enqueueTriggerAction(trig(50, 'B', 'back'), 'kick');
+for (var r = 0; r < 6; r++) { reply(50, 'deferred'); newRound(); }
+check('A7 deferred entry ages out after 6 rounds', names().length === 0, JSON.stringify(names()));
+
+// A8. One release per round.
+reset();
+enqueueTriggerAction(trig(60, 'A', 'back'), 'kick');
+enqueueTriggerAction(trig(61, 'B', 'back'), 'bash');
+reply(60, 'fired');
+check('A8 second entry waits for the next round', sent.length === 1, JSON.stringify(sent));
+newRound();
+check('A8 next round releases the second', sent.length === 2 && sent[1].body.id === 61, JSON.stringify(sent));
+
+// A9. Login hold: nothing sends before settle. drainQueue arms a real 2.5 s
+// settle timer while held; stub setTimeout for these cases so no stray timer
+// keeps node alive or fires after the summary.
+var realSetTimeout = global.setTimeout;
+var armed = [];
+global.setTimeout = function (fn, ms) { armed.push({ fn: fn, ms: ms }); return armed.length; };
+function releaseLoginHold() {
+    (0, eval)('queueLoginSettled = true; queueSettleTimer = null; drainQueue();');
+}
+reset();
+(0, eval)('queueLoginSettled = false; queueSettleTimer = null;');
+enqueueTriggerAction(trig(70, 'B', 'back'), 'kick');
+check('A9 nothing sends during the login hold', sent.length === 0, JSON.stringify(sent));
+check('A9 the hold arms the 2.5 s fallback timer', armed.length === 1 && armed[0].ms === 2500, JSON.stringify(armed.map(function (a) { return a.ms; })));
+releaseLoginHold();
+check('A9 settle releases it', sent.length === 1, JSON.stringify(sent));
+
+// A9b. The fallback timer itself settles the hold and sends.
+reset();
+armed = [];
+(0, eval)('queueLoginSettled = false; queueSettleTimer = null;');
+enqueueTriggerAction(trig(71, 'B', 'back'), 'kick');
+armed[0].fn();
+check('A9b fallback timer settles the hold and sends', sent.length === 1 && sent[0].body.id === 71, JSON.stringify(sent));
+
+// A9c. Front and back entries enqueued during the hold: front goes first,
+// whichever arrived first.
+reset();
+(0, eval)('queueLoginSettled = false; queueSettleTimer = null;');
+enqueueTriggerAction(trig(72, 'B', 'back'), 'kick');
+enqueueTriggerAction(trig(73, 'F', 'front'), 'bash');
+check('A9c held queue orders front ahead of back', JSON.stringify(names()) === '["F","B"]' && sent.length === 0, JSON.stringify(names()) + JSON.stringify(sent));
+releaseLoginHold();
+check('A9c release sends the front entry first', sent.length === 1 && sent[0].body.id === 73, JSON.stringify(sent));
+reply(73, 'fired');
+newRound();
+check('A9c then the back entry', sent.length === 2 && sent[1].body.id === 72, JSON.stringify(sent));
+
+reset();
+(0, eval)('queueLoginSettled = false; queueSettleTimer = null;');
+enqueueTriggerAction(trig(74, 'F', 'front'), 'bash');
+enqueueTriggerAction(trig(75, 'B', 'back'), 'kick');
+releaseLoginHold();
+check('A9c front first when it arrived first too', sent.length === 1 && sent[0].body.id === 74 && JSON.stringify(names()) === '["F","B"]', JSON.stringify(sent));
+
+global.setTimeout = realSetTimeout;
+reset();
+
+// A10. Death clears.
+reset();
+enqueueTriggerAction(trig(80, 'B', 'back'), 'kick');
+GMCPStructs.Commands = { State: { mode: 'dead' } };
+(0, eval)('checkDeathClearsQueue();');
+check('A10 death clears the queue', names().length === 0, JSON.stringify(names()));
+GMCPStructs.Commands = { State: { mode: '' } };
+(0, eval)('checkDeathClearsQueue();');
+
 console.log((failures ? failures + ' of ' : 'all ') + checks + ' checks ' + (failures ? 'FAILED' : 'passed'));
 process.exit(failures ? 1 : 0);
