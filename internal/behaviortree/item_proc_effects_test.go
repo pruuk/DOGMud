@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -139,6 +140,32 @@ func TestProcLifesteal(t *testing.T) {
 	procLifesteal(attacker, 80, map[string]float64{"ratio": 0.25})
 	if attacker.Health != 200 {
 		t.Fatalf("expected clamp at 200, got %d", attacker.Health)
+	}
+}
+
+// #285: lifesteal stops at the reserved ceiling, not the raw max. The
+// Blackrazor holds its own health reserve, and lifesteal used to climb to the
+// raw max mid-fight (421 to 562 against 140 reserved) until the next
+// recalculation pulled it back.
+func TestProcLifesteal_StopsAtReservedCeiling(t *testing.T) {
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		999287: {ItemId: 999287, Name: "hungry blade", Type: items.Weapon, Hands: 2, ReserveHealthPct: 0.25},
+	}))
+	attacker := characters.New()
+	// Value set directly, no Validate: this package's other tests load the
+	// shipped balance config, which would re-derive the max from stats.
+	attacker.HealthMax.Value = 400
+	attacker.Equipment.Weapon = items.New(999287)
+	ceiling := attacker.PoolCeiling(characters.PoolHealth)
+	if ceiling >= 400 {
+		t.Fatalf("setup: ceiling %d is not reserved below the raw 400", ceiling)
+	}
+	attacker.Health = ceiling - 5
+	if healed := procLifesteal(attacker, 400, map[string]float64{"ratio": 0.5}); healed != 5 {
+		t.Errorf("expected 5 healed (up to the ceiling), got %d", healed)
+	}
+	if attacker.Health != ceiling {
+		t.Errorf("lifesteal left health at %d, want the reserved ceiling %d (raw max 400)", attacker.Health, ceiling)
 	}
 }
 

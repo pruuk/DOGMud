@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -33,8 +34,8 @@ func Paz(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`You illuminate <ansi fg="mobname">%s</ansi> with a %s!`, mob.Character.Name, beamOfLight))
 				room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> illuminates <ansi fg="mobname">%s</ansi> with a %s!`, user.Character.Name, mob.Character.Name, beamOfLight), user.UserId)
 
-				mob.Character.Health = mob.Character.HealthMax.Value
-				mob.Character.Conviction = mob.Character.ConvictionMax.Value
+				mob.Character.SetPoolFraction(characters.PoolHealth, 1.0)
+				mob.Character.SetPoolFraction(characters.PoolConviction, 1.0)
 
 				return true, nil
 			}
@@ -44,8 +45,8 @@ func Paz(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> illuminates <ansi fg="username">%s</ansi> with a %s!`, user.Character.Name, u.Character.Name, beamOfLight), user.UserId, u.UserId)
 			u.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(`<ansi fg="username">%s</ansi> illuminates you with a %s!`, user.Character.Name, beamOfLight)))
 
-			u.Character.Health = u.Character.HealthMax.Value
-			u.Character.Conviction = u.Character.ConvictionMax.Value
+			u.Character.SetPoolFraction(characters.PoolHealth, 1.0)
+			u.Character.SetPoolFraction(characters.PoolConviction, 1.0)
 
 			events.AddToQueue(events.CharacterVitalsChanged{UserId: u.UserId})
 
@@ -58,9 +59,9 @@ func Paz(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	user.SendText(messaging.CategoryAdmin, `You paz yourself with a `+beamOfLight+`!`)
 	room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> illuminates <ansi fg="username">%s</ansi> with a %s!`, user.Character.Name, user.Character.Name, beamOfLight), user.UserId)
 
-	if user.Character.Health != user.Character.HealthMax.Value || user.Character.Conviction != user.Character.ConvictionMax.Value {
-		user.Character.Health = user.Character.HealthMax.Value
-		user.Character.Conviction = user.Character.ConvictionMax.Value
+	if user.Character.Health != user.Character.PoolCeiling(characters.PoolHealth) || user.Character.Conviction != user.Character.PoolCeiling(characters.PoolConviction) {
+		user.Character.SetPoolFraction(characters.PoolHealth, 1.0)
+		user.Character.SetPoolFraction(characters.PoolConviction, 1.0)
 
 		events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
 	}

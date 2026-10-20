@@ -193,7 +193,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 				if healAmt < 1 {
 					healAmt = 1
 				}
-				user.Character.Heal(healAmt)
+				user.Character.ApplyRestore(characters.PoolHealth, healAmt)
 
 				// Emit tick feedback while a heal-spell Regenerating record is active
 				// so players get confirmation their mend-wounds (or similar) is working.
@@ -210,7 +210,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 					if healAmt < 1 {
 						healAmt = 1
 					}
-					user.Character.Heal(healAmt)
+					user.Character.ApplyRestore(characters.PoolHealth, healAmt)
 					user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
 						`<ansi fg="green">Your wounds knit closed. (%s)</ansi>`,
 						combat.GetHealDescription(healAmt, user.Character.HealthMax.Value)))

@@ -309,8 +309,9 @@ func (c *Character) poolMax(p Pool) int {
 // for this reason; do not re-add it. A companion or enchantment holder should
 // simply HAVE LESS, not PAY MORE.
 //
-// Regeneration is a deliberate exception and still reads the raw max -- see
-// HealthPerRound/StaminaPerRound/ConvictionPerRound in resources.go.
+// Regeneration RATE is a deliberate exception and still reads the raw max --
+// see HealthPerRound/StaminaPerRound/ConvictionPerRound in resources.go. What a
+// restore may fill UP TO is PoolCeiling, not this.
 func (c *Character) EffectivePoolMax(p Pool) int {
 	max := c.poolMax(p)
 	if eff := max - c.GetPoolReservation(string(p), max); eff > 1 {
@@ -335,6 +336,62 @@ func (c *Character) EffectivePoolMax(p Pool) int {
 // it looked comfortable.
 func (c *Character) EffectivePoolMaxNamed(pool string) int {
 	return c.EffectivePoolMax(Pool(pool))
+}
+
+// PoolCeiling is the highest value pool may HOLD: the raw max less the
+// reservation (GetPoolReservation), floored at 1 for health and 0 for stamina
+// and conviction.
+//
+// It is the one ceiling for every write that raises a pool. ApplyRestore caps
+// at it, SetPoolFraction caps at it, and the reservation clamp in
+// RecalculateStats pulls a pool back to it. Before #285 the restores capped at
+// the RAW max and only the clamp knew about reservation, so regen, potions,
+// heals and lifesteal filled a reserved pool past what it could hold and the
+// prompt, status and GMCP showed the inflated value until the next
+// recalculation pulled it back (conviction 251 against max 405 with 194
+// reserved). Players and mobs share the rule: GetPoolReservation has no IsMob
+// gate.
+//
+// Distinct from EffectivePoolMax, which is floored at 1 for every pool because
+// it is a DENOMINATOR. A fully reserved stamina pool holds 0, and a restore
+// ceiling of 1 would refill it to 1 every tick for the clamp to take away.
+func (c *Character) PoolCeiling(p Pool) int {
+	ceiling, _ := c.reservedCeiling(p)
+	return ceiling
+}
+
+// reservedCeiling is PoolCeiling plus the reservation it took out, for the
+// RecalculateStats clamp, which acts only when something is reserved and
+// leaves the plain max clamp to validatePoolClamps.
+func (c *Character) reservedCeiling(p Pool) (ceiling, reserved int) {
+	raw := c.poolMax(p)
+	reserved = c.GetPoolReservation(string(p), raw)
+	ceiling = raw - reserved
+	floor := 0
+	if p == PoolHealth {
+		floor = 1
+	}
+	if ceiling < floor {
+		ceiling = floor
+	}
+	return ceiling, reserved
+}
+
+// SetPoolFraction sets pool to frac of its RAW max, never above PoolCeiling,
+// and returns the value written. It is the absolute set for spawn, respawn,
+// revive and admin restore: frac 1.0 is "full", which for a reserved actor is
+// the ceiling, not the raw max.
+//
+// The fraction is of the raw max on purpose, so a respawn at 5% or a bonded
+// companion back at half is the same number it always was unless the
+// reservation leaves less room than that.
+func (c *Character) SetPoolFraction(p Pool, frac float64) int {
+	v := int(float64(c.poolMax(p)) * frac)
+	if ceiling := c.PoolCeiling(p); v > ceiling {
+		v = ceiling
+	}
+	c.setPool(p, v)
+	return v
 }
 
 // setPool writes a pool. Unexported so every caller goes through a primitive
@@ -584,8 +641,11 @@ func (c *Character) applyVitalChange(pool Pool, delta int) int {
 	next := current + delta
 
 	if delta > 0 {
-		if max := c.poolMax(pool); next > max {
-			next = max
+		// The reserved ceiling, not the raw max (#285). A pool already above
+		// it (a reservation that grew since the last clamp) is left where it
+		// is: a restore never lowers a pool.
+		if ceiling := c.PoolCeiling(pool); next > ceiling {
+			next = max(ceiling, current)
 		}
 	} else if pool != PoolHealth && next < 0 {
 		// Floor rule 2: stamina and conviction stop at empty.
@@ -731,7 +791,8 @@ func (c *Character) interruptWork() {
 }
 
 // ApplyRestore restores amount to pool and returns the amount ACTUALLY restored,
-// which is less than requested when the pool hits its maximum.
+// which is less than requested when the pool hits PoolCeiling (the raw max
+// less any reservation, #285).
 //
 // Restore is the same pipeline as harm with the sign flipped, which is why the
 // two share applyVitalChange. Restoring a character whose health is negative
