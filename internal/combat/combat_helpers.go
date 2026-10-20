@@ -968,6 +968,9 @@ type hitResolution struct {
 func (r hitResolution) defenceWon() bool { return r.defended || r.defenseCrit }
 
 // doubleFumbleMessages are comedy flavor text for when both combatants fumble.
+// They are picked without looking at what either side fights with, so no line
+// may name a weapon: a bare-handed fighter or a beast fumbles through them too
+// (#631).
 var doubleFumbleMessages = []struct {
 	toAttacker string
 	toDefender string
@@ -984,9 +987,9 @@ var doubleFumbleMessages = []struct {
 		toRoom:     `%s and %s both flail about in an embarrassing tangle of limbs.`,
 	},
 	{
-		toAttacker: `Your weapon slips at the exact moment %s trips over their own guard!`,
-		toDefender: `Your guard tangles at the exact moment %s's weapon slips free!`,
-		toRoom:     `%s's weapon slips and %s's guard tangles; both stumble to the ground!`,
+		toAttacker: `Your attack goes wide at the exact moment %s trips over their own guard!`,
+		toDefender: `Your guard tangles at the exact moment %s's attack goes wide!`,
+		toRoom:     `%s's attack goes wide and %s's guard tangles; both stumble to the ground!`,
 	},
 	{
 		toAttacker: `You overcommit and tumble forward, and %s overreacts and falls too!`,
