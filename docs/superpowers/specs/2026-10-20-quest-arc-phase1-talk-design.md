@@ -74,7 +74,8 @@ spec; line numbers were read from the files at that commit.
   may name a `behavior` key; choosing it fires the tree with that key.
 - **R13 AI companion** (section 4.2): `ask` on the player's own bonded companion still routes to
   the module; `companion-ask` picks one of the NPC's eligible info topics by key, never an offer
-  or hand-in.
+  or hand-in. (Planning simplified the mechanism: the owner's words pick the topic at command
+  time, so the model needs no topic list; section 4.2.)
 
 ## 3. Data model
 
@@ -188,10 +189,14 @@ deletion's callers with `codegraph_callers` before removing it.
 6. **Markers** (R9): one function, `dialogue.Marker(df *DialogueFile, ps *PlayerState) string`,
    returns `[?]`, `[!]`, `[*]` or `""` by the requirements' priority. It feeds:
    - the text roster, replacing `FormattedName.QuestAlert bool` with `Marker string` in the same
-     slot, so the anonymize strip at `actions/perception.go:46` keeps hiding it from viewers who
-     cannot name the NPC;
-   - GMCP `Room.Info.Contents.Npcs`: `marker` string replaces `quest_flag` bool; the web client
-     prints it as text before the name;
+     slot. A viewer at Shapes or None sight already gets anonymous figures in place of the whole
+     roster (`rooms/roomdetails.go:336`), and the sight-line name helpers clear it
+     (`actions/perception.go:46`, `characters/formattedname.go:178`,
+     `hooks/spell_resolution.go:474`);
+   - GMCP `Room.Info.Contents.Npcs`: `marker` string replaces `quest_flag` bool. No web client
+     script lists NPC names from GMCP today (`webclient-pure.html:629` reads only `adjectives`
+     for the map's shop icon), so players see the marker in the text roster; the field is there
+     for the client arc;
    - each menu line's `Entry.Marker`.
    Combat lines, `look <npc>` and other name uses stay unmarked. Deleted with it: `mob.QuestFlags`,
    `SpawnInfo.QuestFlags` and its copy in `rooms.go`, the GMCP bool, and the builder fields listed
@@ -219,10 +224,12 @@ Sable 315, bandit leader 254), whose actions are `say` 47, `send_user_text` 6, `
 `set_state` 3, `board_ferry` 3, `open_instance_portal` 2, `grant_quest` 2, `move_player` 1,
 `emote` 1. The `noncombat_questgiver` archetype mentions `player_ask` only in a comment.
 
-- A topic gains `behavior: <key>`. Choosing the topic (after its line, text and effects) fires
-  the mob's tree with a new event `player_topic` carrying the topic key. The `player_ask` event
+- A topic gains `behavior: true`. Choosing the topic (after its line, text and effects) fires
+  the mob's tree with a new event `player_topic` carrying the topic's own key (planning: the
+  key is always the topic's own, so the field is a flag). The `player_ask` event
   is removed from `behaviortree/events.go`.
-- A new tree condition `topic_is: <key>` replaces `keyword_match` inside those branches. Other
+- A new tree condition `check: topic_is` with `topic: <key>` replaces `keyword_match` inside
+  those branches. Other
   conditions in the branch (`player_has_quest`, `player_has_item`) stay as tree conditions, and
   the topic carries matching gates so the menu shows it only when the branch can act.
 - Branches whose only actions speak (`say`, `respond`, `send_user_text`, `emote`) become plain
@@ -231,8 +238,8 @@ Sable 315, bandit leader 254), whose actions are `say` 47, `send_user_text` 6, `
   deleted (requirements: no quest is granted except by accepting from an NPC menu).
 - Branches with `board_ferry`, `open_instance_portal`, `move_player` or `set_state` keep their
   tree action and become topics with `behavior`.
-- Validator: a `behavior` key must match a `topic_is` condition in that mob's tree, and every
-  `topic_is` key must name a topic on that mob.
+- Validator: a `behavior: true` topic's key must appear in a `topic_is` condition in that
+  mob's tree, and every `topic_is` key must name a topic on that mob.
 
 ### 4.2 AI companion (R13)
 
@@ -240,12 +247,14 @@ Sable 315, bandit leader 254), whose actions are `say` 47, `send_user_text` 6, `
 
 - `ask <own bonded companion> ...` still routes through `companionai.RouteAsk`
   (`ask.go:142`): that is chat with the companion, not NPC dialogue. Every other `ask` redirects.
-- `companion-ask <who> about <what>` authorizes the companion as today. The model's `sayto`
-  action (`modules/aicompanion/actions.go:475`) no longer passes free text to
-  `companionai.AskNpc`; the model is given the NPC's eligible info topics (key and label) and its
-  action names one key. `AskNpc` resolves that key and plays it exactly as the owner choosing it,
-  with the companion speaking the label. Offers and hand-ins are never offered to the model. A
-  key that is not an eligible info topic gets a shrug and changes nothing.
+- `companion-ask <who> about <what>` resolves `<what>` against that NPC's eligible **info**
+  topics when the owner types it (key, or a label containing every word typed, case-insensitive,
+  exactly one match). No match or several: the owner gets one line listing the NPC's info topic
+  labels and no authority is granted. A match stores the topic key in the companion's
+  `askAuthority`. When the model's authorized `sayto` fires
+  (`modules/aicompanion/actions.go:475`), `companionai.AskNpc` receives that key, not the
+  model's words, and plays the topic exactly as the owner choosing it. Offers and hand-ins are
+  never reachable this way. No prompt or model schema change is needed.
 
 ## 5. Validators
 
