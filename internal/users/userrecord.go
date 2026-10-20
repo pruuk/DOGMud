@@ -790,6 +790,10 @@ func (u *UserRecord) ConnectionId() uint64 {
 // Prompt related functionality
 func (u *UserRecord) StartPrompt(command string, rest string) (*prompt.Prompt, bool) {
 
+	// The rule already holding as the prompt opens; read before sessionMu
+	// because the gate reads the character's machines.
+	openedUnder := menuGate(u.Character)
+
 	u.sessionMu.Lock()
 	if u.activePrompt != nil {
 		// If it's the same prompt, return the existing one
@@ -806,6 +810,7 @@ func (u *UserRecord) StartPrompt(command string, rest string) (*prompt.Prompt, b
 	replaced := u.activeMenu
 	u.activeMenu = nil
 	u.activePrompt = prompt.New(command, rest)
+	u.activePrompt.OpenedUnder = openedUnder
 	p := u.activePrompt
 	u.signalMenuStateLocked(wasOpen)
 	u.sessionMu.Unlock()

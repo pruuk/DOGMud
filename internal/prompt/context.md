@@ -74,6 +74,11 @@ A question can be a menu from `internal/menu` instead of free text. See
 - `Prompt.NonModal`: a menu question that gets a line it does not recognise
   closes the prompt and the line runs as a command; game interrupts close it
   too. Player flows set it; builders stay modal.
+- `Prompt.OpenedUnder`: the interrupt rule already holding when the prompt
+  opened, set by `users.StartPrompt`; only a different rule closes a
+  non-modal prompt.
+- `Prompt.SetAsideLine`: said when a non-modal prompt closes unfinished, so a
+  draft never vanishes silently (mail sets "You set your unsent mail aside.").
 - `Prompt.RoomBound`: the prompt edits the room or zone the player stands in,
   so a room change cancels it even though it is modal.
 

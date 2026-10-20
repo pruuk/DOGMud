@@ -119,7 +119,11 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			// Re-ask from the top. RejectResponse alone would re-show the
 			// confirm (GetNextQuestion returns the last question), so clear
 			// the prompt and re-enter Start — same pattern as the name decline.
+			// The arrival already fired: carry the `entered` flag into the
+			// fresh prompt so answering again does not announce it twice.
 			user.ClearPrompt()
+			fresh, _ := user.StartPrompt(`start`, rest)
+			fresh.Store(`entered`, true)
 			return Start(rest, user, room, flags)
 		}
 		user.ClearPrompt()

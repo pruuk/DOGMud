@@ -100,6 +100,7 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	cmdPrompt, isNew := user.StartPrompt(`mail`, rest)
 	cmdPrompt.NonModal = true
+	cmdPrompt.SetAsideLine = `You set your unsent mail aside.`
 
 	// Recipient is the initial argument (or prompted for if omitted).
 	recipientName := rest

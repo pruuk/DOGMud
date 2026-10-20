@@ -57,6 +57,15 @@ type Prompt struct {
 	// so a room change cancels it even though it is modal; otherwise the
 	// next answer would act on the new room (#375).
 	RoomBound bool
+	// OpenedUnder is the interrupt rule that already held when the prompt
+	// opened (menu.CloseNone when none did). A player may open a non-modal
+	// prompt while sitting or fighting, so only a different rule (a new
+	// interrupt) closes it; set by users.StartPrompt (#375).
+	OpenedUnder menu.CloseReason
+	// SetAsideLine, when set, is said to the player whenever the non-modal
+	// prompt closes without being finished, so a draft never vanishes
+	// silently ("You set your unsent mail aside.").
+	SetAsideLine string
 }
 
 func New(command string, rest string) *Prompt {

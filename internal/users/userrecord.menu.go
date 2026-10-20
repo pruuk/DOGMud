@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/prompt"
 )
 
 // openMenu is the game menu a player has open and the session it came with.
@@ -152,26 +153,52 @@ func (u *UserRecord) currentMenu() *openMenu {
 }
 
 // clearNonModalPromptLocked clears the open prompt only if it is non-modal
-// and reports whether it did. The caller holds sessionMu and signals.
-func (u *UserRecord) clearNonModalPromptLocked() bool {
-	if u.activePrompt == nil || !u.activePrompt.NonModal {
-		return false
+// and r is a new interrupt for it, and returns the prompt it cleared (nil
+// when none). A rule that already held when the prompt opened (OpenedUnder)
+// is not new: mail opened while resting survives the next push while the
+// player still rests. The caller holds sessionMu and signals.
+func (u *UserRecord) clearNonModalPromptLocked(r menu.CloseReason) *prompt.Prompt {
+	p := u.activePrompt
+	if p == nil || !p.NonModal {
+		return nil
+	}
+	if r != menu.CloseNone && r == p.OpenedUnder {
+		return nil
 	}
 	u.activePrompt = nil
-	return true
+	return p
 }
 
 // takeMenuAndNonModalPrompt removes the open game menu and any non-modal
-// prompt in one critical section, signalling once, and returns what it took.
-func (u *UserRecord) takeMenuAndNonModalPrompt() (om *openMenu, promptCleared bool) {
+// prompt r closes, in one critical section, signalling once, and returns
+// what it took.
+func (u *UserRecord) takeMenuAndNonModalPrompt(r menu.CloseReason) (om *openMenu, cleared *prompt.Prompt) {
 	u.sessionMu.Lock()
 	defer u.sessionMu.Unlock()
 	wasOpen := u.menuOrPromptOpenLocked()
 	om = u.activeMenu
 	u.activeMenu = nil
-	promptCleared = u.clearNonModalPromptLocked()
+	cleared = u.clearNonModalPromptLocked(r)
 	u.signalMenuStateLocked(wasOpen)
-	return om, promptCleared
+	return om, cleared
+}
+
+// sayPromptSetAside speaks a closed prompt's SetAsideLine, if it has one.
+func (u *UserRecord) sayPromptSetAside(p *prompt.Prompt) {
+	if p != nil && p.SetAsideLine != "" {
+		u.SendText(messaging.CategorySystem, p.SetAsideLine)
+	}
+}
+
+// lowerPromptOpenedUnder forgets the rule a prompt opened under once that
+// rule no longer holds, so the same rule coming back is a new interrupt
+// (sit, stand, sit again closes it).
+func (u *UserRecord) lowerPromptOpenedUnder() {
+	u.sessionMu.Lock()
+	defer u.sessionMu.Unlock()
+	if u.activePrompt != nil {
+		u.activePrompt.OpenedUnder = menu.CloseNone
+	}
 }
 
 // CloseMenu closes the open game menu, if any, announcing an interrupt reason.
@@ -184,20 +211,23 @@ func (u *UserRecord) CloseMenu(r menu.CloseReason) {
 // topic, its names, and whether anything was open. The caller speaks the
 // three follow lines (actions.BreakOffMenuToFollow).
 func (u *UserRecord) CloseMenuForFollow() (topic string, names []string, had bool) {
-	om, promptCleared := u.takeMenuAndNonModalPrompt()
+	om, cleared := u.takeMenuAndNonModalPrompt(menu.CloseFollow)
+	u.sayPromptSetAside(cleared)
 	if om != nil {
 		u.afterMenuClosed(om, menu.CloseFollow, false)
 		return om.s.Topic, om.s.TopicNames, true
 	}
-	return "", nil, promptCleared
+	return "", nil, cleared != nil
 }
 
-// CheckMenuInterrupts closes the open game menu and any non-modal prompt when
-// an interrupt rule holds. Pushed by the busy observers, the condition hook,
-// and called on every choice.
+// CheckMenuInterrupts closes the open game menu when an interrupt rule
+// holds, and any non-modal prompt when the rule is new to it (see
+// clearNonModalPromptLocked). Pushed by the busy observers, the condition
+// hook, and called on every choice.
 func (u *UserRecord) CheckMenuInterrupts() {
 	r := menuGate(u.Character)
 	if r == menu.CloseNone {
+		u.lowerPromptOpenedUnder()
 		return
 	}
 	u.closeForRule(r)
@@ -228,14 +258,15 @@ func (u *UserRecord) takeRoomBoundPrompt() bool {
 }
 
 func (u *UserRecord) closeForRule(r menu.CloseReason) {
-	om, promptCleared := u.takeMenuAndNonModalPrompt()
+	om, cleared := u.takeMenuAndNonModalPrompt(r)
 	if om != nil {
 		u.afterMenuClosed(om, r, true)
 	}
-	if promptCleared {
+	if cleared != nil {
 		if line := menu.InterruptLine(r, ""); line != "" {
 			u.SendText(messaging.CategoryRefusal, line)
 		}
+		u.sayPromptSetAside(cleared)
 	}
 }
 

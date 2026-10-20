@@ -40,6 +40,8 @@ func (u *UserRecord) RoutePromptInput(line string, typed bool) (next string, had
 		res = q.Resolve(line)
 		if p.NonModal && res.Kind == menu.NotAnAnswer {
 			u.ClearPrompt()
+			// Said before the line runs, so a draft never vanishes silently.
+			u.sayPromptSetAside(p)
 			return line, true
 		}
 	}
@@ -52,8 +54,10 @@ func (u *UserRecord) RoutePromptInput(line string, typed bool) (next string, had
 		case menu.Ambiguous:
 			u.SendText(messaging.CategoryRefusal, ambiguousLine(res.Matches))
 		case menu.NotAnAnswer, menu.Empty:
-			// Only a modal menu gets here (a non-modal one closed above);
-			// the builder redraws its menu after this line.
+			// NotAnAnswer arrives only from a modal menu (a non-modal one
+			// closed above). Empty, Enter on a menu with no Default and no
+			// Leave, arrives from either kind (picklock is non-modal). The
+			// command redraws its menu after this line either way.
 			u.SendText(messaging.CategoryRefusal, "Pick a number from the list.")
 		}
 	}

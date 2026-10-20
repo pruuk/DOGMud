@@ -579,8 +579,13 @@ menu itself (rendering, resolving) is `internal/menu`; see its `context.md`.
   closes the menu (`CloseOtherCommand`) and returns false so the caller runs it
   as a command.
 - `CloseMenu(reason)`: closes and speaks the interrupt line.
-- `CheckMenuInterrupts()`: closes the menu and any non-modal prompt when
-  `menuGate` holds. Pushed by the busy observers (`characters.BusyStateChanged`),
+- `CheckMenuInterrupts()`: closes the menu when `menuGate` holds, and a
+  non-modal prompt only on a NEW interrupt: `StartPrompt` records the rule
+  already holding as `Prompt.OpenedUnder` (mail opened while resting, picklock
+  in a fight), and that same rule does not close it. When no rule holds the
+  record is cleared, so sitting down again after standing does close it.
+  Room changes and follow pulls always close a non-modal prompt. A closed
+  prompt's `SetAsideLine` is spoken after the interrupt line. Pushed by the busy observers (`characters.BusyStateChanged`),
   `hooks` condition changes, and `actions.Sleep`; also called on every choice.
 - `CloseMenusForRoomChange()`: any move closes the game menu, any non-modal
   prompt, and a `RoomBound` prompt ("You left the room, so the edit is
@@ -609,7 +614,8 @@ onto that check when it lands.
 **Prompt routing.** `RoutePromptInput(line, typed)` gives one input line to the
 open command prompt and returns the line to run next. A queued line (typed
 false) never answers. A non-modal prompt whose menu question does not recognise
-a typed line closes and the line runs as a command. `ClearFinishedPrompt()`
+a typed line closes and the line runs as a command; its `SetAsideLine`, if
+set, is spoken first ("You set your unsent mail aside."). `ClearFinishedPrompt()`
 clears a prompt whose questions are all answered, so `Char.Menu` reports it
 closed at once.
 

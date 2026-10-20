@@ -163,7 +163,7 @@ func cmdCharacterNew(user *users.UserRecord, room *rooms.Room, cmdPrompt *prompt
 		return true, nil
 	}
 
-	if question.Response == `no` {
+	if question.Response != `yes` {
 		user.ClearPrompt()
 		return true, nil
 	}
@@ -218,7 +218,7 @@ func cmdCharacterDelete(user *users.UserRecord, cmdPrompt *prompt.Prompt, altNam
 			return true, nil
 		}
 
-		if question.Response == `no` {
+		if question.Response != `yes` {
 			user.SendText(messaging.CategorySystem, `<ansi fg="203">Okay. Aborting.</ansi>`)
 			user.ClearPrompt()
 			return true, nil
@@ -273,7 +273,7 @@ func cmdCharacterChange(user *users.UserRecord, room *rooms.Room, cmdPrompt *pro
 			return true, nil
 		}
 
-		if question.Response == `no` {
+		if question.Response != `yes` {
 			user.SendText(messaging.CategorySystem, `<ansi fg="203">Okay. Aborting.</ansi>`)
 			user.ClearPrompt()
 			return true, nil
