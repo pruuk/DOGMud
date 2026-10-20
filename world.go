@@ -1029,18 +1029,9 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 
 		if !handled {
 
-			// Lets users use gossip/say shortcuts without a space
-			if len(inputText) > 1 {
-				if inputText[0] == '`' || inputText[0] == '.' {
-					inputText = fmt.Sprintf(`%s %s`, string(inputText[0]), string(inputText[1:]))
-				}
-			}
-
-			if index := strings.Index(inputText, " "); index != -1 {
-				command, remains = strings.ToLower(inputText[0:index]), inputText[index+1:]
-			} else {
-				command = inputText
-			}
+			// Lets users use gossip/say shortcuts without a space. Shared
+			// with the stake prompt's command check (#375 R14).
+			command, remains = usercommands.SplitInput(inputText)
 
 			handled, err = usercommands.TryCommand(command, remains, userId, flags)
 			if err != nil {

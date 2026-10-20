@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"errors"
 	"sort"
 	"strings"
 	"testing"
@@ -228,6 +229,81 @@ func TestOpenInstancePortal_UnknownZoneParamFails(t *testing.T) {
 	require.Equal(t, Failure, actOpenInstancePortal(sableParams("moon"), stakeCtx("player_topic", "open_moon")))
 	require.Nil(t, requireUser(t, stakeUserId).GetPrompt())
 	require.Empty(t, *calls)
+}
+
+func TestParseStake_AcceptsGoldSuffixAndCommas(t *testing.T) {
+	for in, want := range map[string]int{
+		"250": 250, "250 gold": 250, "250g": 250, "250 g": 250, "250 Gold": 250,
+		"1,000": 1000, "1,000 gold": 1000, "0": 0,
+	} {
+		got, ok := parseStake(in)
+		require.True(t, ok, "%q is a stake", in)
+		require.Equal(t, want, got, "%q", in)
+	}
+	for _, in := range []string{"", "gold", "lots", "250 silver", "-5", "2 50", "250gg"} {
+		_, ok := parseStake(in)
+		require.False(t, ok, "%q is not a stake", in)
+	}
+}
+
+func TestStakePrompt_GoldSuffixOpens(t *testing.T) {
+	calls := seedStakeScene(t)
+	chooseArenaTopic(t)
+	events.DrainQueuedMessagesForTest(stakeUserId)
+
+	outcome, _ := answerStake(t, "250 gold")
+	require.Equal(t, StakeHandled, outcome)
+	got := captureOutcome(t, calls)
+	require.Equal(t, 750, got.gold)
+	require.Equal(t, []zoneCall{{"Instance Arena", 250, stakeUserId}}, got.calls)
+}
+
+func TestStakePrompt_CloneFailureRefunds(t *testing.T) {
+	calls := seedStakeScene(t)
+	createZoneInstance = func(zone string, gold int, owner int, authorized []int, overworld int) (*rooms.ZoneInstance, error) {
+		*calls = append(*calls, zoneCall{zone, gold, owner})
+		return nil, errors.New("no template")
+	}
+	chooseArenaTopic(t)
+	events.DrainQueuedMessagesForTest(stakeUserId)
+
+	outcome, _ := answerStake(t, "250")
+	require.Equal(t, StakeHandled, outcome)
+	got := captureOutcome(t, calls)
+	require.Len(t, got.calls, 1, "fixture check: the clone was attempted")
+	require.Equal(t, 1000, got.gold, "a failed clone refunds the stake")
+	require.Equal(t, []string{"say The planes resist me. Your gold is returned."}, got.mobSaid)
+	require.Empty(t, got.tempExits)
+	require.Nil(t, requireUser(t, stakeUserId).GetPrompt())
+}
+
+func TestStakePrompt_EmptyLineKeepsThePromptOpen(t *testing.T) {
+	calls := seedStakeScene(t)
+	chooseArenaTopic(t)
+	events.DrainQueuedMessagesForTest(stakeUserId)
+
+	outcome, _ := answerStake(t, "")
+	require.Equal(t, StakePending, outcome)
+	p := requireUser(t, stakeUserId).GetPrompt()
+	require.NotNil(t, p, "Enter on an empty line asks again")
+	require.Equal(t, PortalStakeCommand, p.Command)
+	require.NotNil(t, p.GetNextQuestion())
+	got := captureOutcome(t, calls)
+	require.Equal(t, 1000, got.gold)
+	require.Empty(t, got.calls)
+	require.Empty(t, got.userLines, "nothing is said; the question stays on the prompt line")
+}
+
+func TestStakePrompt_RoomChangeClosesWithTheSetAsideLine(t *testing.T) {
+	seedStakeScene(t)
+	chooseArenaTopic(t)
+	events.DrainQueuedMessagesForTest(stakeUserId)
+
+	u := requireUser(t, stakeUserId)
+	u.CloseMenusForRoomChange()
+	require.Nil(t, u.GetPrompt(), "walking away closes the amount prompt")
+	require.Contains(t, strings.Join(events.DrainQueuedMessagesForTest(stakeUserId), "\n"),
+		"You name no stake, so the way stays closed.")
 }
 
 func TestAnswerStake_NoPromptIsNotHandled(t *testing.T) {

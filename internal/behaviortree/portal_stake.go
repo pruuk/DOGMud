@@ -119,10 +119,18 @@ func AnswerStake(user *users.UserRecord) (StakeOutcome, string) {
 }
 
 // parseStake reads a whole number of gold: digits, with optional thousands
-// commas ("1,000"). A number too large to hold reads as the largest stake,
-// which the purse check then refuses.
+// commas ("1,000") and an optional "gold" or "g" after it ("250 gold",
+// "250g"). A number too large to hold reads as the largest stake, which the
+// purse check then refuses.
 func parseStake(s string) (int, bool) {
-	s = strings.ReplaceAll(strings.TrimSpace(s), `,`, ``)
+	s = strings.ToLower(strings.TrimSpace(s))
+	for _, unit := range []string{`gold`, `g`} {
+		if strings.HasSuffix(s, unit) {
+			s = strings.TrimSpace(strings.TrimSuffix(s, unit))
+			break
+		}
+	}
+	s = strings.ReplaceAll(s, `,`, ``)
 	if s == `` {
 		return 0, false
 	}

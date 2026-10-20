@@ -865,12 +865,15 @@ opens a non-modal free-text prompt, "How much gold will you stake?", through
 `users.StartPrompt(PortalStakeCommand, "")`. The input loop gives the next
 typed line to it and re-runs the hidden user command `portalstake`
 (`usercommands/portalstake.go`, registered in its `init`), which calls
-`AnswerStake`. A whole number (commas allowed) opens the portal through
+`AnswerStake`. A whole number (commas and a trailing `gold` or `g`
+allowed) opens the portal through
 `openInstancePortal`, the one body the typed path also runs (minimum and
 purse checks, charge, clone scaled by the stake, exit, lines), once the mob is
 still in the room the prompt opened in with the player. Anything else closes
-the prompt with one line; if it is a known command (a registered command after
-aliases, or an exit) the command then runs, so free-text #641 does not bite
+the prompt with one line; if `TryCommand` would run it
+(`usercommands.isKnownCommandLine`, which shares `SplitInput` and
+`fallbackRoute` with the dispatcher: a registered command, an emote, a known
+spell, the say shortcut, an exit or a compass direction) the command then runs, so free-text #641 does not bite
 here. Only the mob's presence is re-checked at answer time, not the tree's
 other gates. Tests swap `createZoneInstance` and `boardFerry`.
 

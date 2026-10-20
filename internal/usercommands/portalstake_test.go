@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
@@ -32,7 +33,8 @@ const (
 func seedPortalStakeScene(t *testing.T) *users.UserRecord {
 	t.Helper()
 	events.DrainAllQueuedEventsForTest()
-	t.Cleanup(keywords.SeedKeywordsForTest())
+	// The shipped say shortcut: "." is an alias of say (keywords.yaml).
+	t.Cleanup(keywords.SeedKeywordsForTest(keywords.Aliases{CommandAliases: map[string][]string{"say": {"."}}}))
 	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{
 		psRoom:      {RoomId: psRoom, Zone: "TestZone", Title: "Archway", Exits: map[string]exit.RoomExit{"north": {RoomId: psNorthRoom}}},
 		psNorthRoom: {RoomId: psNorthRoom, Zone: "TestZone", Title: "Street", Exits: map[string]exit.RoomExit{}},
@@ -89,6 +91,35 @@ func TestPortalStake_MovementClosesThePromptAndStillMoves(t *testing.T) {
 		"a known command typed at the prompt still runs as a command")
 	require.Equal(t, 1000, u.Character.Gold)
 	require.Len(t, events.DrainQueuedMessagesForTest(psUserId), 1, "one line says the way stays closed")
+}
+
+// Every kind of line TryCommand runs also runs from the prompt, once: an
+// emote, the say shortcut, and a compass direction with no exit (the
+// "bump into a wall" line).
+func TestPortalStake_EveryCommandKindRunsOnce(t *testing.T) {
+	for _, line := range []string{"smile", ".hello", "`hello", "east", "say hello"} {
+		t.Run(line, func(t *testing.T) {
+			u := seedPortalStakeScene(t)
+			if line == "`hello" {
+				t.Cleanup(keywords.SeedKeywordsForTest(keywords.Aliases{CommandAliases: map[string][]string{"broadcast": {"`"}}}))
+			}
+			typeAtPrompt(t, u, line)
+			require.Nil(t, u.GetPrompt(), "a non-number closes the prompt")
+			require.Equal(t, []string{line}, events.DrainQueuedUserInputsForTest(psUserId),
+				"the line runs as a command exactly once")
+		})
+	}
+}
+
+func TestPortalStake_KnownSpellNameRuns(t *testing.T) {
+	u := seedPortalStakeScene(t)
+	spellId := "stakeglow"
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{spellId: {SpellId: spellId, Name: "Stake Glow"}}))
+	require.Equal(t, spellId, spells.ResolveSpellId(spellId), "fixture check: the spell resolves")
+	u.Character.SpellBook = map[string]int{spellId: 1}
+	typeAtPrompt(t, u, spellId)
+	require.Equal(t, []string{spellId}, events.DrainQueuedUserInputsForTest(psUserId),
+		"a spell the player knows, typed by name, is a command")
 }
 
 func TestPortalStake_UnknownWordClosesWithoutRunning(t *testing.T) {
