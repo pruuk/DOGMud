@@ -208,5 +208,34 @@ check('A10 death clears the queue', names().length === 0, JSON.stringify(names()
 GMCPStructs.Commands = { State: { mode: '' } };
 (0, eval)('checkDeathClearsQueue();');
 
+// A11. In-flight timeout: a Try that never gets a reply is retried after
+// QUEUE_INFLIGHT_TIMEOUT_MS, counting an attempt each time, and dropped after
+// QUEUE_STALENESS_ROUNDS timeouts. Date.now is stubbed to a test clock.
+var realNow = Date.now;
+var clock = realNow();
+Date.now = function () { return clock; };
+var TIMEOUT = (0, eval)('QUEUE_INFLIGHT_TIMEOUT_MS');
+var STALE = (0, eval)('QUEUE_STALENESS_ROUNDS');
+var realLog = console.log;
+reset();
+enqueueTriggerAction(trig(90, 'T', 'back'), 'kick');
+var head = (0, eval)('actionQueue[0]');
+check('A11 the Try is sent', sent.length === 1 && sent[0].body.id === 90, JSON.stringify(sent));
+clock += TIMEOUT - 1;
+(0, eval)('drainQueue();');
+check('A11 no retry before the timeout', sent.length === 1 && head.attempts === 0, JSON.stringify(sent) + ' attempts=' + head.attempts);
+clock += 2;
+console.log = function () {};
+(0, eval)('drainQueue();');
+console.log = realLog;
+check('A11 timeout counts an attempt and retries', sent.length === 2 && sent[1].body.id === 90 && head.attempts === 1, JSON.stringify(sent) + ' attempts=' + head.attempts);
+console.log = function () {};
+for (var k = 1; k < STALE; k++) { clock += TIMEOUT + 1; (0, eval)('drainQueue();'); }
+console.log = realLog;
+check('A11 dropped after ' + STALE + ' timeouts', names().length === 0 && (0, eval)('queueInFlight') === null, JSON.stringify(names()));
+check('A11 sent once plus ' + (STALE - 1) + ' retries', sent.length === STALE, String(sent.length));
+Date.now = realNow;
+reset();
+
 console.log((failures ? failures + ' of ' : 'all ') + checks + ' checks ' + (failures ? 'FAILED' : 'passed'));
 process.exit(failures ? 1 : 0);
