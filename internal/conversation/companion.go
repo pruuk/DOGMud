@@ -2,10 +2,11 @@ package conversation
 
 import (
 	"strings"
+	"unicode"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -24,26 +25,20 @@ func CompanionTopic(user *users.UserRecord, mob *mobs.Mob, what string) (key str
 	}
 	ps := PlayerState(user)
 	what = strings.TrimSpace(what)
-	words := strings.Fields(strings.ToLower(what))
+	words := splitWords(what)
 	var hits []string
 	for i := range df.Topics {
 		t := &df.Topics[i]
-		if t.Kind != dialogue.KindInfo || !df.Eligible(t, ps) {
+		// A behavior topic can move the owner (a ferry, a stake prompt), which
+		// a companion never does on the owner's behalf.
+		if t.Kind != dialogue.KindInfo || t.Behavior || !df.Eligible(t, ps) {
 			continue
 		}
 		labels = append(labels, t.Label)
 		if strings.EqualFold(t.Key, what) {
 			key = t.Key
 		}
-		label := strings.ToLower(t.Label)
-		all := len(words) > 0
-		for _, w := range words {
-			if !strings.Contains(label, w) {
-				all = false
-				break
-			}
-		}
-		if all {
+		if labelHasWords(t.Label, words) {
 			hits = append(hits, t.Key)
 		}
 	}
@@ -56,6 +51,36 @@ func CompanionTopic(user *users.UserRecord, mob *mobs.Mob, what string) (key str
 	return "", labels, false
 }
 
+// splitWords lowercases s and splits it on anything that is not a letter or
+// a digit, so punctuation and underscores never glue words together.
+func splitWords(s string) []string {
+	return strings.FieldsFunc(strings.ToLower(s), func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+}
+
+// labelHasWords reports whether every typed word is a whole word of label or
+// the start (three letters or more) of one. "ore" is not in "more".
+func labelHasWords(label string, typed []string) bool {
+	if len(typed) == 0 {
+		return false
+	}
+	lw := splitWords(label)
+	for _, w := range typed {
+		found := false
+		for _, l := range lw {
+			if w == l || (len(w) >= 3 && strings.HasPrefix(l, w)) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
 // AskForOwner plays an info topic a companion was authorized to ask about,
 // exactly as the owner choosing it, minus the owner's own line (the
 // companion already spoke aloud) and minus the menu (the owner opened none).
@@ -63,22 +88,25 @@ func CompanionTopic(user *users.UserRecord, mob *mobs.Mob, what string) (key str
 // words. Installed as the companion NPC asker in Task 19.
 func AskForOwner(ownerUserId int, mobInstanceId int, key string, authorized bool) bool {
 	user := users.GetByUserId(ownerUserId)
-	mob := mobs.GetInstance(mobInstanceId)
-	if user == nil || user.Character == nil || mob == nil || !authorized {
+	if user == nil || user.Character == nil || !authorized {
 		return false
 	}
-	if mob.Character.IsCharmed() || mob.Character.RoomId != user.Character.RoomId {
+	// The owner must be able to hold the conversation: the talk menu's own
+	// gate (awake, idle, not in a fight or held), the NPC in the room, seen
+	// at full sight and perceived. An open prompt does not matter: no menu
+	// opens here.
+	if reason, _ := user.MenuBlockedReason(); reason != menu.CloseNone {
 		return false
 	}
-	room := rooms.LoadRoom(mob.Character.RoomId)
-	if room == nil {
+	mob, room, ok := present(user, mobInstanceId)
+	if !ok || mob.Character.IsCharmed() {
 		return false
 	}
 	df := dialogue.Load(int(mob.MobId), mob.Zone)
 	buf := &lineBuffer{user: user}
 	ps := talkState(user, buf)
 	t := df.FindTopic(key)
-	if t == nil || t.Kind != dialogue.KindInfo || !df.Eligible(t, ps) {
+	if t == nil || t.Kind != dialogue.KindInfo || t.Behavior || !df.Eligible(t, ps) {
 		mob.Command(`emote shrugs.`)
 		return true
 	}

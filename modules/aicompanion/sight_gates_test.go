@@ -4,8 +4,10 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/companionai"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
@@ -13,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -47,6 +50,8 @@ func askForScene(t *testing.T, smithHere, lit bool) (*AICompanionModule, *contro
 			{Key: `ore`, Kind: dialogue.KindInfo, Label: `What of the ore shipment?`, Text: `Delayed.`},
 			{Key: `weather`, Kind: dialogue.KindInfo, Label: `How is the weather?`, Text: `Grim.`},
 			{Key: `rumor`, Kind: dialogue.KindInfo, Label: `Any rumors, friend?`, Text: `None.`},
+			{Key: `delay`, Kind: dialogue.KindInfo, Label: `Why is the caravan late?`, Text: `Bandits.`},
+			{Key: `ferry`, Kind: dialogue.KindInfo, Label: `Can you take me across?`, Text: `Aye.`, Behavior: true},
 		}}))
 	}
 	if !lit {
@@ -106,9 +111,15 @@ func TestCompanionAskSight_AShapeIsNotNamedToTheCompanion(t *testing.T) {
 		t.Fatalf("fixture: the owner must make out shapes only, got %v", got)
 	}
 
+	// R13: a conversation needs full sight and the NPC perceived, so a shape
+	// is refused with the generic line and no leave is granted.
 	_, _ = m.cmdAskFor(`#300 about the ore`, owner, room, events.EventFlag(0))
-	if c.askAuth == nil || c.askAuth.MobInstanceId != 300 {
-		t.Fatalf("fixture: the owner could not send the companion to the shape: %+v", c.askAuth)
+	told := strings.Join(events.DrainQueuedMessagesForTest(owner.UserId), ``)
+	if c.askAuth != nil {
+		t.Fatalf("a shape is not someone to question, yet a leave was granted: %+v", c.askAuth)
+	}
+	if strings.Contains(told, `Smith`) || strings.Contains(told, `ore shipment`) {
+		t.Errorf("the refusal leaks the NPC or its topics: %q", told)
 	}
 	for _, line := range c.mind.RecentLines {
 		if strings.Contains(line.Text, `Smith`) {
@@ -120,8 +131,8 @@ func TestCompanionAskSight_AShapeIsNotNamedToTheCompanion(t *testing.T) {
 			t.Errorf("her prompt names the shape: %q", s.Text)
 		}
 	}
-	if len(c.pending) == 0 || !strings.Contains(c.pending[len(c.pending)-1].Text, `a figure`) {
-		t.Errorf("the errand should name the NPC as the owner sees it, a figure: %+v", c.pending)
+	if len(c.pending) != 0 {
+		t.Errorf("no errand should be sent to a shape: %+v", c.pending)
 	}
 }
 
@@ -235,5 +246,77 @@ func TestCompanionAsk_UnmatchedTopicGrantsNoLeaveAndListsTheLabels(t *testing.T)
 		if !strings.Contains(told, `What of the ore shipment?`) || !strings.Contains(told, `Any rumors, friend?`) {
 			t.Errorf("%q: the owner should read the NPC's info labels: %q", what, told)
 		}
+	}
+}
+
+// A behavior topic can move the owner (ferries, stake prompts), so a
+// companion is never sent to it, and the refusal does not list it.
+func TestCompanionAsk_BehaviorTopicIsNotOfferedToTheCompanion(t *testing.T) {
+	m, c, owner, room := askForScene(t, true, true)
+	_, _ = m.cmdAskFor(`smith about ferry`, owner, room, events.EventFlag(0))
+	told := strings.Join(events.DrainQueuedMessagesForTest(owner.UserId), ``)
+	if c.askAuth != nil {
+		t.Fatalf("a behavior topic was reachable: %+v", c.askAuth)
+	}
+	if strings.Contains(told, `take me across`) {
+		t.Errorf("the behavior topic was listed: %q", told)
+	}
+}
+
+// valid() checks the model's words against the owner's. When the owner
+// typed a key, the label's words stand in, so a natural question passes.
+func TestCompanionAsk_AKeyTypedByTheOwnerStillAdmitsANaturalSentence(t *testing.T) {
+	m, c, owner, room := askForScene(t, true, true)
+	_, _ = m.cmdAskFor(`smith about delay`, owner, room, events.EventFlag(0))
+	if c.askAuth == nil || c.askAuth.TopicKey != `delay` {
+		t.Fatalf("fixture: the key was not resolved: %+v", c.askAuth)
+	}
+	now := time.Now().Unix()
+	if !c.askAuth.valid(300, `Why is the caravan so late?`, now) {
+		t.Errorf("a natural sentence about the topic was refused: %q", c.askAuth.Topic)
+	}
+	if c.askAuth.valid(300, `How is the weather today?`, now) {
+		t.Errorf("another topic was admitted: %q", c.askAuth.Topic)
+	}
+}
+
+// Underscores in a typed key read as spaces.
+func TestCompanionAsk_UnderscoresInTheOwnersWordsBecomeSpaces(t *testing.T) {
+	m, c, owner, room := askForScene(t, true, true)
+	_, _ = m.cmdAskFor(`smith about ore_shipment`, owner, room, events.EventFlag(0))
+	if c.askAuth == nil || strings.Contains(c.askAuth.Topic, `_`) {
+		t.Fatalf("the stored words keep an underscore: %+v", c.askAuth)
+	}
+}
+
+// The authorized sayto hands AskNpc the topic key, never the model's words.
+func TestCompanionAsk_SaytoHandsTheTopicKeyToTheAsker(t *testing.T) {
+	m, c, owner, room := askForScene(t, true, true)
+	her := mobs.GetInstance(42)
+	var gotKey string
+	var gotMob int
+	calls := 0
+	companionai.SetNpcAsker(func(ownerId, mobInstanceId int, text string, authorized bool) bool {
+		calls++
+		gotKey, gotMob = text, mobInstanceId
+		return authorized
+	})
+	t.Cleanup(func() { companionai.SetNpcAsker(nil) })
+
+	_, _ = m.cmdAskFor(`smith about the ore`, owner, room, events.EventFlag(0))
+	if c.askAuth == nil {
+		t.Fatal("fixture: no leave granted")
+	}
+	out := m.performAction(c, her, owner, harmScene(300, 2),
+		ActionProposal{Verb: `sayto`, Ref: `t1`, Query: `Any news of the ore shipment, friend?`},
+		[]stimulus{{Kind: `heard`, FromOwner: true}}, 0, 0)
+	if !out.Issued {
+		t.Fatalf("the sayto was not issued: %+v", out)
+	}
+	if calls != 1 || gotKey != `ore` || gotMob != 300 {
+		t.Fatalf("asker got key %q for mob %d (%d calls); want ore for 300", gotKey, gotMob, calls)
+	}
+	if c.askAuth != nil {
+		t.Error("the leave should be spent")
 	}
 }

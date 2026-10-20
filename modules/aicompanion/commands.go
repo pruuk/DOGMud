@@ -5,11 +5,13 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/apiframework"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	talkflow "github.com/GoMudEngine/GoMud/internal/conversation"
+	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -647,9 +649,16 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 		refusal.NotHereCreature(user)
 		return true, nil
 	}
+	// A conversation needs full sight and the NPC perceived (the talk rules).
+	// Short of that the refusal is the generic one: it names no NPC and
+	// lists no topics.
+	if messaging.ParticipantSight(user.Character, room) != messaging.SightFull || !user.Character.Perceives(&target.Character) {
+		refusal.NotHereCreature(user)
+		return true, nil
+	}
 	// What the owner typed must name one of the NPC's info topics (R13). The
 	// key it resolves to is what the NPC is later asked, never the model's
-	// words. Offers and hand-ins are the owner's own to make.
+	// words. Offers, hand-ins and behavior topics are the owner's own.
 	key, labels, found := talkflow.CompanionTopic(user, target, topic)
 	if !found {
 		if len(labels) == 0 {
@@ -660,7 +669,18 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 		}
 		return true, nil
 	}
-	c.askAuth = &askAuthority{MobInstanceId: mobInstanceId, Topic: topic, TopicKey: key, Expires: time.Now().Unix() + 60}
+	// valid() looks for these words in what the model says. The owner's own
+	// words stand, with underscores read as spaces; a key typed as such says
+	// little a model would repeat, so the label's words stand instead.
+	authWords := strings.ReplaceAll(topic, `_`, ` `)
+	if strings.EqualFold(strings.TrimSpace(topic), key) {
+		if t := dialogue.Load(int(target.MobId), target.Zone).FindTopic(key); t != nil {
+			authWords = strings.Join(strings.FieldsFunc(t.Label, func(r rune) bool {
+				return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+			}), ` `)
+		}
+	}
+	c.askAuth = &askAuthority{MobInstanceId: mobInstanceId, Topic: authWords, TopicKey: key, Expires: time.Now().Unix() + 60}
 	// The NPC is named as the owner perceives it: an owner who makes it out
 	// only as a shape sends her to "a figure", so its real name never
 	// reaches her memory or her prompt, where she might say it aloud (#454).
