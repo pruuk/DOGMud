@@ -70,6 +70,11 @@ spec; line numbers were read from the files at that commit.
 - **R9 Markers replace the dead upstream `★`** in the same name slot; the old fields are deleted.
 - **R10 Data model** as in section 3.
 - **R11 Talk flow** as in section 4; the menu is re-shown after every answer.
+- **R12 Behavior-tree `ask` branches become topics** (raised while planning; section 4.1). A topic
+  may name a `behavior` key; choosing it fires the tree with that key.
+- **R13 AI companion** (section 4.2): `ask` on the player's own bonded companion still routes to
+  the module; `companion-ask` picks one of the NPC's eligible info topics by key, never an offer
+  or hand-in.
 
 ## 3. Data model
 
@@ -192,7 +197,10 @@ deletion's callers with `codegraph_callers` before removing it.
    `SpawnInfo.QuestFlags` and its copy in `rooms.go`, the GMCP bool, and the builder fields listed
    in section 1.
 7. **`ask <npc> ...`** prints one redirect line ("Conversations happen through talk now. Try
-   talk velk.") and does nothing else.
+   talk velk.") and does nothing else, with the one exception in 4.2. The quest engine's
+   `dialogue` event (`ask.go`, one content use: `quests/28-waking_to_gaius.yaml:422`, granting
+   `28-asked` on mob 9491) is folded into a topic effect by the converter and the trigger is
+   deleted.
 8. **LLM** (R4): the `llm.AskAsync` paths in `talk.go` and `ask.go` are removed.
 9. **Editor off** (R5): the dialogue panel in `static/js/dialogue.js` is hidden and
    `modules/gmcp/gmcp.Dialogue.go` refuses saves with one line naming phase 6.
@@ -200,6 +208,44 @@ deletion's callers with `codegraph_callers` before removing it.
     filter. Nothing gates a topic or the opener on mood.
 11. **Player state** comes through `PlayerState`, extended with `HasHeard func(key string) bool`
     and `MarkHeard func(key string)`; `dialogue` keeps its rule of not importing `characters`.
+
+### 4.1 Behavior-tree topics (R12)
+
+Today `askNpcChain` (`internal/usercommands/ask.go:177`) offers every question to the mob's
+behavior tree as `player_ask` before dialogue. Shipped content: 26 `player_ask` branches in 12
+behavior files (Threshold Keeper 9553, the three ferry hands 9574 to 9576, quay agent 9572,
+ferry agent 9571, passage agent 9573, Cleric Hadwen 9100, Warden Esk 9107, Barmaid Dal 117,
+Sable 315, bandit leader 254), whose actions are `say` 47, `send_user_text` 6, `respond` 5,
+`set_state` 3, `board_ferry` 3, `open_instance_portal` 2, `grant_quest` 2, `move_player` 1,
+`emote` 1. The `noncombat_questgiver` archetype mentions `player_ask` only in a comment.
+
+- A topic gains `behavior: <key>`. Choosing the topic (after its line, text and effects) fires
+  the mob's tree with a new event `player_topic` carrying the topic key. The `player_ask` event
+  is removed from `behaviortree/events.go`.
+- A new tree condition `topic_is: <key>` replaces `keyword_match` inside those branches. Other
+  conditions in the branch (`player_has_quest`, `player_has_item`) stay as tree conditions, and
+  the topic carries matching gates so the menu shows it only when the branch can act.
+- Branches whose only actions speak (`say`, `respond`, `send_user_text`, `emote`) become plain
+  info topics with no `behavior`, and the branch is deleted.
+- The 2 `grant_quest` branches become offer topics with Accept / Leave and their tree branch is
+  deleted (requirements: no quest is granted except by accepting from an NPC menu).
+- Branches with `board_ferry`, `open_instance_portal`, `move_player` or `set_state` keep their
+  tree action and become topics with `behavior`.
+- Validator: a `behavior` key must match a `topic_is` condition in that mob's tree, and every
+  `topic_is` key must name a topic on that mob.
+
+### 4.2 AI companion (R13)
+
+`modules/aicompanion` is off by default (`Modules.aicompanion.Enabled: false`).
+
+- `ask <own bonded companion> ...` still routes through `companionai.RouteAsk`
+  (`ask.go:142`): that is chat with the companion, not NPC dialogue. Every other `ask` redirects.
+- `companion-ask <who> about <what>` authorizes the companion as today. The model's `sayto`
+  action (`modules/aicompanion/actions.go:475`) no longer passes free text to
+  `companionai.AskNpc`; the model is given the NPC's eligible info topics (key and label) and its
+  action names one key. `AskNpc` resolves that key and plays it exactly as the owner choosing it,
+  with the companion speaking the label. Offers and hand-ins are never offered to the model. A
+  key that is not an eligible info topic gets a shrug and changes nothing.
 
 ## 5. Validators
 
