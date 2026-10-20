@@ -158,7 +158,7 @@ func ExecuteDrain(actor Actor) DrainResult {
 		if healAmt < 1 {
 			healAmt = 1
 		}
-		healed = char.Heal(healAmt)
+		healed = char.ApplyRestore(characters.PoolHealth, healAmt)
 	}
 
 	// Determine source/target types for analytics.
@@ -335,7 +335,7 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 
 	result.Executed = true
 	if totalHeal > 0 {
-		result.Healed = char.Heal(totalHeal)
+		result.Healed = char.ApplyRestore(characters.PoolHealth, totalHeal)
 	}
 
 	return result

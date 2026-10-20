@@ -112,12 +112,12 @@ func RespawnBondedCompanion(userId int, mobId int) int {
 	mob.Character.Name = comp.Name
 
 	// Back on their feet, but not fresh: a recovered companion returns hurt.
-	mob.Character.Health = mob.Character.HealthMax.Value / 2
+	mob.Character.SetPoolFraction(characters.PoolHealth, 0.5)
 	if mob.Character.Health < 1 {
-		mob.Character.Health = 1
+		mob.Character.ApplyRestore(characters.PoolHealth, 1-mob.Character.Health)
 	}
-	mob.Character.Stamina = mob.Character.StaminaMax.Value / 2
-	mob.Character.Conviction = mob.Character.ConvictionMax.Value / 2
+	mob.Character.SetPoolFraction(characters.PoolStamina, 0.5)
+	mob.Character.SetPoolFraction(characters.PoolConviction, 0.5)
 
 	mob.Character.Charm(user.UserId, -1, "")
 	user.Character.TrackCharmed(mob.InstanceId, true)

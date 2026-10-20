@@ -84,22 +84,9 @@ func Charge(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			sendMoveEvent("charge", "hit", ids, aud, messaging.CategoryTrip, damageTokens)
 		}
 	} else if result.Damage > 0 {
-		// Defended-partial: the actee line still carries the damage from the
-		// store; the room line names the defence that blunted the charge, so
-		// it is swapped for the defence triad's ToRoom text when a defence
-		// actually fired.
-		roles, _ := renderMoveEvent("charge", "partial", ids, damageTokens)
-		defence, defended := moveDefenceLines(mob, room, target, result.Defence, "charge")
-		partialObserver := lineOrNone(messaging.CategoryTrip, roles.Observer)
-		if defended {
-			partialObserver = messaging.Say(messaging.CategoryTrip, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryTrip, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    messaging.NoLine,
-			Actee:    lineOrNone(messaging.CategoryTrip, roles.Actee),
-			Observer: partialObserver,
-		}, aud)
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
+		defence, _ := moveDefenceLines(mob, room, target, result.Defence, "charge")
+		sendPartialMove("charge", "partial", ids, aud, messaging.CategoryTrip, damageTokens, defence.Shortage)
 	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, "charge"); defended {
 		sendMoveDefenceShortage(messaging.Say(messaging.CategoryTrip, defence.Shortage), aud)
 		messaging.SendTrio(messaging.Trio{

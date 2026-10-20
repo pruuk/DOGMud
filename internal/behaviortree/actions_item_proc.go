@@ -281,8 +281,8 @@ func checkProcSiblings(children []NodeDef, event, path string) error {
 	return nil
 }
 
-// procLifesteal heals the attacker for ratio*damage, clamped to HealthMax.
-// Returns the amount actually healed.
+// procLifesteal heals the attacker for ratio*damage, clamped to PoolCeiling
+// like every restore (#285). Returns the amount actually healed.
 func procLifesteal(attacker *characters.Character, damage int, params map[string]float64) int {
 	if attacker == nil {
 		return 0
@@ -295,7 +295,7 @@ func procLifesteal(attacker *characters.Character, damage int, params map[string
 	if amt < 1 {
 		amt = 1
 	}
-	return attacker.Heal(amt)
+	return attacker.ApplyRestore(characters.PoolHealth, amt)
 }
 
 // procStealPool drains a pool from the target into the owner. Params:

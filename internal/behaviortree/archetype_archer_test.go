@@ -24,15 +24,14 @@ func TestArchetype_Archer_FiresRangedShot(t *testing.T) {
 	}
 
 	const here, there = 4500, 4501
-	cleanup := rooms.SeedRoomsForTest(map[int]*rooms.Room{
+	seedLitRooms(t, map[int]*rooms.Room{
 		here: {RoomId: here, Zone: "test", Exits: map[string]exit.RoomExit{
 			"north": {RoomId: there},
 		}},
 		there: {RoomId: there, Zone: "test", Exits: map[string]exit.RoomExit{
 			"south": {RoomId: here},
 		}},
-	}, map[string]*rooms.ZoneConfig{})
-	defer cleanup()
+	})
 
 	// Aggro target one exit (north) away.
 	target := seedTargetMob(t, 4510, there)

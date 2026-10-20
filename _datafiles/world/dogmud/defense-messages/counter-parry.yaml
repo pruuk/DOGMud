@@ -14,7 +14,7 @@ options:
       actee:
       - '<ansi fg="defense-good">You turn the blow aside and strike back, but {actor} recovers in time.</ansi>'
       - '<ansi fg="defense-good">You catch the attack on your weapon and press in, but {actor} twists clear.</ansi>'
-      - '<ansi fg="defense-good">You beat the attack aside and swing back, but the swing finds nothing.</ansi>'
+      - '<ansi fg="defense-good">You beat {actor}''s attack aside and swing back, but the swing finds nothing.</ansi>'
       - '<ansi fg="defense-good">You check the blow on your guard and strike over it, but {actor} ducks.</ansi>'
       - '<ansi fg="defense-good">Your answer follows the parry at once, but {actor} pulls back in time.</ansi>'
       actor:

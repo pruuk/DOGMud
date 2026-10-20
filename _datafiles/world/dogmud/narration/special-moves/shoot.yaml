@@ -13,10 +13,10 @@ events:
   partial:
     actor:
       - 'Your shot grazes {actee}! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your shot flies past {actee}, but the edge of it still barely hits them! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your shot only half finds {actee}, but the edge of it still barely hits them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor}''s shot flies past, but the edge of it still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor}''s shot flies past, but the edge of it still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s shot grazes you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s shot only half finds you, but the edge of it still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
   miss:
     actor:
       - 'Your shot narrowly misses {actee}!'

@@ -242,7 +242,7 @@ gated by its `beast_moves` listing alone), so armed undead still drain.
 | `ExecuteMaul` | lists `maul`, no hands | Heavier damage + bleed stack |
 | `ExecutePounce` | lists `pounce`, no hands, legs, not grappling | Knockdown + damage (no bleed) |
 | `ExecuteGore` | lists `gore`, no hands | Damage + knockback |
-| `ExecuteDrain` | lists `drain` (the species also has the `LifeDrain` flag) | Damage + heal attacker (`damage × DrainHealRatio`) via `Character.Heal` |
+| `ExecuteDrain` | lists `drain` (the species also has the `LifeDrain` flag) | Damage + heal attacker (`damage × DrainHealRatio`) via `Character.ApplyRestore(PoolHealth, ...)`, capped at the reserved ceiling |
 | `ExecuteThrottle` | lists `throttle`, no hands | Damage + bleed stack + Throttled condition #89 (stamina DoT) + cast interrupt via `chokeCastInterrupt` |
 | `ExecuteSmother` | lists `smother`, no hands (mob-only: the smoke elemental, #541 slice 2) | On a hit: damage + cast interrupt via `chokeCastInterrupt` (run first, so the caster's hold is judged sighted, as throttle's is) + Blinded (3) + Smothered (`conditions.ConditionIdSmothered`, 144, stamina DoT); a partial or miss applies nothing; no bleed. `SmotherResult.NotSmoke` is the identity refusal; `SmotherResult.ActeeSightBefore` is the target's `ParticipantSight` taken before the blinding, which the mob command judges the target's hit and cast_interrupt lines at (owner rule 2026-10-05) |
 
@@ -1413,6 +1413,39 @@ type SearchResult struct {
 
 ---
 
+## Sit Action (#637)
+
+`sit.go`, shared by players and mobs. Sitting is the `position.Sitting`
+state, not a condition and not an emote (the old `sit` emote alias is gone,
+and a guard in `actions_test.go` keeps `sit` and `rest` out of
+`EmoteAliases`).
+
+- `Sit(actor) bool` moves Standing to Sitting (`TriggerSitCommand`). It
+  refuses, in order: asleep (`SitRefuseAsleep`, "You're asleep. Type 'wake'
+  to wake up."; sit never wakes a sleeper, owner ruling 2026-10-19, and the
+  player dispatcher's cancel-on-action wake skips sit through
+  `usercommands.keepsSleep` so a player can reach this line), busy
+  (`refusal.WhileBusy(actor, "sit")`, casting, crafting or salvaging, for
+  players and mobs alike), already sitting
+  (`SitRefuseSitting`), in combat (`refusal.WhileFighting(actor, "sit")`),
+  grappled (`SitRefuseGrappled`), any other non-standing state
+  (`SitRefuseOnTheFloor`). A mob's refusal is silent (its `SendText` does
+  nothing). Lines: "You sit down." / "X sits down.".
+- `StandFromSitting(actor) bool` stands a sitter for free
+  (`TriggerStandCommand`), "You stand up." / "X stands up."; false and silent
+  for anyone not sitting. Called by both `stand` commands before their
+  knockdown path. A room move (walking included) stands a sitter silently
+  in the rooms choke points instead (`Character.StandForMove`).
+- `NarrateCombatRise(actor)` is "You leap to your feet!" / "X leaps up!",
+  called by the hooks Position observer when combat stands a sitter
+  (`Character.RiseForCombat`).
+
+The actor gets its own line; the observer line goes through `SendSeen`, so it
+is sight-gated, hides the name from a reader who cannot see the actor, and is
+not sent at all for a hidden actor (#274, owner R3). A hidden player who sits
+or stands also gets `HiddenPostureNote` ("No one sees it; you are hidden.");
+the combat leap sends no note.
+
 ## Sleep Action (chunk 3.3)
 
 ### Sleep
@@ -1858,7 +1891,7 @@ taunt path's ordering).
 | Shadow | actions | self→target | ShadowResult | varies | ShadowCooldown (start, stop, spotted) |
 | Sneak | actions | self vs room | SneakResult | silent | shared |
 | Steal | actions | self vs mob/player/container | StealResult | varies | shared |
-| ExecuteFire | actions | self vs target (same/adjacent room) | FireResult | both | shared (special-move), EVERY shot |
+| ExecuteFire | actions | self vs target (same/adjacent room) | FireResult | both | shared (special-move), waited for and claimed by EVERY shot (#265) |
 | BeginFlee | actions | self (command half) | FleeBegin | wrapper renders | none |
 | ResolveFlee | actions | self vs blocker (round half) | FleeOutcome | wrapper renders | none |
 | Sell | actions | self vs merchant | SellResult | player only | none |
@@ -2003,18 +2036,30 @@ hardcoded `"1 rounds"` against everyone else's configured value, and nothing
 could see it. The `cooldowns` command shows it as `SpecialMoveCooldownLabel`
 ("special moves"); the record does not know which move claimed it (#620).
 
-`ExecuteFire` claims it on **every shot**, ordinary or not, because firing
-chambers its own next round. That is not a rate change: before the fold, the
-shot claimed nothing and the separate `reload` claimed instead, so a
-shot-plus-reload cycle already cost exactly one burn.
+`ExecuteFire` **waits for and claims it on every shot**, ordinary, cross-room
+or ambush (owner ruling 2026-10-19, #265: bows were always meant to fire on the
+shared cooldown, players and mobs alike). So a shooter fires at most once per
+`SpecialMoveCooldown` rounds, and a shot shares that timer with bash, kick,
+casting and the rest. The ask (`SpecialMoveReady`) comes before the
+auto-chamber and before admission, so a shot refused for the timer
+(`FireResult.OnCooldown`) spends no stamina, no arrow and no round; the claim
+(`ClaimSpecialMove`) comes after admission and the stale-weapon re-check, the
+order bash and trip use. `TestFireAdmissionOrdering` pins both sites. The
+player `fire`/`shoot` command answers `OnCooldown` with
+`refusal.CooldownAfterCost(user, "shoot", cost)`; the mob command is silent.
+Chambering (`chamberNextRound`, the retired `reload`) neither asks nor claims:
+the shot's one claim covers the whole fire-and-chamber action.
+`CommandIsReady` and `specialMoveVerbs` carry `fire` and its alias `shoot`, so
+a caller that asks first (behaviour-tree `command_best_of`, the AI companion,
+gmcp CharOp) hears not-ready while the timer runs (`ActionDeferred`), and
+not-ready with no ranged weapon, or an empty one with nothing to chamber
+(`findAmmoBundle`, the lookup `chamberNextRound` draws from). Target, sight
+and range ride on the words after the verb and stay with `ExecuteFire`.
 
-⚠️ **The claim does NOT gate the ambush.** A shot from stealth is a surprise
-shot because the shooter was hidden, full stop. The old gate refused the opener
-whenever the timer was spent — which meant refusing it whenever the player had
-reloaded, the very thing you must do to have something to ambush with. Now that
-an ordinary shot claims too, re-adding the gate would deny the opener after ANY
-previous shot. Stealth is what limits ambushes: the shot reveals you and `sneak`
-refuses in combat, so an engagement yields one opener.
+The ambush is gated like any shot. In practice the opener rarely meets a
+running timer: `sneak` refuses in combat, so a hidden shooter's first shot
+normally opens an engagement after the timer cleared, and the shot reveals the
+shooter, so an engagement still yields one opener.
 
 Melee is DIFFERENT and deliberately so: `EngageAggroType` still gates its opener
 on the timer, because melee has no per-swing claim to collide with.
@@ -2109,7 +2154,7 @@ the rest are ordinary verbs.
 | Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `search_bauble.go` (roll and delayed delivery), `search_feature.go` (`search <feature>`), `scan.go`, `track.go`, `steal.go`, `steal_pocket.go` (a player's pickpocket pause and bauble) |
 | Items & economy | `get.go` (`GetItemFromFloor` refuses a household's bauble (`BaubleBelongsTo`) with `ErrHouseholdBauble`, the item found and nothing moved, for every taker: a player's `get`, a mob's, a companion's, a scavenger's (owner ruling 2026-09-29); its gates sit in one early-return block), `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `sell_quote.go` (`QuoteSale`, `SaleMerchant`: the one quote sell, offer and appraise share), `sell_bauble.go`, `stolen_bauble.go` (heat, recognition, returns), `remove_equip.go`, `shop_sight.go`, `drink.go` |
 | Trades | `craft.go`, `salvage.go`, `forage.go`, `plant.go`, `defuse.go` |
-| Movement & state | `go.go`, `sleep.go`, `consider.go`, `map_visit.go` (`MarkRoomMappedIfSeen`: puts a room on the fog-of-war map by its template id only when the character makes anything out there; a room walked in the dark stays off until seen, #252 ruling R5; `usercommands.Go` and gmcp's `SightBandChanged` handler call it) |
+| Movement & state | `go.go`, `sleep.go`, `sit.go` (sit / rest and standing from a seat, #637), `consider.go`, `map_visit.go` (`MarkRoomMappedIfSeen`: puts a room on the fog-of-war map by its template id only when the character makes anything out there; a room walked in the dark stays off until seen, #252 ruling R5; `usercommands.Go` and gmcp's `SightBandChanged` handler call it) |
 | Social | `say.go`, `emote.go`, `emote_aliases.go` |
 | Divergences | `divergences.go` — deliberate departures from upstream behaviour |
 

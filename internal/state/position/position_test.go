@@ -37,7 +37,7 @@ func TestPO_002_StandingHasNoData(t *testing.T) {
 
 func TestPO_003_StateStringFormatted(t *testing.T) {
 	// Sanity: each enum value has a non-empty, non-"Unknown" String().
-	for s := position.Standing; s <= position.Turtle; s++ {
+	for s := position.Standing; s <= position.Sitting; s++ {
 		got := s.String()
 		if got == "" || got == "Unknown" {
 			t.Errorf("State(%d).String() = %q, want non-empty + non-Unknown", s, got)

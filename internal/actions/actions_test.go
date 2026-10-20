@@ -109,7 +109,10 @@ func TestEmoteAliasesPopulated(t *testing.T) {
 	assert.Contains(t, EmoteAliases, "bow")
 	assert.Contains(t, EmoteAliases, "laugh")
 	assert.Contains(t, EmoteAliases, "dance")
-	assert.Contains(t, EmoteAliases, "sit")
+	// `sit` is the real sit command now (#637), so no emote may shadow it,
+	// and `rest`, its synonym, must not become one either.
+	assert.NotContains(t, EmoteAliases, "sit")
+	assert.NotContains(t, EmoteAliases, "rest")
 }
 
 // TestFormatSayTextLineWrapping verifies that very long say messages are

@@ -23,4 +23,4 @@ NPCs follow daily routines and may be asleep at night. See
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help stand</ansi>, <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help sit</ansi>, <ansi fg="command">help stand</ansi>, <ansi fg="command">help combat</ansi>

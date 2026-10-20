@@ -647,7 +647,8 @@ full resolution flow and policy matrix.
 | Knob | Default | Effect |
 |------|---------|--------|
 | `ScheduleMaxPathRetries` | 20 | After N consecutive failed `pathto` attempts, a scheduled mob falls back to `pathto home`. Chunk 3.2. Also governs patrol path retries (chunk 3.4 reuses the same threshold; no separate knob). |
-| `SleepRegenMultiplier` | 5.0 | HP/SP/CP per-round regen multiplier when bearer has the Sleeping condition. Chunk 3.3. |
+| `SleepRegenMultiplier` | 5.0 | HP/SP/CP per-round regen multiplier when bearer has the Sleeping condition. Chunk 3.3. Shipped 5.0 in `config.yaml` since #637 (before that the Go default was the live value). |
+| `SitRegenMultiplier` | 2.0 | HP/SP/CP per-round regen multiplier while Sitting (`sit` / `rest`, #637). Shipped 2.0. Never stacks with sleep (a sleeping sitter gets the sleep rate). Owner ruling 2026-10-19: keep it below `SleepRegenMultiplier`; `config_sitregen_test.go` pins that on the shipped file and the defaults. `<= 0` restores the default. |
 | `ScheduleWakeGraceRounds` | 50 | After a forced wake during a sleep segment, suppress re-sleep for N rounds (~200 sec real-time at default tick rate). Chunk 3.3. |
 | `ConversationBaseChancePct` | 1.0 | Per-tick % chance a fully-idle NPC attempts to start an idle conversation. Chunk 3.6. |
 | `ConversationPlayerArrivalBoostPct` | 25 | On player arrival in a room with relateable, idle NPCs, % chance to start one. Chunk 3.6. |

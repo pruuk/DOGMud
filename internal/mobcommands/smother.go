@@ -87,20 +87,9 @@ func Smother(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			}
 		}
 	} else if result.Damage > 0 {
-		// Defended-partial: the actee line carries the damage from the store;
-		// the room line names the defence that blunted the smoke when one fired.
-		roles, _ := renderMoveEvent("smother", "partial", ids, damageTokens)
-		defence, defended := moveDefenceLines(mob, room, target, result.Defence, "rolling smoke")
-		partialObserver := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
-		if defended {
-			partialObserver = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    messaging.NoLine,
-			Actee:    lineOrNone(messaging.CategoryHitNaturalSharp, roles.Actee),
-			Observer: partialObserver,
-		}, aud)
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
+		defence, _ := moveDefenceLines(mob, room, target, result.Defence, "rolling smoke")
+		sendPartialMove("smother", "partial", ids, aud, messaging.CategoryHitNaturalSharp, damageTokens, defence.Shortage)
 	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, "rolling smoke"); defended {
 		// A defence stopped it outright: the defender's line and the room line
 		// both come from the triad.

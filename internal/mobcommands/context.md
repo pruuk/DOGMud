@@ -16,6 +16,12 @@ The `internal/mobcommands` package implements the AI command system for non-play
 
 ### AI Behavior Categories
 
+#### **Posture (#637)**
+- `sit` and `rest` (both registered, `sit.go`) wrap `actions.Sit`; `stand`
+  gets a sitter up for free through `actions.StandFromSitting`. Any room move
+  stands a sitter silently in `rooms.Room.AddMob`. Same rules and lines as the
+  player commands.
+
 #### **Combat Intelligence**
 - **Threat assessment**: `lookfortrouble` - Advanced hostility detection and target selection
 - **Combat actions**: `attack`, `backstab`, `fire`, `throw` - Offensive capabilities
@@ -52,6 +58,15 @@ The `internal/mobcommands` package implements the AI command system for non-play
   the actee's line at `SmotherResult.ActeeSightBefore` (the sight before
   the smoke; owner rule 2026-10-05) using the pre-hidden-text exception
   `acteeDefenceLine` also uses; observers are judged by their own sight now.
+- **Defended partial (#631)**: a move a defence blunted but did not stop
+  (it still dealt damage) narrates through `sendPartialMove`
+  (`skill_move_defence.go`): every role reads the store's partial event,
+  and only the defender's shortage note comes from `moveDefenceLines`. The
+  defence triad narrates only a defence that stopped the move outright.
+  The usercommands twin applies the same rule.
+  `TestPartialMovesNarrateThroughTheRule` holds every call site in both
+  packages to it; `TestSpecialMoveStoresCarryEveryTierTheRuleDraws` holds
+  each store's partial event to the roles its hit event carries.
 - **Taunt pools**: `Taunt` and `Howl` each run `executeTauntAction` and its refusal checks, then hand the result to `narrateMobTaunt(mob, room, result, pool, command, legacy, aggroLine)` (`taunt.go`), the one narration flow. `Taunt` reads `mob.Character.TauntPool()` (wordless for a speechless species, else rhetoric); `Howl` always reads `combat.TauntPoolHowl` (`howl.yaml`) and re-renders its damage text with `TauntResult.WithWordlessDamageText`, so a howl names no speech whatever the species. `sendMobTauntTriad` takes the pool first. `mobTauntLegacy` holds the empty-store literals per command.
 - **Rhetoric**: `taunt` and its wolf-flavoured `howl` variant use the shared
   coordinated Defy renderer when defended. Its attacker, defender, and room

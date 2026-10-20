@@ -52,7 +52,7 @@ func TestNewlyDefendableAttackNamesRenderTriads(t *testing.T) {
 		{"tailsweep", meleeDefences},
 		{"charge", meleeDefences},
 		{"goring charge", meleeDefences},
-		{"hamstring slash", meleeDefences},
+		{"low lunge", meleeDefences},
 		{"savage bite", meleeDefences},
 		{"pounce", meleeDefences},
 		{"claw rake", meleeDefences},

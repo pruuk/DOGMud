@@ -48,20 +48,13 @@ var poolWriteExemptions = map[string]string{
 	// depend on. These are what the primitives are built ON, not callers of it.
 	"internal/characters/validate.go": "implements the pool clamps themselves",
 
-	// --- 3. Construction and spawn-time absolute sets. ---
+	// --- 3. Construction absolute sets. ---
 	// These run in a defined order relative to Validate() and set a pool to an
-	// absolute value. No primitive expresses that: cost, harm and restore are
-	// all relative deltas.
-	"internal/characters/character.go":         "character construction and full-restore",
-	"internal/characters/overrides.go":         "ApplyMobOverrides spawn-time set",
-	"internal/mobs/mobs.go":                    "mob spawn",
-	"internal/hooks/PlayerSpawn_HandleJoin.go": "companion re-summon",
-	// A recovered bonded companion returns at a fraction of max, the same
-	// spawn-time absolute set as Life_Cascades' respawn.
-	"internal/hooks/companion_bonded.go": "bonded companion recovery sets pools to a fraction of max",
-	// Respawn sets pools to a FRACTION of max, which is a reduction for anyone
-	// above it and a restore for anyone below. Neither primitive fits.
-	"internal/hooks/Life_Cascades.go": "respawn sets pools to a fraction of max",
+	// absolute value. Spawn, respawn, companion summon and recovery, revive and
+	// admin restore now go through SetPoolFraction, which caps at the reserved
+	// ceiling (#285), and need no exemption: do not add them back.
+	"internal/characters/character.go": "character construction and full-restore",
+	"internal/characters/overrides.go": "ApplyMobOverrides spawn-time set",
 
 	// atFullPools refills Health and Stamina on its own by-value copy of the
 	// character so PowerScore rates the build at full pools. The helper lives in
@@ -70,36 +63,16 @@ var poolWriteExemptions = map[string]string{
 
 	// --- 4. Admin commands, which deliberately bypass cost and harm semantics. ---
 	"internal/usercommands/admin.zap.go": "admin set-to-1",
-	"internal/usercommands/admin.mob.go": "admin mob heal",
-	"internal/usercommands/admin.paz.go": "admin restore",
-	"internal/mobcommands/suicide.go":    "ReviveOnDeath full restore",
-	"internal/usercommands/suicide.go":   "ReviveOnDeath full restore",
 
 	// --- 5. A test fixture living in a non-_test.go file. ---
 	// It compiles into the shipping binary, so the walker sees it even though
 	// nothing in production calls it.
 	"internal/users/test_helpers.go": "test fixture in a non-_test.go file",
 
-	// --- Temporary. U5b-2 and U5c route each of these and delete the entry. ---
-	// Each is a real gameplay change, deliberately held out of U5b-1 so that
-	// chunk could merge as provably behaviour-neutral.
-	//
-	// resources.go holds the two deprecated helpers U5b-1 could NOT route,
-	// documented in the plan's prose but missing from its exemption map:
-	//
-	//   - DeductDefenseStamina was full-or-refuse; U5b-2 replaced its call site
-	//     with ApplyCostPartial and deleted the function. That flips defence
-	//     from "cannot afford, so no defence" to "pay what you have", which is
-	//     a live combat change.
-	//   - Heal is a HARM path: conditions.ComputeTickAmount returns a negative value
-	//     for TickPercent < 0, and ApplyRestore no-ops on non-positive input, so
-	//     wrapping Heal over it would silently delete every health
-	//     damage-over-time condition. U5b-1 removed its two signed callers; U5c
-	//     retires the function.
-	//
-	// This is a FILE exemption on the file where both follow-ups land. Delete it
-	// once both functions are gone rather than letting it outlive them.
-	"internal/characters/resources.go": "U5c retires Heal; its two writes are all that remain here",
+	// internal/characters/resources.go is DELIBERATELY ABSENT. It was exempt
+	// while it held Heal, which capped at the raw HealthMax and so filled a
+	// reserved pool past its ceiling. #285 retired Heal: every caller passed a
+	// positive amount and now calls ApplyRestore(PoolHealth, ...).
 
 	// DELIBERATELY ABSENT, though the U5b-1 plan listed both as U5b-2 exemptions:
 	// internal/combat/combat_helpers.go and internal/usercommands/flee.go.

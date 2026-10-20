@@ -1,5 +1,40 @@
 # DOGMud Patch Notes
 
+## 2026-10-19: Take a seat
+
+- You can now sit down to rest. Type sit, or rest, which does the same.
+  While you sit, your health, stamina and conviction come back faster than
+  standing, though not as fast as sleep, and you stay awake.
+- Type stand to get up. Getting up from a seat is free. Walking away gets
+  you up too.
+- If a fight comes to you, you leap to your feet. You can't sit down in a
+  fight.
+- Everyone in the room can see who is sitting, and if your prompt shows
+  your position it now reads "Sitting" while you sit. Creatures sit and
+  rest by the same rules.
+- You can't sit while asleep (type wake first), or while casting or
+  crafting.
+
+## 2026-10-19: Bows wait their turn, and fights read true
+
+- Bows now share the short recovery that bash, trip and the other special
+  moves use, for players and creatures alike. Shoot too soon and you are
+  told to wait, and the attempt costs you nothing. Companions with a bow
+  wait out the recovery instead of trying a shot that won't go.
+- The Sentinel now carries its warbow and quiver into the fight: it
+  shoots, fights hand to hand while it recovers, then shoots again.
+- When gear or a fielded companion holds part of a pool in reserve,
+  healing, potions, regeneration and life drain now stop at what you can
+  actually hold, so your prompt no longer shows a number that snaps back.
+- Every block, dodge, parry, quell and defy line now names who you are
+  defending against.
+- A blow that is partly turned aside now reads the same to everyone: you,
+  your foe and the room all see that it mostly missed but still landed.
+  Those lines no longer claim a dodge when you blocked or parried, and the
+  firebomb's glancing blast now reads this way too.
+- Beasts no longer promise a pounce they cannot make, fumble with their
+  own claws as the subject, or let a weapon slip when they have none.
+
 ## 2026-10-19: Every creature squares up its own way
 
 - When a fight begins, the first line now shows how your foe gets ready,

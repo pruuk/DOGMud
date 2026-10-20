@@ -129,9 +129,9 @@ func wireLifeCrossMachineCascades(c *characters.Character) {
 				// Pools come back at GamePlay.Death.RespawnPoolFraction of max
 				// (Validate defaults it to 0.05 when config.yaml omits it).
 				frac := float64(configs.GetGamePlayConfig().Death.RespawnPoolFraction)
-				c.Health = int(float64(c.HealthMax.Value) * frac)
-				c.Stamina = int(float64(c.StaminaMax.Value) * frac)
-				c.Conviction = int(float64(c.ConvictionMax.Value) * frac)
+				c.SetPoolFraction(characters.PoolHealth, frac)
+				c.SetPoolFraction(characters.PoolStamina, frac)
+				c.SetPoolFraction(characters.PoolConviction, frac)
 				_ = c.AddCondition(81, false) // NoAggroTarget grace
 
 				// Clear damage ledger and notify vitals subscribers.

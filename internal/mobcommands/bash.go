@@ -92,22 +92,9 @@ func Bash(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			sendMoveEvent("bash", "hit", ids, aud, messaging.CategoryBash, tokens)
 		}
 	} else if result.Damage > 0 {
-		// Defended-partial: the actee line still carries the damage from the
-		// store; the room line names the defence that blunted the bash, so it
-		// is swapped for the defence triad's ToRoom text when a defence
-		// actually fired.
-		roles, _ := renderMoveEvent("bash", "partial", ids, tokens)
-		defence, defended := moveDefenceLines(mob, room, target, result.Defence, bashLabel)
-		partialObserver := lineOrNone(messaging.CategoryBash, roles.Observer)
-		if defended {
-			partialObserver = messaging.Say(messaging.CategoryBash, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryBash, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    messaging.NoLine,
-			Actee:    lineOrNone(messaging.CategoryBash, roles.Actee),
-			Observer: partialObserver,
-		}, aud)
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
+		defence, _ := moveDefenceLines(mob, room, target, result.Defence, bashLabel)
+		sendPartialMove("bash", "partial", ids, aud, messaging.CategoryBash, tokens, defence.Shortage)
 	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, bashLabel); defended {
 		// A defence stopped it outright: the defender's line and the room line
 		// both come from the triad.

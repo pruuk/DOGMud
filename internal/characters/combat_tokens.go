@@ -43,6 +43,7 @@ func (c *Character) CalculateStanceString() string {
 //   - "prone" - Prone or Supine
 //   - "locked in close combat" - any standing grapple state
 //   - "grappling on the ground" - any ground grapple state
+//   - "sitting" - Sitting (#637; combat stands a sitter, so rarely seen)
 func (c *Character) CalculatePositionString() string {
 	if c.Position == nil {
 		return "standing"
@@ -54,6 +55,8 @@ func (c *Character) CalculatePositionString() string {
 		return "locked in close combat"
 	case c.IsGroundGrapple():
 		return "grappling on the ground"
+	case c.IsSitting():
+		return "sitting"
 	default:
 		return "standing"
 	}

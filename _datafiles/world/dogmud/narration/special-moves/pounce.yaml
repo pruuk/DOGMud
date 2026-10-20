@@ -41,17 +41,17 @@ events:
       - '{actor} leaps and bears into {actee}, drawing a grunt of pain!'
   partial:
     actor:
-      - '{actee} sidesteps, but you still catch them! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your leap at {actee} mostly misses, but you still barely hit them on the way past! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actee} dodges the worst of your pounce, but you still catch them! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} gets mostly clear, but you still catch them! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your leap at {actee} only half lands, but you still barely hit them! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} avoids the worst of your pounce, but you still catch them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} leaps at you and you sidestep most of it, but it still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} leaps at you and you sidestep most of it, but they still barely hit you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} springs at you; you dodge most of the pounce, but not all! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} leaps at you and you get mostly clear, but it still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} leaps at you; the leap only half lands, but they still barely hit you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} springs at you; you avoid most of the pounce, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} leaps at {actee}, who mostly dodges but is still barely hit!'
-      - '{actor} leaps at {actee}, who mostly dodges but is still barely hit!'
-      - '{actor} leaps at {actee}, who dodges the worst of it but still gets caught!'
+      - '{actor} leaps at {actee}, who gets mostly clear but is still barely hit!'
+      - '{actor} leaps at {actee}; the leap only half lands, but still hits!'
+      - '{actor} leaps at {actee}, who avoids the worst of it but still gets caught!'
   # DIVERGENT (Task 4b Step 3, owner-approved 2026-09-21): variants 1 to 3
   # (the player's original lines) describe different feels -- target
   # sidesteps / target dodges / pounce carries past -- one feel per variant

@@ -37,17 +37,17 @@ events:
       - '{actor}''s grip chokes the spell out of {actee}!'
   partial:
     actor:
-      - 'Your fangs still graze {actee} as they pull free! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your throttle lunge mostly misses {actee}''s throat, but your fangs still graze it! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actee} pulls mostly free of your grip, but your fangs still catch their throat! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your fangs still graze {actee} as they get mostly clear! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your throttle lunge only half reaches {actee}''s throat, but your fangs still graze it! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} stops most of your lunge, but your fangs still catch their throat! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} lunges for your throat and you pull mostly free, but the fangs still catch you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} lunges for your throat and you pull mostly free, but the fangs still catch you! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You twist mostly away as {actor} snaps at your throat, but not all the way! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} lunges for your throat and you get mostly clear, but the fangs still catch you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s lunge only half reaches your throat, but the fangs still graze you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} snaps at your throat; you stop most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} lunges for {actee}''s throat, who pulls mostly free but still gets grazed!'
-      - '{actor} lunges for {actee}''s throat, who pulls mostly free but still gets grazed!'
-      - '{actor} snaps at {actee}''s throat, who twists mostly away but not all the way!'
+      - '{actor} lunges for {actee}''s throat; {actee} gets mostly clear but still gets grazed!'
+      - '{actor}''s lunge only half reaches {actee}''s throat, but the fangs still graze it!'
+      - '{actor} snaps at {actee}, who stops most of it but not all!'
   miss:
     actor:
       - 'You lunge for {actee}''s throat, but miss!'

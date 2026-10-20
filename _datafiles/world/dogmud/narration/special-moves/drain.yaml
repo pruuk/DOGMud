@@ -30,17 +30,17 @@ events:
       - '<ansi fg="green">You feel {heal} as their warmth becomes yours.</ansi>'
   partial:
     actor:
-      - '{actee} pulls mostly free, but you still drain a little! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You mostly miss {actee}, but still drain some life! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actee} dodges most of your grip, but you still sap a trace of their life-force! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} keeps most of their life from you, but you still drain a little! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your grip on {actee} only half takes hold, but you still drain some life! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} fends off most of your grasp, but you still sap a trace of their life-force! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - 'You pull mostly free, but {actor} still drains a little! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} mostly misses, but still drains some of your life! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} lunges to drain you; you dodge most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You keep most of your life from {actor}, but they still drain a little! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s grip only half takes hold, but still drains some of your life! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} reaches to drain you; you fend off most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} reaches for {actee} hungrily, who slips mostly free but still gets caught!'
-      - '{actor} lunges to drain {actee}, who slips mostly free but still gets caught!'
-      - '{actor} lunges to drain {actee}, who dodges most of it but not all!'
+      - '{actor} reaches for {actee} hungrily, but drains only a little of their life!'
+      - '{actor} lunges to drain {actee}, but the grip only half takes hold!'
+      - '{actor} lunges to drain {actee}, who fends off most of it but not all!'
   partial_heal:
     actor:
       - '<ansi fg="green">A trickle of stolen vitality flows into you. You feel {heal}.</ansi>'

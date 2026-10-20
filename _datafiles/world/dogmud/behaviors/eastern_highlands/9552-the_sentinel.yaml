@@ -46,3 +46,13 @@ tree:
           count: 1
           base_pool: 300
           hostile: true
+
+    # -- Ironhorn Warbow (#265): fire the wielded bow while arrows last --
+    # The archer archetype's try_fire, without its keep_distance kite: the
+    # Sentinel holds its vault. A shot waits for the shared special-move
+    # cooldown, as a player's does, so between shots (and once the quiver is
+    # spent) try_fire fails and the round falls through to the legacy combat
+    # commands and melee swing.
+    - type: action
+      event: mob_combat_round
+      do: try_fire

@@ -7,9 +7,9 @@ events:
       - '{actor} lunges low and tears into {actee}''s legs!'
   partial:
     actee:
-      - '{actor} lunges at your legs and still catches you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} lunges low at your legs; you avoid the worst of it, but it still catches you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} lunges at {actee}''s legs, who mostly dodges but still gets caught!'
+      - '{actor} lunges low at {actee}, who avoids the worst of it but still gets caught!'
   miss:
     actee:
       - '{actor} lunges at your legs, but you sidestep the attack!'

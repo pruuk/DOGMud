@@ -13,6 +13,12 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+// hamstringAttack is what a defence line calls the move ("sweeps aside the
+// fumbled low lunge"). It is the move as the reader sees it in the store's
+// own lines ("lunges low and tears into your legs"), never the command name:
+// "hamstring slash" read as an internal label beside a rat's bite (#631).
+const hamstringAttack = "low lunge"
+
 // Hamstring is a wolf physical attack that applies a bleed condition.
 func Hamstring(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
@@ -71,23 +77,10 @@ func Hamstring(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if result.Hit {
 		sendMoveEvent("hamstring", "hit", ids, aud, messaging.CategoryHitNaturalSharp, damageTokens)
 	} else if result.Damage > 0 {
-		// Defended-partial: the actee line still carries the damage from the
-		// store; the room line names the defence that blunted the hamstring,
-		// so it is swapped for the defence triad's ToRoom text when a defence
-		// actually fired.
-		roles, _ := renderMoveEvent("hamstring", "partial", ids, damageTokens)
-		defence, defended := moveDefenceLines(mob, room, target, result.Defence, "hamstring slash")
-		partialObserver := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
-		if defended {
-			partialObserver = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    messaging.NoLine,
-			Actee:    lineOrNone(messaging.CategoryHitNaturalSharp, roles.Actee),
-			Observer: partialObserver,
-		}, aud)
-	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, "hamstring slash"); defended {
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
+		defence, _ := moveDefenceLines(mob, room, target, result.Defence, hamstringAttack)
+		sendPartialMove("hamstring", "partial", ids, aud, messaging.CategoryHitNaturalSharp, damageTokens, defence.Shortage)
+	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, hamstringAttack); defended {
 		// A defence stopped it outright: the defender's line and the room line
 		// both come from the triad.
 		sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)

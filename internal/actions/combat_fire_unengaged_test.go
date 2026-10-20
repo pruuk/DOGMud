@@ -204,8 +204,8 @@ func setWatcherAggro(t *testing.T, instanceId int, aggro state.ActorRef) {
 
 // sampleShotsFromOneShooter fires n shots from the SAME shooter object,
 // restoring between shots only what a shot spends -- the weapon's load, the
-// shooter's stamina (it feeds the resource-depletion damage multiplier), and
-// the target's health. Nothing about engagement is reset, which is the point:
+// shooter's stamina (it feeds the resource-depletion damage multiplier), the
+// shared special-move timer, and the target's health. Nothing about engagement is reset, which is the point:
 // the drop in case 2 happens inside one continuous fight.
 func sampleShotsFromOneShooter(t *testing.T, char *characters.Character, rest string, n int) (float64, FireResult) {
 	t.Helper()
@@ -219,6 +219,9 @@ func sampleShotsFromOneShooter(t *testing.T, char *characters.Character, rest st
 		target.Character.Health = surpriseMobHealth
 		char.Stamina = char.StaminaMax.Value
 		char.Equipment.Weapon.Loaded = true
+		// A shot claims the shared special-move timer and waits for it
+		// (#265); each sample stands for a shot after the timer cleared.
+		ReleaseSpecialMove(char)
 		res := ExecuteFire(actor, rest)
 		require.True(t, res.Executed, "sample %d: the shot must execute", i)
 		require.True(t, res.MoveResult.Hit, "sample %d: the deterministic win must land", i)

@@ -156,31 +156,12 @@ func (c *Character) RecalculateStats() {
 	// enchantment reservations and pinnacle-item ItemSpec reserve_*_pct
 	// contributions; the clamp applies to the CURRENT pool only (max is
 	// untouched).
-	if hpRes := c.GetPoolReservation("health", c.HealthMax.Value); hpRes > 0 {
-		effectiveHP := c.HealthMax.Value - hpRes
-		if effectiveHP < 1 {
-			effectiveHP = 1
-		}
-		if c.Health > effectiveHP {
-			c.Health = effectiveHP
-		}
-	}
-	if spRes := c.GetPoolReservation("stamina", c.StaminaMax.Value); spRes > 0 {
-		effectiveSP := c.StaminaMax.Value - spRes
-		if effectiveSP < 0 {
-			effectiveSP = 0
-		}
-		if c.Stamina > effectiveSP {
-			c.Stamina = effectiveSP
-		}
-	}
-	if cpRes := c.GetPoolReservation("conviction", c.ConvictionMax.Value); cpRes > 0 {
-		effectiveCP := c.ConvictionMax.Value - cpRes
-		if effectiveCP < 0 {
-			effectiveCP = 0
-		}
-		if c.Conviction > effectiveCP {
-			c.Conviction = effectiveCP
+	// The ceiling is PoolCeiling, the same one ApplyRestore and
+	// SetPoolFraction cap at, so a restore can never fill past what this clamp
+	// would take back (#285).
+	for _, p := range []Pool{PoolHealth, PoolStamina, PoolConviction} {
+		if ceiling, reserved := c.reservedCeiling(p); reserved > 0 && c.PoolValue(p) > ceiling {
+			c.setPool(p, ceiling)
 		}
 	}
 

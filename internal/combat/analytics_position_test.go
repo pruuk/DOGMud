@@ -24,6 +24,7 @@ var allPositionStates = []position.State{
 	position.HalfGuard,
 	position.Guard,
 	position.Turtle,
+	position.Sitting,
 }
 
 // TestPositionBucketCoversEveryState is the anti-drift gate for the bug where
@@ -71,6 +72,7 @@ func TestPositionBucketMapping(t *testing.T) {
 		position.Mount:        "grounded",
 		position.Guard:        "grounded",
 		position.Turtle:       "grounded",
+		position.Sitting:      "standing",
 	}
 	for st, want := range cases {
 		if got := positionBucket(st.String()); got != want {

@@ -88,21 +88,9 @@ func Gore(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			sendMoveEvent("gore", "hit", ids, aud, goreCategories, damageTokens)
 		}
 	} else if res.MoveResult.Damage > 0 {
-		// Defended-partial: the personal lines carry the damage, and the room
-		// line names the defence that blunted the gore (U6b Task 9), falling
-		// back to the squared partial text when there was no defence to name.
-		roles, _ := renderMoveEvent("gore", "partial", ids, damageTokens)
-		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "goring charge")
-		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
-		if defended {
-			observer = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(goreCategories.Actor, roles.Actor),
-			Actee:    lineOrNone(goreCategories.Actee, roles.Actee),
-			Observer: observer,
-		}, aud)
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
+		defence, _ := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "goring charge")
+		sendPartialMove("gore", "partial", ids, aud, goreCategories, damageTokens, defence.Shortage)
 	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "goring charge"); defended {
 		// A defence stopped it outright: all three lines come from the triad.
 		sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)

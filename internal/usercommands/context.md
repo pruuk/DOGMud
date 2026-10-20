@@ -17,7 +17,17 @@ The `internal/usercommands` package implements the complete command system for p
 ### Command Categories
 
 #### **Basic Interaction Commands**
-- **Movement**: `go`, `flee` - Navigation and escape mechanics
+- **Movement**: `go`, `flee` - Navigation and escape mechanics. A sitter
+  who moves is stood silently by `rooms.MoveToRoom` (#637), not here.
+- **Posture** (#637): `sit` (`sit.go`; `rest` is its alias in
+  `keywords.yaml` command-aliases) wraps `actions.Sit`; `stand` gets a sitter
+  up for free through `actions.StandFromSitting` before its paid knockdown
+  path. `sit` is refused in combat by its registry flag (`AllowedInCombat`
+  false); `stand` is allowed. The asleep and busy refusals live in
+  `actions.Sit`, shared with mobs; this wrapper adds nothing. `sit` is the
+  one command in `keepsSleep` (`usercommands.go`): the dispatcher's
+  cancel-on-action wake skips it, so a sleeping player who types sit or rest
+  stays asleep and is told to type `wake` (owner ruling 2026-10-19).
 - **Communication**: `say`, `shout`, `whisper`, `emote`, `broadcast` - Player communication
 - **Observation**: `look`, `inspect`, `consider`, `online` (`who` is its alias in `keywords.yaml`, #421) - Information gathering.
   The admin `online` table swaps Title for UserId, Zone and RoomId, and
@@ -78,6 +88,17 @@ The `internal/usercommands` package implements the complete command system for p
   `Not<Identity>` result for ineligible callers. See
   `internal/combat/context.md` "Beast Moveset (Phase 3)" for full
   gate and mechanic details.
+- **Defended partial (#631)**: a special move a defence blunted but did
+  not stop (it still dealt damage) narrates through `sendPartialMove`
+  (`skill_move_defence.go`): every role reads the store's partial event,
+  and only the defender's shortage note comes from `moveDefenceLines`. The
+  defence triad narrates only a defence that stopped the move outright.
+  The firebomb (`throw.go`, event `partial_hit`) follows it too. Partial
+  lines name no defence: they must read true for dodge, block, parry,
+  quell or defy alike (`defenceWordInPartial` in mobcommands'
+  `partial_rule_test.go`). The mobcommands twin applies the same rule;
+  `TestPartialMovesNarrateThroughTheRule` (mobcommands) holds every call
+  site in both packages to it.
 
 #### **Naming a creature in the dark (#454)**
 Every command that names a creature in the room runs the typed name through

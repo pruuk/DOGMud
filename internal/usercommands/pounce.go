@@ -95,21 +95,9 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			sendMoveEvent("pounce", "hit", ids, aud, pounceCategories, damageTokens)
 		}
 	} else if res.MoveResult.Damage > 0 {
-		// Defended-partial: the personal lines carry the damage, and the room
-		// line names the defence that blunted the pounce (U6b Task 9), falling
-		// back to the squared partial text when there was no defence to name.
-		roles, _ := renderMoveEvent("pounce", "partial", ids, damageTokens)
-		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "pounce")
-		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
-		if defended {
-			observer = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
-			sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
-		}
-		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(pounceCategories.Actor, roles.Actor),
-			Actee:    lineOrNone(pounceCategories.Actee, roles.Actee),
-			Observer: observer,
-		}, aud)
+		// Defended-partial: every role reads the partial tier (sendPartialMove).
+		defence, _ := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "pounce")
+		sendPartialMove("pounce", "partial", ids, aud, pounceCategories, damageTokens, defence.Shortage)
 	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "pounce"); defended {
 		// A defence stopped it outright: all three lines come from the triad.
 		sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)

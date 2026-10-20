@@ -425,6 +425,16 @@ func (c *Character) EffectivePoolMax(p Pool) int
 // unreachable from status.template.
 func (c *Character) EffectivePoolMaxNamed(pool string) int
 
+// PoolCeiling is the highest value a pool may HOLD: poolMax - GetPoolReservation,
+// floored at 1 for health and 0 for stamina and conviction (#285). ApplyRestore,
+// SetPoolFraction and the RecalculateStats reservation clamp all use it.
+func (c *Character) PoolCeiling(p Pool) int
+
+// SetPoolFraction sets a pool to frac of its RAW max, capped at PoolCeiling, and
+// returns the value written. Spawn, respawn, companion summon and recovery,
+// ReviveOnDeath and admin restore use it; 1.0 means "full".
+func (c *Character) SetPoolFraction(p Pool, frac float64) int
+
 func (c *Character) ApplyCost(pool Pool, amount int) bool
 func (c *Character) ApplyCostPartial(pool Pool, amount int) CostResult
 
@@ -513,11 +523,14 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   life-preserving resolutions. Lower-level `ApplyCost*` methods remain for
   legacy and non-U8 consumers; do not bypass the action quote for a registered
   action.
-- **A green pool-mutation guard does not mean every pool write is routed.**
-  `resources.go` is exempt as a FILE, so `Heal()`'s writes are invisible and so
-  are its three production callers (`actions/combat_drain.go:126`, `:281`,
-  `behaviortree/actions_item_proc.go:298`, the lifesteal proc). They retire
-  with `Heal` in U5c.
+- **Every write that raises a pool stops at `PoolCeiling`** (#285), the raw max
+  less the reservation. `Heal()` capped at the raw `HealthMax` and is gone; its
+  callers (drain, area drain, the lifesteal proc, player health regen) call
+  `ApplyRestore(PoolHealth, ...)`. Absolute sets go through `SetPoolFraction`.
+  Before this, regen, potions, heals and lifesteal filled a reserved pool past
+  what it could hold and the prompt showed the inflated value until the next
+  RecalculateStats clamp pulled it back. `resources.go` is no longer exempt from
+  the pool-mutation guard.
 - **`CostCommitResult.Short()` strips only the governing skill term** for a
   partially paid autoattack, winning defence, flee, or grapple participant. The
   action still resolves and does not inherit unpaid debt.
@@ -623,11 +636,12 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   `int(1 * StandMinStamina) = 0`, so a fully reserved character stands for free.
   There is no stamina left to charge, and refusing would recreate the permanent
   floor-lockout Task 11 removed.
-- **Regen deliberately still reads the RAW max.** `HealthPerRound`,
+- **Regen RATE deliberately still reads the RAW max.** `HealthPerRound`,
   `StaminaPerRound` and `ConvictionPerRound` in `resources.go` are the named
   exception: making them reserve-aware is a NERF to reserved characters, and the
   faster refill relative to the usable pool is what offsets the depletion penalty
-  they carry. Each carries a comment saying so. It is not drift.
+  they carry. Each carries a comment saying so. It is not drift. What regen
+  fills UP TO is `PoolCeiling`, applied by `ApplyRestore` (#285).
 - **Regen is percentage-of-max everywhere, never a flat amount** (Stage 29.5).
   `HealthPerRound()`, `StaminaPerRound()` and `ConvictionPerRound()` each read
   one of six `Balance` knobs -- `PlayerHealthRegenPct`, `PlayerStaminaRegenPct`,
@@ -641,11 +655,14 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   default (players 0.02 vs default 0.01 each); the mob rates ship unchanged
   from their defaults (`MobHealthRegenPct` 0.01, `MobStaminaRegenPct` and
   `MobConvictionRegenPct` 0.02).
-- **Sleeping multiplies the per-round result, not the percentage.** All three
-  `*PerRound` methods apply `Balance.SleepRegenMultiplier` (ships at the Go
-  default, 5.0) to the already-floored base when `HasConditionFlag(conditions.Sleeping)`
-  is set, then truncate again. This is the same 5x named in the Sleep
-  Mechanics section of the root `CLAUDE.md`; it is one mechanism, applied here.
+- **Resting multiplies the per-round result, not the percentage.** All three
+  `*PerRound` methods scale the already-floored base by
+  `RestRegenMultiplier()` (through `applyRestRegen`), then truncate again.
+  It is `Balance.SleepRegenMultiplier` (shipped 5.0 in `config.yaml`) while
+  `HasConditionFlag(conditions.Sleeping)`, else `Balance.SitRegenMultiplier`
+  (shipped 2.0, #637) while `IsSitting()`, else 1. The two never stack: a
+  sleeping sitter gets the sleep rate. Owner ruling 2026-10-19: sitting stays
+  below sleep (`internal/configs/config_sitregen_test.go` pins it).
 - **Mutation regen multipliers are NOT uniformly wired.** `stamina_regen_multiplier`
   (`mutations.GetStaminaRegenMultiplier`) is applied inside `StaminaPerRound()`
   itself. `health_regen_multiplier` and `health_regen_if_lit_multiplier`
@@ -659,7 +676,7 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   bounds enforced in `internal/devtools/magnitude_bounds_test.go` are
   `health_regen_multiplier` [-0.3, 0.6] and `stamina_regen_multiplier`
   [-0.4, 0.4].
-- **Heal spells regenerate via a timed record, not a direct `Heal()` call.** The
+- **Heal spells regenerate via a timed record, not a direct restore call.** The
   spell's `effect_magnitude` YAML field becomes the regen multiplier
   (`spellData.EffectMagnitude`, e.g. 3 = 3x base regen, floored at 1.0; help
   spells do not crit). `internal/hooks/spell_help_effects.go`'s
@@ -693,11 +710,11 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
 - **`ApplyHarm`'s source is not universally available.** Direct combat, spell and
   maneuver sites have an actor; damage-over-time, toxicity and attrition sites do
   not, because `conditions.Condition` has no applier field. Those pass the zero value.
-- **`Heal()` is a HARM path at two call sites.** `conditions.ComputeTickAmount`
-  returns a negative value for `TickPercent < 0`. Do NOT make `Heal` a thin
-  wrapper over `ApplyRestore` -- `ApplyRestore` no-ops on non-positive input, so
-  that would silently delete every health damage-over-time condition. U5b-1 split the
-  two signed call sites; U5c retires `Heal`.
+- **`ApplyRestore` no-ops on non-positive input.** `conditions.ComputeTickAmount`
+  returns a negative value for `TickPercent < 0`, so a signed tick must be split
+  into `ApplyHarm` and `ApplyRestore` by sign, never passed to `ApplyRestore`
+  whole, or every health damage-over-time condition silently vanishes. `Heal()`
+  carried that trap until #285 retired it.
 - **`ApplyHealthChange` is a wrapper, not a legacy path.** It owns the
   `CancelCombatConditions` on crossing below zero, which reaches `Validate(true)` and
   a full stat recalculation, and 8 melee call sites depend on it. `ApplyHarm`
@@ -1549,6 +1566,27 @@ and `actions.ExecuteTaunt`, before any line names the target (#382).
 `ExecuteSkillMove` skips it for an area shape (`Shape.Targeting ==
 TargetArea`, the boss area drain `actions.ExecuteDrainArea`): a sweep picks no
 one out, so a hidden player it clips stays hidden and keeps its conditions.
+
+`RiseForCombat() bool` moves a `Sitting` character to `Standing` under
+`position.TriggerCombatRise` and reports whether it did; it is a no-op for
+anyone not sitting (a knockdown is untouched). `RevealForCombat` calls it
+LAST, after the reveal, so a hidden sitter's leap is narrated only once they
+are visible. Its other caller is the CombatPhase Idle-to-Engaging observer
+in `internal/hooks/Position_SitRise.go`, so a sitter who starts a fight
+stands. An area attack does not stand a sitter it clips (no RevealForCombat
+for an area shape; owner ruling 2026-10-19: working as intended). It is deliberately not inside
+`CancelCombatConditions`, which a death also runs: a dying sitter must not be
+narrated leaping up. The hooks Position observer narrates the rise.
+
+`StandForMove() bool` is the silent twin for a room move
+(`TriggerMoveStand`): `rooms.MoveToRoom` calls it for every player move and
+`Room.AddMob` for every mob room entry, so walking, flee, recall, teleport,
+summon, follow, quest and script moves and respawn all arrive Standing with
+no line of their own.
+
+**Sitting is not a knockdown.** `AttemptRecovery` gates on `IsProne() ||
+IsSupine()`, so a sitter is never recovered, counted or auto-stood by the
+#398 guard (`sitting_test.go` pins it).
 
 ### Hidden movement stamina scaling
 

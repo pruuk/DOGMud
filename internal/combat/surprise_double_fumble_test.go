@@ -106,3 +106,17 @@ func TestDoubleFumble_OnAnOrdinaryRoundMarksNothing(t *testing.T) {
 		t.Errorf("expected the ordinary hit-melee routing, got %v", result.MessagesToSource)
 	}
 }
+
+// #631: the double-fumble lines are picked without looking at either side's
+// gear, so a line that names a weapon lies to a bare-handed fighter or a beast
+// ("Your weapon slips at the exact moment Steppe Wolf trips over their own
+// guard!" read by an unarmed admin).
+func TestDoubleFumbleMessagesNameNoWeapon(t *testing.T) {
+	for i, m := range doubleFumbleMessages {
+		for role, line := range map[string]string{"attacker": m.toAttacker, "defender": m.toDefender, "room": m.toRoom} {
+			if strings.Contains(strings.ToLower(line), "weapon") {
+				t.Errorf("doubleFumbleMessages[%d] %s line names a weapon: %q", i, role, line)
+			}
+		}
+	}
+}

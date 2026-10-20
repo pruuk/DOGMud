@@ -44,17 +44,17 @@ events:
       - '{actor}''s foot crashes into {actee}!'
   standard_partial:
     actor:
-      - 'Your foot still lands as {actee} dodges most of it! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your <ansi fg="yellow-bold">kick</ansi> fails to beat {actee}''s guard, but barely hits! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You swing a kick at {actee}; they dodge most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your foot still lands as {actee} avoids most of it! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your <ansi fg="yellow-bold">kick</ansi> is mostly stopped by {actee}, but barely hits! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You swing a kick at {actee}; they blunt most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - 'You dodge most of {actor}''s kick, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor}''s kick barely gets past your guard! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} swings a kick at you, and you dodge most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You avoid most of {actor}''s kick, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You stop most of {actor}''s kick, but it barely gets through! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} swings a kick at you, and you blunt most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} swings a kick at {actee}, who mostly dodges but is still barely hit!'
-      - '{actor} swings a kick at {actee}, who mostly dodges but is still barely hit!'
-      - '{actor} swings a kick at {actee}, who dodges most of it but not all!'
+      - '{actor} swings a kick at {actee}, who avoids most of it but is still barely hit!'
+      - '{actor} swings a kick at {actee}, who stops most of it but is still barely hit!'
+      - '{actor} swings a kick at {actee}, who blunts most of it but not all!'
   standard_miss:
     actor:
       - 'You try to kick {actee}, but miss!'
@@ -98,14 +98,14 @@ events:
       - '{actor} grinds their foot into {actee}!'
   stomp_partial:
     actor:
-      - 'Your foot still lands as {actee} rolls mostly clear! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actee} rolls aside, but your foot still catches them! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your foot still lands as {actee} gets mostly clear! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} takes only part of your stomp, but your foot still catches them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - 'You roll mostly clear, but {actor}''s foot still lands! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You roll aside, but {actor}''s foot still catches you! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You get mostly clear, but {actor}''s foot still lands! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You take only part of {actor}''s stomp, but the foot still catches you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} tries to stomp {actee}, who rolls mostly clear but still gets caught!'
-      - '{actor} tries to stomp {actee}, who rolls mostly clear but still gets caught!'
+      - '{actor} tries to stomp {actee}, who gets mostly clear but still gets caught!'
+      - '{actor} stomps down at {actee}, who takes only part of it but still gets caught!'
   stomp_miss:
     actor:
       - 'You stomp at {actee}, but they roll aside!'
@@ -149,14 +149,14 @@ events:
       - '{actor} wrenches {actee} close and knees them hard!'
   knee_partial:
     actor:
-      - '{actee} blocks most of your knee, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You try to knee {actee}; they block most of it, but the strike still lands! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} stops most of your knee, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You try to knee {actee}; they take only part of it, but the strike still lands! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} tries to knee you, and you block most of it, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} tries to knee you, and you block most of it, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} tries to knee you, and you stop most of it, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} tries to knee you; you take only part of it, but the strike still lands! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} tries to knee {actee} in the grapple, who blocks most of it but still takes the hit!'
-      - '{actor} tries to knee {actee} in the grapple, who blocks most of it but still takes the hit!'
+      - 'In the grapple, {actor} tries to knee {actee}, who stops most of it but still takes the hit!'
+      - 'In the grapple, {actor} drives a knee at {actee}, who takes only part of it but still feels it!'
   # DIVERGENT (Task 4b Step 4, owner-approved 2026-09-21): variants 1 to 3
   # (the player's original lines) describe different feels -- target turns
   # away / strike glances off / target blocks -- one feel per variant across

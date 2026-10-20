@@ -227,6 +227,9 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 				// Chunk 3.3: sleeping suffix
 				if player.Character != nil && player.Character.HasConditionFlag(conditions.Sleeping) {
 					playerEntry += ` <ansi fg="8">(asleep)</ansi>`
+				} else if player.Character != nil && player.Character.IsSitting() {
+					// #637: a sitter shows seated; asleep takes precedence.
+					playerEntry += ` <ansi fg="8">(sitting)</ansi>`
 				}
 				details.VisiblePlayers = append(details.VisiblePlayers, playerEntry)
 			}
@@ -301,6 +304,9 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 			// Chunk 3.3: sleeping suffix
 			if mob.Character.HasConditionFlag(conditions.Sleeping) {
 				mobNameStr += ` <ansi fg="8">(asleep)</ansi>`
+			} else if mob.Character.IsSitting() {
+				// #637: a sitter shows seated; asleep takes precedence.
+				mobNameStr += ` <ansi fg="8">(sitting)</ansi>`
 			}
 
 			if mob.Character.IsCharmed() {

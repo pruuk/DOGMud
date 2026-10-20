@@ -85,6 +85,12 @@ type FireResult struct {
 	// NoTarget renders as "Could not find your target.", which reads as a typo.
 	TooDarkToAim bool
 	Blinded      bool
+
+	// OnCooldown reports a shot refused because the shared special-move
+	// cooldown is running (owner ruling 2026-10-19, #265). Set before any cost
+	// when the timer was already running (Cost is zero), or after the shot's
+	// cost when the claim lost the timer to the admission seam (Cost is paid).
+	OnCooldown bool
 }
 
 // The refusals of an aimed shot the shooter cannot see to line up: the fire
@@ -133,11 +139,11 @@ func ShotFallsBackHome(viewer *characters.Character, room *rooms.Room) bool {
 
 // ExecuteFire resolves a ranged shot immediately. rest is either "<target>"
 // (same room) or "<target words...> <direction>" (adjacent room). The weapon
-// must be loaded; firing unloads it (even on a miss). An ORDINARY shot does not
-// consume the special-move cooldown — reloading does — but the U10d same-room
-// surprise shot does, and is refused (and downgraded to an ordinary shot) when
-// that timer is already claimed. Every shot consumes the attacker's combat
-// round via RecordAndWait.
+// must be loaded; firing unloads it (even on a miss) and chambers the next
+// round. Every shot, the U10d surprise shot included, waits for and claims the
+// shared special-move cooldown (OnCooldown when it is running, owner ruling
+// 2026-10-19, #265). Every shot consumes the attacker's combat round via
+// RecordAndWait.
 //
 // Callers are responsible for: messaging, OnSkillUse/OnStatUse progression,
 // retaliation aggro on the target, crime recording, and combat-initiation
@@ -168,6 +174,15 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	weapon := findRangedWeaponSlot(actor)
 	if weapon == nil {
 		return FireResult{NoWeapon: true}
+	}
+	// A shot is a special move and waits for the shared special-move cooldown
+	// like every other (owner ruling 2026-10-19, #265: bows were always meant
+	// to fire on it). Asked HERE, before the auto-chamber below, because
+	// chambering spends stamina and an arrow: a shot refused for the timer
+	// must cost nothing. The claim is taken after the shot's own cost is
+	// admitted, further down, the order bash and trip use.
+	if !SpecialMoveReady(char) {
+		return FireResult{WeaponName: weapon.DisplayName(), OnCooldown: true}
 	}
 	// An UNLOADED weapon chambers itself here rather than refusing.
 	//
@@ -342,23 +357,25 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	// out of counterattacks (the one single-target attack that cannot be countered), and narrates
 	// anonymously. A stacked crit on top of all three would be a boss killed
 	// from the next room at no risk and with no way to learn who did it.
-	// ONE claim per shot, sneaking or not. Before the fold, an ordinary shot
-	// claimed nothing and the separate `reload` claimed instead, so a
-	// shot-plus-reload cycle already cost exactly one burn. It still does: this
-	// is a command-count change, not a rate change.
+	// ONE claim per shot, sneaking or not, and the claim GATES the shot
+	// (owner ruling 2026-10-19, #265): a bow fires on the shared special-move
+	// cooldown, players and mobs alike, so a shooter fires at most once per
+	// SpecialMoveCooldown rounds. SpecialMoveReady refused a running timer at
+	// the top, before any cost; this claim is the take, after the shot's cost
+	// is admitted, exactly as bash and trip order it. It fails only when the
+	// admission seam spent the timer underneath us, and then the paid cost is
+	// kept and the shot does not happen.
 	//
-	// ⚠️ THE CLAIM DOES NOT GATE THE AMBUSH, and that is deliberate. A shot from
-	// stealth is a surprise strike because the shooter was hidden, full stop.
-	// The old code refused the opener when the timer was already spent, which in
-	// practice meant refusing it whenever the player had reloaded -- exactly the
-	// thing you must do to have a loaded weapon to ambush WITH. Now that firing
-	// chambers its own next round, an ordinary shot claims the timer too, so
-	// re-adding the gate would deny the ambush after any previous shot instead.
-	//
-	// What actually limits ambushes is stealth: firing reveals the shooter, and
-	// `sneak` refuses while in combat, so an engagement yields one opener.
+	// The ambush is gated too: a shot from stealth while the timer runs is
+	// refused like any other. In practice the opener rarely meets a running
+	// timer, because `sneak` refuses while in combat, so the hidden shooter's
+	// first shot of an engagement normally comes after the timer has cleared.
+	// Firing reveals the shooter, so an engagement still yields one opener.
 	surpriseShot := !crossRoom && result.IsSneaking
-	ClaimSpecialMove(char)
+	if !ClaimSpecialMove(char) {
+		result.OnCooldown = true
+		return result
+	}
 
 	bonusCrit := 1.0
 	if surpriseShot {

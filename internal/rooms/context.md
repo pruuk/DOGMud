@@ -87,7 +87,12 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   every creature `viewer` does not perceive (`characters.Character.Perceives`)
   before matching, so a hidden creature cannot be named and does not count
   toward `2.name`. `FindByName` is the unfiltered form for staff tools and mob
-  callers. The "Also here" listing (`roomdetails.go`) reads the same
+  callers. A listed player or mob carries one posture suffix: `(asleep)` for
+  the Sleeping flag, else `(sitting)` for `position.Sitting` (#637).
+  Nobody arrives seated: `MoveToRoom` (every player move) and `AddMob` (every
+  mob room entry) call `Character.StandForMove`, which stands a sitter
+  silently, so every move path, present or future, is covered there.
+  The "Also here" listing (`roomdetails.go`) reads the same
   `Perceives` rule, with no pet requirement, and then the viewer's
   `messaging.ParticipantSight` in the room (lighting plan 5c): at shapes every
   entry, players, mobs and pet alike, is `messaging.UnseenFigure(SightShapes)`
