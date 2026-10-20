@@ -145,6 +145,13 @@ lives in `.claude/skills/dogmud-player-copy/SKILL.md`.
   through this package, and destructive confirms use `Confirm`.
 - `internal/actions`: `BreakOffMenuToFollow` speaks `FollowLines`.
 
+## Guard
+
+`TestMenuGuard_NoNumberedMenusOutsideTheMenuPackage`
+(`internal/usercommands/menu_guard_test.go`) forbids, in non-test Go code
+outside this package, a `"tables/numbered-list` template render and the copied
+`restNum > 0 && restNum <= len(` range check. Comments are ignored.
+
 ## Gotchas
 
 - Do not add a prefix or fuzzy match to game menus. It would swallow "n", "l"
