@@ -28,10 +28,13 @@ func menuGate(c *characters.Character) menu.CloseReason {
 		return menu.CloseAsleep
 	case c.HasCondition(quitConditionId):
 		return menu.CloseQuitting
-	case !c.IsStanding():
-		return menu.CloseOffFeet
+	// Controlled before off feet: every grapple position is off the feet, so
+	// a seized player must read "as you are seized". Control is nil for a
+	// character loaded from a save; both checks are nil-safe.
 	case c.IsBeingControlled(), c.Control != nil && c.Control.State() == control.BecomingControlled:
 		return menu.CloseControlled
+	case !c.IsStanding():
+		return menu.CloseOffFeet
 	}
 	return menu.CloseNone
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/state/control"
+	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
 
 func testMenu() menu.Menu {
@@ -179,6 +181,36 @@ func TestCheckMenuInterrupts_ClosesOnBusy(t *testing.T) {
 	u.CheckMenuInterrupts()
 	if u.HasOpenMenu() || len(r.closed) != 1 || r.closed[0] != menu.CloseBusy {
 		t.Fatalf("open %v closed %v", u.HasOpenMenu(), r.closed)
+	}
+}
+
+// TestMenuGate_SeizedReadsControlledNotOffFeet: every grapple position is
+// off the feet, so the controlled rule must come before the off-feet rule
+// for a seized player to read "as you are seized".
+func TestMenuGate_SeizedReadsControlledNotOffFeet(t *testing.T) {
+	u := menuUser()
+	u.Character.Control = control.NewMachine()
+	if err := u.Character.Control.TransitionToControlled(state.TransitionReason{}); err != nil {
+		t.Fatalf("transition to Controlled: %v", err)
+	}
+	if err := u.Character.Position.Inner().TransitionTo(position.Sitting, state.TransitionReason{}); err != nil {
+		t.Fatalf("transition to Sitting: %v", err)
+	}
+	if u.Character.IsStanding() {
+		t.Fatal("fixture still standing; the test would not reach the order question")
+	}
+	if r := menuGate(u.Character); r != menu.CloseControlled {
+		t.Fatalf("gate %v, want CloseControlled", r)
+	}
+}
+
+// TestMenuGate_NilControlIsNotControlled: players loaded from a save have no
+// Control machine; the gate must not panic and must not refuse.
+func TestMenuGate_NilControlIsNotControlled(t *testing.T) {
+	u := menuUser()
+	u.Character.Control = nil
+	if r := menuGate(u.Character); r != menu.CloseNone {
+		t.Fatalf("gate %v, want CloseNone", r)
 	}
 }
 
