@@ -545,6 +545,42 @@ func TestTalk_NoDialogueFileNodsAndOpensNoMenu(t *testing.T) {
 	require.Contains(t, events.DrainQueuedInputsForTest(100), "emote nods.")
 }
 
+// A choice whose effects landed (heard set, grants) refreshes the GMCP
+// markers once; a pitch or a refused choice does not.
+func TestTalk_MarkersRefreshOncePerSuccessfulChoice(t *testing.T) {
+	user, mob, done := talkFixture(t)
+	defer done()
+	conversation.Talk(user, mustRoom(t, user), mob)
+	events.DrainQueuedNpcMarkersChangedForTest(1)
+
+	require.True(t, user.RouteMenuInput("2", true))
+	require.Len(t, events.DrainQueuedNpcMarkersChangedForTest(1), 1, "info choice")
+}
+
+func TestOffer_MarkersRefreshOnAcceptOnly(t *testing.T) {
+	user, mob, done := offerFixture(t)
+	defer done()
+	conversation.Talk(user, mustRoom(t, user), mob)
+	events.DrainQueuedNpcMarkersChangedForTest(1)
+
+	require.True(t, user.RouteMenuInput("1", true))
+	require.Empty(t, events.DrainQueuedNpcMarkersChangedForTest(1), "the pitch changes nothing")
+	require.True(t, user.RouteMenuInput("1", true), "1 is Accept")
+	require.Len(t, events.DrainQueuedNpcMarkersChangedForTest(1), 1, "accept")
+}
+
+func TestTalk_RefusedChoiceDoesNotRefreshMarkers(t *testing.T) {
+	user, mob, done := fixtureWith(t, chargeFixtureYAML)
+	defer done()
+	user.Character.Gold = 0
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+	conversation.Talk(user, mustRoom(t, user), mob)
+	events.DrainQueuedNpcMarkersChangedForTest(1)
+
+	require.True(t, user.RouteMenuInput("1", true))
+	require.Empty(t, events.DrainQueuedNpcMarkersChangedForTest(1))
+}
+
 // Charmed NPCs offer no topics: the approach line and a nod, nothing more.
 func TestTalk_CharmedMobOnlyNods(t *testing.T) {
 	user, mob, done := talkFixture(t)

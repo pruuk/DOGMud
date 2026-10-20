@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conversation"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -65,6 +66,22 @@ func TestGiveResolve_EligibleHandInPlaysTheTopic(t *testing.T) {
 	require.Equal(t, 0, countBackpack(user, 10001))
 	require.False(t, mobHolds(mob, 10001), "the topic takes the item; the mob does not keep it")
 	require.Equal(t, []string{"9-end"}, questTokensFor(1))
+}
+
+func TestGiveResolve_RefreshesMarkersOnceOnlyWhenPlayed(t *testing.T) {
+	user, mob, done := offerFixture(t)
+	defer done()
+	room := mustRoom(t, user)
+	itm := giveItem(t, user, 10001)
+	events.DrainQueuedNpcMarkersChangedForTest(1)
+
+	require.True(t, conversation.Give(user, room, mob, itm))
+	require.Len(t, events.DrainQueuedNpcMarkersChangedForTest(1), 1, "hand-in played")
+
+	user.Character.QuestProgress = map[int]string{9: "end"}
+	again := giveItem(t, user, 10001)
+	require.True(t, conversation.Give(user, room, mob, again))
+	require.Empty(t, events.DrainQueuedNpcMarkersChangedForTest(1), "handed back changes nothing")
 }
 
 // Giving and choosing the topic from the menu print the same lines.

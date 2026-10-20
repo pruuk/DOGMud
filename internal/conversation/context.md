@@ -39,6 +39,9 @@ package owns everything that needs a user, a room or a mob.
   flushed after the handover line and before the NPC reply, also when Apply
   refuses. `PlayerState(user)` itself still sends at once for other callers.
   A price the player cannot pay says so in the talk flow only.
+- Every choice whose effects landed (info, hand-in, accepted offer, give
+  resolution, behavior topic) calls `RefreshMarkers` once, from `after`; a
+  pitch, a refused choice or an item handed back does not.
 - Charmed NPCs offer no topics: `Talk` gives the approach line and a nod,
   `Give` returns false, and `Marker` is empty.
 - `Give` does not check `MenuBlockedReason`: give is a plain command with its

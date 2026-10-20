@@ -224,8 +224,11 @@ func applyWithHandover(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, 
 	return ok
 }
 
-// after shifts the NPC's mood and fires a behavior topic's tree.
+// after runs once per choice whose effects landed: it refreshes the
+// player's NPC markers (the heard set or a grant may have changed them),
+// shifts the NPC's mood and fires a behavior topic's tree.
 func after(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic) {
+	RefreshMarkers(user.UserId)
 	dialogue.ShiftMood(mob.InstanceId, t.MoodChange, df.DefaultMood)
 	if t.Behavior {
 		behaviortree.TryMobBehavior(mob.InstanceId, behaviortree.EventContext{
