@@ -1,0 +1,34 @@
+package events
+
+import "container/heap"
+
+// NpcMarkersChanged says the talk markers a player sees on NPCs may have
+// changed (a quest token landed, a topic was heard). modules/gmcp answers
+// with Room.Info.Contents.Npcs (#375 R9).
+type NpcMarkersChanged struct {
+	UserId int
+}
+
+func (p NpcMarkersChanged) Type() string { return `NpcMarkersChanged` }
+
+// DrainQueuedNpcMarkersChangedForTest removes the NpcMarkersChanged events for
+// userId from the global queue and returns them. Pass 0 to drain every one.
+//
+// FOR TEST USE ONLY. Mutates the queue.
+func DrainQueuedNpcMarkersChangedForTest(userId int) []NpcMarkersChanged {
+	qLock.Lock()
+	defer qLock.Unlock()
+	var found []NpcMarkersChanged
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		m, ok := pe.event.(NpcMarkersChanged)
+		if ok && (userId == 0 || m.UserId == userId) {
+			found = append(found, m)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}

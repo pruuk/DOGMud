@@ -445,6 +445,12 @@ call, for every lane including the sub-module requests:
   `environment`, `symbol` and `coords` stay: they place the player on a map they hold.
 - **SightShapes:** the room reads, but every occupant is `unseenOccupant`: name `a figure`
   (`messaging.UnseenNoun`), empty `id` and `adjectives`, `aggro` kept.
+- **NPC talk marker (#375 R9):** each entry in `Contents.Npcs` carries `marker`, a string
+  (`[!]`, `[?]`, `[*]` or empty) from `rooms.NpcMarker`, asked only at `SightFull`. It replaced
+  the NPC `quest_flag` boolean; the item payload's `quest_flag` is unchanged.
+  `npcMarkersChangedHandler` answers `events.NpcMarkersChanged` (queued by
+  `conversation.RefreshMarkers`, e.g. when a quest token lands) with a
+  `Room.Info.Contents.Npcs` update.
 - **Rosters and containers follow the text lane:** players and NPCs are listed only when
   `Character.Perceives` them (the `rooms.GetDetails` rule), and a hidden container the viewer has
   not discovered (`HasDiscovery`) is not listed, as in `look`.

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/factions"
@@ -196,6 +197,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 
 	if remove {
 		questUser.Character.ClearQuestToken(evt.QuestToken)
+		conversation.RefreshMarkers(questUser.UserId)
 		return events.Continue
 	}
 
@@ -223,6 +225,9 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			return events.Continue
 		}
 	}
+
+	// The token has landed: the talk markers on NPCs may have changed.
+	conversation.RefreshMarkers(questUser.UserId)
 
 	// Bridge legacy/dialogue token grants into the questengine's quest_granted
 	// triggers. The questengine fires quest_granted only from its own internal

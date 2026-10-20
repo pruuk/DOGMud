@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/conversation"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
@@ -52,6 +54,13 @@ func TestMarker_NoMarkerWithoutFullSight(t *testing.T) {
 		lit.AddPlayer(user.UserId)
 		lit.AddMob(mob.InstanceId)
 	}()
+
+	// Positive controls: the move really happened, the viewer does not see
+	// the room in full, and the mob is in room 2's list.
+	require.NotEqual(t, messaging.SightFull, messaging.ParticipantSight(user.Character, dark))
+	require.Contains(t, dark.GetMobs(), mob.InstanceId)
+	require.Equal(t, darkRoom, user.Character.RoomId)
+	require.Equal(t, "[*]", conversation.Marker(user.UserId, mob), "the mob still has a marker to hide")
 
 	require.NotContains(t, rosterFor(t, user), "[*]")
 }

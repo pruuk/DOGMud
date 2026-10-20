@@ -283,6 +283,9 @@ func main() {
 
 	hooks.RegisterListeners()
 
+	// Wire the talk-marker callback into the room roster and GMCP (#375).
+	wireConversationHooks()
+
 	// Wire the rooms package's btree-eviction callback to behaviortree's
 	// implementation. Avoids an internal/rooms → internal/behaviortree
 	// import cycle (behaviortree already imports rooms).

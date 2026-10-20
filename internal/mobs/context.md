@@ -148,7 +148,6 @@ type Mob struct {
     // Social Properties
     Groups          []string                 // Group allegiances
     Hates           []string                 // Groups/races this mob hates
-    QuestFlags      []string                 // Quest flags for interactions
     
     // Economy
     ItemDropChance  int                      // Chance to drop items on death

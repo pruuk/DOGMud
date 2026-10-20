@@ -148,6 +148,12 @@ The `internal/rooms` package is the core world management system for GoMud, hand
 - **Environmental context**: Day/night cycles, lighting, biome effects
 - **User-specific views**: Personalized room information based on character state
 - **Room alerts**: Special notifications for banks, training, storage, etc.
+- **NPC talk marker** (`npcmarker.go`): `rooms.NpcMarker func(viewerUserId int,
+  mob *mobs.Mob) string` is a hook installed at boot (`wireConversationHooks`
+  in the root package, and by `internal/conversation`'s init). `GetDetails`
+  prefixes a mob's name with the result (`FormattedName.Marker`), only when the
+  viewer's `ParticipantSight` is `SightFull`; at Shapes or None the roster is
+  figures or empty. It replaced the unused `Mob.QuestFlags` star (#375 R9).
 - **Description modifiers**: `descriptionWithModifiers` applies each active
   mutator's prepend, append or replace text BEFORE the wrap, and
   `wrapDescriptionParts` wraps each part as plain text, highlights nouns,
@@ -640,6 +646,7 @@ When writing hidden noun descriptions:
 | `save_and_load.go` | Room YAML + instance-save persistence, `restoreSkipTaggedFields` |
 | `prose_wrap.go` | Re-folds long prose into wrapped `>` block scalars on template save |
 | `roomdetails.go` | Assembled per-look detail payload |
+| `npcmarker.go` | The `NpcMarker` hook: the viewer's talk marker before an NPC's name (#375) |
 | `zoneconfig.go` | Per-zone `zone-config.yaml` (including `non_cartesian` and the `instance_gold` opt-in) |
 | `zone_lifecycle.go` | Zone create/delete lifecycle |
 | `zone_rename.go` | Zone renaming and the reference rewrites it implies |

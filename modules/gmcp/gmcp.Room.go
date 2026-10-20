@@ -38,7 +38,26 @@ func init() {
 	events.RegisterListener(events.PlayerDespawn{}, g.despawnHandler)
 	events.RegisterListener(GMCPRoomUpdate{}, g.buildAndSendGMCPPayload)
 	events.RegisterListener(events.SightBandChanged{}, g.sightBandChangedHandler)
+	events.RegisterListener(events.NpcMarkersChanged{}, g.npcMarkersChangedHandler)
 
+}
+
+// npcMarkersChangedHandler re-sends the NPC list when the talk markers a
+// player sees may have changed (#375 R9).
+func (g *GMCPRoomModule) npcMarkersChangedHandler(e events.Event) events.ListenerReturn {
+	evt, typeOk := e.(events.NpcMarkersChanged)
+	if !typeOk {
+		mudlog.Error("Event", "Expected Type", "NpcMarkersChanged", "Actual Type", e.Type())
+		return events.Cancel
+	}
+	if evt.UserId < 1 {
+		return events.Continue
+	}
+	events.AddToQueue(GMCPRoomUpdate{
+		UserId:     evt.UserId,
+		Identifier: `Room.Info.Contents.Npcs`,
+	})
+	return events.Continue
 }
 
 // sightBandChangedHandler re-sends Room.Info when a player's light band
@@ -396,7 +415,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 				Aggro:      mob.Character.IsInCombat(),
 			}
 
-			if rooms.NpcMarker != nil {
+			if rooms.NpcMarker != nil && sight == messaging.SightFull {
 				c.Marker = rooms.NpcMarker(user.UserId, mob)
 			}
 
