@@ -383,6 +383,11 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 			conditionOptions := []templates.NameDescription{}
 
 			for _, conditionId := range conditions.GetAllConditionIds() {
+				// Condition 0 is the quit timer, not a trap effect, and its
+				// id "0" would collide with this menu's leave answer.
+				if conditionId == 0 {
+					continue
+				}
 				if b := conditions.GetConditionSpec(conditionId); b != nil {
 
 					if b.Name == `empty` {
@@ -398,8 +403,14 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 				}
 			}
 
+			// Ties break on id: names repeat ("Stunned" twice), and the ids
+			// arrive in map order, so without it the numbers swap between
+			// redraws.
 			sort.SliceStable(conditionOptions, func(i, j int) bool {
-				return conditionOptions[i].Name < conditionOptions[j].Name
+				if conditionOptions[i].Name != conditionOptions[j].Name {
+					return conditionOptions[i].Name < conditionOptions[j].Name
+				}
+				return conditionOptions[i].Id.(int) < conditionOptions[j].Id.(int)
 			})
 
 			question := cmdPrompt.AskMenu(trapConditionMenu(conditionOptions), `0`)
@@ -838,10 +849,12 @@ func newOrExistingMenu(opts []templates.NameDescription, newDescription string) 
 	return m
 }
 
-// trapConditionMenu toggles conditions on a trap; Done (or Enter) answers "0".
+// trapConditionMenu toggles conditions on a trap; Done, Enter or a typed 0
+// answers "0".
 func trapConditionMenu(conditionOptions []templates.NameDescription) menu.Menu {
 	m := optionsMenu(`Select a condition to add to the trap, or nothing to continue:`, conditionOptions, 2)
 	m.Leave = `Done`
+	m.LeaveAliases = []string{`0`}
 	return m
 }
 
@@ -856,9 +869,11 @@ func recipeMenu(recipeOptions []templates.NameDescription) menu.Menu {
 	return m
 }
 
-// roomMutatorMenu toggles room mutators; Done (or Enter) answers "0".
+// roomMutatorMenu toggles room mutators; Done, Enter or a typed 0 answers
+// "0".
 func roomMutatorMenu(mutatorOptions []templates.NameDescription) menu.Menu {
 	m := optionsMenu(`Select a mutator to add to the room, or nothing to continue:`, mutatorOptions, 2)
 	m.Leave = `Done`
+	m.LeaveAliases = []string{`0`}
 	return m
 }

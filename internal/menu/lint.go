@@ -57,6 +57,19 @@ func LintLabels(m Menu) []string {
 			seenID[e.Id] = true
 		}
 	}
+	// A leave alias is checked first, so one that matches an entry's id or
+	// alias would hide that entry.
+	for _, a := range m.LeaveAliases {
+		for _, e := range m.Entries {
+			hit := strings.EqualFold(a, e.Id)
+			for _, ea := range e.Aliases {
+				hit = hit || strings.EqualFold(a, ea)
+			}
+			if hit {
+				probs = append(probs, fmt.Sprintf("leave alias %q shadows entry %q", a, e.Id))
+			}
+		}
+	}
 	if m.Default != "" {
 		found := false
 		for _, e := range m.Entries {

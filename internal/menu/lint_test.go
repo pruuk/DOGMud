@@ -75,6 +75,18 @@ func TestLintLabels_Boundaries(t *testing.T) {
 	}
 }
 
+func TestLintLabels_LeaveAliasMustNotShadowAnEntry(t *testing.T) {
+	ok := Menu{Entries: []Entry{{Id: "a", Label: "One"}}, Leave: "Done", LeaveAliases: []string{"0"}}
+	if probs := LintLabels(ok); len(probs) != 0 {
+		t.Errorf("clean leave alias flagged: %v", probs)
+	}
+	clash := Menu{Entries: []Entry{{Id: "x", Label: "One", Aliases: []string{"q"}}, {Id: "quit", Label: "Two"}}, Leave: "Done", LeaveAliases: []string{"Q", "quit"}}
+	probs := LintLabels(clash)
+	if !hasProblem(probs, `leave alias "Q"`) || !hasProblem(probs, `leave alias "quit"`) {
+		t.Errorf("leave aliases shadowing an entry: %v", probs)
+	}
+}
+
 func TestLintLabels_ChecksTheLeaveLabel(t *testing.T) {
 	long := Menu{Entries: []Entry{{Id: "a", Label: "One"}}, Leave: strings.Repeat("x", 51)}
 	if probs := LintLabels(long); !hasProblem(probs, "label over") {

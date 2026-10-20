@@ -337,16 +337,9 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 
 		subTypeMenu := optionsMenu(`What Subtype of item will it be?`, subTypeOptions, 1)
 		subTypeMenu.Default = string(newItemSpec.Subtype)
-		subTypeMenu.Leave = `Cancel`
-		question := cmdPrompt.AskMenu(subTypeMenu, ``)
+		question := cmdPrompt.AskMenu(subTypeMenu)
 		if !question.Done {
 			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
-			return true, nil
-		}
-
-		if question.Response == `` {
-			user.SendText(messaging.CategoryAdmin, "Aborting...")
-			user.ClearPrompt()
 			return true, nil
 		}
 

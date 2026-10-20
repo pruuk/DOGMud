@@ -60,6 +60,24 @@ func TestResolve_PrefixMatchingEntryAndLeaveListsBoth(t *testing.T) {
 	}
 }
 
+func TestResolve_LeaveAliasBeatsTheNumberCheck(t *testing.T) {
+	m := Menu{Entries: []Entry{{Id: "a", Label: "alpha"}}, Leave: "Done", LeaveAliases: []string{"0"}}
+	if r := Resolve(m, " 0 "); r.Kind != Leave {
+		t.Fatalf(`"0" with a leave alias: %+v`, r)
+	}
+	if r := Resolve(m, "1"); r.Kind != Chosen || r.Entry.Id != "a" {
+		t.Fatalf("numbers still choose: %+v", r)
+	}
+	m.LeaveAliases = nil
+	if r := Resolve(m, "0"); r.Kind != NoSuchNumber {
+		t.Fatalf(`"0" without the alias: %+v`, r)
+	}
+	noLeave := Menu{Entries: []Entry{{Id: "a", Label: "alpha"}}, LeaveAliases: []string{"0"}}
+	if r := Resolve(noLeave, "0"); r.Kind != NoSuchNumber {
+		t.Fatalf("an alias without a Leave entry must not leave: %+v", r)
+	}
+}
+
 func TestResolve_NumberEdgeCases(t *testing.T) {
 	m := talkMenu()
 	if r := Resolve(m, "99999999999999999999999"); r.Kind != NoSuchNumber {

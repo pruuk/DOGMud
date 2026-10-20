@@ -16,10 +16,12 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// zoneMutatorMenu toggles zone mutators; Done (or Enter) answers "0".
+// zoneMutatorMenu toggles zone mutators; Done, Enter or a typed 0 answers
+// "0".
 func zoneMutatorMenu(mutatorOptions []templates.NameDescription) menu.Menu {
 	m := optionsMenu(`Select a mutator to add/remove, or nothing to continue:`, mutatorOptions, 2)
 	m.Leave = `Done`
+	m.LeaveAliases = []string{`0`}
 	return m
 }
 

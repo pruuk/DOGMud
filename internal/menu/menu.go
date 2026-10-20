@@ -50,6 +50,10 @@ type Menu struct {
 	Columns    int    // 2 lays name-only lists side by side (long admin lists); Detail is not shown in this mode
 	Prefix     bool   // a unique label prefix resolves (builders only)
 	AcceptText bool   // an unmatched line resolves as Text (free-text builders)
+
+	// LeaveAliases are extra exact words that pick Leave, checked before
+	// numbers so a builder's "0" can mean done. Ignored when Leave is "".
+	LeaveAliases []string
 }
 
 // all returns the entries as numbered, Leave included.

@@ -51,6 +51,10 @@ func (u *UserRecord) RoutePromptInput(line string, typed bool) (next string, had
 			u.SendText(messaging.CategoryRefusal, fmt.Sprintf("There is no choice %s.", strings.TrimSpace(line)))
 		case menu.Ambiguous:
 			u.SendText(messaging.CategoryRefusal, ambiguousLine(res.Matches))
+		case menu.NotAnAnswer, menu.Empty:
+			// Only a modal menu gets here (a non-modal one closed above);
+			// the builder redraws its menu after this line.
+			u.SendText(messaging.CategoryRefusal, "Pick a number from the list.")
 		}
 	}
 

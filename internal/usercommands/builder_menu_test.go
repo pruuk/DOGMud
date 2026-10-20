@@ -95,14 +95,14 @@ func TestBuilderMenu_ItemTypeByNumber(t *testing.T) {
 	assert.Equal(t, `Physical mitigation % (plate:12-18, leather:4-8, cloth:1-3)?`, lastQuestion(t, admin))
 }
 
-func TestBuilderMenu_ItemSubtypeByNumberAndCancel(t *testing.T) {
+func TestBuilderMenu_ItemSubtypeByNumberAndEnterRedraws(t *testing.T) {
 	admin, room := builderAdmin(t)
 	run := func() { _, _ = Item("create", admin, room, 0) }
 
 	// Name, type 2 (armor), three mitigation defaults, then the subtype menu.
 	out := drive(t, admin, run, "Test Thing", "2", "", "", "")
 	assert.Contains(t, out, "What Subtype of item will it be?")
-	assert.Contains(t, out, "Cancel", "the subtype menu offers Cancel")
+	assert.NotContains(t, out, "Cancel", "the subtype menu has no leave entry")
 
 	drive(t, admin, run, "3")
 	q := questionFor(t, admin, `What Subtype of item will it be?`)
@@ -110,12 +110,14 @@ func TestBuilderMenu_ItemSubtypeByNumberAndCancel(t *testing.T) {
 	assert.Equal(t, items.ItemSubtypes()[2].Type, q.Response)
 	assert.Equal(t, `Will this item have a maximum number of uses?`, lastQuestion(t, admin))
 
-	// A fresh build: Enter on the subtype menu (no current subtype) is Cancel.
+	// A fresh build: Enter on the subtype menu (no current subtype) keeps
+	// the build and redraws the menu.
 	admin.ClearPrompt()
 	events.DrainQueuedMessagesForTest(admin.UserId)
 	out = drive(t, admin, run, "Test Thing", "2", "", "", "", "")
-	assert.Contains(t, out, "Aborting...")
-	assert.Nil(t, admin.GetPrompt(), "Cancel ends the build")
+	assert.NotContains(t, out, "Aborting...")
+	assert.Contains(t, out, "What Subtype of item will it be?", "the menu is redrawn")
+	assert.False(t, questionFor(t, admin, `What Subtype of item will it be?`).Done)
 }
 
 func TestBuilderMenu_ContainerByNumber(t *testing.T) {
@@ -154,7 +156,10 @@ func TestBuilderMenu_TrapConditionsToggleByNumber(t *testing.T) {
 	admin, _ := builderAdmin(t)
 	// Two specs share a name, as two shipped "Stunned" specs do: picking
 	// each by number must store a different id.
+	// Condition 0 is the quit timer; its id "0" would collide with the
+	// toggle menu's leave answer, so it is never listed.
 	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		0:   {ConditionId: 0, Name: "Meditating"},
 		201: {ConditionId: 201, Name: "Alpha"},
 		202: {ConditionId: 202, Name: "Stunned"},
 		203: {ConditionId: 203, Name: "Stunned"},
@@ -168,6 +173,9 @@ func TestBuilderMenu_TrapConditionsToggleByNumber(t *testing.T) {
 	out := drive(t, admin, run, "yes", "5", "yes")
 	assert.Contains(t, out, heading)
 	assert.Contains(t, out, "Done")
+	assert.NotContains(t, out, "Meditating", "condition 0 is not offered")
+	q := questionFor(t, admin, heading)
+	require.Len(t, q.Menu.Entries, 3, "Alpha and the two Stunned specs")
 
 	out = drive(t, admin, run, "2")
 	assert.Contains(t, out, menu.MarkerChecked, "the toggled condition shows [x]")
@@ -292,8 +300,9 @@ func TestBuilderMenu_ZoneMutatorsToggleByNumber(t *testing.T) {
 	require.True(t, ok)
 	assert.Contains(t, stored.([]string), "zz-test-alpha")
 
-	drive(t, admin, run, "")
-	assert.Equal(t, `Should the zone have music?`, lastQuestion(t, admin), "Done moves on")
+	// The admin habit of typing 0 to finish still works.
+	drive(t, admin, run, "0")
+	assert.Equal(t, `Should the zone have music?`, lastQuestion(t, admin), "0 finishes the list")
 }
 
 func TestBuilderMenu_ServerConfigByNumber(t *testing.T) {

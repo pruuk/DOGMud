@@ -122,6 +122,38 @@ func TestRoutePromptInput_NoSuchNumberSaysSo(t *testing.T) {
 	}
 }
 
+// A modal builder menu used to say "Invalid selection." on a line it could
+// not use; the router now says so before the builder redraws.
+func TestRoutePromptInput_ModalUnknownLineSaysPickANumber(t *testing.T) {
+	u := menuUser()
+	builderPrompt(u)
+	events.DrainQueuedMessagesForTest(u.UserId)
+	u.RoutePromptInput("north", true)
+	if msgs := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), ""); !strings.Contains(msgs, "Pick a number from the list.") {
+		t.Fatalf("unknown line: messages %q", msgs)
+	}
+	// Enter on a menu with no default and no leave says the same.
+	u.RoutePromptInput("", true)
+	if msgs := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), ""); !strings.Contains(msgs, "Pick a number from the list.") {
+		t.Fatalf("enter: messages %q", msgs)
+	}
+	if u.GetPrompt().Questions[0].Done {
+		t.Fatal("an unknown line answered the question")
+	}
+}
+
+func TestRoutePromptInput_NonModalUnknownLineIsSilent(t *testing.T) {
+	u := menuUser()
+	p, _ := u.StartPrompt("talk", "smith")
+	p.NonModal = true
+	p.AskMenu(menu.Menu{Heading: "Talk?", Entries: []menu.Entry{{Id: "a", Label: "alpha"}}})
+	events.DrainQueuedMessagesForTest(u.UserId)
+	u.RoutePromptInput("north", true)
+	if msgs := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), ""); strings.Contains(msgs, "Pick a number") {
+		t.Fatalf("a non-modal close must not refuse the command: %q", msgs)
+	}
+}
+
 func TestRoutePromptInput_AmbiguousNamesTheMatches(t *testing.T) {
 	u := menuUser()
 	p, _ := u.StartPrompt("room", "edit exits")

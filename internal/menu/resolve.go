@@ -49,6 +49,14 @@ func Resolve(m Menu, input string) Result {
 		return Result{Kind: Empty}
 	}
 
+	if m.Leave != "" {
+		for _, a := range m.LeaveAliases {
+			if strings.EqualFold(a, in) {
+				return Result{Kind: Leave}
+			}
+		}
+	}
+
 	if allDigits(in) {
 		n, err := strconv.Atoi(in)
 		if err != nil || n < 1 || n > len(all) {
