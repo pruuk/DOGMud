@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -48,6 +49,7 @@ func RenameSelf(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	}
 
 	cmdPrompt, _ := user.StartPrompt(`rename`, rest)
+	cmdPrompt.NonModal = true
 
 	days := cooldownHours / 24
 	var confirmText string
@@ -62,8 +64,9 @@ func RenameSelf(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 			user.Character.Name, newName, days)
 	}
 
-	q := cmdPrompt.Ask(confirmText, []string{`yes`, `no`}, `no`)
+	q := cmdPrompt.AskConfirm(confirmText, `Yes`, `No`)
 	if !q.Done {
+		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
 		return true, nil
 	}
 	if q.Response != `yes` {

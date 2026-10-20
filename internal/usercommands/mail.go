@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -98,6 +99,7 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	cmdPrompt, isNew := user.StartPrompt(`mail`, rest)
+	cmdPrompt.NonModal = true
 
 	// Recipient is the initial argument (or prompted for if omitted).
 	recipientName := rest
@@ -180,14 +182,15 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	// Confirm.
-	question = cmdPrompt.Ask(fmt.Sprintf(`Send this mail to <ansi fg="username">%s</ansi>?`, recipientName), []string{`Yes`, `No`}, `No`)
+	question = cmdPrompt.AskConfirm(fmt.Sprintf(`Send this mail to <ansi fg="username">%s</ansi>?`, recipientName), `Yes, send it`, `No`)
 	if !question.Done {
 		tplTxt, _ := templates.Process("mail/message", msg, user.UserId)
 		user.SendText(messaging.CategoryScreen, tplTxt)
+		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
 		return true, nil
 	}
 	user.ClearPrompt()
-	if len(question.Response) == 0 || question.Response[0:1] != `Y` {
+	if question.Response != `yes` {
 		user.SendText(messaging.CategorySystem, `Cancelling the mail.`)
 		return true, nil
 	}

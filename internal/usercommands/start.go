@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -60,13 +61,17 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You will be known as <ansi fg="yellow-bold">%s</ansi>!%s`, user.Character.Name, term.CRLFStr))
 	}
 
-	question := cmdPrompt.Ask(
-		"How much of Gaius do you already know?\n"+
-			"  1) New to text MUDs:  I'll teach you the basics first.\n"+
-			"  2) New to DOGMud:     I know MUDs; show me what's different.\n"+
-			"  3) Veteran:           Skip all tutorials; drop me into the city.",
-		[]string{"1", "2", "3"}, "2")
+	question := cmdPrompt.AskMenu(menu.Menu{
+		Heading: "How much of Gaius do you already know?",
+		Entries: []menu.Entry{
+			{Id: "1", Label: "New to text MUDs", Detail: "I'll teach you the basics first."},
+			{Id: "2", Label: "New to DOGMud", Detail: "I know MUDs; show me what's different."},
+			{Id: "3", Label: "Veteran", Detail: "Skip all tutorials; drop me into the city."},
+		},
+		Default: "2",
+	})
 	if !question.Done {
+		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
 		return true, nil
 	}
 
@@ -105,11 +110,12 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	switch onboardingRoute(question.Response) {
 	case routeVeteran:
-		confirm := cmdPrompt.Ask("Skip everything and start in the city, already Awakened? (y/n)", []string{"y", "n"}, "n")
+		confirm := cmdPrompt.AskConfirm("Skip everything and start in the city, already Awakened?", "Yes, skip ahead", "No")
 		if !confirm.Done {
+			user.SendText(messaging.CategoryScreen, menu.Render(*confirm.Menu))
 			return true, nil
 		}
-		if confirm.Response != "y" {
+		if confirm.Response != "yes" {
 			// Re-ask from the top. RejectResponse alone would re-show the
 			// confirm (GetNextQuestion returns the last question), so clear
 			// the prompt and re-enter Start — same pattern as the name decline.

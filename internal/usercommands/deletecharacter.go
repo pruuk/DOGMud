@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -15,12 +16,14 @@ import (
 // type-the-name match.
 func DeleteCharacter(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	cmdPrompt, _ := user.StartPrompt(`deletecharacter`, rest)
+	cmdPrompt.NonModal = true
 
-	q1 := cmdPrompt.Ask(
+	q1 := cmdPrompt.AskConfirm(
 		`<ansi fg="red">This will permanently delete your account and free your name`+
 			` for someone else to claim. This cannot be undone.</ansi> Continue?`,
-		[]string{`yes`, `no`}, `no`)
+		`Yes, delete my account`, `No, keep it`)
 	if !q1.Done {
+		user.SendText(messaging.CategoryScreen, menu.Render(*q1.Menu))
 		return true, nil
 	}
 	if q1.Response != `yes` {

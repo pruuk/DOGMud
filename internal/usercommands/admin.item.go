@@ -364,16 +364,17 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 	// Maximum Uses
 	//
 	{
-		defaultYN := `n`
+		usesMenu := menu.Confirm(`Will this item have a maximum number of uses?`, `Yes`, `No`)
 		if newItemSpec.Uses > 0 {
-			defaultYN = `y`
+			usesMenu.Default = `yes`
 		}
-		question := cmdPrompt.Ask(`Will this item have a maximum number of uses?`, []string{`y`, `n`}, defaultYN)
+		question := cmdPrompt.AskMenu(usesMenu)
 		if !question.Done {
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
-		if question.Response == `y` {
+		if question.Response == `yes` {
 			question := cmdPrompt.Ask(`How many uses will this item have?`, []string{strconv.Itoa(newItemSpec.Uses)}, strconv.Itoa(newItemSpec.Uses))
 			if !question.Done {
 				return true, nil
@@ -438,7 +439,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 	// Confirm?
 	//
 	{
-		question := cmdPrompt.Ask(`Does this look correct?`, []string{`y`, `n`}, `n`)
+		question := cmdPrompt.AskConfirm(`Does this look correct?`, `Yes`, `No`)
 		if !question.Done {
 
 			user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Name:</ansi>        <ansi fg="white-bold">`+newItemSpec.Name+`</ansi>`)
@@ -472,12 +473,13 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 
 			user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">SubType:</ansi>     <ansi fg="white-bold">`+string(newItemSpec.Subtype)+`</ansi>`)
 
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
 		user.ClearPrompt()
 
-		if question.Response != `y` {
+		if question.Response != `yes` {
 			user.SendText(messaging.CategoryAdmin, "Aborting...")
 			return true, nil
 		}

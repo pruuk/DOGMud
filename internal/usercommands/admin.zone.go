@@ -208,8 +208,13 @@ func zone_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	//
 	{
 
-		question := cmdPrompt.Ask(`Should the zone have music?`, []string{`yes`, `no`}, util.BoolYN(editZoneConfig.MusicFile != ``))
+		musicMenu := menu.Confirm(`Should the zone have music?`, `Yes`, `No`)
+		if editZoneConfig.MusicFile != `` {
+			musicMenu.Default = `yes`
+		}
+		question := cmdPrompt.AskMenu(musicMenu)
 		if !question.Done {
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 

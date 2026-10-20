@@ -98,8 +98,9 @@ func room_Edit_Exits(rest string, user *users.UserRecord, room *rooms.Room, flag
 		}
 
 		// Since they picked a exit that exists, lets get the question of delete out of the way immediately.
-		question := cmdPrompt.Ask(`Delete this exit?`, []string{`yes`, `no`}, `no`)
+		question := cmdPrompt.AskConfirm(`Delete this exit?`, `Yes, delete it`, `No, keep it`)
 		if !question.Done {
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
@@ -181,14 +182,14 @@ func room_Edit_Exits(rest string, user *users.UserRecord, room *rooms.Room, flag
 	// Exit message?
 	//
 	{
-		secretExitDefault := `no`
+		secretMenu := menu.Confirm(`Is this a hidden exit?`, `Yes`, `No`)
 		if currentlyEditing.Exit.Secret {
-			secretExitDefault = `yes`
+			secretMenu.Default = `yes`
 		}
 
-		// allow them to name/rename the exit.
-		question := cmdPrompt.Ask(`Is this a hidden exit?`, []string{`yes`, `no`}, secretExitDefault)
+		question := cmdPrompt.AskMenu(secretMenu)
 		if !question.Done {
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 

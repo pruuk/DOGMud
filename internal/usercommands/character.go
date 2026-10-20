@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -61,31 +62,20 @@ func Character(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		hiredOutChars[mob.Character.Name] = mob.Character
 	}
 
-	menuOptions := []string{`new`}
-
 	cmdPrompt, isNew := user.StartPrompt(`character`, rest)
+	cmdPrompt.NonModal = true
 
 	if isNew {
-
-		if len(altNames) > 0 {
-			menuOptions = append(menuOptions, `view`)
-			menuOptions = append(menuOptions, `change`)
-			menuOptions = append(menuOptions, `delete`)
-			menuOptions = append(menuOptions, `hire`)
-		}
-
 		if len(nameToAlt) > 0 {
 			altTblTxt := getAltTable(nameToAlt, hiredOutChars, user.UserId)
 			user.SendBlankLine(messaging.CategorySystem)
 			user.SendText(messaging.CategorySystem, altTblTxt)
 		}
-
 	}
 
-	menuOptions = append(menuOptions, `quit`)
-
-	question := cmdPrompt.Ask(`What would you like to do?`, menuOptions, `quit`)
+	question := cmdPrompt.AskMenu(characterMenu(altNames))
 	if !question.Done {
+		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
 		return true, nil
 	}
 
@@ -108,6 +98,23 @@ func Character(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	}
 
 	return true, nil
+}
+
+// characterMenu is the character room's menu. Each Id is the word the old
+// prompt took, so typing "new" or "delete" still picks it; Enter closes it.
+func characterMenu(altNames []string) menu.Menu {
+	m := menu.Menu{Heading: `What would you like to do?`, Default: `quit`}
+	m.Entries = append(m.Entries, menu.Entry{Id: `new`, Label: `Make a new character`})
+	if len(altNames) > 0 {
+		m.Entries = append(m.Entries,
+			menu.Entry{Id: `view`, Label: `Look at a character`},
+			menu.Entry{Id: `change`, Label: `Change to a character`},
+			menu.Entry{Id: `delete`, Label: `Delete a character`},
+			menu.Entry{Id: `hire`, Label: `Hire a character to follow you`},
+		)
+	}
+	m.Entries = append(m.Entries, menu.Entry{Id: `quit`, Label: `Close this menu`})
+	return m
 }
 
 // selectAltByName prompts for an alt name and returns the match and raw response.
@@ -142,14 +149,17 @@ func cmdCharacterNew(user *users.UserRecord, room *rooms.Room, cmdPrompt *prompt
 		user.SendText(messaging.CategoryRefusal, `<ansi fg="203">You already have too many alts.</ansi>`)
 		user.SendText(messaging.CategoryRefusal, `<ansi fg="203">You'll need to delete one to create a new one.</ansi>`)
 
-		// Reject the menu response so they can pick again
-		// Re-calling Ask with the same question text returns the existing question object
-		cmdPrompt.Ask(`What would you like to do?`, []string{`quit`}, `quit`).RejectResponse()
+		// Reject the menu response so they can pick again. AskMenu with the
+		// same heading returns the existing question.
+		q := cmdPrompt.AskMenu(characterMenu(altNames))
+		q.RejectResponse()
+		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
 		return true, nil
 	}
 
-	question := cmdPrompt.Ask(`Are you SURE? (Your current character will be saved here to change back to later)`, []string{`yes`, `no`}, `no`)
+	question := cmdPrompt.AskConfirm(`Are you SURE? (Your current character will be saved here to change back to later)`, `Yes`, `No`)
 	if !question.Done {
+		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
 		return true, nil
 	}
 
@@ -202,8 +212,9 @@ func cmdCharacterDelete(user *users.UserRecord, cmdPrompt *prompt.Prompt, altNam
 			return true, nil
 		}
 
-		question := cmdPrompt.Ask(`<ansi fg="red">Are you SURE you want to delete <ansi fg="username">`+delChar.Name+`</ansi>?</ansi>`, []string{`yes`, `no`}, `no`)
+		question := cmdPrompt.AskConfirm(`<ansi fg="red">Are you SURE you want to delete <ansi fg="username">`+delChar.Name+`</ansi>?</ansi>`, `Yes, delete them`, `No, keep them`)
 		if !question.Done {
+			user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
 			return true, nil
 		}
 
@@ -256,8 +267,9 @@ func cmdCharacterChange(user *users.UserRecord, room *rooms.Room, cmdPrompt *pro
 			return true, nil
 		}
 
-		question := cmdPrompt.Ask(`<ansi fg="51">Are you SURE you want to change to <ansi fg="username">`+char.Name+`</ansi>?</ansi>`, []string{`yes`, `no`}, `no`)
+		question := cmdPrompt.AskConfirm(`<ansi fg="51">Are you SURE you want to change to <ansi fg="username">`+char.Name+`</ansi>?</ansi>`, `Yes`, `No`)
 		if !question.Done {
+			user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
 			return true, nil
 		}
 
@@ -386,8 +398,9 @@ func cmdCharacterHire(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 
 		mudlog.Debug(`Hire Alt`, `UserId`, user.UserId, `alt-name`, char.Name, `gear-value`, gearValue, `skill-ranks`, char.GetTotalSkillRanks(), `total`, charValue)
 
-		question := cmdPrompt.Ask(fmt.Sprintf(`<ansi fg="51">The price to hire <ansi fg="username">%s</ansi> is <ansi fg="gold">%s gold</ansi>. Are you sure?</ansi>`, char.Name, util.FormatNumber(charValue)), []string{`yes`, `no`}, `no`)
+		question := cmdPrompt.AskConfirm(fmt.Sprintf(`<ansi fg="51">The price to hire <ansi fg="username">%s</ansi> is <ansi fg="gold">%s gold</ansi>. Are you sure?</ansi>`, char.Name, util.FormatNumber(charValue)), `Yes, hire them`, `No`)
 		if !question.Done {
+			user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
 			return true, nil
 		}
 

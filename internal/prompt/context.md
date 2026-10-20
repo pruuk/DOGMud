@@ -164,15 +164,17 @@ func mob_Create(rest string, user *users.UserRecord, room *rooms.Room, flags eve
     }
     // Continue with additional steps...
     
-    // Final confirmation
-    question = cmdPrompt.Ask(`Create this mob? (y/n)`, []string{`y`, `n`})
+    // Final confirmation: a two-entry menu, Enter picks No. The command
+    // draws the menu itself; the prompt line is a bare ".:".
+    question = cmdPrompt.AskConfirm(`Create this mob?`, `Yes, create it`, `No`)
     if !question.Done {
+        user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
         return true, nil
     }
     
     user.ClearPrompt()
     
-    if question.Response != `y` {
+    if question.Response != `yes` {
         user.SendText("Aborting...")
         return true, nil
     }
@@ -187,12 +189,22 @@ func mob_Create(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 **Example: Character Management**
 ```go
 func Character(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-    menuOptions := []string{`new`, `delete`, `switch`, `hire`, `dismiss`, `quit`}
-    
     cmdPrompt, isNew := user.StartPrompt(`character`, rest)
+    // A player flow is non-modal: a line that is not a choice closes the
+    // prompt and runs as a command. Builders and start stay modal.
+    cmdPrompt.NonModal = true
     
-    question := cmdPrompt.Ask(`Choose an option:`, menuOptions, `new`)
+    // Each entry's Id is what Response carries; Enter picks the Default.
+    question := cmdPrompt.AskMenu(menu.Menu{
+        Heading: `What would you like to do?`,
+        Entries: []menu.Entry{
+            {Id: `new`, Label: `Make a new character`},
+            {Id: `quit`, Label: `Close this menu`},
+        },
+        Default: `quit`,
+    })
     if !question.Done {
+        user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
         return true, nil
     }
     

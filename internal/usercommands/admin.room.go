@@ -174,8 +174,9 @@ func room_Edit_Containers(rest string, user *users.UserRecord, room *rooms.Room,
 		}
 
 		// Since they picked a container that exists, lets get the question of delete out of the way immediately.
-		question := cmdPrompt.Ask(`Delete this container?`, []string{`yes`, `no`}, `no`)
+		question := cmdPrompt.AskConfirm(`Delete this container?`, `Yes, delete it`, `No, keep it`)
 		if !question.Done {
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
@@ -319,8 +320,13 @@ func room_Edit_Containers_SendRecipes(user *users.UserRecord, recipeResultItemId
 // Returns the updated lock and whether the caller should early-return (pending=true means a question is still in progress).
 func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock gamelock.Lock, itemType string) (gamelock.Lock, bool) {
 
-	question := cmdPrompt.Ask(`Will this `+itemType+` be locked?`, []string{`yes`, `no`}, util.BoolYN(lock.Difficulty > 0))
+	lockedMenu := menu.Confirm(`Will this `+itemType+` be locked?`, `Yes`, `No`)
+	if lock.Difficulty > 0 {
+		lockedMenu.Default = `yes`
+	}
+	question := cmdPrompt.AskMenu(lockedMenu)
 	if !question.Done {
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return lock, true
 	}
 
@@ -356,8 +362,13 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 		//
 		// Lock Trap Options
 		//
-		question = cmdPrompt.Ask(`Will this lock have a trap?`, []string{`yes`, `no`}, util.BoolYN(len(lock.TrapConditionIds) > 0))
+		trapMenu := menu.Confirm(`Will this lock have a trap?`, `Yes`, `No`)
+		if len(lock.TrapConditionIds) > 0 {
+			trapMenu.Default = `yes`
+		}
+		question = cmdPrompt.AskMenu(trapMenu)
 		if !question.Done {
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return lock, true
 		}
 
@@ -502,8 +513,13 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 // Returns the updated recipes and whether the caller should early-return.
 func editContainerRecipes(cmdPrompt *prompt.Prompt, user *users.UserRecord, recipes map[int][]int) (map[int][]int, bool) {
 
-	question := cmdPrompt.Ask(`Will this container have recipes?`, []string{`yes`, `no`}, util.BoolYN(len(recipes) > 0))
+	recipesMenu := menu.Confirm(`Will this container have recipes?`, `Yes`, `No`)
+	if len(recipes) > 0 {
+		recipesMenu.Default = `yes`
+	}
+	question := cmdPrompt.AskMenu(recipesMenu)
 	if !question.Done {
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return recipes, true
 	}
 
