@@ -93,4 +93,46 @@ func TestActionTry_DefersWhileAPromptIsOpen(t *testing.T) {
 	require.Equal(t, "deferred", result.Status)
 	require.Equal(t, "menu open", result.Reason)
 	require.Empty(t, events.DrainQueuedByTypeForTest(`Input`), "the command must not run")
+
+	// With nothing open the same call is not deferred. A bare test user has no
+	// room, so readiness may panic; the point is only that the guard is passed.
+	u.ClearPrompt()
+	require.False(t, u.MenuOrPromptOpen())
+	events.DrainQueuedByTypeForTest(`GMCPOut`)
+	func() {
+		defer func() { _ = recover() }()
+		try()
+	}()
+	for _, o := range drainGMCPOut(t) {
+		if o.Module == `Char.Action.Result` {
+			require.NotEqual(t, "deferred", o.Payload.(GMCPAction_Result).Status)
+		}
+	}
+}
+
+// A reconnect reuses the user record, so an open prompt survives it. The fresh
+// client starts unpaused and must be told: once at spawn, once next round for a
+// web client whose GMCP hello raced the login burst.
+func TestPlayerSpawn_ResendsAnOpenMenuToAReturningClient(t *testing.T) {
+	u := menuTestUser(t, 9824, 98824, true)
+	t.Cleanup(func() { menuSpawnPending = map[int]struct{}{} })
+
+	menuPlayerSpawnHandler(events.PlayerSpawn{UserId: u.UserId})
+	require.Empty(t, drainGMCPOut(t), "nothing open, nothing to resend")
+	menuNewRoundHandler(events.NewRound{})
+	require.Empty(t, drainGMCPOut(t))
+
+	u.StartPrompt(`test`, ``)
+	events.DrainQueuedByTypeForTest(`GMCPOut`)
+
+	menuPlayerSpawnHandler(events.PlayerSpawn{UserId: u.UserId})
+	sent := drainGMCPOut(t)
+	require.Len(t, sent, 1)
+	require.Equal(t, `Char.Menu`, sent[0].Module)
+	require.Equal(t, map[string]bool{"open": true}, sent[0].Payload)
+
+	menuNewRoundHandler(events.NewRound{})
+	require.Len(t, drainGMCPOut(t), 1, "one re-push next round")
+	menuNewRoundHandler(events.NewRound{})
+	require.Empty(t, drainGMCPOut(t), "the re-push happens once")
 }

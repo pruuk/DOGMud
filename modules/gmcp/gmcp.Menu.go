@@ -1,6 +1,8 @@
 package gmcp
 
 import (
+	"sync"
+
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -10,6 +12,60 @@ import (
 // clients with GMCP can read the same signal in their own scripts.
 func init() {
 	events.RegisterListener(events.MenuChanged{}, menuChangedHandler)
+	events.RegisterListener(events.PlayerSpawn{}, menuPlayerSpawnHandler)
+	events.RegisterListener(events.NewRound{}, menuNewRoundHandler)
+}
+
+// menuSpawnPending holds users who just spawned, for a one-round re-push.
+var (
+	menuSpawnPending   = map[int]struct{}{}
+	menuSpawnPendingMu sync.Mutex
+)
+
+// A reconnect reuses the user record, so an open menu or prompt survives it
+// but the fresh client starts unpaused. Tell it once at spawn and once next
+// round (a web client's GMCP hello can race the login burst). Only "open" is
+// sent: a fresh client already assumes closed.
+func menuPlayerSpawnHandler(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.PlayerSpawn)
+	if !ok || evt.UserId == 0 {
+		return events.Continue
+	}
+	sendMenuIfOpen(evt.UserId)
+	menuSpawnPendingMu.Lock()
+	menuSpawnPending[evt.UserId] = struct{}{}
+	menuSpawnPendingMu.Unlock()
+	return events.Continue
+}
+
+func menuNewRoundHandler(e events.Event) events.ListenerReturn {
+	if _, ok := e.(events.NewRound); !ok {
+		return events.Continue
+	}
+	menuSpawnPendingMu.Lock()
+	if len(menuSpawnPending) == 0 {
+		menuSpawnPendingMu.Unlock()
+		return events.Continue
+	}
+	pending := menuSpawnPending
+	menuSpawnPending = map[int]struct{}{}
+	menuSpawnPendingMu.Unlock()
+	for userId := range pending {
+		sendMenuIfOpen(userId)
+	}
+	return events.Continue
+}
+
+func sendMenuIfOpen(userId int) {
+	user := users.GetByUserId(userId)
+	if user == nil || !user.MenuOrPromptOpen() || !isGMCPEnabled(user.ConnectionId()) {
+		return
+	}
+	events.AddToQueue(GMCPOut{
+		UserId:  userId,
+		Module:  `Char.Menu`,
+		Payload: map[string]bool{"open": true},
+	})
 }
 
 func menuChangedHandler(e events.Event) events.ListenerReturn {
