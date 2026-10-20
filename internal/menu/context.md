@@ -35,6 +35,9 @@ send the text. Part of the quest-arc phase 0 work (#375).
 
 - `Heading`, `Entries`.
 - `Leave`: label of the final numbered leave entry; `""` for none.
+- `LeaveAliases`: extra exact words that pick Leave, checked before the
+  number branch (so a builder's "0" can mean done); ignored when `Leave` is
+  `""`.
 - `Default`: the `Id` chosen on Enter; `""` for none.
 - `Footer`: overrides the computed footer.
 - `Columns`: `2` lays name-only lists side by side (long admin lists). In this

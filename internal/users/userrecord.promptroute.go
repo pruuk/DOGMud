@@ -50,7 +50,7 @@ func (u *UserRecord) RoutePromptInput(line string, typed bool) (next string, had
 	if q.Menu != nil {
 		switch q.LastResult {
 		case menu.NoSuchNumber:
-			u.SendText(messaging.CategoryRefusal, fmt.Sprintf("There is no choice %s.", strings.TrimSpace(line)))
+			u.SendText(messaging.CategoryRefusal, noSuchChoiceLine(line))
 		case menu.Ambiguous:
 			u.SendText(messaging.CategoryRefusal, ambiguousLine(res.Matches))
 		case menu.NotAnAnswer, menu.Empty:
@@ -75,6 +75,12 @@ func (u *UserRecord) ClearFinishedPrompt() {
 	if p := u.GetPrompt(); p != nil && p.GetNextQuestion() == nil {
 		u.ClearPrompt()
 	}
+}
+
+// noSuchChoiceLine is the refusal for a number outside the list, shared by
+// game menus and prompts.
+func noSuchChoiceLine(line string) string {
+	return fmt.Sprintf("There is no choice %s.", strings.TrimSpace(line))
 }
 
 // ambiguousLine names the entries a prefix matched, the same refusal a game

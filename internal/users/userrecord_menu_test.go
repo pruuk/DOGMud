@@ -223,6 +223,16 @@ func TestCheckMenuInterrupts_NoRuleKeepsTheMenu(t *testing.T) {
 	}
 }
 
+func TestCheckMenuInterrupts_NothingOpenIsUntouched(t *testing.T) {
+	u := signalUser()
+	startCrafting(t, u)
+	u.CheckMenuInterrupts()
+	if u.MenuOrPromptOpen() {
+		t.Fatal("a user with nothing open now has something open")
+	}
+	wantSignals(t, u)
+}
+
 func TestCheckMenuInterrupts_ClosesANonModalPromptButNotAModalOne(t *testing.T) {
 	u := menuUser()
 	p, _ := u.StartPrompt("guild", "")

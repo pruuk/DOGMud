@@ -1,9 +1,6 @@
 package users
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/menu"
@@ -225,6 +222,10 @@ func (u *UserRecord) CloseMenuForFollow() (topic string, names []string, had boo
 // clearNonModalPromptLocked). Pushed by the busy observers, the condition
 // hook, and called on every choice.
 func (u *UserRecord) CheckMenuInterrupts() {
+	// Hot path: nothing open means nothing to close or lower.
+	if !u.MenuOrPromptOpen() {
+		return
+	}
 	r := menuGate(u.Character)
 	if r == menu.CloseNone {
 		u.lowerPromptOpenedUnder()
@@ -324,7 +325,7 @@ func (u *UserRecord) RouteMenuInput(line string, typed bool) bool {
 		u.closeMenuWith(om, menu.CloseLeft, false)
 		return true
 	case menu.NoSuchNumber:
-		u.SendText(messaging.CategoryRefusal, fmt.Sprintf("There is no choice %s.", strings.TrimSpace(line)))
+		u.SendText(messaging.CategoryRefusal, noSuchChoiceLine(line))
 		return true
 	case menu.Ambiguous:
 		u.SendText(messaging.CategoryRefusal, ambiguousLine(res.Matches))
