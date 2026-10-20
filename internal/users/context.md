@@ -561,6 +561,70 @@ if present).
 - connections.SendTo()             // Send messages to user
 ```
 
+### Game menu session (#375 phase 0)
+
+A player has at most one open game menu (`activeMenu`, with its
+`menu.Session`) besides the command prompt. Files: `userrecord.menu.go`,
+`menu_gate.go`, `userrecord.promptroute.go`, `userrecord.activity.go`. The
+menu itself (rendering, resolving) is `internal/menu`; see its `context.md`.
+
+- `OpenMenu(m, s) (menu.CloseReason, bool)`: opens and sends the menu on
+  `CategoryScreen`. It refuses with the gate's reason while an interrupt rule
+  holds, and refuses with `menu.CloseNone` while a prompt is open. Opening
+  replaces an open game menu (the old one's `OnClose` gets `CloseReplaced`).
+- `StartPrompt` closes an open game menu (the prompt replaces it).
+- `RouteMenuInput(line, typed)`: offers a line to the open menu and reports
+  whether it consumed it. Only typed lines answer. A chosen entry re-checks
+  `menuGate` and `Session.StillValid` first; a line that is not an answer
+  closes the menu (`CloseOtherCommand`) and returns false so the caller runs it
+  as a command.
+- `CloseMenu(reason)`: closes and speaks the interrupt line.
+- `CheckMenuInterrupts()`: closes the menu when `menuGate` holds, and a
+  non-modal prompt only on a NEW interrupt: `StartPrompt` records the rule
+  already holding as `Prompt.OpenedUnder` (picklock in a fight), and that same
+  rule does not close it. When no rule holds the record is cleared, so the
+  same rule starting again does close it. Sitting is not a rule, so mail opened
+  while resting, or a player sitting down, never closes a prompt.
+  Room changes and follow pulls always close a non-modal prompt. A closed
+  prompt's `SetAsideLine` is spoken after the interrupt line. Pushed by the busy observers (`characters.BusyStateChanged`),
+  `hooks` condition changes, and `actions.Sleep`; also called on every choice.
+- `CloseMenusForRoomChange()`: any move closes the game menu, any non-modal
+  prompt, and a `RoomBound` prompt ("You left the room, so the edit is
+  cancelled."). Called from `hooks/RoomChange_MenuClose.go`.
+- `CloseMenuForFollow()`: silent close because a leader is pulling the player
+  away; returns the session's topic, its names, and whether anything was open.
+  `actions.BreakOffMenuToFollow` speaks the three lines.
+- `MenuOrPromptOpen()` is what `Char.Menu` reports; `HasOpenMenu()` is the game
+  menu alone.
+- A choice holds the `MenuChanged` signal until `OnChoose` returns, so a
+  chosen entry that opens the next menu (a chained menu) never tells the client
+  the menu closed in between.
+- `MenuChanged` is queued inside the same `sessionMu` critical section as the
+  state change, so signals cannot queue out of order. Callbacks and `SendText`
+  run after `sessionMu` is released, so a callback may open another menu.
+
+**`menuGate` rules** (first match wins, `CloseNone` when none holds): dead
+(`CloseDead`), in combat, acting (casting, crafting, salvaging: `CloseBusy`),
+asleep, the quit timer (`CloseQuitting`), controlled (`CloseControlled`).
+Being off their feet (sitting, prone, supine, any non-standing position) is
+not a gate (owner 2026-10-20: off their feet is not a gate for audio
+interactions); a seized player is gated by control, not position. The quit timer is condition 0 (`quitConditionId`, "Meditating"). The gate is
+built from the same sources as the shared busy check filed as #640; move it
+onto that check when it lands.
+
+**Prompt routing.** `RoutePromptInput(line, typed)` gives one input line to the
+open command prompt and returns the line to run next. A queued line (typed
+false) never answers. A non-modal prompt whose menu question does not recognise
+a typed line closes and the line runs as a command; its `SetAsideLine`, if
+set, is spoken first ("You set your unsent mail aside."). `ClearFinishedPrompt()`
+clears a prompt whose questions are all answered, so `Char.Menu` reports it
+closed at once.
+
+**Activity.** A line a game menu consumed never reaches `TryCommand`, so
+`NoteActivity()` stamps the last input round and calls `WakePresence()` (Idle
+or AFK back to Active). `usercommands.TryCommand` calls `WakePresence` for every
+command but `afk`.
+
 ### Prompt System Integration
 ```go
 // Users can have active prompts

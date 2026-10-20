@@ -9,12 +9,19 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+// exitMenu is the "Choose one:" exit picker: a "new" entry first, then the
+// room's exits. Enter picks new.
+func exitMenu(exitOptions []templates.NameDescription) menu.Menu {
+	return newOrExistingMenu(exitOptions, `create a new exit`)
+}
 
 // room_Edit_Exits walks an admin through the multi-step prompt to create,
 // rename, reconfigure, or delete a room exit. The lock questionnaire is
@@ -59,21 +66,15 @@ func room_Edit_Exits(rest string, user *users.UserRecord, room *rooms.Room, flag
 	currentlyEditing := ExitEdit{}
 
 	cmdPrompt, _ := user.StartPrompt(`room edit exits`, rest)
+	cmdPrompt.RoomBound = true // edits this room; a move cancels it (#375)
 
-	question := cmdPrompt.Ask(`Choose one:`, []string{`new`}, `new`)
+	question := cmdPrompt.AskMenu(exitMenu(exitOptions))
 	if !question.Done {
-		tplTxt, _ := templates.Process("tables/numbered-list", exitOptions, user.UserId)
-		user.SendText(messaging.CategoryAdmin, tplTxt)
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return true, nil
 	}
 
 	currentlyEditing.Name = question.Response
-
-	if restNum, err := strconv.Atoi(currentlyEditing.Name); err == nil {
-		if restNum > 0 && restNum <= len(exitOptions) {
-			currentlyEditing.Name = exitOptions[restNum-1].Name
-		}
-	}
 
 	for _, o := range exitOptions {
 		if strings.EqualFold(o.Name, currentlyEditing.Name) {
@@ -97,8 +98,9 @@ func room_Edit_Exits(rest string, user *users.UserRecord, room *rooms.Room, flag
 		}
 
 		// Since they picked a exit that exists, lets get the question of delete out of the way immediately.
-		question := cmdPrompt.Ask(`Delete this exit?`, []string{`yes`, `no`}, `no`)
+		question := cmdPrompt.AskConfirm(`Delete this exit?`, `Yes, delete it`, `No, keep it`)
 		if !question.Done {
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
@@ -180,14 +182,14 @@ func room_Edit_Exits(rest string, user *users.UserRecord, room *rooms.Room, flag
 	// Exit message?
 	//
 	{
-		secretExitDefault := `no`
+		secretMenu := menu.Confirm(`Is this a hidden exit?`, `Yes`, `No`)
 		if currentlyEditing.Exit.Secret {
-			secretExitDefault = `yes`
+			secretMenu.Default = `yes`
 		}
 
-		// allow them to name/rename the exit.
-		question := cmdPrompt.Ask(`Is this a hidden exit?`, []string{`yes`, `no`}, secretExitDefault)
+		question := cmdPrompt.AskMenu(secretMenu)
 		if !question.Done {
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 

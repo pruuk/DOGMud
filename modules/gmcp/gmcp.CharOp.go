@@ -112,6 +112,12 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 			sendActionResult(uid, req.Id, "rejected", "no character")
 			break
 		}
+		// Belt and suspenders for the client's pause (#375): a queued action
+		// never runs while a menu or prompt is open.
+		if u.MenuOrPromptOpen() {
+			sendActionResult(uid, req.Id, "deferred", "menu open")
+			break
+		}
 		room := rooms.LoadRoom(u.Character.RoomId)
 		actor := actions.NewUserActorInRoom(u, room)
 		result := actions.ActionReadiness(actor, req.Cmd)

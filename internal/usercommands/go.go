@@ -223,7 +223,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 		if exitInfo.ExitMessage != `` && !flags.Has(events.CmdIsRequeue) {
 			user.SendText(messaging.CategoryRoomDescription, exitInfo.ExitMessage)
-			user.CommandFlagged(rest, flags|events.CmdIsRequeue|events.CmdBlockInputUntilComplete, 1)
+			// CmdTyped is stripped: this delayed re-run is the engine's, and
+			// it must not answer a prompt or menu opened in between (#375).
+			user.CommandFlagged(rest, (flags&^events.CmdTyped)|events.CmdIsRequeue|events.CmdBlockInputUntilComplete, 1)
 			return true, nil
 		}
 
@@ -383,6 +385,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 									partyUser.SendText(messaging.CategoryRoomExit, PartyFollowLostLine)
 									continue
 								}
+								actions.BreakOffMenuToFollow(partyUser, user.Character, user.UserId, room)
 								partyUser.SendText(messaging.CategoryRoomExit, `You follow the party leader.`)
 								// CmdFollowStep: the room they leave has just
 								// lost the leader's light, which they walk on

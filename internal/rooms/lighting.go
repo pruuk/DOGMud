@@ -322,6 +322,23 @@ func (r *Room) DepartureSight(observer, mover *characters.Character) messaging.S
 	return messaging.ParticipantSight(observer, withBearerLight{r: r, bearer: mover})
 }
 
+// DepartureSnapshot is VisualSnapshot with mover's own carried light counted
+// in r, whether or not mover has already left it: what each player here makes
+// out of mover leaving, the room-wide twin of DepartureSight. Deliver a line
+// with SendTextVisualToSnapshot.
+func (r *Room) DepartureSnapshot(mover *characters.Character) VisualSnapshot {
+	snap := VisualSnapshot{}
+	lighting := withBearerLight{r: r, bearer: mover}
+	for _, uid := range r.GetPlayers() {
+		u := users.GetByUserId(uid)
+		if u == nil {
+			continue
+		}
+		snap[uid] = visualDecision(u.Character, lighting)
+	}
+	return snap
+}
+
 // mutatorSkyFilter multiplies the skylight fraction of every active mutator
 // that declares one; 1 means nothing filters the sky. Outdoor-only mutators
 // never reach an indoor biome (ActiveMutators skips them), so weather stays

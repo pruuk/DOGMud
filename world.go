@@ -23,7 +23,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
-	"github.com/GoMudEngine/GoMud/internal/prompt"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -958,6 +957,7 @@ loop:
 				UserId:    wi.FromId,
 				InputText: wi.InputText,
 				ReadyTurn: util.GetTurnCount(),
+				Flags:     events.CmdTyped,
 			})
 
 		}
@@ -972,25 +972,24 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 		return
 	}
 
-	var activeQuestion *prompt.Question = nil
-	hadPrompt := false
-	if cmdPrompt := user.GetPrompt(); cmdPrompt != nil {
-		hadPrompt = true
-		if activeQuestion = cmdPrompt.GetNextQuestion(); activeQuestion != nil {
+	typed := flags.Has(events.CmdTyped)
 
-			activeQuestion.Answer(string(inputText))
-			inputText = ``
-
-			// set the input buffer to invoke the command prompt it was relevant to
-			if cmdPrompt.Command != `` {
-				inputText = cmdPrompt.Command + " " + cmdPrompt.Rest
-			}
-		} else {
-			// If a prompt was found, but no pending questions, clear it.
-			user.ClearPrompt()
+	// A typed line goes to an open game menu first (#375). A line the menu
+	// does not recognise has closed it and runs below as a command.
+	if user.RouteMenuInput(inputText, typed) {
+		// The line never reaches TryCommand, so record it as activity here
+		// (a player in a menu must not idle out), and redraw the prompt line
+		// so a telnet player gets one after a silent close.
+		if strings.TrimSpace(inputText) != `` {
+			user.NoteActivity()
 		}
-
+		connections.SendTo([]byte(templates.AnsiParse(user.GetCommandPrompt())), user.ConnectionId())
+		return
 	}
+
+	// Then to an open command prompt. Only a typed line answers it; the
+	// rules live in RoutePromptInput, where they are unit tested.
+	inputText, hadPrompt := user.RoutePromptInput(inputText, typed)
 
 	command := ``
 	remains := ``
@@ -1020,6 +1019,7 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 						UserId:    userId,
 						InputText: newCmd,
 						ReadyTurn: readyTurn,
+						Flags:     flags & events.CmdTyped,
 					})
 
 					readyTurn++
@@ -1062,6 +1062,10 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 			user.Command(`emote @looks a little confused`)
 		}
 	}
+
+	// A prompt whose questions are all answered is finished; clear it now
+	// rather than on the next input, so Char.Menu reports it closed (#375).
+	user.ClearFinishedPrompt()
 
 	// If they had an input prompt, but now they don't, lets make sure to resend a status prompt
 	if hadPrompt || (!hadPrompt && user.GetPrompt() != nil) {

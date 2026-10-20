@@ -4,6 +4,7 @@ import (
 	"container/heap"
 	"fmt"
 	"math/rand"
+	"sort"
 	"sync"
 	"time"
 
@@ -282,6 +283,39 @@ func DrainQueuedCharacterDiedForTest() []CharacterDied {
 	globalQueue = remaining
 	heap.Init(&globalQueue)
 	return found
+}
+
+// DrainQueuedMenuChangedForTest removes the MenuChanged events for userId from
+// the global queue and returns them in the order they were queued.
+//
+// FOR TEST USE ONLY. Mutates the queue. Call it once to discard leftovers from
+// an earlier test, then again to assert on what the code under test queued.
+func DrainQueuedMenuChangedForTest(userId int) []MenuChanged {
+	qLock.Lock()
+	defer qLock.Unlock()
+
+	type seen struct {
+		order uint64
+		ev    MenuChanged
+	}
+	var found []seen
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		if m, ok := pe.event.(MenuChanged); ok && m.UserId == userId {
+			found = append(found, seen{order: pe.order, ev: m})
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+
+	sort.Slice(found, func(i, j int) bool { return found[i].order < found[j].order })
+	out := make([]MenuChanged, 0, len(found))
+	for _, f := range found {
+		out = append(out, f.ev)
+	}
+	return out
 }
 
 // DrainQueuedMobDeathsForTest removes all MobDeath events from the global
@@ -810,6 +844,20 @@ func DrainQueuedByTypeForTest(typeName string) []Event {
 	globalQueue = remaining
 	heap.Init(&globalQueue)
 	return found
+}
+
+// QueuedTypesInOrderForTest returns the Type() of every queued event in the
+// order ProcessEvents would pop them, without removing anything.
+func QueuedTypesInOrderForTest() []string {
+	qLock.Lock()
+	defer qLock.Unlock()
+	cp := make(priorityQueue, len(globalQueue))
+	copy(cp, globalQueue)
+	var order []string
+	for cp.Len() > 0 {
+		order = append(order, heap.Pop(&cp).(*prioritizedEvent).event.Type())
+	}
+	return order
 }
 
 // Initialize the priority queue.

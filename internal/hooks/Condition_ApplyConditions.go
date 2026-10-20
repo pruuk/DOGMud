@@ -134,6 +134,13 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 	// (messaging M6 slice 1, section 1): the newest application owns it.
 	targetChar.Conditions.Stamp(evt.ConditionId, evt.Source, evt.Caster)
 
+	// Sleeping and the quit timer (condition 0) close an open menu (#375).
+	if evt.UserId > 0 {
+		if u := users.GetByUserId(evt.UserId); u != nil {
+			u.CheckMenuInterrupts()
+		}
+	}
+
 	// A tick_pool condition's per-round amount is computed here, where the
 	// record now exists, on a fresh application and a refresh alike, at the
 	// applier's scale (a spell's caster scale; 0, meaning 1.0, for the rest).

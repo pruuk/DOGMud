@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
@@ -59,7 +60,7 @@ type UserRecord struct {
 	LastMusic       string                `yaml:"-"`                         // Keeps track of the last music that was played
 	LastWhisperFrom int                   `yaml:"-"`                         // UserId of last person who whispered to us (don't save)
 	connectionId    uint64
-	// sessionMu guards unsentText, suggestText, tempDataStore and activePrompt
+	// sessionMu guards unsentText, suggestText, tempDataStore, activePrompt and activeMenu
 	// — the only UserRecord state written from BOTH the per-connection
 	// goroutine (main.go's read loop, which never takes util.LockMud) and the
 	// tick loop (world.go processInput, hooks/RedrawPrompt_SendRedraw, which
@@ -74,6 +75,11 @@ type UserRecord struct {
 	lastInputRound uint64
 	tempDataStore  map[string]any
 	activePrompt   *prompt.Prompt
+	activeMenu     *openMenu // the open game menu (#375); guarded by sessionMu
+	// menuSignalHold and menuSignalBase defer MenuChanged across a menu
+	// choice (userrecord.menu.go choose); guarded by sessionMu.
+	menuSignalHold int
+	menuSignalBase bool
 	isZombie       bool // are they a zombie currently?
 	inputBlocked   bool // Whether input is currently intentionally turned off (for a certain category of commands)
 }
@@ -304,7 +310,8 @@ func (u *UserRecord) SetLastInputRound(rdNum uint64) {
 	// Note: the Idle/AFK → Active wake fires from usercommands.TryCommand
 	// (per-command entry point) so it can branch on which command is
 	// being dispatched. The `afk` command toggles its own state and must
-	// not be auto-cleared before its handler runs.
+	// not be auto-cleared before its handler runs. The wake itself is
+	// WakePresence; a line a game menu consumes goes through NoteActivity.
 }
 
 func (u *UserRecord) GetLastInputRound() uint64 {
@@ -783,20 +790,35 @@ func (u *UserRecord) ConnectionId() uint64 {
 // Prompt related functionality
 func (u *UserRecord) StartPrompt(command string, rest string) (*prompt.Prompt, bool) {
 
-	u.sessionMu.Lock()
-	defer u.sessionMu.Unlock()
+	// The rule already holding as the prompt opens; read before sessionMu
+	// because the gate reads the character's machines.
+	openedUnder := menuGate(u.Character)
 
+	u.sessionMu.Lock()
 	if u.activePrompt != nil {
 		// If it's the same prompt, return the existing one
 		if u.activePrompt.Command == command && u.activePrompt.Rest == rest {
-			return u.activePrompt, false
+			p := u.activePrompt
+			u.sessionMu.Unlock()
+			return p, false
 		}
 	}
 
-	// If no prompt found or it seems like a new prompt, create a new one and replace the old
+	// If no prompt found or it seems like a new prompt, create a new one and replace the old.
+	// A prompt replaces an open game menu (#375): one signal, OnClose after unlock.
+	wasOpen := u.menuOrPromptOpenLocked()
+	replaced := u.activeMenu
+	u.activeMenu = nil
 	u.activePrompt = prompt.New(command, rest)
+	u.activePrompt.OpenedUnder = openedUnder
+	p := u.activePrompt
+	u.signalMenuStateLocked(wasOpen)
+	u.sessionMu.Unlock()
 
-	return u.activePrompt, true
+	if replaced != nil {
+		u.afterMenuClosed(replaced, menu.CloseReplaced, false)
+	}
+	return p, true
 }
 
 func (u *UserRecord) GetPrompt() *prompt.Prompt {
@@ -810,8 +832,9 @@ func (u *UserRecord) GetPrompt() *prompt.Prompt {
 func (u *UserRecord) ClearPrompt() {
 	u.sessionMu.Lock()
 	defer u.sessionMu.Unlock()
-
+	wasOpen := u.menuOrPromptOpenLocked()
 	u.activePrompt = nil
+	u.signalMenuStateLocked(wasOpen)
 }
 
 func (u *UserRecord) GetOnlineInfo() OnlineInfo {

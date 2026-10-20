@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -101,18 +102,19 @@ func Mudmail(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	//
 	// Display preview?
 	//
-	question = cmdPrompt.Ask(`Send this message to everyone?`, []string{`Yes`, `No`}, `No`)
+	question = cmdPrompt.AskConfirm(`Send this message to everyone?`, `Yes, send it`, `No`)
 	if !question.Done {
 
 		tplTxt, _ := templates.Process("mail/message", msg, user.UserId)
 		user.SendText(messaging.CategoryAdmin, tplTxt)
 
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return true, nil
 	}
 
 	user.ClearPrompt()
 
-	if question.Response[0:1] != `Y` {
+	if question.Response != `yes` {
 		user.SendText(messaging.CategoryAdmin, `Okay! Cancelling mass mail.`)
 		return true, nil
 	}

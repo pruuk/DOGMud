@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -69,8 +70,10 @@ func spell_List(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 		return spellNames[i].Name < spellNames[j].Name
 	})
 
-	tplTxt, _ := templates.Process("tables/numbered-list", spellNames, user.UserId)
-	user.SendText(messaging.CategoryAdmin, tplTxt)
+	// A display list, not a choice: one plain line per spell.
+	for _, s := range spellNames {
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`  %s: %s`, s.Name, s.Description))
+	}
 
 	return true, nil
 }

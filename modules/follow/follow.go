@@ -422,6 +422,7 @@ func (f *FollowModule) roomChangeHandler(e events.Event) events.ListenerReturn {
 							f.loseSightOf(user, fId)
 							continue
 						}
+						actions.BreakOffMenuToFollow(user, moverCharacter(evt), evt.UserId, fromRoom)
 						user.Command(followExitName, .25)
 						continue
 					}

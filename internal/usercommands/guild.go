@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/guilds"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -126,12 +127,14 @@ func guildCreate(user *users.UserRecord, remainder, rest string) {
 	cost := int(configs.GetBalanceConfig().GuildFoundingCost)
 
 	cmdPrompt, _ := user.StartPrompt(`guild`, rest)
-	q := cmdPrompt.Ask(fmt.Sprintf(`Found "%s" [%s] for %s gold from your bank?`, name, strings.ToUpper(tag), util.FormatNumber(cost)), []string{`Yes`, `No`}, `No`)
+	cmdPrompt.NonModal = true
+	q := cmdPrompt.AskConfirm(fmt.Sprintf(`Found "%s" [%s] for %s gold from your bank?`, name, strings.ToUpper(tag), util.FormatNumber(cost)), `Yes, found it`, `No`)
 	if !q.Done {
+		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
 		return
 	}
 	user.ClearPrompt()
-	if len(q.Response) == 0 || q.Response[0:1] != `Y` {
+	if q.Response != `yes` {
 		user.SendText(messaging.CategorySystem, `Guild founding cancelled.`)
 		return
 	}
@@ -190,12 +193,14 @@ func guildLeave(user *users.UserRecord, rest string) {
 		}
 		// Sole-member leader: leaving disbands.
 		cmdPrompt, _ := user.StartPrompt(`guild`, rest)
-		q := cmdPrompt.Ask(`You are the only member. Leaving will disband the guild. Proceed?`, []string{`Yes`, `No`}, `No`)
+		cmdPrompt.NonModal = true
+		q := cmdPrompt.AskConfirm(`You are the only member. Leaving will disband the guild. Proceed?`, `Yes, disband it`, `No, stay`)
 		if !q.Done {
+			user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
 			return
 		}
 		user.ClearPrompt()
-		if len(q.Response) == 0 || q.Response[0:1] != `Y` {
+		if q.Response != `yes` {
 			user.SendText(messaging.CategorySystem, `Cancelled.`)
 			return
 		}
@@ -224,12 +229,14 @@ func guildDisband(user *users.UserRecord, rest string) {
 		return
 	}
 	cmdPrompt, _ := user.StartPrompt(`guild`, rest)
-	q := cmdPrompt.Ask(fmt.Sprintf(`Disband "%s"? This cannot be undone.`, g.Name), []string{`Yes`, `No`}, `No`)
+	cmdPrompt.NonModal = true
+	q := cmdPrompt.AskConfirm(fmt.Sprintf(`Disband "%s"? This cannot be undone.`, g.Name), `Yes, disband it`, `No, keep it`)
 	if !q.Done {
+		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
 		return
 	}
 	user.ClearPrompt()
-	if len(q.Response) == 0 || q.Response[0:1] != `Y` {
+	if q.Response != `yes` {
 		user.SendText(messaging.CategorySystem, `Cancelled.`)
 		return
 	}
@@ -425,12 +432,14 @@ func guildTransfer(user *users.UserRecord, remainder, rest string) {
 	}
 	name := memberName(g, targetId)
 	cmdPrompt, _ := user.StartPrompt(`guild`, rest)
-	q := cmdPrompt.Ask(fmt.Sprintf(`Hand leadership of %s to %s?`, g.Name, name), []string{`Yes`, `No`}, `No`)
+	cmdPrompt.NonModal = true
+	q := cmdPrompt.AskConfirm(fmt.Sprintf(`Hand leadership of %s to %s?`, g.Name, name), `Yes, hand it over`, `No, keep it`)
 	if !q.Done {
+		user.SendText(messaging.CategoryScreen, menu.Render(*q.Menu))
 		return
 	}
 	user.ClearPrompt()
-	if len(q.Response) == 0 || q.Response[0:1] != `Y` {
+	if q.Response != `yes` {
 		user.SendText(messaging.CategorySystem, `Cancelled.`)
 		return
 	}

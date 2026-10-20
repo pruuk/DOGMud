@@ -1,0 +1,185 @@
+package users
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/menu"
+)
+
+// builderPrompt opens a modal menu prompt the way an admin builder does.
+func builderPrompt(u *UserRecord) {
+	p, _ := u.StartPrompt("room", "edit containers")
+	p.AskMenu(menu.Menu{Heading: "Choose one:", Entries: []menu.Entry{{Id: "new", Label: "new"}, {Id: "chest", Label: "chest"}}})
+}
+
+func TestRoutePromptInput_NoPromptRunsTheLine(t *testing.T) {
+	u := menuUser()
+	next, had := u.RoutePromptInput("look", true)
+	if next != "look" || had {
+		t.Fatalf("next %q had %v", next, had)
+	}
+}
+
+func TestRoutePromptInput_TypedNumberAnswersAndRerunsTheCommand(t *testing.T) {
+	u := menuUser()
+	builderPrompt(u)
+	next, had := u.RoutePromptInput("2", true)
+	if next != "room edit containers" || !had {
+		t.Fatalf("next %q had %v", next, had)
+	}
+	if q := u.GetPrompt().Questions[0]; !q.Done || q.Response != "chest" {
+		t.Fatalf("done %v response %q", q.Done, q.Response)
+	}
+}
+
+func TestRoutePromptInput_QueuedLineNeverAnswers(t *testing.T) {
+	u := menuUser()
+	builderPrompt(u)
+	next, had := u.RoutePromptInput("1", false)
+	if next != "1" || !had {
+		t.Fatalf("next %q had %v", next, had)
+	}
+	if u.GetPrompt() == nil || u.GetPrompt().Questions[0].Done {
+		t.Fatal("a queued line answered or closed the prompt")
+	}
+}
+
+func TestRoutePromptInput_ModalMenuKeepsAnUnknownLine(t *testing.T) {
+	u := menuUser()
+	builderPrompt(u)
+	next, _ := u.RoutePromptInput("north", true)
+	if next != "room edit containers" || u.GetPrompt() == nil {
+		t.Fatalf("next %q prompt %v", next, u.GetPrompt())
+	}
+}
+
+func TestRoutePromptInput_NonModalClosesOnANonAnswerAndRunsIt(t *testing.T) {
+	u := menuUser()
+	builderPrompt(u)
+	u.GetPrompt().NonModal = true
+	next, had := u.RoutePromptInput("north", true)
+	if next != "north" || !had || u.GetPrompt() != nil {
+		t.Fatalf("next %q had %v prompt %v", next, had, u.GetPrompt())
+	}
+}
+
+func TestRoutePromptInput_NonModalStillTakesAnAnswer(t *testing.T) {
+	u := menuUser()
+	builderPrompt(u)
+	u.GetPrompt().NonModal = true
+	next, _ := u.RoutePromptInput("1", true)
+	if next != "room edit containers" || !u.GetPrompt().Questions[0].Done {
+		t.Fatalf("next %q", next)
+	}
+}
+
+func TestRoutePromptInput_FinishedPromptIsClearedAndTheLineRuns(t *testing.T) {
+	u := menuUser()
+	builderPrompt(u)
+	u.GetPrompt().Questions[0].Answer("1")
+	next, had := u.RoutePromptInput("look", true)
+	if next != "look" || !had || u.GetPrompt() != nil {
+		t.Fatalf("next %q had %v prompt %v", next, had, u.GetPrompt())
+	}
+}
+
+func TestRoutePromptInput_FreeTextQuestionTakesTheTypedLineAndReruns(t *testing.T) {
+	u := menuUser()
+	p, _ := u.StartPrompt("mail", "bob")
+	p.Ask("Subject?", nil)
+	next, had := u.RoutePromptInput("  Hello there  ", true)
+	if next != "mail bob" || !had {
+		t.Fatalf("next %q had %v", next, had)
+	}
+	if q := u.GetPrompt().Questions[0]; !q.Done || q.Response != "Hello there" {
+		t.Fatalf("done %v response %q", q.Done, q.Response)
+	}
+}
+
+func TestRoutePromptInput_NoCommandRerunsNothing(t *testing.T) {
+	u := menuUser()
+	p, _ := u.StartPrompt("", "")
+	p.Ask("Name?", nil)
+	next, had := u.RoutePromptInput("Bob", true)
+	if next != "" || !had {
+		t.Fatalf("next %q had %v", next, had)
+	}
+}
+
+func TestRoutePromptInput_NoSuchNumberSaysSo(t *testing.T) {
+	u := menuUser()
+	builderPrompt(u)
+	events.DrainQueuedMessagesForTest(u.UserId)
+	u.RoutePromptInput("7", true)
+	msgs := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), "")
+	if !strings.Contains(msgs, "There is no choice 7.") {
+		t.Fatalf("messages %q", msgs)
+	}
+	if u.GetPrompt().Questions[0].Done {
+		t.Fatal("a bad number answered the question")
+	}
+}
+
+// A modal builder menu used to say "Invalid selection." on a line it could
+// not use; the router now says so before the builder redraws.
+func TestRoutePromptInput_ModalUnknownLineSaysPickANumber(t *testing.T) {
+	u := menuUser()
+	builderPrompt(u)
+	events.DrainQueuedMessagesForTest(u.UserId)
+	u.RoutePromptInput("north", true)
+	if msgs := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), ""); !strings.Contains(msgs, "Pick a number from the list.") {
+		t.Fatalf("unknown line: messages %q", msgs)
+	}
+	// Enter on a menu with no default and no leave says the same.
+	u.RoutePromptInput("", true)
+	if msgs := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), ""); !strings.Contains(msgs, "Pick a number from the list.") {
+		t.Fatalf("enter: messages %q", msgs)
+	}
+	if u.GetPrompt().Questions[0].Done {
+		t.Fatal("an unknown line answered the question")
+	}
+}
+
+func TestRoutePromptInput_NonModalUnknownLineIsSilent(t *testing.T) {
+	u := menuUser()
+	p, _ := u.StartPrompt("talk", "smith")
+	p.NonModal = true
+	p.AskMenu(menu.Menu{Heading: "Talk?", Entries: []menu.Entry{{Id: "a", Label: "alpha"}}})
+	events.DrainQueuedMessagesForTest(u.UserId)
+	u.RoutePromptInput("north", true)
+	if msgs := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), ""); strings.Contains(msgs, "Pick a number") {
+		t.Fatalf("a non-modal close must not refuse the command: %q", msgs)
+	}
+}
+
+func TestRoutePromptInput_AmbiguousNamesTheMatches(t *testing.T) {
+	u := menuUser()
+	p, _ := u.StartPrompt("room", "edit exits")
+	p.AskMenu(menu.Menu{Heading: "Exit?", Prefix: true, Entries: []menu.Entry{{Id: "north", Label: "north"}, {Id: "northeast", Label: "northeast"}}})
+	events.DrainQueuedMessagesForTest(u.UserId)
+	u.RoutePromptInput("nor", true)
+	msgs := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), "")
+	if !strings.Contains(msgs, "Which one? north, northeast.") {
+		t.Fatalf("messages %q", msgs)
+	}
+	if u.GetPrompt().Questions[0].Done {
+		t.Fatal("an ambiguous prefix answered the question")
+	}
+}
+
+func TestClearFinishedPrompt(t *testing.T) {
+	u := menuUser()
+	u.ClearFinishedPrompt() // no prompt: nothing to do
+	builderPrompt(u)
+	u.ClearFinishedPrompt()
+	if u.GetPrompt() == nil {
+		t.Fatal("an unanswered prompt was cleared")
+	}
+	u.GetPrompt().Questions[0].Answer("1")
+	u.ClearFinishedPrompt()
+	if u.GetPrompt() != nil {
+		t.Fatal("a finished prompt was kept")
+	}
+}

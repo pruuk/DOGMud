@@ -23,7 +23,10 @@ import (
 // question: "<Verb> what|whom|who|how much?", "... which <noun>?" and
 // "What would you like to <verb>?". Literals passed straight to
 // cmdPrompt.Ask( are skipped by refusalPhraseHits: interactive questions wait
-// for the player's answer and are not refusals.
+// for the player's answer and are not refusals. Since #375 a question can
+// also be a menu, so the same skip covers the Heading of a menu.Menu literal
+// and the question (first) argument of cmdPrompt.AskConfirm( and
+// menu.Confirm(.
 var refusalPhrases = []struct {
 	family string
 	re     *regexp.Regexp
@@ -77,21 +80,48 @@ func refusalPhraseHits(t *testing.T, rel string, src []byte) []string {
 	if err != nil {
 		t.Fatalf("%s: %v", rel, err)
 	}
-	// Literal arguments of a cmdPrompt.Ask( call are interactive questions.
+	// Literal arguments of a cmdPrompt.Ask( call, the question argument of
+	// cmdPrompt.AskConfirm( and menu.Confirm(, and the Heading of a menu.Menu
+	// literal are interactive questions.
 	asked := map[*ast.BasicLit]bool{}
+	isSel := func(e ast.Expr, recv, name string) bool {
+		sel, ok := e.(*ast.SelectorExpr)
+		if !ok || sel.Sel.Name != name {
+			return false
+		}
+		id, ok := sel.X.(*ast.Ident)
+		return ok && id.Name == recv
+	}
 	ast.Inspect(f, func(n ast.Node) bool {
-		call, ok := n.(*ast.CallExpr)
-		if !ok {
-			return true
-		}
-		sel, ok := call.Fun.(*ast.SelectorExpr)
-		if !ok || sel.Sel.Name != "Ask" {
-			return true
-		}
-		if recv, ok := sel.X.(*ast.Ident); ok && recv.Name == "cmdPrompt" {
-			for _, a := range call.Args {
-				if lit, ok := a.(*ast.BasicLit); ok {
-					asked[lit] = true
+		switch n := n.(type) {
+		case *ast.CallExpr:
+			switch {
+			case isSel(n.Fun, "cmdPrompt", "Ask"):
+				for _, a := range n.Args {
+					if lit, ok := a.(*ast.BasicLit); ok {
+						asked[lit] = true
+					}
+				}
+			case isSel(n.Fun, "cmdPrompt", "AskConfirm"), isSel(n.Fun, "menu", "Confirm"):
+				if len(n.Args) > 0 {
+					if lit, ok := n.Args[0].(*ast.BasicLit); ok {
+						asked[lit] = true
+					}
+				}
+			}
+		case *ast.CompositeLit:
+			if !isSel(n.Type, "menu", "Menu") {
+				return true
+			}
+			for _, el := range n.Elts {
+				kv, ok := el.(*ast.KeyValueExpr)
+				if !ok {
+					continue
+				}
+				if key, ok := kv.Key.(*ast.Ident); ok && key.Name == "Heading" {
+					if lit, ok := kv.Value.(*ast.BasicLit); ok {
+						asked[lit] = true
+					}
 				}
 			}
 		}
@@ -190,6 +220,30 @@ func TestRefusalPhraseGuardSkipsOnlyAskQuestions(t *testing.T) {
 		t.Errorf("a cmdPrompt.Ask question was flagged:\n%s", hits)
 	}
 	for _, want := range []string{"Shout what?", "Say what?", "Get what?"} {
+		if !strings.Contains(hits, want) {
+			t.Errorf("%q should be a hit:\n%s", want, hits)
+		}
+	}
+}
+
+// TestRefusalPhraseGuardSkipsMenuQuestions: a menu's Heading and a confirm's
+// question are interactive questions (#375) and are skipped; a Heading-keyed
+// literal of another type, a menu entry's Label, and a confirm label are
+// still hits.
+func TestRefusalPhraseGuardSkipsMenuQuestions(t *testing.T) {
+	src := "package probe\n\nfunc f() {\n" +
+		"\t_ = menu.Menu{Heading: \"What would you like to do?\", Entries: []menu.Entry{{Label: \"Sell what?\"}}}\n" +
+		"\tcmdPrompt.AskConfirm(\"Give whom?\", \"Steal what?\", \"No\")\n" +
+		"\t_ = menu.Confirm(\"Drop what?\", \"Yes\", \"No\")\n" +
+		"\t_ = other.Menu{Heading: \"Buy what?\"}\n" +
+		"}\n"
+	hits := strings.Join(refusalPhraseHits(t, "probe.go", []byte(src)), "\n")
+	for _, skipped := range []string{"What would you like to do?", "Give whom?", "Drop what?"} {
+		if strings.Contains(hits, skipped) {
+			t.Errorf("menu question %q was flagged:\n%s", skipped, hits)
+		}
+	}
+	for _, want := range []string{"Sell what?", "Steal what?", "Buy what?"} {
 		if !strings.Contains(hits, want) {
 			t.Errorf("%q should be a hit:\n%s", want, hits)
 		}

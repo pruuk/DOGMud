@@ -62,7 +62,6 @@ func ConvertColorShortTags(input string) string
 func StripCharsForScreenReaders(s string) string
 func ConvertToAscii(s string) string
 func FormatNumber(n int) string
-func BoolYN(b bool) string
 func StringWildcardMatch(stringToSearch, patternToSearch string) bool
 ```
 

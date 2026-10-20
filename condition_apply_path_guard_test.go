@@ -117,7 +117,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/actions/combat_throttle.go|145": "condition 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
 	"internal/actions/combat_smother.go|103":  "Blinded (3) carries spell start lines; the smother hit line narrates the blinding instead, judged at the target's sight from before the hit (SmotherResult.ActeeSightBefore), and the blindness lands in the same tick so the target's following lines are judged blind",
 	"internal/actions/combat_smother.go|104":  "condition 144 is silent-start; the smother move narrates the smoke as it lands and must apply it in the same tick",
-	"internal/actions/sleep.go|59":            "condition 15 is silent-start; Sleep reads the Sleeping flag back for its own idempotence check, so it sends the start line itself",
+	"internal/actions/sleep.go|60":            "condition 15 is silent-start; Sleep reads the Sleeping flag back for its own idempotence check, so it sends the start line itself",
 
 	// ── former combat conditions: warcry and rally are now one record each,
 	// applied via AddConditionMagnitude (conditions.ConditionIdWarcry /
@@ -137,7 +137,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/usercommands/skill.disenchant.go|71": "former combat condition (withdrawal): the disenchant command narrates; must apply synchronously so Validate clamps the pool now",
 
 	// ── mob holders: no client, so no line could reach anyone ───────────────
-	"internal/usercommands/character.go|424":         "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
+	"internal/usercommands/character.go|437":         "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
 	"internal/behaviortree/actions_item_proc.go|419": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
 	"internal/hooks/manifester_companions.go|40":     "the holder is a MOB (a summoned companion), not a player",
 

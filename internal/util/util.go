@@ -997,13 +997,6 @@ func ValidateWorldFiles(exampleWorldPath string, worldPath string) error {
 	return nil
 }
 
-func BoolYN(b bool) string {
-	if b {
-		return `yes`
-	}
-	return `no`
-}
-
 // SaveRoundCount deliberately does NOT route through Save (chunk 2.8).
 //
 // It is called every 10 seconds from world.go WITH THE WORLD LOCK HELD, and an

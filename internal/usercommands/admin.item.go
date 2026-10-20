@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -190,19 +191,15 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 			})
 		}
 
-		question := cmdPrompt.Ask(`What Type of item will it be?`, []string{string(newItemSpec.Type)}, string(newItemSpec.Type))
+		typeMenu := optionsMenu(`What Type of item will it be?`, typeOptions, 1)
+		typeMenu.Default = string(newItemSpec.Type)
+		question := cmdPrompt.AskMenu(typeMenu)
 		if !question.Done {
-			tplTxt, _ := templates.Process("tables/numbered-list", typeOptions, user.UserId)
-			user.SendText(messaging.CategoryAdmin, tplTxt)
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
 		typeNameSelection := question.Response
-		if restNum, err := strconv.Atoi(typeNameSelection); err == nil {
-			if restNum > 0 && restNum <= len(typeOptions) {
-				typeNameSelection = typeOptions[restNum-1].Name
-			}
-		}
 
 		for _, t := range allTypes {
 			if strings.EqualFold(t.Type, typeNameSelection) {
@@ -213,8 +210,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		if newItemSpec.Type == `` {
 			question.RejectResponse()
 
-			tplTxt, _ := templates.Process("tables/numbered-list", typeOptions, user.UserId)
-			user.SendText(messaging.CategoryAdmin, tplTxt)
+			user.SendText(messaging.CategoryAdmin, menu.Render(typeMenu))
 
 			return true, nil
 		}
@@ -339,25 +335,15 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 			})
 		}
 
-		question := cmdPrompt.Ask(`What Subtype of item will it be?`, []string{string(newItemSpec.Subtype)}, string(newItemSpec.Subtype))
+		subTypeMenu := optionsMenu(`What Subtype of item will it be?`, subTypeOptions, 1)
+		subTypeMenu.Default = string(newItemSpec.Subtype)
+		question := cmdPrompt.AskMenu(subTypeMenu)
 		if !question.Done {
-			tplTxt, _ := templates.Process("tables/numbered-list", subTypeOptions, user.UserId)
-			user.SendText(messaging.CategoryAdmin, tplTxt)
-			return true, nil
-		}
-
-		if question.Response == `` {
-			user.SendText(messaging.CategoryAdmin, "Aborting...")
-			user.ClearPrompt()
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
 		typeNameSelection := question.Response
-		if restNum, err := strconv.Atoi(typeNameSelection); err == nil {
-			if restNum > 0 && restNum <= len(subTypeOptions) {
-				typeNameSelection = subTypeOptions[restNum-1].Name
-			}
-		}
 
 		for _, t := range allSubTypes {
 			if strings.EqualFold(t.Type, typeNameSelection) {
@@ -368,8 +354,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		if newItemSpec.Subtype == `` {
 			question.RejectResponse()
 
-			tplTxt, _ := templates.Process("tables/numbered-list", subTypeOptions, user.UserId)
-			user.SendText(messaging.CategoryAdmin, tplTxt)
+			user.SendText(messaging.CategoryAdmin, menu.Render(subTypeMenu))
 
 			return true, nil
 		}
@@ -379,16 +364,17 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 	// Maximum Uses
 	//
 	{
-		defaultYN := `n`
+		usesMenu := menu.Confirm(`Will this item have a maximum number of uses?`, `Yes`, `No`)
 		if newItemSpec.Uses > 0 {
-			defaultYN = `y`
+			usesMenu.Default = `yes`
 		}
-		question := cmdPrompt.Ask(`Will this item have a maximum number of uses?`, []string{`y`, `n`}, defaultYN)
+		question := cmdPrompt.AskMenu(usesMenu)
 		if !question.Done {
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
-		if question.Response == `y` {
+		if question.Response == `yes` {
 			question := cmdPrompt.Ask(`How many uses will this item have?`, []string{strconv.Itoa(newItemSpec.Uses)}, strconv.Itoa(newItemSpec.Uses))
 			if !question.Done {
 				return true, nil
@@ -453,7 +439,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 	// Confirm?
 	//
 	{
-		question := cmdPrompt.Ask(`Does this look correct?`, []string{`y`, `n`}, `n`)
+		question := cmdPrompt.AskConfirm(`Does this look correct?`, `Yes`, `No`)
 		if !question.Done {
 
 			user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Name:</ansi>        <ansi fg="white-bold">`+newItemSpec.Name+`</ansi>`)
@@ -487,12 +473,13 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 
 			user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">SubType:</ansi>     <ansi fg="white-bold">`+string(newItemSpec.Subtype)+`</ansi>`)
 
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
 		user.ClearPrompt()
 
-		if question.Response != `y` {
+		if question.Response != `yes` {
 			user.SendText(messaging.CategoryAdmin, "Aborting...")
 			return true, nil
 		}

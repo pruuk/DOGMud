@@ -227,6 +227,28 @@ GMCP. In Phases 2–3 the same event will be emitted by inbound
 `Char.Automation.Set` / `Char.Automation.Remove` GMCP handlers when
 ticks or triggers are added or removed.
 
+### Menu Events (#375 phase 0)
+
+```go
+// MenuChanged fires when a player's first game menu or prompt opens (Open
+// true) or the last one closes (Open false).
+type MenuChanged struct {
+    UserId int
+    Open   bool
+}
+```
+
+Queued by `internal/users` under the user's `sessionMu`, so signals queue in
+state-change order. `modules/gmcp` listens and pushes `Char.Menu {open}`.
+`CmdTyped` is set only by the world input worker (and kept on the player's own
+macro expansions); engine-queued commands (follow steps, scripts,
+`user.Command`) never carry it and so never answer a menu or a prompt.
+
+Test helpers (`events.go`): `DrainQueuedMenuChangedForTest(userId)` removes and
+returns the queued `MenuChanged` events for one user;
+`QueuedTypesInOrderForTest()` returns the `Type()` of every queued event in
+queue order.
+
 ### Unique Events
 
 **Events with automatic deduplication:**
@@ -263,6 +285,7 @@ const (
     CmdUnBlockInput            EventFlag = 0b00010000  // Unblock user input
     CmdBlockInputUntilComplete EventFlag = CmdBlockInput | CmdUnBlockInput
     CmdFollowStep              EventFlag = 0b00100000  // Party member's step after the leader: no light-notice check first (#620)
+    CmdTyped                   EventFlag = 0b01000000  // A line the player typed; only a typed line may answer a menu or prompt (#375)
 )
 ```
 

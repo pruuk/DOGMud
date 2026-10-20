@@ -346,6 +346,7 @@ type Character struct {
 	LastAttackRejectedRound uint64                         `yaml:"-"` // runtime only — round of last player_attack_rejected event fire, for dedupe
 	permanentConditionIds   []int                          // Condition Id's that are always present for this character
 	userId                  int                            // User ID of the character if any
+	busyWired               busyWiring                     // which machines carry the menu busy observer (#375); not saved
 	displacedGear           []DisplacedGear                // runtime only: gear a mutation or species pushed off the body, drained by TakeDisplacedGear (#481)
 	combatPhaseWired        bool                           `yaml:"-"` // true after OnCharacterCreated callbacks have fired once
 	// Stage 3.4: spawn-time override for carry capacity. Set via

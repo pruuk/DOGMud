@@ -78,6 +78,16 @@ type AutomationChanged struct {
 
 func (a AutomationChanged) Type() string { return `AutomationChanged` }
 
+// MenuChanged fires when a player's first game menu or prompt opens (Open
+// true) or the last one closes (Open false). gmcp pushes it as Char.Menu so
+// the web client pauses ticks and triggers while a menu is open (#375).
+type MenuChanged struct {
+	UserId int
+	Open   bool
+}
+
+func (m MenuChanged) Type() string { return `MenuChanged` }
+
 // Used for giving/taking quest progress
 type Quest struct {
 	UserId     int

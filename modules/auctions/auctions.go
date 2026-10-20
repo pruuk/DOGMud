@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
@@ -411,12 +412,14 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 	}
 
 	cmdPrompt, _ := user.StartPrompt(`auction`, rest)
-	questionConfirm := cmdPrompt.Ask(`Auction your `+matchItem.NameComplex()+`?`, []string{`Yes`, `No`})
+	cmdPrompt.NonModal = true
+	questionConfirm := cmdPrompt.AskConfirm(`Auction your `+matchItem.NameComplex()+`?`, `Yes, auction it`, `No`)
 	if !questionConfirm.Done {
+		user.SendText(messaging.CategoryScreen, menu.Render(*questionConfirm.Menu))
 		return true, nil
 	}
 
-	if questionConfirm.Response != `Yes` {
+	if questionConfirm.Response != `yes` {
 		user.SendText(messaging.CategorySystem, `Aborting auction`)
 		user.ClearPrompt()
 		return true, nil

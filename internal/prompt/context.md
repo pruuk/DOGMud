@@ -51,6 +51,43 @@ type Prompt struct {
 }
 ```
 
+### Menu questions (#375 phase 0)
+
+A question can be a menu from `internal/menu` instead of free text. See
+`internal/menu/context.md` for the menu itself.
+
+- `Question.Menu *menu.Menu`: set by `AskMenu`. When set, `Answer` resolves the
+  line with `menu.Resolve`, and `String()` prints only the bare prompt mark
+  because the menu text was already drawn.
+- `Question.LastResult menu.ResultKind`: what the last `Answer` meant to the
+  menu, so the caller can say why a line was refused (`NoSuchNumber`,
+  `Ambiguous`).
+- `Prompt.AskMenu(m, leaveResponse...)`: asks a menu question. The menu's
+  `Heading` identifies the question, and each call replaces the stored menu so
+  a toggled marker shows on the next render. `leaveResponse` is the `Response`
+  when the player picks the Leave entry. A chosen entry sets `Response` to its
+  `Id`; a `Text` result (menus with `AcceptText`) sets it to the typed text.
+- `Prompt.AskConfirm(question, yesLabel, noLabel)`: a two-entry menu from
+  `menu.Confirm`; `Response` is `yes` or `no`, and Enter picks `no`.
+- `Question.Resolve(line)`: what a line would mean, without answering. A
+  non-menu question reports `menu.Text` for any line.
+- `Prompt.NonModal`: a menu question that gets a line it does not recognise
+  closes the prompt and the line runs as a command; game interrupts close it
+  too. Player flows set it; builders stay modal.
+- `Prompt.OpenedUnder`: the interrupt rule already holding when the prompt
+  opened, set by `users.StartPrompt`; only a different rule closes a
+  non-modal prompt.
+- `Prompt.SetAsideLine`: said when a non-modal prompt closes unfinished, so a
+  draft never vanishes silently (mail sets "You set your unsent mail aside.").
+- `Prompt.RoomBound`: the prompt edits the room or zone the player stands in,
+  so a room change cancels it even though it is modal.
+
+**Typed-only answers.** Only a line the player typed may answer a prompt. A
+queued line (follow step, script, macro the engine expanded from untyped input)
+never answers one; it runs as a command. The routing lives in
+`users.UserRecord.RoutePromptInput` (see `internal/users/context.md`) and keys
+off `events.CmdTyped`.
+
 ## Key Features
 
 ### 1. **Session Management**
@@ -132,15 +169,17 @@ func mob_Create(rest string, user *users.UserRecord, room *rooms.Room, flags eve
     }
     // Continue with additional steps...
     
-    // Final confirmation
-    question = cmdPrompt.Ask(`Create this mob? (y/n)`, []string{`y`, `n`})
+    // Final confirmation: a two-entry menu, Enter picks No. The command
+    // draws the menu itself; the prompt line is a bare ".:".
+    question = cmdPrompt.AskConfirm(`Create this mob?`, `Yes, create it`, `No`)
     if !question.Done {
+        user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
         return true, nil
     }
     
     user.ClearPrompt()
     
-    if question.Response != `y` {
+    if question.Response != `yes` {
         user.SendText("Aborting...")
         return true, nil
     }
@@ -155,12 +194,22 @@ func mob_Create(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 **Example: Character Management**
 ```go
 func Character(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-    menuOptions := []string{`new`, `delete`, `switch`, `hire`, `dismiss`, `quit`}
-    
     cmdPrompt, isNew := user.StartPrompt(`character`, rest)
+    // A player flow is non-modal: a line that is not a choice closes the
+    // prompt and runs as a command. Builders and start stay modal.
+    cmdPrompt.NonModal = true
     
-    question := cmdPrompt.Ask(`Choose an option:`, menuOptions, `new`)
+    // Each entry's Id is what Response carries; Enter picks the Default.
+    question := cmdPrompt.AskMenu(menu.Menu{
+        Heading: `What would you like to do?`,
+        Entries: []menu.Entry{
+            {Id: `new`, Label: `Make a new character`},
+            {Id: `quit`, Label: `Close this menu`},
+        },
+        Default: `quit`,
+    })
     if !question.Done {
+        user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
         return true, nil
     }
     

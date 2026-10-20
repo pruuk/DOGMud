@@ -483,6 +483,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Mutation.go` | `Mutation` | Mutation roster and reveal events |
 | `gmcp.Dialogue.go` | `Dialogue` | NPC conversation state for the client |
 | `gmcp.Action.go` | `Action` | Clickable action affordances |
+| `gmcp.Menu.go` | `Char.Menu` | Whether a game menu or prompt is open (`{open}`); see "Char.Menu" above |
 | `gmcp.Commands.go` | `Commands` | Command state, modes, cooldowns |
 | `gmcp.Behavior.go` | `Behavior` | Behaviour-tree state (admin/builder tooling) |
 | `gmcp.Build.go` | `Build` | The admin web building tools' data feed |
@@ -495,6 +496,27 @@ payload schema and push triggers — this table is the map, not the schema.
 The `_refs` files exist because reference data (item and quest definitions) is
 large and static: it is pushed once rather than on every update, and the live
 payloads carry ids that index into it.
+
+## Char.Menu: is a menu or prompt open (`gmcp.Menu.go`, #375 phase 0)
+
+Payload: `{"open": true|false}`. The web client queues ticks and triggers
+while it is `true`; telnet clients with GMCP can read the same signal.
+
+- Pushed on `events.MenuChanged` (queued by `internal/users` when a player's
+  first game menu or prompt opens or the last one closes).
+- Queued at priority `-1` (lower pops first). `internal/users` queues
+  `MenuChanged` and then the menu text, so a default-priority frame would land
+  after the text and a client trigger matching the text could fire before it
+  knows a menu is open. Every `Char.Menu` frame shares that one priority, so a
+  close cannot overtake a re-push.
+- A reconnect reuses the user record, so an open menu survives it but the fresh
+  client starts unpaused. The module re-sends `{"open": true}` on `PlayerSpawn`
+  and again on the next `NewRound`, only when a menu or prompt is open. A fresh
+  client already assumes closed, so `false` is never re-sent.
+- `Char.Action.Try` (`gmcp.CharOp.go`): while `MenuOrPromptOpen()` is true the
+  queued action is not run; the module replies `Char.Action.Result` with status
+  `deferred` and reason `menu open`. Every exit from that handler must reply,
+  or the client parks its action queue.
 
 ## Gotchas
 

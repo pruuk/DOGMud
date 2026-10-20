@@ -49,6 +49,13 @@ via `internal/grapplemessaging`.
 - Symmetric (Clinch, HalfGuard, Turtle): both sides Neutral.
 - Asymmetric: controller arg → Controlling; controlled arg → Controlled.
 
+## RegisterObserver (#375 phase 0)
+
+`func (m *Machine) RegisterObserver(name string, obs func(from, to State, r state.TransitionReason))`
+installs an observer fired after every transition (nil-safe passthrough to
+`Subscribe`). `Character.WireBusyObservers` uses it so an open game menu closes
+when a player is seized (`CloseControlled`).
+
 ## Validation
 
 Per-pair invariant (in `internal/state/position/validation.go`):

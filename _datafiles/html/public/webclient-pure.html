@@ -814,8 +814,15 @@
                 }
             },
             "Char.Automation": function() {
+                automationReady = true; // first push of the session: the character is in the world
                 renderAutomation();
                 rebuildTickTimers();
+            },
+            "Char.Menu": function() {
+                var m = (GMCPStructs["Char"] || {}).Menu || {};
+                var wasOpen = menuOpen;
+                menuOpen = m.open === true;
+                if (wasOpen && !menuOpen) drainQueue();
             },
             "Char.Mutation": function() {
                 var m = (GMCPStructs["Char"] || {}).Mutation;
@@ -1316,11 +1323,6 @@
                     list.appendChild(qbar);
                 }
 
-                if (!a || !a.triggers || !a.triggers.length) {
-                    makeEmptyMsg("No triggers configured.");
-                    return;
-                }
-
                 // Helper: build one trigger row
                 function makeTriggerRow(trig, queuePos) {
                     var trRow = document.createElement("div");
@@ -1361,6 +1363,18 @@
                 // 1) Render queued triggers first, in actionQueue order
                 for (var qi2 = 0; qi2 < actionQueue.length; qi2++) {
                     var qentry = actionQueue[qi2];
+                    if (qentry.triggerId < 0) {
+                        // A tick queued while a menu was open (#375). It has no
+                        // trigger behind it, so show the entry's own "tick: ..."
+                        // name and leave the row unwired: no toggle, no
+                        // test-fire, no context menu.
+                        var qtickRow = makeTriggerRow({ id: qentry.triggerId, name: qentry.name, thenCmds: qentry.commands, enabled: true }, qi2 + 1);
+                        delete qtickRow.dataset.autoType;
+                        delete qtickRow.dataset.autoId;
+                        delete qtickRow.dataset.autoKey;
+                        list.appendChild(qtickRow);
+                        continue;
+                    }
                     // Find the trigger in Automation to get its live data
                     var qtrig = null;
                     if (a && a.triggers) {
@@ -1380,6 +1394,13 @@
                     var qsep = document.createElement("hr");
                     qsep.className = "auto-qsep";
                     list.appendChild(qsep);
+                }
+
+                // Checked after the queued rows, so ticks queued during a menu
+                // still show when no triggers are configured.
+                if (!a || !a.triggers || !a.triggers.length) {
+                    makeEmptyMsg("No triggers configured.");
+                    return;
                 }
 
                 // 2) Render non-queued triggers normally
@@ -1416,6 +1437,8 @@
                 if (!t.enabled || !t.intervalSec || t.intervalSec < 1) return;
                 var cmds = String(t.commands || "");
                 tickTimers[t.id] = setInterval(function() {
+                    if (!automationReady) return;
+                    if (menuOpen) { enqueueDirectAction(-t.id, "tick: " + (t.name || t.id), cmds); return; }
                     cmds.split(";").forEach(function(c) { c = c.trim(); if (c) SendData(c); });
                 }, t.intervalSec * 1000);
             });
@@ -1525,6 +1548,35 @@
         var queueRearmAge = 0;          // rounds since the rearm candidate fired (cleared when stale)
         var queueLoginSettled = false;  // hold draining until the login burst settles (see drainQueue)
         var queueSettleTimer = null;    // fallback so the queue never holds forever if no round push arrives
+        var menuOpen = false;           // a game menu or prompt is open (Char.Menu, #375): queue, don't send
+        var automationReady = false;    // this session's Char.Automation has arrived: ticks/triggers may run
+
+        // Queue an action that would have fired immediately (a tick, or a
+        // trigger with no queue mode) while a menu is open. It keeps all its
+        // commands and is sent straight, paced one entry per round, when the
+        // menu closes. Ticks use negative ids so they never collide with
+        // trigger ids.
+        function enqueueDirectAction(id, name, commands) {
+            for (var i = 0; i < actionQueue.length; i++) {
+                if (actionQueue[i].triggerId === id) return;
+            }
+            if (actionQueue.length >= QUEUE_CAP) return;
+            actionQueue.push({ triggerId: id, name: name, commands: commands, direct: true });
+            renderAutomation();
+        }
+
+        // Disconnect: stop every timer, empty the queue, and wait for the next
+        // session's Char.Automation before anything runs again (#375).
+        function stopAutomation() {
+            for (var id in tickTimers) { clearInterval(tickTimers[id]); }
+            tickTimers = {};
+            tickTimersSig = '';
+            clearActionQueue();
+            if (queueSettleTimer) { clearTimeout(queueSettleTimer); queueSettleTimer = null; }
+            queueLoginSettled = false;
+            menuOpen = false;
+            automationReady = false;
+        }
 
         // Resolve $1..$9 captures into a command string (same logic as fireTriggerCommands).
         function substituteCaptures(cmds, caps) {
@@ -1570,6 +1622,7 @@
                 }
                 return;
             }
+            if (menuOpen) return; // paused while a menu is open (#375)
             // ⚠️ ONE ACTION PER ROUND. Without this the queue is indistinguishable
             // from no queue at all. The server's ActionReadiness only gates `cast` and
             // the 14 special-move verbs; its final line returns ActionReady for
@@ -1620,6 +1673,16 @@
             }
             if (!actionQueue.length) return;
             var entry = actionQueue[0];
+            if (entry.direct) {
+                // A paused tick or immediate trigger: send all its commands now,
+                // and count it as this round's release.
+                String(entry.commands || "").split(";").forEach(function (c) { c = c.trim(); if (c) SendData(c); });
+                queueFiredThisRound = true;
+                queueFiredAt = Date.now();
+                removeQueueEntry(entry);
+                renderAutomation();
+                return;
+            }
             entry.attempts = entry.attempts || 0;
             var cmd = String(entry.commands || "").split(";")[0].trim(); // one command per queued action
             entry.isCast = /^cast\b/i.test(cmd);
@@ -1706,6 +1769,7 @@
         function runTriggers(line, nowMs) {
             var a = GMCPStructs["Char"] && GMCPStructs["Char"].Automation;
             if (!a || !a.triggers) return;
+            if (!automationReady) return; // never during login (#375)
             a.triggers.forEach(function(t){
                 if (!t.enabled || !t.pattern) return;
                 var re = compileTriggerPattern(t.pattern);
@@ -1719,6 +1783,8 @@
                     // Resolve captures NOW (they're gone by drain time)
                     var resolved = substituteCaptures(ok ? t.thenCmds : t.elseCmds, m);
                     enqueueTriggerAction(t, resolved);
+                } else if (menuOpen) {
+                    enqueueDirectAction(t.id, t.name, substituteCaptures(ok ? t.thenCmds : t.elseCmds, m));
                 } else {
                     fireTriggerCommands(ok ? t.thenCmds : t.elseCmds, m);
                 }
@@ -2580,6 +2646,7 @@
             };
 
             socket.onclose = function(event) {
+                stopAutomation(); // nothing fires at the login prompts (#375)
                 // Logged out: hide the companion key button and its form.
                 if (companionGlue) { companionGlue.disconnected(); }
 

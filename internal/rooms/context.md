@@ -300,6 +300,13 @@ unlit follower follows a lit leader and nobody follows an unlit leader in
 true darkness. The mover's light counts on their way out, as the
 departure-line ruling of 2026-10-09 has it.
 
+**`(*Room) DepartureSnapshot(mover *characters.Character) VisualSnapshot`**
+(#375 phase 0) is `VisualSnapshot` with `mover`'s own carried light counted in
+the room, whether or not `mover` has already left it: what each player here
+makes out of `mover` leaving, the room-wide twin of `DepartureSight`. Deliver
+a line with `SendTextVisualToSnapshot`. `actions.BreakOffMenuToFollow` uses it
+for the line to the room a follower leaves.
+
 **Sky fraction and lamp are both `*float64`/`*int` POINTERS, on both
 `Room` and `BiomeInfo`, because zero is meaningful for both.** A cave's sky
 fraction is genuinely `0` (no sky reaches it at all) and must be

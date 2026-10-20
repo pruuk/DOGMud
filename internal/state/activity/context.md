@@ -265,6 +265,17 @@ func (m *Machine) SalvagingData() (SalvagingData, bool)
 Return the activity context for the current state. Second return value
 is `false` if the machine is not in the matching state.
 
+### RegisterObserver
+
+```go
+func (m *Machine) RegisterObserver(name string, obs func(from, to State, r state.TransitionReason))
+```
+
+Installs an observer fired after every transition (nil-safe passthrough to
+`Subscribe`). `Character.WireBusyObservers` uses it so an open game menu closes
+the moment a player starts casting, crafting or salvaging (`CloseBusy`) (#375
+phase 0).
+
 ### Inner
 
 ```go

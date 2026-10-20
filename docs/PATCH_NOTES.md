@@ -1,5 +1,29 @@
 # DOGMud Patch Notes
 
+## 2026-10-20: Choices as numbered lists
+
+- Every choice the game offers you is now a numbered list in the same
+  layout: your character menu, guild and mail confirmations, renaming,
+  auctions, lock picking and the welcome questions. Type the number, or
+  press Enter for the choice it names at the bottom.
+- Yes or no questions are two numbered lines, and Enter always means no.
+  When the action can't be undone, the line says what it does, such as
+  "Yes, disband it". You can still type y or n.
+- Typing any other command while a choice is open sets the choice aside
+  and runs your command. A fight starting, falling asleep or walking
+  away also ends the choice, with a line saying why.
+- If you are following someone and they leave, you break off what you
+  were choosing and follow them, and they see that you did.
+- An unsent letter is set aside with a note if you leave the mail
+  prompt to do something else.
+- In the web client, your ticks and triggers now wait while a choice is
+  open and catch up one at a time once it closes. They no longer fire
+  while you are typing your name and password.
+- Builders: every admin list uses the new layout, a number or the start
+  of a name picks an entry, and picking server settings by number now
+  works. Typing 0 still finishes a toggle list. Leaving the room ends a
+  room edit in progress.
+
 ## 2026-10-19: Take a seat
 
 - You can now sit down to rest. Type sit, or rest, which does the same.

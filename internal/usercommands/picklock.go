@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -181,6 +182,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	// Get if already exists, otherwise create new
 	cmdPrompt, isNew := user.StartPrompt(`picklock`, rest)
+	cmdPrompt.NonModal = true
 
 	if isNew {
 		user.SendText(messaging.CategorySystem, GetLockRender(sequence, keyring_sequence, user.UserId))
@@ -191,8 +193,9 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		entered = keyring_sequence
 	}
 
-	question := cmdPrompt.Ask(`Move your lockpick?`, []string{`UP`, `DOWN`, `quit`})
+	question := cmdPrompt.AskMenu(picklockMenu())
 	if !question.Done {
+		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
 		return true, nil
 	}
 
@@ -302,7 +305,22 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		}
 	}
 
+	// The question was reset above, so show the choices again.
+	user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))
 	return true, nil
+}
+
+// picklockMenu is the lockpick's choices. The Ids are the words the old
+// prompt took, so "up" and "down" still work, and u and d are short forms.
+func picklockMenu() menu.Menu {
+	return menu.Menu{
+		Heading: `Move your lockpick?`,
+		Entries: []menu.Entry{
+			{Id: `UP`, Label: `Up`, Aliases: []string{`u`}},
+			{Id: `DOWN`, Label: `Down`, Aliases: []string{`d`}},
+			{Id: `quit`, Label: `Stop picking`},
+		},
+	}
 }
 
 func GetLockRender(sequence string, entered string, viewingUserId int) string {

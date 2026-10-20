@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutators"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
@@ -141,21 +142,15 @@ func room_Edit_Containers(rest string, user *users.UserRecord, room *rooms.Room,
 	currentlyEditing := ContainerEdit{}
 
 	cmdPrompt, _ := user.StartPrompt(`room edit containers`, rest)
+	cmdPrompt.RoomBound = true // edits this room; a move cancels it (#375)
 
-	question := cmdPrompt.Ask(`Choose one:`, []string{`new`}, `new`)
+	question := cmdPrompt.AskMenu(containerMenu(containerOptions))
 	if !question.Done {
-		tplTxt, _ := templates.Process("tables/numbered-list", containerOptions, user.UserId)
-		user.SendText(messaging.CategoryAdmin, tplTxt)
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return true, nil
 	}
 
 	currentlyEditing.Name = question.Response
-
-	if restNum, err := strconv.Atoi(currentlyEditing.Name); err == nil {
-		if restNum > 0 && restNum <= len(containerOptions) {
-			currentlyEditing.Name = containerOptions[restNum-1].Name
-		}
-	}
 
 	for _, o := range containerOptions {
 		if strings.EqualFold(o.Name, currentlyEditing.Name) {
@@ -179,8 +174,9 @@ func room_Edit_Containers(rest string, user *users.UserRecord, room *rooms.Room,
 		}
 
 		// Since they picked a container that exists, lets get the question of delete out of the way immediately.
-		question := cmdPrompt.Ask(`Delete this container?`, []string{`yes`, `no`}, `no`)
+		question := cmdPrompt.AskConfirm(`Delete this container?`, `Yes, delete it`, `No, keep it`)
 		if !question.Done {
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
@@ -324,8 +320,13 @@ func room_Edit_Containers_SendRecipes(user *users.UserRecord, recipeResultItemId
 // Returns the updated lock and whether the caller should early-return (pending=true means a question is still in progress).
 func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock gamelock.Lock, itemType string) (gamelock.Lock, bool) {
 
-	question := cmdPrompt.Ask(`Will this `+itemType+` be locked?`, []string{`yes`, `no`}, util.BoolYN(lock.Difficulty > 0))
+	lockedMenu := menu.Confirm(`Will this `+itemType+` be locked?`, `Yes`, `No`)
+	if lock.Difficulty > 0 {
+		lockedMenu.Default = `yes`
+	}
+	question := cmdPrompt.AskMenu(lockedMenu)
 	if !question.Done {
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return lock, true
 	}
 
@@ -361,8 +362,13 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 		//
 		// Lock Trap Options
 		//
-		question = cmdPrompt.Ask(`Will this lock have a trap?`, []string{`yes`, `no`}, util.BoolYN(len(lock.TrapConditionIds) > 0))
+		trapMenu := menu.Confirm(`Will this lock have a trap?`, `Yes`, `No`)
+		if len(lock.TrapConditionIds) > 0 {
+			trapMenu.Default = `yes`
+		}
+		question = cmdPrompt.AskMenu(trapMenu)
 		if !question.Done {
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return lock, true
 		}
 
@@ -388,6 +394,11 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 			conditionOptions := []templates.NameDescription{}
 
 			for _, conditionId := range conditions.GetAllConditionIds() {
+				// Condition 0 is the quit timer, not a trap effect, and its
+				// id "0" would collide with this menu's leave answer.
+				if conditionId == 0 {
+					continue
+				}
 				if b := conditions.GetConditionSpec(conditionId); b != nil {
 
 					if b.Name == `empty` {
@@ -403,14 +414,19 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 				}
 			}
 
+			// Ties break on id: names repeat ("Stunned" twice), and the ids
+			// arrive in map order, so without it the numbers swap between
+			// redraws.
 			sort.SliceStable(conditionOptions, func(i, j int) bool {
-				return conditionOptions[i].Name < conditionOptions[j].Name
+				if conditionOptions[i].Name != conditionOptions[j].Name {
+					return conditionOptions[i].Name < conditionOptions[j].Name
+				}
+				return conditionOptions[i].Id.(int) < conditionOptions[j].Id.(int)
 			})
 
-			question := cmdPrompt.Ask(`Select a condition to add to the trap, or nothing to continue:`, []string{}, `0`)
+			question := cmdPrompt.AskMenu(trapConditionMenu(conditionOptions), `0`)
 			if !question.Done {
-				tplTxt, _ := templates.Process("tables/numbered-list-doubled", conditionOptions, user.UserId)
-				user.SendText(messaging.CategoryAdmin, tplTxt)
+				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 				return lock, true
 			}
 
@@ -420,19 +436,8 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 
 				conditionSelectedInt := 0
 
-				if restNum, err := strconv.Atoi(conditionSelected); err == nil {
-					if restNum > 0 && restNum <= len(conditionOptions) {
-						conditionSelectedInt = conditionOptions[restNum-1].Id.(int)
-					}
-				}
-
-				if conditionSelectedInt == 0 {
-					for _, b := range conditionOptions {
-						if strings.EqualFold(b.Name, conditionSelected) {
-							conditionSelectedInt = b.Id.(int)
-							break
-						}
-					}
+				if b, ok := optionByResponse(conditionOptions, conditionSelected); ok {
+					conditionSelectedInt = b.Id.(int)
 				}
 
 				if conditionSelectedInt == 0 {
@@ -440,8 +445,7 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 					user.SendText(messaging.CategoryAdmin, "Invalid selection.")
 					question.RejectResponse()
 
-					tplTxt, _ := templates.Process("tables/numbered-list-doubled", conditionOptions, user.UserId)
-					user.SendText(messaging.CategoryAdmin, tplTxt)
+					user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 					return lock, true
 				}
 
@@ -471,8 +475,9 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 					conditionOptions[idx] = data
 				}
 
-				tplTxt, _ := templates.Process("tables/numbered-list-doubled", conditionOptions, user.UserId)
-				user.SendText(messaging.CategoryAdmin, tplTxt)
+				// Re-ask so the stored menu carries the updated [x] marks.
+				question = cmdPrompt.AskMenu(trapConditionMenu(conditionOptions), `0`)
+				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 				return lock, true
 
 			}
@@ -508,8 +513,13 @@ func editLockAndTrap(cmdPrompt *prompt.Prompt, user *users.UserRecord, lock game
 // Returns the updated recipes and whether the caller should early-return.
 func editContainerRecipes(cmdPrompt *prompt.Prompt, user *users.UserRecord, recipes map[int][]int) (map[int][]int, bool) {
 
-	question := cmdPrompt.Ask(`Will this container have recipes?`, []string{`yes`, `no`}, util.BoolYN(len(recipes) > 0))
+	recipesMenu := menu.Confirm(`Will this container have recipes?`, `Yes`, `No`)
+	if len(recipes) > 0 {
+		recipesMenu.Default = `yes`
+	}
+	question := cmdPrompt.AskMenu(recipesMenu)
 	if !question.Done {
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return recipes, true
 	}
 
@@ -581,30 +591,21 @@ func editContainerRecipes(cmdPrompt *prompt.Prompt, user *users.UserRecord, reci
 					Description: `skip this step`,
 				})
 
-			question := cmdPrompt.Ask(`Modify which (or new)?`, []string{`skip`}, `skip`)
+			question := cmdPrompt.AskMenu(recipeMenu(recipeOptions))
 			if !question.Done {
-				tplTxt, _ := templates.Process("tables/numbered-list", recipeOptions, user.UserId)
-				user.SendText(messaging.CategoryAdmin, tplTxt)
+				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 				return recipes, true
 			}
 
-			recipeSelected := question.Response
-			if restNum, err := strconv.Atoi(recipeSelected); err == nil {
-				if restNum > 0 && restNum <= len(recipeOptions) {
-					recipeNow = recipeOptions[restNum-1].Id.(int)
-				}
+			recipeSelected, ok := optionByResponse(recipeOptions, question.Response)
+			if !ok {
+				question.RejectResponse()
+				user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
+				return recipes, true
 			}
+			recipeNow = recipeSelected.Id.(int)
 
-			if recipeNow == 0 {
-				for _, b := range recipeOptions {
-					if strings.EqualFold(b.Name, recipeSelected) {
-						recipeNow = b.Id.(int)
-						break
-					}
-				}
-			}
-
-			if question.Response == `new` {
+			if recipeSelected.Name == `new` {
 
 				question := cmdPrompt.Ask(`What itemId will be created?`, []string{})
 				if !question.Done {
@@ -731,6 +732,7 @@ func room_Edit_Mutators(rest string, user *users.UserRecord, room *rooms.Room, f
 	}
 
 	cmdPrompt, _ := user.StartPrompt(`room edit mutators`, rest)
+	cmdPrompt.RoomBound = true // edits this room; a move cancels it (#375)
 
 	selectedMutatorList := []string{}
 	if muts, ok := cmdPrompt.Recall(`mutators`); ok {
@@ -765,10 +767,9 @@ func room_Edit_Mutators(rest string, user *users.UserRecord, room *rooms.Room, f
 		return mutatorOptions[i].Name < mutatorOptions[j].Name
 	})
 
-	question := cmdPrompt.Ask(`Select a mutator to add to the room, or nothing to continue:`, []string{}, `0`)
+	question := cmdPrompt.AskMenu(roomMutatorMenu(mutatorOptions), `0`)
 	if !question.Done {
-		tplTxt, _ := templates.Process("tables/numbered-list-doubled", mutatorOptions, user.UserId)
-		user.SendText(messaging.CategoryAdmin, tplTxt)
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return true, nil
 	}
 
@@ -776,19 +777,8 @@ func room_Edit_Mutators(rest string, user *users.UserRecord, room *rooms.Room, f
 
 		mutatorSelected := ``
 
-		if restNum, err := strconv.Atoi(question.Response); err == nil {
-			if restNum > 0 && restNum <= len(mutatorOptions) {
-				mutatorSelected = mutatorOptions[restNum-1].Id.(string)
-			}
-		}
-
-		if mutatorSelected == `` {
-			for _, b := range mutatorOptions {
-				if strings.EqualFold(b.Name, question.Response) {
-					mutatorSelected = b.Id.(string)
-					break
-				}
-			}
+		if b, ok := optionByResponse(mutatorOptions, question.Response); ok {
+			mutatorSelected = b.Id.(string)
 		}
 
 		if mutatorSelected == `` {
@@ -796,8 +786,7 @@ func room_Edit_Mutators(rest string, user *users.UserRecord, room *rooms.Room, f
 			user.SendText(messaging.CategoryAdmin, "Invalid selection.")
 			question.RejectResponse()
 
-			tplTxt, _ := templates.Process("tables/numbered-list-doubled", mutatorOptions, user.UserId)
-			user.SendText(messaging.CategoryAdmin, tplTxt)
+			user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 			return true, nil
 		}
 
@@ -827,8 +816,9 @@ func room_Edit_Mutators(rest string, user *users.UserRecord, room *rooms.Room, f
 			mutatorOptions[idx] = data
 		}
 
-		tplTxt, _ := templates.Process("tables/numbered-list-doubled", mutatorOptions, user.UserId)
-		user.SendText(messaging.CategoryAdmin, tplTxt)
+		// Re-ask so the stored menu carries the updated [x] marks.
+		question = cmdPrompt.AskMenu(roomMutatorMenu(mutatorOptions), `0`)
+		user.SendText(messaging.CategoryAdmin, menu.Render(*question.Menu))
 		return true, nil
 
 	}
@@ -849,4 +839,57 @@ func room_Edit_Mutators(rest string, user *users.UserRecord, room *rooms.Room, f
 	user.ClearPrompt()
 
 	return true, nil
+}
+
+// containerMenu is the "Choose one:" container picker: a "new" entry first,
+// then the room's containers. Enter picks new.
+func containerMenu(containerOptions []templates.NameDescription) menu.Menu {
+	return newOrExistingMenu(containerOptions, `create a new container`)
+}
+
+// newOrExistingMenu prepends a "new" entry (unless the list already has one)
+// and makes it the Enter default. Containers and exits share it.
+func newOrExistingMenu(opts []templates.NameDescription, newDescription string) menu.Menu {
+	hasNew := false
+	for _, o := range opts {
+		if o.Name == `new` {
+			hasNew = true
+			break
+		}
+	}
+	if !hasNew {
+		opts = append([]templates.NameDescription{{Name: `new`, Description: newDescription}}, opts...)
+	}
+	m := optionsMenu(`Choose one:`, opts, 1)
+	m.Default = `new`
+	return m
+}
+
+// trapConditionMenu toggles conditions on a trap; Done, Enter or a typed 0
+// answers "0".
+func trapConditionMenu(conditionOptions []templates.NameDescription) menu.Menu {
+	m := optionsMenu(`Select a condition to add to the trap, or nothing to continue:`, conditionOptions, 2)
+	m.Leave = `Done`
+	m.LeaveAliases = []string{`0`}
+	return m
+}
+
+// recipeMenu picks a container recipe to modify; Enter picks skip.
+func recipeMenu(recipeOptions []templates.NameDescription) menu.Menu {
+	m := optionsMenu(`Modify which (or new)?`, recipeOptions, 1)
+	for _, o := range recipeOptions {
+		if o.Name == `skip` {
+			m.Default = optionId(o)
+		}
+	}
+	return m
+}
+
+// roomMutatorMenu toggles room mutators; Done, Enter or a typed 0 answers
+// "0".
+func roomMutatorMenu(mutatorOptions []templates.NameDescription) menu.Menu {
+	m := optionsMenu(`Select a mutator to add to the room, or nothing to continue:`, mutatorOptions, 2)
+	m.Leave = `Done`
+	m.LeaveAliases = []string{`0`}
+	return m
 }
