@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -586,7 +587,9 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 		room.Lamp = rooms.LampPtr(90) // pin fully lit; see combat_blind_warning_test.go in internal/hooks
 		prepareRangedCostCycle(user.Character, true, 0)
 		user.Character.EndAggro()
-		user.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+		// A FREE timer: a running one now refuses before the cost (#265).
+		// A cost-refused shot must leave it unclaimed.
+		user.Character.Cooldowns = characters.Cooldowns{}
 		target := mobs.GetInstance(100)
 		require.NotNil(t, target)
 		target.Character.Health = 500
@@ -599,7 +602,7 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 		assert.True(t, user.Character.Equipment.Weapon.Loaded)
 		assert.Equal(t, 20, user.Character.Items[1].Uses)
 		assert.False(t, user.Character.IsInCombat())
-		assert.Equal(t, 3, user.Character.Cooldowns["special-move"])
+		assert.Zero(t, user.Character.Cooldowns["special-move"])
 		assert.Equal(t, 500, target.Character.Health)
 		assertVoluntaryRefusalOutput(t, events.DrainQueuedMessagesForTest(user.UserId), characters.PoolStamina)
 	})
@@ -612,7 +615,7 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 		mob, room := getRangedTestMobAndRoom(t)
 		prepareRangedCostCycle(&mob.Character, true, 0)
 		mob.Character.SetAggro(1, 0, characters.DefaultAttack)
-		mob.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+		mob.Character.Cooldowns = characters.Cooldowns{} // free; see the player case
 		target := users.GetByUserId(1)
 		require.NotNil(t, target)
 		target.Character.Health = 500
@@ -622,6 +625,69 @@ func TestShootRefusal_PlayerAndMobWrappersAreAtomic(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 0, mob.Character.Stamina)
+		assert.True(t, mob.Character.Equipment.Weapon.Loaded)
+		assert.Equal(t, 20, mob.Character.Items[1].Uses)
+		assert.Equal(t, 0, mob.Character.RoundsWaiting())
+		assert.Zero(t, mob.Character.Cooldowns["special-move"])
+		assert.Equal(t, 500, target.Character.Health)
+		assert.Empty(t, events.DrainQueuedMessagesForTest(target.UserId), "mob refusal must stay silent")
+	})
+}
+
+// TestShootCooldownRefusal_PlayerAndMobWrappers pins owner ruling 2026-10-19
+// (#265): a shot waits for the shared special-move cooldown. With the timer
+// running the player gets the same refusal bash and trip give, and the mob is
+// silent; neither spends stamina, an arrow, the round, or the target's health.
+func TestShootCooldownRefusal_PlayerAndMobWrappers(t *testing.T) {
+	t.Run("player", func(t *testing.T) {
+		cleanup := seedAllRegistries()
+		defer cleanup()
+		pinRangedCostEvidence(t)
+		isolateOpinions(t)
+
+		user, room := getTestUserAndRoom(t)
+		room.Lamp = rooms.LampPtr(90)
+		prepareRangedCostCycle(user.Character, true, 100)
+		user.Character.EndAggro()
+		user.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+		target := mobs.GetInstance(100)
+		require.NotNil(t, target)
+		target.Character.Health = 500
+		events.DrainQueuedMessagesForTest(user.UserId)
+
+		_, err := Fire("skeleton", user, room, 0)
+		require.NoError(t, err)
+
+		assert.Equal(t, 100, user.Character.Stamina)
+		assert.True(t, user.Character.Equipment.Weapon.Loaded)
+		assert.Equal(t, 20, user.Character.Items[1].Uses)
+		assert.False(t, user.Character.IsInCombat())
+		assert.Equal(t, 0, user.Character.RoundsWaiting())
+		assert.Equal(t, 3, user.Character.Cooldowns["special-move"])
+		assert.Equal(t, 500, target.Character.Health)
+		lines := events.DrainQueuedMessagesForTest(user.UserId)
+		require.Len(t, lines, 1)
+		assert.Contains(t, lines[0], refusal.CooldownText("shoot"))
+	})
+
+	t.Run("mob", func(t *testing.T) {
+		cleanup := seedAllRegistries()
+		defer cleanup()
+		pinRangedCostEvidence(t)
+
+		mob, room := getRangedTestMobAndRoom(t)
+		prepareRangedCostCycle(&mob.Character, true, 100)
+		mob.Character.SetAggro(1, 0, characters.DefaultAttack)
+		mob.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+		target := users.GetByUserId(1)
+		require.NotNil(t, target)
+		target.Character.Health = 500
+		events.DrainQueuedMessagesForTest(target.UserId)
+
+		_, err := mobcommands.Fire("Aliceia", mob, room)
+		require.NoError(t, err)
+
+		assert.Equal(t, 100, mob.Character.Stamina)
 		assert.True(t, mob.Character.Equipment.Weapon.Loaded)
 		assert.Equal(t, 20, mob.Character.Items[1].Uses)
 		assert.Equal(t, 0, mob.Character.RoundsWaiting())

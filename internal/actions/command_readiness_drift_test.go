@@ -761,6 +761,8 @@ func runExecuteAndReadExecuted(cmd string, actor Actor) bool {
 		return ExecuteThrottle(actor).Executed
 	case "smother":
 		return ExecuteSmother(actor).Executed
+	case "fire", "shoot":
+		return ExecuteFire(actor, "Target").Executed
 	}
 	return false
 }
@@ -1480,6 +1482,28 @@ func TestCommandReadinessDrift(t *testing.T) {
 				m.Character.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 			},
 			false, "NotBeast"},
+
+		// ─── fire / shoot (#265) ──────────────────────────────────────────────
+		// A shot waits for the shared special-move cooldown. These rows cover
+		// the verb-level gates ExecuteFire applies before a target is named;
+		// the actor has no room, so the ready path (which needs a target in a
+		// room) is TestCommandIsReady_ShotWaitsForTheCooldown.
+		{"fire_crafting", "fire", func(m *mobs.Mob) {
+			m.Character.Equipment.Weapon = driftBow(true)
+			setCraftingForTest(m)
+		}, false, "Crafting"},
+		{"fire_cooldown", "fire", func(m *mobs.Mob) {
+			m.Character.Equipment.Weapon = driftBow(true)
+			m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+		}, false, "OnCooldown"},
+		{"shoot_cooldown", "shoot", func(m *mobs.Mob) {
+			m.Character.Equipment.Weapon = driftBow(true)
+			m.Character.Cooldowns = characters.Cooldowns{"special-move": 3}
+		}, false, "OnCooldown"},
+		{"fire_no_weapon", "fire", func(m *mobs.Mob) {}, false, "NoWeapon"},
+		{"fire_empty_no_ammo", "fire", func(m *mobs.Mob) {
+			m.Character.Equipment.Weapon = driftBow(false)
+		}, false, "NotLoaded"},
 	}
 
 	for _, tc := range cases {
@@ -1519,7 +1543,7 @@ func TestCommandReadinessDrift(t *testing.T) {
 			physicalSpecial := map[string]bool{
 				"bash": true, "trip": true, "kick": true, "grapple": true, "hamstring": true,
 				"rake": true, "maul": true, "pounce": true, "gore": true, "drain": true, "throttle": true,
-				"smother": true,
+				"smother": true, "fire": true, "shoot": true,
 			}
 			if physicalSpecial[tc.cmd] {
 				assert.Equal(t, staminaBefore, mob.Character.Stamina,
@@ -1728,8 +1752,28 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 		case "NoLegs":
 			return r.NoLegs
 		}
+	case "fire", "shoot":
+		r := ExecuteFire(actor, "Target")
+		switch flag {
+		case "Crafting":
+			return r.Crafting
+		case "OnCooldown":
+			return r.OnCooldown
+		case "NoWeapon":
+			return r.NoWeapon
+		case "NotLoaded":
+			return r.NotLoaded
+		}
 	}
 	return false
+}
+
+// driftBow is a two-handed arrow-shooting weapon for the fire/shoot rows.
+func driftBow(loaded bool) items.Item {
+	return items.Item{ItemId: 1, Loaded: loaded, Spec: &items.ItemSpec{
+		ItemId: 1, Name: "longbow", Type: items.Weapon, Subtype: items.Shooting,
+		AmmoTag: "arrows", DamageMultiplier: 1, Hands: 2,
+	}}
 }
 
 // setCraftingForTest puts a mob into crafting state.

@@ -34,8 +34,9 @@ character:
   items:
     - itemid: 20090
       dropchance: 60
-    - itemid: 10046
-      dropchance: 60
+    # Arrows for the Ironhorn Warbow it wields (#265): firing chambers the
+    # next arrow from a matching ammo bundle, the same rule a player shoots by.
+    - itemid: 30062
     - itemid: 40165
       dropchance: 25
     - itemid: 40166
@@ -53,6 +54,11 @@ character:
   level: 1
   gold: 0
   equipment:
+    # Wielded so it can fire (#265); it was loot-only and never shot. The
+    # 60% drop chance it had as carried loot rides on the equipped item.
+    weapon:
+      itemid: 10046
+      dropchance: 60
     body:
       itemid: 40231
     neck:

@@ -1858,7 +1858,7 @@ taunt path's ordering).
 | Shadow | actions | self→target | ShadowResult | varies | ShadowCooldown (start, stop, spotted) |
 | Sneak | actions | self vs room | SneakResult | silent | shared |
 | Steal | actions | self vs mob/player/container | StealResult | varies | shared |
-| ExecuteFire | actions | self vs target (same/adjacent room) | FireResult | both | shared (special-move), EVERY shot |
+| ExecuteFire | actions | self vs target (same/adjacent room) | FireResult | both | shared (special-move), waited for and claimed by EVERY shot (#265) |
 | BeginFlee | actions | self (command half) | FleeBegin | wrapper renders | none |
 | ResolveFlee | actions | self vs blocker (round half) | FleeOutcome | wrapper renders | none |
 | Sell | actions | self vs merchant | SellResult | player only | none |
@@ -2003,18 +2003,30 @@ hardcoded `"1 rounds"` against everyone else's configured value, and nothing
 could see it. The `cooldowns` command shows it as `SpecialMoveCooldownLabel`
 ("special moves"); the record does not know which move claimed it (#620).
 
-`ExecuteFire` claims it on **every shot**, ordinary or not, because firing
-chambers its own next round. That is not a rate change: before the fold, the
-shot claimed nothing and the separate `reload` claimed instead, so a
-shot-plus-reload cycle already cost exactly one burn.
+`ExecuteFire` **waits for and claims it on every shot**, ordinary, cross-room
+or ambush (owner ruling 2026-10-19, #265: bows were always meant to fire on the
+shared cooldown, players and mobs alike). So a shooter fires at most once per
+`SpecialMoveCooldown` rounds, and a shot shares that timer with bash, kick,
+casting and the rest. The ask (`SpecialMoveReady`) comes before the
+auto-chamber and before admission, so a shot refused for the timer
+(`FireResult.OnCooldown`) spends no stamina, no arrow and no round; the claim
+(`ClaimSpecialMove`) comes after admission and the stale-weapon re-check, the
+order bash and trip use. `TestFireAdmissionOrdering` pins both sites. The
+player `fire`/`shoot` command answers `OnCooldown` with
+`refusal.CooldownAfterCost(user, "shoot", cost)`; the mob command is silent.
+Chambering (`chamberNextRound`, the retired `reload`) neither asks nor claims:
+the shot's one claim covers the whole fire-and-chamber action.
+`CommandIsReady` and `specialMoveVerbs` carry `fire` and its alias `shoot`, so
+a caller that asks first (behaviour-tree `command_best_of`, the AI companion,
+gmcp CharOp) hears not-ready while the timer runs (`ActionDeferred`), and
+not-ready with no ranged weapon, or an empty one with nothing to chamber
+(`findAmmoBundle`, the lookup `chamberNextRound` draws from). Target, sight
+and range ride on the words after the verb and stay with `ExecuteFire`.
 
-⚠️ **The claim does NOT gate the ambush.** A shot from stealth is a surprise
-shot because the shooter was hidden, full stop. The old gate refused the opener
-whenever the timer was spent — which meant refusing it whenever the player had
-reloaded, the very thing you must do to have something to ambush with. Now that
-an ordinary shot claims too, re-adding the gate would deny the opener after ANY
-previous shot. Stealth is what limits ambushes: the shot reveals you and `sneak`
-refuses in combat, so an engagement yields one opener.
+The ambush is gated like any shot. In practice the opener rarely meets a
+running timer: `sneak` refuses in combat, so a hidden shooter's first shot
+normally opens an engagement after the timer cleared, and the shot reveals the
+shooter, so an engagement still yields one opener.
 
 Melee is DIFFERENT and deliberately so: `EngageAggroType` still gates its opener
 on the timer, because melee has no per-swing claim to collide with.

@@ -313,14 +313,15 @@ func TestFireSurprise_CrossRoomShotGetsNothing(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 6. A claimed special-move cooldown denies the opener, and says so
+// 6. A claimed special-move cooldown refuses the opener like any shot (#265)
 // ---------------------------------------------------------------------------
 
-// Not an edge case: a loaded bow implies a recent reload, and reload burns this
-// same timer, so the natural "reload, sneak, shoot" sequence denies the opener
-// whenever the reload was inside SpecialMoveCooldown rounds. The player has to
-// be told, or the ambush silently does nothing.
-func TestFireSurprise_ClaimedCooldownStillAllowsTheOpener(t *testing.T) {
+// Owner ruling 2026-10-19 (#265): every shot waits for the shared special-move
+// cooldown, the ambush included. A hidden shooter whose timer is running is
+// refused like any other shooter: OnCooldown, nothing spent, still hidden. In
+// practice the opener rarely meets a running timer, because `sneak` refuses in
+// combat, so the hidden shot normally opens an engagement after it cleared.
+func TestFireSurprise_ClaimedCooldownRefusesTheOpener(t *testing.T) {
 	pinRangedSurpriseBalance(t)
 	pinOrdinaryContestWin(t)
 	_, cleanup := seedFireMobInRoom(t, 1, 1)
@@ -331,13 +332,16 @@ func TestFireSurprise_ClaimedCooldownStillAllowsTheOpener(t *testing.T) {
 		int(configs.GetBalanceConfig().SpecialMoveCooldown))),
 		"precondition: something else claims the timer first")
 	require.Positive(t, char.Cooldowns["special-move"])
+	staminaBefore := char.Stamina
 
 	res := ExecuteFire(newStubActor(char, rooms.LoadRoom(1)), "skeleton")
 
-	require.True(t, res.Executed)
-	assert.True(t, res.MoveResult.Crit,
-		"a hidden shooter gets the opener even with the timer already claimed")
-	assert.True(t, res.Revealed, "the opener still gives the shooter away")
+	assert.True(t, res.OnCooldown, "a running timer refuses the opener too")
+	assert.False(t, res.Executed, "no shot is taken")
+	assert.False(t, res.Revealed, "a refused shot gives nothing away")
+	assert.True(t, char.IsHidden(), "the shooter stays hidden")
+	assert.Equal(t, staminaBefore, char.Stamina, "a refused shot spends no stamina")
+	assert.True(t, char.Equipment.Weapon.Loaded, "a refused shot keeps its arrow nocked")
 }
 
 // ---------------------------------------------------------------------------

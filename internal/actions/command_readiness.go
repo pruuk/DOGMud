@@ -130,6 +130,19 @@ func CommandIsReady(actor Actor, cmd string) bool {
 
 	case "smother":
 		return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesHasBeastMove(char, "smother")
+
+	// A shot waits for the shared special-move cooldown (owner ruling
+	// 2026-10-19, #265), checked above. Beyond it ExecuteFire refuses, before
+	// any target is named, a shooter with no ranged weapon (NoWeapon) and one
+	// with an empty weapon and nothing to chamber (NotLoaded). No combat gate:
+	// a shot can open a fight or reach the next room. Target, sight and range
+	// depend on the words after the verb, which readiness does not see.
+	case "fire", "shoot":
+		weapon := findRangedWeaponSlot(actor)
+		if weapon == nil {
+			return false
+		}
+		return weapon.Loaded || findAmmoBundle(char, weapon.GetSpec().AmmoTag) >= 0
 	}
 
 	return false
