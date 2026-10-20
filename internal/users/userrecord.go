@@ -59,7 +59,7 @@ type UserRecord struct {
 	LastMusic       string                `yaml:"-"`                         // Keeps track of the last music that was played
 	LastWhisperFrom int                   `yaml:"-"`                         // UserId of last person who whispered to us (don't save)
 	connectionId    uint64
-	// sessionMu guards unsentText, suggestText, tempDataStore and activePrompt
+	// sessionMu guards unsentText, suggestText, tempDataStore, activePrompt and activeMenu
 	// — the only UserRecord state written from BOTH the per-connection
 	// goroutine (main.go's read loop, which never takes util.LockMud) and the
 	// tick loop (world.go processInput, hooks/RedrawPrompt_SendRedraw, which
@@ -74,8 +74,9 @@ type UserRecord struct {
 	lastInputRound uint64
 	tempDataStore  map[string]any
 	activePrompt   *prompt.Prompt
-	isZombie       bool // are they a zombie currently?
-	inputBlocked   bool // Whether input is currently intentionally turned off (for a certain category of commands)
+	activeMenu     *openMenu // the open game menu (#375); guarded by sessionMu
+	isZombie       bool      // are they a zombie currently?
+	inputBlocked   bool      // Whether input is currently intentionally turned off (for a certain category of commands)
 }
 
 // UserTick is a user-defined real-time-second timer that fires commands from
@@ -784,19 +785,23 @@ func (u *UserRecord) ConnectionId() uint64 {
 func (u *UserRecord) StartPrompt(command string, rest string) (*prompt.Prompt, bool) {
 
 	u.sessionMu.Lock()
-	defer u.sessionMu.Unlock()
-
 	if u.activePrompt != nil {
 		// If it's the same prompt, return the existing one
 		if u.activePrompt.Command == command && u.activePrompt.Rest == rest {
-			return u.activePrompt, false
+			p := u.activePrompt
+			u.sessionMu.Unlock()
+			return p, false
 		}
 	}
 
 	// If no prompt found or it seems like a new prompt, create a new one and replace the old
+	wasOpen := u.menuOrPromptOpenLocked()
 	u.activePrompt = prompt.New(command, rest)
+	p := u.activePrompt
+	u.sessionMu.Unlock()
 
-	return u.activePrompt, true
+	u.notifyMenuState(wasOpen, true)
+	return p, true
 }
 
 func (u *UserRecord) GetPrompt() *prompt.Prompt {
@@ -809,9 +814,12 @@ func (u *UserRecord) GetPrompt() *prompt.Prompt {
 
 func (u *UserRecord) ClearPrompt() {
 	u.sessionMu.Lock()
-	defer u.sessionMu.Unlock()
-
+	wasOpen := u.menuOrPromptOpenLocked()
 	u.activePrompt = nil
+	nowOpen := u.menuOrPromptOpenLocked()
+	u.sessionMu.Unlock()
+
+	u.notifyMenuState(wasOpen, nowOpen)
 }
 
 func (u *UserRecord) GetOnlineInfo() OnlineInfo {

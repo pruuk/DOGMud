@@ -43,6 +43,10 @@ type Prompt struct {
 	Rest      string         // What is the 'rest' of the command
 	Questions []*Question    // All questions so far
 	State     map[string]any // Optional place to store state
+	// NonModal: a menu question that gets a line it does not recognise
+	// closes the prompt and the line runs as a command, and game interrupts
+	// close it. Player flows set it; builders stay modal (#375).
+	NonModal bool
 }
 
 func New(command string, rest string) *Prompt {
