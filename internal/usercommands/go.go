@@ -385,11 +385,11 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 									partyUser.SendText(messaging.CategoryRoomExit, PartyFollowLostLine)
 									continue
 								}
+								actions.BreakOffMenuToFollow(partyUser, user.Character, user.UserId, room)
 								partyUser.SendText(messaging.CategoryRoomExit, `You follow the party leader.`)
 								// CmdFollowStep: the room they leave has just
 								// lost the leader's light, which they walk on
 								// with, so it must not be announced (#620).
-								actions.BreakOffMenuToFollow(partyUser, user.Character, user.UserId, room)
 								partyUser.CommandFlagged(rest, events.CmdFollowStep)
 							}
 						}

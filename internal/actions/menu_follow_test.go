@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -63,28 +64,35 @@ func TestBreakOffMenuToFollow_ClosesAndSpeaksThreeLines(t *testing.T) {
 	require.False(t, mira.HasOpenMenu())
 	require.Equal(t, []string{"You break off your talk with Kael to follow Brannoc."}, followRead(followMiraId))
 	require.Equal(t, []string{"Mira breaks off a talk with Kael to follow you."}, followRead(followBrannocId))
-	witness := followRead(followWitnessId)
-	if len(witness) == 0 { // a room-addressed message instead of per-reader lines
-		for _, m := range events.DrainQueuedRoomMessagesForTest(followRoomId) {
-			witness = append(witness, strings.TrimSpace(followTag.ReplaceAllString(m.Text, "")))
-		}
-	}
-	require.Equal(t, []string{"Mira breaks off a talk with Kael and follows Brannoc."}, witness)
+	require.Equal(t, []string{"Mira breaks off a talk with Kael and follows Brannoc."}, followRead(followWitnessId))
 }
 
-func TestBreakOffMenuToFollow_DarkFollowerDoesNotReadTheLeadersName(t *testing.T) {
+// The leader has already left the room when the lines are spoken, and a mover
+// is seen by their own light on the way out (owner rule 2026-10-09): in a dark
+// room a lantern-carrying leader is named to an unlit follower, to the leader
+// reading the follower, and to an unlit witness.
+func TestBreakOffMenuToFollow_LitLeaderIsNamedInADarkRoom(t *testing.T) {
+	const lanternId = 8979
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		lanternId: {ConditionId: lanternId, Name: "Test Lantern", TriggerCount: 1, RoundInterval: 1,
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 54}}},
+	}))
 	mira, brannoc, room := followScene(t, 0)
-	require.NotEqual(t, messaging.SightFull, messaging.ParticipantSight(mira.Character, room))
+	require.True(t, brannoc.Character.Conditions.AddCondition(lanternId, true))
+	room.RemovePlayer(followBrannocId) // the leader has already walked out
+	require.NotEqual(t, messaging.SightFull, messaging.ParticipantSight(mira.Character, room),
+		"fixture premise: the room alone is dark to the follower")
 	_, ok := mira.OpenMenu(menu.Menu{Entries: []menu.Entry{{Id: "a", Label: "A"}}}, menu.Session{})
 	require.True(t, ok)
-	events.DrainQueuedMessageEventsForTest(followMiraId)
+	for _, id := range []int{followMiraId, followBrannocId, followWitnessId} {
+		events.DrainQueuedMessageEventsForTest(id)
+	}
 
 	BreakOffMenuToFollow(mira, brannoc.Character, followBrannocId, room)
 
-	got := followRead(followMiraId)
-	require.Len(t, got, 1)
-	require.NotContains(t, got[0], "Brannoc")
-	require.True(t, strings.HasPrefix(got[0], "You stop what you were doing to follow "), got[0])
+	require.Equal(t, []string{"You stop what you were doing to follow Brannoc."}, followRead(followMiraId))
+	require.Equal(t, []string{"Mira stops what they were doing to follow you."}, followRead(followBrannocId))
+	require.Equal(t, []string{"Mira stops what they were doing and follows Brannoc."}, followRead(followWitnessId))
 }
 
 func TestBreakOffMenuToFollow_NothingOpenSaysNothing(t *testing.T) {

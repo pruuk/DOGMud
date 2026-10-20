@@ -30,16 +30,20 @@ func BreakOffMenuToFollow(follower *users.UserRecord, leader *characters.Charact
 
 	hideForFollower := append([]string{leader.Name}, topicNames...)
 	follower.SendText(messaging.CategoryRoomExit,
-		messaging.HideNames(toFollower, hideForFollower, messaging.ParticipantSight(follower.Character, room)))
+		messaging.HideNames(toFollower, hideForFollower, room.DepartureSight(follower.Character, leader)))
 
 	if leaderUserId > 0 {
 		if lu := users.GetByUserId(leaderUserId); lu != nil {
 			hideForLeader := append([]string{follower.Character.Name}, topicNames...)
 			lu.SendText(messaging.CategoryRoomExit,
-				messaging.HideNames(toLeader, hideForLeader, messaging.ParticipantSight(lu.Character, room)))
+				messaging.HideNames(toLeader, hideForLeader, room.DepartureSight(lu.Character, leader)))
 		}
 	}
 
 	roomNames := append([]string{follower.Character.Name, leader.Name}, topicNames...)
-	room.SendTextVisualHidingNames(messaging.CategoryRoomExit, toRoom, roomNames, follower.UserId, leaderUserId)
+	// The leader has already left room, so every reader is judged with the
+	// leader's own carried light counted in it (a mover is seen by their own
+	// light on the way out).
+	room.SendTextVisualToSnapshot(room.DepartureSnapshot(leader), messaging.CategoryRoomExit, toRoom, roomNames,
+		follower.UserId, leaderUserId)
 }
