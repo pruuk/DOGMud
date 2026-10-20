@@ -65,13 +65,22 @@ func TestMenuChanged_FrameIsDispatchedBeforeTheMenuText(t *testing.T) {
 
 	// Run the first pop the way ProcessEvents would: MenuChanged is handled
 	// before the Message, and the handler queues the frame.
-	require.Equal(t, `MenuChanged`, events.QueuedTypesInOrderForTest()[0])
+	// Other tests may leave unrelated events queued; look only at ours.
+	ours := func() []string {
+		var order []string
+		for _, ty := range events.QueuedTypesInOrderForTest() {
+			if ty == `MenuChanged` || ty == `Message` || ty == `GMCPOut` {
+				order = append(order, ty)
+			}
+		}
+		return order
+	}
+	require.Equal(t, []string{`MenuChanged`, `Message`}, ours())
 	for _, e := range events.DrainQueuedByTypeForTest(`MenuChanged`) {
 		menuChangedHandler(e)
 	}
 
-	order := events.QueuedTypesInOrderForTest()
-	require.Equal(t, []string{`GMCPOut`, `Message`}, order,
+	require.Equal(t, []string{`GMCPOut`, `Message`}, ours(),
 		"Char.Menu open must pop ahead of the menu text")
 }
 
