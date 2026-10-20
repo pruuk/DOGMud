@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/apiframework"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	talkflow "github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -572,7 +573,8 @@ func (m *AICompanionModule) cmdBoundary(rest string, user *users.UserRecord, roo
 // model must not be able to move a player's quests, items or gold.
 type askAuthority struct {
 	MobInstanceId int
-	Topic         string
+	Topic         string // the owner's words; the model's sayto must still carry them
+	TopicKey      string // the NPC info topic those words resolved to (R13)
 	Expires       int64
 }
 
@@ -645,7 +647,20 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 		refusal.NotHereCreature(user)
 		return true, nil
 	}
-	c.askAuth = &askAuthority{MobInstanceId: mobInstanceId, Topic: topic, Expires: time.Now().Unix() + 60}
+	// What the owner typed must name one of the NPC's info topics (R13). The
+	// key it resolves to is what the NPC is later asked, never the model's
+	// words. Offers and hand-ins are the owner's own to make.
+	key, labels, found := talkflow.CompanionTopic(user, target, topic)
+	if !found {
+		if len(labels) == 0 {
+			user.SendText(messaging.CategoryRefusal, `They have nothing to tell your companion right now.`)
+		} else {
+			user.SendText(messaging.CategoryRefusal, util.SplitStringNL(
+				`Name one topic for your companion to ask about: `+strings.Join(labels, ` / `), 80))
+		}
+		return true, nil
+	}
+	c.askAuth = &askAuthority{MobInstanceId: mobInstanceId, Topic: topic, TopicKey: key, Expires: time.Now().Unix() + 60}
 	// The NPC is named as the owner perceives it: an owner who makes it out
 	// only as a shape sends her to "a figure", so its real name never
 	// reaches her memory or her prompt, where she might say it aloud (#454).

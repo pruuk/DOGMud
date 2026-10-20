@@ -472,7 +472,7 @@ func (m *AICompanionModule) performAction(c *controller, mob *mobs.Mob, owner *u
 		// covers one NPC, one topic, for a minute. Without it her words are
 		// only words, and none of the owner's quests, items or gold move.
 		if t.Kind == `npc` && owner != nil && c.askAuth.valid(t.MobInstanceId, a.Query, time.Now().Unix()) {
-			companionai.AskNpc(owner.UserId, t.MobInstanceId, a.Query, true)
+			companionai.AskNpc(owner.UserId, t.MobInstanceId, c.askAuth.TopicKey, true)
 			c.askAuth = nil
 		}
 		c.mind.addLine(Line{Speaker: c.profile.Name, Kind: `said`, Text: `(to ` + t.Name + `) ` + a.Query}, m.cfg.WorkingMemoryLines)

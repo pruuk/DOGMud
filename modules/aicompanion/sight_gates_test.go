@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
+	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -39,6 +40,14 @@ func askForScene(t *testing.T, smithHere, lit bool) (*AICompanionModule, *contro
 	owner, _, room, _ := harmWorld(t, configs.PVPDisabled)
 	if smithHere {
 		harmMob(t, room, 300, `Smith`)
+		// companion-ask resolves what the owner typed against the NPC's info
+		// topics (R13), so the Smith needs one. harmMob leaves MobId 0 and
+		// no zone, which is the key dialogue.Load reads.
+		t.Cleanup(dialogue.InstallForTest(&dialogue.DialogueFile{Topics: []dialogue.Topic{
+			{Key: `ore`, Kind: dialogue.KindInfo, Label: `What of the ore shipment?`, Text: `Delayed.`},
+			{Key: `weather`, Kind: dialogue.KindInfo, Label: `How is the weather?`, Text: `Grim.`},
+			{Key: `rumor`, Kind: dialogue.KindInfo, Label: `Any rumors, friend?`, Text: `None.`},
+		}}))
 	}
 	if !lit {
 		room.SkyLight, room.Lamp = rooms.SkyLightPtr(0), rooms.LampPtr(0)
@@ -201,5 +210,30 @@ func TestCraftableHereIsEmptyWhenSleepingInALitRoom(t *testing.T) {
 	}
 	if got := craftableHere(her, p, room); len(got) != 0 {
 		t.Fatalf("asleep in a lit room: nothing is craftable here, got %+v", got)
+	}
+}
+
+// R13: the leave stores the topic key the owner's words resolved to, and
+// that key, not the model's words, is what reaches the NPC.
+func TestCompanionAsk_StoresTheResolvedTopicKey(t *testing.T) {
+	m, c, owner, room := askForScene(t, true, true)
+	_, _ = m.cmdAskFor(`smith about the ore`, owner, room, events.EventFlag(0))
+	if c.askAuth == nil || c.askAuth.TopicKey != `ore` {
+		t.Fatalf("the leave should carry the topic key: %+v", c.askAuth)
+	}
+}
+
+// No match, or several, grants no leave and lists the NPC's info labels.
+func TestCompanionAsk_UnmatchedTopicGrantsNoLeaveAndListsTheLabels(t *testing.T) {
+	for _, what := range []string{`smith about gossip`, `smith about the`} {
+		m, c, owner, room := askForScene(t, true, true)
+		_, _ = m.cmdAskFor(what, owner, room, events.EventFlag(0))
+		told := strings.Join(events.DrainQueuedMessagesForTest(owner.UserId), ``)
+		if c.askAuth != nil {
+			t.Fatalf("%q: no single topic matched, yet a leave was granted: %+v", what, c.askAuth)
+		}
+		if !strings.Contains(told, `What of the ore shipment?`) || !strings.Contains(told, `Any rumors, friend?`) {
+			t.Errorf("%q: the owner should read the NPC's info labels: %q", what, told)
+		}
 	}
 }
