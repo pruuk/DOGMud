@@ -2001,6 +2001,8 @@ EOF
 - Create: `internal/conversation/talk.go`
 - Test: `internal/usercommands/conversation_talk_test.go` (the `usercommands` test package already seeds a room, users and a mob through `seedAllRegistries`; tests there may call `conversation` directly)
 
+**Also in this task (moved from Task 7):** add `"player_topic": true, // a player chose a behavior talk topic on this mob (Text = topic key)` to `KnownBehaviorEvents` in `internal/behaviortree/events.go` and the test `TestPlayerTopicIsAKnownEvent` (`require.True(t, KnownBehaviorEvents["player_topic"])`) to `internal/behaviortree/topics_test.go`, in the same commit as `talk.go`'s `EventType: "player_topic"` dispatch. `TestEventVocabulary_MatchesDispatchSitesBothWays` fails while an event is registered with no dispatch site, so they must land together.
+
 Output order for a topic that takes an item (owner's own example, "Here is the evidence you were looking for, Warden [hand them the purse]"): the player's line, then the handover line, then the NPC's reply. Update the spec's section 4 items 4 and 5 to this order in this task's commit.
 
 - [ ] **Step 1: Write the fixture helper and failing tests**
@@ -3001,6 +3003,9 @@ func validateShippedDialogue() []dialogue.Problem {
 }
 
 // behaviorTopicKeys indexes topic_is keys by mob id from behaviors/**/<id>-*.yaml.
+// (Review of Task 6 changed World.BehaviorTopics to map[int][]string so the
+// validator can also report a topic_is on a mob with no dialogue file:
+// return byMob directly instead of the closure below.)
 func behaviorTopicKeys() func(int) []string {
 	byMob := map[int][]string{}
 	root := filepath.Join(string(configs.GetFilePathsConfig().DataFiles), "behaviors")

@@ -13,10 +13,19 @@ package owns everything that needs a user, a room or a mob.
 | File | What it holds |
 |---|---|
 | `playerstate.go` | `PlayerState(user)`: the `dialogue.PlayerState` callbacks over a character |
+| `talk.go` | `Talk(user, room, mob)`: the approach line, opener and breadcrumbs, then the private talk menu; info and hand-in choices (player line, handover line, NPC reply, then the menu re-shown), the offer pitch and its Accept / Leave card, and `player_topic` for `behavior` topics |
 
 ## Rules
 
 - Observers see a conversation, never a menu: the player's line and the NPC's
   answer go to the room through `actions.Say`; menus, cards and hints go to the
   player only.
-- Every choice re-checks eligibility right before it acts.
+- Every choice re-checks eligibility right before it acts. `StillValid` (the
+  NPC in the same room, the room at full sight, the NPC perceived) runs
+  before every choice; a failed check closes the menu with the context-lost
+  line.
+- Quest grants are queued (`events.Quest`), so the menu re-shown after a
+  choice counts the token that choice granted as held (`heldAlso`); without
+  it the re-shown menu still lists an offer the player just accepted.
+- An NPC with no eligible topic left opens no menu: once the last topic is
+  used up the conversation simply ends.

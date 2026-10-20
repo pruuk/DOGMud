@@ -175,14 +175,18 @@ deletion's callers with `codegraph_callers` before removing it.
    offer is still eligible and the NPC still present and named) and applies the effects; a
    failed re-check gives one line and grants nothing. Either answer returns to the talk menu,
    re-shown.
-4. **Hand-in chosen**, and any topic of any kind that takes an item: if the topic has
-   `requiresItem`, the player sees "You give the bandit purse to Warden Velk." and the room sees
-   the same act through the sight rules (the lines `give.go` prints today). Then the player line
-   (the label for info), the NPC text and the effects. A hand-in completes on choice with no
-   card (R6). The menu is re-shown.
+4. **Hand-in chosen**, and any topic of any kind that takes an item: the player line (the label
+   for info), then the handover line, then the NPC reply. The handover line is printed only when
+   the topic has `requiresItem` and the effects took it: the player sees "You give the bandit
+   purse to Warden Velk." and the room sees the same act through the sight rules (the lines
+   `give.go` prints today). The owner's own example: "Here is the evidence you were looking
+   for, Warden", then the purse changes hands, then the Warden answers. A hand-in completes on
+   choice with no card (R6). The menu is re-shown, counting the quest token the choice just
+   granted as held (the grant is queued and lands on a later event pass).
 5. **`give <item> <npc>`** (R8), checked before any transfer and before the quest engine:
    - an eligible topic on that NPC has `requiresItem` equal to the item: resolve exactly as
-     choosing it (step 4), first such topic in authored order. No menu needs to be open.
+     choosing it (step 4): player line, handover line, NPC reply, first such topic in
+     authored order. No menu needs to be open.
    - some topic on that NPC wants the item but none is eligible: the NPC hands it back and the
      item never leaves the player ("Warden Velk looks at the bandit purse and hands it back.").
    - otherwise: today's give, unchanged.

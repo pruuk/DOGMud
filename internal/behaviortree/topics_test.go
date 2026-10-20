@@ -8,6 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestPlayerTopicIsAKnownEvent(t *testing.T) {
+	require.True(t, KnownBehaviorEvents["player_topic"])
+}
+
 func TestTopicIs_MatchesTheEventKeyOnly(t *testing.T) {
 	ctx := &EvalContext{Event: EventContext{EventType: "player_topic", Text: "ferry"}}
 	require.Equal(t, Success, condTopicIs(map[string]any{"topic": "ferry"}, ctx))
