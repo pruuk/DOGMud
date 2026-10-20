@@ -21,15 +21,21 @@ func (c *Character) MarkHeard(key string) {
 }
 
 // RenameHeardTopics applies the topic-key manifest's renames (old -> new)
-// so a renamed topic stays heard. Run at load.
+// so a renamed topic stays heard. Run at load; it always rebuilds the list
+// sorted and unique, which also repairs a hand-edited save.
 func (c *Character) RenameHeardTopics(renames map[string]string) {
-	if len(renames) == 0 || len(c.HeardTopics) == 0 {
+	if len(c.HeardTopics) == 0 {
 		return
 	}
 	keys := c.HeardTopics
 	c.HeardTopics = nil
 	for _, k := range keys {
-		if n, ok := renames[k]; ok {
+		// Follow chains (a->b, b->c); the hop limit stops cycles.
+		for hops := 0; hops < len(renames); hops++ {
+			n, ok := renames[k]
+			if !ok {
+				break
+			}
 			k = n
 		}
 		c.MarkHeard(k)

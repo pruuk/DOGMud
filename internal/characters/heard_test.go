@@ -23,6 +23,24 @@ func TestHeard_RenameAppliesAndDedupes(t *testing.T) {
 	require.Equal(t, []string{"12.a", "94.c"}, c.HeardTopics)
 }
 
+func TestHeard_RenameFollowsChains(t *testing.T) {
+	c := &Character{HeardTopics: []string{"a"}}
+	c.RenameHeardTopics(map[string]string{"a": "b", "b": "c"})
+	require.Equal(t, []string{"c"}, c.HeardTopics)
+}
+
+func TestHeard_RenameCycleTerminates(t *testing.T) {
+	c := &Character{HeardTopics: []string{"a"}}
+	c.RenameHeardTopics(map[string]string{"a": "b", "b": "a"})
+	require.Len(t, c.HeardTopics, 1)
+}
+
+func TestHeard_RenameRepairsUnsortedList(t *testing.T) {
+	c := &Character{HeardTopics: []string{"b", "a", "a"}}
+	c.RenameHeardTopics(nil)
+	require.Equal(t, []string{"a", "b"}, c.HeardTopics)
+}
+
 func TestHeard_SurvivesYAMLRoundTrip(t *testing.T) {
 	c := &Character{Name: "Mira"}
 	c.MarkHeard("94.where_to_look")

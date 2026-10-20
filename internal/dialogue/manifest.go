@@ -1,12 +1,14 @@
 package dialogue
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"sort"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -24,6 +26,8 @@ type Manifest struct {
 func ParseManifest(data []byte) (Manifest, error) {
 	m := Manifest{Renamed: map[string]string{}}
 	section := "keys"
+	data = bytes.TrimPrefix(data, []byte{0xEF, 0xBB, 0xBF}) // UTF-8 BOM
+	seen := map[string]bool{}
 	for n, raw := range strings.Split(string(data), "\n") {
 		line := strings.TrimSpace(raw)
 		switch {
@@ -39,20 +43,39 @@ func ParseManifest(data []byte) (Manifest, error) {
 			continue
 		}
 		switch section {
-		case "keys":
-			m.Keys = append(m.Keys, line)
-		case "retired":
-			m.Retired = append(m.Retired, line)
+		case "keys", "retired":
+			if !validKey(line) {
+				return m, fmt.Errorf("topic-keys.txt line %d: a key has no spaces or \"->\": %q", n+1, line)
+			}
+			if section == "keys" {
+				if seen[line] {
+					return m, fmt.Errorf("topic-keys.txt line %d: repeated key %q", n+1, line)
+				}
+				seen[line] = true
+				m.Keys = append(m.Keys, line)
+			} else {
+				m.Retired = append(m.Retired, line)
+			}
 		case "renamed":
 			old, nu, ok := strings.Cut(line, "->")
-			if !ok || strings.TrimSpace(old) == "" || strings.TrimSpace(nu) == "" {
+			old, nu = strings.TrimSpace(old), strings.TrimSpace(nu)
+			if !ok || !validKey(old) || !validKey(nu) {
 				return m, fmt.Errorf("topic-keys.txt line %d: a rename is \"old -> new\": %q", n+1, line)
 			}
-			m.Renamed[strings.TrimSpace(old)] = strings.TrimSpace(nu)
+			if _, dup := m.Renamed[old]; dup {
+				return m, fmt.Errorf("topic-keys.txt line %d: %q is renamed twice", n+1, old)
+			}
+			m.Renamed[old] = nu
 		}
 	}
 	sort.Strings(m.Keys)
 	return m, nil
+}
+
+// validKey reports whether s can be a manifest key: not empty, no
+// whitespace, no rename arrow.
+func validKey(s string) bool {
+	return s != "" && !strings.ContainsAny(s, " \t\r\n") && !strings.Contains(s, "->")
 }
 
 // Diff compares content keys with the manifest: missing are listed keys gone
@@ -99,6 +122,7 @@ func HeardRenames() map[string]string {
 	}
 	m, err := ParseManifest(data)
 	if err != nil {
+		mudlog.Warn("dialogue.HeardRenames()", "path", path, "error", err)
 		return nil
 	}
 	return m.Renamed
