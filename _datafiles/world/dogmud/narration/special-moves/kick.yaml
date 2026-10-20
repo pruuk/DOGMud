@@ -155,8 +155,8 @@ events:
       - '{actor} tries to knee you, and you stop most of it, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} tries to knee you; you take only part of it, but the strike still lands! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} tries to knee {actee} in the grapple, who stops most of it but still takes the hit!'
-      - '{actor} drives a knee at {actee} in the grapple, who takes only part of it but still feels it!'
+      - 'In the grapple, {actor} tries to knee {actee}, who stops most of it but still takes the hit!'
+      - 'In the grapple, {actor} drives a knee at {actee}, who takes only part of it but still feels it!'
   # DIVERGENT (Task 4b Step 4, owner-approved 2026-09-21): variants 1 to 3
   # (the player's original lines) describe different feels -- target turns
   # away / strike glances off / target blocks -- one feel per variant across

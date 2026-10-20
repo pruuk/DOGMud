@@ -45,7 +45,7 @@ events:
       - '{actor}''s lunge only half reaches your throat, but the fangs still graze you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} snaps at your throat; you stop most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} lunges for the throat of {actee}, who gets mostly clear but still gets grazed!'
+      - '{actor} lunges for {actee}''s throat; {actee} gets mostly clear but still gets grazed!'
       - '{actor}''s lunge only half reaches {actee}''s throat, but the fangs still graze it!'
       - '{actor} snaps at {actee}, who stops most of it but not all!'
   miss:

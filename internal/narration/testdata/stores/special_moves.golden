@@ -276,11 +276,11 @@ kick|knee_miss|3|observer= <ansi fg="mobname">ACTOR</ansi> tries to knee <ansi f
 kick|knee_miss|3|remote_observer= 
 kick|knee_partial|0|actor= <ansi fg="username">ACTEE</ansi> stops most of your knee, but it still lands! (<ansi fg="damage">DAMAGE</ansi>)
 kick|knee_partial|0|actee= <ansi fg="mobname">ACTOR</ansi> tries to knee you, and you stop most of it, but it still lands! (<ansi fg="damage">DAMAGE</ansi>)
-kick|knee_partial|0|observer= <ansi fg="mobname">ACTOR</ansi> tries to knee <ansi fg="username">ACTEE</ansi> in the grapple, who stops most of it but still takes the hit!
+kick|knee_partial|0|observer= In the grapple, <ansi fg="mobname">ACTOR</ansi> tries to knee <ansi fg="username">ACTEE</ansi>, who stops most of it but still takes the hit!
 kick|knee_partial|0|remote_observer= 
 kick|knee_partial|1|actor= You try to knee <ansi fg="username">ACTEE</ansi>; they take only part of it, but the strike still lands! (<ansi fg="damage">DAMAGE</ansi>)
 kick|knee_partial|1|actee= <ansi fg="mobname">ACTOR</ansi> tries to knee you; you take only part of it, but the strike still lands! (<ansi fg="damage">DAMAGE</ansi>)
-kick|knee_partial|1|observer= <ansi fg="mobname">ACTOR</ansi> drives a knee at <ansi fg="username">ACTEE</ansi> in the grapple, who takes only part of it but still feels it!
+kick|knee_partial|1|observer= In the grapple, <ansi fg="mobname">ACTOR</ansi> drives a knee at <ansi fg="username">ACTEE</ansi>, who takes only part of it but still feels it!
 kick|knee_partial|1|remote_observer= 
 kick|standard_hit|0|actor= You kick <ansi fg="username">ACTEE</ansi> hard! (<ansi fg="damage">DAMAGE</ansi>)
 kick|standard_hit|0|actee= <ansi fg="mobname">ACTOR</ansi> kicks you hard! (<ansi fg="damage">DAMAGE</ansi>)
@@ -744,7 +744,7 @@ throttle|miss|3|observer= <ansi fg="username">ACTEE</ansi> twists away before <a
 throttle|miss|3|remote_observer= 
 throttle|partial|0|actor= Your fangs still graze <ansi fg="username">ACTEE</ansi> as they get mostly clear! (<ansi fg="damage">DAMAGE</ansi>)
 throttle|partial|0|actee= <ansi fg="mobname">ACTOR</ansi> lunges for your throat and you get mostly clear, but the fangs still catch you! (<ansi fg="damage">DAMAGE</ansi>)
-throttle|partial|0|observer= <ansi fg="mobname">ACTOR</ansi> lunges for the throat of <ansi fg="username">ACTEE</ansi>, who gets mostly clear but still gets grazed!
+throttle|partial|0|observer= <ansi fg="mobname">ACTOR</ansi> lunges for <ansi fg="username">ACTEE</ansi>'s throat; <ansi fg="username">ACTEE</ansi> gets mostly clear but still gets grazed!
 throttle|partial|0|remote_observer= 
 throttle|partial|1|actor= Your throttle lunge only half reaches <ansi fg="username">ACTEE</ansi>'s throat, but your fangs still graze it! (<ansi fg="damage">DAMAGE</ansi>)
 throttle|partial|1|actee= <ansi fg="mobname">ACTOR</ansi>'s lunge only half reaches your throat, but the fangs still graze you! (<ansi fg="damage">DAMAGE</ansi>)
