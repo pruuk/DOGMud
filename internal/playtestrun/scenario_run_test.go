@@ -246,14 +246,9 @@ func TestRunScenario_WallClockIncomplete(t *testing.T) {
 			StopPollInterval:  time.Millisecond,
 		})
 	}()
-	// Advance past deadline quickly.
-	go func() {
-		for i := 0; i < 50; i++ {
-			clock.Advance(time.Millisecond)
-			time.Sleep(time.Millisecond)
-		}
-	}()
-	_ = pumpCtx
+	// Advance past the deadline, and keep advancing until RunScenario returns:
+	// a bounded advance could finish before a loaded machine sets the deadline.
+	pumpClock(t, pumpCtx, clock)
 	err := <-done
 	pumpCancel()
 	require.Error(t, err)
