@@ -278,11 +278,7 @@ func (u *UserRecord) RouteMenuInput(line string, typed bool) bool {
 		u.SendText(messaging.CategoryRefusal, fmt.Sprintf("There is no choice %s.", strings.TrimSpace(line)))
 		return true
 	case menu.Ambiguous:
-		labels := make([]string, 0, len(res.Matches))
-		for _, e := range res.Matches {
-			labels = append(labels, e.Label)
-		}
-		u.SendText(messaging.CategoryRefusal, "Which one? "+strings.Join(labels, ", ")+".")
+		u.SendText(messaging.CategoryRefusal, ambiguousLine(res.Matches))
 		return true
 	case menu.Empty:
 		u.SendText(messaging.CategoryScreen, menu.Render(om.m))
