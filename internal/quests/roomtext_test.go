@@ -121,6 +121,8 @@ func TestShippedQuestRoomTextFollowsConvention(t *testing.T) {
 	// triggers of quests 63 (3), 65 (3) and 68 (2). The batch 4 review then
 	// took 2 away: quest 68's guild mark triggers no longer make the circle
 	// choice (spec R28, the choice moved to talk), so their observer lines went.
-	assert.Equal(t, 28, checked,
-		"28 quest observer lines ship; a different count means the inventory moved, so re-read this test")
+	// Batch 5 added 2: the lost-item triggers of quests 69 (the rubbing) and
+	// 71 (the ledger page).
+	assert.Equal(t, 30, checked,
+		"30 quest observer lines ship; a different count means the inventory moved, so re-read this test")
 }

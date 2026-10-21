@@ -13,7 +13,7 @@ segments:
       - emote listens to someone farther down the bar with the
         particular expression of a person who finds what they are
         hearing genuinely interesting.
-      - say The Gilt Rest has always been a good room for a quiet
+      - say The Gilt Threshold has always been a good room for a quiet
         conversation. The walls are solid. I have never asked
         anyone what they discussed.
       - emote refills a cup at the far end without being summoned
@@ -30,6 +30,6 @@ segments:
     target_room: 5816
     activity: sleeping
     idlecommands:
-      - emote sleeps in the lodging above the Gilt Rest, the bar
+      - emote sleeps in the lodging above the Gilt Threshold, the bar
         quiet below, whatever she heard tonight filed behind the same
         pleasant expression she offered to every guest who said it.

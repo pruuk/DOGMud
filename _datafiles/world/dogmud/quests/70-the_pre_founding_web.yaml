@@ -16,8 +16,10 @@ steps:
       sealed Deep Canal with your own eyes, take a rubbing of the lintel
       symbol, and carry it up to Orin in the Crafting Quarter.
     hint: >-
-      Go west and deeper to the Buried Lintel. Examine the symbol carved
-      on its underside to take a rubbing. Mind the canal. It is not empty.
+      The Buried Lintel lies west twice from Gritta's Flooded Cellar, past
+      the Pre-Founding Stonework. From the Flooded Stair, go down into the
+      cellar first. Mind the canal north of the stonework: it is not empty.
+      Type look symbol.
   - id: witness
     map_target: 5706  # fallback when Orin the Bookseller is not spawned
     map_target_mob: 9332  # follow Orin the Bookseller (schedule np_crafting_orin) — a fixed room is wrong for part of the day
@@ -63,6 +65,7 @@ triggers:
     noun: symbol
     conditions:
       has: ["70-start"]
+      missing: ["70-end"]
       missing_item: 40118
     actions:
       - grant: "70-witness"
