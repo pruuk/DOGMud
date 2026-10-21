@@ -23,6 +23,9 @@ exits:
   down:
     roomid: 5525
 nouns:
+  # Aliases: "look board" and "look floor board" find the floorboard too.
+  board: ":floorboard"
+  floor board: ":floorboard"
   stock ledger: A bound account book, current year, open to a
     page of cargo manifests and their tallied values. The columns
     add up, until you check the sub-totals against the totals,
