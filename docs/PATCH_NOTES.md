@@ -7,6 +7,20 @@
   rest of the world at each autosave, so the game should feel smoother,
   especially while the caravan is on the road.
 
+## 2026-10-21: Room features accept singular and plural
+
+- Looking at or searching something in a room now works whether you
+  type it in the singular or the plural. If a room describes wardstones,
+  both "look wardstone" and "look wardstones" show them.
+- Quest steps that wait for you to look at or touch something now count
+  either spelling too, so "look pillars" advances a step as well as
+  "look pillar".
+
+## 2026-10-21: Smoother travel in the web client
+
+- Walking between areas in the web client no longer stalls the game for
+  everyone while your map redraws. The map itself looks the same.
+
 ## 2026-10-20: Choices as numbered lists
 
 - Every choice the game offers you is now a numbered list in the same

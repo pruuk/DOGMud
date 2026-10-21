@@ -273,8 +273,7 @@ func SaveRoomTemplate(roomTpl Room) error {
 
 	// Do not accept a RoomId of zero.
 	if roomTpl.RoomId == 0 {
-		roomTpl.RoomId = GetNextRoomId()
-		SetNextRoomId(roomTpl.RoomId + 1)
+		roomTpl.RoomId = allocateRoomId()
 	}
 
 	//
@@ -515,8 +514,15 @@ func loadAllRoomZones() error {
 	start := time.Now()
 
 	nextRoomId := GetNextRoomId()
+	configuredNextRoomId := nextRoomId
 	defer func() {
 		if nextRoomId != GetNextRoomId() {
+			if nextRoomId > configuredNextRoomId {
+				// Logged once per boot. On a host where the override file
+				// cannot be written the counter is lost on every restart,
+				// so this is the guard that keeps ids from being reissued.
+				mudlog.Warn(`rooms.loadAllRoomZones()`, `message`, `NextRoomId was at or below an existing room id; raised`, `configured`, configuredNextRoomId, `raisedTo`, nextRoomId)
+			}
 			SetNextRoomId(nextRoomId)
 		}
 	}()

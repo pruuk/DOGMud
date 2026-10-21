@@ -57,7 +57,10 @@ keep it that way.
 `Notify` → `evaluate` (recursive), per matching trigger:
 
 1. **Field match** (`matchTriggerFields`) — mob, room, item, skill, command,
-   topic, questToken, noun, verb.
+   topic, questToken, noun, verb. A trigger `noun:` also matches the typed
+   noun's singular/plural variant (`util.NounNumberVariants`), but only when no
+   trigger of the event matches the typed noun exactly; author one spelling
+   per noun (a guard test fails on a pair that differs only by number).
 2. **Visit guard** — `MarkVisited(trigId)`; a trigger fires at most once per
    chain.
 3. **Conditions** — `EvalConditions(t.Conditions, player)`.

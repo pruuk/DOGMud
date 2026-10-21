@@ -132,6 +132,13 @@ whole multi-word phrases already.
 use it when two entries can share a name and the caller must know which one
 matched, as `buy` does for shelf rows.
 
+`NounNumberVariants(word)` lists the other singular/plural spellings of a
+lower-cased noun (`es`, `ies`/`y`, plain `s`), in try order, and
+`NounsDifferOnlyByNumber(a, b)` is the yes/no form. `rooms.FindNoun` and the
+quest engine's `noun:` trigger filter both use them, so a noun a player can
+look at is a noun a quest trigger sees. A word ending in `ss` never loses its
+`s`, and one ending in `s` never gains one (`mos` does not reach `moss`).
+
 `GetMatchNumber` parses the disambiguation forms (`2.sword`, `sword#2`).
 
 **`ConvertForFilename` is load-bearing.** Data-file names are derived from

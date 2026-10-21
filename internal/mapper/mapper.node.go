@@ -9,6 +9,16 @@ type mapNode struct {
 	SecretExits map[string]struct{} // Just a flag for whether an exit key is secret
 	Pos         positionDelta       // Its x/y/z position relative to the root node
 	Plane       int                 // coordinate-space id (0 = overworld); copied from Room.Plane
+
+	// Template-owned room fields (all `instance:"skip"` on rooms.Room, so the
+	// template value is the live value), copied at crawl time. Snapshot reads
+	// them for a room that idle unloading has dropped, so the per-move Zone.Map
+	// build never reloads a room from disk on the event loop.
+	Title     string
+	Zone      string
+	Biome     string // Room.Biome as authored ("" = zone default), resolved at snapshot time
+	IsBank    bool
+	IsStorage bool
 }
 
 type nodeExit struct {
