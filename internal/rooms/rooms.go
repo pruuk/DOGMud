@@ -134,7 +134,7 @@ type Room struct {
 
 func NewRoom(zone string) *Room {
 	r := &Room{
-		RoomId:        GetNextRoomId(),
+		RoomId:        allocateRoomId(),
 		Zone:          zone,
 		Title:         "An empty room.",
 		Description:   "This is an empty room that was never given a description.",
@@ -144,8 +144,6 @@ func NewRoom(zone string) *Room {
 		visitors:      make(map[VisitorType]map[int]uint64),
 		tempDataStore: make(map[string]any),
 	}
-
-	SetNextRoomId(r.RoomId + 1)
 
 	return r
 }
@@ -2465,37 +2463,8 @@ func (r *Room) FindNoun(noun string) (foundNoun string, nounDescription string) 
 			}
 		}
 
-		// Strip "es"
-		if strings.HasSuffix(newNoun, "es") {
-			tn := strings.TrimSuffix(newNoun, "es")
-			if desc, ok := roomNouns[tn]; ok {
-				if strings.HasPrefix(desc, ":") {
-					target := desc[1:]
-					if targetDesc, ok2 := roomNouns[target]; ok2 && !strings.HasPrefix(targetDesc, ":") {
-						return target, targetDesc
-					}
-				} else {
-					return tn, desc
-				}
-			}
-		} else {
-			// Add "es"
-			tn := newNoun + "es"
-			if desc, ok := roomNouns[tn]; ok {
-				if strings.HasPrefix(desc, ":") {
-					target := desc[1:]
-					if targetDesc, ok2 := roomNouns[target]; ok2 && !strings.HasPrefix(targetDesc, ":") {
-						return target, targetDesc
-					}
-				} else {
-					return tn, desc
-				}
-			}
-		}
-
-		// "ies" -> "y"
-		if strings.HasSuffix(newNoun, "ies") {
-			tn := strings.TrimSuffix(newNoun, "ies") + "y"
+		// Singular/plural spellings of the typed word, in precedence order.
+		for _, tn := range util.NounNumberVariants(newNoun) {
 			if desc, ok := roomNouns[tn]; ok {
 				if strings.HasPrefix(desc, ":") {
 					target := desc[1:]

@@ -663,7 +663,7 @@ When writing hidden noun descriptions:
 | `instances.go` / `ephemeral.go` | Instanced and ephemeral rooms |
 | `cubegen.go` | Generated cube/maze room structures |
 | `memory.go` | Memory reporting for the admin report |
-| `test_helpers.go` | Test fixtures |
+| `test_helpers.go` | Test fixtures (`SeedRoomsForTest`, `SeedBiomesForTest`, `UnloadRoomForTest` for a cold room without the unload save) |
 
 ### An indoor biome must be classified for weather prose
 
@@ -836,3 +836,12 @@ sweep prunes its record later as lost.
   unload (`removeRoomFromMemory`, which also clears its fixture outputs).
   `RemoveItem` clears the removed item's fixture output. Stashed items are
   never visited and never index a room.
+
+## Room id allocation
+
+`Server.NextRoomId` is a hint, not the authority. `allocateRoomId()` (used by
+`NewRoom` and `SaveRoomTemplate` for a zero id) skips any id that already has
+a template in the file-path cache or a room in memory, then advances the
+counter. `loadAllRoomZones` raises the counter above the highest template on
+disk and logs once when it had to. Both guards matter on a host where
+`/mud-config` is read-only and the counter cannot persist across restarts.

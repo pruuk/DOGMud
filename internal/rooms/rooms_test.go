@@ -2501,6 +2501,74 @@ func TestFindNoun(t *testing.T) {
 	}
 }
 
+// TestFindNoun_PlainSPluralSingular pins that a room noun matches the plain
+// "-s" singular and plural spellings of what the player typed, alongside the
+// older "-es" and "-ies" rules, with exact spellings always winning.
+func TestFindNoun_PlainSPluralSingular(t *testing.T) {
+	r := &Room{
+		Nouns: map[string]string{
+			"wardstones":      "carved wardstones",
+			"slab":            "a flat slab",
+			"crates":          "stacked crates",
+			"moss":            "damp moss",
+			"standing stones": "a ring of standing stones",
+			"box":             "a plain box",
+			"berries":         "ripe berries",
+			"pony":            "a small horse",
+			"torch":           "a torch",
+			"torches":         "many torches",
+		},
+	}
+
+	tests := []struct {
+		name      string
+		typed     string
+		wantNoun  string
+		wantDesc  string
+		wantEmpty bool
+	}{
+		{name: "singular typed for plural noun", typed: "wardstone", wantNoun: "wardstones", wantDesc: "carved wardstones"},
+		{name: "plural typed for singular noun", typed: "slabs", wantNoun: "slab", wantDesc: "a flat slab"},
+		{name: "singular typed for plural noun (crate)", typed: "crate", wantNoun: "crates", wantDesc: "stacked crates"},
+		{name: "exact plural still matches", typed: "wardstones", wantNoun: "wardstones", wantDesc: "carved wardstones"},
+		{name: "exact singular beats plural variant", typed: "torch", wantNoun: "torch", wantDesc: "a torch"},
+		{name: "es plural still matches", typed: "boxes", wantNoun: "box", wantDesc: "a plain box"},
+		{name: "ies to y still matches", typed: "ponies", wantNoun: "pony", wantDesc: "a small horse"},
+		{name: "y typed for ies noun", typed: "berry", wantNoun: "berries", wantDesc: "ripe berries"},
+		{name: "ss word does not gain a false match", typed: "mos", wantEmpty: true},
+		{name: "ss word exact", typed: "moss", wantNoun: "moss", wantDesc: "damp moss"},
+		{name: "multi-word singular typed", typed: "standing stone", wantNoun: "standing stones", wantDesc: "a ring of standing stones"},
+		{name: "single word of a multi-word noun, singular", typed: "stone", wantNoun: "standing stones", wantDesc: "a ring of standing stones"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotNoun, gotDesc := r.FindNoun(tt.typed)
+			if tt.wantEmpty {
+				if gotNoun != "" || gotDesc != "" {
+					t.Fatalf("FindNoun(%q) = (%q, %q), want no match", tt.typed, gotNoun, gotDesc)
+				}
+				return
+			}
+			if gotNoun != tt.wantNoun || gotDesc != tt.wantDesc {
+				t.Fatalf("FindNoun(%q) = (%q, %q), want (%q, %q)", tt.typed, gotNoun, gotDesc, tt.wantNoun, tt.wantDesc)
+			}
+		})
+	}
+}
+
+// TestFindNoun_PlainSViaAlias pins that a plain-s variant that lands on an
+// alias entry resolves to the alias target, the same as an exact alias hit.
+func TestFindNoun_PlainSViaAlias(t *testing.T) {
+	r := &Room{Nouns: map[string]string{
+		"wardstones": "carved wardstones",
+		"markers":    ":wardstones",
+	}}
+	gotNoun, gotDesc := r.FindNoun("marker")
+	if gotNoun != "wardstones" || gotDesc != "carved wardstones" {
+		t.Fatalf("FindNoun(marker) = (%q, %q), want (wardstones, carved wardstones)", gotNoun, gotDesc)
+	}
+}
+
 func TestPruneVisitors_EmptyMapFastPath(t *testing.T) {
 	r := &Room{
 		RoomId:   9991,

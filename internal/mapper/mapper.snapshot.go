@@ -75,22 +75,52 @@ func (r *mapper) Snapshot(visited map[int]struct{}) []SnapshotRoom {
 		}
 		// Biome name comes from the room's biome (not n.Legend, which may hold a
 		// per-room MapLegend override like "Townsquare"); the client uses it for tinting.
+		//
+		// NEVER load a room here. This runs on the event loop for every room
+		// change a web-client player makes, over every visited room the crawl
+		// reached (790 to 1,209 on the overworld). A room idle unloading has
+		// dropped used to be read and parsed from disk per call: ~0.17 ms each,
+		// ~150 ms for 960 cold rooms locally and far more on the droplet, the
+		// "lag when moving area to area" the owner saw.
+		//
+		// A loaded room is read live, exactly as before. An unloaded room reads
+		// the template fields its mapNode copied at crawl time; it would have
+		// come back from disk with those same values (all are instance:"skip"),
+		// and with no mobs, because unloading destroys them and LoadRoom does
+		// not respawn them, so it never carried the live-only "shop" tag either.
 		srcZone := ""
-		if room := rooms.LoadRoom(id); room != nil {
-			sr.Name = room.Title
-			srcZone = room.Zone
-			if b := room.GetBiome(); b != nil {
+		if rooms.IsRoomLoaded(id) {
+			if room := rooms.LoadRoom(id); room != nil { // memory hit, no disk
+				sr.Name = room.Title
+				srcZone = room.Zone
+				if b := room.GetBiome(); b != nil {
+					sr.Biome = b.Name
+				}
+				// Service tags so the client can highlight important rooms.
+				if room.IsBank {
+					sr.Tags = append(sr.Tags, "bank")
+				}
+				if room.IsStorage {
+					sr.Tags = append(sr.Tags, "storage")
+				}
+				if len(room.GetMobs(rooms.FindMerchant)) > 0 {
+					sr.Tags = append(sr.Tags, "shop")
+				}
+			}
+		} else {
+			sr.Name = n.Title
+			srcZone = n.Zone
+			// A throwaway Room so the biome resolves through Room.GetBiome
+			// itself (zone default when unset, then the "default" biome),
+			// without a copy of that rule here.
+			if b := (&rooms.Room{Biome: n.Biome, Zone: n.Zone}).GetBiome(); b != nil {
 				sr.Biome = b.Name
 			}
-			// Service tags so the client can highlight important rooms.
-			if room.IsBank {
+			if n.IsBank {
 				sr.Tags = append(sr.Tags, "bank")
 			}
-			if room.IsStorage {
+			if n.IsStorage {
 				sr.Tags = append(sr.Tags, "storage")
-			}
-			if len(room.GetMobs(rooms.FindMerchant)) > 0 {
-				sr.Tags = append(sr.Tags, "shop")
 			}
 		}
 
@@ -132,13 +162,29 @@ func (r *mapper) Snapshot(visited map[int]struct{}) []SnapshotRoom {
 				se.Stub = true
 				se.Kind = classifyKind(e.Direction, e.Direction) // nominal placement
 			}
-			// mapNode carries no Zone; LoadRoom is an in-memory cache hit.
-			if dr := rooms.LoadRoom(e.RoomId); dr != nil && dr.Zone != "" && dr.Zone != srcZone {
-				se.ToZone = dr.Zone
+			if dz := r.snapshotZone(e.RoomId); dz != "" && dz != srcZone {
+				se.ToZone = dz
 			}
 			sr.Exits = append(sr.Exits, se)
 		}
 		out = append(out, sr)
 	}
 	return out
+}
+
+// snapshotZone is a room's zone for an exit's ToZone, without loading it: the
+// live room when it is in memory, else the zone its mapNode copied at crawl
+// time. The crawl follows every exit of every node it records, so an exit's
+// destination is either crawled or a room that failed to load at crawl time
+// (which LoadRoom would also have returned nil for); either way "" is right.
+func (r *mapper) snapshotZone(roomId int) string {
+	if rooms.IsRoomLoaded(roomId) {
+		if room := rooms.LoadRoom(roomId); room != nil { // memory hit, no disk
+			return room.Zone
+		}
+	}
+	if n, ok := r.crawledRooms[roomId]; ok {
+		return n.Zone
+	}
+	return ""
 }

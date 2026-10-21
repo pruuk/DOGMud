@@ -321,6 +321,18 @@ renderer (`RoomGridSVG` in `gmcp.js`) uses the `kind` field to route
 each exit to its correct visual treatment: connector line (`normal`/
 `long`), teal edge-stub with chevron (`wrap`), or ▲/▼ tick (`vertical`).
 
+**Snapshot never loads a room.** It runs on the event loop on every room
+change, over every visited room in the crawl (790 to 1,209 on the
+overworld). A loaded room (`rooms.IsRoomLoaded`) is read live, including
+the live-only `shop` tag. An unloaded room reads the template fields
+`getMapNode` copied onto its `mapNode` at crawl time (`Title`, `Zone`,
+`Biome`, `IsBank`, `IsStorage`, all `instance:"skip"` on `rooms.Room`);
+its biome name still resolves through `Room.GetBiome`. Exit `ToZone`
+comes from `snapshotZone`, the same live-or-node rule. Before this, an
+idle-unloaded room was reparsed from disk per snapshot (~180 ms for 960
+cold rooms locally). `mapper.snapshot_cold_test.go` pins both the
+no-load rule and the payload against a golden from the loading version.
+
 ### SnapshotExit Extended Fields
 
 `SnapshotExit` carries additional flags that inform per-exit visual

@@ -2,10 +2,12 @@ package questengine
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // indexedTrigger pairs a definition trigger with the engine-assigned identity
@@ -102,9 +104,24 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 	result := NotifyResult{}
 
 	triggers := e.triggerIndex[eventType]
+
+	// A typed noun matches a trigger's noun exactly or as a singular/plural
+	// variant ("look slabs" for `noun: slab`). An exact match is preferred:
+	// number variants only count when no trigger matches the typed noun
+	// exactly, so a quest that authors both spellings never double-fires.
+	allowNounVariants := details.Noun != ""
+	if allowNounVariants {
+		for _, t := range triggers {
+			if t.def.Noun == details.Noun && matchTriggerFields(t.def, details, false) {
+				allowNounVariants = false
+				break
+			}
+		}
+	}
+
 	for _, t := range triggers {
 		// Field matching
-		if !matchTriggerFields(t.def, details) {
+		if !matchTriggerFields(t.def, details, allowNounVariants) {
 			continue
 		}
 
@@ -153,8 +170,10 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 	return result
 }
 
-// matchTriggerFields checks whether a trigger's field filters match the event details.
-func matchTriggerFields(t *TriggerDef, d EventDetails) bool {
+// matchTriggerFields checks whether a trigger's field filters match the event
+// details. With nounVariants set, a trigger noun also matches a typed noun that
+// differs from it only by singular/plural (util.NounNumberVariants).
+func matchTriggerFields(t *TriggerDef, d EventDetails, nounVariants bool) bool {
 	if t.Mob > 0 && t.Mob != d.MobId {
 		return false
 	}
@@ -177,7 +196,9 @@ func matchTriggerFields(t *TriggerDef, d EventDetails) bool {
 		return false
 	}
 	if t.Noun != "" && t.Noun != d.Noun {
-		return false
+		if !nounVariants || !slices.Contains(util.NounNumberVariants(d.Noun), t.Noun) {
+			return false
+		}
 	}
 	if t.Verb != "" && t.Verb != d.Verb {
 		return false

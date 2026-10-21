@@ -86,15 +86,25 @@ func equipBow(c *characters.Character, loaded bool) {
 // those stay exact and are checked by the caller afterwards.
 //
 // 12 attempts puts a spurious failure at roughly 0.023^12, which is never.
+//
+// Since #265 a shot claims the shared special-move cooldown, so without
+// clearing it every retry after the first was refused unfired and the test
+// failed at the single-shot fumble rate (16 in 600, measured 2026-10-21).
+// Each try therefore clears the timer, and a try that did not fire fails
+// loudly rather than counting as a miss.
 func shootUntilItLands(t *testing.T, user *users.UserRecord, room *rooms.Room, cmd string, healthOf func() int) {
 	t.Helper()
 	const attempts = 12
 	start := healthOf()
 	for i := 0; i < attempts; i++ {
 		equipBow(user.Character, true) // firing unloads the bow; reload each try
+		delete(user.Character.Cooldowns, "special-move")
 		handled, err := Fire(cmd, user, room, 0)
 		if !handled || err != nil {
 			t.Fatalf("Fire(%q) attempt %d: handled=%v err=%v", cmd, i+1, handled, err)
+		}
+		if user.Character.Equipment.Weapon.Loaded {
+			t.Fatalf("Fire(%q) attempt %d was refused without firing (the bow is still loaded)", cmd, i+1)
 		}
 		if healthOf() < start {
 			return
