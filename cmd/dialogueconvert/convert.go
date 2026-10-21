@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
@@ -214,6 +215,7 @@ type cFile struct {
 	topics      []*cTopic
 	keys        map[string]bool
 	isNew       bool
+	suffixed    []string // report lines for keys that took a suffix
 }
 
 // Output is the file as written.
@@ -235,6 +237,9 @@ func (f *cFile) uniqueKey(base string) string {
 		key = fmt.Sprintf("%s_%d", base, n)
 	}
 	f.keys[key] = true
+	if key != base {
+		f.suffixed = append(f.suffixed, fmt.Sprintf("mob %d: key %s (sibling %s)", f.MobId, key, base))
+	}
 	return key
 }
 
@@ -405,11 +410,7 @@ func (c *converter) convertDialogue(d dialogueSource) {
 	// Rule 1: nodes.
 	for _, n := range nodes {
 		where := fmt.Sprintf("mob %d node %s", lf.MobId, n.Id)
-		base := slug(n.Id)
-		key := f.uniqueKey(base)
-		if key != base {
-			c.rep.Notes = append(c.rep.Notes, fmt.Sprintf("%s: key %q taken, written as %q", where, base, key))
-		}
+		key := f.uniqueKey(slug(n.Id))
 		t := c.newTopic(key, n.GrantsQuest, where)
 		t.Text, t.Hints, t.MoodChange = n.Text, n.Hints, n.MoodChange
 		t.Gates = dialogue.Gates{
@@ -439,7 +440,10 @@ func (c *converter) convertDialogue(d dialogueSource) {
 		}
 	}
 
-	// Rule 2: requires to heardRequired.
+	// Rule 2: requires to heardRequired. The old engine passed a requires id
+	// once the player had heard the node of that id OR any node that unlocks
+	// it. A topic needs every heardRequired key, so one is picked: the
+	// candidate earliest in file order, the one most likely heard first.
 	for _, n := range nodes {
 		if len(n.Requires) == 0 {
 			continue
@@ -447,26 +451,34 @@ func (c *converter) convertDialogue(d dialogueSource) {
 		t := nodeTopic[n.Id]
 		for _, req := range n.Requires {
 			where := fmt.Sprintf("mob %d node %s requires %q", lf.MobId, n.Id, req)
-			target, how := nodeTopic[req], "a node id"
-			if target == nil {
-				var unlockers []string
-				for _, u := range nodes {
-					for _, x := range u.Unlocks {
-						if x == req {
-							unlockers = append(unlockers, u.Id)
-							break
-						}
+			var cands []string // node ids, file order
+			for _, u := range nodes {
+				hit := u.Id == req
+				for _, x := range u.Unlocks {
+					if x == req {
+						hit = true
 					}
 				}
-				if len(unlockers) == 0 {
-					c.rep.Requires = append(c.rep.Requires, where+": no node has that id or unlocks it; nothing written")
-					continue
+				if hit {
+					cands = appendUnique(cands, u.Id)
 				}
-				target = nodeTopic[unlockers[0]]
-				how = "unlocked by node " + unlockers[0]
-				line := fmt.Sprintf("%s: no node has that id; unlocked by node %s (key %s)", where, unlockers[0], target.Key)
-				if len(unlockers) > 1 {
-					line += fmt.Sprintf("; also unlocked by %v, first used", unlockers[1:])
+			}
+			if len(cands) == 0 {
+				c.rep.Requires = append(c.rep.Requires, where+": no node has that id or unlocks it; nothing written")
+				continue
+			}
+			target := nodeTopic[cands[0]]
+			how := "node " + cands[0]
+			if cands[0] != req {
+				how = "unlocked by node " + cands[0]
+			}
+			if _, isNode := nodeTopic[req]; !isNode || len(cands) > 1 {
+				line := fmt.Sprintf("%s: %s (key %s)", where, how, target.Key)
+				if !isNode {
+					line = fmt.Sprintf("%s: no node has that id; %s (key %s)", where, how, target.Key)
+				}
+				if len(cands) > 1 {
+					line += fmt.Sprintf("; also reached through %v; picked the earliest in file order, zone pass to confirm", cands[1:])
 				}
 				c.rep.Requires = append(c.rep.Requires, line)
 			}
@@ -524,31 +536,40 @@ func (c *converter) convertDialogue(d dialogueSource) {
 		class := patternClass(p, triggers)
 		c.rep.Patterns[class]++
 		where := fmt.Sprintf("mob %d pattern %d %v", lf.MobId, i+1, p.Keywords)
-		gated := ""
-		if len(p.QuestRequired)+len(p.QuestExcluded) > 0 {
-			gated = fmt.Sprintf(" (it was gated: questRequired %v questExcluded %v)", p.QuestRequired, p.QuestExcluded)
-		}
-		first := ""
-		if len(p.Responses) > 0 {
-			first = p.Responses[0]
-		}
+		gated := patternExtras(p)
+		all := strings.Join(p.Responses, joinSep)
 		switch class {
 		case "catchall":
-			if lf.Tree == nil && firstGreeting < 0 && f.Opener == nil && first != "" {
-				f.Opener = &dialogue.Opener{Text: first}
-				c.rep.Dropped = append(c.rep.Dropped, where+": catchall, first response became the opener (tree-less, no greeting)"+gated)
+			if lf.Tree == nil && firstGreeting < 0 && f.Opener == nil && all != "" {
+				f.Opener = &dialogue.Opener{Text: all}
+				c.rep.Dropped = append(c.rep.Dropped, where+": catchall, its responses became the opener (tree-less, no greeting)"+gated)
 			} else {
 				c.rep.Dropped = append(c.rep.Dropped, where+": catchall, dropped"+gated)
 			}
 		case "greeting":
-			if lf.Tree == nil && i == firstGreeting && f.Opener == nil && first != "" {
-				f.Opener = &dialogue.Opener{Text: first}
-				c.rep.Dropped = append(c.rep.Dropped, where+": greeting, first response became the opener (tree-less)"+gated)
+			if lf.Tree == nil && i == firstGreeting && f.Opener == nil && all != "" {
+				f.Opener = &dialogue.Opener{Text: all}
+				c.rep.Dropped = append(c.rep.Dropped, where+": greeting, its responses became the opener (tree-less)"+gated)
 			} else {
 				c.rep.Dropped = append(c.rep.Dropped, where+": greeting, dropped"+gated)
 			}
 		case "overlap":
-			c.rep.Dropped = append(c.rep.Dropped, where+": overlap with a tree trigger, dropped"+gated)
+			// The nodes sharing a keyword: if every one is gated, this
+			// pattern was what a player outside those gates heard.
+			var shared, ungated []string
+			for _, n := range nodes {
+				if nodeSharesKeyword(n, p) {
+					shared = append(shared, n.Id)
+					if !nodeGated(n) {
+						ungated = append(ungated, n.Id)
+					}
+				}
+			}
+			if len(ungated) == 0 {
+				c.rep.Dropped = append(c.rep.Dropped, fmt.Sprintf("%s: overlap, live fallback, breadcrumb candidate (every node sharing a keyword is gated: %v), dropped%s", where, shared, gated))
+			} else {
+				c.rep.Dropped = append(c.rep.Dropped, fmt.Sprintf("%s: overlap with a tree trigger (ungated node %v), dropped%s", where, ungated, gated))
+			}
 		case "other":
 			var kw string
 			for _, k := range p.Keywords {
@@ -575,12 +596,100 @@ func (c *converter) convertDialogue(d dialogueSource) {
 			if len(p.Moods) > 0 {
 				c.rep.Notes = append(c.rep.Notes, fmt.Sprintf("%s: moods filter %v dropped (topics are never gated by mood), topic %s", where, p.Moods, key))
 			}
+			if extra := nonGreetingKeywords(p); extra <= 1 && extra < countKeywords(p) {
+				c.rep.FoldIntoOpener = append(c.rep.FoldIntoOpener, fmt.Sprintf("%s: a greeting plus %d other word; topic %s kept, the zone pass may fold it into the opener", where, extra, key))
+			}
 			f.add(t)
 		}
 	}
-	if f.Opener == nil {
-		c.rep.Notes = append(c.rep.Notes, fmt.Sprintf("mob %d: no opener (no tree root, greeting or catch-all)", lf.MobId))
+}
+
+// patternExtras names everything a dropped pattern carried besides its
+// keywords and responses, so the report shows what dropping it loses.
+func patternExtras(p legacyPattern) string {
+	var parts []string
+	if len(p.Moods) > 0 {
+		parts = append(parts, fmt.Sprintf("moods %v", p.Moods))
 	}
+	if p.MoodChange != "" {
+		parts = append(parts, "moodChange "+p.MoodChange)
+	}
+	if len(p.QuestRequired) > 0 {
+		parts = append(parts, fmt.Sprintf("questRequired %v", p.QuestRequired))
+	}
+	if len(p.QuestExcluded) > 0 {
+		parts = append(parts, fmt.Sprintf("questExcluded %v", p.QuestExcluded))
+	}
+	if len(p.QuestFlagRequired) > 0 {
+		parts = append(parts, fmt.Sprintf("questFlagRequired %v", p.QuestFlagRequired))
+	}
+	if len(p.QuestFlagExcluded) > 0 {
+		parts = append(parts, fmt.Sprintf("questFlagExcluded %v", p.QuestFlagExcluded))
+	}
+	for _, x := range []struct {
+		name string
+		v    int
+	}{{"requiresItem", p.RequiresItem}, {"itemExcluded", p.ItemExcluded}, {"givesItem", p.GivesItem}, {"givesGold", p.GivesGold},
+		{"chargesGold", p.ChargesGold}, {"goldRequired", p.GoldRequired}, {"masterworkRequired", p.MasterworkRequired}} {
+		if x.v != 0 {
+			parts = append(parts, fmt.Sprintf("%s %d", x.name, x.v))
+		}
+	}
+	if p.GrantsQuest != "" {
+		parts = append(parts, "grantsQuest "+p.GrantsQuest)
+	}
+	if p.SetsQuestFlag != nil {
+		parts = append(parts, fmt.Sprintf("setsQuestFlag %s=%s", p.SetsQuestFlag.Key, p.SetsQuestFlag.Value))
+	}
+	if len(p.BumpsRep) > 0 {
+		parts = append(parts, fmt.Sprintf("bumpsRep %v", p.BumpsRep))
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return " (it carried: " + strings.Join(parts, "; ") + ")"
+}
+
+func normKeywords(kws []string) []string {
+	var out []string
+	for _, k := range kws {
+		if k = strings.ToLower(strings.TrimSpace(k)); k != "" {
+			out = append(out, k)
+		}
+	}
+	return out
+}
+
+func countKeywords(p legacyPattern) int { return len(normKeywords(p.Keywords)) }
+
+func nonGreetingKeywords(p legacyPattern) int {
+	n := 0
+	for _, k := range normKeywords(p.Keywords) {
+		if !greetingWords[k] {
+			n++
+		}
+	}
+	return n
+}
+
+func nodeSharesKeyword(n legacyTreeNode, p legacyPattern) bool {
+	trig := map[string]bool{}
+	for _, t := range normKeywords(n.Triggers) {
+		trig[t] = true
+	}
+	for _, k := range normKeywords(p.Keywords) {
+		if trig[k] {
+			return true
+		}
+	}
+	return false
+}
+
+// nodeGated reports whether a node only answered some players.
+func nodeGated(n legacyTreeNode) bool {
+	return len(n.QuestRequired) > 0 || len(n.QuestExcluded) > 0 || len(n.QuestFlagRequired) > 0 || len(n.QuestFlagExcluded) > 0 ||
+		n.RequiresItem != 0 || n.ItemExcluded != 0 || n.GoldRequired != 0 || n.MasterworkRequired != 0 || n.ChargesGold != 0 ||
+		len(n.Requires) > 0
 }
 
 // ---------------------------------------------------------------- rule 6
@@ -833,7 +942,11 @@ func (c *converter) itemGive(q questSource, i int, tr quests.TriggerDef) {
 	}
 
 	// The ask route and the give route were alternatives that paid the same
-	// reward: an effect the topic already carries is not added again.
+	// reward: an effect the topic already carries is not added again. One it
+	// lacks is added and named, since the ask route never paid it.
+	added := func(what string) {
+		c.rep.MergeLines = append(c.rep.MergeLines, fmt.Sprintf("mob %d topic %s: added %s from %s (the ask route did not pay it)", tr.Mob, target.Key, what, w.where))
+	}
 	grantSeen := false
 	for k, a := range tr.Actions {
 		switch actionName(a) {
@@ -862,12 +975,14 @@ func (c *converter) itemGive(q questSource, i int, tr quests.TriggerDef) {
 				w.clash(fmt.Sprintf("bump_rep %s %d clashes with topic %s bumpsRep %v", nb.Faction, nb.Delta, target.Key, target.BumpsRep))
 			default:
 				target.BumpsRep = append(target.BumpsRep, nb)
+				added(fmt.Sprintf("bumpsRep %s %d", nb.Faction, nb.Delta))
 			}
 		case "set_flag":
 			nf := dialogue.QuestFlagSet{Key: a.SetFlag.Key, Value: a.SetFlag.Value}
 			switch {
 			case target.SetsQuestFlag == nil:
 				target.SetsQuestFlag = &nf
+				added(fmt.Sprintf("setsQuestFlag %s=%s", nf.Key, nf.Value))
 			case *target.SetsQuestFlag != nf:
 				w.clash(fmt.Sprintf("set_flag %s=%s clashes with topic %s setsQuestFlag %s=%s", nf.Key, nf.Value, target.Key, target.SetsQuestFlag.Key, target.SetsQuestFlag.Value))
 			}
@@ -875,6 +990,7 @@ func (c *converter) itemGive(q questSource, i int, tr quests.TriggerDef) {
 			switch {
 			case target.GivesItem == 0:
 				target.GivesItem = a.GiveItem
+				added(fmt.Sprintf("givesItem %d", a.GiveItem))
 			case target.GivesItem != a.GiveItem:
 				w.clash(fmt.Sprintf("give_item %d clashes with topic %s givesItem %d", a.GiveItem, target.Key, target.GivesItem))
 			}
@@ -882,6 +998,7 @@ func (c *converter) itemGive(q questSource, i int, tr quests.TriggerDef) {
 			switch {
 			case target.GivesGold == 0:
 				target.GivesGold = a.GiveGold
+				added(fmt.Sprintf("givesGold %d", a.GiveGold))
 			case target.GivesGold != a.GiveGold:
 				w.clash(fmt.Sprintf("give_gold %d clashes with topic %s givesGold %d", a.GiveGold, target.Key, target.GivesGold))
 			}
@@ -1043,67 +1160,244 @@ func spoken(a btNode) string {
 	return paramString(a.Params, "text")
 }
 
-func (c *converter) convertBehavior(b behaviorSource) {
-	var branches []btNode
-	askBranches(b.Tree, &branches)
-	if len(branches) == 0 {
-		return
-	}
-	for n, br := range branches {
-		c.convertBranch(b, n+1, br)
-	}
+// branchInfo is one player_ask branch, read once.
+type branchInfo struct {
+	n           int
+	where       string
+	keywords    []string // lowercased
+	conds       []btNode // every condition except keyword_match
+	gates       dialogue.Gates
+	treeOnly    []string
+	speech      []string
+	firstSpeech int
+	grants      []string
+	others      []string
+	ferry       *btNode
+	portal      *btNode
+	opener      bool      // became the opener or an opener variant
+	topics      []*cTopic // the topics it became
 }
 
-func (c *converter) convertBranch(b behaviorSource, n int, br btNode) {
+// speechOnly: the branch only speaks, so its text can live outside the tree.
+func (bi *branchInfo) speechOnly() bool {
+	return len(bi.others) == 0 && len(bi.grants) == 0 && len(bi.treeOnly) == 0 && len(bi.speech) > 0
+}
+
+func (bi *branchInfo) greets() bool {
+	for _, k := range bi.keywords {
+		if greetingWords[k] {
+			return true
+		}
+	}
+	return false
+}
+
+// shadows reports whether this earlier branch saw a question before later
+// did: a branch with no keyword_match sees every question; otherwise they
+// must share a keyword.
+func (bi *branchInfo) shadows(later *branchInfo) bool {
+	if len(bi.keywords) == 0 {
+		return true
+	}
+	for _, k := range bi.keywords {
+		for _, l := range later.keywords {
+			if k == l {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func analyzeBranch(path string, n int, br btNode) *branchInfo {
 	var conds, acts []btNode
 	flatten(br, &conds, &acts)
-
-	where := fmt.Sprintf("`%s` branch %d", b.Path, n)
-	var keywords, treeOnly []string
-	var gates dialogue.Gates
+	bi := &branchInfo{n: n, where: fmt.Sprintf("`%s` branch %d", path, n), firstSpeech: -1}
 	for _, cd := range conds {
 		switch cd.Check {
 		case "keyword_match":
-			if keywords == nil {
-				keywords = paramList(cd.Params, "keywords")
+			if bi.keywords == nil {
+				bi.keywords = normKeywords(paramList(cd.Params, "keywords"))
 			}
+			continue
 		case "player_has_quest":
-			gates.QuestRequired = appendUnique(gates.QuestRequired, paramString(cd.Params, "quest"))
+			bi.gates.QuestRequired = appendUnique(bi.gates.QuestRequired, paramString(cd.Params, "quest"))
 		case "player_missing_quest":
-			gates.QuestExcluded = appendUnique(gates.QuestExcluded, paramString(cd.Params, "quest"))
+			bi.gates.QuestExcluded = appendUnique(bi.gates.QuestExcluded, paramString(cd.Params, "quest"))
+		case "player_has_item":
+			// A key the player keeps: the topic shows only to holders, and
+			// the tree keeps the check.
+			bi.gates.CarriesItem = paramInt(cd.Params, "item_id")
+			bi.treeOnly = append(bi.treeOnly, cd.Check)
 		default:
-			treeOnly = append(treeOnly, cd.Check)
+			bi.treeOnly = append(bi.treeOnly, cd.Check)
 		}
+		bi.conds = append(bi.conds, cd)
 	}
-	if len(keywords) > 0 {
-		where += fmt.Sprintf(" (keywords %v)", keywords)
+	if len(bi.keywords) > 0 {
+		bi.where += fmt.Sprintf(" (keywords %v)", bi.keywords)
 	}
-
-	var speech []string
-	firstSpeech := -1
-	var grants, others []string
-	var ferry, portal *btNode
 	for k, a := range acts {
 		switch {
 		case speechActions[a.Do]:
 			if s := spoken(a); s != "" {
-				speech = append(speech, s)
-				if firstSpeech < 0 {
-					firstSpeech = k + 1
+				bi.speech = append(bi.speech, s)
+				if bi.firstSpeech < 0 {
+					bi.firstSpeech = k + 1
 				}
 			}
 		case a.Do == "grant_quest":
-			grants = append(grants, paramString(a.Params, "quest"))
+			bi.grants = append(bi.grants, paramString(a.Params, "quest"))
 		default:
-			others = append(others, a.Do)
-			if a.Do == "board_ferry" && ferry == nil {
-				ferry = &acts[k]
+			bi.others = append(bi.others, a.Do)
+			if a.Do == "board_ferry" && bi.ferry == nil {
+				bi.ferry = &acts[k]
 			}
-			if a.Do == "open_instance_portal" && portal == nil {
-				portal = &acts[k]
+			if a.Do == "open_instance_portal" && bi.portal == nil {
+				bi.portal = &acts[k]
 			}
 		}
 	}
+	return bi
+}
+
+func paramInt(p map[string]any, key string) int {
+	switch v := p[key].(type) {
+	case int:
+		return v
+	case float64:
+		return int(v)
+	case string:
+		n, _ := strconv.Atoi(strings.TrimSpace(v))
+		return n
+	}
+	return 0
+}
+
+func cloneGates(g dialogue.Gates) dialogue.Gates {
+	g.QuestRequired, g.QuestExcluded = copyStrings(g.QuestRequired), copyStrings(g.QuestExcluded)
+	g.QuestFlagRequired, g.QuestFlagExcluded = copyMap(g.QuestFlagRequired), copyMap(g.QuestFlagExcluded)
+	return g
+}
+
+func (c *converter) convertBehavior(b behaviorSource) {
+	var nodes []btNode
+	askBranches(b.Tree, &nodes)
+	if len(nodes) == 0 {
+		return
+	}
+	var branches []*branchInfo
+	for n, br := range nodes {
+		branches = append(branches, analyzeBranch(b.Path, n+1, br))
+	}
+	f := c.fileFor(b.MobId, "behavior-only mob, "+b.Path)
+	if f == nil {
+		for _, bi := range branches {
+			c.rep.Behavior = append(c.rep.Behavior, bi.where+": no file for the mob, not converted")
+		}
+		return
+	}
+
+	// A file with no opener takes its first unconditional speech-only
+	// greeting branch. Speech-only greeting branches above it that share a
+	// keyword and are gated only on quests were tried first: they become
+	// opener variants, which also win first.
+	if f.Opener == nil {
+		for g, bi := range branches {
+			if !bi.speechOnly() || !bi.greets() || len(bi.conds) > 0 {
+				continue
+			}
+			f.Opener = &dialogue.Opener{Text: strings.Join(bi.speech, joinSep)}
+			bi.opener = true
+			c.rep.Behavior = append(c.rep.Behavior, bi.where+": speech only greeting: became the opener: delete the branch")
+			for _, v := range branches[:g] {
+				if v.speechOnly() && v.greets() && v.shadows(bi) && v.gates.CarriesItem == 0 {
+					f.Opener.Variants = append(f.Opener.Variants, dialogue.OpenerVariant{Gates: cloneGates(v.gates), Text: strings.Join(v.speech, joinSep)})
+					v.opener = true
+					c.rep.Behavior = append(c.rep.Behavior, v.where+": gated speech only greeting: became an opener variant: delete the branch")
+				}
+			}
+			break
+		}
+	}
+
+	for _, bi := range branches {
+		if !bi.opener {
+			c.emitBranch(f, bi)
+		}
+	}
+
+	// Selector order: a later branch sharing a keyword with an earlier gated
+	// one was its fallback, heard only when the earlier gate failed.
+	for j, later := range branches {
+		if later.opener || len(later.topics) == 0 {
+			continue
+		}
+		for _, earlier := range branches[:j] {
+			if earlier.opener || len(earlier.conds) == 0 || !earlier.shadows(later) {
+				continue
+			}
+			c.gateFallback(earlier, later)
+		}
+	}
+}
+
+// gateFallback gives the later branch's topics the inverse of the earlier
+// branch's one condition. A conjunction has no single inverse gate, and a
+// tree-state condition has none at all: both are reported.
+func (c *converter) gateFallback(earlier, later *branchInfo) {
+	var checks []string
+	for _, cd := range earlier.conds {
+		checks = append(checks, cd.Check)
+	}
+	cannot := func(why string) {
+		c.rep.Clashes = append(c.rep.Clashes, fmt.Sprintf("%s falls back from branch %d (conditions %v): could not gate (%s); owner decision", later.where, earlier.n, checks, why))
+	}
+	if len(earlier.conds) > 1 {
+		cannot("more than one condition, so no single inverse gate")
+		return
+	}
+	cd := earlier.conds[0]
+	var what string
+	apply := func(t *cTopic) {}
+	switch cd.Check {
+	case "player_has_quest":
+		q := paramString(cd.Params, "quest")
+		what = "questExcluded " + q
+		apply = func(t *cTopic) { t.QuestExcluded = appendUnique(t.QuestExcluded, q) }
+	case "player_missing_quest":
+		q := paramString(cd.Params, "quest")
+		what = "questRequired " + q
+		apply = func(t *cTopic) { t.QuestRequired = appendUnique(t.QuestRequired, q) }
+	case "player_has_item":
+		id := paramInt(cd.Params, "item_id")
+		what = fmt.Sprintf("itemExcluded %d", id)
+		apply = func(t *cTopic) {
+			if t.ItemExcluded != 0 && t.ItemExcluded != id {
+				c.rep.Clashes = append(c.rep.Clashes, fmt.Sprintf("%s: topic %s already has itemExcluded %d, not %d", later.where, t.Key, t.ItemExcluded, id))
+				return
+			}
+			t.ItemExcluded = id
+		}
+	default:
+		cannot(cd.Check + " has no topic gate")
+		return
+	}
+	var keys []string
+	for _, t := range later.topics {
+		apply(t)
+		keys = append(keys, t.Key)
+	}
+	c.rep.Fallbacks = append(c.rep.Fallbacks, fmt.Sprintf("%s falls back from branch %d (%s): %s added to %v", later.where, earlier.n, cd.Check, what, keys))
+}
+
+// emitBranch writes the topics one branch becomes.
+func (c *converter) emitBranch(f *cFile, bi *branchInfo) {
+	before := len(f.topics)
+	defer func() { bi.topics = append([]*cTopic(nil), f.topics[before:]...) }()
+
+	where, gates, speech, firstSpeech := bi.where, bi.gates, bi.speech, bi.firstSpeech
+	grants, others, treeOnly, ferry, portal := bi.grants, bi.others, bi.treeOnly, bi.ferry, bi.portal
 	firstText := ""
 	if len(speech) > 0 {
 		firstText = speech[0]
@@ -1112,26 +1406,20 @@ func (c *converter) convertBranch(b behaviorSource, n int, br btNode) {
 	if keep == "" {
 		keep = "nothing else"
 	}
-
-	f := c.fileFor(b.MobId, "behavior-only mob, "+b.Path)
-	if f == nil {
-		c.rep.Behavior = append(c.rep.Behavior, where+": no file for the mob, not converted")
-		return
-	}
 	baseKey := ""
-	if len(keywords) > 0 {
-		baseKey = slug(keywords[0])
+	if len(bi.keywords) > 0 {
+		baseKey = slug(bi.keywords[0])
 	}
 	if baseKey == "" {
-		baseKey = fmt.Sprintf("ask_%d", n)
+		baseKey = fmt.Sprintf("ask_%d", bi.n)
 	}
-	if len(keywords) == 0 && ferry == nil && portal == nil {
+	if len(bi.keywords) == 0 && ferry == nil && portal == nil {
 		c.rep.Clashes = append(c.rep.Clashes, fmt.Sprintf("%s: no keyword_match, so it ran on every ask; as a topic it runs only when chosen; owner decision", where))
 	}
 	newInfo := func(key string) *cTopic {
 		t := &cTopic{}
 		t.Key, t.Kind = key, dialogue.KindInfo
-		t.Gates = dialogue.Gates{QuestRequired: copyStrings(gates.QuestRequired), QuestExcluded: copyStrings(gates.QuestExcluded)}
+		t.Gates = cloneGates(gates)
 		return t
 	}
 
@@ -1169,7 +1457,7 @@ func (c *converter) convertBranch(b behaviorSource, n int, br btNode) {
 	case len(grants) > 0:
 		key := f.uniqueKey(baseKey)
 		t := c.newTopic(key, grants[0], where)
-		t.Gates = dialogue.Gates{QuestRequired: copyStrings(gates.QuestRequired), QuestExcluded: copyStrings(gates.QuestExcluded)}
+		t.Gates = cloneGates(gates)
 		guardCreatedGrant(t)
 		t.grants = append(t.grants, srcBehavior)
 		for _, g := range grants[1:] {
@@ -1217,6 +1505,10 @@ func (c *converter) finish() {
 	sort.Ints(ids)
 	for _, id := range ids {
 		f := c.res.Files[id]
+		c.rep.Suffixed = append(c.rep.Suffixed, f.suffixed...)
+		if f.Opener == nil {
+			c.rep.NoOpener = append(c.rep.NoOpener, fmt.Sprintf("mob %d (dialogue/%s/%d.yaml): no tree root, greeting pattern, catch-all or ungated greeting branch; the zone pass writes one", id, f.Folder, id))
+		}
 		for _, t := range f.topics {
 			// Rule 5: a priced topic is hidden from a player who cannot pay.
 			if t.ChargesGold > t.GoldRequired {
@@ -1320,6 +1612,11 @@ type Report struct {
 	GatedOffers  []string
 	Dropped      []string
 	Notes        []string
+
+	Fallbacks      []string // behavior branches gated as the fallback of the branch above
+	Suffixed       []string // keys that took a _2, _3 suffix, with their sibling
+	FoldIntoOpener []string // "other" patterns that are a greeting plus at most one word
+	NoOpener       []string // files the converter could give no opener
 }
 
 func newReport() *Report {
@@ -1390,7 +1687,11 @@ func (r *Report) Markdown() string {
 	section("Triggers to delete", r.Triggers)
 	section("Triggers held for a decision", r.HeldTriggers)
 	section("Behavior branches", r.Behavior)
+	section("Branch fallbacks gated", r.Fallbacks)
 	section("New files", r.NewFiles)
+	section("Files without an opener", r.NoOpener)
+	section("Suffixed keys", r.Suffixed)
+	section("Patterns to fold into the opener", r.FoldIntoOpener)
 	section("Gated offers", r.GatedOffers)
 	section("Dropped patterns", r.Dropped)
 	section("Notes", r.Notes)

@@ -1,4 +1,5 @@
-# TestConvert_InstanceZoneBranches: a disc-gated instance portal.
+# TestConvert_InstanceZoneBranches: a disc-gated instance portal and the
+# no-disc fallback below it.
 tree:
   type: selector
   children:
@@ -14,3 +15,12 @@ tree:
           exit_expires: "30 real minutes"
           zones:
             crash: "Crash Site Interior"
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [crash, open, enter]
+        - type: action
+          do: say
+          text: Not without the key.

@@ -1,0 +1,80 @@
+# TestConvert_BehaviorFallbacks: selector order. A gated greeting above the
+# plain one becomes an opener variant; a quest-gated branch above a fallback
+# gives the fallback the inverse gate; a state-gated pair cannot be gated.
+tree:
+  type: selector
+  children:
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [hello, back]
+        - type: condition
+          check: player_has_quest
+          quest: "40-end"
+        - type: action
+          do: say
+          text: Welcome back.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [hello, hi]
+        - type: action
+          do: say
+          text: Hello.
+        - type: action
+          do: say
+          text: Mind the arch.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [passage]
+        - type: condition
+          check: player_has_quest
+          quest: "40-start"
+        - type: action
+          do: say
+          text: Through you go.
+        - type: action
+          do: move_player
+          room_id: 468
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [passage, arch]
+        - type: action
+          do: say
+          text: Not yet.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [begin]
+        - type: condition
+          check: state_equals
+          key: rite_running
+          value: "1"
+        - type: action
+          do: say
+          text: Hush.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [begin]
+        - type: action
+          do: say
+          text: We begin.
+        - type: action
+          do: set_state
+          key: rite_running
+          value: "1"

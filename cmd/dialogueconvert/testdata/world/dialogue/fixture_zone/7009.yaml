@@ -1,0 +1,27 @@
+# TestConvert_PatternReasons: an overlap whose only node is gated (the live
+# answer), an "other" that is a greeting plus one word, and a dropped
+# greeting carrying moods, moodChange and a flag gate.
+mobid: 7009
+zone: Fixture Zone
+defaultMood: neutral
+patterns:
+  - keywords: ["missing"]
+    responses:
+      - "Ask the captain."
+  - keywords: ["hello", "hi", "tavern"]
+    responses:
+      - "Welcome to the tavern."
+  - keywords: ["hello"]
+    moods: ["grateful"]
+    moodChange: friendly
+    questFlagRequired: {"7-path": "hunter"}
+    responses:
+      - "Good to see you, hunter."
+tree:
+  root:
+    text: "Evening."
+  nodes:
+    - id: find_her
+      triggers: ["missing"]
+      questRequired: ["7-start"]
+      text: "Search the wards."

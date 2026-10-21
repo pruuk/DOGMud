@@ -188,7 +188,8 @@ func TestConvert_TreelessOpener(t *testing.T) {
 
 	out := res.Files[7006].Output()
 	require.NotNil(t, out.Opener)
-	assert.Equal(t, "Sit a moment. What tore this time?", out.Opener.Text, "the greeting's first response")
+	assert.Equal(t, "Sit a moment. What tore this time?\n---\nBex. Cloth or leather, I can fix it.", out.Opener.Text,
+		"every greeting response, folded by the zone pass")
 	assert.Empty(t, out.Topics, "the catch-all is dropped")
 	assert.Equal(t, "friendly", out.DefaultMood)
 }
@@ -207,7 +208,7 @@ patterns:
 	res := Convert(in)
 	out := res.Files[8001].Output()
 	require.NotNil(t, out.Opener)
-	assert.Equal(t, "I keep the bar.", out.Opener.Text)
+	assert.Equal(t, "I keep the bar.\n---\nAsk someone else.", out.Opener.Text)
 	assert.Equal(t, []string{"road"}, res.Keys(8001))
 }
 
@@ -236,6 +237,8 @@ func TestConvert_ItemGiveMergesIntoTopic(t *testing.T) {
 
 	assert.True(t, anyLine(res.Report.MergeLines, "mob 94", "protection_report", "A protection notice? Let me see that.", "This is enough to act on."),
 		"%v", res.Report.MergeLines)
+	assert.True(t, anyLine(res.Report.MergeLines, "mob 94", "protection_report", "added bumpsRep thornwall_watch 5"),
+		"an effect the merge adds is named: %v", res.Report.MergeLines)
 	assert.True(t, anyLine(res.Report.Triggers, "delete quest 10-the_drowning_posts_debt.yaml trigger 0"), "%v", res.Report.Triggers)
 }
 
@@ -283,6 +286,7 @@ triggers:
 	assert.Equal(t, []dialogue.RepBump{{Faction: "watch", Delta: 5}}, tp.BumpsRep, "same bump is not appended twice")
 	assert.Equal(t, dialogue.QuestFlagSet{Key: "19-completion", Value: "full"}, *tp.SetsQuestFlag)
 	assert.Empty(t, res.Report.Clashes)
+	assert.False(t, anyLine(res.Report.MergeLines, "added"), "nothing was added: %v", res.Report.MergeLines)
 	assert.True(t, anyLine(res.Report.Triggers, "delete quest 19-bounty.yaml trigger 0"), "%v", res.Report.Triggers)
 }
 
@@ -416,21 +420,22 @@ func TestConvert_BehaviorAskBranches(t *testing.T) {
 	assert.Equal(t, "Stillwater", out.Zone)
 	assert.True(t, anyLine(res.Report.NewFiles, "dialogue/stillwater/9571.yaml"), "%v", res.Report.NewFiles)
 
-	assert.Equal(t, []string{"to_confluence", "to_plymouth", "hello"}, res.Keys(9571),
-		"one ferry topic per destination, then the speech topic")
+	assert.Equal(t, []string{"to_confluence", "to_plymouth"}, res.Keys(9571),
+		"one ferry topic per destination; the greeting branch is the opener, not a topic")
 	for _, key := range []string{"to_confluence", "to_plymouth"} {
 		tp := mustTopic(t, res, 9571, key)
 		assert.Equal(t, dialogue.KindInfo, tp.Kind)
 		assert.True(t, tp.Behavior, key)
 	}
-	speech := mustTopic(t, res, 9571, "hello")
-	assert.False(t, speech.Behavior)
-	assert.Equal(t, "I book passage on the water.\n---\n<ansi fg=\"181\">  [Try: ask agent passage plymouth]</ansi>", speech.Text)
+	require.NotNil(t, out.Opener, "a file with no opener takes its first ungated speech-only greeting branch")
+	assert.Equal(t, "I book passage on the water.\n---\n<ansi fg=\"181\">  [Try: ask agent passage plymouth]</ansi>", out.Opener.Text)
+	assert.Empty(t, out.Opener.Variants)
 
 	path := "behaviors/stillwater/9571-the_ferry_agent.yaml"
 	assert.True(t, anyLine(res.Report.Behavior, path, "branch 1", "to_plymouth", "destination: plymouth"), "%v", res.Report.Behavior)
 	assert.True(t, anyLine(res.Report.Behavior, path, "branch 1", "to_confluence", "destination: confluence"), "%v", res.Report.Behavior)
-	assert.True(t, anyLine(res.Report.Behavior, path, "branch 2", "hello", "delete the branch"), "%v", res.Report.Behavior)
+	assert.True(t, anyLine(res.Report.Behavior, path, "branch 2", "became the opener", "delete the branch"), "%v", res.Report.Behavior)
+	assert.False(t, anyLine(res.Report.NoOpener, "mob 9571"), "%v", res.Report.NoOpener)
 
 	assert.Nil(t, res.Topic(7001, "ask_1"), "trees under behaviors/rooms are not mob trees")
 	assert.False(t, anyLine(res.Report.Behavior, "behaviors/rooms"), "%v", res.Report.Behavior)
@@ -443,9 +448,67 @@ func TestConvert_InstanceZoneBranches(t *testing.T) {
 	assert.True(t, tp.Behavior)
 	assert.Equal(t, dialogue.KindInfo, tp.Kind)
 	assert.Equal(t, 0, tp.RequiresItem, "the disc is a reusable key: no topic requiresItem")
+	assert.Equal(t, 40168, tp.CarriesItem, "shown only to disc holders, never taken")
 	assert.Equal(t, "eastern_highlands", res.Files[9553].Folder)
 	assert.True(t, anyLine(res.Report.Behavior, "9553-the_threshold_keeper.yaml", "open_crash", "zone: crash", "guidance:", "player_has_item"),
 		"%v", res.Report.Behavior)
+
+	fallback := mustTopic(t, res, 9553, "crash")
+	assert.Equal(t, 40168, fallback.ItemExcluded, "the no-disc answer hides from disc holders")
+	assert.Equal(t, 0, fallback.CarriesItem)
+	assert.True(t, anyLine(res.Report.Fallbacks, "9553-the_threshold_keeper.yaml", "branch 2", "branch 1", "itemExcluded 40168"),
+		"%v", res.Report.Fallbacks)
+	assert.True(t, anyLine(res.Report.NoOpener, "mob 9553"), "no greeting branch: reported: %v", res.Report.NoOpener)
+}
+
+func TestConvert_BehaviorFallbacks(t *testing.T) {
+	res := convertFixtures(t)
+	path := "behaviors/fixture_zone/9601-a_warden.yaml"
+
+	out := res.Files[9601].Output()
+	require.NotNil(t, out.Opener)
+	assert.Equal(t, "Hello.\n---\nMind the arch.", out.Opener.Text)
+	require.Len(t, out.Opener.Variants, 1, "the gated greeting above it becomes a variant")
+	assert.Equal(t, "Welcome back.", out.Opener.Variants[0].Text)
+	assert.Equal(t, []string{"40-end"}, out.Opener.Variants[0].QuestRequired)
+	assert.Equal(t, []string{"passage", "passage_2", "begin", "begin_2"}, res.Keys(9601))
+
+	open := mustTopic(t, res, 9601, "passage")
+	assert.Equal(t, []string{"40-start"}, open.QuestRequired)
+	notYet := mustTopic(t, res, 9601, "passage_2")
+	assert.Equal(t, []string{"40-start"}, notYet.QuestExcluded, "inverse of the branch above")
+	assert.True(t, anyLine(res.Report.Fallbacks, path, "branch 4", "branch 3", "questExcluded 40-start"), "%v", res.Report.Fallbacks)
+
+	assert.Empty(t, mustTopic(t, res, 9601, "begin_2").QuestExcluded)
+	assert.True(t, anyLine(res.Report.Clashes, path, "branch 6", "branch 5", "state_equals", "could not gate"), "%v", res.Report.Clashes)
+
+	assert.True(t, anyLine(res.Report.Suffixed, "mob 9601", "passage_2", "passage"), "%v", res.Report.Suffixed)
+	assert.True(t, anyLine(res.Report.Suffixed, "mob 9601", "begin_2", "begin"), "%v", res.Report.Suffixed)
+}
+
+func TestConvert_RequiresPicksTheEarliestUnlocker(t *testing.T) {
+	res := convertFixtures(t)
+
+	assert.Equal(t, []string{"people"}, mustTopic(t, res, 7008, "needs").HeardRequired,
+		"people unlocks exile_story and comes first, so hearing people was enough")
+	assert.Equal(t, []string{"people"}, mustTopic(t, res, 7008, "exile_story").HeardRequired)
+	assert.True(t, anyLine(res.Report.Requires, "mob 7008", "node needs", "exile_story", "people", "earliest"), "%v", res.Report.Requires)
+}
+
+func TestConvert_PatternReasons(t *testing.T) {
+	res := convertFixtures(t)
+
+	assert.True(t, anyLine(res.Report.Dropped, "mob 7009", "pattern 1", "live fallback, breadcrumb candidate", "find_her"),
+		"%v", res.Report.Dropped)
+	assert.True(t, anyLine(res.Report.Dropped, "mob 7005", "pattern 3", "overlap", "missing_case"), "%v", res.Report.Dropped)
+	assert.False(t, anyLine(res.Report.Dropped, "mob 7005", "live fallback"), "an ungated node was the answer")
+
+	assert.NotNil(t, res.Topic(7009, "hello"), "still emitted as a topic")
+	assert.True(t, anyLine(res.Report.FoldIntoOpener, "mob 7009", "hello", "tavern"), "%v", res.Report.FoldIntoOpener)
+	assert.False(t, anyLine(res.Report.FoldIntoOpener, "mob 7005"), "%v", res.Report.FoldIntoOpener)
+
+	assert.True(t, anyLine(res.Report.Dropped, "mob 7009", "pattern 3", "greeting", "moods [grateful]", "moodChange friendly", "questFlagRequired", "7-path"),
+		"%v", res.Report.Dropped)
 }
 
 func TestConvert_BehaviorGrantQuestBecomesOffer(t *testing.T) {
@@ -469,6 +532,8 @@ func TestConvert_BehaviorGrantQuestBecomesOffer(t *testing.T) {
 	path := "behaviors/fixture_zone/9600-a_ferryman.yaml"
 	assert.True(t, anyLine(res.Report.Behavior, path, "branch 1", "work", "delete the branch"), "%v", res.Report.Behavior)
 	assert.True(t, anyLine(res.Report.Behavior, path, "branch 2", "pier", "player_topic", "topic_is"), "%v", res.Report.Behavior)
+	assert.Nil(t, res.Files[9600].Output().Opener)
+	assert.True(t, anyLine(res.Report.NoOpener, "mob 9600"), "%v", res.Report.NoOpener)
 }
 
 func TestConvert_BehaviorBranchWithoutKeywordsIsFlagged(t *testing.T) {

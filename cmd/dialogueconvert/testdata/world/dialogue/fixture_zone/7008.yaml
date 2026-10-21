@@ -1,0 +1,23 @@
+# TestConvert_RequiresPicksTheEarliestUnlocker: needs requires exile_story,
+# which people also unlocks, so hearing people was enough.
+mobid: 7008
+zone: Fixture Zone
+defaultMood: neutral
+patterns: []
+tree:
+  root:
+    text: "Speak."
+  nodes:
+    - id: people
+      triggers: ["people"]
+      unlocks: ["exile_story"]
+      text: "We are few."
+    - id: exile_story
+      triggers: ["exile"]
+      requires: ["people"]
+      unlocks: ["needs"]
+      text: "We were driven out."
+    - id: needs
+      triggers: ["needs"]
+      requires: ["exile_story"]
+      text: "We need salve."
