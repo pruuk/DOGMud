@@ -1,0 +1,21 @@
+itemid: 40506
+name: Scorched Page
+namesimple: scorched page
+description: |
+  A single page from a book that someone tried hard to burn. The edges
+  are black and curled, but the middle survived. The writing is small
+  and neat:
+
+    "Pull the vine away and the wall falls. This does not make the vine
+    the wall."
+
+  Along one burned edge, a temple clerk's note reads: "Examined,
+  condemned, destruction ordered." Under it, in different ink, someone
+  has added: "Why is this so hard to burn?"
+type: object
+subtype: mundane
+weight: 0.1
+value: 5
+rarity_tier: 40
+vendor_categories:
+- tailoring

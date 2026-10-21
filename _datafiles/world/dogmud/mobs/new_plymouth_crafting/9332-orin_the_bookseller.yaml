@@ -39,7 +39,7 @@ character:
     eyes, the Chrysalis-change that makes him useful at closing time.
     His irises are deep with old ink, shifting the way dark water shifts,
     capable of reading in light that would leave anyone else tracing
-    shapes. He sells books and maps. Among the maps, he still carries
+    shapes. He sells maps and curios. Among the maps, he still keeps
     the last work of Edvar the cartographer, who occupied the shop
     next door and is no longer here. He is not in a hurry to sell
     those particular maps. He prices them fairly.
@@ -52,4 +52,11 @@ character:
     willpower:
       base: 106
   shop:
-    - itemid: 40006
+    - itemid: 40500
+    - itemid: 40501
+    - itemid: 40502
+    - itemid: 40503
+    - itemid: 40504
+    - itemid: 40505
+    - itemid: 40506
+    - itemid: 40507

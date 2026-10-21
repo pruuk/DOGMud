@@ -1,0 +1,21 @@
+itemid: 40504
+name: Skipping Rhyme Sheet
+namesimple: rhyme sheet
+description: |
+  A cheap printed sheet of children's skipping rhymes, the kind sold by
+  the handful at market fairs. Most of them are nonsense about cats and
+  cabbages. The one at the top is printed larger than the rest:
+
+    Four fires in the sky,
+    one came down to die,
+    three stayed up to cry,
+    now you're born and so am I.
+
+  A note at the bottom says the Temple considers these rhymes harmless.
+type: object
+subtype: mundane
+weight: 0.1
+value: 1
+rarity_tier: 40
+vendor_categories:
+- tailoring

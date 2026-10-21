@@ -1,0 +1,19 @@
+itemid: 40502
+name: Map of Pothole Coulee
+namesimple: coulee map
+description: |
+  A small hand-drawn map of Pothole Coulee. The Awakening Pool is drawn
+  first and largest, with paths running out from it to the shores, the
+  old tower, the observatory and the mine. The Threshold House is drawn
+  with special care, and Warden Esk's arch is marked as the way out.
+
+  It is the kind of map people buy to remember where they started.
+  Under the pool, in small letters, someone has written: "Where the
+  Opened come back to themselves."
+type: object
+subtype: mundane
+weight: 0.1
+value: 3
+rarity_tier: 40
+vendor_categories:
+- tailoring
