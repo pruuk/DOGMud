@@ -134,7 +134,7 @@ type Room struct {
 
 func NewRoom(zone string) *Room {
 	r := &Room{
-		RoomId:        GetNextRoomId(),
+		RoomId:        allocateRoomId(),
 		Zone:          zone,
 		Title:         "An empty room.",
 		Description:   "This is an empty room that was never given a description.",
@@ -144,8 +144,6 @@ func NewRoom(zone string) *Room {
 		visitors:      make(map[VisitorType]map[int]uint64),
 		tempDataStore: make(map[string]any),
 	}
-
-	SetNextRoomId(r.RoomId + 1)
 
 	return r
 }

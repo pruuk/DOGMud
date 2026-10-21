@@ -294,6 +294,10 @@ master; the entries cost nothing), `Modules.aicompanion.APIKey`, `.APIKeyEnv`,
   `Server.Locked` and still refuses `hardLocked`. A new engine-owned key in
   the shipped lock list must use it, or its write is silently refused.
 - Both refuse `RedactedValue` as a value (`ErrRedactedValue`).
+- Both apply the change to the live config even when the durable save fails
+  (read-only `/mud-config` on prod), then return the save error. Memory always
+  follows the `overrides` map, so an engine counter such as `Server.NextRoomId`
+  keeps advancing in-process; only its persistence across restarts is lost.
 - `usercommands.isEditAllowed` delegates to `IsLocked`.
 
 **Redacted view (`config_display.go`).** `AllConfigData` returns values raw
