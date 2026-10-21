@@ -80,6 +80,31 @@ spec; line numbers were read from the files at that commit.
   600 and up for only the bravest solo players or for groups). These are instance zones;
   "rift" is FinalTwist's separate micro-instance system in #208. Ferries need no prompt: one
   topic per destination, the destination a fixed action parameter.
+- **R15 to R21: conversion decisions** (owner 2026-10-20, from the converter's held cases):
+  - **R15** Found the item before taking the quest (Malk 15, Delia 16): talk shows the offer,
+    the player accepts, then hands in from the same menu; a `give` before accepting hands the
+    item back. The chain triggers that completed 15 and 16 on accept (a live bug) go.
+  - **R16** Hand-in narration lines that only the old give route printed (quests 35, 68, 69,
+    74) are dropped. No narration field.
+  - **R17** Hadwen grants no new quest from his tree. Quest 29 "Two Roads" is replaced by two
+    quests Hadwen offers after the rite (Toke's road, Esk's road); the player takes either,
+    both or neither. The rite still completes quest 30.
+  - **R18** A behavior topic (a timed scene: Hadwen's rite, Esk's crossing) closes the talk
+    menu instead of re-showing it.
+  - **R19** The bandit leader's talk option is dropped; nothing in conversation stops his
+    ambush.
+  - **R20** Every tutorial that teaches `ask` is converted to a `talk` lesson or dropped
+    (quest 28's lesson in room 6261 becomes a talk lesson). The 98 lines in 36 files that
+    tell players to "type ask" are rewritten or removed in the zone pass.
+  - **R21** No quest is handed out in a batch: Crier Toke offers each of the seven trail
+    quests (32, 35, 38, 41, 44, 47, 50) as its own topic after Find Your Footing, accepted
+    one at a time; the starter items move onto the matching offers. Bridges that chain one
+    quest into the next giver ("go talk to Fred") belong to phase 2's chain mechanism and the
+    Pothole Coulee content pass (roadmap).
+  - Settled without asking: `-report` give routes (14, 63, 65, 67) become direct `-end`
+    topics; quest 66 becomes one hand-in topic (fixes the ask-route soft-lock); `requires` on
+    an offer (mobs 95, 96) becomes a quest gate; the Threshold Keeper's disc and Rusk's dagger
+    use the `carriesItem` gate (shown, never taken).
 - **R13 AI companion** (section 4.2): `ask` on the player's own bonded companion still routes to
   the module; `companion-ask` picks one of the NPC's eligible info topics by key, never an offer
   or hand-in. (Planning simplified the mechanism: the owner's words pick the topic at command

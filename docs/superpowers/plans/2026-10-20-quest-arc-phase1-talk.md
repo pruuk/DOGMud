@@ -2929,6 +2929,16 @@ go run ./cmd/dialogueconvert -data _datafiles/world/dogmud -out "<scratchpad>/co
 
 - [ ] **Step 4: Re-run** after converter fixes and keep the final output folder path for Task 15.
 
+**Owner rulings for Task 14 (2026-10-20), applied in Tasks 15 to 17 and recorded as spec R15 to R21:**
+- Malk 15 / Delia 16: offer, Accept, hand in; give before accepting hands back; delete the chain triggers that complete them on `-start` (live bug) and the item_give triggers.
+- Drop every hand-in narration (`actor`) line; delete those item_give triggers.
+- Hadwen: one `begin` behavior topic (questRequired [30-start], questExcluded [30-end]); the rite tree keeps granting 30-end and stops granting 29-start; replace quest 29 with two new bridge quests offered by Hadwen after 30-end (Toke's road: ends at Toke; Esk's road: ends at Esk or the arch), each a normal offer topic; retire quest 29 (keep its file only if saves hold 29 tokens: check `_datafiles/world/dogmud/users/*.yaml` for `29:` progress and keep a no-op end for them).
+- Behavior topics close the menu (code change in `internal/conversation/talk.go`: after a `behavior: true` topic, do not call openMenu; test it). Do it in Task 19 if not before.
+- Bandit leader 254: delete the ask branch and its topic; his dialogue stays as info only.
+- Tutorials: quest 28's room 6261 lesson becomes `talk dewey` and choosing the world topic; grep `-i "ask "` across `_datafiles/world/dogmud` (dialogue, quests, rooms, help, templates) and rewrite every instruction to type ask, or drop it (98 lines in 36 files at last count).
+- Toke: remove the seven grants and three give_items from quest 31's `quest_granted 31-end` trigger; Toke gets seven offer topics (32, 35, 38, 41, 44, 47, 50), each gated on 31-end and excluded on its own start and end; each starter item moves onto the offer of the quest it belongs to (`givesItem`). Each trail's existing trailhead offer stays.
+- Quests 14, 63, 65, 67: delete the item_give trigger, keep the topic's `-end` grant, fold npc_say text. Quest 66: one hand-in topic granting 66-end with setsQuestFlag 66-addict-fate saved; delete the trigger and its chain. Mobs 95, 96: replace the offer `requires` with questRequired [9-start] / [10-start].
+
 ### Task 15: Zone passes (labels, lines, text)
 
 One subagent per zone batch (34 zone folders; batch the small ones: about 8 batches, the largest being `the_confluence` 67, `greenford` 38, `pothole_coulee` 29, `stillwater` 22). Model: Opus (judgement: voice and copy).

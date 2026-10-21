@@ -200,6 +200,10 @@ to exactly one topic.
   then offers the chain's next quest in the same menu.
 - Chain declaration on the quest (next quest id), so the hand-in offer and the validator
   share one source.
+- Bridges (owner 2026-10-20): a finished quest offers the next quest in its chain, often a
+  short bridge quest to the next giver ("go talk to Fred for the next step"). The Pothole
+  Coulee trail quests (First Blood and the six others Toke now offers one by one, spec R21)
+  chain this way in the phase 7 Pothole Coulee pass.
 - Eligibility: gates hide the quest topic; breadcrumb shows instead.
 - Validators (warning list now, hard failure after phase 7): start and end at an NPC topic;
   every step has a hint; every step has exactly one progression trigger, optionally preceded
