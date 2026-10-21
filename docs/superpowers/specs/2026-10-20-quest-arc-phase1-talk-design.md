@@ -101,6 +101,11 @@ spec; line numbers were read from the files at that commit.
     one at a time; the starter items move onto the matching offers. Bridges that chain one
     quest into the next giver ("go talk to Fred") belong to phase 2's chain mechanism and the
     Pothole Coulee content pass (roadmap).
+  - **R22** (owner 2026-10-21) A crafting quest's made item is never a hostage to its
+    turn-in. Selling the crafted item to the quest's own smith counts as the turn-in (Rusk,
+    quest 35: "I love the entrepreneurial spirit. You'll be a smith in no time."); a player
+    who still has it shows it and keeps it; a player who sold or lost it elsewhere can still
+    report without crafting again.
   - Settled without asking: `-report` give routes (14, 63, 65, 67) become direct `-end`
     topics; quest 66 becomes one hand-in topic (fixes the ask-route soft-lock); `requires` on
     an offer (mobs 95, 96) becomes a quest gate; the Threshold Keeper's disc and Rusk's dagger
