@@ -2943,6 +2943,12 @@ go run ./cmd/dialogueconvert -data _datafiles/world/dogmud -out "<scratchpad>/co
 
 One subagent per zone batch (34 zone folders; batch the small ones: about 8 batches, the largest being `the_confluence` 67, `greenford` 38, `pothole_coulee` 29, `stillwater` 22). Model: Opus (judgement: voice and copy).
 
+**The new-player start gets extra validation (owner 2026-10-21).** Batch 1 is `pothole_coulee` plus `newcomer_antechamber` (Dewey, quest 28). Where players start out, a mistake costs the most, so this batch adds, on top of the steps below:
+- The owner reviews every topic in the batch, not five samples: a published page per NPC listing label, player line, reply and gates in plain words.
+- A scripted gate walk over the converted files, from a fresh character's quest state: every quest in the batch can be offered and completed, nothing is re-offered after its end, no topic is a dead end. It is a program, not a reading, and it runs for every later batch too.
+- An adversarial review by a separate Opus subagent (not the writer): copy rules, voice, gates, and that every tutorial instruction names a command that exists after Task 19.
+- Task 26 carries a dedicated new-player scenario (goal 7).
+
 - [ ] **Step 1: Brief each subagent with:**
   - The global Edit/Write rule; files live in the scratchpad output folder, edited with Edit.
   - Read in chunks of at most 400 lines; report "read N of N files" with the list.
@@ -3421,6 +3427,7 @@ Follow `dogmud-playtesting` (harness location, an ephemeral goals file, `--check
   4. Relog and server restart: heard topics stay Dim and unmarked.
   5. Interrupts: combat starting, the NPC walking away, darkness falling mid-menu.
   6. `ask <npc> anything` redirects; `ask` on a hired companion behaves as before.
+  7. New-player start, end to end, on a fresh character (owner 2026-10-21, required): wake in the newcomer antechamber, Dewey's talk lesson in room 6261 (quest 28), into Pothole Coulee; every opening NPC's menu; Find Your Footing (31); Crier Toke's seven trail offers accepted one at a time with each starter item arriving on its own offer; Hadwen's rite (quest 30: the menu closes on the scene, the mid-rite talk does not restart it); both roads after the rite, taken and handed in; no instruction anywhere tells the player to type `ask`. A second fresh character takes neither road and must not be stuck.
 - [ ] File every finding as a GitHub issue (`gh issue create --repo pruuk/DOGMud`; search first), exploit-class bugs excepted per CLAUDE.md. Fix findings that break the phase's exit criteria before the PR; file the rest.
 
 ### Task 27: Push and open the PR
