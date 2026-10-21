@@ -31,8 +31,8 @@ import (
 // Careful is captured at prepare time rather than read at commit time, so the
 // unit is fully self-describing and this package does not depend on configs.
 type PendingWrite struct {
-	Kind    string // "room" | "user" — for reporting only
-	Id      int    // room id or user id — for reporting only
+	Kind    string // "room" | "user" | "plugin" | "knowledge"; the autosave drain confirms "knowledge" commits by Kind+Id, the rest is reporting only
+	Id      int    // room, user or observer mob id
 	Path    string // absolute or data-relative target path
 	Data    []byte // nil means DELETE the file at Path instead of writing it
 	Careful bool   // route through the atomic+durable path (ignored for deletes)

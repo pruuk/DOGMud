@@ -55,4 +55,13 @@ type ObserverFile struct {
 	ObserverMobId int       `yaml:"observer_mob_id"`
 	ObserverName  string    `yaml:"observer_name"`
 	Records       []*Record `yaml:"records"`
+
+	// Write-behind bookkeeping (see persistence.go). Unexported and untagged,
+	// so YAML never reads or writes them. All three are guarded by
+	// knowledgeCacheMu. gen counts mutations; savedGen is the gen whose bytes
+	// are confirmed on disk; preparedGen is the gen of the latest snapshot
+	// handed to the autosave queue. The file is dirty while gen != savedGen.
+	gen         uint64
+	savedGen    uint64
+	preparedGen uint64
 }

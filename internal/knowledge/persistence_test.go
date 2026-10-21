@@ -30,7 +30,13 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 		},
 	}
 
-	if err := saveObserverFile(fc); err != nil {
+	// Saving is write-behind now: seed the cache with a dirty file and flush
+	// it the way shutdown does.
+	knowledgeCacheMu.Lock()
+	knowledgeCache[fc.ObserverMobId] = fc
+	markDirtyLocked(fc)
+	knowledgeCacheMu.Unlock()
+	if err := SaveAll(); err != nil {
 		t.Fatalf("save failed: %v", err)
 	}
 

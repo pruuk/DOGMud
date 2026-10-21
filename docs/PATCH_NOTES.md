@@ -1,5 +1,12 @@
 # DOGMud Patch Notes
 
+## 2026-10-21: Less background lag
+
+- The server spends much less effort remembering what townsfolk see as
+  caravans and foragers pass by. What they notice is now saved with the
+  rest of the world at each autosave, so the game should feel smoother,
+  especially while the caravan is on the road.
+
 ## 2026-10-20: Choices as numbered lists
 
 - Every choice the game offers you is now a numbered list in the same
