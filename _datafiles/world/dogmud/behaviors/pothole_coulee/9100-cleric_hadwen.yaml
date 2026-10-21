@@ -263,9 +263,9 @@ tree:
           text: >-
             New to Gaius? Welcome. This is Pothole Coulee, and I keep
             its pool, which is waiting for you. Type
-            <ansi fg="command">talk hadwen</ansi>, ask me about the
-            rite if you want the why of it, and choose to begin the
-            rite when you are ready.
+            <ansi fg="command">talk hadwen</ansi>, then choose what
+            happens in the rite if you want the why of it, or choose
+            to begin the rite when you are ready.
           delay: 2.0
 
     # ── AMBIENT BACKSTOP: every so often, repeat the invitation aloud.
