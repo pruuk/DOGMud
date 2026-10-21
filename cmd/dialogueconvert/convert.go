@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -397,6 +399,7 @@ func (c *converter) convertDialogue(d dialogueSource) {
 
 	triggers := map[string]bool{}
 	nodeTopic := map[string]*cTopic{}
+	var nodeTopics []*cTopic // aligned with nodes
 	var nodes []legacyTreeNode
 	if lf.Tree != nil {
 		nodes = lf.Tree.Nodes
@@ -415,12 +418,7 @@ func (c *converter) convertDialogue(d dialogueSource) {
 		key := f.uniqueKey(slug(n.Id))
 		t := c.newTopic(key, n.GrantsQuest, where)
 		t.Text, t.Hints, t.MoodChange = n.Text, n.Hints, n.MoodChange
-		t.Gates = dialogue.Gates{
-			QuestRequired: copyStrings(n.QuestRequired), QuestExcluded: copyStrings(n.QuestExcluded),
-			QuestFlagRequired: copyMap(n.QuestFlagRequired), QuestFlagExcluded: copyMap(n.QuestFlagExcluded),
-			RequiresItem: n.RequiresItem, ItemExcluded: n.ItemExcluded,
-			GoldRequired: n.GoldRequired, MasterworkRequired: n.MasterworkRequired,
-		}
+		t.Gates = nodeGates(n)
 		t.GivesItem, t.SetsQuestFlag, t.BumpsRep = n.GivesItem, n.SetsQuestFlag, n.BumpsRep
 		t.GivesGold, t.ChargesGold = n.GivesGold, n.ChargesGold
 		if n.GrantsQuest != "" {
@@ -437,6 +435,7 @@ func (c *converter) convertDialogue(d dialogueSource) {
 			c.rep.Nodes["info"]++
 		}
 		f.add(t)
+		nodeTopics = append(nodeTopics, t)
 		if _, dup := nodeTopic[n.Id]; !dup {
 			nodeTopic[n.Id] = t
 		}
@@ -563,54 +562,233 @@ func (c *converter) convertDialogue(d dialogueSource) {
 				c.rep.Dropped = append(c.rep.Dropped, where+": greeting, dropped"+gated)
 			}
 		case "overlap":
-			// The nodes sharing a keyword: if every one is gated, this
-			// pattern was what a player outside those gates heard.
-			var shared, ungated []string
-			for _, n := range nodes {
-				if nodeSharesKeyword(n, p) {
-					shared = append(shared, n.Id)
-					if !nodeGated(n) {
-						ungated = append(ungated, n.Id)
-					}
-				}
-			}
-			if len(ungated) == 0 {
-				c.rep.Dropped = append(c.rep.Dropped, fmt.Sprintf("%s: overlap, live fallback, breadcrumb candidate (every node sharing a keyword is gated: %v), dropped%s", where, shared, gated))
-			} else {
-				c.rep.Dropped = append(c.rep.Dropped, fmt.Sprintf("%s: overlap with a tree trigger (ungated node %v), dropped%s", where, ungated, gated))
-			}
+			c.overlapPattern(f, nodes, nodeTopics, triggers, p, where, gated)
 		case "other":
-			var kw string
-			for _, k := range p.Keywords {
-				if strings.TrimSpace(k) != "" {
-					kw = k
-					break
-				}
-			}
-			key := f.uniqueKey(slug(kw))
-			t := c.newTopic(key, p.GrantsQuest, where)
-			t.Text = strings.Join(p.Responses, joinSep)
-			t.MoodChange = p.MoodChange
-			t.Gates = dialogue.Gates{
-				QuestRequired: copyStrings(p.QuestRequired), QuestExcluded: copyStrings(p.QuestExcluded),
-				QuestFlagRequired: copyMap(p.QuestFlagRequired), QuestFlagExcluded: copyMap(p.QuestFlagExcluded),
-				RequiresItem: p.RequiresItem, ItemExcluded: p.ItemExcluded,
-				GoldRequired: p.GoldRequired, MasterworkRequired: p.MasterworkRequired,
-			}
-			t.GivesItem, t.SetsQuestFlag, t.BumpsRep = p.GivesItem, p.SetsQuestFlag, p.BumpsRep
-			t.GivesGold, t.ChargesGold = p.GivesGold, p.ChargesGold
-			if p.GrantsQuest != "" {
-				t.grants = append(t.grants, srcPattern)
-			}
-			if len(p.Moods) > 0 {
-				c.rep.Notes = append(c.rep.Notes, fmt.Sprintf("%s: moods filter %v dropped (topics are never gated by mood), topic %s", where, p.Moods, key))
-			}
-			if extra := nonGreetingKeywords(p); extra <= 1 && extra < countKeywords(p) {
-				c.rep.FoldIntoOpener = append(c.rep.FoldIntoOpener, fmt.Sprintf("%s: a greeting plus %d other word; topic %s kept, the zone pass may fold it into the opener", where, extra, key))
-			}
-			f.add(t)
+			kw := firstKeyword(p, nil)
+			c.patternTopic(f, p, slug(kw), p.Responses, where)
 		}
 	}
+}
+
+// overlapPattern converts a pattern that shares a keyword with a tree node.
+// Under the old engine it answered whenever the tree did not: for its other
+// keywords, and for a player outside the gates of every node it shares a
+// keyword with. Its responses are compared (normText) with the text and
+// hints of those nodes' topics:
+//   - every response already there: dropped, the node says it;
+//   - otherwise, when its keyword set equals one shared node's trigger set,
+//     its gates equal that node's, the node has no requires and grants no
+//     quest, and the pattern carries no effect and no different moodChange,
+//     it is the same question: the missing responses are appended to that
+//     node's topic (joinSep, for the zone pass to merge);
+//   - otherwise it becomes its own info topic by the "other" path, keyed by
+//     its first keyword that is not a tree trigger (else its first keyword),
+//     with only the missing responses.
+//
+// Each kept pattern is listed in the report's OverlapKept.
+func (c *converter) overlapPattern(f *cFile, nodes []legacyTreeNode, nodeTopics []*cTopic, triggers map[string]bool, p legacyPattern, where, gated string) {
+	var shared, ungated []string
+	var covers []string
+	for i, n := range nodes {
+		if !nodeSharesKeyword(n, p) {
+			continue
+		}
+		shared = append(shared, n.Id)
+		if !nodeGated(n) {
+			ungated = append(ungated, n.Id)
+		}
+		covers = append(covers, normText(nodeTopics[i].Text), normText(nodeTopics[i].Hints))
+	}
+	why := fmt.Sprintf("overlap with a tree trigger (ungated node %v)", ungated)
+	if len(ungated) == 0 {
+		why = fmt.Sprintf("overlap, live fallback, breadcrumb candidate (every node sharing a keyword is gated: %v)", shared)
+	}
+
+	var missing []string
+	for _, r := range p.Responses {
+		nr := normText(r)
+		if nr == "" {
+			continue
+		}
+		found := false
+		for _, cv := range covers {
+			if strings.Contains(cv, nr) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			missing = append(missing, r)
+		}
+	}
+	if len(missing) == 0 {
+		c.rep.OverlapOutcomes["covered"]++
+		c.rep.Dropped = append(c.rep.Dropped, fmt.Sprintf("%s: %s, text already in node %v, dropped%s", where, why, shared, gated))
+		return
+	}
+	partial := ""
+	if len(missing) < len(p.Responses) {
+		partial = fmt.Sprintf(", %d of %d responses (the rest are already in the node)", len(missing), len(p.Responses))
+	}
+
+	if i := sameQuestionNode(nodes, nodeTopics, p); i >= 0 {
+		t := nodeTopics[i]
+		parts := missing
+		if t.Text != "" {
+			parts = append([]string{t.Text}, missing...)
+		}
+		t.Text = strings.Join(parts, joinSep)
+		c.rep.OverlapOutcomes["merged"]++
+		c.rep.OverlapKept = append(c.rep.OverlapKept, fmt.Sprintf("%s: %s; same keyword set and gates as node %s, merged into topic %s%s", where, why, nodes[i].Id, t.Key, partial))
+		return
+	}
+
+	key := c.patternTopic(f, p, slug(firstKeyword(p, triggers)), missing, where)
+	c.rep.OverlapOutcomes["topic"]++
+	near := ""
+	if share := nearestShare(missing, covers); share >= nearShare {
+		near = fmt.Sprintf("; close to the node's text (%.0f%% of its words), zone pass: check for a paraphrase", 100*share)
+	}
+	c.rep.OverlapKept = append(c.rep.OverlapKept, fmt.Sprintf("%s: %s; text not in the tree, kept as topic %s%s%s%s", where, why, key, partial, near, gated))
+}
+
+// nearShare is the share of a response's content words found in one node
+// text above which a kept overlap is flagged as a likely paraphrase (the
+// dropped-pattern audit's threshold).
+const nearShare = 0.6
+
+// stopWords are left out of the word share (the audit's list).
+var stopWords = func() map[string]bool {
+	m := map[string]bool{}
+	for _, w := range strings.Fields("a an the and or but if then of to in on at for with from by as is are was were be been am it its this that these those i you he she we they me my your his her our their us them him not no so do does did have has had will would can could shall should may might just very too also than there here what who whom which when where why how all any some into out up down over about one yes oh well now again still even only own same such more most much many few") {
+		m[w] = true
+	}
+	return m
+}()
+
+func contentWords(norm string) map[string]bool {
+	m := map[string]bool{}
+	for _, w := range strings.Fields(norm) {
+		if len(w) > 1 && !stopWords[w] {
+			m[w] = true
+		}
+	}
+	return m
+}
+
+// nearestShare is the highest share, over the responses and the normalized
+// covers, of a response's content words that one cover contains.
+func nearestShare(responses, covers []string) float64 {
+	best := 0.0
+	for _, r := range responses {
+		rw := contentWords(normText(r))
+		if len(rw) == 0 {
+			continue
+		}
+		for _, cv := range covers {
+			cw := contentWords(cv)
+			n := 0
+			for w := range rw {
+				if cw[w] {
+					n++
+				}
+			}
+			if s := float64(n) / float64(len(rw)); s > best {
+				best = s
+			}
+		}
+	}
+	return best
+}
+
+// sameQuestionNode returns the index of the node an overlap pattern merges
+// into (see overlapPattern), or -1.
+func sameQuestionNode(nodes []legacyTreeNode, nodeTopics []*cTopic, p legacyPattern) int {
+	if p.GrantsQuest != "" || p.GivesItem != 0 || p.SetsQuestFlag != nil || len(p.BumpsRep) > 0 || p.GivesGold != 0 || p.ChargesGold != 0 {
+		return -1
+	}
+	kws := keywordSet(p.Keywords)
+	for i, n := range nodes {
+		t := nodeTopics[i]
+		if !reflect.DeepEqual(kws, keywordSet(n.Triggers)) || len(n.Requires) > 0 || n.GrantsQuest != "" || t.Kind != dialogue.KindInfo {
+			continue
+		}
+		if p.MoodChange != "" && p.MoodChange != n.MoodChange {
+			continue
+		}
+		if reflect.DeepEqual(patternGates(p), nodeGates(n)) {
+			return i
+		}
+	}
+	return -1
+}
+
+func keywordSet(kws []string) map[string]bool {
+	m := map[string]bool{}
+	for _, k := range normKeywords(kws) {
+		m[k] = true
+	}
+	return m
+}
+
+// firstKeyword is the pattern's first keyword that is not in skip, else its
+// first keyword.
+func firstKeyword(p legacyPattern, skip map[string]bool) string {
+	first := ""
+	for _, k := range p.Keywords {
+		if strings.TrimSpace(k) == "" {
+			continue
+		}
+		if first == "" {
+			first = k
+		}
+		if !skip[strings.ToLower(strings.TrimSpace(k))] {
+			return k
+		}
+	}
+	return first
+}
+
+func patternGates(p legacyPattern) dialogue.Gates {
+	return dialogue.Gates{
+		QuestRequired: copyStrings(p.QuestRequired), QuestExcluded: copyStrings(p.QuestExcluded),
+		QuestFlagRequired: copyMap(p.QuestFlagRequired), QuestFlagExcluded: copyMap(p.QuestFlagExcluded),
+		RequiresItem: p.RequiresItem, ItemExcluded: p.ItemExcluded,
+		GoldRequired: p.GoldRequired, MasterworkRequired: p.MasterworkRequired,
+	}
+}
+
+func nodeGates(n legacyTreeNode) dialogue.Gates {
+	return dialogue.Gates{
+		QuestRequired: copyStrings(n.QuestRequired), QuestExcluded: copyStrings(n.QuestExcluded),
+		QuestFlagRequired: copyMap(n.QuestFlagRequired), QuestFlagExcluded: copyMap(n.QuestFlagExcluded),
+		RequiresItem: n.RequiresItem, ItemExcluded: n.ItemExcluded,
+		GoldRequired: n.GoldRequired, MasterworkRequired: n.MasterworkRequired,
+	}
+}
+
+// patternTopic makes a kept pattern an info topic (or the kind its grant
+// names) carrying its gates and effects, with the given responses as text.
+// It returns the key.
+func (c *converter) patternTopic(f *cFile, p legacyPattern, base string, responses []string, where string) string {
+	key := f.uniqueKey(base)
+	t := c.newTopic(key, p.GrantsQuest, where)
+	t.Text = strings.Join(responses, joinSep)
+	t.MoodChange = p.MoodChange
+	t.Gates = patternGates(p)
+	t.GivesItem, t.SetsQuestFlag, t.BumpsRep = p.GivesItem, p.SetsQuestFlag, p.BumpsRep
+	t.GivesGold, t.ChargesGold = p.GivesGold, p.ChargesGold
+	if p.GrantsQuest != "" {
+		t.grants = append(t.grants, srcPattern)
+	}
+	if len(p.Moods) > 0 {
+		c.rep.Notes = append(c.rep.Notes, fmt.Sprintf("%s: moods filter %v dropped (topics are never gated by mood), topic %s", where, p.Moods, key))
+	}
+	if extra := nonGreetingKeywords(p); extra <= 1 && extra < countKeywords(p) {
+		c.rep.FoldIntoOpener = append(c.rep.FoldIntoOpener, fmt.Sprintf("%s: a greeting plus %d other word; topic %s kept, the zone pass may fold it into the opener", where, extra, key))
+	}
+	f.add(t)
+	return key
 }
 
 // patternExtras names everything a dropped pattern carried besides its
@@ -657,6 +835,26 @@ func patternExtras(p legacyPattern) string {
 		return ""
 	}
 	return " (it carried: " + strings.Join(parts, "; ") + ")"
+}
+
+var markupTag = regexp.MustCompile(`<[^>]*>`)
+
+// normText is the text a response is compared by: markup tags removed,
+// lowercased, apostrophes dropped, every other character outside [a-z0-9]
+// a space, runs of spaces collapsed. It matches the normalization of the
+// dropped-pattern audit (measure.py) so the two agree on "already present".
+func normText(s string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(markupTag.ReplaceAllString(s, "")) {
+		switch {
+		case r == '\'':
+		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'):
+			b.WriteRune(r)
+		default:
+			b.WriteByte(' ')
+		}
+	}
+	return strings.Join(strings.Fields(b.String()), " ")
 }
 
 func normKeywords(kws []string) []string {
@@ -2014,10 +2212,16 @@ type Report struct {
 	Suffixed       []string // keys that took a _2, _3 suffix, with their sibling
 	FoldIntoOpener []string // "other" patterns that are a greeting plus at most one word
 	NoOpener       []string // files the converter could give no opener
+
+	// OverlapKept lists each overlap pattern whose text the tree lacked: the
+	// topic it became or the node topic it merged into, for the zone pass.
+	OverlapKept     []string
+	OverlapOutcomes map[string]int // "topic", "merged", "covered"
 }
 
 func newReport() *Report {
-	return &Report{Patterns: map[string]int{}, Nodes: map[string]int{}, GrantsIn: map[string]int{}, GrantsOut: map[string]int{}, GrantsByRuling: map[string]int{}}
+	return &Report{Patterns: map[string]int{}, Nodes: map[string]int{}, GrantsIn: map[string]int{}, GrantsOut: map[string]int{}, GrantsByRuling: map[string]int{},
+		OverlapOutcomes: map[string]int{}}
 }
 
 func sum(m map[string]int) int {
@@ -2054,7 +2258,9 @@ func (r *Report) Markdown() string {
 	for _, k := range []string{"catchall", "greeting", "overlap", "other"} {
 		fmt.Fprintf(&b, "- %s: %d\n", k, r.Patterns[k])
 	}
-	fmt.Fprintf(&b, "- total: %d\n\nNodes by kind:\n\n", sum(r.Patterns))
+	fmt.Fprintf(&b, "- total: %d\n\nOverlap patterns by outcome (each kept one is listed under \"Overlap patterns kept\"):\n\n", sum(r.Patterns))
+	fmt.Fprintf(&b, "- overlap kept as a topic: %d\n- overlap merged into a node topic: %d\n- overlap dropped, text already in the node: %d\n\nNodes by kind:\n\n",
+		r.OverlapOutcomes["topic"], r.OverlapOutcomes["merged"], r.OverlapOutcomes["covered"])
 	for _, k := range []string{"offer", "handin", "info marked", "info"} {
 		fmt.Fprintf(&b, "- %s: %d\n", k, r.Nodes[k])
 	}
@@ -2098,6 +2304,7 @@ func (r *Report) Markdown() string {
 	section("Suffixed keys", r.Suffixed)
 	section("Patterns to fold into the opener", r.FoldIntoOpener)
 	section("Gated offers", r.GatedOffers)
+	section("Overlap patterns kept", r.OverlapKept)
 	section("Dropped patterns", r.Dropped)
 	section("Notes", r.Notes)
 	return b.String()

@@ -167,7 +167,7 @@ func TestConvert_PatternClasses(t *testing.T) {
 	res := convertFixtures(t)
 
 	assert.Equal(t, []string{"missing_case", "crime_wave"}, res.Keys(7005),
-		"catch-all, greeting and overlap are dropped")
+		"catch-all, greeting and an overlap the node already says are dropped")
 	other := mustTopic(t, res, 7005, "crime_wave")
 	assert.Equal(t, dialogue.KindInfo, other.Kind)
 	assert.False(t, other.Marked)
@@ -828,8 +828,9 @@ func TestConvert_RequiresPicksTheEarliestUnlocker(t *testing.T) {
 func TestConvert_PatternReasons(t *testing.T) {
 	res := convertFixtures(t)
 
-	assert.True(t, anyLine(res.Report.Dropped, "mob 7009", "pattern 1", "live fallback, breadcrumb candidate", "find_her"),
-		"%v", res.Report.Dropped)
+	assert.True(t, anyLine(res.Report.OverlapKept, "mob 7009", "pattern 1", "live fallback, breadcrumb candidate", "find_her", "topic missing"),
+		"%v", res.Report.OverlapKept)
+	assert.Equal(t, "Ask the captain.", mustTopic(t, res, 7009, "missing").Text, "its text is not the node's, so it is kept")
 	assert.True(t, anyLine(res.Report.Dropped, "mob 7005", "pattern 3", "overlap", "missing_case"), "%v", res.Report.Dropped)
 	assert.False(t, anyLine(res.Report.Dropped, "mob 7005", "live fallback"), "an ungated node was the answer")
 
@@ -1056,6 +1057,133 @@ func TestPatternClass(t *testing.T) {
 	assert.Equal(t, "greeting", patternClass(legacyPattern{Keywords: []string{"Hello", "good day"}}, triggers))
 	assert.Equal(t, "overlap", patternClass(legacyPattern{Keywords: []string{"hello", "missing"}}, triggers))
 	assert.Equal(t, "other", patternClass(legacyPattern{Keywords: []string{"hello", "crime"}}, triggers))
+}
+
+// overlapInput is one tree file with an overlap pattern of each outcome.
+func overlapInput(t *testing.T) *Input {
+	t.Helper()
+	return inlineInput(t, map[int]string{8101: `
+mobid: 8101
+zone: Inline Zone
+defaultMood: neutral
+patterns:
+  - keywords: ["lake", "husband"]
+    questFlagRequired: {"9-path": "lake"}
+    questExcluded: ["9-end"]
+    moodChange: sad
+    responses:
+      - "He went into the lake twelve years ago. He never came out."
+  - keywords: ["water"]
+    responses:
+      - "The <ansi fg=\"cyan\">lake</ansi> is COLD. Nobody swims!"
+  - keywords: ["Water", "lake"]
+    responses:
+      - "The lake is cold. Nobody swims."
+      - "Fish there are big as dogs."
+  - keywords: ["ferry"]
+    responses:
+      - "The ferry runs at dawn."
+tree:
+  root:
+    text: "Mind the reeds."
+  nodes:
+    - id: lake
+      triggers: ["lake", "water"]
+      text: "The lake is cold. Nobody swims."
+    - id: ferry_talk
+      triggers: ["ferry"]
+      questRequired: ["9-start"]
+      text: "Take the ferry north."
+`}, nil)
+}
+
+func TestConvert_OverlapWithUniqueTextBecomesATopic(t *testing.T) {
+	res := Convert(overlapInput(t))
+
+	tp := mustTopic(t, res, 8101, "husband")
+	assert.Equal(t, dialogue.KindInfo, tp.Kind)
+	assert.Equal(t, "", tp.Label, "the zone pass writes the label")
+	assert.Equal(t, "He went into the lake twelve years ago. He never came out.", tp.Text)
+	assert.Equal(t, "sad", tp.MoodChange)
+
+	fallback := mustTopic(t, res, 8101, "ferry")
+	assert.Equal(t, "The ferry runs at dawn.", fallback.Text, "the answer outside the gated node's gates")
+	assert.Empty(t, fallback.QuestRequired)
+
+	assert.Equal(t, []string{"lake", "ferry_talk", "husband", "ferry"}, res.Keys(8101))
+	assert.Equal(t, map[string]int{"topic": 2, "merged": 1, "covered": 1}, res.Report.OverlapOutcomes)
+}
+
+func TestConvert_OverlapGatesCarryOver(t *testing.T) {
+	res := Convert(overlapInput(t))
+
+	tp := mustTopic(t, res, 8101, "husband")
+	assert.Equal(t, map[string]string{"9-path": "lake"}, tp.QuestFlagRequired)
+	assert.Equal(t, []string{"9-end"}, tp.QuestExcluded)
+}
+
+func TestConvert_OverlapWhoseTextTheNodeHasStaysDropped(t *testing.T) {
+	res := Convert(overlapInput(t))
+
+	assert.Nil(t, res.Topic(8101, "water"), "pattern 2 says what node lake says")
+	assert.True(t, anyLine(res.Report.Dropped, "mob 8101", "pattern 2", "overlap", "text already in", "lake", "dropped"),
+		"%v", res.Report.Dropped)
+	assert.False(t, anyLine(res.Report.Dropped, "mob 8101", "pattern 1"), "%v", res.Report.Dropped)
+}
+
+func TestConvert_OverlapWithTheSameKeywordsMergesIntoTheNode(t *testing.T) {
+	res := Convert(overlapInput(t))
+
+	lake := mustTopic(t, res, 8101, "lake")
+	assert.Equal(t, "The lake is cold. Nobody swims."+joinSep+"Fish there are big as dogs.", lake.Text,
+		"only the response the node lacks is added")
+}
+
+func TestConvert_OverlapKeptIsReported(t *testing.T) {
+	res := Convert(overlapInput(t))
+	r := res.Report
+
+	assert.True(t, anyLine(r.OverlapKept, "mob 8101 pattern 1", "[lake husband]", "topic husband"), "%v", r.OverlapKept)
+	assert.True(t, anyLine(r.OverlapKept, "mob 8101 pattern 3", "[Water lake]", "merged into topic lake"), "%v", r.OverlapKept)
+	assert.True(t, anyLine(r.OverlapKept, "mob 8101 pattern 4", "[ferry]", "topic ferry", "live fallback"), "%v", r.OverlapKept)
+	assert.False(t, anyLine(r.OverlapKept, "pattern 2"), "%v", r.OverlapKept)
+	md := r.Markdown()
+	assert.Contains(t, md, "## Overlap patterns kept\n\n- mob 8101 pattern 1")
+	assert.Contains(t, md, "- overlap kept as a topic: 2\n- overlap merged into a node topic: 1\n- overlap dropped, text already in the node: 1\n")
+	assert.True(t, r.Reconciled())
+}
+
+func TestConvert_OverlapParaphraseIsFlagged(t *testing.T) {
+	res := Convert(inlineInput(t, map[int]string{8102: `
+mobid: 8102
+zone: Inline Zone
+defaultMood: neutral
+patterns:
+  - keywords: ["mill"]
+    responses:
+      - "The old mill burned down last winter, wheel and all."
+  - keywords: ["mill", "grain"]
+    responses:
+      - "Grain comes up from Greenford on the barge."
+tree:
+  root:
+    text: "Busy day."
+  nodes:
+    - id: mill
+      triggers: ["mill"]
+      questRequired: ["9-start"]
+      text: "The mill burned down last winter. Wheel and all, gone."
+`}, nil))
+	r := res.Report
+	assert.Equal(t, map[string]int{"topic": 2}, nonZero(r.OverlapOutcomes))
+	assert.True(t, anyLine(r.OverlapKept, "mob 8102 pattern 1", "zone pass: check for a paraphrase"), "%v", r.OverlapKept)
+	assert.False(t, anyLine(r.OverlapKept, "mob 8102 pattern 2", "paraphrase"), "%v", r.OverlapKept)
+	assert.Equal(t, "Grain comes up from Greenford on the barge.", mustTopic(t, res, 8102, "grain").Text)
+}
+
+func TestNormText(t *testing.T) {
+	assert.Equal(t, "the lake is cold nobody swims", normText("The <ansi fg=\"cyan\">lake</ansi> is COLD.  Nobody swims!"))
+	assert.Equal(t, "dont go", normText("Don't go"))
 }
 
 func TestSlug(t *testing.T) {

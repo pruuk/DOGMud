@@ -11,7 +11,7 @@ patterns:
       - "Hello."
   - keywords: ["Missing", "person"]
     responses:
-      - "Covered by the tree."
+      - "Elara is missing."
   - keywords: ["Crime Wave", "thug"]
     questRequired: ["7-start"]
     moodChange: friendly
