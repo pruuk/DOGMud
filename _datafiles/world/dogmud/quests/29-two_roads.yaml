@@ -3,7 +3,9 @@
 # Retired by owner ruling R17 (2026-10-20, #375 phase 1): Cleric Hadwen
 # grants no quest from his rite tree, and this signpost is replaced by two
 # quests he offers after the rite, Toke's Road (88) and Esk's Road (89).
-# Nothing grants 29-start any more.
+# Once Task 17 removes the rite tree's grant_quest 29-start (still in
+# behaviors/pothole_coulee/9100-cleric_hadwen.yaml until then), nothing
+# grants 29-start.
 #
 # The file stays because saved characters hold 29 tokens (quest 29 shipped
 # in July 2026; local saves checked 2026-10-21 hold both 29: start and

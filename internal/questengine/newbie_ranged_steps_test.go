@@ -293,7 +293,15 @@ func TestIden9161_MidQuestGreetsAndAnswersEachStep(t *testing.T) {
 		"cover_shot": "type ask iden done",
 	}
 	for step, cmd := range want {
-		require.Contains(t, questHintFor(t, q, step), cmd, "quest 50 step %q changed; update this test and Iden together", step)
+		// #375 phase 1: the hand-in step's quest hint teaches talk, while the
+		// pre-conversion dialogue still greets with "ask iden done" until the
+		// converted files land (Task 15 step 4); newbie_topic_steps_test.go
+		// pins the topic side.
+		questCmd := cmd
+		if step == "cover_shot" {
+			questCmd = "type talk iden"
+		}
+		require.Contains(t, questHintFor(t, q, step), questCmd, "quest 50 step %q changed; update this test and Iden together", step)
 		n := newNpcTalker(df, playerOn(q, step, "30-end"))
 		_, hints := n.greet()
 		require.Contains(t, squash(hints), cmd, "step %q: Iden's greeting must name the step's command", step)

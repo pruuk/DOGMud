@@ -16,8 +16,10 @@ secret: false
 #             the craft cannot begin without both materials in hand. A player
 #             saved on 35-start (the old first step) who already bought them
 #             can craft straight away.
-#   35-end    Rusk's craft_turnin node (gated on 35-craft), or handing her
-#             the dagger (item_give trigger below).
+#   35-end    Rusk's hand-in topics (gated on 35-craft): craft_turnin when
+#             the player carries the dagger (also what giving it to her
+#             resolves to; she never keeps it), craft_turnin_told when not.
+#             The item_give trigger below goes in Task 16 (#375).
 
 steps:
   - id: start
@@ -51,28 +53,24 @@ steps:
       before. Bring it back to Rusk."
     hint: "Go to Smith Rusk at the forge and type talk rusk."
   - id: end
-    description: "Rusk has looked the blade over and said nothing
-      that was not a compliment. The coulee is your range now. Go
+    description: "Rusk is satisfied with your first work at the
+      forge. The coulee is your range now. Go
       north to the Quench Shed and west to the talus slope, and
       find Survivor Ovell in the Collapsed Cut."
 
 rewards:
   skillinfo: "blacksmithing:1"
   gold: 15
+  # Neutral on purpose: Rusk's two hand-in topics (the dagger shown, or
+  # her taking the player's word) both end here, and her own reply has
+  # already said where Ovell is.
   actor: >-
-    Rusk takes the dagger and turns it slowly, checking the edge
-    with one thumbnail. The grey forearm catches the forge light.
-    After a moment she sets it back on the anvil and looks at you,
-    not at the blade, with the measuring expression of a smith
-    deciding whether a piece of iron is worth tempering.
-    "Straight seam. Weight is forward where it belongs. You did
-    not rush the quench." She presses coins into your hand with
-    the finality of a door closing. "North through the Quench Shed,
-    then west to the talus. Find Ovell in the Collapsed Cut, south
-    of the Lower Talus. He pulled himself out of a cave-in and has
-    been waiting for someone to notice. Do not make him wait longer."
-  observer: "Rusk examines the dagger briefly, nods once, and
-    presses a few coins into {actor}'s hand."
+    Rusk looks at you, not at the forge, with the measuring expression
+    of a smith deciding whether a piece of iron is worth tempering.
+    Then she nods once and presses a few coins into your hand with the
+    finality of a door closing.
+  observer: "Rusk nods once and presses a few coins into {actor}'s
+    hand."
 
 triggers:
   # ── LIST RUSK'S GOODS (she trades in the smithy, room 5245) ─────

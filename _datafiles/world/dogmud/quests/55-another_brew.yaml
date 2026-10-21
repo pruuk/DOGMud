@@ -44,7 +44,7 @@ rewards:
   actor: >-
     The brew settles in you, clean and right. You remember what Falv
     said: the marsh does not care how long ago you learned, only whether
-    your salve is fresh. Ask him for more work when the stock runs thin.
+    your salve is fresh. Talk to him for more work when the stock runs thin.
   observer: "The newcomer drinks down a fresh brew."
 
 triggers:

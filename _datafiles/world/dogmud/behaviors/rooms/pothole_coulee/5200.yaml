@@ -33,9 +33,10 @@ tree:
         - type: action
           do: send_user_text
           text: >-
-            The pool's stillness holds you where you stand -- not
+            The pool's stillness holds you where you stand, not
             unkindly, the way a hand on a shoulder holds. The rite
-            comes first. Say <ansi fg="command">ask hadwen begin</ansi>
-            when you are ready, and the whole coulee opens with you.
+            comes first. Type <ansi fg="command">talk hadwen</ansi>,
+            then choose to begin the rite when you are ready, and the
+            whole coulee opens with you.
         - type: action
           do: intercept

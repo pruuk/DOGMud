@@ -220,7 +220,16 @@ func checkGiverSteps(t *testing.T, npc string, df string, cases []giverStep) {
 	d := loadCouleeDialogue(t, df)
 	for _, c := range cases {
 		q := loadShippedQuest(t, c.file, c.id)
-		require.Contains(t, questHintFor(t, q, c.step), c.want,
+		// #375 phase 1 split the final step: the quest hint already teaches
+		// talk (the hand-in is a topic), while the shipped pre-conversion
+		// dialogue below still greets with "ask <npc> done" until the
+		// converted files land (Task 15 step 4). The topic-side truth is
+		// pinned by newbie_topic_steps_test.go.
+		questWant := c.want
+		if c.final {
+			questWant = "type talk " + npc
+		}
+		require.Contains(t, questHintFor(t, q, c.step), questWant,
 			"quest %d step %q hint changed; update this test and %s together", c.id, c.step, npc)
 		n := newNpcTalker(d, playerOn(q, c.step, c.others...))
 		_, hints := n.greet()
