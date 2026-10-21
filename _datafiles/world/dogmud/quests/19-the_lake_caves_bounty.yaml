@@ -17,34 +17,37 @@ steps:
     map_target: 4121  # Cave Mouth — sole entrance to the cave system (down -> 4127)
     description: "Constable Drunn has posted a bounty on the lake-cave creatures.
       Clear the shallows of shrimp swarms, deal with at least one drowned
-      hunter, then come back to the constabulary for further instructions."
-    hint: "Take a light source -- your chrysalis-glow spell or a lantern. The
-      caves are dark. The cave mouth is east of the fishing docks."
+      hunter, then come back to the constabulary for further instructions.
+      The cave mouth is past the boat pier, north of the Fishing Docks."
+    hint: "Bring a light: the caves are dark. From the Constabulary, go
+      west to North Square, south twice to Lakefront Square, east twice
+      to the Lake-View Promenade, and north twice to the Net Yard. Go
+      east, north and east to the Cave Mouth, then down into the
+      Dripping Antechamber. Skitter-shrimp swarms gather there. Type
+      attack swarm."
   - id: shrimp
     map_target: 4128  # Pool Chamber — first room a Drowned Hunter (mob 331) can hold
     description: "You have cleared a swarm of skitter-shrimp from the cave
       shallows. The fishing nets will hold longer."
-    hint: "A drowned hunter still lurks deeper in the cave system. Clear at
-      least one, then walk back to Constable Drunn at the constabulary and
-      ask him about the quest to report."
+    hint: "A drowned hunter lurks deeper in the caves. From the Dripping
+      Antechamber, go north into the Pool Chamber. Type attack hunter."
   - id: hunter
     map_target: 4110  # fallback when Constable Drunn is not spawned
     map_target_mob: 335  # follow Constable Drunn (maxwander 2) — a fixed room is wrong for part of the day
     description: "You have killed a drowned hunter. The shallows are
       meaningfully safer."
-    hint: "Walk back to Constable Drunn at the constabulary and ask him about
-      the quest to report. (If you have not cleared a shrimp swarm yet, do
-      that first.)"
+    hint: "Report to Constable Drunn at the Constabulary, on the east
+      side of North Square. Type talk drunn."
   - id: signed
     map_target: -1  # -1: bundled objectives, rooms [4110, 4116]; Phase 2 split review
     description: "Drunn has signed the upgraded bounty. The constabulary will
       pay handsomely for proof that the deepest threat in the sump has been
-      put down -- but the warrant is now yours to pursue or to walk away
-      from. Either way you have earned the partial payment."
-    hint: "Hand Drunn a leviathan tooth from the sump dweller for the full
-      reward, or ask him about the quest again to close the bounty for the
-      partial payment now. You can also turn in the tooth to dock master
-      Arn at the fishing docks if you would rather."
+      put down, but the warrant is now yours to pursue or to walk away
+      from. Either way you have earned the smaller payment."
+    hint: "For the full reward, kill the sump dweller in the Hollow Sump,
+      north of the Pool Chamber, and bring back its tooth. Dock Master
+      Arn at the Fishing Docks pays for the tooth too. To report, with
+      the tooth or without it, type talk drunn."
   - id: end
     description: "The lake-caves bounty is closed. The shallows are safer.
       The lake-folk owe you a quiet round at the inn."

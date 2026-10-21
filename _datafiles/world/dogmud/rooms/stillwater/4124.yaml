@@ -71,7 +71,7 @@ hidden_nouns:
       garden. Whoever planted the crab-apple chose to plant it
       directly over the marker.
     hidden_description: |
-      A flat slab of weathered stone is half-buried at the foot of the crab-apple tree.
+      A flat slab of weathered stone, a buried marker, lies at the foot of the crab-apple tree. Try `look marker`.
 idlemessages:
 - A bee moves slowly between the elderberry flowers along the eastern fence.
 - A breeze lifts the smell of crushed marsh-sage briefly across the garden.
