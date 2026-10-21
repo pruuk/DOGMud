@@ -228,6 +228,30 @@ func GetNextRoomId() int {
 	return int(configs.GetServerConfig().NextRoomId)
 }
 
+// roomIdInUse reports whether roomId already names a room: a template on disk
+// (the file-path cache is filled from every zone at boot) or a room held in
+// memory.
+func roomIdInUse(roomId int) bool {
+	if _, ok := roomManager.cachedFilePath(roomId); ok {
+		return true
+	}
+	_, ok := roomManager.rooms[roomId]
+	return ok
+}
+
+// allocateRoomId returns the next free room id and leaves the counter just
+// past it. Server.NextRoomId is only a hint: when it points at an id that
+// already exists (a lost override file, a stale counter), the allocator skips
+// forward rather than hand out an id that would clobber that room.
+func allocateRoomId() int {
+	roomId := GetNextRoomId()
+	for roomIdInUse(roomId) {
+		roomId++
+	}
+	SetNextRoomId(roomId + 1)
+	return roomId
+}
+
 // SetNextRoomId persists the next room id. It uses configs.SetEngineVal
 // because the shipped Server.Locked names Server.NextRoomId, and SetVal
 // honours that list.
