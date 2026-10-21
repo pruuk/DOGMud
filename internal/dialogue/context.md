@@ -68,7 +68,8 @@ Topics and opener variants (`topic.go`) share one `Gates` struct:
 `requiresItem` (taken when the effects apply), `itemExcluded` (hidden while
 carried), `carriesItem` (shown only while the player carries the item anywhere,
 `PlayerState.CarriesItem` falling back to `HasItem`, never taken: a reusable
-key such as the Threshold Keeper's disc), `goldRequired` and
+key such as the Threshold Keeper's disc; `ItemTopic` treats it as wanting the
+item, so `give` plays the topic and keeps the item), `goldRequired` and
 `masterworkRequired`. `Gates.pass` checks them all; a nil `PlayerState` skips
 them, and `carriesItem` with no item callback fails closed. `ValidateWorld`
 checks every item id they name.

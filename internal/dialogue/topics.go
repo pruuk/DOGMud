@@ -137,16 +137,18 @@ func (df *DialogueFile) Menu(npcName string, ps *PlayerState) menu.Menu {
 	return m
 }
 
-// ItemTopic is the first eligible topic wanting itemId (its requiresItem),
-// and whether any topic on this NPC wants that item at all. A wanted item
-// with no eligible topic is handed back by give (R8).
+// ItemTopic is the first eligible topic wanting itemId, in authored order,
+// and whether any topic on this NPC wants that item at all. A topic wants an
+// item through its requiresItem (handed over) or its carriesItem (shown, never
+// taken: Apply leaves it with the player). A wanted item with no eligible
+// topic is handed back by give (R8).
 func (df *DialogueFile) ItemTopic(itemId int, ps *PlayerState) (t *Topic, wanted bool) {
 	if df == nil || itemId <= 0 {
 		return nil, false
 	}
 	for i := range df.Topics {
 		tp := &df.Topics[i]
-		if tp.RequiresItem != itemId {
+		if tp.RequiresItem != itemId && tp.CarriesItem != itemId {
 			continue
 		}
 		wanted = true

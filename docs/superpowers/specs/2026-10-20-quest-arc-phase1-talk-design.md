@@ -217,9 +217,11 @@ deletion's callers with `codegraph_callers` before removing it.
    choice with no card (R6). The menu is re-shown, counting the quest token the choice just
    granted as held (the grant is queued and lands on a later event pass).
 5. **`give <item> <npc>`** (R8), checked before any transfer and before the quest engine:
-   - an eligible topic on that NPC has `requiresItem` equal to the item: resolve exactly as
-     choosing it (step 4): player line, handover line, NPC reply, first such topic in
-     authored order. No menu needs to be open.
+   - an eligible topic on that NPC has `requiresItem` OR `carriesItem` equal to the item:
+     resolve exactly as choosing it (step 4): player line, handover line, NPC reply, first
+     such topic in authored order. A `carriesItem` topic never takes the item and prints no
+     handover line. No menu needs to be open. (corrected 2026-10-21: a shown item was falling
+     through to an ordinary give and was lost)
    - some topic on that NPC wants the item but none is eligible: the NPC hands it back and the
      item never leaves the player ("Warden Velk looks at the bandit purse and hands it back.").
    - otherwise: today's give, unchanged.

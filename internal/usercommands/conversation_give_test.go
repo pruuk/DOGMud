@@ -106,6 +106,31 @@ func TestGiveResolve_SameOutputAsChoosingTheTopic(t *testing.T) {
 	require.Equal(t, chosenTheirs, givenTheirs)
 }
 
+const shownItemFixtureYAML = `mobid: 1
+zone: TestZone
+topics:
+  - key: dagger
+    kind: info
+    label: "Look at this dagger."
+    text: "Fine work, that."
+    carriesItem: 10001
+`
+
+// A shown item (carriesItem) is answered by its topic and never leaves the
+// player: give must not fall through to the ordinary give (R8).
+func TestGiveResolve_ShownItemPlaysTheTopicAndIsKept(t *testing.T) {
+	user, mob, done := fixtureWith(t, shownItemFixtureYAML)
+	defer done()
+	itm := giveItem(t, user, 10001)
+
+	require.True(t, conversation.Give(user, mustRoom(t, user), mob, itm))
+	mine := drained(1)
+	require.Contains(t, mine, "Fine work, that.")
+	require.NotContains(t, mine, "You give the", "a shown item is not handed over")
+	require.Equal(t, 1, countBackpack(user, 10001), "the item stays with the player")
+	require.False(t, mobHolds(mob, 10001))
+}
+
 func TestGiveResolve_WantedButIneligibleIsHandedBack(t *testing.T) {
 	user, mob, done := offerFixture(t)
 	defer done()

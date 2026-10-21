@@ -258,6 +258,45 @@ topics:
 	require.False(t, wanted)
 }
 
+// A shown item (carriesItem) is wanted by give just as a handed one is (R8):
+// give resolves as choosing the topic, and Apply never takes the item. The
+// first matching topic in authored order wins, whichever field matched.
+func TestItemTopic_CarriesItemWantsTheItemToo(t *testing.T) {
+	df := loadFixture(t, `mobid: 51
+zone: testzone
+topics:
+  - key: shown
+    kind: info
+    label: "Look at this dagger."
+    text: "Fine work."
+    questRequired: [35-start]
+    carriesItem: 77
+  - key: handed
+    kind: handin
+    label: "Take the dagger."
+    playerLine: "Here."
+    text: "Thanks."
+    requiresItem: 77
+`)
+	f := newFake()
+	f.items[77] = true
+	tp, wanted := df.ItemTopic(77, f.ps())
+	require.NotNil(t, tp)
+	require.Equal(t, "handed", tp.Key, "the shown topic is ineligible, so the next match wins")
+	require.True(t, wanted)
+
+	f.tokens["35-start"] = true
+	tp, wanted = df.ItemTopic(77, f.ps())
+	require.NotNil(t, tp)
+	require.Equal(t, "shown", tp.Key, "authored order decides between the two kinds")
+	require.True(t, wanted)
+
+	f.items[77] = false
+	tp, wanted = df.ItemTopic(77, f.ps())
+	require.Nil(t, tp, "a shown topic needs the item carried")
+	require.True(t, wanted, "but it still wants the item: hand it back")
+}
+
 func TestNilFileIsSafe(t *testing.T) {
 	var df *DialogueFile
 	require.Equal(t, "", df.Marker(newFake().ps()))
