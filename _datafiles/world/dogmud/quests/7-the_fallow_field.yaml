@@ -11,12 +11,13 @@ steps:
     map_target: 444  # the Pest Fields — kill pests for a sample
     description: "Farmer Dorn has asked you to clear the crop pests
       from the south fields and bring back a sample."
-    hint: "Kill crop pests until one drops a sample. From Dorn's farm,
-      go east 1 to the fallow field, then south 1 to the pest fields."
+    hint: "From Dorn's farm, go east to the fallow field, then south to
+      the Pest Fields. There, type attack pest until one drops a sample."
   - id: deliver
     map_target: 442  # Farmer Dorn's farm
     description: "You have a pest sample. Bring it back to Farmer Dorn."
-    hint: "Return to Farmer Dorn with the pest sample."
+    hint: "Take the pest sample back to Farmer Dorn's farm and type talk
+      dorn."
   - id: end
     description: "You reported back to Dorn. The pest problem is
       under control for now."

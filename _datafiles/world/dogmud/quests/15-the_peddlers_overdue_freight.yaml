@@ -11,10 +11,10 @@ steps:
     description: "Peddler Malk has been waiting on a freight
       shipment for days. He suspects bandits intercepted it. Find
       the missing freight crate."
-    hint: "Find Malk's missing freight crate. From his camp, go
-      east 1 to the Waypoint Shrine, then south along the road.
-      The bandits have been seen near a ruined barn west of the
-      farmland stretch."
+    hint: "From Malk's camp, go east to the Waypoint Shrine, then
+      south three times, then west into the ruined barn. The crate
+      is in the crates against the back wall. Bring it to Malk and
+      type talk malk."
   - id: end
     description: "You recovered Malk's freight crate and returned
       it to him."

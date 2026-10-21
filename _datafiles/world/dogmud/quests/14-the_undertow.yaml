@@ -13,9 +13,9 @@ steps:
       cellar -- scraping, voices, the sound of things being moved. The old
       drainage tunnels run beneath the tavern. He has given you a lantern and
       asked you to investigate."
-    hint: "Descend through the kitchen trapdoor into the cellar. Search the
-      tunnels for evidence of smuggling -- check any stash rooms or crates
-      you find."
+    hint: "Go west into the tavern kitchen and down through the trapdoor.
+      In the tunnels below, find the Stash Room and type get stick from
+      crates."
   - id: explore
     description: "You found a tally stick in the smugglers' stash room -- proof
       of regular shipments moving through these tunnels. The chalk arrows on
@@ -28,21 +28,21 @@ steps:
       smuggling tunnels. A man named Torvan Cresk runs the whole operation from
       here. A locked strongbox beneath his table likely holds the real
       evidence -- but Torvan has the key."
-    hint: "Torvan Cresk has the key to the strongbox. Fight him, take the
-      key, and open the strongbox."
+    hint: "Torvan Cresk carries the strongbox key. Defeat him for it, then
+      type open strongbox."
   - id: evidence
     map_target: 473  # fallback when Guard Captain Velk is not spawned
     map_target_mob: 94  # follow Guard Captain Velk (schedule thornwall_guard_captain) — a fixed room is wrong for part of the day
     description: "You have obtained a bribe ledger from the strongbox -- it
       names corrupt city officials taking payments to look the other way.
       Guard Captain Velk needs to see this."
-    hint: "Bring the bribe ledger to Guard Captain Velk at the barracks in
-      the city centre."
+    hint: "Take the bribe ledger to Guard Captain Velk at the barracks and
+      type talk velk."
   - id: report
     map_target: -1  # -1: return-to-giver / in-place (start room 473); Phase 2 split review
     description: "Guard Captain Velk has the bribe ledger and is reviewing the
       names. He is ready to act."
-    hint: "Speak with Velk to close the case."
+    hint: "Type talk velk to close the case."
   - id: end
     description: "The smuggling tunnels have been exposed and the bribe ledger
       is in the hands of the city watch. Thornwall's underground corruption

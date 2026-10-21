@@ -9,20 +9,18 @@ steps:
   - id: start
     map_target: 477
     description: "Guard Captain Velk at the barracks has asked you to locate a missing
-      person -- a young woman named Elara, reported missing by her family. Search the
+      person, a young woman named Elara, reported missing by her family. Search the
       residential wards north of the market for any sign of her."
-    hint: "From the barracks, go south 1, then east 5 along Main Street, then north
-      2 into the Residential Ward. Look for Elara there. Try speaking with her -- she
-      may respond to calm, reassuring words."
+    hint: "From the barracks, go south, then east five times along Main Street, then
+      north twice into the Residential Ward. Find Elara there and type talk elara."
   - id: found
     map_target: 473  # fallback when Guard Captain Velk is not spawned
     map_target_mob: 94  # follow Guard Captain Velk (schedule thornwall_guard_captain) — a fixed room is wrong for part of the day
     description: "You have found Elara hiding in the residential ward. She is running
       from an arranged marriage and does not want to be returned. You must decide what
       to tell the guard captain."
-    hint: "Return to Captain Velk at the barracks. From the residential ward, go south
-      2, then west 5, then north 1. Report what you found -- the choice of what to
-      tell him is yours."
+    hint: "From the Residential Ward, go south twice, then west five times, then
+      north into the barracks. Type talk velk. What you report is your choice."
   - id: end
     description: "You reported back to Captain Velk. The case is closed, one way or
       another."

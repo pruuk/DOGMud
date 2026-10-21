@@ -1,17 +1,18 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">instances</ansi>
 
 Instanced zones are dangerous, private areas you can enter
-by paying a Riftkeeper NPC. The more gold you invest, the
-tougher the enemies -- and the better the potential loot.
+by paying a riftkeeper. The more gold you invest, the
+tougher the enemies, and the better the potential loot.
 
 <ansi fg="yellow">How It Works:</ansi>
 
-  1. Find the Riftkeeper (down from Temple District).
-  2. <ansi fg="command">ask sable portals</ansi> to see available zones.
-  3. <ansi fg="command">ask sable arena 200</ansi> to open a rift to the
-     Arena with 200 gold invested. The gold is deducted
-     immediately. Minimum investment is 100 gold.
-  4. Sable will tell you the exit command to enter.
+  1. Find Sable the riftkeeper in the Rift Chamber, down
+     from the Temple District in Thornwall.
+  2. Type <ansi fg="command">talk sable</ansi> and choose where to go.
+  3. Answer how much gold you will stake, for example 200.
+     The gold is taken at once. The least Sable takes is
+     100 gold.
+  4. Sable names the word to type to step into the rift.
 
   The gold you invest determines how tough the enemies
   are and how good the loot can be. Invest more for a

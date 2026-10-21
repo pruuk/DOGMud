@@ -7,7 +7,7 @@ expulsion. There is no coming back.
 
   A linear gauntlet of increasingly dangerous rooms.
   Push through pit fighters, veterans, and finally the
-  Arena Champion. Enemies respawn — the waves never
+  Arena Champion. Enemies respawn, and the waves never
   truly stop. How far can you get before they grind
   you down?
 
@@ -29,8 +29,8 @@ expulsion. There is no coming back.
 <ansi fg="yellow">How to Enter:</ansi>
 
   Visit the Rift Chamber (down from Temple District).
-  <ansi fg="command">ask sable arena 200</ansi> — invest any amount over 100
-  gold. Sable will tell you the exit command.
+  Type <ansi fg="command">talk sable</ansi>, choose the Arena, and stake 100
+  gold or more. Sable names the word to type to enter.
 
 <ansi fg="yellow">Tips:</ansi>
 
