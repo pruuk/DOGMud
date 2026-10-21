@@ -36,6 +36,11 @@ type Input struct {
 	Files  []dlgFile
 	Quests []quests.Quest
 	Trees  []treeFile
+	// Retired lists quest ids that are deliberately not startable (owner
+	// ruling R17). Characters already holding their tokens must still be
+	// able to finish, so the walk seeds each one with a holder at its start
+	// step and keeps every other check on.
+	Retired map[int]bool
 	// WorldItems maps an item id to the places in the world data that
 	// supply it (a mob's shop or gear, a room spawn or container, a biome,
 	// a recipe output). Those sources are ASSUMED obtainable.

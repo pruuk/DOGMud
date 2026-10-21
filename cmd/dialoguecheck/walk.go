@@ -20,9 +20,10 @@ const (
 	ClassOrphan      = "ORPHAN STEP"
 	ClassUnreachable = "UNREACHABLE TOPIC"
 	ClassAssumed     = "ASSUMED"
+	ClassRetired     = "RETIRED"
 )
 
-var classOrder = []string{ClassValidation, ClassDeadEnd, ClassReOffer, ClassUnstartable, ClassOrphan, ClassUnreachable, ClassAssumed}
+var classOrder = []string{ClassValidation, ClassDeadEnd, ClassReOffer, ClassUnstartable, ClassOrphan, ClassUnreachable, ClassAssumed, ClassRetired}
 
 func isError(class string) bool {
 	switch class {
@@ -180,6 +181,13 @@ func newWalker(in Input) *walker {
 		}
 		w.qs[q.QuestId] = m
 		w.reach[q.QuestId] = map[node]bool{none: true}
+		if in.Retired[q.QuestId] {
+			// Nothing grants a retired quest's start, but characters saved
+			// holding it exist: they stand at its first step.
+			if j, ok := m.idx["start"]; ok {
+				w.reach[q.QuestId][node{idx: j, chain: true}] = true
+			}
+		}
 	}
 	for _, f := range in.Files {
 		w.mobFolder[f.File.MobId] = f.Folder
@@ -1007,6 +1015,9 @@ func (w *walker) check() {
 func (w *walker) checkQuest(m *qmodel) {
 	id := m.q.QuestId
 	zones := sortedKeys(m.zones)
+	if w.in.Retired[id] {
+		w.emit(ClassRetired, zones, "quest %d %q: not startable by design; holders finish through its triggers", id, m.q.Name)
+	}
 	started := false
 	for n := range w.reach[id] {
 		if n.idx >= 0 {

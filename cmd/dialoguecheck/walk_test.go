@@ -135,6 +135,33 @@ func TestWalk_QuestNothingStartsIsUnstartable(t *testing.T) {
 	require.Contains(t, st[0], `quest 1 "Clean Errand": nothing grants 1-start`)
 }
 
+// A retired quest has no start grant by design: it is reported as RETIRED,
+// not UNSTARTABLE, and its holders still reach the end through the hand-in.
+func TestWalk_RetiredQuestIsInformationalNotUnstartable(t *testing.T) {
+	in := loadFixture(t, "clean")
+	in.Files[0].File.Topics = in.Files[0].File.Topics[1:] // drop the offer
+	in.Retired = map[int]bool{1: true}
+	fs := Walk(in)
+	require.Empty(t, ofClass(fs, ClassUnstartable), "%v", fs)
+	require.Empty(t, ofClass(fs, ClassDeadEnd), "%v", fs)
+	ret := ofClass(fs, ClassRetired)
+	require.Equal(t, []string{`quest 1 "Clean Errand": not startable by design; holders finish through its triggers`}, ret)
+	require.False(t, isError(ClassRetired))
+}
+
+// Retiring does not switch the other checks off: with no hand-in, a holder
+// at 1-start can never reach 1-end, which is still a DEAD END.
+func TestWalk_RetiredQuestWhoseHoldersCannotFinishIsADeadEnd(t *testing.T) {
+	in := loadFixture(t, "clean")
+	in.Files[0].File.Topics = in.Files[0].File.Topics[2:] // drop offer and hand-in
+	in.Retired = map[int]bool{1: true}
+	fs := Walk(in)
+	require.Empty(t, ofClass(fs, ClassUnstartable), "%v", fs)
+	dead := ofClass(fs, ClassDeadEnd)
+	require.Len(t, dead, 1, "%v", fs)
+	require.Contains(t, dead[0], "can reach 1-start and never 1-end")
+}
+
 func TestWalk_UnmodeledEventsAndWorldItemsAreAssumed(t *testing.T) {
 	fs := Walk(loadFixture(t, "assumed"))
 	as := strings.Join(ofClass(fs, ClassAssumed), "\n")

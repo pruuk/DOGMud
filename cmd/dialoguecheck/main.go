@@ -16,6 +16,11 @@
 //     ORPHAN STEP, UNREACHABLE TOPIC and ASSUMED lines. See walk.go for what
 //     is modeled.
 //
+// -retired 29,30 names quests that are deliberately not startable: they print
+// an informational RETIRED line instead of UNSTARTABLE QUEST, and the walk
+// seeds a holder at their start step so DEAD END still checks that holders can
+// finish.
+//
 // -zones filters the report; reachability is always computed over the whole
 // world, because quests cross zones. The exit status is 1 when any error
 // class (VALIDATION, DEAD END, RE-OFFER, UNSTARTABLE QUEST) is shown.
@@ -51,6 +56,7 @@ type options struct {
 	Dialogue string
 	Zones    string
 	Report   string
+	Retired  string
 }
 
 func main() {
@@ -59,6 +65,7 @@ func main() {
 	flag.StringVar(&o.Dialogue, "dialogue", "", "dialogue folder to check, named dialogue (zone folders of <mobid>.yaml); required")
 	flag.StringVar(&o.Zones, "zones", "", "comma-separated zone folders to report on (default: all)")
 	flag.StringVar(&o.Report, "report", "auto", "converter report.md to apply; auto uses <dialogue>/../report.md if present; none applies nothing")
+	flag.StringVar(&o.Retired, "retired", "", "comma-separated quest ids retired by design (not startable; holders must still finish)")
 	flag.Parse()
 
 	code, err := run(os.Stdout, o)
@@ -202,6 +209,9 @@ func run(out io.Writer, o options) (int, error) {
 		return 0, err
 	}
 	in := Input{Quests: quests.GetAllQuests(), Trees: trees, Plan: plan}
+	if in.Retired, err = parseRetired(o.Retired); err != nil {
+		return 0, err
+	}
 	for _, f := range world.Files {
 		in.Files = append(in.Files, dlgFile{Folder: folders[f.MobId], File: f})
 	}
@@ -264,6 +274,22 @@ func run(out io.Writer, o options) (int, error) {
 		fmt.Fprintf(out, "# WARNING: %d files still carry old patterns or a tree; the gate walk reads topics only, so its findings for them mean nothing\n", old)
 	}
 	return report(out, findings, o.Zones), nil
+}
+
+// parseRetired reads the -retired list of quest ids.
+func parseRetired(list string) (map[int]bool, error) {
+	out := map[int]bool{}
+	for _, f := range strings.Split(list, ",") {
+		if f = strings.TrimSpace(f); f == "" {
+			continue
+		}
+		id, err := strconv.Atoi(f)
+		if err != nil {
+			return nil, fmt.Errorf("-retired %q: %q is not a quest id", list, f)
+		}
+		out[id] = true
+	}
+	return out, nil
 }
 
 func uniq(s []string) []string {
