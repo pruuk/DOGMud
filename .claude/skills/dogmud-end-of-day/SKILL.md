@@ -1,6 +1,6 @@
 ---
 name: dogmud-end-of-day
-description: Use at the end of a working day or session, when the owner signs off, says EOD, or asks to wrap up. Covers the daily archive sweep of docs/superpowers/specs and plans (shipped work to completed/, dropped work to abandoned/, every reference repointed), the repo-root tidy that archives old screenshots without touching binaries, the scratch sweep of C:\tmp and C:\gotmp (merged worktrees, stale cargo targets and scratch dirs), and the session handoff memory.
+description: Use at the end of a working day or session, when the owner signs off, says EOD, or asks to wrap up. Covers the daily archive sweep of docs/superpowers/specs and plans (shipped work to completed/, dropped work to abandoned/, every reference repointed), the repo-root tidy that archives old screenshots without touching binaries, the daily disk check (C: free space with a 60 GB warning, the Go build cache with a go clean -cache trigger, DOGMud's own session scratchpads) and the scratch sweep of C:\tmp and C:\gotmp (merged worktrees, stale cargo targets and scratch dirs), and the session handoff memory.
 ---
 
 This skill is the owner's end-of-day SOP (ruled 2026-09-25). It keeps
@@ -79,17 +79,35 @@ Afterwards run the guard tests whose constants name spec paths
 - **Never touch `novel/`**, `.mcp.json` or `.claude/settings.local.json`.
 - Anything untracked and unrecognised: report it, do not move it.
 
-## 3. Scratch sweep: C:\tmp and C:\gotmp
+## 3. Disk check and scratch sweep
 
 Owner, 2026-09-29: `C:\tmp` fills rapidly across projects (DOGMud worktrees,
 boot checks, review scratch, and Ballistic's cargo `*-target` dirs, which
-alone reached 12 GB in four days). What fills C: and what does not is measured
-in the `reference-go-build-cache-fills-c-drive` memory; the Go caches are NOT
-the problem, so do not `go clean -cache`.
+alone reached 12 GB in four days). Owner, 2026-10-20: C: reached 0 bytes and
+broke builds in two projects; the EOD now measures the disk every day. That
+day the culprits were the Go build cache (72 GB) and Claude session
+scratchpads (104 GB, one of them holding 78 GB of another project's cargo
+targets), not `C:\tmp` (15 GB). Scratchpads are NOT reliably auto-cleaned.
+Measure each time; the `reference-go-build-cache-fills-c-drive` memory has
+the history.
 
 Several sessions share these directories, some of them live. **Age and git
-state decide, never the name.** Record `C:` free space first
-(`Get-PSDrive C`).
+state decide, never the name.**
+
+**First, the disk report** (PowerShell; read-only):
+
+```powershell
+"C: free {0:N1} GB" -f ((Get-PSDrive C).Free/1GB)
+foreach ($p in @("$env:LOCALAPPDATA\go-build", "$env:LOCALAPPDATA\Temp\claude\C--Users-Calabe-Davis-workspace-DOGMud", "$env:LOCALAPPDATA\Temp\claude\c--Users-Calabe-Davis-workspace-DOGMud", "C:\tmp", "C:\gotmp")) {
+  if (Test-Path $p) { $s = (Get-ChildItem $p -Recurse -Force -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum; "{0,8:N1} GB  {1}" -f ($s/1GB), $p }
+}
+```
+
+**Below 60 GB free, say so at the top of the EOD report to the owner**, with
+the sizes above, before anything else. The steps below usually recover the
+DOGMud share; if C: is still under 60 GB after them, the rest belongs to
+other projects (CritBench's `target/` and `record-cache`, other sessions'
+scratchpads): report it, do not delete it.
 
 1. **DOGMud worktrees under `C:\tmp`.** From the main checkout, `git fetch
    origin`, then for each `C:/tmp/...` row of `git worktree list`:
@@ -116,6 +134,22 @@ state decide, never the name.** Record `C:` free space first
    another session may be using them today.
 5. **`C:\gotmp`**: delete `go-build*` dirs older than one day (Go failed to
    auto-clean them).
+6. **Go build cache** (`%LOCALAPPDATA%\go-build`): over 20 GB, run
+   `go clean -cache`. It only costs the next build of each Go project a slower
+   first run; no source or module is touched. Skip it while a Go build or test
+   run of another session is in progress (ask it, or wait).
+7. **DOGMud's own session scratchpads** (`%LOCALAPPDATA%\Temp\claude\` the
+   `C--Users-Calabe-Davis-workspace-DOGMud` folder, either case of the
+   leading `c`): delete each session folder not written in the last two days.
+   Never delete the current session's folder, and never delete a folder a
+   running process still writes to (a dev server or test log inside it; check
+   `Get-CimInstance Win32_Process` command lines for the folder's id before
+   deleting). Never touch another project's scratchpad folders: that
+   project's own EOD owns them.
+
+Before building anything large in a scratchpad (a `CARGO_TARGET_DIR`, a full
+copy of the repo), remember it is not cleaned for you: delete it when the
+work it served is merged.
 
 Mechanics, from the traps already hit:
 - Files locked by running processes fail to delete; skip them and carry on.
@@ -127,7 +161,8 @@ Mechanics, from the traps already hit:
 - Never delete under `C:\Users\<user>\workspace\`, and never delete the
   current session's own scratchpad or worktree.
 
-Report in the handoff: C: free before and after, how many worktrees were
+Report in the handoff: C: free before and after, the go-build and
+scratchpad sizes before and after, how many worktrees and scratchpads were
 removed, and every item left with its reason.
 
 ## 4. Handoff
