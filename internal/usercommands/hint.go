@@ -13,6 +13,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+// hintNoQuestText is the one line every "nothing to hint at" path sends (owner
+// ruling 2026-10-21, #375): no current quest, so say how to find one. [!] is
+// menu.MarkerQuest, the mark the room list prints beside a quest giver.
+const hintNoQuestText = `You don't have any current quests. Look for someone with [!] next to their name. That mark means they have a quest for you. Type <ansi fg="command">talk &lt;name&gt;</ansi> to speak with them.`
+
 func Hint(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	allProgress := user.Character.GetQuestProgress()
@@ -26,7 +31,7 @@ func Hint(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	if len(allProgress) == 0 {
-		user.SendText(messaging.CategoryTip, `You don't have any active quests.`)
+		user.SendText(messaging.CategoryTip, hintNoQuestText)
 		return true, nil
 	}
 
@@ -41,7 +46,7 @@ func Hint(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// Quests panel + minimap marker so all three agree on one focus).
 		targetQuestId = user.Character.GetFocusQuestId()
 		if _, ok := allProgress[targetQuestId]; !ok {
-			user.SendText(messaging.CategoryTip, `You don't have any active quests.`)
+			user.SendText(messaging.CategoryTip, hintNoQuestText)
 			return true, nil
 		}
 	} else if numId, err := strconv.Atoi(rest); err == nil {
@@ -74,7 +79,7 @@ func Hint(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	engine := questengine.GetEngine()
 	qDef := engine.GetQuest(targetQuestId)
 	if qDef == nil {
-		user.SendText(messaging.CategoryTip, `You don't have any active quests.`)
+		user.SendText(messaging.CategoryTip, hintNoQuestText)
 		return true, nil
 	}
 
