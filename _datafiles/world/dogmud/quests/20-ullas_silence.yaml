@@ -63,11 +63,14 @@ steps:
   - id: wardstone_altar
     map_target: 4130
     description: "The altar slab in the Wardstone Circle carries the
-      spiral too, and a worn line, almost a channel, pointing east
-      toward the lake. The sites form a line across Stillwater: the
-      chapel, the wardstones, the temple, and on out under the lake,
-      where only the lake caves can reach. Elgar followed it."
-    hint: "Bring a light: the caves are dark. From the Wardstone
+      spiral too, the fourth site, and a worn line, almost a channel,
+      pointing east toward the lake. The chapel and the wardstones
+      form a line that runs east past the north edge of the town and
+      on out under the lake, where only the lake caves can reach. The
+      pillars and the garden marker lie south of it, like signposts.
+      Elgar followed it."
+    hint: "Bring a light: the caves are dark. A drowned hunter hides
+      in the Bone Shoals and strikes first. From the Wardstone
       Circle, go south three times to the Healer's Cottage, then east
       twice to North Square. Go south twice to Lakefront Square, east
       twice to the Lake-View Promenade, and north twice to the Net
@@ -80,15 +83,19 @@ steps:
     description: "Elgar's cache lay where he hid it before going
       deeper: an oilskin pouch with a folded note to Brindle the
       smith, a small Stillwater Black Pearl, and a curl of waxed
-      line. The note explains the spiral: the sites are markers on a
+      line. You left the pearl and the line in the cache where he set
+      them. The note explains the spiral: the sites are markers on a
       line, and the lake caves meet that line in the deep sump.
       Elgar wrote that he was going down alone because he could not
       wait for Brindle to finish the work he was doing. The note is
       dated the day he disappeared."
-    hint: "Smith Brindle should know what you found. His smithy is
-      north of the Pike & Lantern, on the west side of Tinder &
-      Tackle. In the evening he drinks at the Pike & Lantern. Type
-      talk brindle."
+    hint: "Smith Brindle should know what you found. From the Bone
+      Shoals, go east, then up to the Cave Mouth. Go west, south and
+      west to the Net Yard, south twice to the Lake-View Promenade,
+      then west twice to Lakefront Square. By day, go north, then
+      west into Brindle's Smithy. In the evening he drinks at the
+      Pike & Lantern instead, just west of Lakefront Square. He
+      sleeps at night. Type talk brindle."
   - id: brindle_confession
     map_target: 4140
     description: "Brindle was Elgar's friend and was meant to go down
@@ -96,7 +103,8 @@ steps:
       hook-spear ever since, never quite able to give it to anyone.
       He says Vella the healer, Elgar's sister, buried something at
       Elgar's empty grave for whoever came looking."
-    hint: "From Brindle's Smithy, go east, then north to North Square.
+    hint: "From the Pike & Lantern, go north into Brindle's Smithy
+      first. From the smithy, go east, then north to North Square.
       Go west three times, through Ulla's Parlor and the Healer's
       Cottage, into Stillwater Cemetery. The turf at the foot of
       Elgar's grave has been disturbed. Type look disturbance."
@@ -108,8 +116,10 @@ steps:
       own hand reading 'He was your brother.' The kingfisher is
       unmistakably Elgar's work."
     hint: "Take the carved kingfisher to Vella Thorne. She keeps the
-      Healer's Cottage, just east of the cemetery, and sits with Ulla
-      in the evening. Type talk vella."
+      Healer's Cottage, just east of the cemetery. In the morning she
+      visits the Healer's Alcove in the temple, and in the evening she
+      sits with Ulla in Ulla's Parlor. She sleeps at night. Type talk
+      vella."
   - id: vella_journal
     map_target: 4137
     description: "Vella has accepted the kingfisher and entrusted you
@@ -289,13 +299,15 @@ triggers:
     actions:
       - grant: "20-wardstone_altar"
       - actor: "The wardstone slab carries the spiral worn deep
-          enough to set a finger into. A worn channel runs from it
-          toward the east. Stand at the circle's centre with the
-          chapel ruin at your back, follow the channel with your eye,
-          and the alignment is plain: the chapel, this slab, and far
-          off to the east, down in the town, the temple. The four
-          sites form a line. It runs on past the town, out under the
-          lake, and down, somewhere only the lake caves can reach."
+          enough to set a finger into: the fourth site you have
+          found. A worn channel runs from it straight toward the
+          east. Stand at the circle's centre with the chapel ruin at
+          your back, follow the channel with your eye, and the
+          alignment is plain: the chapel, this slab, and on east past
+          the north edge of the town, out under the lake, and down,
+          somewhere only the lake caves can reach. The pillars and
+          the garden marker lie south of the line, like signposts
+          pointing to it."
   - event: room_interact
     room: 4145
     noun: altar
@@ -305,13 +317,15 @@ triggers:
     actions:
       - grant: "20-wardstone_altar"
       - actor: "The wardstone slab carries the spiral worn deep
-          enough to set a finger into. A worn channel runs from it
-          toward the east. Stand at the circle's centre with the
-          chapel ruin at your back, follow the channel with your eye,
-          and the alignment is plain: the chapel, this slab, and far
-          off to the east, down in the town, the temple. The four
-          sites form a line. It runs on past the town, out under the
-          lake, and down, somewhere only the lake caves can reach."
+          enough to set a finger into: the fourth site you have
+          found. A worn channel runs from it straight toward the
+          east. Stand at the circle's centre with the chapel ruin at
+          your back, follow the channel with your eye, and the
+          alignment is plain: the chapel, this slab, and on east past
+          the north edge of the town, out under the lake, and down,
+          somewhere only the lake caves can reach. The pillars and
+          the garden marker lie south of the line, like signposts
+          pointing to it."
   - event: room_interact
     room: 4145
     noun: slab
@@ -321,13 +335,15 @@ triggers:
     actions:
       - grant: "20-wardstone_altar"
       - actor: "The wardstone slab carries the spiral worn deep
-          enough to set a finger into. A worn channel runs from it
-          toward the east. Stand at the circle's centre with the
-          chapel ruin at your back, follow the channel with your eye,
-          and the alignment is plain: the chapel, this slab, and far
-          off to the east, down in the town, the temple. The four
-          sites form a line. It runs on past the town, out under the
-          lake, and down, somewhere only the lake caves can reach."
+          enough to set a finger into: the fourth site you have
+          found. A worn channel runs from it straight toward the
+          east. Stand at the circle's centre with the chapel ruin at
+          your back, follow the channel with your eye, and the
+          alignment is plain: the chapel, this slab, and on east past
+          the north edge of the town, out under the lake, and down,
+          somewhere only the lake caves can reach. The pillars and
+          the garden marker lie south of the line, like signposts
+          pointing to it."
 
   # ── Step 7: Bone Shoals cache (4130) ──
   - event: room_interact
@@ -340,12 +356,14 @@ triggers:
       - grant: "20-bone_shoals_cache"
       - actor: "The oilskin pouch holds a folded note in Elgar's
           hand, addressed to Brindle the smith. The note explains the
-          spiral: alignment points connecting the chapel, the
-          temple, the wardstone circle, and the deep sump beneath the
-          lake. Elgar wrote that he was going down alone because he
-          could not wait for Brindle to finish the work he was doing.
-          The note is dated the day he disappeared. Brindle needs to
-          know you found this."
+          spiral: the chapel, the wardstone circle and the deep sump
+          beneath the lake lie on one line, and the marks at the
+          temple point the way to it. Elgar wrote that he was going
+          down alone because he could not wait for Brindle to finish
+          the work he was doing. The note is dated the day he
+          disappeared. A small black pearl and a curl of waxed line
+          lie with it; you leave them where he set them. Brindle
+          needs to know you found this."
 
   # ── Step 9: cemetery disturbance (4140) — covers `disturbance` and
   #    the room noun `elgar's grave` (trigger nouns are compared
@@ -439,3 +457,22 @@ triggers:
       - set_flag:
           key: "20-truth"
           value: "partial"
+
+  # ── Step 9, appended: `look grave` in the cemetery (4140). The room
+  #    noun `Elgar's grave` answers `grave` through FindNoun, but the
+  #    trigger compares the typed noun, so `grave` needs its own entry.
+  #    Same conditions and actions as the `disturbance` trigger. ──
+  - event: room_interact
+    room: 4140
+    noun: grave
+    conditions:
+      has: ["20-brindle_confession"]
+      missing: ["20-kingfisher_found"]
+    actions:
+      - grant: "20-kingfisher_found"
+      - give_item: 40060
+      - actor: "Inside the buried wooden box: a single small
+          carved kingfisher in dark wood, unmistakably Elgar's work,
+          and a folded note in a different hand reading 'He was your
+          brother. V.' The kingfisher is yours now. Bring it to Vella
+          at the Healer's Cottage."
