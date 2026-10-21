@@ -119,6 +119,11 @@ spec; line numbers were read from the files at that commit.
     own, 400 and up only for the bravest alone or a group, with a warning that there is no
     second chance (death sends you out, no recall inside) and the fights come one after
     another. Monster gold still scales with the stake as for the Oasis (owner 2026-10-17).
+  - **R27** (owner 2026-10-21) An offer's `playerLine` (spoken before the NPC's pitch) may use
+    only what the player can see at that moment: the quest title in the menu and the opener
+    shown in the same quest state. Where that opener does not name the problem, the line is
+    general ("Is there something I can help with?"). Where the opener always names it (a lock),
+    the specific line stays.
   - **R25** (owner 2026-10-21) The character-creation question "How much of Gaius do you
     already know?" has no default: Enter asks again, so nobody skips the tutorial by
     pressing Enter. Pinned by `TestConfirmMenu_StartEnterReasks`.
