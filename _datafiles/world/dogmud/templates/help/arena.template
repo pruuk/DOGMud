@@ -1,7 +1,7 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">arena</ansi>
 
-The Arena is a brutal proving ground where death means
-expulsion. There is no coming back.
+The Arena is a brutal proving ground where death sends
+you out, and you cannot go back in.
 
 <ansi fg="yellow">Layout:</ansi>
 
@@ -13,11 +13,25 @@ expulsion. There is no coming back.
 
 <ansi fg="yellow">Rules:</ansi>
 
-  <ansi fg="red">Death ends your run.</ansi> You are expelled permanently.
-  Recall magic does not work. The only way out is the
-  return portal at the entrance.
+  <ansi fg="red">There is no second chance.</ansi> If you die, you are
+  sent out and cannot go back in. Recall magic does not
+  work. The only way out is the return portal at the
+  entrance.
+
+  The fights come one after another. Every room past
+  the entrance holds fighters who attack on sight, and
+  the fallen soon return.
 
   The rift stays open for 30 minutes.
+
+<ansi fg="yellow">Stakes:</ansi>
+
+  The more gold you stake, the harder the Arena fights
+  and the richer it pays.
+
+    100 to 200 gold: a midgame fighter on their own.
+    200 to 400 gold: an endgame fighter on their own.
+    400 gold and up: only the bravest alone, or a group.
 
 <ansi fg="yellow">Loot:</ansi>
 

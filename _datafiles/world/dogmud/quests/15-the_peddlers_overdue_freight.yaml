@@ -12,9 +12,18 @@ steps:
       shipment for days. He suspects bandits intercepted it. Find
       the missing freight crate."
     hint: "From Malk's camp, go east to the Waypoint Shrine, then
-      south three times, then west into the ruined barn. The crate
-      is in the crates against the back wall. Bring it to Malk and
-      type talk malk."
+      south three times, then west into the ruined barn. Type get
+      freight crate from crates."
+  # Granted when the crate is picked up, or on accepting while already
+  # holding it. It drives the step hint only: the hand-in topic gates on
+  # 15-start plus the crate, so a save at 15-start holding the crate still
+  # hands in (batch 2 review B1).
+  - id: return
+    map_target: 4003  # fallback when Peddler Malk is not spawned
+    map_target_mob: 250  # follow Peddler Malk
+    description: "You have Malk's freight crate. Take it back to his camp."
+    hint: "From the ruined barn, go east, then north three times, then
+      west into Malk's camp. Type talk malk."
   - id: end
     description: "You recovered Malk's freight crate and returned
       it to him."
@@ -23,9 +32,7 @@ rewards:
   actor: "Malk examines the crate, running his elongated
     fingers over the forced lock. 'This is the one. Everything
     accounted for, near enough.' He reaches into the cart and
-    produces a small purse. 'Road rate from me, any time you
-    need supplies. Better than road rate, in fact. I do not
-    forget a good turn.'"
+    produces a small purse and presses it into your hand."
   observer: "Malk examines the recovered freight crate with
     evident relief, already tallying his inventory."
   gold: 15
@@ -72,3 +79,24 @@ triggers:
       missing: [15-end]
     actions:
       - grant: 15-end
+
+  # The two triggers below are appended last so the trigger indexes in the
+  # converter report (which deletes triggers 0 to 2) hold.
+  # Picking up the crate moves the hint on to the way back.
+  - event: item_gain
+    item: 40039
+    conditions:
+      has: [15-start]
+      missing: [15-return]
+    actions:
+      - grant: 15-return
+
+  # R15: a player who found the crate first accepts the offer holding it.
+  # Dialogue grants reach quest_granted (hooks/Quest_HandleQuestUpdate.go).
+  - event: quest_granted
+    quest_token: "15-start"
+    conditions:
+      missing: [15-return]
+      has_item: 40039
+    actions:
+      - grant: 15-return
