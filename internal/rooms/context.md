@@ -173,6 +173,12 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   sentence that mentions a noun names nothing. Quest triggers match on it
   (`questengine.EventDetails.RoomNoun`), so a quest written with the room's
   noun key accepts every name the room accepts.
+  A hyphen matches a space on both sides (`util.NounHyphenFold`): the room
+  text may show `nave-lamps` for the key `nave lamps`, and `look nave-lamps`
+  finds it; a key typed exactly as authored (`bench-vise`) is taken as is
+  first. `FindNoun` folds the keys and alias targets (`foldedNouns`), runs
+  the lookup (`findNounIn`) and maps the result back to the authored key;
+  `NounNamedBy` and `FindHiddenNoun` fold the same way.
 
 ### Biome System (`biomes.go`)
 - **BiomeInfo**: Environmental definitions affecting room behavior

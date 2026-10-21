@@ -229,7 +229,13 @@ func matchTriggerFields(t *TriggerDef, d EventDetails, tier nounTier) bool {
 }
 
 // nounMatches reports whether trigger noun n matches the event's noun at tier.
+//
+// A hyphen matches a space (util.NounHyphenFold) in the trigger noun, the
+// typed noun and the room noun alike.
 func nounMatches(n string, d EventDetails, tier nounTier) bool {
+	n = util.NounHyphenFold(n)
+	d.Noun = util.NounHyphenFold(d.Noun)
+	d.RoomNoun = util.NounHyphenFold(d.RoomNoun)
 	if n == d.Noun {
 		return true
 	}

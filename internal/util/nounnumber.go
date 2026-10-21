@@ -36,6 +36,14 @@ func NounNumberVariants(word string) []string {
 	return out
 }
 
+// NounHyphenFold treats a hyphen as a space. Room text highlights a noun as
+// `nave-lamps` while its key is `nave lamps`, so noun matching (rooms.FindNoun,
+// rooms.Room.NounNamedBy, quest trigger nouns) folds both the typed text and
+// the keys through this before comparing.
+func NounHyphenFold(s string) string {
+	return strings.ReplaceAll(s, "-", " ")
+}
+
 // NounsDifferOnlyByNumber reports whether a and b are different spellings of
 // one noun's number: b is one of a's NounNumberVariants or the reverse.
 func NounsDifferOnlyByNumber(a, b string) bool {

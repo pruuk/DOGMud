@@ -72,6 +72,9 @@ keep it that way.
    board` names nothing. The command handlers in `usercommands` fill
    `RoomNoun` on `room_interact` and `command_issued`. Author one spelling
    per noun (a guard test fails on a pair that differs only by number).
+   A hyphen matches a space (`util.NounHyphenFold`) in `nounMatches` on the
+   trigger noun, the typed noun and `RoomNoun`, so `look
+   processional-reliefs` fires `noun: processional reliefs`.
 2. **Visit guard** — `MarkVisited(trigId)`; a trigger fires at most once per
    chain.
 3. **Conditions** — `EvalConditions(t.Conditions, player)`.

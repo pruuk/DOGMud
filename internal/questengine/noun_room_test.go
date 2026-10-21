@@ -28,6 +28,24 @@ func TestTriggerNoun_RoomAliasFiresRoomNounTrigger(t *testing.T) {
 	}
 }
 
+func TestTriggerNoun_HyphenMatchesSpace(t *testing.T) {
+	// Room text shows `processional-reliefs`; the trigger noun is spaced.
+	e := nounEngine(map[int]string{1: "processional reliefs"})
+	p := newFullMockPlayer(100)
+	assert.True(t, notifyLookRoomNoun(e, p, "processional-reliefs", "").Handled)
+	assert.True(t, p.HasQuest(questTokenFor(1)))
+
+	// Singular/plural still applies on top.
+	e2 := nounEngine(map[int]string{1: "processional reliefs"})
+	p2 := newFullMockPlayer(100)
+	assert.True(t, notifyLookRoomNoun(e2, p2, "processional-relief", "").Handled)
+
+	// A hyphenated trigger noun matches the spaced room noun.
+	e3 := nounEngine(map[int]string{1: "nave-lamps"})
+	p3 := newFullMockPlayer(100)
+	assert.True(t, notifyLookRoomNoun(e3, p3, "lamps", "nave lamps").Handled)
+}
+
 func TestTriggerNoun_TypedTextStillMatchesWithoutRoomNoun(t *testing.T) {
 	// A trigger noun that is not a room noun still matches the typed text.
 	e := nounEngine(map[int]string{1: "guild mark"})
