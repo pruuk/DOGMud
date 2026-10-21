@@ -67,8 +67,9 @@ triggers:
             - {delay: 5, text: "You have done what you can. The
                 rest is politics."}
 
-  # Corpses hold the loot (CorpsesEnabled), and only some pests carry a
-  # sample, so after each kill the player is told how to search the body.
+  # Corpses hold the loot (CorpsesEnabled), and every crop pest carries a
+  # sample (item 24 is a carried item, which always drops), so after each
+  # kill the player is told how to search the body.
   # Appended last so the trigger indexes in the converter report hold.
   # `loot corpse` reaches the newest corpse at every sight level
   # (rooms.FindCorpseIndex); the Pest Fields are outdoors and dark at night,
@@ -80,5 +81,17 @@ triggers:
       missing: [7-deliver]
       missing_item: 24
     actions:
-      - actor: "The pest goes still. Not every pest carries a sample. To
-          search this one, type loot corpse."
+      - actor: "The pest goes still. To search it for a sample, type loot
+          corpse."
+
+  # A player who found the sample first accepts the offer holding it, so the
+  # step hint moves on to the hand-in. Appended last so the trigger indexes in
+  # the converter report hold. Dialogue grants reach quest_granted
+  # (hooks/Quest_HandleQuestUpdate.go).
+  - event: quest_granted
+    quest_token: "7-start"
+    conditions:
+      missing: [7-deliver]
+      has_item: 24
+    actions:
+      - grant: 7-deliver

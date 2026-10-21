@@ -71,8 +71,12 @@ tree:
     # rooms/instance_*/zone-config.yaml (death_policy, allow_recall) and the
     # arena rooms: 5002, 5006, 5007 and 5008 run north in a line from the
     # entrance, each holds one or two fighters marked hostile, and a fallen
-    # fighter respawns within minutes (respawnrate "1h" is one game hour,
-    # about two and a half real minutes at RoundsPerDay 900).
+    # fighter respawns within a round to a few minutes. Room 5002 has
+    # respawnrate "1h" (one game hour, about two and a half real minutes at
+    # RoundsPerDay 900). Rooms 5006 to 5008 use "1h 30m" and "120m" (plus one
+    # "1h" fighter in 5006), which gametime.AddPeriod does not know, so those
+    # fall back to one round. That one-round respawn is the owner's intended
+    # gold farm (2026-10-17).
     #
     # arena guidance:
     #   The more gold you stake, the harder the Arena fights and the richer
