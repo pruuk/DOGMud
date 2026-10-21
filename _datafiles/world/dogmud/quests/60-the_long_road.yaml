@@ -2,7 +2,7 @@ questid: 60
 name: The Long Road
 description: A sealed dispatch must travel the length of the road from the
   northern toll to the gates of New Plymouth, passed hand to hand up the
-  official post relay -- ferry agent to tithe-clerk to gate.
+  official post relay, from ferry agent to tithe-clerk to gate.
 secret: false
 
 steps:
@@ -24,22 +24,20 @@ steps:
     map_target: 5471
     description: "Verrold entered the manifest in the tithe ledger and sealed
       it into a capital packet. Deliver it to the East Gate guard at New
-      Plymouth -- the last leg of the road."
-    hint: "Carry the sealed packet north to the East Gate of New Plymouth and
-      give it to the gate guard."
+      Plymouth, the last leg of the road."
+    hint: "From the Great Tithe Barn, go east to the Tithe Road, then north
+      until the road ends at the East Gate of New Plymouth. Type talk guard."
   - id: end
     description: "You delivered the dispatch the length of the road, from the
       northern toll to the gates of the capital."
 
 rewards:
-  actor: "The guard breaks the seal, scans the packet, and gives a
-    short nod. 'Came the whole road, did it. And you with it.' He presses a
-    stamped brass token into your hand. 'Couriers' token. The post-houses
-    from here to the toll will know it -- a bed and a meal on the road, and
-    a name that travels ahead of you. The capital remembers who carries its
-    word.'"
+  actor: "The guard breaks the seal, scans the packet, and marks the gate
+    ledger with a short nod. The brass token he pressed into your hand is
+    stamped with the tower and three waves of New Plymouth: the mark of a
+    courier who carried the capital's word the length of the road."
   observer: "The East Gate guard takes the sealed packet, checks its seal
-    against the gate ledger, and waves the courier through."
+    against the gate ledger, and logs it in."
   gold: 150
 
 triggers:

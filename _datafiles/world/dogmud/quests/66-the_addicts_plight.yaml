@@ -1,10 +1,10 @@
 questid: 66
 name: The Addict's Plight
 description: >-
-  A Bloom addict named Teels is barely holding on -- collapsing on the Lower
-  Wharf, lucid only in flashes. They press a spent wax wrapper into your
+  A Bloom addict named Teels is barely holding on, collapsing on the Lower
+  Wharf, clear only in flashes. They press a spent wax wrapper into your
   hands and beg you to find the healer Ysolde in the Common Quarter. Help
-  them, and you will learn the drug's grip up close -- and that it has a
+  them, and you will learn the drug's grip up close, and that it has a
   source that must be traced.
 secret: false
 
@@ -19,13 +19,14 @@ steps:
     map_target_mob: 9323  # follow Ysolde (schedule np_common_ysolde) — a fixed room is wrong for part of the day
     description: >-
       Teels, a Bloom addict on the Lower Wharf, begged you for help.
-      They pressed a spent wax wrapper into your hands -- the copper-flower
+      They pressed a spent wax wrapper into your hands. The copper-flower
       smell of Bloom is on the cloth, and a healer who knows that smell
       may know what to do.
     hint: >-
-      Take the wax wrapper Teels gave you to Ysolde, the back-alley healer
-      in the Common Quarter. She asks no questions and she will know what
-      the smell means.
+      From the Lower Wharf, go north three times to Dock Street, then east
+      twice to Dockgate Street. Go north four times to the Back Court, east
+      to Tannery Street, north to Sweeper's Corner, east into the
+      Back-Alley, then north into Ysolde's Room. Type talk ysolde.
   - id: escort
     map_target: -1  # -1: return-to-giver / in-place (start room 5620); Phase 2 split review
     description: >-
@@ -33,13 +34,13 @@ steps:
       copper-flower note at once. She has seen this kind of sickness more
       than she would like.
     hint: >-
-      Hear what Ysolde has to say -- about the wrapper, about Teels, and
-      about what a purge can and cannot do.
+      Ysolde still has the wrapper. Tell her where Teels is. Type talk
+      ysolde.
   - id: detox
     map_target: -1  # -1: no single resolved destination (near [5620]); Phase 2 review
     description: >-
       Ysolde can purge the Bloom from Teels' system. She made something
-      plain -- the detox holds only until the craving returns, and the
+      plain: the purge holds only until the craving returns, and the
       craving returns every time while the source is still running.
     hint: >-
       Teels is stable for now. The Bloom has a source somewhere on the
@@ -56,12 +57,12 @@ rewards:
   rep_faction: np_commonfolk
   rep_amount: 10
   actor: >-
-    Teels is stable -- for now. Ysolde was clear -- the purge holds until
+    Teels will be stable, for now. Ysolde was clear: the purge holds until
     the craving comes back, and the craving comes back while the source
     is still running. The wrapper is gone but the smell stays with you.
     The docks know where the Bloom comes from, or someone on them does.
   observer: >-
-    The traveller looks up from a quiet dockside exchange with the look
+    The traveller looks up from a quiet exchange with the look
     of someone who has just learned something they cannot unlearn.
 
 triggers:

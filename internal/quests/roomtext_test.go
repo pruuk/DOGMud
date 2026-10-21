@@ -117,6 +117,8 @@ func TestShippedQuestRoomTextFollowsConvention(t *testing.T) {
 			walk(filepath.Base(f), tr.Actions, 0)
 		}
 	}
-	assert.Equal(t, 22, checked,
-		"22 quest observer lines ship; a different count means the inventory moved, so re-read this test")
+	// 22 before #375 batch 4, which added 8: the spaced-noun and lost-item
+	// triggers of quests 63 (3), 65 (3) and 68 (2).
+	assert.Equal(t, 30, checked,
+		"30 quest observer lines ship; a different count means the inventory moved, so re-read this test")
 }

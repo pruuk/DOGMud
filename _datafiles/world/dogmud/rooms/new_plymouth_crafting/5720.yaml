@@ -5,16 +5,17 @@ description: >
   The workshop floor inside has not been cleared, but
   it has been tidied, which are different things. Planing
   benches run east and west, and above them the cooper's
-  tools hang in their brackets: the <ansi fg="itemname">heading-knife</ansi>,
+  tools hang in their brackets: the <ansi fg="itemname">heading knife</ansi>,
   croze and flagging iron, each slotted into the
   bracket that was made for it by hands that knew the
   work. At the north end of the floor a partitioned
   corner holds a cot with a folded blanket and a pair
   of boots placed with intention. Whoever lives here
   has organized the space without much room to work
-  with. One floorboard beside the cot sits slightly
-  proud of its neighbors. Cut along the inside edge of the west bench,
-  a <ansi fg="itemname">bench-inscription</ansi> reads
+  with. One <ansi fg="itemname">loose floorboard</ansi> beside
+  the cot sits slightly proud of its neighbors. Cut along the
+  inside edge of the west bench, a
+  <ansi fg="itemname">bench inscription</ansi> reads
   a name and below it "Master Stave-Hand," the letters
   careful and unhurried, the work of someone who believed
   the bench would outlast them and intended to be in it.

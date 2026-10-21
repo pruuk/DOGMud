@@ -12,26 +12,31 @@ steps:
   - id: start
     map_target: 6037  # the Buried Lintel — take a rubbing
     description: >-
-      Gritta asked you to go deeper -- to see the Buried Lintel and the
+      Gritta asked you to go deeper, to see the Buried Lintel and the
       sealed Deep Canal with your own eyes, take a rubbing of the lintel
       symbol, and carry it up to Orin in the Crafting Quarter.
     hint: >-
       Go west and deeper to the Buried Lintel. Examine the symbol carved
-      on its underside to take a rubbing. Mind the canal -- it is not empty.
+      on its underside to take a rubbing. Mind the canal. It is not empty.
   - id: witness
     map_target: 5706  # fallback when Orin the Bookseller is not spawned
     map_target_mob: 9332  # follow Orin the Bookseller (schedule np_crafting_orin) — a fixed room is wrong for part of the day
     description: >-
       You stood beneath the Buried Lintel and took a rubbing of the
-      eight-pointed symbol -- the original the gallery's oldest painting
+      eight-pointed symbol, the original the gallery's oldest painting
       only copied, carved before the colony arrived.
     hint: >-
       Carry the lintel rubbing up to Orin the bookseller in the Crafting
-      Quarter, who can match it to the surface records.
+      Quarter. From the Buried Lintel, go east twice to Gritta's Flooded
+      Cellar, up the Flooded Stair, then east twice to Quill's Lamp-Walk. Go
+      south to Lower Lintel Street, east twice into the Underdocks, then up
+      the stair. Go north to the Chandlery, east twice to the Caravan Depot,
+      then north eight times, through Marn's shop and over the canal bridge,
+      to the Inkwalk. Orin's Bookstall is east. Type talk orin.
   - id: end
     description: >-
       The web is closed: the discovery below, the cipher at the Temple,
-      the panel in the gallery -- all of it agrees. The colony arrived,
+      the panel in the gallery: all of it agrees. The colony arrived,
       found this, and wrote itself into the record as first. The stone
       simply goes on being older.
 
@@ -64,7 +69,7 @@ triggers:
       - give_item: 40118
       - actor: >-
           You press paper to the underside of the lintel and bring the
-          symbol up in charcoal -- four concentric rings, eight points at
+          symbol up in charcoal: four concentric rings, eight points at
           equal intervals, cut by someone who drew it before they carved
           it. The colony arrived here, found this, and wrote itself into
           the founding record as first. The rubbing in your hands says
@@ -79,7 +84,7 @@ triggers:
       missing: ["70-start"]
     actions:
       - actor: >-
-          The symbol on the lintel's underside is clean and deliberate --
+          The symbol on the lintel's underside is clean and deliberate:
           rings and eight points, cut to be read by someone passing
           beneath. Without a reason to record it, you only look.
 
@@ -92,7 +97,7 @@ triggers:
     actions:
       - actor: >-
           The seam of gray material runs along the flood line, wider here
-          than in the galleries -- smooth where the black water works it,
+          than in the galleries, smooth where the black water works it,
           taking no mark, no wear. It does not belong to any stone the
           colony has a name for. It was here before the canal, before the
           quarter, before the founding the city teaches.

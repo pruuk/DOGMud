@@ -2,7 +2,7 @@ questid: 67
 name: The Bloom Trail
 description: >-
   Teels will relapse unless the Bloom's source is stopped. Ysolde has
-  done what she can -- the purge holds only until the craving returns.
+  done what she can: the purge holds only until the craving returns.
   Follow the trade from the docks to its roots and bring the watch
   enough to act.
 secret: false
@@ -21,18 +21,24 @@ steps:
       Trace the Bloom to its source. It starts with a clean little
       draper's shop on the docks.
     hint: >-
-      Find the draper Teels mentioned -- Marn, down the dock streets --
-      and get into his back room.
+      From Ysolde's Room, go south to the Back-Alley, west to Sweeper's
+      Corner, south to Tannery Street, west to the Back Court, then south
+      four times to Dockgate Street. Go west twice to Dock Street, north
+      three times to the Outer Dock Lane, then north into Marn's shop. Type
+      talk marn.
   - id: front
     map_target: 5808  # fallback when Falk the Auctioneer is not spawned
     map_target_mob: 9345  # follow Falk the Auctioneer (schedule np_merchant_falk) — a fixed room is wrong for part of the day
     description: >-
       You got past Marn's front. The supply comes up from an address in
-      the Old Quarter -- 215 Lintel Street -- routed through people who
+      the Old Quarter, 215 Lintel Street, routed through people who
       never ask questions.
     hint: >-
-      Ask the auctioneer Falk in the Merchant Quarter about the Lintel
-      Street address.
+      The auctioneer Falk knows who holds the Lintel Street property. From
+      Marn's shop, go north twice to the Long Market Crossing, east three
+      times to the Merchant Gate, north, then east twice. Go north into the
+      Market Stalls, east, south, east, then south into Falk's Auction
+      House. Type talk falk.
   - id: lintel
     map_target: 6013  # fallback when Wenna the Servant is not spawned
     map_target_mob: 9369  # follow Wenna the Servant (schedule np_noble_wenna) — a fixed room is wrong for part of the day
@@ -40,27 +46,27 @@ steps:
       Falk knows the Lintel Street address as a quiet property held
       through nominal owners.
     hint: >-
-      The deliveries pass through the Noble Quarter. Ask the servant
-      Wenna about the unmarked crates she has seen.
+      The deliveries pass through the Noble Quarter. The servant Wenna has
+      seen the unmarked crates. Type talk wenna.
   - id: delivery
     map_target: 6029  # fallback when Deren is not spawned
     map_target_mob: 9379  # follow Deren (schedule np_oldquarter_deren) — a fixed room is wrong for part of the day
     description: >-
-      Wenna confirmed the delivery house -- unmarked goods at odd hours,
+      Wenna confirmed the delivery house: unmarked goods at odd hours,
       under the bloodline office's eye.
     hint: >-
-      Go down into the Old Quarter to 215 Lintel Street, and confront
-      Deren about the source to his face.
+      Deren keeps the house at 215 Lintel Street, down in the Old Quarter.
+      Confront him about the source to his face. Type talk deren.
   - id: source
     map_target: 6031  # fallback when Quill the Lamplighter is not spawned
     map_target_mob: 9380  # follow Quill the Lamplighter (schedule np_oldquarter_quill) — a fixed room is wrong for part of the day
     description: >-
-      You found 215 Lintel Street -- the production room, the apparatus,
+      You found 215 Lintel Street: the production room, the apparatus,
       and Deren, exposed but untouchable, the bloodline office at his
       back.
     hint: >-
-      Find a witness. The lamplighter Quill walks these canals -- ask
-      him for his account of what passes the iron door.
+      Find a witness. The lamplighter Quill walks these canals and has seen
+      what passes the iron door. Type talk quill.
   - id: witness
     map_target: 5525
     description: >-
@@ -68,12 +74,16 @@ steps:
       delivery note, and the testimony, you have a case the watch
       cannot ignore.
     hint: >-
-      Take the case-file to the Dock Constable.
+      Take the case file to the Dock Constable. From Quill's Lamp-Walk, just
+      south of his hovel, go south to Lower Lintel Street, then east twice
+      into the Underdocks. Go up the stair, north to the Chandlery, and east
+      twice to the Caravan Depot. Go north four times to the Outer Dock Lane,
+      then east into the Dock Constable's Post. Type talk constable.
   - id: report
     map_target: -1  # -1: return-to-giver / in-place (start room 5525); Phase 2 split review
     description: >-
-      The Dock Constable has the case-file. The trade will be disrupted
-      -- but Deren himself stays beyond her reach.
+      The Dock Constable has the case file. The trade will be broken up,
+      but Deren himself stays beyond his reach.
     hint: >-
       The watch will act on what it can.
   - id: end
@@ -87,8 +97,8 @@ rewards:
   rep_faction: np_dockfolk
   rep_amount: 20
   actor: >-
-    The trade is broken -- for now. The constable took the case-file
-    and her jaw was set when she read it. Deren stays untouched; the
+    The trade is broken, for now. The constable took the case file
+    and his jaw was set when he read it. Deren stays untouched. The
     bloodline office is a wall you cannot move with evidence. But the
     supply stops, and that buys Teels a chance. One life you could
     reach.
