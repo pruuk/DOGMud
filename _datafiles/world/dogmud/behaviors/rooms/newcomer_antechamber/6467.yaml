@@ -79,22 +79,22 @@ tree:
           do: mob_say
           mob_id: 9491
           text: >-
-            That's the last of it. Steady, now -- this part feels strange the
+            That's the last of it. Steady, now. This part feels strange the
             first time, but it's gentle. I've got you.
         - type: action
           do: send_user_text
           delay: 1.5
           text: >-
             Dewey rests a hand on your shoulder, and the grey begins to thin
-            around you -- unspooling like thread pulled loose, brightening from
+            around you, unspooling like thread pulled loose, brightening from
             the edges inward.
         - type: action
           do: send_user_text
           delay: 3.0
           text: >-
             The pale blue-green light rises up to meet you. For a breath there is
-            only warmth and a weightless sense of falling upward into it -- and
-            then the world takes shape around you, solid and real and loud with
+            only warmth and a weightless sense of falling upward into it. Then
+            the world takes shape around you, solid and real and loud with
             life.
         - type: action
           do: move_player
@@ -127,7 +127,7 @@ tree:
           do: mob_say
           mob_id: 9491
           text: >-
-            One step left, and it is not a walk -- type
+            One step left, and it is not a walk. Type
             <ansi fg="command">talk dewey</ansi> and I will carry you through.
         - type: action
           do: intercept
