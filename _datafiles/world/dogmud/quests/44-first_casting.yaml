@@ -25,10 +25,10 @@ steps:
     map_target: 5305
     description: >-
       The Star Chamber is where you first turn the mind. Stand there and
-      loose a spell you know at the practice mote -- conviction-spike, the
+      loose a spell you know at the practice mote. Conviction Spike, the
       attack you woke with, will serve. Adept Grieve keeps the observatory.
     hint: >-
-      Go north into the Star Chamber and type cast conviction-spike mote.
+      Go north into the Star Chamber and type cast spike mote.
   - id: cast
     map_target: 5303
     description: >-

@@ -71,7 +71,7 @@ tree:
           chamber north of the Narrows. Stand in the Narrows and put a
           shot across the exit before it ever sees you."
         hints: "Go north to the Echoing Narrows and type fire scout north.
-          If it is dark, type cast chrysalis-glow first."
+          If it is dark, type cast glow first."
       - questRequired: ["51-shoot"]
         questExcluded: ["51-kill", "51-end"]
         text: "You hit it, and now it is coming for you. Hold the Narrows
@@ -101,7 +101,7 @@ tree:
           run dry. Out of ammo? Ask me before you climb."
         hints: "From the Canyon Head, go up, then keep north to the
           Overlook and type fire skell. If it is dark, type cast
-          chrysalis-glow first."
+          glow first."
 
       # ── Mid quest 59 (repeatable drill), one variant per step ─
       # Before the 52-end variant: a drilling player holds 52-end too.
@@ -110,7 +110,7 @@ tree:
         text: "The drill, then. The scout is back on the sounding floor.
           Shoot it from the Narrows, across the exit."
         hints: "Go north to the Echoing Narrows and type fire scout north.
-          If it is dark, type cast chrysalis-glow first."
+          If it is dark, type cast glow first."
       - questRequired: ["59-shoot"]
         questExcluded: ["59-end"]
         text: "It is coming for you. Stand in the Narrows and finish it.

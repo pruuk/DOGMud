@@ -34,10 +34,9 @@ steps:
       the Unfolded in the Thinnest Place. It casts at you from across the
       room, so cast back and keep casting until it falls.
     hint: >-
-      If it is dark, type cast chrysalis-glow first. From Keeper Orrin, go
-      west, north and north to the Grove Heart, then west, up, north, west,
-      north and east to the Thinnest Place, and type cast conviction-spike
-      unfolded.
+      If it is dark, type cast glow first. From Keeper Orrin, go west, north
+      and north to the Grove Heart, then west, up, north, west, north and
+      east to the Thinnest Place, and type cast spike unfolded.
   - id: end
     description: >-
       The Unfolded is undone, and the thinnest place is quiet for the first

@@ -75,7 +75,7 @@ tree:
         text: "Not yet. West of here, in the Veil Hollow, a revenant walks.
           It will come at you the moment you step in. Let it, and loose a
           spell at it while it does."
-        hints: "If it is dark, type cast chrysalis-glow first. Go west to the
+        hints: "If it is dark, type cast glow first. Go west to the
           Veil Hollow and type cast conviction-spike revenant."
       - questRequired: ["45-cast"]
         questExcluded: ["45-kill", "45-end"]
@@ -105,7 +105,7 @@ tree:
           Grove Heart, up through the Veil Tear, across the folded ground and
           the unraveling. It casts at range, so cast back and keep casting. Do
           not let the strange ground turn you around. Put it down."
-        hints: "If it is dark, type cast chrysalis-glow first. Go west, north
+        hints: "If it is dark, type cast glow first. Go west, north
           and north to the Grove Heart, then west, up, north, west, north and
           east to the Thinnest Place, and type cast conviction-spike
           unfolded."
@@ -115,7 +115,7 @@ tree:
         questExcluded: ["57-end"]
         text: "A wisp has drifted back in at the Grove Edge, just south of
           here. Put it down. The grove will tell me when it is done."
-        hints: "If it is dark, type cast chrysalis-glow first. Go south to the
+        hints: "If it is dark, type cast glow first. Go south to the
           Grove Edge and type cast conviction-spike wisp until it falls."
 
       # ── Quest 46 complete ────────────────────────────────
@@ -140,7 +140,7 @@ tree:
         and when the revenant there is on you, loose a spell at it. You will
         be hit mid-fold. The fold will shudder. Hold it through, and keep
         casting until it falls. Then come back to me."
-      hints: "If it is dark, type cast chrysalis-glow first. Go west to the
+      hints: "If it is dark, type cast glow first. Go west to the
         Veil Hollow and type cast conviction-spike revenant."
 
     # ── QUEST 45 TURN-IN ──────────────────────────────────────
@@ -173,7 +173,7 @@ tree:
         scabland to the thinnest place. It will throw foldings at you from
         across the room. Cast back, hold your concentration, and keep
         casting. Out-cast it. There is no other way past it."
-      hints: "If it is dark, type cast chrysalis-glow first. Go west, north
+      hints: "If it is dark, type cast glow first. Go west, north
         and north to the Grove Heart, then west, up, north, west, north and
         east to the Thinnest Place, and type cast conviction-spike
         unfolded."
@@ -188,7 +188,7 @@ tree:
         thin place -- it keeps leaking. There is a wisp at the Grove Edge,
         just south of here. Put it down. The practice matters as much as
         the clearing."
-      hints: "If it is dark, type cast chrysalis-glow first. Go south to the
+      hints: "If it is dark, type cast glow first. Go south to the
         Grove Edge and type cast conviction-spike wisp until it falls."
 
     # ── MID-QUEST ANSWERS (one per step, ahead of the general help) ──
@@ -204,7 +204,7 @@ tree:
         come at you as soon as you step in. That is the point. With it on
         you, loose the spike you woke with. A hit can shake the fold. Hold
         it anyway."
-      hints: "If it is dark, type cast chrysalis-glow first. Go west to the
+      hints: "If it is dark, type cast glow first. Go west to the
         Veil Hollow and type cast conviction-spike revenant."
     - id: grove_mid_kill
       triggers: ["wisp", "revenant", "creature", "cast", "spike",
@@ -237,7 +237,7 @@ tree:
         West from there, then north into the Unraveling, then east. That is
         the thinnest place, and it is waiting in it. Cast at it and keep
         casting."
-      hints: "If it is dark, type cast chrysalis-glow first. Go west, north
+      hints: "If it is dark, type cast glow first. Go west, north
         and north to the Grove Heart, then west, up, north, west, north and
         east to the Thinnest Place, and type cast conviction-spike
         unfolded."
@@ -249,7 +249,7 @@ tree:
       text: "The wisp is at the Grove Edge, just south of here. Put it down
         with a casting. The grove will tell me when it is done, so you need
         not come back to say so."
-      hints: "If it is dark, type cast chrysalis-glow first. Go south to the
+      hints: "If it is dark, type cast glow first. Go south to the
         Grove Edge and type cast conviction-spike wisp until it falls."
 
     # ── CONCENTRATION / COMBAT-CAST HELP ──────────────────────

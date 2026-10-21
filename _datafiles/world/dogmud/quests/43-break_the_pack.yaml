@@ -34,7 +34,7 @@ steps:
       it up, and flee if a fight turns against you.
     hint: >-
       In the Den, south of the Bone Field, type attack alpha. If it is dark,
-      type cast chrysalis-glow first.
+      type cast glow first.
   - id: end
     description: >-
       The alpha is dead and the pack is broken. You came to the steppe

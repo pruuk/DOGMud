@@ -28,7 +28,7 @@ steps:
       the Lower Wash, just north of Squatter's Hollow.
     hint: >-
       Go north from Squatter's Hollow to the Lower Wash and type attack
-      scout. If it is dark, type cast chrysalis-glow first.
+      scout. If it is dark, type cast glow first.
   - id: firstkill
     map_target: 5235  # Cracked Cistern: Bandit Squatter (mob 9111)
     description: >-

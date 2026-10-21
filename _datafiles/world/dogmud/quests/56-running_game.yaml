@@ -34,7 +34,7 @@ steps:
       Trail.
     hint: >-
       In the Thornbrake, north of Delk's camp, type attack pronghorn. If it
-      is dark, type cast chrysalis-glow first.
+      is dark, type cast glow first.
   - id: hunt
     map_target: 5284
     description: >-

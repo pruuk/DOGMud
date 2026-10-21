@@ -44,7 +44,7 @@ steps:
       flee if a fight turns against you.
     hint: >-
       In the Watch Room at the top of the tower, type attack captain.
-      If it is dark, type cast chrysalis-glow first.
+      If it is dark, type cast glow first.
   - id: end
     description: "The captain has fallen and the tower is yours. The coulee is a harder place for bandits than it was this morning."
     hint: "You have taken the tower. Speak with Garve in the hollow if you want to hear what it means and where the road goes next."

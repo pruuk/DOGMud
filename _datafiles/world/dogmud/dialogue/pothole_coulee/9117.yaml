@@ -160,7 +160,7 @@ tree:
           ever.
         hints: >-
           In the Den at the bottom of the mine, type attack beast.
-          If it is dark, type cast chrysalis-glow first.
+          If it is dark, type cast glow first.
       - questRequired: ["54-start"]
         questExcluded: ["54-end"]
         text: >-
@@ -263,7 +263,7 @@ tree:
         is a good one.
       hints: >-
         In the Den at the bottom of the mine, type attack beast.
-        If it is dark, type cast chrysalis-glow first.
+        If it is dark, type cast glow first.
       moodChange: neutral
 
     - id: forge_loop_offer
@@ -361,7 +361,7 @@ tree:
         the one that matters.
       hints: >-
         In the Den at the bottom of the mine, type attack beast.
-        If it is dark, type cast chrysalis-glow first.
+        If it is dark, type cast glow first.
 
     - id: dark_help
       triggers: ["dark", "mine", "light", "glow", "black", "see",

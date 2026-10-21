@@ -182,8 +182,9 @@ var typedCommand = regexp.MustCompile(`(?i)\btype\s`)
 // darkAside is the one sentence a step hint may carry besides its command:
 // the owner-requested reminder on kill quests whose rooms go dark at night
 // (2026-10-17 audit, B4). It is a precondition, not a second step, and it is
-// stripped verbatim before counting so any other wording still counts.
-const darkAside = "If it is dark, type cast chrysalis-glow first."
+// stripped verbatim before counting so any other wording still counts. It
+// names the spell by its alias, `cast glow` (owner 2026-10-21).
+const darkAside = "If it is dark, type cast glow first."
 
 // helpPointer is the other allowed extra: "For more, type help <topic>." The
 // owner asked that a step explaining a setting point at its help file

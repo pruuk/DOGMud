@@ -51,7 +51,7 @@ steps:
       you have left to spend. Type status. For more, type help status."
   - id: statused
     map_target: -1  # action step (command/skill), no travel destination
-    description: "You read your six stats and three pools."
+    description: "You read your six attributes and three pools."
     hint: "Skills are the things you get better at by doing them. Type
       skills. For more, type help skills."
   - id: skilled
@@ -108,8 +108,8 @@ steps:
       For more, type help warcry."
   - id: warcried
     map_target: -1  # action step (command/skill) — no travel destination
-    description: "Your war cry steadied your nerve. It is a condition,
-      riding on you."
+    description: "Your war cry steadied your nerve. It is a condition, an
+      effect on you."
     hint: "Conditions are effects on you, good or bad. Type conditions to
       see yours. For more, type help conditions."
   - id: saw_conditions
@@ -177,8 +177,8 @@ triggers:
                 Nothing here can harm you. I am Dewey, your guide."}
             - {delay: 2, text: "You have a quest now. A quest is a task, done
                 one step at a time. This one teaches you to live here."}
-            - {delay: 2, text: "You act here by typing. Each word you type is
-                a command. Type it, press Enter, and the world answers."}
+            - {delay: 2, text: "You act here by typing. The first word you type
+                is the command. Type it, press Enter, and the world answers."}
             - {delay: 2, text: "Your first command is hint. It names your next
                 step, any time you are not sure. Type hint."}
 
@@ -277,7 +277,7 @@ triggers:
           mob: 9491
           lines:
             - {delay: 0, text: "There you are, all of you on one page. The six
-                stats at the top are how strong, quick and sharp you are.
+                attributes at the top are how strong, quick and sharp you are.
                 They grow when you use them."}
             - {delay: 2, text: "Your three pools matter most. Health keeps you
                 alive. Stamina pays for swings and other moves of the body.
@@ -289,8 +289,7 @@ triggers:
             - {delay: 2, text: "Some things you keep, like a companion or a
                 piece of enchanted gear, hold part of a pool back for as
                 long as you keep them. That is called reservation. Rest
-                does not bring it back, and status shows how much is held.
-                Type help reservation to learn more."}
+                does not bring it back, and status shows how much is held."}
             - {delay: 2, text: "Next, your skills. Skills are the things you
                 get better at by doing them. Type skills."}
 
@@ -436,6 +435,10 @@ triggers:
   # answer itself, in Dewey's dialogue (dialogue/newcomer_antechamber/
   # 9491.yaml, the patterns gated on 28-asked), which reads the token this
   # trigger has just granted.
+  # Stale once the converted dialogue lands: there, the talk topic asked_28
+  # grants 28-asked, and this trigger would let `ask dewey <x>` skip the talk
+  # lesson. It stays until ask redirects to talk (plan Task 19), because the
+  # live dialogue still answers through ask; delete it then (review m16).
   - event: dialogue
     mob: 9491
     conditions:
@@ -471,7 +474,7 @@ triggers:
           mob: 9491
           lines:
             - {delay: 0, text: "Feel that lift? That is a condition, an effect
-                riding on you. Conditions can be good or bad. Type
+                on you. Conditions can be good or bad. Type
                 conditions to see yours."}
 
   - event: command_issued

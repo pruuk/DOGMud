@@ -38,8 +38,8 @@ steps:
       From Hub Square: west, west, south, south to Tarn on the Steppe Edge,
       then south once more.
     hint: >-
-      On the Open Steppe, type track hare. If it is dark, type cast
-      chrysalis-glow first.
+      On the Open Steppe, type track hare. If it is dark, type cast glow
+      first.
   - id: track
     map_target: 5284
     description: >-

@@ -51,7 +51,7 @@ steps:
       Trail. First read the ground for one.
     hint: >-
       In the Thornbrake, north of Delk's camp, type track pronghorn. If it is
-      dark, type cast chrysalis-glow first.
+      dark, type cast glow first.
   - id: track
     map_target: 5289
     description: >-

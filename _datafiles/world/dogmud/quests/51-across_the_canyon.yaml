@@ -44,7 +44,7 @@ steps:
       exit into the chamber to the north. When it charges, finish it.
     hint: >-
       Go north to the Echoing Narrows and type fire scout north.
-      If it is dark, type cast chrysalis-glow first.
+      If it is dark, type cast glow first.
   - id: shoot
     map_target: 5354  # Echoing Narrows — hold this ground; the scout charges to you (was 5356, where it no longer is)
     description: >-

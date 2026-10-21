@@ -193,7 +193,7 @@ tree:
             One gift more, and you carry it from today: a light of your
             own. Gaius keeps true dark in its caves and mines, and the
             dark will blind you. When it does, type
-            <ansi fg="command">cast chrysalis-glow</ansi> and the spores
+            <ansi fg="command">cast glow</ansi> and the spores
             in you will answer.
           delay: 33.0
         - type: action

@@ -48,7 +48,7 @@ steps:
       Mending Hut, not in the mud.
     hint: >-
       Go west from Falv's camp to the Reed Beds and type attack leech. If
-      it is dark, type cast chrysalis-glow first.
+      it is dark, type cast glow first.
   - id: leech
     map_target: 5272
     description: >-

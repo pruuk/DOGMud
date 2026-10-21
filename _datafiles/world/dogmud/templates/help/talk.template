@@ -1,15 +1,37 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">talk</ansi>
 
-The <ansi fg="command">talk</ansi> command initiates a conversation with
-an NPC. The NPC will greet you and may offer hints about
-quests, local lore, or things they can help with.
-
-Use <ansi fg="command">ask</ansi> to follow up on specific topics.
+The <ansi fg="command">talk</ansi> command starts a conversation with someone.
+They answer you, and a numbered list of things you can say to them
+comes up under their words.
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">talk</ansi> <ansi fg="cyan"><npc></ansi>
-  <ansi fg="command">talk to</ansi> <ansi fg="cyan"><npc></ansi>
+  <ansi fg="command">talk</ansi> <ansi fg="cyan"><name></ansi>
+  <ansi fg="command">talk to</ansi> <ansi fg="cyan"><name></ansi>
+
+<ansi fg="yellow">Choosing from the list: </ansi>
+
+  Type the number of a line, then press Enter, to say it. They answer,
+  and the list comes back so you can ask more. To leave, press Enter on
+  its own or choose the last line. Typing any other command also ends
+  the conversation, and the game carries out that command.
+
+<ansi fg="yellow">Marks: </ansi>
+
+  A mark beside a name, or beside a line in the list, tells you why it
+  is worth your time:
+
+  <ansi fg="yellow">[!]</ansi>  a quest to offer. Choose it to hear what they want, then
+       choose Accept to take the quest, or Leave.
+  <ansi fg="yellow">[?]</ansi>  a quest you can finish with them now.
+  <ansi fg="yellow">[*]</ansi>  something worth hearing.
+
+  A line you have already heard shows in grey.
+
+<ansi fg="yellow">Handing things over: </ansi>
+
+  When someone asks you for an item, give it to them with
+  <ansi fg="command">give</ansi> <ansi fg="cyan"><item> <name></ansi>.
 
 <ansi fg="yellow">Examples: </ansi>
 
@@ -17,5 +39,4 @@ Use <ansi fg="command">ask</ansi> to follow up on specific topics.
   <ansi fg="command">talk to korvath</ansi>
 
 <ansi fg="yellow">See Also: </ansi>
-  <ansi fg="command">help ask</ansi>
-
+  <ansi fg="command">help give</ansi>, <ansi fg="command">help quests</ansi>
