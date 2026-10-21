@@ -1,5 +1,14 @@
 # DOGMud Patch Notes
 
+## 2026-10-21: Room features accept singular and plural
+
+- Looking at or searching something in a room now works whether you
+  type it in the singular or the plural. If a room describes wardstones,
+  both "look wardstone" and "look wardstones" show them.
+- Quest steps that wait for you to look at or touch something now count
+  either spelling too, so "look pillars" advances a step as well as
+  "look pillar".
+
 ## 2026-10-21: Smoother travel in the web client
 
 - Walking between areas in the web client no longer stalls the game for

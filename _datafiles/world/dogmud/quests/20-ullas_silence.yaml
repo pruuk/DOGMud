@@ -164,20 +164,8 @@ triggers:
           Stillwater fish-mark. The temple priest in town keeps
           records of older lore; she may know what the symbol means."
 
-  # ── Step 3a: temple pillars (4123) — covers `pillars` and `pillar` ──
-  - event: room_interact
-    room: 4123
-    noun: pillars
-    conditions:
-      has: ["20-workshop_carving"]
-      missing: ["20-temple_pillars"]
-    actions:
-      - grant: "20-temple_pillars"
-      - actor: "The four pillars at the corners of the temple
-          carry the same spiral that Elgar scratched into his bench-
-          vise -- worked into the stone with patience and skill, far
-          older than the present temple. The temple garden behind
-          this room may hold more of the same."
+  # ── Step 3a: temple pillars (4123) — `pillar` also matches `pillars`,
+  #    the engine treats singular and plural spellings as one noun ──
   - event: room_interact
     room: 4123
     noun: pillar
