@@ -2417,6 +2417,35 @@ func (r *Room) FindHiddenNoun(search string) (string, HiddenNoun, bool) {
 	return "", HiddenNoun{}, false
 }
 
+// nounNumberVariants lists the other singular/plural spellings of a typed
+// noun, in the order FindNoun tries them (the exact spelling is tried before
+// this is called): "-es" removed or added, "-ies" to "-y", then plain "-s"
+// removed or added, then "-y" to "-ies". A word already ending in "s" never
+// gains an "s" and a word ending in "ss" never loses one, so "mos" does not
+// reach "moss".
+func nounNumberVariants(word string) []string {
+	var out []string
+	if strings.HasSuffix(word, "es") {
+		out = append(out, strings.TrimSuffix(word, "es"))
+	} else {
+		out = append(out, word+"es")
+	}
+	if strings.HasSuffix(word, "ies") {
+		out = append(out, strings.TrimSuffix(word, "ies")+"y")
+	}
+	if strings.HasSuffix(word, "s") {
+		if !strings.HasSuffix(word, "ss") {
+			out = append(out, strings.TrimSuffix(word, "s"))
+		}
+	} else {
+		out = append(out, word+"s")
+	}
+	if strings.HasSuffix(word, "y") {
+		out = append(out, strings.TrimSuffix(word, "y")+"ies")
+	}
+	return out
+}
+
 func (r *Room) FindNoun(noun string) (foundNoun string, nounDescription string) {
 	if len(r.Nouns) == 0 {
 		return "", ""
@@ -2469,37 +2498,8 @@ func (r *Room) FindNoun(noun string) (foundNoun string, nounDescription string) 
 			}
 		}
 
-		// Strip "es"
-		if strings.HasSuffix(newNoun, "es") {
-			tn := strings.TrimSuffix(newNoun, "es")
-			if desc, ok := roomNouns[tn]; ok {
-				if strings.HasPrefix(desc, ":") {
-					target := desc[1:]
-					if targetDesc, ok2 := roomNouns[target]; ok2 && !strings.HasPrefix(targetDesc, ":") {
-						return target, targetDesc
-					}
-				} else {
-					return tn, desc
-				}
-			}
-		} else {
-			// Add "es"
-			tn := newNoun + "es"
-			if desc, ok := roomNouns[tn]; ok {
-				if strings.HasPrefix(desc, ":") {
-					target := desc[1:]
-					if targetDesc, ok2 := roomNouns[target]; ok2 && !strings.HasPrefix(targetDesc, ":") {
-						return target, targetDesc
-					}
-				} else {
-					return tn, desc
-				}
-			}
-		}
-
-		// "ies" -> "y"
-		if strings.HasSuffix(newNoun, "ies") {
-			tn := strings.TrimSuffix(newNoun, "ies") + "y"
+		// Singular/plural spellings of the typed word, in precedence order.
+		for _, tn := range nounNumberVariants(newNoun) {
 			if desc, ok := roomNouns[tn]; ok {
 				if strings.HasPrefix(desc, ":") {
 					target := desc[1:]

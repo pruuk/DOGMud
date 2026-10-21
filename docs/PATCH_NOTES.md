@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-10-21: Room features accept singular and plural
+
+- Looking at or searching something in a room now works whether you
+  type it in the singular or the plural. If a room describes wardstones,
+  both "look wardstone" and "look wardstones" show them.
+
 ## 2026-10-20: Choices as numbered lists
 
 - Every choice the game offers you is now a numbered list in the same
