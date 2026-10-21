@@ -14,13 +14,14 @@ steps:
       keeps his books in the office above the constable's post, and Jesset
       told you to mind the floor there.
     hint: >-
-      From the Long Quay, go north five times to the Outer Dock Lane, then
-      east into the Dock Constable's Post and up into the Foreman's Office.
-      Type look floor board.
+      From the Long Quay, where Jesset keeps his board, go north five times
+      to the Outer Dock Lane, then east into the Dock Constable's Post and up
+      into the Foreman's Office.
+      Type look floorboard.
   - id: evidence
     map_target: -1  # -1: bundled objectives, rooms [5503, 5525]; Phase 2 split review
     description: >-
-      Beneath a loose floor board in the foreman's office you found Hewd's
+      Beneath a loose floorboard in the foreman's office you found Hewd's
       hidden tally-book, with two sets of numbers: proof that he is the one
       skimming and that he hung the shortage on Teo.
     hint: >-
@@ -54,13 +55,13 @@ rewards:
     dockhand gives the traveller a short, respectful nod.
 
 triggers:
-  # ── EVIDENCE: pry up the loose floor-board in the foreman's office (5526) ──
-  # The noun is the room's own key, `floor board` (it was `floor-board`,
-  # which only the old hyphenated highlight could reach). Triggers 5 to 8
-  # add `board` and the lost-book recovery.
+  # ── EVIDENCE: pry up the loose floorboard in the foreman's office (5526) ──
+  # The noun is the room's own key, `floorboard` (it was `floor-board`, then
+  # `floor board`; one word since 2026-10-21 so 63 and 68 teach the same
+  # spelling). Triggers 5 to 8 add `board` and the lost-book recovery.
   - event: room_interact
     room: 5526
-    noun: floor board
+    noun: floorboard
     conditions:
       has: ["63-start"]
       missing: ["63-evidence"]
@@ -74,17 +75,17 @@ triggers:
           shipment: the manifest count on the left, the real one on the
           right. Foreman Hewd has been skimming the difference for a long
           time, and the shortage he reported was Teo's only by his choosing.
-      - observer: "{actor} works a loose floor board free and pockets something wrapped in oilcloth."
+      - observer: "{actor} works a loose floorboard free and pockets something wrapped in oilcloth."
 
-  # ── floor board, no quest yet ──
+  # ── floorboard, no quest yet ──
   - event: room_interact
     room: 5526
-    noun: floor board
+    noun: floorboard
     conditions:
       missing: ["63-start"]
     actions:
       - actor: >-
-          One floor board sits a little proud of its neighbors. You could
+          One floorboard sits a little proud of its neighbors. You could
           work it loose, but prying up another man's floor without a
           reason is a fast way to find trouble you came here to avoid.
 
@@ -127,7 +128,7 @@ triggers:
     actions:
       - grant: "63-end"
 
-  # ── EVIDENCE, short noun: `look board` reaches the same floor board ──
+  # ── EVIDENCE, short noun: `look board` reaches the same floorboard ──
   - event: room_interact
     room: 5526
     noun: board
@@ -144,7 +145,7 @@ triggers:
           shipment: the manifest count on the left, the real one on the
           right. Foreman Hewd has been skimming the difference for a long
           time, and the shortage he reported was Teo's only by his choosing.
-      - observer: "{actor} works a loose floor board free and pockets something wrapped in oilcloth."
+      - observer: "{actor} works a loose floorboard free and pockets something wrapped in oilcloth."
 
   # ── board, no quest yet ──
   - event: room_interact
@@ -154,14 +155,14 @@ triggers:
       missing: ["63-start"]
     actions:
       - actor: >-
-          One floor board sits a little proud of its neighbors. You could
+          One floorboard sits a little proud of its neighbors. You could
           work it loose, but prying up another man's floor without a
           reason is a fast way to find trouble you came here to avoid.
 
   # ── LOST tally-book: Hewd kept a fair copy under the same board ──
   - event: room_interact
     room: 5526
-    noun: floor board
+    noun: floorboard
     conditions:
       has: ["63-evidence"]
       missing: ["63-end"]
@@ -171,7 +172,7 @@ triggers:
       - actor: >-
           You lift the board again. Hewd kept a fair copy as well as his
           working book, and it is still there in the oilcloth. You take it.
-      - observer: "{actor} lifts a loose floor board and takes something wrapped in oilcloth."
+      - observer: "{actor} lifts a loose floorboard and takes something wrapped in oilcloth."
 
   - event: room_interact
     room: 5526
@@ -185,4 +186,4 @@ triggers:
       - actor: >-
           You lift the board again. Hewd kept a fair copy as well as his
           working book, and it is still there in the oilcloth. You take it.
-      - observer: "{actor} lifts a loose floor board and takes something wrapped in oilcloth."
+      - observer: "{actor} lifts a loose floorboard and takes something wrapped in oilcloth."

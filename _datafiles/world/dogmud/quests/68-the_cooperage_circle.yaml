@@ -47,16 +47,20 @@ steps:
     hint: >-
       From the Cooperage Floor, go south three times to the Inkwalk, then
       east into Orin's Bookstall. Type talk orin.
+  # The choice is made in talk (spec R28, owner 2026-10-21): Orin takes the
+  # circle's side, Clerk Vell the bloodline's. Each first explains what the
+  # player is signing up for, and neither choice can be undone.
   - id: choice
-    map_target: -1  # -1: bundled objectives, rooms [5719, 5817]; Phase 2 split review
+    map_target: -1  # -1: bundled objectives, rooms [5706, 5817]; Phase 2 split review
     description: >-
-      Orin laid out the choice: help the circle hold the cooperage, or take
-      Edvar's survey to Clerk Vell and be paid for it.
+      Orin laid out the choice: stand with the circle and leave Edvar's
+      survey in its keeping, or take the survey to Clerk Vell and be paid
+      for it. Whichever you choose is final.
     hint: >-
-      To help the circle, go to the cooperage front and type look old guild
-      mark. That re-cuts the mark, and the choice is made. To side with the
-      bloodline instead, take Edvar's survey to Clerk Vell in the Permit
-      Office in the Merchant Quarter.
+      Orin will tell you what standing with the circle means. Clerk Vell, in
+      the Permit Office in the Merchant Quarter, takes the survey for the
+      bloodline. Hear both out before you choose: neither can be undone.
+      Type talk orin.
   - id: end
     description: >-
       The matter of the cooperage is settled, one way or the other.
@@ -70,12 +74,14 @@ triggers:
   # The nouns here were `loose-floorboard` and `old-guild-mark`, which no
   # player could guess; they are now `floorboard` and the room's own key
   # `old guild mark`, and triggers 5 to 10 add the other spellings and the
-  # survey step's catch-up.
+  # survey step's catch-up. Since 2026-10-21 (spec R28) the mark only
+  # describes; the choice is made in talk (Orin 9332, Clerk Vell 9349).
   - event: room_interact
     room: 5720
     noun: floorboard
     conditions:
       has: ["68-evidence"]
+      missing: ["68-end"]
       missing_item: 40113
     actions:
       - give_item: 40113
@@ -99,7 +105,9 @@ triggers:
           up the floor of an occupied workshop without a reason is the kind of
           thing that ends a welcome before it starts. You leave it.
 
-  # CIRCLE BRANCH: re-cut the guild-mark over the cooperage door (5719)
+  # Guild mark while the choice is open (5719). This trigger made the
+  # circle choice until 2026-10-21; under spec R28 the choice is made in
+  # talk with Orin (or Vell), so the mark only describes. Kept at this index.
   - event: room_interact
     room: 5719
     noun: old guild mark
@@ -107,20 +115,11 @@ triggers:
       has: ["68-choice"]
       missing: ["68-end"]
     actions:
-      - set_flag: {key: "68-allegiance", value: "circle"}
-      - give_gold: 60
-      - bump_rep: {faction: cooperage_circle, delta: 20}
-      - bump_rep: {faction: bloodline_domestic, delta: -15}
-      - give_item: 40114
       - actor: >-
-          You re-cut the old guild mark over the door until it reads as a
-          working shop again, a cooper's mark a clerk cannot easily call
-          derelict, and you carry Edvar's survey out to where the circle
-          can keep it safe. Orin presses a copy of the map on you before you
-          go. "The original is below," he says, "where the canal meets the old
-          quarter. Someone outside this should know it is real."
-      - observer: "{actor} re-cuts a faded guild mark over a shuttered door until it reads as a working shop again."
-      - grant: "68-end"
+          The cooper's guild mark, a stave and hammer, is painted beside
+          the door, the paint cracked and lifting. Re-cut, it would tell any
+          clerk this is a working shop. Whether that happens is the circle's
+          to decide, and Orin speaks for the circle.
 
   # guild mark, before the choice
   - event: room_interact
@@ -130,8 +129,8 @@ triggers:
       missing: ["68-choice"]
     actions:
       - actor: >-
-          The cooper's guild mark is set above the door in faded paint, a
-          stave and hammer. Re-cutting it would be a real act with real
+          The cooper's guild mark, a stave and hammer, is painted beside
+          the door in faded paint. Re-cutting it would be a real act with real
           consequences. You do not yet have a reason to.
 
   # BLOODLINE BRANCH: give Edvar's map-fragment to Clerk Vell (9349)
@@ -164,6 +163,7 @@ triggers:
     noun: loose floorboard
     conditions:
       has: ["68-evidence"]
+      missing: ["68-end"]
       missing_item: 40113
     actions:
       - give_item: 40113
@@ -214,7 +214,8 @@ triggers:
           The board is loose and the space beneath it is empty. You already
           have Edvar's survey. Take it to Orin.
 
-  # ── guild mark, the short noun: same as triggers 2 and 3 ──
+  # ── guild mark, the short noun: same as triggers 2 and 3 (describes only;
+  #    the choice is made in talk, spec R28) ──
   - event: room_interact
     room: 5719
     noun: guild mark
@@ -222,20 +223,11 @@ triggers:
       has: ["68-choice"]
       missing: ["68-end"]
     actions:
-      - set_flag: {key: "68-allegiance", value: "circle"}
-      - give_gold: 60
-      - bump_rep: {faction: cooperage_circle, delta: 20}
-      - bump_rep: {faction: bloodline_domestic, delta: -15}
-      - give_item: 40114
       - actor: >-
-          You re-cut the old guild mark over the door until it reads as a
-          working shop again, a cooper's mark a clerk cannot easily call
-          derelict, and you carry Edvar's survey out to where the circle
-          can keep it safe. Orin presses a copy of the map on you before you
-          go. "The original is below," he says, "where the canal meets the old
-          quarter. Someone outside this should know it is real."
-      - observer: "{actor} re-cuts a faded guild mark over a shuttered door until it reads as a working shop again."
-      - grant: "68-end"
+          The cooper's guild mark, a stave and hammer, is painted beside
+          the door, the paint cracked and lifting. Re-cut, it would tell any
+          clerk this is a working shop. Whether that happens is the circle's
+          to decide, and Orin speaks for the circle.
 
   - event: room_interact
     room: 5719
@@ -244,6 +236,6 @@ triggers:
       missing: ["68-choice"]
     actions:
       - actor: >-
-          The cooper's guild mark is set above the door in faded paint, a
-          stave and hammer. Re-cutting it would be a real act with real
+          The cooper's guild mark, a stave and hammer, is painted beside
+          the door in faded paint. Re-cutting it would be a real act with real
           consequences. You do not yet have a reason to.
