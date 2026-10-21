@@ -106,6 +106,14 @@ spec; line numbers were read from the files at that commit.
     quest 35: "I love the entrepreneurial spirit. You'll be a smith in no time."); a player
     who still has it shows it and keeps it; a player who sold or lost it elsewhere can still
     report without crafting again.
+  - **R23** (owner 2026-10-21) With no active quest, `hint` tells every player how to find one:
+    look for someone marked `[!]` and talk to them. One line for every player everywhere; no
+    per-quest fallback.
+  - **R24** (owner 2026-10-21) New-player copy is written for people who have never played a
+    MUD: the player asks about what is on their screen ("What is this h/sp/cp line?", not
+    "What are my three pools?"), and a concept is taught before any line that relies on it
+    (what a command is, before "What if I forget a command?"). The guide's own menu covers
+    the first verbs a newcomer needs, combat included.
   - Settled without asking: `-report` give routes (14, 63, 65, 67) become direct `-end`
     topics; quest 66 becomes one hand-in topic (fixes the ask-route soft-lock); `requires` on
     an offer (mobs 95, 96) becomes a quest gate; the Threshold Keeper's disc and Rusk's dagger

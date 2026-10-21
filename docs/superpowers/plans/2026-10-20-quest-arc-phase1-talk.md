@@ -2953,6 +2953,8 @@ One subagent per zone batch (34 zone folders; batch the small ones: about 8 batc
   - The global Edit/Write rule; files live in the scratchpad output folder, edited with Edit.
   - Read in chunks of at most 400 lines; report "read N of N files" with the list.
   - The nine menu language conventions (`internal/menu/context.md`) and `dogmud-player-copy` (80-column wrap, no raw numbers, ESL-clear, no em or en dashes in new text).
+  - Spec R24: write for players new to the genre wherever a newcomer can plausibly arrive. Labels ask about what the player sees, not game vocabulary; teach a concept before a line relies on it (order with `heardRequired`).
+  - Grep `behaviors/` too for player-facing `ask` instructions (batch 1 found the first line of the game there), and teach `whisper`, never `tell` (no such command).
   - For each topic: write `label` (info: the player's line in the player's voice, at most 50 characters; offer and hand-in: already the quest title, keep it); write `playerLine` for offers ("Do you want help ...?") and hand-ins (reporting the result), at most 70 characters; write `breadcrumb` where the converter flagged a gated offer and the NPC would plausibly say "come back later".
   - Fold any `text` holding `\n---\n` into one natural reply.
   - Rewrite every offer's `text` so it reads as a pitch **before** acceptance (no "thank you for agreeing").
