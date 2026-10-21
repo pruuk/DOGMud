@@ -16,7 +16,7 @@ package owns everything that needs a user, a room or a mob.
 | `marker.go` | `Marker(viewerUserId, mob)`: the viewer's talk marker (`[?]`, `[!]`, `[*]` or empty), empty for a charmed NPC; installed as `rooms.NpcMarker` explicitly at boot by `wireConversationHooks` (`conversation_wiring.go` in `main`) and also by this package's `init`; the room roster and the GMCP `Room.Info` NPC list call it. `RefreshMarkers(userId)` queues `events.NpcMarkersChanged` (unique per player) so a GMCP client re-reads its NPC list |
 | `give.go` | `Give(user, room, mob, itm) bool`: `give <item> <npc>` resolved against the NPC's topics before any transfer (R8). An eligible topic wanting the item runs through `resolve`, the same path as a menu choice (an offer shows its card and takes the item only on Accept); a wanted item with no eligible topic is handed back; false (nothing changed) when no topic wants it or the NPC is charmed |
 | `companion.go` | `CompanionTopic(user, mob, what)`: resolves the owner's `companion-ask` words to one eligible info topic key (key, or the one label holding every word) plus the info labels for the refusal line; `AskForOwner(ownerId, mobInstanceId, key, authorized)`: plays that info topic as the owner choosing it, with no owner line and no menu (not yet installed as the companion asker; `usercommands.AskNpcForOwner` still is) |
-| `talk.go` | `Talk(user, room, mob)`: the approach line, opener and breadcrumbs, then the private talk menu; info and hand-in choices (player line, handover line, NPC reply, then the menu re-shown), the offer pitch and its Accept / Leave card, and `player_topic` for `behavior` topics |
+| `talk.go` | `Talk(user, room, mob)`: the approach line, opener and breadcrumbs, then the private talk menu; info and hand-in choices (player line, handover line, NPC reply, then the menu re-shown), the offer pitch and its Accept / Leave card, and `player_topic` for `behavior` topics (a behavior topic whose effects landed closes the menu instead of re-showing it, R18) |
 
 ## Rules
 
@@ -30,6 +30,9 @@ package owns everything that needs a user, a room or a mob.
 - Quest grants are queued (`events.Quest`), so the menu re-shown after a
   choice counts the token that choice granted as held (`heldAlso`); without
   it the re-shown menu still lists an offer the player just accepted.
+- A behavior topic (a timed scene) closes the talk menu once its effects
+  landed, whether chosen directly or accepted from an offer card; a refused
+  behavior topic still re-shows the menu. The player talks again afterwards.
 - An NPC with no eligible topic left opens no menu: once the last topic is
   used up the conversation simply ends.
 - `Talk` checks `users.(*UserRecord).MenuBlockedReason` before anyone speaks:

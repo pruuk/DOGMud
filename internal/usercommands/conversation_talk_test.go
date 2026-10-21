@@ -520,8 +520,22 @@ func TestTalk_BehaviorTopicFiresTheTreeWithItsKey(t *testing.T) {
 	conversation.Talk(user, mustRoom(t, user), mob)
 	require.True(t, user.RouteMenuInput("2", true), "knock")
 	require.Equal(t, 0, st.GetInt("rung"), "knock carries its own key, not ring")
+	// A behavior topic closes the menu (R18): talk again for the next choice.
+	conversation.Talk(user, mustRoom(t, user), mob)
 	require.True(t, user.RouteMenuInput("1", true), "ring")
 	require.Equal(t, 1, st.GetInt("rung"))
+}
+
+func TestTalk_BehaviorTopicClosesTheMenu(t *testing.T) {
+	user, mob, done := fixtureWith(t, behaviorFixtureYAML)
+	defer done()
+	conversation.Talk(user, mustRoom(t, user), mob)
+	require.True(t, user.HasOpenMenu())
+	drained(1)
+
+	require.True(t, user.RouteMenuInput("1", true), "ring")
+	require.False(t, user.HasOpenMenu(), "a behavior topic closes the talk menu (R18)")
+	require.NotContains(t, drained(1), "Talking with", "the menu is not re-shown")
 }
 
 func TestTalk_NoDialogueFileNodsAndOpensNoMenu(t *testing.T) {

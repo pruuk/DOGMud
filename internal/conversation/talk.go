@@ -186,7 +186,7 @@ func choose(user *users.UserRecord, mobInstanceId int, key string) {
 // resolve runs an eligible topic, the one path for a menu choice and for a
 // give (R8): an offer pitches and shows its Accept / Leave card (R6), and
 // takes nothing until Accept; any other topic plays and the menu is
-// re-shown.
+// re-shown, except a behavior topic whose effects landed, which closes it.
 func resolve(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic, ps *dialogue.PlayerState, buf *lineBuffer) {
 	if t.Kind == dialogue.KindOffer {
 		playerSay(user, room, t.PlayerLine)
@@ -195,7 +195,10 @@ func resolve(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialog
 		offerCard(user, mob, t)
 		return
 	}
-	granted := play(user, room, mob, df, t, ps, buf)
+	granted, applied := play(user, room, mob, df, t, ps, buf)
+	if applied && t.Behavior {
+		return // a timed scene is under way: the menu closes (R18)
+	}
 	openMenu(user, mob.InstanceId, granted)
 }
 
@@ -203,20 +206,21 @@ func resolve(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialog
 // handover when it takes an item, the callbacks' private lines, the NPC's
 // reply, then mood and any behavior. When Apply refuses (a price or a
 // delivery failed) the player reads the refusal and the NPC says nothing
-// more. It returns the quest token the topic granted, or "".
-func play(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic, ps *dialogue.PlayerState, buf *lineBuffer) string {
+// more. It returns the quest token the topic granted, or "", and whether the
+// topic's effects landed.
+func play(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic, ps *dialogue.PlayerState, buf *lineBuffer) (string, bool) {
 	line := t.Label
 	if t.Kind == dialogue.KindHandIn {
 		line = t.PlayerLine
 	}
 	playerSay(user, room, line)
 	if !applyWithHandover(user, room, mob, df, t, ps, buf) {
-		return ""
+		return "", false
 	}
 	npcSay(mob, room, t.Text)
 	sendHints(user, t.Hints)
 	after(user, room, mob, df, t)
-	return t.GrantsQuest
+	return t.GrantsQuest, true
 }
 
 // applyWithHandover applies t and, when it took an item, prints the handover
@@ -255,20 +259,24 @@ func offerCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic) {
 	inst, key := mob.InstanceId, t.Key
 	card := menu.Confirm(t.Label, "Accept", "Leave")
 	user.OpenMenu(card, session(user, mob, func(e menu.Entry) {
-		granted := ""
+		granted, closes := "", false
 		if e.Id == "yes" {
-			granted = accept(user, inst, key)
+			granted, closes = accept(user, inst, key)
+		}
+		if closes {
+			return
 		}
 		openMenu(user, inst, granted)
 	}))
 }
 
 // accept grants an offer after re-checking it, and returns the token it
-// granted, or "".
-func accept(user *users.UserRecord, mobInstanceId int, key string) string {
+// granted, or "", and whether the accepted offer was a behavior topic (R18),
+// which closes the menu.
+func accept(user *users.UserRecord, mobInstanceId int, key string) (string, bool) {
 	mob, room, ok := present(user, mobInstanceId)
 	if !ok {
-		return ""
+		return "", false
 	}
 	df := dialogue.Load(int(mob.MobId), mob.Zone)
 	buf := &lineBuffer{user: user}
@@ -276,13 +284,13 @@ func accept(user *users.UserRecord, mobInstanceId int, key string) string {
 	t := df.FindTopic(key)
 	if t == nil || !df.Eligible(t, ps) {
 		user.SendText(messaging.CategoryRefusal, `That offer is no longer open.`)
-		return ""
+		return "", false
 	}
 	if !applyWithHandover(user, room, mob, df, t, ps, buf) {
-		return ""
+		return "", false
 	}
 	after(user, room, mob, df, t)
-	return t.GrantsQuest
+	return t.GrantsQuest, t.Behavior
 }
 
 // playerSay speaks a topic line as the player: the room hears it through
