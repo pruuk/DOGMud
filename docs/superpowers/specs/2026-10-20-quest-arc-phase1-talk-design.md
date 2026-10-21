@@ -114,6 +114,11 @@ spec; line numbers were read from the files at that commit.
     "What are my three pools?"), and a concept is taught before any line that relies on it
     (what a command is, before "What if I forget a command?"). The guide's own menu covers
     the first verbs a newcomer needs, combat included.
+  - **R26** (owner 2026-10-21) Sable's Arena guidance is one step lower than the Oasis: 100 to
+    200 gold for a midgame fighter on their own, 200 to 400 for an endgame fighter on their
+    own, 400 and up only for the bravest alone or a group, with a warning that there is no
+    second chance (death sends you out, no recall inside) and the fights come one after
+    another. Monster gold still scales with the stake as for the Oasis (owner 2026-10-17).
   - **R25** (owner 2026-10-21) The character-creation question "How much of Gaius do you
     already know?" has no default: Enter asks again, so nobody skips the tutorial by
     pressing Enter. Pinned by `TestConfirmMenu_StartEnterReasks`.
