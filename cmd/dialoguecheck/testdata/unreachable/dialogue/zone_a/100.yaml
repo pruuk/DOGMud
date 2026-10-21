@@ -1,0 +1,23 @@
+mobid: 100
+zone: Zone A
+defaultMood: neutral
+topics:
+# Item 777 comes from nothing: no topic, trigger, tree, mob, room or recipe.
+- key: five
+  kind: offer
+  quest: 5
+  label: Locked Out
+  playerLine: Do you want help?
+  text: Bring me the key first.
+  requiresItem: 777
+  questExcluded: [5-start, 5-end]
+  grantsQuest: 5-start
+- key: five_done
+  kind: handin
+  quest: 5
+  label: Locked Out
+  playerLine: Done.
+  text: Thanks.
+  questRequired: [5-start]
+  questExcluded: [5-end]
+  grantsQuest: 5-end

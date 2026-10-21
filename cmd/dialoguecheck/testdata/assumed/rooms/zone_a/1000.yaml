@@ -1,0 +1,6 @@
+roomid: 1000
+zone: Zone A
+title: A Test Room
+spawninfo:
+- itemid: 600
+  respawnrate: 5 real minutes

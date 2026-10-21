@@ -1,0 +1,12 @@
+questid: 6
+name: Walk In
+steps:
+  - id: start
+  - id: end
+triggers:
+  - event: room_enter
+    room: 1000
+    conditions:
+      missing: [6-start]
+    actions:
+      - grant: 6-start

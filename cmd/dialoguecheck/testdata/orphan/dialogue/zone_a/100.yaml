@@ -1,0 +1,29 @@
+mobid: 100
+zone: Zone A
+defaultMood: neutral
+topics:
+- key: four
+  kind: offer
+  quest: 4
+  label: Middle Step
+  playerLine: Do you want help?
+  text: Do it.
+  questExcluded: [4-start, 4-end]
+  grantsQuest: 4-start
+# Grants 4-mid; only its own questExcluded names it, which is no consumer.
+- key: step
+  kind: info
+  label: What next?
+  text: Keep going.
+  questRequired: [4-start]
+  questExcluded: [4-mid]
+  grantsQuest: 4-mid
+- key: four_done
+  kind: handin
+  quest: 4
+  label: Middle Step
+  playerLine: Done.
+  text: Thanks.
+  questRequired: [4-start]
+  questExcluded: [4-end]
+  grantsQuest: 4-end

@@ -1,0 +1,6 @@
+questid: 4
+name: Middle Step
+steps:
+  - id: start
+  - id: mid
+  - id: end

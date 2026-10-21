@@ -1,0 +1,39 @@
+mobid: 100
+zone: Zone A
+defaultMood: neutral
+topics:
+# No quest 2 token in questExcluded: offered again after 2-end.
+- key: two
+  kind: offer
+  quest: 2
+  label: Offered Twice
+  playerLine: Do you want help?
+  text: Do it.
+  grantsQuest: 2-start
+- key: two_done
+  kind: handin
+  quest: 2
+  label: Offered Twice
+  playerLine: Done.
+  text: Thanks.
+  questRequired: [2-start]
+  questExcluded: [2-end]
+  grantsQuest: 2-end
+# Only 3-start excluded: HasQuest(3-start) holds at 3-end, so it is guarded.
+- key: three
+  kind: offer
+  quest: 3
+  label: Guarded By Start
+  playerLine: Do you want help?
+  text: Do it.
+  questExcluded: [3-start]
+  grantsQuest: 3-start
+- key: three_done
+  kind: handin
+  quest: 3
+  label: Guarded By Start
+  playerLine: Done.
+  text: Thanks.
+  questRequired: [3-start]
+  questExcluded: [3-end]
+  grantsQuest: 3-end

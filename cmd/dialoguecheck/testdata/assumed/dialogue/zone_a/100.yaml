@@ -1,0 +1,15 @@
+mobid: 100
+zone: Zone A
+defaultMood: neutral
+topics:
+# Item 600 only spawns in room 1000: obtainable, but ASSUMED.
+- key: six_done
+  kind: handin
+  quest: 6
+  label: Walk In
+  playerLine: I found it.
+  text: Thanks.
+  requiresItem: 600
+  questRequired: [6-start]
+  questExcluded: [6-end]
+  grantsQuest: 6-end

@@ -1,0 +1,23 @@
+# The old quest 66 shape (#645): the give route grants 66-detox and its
+# quest_granted chain grants 66-end; the ask route takes the wrapper and
+# grants only 66-escort, which the give route then excludes.
+questid: 66
+name: The Addict's Plight
+steps:
+  - id: start
+  - id: escort
+  - id: detox
+  - id: end
+triggers:
+  - event: item_give
+    mob: 200
+    item: 500
+    conditions:
+      has: [66-start]
+      missing: [66-escort]
+    actions:
+      - grant: 66-detox
+  - event: quest_granted
+    quest_token: 66-detox
+    actions:
+      - grant: 66-end

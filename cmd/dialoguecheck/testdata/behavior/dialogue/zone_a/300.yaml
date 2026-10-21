@@ -1,0 +1,20 @@
+mobid: 300
+zone: Zone A
+defaultMood: neutral
+topics:
+- key: seven
+  kind: offer
+  quest: 7
+  label: Told The Tree
+  playerLine: Do you want help?
+  text: Report back when it is done.
+  questExcluded: [7-start, 7-end]
+  grantsQuest: 7-start
+# The hand-in lives in the tree: this topic only fires it (R12).
+- key: report
+  kind: info
+  label: It is done.
+  text: Then let me see.
+  behavior: true
+  questRequired: [7-start]
+  questExcluded: [7-end]

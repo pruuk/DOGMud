@@ -1,0 +1,19 @@
+mobid: 400
+zone: Zone A
+defaultMood: neutral
+topics:
+- key: eight
+  kind: offer
+  quest: 8
+  label: Broken Chain
+  playerLine: Do you want help?
+  text: Tell me when you are ready.
+  questExcluded: [8-start, 8-end]
+  grantsQuest: 8-start
+- key: ready
+  kind: info
+  label: I am ready.
+  text: Then go.
+  behavior: true
+  questRequired: [8-start]
+  questExcluded: [8-mid]

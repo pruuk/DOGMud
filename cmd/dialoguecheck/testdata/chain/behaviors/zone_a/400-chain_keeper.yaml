@@ -1,0 +1,10 @@
+tree:
+  type: sequence
+  event: player_topic
+  children:
+    - type: condition
+      check: topic_is
+      topic: ready
+    - type: action
+      do: grant_quest
+      quest: "8-mid"
