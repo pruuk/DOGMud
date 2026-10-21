@@ -68,7 +68,8 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			{Id: "2", Label: "New to DOGMud", Detail: "I know MUDs; show me what's different."},
 			{Id: "3", Label: "Veteran", Detail: "Skip all tutorials; drop me into the city."},
 		},
-		Default: "2",
+		// No Default (owner 2026-10-21): Enter asks again, so a newcomer who
+		// only presses Enter never lands on a path that skips the tutorial.
 	})
 	if !question.Done {
 		user.SendText(messaging.CategoryScreen, menu.Render(*question.Menu))

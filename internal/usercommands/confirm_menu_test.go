@@ -183,7 +183,10 @@ func TestConfirmMenu_MailSend(t *testing.T) {
 	})
 }
 
-func TestConfirmMenu_StartEnterPicksTwo(t *testing.T) {
+// TestConfirmMenu_StartEnterReasks: the experience question has no default
+// (owner 2026-10-21). A newcomer who only presses Enter must not land on a
+// path that skips Dewey's tutorial, so Enter asks again.
+func TestConfirmMenu_StartEnterReasks(t *testing.T) {
 	u := users.NewTestUser(841, "newcomer", "Newcomer", 0)
 	u.Character.RoomId = -1
 	confirmUsers(t, u)
@@ -191,11 +194,13 @@ func TestConfirmMenu_StartEnterPicksTwo(t *testing.T) {
 	_, _ = Start("", u, &rooms.Room{RoomId: -1}, 0)
 	out := drainSentText(u.UserId)
 	assert.Contains(t, out, "New to DOGMud")
+	assert.Contains(t, out, "Type a number.")
+	assert.NotContains(t, out, "press Enter for")
 
 	u.RoutePromptInput("", true)
 	q := questionFor(t, u, "How much of Gaius do you already know?")
-	assert.True(t, q.Done)
-	assert.Equal(t, "2", q.Response, "Enter picks New to DOGMud")
+	assert.False(t, q.Done, "Enter picks no path")
+	assert.Contains(t, drainSentText(u.UserId), "Pick a number from the list.")
 }
 
 func TestConfirmMenu_MailSetAsideLine(t *testing.T) {
