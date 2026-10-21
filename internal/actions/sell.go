@@ -13,10 +13,12 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -406,7 +408,37 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 		saleProgression(seller, mob)
 	}
 
+	notifySaleToQuests(seller, item, mob)
 	return sellValue, SellStopSoldAll
+}
+
+// notifySaleToQuests tells the quest engine a player's sale completed, as
+// postSuccessBookkeeping does for a purchase, but with the item sold and the
+// shop mob that bought it, so a trigger can key on either (R22, #375: selling
+// Smith Rusk the crafted dagger turns in First Heat). It runs only on the
+// success paths, once per unit, so a refused sale never reaches it. Mob sellers
+// have no quest log and are skipped.
+func notifySaleToQuests(seller Actor, item items.Item, mob *mobs.Mob) {
+	if !seller.IsPlayer() {
+		return
+	}
+	userId := seller.GetUserId()
+	u := users.GetByUserId(userId)
+	room := seller.GetRoom()
+	if u == nil || room == nil {
+		return
+	}
+	details := questengine.EventDetails{
+		UserId:  userId,
+		RoomId:  room.RoomId,
+		Command: "sell",
+		ItemId:  item.ItemId,
+	}
+	if mob != nil {
+		details.MobId = int(mob.MobId)
+	}
+	bridge := questengine.NewGameBridge(u, room.RoomId)
+	questengine.GetEngine().Notify("command", details, bridge, bridge)
 }
 
 // sellFindItemInChar searches backpack → potions → components for a match.

@@ -278,5 +278,6 @@ func sellBaubleToMerchant(seller Actor, item items.Item, sellValue int,
 		saleProgression(seller, mob)
 	}
 
+	notifySaleToQuests(seller, item, mob)
 	return sellValue, SellStopSoldAll
 }

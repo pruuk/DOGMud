@@ -19,7 +19,9 @@ secret: false
 #   35-end    Rusk's hand-in topics (gated on 35-craft): craft_turnin when
 #             the player carries the dagger (also what giving it to her
 #             resolves to; she never keeps it), craft_turnin_told when not.
-#             The item_give trigger below goes in Task 16 (#375).
+#             Two more routes also grant it: the item_give trigger
+#             (handing her the dagger) and the sell trigger (selling it to
+#             her shop, R22), both below.
 
 steps:
   - id: start
@@ -148,3 +150,28 @@ triggers:
       - consume_item: 10009
       - give_item: 10009
       - grant: "35-end"
+
+  # ── TURN IN BY SELLING THE BLADE (owner ruling R22, #375) ──
+  # A crafted dagger is never a hostage to its turn-in: a player who sells
+  # the finished blade to Rusk's shop has handed it over as surely as one
+  # who gives it. The sell action raises this command event only for a
+  # completed sale (a refused one never notifies), carrying the item sold
+  # and the buying shop mob, so item 10009 and mob 9116 here mean exactly
+  # "Rusk bought the dagger". The sale has already taken the blade, so
+  # there is nothing to consume or return. Rewards pay through the same
+  # 35-end grant as the other two routes.
+  - event: command
+    command: sell
+    room: 5245
+    mob: 9116
+    item: 10009
+    conditions:
+      has: ["35-craft"]
+      missing: ["35-end"]
+    actions:
+      - grant: "35-end"
+      - npc_say:
+          mob: 9116
+          lines:
+            - {delay: 1, text: "I love the entrepreneurial spirit. You'll be
+                a smith in no time."}
