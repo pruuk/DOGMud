@@ -74,7 +74,7 @@ steps:
       Report back to Ovell in the Collapsed Cut.
     hint: >-
       Go back to Survivor Ovell in the Collapsed Cut, east of the Ore
-      Pocket, and type ask ovell done.
+      Pocket, and type talk ovell.
   - id: end
     description: >-
       The slope is clear and you have worked the vein. Ovell
@@ -142,7 +142,7 @@ triggers:
       - actor: >-
           You work the exposed vein for whatever it will give. The
           seam is open to anyone now. Go back to Ovell in the
-          Collapsed Cut and type ask ovell done.
+          Collapsed Cut and type talk ovell.
 
   # ── ORE: forage the basalt-iron vein (room 5252 — ore pocket) ───────
   - event: command
@@ -156,4 +156,4 @@ triggers:
       - actor: >-
           You pick through the rubble where the vein crosses the ore
           pocket. The seam is open to anyone now. Go back to Ovell,
-          just east of here, and type ask ovell done.
+          just east of here, and type talk ovell.

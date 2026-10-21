@@ -175,7 +175,7 @@ func TestQuest42TheHunt_OneCommandPerStep(t *testing.T) {
 			"hunt":  "type loot corpse",
 			"meat":  "type sleep",
 			"rest":  "type craft grilled meat",
-			"cook":  "type ask delk report",
+			"cook":  "type talk delk", // R20 (#375): talk replaces ask
 		}
 		for _, s := range q.Steps {
 			if s.Id == "end" {

@@ -49,7 +49,7 @@ steps:
     description: "You worked iron at the forge for the first time
       and turned raw materials into something that did not exist
       before. Bring it back to Rusk."
-    hint: "Go to Smith Rusk at the forge and type ask rusk done."
+    hint: "Go to Smith Rusk at the forge and type talk rusk."
   - id: end
     description: "Rusk has looked the blade over and said nothing
       that was not a compliment. The coulee is your range now. Go
@@ -125,7 +125,7 @@ triggers:
       # teaching lives on the recipe's success_actor
       # (recipes/blacksmithing/iron-dagger.yaml).
       - actor: "The iron dagger is yours, made at the forge. Take it
-          to Rusk and type ask rusk done."
+          to Rusk and type talk rusk."
 
   # ── TURN IN BY GIVING THE BLADE ──────────────────────────
   # Alternate completion path to the `ask rusk done` dialogue node:

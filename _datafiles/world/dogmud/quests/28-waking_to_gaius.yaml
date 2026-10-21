@@ -92,11 +92,12 @@ steps:
   - id: said
     map_target: -1  # action step (command/skill) — no travel destination
     description: "You spoke, and the world can hear you."
-    hint: "Ask puts a question to one person about one topic. Type ask
-      dewey world. For more, type help ask."
+    hint: "Talk starts a conversation with one person, and you choose what
+      to ask about. Type talk dewey, then choose the question about the
+      world. For more, type help talk."
   - id: asked
-    description: "You learned to ask. Half of what matters is learned that
-      way."
+    description: "You learned to talk with someone and ask a question. Half
+      of what matters is learned that way."
     hint: "To walk to the next room, type its direction. Type north."
   - id: proving_prompt
     map_target: -1  # action step (command/skill) — no travel destination
@@ -147,7 +148,8 @@ steps:
   - id: fled
     map_target: -1  # -1: no single resolved destination; Phase 2 review
     description: "You broke away. Running is how you live to win the next one."
-    hint: "Talk starts a conversation with someone. Type talk dewey."
+    hint: "Dewey is waiting at the Landing for one last word. Type talk
+      dewey."
   - id: end
     description: "Dewey sent you through to the world. Gaius is waiting."
 
@@ -382,7 +384,10 @@ triggers:
                 topic, like help look, to read about one thing. The way
                 north is open."}
 
-  # ── 6261 The World Speaks: say, ask, north ──
+  # ── 6261 The World Speaks: say, talk, north ──
+  #    The talk lesson (R20, #375 phase 1): Dewey's topic asked_28 (the
+  #    question about the world, dialogue/newcomer_antechamber/9491.yaml)
+  #    grants 28-asked when chosen from his talk menu.
   - event: room_enter
     room: 6261
     conditions:
@@ -409,9 +414,9 @@ triggers:
       - npc_say:
           mob: 9491
           lines:
-            - {delay: 0, text: "Ha, and the world will answer, out there. Ask
-                puts a question to one person about one topic. Ask me
-                something. Type ask dewey world."}
+            - {delay: 0, text: "Ha, and the world will answer, out there. Talk
+                starts a conversation with one person, and you choose what to
+                ask. Ask me something. Type talk dewey."}
 
   # The question has to reach Dewey: a bare `ask` or `ask world` is refused.
   # No npc_say here: this trigger runs before Dewey's reply is queued, so its

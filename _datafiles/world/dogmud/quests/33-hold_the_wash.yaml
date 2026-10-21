@@ -57,7 +57,7 @@ steps:
       The bandit squatter is down too. Garve waits in Squatter's Hollow,
       west of the Cracked Cistern.
     hint: >-
-      Go back to Garve in Squatter's Hollow and type ask garve report.
+      Go back to Garve in Squatter's Hollow and type talk garve.
   - id: end
     description: >-
       Garve can hold the wash now. He mentioned the bandits still hold
@@ -102,4 +102,4 @@ triggers:
       - actor: >-
           The bandit squatter drops, and he was wearing something worth
           having. Loot the corpse before you go. Then go back to Garve
-          in Squatter's Hollow and type ask garve report.
+          in Squatter's Hollow and type talk garve.

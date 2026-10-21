@@ -75,8 +75,8 @@ steps:
       You have blooded yourself, thrown the firebomb, and worked the
       marsh for herbs. Report back to Falv at his camp.
     hint: >-
-      Go back to Fenwalker Falv at the Cattail Stand and type ask falv
-      done.
+      Go back to Fenwalker Falv at the Cattail Stand and type talk
+      falv.
   - id: end
     description: >-
       Falv has named you marsh-worthy and given you a bandolier for your
@@ -143,7 +143,7 @@ triggers:
       - actor: >-
           That is foraging the marsh: working the firm ground between the
           cattails for what grows there. Some days it gives little, and
-          that is part of it. Go back to Falv and type ask falv done.
+          that is part of it. Go back to Falv and type talk falv.
   - event: command
     command: forage
     room: 5273
@@ -154,5 +154,5 @@ triggers:
       - grant: "39-forage"
       - actor: >-
           The black pool's waterline is the richest ground in the marsh,
-          even on a day it gives up little. Go back to Falv and type ask
-          falv done.
+          even on a day it gives up little. Go back to Falv and type talk
+          falv.

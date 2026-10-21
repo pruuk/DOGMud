@@ -1,25 +1,19 @@
-# Quest 29 — Two Roads (Pothole Coulee, post-rite signpost)
+# Quest 29: Two Roads (Pothole Coulee, post-rite signpost). RETIRED.
 #
-# A short bridging quest that exists to give a freshly-Opened player a
-# PERSISTENT objective the instant the Awakening rite ends — instead of the old
-# dead spot where they held no active quest and had to guess "ask toke footing".
+# Retired by owner ruling R17 (2026-10-20, #375 phase 1): Cleric Hadwen
+# grants no quest from his rite tree, and this signpost is replaced by two
+# quests he offers after the rite, Toke's Road (88) and Esk's Road (89).
+# Nothing grants 29-start any more.
 #
-# Token flow:
-#   29-start — granted directly by Cleric Hadwen's behavior tree at the close of
-#              the rite (right after 30-end). It is NOT granted by a
-#              `quest_granted 30-end` trigger: behavior-tree grants pre-set the
-#              token and so do not fire the engine's quest_granted event
-#              (see internal/hooks/Quest_HandleQuestUpdate.go — the Notify is
-#              gated on freshlyGranted).
-#   29-end   — granted when the player commits to a road: asking Crier Toke for
-#              footing (dialogue grants 31-start, which DOES fire quest_granted)
-#              OR passing through Warden Esk's arch into Thornwall (room 468).
-#              Either way the signpost is done and drops out of the quest panel.
+# The file stays because saved characters hold 29 tokens (quest 29 shipped
+# in July 2026; local saves checked 2026-10-21 hold both 29: start and
+# 29: end). A player saved on 29-start can still finish it: every road out
+# grants 29-end through the triggers below, so nobody is left holding it.
 #
-# map_target 5203 (Hub Square, where Crier Toke stands) aims the web minimap
-# marker at the recommended new-player road. The hint names one command, Toke's
-# (owner ruling 2026-10-17: one command per hint); Esk's road is described in
-# the step description.
+# Token flow (holders only):
+#   29-end: granted when the player commits to a road: accepting Toke's
+#            footing walk (31-start), accepting either replacement road (88
+#            or 89), or arriving in Thornwall (room 468) through the arch.
 
 questid: 29
 name: Two Roads
@@ -37,21 +31,35 @@ steps:
       south of the pool, ready to teach you the town. That is the road for
       anyone new to Gaius. The other road leaves the coulee at once: Warden Esk
       keeps the arch in the Threshold House, south from Hub Square through
-      Market Row, and asking him for passage takes you out to the wider world.
-      Either road is yours.
+      Market Row, and he can send you out to the wider world. Either road is
+      yours.
     hint: >-
       New to Gaius? From the pool go south to Hub Square, find Crier Toke at
-      the notice post, and type ask toke footing.
+      the notice post, and type talk toke.
   - id: end
     description: >-
       You have chosen your road out of the coulee.
 
 triggers:
-  # ── TOKE'S ROAD: asking Toke for footing grants 31-start (via dialogue,
-  #    which fires quest_granted), closing the signpost and handing off to
-  #    "Find Your Footing".
+  # ── TOKE'S ROAD: accepting Toke's footing walk grants 31-start, which
+  #    fires quest_granted, closing the signpost.
   - event: quest_granted
     quest_token: 31-start
+    conditions:
+      has: [29-start]
+      missing: [29-end]
+    actions:
+      - grant: 29-end
+  # ── THE REPLACEMENT ROADS: accepting either of Hadwen's road offers.
+  - event: quest_granted
+    quest_token: 88-start
+    conditions:
+      has: [29-start]
+      missing: [29-end]
+    actions:
+      - grant: 29-end
+  - event: quest_granted
+    quest_token: 89-start
     conditions:
       has: [29-start]
       missing: [29-end]

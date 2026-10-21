@@ -11,7 +11,8 @@
 #   Steps run in order; each trigger gates on the step before it.
 #   31-equip   — command trigger, `equip` — teaches wearing gear
 #   31-lantern — room_enter trigger, The Drowned Lantern (5205)
-#   31-end     — granted by Toke's dialogue turn-in (requires 31-lantern)
+#   31-end:      granted by Toke's dialogue turn-in (requires 31-lantern);
+#                after it, Toke offers the seven trail quests one at a time
 
 questid: 31
 name: Find Your Footing
@@ -44,10 +45,10 @@ steps:
     map_target: 5203  # fallback when Crier Toke is not spawned
     map_target_mob: 9106  # follow Crier Toke (schedule pothole_toke) — a fixed room is wrong for part of the day
     description: "You have seen the school, kitted out at the shop, and found the inn. Report back to Crier Toke in Hub Square."
-    hint: "From the inn go east to Market Row, then north to Hub Square. Find Toke at the notice post and type ask toke footing to finish."
+    hint: "From the inn go east to Market Row, then north to Hub Square. Find Toke at the notice post, type talk toke, and choose Find Your Footing to finish."
   - id: end
-    description: "You know the hub now. Toke says the coulee mouths are next, whenever you are ready."
-    hint: "Ask any of the townsfolk about the coulee when you want to push outward."
+    description: "You know the hub now. Toke says the coulee mouths are next, whenever you are ready. He can send you down any of the seven."
+    hint: "Talk to Crier Toke when you want to push outward. He offers each of the seven trails."
 
 rewards:
   gold: 20
@@ -127,35 +128,10 @@ triggers:
           The keeper of the Drowned Lantern tips you a nod as you step in.
           "First one is on the house -- the coulee's welcome. Rest while it
           is still being gentle with you." Now go back to Crier Toke in Hub
-          Square, east and then north, and type ask toke footing.
+          Square, east and then north, and type talk toke.
 
-  # ── FOOTING COMPLETE: open all seven coulee mouths at once ──
-  #    When Toke turns in the footing quest (grants 31-end), the quest_granted
-  #    chain fires this once (guard: `missing 32-start`). It grants all seven
-  #    trail-start tokens and hands over the two starter weapons the trailhead
-  #    NPCs would otherwise give — so the player leaves Toke with a full kit and
-  #    a quest log full of trails (Toke's scavenger hunt, 2026-07-18 feedback).
-  #    This is SAFE to grant early: each trail quest advances from its own step
-  #    triggers (mob_death / command / room_enter), not from its offer dialogue;
-  #    the offer nodes are `questExcluded` once the token is held, so they simply
-  #    stop re-offering. The five craft/lore/wild trails need no starter item.
-  - event: quest_granted
-    quest_token: 31-end
-    conditions:
-      missing: [32-start]
-    actions:
-      # First Blood (32) is granted LAST so it becomes the focus quest
-      # (LastQuestId = most recently granted). First Blood is the natural
-      # "start here" combat quest AND the one carrying a map_target (Drill
-      # Yard 5227), so the minimap marker points the newbie there right after
-      # the seven-quest dump instead of at an arbitrary last-in-list quest.
-      - grant: 35-start
-      - grant: 38-start
-      - grant: 41-start
-      - grant: 44-start
-      - grant: 47-start
-      - grant: 50-start
-      - grant: 32-start
-      - give_item: 10043
-      - give_item: 10038
-      - give_item: 30064
+  # The 31-end trigger that granted all seven trail quests at once (and the
+  # cudgel, sling and shot with them) is gone (owner ruling R21, #375 phase
+  # 1): no quest is handed out in a batch. Crier Toke offers each of the
+  # seven trails (32, 35, 38, 41, 44, 47, 50) as its own topic after 31-end,
+  # and each starter item rides on the offer of the quest it belongs to.

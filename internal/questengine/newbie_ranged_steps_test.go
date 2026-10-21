@@ -137,7 +137,7 @@ func TestQuest51AcrossTheCanyon_OneCommandPerStep(t *testing.T) {
 
 	require.Contains(t, questHintFor(t, q, "start"), "type fire scout north")
 	require.Contains(t, questHintFor(t, q, "shoot"), "type fire scout")
-	require.Contains(t, questHintFor(t, q, "kill"), "type ask bryn done")
+	require.Contains(t, questHintFor(t, q, "kill"), "type talk bryn") // R20 (#375): talk replaces ask
 
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")

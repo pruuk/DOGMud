@@ -81,7 +81,7 @@ steps:
     description: >-
       You slept rough and woke stronger. Now cook the kill at Delk's fire in
       Hunter's Hollow. You need the raw meat and the salt-pouch. No meat?
-      Bring down a pronghorn and loot it. No salt? Ask Delk for salt.
+      Bring down a pronghorn and loot it. No salt? Talk to Delk for more.
     hint: >-
       At Delk's camp fire in Hunter's Hollow, type craft grilled meat. A
       craft can fail. If it does, hunt another pronghorn for meat and retry.
@@ -91,7 +91,7 @@ steps:
       You cooked the kill over the fire. Delk is at his camp in Hunter's
       Hollow.
     hint: >-
-      Go back to Hunter Delk in Hunter's Hollow and type ask delk report.
+      Go back to Hunter Delk in Hunter's Hollow and type talk delk.
   - id: end
     description: >-
       Delk has named you a hunter, near enough. Deeper south the pack
@@ -176,5 +176,4 @@ triggers:
       - grant: "42-cook"
       - actor: >-
           The meat sears over the fire, salt and smoke and fat. A hot
-          meal in the field is its own small victory. Type ask delk
-          report.
+          meal in the field is its own small victory. Type talk delk.

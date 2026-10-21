@@ -54,7 +54,7 @@ steps:
       You cast with a fight on you and put down a veil-warped creature.
       Report to Keeper Orrin in the Whispering Grove.
     hint: >-
-      Go back to Keeper Orrin in the Whispering Grove and type ask orrin done.
+      Go back to Keeper Orrin in the Whispering Grove and type talk orrin.
   - id: end
     description: >-
       Orrin has named your concentration sound. West of the Grove Heart and up
@@ -131,7 +131,7 @@ triggers:
       - actor: >-
           The drift-wisp comes apart into the motes it was made of and does
           not gather again. Go back to Keeper Orrin in the Whispering Grove
-          and type ask orrin done.
+          and type talk orrin.
   - event: mob_death
     mob: 9148
     conditions:
@@ -141,4 +141,4 @@ triggers:
       - grant: "45-kill"
       - actor: >-
           The grove revenant folds down and is still. Go back to Keeper Orrin
-          in the Whispering Grove and type ask orrin done.
+          in the Whispering Grove and type talk orrin.

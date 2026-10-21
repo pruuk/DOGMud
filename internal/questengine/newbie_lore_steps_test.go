@@ -124,7 +124,8 @@ func loreStepHint(t *testing.T, q *QuestDef, step string) string {
 // done") belongs to the last step before end, and only there.
 func loreOnlyFinalStepReports(t *testing.T, q *QuestDef, giver string) {
 	t.Helper()
-	report := "ask " + giver + " done"
+	report := "type talk " + giver // R20 (#375): talk replaces ask
+
 	last := q.Steps[len(q.Steps)-2].Id
 	for _, s := range q.Steps {
 		if s.Id == "end" {

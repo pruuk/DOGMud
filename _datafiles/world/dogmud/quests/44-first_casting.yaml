@@ -35,8 +35,8 @@ steps:
       You shaped a spell and loosed it at the mark. Return to Grieve in the
       Observatory Hall.
     hint: >-
-      Go back to Adept Grieve in the Observatory Hall and type ask grieve
-      done.
+      Go back to Adept Grieve in the Observatory Hall and type talk
+      grieve.
   - id: end
     description: >-
       Grieve has named you a caster of the first and smallest sort. North of
@@ -74,4 +74,4 @@ triggers:
           Your spell leaves you and breaks against the mote in a flare of
           folded light; the mote draws inward and reknits, unharmed. That is
           casting -- will shaped to a purpose and let go. Go back south to
-          Adept Grieve in the Observatory Hall and type ask grieve done.
+          Adept Grieve in the Observatory Hall and type talk grieve.

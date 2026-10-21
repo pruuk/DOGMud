@@ -5,8 +5,8 @@
 #               HandleJoin notifies the quest engine room_enter on every
 #               login/spawn, so a brand-new character gets the quest the
 #               moment they materialize at 5200 — zero input required.
-#               Cleric Hadwen's dialogue also grants it (ask hadwen
-#               rite) for veterans who walk in via the corridor.
+#               Cleric Hadwen's dialogue also offers it (his offer topic
+#               rite_offer) for veterans who walk in via the corridor.
 #   30-end    — granted by Hadwen's behavior tree at the close of the
 #               rite sequence (behaviors/pothole_coulee/9100-*.yaml).
 #               Blank-slate Awakening: the rite grants NO starter mutation
@@ -21,14 +21,15 @@ steps:
   - id: start
     map_target: 5200  # fallback when Cleric Hadwen is not spawned
     map_target_mob: 9100  # follow Cleric Hadwen (schedule pothole_hadwen) — a fixed room is wrong for part of the day
-    description: "Cleric Hadwen will open the pool for you when you are ready. Type ask hadwen begin at the pool to start the rite."
-    hint: "Stand at the Awakening Pool and type ask hadwen begin when you are ready."
+    description: "Cleric Hadwen will open the pool for you when you are ready. Talk to him at the pool and choose to begin the rite."
+    hint: "Stand at the Awakening Pool and type talk hadwen. When you are ready, choose to begin the rite."
   - id: end
-    description: "The pool has opened you. Two roads from here: learn the town with Crier Toke, or leave through Warden Esk's arch."
+    description: "The pool has opened you. Two roads from here: learn the town with Crier Toke, or leave through Warden Esk's arch. Cleric Hadwen can point you down either one."
     # An end hint is never displayed (the quest is complete). What a new
-    # Opened needs to hear lives where it is shown: quest 29's start hint
-    # names the next road, and the reward line below names the light spell.
-    hint: "Quest 29, Two Roads, shows the way on from here."
+    # Opened needs to hear lives where it is shown: Hadwen's two road
+    # offers (quests 88 and 89, R17) and the rite's closing lines name the
+    # next road, and the reward line below names the light spell.
+    hint: "Talk to Cleric Hadwen to choose a road on from here."
 
 rewards:
   actor: >-

@@ -36,7 +36,7 @@ steps:
       Your words did what reason could not -- Garrow's bluster broke and he quit
       the green. Return to Hale.
     hint: >-
-      Go south to Loresinger Hale at the Stone Circle and type ask hale done.
+      Go south to Loresinger Hale at the Stone Circle and type talk hale.
   - id: end
     description: >-
       Hale has taken your measure and found it sound. North, past the ring, the
@@ -74,4 +74,4 @@ triggers:
           fight goes out of Garrow all at once -- he throws up his heavy hands,
           mutters a surrender, and quits the green. Old Ferd lets out a breath he
           has been holding for days. Go south to Hale at the Stone Circle and
-          type ask hale done.
+          type talk hale.
