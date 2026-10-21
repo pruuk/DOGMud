@@ -2517,6 +2517,52 @@ func (r *Room) FindNoun(noun string) (foundNoun string, nounDescription string) 
 	return "", ""
 }
 
+// NounNamedBy returns the key of the room noun that phrase names, or "" when
+// it names none. It resolves through FindNoun, so every name the room accepts
+// for a noun (its key, a data alias, a word of a multi-word name, a
+// singular/plural spelling) resolves to the noun's key. Unlike FindNoun, which
+// is lenient for `look` and settles for any one word it recognises, the
+// result counts only when every word of phrase is a word of one of that
+// noun's names (or a singular/plural spelling of one): "floor board" names
+// `floorboard` through its alias, "i found the board" names nothing. Quest
+// triggers match on it (questengine.EventDetails.RoomNoun), and every
+// command's words reach them, so a sentence must not.
+func (r *Room) NounNamedBy(phrase string) string {
+	phrase = strings.ToLower(strings.TrimSpace(phrase))
+	if phrase == "" || len(r.Nouns) == 0 {
+		return ""
+	}
+	key, _ := r.FindNoun(phrase)
+	if key == "" {
+		return ""
+	}
+	words := map[string]bool{}
+	for name, desc := range r.Nouns {
+		if name != key && desc != ":"+key {
+			continue
+		}
+		for _, w := range strings.Fields(strings.ToLower(name)) {
+			words[w] = true
+		}
+	}
+	for _, w := range strings.Fields(phrase) {
+		if words[w] {
+			continue
+		}
+		named := false
+		for _, v := range util.NounNumberVariants(w) {
+			if words[v] {
+				named = true
+				break
+			}
+		}
+		if !named {
+			return ""
+		}
+	}
+	return key
+}
+
 func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomId int) {
 
 	// Check for direction aliases from keywords.yaml first

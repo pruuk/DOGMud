@@ -383,10 +383,11 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 			if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
 				bridge := questengine.NewGameBridge(user, room.RoomId)
 				result := questengine.GetEngine().Notify("room_interact", questengine.EventDetails{
-					UserId: user.UserId,
-					RoomId: room.RoomId,
-					Verb:   alias,
-					Noun:   strings.ToLower(rest),
+					UserId:   user.UserId,
+					RoomId:   room.RoomId,
+					Verb:     alias,
+					Noun:     strings.ToLower(rest),
+					RoomNoun: room.NounNamedBy(rest),
 				}, bridge, bridge)
 				if result.Handled {
 					return true, nil
@@ -537,10 +538,11 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 				matchRoom, _ := rooms.OriginalRoomId(room.RoomId)
 				bridge := questengine.NewGameBridge(user, room.RoomId)
 				questengine.GetEngine().Notify("command_issued", questengine.EventDetails{
-					UserId:  user.UserId,
-					RoomId:  matchRoom,
-					Command: cmd,
-					Noun:    strings.ToLower(rest),
+					UserId:   user.UserId,
+					RoomId:   matchRoom,
+					Command:  cmd,
+					Noun:     strings.ToLower(rest),
+					RoomNoun: room.NounNamedBy(rest),
 				}, bridge, bridge)
 			}
 			return handled, err

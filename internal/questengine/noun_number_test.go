@@ -102,7 +102,7 @@ func TestTriggerNoun_Quest20PillarsOneTrigger(t *testing.T) {
 		matches := 0
 		for i := range q.Triggers {
 			tr := &q.Triggers[i]
-			if tr.Event == "room_interact" && matchTriggerFields(tr, d, true) {
+			if tr.Event == "room_interact" && matchTriggerFields(tr, d, nounNumber) {
 				matches++
 			}
 		}

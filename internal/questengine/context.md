@@ -57,9 +57,20 @@ keep it that way.
 `Notify` → `evaluate` (recursive), per matching trigger:
 
 1. **Field match** (`matchTriggerFields`) — mob, room, item, skill, command,
-   topic, questToken, noun, verb. A trigger `noun:` also matches the typed
-   noun's singular/plural variant (`util.NounNumberVariants`), but only when no
-   trigger of the event matches the typed noun exactly; author one spelling
+   topic, questToken, noun, verb. A trigger `noun:` matches in three tiers
+   (`nounTier`, picked by `pickNounTier`): the typed noun exactly; else its
+   singular/plural variant (`util.NounNumberVariants`); else
+   `EventDetails.RoomNoun`, the room's own noun key the typed words name
+   (`rooms.Room.NounNamedBy`: a data alias, a word of a multi-word name, a
+   number variant), or that key's number variant. Only the narrowest tier
+   that matches any trigger of the event is used, so two spellings of one
+   thing never double-fire (quest 63's `board` and `floorboard` triggers:
+   `look board` fires `board` only). So a trigger written with the room's
+   noun key accepts every name the room accepts for it; a trigger noun that
+   is not a room noun still matches the typed text. `NounNamedBy` refuses a
+   phrase with a word that is no name of the noun, so `say i found the
+   board` names nothing. The command handlers in `usercommands` fill
+   `RoomNoun` on `room_interact` and `command_issued`. Author one spelling
    per noun (a guard test fails on a pair that differs only by number).
 2. **Visit guard** — `MarkVisited(trigId)`; a trigger fires at most once per
    chain.

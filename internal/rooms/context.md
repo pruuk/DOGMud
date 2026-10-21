@@ -165,6 +165,14 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   (which leaves existing tags alone) and before the minimap joins the line,
   so nouns stay highlighted under a recolour (wildfire), inside a coloured
   modifier, and never rewrite a map tag's attribute (#455).
+- **Noun lookup**: `FindNoun` resolves what a player typed to a noun key
+  and description: exact key, data alias (`board: ":floorboard"`), a word
+  of a multi-word name, singular/plural spellings; it is lenient for `look`
+  and settles for any one word it recognises. `NounNamedBy` returns the key
+  only when every typed word is a word of one of that noun's names, so a
+  sentence that mentions a noun names nothing. Quest triggers match on it
+  (`questengine.EventDetails.RoomNoun`), so a quest written with the room's
+  noun key accepts every name the room accepts.
 
 ### Biome System (`biomes.go`)
 - **BiomeInfo**: Environmental definitions affecting room behavior
