@@ -10,9 +10,10 @@ The `internal/knowledge` package maintains per-NPC × per-subject facts about wh
 - **types.go**: Enums and data structures (`SubjectType`, `Subject`, `Source`, `Confidence`, `Observation`, `Record`, `ObserverFile`)
 - **knowledge.go**: Public API (`RecordMet`, `RecordObservation`, `RecordName`, `RecordCrimeWitnessed`, `Forget`, `ForgetFact`, `Get`, `HasMet`, `NameOf`, `LastSeen`, `WitnessedCrimes`, `FrequentedRooms`, `AllForObserver`, `AllObserversOfPlayer`, `RecordRoutineObservers`); lazy cache initialization; test seams
 - **decay.go**: Frequency analysis (`FrequentedRooms` — top-K rooms from bounded observation log)
-- **persistence.go**: Disk I/O (`loadOrLazyInit`, `loadObserverFileFromDisk`, `saveObserverFile`); cache management; file path generation
+- **persistence.go**: Disk I/O and the write-behind path (`loadOrLazyInit`, `loadObserverFileFromDisk`, `markDirtyLocked`, `PrepareDirtyWrites`, `MarkCommitted`, `SaveAll`, `SetAutosaveQueue`, `WriteKind`); cache management; file path generation
 - **knowledge_test.go**: Unit tests for all public functions, observation bounding, crime joining, and persistence
 - **persistence_test.go**: Tests for disk I/O, cache lifecycle, and concurrent saves
+- **persistence_batch_test.go**: Tests for the write-behind contract (no file write per observation, one write per dirty file per flush, dirty until commit confirmed, `SaveAll` cancels queued copies, crash loses only the unflushed tail)
 - **test_main_test.go**: TestMain setup with environment-variable override for temp-dir isolation
 
 ## Key Functions
@@ -22,13 +23,13 @@ The `internal/knowledge` package maintains per-NPC × per-subject facts about wh
 - **MobSubject(mobId int) Subject**: Constructs a `Subject` with `Type: SubjectMob` and `Id: mobId`. The id refers to the mob TEMPLATE, not a specific instance.
 
 ### Write API
-- **RecordMet(observerMobId int, subject Subject, room int, source Source)**: Marks that the observer has met the subject. Creates a fresh record if missing, sets `HasMet: true`, stamps `Source` and `Confidence: ConfidenceHigh`, records `LearnedRound` on first call, updates `LastSeenRoom`, `LastSeenRound`, and `LastUpdatedRound`. Persists synchronously.
+- **RecordMet(observerMobId int, subject Subject, room int, source Source)**: Marks that the observer has met the subject. Creates a fresh record if missing, sets `HasMet: true`, stamps `Source` and `Confidence: ConfidenceHigh`, records `LearnedRound` on first call, updates `LastSeenRoom`, `LastSeenRound`, and `LastUpdatedRound`. Updates memory at once and marks the file dirty; no disk write (see Persistence).
 
-- **RecordObservation(observerMobId int, subject Subject, room int)**: Appends an observation (room, round) to the bounded log. Creates record if missing. Deduplicates same-round observations at the tail. Truncates log to the most recent `KnowledgeObservationLogMax` entries (default 32) to bound memory. Persists synchronously.
+- **RecordObservation(observerMobId int, subject Subject, room int)**: Appends an observation (room, round) to the bounded log. Creates record if missing. Deduplicates same-round observations at the tail. Truncates log to the most recent `KnowledgeObservationLogMax` entries (default 32) to bound memory. Updates memory at once and marks the file dirty; no disk write (see Persistence).
 
-- **RecordName(observerMobId int, subject Subject, name string, source Source)**: Records the name the observer learned for the subject. Creates record if missing. Deduplicates — no-op if the name is already set to the same value. Stamps `LastUpdatedRound`. Persists synchronously.
+- **RecordName(observerMobId int, subject Subject, name string, source Source)**: Records the name the observer learned for the subject. Creates record if missing. Deduplicates: no-op if the name is already set to the same value. Stamps `LastUpdatedRound`. Updates memory at once and marks the file dirty; no disk write (see Persistence).
 
-- **RecordCrimeWitnessed(observerMobId int, subject Subject, crimeId int)**: Records that the observer witnessed a crime by the subject. Creates record if missing, appends crimeId to the crimes-witnessed list. Deduplicates — no-op if crimeId is already recorded. Stamps `LastUpdatedRound`. Persists synchronously.
+- **RecordCrimeWitnessed(observerMobId int, subject Subject, crimeId int)**: Records that the observer witnessed a crime by the subject. Creates record if missing, appends crimeId to the crimes-witnessed list. Deduplicates: no-op if crimeId is already recorded. Stamps `LastUpdatedRound`. Updates memory at once and marks the file dirty; no disk write (see Persistence).
 
 ### Read API
 - **Get(observerMobId int, subject Subject) \*Record**: Returns the in-memory record for the given observer and subject, or nil if the record does not exist. Triggers lazy cache load on first access for this observer but does not create a record.
@@ -51,16 +52,30 @@ The `internal/knowledge` package maintains per-NPC × per-subject facts about wh
 - **RecordRoutineObservers(movingInstanceId int, movingTemplateId int, room \*rooms.Room)**: Auto-write helper used by the forager/caravan room-change hook. Iterates all other NPC mobs currently in the room and writes observation + met records for each, treating the moving entity (identified by its template ID) as the subject. Skips the moving entity's own instance to avoid self-observation. Used to populate routine observation logs as NPCs traverse the world.
 
 ### Forget API
-- **Forget(observerMobId int, subject Subject)**: Removes the entire record for the subject from the observer's file. Idempotent — no-op if the record does not exist. Intentionally does NOT cascade to opinion (1.1) or reputation (1.2/1.3) state; those systems track faction-level trust derived from witnessed behavior over time, not individual memory. Persists synchronously.
+- **Forget(observerMobId int, subject Subject)**: Removes the entire record for the subject from the observer's file. Idempotent: no-op if the record does not exist. Intentionally does NOT cascade to opinion (1.1) or reputation (1.2/1.3) state; those systems track faction-level trust derived from witnessed behavior over time, not individual memory. Updates memory at once and marks the file dirty; no disk write (see Persistence).
 
-- **ForgetFact(observerMobId int, subject Subject, fact string)**: Clears a single fact from the record without removing the record itself. Valid fact keys are `"name"`, `"observations"`, and `"crimes"`. Unknown fact keys are a no-op. Stamps `LastUpdatedRound`. Same no-cascade policy as `Forget`. Persists synchronously.
+- **ForgetFact(observerMobId int, subject Subject, fact string)**: Clears a single fact from the record without removing the record itself. Valid fact keys are `"name"`, `"observations"`, and `"crimes"`. Unknown fact keys are a no-op. Stamps `LastUpdatedRound`. Same no-cascade policy as `Forget`. Updates memory at once and marks the file dirty; no disk write (see Persistence).
 
 ## Global State
 
 ### Cache and Mutex
 - **knowledgeCache**: `map[int]*ObserverFile` keyed by observer mob template id. Holds every loaded observer's knowledge table in memory.
 - **knowledgeCacheMu**: `sync.RWMutex` protecting knowledgeCache and all in-cache mutations. Write operations (Record\*, Forget, ForgetFact) acquire the write lock; read operations acquire the read lock.
-- **saveMu**: `sync.Mutex` serializing disk writes to prevent Windows `ERROR_SHARING_VIOLATION` on overlapping writes to the same observer file. Mirrors the `internal/crimes` and `internal/opinions` patterns.
+- **saveMu**: `sync.Mutex` serializing `SaveAll`'s disk writes to prevent Windows `ERROR_SHARING_VIOLATION` on overlapping writes to the same observer file. Mirrors the `internal/crimes` and `internal/opinions` patterns.
+- **autosaveQueue**: the shared `*savequeue.Queue`, set by `SetAutosaveQueue` from `internal/hooks` at init. `SaveAll` cancels into it.
+- **ObserverFile.gen / savedGen / preparedGen** (unexported, untagged, guarded by `knowledgeCacheMu`): mutation counter, the generation confirmed on disk, and the generation of the latest snapshot handed to the queue. Dirty means `gen != savedGen`.
+
+## Persistence (write-behind on the autosave cycle)
+
+No `Record*`/`Forget*` call touches the disk. Each mutates the cached `ObserverFile` and calls `markDirtyLocked`. The writes ride the autosave cycle that rooms, users and plugins already use (`internal/savequeue`, `Timing.AutosaveWritesPerTick`):
+
+1. `hooks.PrepareAutosaveSet` calls `PrepareDirtyWrites`, which marshals each dirty file once into a `savequeue.PendingWrite` (`Kind: WriteKind` = `"knowledge"`, `Id`: observer mob id, `Careful: true`) and records `preparedGen`.
+2. The drain (`hooks.drainPendingWrites`) commits them through `util.Save` at the per-tick budget and calls `MarkCommitted(Id)` for each successful knowledge commit. `MarkCommitted` marks `preparedGen` saved, so a mutation after the snapshot keeps the file dirty, and a failed or superseded write is simply prepared again next cycle.
+3. Shutdown (`world.go`) and copyover (`copyover.go`) call `SaveAll` BEFORE `AutosaveQueue().FlushAll()`. `SaveAll` writes every dirty file synchronously and cancels any older queued copy (guard G2), so each file lands once and stale bytes cannot overwrite it. Must run on MainWorker.
+
+Why: these were a synchronous `util.Save` (temp file, fsync, rename) per call on the event loop. `RecordRoutineObservers` calls `RecordObservation` and `RecordMet` for every mob already in the room on every forager or caravan step, so a caravan crew of N cost about N x (N-1) x 2 fsyncs per step: ~12 saves a second and ~62% of game CPU on an idle server (profiled at d4db22500). A file is now written at most once per autosave cycle.
+
+**Durability trade-off**: the same one autosave already makes for rooms and users. A clean shutdown or copyover loses nothing. A crash loses the knowledge changes made since the last committed autosave cycle: at most one `Timing.RoundsPerAutoSave` interval (225 rounds = 15 minutes as shipped) plus that cycle's drain. Everything committed before it survives, since each write is still `util.Save`.
 
 ### Test Seams
 - **roundForTest**: Injection hook for `currentRound()` — lets tests freeze or advance the round count without reading `util.GetRoundCount()`. Production never sets this; tests assign a closure and must clear it after use.
@@ -236,7 +251,7 @@ The knowledge layer reads from two other v1 substrates but does not cascade writ
 - **factions**: Calls `AllDefinitions()` to iterate faction crime logs in `WitnessedCrimes()`.
 - **crimes**: Calls `AllForFaction()` to enrich witnessed crime IDs with live status in `WitnessedCrimes()`.
 - **util**: Uses `GetRoundCount()` for timestamps and `ConvertForFilename()` for path generation.
-- **mudlog**: Logs warnings on disk I/O errors.
+- **savequeue**: `PendingWrite` for prepared writes; `Queue.Cancel` from `SaveAll`.
 
 ### Imported By
 - `internal/usercommands/attack.go` (assault crime witnessing)
@@ -272,4 +287,4 @@ Tests inject fake implementations via global function pointers (`roundForTest`, 
 - `WitnessedCrimes` joins crime IDs against live substrate, returns enriched view with kind and resolve status.
 - `AllObserversOfPlayer` performs reverse lookup across in-memory cache.
 - `RecordRoutineObservers` iterates room occupants, skips moving entity, writes observations for each.
-- Persistence: files are created on first write, loaded lazily on first access, saved synchronously on every Record\* call.
+- Persistence: files are loaded lazily on first access; a Record\* call writes no file; `PrepareDirtyWrites` yields one write per dirty file; a file stays dirty until `MarkCommitted`; `SaveAll` persists everything and cancels queued copies; a crash between flushes loses only the unflushed tail.

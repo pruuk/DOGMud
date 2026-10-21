@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/knowledge"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/savequeue"
@@ -22,6 +23,7 @@ var autosaveQueue = rooms.AutosaveQueue()
 func init() {
 	users.SetAutosaveQueue(autosaveQueue)
 	plugins.SetAutosaveQueue(autosaveQueue)
+	knowledge.SetAutosaveQueue(autosaveQueue)
 }
 
 // AutosaveQueue exposes the pending set for shutdown and copyover flushes.
@@ -56,11 +58,17 @@ func PrepareAutosaveSet() ([]savequeue.PendingWrite, error) {
 	roomWrites, roomErr := rooms.PrepareAllInstanceWrites()
 	userWrites, userErr := users.PrepareAllUserWrites()
 	pluginWrites, pluginErr := plugins.PrepareAll()
+	// NPC knowledge files: only the ones changed since their last confirmed
+	// commit (a dirty set; see internal/knowledge/persistence.go). They share
+	// no transaction with the others, but riding this pass keeps them off the
+	// event loop and under the same per-tick write budget.
+	knowledgeWrites, knowledgeErr := knowledge.PrepareDirtyWrites()
 
-	writes := make([]savequeue.PendingWrite, 0, len(roomWrites)+len(userWrites)+len(pluginWrites))
+	writes := make([]savequeue.PendingWrite, 0, len(roomWrites)+len(userWrites)+len(pluginWrites)+len(knowledgeWrites))
 	writes = append(writes, roomWrites...)
 	writes = append(writes, userWrites...)
 	writes = append(writes, pluginWrites...)
+	writes = append(writes, knowledgeWrites...)
 
 	// A prepare failure for one entity must not discard the rest of the
 	// snapshot: the other players' progress is still worth persisting. Report
@@ -71,5 +79,8 @@ func PrepareAutosaveSet() ([]savequeue.PendingWrite, error) {
 	if userErr != nil {
 		return writes, userErr
 	}
-	return writes, pluginErr
+	if pluginErr != nil {
+		return writes, pluginErr
+	}
+	return writes, knowledgeErr
 }

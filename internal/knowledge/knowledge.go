@@ -5,7 +5,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/crimes"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -61,11 +60,8 @@ func RecordMet(observerMobId int, subject Subject, room int, source Source) {
 	r.LastSeenRoom = room
 	r.LastSeenRound = now
 	r.LastUpdatedRound = now
+	markDirtyLocked(fc) // written on the next autosave flush (persistence.go)
 	knowledgeCacheMu.Unlock()
-
-	if err := saveObserverFile(fc); err != nil {
-		mudlog.Warn("knowledge.RecordMet: save failed", "observer", observerMobId, "error", err)
-	}
 }
 
 func Get(observerMobId int, subject Subject) *Record {
@@ -110,6 +106,7 @@ func RecordObservation(observerMobId int, subject Subject, room int) {
 			r.LastSeenRoom = room
 			r.LastSeenRound = now
 			r.LastUpdatedRound = now
+			markDirtyLocked(fc)
 			knowledgeCacheMu.Unlock()
 			return
 		}
@@ -122,11 +119,8 @@ func RecordObservation(observerMobId int, subject Subject, room int) {
 	r.LastSeenRoom = room
 	r.LastSeenRound = now
 	r.LastUpdatedRound = now
+	markDirtyLocked(fc)
 	knowledgeCacheMu.Unlock()
-
-	if err := saveObserverFile(fc); err != nil {
-		mudlog.Warn("knowledge.RecordObservation: save failed", "observer", observerMobId, "error", err)
-	}
 }
 
 func RecordName(observerMobId int, subject Subject, name string, source Source) {
@@ -151,11 +145,8 @@ func RecordName(observerMobId int, subject Subject, name string, source Source) 
 	}
 	r.NameLearned = name
 	r.LastUpdatedRound = now
+	markDirtyLocked(fc)
 	knowledgeCacheMu.Unlock()
-
-	if err := saveObserverFile(fc); err != nil {
-		mudlog.Warn("knowledge.RecordName: save failed", "observer", observerMobId, "error", err)
-	}
 }
 
 func RecordCrimeWitnessed(observerMobId int, subject Subject, crimeId int) {
@@ -182,11 +173,8 @@ func RecordCrimeWitnessed(observerMobId int, subject Subject, crimeId int) {
 	}
 	r.CrimesWitnessed = append(r.CrimesWitnessed, crimeId)
 	r.LastUpdatedRound = now
+	markDirtyLocked(fc)
 	knowledgeCacheMu.Unlock()
-
-	if err := saveObserverFile(fc); err != nil {
-		mudlog.Warn("knowledge.RecordCrimeWitnessed: save failed", "observer", observerMobId, "error", err)
-	}
 }
 
 // Forget removes the entire record for subject from this observer's file.
@@ -199,21 +187,14 @@ func Forget(observerMobId int, subject Subject) {
 	fc := loadOrLazyInit(observerMobId, observerNameFor(observerMobId))
 
 	knowledgeCacheMu.Lock()
-	mutated := false
 	for i, r := range fc.Records {
 		if r.Subject == subject {
 			fc.Records = append(fc.Records[:i], fc.Records[i+1:]...)
-			mutated = true
+			markDirtyLocked(fc)
 			break
 		}
 	}
 	knowledgeCacheMu.Unlock()
-
-	if mutated {
-		if err := saveObserverFile(fc); err != nil {
-			mudlog.Warn("knowledge.Forget: save failed", "observer", observerMobId, "error", err)
-		}
-	}
 }
 
 // ForgetFact clears a single field ("name", "observations", or "crimes")
@@ -242,11 +223,8 @@ func ForgetFact(observerMobId int, subject Subject, fact string) {
 		return
 	}
 	r.LastUpdatedRound = now
+	markDirtyLocked(fc)
 	knowledgeCacheMu.Unlock()
-
-	if err := saveObserverFile(fc); err != nil {
-		mudlog.Warn("knowledge.ForgetFact: save failed", "observer", observerMobId, "error", err)
-	}
 }
 
 func HasMet(observerMobId int, subject Subject) bool {

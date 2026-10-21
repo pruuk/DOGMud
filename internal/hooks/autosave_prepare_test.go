@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/knowledge"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/savequeue"
@@ -135,9 +137,11 @@ func TestPrepareAutosaveSet_CoversRoomsAndUsersInOneSet(t *testing.T) {
 
 	// Users may legitimately be zero here (nobody connected in a unit test);
 	// what matters is that both kinds flow through ONE returned set rather than
-	// two independently-scheduled passes.
+	// two independently-scheduled passes. Knowledge files are allowed too:
+	// earlier tests in this binary (crime witnessing) leave NPC knowledge
+	// dirty, and the pass carries it.
 	for _, w := range writes {
-		if w.Kind != "room" && w.Kind != "user" {
+		if w.Kind != "room" && w.Kind != "user" && w.Kind != knowledge.WriteKind {
 			t.Errorf("unexpected kind %q in the prepared set", w.Kind)
 		}
 		if w.Path == "" {
@@ -263,4 +267,57 @@ func TestAutosaveQueue_IsSharedBetweenRoomsAndUsers(t *testing.T) {
 		t.Fatalf("pending %d, want 1 (before was %d)", q.Pending(), before)
 	}
 	q.Drain(10)
+}
+
+// knowledgeWritesFor filters a prepared set down to one observer's knowledge
+// file. Other tests in this binary can leave knowledge records behind, so the
+// assertions key on a private observer id rather than on the whole set.
+func knowledgeWritesFor(writes []savequeue.PendingWrite, observerMobId int) int {
+	n := 0
+	for _, w := range writes {
+		if w.Kind == knowledge.WriteKind && w.Id == observerMobId {
+			n++
+		}
+	}
+	return n
+}
+
+// NPC knowledge rides the autosave pass instead of fsyncing per observation on
+// the event loop. A dirty file must appear once in the prepared set, and the
+// drain must confirm its commit back, or the file is re-written every cycle.
+func TestAutosave_KnowledgeIsPreparedOnceAndConfirmedByTheDrain(t *testing.T) {
+	dir := withAutosaveTestEnv(t)
+	seedG1Room(t, dir, 920004)
+	events.DrainQueuedBroadcastsForTest()
+
+	const observer = 920901
+	// RecordObservation then RecordMet, twice: a caravan step, repeated.
+	for room := 1; room <= 2; room++ {
+		knowledge.RecordObservation(observer, knowledge.MobSubject(920902), room)
+		knowledge.RecordMet(observer, knowledge.MobSubject(920902), room, knowledge.SourceWitnessed)
+	}
+
+	writes, err := PrepareAutosaveSet()
+	if err != nil {
+		t.Fatalf("PrepareAutosaveSet: %v", err)
+	}
+	if got := knowledgeWritesFor(writes, observer); got != 1 {
+		t.Fatalf("observer %d has %d knowledge writes in the set, want exactly 1", observer, got)
+	}
+
+	q := AutosaveQueue()
+	q.Supersede(writes)
+	cycleWaiting = true
+	for i := 0; i < 1000 && (q.Pending() > 0 || cycleWaiting); i++ {
+		drainPendingWrites()
+	}
+
+	again, err := knowledge.PrepareDirtyWrites()
+	if err != nil {
+		t.Fatalf("PrepareDirtyWrites: %v", err)
+	}
+	if got := knowledgeWritesFor(again, observer); got != 0 {
+		t.Errorf("the drain committed observer %d's file but did not confirm it: still dirty", observer)
+	}
+	events.DrainQueuedBroadcastsForTest()
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/copyover"
 	"github.com/GoMudEngine/GoMud/internal/forager"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
+	"github.com/GoMudEngine/GoMud/internal/knowledge"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -70,6 +71,14 @@ func triggerCopyover() error {
 	// refused one is recoverable and obvious; a completed one that silently ate
 	// a cycle of saves is neither. This is the only place in the codebase where
 	// a save failure stops an operation rather than being logged past.
+	//
+	// NPC knowledge is write-behind, so its dirty files go first: SaveAll
+	// cancels any older queued copy, which FlushAll would otherwise land.
+	// Logged, not an abort: it is NPC memory, and the queue flush below is
+	// still the gate for player and world state.
+	if err := knowledge.SaveAll(); err != nil {
+		mudlog.Error("copyover", "action", "knowledge.SaveAll", "error", err)
+	}
 	if err := hooks.AutosaveQueue().FlushAll(); err != nil {
 		mudlog.Error("copyover", "action", "FlushPendingWrites", "error", err,
 			"message", "aborting copyover rather than discarding unwritten saves")
