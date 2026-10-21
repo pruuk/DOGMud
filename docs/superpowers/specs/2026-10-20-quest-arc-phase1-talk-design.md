@@ -124,6 +124,12 @@ spec; line numbers were read from the files at that commit.
     shown in the same quest state. Where that opener does not name the problem, the line is
     general ("Is there something I can help with?"). Where the opener always names it (a lock),
     the specific line stays.
+  - **R28** (owner 2026-10-21) A quest choice that cannot be undone is made in a talk menu with
+    the questgiver(s), never by a room command or a look. The NPC first explains what the player
+    is signing up for in a topic the player must hear (`heardRequired` gates the choice topic on
+    it); the choice topic's own text and hint repeat the warning. Room commands may discover or
+    unlock the choice, never make it. First case: quest 68's circle choice (was `look old guild
+    mark`).
   - **R25** (owner 2026-10-21) The character-creation question "How much of Gaius do you
     already know?" has no default: Enter asks again, so nobody skips the tutorial by
     pressing Enter. Pinned by `TestConfirmMenu_StartEnterReasks`.
