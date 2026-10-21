@@ -32,6 +32,8 @@ exits:
   east:
     roomid: 5721
 nouns:
+  # Aliases: "look floor board" finds the loose floorboard too.
+  floor board: ":loose floorboard"
   heading knife: A wide curved blade in its bracket on
     the wall above the east bench, the tool for shaping
     barrel-head stock. The blade is clean and oiled, the
