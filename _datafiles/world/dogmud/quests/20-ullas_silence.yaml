@@ -99,8 +99,9 @@ steps:
   - id: brindle_confession
     map_target: 4140
     description: "Brindle was Elgar's friend and was meant to go down
-      with him. He did not go that day. He has been finishing Elgar's
-      hook-spear ever since, never quite able to give it to anyone.
+      with him. He did not go that day. The hook-spear Elgar ordered
+      has sat half-finished on his bench ever since. Now that he has
+      said it aloud, he means to finish it at last and take it to Ulla.
       He says Vella the healer, Elgar's sister, buried something at
       Elgar's empty grave for whoever came looking."
     hint: "From the Pike & Lantern, go north into Brindle's Smithy
@@ -131,8 +132,9 @@ steps:
   - id: end
     description: "The matter of Elgar Voss has been laid open. Ulla
       has read his last words and can finally grieve in the open
-      instead of behind closed doors. The hook-spear Brindle never
-      finished is yours now."
+      instead of behind closed doors. Brindle finished Elgar's
+      hook-spear at last and brought it to her, and she has given it
+      to you."
 
 rewards:
   actor: "Ulla unfolds the journal page slowly. She reads it
@@ -141,11 +143,12 @@ rewards:
     away. When she looks up, her eyes are wet but steady for the
     first time in years.\n\n'I knew it was something,' she says
     quietly. 'I knew it was something he could not say.'\n\nShe rises
-    with effort, walks to the workshop stair, and brings down a long
-    wrapped bundle that has been sitting up there for years: the
-    hook-spear Brindle finished and never delivered. She places it
-    in your hands without ceremony.\n\n'It was meant for someone who
-    would understand. He'd want it to be you.'"
+    with effort and takes up a long wrapped bundle from beside the
+    hearth: Elgar's hook-spear, the lake-iron bright and new.
+    'Brindle brought this to my door after you spoke with him. He
+    finished it at last, twelve years late.' She places it in your
+    hands without ceremony.\n\n'It was meant for someone who would
+    understand. He'd want it to be you.'"
   observer: "is given a long wrapped bundle by Ulla, who closes her
     hand over hers for a moment before letting go."
   gold: 100

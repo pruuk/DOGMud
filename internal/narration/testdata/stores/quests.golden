@@ -50,7 +50,7 @@ quest|20|rewards|actor => Ulla unfolds the journal page slowly. She reads it twi
 
 'I knew it was something,' she says quietly. 'I knew it was something he could not say.'
 
-She rises with effort, walks to the workshop stair, and brings down a long wrapped bundle that has been sitting up there for years: the hook-spear Brindle finished and never delivered. She places it in your hands without ceremony.
+She rises with effort and takes up a long wrapped bundle from beside the hearth: Elgar's hook-spear, the lake-iron bright and new. 'Brindle brought this to my door after you spoke with him. He finished it at last, twelve years late.' She places it in your hands without ceremony.
 
 'It was meant for someone who would understand. He'd want it to be you.'
 quest|20|rewards|observer => is given a long wrapped bundle by Ulla, who closes her hand over hers for a moment before letting go.
