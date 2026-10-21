@@ -2975,6 +2975,8 @@ One subagent per zone batch (34 zone folders; batch the small ones: about 8 batc
 
 ### Task 16: Remove the converted quest triggers
 
+**Renumbering from master (2026-10-21):** PR #648 merged quest 20's `pillars`/`pillar` trigger pair (0-based index 2 removed, old 3 became 2, every later quest 20 trigger shifts down by one). After this branch merges master, the converter report's `delete quest 20-ullas_silence.yaml trigger 17` and `trigger 18` name triggers 16 and 17. Delete by matching the trigger's content (event, item, grant), never by stale index; re-run the converter after the merge to regenerate the list.
+
 - [ ] For every `delete quest <file> trigger <index>` line in the final report (33 `item_give`, 1 `dialogue`), delete that trigger block from the quest file with Edit, keeping comments that still describe remaining triggers and removing comments that described the deleted one. Then `grep -n "event: item_give" -r _datafiles/world/dogmud/quests` must list only triggers without a `grant` action (expect none) and `grep -n "event: dialogue" -r _datafiles/world/dogmud/quests` must be empty.
 
 ### Task 17: Rewrite the behavior-tree ask branches
