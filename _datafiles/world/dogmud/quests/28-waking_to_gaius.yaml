@@ -459,7 +459,13 @@ triggers:
       - npc_say:
           mob: 9491
           lines:
-            - {delay: 1, text: "The practice ring, where you make your
+            # Dewey's lesson topics stay open here, and while one is unheard
+            # his name shows [*] (dialogue Marker). Tie the mark the player
+            # met in the first menu back to him (R24). Worded so it holds
+            # whether or not the mark is showing; the warcry prompt stays last.
+            - {delay: 1, text: "When you see [*] beside my name, I still have
+                something worth hearing. If you want it, type talk dewey."}
+            - {delay: 2, text: "The practice ring, where you make your
                 mistakes safely. A war cry is a shout that steadies you
                 before a fight. Type warcry."}
 
