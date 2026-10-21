@@ -431,16 +431,23 @@ func setVal(propertyPath string, newVal string, operator bool) error {
 	}
 
 	overridePath := overridePathFor(GetConfig().FilePaths.DataFiles.String())
-	if err := util.Save(overridePath, writeBytes, bool(configData.FilePaths.CarefulSaveFiles)); err != nil {
-		return err
-	}
+	saveErr := util.Save(overridePath, writeBytes, bool(configData.FilePaths.CarefulSaveFiles))
 
+	// The overrides map was already mutated above, so memory follows it even
+	// when the durable save failed (prod mounts /mud-config read-only).
+	// Returning before this overlay let overrides and the live config diverge,
+	// which froze Server.NextRoomId in memory while the map kept advancing and
+	// made the room allocator hand out the same id repeatedly. The save error
+	// is still returned so callers log it or report it.
 	if err = configData.OverlayOverrides(overrides); err != nil {
+		if saveErr != nil {
+			return errors.Join(saveErr, err)
+		}
 		return err
 	}
 
 	configData.Validate()
-	return nil
+	return saveErr
 }
 
 func GetConfig() Config {

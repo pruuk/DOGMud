@@ -9,6 +9,11 @@
   either spelling too, so "look pillars" advances a step as well as
   "look pillar".
 
+## 2026-10-21: Smoother travel in the web client
+
+- Walking between areas in the web client no longer stalls the game for
+  everyone while your map redraws. The map itself looks the same.
+
 ## 2026-10-20: Choices as numbered lists
 
 - Every choice the game offers you is now a numbered list in the same

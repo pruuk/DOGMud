@@ -1042,6 +1042,11 @@ func (r *mapper) getMapNode(roomId int) *mapNode {
 		Pos:         positionDelta{x: room.X, y: room.Y, z: room.Z}, // authored coords; startByCrawl overwrites when it falls back
 		Exits:       make(map[string]nodeExit, 2),                   // assume there will be on average 2 exits per room
 		SecretExits: make(map[string]struct{}),
+		Title:       room.Title,
+		Zone:        room.Zone,
+		Biome:       room.Biome, // read before GetBiome below, which fills an empty one in place
+		IsBank:      room.IsBank,
+		IsStorage:   room.IsStorage,
 	}
 
 	if room.MapSymbol != `` {

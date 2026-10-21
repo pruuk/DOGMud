@@ -23,6 +23,16 @@ func SeedRoomsForTest(roomMap map[int]*Room, zoneMap map[string]*ZoneConfig) fun
 	}
 }
 
+// UnloadRoomForTest drops a room from the in-memory room cache, as idle-room
+// unloading (RoomMaintenance) does, so the next LoadRoom reads it from disk
+// again. It skips the rest of removeRoomFromMemory on purpose: no instance
+// save is written, no mobs are torn down, and the file-path cache keeps its
+// entry, which matches production (an unloaded room's path stays cached).
+// Intended for cross-package tests that need a "cold" room.
+func UnloadRoomForTest(roomId int) {
+	delete(roomManager.rooms, roomId)
+}
+
 // MarkRoomOccupancy updates the roomManager tracking maps so that
 // GetRoomsWithPlayers / GetRoomsWithMobs return correct results in tests.
 // Call this after AddPlayer/AddMob on the room objects.
