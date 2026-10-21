@@ -2949,6 +2949,8 @@ One subagent per zone batch (34 zone folders; batch the small ones: about 8 batc
 - An adversarial review by a separate Opus subagent (not the writer): copy rules, voice, gates, and that every tutorial instruction names a command that exists after Task 19.
 - Task 26 carries a dedicated new-player scenario (goal 7).
 
+**Batch 1 APPROVED by the owner 2026-10-21** after three review rounds (page https://claude.ai/artifact/MJ2dj1f7Fahi119VcUXG33, version 3). Its rulings became spec R22 to R25. Working copy: `C:/tmp/dogmud-375-convert/dialogue/{pothole_coulee,newcomer_antechamber}`; gate walk `go run ./cmd/dialoguecheck -data _datafiles/world/dogmud -dialogue C:/tmp/dogmud-375-convert/dialogue -zones <zones> -retired 29`; page generator `C:/tmp/dogmud-375-convert/review_page.py`.
+
 - [ ] **Step 1: Brief each subagent with:**
   - The global Edit/Write rule; files live in the scratchpad output folder, edited with Edit.
   - Read in chunks of at most 400 lines; report "read N of N files" with the list.
