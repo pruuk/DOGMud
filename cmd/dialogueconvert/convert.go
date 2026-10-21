@@ -286,15 +286,17 @@ func (r *Result) Keys(mobId int) []string {
 // ---------------------------------------------------------------- convert
 
 type converter struct {
-	in     *Input
-	res    *Result
-	rep    *Report
-	titles map[int]string
+	in      *Input
+	res     *Result
+	rep     *Report
+	titles  map[int]string
+	deleted map[string]bool // trigger delete lines already listed
 }
 
-// Convert applies the rules of plan Task 13 (spec section 6.1) in order.
+// Convert applies the rules of plan Task 13 (spec section 6.1) in order,
+// with the conversion rulings R15 to R21 (spec section 2).
 func Convert(in *Input) *Result {
-	c := &converter{in: in, rep: newReport(), titles: map[int]string{}}
+	c := &converter{in: in, rep: newReport(), titles: map[int]string{}, deleted: map[string]bool{}}
 	c.res = &Result{Files: map[int]*cFile{}, Report: c.rep}
 	for _, q := range in.Quests {
 		c.titles[q.Quest.QuestId] = q.Quest.Name
@@ -481,6 +483,13 @@ func (c *converter) convertDialogue(d dialogueSource) {
 					line += fmt.Sprintf("; also reached through %v; picked the earliest in file order, zone pass to confirm", cands[1:])
 				}
 				c.rep.Requires = append(c.rep.Requires, line)
+			}
+			if target.Kind == dialogue.KindOffer && target.GrantsQuest != "" {
+				// Settled ruling (mobs 95, 96): hearing an offer meant taking
+				// it, so the gate is the quest the offer starts.
+				t.QuestRequired = appendUnique(t.QuestRequired, target.GrantsQuest)
+				c.rep.Requires = append(c.rep.Requires, fmt.Sprintf("%s: requires names an offer (%s, key %s); questRequired %s written (settled ruling: requires on an offer becomes a quest gate)", where, how, target.Key, target.GrantsQuest))
+				continue
 			}
 			if target.Kind != dialogue.KindInfo {
 				c.rep.Requires = append(c.rep.Requires, fmt.Sprintf("%s: requires names an offer (%s, key %s, kind %s); no heardRequired written", where, how, target.Key, target.Kind))
@@ -765,6 +774,29 @@ type triggerWork struct {
 	held   []string
 	mob    int
 	npcSay []string
+	give   bool     // an item_give trigger: its narration is dropped (R16)
+	why    string   // reason appended to the delete line, when a ruling deleted it
+	chain  []string // further delete lines (quest_granted chains), held with this trigger
+}
+
+// narration drops an actor or observer line from a give route (R16: the
+// hand-in narration only the old give route printed goes; no narration
+// field). It reports whether the action was narration it dropped.
+func (w *triggerWork) narration(k int, a quests.ActionDef) bool {
+	if !w.give {
+		return false
+	}
+	name := actionName(a)
+	if name != "actor" && name != "observer" {
+		return false
+	}
+	w.c.rep.DroppedNarration = append(w.c.rep.DroppedNarration, fmt.Sprintf("%s action %d: %s dropped (R16): %s", w.where, k, name, describeAction(a)))
+	return true
+}
+
+// deleteChain lists a quest_granted trigger for deletion with this one.
+func (w *triggerWork) deleteChain(q questSource, idx int, why string) {
+	w.chain = append(w.chain, fmt.Sprintf("quest %s trigger %d (%s)", q.File, idx, why))
 }
 
 func (w *triggerWork) unmappable(k int, a quests.ActionDef, detail string) {
@@ -784,9 +816,33 @@ func (w *triggerWork) clash(msg string) {
 func (w *triggerWork) finish() {
 	if len(w.held) > 0 {
 		w.c.rep.HeldTriggers = append(w.c.rep.HeldTriggers, fmt.Sprintf("hold %s until decided (%s)", w.where, strings.Join(w.held, ", ")))
+		for _, ch := range w.chain {
+			w.c.rep.HeldTriggers = append(w.c.rep.HeldTriggers, fmt.Sprintf("hold %s with %s", ch, w.where))
+		}
 		return
 	}
-	w.c.rep.Triggers = append(w.c.rep.Triggers, "delete "+w.where)
+	line := "delete " + w.where
+	if w.why != "" {
+		line += " (" + w.why + ")"
+	}
+	w.c.deleteTrigger(line)
+	for _, ch := range w.chain {
+		w.c.deleteTrigger("delete " + ch)
+	}
+}
+
+// deleteTrigger lists a trigger for Task 16 once; two give routes can share
+// one quest_granted chain (quest 63).
+func (c *converter) deleteTrigger(line string) {
+	key := line
+	if i := strings.Index(line, " ("); i >= 0 {
+		key = line[:i]
+	}
+	if c.deleted[key] {
+		return
+	}
+	c.deleted[key] = true
+	c.rep.Triggers = append(c.rep.Triggers, line)
 }
 
 // conditionGates maps a trigger's conditions to topic gates. Conditions with
@@ -846,6 +902,9 @@ func (w *triggerWork) applyFresh(t *cTopic, actions []quests.ActionDef, item int
 				t.Text += joinSep + npcSayText(a.NpcSay)
 			}
 		default:
+			if w.narration(k, a) {
+				continue
+			}
 			w.unmappable(k, a, describeAction(a))
 		}
 	}
@@ -869,21 +928,21 @@ func describeAction(a quests.ActionDef) string {
 
 // itemGive folds one quest item_give trigger into a topic on its mob.
 func (c *converter) itemGive(q questSource, i int, tr quests.TriggerDef) {
-	w := &triggerWork{c: c, where: fmt.Sprintf("quest %s trigger %d", q.File, i), mob: tr.Mob}
+	w := &triggerWork{c: c, where: fmt.Sprintf("quest %s trigger %d", q.File, i), mob: tr.Mob, give: true}
 	defer w.finish()
 
-	var grant string
+	var grants []string
 	for _, a := range tr.Actions {
 		if a.Grant != "" {
-			grant = a.Grant
-			break
+			grants = append(grants, a.Grant)
 		}
 	}
-	if grant == "" {
+	if len(grants) == 0 {
 		c.rep.Notes = append(c.rep.Notes, w.where+": item_give with no grant, left in the quest file")
 		w.held = append(w.held, "no grant")
 		return
 	}
+	grant := grants[0]
 	f := c.fileFor(tr.Mob, fmt.Sprintf("give-only hand-in, %s", w.where))
 	if f == nil {
 		w.held = append(w.held, "no file for mob")
@@ -897,6 +956,21 @@ func (c *converter) itemGive(q questSource, i int, tr quests.TriggerDef) {
 			wanting = append(wanting, t)
 		}
 	}
+	end := endToken(q.Quest.QuestId)
+
+	// R15: a give that starts the quest when a hand-in on this mob takes the
+	// same item (the player found it before accepting) is deleted, not
+	// merged: talk shows the offer, and a give before accepting hands the
+	// item back.
+	if kind, qid, _ := kindOf(grant); kind == dialogue.KindOffer && qid == q.Quest.QuestId && len(grants) == 1 {
+		for _, t := range wanting {
+			if t.GrantsQuest == end {
+				c.giveBeforeAccepting(w, q, tr, grant, t)
+				return
+			}
+		}
+	}
+
 	if len(wanting) == 0 {
 		key := f.uniqueKey(fmt.Sprintf("give_%d", tr.Item))
 		t := c.newTopic(key, grant, w.where)
@@ -908,9 +982,40 @@ func (c *converter) itemGive(q questSource, i int, tr quests.TriggerDef) {
 			c.rep.Notes = append(c.rep.Notes, fmt.Sprintf("mob %d topic %s: no npc_say, text to write", tr.Mob, key))
 		}
 		t.grants = append(t.grants, srcItemGive)
+		c.showNotTake(tr.Mob, t, tr.Item, w.where)
 		f.add(t)
 		c.rep.Notes = append(c.rep.Notes, fmt.Sprintf("mob %d topic %s created from %s (%s)", tr.Mob, key, w.where, t.Kind))
 		return
+	}
+
+	// Settled ruling (quests 14, 63, 65, 67; quest 66): a give route whose
+	// quest_granted chain grants the quest's end is a direct -end hand-in.
+	for _, g := range grants {
+		path, ok := chainToEnd(q, g)
+		if !ok {
+			continue
+		}
+		var to *cTopic
+		for _, t := range wanting {
+			if t.GrantsQuest == end {
+				to = t
+				break
+			}
+		}
+		if to == nil {
+			for _, t := range wanting {
+				for _, own := range grants {
+					if to == nil && t.GrantsQuest == own {
+						to = t
+					}
+				}
+			}
+		}
+		if to != nil {
+			c.directEnd(w, q, tr, g, path, to, gates)
+			return
+		}
+		break
 	}
 
 	var target *cTopic
@@ -941,23 +1046,38 @@ func (c *converter) itemGive(q questSource, i int, tr quests.TriggerDef) {
 		c.rep.MergeLines = append(c.rep.MergeLines, fmt.Sprintf("mob %d topic %s: trigger gates differ (%s): %s", tr.Mob, target.Key, w.where, diff))
 	}
 
-	// The ask route and the give route were alternatives that paid the same
-	// reward: an effect the topic already carries is not added again. One it
-	// lacks is added and named, since the ask route never paid it.
-	added := func(what string) {
-		c.rep.MergeLines = append(c.rep.MergeLines, fmt.Sprintf("mob %d topic %s: added %s from %s (the ask route did not pay it)", tr.Mob, target.Key, what, w.where))
-	}
 	grantSeen := false
 	for k, a := range tr.Actions {
+		if a.Grant == "" {
+			continue
+		}
+		if grantSeen {
+			w.unmappable(k, a, fmt.Sprintf("second grant %q (a topic carries one)", a.Grant))
+		}
+		grantSeen = true
+	}
+	w.mergeEffects(target, tr.Actions, tr.Item, w.where)
+	target.grants = append(target.grants, srcItemGive)
+	c.showNotTake(tr.Mob, target, tr.Item, w.where)
+}
+
+// mergeEffects folds a trigger's actions, other than its grants, into a
+// topic that already exists. The ask route and the give route were
+// alternatives that paid the same reward: an effect the topic already
+// carries is not added again. One it lacks is added and named, since the ask
+// route never paid it.
+func (w *triggerWork) mergeEffects(target *cTopic, actions []quests.ActionDef, item int, from string) {
+	c := w.c
+	added := func(what string) {
+		c.rep.MergeLines = append(c.rep.MergeLines, fmt.Sprintf("mob %d topic %s: added %s from %s (the ask route did not pay it)", w.mob, target.Key, what, from))
+	}
+	for k, a := range actions {
 		switch actionName(a) {
 		case "grant":
-			if grantSeen {
-				w.unmappable(k, a, fmt.Sprintf("second grant %q (a topic carries one)", a.Grant))
-			}
-			grantSeen = true
+			// The caller accounts for grants.
 		case "consume_item":
-			if a.ConsumeItem != tr.Item {
-				w.unmappable(k, a, fmt.Sprintf("consumes %d, not the trigger item %d", a.ConsumeItem, tr.Item))
+			if a.ConsumeItem != item {
+				w.unmappable(k, a, fmt.Sprintf("consumes %d, not the trigger item %d", a.ConsumeItem, item))
 			}
 		case "bump_rep":
 			nb := dialogue.RepBump{Faction: a.BumpRep.Faction, Delta: a.BumpRep.Delta}
@@ -1004,12 +1124,134 @@ func (c *converter) itemGive(q questSource, i int, tr quests.TriggerDef) {
 			}
 		case "npc_say":
 			w.sayLine(k, a)
-			c.rep.MergeLines = append(c.rep.MergeLines, fmt.Sprintf("mob %d topic %s: npc_say to fold into the topic text: %q", tr.Mob, target.Key, npcSayText(a.NpcSay)))
+			c.rep.MergeLines = append(c.rep.MergeLines, fmt.Sprintf("mob %d topic %s: npc_say to fold into the topic text: %q", w.mob, target.Key, npcSayText(a.NpcSay)))
 		default:
+			if w.narration(k, a) {
+				continue
+			}
 			w.unmappable(k, a, describeAction(a))
 		}
 	}
-	target.grants = append(target.grants, srcItemGive)
+}
+
+// showNotTake applies the settled carriesItem rule (the Threshold Keeper's
+// disc, Rusk's dagger): a route that takes the item and hands the same item
+// back only checks that the player carries it, so the topic shows to holders
+// and never takes it.
+func (c *converter) showNotTake(mob int, t *cTopic, item int, from string) {
+	if item == 0 || t.RequiresItem != item || t.GivesItem != item {
+		return
+	}
+	t.RequiresItem, t.GivesItem, t.CarriesItem = 0, 0, item
+	c.rep.Rulings = append(c.rep.Rulings, fmt.Sprintf("mob %d topic %s: carriesItem %d from %s (it took the item and handed it back: shown, never taken; settled ruling)", mob, t.Key, item, from))
+}
+
+// chainToEnd follows the quest's quest_granted triggers from token through
+// the grants they make. When one of them grants the quest's end token it
+// returns the trigger indexes passed through, in order.
+func chainToEnd(q questSource, token string) ([]int, bool) {
+	end := endToken(q.Quest.QuestId)
+	seen := map[string]bool{}
+	var walk func(tok string) ([]int, bool)
+	walk = func(tok string) ([]int, bool) {
+		if seen[tok] {
+			return nil, false
+		}
+		seen[tok] = true
+		for i, t := range q.Quest.Triggers {
+			if t.Event != "quest_granted" || t.QuestToken != tok {
+				continue
+			}
+			for _, a := range t.Actions {
+				if a.Grant == end {
+					return []int{i}, true
+				}
+				if a.Grant != "" {
+					if rest, ok := walk(a.Grant); ok {
+						return append([]int{i}, rest...), true
+					}
+				}
+			}
+		}
+		return nil, false
+	}
+	return walk(token)
+}
+
+// byRuling counts a grant no topic carries because a ruling says so, and
+// names it.
+func (c *converter) byRuling(src, line string) {
+	c.rep.GrantsByRuling[src]++
+	c.rep.RulingGrants = append(c.rep.RulingGrants, fmt.Sprintf("%s: %s", src, line))
+}
+
+// giveBeforeAccepting applies R15 to a give route that starts the quest.
+func (c *converter) giveBeforeAccepting(w *triggerWork, q questSource, tr quests.TriggerDef, grant string, handIn *cTopic) {
+	w.why = "R15: a give before accepting hands the item back; talk shows the offer"
+	c.byRuling(srcItemGive, fmt.Sprintf("%s grant %s: dropped (R15: found the item before accepting; the player accepts the offer, then hands in through topic %s)", w.where, grant, handIn.Key))
+	var lost []string
+	for k, a := range tr.Actions {
+		switch actionName(a) {
+		case "grant":
+		case "npc_say":
+			lost = append(lost, fmt.Sprintf("action %d npc_say %q", k, npcSayText(a.NpcSay)))
+		default:
+			lost = append(lost, fmt.Sprintf("action %d %s %s", k, actionName(a), describeAction(a)))
+		}
+	}
+	line := fmt.Sprintf("%s: R15, deleted, not merged; mob %d topic %s keeps %s", w.where, tr.Mob, handIn.Key, handIn.GrantsQuest)
+	if len(lost) > 0 {
+		line += "; dropped with it: " + strings.Join(lost, "; ")
+	}
+	c.rep.Rulings = append(c.rep.Rulings, line)
+	if path, ok := chainToEnd(q, grant); ok {
+		for _, idx := range path {
+			w.deleteChain(q, idx, fmt.Sprintf("R15: quest_granted %s completed the quest on accept, a live bug", q.Quest.Triggers[path[0]].QuestToken))
+		}
+		c.rep.Rulings = append(c.rep.Rulings, fmt.Sprintf("quest %s triggers %v: R15, the quest_granted chain from %s to %s is deleted (it completed the quest on accept)", q.File, path, grant, endToken(q.Quest.QuestId)))
+	}
+}
+
+// directEnd merges a give route whose quest_granted chain ends the quest into
+// the hand-in topic as a direct -end grant (settled ruling for the -report
+// routes of quests 14, 63, 65, 67 and the escort route of quest 66). The
+// chain's effects merge with the trigger's, and the chain is deleted with it.
+func (c *converter) directEnd(w *triggerWork, q questSource, tr quests.TriggerDef, chained string, path []int, target *cTopic, gates dialogue.Gates) {
+	qid := q.Quest.QuestId
+	end := endToken(qid)
+	if target.GrantsQuest != end {
+		// The topic granted a step the give route passed through: it now
+		// grants the end, and the step's grant is named.
+		old := target.GrantsQuest
+		for _, s := range target.grants {
+			c.byRuling(s, fmt.Sprintf("mob %d topic %s grant %s: replaced by %s (settled ruling: the hand-in grants the end directly)", tr.Mob, target.Key, old, end))
+		}
+		target.grants = nil
+		target.GrantsQuest, target.Kind, target.Quest, target.Marked = end, dialogue.KindHandIn, qid, false
+		target.Label = c.label(dialogue.KindHandIn, qid, w.where)
+		target.QuestExcluded = appendUnique(target.QuestExcluded, end)
+		c.rep.Rulings = append(c.rep.Rulings, fmt.Sprintf("mob %d topic %s: now the hand-in for quest %d, granting %s instead of %s (settled ruling: one hand-in topic; %s and its chain deleted)", tr.Mob, target.Key, qid, end, old, w.where))
+	}
+	if diff := gateDiff(gates, target.Gates); diff != "" {
+		c.rep.MergeLines = append(c.rep.MergeLines, fmt.Sprintf("mob %d topic %s: trigger gates differ (%s): %s", tr.Mob, target.Key, w.where, diff))
+	}
+	for _, a := range tr.Actions {
+		switch {
+		case a.Grant == "":
+		case a.Grant == chained:
+			target.grants = append(target.grants, srcItemGive)
+			c.rep.MergeLines = append(c.rep.MergeLines, fmt.Sprintf("mob %d topic %s: grant %s from %s merged as %s (its quest_granted chain, triggers %v, completes the quest; settled ruling)", tr.Mob, target.Key, chained, w.where, end, path))
+		default:
+			c.byRuling(srcItemGive, fmt.Sprintf("%s grant %s: dropped (settled ruling: the step is skipped, topic %s grants %s directly)", w.where, a.Grant, target.Key, end))
+		}
+	}
+	w.mergeEffects(target, tr.Actions, tr.Item, w.where)
+	for _, idx := range path {
+		from := fmt.Sprintf("quest %s trigger %d", q.File, idx)
+		w.mergeEffects(target, q.Quest.Triggers[idx].Actions, tr.Item, from)
+		w.deleteChain(q, idx, fmt.Sprintf("quest_granted %s chain to %s, folded into mob %d topic %s", q.Quest.Triggers[idx].QuestToken, end, tr.Mob, target.Key))
+	}
+	c.showNotTake(tr.Mob, target, tr.Item, w.where)
 }
 
 // gateDiff describes how a trigger's gates differ from a topic's.
@@ -1290,6 +1532,9 @@ func (c *converter) convertBehavior(b behaviorSource) {
 	for n, br := range nodes {
 		branches = append(branches, analyzeBranch(b.Path, n+1, br))
 	}
+	if rule, ok := behaviorRulings[b.Path]; ok && rule(c, b, branches) {
+		return
+	}
 	f := c.fileFor(b.MobId, "behavior-only mob, "+b.Path)
 	if f == nil {
 		for _, bi := range branches {
@@ -1340,6 +1585,128 @@ func (c *converter) convertBehavior(b behaviorSource) {
 			c.gateFallback(earlier, later)
 		}
 	}
+}
+
+// behaviorRuling applies an owner ruling to one behavior file in place of the
+// general branch rules. It reports false, leaving the general rules to run
+// and the report to say why, when the file no longer has the shape the
+// ruling was made for.
+type behaviorRuling func(c *converter, b behaviorSource, branches []*branchInfo) bool
+
+// behaviorRulings are the one-off rulings on single behavior trees (spec R17,
+// R19), keyed by path.
+var behaviorRulings = map[string]behaviorRuling{
+	"behaviors/pothole_coulee/9100-cleric_hadwen.yaml":   hadwenRite,
+	"behaviors/marches_spur_road/254-bandit_leader.yaml": banditLeaderAsk,
+}
+
+// rulingShape reports a ruling not applied because its file changed.
+func (c *converter) rulingShape(b behaviorSource, ruling, why string) bool {
+	c.rep.Clashes = append(c.rep.Clashes, fmt.Sprintf("`%s`: ruling %s not applied (%s); general rules used, owner decision", b.Path, ruling, why))
+	return false
+}
+
+// banditLeaderAsk applies R19: the bandit leader's ask branch (no
+// keyword_match; it cancelled his ambush countdown on any ask) becomes no
+// topic. Nothing in conversation stops his ambush.
+func banditLeaderAsk(c *converter, b behaviorSource, branches []*branchInfo) bool {
+	for _, bi := range branches {
+		if len(bi.keywords) > 0 || len(bi.grants) > 0 || len(bi.speech) > 0 {
+			return c.rulingShape(b, "R19", fmt.Sprintf("branch %d has keywords, grants or speech", bi.n))
+		}
+	}
+	for _, bi := range branches {
+		c.rep.Behavior = append(c.rep.Behavior, fmt.Sprintf("%s: no topic (R19: the talk option is dropped; nothing in conversation stops his ambush): delete the branch", bi.where))
+	}
+	c.rep.Rulings = append(c.rep.Rulings, fmt.Sprintf("mob %d (`%s`): R19, its %d ask branch(es) become no topic; the dialogue file stays info only", b.MobId, b.Path, len(branches)))
+	return true
+}
+
+// Hadwen's rite (R17): the grant the tree keeps and the one it stops making.
+const (
+	hadwenKeeps = "30-end"
+	hadwenDrops = "29-start"
+)
+
+// hadwenRite applies R17: the mid-rite answer and the rite (both keyed on
+// begin) answer one behavior topic begin, gated on 30-start and not 30-end.
+// The topic carries no grant: the rite keeps granting 30-end at its close,
+// and stops granting 29-start (quest 29 is replaced by two quests Hadwen
+// offers after the rite).
+func hadwenRite(c *converter, b behaviorSource, branches []*branchInfo) bool {
+	var rite *branchInfo
+	var waits []*branchInfo
+	for _, bi := range branches {
+		begin := false
+		for _, k := range bi.keywords {
+			begin = begin || k == "begin"
+		}
+		if !begin {
+			return c.rulingShape(b, "R17", fmt.Sprintf("branch %d is not a begin branch", bi.n))
+		}
+		if len(bi.grants) > 0 {
+			if rite != nil {
+				return c.rulingShape(b, "R17", "more than one granting begin branch")
+			}
+			rite = bi
+			continue
+		}
+		for _, cd := range bi.conds {
+			if cd.Check != "state_equals" {
+				return c.rulingShape(b, "R17", fmt.Sprintf("branch %d has condition %s", bi.n, cd.Check))
+			}
+		}
+		waits = append(waits, bi)
+	}
+	if rite == nil {
+		return c.rulingShape(b, "R17", "no begin branch grants a quest")
+	}
+	for _, g := range rite.grants {
+		if g != hadwenKeeps && g != hadwenDrops {
+			return c.rulingShape(b, "R17", "the rite grants "+g)
+		}
+	}
+	f := c.fileFor(b.MobId, "behavior-only mob, "+b.Path)
+	if f == nil {
+		return c.rulingShape(b, "R17", "no file for the mob")
+	}
+
+	key := f.uniqueKey("begin")
+	t := &cTopic{}
+	t.Key, t.Kind, t.Behavior = key, dialogue.KindInfo, true
+	t.Gates = cloneGates(rite.gates)
+	if len(rite.speech) > 0 {
+		t.Text = rite.speech[0]
+	}
+	f.add(t)
+
+	for _, w := range waits {
+		c.rep.Behavior = append(c.rep.Behavior, fmt.Sprintf("%s: topic %s (R17, shared with branch %d): event: player_topic, check: topic_is with topic: %s replaces keyword_match; keep: state_equals (the mid-rite answer)",
+			w.where, key, rite.n, key))
+	}
+	took := "no speech to remove"
+	if rite.firstSpeech > 0 {
+		took = fmt.Sprintf("remove the speech action %d that the topic text now speaks", rite.firstSpeech)
+	}
+	keep := strings.Join(append(append([]string(nil), rite.treeOnly...), rite.others...), ", ")
+	c.rep.Behavior = append(c.rep.Behavior, fmt.Sprintf("%s: topic %s (R17): event: player_topic, check: topic_is with topic: %s replaces keyword_match; %s; remove grant_quest %s; keep grant_quest %s and: %s",
+		rite.where, key, key, took, hadwenDrops, hadwenKeeps, keep))
+
+	for _, g := range rite.grants {
+		if g == hadwenKeeps {
+			c.byRuling(srcBehavior, fmt.Sprintf("%s grant_quest %s: stays in the tree, granted at the rite's close; topic %s carries no grant (R17)", rite.where, g, key))
+		} else {
+			c.byRuling(srcBehavior, fmt.Sprintf("%s grant_quest %s: dropped (R17: Hadwen grants no new quest from his tree; quest 29 is replaced by two quests offered after the rite)", rite.where, g))
+		}
+	}
+	var ns []string
+	for _, w := range waits {
+		ns = append(ns, strconv.Itoa(w.n))
+	}
+	ns = append(ns, strconv.Itoa(rite.n))
+	c.rep.Rulings = append(c.rep.Rulings, fmt.Sprintf("mob %d (`%s`): R17, branches %s become one behavior topic %s (questRequired %v, questExcluded %v, no grant); the tree keeps grant_quest %s and stops granting %s; the two bridge quests that replace quest 29 are content work",
+		b.MobId, b.Path, strings.Join(ns, ", "), key, t.QuestRequired, t.QuestExcluded, hadwenKeeps, hadwenDrops))
+	return true
 }
 
 // gateFallback gives the later branch's topics the inverse of the earlier
@@ -1498,6 +1865,31 @@ func (c *converter) emitBranch(f *cFile, bi *branchInfo) {
 // ---------------------------------------------------------------- finish
 
 func (c *converter) finish() {
+	// Delete lines keep quest order; within one quest file, trigger order
+	// (a shared chain is listed when its first give route is).
+	first := map[string]int{}
+	fileAndIndex := func(line string) (string, int) {
+		fs := strings.Fields(line) // delete quest <file> trigger <n> ...
+		if len(fs) < 5 {
+			return line, 0
+		}
+		n, _ := strconv.Atoi(fs[4])
+		return fs[2], n
+	}
+	for i, l := range c.rep.Triggers {
+		if f, _ := fileAndIndex(l); first[f] == 0 {
+			first[f] = i + 1
+		}
+	}
+	sort.SliceStable(c.rep.Triggers, func(i, j int) bool {
+		fi, ni := fileAndIndex(c.rep.Triggers[i])
+		fj, nj := fileAndIndex(c.rep.Triggers[j])
+		if fi != fj {
+			return first[fi] < first[fj]
+		}
+		return ni < nj
+	})
+
 	ids := make([]int, 0, len(c.res.Files))
 	for id := range c.res.Files {
 		ids = append(ids, id)
@@ -1599,7 +1991,12 @@ type Report struct {
 	Nodes                map[string]int
 	GrantsIn             map[string]int
 	GrantsOut            map[string]int
+	GrantsByRuling       map[string]int // grants no topic carries, each named in RulingGrants
 	TopicsCarryingGrants int
+
+	Rulings          []string // owner rulings and settled rules applied, with what each did
+	RulingGrants     []string // one line per grant counted in GrantsByRuling
+	DroppedNarration []string // R16: give-route narration dropped
 
 	Requires     []string
 	Unmappable   []string
@@ -1620,7 +2017,7 @@ type Report struct {
 }
 
 func newReport() *Report {
-	return &Report{Patterns: map[string]int{}, Nodes: map[string]int{}, GrantsIn: map[string]int{}, GrantsOut: map[string]int{}}
+	return &Report{Patterns: map[string]int{}, Nodes: map[string]int{}, GrantsIn: map[string]int{}, GrantsOut: map[string]int{}, GrantsByRuling: map[string]int{}}
 }
 
 func sum(m map[string]int) int {
@@ -1634,14 +2031,19 @@ func sum(m map[string]int) int {
 func (r *Report) GrantsInTotal() int  { return sum(r.GrantsIn) }
 func (r *Report) GrantsOutTotal() int { return sum(r.GrantsOut) }
 
-// Reconciled reports whether every component and the total agree.
+// GrantsByRulingTotal counts the grants no topic carries by a ruling.
+func (r *Report) GrantsByRulingTotal() int { return sum(r.GrantsByRuling) }
+
+// Reconciled reports whether every component and the total agree: each
+// input grant is carried by a topic or named under a ruling.
 func (r *Report) Reconciled() bool {
 	for _, s := range grantSources {
-		if r.GrantsIn[s] != r.GrantsOut[s] {
+		if r.GrantsIn[s] != r.GrantsOut[s]+r.GrantsByRuling[s] {
 			return false
 		}
 	}
-	return r.GrantsInTotal() == r.GrantsOutTotal()
+	return len(r.RulingGrants) == r.GrantsByRulingTotal() &&
+		r.GrantsInTotal() == r.GrantsOutTotal()+r.GrantsByRulingTotal()
 }
 
 // Markdown renders the report.
@@ -1657,15 +2059,15 @@ func (r *Report) Markdown() string {
 		fmt.Fprintf(&b, "- %s: %d\n", k, r.Nodes[k])
 	}
 	fmt.Fprintf(&b, "- total: %d\n\n", sum(r.Nodes))
-	b.WriteString("Grants by source (input: counted in the old content; output: carried by the converted topics):\n\n")
-	b.WriteString("| source | input | output |\n|---|---|---|\n")
+	b.WriteString("Grants by source (input: counted in the old content; output: carried by the converted topics; by ruling: carried by no topic because a ruling says so, each named under \"Grants accounted for by a ruling\"):\n\n")
+	b.WriteString("| source | input | output | by ruling |\n|---|---|---|---|\n")
 	for _, s := range grantSources {
-		fmt.Fprintf(&b, "| %s | %d | %d |\n", s, r.GrantsIn[s], r.GrantsOut[s])
+		fmt.Fprintf(&b, "| %s | %d | %d | %d |\n", s, r.GrantsIn[s], r.GrantsOut[s], r.GrantsByRuling[s])
 	}
-	fmt.Fprintf(&b, "| total | %d | %d |\n\n", r.GrantsInTotal(), r.GrantsOutTotal())
+	fmt.Fprintf(&b, "| total | %d | %d | %d |\n\n", r.GrantsInTotal(), r.GrantsOutTotal(), r.GrantsByRulingTotal())
 	fmt.Fprintf(&b, "Topics carrying a grant: %d (merged item_give grants share their topic)\n\n", r.TopicsCarryingGrants)
 	if r.Reconciled() {
-		b.WriteString("Reconciled: yes\n\n")
+		b.WriteString("Reconciled: yes (input = output + by ruling, for every source and the total)\n\n")
 	} else {
 		b.WriteString("Reconciled: NO (a component or the total disagrees; see Clashes and Unmappable)\n\n")
 	}
@@ -1680,8 +2082,11 @@ func (r *Report) Markdown() string {
 		}
 		b.WriteString("\n")
 	}
+	section("Grants accounted for by a ruling", r.RulingGrants)
+	section("Rulings applied", r.Rulings)
 	section("Requires mappings", r.Requires)
 	section("Unmappable actions", r.Unmappable)
+	section("Dropped narration", r.DroppedNarration)
 	section("Clashes and mismatches", r.Clashes)
 	section("Merge lines", r.MergeLines)
 	section("Triggers to delete", r.Triggers)

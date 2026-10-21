@@ -57,8 +57,8 @@ func run(data, out string) error {
 		return err
 	}
 	r := res.Report
-	fmt.Printf("%d files written to %s; grants in %d, out %d; reconciled: %v\n",
-		len(res.Files), out, r.GrantsInTotal(), r.GrantsOutTotal(), r.Reconciled())
+	fmt.Printf("%d files written to %s; grants in %d, out %d, by ruling %d; reconciled: %v\n",
+		len(res.Files), out, r.GrantsInTotal(), r.GrantsOutTotal(), r.GrantsByRulingTotal(), r.Reconciled())
 	return nil
 }
 

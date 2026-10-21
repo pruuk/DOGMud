@@ -1,4 +1,4 @@
-# TestConvert_RequiresOnAnOfferIsReported: f requires the grant node e.
+# TestConvert_RequiresOnAnOfferBecomesAQuestGate: f requires the grant node e.
 mobid: 7003
 zone: Fixture Zone
 defaultMood: neutral

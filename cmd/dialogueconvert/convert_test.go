@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -127,12 +128,16 @@ func TestConvert_RequiresToHeardRequired(t *testing.T) {
 	assert.True(t, anyLine(res.Report.Requires, "mob 7002", "node d", `"x"`, "node c"), "D's mapping is reported: %v", res.Report.Requires)
 }
 
-func TestConvert_RequiresOnAnOfferIsReported(t *testing.T) {
+func TestConvert_RequiresOnAnOfferBecomesAQuestGate(t *testing.T) {
+	// Settled ruling (mobs 95, 96): requires naming an offer becomes a gate on
+	// the quest that offer starts.
 	res := convertFixtures(t)
 
 	f := mustTopic(t, res, 7003, "f")
 	assert.Empty(t, f.HeardRequired)
-	assert.True(t, anyLine(res.Report.Requires, "mob 7003", "node f", "requires names an offer"), "%v", res.Report.Requires)
+	assert.Equal(t, []string{"40-start"}, f.QuestRequired)
+	assert.True(t, anyLine(res.Report.Requires, "mob 7003", "node f", "requires names an offer", "questRequired 40-start"), "%v", res.Report.Requires)
+	assert.False(t, anyLine(res.Report.Requires, "mob 7003", "no heardRequired written"), "%v", res.Report.Requires)
 }
 
 func TestConvert_RootAndVariants(t *testing.T) {
@@ -375,15 +380,60 @@ func TestConvert_ItemGiveWithNoTopicCreatesOne(t *testing.T) {
 	assert.Equal(t, "First Heat", tp.Label)
 	assert.Equal(t, []string{"35-start"}, tp.QuestRequired)
 	assert.Equal(t, []string{"35-end"}, tp.QuestExcluded, "missing plus the grant and end token, once each")
-	assert.Equal(t, 10009, tp.RequiresItem)
-	assert.Equal(t, 10009, tp.GivesItem)
+	assert.Equal(t, 0, tp.RequiresItem, "the dagger is shown, never taken")
+	assert.Equal(t, 0, tp.GivesItem)
+	assert.Equal(t, 10009, tp.CarriesItem)
 	assert.Equal(t, "35-end", tp.GrantsQuest)
 	assert.Equal(t, "Yours. You made it.", tp.Text)
 	assert.Equal(t, []string{"forge", "give_10009"}, res.Keys(9116))
 	assert.True(t, anyLine(res.Report.Triggers, "delete quest 35-first_heat.yaml trigger 0"), "%v", res.Report.Triggers)
 }
 
-func TestConvert_UnmappableActionsAreReported(t *testing.T) {
+func TestConvert_ItemShownAndReturnedIsCarriesItem(t *testing.T) {
+	// Settled ruling (Rusk's dagger, Dross's rubbing): a give route that takes
+	// the item and hands the same item back is a carriesItem gate, merged or
+	// created.
+	in := inlineInput(t, map[int]string{9116: `
+mobid: 9116
+zone: Inline Zone
+defaultMood: neutral
+patterns: []
+tree:
+  root: {text: "Forge's hot."}
+  nodes:
+    - id: dagger
+      triggers: ["dagger"]
+      questRequired: ["35-craft"]
+      questExcluded: ["35-end"]
+      requiresItem: 10009
+      grantsQuest: "35-end"
+      text: "Let me see it."
+`}, map[string]string{"35-first_heat.yaml": `
+questid: 35
+name: First Heat
+steps: [{id: start}, {id: craft}, {id: end}]
+triggers:
+  - event: item_give
+    mob: 9116
+    item: 10009
+    conditions: {has: ["35-craft"], missing: ["35-end"]}
+    actions:
+      - consume_item: 10009
+      - give_item: 10009
+      - grant: "35-end"
+`})
+	res := Convert(in)
+	tp := mustTopic(t, res, 9116, "dagger")
+	assert.Equal(t, 10009, tp.CarriesItem)
+	assert.Equal(t, 0, tp.RequiresItem)
+	assert.Equal(t, 0, tp.GivesItem)
+	assert.True(t, anyLine(res.Report.Rulings, "mob 9116 topic dagger", "carriesItem 10009", "shown, never taken"), "%v", res.Report.Rulings)
+	assert.True(t, anyLine(res.Report.Triggers, "delete quest 35-first_heat.yaml trigger 0"), "%v", res.Report.Triggers)
+}
+
+func TestConvert_GiveNarrationIsDropped(t *testing.T) {
+	// R16: an actor line only the old give route printed is dropped, named in
+	// the report, and does not hold the trigger.
 	res := convertFixtures(t)
 
 	tp := mustTopic(t, res, 9360, "give_40115")
@@ -391,9 +441,289 @@ func TestConvert_UnmappableActionsAreReported(t *testing.T) {
 	assert.True(t, tp.Marked)
 	assert.Equal(t, []string{"69-start"}, tp.QuestRequired)
 	assert.Equal(t, []string{"69-gallery", "69-end"}, tp.QuestExcluded)
-	assert.True(t, anyLine(res.Report.Unmappable, "quest 69-the_gallery_cipher.yaml", "trigger 0", "action 1", "actor", "Dross takes the rubbing"),
-		"%v", res.Report.Unmappable)
-	assert.True(t, anyLine(res.Report.HeldTriggers, "69-the_gallery_cipher.yaml trigger 0"), "%v", res.Report.HeldTriggers)
+	assert.True(t, anyLine(res.Report.DroppedNarration, "quest 69-the_gallery_cipher.yaml trigger 0", "action 1", "actor", "Dross takes the rubbing"),
+		"%v", res.Report.DroppedNarration)
+	assert.False(t, anyLine(res.Report.Unmappable, "69-the_gallery_cipher.yaml"), "%v", res.Report.Unmappable)
+	assert.False(t, anyLine(res.Report.HeldTriggers, "69-the_gallery_cipher.yaml"), "%v", res.Report.HeldTriggers)
+	assert.True(t, anyLine(res.Report.Triggers, "delete quest 69-the_gallery_cipher.yaml trigger 0"), "%v", res.Report.Triggers)
+}
+
+func TestConvert_UnmappableActionsAreReported(t *testing.T) {
+	in := inlineInput(t, map[int]string{9360: `
+mobid: 9360
+zone: Inline Zone
+defaultMood: neutral
+patterns: []
+tree:
+  root: {text: "Gallery."}
+  nodes: []
+`}, map[string]string{"69-gallery.yaml": `
+questid: 69
+name: The Gallery Cipher
+steps: [{id: start}, {id: gallery}, {id: end}]
+triggers:
+  - event: item_give
+    mob: 9360
+    item: 40115
+    conditions: {has: ["69-start"], missing: ["69-gallery"]}
+    actions:
+      - grant: "69-gallery"
+      - teleport: 5000
+`})
+	res := Convert(in)
+	mustTopic(t, res, 9360, "give_40115")
+	assert.True(t, anyLine(res.Report.Unmappable, "quest 69-gallery.yaml", "trigger 0", "action 1", "teleport"), "%v", res.Report.Unmappable)
+	assert.True(t, anyLine(res.Report.HeldTriggers, "69-gallery.yaml trigger 0"), "%v", res.Report.HeldTriggers)
+}
+
+func TestConvert_ReportRouteBecomesDirectEnd(t *testing.T) {
+	// Settled ruling (quests 14, 63, 65, 67): a give route granting a token
+	// whose quest_granted chain grants the end merges into the -end hand-in;
+	// the give trigger and its chain are both deleted.
+	in := inlineInput(t, map[int]string{94: `
+mobid: 94
+zone: Inline Zone
+defaultMood: neutral
+patterns: []
+tree:
+  root: {text: "Civilian."}
+  nodes:
+    - id: velkhandoff
+      triggers: ["ledger"]
+      questRequired: ["14-evidence"]
+      questExcluded: ["14-end"]
+      requiresItem: 40036
+      grantsQuest: "14-end"
+      bumpsRep: [{faction: bloom_trade, delta: -15}]
+      text: "Names. Dates."
+`}, map[string]string{"14-undertow.yaml": `
+questid: 14
+name: The Undertow
+steps: [{id: start}, {id: evidence}, {id: report}, {id: end}]
+triggers:
+  - event: item_give
+    mob: 94
+    item: 40036
+    conditions: {has: ["14-evidence"], missing: ["14-report"]}
+    actions:
+      - grant: "14-report"
+      - npc_say:
+          mob: 94
+          lines:
+            - {delay: 1, text: "A bribe ledger? Let me see that."}
+  - event: quest_granted
+    quest_token: "14-report"
+    conditions: {missing: ["14-end"]}
+    actions:
+      - bump_rep: {faction: bloom_trade, delta: -15}
+      - set_flag: {key: "14-outcome", value: "arrests"}
+      - grant: "14-end"
+`})
+	res := Convert(in)
+	tp := mustTopic(t, res, 94, "velkhandoff")
+	assert.Equal(t, "14-end", tp.GrantsQuest)
+	assert.Equal(t, dialogue.KindHandIn, tp.Kind)
+	assert.Equal(t, []dialogue.RepBump{{Faction: "bloom_trade", Delta: -15}}, tp.BumpsRep, "the chain's same bump is not doubled")
+	require.NotNil(t, tp.SetsQuestFlag, "a chain effect the topic lacks is added")
+	assert.Equal(t, dialogue.QuestFlagSet{Key: "14-outcome", Value: "arrests"}, *tp.SetsQuestFlag)
+	assert.Empty(t, res.Report.Clashes)
+	assert.Empty(t, res.Report.HeldTriggers)
+	assert.True(t, anyLine(res.Report.MergeLines, "mob 94 topic velkhandoff", "A bribe ledger?"), "%v", res.Report.MergeLines)
+	assert.True(t, anyLine(res.Report.MergeLines, "mob 94 topic velkhandoff", "14-report", "14-end", "chain"), "%v", res.Report.MergeLines)
+	assert.True(t, anyLine(res.Report.Triggers, "delete quest 14-undertow.yaml trigger 0"), "%v", res.Report.Triggers)
+	assert.True(t, anyLine(res.Report.Triggers, "delete quest 14-undertow.yaml trigger 1", "quest_granted 14-report"), "%v", res.Report.Triggers)
+	assert.Equal(t, 1, res.Report.GrantsOut[srcItemGive])
+	assert.True(t, res.Report.Reconciled())
+}
+
+func TestConvert_SharedChainIsDeletedOnce(t *testing.T) {
+	// Quest 63: two give routes to two mobs share one quest_granted chain.
+	// The chain is listed once, and the list keeps trigger order.
+	handoff := func(mob int) string {
+		return `
+mobid: ` + strconv.Itoa(mob) + `
+zone: Inline Zone
+defaultMood: neutral
+patterns: []
+tree:
+  root: {text: "Docks."}
+  nodes:
+    - id: tallyhandoff
+      triggers: ["tally"]
+      questRequired: ["63-evidence"]
+      questExcluded: ["63-end"]
+      requiresItem: 40100
+      grantsQuest: "63-end"
+      text: "Two columns."
+`
+	}
+	in := inlineInput(t, map[int]string{9316: handoff(9316), 9300: handoff(9300)}, map[string]string{"63-dock_rat.yaml": `
+questid: 63
+name: Dock Rat
+steps: [{id: start}, {id: evidence}, {id: report}, {id: end}]
+triggers:
+  - event: item_give
+    mob: 9316
+    item: 40100
+    actions: [{grant: "63-report"}]
+  - event: item_give
+    mob: 9300
+    item: 40100
+    actions: [{grant: "63-report"}]
+  - event: quest_granted
+    quest_token: "63-report"
+    actions: [{grant: "63-end"}]
+`})
+	res := Convert(in)
+	var lines []string
+	for _, l := range res.Report.Triggers {
+		lines = append(lines, strings.SplitN(l, " (", 2)[0])
+	}
+	assert.Equal(t, []string{
+		"delete quest 63-dock_rat.yaml trigger 0",
+		"delete quest 63-dock_rat.yaml trigger 1",
+		"delete quest 63-dock_rat.yaml trigger 2",
+	}, lines)
+	assert.Equal(t, 2, res.Report.GrantsOut[srcItemGive])
+	assert.True(t, res.Report.Reconciled())
+}
+
+func TestConvert_GiveBeforeAcceptingIsDeleted(t *testing.T) {
+	// R15 (quests 15, 16): the give route that starts the quest is deleted,
+	// not merged; the hand-in keeps its -end grant; the chain that completed
+	// the quest on -start (a live bug) is deleted too.
+	in := inlineInput(t, map[int]string{250: `
+mobid: 250
+zone: Inline Zone
+defaultMood: neutral
+patterns: []
+tree:
+  root: {text: "Freight."}
+  nodes:
+    - id: freight_offer
+      triggers: ["freight"]
+      questExcluded: ["15-start", "15-end"]
+      grantsQuest: "15-start"
+      text: "My crate went missing."
+    - id: quest_complete_dialogue
+      triggers: ["crate"]
+      questRequired: ["15-start"]
+      questExcluded: ["15-end"]
+      requiresItem: 40039
+      grantsQuest: "15-end"
+      text: "That is the one."
+`}, map[string]string{"15-freight.yaml": `
+questid: 15
+name: The Peddler's Overdue Freight
+steps: [{id: start}, {id: end}]
+triggers:
+  - event: item_give
+    mob: 250
+    item: 40039
+    conditions: {has: ["15-start"], missing: ["15-end"]}
+    actions:
+      - grant: "15-end"
+  - event: item_give
+    mob: 250
+    item: 40039
+    conditions: {missing: ["15-start"]}
+    actions:
+      - grant: "15-start"
+      - npc_say:
+          mob: 250
+          lines:
+            - {delay: 1, text: "My freight! Where did you find it?"}
+  - event: quest_granted
+    quest_token: "15-start"
+    conditions: {missing: ["15-end"]}
+    actions:
+      - grant: "15-end"
+`})
+	res := Convert(in)
+	assert.Equal(t, []string{"freight_offer", "quest_complete_dialogue"}, res.Keys(250), "no topic from the early give")
+	tp := mustTopic(t, res, 250, "quest_complete_dialogue")
+	assert.Equal(t, "15-end", tp.GrantsQuest)
+	assert.Equal(t, 40039, tp.RequiresItem)
+	assert.Empty(t, res.Report.Clashes)
+	assert.Empty(t, res.Report.HeldTriggers)
+	r := res.Report
+	assert.True(t, anyLine(r.Triggers, "delete quest 15-freight.yaml trigger 0"), "%v", r.Triggers)
+	assert.True(t, anyLine(r.Triggers, "delete quest 15-freight.yaml trigger 1", "R15"), "%v", r.Triggers)
+	assert.True(t, anyLine(r.Triggers, "delete quest 15-freight.yaml trigger 2", "R15", "quest_granted 15-start", "live bug"), "%v", r.Triggers)
+	assert.True(t, anyLine(r.RulingGrants, "15-freight.yaml trigger 1", "15-start", "R15"), "%v", r.RulingGrants)
+	assert.True(t, anyLine(r.Rulings, "15-freight.yaml trigger 1", "R15", "My freight!"), "the dropped line is named: %v", r.Rulings)
+	assert.Equal(t, 2, r.GrantsIn[srcItemGive])
+	assert.Equal(t, 1, r.GrantsOut[srcItemGive])
+	assert.Equal(t, 1, r.GrantsByRuling[srcItemGive])
+	assert.True(t, r.Reconciled())
+	assert.Contains(t, r.Markdown(), "| item_give | 2 | 1 | 1 |")
+}
+
+func TestConvert_ChainedSecondGrantBecomesTheEnd(t *testing.T) {
+	// Quest 66 (settled): the give route granted the escort step and a second
+	// token whose chain ends the quest. The hand-in becomes one -end topic with
+	// the chain's flag; the skipped step's grants are named as by ruling.
+	in := inlineInput(t, map[int]string{9323: `
+mobid: 9323
+zone: Inline Zone
+defaultMood: neutral
+patterns: []
+tree:
+  root: {text: "Sit down."}
+  nodes:
+    - id: wrapperhandoff
+      triggers: ["wrapper"]
+      questRequired: ["66-start"]
+      questExcluded: ["66-escort", "66-end"]
+      requiresItem: 40110
+      grantsQuest: "66-escort"
+      text: "Copper-flower note."
+`}, map[string]string{"66-plight.yaml": `
+questid: 66
+name: The Addict's Plight
+steps: [{id: start}, {id: escort}, {id: detox}, {id: end}]
+triggers:
+  - event: item_give
+    mob: 9323
+    item: 40110
+    conditions: {has: ["66-start"], missing: ["66-escort"]}
+    actions:
+      - grant: "66-escort"
+      - npc_say:
+          mob: 9323
+          lines:
+            - {delay: 1, text: "This wrapper. I know this smell."}
+      - grant: "66-detox"
+  - event: quest_granted
+    quest_token: "66-detox"
+    conditions: {missing: ["66-end"]}
+    actions:
+      - set_flag: {key: "66-addict-fate", value: "saved"}
+      - grant: "66-end"
+`})
+	res := Convert(in)
+	tp := mustTopic(t, res, 9323, "wrapperhandoff")
+	assert.Equal(t, dialogue.KindHandIn, tp.Kind)
+	assert.Equal(t, 66, tp.Quest)
+	assert.False(t, tp.Marked)
+	assert.Equal(t, "The Addict's Plight", tp.Label)
+	assert.Equal(t, "66-end", tp.GrantsQuest)
+	require.NotNil(t, tp.SetsQuestFlag)
+	assert.Equal(t, dialogue.QuestFlagSet{Key: "66-addict-fate", Value: "saved"}, *tp.SetsQuestFlag)
+	assert.Equal(t, []string{"66-escort", "66-end"}, tp.QuestExcluded)
+
+	r := res.Report
+	assert.Empty(t, r.Unmappable)
+	assert.Empty(t, r.Clashes)
+	assert.Empty(t, r.HeldTriggers)
+	assert.True(t, anyLine(r.Triggers, "delete quest 66-plight.yaml trigger 0"), "%v", r.Triggers)
+	assert.True(t, anyLine(r.Triggers, "delete quest 66-plight.yaml trigger 1", "quest_granted 66-detox"), "%v", r.Triggers)
+	assert.True(t, anyLine(r.RulingGrants, "mob 9323 topic wrapperhandoff", "66-escort", "66-end"), "%v", r.RulingGrants)
+	assert.True(t, anyLine(r.RulingGrants, "66-plight.yaml trigger 0", "66-escort"), "%v", r.RulingGrants)
+	assert.Equal(t, map[string]int{srcNodeMid: 1, srcItemGive: 2}, nonZero(r.GrantsIn))
+	assert.Equal(t, map[string]int{srcItemGive: 1}, nonZero(r.GrantsOut))
+	assert.Equal(t, map[string]int{srcNodeMid: 1, srcItemGive: 1}, nonZero(r.GrantsByRuling))
+	assert.True(t, r.Reconciled())
 }
 
 func TestConvert_DialogueTrigger(t *testing.T) {
@@ -536,12 +866,8 @@ func TestConvert_BehaviorGrantQuestBecomesOffer(t *testing.T) {
 	assert.True(t, anyLine(res.Report.NoOpener, "mob 9600"), "%v", res.Report.NoOpener)
 }
 
-func TestConvert_BehaviorBranchWithoutKeywordsIsFlagged(t *testing.T) {
-	// The bandit leader's ask branch ran on every ask to cancel his
-	// countdown; a topic runs only when chosen, so the owner decides.
-	in := NewInput()
-	in.MobZones[254] = "Marches Spur Road"
-	require.NoError(t, in.AddBehavior("behaviors/marches_spur_road/254-bandit_leader.yaml", 254, []byte(`
+// keywordlessAsk is an ask branch with no keyword_match: it ran on every ask.
+const keywordlessAsk = `
 tree:
   type: selector
   children:
@@ -555,12 +881,110 @@ tree:
         - type: condition
           check: random_chance
           percent: 0
+`
+
+func TestConvert_BehaviorBranchWithoutKeywordsIsFlagged(t *testing.T) {
+	// A branch that ran on every ask becomes a topic that runs only when
+	// chosen, so it is flagged.
+	in := NewInput()
+	in.MobZones[9602] = "Fixture Zone"
+	require.NoError(t, in.AddBehavior("behaviors/fixture_zone/9602-a_guard.yaml", 9602, []byte(keywordlessAsk)))
+	res := Convert(in)
+	tp := mustTopic(t, res, 9602, "ask_1")
+	assert.True(t, tp.Behavior)
+	assert.True(t, anyLine(res.Report.Clashes, "9602-a_guard.yaml", "branch 1", "no keyword_match", "every ask"), "%v", res.Report.Clashes)
+	assert.True(t, anyLine(res.Report.Behavior, "9602-a_guard.yaml", "ask_1", "random_chance", "set_state"), "%v", res.Report.Behavior)
+}
+
+func TestConvert_BanditLeaderAskIsDropped(t *testing.T) {
+	// R19: the bandit leader's talk option is dropped; nothing in
+	// conversation stops his ambush.
+	in := NewInput()
+	in.MobZones[254] = "Marches Spur Road"
+	require.NoError(t, in.AddBehavior("behaviors/marches_spur_road/254-bandit_leader.yaml", 254, []byte(keywordlessAsk)))
+	res := Convert(in)
+	assert.Empty(t, res.Keys(254), "no topic")
+	assert.Nil(t, res.Files[254], "no new file for a mob the ruling leaves without topics")
+	assert.Empty(t, res.Report.Clashes)
+	assert.True(t, anyLine(res.Report.Behavior, "254-bandit_leader.yaml", "branch 1", "R19", "delete the branch"), "%v", res.Report.Behavior)
+	assert.True(t, anyLine(res.Report.Rulings, "254-bandit_leader.yaml", "R19"), "%v", res.Report.Rulings)
+}
+
+func TestConvert_HadwenRiteIsOneBeginTopic(t *testing.T) {
+	// R17: Hadwen's two begin branches (mid-rite answer and the rite) answer
+	// one behavior topic gated on 30-start and not 30-end. The topic carries
+	// no grant: the tree keeps granting 30-end at the rite's close and stops
+	// granting 29-start.
+	in := NewInput()
+	in.MobZones[9100] = "Pothole Coulee"
+	require.NoError(t, in.AddBehavior("behaviors/pothole_coulee/9100-cleric_hadwen.yaml", 9100, []byte(`
+tree:
+  type: selector
+  children:
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [begin, ready]
+        - type: condition
+          check: state_equals
+          key: rite_running
+          value: "1"
+        - type: action
+          do: say
+          text: Hush, now.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [begin, ready]
+        - type: condition
+          check: player_has_quest
+          quest: "30-start"
+        - type: condition
+          check: player_missing_quest
+          quest: "30-end"
+        - type: condition
+          check: state_equals
+          key: rite_running
+          value: ""
+        - type: action
+          do: set_state
+          key: rite_running
+          value: "1"
+        - type: action
+          do: say
+          text: Then we begin.
+        - type: action
+          do: grant_quest
+          quest: "30-end"
+        - type: action
+          do: grant_quest
+          quest: "29-start"
 `)))
 	res := Convert(in)
-	tp := mustTopic(t, res, 254, "ask_1")
+	assert.Equal(t, []string{"begin"}, res.Keys(9100))
+	tp := mustTopic(t, res, 9100, "begin")
 	assert.True(t, tp.Behavior)
-	assert.True(t, anyLine(res.Report.Clashes, "254-bandit_leader.yaml", "branch 1", "no keyword_match", "every ask"), "%v", res.Report.Clashes)
-	assert.True(t, anyLine(res.Report.Behavior, "254-bandit_leader.yaml", "ask_1", "random_chance", "set_state"), "%v", res.Report.Behavior)
+	assert.Equal(t, dialogue.KindInfo, tp.Kind)
+	assert.Empty(t, tp.GrantsQuest, "the tree grants 30-end, not the topic")
+	assert.Equal(t, []string{"30-start"}, tp.QuestRequired)
+	assert.Equal(t, []string{"30-end"}, tp.QuestExcluded)
+	assert.Equal(t, "Then we begin.", tp.Text)
+
+	r := res.Report
+	assert.Empty(t, r.Clashes, "no owner decision left")
+	assert.True(t, anyLine(r.Behavior, "9100-cleric_hadwen.yaml", "branch 1", "topic begin", "R17", "state_equals"), "%v", r.Behavior)
+	assert.True(t, anyLine(r.Behavior, "9100-cleric_hadwen.yaml", "branch 2", "topic begin", "R17", "remove grant_quest 29-start", "keep grant_quest 30-end"), "%v", r.Behavior)
+	assert.True(t, anyLine(r.Rulings, "9100-cleric_hadwen.yaml", "R17"), "%v", r.Rulings)
+	assert.True(t, anyLine(r.RulingGrants, "9100-cleric_hadwen.yaml", "29-start", "dropped", "R17"), "%v", r.RulingGrants)
+	assert.True(t, anyLine(r.RulingGrants, "9100-cleric_hadwen.yaml", "30-end", "stays in the tree", "R17"), "%v", r.RulingGrants)
+	assert.Equal(t, 2, r.GrantsIn[srcBehavior])
+	assert.Equal(t, 0, r.GrantsOut[srcBehavior])
+	assert.Equal(t, 2, r.GrantsByRuling[srcBehavior])
+	assert.True(t, r.Reconciled())
 }
 
 func TestConvert_LabelsLeftEmptyForTheZonePass(t *testing.T) {
@@ -613,7 +1037,8 @@ func TestConvert_ReconciliationCounts(t *testing.T) {
 	assert.True(t, r.Reconciled())
 
 	md := r.Markdown()
-	assert.Contains(t, md, "| total | 11 | 11 |")
+	assert.Contains(t, md, "| source | input | output | by ruling |")
+	assert.Contains(t, md, "| total | 11 | 11 | 0 |")
 	assert.Contains(t, md, "Reconciled: yes")
 }
 
