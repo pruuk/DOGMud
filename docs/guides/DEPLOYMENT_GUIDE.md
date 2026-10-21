@@ -295,6 +295,14 @@ Then open a new file in nano:
 nano ~/mud-config/config-production.yaml
 ```
 
+The server writes to this file too: after migrations it records
+`Server.CurrentVersion`, and it keeps `Server.NextRoomId` there. Its first
+write rewrites the file without your comments, so keep a commented copy
+(`cp config-production.yaml config-production.yaml.bak`). The server runs as
+root inside the container, so after its first write the file is owned by
+root; give it back to yourself once with
+`sudo chown mudadmin:mudadmin ~/mud-config/config-production.yaml`.
+
 Paste the following contents into nano (right-click to paste in
 most terminals):
 
@@ -422,8 +430,11 @@ services:
     volumes:
       # Persist game data across container rebuilds
       - ./_datafiles:/app/_datafiles
-      # Mount the production config override
-      - /home/mudadmin/mud-config:/mud-config:ro
+      # Mount the production config override. It must be WRITABLE (no :ro):
+      # the server saves engine values here (Server.CurrentVersion after
+      # migrations, Server.NextRoomId when rooms are created). Read-only, it
+      # re-runs every migration on every boot and loses the room counter.
+      - /home/mudadmin/mud-config:/mud-config
     networks:
       - mud_network
     restart: unless-stopped
