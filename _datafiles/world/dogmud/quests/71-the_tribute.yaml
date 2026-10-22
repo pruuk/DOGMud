@@ -32,7 +32,8 @@ steps:
       The tribute runs upward, past the clerk, to Horst at the gate of the
       watched house. From the Permit Office, go east to the Watched Lane,
       then north to the Watched House Gate. In the evening he sits in the
-      private parlor of the Gilt Threshold instead. Type talk horst.
+      private parlor of the Gilt Threshold instead, and he sleeps at the gate
+      in the small hours. Type talk horst.
   - id: horst
     map_target: 5815
     description: >-
@@ -41,9 +42,10 @@ steps:
       arrangement. Papers were left in the parlor.
     hint: >-
       The papers are in the private parlor of the Gilt Threshold, where
-      Horst sits in the evening. From the Watched House Gate, go south twice to the Porters' Dock, west three
-      times to the Gilded Walk, north into the Gilt Threshold, then east
-      into the parlor. Type look paper scrap.
+      Horst sits in the evening. From the Watched House Gate, go south
+      twice to the Porters' Dock, west three times to the Gilded Walk,
+      north into the Gilt Threshold, then east into the parlor. Type look
+      paper scrap.
   - id: ledger
     map_target: 5810  # fallback when Dame Ostry is not spawned
     map_target_mob: 9347  # follow Dame Ostry (schedule np_merchant_ostry) — a fixed room is wrong for part of the day
@@ -95,11 +97,11 @@ triggers:
       - actor: >-
           The torn scrap on the floor reads "before the permit clears",
           and the page it tore from is still on the table among the
-          cup-rings, slid half under a ledger-board. You take it: a column
+          cup rings, slid half under a ledger-board. You take it: a column
           of quarterly sums against vendor names, every figure routed up to
           one unnamed account. It does not prove a crime. It proves exactly
           where the money goes, and who waits on whom.
-      - observer: "{actor} palms a page from the table among the cup-rings."
+      - observer: "{actor} palms a page from the table among the cup rings."
 
   # paper-scrap, before reaching Horst
   - event: room_interact

@@ -18,8 +18,9 @@ steps:
     hint: >-
       The Buried Lintel lies west twice from Gritta's Flooded Cellar, past
       the Pre-Founding Stonework. From the Flooded Stair, go down into the
-      cellar first. Mind the canal north of the stonework: it is not empty.
-      Type look symbol.
+      cellar first. From the Silted Gallery, where Gritta works in the
+      afternoon, the Buried Lintel is just south. Mind the canal north of
+      the stonework: it is not empty. Type look symbol.
   - id: witness
     map_target: 5706  # fallback when Orin the Bookseller is not spawned
     map_target_mob: 9332  # follow Orin the Bookseller (schedule np_crafting_orin) — a fixed room is wrong for part of the day

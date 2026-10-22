@@ -41,8 +41,9 @@ steps:
       times to the Gilded Walk. Go north into the Gilt Threshold, west twice
       to the Processional, North End, then north four times to the Palace
       Processional. Go west into the Administrative Office, then north into
-      the Art Gallery. Lysha keeps the hall in the morning and evening and
-      works upstairs in the afternoon. Type talk lysha.
+      the Art Gallery. Lysha keeps the hall in the morning and evening,
+      works upstairs in the afternoon, and sleeps upstairs at night. Type
+      talk lysha.
   - id: reading
     map_target: 5916  # fallback when Scholar Dross is not spawned
     map_target_mob: 9360  # follow Scholar Dross (schedule np_temple_dross) — a fixed room is wrong for part of the day
