@@ -9,8 +9,8 @@ segments:
     idlecommands:
       - emote looks east down the Greenford road a long moment, reading the
         traffic on it the way a captain reads a duty he has held for years.
-      - say Road's open to Greenford. Two days, decent going. Mind the last
-        ford; it runs higher than it looks.
+      - say Road's open to Greenford. Two days, decent going. Fill your
+        water at the hamlet well; the plateau past it has no shade.
       - emote checks a carter's load with a glance and waves it through the
         arch without breaking stride.
   - start: 22
