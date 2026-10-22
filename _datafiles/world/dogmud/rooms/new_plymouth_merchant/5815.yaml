@@ -14,7 +14,9 @@ description: >
   of polished walnut, four chairs, a lamp on a stand,
   and nothing that does not serve a purpose. At this moment
   the chairs have been pushed back from the table and
-  the surface wiped, but the
+  the surface wiped around a
+  <ansi fg="itemname">ledger board</ansi>
+  left at one edge, but the
   <ansi fg="itemname">cup rings</ansi>
   left by two vessels have not quite been removed. The
   cloth was in a hurry, or the person using it did not
@@ -52,6 +54,11 @@ nouns:
     pass. Whoever cleaned this table was quick about
     it, or was thinking of something else. The cups
     themselves are gone.
+  ledger board: A flat board of the kind clerks rest
+    a ledger on, left at the edge of the table where
+    the wiping stopped. The wood is scuffed and ink
+    stained. A page has worked loose beneath it, and
+    only the corner of it shows.
   paper scrap: A torn corner of paper, dropped or
     slid from the table and not retrieved. The visible
     face carries four words in a close, careful hand.
