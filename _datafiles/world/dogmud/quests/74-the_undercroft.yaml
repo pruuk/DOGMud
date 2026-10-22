@@ -61,7 +61,7 @@ steps:
   - id: reveal
     map_target: -1  # -1: bundled objectives, rooms [6167, 6188]; Phase 2 split review
     description: "In a sealed chamber beneath the temple you found the old sky
-      carved in four rings, where the temple above teaches three, and took a
+      carved in four rings, where the temple's teaching keeps to three, and took a
       rubbing of it. There was a fourth. Aldric the Keeper would keep the proof
       inside the order; the Margin scholar at the Temple Portico would carry it
       out. The choice is yours, and it cannot be undone."
@@ -186,8 +186,8 @@ triggers:
       - give_item: 40142
       - actor: >-
           You read the carving the way the mason's survey taught you to read
-          stone. Four rings, cut with an instrument's care, where every wall
-          above keeps to three. The temple did not miscount. It chose a
+          stone. Four rings, cut with an instrument's care, where the
+          temple's teaching keeps to three. The temple did not miscount. It chose a
           count, and built three hundred years on the choice, and set its
           floor over the wall that remembers otherwise. There was a fourth.
           The sky the Founders found was not the sky we are taught. You take a
