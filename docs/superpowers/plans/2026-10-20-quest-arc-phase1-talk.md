@@ -2949,6 +2949,8 @@ One subagent per zone batch (34 zone folders; batch the small ones: about 8 batc
 - An adversarial review by a separate Opus subagent (not the writer): copy rules, voice, gates, and that every tutorial instruction names a command that exists after Task 19.
 - Task 26 carries a dedicated new-player scenario (goal 7).
 
+**Batch 5 (New Plymouth part 2: new_plymouth_temple, new_plymouth_merchant, new_plymouth_noble, new_plymouth_old_quarter) APPROVED by the owner 2026-10-21** (page https://claude.ai/artifact/YS5gaqGdqtvhF1MuWG1xUQ). Owner: "A few hints are a bit heavy handed, but that's better than being too obtuse to understand."
+
 **Batch 4 (New Plymouth part 1: new_plymouth_docks, new_plymouth_common, new_plymouth_crafting, new_plymouth_outskirts, new_plymouth_sewers) APPROVED by the owner 2026-10-21** (page https://claude.ai/artifact/Mt9F5fYc7eWzWt8yH9KmFC; rulings R28). Owner: Orin drops the glass vial and sells maps and curios, some with subtle Easter eggs and fragments of the novel; info labels must pass the same "what can the player know" test as offer lines.
 
 **Batch 3 (Stillwater: stillwater, stillwater_marsh, ferries) APPROVED by the owner 2026-10-21** (page https://claude.ai/artifact/DoB2zinvZdcfTExLTMUqEP), together with the 23 restored-lore topics in batches 1 and 2 (`C:/tmp/dogmud-375-convert/pages/restored-b1b2.txt`). Owner rulings: the hook-spear is unfinished on Brindle's bench until the confession, then Brindle finishes it and brings it to Ulla, who gives it to the player; R27 (offer player lines use only what the player can see) applies retroactively to batches 1 to 3.
