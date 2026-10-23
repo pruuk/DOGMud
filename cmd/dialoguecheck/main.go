@@ -253,7 +253,7 @@ func run(out io.Writer, o options) (int, error) {
 		findings = append(findings, Finding{Class: ClassValidation, Zones: zones, Text: p.String()})
 	}
 
-	fmt.Fprintf(out, "# dialoguecheck: data %s, dialogue %s\n", filepath.ToSlash(data), filepath.ToSlash(dlg))
+	_, _ = fmt.Fprintf(out, "# dialoguecheck: data %s, dialogue %s\n", filepath.ToSlash(data), filepath.ToSlash(dlg))
 	if plan != nil {
 		nd, nb := 0, 0
 		for _, m := range plan.DeleteTriggers {
@@ -262,11 +262,11 @@ func run(out io.Writer, o options) (int, error) {
 		for _, m := range plan.Branches {
 			nb += len(m)
 		}
-		fmt.Fprintf(out, "# converter report applied: %s (%d quest triggers left out, %d player_ask branches read as player_topic)\n", filepath.ToSlash(reportPath), nd, nb)
+		_, _ = fmt.Fprintf(out, "# converter report applied: %s (%d quest triggers left out, %d player_ask branches read as player_topic)\n", filepath.ToSlash(reportPath), nd, nb)
 	} else {
-		fmt.Fprintln(out, "# no converter report applied")
+		_, _ = fmt.Fprintln(out, "# no converter report applied")
 	}
-	fmt.Fprintf(out, "# %d dialogue files, %d quests, %d behavior trees, %d sources walked\n", len(in.Files), len(in.Quests), len(trees), len(w.srcs))
+	_, _ = fmt.Fprintf(out, "# %d dialogue files, %d quests, %d behavior trees, %d sources walked\n", len(in.Files), len(in.Quests), len(trees), len(w.srcs))
 	// A file still carrying old patterns or a tree no longer decodes: the
 	// strict LoadAllFiles reports it as a VALIDATION line (#375 Task 21).
 	return report(out, findings, o.Zones), nil
@@ -340,7 +340,7 @@ func report(out io.Writer, findings []Finding, zoneList string) int {
 	counts := map[string]int{}
 	code := 0
 	for _, f := range keep {
-		fmt.Fprintln(out, f.String())
+		_, _ = fmt.Fprintln(out, f.String())
 		counts[f.Class]++
 		if isError(f.Class) {
 			code = 1
@@ -354,6 +354,6 @@ func report(out io.Writer, findings []Finding, zoneList string) int {
 	if len(filter) > 0 {
 		scope = "zones " + strings.Join(sortedKeys(filter), ",") + fmt.Sprintf(" (%d findings outside the filter not shown)", hidden)
 	}
-	fmt.Fprintf(out, "summary (%s): %s\n", scope, strings.Join(parts, ", "))
+	_, _ = fmt.Fprintf(out, "summary (%s): %s\n", scope, strings.Join(parts, ", "))
 	return code
 }

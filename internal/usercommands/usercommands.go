@@ -628,7 +628,7 @@ func isKnownCommandLine(user *users.UserRecord, room *rooms.Room, line string) b
 func SplitInput(inputText string) (command string, rest string) {
 	if len(inputText) > 1 {
 		if inputText[0] == '`' || inputText[0] == '.' {
-			inputText = fmt.Sprintf(`%s %s`, string(inputText[0]), string(inputText[1:]))
+			inputText = fmt.Sprintf(`%s %s`, string(inputText[0]), inputText[1:])
 		}
 	}
 	if index := strings.Index(inputText, " "); index != -1 {
