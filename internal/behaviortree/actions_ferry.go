@@ -1,7 +1,7 @@
 package behaviortree
 
 import (
-	"sort"
+	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/ferry"
@@ -14,23 +14,18 @@ import (
 // route chosen without a live schedule.
 var boardFerry = ferry.Board
 
-// actBoardFerry handles "ask <agent> passage <destination>". Params:
+// actBoardFerry boards the route a talk topic names (#375 R14). Params:
 //
-//	routes:            # destination keyword → routeid
+//	routes:            # destination key → routeid
 //	  plymouth: stillwater_np_packet
 //	  confluence: stillwater_confluence_barge
-//	destination: plymouth   # optional: a key of routes (#375 R14)
+//	destination: plymouth   # required: a key of routes
 //
-// With destination set (a talk topic per destination, where Text is the
-// bare topic key), that route is boarded and the text is not read; a
-// destination that is not a key of routes logs an error and fails.
-// Otherwise it resolves the destination word from the ask text, then delegates the
-// entire boarding flow (schedule check, fare, move, messaging) to
-// ferry.Board. Returns Failure when params are unusable so other tree
-// branches can try; returns Success (with mob dialogue) on every handled
-// outcome. The keyword_match condition gating this action in the tree
-// establishes boarding intent, so an unrecognized destination lists the
-// options rather than falling through.
+// One talk topic per destination: the branch's destination param picks the
+// route, and ferry.Board does the schedule check, fare, move and messaging.
+// A tree whose destination is missing or is not a key of routes does not
+// load (checkBoardFerryParams). Returns Failure when the agent is not at
+// port so other branches can try, and Success on every other outcome.
 func actBoardFerry(params map[string]any, ctx *EvalContext) Result {
 	mob := mobs.GetInstance(ctx.InstanceId)
 	if mob == nil {
@@ -40,72 +35,61 @@ func actBoardFerry(params map[string]any, ctx *EvalContext) Result {
 	if user == nil {
 		return Failure
 	}
-
-	routesMap := map[string]string{}
-	if raw, ok := params["routes"]; ok {
-		switch m := raw.(type) {
-		case map[string]any:
-			for k, v := range m {
-				if s, ok := v.(string); ok {
-					routesMap[strings.ToLower(k)] = s
-				}
-			}
-		case map[any]any:
-			for k, v := range m {
-				ks, kok := k.(string)
-				vs, vok := v.(string)
-				if kok && vok {
-					routesMap[strings.ToLower(ks)] = vs
-				}
-			}
-		case map[string]string:
-			for k, v := range m {
-				routesMap[strings.ToLower(k)] = v
-			}
-		}
-	}
-	if len(routesMap) == 0 {
+	dest := ferryDestination(params)
+	routeId, ok := ferryRoutes(params)[dest]
+	if !ok {
+		mudlog.Error("actBoardFerry", "error", "destination is not a key of routes", "destination", dest, "mobId", ctx.MobId)
 		return Failure
 	}
-
-	// Sorted keyword order makes the pick deterministic when the ask text
-	// contains more than one destination ("plymouth or confluence?").
-	dests := make([]string, 0, len(routesMap))
-	for k := range routesMap {
-		dests = append(dests, k)
-	}
-	sort.Strings(dests)
-
-	// A talk topic names its destination as a param (#375 R14): under
-	// player_topic, Text is a bare topic key, not the player's words.
-	if dest := strings.ToLower(strings.TrimSpace(getStringParam(params, "destination"))); dest != `` {
-		routeId, ok := routesMap[dest]
-		if !ok {
-			mudlog.Error("actBoardFerry", "error", "destination is not a key of routes", "destination", dest, "mobId", ctx.MobId)
-			return Failure
-		}
-		if boardFerry(user, mob, ctx.RoomId, routeId) == ferry.BoardNotAtPort {
-			return Failure
-		}
-		return Success
-	}
-
-	text := strings.ToLower(ctx.Event.Text)
-	routeId := ``
-	for _, keyword := range dests {
-		if strings.Contains(text, keyword) {
-			routeId = routesMap[keyword]
-			break
-		}
-	}
-
-	if routeId == `` {
-		mob.Command(`say Passage where? I book for ` + strings.Join(dests, ` and `) + `.`)
-		return Success
-	}
-
 	if boardFerry(user, mob, ctx.RoomId, routeId) == ferry.BoardNotAtPort {
 		return Failure // fall through to other tree branches
 	}
 	return Success
+}
+
+// ferryDestination is the branch's destination param, trimmed and lowered
+// to match the routes keys.
+func ferryDestination(params map[string]any) string {
+	return strings.ToLower(strings.TrimSpace(getStringParam(params, "destination")))
+}
+
+// ferryRoutes reads the routes param (destination key → route id), keys
+// lowered.
+func ferryRoutes(params map[string]any) map[string]string {
+	routes := map[string]string{}
+	switch m := params["routes"].(type) {
+	case map[string]any:
+		for k, v := range m {
+			if s, ok := v.(string); ok {
+				routes[strings.ToLower(k)] = s
+			}
+		}
+	case map[any]any:
+		for k, v := range m {
+			ks, kok := k.(string)
+			vs, vok := v.(string)
+			if kok && vok {
+				routes[strings.ToLower(ks)] = vs
+			}
+		}
+	case map[string]string:
+		for k, v := range m {
+			routes[strings.ToLower(k)] = v
+		}
+	}
+	return routes
+}
+
+// checkBoardFerryParams refuses, at load, a board_ferry node whose
+// destination is missing or is not a key of routes: with no player words
+// to read, such a node could never board anyone.
+func checkBoardFerryParams(params map[string]any) error {
+	dest := ferryDestination(params)
+	if dest == "" {
+		return fmt.Errorf("board_ferry needs a destination param (a key of routes)")
+	}
+	if _, ok := ferryRoutes(params)[dest]; !ok {
+		return fmt.Errorf("board_ferry destination %q is not a key of routes", dest)
+	}
+	return nil
 }

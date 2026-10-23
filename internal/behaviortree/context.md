@@ -866,8 +866,8 @@ These actions were added alongside the room behavior tree system:
 | Action | Params | Description |
 |--------|--------|-------------|
 | `create_instance` | `zone_name` (string), `gold_amount` (int), `state_key` (string, default `"instance_entry_room_id"`) | Clones an instanced zone and stores the entry room ID in BehaviorState. Use `add_temp_exit` with no `room_id` param to consume it. |
-| `open_instance_portal` | `zones` (map), `min_gold` (int, default 100), `exit_expires` (string, default `"30 real minutes"`), `zone` (string, optional), `guidance` (string, optional) | Full portal-vendor flow: parses `"<zone> <gold>"` from ask text, validates, charges gold, creates instance, adds temp exit. Returns Failure if text doesn't match pattern; returns Success with mob dialogue on all other outcomes (success or error). With `zone` set (a talk topic, #375 R14) the text is not parsed for a zone: the player gets the private amount prompt below. A `zone` that is not a key of `zones` logs an error and fails. |
-| `board_ferry` | `routes` (map: keyword to route id), `destination` (string, optional) | Boards the route the ask text names (`ferry.Board` does schedule, fare and move). With `destination` set (one talk topic per destination, #375 R14) that key of `routes` is boarded and the text is not read; an unknown key logs an error and fails. |
+| `open_instance_portal` | `zones` (map), `zone` (string, required: a key of `zones`), `min_gold` (int, default 100), `exit_expires` (string, default `"30 real minutes"`), `guidance` (string, optional) | Portal-vendor flow for the zone a talk topic names (#375 R14): shows the guidance and opens the private amount prompt below; the answer charges, clones the instance and adds the temp exit. The event text is never read. A node whose `zone` is missing or not a key of `zones` fails the tree's load (`checkOpenInstancePortalParams`). |
+| `board_ferry` | `routes` (map: destination key to route id), `destination` (string, required: a key of `routes`) | Boards the route `destination` names, one talk topic per destination (#375 R14); `ferry.Board` does schedule, fare and move. The event text is never read. Returns Failure when the agent is not at port. A node whose `destination` is missing or not a key of `routes` fails the tree's load (`checkBoardFerryParams`). |
 
 **Amount prompt** (`portal_stake.go`, #375 R14). With `zone` set,
 `open_instance_portal` sends the `guidance` text to the player alone and
@@ -877,7 +877,7 @@ typed line to it and re-runs the hidden user command `portalstake`
 (`usercommands/portalstake.go`, registered in its `init`), which calls
 `AnswerStake`. A whole number (commas and a trailing `gold` or `g`
 allowed) opens the portal through
-`openInstancePortal`, the one body the typed path also runs (minimum and
+`openInstancePortal` (minimum and
 purse checks, charge, clone scaled by the stake, exit, lines), once the mob is
 still in the room the prompt opened in with the player. Anything else closes
 the prompt with one line; if `TryCommand` would run it
@@ -1040,6 +1040,17 @@ Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tact
 The `actions_*` / `conditions_*` split is the whole architecture: a tree is
 authored data, and extending the engine means adding a named action or
 condition to one of these files, not writing tree logic.
+
+**Load-time param checks.** `compileAction` runs `actionParamChecks`
+(`loader.go`), a map from action name to a params check, so a node that
+could never act fails its whole tree's load, and the editor's save, with its
+path. Today it holds `board_ferry` (`destination` must be a key of `routes`)
+and `open_instance_portal` (`zone` must be a key of `zones`): since #375
+retired `player_ask`, no live event carries the player's own words, so these
+actions have no text to fall back on. Trees load lazily, so
+`TestShippedBehaviorTrees_AllCompile` (`roundtrip_test.go`) compiles every
+shipped behavior file through its subject's loader to turn a refused tree
+into a CI failure rather than a runtime log line.
 
 **Behaviour-tree combat events fire before the legacy AI**, and `mob_die`
 handlers must use instant actions (`send_room_text`, not `respond`) because the

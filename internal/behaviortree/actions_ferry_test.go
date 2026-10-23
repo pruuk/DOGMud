@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/ferry"
@@ -70,7 +71,9 @@ func TestBoardFerry_DestinationParamPicksTheRoute(t *testing.T) {
 	require.Equal(t, []string{"stillwater_confluence_barge"}, *boarded)
 }
 
-func TestBoardFerry_DestinationParamWinsOverText(t *testing.T) {
+// The event text is never read: a destination word in it does not change
+// the route the param names.
+func TestBoardFerry_TextIsNotRead(t *testing.T) {
 	boarded := seedFerryScene(t)
 	require.Equal(t, Success, actBoardFerry(ferryParams("confluence"), ferryCtx("player_topic", "plymouth")))
 	require.Equal(t, []string{"stillwater_confluence_barge"}, *boarded)
@@ -82,11 +85,36 @@ func TestBoardFerry_UnknownDestinationFails(t *testing.T) {
 	require.Empty(t, *boarded, "an unknown destination boards nothing")
 }
 
-// The text path matches a destination keyword in Event.Text. The action
-// ignores the event type, so the test uses a neutral one: no live mob event
-// carries the player's own words since #375 retired player_ask.
-func TestBoardFerry_TextPathStillWorks(t *testing.T) {
+// No live event carries the player's own words since #375 retired
+// player_ask, so a missing destination boards nothing even when the text
+// names a route.
+func TestBoardFerry_MissingDestinationBoardsNothing(t *testing.T) {
 	boarded := seedFerryScene(t)
-	require.Equal(t, Success, actBoardFerry(ferryParams(""), ferryCtx("test_event", "passage to plymouth")))
-	require.Equal(t, []string{"stillwater_np_packet"}, *boarded)
+	require.Equal(t, Failure, actBoardFerry(ferryParams(""), ferryCtx("player_topic", "passage to plymouth")))
+	require.Empty(t, *boarded)
+}
+
+const ferryTreeYAML = `tree:
+  type: sequence
+  event: player_topic
+  children:
+    - type: condition
+      check: topic_is
+      topic: to_plymouth
+    - type: action
+      do: board_ferry
+%s      routes:
+        plymouth: stillwater_np_packet
+`
+
+// A board_ferry node that could never board anyone fails the tree's load.
+func TestBoardFerry_LoadRefusesAMissingOrUnknownDestination(t *testing.T) {
+	_, err := LoadTreeFromBytes([]byte(fmt.Sprintf(ferryTreeYAML, "      destination: plymouth\n")))
+	require.NoError(t, err, "fixture check: a destination that is a key of routes loads")
+
+	_, err = LoadTreeFromBytes([]byte(fmt.Sprintf(ferryTreeYAML, "")))
+	require.ErrorContains(t, err, "board_ferry needs a destination param")
+
+	_, err = LoadTreeFromBytes([]byte(fmt.Sprintf(ferryTreeYAML, "      destination: atlantis\n")))
+	require.ErrorContains(t, err, `board_ferry destination "atlantis" is not a key of routes`)
 }

@@ -482,7 +482,7 @@ NPC dialogue sequences.
 
 | Action | Params | Description |
 |--------|--------|-------------|
-| `open_instance_portal` | `zones` (map), `min_gold` (int), `exit_expires` (string) | Full portal-vendor flow. Parses `"<zone> <gold>"` from ask text, validates, charges gold, clones instance, adds temp exit. Returns Failure if text doesn't match; otherwise Success with inline mob dialogue. |
+| `open_instance_portal` | `zones` (map), `zone` (string, required: a key of `zones`), `min_gold` (int), `exit_expires` (string), `guidance` (string) | Portal-vendor flow for the zone a `player_topic` branch names: shows `guidance` and asks the player privately for a stake, then charges gold, clones the instance and adds a temp exit. A missing or unknown `zone` fails the tree's load. |
 | `create_instance` | `zone_name` (string), `gold_amount` (int), `state_key` (string) | Clones an instance and stores entry room ID in state. Follow with `add_temp_exit` (omit `room_id` to read from state). |
 
 `open_instance_portal` `zones` param maps short names to template zone names:

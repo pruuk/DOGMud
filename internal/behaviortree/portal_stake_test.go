@@ -2,6 +2,7 @@ package behaviortree
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 	"testing"
@@ -14,9 +15,10 @@ import (
 )
 
 // R14 (#375): a talk topic opens an instance zone through a private amount
-// prompt. These tests pin that the prompt path and the typed "<zone> <gold>"
-// path share one body (same charge, clone, exit and lines), that the prompt
-// shows the authored guidance, and that a bad answer closes the prompt.
+// prompt. These tests pin that the prompt shows the authored guidance, that
+// an amount opens the portal (charge, clone, exit and lines), that a bad
+// answer closes the prompt, and that a node with no usable zone does not
+// load.
 
 const (
 	stakeRoom       = 7101
@@ -154,28 +156,62 @@ func TestOpenInstancePortal_ZoneParamStartsPromptWithGuidance(t *testing.T) {
 		"the player sees the zone's guidance before the question")
 }
 
-func TestStakePrompt_AmountOpensExactlyAsTheTypedPath(t *testing.T) {
-	// Typed path: Event.Text "arena 250". The action ignores the event
-	// type, so a neutral one stands in for the retired player_ask.
+func TestStakePrompt_AmountOpensThePortal(t *testing.T) {
 	calls := seedStakeScene(t)
-	require.Equal(t, Success, actOpenInstancePortal(sableParams(""), stakeCtx("test_event", "arena 250")))
-	typed := captureOutcome(t, calls)
-	require.Equal(t, 750, typed.gold, "fixture check: the typed path charged the stake")
-	require.Equal(t, []zoneCall{{"Instance Arena", 250, stakeUserId}}, typed.calls, "fixture check: the typed path cloned the zone at the stake")
-	require.Equal(t, []string{"arena-1"}, typed.tempExits, "fixture check: the typed path opened the exit")
-	require.Equal(t, []string{"say The rift is open. Type arena-1 to enter.", "say It will hold for a time. Do not tarry."}, typed.mobSaid,
-		"fixture check: the typed path spoke the open lines")
-
-	// Prompt path, on a fresh scene.
-	calls = seedStakeScene(t)
 	chooseArenaTopic(t)
 	events.DrainQueuedMessagesForTest(stakeUserId) // the guidance
 	outcome, _ := answerStake(t, "250")
 	require.Equal(t, StakeHandled, outcome)
-	prompted := captureOutcome(t, calls)
+	got := captureOutcome(t, calls)
 
-	require.Equal(t, typed, prompted, "the prompt path and the typed path open the portal the same way")
+	require.Equal(t, 750, got.gold, "the stake is charged")
+	require.Equal(t, []zoneCall{{"Instance Arena", 250, stakeUserId}}, got.calls, "the zone is cloned at the stake")
+	require.Equal(t, []string{"arena-1"}, got.tempExits, "the exit opens")
+	require.Equal(t, []string{"say The rift is open. Type arena-1 to enter.", "say It will hold for a time. Do not tarry."}, got.mobSaid)
 	require.Nil(t, requireUser(t, stakeUserId).GetPrompt(), "the prompt closes once the portal opens")
+}
+
+// The event text is never read for a stake: under player_topic it is the
+// bare topic key, and no live event carries the player's own words since
+// #375 retired player_ask.
+func TestOpenInstancePortal_TextIsNotReadForAStake(t *testing.T) {
+	calls := seedStakeScene(t)
+	require.Equal(t, Success, actOpenInstancePortal(sableParams("arena"), stakeCtx("player_topic", "arena 250")))
+	require.NotNil(t, requireUser(t, stakeUserId).GetPrompt(), "the amount prompt opens")
+	require.Empty(t, *calls, "nothing opens from the text")
+}
+
+func TestOpenInstancePortal_MissingZoneParamOpensNothing(t *testing.T) {
+	calls := seedStakeScene(t)
+	require.Equal(t, Failure, actOpenInstancePortal(sableParams(""), stakeCtx("player_topic", "arena 250")))
+	require.Nil(t, requireUser(t, stakeUserId).GetPrompt())
+	require.Empty(t, *calls)
+}
+
+const portalTreeYAML = `tree:
+  type: sequence
+  event: player_topic
+  children:
+    - type: condition
+      check: topic_is
+      topic: open_arena
+    - type: action
+      do: open_instance_portal
+%s      zones:
+        arena: "Instance Arena"
+`
+
+// An open_instance_portal node that could never open anything fails the
+// tree's load.
+func TestOpenInstancePortal_LoadRefusesAMissingOrUnknownZone(t *testing.T) {
+	_, err := LoadTreeFromBytes([]byte(fmt.Sprintf(portalTreeYAML, "      zone: arena\n")))
+	require.NoError(t, err, "fixture check: a zone that is a key of zones loads")
+
+	_, err = LoadTreeFromBytes([]byte(fmt.Sprintf(portalTreeYAML, "")))
+	require.ErrorContains(t, err, "open_instance_portal needs a zone param")
+
+	_, err = LoadTreeFromBytes([]byte(fmt.Sprintf(portalTreeYAML, "      zone: moon\n")))
+	require.ErrorContains(t, err, `open_instance_portal zone "moon" is not a key of zones`)
 }
 
 func TestStakePrompt_BelowMinimumRefusesNamingTheMinimum(t *testing.T) {

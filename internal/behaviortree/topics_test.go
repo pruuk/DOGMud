@@ -33,6 +33,9 @@ func TestTopicKeysInFile(t *testing.T) {
           topic: ferry
         - type: action
           do: board_ferry
+          destination: plymouth
+          routes:
+            plymouth: stillwater_np_packet
     - type: sequence
       event: player_topic
       children:
