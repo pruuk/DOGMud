@@ -285,22 +285,32 @@ already known, so no presence leaks.
 - **Context-aware help**: Relevant command suggestions based on situation
 - **Admin filtering**: Different suggestions for admin vs regular users
 
-#### **Dialogue–Quest Integration** (`talk.go`, `ask.go`)
-- **PlayerState construction**: `buildPlayerState(user)` creates a
-  `dialogue.PlayerState` with callbacks for `HasQuest`, `HasItem`,
-  `RemoveItem`, `GiveQuest`, `GiveItem`, etc. — passed to all dialogue
-  engine calls so NPC dialogue can be gated on quest progress and
-  inventory. `GiveItem` returns whether the item actually reached the
-  player (false when `StoreItem` refuses over carry capacity, or on an
-  invalid item id) — the dialogue engine then withholds the node's
-  other effects, including `grantsQuest` (2026-08-03 soft-lock fix)
-- **Quest context for LLM**: `buildQuestContext(user, mobId)` returns
-  human-readable quest summaries injected into the LLM system prompt
-  via `llm.ConversationContext.QuestContext`
-- **Item consumption**: `requiresItem` on dialogue nodes removes the
-  item from the player's backpack on activation (via `RemoveItem`)
-- **Quest advancement**: `grantsQuest` fires `events.Quest` to
-  advance quest state; the quest event handler processes rewards
+#### **NPC conversation** (`talk.go`, `ask.go`, `give.go`; #375 phase 1)
+- **talk**: `Talk` parses `talk [to] <npc>`, aims the name by sight
+  (`actions.AimBySight`), refuses a player target and a sleeping NPC, then
+  hands the rest to `conversation.Talk`: the opener as speech and the
+  private topic menu. `conversation.Talk` refuses an NPC the player cannot
+  see by name (a figure aimed at in the dark) before anyone speaks.
+- **ask**: chat with the player's own charmed follower or a bonded AI
+  companion only (R13): `companionai.RouteAsk` with the `to`/`about` words
+  stripped, else a blank stare for the player's own unbonded follower. Every
+  other NPC, including another player's bonded companion the module does not
+  claim, gets one private redirect to `talk` (`redirectToTalk`, which repeats
+  the name as typed). No LLM call and no topic handling (R4).
+- **give** to an NPC: `conversation.Give` runs first, before the quest
+  engine and before any transfer (R8). A topic wanting the item plays as if
+  chosen from the menu and takes the named instance; a wanted item with no
+  eligible topic is handed back (the mob's tree may say why, crediting
+  nothing). Only an item no topic wants takes the ordinary give path
+  (quest engine notify, transfer, `player_give`).
+- **PlayerState**: `conversation.PlayerState(user)` builds the
+  `dialogue.PlayerState` callbacks (`HasQuest`, `HasItem`, `RemoveItem`,
+  `GiveQuest`, `GiveItem`, ...). `GiveItem` returns whether the item
+  actually reached the player (false when `StoreItem` refuses over carry
+  capacity, or on an invalid item id), and the dialogue engine then
+  withholds the topic's other effects, including `grantsQuest` (2026-08-03
+  soft-lock fix). `grantsQuest` fires `events.Quest`; the quest event
+  handler processes rewards.
 
 #### **Scripting Integration**
 - **JavaScript exposure**: Commands can be called from game scripts

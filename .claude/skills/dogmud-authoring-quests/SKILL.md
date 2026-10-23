@@ -127,26 +127,35 @@ owner call on the quest mechanisms arc, not a fix to make in passing.
 ## Items
 
 ### Quest Item Delivery: give.go Gotcha
-**CRITICAL:** `give.go` transfers the item from the player to the mob BEFORE
-any handler fires. The handler cannot prevent or undo the transfer.
-Consequences:
-- Quest item delivery is handled by the quest engine's `item_give` triggers
-  (in quest YAML) and/or behavior tree `player_give` handlers on the mob
-- NPCs that should NOT keep the item (e.g., the quest giver who handed it
-  out) need a behavior tree `player_give` handler that uses the `return_item`
-  action to give the item back
+Since #375 (R7, R8) an item hand-in is a dialogue topic, never a quest
+trigger: an `item_give` trigger may not carry a `grant` (the boot validators
+refuse it). `give <item> <npc>` asks the NPC's topics first, BEFORE any
+transfer:
+- A topic wanting the item (`requiresItem`, taken; or `carriesItem`, shown
+  and kept) that is eligible plays exactly as if chosen from the talk menu,
+  and takes the instance the player named (`give 2.purse`).
+- A topic wants it but none is eligible: the item never leaves the player.
+  The mob's tree may say why: a `player_give` branch with an `item_matches`
+  condition for that item, using only speech and `return_item`, plays as a
+  hand-back (Arn's "See Drunn first, then come back."). It can credit
+  nothing. Otherwise the player reads "<npc> looks at the <item> and hands
+  it back."
+- No topic wants it: the old give. `give.go` transfers the item to the mob
+  BEFORE the tree's `player_give` fires, so a handler can only react after
+  the fact, typically by giving it back with `return_item`.
 - Quest givers who hand out physical items via `givesItem` must also have a
-  recovery dialogue node that gives a replacement if the player lost the item
+  recovery topic that gives a replacement if the player lost the item
 
 ### Dialogue Engine: givesItem
 Tree nodes and patterns support `givesItem: <itemId>`. When a node fires with
 `givesItem` set, the player receives the item and sees "You receive a <itemname>."
 Use this for NPCs handing quest items to the player during dialogue.
 
-This is a hard constraint, not advice: by the time any handler runs, the
-item is already gone from the player. A handler cannot inspect the item and
-decide to refuse it, it can only react after the fact (typically by giving
-it back with `return_item`).
+For an item no topic wants this is a hard constraint: by the time any
+handler runs, the item is already gone from the player. A handler cannot
+inspect the item and decide to refuse it, it can only react after the fact
+(typically by giving it back with `return_item`). To refuse a quest item
+before it moves, make a topic want it.
 
 Two more item rules for quests:
 
@@ -232,7 +241,7 @@ to the same two words, so one vocabulary covers both blocks.
 Quest YAML triggers panic at startup if the `event:` name is not in the
 quest engine's hardcoded `validEvents` map (`internal/questengine/loader.go`,
 around line 39-43). The behavior tree event vocabulary
-(`mob_die`, `mob_hurt`, `mob_idle`, `player_ask`, `player_give`,
+(`mob_die`, `mob_hurt`, `mob_idle`, `player_topic`, `player_give`,
 `player_enter`, `mob_flee`) is a separate system and does not overlap with
 quest engine event names. Do not guess an event name from the behavior tree
 vocabulary or from what sounds plausible: `mob_killed` and `mob_die` both

@@ -109,25 +109,22 @@ tree:
   type: selector
   children:
 
-    # Player asks — quest offer
+    # Player chose the talk topic `to_plymouth` (behavior: true in the
+    # dialogue file; the Stillwater ferry agent 9571 ships this shape)
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [quest, task, help]
-        - type: condition
-          check: player_missing_quest
-          quest: "10-start"
+          check: topic_is
+          topic: to_plymouth
         - type: action
-          do: respond
-          user_text: "I need someone to clear those bandits out."
-          hints: "Ask about the bandits."
-        - type: action
-          do: grant_quest
-          quest: "10-start"
+          do: board_ferry
+          destination: plymouth
+          routes:
+            plymouth: stillwater_np_packet
 
-    # Player gives a quest item
+    # Player gives the quest item too late: say why and hand it back. The
+    # hand-in itself is a dialogue topic, never a tree branch (#375 R7).
     - type: sequence
       event: player_give
       children:
@@ -136,13 +133,12 @@ tree:
           item_id: 30001
         - type: condition
           check: player_has_quest
-          quest: "10-start"
-        - type: action
-          do: respond
-          user_text: "This is exactly what I needed, thank you!"
-        - type: action
-          do: grant_quest
           quest: "10-end"
+        - type: action
+          do: say
+          text: "You already brought me that. Keep it."
+        - type: action
+          do: return_item
 
     # Idle emote with cooldown
     - type: decorator
@@ -171,8 +167,8 @@ tree:
 
 | Event | Trigger | Notable Context |
 |-------|---------|-----------------|
-| `player_ask` | Player uses `ask <mob> ...` (the `ask` command only — a plain `say` does NOT fire this) | `Text` = spoken text |
-| `player_give` | Player gives an item to the mob | `ItemId` = item given; `ItemUUID` = that exact instance |
+| `player_topic` | Player chose a `behavior: true` talk topic (`internal/conversation`, #375 R12); `ask` fires no tree event since #375 (`player_ask` is gone) | `Text` = the topic's key, read by `topic_is` |
+| `player_give` | Player gives an item to the mob that no talk topic wants (an ordinary give, after the transfer); or a hand-back: a topic wants the item but none is eligible, so it never left the player (`give_handback.go`) | `ItemId` = item given; `ItemUUID` = that exact instance; `HandBack` non-nil on a hand-back |
 | `mob_idle` | Mob's periodic idle tick fires | No player context |
 | `mob_hurt` | Mob takes damage in combat | `UserId` = attacker |
 | `mob_die` | Mob's health reaches zero | `UserId` = killing player |
@@ -188,6 +184,19 @@ tree:
 
 Any node may include `event: <type>` to skip that branch when the event
 does not match. Nodes without an `event` field evaluate on all events.
+
+**Give hand-backs** (`give_handback.go`, #375 review M1). When a talk topic
+wants an item but none is eligible, `conversation.Give` keeps the item with
+the player and fires `player_give` with `EventContext.HandBack` set (a
+`*GiveHandBack`). Only a branch written for that item answers: an event
+branch must hold an `item_matches` condition naming it (`namesItem`) and use
+only speech actions and `return_item` (`handBackActions`, `handBackSafe`);
+any other branch is skipped whole before it speaks, and any other action
+fails without acting, so a hand-back never credits. `return_item` then moves
+nothing, says "<npc> hands back the <item>.", and sets
+`GiveHandBack.Returned`; without it the caller prints its own hand-back line.
+A catch-all give branch ("I have no use for this.") answers ordinary gifts
+only.
 
 ### Combat Phase transition events (chunk 0)
 
@@ -221,6 +230,7 @@ Condition nodes use `type: condition` with `check: <name>`.
 | Condition | Params | Description |
 |-----------|--------|-------------|
 | `keyword_match` | `keywords` (list) | Matches any word in event Text. |
+| `topic_is` | `topic` (string) | A `player_topic` event carrying this topic key (`topics.go`, #375 R12). `TopicKeysInFile` lists a file's keys for the dialogue validators. |
 
 ### Player State
 
@@ -391,7 +401,7 @@ are subject to perception-scaled reaction delays (see below).
 |--------|--------|-------------|
 | `give_item` | `item_id` (int) | Gives one item copy to player. |
 | `give_item_multiple` | `item_id` (int), `count` (int, default 1) | Gives N copies to player. |
-| `return_item` | none | Returns the event's item to the player (for `player_give` rejection). Hands back the **real** item off the mob's inventory (found via `ctx.Event.ItemUUID`, else the newest `ctx.Event.ItemId` match), never a fresh copy. Fails if the mob isn't holding it. The "hands back" line hides the NPC's name at the player's sight (#454). |
+| `return_item` | none | Returns the event's item to the player (for `player_give` rejection). Hands back the **real** item off the mob's inventory (found via `ctx.Event.ItemUUID`, else the newest `ctx.Event.ItemId` match), never a fresh copy. Fails if the mob isn't holding it. The "hands back" line hides the NPC's name at the player's sight (#454). On a give hand-back the item is still the player's: nothing moves, the line is said, and `GiveHandBack.Returned` is set. |
 | `take_item` | `item_id` (int) | Removes first matching item from player. |
 | `give_gold` | `amount` (int) | Adds N gold to player. |
 | `take_gold` | `amount` (int) | Subtracts N gold (floor 0). |
@@ -1018,7 +1028,7 @@ Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tact
 |-------|-------|
 | Core | `engine.go`, `types.go`, `state.go`, `structural.go`, `decorators.go`, `helpers.go`, `params.go`, `references.go` |
 | Loading & validation | `loader.go`, `validate.go`, `save.go`, `test_export.go` |
-| Events | `events.go` |
+| Events | `events.go`, `topics.go` (`topic_is`, `TopicKeysInFile`), `give_handback.go` (`GiveHandBack`, the hand-back branch rules) |
 | Actions — generic | `actions.go`, `actions_mob.go`, `actions_state.go`, `actions_room.go`, `actions_party.go`, `actions_goal.go` |
 | Actions — combat | `actions_combat.go`, `action_cast_best_in_category.go`, `actions_archer.go` |
 | Actions — economy | `actions_forager.go`, `actions_forager_verbs.go`, `actions_forager_storage.go`, `actions_wagon.go`, `actions_ferry.go`, `portal_stake.go`, `caravan_reset.go` |

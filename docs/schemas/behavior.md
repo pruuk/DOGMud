@@ -4,8 +4,11 @@
 
 Behavior trees are YAML files that define event-driven mob AI. They replace
 JS scripts with declarative, composable logic. Trees evaluate on events
-(`player_ask`, `player_give`, `mob_idle`, `mob_hurt`) **before** JS scripts
-and dialogue, giving behavior trees first priority.
+(`player_topic`, `player_give`, `mob_idle`, `mob_hurt`) **before** JS
+scripts. Talk topics (#375) come first for conversation and item hand-ins:
+a tree hears `player_topic` only when a player chooses a `behavior: true`
+topic, and `player_give` only for an item no topic wants, or as a hand-back
+when a topic wants it but none is eligible (see `internal/behaviortree/context.md`).
 
 **Path formula:**
 ```
@@ -49,8 +52,8 @@ Nodes without an `event` field evaluate on all events.
 
 | Event | Trigger | Context Available |
 |-------|---------|-------------------|
-| `player_ask` | Player asks the mob something | `Text` = the ask text |
-| `player_give` | Player gives an item to the mob | `ItemId` = item given |
+| `player_topic` | Player chose a `behavior: true` talk topic on the mob | `Text` = the topic key (`check: topic_is`) |
+| `player_give` | Player gives an item to the mob | `ItemId` = item given; `HandBack` set on a hand-back |
 | `mob_idle` | Mob's idle tick (periodic) | No player context |
 | `mob_hurt` | Mob takes damage in combat | `UserId` = attacker |
 | `mob_die` | Mob's health reaches zero | `UserId` = killing player |
@@ -283,7 +286,7 @@ tree:
   type: selector
   children:
     - type: sequence
-      event: player_ask     # Only evaluates on ask events
+      event: player_topic   # Only evaluates on talk topic events
       children: [...]
     - type: selector
       event: mob_idle        # Only evaluates on idle ticks
@@ -301,22 +304,20 @@ tree:
 tree:
   type: selector
   children:
-    # --- Player asks about quests ---
+    # --- Player chose the behavior talk topic `ring_bell` ---
+    # (offers and hand-ins are dialogue topics, never tree branches, #375)
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [quest, task, help]
-        - type: condition
-          check: player_missing_quest
-          quest: "10-start"
+          check: topic_is
+          topic: ring_bell
         - type: action
-          do: respond
-          user_text: "I could use some help around here."
-          hints: "Ask about the trouble in the mines."
+          do: set_state
+          key: bell
+          value: rung
 
-    # --- Player gives an item ---
+    # --- Player gives the quest item too late: say why, hand it back ---
     - type: sequence
       event: player_give
       children:
@@ -325,13 +326,12 @@ tree:
           item_id: 30001
         - type: condition
           check: player_has_quest
-          quest: "10-start"
-        - type: action
-          do: respond
-          user_text: "Ah, you found it! Thank you kindly."
-        - type: action
-          do: grant_quest
           quest: "10-end"
+        - type: action
+          do: say
+          text: "You already brought me that. Keep it."
+        - type: action
+          do: return_item
 
     # --- Idle behavior ---
     - type: selector

@@ -762,10 +762,9 @@ reward mechanism is needed in the dialogue system.
 
 ### LLM Quest Context
 
-When an NPC has an LLM profile, `talk.go` and `ask.go` populate
-`llm.ConversationContext.QuestContext` with human-readable summaries of the
-player's active quests. These are injected into the LLM system prompt so
-Ollama-powered NPCs can reference quest state naturally.
+`talk` and `ask` make no LLM calls since #375 (R4), so nothing fills
+`llm.ConversationContext.QuestContext` from quest state any more. A future
+hook for model-voiced NPCs is #643.
 
 This comprehensive quests system provides flexible quest management with
 multi-step progression, diverse reward types, secret quest support, and

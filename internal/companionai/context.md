@@ -15,7 +15,7 @@ type RespawnFunc func(userId int, mobId int) int
 type IdleFunc func(mobInstanceId int) bool
 type RejoinFunc func(userId int) bool
 type SnapshotFunc func(userId int) bool
-type NpcAskFunc func(ownerUserId int, mobInstanceId int, text string, authorized bool) bool
+type NpcAskFunc func(ownerUserId int, mobInstanceId int, topicKey string, authorized bool) bool
 type BondedFunc func(mobInstanceId int) bool
 type HoldFunc func(userId int, mobInstanceId int) bool
 
@@ -35,7 +35,7 @@ func SetSnapshotter(f SnapshotFunc)
 func Snapshot(userId int) bool
 
 func SetNpcAsker(f NpcAskFunc)
-func AskNpc(ownerUserId int, mobInstanceId int, text string, authorized bool) bool
+func AskNpc(ownerUserId int, mobInstanceId int, topicKey string, authorized bool) bool
 
 func SetBondedCheck(f BondedFunc)
 func IsBondedCompanion(mobInstanceId int) bool
@@ -61,9 +61,15 @@ func ServeRelayPage(w http.ResponseWriter, r *http.Request) bool
 func RelayOrigin() string
 ```
 
-- `RouteAsk` is called by `internal/usercommands/ask.go` before the normal
-  companion and NPC paths. The aicompanion module installs the handler and
-  claims asks aimed at companions it drives.
+- `RouteAsk` is called by `internal/usercommands/ask.go` for the player's
+  own charmed follower or a bonded companion (every other NPC gets the talk
+  redirect, #375). The aicompanion module installs the handler and claims
+  asks aimed at companions it drives.
+- `AskNpc` is called by the aicompanion module when an owner-authorized
+  `sayto` fires. `topicKey` is the info topic the owner's `companion-ask`
+  resolved at command time (#375 R13), never the model's words.
+  `internal/conversation` installs the handler (`AskForOwner`, from its
+  `init`), which plays that topic as the owner choosing it.
 - `RouteIdle` is called by `internal/hooks/MobIdle_HandleIdleMobs.go` right
   after the sleeping check. The aicompanion module claims the idle tick of
   every companion it drives, so floor-loot grabs, behaviour-tree idle and
@@ -135,5 +141,6 @@ func RelayOrigin() string
 (installs the relay sender, forwards relay messages),
 `internal/usercommands` (ask, dismiss), `internal/hooks` (installs the
 respawner, asks the follow hold), `internal/actions` and `internal/seeders`
-(the bonded check), `modules/aicompanion` (installs the ask handler, the
-holder and the bonded check, calls the respawner).
+(the bonded check), `internal/conversation` (installs the NPC asker),
+`modules/aicompanion` (installs the ask handler, the holder and the bonded
+check, calls the respawner and the NPC asker).

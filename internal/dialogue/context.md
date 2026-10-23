@@ -31,10 +31,24 @@ Two conversation styles coexist in one file:
 - **validate.go** — `ValidateDialogueFile` with injectable validators. The
   semicolon rule covers spoken fields only (greetings, pattern responses,
   root, variant and node text); hints go out through SendText and are exempt.
-- **registry_validators.go** — `RegistryValidators()`, the validators backed by
-  the loaded quest and item registries. The builder's dialogue editor
-  (modules/gmcp) and the boot smoke sweep
-  `TestSmoke_ShippedDialoguePassesTheEditorValidator` both use it.
+- **registry_validators.go**: `RegistryValidators()`, the old-format
+  validators backed by the loaded quest and item registries. Only the
+  builder's dialogue editor (modules/gmcp) still uses it, until #375 Task 20
+  switches the editor off.
+- **world.go**: `World`, `QuestInfo`, `Problem`, `ValidateWorld`: the topic
+  validators over a proposed world (#375 spec 5). `World.BehaviorTopics` holds
+  each mob's per-mob tree `topic_is` keys (checked both ways);
+  `World.ArchetypeTopics` holds its declared archetype's keys, which also
+  serve a `behavior: true` topic but are never a problem on a mob with no
+  such topic, since an archetype is shared.
+- **world_registry.go**: `LoadAllFiles` (strict decode of every shipped
+  file) and `RegistryWorld(behaviorTopics)`, the world from the loaded
+  registries. The boot door and the CI sweep
+  `TestSmoke_ShippedDialoguePassesTheValidators` both run
+  `validateShippedDialogue` in `main_dialogue.go`, which also fills
+  `ArchetypeTopics` and adds the file-placement rules only the loaded mob
+  templates can judge (dialogue folder equals the mob's zone folder, behavior
+  trees read at the runtime's path, unparsable trees reported).
 - **validation.go** — `CollectFlagReferences` for quest-flag cross-checking.
 - **walk.go** — `WalkAllFiles`, used by audits and boot-time validation.
 
@@ -87,7 +101,7 @@ returns false — applying nothing else — when delivery fails (2026-08-03
 soft-lock fix): no quest grant, no `requiresItem` removal, no flags/rep/
 gold, and `TreeAdvance` skips `UpdateMemory` so the node re-fires once
 the player makes room. `PlayerState.GiveItem` is `func(int) bool`; the
-production callback in `usercommands.buildPlayerState` returns
+production callback in `conversation.PlayerState` returns
 `StoreItem`'s verdict and returns false (with an error log) for an
 invalid item id. A nil `GiveItem` counts as delivered (skip-checks
 contract).
@@ -177,7 +191,7 @@ mob must not inherit a stranger's conversation history.
 - **A `nil` `*PlayerState` disables all gating.** Accepted for backward
   compatibility with mob-to-mob and other non-user contexts; every requirement,
   exclusion, flag check and masterwork gate is skipped. Never pass nil from a
-  production path — `buildPlayerState` always returns a populated one.
+  production path — `conversation.PlayerState` always returns a populated one.
 - **Every callback field is optional and individually nil-checked.** A missing
   *interrogative* callback fails the gate **closed** (no `HasQuest` means a
   `questRequired` node is hidden, because absent information is not proof the

@@ -59,3 +59,25 @@ func TestHelpListsHoldEachTopicOnceAndOnlySkillsAsSkills(t *testing.T) {
 	sort.Strings(problems)
 	require.Empty(t, problems)
 }
+
+// #375: NPCs are talked to with talk, so the help index's quests list teaches
+// talk, and ask (now only for a bonded companion) sits with the companion
+// commands, never under quests (review M7).
+func TestHelpQuestsListTeachesTalkNotAsk(t *testing.T) {
+	_, here, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+
+	origKeywords := loadedKeywords
+	defer func() { loadedKeywords = origKeywords }()
+
+	cfg := configs.GetConfig()
+	cfg.FilePaths.DataFiles = configs.ConfigString(filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud"))
+	configs.SetConfigForTest(t, cfg)
+
+	LoadAliases()
+	quests := loadedKeywords.Help["command"]["quests"]
+	require.NotEmpty(t, quests, "fixture: the dogmud help map must have a command/quests list")
+	require.Contains(t, quests, "talk")
+	require.NotContains(t, quests, "ask")
+	require.Contains(t, loadedKeywords.Help["command"]["character"], "ask")
+}
