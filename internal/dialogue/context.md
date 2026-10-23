@@ -55,7 +55,10 @@ longer decodes under the strict loader.
   templates can judge (dialogue folder equals the mob's zone folder, behavior
   trees read at the runtime's path, unparsable trees reported).
 - **manifest.go**: `Manifest`, `ParseManifest`, `Manifest.Diff`,
-  `HeardRenames`: the committed topic-key manifest.
+  `HeardRenames`: the committed topic-key manifest,
+  `dialogue/topic-keys.txt`. `topic_manifest_test.go` (repo root) holds it
+  to content, and `users.LoadUser` passes `HeardRenames()` to
+  `Character.RenameHeardTopics` after `MigrateQuestFlags`.
 - **validation.go**: `CollectFlagReferences` over topics and opener variants,
   for `questengine.ValidateAllFlags`.
 - **walk.go**: `WalkAllFiles`, used by the quest editor's reference guard.

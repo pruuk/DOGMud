@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
+	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/savequeue"
@@ -562,6 +563,9 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 	loadedUser.Character.MigrateAlchemyRecipes()
 	loadedUser.Character.MigrateDescriptionWrapping()
 	loadedUser.Character.MigrateQuestFlags()
+	// A renamed talk topic stays heard (#375): renames come from the
+	// topic-key manifest, dialogue/topic-keys.txt.
+	loadedUser.Character.RenameHeardTopics(dialogue.HeardRenames())
 	loadedUser.Character.MigrateLegacyPotions()
 	// U10d ranged detune. MUST precede MigrateEnchantments: ApplyTier does an
 	// unconditional EnchantBaseline.RestoreInto, which would re-install the
