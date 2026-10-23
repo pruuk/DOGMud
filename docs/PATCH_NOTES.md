@@ -24,6 +24,13 @@
 - Builders: dialogue editing in the web builder is off until the new
   topic editor arrives.
 
+## 2026-10-21: Less background lag
+
+- The server spends much less effort remembering what townsfolk see as
+  caravans and foragers pass by. What they notice is now saved with the
+  rest of the world at each autosave, so the game should feel smoother,
+  especially while the caravan is on the road.
+
 ## 2026-10-21: Room features accept singular and plural
 
 - Looking at or searching something in a room now works whether you

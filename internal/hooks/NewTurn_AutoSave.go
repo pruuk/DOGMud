@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/knowledge"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -94,6 +95,15 @@ func drainPendingWrites() {
 	res := q.Drain(perTick)
 	if res.Committed+res.Failed > 0 {
 		util.TrackTime(`AutoSave.Commit`, time.Since(start).Seconds())
+	}
+
+	// Knowledge files are a dirty set, not a full snapshot like rooms and
+	// users: a file stays dirty until its commit is confirmed here, so a
+	// failed or superseded write is prepared again next cycle.
+	for _, o := range res.Outcomes {
+		if o.Err == nil && o.Write.Kind == knowledge.WriteKind {
+			knowledge.MarkCommitted(o.Write.Id)
+		}
 	}
 
 	if res.Cycle == nil {

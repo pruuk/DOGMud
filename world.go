@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/knowledge"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -811,6 +812,13 @@ loop:
 			// Unlike copyover this LOGS AND PROCEEDS. The operator asked the
 			// process to stop and refusing is not useful, but the failure has to
 			// be loud enough to find in the log afterwards.
+			//
+			// NPC knowledge is write-behind (dirty until an autosave commit
+			// lands), so write what is still dirty first. Before FlushAll,
+			// because SaveAll cancels any older queued copy of each file.
+			if err := knowledge.SaveAll(); err != nil {
+				mudlog.Error("shutdown", "action", "knowledge.SaveAll", "error", err.Error())
+			}
 			if err := hooks.AutosaveQueue().FlushAll(); err != nil {
 				mudlog.Error("shutdown", "action", "FlushPendingWrites", "error", err.Error())
 			}

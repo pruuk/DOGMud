@@ -30,8 +30,8 @@ Design: `docs/superpowers/specs/2026-08-10-autosave-async-writes-design.md`
 
 ```go
 type PendingWrite struct {
-	Kind    string // "room" | "user" — reporting only
-	Id      int    // room or user id — reporting only
+	Kind    string // "room" | "user" | "plugin" | "knowledge"; the drain confirms "knowledge" commits by Kind+Id (knowledge.MarkCommitted)
+	Id      int    // room, user or observer mob id
 	Path    string
 	Data    []byte // nil means DELETE the file at Path
 	Careful bool   // route through the atomic+durable path
