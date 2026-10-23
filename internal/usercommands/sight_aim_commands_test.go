@@ -45,6 +45,13 @@ const (
 func aimScene(t *testing.T, band aimBand) (*users.UserRecord, *rooms.Room) {
 	t.Helper()
 	t.Cleanup(seedAllRegistries())
+	return aimSceneSeeded(t, band)
+}
+
+// aimSceneSeeded is aimScene over registries the caller already seeded (a
+// talk fixture with its dialogue installed).
+func aimSceneSeeded(t *testing.T, band aimBand) (*users.UserRecord, *rooms.Room) {
+	t.Helper()
 	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
 		aimInfraredConditionId: {ConditionId: aimInfraredConditionId, Name: "Test Infrared",
 			RoundInterval: 1, TriggerCount: 1, Flags: []conditions.Flag{conditions.InfraredVision},

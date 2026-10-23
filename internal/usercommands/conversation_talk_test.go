@@ -481,6 +481,43 @@ func TestTalk_DarkRoomEndsTheConversation(t *testing.T) {
 	require.NotContains(t, drained(1), "Old age.")
 }
 
+// Spec 4 item 1: the NPC must be visible by name. A player who makes out
+// shapes only can aim talk at a figure, but gets one private refusal naming
+// the light before anyone speaks: no approach line, no opener, no menu
+// (#375 review I1). The lit control opens the menu.
+func TestTalkCommand_AtAShapeRefusesBeforeAnyoneSpeaks(t *testing.T) {
+	user, mob, done := talkFixture(t)
+	defer done()
+	_, room := aimSceneSeeded(t, aimShapes)
+	require.Equal(t, messaging.SightShapes, messaging.ParticipantSight(user.Character, room),
+		"precondition: the talker makes out shapes only")
+
+	_, err := Talk("2.shape", user, room, 0)
+	require.NoError(t, err)
+	mine, theirs := aimTold(1), aimTold(2)
+	require.Equal(t, 1, strings.Count(mine, conversation.TalkSightLine), "one refusal: %q", mine)
+	require.NotContains(t, mine, "Rattle.", "the NPC spoke its opener")
+	require.NotContains(t, mine, "Skeleton", "the refusal named a shape")
+	require.Empty(t, theirs, "the room heard an approach or an opener")
+	require.False(t, user.HasOpenMenu())
+
+	// The conversation entry point refuses the same way for any caller.
+	conversation.Talk(user, room, mob)
+	require.Contains(t, aimTold(1), conversation.TalkSightLine)
+	require.Empty(t, aimTold(2))
+	require.False(t, user.HasOpenMenu())
+}
+
+func TestTalkCommand_AtAShapeLitControlOpensTheMenu(t *testing.T) {
+	user, _, done := talkFixture(t)
+	defer done()
+	_, room := aimSceneSeeded(t, aimFull)
+	_, err := Talk("skeleton", user, room, 0)
+	require.NoError(t, err)
+	require.True(t, user.HasOpenMenu())
+	require.NotContains(t, aimTold(1), conversation.TalkSightLine)
+}
+
 const behaviorFixtureYAML = `mobid: 1
 zone: TestZone
 topics:

@@ -12,16 +12,22 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/uuid"
 )
 
 // Talk opens a conversation with mob: the approach line and the NPC's
 // opener and breadcrumbs as speech the room hears, then the private menu.
 // The caller has already resolved mob by sight and refused a sleeping one.
-// When the menu could not open (spec 4 item 1), the player gets one private
-// line and nobody speaks.
+// When the menu could not open, or the player cannot see the NPC by name (a
+// figure at shapes sight; spec 4 item 1), the player gets one private line
+// and nobody speaks.
 func Talk(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob) {
 	if line := blockedLine(user); line != "" {
 		user.SendText(messaging.CategoryRefusal, line)
+		return
+	}
+	if !seesByName(user, room, mob) {
+		user.SendText(messaging.CategoryRefusal, TalkSightLine)
 		return
 	}
 	room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
@@ -58,6 +64,12 @@ var blockedLines = map[menu.CloseReason]string{
 
 const promptOpenLine = "Finish what you have open before you start a conversation."
 
+// TalkSightLine refuses a conversation with an NPC the player cannot see by
+// name (spec 4 item 1): one aimed at as a figure, or one the light no longer
+// shows. It names no one, so a figure's name never leaks, and follows the
+// shop verbs' "You can't make out ... well enough to ..." wording.
+const TalkSightLine = "You can't make out who that is well enough to start a conversation."
+
 // blockedLine is the refusal when the talk menu could not open now, or "".
 func blockedLine(user *users.UserRecord) string {
 	reason, promptOpen := user.MenuBlockedReason()
@@ -75,10 +87,15 @@ func blockedLine(user *users.UserRecord) string {
 
 // lineBuffer holds the private lines the PlayerState callbacks send during a
 // choice (a delivery, gold received or paid, a refusal), so they land after
-// the handover line and before the NPC's reply.
+// the handover line and before the NPC's reply. It also carries the choice's
+// item: prefer is the instance a give named (zero from the menu), and taken
+// is the display name of the item the choice's effects took, for the
+// handover line.
 type lineBuffer struct {
-	user  *users.UserRecord
-	lines []bufferedLine
+	user   *users.UserRecord
+	lines  []bufferedLine
+	prefer uuid.UUID
+	taken  string
 }
 
 type bufferedLine struct {
@@ -97,10 +114,19 @@ func (b *lineBuffer) flush() {
 	b.lines = nil
 }
 
-// talkState is PlayerState for a choice: its private lines go to buf, and a
-// price the player cannot pay says so (the shared callback is silent).
+// talkState is PlayerState for a choice: its private lines go to buf, a
+// price the player cannot pay says so (the shared callback is silent), and
+// a taken item is buf.prefer's instance when it names one, recorded in
+// buf.taken.
 func talkState(user *users.UserRecord, buf *lineBuffer) *dialogue.PlayerState {
 	ps := playerState(user, buf.add)
+	ps.RemoveItem = func(itemId int) bool {
+		itm, ok := removeBackpackItem(user, itemId, buf.prefer)
+		if ok {
+			buf.taken = itm.DisplayName()
+		}
+		return ok
+	}
 	charge := ps.ChargeGold
 	ps.ChargeGold = func(amount int) bool {
 		if charge(amount) {
@@ -134,11 +160,17 @@ func present(user *users.UserRecord, mobInstanceId int) (*mobs.Mob, *rooms.Room,
 		return nil, nil, false
 	}
 	room := rooms.LoadRoom(user.Character.RoomId)
-	if room == nil || messaging.ParticipantSight(user.Character, room) != messaging.SightFull ||
-		!user.Character.Perceives(&mob.Character) {
+	if !seesByName(user, room, mob) {
 		return nil, nil, false
 	}
 	return mob, room, true
+}
+
+// seesByName reports whether the player can see mob by name in room: full
+// sight there, and the mob perceived (spec 4 item 1).
+func seesByName(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob) bool {
+	return room != nil && messaging.ParticipantSight(user.Character, room) == messaging.SightFull &&
+		user.Character.Perceives(&mob.Character)
 }
 
 func session(user *users.UserRecord, mob *mobs.Mob, onChoose func(menu.Entry)) menu.Session {
@@ -192,7 +224,7 @@ func resolve(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialog
 		playerSay(user, room, t.PlayerLine)
 		npcSay(mob, room, t.Text)
 		sendHints(user, t.Hints)
-		offerCard(user, mob, t)
+		offerCard(user, mob, t, buf.prefer)
 		return
 	}
 	granted, applied := play(user, room, mob, df, t, ps, buf)
@@ -226,11 +258,10 @@ func play(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.
 // applyWithHandover applies t and, when it took an item, prints the handover
 // lines; then it flushes the callbacks' private lines, refused or not.
 func applyWithHandover(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic, ps *dialogue.PlayerState, buf *lineBuffer) bool {
-	// Read before Apply, which takes the item.
-	itemName := backpackItemName(user, t.RequiresItem)
+	buf.taken = ""
 	ok := df.Apply(t, ps)
-	if ok && itemName != "" {
-		handoverLines(user, room, mob, itemName)
+	if ok && buf.taken != "" {
+		handoverLines(user, room, mob, buf.taken)
 	}
 	buf.flush()
 	return ok
@@ -254,14 +285,15 @@ func after(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue
 
 // offerCard is the private Accept / Leave after an offer's pitch (R6).
 // Enter is Leave. Accept re-checks eligibility before granting; either way
-// the talk menu comes back.
-func offerCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic) {
+// the talk menu comes back. prefer is the item instance a give named, which
+// Accept takes in place of the first match (zero from the menu).
+func offerCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic, prefer uuid.UUID) {
 	inst, key := mob.InstanceId, t.Key
 	card := menu.Confirm(t.Label, "Accept", "Leave")
 	user.OpenMenu(card, session(user, mob, func(e menu.Entry) {
 		granted, closes := "", false
 		if e.Id == "yes" {
-			granted, closes = accept(user, inst, key)
+			granted, closes = accept(user, inst, key, prefer)
 		}
 		if closes {
 			return
@@ -273,13 +305,13 @@ func offerCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic) {
 // accept grants an offer after re-checking it, and returns the token it
 // granted, or "", and whether the accepted offer was a behavior topic (R18),
 // which closes the menu.
-func accept(user *users.UserRecord, mobInstanceId int, key string) (string, bool) {
+func accept(user *users.UserRecord, mobInstanceId int, key string, prefer uuid.UUID) (string, bool) {
 	mob, room, ok := present(user, mobInstanceId)
 	if !ok {
 		return "", false
 	}
 	df := dialogue.Load(int(mob.MobId), mob.Zone)
-	buf := &lineBuffer{user: user}
+	buf := &lineBuffer{user: user, prefer: prefer}
 	ps := talkState(user, buf)
 	t := df.FindTopic(key)
 	if t == nil || !df.Eligible(t, ps) {
@@ -317,18 +349,6 @@ func sendHints(user *users.UserRecord, hints string) {
 	if hints != "" {
 		user.SendText(messaging.CategoryDialogueHint, fmt.Sprintf(`<ansi fg="181">  [%s]</ansi>`, hints))
 	}
-}
-
-func backpackItemName(user *users.UserRecord, itemId int) string {
-	if itemId <= 0 {
-		return ""
-	}
-	for _, itm := range user.Character.GetAllBackpackItems() {
-		if itm.ItemId == itemId {
-			return itm.DisplayName()
-		}
-	}
-	return ""
 }
 
 // handoverLines are give.go's own lines for an item handed to a mob.

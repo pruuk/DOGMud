@@ -1,7 +1,11 @@
 # Records Clerk Pell — Behavior Tree
 # Handles: player_give for rejection/redirect only.
-# Quest 6 (bridge report) advancement is handled by the quest engine's
-# item_give trigger. Quest 9 (tithe ledger) redirect to Olen stays here.
+# The quest 6 bridge report hand-in is the dialogue topic bridge_report
+# (#375 R7/R8): give resolves as that topic before this tree runs, and
+# when it is not eligible give keeps the report with the player and offers
+# it here as a hand-back, so the report branches say why (return_item then
+# only says it came back). The tithe ledger (29) is wanted by no Pell topic,
+# so its give is ordinary and the quest 9 redirect to Olen stays here.
 
 tree:
   type: selector
@@ -25,8 +29,8 @@ tree:
         - type: action
           do: return_item
 
-    # ── GIVE: bridge report (item 31), Q6 active — let quest engine handle ──
-    # (no branch — falls through to quest engine item_give trigger)
+    # ── GIVE: bridge report (item 31), Q6 active ──
+    # (no branch: the bridge_report topic takes it before this tree runs)
 
     # ── GIVE: bridge report (item 31), no active quest — reject ──
     - type: sequence

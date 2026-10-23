@@ -1,15 +1,17 @@
 # Road Warden Tessara — Behavior Tree
 # Handles: player_give event for item rejection only.
-# Quest 4 advancement and flavor text are handled by the quest engine's
-# item_give trigger in the quest YAML. The behavior tree only rejects
-# items that don't match quest expectations.
+# The quest 4 purse hand-in is the dialogue topic evidence_handoff
+# (#375 R7/R8): give resolves as that topic before this tree runs. When it
+# is not eligible, give keeps the purse with the player and offers it here
+# as a hand-back (return_item then only says it came back). Other items
+# are ordinary gives.
 
 tree:
   type: selector
   children:
 
-    # ── GIVE: bandit's purse, Q4 active — let quest engine handle it ──
-    # (no branch needed — fall through to quest engine)
+    # ── GIVE: bandit's purse, Q4 active ──
+    # (no branch: the evidence_handoff topic takes it before this tree runs)
 
     # ── GIVE: bandit's purse, Q4 already complete — return it ──
     - type: sequence

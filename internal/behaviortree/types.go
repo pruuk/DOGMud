@@ -21,8 +21,11 @@ type EventContext struct {
 	EventType string // "player_topic", "mob_idle", "player_give", etc.
 	UserId    int    // Triggering player (0 if none)
 	MobId     int    // Triggering mob instance (0 if none)
-	Text      string // For ask/say events — the text spoken
-	ItemId    int    // For give/show events — the item template id
+	// Text is the chosen topic's key for player_topic (topic_is reads it;
+	// #375 R12), and the words that came with the event for the other
+	// events that carry any (ferry and portal actions read it).
+	Text   string
+	ItemId int // For give/show events: the item template id
 	// ItemUUID identifies the EXACT item instance the event refers to, so
 	// handlers (e.g. return_item) can operate on the real, stateful object
 	// rather than a fresh copy minted from ItemId. Zero when the producer
@@ -36,6 +39,10 @@ type EventContext struct {
 	// Proc carries a proc event's participants into an item tree (item
 	// behaviour slice 3). Nil for every other event.
 	Proc *ProcEvent
+	// HandBack marks a player_give whose item never left the player (a talk
+	// topic wanted it, none was eligible; see give_handback.go). Nil for
+	// every ordinary give and every other event.
+	HandBack *GiveHandBack
 }
 
 // Node is the interface all behavior tree nodes implement.

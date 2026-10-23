@@ -40,7 +40,7 @@ func TestQuest28_RefusableStepsNeedTheCommandToSucceed(t *testing.T) {
 			EventDetails{Command: "say"},
 			"command", EventDetails{Command: "say"}},
 		// The ask step (28-asked) is Dewey's talk topic asked_28 since #375
-		// Task 19; no quest trigger grants it (TestQuest28_AskReplyComesBeforeTheNextPrompt).
+		// Task 19; no quest trigger grants it (TestQuest28_TalkLessonGrantsTheStepWithItsReply).
 		{"warcry", "28-proving_prompt", "28-warcried",
 			EventDetails{Command: "warcry"},
 			"command", EventDetails{Command: "warcry"}},

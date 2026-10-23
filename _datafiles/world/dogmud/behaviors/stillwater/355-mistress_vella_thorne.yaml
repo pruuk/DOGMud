@@ -1,13 +1,13 @@
 # Mistress Vella Thorne — Behavior Tree
 # Handles: player_give safety nets for quest items.
-# Quest 20 advancement (kingfisher → journal handover) is in the quest
-# engine's item_give triggers in quests/20-ullas_silence.yaml. This tree
-# only handles rejection cases:
-# - Kingfisher (40060) before 20-kingfisher_found: shouldn't be possible,
-#   but return safely anyway.
-# - Kingfisher (40060) after 20-vella_journal: already handed over before;
-#   return.
-# - Journal (40061) any time: it's for Ulla, not Vella. Return.
+# The quest 20 kingfisher hand-in is the dialogue topic vellahandoff
+# (#375 R7/R8): give resolves as that topic before this tree runs. When it
+# is not eligible, give keeps the kingfisher with the player and offers it
+# here as a hand-back (return_item then only says it came back):
+# - Kingfisher (40060) before 20-kingfisher_found: return it.
+# - Kingfisher (40060) after 20-vella_journal: already handed over; return.
+# - Journal (40061) any time: wanted by no Vella topic, so an ordinary give;
+#   it is for Ulla, not Vella. Return.
 
 tree:
   type: selector

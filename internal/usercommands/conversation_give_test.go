@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -246,6 +247,208 @@ func TestGiveCommand_HandInGoesThroughTheTopic(t *testing.T) {
 	require.Equal(t, 0, countBackpack(user, 10001), "the sword was handed in")
 	require.False(t, mobHolds(mob, 10001), "a topic hand-in never transfers to the mob")
 	require.Equal(t, []string{"9-end"}, questTokensFor(1))
+}
+
+// A hand-in takes the instance the player named (#375 review M3): with two
+// swords, `give 2.sword` hands over the second, named in the handover line,
+// and the first stays in the pack.
+func TestGiveCommand_HandInTakesTheNamedInstance(t *testing.T) {
+	user, _, done := offerFixture(t)
+	defer done()
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+	second := items.New(10001)
+	second.Rename("notched sword")
+	require.True(t, user.Character.StoreItem(second))
+	var firstUUID string
+	for _, itm := range user.Character.GetAllBackpackItems() {
+		if itm.ItemId == 10001 && itm.UUID != second.UUID {
+			firstUUID = itm.UUID.String()
+		}
+	}
+	require.NotEmpty(t, firstUUID)
+
+	_, err := Give("2.sword skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+	mine := drained(1)
+	require.Contains(t, mine, `You give the <ansi fg="item">Notched Sword</ansi>`)
+	require.Contains(t, mine, "My thanks.")
+	left := user.Character.GetAllBackpackItems()
+	require.Len(t, left, 1)
+	require.Equal(t, firstUUID, left[0].UUID.String(), "the first sword was taken in place of the named one")
+	require.Equal(t, []string{"9-end"}, questTokensFor(1))
+}
+
+// The same through an offer's card: Accept takes the instance the give named.
+func TestGiveResolve_OfferCardTakesTheNamedInstance(t *testing.T) {
+	user, mob, done := fixtureWith(t, itemOfferFixtureYAML)
+	defer done()
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+	second := items.New(10001)
+	second.Rename("notched sword")
+	require.True(t, user.Character.StoreItem(second))
+	var named items.Item
+	for _, itm := range user.Character.GetAllBackpackItems() {
+		if itm.UUID == second.UUID {
+			named = itm
+		}
+	}
+	require.Equal(t, second.UUID, named.UUID)
+
+	require.True(t, conversation.Give(user, mustRoom(t, user), mob, named))
+	drained(1)
+	require.True(t, user.RouteMenuInput("1", true), "1 is Accept")
+	require.Contains(t, drained(1), `You give the <ansi fg="item">Notched Sword</ansi>`)
+	left := user.Character.GetAllBackpackItems()
+	require.Len(t, left, 1)
+	require.NotEqual(t, second.UUID, left[0].UUID)
+}
+
+// loadSkeletonTree installs a behavior tree for the Skeleton (mob 1) for the
+// rest of the test.
+func loadSkeletonTree(t *testing.T, tree string) {
+	t.Helper()
+	node, err := behaviortree.LoadTreeFromBytes([]byte(tree))
+	require.NoError(t, err)
+	t.Cleanup(behaviortree.GetEngine().SetMobTreeForTest(1, node))
+}
+
+// The purse topic is used up (9-end held), so the sword is wanted but no
+// topic can take it. The tree's authored refusal plays in place of the
+// generic hand-back line (#375 review M1: Arn's "See Drunn first").
+const handBackRefusalTree = `tree:
+  type: selector
+  children:
+    - type: sequence
+      event: player_give
+      children:
+        - type: condition
+          check: item_matches
+          item_id: 10001
+        - type: condition
+          check: player_has_quest
+          quest: "9-end"
+        - type: action
+          do: send_user_text
+          text: "You already brought me that."
+        - type: action
+          do: return_item
+`
+
+func TestGiveCommand_WantedButIneligiblePlaysTheTreesRefusal(t *testing.T) {
+	user, mob, done := offerFixture(t)
+	defer done()
+	loadSkeletonTree(t, handBackRefusalTree)
+	user.Character.QuestProgress = map[int]string{9: "end"}
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+
+	_, err := Give("iron sword skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+	mine := drained(1)
+	require.Contains(t, mine, "You already brought me that.")
+	require.Contains(t, mine, "Skeleton hands back the Iron Sword.")
+	require.NotContains(t, mine, "looks at the", "a second, generic hand-back line")
+	require.NotContains(t, mine, "You give the", "the item never moved")
+	require.Equal(t, 1, countBackpack(user, 10001))
+	require.False(t, mobHolds(mob, 10001))
+	require.Empty(t, questTokensFor(1))
+}
+
+// A hand-back credits nothing: a give branch that would pay, grant or take
+// is skipped whole, before any of its speech, and the generic line plays.
+func TestGiveCommand_HandBackTreeCannotCredit(t *testing.T) {
+	user, mob, done := offerFixture(t)
+	defer done()
+	loadSkeletonTree(t, `tree:
+  type: selector
+  children:
+    - type: sequence
+      event: player_give
+      children:
+        - type: condition
+          check: item_matches
+          item_id: 10001
+        - type: action
+          do: send_user_text
+          text: "Have a reward."
+        - type: action
+          do: give_gold
+          amount: 50
+        - type: action
+          do: grant_quest
+          quest: "8-start"
+        - type: action
+          do: return_item
+`)
+	user.Character.QuestProgress = map[int]string{9: "end"}
+	user.Character.Gold = 0
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+
+	_, err := Give("iron sword skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+	mine := drained(1)
+	require.NotContains(t, mine, "Have a reward.", "a crediting branch spoke")
+	require.Contains(t, mine, "looks at the")
+	require.Equal(t, 0, user.Character.Gold)
+	require.False(t, user.Character.HasQuest("8-start"))
+	require.Empty(t, questTokensFor(1))
+	require.Equal(t, 1, countBackpack(user, 10001))
+	require.False(t, mobHolds(mob, 10001))
+}
+
+// A catch-all give branch (no item_matches) is for ordinary gifts: it does
+// not answer an item a topic wants (Sylara's "I have no use for this.").
+func TestGiveCommand_HandBackSkipsACatchAllBranch(t *testing.T) {
+	user, _, done := offerFixture(t)
+	defer done()
+	loadSkeletonTree(t, `tree:
+  type: selector
+  children:
+    - type: sequence
+      event: player_give
+      children:
+        - type: action
+          do: send_user_text
+          text: "I have no use for this."
+        - type: action
+          do: return_item
+`)
+	user.Character.QuestProgress = map[int]string{9: "end"}
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+
+	_, err := Give("iron sword skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+	mine := drained(1)
+	require.NotContains(t, mine, "I have no use for this.")
+	require.Contains(t, mine, "looks at the")
+	require.Equal(t, 1, countBackpack(user, 10001))
+}
+
+// A tree that only speaks still leaves the player told the item came back.
+func TestGiveCommand_HandBackTreeWithoutReturnStillSaysItCameBack(t *testing.T) {
+	user, _, done := offerFixture(t)
+	defer done()
+	loadSkeletonTree(t, `tree:
+  type: selector
+  children:
+    - type: sequence
+      event: player_give
+      children:
+        - type: condition
+          check: item_matches
+          item_id: 10001
+        - type: action
+          do: send_user_text
+          text: "The temple accepts coin."
+`)
+	user.Character.QuestProgress = map[int]string{9: "end"}
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+
+	_, err := Give("iron sword skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+	mine := drained(1)
+	require.Contains(t, mine, "The temple accepts coin.")
+	require.Contains(t, mine, "looks at the")
+	require.Equal(t, 1, countBackpack(user, 10001))
 }
 
 // A wanted item given while no topic wanting it is eligible is handed back

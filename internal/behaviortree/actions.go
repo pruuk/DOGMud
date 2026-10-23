@@ -164,6 +164,12 @@ var delayedActions = map[string]bool{
 }
 
 func (n *ActionNode) Evaluate(ctx *EvalContext) Result {
+	// A give hand-back credits nothing (give_handback.go): an action outside
+	// speech and return_item fails without acting, even outside a filtered
+	// branch.
+	if ctx != nil && ctx.Event.HandBack != nil && !handBackActions[n.Name] {
+		return Failure
+	}
 	// Static delay check first — bypasses perception-scaled timing.
 	if staticDelay, ok := n.Params["delay"]; ok {
 		var delaySec float64

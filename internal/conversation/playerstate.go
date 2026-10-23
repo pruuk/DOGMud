@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/uuid"
 )
 
 // PlayerState creates a PlayerState from the user's character for
@@ -50,23 +51,8 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 			return false
 		},
 		RemoveItem: func(itemId int) bool {
-			for _, itm := range user.Character.GetAllBackpackItems() {
-				if itm.ItemId != itemId {
-					continue
-				}
-				if !user.Character.RemoveItem(itm) {
-					return false
-				}
-				// The same loss event give.go queues when a hand-in is
-				// consumed, so item-loss listeners see a talk hand-in too.
-				events.AddToQueue(events.ItemOwnership{
-					UserId: user.UserId,
-					Item:   itm,
-					Gained: false,
-				})
-				return true
-			}
-			return false
+			_, ok := removeBackpackItem(user, itemId, uuid.UUID{})
+			return ok
 		},
 		GiveQuest: func(token string) {
 			events.AddToQueue(events.Quest{
@@ -145,4 +131,35 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 		HasHeard:  user.Character.HasHeard,
 		MarkHeard: user.Character.MarkHeard,
 	}
+}
+
+// removeBackpackItem takes one itemId item from the player's backpack and
+// returns it: the instance prefer names when it is there with that id (the
+// one a give named, `give 2.purse`), else the first match. It queues the
+// same loss event give.go queues when a hand-in is consumed, so item-loss
+// listeners see a talk hand-in too.
+func removeBackpackItem(user *users.UserRecord, itemId int, prefer uuid.UUID) (items.Item, bool) {
+	pack := user.Character.GetAllBackpackItems()
+	pick := -1
+	for i, itm := range pack {
+		if itm.ItemId != itemId {
+			continue
+		}
+		if !prefer.IsNil() && itm.UUID == prefer {
+			pick = i
+			break
+		}
+		if pick < 0 {
+			pick = i
+		}
+	}
+	if pick < 0 || !user.Character.RemoveItem(pack[pick]) {
+		return items.Item{}, false
+	}
+	events.AddToQueue(events.ItemOwnership{
+		UserId: user.UserId,
+		Item:   pack[pick],
+		Gained: false,
+	})
+	return pack[pick], true
 }

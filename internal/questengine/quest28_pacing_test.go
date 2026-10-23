@@ -106,9 +106,10 @@ func npcSaySeconds(n *NpcSayDef) int {
 	return total
 }
 
-// The ask step's reply and its next-step line come from Dewey's dialogue, the
-// reply first, the way north last, and no quest npc_say line runs ahead.
-func TestQuest28_AskReplyComesBeforeTheNextPrompt(t *testing.T) {
+// The 28-asked step is Dewey's talk lesson topic (#375 R20, Task 19): no
+// quest trigger grants it, choosing the topic grants it with its reply, the
+// reply ends on the way north, and his opener then says the way is open.
+func TestQuest28_TalkLessonGrantsTheStepWithItsReply(t *testing.T) {
 	q := loadQuest28(t)
 	for i, tr := range q.Triggers {
 		require.NotEqual(t, "dialogue", tr.Event,
