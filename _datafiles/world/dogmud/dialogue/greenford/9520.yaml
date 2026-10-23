@@ -2,78 +2,53 @@ mobid: 9520
 zone: Greenford
 defaultMood: friendly
 greetings:
-  - text: "If you are not a student, you are welcome to observe
-      from the back row. Please do not interrupt the working."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Yes. Quickly -- I have a demonstration to reset."
-  - keywords: ["lecture", "class", "teach", "lesson"]
-    responses:
-      - "Natural philosophy, second year. We are in the middle
-        of a derivation. Come back at the bell if you like."
-  - keywords: [""]
-    responses:
-      - "Ask me. If it is about the subject, I will answer. If
-        it is about the university, probably also."
-tree:
-  root:
-    text: |
-      Natural philosophy -- second year. The morning's
-      working is on the board if you want to read it. We
-      are in a derivation and I am about to demonstrate
-      the pendulum component. Ask me something that does
-      not take more than a minute.
-    hints: "You could ask about today's lecture and the subject,
-      about the students and the teaching, or about the
-      university."
-  nodes:
-    - id: lecture
-      triggers: ["lecture", "subject", "today", "board",
-        "working", "derivation", "pendulum", "philosophy",
-        "natural", "demonstration", "chalk", "figures",
-        "mathematics", "what", "topic"]
-      text: |
-        Natural philosophy -- the pendulum problem. We are
-        establishing the relationship between arc length and
-        period. The board carries three steps of a six-step
-        derivation. Most of the second year can follow the
-        algebra when I slow down for them. The part where
-        they stop following is when the physical intuition
-        and the mathematics have to agree with each other.
-        That is, not coincidentally, the most interesting
-        part. I have been teaching this class for eleven
-        years and that is still where it gets good.
-      hints: "You could ask about the students and the teaching,
-        or about the university."
-    - id: students
-      triggers: ["students", "student", "class", "teaching",
-        "teach", "second year", "young", "learning",
-        "understand", "follow", "behind", "ahead"]
-      text: |
-        The second year is the turning point -- students who
-        got this far on memory and careful note-taking start
-        to meet problems that do not yield to that. The ones
-        who make it through are the ones who can hold a problem
-        for a week without knowing the answer. The rest go
-        into administration or law, which is also useful.
-        I do not tell them this. The selection happens on its
-        own, and it is kindest to let it.
-      hints: "You could ask about today's lecture and the
-        subject on the board, or about the university."
-    - id: university
-      triggers: ["university", "department", "faculty",
-        "scholars", "institution", "campus", "hall", "here",
-        "college", "how long", "years", "career"]
-      text: |
-        Eleven years here, which is long enough to know the
-        building's habits -- which windows stick in winter,
-        which lecture halls echo badly when the south row
-        shifts in their seats. The natural philosophy
-        department is small and reasonably well-funded and
-        has been left alone to do its work, which is the
-        best possible institutional condition. I have no
-        complaints about the place.
-      hints: "You could ask about today's lecture and the
-        subject, or about the students and the teaching."
+- text: If you are not a student, you are welcome to watch from the back row. Please
+    do not interrupt the working.
+  moods:
+  - friendly
+opener:
+  text: |
+    You have arrived in the middle of a derivation, so I will
+    be brief. This is second-year natural
+    philosophy, and the morning's working is on the board if
+    you care to read it. In a moment I show the pendulum part.
+    Ask me something that will not take more than a minute.
+  hints: You could ask the lecturer about today's lecture, about her students, or
+    about the university.
+topics:
+- key: lecture
+  kind: info
+  label: What is on the board today?
+  text: |
+    Natural philosophy, the pendulum problem. We are working out
+    the relationship between the length of the swing and the time
+    it takes. The board carries three steps of a six-step
+    derivation. Most of the second year can follow the algebra when
+    I slow down for them. The part where they stop following is
+    when the physical sense and the mathematics have to agree with
+    each other. That is, not by chance, the most interesting part. I
+    have been teaching this class for eleven years, and that is
+    still where it gets good. Come back at the bell if you want the
+    rest.
+- key: students
+  kind: info
+  label: How are your students doing?
+  text: |
+    The second year is the turning point. Students who got this far
+    on memory and careful notes start to meet problems that do not
+    give way to that. The ones who make it through are the ones who
+    can hold a problem for a week without knowing the answer. The
+    rest go into administration or law, which is also useful. I do
+    not tell them this. The sorting happens on its own, and it is
+    kindest to let it.
+- key: university
+  kind: info
+  label: Do you like teaching here?
+  text: |
+    Eleven years here, which is long enough to know the building's
+    habits. Which windows stick in winter, which lecture halls echo
+    badly when the south row shifts in their seats. The natural
+    philosophy department is small and reasonably well funded and
+    has been left alone to do its work, which is the best possible
+    condition for any department. I have no complaints about the
+    place.

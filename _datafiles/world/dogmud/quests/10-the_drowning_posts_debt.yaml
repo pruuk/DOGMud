@@ -41,22 +41,3 @@ rewards:
   itemid: 28
   rep_faction: thornwall_citizens
   rep_amount: 15
-
-triggers:
-  # Notice delivery to Velk via give command
-  - event: item_give
-    mob: 94
-    item: 30
-    conditions:
-      has: ["10-start"]
-      missing: ["10-report"]
-    actions:
-      - grant: "10-report"
-      - npc_say:
-          mob: 94
-          lines:
-            - {delay: 1, text: "A protection notice? Let me see that."}
-            - {delay: 3, text: "This is enough to act on. I will put a patrol
-                on the back alleys and bring someone in for questioning."}
-            - {delay: 5, text: "Tell the tavern keeper he can stop paying. The
-                watch will handle this now."}

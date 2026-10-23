@@ -415,52 +415,6 @@ triggers:
           the first. You can take this one to Vella in place of
           the one you lost."
 
-  # ============================================================
-  # ITEM_GIVE: kingfisher → Vella → grants step 10, gives journal
-  # consume_item suppresses give.go's behavior-tree fallthrough so
-  # the noncombat_questgiver archetype's "declines politely" emote
-  # does not fire after the quest engine accepts the handover.
-  # ============================================================
-  - event: item_give
-    mob: 355
-    item: 40060
-    conditions:
-      has: ["20-kingfisher_found"]
-      missing: ["20-vella_journal"]
-    actions:
-      - consume_item: 40060
-      - grant: "20-vella_journal"
-      - give_item: 40061
-      - npc_say:
-          mob: 355
-          lines:
-            - {delay: 1, text: "He carried this in his pocket for
-                years. I knew where it ended up."}
-            - {delay: 5, text: "I left the note. I left it because I
-                hoped that some day someone would come looking for him
-                who was not me, and I could not bring myself to be
-                the first to say it."}
-            - {delay: 10, text: "Take this. It is the page he wrote
-                the morning he went down. He left it with me to give
-                to Ulla. I have not had the strength."}
-
-  # ============================================================
-  # ITEM_GIVE: journal → Ulla → grants end + sets default flag
-  # consume_item suppresses give.go's behavior-tree fallthrough.
-  # ============================================================
-  - event: item_give
-    mob: 347
-    item: 40061
-    conditions:
-      has: ["20-vella_journal"]
-      missing: ["20-end"]
-    actions:
-      - consume_item: 40061
-      - grant: "20-end"
-      - set_flag:
-          key: "20-truth"
-          value: "partial"
-
   # ── Step 9, appended: `look grave` in the cemetery (4140). The room
   #    noun `Elgar's grave` answers `grave` through FindNoun, but the
   #    trigger compares the typed noun, so `grave` needs its own entry.

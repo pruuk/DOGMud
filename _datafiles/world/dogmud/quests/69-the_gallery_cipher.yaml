@@ -113,46 +113,6 @@ triggers:
           plaque that names them. Their hands are oddly placed. Without a
           reason to study them you move on.
 
-  # ── GIVE THE RUBBING TO DROSS ────────────────────────────
-  # Alternate path to the q69_gallery dialogue node ("ask dross
-  # rubbing"). The quest log says "Take the rubbing to Dross", so a
-  # player who physically hands it over must advance too. The rubbing
-  # is needed later (Lysha reads it; Dross lays it beside the reading
-  # at the end), so we consume the given copy and hand back a clean
-  # one — same pattern as quest 35 (give.go's consume branch returns
-  # before the generic "hands it back" emote, so it reads cleanly).
-  - event: item_give
-    mob: 9360
-    item: 40115
-    conditions:
-      has: ["69-rubbing"]
-      missing: ["69-gallery"]
-    actions:
-      - actor: >-
-          Dross takes the rubbing and unrolls it across his knee,
-          tracing the figures' hands. "Yes -- yes, this is the
-          sequence." He rolls it carefully and hands it back. "Keep
-          it. You will need it where I am sending you."
-      - consume_item: 40115
-      - give_item: 40115
-      - grant: "69-gallery"
-
-  - event: item_give
-    mob: 9360
-    item: 40116
-    conditions:
-      has: ["69-reading"]
-      missing: ["69-end"]
-    actions:
-      - bump_rep: {faction: cooperage_circle, delta: 5}
-      - npc_say:
-          mob: 9360
-          lines:
-            - {delay: 1, text: "You reached her. You actually reached her."}
-            - {delay: 4, text: "The third panel -- painted from observation, of a structure that stands inland of the docks, exactly where the cipher's geometry points. The rubbing and the panel agree. The same hand, or the same workshop, and they agree."}
-            - {delay: 8, text: "Then it is settled, as far as evidence settles anything. The inscription predates the founding. The founding date is wrong. And everything the bloodline holds in law derives from a date that is wrong. You should know what you have helped prove. And be careful who you prove it to."}
-      - grant: "69-end"
-
   # Lost rubbing (appended 2026-10-21, #375 batch 5): Dross and Lysha both
   # need to see the rubbing (carriesItem), so a player who lost it takes
   # another while the quest is open. Trigger 0 gives the first copy and so

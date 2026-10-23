@@ -38,50 +38,6 @@ rewards:
   gold: 15
 
 triggers:
-  # Normal completion: player has quest, delivers crate
-  - event: item_give
-    mob: 250
-    item: 40039
-    conditions:
-      has: [15-start]
-      missing: [15-end]
-    actions:
-      - grant: 15-end
-      - npc_say:
-          mob: 250
-          lines:
-            - {delay: 1, text: "That is the one! The iron straps,
-                the stencil marks -- that is my consignment."}
-            - {delay: 3, text: "I owe you for this. Road prices
-                from me, any time. Better than road prices."}
-
-  # Pre-discovery: player found crate before talking to Malk
-  - event: item_give
-    mob: 250
-    item: 40039
-    conditions:
-      missing: [15-start]
-    actions:
-      - grant: 15-start
-      - npc_say:
-          mob: 250
-          lines:
-            - {delay: 1, text: "My freight! Where did you -- never
-                mind, I can see the lock has been forced. Bandits."}
-            - {delay: 3, text: "You have done me a considerable
-                favor. Road prices from me, any time. Better than
-                road prices."}
-
-  # Chain: after pre-discovery grants 15-start, auto-complete
-  - event: quest_granted
-    quest_token: "15-start"
-    conditions:
-      missing: [15-end]
-    actions:
-      - grant: 15-end
-
-  # The two triggers below are appended last so the trigger indexes in the
-  # converter report (which deletes triggers 0 to 2) hold.
   # Picking up the crate moves the hint on to the way back.
   - event: item_gain
     item: 40039

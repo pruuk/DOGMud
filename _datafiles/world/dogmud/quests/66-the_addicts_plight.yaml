@@ -64,39 +64,3 @@ rewards:
   observer: >-
     The traveller looks up from a quiet exchange with the look
     of someone who has just learned something they cannot unlearn.
-
-triggers:
-  # ── ESCORT: player brings the wax wrapper (40110) to Ysolde (9323) ──
-  - event: item_give
-    mob: 9323
-    item: 40110
-    conditions:
-      has: ["66-start"]
-      missing: ["66-escort"]
-    actions:
-      - grant: "66-escort"
-      - npc_say:
-          mob: 9323
-          lines:
-            - {delay: 1, text: "This wrapper. I know this smell."}
-            - {delay: 3, text: "Copper-flower, underneath the wax. I've
-                been taking it off people's skin for the better part of two
-                seasons. You said someone gave this to you -- they need the
-                purge, not just the sympathy."}
-            - {delay: 5, text: "I can get Teels through withdrawal. Hear me
-                on this -- the purge holds until the craving comes back. And
-                the craving comes back every time while the source is still
-                running. Someone is putting this on the docks. That is the
-                problem I cannot fix."}
-      - grant: "66-detox"
-
-  # ── AUTO-COMPLETE: detox → end ──
-  - event: quest_granted
-    quest_token: "66-detox"
-    conditions:
-      missing: ["66-end"]
-    actions:
-      - set_flag:
-          key: "66-addict-fate"
-          value: "saved"
-      - grant: "66-end"

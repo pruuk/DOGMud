@@ -160,35 +160,6 @@ triggers:
       - actor: "The strongbox is locked with a heavy brass padlock. You
           need a key."
 
-  # ── REPORT: bribe ledger to Velk ─────────────────────
-  - event: item_give
-    mob: 94
-    item: 40036
-    conditions:
-      has: ["14-evidence"]
-      missing: ["14-report"]
-    actions:
-      - grant: "14-report"
-      - npc_say:
-          mob: 94
-          lines:
-            - {delay: 1, text: "A bribe ledger? Let me see that."}
-            - {delay: 3, text: "Names, dates, amounts. Gate captains, customs
-                clerks, a warehouse inspector -- all on the take."}
-            - {delay: 5, text: "This changes everything. I am ordering arrests
-                tonight."}
-
-  # ── AUTO-COMPLETE: report → end ───────────────────────
-  - event: quest_granted
-    quest_token: "14-report"
-    conditions:
-      missing: ["14-end"]
-    actions:
-      - grant: "14-end"
-
-  # Everything below is appended last so the trigger indexes in the
-  # converter report (which deletes triggers 6 and 7) hold.
-
   # ── LOOT: Torvan falls ────────────────────────────────
   # Corpses hold the loot (CorpsesEnabled), so the key is taken by hand.
   # mob_death reaches every player with kill credit (hooks/

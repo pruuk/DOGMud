@@ -2,125 +2,176 @@ mobid: 9464
 zone: The Confluence
 defaultMood: friendly
 greetings:
-  - text: "The Chapter House is not a public room. You have been
-      admitted to the cloisters, so I will assume you have
-      a reason to be here. State it."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Aldric. I keep this order. If you are in this room,
-        someone decided you should be. What do you need?"
-  - keywords: ["order", "keepers", "temple", "who are"]
-    responses:
-      - "We are the temple's keepers -- of the rite, of the
-        records, of the building and the ground beneath it. The
-        work has been continuous for three hundred years. It will
-        continue after us."
-  - keywords: [""]
-    responses:
-      - "Plainly, if you please. I am not difficult to talk to,
-        only direct."
-tree:
-  root:
-    text: "I am Aldric -- head of this order, for what that
-      is worth. The Chapter House is where the order's decisions
-      are made, and I have made a great many of them in this
-      room. Some of them I would change. Some of them I would
-      not."
-    hints: "You could ask Aldric about the order he leads, about
-      the temple and what it was raised on, or about whether
-      he will permit a look at what lies below."
-  nodes:
-    - id: aldrichandoff
-      triggers: ["rubbing", "undercroft", "reveal", "keepers", "confidence",
-        "deliver", "hand", "give", "turn", "done", "quest", "task"]
-      questRequired: ["74-reveal"]
-      questExcluded: ["74-end"]
-      requiresItem: 40142
-      grantsQuest: "74-end"
-      setsQuestFlag: {key: "74-allegiance", value: "keepers"}
-      givesGold: 80
-      bumpsRep:
-        - {faction: "keepers", delta: 20}
-        - {faction: "margin", delta: -10}
-      text: "You took a rubbing. Of course you did. I will keep this with
-        the others -- the order will hold it. And you, I think, will keep
-        our confidence."
-      hints: "You hand the rubbing to Aldric."
-    - id: aldric_q74_permission
-      questRequired: ["74-survey"]
-      triggers: ["permission", "allow", "descent", "below",
-        "stair", "down", "deeper", "underneath", "supervise",
-        "look", "see", "permitted", "consent", "agreed",
-        "decision", "older", "foundation", "cael"]
-      text: "Brother Cael tells me you have read the records. Good.
-        I will not pretend you did not. I have permitted this --
-        a supervised descent, no more than that -- because I have
-        spent thirty years deciding that concealment is not
-        custodianship. What is there is there. The temple stands
-        above it and does its work, and that work is real,
-        whatever the ground holds. Go carefully. What you find
-        belongs to the order to interpret, not to you alone. Do
-        you understand that?"
-      hints: "You could go carefully down the stair in the older
-        east corridor when you are ready."
-    - id: q73_aside
-      questRequired: ["73-end"]
-      questExcluded: ["74-start"]
-      triggers: ["question", "margin", "fourth", "record",
-        "scholars", "found", "notation", "asked", "water",
-        "survey"]
-      text: "The Margin's question reached us before you did. They
-        are careful scholars and they are not wrong. I have read
-        every document they have cited, and several they have not
-        found yet. I have known what the building record says for
-        a long time. The question was never what is there -- the
-        question was what to do with knowing. I have not always
-        answered that well."
-      hints: "You could ask Aldric what he means by that, or ask
-        whether he will permit a supervised look at what lies
-        below."
-    - id: the_order
-      triggers: ["order", "keepers", "history", "founded",
-        "purpose", "three hundred", "continuous", "since",
-        "who kept", "before"]
-      text: "The order was established at the temple's founding
-        to tend the rite and the building in which it is kept.
-        Three hundred years is a long time to do one thing. You
-        develop a certain relationship with continuity -- with
-        the idea that the work you were given is worth doing,
-        that the institution is not just you. I believe that.
-        I also believe it can be used to avoid difficult
-        questions, and I have used it that way, and I am not
-        proud of it."
-      hints: "You could ask Aldric about the records, or about
-        what lies beneath the temple."
-    - id: the_ground
-      questRequired: ["73-end"]
-      triggers: ["older", "beneath", "under", "built", "raised",
-        "foundation", "stone", "ground", "deeper", "what is",
-        "what lies", "below"]
-      text: "The temple was raised on work that was already there.
-        The building record says so plainly, if you read it with
-        care. I have read it. The previous heads of this order
-        read it. We kept the rite and we kept our counsel, and
-        the two things became the same habit of mind. I will not
-        tell you what is down there -- I have not gone down myself
-        in many years, and what I remember I am not certain is
-        mine alone to give. What I will tell you: it is not
-        frightening. It is old. There is a difference."
-      hints: "You could ask Aldric whether he would permit a look,
-        or ask about the order and its history."
-    - id: crane_note
-      triggers: ["crane", "prioress", "believer", "faith",
-        "devout", "prayer"]
-      text: "Prioress Crane is the best of us. I mean that without
-        irony. She holds what this order holds with her whole
-        self, and she has never needed me to tell her it is worth
-        holding. I have not told her everything I know. I have
-        wondered, for a long time, whether that was a kindness or
-        a failure of nerve. I still do not have a satisfying
-        answer."
-      hints: "You could ask Aldric about the temple and what lies
-        beneath it, or about the order's history."
+- text: The Chapter House is not a public room. You have been admitted to the cloisters,
+    so I will assume you have a reason to be here. State it.
+  moods:
+  - friendly
+opener:
+  text: Aldric. I lead this order, for what that is worth. If you are in this room,
+    someone decided you should be. The Chapter House is where the order's decisions
+    are made, and I have made a great many of them in this room. Some of them I
+    would change. Some of them I would not.
+  hints: You could ask Aldric about the order he leads, or about Prioress Crane.
+  # Quest 74 states first (first match wins; HasQuest is also true at every
+  # later step). The 74-end pair reacts to the choice the player made.
+  variants:
+  - questRequired:
+    - 74-end
+    questFlagRequired:
+      74-allegiance: keepers
+    text: You kept the order's confidence. I have not forgotten it, and I will not.
+    hints: You could ask Aldric about the order he leads, about what the temple was
+      raised on, or about Prioress Crane.
+  - questRequired:
+    - 74-end
+    text: The Margin has it now. You chose, and I will not pretend I would have
+      chosen the same. We have nothing more to say about what lies below.
+    hints: Aldric is courteous, and no more than courteous. You could still ask him
+      about the order or about Prioress Crane.
+  - questRequired:
+    - 74-descent
+    questExcluded:
+    - 74-end
+    carriesItem: 40142
+    text: You have been below. I can see it on you. Before you hand me anything,
+      hear what it would mean.
+    hints: To hear what giving Aldric the rubbing means, choose to ask him below.
+      The Margin scholar at the Temple Portico would carry it out instead. Neither
+      choice can be undone. To reach her, go east to the North Walk, south to the
+      Cloister Garth, west three times through the warded door to the Chapel of the
+      Brenn, west to the Crossing, then north three times to the Temple Portico.
+  - questRequired:
+    - 74-reveal
+    questExcluded:
+    - 74-end
+    text: You have been below, I hear. Then where is what you brought up?
+    hints: If you lost the rubbing, Brother Cael can draw you a clean copy. From
+      the Chapter House, go east to the North Walk, then east into the Archive. Type
+      talk cael.
+  - questRequired:
+    - 74-descent
+    questExcluded:
+    - 74-reveal
+    - 74-end
+    text: Brother Cael tells me you have read the records. Good. I will not pretend
+      you did not.
+    hints: You could ask Aldric whether he will allow you to go down below the
+      temple.
+  - questRequired:
+    - 73-end
+    text: Aldric. I lead this order, for what that is worth. The Margin's question
+      has walked into my Chapter House, I see. Some of my decisions I would change.
+      Some of them I would not.
+    hints: You could ask Aldric about the order he leads, about what the temple was
+      raised on, or about Prioress Crane.
+topics:
+# Quest 74's Keepers choice (spec R28): the warning (aldric_terms) must be
+# heard first, and both hide once the choice is made (74-end). The Margin
+# side is the Margin scholar's (9454), built the same way. The hand-in gates
+# on 74-descent, the step before the rubbing is given, plus the rubbing.
+- key: aldrichandoff
+  kind: handin
+  quest: 74
+  label: The Undercroft
+  playerLine: Keep the rubbing. The order should hold it, for good.
+  text: You took a rubbing. Of course you did. Then you understand what we have
+    carried, and why some of us decided to carry it quietly. I will keep this with
+    the others. The order will hold it, and you, I think, will keep our confidence.
+  hints: You gave the rubbing to Aldric. The choice is made and cannot be undone,
+    and the Margin now counts you against it.
+  heardRequired:
+  - aldric_terms
+  questRequired:
+  - 74-descent
+  questExcluded:
+  - 74-end
+  requiresItem: 40142
+  grantsQuest: 74-end
+  setsQuestFlag:
+    key: 74-allegiance
+    value: keepers
+  bumpsRep:
+  - faction: keepers
+    delta: 20
+  - faction: margin
+    delta: -10
+  givesGold: 80
+- key: aldric_terms
+  kind: info
+  label: What happens if I give you the rubbing?
+  text: Then it stays with the order, with the other things we have kept, and it
+    does not leave this house. The Margin will not see it. Quist will learn who went
+    down and came back with nothing to show him, and the Margin does not forgive
+    that quickly. I will not ask you to lie for us. I will ask you to keep silent.
+    The order pays its debts, and it will pay you. But once I have filed it away,
+    I do not hand it back.
+  hints: Giving the rubbing to Aldric keeps the truth inside the temple for good
+    and sets the Margin against you. It cannot be undone. If you are sure, choose
+    The Undercroft below.
+  marked: true
+  questRequired:
+  - 74-descent
+  questExcluded:
+  - 74-end
+  carriesItem: 40142
+- key: aldric_q74_permission
+  kind: info
+  label: Will you allow me to go down below the temple?
+  text: I have permitted it. A supervised descent, no more than that, because I have
+    spent thirty years deciding that concealment is not custodianship. What is there
+    is there. The temple stands above it and does its work, and that work is real,
+    whatever the ground holds. Go carefully. What you find belongs to the order to
+    interpret, not to you alone. Do you understand that?
+  hints: Brother Cael, in the Archive east along the North Walk, knows the way
+    down.
+  marked: true
+  questRequired:
+  - 74-descent
+  questExcluded:
+  - 74-reveal
+  - 74-end
+- key: q73_aside
+  kind: info
+  label: Has the Margin's question reached you here?
+  text: The Margin's question reached us before you did. They are careful scholars
+    and they are not wrong. I have read every document they have cited, and several
+    they have not found yet. I have known what the building record says for a long
+    time. The question was never what is there. The question was what to do with
+    knowing. I have not always answered that well.
+  questRequired:
+  - 73-end
+  questExcluded:
+  - 74-start
+- key: the_ground
+  kind: info
+  label: What was the temple raised on?
+  text: 'The temple was raised on work that was already there. The building record
+    says so plainly, if you read it with care. I have read it. The previous heads
+    of this order read it. We kept the rite and we kept our counsel, and the two
+    things became the same habit of mind. I will not tell you what is down there. I
+    have not gone down myself in many years, and what I remember I am not certain is
+    mine alone to give. What I will tell you: it is not frightening. It is old. There
+    is a difference.'
+  marked: true
+  questRequired:
+  - 73-end
+# the_order folds the "order keepers temple" pattern (kept as topic temple)
+# into its opening sentence.
+- key: the_order
+  kind: info
+  label: What is this order, and what does it keep?
+  text: We are the temple's keepers. Of the rite, of the records, of the building
+    and the ground beneath it. The order was established at the temple's founding
+    to tend the rite and the building in which it is kept. Three hundred years is a
+    long time to do one thing. You develop a certain relationship with continuity,
+    with the idea that the work you were given is worth doing, that the institution
+    is not just you. I believe that. I also believe it can be used to avoid
+    difficult questions, and I have used it that way, and I am not proud of it.
+- key: crane_note
+  kind: info
+  label: What do you think of Prioress Crane?
+  text: Prioress Crane is the best of us. I mean that without irony. She holds what
+    this order holds with her whole self, and she has never needed me to tell her
+    it is worth holding. I have not told her everything I know. I have wondered,
+    for a long time, whether that was a kindness or a failure of nerve. I still do
+    not have a satisfying answer.

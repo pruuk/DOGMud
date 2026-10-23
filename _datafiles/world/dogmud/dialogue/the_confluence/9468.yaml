@@ -2,43 +2,28 @@ mobid: 9468
 zone: The Confluence
 defaultMood: friendly
 greetings:
-  - text: "The refectory is between meals at the moment. If you
-      are hungry, come back at the sixth hour."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Cellarer. I run the stores and the table. If you need
-        the Archive or the Prioress, they are further in."
-  - keywords: ["food", "eat", "meal", "hungry", "bread", "drink",
-      "store", "stores"]
-    responses:
-      - "The order eats twice a day -- sixth hour and eighteenth.
-        Visitors are permitted to join at the common table if
-        they have business in the cloisters. The bread is good.
-        I am particular about the bread."
-  - keywords: [""]
-    responses:
-      - "Sixth hour and eighteenth. Or ask the Archive if it
-        is records you need."
-tree:
-  root:
-    text: "I keep the refectory and the stores. Simple work, done
-      consistently, which is how all the important work goes. Was
-      there something you needed?"
-    hints: "You could ask the Cellarer about the refectory, the
-      stores, or what the order's daily life looks like."
-  nodes:
-    - id: the_stores
-      triggers: ["stores", "supplies", "cellarer", "provisions",
-        "what keep", "stock", "managed", "account"]
-      text: "Three months of grain, two months of oil. A good
-        supply of preserved fish from the Quay traders. The
-        temple has been here three hundred years. It has a
-        relationship with continuity. I keep the stores the
-        same way -- enough to last, never so much that we stop
-        paying attention to what we have. The old cellarer who
-        trained me called it the middle path between hoarding
-        and faith. I have found it a sound principle."
-      hints: "You could ask about the daily life of the order,
-        or let the Cellarer return to the provisions."
+- text: The refectory is between meals at the moment. Is there something you need?
+  moods:
+  - friendly
+opener:
+  text: I am the Cellarer. The refectory and the stores are mine to keep, and I
+    keep them the same way every day, which is how all the important work goes.
+    If it is the Archive or the Prioress you want, they are further in. If it is
+    the kitchen, you have found it.
+  hints: You could ask the Cellarer about the stores, or about when the order eats.
+topics:
+- key: the_stores
+  kind: info
+  label: What do you keep in the stores?
+  text: Three months of grain, two months of oil. A good supply of preserved fish
+    from the Quay traders. The temple has been here three hundred years. It has a
+    relationship with continuity. I keep the stores the same way. Enough to last,
+    never so much that we stop paying attention to what we have. The old cellarer
+    who trained me called it the middle path between hoarding and faith. I have found
+    it a sound principle.
+- key: food
+  kind: info
+  label: When does the order eat?
+  text: Twice a day, at the sixth hour and the eighteenth. No one eats who does not
+    attend, and no one attends who cannot be fed. The bread is good. I am particular
+    about the bread.

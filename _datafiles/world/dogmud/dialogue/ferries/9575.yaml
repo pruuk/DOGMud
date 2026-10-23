@@ -1,0 +1,10 @@
+mobid: 9575
+zone: Ferries
+defaultMood: neutral
+opener:
+  text: Hold on. Let me set the pole. There. This is the Grey Heron, Stillwater
+    down to the Confluence. Your fare goes to the agent on the dock, not to me.
+    Short trip. Now keep clear of the pole, it swings wide.
+  hints: The gangplank leads to whichever pier the boat is tied up at. Wait while
+    she crosses. When she ties up at the pier you paid to reach, type gangplank to
+    walk ashore.

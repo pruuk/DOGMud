@@ -1,112 +1,121 @@
 mobid: 84
 zone: Watchers Crossing
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "good day"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Welcome to the Crossing Inn. You look road-worn. Sit down, there is stew on."
-      - "Traveller. Come in, come in. The fire is warm and the ale is passable."
-      - "Another face from the west road. You are welcome here, so long as you pay your tab."
-
-  - keywords: ["hello", "hi", "greet"]
-    moods: ["grateful"]
-    responses:
-      - "Ah, you are back. There is a bowl with your name on it. Sit, eat."
-      - "Welcome back, friend. The inn remembers those who do it good turns."
-
-  - keywords: ["toll", "bridge", "harn", "crossing", "tax"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "That toll is killing us. Merchants are taking the long way around rather than pay, and the inn suffers for it. Harn means well, but he has no authority to charge for the bridge."
-      - "Five gold to cross a bridge? There is no writ from Thornwall, no charter. One man decided to charge travellers and nobody stopped him. It has to end."
-
-  - keywords: ["help", "quest", "task", "work", "job", "complaint"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "If you want to help, get me proof. Harn keeps a ledger at the tollhouse -- every coin in, every coin out. If that ledger shows no official authority behind the toll, I can petition Thornwall to shut it down."
-      - "I need the crossing ledger from the tollhouse. It will show that the toll has no legal backing. Bring it to me and I will handle the rest."
-
-  - keywords: ["inn", "food", "drink", "ale", "stew", "room", "stay"]
-    responses:
-      - "Stew is on the hearth, ale is in the barrel. Rooms upstairs if you need one. Prices are fair -- I am not in the business of gouging travellers, unlike some."
-      - "You are welcome to eat and rest. The inn has stood here longer than the toll, and it will be here after it is gone."
-
-  - keywords: ["brecca", "merchant", "trade", "trading post", "shop"]
-    responses:
-      - "Brecca runs the trading post next door. Good woman, fair prices. She is as frustrated with the toll as I am -- it is driving her suppliers to other routes."
-
-  - keywords: ["road", "travel", "dustwalk", "thornwall"]
-    responses:
-      - "Dustwalk Road comes in from the west, Thornwall is east across the bridge. This is the waypoint between, and it is dying because of that toll."
-
-  - keywords: [""]
-    responses:
-      - "Speak up, I am listening. And eat something -- you look half-starved."
-      - "Is there something you need? I have a kitchen to run."
-
-tree:
-  root:
-    text: "Welcome to the Crossing Inn. Sit anywhere -- food is on the hearth and I will not ask your business unless you want to share it. Though if you came over the bridge, I expect you have opinions about that toll."
-    hints: "Ask me about the toll, the inn, or whether I need any help."
-    variants:
-      - questRequired: ["5-start"]
-        questExcluded: ["5-end"]
-        text: "Any luck with that ledger? The sooner I have proof, the sooner I can write to the magistrate."
-        hints: "Find the crossing ledger at the tollhouse and bring it back to me."
-      - questRequired: ["5-end"]
-        text: "Thanks to you, the magistrate will have that ledger before the month is out. This settlement owes you one. Sit down -- stew is on the house."
-
-  nodes:
-    - id: tolvahandoff
-      triggers: ["ledger", "complaint", "book", "deliver", "hand",
-        "give", "turn", "done", "finished", "report", "quest", "task"]
-      questRequired: ["5-start"]
-      questExcluded: ["5-end"]
-      requiresItem: 21
-      grantsQuest: "5-end"
-      text: "This is it -- Harn's own hand, no commission number,
-        no writ. I have what the magistrate needs. You have done
-        this settlement a real service."
-      hints: "You hand the crossing ledger to Tolva."
-      moodChange: grateful
-
-    - id: toll_problem
-      triggers: ["toll", "bridge", "harn", "tax", "five gold", "crossing"]
-      text: "Harn set up that toll two years ago. Says the bridge needs repairs, and maybe it does, but he has no charter from Thornwall, no writ of authority. He just started charging people and nobody stopped him. Merchants are rerouting to avoid the fee, and every one that does is a customer I lose. This settlement is withering."
-      hints: "Ask how you could help, or about the ledger."
-      unlocks: ["help_quest", "about_harn"]
-
-    - id: help_quest
-      triggers: ["help", "ledger", "proof", "quest", "task", "what can i do"]
-      questExcluded: ["5-start", "5-end"]
-      grantsQuest: "5-start"
-      text: "Harn keeps a ledger. Every toll payment, every expense. If there is no commission from Thornwall in those records -- and I wager there is not -- that is proof the toll is unauthorized. Get me that ledger and I will send it to the magistrate myself. I have a contact who will see it reaches the right desk."
-      hints: "Head to the tollhouse east of the crossroads and find the crossing ledger."
-      moodChange: friendly
-
-    - id: about_harn
-      triggers: ["harn", "collector", "who is he", "tollhouse"]
-      text: "Harn is not a bad man. That is what makes this difficult. He genuinely believes the bridge will collapse without repairs, and maybe he is right. But you do not get to tax people on your own authority. There are processes. He should have gone to Thornwall first. Instead he put up a booth and started collecting. Stubborn as the bridge itself."
-
-    - id: about_brecca
-      triggers: ["brecca", "merchant", "trading post", "trade"]
-      text: "Brecca has been here almost as long as I have. Good head for numbers, fair dealer. She is hurting from the toll as much as I am -- her suppliers are adding the cost to their prices or just finding other routes. Talk to her if you need supplies."
-
-    - id: inn_services
-      triggers: ["food", "drink", "room", "stay", "rest", "stew"]
-      text: "Stew is lamb and root vegetables today. Ale is from the last barrel, so it is a bit strong, but that is not a complaint from most. Rooms upstairs are two gold a night, clean bedding, and I lock the doors at midnight. Help yourself."
-
-    - id: ledger_return
-      triggers: ["ledger", "found", "proof", "evidence", "records", "here",
-        "quest", "task"]
-      questRequired: ["5-start"]
-      questExcluded: ["5-end"]
-      requiresItem: 21
-      grantsQuest: "5-end"
-      text: "No commission. No charter number. No authorizing signature. Just Harn's own hand, collecting and spending as he sees fit. This is what I needed. The magistrate in Thornwall will see this before the month is out."
-      moodChange: grateful
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: "Welcome to the Crossing Inn. Sit anywhere. I will not ask your business
+    unless you want to share it. Though if you came over the bridge, I expect you
+    have opinions about that toll."
+  hints: "You could ask Tolva about the toll, about Harn who collects it, or about
+    the inn."
+  variants:
+  - questRequired:
+    - 5-end
+    text: "Thanks to you, the magistrate will have that ledger before the month is
+      out. This settlement owes you one."
+  - questRequired:
+    - 5-deliver
+    questExcluded:
+    - 5-end
+    text: "Is that what I think it is under your arm? Let me see it."
+    hints: "Choose The Innkeeper's Complaint below to hand Tolva the crossing
+      ledger."
+  # The ledger picked up before accepting grants no step; the hand-in still
+  # takes it (5-start + item 21).
+  - questRequired:
+    - 5-start
+    questExcluded:
+    - 5-deliver
+    - 5-end
+    carriesItem: 21
+    text: "Is that what I think it is under your arm? Let me see it."
+    hints: "Choose The Innkeeper's Complaint below to hand Tolva the crossing
+      ledger."
+  - questRequired:
+    - 5-start
+    questExcluded:
+    - 5-deliver
+    - 5-end
+    text: "Any luck with that ledger? The sooner I have proof, the sooner I can write
+      to the magistrate."
+    hints: "From the Crossing Inn, go south to the West Approach, then east into the
+      Tollhouse. The ledger sits on the counter. Type get ledger."
+topics:
+- key: help_quest
+  kind: offer
+  quest: 5
+  label: The Innkeeper's Complaint
+  playerLine: Do you want help with that toll?
+  text: "Harn keeps a ledger at the tollhouse. Every toll payment, every expense. If
+    there is no commission from Thornwall in those records, and I wager there is
+    not, that is proof the toll is unauthorized. Get me that ledger and I will send
+    it to the magistrate myself. I have a contact who will see it reaches the right
+    desk."
+  hints: "If you accept, the Tollhouse is close: from the Crossing Inn, go south to
+    the West Approach, then east."
+  questExcluded:
+  - 5-start
+  - 5-end
+  grantsQuest: 5-start
+  moodChange: friendly
+# ledger_return (tree node) merged into tolvahandoff; the quest npc_say's
+# "someone is skimming" is dropped, because Harn's ledger shows every coin
+# going into the bridge and the reward line finds no writ, not theft.
+- key: tolvahandoff
+  kind: handin
+  quest: 5
+  label: The Innkeeper's Complaint
+  playerLine: I brought you Harn's crossing ledger.
+  text: "The crossing ledger. Let me see those numbers. No commission. No charter
+    number. No authorizing signature. Just Harn's own hand, collecting and spending
+    as he sees fit. This is what I needed. The magistrate in Thornwall will see this
+    before the month is out. You have done this settlement a real service."
+  hints: "You hand the crossing ledger to Tolva."
+  questRequired:
+  - 5-start
+  questExcluded:
+  - 5-end
+  requiresItem: 21
+  grantsQuest: 5-end
+  moodChange: grateful
+# toll (pattern) folded into toll_problem; shop (pattern) into about_brecca;
+# inn (pattern) into inn_services; work (pattern) is covered by the
+# help_quest pitch.
+- key: toll_problem
+  kind: info
+  label: What is wrong with the toll?
+  text: "Harn set up that toll two years ago. Says the bridge needs repairs, and
+    maybe it does, but he has no charter from Thornwall, no writ of authority. One
+    man decided to charge travellers and nobody stopped him. Merchants are taking
+    the long way around rather than pay, and every one that does is a customer I
+    lose. This settlement is withering. It has to end."
+  marked: true
+- key: about_harn
+  kind: info
+  label: What kind of man is Harn?
+  text: "Harn is not a bad man. That is what makes this difficult. He genuinely
+    believes the bridge will collapse without repairs, and maybe he is right. But you
+    do not get to tax people on your own authority. There are processes. He should
+    have gone to Thornwall first. Instead he put up a booth and started collecting.
+    Stubborn as the bridge itself."
+- key: about_brecca
+  kind: info
+  label: What else is here at the crossing?
+  text: "Not much besides the inn, the tollhouse and the bridge. Brecca runs the
+    trading post next door. She has been here almost as long as I have. Good head
+    for numbers, fair dealer. She is hurting from the toll as much as I am. Her
+    suppliers are adding the cost to their prices or just finding other routes.
+    Talk to her if you need supplies."
+  hints: "The trading post is just east of the inn."
+- key: inn_services
+  kind: info
+  label: What is the inn like these days?
+  text: "Quieter than it should be. The inn has stood here longer than the toll, and
+    it will be here after it is gone. Most nights the common room is half empty now,
+    because the carters who used to fill it take the long way round. You are welcome
+    to sit by the fire and rest your feet."
+  hints: "Sitting down to rest helps you recover faster. Type sit."
+- key: road
+  kind: info
+  label: Which way does the road run?
+  text: "Dustwalk Road comes in from the west. Thornwall is east across the bridge.
+    This is the waypoint between, and it is dying because of that toll."

@@ -85,7 +85,7 @@ flags:
       the Keepers' confidence. Set by the hand-in topic the player chooses:
       Aldric (9464) or the Margin scholar (9454)."
 
-# Rewards fire on the `end` step (granted by either allegiance branch below).
+# Rewards fire on the `end` step (granted by either allegiance hand-in topic).
 # Faction reputation is flag-specific and delivered by the hand-in topics; this
 # block is the faction-neutral completion message, pointing onward.
 rewards:
@@ -205,52 +205,3 @@ triggers:
           A vast carving of the night sky in nested rings, cut into the
           chamber's far wall by a very old hand. Without a reason to count
           them closely, it is only a beautiful, weathered thing in the dark.
-
-  # ── COMPLETION, KEEPERS BRANCH: give the rubbing to Aldric (9464) ──
-  - event: item_give
-    mob: 9464
-    item: 40142
-    conditions:
-      has: ["74-reveal"]
-      missing: ["74-end"]
-    actions:
-      - set_flag: {key: "74-allegiance", value: "keepers"}
-      - give_gold: 80
-      - bump_rep: {faction: keepers, delta: 20}
-      - bump_rep: {faction: margin, delta: -10}
-      - npc_say:
-          mob: 9464
-          lines:
-            - {delay: 1, text: "You took a rubbing. Of course you did."}
-            - {delay: 4, text: "Then you understand what we have carried, and why some of us decided to carry it quietly. I will keep this with the others. The order will hold it -- and you, I think, will keep our confidence."}
-      - actor: >-
-          You hand Aldric the rubbing. He looks at it a long moment, then folds
-          it away with the care of a man filing something he has decided not to
-          act on. You have kept the Keepers' confidence. What that costs, and
-          what it is worth, will be yours to weigh.
-      - grant: "74-end"
-
-  # ── COMPLETION, MARGIN BRANCH: give the rubbing to the Margin scholar (9454) ──
-  - event: item_give
-    mob: 9454
-    item: 40142
-    conditions:
-      has: ["74-reveal"]
-      missing: ["74-end"]
-    actions:
-      - set_flag: {key: "74-allegiance", value: "margin"}
-      - give_gold: 40
-      - bump_rep: {faction: margin, delta: 20}
-      - bump_rep: {faction: keepers, delta: -10}
-      - npc_say:
-          mob: 9454
-          lines:
-            - {delay: 1, text: "Is that -- it is. From below. They let you down, and you brought this up."}
-            - {delay: 5, text: "Then it is real, and it is out, and it cannot be un-known now. The Margin will keep it where the temple cannot reorganize it. Thank you. You have no idea what this is worth -- or perhaps you do."}
-      - actor: >-
-          You give the Margin scholar the rubbing. She holds it like something
-          that might break, then like something that cannot. The truth is out
-          of the temple's keeping now, in hands that will not let it go quiet.
-          You have carried it into the light. Where it leads next is another
-          road.
-      - grant: "74-end"

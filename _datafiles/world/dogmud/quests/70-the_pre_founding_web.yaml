@@ -105,14 +105,3 @@ triggers:
           taking no mark, no wear. It does not belong to any stone the
           colony has a name for. It was here before the canal, before the
           quarter, before the founding the city teaches.
-
-  # END: carry the rubbing up to Orin (9332)
-  - event: item_give
-    mob: 9332
-    item: 40118
-    conditions:
-      has: ["70-witness"]
-      missing: ["70-end"]
-    actions:
-      - bump_rep: {faction: cooperage_circle, delta: 5}
-      - grant: "70-end"

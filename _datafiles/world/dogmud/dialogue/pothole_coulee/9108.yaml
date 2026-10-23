@@ -1,259 +1,219 @@
 mobid: 9108
 zone: Pothole Coulee
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "hail"]
-    responses:
-      - "You need something. Say it."
-      - "I train fighters, not talkers. You here to fight?"
-      - "Drillmaster Vorn. Keep walking or start listening --
-          your choice."
-
-  - keywords: ["train", "learn", "combat", "fight", "drill",
-      "practice", "quest", "task"]
-    responses:
-      - "That is what I am here for. Ask me properly -- not
-          at a shout."
-
-  - keywords: ["combatverbosity", "verbosity", "combat output",
-      "verbose", "output"]
-    responses:
-      - "set combatverbosity full gives you every detail of every
-          exchange. medium is the working soldier's setting.
-          light is for veterans who already know the shape of
-          a fight and do not need to read it. Start on full.
-          Change it when you know what you are changing."
-
-  - keywords: [""]
-    responses:
-      - "State your business."
-      - "I do not have time for riddles. Ask something."
-      - "If you are here to train, say so."
-
-tree:
-  root:
-    text: "Vorn. Drillmaster. I run the Drill Yard."
-    hints: "You could ask Vorn about training or your task."
-    variants:
-      # ── Not yet Opened (quest 30 incomplete) ──────────
-      - questExcluded: ["30-end"]
-        text: "You are not ready for this yard. The rite of
-          Awakening comes first. Find Cleric Hadwen at the
-          reflecting pool -- north of the hub -- and complete
-          the rite. Then come back."
-        hints: "Find Cleric Hadwen at the reflecting pool
-          north of the hub. Complete the Awakening before
-          speaking with Vorn again."
-
-      # ── Opened, quest not yet started ─────────────────
-      - questRequired: ["30-end"]
-        questExcluded: ["32-start", "32-end"]
-        text: "You have been through the rite. Good. Now you
-          learn to use what the Awakening gave you. I run
-          combat training in this yard. If you want it, ask
-          me about training."
-        hints: "Type ask vorn train to begin combat training."
-
-      # ── Mid quest 32, one variant per step (one command each) ─
-      - questRequired: ["32-start"]
-        questExcluded: ["32-wield", "32-end"]
-        text: "You are not done. That cudgel goes in your hand,
-          not your pack. If it is already in your hand, put it
-          away and take it up again so I can see you do it."
-        hints: "Type wield cudgel."
-      - questRequired: ["32-wield"]
-        questExcluded: ["32-sized_up", "32-end"]
-        text: "The cudgel is in your hand. Before you swing it,
-          look at what you are swinging at. Read the dummy and see
-          what it tells you."
-        hints: "Type consider dummy."
-      - questRequired: ["32-sized_up"]
-        questExcluded: ["32-strike", "32-end"]
-        text: "Now you know what you face. Use the cudgel. Hit the
-          dummy until it stops hitting back."
-        hints: "Type attack dummy."
-      - questRequired: ["32-strike"]
-        questExcluded: ["32-special", "32-end"]
-        text: "You beat the dummy. Now your feet. Kick the next
-          one, or trip it if you like. If it is still down, wait
-          for it to stand up."
-        hints: "Type kick dummy."
-      # Also answers a player saved on the old consider step, which
-      # comes after special.
-      - questRequired: ["32-special"]
-        questExcluded: ["32-verbosity", "32-end"]
-        text: "Last thing. Choose how much of a fight you see.
-          Start on full. Change it when you know what you are
-          changing."
-        hints: "Type set combatverbosity full."
-      - questRequired: ["32-verbosity"]
-        questExcluded: ["32-end"]
-        text: "You have the look of someone who finished the
-          checklist. Tell me about it."
-        hints: "Type ask vorn report."
-
-      # ── Quest complete ─────────────────────────────────
-      - questRequired: ["32-end"]
-        text: "You are through here. Garve is running caravan
-          guard work out in the wash. Go north to the Sparring
-          Circle and follow the wash east. He waits in
-          Squatter's Hollow, south of the Lower Wash. That is
-          where the real schooling starts. Set your home first.
-          You will want a fallback point."
-        hints: "Type sethome coulee to set your recall point
-          here first."
-
-  nodes:
-    # ── OFFER TRAINING / QUEST START ──────────────────────
-    - id: train_offer
-      triggers: ["train", "learn", "fight", "combat", "drill",
-        "teach", "quest", "task"]
-      questRequired: ["30-end"]
-      questExcluded: ["32-start", "32-end"]
-      grantsQuest: "32-start"
-      givesItem: 10043
-      text: "Right. Stand straight. Here is a cudgel. Nothing
-        fancy, nothing that will embarrass you in a real fight.
-        First, take it in your hand. Then the training dummy in
-        this yard: hit it until it stops hitting back. After that,
-        kick it or trip it once, to learn that you have options
-        beyond the basic swing. Then consider it, to see what you
-        are walking into. Last, set combatverbosity to your taste.
-        It controls how much combat detail you see. Then come back
-        to me and report."
-      hints: "Type wield cudgel."
-
-    # ── TURN-IN ───────────────────────────────────────────
-    - id: train_turnin
-      triggers: ["report", "done", "ready", "finished",
-        "quest", "task"]
-      questRequired: ["32-verbosity"]
-      questExcluded: ["32-end"]
-      grantsQuest: "32-end"
-      text: "Good. You hit the dummy, used your feet, read your
-        opponent, and tuned your output. That is the checklist.
-        You are not a soldier yet, but you are not dead weight
-        either. Take the coin. Garve is running caravan guard
-        work in the wash and he could use someone who knows which
-        end of a cudgel to hold. Go north to the Sparring Circle
-        and follow the wash east, then south to Squatter's
-        Hollow. Set your home here first so you have somewhere to
-        fall back to."
-      hints: "Quest complete. Type sethome coulee to set your
-        recall point in Pothole Coulee. Then go north to the
-        Sparring Circle, east three times to the Lower Wash, and
-        south to Squatter's Hollow, and type ask garve to find out
-        what Caravan Guard Garve needs."
-
-    # ── LOST CUDGEL (S8: one handout, never a second) ─────
-    # itemExcluded hides the handout while the player carries a cudgel
-    # anywhere (pack or hand); the node after it answers instead.
-    - id: cudgel_replace
-      triggers: ["cudgel", "weapon", "lost", "wield"]
-      questRequired: ["32-start"]
-      questExcluded: ["32-end"]
-      itemExcluded: 10043
-      givesItem: 10043
-      text: "Lost it already? Here. Another cudgel. Try to keep
-        this one."
-      hints: "Type wield cudgel."
-    - id: cudgel_have
-      triggers: ["cudgel", "weapon", "lost", "wield"]
-      questRequired: ["32-start"]
-      questExcluded: ["32-end"]
-      text: "You already have a cudgel. Check your hands and
-        your pack. If it is not in your hand, take it up."
-      hints: "Type wield cudgel."
-
-    # ── MID-QUEST PROGRESS (S10): one answer per step ─────
-    # Placed before combat_help so a mid-quest "help" or "dummy" names the
-    # step's one command; kick, trip and consider still reach combat_help.
-    - id: progress_start
-      triggers: ["report", "done", "ready", "finished", "quest",
-        "task", "dummy", "attack", "help", "how", "next", "what",
-        "train", "drill", "fight"]
-      questRequired: ["32-start"]
-      questExcluded: ["32-wield", "32-end"]
-      text: "Not yet. First the cudgel goes in your hand. Then we
-        talk about the dummy."
-      hints: "Type wield cudgel."
-    - id: progress_wield
-      triggers: ["report", "done", "ready", "finished", "quest",
-        "task", "dummy", "attack", "help", "how", "next", "what",
-        "train", "drill", "fight"]
-      questRequired: ["32-wield"]
-      questExcluded: ["32-sized_up", "32-end"]
-      text: "Not yet. Look at the dummy before you swing. Consider
-        tells you how dangerous a thing is."
-      hints: "Type consider dummy."
-    - id: progress_sized_up
-      triggers: ["report", "done", "ready", "finished", "quest",
-        "task", "dummy", "attack", "help", "how", "next", "what",
-        "train", "drill", "fight"]
-      questRequired: ["32-sized_up"]
-      questExcluded: ["32-strike", "32-end"]
-      text: "Not yet. The dummy is right there. Hit it until it
-        stops hitting back."
-      hints: "Type attack dummy."
-    - id: progress_strike
-      triggers: ["report", "done", "ready", "finished", "quest",
-        "task", "dummy", "attack", "help", "how", "next", "what",
-        "train", "drill", "fight"]
-      questRequired: ["32-strike"]
-      questExcluded: ["32-special", "32-end"]
-      text: "Not yet. You beat it with the cudgel. Now use your
-        feet. Kick the next dummy, or trip it. If it is still
-        down, wait for it to stand up."
-      hints: "Type kick dummy."
-    - id: progress_special
-      triggers: ["report", "done", "ready", "finished", "quest",
-        "task", "dummy", "attack", "help", "how", "next", "what",
-        "train", "drill", "fight"]
-      questRequired: ["32-special"]
-      questExcluded: ["32-verbosity", "32-end"]
-      text: "Almost. Choose how much of a fight you see. Full
-        shows everything. Start there."
-      hints: "Type set combatverbosity full."
-    - id: progress_verbosity
-      triggers: ["dummy", "attack", "help", "how", "next", "what",
-        "train", "drill", "fight"]
-      questRequired: ["32-verbosity"]
-      questExcluded: ["32-end"]
-      text: "You have done the checklist. Report to me and we are
-        finished here."
-      hints: "Type ask vorn report."
-
-    # ── COMBAT HELP: consider + combatverbosity ────────────
-    - id: combat_help
-      triggers: ["consider", "combatverbosity", "verbosity",
-        "moves", "help", "kick", "trip"]
-      text: "Consider tells you how dangerous something looks before
-        you commit to the fight. Type consider on a target and read
-        what it says -- that is how you stop walking into fights you
-        cannot win. Combatverbosity controls how much detail you see
-        during combat: full gives you everything, medium trims the
-        fat, light is bare-bones. Type set combatverbosity followed by
-        your choice. Special moves are kick and trip -- kick hits
-        harder when they are standing, trip puts them on the ground
-        so your next swing lands harder. Both cost stamina. Use them
-        when the moment calls for it, not every round."
-      hints: "Type consider dummy to read the training dummy.
-        Type set combatverbosity full, medium, or light to set your
-        output preference. Type kick dummy or trip dummy to try
-        a special move. Ask me about shouts when you want more than
-        muscle in a fight."
-
-    - id: shouts_help
-      triggers: ["shout", "shouts", "rally", "warcry", "battle-shout"]
-      text: "There is more to a fight than the swing. A battle-shout
-        can turn one -- rally steadies your nerve and your allies',
-        warcry hardens the whole line. They lean on a silver tongue,
-        not a strong arm, so they come to you later. For now, know
-        they exist."
-      hints: "Battle-shouts -- rally and warcry -- come later. Type
-        help rally or help warcry to read about them when you are
-        ready."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: I am Vorn, the drillmaster, and this is my yard. Stand where I can see
+    you.
+  hints: You could ask Vorn about training or your task.
+  variants:
+  - questExcluded:
+    - 30-end
+    text: You are not ready for this yard. The rite of Awakening comes first. Find
+      Cleric Hadwen at the reflecting pool, north of the hub, and complete the
+      rite. Then come back.
+    hints: Find Cleric Hadwen at the reflecting pool north of the hub. Complete the
+      Awakening before speaking with Vorn again.
+  - questRequired:
+    - 30-end
+    questExcluded:
+    - 32-start
+    - 32-end
+    text: You have been through the rite. Good. Now you learn to use what the Awakening
+      gave you. I run combat training in this yard. If you want it, say so.
+    hints: Choose First Blood below to begin combat training.
+  - questRequired:
+    - 32-start
+    questExcluded:
+    - 32-wield
+    - 32-end
+    text: You are not done. That cudgel goes in your hand, not your pack. If it is
+      already in your hand, put it away and take it up again so I can see you do it.
+    hints: Type wield cudgel.
+  - questRequired:
+    - 32-wield
+    questExcluded:
+    - 32-sized_up
+    - 32-end
+    text: The cudgel is in your hand. Before you swing it, look at what you are swinging
+      at. Read the dummy and see what it tells you.
+    hints: Type consider dummy.
+  - questRequired:
+    - 32-sized_up
+    questExcluded:
+    - 32-strike
+    - 32-end
+    text: Now you know what you face. Use the cudgel. Hit the dummy until it stops
+      hitting back.
+    hints: Type attack dummy.
+  - questRequired:
+    - 32-strike
+    questExcluded:
+    - 32-special
+    - 32-end
+    text: You beat the dummy. Now your feet. Kick the next one, or trip it if you
+      like. If it is still down, wait for it to stand up.
+    hints: Type kick dummy.
+  - questRequired:
+    - 32-special
+    questExcluded:
+    - 32-verbosity
+    - 32-end
+    text: Last thing. Choose how much of a fight you see. Start on full. Change it
+      when you know what you are changing.
+    hints: Type set combatverbosity full.
+  - questRequired:
+    - 32-verbosity
+    questExcluded:
+    - 32-end
+    text: You have the look of someone who finished the checklist. Tell me about it.
+    hints: Choose First Blood below to report.
+  - questRequired:
+    - 32-end
+    text: You are through here. Garve is running caravan guard work out in the wash.
+      Go north to the Sparring Circle and follow the wash east. He waits in Squatter's
+      Hollow, south of the Lower Wash. That is where the real schooling starts. Set
+      your home first. You will want a fallback point.
+    hints: Type sethome coulee first to make this your home, where you wake if you
+      die.
+topics:
+- key: train_offer
+  kind: offer
+  quest: 32
+  label: First Blood
+  playerLine: Will you teach me to fight?
+  text: 'Then stand straight and listen. You get a cudgel. Nothing fancy, nothing
+    that will embarrass you in a real fight. First, take it in your hand. Then consider
+    the training dummy in this yard, to see what you are walking into. Then hit it
+    until it stops hitting back. After that, kick it or trip it once, to learn that
+    you have options beyond the basic swing. Last, set combatverbosity to your taste.
+    It controls how much combat detail you see. Then come back to me and report.'
+  hints: Accept, and Vorn hands you a cudgel. Then type wield cudgel.
+  questRequired:
+  - 30-end
+  questExcluded:
+  - 32-start
+  - 32-end
+  grantsQuest: 32-start
+  givesItem: 10043
+- key: train_turnin
+  kind: handin
+  quest: 32
+  label: First Blood
+  playerLine: I've worked through your whole checklist.
+  text: Good. You hit the dummy, used your feet, read your opponent, and tuned your
+    output. That is the checklist. You are not a soldier yet, but you are not dead
+    weight either. Take the coin. Garve is running caravan guard work in the wash
+    and he could use someone who knows which end of a cudgel to hold. Go north to
+    the Sparring Circle and follow the wash east, then south to Squatter's Hollow.
+    If the wash kills you, you wake at the Mending Hut. Walk back and try again.
+  hints: Quest complete. Go north to the Sparring Circle, east three times to the
+    Lower Wash, and south to Squatter's Hollow, and type talk garve to find out what
+    Caravan Guard Garve needs.
+  questRequired:
+  - 32-verbosity
+  questExcluded:
+  - 32-end
+  grantsQuest: 32-end
+# The replacement and the reminder never show together: itemExcluded and
+# carriesItem on the same item are exact opposites.
+- key: cudgel_replace
+  kind: info
+  label: I've lost my cudgel.
+  text: Lost it already? Here. Another cudgel. Try to keep this one.
+  hints: Type wield cudgel.
+  questRequired:
+  - 32-start
+  questExcluded:
+  - 32-end
+  itemExcluded: 10043
+  givesItem: 10043
+- key: cudgel_have
+  kind: info
+  label: I can't find my cudgel.
+  text: You already have a cudgel. Check your hands and your pack. If it is not in
+    your hand, take it up.
+  hints: Type wield cudgel.
+  questRequired:
+  - 32-start
+  questExcluded:
+  - 32-end
+  carriesItem: 10043
+- key: progress_start
+  kind: info
+  label: What do I do with the cudgel?
+  text: Not yet. First the cudgel goes in your hand. Then we talk about the dummy.
+  hints: Type wield cudgel.
+  questRequired:
+  - 32-start
+  questExcluded:
+  - 32-wield
+  - 32-end
+- key: progress_wield
+  kind: info
+  label: I'm holding the cudgel. What next?
+  text: Not yet. Look at the dummy before you swing. Consider tells you how dangerous
+    a thing is.
+  hints: Type consider dummy.
+  questRequired:
+  - 32-wield
+  questExcluded:
+  - 32-sized_up
+  - 32-end
+- key: progress_sized_up
+  kind: info
+  label: I've sized up the dummy. Now what?
+  text: Not yet. The dummy is right there. Hit it until it stops hitting back.
+  hints: Type attack dummy.
+  questRequired:
+  - 32-sized_up
+  questExcluded:
+  - 32-strike
+  - 32-end
+- key: progress_strike
+  kind: info
+  label: The dummy is down. What next?
+  text: Not yet. You beat it with the cudgel. Now use your feet. Kick the next dummy,
+    or trip it. If it is still down, wait for it to stand up.
+  hints: Type kick dummy.
+  questRequired:
+  - 32-strike
+  questExcluded:
+  - 32-special
+  - 32-end
+- key: progress_special
+  kind: info
+  label: I've used my feet. Is there more?
+  text: Almost. Choose how much of a fight you see. Full shows everything. Start there.
+  hints: Type set combatverbosity full.
+  questRequired:
+  - 32-special
+  questExcluded:
+  - 32-verbosity
+  - 32-end
+- key: combat_help
+  kind: info
+  label: How do consider and special moves work?
+  text: 'Consider tells you how dangerous something looks before you commit to the
+    fight. Type consider on a target and read what it says. That is how you stop
+    walking into fights you cannot win. Combatverbosity controls how much of a fight
+    you read. Full gives you every detail of every exchange. Medium shows only the
+    hits, the working soldier''s setting. Light gives a short summary of each round,
+    for veterans who already know the shape of a fight. Start on full. Change it when
+    you know what you are changing: type set combatverbosity followed by your choice.
+    Special moves are kick and trip.
+    Kick hits harder when they are standing, and trip puts them on the ground so your
+    next swing lands harder. Both cost stamina. Use them when the moment calls for
+    it, not every round.'
+  hints: Consider tells you how hard a foe is before you fight it. Type consider
+    dummy. For more, type help consider. You could ask Vorn about shouts when you
+    want more than muscle in a fight.
+  marked: true
+- key: shouts_help
+  kind: info
+  label: What are battle-shouts?
+  text: There is more to a fight than the swing. A battle-shout can turn one. Rally
+    steadies your nerve and your allies', and warcry hardens the whole line. They
+    lean on a silver tongue, not a strong arm, so they come to you later. For now,
+    know they exist.
+  hints: Battle-shouts, rally and warcry, come later. To read about them when you
+    are ready, type help warcry.

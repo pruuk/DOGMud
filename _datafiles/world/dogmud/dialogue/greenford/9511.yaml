@@ -2,77 +2,54 @@ mobid: 9511
 zone: Greenford
 defaultMood: friendly
 greetings:
-  - text: "Counter's open. If you can't find it on the shelves,
-      ask -- I know where everything is."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Day to you. Take your time -- the system will make
-        sense eventually."
-  - keywords: ["buy", "sell", "price", "cost", "purchase"]
-    responses:
-      - "Balance scale's on the counter. Prices are marked.
-        I don't negotiate but I don't overcharge either."
-  - keywords: [""]
-    responses:
-      - "Ask me what you need. If I have it, I'll tell you
-        where it is."
-tree:
-  root:
-    text: |
-      General Store, twelve years. I carry lamp oil, candles,
-      rope, salt, dry goods, and whatever else the market
-      doesn't cover. Three tiers on each wall. The balance
-      scale is on the counter. What do you need?
-    hints: "You could ask Prue about the stock and the shelves,
-      about trade and prices, or about Greenford and the
-      market."
-  nodes:
-    - id: stock
-      triggers: ["stock", "shelf", "shelves", "lamp", "candle",
-        "oil", "rope", "salt", "supplies", "goods", "hardware",
-        "store", "counter", "salted", "cord"]
-      text: |
-        Eye-level tier: lamp oil in three grades -- I'll
-        explain the grades if you ask -- and beeswax and tallow
-        candles in paper sleeves. Below that: rope in three
-        weights, waxed cord, awls, needles. Top tier is dry
-        goods -- oats, flour, dried beans, salt -- and small
-        hardware in labelled jars. The university buys the
-        lamp oil in quantity each term. I keep extra for the
-        weeks before the term order comes in. The counter has
-        the balance scale and the sweet jar, which is for
-        customers under a certain age. I know where everything
-        is. Ask me.
-      hints: "You could ask about trade and prices, or about
-        Greenford and the market square."
-    - id: trade
-      triggers: ["trade", "price", "prices", "cost", "buying",
-        "selling", "customers", "daily", "business"]
-      text: |
-        Steady trade -- the university and the town between
-        them keep me busy. The university buys lamp oil and
-        writing supplies in bulk at the start of each term.
-        The town buys daily goods year-round. Prices are what
-        they are: I mark them fair and I don't move them for
-        anyone, which means my regulars know what to expect and
-        my occasional customers don't get taken. The balance
-        scale's been calibrated inside the last six months. If
-        you think my weights are off, you're welcome to check
-        them. They're not off.
-      hints: "You could ask about the stock and the shelves, or
-        about the town and the market square."
-    - id: town
-      triggers: ["town", "greenford", "market", "square",
-        "neighbors", "university", "uphill", "neighbours"]
-      text: |
-        Good town to keep a store in -- the university keeps
-        the demand steady and the town doesn't overgrow itself.
-        Market square's where most people come through. The
-        specialist shops on the cross-lanes handle what I
-        don't. I'm the catch-all: if the chandler, the
-        fishmonger, and the bookshop between them don't have
-        it, I probably do. That's the job. It suits me.
-      hints: "You could ask about the stock and the supplies,
-        or about trade and daily prices."
+- text: Counter's open. If you can't find it on the shelves, say so. I know where
+    everything is.
+  moods:
+  - friendly
+opener:
+  text: |
+    Twelve years I've kept this General Store, and in twelve
+    years nothing on these shelves has moved without my say. I
+    sell lamp oil, candles and salt, and whatever else the
+    market doesn't cover. There are three tiers on each wall,
+    and everything is exactly where it belongs. The balance
+    scale on the counter is true, before you ask. Now. What are
+    you after?
+  hints: You could ask Prue about her shelves, about her prices, or about Greenford
+    and the market. To see what she sells, type list.
+topics:
+- key: stock
+  kind: info
+  label: What is on your shelves?
+  text: |
+    Eye-level tier is lamp oil in clay bottles and tallow candles
+    in paper sleeves. Below that, rope, waxed cord, awls and
+    needles. Top tier is dry goods, oats, flour, dried beans, and
+    salt, and small hardware in labelled jars. The rope and the dry
+    goods mostly go out on the university's term order. What I
+    sell over the counter is lamp oil, tallow candles, and cooking
+    salt. The university buys the lamp oil in quantity each term,
+    and I keep extra for the weeks before the order comes in. The
+    sweet jar on the counter is for customers under a certain age.
+- key: trade
+  kind: info
+  label: Are your prices fair?
+  text: |
+    Prices are what they are. I mark them fair and I don't move
+    them for anyone, which means my regulars know what to expect
+    and my occasional customers don't get taken. Steady trade. The
+    university and the town between them keep me busy. The
+    university buys lamp oil and writing supplies in bulk at the
+    start of each term. The town buys daily goods all year. The balance
+    scale was checked inside the last six months. If you think my
+    weights are off, you're welcome to check them. They're not off.
+- key: town
+  kind: info
+  label: Where do I find what you don't stock?
+  text: |
+    The craft shops down the Guild Lane handle what I don't. I'm
+    the catch-all. If the chandler, the fishmonger, and the bookshop
+    between them don't have it, I might. That's the job. The market
+    square's where most people come through. It's a good town to
+    keep a store in. The university keeps the demand steady and the
+    town doesn't outgrow itself. It suits me.

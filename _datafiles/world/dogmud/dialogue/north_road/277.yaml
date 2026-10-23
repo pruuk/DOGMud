@@ -1,142 +1,156 @@
 mobid: 277
 zone: North Road
 defaultMood: neutral
-
-tree:
-  root:
-    text: "Yes?"
-    hints: "You could ask about the farm, her sheep, or the road."
-    variants:
-      - questRequired: ["18-start"]
-        questExcluded: ["18-end"]
-        questFlagRequired:
-          "18-resolution": "quiet"
-        grantsQuest: "18-end"
-        givesItem: 50
-        text: "You kept quiet. Corvin made this -- he makes them
-          for people he decides are worth it. He does not decide
-          often. The road north is quieter than it looks. People
-          watch out for each other, in their way."
-        hints: "Betta trusts you."
-      - questRequired: ["18-start"]
-        questExcluded: ["18-end"]
-        questFlagRequired:
-          "18-resolution": "told"
-        grantsQuest: "18-end"
-        text: "I can smell it on you. You told them. We have
-          nothing more to say to each other."
-      - questRequired: ["18-start"]
-        questExcluded: ["18-end"]
-        questFlagRequired:
-          "18-resolution": "killed"
-        grantsQuest: "18-end"
-        text: "You think killing one of them helps? Now they
-          will send more. Now they will pay attention to this
-          stretch of road. I asked for silence, not slaughter."
-      - questRequired: ["18-start"]
-        questExcluded: ["18-end"]
-        text: "You know what I asked. I have nothing more to say
-          about it."
-        hints: "A bloodline agent is patrolling the road. Find
-          them and decide what to say."
-      - questRequired: ["18-end"]
-        questFlagRequired:
-          "18-resolution": "quiet"
-        text: "You kept your word. That matters."
-      - questRequired: ["18-end"]
-        questFlagRequired:
-          "18-resolution": "told"
-        text: "..."
-      - questRequired: ["18-end"]
-        questFlagRequired:
-          "18-resolution": "killed"
-        text: "You should go."
-
-  nodes:
-    - id: farm
-      triggers: ["farm", "sheep", "land", "turnips"]
-      text: "It is a farm. The sheep need shearing and the
-        turnips need pulling and the fence needs mending. It
-        has always been this way."
-
-    - id: weather
-      triggers: ["weather", "cold", "rain", "wind"]
-      text: "Winter is coming early this year. You can tell by
-        the wool -- the sheep know before we do."
-
-    - id: road
-      triggers: ["road", "travel", "riders"]
-      text: "People pass through. I do not keep track."
-      hints: "Betta does not seem forthcoming. Perhaps there
-        is something in the barn worth looking at."
-
-    - id: barn_trace
-      triggers: ["barn", "bedroll", "stayed", "girl", "someone",
-        "sleeping"]
-      questExcluded: ["18-start", "18-end"]
-      text: "You looked in my barn. Fine. Yes, someone stayed
-        there. A girl, heading north. She did not steal, she
-        did not cause trouble, she slept one night and left
-        before dawn."
-      hints: "You could ask Betta to tell you more, or ask if
-        she needs anything."
-      unlocks: ["ask_silence"]
-      moodChange: neutral
-
-    - id: ask_silence
-      triggers: ["help", "quiet", "silence", "secret", "need",
-        "anything", "quest", "task"]
-      questExcluded: ["18-start", "18-end"]
-      grantsQuest: "18-start"
-      text: "There are people on the road asking about her.
-        Official-looking. If they ask you, you did not see
-        anything in my barn. You did not hear anything from me.
-        That is all I am asking."
-      moodChange: neutral
-
-    - id: reward_quiet
-      triggers: ["done", "quiet", "kept", "said nothing", "back",
-        "report", "quest", "task"]
-      questRequired: ["18-start"]
-      questExcluded: ["18-end"]
-      questFlagRequired:
-        "18-resolution": "quiet"
-      grantsQuest: "18-end"
-      givesItem: 50
-      text: "You kept quiet. Corvin made this -- he makes them
-        for people he decides are worth it. He does not decide
-        often. The road north is quieter than it looks. People
-        watch out for each other, in their way. That is all I
-        know."
-      moodChange: friendly
-
-    - id: result_told
-      triggers: ["done", "told", "agent", "back", "report", "quest", "task"]
-      questRequired: ["18-start"]
-      questExcluded: ["18-end"]
-      questFlagRequired:
-        "18-resolution": "told"
-      grantsQuest: "18-end"
-      text: "I have nothing to say to you."
-      moodChange: hostile
-
-    - id: result_killed
-      triggers: ["done", "killed", "dead", "agent", "back",
-        "report", "quest", "task"]
-      questRequired: ["18-start"]
-      questExcluded: ["18-end"]
-      questFlagRequired:
-        "18-resolution": "killed"
-      grantsQuest: "18-end"
-      text: "You think killing one of them helps? Now they will
-        send more. Now they will pay attention to this stretch
-        of road. I asked you for silence, not slaughter."
-      moodChange: hostile
-
-    - id: corvin
-      triggers: ["corvin", "son", "boy"]
-      text: "He is a good boy. Too trusting for the road, but
-        that will change. It always does."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Yes?
+  hints: You could ask about the farm, the weather, her boy Corvin, or the road.
+  # Quest 18 states first (first match wins). The three root variants that
+  # finished the quest became the hand-ins below; these only speak.
+  variants:
+  - questRequired:
+    - 18-end
+    questFlagRequired:
+      18-resolution: quiet
+    text: You kept your word. That matters.
+  - questRequired:
+    - 18-end
+    questFlagRequired:
+      18-resolution: told
+    text: '...'
+    hints: Betta will not look at you.
+  - questRequired:
+    - 18-end
+    questFlagRequired:
+      18-resolution: killed
+    text: You should go.
+  - questRequired:
+    - 18-answered
+    questExcluded:
+    - 18-end
+    text: You have the look of someone who met that rider. Well?
+    hints: Betta wants to hear how it went with the agent.
+  - questRequired:
+    - 18-start
+    questExcluded:
+    - 18-end
+    text: You know what I asked. I have nothing more to say about it.
+    hints: The bloodline agent walks the road around the Road Fork. From Betta's
+      Yard, go east twice and south twice to the village square, then south twice
+      and east twice to the Road Fork. Type talk agent.
+  - questFlagRequired:
+      18-barn: seen
+    questExcluded:
+    - 18-start
+    text: You have been in my barn. I can see straw on your boots.
+    hints: Betta knows you found the bedroll in her barn. You could ask her about
+      it.
+topics:
+# The three hand-ins merge the tree nodes and the root variants that granted
+# 18-end (reward_quiet + variant_1, result_told + variant_2, result_killed +
+# variant_3). Each gates on the agent having been answered (18-answered).
+- key: reward_quiet
+  kind: handin
+  quest: 18
+  label: Betta's Silence
+  playerLine: The rider asked. I told them nothing about your barn.
+  text: You kept quiet. Corvin made this. He makes them for people he decides are
+    worth it, and he does not decide often. The road north is quieter than it looks.
+    People watch out for each other, in their way. That is all I know.
+  hints: Betta trusts you. She gives you a small carved bird of Corvin's.
+  questRequired:
+  - 18-answered
+  questExcluded:
+  - 18-end
+  questFlagRequired:
+    18-resolution: quiet
+  grantsQuest: 18-end
+  givesItem: 50
+  moodChange: friendly
+- key: result_told
+  kind: handin
+  quest: 18
+  label: Betta's Silence
+  playerLine: The rider asked, and I told them about your barn.
+  text: I can smell it on you. You told them. We have nothing more to say to each
+    other.
+  questRequired:
+  - 18-answered
+  questExcluded:
+  - 18-end
+  questFlagRequired:
+    18-resolution: told
+  grantsQuest: 18-end
+  moodChange: hostile
+- key: result_killed
+  kind: handin
+  quest: 18
+  label: Betta's Silence
+  playerLine: The rider will not be asking anyone anything now.
+  text: You think killing one of them helps? Now they will send more. Now they will
+    pay attention to this stretch of road. I asked you for silence, not slaughter.
+  questRequired:
+  - 18-answered
+  questExcluded:
+  - 18-end
+  questFlagRequired:
+    18-resolution: killed
+  grantsQuest: 18-end
+  moodChange: hostile
+- key: ask_silence
+  kind: offer
+  quest: 18
+  label: Betta's Silence
+  playerLine: Is there something you want from me?
+  text: There are people on the road asking about her. Official-looking. If they
+    ask you, you did not see anything in my barn. You did not hear anything from
+    me. That is all I am asking. Whatever you tell them, you cannot take it back,
+    so think before you answer. And do not lay a hand on them. Kill one and they
+    will send ten, and you will get nothing from me but a shut door.
+  hints: Betta wants you to keep quiet about the girl in her barn. The bloodline
+    agent walks the road around the Road Fork. Killing the agent ends this for
+    good. Betta will turn on you, and you will get no reward.
+  heardRequired:
+  - barn_trace
+  questExcluded:
+  - 18-start
+  - 18-end
+  grantsQuest: 18-start
+  moodChange: neutral
+# barn_trace was keyed on "barn bedroll"; it now waits for the player to
+# have found the bedroll (quest 18 trigger 0 sets 18-barn).
+- key: barn_trace
+  kind: info
+  label: Who slept on the straw in your barn?
+  text: You looked in my barn. Fine. Yes, someone stayed there. A girl, heading north.
+    She did not steal, she did not cause trouble, she slept one night and left before
+    dawn.
+  hints: Betta might want something from you now.
+  marked: true
+  questExcluded:
+  - 18-start
+  - 18-end
+  questFlagRequired:
+    18-barn: seen
+  moodChange: neutral
+- key: farm
+  kind: info
+  label: How is the farm doing?
+  text: It is a farm. The sheep need shearing and the turnips need pulling and the
+    fence needs mending. It has always been this way.
+- key: weather
+  kind: info
+  label: Is it going to be a hard winter?
+  text: Winter is coming early this year. You can tell by the wool. The sheep know
+    before we do.
+- key: corvin
+  kind: info
+  label: How is your boy Corvin getting on?
+  text: Corvin. He is a good boy. Too trusting for the road, but that will change.
+    It always does.
+- key: road
+  kind: info
+  label: Have you seen anyone pass on the road?
+  text: People pass through. I do not keep track.
+  hints: Betta does not seem forthcoming. Her barn is just south of the yard.
+  questExcluded:
+  - 18-start

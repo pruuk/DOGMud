@@ -1,246 +1,209 @@
 mobid: 9128
 zone: Pothole Coulee
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "hail"]
-    responses:
-      - "Birna. I keep the pool and the racks. You need a brew, or
-          you need to learn one?"
-      - "If you are buying, the stall is the racks behind me. If you
-          are learning, ask."
-
-  - keywords: ["brew", "alchemy", "craft", "potion", "salve", "learn",
-      "teach", "make", "quest", "task"]
-    responses:
-      - "Brewing is patience and clean hands. The bench does the rest.
-          Ask me to teach you the first one."
-      - "A glass vial, a healer's root, the bench. That is the whole
-          first lesson."
-
-  - keywords: ["veins", "veining", "hands", "mutation", "opened",
-      "green"]
-    responses:
-      - "The Awakening left this in my hands. The green wakes up
-          around living things -- a root that is still good to pick,
-          a brew that has not turned. I have stopped questioning it
-          and started using it."
-
-  - keywords: ["bottle", "bottles", "vial", "tier", "glass"]
-    responses:
-      - "Glass is the honest bottle -- it holds a brew steady and
-          shows you the color. There are finer ones, clay and sealed
-          and crystal, that age a potion slower or faster. Worry
-          about that later. Glass first."
-
-  - keywords: ["toxicity", "sick", "gut", "poison"]
-    responses:
-      - "Drink too many brews too fast and your gut churns -- the body
-          can only take so much before it rebels. Space them out.
-          A strong vitality helps you hold more."
-
-  - keywords: [""]
-    responses:
-      - "Say what you need."
-      - "The racks are not going to turn themselves."
-      - "Ask, or buy, or let me work."
-
-tree:
-  root:
-    text: "Birna. I brew."
-    hints: "You could ask Birna about brewing or your task."
-    variants:
-      # ── Not yet Opened (quest 30 incomplete) ─────────────
-      - questExcluded: ["30-end"]
-        text: "You have not been through the rite yet -- I can see it.
-          Brewing keeps. The Awakening comes first. Cleric Hadwen
-          runs it at the reflecting pool north of here. Go be
-          Opened, then come back and I will teach you the bench."
-        hints: "Find Cleric Hadwen at the reflecting pool and complete
-          the Awakening before returning to Herbalist Birna."
-
-      # ── Opened, quest not yet started ────────────────────
-      - questRequired: ["30-end"]
-        questExcluded: ["38-start", "38-end"]
-        text: "You have been through the rite. Good -- steady hands
-          are wasted on the unawakened. I teach the brew if you want
-          it: buy a vial and a root, work the bench, drink what you
-          make. Ask me about brewing."
-        hints: "Type ask birna brew to learn the first brew."
-
-      # ── Mid quest 38, one variant per step (one command each) ─
-      - questRequired: ["38-start"]
-        questExcluded: ["38-list", "38-end"]
-        text: "First see what I stock. The racks behind me are my
-          stall. A healing salve takes one glass vial and two healer's
-          roots, and you will find both there."
-        hints: "Type list."
-      - questRequired: ["38-list"]
-        questExcluded: ["38-vial", "38-end"]
-        text: "The glass vial first. The small clear one on my racks.
-          It is what holds the salve once it is made."
-        hints: "Type buy glass vial."
-      - questRequired: ["38-vial"]
-        questExcluded: ["38-roots", "38-end"]
-        text: "You have the vial. Now the roots: two healer's roots
-          for one salve. Buy them from me, or forage your own if you
-          know where they grow."
-        hints: "Type buy 2 healers root."
-      - questRequired: ["38-roots"]
-        questExcluded: ["38-brew", "38-end"]
-        text: "Vial and roots. That is a salve's worth. The bench is
-          right here at the water's edge, and there is a second one on
-          the Drying Racks, west of the pool. A craft can fail. If it
-          does, buy a glass vial and two roots again and try once more."
-        hints: "At the alchemy bench, type craft healing salve. A craft
-          can fail. If it does, buy a glass vial and two healer's roots
-          again and retry."
-      - questRequired: ["38-brew"]
-        questExcluded: ["38-drink", "38-end"]
-        text: "You made the salve. A brew is only worth what it does.
-          Drink it down and feel it work."
-        hints: "Type drink healing salve."
-      - questRequired: ["38-drink"]
-        questExcluded: ["38-end"]
-        text: "You have brewed and you have drunk. Tell me how it
-          went."
-        hints: "Type ask birna done."
-
-      # ── Quest complete ────────────────────────────────────
-      - questRequired: ["38-end"]
-        text: "You are brewer enough to leave the pool. South, past
-          the verge, the marsh begins -- and Falv keeps a camp in
-          the reeds. He is rough company but he knows the water. Set
-          your home here first if you have not."
-        hints: "Type sethome coulee to set your recall point. Fenwalker
-          Falv camps on the Cattail Stand: south twice to the Reed
-          Beds, then east."
-
-  nodes:
-    # ── OFFER BREW LESSON / QUEST START ───────────────────────
-    - id: brew_offer
-      triggers: ["brew", "learn", "alchemy", "craft", "teach", "make",
-        "quest", "task"]
-      questRequired: ["30-end"]
-      questExcluded: ["38-start", "38-end"]
-      grantsQuest: "38-start"
-      text: "Right. Here is the shape of it. A healing salve takes two
-        healer's roots and one glass vial, and both are on my racks.
-        First see what I stock and what it costs. Then buy the vial,
-        then the roots. Take them to the alchemy bench at the water's
-        edge and craft a healing salve: the roots and the water become
-        the brew, sealed in the vial. Then drink it and feel what you
-        made. A brew you have not tasted is just a guess. Come back
-        when you have brewed and drunk."
-      hints: "Type list."
-
-    # ── TURN-IN ───────────────────────────────────────────────
-    - id: brew_turnin
-      triggers: ["report", "done", "ready", "finished", "quest",
-        "task"]
-      questRequired: ["38-drink"]
-      questExcluded: ["38-end"]
-      grantsQuest: "38-end"
-      text: "Warm and steady, was it -- not a jolt, a mending. That is
-        a salve doing its work. You understand the loop now: gather
-        or buy, work the bench, drink the result. Apply it to
-        anything you learn to make. Here -- the antidote formula, and
-        a couple of empty vials to keep you brewing. South past the
-        verge the marsh starts. Falv keeps a camp out there. Set your
-        home here first -- you will want somewhere to wake."
-      hints: "Quest complete. Type sethome coulee to set your recall
-        point. Fenwalker Falv camps on the Cattail Stand: south twice
-        to the Reed Beds, then east."
-
-    # ── MID QUEST 38 QUESTIONS, one node per step ─────────────
-    # A player mid-lesson who asks about the vial, the roots, the salve,
-    # the bench or the drink gets the step they are on, not the catch-all.
-    # These sit before brew_help so its "drink", "bottle" and "help" go
-    # to the lesson while the quest is open.
-    - id: brew_step_list
-      triggers: ["vial", "bottle", "glass", "root", "herb", "salve",
-        "craft", "bench", "drink", "buy", "list", "stall", "rack",
-        "stock", "brew", "make", "help", "how", "next", "quest", "task",
-        "done", "report", "ready", "finished"]
-      questRequired: ["38-start"]
-      questExcluded: ["38-list", "38-end"]
-      text: "Start with my stock. The racks behind me are the stall.
-        You need one glass vial and two healer's roots for a healing
-        salve, and you will see both there, with what they cost."
-      hints: "Type list."
-    - id: brew_step_vial
-      triggers: ["vial", "bottle", "glass", "root", "herb", "salve",
-        "craft", "bench", "drink", "buy", "list", "stall", "rack",
-        "stock", "brew", "make", "help", "how", "next", "quest", "task",
-        "done", "report", "ready", "finished"]
-      questRequired: ["38-list"]
-      questExcluded: ["38-vial", "38-end"]
-      text: "The glass vial first. It is the small clear one on my
-        racks. People call them bottles too. It is the same glass. It
-        holds the salve once it is made."
-      hints: "Type buy glass vial."
-    - id: brew_step_roots
-      triggers: ["vial", "bottle", "glass", "root", "herb", "salve",
-        "craft", "bench", "drink", "buy", "list", "stall", "rack",
-        "stock", "brew", "make", "help", "how", "next", "quest", "task",
-        "done", "report", "ready", "finished"]
-      questRequired: ["38-vial"]
-      questExcluded: ["38-roots", "38-end"]
-      text: "You have your vial. Now two healer's roots. Pale, bitter
-        things. Buy them from me, or forage your own if you know where
-        they grow. Either kind works."
-      hints: "Type buy 2 healers root."
-    - id: brew_step_craft
-      triggers: ["vial", "bottle", "glass", "root", "herb", "salve",
-        "craft", "bench", "drink", "buy", "list", "stall", "rack",
-        "stock", "brew", "make", "help", "how", "next", "quest", "task",
-        "done", "report", "ready", "finished"]
-      questRequired: ["38-roots"]
-      questExcluded: ["38-brew", "38-end"]
-      text: "Vial and two roots: that is everything. Stand at the
-        bench, here at the water's edge or on the Drying Racks west of
-        the pool, and name the recipe. If you ever forget what you can
-        make, craft list will tell you. A craft can fail. If it does,
-        buy a glass vial and two roots again and try once more."
-      hints: "At the alchemy bench, type craft healing salve. A craft
-        can fail. If it does, buy a glass vial and two healer's roots
-        again and retry."
-    - id: brew_step_drink
-      triggers: ["vial", "bottle", "glass", "root", "herb", "salve",
-        "craft", "bench", "drink", "buy", "list", "stall", "rack",
-        "stock", "brew", "make", "help", "how", "next", "quest", "task",
-        "done", "report", "ready", "finished"]
-      questRequired: ["38-brew"]
-      questExcluded: ["38-drink", "38-end"]
-      text: "The salve is made. Drink it. You will feel it mend you,
-        slow and warm."
-      hints: "Type drink healing salve."
-    - id: brew_step_report
-      triggers: ["vial", "bottle", "glass", "root", "herb", "salve",
-        "craft", "bench", "drink", "buy", "list", "stall", "rack",
-        "stock", "brew", "make", "help", "how", "next"]
-      questRequired: ["38-drink"]
-      questExcluded: ["38-end"]
-      text: "You have brewed and you have drunk. That is the lesson.
-        Tell me it is done."
-      hints: "Type ask birna done."
-
-    # ── BREW MECHANICS HELP ───────────────────────────────────
-    - id: brew_help
-      triggers: ["bottle", "bottles", "toxicity", "bandolier",
-        "drink", "recipes", "station", "help", "ingredients"]
-      text: "Three things worth knowing. First: the bench is a station
-        -- some brews need a specific one, and the craft command tells
-        you if you are standing in the wrong place. Second: ingredients
-        come from the racks or from the ground -- type forage in the
-        right country and you will turn up herbs to brew with. Third:
-        go easy drinking. Every brew carries a little toxicity, and if
-        your gut churns you have had too many too fast. Later you will
-        want a bandolier to carry brews ready to hand -- Falv has those
-        out in the marsh."
-      hints: "The bench is a crafting station, and craft tells you if you
-        are in the wrong place. Type forage to gather herbs. Drinking
-        too many brews too fast raises toxicity -- space them out."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: I'm Birna. I brew what the marsh gives, and I take my time doing it. A
+    rushed brew is a wasted one.
+  hints: You could ask Birna about brewing or your task.
+  variants:
+  - questExcluded:
+    - 30-end
+    text: You have not been through the rite yet. I can see it. Brewing keeps. The
+      Awakening comes first. Cleric Hadwen runs it at the reflecting pool north of
+      here. Go be Opened, then come back and I will teach you the bench.
+    hints: Find Cleric Hadwen at the reflecting pool and complete the Awakening before
+      returning to Herbalist Birna.
+  - questRequired:
+    - 30-end
+    questExcluded:
+    - 38-start
+    - 38-end
+    text: 'You have been through the rite. Good. Steady hands are wasted on the
+      unawakened. I teach the brew if you want it: buy a vial and a root, work the
+      bench, drink what you make. Say the word.'
+    hints: Choose First Brew below to learn the first brew.
+  - questRequired:
+    - 38-start
+    questExcluded:
+    - 38-list
+    - 38-end
+    text: First see what I stock. The racks behind me are my stall. A healing salve
+      takes one glass vial and two healer's roots, and you will find both there.
+    hints: Type list.
+  - questRequired:
+    - 38-list
+    questExcluded:
+    - 38-vial
+    - 38-end
+    text: The glass vial first. The small clear one on my racks. It is what holds
+      the salve once it is made.
+    hints: Type buy glass vial.
+  - questRequired:
+    - 38-vial
+    questExcluded:
+    - 38-roots
+    - 38-end
+    text: 'You have the vial. Now the roots: two healer''s roots for one salve. Buy
+      them from me, or forage your own if you know where they grow.'
+    hints: Type buy 2 healers root.
+  - questRequired:
+    - 38-roots
+    questExcluded:
+    - 38-brew
+    - 38-end
+    text: Vial and roots. That is a salve's worth. The bench is right here at the
+      water's edge, and there is a second one on the Drying Racks, west of the pool.
+      A craft can fail. If it does, buy a glass vial and two roots again and try once
+      more.
+    hints: At the alchemy bench, type craft healing salve. A craft can fail. If it
+      does, buy a glass vial and two healer's roots again and retry.
+  - questRequired:
+    - 38-brew
+    questExcluded:
+    - 38-drink
+    - 38-end
+    text: You made the salve. A brew is only worth what it does. Drink it down and
+      feel it work.
+    hints: Type drink healing salve.
+  - questRequired:
+    - 38-drink
+    questExcluded:
+    - 38-end
+    text: You have brewed and you have drunk. Tell me how it went.
+    hints: Choose First Brew below to report.
+  - questRequired:
+    - 38-end
+    text: You are brewer enough to leave the pool. South, past the verge, the marsh
+      begins, and Falv keeps a camp in the reeds. He is rough company but he knows
+      the water. Set your home here first if you have not.
+    hints: 'Type sethome coulee to make this your home, where you wake if you die.
+      Fenwalker Falv camps on
+      the Cattail Stand: south twice to the Reed Beds, then east.'
+topics:
+- key: brew_offer
+  kind: offer
+  quest: 38
+  label: First Brew
+  playerLine: Will you teach me to brew?
+  text: 'Right. Brewing is patience and clean hands, and the bench does the rest.
+    Here is the shape of it. A healing salve takes two healer''s roots
+    and one glass vial, and both are on my racks. First see what I stock and what
+    it costs. Then buy the vial, then the roots. Take them to the alchemy bench at
+    the water''s edge and craft a healing salve: the roots and the water become the
+    brew, sealed in the vial. Then drink it and feel what you made. A brew you have
+    not tasted is just a guess. Come back when you have brewed and drunk.'
+  hints: Type list.
+  questRequired:
+  - 30-end
+  questExcluded:
+  - 38-start
+  - 38-end
+  grantsQuest: 38-start
+- key: brew_turnin
+  kind: handin
+  quest: 38
+  label: First Brew
+  playerLine: I brewed a healing salve and drank it.
+  text: 'Warm and steady, was it, not a jolt, a mending. That is a salve doing its
+    work. You understand the loop now: gather or buy, work the bench, drink the result.
+    Apply it to anything you learn to make. Here, the antidote formula, and a couple
+    of empty vials to keep you brewing. South past the verge the marsh starts. Falv
+    keeps a camp out there. Set your home here first, you will want somewhere to
+    wake.'
+  hints: 'Quest complete. Type sethome coulee to make this your home, where you wake
+    if you die. Fenwalker
+    Falv camps on the Cattail Stand: south twice to the Reed Beds, then east.'
+  questRequired:
+  - 38-drink
+  questExcluded:
+  - 38-end
+  grantsQuest: 38-end
+- key: brew_step_list
+  kind: info
+  label: What do I need for a salve?
+  text: Start with my stock. The racks behind me are the stall. You need one glass
+    vial and two healer's roots for a healing salve, and you will see both there,
+    with what they cost.
+  hints: Type list.
+  questRequired:
+  - 38-start
+  questExcluded:
+  - 38-list
+  - 38-end
+- key: brew_step_vial
+  kind: info
+  label: What should I buy first?
+  text: The glass vial first. It is the small clear one on my racks. People call them
+    bottles too. It is the same glass. It holds the salve once it is made.
+  hints: Type buy glass vial.
+  questRequired:
+  - 38-list
+  questExcluded:
+  - 38-vial
+  - 38-end
+- key: brew_step_roots
+  kind: info
+  label: I have the vial. What next?
+  text: You have your vial. Now two healer's roots. Pale, bitter things. Buy them
+    from me, or forage your own if you know where they grow. Either kind works.
+  hints: Type buy 2 healers root.
+  questRequired:
+  - 38-vial
+  questExcluded:
+  - 38-roots
+  - 38-end
+- key: brew_step_craft
+  kind: info
+  label: I have a vial and two roots. Now what?
+  text: 'Vial and two roots: that is everything. Stand at the bench, here at the water''s
+    edge or on the Drying Racks west of the pool, and name the recipe. If you ever
+    forget what you can make, craft list will tell you. A craft can fail. If it does,
+    buy a glass vial and two roots again and try once more.'
+  hints: At the alchemy bench, type craft healing salve. A craft can fail. If it does,
+    buy a glass vial and two healer's roots again and retry.
+  questRequired:
+  - 38-roots
+  questExcluded:
+  - 38-brew
+  - 38-end
+- key: brew_step_drink
+  kind: info
+  label: The salve is made. What now?
+  text: The salve is made. Drink it. You will feel it mend you, slow and warm.
+  hints: Type drink healing salve.
+  questRequired:
+  - 38-brew
+  questExcluded:
+  - 38-drink
+  - 38-end
+- key: brew_help
+  kind: info
+  label: What else should I know about brewing?
+  text: 'Three things worth knowing. First: the bench is a station, and some brews need
+    a specific one, and the craft command tells you if you are standing in the wrong
+    place. Second: ingredients come from the racks or from the ground, so type forage
+    in the right country and you will turn up herbs to brew with. Third: go easy drinking.
+    Every brew carries a little toxicity, and if your gut churns you have had too
+    many too fast. Space them out. A strong vitality helps you hold more. Later you
+    will want a bandolier to carry brews ready to hand.
+    Falv has those out in the marsh.'
+  hints: The bench is a crafting station, and craft tells you if you are in the wrong
+    place. Type forage to gather herbs. Drinking too many brews too fast raises toxicity,
+    so space them out.
+  marked: true
+- key: bottles
+  kind: info
+  label: Why a glass vial and not another bottle?
+  text: Glass is the honest bottle. It holds a brew steady and shows you the color.
+    Every brew ages in its bottle. It grows stronger for a while, then it fades,
+    and in the end it spoils. A clay flask is cheap, and a brew ages fast in it. A
+    sealed phial or a crystal decanter ages a brew slowly, so it keeps. Worry about
+    that later. Glass first.
+  questRequired:
+  - 38-start
+- key: veins
+  kind: info
+  label: Why does green show under your skin?
+  text: The Awakening left this in my hands. The green wakes up around living things,
+    like a root that is still good to pick, a brew that has not turned. I have stopped
+    questioning it and started using it.

@@ -1,23 +1,20 @@
 mobid: 359
 zone: Thornwall City
-
-patterns:
-  - keywords: [hello, hi, greetings, hail]
-    responses:
-      - 'Hey.'
-
-  - keywords: [bow, weapon, arrow]
-    responses:
-      - 'Yew. Cured slow. The bowyer up in Stillwater knows his trade. Not pretty, but it shoots true.'
-
-  - keywords: [bandit, bandits, road]
-    responses:
-      - 'I see them before they see us. After that it is just arithmetic.'
-
-  - keywords: [ketil, marta, crew]
-    responses:
-      - 'Good people. Run a tight wagon. I get paid on time.'
-
-  - keywords: [""]
-    responses:
-      - 'Hm.'
+defaultMood: ""
+opener:
+  text: Hey.
+  hints: You could ask Lars about his bow, the bandits, or his boss.
+topics:
+- key: bow
+  kind: info
+  label: Where did you get that bow?
+  text: Yew. Cured slow. The bowyer up in Stillwater knows his trade. Not pretty,
+    but it shoots true.
+- key: bandit
+  kind: info
+  label: How do you deal with bandits?
+  text: I see them before they see us. After that it is just arithmetic.
+- key: ketil
+  kind: info
+  label: What is your boss like?
+  text: Good people. Run a tight wagon. I get paid on time.

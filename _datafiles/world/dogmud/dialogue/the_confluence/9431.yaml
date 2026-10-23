@@ -2,82 +2,50 @@ mobid: 9431
 zone: The Confluence
 defaultMood: friendly
 greetings:
-  - text: "Chart copies, manifests, letters of credit. What do you need
-      written or copied?"
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Morning. Something to copy, or a document to draw up?"
-  - keywords: ["chart", "map", "navigation", "river", "copy", "buy",
-      "price", "harbor", "how much", "cost"]
-    responses:
-      - "Harbor chart is a standard two-day copy. Navigation chart takes
-        longer -- I check those against the current pilot report before
-        I'll sign them."
-  - keywords: ["manifest", "letter", "credit", "document", "write",
-      "draw", "draft"]
-    responses:
-      - "Manifests, letters of credit, cargo declarations -- I'll draw
-        up whatever the trade needs. Turnaround depends on length and
-        whether you're in a hurry."
-  - keywords: [""]
-    responses:
-      - "Charts and documents are my trade. Ask me what you need."
-tree:
-  root:
-    text: "Most of my trade is harbor charts -- river-merchants who need
-      a current copy of the approach, boat crews that came in without
-      their navigation record, the occasional traveler who wants a copy
-      of the Confluence layout. I also draw up manifests and trade
-      documents for crews that don't carry a scrivener. The charts are
-      the interesting work. The manifests pay better."
-    hints: "You could ask Tallis about the charts he copies, about the
-      old charts and what they show, or about his copy work."
-  nodes:
-    - id: old_charts
-      triggers: ["old", "older", "original", "ancient", "early", "first",
-        "oldest", "history", "historical", "archive", "source",
-        "disagree", "different", "channel", "fourth", "waters", "count",
-        "reference", "interesting"]
-      text: "The oldest charts I copy from are interesting to look at.
-        They predate the current quay layout by sixty, maybe seventy
-        years -- you can see where the original wharves sat before the
-        expansion. A handful of them disagree on the count of waters at
-        the junction. A few show what looks like a fourth channel where
-        the rivers meet -- narrower than the three main ones, drawn as
-        a distinct waterway rather than just a confusion of currents.
-        Whether it was ever there, or whether the original survey had a
-        bad day, I couldn't tell you. The scholars up in their quarter
-        have argued about it for years. I copy the maps as I find them
-        and leave the argument to them."
-      hints: "You could ask Tallis about the charts he copies, or about
-        his copy work."
-    - id: charts
-      triggers: ["chart", "charts", "map", "harbor", "navigation", "copy",
-        "current", "pilot", "approach", "layout", "river", "what",
-        "which", "carry", "have", "buy"]
-      text: "The harbor chart covers the Confluence approach and quay
-        layout -- current as of last season's pilot survey, which is
-        more current than most of what's in circulation. The navigation
-        chart for the Aldren upstream is more involved: I source from
-        the pilot association's master copy and check it against the
-        seasonal sounding notes before I sign off on a copy. The Brenn
-        and Solt upper reaches I carry in rougher form -- the surveying
-        is less regular up there. Buyers know what they're getting."
-      hints: "You could ask Tallis about the old charts and what they
-        show, or about his copy work."
-    - id: copy_work
-      triggers: ["copy", "work", "job", "write", "handwriting", "how",
-        "long", "scrivener", "trade", "why", "business", "precision",
-        "consistent", "same"]
-      text: "Copy work is precision and patience. You set the original,
-        you reproduce it accurately, you don't introduce errors, and you
-        sign off on what you've done. The river-trade generates a large
-        volume of documents that need to be legible, accurate, and
-        certified by someone whose hand is on record with the guild.
-        That's what I do. The copying itself I find easier than most
-        people find it. I don't have to think about the letter shapes.
-        They come out the same way regardless."
-      hints: "You could ask Tallis about the charts he copies, or about
-        the old charts and what they show."
+- text: Mind the copy-board. The ink on that chart is still wet.
+  moods:
+  - friendly
+opener:
+  text: Most of my trade is harbor charts. River merchants who need a current copy
+    of the approach, boat crews that came in without their navigation record, the
+    occasional traveler who wants the Confluence laid out on paper. I also draw up
+    manifests and trade documents for crews that don't carry a scrivener. The
+    charts are the interesting work. The manifests pay better.
+  hints: You could ask Tallis about the charts he copies, about the oldest charts
+    in his stall, or about his copy work.
+topics:
+- key: charts
+  kind: info
+  label: What charts do you copy?
+  text: The harbor chart covers the Confluence approach and the quay layout. It's
+    current as of last season's pilot survey, which is more current than most of
+    what's in circulation. A harbor chart is a two-day copy. The navigation chart
+    for the Aldren upstream takes longer. I copy from the pilot association's
+    master and check it against the seasonal sounding notes before I sign off. The
+    Brenn and Solt upper reaches I carry in rougher form, because the surveying is
+    less regular up there. The copies on the board are orders for the boats, and
+    the buyers know what they're getting.
+- key: old_charts
+  kind: info
+  label: What do your oldest charts show?
+  text: The oldest charts I copy from are interesting to look at. They're older
+    than the current quay by sixty, maybe seventy years. You can see where the
+    first wharves sat before the expansion. A handful of them disagree on the count
+    of waters at the junction. A few show what looks like a fourth channel where
+    the rivers meet, narrower than the three main ones, drawn as a waterway of its
+    own rather than a confusion of currents. Whether it was ever there, or whether
+    the first survey had a bad day, I couldn't tell you. The scholars up in their
+    quarter have argued about it for years. I copy the maps as I find them and
+    leave the argument to them.
+  hints: The oldest charts are here in the stall. Type look old charts.
+  marked: true
+- key: copy_work
+  kind: info
+  label: What does copy work take?
+  text: Precision and patience. You set the original, you reproduce it accurately,
+    you don't introduce errors, and you sign off on what you've done. The river
+    trade makes a great many documents that need to be legible, accurate, and
+    certified by someone whose hand is on record with the guild. Manifests,
+    letters of credit, cargo declarations. I draw up whatever the crews need. The
+    copying itself I find easier than most people do. I don't have to think about
+    the letter shapes. They come out the same way every time.

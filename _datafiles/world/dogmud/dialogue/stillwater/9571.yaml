@@ -1,0 +1,22 @@
+mobid: 9571
+zone: Stillwater
+defaultMood: neutral
+opener:
+  text: I book passage on the water. The Lakewind Packet runs to New Plymouth, and
+    the Grey Heron runs down to the Confluence. You pay the fare at the plank and step
+    off again at the far pier. If the boat is out, I will tell you when she ties up
+    next.
+  hints: Choose where you want to go below. If the boat is tied up here, the agent
+    takes the fare as soon as you choose and you board at once. On board, wait until
+    she ties up at the far pier, then type gangplank to walk ashore.
+topics:
+- key: to_confluence
+  kind: info
+  label: Take me to the Confluence.
+  text: ""
+  behavior: true
+- key: to_plymouth
+  kind: info
+  label: Take me to New Plymouth.
+  text: ""
+  behavior: true

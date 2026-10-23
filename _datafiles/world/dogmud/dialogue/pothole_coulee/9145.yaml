@@ -1,268 +1,228 @@
 mobid: 9145
 zone: Pothole Coulee
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "hail"]
-    responses:
-      - "Orrin. I keep the grove. Grieve sent you up, or you would not have
-          found the path quiet -- it does not stay put for the unready."
-      - "Move slowly here. The grove takes the difference out on the hasty."
-
-  - keywords: ["cast", "concentration", "combat", "learn", "teach", "grove",
-      "quest", "task"]
-    responses:
-      - "Anyone can cast standing still in a quiet room. The grove teaches the
-          other thing -- holding the fold together while you are being hit.
-          Ask me and I will set you to it."
-      - "Concentration is not a calm room. It is the holding-on when the room
-          is anything but. Ask, when you want to learn it."
-
-  - keywords: ["outline", "lag", "smear", "mutation", "opened", "shadow"]
-    responses:
-      - "You have noticed the lag. The grove does it to everyone who stays --
-          the edges of me arrive a beat behind the rest. The Awakening opened
-          me to this place and the place keeps the difference. The trick is to
-          move slow enough that the lag cannot matter."
-
-  - keywords: ["hold", "focus", "break", "interrupt"]
-    responses:
-      - "A hit can break a casting. So can bolting across the room mid-fold.
-          The answer is not to avoid the blow -- out here you cannot -- but to
-          keep shaping the fold through it. Get hit, and hold anyway. That is
-          the whole lesson."
-
-  - keywords: ["scabland", "scab", "unfolded", "unraveling"]
-    responses:
-      - "Past the Grove Heart, west and up through the Veil Tear, the ground
-          stops agreeing to be ground. That is the scabland. The thing that
-          thinned all of this is out there in the worst of it, still casting.
-          The Unfolded. It is a fight you take when your nerve and your folds
-          are steady, not before."
-
-  - keywords: [""]
-    responses:
-      - "Say it plainly."
-      - "The grove is listening. So am I."
-      - "Speak, or sit a while."
-
-tree:
-  root:
-    text: "Orrin. Keeper of the grove."
-    hints: "You could ask Orrin about casting in combat or your task."
-    variants:
-      # ── Not ready (Grieve's lesson unfinished) ───────────
-      - questExcluded: ["44-end"]
-        text: "You have not learned to cast yet. There is no holding a fold
-          under pressure before you can shape one at all. Go back down to
-          Adept Grieve in the observatory and learn the first casting. Come
-          to me when your hands know the shape of it."
-        hints: "Return south to the observatory and finish Adept Grieve's
-          casting lesson before coming to Keeper Orrin."
-
-      # ── Ready for quest 45 ───────────────────────────────
-      - questRequired: ["44-end"]
-        questExcluded: ["45-start", "45-end"]
-        text: "Grieve's mark on you, then. Good. Now the harder half: casting
-          with a fight on you. The grove is full of things the thinning has
-          warped -- fight one, and cast while you do. Ask me about it when you
-          are ready to be hit."
-        hints: "Type ask orrin cast to take on the grove's lesson."
-
-      # ── Mid quest 45, one variant per step (one command each) ─
-      - questRequired: ["45-start"]
-        questExcluded: ["45-cast", "45-end"]
-        text: "Not yet. West of here, in the Veil Hollow, a revenant walks.
-          It will come at you the moment you step in. Let it, and loose a
-          spell at it while it does."
-        hints: "If it is dark, type cast glow first. Go west to the
-          Veil Hollow and type cast conviction-spike revenant."
-      - questRequired: ["45-cast"]
-        questExcluded: ["45-kill", "45-end"]
-        text: "The fold held under fire. I felt it. Now finish what you
-          started. Keep casting at the thing until it falls."
-        hints: "Go west to the Veil Hollow and type cast conviction-spike
-          revenant until it falls."
-      - questRequired: ["45-kill"]
-        questExcluded: ["45-end"]
-        text: "You are back, and the grove is a little quieter for it. Tell
-          me how it went."
-        hints: "Type ask orrin done."
-
-      # ── Ready for quest 46 ───────────────────────────────
-      - questRequired: ["45-end"]
-        questExcluded: ["46-start", "46-end"]
-        text: "You hold a casting under fire now. That is the skill that keeps
-          a caster breathing. There is one thing left, and it is the hard one
-          -- the Unfolded, out on the scabland. Ask me about it when your
-          nerve is up."
-        hints: "Type ask orrin scabland when you are ready for the final task."
-
-      # ── Mid quest 46 ─────────────────────────────────────
-      - questRequired: ["46-start"]
-        questExcluded: ["46-end"]
-        text: "It is still out there, in the thinnest place. Through the
-          Grove Heart, up through the Veil Tear, across the folded ground and
-          the unraveling. It casts at range, so cast back and keep casting. Do
-          not let the strange ground turn you around. Put it down."
-        hints: "If it is dark, type cast glow first. Go west, north
-          and north to the Grove Heart, then west, up, north, west, north and
-          east to the Thinnest Place, and type cast conviction-spike
-          unfolded."
-
-      # ── Mid quest 57 (repeatable tending) ────────────────
-      - questRequired: ["57-start"]
-        questExcluded: ["57-end"]
-        text: "A wisp has drifted back in at the Grove Edge, just south of
-          here. Put it down. The grove will tell me when it is done."
-        hints: "If it is dark, type cast glow first. Go south to the
-          Grove Edge and type cast conviction-spike wisp until it falls."
-
-      # ── Quest 46 complete ────────────────────────────────
-      - questRequired: ["46-end"]
-        text: "You undid the Unfolded. The grove has been quieter since --
-          the thinning is closing, slow, the way a wound closes. I have kept
-          this place a long time and never thought to see that. You came up
-          here barely able to cast. You leave able to mend yourself. Go well."
-        hints: "You have cleared the Folding spoke. Well done."
-
-  nodes:
-    # ── QUEST 45 OFFER ────────────────────────────────────────
-    - id: grove_offer
-      triggers: ["cast", "concentration", "combat", "grove", "learn",
-        "teach", "quest", "task"]
-      questRequired: ["44-end"]
-      questExcluded: ["45-start", "45-end"]
-      grantsQuest: "45-start"
-      text: "Right. Here is the work. West of here the veil-warped things
-        gather: drift-wisps, and the revenants of those who came before and
-        never left. They come at anyone who walks in. Go to the Veil Hollow,
-        and when the revenant there is on you, loose a spell at it. You will
-        be hit mid-fold. The fold will shudder. Hold it through, and keep
-        casting until it falls. Then come back to me."
-      hints: "If it is dark, type cast glow first. Go west to the
-        Veil Hollow and type cast conviction-spike revenant."
-
-    # ── QUEST 45 TURN-IN ──────────────────────────────────────
-    - id: grove_turnin
-      triggers: ["report", "done", "ready", "finished", "quest", "task"]
-      questRequired: ["45-kill"]
-      questExcluded: ["45-end"]
-      grantsQuest: "45-end"
-      text: "You were hit and the fold held. That is concentration -- not
-        calm, but holding-on. Here is a wider working for it: sparks. The
-        weakest of the area spells, which is the same as saying the first you
-        can trust yourself with -- it touches everything before you at once.
-        Now the last task, when you are ready. The Unfolded, on the scabland.
-        Ask me."
-      hints: "Quest complete. You learned sparks. Type ask orrin scabland
-        when you are ready for the final task."
-
-    # ── QUEST 46 OFFER ────────────────────────────────────────
-    - id: scab_offer
-      triggers: ["scabland", "scab", "unfolded", "unraveling", "final",
-        "quest", "task"]
-      questRequired: ["45-end"]
-      questExcluded: ["46-start", "46-end"]
-      grantsQuest: "46-start"
-      text: "The Unfolded, then. Long ago an adept of Grieve's house reached
-        too far into a thin place and did not come all the way back. What
-        stayed is the shape the reaching left -- a thing made of nothing but
-        casting, and it has been casting at the world ever since. Go through
-        the Grove Heart and up through the Veil Tear, then across the
-        scabland to the thinnest place. It will throw foldings at you from
-        across the room. Cast back, hold your concentration, and keep
-        casting. Out-cast it. There is no other way past it."
-      hints: "If it is dark, type cast glow first. Go west, north
-        and north to the Grove Heart, then west, up, north, west, north and
-        east to the Thinnest Place, and type cast conviction-spike
-        unfolded."
-
-    # ── REPEATABLE GROVE TENDING OFFER ────────────────────────
-    - id: grove_loop_offer
-      triggers: ["work", "again", "more", "tend", "job", "quest", "task"]
-      questRequired: ["46-end"]
-      grantsQuest: "57-start"
-      questExcluded: ["57-start", "57-end"]
-      text: "The warped things drift back in. That is the nature of a
-        thin place -- it keeps leaking. There is a wisp at the Grove Edge,
-        just south of here. Put it down. The practice matters as much as
-        the clearing."
-      hints: "If it is dark, type cast glow first. Go south to the
-        Grove Edge and type cast conviction-spike wisp until it falls."
-
-    # ── MID-QUEST ANSWERS (one per step, ahead of the general help) ──
-    # The words the hints and lines above invite (wisp, revenant, cast,
-    # spike, grove, help, how) get a step answer, not the catch-all.
-    - id: grove_mid_cast
-      triggers: ["wisp", "revenant", "creature", "cast", "spike",
-        "conviction", "grove", "hollow", "fight", "kill", "concentration",
-        "combat", "where", "how", "help", "quest", "task"]
-      questRequired: ["45-start"]
-      questExcluded: ["45-cast", "45-end"]
-      text: "West of here is the Veil Hollow, and a revenant walks it. It will
-        come at you as soon as you step in. That is the point. With it on
-        you, loose the spike you woke with. A hit can shake the fold. Hold
-        it anyway."
-      hints: "If it is dark, type cast glow first. Go west to the
-        Veil Hollow and type cast conviction-spike revenant."
-    - id: grove_mid_kill
-      triggers: ["wisp", "revenant", "creature", "cast", "spike",
-        "conviction", "grove", "hollow", "fight", "kill", "concentration",
-        "combat", "where", "how", "help", "quest", "task"]
-      questRequired: ["45-cast"]
-      questExcluded: ["45-kill", "45-end"]
-      text: "You held the fold under fire. Now finish it. Keep casting at
-        the thing until it falls. A drift-wisp in the Thinning Wood, north
-        of the Veil Hollow, serves as well as the revenant."
-      hints: "Go west to the Veil Hollow and type cast conviction-spike
-        revenant until it falls."
-    - id: grove_mid_report
-      triggers: ["wisp", "revenant", "creature", "cast", "spike",
-        "conviction", "grove", "hollow", "fight", "kill", "concentration",
-        "combat", "where", "how", "help"]
-      questRequired: ["45-kill"]
-      questExcluded: ["45-end"]
-      text: "It is done, then. You need not tell me twice that the grove is
-        quieter. Tell me once, properly."
-      hints: "Type ask orrin done."
-    - id: scab_mid
-      triggers: ["unfolded", "scabland", "scab", "thinnest", "unraveling",
-        "tear", "route", "way", "where", "path", "directions", "lost",
-        "cast", "how", "help", "quest", "task"]
-      questRequired: ["46-start"]
-      questExcluded: ["46-end"]
-      text: "Through the Grove Heart, then west to the Veil Tear and up. The
-        Riven Ground, then the Folded Distance, where the far looks near.
-        West from there, then north into the Unraveling, then east. That is
-        the thinnest place, and it is waiting in it. Cast at it and keep
-        casting."
-      hints: "If it is dark, type cast glow first. Go west, north
-        and north to the Grove Heart, then west, up, north, west, north and
-        east to the Thinnest Place, and type cast conviction-spike
-        unfolded."
-    - id: grove_loop_mid
-      triggers: ["wisp", "grove", "edge", "tend", "work", "cast", "spike",
-        "where", "how", "help", "quest", "task"]
-      questRequired: ["57-start"]
-      questExcluded: ["57-end"]
-      text: "The wisp is at the Grove Edge, just south of here. Put it down
-        with a casting. The grove will tell me when it is done, so you need
-        not come back to say so."
-      hints: "If it is dark, type cast glow first. Go south to the
-        Grove Edge and type cast conviction-spike wisp until it falls."
-
-    # ── CONCENTRATION / COMBAT-CAST HELP ──────────────────────
-    - id: grove_help
-      triggers: ["hold", "focus", "interrupt", "break", "help"]
-      text: "Two things make a combat caster. First, cast while fighting:
-        type cast and the spell, the same as standing still, but expect the
-        blow to come mid-fold. Second, concentration: a hit can shake a
-        casting loose, and the answer is to keep shaping it through the hit
-        rather than flinch off it. Get struck, and hold the fold anyway. The
-        grove will give you plenty of chances to practice being struck."
-      hints: "While fighting in the grove, type cast conviction-spike. Push
-        the casting through the hits you take."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Come in slowly, if you would. The grove is kind to slow feet. My name is
+    Orrin, and I look after it.
+  hints: You could ask Orrin about casting in combat or your task.
+  variants:
+  - questExcluded:
+    - 44-end
+    text: You have not learned to cast yet. There is no holding a fold under pressure
+      before you can shape one at all. Go back down to Adept Grieve in the observatory
+      and learn the first casting. Come to me when your hands know the shape of it.
+    hints: Return south to the observatory and finish Adept Grieve's casting lesson
+      before coming to Keeper Orrin.
+  - questRequired:
+    - 44-end
+    questExcluded:
+    - 45-start
+    - 45-end
+    text: 'Grieve''s mark on you, then. Good. Now the harder half: casting with a
+      fight on you. The grove is full of things the thinning has warped. Fight one,
+      and cast while you do. When you are ready to be hit, I will set you the
+      lesson.'
+    hints: Choose The Unquiet Grove below to take on the grove's lesson.
+  - questRequired:
+    - 45-start
+    questExcluded:
+    - 45-cast
+    - 45-end
+    text: Not yet. West of here, in the Veil Hollow, a revenant walks. It will come
+      at you the moment you step in. Let it, and loose a spell at it while it does.
+    hints: If it is dark, type cast glow first. Go west to the Veil Hollow and type
+      cast spike revenant.
+  - questRequired:
+    - 45-cast
+    questExcluded:
+    - 45-kill
+    - 45-end
+    text: The fold held under fire. I felt it. Now finish what you started. Keep casting
+      at the thing until it falls.
+    hints: Go west to the Veil Hollow and type cast spike revenant until it falls.
+  - questRequired:
+    - 45-kill
+    questExcluded:
+    - 45-end
+    text: You are back, and the grove is a little quieter for it. Tell me how it went.
+    hints: Choose The Unquiet Grove below to report.
+  - questRequired:
+    - 45-end
+    questExcluded:
+    - 46-start
+    - 46-end
+    text: You hold a casting under fire now. That is the skill that keeps a caster
+      breathing. There is one thing left, and it is the hard one. The Unfolded,
+      out on the scabland. When your nerve is up, I will tell you where it waits.
+    hints: Choose The Unfolded below when you are ready for the final task.
+  - questRequired:
+    - 46-start
+    questExcluded:
+    - 46-end
+    text: It is still out there, in the thinnest place. Through the Grove Heart, up
+      through the Veil Tear, across the folded ground and the unraveling. It casts
+      at range, so cast back and keep casting. Do not let the strange ground turn
+      you around. Put it down.
+    hints: If it is dark, type cast glow first. Go west, north and north to the Grove
+      Heart, then west, up, north, west, north and east to the Thinnest Place, and
+      type cast spike unfolded.
+  - questRequired:
+    - 57-start
+    questExcluded:
+    - 57-end
+    text: A wisp has drifted back in at the Grove Edge, just south of here. Put it
+      down. The grove will tell me when it is done.
+    hints: If it is dark, type cast glow first. Go south to the Grove Edge and type
+      cast spike wisp until it falls.
+  - questRequired:
+    - 46-end
+    text: You undid the Unfolded. The grove has been quieter since. The thinning
+      is closing, slow, the way a wound closes. I have kept this place a long time
+      and never thought to see that. You came up here barely able to cast. You leave
+      able to mend yourself. Go well.
+    hints: You have finished the folding trail. Well done.
+topics:
+- key: grove_offer
+  kind: offer
+  quest: 45
+  label: The Unquiet Grove
+  playerLine: Will you teach me to cast while I'm under attack?
+  text: 'Right. Here is the work. West of here the veil-warped things gather: drift-wisps,
+    and the revenants of those who came before and never left. They come at anyone
+    who walks in. Go to the Veil Hollow, and when the revenant there is on you, loose
+    a spell at it. You will be hit mid-fold. The fold will shudder. Hold it through,
+    and keep casting until it falls. Then come back to me.'
+  hints: If it is dark, type cast glow first. Go west to the Veil Hollow and type
+    cast spike revenant.
+  questRequired:
+  - 44-end
+  questExcluded:
+  - 45-start
+  - 45-end
+  grantsQuest: 45-start
+- key: grove_turnin
+  kind: handin
+  quest: 45
+  label: The Unquiet Grove
+  playerLine: I held the fold under fire, and the revenant fell.
+  text: 'You were hit and the fold held. That is concentration, not calm, but holding-on.
+    Here is a wider working for it: sparks. The weakest of the area spells, which
+    is the same as saying the first you can trust yourself with. It touches everything
+    before you at once. Now the last task, when you are ready. The Unfolded, on the
+    scabland. I will tell you where it waits.'
+  hints: Quest complete. You learned sparks. Choose The Unfolded below when you are
+    ready for the final task.
+  questRequired:
+  - 45-kill
+  questExcluded:
+  - 45-end
+  grantsQuest: 45-end
+- key: scab_offer
+  kind: offer
+  quest: 46
+  label: The Unfolded
+  playerLine: Do you want the Unfolded put down?
+  text: The Unfolded, then. Long ago an adept of Grieve's house reached too far into
+    a thin place and did not come all the way back. What stayed is the shape the reaching
+    left, a thing made of nothing but casting, and it has been casting at the world
+    ever since. Go through the Grove Heart and up through the Veil Tear, then across
+    the scabland to the thinnest place. It will throw foldings at you from across
+    the room. Cast back, hold your concentration, and keep casting. Out-cast it. There
+    is no other way past it.
+  hints: If it is dark, type cast glow first. Go west, north and north to the Grove
+    Heart, then west, up, north, west, north and east to the Thinnest Place, and
+    type cast spike unfolded.
+  breadcrumb: Learn to hold a casting first. The scabland keeps worse than revenants,
+    and it will wait for you.
+  questRequired:
+  - 45-end
+  questExcluded:
+  - 46-start
+  - 46-end
+  grantsQuest: 46-start
+- key: grove_loop_offer
+  kind: offer
+  quest: 57
+  label: Tending the Grove
+  playerLine: Is there more work in the grove for me?
+  text: The warped things drift back in. That is the nature of a thin place, and it
+    keeps leaking. There is a wisp at the Grove Edge, just south of here. Put it down.
+    The practice matters as much as the clearing.
+  hints: If it is dark, type cast glow first. Go south to the Grove Edge and type
+    cast spike wisp until it falls.
+  questRequired:
+  - 46-end
+  questExcluded:
+  - 57-start
+  - 57-end
+  grantsQuest: 57-start
+- key: grove_mid_cast
+  kind: info
+  label: Where do I find the revenant?
+  text: West of here is the Veil Hollow, and a revenant walks it. It will come at
+    you as soon as you step in. That is the point. With it on you, loose the spike
+    you woke with. A hit can shake the fold. Hold it anyway.
+  hints: If it is dark, type cast glow first. Go west to the Veil Hollow and type
+    cast spike revenant.
+  questRequired:
+  - 45-start
+  questExcluded:
+  - 45-cast
+  - 45-end
+- key: grove_mid_kill
+  kind: info
+  label: The fold held. What now?
+  text: You held the fold under fire. Now finish it. Keep casting at the thing until
+    it falls. A drift-wisp in the Thinning Wood, north of the Veil Hollow, serves
+    as well as the revenant.
+  hints: Go west to the Veil Hollow and type cast spike revenant until it falls.
+  questRequired:
+  - 45-cast
+  questExcluded:
+  - 45-kill
+  - 45-end
+- key: scab_mid
+  kind: info
+  label: How do I reach the thinnest place?
+  text: Through the Grove Heart, then west to the Veil Tear and up. The Riven Ground,
+    then the Folded Distance, where the far looks near. West from there, then north
+    into the Unraveling, then east. That is the thinnest place, and it is waiting
+    in it. Cast at it and keep casting.
+  hints: If it is dark, type cast glow first. Go west, north and north to the Grove
+    Heart, then west, up, north, west, north and east to the Thinnest Place, and
+    type cast spike unfolded.
+  questRequired:
+  - 46-start
+  questExcluded:
+  - 46-end
+- key: grove_loop_mid
+  kind: info
+  label: Where is the wisp?
+  text: The wisp is at the Grove Edge, just south of here. Put it down with a casting.
+    The grove will tell me when it is done, so you need not come back to say so.
+  hints: If it is dark, type cast glow first. Go south to the Grove Edge and type
+    cast spike wisp until it falls.
+  questRequired:
+  - 57-start
+  questExcluded:
+  - 57-end
+- key: grove_help
+  kind: info
+  label: How do I cast while I'm being hit?
+  text: 'Anyone can cast standing still in a quiet room. The grove teaches the other
+    thing: holding the fold together while you are being hit. Two things make a
+    combat caster. First, cast while fighting: type cast and
+    the spell, the same as standing still, but expect the blow to come mid-fold. Second,
+    concentration: a hit can shake a casting loose, and the answer is to keep shaping
+    it through the hit rather than flinch off it. Get struck, and hold the fold anyway.
+    The grove will give you plenty of chances to practice being struck.'
+  hints: While fighting in the grove, type cast spike. Push the casting
+    through the hits you take.
+  marked: true
+- key: outline
+  kind: info
+  label: Why does your outline lag behind you?
+  text: You have noticed the lag. The grove does it to everyone who stays. The edges
+    of me arrive a beat behind the rest. The Awakening opened me to this place and
+    the place keeps the difference. The trick is to move slow enough that the lag
+    cannot matter.

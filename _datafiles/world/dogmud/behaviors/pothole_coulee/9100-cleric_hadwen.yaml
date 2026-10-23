@@ -3,8 +3,8 @@
 # Owns the Awakening Rite beat of quest 30:
 #   - dialogue (dialogue/pothole_coulee/9100.yaml) grants 30-start
 #   - this tree answers the player choosing to begin the rite (talk hadwen,
-#     topic `begin`, #375; until Task 17 rewires it, the old ask keywords
-#     begin/ready) while 30-start is held,
+#     topic `begin`, #375 R17; the topic's text is empty, so this tree
+#     speaks every line) while 30-start is held,
 #     plays the paced rite sequence, and fires 30-end (the "Opened" token).
 #     Blank-slate Awakening: the rite grants NO starter mutation — mutations
 #     are earned afterward through use-based drift.
@@ -35,11 +35,11 @@ tree:
 
     # ── MID-RITE: the player chooses to begin while the rite is already running ──
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [begin, ready]
+          check: topic_is
+          topic: begin
         - type: condition
           check: state_equals
           key: rite_running
@@ -54,11 +54,11 @@ tree:
 
     # ── THE RITE: the player chooses to begin (30-start held, not yet opened) ──
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [begin, ready]
+          check: topic_is
+          topic: begin
         - type: condition
           check: player_has_quest
           quest: "30-start"
@@ -227,19 +227,12 @@ tree:
           do: grant_quest
           quest: "30-end"
           delay: 40.5
-        # Immediately hand the freshly-Opened player a persistent objective so
-        # they are never left adrift: "Two Roads" (quest 29) names both onward
-        # paths -- Crier Toke (learn the town) and Warden Esk (leave). Granted
-        # here rather than via a quest_granted 30-end trigger because
-        # behavior-tree grants pre-set the token and do not fire the engine's
-        # quest_granted event (see 29-two_roads.yaml header).
-        - type: action
-          do: grant_quest
-          quest: "29-start"
-          delay: 41.0
+        # No quest 29 grant here any more (#375 R17): the two roads are the
+        # road_toke and road_esk offer topics in his dialogue, which the
+        # closing line above sends the player back to with talk hadwen.
         # The rite is over: clear the flag so the next newcomer can begin.
-        # Queued after both grants (the queue runs in order), so by the time
-        # a second begin can pass the flag the asker already holds 30-end.
+        # Queued after the 30-end grant (the queue runs in order), so by the
+        # time a second begin can pass the flag the asker already holds 30-end.
         - type: action
           do: set_state
           key: rite_running

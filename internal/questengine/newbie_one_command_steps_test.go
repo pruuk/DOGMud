@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -118,32 +119,17 @@ func loadShippedQuest(t *testing.T, file string, wantId int) *QuestDef {
 	return &q
 }
 
-// turnInRequires reads the questRequired list of one dialogue node from a
-// shipped dialogue file.
-func turnInRequires(t *testing.T, file string, nodeId string) []string {
+// turnInRequires reads the questRequired list of one hand-in topic from a
+// shipped dialogue file (#375: the hand-in is a topic, keyed as the old tree
+// node was).
+func turnInRequires(t *testing.T, file string, key string) []string {
 	t.Helper()
-	_, here, _, ok := runtime.Caller(0)
-	require.True(t, ok)
-	path := filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "dialogue", "pothole_coulee", file)
-	data, err := os.ReadFile(path)
-	require.NoError(t, err)
-	var df struct {
-		Tree struct {
-			Nodes []struct {
-				Id            string   `yaml:"id"`
-				QuestRequired []string `yaml:"questRequired"`
-			} `yaml:"nodes"`
-		} `yaml:"tree"`
-	}
-	require.NoError(t, yaml.Unmarshal(data, &df))
-	for _, n := range df.Tree.Nodes {
-		if n.Id == nodeId {
-			require.NotEmpty(t, n.QuestRequired, "%s node %s gates on nothing", file, nodeId)
-			return n.QuestRequired
-		}
-	}
-	t.Fatalf("%s has no node %s", file, nodeId)
-	return nil
+	df := loadCouleeTopics(t, file)
+	tp := df.FindTopic(key)
+	require.NotNil(t, tp, "%s has no topic %s", file, key)
+	require.Equal(t, dialogue.KindHandIn, tp.Kind, "%s topic %s is the quest's hand-in", file, key)
+	require.NotEmpty(t, tp.QuestRequired, "%s topic %s gates on nothing", file, key)
+	return tp.QuestRequired
 }
 
 func holdsAll(p *linearPlayer, tokens []string) bool {

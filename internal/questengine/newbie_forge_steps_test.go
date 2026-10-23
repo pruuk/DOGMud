@@ -1,122 +1,39 @@
 package questengine
 
 import (
-	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/stretchr/testify/require"
-	yaml "gopkg.in/yaml.v3"
 )
 
-// forgeDialogue loads a shipped Pothole Coulee dialogue file.
-func forgeDialogue(t *testing.T, file string) *dialogue.DialogueFile {
-	t.Helper()
-	_, here, _, ok := runtime.Caller(0)
-	require.True(t, ok)
-	raw, err := os.ReadFile(filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "dialogue", "pothole_coulee", file))
-	require.NoError(t, err)
-	var df dialogue.DialogueFile
-	require.NoError(t, yaml.Unmarshal(raw, &df), "dialogue %s must parse, or the NPC goes mute", file)
-	require.NotNil(t, df.Tree)
-	return &df
-}
-
-var forgeTalkInstance = 71000
-
-// forgeAsk answers a topic the way usercommands/ask.go does: tree nodes
-// first, then patterns. catchAll is true when the empty-keyword pattern
-// answered.
-func forgeAsk(df *dialogue.DialogueFile, p *linearPlayer, topic string) (hints string, fromTree, catchAll bool) {
-	forgeTalkInstance++
-	ps := &dialogue.PlayerState{HasQuest: p.HasQuest, HasItem: func(int) bool { return false }}
-	if _, h, _, ok := dialogue.TreeAdvance(df, forgeTalkInstance, 1, topic, ps); ok {
-		return h, true, false
-	}
-	_, _, _, fallback := dialogue.MatchWithFallbackInfo(df, forgeTalkInstance, topic, ps)
-	return "", false, fallback
-}
-
-func forgeGreetHints(df *dialogue.DialogueFile, p *linearPlayer) string {
-	forgeTalkInstance++
-	ps := &dialogue.PlayerState{HasQuest: p.HasQuest, HasItem: func(int) bool { return false }}
-	_, h, _ := dialogue.Greet(df, forgeTalkInstance, 1, ps)
-	return h
-}
-
-func forgeSquash(s string) string { return strings.ToLower(strings.Join(strings.Fields(s), " ")) }
-
-// forgeGiverMatchesSteps: on each step the giver's greeting hint and the
-// answer to every quest word name that step's own command, never the
-// catch-all.
-func forgeGiverMatchesSteps(t *testing.T, q *QuestDef, file string, prereqs []string, commands map[string]string, words []string) {
-	t.Helper()
-	df := forgeDialogue(t, file)
-	for step, cmd := range commands {
-		p := newLinearPlayer(q)
-		p.current = step
-		for _, tok := range prereqs {
-			p.fullMockPlayer.quests[tok] = true
-		}
-		require.Contains(t, forgeSquash(forgeGreetHints(df, p)), cmd,
-			"%s greeting on step %s must name the step's command", file, step)
-		for _, w := range words {
-			p2 := newLinearPlayer(q)
-			p2.current = step
-			for _, tok := range prereqs {
-				p2.fullMockPlayer.quests[tok] = true
-			}
-			hints, fromTree, catchAll := forgeAsk(df, p2, w)
-			require.False(t, catchAll, "%s: ask %q on step %s fell through to the catch-all", file, w, step)
-			require.True(t, fromTree, "%s: ask %q on step %s must get a quest answer", file, w, step)
-			require.Contains(t, forgeSquash(hints), "type ", "%s: ask %q on step %s names no command", file, w, step)
-			require.Equal(t, step, p2.current, "%s: ask %q on step %s must not move the quest", file, w, step)
-		}
-	}
-}
-
+// Rusk's opener names each First Heat step's command and a quest-aware topic
+// answers it; on the craft step the hand-in completes the quest. A player who
+// sold the dagger reports on their word (craft_turnin_told); the shown-dagger
+// hand-in is pinned by TestRusk9116_HandInWithOrWithoutTheDagger.
 func TestRusk9116_MidQuestGreetsAndAnswersEachStep(t *testing.T) {
-	q := loadShippedQuest(t, "35-first_heat.yaml", 35)
-	forgeGiverMatchesSteps(t, q, "9116.yaml", []string{"30-end"},
-		map[string]string{
-			"start": "type list",
-			"list":  "type buy iron ingot",
-			"ingot": "type buy leather strip",
-			"strip": "type craft iron dagger",
-			"craft": "type ask rusk done",
-		},
-		[]string{"ingot", "strip", "dagger", "craft", "list", "help", "how"})
+	f := "35-first_heat.yaml"
+	pre := []string{"30-end"}
+	checkTopicSteps(t, "rusk", "9116.yaml", []topicStep{
+		{f, 35, "start", "type list", pre, "heat_list_help", false},
+		{f, 35, "list", "type buy iron ingot", pre, "heat_ingot_help", false},
+		{f, 35, "ingot", "type buy leather strip", pre, "heat_strip_help", false},
+		{f, 35, "strip", "type craft iron dagger", pre, "heat_craft_help", false},
+		{f, 35, "craft", "", pre, "craft_turnin_told", true},
+	})
 }
 
 func TestOvell9117_MidQuestGreetsAndAnswersEachStep(t *testing.T) {
-	q36 := loadShippedQuest(t, "36-pick_the_vein.yaml", 36)
-	forgeGiverMatchesSteps(t, q36, "9117.yaml", []string{"30-end", "35-end"},
-		map[string]string{
-			"start":     "type attack scavenger",
-			"scavenger": "type attack lurker",
-			"lurker":    "type forage",
-		},
-		[]string{"vein", "lurker", "scavenger", "forage", "help", "how"})
-
-	// On the last step every quest word reaches the turn-in or names it.
-	df := forgeDialogue(t, "9117.yaml")
-	p := newLinearPlayer(q36)
-	p.current = "ore"
-	p.fullMockPlayer.quests["30-end"], p.fullMockPlayer.quests["35-end"] = true, true
-	require.Contains(t, forgeSquash(forgeGreetHints(df, p)), "type ask ovell done")
-
-	q37 := loadShippedQuest(t, "37-into_the_vein.yaml", 37)
-	forgeGiverMatchesSteps(t, q37, "9117.yaml", []string{"30-end", "35-end", "36-end"},
-		map[string]string{"start": "type attack beast"},
-		[]string{"beast", "den", "help", "how"})
-
-	q54 := loadShippedQuest(t, "54-back_to_the_forge.yaml", 54)
-	forgeGiverMatchesSteps(t, q54, "9117.yaml", []string{"30-end", "35-end", "36-end", "37-end"},
-		map[string]string{"start": "type craft iron dagger"},
-		[]string{"forge", "craft", "work", "help", "how"})
+	f36 := "36-pick_the_vein.yaml"
+	pre := []string{"30-end", "35-end"}
+	checkTopicSteps(t, "ovell", "9117.yaml", []topicStep{
+		{f36, 36, "start", "type attack scavenger", pre, "vein_scavenger_help", false},
+		{f36, 36, "scavenger", "type attack lurker", pre, "vein_lurker_help", false},
+		{f36, 36, "lurker", "type forage", pre, "vein_forage_help", false},
+		{f36, 36, "ore", "", pre, "vein_turnin", true},
+		{"37-into_the_vein.yaml", 37, "start", "type attack beast", []string{"30-end", "35-end", "36-end"}, "beast_help", false},
+		{"54-back_to_the_forge.yaml", 54, "start", "type craft iron dagger", []string{"30-end", "35-end", "36-end", "37-end"}, "forge_loop_help", false},
+	})
 }
 
 // The forge spoke of Pothole Coulee (quests 35, 36, 37 and 54) under the owner
@@ -191,16 +108,34 @@ func TestQuest35FirstHeat_OneCommandPerStep(t *testing.T) {
 		require.Equal(t, "craft", w.p.current, "crafting proves the materials were bought (lenient grant)")
 	})
 
+	// #375 Task 10: `give dagger rusk` resolves as the topic that wants the
+	// dagger (conversation.Give over DialogueFile.ItemTopic), not as a quest
+	// item_give trigger.
+	rusk := loadCouleeTopics(t, "9116.yaml")
+	require.Equal(t, forgeSmithRusk, rusk.MobId)
+
 	t.Run("player saved on craft can turn in by handing over the blade", func(t *testing.T) {
 		w := newQuestWalker(q).at("craft")
+		w.p.fullMockPlayer.quests["30-end"] = true
+		w.p.items[forgeIronDagger] = true
 		require.True(t, holdsAll(w.p, turnIn))
-		w.notify("item_give", EventDetails{MobId: forgeSmithRusk, ItemId: forgeIronDagger, RoomId: forgeSmithy})
+		n := newNpcTalker(rusk, w.p)
+		tp, wanted := rusk.ItemTopic(forgeIronDagger, n.state())
+		require.True(t, wanted, "Rusk wants the dagger")
+		require.NotNil(t, tp, "giving the dagger on the craft step must play a hand-in")
+		require.Equal(t, "craft_turnin", tp.Key)
+		require.True(t, rusk.Apply(tp, n.state()))
 		require.Equal(t, "end", w.p.current)
+		require.True(t, w.p.items[forgeIronDagger], "Rusk looks the dagger over and hands it back")
 	})
 
 	t.Run("handing over a blade before the craft does not finish the quest", func(t *testing.T) {
 		w := newQuestWalker(q).at("strip")
-		w.notify("item_give", EventDetails{MobId: forgeSmithRusk, ItemId: forgeIronDagger, RoomId: forgeSmithy})
+		w.p.fullMockPlayer.quests["30-end"] = true
+		w.p.items[forgeIronDagger] = true
+		tp, wanted := rusk.ItemTopic(forgeIronDagger, newNpcTalker(rusk, w.p).state())
+		require.True(t, wanted, "Rusk wants the dagger, so give hands it back instead of keeping it")
+		require.Nil(t, tp, "no hand-in is open before the craft")
 		require.Equal(t, "strip", w.p.current)
 	})
 }

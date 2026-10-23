@@ -12,7 +12,7 @@ import (
 
 // TestDialogueGoldPurchasesAreAtomic pins how shipped content sells a quest
 // for gold through dialogue:
-//   - every dialogue entry that charges gold (chargesGold) carries
+//   - every dialogue topic that charges gold (chargesGold) carries
 //     goldRequired at exactly the same price, so the gate and the charge
 //     agree, and the charge happens in the same step as the check;
 //   - no dialogue entry grants a quest whose quest_granted trigger runs
@@ -86,20 +86,18 @@ func TestDialogueGoldPurchasesAreAtomic(t *testing.T) {
 		if err := yaml.Unmarshal(b, &df); err != nil {
 			t.Fatalf("%s: %v", f, err)
 		}
-		for i, p := range df.Patterns {
-			check(f, fmt.Sprintf("pattern %d", i), p.GrantsQuest, p.GoldRequired, p.ChargesGold)
+		// #375: every entry is a topic; opener variants carry gates only,
+		// so they can neither charge nor grant.
+		for _, tp := range df.Topics {
+			check(f, "topic "+tp.Key, tp.GrantsQuest, tp.GoldRequired, tp.ChargesGold)
 		}
-		if df.Tree == nil {
-			continue
-		}
-		for i, v := range df.Tree.Root.Variants {
-			check(f, fmt.Sprintf("root variant %d", i), v.GrantsQuest, v.GoldRequired, v.ChargesGold)
-		}
-		for _, n := range df.Tree.Nodes {
-			check(f, "node "+n.Id, n.GrantsQuest, n.GoldRequired, n.ChargesGold)
+		if df.Opener != nil {
+			for i, v := range df.Opener.Variants {
+				check(f, fmt.Sprintf("opener variant %d", i), "", v.GoldRequired, 0)
+			}
 		}
 	}
 	if paidGrants < 9 {
-		t.Fatalf("found %d paid quest grants; expected at least Veyra's nine teach_ nodes", paidGrants)
+		t.Fatalf("found %d paid quest grants; expected at least Veyra's nine teach_ topics", paidGrants)
 	}
 }

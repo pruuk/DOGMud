@@ -1,107 +1,76 @@
 package questengine
 
 import (
-	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	yaml "gopkg.in/yaml.v3"
 )
 
 // TestQuest35_GiveDaggerCompletesFirstHeat locks the fix for the newbie-area
-// "First Heat stalls at 66%" bug (Malia playtest, 2026-06-29). Before the fix,
-// quest 35 had exactly ONE completion path for the craft→end step: the
-// craft_turnin dialogue node (`ask rusk done`). A player who did the intuitive
-// thing — physically GIVE the finished iron dagger (item 10009) to Smith Rusk
-// (mob 9116) — fired only the generic archetype player_give handler (hands it
-// back, does nothing for the quest), leaving the quest parked at 35-craft.
+// "First Heat stalls at 66%" bug (Malia playtest, 2026-06-29): a player who
+// did the intuitive thing, physically GIVE the finished iron dagger (item
+// 10009) to Smith Rusk (mob 9116), got it handed back with no quest progress,
+// leaving the quest parked at 35-craft.
 //
-// This test loads the REAL quest 35 YAML and asserts that an item_give of the
-// iron dagger to Rusk, by a player who has already crafted (35-start + 35-craft,
-// missing 35-end), grants 35-end. It is the give-path counterpart to the
-// existing dialogue turn-in.
+// The 2026-06-29 fix was a quest item_give trigger. Since #375 (Task 10) a
+// give resolves as the topic that wants the item (conversation.Give over
+// DialogueFile.ItemTopic), and the trigger is gone (Task 16). This test loads
+// Rusk's REAL converted dialogue and asserts that, for a player on 35-craft
+// who carries the dagger, the dagger resolves to the craft_turnin hand-in and
+// playing it grants 35-end. Before the craft the dagger is wanted but no
+// hand-in is open, so give hands it back instead of keeping it.
 func TestQuest35_GiveDaggerCompletesFirstHeat(t *testing.T) {
 	const (
-		ruskMobId     = 9116
-		ironDaggerId  = 10009
-		startToken    = "35-start"
-		craftToken    = "35-craft"
-		endToken      = "35-end"
-		questYAMLPath = "../../_datafiles/world/dogmud/quests/35-first_heat.yaml"
+		ruskMobId    = 9116
+		ironDaggerId = 10009
 	)
+	rusk := loadCouleeTopics(t, "9116.yaml")
+	require.Equal(t, ruskMobId, rusk.MobId)
+	q := loadShippedQuest(t, "35-first_heat.yaml", 35)
 
-	data, err := os.ReadFile(questYAMLPath)
-	require.NoError(t, err, "must be able to read the real quest 35 YAML")
+	p := playerOn(q, "craft", "30-end")
+	p.items[ironDaggerId] = true
+	n := newNpcTalker(rusk, p)
+	tp, wanted := rusk.ItemTopic(ironDaggerId, n.state())
+	require.True(t, wanted, "Rusk must want the dagger")
+	require.NotNil(t, tp, "giving the finished dagger to Rusk must play a hand-in")
+	require.Equal(t, "craft_turnin", tp.Key)
+	require.Equal(t, ironDaggerId, tp.CarriesItem, "the dagger is shown, never taken")
+	require.True(t, rusk.Apply(tp, n.state()))
+	require.True(t, p.HasQuest("35-end"), "giving the finished dagger to Rusk must complete First Heat (grant 35-end)")
+	require.True(t, p.items[ironDaggerId], "the player keeps the dagger")
 
-	var q QuestDef
-	require.NoError(t, yaml.Unmarshal(data, &q), "quest 35 YAML must unmarshal")
-	require.Equal(t, 35, q.QuestId, "loaded the wrong quest file")
-
-	e := NewEngine()
-	e.RegisterQuest(&q)
-
-	// Player has crafted the dagger but not yet turned it in.
-	player := newFullMockPlayer(5245)
-	player.quests[startToken] = true
-	player.quests[craftToken] = true
-	player.items[ironDaggerId] = true
-	ctx := newFullMockActionContext(1, player)
-
-	result := e.Notify("item_give", EventDetails{
-		UserId: 1,
-		MobId:  ruskMobId,
-		ItemId: ironDaggerId,
-	}, player, ctx)
-
-	assert.True(t, result.Handled,
-		"giving the iron dagger to Rusk must be intercepted by a quest trigger")
-	assert.True(t, player.HasQuest(endToken),
-		"giving the finished dagger to Rusk must complete First Heat (grant 35-end)")
+	early := playerOn(q, "strip", "30-end")
+	early.items[ironDaggerId] = true
+	tp, wanted = rusk.ItemTopic(ironDaggerId, newNpcTalker(rusk, early).state())
+	require.True(t, wanted)
+	require.Nil(t, tp, "no hand-in plays before the dagger is crafted")
 }
 
 // TestQuest69_GiveRubbingAdvancesGalleryStep locks the same fix for the Gallery
-// Cipher quest (found by the F3 audit, 2026-06-29). The quest log says "Take the
-// rubbing to Dross", but the only path that advanced rubbing→gallery was the
-// q69_gallery dialogue node (`ask dross rubbing`). A player who physically gave
-// the rubbing (item 40115) to Dross (mob 9360) silently transferred it with no
-// quest advancement — identical class to the First Heat bug. This test loads the
-// real quest 69 YAML and asserts the give-path now grants 69-gallery.
+// Cipher quest (F3 audit, 2026-06-29). The quest log says "Take the rubbing to
+// Dross", and a player who physically gave the rubbing (item 40115) to Dross
+// (mob 9360) must advance rubbing to gallery. Since #375 the give resolves as
+// Dross's q69_gallery topic (carriesItem 40115), which grants 69-gallery and
+// leaves the rubbing with the player, who needs it at the gallery.
 func TestQuest69_GiveRubbingAdvancesGalleryStep(t *testing.T) {
 	const (
-		drossMobId   = 9360
-		rubbingItem  = 40115
-		rubbingToken = "69-rubbing"
-		galleryToken = "69-gallery"
-		questPath    = "../../_datafiles/world/dogmud/quests/69-the_gallery_cipher.yaml"
+		drossMobId  = 9360
+		rubbingItem = 40115
 	)
+	dross := loadShippedDialogue(t, "new_plymouth_temple", "9360.yaml")
+	require.Equal(t, drossMobId, dross.MobId)
+	q := loadShippedQuest(t, "69-the_gallery_cipher.yaml", 69)
 
-	data, err := os.ReadFile(questPath)
-	require.NoError(t, err, "must be able to read the real quest 69 YAML")
-
-	var q QuestDef
-	require.NoError(t, yaml.Unmarshal(data, &q), "quest 69 YAML must unmarshal")
-	require.Equal(t, 69, q.QuestId, "loaded the wrong quest file")
-
-	e := NewEngine()
-	e.RegisterQuest(&q)
-
-	// Player has the rubbing but has not yet been sent to the gallery.
-	player := newFullMockPlayer(5902)
-	player.quests[rubbingToken] = true
-	player.items[rubbingItem] = true
-	ctx := newFullMockActionContext(1, player)
-
-	result := e.Notify("item_give", EventDetails{
-		UserId: 1,
-		MobId:  drossMobId,
-		ItemId: rubbingItem,
-	}, player, ctx)
-
-	assert.True(t, result.Handled,
-		"giving the rubbing to Dross must be intercepted by a quest trigger")
-	assert.True(t, player.HasQuest(galleryToken),
-		"giving the rubbing to Dross must advance the quest (grant 69-gallery)")
-	assert.True(t, player.HasItem(rubbingItem),
-		"the player must keep a rubbing (needed at the gallery and at turn-in)")
+	p := playerOn(q, "rubbing")
+	p.items[rubbingItem] = true
+	n := newNpcTalker(dross, p)
+	tp, wanted := dross.ItemTopic(rubbingItem, n.state())
+	require.True(t, wanted, "Dross must want the rubbing")
+	require.NotNil(t, tp, "giving the rubbing to Dross must play a topic")
+	require.Equal(t, "q69_gallery", tp.Key)
+	require.True(t, dross.Apply(tp, n.state()))
+	require.True(t, p.HasQuest("69-gallery"), "giving the rubbing to Dross must advance the quest (grant 69-gallery)")
+	require.True(t, p.items[rubbingItem], "the player must keep a rubbing (needed at the gallery and at turn-in)")
+	require.Empty(t, n.removed, "Dross takes nothing")
 }

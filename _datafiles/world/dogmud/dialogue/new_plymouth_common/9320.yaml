@@ -1,138 +1,126 @@
 mobid: 9320
 zone: New Plymouth Common
 defaultMood: neutral
-
 greetings:
-  - text: "I heard you coming from two corners away. You've got a particular
-      kind of step."
-    moods: ["neutral"]
-  - text: "Back again. Good — I was about to sweep past something interesting."
-    moods: ["friendly"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "morning", "evening"]
-    responses:
-      - "I know. I heard."
-      - "You're earlier than usual."
-
-  - keywords: [""]
-    responses:
-      - "Say it plainly. I don't have a lot of sweep-time to spare."
-
-tree:
-  root:
-    text: "Carter's Rise, three years. Before that the tannery streets, two
-      more. You want to know what moves through here, I'm your man. What
-      is it — the people, the quarter's troubles, or the strange bits I
-      keep finding in the gutters?"
-    hints: "You could ask Coll about the gossip in the quarter, the grey
-      fragments he finds in the gutters, or the troubles weighing on
-      the Common folk."
-
-  nodes:
-    # ── DELIVERY BY ASK (completion) ──────────────────────────
-    # Mirrors the give-path: a player who turns the lump in by asking
-    # Coll about it (rather than `give lump coll`) completes the step
-    # too. requiresItem gates this to fire only with the lump in hand
-    # and consumes it on match, so the trigger list is safe. Placed
-    # before sweeperreport so it wins when the item is held; the
-    # sweeperreport node still guides a player who is asking without it.
-    # Grants 65-end directly (not 65-report): the give-path reaches 65-end via
-    # a questengine quest_granted chain (65-report -> 65-end) that only fires
-    # inside questengine.Notify. A dialogue grant routes through events.Quest,
-    # which does NOT fire that chain, so granting 65-report here would stall.
-    # IsTokenAfter permits skipping to a later step, and the 65-report->65-end
-    # chain has no side effects, so granting 65-end is equivalent.
-    - id: sweeperhandoff
-      triggers: ["found", "undercroft", "seam", "below", "source", "lump",
-                 "grey", "gray", "material", "fragment", "piece", "report",
-                 "deliver", "hand", "give", "turn", "done", "finished",
-                 "complete", "quest", "task"]
-      questRequired: ["65-discover"]
-      questExcluded: ["65-end"]
-      requiresItem: 40101
-      grantsQuest: "65-end"
-      text: "Coll takes the lump from your hand before you finish speaking,
-        turns it over, and weighs it on his palm. \"Heavier than stone its
-        size has any right to be. I knew it.\" He folds it away carefully.
-        \"You did right bringing this to me.\""
-      hints: "You hand the lump of gray material to Coll."
-      moodChange: curious
-
-    - id: sweeperreport
-      triggers: ["found", "undercroft", "seam", "below", "stone", "source",
-                 "lump", "grey", "gray", "material", "report", "buried",
-                 "city", "down", "it"]
-      questRequired: ["65-discover"]
-      questExcluded: ["65-report"]
-      text: "You went down — I can see it on you, and you've got a piece of
-        it in your hand. Don't tell me about it. Give it here, let me feel
-        the weight of the thing for myself."
-      hints: "Give the lump of gray material to Coll."
-      moodChange: curious
-
-    - id: gossip
-      triggers: ["gossip", "news", "who", "word", "quarter", "neighbors",
-                 "street", "people", "know", "tell", "what"]
-      text: "Half the Common's business happens at this well before the
-        first bell. I don't ask questions — I just sweep near enough to
-        hear the answers. The Brimming Bowl gets the evening version.
-        Between the two of them and what comes through the gutters, I've
-        got a reasonably complete picture of who owes who what and why
-        three families on Midden Row aren't speaking. You want specifics,
-        you'll need to tell me what you're looking for."
-      hints: "Coll seems to know the quarter's daily rhythms well. You
-        could ask about the grey fragments he keeps finding, or the
-        troubles weighing on the Common folk."
-
-    - id: fragments
-      triggers: ["fragment", "fragments", "grey", "gray", "stone", "gutter",
-                 "gutters", "material", "found", "find", "bits", "pieces",
-                 "strange"]
-      text: "I've been finding them for two years, now — small pieces, grey
-        as old bone but harder, and they don't match anything quarried
-        around here. Come up in the gutters mostly, when the rain's been
-        heavy. I've got eleven of them in a tin at home. I showed one to
-        the old bookseller on the Inkwalk and he got an expression on him
-        like he'd heard a rumor confirmed. Wouldn't say what rumor. I've
-        been keeping my ear to that particular wall ever since. Walls are
-        good for that."
-      hints: "Coll's fragments seem to have caught someone's attention.
-        The bookseller on the Inkwalk might know more about what they are."
-      moodChange: curious
-
-    - id: troubles
-      triggers: ["trouble", "troubles", "bloodline", "problem", "problems",
-                 "rent", "levy", "tax", "hard", "difficult", "bad", "worse",
-                 "city", "domestic", "office", "clerk"]
-      text: "The rent went up twice in eighteen months — the bloodline's
-        domestic office runs the collecting through a clerk in the Merchant
-        Quarter who has a very clean seal and no particular sympathy for
-        families that come up short. Mother Brisk on the condemned block
-        is keeping four extra people in a space licensed for two and not
-        telling anyone about it, and I'm not going to be the one who tells
-        anyone about it either. Beyond that — the well's a city asset that
-        hasn't been repointed in six years. I know because I can hear the
-        water moving through the cracks from street level."
-      hints: "The bloodline's reach into the Common Quarter weighs heavily
-        here. Coll knows more about the gutters and the walls than he lets on."
-      moodChange: cautious
-
-    - id: tracefragments
-      triggers: ["quest", "task", "help", "source", "trace", "where", "below",
-                 "down", "undercroft", "find out", "comes from", "origin",
-                 "investigate"]
-      text: "You want to do an old sweeper a turn? Find out where they come
-        from. The gutters run downhill, and downhill in this quarter ends in
-        stone older than anything above it. There's a stair past the
-        fighting-pit gate that goes down into the old foundations — further
-        down than the cellars, into stonework nobody living laid. If my grey
-        bits come from anywhere, they come from down there. Go and look at
-        what runs through those walls. Then come back and tell me I'm not
-        mad."
-      hints: "Past the fighting-pit gate, an undercroft stair descends into
-        pre-Founding stone. Examine the seams in the walls down there, then
-        return to Coll."
-      grantsQuest: "65-start"
-      questExcluded: ["65-start", "65-end"]
-      moodChange: curious
+- text: I heard you coming from two corners away. You've got a particular kind of
+    step.
+  moods:
+  - neutral
+- text: You're earlier than usual.
+  moods:
+  - friendly
+- text: Stop a moment. I was about to sweep past something interesting.
+  moods:
+  - friendly
+opener:
+  text: Three years I've swept Carter's Rise, and two on the tannery streets
+    before that. Stone carries more than folk think, if you've the ears for it,
+    and I have. So ask me about the people, the quarter's troubles, or the
+    strange gray bits I keep finding in the gutters. I've something on all
+    three.
+  hints: You could ask Coll about the gossip at the well, the gray bits in the
+    gutters, or the troubles of the Common Quarter. His task below is about where
+    the gray bits come from.
+  variants:
+  - questRequired:
+    - 65-end
+    text: My tin of gray bits sits heavier on my mind now. Older than the city,
+      under the city. Keep it between us.
+    hints: You could ask Coll about the gossip at the well, the gray bits in the
+      gutters, or the troubles of the Common Quarter.
+  - questRequired:
+    - 65-start
+    questExcluded:
+    - 65-end
+    carriesItem: 40101
+    text: You went down. I can see it on you, and you've got a piece of it in your
+      hand. Don't tell me about it. Let me feel the weight of the thing for myself.
+    hints: Choose The Street Sweeper's Secret below to give Coll the lump.
+  - questRequired:
+    - 65-discover
+    questExcluded:
+    - 65-end
+    text: You went down? Then where's the piece of it? I need to feel the weight of
+      it.
+    hints: If you lost the lump, more of the gray material is in the seam below.
+      From Carter's Rise, where Coll sweeps by day, go west twice to Dockgate
+      Street, then north three times to Tenement Row. Go east, then north to Tannery Street. Go east twice to the
+      Flophouse Steps, north to the Fighting-Pit Gate, east to the Undercroft
+      Stair, then down into the Old Foundation. Type look seam.
+  - questRequired:
+    - 65-start
+    questExcluded:
+    - 65-discover
+    text: Been down yet? The stair's past the fighting-pit gate. Look at what runs
+      through those walls.
+    hints: From Carter's Rise, where Coll sweeps by day, go west twice to Dockgate
+      Street, then north three times to Tenement Row. Go east, then north to Tannery Street. Go east twice
+      to the Flophouse Steps, north to the Fighting-Pit Gate, east to the
+      Undercroft Stair, then down into the Old Foundation. Type look seam.
+topics:
+- key: sweeperhandoff
+  kind: handin
+  quest: 65
+  label: The Street Sweeper's Secret
+  playerLine: I found where your gray bits come from. Feel this.
+  text: Let me see that. Cold as a well bottom and heavier than it has any right
+    to be. This is it, the same stuff, but whole.
+  questRequired:
+  - 65-start
+  questExcluded:
+  - 65-end
+  requiresItem: 40101
+  grantsQuest: 65-end
+  moodChange: curious
+- key: tracefragments
+  kind: offer
+  quest: 65
+  label: The Street Sweeper's Secret
+  playerLine: Do you want help finding where your gray bits come from?
+  text: You want to do an old sweeper a turn? Find out where they come from. The
+    gutters run downhill, and downhill in this quarter ends in stone older than
+    anything above it. There's a stair past the fighting-pit gate that goes down
+    into the old foundations, further down than the cellars, into stonework
+    nobody living laid. If my gray bits come from anywhere, they come from down
+    there. Go and look at what runs through those walls. Then come back and tell
+    me I'm not mad.
+  hints: Accept, then find the Undercroft Stair, east of the Fighting-Pit Gate, and
+    go down into the Old Foundation. There, type look seam.
+  questExcluded:
+  - 65-start
+  - 65-end
+  grantsQuest: 65-start
+  moodChange: curious
+- key: gossip
+  kind: info
+  label: What do you hear at the well?
+  text: Half the Common's business happens at this well before the first bell. I
+    don't ask questions. I just sweep near enough to hear the answers. The
+    Brimming Bowl gets the evening version. Between the two of them and what comes
+    through the gutters, I've got a fair picture of who owes who what, and why
+    three families on Midden Row aren't speaking. You want specifics, you'll need
+    to know what you're looking for.
+- key: fragments
+  kind: info
+  label: What are the gray bits in the gutters?
+  text: I've been finding them for two years now. Small pieces, gray as old bone
+    but harder, and they don't match anything quarried around here. They come up
+    in the gutters mostly, when the rain's been heavy. I've got eleven of them in
+    a tin. I showed one to the old bookseller on the Inkwalk and he got a look on
+    him like he'd heard a rumor confirmed. Wouldn't say what rumor. I've been
+    keeping my ear to that particular wall ever since. Walls are good for that.
+  hints: Coll's fragments have caught someone's attention. The bookseller on the
+    Inkwalk is Orin, in the Crafting Quarter.
+  moodChange: curious
+- key: troubles
+  kind: info
+  label: What troubles the Common Quarter?
+  text: The rent went up twice in eighteen months. The bloodline's domestic office
+    runs the collecting through a clerk in the Merchant Quarter who has a very
+    clean seal and no sympathy for families that come up short. Mother Brisk on
+    the condemned block is keeping four extra people in a space licensed for two
+    and not telling anyone about it, and I'm not going to be the one who tells
+    either. Beyond that, the well's a city asset that hasn't been repointed in six
+    years. I know because I can hear the water moving through the cracks from
+    street level.
+  moodChange: cautious

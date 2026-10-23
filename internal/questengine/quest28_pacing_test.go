@@ -106,8 +106,8 @@ func npcSaySeconds(n *NpcSayDef) int {
 	return total
 }
 
-// The ask step's reply and its next-step line are one line, from Dewey's
-// dialogue: the reply first, the way north last.
+// The ask step's reply and its next-step line come from Dewey's dialogue, the
+// reply first, the way north last, and no quest npc_say line runs ahead.
 func TestQuest28_AskReplyComesBeforeTheNextPrompt(t *testing.T) {
 	q := loadQuest28(t)
 	for _, tr := range q.Triggers {
@@ -119,29 +119,32 @@ func TestQuest28_AskReplyComesBeforeTheNextPrompt(t *testing.T) {
 		}
 	}
 
-	var df dialogue.DialogueFile
-	require.NoError(t, yamlv2.Unmarshal(repoFile(t, "_datafiles", "world", "dogmud", "dialogue", "newcomer_antechamber", "9491.yaml"), &df),
-		"9491.yaml must parse or Dewey goes mute")
-
-	holding := func(tokens ...string) *dialogue.PlayerState {
-		set := map[string]bool{}
-		for _, tok := range tokens {
-			set[tok] = true
-		}
-		return &dialogue.PlayerState{HasQuest: func(tok string) bool { return set[tok] }}
+	// #375 (R20): the ask step is Dewey's lesson topic. Choosing it plays the
+	// reply and grants 28-asked in the same step (Apply), so no quest line can
+	// land between the question and the answer, and the reply itself ends on
+	// the way north.
+	df := loadShippedDialogue(t, "newcomer_antechamber", "9491.yaml")
+	set := map[string]bool{"28-start": true, "28-said": true}
+	ps := &dialogue.PlayerState{
+		HasQuest:  func(tok string) bool { return set[tok] },
+		GiveQuest: func(tok string) { set[tok] = true },
+		HasHeard:  func(string) bool { return false },
+		MarkHeard: func(string) {},
 	}
-	const prompt = "The way north is open."
+	lesson := df.FindTopic("asked_28")
+	require.NotNil(t, lesson, "Dewey's talk lesson topic")
+	require.True(t, df.Eligible(lesson, ps), "the lesson is on the menu on the ask step")
+	require.Equal(t, "28-asked", lesson.GrantsQuest)
+	require.True(t, strings.HasSuffix(strings.TrimSpace(squash(lesson.Text)), "before you go north."),
+		"the lesson's reply must end with the way north; got %q", lesson.Text)
+	require.True(t, df.Apply(lesson, ps))
+	require.True(t, set["28-asked"], "choosing the lesson grants 28-asked with the reply")
 
-	// The trigger grants 28-asked before the reply is chosen.
-	for _, topic := range []string{"world", "gaius", "lanterns"} {
-		reply, _, ok, _ := dialogue.MatchWithFallbackInfo(&df, 1, topic, holding("28-said", "28-asked"))
-		require.True(t, ok)
-		require.True(t, strings.HasSuffix(strings.TrimSpace(reply), prompt),
-			"ask dewey %s on the ask step must end with the way north; got %q", topic, reply)
-	}
-
-	// Once the player has walked on, the way north is not repeated.
-	reply, _, ok, _ := dialogue.MatchWithFallbackInfo(&df, 1, "world", holding("28-said", "28-asked", "28-proving_prompt"))
-	require.True(t, ok)
-	require.NotContains(t, reply, prompt)
+	// After the lesson Dewey's opener says the way north is open; once the
+	// player has walked on, it is not repeated.
+	text, _ := df.OpenerFor(ps)
+	require.Contains(t, squash(text), "the way north is open", "Dewey's opener after the lesson")
+	set["28-proving_prompt"] = true
+	text, _ = df.OpenerFor(ps)
+	require.NotContains(t, squash(text), "the way north is open", "the way north is not repeated after the walk on")
 }

@@ -1,119 +1,218 @@
 mobid: 94
 zone: Thornwall City
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Civilian. State your business. If you are here to file a report, there are forms on the counter."
-      - "What do you need? Make it quick -- I have a shift change in an hour and the rosters are not done."
-
-  - keywords: ["hello", "hi"]
-    moods: ["grateful"]
-    responses:
-      - "Good to see you. The watch owes you one. What do you need?"
-
-  - keywords: ["missing", "person", "elara", "disappear", "find"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "We have a missing person case. Young woman, name of Elara. Family reported it. If you are willing to look into it, I could use the help -- my patrols are stretched thin."
-      - "Elara went missing three days ago. Family is frantic. My guards are covering the gates and market, but the residential wards need someone to knock on doors."
-
-  - keywords: ["crime", "thug", "protection", "racket", "alley"]
-    responses:
-      - "There is always criminal activity in the back alleys. We patrol when we can, but we are understaffed. If you have specific information, I will act on it."
-
-  - keywords: ["guard", "patrol", "watch", "duty"]
-    responses:
-      - "The city watch covers the gates, market, and main streets. We are spread thin. The back alleys and residential wards get patrol coverage when we have bodies to spare, which is not often."
-
-  - keywords: [""]
-    responses:
-      - "Is there something else? The duty log will not write itself."
-      - "If you have nothing to report, I have work to do."
-
-tree:
-  root:
-    text: "Civilian. If you are here about the noise complaint on Market Street, it is filed. If you are here about something else, take a seat."
-    hints: "Ask me about the missing person case, crime in the city, or the guard's operations."
-    variants:
-      - questRequired: ["8-start"]
-        questExcluded: ["8-end"]
-        text: "Any news on the missing girl? The father has been by twice today. If you have found something, I need to hear it."
-        hints: "Report what you have found about Elara."
-      - questRequired: ["8-end"]
-        questExcluded: ["14-evidence"]
-        text: "You did the watch a service with that missing person case. If you hear of anything else, my door is open."
-      - questRequired: ["14-evidence"]
-        questExcluded: ["14-end"]
-        text: "You have been in the tunnels? I can smell it on you. If you have found something, let me see it."
-        hints: "You could give him the bribe ledger, or ask about the tunnel operation."
-      - questRequired: ["14-end"]
-        text: "The tunnel operation is shut down and the arrests are underway. That ledger you brought me is going to shake this city to its foundations. Good work."
-
-  nodes:
-    - id: velkhandoff
-      triggers: ["ledger", "bribe", "evidence", "smuggling",
-        "deliver", "hand", "give", "turn", "done", "finished",
-        "report", "quest", "task"]
-      questRequired: ["14-evidence"]
-      questExcluded: ["14-end"]
-      requiresItem: 40036
-      grantsQuest: "14-end"
-      text: "Names. Dates. Amounts. Gate captains, customs clerks,
-        a warehouse inspector -- all in here. This changes
-        everything. I am ordering arrests tonight."
-      hints: "You hand the bribe ledger to Velk."
-      moodChange: friendly
-
-    - id: missing_case
-      triggers: ["missing", "person", "elara", "case", "help", "quest", "task"]
-      questExcluded: ["8-start", "8-end"]
-      grantsQuest: "8-start"
-      text: "Elara. Twenty-two years old, daughter of a merchant family in the eastern quarter. Reported missing three days ago by her father. No signs of violence, no ransom demand. She just vanished. My guards are watching the gates and the market, but I do not have the people to search the residential wards door by door. If you are willing to look into it, I would appreciate the help. Her father is Aldric Sevarn -- ask me about the family if you want background. Otherwise, start searching the residential wards north of the market."
-      hints: "Search the residential wards north of the market for Elara. You could also ask Velk about her family."
-      moodChange: friendly
-
-    - id: family_info
-      triggers: ["family", "father", "merchant", "who", "why", "aldric", "sevarn"]
-      questRequired: ["8-start"]
-      text: "The father is Aldric Sevarn, textile merchant. Prominent family, old money, strong opinions about how daughters should conduct themselves. He filed the report in person. Very insistent. Very concerned. Draw your own conclusions about what kind of concerned."
-
-    - id: where_to_look
-      triggers: ["where", "search", "residential", "look", "find"]
-      questRequired: ["8-start"]
-      text: "If she is still in the city, the residential wards are the most likely place. Cheap rooms, anonymous landlords, people who mind their own business. Start north of the market and work your way through. Ask quietly -- if she is hiding, a loud search will just drive her deeper."
-
-    - id: protection_report
-      triggers: ["protection", "racket", "thug", "extortion", "notice", "evidence", "proof", "quest", "task"]
-      questRequired: ["10-start"]
-      questExcluded: ["10-report", "10-end"]
-      requiresItem: 30
-      grantsQuest: "10-report"
-      text: "You have evidence of a protection racket? Show me. This is enough to act on. I will put a patrol on the back alleys and bring someone in for questioning. Tell the tavern keeper he can stop paying -- the watch will handle this now."
-      moodChange: friendly
-
-    - id: case_report
-      triggers: ["found", "report", "elara", "located", "hiding", "quest", "task"]
-      questRequired: ["8-found"]
-      questExcluded: ["8-end"]
-      grantsQuest: "8-end"
-      text: "I will close the case based on your account. The family will be notified that she has been located. What I tell them beyond that depends on what you have told me. The watch deals in facts, not judgments."
-      moodChange: grateful
-
-    - id: tunnel_report
-      triggers: ["tunnels", "smugglers", "smuggling", "ledger", "bribe", "quest", "task"]
-      questRequired: ["14-evidence"]
-      questExcluded: ["14-report"]
-      text: "Smuggling tunnels under the Craftsmen's Quarter? And a bribe ledger naming officials? That is... significant. Give me the ledger. I need to see the names before I can act."
-      hints: "You could hand over the bribe ledger."
-
-    - id: tunnel_complete
-      triggers: ["done", "finished", "complete", "tunnels", "quest", "task"]
-      questRequired: ["14-end"]
-      text: "The ledger checks out. Gate captains, customs clerks, a warehouse inspector -- all on the take. The arrests are underway. The tunnels will be sealed and patrols doubled in the quarter. You have done this city a real service."
-      moodChange: grateful
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Civilian. If you are here about the noise complaint on Main Street, it is
+    filed. If you are here about something else, take a seat.
+  hints: You could ask Velk about the missing person case or the city watch.
+  variants:
+  - questRequired:
+    - 8-start
+    questExcluded:
+    - 8-found
+    text: Any news on the missing girl? The father has been by twice today. If you
+      have found something, I need to hear it.
+    hints: Search the Residential Ward, north of Market Square, for Elara.
+  - questRequired:
+    - 8-found
+    questExcluded:
+    - 8-end
+    text: What did you learn about Elara? Let me hear it.
+    hints: "Three entries below share the title The City Watch's Missing Person.
+      Each gives Velk a different report."
+  - questRequired:
+    - 10-start
+    questExcluded:
+    - 10-report
+    carriesItem: 30
+    text: You have the look of someone carrying a complaint. If it is about the back
+      alleys, let me see it.
+    hints: Choose the line about Marek's protection notice below.
+  # A save at 14-report (Velk already holds the ledger; the old give route's
+  # chain to 14-end is gone) closes the case through case_close.
+  - questRequired:
+    - 14-report
+    questExcluded:
+    - 14-end
+    text: I have your ledger, and I have read every name in it. There is one thing
+      left to do before I close the case.
+    hints: Choose The Undertow below to close the case.
+  - questRequired:
+    - 14-evidence
+    questExcluded:
+    - 14-end
+    carriesItem: 40036
+    text: You have been in the tunnels? I can smell it on you. If you found something,
+      let me see it.
+    hints: Choose The Undertow below to hand over the bribe ledger.
+  - questRequired:
+    - 14-evidence
+    questExcluded:
+    - 14-end
+    text: You had a ledger full of names? Then where is it? Without it, I cannot
+      arrest anyone.
+    hints: If you lost the bribe ledger, go back to the strongbox in Torvan's
+      Operations Room and type open strongbox.
+  - questRequired:
+    - 14-end
+    text: The tunnel operation is shut down and the arrests are underway. That ledger
+      you brought me is going to shake this city to its foundations. Good work.
+  - questRequired:
+    - 8-end
+    text: You did the watch a service with that missing person case. If you hear of
+      anything else, my door is open.
+topics:
+- key: missing_case
+  kind: offer
+  quest: 8
+  label: The City Watch's Missing Person
+  playerLine: Do you want help finding your missing person?
+  text: Elara. Twenty-two years old, daughter of a merchant family in the eastern
+    quarter. Reported missing three days ago by her father. No signs of violence,
+    no ransom demand. She just vanished. My guards are watching the gates and the
+    market, but I do not have the people to search the residential wards door by
+    door. If you are willing to look into it, I would appreciate the help. Her father
+    is Aldric Sevarn, if you want to know about the family. If not, start with the
+    residential wards north of the market.
+  hints: The Residential Ward is north of Market Square.
+  questExcluded:
+  - 8-start
+  - 8-end
+  grantsQuest: 8-start
+  moodChange: friendly
+- key: family_info
+  kind: info
+  label: Who is Elara's family?
+  text: The father is Aldric Sevarn, textile merchant. Prominent family, old money,
+    strong opinions about how daughters should conduct themselves. He filed the report
+    in person. Very insistent. Very concerned. Draw your own conclusions about what
+    kind of concerned.
+  questRequired:
+  - 8-start
+- key: where_to_look
+  kind: info
+  label: Where should I look for Elara?
+  text: If she is still in the city, the residential wards are the most likely place.
+    Cheap rooms, anonymous landlords, people who mind their own business. Start north
+    of the market and work your way through. Go quietly. If she is hiding, a loud
+    search will just drive her deeper.
+  hints: From the Guard Barracks, go south, then east five times along Main Street
+    to Market Square, then north twice into the Residential Ward.
+  marked: true
+  questRequired:
+  - 8-start
+  questExcluded:
+  - 8-found
+# Quest 8's three reports: Elara (107 the_choice) offers the player three
+# answers, and each is its own hand-in, so what the player says is what
+# Velk hears. All three complete the quest; a flag can tell them apart in
+# phase 2.
+- key: case_report_where
+  kind: handin
+  quest: 8
+  label: The City Watch's Missing Person
+  playerLine: She is hiding in the Residential Ward, North.
+  text: The Residential Ward. Good. I will send word to her father, and he will come
+    for her with guards. That is his right under the law, whatever I think of it.
+    The case is closed.
+  questRequired:
+  - 8-found
+  questExcluded:
+  - 8-end
+  grantsQuest: 8-end
+  moodChange: grateful
+- key: case_report_notfound
+  kind: handin
+  quest: 8
+  label: The City Watch's Missing Person
+  playerLine: I searched the wards and did not find her.
+  text: Nothing at all? Then she does not want to be found, or she has left the
+    city. I will write it up as searched and not located. The case is closed.
+  questRequired:
+  - 8-found
+  questExcluded:
+  - 8-end
+  grantsQuest: 8-end
+  moodChange: grateful
+- key: case_report_truth
+  kind: handin
+  quest: 8
+  label: The City Watch's Missing Person
+  playerLine: She is alive and hiding by choice. It is your call.
+  text: Alive, and hiding by choice. She is a grown woman, and hiding is not a crime.
+    I will tell her father she is alive and well and does not wish to come home.
+    He will not like it. The watch deals in facts, not judgments. The case is closed.
+  questRequired:
+  - 8-found
+  questExcluded:
+  - 8-end
+  grantsQuest: 8-end
+  moodChange: grateful
+# Quest 10's step (the protection notice), a mid-quest grant: stays marked.
+# The quest 10 give trigger's npc_say lines are folded into the text.
+- key: protection_report
+  kind: info
+  label: Marek sent me with a protection notice.
+  text: A protection notice? Let me see that. This is enough to act on. I will put
+    a patrol on the back alleys and bring someone in for questioning. Tell the tavern
+    keeper he can stop paying. The watch will handle this now.
+  hints: Go back to Marek at the Drowning Post and type talk marek.
+  marked: true
+  questRequired:
+  - 10-start
+  questExcluded:
+  - 10-report
+  - 10-end
+  requiresItem: 30
+  grantsQuest: 10-report
+  moodChange: friendly
+# Hand-in for quest 14. The tunnel_report node and the give trigger's npc_say
+# lines are folded in. It grants 14-end directly (settled ruling: the
+# 14-report chain is gone). It does not exclude 14-report: case_close
+# below serves saves at that step, which already gave Velk the ledger.
+- key: velkhandoff
+  kind: handin
+  quest: 14
+  label: The Undertow
+  playerLine: I found a bribe ledger in the smugglers' tunnels.
+  text: Smuggling tunnels under the city, and a ledger naming officials? Let me see
+    that. Names, dates, amounts. Gate captains, customs clerks, a warehouse inspector,
+    all on the take. This changes everything. I am ordering arrests tonight.
+  questRequired:
+  - 14-evidence
+  questExcluded:
+  - 14-end
+  requiresItem: 40036
+  grantsQuest: 14-end
+  moodChange: friendly
+# A save at 14-report gave Velk the ledger through the old give route, whose
+# chain to 14-end Task 16 deletes. No item: Velk already has it.
+- key: case_close
+  kind: handin
+  quest: 14
+  label: The Undertow
+  playerLine: You have the ledger. Is the case closed?
+  text: It is. The names check out. Gate captains, customs clerks, a warehouse
+    inspector, all on the take. I am ordering arrests tonight.
+  questRequired:
+  - 14-report
+  questExcluded:
+  - 14-end
+  grantsQuest: 14-end
+  moodChange: friendly
+- key: tunnel_complete
+  kind: info
+  label: What came of the bribe ledger?
+  text: The ledger checks out. Gate captains, customs clerks, a warehouse inspector,
+    all on the take. The arrests are underway. The tunnels will be sealed and patrols
+    doubled in the quarter. You have done this city a real service.
+  questRequired:
+  - 14-end
+  moodChange: grateful
+- key: guard
+  kind: info
+  label: How does the city watch keep order?
+  text: The city watch covers the gates, market, and main streets. We are spread thin.
+    The back alleys and residential wards get patrol coverage when we have bodies
+    to spare, which is not often. There is always crime in the back alleys. If you
+    have specific information about it, bring it to me and I will act on it.

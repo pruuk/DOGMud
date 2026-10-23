@@ -1,132 +1,134 @@
 mobid: 83
 zone: Dustwalk Road
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "good day"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Traveller. You have come from the north? Good -- that means the road behind you is still clear."
-      - "Welcome to the post. I am Tessara, road warden for this stretch. What brings you south?"
-      - "You look like someone with a purpose. That, or someone who got lost. Either way, you are welcome here."
-
-  - keywords: ["hello", "hi", "greet"]
-    moods: ["grateful"]
-    responses:
-      - "Ah, you again. The road is quieter thanks to your work. What can I do for you?"
-      - "Welcome back, friend. The warden post is always open to you."
-
-  - keywords: ["bandit", "bandits", "trouble", "danger", "threat", "south"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Bandits, yes. They have been hitting caravans south of here for weeks. I have reported it, but the Watchers have their own problems and reinforcements are slow in coming."
-      - "The road south has become dangerous. A group has dug in somewhere in the gullies past the ridgeline. I cannot leave my post to deal with them alone, and they know it."
-
-  - keywords: ["investigate", "help", "quest", "task", "work", "job"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "If you are willing, I could use someone to scout the bandit camp to the south. I need evidence of their operation -- documents, anything that proves this is organized and not just opportunistic theft. Bring me proof and I can get the Watchers to act."
-      - "There is something you could do. Head south past the ridgeline, into the gullies. Find their camp. Bring me anything that shows who they are and what they are planning. I will see it gets to the right people."
-
-  - keywords: ["report", "evidence", "purse", "letter", "documents", "proof"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "If you have found evidence from the bandit camp, I need to see it. Anything with names, routes, or schedules would be enough to get the Watchers moving."
-      - "Documents are what I need. The wardens at Watchers Crossing will not act on rumour -- they need proof on paper."
-
-  - keywords: ["warden", "wardens", "post", "patrol", "duty"]
-    responses:
-      - "I am one of a handful of road wardens assigned to the routes between Sanctum Basin and the eastern settlements. We keep the roads passable and report what we see. It is thankless work, but necessary."
-      - "The warden posts are the only law on these roads. We are too few and too spread out, but we do what we can."
-
-  - keywords: ["watchers", "crossing", "east", "tower", "towers"]
-    responses:
-      - "Watchers Crossing is the first proper settlement east of here. They maintain the towers and patrol the approaches. If you are heading that way, the eastern fork from the ridgeline will take you there."
-      - "The Watchers are better resourced than we wardens are. Stone towers, regular patrols, actual walls. Getting there is the hard part."
-
-  - keywords: ["road", "dustwalk", "travel", "route"]
-    responses:
-      - "Dustwalk Road connects Sanctum Basin to the eastern territories. It is the only maintained route through this stretch of country, which makes it valuable -- and a target."
-      - "The road is old. Older than the wardens, older than the settlements it connects. Someone built it well. We just try to keep it passable."
-
-  - keywords: ["trade", "buy", "sell"]
-    responses:
-      - "I am a warden, not a merchant. But if you need supplies, Sanctum Basin is north and Watchers Crossing is east."
-
-  - keywords: [""]
-    responses:
-      - "Speak plainly. I am listening."
-      - "Is there something you need? I have reports to write."
-
-tree:
-  root:
-    text: "Traveller. You have come at an interesting time. The road south has grown dangerous and I could use someone with steady hands. Or you could just be passing through -- either way, you are welcome at the post."
-    hints: "Ask me about the bandits, the road, or how you might help."
-    variants:
-      - questRequired: ["4-start"]
-        questExcluded: ["4-end"]
-        text: "Any luck at the bandit camp? I need hard evidence -- documents, a purse with identifying marks, anything. Without proof, the Watchers will not move."
-        hints: "Find evidence at the bandit camp south of the ridgeline and bring it to Tessara."
-      - questRequired: ["4-end"]
-        text: "The report went east this morning. The Watchers will have a patrol out within the week, thanks to you. The road is already safer."
-
-  nodes:
-    - id: bandits
-      triggers: ["bandit", "bandits", "trouble", "danger", "south", "dangerous"]
-      text: "A group has set up in the gullies south of the ridgeline. They have been hitting merchant caravans for weeks -- small ones, the kind that cannot afford guards. I have sent reports to Watchers Crossing, but the wardens there have their own concerns. By the time they act, the bandits will have moved on and set up somewhere else."
-      hints: "Ask how you could help, or about Watchers Crossing."
-      unlocks: ["help_quest", "watchers_info"]
-
-    - id: help_quest
-      triggers: ["help", "investigate", "quest", "task", "what can i do", "willing"]
-      questExcluded: ["4-start", "4-end"]
-      grantsQuest: "4-start"
-      text: "I cannot leave the post. But if you were willing to scout the camp and bring me evidence -- documents, anything with names or schedules -- I could include it in my next report. Hard evidence is what the Watchers need to justify sending a patrol. It would make a real difference."
-      hints: "Accept the task and head south past the ridgeline to find the bandit camp."
-      moodChange: friendly
-
-    - id: watchers_info
-      triggers: ["watchers", "crossing", "east", "towers", "settlement"]
-      text: "Watchers Crossing is three leagues that way, give or take. A proper settlement with walls and towers. They patrol the eastern approaches and keep the trade routes open -- when they have the people for it. The eastern fork from the ridgeline will take you there."
-
-    - id: road_info
-      triggers: ["road", "dustwalk", "route", "travel", "where"]
-      text: "Dustwalk Road runs from Sanctum Basin down through the scrublands to the eastern territories. This post sits roughly in the middle -- north is the plateau, south is open country, east leads to Watchers Crossing. The road is old and well-built, but maintenance has slipped. I do what I can."
-
-    - id: about_tessara
-      triggers: ["you", "yourself", "warden", "who are you", "your story", "tessara"]
-      text: "I have been walking roads for longer than I care to count. Started as a caravan guard, moved to the wardens when I got tired of protecting someone else's profits. Out here, you protect the road itself -- and everyone on it. It suits me."
-      moodChange: friendly
-
-    # ── DELIVERY BY ASK (completion) ──────────────────────────
-    # Mirrors the give-path: a player who turns in the purse by asking
-    # Tessara about it (rather than `give purse tessara`) completes the
-    # quest too. requiresItem gates this node to fire ONLY when the
-    # player actually holds the purse and consumes it on match, so the
-    # broad trigger list is safe. Placed before evidence_return so it
-    # wins when the item is in hand; evidence_return still guides a
-    # player who is asking but has not found the purse yet.
-    - id: evidence_handoff
-      triggers: ["evidence", "purse", "letter", "found", "proof", "report",
-        "documents", "hand", "deliver", "give", "turn", "turnin", "done",
-        "finished", "complete", "quest", "task"]
-      questRequired: ["4-investigate"]
-      questExcluded: ["4-end"]
-      requiresItem: 16
-      grantsQuest: "4-end"
-      text: "Tessara takes the purse the moment you offer it, tips the\
-        \ contents into her palm, and her jaw sets. \"Schedules. Names.\
-        \ This is exactly what the Watchers need to move.\""
-      hints: "You hand the bandit's purse to Tessara."
-
-    - id: evidence_return
-      triggers: ["evidence", "purse", "letter", "found", "proof", "report", "documents"]
-      questRequired: ["4-investigate"]
-      questExcluded: ["4-end"]
-      text: "If you have found evidence from the bandit camp -- a purse, documents,\
-        \ anything with names or schedules -- bring it to me directly. Hand it\
-        \ over and I will see it gets into my report."
-      hints: "Give the bandit's purse to Tessara to complete the evidence handoff."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: "Traveller. You have come at an interesting time. The road south has grown
+    dangerous and I could use someone with steady hands. Or you could just be
+    passing through. Either way, you are welcome at the post."
+  hints: "You could ask Tessara what has made the road south dangerous, where the
+    road leads, or how she came to be a warden."
+  # Quest 4 states; evidence_return (tree node) and the report pattern are
+  # folded into these variants.
+  variants:
+  - questRequired:
+    - 4-end
+    text: "The report went east this morning. The Watchers will have a patrol out
+      within the week, thanks to you. The road is already safer."
+  - questRequired:
+    - 4-evidence
+    questExcluded:
+    - 4-end
+    text: "You have something from the camp. I can see it on your face. Let me see
+      it."
+    hints: "Choose The Warden's Report below to hand Tessara the bandit's purse."
+  # The purse picked up before accepting grants no step; the hand-in still
+  # takes it (4-start + item 16).
+  - questRequired:
+    - 4-start
+    questExcluded:
+    - 4-evidence
+    - 4-end
+    carriesItem: 16
+    text: "Is that a purse with marks on it? You found their stash already. Let me
+      see it."
+    hints: "Choose The Warden's Report below to hand Tessara the bandit's purse."
+  - questRequired:
+    - 4-investigate
+    questExcluded:
+    - 4-evidence
+    - 4-end
+    text: "You found their camp? Then the proof is close. They keep what they steal
+      in the hollow past it. Documents, a purse with marks on it, anything with
+      names or schedules."
+    hints: "The Bandit Hollow is just south of the Abandoned Campsite. Look among
+      the stolen goods there. Type get purse."
+  - questRequired:
+    - 4-start
+    questExcluded:
+    - 4-investigate
+    - 4-end
+    text: "Any luck at the bandit camp? I need hard evidence. Documents, a purse with
+      identifying marks, anything. Without proof, the Watchers will not move."
+    hints: "From the Warden's Post, go south twice to the Abandoned Campsite, where
+      the bandits have been working. Their hollow is south of it."
+topics:
+- key: help_quest
+  kind: offer
+  quest: 4
+  label: The Warden's Report
+  playerLine: What do you need steady hands for?
+  text: "A group of bandits has dug in south of here, and I cannot leave the post.
+    But if you were willing to scout their camp and bring me evidence, documents,
+    a purse, anything with names or schedules, I could put it in my next report.
+    Hard evidence is what the Watchers need to justify sending a patrol. It would
+    make a real difference."
+  hints: "If you accept, the bandit camp is south: from the Warden's Post, go south
+    twice to the Abandoned Campsite."
+  questExcluded:
+  - 4-start
+  - 4-end
+  grantsQuest: 4-start
+  moodChange: friendly
+- key: evidence_handoff
+  kind: handin
+  quest: 4
+  label: The Warden's Report
+  playerLine: I found this purse among the bandits' stolen goods.
+  text: "Schedules. Names. Caravan routes. This is not petty theft. Someone is feeding
+    them information from inside the trading houses. This is exactly what the
+    Watchers need to move. You have done good work."
+  hints: "Tessara tips the purse's contents into her palm, and her jaw sets."
+  questRequired:
+  - 4-start
+  questExcluded:
+  - 4-end
+  requiresItem: 16
+  grantsQuest: 4-end
+# threat (pattern) folded into bandits; tower (pattern) into watchers_info;
+# road (pattern) into road_info; wardens (pattern) into about_tessara; work
+# (pattern) is covered by the help_quest pitch.
+- key: bandits
+  kind: info
+  label: What has made the road south dangerous?
+  text: "Bandits. A group has set up in the gullies south of the ridgeline. They have
+    been hitting merchant caravans for weeks, the small ones that cannot afford
+    guards. I have sent reports to Watchers Crossing, but the wardens there have
+    their own problems, and reinforcements are slow in coming. By the time they act,
+    the bandits will have moved on and set up somewhere else."
+  marked: true
+- key: watchers_info
+  kind: info
+  label: What is Watchers Crossing?
+  text: "The first proper settlement east of here, with walls and towers. They
+    patrol the eastern approaches and keep the trade routes open, when they have the
+    people for it. They are better resourced than we wardens are. The eastern fork
+    at the ridgeline will take you there."
+  hints: "From the Warden's Post, go south to the Ridgeline, then east twice to
+    Watchers Crossing."
+  marked: true
+  heardRequired:
+  - bandits
+- key: road_info
+  kind: info
+  label: Where does this road lead?
+  text: "Dustwalk Road runs from Sanctum Basin down through the scrublands to the
+    eastern territories. It is the only maintained route through this stretch of
+    country, which makes it valuable, and a target. This post sits roughly in the
+    middle. North is the plateau, south is open country, east leads to Watchers
+    Crossing. The road is older than the wardens, older than the settlements it
+    connects. Someone built it well. We just try to keep it passable."
+- key: about_tessara
+  kind: info
+  label: How did you come to be a warden?
+  text: "I have been walking roads for longer than I care to count. Started as a
+    caravan guard, moved to the wardens when I got tired of protecting someone
+    else's profits. There are only a handful of us on the routes between Sanctum
+    Basin and the eastern settlements. Too few and too spread out, but the warden
+    posts are the only law on these roads. Out here, you protect the road itself,
+    and everyone on it. It suits me."
+  moodChange: friendly
+- key: trade
+  kind: info
+  label: Do you have supplies to sell?
+  text: "I am a warden, not a merchant. But if you need supplies, Sanctum Basin is
+    north and the trading post at Watchers Crossing is east."

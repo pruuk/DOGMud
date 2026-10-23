@@ -2,73 +2,50 @@ mobid: 9513
 zone: Greenford
 defaultMood: friendly
 greetings:
-  - text: "On the hour, on the cross. If you missed it, ask me --
-      I'll read it again."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Day to you. Announcements on the hour. Board's up if
-        you want to read ahead."
-  - keywords: ["news", "hear", "what", "today"]
-    responses:
-      - "Bridge repair's the main item this week. Timetable's
-        on the board. I'll read it on the next bell."
-  - keywords: [""]
-    responses:
-      - "Ask me what you want to know. That's the job."
-tree:
-  root:
-    text: |
-      Town crier, Market Cross, Greenford -- the notices, the
-      announcements, the bridge repair timetable if you want
-      that again. Bell goes on the hour. Board's up to date.
-      What do you want to know?
-    hints: "You could ask about the notices and the news, about
-      the market square, or about Greenford uphill."
-  nodes:
-    - id: notices
-      triggers: ["notice", "notices", "news", "announcement",
-        "announcements", "bell", "board", "crier", "reading",
-        "timetable"]
-      text: |
-        Today's reading: bridge repair timetable -- the east
-        pier work runs two more weeks, toll stays in place,
-        crossing remains open. Weavers' circle meets Thursday
-        at the hall on Cross Lane. Two rooms to let on Mill
-        Lane, enquire at the green door. Lost dog, brown with
-        a white ear, name of Burr, answers to neither -- that's
-        the owner's description, not mine. The board has all of
-        it written up. I read it on the bell and again on
-        request. The bell's the announcement. The board is
-        the record.
-      hints: "You could ask about the market square, or about
-        Greenford and the university uphill."
-    - id: square
-      triggers: ["square", "market", "cross", "stalls", "town",
-        "cobbles", "cross"]
-      text: |
-        Good square for the job -- the cross draws people in
-        from three sides and the stalls keep them here long
-        enough to listen. I've been working this end of the
-        market for eleven years and the square has changed
-        less than you'd expect: same cobbles, same stalls in
-        roughly the same places, same produce on a Thursday.
-        The inn's on the east side. The bookshop's on the
-        west. The rest of the town fills in around them. It's
-        a settled place.
-      hints: "You could ask about the notices and the day's
-        news, or about Greenford uphill."
-    - id: greenford
-      triggers: ["greenford", "upper", "uphill", "university",
-        "scholars"]
-      text: |
-        University town, three hundred years old give or take
-        -- the scholars know the exact figure and correct you
-        if you get it wrong, which tells you something about
-        the place. The upper town's the market and the inn and
-        the bookshop. The university's at the crown of the
-        hill above that. The town runs itself quietly and the
-        scholars keep to their books. It works.
-      hints: "You could ask about the notices and the board, or
-        about the market square and the cross."
+- text: On the hour, on the cross. If you missed it, say so. I'll read it again.
+  moods:
+  - friendly
+opener:
+  text: |
+    Gather round! I'm the town crier, and the Market
+    Cross is my patch. I carry the notices and the announcements,
+    and the bridge repair timetable, which I'll gladly read again
+    for anyone who missed it. The bell goes on the hour, and the
+    board is up to date. So, friend, what would you like to hear?
+  hints: You could ask the crier for today's notices, about the market square, or
+    about Greenford and the university.
+topics:
+- key: notices
+  kind: info
+  label: What are today's notices?
+  text: |
+    Today's reading. The bridge repair timetable, which is the
+    main item this week. The east pier work runs two more weeks,
+    the toll stays in place, and the crossing remains open. The
+    weavers' circle meets Thursday at the Weaver's Loft on the
+    Guild Lane. Lost dog, brown with a white ear, name of Burr,
+    answers to neither. That's the owner's description, not mine.
+    The board has all of it written up. I read it on the bell and
+    again on request. The bell's the announcement. The board is
+    the record.
+- key: square
+  kind: info
+  label: How long have you worked this square?
+  text: |
+    Eleven years at this end of the market, and the square has
+    changed less than you'd expect. Same cobbles, same stalls in
+    roughly the same places, same produce on a Thursday. The cross
+    draws people in from three sides, and the stalls keep them here
+    long enough to listen. The inn's on the east side of the square.
+    The bookshop's on the west. The rest of the town fills in
+    around them. It's a settled place.
+- key: greenford
+  kind: info
+  label: How old is Greenford?
+  text: |
+    University town, three hundred years old, give or take. The
+    scholars know the exact figure and correct you if you get it
+    wrong, which tells you something about the place. The upper
+    town is the market and the inn and the bookshop. The university
+    is at the crown of the hill above that. The town runs itself
+    quietly and the scholars keep to their books. It works.

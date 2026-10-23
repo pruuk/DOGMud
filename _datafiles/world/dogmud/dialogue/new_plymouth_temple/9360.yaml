@@ -1,170 +1,248 @@
 mobid: 9360
 zone: New Plymouth Temple
 defaultMood: neutral
-
 greetings:
-  - text: "You are not a novice and you are not one of the senior
-      keepers. Good. Look at this wall. The oxidation pattern on
-      that mortar is not from the founding period. I have been
-      saying this for two weeks."
-    moods: ["neutral"]
-  - text: "You again. Have you had a look at the inscription yet?
-      Has it changed your mind, or do you still need convincing?"
-    moods: ["friendly"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Hello. Do you know anything about stone oxidation rates?
-          You look like someone who might."
-      - "Good. I need someone who will actually listen to an argument."
-
-  - keywords: [""]
-    responses:
-      - "Ask. I have a great deal to say and very few people asking."
-
-tree:
-  root:
-    text: "The eastern inscription is not from the founding period.
-      I have the oxidation data, the weathering depth, and a
-      comparison to confirmed pre-founding stonework in the
-      civic quarter. The founding plaque is wrong — by at least
-      a century. Do you want the argument, or were you here for
-      something else?"
-    hints: "Scholar Dross is very worked up about something. You
-      could ask him about the inscriptions and his evidence, about
-      a cipher he found in the old temple artwork, or about why
-      no one in authority seems willing to listen to him."
-
-  nodes:
-    - id: knower
-      questRequired: ["77-end"]
-      triggers: ["quest", "task", "truth", "east", "site", "crash",
-                 "records", "moons", "sky", "ships", "blessing",
-                 "bloodline", "found", "knew"]
-      text: "Stop. Stand still and let me look at you. I have spent my
-        whole life being the only man in the room who could see the
-        crack in the wall, and being told I was mad for it -- and I know
-        that look, because I have worn it. You have been somewhere. You
-        have seen the thing under the thing. Do not tell me what. No --
-        I am not being modest, I am being careful, which is new for me
-        and does not suit me. My little forgery is a founding date off by
-        a century. Yours is bigger. I can smell it. Whatever you found
-        out east, it makes my inscriptions look like a spelling error,
-        and if you say it in this hall they will not merely change the
-        subject the way the Canon changes it with me. Guard it. I have
-        wanted an ally who could see for twenty years. Now that one is
-        standing in front of me, I find I am afraid of what you see."
-      hints: "Scholar Dross has recognized something in you and will not
-        let you say it aloud here. You could still ask him about his
-        inscriptions, the cipher in the old artwork, or why no one in
-        authority will listen."
-      moodChange: cautious
-    - id: q69_start
-      triggers: ["quest", "task", "cipher", "rubbing", "reliefs", "help",
-                 "prove", "do"]
-      questExcluded: ["69-start", "69-end"]
-      grantsQuest: "69-start"
-      text: "You will listen? Good -- most do not. The eastern inscription
-        is older than the founding it supposedly records. I have the
-        oxidation data and the stone comparison. And the processional
-        reliefs in the nave encode the real date in the hand positions of
-        the figures. I cannot prove the full sequence without the key, and
-        the key is a set of relief fragments in the Noble Quarter gallery --
-        where my formal inquiry has gone unanswered for a year. But you are
-        not a formal inquiry. Make me a rubbing of those reliefs, in the
-        sanctuary nave, and bring it here. That is where it starts."
-      hints: "Scholar Dross wants a rubbing of the processional reliefs in
-        the Grand Temple sanctuary nave. Examine the reliefs there to take a
-        rubbing, then bring it back to him in the courtyard. You could ask
-        about the quest, the
-        cipher, or the reliefs."
-
-    - id: q69_gallery
-      triggers: ["rubbing", "cipher", "read", "gallery", "key", "next",
-                 "lysha", "panel", "fragments", "quest", "task"]
-      questRequired: ["69-rubbing"]
-      questExcluded: ["69-gallery", "69-end"]
-      grantsQuest: "69-gallery"
-      text: "Yes -- yes, this is the sequence, but it runs past what I can
-        anchor without the gallery's fragments to fix the zero point. Go to
-        the Noble Quarter gallery. There is a guide there, Ferrol, who will
-        walk you past the portraits and call the older panels decorative.
-        They are not. Get past him to the keeper -- her name is Lysha -- and
-        ask her, in those words, about the third panel from the left. She
-        will know what you mean."
-      hints: "Dross read part of the cipher but needs the gallery's key. Go
-        to the Noble Quarter art gallery, get past the guide Ferrol to Keeper
-        Lysha, and ask her about the third panel from the left."
-      moodChange: friendly
-
-    - id: inscriptions
-      triggers: ["inscription", "inscribe", "age", "date", "stone",
-                 "wall", "oxidation", "mortar", "evidence", "proof",
-                 "founding", "founded", "claim", "built", "year",
-                 "depth", "cut", "wrong", "fact", "argument", "argue",
-                 "tell", "explain", "century", "older", "weathering",
-                 "compare", "show", "what", "look"]
-      text: "The oxidation rate on limestone mortar in this climate is
-        well documented — I have three reference surveys. The mortar
-        on the eastern inscription oxidizes at a rate consistent with
-        work done roughly a century and a half before the founding
-        date on the plaque. The cut depth on the inscription letters
-        is consistent with that same period. I compared it to the
-        civic quarter's pre-founding foundation stones and the
-        profile matches. The inscription was made before the founding.
-        The plaque saying when it was made is wrong. That is the
-        argument. It is not a subtle argument."
-      hints: "You could ask about the cipher Scholar Dross found in
-        the old artwork, or about why no one in authority is engaging
-        with his findings."
-      moodChange: friendly
-
-    - id: cipher
-      triggers: ["cipher", "gallery", "noble", "painting", "art",
-                 "artwork", "decode", "code", "hidden", "pattern",
-                 "figure", "carving", "relief", "sculpture", "mark",
-                 "image", "hand position", "hands", "arrangement",
-                 "western", "nave", "processional", "pre-founding",
-                 "collection", "artifacts", "noble quarter"]
-      text: "In the western nave there are processional relief figures —
-        old, very old, made before the plaque they are supposed to
-        illustrate. The hand positions of those figures encode a
-        numeric sequence. I counted them four separate times. The
-        sequence is not decorative. It is a date — the real founding
-        date, or something close to it — embedded in the art by
-        whoever commissioned it, presumably because they knew the
-        official record was going to be wrong. The key to reading the
-        full cipher is in the Noble Quarter gallery. There is a
-        collection of pre-founding artifacts there — relief fragments
-        from the same workshop, same hand, same arrangement code. I
-        have submitted a formal request to examine them. I have not
-        heard back."
-      hints: "You could ask about why no one in authority will engage
-        with Scholar Dross's findings, or return to the inscription
-        evidence."
-      moodChange: neutral
-
-    - id: ignored
-      triggers: ["listen", "why", "ignore", "silence", "dismiss",
-                 "official", "blood", "power", "ruling", "lord",
-                 "interested", "no one", "nobody", "refuse", "reject",
-                 "reason", "whose", "benefit", "who benefits",
-                 "not listening", "won't", "formal", "submit",
-                 "rejected", "why not", "care", "respond"]
-      text: "The founding date is not only a historical fact — it is
-        a legal one. The ruling family's charter, their property
-        rights, their authority in the city courts all derive from
-        the founding and its date. If the real founding was a century
-        earlier, the original charter was with a different family
-        entirely. The current family's claim to the city rests on
-        a date that I am now certain is wrong. That is why the Canon
-        changes the subject when I raise it. That is why my formal
-        inquiry to the Noble Quarter gallery has not been answered.
-        That is why the junior archivist told me to submit a query
-        in writing rather than simply letting me through the door.
-        They know. I think they all know. Confirming it in writing
-        would require taking a position."
-      hints: "You could ask about the inscription evidence itself, or
-        about the cipher in the old relief artwork."
-      moodChange: cautious
+- text: You are not a novice and you are not one of the senior keepers. Good. Look
+    at this wall. The weathering on that mortar is not from the founding period. I
+    have been saying this for two weeks.
+  moods:
+  - neutral
+- text: You again. Have you had a look at the inscription yet? Has it changed your
+    mind, or do you still need convincing?
+  moods:
+  - friendly
+opener:
+  text: The eastern inscription is not from the founding period. I have the
+    weathering data, the depth of the cuts, and a comparison with stonework in the
+    civic quarter that is known to be older than the city. The founding plaque is
+    wrong, by at least a century. Do you want the argument, or were you here for
+    something else?
+  hints: Scholar Dross is very worked up about something. You could ask him about
+    the inscription and his evidence, about a cipher he found in the old temple
+    carvings, or about why no one in authority will listen to him.
+  # Quest 69 states first (first match wins; HasQuest is also true at every
+  # later step, so each variant excludes the step after it).
+  variants:
+  - questRequired:
+    - 69-gallery
+    questExcluded:
+    - 69-end
+    carriesItem: 40116
+    text: Is that her reading? Give it here. Carefully.
+    hints: Choose The Gallery Cipher below to give Dross Keeper Lysha's reading.
+  - questRequired:
+    - 69-reading
+    questExcluded:
+    - 69-end
+    text: You reached her? Then where is her reading? I need it in her hand, not
+      in your memory.
+    hints: If you lost Keeper Lysha's reading, she can write it out again. She keeps
+      the Art Gallery in the Noble Quarter and sleeps upstairs at night. Type talk
+      lysha.
+  - questRequired:
+    - 69-gallery
+    questExcluded:
+    - 69-reading
+    - 69-end
+    text: Have you found the keeper yet? Lysha, in the Noble Quarter gallery. The
+      third panel from the left.
+    hints: From the Temple Courtyard, go south twice into the Sanctuary, then west
+      six times to the Gilded Walk. Go north into the Gilt Threshold, west twice to
+      the Processional, North End, then north four times to the Palace Processional.
+      Go west into the Administrative Office, then north into the Art Gallery. Lysha
+      keeps the hall in the morning and evening, works upstairs in the afternoon,
+      and sleeps upstairs at night. Type talk lysha.
+  - questRequired:
+    - 69-rubbing
+    questExcluded:
+    - 69-gallery
+    - 69-end
+    carriesItem: 40115
+    text: Is that the rubbing? Show me. Show me now.
+    hints: Choose I have the rubbing from the reliefs below.
+  - questRequired:
+    - 69-rubbing
+    questExcluded:
+    - 69-gallery
+    - 69-end
+    text: You took the rubbing? Then where is it? Paper does not walk off on its own.
+    hints: If you lost the rubbing, take another. The processional reliefs are in the
+      Grand Temple Sanctuary, south twice from the Temple Courtyard. Type look
+      reliefs.
+  - questRequired:
+    - 69-start
+    questExcluded:
+    - 69-rubbing
+    - 69-end
+    text: Have you been to the reliefs yet? The north wall of the sanctuary, at waist
+      height. You cannot miss them if you look.
+    hints: From the Temple Courtyard, go south twice into the Grand Temple
+      Sanctuary. The processional reliefs run along its north wall. Type look
+      reliefs.
+  # The staring opener shows exactly when `knower` does: 77-end and no quest
+  # 69 token (HasQuest("69-start") stays true through 69-end).
+  - questRequired:
+    - 77-end
+    questExcluded:
+    - 69-start
+    text: Wait. Stop there. No, do not speak yet. Let me look at you. The eastern
+      inscription is a century older than its plaque says, and even that can wait.
+    hints: Scholar Dross is staring at you as if he can see where you have been.
+  - questRequired:
+    - 77-end
+    - 69-end
+    text: It holds. Every line of it holds. Wait. Stop there. No, do not speak yet.
+      Let me look at you.
+    hints: Scholar Dross is staring at you as if he can see where you have been.
+  - questRequired:
+    - 69-end
+    text: It holds. Every line of it holds. Now all I need is someone with power who
+      is obliged to be honest. I am still looking.
+    hints: You could ask Dross about the inscription, the cipher in the old carvings,
+      or why no one in authority will listen.
+topics:
+- key: q69_start
+  kind: offer
+  quest: 69
+  label: The Gallery Cipher
+  playerLine: Do you want help proving the inscription is older?
+  text: Help? Most people will not even listen. The eastern inscription is older than
+    the founding it is supposed to record. I have the weathering data and the stone
+    comparison. And the processional reliefs in the nave hide the real date in the
+    hand positions of the figures. I cannot read the full sequence without the key,
+    and the key is a set of panels in the Noble Quarter gallery, where my formal
+    inquiry has gone unanswered for a year. But you are not a formal inquiry. Make me
+    a rubbing of those reliefs in the sanctuary and bring it here. That is where it
+    starts.
+  hints: Accept, then go to the Grand Temple Sanctuary, south twice from the Temple
+    Courtyard. The processional reliefs run along its north wall. Type look reliefs.
+  questExcluded:
+  - 69-start
+  - 69-end
+  grantsQuest: 69-start
+- key: give_40116
+  kind: handin
+  quest: 69
+  label: The Gallery Cipher
+  playerLine: Keeper Lysha read the third panel against the rubbing.
+  text: You reached her. You actually reached her. The third panel, painted from
+    life, of a structure that stands inland of the docks, exactly where the cipher's
+    geometry points. The rubbing and the panel agree. The same hand, or the same
+    workshop, and they agree. Then it is settled, as far as evidence settles
+    anything. The inscription is older than the founding. The founding date is
+    wrong. And everything the bloodline holds in law comes from a date that is wrong.
+    You should know what you have helped prove. And be careful who you prove it to.
+  questRequired:
+  - 69-gallery
+  questExcluded:
+  - 69-end
+  requiresItem: 40116
+  grantsQuest: 69-end
+  bumpsRep:
+  - faction: cooperage_circle
+    delta: 5
+# The rubbing step (was q69_gallery plus give_40115, the item_give route): the
+# rubbing is shown, never taken (carriesItem), so `give rubbing dross` resolves
+# here and the player keeps it for Lysha.
+- key: q69_gallery
+  kind: info
+  label: I have the rubbing from the reliefs.
+  text: Let me see it. Yes, yes, this is the sequence. But it runs past what I can
+    anchor without the gallery's panels to fix the zero point. Keep the rubbing. You
+    will need it where I am sending you. Go to the Noble Quarter gallery. There is a
+    guide, Ferrol, who will walk you past the portraits and call the older panels
+    decorative. They are not. Get past him to the keeper. Her name is Lysha. Tell her
+    you have come about the third panel from the left. She will know what you mean.
+  hints: Dross read part of the cipher but needs the gallery's key. Keeper Lysha
+    keeps the Art Gallery in the Noble Quarter and sleeps upstairs at night. Type
+    talk lysha.
+  marked: true
+  questRequired:
+  - 69-rubbing
+  questExcluded:
+  - 69-gallery
+  - 69-end
+  carriesItem: 40115
+  grantsQuest: 69-gallery
+  moodChange: friendly
+- key: knower
+  kind: info
+  label: Why are you looking at me like that?
+  text: Stop. Stand still and let me look at you. I have spent my whole life being
+    the only man in the room who could see the crack in the wall, and being told I
+    was mad for it, and I know that look, because I have worn it. You have been
+    somewhere. You have seen the thing under the thing. Do not tell me what. No, I
+    am not being modest, I am being careful, which is new for me and does not suit
+    me. My little forgery is a founding date off by a century. Yours is bigger. I can
+    smell it. Whatever you found out east, it makes my inscription look like a
+    spelling error, and if you say it in this hall they will not merely change the
+    subject the way the Canon changes it with me. Guard it. I have wanted an ally who
+    could see for twenty years. Now that one is standing in front of me, I find I am
+    afraid of what you see.
+  hints: Scholar Dross has recognized something in you and will not let you say it
+    aloud here.
+  questRequired:
+  - 77-end
+  questExcluded:
+  - 69-start
+  moodChange: cautious
+# Same reaction for a player who finished quest 69 first: `knower` is hidden once
+# 69-start is held, so this copy carries the 69-end case (the staring opener
+# above shows in exactly the states where one of the two topics is eligible).
+- key: knower_after69
+  kind: info
+  label: Why are you staring at me like that?
+  text: Stop. Stand still and let me look at you. I have spent my whole life being
+    the only man in the room who could see the crack in the wall, and being told I
+    was mad for it, and I know that look, because I have worn it. You have been
+    somewhere. You have seen the thing under the thing. Do not tell me what. No, I
+    am not being modest, I am being careful, which is new for me and does not suit
+    me. My little forgery is a founding date off by a century. Yours is bigger. I can
+    smell it. Whatever you found out east, it makes my inscription look like a
+    spelling error, and if you say it in this hall they will not merely change the
+    subject the way the Canon changes it with me. Guard it. I have wanted an ally who
+    could see for twenty years. Now that one is standing in front of me, I find I am
+    afraid of what you see.
+  hints: Scholar Dross has recognized something in you and will not let you say it
+    aloud here.
+  questRequired:
+  - 77-end
+  - 69-end
+  moodChange: cautious
+- key: inscriptions
+  kind: info
+  label: What is wrong with the eastern inscription?
+  text: The weathering rate of limestone mortar in this climate is well documented.
+    I have three reference surveys. The mortar on the eastern inscription has
+    weathered as far as work done about a century and a half before the date on the
+    plaque. The depth of the cut letters fits that same period. I compared it with
+    the old foundation stones in the civic quarter, the ones known to be older than
+    the city, and the profile matches. The inscription was made before the founding.
+    The plaque saying when it was made is wrong. That is the argument. It is not a
+    subtle argument.
+  moodChange: friendly
+- key: cipher
+  kind: info
+  label: What cipher did you find in the old carvings?
+  text: Along the north wall of the nave there are processional relief figures. Old,
+    very old, made before the plaque they are supposed to illustrate. The hand
+    positions of those figures hide a sequence of numbers. I counted them four
+    separate times. The sequence is not decoration. It is a date, the real founding
+    date or something close to it, set into the art by whoever paid for it,
+    presumably because they knew the official record was going to be wrong. The key
+    to reading the whole cipher is in the Noble Quarter gallery. There are panels
+    there from the same workshop, the same hand, the same code. I have sent a formal
+    request to examine them. I have not heard back.
+  moodChange: neutral
+- key: ignored
+  kind: info
+  label: Why will no one in authority listen to you?
+  text: The founding date is not only a fact of history. It is a fact of law. The
+    ruling family's charter, their property, their authority in the city courts,
+    all of it comes from the founding and its date. If the real founding was a
+    century earlier, the original charter was with a different family entirely. The
+    current family's claim to the city rests on a date I am now certain is wrong.
+    That is why the Canon changes the subject when I raise it. That is why my formal
+    inquiry to the Noble Quarter gallery has not been answered. They know. I think
+    they all know. Saying so in writing would mean taking a side.
+  moodChange: cautious

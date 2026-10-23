@@ -2,79 +2,56 @@ mobid: 9522
 zone: Greenford
 defaultMood: friendly
 greetings:
-  - text: "University gate. Sign in at the lodge window if you
-      are visiting, then I'll point you where you need to go."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "good"]
-    responses:
-      - "Morning. Sign in and I'll get you sorted."
-  - keywords: ["library", "archive", "brennan", "where"]
-    responses:
-      - "Library east across the quad, archive south of the
-        reading room, Brennan's office west in the lecture-
-        hall range. Board has the hours."
-  - keywords: [""]
-    responses:
-      - "Ask me. I know this campus and the board is current."
-tree:
-  root:
-    text: |
-      University gate -- I am Kern, the porter. Sign in at
-      the lodge window if you are visiting. Name and purpose,
-      nothing more. Library is east across the quad. Archive
-      is south of the reading room. Brennan's office is west
-      in the lecture-hall range. Visiting hours are on the
-      board. What do you need?
-    hints: "You could ask Kern for directions to the library,
-      the archive, or Brennan's office, about the university
-      and its colleges, or about the gate and visiting hours."
-  nodes:
-    - id: directions
-      triggers: ["library", "archive", "brennan", "office",
-        "find", "looking", "lost", "directions", "direction",
-        "east", "west", "south", "reading room", "reading",
-        "go", "map", "how do"]
-      text: |
-        Library is east across the quad -- public stacks,
-        reference, and lending. Reading room is south of
-        that. Archive is further south again, past the
-        reading room. If it is the eastern surveys you want,
-        Tess the Archivist has them. Brennan's office is
-        west, in the lecture-hall range -- first door on the
-        south side. The board here has visiting hours for
-        all three. Anything not listed, ask me.
-      hints: "You could ask about the university and its
-        colleges, or about the gate and visiting hours."
-    - id: university
-      triggers: ["university", "college", "colleges", "campus",
-        "scholars", "students", "faculty", "institution",
-        "history", "building", "tower", "three hundred",
-        "old", "founded"]
-      text: |
-        Three hundred years and still building -- east wing
-        is being extended right now, timber going up past
-        the tower every other week. Seven years I have been
-        at this gate and the campus has not stopped changing.
-        The colleges each have their own hours and their own
-        particulars. The board covers the main buildings.
-        The university is the town's main industry and its
-        main personality, in about equal measure.
-      hints: "You could ask for directions to the library,
-        archive, or Brennan's office, or about the gate and
-        the lodge."
-    - id: gate
-      triggers: ["porter", "gate", "lodge", "ledger", "board",
-        "hours", "visitor", "visitors", "visiting", "log",
-        "record", "entrance", "entry", "sign", "signing"]
-      text: |
-        I keep the log and the board -- visitors in and out,
-        hours of the main buildings, any closures or changes
-        to the day's schedule. The ledger is mine and I keep
-        it exact. If someone has been here, their name is in
-        it. If they left, that is in it too. Seven years of
-        that record is in the lodge behind me. Some of it is
-        interesting in hindsight. Most of it is just names
-        and hours, which is what it is supposed to be.
-      hints: "You could ask for directions across the campus,
-        or about the university and its history."
+- text: University gate. Visitors are welcome. I'll point you where you need to go.
+  moods:
+  - friendly
+opener:
+  text: |
+    Morning, and welcome to the university gate. I'm Kern, the
+    porter. I answer the same few questions all day, and I've
+    come to enjoy answering them well. Visitors give their name
+    at the lodge window, and I keep the ledger. The library is
+    east across the quad, and the archive is south of its
+    reading room. Brennan's office is in the lecture-hall range,
+    west of the quad. Visiting hours are on the board. Now,
+    where are you headed?
+  hints: You could ask Kern the way to the library, the archive or Brennan's office,
+    about the university, or about the gate and its ledger.
+topics:
+- key: directions
+  kind: info
+  label: How do I find the library, archive and Brennan?
+  text: |
+    South of this gate is the quad. The library is east across it,
+    with the public stacks, reference, and lending. The reading room
+    is south of the library, and the archive is south again, past
+    the reading room. If it is the eastern surveys you want, Tess
+    the Archivist has them. Brennan's office is west of the quad,
+    through the lecture hall and out its south door. The board here
+    has visiting hours for all three.
+  hints: To reach Brennan, go south into the Quadrangle, west into the Lecture Hall,
+    then south into Brennan's Office. He sleeps at his desk late at night. Type talk
+    brennan.
+  marked: true
+- key: university
+  kind: info
+  label: Is the university still building?
+  text: |
+    Three hundred years and still building. The east wing is being
+    extended right now, with timber going up past the tower every
+    other week. Seven years I have been at this gate, and the
+    grounds have not stopped changing. The colleges each have their
+    own hours and their own ways. The board covers the main
+    buildings. The university is the town's main industry and its
+    main personality, in about equal measure.
+- key: gate
+  kind: info
+  label: What do you write in your ledger?
+  text: |
+    I keep the log and the board. Visitors in and out, the hours of
+    the main buildings, any closures or changes to the day. The
+    ledger is mine and I keep it exact. If someone has been here,
+    their name is in it. If they left, that is in it too. Seven
+    years of that record is in the lodge behind me. Some of it is
+    interesting looking back. Most of it is just names and hours,
+    which is what it is supposed to be.

@@ -1,14 +1,10 @@
 package questengine
 
 import (
-	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	yaml "gopkg.in/yaml.v3"
 )
 
 // The Lore spoke (Pothole Coulee quests 47, 48, 49 and the repeatable 58),
@@ -16,97 +12,6 @@ import (
 // command per step, steps in order, the report back to the giver only in the
 // last step's hint, and the giver's mid-quest greeting naming the current
 // step's one command.
-
-// loreDialogue is the slice of a shipped dialogue file these tests read: the
-// root variants (greetings) and the tree nodes, with their quest gates.
-type loreDialogue struct {
-	Tree struct {
-		Root struct {
-			Variants []struct {
-				QuestRequired []string `yaml:"questRequired"`
-				QuestExcluded []string `yaml:"questExcluded"`
-				Hints         string   `yaml:"hints"`
-			} `yaml:"variants"`
-		} `yaml:"root"`
-		Nodes []struct {
-			Id            string   `yaml:"id"`
-			Triggers      []string `yaml:"triggers"`
-			QuestRequired []string `yaml:"questRequired"`
-			QuestExcluded []string `yaml:"questExcluded"`
-			GrantsQuest   string   `yaml:"grantsQuest"`
-			Hints         string   `yaml:"hints"`
-		} `yaml:"nodes"`
-	} `yaml:"tree"`
-}
-
-func loadLoreDialogue(t *testing.T, file string) *loreDialogue {
-	t.Helper()
-	_, here, _, ok := runtime.Caller(0)
-	require.True(t, ok)
-	path := filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "dialogue", "pothole_coulee", file)
-	data, err := os.ReadFile(path)
-	require.NoError(t, err)
-	var df loreDialogue
-	require.NoError(t, yaml.Unmarshal(data, &df))
-	return &df
-}
-
-// gateOpen mirrors dialogue.checkQuestGate's token half: every required token
-// held, no excluded token held.
-func loreGateOpen(p *linearPlayer, required, excluded []string) bool {
-	for _, r := range required {
-		if !p.HasQuest(r) {
-			return false
-		}
-	}
-	for _, x := range excluded {
-		if p.HasQuest(x) {
-			return false
-		}
-	}
-	return true
-}
-
-// greetingHint is the hint of the first root variant open to the player, the
-// way dialogue.Greet picks it.
-func (df *loreDialogue) greetingHint(p *linearPlayer) string {
-	for _, v := range df.Tree.Root.Variants {
-		if loreGateOpen(p, v.QuestRequired, v.QuestExcluded) {
-			return v.Hints
-		}
-	}
-	return ""
-}
-
-// answer returns the id and hint of the first tree node that answers `ask
-// <npc> <topic>`, the way dialogue.TreeAdvance picks it (substring match on a
-// trigger, then the quest gate). An empty id means the question falls through
-// to the patterns.
-func (df *loreDialogue) answer(p *linearPlayer, topic string) (string, string) {
-	topic = strings.ToLower(topic)
-	for _, n := range df.Tree.Nodes {
-		hit := false
-		for _, tr := range n.Triggers {
-			if strings.Contains(topic, strings.ToLower(tr)) {
-				hit = true
-				break
-			}
-		}
-		if hit && loreGateOpen(p, n.QuestRequired, n.QuestExcluded) {
-			return n.Id, n.Hints
-		}
-	}
-	return "", ""
-}
-
-// holding gives the walker's player the earlier quests' tokens a real player
-// on this quest already holds, so the giver's "not ready" greeting stays shut.
-func (w *questWalker) loreHolding(tokens ...string) *questWalker {
-	for _, tok := range tokens {
-		w.p.fullMockPlayer.quests[tok] = true
-	}
-	return w
-}
 
 // stepHint returns the hint of one step.
 func loreStepHint(t *testing.T, q *QuestDef, step string) string {
@@ -168,19 +73,11 @@ func TestQuest47FirstWords_OneCommandPerStep(t *testing.T) {
 	})
 
 	t.Run("Wenna answers mid-quest questions about the lesson", func(t *testing.T) {
-		df := loadLoreDialogue(t, "9153.yaml")
-		w := newQuestWalker(q).at("start").loreHolding("30-end")
-		require.Equal(t, "Type help.", df.greetingHint(w.p))
-		for _, topic := range []string{"done", "ready", "quest", "task", "help", "how"} {
-			id, hint := df.answer(w.p, topic)
-			require.NotEmpty(t, id, "ask wenna %s mid-quest falls through to the catch-all", topic)
-			require.NotEqual(t, "words_turnin", id)
-			require.Contains(t, strings.ToLower(hint), "type help", "ask wenna %s must point at the current step", topic)
-		}
-		w = newQuestWalker(q).at("help").loreHolding("30-end")
-		require.Equal(t, "Type ask wenna done.", df.greetingHint(w.p))
-		id, _ := df.answer(w.p, "done")
-		require.Equal(t, "words_turnin", id)
+		f := "47-first_words.yaml"
+		checkTopicSteps(t, "wenna", "9153.yaml", []topicStep{
+			{f, 47, "start", "type help", []string{"30-end"}, "words_progress", false},
+			{f, 47, "help", "", []string{"30-end"}, "words_turnin", true},
+		})
 	})
 }
 
@@ -211,21 +108,11 @@ func TestQuest48StandingStones_OneCommandPerStep(t *testing.T) {
 	})
 
 	t.Run("Hale's greeting and answers follow the step", func(t *testing.T) {
-		df := loadLoreDialogue(t, "9157.yaml")
-		w := newQuestWalker(q).at("start").loreHolding("47-end")
-		hint := strings.ToLower(df.greetingHint(w.p))
-		require.Contains(t, hint, "type taunt garrow")
-		require.NotContains(t, hint, "done", "the mid-quest greeting must not preview the report")
-		for _, topic := range []string{"done", "ready", "quest", "task", "taunt", "garrow", "how", "help"} {
-			id, hint := df.answer(w.p, topic)
-			require.NotEmpty(t, id, "ask hale %s mid-quest falls through to the patterns", topic)
-			require.NotEqual(t, "stones_turnin", id)
-			require.Contains(t, strings.ToLower(hint), "type taunt garrow", "ask hale %s must point at the current step", topic)
-		}
-		w = newQuestWalker(q).at("taunt").loreHolding("47-end")
-		require.Equal(t, "type ask hale done.", strings.ToLower(df.greetingHint(w.p)))
-		id, _ := df.answer(w.p, "done")
-		require.Equal(t, "stones_turnin", id)
+		f := "48-the_standing_stones.yaml"
+		checkTopicSteps(t, "hale", "9157.yaml", []topicStep{
+			{f, 48, "start", "type taunt garrow", []string{"47-end"}, "stones_progress", false},
+			{f, 48, "taunt", "", []string{"47-end"}, "stones_turnin", true},
+		})
 	})
 }
 
@@ -259,21 +146,11 @@ func TestQuest49OldShrine_OneCommandPerStep(t *testing.T) {
 	})
 
 	t.Run("Sere's greeting and answers follow the step", func(t *testing.T) {
-		df := loadLoreDialogue(t, "9160.yaml")
-		w := newQuestWalker(q).at("start").loreHolding("47-end", "48-end")
-		hint := strings.ToLower(df.greetingHint(w.p))
-		require.Contains(t, hint, "type search")
-		require.NotContains(t, hint, "done", "the mid-quest greeting must not preview the report")
-		for _, topic := range []string{"done", "ready", "quest", "task", "search", "disc", "floor", "how", "help"} {
-			id, hint := df.answer(w.p, topic)
-			require.NotEmpty(t, id, "ask sere %s mid-quest falls through to the patterns", topic)
-			require.NotEqual(t, "shrine_turnin", id)
-			require.Contains(t, strings.ToLower(hint), "type search", "ask sere %s must point at the current step", topic)
-		}
-		w = newQuestWalker(q).at("find").loreHolding("47-end", "48-end")
-		require.Equal(t, "type ask sere done.", strings.ToLower(df.greetingHint(w.p)))
-		id, _ := df.answer(w.p, "done")
-		require.Equal(t, "shrine_turnin", id)
+		f := "49-the_old_shrine.yaml"
+		checkTopicSteps(t, "sere", "9160.yaml", []topicStep{
+			{f, 49, "start", "type search", []string{"47-end", "48-end"}, "shrine_progress", false},
+			{f, 49, "find", "", []string{"47-end", "48-end"}, "shrine_turnin", true},
+		})
 	})
 }
 
@@ -307,13 +184,10 @@ func TestQuest58ReadingTheStones_FinishesWhereItSays(t *testing.T) {
 	require.Equal(t, "end", w.p.current)
 
 	t.Run("Sere's greeting names the search while it is open", func(t *testing.T) {
-		df := loadLoreDialogue(t, "9160.yaml")
-		w := newQuestWalker(q).at("start")
 		// A real character on 49-end holds every earlier 48 and 49 token too.
-		for _, tok := range []string{"47-end", "48-start", "48-taunt", "48-end", "49-start", "49-find", "49-end"} {
-			w.p.fullMockPlayer.quests[tok] = true
-		}
-		hint := strings.ToLower(df.greetingHint(w.p))
-		require.Contains(t, hint, "type search")
+		checkTopicSteps(t, "sere", "9160.yaml", []topicStep{
+			{"58-reading_the_stones.yaml", 58, "start", "type search",
+				[]string{"47-end", "48-start", "48-taunt", "48-end", "49-start", "49-find", "49-end"}, "stones_loop_progress", false},
+		})
 	})
 }

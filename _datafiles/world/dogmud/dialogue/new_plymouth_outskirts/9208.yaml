@@ -1,55 +1,63 @@
 mobid: 9208
 zone: New Plymouth Outskirts
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "State your business at the gate. The capital does not admit idlers."
-      - "East Gate watch. Keep moving unless you have cause to stop."
-  - keywords: ["quest", "task", "work", "job"]
-    responses:
-      - "If you carry a sealed packet for the gate, ask me about it."
-  - keywords: ["gate", "city", "enter", "plymouth", "capital", "wall", "walls"]
-    responses:
-      - "Beyond this gate is New Plymouth proper. You'll need better cause than curiosity to pass, but the outskirts are open to you."
-  - keywords: ["gossip", "news", "rumor", "rumors"]
-    responses:
-      - "The watch does not gossip with the road. Move along."
-  - keywords: [""]
-    responses:
-      - "Well?"
-
-tree:
-  root:
-    text: "I am the watch on the East Gate. The capital's road ends at my post, and so does the post relay -- if you carry a sealed packet for the gate, I am the hand it was meant for."
-    hints: "You could ask the guard about a quest or task, the gate, or the city."
-
-  nodes:
-    - id: guardhandoff
-      triggers: ["manifest", "packet", "delivery", "parcel", "gate", "deliver",
-                 "hand", "give", "turn", "done", "report", "quest", "task"]
-      questRequired: ["60-manifest"]
-      questExcluded: ["60-end"]
-      requiresItem: 40073
-      grantsQuest: "60-end"
-      text: "The guard takes the packet, checks the seal against the gate ledger,
-        and makes his mark without ceremony. \"Relay dispatch -- done, and done
-        right.\" He notes your name against the entry. \"The post-house will have
-        your payment. The relay holds another week on your run.\""
-      hints: "You hand the manifest packet to the East Gate guard."
-
-    - id: quest_active
-      triggers: ["quest", "task", "packet", "deliver", "dispatch", "gate", "relay", "post"]
-      questRequired: ["60-manifest"]
-      questExcluded: ["60-end"]
-      text: "A sealed packet from the post relay? Hand it here. I check its seal against the gate ledger and log it in -- that is the end of its road, and yours. Give it over."
-      hints: "Give the sealed capital packet to the East Gate guard."
-
-    - id: quest_done
-      triggers: ["quest", "task", "packet", "post", "token"]
-      questRequired: ["60-end"]
-      text: "You are the one who ran the dispatch the whole road, toll to gate. The capital remembers that. Show your token at any post-house and they will know you."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: I am the watch on the East Gate. The capital's road ends at my post, and so
+    does the post relay. If you carry a sealed packet for the gate, I am the hand
+    it was meant for.
+  hints: You could ask the guard about the gate and the city, or about news from
+    the road.
+  variants:
+  - questRequired:
+    - 60-end
+    text: You are the one who ran the dispatch the whole road, toll to gate. The
+      capital remembers that. Keep the token.
+    hints: You could ask the guard about the gate and the city, or about news from
+      the road.
+  - questRequired:
+    - 60-start
+    questExcluded:
+    - 60-end
+    carriesItem: 40073
+    text: A sealed packet from the post relay? Hand it here. I check its seal
+      against the gate ledger and log it in. That is the end of its road, and
+      yours.
+    hints: Choose The Long Road below to give the guard the sealed packet.
+  - questRequired:
+    - 60-manifest
+    questExcluded:
+    - 60-end
+    text: Verrold sealed you a packet and you've come to the gate without it?
+    hints: If you lost the packet, Tithe-Clerk Verrold can seal another. From the
+      East Gate, go south down the road all the way to the Tithe Road, then west
+      into the Great Tithe Barn. Type talk verrold.
+topics:
+- key: guardhandoff
+  kind: handin
+  quest: 60
+  label: The Long Road
+  playerLine: I've carried the sealed packet the whole road.
+  text: A capital packet, Verrold's seal. Into the gate ledger it goes. Came the
+    whole road, did it? And you with it. Here, a courier's token. The post-houses
+    will know it. The capital remembers who carries its word.
+  questRequired:
+  - 60-start
+  questExcluded:
+  - 60-end
+  requiresItem: 40073
+  grantsQuest: 60-end
+  givesItem: 40074
+- key: city
+  kind: info
+  label: Can I get into the city through this gate?
+  text: Beyond this gate is New Plymouth proper. You'll need better cause than
+    curiosity to pass this way, but the outskirts are open to you, and the river
+    road is open to anyone.
+  hints: The gate stays shut. To reach the city on foot, go south to the Gate
+    Approach, east to the Riverside Path, then north three times to the River Road
+    Landing on the docks.
+  marked: true
+- key: gossip
+  kind: info
+  label: Any news from the road?
+  text: The watch does not gossip with the road. Move along.

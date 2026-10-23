@@ -6,12 +6,9 @@ description: A caravan master at the crossroads village needs the
 secret: false
 
 flags:
-  # "diplomacy" is no longer set by anything once Task 15 step 4 lands the
-  # converted dialogue (owner 2026-10-23 removed the crate ending). The
-  # shipped old-format 281/286 still set it until then, and the boot flag
-  # validator panics without it; drop it after step 4.
+  # One value since the owner removed the crate ending (2026-10-23).
   - key: resolution
-    values: [combat, diplomacy]
+    values: [combat]
     description: "How the player resolved the bandit problem"
 
 steps:
@@ -30,26 +27,3 @@ steps:
 
 rewards:
   gold: 40
-
-triggers:
-  # Task 16 deletes this trigger (the hand-in is 281 pinhandoff). The
-  # Letter of Introduction (item 51) was removed from the quest by the
-  # owner, 2026-10-23.
-  - event: item_give
-    mob: 281
-    item: 54
-    conditions:
-      has: [17-start]
-      missing: [17-end]
-    actions:
-      - grant: 17-end
-      - set_flag:
-          key: "17-resolution"
-          value: "combat"
-      - consume_item: 54
-      - npc_say:
-          mob: 281
-          lines:
-            - {delay: 1, text: "Soren's pin. So he is done."}
-            - {delay: 3, text: "The road is ours again, and you have
-                earned your pay."}

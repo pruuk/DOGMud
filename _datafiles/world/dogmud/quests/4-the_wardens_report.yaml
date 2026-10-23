@@ -65,18 +65,3 @@ triggers:
       missing: ["4-evidence"]
     actions:
       - grant: "4-evidence"
-
-  # evidence -> end: deliver the purse to Road Warden Tessara (mob 83).
-  - event: item_give
-    mob: 83
-    item: 16
-    conditions:
-      has: ["4-evidence"]
-      missing: ["4-end"]
-    actions:
-      - grant: "4-end"
-      - npc_say:
-          mob: 83
-          lines:
-            - {delay: 1, text: "Caravan schedules. Supply routes. This is not petty theft -- someone is feeding them information from inside the trading houses."}
-            - {delay: 4, text: "This changes things. You have done good work. The Watchers will act on this."}

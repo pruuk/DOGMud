@@ -2,533 +2,286 @@ mobid: 9584
 zone: The Confluence
 defaultMood: neutral
 
-# Veyra Coil-Tongue, the convergence-crafter. She asks exactly as many
-# questions as the work requires and not one more. Transactional,
-# exacting, few words. Treats craft as contract, not conversation.
+# Veyra Coil-Tongue, the convergence-crafter. Transactional, exacting, few
+# words.
 #
 # Gating notes:
-#   - The intro (grantsQuest 78-start) requires masterworkRequired: 50:
-#     the player must be carrying an item they personally crafted at
-#     craft skill >= 50. Quest 78's own trigger (see
-#     quests/78-the_convergence.yaml) fires the instant 78-start is
-#     granted and grants 78-end in the same beat.
-#   - Once known (78-end), Veyra sells nine secret recipes, quests 79-87.
-#     A player may buy any number of them, each once. Per secret, in this
-#     order (first match wins, and triggers match anywhere in the topic):
-#       owned_  requires {id}-start (held at {id}-end too). Any mention of
-#               the secret, priced or teach, gets "you already carry it".
-#               It keys on the quest token, never on recipe knowledge, so
-#               a player who discovered a sub-recipe can still buy.
-#       teach_  triggers only on "teach <name>" phrases. goldRequired and
-#               chargesGold at the price: the gold is checked and taken in
-#               the same step, before {id}-start is granted. The quest's
-#               quest_granted trigger then teaches the recipes.
-#       refuse_ same teach triggers and gates, no price: a player short of
-#               gold is told the price and granted nothing.
-#       price_  the bare name. States the price and how to buy. Grants
-#               nothing, so asking about a secret never buys it.
-#   - Name triggers are distinctive words only, so ordinary speech does not
-#     reach a secret: no "staff", "shield", "boots", "belt", "pack" or
-#     "harness" (also part of the sub-recipe name reinforced-harness).
-#   - Discovery: the known root greeting, the secrets_list node and the
-#     known-player fallback pattern name all nine secrets, without prices.
+#   - The Convergence (78) needs masterworkRequired: 50, an item the player
+#     made at craft skill 50 or more, carried. Quest 78's own trigger grants
+#     78-end the moment 78-start is accepted. Until then the offer is hidden
+#     and its breadcrumb tells the player what Veyra wants to see.
+#   - Once known (78-end), Veyra sells nine secret recipes, quests 79 to 87,
+#     each once. secrets_list names all nine with their prices. Each secret
+#     is one offer whose pitch says what it is and what it costs;
+#     goldRequired hides the offer until the player carries the price, and
+#     Accept charges it (chargesGold) before the quest start is granted. The
+#     quest's quest_granted trigger then teaches the recipes. A bought
+#     secret hides its offer by its own start token.
+#   - No breadcrumbs on the nine offers: secrets_list carries every price,
+#     and nine "come back later" lines would bury the opener.
 
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "hail"]
-    responses:
-      - "Veyra. I don't repeat a greeting twice in one conversation."
-      - "If you're browsing, the bench speaks for itself. If you're
-          here about work, say so."
-
-  - keywords: ["confluence", "convergence", "commission", "measure",
-      "masterwork", "quest", "task", "work", "trade", "discipline",
-      "recipe", "secret"]
-    questExcluded: ["78-end"]
-    responses:
-      - "I don't take on hands I haven't seen work. Show me something
-          you made yourself, and we'll talk about what comes after."
-      - "Six trades, made to agree with each other. That's the whole
-          of what I do here. I don't explain it to people who haven't
-          held a tool."
-
-  - keywords: ["scar", "hand", "latticework", "accident"]
-    responses:
-      - "One working didn't agree with me the way the others had. I
-          kept the hand. I kept the lesson."
-
-  - keywords: ["gold", "price", "cost", "pay", "fee"]
-    responses:
-      - "Nothing I know comes cheap, and I don't haggle. Ask about a
-          specific secret if you want a number."
-
-  # Known players: anything she has no answer for gets the list of
-  # secrets. Placed before the generic fallback; the first fallback whose
-  # gates pass wins.
-  - keywords: [""]
-    questRequired: ["78-end"]
-    responses:
-      - "I know nine secrets worth the name. The Vitalis Bandolier. The
-          Blackrazor. The Wayfarer's Bottomless Pack. The Aegis of
-          Mockery. The Thornwall Harness. The Seething Prism. The Zephyr
-          Treads. The Staff of the Hollow Choir. The Phial of Second
-          Birth. None of them comes cheap. Ask me about one to hear its
-          price. Ask me to teach it to you if you mean to buy."
-
-  - keywords: [""]
-    responses:
-      - "Say what you need, or don't say anything at all."
-      - "I'm not paid to make conversation."
-      - "The bench doesn't wait on idle talk, and neither do I."
-
-tree:
-  root:
-    text: "Veyra doesn't look up from the bench. You'll have to earn
-      that."
-    hints: "You could ask Veyra about her work, or the convergence."
-    variants:
-      # ── Known, and has seen the Crash Site truth ─────────────────
-      - questRequired: ["78-end", "77-end"]
-        text: "You've seen what's under the Crash Site, and you're
-          still standing here. Good. I know nine secrets worth the
-          name. The Vitalis Bandolier. The Blackrazor. The Wayfarer's
-          Bottomless Pack. The Aegis of Mockery. The Thornwall Harness.
-          The Seething Prism. The Zephyr Treads. The Staff of the
-          Hollow Choir. The Phial of Second Birth. None of them comes
-          cheap."
-        hints: "Ask Veyra about a secret to hear its price, for example
-          ask veyra blackrazor. To buy it, ask veyra teach blackrazor."
-
-      # ── Known, ordinary case ──────────────────────────────────────
-      - questRequired: ["78-end"]
-        text: "You're known to me now. I know nine secrets worth the
-          name. The Vitalis Bandolier. The Blackrazor. The Wayfarer's
-          Bottomless Pack. The Aegis of Mockery. The Thornwall Harness.
-          The Seething Prism. The Zephyr Treads. The Staff of the
-          Hollow Choir. The Phial of Second Birth. None of them comes
-          cheap."
-        hints: "Ask Veyra about a secret to hear its price, for example
-          ask veyra blackrazor. To buy it, ask veyra teach blackrazor."
-
-      # ── Not yet known, but carrying proof of skill ───────────────
-      - masterworkRequired: 50
-        questExcluded: ["78-start", "78-end"]
-        text: "That's your hand on that work. I can tell. I don't
-          usually make time for strangers, but I'll make an exception.
-          Ask me about the convergence if you want to know what that
-          means."
-        hints: "You could ask Veyra about the convergence, or her
-          work."
-
-  nodes:
-    # ── INTRO: masterwork-gated, grants 78-start ─────────────────
-    - id: convergence_intro
-      triggers: ["convergence", "commission", "quest", "task", "work",
-        "masterwork", "measure"]
-      masterworkRequired: 50
-      questExcluded: ["78-start", "78-end"]
-      grantsQuest: "78-start"
-      text: "Turn that over again. Yes, your hand, not a shop's. That's
-        the only credential I recognize. Six trades, made to agree with
-        each other in one piece. That's the convergence. I don't teach
-        it to just anyone. I keep the recipes secret, and I share them
-        only with people who've already proven they can hold a tool
-        steady. You qualify now. Come back when you want one, and I'll
-        tell you what it costs."
-      hints: "You are known to Veyra now. Ask her about her secrets to
-        hear which recipes she can share."
-
-    # ══ VITALIS BANDOLIER (79, alchemy), 17,500 ══════════════════
-    - id: owned_bandolier
-      triggers: ["bandolier", "vitalis"]
-      questRequired: ["78-end", "79-start"]
-      text: "The Vitalis Bandolier. You already carry that one. I don't
-        sell a secret twice."
-      hints: "You already have Veyra's secret recipe for the Vitalis
-        Bandolier."
-    - id: teach_bandolier
-      triggers: ["teach bandolier", "teach me bandolier",
-        "teach the bandolier", "teach me the bandolier", "teach vitalis",
-        "teach me vitalis", "teach the vitalis", "teach me the vitalis"]
-      questRequired: ["78-end"]
-      questExcluded: ["79-start", "79-end"]
-      goldRequired: 17500
-      chargesGold: 17500
-      grantsQuest: "79-start"
-      text: "The Vitalis Bandolier, then. Listen closely. I say it once."
-      hints: "Veyra has shared her secret recipe for the Vitalis
-        Bandolier. Gather the materials and craft it by your own hand."
-    - id: refuse_bandolier
-      triggers: ["teach bandolier", "teach me bandolier",
-        "teach the bandolier", "teach me the bandolier", "teach vitalis",
-        "teach me vitalis", "teach the vitalis", "teach me the vitalis"]
-      questRequired: ["78-end"]
-      questExcluded: ["79-start", "79-end"]
-      text: "The Vitalis Bandolier is 17,500 gold, all of it up front,
-        and you aren't carrying it. Come back when you are."
-      hints: "Veyra's secret recipe for the Vitalis Bandolier costs
-        17,500 gold. Come back when you carry that much."
-    - id: price_bandolier
-      triggers: ["bandolier", "vitalis"]
-      questRequired: ["78-end"]
-      questExcluded: ["79-start", "79-end"]
-      text: "The Vitalis Bandolier. A belt that keeps its own contents
-        fresh and feeds them to you without your hand ever leaving the
-        fight. Alchemy work, mostly, with a housing under it that has
-        to hold. 17,500 gold, all of it up front. If you mean it, ask
-        me to teach you the Vitalis Bandolier."
-      hints: "To buy this secret, type: ask veyra teach bandolier"
-
-    # ══ THE BLACKRAZOR (80, blacksmithing), 25,000 ═══════════════
-    - id: owned_blackrazor
-      triggers: ["blackrazor", "razor"]
-      questRequired: ["78-end", "80-start"]
-      text: "The Blackrazor. You already carry that one. I don't sell a
-        secret twice."
-      hints: "You already have Veyra's secret recipe for The
-        Blackrazor."
-    - id: teach_blackrazor
-      triggers: ["teach blackrazor", "teach me blackrazor",
-        "teach the blackrazor", "teach me the blackrazor", "teach razor",
-        "teach me razor", "teach the razor", "teach me the razor"]
-      questRequired: ["78-end"]
-      questExcluded: ["80-start", "80-end"]
-      goldRequired: 25000
-      chargesGold: 25000
-      grantsQuest: "80-start"
-      text: "The Blackrazor, then. Listen closely. I say it once."
-      hints: "Veyra has shared her secret recipe for The Blackrazor.
-        Gather the materials and craft it by your own hand."
-    - id: refuse_blackrazor
-      triggers: ["teach blackrazor", "teach me blackrazor",
-        "teach the blackrazor", "teach me the blackrazor", "teach razor",
-        "teach me razor", "teach the razor", "teach me the razor"]
-      questRequired: ["78-end"]
-      questExcluded: ["80-start", "80-end"]
-      text: "The Blackrazor is 25,000 gold, all of it up front, and you
-        aren't carrying it. Come back when you are."
-      hints: "Veyra's secret recipe for The Blackrazor costs 25,000
-        gold. Come back when you carry that much."
-    - id: price_blackrazor
-      triggers: ["blackrazor", "razor"]
-      questRequired: ["78-end"]
-      questExcluded: ["80-start", "80-end"]
-      text: "The Blackrazor. Not a blade I'd show just anyone. It
-        doesn't stay quiet, and it doesn't stay fed. Blacksmithing,
-        with a hunger built into the steel that only a kill will
-        settle. 25,000 gold, all of it up front. If you mean it, ask me
-        to teach you the Blackrazor."
-      hints: "To buy this secret, type: ask veyra teach blackrazor"
-
-    # ══ WAYFARER'S BOTTOMLESS PACK (81, tailoring), 12,500 ═══════
-    - id: owned_wayfarer
-      triggers: ["wayfarer", "bottomless"]
-      questRequired: ["78-end", "81-start"]
-      text: "Wayfarer's Bottomless Pack. You already carry that one. I
-        don't sell a secret twice."
-      hints: "You already have Veyra's secret recipe for the
-        Wayfarer's Bottomless Pack."
-    - id: teach_wayfarer
-      triggers: ["teach wayfarer", "teach me wayfarer",
-        "teach the wayfarer", "teach me the wayfarer", "teach bottomless",
-        "teach me bottomless", "teach the bottomless",
-        "teach me the bottomless"]
-      questRequired: ["78-end"]
-      questExcluded: ["81-start", "81-end"]
-      goldRequired: 12500
-      chargesGold: 12500
-      grantsQuest: "81-start"
-      text: "The Wayfarer's Bottomless Pack, then. Listen closely. I say
-        it once."
-      hints: "Veyra has shared her secret recipe for the Wayfarer's
-        Bottomless Pack. Gather the materials and craft it by your own
-        hand."
-    - id: refuse_wayfarer
-      triggers: ["teach wayfarer", "teach me wayfarer",
-        "teach the wayfarer", "teach me the wayfarer", "teach bottomless",
-        "teach me bottomless", "teach the bottomless",
-        "teach me the bottomless"]
-      questRequired: ["78-end"]
-      questExcluded: ["81-start", "81-end"]
-      text: "The Wayfarer's Bottomless Pack is 12,500 gold, all of it up
-        front, and you aren't carrying it. Come back when you are."
-      hints: "Veyra's secret recipe for the Wayfarer's Bottomless Pack
-        costs 12,500 gold. Come back when you carry that much."
-    - id: price_wayfarer
-      triggers: ["wayfarer", "bottomless"]
-      questRequired: ["78-end"]
-      questExcluded: ["81-start", "81-end"]
-      text: "Wayfarer's Bottomless Pack. Tailoring, mostly seams and
-        spatial stitching. The trick is making the inside hold more
-        than the outside admits to. It's the least dangerous thing I
-        know how to make. That doesn't mean it's simple. 12,500 gold,
-        all of it up front. If you mean it, ask me to teach you the
-        Wayfarer's Bottomless Pack."
-      hints: "To buy this secret, type: ask veyra teach wayfarer"
-
-    # ══ AEGIS OF MOCKERY (82, blacksmithing), 20,000 ═════════════
-    - id: owned_aegis
-      triggers: ["aegis", "mockery"]
-      questRequired: ["78-end", "82-start"]
-      text: "The Aegis of Mockery. You already carry that one. I don't
-        sell a secret twice."
-      hints: "You already have Veyra's secret recipe for the Aegis of
-        Mockery."
-    - id: teach_aegis
-      triggers: ["teach aegis", "teach me aegis", "teach the aegis",
-        "teach me the aegis", "teach mockery", "teach me mockery"]
-      questRequired: ["78-end"]
-      questExcluded: ["82-start", "82-end"]
-      goldRequired: 20000
-      chargesGold: 20000
-      grantsQuest: "82-start"
-      text: "The Aegis of Mockery, then. Listen closely. I say it once."
-      hints: "Veyra has shared her secret recipe for the Aegis of
-        Mockery. Gather the materials and craft it by your own hand."
-    - id: refuse_aegis
-      triggers: ["teach aegis", "teach me aegis", "teach the aegis",
-        "teach me the aegis", "teach mockery", "teach me mockery"]
-      questRequired: ["78-end"]
-      questExcluded: ["82-start", "82-end"]
-      text: "The Aegis of Mockery is 20,000 gold, all of it up front,
-        and you aren't carrying it. Come back when you are."
-      hints: "Veyra's secret recipe for the Aegis of Mockery costs
-        20,000 gold. Come back when you carry that much."
-    - id: price_aegis
-      triggers: ["aegis", "mockery"]
-      questRequired: ["78-end"]
-      questExcluded: ["82-start", "82-end"]
-      text: "The Aegis of Mockery. A shield that answers a blocked blow
-        by putting everyone nearby who deserved it flat on their
-        heels. Blacksmithing, and a housing for the voice inside it.
-        20,000 gold, all of it up front. If you mean it, ask me to
-        teach you the Aegis."
-      hints: "To buy this secret, type: ask veyra teach aegis"
-
-    # ══ THORNWALL HARNESS (83, tailoring), 15,000 ════════════════
-    - id: owned_thornwall
-      triggers: ["thornwall"]
-      questRequired: ["78-end", "83-start"]
-      text: "The Thornwall Harness. You already carry that one. I don't
-        sell a secret twice."
-      hints: "You already have Veyra's secret recipe for the Thornwall
-        Harness."
-    - id: teach_thornwall
-      triggers: ["teach thornwall", "teach me thornwall",
-        "teach the thornwall", "teach me the thornwall"]
-      questRequired: ["78-end"]
-      questExcluded: ["83-start", "83-end"]
-      goldRequired: 15000
-      chargesGold: 15000
-      grantsQuest: "83-start"
-      text: "The Thornwall Harness, then. Listen closely. I say it once."
-      hints: "Veyra has shared her secret recipe for the Thornwall
-        Harness. Gather the materials and craft it by your own hand."
-    - id: refuse_thornwall
-      triggers: ["teach thornwall", "teach me thornwall",
-        "teach the thornwall", "teach me the thornwall"]
-      questRequired: ["78-end"]
-      questExcluded: ["83-start", "83-end"]
-      text: "The Thornwall Harness is 15,000 gold, all of it up front,
-        and you aren't carrying it. Come back when you are."
-      hints: "Veyra's secret recipe for the Thornwall Harness costs
-        15,000 gold. Come back when you carry that much."
-    - id: price_thornwall
-      triggers: ["thornwall"]
-      questRequired: ["78-end"]
-      questExcluded: ["83-start", "83-end"]
-      text: "The Thornwall Harness. Tailoring built around barbed
-        plate. Anything that grabs you regrets it. 15,000 gold, all of
-        it up front. If you mean it, ask me to teach you the
-        Thornwall."
-      hints: "To buy this secret, type: ask veyra teach thornwall"
-
-    # ══ SEETHING PRISM (84, jewelcrafting), 20,000 ═══════════════
-    - id: owned_prism
-      triggers: ["prism", "seething"]
-      questRequired: ["78-end", "84-start"]
-      text: "The Seething Prism. You already carry that one. I don't
-        sell a secret twice."
-      hints: "You already have Veyra's secret recipe for the Seething
-        Prism."
-    - id: teach_prism
-      triggers: ["teach prism", "teach me prism", "teach the prism",
-        "teach me the prism", "teach seething", "teach me seething",
-        "teach the seething", "teach me the seething"]
-      questRequired: ["78-end"]
-      questExcluded: ["84-start", "84-end"]
-      goldRequired: 20000
-      chargesGold: 20000
-      grantsQuest: "84-start"
-      text: "The Seething Prism, then. Listen closely. I say it once."
-      hints: "Veyra has shared her secret recipe for the Seething
-        Prism. Gather the materials and craft it by your own hand."
-    - id: refuse_prism
-      triggers: ["teach prism", "teach me prism", "teach the prism",
-        "teach me the prism", "teach seething", "teach me seething",
-        "teach the seething", "teach me the seething"]
-      questRequired: ["78-end"]
-      questExcluded: ["84-start", "84-end"]
-      text: "The Seething Prism is 20,000 gold, all of it up front, and
-        you aren't carrying it. Come back when you are."
-      hints: "Veyra's secret recipe for the Seething Prism costs 20,000
-        gold. Come back when you carry that much."
-    - id: price_prism
-      triggers: ["prism", "seething"]
-      questRequired: ["78-end"]
-      questExcluded: ["84-start", "84-end"]
-      text: "The Seething Prism. Jewelcrafting around a containment
-        lattice that doesn't quite contain what's inside it. That's
-        the point. It'll change you, given time. I won't pretend the
-        price is only in coin, but the coin is 20,000 gold, all of it
-        up front. If you mean it, ask me to teach you the Prism."
-      hints: "To buy this secret, type: ask veyra teach prism"
-
-    # ══ ZEPHYR TREADS (85, tailoring), 12,500 ════════════════════
-    - id: owned_zephyr
-      triggers: ["zephyr", "treads"]
-      questRequired: ["78-end", "85-start"]
-      text: "Zephyr Treads. You already carry that one. I don't sell a
-        secret twice."
-      hints: "You already have Veyra's secret recipe for the Zephyr
-        Treads."
-    - id: teach_zephyr
-      triggers: ["teach zephyr", "teach me zephyr", "teach the zephyr",
-        "teach me the zephyr", "teach treads", "teach me treads"]
-      questRequired: ["78-end"]
-      questExcluded: ["85-start", "85-end"]
-      goldRequired: 12500
-      chargesGold: 12500
-      grantsQuest: "85-start"
-      text: "The Zephyr Treads, then. Listen closely. I will say it once."
-      hints: "Veyra has shared her secret recipe for the Zephyr Treads.
-        Gather the materials and craft them by your own hand."
-    - id: refuse_zephyr
-      triggers: ["teach zephyr", "teach me zephyr", "teach the zephyr",
-        "teach me the zephyr", "teach treads", "teach me treads"]
-      questRequired: ["78-end"]
-      questExcluded: ["85-start", "85-end"]
-      text: "The Zephyr Treads are 12,500 gold, all of it up front, and
-        you aren't carrying it. Come back when you are."
-      hints: "Veyra's secret recipe for the Zephyr Treads costs 12,500
-        gold. Come back when you carry that much."
-    - id: price_zephyr
-      triggers: ["zephyr", "treads"]
-      questRequired: ["78-end"]
-      questExcluded: ["85-start", "85-end"]
-      text: "Zephyr Treads. Tailoring and windlace bindings, soled
-        with quicksilver. You'll forget what it cost to run before you
-        wore them. 12,500 gold, all of it up front. If you mean it, ask
-        me to teach you the Treads."
-      hints: "To buy this secret, type: ask veyra teach zephyr"
-
-    # ══ STAFF OF THE HOLLOW CHOIR (86, enchanting), 22,500 ═══════
-    - id: owned_choir
-      triggers: ["choir"]
-      questRequired: ["78-end", "86-start"]
-      text: "The Staff of the Hollow Choir. You already carry that one.
-        I don't sell a secret twice."
-      hints: "You already have Veyra's secret recipe for the Staff of
-        the Hollow Choir."
-    - id: teach_choir
-      triggers: ["teach choir", "teach me choir", "teach the choir",
-        "teach me the choir", "teach hollow choir",
-        "teach me hollow choir", "teach the hollow choir",
-        "teach me the hollow choir", "teach the staff of the hollow choir",
-        "teach me the staff of the hollow choir"]
-      questRequired: ["78-end"]
-      questExcluded: ["86-start", "86-end"]
-      goldRequired: 22500
-      chargesGold: 22500
-      grantsQuest: "86-start"
-      text: "The Staff of the Hollow Choir, then. Listen closely. I say
-        it once."
-      hints: "Veyra has shared her secret recipe for the Staff of the
-        Hollow Choir. Gather the materials and craft it by your own
-        hand."
-    - id: refuse_choir
-      triggers: ["teach choir", "teach me choir", "teach the choir",
-        "teach me the choir", "teach hollow choir",
-        "teach me hollow choir", "teach the hollow choir",
-        "teach me the hollow choir", "teach the staff of the hollow choir",
-        "teach me the staff of the hollow choir"]
-      questRequired: ["78-end"]
-      questExcluded: ["86-start", "86-end"]
-      text: "The Staff of the Hollow Choir is 22,500 gold, all of it up
-        front, and you aren't carrying it. Come back when you are."
-      hints: "Veyra's secret recipe for the Staff of the Hollow Choir
-        costs 22,500 gold. Come back when you carry that much."
-    - id: price_choir
-      triggers: ["choir"]
-      questRequired: ["78-end"]
-      questExcluded: ["86-start", "86-end"]
-      text: "The Staff of the Hollow Choir. Enchanting around a
-        conductor core. It sings when you cast, and it takes a little
-        of what it hears from whatever you're casting at. 22,500 gold,
-        all of it up front. If you mean it, ask me to teach you the
-        Choir."
-      hints: "To buy this secret, type: ask veyra teach choir"
-
-    # ══ PHIAL OF SECOND BIRTH (87, alchemy), 15,000 ══════════════
-    - id: owned_phial
-      triggers: ["phial", "second birth", "rebirth"]
-      questRequired: ["78-end", "87-start"]
-      text: "The Phial of Second Birth. You already carry that one. I
-        don't sell a secret twice."
-      hints: "You already have Veyra's secret recipe for the Phial of
-        Second Birth."
-    - id: teach_phial
-      triggers: ["teach phial", "teach me phial", "teach the phial",
-        "teach me the phial", "teach second birth",
-        "teach me second birth", "teach rebirth", "teach me rebirth"]
-      questRequired: ["78-end"]
-      questExcluded: ["87-start", "87-end"]
-      goldRequired: 15000
-      chargesGold: 15000
-      grantsQuest: "87-start"
-      text: "The Phial of Second Birth, then. Listen closely. I say it
-        once."
-      hints: "Veyra has shared her secret recipe for the Phial of
-        Second Birth. Gather the materials and craft it by your own
-        hand."
-    - id: refuse_phial
-      triggers: ["teach phial", "teach me phial", "teach the phial",
-        "teach me the phial", "teach second birth",
-        "teach me second birth", "teach rebirth", "teach me rebirth"]
-      questRequired: ["78-end"]
-      questExcluded: ["87-start", "87-end"]
-      text: "The Phial of Second Birth is 15,000 gold, all of it up
-        front, and you aren't carrying it. Come back when you are."
-      hints: "Veyra's secret recipe for the Phial of Second Birth costs
-        15,000 gold. Come back when you carry that much."
-    - id: price_phial
-      triggers: ["phial", "second birth", "rebirth"]
-      questRequired: ["78-end"]
-      questExcluded: ["87-start", "87-end"]
-      text: "The Phial of Second Birth. Alchemy, at the bottom of it:
-        a reduction that unmakes what you've become and gives you
-        exactly one chance to become something else. I don't share
-        this one lightly. 15,000 gold, all of it up front. If you mean
-        it, ask me to teach you the Phial."
-      hints: "To buy this secret, type: ask veyra teach phial"
-
-    # ── SECRETS LIST: names all 9, grants nothing ────────────────
-    # Placed BELOW the secrets so a topic naming one ("the blackrazor
-    # recipe") reaches that secret's own nodes, while the generic words
-    # ("quest", "task", "secret", "recipe", a bare "teach") land here.
-    # These nine names are the only in-game source for the learn_only
-    # pinnacle items, so this node is their discoverability point.
-    - id: secrets_list
-      triggers: ["quest", "task", "commission", "list", "work", "secret",
-        "recipe", "convergence", "teach"]
-      questRequired: ["78-end"]
-      text: "I know nine secrets worth the name. The Vitalis Bandolier.
-        The Blackrazor. The Wayfarer's Bottomless Pack. The Aegis of
-        Mockery. The Thornwall Harness. The Seething Prism. The Zephyr
-        Treads. The Staff of the Hollow Choir. The Phial of Second
-        Birth. None of them comes cheap. Ask me about one to hear its
-        price. Ask me to teach it to you if you mean to buy."
-      hints: "Ask Veyra about a secret to hear its price, for example ask
-        veyra blackrazor. To buy it, ask veyra teach blackrazor."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: I don't look up from the bench for strangers. You'll have to earn that.
+  hints: You could ask Veyra about her work, or about the scarred hand she works
+    with. She sizes up visitors by the fine work they have made themselves.
+  variants:
+  - questRequired:
+    - 78-end
+    - 77-end
+    text: You've seen what's under the Crash Site, and you're still standing here.
+      Good. I know nine secrets worth the name. None of them comes cheap.
+    hints: To hear Veyra's secrets and their prices, choose to ask her below. A
+      secret you can pay for now shows as an offer of its own.
+  - questRequired:
+    - 78-end
+    text: You're known to me now. I know nine secrets worth the name. None of them
+      comes cheap.
+    hints: To hear Veyra's secrets and their prices, choose to ask her below. A
+      secret you can pay for now shows as an offer of its own.
+  - questExcluded:
+    - 78-start
+    - 78-end
+    masterworkRequired: 50
+    text: That's your hand on that work. I can tell. I don't usually make time for
+      strangers, but I'll make an exception.
+    hints: Choose The Convergence below to hear what Veyra means.
+topics:
+- key: convergence_intro
+  kind: offer
+  quest: 78
+  label: The Convergence
+  playerLine: What does my work mean to you?
+  text: Turn that over again. Yes, your hand, not a shop's. That's the only
+    credential I recognize. Six trades, made to agree with each other in one piece.
+    That's the convergence. I don't teach it to just anyone. I keep the recipes
+    secret, and I share them only with people who've already proven they can hold a
+    tool steady. You qualify. Say the word, and you're known to me. Then we can talk
+    about what my secrets cost.
+  hints: Accept to become known to Veyra. After that she will sell you her secret
+    recipes, one at a time.
+  breadcrumb: I don't take on hands I haven't seen work. Show me fine work you made
+    with your own hands, the kind only a practiced crafter turns out, and we'll
+    talk about what comes after.
+  questExcluded:
+  - 78-start
+  - 78-end
+  masterworkRequired: 50
+  grantsQuest: 78-start
+# The nine secrets. Each was four topics (owned_, teach_, refuse_, price_):
+# the pitch now carries the price_ text, secrets_list carries every price
+# (refuse_), and a bought secret simply leaves the menu (owned_).
+- key: teach_bandolier
+  kind: offer
+  quest: 79
+  label: Secret of the Vitalis Bandolier
+  playerLine: Will you teach me the Vitalis Bandolier?
+  text: The Vitalis Bandolier. A belt that keeps its own contents fresh and feeds
+    them to you without your hand ever leaving the fight. Alchemy work, mostly, with
+    a housing under it that has to hold. 17,500 gold, all of it up front. Pay, and I
+    teach you. Listen closely. I say it once.
+  hints: Accept to pay Veyra's price and learn the recipes. Then gather the
+    materials and make each part with your own hands. To see the recipes you know,
+    type craft list.
+  questRequired:
+  - 78-end
+  questExcluded:
+  - 79-start
+  - 79-end
+  goldRequired: 17500
+  grantsQuest: 79-start
+  chargesGold: 17500
+- key: teach_blackrazor
+  kind: offer
+  quest: 80
+  label: Secret of the Blackrazor
+  playerLine: Will you teach me the Blackrazor?
+  text: The Blackrazor. Not a blade I'd show just anyone. It doesn't stay quiet,
+    and it doesn't stay fed. Blacksmithing, with a hunger built into the steel that
+    only a kill will settle. 25,000 gold, all of it up front. Pay, and I teach you.
+    Listen closely. I say it once.
+  hints: Accept to pay Veyra's price and learn the recipes. Then gather the
+    materials and make each part with your own hands. To see the recipes you know,
+    type craft list.
+  questRequired:
+  - 78-end
+  questExcluded:
+  - 80-start
+  - 80-end
+  goldRequired: 25000
+  grantsQuest: 80-start
+  chargesGold: 25000
+- key: teach_wayfarer
+  kind: offer
+  quest: 81
+  label: Secret of the Wayfarer's Bottomless Pack
+  playerLine: Will you teach me the Wayfarer's Bottomless Pack?
+  text: The Wayfarer's Bottomless Pack. Tailoring, mostly seams and spatial
+    stitching. The trick is making the inside hold more than the outside admits to.
+    It's the least dangerous thing I know how to make. That doesn't mean it's
+    simple. 12,500 gold, all of it up front. Pay, and I teach you. Listen closely. I
+    say it once.
+  hints: Accept to pay Veyra's price and learn the recipes. Then gather the
+    materials and make each part with your own hands. To see the recipes you know,
+    type craft list.
+  questRequired:
+  - 78-end
+  questExcluded:
+  - 81-start
+  - 81-end
+  goldRequired: 12500
+  grantsQuest: 81-start
+  chargesGold: 12500
+- key: teach_aegis
+  kind: offer
+  quest: 82
+  label: Secret of the Aegis of Mockery
+  playerLine: Will you teach me the Aegis of Mockery?
+  text: The Aegis of Mockery. A shield that answers a blocked blow by putting
+    everyone nearby who deserved it flat on their heels. Blacksmithing, and a
+    housing for the voice inside it. 20,000 gold, all of it up front. Pay, and I
+    teach you. Listen closely. I say it once.
+  hints: Accept to pay Veyra's price and learn the recipes. Then gather the
+    materials and make each part with your own hands. To see the recipes you know,
+    type craft list.
+  questRequired:
+  - 78-end
+  questExcluded:
+  - 82-start
+  - 82-end
+  goldRequired: 20000
+  grantsQuest: 82-start
+  chargesGold: 20000
+- key: teach_thornwall
+  kind: offer
+  quest: 83
+  label: Secret of the Thornwall Harness
+  playerLine: Will you teach me the Thornwall Harness?
+  text: The Thornwall Harness. Tailoring built around barbed plate. Anything that
+    grabs you regrets it. 15,000 gold, all of it up front. Pay, and I teach you.
+    Listen closely. I say it once.
+  hints: Accept to pay Veyra's price and learn the recipes. Then gather the
+    materials and make each part with your own hands. To see the recipes you know,
+    type craft list.
+  questRequired:
+  - 78-end
+  questExcluded:
+  - 83-start
+  - 83-end
+  goldRequired: 15000
+  grantsQuest: 83-start
+  chargesGold: 15000
+- key: teach_prism
+  kind: offer
+  quest: 84
+  label: Secret of the Seething Prism
+  playerLine: Will you teach me the Seething Prism?
+  text: The Seething Prism. Jewelcrafting around a containment lattice that doesn't
+    quite contain what's inside it. That's the point. It'll change you, given time.
+    I won't pretend the price is only in coin, but the coin is 20,000 gold, all of it
+    up front. Pay, and I teach you. Listen closely. I say it once.
+  hints: Accept to pay Veyra's price and learn the recipes. Then gather the
+    materials and make each part with your own hands. To see the recipes you know,
+    type craft list.
+  questRequired:
+  - 78-end
+  questExcluded:
+  - 84-start
+  - 84-end
+  goldRequired: 20000
+  grantsQuest: 84-start
+  chargesGold: 20000
+- key: teach_zephyr
+  kind: offer
+  quest: 85
+  label: Secret of the Zephyr Treads
+  playerLine: Will you teach me the Zephyr Treads?
+  text: The Zephyr Treads. Tailoring and windlace bindings, soled with quicksilver.
+    You'll forget what it cost to run before you wore them. 12,500 gold, all of it up
+    front. Pay, and I teach you. Listen closely. I will say it once.
+  hints: Accept to pay Veyra's price and learn the recipes. Then gather the
+    materials and make each part with your own hands. To see the recipes you know,
+    type craft list.
+  questRequired:
+  - 78-end
+  questExcluded:
+  - 85-start
+  - 85-end
+  goldRequired: 12500
+  grantsQuest: 85-start
+  chargesGold: 12500
+- key: teach_choir
+  kind: offer
+  quest: 86
+  label: Secret of the Staff of the Hollow Choir
+  playerLine: Will you teach me the Staff of the Hollow Choir?
+  text: The Staff of the Hollow Choir. Enchanting around a conductor core. It sings
+    when you cast, and it takes a little of what it hears from whatever you're
+    casting at. 22,500 gold, all of it up front. Pay, and I teach you. Listen
+    closely. I say it once.
+  hints: Accept to pay Veyra's price and learn the recipes. Then gather the
+    materials and make each part with your own hands. To see the recipes you know,
+    type craft list.
+  questRequired:
+  - 78-end
+  questExcluded:
+  - 86-start
+  - 86-end
+  goldRequired: 22500
+  grantsQuest: 86-start
+  chargesGold: 22500
+- key: teach_phial
+  kind: offer
+  quest: 87
+  label: Secret of the Phial of Second Birth
+  playerLine: Will you teach me the Phial of Second Birth?
+  text: 'The Phial of Second Birth. Alchemy, at the bottom of it: a reduction that
+    unmakes what you''ve become and gives you exactly one chance to become something
+    else. I don''t share this one lightly. 15,000 gold, all of it up front. Pay, and
+    I teach you. Listen closely. I say it once.'
+  hints: Accept to pay Veyra's price and learn the recipes. Then gather the
+    materials and make each part with your own hands. To see the recipes you know,
+    type craft list.
+  questRequired:
+  - 78-end
+  questExcluded:
+  - 87-start
+  - 87-end
+  goldRequired: 15000
+  grantsQuest: 87-start
+  chargesGold: 15000
+- key: secrets_list
+  kind: info
+  label: What secrets do you know, and what do they cost?
+  text: Nine worth the name, and I don't haggle. All of it up front. The Wayfarer's
+    Bottomless Pack and the Zephyr Treads, 12,500 gold each. The Thornwall Harness
+    and the Phial of Second Birth, 15,000 each. The Vitalis Bandolier, 17,500. The
+    Aegis of Mockery and the Seething Prism, 20,000 each. The Staff of the Hollow
+    Choir, 22,500. The Blackrazor, 25,000. Come with the coin for one, and I'll tell
+    you what it is.
+  hints: Each secret Veyra will sell you shows below as an offer once you carry its
+    price in gold. Choose one to hear what it is before you pay.
+  marked: true
+  questRequired:
+  - 78-end
+# confluence is the "confluence convergence commission" pattern (gated
+# questExcluded [78-end]). Its first line is now the Convergence offer's
+# breadcrumb; this is its second, for a player not yet known.
+- key: confluence
+  kind: info
+  label: What is it you make here?
+  text: Six trades, made to agree with each other. That's the whole of what I do
+    here. I don't explain it to people who haven't held a tool.
+  questExcluded:
+  - 78-end
+- key: scar
+  kind: info
+  label: What happened to your hand?
+  text: One working didn't agree with me the way the others had. I kept the hand. I
+    kept the lesson.
+- key: gold
+  kind: info
+  label: Do you sell what you make?
+  text: Nothing I know comes cheap, and I don't haggle. And I don't sell to hands I
+    haven't seen work.
+  questExcluded:
+  - 78-end

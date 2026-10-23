@@ -2,95 +2,52 @@ mobid: 9452
 zone: The Confluence
 defaultMood: friendly
 greetings:
-  - text: "Road-worn? Sit. There is broth on the fire and bread
-      on the board."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Come in. I can see from the road you have had a long
-        one. What do you need?"
-  - keywords: ["food", "eat", "hungry", "meal", "broth", "bread",
-      "buy", "sell", "cost", "price"]
-    responses:
-      - "River broth and black bread -- plain fare, but filling.
-        I ask a small coin to cover the supplies, no more than
-        that. If the coin is a problem, we can talk."
-  - keywords: ["sleep", "rest", "bed", "pallet", "stay", "night",
-      "tired", "exhausted", "lodging"]
-    responses:
-      - "The pallets in the back hall are for pilgrims who need
-        them. No coin required for a night's rest. The broth
-        and bread, that is what costs."
-  - keywords: ["keeper", "keepers", "order", "you", "member",
-      "who", "are", "role", "what", "do"]
-    responses:
-      - "I am a Keeper. My charge is the pilgrim hall -- feed
-        people, see to the injured, keep the beds made. The
-        contemplative work is for others. I find this
-        arrangement suits everyone."
-  - keywords: [""]
-    responses:
-      - "Broth, bread, or a place to rest -- I have all three."
-tree:
-  root:
-    text: "The pilgrim hall is open to any who need it. I have
-      river broth and black bread if you are hungry, and pallets
-      in the back if your feet need a rest before you go on to
-      the temple. What do you need?"
-    hints: "You could ask about the food and what it costs, about
-      resting here before the temple, or about the Keepers' work
-      here."
-  nodes:
-    - id: food
-      triggers: ["food", "eat", "hungry", "meal", "broth", "bread",
-        "buy", "cost", "price", "what", "have", "offer",
-        "provide", "serve", "is", "plain", "simple"]
-      text: "River broth and black bread -- I make both each
-        morning in quantity. It is not elaborate. It is hot
-        and filling, which is what a road-worn pilgrim needs.
-        I ask a small coin for it. The hall's supplies have
-        to come from somewhere. If you are truly without coin,
-        speak up. The Prior would not have me turn a hungry
-        pilgrim away over a few copper."
-      hints: "You could ask about resting here, or about the
-        pilgrim hall and what the Keepers do here."
-    - id: rest
-      triggers: ["sleep", "rest", "pallet", "bed", "night",
-        "stay", "lie", "tired", "exhausted", "recover",
-        "lodge", "lodging", "where", "back"]
-      text: "The back hall has pallets -- straw, clean, dry.
-        Good enough for a night's rest. There is no charge
-        for sleeping. That is the founding covenant of the
-        hall, and I keep it. Pilgrims who arrive sick or
-        injured stay until they can walk, no questions asked.
-        The temple has resources for longer care if you
-        need it."
-      hints: "You could ask about the food, or about the
-        Keepers' work here."
-    - id: role
-      triggers: ["keeper", "keepers", "hospitaller", "role",
-        "what", "do", "work", "charge", "tend", "why",
-        "here", "you", "order", "part", "serving"]
-      text: "My charge is practical: tend the hall, feed
-        the pilgrims, see to anyone who has arrived in poor
-        shape. The Keepers cover all the work the temple
-        needs -- the Historian explains the founding, the
-        Wardens keep order, I keep people fed and rested.
-        The contemplation, the ceremony, the doctrine --
-        that is for the senior Keepers in the cloisters.
-        I find my end of the work suits me better."
-      hints: "You could ask about the food, or about
-        resting before the temple."
-    - id: temple
-      triggers: ["temple", "go", "visit", "see", "worship",
-        "inside", "cross", "causeway", "altar", "how",
-        "where", "direction"]
-      text: "The causeway is straight out the forecourt gate
-        and across to the island. The public temple is open --
-        the founding reliefs, the altar, the sacred fire. It
-        is worth a visit even if the faith is not yours. The
-        stonework is very old. The Warden at the gate can
-        answer more about what lies beyond the public nave."
-      hints: "You could ask about the food or the pallets
-        before you go."
+- text: Road-worn? Sit. There is broth on the fire and bread on the board.
+  moods:
+  - friendly
+opener:
+  text: Come in. I can see from the road you have had a long one. The pilgrim hall
+    is open to any who need it. I have river broth and black bread if you are
+    hungry, and bunks upstairs if your feet need a rest before you go on to the
+    temple. What do you need?
+  hints: You could ask the Hospitaller about the food, about resting here, about her
+    work as a Keeper, or about the way to the temple. To see what she sells, type
+    list.
+topics:
+- key: food
+  kind: info
+  label: What food do you have?
+  text: River broth and black bread. I make both each morning, in quantity. It is
+    plain fare, but it is hot and filling, which is what a road-worn pilgrim needs.
+    I ask a small coin for it, enough to cover the supplies and no more. The hall's
+    supplies have to come from somewhere.
+  hints: To see what she sells, type list.
+- key: rest
+  kind: info
+  label: Can I rest here?
+  text: The dormitory is up the stair. Bunks, clean blankets, dry. Good enough for a
+    night's rest. There is no charge for sleeping. That is the founding covenant of
+    the hall, and I keep it. The broth and bread, that is what costs. Pilgrims who
+    arrive sick or hurt stay until they can walk, no questions asked.
+  hints: The dormitory is up the stair from the hall. To lie down and rest there,
+    type sleep.
+- key: role
+  kind: info
+  label: Are you one of the Keepers?
+  text: I am a Keeper. My charge is practical. Tend the hall, feed the pilgrims, see
+    to anyone who has arrived in poor shape, keep the beds made. The Keepers cover
+    all the work the temple needs. The Historian explains the founding, the Wardens
+    keep order, I keep people fed and rested. The contemplation, the ceremony, the
+    doctrine, that is for the senior Keepers in the cloisters. I find my end of the
+    work suits me better, and I find the arrangement suits everyone.
+- key: temple
+  kind: info
+  label: How do I get to the temple?
+  text: Back out to the forecourt, then over the causeway to the island. The public
+    temple is open. The great hall over the waters, the altar, the sacred flame. It
+    is worth a visit even if the faith is not yours. The stonework is very old. If
+    you want the founding account, the Historian keeps it in the Hall of the
+    Founding, just up the avenue. The Warden in the forecourt can tell you more about
+    what lies past the public nave.
+  hints: The forecourt is north of the hall, and the causeway starts east of the
+    forecourt.

@@ -58,7 +58,7 @@ triggers:
   # ── EVIDENCE: pry up the loose floorboard in the foreman's office (5526) ──
   # The noun is the room's own key, `floorboard` (it was `floor-board`, then
   # `floor board`; one word since 2026-10-21 so 63 and 68 teach the same
-  # spelling). Triggers 5 to 8 add `board` and the lost-book recovery.
+  # spelling). Triggers 2 to 5 add `board` and the lost-book recovery.
   - event: room_interact
     room: 5526
     noun: floorboard
@@ -88,45 +88,6 @@ triggers:
           One floorboard sits a little proud of its neighbors. You could
           work it loose, but prying up another man's floor without a
           reason is a fast way to find trouble you came here to avoid.
-
-  # ── REPORT: tally-book to the Dock Constable (9316) ──
-  - event: item_give
-    mob: 9316
-    item: 40100
-    conditions:
-      has: ["63-evidence"]
-      missing: ["63-report"]
-    actions:
-      - grant: "63-report"
-      - npc_say:
-          mob: 9316
-          lines:
-            - {delay: 1, text: "Let me see that."}
-            - {delay: 3, text: "Two columns. Manifest on the left, the true count on the right. That is the foreman's hand."}
-            - {delay: 5, text: "The shortage was never Teo's. I'll have Hewd in by the next bell, and the boy's name off the board."}
-
-  # ── REPORT (alternate): tally-book to Jesset (9300) ──
-  - event: item_give
-    mob: 9300
-    item: 40100
-    conditions:
-      has: ["63-evidence"]
-      missing: ["63-report"]
-    actions:
-      - grant: "63-report"
-      - npc_say:
-          mob: 9300
-          lines:
-            - {delay: 1, text: "Hewd's book. I had a feeling it ran through that office."}
-            - {delay: 3, text: "I'll walk this to the constable myself -- it lands harder from me. Teo's back on the board in the morning. You did right by him."}
-
-  # ── AUTO-COMPLETE: report → end ──
-  - event: quest_granted
-    quest_token: "63-report"
-    conditions:
-      missing: ["63-end"]
-    actions:
-      - grant: "63-end"
 
   # ── EVIDENCE, short noun: `look board` reaches the same floorboard ──
   - event: room_interact

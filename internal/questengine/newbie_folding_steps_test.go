@@ -8,9 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/stretchr/testify/require"
-	yaml2 "gopkg.in/yaml.v2"
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -77,52 +75,6 @@ func foldingSpawns(t *testing.T, room int, mob int) bool {
 		}
 	}
 	return false
-}
-
-func foldingLoadOrrin(t *testing.T) *dialogue.DialogueFile {
-	t.Helper()
-	_, here, _, ok := runtime.Caller(0)
-	require.True(t, ok)
-	path := filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "dialogue", "pothole_coulee", "9145.yaml")
-	data, err := os.ReadFile(path)
-	require.NoError(t, err)
-	var df dialogue.DialogueFile
-	require.NoError(t, yaml2.Unmarshal(data, &df), "9145.yaml must parse with the loader's yaml.v2, or Orrin is mute")
-	return &df
-}
-
-func foldingState(p *linearPlayer) *dialogue.PlayerState {
-	return &dialogue.PlayerState{
-		HasQuest:  p.HasQuest,
-		HasItem:   func(int) bool { return false },
-		GiveQuest: func(string) {},
-		GiveItem:  func(int) bool { return true },
-	}
-}
-
-var foldingOrrinInstance = 70000
-
-// foldingAsk runs `ask orrin <topic>` the way usercommands/ask.go does: the
-// tree first, then the patterns. It reports the text, the hints and whether
-// the catch-all answered.
-func foldingAsk(t *testing.T, df *dialogue.DialogueFile, p *linearPlayer, topic string) (string, string, bool) {
-	t.Helper()
-	foldingOrrinInstance++
-	ps := foldingState(p)
-	if text, hints, _, ok := dialogue.TreeAdvance(df, foldingOrrinInstance, 1, topic, ps); ok {
-		return text, hints, false
-	}
-	text, _, ok, fallback := dialogue.MatchWithFallbackInfo(df, foldingOrrinInstance, topic, ps)
-	require.True(t, ok, "Orrin said nothing to %q", topic)
-	return text, "", fallback
-}
-
-func foldingGreet(t *testing.T, df *dialogue.DialogueFile, p *linearPlayer) (string, string) {
-	t.Helper()
-	foldingOrrinInstance++
-	text, hints, ok := dialogue.Greet(df, foldingOrrinInstance, 1, foldingState(p))
-	require.True(t, ok)
-	return text, hints
 }
 
 func foldingHint(q *QuestDef, id string) string {
@@ -245,60 +197,18 @@ func TestQuest57TendingTheGrove_EndsOnTheKill(t *testing.T) {
 	require.True(t, foldingSpawns(t, foldingGroveEdge, foldingDriftWisp))
 }
 
-// Orrin answers mid-quest questions about the words his hints use instead of
-// falling through to "Say it plainly.", and his greeting names each step's
-// one command.
+// Orrin's opener names each grove step's one command, and a quest-aware topic
+// on his menu answers it (the old `ask orrin wisp/revenant/cast` words); the
+// kill step's hand-in completes The Unquiet Grove.
 func TestOrrinMidQuestAnswers(t *testing.T) {
-	df := foldingLoadOrrin(t)
-	q45 := loadShippedQuest(t, "45-the_unquiet_grove.yaml", 45)
-
-	for _, step := range []string{"start", "cast"} {
-		p := newLinearPlayer(q45)
-		p.current = step
-		p.fullMockPlayer.quests["44-end"] = true
-		for _, topic := range []string{"wisp", "revenant", "cast", "spike", "grove", "help", "how"} {
-			text, _, fallback := foldingAsk(t, df, p, topic)
-			require.False(t, fallback, "45-%s: ask orrin %s fell through to the catch-all: %q", step, topic, text)
-		}
-	}
-
-	greetWants := map[string]string{
-		"start": "type cast conviction-spike revenant",
-		"cast":  "type cast conviction-spike",
-		"kill":  "type ask orrin done",
-	}
-	for step, want := range greetWants {
-		p := newLinearPlayer(q45)
-		p.current = step
-		p.fullMockPlayer.quests["44-end"] = true
-		_, hints := foldingGreet(t, df, p)
-		require.Contains(t, strings.ToLower(hints), want, "Orrin's greeting on 45-%s", step)
-		require.Equal(t, 1, len(typedCommand.FindAllString(strings.ReplaceAll(hints, darkAside, ""), -1)),
-			"Orrin's greeting on 45-%s names one command: %q", step, hints)
-	}
-
-	q46 := loadShippedQuest(t, "46-the_unfolded.yaml", 46)
-	p := newLinearPlayer(q46)
-	p.current = "start"
-	p.fullMockPlayer.quests["44-end"] = true
-	p.fullMockPlayer.quests["45-end"] = true
-	for _, topic := range []string{"unfolded", "scabland", "thinnest", "way", "help"} {
-		text, _, fallback := foldingAsk(t, df, p, topic)
-		require.False(t, fallback, "46-start: ask orrin %s fell through to the catch-all: %q", topic, text)
-	}
-	_, hints := foldingGreet(t, df, p)
-	require.Contains(t, hints, "west, up, north, west, north and east to the Thinnest Place")
-
-	q57 := loadShippedQuest(t, "57-tending_the_grove.yaml", 57)
-	p = newLinearPlayer(q57)
-	p.current = "start"
-	p.fullMockPlayer.quests["44-end"] = true
-	p.fullMockPlayer.quests["45-end"] = true
-	p.fullMockPlayer.quests["46-end"] = true
-	for _, topic := range []string{"wisp", "grove", "tend", "help"} {
-		text, _, fallback := foldingAsk(t, df, p, topic)
-		require.False(t, fallback, "57-start: ask orrin %s fell through to the catch-all: %q", topic, text)
-	}
-	_, hints = foldingGreet(t, df, p)
-	require.Contains(t, strings.ToLower(hints), "type cast conviction-spike wisp")
+	f45 := "45-the_unquiet_grove.yaml"
+	checkTopicSteps(t, "orrin", "9145.yaml", []topicStep{
+		{f45, 45, "start", "type cast spike revenant", []string{"44-end"}, "grove_mid_cast", false},
+		{f45, 45, "cast", "type cast spike", []string{"44-end"}, "grove_mid_kill", false},
+		{f45, 45, "kill", "", []string{"44-end"}, "grove_turnin", true},
+		{"46-the_unfolded.yaml", 46, "start", "west, up, north, west, north and east to the thinnest place",
+			[]string{"44-end", "45-end"}, "scab_mid", false},
+		{"57-tending_the_grove.yaml", 57, "start", "type cast spike wisp",
+			[]string{"44-end", "45-end", "46-end"}, "grove_loop_mid", false},
+	})
 }

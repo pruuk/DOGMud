@@ -1,14 +1,9 @@
 package questengine
 
 import (
-	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	yaml "gopkg.in/yaml.v3"
 )
 
 // The Alchemy spoke of Pothole Coulee (quests 38, 39 and 55) under the owner
@@ -158,127 +153,27 @@ func TestQuest55AnotherBrew_OneCommandPerStep(t *testing.T) {
 }
 
 // Falv hands out a replacement firebomb while quest 39 is open. A player who
-// still carries one must not get a second (S8): the handout node carries
-// itemExcluded, and the node right after it answers the same words.
+// still carries one must not get a second (S8): the handout topic carries
+// itemExcluded, and its reminder (carriesItem, same gates) hands nothing out.
+// Every firebomb handout on Falv is checked, so a new one cannot skip the
+// rule.
 func TestFalvFirebombHandoutGivesOnlyOne(t *testing.T) {
-	_, here, _, ok := runtime.Caller(0)
-	require.True(t, ok)
-	path := filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "dialogue", "pothole_coulee", "9129.yaml")
-	data, err := os.ReadFile(path)
-	require.NoError(t, err)
-	var df struct {
-		Tree struct {
-			Nodes []struct {
-				Id           string   `yaml:"id"`
-				Triggers     []string `yaml:"triggers"`
-				GivesItem    int      `yaml:"givesItem"`
-				ItemExcluded int      `yaml:"itemExcluded"`
-				GrantsQuest  string   `yaml:"grantsQuest"`
-			} `yaml:"nodes"`
-		} `yaml:"tree"`
-	}
-	require.NoError(t, yaml.Unmarshal(data, &df))
-
-	found := false
-	for i, n := range df.Tree.Nodes {
-		if n.GivesItem != firebombItem || n.GrantsQuest != "" {
+	falv := loadCouleeTopics(t, "9129.yaml")
+	found := 0
+	for i := range falv.Topics {
+		tp := &falv.Topics[i]
+		if tp.GivesItem != firebombItem || tp.GrantsQuest != "" {
 			continue
 		}
-		found = true
-		require.Equal(t, firebombItem, n.ItemExcluded, "node %s hands a firebomb to a player who already carries one", n.Id)
-		require.Less(t, i+1, len(df.Tree.Nodes), "node %s needs a refusal node after it", n.Id)
-		next := df.Tree.Nodes[i+1]
-		require.Equal(t, n.Triggers, next.Triggers, "the node after %s must answer the same words", n.Id)
-		require.Zero(t, next.GivesItem, "the refusal after %s must not hand anything out", n.Id)
+		found++
+		require.Equal(t, firebombItem, tp.ItemExcluded, "topic %s hands a firebomb to a player who already carries one", tp.Key)
 	}
-	require.True(t, found, "no firebomb handout node found; the check would prove nothing")
+	require.Equal(t, 1, found, "expected exactly one firebomb handout topic; the check below names it")
 
-	// Behaviour: a player without a firebomb gets one, a player with one
-	// hears that they have one and gets nothing.
 	q := loadShippedQuest(t, "39-wade_the_marsh.yaml", 39)
-	falv := loadCouleeDialogue(t, "9129.yaml")
 	n := newNpcTalker(falv, playerOn(q, "start", "38-end"))
-	n.ask("firebomb")
-	require.Equal(t, []int{firebombItem}, n.given, "a player without a firebomb gets one")
-	txt, _, _, _ := n.ask("firebomb")
-	require.Equal(t, []int{firebombItem}, n.given, "a player who carries one gets no second")
-	require.Contains(t, squash(txt), "already have one")
-}
-
-type giverStep struct {
-	file   string
-	id     int
-	step   string
-	want   string   // the step's one command, as the greeting hint names it
-	others []string // prerequisite tokens
-	topics []string // words a mid-quest player asks
-	final  bool     // the step before end, where "done" is the turn-in
-}
-
-func checkGiverSteps(t *testing.T, npc string, df string, cases []giverStep) {
-	t.Helper()
-	d := loadCouleeDialogue(t, df)
-	for _, c := range cases {
-		q := loadShippedQuest(t, c.file, c.id)
-		// #375 phase 1 split the final step: the quest hint already teaches
-		// talk (the hand-in is a topic), while the shipped pre-conversion
-		// dialogue below still greets with "ask <npc> done" until the
-		// converted files land (Task 15 step 4). The topic-side truth is
-		// pinned by newbie_topic_steps_test.go.
-		questWant := c.want
-		if c.final {
-			questWant = "type talk " + npc
-		}
-		require.Contains(t, questHintFor(t, q, c.step), questWant,
-			"quest %d step %q hint changed; update this test and %s together", c.id, c.step, npc)
-		n := newNpcTalker(d, playerOn(q, c.step, c.others...))
-		_, hints := n.greet()
-		require.Contains(t, squash(hints), c.want, "quest %d step %q: %s's greeting must name the step's command", c.id, c.step, npc)
-		require.Equal(t, 1, len(typedCommand.FindAllString(strings.ReplaceAll(squash(hints), squash(darkAside), ""), -1)),
-			"quest %d step %q greeting hint names one command: %q", c.id, c.step, hints)
-		for _, topic := range c.topics {
-			_, h, fromTree, catchAll := newNpcTalker(d, playerOn(q, c.step, c.others...)).ask(topic)
-			require.False(t, catchAll, "quest %d step %q: ask %s %s falls to the catch-all", c.id, c.step, npc, topic)
-			require.True(t, fromTree, "quest %d step %q: ask %s %s must reach a quest-aware node", c.id, c.step, npc, topic)
-			if !c.final {
-				require.Contains(t, squash(h), c.want, "quest %d step %q: ask %s %s must name the step's command", c.id, c.step, npc, topic)
-			}
-		}
-	}
-}
-
-// Birna greets each quest 38 step with its command and answers the words the
-// lesson invites (S10), including "bottle" for the glass vial.
-func TestBirna9128_MidQuestGreetsAndAnswersEachStep(t *testing.T) {
-	words := []string{"vial", "bottle", "root", "salve", "craft", "drink", "help", "quest", "done"}
-	f := "38-first_brew.yaml"
-	checkGiverSteps(t, "birna", "9128.yaml", []giverStep{
-		{f, 38, "start", "type list", []string{"30-end"}, words, false},
-		{f, 38, "list", "type buy glass vial", []string{"30-end"}, words, false},
-		{f, 38, "vial", "type buy 2 healers root", []string{"30-end"}, words, false},
-		{f, 38, "roots", "type craft healing salve", []string{"30-end"}, words, false},
-		{f, 38, "brew", "type drink healing salve", []string{"30-end"}, words, false},
-		{f, 38, "drink", "type ask birna done", []string{"30-end"}, []string{"vial", "salve", "drink", "done"}, true},
-	})
-}
-
-// Falv greets each quest 39, 40 and 55 step with its command and answers the
-// words the quests invite (S10).
-func TestFalv9129_MidQuestGreetsAndAnswersEachStep(t *testing.T) {
-	marsh := []string{"leech", "forage", "herbs", "throw", "help", "quest", "done"}
-	f39 := "39-wade_the_marsh.yaml"
-	checkGiverSteps(t, "falv", "9129.yaml", []giverStep{
-		{f39, 39, "start", "type attack leech", []string{"38-end"}, marsh, false},
-		{f39, 39, "leech", "type throw firebomb", []string{"38-end"}, append(marsh, "firebomb"), false},
-		{f39, 39, "throw", "type forage", []string{"38-end"}, append(marsh, "firebomb"), false},
-		{f39, 39, "forage", "type ask falv done", []string{"38-end"}, []string{"leech", "forage", "herbs", "done"}, true},
-		{"40-heart_of_the_mire.yaml", 40, "start", "type attack spirit", []string{"38-end", "39-end"},
-			[]string{"spirit", "mire", "where", "help", "quest"}, false},
-		{"55-another_brew.yaml", 55, "start", "type craft healing salve", []string{"38-end", "39-end", "40-end"},
-			[]string{"brew", "craft", "quest", "done"}, false},
-		{"55-another_brew.yaml", 55, "brew", "type drink healing salve", []string{"38-end", "39-end", "40-end"},
-			[]string{"brew", "drink", "quest", "done"}, false},
-	})
+	checkHandout(t, n, "firebomb_recovery", "firebomb_already_have", firebombItem)
+	require.Contains(t, squash(falv.FindTopic("firebomb_already_have").Text), "already have one")
 }
 
 // S5: Another Brew finishes on the drink, so nothing may send the player

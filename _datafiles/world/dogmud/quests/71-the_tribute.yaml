@@ -116,16 +116,6 @@ triggers:
           lifting papers from this room uninvited, before you know whose they
           are, is the kind of mistake the Gilt Threshold is built to punish.
 
-  # REPORT: give the ledger page to Ostry (9347) -> grant 71-end directly
-  - event: item_give
-    mob: 9347
-    item: 40119
-    conditions:
-      has: ["71-ledger"]
-      missing: ["71-end"]
-    actions:
-      - grant: "71-end"
-
   # bonus: cooperage rep if the player has already proven the false founding (Q69)
   - event: quest_granted
     quest_token: "71-end"

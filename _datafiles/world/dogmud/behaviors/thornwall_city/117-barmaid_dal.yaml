@@ -1,6 +1,6 @@
 # Barmaid Dal — Behavior Tree
 # Room cycling between main tavern (home) and back corner.
-# Gossip redirect on ask. All dialogue handled here.
+# Her gossip redirect lives in her dialogue (topic gossip).
 #
 # State:
 #   location — "home" or "back" (tracks where she is)
@@ -8,17 +8,6 @@
 tree:
   type: selector
   children:
-
-    # ── ASK EVENT: gossip redirect ──
-    - type: sequence
-      event: player_ask
-      children:
-        - type: condition
-          check: keyword_match
-          keywords: [gossip, news, rumor, rumors, talk, word, hear]
-        - type: action
-          do: respond
-          user_text: "You want gossip? Ask the old men in the back corner. They have more stories than sense."
 
     # ── IDLE EVENT: room cycling ──
     - type: selector

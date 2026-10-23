@@ -4,9 +4,9 @@
 # chrysalis_priest, combat_trainer, wilderness_guide_fen, elder_saris,
 # basin_warden, basin_scholar.
 #
-# Dialogue YAML handles player_ask (the btree returns Failure for ask
-# so the dispatcher falls through to dialogue patterns). This archetype
-# covers only non-dialogue events.
+# Conversation is the NPC's dialogue YAML (talk topics, #375). This
+# archetype has no player_topic branch, so it claims no topic and covers
+# only non-dialogue events.
 #
 # Spec: docs/superpowers/specs/completed/2026-04-24-sanctum-basin-mob-audit-design.md
 

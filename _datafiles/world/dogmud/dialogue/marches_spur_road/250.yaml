@@ -1,84 +1,143 @@
 mobid: 250
 zone: Marches Spur Road
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Road's been long. Yours too, I'd wager."
-      - "Welcome to the camp. Such as it is."
-
-  - keywords: ["gossip", "news", "rumor", "rumors"]
-    responses:
-      - "I hear things on the road. Mostly complaints about the road."
-      - "Talk to Thessa at the inn if you want the real news. She hears everything."
-
-  - keywords: ["buy", "sell", "trade", "shop", "wares", "goods"]
-    responses:
-      - "I have road supplies -- rope, oil, dried food, the basics. Take a look."
-
-  - keywords: [""]
-    responses:
-      - "Mm. Something I can help with?"
-
-tree:
-  root:
-    text: "You look like you have been walking a while. I am Malk -- road peddler, when the road cooperates. It has not been cooperating."
-    hints: "You could ask about a quest or task, goods, the road, or New Plymouth."
-
-  nodes:
-    - id: quest_start
-      triggers: ["quest", "task", "help", "problem", "trouble", "freight", "shipment"]
-      questExcluded: ["15-start", "15-end"]
-      grantsQuest: "15-start"
-      text: "I have been camped here for a week waiting on a freight shipment that should have come up from the crossroads. Paid in advance, which I do not usually do, but the supplier was reliable. Was. The crate never arrived. I cannot go check myself -- one man with a cart on a road with bandits is an invitation. If you are heading south, keep an eye out. Sturdy wooden crate, iron straps, my stencil on the side."
-      hints: "The bandits have been seen near an old barn west of the farmland stretch. Look for a ruined barn off the road."
-      moodChange: friendly
-
-    - id: quest_active
-      triggers: ["quest", "task", "freight", "shipment", "crate"]
-      questRequired: ["15-start"]
-      questExcluded: ["15-end"]
-      text: "Still waiting on that freight. If you find the crate, bring it back here. Sturdy wood, iron straps, my stencil."
-      hints: "Check the ruined barn west of the farmland. The bandits may have stashed it there."
-
-    - id: quest_complete_dialogue
-      triggers: ["freight", "crate", "shipment", "found", "here", "brought", "deliver"]
-      questRequired: ["15-start"]
-      questExcluded: ["15-end"]
-      requiresItem: 40039
-      grantsQuest: "15-end"
-      text: "That is the one! The iron straps, the stencil marks -- that is my consignment. Let me check the contents... rope, oil, provisions, all accounted for, near enough. Some of it has been opened but nothing critical is missing. You have done me a real favor."
-      hints: "Quest complete. Malk now offers you better prices on his road supplies."
-      moodChange: friendly
-
-    - id: quest_done
-      triggers: ["quest", "task", "freight", "shipment", "crate"]
-      questRequired: ["15-end"]
-      text: "You already brought my shipment back. I am in your debt. Road prices from me, better than road prices in fact. Any time."
-
-    - id: lost_item
-      triggers: ["lost", "dropped", "missing", "where"]
-      questRequired: ["15-start"]
-      questExcluded: ["15-end"]
-      text: "Lost the shipment? Should still be at that barn if no one has moved it. West of the farmland stretch, off the main road."
-
-    - id: road_talk
-      triggers: ["road", "travel", "south", "north", "route"]
-      text: "The road south to the crossroads has been rough lately. Bandits working the stretch between here and the farmland. I would not travel it alone if I had the choice, which I do not, which is why I am still sitting here."
-      hints: "You could ask about New Plymouth, the bloodline, or the crossroads."
-
-    - id: new_plymouth
-      triggers: ["new plymouth", "plymouth", "city", "coast"]
-      text: "That is where the real money is -- docks district, everything flows through there. I have made the run twice. It is a week's travel from the crossroads if the weather holds. Worth it, if you have goods to move."
-
-    - id: bloodline_talk
-      triggers: ["bloodline", "agents", "patrols"]
-      text: "More patrols on the north road than I have seen in years. The kind that ask questions without buying anything. Looking for someone, if you believe the talk. I do not ask. Asking gets you remembered."
-
-    - id: crossroads_talk
-      triggers: ["crossroads", "south", "amber", "confluence", "stillwater"]
-      text: "The crossroads south of here connects to half the Marches. Amber Valley, the Confluence, all the river trade. Stillwater is a day or two further. Good people there, mostly."
-
-memory:
-  expiryPeriod: ""
+# R15: a player who found the crate before taking the quest sees the offer,
+# accepts it, then hands in from the same menu. A give before accepting hands
+# the crate back (R8). The opener variants notice the crate either way.
+opener:
+  text: You look like you have been walking a while. I am Malk, road peddler, when
+    the road cooperates. It has not been cooperating.
+  hints: You could ask Malk about his missing freight, his goods, or the road.
+  variants:
+  - carriesItem: 40039
+    questExcluded:
+    - 15-start
+    text: Is that... iron straps, my stencil on the side. That is my freight! Where
+      did you find it?
+    hints: Choose The Peddler's Overdue Freight below and accept it. Then choose it
+      again to hand over the crate.
+  - carriesItem: 40039
+    questRequired:
+    - 15-start
+    questExcluded:
+    - 15-end
+    text: That crate. Iron straps, my stencil. That is my freight!
+    hints: Choose The Peddler's Overdue Freight below to hand over the crate.
+  # 15-return is granted when the crate is picked up; it drives hints only.
+  # The hand-in gates on 15-start plus the crate (batch 2 review B1).
+  - questRequired:
+    - 15-return
+    questExcluded:
+    - 15-end
+    text: You found my crate? Then where is it? If it is lost, the bandits may have
+      dragged it back to that barn.
+    hints: From this camp, go east to the Waypoint Shrine, then south three times,
+      then west into the ruined barn. Type get freight crate from crates.
+  - questRequired:
+    - 15-start
+    questExcluded:
+    - 15-end
+    text: Any sign of my freight? Sturdy wooden crate, iron straps, my stencil on the
+      side.
+    hints: From this camp, go east to the Waypoint Shrine, then south three times,
+      then west into the ruined barn.
+  - questRequired:
+    - 15-end
+    text: Good to see you again. The cart is full, thanks to you. Take a look at what
+      I have.
+    hints: To see what Malk sells, type list.
+topics:
+- key: quest_start
+  kind: offer
+  quest: 15
+  label: The Peddler's Overdue Freight
+  playerLine: Is the road giving you trouble? Can I help?
+  text: I have been camped here for a week waiting on a freight shipment that should
+    have come up from the crossroads. Paid in advance, which I do not usually do,
+    but the supplier was reliable. Was. The crate never arrived. I cannot go check
+    myself. One man with a cart on a road with bandits is an invitation. If you are
+    heading south, keep an eye out. Sturdy wooden crate, iron straps, my stencil on
+    the side.
+  hints: The bandits have been seen near a ruined barn, west of the road past the
+    farmland.
+  questExcluded:
+  - 15-start
+  - 15-end
+  grantsQuest: 15-start
+  moodChange: friendly
+# Hand-in. The quest 15 give trigger's npc_say lines are folded in; the
+# "road prices" promise is dropped, since no price changes (quest 15 pays gold).
+- key: quest_complete_dialogue
+  kind: handin
+  quest: 15
+  label: The Peddler's Overdue Freight
+  playerLine: I found your freight crate at the ruined barn.
+  text: That is the one! The iron straps, the stencil marks. That is my consignment.
+    Let me check the contents... rope, oil, provisions, all accounted for, near enough.
+    Some of it has been opened, but nothing critical is missing. I owe you for this.
+  questRequired:
+  - 15-start
+  questExcluded:
+  - 15-end
+  requiresItem: 40039
+  grantsQuest: 15-end
+  moodChange: friendly
+# The lost_item node (the same gates, the same barn) is folded in here.
+- key: quest_active
+  kind: info
+  label: Where do you think your freight went?
+  text: The bandits have been working the road near an old barn, west of the farmland
+    stretch. If no one has moved my crate, that is where it will be. Bring it back
+    here. Sturdy wood, iron straps, my stencil.
+  hints: From this camp, go east to the Waypoint Shrine, then south three times,
+    then west into the ruined barn.
+  marked: true
+  questRequired:
+  - 15-start
+  questExcluded:
+  - 15-end
+- key: quest_done
+  kind: info
+  label: How is business now?
+  text: Better, since you brought my shipment back. I am in your debt. Any time you
+    need supplies, come to me first.
+  questRequired:
+  - 15-end
+- key: road_talk
+  kind: info
+  label: Is the road safe to travel?
+  text: The road south to the crossroads has been rough lately. Bandits working the
+    stretch between here and the farmland. I would not travel it alone if I had the
+    choice, which I do not, which is why I am still sitting here.
+- key: new_plymouth
+  kind: info
+  label: Where is the real money on these roads?
+  text: New Plymouth. The docks district, everything flows through there. I have
+    made the run twice. It is a week's travel from the crossroads if the weather holds.
+    Worth it, if you have goods to move.
+- key: bloodline_talk
+  kind: info
+  label: Have you seen anything strange on the road?
+  text: More patrols on the north road than I have seen in years. The kind that ask
+    questions without buying anything. Looking for someone, if you believe the talk.
+    I do not ask. Asking gets you remembered.
+- key: crossroads_talk
+  kind: info
+  label: Where does the road south lead?
+  text: The crossroads south of here connects to half the Marches. Amber Valley, the
+    Confluence, all the river trade. Stillwater is a day or two further. Good people
+    there, mostly.
+- key: gossip
+  kind: info
+  label: Have you heard any news?
+  text: I hear things on the road. Mostly complaints about the road. Talk to Thessa
+    at the inn if you want the real news. She hears everything.
+  hints: The Broken Yoke Inn is south along the spur road.
+# Malk's shop (mobs/marches_spur_road/250-peddler_malk.yaml) sells iron
+# lockpicks, a basic disarm kit and torches.
+- key: buy
+  kind: info
+  label: What do you have for sale?
+  text: Torches for the dark, lockpicks, and a kit for springing traps. Road goods.
+    Take a look.
+  hints: To see what Malk sells, type list.

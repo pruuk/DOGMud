@@ -1,153 +1,76 @@
 # Sable — Mob 315 — Rift Archway Vendor
-# Handles portal-listing chatter and "<zone> <gold>" purchase requests.
-# The open_instance_portal action manages the full purchase flow:
-# validates zone name, checks gold, charges, clones the instance,
-# adds a temporary exit, and speaks the result.
+# Opens instance zones for a player-chosen stake (#375 R14). Her greeting,
+# the portal list and the arena, oasis and talk answers live in her
+# dialogue (dialogue/thornwall_city/315.yaml). Choosing open_arena or
+# open_oasis there fires the matching branch below: open_instance_portal
+# with zone set shows that zone's guidance and asks "How much gold will
+# you stake?" privately. The open_instance_portal action manages the full
+# purchase flow: checks the minimum and the purse, charges, clones the
+# instance, adds a temporary exit, and speaks the result.
+#
+# Guidance ranges are the owner's (Oasis 2026-10-20, spec R14; Arena
+# 2026-10-21, spec R26, one step lower than the Oasis because the Arena
+# gives no second chance). Facts from rooms/instance_*/zone-config.yaml:
+# the Arena is death_policy ejected, allow_recall false; the Planar Oasis
+# is death_policy rejoin, allow_recall true; both instance_gold true. In
+# the arena rooms 5002, 5006, 5007 and 5008 run north in a line from the
+# entrance, each holds one or two fighters marked hostile, and a fallen
+# fighter respawns within a round to a few minutes. Room 5002 has
+# respawnrate "1h" (one game hour, about two and a half real minutes at
+# RoundsPerDay 900). Rooms 5006 to 5008 use "1h 30m" and "120m" (plus one
+# "1h" fighter in 5006), which gametime.AddPeriod does not know, so those
+# fall back to one round. That one-round respawn is the owner's intended
+# gold farm (2026-10-17).
 
 tree:
   type: selector
   children:
 
-    # ── ASK: greetings / general help ──────────────────────────────────────
+    # ── TOPIC open_arena: stake prompt for the Arena ──────────────────────
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [hello, hi, help, who, what, quest]
-        - type: action
-          do: say
-          text: I am Sable. I open rifts to places best left undisturbed.
-        - type: action
-          do: say
-          text: >-
-            For the right price in gold, I can send you and your party
-            somewhere dangerous.
-        - type: action
-          do: say
-          text: Ask me about portals if you want to know more.
-        - type: action
-          do: send_user_text
-          text: '<ansi fg="181">  [Try: ask sable portals]</ansi>'
-
-    # ── ASK: list available portals ────────────────────────────────────────
-    - type: sequence
-      event: player_ask
-      children:
-        - type: condition
-          check: keyword_match
-          keywords: [portal, portals, zones, instance, instances, rift, rifts]
-        - type: action
-          do: say
-          text: I can open rifts to dangerous places, for a price.
-        - type: action
-          do: say
-          text: Currently I can reach the Arena and the Planar Oasis.
-        - type: action
-          do: say
-          text: Tell me the place and how much gold you wish to invest.
-        - type: action
-          do: say
-          text: The more gold, the more dangerous -- and rewarding.
-        - type: action
-          do: send_user_text
-          text: >-
-            <ansi fg="181">  [Try: ask sable arena 200 or ask sable
-            oasis 300]</ansi>
-
-    # ── ASK: portal purchase "<zone> <gold>" ──────────────────────────────
-    # open_instance_portal parses the ask text for "arena 200" or "oasis 300",
-    # validates gold, clones the instance, and wires up the temporary exit.
-    # It returns Failure when the text doesn't match the "<zone> <number>"
-    # pattern, falling through to the info branches below.
-    # MUST be above arena/oasis info branches so "arena 200" isn't caught
-    # by the keyword_match on "arena" first.
-    #
-    # Task 17 (#375 R14) replaces this branch with one player_topic branch
-    # per zone (topics open_arena, open_oasis in dialogue 315), each with
-    # zone: and this guidance: text. Both sets of ranges are the owner's
-    # (Oasis 2026-10-20; Arena 2026-10-21, one step lower than the Oasis,
-    # because the Arena gives no second chance). Facts from
-    # rooms/instance_*/zone-config.yaml (death_policy, allow_recall) and the
-    # arena rooms: 5002, 5006, 5007 and 5008 run north in a line from the
-    # entrance, each holds one or two fighters marked hostile, and a fallen
-    # fighter respawns within a round to a few minutes. Room 5002 has
-    # respawnrate "1h" (one game hour, about two and a half real minutes at
-    # RoundsPerDay 900). Rooms 5006 to 5008 use "1h 30m" and "120m" (plus one
-    # "1h" fighter in 5006), which gametime.AddPeriod does not know, so those
-    # fall back to one round. That one-round respawn is the owner's intended
-    # gold farm (2026-10-17).
-    #
-    # arena guidance:
-    #   The more gold you stake, the harder the Arena fights and the richer
-    #   it pays.
-    #     100 to 200 gold: a midgame fighter on their own.
-    #     200 to 400 gold: an endgame fighter on their own.
-    #     400 gold and up: only the bravest alone, or a group.
-    #   There is no second chance. If you die, you are sent out and cannot
-    #   go back in, and recall magic does not work inside.
-    #   The fights come one after another. Every room past the entrance
-    #   holds fighters who attack on sight, and the fallen soon return.
-    #
-    # oasis guidance:
-    #   The more gold you stake, the harder the Planar Oasis fights and the
-    #   richer it pays.
-    #     100 to 300 gold: a midgame run on your own.
-    #     300 to 600 gold: an endgame run on your own.
-    #     600 gold and up: only the bravest alone, or a group.
-    #   If you die, you may go back in, and recall magic works inside.
-    - type: sequence
-      event: player_ask
-      children:
+          check: topic_is
+          topic: open_arena
         - type: action
           do: open_instance_portal
+          zone: arena
           min_gold: 100
           exit_expires: "30 real minutes"
           zones:
             arena: "Instance Arena"
             oasis: "Instance Planar Oasis"
+          guidance: |-
+            The more gold you stake, the harder the Arena fights and the richer
+            it pays.
+              100 to 200 gold: a midgame fighter on their own.
+              200 to 400 gold: an endgame fighter on their own.
+              400 gold and up: only the bravest alone, or a group.
+            There is no second chance. If you die, you are sent out and cannot
+            go back in, and recall magic does not work inside.
+            The fights come one after another. Every room past the entrance
+            holds fighters who attack on sight, and the fallen soon return.
 
-    # ── ASK: arena info ────────────────────────────────────────────────────
+    # ── TOPIC open_oasis: stake prompt for the Planar Oasis ───────────────
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [arena]
+          check: topic_is
+          topic: open_oasis
         - type: action
-          do: say
-          text: The Arena is a brutal proving ground. Death means expulsion.
-        - type: action
-          do: say
-          text: >-
-            You cannot recall from within. Tell me how much gold to invest.
-
-    # ── ASK: oasis info ───────────────────────────────────────────────────
-    - type: sequence
-      event: player_ask
-      children:
-        - type: condition
-          check: keyword_match
-          keywords: [oasis]
-        - type: action
-          do: say
-          text: >-
-            The Planar Oasis shimmers between worlds. Dangerous, but you
-            may return if you fall.
-        - type: action
-          do: say
-          text: Recall magic still works there. Tell me how much gold to invest.
-
-    # ── COMMAND: talk ──────────────────────────────────────────────────────
-    - type: sequence
-      event: player_ask
-      children:
-        - type: condition
-          check: keyword_match
-          keywords: [talk]
-        - type: action
-          do: say
-          text: I am Sable. I tend the rift archway.
-        - type: action
-          do: say
-          text: If you seek passage to dangerous places, ask me about portals.
+          do: open_instance_portal
+          zone: oasis
+          min_gold: 100
+          exit_expires: "30 real minutes"
+          zones:
+            arena: "Instance Arena"
+            oasis: "Instance Planar Oasis"
+          guidance: |-
+            The more gold you stake, the harder the Planar Oasis fights and the
+            richer it pays.
+              100 to 300 gold: a midgame run on your own.
+              300 to 600 gold: an endgame run on your own.
+              600 gold and up: only the bravest alone, or a group.
+            If you die, you may go back in, and recall magic works inside.

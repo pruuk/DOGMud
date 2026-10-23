@@ -28,25 +28,6 @@ steps:
     description: "The maintenance report has been delivered. Thornwall will review the
       bridge's condition and decide the toll's fate."
 
-triggers:
-  - event: item_give
-    mob: 99
-    item: 31
-    conditions:
-      has: ["6-start"]
-      missing: ["6-report"]
-    actions:
-      - grant: "6-report"
-      - npc_say:
-          mob: 99
-          lines:
-            - delay: 1
-              text: "A maintenance report from the crossing. Let me file
-                this properly."
-            - delay: 3
-              text: "Done. Tell Harn the report is on record. The Council
-                will review it in due course."
-
 rewards:
   actor: "Harn exhales slowly when you confirm the report is on its way.
     'That is all I can do. If they see the numbers, what the stone costs, what

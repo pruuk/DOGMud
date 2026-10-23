@@ -1,150 +1,190 @@
 mobid: 9323
 zone: New Plymouth Common
 defaultMood: neutral
-
 greetings:
-  - text: "You look like something needs seeing to. Sit down and I'll
-      have a look before you tell me how it happened."
-    moods: ["neutral"]
-  - text: "You again. Has it held, or are we looking at it again?"
-    moods: ["friendly"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "morning", "good", "evening"]
-    responses:
-      - "In. Close the door."
-      - "Whatever it is, I've seen worse. Probably."
-
-  - keywords: [""]
-    responses:
-      - "I'm not going to ask what you did or how — if that's what you
-          were working up to saying."
-
-tree:
-  root:
-    text: "I fix what needs fixing. I don't write down who I've seen or
-      why, and I don't discuss my patients with anyone. That's the whole
-      of the policy and it doesn't change. What is it?"
-    hints: "You could ask Ysolde about her healing work and how she runs
-      things, about the temple healers elsewhere in the city, or about
-      what kind of illness she sees most in the quarter."
-
-  nodes:
-    - id: wrapperhandoff
-      triggers: ["wrapper", "wax", "bloom", "addict", "help",
-                 "deliver", "hand", "give", "turn", "done",
-                 "report", "quest", "task"]
-      questRequired: ["66-start"]
-      questExcluded: ["66-escort", "66-end"]
-      requiresItem: 40110
-      grantsQuest: "66-escort"
-      text: "Ysolde takes the wax wrapper and holds it close,
-        pressing the fold open with one thumb. \"Copper-flower
-        note — that is the one. This is not old stock.\" She
-        looks up. \"Bring the one who had this to me. Whatever
-        state they are in.\""
-      hints: "You hand the wax wrapper to Ysolde."
-
-    - id: q67_grant
-      triggers: ["quest", "task", "source", "bloom", "trail", "marn",
-                 "draper", "docks", "follow", "trade", "stop", "next",
-                 "do more", "what now", "what next"]
-      questRequired: ["66-end"]
-      questExcluded: ["67-start", "67-end"]
-      grantsQuest: "67-start"
-      text: "I can only fix what walks through my door. Teels is stable --
-        for now. But the craving comes back, every time, while the source
-        keeps running. I can tell you what I have seen. There is a draper
-        named Marn on the docks -- keeps a clean shop, respectable-looking.
-        I cannot tell you what he moves or how it moves. But the
-        copper-flower note I have been pulling off people's skin for two
-        seasons -- that smell is in what he handles. He is where the trail
-        starts."
-      hints: "Ysolde has done what she can for Teels -- the rest is in the
-        docks. She names a draper called Marn as the start of the Bloom
-        trail. You could ask about the quest, the task, or what to do next,
-        and follow the trail from there."
-
-    - id: healing
-      triggers: ["heal", "healing", "fix", "treat", "treatment", "wound",
-                 "wounds", "injury", "medicine", "help", "rule", "no questions",
-                 "policy", "how", "work", "what do you", "what you do",
-                 "fee", "cost", "price", "charge", "pay", "paid"]
-      text: "The rule is simple. I look at what's wrong and I try to put it
-        right. I don't ask where you got it, who gave it to you, or whether
-        you'd prefer the story to come out differently. People come in faster
-        and leave in better shape when that's clear at the start. The fee is
-        what you have — I'm not keeping a ledger for it. If you come back, or
-        send someone who needs to, that's payment enough. The alley is the only
-        entrance. Come alone if you can, or no more than two."
-      hints: "Ysolde's rules are simple and she holds to them. You could ask
-        how she compares to the temple healers, or what kinds of illness she
-        sees most."
-      moodChange: friendly
-
-    - id: temple
-      triggers: ["temple", "healers", "church", "keeper", "keeper's", "official",
-                 "priest", "brother", "sister", "compared", "versus", "difference",
-                 "why not", "why not them", "proper", "real", "legitimate",
-                 "trained", "sanctioned"]
-      text: "The temple healers are genuine and I won't say otherwise. They're
-        trained, they're honest, and they have supplies and facilities I cannot
-        match. If you have something that can be explained cleanly to an
-        institution — go there. They're better at the clean ones. The people
-        who come to me come because they can't be at the Keeper's House in the
-        morning without an explanation that follows them out, or because they
-        need something done now rather than when the forms are through. I don't
-        have forms. That is the only material difference between us."
-      hints: "Ysolde has a careful and honest view of the temple healers. You
-        could ask about her own way of running things, or about the sickness
-        she sees most."
-      moodChange: cautious
-
-    - id: teels_q66
-      triggers: ["teels", "addict", "wrapper", "patient", "treated",
-                 "bloom", "source", "draper", "shop", "who"]
-      questRequired: ["66-escort"]
-      text: "I've seen to Teels. The purge is a rough crossing -- your body
-        knows what it is losing and it argues about every step. But they came
-        through. What I cannot do is make the craving stop for good while
-        someone is still putting the Bloom on the docks. Every person I treat
-        will be back in front of me as long as that keeps running. That is not
-        a problem I can fix. I don't know who and I won't guess -- but someone
-        down here does."
-      hints: "Ysolde treated Teels but is plain -- the detox does not hold
-        while the source keeps flowing. If you want to do more than treat the
-        symptom, the Bloom has a source somewhere on the docks."
-      moodChange: cautious
-
-    - id: bloom
-      triggers: ["bloom", "sick", "withdrawal", "copper", "flower", "wafer",
-                 "sickness", "craving", "dependent", "shaking", "sweating",
-                 "addiction", "bark", "skin", "user", "users", "what do you see",
-                 "what kind", "common", "most", "often", "coming in", "comes in"]
-      text: "I see a great deal of withdrawal. A particular kind — there's a
-        copper-flower note underneath the skin-smell that I can pick out now
-        without looking for it. The symptoms run a predictable course and I
-        know how to manage most of them, which means I have seen enough of
-        them to know the course very well. That is what I'll tell you. I won't
-        tell you where they come from or who sends them, because that is not
-        information I have or would share if I did. I treat who walks through
-        the door. The rest is not my work."
-      hints: "Ysolde knows the Bloom withdrawal well and keeps who brings it
-        to herself. If you are looking for a faster way through, you could
-        ask about a detox or a cure."
-      moodChange: cautious
-
-    - id: detox
-      triggers: ["detox", "cure", "purge", "cleanse", "quit", "clean",
-                 "fast", "faster", "quick", "hurry", "get clean", "kick it",
-                 "cut it", "break it"]
-      text: "I have something for it. It is not comfortable -- your body will
-        know what it is doing and argue about every step. Sweating, shaking,
-        worse than you are now for a short while. The slow way is quieter but
-        it takes longer, and some people do not have longer. If you want the
-        purge, drink it when you are ready. I won't ask how bad it is."
-      givesItem: 40109
-      hints: "Ysolde has handed you a sealed clay cup. The choice of when to
-        drink it is yours. She treats what walks through the door -- no
-        records, no questions."
-      moodChange: cautious
+- text: You look like something needs seeing to. Sit down and I'll have a look
+    before you tell me how it happened.
+  moods:
+  - neutral
+- text: In. Close the door.
+  moods:
+  - neutral
+- text: You again. Has it held, or are we looking at it again?
+  moods:
+  - friendly
+opener:
+  text: I fix what needs fixing. I don't write down who I've seen or why, and I
+    don't discuss my patients with anyone. That's the whole of the policy and it
+    doesn't change. What is it?
+  hints: You could ask Ysolde how she runs things, about the temple healers, or
+    about the sickness she sees most in the quarter. She also keeps a few tools
+    for sale under the counter. To see what she sells, type list.
+  variants:
+  - questRequired:
+    - 67-end
+    text: The supply's broken. Fewer people come through my door with that smell
+      on them. Not none. Fewer. I'll take fewer.
+    hints: You could ask Ysolde how she runs things, about the temple healers, or
+      about the sickness she sees most in the quarter. To see what she sells,
+      type list.
+  - questRequired:
+    - 67-start
+    questExcluded:
+    - 67-end
+    text: Marn's shop is on the docks. A clean little front. Start there.
+    hints: From Ysolde's Room, go south to the Back-Alley, west to Sweeper's
+      Corner, south to Tannery Street, west to the Back Court, then south four
+      times to Dockgate Street. Go west twice to Dock Street, north three times to
+      the Outer Dock Lane, then north into Marn's shop. Type talk marn.
+  - questRequired:
+    - 66-end
+    text: Teels is resting. The purge holds, for now. But while someone keeps
+      selling this, the craving comes back.
+    hints: If you want to follow the Bloom to whoever sells it, choose The Bloom
+      Trail below.
+  - questRequired:
+    - 66-escort
+    questExcluded:
+    - 66-end
+    text: I still have the wrapper you brought me. I have not forgotten whoever
+      gave it to you.
+    hints: Choose The Addict's Plight below to tell Ysolde where Teels is.
+  - questRequired:
+    - 66-start
+    questExcluded:
+    - 66-end
+    carriesItem: 40110
+    text: That smell. Copper-flower. What is that in your hand?
+    hints: Choose The Addict's Plight below to give Ysolde the wax wrapper.
+  - questRequired:
+    - 66-start
+    questExcluded:
+    - 66-end
+    text: Someone sent you to me. I can see it. But you came without whatever they
+      sent you with.
+    hints: If you lost the wax wrapper, Teels has more. From Ysolde's Room, go
+      south to the Back-Alley, west to Sweeper's Corner, south to Tannery Street,
+      west to the Back Court, then south four times to Dockgate Street. Go west
+      twice to Dock Street, then south three times to the Lower Wharf. Type talk
+      teels.
+topics:
+- key: wrapperhandoff
+  kind: handin
+  quest: 66
+  label: The Addict's Plight
+  playerLine: Teels on the Lower Wharf sent me with this wrapper.
+  text: This wrapper. I know this smell. Copper-flower, under the wax. I've been
+    taking it off people's skin for the better part of two seasons. Teels sent
+    you? Then they need the purge, not just sympathy. I'll go down to the wharf
+    myself tonight. I can get Teels through the withdrawal. But hear me on this.
+    The purge holds until the craving comes back, and the craving comes back every
+    time while the source is still running. Someone is putting this on the docks.
+    That is the problem I cannot fix.
+  questRequired:
+  - 66-start
+  questExcluded:
+  - 66-escort
+  - 66-end
+  requiresItem: 40110
+  grantsQuest: 66-end
+  setsQuestFlag:
+    key: 66-addict-fate
+    value: saved
+# A character saved at 66-escort (the old ask route took the wrapper and
+# granted 66-escort, which nothing ever completed) finishes here, with no item.
+- key: escort_close
+  kind: handin
+  quest: 66
+  label: The Addict's Plight
+  playerLine: Teels is on the Lower Wharf. Can you help them now?
+  text: The Lower Wharf. I'll go down myself tonight. I can get Teels through the
+    withdrawal. But hear me on this. The purge holds until the craving comes back,
+    and the craving comes back every time while the source is still running.
+    Someone is putting this on the docks. That is the problem I cannot fix.
+  questRequired:
+  - 66-escort
+  questExcluded:
+  - 66-end
+  grantsQuest: 66-end
+  setsQuestFlag:
+    key: 66-addict-fate
+    value: saved
+- key: q67_grant
+  kind: offer
+  quest: 67
+  label: The Bloom Trail
+  playerLine: Do you want help finding where the Bloom comes from?
+  text: I can only fix what walks through my door. Teels is stable, for now. But
+    the craving comes back, every time, while the source keeps running. I can tell
+    you what I have seen. There is a draper named Marn on the docks. He keeps a
+    clean shop, respectable-looking. I cannot tell you what he moves or how it
+    moves. But the copper-flower note I have been pulling off people's skin for
+    two seasons is in what he handles. He is where the trail starts.
+  hints: Accept, then go to Marn's fabric shop on the docks, at the north end of
+    the Outer Dock Lane.
+  questRequired:
+  - 66-end
+  questExcluded:
+  - 67-start
+  - 67-end
+  grantsQuest: 67-start
+- key: teels_q66
+  kind: info
+  label: How is Teels doing?
+  text: I've seen to Teels. The purge is a rough crossing. Your body knows what it
+    is losing and it argues about every step. But they came through. What I cannot
+    do is stop the craving for good while someone is still putting the Bloom on
+    the docks. Every person I treat will be back in front of me as long as that
+    keeps running. That is not a problem I can fix. I don't know who, and I won't
+    guess. But someone down there does.
+  questRequired:
+  - 66-end
+  moodChange: cautious
+- key: healing
+  kind: info
+  label: How do you run things here?
+  text: The rule is simple. I look at what's wrong and I try to put it right. I
+    don't ask where you got it, who gave it to you, or whether you'd prefer the
+    story to come out differently. People come in faster and leave in better shape
+    when that's clear at the start. The fee is what you have. I'm not keeping a
+    ledger for it. If you come back, or send someone who needs to, that's payment
+    enough. The alley is the only way in. Come alone if you can, or no more than
+    two.
+  hints: Ysolde's rules are simple and she holds to them.
+  moodChange: friendly
+- key: temple
+  kind: info
+  label: Why not go to the temple healers?
+  text: The temple healers are genuine and I won't say otherwise. They're trained,
+    they're honest, and they have supplies and rooms I cannot match. If you have
+    something that can be explained cleanly to an institution, go there. They're
+    better at the clean ones. The people who come to me come because they can't be
+    at the Keeper's House in the morning without an explanation that follows them
+    out, or because they need something done now rather than when the forms are
+    through. I don't have forms. That is the only real difference between us.
+  moodChange: cautious
+- key: bloom
+  kind: info
+  label: What sickness do you see most?
+  text: I see a great deal of withdrawal. A particular kind. There's a
+    copper-flower note under the skin smell that I can pick out now without
+    looking for it. The symptoms run a predictable course and I know how to manage
+    most of them, which means I have seen enough of them to know the course very
+    well. I won't tell you where they come from or who sends them, because that is
+    not something I know or would share if I did. I treat who walks through the
+    door. The rest is not my work.
+  hints: Ysolde knows the Bloom withdrawal well, and keeps to herself who brings it
+    in.
+  moodChange: cautious
+- key: detox
+  kind: info
+  label: Do you have a cure for the withdrawal?
+  text: I have something for it. It is not comfortable. Your body will know what
+    it is doing and argue about every step. Sweating, shaking, worse than you are
+    now for a short while. The slow way is quieter but it takes longer, and some
+    people do not have longer. If you want the purge, drink it when you are ready.
+    I won't ask how bad it is.
+  hints: Ysolde hands you a sealed clay cup. When to drink it is your choice.
+  itemExcluded: 40109
+  givesItem: 40109
+  moodChange: cautious

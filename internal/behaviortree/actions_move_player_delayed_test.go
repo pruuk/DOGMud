@@ -76,9 +76,9 @@ func seedEskPassage(t *testing.T) {
 	}
 	ctx := &EvalContext{
 		Event: EventContext{
-			EventType: "player_ask",
+			EventType: "player_topic", // the passage talk topic (#375 R12)
 			UserId:    1,
-			Text:      "arch",
+			Text:      "passage",
 			RoomId:    eskRoom,
 		},
 		MobState:   NewBehaviorState(),

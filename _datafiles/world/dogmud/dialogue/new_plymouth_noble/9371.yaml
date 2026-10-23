@@ -1,138 +1,142 @@
 mobid: 9371
 zone: New Plymouth Noble
 defaultMood: neutral
-
 greetings:
-  - text: "The gallery is open. Let me know if you have questions about
-      any of the pieces."
-    moods: ["neutral", "friendly"]
-  - text: "Back again. Take your time."
-    moods: ["cautious"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Hello. Take your time with the collection."
-      - "Welcome. I am here if you have questions."
-
-  - keywords: [""]
-    responses:
-      - "I know this collection very well. Ask what you need."
-      - "If something in the gallery caught your eye, I may be able
-        to tell you more."
-
-tree:
-  root:
-    text: "The collection is my responsibility. I know it very well.
-      If you have questions about the paintings or what they show —
-      I try to answer what I am able."
-    hints: "You could ask Keeper Lysha about the older paintings in
-      the gallery and what she reads in them, about the cipher or
-      symbol she has found in the third panel, or about what the
-      founding history actually shows when set against what those
-      paintings record."
-
-  nodes:
-    - id: q69_lysha
-      triggers: ["quest", "task", "third", "panel", "cipher", "rubbing",
-                 "dross", "read", "left"]
-      questRequired: ["69-gallery"]
-      questExcluded: ["69-reading", "69-end"]
-      grantsQuest: "69-reading"
-      givesItem: 40116
-      text: "The third panel from the left. So someone finally came up the
-        stairs to ask. Give me the rubbing. ... Yes. This is the same hand
-        as the panel, or the same workshop -- the eight-pointed device, the
-        ringed geometry, identical. The painter worked from observation. The
-        landscape is accurate, and so is the structure. It stands inland of
-        the present docks, where the canal district meets the edge of the
-        Old Quarter. The gallery's lighting was not built to make this panel
-        easy to examine. Someone decided what this room was for. Here -- my
-        reading, written out. Take it to Dross. He will know what it
-        completes."
-      hints: "Keeper Lysha matched your rubbing to the third panel: the
-        eight-pointed structure stood inland of the docks, before the
-        founding. She gave you her annotated reading. Take it back to Scholar
-        Dross at the Temple."
-      moodChange: cautious
-
-    - id: q69_lysha_circle_aside
-      triggers: ["circle", "cooperage", "orin", "trust", "side"]
-      questRequired: ["69-gallery"]
-      questFlagRequired: {"68-allegiance": "circle"}
-      text: "Orin vouches for you -- quietly, the way we do anything. Then I
-        will say plainly what I would not say to a stranger: I am of the
-        circle, here, inside the bloodline's own gallery, reading the thing
-        they hung the lights to hide. Be careful with what you now carry."
-      hints: "Lysha, knowing you stood with the circle, trusts you with her
-        own part in it. The work is the same -- take her reading to Dross."
-
-    - id: paintings
-      triggers: ["painting", "collection", "gallery", "canvas", "pigment",
-                 "color", "colour", "varnish", "hang", "older",
-                 "display", "see", "notice", "between", "portraits",
-                 "age", "aged", "antique", "read", "look", "examine",
-                 "observe", "third", "panel"]
-      text: "The bloodline portraits are recent and well-made — I have
-        no criticism of them as commissions. The older panels between
-        them are different work. They are earlier — fifty years at
-        minimum, possibly more, judging by the varnish crazing and
-        the specific palette used, which I can read to within a decade
-        if I know the source. Whoever painted them painted from
-        observation. The landscapes are accurate. The settlement scenes
-        are accurate. The details in the third panel from the left
-        are accurate. That last part is where things become interesting."
-      hints: "She read those paintings the way a scholar reads a text.
-        You could ask her about the cipher or symbol in the third panel,
-        or about what the founding history shows when compared to what
-        she sees in those older pigments."
-
-    - id: cipher
-      triggers: ["cipher", "symbol", "eight", "pointed", "figure",
-                 "orbital", "mark", "geometry", "pattern", "glyph",
-                 "interesting", "eight-pointed", "structure", "image",
-                 "detail", "background", "shape", "what is it"]
-      text: "The eight-pointed figure in the third panel's background —
-        worked into the detail of a structure at what appears to be
-        an early settlement site. I have seen that same symbol in three
-        places since: in documents the cooperage circle's archive holds,
-        in survey material someone called Orin had compiled before the
-        old route was cleared, and in a reference — secondhand — from
-        someone called Dross who works near the Temple. The same
-        eight-pointed figure in different contexts, pointing at the
-        same location. It is not random decoration. It marks something
-        that was there before the city's official beginning. Whether
-        the bloodline knows what it marks, I do not know. Whether
-        they know I can read it — I am careful not to make that obvious."
-      hints: "She named the cooperage circle's archive, a surveyor
-        called Orin, and someone called Dross near the Temple —
-        three separate threads arriving at the same symbol. You could
-        ask her what the founding history actually shows, and what the
-        older paintings reveal about where this city first began."
-      moodChange: cautious
-
-    - id: truth
-      triggers: ["truth", "founding", "history", "settlement", "location",
-                 "different", "real", "actual", "hidden", "suppressed",
-                 "prior", "original", "earlier", "before", "began",
-                 "where", "position", "coastline", "began", "started",
-                 "first city", "first settlement", "beginning"]
-      text: "The settlement in the third panel is not in the position
-        of New Plymouth. The coastline in the same panel is accurate —
-        I can verify the landform against the harbor surveys. The
-        structure with the eight-pointed symbol stands at a location
-        that would be inland from the current docks, roughly where
-        the canal district meets the edge of the Old Quarter. The
-        official founding history has a specific place and time for
-        this city's beginning. These paintings show an earlier one.
-        I do not know what that earlier place was, or what happened
-        to it, or why the history was written over it. I know that
-        the difference is real, and that the gallery's lighting was
-        not designed to make the third panel easy to examine. Someone
-        decided what this room was for."
-      hints: "She told you what the paintings show and what she believes
-        the suppression means. The earlier settlement stood where the
-        canal district meets the Old Quarter — and what the Old Quarter
-        itself holds may be the final answer. She is very quiet after
-        saying this."
-      moodChange: cautious
+- text: The gallery is open. Let me know if you have questions about any of the
+    pieces.
+  moods:
+  - neutral
+  - friendly
+- text: Back again. Take your time.
+  moods:
+  - cautious
+opener:
+  text: The collection is my responsibility. I know it very well. If you have
+    questions about the paintings or what they show, I try to answer what I am able.
+  hints: You could ask Keeper Lysha about the older paintings between the portraits,
+    about a symbol she has found in the third panel, or about what those paintings
+    say about the city's founding.
+  # Quest 69 states (first match wins).
+  variants:
+  - questRequired:
+    - 69-reading
+    questExcluded:
+    - 69-end
+    itemExcluded: 40116
+    text: Dross has not seen my reading yet? Then where is it?
+    hints: Choose I've lost the reading you gave me below.
+  - questRequired:
+    - 69-gallery
+    questExcluded:
+    - 69-reading
+    - 69-end
+    itemExcluded: 40115
+    text: You have come about the third panel? Then I need to see what you copied
+      from the temple reliefs.
+    hints: Keeper Lysha needs to see your rubbing of the processional reliefs. If you
+      lost it, take another in the Grand Temple Sanctuary. Type look reliefs there.
+  - questRequired:
+    - 69-gallery
+    questExcluded:
+    - 69-reading
+    - 69-end
+    text: You have the look of someone who was sent. Who sent you, and about which
+      painting?
+    hints: Choose to tell Keeper Lysha that Dross sent you about the third panel.
+topics:
+- key: q69_lysha
+  kind: info
+  label: Dross sent me about the third panel from the left.
+  text: The third panel from the left. So someone finally came up the stairs to
+    ask. Show me the rubbing. Yes. This is the same hand as the panel, or the same
+    workshop. The eight-pointed device, the ringed geometry, identical. The painter
+    worked from life. The landscape is accurate, and so is the structure. It stands
+    inland of the present docks, where the canal district meets the edge of the Old
+    Quarter. The gallery's lighting was not built to make this panel easy to
+    examine. Someone decided what this room was for. Here. My reading, written out.
+    Take it to Dross. He will know what it completes.
+  hints: Keeper Lysha matched your rubbing to the third panel and gave you her
+    written reading. Take it back to Scholar Dross at the Grand Temple. Type talk
+    dross.
+  marked: true
+  questRequired:
+  - 69-gallery
+  questExcluded:
+  - 69-reading
+  - 69-end
+  carriesItem: 40115
+  grantsQuest: 69-reading
+  givesItem: 40116
+  moodChange: cautious
+# Quest 69 recovery: the reading is the only way to finish, so a player who
+# lost it gets a fresh copy while the hand-in is open (not farmable: value 0,
+# not salable, and only while the player holds none).
+- key: lost_reading
+  kind: info
+  label: I've lost the reading you gave me.
+  text: Then I write it out again. I have not stopped looking at that panel since.
+    Here. Keep this one close.
+  hints: Keeper Lysha writes her reading out again and hands it to you. Take it to
+    Scholar Dross at the Grand Temple. Type talk dross.
+  questRequired:
+  - 69-reading
+  questExcluded:
+  - 69-end
+  itemExcluded: 40116
+  givesItem: 40116
+- key: q69_lysha_circle_aside
+  kind: info
+  label: I stand with the cooperage circle.
+  text: Orin vouches for you, quietly, the way we do anything. Then I will say
+    plainly what I would not say to a stranger. I am of the circle, here, inside the
+    bloodline's own gallery, reading the thing they hung the lights to hide. Be
+    careful with what you now carry.
+  hints: Lysha, knowing you stood with the circle, trusts you with her own part in
+    it. The work is the same. Take her reading to Dross.
+  questRequired:
+  - 69-reading
+  questExcluded:
+  - 69-end
+  questFlagRequired:
+    68-allegiance: circle
+- key: paintings
+  kind: info
+  label: What are the older paintings here?
+  text: The bloodline portraits are recent and well made. I have no criticism of
+    them as commissions. The older panels between them are different work. They are
+    earlier, by fifty years at the least, possibly more, judging by the cracks in the
+    varnish and the palette, which I can date to within a decade if I know the
+    source. Whoever painted them painted from life. The landscapes are accurate. The
+    settlement scenes are accurate. The details in the third panel from the left are
+    accurate. That last part is where things become interesting.
+- key: cipher
+  kind: info
+  label: What is the symbol in the third panel?
+  text: The eight-pointed figure in the background of the third panel, worked into
+    the detail of a structure at what looks like an early settlement. I have seen
+    that same symbol in three places since. In documents the cooperage circle's
+    archive holds, in survey material a bookseller called Orin has gathered, and in
+    a report, secondhand, from a scholar called Dross who works at the Temple. The
+    same eight-pointed figure in different places, pointing at the same location. It
+    is not decoration. It marks something that was there before the city's official
+    beginning. Whether the bloodline knows what it marks, I do not know. Whether they
+    know I can read it, I am careful not to make obvious.
+  hints: She named the cooperage circle's archive, a bookseller called Orin, and a
+    scholar called Dross, three separate threads arriving at the same symbol.
+  moodChange: cautious
+- key: truth
+  kind: info
+  label: What do the paintings say about the founding?
+  text: The settlement in the third panel is not where New Plymouth stands. The
+    coastline in the same panel is accurate. I can check the landform against the
+    harbor surveys. The structure with the eight-pointed symbol stands somewhere that
+    would be inland from the present docks, roughly where the canal district meets
+    the edge of the Old Quarter. The official history has a set place and time for
+    this city's beginning. These paintings show an earlier one. I do not know what
+    that earlier place was, or what happened to it, or why the history was written
+    over it. I know that the difference is real, and that the gallery's lighting was
+    not designed to make the third panel easy to examine. Someone decided what this
+    room was for.
+  hints: The earlier settlement stood where the canal district meets the Old
+    Quarter. She is very quiet after saying this.
+  moodChange: cautious

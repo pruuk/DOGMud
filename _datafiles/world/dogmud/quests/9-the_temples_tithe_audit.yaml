@@ -38,7 +38,6 @@ rewards:
   rep_amount: 15
 
 triggers:
-  # Ledger delivery to Olen via give command
   # Pick up the ledger in the Records Office -> advance to the deliver step.
   - event: item_gain
     item: 29
@@ -47,26 +46,9 @@ triggers:
       missing: ["9-deliver"]
     actions:
       - grant: "9-deliver"
-  - event: item_give
-    mob: 95
-    item: 29
-    conditions:
-      has: ["9-deliver"]
-      missing: ["9-end"]
-    actions:
-      - grant: "9-end"
-      - npc_say:
-          mob: 95
-          lines:
-            - {delay: 1, text: "Let me see that."}
-            - {delay: 3, text: "Both sides. The merchants are under-paying, and
-                our own expense records are... generous."}
-            - {delay: 5, text: "Thank you for your honesty. This will not be
-                pleasant, but it needed to come to light."}
 
   # A player who found the ledger first accepts the offer holding it, so the
-  # step hint moves on to the hand-in. Appended last so the trigger indexes in
-  # the converter report hold. Dialogue grants reach quest_granted
+  # step hint moves on to the hand-in. Dialogue grants reach quest_granted
   # (hooks/Quest_HandleQuestUpdate.go).
   - event: quest_granted
     quest_token: "9-start"

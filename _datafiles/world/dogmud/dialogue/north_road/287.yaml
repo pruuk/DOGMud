@@ -1,71 +1,108 @@
 mobid: 287
 zone: North Road
 defaultMood: neutral
-
-tree:
-  root:
-    text: "Traveler. A moment of your time. I am conducting
-      inquiries on behalf of the district authority."
-    hints: "You could ask what they want or answer their
-      questions."
-
-  nodes:
-    - id: inquiries
-      triggers: ["what", "inquiries", "want", "questions",
-        "authority", "asking", "quest", "task", "help"]
-      text: "I am looking for a young woman who may have passed
-        through this area recently. Dark-haired, traveling alone,
-        heading north. Have you seen anyone matching that
-        description? Or heard of anyone sheltering travelers
-        off the road?"
-      hints: "You could say you have not seen anyone, tell them
-        about the farmstead, or point them in the wrong direction."
-
-    - id: say_nothing
-      triggers: ["no", "nothing", "not seen", "quiet", "cannot",
-        "sorry", "nobody"]
-      questRequired: ["18-start"]
-      questExcluded: ["18-end"]
-      setsQuestFlag:
-        key: "18-resolution"
-        value: "quiet"
-      text: "I see. Well. If you do recall anything, the district
-        authority offers fair compensation for useful information.
-        Good day."
-      moodChange: neutral
-
-    - id: tell_truth
-      triggers: ["yes", "barn", "farmstead", "betta", "saw",
-        "stayed", "girl", "seen"]
-      questRequired: ["18-start"]
-      questExcluded: ["18-end"]
-      setsQuestFlag:
-        key: "18-resolution"
-        value: "told"
-      text: "A farmstead, you say. North of the village. Thank
-        you -- that is useful. The district authority appreciates
-        cooperation. Here, for your trouble."
-      moodChange: friendly
-
-    - id: misdirect
-      triggers: ["south", "east", "wrong way", "left",
-        "somewhere else", "other direction"]
-      questRequired: ["18-start"]
-      questExcluded: ["18-end"]
-      setsQuestFlag:
-        key: "18-resolution"
-        value: "quiet"
-      text: "South, you say. Hmm. I will look into it. Thank you
-        for your time."
-      moodChange: neutral
-
-    - id: no_quest
-      triggers: ["no", "nothing", "not seen", "quiet", "yes",
-        "barn", "south"]
-      questExcluded: ["18-start"]
-      text: "I see. Well, if you recall anything, the district
-        authority can be reached through any temple clerk. Good
-        day."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Traveler. A moment of your time. I am conducting inquiries on behalf of the
+    district authority.
+  hints: You could ask what the agent is asking about.
+  variants:
+  # A player who killed an agent meets its replacement after the respawn.
+  - questRequired:
+    - 18-answered
+    questFlagRequired:
+      18-resolution: killed
+    text: Another of us went missing on this road. I would think hard before you
+      make it two.
+  - questRequired:
+    - 18-answered
+    text: We have spoken already. Good day, traveler.
+  - questRequired:
+    - 18-start
+    text: Traveler. A moment of your time. I am conducting inquiries on behalf of the
+      district authority.
+    hints: Betta asked you to say nothing about the girl in her barn. Hear what the
+      agent wants first. Whatever you answer is final.
+topics:
+# Quest 18's choice (spec R28): the agent's question (inquiries) must be
+# heard first, and the first answer grants 18-answered, which closes the
+# other two. Betta (277) hands in each result.
+- key: inquiries
+  kind: info
+  label: What are you asking travelers about?
+  text: I am looking for a young woman who may have passed through this area recently.
+    Dark-haired, traveling alone, heading north. Have you seen anyone matching that
+    description? Or heard of anyone sheltering travelers off the road?
+  hints: You could say you have seen no one, point the agent the wrong way, or tell
+    what you know. Whatever you say cannot be taken back. Killing the agent also
+    ends it for good. Betta will turn on you, and you will get no reward.
+  marked: true
+  questExcluded:
+  - 18-answered
+- key: say_nothing
+  kind: info
+  label: I have not seen anyone like that.
+  text: I see. Well. If you do recall anything, the district authority offers fair
+    compensation for useful information. Good day.
+  hints: You told the agent nothing. That answer is final. Betta will want to know.
+  marked: true
+  heardRequired:
+  - inquiries
+  questRequired:
+  - 18-start
+  questExcluded:
+  - 18-answered
+  - 18-end
+  grantsQuest: 18-answered
+  setsQuestFlag:
+    key: 18-resolution
+    value: quiet
+  moodChange: neutral
+- key: misdirect
+  kind: info
+  label: A girl like that went south, the other way.
+  text: South, you say. Hmm. I will look into it. Thank you for your time.
+  hints: You sent the agent the wrong way. That answer is final. Betta will want
+    to know.
+  marked: true
+  heardRequired:
+  - inquiries
+  questRequired:
+  - 18-start
+  questExcluded:
+  - 18-answered
+  - 18-end
+  grantsQuest: 18-answered
+  setsQuestFlag:
+    key: 18-resolution
+    value: quiet
+  moodChange: neutral
+# tell_truth's "Here, for your trouble" paid nothing; the agent now offers
+# only the authority's memory of the player's name.
+- key: tell_truth
+  kind: info
+  label: She slept in the barn at the farmstead.
+  text: A farmstead, you say. North of the village. Thank you, that is useful. The
+    district authority appreciates cooperation, and it will remember your name.
+  hints: You told the agent about Betta's barn. That answer is final.
+  marked: true
+  heardRequired:
+  - inquiries
+  questRequired:
+  - 18-start
+  questExcluded:
+  - 18-answered
+  - 18-end
+  grantsQuest: 18-answered
+  setsQuestFlag:
+    key: 18-resolution
+    value: told
+  moodChange: friendly
+- key: no_quest
+  kind: info
+  label: I cannot help you, I am afraid.
+  text: I see. Well, if you recall anything, the district authority can be reached
+    through any temple clerk. Good day.
+  heardRequired:
+  - inquiries
+  questExcluded:
+  - 18-start

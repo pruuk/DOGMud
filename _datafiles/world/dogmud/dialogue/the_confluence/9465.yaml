@@ -2,136 +2,196 @@ mobid: 9465
 zone: The Confluence
 defaultMood: friendly
 greetings:
-  - text: "Come in -- mind the ledger on the stand. I am in the
-      middle of a reading I have been putting off for ten years,
-      and it is worse than I expected."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Cael. Brother Cael. The Archive is open, within limits.
-        Ask what you need."
-  - keywords: ["archive", "records", "building", "ledger",
-      "what is", "what does"]
-    responses:
-      - "The Archive holds what the temple kept: building records,
-        consecration accounts, maintenance logs from the first
-        century onward. Most of it is routine. Some of it is not."
-  - keywords: [""]
-    responses:
-      - "Ask plainly. I have enough to read without guessing
-        what visitors want."
-tree:
-  root:
-    text: "I keep the Archive -- the temple's building records,
-      its founding accounts, the surveyor's work. Most days no
-      one asks for any of it. Today is not most days, I think."
-    hints: "You could ask Brother Cael about the archive, the
-      building records, or whether he can help you with the
-      questions the Margin raised."
-  nodes:
-    - id: q74_grant
-      questRequired: ["73-end"]
-      questExcluded: ["74-start", "74-end"]
-      triggers: ["quest", "task", "help", "records", "ledger",
-        "building", "temple", "raised", "foundation", "deeper",
-        "cael", "work", "show"]
-      text: "So the Officiant sent you, and you have the Margin's
-        question in your teeth. Good -- I am tired of being the
-        only one who reads these. Here is the work, and it is
-        reading, not digging: three of the temple's own records
-        disagree with its founding story. The building-ledger
-        here, open on the stand. The consecration-record in the
-        Chapter House. And a mason's survey in the old east
-        corridor, by the stair. See all three yourself. Aldric
-        has allowed it -- a supervised look, he calls it. Then
-        come back to me."
-      hints: "You could examine the building-ledger here in the
-        Archive, the consecration-record in the Chapter House,
-        and the mason's survey in the older east corridor --
-        then return to Cael."
-      grantsQuest: "74-start"
-    - id: q74_progress
-      questRequired: ["74-start"]
-      questExcluded: ["74-survey"]
-      triggers: ["progress", "remind", "which", "where", "again",
-        "records", "ledger", "survey", "record", "lost"]
-      text: "Three records. The building-ledger here on the stand.
-        The consecration-record in the Chapter House. The mason's
-        survey in the old east corridor, by the descent stair. See
-        all three, then come back to me."
-      hints: "You could examine the three records, then return to
-        Cael in the Archive."
-    - id: q74_turnin
-      questRequired: ["74-survey"]
-      questExcluded: ["74-descent", "74-end"]
-      triggers: ["report", "return", "found", "done", "descent",
-        "stair", "below", "ready", "back", "seen", "results",
-        "quest", "task"]
-      text: "You have seen all three, then -- the ledger's silence,
-        the record's careful wording, the mason's plain note. Three
-        hands, and they agree on the one thing the founding story
-        will not: the temple was raised on something older, and the
-        Keepers have kept it so. I have told Aldric you should see
-        for yourself. He has allowed a supervised descent -- the
-        stair is in the old east corridor. Go down when you are
-        ready. And... go carefully."
-      hints: "You could descend the stair in the older east corridor
-        when you are ready."
-      grantsQuest: "74-descent"
-    - id: q74_recovery
-      questRequired: ["74-reveal"]
-      questExcluded: ["74-end"]
-      triggers: ["rubbing", "lost", "copy", "replace", "spare",
-        "dropped", "gone", "another", "misplaced", "again"]
-      text: "You took a rubbing and you have mislaid it? It happens
-        to better archivists than you. Sit a moment -- I can lay out
-        a clean copy from what you describe. The lines are simple
-        enough, four rings where there should be three. There. Do
-        not lose this one. And think on who should have it: Aldric in
-        the cloisters, who would keep it quiet, or the scholars at
-        the portico, who would not."
-      hints: "You could take the rubbing to Aldric in the cloisters,
-        or to the Margin scholar at the temple portico."
-      givesItem: 40142
-    - id: what_the_ledger_says
-      triggers: ["disagree", "differ", "silence", "says", "ledger",
-        "what it", "founding", "account", "why kept",
-        "suppressed", "hidden", "secret"]
-      text: "The ledger records the stones laid and the hands that
-        laid them. It does not editorialize. But the dates in the
-        lowest courses are a generation earlier than the founding
-        account gives them, and the stonework notes reference
-        preexisting load-bearing work already in place. The ledger
-        does not say what that work was. It simply assumes you
-        already know. I find that interesting. I have found it
-        interesting for some years."
-      hints: "You could ask Brother Cael about the archive more
-        broadly, or about what the Margin's scholars have found."
-    - id: the_margin
-      triggers: ["margin", "scholars", "quist", "fourth",
-        "notation", "question", "asked", "came"]
-      text: "The Margin sent someone here, eventually. I wondered
-        when they would. Quist has had the question for forty
-        years. I have had it from the archive side for nearly
-        twenty. The problem is not finding the evidence. The
-        problem is that the evidence is in the temple's own
-        records, and no one has been willing to look at it
-        directly. Until now, perhaps."
-      hints: "You could ask what the building records say, or
-        offer to look at them yourself."
-    - id: aldric_note
-      triggers: ["aldric", "keeper", "head", "permission",
-        "allowed", "who is", "prioress", "crane", "senior"]
-      text: "Aldric is the head of the order, and he is not a
-        fool. He has read these records. He made his peace with
-        what they say a long time ago, and his position since
-        has been that the temple's work is the temple's work,
-        and the ground beneath it is not our business to
-        disturb. I disagree with him quietly, which is the
-        only way I have managed to stay in this room for twenty
-        years. Prioress Crane -- she believes, sincerely and
-        completely, which is its own kind of peace. I have
-        a great deal of respect for her."
-      hints: "You could ask what the building records say, or
-        offer to look at them yourself."
+- text: Come in, and mind the ledger on the stand. I am in the middle of a reading
+    I have been putting off for ten years, and it is worse than I expected.
+  moods:
+  - friendly
+opener:
+  text: I am Brother Cael, and I keep the Archive, within limits. The temple's
+    building records are here, its founding accounts, the surveyor's work.
+    Most days nobody asks to see any of it, so you have my full attention.
+  hints: You could ask Brother Cael about the archive, about what the building
+    ledger on the stand says, or about Aldric, who leads the order.
+  # Quest 74 states first (first match wins; HasQuest is also true at every
+  # later step, so each variant excludes the step after it).
+  variants:
+  - questRequired:
+    - 74-end
+    text: You went down, you came back, and you chose. I keep the records. Yours
+      is written now too, in my own hand.
+    hints: You could ask Brother Cael about the archive, or about Aldric.
+  - questRequired:
+    - 74-reveal
+    questExcluded:
+    - 74-end
+    itemExcluded: 40142
+    text: You have been below. I can see it on you. But where is your rubbing?
+    hints: If you lost the rubbing, Brother Cael can draw you a clean copy. Choose
+      to tell him below.
+  - questRequired:
+    - 74-descent
+    questExcluded:
+    - 74-end
+    carriesItem: 40142
+    text: You have been below, and you brought it up. Now think hard on who should
+      have it.
+    hints: Aldric the Keeper would keep the rubbing inside the order. The Margin
+      scholar at the Temple Portico would carry it out. Talk to each before you
+      choose, because neither choice can be undone. From the Archive, go west to
+      the North Walk, then west into the Chapter House. Type talk aldric.
+  - questRequired:
+    - 74-descent
+    questExcluded:
+    - 74-reveal
+    - 74-end
+    text: The stair is past the Older East Corridor. Go down when you are ready,
+      and go carefully.
+    hints: From the Archive, go west to the North Walk, south to the Cloister Garth,
+      east twice to the Prioress's Oratory, south into the Older East Corridor, then
+      east to the Descent Stairhead. Go down, then west three times to the Seeping
+      Passage. Go down again, then west twice to the Water Gallery. Go down once
+      more, then west three times to the Chamber of the Old Sky. Type look orbital
+      face.
+  - questRequired:
+    - 74-survey
+    questExcluded:
+    - 74-descent
+    - 74-end
+    text: You have seen all three. I can tell from your face.
+    hints: Choose to tell Brother Cael what the three records show below.
+  - questRequired:
+    - 74-record
+    questExcluded:
+    - 74-survey
+    - 74-end
+    text: One record left. The mason's survey, in the Older East Corridor.
+    hints: From the Archive, go west to the North Walk, south to the Cloister Garth,
+      east twice to the Prioress's Oratory, then south into the Older East Corridor.
+      Type look survey.
+  - questRequired:
+    - 74-ledger
+    questExcluded:
+    - 74-record
+    - 74-end
+    text: You have read the ledger. Now the consecration record, in the Chapter
+      House.
+    hints: From the Archive, go west to the North Walk, then west into the Chapter
+      House. Type look record.
+  - questRequired:
+    - 74-start
+    questExcluded:
+    - 74-ledger
+    - 74-end
+    text: Three records. Start with the building ledger, here on the stand. Then
+      the consecration record in the Chapter House, then the mason's survey in the
+      Older East Corridor. See all three, then come back to me.
+    hints: The building ledger lies open on the stand beside Brother Cael. Type look
+      ledger.
+  - questRequired:
+    - 73-end
+    questExcluded:
+    - 74-start
+    text: I am Brother Cael, and I keep the Archive, within limits. Most days
+      nobody asks to see any of it. Today is not most days, I think.
+      You carry the Margin's question.
+    hints: You could ask Brother Cael about the archive, about the building ledger,
+      about the Margin, or about Aldric. He would welcome help with the records.
+topics:
+- key: q74_grant
+  kind: offer
+  quest: 74
+  label: The Undercroft
+  playerLine: Can I help you read what the temple's records say?
+  text: 'So the Margin''s question has reached the archive, and you with it. Good.
+    I am tired of being the only one who reads these. Here is the work, and it is
+    reading, not digging: three of the temple''s own records disagree with its
+    founding story. The building ledger here, open on the stand. The consecration
+    record in the Chapter House. And a mason''s survey in the Older East Corridor,
+    by the stair. See all three yourself. Aldric has allowed that much. Then come
+    back to me.'
+  hints: Accept, then read the building ledger open on the stand beside Brother
+    Cael. Type look ledger.
+  questRequired:
+  - 73-end
+  questExcluded:
+  - 74-start
+  - 74-end
+  grantsQuest: 74-start
+- key: q74_turnin
+  kind: info
+  label: I have read all three records.
+  text: 'You have seen all three, then: the ledger''s silence, the record''s careful
+    wording, the mason''s plain note. Three hands, and they agree on the one thing
+    the founding story will not: the temple was raised on something older, and the
+    Keepers have kept it so. I have told Aldric you should see for yourself. He has
+    allowed a supervised descent. The stair is past the Older East Corridor. Go down
+    when you are ready. And go carefully.'
+  hints: From the Archive, go west to the North Walk, south to the Cloister Garth,
+    east twice to the Prioress's Oratory, south into the Older East Corridor, then
+    east to the Descent Stairhead. Go down, then west three times to the Seeping
+    Passage. Go down again, then west twice to the Water Gallery. Go down once more,
+    then west three times to the Chamber of the Old Sky. Type look orbital face.
+  marked: true
+  questRequired:
+  - 74-survey
+  questExcluded:
+  - 74-descent
+  - 74-end
+  grantsQuest: 74-descent
+- key: q74_recovery
+  kind: info
+  label: I have lost the rubbing of the old sky.
+  text: 'You took a rubbing and you have mislaid it? It happens to better archivists
+    than you. Sit a moment. I can lay out a clean copy from what you describe. The
+    lines are simple enough: four rings where there should be three. There. Do not
+    lose this one. And think on who should have it: Aldric in the cloisters, who
+    would keep it quiet, or the Margin scholar at the portico, who would not.'
+  hints: Talk to Aldric and to the Margin scholar before you choose who gets the
+    rubbing, because neither choice can be undone. From the Archive, go west to the
+    North Walk, then west into the Chapter House. Type talk aldric.
+  marked: true
+  questRequired:
+  - 74-reveal
+  questExcluded:
+  - 74-end
+  itemExcluded: 40142
+  givesItem: 40142
+# archive folds the "archive records building ledger" pattern into the
+# root's account of the room.
+- key: archive
+  kind: info
+  label: What does the Archive keep?
+  text: The Archive holds what the temple kept. Building records, consecration
+    accounts, maintenance logs from the first century onward. Most of it is
+    routine. Some of it is not.
+- key: what_the_ledger_says
+  kind: info
+  label: What does the open ledger on the stand say?
+  text: The ledger records the stones laid and the hands that laid them. It does not
+    editorialize. But the dates in the lowest courses are a generation earlier than
+    the founding account gives them, and the stonework notes reference preexisting
+    load-bearing work already in place. The ledger does not say what that work was.
+    It simply assumes you already know. I find that interesting. I have found it
+    interesting for some years.
+  hints: Brother Cael has read the ledger more closely than he admits.
+  marked: true
+- key: the_margin
+  kind: info
+  label: Has the Margin asked you about this before?
+  text: The Margin sent someone here, eventually. I wondered when they would. Quist
+    has had the question for forty years. I have had it from the archive side for
+    nearly twenty. The problem is not finding the evidence. The problem is that the
+    evidence is in the temple's own records, and no one has been willing to look at
+    it directly. Until now, perhaps.
+  questRequired:
+  - 73-end
+- key: aldric_note
+  kind: info
+  label: What kind of man is Aldric?
+  text: Aldric is the head of the order, and he is not a fool. He has read these
+    records. He made his peace with what they say a long time ago, and his position
+    since has been that the temple's work is the temple's work, and the ground
+    beneath it is not our business to disturb. I disagree with him quietly, which
+    is the only way I have managed to stay in this room for twenty years. Prioress
+    Crane believes, sincerely and completely, which is its own kind of peace. I have
+    a great deal of respect for her.

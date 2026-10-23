@@ -522,7 +522,7 @@ func TestSmoke_KaelGreetingFollowsQuest11Branch(t *testing.T) {
 		{"13-extraction", map[int]string{11: `end`, 13: `extraction`}, `rhett`, `Walking the scholar's path.`},
 		{"13-end", map[int]string{11: `end`, 13: `end`}, `rhett`, `Rhett got his crystal.`},
 	}
-	for i, c := range cases {
+	for _, c := range cases {
 		ch := &characters.Character{QuestProgress: c.progress}
 		branch := c.branch
 		ps := &dialogue.PlayerState{
@@ -534,9 +534,11 @@ func TestSmoke_KaelGreetingFollowsQuest11Branch(t *testing.T) {
 				return ``
 			},
 		}
-		text, _, ok := dialogue.Greet(&df, 990000+i, 1, ps)
-		if !ok || !strings.Contains(text, c.want) {
-			t.Errorf("%s: Kael greets with %q, want the greeting containing %q", c.name, text, c.want)
+		// #375: talk opens with OpenerFor (the first variant whose gates
+		// pass); the narrator's half of the greeting is the opener hint.
+		text, hints := df.OpenerFor(ps)
+		if got := strings.Join(strings.Fields(text+" "+hints), " "); !strings.Contains(got, c.want) {
+			t.Errorf("%s: Kael opens with %q, want the opener containing %q", c.name, got, c.want)
 		}
 	}
 }

@@ -53,20 +53,18 @@ func TestAllQuestStepsHaveHints(t *testing.T) {
 // dialogueFileForTest is a minimal struct used to parse dialogue YAML files
 // just enough to check text and hints fields for self-references.
 type dialogueFileForTest struct {
-	Tree struct {
-		Root struct {
+	Opener struct {
+		Text     string `yaml:"text"`
+		Hints    string `yaml:"hints"`
+		Variants []struct {
 			Text  string `yaml:"text"`
 			Hints string `yaml:"hints"`
-		} `yaml:"root"`
-		Nodes []struct {
-			Text  string `yaml:"text"`
-			Hints string `yaml:"hints"`
-		} `yaml:"nodes"`
-	} `yaml:"tree"`
-	Patterns []struct {
+		} `yaml:"variants"`
+	} `yaml:"opener"`
+	Topics []struct {
 		Text  string `yaml:"text"`
 		Hints string `yaml:"hints"`
-	} `yaml:"patterns"`
+	} `yaml:"topics"`
 }
 
 // skipWords are common words that should not be checked as name components
@@ -157,12 +155,12 @@ func TestDialogueSelfReference(t *testing.T) {
 
 		// Collect all text/hints strings from the file.
 		var fields []string
-		fields = append(fields, df.Tree.Root.Text, df.Tree.Root.Hints)
-		for _, node := range df.Tree.Nodes {
-			fields = append(fields, node.Text, node.Hints)
+		fields = append(fields, df.Opener.Text, df.Opener.Hints)
+		for _, v := range df.Opener.Variants {
+			fields = append(fields, v.Text, v.Hints)
 		}
-		for _, pat := range df.Patterns {
-			fields = append(fields, pat.Text, pat.Hints)
+		for _, tp := range df.Topics {
+			fields = append(fields, tp.Text, tp.Hints)
 		}
 
 		for _, word := range nameWords {

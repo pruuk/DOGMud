@@ -1,48 +1,39 @@
 mobid: 276
 zone: North Road
 defaultMood: neutral
-
-tree:
-  root:
-    text: "Hullo. Are you heading north? The road is busy today."
-    hints: "You could ask about the cart, his mother, or what
-      he is making."
-
-  nodes:
-    - id: cart
-      triggers: ["cart", "wheel", "turnip", "stuck"]
-      text: "Wheel caught a rut. Happens sometimes when the
-        load is heavy. These turnips are good ones though --
-        my mother grew them. She grows the best turnips on
-        the road."
-      hints: "You could ask about his mother or offer to help."
-      unlocks: ["mother", "help_cart"]
-
-    - id: help_cart
-      triggers: ["help", "fix", "push", "lift"]
-      text: "Really? That would be -- yes, if you could just
-        lift that side. There. Thank you. My mother makes a
-        lot of soup, if you are hungry. The farmstead is west
-        of the ditch, down the path."
-      moodChange: friendly
-
-    - id: mother
-      triggers: ["mother", "betta", "farm", "farmstead", "soup"]
-      text: "She is at the farm. West of the drainage ditch,
-        follow the path. She does not like surprises, but she
-        feeds people. That is just what she does."
-
-    - id: whittling
-      triggers: ["whittle", "carving", "bird", "wood", "making"]
-      text: "Birds. I make birds mostly. This one is not done
-        yet -- the head is wrong. Birds tilt their heads when
-        they listen. Most people do not notice that."
-
-    - id: road
-      triggers: ["road", "travel", "north", "south"]
-      text: "Lots of people on the road lately. Riders too,
-        asking questions. My mother told me not to talk to
-        riders. But you are not a rider."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Hullo. Are you heading north? The road is busy today.
+  hints: You could ask the boy about his stuck cart, his mother, or what he is carving.
+topics:
+- key: cart
+  kind: info
+  label: Is your cart wheel stuck?
+  text: Wheel caught a rut. Happens sometimes when the load is heavy. These turnips
+    are good ones though. My mother grew them. She grows the best turnips on the road.
+- key: help_cart
+  kind: info
+  label: Let me help you lift that wheel.
+  text: Really? That would be... yes, if you could just lift that side. There. Thank
+    you. My mother would thank you too. The farmstead is west of the ditch, down the
+    path.
+  heardRequired:
+  - cart
+  moodChange: friendly
+- key: mother
+  kind: info
+  label: Where does your mother live?
+  text: She is at the farm. West of the drainage ditch, follow the path. She does
+    not like surprises, but she feeds people. That is just what she does.
+  hints: From the Road Fork, go west twice, north four times to the Drainage Ditch,
+    then west twice to Betta's Yard.
+  marked: true
+- key: whittling
+  kind: info
+  label: What are you carving?
+  text: Birds. I make birds mostly. This one is not done yet. The head is wrong. Birds
+    tilt their heads when they listen. Most people do not notice that.
+- key: road
+  kind: info
+  label: Has the road been busy lately?
+  text: Lots of people on the road lately. Riders too, asking questions. My mother
+    told me not to talk to riders. But you are not a rider.

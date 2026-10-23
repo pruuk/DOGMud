@@ -1,178 +1,244 @@
-# Cleric Hadwen — rite-keeper, The Awakening Pool (5200).
-# No greetings block: his behavior tree owns the room-entry greet
-# (behaviors/pothole_coulee/9100-cleric_hadwen.yaml) — a dialogue
-# greeting here would double-speak on every entry.
-# The rite itself fires from the btree on "ask hadwen begin".
-
 mobid: 9100
 zone: Pothole Coulee
 defaultMood: friendly
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Welcome to the coulee. I keep the pool."
-      - "Peace. The water is patient, and so am I."
-
-  - keywords: [""]
-    responses:
-      - "Ask, if there is something you want to know. I am not going anywhere."
-      - "The pool and I are both still here."
-
-tree:
-  root:
-    text: >-
-      I am Hadwen. I keep the Awakening Pool -- I have opened more
-      people than I can count, and I have never once been bored by it.
-    hints: >-
-      You could ask about the rite, the pool, or the Chrysalis.
-    variants:
-      - questRequired: ["30-start"]
-        questExcluded: ["30-end"]
-        text: >-
-          The pool is ready when you are. There is no hurry in it --
-          but there is also nothing left to wait for.
-        hints: >-
-          When you are ready, type <ansi fg="command">ask hadwen begin</ansi>.
-      - questRequired: ["30-end"]
-        text: >-
-          How does it sit, the new thing under your skin? Settling, I
-          hope. The first one always argues a little before it agrees.
-          Remember: Crier Toke in the square south of here will walk
-          you through the town -- or Warden Esk opens the way out, at
-          the Threshold House south through the market.
-        hints: >-
-          Type <ansi fg="command">ask toke footing</ansi> in Hub Square to
-          learn the town, or <ansi fg="command">ask esk passage</ansi> at the
-          Threshold House to leave. You could also ask Hadwen about
-          mutations, the glow, or your name.
-
-  nodes:
-    - id: newcomer_mutations
-      triggers: ["mutation", "mutations", "change", "changed", "grow", "growth",
-        "skill", "skills", "progress", "progression", "level", "levels", "xp",
-        "experience", "learn", "improve", "stronger", "quest", "task"]
-      questRequired: ["30-end", "21-start"]
-      questExcluded: ["21-end"]
-      text: >-
-        The pool woke something in you -- a capacity, not yet a shape.
-        As you grow, the chrysalis changes you, and each change it makes
-        is called a mutation. It may have changed you already. Type
-        mutations to see what has changed in you. And hear this, for it is the law of Gaius and it
-        surprises newcomers: there are no levels here, and no experience to grind.
-        You grow by doing, and only by doing. Swing a blade and your blade-arm sharpens.
-        Study, and your mind does. Type skills to see what you can do,
-        and status to see your stats -- both climb as you use them. Go
-        and use them.
-      hints: >-
-        You are newly Opened. Type <ansi fg="command">mutations</ansi> to watch
-        the changes arrive, <ansi fg="command">skills</ansi> to see your skills,
-        and <ansi fg="command">status</ansi> for your stats -- all of which
-        grow through use, not levels or XP.
-      moodChange: friendly
-
-    - id: rite_offer
-      triggers: ["rite", "awakening", "pool", "opened", "quest", "task"]
-      questExcluded: ["30-start", "30-end"]
-      grantsQuest: "30-start"
-      text: >-
-        Everyone who stays in Gaius is Opened, sooner or later -- that
-        is our word for it, once the Chrysalis takes hold in you. The
-        world insists. The rite only makes the first change a kindness
-        instead of a surprise. You stand at the edge, I do the small
-        part I do, and the pool does the rest. It does not hurt. It
-        has never once hurt. Tell me when you are ready to begin.
-      hints: >-
-        When you are ready, type <ansi fg="command">ask hadwen begin</ansi>. There is no hurry.
-      moodChange: friendly
-
-    - id: rite_waiting
-      triggers: ["rite", "awakening", "pool", "quest", "task"]
-      questRequired: ["30-start"]
-      questExcluded: ["30-end"]
-      text: >-
-        Everyone who stays in Gaius is Opened, sooner or later -- that
-        is our word for it, once the Chrysalis takes hold in you. The
-        world insists. The rite only makes the first change a kindness
-        instead of a surprise. You stand at the edge, I do the small
-        part I do, and the pool does the rest. It does not hurt. It
-        has never once hurt. Say the word when you are ready and we
-        will begin.
-      hints: >-
-        Type <ansi fg="command">ask hadwen begin</ansi> when you are ready. There is no hurry.
-
-    - id: rite_done
-      triggers: ["rite", "awakening", "pool", "opened", "again", "another", "quest", "task"]
-      questRequired: ["30-end"]
-      text: >-
-        The pool opens a person once. After that, the opening is yours
-        to continue -- effort, conflict, wanting. The body remembers
-        all of it, and in time it answers. You do not need me for the
-        second change, or the tenth.
-      hints: >-
-        You could ask about mutations or the Chrysalis. Crier Toke in
-        the square has work for newly Opened feet.
-
-    - id: mutations
-      triggers: ["mutations", "mutation", "change", "changed", "woke"]
-      questRequired: ["30-end"]
-      text: >-
-        A mutation is a change the chrysalis makes in you as you grow.
-        Type <ansi fg="command">mutations</ansi> and the truth of
-        yourself is listed plainly -- which is more than most worlds
-        offer. Each one woke because of something you did or survived.
-        Read them now and then. They are a better diary than most.
-      hints: >-
-        You could ask about your name, the glow, or the Chrysalis.
-
-    - id: glow
-      triggers: ["glow", "light", "dark", "darkness", "see", "blind",
-        "cave", "mine", "spell", "cast"]
-      questRequired: ["30-end"]
-      text: >-
-        Ah -- the Glow. Every Opened carries a few small gifts of the
-        Chrysalis, and that one is yours from the first day. It is the
-        Chrysalis Glow, a light you can call up out of your own self.
-        The world keeps dark places -- caves, deep mines, shuttered
-        rooms -- and the dark in them is no metaphor. It will blind you
-        until you make your own light. When you cannot see, speak the
-        glow and the spores will answer.
-      hints: >-
-        In any dark place, type cast chrysalis-glow to light it -- you
-        carry that spell already. Type spells to see everything you
-        know how to cast.
-      moodChange: friendly
-
-    - id: rename
-      triggers: ["name", "rename", "renameself", "truer"]
-      questRequired: ["30-end"]
-      text: >-
-        Some people walk out of the pool and their old name still
-        fits. Some find it hangs on them like a borrowed coat. If
-        yours no longer fits the shape of you, type
-        <ansi fg="command">rename</ansi> followed by the name you choose. The
-        coulee will learn the new one fast enough.
-      hints: >-
-        You could ask about mutations or the Chrysalis.
-
-    - id: chrysalis
-      triggers: ["chrysalis", "belief", "gaius", "world", "faith"]
-      text: >-
-        The Chrysalis is the form between what was and what will be.
-        Gaius is made of belief -- the land believes itself into
-        shape, and so does everything living on it. We are not a faith
-        of dogma. We are a faith of becoming, and the pool is the
-        oldest becoming in this valley.
-      hints: >-
-        You could ask about the rite, or about the old way -- though
-        Granny Wicker tells that one better than I do.
-
-    - id: help_literacy
-      triggers: ["help", "commands", "learn", "stuck", "lost"]
-      text: >-
-        When I do not know a thing, I ask the water. When you do not
-        know a thing, type <ansi fg="command">help</ansi> -- it is
-        patient, thorough, and never tired of the question. Add a
-        word to narrow it, like <ansi fg="command">help sleep</ansi>.
-      hints: >-
-        You could ask about the rite or the Chrysalis.
+opener:
+  text: Welcome, and be easy. My name is Hadwen, and this is the Awakening Pool,
+    which I keep. I have opened more people at this water than I can count, and
+    I have never once been bored by it.
+  hints: You could ask about the rite or the Chrysalis.
+  variants:
+  - questRequired:
+    - 30-start
+    questExcluded:
+    - 30-end
+    text: The pool is ready when you are. There is no hurry in it, but there is
+      also nothing left to wait for.
+    hints: When you are ready, choose to begin the rite.
+  # N2: the road hint names only the roads this player is actually offered.
+  # First match wins, so the no-road states come first. HasQuest(88-start)
+  # stays true at 88-end, so a -start token covers "taken" either way.
+  # No road open: a 29-end holder (old signpost), or both roads taken.
+  - questRequired:
+    - 30-end
+    - 29-end
+    text: How does it sit, the new thing under your skin? Settling, I hope. The first
+      one always argues a little before it agrees. You have already set out from
+      here, so the pool has done its part for you.
+    hints: You could ask about mutations, seeing in the dark, or your name.
+  - questRequired:
+    - 30-end
+    - 88-start
+    - 89-start
+    text: How does it sit, the new thing under your skin? Settling, I hope. The first
+      one always argues a little before it agrees. You have walked both roads from
+      here, so the pool has done its part for you.
+    hints: You could ask about mutations, seeing in the dark, or your name.
+  # Toke's road is hidden (footing started) and Esk's is taken.
+  - questRequired:
+    - 30-end
+    - 31-start
+    - 89-start
+    text: How does it sit, the new thing under your skin? Settling, I hope. The first
+      one always argues a little before it agrees. You have walked both roads from
+      here, so the pool has done its part for you.
+    hints: You could ask about mutations, seeing in the dark, or your name.
+  # One road left: Toke's (Esk's taken).
+  - questRequired:
+    - 30-end
+    - 89-start
+    text: How does it sit, the new thing under your skin? Settling, I hope. The first
+      one always argues a little before it agrees. One road from here is still open
+      to you, if you want it.
+    hints: Choose Toke's Road below to learn the town. You could also ask about
+      mutations, seeing in the dark, or your name.
+  # One road left: Esk's (Toke's taken, or footing already started).
+  - questRequired:
+    - 30-end
+    - 88-start
+    text: How does it sit, the new thing under your skin? Settling, I hope. The first
+      one always argues a little before it agrees. One road from here is still open
+      to you, if you want it.
+    hints: Choose Esk's Road below to leave the coulee. You could also ask about
+      mutations, seeing in the dark, or your name.
+  - questRequired:
+    - 30-end
+    - 31-start
+    text: How does it sit, the new thing under your skin? Settling, I hope. The first
+      one always argues a little before it agrees. One road from here is still open
+      to you, if you want it.
+    hints: Choose Esk's Road below to leave the coulee. You could also ask about
+      mutations, seeing in the dark, or your name.
+  # Both roads open.
+  - questRequired:
+    - 30-end
+    text: How does it sit, the new thing under your skin? Settling, I hope. The first
+      one always argues a little before it agrees. Two roads lead on from here, and
+      I can point you down either one.
+    hints: Choose Toke's Road or Esk's Road below to set out. You could also ask
+      about mutations, seeing in the dark, or your name.
+topics:
+# R17: the two roads that replace quest 29 "Two Roads". Take either, both or
+# neither. Toke's road is hidden once footing has started (31-start), since
+# the player is already on it. Both are hidden from 29-end holders, who chose
+# a road under the old signpost (quest 29, retired). An old-save 29-start
+# holder still sees both; taking one grants 29-end through quest 29's
+# triggers, which hides the other, and both NPCs stay open to them anyway.
+- key: road_toke
+  kind: offer
+  quest: 88
+  label: Toke's Road
+  playerLine: How do I learn my way around the town?
+  text: Go south to the square and find Crier Toke at the notice post. He knows every
+    door in the coulee, and he will walk you through the town properly, where to
+    sleep, where to buy, where to learn. If Gaius is new to you, that is the road
+    I would take.
+  hints: From the Awakening Pool, go south to Hub Square and type talk toke.
+  questRequired:
+  - 30-end
+  questExcluded:
+  - 88-start
+  - 88-end
+  - 31-start
+  - 29-end
+  grantsQuest: 88-start
+- key: road_esk
+  kind: offer
+  quest: 89
+  label: Esk's Road
+  playerLine: How do I leave the coulee for the wider world?
+  text: Warden Esk keeps the arch in the Threshold House, south through the market.
+    The arch opens on Thornwall, and from Thornwall every road in the Marches. If
+    you already know this world and only needed the pool, go to him. The coulee will
+    still be here either way.
+  hints: From the Awakening Pool, go south three times, through Hub Square and Market
+    Row, to the Threshold House. Then type talk esk.
+  questRequired:
+  - 30-end
+  questExcluded:
+  - 89-start
+  - 89-end
+  - 29-end
+  grantsQuest: 89-start
+- key: newcomer_mutations
+  kind: info
+  label: How will I grow from here?
+  text: 'The pool woke something in you: a capacity, not yet a shape. As you grow,
+    the chrysalis changes you, and each change it makes is called a mutation. In
+    time it will change you. Type mutations to see what has changed in you so far.
+    And hear this, for it is the law of Gaius: you grow by doing, and only by doing.
+    Swing a blade and your blade-arm sharpens. Study, and your mind does. Type skills
+    to see what you can do, and status to see your attributes. Both climb as you
+    use them. Go and use them.'
+  hints: You are newly Opened. Type <ansi fg="command">mutations</ansi> to watch the
+    changes arrive. For more, type help mutations.
+  questRequired:
+  - 30-end
+  - 21-start
+  questExcluded:
+  - 21-end
+  moodChange: friendly
+- key: rite_offer
+  kind: offer
+  quest: 30
+  label: The Awakening
+  playerLine: Will you open the pool for me?
+  text: Everyone who stays in Gaius is Opened, sooner or later. That is our word
+    for it, once the Chrysalis takes hold in you. The world insists. The rite only
+    makes the first change a kindness instead of a surprise. You stand at the edge,
+    I do the small part I do, and the pool does the rest. It does not hurt. It has
+    never once hurt. Say yes, and we begin whenever you are ready.
+  hints: Accept, then choose to begin the rite when you are ready. There is no hurry.
+  questExcluded:
+  - 30-start
+  - 30-end
+  grantsQuest: 30-start
+  moodChange: friendly
+- key: rite_waiting
+  kind: info
+  label: What happens in the rite?
+  text: Everyone who stays in Gaius is Opened, sooner or later. That is our word
+    for it, once the Chrysalis takes hold in you. The world insists. The rite only
+    makes the first change a kindness instead of a surprise. You stand at the edge,
+    I do the small part I do, and the pool does the rest. It does not hurt. It has
+    never once hurt. Tell me when you are ready and we will begin.
+  hints: When you are ready, choose to begin the rite. There is no hurry.
+  questRequired:
+  - 30-start
+  questExcluded:
+  - 30-end
+# R17: one behavior topic. The text is empty on purpose: the tree speaks in
+# both cases. Before the rite its branch says "Then we begin. Step to the
+# edge with me." and plays the rite; while the rite is already running (the
+# per-player rite_running state) its mid-rite branch says "Hush, now...".
+# A topic text here would be spoken in both cases and contradict the hush.
+- key: begin
+  kind: info
+  label: I'm ready. Let us begin the rite.
+  text: ""
+  hints: The rite takes a little while. Stay by the pool until it is done.
+  behavior: true
+  questRequired:
+  - 30-start
+  questExcluded:
+  - 30-end
+- key: rite_done
+  kind: info
+  label: What happens after the pool?
+  text: The pool opens a person once. After that, the opening is yours to continue
+    through effort, conflict and wanting. The body remembers all of it, and in time it answers.
+    You do not need me for the second change, or the tenth.
+  hints: You could ask about mutations or the Chrysalis.
+  questRequired:
+  - 30-end
+- key: mutations
+  kind: info
+  label: What is a mutation?
+  text: A mutation is a change the chrysalis makes in you as you grow. Type <ansi
+    fg="command">mutations</ansi> and the truth of yourself is listed plainly, which
+    is more than most worlds offer. Each one woke because of something you did or
+    survived. Read them now and then. They are a better diary than most.
+  hints: You could ask about your name, seeing in the dark, or the Chrysalis.
+  questRequired:
+  - 30-end
+- key: glow
+  kind: info
+  label: How do I see in the dark?
+  text: With the Chrysalis Glow. It is a spell, and every soul wakes knowing it.
+    Type cast glow and hold still a moment while it gathers. The spores around you
+    give off a soft light, and it stays with you a while. Then it fades, and you
+    cast it again. Each casting spends a little of your conviction, the CP bar on
+    your prompt. The world
+    keeps dark places, caves and deep mines and shuttered rooms, and the dark in
+    them is no metaphor. It will blind you until you make your own light.
+  hints: When it is too dark to see, type cast glow. For more, type help
+    chrysalis-glow.
+  marked: true
+  questRequired:
+  - 30-end
+  moodChange: friendly
+- key: rename
+  kind: info
+  label: What if my name no longer fits me?
+  text: Some people walk out of the pool and their old name still fits. Some find
+    it hangs on them like a borrowed coat. If yours no longer fits the shape of you,
+    type <ansi fg="command">rename</ansi> followed by the name you choose. The coulee
+    will learn the new one fast enough.
+  hints: You could ask about mutations or the Chrysalis.
+  questRequired:
+  - 30-end
+- key: chrysalis
+  kind: info
+  label: What is the Chrysalis?
+  text: The Chrysalis is the form between what was and what will be. Gaius is made
+    of belief. The land believes itself into shape, and so does everything living
+    on it. We are not a faith of dogma. We are a faith of becoming, and the pool is
+    the oldest becoming in this valley.
+  hints: You could ask about the rite. For the old way, Granny Wicker is the one
+    to ask.
+- key: help_literacy
+  kind: info
+  label: What do I do when I don't know something?
+  text: When I do not know a thing, I ask the water. When you do not know a thing,
+    type <ansi fg="command">help</ansi>. It is patient, thorough, and never tired
+    of the question. Add a word to narrow it, like <ansi fg="command">help sleep</ansi>.
+  hints: You could ask about the rite or the Chrysalis.

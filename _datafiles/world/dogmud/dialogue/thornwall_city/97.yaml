@@ -1,40 +1,28 @@
 mobid: 97
 zone: Thornwall City
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Welcome to the forge. If you need something made or mended, I am your smith. If you are just browsing, try not to touch the hot metal."
-      - "What do you need? I work in steel, iron, and occasionally patience."
-
-  - keywords: ["buy", "sell", "weapon", "dagger", "blade", "sword", "shop"]
-    responses:
-      - "I make blades, tools, and hardware. If you want something specific, tell me what and I will tell you the price. The steel dagger is my best quick work -- proper Thornwall steel."
-
-  - keywords: ["steel", "thornwall", "quality", "craft"]
-    responses:
-      - "Thornwall steel has a particular temper. Blue tint, holds an edge, flexes without breaking. It is the ore and the method both. I learned from my master, who learned from hers. The technique is not written down."
-
-  - keywords: [""]
-    responses:
-      - "Need something? I am at the anvil."
-      - "The forge is open. State your business."
-
-tree:
-  root:
-    text: "Kerra glances up from the anvil, hammer poised mid-stroke, and gives you a brief, appraising look. 'Customer or spectator? If you want something made, tell me what. If you want to watch, stay clear of the sparks.' She sets the hammer down and wipes her hands on the apron."
-    hints: "Ask about her work, buy a weapon, or inquire about Thornwall steel."
-
-  nodes:
-    - id: weapons
-      triggers: ["weapon", "buy", "dagger", "blade", "sword", "steel"]
-      text: "'I make blades to order, but I keep a few pieces ready for travellers who cannot wait. The thornwall steel dagger is my best quick work -- proper temper, good edge, balanced for actual use rather than display.' She produces a dagger from beneath the counter, turning it so the blue-tinted steel catches the forge light."
-      hints: "Consider buying the thornwall steel dagger."
-
-    - id: about_craft
-      triggers: ["smith", "craft", "forge", "technique", "how", "learn"]
-      text: "'I have been at the anvil since I was twelve. My master was Gael, and before her, Tova. The technique goes back generations -- the particular heat, the quench, the temper. You cannot learn Thornwall steel from a book. It lives in the hands.' She flexes her scarred fingers. 'Every burn taught me something.'"
-
-memory:
-  expiryPeriod: ""
+opener:
+  # The opener is spoken, so the old narration (Kerra looks up from the
+  # anvil) moved into the hint.
+  text: Customer or spectator? If you want to buy, look over what I have. If you
+    want to watch, stay clear of the sparks.
+  hints: Kerra looks up from the anvil and wipes her hands on her apron. To see what
+    she has for sale, type list.
+topics:
+# Her shop stocks smithing materials and what she forges from her recipes
+# (mobs/thornwall_city/97-blacksmith_kerra.yaml), not a fixed dagger.
+- key: weapons
+  kind: info
+  label: What weapons do you sell?
+  text: I make blades to order, and I keep what I have made on the rack for travellers
+    who cannot wait. Daggers, swords, bucklers, mail. Proper temper, good edge, balanced
+    for actual use rather than display.
+  hints: To see what Kerra has for sale, type list.
+- key: about_craft
+  kind: info
+  label: How did you learn your trade?
+  text: I have been at the anvil since I was twelve. My master was Gael, and before
+    her, Tova. The technique goes back generations. The particular heat, the quench,
+    the temper. That is what makes Thornwall steel. A blue tint, an edge that holds,
+    a blade that flexes without breaking. It is the ore and the method both. You
+    cannot learn it from a book. It lives in the hands. Every burn taught me something.

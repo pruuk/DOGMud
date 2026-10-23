@@ -1,39 +1,37 @@
 # The Quay Agent — mob 9572 — books passage at the North Quay.
-# Serves BOTH North Quay routes -- destination word picks the route.
+# Serves BOTH North Quay routes, one talk topic per destination.
 tree:
   type: selector
   children:
 
-    # ── PURCHASE: boarding intent → board_ferry resolves destination,
-    # schedule, fare, and movement. Sits FIRST (grant-node-first SOP). ──
+    # ── PURCHASE: one talk topic per destination (#375 R14). The topic's
+    # destination param picks the route; board_ferry resolves schedule,
+    # fare, and movement. Her greeting lives in her dialogue opener. ──
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [passage, board, boarding, ticket, fare, ride, sail, stillwater, confluence]
+          check: topic_is
+          topic: to_stillwater
         - type: action
           do: board_ferry
+          destination: stillwater
           routes:
             stillwater: stillwater_np_packet
             confluence: confluence_np_barge
 
-    # ── info / greetings ──
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [hello, hi, help, who, what, ferry, boat, packet, barge, agent]
+          check: topic_is
+          topic: to_confluence
         - type: action
-          do: say
-          text: I book passage from the North Quay. The Lakewind Packet keeps the crossing to Stillwater and the Broadbeam runs south to the Confluence -- fare settled here, ledger stamped, no exceptions.
-        - type: action
-          do: say
-          text: State your landing when you ask for passage -- Stillwater, or the Confluence. If the vessel is standing off, I will give you her next docking.
-        - type: action
-          do: send_user_text
-          text: '<ansi fg="181">  [Try: ask agent passage stillwater]</ansi>'
+          do: board_ferry
+          destination: confluence
+          routes:
+            stillwater: stillwater_np_packet
+            confluence: confluence_np_barge
 
     # Silent player_enter no-op: claims the event so composition never
     # falls through to noncombat_passive's "pays you little mind." emote.

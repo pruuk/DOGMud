@@ -1,50 +1,29 @@
 mobid: 9604
 zone: Hartcharn
 defaultMood: friendly
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Welcome to the cookhouse. Sit, or take something with you, I
-        do not much care which."
-      - "Crook. Hungry, or just passing through my smoke?"
-  - keywords: ["buy", "sell", "shop", "wares", "goods", "food", "stew",
-      "meal", "eat"]
-    responses:
-      - "Stew, bread, a bit of broth if you are feeling poorly. Ask
-        specific and I will tell you what is on the fire."
-      - "Whatever the foragers bring down, I can turn into something
-        worth eating. Come hungry and leave full."
-  - keywords: ["fire", "kettle", "cook", "cooking"]
-    responses:
-      - "That fire has not gone cold in longer than I can remember. It
-        knows the kettle better than I do most days."
-  - keywords: [""]
-    responses:
-      - "Sit if you are staying."
-      - "The kettle is always on."
-
-tree:
-  root:
-    text: "Welcome to the cookhouse. Sit, or take something with you, I
-      do not much care which."
-    hints: "You could ask Gerta Crook about her cooking or what is on
-      the fire."
-
-  nodes:
-    - id: stock_general
-      triggers: ["buy", "sell", "shop", "wares", "goods", "food",
-        "stew", "meal", "eat", "stock"]
-      text: "Hearty stew, herbal tea, a bit of spiced wine if the mood
-        takes you. Ask specific and I will tell you what is ready and
-        what needs another turn on the fire."
-      hints: "You could ask Gerta Crook about the cooking fire."
-
-    - id: fire_note
-      triggers: ["fire", "kettle", "cook", "cooking", "hearth"]
-      text: "Banked coals and a steady hand, that is most of the trade.
-        Let it simmer too long and everything tastes of smoke. Not
-        long enough and it tastes of nothing at all."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Sit, or take a bowl with you, I don't much care which, so long as you
+    eat. Gerta Crook, and that's my kettle. Nobody leaves this cookhouse hungry.
+    So are you hungry, or just passing through my smoke?
+  hints: You could ask Gerta Crook about her cooking or the cooking fire.
+topics:
+# stock_general folds the "buy sell shop" pattern (both responses). Her
+# static shop list is ingredients, but she is a crafter (crafter: true,
+# crafterrecipeids hearty-stew, herbal-tea, spiced-wine and more), and
+# mobs/crafter.go puts every craft into her shop stock. So the cooked food
+# is offered only "when it is ready".
+- key: stock_general
+  kind: info
+  label: What do you have for sale?
+  text: Whatever the foragers bring down, I can turn into something worth eating.
+    Meat, roots, clams off the lake, salt and the like for your own pot. Hearty stew,
+    herbal tea, a bit of spiced wine, when it is ready. Come hungry and leave full.
+  hints: To see what Gerta sells and for how much, type list.
+# fire folds fire_note and the "fire kettle cook cooking" pattern.
+- key: fire
+  kind: info
+  label: Does that fire ever go out?
+  text: That fire has not gone cold in longer than I can remember. It knows the kettle
+    better than I do most days. Banked coals and a steady hand, that is most of the
+    trade. Let it simmer too long and everything tastes of smoke. Not long enough and
+    it tastes of nothing at all.

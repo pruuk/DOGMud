@@ -1,37 +1,23 @@
 mobid: 9594
 zone: Greenford
 defaultMood: friendly
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Welcome to the Jeweler's Bench. Take a seat, if you like."
-      - "Tibb. Looking to buy, sell, or have something set proper?"
-
-  - keywords: ["jewel", "gem", "wares", "buy", "stock", "ring"]
-    responses:
-      - "Copper, silver, and gold wire, polished stone, a few raw
-        gems worth setting. I keep a small tray, but everything in
-        it is honest work."
-      - "Ask specifically and I will tell you what is in the tray
-        today. Some weeks are better than others for good stone."
-
-  - keywords: ["craft", "recipe", "make", "setting", "ring"]
-    responses:
-      - "I can set a ring, a pendant, or a chrysalis setting if you
-        bring me the stone and the wire. The bench does not hurry,
-        but the work holds up."
-
-  - keywords: [""]
-    responses:
-      - "Have a look at the tray. Ask if you need something particular."
-
-tree:
-  root:
-    text: "Welcome to the Jeweler's Bench. Take a seat, if you like."
-    hints: "You could ask Tibb about his stock, or about setting a
-      ring or pendant."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: A visitor. Good, my eyes could use the rest. Take a seat, if you like.
+    I'm Tibb, and this is the Jeweler's Bench. Have you come to buy, or to make
+    something at the bench yourself?
+  hints: You could ask Tibb about his jeweler's bench, or about the materials he
+    sells. To see what he sells, type list.
+topics:
+- key: craft
+  kind: info
+  label: Can I use your jeweler's bench?
+  text: A ring, a pendant, or a chrysalis setting can be made at this bench, if you
+    bring the stone and the wire. You may work there if you do not hurry it. The bench
+    does not hurry, but the work holds up.
+  hints: To see what you know how to make, type craft list.
+- key: jewel
+  kind: info
+  label: What materials do you sell?
+  text: Copper, silver, and gold wire, polished stone, a few raw gems worth setting,
+    gem dust, chain link, and the odd black pearl. I keep a small tray, but everything
+    in it is honest work. Some weeks are better than others for good stone.

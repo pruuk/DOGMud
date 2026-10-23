@@ -1,167 +1,250 @@
 mobid: 9332
 zone: New Plymouth Crafting
 defaultMood: neutral
-
 greetings:
-  - text: "Books or maps? I have both."
-    moods: ["neutral"]
-  - text: "I wondered when you'd be back. Something caught your eye
-      last time."
-    moods: ["friendly"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Hello. Looking for anything specific?"
-
-  - keywords: [""]
-    responses:
-      - "Take your time. I'm reading."
-
-tree:
-  root:
-    text: "I sell books and maps. The books are general — history,
-      natural records, a bit of theology when the Temple scholars
-      come through. The maps are more interesting. Some of them were
-      made by the man who used to work next door. Ask about the maps,
-      about Edvar who made them, or about the old questions this part
-      of the city keeps producing."
-    hints: "You could ask Orin about the books and maps he carries,
-      about a cartographer named Edvar whose shop next door stands
-      shuttered, or about the old questions this district raises. He keeps
-      glancing up the lane toward the shuttered cooperage as he talks, as
-      though weighing whether to trust you with it."
-
-  nodes:
-    - id: orinhandoff
-      triggers: ["rubbing", "lintel", "symbol", "founding", "web",
-                 "deliver", "hand", "give", "turn", "done", "quest", "task"]
-      questRequired: ["70-witness"]
-      questExcluded: ["70-end"]
-      requiresItem: 40118
-      grantsQuest: "70-end"
-      bumpsRep:
-        - {faction: "cooperage_circle", delta: 5}
-      text: "A rubbing from the lintel -- I did not ask for it, but I am
-        glad of it. This confirms what the survey implied: the mark predates
-        the city's own account of itself. The web is wider than I let
-        myself believe."
-      hints: "You hand the lintel rubbing to Orin."
-
-    - id: q68_start
-      triggers: ["quest", "task", "cooperage", "circle", "help", "join",
-                 "do"]
-      questExcluded: ["68-start", "68-end"]
-      grantsQuest: "68-start"
-      text: "You keep asking the kind of question that closed the cooperage.
-        I will not pretend I have no answer -- but I do not hand answers to
-        strangers. There is a shuttered cooper's shop north of the square,
-        shut by order years ago. Someone still tends the tools inside. Go and
-        see for yourself, and find the lad, Toby. Bring me proof the place is
-        still kept, and we will talk about what you are really asking."
-      hints: "Orin will not say more until you prove you can be trusted. He
-        wants you to visit the shuttered cooperage north of Craftwell Square,
-        find Toby, and bring back proof someone still keeps the place. You
-        could ask about the quest or the task."
-
-    - id: q68_choice
-      triggers: ["report", "back", "proof", "toby", "rubbing", "map",
-                 "decide", "choice", "seize", "vell", "circle", "quest",
-                 "task"]
-      questRequired: ["68-evidence"]
-      questExcluded: ["68-choice", "68-end"]
-      grantsQuest: "68-choice"
-      text: "So it is true -- the tools are kept, the mark is clean, the
-        circle did not all leave. Then you know what we are. We keep what the
-        founding story leaves out, and we pay for it quietly. Clerk Vell has
-        filed to take the cooperage as derelict. The inspection is days away.
-        You can help me hold it -- re-cut the guild-mark over the door so it
-        reads as a working shop, and I will move Edvar's survey somewhere
-        safe. Or you can take what you found to Vell, and be paid for it.
-        That is a real choice, and it is yours."
-      hints: "Orin lays out the choice. To aid the circle, return to the
-        cooperage and examine the old guild-mark over its door. To side with the
-        bloodline, take Edvar's map-fragment to Clerk Vell in the Merchant
-        Quarter permit office. Decide for yourself."
-      moodChange: cautious
-
-    - id: books
-      triggers: ["book", "map", "sell", "carry", "have", "buy",
-                 "what", "stock", "read", "history", "theology",
-                 "natural", "record", "see",
-                 "browse", "here"]
-      text: "I carry general books — regional history, natural surveys,
-        the occasional theological tract when the Temple sends a
-        scholar by to clear shelf space. The maps are the better part
-        of my stock and the part I know best. I buy collections when
-        estates dissolve or scholars move on. The maps Edvar left
-        behind are in a separate category. I price those fairly and
-        I'm careful about who I sell them to."
-      hints: "You could ask about Edvar who made those special maps,
-        or about the old questions this corner of the city raises."
-
-    - id: edvar
-      triggers: ["edvar", "cartographer", "map", "shuttered", "shop",
-                 "next", "door", "neighbor", "who", "was", "made",
-                 "left", "where", "what", "happen", "gone", "missing",
-                 "accurate", "official", "survey"]
-      text: "Edvar was a cartographer — the best I've encountered, and
-        I've handled a great many maps in this work. He occupied the
-        shop next door and spent years surveying this city in more
-        detail than the official records ever attempted. His maps are
-        accurate. More accurate than the ones the city keeps, which
-        means they include some things the city's maps leave out.
-        He is not here anymore. The maps still are. I keep them
-        because they're his best work and because I think they should
-        exist somewhere. That's most of what I'll say to a stranger."
-      hints: "Orin is protective of Edvar's memory and guarded about
-        what the maps contain. You could ask about the old questions
-        this district raises, or about the cooperage nearby."
-      moodChange: cautious
-
-    - id: old_questions
-      triggers: ["question", "old", "district", "cooperage", "circle",
-                 "truth", "official", "city", "missing", "leave", "out",
-                 "includes", "shows", "accurate", "underground", "history",
-                 "what", "know", "tell", "find", "discover", "secret"]
-      text: "There are things in this quarter that the official record
-        does not fully account for. The cooperage went quiet some years
-        ago and nobody in the city administration has pressed for an
-        answer. Edvar documented what he found. I sell those documents.
-        I don't sell them to everyone who asks, and I don't tell every
-        customer what's in them. If you're asking because you already
-        know something about this quarter's history, that is a different
-        conversation. I'm not sure you're ready for it."
-      hints: "Orin is clearly guarded but not dismissive. You could ask
-        about the books and maps he carries, or return to Edvar's story."
-
-    - id: scholars
-      triggers: ["scholar", "temple", "academic", "research", "study",
-                 "learn", "knowledge", "archive", "who", "buys",
-                 "customers", "buyers"]
-      text: "Temple scholars come by when they're researching local
-        history — the quarter has an older layer than most of the
-        city wants to acknowledge. I'm useful to them because I have
-        surveys they can't get from the official archive. I'm careful
-        about what I share and with whom. Scholars with good questions
-        get more from me than scholars with institutional backing."
-      hints: "You could ask about the books and maps Orin carries or
-        about Edvar the cartographer."
-
-    - id: symbol
-      triggers: ["symbol", "orbital", "ept", "novice", "eight",
-                 "mark", "sign"]
-      text: "So the temple sent you — or one of its novices did. The
-        boy who sees the eight-pointed mark everywhere. He is not
-        imagining it. It is on Edvar's oldest surveys, scratched into
-        the margins of charts that predate the founding the temple
-        teaches — the same mark, in the same place, on works drawn a
-        century apart by people who never met. I do not know what it
-        meant. I know it was here before the city decided what its own
-        story was. Tell the novice he is not mad. Tell him also to be
-        careful who he says it to."
-      hints: "Orin has confirmed the novice's symbol is real and older
-        than the official founding — and warned of the danger in saying
-        so. You could ask about Edvar, or the old questions of the
-        quarter."
-      moodChange: cautious
+- text: Maps and curios. Look all you like, though the best of the maps are not
+    for sale.
+  moods:
+  - neutral
+- text: I wondered when you'd be back. Something caught your eye last time.
+  moods:
+  - friendly
+opener:
+  text: Maps, mostly, and a few curios from estates I have bought up. Old pages,
+    keepsakes, the odd printed rhyme. The best maps were made by the man who kept
+    the shop across the Inkwalk, and those stay off the counter.
+  hints: You could ask Orin about his maps and curios, about Edvar the mapmaker
+    whose shop across the lane stands shuttered, or about the old questions this
+    quarter raises. He keeps glancing up the lane toward the shuttered cooperage
+    as he talks. To see what he sells, type list.
+  variants:
+  - questRequired:
+    - 70-start
+    questExcluded:
+    - 70-end
+    carriesItem: 40118
+    text: That is charcoal on your fingers. What have you brought me up from below?
+    hints: Choose The Pre-Founding Web below to give Orin the lintel rubbing.
+  # 68-end: Orin reacts to the choice the player made (68-allegiance), as
+  # Toby does in 9338.
+  - questRequired:
+    - 68-end
+    questFlagRequired:
+      68-allegiance: bloodline
+    text: Vell has Edvar's survey now. I know whose hand carried it there. We have
+      nothing more to discuss about the circle.
+    hints: Orin is polite, and no more than polite. His other questions are still
+      open to you.
+  - questRequired:
+    - 68-end
+    text: Toby has re-cut the mark beside the cooperage door, and it reads as a
+      working shop again. The circle remembers who stood with it. Thank you.
+    hints: You could ask Orin about his maps and curios, about Edvar the mapmaker,
+      or about the old questions this quarter raises.
+  # 68-choice without the survey: old saves made the choice step before the
+  # survey step existed and never lifted the board. Either choice needs it.
+  - questRequired:
+    - 68-choice
+    questExcluded:
+    - 68-end
+    itemExcluded: 40113
+    text: The inspection is days away. But where is Edvar's survey? Whichever way
+      you choose, the survey goes with the choice.
+    hints: Edvar's survey is still under the loose floorboard on the Cooperage
+      Floor. From Orin's Bookstall, go west to the Inkwalk, north twice to the
+      cooperage front, then north onto the Cooperage Floor. Type look floorboard.
+  - questRequired:
+    - 68-choice
+    questExcluded:
+    - 68-end
+    text: The inspection is days away. Have you decided?
+    hints: To hear what standing with the circle means, choose to ask Orin below.
+      Clerk Vell, in the Permit Office in the Merchant Quarter, takes the survey
+      for the bloodline. Neither choice can be undone.
+  - questRequired:
+    - 68-survey
+    questExcluded:
+    - 68-choice
+    - 68-end
+    text: You have it. Edvar's hand. I would know it anywhere.
+    hints: Choose to tell Orin you found Edvar's survey.
+  - questRequired:
+    - 68-evidence
+    questExcluded:
+    - 68-survey
+    - 68-end
+    text: Toby gave you the rubbing, then. Did he tell you about the survey?
+    hints: Edvar's survey is under a loose floorboard on the Cooperage Floor. From
+      Orin's Bookstall, go west to the Inkwalk, north twice to the cooperage
+      front, then north onto the Cooperage Floor. Type look floorboard.
+  - questRequired:
+    - 68-start
+    questExcluded:
+    - 68-evidence
+    - 68-end
+    text: Have you been to the cooperage yet? Find Toby.
+    hints: From Orin's Bookstall, go west to the Inkwalk, then north twice to the
+      Abandoned Cooperage. Toby keeps it by day. Type talk toby.
+topics:
+- key: orinhandoff
+  kind: handin
+  quest: 70
+  label: The Pre-Founding Web
+  playerLine: Gritta sent me up with a rubbing of the Buried Lintel.
+  text: 'A rubbing from the lintel. I am glad of it. This confirms what Edvar''s
+    oldest surveys imply: the mark is older than the city''s own account of
+    itself. The web is wider than I let myself believe.'
+  questRequired:
+  - 70-start
+  questExcluded:
+  - 70-end
+  requiresItem: 40118
+  grantsQuest: 70-end
+  bumpsRep:
+  - faction: cooperage_circle
+    delta: 5
+- key: q68_start
+  kind: offer
+  quest: 68
+  label: The Cooperage Circle
+  playerLine: Is there something I can do about the cooperage?
+  text: You ask the kind of question that closed the cooperage. I will not pretend
+    I have no answer, but I do not hand answers to strangers. There is a shuttered
+    cooper's shop north of the square, shut by order years ago. Someone still
+    tends the tools inside. Go and see for yourself, and find the lad, Toby. Bring
+    me proof the place is still kept, and we will talk about what you are really
+    asking.
+  hints: Accept, then go to the shuttered cooperage north of Craftwell Square and
+    find Toby.
+  questExcluded:
+  - 68-start
+  - 68-end
+  grantsQuest: 68-start
+- key: q68_choice
+  kind: info
+  label: I found Edvar's survey under the floor.
+  text: So it is true. The tools are kept, the mark is clean, the circle did not
+    all leave, and Edvar's last survey survived them. Then you know what we are. We
+    keep what the founding story leaves out, and we pay for it quietly. Clerk Vell
+    has filed to take the cooperage as derelict. The inspection is days away. You
+    can help us hold it. Leave the survey in the circle's keeping, and Toby
+    re-cuts the guild mark beside the door so it reads as a working shop. Or you
+    can take the survey to Vell, and be paid for it. That is a real choice, and
+    it is yours. Ask me what standing with us would cost you before you make it.
+  hints: To hear what standing with the circle means, choose to ask Orin below.
+    Clerk Vell, in the Permit Office in the Merchant Quarter, takes the survey for
+    the bloodline. Neither choice can be undone.
+  marked: true
+  questRequired:
+  - 68-survey
+  questExcluded:
+  - 68-choice
+  - 68-end
+  grantsQuest: 68-choice
+  moodChange: cautious
+# Quest 68's circle choice (spec R28): the warning must be heard first
+# (heardRequired), and both topics hide once the choice is made (68-end).
+# The bloodline side is Clerk Vell's (9349), built the same way.
+- key: circle_terms
+  kind: info
+  label: What would standing with the circle cost me?
+  text: Plainly, then. If you stand with us, Edvar's survey stays with the circle
+    and you do not get it back, so you cannot sell it to Vell afterwards. Toby
+    re-cuts the mark, and when the inspection finds a working shop, the office
+    will ask who helped. Your name will come up. The bloodline's domestic office
+    does not forget a name, and it does not forgive one. I can pay you a little,
+    and give you a copy of the map. Once it is done, it cannot be undone.
+  hints: Standing with the circle gives Edvar's survey to the circle for good and
+    sets the bloodline's office against you. It cannot be undone. If you are sure,
+    choose The Cooperage Circle below.
+  marked: true
+  questRequired:
+  - 68-choice
+  questExcluded:
+  - 68-end
+- key: circle_choice
+  kind: handin
+  quest: 68
+  label: The Cooperage Circle
+  playerLine: I stand with the circle, for good. Keep the survey.
+  text: Then it is done, and it stays done. The survey stays with the circle, and
+    Toby re-cuts the mark tonight so it reads as a working shop. Here, a copy of
+    Edvar's map in my own hand. The original is below, where the canal meets the
+    old quarter. Someone outside the circle should know it is real. And from today
+    the bloodline's office knows your name. Walk carefully.
+  hints: You gave Edvar's survey to the circle. The choice is made and cannot be
+    undone, and the bloodline's office now counts you against it.
+  heardRequired:
+  - circle_terms
+  questRequired:
+  - 68-choice
+  questExcluded:
+  - 68-end
+  requiresItem: 40113
+  grantsQuest: 68-end
+  setsQuestFlag:
+    key: 68-allegiance
+    value: circle
+  bumpsRep:
+  - faction: cooperage_circle
+    delta: 20
+  - faction: bloodline_domestic
+    delta: -15
+  givesGold: 60
+  givesItem: 40114
+- key: books
+  kind: info
+  label: What maps and curios do you sell?
+  text: Maps first. A plan of the city, the North Road as far as the Empty Reach,
+    the coulee for those who remember waking there, and a copy of an old coast
+    chart for anyone who likes old things. Then curios. I buy collections when
+    estates break up or scholars move on, and the small things go on the counter.
+    A rhyme sheet, a pressed flower in a temple reading, a bookmark, a page
+    someone failed to burn. The maps Edvar left behind are another matter. Those
+    I do not sell. Not yet, and not to just anyone.
+  hints: To see what Orin sells, type list.
+- key: edvar
+  kind: info
+  label: Who was Edvar?
+  text: Edvar was a mapmaker, the best I've come across, and I've handled a great
+    many maps in this work. He had the shop across the lane and spent years
+    surveying this city in more detail than the official records ever tried. His
+    maps are accurate. More accurate than the ones the city keeps, which means
+    they include some things the city's maps leave out. He is not here any more.
+    The maps still are. I keep them because they're his best work and because I
+    think they should exist somewhere. That's most of what I'll say to a stranger.
+  hints: Orin is protective of Edvar's memory and guarded about what the maps show.
+  moodChange: cautious
+- key: old_questions
+  kind: info
+  label: What don't the records say about this quarter?
+  text: There are things in this quarter that the official record does not fully
+    account for. The cooperage went quiet some years ago and nobody in the city
+    administration has pressed for an answer. Edvar wrote down what he found. I
+    keep those papers. I don't show them to everyone who asks, and I don't tell
+    every customer what's in them. If you're asking because you already know
+    something about this quarter's history, that is a different conversation. I'm
+    not sure you're ready for it.
+  hints: Orin is clearly guarded, but not dismissive.
+- key: scholars
+  kind: info
+  label: Who comes to you for old surveys?
+  text: Temple scholars come by when they're researching local history. The
+    quarter has an older layer than most of the city wants to admit. I'm useful
+    to them because I have surveys they can't get from the official archive. I'm
+    careful about what I share and with whom. Scholars with good questions get
+    more from me than scholars with an institution behind them.
+- key: symbol
+  kind: info
+  label: What marks do Edvar's oldest surveys carry?
+  text: There is one mark I cannot account for. An eight-pointed figure, four
+    rings and eight points, scratched into the margins of Edvar's oldest surveys,
+    on charts that are older than the founding the temple teaches. There is a
+    novice at the temple who sees it everywhere. He is not imagining it. The same mark, in the same place, on
+    works drawn a century apart by people who never met. I do not know what it
+    meant. I know it was here before the city decided what its own story was. If
+    the novice sent you, tell him he is not mad. Tell him also to be careful who
+    he says it to.
+  hints: Orin confirms the mark is real and older than the official founding, and
+    warns of the danger in saying so.
+  moodChange: cautious

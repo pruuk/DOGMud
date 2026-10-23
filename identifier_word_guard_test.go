@@ -353,9 +353,9 @@ func TestNoTemplateReadsABuffField(t *testing.T) {
 
 // stringDataAllowlist pardons a buff spelling that is deliberate. Keyed
 // "relpath|exact line content (trimmed)"; each entry must still match.
-var stringDataAllowlist = map[string]string{
-	`_datafiles/world/dogmud/dialogue/newcomer_antechamber/9491.yaml|- keywords: ["condition", "conditions", "buff", "effect"]`: "player keyword: a new player who types 'buff' is still understood",
-}
+// Dewey's typed `buff` keyword (9491.yaml) left with the ask engine (#375):
+// topics are chosen from a menu, so no player word needs pardoning.
+var stringDataAllowlist = map[string]string{}
 
 // stringGuardNamesOldSpellings are Go files whose job is to name the old
 // spellings: tests that assert they no longer bind or resolve, and the

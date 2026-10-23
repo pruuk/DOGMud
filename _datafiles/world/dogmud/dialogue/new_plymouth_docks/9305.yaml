@@ -1,122 +1,98 @@
 mobid: 9305
 zone: New Plymouth Docks
 defaultMood: neutral
-
 greetings:
-  - text: "Something you need from the stock? I have most weights
-      represented."
-    moods: ["neutral"]
-  - text: "Back again. The bins haven't changed much."
-    moods: ["friendly"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "morning", "evening"]
-    responses:
-      - "Good. What are you after?"
-      - "I'm here."
-
-  - keywords: [""]
-    responses:
-      - "The bins are open for looking."
-
-tree:
-  root:
-    text: "Remnant bins are at the front — ends and offcuts, priced
-      down from the original bolt. If you want full-weight cloth I
-      don't carry it. What you see is what this shop does."
-    hints: "You could ask Marn about his fabric stock, the kinds of
-      cloth he carries, or whether there is more to the shop."
-    variants:
-      - questRequired: ["67-start"]
-        questExcluded: ["67-front", "67-end"]
-        text: "The bins are open. Something you're after, or was there
-          something particular you came to ask?"
-        hints: "Marn is watching you with more attention than your
-          question warrants. You could pose as a Bloom user and ask
-          what he handles quietly -- or press him on what you already
-          know, the wax wrapper and the clean front."
-
-  nodes:
-    - id: bloom_undercover
-      triggers: ["user", "score", "bloom", "wafer", "quiet",
-                 "special", "private", "personal", "extra",
-                 "quest", "task"]
-      questRequired: ["67-start"]
-      questExcluded: ["67-front", "67-end"]
-      grantsQuest: "67-front"
-      setsQuestFlag:
-        key: "67-entry"
-        value: "undercover"
-      text: "You're not the first to ask. That kind of stock isn't out
-        front. [Marn holds your eye for a long moment, then slides a
-        small wax-wrapped square across the remnant table -- unmarked,
-        no different from the cloth scraps.] Show me you understand
-        what it is. After that we can talk about where the arrangement
-        runs. It doesn't come from this shop -- the supply end is an
-        address in the Old Quarter. Lintel Street. That's where you
-        go next."
-      hints: "Marn has named Lintel Street in the Old Quarter as the
-        supply end of the arrangement. You took the user approach --
-        he thinks you are a customer. You could also press him on the
-        evidence you already hold, or follow the trail to Lintel Street."
-      moodChange: cautious
-
-    - id: bloom_evidence
-      triggers: ["evidence", "wrapper", "draper", "front", "know",
-                 "seen", "found", "cornered", "clean", "act",
-                 "wax", "copper", "smell", "source", "quest", "task"]
-      questRequired: ["67-start"]
-      questExcluded: ["67-front", "67-end"]
-      grantsQuest: "67-front"
-      setsQuestFlag:
-        key: "67-entry"
-        value: "evidence"
-      text: "You know. [Marn does not look at the door. He looks at
-        you, and he is very still.] All right. The clean front is the
-        point -- you can't be moved on if the books are straight. What
-        I manage from this side is movement, not the supply itself. The
-        supply end is in the Old Quarter. Lintel Street. There is an
-        address there. That is all I am going to tell you."
-      hints: "Marn gave it up rather than risk you taking the evidence
-        elsewhere. He named Lintel Street in the Old Quarter as the
-        supply end. You could pose as a user instead, or follow the
-        trail from Lintel Street."
-      moodChange: cautious
-
-    - id: fabric
-      triggers: ["cloth", "fabric", "remnant", "textile", "thread",
-                 "needle", "stock", "sell", "buy", "wares", "goods",
-                 "linen", "wool", "cotton", "material", "bolt", "bins",
-                 "offcut", "scrap", "carry"]
-      text: "What I carry is what's left after the bolt has been used
-        for its purpose — short lengths, odd weights, colors that were
-        fashionable one season and weren't renewed the next. Thread and
-        bone needles I stock in quantity. They move steadily. Everything
-        is priced at what it actually is, not what it might have been."
-      hints: "You could ask Marn about the back of the shop, or about
-        his competition in the cloth trade."
-      unlocks: ["backroom", "competition"]
-
-    - id: backroom
-      triggers: ["back", "room", "door", "storage", "cupboard",
-                 "behind", "wall", "shelves", "locked", "access",
-                 "there", "inside", "further"]
-      text: "Storage. Overflow stock from the bins, empty display
-        frames I haven't disposed of. It isn't set up for customers
-        — the way in is obstructed, nothing of interest back there
-        unless you count old display hardware."
-      hints: "Marn has said what he will about the back of the shop.
-        You could ask about the cloth trade or about new competition."
-      moodChange: cautious
-
-    - id: competition
-      triggers: ["competition", "rival", "other", "shop", "seller",
-                 "market", "business", "cade", "elsewhere", "who",
-                 "price", "where", "better", "before", "was"]
-      text: "I run this shop. What others carry or charge is their
-        matter. If you've heard of someone else in the cloth trade on
-        this part of the docks, I wouldn't know their business. I
-        have enough of my own to manage."
-      hints: "Marn is brisk on the subject of competition. His stock
-        is at the front bins if you have a practical interest."
-      moodChange: cautious
+- text: Something you need from the stock? I have most weights here.
+  moods:
+  - neutral
+- text: You've returned. The bins are much as you left them.
+  moods:
+  - friendly
+opener:
+  text: Remnant bins are at the front. Ends and offcuts, priced down from the
+    original bolt. If you want full-weight cloth I don't carry it. What you see is
+    what this shop does.
+  hints: You could ask Marn about his cloth, the back of the shop, or other cloth
+    sellers. To see what he sells, type list.
+  variants:
+  - questRequired:
+    - 67-start
+    questExcluded:
+    - 67-front
+    - 67-end
+    text: The bins are open. Something you're after, or was there something
+      particular you came to ask?
+    hints: Marn is watching you more closely than a cloth buyer warrants. You could
+      pose as a buyer of the Bloom, or press him with what you already know about
+      the wax wrapper.
+topics:
+- key: bloom_undercover
+  kind: info
+  label: I'm after the stock you don't keep out front.
+  text: You're not the first to ask. That kind of stock isn't out front. Show me
+    you understand what it is, and then we can talk about where the arrangement
+    runs. It doesn't come from this shop. The supply end is an address in the Old
+    Quarter, on Lintel Street. That's where it starts. Who holds that house, I
+    couldn't tell you.
+  hints: Marn holds your eye for a long moment, then nods at a wax-wrapped square
+    under the remnants, the same kind as the wrapper Teels gave you. He takes you
+    for a customer. The auctioneer Falk in the Merchant Quarter knows who holds
+    the Lintel Street property. Type talk falk.
+  marked: true
+  questRequired:
+  - 67-start
+  questExcluded:
+  - 67-front
+  - 67-end
+  grantsQuest: 67-front
+  setsQuestFlag:
+    key: 67-entry
+    value: undercover
+  moodChange: cautious
+- key: bloom_evidence
+  kind: info
+  label: I know about the wax wrapper and your front.
+  text: You know. All right. The clean front is the point. You can't be moved on
+    if the books are straight. What I manage from this side is movement, not the
+    supply itself. The supply end is in the Old Quarter. Lintel Street. There is
+    an address there. Who holds that house, I couldn't tell you. That is all I
+    am going to say.
+  hints: Marn does not look at the door. He looks at you, very still, and gives it
+    up rather than risk you taking what you know elsewhere. The auctioneer Falk in
+    the Merchant Quarter knows who holds the Lintel Street property. Type talk
+    falk.
+  marked: true
+  questRequired:
+  - 67-start
+  questExcluded:
+  - 67-front
+  - 67-end
+  grantsQuest: 67-front
+  setsQuestFlag:
+    key: 67-entry
+    value: evidence
+  moodChange: cautious
+- key: fabric
+  kind: info
+  label: What kind of cloth do you sell?
+  text: What I carry is what's left after the bolt has been used for its purpose.
+    Short lengths, odd weights, colors that were fashionable one season and
+    weren't renewed the next. Thread and bone needles I stock in quantity. They
+    move steadily. Everything is priced at what it actually is, not what it might
+    have been.
+- key: backroom
+  kind: info
+  label: What is behind the cupboard door?
+  text: Storage. Overflow stock from the bins, empty display frames I haven't got
+    rid of. It isn't set up for customers, and there is nothing back there worth
+    your time.
+  hints: Marn has said what he will about the back of the shop.
+  moodChange: cautious
+- key: competition
+  kind: info
+  label: Who else sells cloth on the docks?
+  text: I run this shop. What others carry or charge is their matter. If you've
+    heard of someone else in the cloth trade on this part of the docks, I wouldn't
+    know their business. I have enough of my own to manage.
+  hints: Marn is brisk on the subject of competition.
+  moodChange: cautious

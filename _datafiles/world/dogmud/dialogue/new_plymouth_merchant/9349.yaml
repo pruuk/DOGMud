@@ -1,157 +1,155 @@
 mobid: 9349
 zone: New Plymouth Merchant
 defaultMood: neutral
-
 greetings:
-  - text: "Next in queue. State your application type and I will
-      find the relevant form."
-    moods: ["neutral"]
-  - text: "What is the nature of your business with the office?"
-    moods: ["cautious"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "State your business."
-      - "The queue is moving. What do you need?"
-
-  - keywords: [""]
-    responses:
-      - "I will need something more specific than that."
-      - "Be precise, please. Imprecision creates processing delays."
-
-tree:
-  root:
-    text: "This is the Quarter's permit and tribute office. I process
-      applications, collect the quarterly assessments, and maintain
-      the registration records. Ask about the permits and how the
-      process works, about the tribute and the collection schedule,
-      or about the office itself."
-    hints: "You could ask Clerk Vell about permits and how the
-      application process works, about the tribute and what it
-      covers, or about who the office ultimately serves."
-
-  nodes:
-    - id: vellhandoff
-      triggers: ["fragment", "map", "survey", "cooperage", "report",
-                 "deliver", "hand", "give", "turn", "done", "quest", "task"]
-      questRequired: ["68-choice"]
-      questExcluded: ["68-end"]
-      requiresItem: 40113
-      grantsQuest: "68-end"
-      setsQuestFlag: {key: "68-allegiance", value: "bloodline"}
-      givesGold: 100
-      bumpsRep:
-        - {faction: "bloodline_domestic", delta: 20}
-        - {faction: "cooperage_circle", delta: -15}
-      text: "Let me see what you have brought me. A pre-founding survey, and
-        the address that keeps it -- the office is grateful. Discretion is
-        part of the arrangement, and the office rewards it."
-      hints: "You hand the map-fragment to Clerk Vell."
-
-    - id: q68_vell_report
-      triggers: ["cooperage", "edvar", "survey", "report", "derelict",
-                 "map", "deliver", "give", "circle"]
-      questRequired: ["68-choice"]
-      questExcluded: ["68-end"]
-      text: "You have something pertaining to the cooperage filing? Then it is
-        no longer idle talk -- it is a document. Hand it across the desk and I
-        will examine it. The office is attentive to citizens who assist it."
-      hints: "Clerk Vell will take Edvar's map-fragment if you choose to side
-        with the bloodline. Give the map-fragment to Vell to report the
-        circle."
-
-    - id: q68_vell_dismiss
-      triggers: ["cooperage", "circle", "orin", "edvar", "survey",
-                 "derelict"]
-      questExcluded: ["68-choice", "68-end"]
-      text: "The cooperage on the craft streets? It is a derelict-property
-        matter, filed and pending. I do not discuss filings with the public,
-        and I would not know what a survey or a circle has to do with a
-        question of occupancy. If you have business at this office, state the
-        form you need."
-      hints: "Clerk Vell will not discuss the cooperage filing with someone
-        who has no standing in it."
-
-    - id: q71_vell
-      triggers: ["quest", "task", "tribute", "charter", "audit", "ostry",
-                 "deposit", "rate", "appeal", "pays"]
-      questRequired: ["71-start"]
-      questExcluded: ["71-vell", "71-end"]
-      grantsQuest: "71-vell"
-      text: "The tribute rate is set by charter and is not a subject I
-        negotiate. It is a legal obligation, not a preference, and I apply it
-        uniformly. What it pays for is not a question this office answers. The
-        charter was granted by the governing authority and the governing
-        authority is its own justification. As for Dame Ostry's audit -- a
-        filing is pending and will resolve when it resolves. If you want to
-        know where the obligation leads above this desk, that is not a door I
-        open. The Gilt Threshold keeps its own gate, and a man named Horst
-        keeps that."
-      hints: "Vell will say only that the rate is set by charter -- and the
-        charter rests on the founding. The tribute runs upward, past the
-        clerk, to the Gilt Threshold gate and a man named Horst. Go there."
-      moodChange: cautious
-
-    - id: q71_vell_charter_aside
-      triggers: ["charter", "founding", "date", "false", "wrong", "cipher",
-                 "lintel"]
-      questRequired: ["71-vell", "69-end"]
-      text: "You say the founding date is wrong as though it were a small
-        thing. If it were true it would not be small at all -- the charter,
-        the courts, this office, all of it derives from the founding and its
-        date. But I process filings. I do not adjudicate the foundations of
-        the state, and I would advise you not to say that sentence aloud in
-        the wrong room. The obligation still runs upward. The gate is still
-        Horst's."
-      hints: "Knowing what you know about the founding, Vell's certainty reads
-        differently -- and he half-admits it. Either way the trail leads up to
-        Horst at the Gilt Threshold gate."
-      moodChange: cautious
-
-    - id: permits
-      triggers: ["permit", "license", "application", "process", "queue",
-                 "paper", "form", "register", "registration", "filing",
-                 "stall", "operate", "open", "approval", "deny",
-                 "how", "long"]
-      text: "To operate a commercial stall or fixed premises on the
-        Square, you will need a quarterly permit. I will need proof of
-        residency from you, a statement of goods category, and a surety
-        deposit — refunded at term-end if the premises are left in
-        order. I process applications in three to five working days.
-        There is a queue. I recommend you take a number when you
-        arrive."
-      hints: "The process is clear, impersonal, and entirely designed
-        to be inconvenient without being blockable. You could ask
-        about the tribute, or about who sets these requirements."
-
-    - id: tribute
-      triggers: ["tribute", "tax", "fee", "payment", "assessment",
-                 "quarterly", "tithe", "collect", "rate", "cost",
-                 "owe", "charge", "owed", "amount", "due"]
-      text: "The quarterly tribute is assessed at four per cent of
-        declared gross revenue, collected on the first day of each
-        quarter at this desk. Underdeclaration is subject to audit.
-        Audit findings carry a penalty of the unpaid balance plus
-        interest. The rate is set by charter and is not a subject
-        I negotiate. It is a legal obligation, not a preference, and
-        I apply it uniformly."
-      hints: "He explained it with the confidence of someone who
-        knows the rules are on his side. You could ask about permits,
-        or about who issued this charter and who benefits from it."
-
-    - id: bloodline
-      triggers: ["bloodline", "ruling", "lord", "noble", "dominus",
-                 "charter", "authority", "power", "family", "serves",
-                 "office", "benefits", "who", "above", "behind",
-                 "govern"]
-      text: "The office operates under a charter granted by the
-        governing authority of New Plymouth. I am a civil functionary
-        — I process applications, I collect assessed revenues, and
-        I maintain records. The charter's origins are a matter for
-        legal counsel, not for this desk. Is there an application I
-        can help you with?"
-      hints: "He pivoted back to paperwork without acknowledging the
-        question. The politeness itself is the menace. You could ask
-        about permits or tribute if you need the office for something."
-      moodChange: cautious
+- text: Next in queue. State your application type and I will find the relevant form.
+  moods:
+  - neutral
+- text: What is the nature of your business with the office?
+  moods:
+  - cautious
+opener:
+  text: This is the Quarter's permit and tribute office. I process applications,
+    collect the quarterly assessments, and keep the registration records. State your
+    business.
+  hints: You could ask Clerk Vell about how a permit application works, about the
+    quarterly tribute, or about who the office answers to.
+topics:
+# Quest 68's bloodline choice (spec R28, batch 4 review): the warning
+# (q68_vell_report) must be heard first, and both hide once the choice is
+# made (68-end). The circle side is Orin's (9332), built the same way.
+- key: vellhandoff
+  kind: handin
+  quest: 68
+  label: The Cooperage Circle
+  playerLine: Take Edvar's survey. I side with the office, for good.
+  text: Let me see what you have brought me. A pre-founding survey, and the address
+    that keeps it. This resolves the question of whether the cooperage is
+    genuinely derelict. It is not. It is occupied by people without standing to
+    occupy it. The office is grateful, and it rewards discretion. The matter is
+    closed, and it stays closed.
+  hints: You handed Edvar's survey to Clerk Vell. The choice is made and cannot be
+    undone. The cooperage will be seized, Toby put out of the only place he keeps,
+    and the circle now counts you against it.
+  heardRequired:
+  - q68_vell_report
+  questRequired:
+  - 68-choice
+  questExcluded:
+  - 68-end
+  requiresItem: 40113
+  grantsQuest: 68-end
+  setsQuestFlag:
+    key: 68-allegiance
+    value: bloodline
+  bumpsRep:
+  - faction: bloodline_domestic
+    delta: 20
+  - faction: cooperage_circle
+    delta: -15
+  givesGold: 100
+- key: q68_vell_report
+  kind: info
+  label: What happens if I give you the survey?
+  text: You have something pertaining to the cooperage filing? Then it is no longer
+    idle talk. It is a document, and you should understand what filing it means.
+    The office will treat it as evidence. The cooperage will be seized as occupied
+    without standing, and the lad who keeps it put out. The office pays for
+    discretion, and pays well. But a document filed is filed. I do not hand them
+    back, and the people in that cooperage will know whose hand it came from.
+  hints: Siding with the bloodline hands Edvar's survey to the office for good,
+    gets the cooperage seized, and sets the circle against you. It cannot be
+    undone. If you are sure, choose The Cooperage Circle below.
+  marked: true
+  questRequired:
+  - 68-choice
+  questExcluded:
+  - 68-end
+  carriesItem: 40113
+# Gated on 68-evidence (Toby's step names Vell's filing), so only a player who
+# has heard of the filing sees it.
+- key: q68_vell_dismiss
+  kind: info
+  label: Why did you file to seize the cooperage?
+  text: The cooperage on the craft streets? It is a derelict-property matter, filed
+    and pending. I do not discuss filings with the public, and I would not know what
+    a survey or a circle has to do with a question of occupancy. If you have business
+    at this office, state the form you need.
+  hints: Clerk Vell will not discuss the cooperage filing with someone who has no
+    standing in it.
+  questRequired:
+  - 68-evidence
+  questExcluded:
+  - 68-choice
+  - 68-end
+- key: q71_vell
+  kind: info
+  label: Dame Ostry asks what the tribute pays for.
+  text: The tribute rate is set by charter and is not a subject I negotiate. It is
+    a legal obligation, not a preference, and I apply it uniformly. What it pays for
+    is not a question this office answers. The charter was granted by the governing
+    authority, and the governing authority is its own justification. As for Dame
+    Ostry's audit, a filing is pending and will resolve when it resolves. If you want
+    to know where the obligation leads above this desk, that is not a door I open.
+    The watched house at the end of the Watched Lane keeps its own gate, and a man
+    named Horst keeps that.
+  hints: Vell will say only that the rate is set by charter, and the charter rests
+    on the founding. The tribute runs upward past him, to Horst at the watched house
+    gate. From the Permit Office, go east to the Watched Lane, then north to the
+    gate. He sleeps at the gate in the small hours. Type talk horst.
+  marked: true
+  questRequired:
+  - 71-start
+  questExcluded:
+  - 71-vell
+  - 71-end
+  grantsQuest: 71-vell
+  moodChange: cautious
+- key: q71_vell_charter_aside
+  kind: info
+  label: What if the founding date itself is wrong?
+  text: You say the founding date is wrong as though it were a small thing. If it
+    were true it would not be small at all. The charter, the courts, this office,
+    all of it comes from the founding and its date. But I process filings. I do not
+    judge the foundations of the state, and I would advise you not to say that
+    sentence aloud in the wrong room. The obligation still runs upward. The gate is
+    still Horst's.
+  hints: Knowing what you know about the founding, Vell's certainty reads
+    differently, and he half admits it. Either way the trail leads up to Horst at
+    the watched house gate.
+  questRequired:
+  - 71-vell
+  - 69-end
+  questExcluded:
+  - 71-horst
+  moodChange: cautious
+- key: permits
+  kind: info
+  label: How does a permit application work?
+  text: To keep a stall or a fixed shop on the Square, a trader needs a quarterly
+    permit. I need proof of residency, a statement of the class of goods, and a
+    deposit, returned at the end of the term if the premises are left in order. I
+    process applications in three to five working days. There is a queue. I
+    recommend taking a number on arrival.
+  hints: The process is clear, impersonal, and designed to be inconvenient without
+    ever being refused outright.
+- key: tribute
+  kind: info
+  label: What is the quarterly tribute?
+  text: The quarterly tribute is four parts in every hundred of declared takings,
+    collected on the first day of each quarter at this desk. Declaring too little
+    invites an audit. An audit that finds a shortfall charges the unpaid balance
+    plus interest. The rate is set by charter and is not a subject I negotiate. It is
+    a legal obligation, not a preference, and I apply it uniformly.
+  hints: He explained it with the confidence of someone who knows the rules are on
+    his side.
+- key: bloodline
+  kind: info
+  label: Who does this office answer to?
+  text: The office works under a charter granted by the governing authority of New
+    Plymouth. I am a civil servant. I process applications, I collect what is
+    assessed, and I keep records. Where the charter came from is a matter for
+    lawyers, not for this desk. Is there an application I can help you with?
+  hints: He went back to paperwork without acknowledging the question. The
+    politeness itself is the threat.
+  moodChange: cautious
