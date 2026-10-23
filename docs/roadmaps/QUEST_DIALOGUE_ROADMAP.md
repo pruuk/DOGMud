@@ -187,7 +187,7 @@ to exactly one topic.
 **Spec questions (answered).** LLM topic storage is moot (LLM is out of the arc, #643);
 `UnlockedNodes` maps onto `heardRequired`.
 
-**Status:** implemented on `feat/375-phase1-talk`, PR pending. The one-time converter
+**Status:** implemented on `feat/375-phase1-talk`, PR #661. The one-time converter
 (`cmd/dialogueconvert`) ran and was deleted; `cmd/dialoguecheck` stays as the dialogue
 check for authors.
 
