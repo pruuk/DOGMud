@@ -130,6 +130,12 @@ spec; line numbers were read from the files at that commit.
     it); the choice topic's own text and hint repeat the warning. Room commands may discover or
     unlock the choice, never make it. First case: quest 68's circle choice (was `look old guild
     mark`).
+  - **R29** (owner 2026-10-23) Each NPC speaks in their own voice. No shared template for
+    openers or self-introductions: the clipped "Role, twelve years. Goods, goods, goods. What do
+    you need?" run of fragments reads as a list of facts, and only a character whose description
+    makes them terse (a foreman, a soldier) talks that way. Vary sentence shape, warmth and
+    register by who the NPC is (their description, idle lines, trade). Batch 7 found the pattern
+    in about 45 of 311 openers across every batch.
   - **R25** (owner 2026-10-21) The character-creation question "How much of Gaius do you
     already know?" has no default: Enter asks again, so nobody skips the tutorial by
     pressing Enter. Pinned by `TestConfirmMenu_StartEnterReasks`.
