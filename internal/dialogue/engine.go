@@ -2,16 +2,13 @@ package dialogue
 
 import (
 	"slices"
-	"strings"
-
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // checkQuestGate returns true if the player satisfies quest/item/flag conditions.
 //
 // When ps is nil every check passes (backward compat for mob-to-mob and other
 // non-user contexts). Production callers always pass a fully-populated state
-// built by buildPlayerState.
+// built by conversation.PlayerState.
 //
 // Every callback field is optional and must be nil-checked before use. Four of
 // them (HasQuest, HasItem, RemoveItem, GiveQuest) were previously invoked
@@ -20,14 +17,13 @@ import (
 // A missing *interrogative* callback fails the gate closed: with no way to ask
 // whether the player holds a token or an item, we must not conclude that they
 // do. The exception is questExcluded, where the same reasoning runs the other
-// way — we cannot confirm the player holds the excluding token, so the node
+// way: we cannot confirm the player holds the excluding token, so the topic
 // stays available rather than silently vanishing.
 //
 // goldRequired is interrogative too and fails closed on a nil HasGold: a
-// priced node must never open for a player whose gold cannot be checked.
-// The gate only hides the node; it takes nothing. The charge is the node's
-// chargesGold, which the engine takes in the same step as this gate, before
-// the quest is granted.
+// priced topic must never open for a player whose gold cannot be checked.
+// The gate only hides the topic; it takes nothing. The charge is the topic's
+// chargesGold, which Apply takes before any other effect.
 func checkQuestGate(questRequired, questExcluded []string, requiresItem int, flagRequired, flagExcluded map[string]string, masterworkRequired, goldRequired int, ps *PlayerState) bool {
 	if ps == nil {
 		return true
@@ -79,14 +75,8 @@ func checkQuestGate(questRequired, questExcluded []string, requiresItem int, fla
 	return true
 }
 
-// tryCharge takes an entry's chargesGold as part of matching it. A failed
-// charge makes the entry not match, so the caller moves on to the next one
-// (the authored refusal) and nothing of this entry is applied. It runs after
-// checkQuestGate in the same call, so the gold check and the charge happen
-// in one step of the player's input. Nil ps keeps the package's skip-checks
-// contract; a nil ChargeGold fails closed.
 // itemExcludedBlocks reports whether an itemExcluded gate hides an entry: the
-// player already carries the item, so a handout node does not give a second
+// player already carries the item, so a handout topic does not give a second
 // one while the quest is open. CarriesItem (anywhere on the player) is
 // preferred; a PlayerState without it falls back to HasItem (the backpack).
 // A nil PlayerState skips the check, as every other gate does.
@@ -103,6 +93,9 @@ func itemExcludedBlocks(itemId int, ps *PlayerState) bool {
 	return false
 }
 
+// tryCharge takes a topic's chargesGold before its other effects. A failed
+// charge makes Apply report false with nothing applied. Nil ps keeps the
+// package's skip-checks contract; a nil ChargeGold fails closed.
 func tryCharge(amount int, ps *PlayerState) bool {
 	if amount <= 0 || ps == nil {
 		return true
@@ -113,7 +106,7 @@ func tryCharge(amount int, ps *PlayerState) bool {
 	return ps.ChargeGold(amount)
 }
 
-// applyPaidEffects applies a matched entry's effects after tryCharge took
+// applyPaidEffects applies a chosen topic's effects after tryCharge took
 // charged gold. If the effects abort (an item that could not be delivered),
 // the charge is given back so the player never pays for nothing.
 func applyPaidEffects(charged int, grantsQuest string, requiresItem int, givesItem int, flagSet *QuestFlagSet, bumpsRep []RepBump, givesGold int, ps *PlayerState) bool {
@@ -126,10 +119,10 @@ func applyPaidEffects(charged int, grantsQuest string, requiresItem int, givesIt
 	return false
 }
 
-// applyQuestEffects fires a matched node's side effects. It returns false —
-// applying NOTHING else — when the node gives an item that could not be
+// applyQuestEffects fires a chosen topic's side effects. It returns false,
+// applying NOTHING else, when the topic gives an item that could not be
 // delivered: granting the quest anyway would soft-lock the player (token
-// held, item missing, node then hidden by questExcluded), and removing
+// held, item missing, topic then hidden by questExcluded), and removing
 // requiresItem first would eat their hand-in. Delivery is therefore
 // attempted before any other effect. A nil GiveItem callback keeps the
 // package's skip-checks contract and counts as delivered.
@@ -162,199 +155,4 @@ func applyQuestEffects(grantsQuest string, requiresItem int, givesItem int, flag
 		ps.GiveGold(givesGold)
 	}
 	return true
-}
-
-// Match checks patterns against topic text for the given mob instance.
-// It respects the mob's current mood when patterns declare mood filters.
-// Returns (responseText, moodChange, matched).
-// An empty-keyword pattern acts as the fallback when no specific keyword fires.
-// When ps is nil, quest/item checks are skipped.
-// Match returns (response, moodChange, ok) for a topic against the mob's
-// patterns. Thin wrapper over MatchWithFallbackInfo for callers that don't
-// care whether the catch-all pattern was used.
-func Match(df *DialogueFile, mobInstanceId int, topic string, ps *PlayerState) (string, string, bool) {
-	resp, mood, ok, _ := MatchWithFallbackInfo(df, mobInstanceId, topic, ps)
-	return resp, mood, ok
-}
-
-// MatchWithFallbackInfo is Match plus a usedFallback flag: true when the
-// response came from the empty-keyword catch-all pattern rather than a specific
-// keyword match. Callers can use it to give a clearer answer to a pointed
-// question (e.g. "ask <npc> quest") instead of generic filler.
-func MatchWithFallbackInfo(df *DialogueFile, mobInstanceId int, topic string, ps *PlayerState) (string, string, bool, bool) {
-	topic = strings.ToLower(topic)
-	currentMood := GetMood(mobInstanceId, df.DefaultMood)
-
-	var defaultPattern *Pattern
-	var matched *Pattern
-
-	for i := range df.Patterns {
-		p := &df.Patterns[i]
-
-		// Apply mood filter when specified
-		if len(p.Moods) > 0 {
-			moodMatch := false
-			for _, m := range p.Moods {
-				if Mood(m) == currentMood {
-					moodMatch = true
-					break
-				}
-			}
-			if !moodMatch {
-				continue
-			}
-		}
-
-		// Apply quest/item gate
-		if !checkQuestGate(p.QuestRequired, p.QuestExcluded, p.RequiresItem, p.QuestFlagRequired, p.QuestFlagExcluded, p.MasterworkRequired, p.GoldRequired, ps) || itemExcludedBlocks(p.ItemExcluded, ps) {
-			continue
-		}
-
-		// Single empty-string keyword marks this as the fallback pattern
-		if len(p.Keywords) == 1 && p.Keywords[0] == "" {
-			if defaultPattern == nil {
-				defaultPattern = p
-			}
-			continue
-		}
-
-		// Check for keyword substring match
-		for _, kw := range p.Keywords {
-			if kw != "" && strings.Contains(topic, strings.ToLower(kw)) {
-				matched = p
-				break
-			}
-		}
-		if matched != nil {
-			// A pattern whose price cannot be taken does not match.
-			if len(matched.Responses) > 0 && !tryCharge(matched.ChargesGold, ps) {
-				matched = nil
-				continue
-			}
-			break
-		}
-	}
-
-	if matched == nil {
-		matched = defaultPattern
-		if matched != nil && len(matched.Responses) > 0 && !tryCharge(matched.ChargesGold, ps) {
-			matched = nil
-		}
-	}
-
-	if matched == nil || len(matched.Responses) == 0 {
-		return "", "", false, false
-	}
-
-	usedFallback := matched == defaultPattern
-
-	applyPaidEffects(matched.ChargesGold, matched.GrantsQuest, matched.RequiresItem, matched.GivesItem, matched.SetsQuestFlag, matched.BumpsRep, matched.GivesGold, ps)
-
-	response := matched.Responses[util.Rand(len(matched.Responses))]
-	return response, matched.MoodChange, true, usedFallback
-}
-
-// TreeAdvance attempts to advance a player's position in the mob's conversation tree.
-// It checks triggers against the topic, enforces node prerequisites, and updates memory.
-// Returns (nodeText, hints, moodChange, advanced).
-// Returns (_, _, _, false) if no tree node matches — caller should fall through to Match().
-// When ps is nil, quest/item checks are skipped.
-func TreeAdvance(df *DialogueFile, mobInstanceId, userId int, topic string, ps *PlayerState) (string, string, string, bool) {
-	if df.Tree == nil {
-		return "", "", "", false
-	}
-
-	topic = strings.ToLower(topic)
-	mem := GetMemory(mobInstanceId, userId)
-
-	if IsExpired(mem, df.Memory.ExpiryPeriod) {
-		ResetMemory(mobInstanceId, userId)
-		mem = GetMemory(mobInstanceId, userId)
-	}
-
-	for i := range df.Tree.Nodes {
-		node := &df.Tree.Nodes[i]
-
-		// Check triggers
-		triggered := false
-		for _, t := range node.Triggers {
-			if strings.Contains(topic, strings.ToLower(t)) {
-				triggered = true
-				break
-			}
-		}
-		if !triggered {
-			continue
-		}
-
-		// Enforce requires
-		allUnlocked := true
-		for _, req := range node.Requires {
-			if !mem.UnlockedNodes[req] {
-				allUnlocked = false
-				break
-			}
-		}
-		if !allUnlocked {
-			continue
-		}
-
-		// Enforce quest/item gate
-		if !checkQuestGate(node.QuestRequired, node.QuestExcluded, node.RequiresItem, node.QuestFlagRequired, node.QuestFlagExcluded, node.MasterworkRequired, node.GoldRequired, ps) || itemExcludedBlocks(node.ItemExcluded, ps) {
-			continue
-		}
-
-		// A node whose price cannot be taken does not match; the next
-		// node with the same triggers (the refusal) answers instead.
-		if !tryCharge(node.ChargesGold, ps) {
-			continue
-		}
-
-		// Node matched — fire quest effects and update memory. A failed
-		// item delivery leaves memory untouched too, so the node is not
-		// consumed and re-fires once the player makes room.
-		if applyPaidEffects(node.ChargesGold, node.GrantsQuest, node.RequiresItem, node.GivesItem, node.SetsQuestFlag, node.BumpsRep, node.GivesGold, ps) {
-			UpdateMemory(mobInstanceId, userId, node.Id, node.Unlocks, topic)
-		}
-
-		return node.Text, node.Hints, node.MoodChange, true
-	}
-
-	return "", "", "", false
-}
-
-// Greet returns the tree root greeting for the 'talk' command.
-// Returns ("", "", false) if no tree is defined.
-// When ps is non-nil and the root has Variants, the first matching variant
-// greeting is used instead of the default root text.
-func Greet(df *DialogueFile, mobInstanceId, userId int, ps *PlayerState) (string, string, bool) {
-	if df.Tree == nil {
-		return "", "", false
-	}
-
-	if df.Tree.Root.Text == "" && len(df.Tree.Root.Variants) == 0 {
-		return "", "", false
-	}
-
-	mem := GetMemory(mobInstanceId, userId)
-
-	if IsExpired(mem, df.Memory.ExpiryPeriod) {
-		ResetMemory(mobInstanceId, userId)
-		mem = GetMemory(mobInstanceId, userId)
-	}
-
-	mem.CurrentRootSeen = true
-	mem.LastVisitRound = util.GetRoundCount()
-
-	// Check quest-variant greetings first
-	if ps != nil {
-		for _, v := range df.Tree.Root.Variants {
-			if checkQuestGate(v.QuestRequired, v.QuestExcluded, 0, v.QuestFlagRequired, v.QuestFlagExcluded, v.MasterworkRequired, v.GoldRequired, ps) && !itemExcludedBlocks(v.ItemExcluded, ps) && tryCharge(v.ChargesGold, ps) {
-				applyPaidEffects(v.ChargesGold, v.GrantsQuest, v.RequiresItem, v.GivesItem, v.SetsQuestFlag, v.BumpsRep, v.GivesGold, ps)
-				return v.Text, v.Hints, true
-			}
-		}
-	}
-
-	return df.Tree.Root.Text, df.Tree.Root.Hints, true
 }

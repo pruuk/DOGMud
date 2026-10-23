@@ -15,13 +15,14 @@ import (
 )
 
 // AskAsync fires a goroutine that calls Ollama and delivers the response via onResponse.
-// BOTH callbacks are invoked under util.LockMud() — safe to call mob/room/dialogue
+// BOTH callbacks are invoked under util.LockMud(), so it is safe to call mob/room/dialogue
 // functions directly. onResponse delivers a model reply; onUnavailable fires when the
-// LLM is down, timed out, busy, or returned nothing, and is the YAML-fallback path.
+// LLM is down, timed out, busy, or returned nothing, and is the authored-fallback path.
 //
-// The lock matters: every real onUnavailable implementation touches shared state
-// (mobs.GetInstance, dialogue.Load/ShiftMood, mob.Command), and the internal/dialogue
-// caches are unguarded maps that MainWorker writes. Both callbacks run only on this
+// Nothing calls it since quest arc #375 phase 1 took the LLM out of talk and ask (R4);
+// LLM topics are #643. The lock still matters for any future caller: a fallback that
+// touches mobs.GetInstance, the internal/dialogue caches (unguarded maps that MainWorker
+// writes) or mob.Command must hold the mud lock. Both callbacks run only on this
 // goroutine, which never holds the mud lock on entry, so there is no reentrancy on the
 // non-reentrant mudLock.
 func AskAsync(
@@ -73,10 +74,6 @@ func AskAsync(
 		if maxWords <= 0 {
 			maxWords = 80
 		}
-		recentStr := "none"
-		if len(ctx.RecentTopics) > 0 {
-			recentStr = strings.Join(ctx.RecentTopics, ", ")
-		}
 		questStr := ""
 		if len(ctx.QuestContext) > 0 {
 			questStr = fmt.Sprintf("\nPlayer's active quests relevant to you: %s.", strings.Join(ctx.QuestContext, "; "))
@@ -90,11 +87,10 @@ func AskAsync(
 			tutStr = fmt.Sprintf("\n%s", ctx.TutorialProgress)
 		}
 		systemPrompt := fmt.Sprintf(
-			"%s\nYou are %s in %s. Keep responses under %d words. Stay in character.\nCurrent mood: %s.\nRecent topics discussed: %s.%s%s%s",
+			"%s\nYou are %s in %s. Keep responses under %d words. Stay in character.\nCurrent mood: %s.%s%s%s",
 			profile.SystemPrompt,
 			ctx.MobName, ctx.ZoneName, maxWords,
 			ctx.CurrentMood,
-			recentStr,
 			questStr,
 			condStr,
 			tutStr,

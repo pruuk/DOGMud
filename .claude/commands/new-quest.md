@@ -53,48 +53,45 @@ with steps and rewards from the plan.
 `_datafiles/world/dogmud/items/` subdirectory.
 
 **4c. Dialogue files** — create new or modify existing dialogue YAMLs, adding
-quest nodes with proper gating. For each dialogue file:
-- Every `grantsQuest` tree node MUST include `"quest"` and `"task"` in
-  `triggers`
-- Every `grantsQuest` pattern entry MUST include `"quest"` and `"task"` in
-  `keywords`
+quest topics with proper gating (`docs/schemas/dialogue.md`). For each
+dialogue file:
+- The quest offer is a `kind: offer` topic with `quest: <id>`, the quest's
+  title as its `label`, a `playerLine`, and `grantsQuest` set to the quest's
+  start token. Each hand-in is a `kind: handin` topic granting the end
+  token. Other steps' conversation is `kind: info` topics.
 - Use `questRequired` and `questExcluded` for proper step gating
-  - **End-token exclusion:** every `grantsQuest` node must exclude BOTH
-    the granted token AND `{questid}-end` in `questExcluded` — prevents
-    re-offering completed quests
-- Item delivery steps need BOTH a dialogue path AND a quest YAML `item_give` trigger
+  - **End-token exclusion:** every `grantsQuest` topic must exclude BOTH
+    the granted token AND `{questid}-end` in `questExcluded`, or a
+    completed quest is re-offered
+- Item delivery steps are a topic with `requiresItem` (taken) or
+  `carriesItem` (shown, kept); `give <item> <npc>` plays it. A quest
+  `item_give` trigger may not grant a token (the boot refuses it).
+- Use `heardRequired` for "ask about X before Y" within one NPC; heard
+  topics are saved, so it never bricks a quest.
 - **Narrative voice:** NPC `text` must use first person ("I", "my"). Hints
   must describe player options from the player's perspective. Never write
   3rd-person self-references like "Ask about why she left" — write "You
   could ask why she left" or "You could ask about the marriage."
-- **Trigger discoverability:** Every trigger word must appear in a hint,
-  NPC dialogue text, room description, or quest log. If a hint says "calm
-  her down", the triggers MUST include "calm". Undiscoverable = broken.
-- **Prefer `questRequired` over `requires`** for quest-gated dialogue
-  nodes. `requires` depends on per-player memory that can expire and brick
-  quests. Only use `requires` for non-quest conversational branching.
-- **`expiryPeriod` should almost never be set.** Memory expiry bricks
-  quests when `requires`-gated nodes become unreachable. Only use it
-  for quests where urgency is the explicit design intent (e.g., "deliver
-  this before the trolls attack"). Default: leave empty or omit.
+- Labels: at most 50 characters, `playerLine` at most 70, no em or en dash,
+  no semicolons in spoken text. The boot validators check all of it.
 
 **4d. Room behavior trees** — create room behavior tree handlers for item
 pickups / command intercepts if needed. Confirm the noun appears in the room's
 `description` or `nouns` section so `get <noun>` feels natural.
 
-**4e. Behavior trees** — create `player_give` handlers for item rejection.
-Quest advancement is handled by the quest engine's `item_give` triggers in the
-quest YAML. Behavior trees only handle rejection cases (wrong item, quest
-already complete, not on quest).
-**CRITICAL: give.go transfers the item to the mob BEFORE any handler fires.**
-This means:
-- Quest-accepting NPCs: the quest engine `item_give` trigger grants the token
-  (item is already consumed by the transfer)
-- "Wrong NPC" handlers (quest giver who should NOT keep the item): use a
-  behavior tree `player_give` handler with the `return_item` action to give
-  the item back to the player
-- Quest givers who hand out items via `givesItem` need a recovery dialogue node
-  (fires when player has the quest but not the item) that gives a replacement
+**4e. Behavior trees.** Item hand-ins are dialogue topics (4c), never
+behavior trees or quest triggers. `give <item> <npc>` asks the NPC's topics
+first, BEFORE any transfer:
+- An eligible topic that wants the item plays as if chosen from the menu.
+- A topic wants it but none is eligible: the item stays with the player. A
+  `player_give` branch with `item_matches` for that item, using only speech
+  and `return_item`, can say why.
+- No topic wants it: `give.go` transfers the item BEFORE the tree's
+  `player_give` fires, so a handler can only react after the fact, typically
+  with `return_item`.
+- Quest givers who hand out items via `givesItem` need a recovery topic
+  (open when the player has the quest but not the item) that gives a
+  replacement. `itemExcluded` keeps it to one while the player carries one.
 
 **4f. Mob YAML modifications** — group changes, spawninfo additions. Verify
 quest NPCs are NOT in hostile mob groups.
@@ -109,7 +106,9 @@ plan to verify correctness.
 
 After all files are written:
 
-1. Run `go build ./...` to verify no compilation errors
+1. Run `go build ./...` to verify no compilation errors, then
+   `DOGMUD_BOOT_SMOKE=1 go test . -run 'TestSmoke_' -count=1`: the dialogue
+   validators refuse every rule in 4c
 2. **Check every step has a map destination.** For each step in the new quest,
    confirm exactly one of: `map_target_mob` + a `map_target` fallback (go see a
    named NPC), `map_target: <roomid>` (go to a place/fixture), or
@@ -140,7 +139,7 @@ Reproduce the verification plan from the sketch so the user can test
 immediately:
 
 1. Restart server
-2. Walk to quest giver → `ask <npc> quest` → confirm quest granted
+2. Walk to quest giver → `talk <npc>` → choose the quest → confirm quest granted
 3. For each step: perform the action → confirm quest advances
 4. For each alternative path: test that too
 5. Try to skip steps (go to completion NPC early) → confirm blocked

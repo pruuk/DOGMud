@@ -6,35 +6,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestTreeAdvance_GoldGate exercises the goldRequired gate on a TreeNode.
-// A node that grants a priced quest must not match for a player who cannot
-// pay: the quest's own charge_gold runs on quest_granted, so the dialogue is
-// the only place that can refuse before anything is granted. The refusal is
-// an authored node later in the list with the same triggers and no gate, the
-// same shape masterworkRequired uses.
-func TestTreeAdvance_GoldGate(t *testing.T) {
-	const mobInst = 6100
-	df := &DialogueFile{
-		MobId:       mobInst,
-		Zone:        "test",
-		DefaultMood: "neutral",
-		Tree: &Tree{
-			Nodes: []TreeNode{
-				{
-					Id:           "offer",
-					Triggers:     []string{"blackrazor"},
-					GrantsQuest:  "80-start",
-					GoldRequired: 25000,
-					Text:         "Twenty-five thousand. It's yours.",
-				},
-				{
-					Id:       "offer-refused",
-					Triggers: []string{"blackrazor"},
-					Text:     "Twenty-five thousand. You don't have it.",
-				},
-			},
-		},
-	}
+// TestEligible_GoldGate exercises the goldRequired gate on a topic. A topic
+// that grants a priced quest must not open for a player who cannot pay: the
+// quest's own charge_gold runs on quest_granted, so the dialogue is the only
+// place that can refuse before anything is granted. Ported from the old
+// TreeAdvance/Match gold-gate tests (#375 Task 21).
+func TestEligible_GoldGate(t *testing.T) {
+	df := &DialogueFile{MobId: 6100, Topics: []Topic{{
+		Key: "blackrazor", Kind: KindInfo, Label: "Blackrazor", Text: "Twenty-five thousand. It's yours.",
+		Gates:   Gates{GoldRequired: 25000},
+		Effects: Effects{GrantsQuest: "80-start"},
+	}}}
+	tp := df.FindTopic("blackrazor")
 
 	gold := 1400
 	var granted []string
@@ -44,91 +27,39 @@ func TestTreeAdvance_GoldGate(t *testing.T) {
 		HasGold:   func(amount int) bool { return gold >= amount },
 	}
 
-	// Short of the price: the priced node is hidden, nothing is granted, the
-	// refusal node answers, and the player's gold is untouched.
-	text, _, _, advanced := TreeAdvance(df, mobInst, 610, "blackrazor", ps)
-	assert.True(t, advanced)
-	assert.Equal(t, "Twenty-five thousand. You don't have it.", text)
-	assert.Empty(t, granted, "a player who cannot pay must not be granted the quest")
+	// Short of the price: the topic is hidden and the gate takes nothing.
+	assert.False(t, df.Eligible(tp, ps), "a player who cannot pay must not see the priced topic")
+	assert.Empty(t, df.Menu("Veyra", ps).Entries)
 	assert.Equal(t, 1400, gold, "the gate takes nothing")
 
-	// Exactly the price: the priced node matches and grants.
+	// Exactly the price: the topic opens and grants.
 	gold = 25000
-	ResetMemory(mobInst, 610)
-	text, _, _, advanced = TreeAdvance(df, mobInst, 610, "blackrazor", ps)
-	assert.True(t, advanced)
-	assert.Equal(t, "Twenty-five thousand. It's yours.", text)
+	assert.True(t, df.Eligible(tp, ps))
+	assert.True(t, df.Apply(tp, ps))
 	assert.Equal(t, []string{"80-start"}, granted)
 
 	// A PlayerState with no HasGold callback cannot confirm the player can
 	// pay, so the gate fails closed (as requiresItem does), never open.
-	granted = nil
-	ResetMemory(mobInst, 611)
 	legacy := &PlayerState{
 		HasQuest:  func(string) bool { return false },
-		GiveQuest: func(token string) { granted = append(granted, token) },
+		GiveQuest: func(string) {},
 	}
-	text, _, _, _ = TreeAdvance(df, mobInst, 611, "blackrazor", legacy)
-	assert.Equal(t, "Twenty-five thousand. You don't have it.", text)
-	assert.Empty(t, granted, "nil HasGold must not open a priced node")
-
-	ResetMemory(mobInst, 610)
-	ResetMemory(mobInst, 611)
-	delete(moodCache, mobInst)
+	assert.False(t, df.Eligible(tp, legacy), "nil HasGold must not open a priced topic")
 }
 
-// TestMatch_GoldGate covers the same gate on a keyword Pattern.
-func TestMatch_GoldGate(t *testing.T) {
-	const mobInst = 6101
-	df := &DialogueFile{
-		MobId:       mobInst,
-		DefaultMood: "neutral",
-		Patterns: []Pattern{
-			{Keywords: []string{"razor"}, GoldRequired: 500, GrantsQuest: "x-start", Responses: []string{"paid"}},
-			{Keywords: []string{"razor"}, Responses: []string{"short"}},
-		},
-	}
-	gold := 499
-	var granted []string
-	ps := &PlayerState{
-		HasQuest:  func(string) bool { return false },
-		GiveQuest: func(token string) { granted = append(granted, token) },
-		HasGold:   func(amount int) bool { return gold >= amount },
-	}
-
-	resp, _, ok := Match(df, mobInst, "razor", ps)
-	assert.True(t, ok)
-	assert.Equal(t, "short", resp)
-	assert.Empty(t, granted)
-
-	gold = 500
-	resp, _, _ = Match(df, mobInst, "razor", ps)
-	assert.Equal(t, "paid", resp)
-	assert.Equal(t, []string{"x-start"}, granted)
-	delete(moodCache, mobInst)
-}
-
-// TestGreet_GoldGate covers the same gate on a root greeting variant.
-func TestGreet_GoldGate(t *testing.T) {
-	const mobInst = 6102
-	df := &DialogueFile{
-		MobId:       mobInst,
-		DefaultMood: "neutral",
-		Tree: &Tree{Root: TreeRoot{
-			Text:     "plain",
-			Variants: []QuestGreeting{{GoldRequired: 100, Text: "rich"}},
-		}},
-	}
+// TestOpenerFor_GoldGate covers the same gate on an opener variant.
+func TestOpenerFor_GoldGate(t *testing.T) {
+	df := &DialogueFile{MobId: 6102, Opener: &Opener{
+		Text:     "plain",
+		Variants: []OpenerVariant{{Gates: Gates{GoldRequired: 100}, Text: "rich"}},
+	}}
 	gold := 50
 	ps := &PlayerState{HasGold: func(amount int) bool { return gold >= amount }}
 
-	text, _, _ := Greet(df, mobInst, 620, ps)
+	text, _ := df.OpenerFor(ps)
 	assert.Equal(t, "plain", text)
 
 	gold = 100
-	text, _, _ = Greet(df, mobInst, 620, ps)
+	text, _ = df.OpenerFor(ps)
 	assert.Equal(t, "rich", text)
-
-	ResetMemory(mobInst, 620)
-	delete(moodCache, mobInst)
 }

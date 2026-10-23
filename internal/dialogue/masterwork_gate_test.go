@@ -6,32 +6,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestTreeAdvance_MasterworkGate exercises the masterworkRequired gate on a
-// TreeNode (Veyra's "show me an item you crafted at skill 50+" intro gate).
-// Mirrors TestIntegration_DialogueTreeWithQuestGates's PlayerState setup.
-func TestTreeAdvance_MasterworkGate(t *testing.T) {
-	df := &DialogueFile{
-		MobId:       6000,
-		Zone:        "test",
-		DefaultMood: "neutral",
-		Tree: &Tree{
-			Nodes: []TreeNode{
-				{
-					Id:                 "masterwork-intro",
-					Triggers:           []string{"masterwork", "commission"},
-					Text:               "Ah, a fellow artisan of skill. I'll take your commission.",
-					MasterworkRequired: 50,
-				},
-				{
-					Id:       "masterwork-fallback",
-					Triggers: []string{"masterwork", "commission"},
-					Text:     "Come back when you've proven your craft.",
-				},
-			},
-		},
-	}
-
-	userId := 600
+// TestEligible_MasterworkGate exercises the masterworkRequired gate on a
+// topic (Veyra's "show me an item you crafted at skill 50+" intro gate).
+// Ported from the old TreeAdvance test (#375 Task 21).
+func TestEligible_MasterworkGate(t *testing.T) {
+	df := &DialogueFile{MobId: 6000, Topics: []Topic{{
+		Key: "commission", Kind: KindInfo, Label: "I want a commission.",
+		Text:  "Ah, a fellow artisan of skill. I'll take your commission.",
+		Gates: Gates{MasterworkRequired: 50},
+	}}}
+	tp := df.FindTopic("commission")
 
 	// hasMasterwork toggled by the test to flip HasOwnMasterwork's answer.
 	hasMasterwork := false
@@ -43,37 +27,17 @@ func TestTreeAdvance_MasterworkGate(t *testing.T) {
 		},
 	}
 
-	// Below the gate: the masterwork node is hidden, falls through to the
-	// unfiltered fallback node.
-	text, _, _, advanced := TreeAdvance(df, 6000, userId, "commission", ps)
-	assert.True(t, advanced, "some node should advance even without a masterwork")
-	assert.Equal(t, "Come back when you've proven your craft.", text,
-		"gate should hide the masterwork node when HasOwnMasterwork is false")
+	assert.False(t, df.Eligible(tp, ps), "gate should hide the topic when HasOwnMasterwork is false")
 
-	// Above the gate: the masterwork node now matches first (it's earlier in
-	// the node list and matches the same triggers).
 	hasMasterwork = true
-	ResetMemory(6000, userId)
-	text, _, _, advanced = TreeAdvance(df, 6000, userId, "commission", ps)
-	assert.True(t, advanced)
-	assert.Equal(t, "Ah, a fellow artisan of skill. I'll take your commission.", text,
-		"gate should reveal the masterwork node once HasOwnMasterwork returns true")
+	assert.True(t, df.Eligible(tp, ps), "gate should reveal the topic once HasOwnMasterwork returns true")
 
-	// Backward compat: an old PlayerState with a nil HasOwnMasterwork callback
-	// must not block the gated node (nil-guard skips the check entirely).
-	hasMasterwork = false
-	ResetMemory(6000, userId+1)
+	// Backward compat: a PlayerState with a nil HasOwnMasterwork callback must
+	// not block the gated topic (the nil-guard skips the check entirely).
 	legacyPs := &PlayerState{
 		HasQuest:  func(token string) bool { return false },
 		GiveQuest: func(token string) {},
 	}
-	text, _, _, advanced = TreeAdvance(df, 6000, userId+1, "commission", legacyPs)
-	assert.True(t, advanced)
-	assert.Equal(t, "Ah, a fellow artisan of skill. I'll take your commission.", text,
+	assert.True(t, df.Eligible(tp, legacyPs),
 		"nil HasOwnMasterwork callback should skip the gate, not fail it (backward compat)")
-
-	// Clean up
-	ResetMemory(6000, userId)
-	ResetMemory(6000, userId+1)
-	delete(moodCache, 6000)
 }

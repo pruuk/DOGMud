@@ -28,9 +28,10 @@ func tokenBelongsTo(questId int, tok string) bool {
 	return strings.HasPrefix(tok, fmt.Sprintf("%d-", questId))
 }
 
-// dialogueGateRefs collects references to questId from one gate-carrying
-// dialogue element (Pattern, TreeNode, or QuestGreeting share these fields).
+// dialogueGate collects references to questId from one gate-carrying
+// dialogue element: a topic or an opener variant.
 type dialogueGate struct {
+	quest             int // an offer or handin topic's quest id; 0 elsewhere
 	grantsQuest       string
 	questRequired     []string
 	questExcluded     []string
@@ -41,6 +42,9 @@ type dialogueGate struct {
 
 func (g dialogueGate) refs(questId int) []string {
 	out := []string{}
+	if g.quest == questId {
+		out = append(out, fmt.Sprintf("quest %d", g.quest))
+	}
 	if tokenBelongsTo(questId, g.grantsQuest) {
 		out = append(out, fmt.Sprintf("grantsQuest %q", g.grantsQuest))
 	}
@@ -70,24 +74,32 @@ func (g dialogueGate) refs(questId int) []string {
 	return out
 }
 
-// walkDialogueGates visits every gate-carrying element of a dialogue file.
-// DialogueFile.Tree is a POINTER — nil for pattern-only NPCs, which is most
-// of the live tree — so the tree sections are guarded.
+// walkDialogueGates visits every gate-carrying element of a dialogue file:
+// each topic (gates and effects) and each opener variant (gates only; a
+// variant carries no effects). DialogueFile.Opener is a pointer, nil for a
+// file with no opener, so it is guarded.
 func walkDialogueGates(df *dialogue.DialogueFile, fn func(where string, g dialogueGate)) {
-	for i, p := range df.Patterns {
-		fn(fmt.Sprintf("pattern %d", i), dialogueGate{p.GrantsQuest, p.QuestRequired, p.QuestExcluded,
-			p.QuestFlagRequired, p.QuestFlagExcluded, p.SetsQuestFlag})
+	for _, t := range df.Topics {
+		fn(fmt.Sprintf("topic %s", t.Key), dialogueGate{
+			quest:             t.Quest,
+			grantsQuest:       t.GrantsQuest,
+			questRequired:     t.QuestRequired,
+			questExcluded:     t.QuestExcluded,
+			questFlagRequired: t.QuestFlagRequired,
+			questFlagExcluded: t.QuestFlagExcluded,
+			setsQuestFlag:     t.SetsQuestFlag,
+		})
 	}
-	if df.Tree == nil {
+	if df.Opener == nil {
 		return
 	}
-	for _, n := range df.Tree.Nodes {
-		fn(fmt.Sprintf("node %q", n.Id), dialogueGate{n.GrantsQuest, n.QuestRequired, n.QuestExcluded,
-			n.QuestFlagRequired, n.QuestFlagExcluded, n.SetsQuestFlag})
-	}
-	for i, v := range df.Tree.Root.Variants {
-		fn(fmt.Sprintf("root variant %d", i), dialogueGate{v.GrantsQuest, v.QuestRequired, v.QuestExcluded,
-			v.QuestFlagRequired, v.QuestFlagExcluded, v.SetsQuestFlag})
+	for i, v := range df.Opener.Variants {
+		fn(fmt.Sprintf("opener variant %d", i+1), dialogueGate{
+			questRequired:     v.QuestRequired,
+			questExcluded:     v.QuestExcluded,
+			questFlagRequired: v.QuestFlagRequired,
+			questFlagExcluded: v.QuestFlagExcluded,
+		})
 	}
 }
 

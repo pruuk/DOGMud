@@ -82,8 +82,11 @@ func TestBoardFerry_UnknownDestinationFails(t *testing.T) {
 	require.Empty(t, *boarded, "an unknown destination boards nothing")
 }
 
+// The text path matches a destination keyword in Event.Text. The action
+// ignores the event type, so the test uses a neutral one: no live mob event
+// carries the player's own words since #375 retired player_ask.
 func TestBoardFerry_TextPathStillWorks(t *testing.T) {
 	boarded := seedFerryScene(t)
-	require.Equal(t, Success, actBoardFerry(ferryParams(""), ferryCtx("player_ask", "passage to plymouth")))
+	require.Equal(t, Success, actBoardFerry(ferryParams(""), ferryCtx("test_event", "passage to plymouth")))
 	require.Equal(t, []string{"stillwater_np_packet"}, *boarded)
 }

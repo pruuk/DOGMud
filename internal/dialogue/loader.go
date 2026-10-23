@@ -80,8 +80,6 @@ func Load(mobId int, zone string) *DialogueFile {
 		return nil
 	}
 
-	validateQuestExclusions(&df, path)
-
 	delete(loadFailureLogged, key) // a good load clears the throttle
 	dialogueCache[key] = &df
 	return &df
@@ -95,48 +93,4 @@ func zoneNameSanitize(zone string) string {
 	}
 	zone = strings.ReplaceAll(zone, " ", "_")
 	return strings.ToLower(zone)
-}
-
-// validateQuestExclusions warns if any grantsQuest node is missing the
-// quest's end token from questExcluded. Without the end-token exclusion,
-// players who have completed a quest can get it re-offered.
-func validateQuestExclusions(df *DialogueFile, path string) {
-	checkExclusions := func(label string, grantsQuest string, questExcluded []string) {
-		if grantsQuest == "" {
-			return
-		}
-		// Extract quest ID prefix: "10-start" → "10", "14-evidence" → "14"
-		idx := strings.Index(grantsQuest, "-")
-		if idx < 0 {
-			return
-		}
-		prefix := grantsQuest[:idx]
-		endToken := prefix + "-end"
-
-		// If it already grants the end token, no exclusion needed
-		if grantsQuest == endToken {
-			return
-		}
-
-		for _, ex := range questExcluded {
-			if ex == endToken {
-				return
-			}
-		}
-		mudlog.Warn("dialogue.validateQuestExclusions()", "warning",
-			fmt.Sprintf("%s: %s grants %q but questExcluded is missing %q — completed quest can be re-offered",
-				path, label, grantsQuest, endToken))
-	}
-
-	// Check patterns
-	for i, p := range df.Patterns {
-		checkExclusions(fmt.Sprintf("pattern[%d]", i), p.GrantsQuest, p.QuestExcluded)
-	}
-
-	// Check tree nodes
-	if df.Tree != nil {
-		for _, n := range df.Tree.Nodes {
-			checkExclusions(fmt.Sprintf("node[%s]", n.Id), n.GrantsQuest, n.QuestExcluded)
-		}
-	}
 }

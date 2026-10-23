@@ -264,15 +264,8 @@ func run(out io.Writer, o options) (int, error) {
 		fmt.Fprintln(out, "# no converter report applied")
 	}
 	fmt.Fprintf(out, "# %d dialogue files, %d quests, %d behavior trees, %d sources walked\n", len(in.Files), len(in.Quests), len(trees), len(w.srcs))
-	old := 0
-	for _, f := range in.Files {
-		if len(f.File.Patterns) > 0 || f.File.Tree != nil {
-			old++
-		}
-	}
-	if old > 0 {
-		fmt.Fprintf(out, "# WARNING: %d files still carry old patterns or a tree; the gate walk reads topics only, so its findings for them mean nothing\n", old)
-	}
+	// A file still carrying old patterns or a tree no longer decodes: the
+	// strict LoadAllFiles reports it as a VALIDATION line (#375 Task 21).
 	return report(out, findings, o.Zones), nil
 }
 

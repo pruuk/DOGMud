@@ -155,9 +155,10 @@ func TestOpenInstancePortal_ZoneParamStartsPromptWithGuidance(t *testing.T) {
 }
 
 func TestStakePrompt_AmountOpensExactlyAsTheTypedPath(t *testing.T) {
-	// Typed path: "ask sable arena 250".
+	// Typed path: Event.Text "arena 250". The action ignores the event
+	// type, so a neutral one stands in for the retired player_ask.
 	calls := seedStakeScene(t)
-	require.Equal(t, Success, actOpenInstancePortal(sableParams(""), stakeCtx("player_ask", "arena 250")))
+	require.Equal(t, Success, actOpenInstancePortal(sableParams(""), stakeCtx("test_event", "arena 250")))
 	typed := captureOutcome(t, calls)
 	require.Equal(t, 750, typed.gold, "fixture check: the typed path charged the stake")
 	require.Equal(t, []zoneCall{{"Instance Arena", 250, stakeUserId}}, typed.calls, "fixture check: the typed path cloned the zone at the stake")

@@ -52,6 +52,17 @@ func TestValidateWorld_CleanFixturePasses(t *testing.T) {
 	require.Empty(t, problems(t, menuFixtureYAML))
 }
 
+// Semicolons truncate spoken text, but hints reach the player through
+// SendText, never a mob's say, so a semicolon in a hint is not a problem.
+// Ported from the old ValidateDialogueFile test (#375 Task 21).
+func TestValidateWorld_HintsAreExemptFromTheSemicolonRule(t *testing.T) {
+	src := strings.Replace(menuFixtureYAML, "opener:\n  text: \"Hello.\"\n", "opener:\n  text: \"Hello.\"\n  hints: \"Ask; or listen.\"\n", 1)
+	src = strings.Replace(src, "    text: \"Wet.\"\n", "    text: \"Wet.\"\n    hints: \"Rain; mostly.\"\n", 1)
+	src = strings.Replace(src, "      text: \"Back again?\"\n", "      text: \"Back again?\"\n      hints: \"Again; yes.\"\n", 1)
+	require.Equal(t, 3, strings.Count(src, "hints:"), "the fixture edits did not apply")
+	require.Empty(t, problems(t, src))
+}
+
 func breakFixture(old, nu string) string { return strings.Replace(menuFixtureYAML, old, nu, 1) }
 
 // emDash is built from its code point so no dash character sits in source.

@@ -2,9 +2,11 @@ package dialogue
 
 // The dialogue writer (5b). No writer existed before this; the loader's
 // contract it must honour is documented at each step. Validation is NOT
-// called here — the GMCP handler validates with injected registries first
+// called here: a caller checks the proposed world with ValidateWorld first
 // (the spawn-editor lesson: hardwiring real registries into the save path
-// makes it untestable without a loaded world).
+// makes it untestable without a loaded world). Nothing outside the tests
+// calls these while the builder's dialogue editor is off; the phase 6 topic
+// builder is their intended caller.
 
 import (
 	"errors"
@@ -58,7 +60,7 @@ func CreateNewDialogueFile(mobId int, zone string) error {
 	}
 	df := DialogueFile{
 		MobId: mobId, Zone: zone, DefaultMood: string(MoodNeutral),
-		Patterns: []Pattern{{Keywords: []string{""}, Responses: []string{"..."}}},
+		Opener: &Opener{Text: "..."},
 	}
 	return SaveDialogueFile(df)
 }

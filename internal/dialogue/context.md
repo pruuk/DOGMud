@@ -2,40 +2,44 @@
 
 ## Purpose
 
-`internal/dialogue` is the NPC conversation engine: it loads a mob's dialogue
-YAML, matches what the player said against keyword patterns or a stateful
-conversation tree, applies whatever quest effects the matched node carries, and
-returns the text to speak plus a hint line.
+`internal/dialogue` is the NPC conversation data model and its rules: it loads a
+mob's dialogue YAML (ambient greetings, the opener `talk` says first, and a menu
+of keyed topics), decides which topics a player may see, applies a chosen
+topic's effects, and validates a proposed world of dialogue files. The `talk`
+flow, `give` resolution and the roster marker that call it live in
+`internal/conversation`.
 
 It deliberately does **not** import `characters` or `users`. Everything it needs
 to know about the player arrives through `PlayerState`, a struct of callbacks.
 That keeps the package testable and keeps the import graph acyclic.
 
-Two conversation styles coexist in one file:
-
-- **Patterns** — stateless keyword → response rules. Good for ambient topics.
-- **Tree** — stateful nodes with triggers, unlock requirements, and per-player
-  memory. Good for quest lines.
+Quest arc #375 phase 1 replaced the old keyword patterns and stateful tree
+(`Match`, `MatchWithFallbackInfo`, `TreeAdvance`, `Greet`, the old
+`ValidateDialogueFile` validator and its registry wiring) with topics. Those
+are deleted, and a file still carrying `patterns:`, `tree:` or `memory:` no
+longer decodes under the strict loader.
 
 ## Files
 
-- **types.go** — every YAML shape plus `PlayerState`.
-- **engine.go** — `Match`, `MatchWithFallbackInfo`, `TreeAdvance`, `Greet`, and
-  the shared gate/effect helpers.
-- **loader.go** — `Load(mobId, zone)`, zone-name sanitising, exclusion warnings.
-- **save.go** — `SaveDialogueFile`, `CreateNewDialogueFile`,
-  `DeleteDialogueFile` (no caller now that the builder's dialogue editor is
-  off; Task 21 reshapes this file).
-- **memory.go** — per-(mob instance, player) conversation memory.
-- **mood.go** — per-mob-instance mood state.
-- **greetings.go** — ambient arrival greetings and greet-once tracking.
-- **validate.go** — `ValidateDialogueFile` with injectable validators. The
-  semicolon rule covers spoken fields only (greetings, pattern responses,
-  root, variant and node text); hints go out through SendText and are exempt.
-- **registry_validators.go**: `RegistryValidators()`, the old-format
-  validators backed by the loaded quest and item registries. Nothing but its
-  own test calls it since Task 20 switched the builder's dialogue editor off;
-  Task 21 deletes it.
+- **types.go**: `PlayerState`, `QuestFlagSet`, `RepBump`, `Mood`, `Greeting`,
+  `DialogueFile`.
+- **topic.go**: `Gates`, `Effects`, `Topic`, `Opener`, `OpenerVariant`, the
+  kind constants `KindInfo` / `KindOffer` / `KindHandIn`, and `HeardKey`.
+- **topics.go**: the `DialogueFile` methods `FindTopic`, `Eligible`,
+  `TopicMarker`, `Marker`, `OpenerFor`, `Breadcrumbs`, `Menu`, `ItemTopic`,
+  `Apply`.
+- **engine.go**: the shared gate and effect helpers `checkQuestGate`,
+  `itemExcludedBlocks`, `tryCharge`, `applyPaidEffects`, `applyQuestEffects`.
+- **loader.go**: `Load(mobId, zone)` (strict decode, lazy cache) and
+  zone-name sanitising.
+- **save.go**: `SaveDialogueFile`, `CreateNewDialogueFile` (writes an opener
+  skeleton), `DeleteDialogueFile`. No caller outside the tests while the
+  builder's dialogue editor is off; the phase 6 topic builder is their
+  intended caller.
+- **memory.go**: per-(mob instance, player) memory, now only the greet-once
+  record.
+- **mood.go**: per-mob-instance mood state.
+- **greetings.go**: ambient arrival greetings and greet-once tracking.
 - **world.go**: `World`, `QuestInfo`, `Problem`, `ValidateWorld`: the topic
   validators over a proposed world (#375 spec 5). `World.BehaviorTopics` holds
   each mob's per-mob tree `topic_is` keys (checked both ways);
@@ -50,8 +54,12 @@ Two conversation styles coexist in one file:
   `ArchetypeTopics` and adds the file-placement rules only the loaded mob
   templates can judge (dialogue folder equals the mob's zone folder, behavior
   trees read at the runtime's path, unparsable trees reported).
-- **validation.go** — `CollectFlagReferences` for quest-flag cross-checking.
-- **walk.go** — `WalkAllFiles`, used by audits and boot-time validation.
+- **manifest.go**: `Manifest`, `ParseManifest`, `Manifest.Diff`,
+  `HeardRenames`: the committed topic-key manifest.
+- **validation.go**: `CollectFlagReferences` over topics and opener variants,
+  for `questengine.ValidateAllFlags`.
+- **walk.go**: `WalkAllFiles`, used by the quest editor's reference guard.
+- **testing.go**: `InstallForTest`, for tests in other packages.
 
 ## Data model
 
@@ -61,22 +69,10 @@ type DialogueFile struct {
     Zone        string
     DefaultMood string
     Greetings   []Greeting
-    Patterns    []Pattern
-    Tree        *Tree          // optional
-    Memory      MemoryConfig
+    Opener      *Opener   // optional
+    Topics      []Topic
 }
 ```
-
-`Pattern`, `TreeNode`, and `QuestGreeting` each carry the **same gating
-fields**: `QuestRequired`, `QuestExcluded`, `GrantsQuest`, `RequiresItem`,
-`GivesItem`, `QuestFlagRequired`, `QuestFlagExcluded`, `SetsQuestFlag`,
-`BumpsRep`, `GivesGold`, `ChargesGold`, `MasterworkRequired`, `GoldRequired`,
-`ItemExcluded`. Two shared helpers do the work for all three, plus
-`itemExcludedBlocks` for `itemExcluded` (YAML `itemExcluded: <itemId>`): the
-entry is hidden while the player carries the item anywhere
-(`PlayerState.CarriesItem`, falling back to `HasItem`). It keeps a quest
-giver's handout to one item while the quest is open; put the refusal in a
-later entry with the same triggers and no gate (2026-10-17).
 
 Topics and opener variants (`topic.go`) share one `Gates` struct:
 `questRequired`, `questExcluded`, `questFlagRequired`, `questFlagExcluded`,
@@ -87,7 +83,12 @@ key such as the Threshold Keeper's disc; `ItemTopic` treats it as wanting the
 item, so `give` plays the topic and keeps the item), `goldRequired` and
 `masterworkRequired`. `Gates.pass` checks them all; a nil `PlayerState` skips
 them, and `carriesItem` with no item callback fails closed. `ValidateWorld`
-checks every item id they name.
+checks every item id they name. `itemExcluded` keeps a quest giver's handout
+to one item while the quest is open (2026-10-17).
+
+A topic's `Effects` are `grantsQuest`, `givesItem`, `setsQuestFlag`,
+`bumpsRep`, `givesGold`, `chargesGold` and `moodChange`. Opener variants carry
+gates only.
 
 ```go
 func checkQuestGate(questRequired, questExcluded []string, requiresItem int,
@@ -98,139 +99,134 @@ func applyQuestEffects(grantsQuest string, requiresItem, givesItem int,
 ```
 
 `applyQuestEffects` attempts `GiveItem` **before every other effect** and
-returns false — applying nothing else — when delivery fails (2026-08-03
-soft-lock fix): no quest grant, no `requiresItem` removal, no flags/rep/
-gold, and `TreeAdvance` skips `UpdateMemory` so the node re-fires once
-the player makes room. `PlayerState.GiveItem` is `func(int) bool`; the
-production callback in `conversation.PlayerState` returns
-`StoreItem`'s verdict and returns false (with an error log) for an
-invalid item id. A nil `GiveItem` counts as delivered (skip-checks
-contract).
+returns false, applying nothing else, when delivery fails (2026-08-03
+soft-lock fix): no quest grant, no `requiresItem` removal, no flags/rep/gold,
+and `Apply` does not record the topic as heard, so it plays again once the
+player makes room. `PlayerState.GiveItem` is `func(int) bool`; the production
+callback in `conversation.PlayerState` returns `StoreItem`'s verdict and
+returns false (with an error log) for an invalid item id. A nil `GiveItem`
+counts as delivered (skip-checks contract).
 
-Moods: `friendly`, `neutral`, `hostile`, `afraid`, `grateful`. A pattern or
-greeting can restrict itself to a subset via `moods:`, and matching a node can
-shift the mood via `moodChange:`.
+`goldRequired` (2026-10-05) hides a topic from a player carrying less than
+that much gold (`PlayerState.HasGold`; nil fails it closed). It takes nothing
+by itself. `chargesGold` is the first effect `Apply` takes (`tryCharge`,
+backed by `PlayerState.ChargeGold`, all or nothing; nil fails closed). A
+failed charge makes `Apply` report false with nothing applied. If the paid
+topic's effects then abort (an undeliverable item), `applyPaidEffects` gives
+the gold back. `ValidateWorld` refuses a `chargesGold` without a
+`goldRequired` of at least the same price. Do not sell a quest by charging in
+its `quest_granted` trigger: that runs later, outside the step that checked
+the gold. `quest_charge_gold_gate_guard_test.go` pins the rule for shipped
+content.
+
+Moods: `friendly`, `neutral`, `hostile`, `afraid`, `grateful`. A greeting can
+restrict itself to a subset via `moods:`; a topic's `moodChange` shifts the
+mood when chosen (the caller does it with `ShiftMood`, since `Apply` has no mob
+instance). Mood never gates a topic.
 
 ## Public API
 
 ```go
 func Load(mobId int, zone string) *DialogueFile
 func WalkAllFiles(fn func(mobId int, zone string, df *DialogueFile))
+func LoadAllFiles() (files []*DialogueFile, problems []Problem)
+func RegistryWorld(behaviorTopics map[int][]string) (World, []Problem)
+func ValidateWorld(w World) []Problem
 
-func Match(df *DialogueFile, mobInstanceId int, topic string, ps *PlayerState) (text, hints string, ok bool)
-func MatchWithFallbackInfo(df *DialogueFile, mobInstanceId int, topic string, ps *PlayerState) (text, hints string, ok, wasFallback bool)
-func TreeAdvance(df *DialogueFile, mobInstanceId, userId int, topic string, ps *PlayerState) (text, hints, nodeId string, ok bool)
-func Greet(df *DialogueFile, mobInstanceId, userId int, ps *PlayerState) (text, hints string, ok bool)
+func (df *DialogueFile) FindTopic(key string) *Topic
+func (df *DialogueFile) Eligible(t *Topic, ps *PlayerState) bool
+func (df *DialogueFile) TopicMarker(t *Topic, ps *PlayerState) string
+func (df *DialogueFile) Marker(ps *PlayerState) string
+func (df *DialogueFile) OpenerFor(ps *PlayerState) (text, hints string)
+func (df *DialogueFile) Breadcrumbs(ps *PlayerState) []string
+func (df *DialogueFile) Menu(npcName string, ps *PlayerState) menu.Menu
+func (df *DialogueFile) ItemTopic(itemId int, ps *PlayerState) (t *Topic, wanted bool)
+func (df *DialogueFile) Apply(t *Topic, ps *PlayerState) bool
+func HeardKey(mobId int, key string) string
+
 func PickGreeting(gs []Greeting, currentMood Mood) (string, bool)
+func HasGreeted(mobInstanceId, userId int) bool
+func MarkGreeted(mobInstanceId, userId int)
 
 func GetMood(mobInstanceId int, defaultMood string) Mood
 func SetMood(mobInstanceId int, mood Mood)
 func ShiftMood(mobInstanceId int, target, defaultMood string)
 
 func GetMemory(mobInstanceId, userId int) *PlayerMemory
-func UpdateMemory(mobInstanceId, userId int, nodeId string, unlocks []string, topic string)
-func IsExpired(mem *PlayerMemory, expiryPeriod string) bool
-func ResetMemory(mobInstanceId, userId int)
-func HasGreeted(mobInstanceId, userId int) bool
-func MarkGreeted(mobInstanceId, userId int)
+func SweepMemories() int
+func ForgetMobInstance(mobInstanceId int) int
 
-func ValidateDialogueFile(df DialogueFile, v DialogueValidators) (errs, warns []string)
-func RegistryValidators() DialogueValidators
 func CollectFlagReferences(df *DialogueFile) (refs, sets []FlagRef)
+func ParseManifest(data []byte) (Manifest, error)
+func HeardRenames() map[string]string
 
 func SaveDialogueFile(df DialogueFile) error
 func CreateNewDialogueFile(mobId int, zone string) error
 func DeleteDialogueFile(mobId int, zone string) error
+func InstallForTest(df *DialogueFile) func()
 ```
 
-## Per-player memory
+## Per-instance memory
 
 ```go
 type PlayerMemory struct {
-    VisitCount      int
-    LastVisitRound  uint64
-    UnlockedNodes   map[string]bool
-    CurrentRootSeen bool
-    Greeted         bool
-    RecentTopics    []string   // capped at 5
+    LastVisitRound uint64
+    Greeted        bool
 }
 ```
 
 Keyed by `mobInstanceId<<32 | uint32(userId)` in a package-level map. **This is
-in-process only** — never written to disk, so every restart resets who has been
-greeted and which nodes are unlocked.
-
-The map is swept so it cannot grow for the life of the process:
-
-```go
-func SweepMemories() int              // drops entries idle > memorySweepIdleRounds
-func ForgetMobInstance(mobId int) int // drops every player's memory of one instance
-```
-
-`goldRequired` (2026-10-05) hides an entry from a player carrying less than
-that much gold (`PlayerState.HasGold`; nil fails it closed). It takes
-nothing by itself. `chargesGold` takes the price as part of matching, right
-after the gate and before every other effect (`tryCharge`, backed by
-`PlayerState.ChargeGold`, all or nothing; nil fails closed). A failed charge
-makes the entry not match, so the next entry with the same triggers answers
-and nothing of the paid one is applied. If the paid entry's effects then
-abort (an undeliverable item), `applyPaidEffects` gives the gold back. Put
-`goldRequired` and `chargesGold` at the same price on a purchase node, and
-author the refusal as a later node with the same triggers and gates minus
-those two (first match wins, the same shape `masterworkRequired` uses). Do
-not sell a quest by charging in its `quest_granted` trigger: that runs later,
-outside the step that checked the gold. Veyra's nine `teach_` nodes in
-`the_confluence/9584.yaml` are the reference, and
-`quest_charge_gold_gate_guard_test.go` pins the rule for shipped content.
+in-process only**: never written to disk, so every restart resets who has been
+greeted. What a player has heard is saved on the character (`HeardTopics`),
+never here. `MarkGreeted` stamps `LastVisitRound`, so `SweepMemories` ages an
+idle pair out (after `memorySweepIdleRounds`) and the NPC greets afresh.
 
 `hooks.SweepDialogueMemory` runs the sweep every 500 turns. Call
-`ForgetMobInstance` when a mob despawns — instance ids are reused, and a new
-mob must not inherit a stranger's conversation history.
+`ForgetMobInstance` when a mob despawns: instance ids are reused, and a new
+mob must not inherit a stranger's greeting.
 
 ## Gotchas
 
 - **A `nil` `*PlayerState` disables all gating.** Accepted for backward
-  compatibility with mob-to-mob and other non-user contexts; every requirement,
-  exclusion, flag check and masterwork gate is skipped. Never pass nil from a
-  production path — `conversation.PlayerState` always returns a populated one.
+  compatibility with non-user contexts; every requirement, exclusion, flag
+  check and masterwork gate is skipped. Never pass nil from a production
+  path: `conversation.PlayerState` always returns a populated one.
 - **Every callback field is optional and individually nil-checked.** A missing
   *interrogative* callback fails the gate **closed** (no `HasQuest` means a
-  `questRequired` node is hidden, because absent information is not proof the
+  `questRequired` topic is hidden, because absent information is not proof the
   player qualifies). `questExcluded` is the deliberate exception: without
-  `HasQuest` we cannot confirm the excluding token, so the node stays visible
-  rather than silently vanishing.
-- **`TreeAdvance` substring-matches triggers in file order.** Put quest **grant
-  nodes first** under `tree.nodes`, or an earlier generic node will swallow the
-  trigger word.
-- **Memory is per *instance*, not per template.** Respawn the mob and the
-  player's unlocked nodes are gone. Prefer `questRequired` over `requires` for
-  anything that must survive — `requires` reads `UnlockedNodes`, which is
-  volatile.
-- **`expiryPeriod` should almost always be empty.** The only legitimate use is
-  a quest where urgency is the design intent; otherwise it bricks conversations.
-- **The filename must be `<mobId>.yaml`.** A mismatch does not error — it
-  silently mutes the NPC.
-- **A bare scalar where a list is expected nils the entire file.** Writing
-  `questRequired: "X"` instead of `["X"]` makes yaml.v2 fail the whole
-  document, and because dialogue loads lazily the boot test will not catch it.
-- **Colons and semicolons in `text:`/`hints:` break the YAML or the renderer.**
-  Use `>` block scalars or an em-dash.
+  `HasQuest` we cannot confirm the excluding token, so the topic stays visible
+  rather than silently vanishing. A nil `HasHeard` fails `heardRequired`
+  closed.
+- **The filename must be `<mobId>.yaml`, in the mob's zone folder.** The boot
+  door refuses a mismatch (`decodeFile`, `dialogueFolderProblems`).
+- **Decoding is strict.** An unknown key, an old-format field or a bare scalar
+  where a list is expected fails the file; the boot door and the CI sweep
+  report it rather than leaving the NPC mute.
+- **Semicolons in spoken text are refused** (`ValidateWorld`): `;` is the
+  command separator and truncates a mob's `say`. Hints go out through
+  SendText and are exempt.
 - **Voice rules are enforced by review, not by code:** `text` is the NPC
   speaking (first person); `hints` is narrator text addressed to the player
   (never a third-person self-reference).
-- **Every `grantsQuest` node needs the quest's end token in `questExcluded`**,
-  or a player who finished the quest gets re-offered it. The loader warns at
-  runtime when this is missing.
+- **Every `grantsQuest` needs the granted token and the quest's end token in
+  `questExcluded`**, or the offer repeats or a finished quest is re-offered.
+  `ValidateWorld` refuses either omission.
 
 ## Dependencies
 
-`gametime` (memory expiry), `util` (round count), `mudlog`, plus the YAML
+`util` (round count), `mudlog`, `configs`, `menu` (menu types and
+`LintLabels`), `quests` and `items` (for `RegistryWorld` only), plus the YAML
 loader. Quest effects are applied through `PlayerState` callbacks, so there is
 no compile-time dependency on the quest engine.
 
 ## Consumers
 
-`internal/usercommands` (`talk`, `ask`), `internal/mobs`, `internal/hooks`,
-and the boot-time validation pass. The admin web dialogue editor is off (every
+`internal/conversation` (talk, give, roster marker, companion asker),
+`internal/usercommands` (`go.go` arrival greetings), `internal/questengine`
+(`CollectFlagReferences`), `internal/hooks` (memory sweep), `main_dialogue.go`
+(boot door), `modules/gmcp` (quest reference guard, `hasDialogue`),
+`modules/aicompanion`, and the dev tools `cmd/dialoguecheck` and
+`cmd/dialogueconvert`. The admin web dialogue editor is off (every
 `Build.Dialogue.*` message is refused in `modules/gmcp`) until the topic
 builder of quest arc phase 6.
