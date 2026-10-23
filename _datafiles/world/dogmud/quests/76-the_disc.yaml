@@ -10,13 +10,17 @@ steps:
     map_target: 4023
     description: "Brennan believes the disc is a key that must be woken, and
       that the man who knew how left his work in an Ashwick cottage."
-    hint: "The abandoned cottage stands in Ashwick, a long road from
-      Greenford: north over the bridge and west by the road to the
-      Confluence, then north along the River
-      Road, through Amber Valley and up the South Road to the Ashwick
-      Crossroads. From the crossroads, go east five times to the East Edge of the village, then
-      south into the cottage. Read the journal on its table. Type look
-      journal."
+    hint: "If you do not carry the disc yet, take it first from the
+      cracked floor of the old Reliquary at Pothole Coulee. The abandoned
+      cottage stands in Ashwick, a long road from Greenford. From
+      Brennan's Office, go down through the town to the Greenford Gate,
+      north over the bridge and west along the road to the Confluence. In
+      the city, cross the Brenn Bridge west to Tri-Cross Square and go
+      north through the quays to the River Gate. Then take the River Road
+      north, through Amber Valley and up the South Road to the Ashwick
+      Crossroads. From the crossroads, go east five times to the East Edge
+      of the village, then south into the cottage. Read the journal on its
+      table. Type look journal."
   - id: journal
     map_target: -1  # -1: return-to-giver / in-place (start room 4023); Phase 2 split review
     description: "You read the father's journal: a life spent chasing a
@@ -140,7 +144,7 @@ triggers:
       missing: ["76-end"]
       missing_item: 40167
     actions:
-      - actor: "The marks are cut for a thing you do not have in hand. Without the disc, they are only scratches in old stone. The disc lies in the old Reliquary at Pothole Coulee."
+      - actor: "The marks are cut for a thing you do not have in hand. Without the disc, they are only scratches in old stone. The disc lies in the cracked floor of the old Reliquary at Pothole Coulee. Type look disc there."
   - event: room_interact
     room: 4023
     noun: hearth-marks
@@ -148,3 +152,18 @@ triggers:
       missing: ["76-journal"]
     actions:
       - actor: "Marks are cut into the hearthstone in a deliberate pattern — a method for something, though you cannot read it yet."
+  # Recovery: a player who finished the quest and lost the woken disc takes
+  # a fresh grey disc from the Reliquary (5343 gives one while it is
+  # missing) and wakes it here again. Without this the keeper (9553) turns
+  # them away for good.
+  - event: room_interact
+    room: 4023
+    noun: hearth-marks
+    conditions:
+      has: ["76-end"]
+      has_item: 40167
+      missing_item: 40168
+    actions:
+      - consume_item: 40167
+      - give_item: 40168
+      - actor: "You set the grey disc into the cut center of the hearthstone and follow his method again. The lines warm, and the mark at the center wakes."

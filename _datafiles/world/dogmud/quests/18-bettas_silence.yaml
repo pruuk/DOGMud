@@ -24,8 +24,9 @@ steps:
       girl who slept in her barn."
     hint: "A bloodline agent in a dark coat walks the road around
       the Road Fork, asking about a young woman traveling north.
-      From the village square, go south twice, then east twice to
-      the Road Fork. When you meet the agent, you will have to
+      From Betta's Yard, go east twice and south twice to the
+      village square, then south twice and east twice to the Road
+      Fork. When you meet the agent, you will have to
       choose what to say, and it cannot be taken back. Type talk
       agent."
   # Inserted 2026-10-23 (#375 batch 7, spec R28): the agent's answers

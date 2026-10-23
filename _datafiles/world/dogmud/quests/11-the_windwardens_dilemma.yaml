@@ -19,8 +19,7 @@ steps:
     hint: "Rhett camps at the Ridge Approach: from the Old Citadel
       Plaza at Thornwall's eastern edge, go east seven times. Sylara
       keeps the Stone Circle: from the Ridge Approach, go south twice
-      to the Ridge Trail Junction, then east. Type talk rhett there,
-      or talk sylara at the circle."
+      to the Ridge Trail Junction, then east. Type talk rhett."
   # sided: the choice is made in talk, after each side's warning (R28).
   # Old saves that chose a side before this step existed hold the flag
   # without it; the hand-ins gate on 11-start and the flag, not on this.

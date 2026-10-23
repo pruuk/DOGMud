@@ -10,13 +10,13 @@ segments:
     idlecommands:
       - emote runs a hand along the near horse's neck, checking the coat for
         damp with a quick, practiced press.
-      - say Coaches west depart on the hour. If you need provisions or a hired
-        mount, you have come to the right yard.
+      - say Coaches west run on the post's timetable. If you need food for the
+        road, you have come to the right yard.
       - emote lifts a harness from the rack, works the buckle back and forth
         twice, then hangs it at a slightly better angle.
       - emote carries a water bucket to the near stall and sets it down without
         spilling a drop.
-      - say The horses go out well-rested or they do not go out at all -- that
+      - say The horses go out well-rested or they do not go out at all. That
         is how I keep the coaches on schedule.
       - emote stands in the stable doorway and looks west along the road,
         measuring something in the sky with a flat, unhurried glance.
@@ -27,8 +27,8 @@ segments:
     idlecommands:
       - emote sweeps a slow line of chaff and straw toward the stable door,
         working corner-to-corner without rushing.
-      - say Long day. Last coach cleared the west road before the rain came --
-        exactly how it should go.
+      - say Long day. Last coach cleared the west road before the rain came.
+        That is how it should go.
       - emote checks the water bucket in each stall in turn, topping off two
         and leaving the rest.
       - emote folds a horse blanket in three neat lengths and drapes it over the

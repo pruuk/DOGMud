@@ -343,8 +343,9 @@ all the way to the end of himself. You hope, wherever she is,
 she never learns how far he went.
 
 quest|76|trigger4|action5|observer => <ansi fg="username">Aliceia</ansi> does something careful at the marked hearth, and the air goes briefly strange.
-quest|76|trigger5|action0|actor => The marks are cut for a thing you do not have in hand. Without the disc, they are only scratches in old stone. The disc lies in the old Reliquary at Pothole Coulee.
+quest|76|trigger5|action0|actor => The marks are cut for a thing you do not have in hand. Without the disc, they are only scratches in old stone. The disc lies in the cracked floor of the old Reliquary at Pothole Coulee. Type look disc there.
 quest|76|trigger6|action0|actor => Marks are cut into the hearthstone in a deliberate pattern — a method for something, though you cannot read it yet.
+quest|76|trigger7|action2|actor => You set the grey disc into the cut center of the hearthstone and follow his method again. The lines warm, and the mark at the center wakes.
 quest|77|rewards|actor => You know now. It sits in you like a swallowed stone. The sky will never look the same, and neither will the blessed, and neither will you. Be careful who you tell.
 quest|77|trigger0|action2|actor => You stand among the stones and let the light find them, and one
 by one they wake — a slow inner glow, a drift of moving marks —

@@ -11,7 +11,7 @@ segments:
       - emote presses both palms flat against a sack of grain, feeling the texture
         through the weave without opening it, then nods once.
       - say Stone-ground this morning. Flour does not keep its quality if you
-        leave it sitting -- ask me if you need it fresh.
+        leave it sitting, so buy it the day you mean to use it.
       - emote tips a measure of flour from the scoop into a cloth bag, folds
         the top with three precise creases, and sets it on the counter.
       - say The wheel sets the pace and everything else follows. People who
@@ -27,7 +27,7 @@ segments:
         sacks, and begins stacking the day's remaining bags at the back of the
         counter in order of weight.
       - say That is the last grinding of the day. The wheel runs again at
-        first light -- come back then if you want the morning batch.
+        first light. Come back then if you want the morning batch.
       - emote folds the flour tallies with two careful creases, tucks them into
         the mill ledger, and sets the ledger on its shelf with a small sound of
         finality.

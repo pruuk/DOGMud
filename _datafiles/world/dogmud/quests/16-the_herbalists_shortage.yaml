@@ -16,7 +16,8 @@ steps:
     hint: "From the East Edge of Ashwick, follow the forest
       path north three times to a hidden camp. Whoever lives
       there gathers in the herb clearing just west of it in
-      the mornings. Type talk forager."
+      the mornings. They sleep at the camp late at night. Type talk
+      forager."
   - id: forager
     map_target: 4027  # fallback when Delia is not spawned
     map_target_mob: 259  # follow Delia (schedule ashwick_delia) — a fixed room is wrong for part of the day
@@ -28,7 +29,8 @@ steps:
       Green. From the forager's camp, go south three times to
       the East Edge, west twice to the green, then north. In
       the afternoon she works in the garden behind the cottage,
-      and at dusk she sits on the green. Type talk delia."
+      and at dusk she sits on the green. She sleeps at the cottage at
+      night. Type talk delia."
   - id: end
     description: "You resolved Delia's herb shortage. She
       is grateful, and her worktable is open to you."

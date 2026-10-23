@@ -35,8 +35,9 @@ steps:
       The hedgerow bandit at the Mire Cutoff is dead. The Reach-Touched
       still haunts the Empty Reach to the north.
     hint: >-
-      Follow the road north from the Lake & Ladle through the Empty Reach
-      to the Abandoned Camp, and put down the Reach-Touched.
+      From the Mire Cutoff, go northeast to the Lake & Ladle yard, then
+      follow the road north through the Empty Reach to the Abandoned
+      Camp, and put down the Reach-Touched.
   - id: reach
     map_target: 5378
     description: >-

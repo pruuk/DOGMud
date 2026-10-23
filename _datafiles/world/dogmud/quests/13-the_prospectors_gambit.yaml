@@ -2,16 +2,16 @@ questid: 13
 name: The Prospector's Gambit
 description: You have chosen to help Geomancer Rhett extract windstone
   from the ridge. The crystal could advance healing magic and protect
-  Thornwall. Completing this quest locks The Warden's Covenant.
+  Thornwall. Siding with Rhett locked The Warden's Covenant.
 secret: false
 steps:
   - id: start
     map_target: 3030  # travel to Rhett at the Ridge Approach
-    description: "Travel to Geomancer Rhett at the Ridge Approach and
-      help him begin the windstone extraction."
-    hint: "Geomancer Rhett camps at the Ridge Approach. From the Old
-      Citadel Plaza at Thornwall's eastern edge, go east seven times.
-      Type talk rhett."
+    description: "Tell Geomancer Rhett at the Ridge Approach when you
+      are ready to help him begin the windstone extraction."
+    hint: "Tell Rhett you are ready to hold the brace. He camps at the
+      Ridge Approach: from the Old Citadel Plaza at Thornwall's eastern
+      edge, go east seven times. Type talk rhett."
   - id: extraction
     map_target: -1  # -1: return-to-giver / in-place (start room 3030); Phase 2 split review
     description: "Assist Rhett with the delicate extraction process.
@@ -21,8 +21,6 @@ steps:
   - id: end
     description: "The extraction is complete. Rhett has the windstone
       he needs."
-    hint: "The extraction is complete. Speak with Rhett at the Ridge
-      Approach to finish. Type talk rhett."
 rewards:
   actor: "Rhett grins broadly, cradling the extracted crystal
     like a newborn. He disappears into his work for hours, and when

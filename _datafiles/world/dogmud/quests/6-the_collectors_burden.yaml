@@ -22,8 +22,8 @@ steps:
       Return to Harn at Watchers Crossing and tell him the report has been delivered."
     hint: "Return to Toll Collector Harn at Watchers Crossing. From the
       Records Office, go south to Main Street, then west ten times to
-      the Tollhouse. In the evening he drinks at the Crossing Inn. Type
-      talk harn."
+      the Tollhouse. In the evening he drinks at the Crossing Inn. He
+      sleeps on a cot by the ledger late at night. Type talk harn."
   - id: end
     description: "The maintenance report has been delivered. Thornwall will review the
       bridge's condition and decide the toll's fate."
