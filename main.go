@@ -1893,6 +1893,12 @@ func loadAllDataFiles(isReload bool) {
 	ferry.LoadDataFiles()
 	warehouse.LoadAll()
 	questengine.LoadDataFiles()
+	if probs := validateShippedDialogue(); len(probs) > 0 {
+		for _, p := range probs {
+			mudlog.Error("dialogue", "problem", p.String())
+		}
+		panic(fmt.Sprintf("%d dialogue problems; see the log above", len(probs)))
+	}
 	templates.LoadAliases(plugins.GetPluginRegistry())
 	keywords.LoadAliases(plugins.GetPluginRegistry())
 	mutators.LoadDataFiles()

@@ -72,7 +72,7 @@ func Load(mobId int, zone string) *DialogueFile {
 	}
 
 	var df DialogueFile
-	if err := yaml.Unmarshal(bytes, &df); err != nil {
+	if err := yaml.UnmarshalStrict(bytes, &df); err != nil {
 		// NOT cached, for the same reason: this is the case an author hits
 		// while editing, and they must be able to fix the file and retry
 		// without restarting the server.
