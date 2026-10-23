@@ -1,6 +1,6 @@
 roomid: 6044
 zone: South Road
-title: The Lake & Ladle
+title: The Full Ladle
 description: >
   Woodsmoke and frying onions reach you a hundred paces before the
   building does. It is the first cooking-smell since the crossroads, and after
@@ -20,12 +20,12 @@ exits:
   south: {roomid: 6045}
 nouns:
   inn sign: >
-    A weather-blistered board painted with a still blue lake and,
-    floating improbably upon it, an enormous wooden ladle. The joke is old
-    and local: there is no lake within thirty miles, only the long thirst
-    of the road and the promise that here, at least, the ladle comes full.
-    The paint has faded but the lettering beneath, THE LAKE & LADLE, has
-    been freshly picked out in red.
+    A weather-blistered board painted with an enormous wooden ladle,
+    brimming over. The joke is old and local: there is no water worth the
+    name within thirty miles, only the long thirst of the road and the
+    promise that here, at least, the ladle comes full. The paint has faded
+    but the lettering beneath, THE FULL LADLE, has been freshly picked out
+    in red.
   hearth: >
     A broad stone fireplace banked low, a black iron pot swinging on
     a crane above the coals. Whatever simmers in it has been going since
