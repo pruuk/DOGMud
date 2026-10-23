@@ -3001,6 +3001,12 @@ One subagent per zone batch (34 zone folders; batch the small ones: about 8 batc
 
 - [ ] For every `delete quest <file> trigger <index>` line in the final report (33 `item_give`, 1 `dialogue`), delete that trigger block from the quest file with Edit, keeping comments that still describe remaining triggers and removing comments that described the deleted one. Then `grep -n "event: item_give" -r _datafiles/world/dogmud/quests` must list only triggers without a `grant` action (expect none) and `grep -n "event: dialogue" -r _datafiles/world/dogmud/quests` must be empty.
 
+**Done 2026-10-23:** 40 of the 41 report lines deleted by content (all indices still matched). Quest 28's `event: dialogue` trigger (mob 9491, grants 28-asked) is kept, per the recorded decision in the quest file (review m16): the old `ask` still answers until Task 19, so **Task 19 deletes it** once `ask` redirects to `talk`. Quest 17's `diplomacy` flag value went with the old 281/286 dialogue at Step 4; Soren 286 has no dialogue file (he attacks on sight).
+
+**Checker trap after this task:** `dialoguecheck -report auto` re-applies the report's delete lines by index, so pointed at `C:/tmp/dogmud-375-convert/dialogue` it now drops live triggers. Run it against the repo folder (`-dialogue _datafiles/world/dogmud/dialogue`, where no sibling report exists) or with `-report none`.
+
+**Tests the plan did not schedule:** about 30 `internal/questengine` per-quest tests (`..._OneCommandPerStep`, `..._MidQuestGreetsAndAnswersEachStep`, handout tests), the give-path tests for quests 35 and 69, and four root tests read the shipped old-format dialogue or the deleted give triggers. They are ported to topics in the content commit, so the suite stays green from here; Tasks 19 and 21 keep their own lists.
+
 ### Task 17: Rewrite the behavior-tree ask branches
 
 - [ ] For each of the 26 branches in the report, edit its behavior file with Edit:
@@ -3205,6 +3211,7 @@ func init() {
 
 Keep the quest engine notify (no shipped trigger grants on `item_give` any more; the validator refuses one that does) and everything after it.
 
+- [ ] **Step 5b: Quest 28's ask trigger.** Delete the `event: dialogue` trigger in `quests/28-waking_to_gaius.yaml` (mob 9491, grants `28-asked`) and its comment (review m16 kept it until `ask` redirects to `talk`; Task 16 note). Then `grep -n "event: dialogue" -r _datafiles/world/dogmud/quests` must be empty. Regenerate `internal/narration` goldens if they move.
 - [ ] **Step 6: Old-path tests.** Run `go test ./internal/usercommands/ -count=1` and read every failure. For each failing test: if it tests behavior that still exists (gold gates, item delivery failure, sleeping NPC refusal, behaviour-tree broadcast on a give), port it to `talk`/topics/`give`; if it tests typed-topic matching, `ask` answers, the LLM path or tree memory, delete it and list it in the commit message. Expected to be touched: `ask_test.go`, `ask_behaviour_broadcast_test.go`, `talk_gold_test.go`, `talk_giveitem_test.go`, `give_test.go` (the quest-engine-intercept test keeps working: its fixture mob has no dialogue file, so `conversation.Give` returns false).
 - [ ] **Step 7: Run**
 
