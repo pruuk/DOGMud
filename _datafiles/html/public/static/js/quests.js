@@ -2,7 +2,7 @@
 /*
  * quests.js — the quest editor (admin web-building 5c), fifth mode of the
  * /build page. Consumes Build.Quests (list) + Build.Quest (detail) GMCP and
- * drives Build.Quest.Update/Create/Delete. Mirrors dialogue.js's collapsible
+ * drives Build.Quest.Update/Create/Delete. Mirrors the removed dialogue editor's collapsible
  * (whole-row ▸/▾ toggle) and chip/line helpers; every emitted key is the
  * struct's yaml/json name (they are mirrored server-side).
  */
@@ -144,7 +144,7 @@
     };
   }
 
-  // collapsible row shell — dialogue.js's whole-row ▸/▾ toggle, verbatim.
+  // collapsible row shell — the whole-row ▸/▾ toggle the removed dialogue editor used.
   function collapsible(box, summaryFn, buildBody, ordered) {
     var body = ce("div", { style: "display:none;padding:4px 0 8px 10px;" });
     var sum = ce("span", { text: "▸ " + summaryFn() });

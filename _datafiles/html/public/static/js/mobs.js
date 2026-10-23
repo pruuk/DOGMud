@@ -254,13 +254,16 @@
 
     insp.appendChild(ce("h2", { text: "Mob #" + detail.mobId }));
     insp.appendChild(this.buildTestSpawnRow(detail, enums));
-    // 5b: the dialogue editor opens in a dedicated panel for this mob.
-    var dlgBtn = ce("button", { "class": "mini", text: detail.hasDialogue ? "Dialogue…" : "Add dialogue…" });
-    dlgBtn.addEventListener("click", function () {
-      if (Panel.dirty && !window.confirm("Discard unsaved mob changes?")) return;
-      if (window.Builder.DialoguePanel) window.Builder.DialoguePanel.open(detail.mobId, detail.zone);
-    });
-    insp.appendChild(dlgBtn);
+    // The dialogue editor is off (#375 phase 1): it cannot write topic menus.
+    // The server refuses every Build.Dialogue.* message; say so here.
+    insp.appendChild(ce("div", {
+      "class": "dialogue-off",
+      style: "font-size:12px;color:var(--gold-dim);margin:6px 0;",
+      text: "Dialogue editing is off for now. " +
+        (detail.hasDialogue ? "This mob talks through a dialogue file" : "This mob has no dialogue file") +
+        ", and talking now runs through topic menus that this editor cannot write yet. " +
+        "The topic builder arrives in quest arc phase 6. Until then, edit dialogue files in the repo."
+    }));
 
     // Shared id-picker datalists: items from the login-time Build.Items
     // prefetch, conditions from the server enums.

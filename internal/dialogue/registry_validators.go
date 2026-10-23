@@ -8,10 +8,9 @@ import (
 )
 
 // RegistryValidators wires DialogueValidators to the loaded quest and item
-// registries. The builder's dialogue editor (modules/gmcp) validates a save
-// with it, and the boot smoke sweep validates every shipped dialogue file with
-// it, so the editor and CI apply one set of rules. It reads the registries at
-// call time: load quests and items before validating.
+// registries. It has no caller outside its test now that the builder's
+// dialogue editor is off (#375 Task 20); Task 21 deletes it. It reads the
+// registries at call time: load quests and items before validating.
 func RegistryValidators() DialogueValidators {
 	return DialogueValidators{
 		QuestExists: func(tok string) bool { return quests.GetQuest(tok) != nil },

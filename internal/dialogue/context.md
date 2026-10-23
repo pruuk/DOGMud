@@ -24,7 +24,8 @@ Two conversation styles coexist in one file:
   the shared gate/effect helpers.
 - **loader.go** — `Load(mobId, zone)`, zone-name sanitising, exclusion warnings.
 - **save.go** — `SaveDialogueFile`, `CreateNewDialogueFile`,
-  `DeleteDialogueFile` (the admin web builder writes through these).
+  `DeleteDialogueFile` (no caller now that the builder's dialogue editor is
+  off; Task 21 reshapes this file).
 - **memory.go** — per-(mob instance, player) conversation memory.
 - **mood.go** — per-mob-instance mood state.
 - **greetings.go** — ambient arrival greetings and greet-once tracking.
@@ -32,9 +33,9 @@ Two conversation styles coexist in one file:
   semicolon rule covers spoken fields only (greetings, pattern responses,
   root, variant and node text); hints go out through SendText and are exempt.
 - **registry_validators.go**: `RegistryValidators()`, the old-format
-  validators backed by the loaded quest and item registries. Only the
-  builder's dialogue editor (modules/gmcp) still uses it, until #375 Task 20
-  switches the editor off.
+  validators backed by the loaded quest and item registries. Nothing but its
+  own test calls it since Task 20 switched the builder's dialogue editor off;
+  Task 21 deletes it.
 - **world.go**: `World`, `QuestInfo`, `Problem`, `ValidateWorld`: the topic
   validators over a proposed world (#375 spec 5). `World.BehaviorTopics` holds
   each mob's per-mob tree `topic_is` keys (checked both ways);
@@ -230,4 +231,6 @@ no compile-time dependency on the quest engine.
 ## Consumers
 
 `internal/usercommands` (`talk`, `ask`), `internal/mobs`, `internal/hooks`,
-`internal/web` (the admin dialogue editor), and the boot-time validation pass.
+and the boot-time validation pass. The admin web dialogue editor is off (every
+`Build.Dialogue.*` message is refused in `modules/gmcp`) until the topic
+builder of quest arc phase 6.

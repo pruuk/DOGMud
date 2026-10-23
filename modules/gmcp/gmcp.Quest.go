@@ -113,18 +113,25 @@ type strIdName struct {
 	Name string `json:"name"`
 }
 
+// questTokenEntry is one quest step token ("<questId>-<stepId>") with its
+// quest's name, for the quest editor's pickers.
+type questTokenEntry struct {
+	Token     string `json:"token"`
+	QuestName string `json:"questName"`
+}
+
 type questEnums struct {
-	QuestTokens      []dialogueQuestToken `json:"questTokens"`
-	FlagKeys         map[string][]string  `json:"flagKeys"` // full key -> allowed values
-	Events           []vocabEntry         `json:"events"`
-	Conditions       []vocabEntry         `json:"conditions"`
-	Actions          []vocabEntry         `json:"actions"`
-	StatusConditions []idName             `json:"statusConditions"`
-	Spells           []strIdName          `json:"spells"`
-	Recipes          []string             `json:"recipes"`
-	Factions         []strIdName          `json:"factions"`
-	Skills           []string             `json:"skills"`
-	Stats            []string             `json:"stats"`
+	QuestTokens      []questTokenEntry   `json:"questTokens"`
+	FlagKeys         map[string][]string `json:"flagKeys"` // full key -> allowed values
+	Events           []vocabEntry        `json:"events"`
+	Conditions       []vocabEntry        `json:"conditions"`
+	Actions          []vocabEntry        `json:"actions"`
+	StatusConditions []idName            `json:"statusConditions"`
+	Spells           []strIdName         `json:"spells"`
+	Recipes          []string            `json:"recipes"`
+	Factions         []strIdName         `json:"factions"`
+	Skills           []string            `json:"skills"`
+	Stats            []string            `json:"stats"`
 }
 
 type questDetail struct {
@@ -275,7 +282,7 @@ func collectQuestEnums() questEnums {
 	}
 	for _, q := range quests.GetAllQuests() {
 		for _, step := range q.Steps {
-			e.QuestTokens = append(e.QuestTokens, dialogueQuestToken{
+			e.QuestTokens = append(e.QuestTokens, questTokenEntry{
 				Token:     fmt.Sprintf("%d-%s", q.QuestId, step.Id),
 				QuestName: q.Name,
 			})
