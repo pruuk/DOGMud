@@ -30,7 +30,6 @@ var KnownBehaviorEvents = map[string]bool{
 	"on_spell_hit":           true, // item trees: the bearer's spell hit, into the weapon
 	"on_unequip":             true, // item trees: the item was taken off
 	"packmate_hurt":          true, // a same-room routine-matched packmate was attacked
-	"player_ask":             true, // a player asked this mob about a topic
 	"player_attack_rejected": true, // a player's attack on this mob was rejected (e.g. non-combatant)
 	"player_enter":           true, // a player entered the mob's room
 	"player_give":            true, // a player gave this mob an item

@@ -12,6 +12,6 @@ component be of your own making.
   <ansi fg="yellow">Ingredients:</ansi> Reinforced Frame (x1), Spatial Stitching (x1),
                Folded-Space Silk (x1), Warden Chassis-Loom (x1),
                Leather Strip (x8), Thread Spool (x6)
-  <ansi fg="yellow">Learned:</ansi>     buy Veyra's secret: ask veyra teach wayfarer
+  <ansi fg="yellow">Learned:</ansi>     buy Veyra's wayfarer secret: talk veyra
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>

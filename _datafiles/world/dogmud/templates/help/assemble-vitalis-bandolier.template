@@ -12,6 +12,6 @@ component be of your own making.
   <ansi fg="yellow">Ingredients:</ansi> Reinforced Harness (x1), Preservation Runes (x1),
                Chrysalis Filter-Membrane (x1), Still-Glass Rosette (x1),
                Pine Pitch (x6), Salt Pouch (x6), Beeswax (x4)
-  <ansi fg="yellow">Learned:</ansi>     buy Veyra's secret: ask veyra teach bandolier
+  <ansi fg="yellow">Learned:</ansi>     buy Veyra's bandolier secret: talk veyra
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help craft</ansi>

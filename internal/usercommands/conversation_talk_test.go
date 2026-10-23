@@ -612,6 +612,40 @@ func TestTalk_CharmedMobOnlyNods(t *testing.T) {
 	require.Contains(t, events.DrainQueuedInputsForTest(100), "emote nods.")
 }
 
+// The talk command runs conversation.Talk (#375 Task 19): the opener as
+// speech, then the private menu.
+func TestTalkCommand_OpensTheMenu(t *testing.T) {
+	user, _, done := talkFixture(t)
+	defer done()
+	_, err := Talk("skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+	require.True(t, user.HasOpenMenu())
+	mine, theirs := drained(1), drained(2)
+	require.Contains(t, mine, "Talking with Skeleton")
+	require.Contains(t, theirs, "Rattle.")
+	require.NotContains(t, theirs, "Talking with", "observers never see the menu")
+}
+
+// talk opens no menu and nobody speaks when the NPC is asleep (the sleep
+// refusal moved from ask to talk).
+func TestTalkCommand_SleepingNpcRefuses(t *testing.T) {
+	const sleepId = 9456
+	user, mob, done := talkFixture(t)
+	defer done()
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		sleepId: {ConditionId: sleepId, Name: "Test Sleep", RoundInterval: 1, TriggerCount: 100,
+			Flags: []conditions.Flag{conditions.Sleeping}},
+	}))
+	require.NoError(t, mob.Character.AddCondition(sleepId, true))
+	_, err := Talk("skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+	mine, theirs := drained(1), drained(2)
+	require.Contains(t, mine, "is fast asleep.")
+	require.False(t, user.HasOpenMenu())
+	require.NotContains(t, theirs, "Rattle.")
+	require.NotContains(t, theirs, "approaches")
+}
+
 func TestTalk_ReshownMenuStaysPrivate(t *testing.T) {
 	user, mob, done := talkFixture(t)
 	defer done()

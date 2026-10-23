@@ -4,11 +4,18 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/GoMudEngine/GoMud/internal/companionai"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
+
+// The aicompanion module reaches AskForOwner through companionai, so modules
+// need not import internal/conversation (R13).
+func init() {
+	companionai.SetNpcAsker(AskForOwner)
+}
 
 // CompanionTopic resolves an owner's `companion-ask <who> about <what>`
 // words to one of the NPC's eligible info topics (R13): the key itself, or
@@ -85,7 +92,7 @@ func labelHasWords(label string, typed []string) bool {
 // exactly as the owner choosing it, minus the owner's own line (the
 // companion already spoke aloud) and minus the menu (the owner opened none).
 // key comes from CompanionTopic at command time, never from the model's
-// words. Installed as the companion NPC asker in Task 19.
+// words. Installed as the companion NPC asker at init.
 func AskForOwner(ownerUserId int, mobInstanceId int, key string, authorized bool) bool {
 	user := users.GetByUserId(ownerUserId)
 	if user == nil || user.Character == nil || !authorized {

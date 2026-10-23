@@ -510,11 +510,11 @@
     room_enter: ["room"], room_gate: ["room"], item_give: ["mob", "item"], skill_use: ["skill"],
     mob_death: ["mob", "room"], command: ["command", "room"],
     command_issued: ["command", "room"], item_gain: ["item"],
-    dialogue: ["mob", "topic"], quest_granted: ["quest_token"],
+    quest_granted: ["quest_token"],
     room_interact: ["room", "noun", "verb"]
   };
   var FILTER_KINDS = { room: "room", mob: "mob", item: "item", skill: "skill",
-    command: "text", topic: "text", quest_token: "token", noun: "text", verb: "text" };
+    command: "text", quest_token: "token", noun: "text", verb: "text" };
 
   function triggerRow(box, t) {
     t = t || { event: "room_enter", actions: [] };

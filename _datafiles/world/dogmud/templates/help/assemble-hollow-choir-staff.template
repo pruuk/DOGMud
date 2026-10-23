@@ -12,6 +12,6 @@ component be of your own making.
   <ansi fg="yellow">Ingredients:</ansi> Conductor Core (x1), Choir-Focus Gems (x1),
                Hollowed Voice-Box (x1), Chorus-Shard (x1),
                Chrysalis Setting (x6), Mutation Catalyst (x4)
-  <ansi fg="yellow">Learned:</ansi>     buy Veyra's secret: ask veyra teach choir
+  <ansi fg="yellow">Learned:</ansi>     buy Veyra's choir secret: talk veyra
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help enchanting</ansi>, <ansi fg="command">help craft</ansi>

@@ -79,7 +79,7 @@ func nounNumberPairs(trigs []questengine.TriggerDef) [][2]int {
 		for j := i + 1; j < len(trigs); j++ {
 			a, b := &trigs[i], &trigs[j]
 			if a.Event != b.Event || a.Room != b.Room || a.Mob != b.Mob || a.Item != b.Item ||
-				a.Skill != b.Skill || a.Command != b.Command || a.Topic != b.Topic ||
+				a.Skill != b.Skill || a.Command != b.Command ||
 				a.QuestToken != b.QuestToken || a.Verb != b.Verb {
 				continue
 			}

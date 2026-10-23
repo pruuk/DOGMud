@@ -133,7 +133,6 @@ var behaviorEventHeld = map[string]bool{
 	`mob_flee`:               true,
 	`player_enter`:           true, // one entrant; the rest of the room reads it too
 	`player_give`:            true,
-	`player_ask`:             true,
 	`player_topic`:           true, // one player chose a talk topic; the room reads it too
 	`room_command`:           true,
 	`room_enter`:             true,
@@ -312,7 +311,7 @@ tree:
       do: send_room_text
       text: "The floor creaks under your weight."
     - type: action
-      event: player_ask
+      event: player_topic
       do: respond
       room_text: "{actor} nods at you."
     - type: action

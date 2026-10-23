@@ -233,3 +233,31 @@ func TestGiveResolve_CharmedMobIsNotHandled(t *testing.T) {
 	require.Equal(t, 1, countBackpack(user, 10001))
 	require.Empty(t, questTokensFor(1))
 }
+
+// The give command resolves topics before any transfer (#375 R8, Task 19):
+// a hand-in plays as the topic and the item never reaches the mob.
+func TestGiveCommand_HandInGoesThroughTheTopic(t *testing.T) {
+	user, mob, done := offerFixture(t)
+	defer done()
+	require.True(t, user.Character.StoreItem(items.New(10001))) // seeded "Iron Sword"
+	_, err := Give("iron sword skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+	require.Contains(t, drained(2), "My thanks.")
+	require.Equal(t, 0, countBackpack(user, 10001), "the sword was handed in")
+	require.False(t, mobHolds(mob, 10001), "a topic hand-in never transfers to the mob")
+	require.Equal(t, []string{"9-end"}, questTokensFor(1))
+}
+
+// A wanted item given while no topic wanting it is eligible is handed back
+// by the give command and never leaves the player (R8).
+func TestGiveCommand_WantedButIneligibleIsHandedBack(t *testing.T) {
+	user, mob, done := offerFixture(t)
+	defer done()
+	user.Character.QuestProgress = map[int]string{9: "end"}
+	require.True(t, user.Character.StoreItem(items.New(10001)))
+	_, err := Give("iron sword skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+	require.Contains(t, drained(1), "hands it back")
+	require.Equal(t, 1, countBackpack(user, 10001))
+	require.False(t, mobHolds(mob, 10001))
+}

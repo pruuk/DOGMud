@@ -471,8 +471,9 @@ func TestPetSight_OwnPetInTheDark(t *testing.T) {
 }
 
 // #454 review F4: the sleep refusal named a sleeper the asker aimed at as a
-// shape. Lit control: at full sight it names them.
-func TestAskSight_SleepRefusalHidesAShapesName(t *testing.T) {
+// shape. Lit control: at full sight it names them. The refusal moved from
+// ask to talk with #375 (ask on an NPC only redirects to talk).
+func TestTalkSight_SleepRefusalHidesAShapesName(t *testing.T) {
 	const sleepId = 9455
 	for _, band := range []aimBand{aimFull, aimShapes} {
 		user, room := aimScene(t, band)
@@ -485,11 +486,11 @@ func TestAskSight_SleepRefusalHidesAShapesName(t *testing.T) {
 				Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectInfraReach: {Literal: 30}}},
 		}))
 		require.NoError(t, mobs.GetInstance(100).Character.AddCondition(sleepId, true))
-		aim := "skeleton quest"
+		aim := "skeleton"
 		if band == aimShapes {
-			aim = "2.shape quest"
+			aim = "2.shape"
 		}
-		_, _ = Ask(aim, user, room, events.EventFlag(0))
+		_, _ = Talk(aim, user, room, events.EventFlag(0))
 		told := aimTold(1)
 		assert.Contains(t, told, "is fast asleep.", "band %d", band)
 		if band == aimFull {

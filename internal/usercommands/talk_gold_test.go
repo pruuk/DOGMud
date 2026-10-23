@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -22,12 +23,13 @@ func seedTalkGoldUser(t *testing.T, gold int) (*users.UserRecord, func()) {
 	}
 }
 
-// buildPlayerState's ChargeGold backs dialogue chargesGold: it takes the
-// whole price or nothing, and names the amount with a thousands separator.
+// conversation.PlayerState's ChargeGold backs topic chargesGold: it takes
+// the whole price or nothing, and names the amount with a thousands
+// separator.
 func TestDialogueChargeGold_TakesAllOrNothing(t *testing.T) {
 	u, cleanup := seedTalkGoldUser(t, 1400)
 	defer cleanup()
-	ps := buildPlayerState(u)
+	ps := conversation.PlayerState(u)
 
 	if ps.ChargeGold(25000) {
 		t.Error("ChargeGold reported success for a charge larger than the player's gold")
@@ -54,7 +56,7 @@ func TestDialogueChargeGold_TakesAllOrNothing(t *testing.T) {
 func TestDialogueGiveGold_ThousandsSeparator(t *testing.T) {
 	u, cleanup := seedTalkGoldUser(t, 0)
 	defer cleanup()
-	buildPlayerState(u).GiveGold(12500)
+	conversation.PlayerState(u).GiveGold(12500)
 	if msgs := strings.Join(events.DrainQueuedMessagesForTest(tgUserId), "\n"); !strings.Contains(msgs, "12,500 gold") {
 		t.Errorf("gift line should read 12,500 gold:\n%s", msgs)
 	}

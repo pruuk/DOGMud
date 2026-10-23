@@ -13,6 +13,6 @@ component be of your own making.
                Void-Quenched Obsidian Core (x1),
                Whisper of the Old White (x1), Pale-Grey Casting (x1),
                Steel Ingot (x8), Coal Dust (x6)
-  <ansi fg="yellow">Learned:</ansi>     buy Veyra's secret: ask veyra teach blackrazor
+  <ansi fg="yellow">Learned:</ansi>     buy Veyra's blackrazor secret: talk veyra
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>

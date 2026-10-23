@@ -9,13 +9,12 @@ package quests
 
 // TriggerDef defines when and how a quest step fires.
 type TriggerDef struct {
-	Event      string      `yaml:"event" json:"event"`                                 // room_enter, room_gate, item_give, skill_use, mob_death, command, command_issued, item_gain, dialogue, quest_granted, room_interact
+	Event      string      `yaml:"event" json:"event"`                                 // room_enter, room_gate, item_give, skill_use, mob_death, command, command_issued, item_gain, quest_granted, room_interact
 	Room       int         `yaml:"room,omitempty" json:"room,omitempty"`               // room ID filter
 	Mob        int         `yaml:"mob,omitempty" json:"mob,omitempty"`                 // mob ID filter
 	Item       int         `yaml:"item,omitempty" json:"item,omitempty"`               // item ID filter
 	Skill      string      `yaml:"skill,omitempty" json:"skill,omitempty"`             // skill name filter
 	Command    string      `yaml:"command,omitempty" json:"command,omitempty"`         // command name filter
-	Topic      string      `yaml:"topic,omitempty" json:"topic,omitempty"`             // dialogue topic filter
 	QuestToken string      `yaml:"quest_token,omitempty" json:"quest_token,omitempty"` // for quest_granted event
 	Noun       string      `yaml:"noun,omitempty" json:"noun,omitempty"`               // room noun filter
 	Verb       string      `yaml:"verb,omitempty" json:"verb,omitempty"`               // room interaction verb filter

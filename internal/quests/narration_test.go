@@ -45,6 +45,21 @@ func validQuest(a ActionDef) *Quest {
 	}
 }
 
+// The dialogue event fired from the old `ask` chain, which is gone (#375
+// Task 19): a trigger on it could never fire, so Validate refuses it.
+// Control: the same quest on a live event passes.
+func TestValidateRefusesTheRetiredDialogueEvent(t *testing.T) {
+	q := validQuest(ActionDef{Grant: "9001-start"})
+	if err := q.Validate(); err != nil {
+		t.Fatalf("control quest refused: %v", err)
+	}
+	q.Triggers[0].Event = "dialogue"
+	err := q.Validate()
+	if err == nil || !strings.Contains(err.Error(), `invalid event "dialogue"`) {
+		t.Fatalf("a dialogue trigger must be refused, got %v", err)
+	}
+}
+
 func TestValidateRefusesAnActionThatSetsBothTexts(t *testing.T) {
 	err := validQuest(ActionDef{SendText: "You see it.", RoomText: "{actor} sees it."}).Validate()
 	if err == nil || !strings.Contains(err.Error(), "both actor and observer") {

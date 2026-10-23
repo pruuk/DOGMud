@@ -144,7 +144,6 @@ var questEventVocab = []vocabEntry{
 	{"command", "a command SUCCEEDED (~27 instrumented commands; filters: command, room)"},
 	{"command_issued", "player TYPED a command, success or not — fires from TryCommand for any command (filters: command, room)"},
 	{"item_gain", "an item enters the player's inventory (filter: item)"},
-	{"dialogue", "player asked a mob about a topic (filters: mob, topic)"},
 	{"quest_granted", "a quest token was just granted — the chaining event (filter: quest_token)"},
 	{"room_interact", "player looked/examined a room noun (filters: room, noun, verb)"},
 }

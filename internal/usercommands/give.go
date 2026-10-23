@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -193,6 +194,12 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					user.UserId,
 				)
 			} else {
+
+				// Topics first (#375 R8): a hand-in plays as the topic, and a
+				// wanted item given too early is handed back before it moves.
+				if conversation.Give(user, room, m, giveItem) {
+					return true, nil
+				}
 
 				// Check quest engine first — it may intercept the give before
 				// the item is transferred to the mob.

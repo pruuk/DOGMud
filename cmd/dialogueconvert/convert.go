@@ -1490,9 +1490,6 @@ func (c *converter) dialogueTrigger(q questSource, i int, tr quests.TriggerDef) 
 		w.held = append(w.held, "no file for mob")
 		return
 	}
-	if tr.Topic != "" {
-		c.rep.Notes = append(c.rep.Notes, fmt.Sprintf("%s: topic filter %q dropped (the topic is chosen from the menu)", w.where, tr.Topic))
-	}
 	key := f.uniqueKey(fmt.Sprintf("asked_%d", q.Quest.QuestId))
 	t := &cTopic{}
 	t.Key, t.Kind, t.Marked = key, dialogue.KindInfo, true

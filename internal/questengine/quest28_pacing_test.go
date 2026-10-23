@@ -110,12 +110,12 @@ func npcSaySeconds(n *NpcSayDef) int {
 // reply first, the way north last, and no quest npc_say line runs ahead.
 func TestQuest28_AskReplyComesBeforeTheNextPrompt(t *testing.T) {
 	q := loadQuest28(t)
-	for _, tr := range q.Triggers {
-		if tr.Event != "dialogue" {
-			continue
-		}
+	for i, tr := range q.Triggers {
+		require.NotEqual(t, "dialogue", tr.Event,
+			"trigger %d: the ask chain that fired dialogue triggers is gone (#375 Task 19); the lesson is a talk topic", i)
 		for _, a := range tr.Actions {
-			require.Nil(t, a.NpcSay, "a dialogue trigger's npc_say line is said before the reply to the question")
+			require.NotEqual(t, "28-asked", a.Grant,
+				"trigger %d grants 28-asked: only Dewey's talk topic may, or the step skips the talk lesson", i)
 		}
 	}
 

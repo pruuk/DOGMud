@@ -213,9 +213,6 @@ func matchTriggerFields(t *TriggerDef, d EventDetails, tier nounTier) bool {
 	if t.Command != "" && t.Command != d.Command {
 		return false
 	}
-	if t.Topic != "" && t.Topic != d.Topic {
-		return false
-	}
 	if t.QuestToken != "" && t.QuestToken != d.QuestToken {
 		return false
 	}

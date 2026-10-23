@@ -429,24 +429,6 @@ triggers:
                 questions comes up, and you type a number to ask one. Type
                 talk dewey."}
 
-  # The question has to reach Dewey: a bare `ask` or `ask world` is refused.
-  # No npc_say here: this trigger runs before Dewey's reply is queued, so its
-  # line would land ahead of the answer. The way north is the end of the
-  # answer itself, in Dewey's dialogue (dialogue/newcomer_antechamber/
-  # 9491.yaml, the patterns gated on 28-asked), which reads the token this
-  # trigger has just granted.
-  # Stale once the converted dialogue lands: there, the talk topic asked_28
-  # grants 28-asked, and this trigger would let `ask dewey <x>` skip the talk
-  # lesson. It stays until ask redirects to talk (plan Task 19), because the
-  # live dialogue still answers through ask; delete it then (review m16).
-  - event: dialogue
-    mob: 9491
-    conditions:
-      has: [28-said]
-      missing: [28-asked]
-    actions:
-      - grant: 28-asked
-
   # ── 6262 The Proving: warcry, conditions, cooldowns, consider, attack,
   #    cast, trip, flee ──
   - event: room_enter

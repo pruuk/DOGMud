@@ -43,7 +43,6 @@ type EventDetails struct {
 	ItemId     int
 	Skill      string
 	Command    string
-	Topic      string
 	Noun       string
 	RoomNoun   string
 	Verb       string

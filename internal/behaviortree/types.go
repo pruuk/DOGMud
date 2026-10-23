@@ -18,7 +18,7 @@ const (
 
 // EventContext carries information about the triggering event.
 type EventContext struct {
-	EventType string // "player_ask", "mob_idle", "player_give", etc.
+	EventType string // "player_topic", "mob_idle", "player_give", etc.
 	UserId    int    // Triggering player (0 if none)
 	MobId     int    // Triggering mob instance (0 if none)
 	Text      string // For ask/say events — the text spoken
