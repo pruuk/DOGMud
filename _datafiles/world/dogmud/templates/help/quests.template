@@ -11,15 +11,17 @@ a reward when you finish.
 
   <ansi fg="yellow">[!]</ansi>  they have a new quest for you.
   <ansi fg="yellow">[?]</ansi>  you can finish a quest with them now.
-  <ansi fg="yellow">[*]</ansi>  they have something important to tell you.
+  <ansi fg="yellow">[*]</ansi>  they have something important to tell you, or you can
+       report a step of a quest to them.
 
   To take a quest, type <ansi fg="command">talk</ansi> <ansi fg="cyan"><name></ansi> and choose the <ansi fg="yellow">[!]</ansi> line from
   the numbered list. They tell you what they want. Then choose <ansi fg="yellow">Accept</ansi>
   to take the quest, or <ansi fg="yellow">Leave</ansi> to say no for now.
 
   To finish a quest, talk to the person marked <ansi fg="yellow">[?]</ansi> and choose the
-  <ansi fg="yellow">[?]</ansi> line. If the quest asks for an item, choosing the line hands it
-  over. See <ansi fg="command">help talk</ansi>.
+  <ansi fg="yellow">[?]</ansi> line. Some steps in the middle of a quest work the same way,
+  through a line marked <ansi fg="yellow">[*]</ansi>. If the quest asks for an item,
+  choosing the line hands it over. See <ansi fg="command">help talk</ansi>.
 
 <ansi fg="yellow">Your quest list: </ansi>
 

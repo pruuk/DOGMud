@@ -33,13 +33,14 @@ tree:
   type: selector
   children:
 
-    # ── MID-RITE: the player chooses to begin while the rite is already running ──
+    # ── MID-RITE: the player chooses begin, or the mid-rite topic rite_wait,
+    #    while the rite is already running ──
     - type: sequence
       event: player_topic
       children:
         - type: condition
           check: topic_is
-          topic: begin
+          topics: [begin, rite_wait]
         - type: condition
           check: state_equals
           key: rite_running
@@ -52,13 +53,16 @@ tree:
             Hush, now. The pool is still speaking, and it will not be
             hurried. Let it finish.
 
-    # ── THE RITE: the player chooses to begin (30-start held, not yet opened) ──
+    # ── THE RITE: the player chooses to begin (30-start held, not yet opened).
+    #    rite_wait reaches here only when the rite is NOT running although the
+    #    player holds 30-rite: a logout or a restart cut it short (the tree
+    #    state is not saved). The rite then starts again, so no one is stuck. ──
     - type: sequence
       event: player_topic
       children:
         - type: condition
           check: topic_is
-          topic: begin
+          topics: [begin, rite_wait]
         - type: condition
           check: player_has_quest
           quest: "30-start"
@@ -75,11 +79,32 @@ tree:
           key: rite_running
           per_player: true
           value: "1"
+        # The rite marks itself on the player at once (#375 phase 1
+        # playtest): Hadwen's dialogue cannot read rite_running, so it gates
+        # its mid-rite opener and the rite_wait topic on 30-rite, and hides
+        # begin. 30-end at the close supersedes it.
         - type: action
-          do: say
-          to_actor: true
-          text: Then we begin. Step to the edge with me.
-          delay: 1.0
+          do: grant_quest
+          quest: "30-rite"
+        - type: selector
+          children:
+            - type: sequence
+              children:
+                - type: condition
+                  check: topic_is
+                  topic: rite_wait
+                - type: action
+                  do: say
+                  to_actor: true
+                  text: >-
+                    The pool went quiet before it was done with you. We
+                    begin again. Step to the edge with me.
+                  delay: 1.0
+            - type: action
+              do: say
+              to_actor: true
+              text: Then we begin. Step to the edge with me.
+              delay: 1.0
         - type: action
           do: respond
           user_text: >-

@@ -1018,6 +1018,7 @@ maintainers know the quests are coupled.
 | `narration.go` | `ActionDef.Narration`/`Narrate`, `QuestReward.Narration`/`Narrate`, `validateNarration` |
 | `samecommand.go` | `validateSameCommandChains`, which `Validate` runs: the engine fires every matching trigger in file order against live state, so a trigger may not grant, give, consume or set what a later trigger on the same event requires when one command can match both (#495); put the "already done" trigger first |
 | `validate_refs.go` | Cross-reference validation (flags, tokens, ids) |
+| `test_helpers.go` | `SeedQuestsForTest(qs ...*Quest) func()`: adds quests to the registry for a test (test binaries load no quest data, and `Character.HasQuest` past a quest's start step reads its step order) and returns the restore |
 
 **This package owns the data; `internal/questengine` owns the evaluation.**
 Since the 5c-pre unification, `questengine` only aliases these types. Change a

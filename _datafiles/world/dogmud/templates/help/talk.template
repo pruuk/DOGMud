@@ -41,9 +41,11 @@ light first.
   <ansi fg="yellow">[!]</ansi>  a new quest they can give you.
   <ansi fg="yellow">[?]</ansi>  a quest you can finish with them now. Choose it to report
        what you did.
-  <ansi fg="yellow">[*]</ansi>  something important you have not heard yet.
+  <ansi fg="yellow">[*]</ansi>  something important you have not heard yet. It can also be
+       one step of a quest you are on. Choose it to report that step.
 
   A line you have already heard shows in grey. You can choose it again.
+  A line that moves a quest forward goes away once that step is done.
 
   The same marks appear in front of a person's name when you look at a
   room, so you can see who has something for you before you talk to
@@ -53,10 +55,12 @@ light first.
 <ansi fg="yellow">Handing things over: </ansi>
 
   Some quests ask you to bring an item. When you have it, choose the
-  quest's <ansi fg="yellow">[?]</ansi> line and you hand the item over. You can also type
-  <ansi fg="command">give</ansi> <ansi fg="cyan"><item> <name></ansi>, and it works the same way. If a quest
-  needs the item but you cannot hand it in yet (for example, you have not
-  accepted the quest), they look at it and give it back to you.
+  line about it and you hand the item over. That line is marked <ansi fg="yellow">[?]</ansi>
+  when it finishes the quest, or <ansi fg="yellow">[*]</ansi> when it is one step of a longer
+  quest. You can also type <ansi fg="command">give</ansi> <ansi fg="cyan"><item> <name></ansi>, and it works the
+  same way. If a quest needs the item but you cannot hand it in yet (for
+  example, you have not accepted the quest), they look at it and give it
+  back to you.
 
 <ansi fg="yellow">Examples: </ansi>
 

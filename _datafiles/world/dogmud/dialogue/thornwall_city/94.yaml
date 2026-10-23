@@ -5,7 +5,27 @@ opener:
   text: Civilian. If you are here about the noise complaint on Main Street, it is
     filed. If you are here about something else, take a seat.
   hints: You could ask Velk about the missing person case or the city watch.
+  # The first variant that matches wins. A step the player can finish here
+  # with an item in hand is the most specific, so those come first: quest
+  # 8's variants hid quest 10's greeting while both were open (#375 phase 1
+  # playtest).
   variants:
+  - questRequired:
+    - 10-start
+    questExcluded:
+    - 10-report
+    carriesItem: 30
+    text: You have the look of someone carrying a complaint. If it is about the back
+      alleys, let me see it.
+    hints: Choose the line about Marek's protection notice below.
+  - questRequired:
+    - 14-evidence
+    questExcluded:
+    - 14-end
+    carriesItem: 40036
+    text: You have been in the tunnels? I can smell it on you. If you found something,
+      let me see it.
+    hints: Choose The Undertow below to hand over the bribe ledger.
   - questRequired:
     - 8-start
     questExcluded:
@@ -20,14 +40,6 @@ opener:
     text: What did you learn about Elara? Let me hear it.
     hints: "Three entries below share the title The City Watch's Missing Person.
       Each gives Velk a different report."
-  - questRequired:
-    - 10-start
-    questExcluded:
-    - 10-report
-    carriesItem: 30
-    text: You have the look of someone carrying a complaint. If it is about the back
-      alleys, let me see it.
-    hints: Choose the line about Marek's protection notice below.
   # A save at 14-report (Velk already holds the ledger; the old give route's
   # chain to 14-end is gone) closes the case through case_close.
   - questRequired:
@@ -37,14 +49,6 @@ opener:
     text: I have your ledger, and I have read every name in it. There is one thing
       left to do before I close the case.
     hints: Choose The Undertow below to close the case.
-  - questRequired:
-    - 14-evidence
-    questExcluded:
-    - 14-end
-    carriesItem: 40036
-    text: You have been in the tunnels? I can smell it on you. If you found something,
-      let me see it.
-    hints: Choose The Undertow below to hand over the bribe ledger.
   - questRequired:
     - 14-evidence
     questExcluded:

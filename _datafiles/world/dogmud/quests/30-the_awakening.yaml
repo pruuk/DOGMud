@@ -7,7 +7,8 @@
 #               moment they materialize at 5200 — zero input required.
 #               Cleric Hadwen's dialogue also offers it (his offer topic
 #               rite_offer) for veterans who walk in via the corridor.
-#   30-end    — granted by Hadwen's behavior tree at the close of the
+#   30-rite   — granted by Hadwen's behavior tree as the rite starts.
+#   30-end   — granted by Hadwen's behavior tree at the close of the
 #               rite sequence (behaviors/pothole_coulee/9100-*.yaml).
 #               Blank-slate Awakening: the rite grants NO starter mutation
 #               — mutations are earned afterward through use-based drift.
@@ -23,6 +24,15 @@ steps:
     map_target_mob: 9100  # follow Cleric Hadwen (schedule pothole_hadwen) — a fixed room is wrong for part of the day
     description: "Cleric Hadwen will open the pool for you when you are ready. Talk to him at the pool and choose to begin the rite."
     hint: "Stand at the Awakening Pool and type talk hadwen. When you are ready, choose to begin the rite."
+  # Granted by Hadwen's tree the moment the rite starts, so his dialogue can
+  # tell a player mid-rite from one still waiting (#375 phase 1 playtest).
+  # A rite cut short by a logout or a restart leaves a player here; his
+  # rite_wait topic then starts the rite again.
+  - id: rite
+    map_target: 5200
+    map_target_mob: 9100
+    description: "The rite has begun. Stay by the Awakening Pool until Cleric Hadwen is done."
+    hint: "Stay by the Awakening Pool until the rite is done. If nothing is happening, type talk hadwen and ask whether the rite is still going."
   - id: end
     description: "The pool has opened you. Two roads from here: learn the town with Crier Toke, or leave through Warden Esk's arch. Cleric Hadwen can point you down either one."
     # An end hint is never displayed (the quest is complete). What a new

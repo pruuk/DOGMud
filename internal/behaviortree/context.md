@@ -230,7 +230,7 @@ Condition nodes use `type: condition` with `check: <name>`.
 | Condition | Params | Description |
 |-----------|--------|-------------|
 | `keyword_match` | `keywords` (list) | Matches any word in event Text. |
-| `topic_is` | `topic` (string) | A `player_topic` event carrying this topic key (`topics.go`, #375 R12). `TopicKeysInFile` lists a file's keys for the dialogue validators. |
+| `topic_is` | `topic` (string), `topics` (list), or both | A `player_topic` event carrying one of these topic keys (`topics.go`, #375 R12). `TopicIsKeys(params)` reads them for the condition, `TopicKeysInFile` (the dialogue validators) and `cmd/dialoguecheck`. Hadwen's rite answers `topics: [begin, rite_wait]`. |
 
 ### Player State
 

@@ -479,7 +479,7 @@ func (w *walker) buildTrees() {
 				case "player_missing_quest":
 					s.exc = append(s.exc, paramStr(c.Params, "quest"))
 				case "topic_is":
-					topicKeys = append(topicKeys, paramStr(c.Params, "topic"))
+					topicKeys = append(topicKeys, behaviortree.TopicIsKeys(c.Params)...)
 				case "item_matches", "player_has_item":
 					if id := paramInt(c.Params, "item_id"); id > 0 {
 						s.items = append(s.items, id)

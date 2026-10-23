@@ -140,10 +140,11 @@ func TestHadwenRiteRunsForTwoPlayersAskingAtOnce(t *testing.T) {
 	require.LessOrEqual(t, askHadwenAs(state, 8143, "begin"), 1, "the second asker's re-ask replayed the rite")
 
 	DrainAllDelayedActionsForTest(t)
-	// Only 30-end: the two roads are offer topics in his dialogue now, so the
-	// rite no longer grants quest 29 (#375 R17).
-	require.Equal(t, []string{"30-end"}, granted[8142], "the first asker must be Opened exactly once")
-	require.Equal(t, []string{"30-end"}, granted[8143], "the second asker must be Opened exactly once")
+	// 30-rite as the rite starts, then 30-end once: the two roads are offer
+	// topics in his dialogue now, so the rite no longer grants quest 29
+	// (#375 R17).
+	require.Equal(t, []string{"30-rite", "30-end"}, granted[8142], "the first asker must be Opened exactly once")
+	require.Equal(t, []string{"30-rite", "30-end"}, granted[8143], "the second asker must be Opened exactly once")
 }
 
 func TestHadwenRiteDoesNotReplayMidRite(t *testing.T) {

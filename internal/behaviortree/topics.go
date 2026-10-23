@@ -8,16 +8,35 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// condTopicIs succeeds when a player_topic event carries this branch's
-// topic key (quest arc #375 R12: talk topics replace typed ask words).
+// condTopicIs succeeds when a player_topic event carries one of this
+// branch's topic keys (quest arc #375 R12: talk topics replace typed ask
+// words). The keys are `topic: <key>`, `topics: [<key>, ...]`, or both.
 func condTopicIs(params map[string]any, ctx *EvalContext) Result {
 	if ctx.Event.EventType != "player_topic" {
 		return Failure
 	}
-	if key := getStringParam(params, "topic"); key != "" && key == ctx.Event.Text {
-		return Success
+	for _, key := range TopicIsKeys(params) {
+		if key == ctx.Event.Text {
+			return Success
+		}
 	}
 	return Failure
+}
+
+// TopicIsKeys are the topic keys a topic_is check answers: its `topic`
+// param, then each of its `topics`. The dialogue validator and the
+// dialoguecheck walk read them through here too.
+func TopicIsKeys(params map[string]any) []string {
+	var keys []string
+	if k := getStringParam(params, "topic"); k != "" {
+		keys = append(keys, k)
+	}
+	for _, k := range getStringListParam(params, "topics") {
+		if k != "" {
+			keys = append(keys, k)
+		}
+	}
+	return keys
 }
 
 // TopicKeysInFile lists the topic_is keys in a behavior file, sorted and
@@ -35,7 +54,7 @@ func TopicKeysInFile(path string) ([]string, error) {
 	var walk func(n NodeDef)
 	walk = func(n NodeDef) {
 		if n.Check == "topic_is" {
-			if k := getStringParam(n.Params, "topic"); k != "" {
+			for _, k := range TopicIsKeys(n.Params) {
 				seen[k] = true
 			}
 		}

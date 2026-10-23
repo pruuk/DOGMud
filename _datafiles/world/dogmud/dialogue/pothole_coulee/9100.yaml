@@ -7,9 +7,19 @@ opener:
     I have never once been bored by it.
   hints: You could ask about the rite or the Chrysalis.
   variants:
+  # Mid-rite: the tree grants 30-rite as the rite starts (the dialogue cannot
+  # read its rite_running state).
+  - questRequired:
+    - 30-rite
+    questExcluded:
+    - 30-end
+    text: Quietly, now. The rite is under way, and the pool is still speaking to
+      you. Stay close to the water and let it finish.
+    hints: The rite takes a little while. Stay by the pool until it is done.
   - questRequired:
     - 30-start
     questExcluded:
+    - 30-rite
     - 30-end
     text: The pool is ready when you are. There is no hurry in it, but there is
       also nothing left to wait for.
@@ -165,6 +175,7 @@ topics:
   questRequired:
   - 30-start
   questExcluded:
+  - 30-rite
   - 30-end
 # R17: one behavior topic. The text is empty on purpose: the tree speaks in
 # both cases. Before the rite its branch says "Then we begin. Step to the
@@ -179,6 +190,20 @@ topics:
   behavior: true
   questRequired:
   - 30-start
+  questExcluded:
+  - 30-rite
+  - 30-end
+# Mid-rite (30-rite held), in place of begin. The tree answers: the hush line
+# while the rite runs, or, when a logout or a restart cut the rite short, it
+# says so and starts the rite again. Text empty for the same reason as begin.
+- key: rite_wait
+  kind: info
+  label: Is the rite still going?
+  text: ""
+  hints: The rite takes a little while. Stay by the pool until it is done.
+  behavior: true
+  questRequired:
+  - 30-rite
   questExcluded:
   - 30-end
 - key: rite_done

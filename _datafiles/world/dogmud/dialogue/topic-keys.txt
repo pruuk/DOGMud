@@ -377,6 +377,7 @@
 9100.rename
 9100.rite_done
 9100.rite_offer
+9100.rite_wait
 9100.rite_waiting
 9100.road_esk
 9100.road_toke
