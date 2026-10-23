@@ -11,10 +11,13 @@ steps:
     description: "Brennan believes the disc is a key that must be woken, and
       that the man who knew how left his work in an Ashwick cottage."
     hint: "If you do not carry the disc yet, take it first from the
-      cracked floor of the old Reliquary at Pothole Coulee. The abandoned
-      cottage stands in Ashwick, a long road from Greenford. From
-      Brennan's Office, go down through the town to the Greenford Gate,
-      north over the bridge and west along the road to the Confluence. In
+      cracked floor of the old Reliquary at Pothole Coulee, behind the old
+      shrine north of the stone circle. The abandoned cottage stands in
+      Ashwick, a long road from Greenford. From Brennan's Office, go north,
+      east and north to the University Gate, then down the University Stair
+      and north through the town to the Market Square, down the Town Stair,
+      and north to the Greenford Gate. Then go north over the bridge and
+      west along the road to the Confluence. In
       the city, cross the Brenn Bridge west to Tri-Cross Square and go
       north through the quays to the River Gate. Then take the River Road
       north, through Amber Valley and up the South Road to the Ashwick
@@ -28,7 +31,8 @@ steps:
       the disc."
     hint: "Follow his method at the marked hearth in the cottage, with the
       disc in hand. If you do not carry it yet, the disc lies in the cracked
-      floor of the old Reliquary at Pothole Coulee. Type look hearth marks."
+      floor of the old Reliquary at Pothole Coulee, behind the old shrine
+      north of the stone circle. Type look hearth marks."
   - id: attune
     map_target: -1  # -1: return-to-giver / in-place (start room 4023); Phase 2 split review
     description: "You followed his method at the hearth, and the disc woke.

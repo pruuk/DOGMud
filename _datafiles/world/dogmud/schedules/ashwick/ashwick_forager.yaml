@@ -1,6 +1,6 @@
 id: ashwick_forager
-description: "The forager: works the herb clearing at dawn, gathers in the
-  hidden grove by early afternoon, returns to camp by late afternoon,
+description: "The forager: works the herb clearing at dawn, looks over the
+  hidden grove by early afternoon without cutting there, returns to camp by late afternoon,
   sleeps at camp."
 segments:
   - start: 6
@@ -17,9 +17,9 @@ segments:
     target_room: 4033
     activity: ""
     idlecommands:
-      - emote kneels among the grove's roots, cutting only the stems that will grow back.
+      - emote kneels at the edge of the grove and studies the too-bright leaves without touching them.
       - say Found the bitterroot. Three days east. I didn't stay.
-      - emote scans the treeline once before tying off a bundle.
+      - emote scans the treeline once, then backs away from the grove empty-handed.
       - say It's clean. No contact on the trail.
   - start: 16
     end: 22

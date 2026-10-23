@@ -21,7 +21,7 @@ tougher the enemies, and the better the potential loot.
 <ansi fg="yellow">The Crash Site:</ansi>
 
   A door in a buried face, far out in the Eastern
-  Highlands. The Threshold Keeper waits beside it and
+  Highlands. The Threshold-Keeper waits beside it and
   opens it only for someone who carries the woken disc.
   Type <ansi fg="command">talk keeper</ansi> and choose to have her open
   the way. She takes no less than 200 gold.
@@ -58,9 +58,9 @@ tougher the enemies, and the better the potential loot.
 
 <ansi fg="yellow">Available Zones:</ansi>
 
-  <ansi fg="command">Arena</ansi>    A brutal linear gauntlet. Death ends
+  <ansi fg="command">Arena</ansi>      A brutal linear gauntlet. Death ends
              your run. No recall. Fast and dangerous.
-  <ansi fg="command">Oasis</ansi>    A three-dimensional elemental maze.
+  <ansi fg="command">Oasis</ansi>      A three-dimensional elemental maze.
              Death allows re-entry. Recall works.
              Methodical exploration rewarded.
   <ansi fg="command">Crash Site</ansi> A buried place in the Eastern
