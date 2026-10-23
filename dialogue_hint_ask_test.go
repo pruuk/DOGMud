@@ -16,14 +16,6 @@ import (
 // redirects to `talk`). The house phrase is "choose a line below".
 var askHintPattern = regexp.MustCompile(`(?i)\byou could ask\b|\bask [a-z][a-z' -]* about\b`)
 
-// askHintPending lists dialogue files whose hints are still being rewritten
-// by another agent. THE CONTROLLER REMOVES THESE ENTRIES once those two files
-// are fixed; nothing else may be added here.
-var askHintPending = map[string]bool{
-	"thornwall_city/94.yaml":   true,
-	"pothole_coulee/9100.yaml": true,
-}
-
 // askHintViolations names every hint in df (opener, opener variants, topics)
 // that matches the pattern.
 func askHintViolations(rel string, df dialogue.DialogueFile) []string {
@@ -56,9 +48,6 @@ func TestDialogueHints_NeverAskAsAVerb(t *testing.T) {
 	for _, p := range paths {
 		rel, _ := filepath.Rel(root, p)
 		rel = filepath.ToSlash(rel)
-		if askHintPending[rel] {
-			continue
-		}
 		data, err := os.ReadFile(p)
 		if err != nil {
 			t.Fatalf("%s: %v", p, err)
