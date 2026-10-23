@@ -9,24 +9,43 @@ secret: false
 flags:
   - key: outcome
     values: [mediated, restored, fenn]
-    description: "How the water dispute was settled -- a brokered compromise,
+    description: "How the water dispute was settled: a brokered compromise,
       the source restored for both, or by the letter of the old water-right"
+  # Added 2026-10-23 (#375 batch 7, spec R28): the choice moved into talk
+  # with Hesper (9397). These four only record what the player has learned;
+  # each unlocks one of her warning topics, and the choice is made there.
+  - key: heard-fenn
+    values: ["yes"]
+    description: "The player heard Marrow Fenn's side for Hesper (9400)"
+  - key: heard-ayres
+    values: ["yes"]
+    description: "The player heard Ayres' side for Hesper (9401)"
+  - key: channel
+    values: [found]
+    description: "The player looked over the collapsed channel (6078)"
+  - key: record
+    values: [read]
+    description: "The player read the old water-right in the records (6060)"
 
 steps:
   - id: start
-    map_target: -1  # -1: branching investigation — hear two farmers, then one of three resolution rooms (mediate/restore 6078/record 6060); no single destination
+    map_target: -1  # -1: branching investigation: hear two farmers (6072, 6073), then settle it with Hesper (6061); the channel (6078) and records (6060) are optional finds
     description: >-
       Amber Valley's two dryside farms are feuding over a cut irrigation
-      channel. Hear both sides, and find a way to settle it.
+      channel. Hear both sides, and find a way to settle it with Hesper at
+      the Golden Bough.
     hint: >-
-      Hear both farmers out -- Marrow Fenn on the dry eastern fields, and
-      Ayres on the upstream holding. Then you might broker a compromise back
-      with Hesper at the Golden Bough, restore the water at its source by
-      examining the collapsed channel up in the foothills, or settle it by
-      the old written agreement among the records in the Rite pavilion.
+      Hear both farmers out. From the Golden Bough, go west twice to the
+      Market Square, then south six times to the Irrigation Head-Gate. Marrow
+      Fenn's holding is east of it and Ayres' holding is west. Type talk
+      fenn. Two places may show you more: the records in the cedar chest at
+      the Rite pavilion, on the way south, and the collapsed channel in the
+      foothills, south three times from the head-gate, west twice, then
+      north. Hesper will tell you what each way of ending it means before
+      you choose.
   - id: end
     description: >-
-      The water dispute is settled -- one way or another, the valley's dry
+      The water dispute is settled, one way or another. The valley's dry
       edge has its answer.
 
 rewards:
@@ -40,8 +59,10 @@ rewards:
     that stayed knotted for a long time.
 
 triggers:
-  # PATH B — RESTORE THE SOURCE: haul the collapsed channel clear (6078).
-  #   Restores the water to BOTH farms; favours neither. Flag: restored.
+  # THE FALLEN CHANNEL (6078). Until 2026-10-23 this trigger made the
+  # "restored" choice. Under spec R28 the look only discovers it: it sets
+  # 72-channel, and Hesper (9397) explains the cost and makes the choice.
+  # Kept at this index.
   - event: room_interact
     room: 6078
     noun: the collapsed channel
@@ -49,17 +70,22 @@ triggers:
       has: ["72-start"]
       missing: ["72-end"]
     actions:
-      - set_flag: {key: "72-outcome", value: "restored"}
+      - set_flag: {key: "72-channel", value: "found"}
       - actor: >-
-          You set your back to the fallen slabs and haul the slide clear,
-          stone by stone, until the old channel runs open again -- and the
-          water finds its lost path and goes downhill to both farms at once.
-          Neither man gets to be right. The valley does.
-      - observer: "{actor} hauls a slide of fallen stone clear of an old aqueduct until the water runs through it again."
-      - grant: "72-end"
+          You climb the slide and look it over. A whole span of the old
+          aqueduct lies buried under fallen rock and slumped earth. Above it
+          the water stands brimming and blocked; below it the bed runs dry
+          all the way down to the farms. Neither man cut this channel. The
+          hill did. It is far too much stone for one back, but a valley
+          turned out with ropes could clear it in a day, and then the water
+          would run down to both farms at once. Hesper at the Golden Bough
+          could call them out.
+      - observer: "{actor} climbs over the slide of fallen stone across the old aqueduct, studying it."
 
-  # PATH C — THE RECORD: read the old water-right among the records (6060).
-  #   The letter of the old agreement favours Fenn. Flag: fenn.
+  # THE OLD WATER-RIGHT (6060). Until 2026-10-23 this trigger made the
+  # "fenn" choice. Under spec R28 the look only discovers it: it sets
+  # 72-record, and Hesper (9397) explains the cost and makes the choice.
+  # Kept at this index.
   - event: room_interact
     room: 6060
     noun: the records
@@ -67,15 +93,15 @@ triggers:
       has: ["72-start"]
       missing: ["72-end"]
     actions:
-      - set_flag: {key: "72-outcome", value: "fenn"}
+      - set_flag: {key: "72-record", value: "read"}
       - actor: >-
           The old water-right is here among the ceremony rolls, dated and
           witnessed in a careful hand: the head-gate share was set to feed
           both holdings, turn and turn about. By the letter of it, Ayres has
           taken more than his due for years. It is not a kind answer. It is
-          the true one, and it favours Fenn.
-      - grant: "72-end"
+          the true one, and it favours Fenn. Hesper at the Golden Bough
+          would know what reading it aloud would do to the valley.
 
-  # PATH A — MEDIATE is granted in Hesper Vane's dialogue (9397): a brokered
-  #   compromise grants 72-end + sets the flag 'mediated'. The reward block
-  #   below fires on holding 72-end regardless of which path completed it.
+  # The three endings are Hesper Vane's hand-in topics (9397): each grants
+  # 72-end and sets 72-outcome. The reward block above fires on 72-end
+  # whichever ending completed it.

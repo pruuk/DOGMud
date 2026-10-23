@@ -1,40 +1,50 @@
 questid: 61
 name: Hedgerow Toll
 description: >-
-  Goodwife Pemberton's trade at the Lake & Ladle is bleeding -- her
+  Goodwife Pemberton's trade at the Lake & Ladle is bleeding: her
   lodgers and the road's travellers are being robbed and beaten on the
-  stretch north. She has asked you to put down the two that work it: a
-  hedgerow bandit on the road, and a Reach-touched thing out in the
-  Empty Reach beyond.
+  road. She has asked you to put down the two that work it: a hedgerow
+  bandit in the reeds at the Mire Cutoff, and a Reach-touched thing out
+  in the Empty Reach to the north.
 secret: false
+
+flags:
+  # Added 2026-10-23 (#375 batch 7): a quest has one current step, and
+  # reaching "reach" counts "bandit" as done. Killing the Reach-Touched
+  # first used to skip the bandit; now it only sets this flag, and the
+  # bandit's death finishes both (trigger 3).
+  - key: reach-first
+    values: ["yes"]
+    description: "The Reach-Touched died before the hedgerow bandit"
 
 steps:
   - id: start
     map_target: -1  # -1: bundled objectives, rooms [5376, 5395]; Phase 2 split review
     description: >-
-      Goodwife Pemberton asked you to clear the two preying on the road
-      north: a hedgerow bandit that works the hedges, and a Reach-Touched
-      out in the Empty Reach beyond.
+      Goodwife Pemberton asked you to clear the two preying on the road:
+      a hedgerow bandit hidden in the reeds at the Mire Cutoff, and a
+      Reach-Touched out in the Empty Reach to the north.
     hint: >-
-      Head north up the road. Kill the hedgerow bandit that works the
-      hedges, and the Reach-Touched out in the Empty Reach beyond. Come
-      back and tell Pemberton at the Lake & Ladle when both are down.
+      The hedgerow bandit lies hidden in the reeds at the Mire Cutoff:
+      from the Lake & Ladle's yard, go southwest. The Reach-Touched haunts
+      the Abandoned Camp, far up the road north through the Empty Reach.
+      Kill both, in either order, then come back and tell Pemberton.
   - id: bandit
     map_target: 5395
     description: >-
-      The hedgerow bandit that worked the road north is dead. The
-      Reach-Touched still haunts the Empty Reach beyond.
+      The hedgerow bandit at the Mire Cutoff is dead. The Reach-Touched
+      still haunts the Empty Reach to the north.
     hint: >-
-      Push on north into the Empty Reach and put down the Reach-Touched,
-      then report to Pemberton.
+      Follow the road north from the Lake & Ladle through the Empty Reach
+      to the Abandoned Camp, and put down the Reach-Touched.
   - id: reach
     map_target: 5378
     description: >-
-      The Reach-Touched is down. Both road-preyers are dead -- report
+      The Reach-Touched is down, and so is the hedgerow bandit. Report
       back to Pemberton at the Lake & Ladle.
     hint: >-
-      Return south to the Lake & Ladle in North Road North and tell
-      Pemberton the road is clear. Try ask pemberton report.
+      Return to the Lake & Ladle. Pemberton keeps the common room, east
+      of the inn yard. Type talk pemberton.
   - id: end
     description: >-
       Pemberton can promise her lodgers a safe road again. The toll the
@@ -50,19 +60,20 @@ rewards:
     tell my lodgers the road north is walkable again and not be lying."
     She counts coin from the strongbox without haggling for once, and
     presses a salve into your hand on top of it. "For the next set of
-    bruises. You will have them, doing work like this. Bed and board
-    here are yours at a friend's rate from now on."
+    bruises. You will have them, doing work like this. There is always
+    a seat by my fire for you."
   observer: >-
     Goodwife Pemberton settles a purse into the traveller's hand with
     the air of a woman whose trade just started breathing again.
 
 triggers:
-  # ── HEDGEROW BANDIT defeated (mob 9173, North Road North) ───────────
+  # ── HEDGEROW BANDIT defeated first (mob 9173, North Road North) ──────
   - event: mob_death
     mob: 9173
     conditions:
       has: ["61-start"]
       missing: ["61-bandit"]
+      missing_flag: {"61-reach-first": "yes"}
     actions:
       - grant: "61-bandit"
       - actor: >-
@@ -70,11 +81,12 @@ triggers:
           does not get up. One of the road's two is done. The
           Reach-Touched still haunts the Empty Reach to the north.
 
-  # ── REACH-TOUCHED defeated (mob 9178, The Empty Reach) ──────────────
+  # ── REACH-TOUCHED defeated second (mob 9178, The Empty Reach) ────────
+  # Needs 61-bandit since 2026-10-23; the first-kill case is trigger 2.
   - event: mob_death
     mob: 9178
     conditions:
-      has: ["61-start"]
+      has: ["61-bandit"]
       missing: ["61-reach"]
     actions:
       - grant: "61-reach"
@@ -82,3 +94,31 @@ triggers:
           The Reach-Touched shudders, goes still, and is just a body on
           the stones. The road north is clear of both now. Carry the
           word back to Pemberton at the Lake & Ladle.
+
+  # ── REACH-TOUCHED defeated first (appended 2026-10-23) ───────────────
+  - event: mob_death
+    mob: 9178
+    conditions:
+      has: ["61-start"]
+      missing: ["61-bandit"]
+    actions:
+      - set_flag: {key: "61-reach-first", value: "yes"}
+      - actor: >-
+          The Reach-Touched shudders, goes still, and is just a body on
+          the stones. One of the road's two is done. The hedgerow bandit
+          still lies hidden in the reeds at the Mire Cutoff, southwest of
+          the Lake & Ladle.
+
+  # ── HEDGEROW BANDIT defeated second (appended 2026-10-23) ────────────
+  - event: mob_death
+    mob: 9173
+    conditions:
+      has: ["61-start"]
+      missing: ["61-bandit"]
+      has_flag: {"61-reach-first": "yes"}
+    actions:
+      - grant: "61-reach"
+      - actor: >-
+          The hedgerow bandit folds into the ditch he ambushed from and
+          does not get up. The road is clear of both now. Carry the word
+          back to Pemberton at the Lake & Ladle.

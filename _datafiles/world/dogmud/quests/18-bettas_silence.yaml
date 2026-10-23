@@ -9,16 +9,34 @@ flags:
   - key: resolution
     values: [quiet, told, killed]
     description: "How the player handled the bloodline agent"
+  # Added 2026-10-23 (#375 batch 7): set by looking at the bedroll in
+  # Betta's barn before the quest (trigger 0). Betta only speaks of the
+  # girl to someone who has seen where she slept (277 barn_trace).
+  - key: barn
+    values: [seen]
+    description: "The player found the slept-in bedroll in Betta's barn"
 
 steps:
   - id: start
     map_target: 4038  # fallback when Bloodline Agent is not spawned
-    map_target_mob: 287  # follow Bloodline Agent (maxwander 6) — a fixed room is wrong for part of the day
+    map_target_mob: 287  # follow Bloodline Agent (maxwander 6): a fixed room is wrong for part of the day
     description: "Betta has asked you to keep quiet about the
       girl who slept in her barn."
-    hint: "A bloodline agent is patrolling the north road,
-      asking about a young woman traveling north. When you
-      encounter the agent, you will have to decide what to say."
+    hint: "A bloodline agent in a dark coat walks the road around
+      the Road Fork, asking about a young woman traveling north.
+      From the village square, go south twice, then east twice to
+      the Road Fork. When you meet the agent, you will have to
+      choose what to say, and it cannot be taken back. Type talk
+      agent."
+  # Inserted 2026-10-23 (#375 batch 7, spec R28): the agent's answers
+  # grant this step, so the first answer is final and the others close.
+  - id: answered
+    map_target: 4049
+    description: "You have dealt with the bloodline agent. Betta
+      will want to know how it went."
+    hint: "Betta keeps the farmstead west of the Drainage Ditch.
+      From the village square, go north twice to the Drainage
+      Ditch, then west twice to Betta's Yard. Type talk betta."
   - id: end
     description: "The matter of the girl in the barn has been
       resolved, one way or another."
@@ -27,3 +45,36 @@ rewards:
   actor: "What happened on the north road stays on the
     north road."
   observer: ""
+
+triggers:
+  # The bedroll in Betta's barn (4050), before the quest: finding it is
+  # what lets Betta speak of the girl (flag 18-barn).
+  - event: room_interact
+    room: 4050
+    noun: bedroll
+    conditions:
+      missing: ["18-start"]
+    actions:
+      - set_flag: {key: "18-barn", value: "seen"}
+      - actor: >-
+          A rough bed of straw piled against the wall in the darkest
+          corner of the barn, half covered by an old horse blanket. The
+          straw is pressed flat where someone slept, and not long ago. A
+          few dark hairs cling to the blanket, and beside it lies a
+          withered apple core. Someone stayed here. Betta, out in the
+          yard, must know who.
+
+  # Killing the bloodline agent (287) while the quest is open answers the
+  # agent too; Betta takes it badly (277 result_killed).
+  - event: mob_death
+    mob: 287
+    conditions:
+      has: ["18-start"]
+      missing: ["18-answered"]
+    actions:
+      - set_flag: {key: "18-resolution", value: "killed"}
+      - grant: "18-answered"
+      - actor: >-
+          The agent goes down in the road and does not rise. Whoever sent
+          this one will send another, and they will look harder at this
+          stretch of road now. Betta will hear of it.
