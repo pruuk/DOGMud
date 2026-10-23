@@ -5,7 +5,7 @@ opener:
   text: Welcome, and be easy. My name is Hadwen, and this is the Awakening Pool,
     which I keep. I have opened more people at this water than I can count, and
     I have never once been bored by it.
-  hints: You could ask about the rite or the Chrysalis.
+  hints: Choose a line below to hear about the rite or the Chrysalis.
   variants:
   # Mid-rite: the tree grants 30-rite as the rite starts (the dialogue cannot
   # read its rite_running state).
@@ -34,7 +34,8 @@ opener:
     text: How does it sit, the new thing under your skin? Settling, I hope. The first
       one always argues a little before it agrees. You have already set out from
       here, so the pool has done its part for you.
-    hints: You could ask about mutations, seeing in the dark, or your name.
+    hints: Choose a line below to hear about mutations, seeing in the dark, or
+      your name.
   - questRequired:
     - 30-end
     - 88-start
@@ -42,7 +43,8 @@ opener:
     text: How does it sit, the new thing under your skin? Settling, I hope. The first
       one always argues a little before it agrees. You have walked both roads from
       here, so the pool has done its part for you.
-    hints: You could ask about mutations, seeing in the dark, or your name.
+    hints: Choose a line below to hear about mutations, seeing in the dark, or
+      your name.
   # Toke's road is hidden (footing started) and Esk's is taken.
   - questRequired:
     - 30-end
@@ -51,7 +53,8 @@ opener:
     text: How does it sit, the new thing under your skin? Settling, I hope. The first
       one always argues a little before it agrees. You have walked both roads from
       here, so the pool has done its part for you.
-    hints: You could ask about mutations, seeing in the dark, or your name.
+    hints: Choose a line below to hear about mutations, seeing in the dark, or
+      your name.
   # One road left: Toke's (Esk's taken).
   - questRequired:
     - 30-end
@@ -59,8 +62,8 @@ opener:
     text: How does it sit, the new thing under your skin? Settling, I hope. The first
       one always argues a little before it agrees. One road from here is still open
       to you, if you want it.
-    hints: Choose Toke's Road below to learn the town. You could also ask about
-      mutations, seeing in the dark, or your name.
+    hints: Choose Toke's Road below to learn the town. Other lines below tell you
+      about mutations, seeing in the dark, or your name.
   # One road left: Esk's (Toke's taken, or footing already started).
   - questRequired:
     - 30-end
@@ -68,24 +71,24 @@ opener:
     text: How does it sit, the new thing under your skin? Settling, I hope. The first
       one always argues a little before it agrees. One road from here is still open
       to you, if you want it.
-    hints: Choose Esk's Road below to leave the coulee. You could also ask about
-      mutations, seeing in the dark, or your name.
+    hints: Choose Esk's Road below to leave the coulee. Other lines below tell you
+      about mutations, seeing in the dark, or your name.
   - questRequired:
     - 30-end
     - 31-start
     text: How does it sit, the new thing under your skin? Settling, I hope. The first
       one always argues a little before it agrees. One road from here is still open
       to you, if you want it.
-    hints: Choose Esk's Road below to leave the coulee. You could also ask about
-      mutations, seeing in the dark, or your name.
+    hints: Choose Esk's Road below to leave the coulee. Other lines below tell you
+      about mutations, seeing in the dark, or your name.
   # Both roads open.
   - questRequired:
     - 30-end
     text: How does it sit, the new thing under your skin? Settling, I hope. The first
       one always argues a little before it agrees. Two roads lead on from here, and
       I can point you down either one.
-    hints: Choose Toke's Road or Esk's Road below to set out. You could also ask
-      about mutations, seeing in the dark, or your name.
+    hints: Choose Toke's Road or Esk's Road below to set out. Other lines below
+      tell you about mutations, seeing in the dark, or your name.
 topics:
 # R17: the two roads that replace quest 29 "Two Roads". Take either, both or
 # neither. Toke's road is hidden once footing has started (31-start), since
@@ -212,7 +215,7 @@ topics:
   text: The pool opens a person once. After that, the opening is yours to continue
     through effort, conflict and wanting. The body remembers all of it, and in time it answers.
     You do not need me for the second change, or the tenth.
-  hints: You could ask about mutations or the Chrysalis.
+  hints: Choose a line below to hear about mutations or the Chrysalis.
   questRequired:
   - 30-end
 - key: mutations
@@ -222,7 +225,8 @@ topics:
     fg="command">mutations</ansi> and the truth of yourself is listed plainly, which
     is more than most worlds offer. Each one woke because of something you did or
     survived. Read them now and then. They are a better diary than most.
-  hints: You could ask about your name, seeing in the dark, or the Chrysalis.
+  hints: Choose a line below to hear about your name, seeing in the dark, or the
+    Chrysalis.
   questRequired:
   - 30-end
 - key: glow
@@ -248,7 +252,7 @@ topics:
     it hangs on them like a borrowed coat. If yours no longer fits the shape of you,
     type <ansi fg="command">rename</ansi> followed by the name you choose. The coulee
     will learn the new one fast enough.
-  hints: You could ask about mutations or the Chrysalis.
+  hints: Choose a line below to hear about mutations or the Chrysalis.
   questRequired:
   - 30-end
 - key: chrysalis
@@ -258,12 +262,12 @@ topics:
     of belief. The land believes itself into shape, and so does everything living
     on it. We are not a faith of dogma. We are a faith of becoming, and the pool is
     the oldest becoming in this valley.
-  hints: You could ask about the rite. For the old way, Granny Wicker is the one
-    to ask.
+  hints: Choose a line below to hear about the rite. For the old way, talk to
+    Granny Wicker.
 - key: help_literacy
   kind: info
   label: What do I do when I don't know something?
   text: When I do not know a thing, I ask the water. When you do not know a thing,
     type <ansi fg="command">help</ansi>. It is patient, thorough, and never tired
     of the question. Add a word to narrow it, like <ansi fg="command">help sleep</ansi>.
-  hints: You could ask about the rite or the Chrysalis.
+  hints: Choose a line below to hear about the rite or the Chrysalis.

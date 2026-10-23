@@ -32,7 +32,7 @@ steps:
     map_target: 5200
     map_target_mob: 9100
     description: "The rite has begun. Stay by the Awakening Pool until Cleric Hadwen is done."
-    hint: "Stay by the Awakening Pool until the rite is done. If nothing is happening, type talk hadwen and ask whether the rite is still going."
+    hint: "Stay by the Awakening Pool until the rite is done. If nothing is happening, type talk hadwen and choose Is the rite still going?"
   - id: end
     description: "The pool has opened you. Two roads from here: learn the town with Crier Toke, or leave through Warden Esk's arch. Cleric Hadwen can point you down either one."
     # An end hint is never displayed (the quest is complete). What a new

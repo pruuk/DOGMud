@@ -4,7 +4,8 @@ defaultMood: neutral
 opener:
   text: Civilian. If you are here about the noise complaint on Main Street, it is
     filed. If you are here about something else, take a seat.
-  hints: You could ask Velk about the missing person case or the city watch.
+  hints: Choose a line below to hear about the missing person case or the city
+    watch.
   # The first variant that matches wins. A step the player can finish here
   # with an item in hand is the most specific, so those come first: quest
   # 8's variants hid quest 10's greeting while both were open (#375 phase 1
