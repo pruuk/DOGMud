@@ -126,6 +126,21 @@ func TestValidateWorld_BehaviorTopicsMatchTheTree(t *testing.T) {
 	require.Contains(t, joined, `topic_is "ferry" names no topic on this mob`)
 }
 
+// An archetype's topic_is serves a behavior topic (the runtime runs the
+// archetype when the per-mob tree fails), and an archetype key with no topic
+// on this mob is no problem: the archetype is shared (#375 review M5).
+func TestValidateWorld_ArchetypeTopicsServeABehaviorTopic(t *testing.T) {
+	df := loadFixture(t, breakFixture("    text: \"Wet.\"", "    text: \"Wet.\"\n    behavior: true"))
+	w := testWorld(df)
+	w.ArchetypeTopics = map[int][]string{50: {"weather", "some_other_mobs_topic"}}
+	require.Empty(t, ValidateWorld(w))
+
+	w.ArchetypeTopics = map[int][]string{50: {"some_other_mobs_topic"}}
+	ps := ValidateWorld(w)
+	require.Len(t, ps, 1)
+	require.Contains(t, ps[0].String(), `behavior: true but the mob's tree has no topic_is "weather"`)
+}
+
 func TestValidateWorld_ItemGiveGrantsAreRefused(t *testing.T) {
 	w := testWorld(loadFixture(t, menuFixtureYAML))
 	w.ItemGiveGrants = []string{"quest 10 trigger 2"}

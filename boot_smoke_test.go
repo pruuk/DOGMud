@@ -237,6 +237,15 @@ func TestSmoke_ShippedDialoguePassesTheValidators(t *testing.T) {
 		t.Errorf("%s", p.String())
 	}
 	t.Logf("dialogue files validated: %d (problems: %d)", len(files), len(probs))
+
+	// The behavior-topic rules read each tree at the path TryMobBehavior
+	// loads. Seven shipped trees carry topic_is (Hadwen, Esk, Sable, the
+	// Threshold Keeper and three ferry agents); finding none would mean the
+	// index read the wrong paths and every behavior check passed vacuously.
+	perMob, _, _ := behaviorTopicIndex(mobs.AllMobTemplates())
+	if len(perMob) < 7 {
+		t.Errorf("the behavior-topic index found topic_is in %d trees, want at least 7: %v", len(perMob), perMob)
+	}
 }
 
 // knownSilentlyIgnoredKeys is the accepted baseline of YAML keys that appear in

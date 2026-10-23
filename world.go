@@ -202,10 +202,8 @@ func (w *World) HandleSystemEvents(e events.Event) events.ListenerReturn {
 			Text: `Reloading flat files...`,
 		})
 
-		loadAllDataFiles(true)
-
 		events.AddToQueue(events.Broadcast{
-			Text:            `Done.` + term.CRLFStr,
+			Text:            reloadResultText(loadAllDataFiles(true)) + term.CRLFStr,
 			SkipLineRefresh: true,
 		})
 

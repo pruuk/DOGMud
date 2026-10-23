@@ -40,6 +40,11 @@ type World struct {
 	// tree. Nil skips the behavior checks (no trees in this world). A mob id
 	// with no dialogue file is itself a problem.
 	BehaviorTopics map[int][]string
+	// ArchetypeTopics maps a mob id to the topic_is keys in the archetype
+	// tree its template declares, which the runtime runs when the per-mob
+	// tree fails. A behavior topic may be served by either tree. An archetype
+	// is shared, so an archetype key a mob has no topic for is not a problem.
+	ArchetypeTopics map[int][]string
 	// ItemGiveGrants names quest item_give triggers that carry a grant
 	// action ("quest 10 trigger 2"). Hand-ins are NPC topics (R7). The
 	// trigger index counts all of the quest's triggers from 0, not only the
@@ -197,13 +202,16 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 		add("topics", "heardRequired cycle through %q", cyc)
 	}
 
-	if w.BehaviorTopics != nil {
-		tree := map[string]bool{}
+	if w.BehaviorTopics != nil || w.ArchetypeTopics != nil {
+		tree, served := map[string]bool{}, map[string]bool{}
 		for _, k := range w.BehaviorTopics[df.MobId] {
-			tree[k] = true
+			tree[k], served[k] = true, true
+		}
+		for _, k := range w.ArchetypeTopics[df.MobId] {
+			served[k] = true
 		}
 		for _, t := range df.Topics {
-			if t.Behavior && !tree[t.Key] {
+			if t.Behavior && !served[t.Key] {
 				add(fmt.Sprintf("topic %q", t.Key), "behavior: true but the mob's tree has no topic_is %q", t.Key)
 			}
 		}

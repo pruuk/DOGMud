@@ -1625,13 +1625,19 @@ func TelnetListenOnPort(hostname string, portNum int, wg *sync.WaitGroup, maxCon
 	return server
 }
 
-func loadAllDataFiles(isReload bool) {
+// loadAllDataFiles loads every data file. At boot a loader's panic stops the
+// server. On a reload it returns the failure instead, so the reload command
+// can tell the admin rather than broadcast "Done." (#375 review M4): a
+// loader that panics is recovered here, and a dialogue problem is returned
+// after the remaining loaders have run.
+func loadAllDataFiles(isReload bool) (reloadErr error) {
 
 	if isReload {
 
 		defer func() {
 			if r := recover(); r != nil {
 				mudlog.Error("RELOAD FAILED", "err", r)
+				reloadErr = fmt.Errorf("%v", r)
 			}
 		}()
 
@@ -1893,12 +1899,9 @@ func loadAllDataFiles(isReload bool) {
 	ferry.LoadDataFiles()
 	warehouse.LoadAll()
 	questengine.LoadDataFiles()
-	if probs := validateShippedDialogue(); len(probs) > 0 {
-		for _, p := range probs {
-			mudlog.Error("dialogue", "problem", p.String())
-		}
-		panic(fmt.Sprintf("%d dialogue problems; see the log above", len(probs)))
-	}
+	// At boot a dialogue problem panics; on a reload it is returned once the
+	// remaining loaders below have run.
+	reloadErr = dialogueDoor(validateShippedDialogue(), isReload)
 	templates.LoadAliases(plugins.GetPluginRegistry())
 	keywords.LoadAliases(plugins.GetPluginRegistry())
 	mutators.LoadDataFiles()
@@ -1992,4 +1995,5 @@ func loadAllDataFiles(isReload bool) {
 	spells.LoadCastingMessages()
 	audio.LoadAudioConfig()
 	characters.CompileAdjectiveSwaps() // This should come after loading color patterns.
+	return reloadErr
 }
