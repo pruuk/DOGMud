@@ -277,10 +277,31 @@ func TestTalkAskSight_NoSightResolvesNothing(t *testing.T) {
 	assert.Contains(t, aimTold(1), refusal.NotHereCreatureLine)
 }
 
-func TestTalkSight_ShapesHintsAName(t *testing.T) {
+// A conversation needs the NPC seen by name, so at shapes every talk aim
+// refuses. The shared aim hint ("Try talk figure or talk 2.figure") sent the
+// player to a command that refuses too (playtest seat C, #375). Talk names
+// what is missing, more light, on every route there: a typed name, a figure
+// aim, and ask's redirect to talk. Other verbs keep the hint (kick, steal,
+// plant and shadow above).
+func TestTalkSight_ShapesNamesTheLightNotADeadCommand(t *testing.T) {
 	user, room := aimScene(t, aimShapes)
-	_, _ = Talk("skeleton", user, room, events.EventFlag(0))
-	assert.Contains(t, aimTold(1), "talk 2.figure")
+	for _, typed := range []string{"skeleton", "figure", "2.figure"} {
+		_, _ = Talk(typed, user, room, events.EventFlag(0))
+		told := aimTold(1)
+		assert.Contains(t, told, "more light", "talk %s", typed)
+		assert.NotContains(t, told, "figure</ansi>", "talk %s suggested a figure command: %q", typed, told)
+		assert.NotContains(t, told, "Try", "talk %s suggested a command: %q", typed, told)
+	}
+	// ask on an NPC redirects to talk; at shapes that redirect would name a
+	// talk that refuses.
+	_, _ = Ask("2.figure arena", user, room, events.EventFlag(0))
+	told := aimTold(1)
+	assert.Contains(t, told, "more light")
+	assert.NotContains(t, told, "talk 2.figure")
+
+	// The other verbs sharing the hint are unchanged.
+	_, _ = Consider("skeleton", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), "consider 2.figure")
 }
 
 func TestPartyInviteSight_EachBand(t *testing.T) {
@@ -499,12 +520,13 @@ func TestTalkSight_SleepRefusalHidesAShapesName(t *testing.T) {
 		}
 		_, _ = Talk(aim, user, room, events.EventFlag(0))
 		told := aimTold(1)
-		assert.Contains(t, told, "is fast asleep.", "band %d", band)
 		if band == aimFull {
 			assert.Contains(t, told, "Skeleton is fast asleep.")
 		} else {
+			// At shapes talk refuses for the light before it resolves the
+			// aim, so the sleeper is neither named nor reported asleep.
 			assert.NotContains(t, told, "Skeleton", "an asker who aimed at a shape read its name")
-			assert.Contains(t, told, "A figure is fast asleep.")
+			assert.Contains(t, told, "more light")
 		}
 	}
 }

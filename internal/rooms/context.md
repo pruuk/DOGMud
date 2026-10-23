@@ -92,6 +92,9 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   Nobody arrives seated: `MoveToRoom` (every player move) and `AddMob` (every
   mob room entry) call `Character.StandForMove`, which stands a sitter
   silently, so every move path, present or future, is covered there.
+  `RemoveMob` (every way a mob leaves a room: a move, a despawn, a death)
+  calls `users.(*UserRecord).CloseMenuWithMob` for each player in the room,
+  so a talk menu with that NPC closes at once (#375 phase 1 playtest).
   The "Also here" listing (`roomdetails.go`) reads the same
   `Perceives` rule, with no pet requirement, and then the viewer's
   `messaging.ParticipantSight` in the room (lighting plan 5c): at shapes every

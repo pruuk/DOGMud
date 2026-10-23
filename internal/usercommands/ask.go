@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/companionai"
+	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -67,6 +68,10 @@ func Ask(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	// companion (the module answers its owner and others in the room). Every
 	// other NPC is a talk conversation.
 	if !mob.Character.IsCharmed(user.UserId) && !companionai.IsBondedCompanion(mob.InstanceId) {
+		// At shapes the talk this would suggest refuses too.
+		if conversation.RefusedAtShapes(user, room) {
+			return true, nil
+		}
 		redirectToTalk(user, typedName)
 		return true, nil
 	}

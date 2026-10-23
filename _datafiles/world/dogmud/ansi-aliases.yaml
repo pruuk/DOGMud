@@ -306,3 +306,9 @@ colors:
 # achievements list. Same value as `system`, the category these lines rode,
 # so moving them only stops the normalizer adding a full stop to them.
   screen: 8
+
+# Numbered menu lines (talk, confirms, builders) that are not dimmed. Menus
+# ride `screen` or `admin`, both grey, so a dimmed line (heard info, colour
+# 8) only stands out if the other lines are brighter. Plain text white, the
+# room description colour.
+  menu-label: 15

@@ -495,7 +495,7 @@ func TestTalkCommand_AtAShapeRefusesBeforeAnyoneSpeaks(t *testing.T) {
 	_, err := Talk("2.shape", user, room, 0)
 	require.NoError(t, err)
 	mine, theirs := aimTold(1), aimTold(2)
-	require.Equal(t, 1, strings.Count(mine, conversation.TalkSightLine), "one refusal: %q", mine)
+	require.Equal(t, 1, strings.Count(mine, conversation.TalkShapesLine), "one refusal: %q", mine)
 	require.NotContains(t, mine, "Rattle.", "the NPC spoke its opener")
 	require.NotContains(t, mine, "Skeleton", "the refusal named a shape")
 	require.Empty(t, theirs, "the room heard an approach or an opener")
@@ -503,7 +503,7 @@ func TestTalkCommand_AtAShapeRefusesBeforeAnyoneSpeaks(t *testing.T) {
 
 	// The conversation entry point refuses the same way for any caller.
 	conversation.Talk(user, room, mob)
-	require.Contains(t, aimTold(1), conversation.TalkSightLine)
+	require.Contains(t, aimTold(1), conversation.TalkShapesLine)
 	require.Empty(t, aimTold(2))
 	require.False(t, user.HasOpenMenu())
 }

@@ -33,6 +33,12 @@ func Talk(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		args = args[1:]
 	}
 
+	// A conversation needs the NPC seen by name, so at shapes no aim can
+	// succeed; say what is missing instead of hinting at `talk figure`.
+	if conversation.RefusedAtShapes(user, room) {
+		return true, nil
+	}
+
 	// #454, owner call 2: a typed name resolves only at full sight, or
 	// talking would confirm who is there in the dark.
 	searchName, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, args[0], `talk`)

@@ -18,6 +18,7 @@ const (
 	CloseRoomChange
 	CloseFollow // pulled away by a leader; FollowLines speaks instead
 	CloseContextLost
+	ClosePartnerLeft // the NPC the menu talks with left the room or died
 )
 
 var interruptTail = map[CloseReason]string{
@@ -34,6 +35,13 @@ var interruptTail = map[CloseReason]string{
 // their menu, or "" when the close is silent (their own choice, a command
 // whose output speaks for itself, death, a follow pull).
 func InterruptLine(r CloseReason, topic string) string {
+	if r == ClosePartnerLeft {
+		// The player broke nothing off: the other side went away.
+		if topic == "" {
+			return "The conversation ends because they left."
+		}
+		return "Your " + topic + " ends because they left."
+	}
 	tail, ok := interruptTail[r]
 	if !ok {
 		return ""

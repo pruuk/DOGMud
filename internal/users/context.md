@@ -572,7 +572,20 @@ menu itself (rendering, resolving) is `internal/menu`; see its `context.md`.
   `CategoryScreen`. It refuses with the gate's reason while an interrupt rule
   holds, and refuses with `menu.CloseNone` while a prompt is open. Opening
   replaces an open game menu (the old one's `OnClose` gets `CloseReplaced`).
-- `StartPrompt` closes an open game menu (the prompt replaces it).
+  With `Session.ShowLast` the menu text is queued at event priority 50
+  (`menuShowLastPriority`): after the pass's ordinary lines, including the
+  quest banner and rewards a grant prints on a later event, and before the
+  prompt redraw at 100.
+- `CloseMenuWithMob(mobInstanceId)`: closes the open menu whose
+  `Session.MobInstanceId` is that NPC, with the `ClosePartnerLeft` line at
+  priority 40 (after the NPC's exit or death line). `rooms.Room.RemoveMob`
+  calls it for every player in the room, so every way an NPC leaves (a move,
+  a despawn, a death) ends the talk at once.
+- `StartPrompt` closes an open game menu (the prompt replaces it). A new
+  prompt also forgets the last question the redraw drew
+  (`PromptDrawnTempKey`), so its question is redrawn after the command's own
+  lines even when it reads the same as the last one (a second stake at
+  Sable, #375 R14).
 - `RouteMenuInput(line, typed)`: offers a line to the open menu and reports
   whether it consumed it. Only typed lines answer. A chosen entry re-checks
   `menuGate` and `Session.StillValid` first; a line that is not an answer

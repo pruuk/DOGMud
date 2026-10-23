@@ -83,13 +83,15 @@ func TestAsk_UsagePromptNamesTheCompanion(t *testing.T) {
 	require.NotContains(t, mine, "<topic>")
 }
 
-// The redirect repeats the name the player typed, never the resolved "#id"
-// that a shape aim resolves to.
+// The redirect never shows the resolved "#id" a shape aim resolves to. At
+// shapes there is no redirect at all: the talk it would name refuses, so ask
+// names the light instead (playtest seat C, #375).
 func TestAsk_RedirectUsesTheTypedName(t *testing.T) {
 	user, room := aimScene(t, aimShapes)
 	_, _ = Ask("2.shape quest", user, room, events.EventFlag(0))
 	told := aimTold(1)
-	require.Contains(t, told, "talk 2.shape")
+	require.Contains(t, told, "more light")
+	require.NotContains(t, told, "talk 2.shape")
 	require.NotContains(t, told, "#")
 }
 

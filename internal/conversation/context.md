@@ -38,10 +38,17 @@ package owns everything that needs a user, a room or a mob.
 - `Talk` checks `users.(*UserRecord).MenuBlockedReason` before anyone speaks:
   a gate rule or an open prompt gets one private refusal line and the room
   hears nothing. So does an NPC the player cannot see by name (spec 4 item
-  1): a figure aimed at with `talk 2.figure` at shapes sight gets
-  `TalkSightLine`, which names no one, before the approach line or the opener.
-  A sleeping NPC's refusal (`usercommands.Talk`, before `Talk`) comes first
-  and hides a figure's name itself.
+  1). At shapes sight every talk aim gets `TalkShapesLine` ("You need more
+  light ..."), never the shared aim hint "Try talk figure", which would only
+  refuse again: `usercommands.Talk` and `ask`'s redirect call
+  `RefusedAtShapes` before resolving any name, and `Talk` itself sends
+  `SightRefusal` (`TalkShapesLine` at shapes, otherwise `TalkSightLine`,
+  which names no one) before the approach line or the opener. At full sight
+  a sleeping NPC's refusal (`usercommands.Talk`, before `Talk`) comes first.
+- The talk menu and the Accept / Leave card open with `Session.ShowLast`
+  (shown after the choice's lines, quest banner and rewards included) and
+  `Session.MobInstanceId` (the menu closes, with a line, the moment the NPC
+  leaves the room or dies).
 - During a choice the PlayerState callbacks' private lines (delivery, gold
   received or paid, refusals) are buffered (`talkState`, `lineBuffer`) and
   flushed after the handover line and before the NPC reply, also when Apply

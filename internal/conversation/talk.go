@@ -27,7 +27,7 @@ func Talk(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob) {
 		return
 	}
 	if !seesByName(user, room, mob) {
-		user.SendText(messaging.CategoryRefusal, TalkSightLine)
+		user.SendText(messaging.CategoryRefusal, SightRefusal(user, room))
 		return
 	}
 	room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
@@ -69,6 +69,32 @@ const promptOpenLine = "Finish what you have open before you start a conversatio
 // shows. It names no one, so a figure's name never leaks, and follows the
 // shop verbs' "You can't make out ... well enough to ..." wording.
 const TalkSightLine = "You can't make out who that is well enough to start a conversation."
+
+// TalkShapesLine refuses every talk aim from a player who makes out shapes
+// only. It says what the player needs, more light, rather than the shared aim
+// hint's "Try talk figure", which only reaches TalkSightLine (playtest seat
+// C, #375). Two lines: refusals are not wrapped.
+const TalkShapesLine = "You can only make out shapes here.\n" +
+	"You need more light to see who someone is before you can talk to them."
+
+// SightRefusal is the line for a talk the player's sight refuses:
+// TalkShapesLine at shapes, TalkSightLine otherwise.
+func SightRefusal(user *users.UserRecord, room *rooms.Room) string {
+	if room != nil && messaging.ParticipantSight(user.Character, room) == messaging.SightShapes {
+		return TalkShapesLine
+	}
+	return TalkSightLine
+}
+
+// RefusedAtShapes sends TalkShapesLine and reports true when the player
+// makes out shapes only, so no talk aim there is resolved or hinted at.
+func RefusedAtShapes(user *users.UserRecord, room *rooms.Room) bool {
+	if room == nil || messaging.ParticipantSight(user.Character, room) != messaging.SightShapes {
+		return false
+	}
+	user.SendText(messaging.CategoryRefusal, TalkShapesLine)
+	return true
+}
 
 // blockedLine is the refusal when the talk menu could not open now, or "".
 func blockedLine(user *users.UserRecord) string {
@@ -180,6 +206,10 @@ func session(user *users.UserRecord, mob *mobs.Mob, onChoose func(menu.Entry)) m
 		TopicNames: []string{mob.Character.Name},
 		StillValid: func() bool { _, _, ok := present(user, inst); return ok },
 		OnChoose:   onChoose,
+		// The talk menu and the Accept / Leave card come after the lines of
+		// the choice that opened them, quest banners and rewards included.
+		ShowLast:      true,
+		MobInstanceId: inst,
 	}
 }
 

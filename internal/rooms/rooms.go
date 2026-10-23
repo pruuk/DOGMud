@@ -1393,6 +1393,14 @@ func (r *Room) RemoveMob(mobInstanceId int) {
 	if len(r.mobs) < 1 {
 		delete(roomManager.roomsWithMobs, r.RoomId)
 	}
+
+	// A player talking with this mob loses the conversation now, whatever
+	// took the mob away: a move, a despawn or a death (#375).
+	for _, userId := range r.players {
+		if u := users.GetByUserId(userId); u != nil {
+			u.CloseMenuWithMob(mobInstanceId)
+		}
+	}
 }
 
 func (r *Room) AddItem(item items.Item, stash bool) {

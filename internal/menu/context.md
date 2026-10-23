@@ -54,7 +54,12 @@ send the text. Part of the quest-arc phase 0 work (#375).
   column, then the label. Numbers are padded to the width of the largest.
 - `Detail` wraps at 80 columns under the label, indented past the marker
   column.
-- `Dim` entries render grey.
+- `Dim` entries render grey (colour 8); every other label and `Detail` line
+  renders in the `menu-label` alias (white, 15). Menus ride the grey
+  `screen` and `admin` categories, so without the explicit colour an
+  undimmed line inherits the same grey and Dim shows nothing (#375 phase 1
+  playtest). Pinned on the telnet bytes by
+  `TestRender_DimLineIsDimmerOnTheTelnetPort`.
 - `Columns: 2` places entries in two 39-wide cells; labels are cut to fit and
   `Detail` is dropped.
 - The footer is `Footer` when set; otherwise "Type a number, or press Enter
@@ -91,10 +96,12 @@ the action ("Yes, disband it" / "No, keep it"); otherwise pass "Yes" and "No".
   `CloseChosen`, `CloseLeft`, `CloseOtherCommand`, `CloseReplaced`,
   `CloseCombat`, `CloseBusy`, `CloseDead`, `CloseAsleep`,
   `CloseControlled`, `CloseQuitting`, `CloseRoomChange`, `CloseFollow`,
-  `CloseContextLost`.
+  `CloseContextLost`, `ClosePartnerLeft` (the NPC the menu talks with left
+  the room or died).
 - `InterruptLine(reason, topic)` is the one line the player reads when an
   interrupt closes their menu ("You break off your talk with Kael as the fight
-  begins."), or `""` when the close is silent (their own choice, a command
+  begins."; for `ClosePartnerLeft`, "Your talk with Kael ends because they
+  left."), or `""` when the close is silent (their own choice, a command
   whose output speaks for itself, death, a follow pull).
 - `FollowLines(follower, leader, topic)` returns the three lines for a leader
   pulling a follower out of a menu: to the follower, to the leader, to the
@@ -102,7 +109,10 @@ the action ("Yes, disband it" / "No, keep it"); otherwise pass "Yes" and "No".
 - `Session` carries `Topic` (names the conversation in the lines above),
   `TopicNames` (the names inside `Topic`, hidden per reader by the sight
   rules), `OnChoose`, `OnClose` and `StillValid` (re-checks the caller's
-  context before a choice acts; nil means valid).
+  context before a choice acts; nil means valid), `ShowLast` (send the menu
+  after every line of the event pass, quest banners and rewards included;
+  the menu is open for input at once) and `MobInstanceId` (the NPC the menu
+  talks with; `Room.RemoveMob` closes the menu with `ClosePartnerLeft`).
 
 ## LintLabels
 

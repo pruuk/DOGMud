@@ -37,7 +37,7 @@ func RedrawPrompt_SendRedraw(e events.Event) events.ListenerReturn {
 
 		if evt.OnlyIfChanged || forceDedup {
 
-			oldCmdPrompt := user.GetTempData(`cmdprompt`)
+			oldCmdPrompt := user.GetTempData(users.PromptDrawnTempKey)
 
 			// If the prompt hasn't changed, skip redrawing
 			if s, ok := oldCmdPrompt.(string); ok && s == newCmdPrompt {
@@ -45,7 +45,7 @@ func RedrawPrompt_SendRedraw(e events.Event) events.ListenerReturn {
 			}
 
 			// save the new prompt for next time we want to check
-			user.SetTempData(`cmdprompt`, newCmdPrompt)
+			user.SetTempData(users.PromptDrawnTempKey, newCmdPrompt)
 
 		}
 
