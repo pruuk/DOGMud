@@ -802,7 +802,9 @@ func (w *walker) eval(s *source, fixed map[int]node) (bool, string) {
 	}
 	for _, k := range sortedMapKeys(s.flagReq) {
 		v := s.flagReq[k]
-		if !w.flags[k+"="+v] {
+		// An empty value asks for the flag to be unset (GetQuestFlag returns
+		// "" for a missing key), which every player starts with.
+		if v != "" && !w.flags[k+"="+v] {
 			return false, fmt.Sprintf("questFlagRequired %s=%s is never set", k, v)
 		}
 		if s.flagExc != nil && s.flagExc[k] == v {

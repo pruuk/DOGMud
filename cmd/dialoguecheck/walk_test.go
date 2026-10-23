@@ -122,6 +122,23 @@ func TestWalk_GateNothingMeetsIsAnUnreachableTopic(t *testing.T) {
 	require.Contains(t, st[0], "quest 5 \"Locked Out\": 5-start is never granted")
 }
 
+// questFlagRequired with an empty value gates on the flag being unset,
+// the state every player starts in, so it never makes a topic unreachable.
+// A real value nothing sets still does (the control that proves the check
+// can fail).
+func TestWalk_EmptyFlagValueMeansUnsetAndIsReachable(t *testing.T) {
+	in := loadFixture(t, "clean")
+	done := &in.Files[0].File.Topics[1]
+	require.Equal(t, "errand_done", done.Key)
+	done.QuestFlagRequired = map[string]string{"1-k": ""}
+	fs := Walk(in)
+	require.Empty(t, fs, "%v", fs)
+
+	done.QuestFlagRequired = map[string]string{"1-k": "yes"}
+	fs = Walk(in)
+	require.Contains(t, strings.Join(ofClass(fs, ClassUnreachable), "\n"), "questFlagRequired 1-k=yes is never set")
+}
+
 // The quest 29 shape: a converter ruling drops the only start grant while
 // the quest's other parts still expect it to run.
 func TestWalk_QuestNothingStartsIsUnstartable(t *testing.T) {
