@@ -4,37 +4,44 @@ description: >-
   Brennan, the university's old field man, is certain that the surveyor
   Reth saw something in the eastern country and filed a report designed
   to say nothing. He has sent you to read that survey in the university
-  Archive -- the one that classifies a site as a mineral deposit in three
-  lines, where a careful surveyor would write pages -- and then to bring
-  back whatever you find to earn an introduction to Reth himself, who
-  lives retired in the quiet end of the residential streets.
+  Archive, the one that calls a site a mineral deposit in three lines
+  where a careful surveyor would write pages, and then to bring back
+  whatever you find to earn an introduction to Reth himself, who lives
+  retired at the quiet end of the residential streets.
 secret: false
 
 steps:
   - id: start
     map_target: 6303
     description: "Brennan has set you to read the survey Reth filed on the
-      eastern country -- the one that says nothing."
-    hint: "Examine the filed-survey in the university Archive, then return
-      to Brennan."
+      eastern country, the one that says nothing."
+    hint: "Reth's filed survey lies on the reading stand in the university
+      Archive. From Brennan's Office, go east to the Cloister Walk, east to
+      the Reading Room, then south into the Archive. Type look filed survey."
   - id: survey
     map_target: 6305  # fallback when Brennan the Surveyor is not spawned
     map_target_mob: 9516  # follow Brennan the Surveyor (schedule gf_brennan) — a fixed room is wrong for part of the day
     description: "You found Reth's filed survey: a mineral deposit entry,
-      conspicuously empty -- a man who saw something out there and chose
+      strangely empty, from a man who saw something out there and chose
       not to write it down."
-    hint: "Return to Brennan with what you found."
+    hint: "Take what you saw back to Brennan. From the Archive, go north to
+      the Reading Room, west to the Cloister Walk, then west into Brennan's
+      Office. He sleeps at his desk late at night. Type talk brennan."
   - id: intro
     map_target: 6315  # fallback when Reth is not spawned
     map_target_mob: 9524  # follow Reth (schedule gf_reth) — a fixed room is wrong for part of the day
-    description: "Brennan, convinced, has given you his introduction to
-      Reth, who lives retired in the quiet end of the residential streets."
-    hint: "Seek out Reth in the residential streets."
+    description: "Brennan, convinced, has given you his word to take to
+      Reth, who lives retired at the quiet end of the residential streets.
+      Brennan asks only that Reth let you read his original field notes."
+    hint: "From Brennan's Office, go east to the Cloister Walk, south three
+      times to College Row, west to the Blue Door, then south twice to
+      Reth's Cottage. With Brennan's word, Reth's notes on the table are
+      yours to read. Type look field notes."
   - id: testimony
     map_target: -1  # -1: return-to-giver / in-place (start room 6315); Phase 2 split review
-    description: "You found Reth, and with Brennan's word he told you
-      what he saw in the east: directions and landmarks toward the hill --
-      and that whatever is out there is not natural. He marked it for you."
+    description: "You found Reth's notes, and with Brennan's word they are
+      yours: directions and landmarks toward the eastern highlands, and a
+      warning that whatever is out there is not natural."
     hint: "You have Reth's account and his marked directions. The thread
       runs east."
   - id: end

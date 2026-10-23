@@ -59,6 +59,28 @@ tree:
     # ── PURCHASE: gated on the Attuned Disc, then open the scaled portal ──
     # open_instance_portal parses "crash <gold>" and fails-through if the
     # text does not match, so this must sit above the no-disc fallback.
+    #
+    # Task 17 (#375 R14) replaces this branch with one player_topic branch
+    # (topic open_crash in dialogue 9553, which is gated carriesItem: 40168),
+    # keeping the player_has_item check, with zone: crash and this
+    # guidance: text. Ranges are the owner's (2026-10-23, batch 7): the zone
+    # is a group effort from the start. Facts from
+    # rooms/crash_site_interior/zone-config.yaml: death_policy rejoin,
+    # allow_recall false, no instance_gold, min_gold 200 here. Gold and
+    # material scaling with the stake is filed as #657 (not implemented).
+    #
+    # crash guidance:
+    #   No one goes into the buried thing alone and comes out. Bring others.
+    #   The more gold you stake, the more of the deep wards wake, and the
+    #   more the place has kept for those who reach it.
+    #   Two hundred to four hundred gold suits three of you, moderately well
+    #   armed and armoured. Four hundred to eight hundred wants three of you
+    #   very well armed and armoured. Eight hundred and more, and you should
+    #   bring a great many friends, every one of them at the height of their
+    #   strength.
+    #   I take no less than two hundred. If you fall inside, you may come
+    #   back in while the way stays open, but no magic calls you home from
+    #   there.
     - type: sequence
       event: player_ask
       children:
