@@ -36,10 +36,6 @@ var durableWriteExemptions = map[string]string{
 
 	// Build-time code generation, run by a developer, never by the server.
 	"cmd/generate": "codegen tool; output is source, regenerated on demand",
-
-	// #375 phase 1 one-time dialogue converter: writes a scratch output folder
-	// a developer reviews; never run by the server. Deleted in plan Task 24.
-	"cmd/dialogueconvert": "one-time converter; scratch output, removed in #375 Task 24",
 }
 
 // durableWriteFileExemptions lists individual FILES allowed to hand-roll the

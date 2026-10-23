@@ -149,14 +149,14 @@ breadcrumb offer only: spoken while the offer is hidden for ineligibility
 **Exit.** No `Atoi`-and-index menu block remains outside the package; admin builders behave
 as before; tests cover number, name, Enter, out-of-range and a stale menu.
 
-**Status:** not started.
+**Status:** implemented, PR #642 (merged 2026-10-20).
 
 ## Phase 1: One talk command
 
 **Goal.** `talk <npc>` is the only way to converse, through the menu.
 
 **Spec:** `docs/superpowers/specs/2026-10-20-quest-arc-phase1-talk-design.md` (owner rulings
-R1 to R11 there).
+R1 to R29 there). **Plan:** `docs/superpowers/plans/2026-10-20-quest-arc-phase1-talk.md`.
 
 **Approach.**
 - Convert once: a one-time converter plus zone subagents rewrite all 302 dialogue files into
@@ -187,7 +187,9 @@ to exactly one topic.
 **Spec questions (answered).** LLM topic storage is moot (LLM is out of the arc, #643);
 `UnlockedNodes` maps onto `heardRequired`.
 
-**Status:** spec written 2026-10-20.
+**Status:** implemented on `feat/375-phase1-talk`, PR pending. The one-time converter
+(`cmd/dialogueconvert`) ran and was deleted; `cmd/dialoguecheck` stays as the dialogue
+check for authors.
 
 ## Phase 2: Quest offer, hand-in and the closed loop
 

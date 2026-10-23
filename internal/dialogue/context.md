@@ -229,7 +229,8 @@ no compile-time dependency on the quest engine.
 `internal/usercommands` (`go.go` arrival greetings), `internal/questengine`
 (`CollectFlagReferences`), `internal/hooks` (memory sweep), `main_dialogue.go`
 (boot door), `modules/gmcp` (quest reference guard, `hasDialogue`),
-`modules/aicompanion`, and the dev tools `cmd/dialoguecheck` and
-`cmd/dialogueconvert`. The admin web dialogue editor is off (every
+`modules/aicompanion`, and the dev tool `cmd/dialoguecheck`. The one-time
+converter `cmd/dialogueconvert` did its job and was deleted in plan Task 24
+(git history keeps it). The admin web dialogue editor is off (every
 `Build.Dialogue.*` message is refused in `modules/gmcp`) until the topic
 builder of quest arc phase 6.

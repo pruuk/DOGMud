@@ -87,7 +87,7 @@ keywords: [quest, task, help]
 type: action
 do: respond
 user_text: "I could use your help."
-hints: "Ask about the missing shipment."
+hints: "She may know where the missing shipment went."
 ```
 
 **Decorator nodes** use `mod: <name>` and require a single `child:` block:

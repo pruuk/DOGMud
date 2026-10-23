@@ -145,8 +145,18 @@ lives in `.claude/skills/dogmud-player-copy/SKILL.md`.
   `Question.Resolve` for builder and player flows. See
   `internal/prompt/context.md`.
 - `internal/usercommands`: the admin builders render their numbered lists
-  through this package, and destructive confirms use `Confirm`.
+  through this package, and destructive confirms use `Confirm`. Player
+  commands draw theirs here too (`character.go`, `start.go`, `picklock.go`,
+  `guild.go`, `mail.go`, `renameself.go`, `deletecharacter.go`), and
+  `menu_options.go` builds the option lists that use `MarkerChecked`.
+- `internal/conversation`: the `talk` menu and an offer's Accept / Leave card
+  (`Confirm`), opened through `OpenMenu`, plus the `Close*` reasons that word
+  a refused `talk` (quest arc #375 phase 1).
+- `internal/dialogue`: `DialogueFile.Menu` builds the talk menu (markers
+  `MarkerQuest`, `MarkerHandIn`, `MarkerInfo`; heard info `Dim`), and
+  `ValidateWorld` runs `LintLabels` over each NPC's topic labels.
 - `internal/actions`: `BreakOffMenuToFollow` speaks `FollowLines`.
+- `modules/auctions`: renders its numbered list with `Render`.
 
 ## Guard
 

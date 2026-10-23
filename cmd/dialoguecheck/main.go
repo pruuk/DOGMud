@@ -1,6 +1,7 @@
-// Command dialoguecheck checks converted dialogue before it lands (quest arc
-// #375 phase 1, plan Task 15). It is a dev tool, removed with
-// cmd/dialogueconvert in Task 24.
+// Command dialoguecheck checks a dialogue folder before it lands (quest arc
+// #375 phase 1, written for plan Task 15's converted output). It is a dev
+// tool for authors; it outlived the one-time converter cmd/dialogueconvert,
+// deleted in Task 24.
 //
 //	go run ./cmd/dialoguecheck -data _datafiles/world/dogmud -dialogue <folder> [-zones a,b]
 //
@@ -25,10 +26,12 @@
 // world, because quests cross zones. The exit status is 1 when any error
 // class (VALIDATION, DEAD END, RE-OFFER, UNSTARTABLE QUEST) is shown.
 //
-// When the dialogue folder sits in a dialogueconvert output folder, the
-// sibling report.md is applied (-report auto): the quest triggers it deletes
-// (Task 16) are left out, and the player_ask branches it rewrites (Task 17)
-// are read as player_topic branches. -report none applies nothing.
+// When the dialogue folder sits in an output folder of the retired
+// converter, the sibling report.md is applied (-report auto): the quest
+// triggers it deletes (Task 16) are left out, and the player_ask branches it
+// rewrites (Task 17) are read as player_topic branches. A folder with no
+// report.md (the shipped dialogue) applies nothing. -report none applies
+// nothing either.
 package main
 
 import (

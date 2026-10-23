@@ -1,8 +1,12 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">talk</ansi>
 
-The <ansi fg="command">talk</ansi> command starts a conversation with someone.
-They answer you, and a numbered list of things you can say to them
-comes up under their words.
+The <ansi fg="command">talk</ansi> command starts a conversation with someone in the game
+world, like a guard, a shopkeeper or a farmer. They speak first. Then a
+numbered list of things you can say to them appears under their words.
+Only you see the list. Other people in the room hear what you both say.
+
+You can talk only to someone you can see clearly. In the dark, find a
+light first.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -11,32 +15,53 @@ comes up under their words.
 
 <ansi fg="yellow">Choosing from the list: </ansi>
 
-  Type the number of a line, then press Enter, to say it. They answer,
-  and the list comes back so you can ask more. To leave, press Enter on
-  its own or choose the last line. Typing any other command also ends
-  the conversation, and the game carries out that command.
+  Type the number of a line and press Enter to say it. They answer, and
+  the list comes back so you can say more. To end the conversation, press
+  Enter without typing anything, or choose <ansi fg="yellow">Leave</ansi>, the last line. Typing
+  any other command also ends the conversation, and the game carries out
+  that command.
+
+  Some people have only a few words for you. Then no list appears.
+
+<ansi fg="yellow">Quests: </ansi>
+
+  A quest is a task someone asks you to do, like finding a lost item or
+  chasing off a beast. You get a reward when you finish it. See
+  <ansi fg="command">help quests</ansi>.
+
+  When you choose a quest from the list, they tell you what they want.
+  Then two lines appear: <ansi fg="yellow">1. Accept</ansi> takes the quest, and <ansi fg="yellow">2. Leave</ansi>
+  says no for now. Pressing Enter also means Leave. Either way, the list
+  comes back, and you can ask about the quest again later.
 
 <ansi fg="yellow">Marks: </ansi>
 
-  A mark beside a name, or beside a line in the list, tells you why it
-  is worth your time:
+  A mark in front of a line in the list tells you what it is:
 
-  <ansi fg="yellow">[!]</ansi>  a quest to offer. Choose it to hear what they want, then
-       choose Accept to take the quest, or Leave.
-  <ansi fg="yellow">[?]</ansi>  a quest you can finish with them now.
-  <ansi fg="yellow">[*]</ansi>  something worth hearing.
+  <ansi fg="yellow">[!]</ansi>  a new quest they can give you.
+  <ansi fg="yellow">[?]</ansi>  a quest you can finish with them now. Choose it to report
+       what you did.
+  <ansi fg="yellow">[*]</ansi>  something important you have not heard yet.
 
-  A line you have already heard shows in grey.
+  A line you have already heard shows in grey. You can choose it again.
+
+  The same marks appear in front of a person's name when you look at a
+  room, so you can see who has something for you before you talk to
+  them. If a person has more than one, their name shows the first one
+  in this order: <ansi fg="yellow">[?]</ansi>, <ansi fg="yellow">[!]</ansi>, <ansi fg="yellow">[*]</ansi>.
 
 <ansi fg="yellow">Handing things over: </ansi>
 
-  When someone asks you for an item, give it to them with
-  <ansi fg="command">give</ansi> <ansi fg="cyan"><item> <name></ansi>.
+  Some quests ask you to bring an item. When you have it, choose the
+  quest's <ansi fg="yellow">[?]</ansi> line and you hand the item over. You can also type
+  <ansi fg="command">give</ansi> <ansi fg="cyan"><item> <name></ansi>, and it works the same way. If a quest
+  needs the item but you cannot hand it in yet (for example, you have not
+  accepted the quest), they look at it and give it back to you.
 
 <ansi fg="yellow">Examples: </ansi>
 
-  <ansi fg="command">talk saris</ansi>
-  <ansi fg="command">talk to korvath</ansi>
+  <ansi fg="command">talk toke</ansi>
+  <ansi fg="command">talk to tamsin</ansi>
 
 <ansi fg="yellow">See Also: </ansi>
-  <ansi fg="command">help give</ansi>, <ansi fg="command">help quests</ansi>
+  <ansi fg="command">help quests</ansi>, <ansi fg="command">help give</ansi>, <ansi fg="command">help hint</ansi>

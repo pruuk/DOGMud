@@ -1,14 +1,23 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">ask</ansi>
 
-The <ansi fg="command">ask</ansi> command speaks to your bonded companion, if you
-have one that can hold a conversation.
+The <ansi fg="command">ask</ansi> command speaks to your companion, a creature bound to you.
+You type your words, and a companion that can hold a conversation
+answers in its own way. Most companions cannot talk, and they only look
+at you.
 
-To speak with anyone else, use <ansi fg="command">talk</ansi>. It shows you what
-they can tell you as a numbered list. See <ansi fg="command">help talk</ansi>.
+To speak with anyone else, use <ansi fg="command">talk</ansi>. It shows you what they can tell
+you as a numbered list. If you <ansi fg="command">ask</ansi> someone who is not a companion, the
+game reminds you to use <ansi fg="command">talk</ansi> and nothing else happens. See
+<ansi fg="command">help talk</ansi>.
 
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">ask</ansi> <ansi fg="cyan"><companion></ansi> <ansi fg="yellow"><words></ansi>
+
+<ansi fg="yellow">Examples: </ansi>
+
+  <ansi fg="command">ask wolf where did you come from</ansi>
+  <ansi fg="command">ask wolf about the old road</ansi>
 
 <ansi fg="yellow">See Also: </ansi>
   <ansi fg="command">help talk</ansi>, <ansi fg="command">help companion</ansi>

@@ -37,6 +37,63 @@ silenced 7 quest-giver NPCs in production undetected. Decoding is now strict
 ignored) and the boot door reports the file.
 [[feedback_dialogue_bare_scalar_list_mutes_npc]]
 
+## A topic file
+
+`_datafiles/world/dogmud/dialogue/<zone folder>/<mobId>.yaml`. Trimmed from
+Tamsin Reed (`greywater_flats/9191.yaml`, quest 62):
+
+```yaml
+mobid: 9191
+zone: Greywater Flats
+defaultMood: neutral
+opener:                      # said aloud when talk opens, before the menu
+  text: I am Tamsin Reed. I keep the ford crossing here.
+  hints: You could ask Tamsin about whatever is striking her passengers.
+  variants:                  # first one whose gates pass replaces text
+  - questRequired: [62-end]
+    text: The reeds have stayed quiet since you cleared them.
+topics:
+- key: quest_start           # ^[a-z0-9_]+$, unique in the file, in the manifest
+  kind: offer                # [!]; Accept / Leave card, grants on Accept
+  quest: 62
+  label: Adders in the Ford  # must be the quest's title
+  playerLine: Do you want help with whatever is striking your passengers?
+  text: Would you? There is a marsh adder lairing in the reeds.
+  questExcluded: [62-start, 62-end]
+  grantsQuest: 62-start      # an offer grants the start token
+- key: quest_turnin
+  kind: handin               # [?]; completes on choice, no card
+  quest: 62
+  label: Adders in the Ford
+  playerLine: The marsh adder in the reeds is dead.
+  text: Dead, is it. You have made my crossing a kinder one.
+  questRequired: [62-start, 62-adder]
+  questExcluded: [62-end]
+  grantsQuest: 62-end        # a hand-in grants the end token
+- key: ford_talk
+  kind: info                 # grey once heard; [*] while unheard if marked
+  label: How do I cross the ford safely?
+  text: Keep to the line of withy stakes and it is an easy crossing.
+```
+
+- Every new key needs a line `<mobId>.<key>` in
+  `_datafiles/world/dogmud/dialogue/topic-keys.txt`; a removed or renamed
+  key moves to its `# retired` or `# renamed` section, because saved
+  characters hold heard keys (`topic_manifest_test.go`).
+- Labels follow the menu language in `dogmud-player-copy` (player's voice,
+  at most 50 characters, `menu.LintLabels` checks the rest). `playerLine`
+  may use only what the player can see at that moment (R27).
+- An item hand-in adds `requiresItem` (taken) or `carriesItem` (shown and
+  kept). `breadcrumb` (offers only) is a line the NPC says while the offer is
+  still closed. `heardRequired: [key]` opens a topic once an info topic on
+  the same NPC was heard. `behavior: true` fires the mob's tree as
+  `player_topic` and needs a matching `topic_is` branch.
+- A choice that cannot be undone is made in a talk menu, after a topic the
+  player must hear explains it (`heardRequired`), never by a room command
+  (R28).
+- Validate a draft with `go run ./cmd/dialoguecheck -data
+  _datafiles/world/dogmud -dialogue <folder>` before the boot smoke tests.
+
 ## Gating fields at a glance
 
 Three different things gate whether a topic is on the menu, and two of their
@@ -74,7 +131,11 @@ There are no trigger words to discover: `talk <npc>` lists every topic the
 player may choose. A quest offer is a topic of `kind: offer` whose `label` is
 the quest's title and whose `grantsQuest` is the quest's start token; a
 hand-in is `kind: handin`, granting the end token. `ValidateWorld` checks
-both. The roster marks an NPC with an open offer or hand-in.
+both. The room roster puts the viewer's best marker before the NPC's name:
+`[?]` an eligible hand-in, else `[!]` an eligible offer, else `[*]` an unheard
+`marked: true` info topic (`DialogueFile.Marker`). Players are taught to look
+for `[!]` (`hint` with no active quest says so, R23), so a quest giver whose
+offer is gated shut shows nothing: leave a `breadcrumb` or an opener hint.
 
 ### Dialogue Voice & Discoverability
 - NPC `text` fields are spoken by the NPC, always first person ("I", "my", "me").

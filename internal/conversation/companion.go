@@ -11,8 +11,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// The aicompanion module reaches AskForOwner through companionai, so modules
-// need not import internal/conversation (R13).
+// The aicompanion module reaches AskForOwner through companionai.AskNpc
+// (R13); it imports this package only for CompanionTopic.
 func init() {
 	companionai.SetNpcAsker(AskForOwner)
 }

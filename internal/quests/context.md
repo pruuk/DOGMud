@@ -566,11 +566,11 @@ if quest != nil {
 }
 ```
 
-### Reward Distribution
-The real distribution logic lives in
-`internal/hooks/Quest_HandleQuestUpdate.go`, not in this package (this
-package only defines the data shapes). Condensed and simplified from that
-file:
+### Reward distribution example
+The real distribution logic lives inline in `HandleQuestUpdate`
+(`internal/hooks/Quest_HandleQuestUpdate.go`), not in this package (this
+package only defines the data shapes). No function named `distributeRewards`
+exists; this is that handler's reward block, condensed and simplified:
 ```go
 // Distribute quest completion rewards
 func distributeRewards(questUser *users.UserRecord, rewards QuestReward) {
@@ -675,7 +675,7 @@ gated on quest state and can advance a quest when the player chooses it (or,
 for a hand-in, gives the item it wants). The old keyword patterns and stateful
 tree are gone.
 
-### How It Works
+### How it works: the PlayerState callback pattern
 
 The dialogue package accepts a `PlayerState` callback struct that provides
 quest and inventory checks without importing `characters` or `users` (avoids
