@@ -44,8 +44,11 @@ func Hint(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// Default: the focused quest — LastQuestId when it's still in progress,
 		// else a deterministic fallback to an active quest (shared with the web
 		// Quests panel + minimap marker so all three agree on one focus).
+		// The focus falls back to a finished quest when nothing is in
+		// progress; bare hint then says how to find a new one (R23), and
+		// only `hint <name>` reports a finished quest complete.
 		targetQuestId = user.Character.GetFocusQuestId()
-		if _, ok := allProgress[targetQuestId]; !ok {
+		if step, ok := allProgress[targetQuestId]; !ok || step == "end" {
 			user.SendText(messaging.CategoryTip, hintNoQuestText)
 			return true, nil
 		}
