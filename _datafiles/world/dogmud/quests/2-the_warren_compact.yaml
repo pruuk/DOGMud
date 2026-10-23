@@ -6,20 +6,20 @@ steps:
 - id: start
   description: The Tunnel Shaman has asked you to bring a healing salve as proof of
     good intent. Obtain one and bring it to the shaman in the Low Junction.
-  hint: Bring a healing salve to the Tunnel Shaman. From the Labyrinth entrance, go
-    down 1 to the Low Junction. Salves can be bought from Alchemist Yenna in Sanctum
-    Basin or crafted with the healing-salve recipe.
+  hint: Bring a healing salve to the Tunnel Shaman in the Low Junction, just below
+    the Narrow Descent at the warren's entrance. Apothecary Ilsa in Stillwater sells
+    healing salves, and alchemists can make them. Type talk shaman.
   map_target: 301  # Low Junction — Tunnel Shaman (mob 74) delivery target
 - id: end
   description: You have earned a fragile peace with the warren.
 rewards:
   gold: 15
   skillinfo: rhetoric:1
-  actor: The chieftain inclines its heavy head -- the closest thing to a bow
+  actor: The shaman inclines its fungus-crowned head, the closest thing to a bow
     its mutated frame allows. You are not welcome here. But you are tolerated. That
     is more than any surface-dweller has been given in living memory.
-  observer: A low, guttural exchange passes between the shaman and the chieftain.
-    Something has shifted.
+  observer: A low, guttural call passes from the shaman into the dark of the deeper
+    tunnels. Something has shifted.
 triggers:
 - event: item_give
   mob: 74

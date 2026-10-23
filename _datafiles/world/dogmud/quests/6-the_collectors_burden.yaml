@@ -12,15 +12,18 @@ steps:
       report documenting the bridge's structural problems. He needs it delivered to
       Clerk Pell in the Records Office in Thornwall."
     hint: "Take the maintenance report to Clerk Pell in Thornwall. From
-      Watchers Crossing, follow the road north to the city. The Records
-      Office is north of the east end of Main Street. There, type talk pell."
+      the Tollhouse, go east ten times, over the Old Bridge, into the
+      city and along Main Street to its east end. The Records Office is
+      north of there. Type talk pell."
   - id: report
     map_target: 421  # fallback when Toll Collector Harn is not spawned
     map_target_mob: 86  # follow Toll Collector Harn (schedule watchers_harn) — a fixed room is wrong for part of the day
     description: "Clerk Pell has filed Harn's maintenance report with the magistrate.
       Return to Harn at Watchers Crossing and tell him the report has been delivered."
-    hint: "Return to Toll Collector Harn at Watchers Crossing and type talk
-      harn."
+    hint: "Return to Toll Collector Harn at Watchers Crossing. From the
+      Records Office, go south to Main Street, then west ten times to
+      the Tollhouse. In the evening he drinks at the Crossing Inn. Type
+      talk harn."
   - id: end
     description: "The maintenance report has been delivered. Thornwall will review the
       bridge's condition and decide the toll's fate."
@@ -46,8 +49,8 @@ triggers:
 
 rewards:
   actor: "Harn exhales slowly when you confirm the report is on its way.
-    'That is all I can do. If they see the numbers -- what the stone costs, what
-    the masons charge, what happens if that crack reaches the keystone -- they
+    'That is all I can do. If they see the numbers, what the stone costs, what
+    the masons charge, what happens if that crack reaches the keystone, they
     will understand. The toll is not greed. It is the only thing keeping that
     bridge standing.' He produces a stamped receipt. 'For your crossing. You
     have earned it, and then some.'"

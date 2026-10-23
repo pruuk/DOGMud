@@ -1,7 +1,11 @@
 # Windwarden Sylara — Behavior Tree
-# Handles: player_give for Quest 11 (The Windwarden's Dilemma).
-# When a player gives the wolf totem (item 40033) and is on quest
-# step 11-start, advance to 11-end with flavor lines.
+# Handles: player_give for items no dialogue topic wants.
+#
+# The wolf totem (item 40033) is a dialogue hand-in (topic totem_return,
+# quest 11, #375 R7/R8): give resolves as that topic before this tree
+# runs, and hands the totem back when the topic is not eligible. The old
+# totem branches here granted 11-end without checking the side flag; they
+# were removed in the #375 zone pass.
 #
 # NOTE: The onAsk/fetish-dispensing branch is deferred to a later
 # task — it requires player_has_spell, player_has_misc_data,
@@ -11,47 +15,6 @@
 tree:
   type: selector
   children:
-
-    # ── GIVE: wolf totem, Q11 active — accept and advance ──
-    - type: sequence
-      event: player_give
-      children:
-        - type: condition
-          check: item_matches
-          item_id: 40033
-        - type: condition
-          check: player_has_quest
-          quest: "11-start"
-        - type: condition
-          check: player_missing_quest
-          quest: "11-end"
-        - type: action
-          do: say
-          text: You found it.
-        - type: action
-          do: say
-          text: The wolf spirit's voice -- I can hear it again.
-        - type: action
-          do: say
-          text: >-
-            The spirits noticed what you did. Ask me about the
-            covenant when you are ready.
-        - type: action
-          do: grant_quest
-          quest: "11-end"
-
-    # ── GIVE: wolf totem, Q11 already complete ──
-    - type: sequence
-      event: player_give
-      children:
-        - type: condition
-          check: item_matches
-          item_id: 40033
-        - type: action
-          do: say
-          text: The totem is where it belongs. Thank you.
-        - type: action
-          do: return_item
 
     # ── GIVE: any other item — reject and return ──
     - type: sequence

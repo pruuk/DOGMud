@@ -13,9 +13,10 @@ steps:
       wild herbs from the forest before she can harvest
       them. Investigate the forest north of the hamlet's
       east edge."
-    hint: "Follow the forest path north from the east edge
-      of Ashwick. Look for signs of who has been taking
-      the herbs."
+    hint: "From the East Edge of Ashwick, follow the forest
+      path north three times to a hidden camp. Whoever lives
+      there gathers in the herb clearing just west of it in
+      the mornings. Type talk forager."
   - id: forager
     map_target: 4027  # fallback when Delia is not spawned
     map_target_mob: 259  # follow Delia (schedule ashwick_delia) — a fixed room is wrong for part of the day
@@ -23,19 +24,21 @@ steps:
       who has been harvesting Delia's herbs. They have
       agreed to work with Delia if you vouch for them.
       Return to Delia with the news."
-    hint: "Go back to Delia's cottage and tell her about
-      the forager."
+    hint: "Delia keeps her cottage north of Ashwick's Central
+      Green. From the forager's camp, go south three times to
+      the East Edge, west twice to the green, then north. In
+      the afternoon she works in the garden behind the cottage,
+      and at dusk she sits on the green. Type talk delia."
   - id: end
     description: "You resolved Delia's herb shortage. She
-      is grateful and has offered to teach you what she
-      knows about foraging."
+      is grateful, and her worktable is open to you."
 
 rewards:
   actor: "Delia nods slowly, the practical assessment
     of someone who has weighed a solution and found it sound.
-    'You have a good eye for problems and their fixes. If
-    you want to learn something about the plants out there,
-    I can teach you. Come back any time.'"
+    'You have a good eye for problems and their fixes. My
+    worktable is yours whenever you need it. Come back any
+    time.'"
   observer: "Delia's expression shifts from concern to
     quiet satisfaction as the herb supply problem is resolved."
   gold: 12

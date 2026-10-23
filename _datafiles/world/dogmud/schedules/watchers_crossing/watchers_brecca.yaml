@@ -7,7 +7,7 @@ segments:
     activity: ""
     idlecommands:
       - emote tags and shelves a crate, every item placed with deliberate precision.
-      - say Everything's priced. Haggle if you like -- I priced in the haggling.
+      - say Everything's priced. Haggle if you like. I priced in the haggling.
       - emote measures a customer with one glance and the goods with the next.
       - emote slides an abacus bead and marks the total without looking up.
   - start: 18

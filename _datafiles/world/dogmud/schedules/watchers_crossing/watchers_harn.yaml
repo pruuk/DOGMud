@@ -7,7 +7,7 @@ segments:
     activity: ""
     idlecommands:
       - emote records a payment in the heavy ledger, slow and exact.
-      - say A copper for the bridge. I don't set the rate, friend, I only keep it.
+      - say Five gold for the bridge, friend. Every coin of it goes back into the stone.
       - emote offers an apologetic shrug to a grumbling traveler.
       - emote peers at the bridge stones with a worried frown, counting cracks.
   - start: 18
