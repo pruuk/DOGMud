@@ -13,9 +13,9 @@ opener:
     see on the shelf are ready stock. If you want to talk about the glass I don't
     mind. The old days here, what this place used to be, that depends on who's
     asking.
-  hints: You could ask Edda about her glasswork, about the old days when this
-    place ran full, or about the quarter and its people. To see what she sells,
-    type list.
+  hints: Choose a line below to learn about her glasswork, about the old days
+    when this place ran full, or about the quarter and its people. To see what
+    she sells, type list.
 topics:
 - key: glass
   kind: info

@@ -8,8 +8,9 @@ greetings:
 opener:
   text: I make copies of charts and documents for the Margin, and for paying work from
     the lower city. What did you want to know?
-  hints: You could ask the copyist about her copy work, about Tallis and the chart
-    trade on the Long Quay, or about what copying the junction surveys has shown her.
+  hints: Choose a line below to hear about her copy work, about Tallis and the
+    chart trade on the Long Quay, or about what copying the junction surveys has
+    shown her.
 topics:
 - key: copy_work
   kind: info

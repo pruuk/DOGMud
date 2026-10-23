@@ -12,8 +12,8 @@ greetings:
 opener:
   text: The lane is for the residents of this block. The gate doesn't open to
     visitors.
-  hints: You could ask Porter Skell about the lane behind the gate, about who lives
-    there, or about what it takes to hold a post like his.
+  hints: Choose a line below if you want to hear about the lane behind the gate,
+    about who lives there, or about what it takes to hold a post like his.
 topics:
 - key: lane
   kind: info

@@ -14,9 +14,9 @@ opener:
     visitors with appointments. If you have another purpose here, questions about
     how the house is run or something harder to name, I can probably help with that
     too. What is it?
-  hints: You could ask Father Thane about how registration works, about how the
-    house is run from day to day, or about what the temple offers people who are
-    grieving.
+  hints: Choose a line below to learn about how registration works, about how
+    the house is run from day to day, or about what the temple offers people who
+    are grieving.
 topics:
 - key: intake
   kind: info

@@ -5,8 +5,8 @@ opener:
   text: "Welcome to the Crossing Inn. Sit anywhere. I will not ask your business
     unless you want to share it. Though if you came over the bridge, I expect you
     have opinions about that toll."
-  hints: "You could ask Tolva about the toll, about Harn who collects it, or about
-    the inn."
+  hints: "Choose a line below to hear about the toll, about Harn who collects
+    it, or about the inn."
   variants:
   - questRequired:
     - 5-end

@@ -9,8 +9,8 @@ opener:
   text: Yes. I am working, briefly. I am recording the mark above the doors. The
     proportions, the carving technique, the layering. I do not draw conclusions
     here. The analysis is in the Scholars' Quarter. What did you want?
-  hints: You could ask the scholar what she is recording, about the mark itself, or
-    about the Margin and the Scholars' Quarter upriver.
+  hints: Choose a line below to hear what she is recording, about the mark
+    itself, or about the Margin and the Scholars' Quarter upriver.
   # Quest 74 states first (first match wins). The 74-end pair reacts to the
   # choice the player made.
   variants:
@@ -20,13 +20,14 @@ opener:
       74-allegiance: margin
     text: It is upriver now, in the Margin Hall, copied three times over. No one
       can reorganize it away. You did that.
-    hints: You could ask the scholar about the mark, or about the Margin's work.
+    hints: Choose a line below if you would like to hear about the mark, or
+      about the Margin's work.
   - questRequired:
     - 74-end
     text: Aldric has it, I hear. Filed with the other things the temple keeps. I am
       still recording the mark. The mark, at least, cannot be filed away.
-    hints: The scholar is polite, and no more than polite. You could still ask her
-      about the mark or the Margin.
+    hints: The scholar is polite, and no more than polite. Choose a line below
+      to hear about the mark or the Margin.
   - questRequired:
     - 74-descent
     questExcluded:
@@ -34,12 +35,12 @@ opener:
     carriesItem: 40142
     text: You have been down there. I can see charcoal on your hands. Before you
       give me anything, you should know what it would mean.
-    hints: To hear what giving the scholar the rubbing means, choose to ask her
+    hints: To hear what giving the scholar the rubbing means, choose her line
       below. Aldric the Keeper would keep it inside the order instead. Neither
-      choice can be undone. Aldric keeps the Chapter House by day. From the Temple
-      Portico, go south three times to the Crossing, east three times through the
-      warded door to the Cloister Gate, east to the Cloister Garth, north to the
-      North Walk, then west into the Chapter House.
+      choice can be undone. Aldric keeps the Chapter House by day. From the
+      Temple Portico, go south three times to the Crossing, east three times
+      through the warded door to the Cloister Gate, east to the Cloister Garth,
+      north to the North Walk, then west into the Chapter House.
   - questRequired:
     - 74-reveal
     questExcluded:
@@ -53,8 +54,8 @@ opener:
     - 73-end
     text: Yes. I am working, briefly. You have seen the three records, I hear. Then
       you know why I measure this mark so carefully.
-    hints: You could ask the scholar what she has found in the mark, what she is
-      recording, or about the Margin and the Scholars' Quarter.
+    hints: Choose a line below to hear what she has found in the mark, what she
+      is recording, or about the Margin and the Scholars' Quarter.
 topics:
 # Quest 74's Margin choice (spec R28): the warning (margin_terms) must be
 # heard first, and both hide once the choice is made (74-end). The Keepers

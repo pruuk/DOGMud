@@ -10,8 +10,8 @@ opener:
     Greenford road and the first thing you want is to sit down and not move. I've
     made it, though. The Confluence. It's real, which is more than I can say for most
     of the things people talk about.
-  hints: You could ask the wayfarer about the road from Greenford, about what she
-    makes of the Confluence, or about what lies further east.
+  hints: Choose a line below to hear about the road from Greenford, about what
+    she makes of the Confluence, or about what lies further east.
 topics:
 - key: greenford
   kind: info

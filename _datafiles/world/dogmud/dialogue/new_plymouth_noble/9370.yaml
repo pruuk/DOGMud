@@ -15,9 +15,9 @@ opener:
     of the city as well as a historical one. I give tours here most days. What can I
     tell you about? The founding, perhaps, or the gallery, or how the Quarter works
     today?
-  hints: You could ask Guide Ferrol how New Plymouth was founded, about the gallery
-    and its collection, or about what he leaves out of the tour when visitors push at
-    the edges of it.
+  hints: Choose a line below to hear how New Plymouth was founded, about the
+    gallery and its collection, or about what he leaves out of the tour when
+    visitors push at the edges of it.
 topics:
 - key: founding
   kind: info

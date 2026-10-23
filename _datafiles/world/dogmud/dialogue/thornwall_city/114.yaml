@@ -3,7 +3,7 @@ zone: Thornwall City
 defaultMood: neutral
 opener:
   text: '...'
-  hints: You could ask Fen what he hears in here, or who he is.
+  hints: Choose a line below to hear what he hears in here, or who he is.
 topics:
 - key: gossip_prompt
   kind: info

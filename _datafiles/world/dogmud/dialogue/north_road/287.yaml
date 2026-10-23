@@ -4,7 +4,7 @@ defaultMood: neutral
 opener:
   text: Traveler. A moment of your time. I am conducting inquiries on behalf of the
     district authority.
-  hints: You could ask what the agent is asking about.
+  hints: Choose a line below to hear what the agent is asking about.
   variants:
   # A player who killed an agent meets its replacement after the respawn.
   - questRequired:

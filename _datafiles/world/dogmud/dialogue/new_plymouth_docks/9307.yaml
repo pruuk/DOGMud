@@ -9,7 +9,7 @@ opener:
   text: If it keeps a hull tight or a road lit, it's on these shelves. Pitch,
     oil, wax, lanterns and torches. I can put my hand on any of it without
     looking, so tell me which and it'll be on the counter.
-  hints: You could ask Chandler Voss about his stock, or about the change that
+  hints: Choose a line below to hear about his stock, or about the change that
     keeps him dry. To see what he sells, type list.
 topics:
 - key: stock

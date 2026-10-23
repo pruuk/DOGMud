@@ -4,7 +4,8 @@ defaultMood: neutral
 opener:
   text: Sit, sit, the bench will hold you. I'm Wenna, elder of this farmstead,
     for my sins and my years.
-  hints: You could ask Elder Wenna about the folk and their ways, or your task.
+  hints: Choose a line below to hear about the folk and their ways, or your
+    task.
   variants:
   - questExcluded:
     - 30-end

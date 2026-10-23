@@ -4,7 +4,7 @@ defaultMood: neutral
 opener:
   text: The name is Delk, and the fringe is where I hunt. Ask me straight and I
     will answer you straight, once.
-  hints: You could ask Delk about hunting or your task.
+  hints: Choose a line below to hear about hunting or your task.
   variants:
   - questExcluded:
     - 41-end

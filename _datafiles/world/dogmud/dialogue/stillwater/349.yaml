@@ -4,15 +4,16 @@ defaultMood: friendly
 opener:
   text: Well, hello. Sit on the stool if you are staying. Who are you and where have
     you come from?
-  hints: You could ask Gyda about the town's history, the neighbours, or the healer
-    who visits the lane.
+  hints: Choose a line below if you would like to hear about the town's history,
+    the neighbours, or the healer who visits the lane.
   variants:
   - questRequired:
     - 20-end
     text: Ulla came down the lane this week. I have not seen her out like that in
       years. She stopped to say good morning. I did not make a fuss about it. She
       does not like fuss. I just said good morning back. That was enough.
-    hints: You could ask Gyda about the town's history or the neighbours.
+    hints: Choose a line below to hear about the town's history or the
+      neighbours.
 topics:
 - key: town_history
   kind: info

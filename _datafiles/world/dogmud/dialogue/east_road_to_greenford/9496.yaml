@@ -10,8 +10,8 @@ opener:
   text: "I run cargo between the Confluence basin and Greenford. Grain west, dry
     goods east. I have done it long enough to know every pothole and every good
     resting spot on the route. This milepost is a good resting spot."
-  hints: "You could ask the carter how far Greenford is, what he hauls, or why he
-    stops at this milepost."
+  hints: "Choose a line below to hear how far Greenford is, what he hauls, or
+    why he stops at this milepost."
 topics:
 # how_far (pattern) folded into distance.
 - key: distance

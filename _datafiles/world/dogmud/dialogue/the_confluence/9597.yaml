@@ -4,8 +4,8 @@ defaultMood: friendly
 opener:
   text: Yes. Come in, and close the shutter behind you. The circle is drawn. What
     binding do you need?
-  hints: You could ask Merrow about the enchanting circle, or about their chrysalis
-    materials. To see what they sell, type list.
+  hints: Choose a line below to hear about the enchanting circle, or about their
+    chrysalis materials. To see what they sell, type list.
 topics:
 - key: enchant
   kind: info

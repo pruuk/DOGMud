@@ -9,7 +9,7 @@ opener:
   text: I take in washing for the Row, mostly, and I see more of the Row's
     business on its linen than it would like. Good soap is the whole secret,
     that and not being afraid of cold water. Was there something?
-  hints: You could ask the washerwoman about her work.
+  hints: Choose a line below to learn about her work.
 topics:
 - key: work
   kind: info

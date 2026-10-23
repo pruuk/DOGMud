@@ -16,8 +16,8 @@ opener:
   text: I can pour you something, or I can talk if the hour's slow. Most things
     worth knowing about this end of the docks I've heard from behind this counter
     one time or another.
-  hints: You could ask Bressa about the dock gossip, the waterfront after dark, or
-    who runs a tab. To see what she pours, type list.
+  hints: Choose a line below to learn about the dock gossip, the waterfront
+    after dark, or who runs a tab. To see what she pours, type list.
 topics:
 - key: gossip
   kind: info

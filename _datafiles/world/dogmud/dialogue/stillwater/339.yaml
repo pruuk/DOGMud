@@ -3,15 +3,15 @@ zone: Stillwater
 defaultMood: friendly
 opener:
   text: Welcome. Mind the threads on the floor. What can I do for you?
-  hints: You could ask Edda about her cloth, the cattail she uses, or the weaver Maren
-    in Thornwall. To see what she sells, type list.
+  hints: Choose a line below to hear about her cloth, the cattail she uses, or
+    the weaver Maren in Thornwall. To see what she sells, type list.
   variants:
   - questRequired:
     - 20-end
     text: I heard Ulla came out to the Pike & Lantern last week. First time in years.
       I sent a note round afterward, just a short one. She has not written back yet,
       but I think she will. Some things open slowly.
-    hints: You could ask Edda about her cloth or the ruin up the rise.
+    hints: Choose a line below to learn about her cloth or the ruin up the rise.
 topics:
 - key: weaving_trade
   kind: info

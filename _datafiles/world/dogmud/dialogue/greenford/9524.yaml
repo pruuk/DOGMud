@@ -7,14 +7,14 @@ greetings:
   - friendly
 opener:
   text: I'm not much for visitors. What is it you need?
-  hints: You could ask Reth about his years as a surveyor, about the yew, or about
-    Greenford.
+  hints: Choose a line below to hear about his years as a surveyor, about the
+    yew, or about Greenford.
   variants:
   - questRequired:
     - 75-testimony
     text: You found what you went to find. I hope Brennan makes something of it.
       I've said what I had to say.
-    hints: You could ask Reth about the yew, or about Greenford.
+    hints: Choose a line below to learn about the yew, or about Greenford.
   - questRequired:
     - 75-intro
     questExcluded:

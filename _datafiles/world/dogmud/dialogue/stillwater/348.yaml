@@ -6,8 +6,8 @@ opener:
     you want flour, I have it by the sack. If you want to know how the wheel
     works, I could talk all day, and I will if you let me. What can I do for
     you?
-  hints: You could ask Bram about the mill, the seasonal flood, or the creek bridge.
-    To see what he sells, type list.
+  hints: Choose a line below if you want to hear about the mill, the seasonal
+    flood, or the creek bridge. To see what he sells, type list.
 topics:
 - key: mill_workings
   kind: info

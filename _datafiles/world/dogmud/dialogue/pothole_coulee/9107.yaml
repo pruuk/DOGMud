@@ -21,8 +21,8 @@ opener:
     text: You have the look of someone who has not met the pool yet. The arch will
       still be here after. It has outwaited everything else. Hadwen first. Then
       we will talk about the far side.
-    hints: Cleric Hadwen keeps the Awakening Pool, north of Hub Square. Type talk
-      hadwen there. You could also ask Esk what he watches for.
+    hints: Cleric Hadwen keeps the Awakening Pool, north of Hub Square. Type
+      talk hadwen there. Choose a line below to hear what he watches for.
 topics:
 # R17: the end of Esk's Road (quest 89), offered by Cleric Hadwen after the
 # rite. Crossing the arch (room 468) also closes it, through the quest's own
@@ -68,7 +68,8 @@ topics:
     so that nobody crosses alone, frightened, or hurt, or too young to know what
     the far side asks of them. A door this old deserves a doorman. That is the whole
     of it.'
-  hints: You could ask about the door itself, or his eyes.
+  hints: Choose a line below if you would like to hear about the door itself, or
+    his eyes.
 - key: door_lore
   kind: info
   label: Who built the arch?
@@ -77,11 +78,12 @@ topics:
     says the world believes the arch into working. Granny Wicker says the arch believed
     first. I say it works, it has always worked, and it has never asked anything of
     anyone. That is better behavior than most doors.
-  hints: You could ask what he watches for, or about crossing through the arch.
+  hints: Choose a line below to hear what he watches for, or about crossing
+    through the arch.
 - key: eyes
   kind: info
   label: Why do your eyes glow like embers?
   text: They brighten when I am paying attention, which makes me a poor card player
     and an honest warden. People learn to read them faster than they learn my words.
     Saves everyone time.
-  hints: You could ask about the door, or what he watches for.
+  hints: Choose a line below to learn about the door, or what he watches for.

@@ -3,7 +3,8 @@ zone: Thornwall City
 defaultMood: ""
 opener:
   text: Aye. Wagons are checked over. Long road today.
-  hints: You could ask Ketil about the caravan, its road, or his guards.
+  hints: Choose a line below to learn about the caravan, its road, or his
+    guards.
 topics:
 - key: road
   kind: info

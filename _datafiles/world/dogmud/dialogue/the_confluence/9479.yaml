@@ -14,8 +14,8 @@ opener:
     position was abolished. They gave me a handshake. From the Deputy Registrar. I
     have retired to this lane, I drink cold tea, and I have many opinions. What would
     you like to know?
-  hints: You could ask him about his old work, about how he came to live in this
-    lane, or about the memory the Blooming gave him.
+  hints: Choose a line below to learn about his old work, about how he came to
+    live in this lane, or about the memory the Blooming gave him.
 topics:
 - key: old_work
   kind: info

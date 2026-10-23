@@ -4,8 +4,8 @@ defaultMood: neutral
 opener:
   text: Hello. Sorry, long day on the road. I am fine, just tired. Heading up to
     Stillwater, and stopping to rest my feet a while.
-  hints: You could ask the traveler about Stillwater, the dangers of the road, the
-    riders asking questions, or traveling alone.
+  hints: Choose a line below to learn about Stillwater, the dangers of the road,
+    the riders asking questions, or traveling alone.
 topics:
 - key: stillwater
   kind: info

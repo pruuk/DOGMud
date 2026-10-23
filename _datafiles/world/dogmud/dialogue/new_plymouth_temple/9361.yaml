@@ -14,8 +14,9 @@ opener:
     here, whoever they are, and I do what I can for them. If you are curious about
     the work, or about the healer in the Common Quarter, I can answer that too.
     What is it?
-  hints: You could ask Sister Alms about her healing work, about the healer named
-    Ysolde in the Common Quarter, or about who she will and will not help.
+  hints: Choose a line below if you want to hear about her healing work, about
+    the healer named Ysolde in the Common Quarter, or about who she will and
+    will not help.
 topics:
 - key: healing
   kind: info

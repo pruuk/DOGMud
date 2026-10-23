@@ -12,8 +12,9 @@ greetings:
 opener:
   text: The gate is private property. Is there something I can help you with, or
     were you simply taking the air?
-  hints: You could ask Horst about the watched house and who lives there, about the
-    work he does at the gate, or about the visitors he receives.
+  hints: Choose a line below if you want to hear about the watched house and who
+    lives there, about the work he does at the gate, or about the visitors he
+    receives.
 topics:
 - key: q71_horst
   kind: info

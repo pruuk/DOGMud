@@ -3,7 +3,7 @@ zone: Pothole Coulee
 defaultMood: neutral
 opener:
   text: Tarn. I scout this ground. Not much moves on it that I miss.
-  hints: You could ask Tarn about tracking or your task.
+  hints: Choose a line below if you want to hear about tracking or your task.
   variants:
   - questExcluded:
     - 30-end

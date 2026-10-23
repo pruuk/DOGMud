@@ -4,7 +4,7 @@ defaultMood: neutral
 opener:
   text: Hold still a moment, I'm reading the wind. There. Iden. The bluff-folk
     send their young to me on these terraces to learn a good eye.
-  hints: You could ask Iden about shooting or your task.
+  hints: Choose a line below if you want to hear about shooting or your task.
   variants:
   - questExcluded:
     - 30-end
@@ -107,8 +107,8 @@ topics:
   label: Can I have more shot?
   text: You still have a pouch of shot on you. Spend it first. When the last stone
     is gone, the sling will tell you, and then I will give you another.
-  hints: You already carry a pouch of shot. You could ask Iden for more once it is
-    empty.
+  hints: You already carry a pouch of shot. Choose a line below to get more once
+    it is empty.
   questRequired:
   - 50-start
   questExcluded:

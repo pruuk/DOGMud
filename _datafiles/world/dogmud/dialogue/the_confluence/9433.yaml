@@ -9,7 +9,7 @@ opener:
   text: Mind yourself, friend, there's always something swinging on a rope round
     here. Everything moves through the Long Quay sooner or later. The trick is
     not being in its way when it does.
-  hints: You could ask the porter where to find things on the quay.
+  hints: Choose a line below to hear where to find things on the quay.
 topics:
 - key: quay
   kind: info

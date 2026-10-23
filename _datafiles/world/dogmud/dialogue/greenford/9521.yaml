@@ -14,8 +14,8 @@ opener:
     really should be reading, and instead I'm sitting in the
     quad. I'll regret this break when I check the time. Ask me
     something. It'll make the break worth it.
-  hints: You could ask the student about his studies, about the university grounds,
-    or about Greenford.
+  hints: Choose a line below to hear about his studies, about the university
+    grounds, or about Greenford.
 topics:
 - key: studies
   kind: info

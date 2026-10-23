@@ -10,8 +10,8 @@ opener:
     Up before the row most mornings. It's just how I'm made. The
     basket's for the market square. The row's quiet now, but it'll
     wake up in an hour. What do you need to know?
-  hints: You could ask the resident about her early mornings, about the way to the
-    market square, or about College Row.
+  hints: Choose a line below if you want to hear about her early mornings, about
+    the way to the market square, or about College Row.
 topics:
 - key: morning
   kind: info

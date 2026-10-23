@@ -4,8 +4,8 @@ defaultMood: friendly
 opener:
   text: Mind the sparks. Come in, but stay clear of the anvil until I set the hammer
     down. What do you need forged?
-  hints: You could ask Roan about her forge, or about her smithing materials. To see
-    what she sells, type list.
+  hints: Choose a line below if you want to hear about her forge, or about her
+    smithing materials. To see what she sells, type list.
 topics:
 - key: forge
   kind: info

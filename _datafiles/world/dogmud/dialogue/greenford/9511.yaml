@@ -15,8 +15,8 @@ opener:
     and everything is exactly where it belongs. The balance
     scale on the counter is true, before you ask. Now. What are
     you after?
-  hints: You could ask Prue about her shelves, about her prices, or about Greenford
-    and the market. To see what she sells, type list.
+  hints: Choose a line below if you want to hear about her shelves, about her
+    prices, or about Greenford and the market. To see what she sells, type list.
 topics:
 - key: stock
   kind: info

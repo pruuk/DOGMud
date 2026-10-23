@@ -10,8 +10,8 @@ opener:
     upstairs are let to regulars by the season, and the common room is where half
     the city's business gets settled over wine. We get administrators, travelers,
     the odd scholar from the quarter. All sorts. What brings you in?
-  hints: You could ask Bremm about the house, about the city's news, or about the
-    river tales he hears at the bar.
+  hints: Choose a line below if you would like to hear about the house, about
+    the city's news, or about the river tales he hears at the bar.
 topics:
 - key: rooms_food
   kind: info

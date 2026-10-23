@@ -15,8 +15,9 @@ greetings:
 opener:
   text: I've got nowhere to be and a decent view of the lane from here. Ask what
     you came to ask.
-  hints: You could ask Garrick about the fighting pit, about his soldiering days
-    and that arm, or about the hard cases he watches on the flophouse steps.
+  hints: Choose a line below to hear about the fighting pit, about his
+    soldiering days and that arm, or about the hard cases he watches on the
+    flophouse steps.
 topics:
 - key: pit
   kind: info

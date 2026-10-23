@@ -11,8 +11,9 @@ opener:
     stretch of the south road, and I answer to the Council at New Plymouth for
     the crossings and the grade. The spring floods tore this section out badly.
     It took too long to put back, but it's been put back right."
-  hints: "You could ask Carew about the road repair, about what lies south along the
-    river, or about the pilgrims he sees come through."
+  hints: "Choose a line below if you want to hear about the road repair, about
+    what lies south along the river, or about the pilgrims he sees come
+    through."
 topics:
 # road (pattern) folded into repair.
 - key: repair

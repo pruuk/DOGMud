@@ -6,7 +6,7 @@ opener:
   text: Afternoon. Careful where you step, the rows are tighter than they look. I
     am just the farmer. Road runs past my field. Ask what you like, and I will answer
     when I feel like it.
-  hints: You could ask the farmer about the farm, the road, or the bandits.
+  hints: Choose a line below to learn about the farm, the road, or the bandits.
 topics:
 - key: farm
   kind: info

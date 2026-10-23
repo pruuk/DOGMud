@@ -13,8 +13,8 @@ opener:
     the Solt. Three rivers means three supply cycles that don't line up with each
     other. My work is making sure the houses I represent don't miss their windows.
     I've been at this long enough that I don't miss them.
-  hints: You could ask Edric about what each river brings, about what a trade
-    factor does, or about the guild.
+  hints: Choose a line below to learn about what each river brings, about what a
+    trade factor does, or about the guild.
 topics:
 - key: rivers
   kind: info

@@ -12,9 +12,9 @@ opener:
     which goes up through the bends and takes three days when the current is fair
     and four or five when it isn't. He said three. It's been four. I'm knitting,
     which is what I do when I'm counting days. Was there something?
-  hints: You could ask her about her husband and the river, about life on the Row
-    and what things cost, about what she thinks of the city, or about the weather
-    she can feel coming.
+  hints: Choose a line below if you would like to hear about her husband and the
+    river, about life on the Row and what things cost, about what she thinks of
+    the city, or about the weather she can feel coming.
 topics:
 - key: husband_river
   kind: info

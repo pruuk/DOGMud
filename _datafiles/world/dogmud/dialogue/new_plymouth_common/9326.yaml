@@ -15,8 +15,8 @@ opener:
   text: I sell cut flowers. A posy for a table, a stem for a windowsill, a bunch
     for someone you have wronged or want to. The blooms are open and the price is
     fair. Look while they last.
-  hints: You could ask the flower seller about her flowers, or about Carter's Rise
-    where she keeps her stall. To see what she sells, type list.
+  hints: Choose a line below if you want to hear about her flowers, or about
+    Carter's Rise where she keeps her stall. To see what she sells, type list.
 topics:
 - key: flowers
   kind: info

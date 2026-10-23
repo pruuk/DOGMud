@@ -3,8 +3,8 @@ zone: Pothole Coulee
 defaultMood: neutral
 opener:
   text: Sere. Keeper of the old shrine, or its longest guest.
-  hints: You could ask Hermit Sere about the shrine, or about what lies beneath it,
-    or your task.
+  hints: Choose a line below if you would like to hear about the shrine, or
+    about what lies beneath it, or your task.
   variants:
   - questExcluded:
     - 48-end

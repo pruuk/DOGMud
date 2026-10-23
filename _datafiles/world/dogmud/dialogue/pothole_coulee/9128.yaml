@@ -4,7 +4,7 @@ defaultMood: neutral
 opener:
   text: I'm Birna. I brew what the marsh gives, and I take my time doing it. A
     rushed brew is a wasted one.
-  hints: You could ask Birna about brewing or your task.
+  hints: Choose a line below to hear about brewing or your task.
   variants:
   - questExcluded:
     - 30-end

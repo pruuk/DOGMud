@@ -11,8 +11,8 @@ opener:
     route described to me by half of Greenford, so I feel fairly
     well prepared. The pack's right, the provisions are bought. All
     I'm waiting for now is the hour. What do you need?
-  hints: You could ask the traveler what takes her to New Plymouth, about the road
-    ahead, or why she is leaving.
+  hints: Choose a line below to hear what takes her to New Plymouth, about the
+    road ahead, or why she is leaving.
 topics:
 - key: destination
   kind: info

@@ -3,10 +3,11 @@ zone: Ironwind Steppe
 defaultMood: hostile
 opener:
   text: "Tall-thing comes to goblin home. Brave or stupid. Same thing, usually."
-  hints: "The goblin shaman draws itself up to its full, if unimpressive, height and
-    fixes you with a glare. Charms rattle on its staff as it plants the butt on the
-    stone floor. The other goblins watch to see what the shaman will do. You could
-    ask the shaman about its clan, or about the caves to the north."
+  hints: "The goblin shaman draws itself up to its full, if unimpressive, height
+    and fixes you with a glare. Charms rattle on its staff as it plants the butt
+    on the stone floor. The other goblins watch to see what the shaman will do.
+    Choose a line below to learn about its clan, or about the caves to the
+    north."
 topics:
 # camp (pattern) folded into clan_history; cave (pattern) folded into
 # cave_warning.

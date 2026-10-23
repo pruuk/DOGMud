@@ -4,13 +4,15 @@ defaultMood: hostile
 opener:
   text: "You should not have come this deep into the forest. This is my camp. I am
     not looking for company."
-  hints: "The forager watches you, ready to run. You could ask about the herbs, or
-    why someone would camp alone this deep in the woods."
+  hints: "The forager watches you, ready to run. Choose a line below if you want
+    to hear about the herbs, or why someone would camp alone this deep in the
+    woods."
   variants:
   - questRequired:
     - 16-end
     text: "You came back. I did not expect that."
-    hints: "You could ask about the arrangement with Delia, or ask for a name."
+    hints: "Choose a line below if you would like to hear about the arrangement
+      with Delia, or to request a name."
   - questRequired:
     - 16-forager
     questExcluded:
@@ -27,8 +29,8 @@ topics:
     skill I have that is worth anything without showing myself in a market. I know
     what I am taking, and I know it causes problems for the woman in the village. I
     am sorry about that, but I do not have a better option."
-  hints: "You could ask why the forager hides, or propose an arrangement with
-    Delia."
+  hints: "Choose a line below to hear why the forager hides, or propose an
+    arrangement with Delia."
   questExcluded:
   - 16-end
   moodChange: neutral

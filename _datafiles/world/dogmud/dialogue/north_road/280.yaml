@@ -4,8 +4,8 @@ defaultMood: neutral
 opener:
   text: Hey! You look like you have been on the road. Pull up a chair. Buy me a drink
     and I will tell you about the time I... sit! Drink!
-  hints: You could ask Tam about the bandits who robbed his master, their leader,
-    or the road north.
+  hints: Choose a line below to hear about the bandits who robbed his master,
+    their leader, or the road north.
 topics:
 # bandit corrected against the map: the camp is west of the North Road,
 # one room north of the village square, south of the ditch.

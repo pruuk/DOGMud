@@ -4,7 +4,8 @@ defaultMood: neutral
 opener:
   text: Sit. Drink. If you are looking for trouble, the back alleys have plenty. If
     you are looking for a quiet drink and maybe a favour... well, I could use a favour.
-  hints: You could ask Marek about the favour he needs, or about the tavern.
+  hints: Choose a line below if you would like to hear about the favour he
+    needs, or about the tavern.
   variants:
   - questRequired:
     - 10-start

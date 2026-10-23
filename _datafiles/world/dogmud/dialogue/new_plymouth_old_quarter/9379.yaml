@@ -16,8 +16,9 @@ opener:
     It has been there for some time. The watch knows where I live. If you came here
     for a confession, I have nothing to say to you that is not already known to
     people with the authority to hear it. But ask what you came to ask.
-  hints: You could ask Deren about the arrangement that ran from this address, about
-    Marn, his contact on the docks, or about the captive and the key.
+  hints: Choose a line below if you would like to hear about the arrangement
+    that ran from this address, about Marn, his contact on the docks, or about
+    the captive and the key.
 topics:
 - key: bloom_source
   kind: info

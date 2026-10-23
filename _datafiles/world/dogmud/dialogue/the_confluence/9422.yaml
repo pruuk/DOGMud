@@ -16,8 +16,8 @@ opener:
     trade, and my work is keeping it moving. Freight tallies, passenger
     manifests, tide scheduling, tolls, and the odd dispute all land on me first.
     If it crosses my quay, it goes in my ledger. So, what are you carrying?
-  hints: You could ask Wult about how the Landings works, about the river trade
-    that moves through, or about the people who work the quay.
+  hints: Choose a line below to hear about how the Landings works, about the
+    river trade that moves through, or about the people who work the quay.
 topics:
 - key: landings
   kind: info

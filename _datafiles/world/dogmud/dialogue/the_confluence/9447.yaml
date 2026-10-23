@@ -10,7 +10,7 @@ opener:
     further in, the bookseller's is the door just south of here, and the Inkwell
     Court is straight through for the students and the lodgings. Tell me what you
     are looking for and I can point you right.
-  hints: You could ask the gate-porter where the Margin Hall and the archive are,
+  hints: Choose a line below to hear where the Margin Hall and the archive are,
     about the bookseller's shop, or about what the Scholars' Quarter is for.
 topics:
 - key: archive_hall

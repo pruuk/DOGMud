@@ -3,8 +3,8 @@ zone: The Fernway South
 defaultMood: neutral
 opener:
   text: "Quiet in the pines, which suits me. Something you need?"
-  hints: "You could ask Kessa about her work, about how she sells what she gathers,
-    or about her camp."
+  hints: "Choose a line below to hear about her work, about how she sells what
+    she gathers, or about her camp."
 topics:
 - key: forage
   kind: info

@@ -13,9 +13,9 @@ opener:
   text: I lend coin and I collect it. That is the whole of it. I do not lend to
     strangers passing through. If you want to know about the debts I hold, or about
     what my touch tells me about coin, I will answer what I find worth answering.
-  hints: You could ask Goss about his terms for a loan, about the debts he holds
-    across the city's districts, or about the change that lets him weigh coin by
-    touch.
+  hints: Choose a line below to learn about his terms for a loan, about the
+    debts he holds across the city's districts, or about the change that lets
+    him weigh coin by touch.
 topics:
 - key: loans
   kind: info

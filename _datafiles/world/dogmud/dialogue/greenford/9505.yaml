@@ -13,8 +13,8 @@ opener:
     from yesterday's run. And under the cloth, the fresh river catch, still
     cold. Every price is on the board, chalked fair and up to date. What'll it
     be?
-  hints: You could ask Fenn what is fresh today, about the river row, or about this
-    season's river. To see what he sells, type list.
+  hints: Choose a line below to hear what is fresh today, about the river row,
+    or about this season's river. To see what he sells, type list.
 topics:
 - key: fish
   kind: info

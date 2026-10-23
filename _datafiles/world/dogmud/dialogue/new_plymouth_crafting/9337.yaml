@@ -13,9 +13,9 @@ opener:
     between. Everything for sale here, I made. The smell comes with the work.
     Ask me about any of it, or about the quarter, and you'll get a straight
     answer.
-  hints: You could ask Corwin about his leatherwork, about the smell and his
-    neighbors on the Common side, or about life in the Crafting Quarter. To see
-    what he sells, type list.
+  hints: Choose a line below to hear about his leatherwork, about the smell and
+    his neighbors on the Common side, or about life in the Crafting Quarter. To
+    see what he sells, type list.
 topics:
 - key: work
   kind: info

@@ -12,8 +12,8 @@ opener:
     scribe's door. The lane's quiet most days, which is why I like
     it. I've got the morning off, more or less. What do you want to
     know?
-  hints: You could ask the townsperson about the shops on the lane, about his work,
-    or about Greenford.
+  hints: Choose a line below to hear about the shops on the lane, about his
+    work, or about Greenford.
 topics:
 - key: lane
   kind: info

@@ -6,9 +6,9 @@ opener:
     which makes it the best one too. Every item's tagged, every price is on the
     tag, and yes, I priced in the haggling. My advice on the road ahead is
     free."
-  hints: "Brecca glances up from her abacus, fingers pausing mid-calculation, and
-    gestures at the organized shelves. To see what she sells, type list. You could
-    also ask her about the toll or the roads."
+  hints: "Brecca glances up from her abacus, fingers pausing mid-calculation,
+    and gestures at the organized shelves. To see what she sells, type list.
+    Choose a line below to hear about the toll or the roads."
 topics:
 # toll (pattern) folded into toll_opinion; dustwalk (pattern) into
 # road_advice; the two buy variants into buy.

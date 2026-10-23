@@ -12,8 +12,8 @@ opener:
   text: I am Linnet. I am in my Blooming. That is what they call it when the change
     comes on you. It is... a lot. The whole valley says it is the best thing that
     will ever happen to me, and I am trying to believe them, I really am.
-  hints: You could ask Linnet about her change, about the valley she has grown up
-    in, or about what it is like to face a Blooming here.
+  hints: Choose a line below to hear about her change, about the valley she has
+    grown up in, or about what it is like to face a Blooming here.
 topics:
 # change folds the "change blooming mutation rite" pattern ("Bit much,
 # honestly. But it's a gift. Everyone says.").

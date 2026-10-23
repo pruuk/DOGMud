@@ -10,8 +10,8 @@ opener:
   text: The sick come to me here, and I would rather you were not one of them.
     If it is the records you want, Brother Cael keeps the Archive, off the North
     Walk. If it is something else, tell me plainly.
-  hints: You could ask the Infirmarian about the Chrysalis-changes she sees in her
-    work, or what to do if you are hurt.
+  hints: Choose a line below to learn about the Chrysalis-changes she sees in
+    her work, or what to do if you are hurt.
 topics:
 - key: the_infirmary
   kind: info

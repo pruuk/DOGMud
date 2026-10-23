@@ -13,9 +13,9 @@ opener:
     careful work. I brew compounds and measure reagents exactly, mostly salves
     and curatives, now and then a special order. There is also one
     standing order I would rather not think about.
-  hints: You could ask Vesna about her brewing, about Ysolde the healer who buys
-    her salves, about where her reagents come from, or about the buyer she seems
-    uneasy about. To see what she sells, type list.
+  hints: Choose a line below to learn about her brewing, about Ysolde the healer
+    who buys her salves, about where her reagents come from, or about the buyer
+    she seems uneasy about. To see what she sells, type list.
 topics:
 - key: work
   kind: info

@@ -8,8 +8,8 @@ greetings:
 opener:
   text: I'm supposed to be taking something to the baker, but I'm doing the
     paving-stone game first. I've almost got to the end. Do you want to watch?
-  hints: You could ask the child about the game, or about the errand she is almost
-    doing.
+  hints: Choose a line below to learn about the game, or about the errand she is
+    almost doing.
 topics:
 - key: game_errand
   kind: info

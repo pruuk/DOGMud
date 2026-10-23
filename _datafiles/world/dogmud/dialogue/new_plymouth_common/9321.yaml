@@ -15,8 +15,8 @@ opener:
   text: I've got stew, grilled meat, bread, and tea. The stew's the best value and
     the bread's fresh. What is it? You're eating, you're asking about the quarter,
     or you want to hear me complain about my brother's taste in seasoning?
-  hints: You could ask Marda about her cooking, her brother Halvard the smith, or
-    life in the Common Quarter. To see what she sells, type list.
+  hints: Choose a line below to hear about her cooking, her brother Halvard the
+    smith, or life in the Common Quarter. To see what she sells, type list.
 topics:
 - key: food
   kind: info

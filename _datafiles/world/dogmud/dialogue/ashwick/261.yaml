@@ -3,8 +3,8 @@ zone: Ashwick
 defaultMood: neutral
 opener:
   text: "Hesta. I farm. That is about the full story."
-  hints: "You could ask Hesta about Delia's herbs, the empty cottage at the east
-    end, life in Ashwick, or the patrols that pass through."
+  hints: "Choose a line below to hear about Delia's herbs, the empty cottage at
+    the east end, life in Ashwick, or the patrols that pass through."
 topics:
 - key: herbs_shortage
   kind: info

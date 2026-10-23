@@ -12,8 +12,9 @@ opener:
     I've carried all sorts in my time, but I don't book passage for strangers.
     The passage agent by the sailings board books the regular boats. If you need
     a conversation, the tavern is back along the quay, past the chandlery.
-  hints: You could ask Osse about the river run to New Plymouth, about his barge,
-    about the travelers he has carried, or about getting passage on a boat.
+  hints: Choose a line below if you would like to hear about the river run to
+    New Plymouth, about his barge, about the travelers he has carried, or about
+    getting passage on a boat.
 topics:
 - key: run
   kind: info

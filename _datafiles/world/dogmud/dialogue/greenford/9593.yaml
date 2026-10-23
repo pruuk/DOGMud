@@ -4,8 +4,8 @@ defaultMood: friendly
 opener:
   text: Come in, if you must. The circle is drawn fresh. I'm Cade. State your
     business plainly, the light in here is poor.
-  hints: You could ask Cade about his enchanting circle, or about the materials he
-    sells. To see what he sells, type list.
+  hints: Choose a line below if you want to hear about his enchanting circle, or
+    about the materials he sells. To see what he sells, type list.
 topics:
 - key: craft
   kind: info

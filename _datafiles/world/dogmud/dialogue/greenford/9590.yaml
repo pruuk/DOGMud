@@ -5,8 +5,8 @@ opener:
   text: Mind the sparks. This is the Guild Forge, and I'm Aldo. I'd sooner be
     hammering than talking, so tell me straight. Are you here to buy metal, or
     to work at the forge?
-  hints: You could ask Aldo about his forge, or about the materials he sells. To see
-    what he sells, type list.
+  hints: Choose a line below if you want to hear about his forge, or about the
+    materials he sells. To see what he sells, type list.
 topics:
 - key: craft
   kind: info

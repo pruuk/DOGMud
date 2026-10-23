@@ -3,16 +3,16 @@ zone: Stillwater
 defaultMood: friendly
 opener:
   text: Welcome to Tinder and Tackle. What can I find you?
-  hints: You could ask Wulf about his stock, the caravan, or what to take into the
-    lake caves. To see what he sells, type list.
+  hints: Choose a line below if you want to hear about his stock, the caravan,
+    or what to take into the lake caves. To see what he sells, type list.
   variants:
   - questRequired:
     - 19-end
     text: The cave trouble settled? Good. My lantern sales will go back to the normal
       trickle now. I kept extra stock on hand all season. Now Ketil can bring me
       something more useful.
-    hints: You could ask Wulf about his stock or the caravan. To see what he sells,
-      type list.
+    hints: Choose a line below if you would like to hear about his stock or the
+      caravan. To see what he sells, type list.
 topics:
 - key: stock_general
   kind: info

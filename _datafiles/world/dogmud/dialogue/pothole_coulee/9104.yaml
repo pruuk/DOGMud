@@ -12,16 +12,17 @@ opener:
     it, I stock it: food for the road, cloth for your back, a blade or a sling
     if your road needs one of those too. Fair dealing both directions: I tell
     you what a thing is worth and why.'
-  hints: You could ask about her wares, about selling what you carry, or about the
-    sling on the back shelf.
+  hints: Choose a line below to learn about her wares, about selling what you
+    carry, or about the sling on the back shelf.
   variants:
   - questExcluded:
     - 30-end
     text: New, and not yet through the pool. I will sell to you either way, because
       coin is coin, but the rite first is the local custom, and customers who follow
       it tend to live longer. Hadwen, at the water.
-    hints: Cleric Hadwen keeps the Awakening Pool, north of Hub Square. Type talk
-      hadwen there. You could also ask Onna about her wares now.
+    hints: Cleric Hadwen keeps the Awakening Pool, north of Hub Square. Type
+      talk hadwen there. Choose a line below if you want to hear about her wares
+      now.
 topics:
 - key: wares
   kind: info
@@ -41,7 +42,8 @@ topics:
     name, and I will name my price. It will be less than I charge for the same thing.
     That gap is called a roof over my head. Bring me what the coulee coughs up and
     we will both do fine.
-  hints: You could ask about her wares, or about the sling.
+  hints: Choose a line below if you would like to hear about her wares, or about
+    the sling.
 - key: sling
   kind: info
   label: What is the sling on the back shelf?
@@ -50,7 +52,7 @@ topics:
     looks. Folk who take to it usually end up out past the far-hill mouth, where they
     teach the long shot properly. Pouch of shot goes with it. Do not buy one without
     the other.
-  hints: You could ask about her wares or about selling.
+  hints: Choose a line below to hear about her wares or about selling.
 - key: remembers
   kind: info
   label: Do you really remember every face?
@@ -58,4 +60,4 @@ topics:
     buys. Not to pry. A shopkeeper who remembers saves you the second conversation:
     I will know your size, your salt, and your bad habits by the third visit. Cheaper
     than writing it down and politer than asking twice.'
-  hints: You could ask about her wares or the sling.
+  hints: Choose a line below to learn about her wares or the sling.

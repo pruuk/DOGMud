@@ -6,7 +6,8 @@ opener:
     rather not draw it again today. I am Sefa Crane. I set shards and odd
     growths into wire and stone so they hold still and do some good. What would
     you have set or bound?
-  hints: You could ask Sefa Crane about her wares or the enchanting circle.
+  hints: Choose a line below if you would like to hear about her wares or the
+    enchanting circle.
 topics:
 # stock_general folds the "buy sell shop" pattern (both responses); "ask
 # specific" became the list command.

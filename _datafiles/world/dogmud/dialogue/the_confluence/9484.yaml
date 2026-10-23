@@ -11,8 +11,8 @@ opener:
     enough to call it mine. The road to Greenford runs out behind me, two days'
     travel on a decent road, and I know every milepost of it. Ask before you
     head out.
-  hints: You could ask the Gate Captain about the road east to Greenford, about his
-    work at the gate, or about this side of the river.
+  hints: Choose a line below to learn about the road east to Greenford, about
+    his work at the gate, or about this side of the river.
 topics:
 - key: road
   kind: info

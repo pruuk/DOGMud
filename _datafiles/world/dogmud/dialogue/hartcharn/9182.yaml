@@ -4,8 +4,8 @@ defaultMood: neutral
 opener:
   text: I am Severin Pell, ferry agent, and the post-house stage for anything bound
     up the road to the capital. If you carry for the relay, I am your first stop.
-  hints: You could ask Pell about the ferry, the news on the road, or the provisions
-    he keeps for travellers.
+  hints: Choose a line below if you would like to hear about the ferry, the news
+    on the road, or the provisions he keeps for travellers.
   # Quest 60 states (first match wins); quest_active, quest_sent and
   # quest_done became these variants.
   variants:

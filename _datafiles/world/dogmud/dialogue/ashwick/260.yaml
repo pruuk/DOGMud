@@ -4,8 +4,9 @@ defaultMood: neutral
 opener:
   text: "I am Ferris, deacon of this chapel. It is a small congregation, but a
     sincere one. What brings you to Ashwick?"
-  hints: "You could ask Ferris about the Rite, about the village, or about the symbol
-    above the chapel door. He seems troubled by something."
+  hints: "Choose a line below if you want to hear about the Rite, about the
+    village, or about the symbol above the chapel door. He seems troubled by
+    something."
 topics:
 - key: rite
   kind: info

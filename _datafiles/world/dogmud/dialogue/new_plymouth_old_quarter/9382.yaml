@@ -13,8 +13,8 @@ opener:
   text: I am not paid to stop people walking into a place that is already finished.
     Go in, go out, none of my concern. I am here because standing somewhere else has
     not occurred to me.
-  hints: You could ask the doorman what he still guards, or whether Deren is still
-    inside.
+  hints: Choose a line below to hear what he still guards, or whether Deren is
+    still inside.
 topics:
 - key: door
   kind: info

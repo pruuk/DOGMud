@@ -13,7 +13,7 @@ opener:
     tell you everyone's business, mind. But if you're looking
     for somebody, I can likely point you right. So, what can I
     tell you?
-  hints: You could ask the neighbor who lives where on the lane, about the row
+  hints: Choose a line below to hear who lives where on the lane, about the row
     itself, or about daily life here.
 topics:
 - key: directions

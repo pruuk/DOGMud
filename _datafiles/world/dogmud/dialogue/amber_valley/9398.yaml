@@ -12,8 +12,9 @@ opener:
   text: Take your time. I do. The name is Goss Harrow, and the general store is
     mine, flour to fishhooks and rope to ribbon. Whatever the valley needs and
     does not grow in a field, odds are it passed through my hands first.
-  hints: You could ask Goss about the shop and the valley's goods, about supply and
-    the road, or about life here in Amber Valley.
+  hints: Choose a line below if you would like to hear about the shop and the
+    valley's goods, about supply and the road, or about life here in Amber
+    Valley.
 topics:
 # shop folds the "buy sell shop store goods" pattern ("Have a look round"):
 # Goss has no shop list, so his stock is spoken for on account instead.

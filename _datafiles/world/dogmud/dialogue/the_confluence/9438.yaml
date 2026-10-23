@@ -12,8 +12,8 @@ opener:
     adding the municipality's formal witness. Deeds, contracts, letters of
     attestation, property transfers. If a document needs a seal to stand in civic
     law, it comes through this office.
-  hints: You could ask Pellan about the work of his office, about his seal, or
-    about why a deed needs one.
+  hints: Choose a line below if you would like to hear about the work of his
+    office, about his seal, or about why a deed needs one.
 topics:
 - key: services
   kind: info

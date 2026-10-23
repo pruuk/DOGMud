@@ -16,8 +16,9 @@ opener:
     the Canon's office, I can verify it here. If you do not, then my door is not for
     you. Is there something specific you would like to ask, or were you simply
     curious about the door?
-  hints: You could ask Archivist Holt about the Archive he manages, about what it
-    would take to get through this door, or about the offices he answers to.
+  hints: Choose a line below if you want to hear about the Archive he manages,
+    about what it would take to get through this door, or about the offices he
+    answers to.
 topics:
 - key: archive
   kind: info

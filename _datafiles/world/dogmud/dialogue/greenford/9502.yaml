@@ -11,8 +11,9 @@ opener:
     properly. The flour is stone-ground this morning, the loaves came out before
     the stones started, and the trout are fresh from the steps. Nothing here is
     older than today. What brings you in?
-  hints: You could ask Maret about her flour, about the river and the floods, or
-    about the barges and the grain they bring. To see what she sells, type list.
+  hints: Choose a line below if you would like to hear about her flour, about
+    the river and the floods, or about the barges and the grain they bring. To
+    see what she sells, type list.
 topics:
 - key: flour
   kind: info

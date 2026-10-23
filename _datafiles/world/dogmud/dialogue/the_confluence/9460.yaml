@@ -10,8 +10,8 @@ opener:
   text: Hello. The almonry is for practical needs. A candle for a prayer, bread for
     those short of it, and a word for anyone who needs one. That last one I can
     give you now.
-  hints: You could ask the Almoner about the candles, about the alms the Keepers
-    give, or about the temple's daily charitable work.
+  hints: Choose a line below if you would like to hear about the candles, about
+    the alms the Keepers give, or about the temple's daily charitable work.
 topics:
 - key: candles
   kind: info

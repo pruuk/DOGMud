@@ -13,8 +13,8 @@ opener:
     philosophy, and the morning's working is on the board if
     you care to read it. In a moment I show the pendulum part.
     Ask me something that will not take more than a minute.
-  hints: You could ask the lecturer about today's lecture, about her students, or
-    about the university.
+  hints: Choose a line below if you want to hear about today's lecture, about
+    her students, or about the university.
 topics:
 - key: lecture
   kind: info

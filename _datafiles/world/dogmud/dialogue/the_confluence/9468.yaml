@@ -10,7 +10,8 @@ opener:
     keep them the same way every day, which is how all the important work goes.
     If it is the Archive or the Prioress you want, they are further in. If it is
     the kitchen, you have found it.
-  hints: You could ask the Cellarer about the stores, or about when the order eats.
+  hints: Choose a line below if you want to hear about the stores, or about when
+    the order eats.
 topics:
 - key: the_stores
   kind: info

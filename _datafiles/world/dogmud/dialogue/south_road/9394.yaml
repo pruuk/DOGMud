@@ -10,8 +10,8 @@ opener:
   text: "I'm Wick. I keep sheep along this stretch of the South Road, just above where
     it drops into Amber Valley. Quiet work, but you hear things, standing on a hill
     all day."
-  hints: "You could ask Wick about the valley below, about his flock, or about the
-    water trouble he has heard brewing between two valley farms."
+  hints: "Choose a line below to hear about the valley below, about his flock,
+    or about the water trouble he has heard brewing between two valley farms."
 topics:
 - key: valley
   kind: info

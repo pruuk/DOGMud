@@ -3,7 +3,8 @@ zone: Stillwater
 defaultMood: neutral
 opener:
   text: Sit where you like. The window table has the best view of the lake.
-  hints: You could ask Neva what is on today, why she works here, or for the news.
+  hints: Choose a line below to hear what is on today, why she works here, or
+    for the news.
 topics:
 - key: ale
   kind: info

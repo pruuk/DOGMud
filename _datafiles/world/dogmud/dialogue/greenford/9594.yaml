@@ -5,8 +5,8 @@ opener:
   text: A visitor. Good, my eyes could use the rest. Take a seat, if you like.
     I'm Tibb, and this is the Jeweler's Bench. Have you come to buy, or to make
     something at the bench yourself?
-  hints: You could ask Tibb about his jeweler's bench, or about the materials he
-    sells. To see what he sells, type list.
+  hints: Choose a line below if you want to hear about his jeweler's bench, or
+    about the materials he sells. To see what he sells, type list.
 topics:
 - key: craft
   kind: info

@@ -6,7 +6,8 @@ opener:
     main road. If it is trouble you want, the fallow field next door has plenty.
     Vermin breed in there like it is paradise. And it is, now that Gareth is
     gone and nobody stops them.
-  hints: You could ask Dorn about the pests, his neighbour Gareth, or the city.
+  hints: Choose a line below if you want to hear about the pests, his neighbour
+    Gareth, or the city.
   variants:
   # The hand-in gates on 7-start plus the sample, not on 7-deliver: a sample
   # picked up before accepting grants no deliver step (batch 2 review B1).

@@ -6,7 +6,7 @@ opener:
     before me, and every dose I make is measured true. Keep your hands off the
     bench, though. Some of what sits on it bites back. What ails you, or what do
     you need?
-  hints: You could ask Alard Fen about his wares or his herbs.
+  hints: Choose a line below to learn about his wares or his herbs.
 topics:
 # stock_general folds the "buy sell shop" pattern (both responses); "ask
 # specific" became the list command.

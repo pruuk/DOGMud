@@ -11,8 +11,8 @@ opener:
     desk, whether that is a registration, a deed transfer, a civic petition or a
     letter of civic authority. Most requests I can process myself, and the rest
     I route to the proper office. Now, how may the hall help you?
-  hints: You could ask Orvin about the hall's records, about the old map on the
-    wall, or about who runs the city.
+  hints: Choose a line below to learn about the hall's records, about the old
+    map on the wall, or about who runs the city.
 topics:
 - key: records
   kind: info

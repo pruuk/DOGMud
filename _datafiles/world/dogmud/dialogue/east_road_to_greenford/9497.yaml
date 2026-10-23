@@ -11,8 +11,8 @@ opener:
     hamlet. The rope, the crank, the drainage channel, all of it needs watching, and
     mostly it does not get watched until something goes wrong. Which is why I watch
     it."
-  hints: "You could ask the well-woman how she tends the well, about the hamlet and
-    its folk, or about the water in this dry season."
+  hints: "Choose a line below to hear how she tends the well, about the hamlet
+    and its folk, or about the water in this dry season."
 topics:
 # drink (pattern) folded into well.
 - key: well

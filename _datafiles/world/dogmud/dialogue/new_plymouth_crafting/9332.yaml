@@ -13,10 +13,10 @@ opener:
   text: Maps, mostly, and a few curios from estates I have bought up. Old pages,
     keepsakes, the odd printed rhyme. The best maps were made by the man who kept
     the shop across the Inkwalk, and those stay off the counter.
-  hints: You could ask Orin about his maps and curios, about Edvar the mapmaker
-    whose shop across the lane stands shuttered, or about the old questions this
-    quarter raises. He keeps glancing up the lane toward the shuttered cooperage
-    as he talks. To see what he sells, type list.
+  hints: Choose a line below to learn about his maps and curios, about Edvar the
+    mapmaker whose shop across the lane stands shuttered, or about the old
+    questions this quarter raises. He keeps glancing up the lane toward the
+    shuttered cooperage as he talks. To see what he sells, type list.
   variants:
   - questRequired:
     - 70-start
@@ -39,8 +39,8 @@ opener:
     - 68-end
     text: Toby has re-cut the mark beside the cooperage door, and it reads as a
       working shop again. The circle remembers who stood with it. Thank you.
-    hints: You could ask Orin about his maps and curios, about Edvar the mapmaker,
-      or about the old questions this quarter raises.
+    hints: Choose a line below if you want to hear about his maps and curios,
+      about Edvar the mapmaker, or about the old questions this quarter raises.
   # 68-choice without the survey: old saves made the choice step before the
   # survey step existed and never lifted the board. Either choice needs it.
   - questRequired:
@@ -58,7 +58,7 @@ opener:
     questExcluded:
     - 68-end
     text: The inspection is days away. Have you decided?
-    hints: To hear what standing with the circle means, choose to ask Orin below.
+    hints: To hear what standing with the circle means, choose his line below.
       Clerk Vell, in the Permit Office in the Merchant Quarter, takes the survey
       for the bloodline. Neither choice can be undone.
   - questRequired:
@@ -131,9 +131,9 @@ topics:
     re-cuts the guild mark beside the door so it reads as a working shop. Or you
     can take the survey to Vell, and be paid for it. That is a real choice, and
     it is yours. Ask me what standing with us would cost you before you make it.
-  hints: To hear what standing with the circle means, choose to ask Orin below.
-    Clerk Vell, in the Permit Office in the Merchant Quarter, takes the survey for
-    the bloodline. Neither choice can be undone.
+  hints: To hear what standing with the circle means, choose his line below.
+    Clerk Vell, in the Permit Office in the Merchant Quarter, takes the survey
+    for the bloodline. Neither choice can be undone.
   marked: true
   questRequired:
   - 68-survey

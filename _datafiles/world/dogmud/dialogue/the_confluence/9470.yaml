@@ -10,8 +10,8 @@ opener:
   text: Sorry. I'm junior enough that visitors to the cloisters still surprise me. I
     keep the Garth and the walks clean. It sounds small, but the Garth is the heart
     of the cloisters, the part everything else looks onto. I take it seriously.
-  hints: You could ask the cloister keeper about the Garth, or about where to find
-    the senior Keepers.
+  hints: Choose a line below if you would like to hear about the Garth, or about
+    where to find the senior Keepers.
 topics:
 - key: the_garth
   kind: info

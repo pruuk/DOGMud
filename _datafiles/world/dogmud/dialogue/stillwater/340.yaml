@@ -4,8 +4,9 @@ defaultMood: neutral
 opener:
   text: I am Kess. I carve the lake's pearls, and I will keep working while you
     talk, so do not mind it if I do not look up. What brings you in?
-  hints: You could ask Kess about the pearls she works, her silver settings, or the
-    divers who used to bring the best stones. To see what she sells, type list.
+  hints: Choose a line below to hear about the pearls she works, her silver
+    settings, or the divers who used to bring the best stones. To see what she
+    sells, type list.
 topics:
 - key: pearl_quality
   kind: info

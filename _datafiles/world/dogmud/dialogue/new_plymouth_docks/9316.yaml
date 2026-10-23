@@ -10,8 +10,8 @@ opener:
   text: I've got an accusation I'm working on with half the facts, and a foreman
     who gave me a very clean statement. If you know something that matters, I'll
     hear it.
-  hints: You could ask the constable about the charge against Teo, the trouble on
-    the docks, or what evidence would change the case.
+  hints: Choose a line below if you want to hear about the charge against Teo,
+    the trouble on the docks, or what evidence would change the case.
   variants:
   - questRequired:
     - 63-start
@@ -43,7 +43,7 @@ opener:
     - 63-end
     text: Hewd is answering for his two columns now, and Teo's name is off the
       board. That's the docks put a little straighter.
-    hints: You could ask the constable what happens to Hewd now, or about the
+    hints: Choose a line below to hear what happens to Hewd now, or about the
       trouble on the docks.
 topics:
 - key: tallyhandoff

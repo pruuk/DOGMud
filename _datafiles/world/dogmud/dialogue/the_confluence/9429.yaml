@@ -13,8 +13,9 @@ opener:
     cloth, rope, tinder and skins, so you don't have to go to four different
     vendors, and my prices are for the everyday market, not the guild-house
     crowd.
-  hints: You could ask Lenne about river-cloth, about the rope she stocks, or
-    about what else is in the market. To see what she sells, type list.
+  hints: Choose a line below if you would like to hear about river-cloth, about
+    the rope she stocks, or about what else is in the market. To see what she
+    sells, type list.
 topics:
 - key: cloth
   kind: info

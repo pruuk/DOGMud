@@ -7,7 +7,8 @@ defaultMood: neutral
 opener:
   text: You look like you have been walking a while. I am Malk, road peddler, when
     the road cooperates. It has not been cooperating.
-  hints: You could ask Malk about his missing freight, his goods, or the road.
+  hints: Choose a line below if you want to hear about his missing freight, his
+    goods, or the road.
   variants:
   - carriesItem: 40039
     questExcluded:

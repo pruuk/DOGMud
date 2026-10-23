@@ -15,8 +15,8 @@ opener:
     reading room. Brennan's office is in the lecture-hall range,
     west of the quad. Visiting hours are on the board. Now,
     where are you headed?
-  hints: You could ask Kern the way to the library, the archive or Brennan's office,
-    about the university, or about the gate and its ledger.
+  hints: Choose a line below to learn the way to the library, the archive or
+    Brennan's office, about the university, or about the gate and its ledger.
 topics:
 - key: directions
   kind: info

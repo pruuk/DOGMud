@@ -16,9 +16,9 @@ opener:
   text: Pull up a stool. The Bowl has stood forty years, and for twenty of them
     it's run the way I say it runs. You'll get a drink here, or a meal, or the
     quarter's gossip, and the gossip comes free with the drink. Which is it?
-  hints: You could ask Renn about the Brimming Bowl, the ale she sends down to the
-    docks, or what she's heard around the quarter. To see what she pours, type
-    list.
+  hints: Choose a line below if you want to hear about the Brimming Bowl, the
+    ale she sends down to the docks, or what she's heard around the quarter. To
+    see what she pours, type list.
 topics:
 - key: bowl
   kind: info

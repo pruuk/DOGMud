@@ -13,8 +13,9 @@ opener:
   text: I light the lamps at dusk, trim the wicks, fill the oil when they run low.
     I do not ask what the lights show me. That question has never made my life any
     better.
-  hints: You could ask Quill about his lamp route, about the iron door on Lintel
-    Street and who comes to it at odd hours, or about who lives in the Old Quarter.
+  hints: Choose a line below to learn about his lamp route, about the iron door
+    on Lintel Street and who comes to it at odd hours, or about who lives in the
+    Old Quarter.
 topics:
 - key: bloom_witness
   kind: info

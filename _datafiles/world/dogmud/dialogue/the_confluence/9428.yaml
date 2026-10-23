@@ -12,9 +12,9 @@ opener:
     posts, the salt-cured roe from the estuary traders, the preserved goods the
     Kilnreach crews put up for the long season. Lower volume, better margin, and
     more interesting to work with than a barge full of iron ingots.
-  hints: You could ask Varro about the Solt and what it carries, about food that
-    keeps on the road, or about why he works the small cargo. To see what he
-    sells, type list.
+  hints: Choose a line below to learn about the Solt and what it carries, about
+    food that keeps on the road, or about why he works the small cargo. To see
+    what he sells, type list.
 topics:
 - key: solt
   kind: info

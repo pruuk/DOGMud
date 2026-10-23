@@ -10,8 +10,9 @@ opener:
   text: "Moving a small herd east to the Greenford market. I have done this route six
     times and it does not get shorter. The road is dry this season, hard on feet
     and not great for the stock."
-  hints: "You could ask the drover about the road east, about the dry season and
-    the herd, or about the Greenford market where he is headed."
+  hints: "Choose a line below if you would like to hear about the road east,
+    about the dry season and the herd, or about the Greenford market where he is
+    headed."
 topics:
 # far (pattern) folded into route.
 - key: route

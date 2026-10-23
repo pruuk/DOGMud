@@ -4,8 +4,8 @@ defaultMood: friendly
 opener:
   text: Oh, come in, come in! Welcome to the Weaver's Loft. I'm Wenna. Have you
     come for thread, or would you like a turn at the loom?
-  hints: You could ask Wenna about her loom, or about the materials she sells. To see
-    what she sells, type list.
+  hints: Choose a line below if you want to hear about her loom, or about the
+    materials she sells. To see what she sells, type list.
 topics:
 - key: craft
   kind: info

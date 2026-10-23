@@ -14,18 +14,19 @@ opener:
   text: I work the flooded chambers below. What the water has not taken, the silt
     has covered, and what the silt has covered, I find. If you are down here with a
     question, the stone can probably answer it better than I can. But ask.
-  hints: You could ask Gritta about the gray material she senses in the deep stone,
-    about the old symbol on the buried lintels, or about who receives her finds. She
-    studies you the way someone does when deciding whether to ask a stranger to
-    witness something for themselves.
+  hints: Choose a line below to hear about the gray material she senses in the
+    deep stone, about the old symbol on the buried lintels, or about who
+    receives her finds. She studies you the way someone does when deciding
+    whether to ask a stranger to witness something for themselves.
   # Quest 70 states (first match wins; HasQuest is also true at every later step).
   variants:
   - questRequired:
     - 70-end
     text: Orin has it, then. Good. Someone outside my little chain has seen it with
       their own eyes. That was the point.
-    hints: You could ask Gritta about the gray material in the deep stone, about the
-      old symbol on the buried lintels, or about who receives her finds.
+    hints: Choose a line below to learn about the gray material in the deep
+      stone, about the old symbol on the buried lintels, or about who receives
+      her finds.
   - questRequired:
     - 70-witness
     questExcluded:

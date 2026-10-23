@@ -13,8 +13,9 @@ opener:
     table and a lamp, the reading room is south. The card
     catalogue sits beside this desk. Use it once and you will
     find it simple. Quietly, now: how may I help?
-  hints: You could ask Vance about the library's sections, about borrowing books,
-    about the quiet of the stacks, or about the university.
+  hints: Choose a line below if you would like to hear about the library's
+    sections, about borrowing books, about the quiet of the stacks, or about the
+    university.
 topics:
 - key: library
   kind: info

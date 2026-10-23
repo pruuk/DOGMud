@@ -12,16 +12,16 @@ opener:
     mind the coulee's gold, which mostly means minding the people attached to
     it. Yours is welcome here. It will be exactly as you left it, which is more
     than can be said for gold in a pocket.
-  hints: You could ask about the bank, about keeping your gold safe, or about the
-    ledger.
+  hints: Choose a line below to hear about the bank, about keeping your gold
+    safe, or about the ledger.
   variants:
   - questExcluded:
     - 30-end
     text: Not yet Opened by the pool, I see. The ledger takes no position on that,
       but the town does. The pool first, then commerce. Cleric Hadwen, at the water.
       Your account will keep.
-    hints: Cleric Hadwen keeps the Awakening Pool, north of Hub Square. Type talk
-      hadwen there. You could also ask Croup about the bank now.
+    hints: Cleric Hadwen keeps the Awakening Pool, north of Hub Square. Type
+      talk hadwen there. Choose a line below to learn about the bank now.
 topics:
 - key: bank_lesson
   kind: info
@@ -41,7 +41,8 @@ topics:
   text: Forty years of the coulee's arithmetic, in one hand, and the hand is mine. Every loan, every
     season's haul, every promise anyone was foolish enough to put a number on. People
     think a town runs on water or faith. It runs on somebody writing things down.
-  hints: You could ask about the bank, or about his knuckles.
+  hints: Choose a line below if you want to hear about the bank, or about his
+    knuckles.
 - key: knuckles
   kind: info
   label: What happened to your knuckles?
@@ -49,4 +50,5 @@ topics:
     edge when I am thinking, which the desk has opinions about. They are good for
     rapping the counter when a clever person tries clever arithmetic on me. One rap
     usually settles it.
-  hints: You could ask about the ledger or the bank.
+  hints: Choose a line below if you would like to hear about the ledger or the
+    bank.

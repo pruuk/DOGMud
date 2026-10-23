@@ -16,17 +16,17 @@ opener:
   text: I fix what needs fixing. I don't write down who I've seen or why, and I
     don't discuss my patients with anyone. That's the whole of the policy and it
     doesn't change. What is it?
-  hints: You could ask Ysolde how she runs things, about the temple healers, or
-    about the sickness she sees most in the quarter. She also keeps a few tools
-    for sale under the counter. To see what she sells, type list.
+  hints: Choose a line below to hear how she runs things, about the temple
+    healers, or about the sickness she sees most in the quarter. She also keeps
+    a few tools for sale under the counter. To see what she sells, type list.
   variants:
   - questRequired:
     - 67-end
     text: The supply's broken. Fewer people come through my door with that smell
       on them. Not none. Fewer. I'll take fewer.
-    hints: You could ask Ysolde how she runs things, about the temple healers, or
-      about the sickness she sees most in the quarter. To see what she sells,
-      type list.
+    hints: Choose a line below to hear how she runs things, about the temple
+      healers, or about the sickness she sees most in the quarter. To see what
+      she sells, type list.
   - questRequired:
     - 67-start
     questExcluded:

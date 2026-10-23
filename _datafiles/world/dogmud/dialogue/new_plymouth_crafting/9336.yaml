@@ -12,8 +12,9 @@ opener:
   text: Talk while I stitch, if you don't mind. The work doesn't stop for
     anyone. I'm the tailor here. Alterations, cloth work, pieces made to order,
     for the whole quarter and for some all the way up at the Noble end of town.
-  hints: You could ask Nessa about her tailoring, the Noble Quarter clients she
-    makes for, or how cloth reaches her bench. To see what she sells, type list.
+  hints: Choose a line below if you want to hear about her tailoring, the Noble
+    Quarter clients she makes for, or how cloth reaches her bench. To see what
+    she sells, type list.
 topics:
 - key: work
   kind: info

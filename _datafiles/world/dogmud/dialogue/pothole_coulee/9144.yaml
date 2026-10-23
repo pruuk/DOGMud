@@ -4,7 +4,7 @@ defaultMood: neutral
 opener:
   text: I am Grieve. I was an adept here once, when this ruin was a
     Folding-house. Now I am its caretaker, and the last of us who stayed.
-  hints: You could ask Grieve about casting or your task.
+  hints: Choose a line below to hear about casting or your task.
   variants:
   - questExcluded:
     - 30-end

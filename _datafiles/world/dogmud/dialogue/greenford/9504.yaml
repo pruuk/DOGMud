@@ -12,8 +12,8 @@ opener:
     Timber, grain, finished goods, it's all the same to my arms. This time of
     year a boat ties up at the Greenford landing every few days, and the river's
     running well. Ask while I work.
-  hints: You could ask the barge-hand about the cargo, about the Confluence, or about
-    the current this season.
+  hints: Choose a line below if you would like to hear about the cargo, about
+    the Confluence, or about the current this season.
 topics:
 - key: cargo
   kind: info

@@ -15,8 +15,8 @@ greetings:
 opener:
   text: I run this block, I keep my tenants housed, and I am not interested in
     anyone's opinion about how I do either. What do you want?
-  hints: You could ask Mother Brisk about her tenants, about the condemned upper
-    floors, or about the bloodline's tax collector.
+  hints: Choose a line below if you would like to hear about her tenants, about
+    the condemned upper floors, or about the bloodline's tax collector.
 topics:
 - key: tenants
   kind: info

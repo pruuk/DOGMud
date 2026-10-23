@@ -11,8 +11,8 @@ greetings:
 opener:
   text: It's... the ceiling's low. You can't stand up straight. Past the canal.
     Past it.
-  hints: The wanderer's attention drifts. You might ask about the room they keep
-    coming back to, or about the Bloom.
+  hints: The wanderer's attention drifts. Choose a line below to hear about the
+    room they keep coming back to, or about the Bloom.
 topics:
 - key: room
   kind: info

@@ -5,7 +5,8 @@ opener:
   text: These are the Stillwater docks, and I am Arn. I keep the ledgers and
     settle the moorings. Take a bench if you want to watch the boats go out.
     Fewer go out than should, lately. If you have business, I am listening.
-  hints: You could ask Arn about himself, the docks, or the bounty on the lake caves.
+  hints: Choose a line below to hear about himself, the docks, or the bounty on
+    the lake caves.
   variants:
   - questRequired:
     - 19-end
@@ -13,14 +14,15 @@ opener:
       19-completion: full
     text: The one who killed the sump dweller. Sit any time. The docks rest easier
       with that thing dead. I will not forget it.
-    hints: You could ask Arn about the docks or the caravan.
+    hints: Choose a line below to learn about the docks or the caravan.
   - questRequired:
     - 19-end
     questFlagRequired:
       19-completion: partial
     text: The shallows are quieter than they were. That is something. The deep is
       still the deep, but at least the nets come back whole now.
-    hints: You could ask Arn about the docks or the caravan.
+    hints: Choose a line below if you want to hear about the docks or the
+      caravan.
   - questRequired:
     - 19-signed
     questExcluded:

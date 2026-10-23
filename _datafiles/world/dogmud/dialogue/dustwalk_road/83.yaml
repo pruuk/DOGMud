@@ -5,8 +5,8 @@ opener:
   text: "Traveller. You have come at an interesting time. The road south has grown
     dangerous and I could use someone with steady hands. Or you could just be
     passing through. Either way, you are welcome at the post."
-  hints: "You could ask Tessara what has made the road south dangerous, where the
-    road leads, or how she came to be a warden."
+  hints: "Choose a line below to hear what has made the road south dangerous,
+    where the road leads, or how she came to be a warden."
   # Quest 4 states; evidence_return (tree node) and the report pattern are
   # folded into these variants.
   variants:

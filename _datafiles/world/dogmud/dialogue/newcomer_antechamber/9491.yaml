@@ -6,8 +6,8 @@ opener:
   # prompt and fight questions open after the talk lesson (28-asked).
   text: Ask me anything you like. When you reach the landing at the end, talk to
     me there and I'll send you through to the world.
-  hints: Each line below is a question you can ask. Type the number of a question,
-    then press Enter. Type a number again any time to ask more.
+  hints: Each line below is a question. Type the number of a question, then
+    press Enter. Type a number again any time to hear more.
   variants:
   # Quest 28's talk lesson in room 6261: the player has said hello and now
   # chooses a question from Dewey's menu (R20). This is the first menu a
@@ -19,8 +19,8 @@ opener:
     - 28-asked
     text: Ask me something. Anything at all, but the world is a fine place to start.
       See the [*] beside it? That mark means I think you should hear it.
-    hints: Each line below is a question you can ask. Type the number of the question
-      about the world, then press Enter.
+    hints: Each line below is a question. Type the number of the question about
+      the world, then press Enter.
   # Opener variants carry gates only, not heardRequired, so this cannot tell
   # which lessons are heard. It points at the [*] questions; the way north
   # comes from quest 28's `asked` step hint and from Dewey's mob_idle line

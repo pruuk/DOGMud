@@ -22,21 +22,22 @@ defaultMood: neutral
 
 opener:
   text: I don't look up from the bench for strangers. You'll have to earn that.
-  hints: You could ask Veyra about her work, or about the scarred hand she works
-    with. She sizes up visitors by the fine work they have made themselves.
+  hints: Choose a line below if you would like to hear about her work, or about
+    the scarred hand she works with. She sizes up visitors by the fine work they
+    have made themselves.
   variants:
   - questRequired:
     - 78-end
     - 77-end
     text: You've seen what's under the Crash Site, and you're still standing here.
       Good. I know nine secrets worth the name. None of them comes cheap.
-    hints: To hear Veyra's secrets and their prices, choose to ask her below. A
+    hints: To hear Veyra's secrets and their prices, choose her line below. A
       secret you can pay for now shows as an offer of its own.
   - questRequired:
     - 78-end
     text: You're known to me now. I know nine secrets worth the name. None of them
       comes cheap.
-    hints: To hear Veyra's secrets and their prices, choose to ask her below. A
+    hints: To hear Veyra's secrets and their prices, choose her line below. A
       secret you can pay for now shows as an offer of its own.
   - questExcluded:
     - 78-start

@@ -5,15 +5,16 @@ opener:
   text: Come in, and close the door behind you. I am Mistress Thorne. If you
     have brought me trouble, tell me plainly, and I will help if it can be
     helped.
-  hints: You could ask Vella about her herbs, the temple, the lake, or her brother
-    Elgar.
+  hints: Choose a line below to learn about her herbs, the temple, the lake, or
+    her brother Elgar.
   variants:
   - questRequired:
     - 20-end
     text: Sit. The kettle is on. The town is quieter for what you did, and so am I.
       I have not slept that well in twelve years. The kingfisher sits on Ulla's mantel
       now. I went to see it last week.
-    hints: You could ask Vella about her herbs, the temple, or the lake.
+    hints: Choose a line below if you want to hear about her herbs, the temple,
+      or the lake.
   - questRequired:
     - 20-brindle_confession
     questExcluded:

@@ -32,7 +32,8 @@ topics:
     have heard the name. My father has been telling everyone I am missing. I am not
     missing. I left. There is a difference, but the guard does not care about the
     distinction.
-  hints: You could ask why she left, about her father, or what happens now.
+  hints: Choose a line below to hear why she left, about her father, or what
+    happens now.
   marked: true
   questRequired:
   - 8-start

@@ -10,8 +10,8 @@ greetings:
   - cautious
 opener:
   text: The counter is open. What does this office need to do for you?
-  hints: You could ask Harbormaster Greer about the ship manifests, the harbor
-    fees, or where the fees go.
+  hints: Choose a line below if you want to hear about the ship manifests, the
+    harbor fees, or where the fees go.
 topics:
 - key: manifests
   kind: info

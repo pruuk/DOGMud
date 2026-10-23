@@ -4,7 +4,8 @@ defaultMood: neutral
 opener:
   text: Just passing through. Heading north to the crossing and then east to Thornwall,
     if the road holds.
-  hints: You could ask Bren about the road behind him or what lies south.
+  hints: Choose a line below to learn about the road behind him or what lies
+    south.
 topics:
 - key: stillwater
   kind: info

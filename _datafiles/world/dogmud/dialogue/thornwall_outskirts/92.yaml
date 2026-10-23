@@ -7,8 +7,8 @@ opener:
   text: Traveller. The gate is open and you are welcome in Thornwall, provided you
     keep the peace. If this is your first visit, the market district is straight
     ahead through the gate.
-  hints: The guard looks you over for weapons, trouble, or both. You could ask her
-    about the city or about trouble on the roads.
+  hints: The guard looks you over for weapons, trouble, or both. Choose a line
+    below to hear about the city or about trouble on the roads.
 topics:
 - key: city_info
   kind: info

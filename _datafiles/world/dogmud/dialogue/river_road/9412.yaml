@@ -11,8 +11,9 @@ opener:
     everything worth hearing at this landing. You'll find me here most days,
     unless it's market day or I've gone upriver to check my traps. Now, what can
     I do for you?"
-  hints: "To see what Birrel sells, type list. You could also ask her about the folk
-    at the landing, or about the pilgrims passing through."
+  hints: "To see what Birrel sells, type list. Choose a line below if you would
+    like to hear about the folk at the landing, or about the pilgrims passing
+    through."
 topics:
 # net (pattern) folded into fish; news (pattern) is small talk, folded into
 # village.

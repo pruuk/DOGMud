@@ -4,9 +4,10 @@ defaultMood: friendly
 opener:
   text: "Oh, wonderful, someone who is not a bird or a lizard! Are you here about the
     windstone? Please say you are here about the windstone."
-  hints: "A young man in a dusty scholar's coat looks up from a spread of rock samples
-    and charts, his face lighting up. You could ask Rhett about the windstone, about
-    Thornwall's failing wards, or about the Windwarden who guards the circle."
+  hints: "A young man in a dusty scholar's coat looks up from a spread of rock
+    samples and charts, his face lighting up. Choose a line below if you would
+    like to hear about the windstone, about Thornwall's failing wards, or about
+    the Windwarden who guards the circle."
   # Quest 11: the sided variants come before the unsided one, because a
   # flag map cannot say "no side yet" (#611).
   variants:
@@ -37,7 +38,7 @@ opener:
     - 11-end
     text: "You have taken the question on? Good. Before you decide, let me tell you
       plainly what working with me would mean."
-    hints: "You could ask Rhett what siding with him would mean."
+    hints: "Choose a line below to hear what siding with him would mean."
   # Old saves finished quest 11 without choosing a side (the shipped Kael
   # route granted 11-end with no flag). An empty flag value means the flag
   # is not set; this state can still choose, after the same warning.
@@ -50,7 +51,7 @@ opener:
       11-branch: ""
     text: "You finished what you took on out here, but you never said whose side you
       are on. Let me tell you plainly what working with me would mean."
-    hints: "You could ask Rhett what siding with him would mean."
+    hints: "Choose a line below to hear what siding with him would mean."
   - questRequired:
     - 13-extraction
     questExcluded:
@@ -102,8 +103,8 @@ opener:
       11-branch: rhett
     text: "I have been preparing an extraction site. Ask me about the work if you
       are interested."
-    hints: "Rhett leans in conspiratorially. You could ask him about the extraction
-      site."
+    hints: "Rhett leans in conspiratorially. Choose a line below if you want to
+      hear about the extraction site."
 topics:
 - key: his_cause
   kind: offer
@@ -180,8 +181,8 @@ topics:
   text: "Then we are agreed, and there is no undoing it. The Windwarden will not deal
     with you now. You have already shown you can do the work out here. Ask me about
     the extraction site when you are ready."
-  hints: "You have sided with Rhett, and Sylara will not work with you now. You
-    could ask Rhett about the extraction site."
+  hints: "You have sided with Rhett, and Sylara will not work with you now.
+    Choose a line below if you would like to hear about the extraction site."
   marked: true
   heardRequired:
   - rhett_terms

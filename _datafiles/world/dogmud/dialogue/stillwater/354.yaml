@@ -3,7 +3,8 @@ zone: Stillwater
 defaultMood: neutral
 opener:
   text: Oswin. I used to fish. A coin if you have one to spare.
-  hints: You could ask Oswin about his fishing days or what he saw on the lake.
+  hints: Choose a line below if you would like to hear about his fishing days or
+    what he saw on the lake.
 topics:
 - key: boat
   kind: info

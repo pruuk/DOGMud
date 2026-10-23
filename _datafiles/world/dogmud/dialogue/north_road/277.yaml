@@ -3,7 +3,8 @@ zone: North Road
 defaultMood: neutral
 opener:
   text: Yes?
-  hints: You could ask about the farm, the weather, her boy Corvin, or the road.
+  hints: Choose a line below if you want to hear about the farm, the weather,
+    her boy Corvin, or the road.
   # Quest 18 states first (first match wins). The three root variants that
   # finished the quest became the hand-ins below; these only speak.
   variants:
@@ -42,8 +43,8 @@ opener:
     questExcluded:
     - 18-start
     text: You have been in my barn. I can see straw on your boots.
-    hints: Betta knows you found the bedroll in her barn. You could ask her about
-      it.
+    hints: Betta knows you found the bedroll in her barn. Choose a line below if
+      you would like to hear about it.
 topics:
 # The three hand-ins merge the tree nodes and the root variants that granted
 # 18-end (reward_quiet + variant_1, result_told + variant_2, result_killed +

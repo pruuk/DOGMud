@@ -11,8 +11,8 @@ opener:
     right, which is rarer than you'd think. For anyone who needs a
     sealed pot quick, there are clay pots on the shelf. So, what are you
     storing?
-  hints: You could ask the cooper about his barrels and storage vessels. To see what
-    he sells, type list.
+  hints: Choose a line below to learn about his barrels and storage vessels. To
+    see what he sells, type list.
 topics:
 - key: vessels
   kind: info

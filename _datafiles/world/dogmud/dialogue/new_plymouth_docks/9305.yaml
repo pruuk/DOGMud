@@ -12,8 +12,8 @@ opener:
   text: Remnant bins are at the front. Ends and offcuts, priced down from the
     original bolt. If you want full-weight cloth I don't carry it. What you see is
     what this shop does.
-  hints: You could ask Marn about his cloth, the back of the shop, or other cloth
-    sellers. To see what he sells, type list.
+  hints: Choose a line below if you would like to hear about his cloth, the back
+    of the shop, or other cloth sellers. To see what he sells, type list.
   variants:
   - questRequired:
     - 67-start

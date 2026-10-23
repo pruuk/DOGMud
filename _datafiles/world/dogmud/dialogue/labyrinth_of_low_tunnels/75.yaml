@@ -5,15 +5,16 @@ defaultMood: neutral
 opener:
   text: "A surface-walker in the Hollow. My warriors wanted to kill you. I am still
     deciding. Leave before I decide wrong."
-  hints: "The chieftain turns a polished obsidian knife in its hands and watches you.
-    It has not decided whether you may stay. You could ask about its people."
+  hints: "The chieftain turns a polished obsidian knife in its hands and watches
+    you. It has not decided whether you may stay. Choose a line below if you
+    would like to hear about its people."
   variants:
   - questRequired:
     - 2-end
     text: "The compact-bringer. The shaman says you brought medicine. That is why you
       still breathe. Sit, if you wish."
-    hints: "You could ask the chieftain about the compact, its people, or what lies
-      below the warren."
+    hints: "Choose a line below to hear about the compact, its people, or what
+      lies below the warren."
 topics:
 - key: audience
   kind: info
@@ -37,7 +38,8 @@ topics:
     at stone in the dark. Thirty who can fight. Eleven children. The rest are old or
     sick. We were hundreds once. Disease took many. The change took more. And your
     kind took the rest. That is what remains of the Discarded."
-  hints: "You could ask what happened to them, or about the surface."
+  hints: "Choose a line below to hear what happened to them, or about the
+    surface."
 - key: exile_story
   kind: info
   label: What happened to your people?
@@ -45,7 +47,8 @@ topics:
     changed in ways the priests could not explain or control. The surface people
     were afraid. So they drove us into the earth. Not with armies. With silence.
     Closed doors. Poisoned wells. Until the dark was the only place left."
-  hints: "You could ask what the warren needs, or what lies below it."
+  hints: "Choose a line below to hear what the warren needs, or what lies below
+    it."
   heardRequired:
   - people
   moodChange: friendly

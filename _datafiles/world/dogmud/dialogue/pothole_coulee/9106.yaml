@@ -11,8 +11,8 @@ opener:
   text: Hoy yourself! Stand close, the throat does the loud part. Toke, town crier,
     both mouths at your service. The top one is for talk, the low one for distance.
     Whatever happened in the coulee today, I knew it yesterday.
-  hints: You could ask about the news, the seven mouths of the coulee, or a task to
-    find your footing.
+  hints: Choose a line below if you would like to hear about the news, the seven
+    mouths of the coulee, or a task to find your footing.
   variants:
   - questExcluded:
     - 30-end
@@ -76,8 +76,8 @@ opener:
     text: The town knows your face now. I made sure of it. When you want more than
       the hub, pick a mouth and I will send you down it. The coulee has seven of them,
       and every one leads somewhere that will teach you something.
-    hints: You could ask about the seven mouths or the day's news, or take one of
-      the seven trails.
+    hints: Choose a line below to hear about the seven mouths or the day's news,
+      or take one of the seven trails.
 topics:
 # R17: the end of Toke's Road (quest 88), offered by Cleric Hadwen after the
 # rite. Quest 88 also closes when footing starts (its 31-start trigger), so a
@@ -366,8 +366,9 @@ topics:
     another, brewing, the wilds, folding (the quiet art, mind you), old lore, and
     the far hill where they teach the long shot. The paths are marked off the shore
     and the square. Walk any of them. Walk all of them if your boots hold.
-  hints: The mouths open off the edges of town. The map command shows what you have
-    found so far. You could ask the way to the drill yard, the terrace or the steppe.
+  hints: The mouths open off the edges of town. The map command shows what you
+    have found so far. Choose a line below to learn the way to the drill yard,
+    the terrace or the steppe.
   marked: true
 - key: way_drill_yard
   kind: info
@@ -401,11 +402,13 @@ topics:
     fg="command">say</ansi> talks to the room you stand in, <ansi fg="command">whisper</ansi>
     reaches one ear anywhere in Gaius, and <ansi fg="command">emote</ansi> is for when
     words are too small. I use all three before breakfast.'
-  hints: You could ask about the seven mouths or a task.
+  hints: Choose a line below if you want to hear about the seven mouths or a
+    task.
 - key: voices
   kind: info
   label: How do you speak with two mouths?
   text: Born with both, and glad of it. The low one carries across the square. The
     top one does the thinking. They get along better than most married couples. Folk
     stop noticing inside a week, and you will too.
-  hints: You could ask about the news or the seven mouths.
+  hints: Choose a line below if you would like to hear about the news or the
+    seven mouths.

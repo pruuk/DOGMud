@@ -10,8 +10,8 @@ opener:
     particular the notes at the junction where the rivers meet. It is a
     long-standing question of mapmaking, and I am trying to establish how many
     different hands have worked on this one chart. What did you want to know?
-  hints: You could ask Savel about what she is studying, about the fourth water,
-    or about the Margin and where its scholars work.
+  hints: Choose a line below to learn about what she is studying, about the
+    fourth water, or about the Margin and where its scholars work.
 topics:
 - key: studying
   kind: info

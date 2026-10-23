@@ -8,7 +8,8 @@ greetings:
 opener:
   text: I make barrels. Ask me about one and you'll hear more than you bargained
     for.
-  hints: You could ask Clout about barrel-making and the cooper's craft.
+  hints: Choose a line below to learn about barrel-making and the cooper's
+    craft.
 topics:
 - key: barrels
   kind: info

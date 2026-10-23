@@ -4,7 +4,7 @@ defaultMood: neutral
 opener:
   text: I am Vorn, the drillmaster, and this is my yard. Stand where I can see
     you.
-  hints: You could ask Vorn about training or your task.
+  hints: Choose a line below to hear about training or your task.
   variants:
   - questExcluded:
     - 30-end
@@ -205,8 +205,8 @@ topics:
     next swing lands harder. Both cost stamina. Use them when the moment calls for
     it, not every round.'
   hints: Consider tells you how hard a foe is before you fight it. Type consider
-    dummy. For more, type help consider. You could ask Vorn about shouts when you
-    want more than muscle in a fight.
+    dummy. For more, type help consider. Choose a line below to learn about
+    shouts when you want more than muscle in a fight.
   marked: true
 - key: shouts_help
   kind: info

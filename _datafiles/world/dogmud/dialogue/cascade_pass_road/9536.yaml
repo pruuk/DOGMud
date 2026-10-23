@@ -17,8 +17,9 @@ opener:
     every traveler seems to want to ask, which is why we do not take the closer
     timber. I take from the west. I have my reasons and they are mine. Ask me
     anything else and I will answer it."
-  hints: "You could ask Bertt about the camp and the work, about the eastern timber
-    the crews leave standing, or about the man who keeps to the top of the pass."
+  hints: "Choose a line below to learn about the camp and the work, about the
+    eastern timber the crews leave standing, or about the man who keeps to the
+    top of the pass."
 topics:
 - key: eastern
   kind: info

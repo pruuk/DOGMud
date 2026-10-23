@@ -12,9 +12,9 @@ opener:
   text: This is my forge. Steel and ironwork, mostly, and ingots and fittings if
     you'd rather work the metal yourself. I'll talk too, if you like. My sister
     says I don't do enough of it, so you'd be doing her a favour.
-  hints: You could ask Halvard about his work at the forge, his sister Marda in the
-    Common Quarter, or how iron reaches the Crafting Quarter. To see what he
-    sells, type list.
+  hints: Choose a line below to learn about his work at the forge, his sister
+    Marda in the Common Quarter, or how iron reaches the Crafting Quarter. To
+    see what he sells, type list.
 topics:
 - key: work
   kind: info

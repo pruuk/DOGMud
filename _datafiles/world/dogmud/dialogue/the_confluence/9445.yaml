@@ -11,9 +11,9 @@ opener:
     Margin, checking the written accounts against the survey record. Most of the
     survey work is done across the court by the cartographers. I am working the
     written history side. What did you want to know?
-  hints: You could ask the scholar about what the written accounts say of the fourth
-    water, about how the temple's account fits with the Margin's work, or about life
-    in the Scholars' Quarter.
+  hints: Choose a line below to hear about what the written accounts say of the
+    fourth water, about how the temple's account fits with the Margin's work, or
+    about life in the Scholars' Quarter.
 topics:
 - key: fourth_water
   kind: info

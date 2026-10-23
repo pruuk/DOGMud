@@ -14,8 +14,8 @@ opener:
     the keepers have what they need for their work. Nineteen years of that, and I
     find it entirely satisfactory. I am not the one to ask about most things, but I
     can usually point you to who is.
-  hints: You could ask Yelin about the Keeper's House, about his long years of
-    service here, or about the faith as he sees it from the hall.
+  hints: Choose a line below to learn about the Keeper's House, about his long
+    years of service here, or about the faith as he sees it from the hall.
 topics:
 - key: house
   kind: info

@@ -4,9 +4,10 @@ defaultMood: neutral
 opener:
   text: "Hm. A visitor. Rare enough out here. You have the look of someone who
     solves problems. I have one that needs solving."
-  hints: "A weathered man in patched leather looks up from a piece of cedar he is
-    carving and sets down his knife. You could ask Kael about Sylara and Rhett, the
-    two people he worries for, or about his years on the steppe."
+  hints: "A weathered man in patched leather looks up from a piece of cedar he
+    is carving and sets down his knife. Choose a line below to learn about
+    Sylara and Rhett, the two people he worries for, or about his years on the
+    steppe."
   # Quest 11 states first. A flag map cannot say "no side yet", so the
   # unflagged 11-start variant comes after the two sided ones (#611).
   variants:

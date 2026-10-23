@@ -11,7 +11,8 @@ opener:
     latches, the hardware a household or workshop runs through without
     noticing. I don't make weapons. Say what you need, and I'll tell you if
     it's mine to make.
-  hints: You could ask the smith about his ironwork, or where to look for weapons.
+  hints: Choose a line below to hear about his ironwork, or where to look for
+    weapons.
 topics:
 - key: ironwork
   kind: info

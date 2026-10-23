@@ -11,8 +11,8 @@ opener:
     of Confluence, the great meeting place at the three rivers. I was raised hearing
     about it. I should have gone years ago. Now I am going, which is nearly the same
     thing, I suppose."
-  hints: "You could ask Wess about the temple, about the symbol carved above its
-    doors, or why she is making the journey."
+  hints: "Choose a line below to learn about the temple, about the symbol carved
+    above its doors, or why she is making the journey."
 topics:
 # south (pattern) folded into why; pilgrim (pattern) into temple.
 - key: temple

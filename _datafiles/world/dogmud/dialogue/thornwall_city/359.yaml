@@ -3,7 +3,8 @@ zone: Thornwall City
 defaultMood: ""
 opener:
   text: Hey.
-  hints: You could ask Lars about his bow, the bandits, or his boss.
+  hints: Choose a line below if you would like to hear about his bow, the
+    bandits, or his boss.
 topics:
 - key: bow
   kind: info

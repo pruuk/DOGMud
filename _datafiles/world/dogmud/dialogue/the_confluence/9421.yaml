@@ -12,8 +12,9 @@ opener:
     eel where the Solt runs cold along the eastern bank. I buy off the boats every
     morning, and nothing on this slab sits long. Best variety in the region, if I
     say so myself.
-  hints: You could ask Pella about her fish and how to cook them, about the three
-    rivers, or about her years on the quay. To see what she sells, type list.
+  hints: Choose a line below if you would like to hear about her fish and how to
+    cook them, about the three rivers, or about her years on the quay. To see
+    what she sells, type list.
 topics:
 - key: fish
   kind: info

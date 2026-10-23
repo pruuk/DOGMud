@@ -3,8 +3,8 @@ zone: Stillwater
 defaultMood: cautious
 opener:
   text: Welcome. The kettle is on. Sit if you like.
-  hints: You could ask Ulla about herself, her family, or the town. Her task below
-    is about her late husband.
+  hints: Choose a line below if you want to hear about herself, her family, or
+    the town. Her task below is about her late husband.
   variants:
   - questRequired:
     - 20-end
@@ -14,7 +14,8 @@ opener:
       20-truth: whole
     text: Drunn told me you went down into the deep and killed the thing in the sump.
       Elgar would have wanted to be the one. He'd be glad it was you instead.
-    hints: You could ask Ulla about herself, her family, or the town.
+    hints: Choose a line below if you would like to hear about herself, her
+      family, or the town.
   - questRequired:
     - 20-end
     - 19-end
@@ -22,7 +23,7 @@ opener:
       19-completion: full
     text: Drunn told me you killed the thing in the sump. The lake will be kinder
       for it. Elgar would have wanted to know the deep was less hungry by one mouth.
-    hints: You could ask Ulla about herself, her family, or the town.
+    hints: Choose a line below to hear about herself, her family, or the town.
   - questRequired:
     - 20-end
     questFlagRequired:
@@ -32,7 +33,7 @@ opener:
       her brother went down because that is who he was. She could not have stopped
       him. No one could. I went to the Pike & Lantern for the first time in a long
       while. Sigrid kept the old seat for me. Vella came with me.
-    hints: You could ask Ulla about herself, her family, or the town.
+    hints: Choose a line below to learn about herself, her family, or the town.
   - questRequired:
     - 20-end
     text: Thank you. The journal sits on the mantel now beside his birds. I read it

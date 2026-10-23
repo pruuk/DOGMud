@@ -5,8 +5,8 @@ opener:
   text: Welcome to the Chrysalis Workshop. I am Rane. Come in, but keep your boots
     off the circle if you would. The inlay is dry, but I would rather you not test
     it.
-  hints: You could ask Rane about the circle in the floor or the wares on the bench.
-    To see what Rane sells, type list.
+  hints: Choose a line below to learn about the circle in the floor or the wares
+    on the bench. To see what Rane sells, type list.
 topics:
 - key: enchant
   kind: info

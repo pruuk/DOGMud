@@ -12,8 +12,9 @@ opener:
     season, and I do not like what it tells me. The stalks have held, but the
     ears are thin. It may come right, or it may be a poor harvest. The rain will
     decide that, not me."
-  hints: "You could ask the farmer about the harvest, about the old waystone at the
-    field's east edge, or about how long her family has worked this land."
+  hints: "Choose a line below to learn about the harvest, about the old waystone
+    at the field's east edge, or about how long her family has worked this
+    land."
 topics:
 # wheat (pattern) folded into harvest.
 - key: harvest

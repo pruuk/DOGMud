@@ -11,8 +11,9 @@ opener:
     and I farm the east side, the dry side, the hard side, and harder still this
     year. I will tell you exactly whose fault that is, if you have the stomach
     to hear it.
-  hints: You could ask Marrow about his farm and the drought, about the dispute over
-    the water from his side, or about Ayres, the neighbour he blames.
+  hints: Choose a line below if you want to hear about his farm and the drought,
+    about the dispute over the water from his side, or about Ayres, the
+    neighbour he blames.
   # Quest 72: one line per ending (first match wins).
   variants:
   - questRequired:

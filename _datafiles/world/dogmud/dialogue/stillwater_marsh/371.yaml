@@ -3,8 +3,8 @@ zone: Stillwater Marsh
 defaultMood: neutral
 opener:
   text: Aye. Mind the soft ground here. Was there something?
-  hints: You could ask Tova about her work, the dangers of the marsh, or where she
-    stays.
+  hints: Choose a line below if you want to hear about her work, the dangers of
+    the marsh, or where she stays.
 topics:
 - key: forage
   kind: info

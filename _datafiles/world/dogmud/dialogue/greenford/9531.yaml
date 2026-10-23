@@ -12,8 +12,9 @@ opener:
     I keep all of it moving. If you're heading west, I can
     sell you rations for the road and have you out before the
     hour. What'll it be?
-  hints: You could ask Wren about the stable and its horses, about food for the road,
-    or about the travelers who pass through. To see what she sells, type list.
+  hints: Choose a line below if you would like to hear about the stable and its
+    horses, about food for the road, or about the travelers who pass through. To
+    see what she sells, type list.
 topics:
 - key: stable
   kind: info

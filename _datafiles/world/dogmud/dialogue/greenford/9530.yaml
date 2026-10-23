@@ -15,8 +15,8 @@ opener:
     one on each side of the road. New Plymouth is three days west
     on a clear road. If you're arriving instead, the town is east.
     Which way are you bound?
-  hints: You could ask Garn about his work at the gate, about the road west to New
-    Plymouth, or about Greenford.
+  hints: Choose a line below if you would like to hear about his work at the
+    gate, about the road west to New Plymouth, or about Greenford.
 topics:
 - key: gate
   kind: info

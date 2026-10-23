@@ -6,7 +6,8 @@ opener:
     season, and you look tired from it. I am Thessa, and the Broken Yoke is
     mine. The food is hot, the ale is cold, and the fire never goes out. Tell me
     how you like things, and I will remember.
-  hints: You could ask Thessa about the road, the inn, or the news.
+  hints: Choose a line below if you would like to hear about the road, the inn,
+    or the news.
 topics:
 - key: road_trouble
   kind: info

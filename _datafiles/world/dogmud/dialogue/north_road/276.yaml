@@ -3,7 +3,8 @@ zone: North Road
 defaultMood: neutral
 opener:
   text: Hullo. Are you heading north? The road is busy today.
-  hints: You could ask the boy about his stuck cart, his mother, or what he is carving.
+  hints: Choose a line below if you would like to hear about his stuck cart, his
+    mother, or what he is carving.
 topics:
 - key: cart
   kind: info

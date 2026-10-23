@@ -5,8 +5,8 @@ opener:
   text: I am Ilsa, the apothecary. If you are hurt, tell me now, not after it
     festers. Most people wait too long. If it is a question, ask it while I
     work.
-  hints: You could ask Ilsa about her remedies, her patients, or Vella Thorne. To
-    see what she sells, type list.
+  hints: Choose a line below if you want to hear about her remedies, her
+    patients, or Vella Thorne. To see what she sells, type list.
 topics:
 - key: remedy_trade
   kind: info

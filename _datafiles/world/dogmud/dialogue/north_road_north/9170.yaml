@@ -5,8 +5,8 @@ opener:
   text: I am Garrick, toller on the north line, and short a courier this week, which
     is my trouble and may be your fortune. I have a dispatch that should be in the
     capital and no honest hand to carry it.
-  hints: You could ask Garrick about the dispatch he needs carried, the toll, or the
-    road north.
+  hints: Choose a line below if you would like to hear about the dispatch he
+    needs carried, the toll, or the road north.
   # Quest 60 states (first match wins); quest_active and quest_done became
   # these variants.
   variants:

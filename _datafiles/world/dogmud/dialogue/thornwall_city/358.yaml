@@ -4,7 +4,7 @@ defaultMood: ""
 opener:
   text: Hello there. Go on, look at the hammer. Everybody does. She does not
     mind.
-  hints: You could ask Marta about her hammer, the bandits, or her boss.
+  hints: Choose a line below to hear about her hammer, the bandits, or her boss.
 topics:
 - key: hammer
   kind: info

@@ -10,8 +10,8 @@ opener:
   text: I tend the garden and sweep the forecourt. I am not very far into my training
     yet, but I can answer small questions. The Historian knows more, or the Warden
     here in the forecourt. What is it?
-  hints: You could ask the acolyte about the meditation garden, about how to cross to
-    the temple, or about her training.
+  hints: Choose a line below if you would like to hear about the meditation
+    garden, about how to cross to the temple, or about her training.
 topics:
 - key: garden
   kind: info

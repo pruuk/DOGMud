@@ -5,8 +5,8 @@ opener:
   text: I am Goodwife Pemberton. I keep the Lake and Ladle, and I would keep it a
     deal better if the road outside were not robbing my custom blind. Half my lodgers
     come in bruised, and the other half do not come in at all.
-  hints: You could ask Pemberton about the trouble on the road, the road north, or
-    her kitchen.
+  hints: Choose a line below to hear about the trouble on the road, the road
+    north, or her kitchen.
   # Quest 61 states (first match wins); quest_done and quest_active became
   # these variants. The "free bed and board" promise is gone: the inn has
   # no lodging, only a shop.

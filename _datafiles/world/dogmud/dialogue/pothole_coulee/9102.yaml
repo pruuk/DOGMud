@@ -9,8 +9,8 @@ greetings:
 opener:
   text: I am Sala, and I mend what the coulee dents. Cuts, breaks, bad nights,
     worse mornings. The beds are clean, and I keep the questions small.
-  hints: You could ask about making this place your home, about healing, or about
-    her third eye.
+  hints: Choose a line below to learn about making this place your home, about
+    healing, or about her third eye.
   variants:
   - questExcluded:
     - 30-end
@@ -39,8 +39,8 @@ topics:
     does its best work when you stop supervising it. For the rest, there are salves
     and potions, and Onna stocks the simple ones. If something is wrong that none
     of that touches, come to me and point at where it hurts.'
-  hints: You could ask Innkeep Tally about sleeping at the Lantern, or ask about making
-    this hut your home.
+  hints: Choose a line below if you want to hear about sleeping at the Lantern,
+    or to hear about making this hut your home.
 - key: eye
   kind: info
   label: What does your third eye see?
@@ -48,7 +48,8 @@ topics:
     approving of me. It sees slow things, like the mend under a scab, or the fever
     before the heat. It blinks when it is thinking. Pay it no mind. It has seen worse than
     you.
-  hints: You could ask about healing or about making this place home.
+  hints: Choose a line below if you would like to hear about healing or about
+    making this place home.
 - key: hut
   kind: info
   label: Why is the hut up on stilts?
@@ -56,4 +57,4 @@ topics:
     because mending is half warmth, and the door is never barred. People wake here
     confused sometimes, after a bad fall somewhere far off. I keep the kettle on for
     exactly that confusion.
-  hints: You could ask about making this place your home.
+  hints: Choose a line below to hear about making this place your home.

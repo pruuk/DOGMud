@@ -11,8 +11,8 @@ opener:
     every morning. I live on the far end of the lane, closest to the
     road. You get used to the traffic. Some of it you stop noticing
     and some of it you never do. What do you want to know?
-  hints: You could ask the resident about living at the edge of town, about how she
-    knows the rain is coming, or about the travelers who pass.
+  hints: Choose a line below to hear about living at the edge of town, about how
+    she knows the rain is coming, or about the travelers who pass.
 topics:
 - key: edge
   kind: info

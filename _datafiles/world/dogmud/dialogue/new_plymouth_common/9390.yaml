@@ -12,9 +12,9 @@ opener:
   text: Nothing on this stall is glamorous, and every bit of it gets used. Rope,
     waterskins, soap, tinderboxes, tallow candles, flour. The Common can't get
     through a week without them.
-  hints: You could ask Mardle about her goods, about everyday life in the Common
-    Quarter, or about where her supplies come from. To see what she sells, type
-    list.
+  hints: Choose a line below if you would like to hear about her goods, about
+    everyday life in the Common Quarter, or about where her supplies come from.
+    To see what she sells, type list.
 topics:
 - key: wares
   kind: info

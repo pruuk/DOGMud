@@ -5,7 +5,7 @@ opener:
   text: Mind the shuttle there, it swings wide when the loom gets going. I'm
     Bryd Harrow. My mother wove in this shed before me, and I turn the hill wool
     into cloth and thread the same as she did. Were you after either?
-  hints: You could ask Bryd Harrow about her wares or the loom.
+  hints: Choose a line below to learn about her wares or the loom.
 topics:
 # stock_general folds the "buy sell shop" pattern (both responses). The
 # cloaks, satchels and bandoliers are her crafter recipes (crafter: true);

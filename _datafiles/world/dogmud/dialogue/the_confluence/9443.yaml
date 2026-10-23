@@ -12,9 +12,9 @@ opener:
     to see where they agree and where they part ways, and then I try to work out
     whether the river changed or the surveyor did. Just now it is the junction
     series. Ask, by all means.
-  hints: You could ask Riss about the fourth-water question and what the old surveys
-    show, about the three rivers and their names, or about how she compares the
-    surveys.
+  hints: Choose a line below if you would like to hear about the fourth-water
+    question and what the old surveys show, about the three rivers and their
+    names, or about how she compares the surveys.
 topics:
 - key: fourth_water
   kind: info

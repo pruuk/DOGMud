@@ -3,9 +3,10 @@ zone: Ironwind Steppe
 defaultMood: hostile
 opener:
   text: "Another one drawn by the wind. Or by the crystal. Which is it?"
-  hints: "A tall woman in layered wool and bone ornaments stands before the circle of
-    standing stones, planting a cedar staff topped with a bleached wolf skull. You
-    could ask Sylara about the circle, or about who is after the crystal."
+  hints: "A tall woman in layered wool and bone ornaments stands before the
+    circle of standing stones, planting a cedar staff topped with a bleached
+    wolf skull. Choose a line below if you want to hear about the circle, or
+    about who is after the crystal."
   # Quest 11: the sided variants come before the unsided one, because a
   # flag map cannot say "no side yet" (#611). Old saves may hold a side
   # without the 11-sided step.
@@ -38,7 +39,7 @@ opener:
     - 11-end
     text: "So you carry the question now. Then hear what standing with me would cost
       you, before you decide."
-    hints: "You could ask Sylara what siding with her would mean."
+    hints: "Choose a line below to hear what siding with her would mean."
   # Old saves finished quest 11 without choosing a side (the shipped Kael
   # route granted 11-end with no flag). An empty flag value means the flag
   # is not set; this state can still choose, after the same warning.
@@ -51,7 +52,7 @@ opener:
       11-branch: ""
     text: "The steppe remembers what you did out here, but you never said where you
       stand. Hear what standing with me would cost you, before you decide."
-    hints: "You could ask Sylara what siding with her would mean."
+    hints: "Choose a line below to hear what siding with her would mean."
   - questRequired:
     - 12-ritual
     questExcluded:
@@ -101,7 +102,7 @@ opener:
     text: "You proved yourself on the steppe. The spirits noticed. I could teach you
       the old covenant, to call upon the wolf spirits that guard the wind-paths. It
       is not offered lightly."
-    hints: "You could ask Sylara about the covenant."
+    hints: "Choose a line below to learn about the covenant."
 topics:
 # help (pattern) folded into the her_cause pitch.
 - key: her_cause
@@ -181,8 +182,8 @@ topics:
   text: "Then it is done, and it cannot be undone. The scholar will not deal with
     you now. You have already done the steppe a service, and the spirits saw it.
     Ask me about the covenant when you are ready."
-  hints: "You have sided with Sylara, and Rhett will not work with you now. You
-    could ask Sylara about the covenant."
+  hints: "You have sided with Sylara, and Rhett will not work with you now.
+    Choose a line below if you want to hear about the covenant."
   marked: true
   heardRequired:
   - sylara_terms

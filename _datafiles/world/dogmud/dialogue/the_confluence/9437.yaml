@@ -13,8 +13,8 @@ opener:
     exactly how much is on the shelf. If you need something heavier, the
     chandler down in the Landings or the River Market on the Long Quay is your
     next stop.
-  hints: You could ask Corliss about the goods she carries, or about the
-    tri-cities broadsheet. To see what she sells, type list.
+  hints: Choose a line below if you want to hear about the goods she carries, or
+    about the tri-cities broadsheet. To see what she sells, type list.
 topics:
 - key: goods
   kind: info

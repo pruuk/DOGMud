@@ -14,9 +14,9 @@ opener:
     everything else, I have materials and finished pieces on the shelf. What is it
     you wanted to know? The craft, where the cloth comes from, or something else
     entirely?
-  hints: You could ask Modiste Aurel about her craft and the work she does for the
-    bloodline, about where her fine cloth comes from, or about what a clothier sees
-    in the people she dresses. To see what she sells, type list.
+  hints: Choose a line below to hear about her craft and the work she does for
+    the bloodline, about where her fine cloth comes from, or about what a
+    clothier sees in the people she dresses. To see what she sells, type list.
 topics:
 - key: buy
   kind: info

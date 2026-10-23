@@ -10,8 +10,8 @@ opener:
   text: "I am travelling to Greenford to start at the university. I have an
     acceptance letter and a great many scrolls I should probably have shipped ahead
     and did not. I am learning things already, and I have not arrived yet."
-  hints: "You could ask the scholar about the university at Greenford, why people go
-    there to study, or what she hopes to learn."
+  hints: "Choose a line below if you want to hear about the university at
+    Greenford, why people go there to study, or what she hopes to learn."
 topics:
 # far (pattern) folded into university.
 - key: university

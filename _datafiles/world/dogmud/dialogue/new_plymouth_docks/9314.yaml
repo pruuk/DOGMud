@@ -12,15 +12,15 @@ opener:
   text: I didn't take anything. I want to be clear about that. The numbers they're
     pinning on me were wrong before I touched the manifest. I flagged it. I have a
     witness who heard me flag it. Nobody has gone to find that person.
-  hints: You could ask Teo about the theft charge, what was wrong with the
-    manifest, or who he thinks is responsible.
+  hints: Choose a line below to hear about the theft charge, what was wrong with
+    the manifest, or who he thinks is responsible.
   variants:
   - questRequired:
     - 63-end
     text: My name's off the board. Jesset says I start again in the morning. I
       don't know how to thank you properly, so I'll just say it. Thank you.
-    hints: You could ask Teo what happens now, or what was wrong with the
-      manifest.
+    hints: Choose a line below to hear what happens now, or what was wrong with
+      the manifest.
 topics:
 - key: theft
   kind: info

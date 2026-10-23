@@ -12,8 +12,9 @@ opener:
     Hollow two nights back and the bandits were waiting in the wash. Most of the caravan
     pushed through. I did not. This arm says I hold the hollow. It does not say I
     clear the wash alone.
-  hints: You could ask about the wash, the ambush, or what he needs. His eyes catch
-    the light strangely, and you could ask about them.
+  hints: Choose a line below if you want to hear about the wash, the ambush, or
+    what he needs. His eyes catch the light strangely, and one line below is
+    about them.
   variants:
   - questExcluded:
     - 30-end
@@ -271,7 +272,8 @@ topics:
     wagon block went wrong. It will hold, since Sala at the Mending Hut wrapped it right,
     but sword work is out until the sinew knits. A guard without a sword arm is
     a lookout, and I am a very good lookout from this alcove.
-  hints: You could ask about the ambush, the wash, or his eyes.
+  hints: Choose a line below if you would like to hear about the ambush, the
+    wash, or his eyes.
 - key: ambush_lore
   kind: info
   label: How did the ambush happen?
@@ -279,7 +281,7 @@ topics:
     was tight) and the bandits had the bend already. Four wagons. Three pushed through.
     One did not. I was riding the tailgate of the third when the block happened. I
     covered the gap. The wagons made it. I did not make it far.
-  hints: You could ask about the wash, the arm, or his eyes.
+  hints: Choose a line below to hear about the wash, the arm, or his eyes.
 - key: eyes_lambent
   kind: info
   label: Why do your eyes catch the light?
@@ -287,7 +289,7 @@ topics:
     the dark is serious about itself. Things shift in people who spend enough time
     in the real dark. My eyes started catching the light differently about four years
     in. I stopped mentioning it when I stopped being surprised by it.
-  hints: You could ask about the convoy or the wash.
+  hints: Choose a line below to learn about the convoy or the wash.
 # Until the wash is held; after that the tower pitch above takes over.
 - key: tower_hint
   kind: info

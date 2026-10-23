@@ -10,7 +10,8 @@ opener:
     everything worth knowing about this lane. The paving was laid in the old
     Registrar's time and not touched since. The lane used to have a fountain at the
     far end. Guild money, back when the guild had money. What do you want to know?
-  hints: You could ask the old man how the lane has changed, or simply let him talk.
+  hints: Choose a line below to hear how the lane has changed, or simply let him
+    talk.
 topics:
 - key: lane_history
   kind: info

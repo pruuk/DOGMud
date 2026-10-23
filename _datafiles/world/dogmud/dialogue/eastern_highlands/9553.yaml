@@ -13,7 +13,8 @@ opener:
   text: I keep the threshold. Others come to look at the door and go home. You have
     the look of one who means to go in. I can open the way as deep as your coin
     buys, but not without the key.
-  hints: You could ask the keeper about the way through the door.
+  hints: Choose a line below if you would like to hear about the way through the
+    door.
   variants:
   - questRequired:
     - 77-end
@@ -23,8 +24,8 @@ opener:
       and climb back up quiet. I never asked what you found. I do not ask you either.
       But mind the road home, and mind your mouth on it. The door I keep is not the
       only threshold you cross now.
-    hints: You could ask the keeper about the way through the door. If you carry
-      the woken disc, choose below to have her open it.
+    hints: Choose a line below to hear about the way through the door. If you
+      carry the woken disc, choose below to have her open it.
   - carriesItem: 40168
     text: You carry it. The woken disc. I can feel it from here, warm along its
       lines. Then the door will answer, and I can open the way as deep as your coin

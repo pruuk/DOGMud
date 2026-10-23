@@ -6,8 +6,8 @@ opener:
   # the greeting pattern's line becomes what Ferd says.
   text: Mind the green. There is a quarrel parked on it, and I am the older half
     of it.
-  hints: Ferd stands his weary ground a careful distance from the young man. You could
-    ask him about the quarrel.
+  hints: Ferd stands his weary ground a careful distance from the young man.
+    Choose a line below if you want to hear about the quarrel.
   variants:
   - questRequired:
     - 48-taunt

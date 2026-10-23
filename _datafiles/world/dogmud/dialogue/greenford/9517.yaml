@@ -13,8 +13,9 @@ opener:
     upper tier, if that is what you are looking for. The restricted
     collection is east. That opens by written application, and the
     provost signs the leave.
-  hints: You could ask Tess about the eastern surveys, about the marks in the survey
-    margins, about how the archive is kept, or about the restricted collection.
+  hints: Choose a line below to hear about the eastern surveys, about the marks
+    in the survey margins, about how the archive is kept, or about the
+    restricted collection.
   variants:
   - questRequired:
     - 75-survey

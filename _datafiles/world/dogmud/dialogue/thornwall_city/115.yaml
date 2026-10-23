@@ -4,7 +4,7 @@ defaultMood: friendly
 opener:
   text: Ha! Fresh blood! Come to hear old Gobb tell it like it is, have you? Smart.
     Very smart.
-  hints: You could ask Gobb what he hears, or who he is.
+  hints: Choose a line below to hear what he hears, or who he is.
 topics:
 - key: gossip_prompt
   kind: info

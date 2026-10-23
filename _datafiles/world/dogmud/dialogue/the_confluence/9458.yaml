@@ -8,8 +8,8 @@ greetings:
 opener:
   text: Welcome. I tend the reliquary, the objects the Keepers have held since the
     Founding, and one piece older than that. What did you want to know about them?
-  hints: You could ask the Sacristan about the relic collection, or about the oldest
-    piece on the dark granite shelf.
+  hints: Choose a line below to learn about the relic collection, or about the
+    oldest piece on the dark granite shelf.
 topics:
 - key: margin_aside
   kind: info

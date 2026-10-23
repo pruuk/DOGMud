@@ -12,8 +12,8 @@ opener:
     and the bridge repair timetable, which I'll gladly read again
     for anyone who missed it. The bell goes on the hour, and the
     board is up to date. So, friend, what would you like to hear?
-  hints: You could ask the crier for today's notices, about the market square, or
-    about Greenford and the university.
+  hints: Choose a line below to hear today's notices, about the market square,
+    or about Greenford and the university.
 topics:
 - key: notices
   kind: info

@@ -10,8 +10,8 @@ opener:
   text: "Name's Pell. I run a peddler's circuit, north to the kilns and the corridor
     towns, south down into Amber Valley and back, round and round till my boots wear
     through. I carry goods, and what I really trade in is news. Which do you want?"
-  hints: "You could ask Pell about his goods and his route, about the news he is
-    carrying, or about the road ahead."
+  hints: "Choose a line below if you want to hear about his goods and his route,
+    about the news he is carrying, or about the road ahead."
 topics:
 # buy (pattern) folded into goods: Pell has no shop, and his pack is
 # promised down the valley.

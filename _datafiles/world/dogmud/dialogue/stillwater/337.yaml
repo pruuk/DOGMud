@@ -4,15 +4,16 @@ defaultMood: neutral
 opener:
   text: Stand clear of the slack tub. I am Brindle. Tell me what you need, and I
     will tell you if I can make it.
-  hints: You could ask Brindle about his trade or the lake-iron he works. To see
-    what he sells, type list.
+  hints: Choose a line below to learn about his trade or the lake-iron he works.
+    To see what he sells, type list.
   variants:
   - questRequired:
     - 20-end
     text: Ulla gave it to you? Good. I finished it at last and carried it to her
       door myself. It was hers to give, not mine. The spear should not have sat that
       long. Wear it well.
-    hints: You could ask Brindle about his trade or the lake-iron.
+    hints: Choose a line below if you want to hear about his trade or the
+      lake-iron.
   - questRequired:
     - 20-brindle_confession
     questExcluded:

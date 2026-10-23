@@ -5,7 +5,8 @@ opener:
   text: Tithe-clerk's post. I am Verrold, tithe-clerk for the vale, and a stage on
     the capital's post relay when a dispatch comes through. State your business and
     let me keep my count.
-  hints: You could ask Verrold about the tithe he keeps, or the news of the vale.
+  hints: Choose a line below to learn about the tithe he keeps, or the news of
+    the vale.
   # Quest 60 states (first match wins); quest_active, quest_sent and
   # quest_done became these variants.
   variants:

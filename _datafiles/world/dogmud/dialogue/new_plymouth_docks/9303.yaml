@@ -8,8 +8,9 @@ greetings:
 opener:
   text: If you need something from the warehouse, the stock is on the list. If you
     want to talk about the warehouse, I have time for two questions.
-  hints: You could ask Dunmar about his stock, the caravan runner who carries it
-    into the city, or how the supply runs. To see what he sells, type list.
+  hints: Choose a line below to learn about his stock, the caravan runner who
+    carries it into the city, or how the supply runs. To see what he sells, type
+    list.
 topics:
 - key: stock
   kind: info

@@ -17,9 +17,9 @@ opener:
     civic quarter that is known to be older than the city. The founding plaque is
     wrong, by at least a century. Do you want the argument, or were you here for
     something else?
-  hints: Scholar Dross is very worked up about something. You could ask him about
-    the inscription and his evidence, about a cipher he found in the old temple
-    carvings, or about why no one in authority will listen to him.
+  hints: Scholar Dross is very worked up about something. Choose a line below to
+    learn about the inscription and his evidence, about a cipher he found in the
+    old temple carvings, or about why no one in authority will listen to him.
   # Quest 69 states first (first match wins; HasQuest is also true at every
   # later step, so each variant excludes the step after it).
   variants:
@@ -98,8 +98,8 @@ opener:
     - 69-end
     text: It holds. Every line of it holds. Now all I need is someone with power who
       is obliged to be honest. I am still looking.
-    hints: You could ask Dross about the inscription, the cipher in the old carvings,
-      or why no one in authority will listen.
+    hints: Choose a line below if you want to hear about the inscription, the
+      cipher in the old carvings, or why no one in authority will listen.
 topics:
 - key: q69_start
   kind: offer

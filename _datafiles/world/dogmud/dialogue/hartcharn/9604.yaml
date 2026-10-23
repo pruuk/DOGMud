@@ -5,7 +5,7 @@ opener:
   text: Sit, or take a bowl with you, I don't much care which, so long as you
     eat. Gerta Crook, and that's my kettle. Nobody leaves this cookhouse hungry.
     So are you hungry, or just passing through my smoke?
-  hints: You could ask Gerta Crook about her cooking or the cooking fire.
+  hints: Choose a line below to learn about her cooking or the cooking fire.
 topics:
 # stock_general folds the "buy sell shop" pattern (both responses). Her
 # static shop list is ingredients, but she is a crafter (crafter: true,

@@ -12,15 +12,15 @@ opener:
     the pastoral work with the novices. I have been a Keeper for forty years. I
     believe what I believe with my full self, and I will not apologize for it, and I
     will not pretend it makes every question easy.'
-  hints: You could ask Prioress Crane about the faith and the rite, or about the
-    Keepers who hold the order with her.
+  hints: Choose a line below if you would like to hear about the faith and the
+    rite, or about the Keepers who hold the order with her.
   variants:
   - questRequired:
     - 73-end
     text: 'I am Crane. Prioress Crane. You have the look of someone carrying a
       question about this temple. I believe what I believe with my full self, and I
       will not pretend it makes every question easy.'
-    hints: You could ask Prioress Crane about the faith and the rite, about the
+    hints: Choose a line below to hear about the faith and the rite, about the
       Keepers, or about what she makes of the questions the Margin raises.
 topics:
 - key: crane_believer_aside

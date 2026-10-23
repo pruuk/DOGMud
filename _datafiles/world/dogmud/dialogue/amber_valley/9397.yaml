@@ -10,10 +10,10 @@ opener:
   text: Hesper Vane, and this is my house, the Golden Bough. If a thing happens in
     Amber Valley, it gets argued about over my tables within the hour. I love this
     place and the people in it, even when they wear me to the bone.
-  hints: You could ask Hesper about the inn and the valley, about the Chrysalis Rite
-    and how folk live here, or about the two farmers feuding over the water, which
-    has been souring her common room. A level-headed traveller might be just what
-    she has been wishing would walk through the door.
+  hints: Choose a line below to learn about the inn and the valley, about the
+    Chrysalis Rite and how folk live here, or about the two farmers feuding over
+    the water, which has been souring her common room. A level-headed traveller
+    might be just what she has been wishing would walk through the door.
   # Quest 72 states first (first match wins): the three endings, then the
   # player who has heard both farmers, then the quest in progress.
   variants:
@@ -24,16 +24,16 @@ opener:
     text: The common room has gone quiet since you sat those two down. Fenn has his
       share and Ayres has his gate, and they nod to each other across my table now.
       Nearly.
-    hints: You could ask Hesper about the inn and the valley, or about the Chrysalis
-      Rite.
+    hints: Choose a line below if you want to hear about the inn and the valley,
+      or about the Chrysalis Rite.
   - questRequired:
     - 72-end
     questFlagRequired:
       72-outcome: restored
     text: Water in both channels, and both men too busy with their fields to quarrel.
       The old works hold. You did that, and the valley knows it.
-    hints: You could ask Hesper about the inn and the valley, or about the Chrysalis
-      Rite.
+    hints: Choose a line below if you would like to hear about the inn and the
+      valley, or about the Chrysalis Rite.
   - questRequired:
     - 72-end
     questFlagRequired:
@@ -41,8 +41,8 @@ opener:
     text: Ayres has not set foot in the Bough since I read that water-right aloud.
       Fenn drinks here every night. The law was on his side, and now the whole valley
       knows it.
-    hints: You could ask Hesper about the inn and the valley, or about the Chrysalis
-      Rite.
+    hints: Choose a line below to hear about the inn and the valley, or about
+      the Chrysalis Rite.
   - questRequired:
     - 72-start
     questExcluded:
@@ -53,7 +53,7 @@ opener:
     text: You have been out to both farms. I can see the dust on your boots. Well?
       Do you think they could live with a fair split?
     hints: Hesper will tell you what a brokered compromise would mean before you
-      ask her for one. If you found the fallen channel in the foothills or read the
+      propose one. If you found the fallen channel in the foothills or read the
       old water-right in the Rite pavilion, she will hear about that too.
   - questRequired:
     - 72-start

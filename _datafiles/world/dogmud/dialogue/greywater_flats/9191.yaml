@@ -5,8 +5,8 @@ opener:
   text: I am Tamsin Reed. I keep the ford crossing here, pole the high water and walk
     folk over the low. I would keep it better if my passengers stopped getting struck
     in the reeds waiting their turn.
-  hints: You could ask Tamsin about whatever is striking her passengers, the ford,
-    or the goods she keeps for travellers.
+  hints: Choose a line below if you would like to hear about whatever is
+    striking her passengers, the ford, or the goods she keeps for travellers.
   # Quest 62 states (first match wins); quest_active and quest_done became
   # these variants. The "free crossing" promise is gone: the ford has no
   # fare to waive.

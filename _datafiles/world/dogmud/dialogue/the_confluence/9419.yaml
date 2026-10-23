@@ -12,8 +12,8 @@ opener:
     the fish market is down along the waterfront, and the overlook is out at the
     south end of the wharf, if you want to see where the three rivers come
     together.
-  hints: You could ask Holt about the gate, about what is in the Landings, or
-    about where the three rivers meet.
+  hints: Choose a line below to learn about the gate, about what is in the
+    Landings, or about where the three rivers meet.
 topics:
 - key: gate
   kind: info

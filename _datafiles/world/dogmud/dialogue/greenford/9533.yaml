@@ -14,9 +14,9 @@ opener:
     than me. Travelers leave coin in the offering box, or a
     keepsake, or nothing at all. The blessing doesn't need paying
     for. Are you heading west, or only stopping?
-  hints: You could ask Mette about the shrine post and its carving, about what
-    travelers leave, about the road-blessing, or about how she came to keep the
-    shrine.
+  hints: Choose a line below to hear about the shrine post and its carving,
+    about what travelers leave, about the road-blessing, or about how she came
+    to keep the shrine.
 topics:
 - key: shrine
   kind: info

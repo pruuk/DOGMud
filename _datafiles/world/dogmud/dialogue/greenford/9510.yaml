@@ -14,8 +14,9 @@ opener:
     light. You're standing in the common room, so you've found
     the best of it already. The rooms upstairs go to scholars by
     the term. What brings you through?
-  hints: You could ask Daven about the inn, about the travelers who stop here, or
-    about Greenford and the market. To see what he sells, type list.
+  hints: Choose a line below to learn about the inn, about the travelers who
+    stop here, or about Greenford and the market. To see what he sells, type
+    list.
 topics:
 - key: inn
   kind: info

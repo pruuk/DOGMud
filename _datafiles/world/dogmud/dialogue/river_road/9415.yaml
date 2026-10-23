@@ -11,8 +11,8 @@ opener:
     the calling, I'm the one with the better boots, which I am wearing out on her
     behalf, I'll note. We've been on the road ten days and it has been fine. Mostly
     fine. The last camp was fine."
-  hints: "You could ask Nara about the journey, about where they have been sleeping,
-    or about what she expects at the Confluence."
+  hints: "Choose a line below if you would like to hear about the journey, about
+    where they have been sleeping, or about what she expects at the Confluence."
 topics:
 # lost (pattern) folded into road; pilgrim (pattern) into confluence.
 - key: road

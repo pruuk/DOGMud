@@ -9,7 +9,7 @@ opener:
   text: I am mid-copy. The Scriptorium is not usually open to visitors, but I am not
     the one to enforce that. It is painstaking work, and I have no objection to a
     short interruption, provided it is short.
-  hints: You could ask the scribe about the copying work.
+  hints: Choose a line below to hear about the copying work.
 topics:
 - key: the_work
   kind: info

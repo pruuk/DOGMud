@@ -4,8 +4,8 @@ defaultMood: neutral
 opener:
   text: "Wind's light today, and nothing on the flats but grass. You want
     something from me?"
-  hints: "You could ask Halix about his work, the dangers of the steppes, or where he
-    stays."
+  hints: "Choose a line below to hear about his work, the dangers of the
+    steppes, or where he stays."
 topics:
 - key: forage
   kind: info

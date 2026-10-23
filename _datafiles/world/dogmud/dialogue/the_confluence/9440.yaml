@@ -9,8 +9,8 @@ opener:
   text: Nice enough morning. I cut through the square most days on my way to the
     market. The ferry was late again, so I've time to spare. The pigeons are
     always here at this hour, and I had bread left over.
-  hints: You could ask the citizen about the square, about the pigeons, or about
-    the ferry.
+  hints: Choose a line below to hear about the square, about the pigeons, or
+    about the ferry.
 topics:
 - key: square
   kind: info

@@ -4,20 +4,22 @@ defaultMood: friendly
 opener:
   text: Sit anywhere. Common room is quiet this hour. The seat by the hearth is the
     warmest.
-  hints: You could ask Sigrid about the inn, the caravan, or the people of the town.
+  hints: Choose a line below if you want to hear about the inn, the caravan, or
+    the people of the town.
   variants:
   - questRequired:
     - 20-end
     text: Ulla came in for a drink last week. First time in years. That is your doing.
       The seat by the window is hers when she comes. I have kept it that way.
-    hints: You could ask Sigrid about the inn, the town, or the caravan.
+    hints: Choose a line below if you would like to hear about the inn, the
+      town, or the caravan.
   - questRequired:
     - 19-end
     questFlagRequired:
       19-completion: full
     text: Drunn told me you put the deep-water thing down in the caves. Drinks are
       on the house tonight. Sit where you like.
-    hints: You could ask Sigrid about the inn, the town, or the caravan.
+    hints: Choose a line below to hear about the inn, the town, or the caravan.
 topics:
 - key: lake_decline
   kind: info

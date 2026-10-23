@@ -6,8 +6,8 @@ opener:
     priest. You need no reason to come in. Some come to pray, some to think, and
     some only to get out of the wind. Sit a while if you like, and tell me if I
     can help.
-  hints: You could ask Priest Seren about herself, the temple, the carved pillars
-    outside, its garden, or the lake.
+  hints: Choose a line below if you want to hear about herself, the temple, the
+    carved pillars outside, its garden, or the lake.
   variants:
   - questRequired:
     - 20-workshop_carving

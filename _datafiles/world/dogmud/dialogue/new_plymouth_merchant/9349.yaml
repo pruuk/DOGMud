@@ -12,8 +12,8 @@ opener:
   text: This is the Quarter's permit and tribute office. I process applications,
     collect the quarterly assessments, and keep the registration records. State your
     business.
-  hints: You could ask Clerk Vell about how a permit application works, about the
-    quarterly tribute, or about who the office answers to.
+  hints: Choose a line below if you want to hear about how a permit application
+    works, about the quarterly tribute, or about who the office answers to.
 topics:
 # Quest 68's bloodline choice (spec R28, batch 4 review): the warning
 # (q68_vell_report) must be heard first, and both hide once the choice is

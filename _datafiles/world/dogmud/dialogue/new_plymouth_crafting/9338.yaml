@@ -12,9 +12,9 @@ opener:
   text: I keep the place. That's the job. If you want to know about the cooperage,
     I'll answer what I can. The people who were here, that's a shorter
     conversation. What's downstairs is not one I'm having.
-  hints: You could ask Toby about the cooperage, about the people who are no
-    longer here, or about what is downstairs, though he seems very sure about that
-    last one.
+  hints: Choose a line below if you want to hear about the cooperage, about the
+    people who are no longer here, or about what is downstairs, though he seems
+    very sure about that last one.
   variants:
   - questRequired:
     - 68-end
@@ -27,8 +27,8 @@ opener:
     - 68-end
     text: The mark beside the door is re-cut and reads true again. Let the clerk
       call that derelict. Thank you.
-    hints: You could ask Toby about the cooperage, about the people who are no
-      longer here, or about what is downstairs.
+    hints: Choose a line below if you would like to hear about the cooperage,
+      about the people who are no longer here, or about what is downstairs.
   # 68-choice before 68-survey: variants are first-match and has 68-survey is
   # also true at 68-choice.
   # 68-choice without the survey first: old saves made the choice step before

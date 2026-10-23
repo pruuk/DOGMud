@@ -9,8 +9,8 @@ opener:
   text: I am working through the secondary accounts for the fourth-water research.
     There are more of them than I expected. I can talk for a few minutes. What did
     you need?
-  hints: You could ask the student about the fourth-water research, or what it is
-    like to study in the Scholars' Quarter.
+  hints: Choose a line below to learn about the fourth-water research, or what
+    it is like to study in the Scholars' Quarter.
 topics:
 - key: research
   kind: info

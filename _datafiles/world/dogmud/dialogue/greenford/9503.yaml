@@ -11,8 +11,8 @@ opener:
     gives. Some days it's generous. Some days you go home with wet boots and a story
     about the one that didn't bite. Today looks like a generous day. What do you want
     to know?
-  hints: You could ask the fisherman about his catch, about how he reads the river,
-    or about the bridge above.
+  hints: Choose a line below if you would like to hear about his catch, about
+    how he reads the river, or about the bridge above.
 topics:
 - key: catch
   kind: info

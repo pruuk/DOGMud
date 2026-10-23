@@ -11,8 +11,9 @@ greetings:
   - friendly
 opener:
   text: I... yes? Sorry. I was listening for the stair. I wasn't expecting anyone.
-  hints: You could ask Wenna about her work here, about why she is so careful around
-    the steward, or about what she has seen on the estate lane at night.
+  hints: Choose a line below to learn about her work here, about why she is so
+    careful around the steward, or about what she has seen on the estate lane at
+    night.
 topics:
 - key: bloom_delivery
   kind: info

@@ -6,8 +6,8 @@ opener:
   text: "Surface-walker. You breathe our air. Still alive, so the scouts let you
     pass. Or you killed them. You had better have a reason."
   hints: "The shaman holds up an open palm toward you, a gesture that needs no
-    translation. You could ask the shaman about its people, about the one who leads
-    them, or how to prove you mean no harm."
+    translation. Choose a line below to hear about its people, about the one who
+    leads them, or how to prove you mean no harm."
   variants:
   - questRequired:
     - 2-end
@@ -76,8 +76,8 @@ topics:
   text: "We are the Discarded. What the surface threw away. Once we were your kind,
     three generations past. The Chrysalis took us without guidance and made us what
     you see. We did not choose this. But we endure."
-  hints: "You could ask the shaman about the Chrysalis, or what drove its people
-    underground."
+  hints: "Choose a line below to learn about the Chrysalis, or what drove its
+    people underground."
 - key: chrysalis_talk
   kind: info
   label: What did the Chrysalis do to you?
@@ -105,7 +105,7 @@ topics:
     receive surface-walkers. The last ones came with knives and specimen jars, and
     left with pieces of our dead. If you would speak with it, you must prove your
     intent is different."
-  hints: "You could ask the shaman how to prove your intent."
+  hints: "Choose a line below to hear how to prove your intent."
 - key: scholar_topic
   kind: info
   label: Have other surface-walkers come here?

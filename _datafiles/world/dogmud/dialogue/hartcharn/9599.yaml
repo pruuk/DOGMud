@@ -5,8 +5,8 @@ opener:
   text: You want something kept safe, then. I am Osric Vane, and the strongbox
     and the ledger for this end of town are mine. Every coin in or out gets its
     line. What am I looking after for you?
-  hints: You could ask Osric Vane about keeping your coin, keeping your goods, or
-    the strongbox itself.
+  hints: Choose a line below if you want to hear about keeping your coin,
+    keeping your goods, or the strongbox itself.
 topics:
 # storage_general and the "bank storage deposit" pattern fold into the two
 # topics below, one command each.

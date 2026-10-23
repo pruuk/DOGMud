@@ -5,8 +5,8 @@ opener:
   text: "The toll is five gold to cross the bridge, or a road token if you carry
     one. And before you say it, yes, I know what Tolva thinks. I have heard it
     all."
-  hints: "You could ask Harn about the bridge, about where the toll money goes, or
-    whether he has a charter for it."
+  hints: "Choose a line below if you want to hear about the bridge, about where
+    the toll money goes, or whether he has a charter for it."
   variants:
   - questRequired:
     - 6-end

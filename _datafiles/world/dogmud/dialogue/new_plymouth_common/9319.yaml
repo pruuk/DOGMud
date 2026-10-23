@@ -16,8 +16,8 @@ opener:
   text: I run a quiet house, and I tell no one what they are not owed to know
     about who comes and goes. My rooms are all spoken for just now. What brings
     you to my door?
-  hints: You could ask Tova about her house, about the old seminary beside the Row,
-    or about the lodgers who left the city some months back.
+  hints: Choose a line below to learn about her house, about the old seminary
+    beside the Row, or about the lodgers who left the city some months back.
 topics:
 - key: rooms
   kind: info

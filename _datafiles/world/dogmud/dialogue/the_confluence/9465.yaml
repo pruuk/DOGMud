@@ -10,8 +10,9 @@ opener:
   text: I am Brother Cael, and I keep the Archive, within limits. The temple's
     building records are here, its founding accounts, the surveyor's work.
     Most days nobody asks to see any of it, so you have my full attention.
-  hints: You could ask Brother Cael about the archive, about what the building
-    ledger on the stand says, or about Aldric, who leads the order.
+  hints: Choose a line below if you would like to hear about the archive, about
+    what the building ledger on the stand says, or about Aldric, who leads the
+    order.
   # Quest 74 states first (first match wins; HasQuest is also true at every
   # later step, so each variant excludes the step after it).
   variants:
@@ -19,7 +20,7 @@ opener:
     - 74-end
     text: You went down, you came back, and you chose. I keep the records. Yours
       is written now too, in my own hand.
-    hints: You could ask Brother Cael about the archive, or about Aldric.
+    hints: Choose a line below to hear about the archive, or about Aldric.
   - questRequired:
     - 74-reveal
     questExcluded:
@@ -94,8 +95,9 @@ opener:
     text: I am Brother Cael, and I keep the Archive, within limits. Most days
       nobody asks to see any of it. Today is not most days, I think.
       You carry the Margin's question.
-    hints: You could ask Brother Cael about the archive, about the building ledger,
-      about the Margin, or about Aldric. He would welcome help with the records.
+    hints: Choose a line below to learn about the archive, about the building
+      ledger, about the Margin, or about Aldric. He would welcome help with the
+      records.
 topics:
 - key: q74_grant
   kind: offer

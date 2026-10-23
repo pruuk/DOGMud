@@ -5,8 +5,8 @@ opener:
   text: "I am Delia. I tend herbs, brew remedies, and try to keep this hamlet from
     falling apart one poultice at a time. Lately the falling apart has been
     winning."
-  hints: "You could ask Delia what has gone wrong, or whether she has ever trained
-    anyone."
+  hints: "Choose a line below to hear what has gone wrong, or whether she has
+    ever trained anyone."
   # quest_active and quest_done (tree nodes) became the 16-start and 16-end
   # variants.
   variants:
@@ -14,7 +14,7 @@ opener:
     - 16-end
     text: "The stock is recovering. You solved a problem I had been struggling with
       for weeks. My worktable is yours if you want to do any herb work."
-    hints: "You could ask Delia about using her worktable."
+    hints: "Choose a line below to hear about using her worktable."
   - questRequired:
     - 16-forager
     questExcluded:

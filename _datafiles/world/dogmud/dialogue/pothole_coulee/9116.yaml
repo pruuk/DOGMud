@@ -4,7 +4,7 @@ defaultMood: neutral
 opener:
   text: Rusk. I work the iron here, and I teach it to anyone who watches more
     than they talk.
-  hints: You could ask Rusk about smithing or your task.
+  hints: Choose a line below to hear about smithing or your task.
   variants:
   - questExcluded:
     - 30-end

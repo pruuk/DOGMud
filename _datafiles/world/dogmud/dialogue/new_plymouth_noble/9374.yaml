@@ -13,9 +13,9 @@ opener:
   text: The gate is closed. The Palace isn't receiving visitors. If there's
     something I can help you with before you head back down the Sentry Walk, I'm not
     going anywhere.
-  hints: You could ask Guard-Captain Doryn about the Palace beyond the gate, about
-    his duty here, or about Garrick One-Hand, an old comrade of his who runs the
-    fighting pit in the Common Quarter.
+  hints: Choose a line below if you want to hear about the Palace beyond the
+    gate, about his duty here, or about Garrick One-Hand, an old comrade of his
+    who runs the fighting pit in the Common Quarter.
 topics:
 - key: gate
   kind: info

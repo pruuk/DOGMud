@@ -11,7 +11,8 @@ opener:
     someone decided you should be. The Chapter House is where the order's decisions
     are made, and I have made a great many of them in this room. Some of them I
     would change. Some of them I would not.
-  hints: You could ask Aldric about the order he leads, or about Prioress Crane.
+  hints: Choose a line below if you want to hear about the order he leads, or
+    about Prioress Crane.
   # Quest 74 states first (first match wins; HasQuest is also true at every
   # later step). The 74-end pair reacts to the choice the player made.
   variants:
@@ -20,14 +21,14 @@ opener:
     questFlagRequired:
       74-allegiance: keepers
     text: You kept the order's confidence. I have not forgotten it, and I will not.
-    hints: You could ask Aldric about the order he leads, about what the temple was
-      raised on, or about Prioress Crane.
+    hints: Choose a line below if you would like to hear about the order he
+      leads, about what the temple was raised on, or about Prioress Crane.
   - questRequired:
     - 74-end
     text: The Margin has it now. You chose, and I will not pretend I would have
       chosen the same. We have nothing more to say about what lies below.
-    hints: Aldric is courteous, and no more than courteous. You could still ask him
-      about the order or about Prioress Crane.
+    hints: Aldric is courteous, and no more than courteous. Choose a line below
+      to hear about the order or about Prioress Crane.
   - questRequired:
     - 74-descent
     questExcluded:
@@ -35,11 +36,12 @@ opener:
     carriesItem: 40142
     text: You have been below. I can see it on you. Before you hand me anything,
       hear what it would mean.
-    hints: To hear what giving Aldric the rubbing means, choose to ask him below.
-      The Margin scholar at the Temple Portico would carry it out instead. Neither
-      choice can be undone. To reach her, go east to the North Walk, south to the
-      Cloister Garth, west three times through the warded door to the Chapel of the
-      Brenn, west to the Crossing, then north three times to the Temple Portico.
+    hints: To hear what giving Aldric the rubbing means, choose his line below.
+      The Margin scholar at the Temple Portico would carry it out instead.
+      Neither choice can be undone. To reach her, go east to the North Walk,
+      south to the Cloister Garth, west three times through the warded door to
+      the Chapel of the Brenn, west to the Crossing, then north three times to
+      the Temple Portico.
   - questRequired:
     - 74-reveal
     questExcluded:
@@ -55,15 +57,15 @@ opener:
     - 74-end
     text: Brother Cael tells me you have read the records. Good. I will not pretend
       you did not.
-    hints: You could ask Aldric whether he will allow you to go down below the
-      temple.
+    hints: Choose a line below to hear whether he will allow you to go down
+      below the temple.
   - questRequired:
     - 73-end
     text: Aldric. I lead this order, for what that is worth. The Margin's question
       has walked into my Chapter House, I see. Some of my decisions I would change.
       Some of them I would not.
-    hints: You could ask Aldric about the order he leads, about what the temple was
-      raised on, or about Prioress Crane.
+    hints: Choose a line below if you would like to hear about the order he
+      leads, about what the temple was raised on, or about Prioress Crane.
 topics:
 # Quest 74's Keepers choice (spec R28): the warning (aldric_terms) must be
 # heard first, and both hide once the choice is made (74-end). The Margin

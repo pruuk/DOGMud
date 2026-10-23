@@ -11,8 +11,9 @@ opener:
     the Margin's people and the students they bring in. The Confluence History is
     the most complete general account, if that is what you need. What are you
     looking for?
-  hints: You could ask Drunn about the books he sells, about the old chart by the
-    counter, or about the Scholars' Quarter. To see what he sells, type list.
+  hints: Choose a line below to learn about the books he sells, about the old
+    chart by the counter, or about the Scholars' Quarter. To see what he sells,
+    type list.
 topics:
 - key: books
   kind: info

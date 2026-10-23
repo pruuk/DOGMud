@@ -9,8 +9,8 @@ greetings:
 opener:
   text: I'm Dobb. I run the Long Market route for Dunmar, everything from this
     warehouse out to every quarter in the city. What's on your mind?
-  hints: You could ask Dobb about his delivery route, which parts of the city are
-    short of supplies, or what he hears on the way.
+  hints: Choose a line below if you would like to hear about his delivery route,
+    which parts of the city are short of supplies, or what he hears on the way.
 topics:
 - key: route
   kind: info

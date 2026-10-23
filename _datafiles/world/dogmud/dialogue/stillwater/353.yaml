@@ -5,15 +5,16 @@ opener:
   text: Good day to you. My name is Fenwick. I am only resting my feet before I
     go on up the north road. Forgive me for saying so, but you have the look of
     someone who has walked the same road, only from the other direction.
-  hints: You could ask Fenwick about news from the road, Thornwall, or the places
-    he has seen.
+  hints: Choose a line below to learn about news from the road, Thornwall, or
+    the places he has seen.
   variants:
   - questRequired:
     - 20-end
     text: I heard something from Ketil's driver this morning about the matter at the
       lake. You look like the person it concerns. The road carries stories faster
       than it carries feet. Safe travels.
-    hints: You could ask Fenwick about news from the road or Thornwall.
+    hints: Choose a line below if you want to hear about news from the road or
+      Thornwall.
 topics:
 - key: road_news
   kind: info

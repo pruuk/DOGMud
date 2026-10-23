@@ -14,8 +14,9 @@ opener:
     pieces that move through this district. I also keep the Square's property
     registrations and estate transfers. The wares and the Square I will discuss
     freely. About the records, I choose what I say.
-  hints: You could ask Falk about his wares, about the Square and how trade runs
-    here, or about the property records he keeps. To see what he sells, type list.
+  hints: Choose a line below if you would like to hear about his wares, about
+    the Square and how trade runs here, or about the property records he keeps.
+    To see what he sells, type list.
 topics:
 - key: bloom_lintel
   kind: info

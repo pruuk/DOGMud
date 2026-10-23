@@ -3,8 +3,8 @@ zone: Stillwater
 defaultMood: neutral
 opener:
   text: Hodder. Sit if you like. The net is not going anywhere, and neither am I.
-  hints: You could ask Hodder about the nets, the old fishermen he knew, or the deep
-    water.
+  hints: Choose a line below to hear about the nets, the old fishermen he knew,
+    or the deep water.
   variants:
   - questRequired:
     - 19-end
@@ -13,13 +13,15 @@ opener:
     text: The deep thing is dead, then. Good. Sundval and Korr and three others I
       could name went down in bad seasons. Some of those were the lake. Maybe not
       all of them. The nets are mending. That is what matters now.
-    hints: You could ask Hodder about the deep water or the old fishermen he knew.
+    hints: Choose a line below to learn about the deep water or the old
+      fishermen he knew.
   - questRequired:
     - 19-end
     text: The shallows are quieter. I can tell by the way the mesh is coming back
       clean. The lake is still the lake, but at least what is pushing out of the caves
       has been pushed back.
-    hints: You could ask Hodder about the deep water or the nets.
+    hints: Choose a line below if you want to hear about the deep water or the
+      nets.
 topics:
 - key: old_fishermen
   kind: info

@@ -11,8 +11,8 @@ opener:
     The green's the right place for it. It's close to the water, the elm gives shade
     by midmorning, and the old stone there doesn't bother anyone while I work. I'm not
     going anywhere until the linen's done, and the linen takes a while.
-  hints: You could ask the washerwoman whose washing she does, about the cold river
-    water, about the river district, or about the old stone on the green.
+  hints: Choose a line below to hear whose washing she does, about the cold
+    river water, about the river district, or about the old stone on the green.
 topics:
 - key: laundry
   kind: info

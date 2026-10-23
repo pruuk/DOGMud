@@ -4,8 +4,8 @@ defaultMood: neutral
 opener:
   text: Name is Hagen. I cut wood. That is about all there is to say. You passing
     through, or you got business on the road?
-  hints: You could ask Hagen about Stillwater, the road and the ford, the riders
-    on the road, or his work.
+  hints: Choose a line below to learn about Stillwater, the road and the ford,
+    the riders on the road, or his work.
 topics:
 - key: stillwater
   kind: info

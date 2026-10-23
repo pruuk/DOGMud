@@ -12,8 +12,9 @@ opener:
     natural-history folios, every primary material the society has gathered
     since its founding, and I know where each one sits. Tell me what you are
     after and I will tell you whether we have it.
-  hints: You could ask Fenn about what the archive holds, about the old surveys of
-    the river junction, or about the Margin and how the society works.
+  hints: Choose a line below if you want to hear about what the archive holds,
+    about the old surveys of the river junction, or about the Margin and how the
+    society works.
 topics:
 - key: archive
   kind: info

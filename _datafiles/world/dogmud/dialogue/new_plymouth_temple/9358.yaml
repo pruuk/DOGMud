@@ -13,8 +13,9 @@ opener:
     blessings, we keep the records, and we care for the keepers who pass through
     the house. If you are looking for something here, I will try to help you
     find it, or tell you honestly why I cannot.
-  hints: You could ask Canon Merid about blessings and the faith's work, about the
-    Archive and who may read in it, or about how the temple stands with the city.
+  hints: Choose a line below to hear about blessings and the faith's work, about
+    the Archive and who may read in it, or about how the temple stands with the
+    city.
 topics:
 - key: blessings
   kind: info

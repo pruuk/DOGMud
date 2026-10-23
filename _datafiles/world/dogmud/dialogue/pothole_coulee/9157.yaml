@@ -4,8 +4,8 @@ defaultMood: neutral
 opener:
   text: I sing the stones of this ring, so that what they carry outlasts the
     weather on the marks. Hale is my name.
-  hints: You could ask Loresinger Hale about the stones and the old story, or your
-    task.
+  hints: Choose a line below to learn about the stones and the old story, or
+    your task.
   variants:
   - questExcluded:
     - 47-end
@@ -23,8 +23,8 @@ opener:
       you, and you can earn the deeper story in the doing. There is a quarrel souring
       the green that wants settling. When you are ready to be of use, I will tell
       you about the stones, or about the dispute.
-    hints: Choose The Standing Stones below to take on the loresinger's task, or ask
-      about the quarrel on the green.
+    hints: Choose The Standing Stones below to take on the loresinger's task, or
+      to hear about the quarrel on the green.
   - questRequired:
     - 48-start
     questExcluded:

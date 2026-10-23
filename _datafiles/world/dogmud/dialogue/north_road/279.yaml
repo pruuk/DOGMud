@@ -7,8 +7,8 @@ opener:
   text: Sit, sit. You look like someone with a story. Everyone who comes through here
     has a story. I have been sitting by this fire longer than Haral has owned this
     place. You pick things up.
-  hints: You could ask Old Dessa about the road, the bandits, the farm folk nearby,
-    or strangers passing through.
+  hints: Choose a line below if you want to hear about the road, the bandits,
+    the farm folk nearby, or strangers passing through.
 topics:
 - key: road
   kind: info

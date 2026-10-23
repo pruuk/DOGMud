@@ -15,8 +15,8 @@ opener:
     understand. I am being patient, between one way of seeing
     it and the next. The cloister walk is good for that. Ask me
     something.
-  hints: You could ask the scholar about the cloister walk, about his research, or
-    about what keeps him at the university.
+  hints: Choose a line below to learn about the cloister walk, about his
+    research, or about what keeps him at the university.
 topics:
 - key: cloister
   kind: info

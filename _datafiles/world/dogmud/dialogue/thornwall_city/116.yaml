@@ -3,7 +3,7 @@ zone: Thornwall City
 defaultMood: neutral
 opener:
   text: '...'
-  hints: You could ask Wrex what he has seen, or who he is.
+  hints: Choose a line below to hear what he has seen, or who he is.
 topics:
 - key: gossip_prompt
   kind: info

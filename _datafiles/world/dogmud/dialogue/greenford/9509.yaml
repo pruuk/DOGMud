@@ -16,8 +16,9 @@ opener:
     top, where the step-ladder earns its keep. The crate by the
     door is old stock, marked down twice. If you're looking for
     something, ask. It won't be obvious.
-  hints: You could ask Aldith about her stock, about the eastern survey work, or
-    about the university uphill. To see what she sells, type list.
+  hints: Choose a line below if you would like to hear about her stock, about
+    the eastern survey work, or about the university uphill. To see what she
+    sells, type list.
 topics:
 - key: books
   kind: info

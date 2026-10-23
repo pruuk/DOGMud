@@ -12,8 +12,8 @@ opener:
   text: Sela Brim, valley born and valley proud. I am just a market soul. I keep
     my stall, I know everyone, and I will talk the ear clean off a statue if you let
     me. What has caught your eye?
-  hints: You could ask Sela about the market and valley life, about the blossoms
-    she wears so proudly, or just for the latest valley gossip.
+  hints: Choose a line below to learn about the market and valley life, about
+    the blossoms she wears so proudly, or just for the latest valley gossip.
 topics:
 - key: market
   kind: info

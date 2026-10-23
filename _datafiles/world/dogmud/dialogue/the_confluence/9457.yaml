@@ -11,8 +11,8 @@ opener:
     where the three waters become one beneath the floor. The temple was raised over
     this meeting, and the meeting is the heart of everything we hold. What did you
     wish to understand?
-  hints: You could ask the Officiant about the rite and the waters below, about the
-    ringed mark the temple keeps, or about the temple beyond the sanctuary.
+  hints: Choose a line below to learn about the rite and the waters below, about
+    the ringed mark the temple keeps, or about the temple beyond the sanctuary.
   variants:
   - questRequired:
     - 73-end
@@ -21,8 +21,8 @@ opener:
     text: Welcome. You have come from the Scholars' Quarter, I think. People who
       have been there look at the grate differently. What did you wish to
       understand?
-    hints: You could ask the Officiant to send word to the senior Keepers for you,
-      about the rite, or about the temple beyond the sanctuary.
+    hints: Choose a line below to hear you, about the rite, or about the temple
+      beyond the sanctuary.
 topics:
 - key: q74_admit
   kind: info

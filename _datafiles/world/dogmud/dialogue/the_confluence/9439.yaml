@@ -10,7 +10,7 @@ opener:
   text: Whatever the hall posts by the first hour, I carry through the square.
     Licenses, council notices, lost property, public announcements. It's a public
     record. Ask if you want something repeated.
-  hints: You could ask the town crier what today's notices say.
+  hints: Choose a line below to hear what today's notices say.
 topics:
 - key: notices
   kind: info

@@ -10,7 +10,7 @@ greetings:
   - neutral
 opener:
   text: Freight doesn't move itself.
-  hints: You could ask Goran about the work on the docks.
+  hints: Choose a line below if you want to hear about the work on the docks.
 topics:
 - key: work
   kind: info

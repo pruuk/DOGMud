@@ -8,7 +8,7 @@ opener:
   text: Welcome to the temple. If you are here for contemplation, the nave is open.
     If you are here for something else... well, there is a matter I could use help
     with, if you are the helping sort.
-  hints: You could ask Olen where you are, or about the help he needs.
+  hints: Choose a line below to hear where you are, or about the help he needs.
   variants:
   # The hand-in gates on 9-start plus the ledger, not on 9-deliver: a ledger
   # picked up before accepting grants no deliver step (batch 2 review B1).

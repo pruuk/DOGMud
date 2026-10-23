@@ -13,8 +13,8 @@ opener:
     official record. It's not a complicated job, but it's a necessary one. The
     Confluence has grown large enough that nobody enjoys arguing about weight
     without a standard.
-  hints: You could ask Gett about the tariff, about how the weighing works, or
-    about what happens when the weights disagree.
+  hints: Choose a line below to hear about the tariff, about how the weighing
+    works, or about what happens when the weights disagree.
 topics:
 - key: tariff
   kind: info

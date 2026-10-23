@@ -10,7 +10,8 @@ opener:
   text: I keep a general stock. Clay pots and cloth bolts for the craft market. If you
     need something in depth, the specialists up the Row have more. If you need it
     quickly, I probably have it. What are you working on?
-  hints: You could ask about what he stocks. To see what he sells, type list.
+  hints: Choose a line below to hear about what he stocks. To see what he sells,
+    type list.
 topics:
 - key: goods
   kind: info

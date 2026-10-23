@@ -10,9 +10,9 @@ opener:
   text: The forecourt is open, and the causeway straight ahead takes you to the
     temple. If trouble is what you came for, I ask that you reconsider. I will
     not ask twice.
-  hints: You could ask the warden about the scholar copying the stonework at the
-    temple doors, about what lies across the causeway, or about his work in the
-    forecourt.
+  hints: Choose a line below if you want to hear about the scholar copying the
+    stonework at the temple doors, about what lies across the causeway, or about
+    his work in the forecourt.
 topics:
 - key: scholar
   kind: info

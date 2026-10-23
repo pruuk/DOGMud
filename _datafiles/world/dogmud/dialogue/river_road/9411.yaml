@@ -11,8 +11,8 @@ opener:
     Barges come down from upriver, we take their cargo off, and we load what's
     bound south for the Confluence, grain and timber and trade goods. The water
     runs deep and steady through here. It's good work, if you can read it."
-  hints: "You could ask Tarro how often the barges run, what cargo moves on the
-    river, or about the Confluence."
+  hints: "Choose a line below to hear how often the barges run, what cargo moves
+    on the river, or about the Confluence."
 topics:
 # river (pattern) folded into barges.
 - key: barges

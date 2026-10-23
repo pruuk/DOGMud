@@ -17,9 +17,9 @@ opener:
     order. I stay at this fire now so that someone is here to say to you what nobody
     said to me. Do not go up. That is the whole of it. Everything else I can tell you
     is only me proving I mean it."
-  hints: "You could ask him about his hand, about what lies east, about the warning
-    he would give, about why he stays so close to it, or whether others went before
-    you."
+  hints: "Choose a line below if you want to hear about his hand, about what
+    lies east, about the warning he would give, about why he stays so close to
+    it, or whether others went before you."
 topics:
 - key: hand
   kind: info

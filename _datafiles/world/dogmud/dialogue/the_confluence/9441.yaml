@@ -15,8 +15,9 @@ opener:
     meet at the Confluence? You will say three. Everyone says three. But the oldest
     surveys do not agree with everyone, and I have never been able to make the city
     look at why.'
-  hints: You could ask Quist about the Margin and what they study, or about his
-    silver eyes. He would welcome help with his question.
+  hints: Choose a line below if you would like to hear about the Margin and what
+    they study, or about his silver eyes. He would welcome help with his
+    question.
   # Quest 73 states first (first match wins; HasQuest is also true at every
   # later step, so each variant excludes the step after it).
   variants:
@@ -27,17 +28,20 @@ opener:
     text: It is on my table, beside the three records, and it is being copied as
       we speak. There was a fourth, and now it is written where no one can
       unwrite it.
-    hints: You could ask Quist about the Margin, or about his silver eyes.
+    hints: Choose a line below to hear about the Margin, or about his silver
+      eyes.
   - questRequired:
     - 74-end
     text: Aldric has it, I hear. Then the temple keeps its count a while longer.
       The records here will wait. They are good at waiting.
-    hints: You could ask Quist about the Margin, or about his silver eyes.
+    hints: Choose a line below to learn about the Margin, or about his silver
+      eyes.
   - questRequired:
     - 74-start
     text: The temple let you into its own records? Then read them the way you read
       mine. Slowly, and twice.
-    hints: You could ask Quist about the Margin, or about his silver eyes.
+    hints: Choose a line below if you want to hear about the Margin, or about
+      his silver eyes.
   - questRequired:
     - 73-end
     text: There was a fourth. You have seen it with your own eyes now, and no one

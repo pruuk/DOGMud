@@ -14,7 +14,7 @@ opener:
     everything that goes on in this lane, and most of what
     doesn't. It goes quiet at the south end. That's rather the
     point of it. What can I do for you?
-  hints: You could ask the old functionary about the last house on the lane, about
+  hints: Choose a line below to hear about the last house on the lane, about
     this end of the lane, or about his years at the university.
 topics:
 - key: reth

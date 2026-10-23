@@ -6,7 +6,7 @@ defaultMood: neutral
 opener:
   text: Ale is cheap, wine is not, and I have a room full of thirsty people. What
     do you need?
-  hints: You could ask Dal about the local gossip.
+  hints: Choose a line below if you want to hear about the local gossip.
 topics:
 - key: gossip
   kind: info

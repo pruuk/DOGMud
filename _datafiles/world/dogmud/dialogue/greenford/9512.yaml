@@ -10,8 +10,8 @@ opener:
     Best greens on the Market Cross. Cut on the valley farms
     this morning, on my stall by first light. Press one if you
     doubt me. You won't. Buying, or looking?
-  hints: You could ask the produce-seller about her greens, about the season, or
-    about the square. To see what she sells, type list.
+  hints: Choose a line below if you want to hear about her greens, about the
+    season, or about the square. To see what she sells, type list.
 topics:
 - key: produce
   kind: info

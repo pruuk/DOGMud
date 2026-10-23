@@ -18,16 +18,16 @@ opener:
     and I have. So ask me about the people, the quarter's troubles, or the
     strange gray bits I keep finding in the gutters. I've something on all
     three.
-  hints: You could ask Coll about the gossip at the well, the gray bits in the
-    gutters, or the troubles of the Common Quarter. His task below is about where
-    the gray bits come from.
+  hints: Choose a line below to learn about the gossip at the well, the gray
+    bits in the gutters, or the troubles of the Common Quarter. His task below
+    is about where the gray bits come from.
   variants:
   - questRequired:
     - 65-end
     text: My tin of gray bits sits heavier on my mind now. Older than the city,
       under the city. Keep it between us.
-    hints: You could ask Coll about the gossip at the well, the gray bits in the
-      gutters, or the troubles of the Common Quarter.
+    hints: Choose a line below if you want to hear about the gossip at the well,
+      the gray bits in the gutters, or the troubles of the Common Quarter.
   - questRequired:
     - 65-start
     questExcluded:

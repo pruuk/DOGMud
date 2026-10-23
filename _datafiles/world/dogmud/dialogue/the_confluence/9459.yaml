@@ -10,8 +10,8 @@ opener:
   text: The nave is open to you. The door behind me is not. It leads to the
     cloisters, the archive, and what lies below, and none of that is open to
     visitors. What did you want to know?
-  hints: You could ask the Warden why the cloisters are closed, or how to reach the
-    senior Keepers if your questions warrant it.
+  hints: Choose a line below to hear why the cloisters are closed, or how to
+    reach the senior Keepers if your questions warrant it.
   variants:
   - questRequired:
     - 74-start

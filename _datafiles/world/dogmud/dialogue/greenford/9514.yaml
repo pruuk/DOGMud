@@ -10,8 +10,8 @@ opener:
     year at the university, up at the top of the hill. Survey methods and
     applied cartography. It sounds dry until you're actually out in the field.
     I'm on my way up now, so ask quickly, while I'm still here.
-  hints: You could ask the student about her studies, about the university, or about
-    Greenford.
+  hints: Choose a line below to hear about her studies, about the university, or
+    about Greenford.
 topics:
 - key: study
   kind: info

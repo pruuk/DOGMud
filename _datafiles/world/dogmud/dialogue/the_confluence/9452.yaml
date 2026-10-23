@@ -10,9 +10,9 @@ opener:
     is open to any who need it. I have river broth and black bread if you are
     hungry, and bunks upstairs if your feet need a rest before you go on to the
     temple. What do you need?
-  hints: You could ask the Hospitaller about the food, about resting here, about her
-    work as a Keeper, or about the way to the temple. To see what she sells, type
-    list.
+  hints: Choose a line below if you want to hear about the food, about resting
+    here, about her work as a Keeper, or about the way to the temple. To see
+    what she sells, type list.
 topics:
 - key: food
   kind: info

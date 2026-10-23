@@ -4,7 +4,7 @@ defaultMood: neutral
 opener:
   text: Good day. I am waiting for the road to clear before heading north. These bandits
     have made a mess of my schedule.
-  hints: You could ask the caravan master about the bandits, about his cargo, about
+  hints: Choose a line below to learn about the bandits, about his cargo, about
     bartering, or about the dangers of the road.
   # Quest 17 states first (first match wins). The peaceful crate ending was
   # removed by the owner (2026-10-23): the quest is fight, take the pin,

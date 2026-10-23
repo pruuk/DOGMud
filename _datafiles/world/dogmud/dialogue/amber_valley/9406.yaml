@@ -11,8 +11,8 @@ opener:
     blame them. I am Hollin Tarrow, and I turn raw hide into good leather. The
     brown hands and the brave nose come with it. What brings you to the smelly
     end of town?
-  hints: You could ask Hollin about his trade, about the valley, or about life here
-    in Amber Valley.
+  hints: Choose a line below if you would like to hear about his trade, about
+    the valley, or about life here in Amber Valley.
 topics:
 # trade folds the "leather hide tan work trade" pattern ("Patience and a
 # strong stomach, that's the craft").

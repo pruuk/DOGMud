@@ -11,16 +11,16 @@ greetings:
 opener:
   text: You looking for the board or you looking for me? If it's me, there's a
     theft hung on one of my hands that I don't believe.
-  hints: You could ask Jesset about work on the docks, the harbor fees, or the
-    people who passed through before you. His task is about the theft pinned on
-    his dockhand Teo.
+  hints: Choose a line below to hear about work on the docks, the harbor fees,
+    or the people who passed through before you. His task is about the theft
+    pinned on his dockhand Teo.
   variants:
   - questRequired:
     - 63-end
     text: Teo's back on the board, and Hewd answers to the constable now. That is
       how it should have gone the first time.
-    hints: You could ask Jesset about work on the docks, the harbor fees, or the
-      people who passed through before you.
+    hints: Choose a line below to learn about work on the docks, the harbor
+      fees, or the people who passed through before you.
   - questRequired:
     - 63-start
     questExcluded:

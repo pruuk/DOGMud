@@ -11,8 +11,8 @@ opener:
     has been properly graded east. Half my customers are heading for Greenford, the
     other half are coming back from it. Both lots buy cheese, which tells you
     something."
-  hints: "To see what Mistress Odell sells, type list. You could also ask her about
-    the travellers heading east, or about the dry weather."
+  hints: "To see what Mistress Odell sells, type list. Choose a line below to
+    learn about the travellers heading east, or about the dry weather."
 topics:
 # sell (pattern) folded into wares.
 - key: wares

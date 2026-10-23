@@ -136,6 +136,12 @@ spec; line numbers were read from the files at that commit.
     makes them terse (a foreman, a soldier) talks that way. Vary sentence shape, warmth and
     register by who the NPC is (their description, idle lines, trade). Batch 7 found the pattern
     in about 45 of 311 openers across every batch.
+  - **R30** (owner 2026-10-23) A talk-menu hint (opener, opener variant or topic `hints`) never
+    uses "ask" as a verb: a player new to MUDs reads it as the `ask` command, which now only
+    redirects to `talk`. The house phrase for pointing at the menu is "choose a line below"
+    ("Choose a line below to hear about the barracks or the market."). An NPC may still say "ask
+    me about the road" in `text`, in their own voice. Enforced by
+    `TestDialogueHints_NeverAskAsAVerb` (`dialogue_hint_ask_test.go`).
   - **R25** (owner 2026-10-21) The character-creation question "How much of Gaius do you
     already know?" has no default: Enter asks again, so nobody skips the tutorial by
     pressing Enter. Pinned by `TestConfirmMenu_StartEnterReasks`.

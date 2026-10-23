@@ -10,8 +10,8 @@ opener:
   text: River cloth or homespun, those are the two. River cloth is what the city is
     known for. A tighter weave, with linen blended in, and it holds color well.
     Homespun is cheaper and softer, if that is what the work calls for. Which?
-  hints: You could ask the weaver about the river cloth or the homespun. To see what
-    she sells, type list.
+  hints: Choose a line below to hear about the river cloth or the homespun. To
+    see what she sells, type list.
 topics:
 - key: river_cloth
   kind: info

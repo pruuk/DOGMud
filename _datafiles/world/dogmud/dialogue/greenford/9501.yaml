@@ -12,8 +12,9 @@ opener:
     climbs the hill from there. It's a quiet place, scholars mostly, with the
     university up at the crown. You'll eat well, and there's an inn on the
     square. Anything you need to know before you go on?
-  hints: You could ask Oswin about the bridge, about the river trade at the landing,
-    about the toll, or about Greenford and the university uphill.
+  hints: Choose a line below if you want to hear about the bridge, about the
+    river trade at the landing, about the toll, or about Greenford and the
+    university uphill.
 topics:
 - key: bridge
   kind: info

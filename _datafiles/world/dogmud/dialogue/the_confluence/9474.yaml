@@ -10,8 +10,8 @@ opener:
     piece before it leaves the shelf. It suits alchemy work, dry storage, or
     anything else that needs a vessel to take heat. Tell me what you're making
     and I'll tell you which pot.
-  hints: You could ask the potter about her clay pots. To see what she sells, type
-    list.
+  hints: Choose a line below if you want to hear about her clay pots. To see
+    what she sells, type list.
 topics:
 - key: pots
   kind: info

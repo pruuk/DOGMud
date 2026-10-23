@@ -12,9 +12,9 @@ opener:
     crews, merchants, pilgrims, the odd curious traveler down from upriver. They
     all end up here eventually. I know most of their names, and more of their
     business than they'd comfortably guess.
-  hints: You could ask Sybba about this week's gossip, about the people she sees
-    come through, or about what kind of city the Confluence is. To see what she
-    serves, type list.
+  hints: Choose a line below to learn about this week's gossip, about the people
+    she sees come through, or about what kind of city the Confluence is. To see
+    what she serves, type list.
 topics:
 - key: gossip
   kind: info

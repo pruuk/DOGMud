@@ -13,9 +13,9 @@ greetings:
 opener:
   text: The collection is my responsibility. I know it very well. If you have
     questions about the paintings or what they show, I try to answer what I am able.
-  hints: You could ask Keeper Lysha about the older paintings between the portraits,
-    about a symbol she has found in the third panel, or about what those paintings
-    say about the city's founding.
+  hints: Choose a line below to hear about the older paintings between the
+    portraits, about a symbol she has found in the third panel, or about what
+    those paintings say about the city's founding.
   # Quest 69 states (first match wins).
   variants:
   - questRequired:

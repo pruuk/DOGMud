@@ -4,7 +4,7 @@ defaultMood: neutral
 opener:
   text: Come in slowly, if you would. The grove is kind to slow feet. My name is
     Orrin, and I look after it.
-  hints: You could ask Orrin about casting in combat or your task.
+  hints: Choose a line below to hear about casting in combat or your task.
   variants:
   - questExcluded:
     - 44-end

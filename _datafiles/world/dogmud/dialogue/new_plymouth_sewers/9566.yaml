@@ -16,9 +16,9 @@ opener:
     all. You are standing in my parlor, so wipe your feet and keep your boots off
     my channel. Ask what you like. Words are the one thing down here that costs
     nothing.
-  hints: You could ask Tam what a tosher does, about the ways back up, about what
-    he finds down here, about the deep past the old stair, or about the traffic
-    that passes through in the dark hours.
+  hints: Choose a line below to hear what a tosher does, about the ways back up,
+    about what he finds down here, about the deep past the old stair, or about
+    the traffic that passes through in the dark hours.
 topics:
 - key: tosher
   kind: info

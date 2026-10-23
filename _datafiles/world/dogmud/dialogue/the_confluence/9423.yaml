@@ -12,8 +12,8 @@ opener:
     tinderboxes, lamp oil. Tallow dips when the oil boat comes down, and small
     ironware from up the Brenn when the smith there sends any. If it keeps a
     vessel moving and a crew alive, I've sold it at one time or another.
-  hints: You could ask Ferrick about rope and line, about lamp oil and tinder, or
-    about the history of his shop. To see what he sells, type list.
+  hints: Choose a line below to hear about rope and line, about lamp oil and
+    tinder, or about the history of his shop. To see what he sells, type list.
 topics:
 - key: rope
   kind: info

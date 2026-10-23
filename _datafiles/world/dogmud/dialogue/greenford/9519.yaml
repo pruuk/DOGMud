@@ -13,9 +13,9 @@ opener:
     been treated. I have been looking at it for twenty years, and
     the dates do not add up. I am here because the common room is
     warmer than my office. Ask me something.
-  hints: You could ask the scholar about his doubts on the Founding, about how he
-    reads old documents, about why the official account troubles him, or about his
-    place at the university.
+  hints: Choose a line below if you would like to hear about his doubts on the
+    Founding, about how he reads old documents, about why the official account
+    troubles him, or about his place at the university.
 topics:
 - key: founding
   kind: info

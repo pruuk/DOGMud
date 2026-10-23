@@ -10,8 +10,8 @@ opener:
   text: The morning bake is done. The black bread is on the counter and the
     fruit pastries are on the side shelf. I bake at the same hour every day, so
     if you like a good crust, come early.
-  hints: You could ask the baker about the bread or the pastries. To see what she
-    sells, type list.
+  hints: Choose a line below if you want to hear about the bread or the
+    pastries. To see what she sells, type list.
 topics:
 - key: bread
   kind: info

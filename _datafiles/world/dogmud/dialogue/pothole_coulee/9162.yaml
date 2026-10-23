@@ -3,7 +3,7 @@ zone: Pothole Coulee
 defaultMood: neutral
 opener:
   text: Keep it low. Sound carries in this canyon. I'm Bryn, and I hold it.
-  hints: You could ask Bryn about the canyon or your task.
+  hints: Choose a line below to hear about the canyon or your task.
   variants:
   - questExcluded:
     - 50-end
@@ -161,8 +161,8 @@ topics:
   label: Can I have more shot?
   text: You still have a pouch of shot on you. Spend it first. When the last stone
     is gone, ask me again.
-  hints: You already carry a pouch of shot. You could ask Bryn for more once it is
-    empty.
+  hints: You already carry a pouch of shot. Choose a line below to get more once
+    it is empty.
   questRequired:
   - 51-start
   questExcluded:
@@ -174,8 +174,8 @@ topics:
   text: A case of bolts. Take it, since a kiter makes a long fight, and an empty weapon
     on the overlook is a dead climber. Run dry up there and you will wish you had
     asked twice. Come back for more if you need it.
-  hints: You received a case of bolts. Carry plenty against Skell. You could ask Bryn
-    for more ammo if you run dry.
+  hints: You received a case of bolts. Carry plenty against Skell. Choose a line
+    below to get more ammo if you run dry.
   questRequired:
   - 51-end
   questExcluded:
@@ -187,8 +187,8 @@ topics:
   label: Can I have more bolts?
   text: You still have bolts in that case. Spend them first. When the case is empty,
     come and ask me again, before you climb.
-  hints: You already carry a case of bolts. You could ask Bryn for more once it is
-    empty.
+  hints: You already carry a case of bolts. Choose a line below to get more once
+    it is empty.
   questRequired:
   - 51-end
   questExcluded:

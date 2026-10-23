@@ -14,9 +14,9 @@ opener:
     at the gate, and I keep what they might bring inside. Candles, incense,
     charms, whatever the occasion asks. Ask what each one is for, or about the
     temple, and I will tell you.
-  hints: You could ask Almoner Sten about the offerings he sells, about the temple
-    through the gate, or about why people bring offerings at all. To see what he
-    sells, type list.
+  hints: Choose a line below to learn about the offerings he sells, about the
+    temple through the gate, or about why people bring offerings at all. To see
+    what he sells, type list.
 topics:
 - key: offerings
   kind: info

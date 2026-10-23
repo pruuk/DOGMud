@@ -13,7 +13,7 @@ opener:
   text: I manage the Quarter's administrative correspondence and the bloodline's
     business with the city. Was there something specific you needed, or are you
     simply learning your way around?
-  hints: You could ask Steward Caldwin about the work of his office, about whose
+  hints: Choose a line below to hear about the work of his office, about whose
     orders he carries out, or about how far his patience for questions goes.
 topics:
 - key: office

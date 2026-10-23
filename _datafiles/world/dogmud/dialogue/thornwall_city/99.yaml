@@ -4,7 +4,7 @@ defaultMood: neutral
 opener:
   text: You are in the Records Office. I am Pell. State your business or take a number.
     There are no numbers. That was a joke. State your business.
-  hints: You could ask Pell about the records he keeps.
+  hints: Choose a line below if you want to hear about the records he keeps.
   variants:
   - questRequired:
     - 6-report

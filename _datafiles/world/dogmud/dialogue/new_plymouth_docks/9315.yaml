@@ -9,8 +9,8 @@ greetings:
 opener:
   text: The office handles cargo allocations and shift assignments. If you've come
     about the Teo matter, I've already given the constable my full statement.
-  hints: You could ask Hewd about Teo, about his books, or about the correction in
-    the manifest.
+  hints: Choose a line below if you want to hear about Teo, about his books, or
+    about the correction in the manifest.
   variants:
   - questRequired:
     - 63-end

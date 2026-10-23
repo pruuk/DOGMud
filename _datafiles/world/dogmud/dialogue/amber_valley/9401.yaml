@@ -10,8 +10,8 @@ opener:
   text: Ayres. I hold the upstream ground, where the water first comes into the valley.
     That makes me the villain in every story Fenn tells, so let me guess. You have
     heard his version already. Sit down and hear the true one.
-  hints: You could ask Ayres about his farm, about the dispute from his side, or about
-    the old water-right he says is his.
+  hints: Choose a line below to learn about his farm, about the dispute from his
+    side, or about the old water-right he says is his.
   # Quest 72: one line per ending (first match wins).
   variants:
   - questRequired:

@@ -13,18 +13,19 @@ opener:
     would rather work their own. You may ask about the blades, or how my supply
     reaches me. You will also ask about the third arm, so you may as well get it
     over with.
-  hints: You could ask Dame Ostry about her blades, about where her steel comes
-    from, or about the third arm. Under the shop talk there is a tightness about a
-    tribute and an audit she plainly wants to be rid of. To see what she sells, type
-    list.
+  hints: Choose a line below to learn about her blades, about where her steel
+    comes from, or about the third arm. Under the shop talk there is a tightness
+    about a tribute and an audit she plainly wants to be rid of. To see what she
+    sells, type list.
   # Quest 71 states (first match wins; HasQuest is also true at every later step).
   variants:
   - questRequired:
     - 71-end
     text: My deposit came back this morning and my permit cleared. Nobody said why.
       Nobody needed to.
-    hints: You could ask Dame Ostry about her blades, about where her steel comes
-      from, or about the third arm. To see what she sells, type list.
+    hints: Choose a line below if you want to hear about her blades, about where
+      her steel comes from, or about the third arm. To see what she sells, type
+      list.
   - questRequired:
     - 71-horst
     questExcluded:

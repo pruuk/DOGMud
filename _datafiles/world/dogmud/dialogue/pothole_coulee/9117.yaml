@@ -14,7 +14,7 @@ opener:
     a good seam, but the scavengers moved in after the noise of the fall and the
     lurker claimed the pocket. I can see the vein from here with this eye and I
     cannot reach it.
-  hints: Each line below is something you can ask Ovell. Type its number.
+  hints: Each line below is something Ovell can tell you about. Type its number.
   variants:
   - questExcluded:
     - 30-end

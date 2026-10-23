@@ -12,8 +12,8 @@ opener:
     question I cannot answer from them. I am Brennan. If Aldith
     sent you up the hill, or if you found the office yourself,
     sit. I have something I need done that I cannot do myself.
-  hints: You could ask Brennan about his survey work, about the mark on his old maps,
-    or about his place at the university.
+  hints: Choose a line below if you want to hear about his survey work, about
+    the mark on his old maps, or about his place at the university.
   # Quest states, latest first (first match wins, and HasQuest is also
   # true at every later step, so each variant excludes the step after it).
   variants:
@@ -21,8 +21,8 @@ opener:
     - 77-end
     text: You went all the way in, didn't you. No. Do not tell me. I can see it on
       you well enough.
-    hints: You could ask Brennan what he sees in you, or about the mark on his old
-      maps.
+    hints: Choose a line below to hear what he sees in you, or about the mark on
+      his old maps.
   - questRequired:
     - 76-attune
     itemExcluded: 40168

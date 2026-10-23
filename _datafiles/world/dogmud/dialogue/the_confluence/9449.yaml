@@ -10,8 +10,9 @@ opener:
   text: I keep the founding account here. How the three rivers were drawn together,
     the temple raised on the island, the first Keepers set to tend it. The account
     is on the wall, and I am here to explain it. What did you wish to know?
-  hints: You could ask the Historian about the founding, about the old mark above the
-    temple doors, about the Keepers, or about what lies past the public temple.
+  hints: Choose a line below to hear about the founding, about the old mark
+    above the temple doors, about the Keepers, or about what lies past the
+    public temple.
 topics:
 - key: margin_aside
   kind: info

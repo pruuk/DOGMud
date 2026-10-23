@@ -3,7 +3,7 @@ zone: Pothole Coulee
 defaultMood: neutral
 opener:
   text: Falv. Watch the water side.
-  hints: You could ask Falv about the marsh or your task.
+  hints: Choose a line below to learn about the marsh or your task.
   variants:
   - questExcluded:
     - 38-end

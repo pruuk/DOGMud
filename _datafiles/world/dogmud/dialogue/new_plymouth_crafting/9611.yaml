@@ -5,8 +5,8 @@ opener:
   text: Come in out of the light. It is better for the eyes at the bench than in
     the doorway. Perla Gilt. If you are after a setting or a ring, you have come to
     the right stool.
-  hints: You could ask Perla about the jeweler's bench, or about her materials. To
-    see what she sells, type list.
+  hints: Choose a line below to learn about the jeweler's bench, or about her
+    materials. To see what she sells, type list.
 topics:
 - key: gem
   kind: info

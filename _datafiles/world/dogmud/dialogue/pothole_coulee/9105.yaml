@@ -10,15 +10,16 @@ opener:
   text: They call me Granny Wicker, and I was old when that was a compliment. I keep
     the remedies the Church forgot and the knowing it never had. Sit. Ask. The kettle
     does the rest.
-  hints: You could ask about a remedy, the old way, or the charms on their threads.
+  hints: Choose a line below to hear about a remedy, the old way, or the charms
+    on their threads.
   variants:
   - questExcluded:
     - 30-end
     text: Not yet dipped, are you, duck? I can smell the old world on you still,
       all dust and hurry. Go and let the pool have its look. 'First the water, then the
       wandering,' as we say. As I say, anyhow. I am mostly who 'we' is by now.
-    hints: Cleric Hadwen keeps the Awakening Pool, north of Hub Square. Type talk
-      hadwen there. You could also ask Granny about the old way first.
+    hints: Cleric Hadwen keeps the Awakening Pool, north of Hub Square. Type
+      talk hadwen there. Choose a line below to learn about the old way first.
 topics:
 - key: remedy
   kind: info
@@ -27,7 +28,8 @@ topics:
     the Lantern''s stew and somebody to eat it beside. For everything else there is
     a tea, and I have it. ''Bitter on the tongue, better in the bones,'' duck. The
     ones that taste kind do the least.'
-  hints: You could ask about the old way or the charms.
+  hints: Choose a line below if you want to hear about the old way or the
+    charms.
 - key: old_way
   kind: info
   label: What is the old way?
@@ -35,7 +37,8 @@ topics:
     a word to it. Hadwen is a good man and his rite is true, but it is a young coat
     on an old body, duck. The coulee remembers the first names of things. Walk it
     gently and it may tell you one or two.
-  hints: You could ask about the charms, or a remedy.
+  hints: Choose a line below if you would like to hear about the charms, or a
+    remedy.
 - key: charms
   kind: info
   label: What are all these charms for?
@@ -43,7 +46,7 @@ topics:
     for somebody. They turn when the weather changes its mind, and they tick when
     something new walks the coulee. They ticked when you came in, duck. That is not
     a bad sign. It is just the cottage taking your measure.
-  hints: You could ask about the old way or a remedy.
+  hints: Choose a line below to hear about the old way or a remedy.
 - key: forage_tease
   kind: info
   label: Where do your herbs come from?
@@ -51,4 +54,4 @@ topics:
     mosses that only grow where the basalt sweats. Out past the wild mouth there is
     a body who teaches the gathering proper. My knees retired from it the same year
     the Church arrived, and only one of those was a loss.
-  hints: You could ask about a remedy or the old way.
+  hints: Choose a line below to learn about a remedy or the old way.

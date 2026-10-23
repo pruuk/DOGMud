@@ -3,8 +3,8 @@ zone: Stillwater
 defaultMood: friendly
 opener:
   text: Fresh clams this morning, brought up off the shallows.
-  hints: You could ask Tov about the lean year, the nets, or the pearl divers. To
-    see what he sells, type list.
+  hints: Choose a line below to learn about the lean year, the nets, or the
+    pearl divers. To see what he sells, type list.
   variants:
   - questRequired:
     - 19-end
@@ -12,14 +12,14 @@ opener:
       19-completion: full
     text: The cave trouble is settled, I hear. The nets are coming back whole now,
       first time in two seasons. You've got my gratitude.
-    hints: You could ask Tov about the catch or the nets. To see what he sells, type
-      list.
+    hints: Choose a line below if you want to hear about the catch or the nets.
+      To see what he sells, type list.
   - questRequired:
     - 19-end
     text: The shallows are calmer. Nets coming back in better shape. I am not sure
       what happened down there in the caves, but the difference shows.
-    hints: You could ask Tov about the catch or the nets. To see what he sells, type
-      list.
+    hints: Choose a line below if you would like to hear about the catch or the
+      nets. To see what he sells, type list.
 topics:
 - key: lean_year
   kind: info

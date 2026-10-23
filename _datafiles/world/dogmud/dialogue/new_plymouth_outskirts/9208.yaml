@@ -5,15 +5,15 @@ opener:
   text: I am the watch on the East Gate. The capital's road ends at my post, and so
     does the post relay. If you carry a sealed packet for the gate, I am the hand
     it was meant for.
-  hints: You could ask the guard about the gate and the city, or about news from
-    the road.
+  hints: Choose a line below to hear about the gate and the city, or about news
+    from the road.
   variants:
   - questRequired:
     - 60-end
     text: You are the one who ran the dispatch the whole road, toll to gate. The
       capital remembers that. Keep the token.
-    hints: You could ask the guard about the gate and the city, or about news from
-      the road.
+    hints: Choose a line below to learn about the gate and the city, or about
+      news from the road.
   - questRequired:
     - 60-start
     questExcluded:

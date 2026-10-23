@@ -5,8 +5,8 @@ opener:
   text: Hey there! I am Luc. I am only fishing the shallows today, nothing
     exciting. You look like you are heading somewhere a lot more interesting
     than this. Go on, ask me anything.
-  hints: You could ask Luc about the fishing, the strange currents, or what old Hodder
-    taught him.
+  hints: Choose a line below if you would like to hear about the fishing, the
+    strange currents, or what old Hodder taught him.
 topics:
 - key: lake
   kind: info

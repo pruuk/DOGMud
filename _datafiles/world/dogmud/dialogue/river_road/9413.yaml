@@ -11,8 +11,8 @@ opener:
     road was cut south. Just me and the river. It changes. Higher some years, lower
     others, different fish. But it's always itself. Good to know something that's
     always itself."
-  hints: "You could ask Sedge about his years on the river, how he smokes his fish,
-    or about the Confluence where the rivers meet."
+  hints: "Choose a line below to hear about his years on the river, how he
+    smokes his fish, or about the Confluence where the rivers meet."
 topics:
 # old (pattern) folded into river; fish (pattern) into smoking.
 - key: river

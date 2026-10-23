@@ -10,8 +10,8 @@ opener:
   text: "Bram Ostle, at your service. I run the Full Ladle, last honest roof
     before the valley road bends down. Folk stop here to shake the dust off before
     Amber Valley, and I'm glad of the company."
-  hints: "You could ask Bram about the inn, about the travellers who pass through, or
-    about the valley ahead."
+  hints: "Choose a line below to learn about the inn, about the travellers who
+    pass through, or about the valley ahead."
 topics:
 # ale (pattern) folded into inn.
 - key: inn

@@ -10,8 +10,9 @@ opener:
     east gate has. Most who come in are road travelers, merchants bound to or
     from Greenford, pilgrims arriving at the Confluence, the odd road warden off
     a cold patrol. Sit yourself down. What can I get you?
-  hints: You could ask the innkeeper about the food she serves, about a bed for the
-    night, or about who passes through the inn. To see what she sells, type list.
+  hints: Choose a line below if you would like to hear about the food she
+    serves, about a bed for the night, or about who passes through the inn. To
+    see what she sells, type list.
 topics:
 - key: food
   kind: info

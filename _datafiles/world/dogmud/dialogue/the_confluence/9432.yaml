@@ -14,8 +14,8 @@ opener:
     The Weighhouse handles the tariff. We're the trade body. If you're moving goods
     commercially through this quay, you're working within our charter whether you
     know it or not.
-  hints: You could ask Oslen about the guild charter, about what the tolls pay
-    for, or about how the guild settles disputes.
+  hints: Choose a line below if you would like to hear about the guild charter,
+    about what the tolls pay for, or about how the guild settles disputes.
 topics:
 - key: charter
   kind: info

@@ -14,9 +14,9 @@ opener:
     house, with good wine, a warm bowl and a fire that stays lit. Ask me about
     the rooms, or what we serve at the bar. And there is the private parlor at
     the back. Some rather notable guests come through that door.
-  hints: You could ask Madam Sephe about the rooms upstairs, about the food and drink
-    she serves, or about the private parlor and the guests who use it. To see what
-    she sells, type list.
+  hints: Choose a line below to learn about the rooms upstairs, about the food
+    and drink she serves, or about the private parlor and the guests who use it.
+    To see what she sells, type list.
 topics:
 - key: lodging
   kind: info

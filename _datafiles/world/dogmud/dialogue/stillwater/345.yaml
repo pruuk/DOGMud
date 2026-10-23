@@ -3,7 +3,7 @@ zone: Stillwater
 defaultMood: friendly
 opener:
   text: Welcome. I am Finn, the acolyte. Can I help, or shall I fetch Priest Seren?
-  hints: You could ask Finn about Priest Seren or about his training.
+  hints: Choose a line below to hear about Priest Seren or about his training.
 topics:
 - key: seren
   kind: info

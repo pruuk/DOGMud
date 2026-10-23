@@ -4,7 +4,7 @@ defaultMood: friendly
 opener:
   text: Hi! Are you going in the water? I am not supposed to but I watch it every
     day.
-  hints: You could ask Pip about his da, the shallows, or the caves.
+  hints: Choose a line below to learn about his da, the shallows, or the caves.
 topics:
 - key: fisherman
   kind: info

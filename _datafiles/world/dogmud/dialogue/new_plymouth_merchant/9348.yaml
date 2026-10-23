@@ -13,9 +13,9 @@ opener:
     finished pieces for those who want them ready. Whatever you buy, I fit
     before it leaves. You're looking at my skin. Most people do. Ask about it,
     or about my stock and where the materials come from.
-  hints: You could ask Brun about the armor he stocks, about where his materials come
-    from, or about his skin and what the Chrysalis did to it. To see what he sells,
-    type list.
+  hints: Choose a line below to hear about the armor he stocks, about where his
+    materials come from, or about his skin and what the Chrysalis did to it. To
+    see what he sells, type list.
 topics:
 - key: armor
   kind: info

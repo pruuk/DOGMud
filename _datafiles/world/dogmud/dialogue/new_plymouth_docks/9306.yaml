@@ -11,8 +11,9 @@ greetings:
 opener:
   text: Browse if you like. Ask if you have a question. I usually know the answer,
     though the answer sometimes costs more than whatever is on the shelf.
-  hints: You could ask Old Sable about the rumors she trades in, the pawn trade, or
-    what has come up from the docks lately. To see what she sells, type list.
+  hints: Choose a line below to learn about the rumors she trades in, the pawn
+    trade, or what has come up from the docks lately. To see what she sells,
+    type list.
 topics:
 - key: rumors
   kind: info

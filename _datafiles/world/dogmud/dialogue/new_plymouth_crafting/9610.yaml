@@ -5,8 +5,8 @@ opener:
   text: Ansel Rune. If you have Chrysalis material worth binding, this is the circle
     to bind it in. I am mid-working, so state your business and I will try not to
     lose the thread.
-  hints: You could ask Ansel about the enchanting circle, or about his materials.
-    To see what he sells, type list.
+  hints: Choose a line below if you would like to hear about the enchanting
+    circle, or about his materials. To see what he sells, type list.
 topics:
 - key: enchant
   kind: info

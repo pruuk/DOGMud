@@ -4,8 +4,8 @@ defaultMood: friendly
 opener:
   text: Welcome up. Mind the stairs. Good light in here this time of day. What can I
     cut or set for you?
-  hints: You could ask Bevan about the jeweler's bench, or about her materials. To see
-    what she sells, type list.
+  hints: Choose a line below if you would like to hear about the jeweler's
+    bench, or about her materials. To see what she sells, type list.
 topics:
 - key: gem
   kind: info
