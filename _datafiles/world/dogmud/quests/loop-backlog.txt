@@ -1,0 +1,189 @@
+# Quest loop backlog (#375 phase 2, spec 5.3). One finding key per line,
+# "rule questId where", for a loop-rule failure in shipped content that the
+# phase 7 zone passes have not fixed yet. A finding listed here is a boot
+# warning; any finding not listed refuses boot, CI and the quest editor's
+# save. A line with no matching finding fails CI: delete it when its finding
+# is fixed. Never add a line by hand to make new content pass.
+chain 30 mob 9100 topic road_esk
+chain 30 mob 9100 topic road_toke
+chain 30 mob 9106 topic footing_offer
+chain 30 mob 9108 topic train_offer
+chain 30 mob 9116 topic craft_offer
+chain 30 mob 9128 topic brew_offer
+chain 30 mob 9136 topic sign_offer
+chain 30 mob 9144 topic cast_offer
+chain 30 mob 9153 topic words_offer
+chain 30 mob 9161 topic shoot_offer
+chain 32 mob 9112 topic wash_offer
+chain 34 mob 9112 topic cull_offer
+chain 35 mob 9117 topic vein_offer
+chain 37 mob 9117 topic forge_loop_offer
+chain 38 mob 9129 topic marsh_offer
+chain 40 mob 9129 topic brew_loop_offer
+chain 41 mob 9137 topic hunt_offer
+chain 43 mob 9137 topic game_loop_offer
+chain 44 mob 9145 topic grove_offer
+chain 46 mob 9145 topic grove_loop_offer
+chain 47 mob 9157 topic stones_offer
+chain 48 mob 9160 topic shrine_offer
+chain 50 mob 9162 topic canyon_offer
+chain 52 mob 9162 topic range_loop_offer
+chain 73 mob 9465 topic q74_grant
+chain 75 mob 9516 topic disc_quest
+chain 75 mob 9516 topic disc_tale
+chain 78 mob 9584 topic teach_aegis
+chain 78 mob 9584 topic teach_bandolier
+chain 78 mob 9584 topic teach_blackrazor
+chain 78 mob 9584 topic teach_choir
+chain 78 mob 9584 topic teach_phial
+chain 78 mob 9584 topic teach_prism
+chain 78 mob 9584 topic teach_thornwall
+chain 78 mob 9584 topic teach_wayfarer
+chain 78 mob 9584 topic teach_zephyr
+end 1000000 step 2 (end)
+end 21 mob 9106 topic newcomer_players
+end 21 step 1 (end)
+end 28 step 25 (end)
+end 29 quest 29 trigger 0
+end 29 quest 29 trigger 1
+end 29 quest 29 trigger 2
+end 29 quest 29 trigger 3
+end 29 step 1 (end)
+end 30 step 2 (end)
+end 34 quest 34 trigger 0
+end 34 quest 34 trigger 1
+end 34 step 1 (end)
+end 35 quest 35 trigger 4
+end 37 quest 37 trigger 0
+end 37 step 1 (end)
+end 40 quest 40 trigger 0
+end 40 step 1 (end)
+end 43 quest 43 trigger 0
+end 43 step 1 (end)
+end 46 quest 46 trigger 0
+end 46 step 1 (end)
+end 52 quest 52 trigger 0
+end 52 step 1 (end)
+end 53 quest 53 trigger 1
+end 53 step 2 (end)
+end 54 quest 54 trigger 0
+end 54 step 1 (end)
+end 55 quest 55 trigger 2
+end 55 step 2 (end)
+end 56 quest 56 trigger 1
+end 56 step 2 (end)
+end 57 quest 57 trigger 0
+end 57 step 1 (end)
+end 58 quest 58 trigger 0
+end 58 step 1 (end)
+end 59 quest 59 trigger 1
+end 59 step 2 (end)
+end 75 quest 75 trigger 2
+end 75 step 4 (end)
+end 76 quest 76 trigger 4
+end 76 step 3 (end)
+end 77 quest 77 trigger 0
+end 77 step 0 (end)
+end 78 quest 78 trigger 0
+end 78 step 1 (end)
+end 79 quest 79 trigger 1
+end 79 step 1 (end)
+end 80 quest 80 trigger 1
+end 80 step 1 (end)
+end 81 quest 81 trigger 1
+end 81 step 1 (end)
+end 82 quest 82 trigger 1
+end 82 step 1 (end)
+end 83 quest 83 trigger 1
+end 83 step 1 (end)
+end 84 quest 84 trigger 1
+end 84 step 1 (end)
+end 85 quest 85 trigger 1
+end 85 step 1 (end)
+end 86 quest 86 trigger 1
+end 86 step 1 (end)
+end 87 quest 87 trigger 1
+end 87 step 1 (end)
+end 88 quest 88 trigger 0
+end 89 quest 89 trigger 0
+hint 21 step 0 (start)
+hint 78 step 0 (start)
+hint 79 step 0 (start)
+hint 80 step 0 (start)
+hint 81 step 0 (start)
+hint 82 step 0 (start)
+hint 83 step 0 (start)
+hint 84 step 0 (start)
+hint 85 step 0 (start)
+hint 86 step 0 (start)
+hint 87 step 0 (start)
+one-action 1000000 step 1 (givegold)
+one-action 1000000 step 2 (end)
+one-action 11 mob 241 topic totem_return
+one-action 11 mob 242 topic sample_return
+one-action 14 mob 94 topic velkhandoff
+one-action 14 quest 14 trigger 4
+one-action 14 quest 14 trigger 6
+one-action 14 quest 14 trigger 7
+one-action 14 quest 14 trigger 8
+one-action 14 step 6 (report)
+one-action 15 mob 250 topic quest_complete_dialogue
+one-action 15 quest 15 trigger 1
+one-action 16 mob 259 topic quest_complete_herbs
+one-action 19 quest 19 trigger 1
+one-action 20 mob 347 topic ullahandoff
+one-action 20 mob 355 topic vellahandoff
+one-action 28 quest 28 trigger 2
+one-action 28 step 25 (end)
+one-action 30 step 1 (rite)
+one-action 30 step 2 (end)
+one-action 32 quest 32 trigger 5
+one-action 32 step 5 (consider)
+one-action 34 quest 34 trigger 0
+one-action 34 quest 34 trigger 1
+one-action 35 quest 35 trigger 3
+one-action 38 quest 38 trigger 3
+one-action 38 quest 38 trigger 4
+one-action 4 mob 83 topic evidence_handoff
+one-action 5 mob 84 topic tolvahandoff
+one-action 50 quest 50 trigger 2
+one-action 60 mob 9208 topic guardhandoff
+one-action 61 quest 61 trigger 0
+one-action 61 quest 61 trigger 3
+one-action 63 mob 9300 topic tallyhandoff
+one-action 63 mob 9316 topic tallyhandoff
+one-action 63 step 2 (report)
+one-action 65 mob 9320 topic sweeperhandoff
+one-action 65 step 2 (report)
+one-action 66 mob 9323 topic escort_close
+one-action 66 mob 9323 topic wrapperhandoff
+one-action 66 step 1 (escort)
+one-action 66 step 2 (detox)
+one-action 67 mob 9316 topic casefilehandoff
+one-action 67 step 6 (report)
+one-action 68 quest 68 trigger 0
+one-action 68 quest 68 trigger 4
+one-action 68 quest 68 trigger 6
+one-action 68 quest 68 trigger 7
+one-action 69 mob 9360 topic give_40116
+one-action 7 mob 89 topic dornhandoff
+one-action 7 quest 7 trigger 2
+one-action 70 mob 9332 topic orinhandoff
+one-action 70 quest 70 trigger 0
+one-action 71 mob 9347 topic ledgerhandoff
+one-action 74 mob 9454 topic marginhandoff
+one-action 74 mob 9464 topic aldrichandoff
+one-action 75 quest 75 trigger 2
+one-action 76 quest 76 trigger 4
+one-action 78 quest 78 trigger 0
+one-action 9 mob 95 topic olenhandoff
+one-action 9 quest 9 trigger 1
+refs 1000000 quest 1000000 refs
+start 1000000 step 0 (start)
+start 21 step 0 (start)
+start 28 quest 28 trigger 0
+start 28 step 0 (start)
+start 29 step 0 (start)
+start 30 quest 30 trigger 0
+start 77 quest 77 trigger 0
+start 77 step 0 (end)

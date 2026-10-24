@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 )
 
@@ -175,29 +174,4 @@ func scanQuestReferences(questId int) []questRefEntry {
 	}
 
 	return out
-}
-
-// collectDialogueGrantTokens indexes every token any dialogue file grants —
-// the "is this step reachable" warning's dialogue side.
-func collectDialogueGrantTokens() map[string]bool {
-	granted := map[string]bool{}
-	dialogue.WalkAllFiles(func(mobId int, zone string, df *dialogue.DialogueFile) {
-		walkDialogueGates(df, func(where string, g dialogueGate) {
-			if g.grantsQuest != "" {
-				granted[g.grantsQuest] = true
-			}
-		})
-	})
-	return granted
-}
-
-// mobHasDialogueFile checks by mob template zone. Uses dialogue.Load (and so
-// shares its cache behavior — fine: MainWorker only, and Load's nil-sentinel
-// semantics are the live game's own).
-func mobHasDialogueFile(mobId int) bool {
-	m := mobs.GetMobSpec(mobs.MobId(mobId))
-	if m == nil {
-		return false
-	}
-	return dialogue.Load(mobId, m.Zone) != nil
 }

@@ -14,11 +14,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/factions"
-	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
-	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/questworld"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 )
@@ -51,34 +49,7 @@ func realQuestDeps() questDeps {
 		del:        quests.DeleteQuest,
 		references: scanQuestReferences,
 		reindex:    questengine.LoadDataFiles,
-		validators: realQuestValidators(),
-	}
-}
-
-func realQuestValidators() quests.QuestValidators {
-	statNames := map[string]bool{"strength": true, "dexterity": true, "perception": true,
-		"vitality": true, "willpower": true, "charisma": true}
-	skillNames := map[string]bool{}
-	for _, s := range skills.GetAllSkillNames() {
-		skillNames[string(s)] = true
-	}
-	dlgGrants := collectDialogueGrantTokens()
-	return quests.QuestValidators{
-		StepExists:      func(tok string) bool { return quests.GetQuest(tok) != nil },
-		MobExists:       func(id int) bool { return mobs.GetMobSpec(mobs.MobId(id)) != nil },
-		ItemExists:      func(id int) bool { return items.GetItemSpec(id) != nil },
-		RoomExists:      func(id int) bool { return rooms.LoadRoomTemplate(id) != nil },
-		ConditionExists: func(id int) bool { return conditions.GetConditionSpec(id) != nil },
-		SpellExists:     func(id string) bool { return spells.GetSpell(id) != nil },
-		SkillExists:     func(name string) bool { return skillNames[name] },
-		StatExists:      func(name string) bool { return statNames[name] },
-		RecipeExists:    func(id string) bool { return crafting.GetRecipe(id) != nil },
-		FactionExists:   func(id string) bool { return factions.GetDefinition(id) != nil },
-		FlagDeclared: func(key, value string) bool {
-			return quests.ValidateFlag(key, value) == nil
-		},
-		DialogueGrants: func(token string) bool { return dlgGrants[token] },
-		MobHasDialogue: mobHasDialogueFile,
+		validators: questworld.Validators(),
 	}
 }
 

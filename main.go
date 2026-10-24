@@ -1902,6 +1902,9 @@ func loadAllDataFiles(isReload bool) (reloadErr error) {
 	// At boot a dialogue problem panics; on a reload it is returned once the
 	// remaining loaders below have run.
 	reloadErr = dialogueDoor(validateShippedDialogue(), isReload)
+	if err := questDoor(isReload); err != nil && reloadErr == nil {
+		reloadErr = err
+	}
 	templates.LoadAliases(plugins.GetPluginRegistry())
 	keywords.LoadAliases(plugins.GetPluginRegistry())
 	mutators.LoadDataFiles()
