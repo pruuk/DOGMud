@@ -237,6 +237,28 @@ func TestWalk_OrderBugIsStillASkip(t *testing.T) {
 	require.Contains(t, got, "walk-dead-end 53 quest 53 trigger mob_death mob=331 grants=53-hunter")
 }
 
+// The walk sorts quests by id, so the trigger engine sees them in one order
+// whatever order the caller lists them in. Here quest 7's kill trigger also
+// grants 53-end: run before quest 53's own kill trigger it hides firstkill
+// (a skip); run after it, the firing passes through firstkill.
+func TestWalk_QuestOrderDoesNotChangeFindings(t *testing.T) {
+	build := func(sevenFirst bool) questloop.World {
+		w := walkWorld()
+		seven := &quests.Quest{QuestId: 7, Steps: []quests.QuestStep{{Id: "end"}},
+			Triggers: []quests.TriggerDef{{Event: "mob_death", Mob: 9110,
+				Conditions: quests.Conditions{Has: []string{"53-start"}},
+				Actions:    []quests.ActionDef{{Grant: "53-end"}}}}}
+		if sevenFirst {
+			w.Quests = append([]*quests.Quest{seven}, w.Quests...)
+		} else {
+			w.Quests = append(w.Quests, seven)
+		}
+		return w
+	}
+	a, b := Walk(build(true), questloop.Sources{}), Walk(build(false), questloop.Sources{})
+	require.Equal(t, a, b)
+}
+
 func TestWalk_GuardCanFail(t *testing.T) {
 	// The clean world must stay clean, and every mutation above must be
 	// caught: this is the proof the walk is capable of failing.

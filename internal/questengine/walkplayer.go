@@ -56,7 +56,9 @@ func (p *walkPlayer) HasQuest(token string) bool {
 	return want >= 0 && want <= p.index(id, cur)
 }
 
-// grant moves a quest forward the way GiveQuestToken does.
+// grant moves a quest forward the way GiveQuestToken does. A quest not yet
+// begun is entered only at "start", or at the only step of a one-step quest
+// (quests.IsTokenAfter).
 func (p *walkPlayer) grant(token string) {
 	id, step := splitToken(token)
 	next := p.index(id, step)
@@ -65,7 +67,7 @@ func (p *walkPlayer) grant(token string) {
 	}
 	cur, ok := p.progress[id]
 	if !ok {
-		if next == 0 {
+		if step == "start" || (step == "end" && len(p.steps[id]) == 1) {
 			p.progress[id] = step
 		}
 		return

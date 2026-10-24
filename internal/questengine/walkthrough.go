@@ -1,7 +1,9 @@
 package questengine
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
@@ -15,6 +17,17 @@ import (
 // share questloop's shape and backlog. A quest with no offer is skipped: the
 // start rule reports it.
 func Walk(w questloop.World, src questloop.Sources) []questloop.Finding {
+	// Sorted by id, so the engine's trigger order (and so every firing) does
+	// not depend on the order the caller lists the quests in.
+	var qs []*quests.Quest
+	for _, q := range w.Quests {
+		if q != nil {
+			qs = append(qs, q)
+		}
+	}
+	slices.SortStableFunc(qs, func(a, b *quests.Quest) int { return cmp.Compare(a.QuestId, b.QuestId) })
+	w.Quests = qs
+
 	eng := NewEngine()
 	steps := map[int][]string{}
 	for _, q := range w.Quests {

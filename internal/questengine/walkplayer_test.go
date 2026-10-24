@@ -29,6 +29,16 @@ func TestWalkPlayer_StepOrderSemantics(t *testing.T) {
 	require.Equal(t, "end", p.progress[53], "a grant never moves back")
 }
 
+// A quest is entered only at "start", or at the only step of a one-step
+// quest, as quests.IsTokenAfter allows: not at whatever step comes first.
+func TestWalkPlayer_EntersOnlyAtStart(t *testing.T) {
+	p := newWalkPlayer(map[int][]string{60: {"begin", "end"}, 61: {"end"}})
+	p.grant("60-begin")
+	require.False(t, p.HasQuest("60-begin"), "a first step not named start cannot be entered")
+	p.grant("61-end")
+	require.True(t, p.HasQuest("61-end"), "a one-step quest is entered at its only step")
+}
+
 func TestWalkPlayer_SetHeldAndClone(t *testing.T) {
 	p := newWalkPlayer(walkQuests())
 	p.hold("34-end")
