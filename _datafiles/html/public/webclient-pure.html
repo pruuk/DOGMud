@@ -749,6 +749,13 @@
                     GMCPUpdateHandlers['Char.Sight']();
                 }
 
+                // Char.Menu likewise: a full "Char" push must not leave menuOpen
+                // stale. The handler only reads the stored Menu state, so it is
+                // idempotent when the sub-object is merely carried over.
+                if ( obj.Menu ) {
+                    GMCPUpdateHandlers['Char.Menu']();
+                }
+
                 // NOTE: do NOT refresh the automation panel or tick timers here.
                 // Automation (macros/aliases/ticks/triggers) is a separate module
                 // pushed as "Char.Automation"; it never arrives in the full "Char"
