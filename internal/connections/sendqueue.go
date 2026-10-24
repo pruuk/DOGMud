@@ -10,9 +10,11 @@ import (
 )
 
 // maxQueuedBytes caps the output one connection may have waiting for its
-// socket. A full Zone.Map for a well-explored character is about 271 KB and is
-// sent on every room change, so 4 MiB is about 15 full maps: a client that
-// far behind is not catching up, and holding more only grows server memory.
+// socket. It guards bursts such as full Zone.Maps, which for a well-explored
+// character are about 271 KB each and go out on login and on a zone or floor
+// change (and on every update to a telnet GMCP client). 4 MiB is about 15 full
+// maps: a client that far behind is not catching up, and holding more only
+// grows server memory.
 // The worst case is about 120 MB with 30 stalled clients, on a production
 // droplet with 961 MB. Past the cap the connection is closed rather than
 // letting anyone wait. (Owner decision 2026-10-24: lowered from 8 MiB.)

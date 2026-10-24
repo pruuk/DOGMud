@@ -481,7 +481,8 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Char.go` | `Char` | Vitals, stats, status — the core player feed |
 | `gmcp.Automation.go` | `Char.Automation` | Triggers, macros, aliases, the action queue |
 | `gmcp.Room.go` | `Room` | Current room: description, exits, occupants |
-| `gmcp.Zone.go` | `Zone` | The `Zone.Map` snapshot the web mapper draws, plus `party` |
+| `gmcp.Zone.go` | `Zone` | The `Zone.Map` snapshot the web mapper draws, plus `party` and `full`; sent as a diff (see "Zone.Map is sent as a diff") |
+| `gmcp.ZoneDiff.go` | (none) | `zoneDiff`, the pure decision of what `Zone.Map` to send, and `roomFingerprint` |
 | `gmcp.CharVitalsWatch.go` | `Char.Vitals` | The once-a-round on-change check that keeps `Char.Vitals` current (see "When Char.Vitals is sent") |
 | `gmcp.Party.go` | `Party` | Party roster and member vitals. The full `Party` package goes out on `PartyUpdated` and also to a member on `PlayerSpawn` (and once more the next round): a reconnect inside the zombie window keeps the party, and without the push the fresh client had `Party.Vitals` but no `Members`, so the web client's Vitals window showed the viewer twice (playtest 2026-10-17) |
 | `gmcp.Comm.go` | `Comm` | Channel messages |
@@ -539,6 +540,58 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   `zoneMapVisited` (`gmcp.Zone.go`) builds the snapshot's room set and adds
   the current room only when the player's `ParticipantSight` is not
   `SightNone`, so a login in the dark does not name the room (#382 playtest).
+- **`Zone.Map` is sent as a diff (#650), to the web client only.** A telnet
+  GMCP client (Mudlet scripts, other tools) was written against a map that is
+  every room and may not merge a partial, so `buildAndSend` sends it the whole
+  map with `full: true` on every update and keeps no state for it.
+  `isWebClientConnection` (`gmcp.go`) tells them apart by the `WebClient` name
+  `onNetConnect` gives every websocket, the same test `dispatchGMCP` frames on.
+  For the web client, `GMCPZoneModule.zoneSent` holds,
+  per user id, what was last sent (`zoneSentState`: connection id, zone, floor
+  `cz`, sorted party, a fingerprint per room), guarded by `zoneMu` and cleared
+  by `zoneDespawnHandler` on `events.PlayerDespawn`. `buildAndSend` still
+  builds the snapshot each time and asks `zoneDiff` what to send: the whole map
+  with `full: true` for a new connection id, a zone change or a floor change;
+  otherwise `full: false` with only the rooms whose fingerprint is new or
+  different; and nothing at all when no room and not the party changed (the
+  usual step into a known room). A room the mapper has no position for
+  (`GetCoordinates` errors) gets `cz` = `noMapCoordinate` (999999999999999999),
+  the z `Room.Info` reports for it, so stepping into or out of it is a floor
+  change on both sides and brings a full map. `party` is on every `Zone.Map` (`[]` when
+  none), and a party change alone sends a partial with no rooms. Rooms are
+  never removed, because the visited set only grows. `roomFingerprint` hashes
+  each exit in a sorted order, because `mapper.Snapshot` builds exits from a
+  Go map. Anything that changes what a room looks like must reach the
+  snapshot, or the client never hears of it. The builder's `sendZoneMapFull`
+  (`gmcp.Build.go`) always sets `full: true`; `build.html` ignores a
+  `full: false` play map, which would otherwise shrink the editor canvas. The
+  web client (`setZoneSnapshot` in `static/js/gmcp.js`) resets on `full` and
+  merges otherwise, and no longer relies on a full map after every step: it
+  rebuilds party markers that moved, `centerOnRoom` re-fogs tokens whose
+  distance band changed, and the `Room` handler leaves a room a snapshot drew
+  as it is (`fromSnapshot`). Every rebuild of a placed token goes through
+  `_rebuildTokenGroup`, which redraws the room's stair ticks: they live in the
+  token's group and `drawnVerticalTicks` would otherwise stop them being
+  drawn again. `tools/webclient-tests/zone-map-diff.js` runs it.
+- **`Zone.Map.Resync` keeps the two in step (#650).** If the web client's map
+  is wiped by anything other than a `full: true` map, the server, which only
+  sends what changed, would never redraw it. Two client paths do that: the
+  `Room` handler resets when `Room.Info`'s zone or floor differs from the last
+  one, and `setZoneSnapshot` resets on a partial whose zone or floor differs
+  from what is drawn. Both call `RoomGridSVG.requestResync`, which sends GMCP
+  `Zone.Map.Resync` (payload `{}`) through the page's `onResync` option. The
+  server keys zone and floor exactly as `Room.Info` does (a room with no map
+  coordinates included), so its full map follows every `Room` handler reset;
+  the handler's wait, `RoomGridSVG.RESYNC_GRACE_MS` (15 s), is a fallback and
+  not the normal path. It must outlast a full map of about 273 KB on a slow
+  link: the 2 s grace it replaced made such a link fetch the map twice. A
+  full map cancels the wait and never asks, so a full map that itself resets
+  cannot loop, and a second wipe inside the wait does not ask twice. A
+  resetting partial asks at once. On the server `HandleIAC` queues
+  `GMCPZoneResync{ConnectionId}` (it runs on the connection goroutine), and
+  `zoneResyncHandler` on MainWorker resolves the user, deletes its `zoneSent`
+  entry and queues `GMCPZoneUpdate`, so the next map is full. A connection
+  with no logged-in user is ignored.
 - **Emit only on change where you can.** These push on room change and round
   boundaries; adding an unconditional per-round emit to a large payload is a
   bandwidth regression that will not show up in a local test.
@@ -547,8 +600,9 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   `u.Character`, the room manager) races the world tick and can trigger Go's
   uncatchable `fatal error: concurrent map read and map write`. Do not do that
   work inline: queue an event and handle it on MainWorker, as `GMCPBuildOp` /
-  `handleBuildOp` (`gmcp.Build.go`) and `GMCPCharOp` / `handleCharOp`
-  (`gmcp.CharOp.go`) both do. **Copy the payload** when you queue it — it
+  `handleBuildOp` (`gmcp.Build.go`), `GMCPCharOp` / `handleCharOp`
+  (`gmcp.CharOp.go`) and `GMCPZoneResync` / `zoneResyncHandler`
+  (`gmcp.Zone.go`, no payload) all do. **Copy the payload** when you queue it — it
   aliases the IAC read buffer, which is reused once `HandleIAC` returns.
 - **`Companion.Relay.*` is the one inbound family handled inline.**
   `Companion.Relay.Response`, `.Ready` and `.Gone` touch no game state, so
