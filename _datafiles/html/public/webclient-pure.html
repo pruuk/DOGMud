@@ -519,7 +519,10 @@
         /////////////////////////////////////////////
         var gr = null;
         (function initMap() {
-            var mapOptions = { cellSize: 80, cellMargin: 80, initialZoom: 0.5 };
+            var mapOptions = { cellSize: 80, cellMargin: 80, initialZoom: 0.5,
+                // The map was wiped by something other than a full Zone.Map:
+                // ask the server for a whole one (#650, RoomGridSVG.requestResync).
+                onResync: function () { SendGMCP("Zone.Map.Resync", {}); } };
             gr = new RoomGridSVG('#map-render', mapOptions);
         })();
 
@@ -613,6 +616,14 @@
                             allRooms.roomZones[zoneKey] = [];
                         }
                         gr.setRooms(allRooms.roomZones[zoneKey]);
+                        // That wiped every Zone.Map room. The server's full
+                        // Zone.Map follows every zone or floor change (a room
+                        // with no map coordinates included) and repaints. If
+                        // none arrives within the grace, a safety net and not
+                        // the normal path, ask for a whole map, since the
+                        // server sends only what changed and the map would
+                        // stay wiped (#650, RoomGridSVG.RESYNC_GRACE_MS).
+                        gr.requestResync(RoomGridSVG.RESYNC_GRACE_MS);
                     }
 
                     var r = {
@@ -663,7 +674,14 @@
                     }
 
                     allRooms.roomZones[zoneKey].push(r);
-                    gr.addRoom(r);
+                    // A room a Zone.Map already drew keeps that version: this
+                    // Room.Info shape has no name, tags or exit metadata, and
+                    // since #650 no Zone.Map follows a step into a known room
+                    // to put them back. Just centre on it.
+                    var known = gr.rooms.get(r.RoomId);
+                    if ( !(known && known.room.fromSnapshot) ) {
+                        gr.addRoom(r);
+                    }
                     gr.centerOnRoom(r.RoomId);
                 }
 
@@ -731,6 +749,13 @@
                     GMCPUpdateHandlers['Char.Sight']();
                 }
 
+                // Char.Menu likewise: a full "Char" push must not leave menuOpen
+                // stale. The handler only reads the stored Menu state, so it is
+                // idempotent when the sub-object is merely carried over.
+                if ( obj.Menu ) {
+                    GMCPUpdateHandlers['Char.Menu']();
+                }
+
                 // NOTE: do NOT refresh the automation panel or tick timers here.
                 // Automation (macros/aliases/ticks/triggers) is a separate module
                 // pushed as "Char.Automation"; it never arrives in the full "Char"
@@ -792,7 +817,10 @@
                     return;
                 }
                 if ( gr && gr.setZoneSnapshot ) {
-                    gr.setZoneSnapshot(obj.Map.zone, obj.Map.rooms || [], obj.Map.cz || 0, obj.Map.party || []);
+                    // full:false is a partial map (#650): only rooms that are
+                    // new or changed, merged into what is drawn. A missing
+                    // flag (an older server) means the whole map.
+                    gr.setZoneSnapshot(obj.Map.zone, obj.Map.rooms || [], obj.Map.cz || 0, obj.Map.party || [], obj.Map.full !== false);
                     // Update map panel title if we can find it
                     var mapTitle = document.querySelector('#panel-map .ph-title');
                     if (mapTitle) mapTitle.textContent = 'Map (' + obj.Map.zone + ')';

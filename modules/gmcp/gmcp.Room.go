@@ -69,8 +69,9 @@ func (g *GMCPRoomModule) npcMarkersChangedHandler(e events.Event) events.Listene
 // sightBandChangedHandler re-sends Room.Info when a player's light band
 // changes, since the payload follows sight (#252): lighting a torch in a dark
 // room fills in the room, and losing the light empties it. A room the player
-// now makes out joins their map, and the map is re-sent, so a room entered in
-// the dark is mapped the moment it is seen.
+// now makes out for the first time joins their map, and only then is the map
+// re-sent, so a room entered in the dark is mapped the moment it is seen. A
+// room already on the map sends nothing: the snapshot would be identical.
 func (g *GMCPRoomModule) sightBandChangedHandler(e events.Event) events.ListenerReturn {
 
 	evt, typeOk := e.(events.SightBandChanged)
@@ -465,7 +466,8 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 		m := mapper.GetMapper(room.RoomId)
 		x, y, z, err := m.GetCoordinates(room.RoomId)
 		if err != nil {
-			payload.Coordinates += `, 999999999999999999, 999999999999999999, 999999999999999999`
+			nc := strconv.Itoa(noMapCoordinate)
+			payload.Coordinates += `, ` + nc + `, ` + nc + `, ` + nc
 		} else {
 			payload.Coordinates += `, ` + strconv.Itoa(x) + `, ` + strconv.Itoa(y) + `, ` + strconv.Itoa(z)
 		}

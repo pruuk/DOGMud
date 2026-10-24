@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/gorilla/websocket"
@@ -98,9 +99,37 @@ func GetAllConnectionIds() []ConnectionId {
 	return ids
 }
 
+// cleanupWait bounds how long Cleanup waits for writers in total; see
+// WriterDrainTimeout.
+const cleanupWait = WriterDrainTimeout
+
+// Cleanup removes every connection (server shutdown) and waits, bounded by
+// cleanupWait in total, for each writer goroutine to deliver what was queued
+// and exit. Runs on the shutdown path, not the game loop.
 func Cleanup() {
-	for _, id := range GetAllConnectionIds() {
-		Remove(id)
+	lock.RLock()
+	cds := make([]*ConnectionDetails, 0, len(netConnections))
+	for _, cd := range netConnections {
+		cds = append(cds, cd)
+	}
+	lock.RUnlock()
+
+	for _, cd := range cds {
+		_ = Remove(cd.ConnectionId())
+	}
+
+	deadline := time.NewTimer(cleanupWait)
+	defer deadline.Stop()
+	for _, cd := range cds {
+		if cd.wsConn == nil && cd.conn == nil {
+			continue // socketless; never had a writer
+		}
+		select {
+		case <-cd.sendQueue().done:
+		case <-deadline.C:
+			mudlog.Warn("Cleanup", "error", "writers still running at shutdown", "waited", cleanupWait)
+			return
+		}
 	}
 }
 
@@ -158,13 +187,23 @@ type writeTarget struct {
 	cd *ConnectionDetails
 }
 
-// Broadcast writes to every logged-in connection.
+// reportSendError logs a failed enqueue. ErrSendQueueFull was already logged
+// (as SendQueueOverCap, with the queued size) where it was detected, and
+// ErrConnectionClosing means whatever closed the connection already logged
+// why; repeating either per queued message is noise.
+func reportSendError(where string, t writeTarget, err error) {
+	if errors.Is(err, ErrSendQueueFull) || errors.Is(err, ErrConnectionClosing) {
+		return
+	}
+	mudlog.Warn(where, "connectionId", t.id, "remoteAddr", t.cd.remoteAddrString(), "error", err)
+}
+
+// Broadcast queues text for every logged-in connection and returns without
+// waiting on any socket (see sendqueue.go).
 //
-// The registry lock is held ONLY long enough to snapshot the targets. Writes
-// happen with the lock released: cd.Write() can block for up to writeTimeout,
-// and holding the package lock across that would queue every other connection
-// operation — including the Remove() that reaps the stalled client — behind one
-// wedged socket, on the single game-loop goroutine.
+// The registry lock is held ONLY long enough to snapshot the targets. Queueing
+// happens with it released, and a connection over its queue cap is Removed
+// here, the same path a failed write has always taken.
 func Broadcast(colorizedText []byte, skipConnectionIds ...ConnectionId) []ConnectionId {
 
 	lock.RLock()
@@ -200,7 +239,7 @@ func Broadcast(colorizedText []byte, skipConnectionIds ...ConnectionId) []Connec
 	for _, t := range targets {
 
 		if _, err := t.cd.Write(colorizedText); err != nil {
-			mudlog.Warn("Broadcast()", "connectionId", t.id, "remoteAddr", t.cd.remoteAddrString(), "error", err)
+			reportSendError("Broadcast()", t, err)
 			// Remove from the connections
 			removeIds = append(removeIds, t.id)
 		}
@@ -215,8 +254,8 @@ func Broadcast(colorizedText []byte, skipConnectionIds ...ConnectionId) []Connec
 	return sentToIds
 }
 
-// SendTo writes to the named connections. As with Broadcast, the registry lock
-// is released before any write.
+// SendTo queues b for the named connections and returns without waiting on
+// any socket. As with Broadcast, the registry lock is released before queueing.
 func SendTo(b []byte, ids ...ConnectionId) {
 
 	lock.RLock()
@@ -232,7 +271,7 @@ func SendTo(b []byte, ids ...ConnectionId) {
 
 	for _, t := range targets {
 		if _, err := t.cd.Write(b); err != nil {
-			mudlog.Warn("SendTo()", "connectionId", t.id, "remoteAddr", t.cd.remoteAddrString(), "error", err)
+			reportSendError("SendTo()", t, err)
 			// Remove from the connections
 			removeIds = append(removeIds, t.id)
 		}

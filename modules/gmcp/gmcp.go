@@ -85,6 +85,17 @@ func isGMCPEnabled(connectionId uint64) bool {
 	return false
 }
 
+// isWebClientConnection reports whether a connection is the web client.
+// onNetConnect names every websocket connection `WebClient` (only a Core.Hello
+// renames a client, and the web client sends none), and dispatchGMCP frames
+// GMCP for the web client on the same test.
+func isWebClientConnection(connectionId uint64) bool {
+	if gmcpData, ok := gmcpModule.cache.Get(connectionId); ok {
+		return gmcpData.Client.Name == `WebClient`
+	}
+	return false
+}
+
 // ///////////////////
 // EVENTS
 // ///////////////////
@@ -402,6 +413,14 @@ func (g *GMCPModule) HandleIAC(connectionId uint64, iacCmd []byte) bool {
 				Command:      command,
 				Payload:      append([]byte(nil), payload...),
 			})
+
+		// ---- Zone.Map resync (#650) ----
+		// The web client's map was wiped by something other than a full
+		// Zone.Map; the next one must be whole. zoneSent belongs to the event
+		// loop, and resolving the user reads the user records, so defer to
+		// MainWorker like the ops above. The payload is empty.
+		case `Zone.Map.Resync`:
+			events.AddToQueue(GMCPZoneResync{ConnectionId: connectionId})
 
 		// ---- admin web room-builder (admin web-building 1b) ----
 		// Build.* mutates rooms and rebuilds mappers, which write the shared

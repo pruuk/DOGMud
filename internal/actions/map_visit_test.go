@@ -40,6 +40,24 @@ func TestMarkRoomMappedIfSeen_ShapesRoomJoinsTheMap(t *testing.T) {
 	require.True(t, u.Character.HasVisitedRoom("MapZone", 9730))
 }
 
+// The return value means "the map changed": seeing a room already on the map
+// reports false, so the sight-change path does not re-send an identical
+// Zone.Map (about 271 KB for an explored character) on every light change.
+func TestMarkRoomMappedIfSeen_SeeingAMappedRoomAgainReportsNoChange(t *testing.T) {
+	u, room := mapVisitRoom(t, 30)
+	require.True(t, MarkRoomMappedIfSeen(u.Character, room), "first sight maps the room")
+	require.False(t, MarkRoomMappedIfSeen(u.Character, room), "second sight changes nothing")
+	require.True(t, u.Character.HasVisitedRoom("MapZone", 9730))
+}
+
+// A room mapped earlier (by a move, or another visit) and seen now is no change.
+func TestMarkRoomMappedIfSeen_LitRoomAlreadyMappedReportsNoChange(t *testing.T) {
+	u, room := mapVisitRoom(t, 30)
+	u.Character.MarkRoomVisited("MapZone", 9730)
+	require.False(t, MarkRoomMappedIfSeen(u.Character, room))
+	require.Len(t, u.Character.GetVisitedRooms("MapZone"), 1)
+}
+
 // A room already on the map stays there when the character returns blind.
 func TestMarkRoomMappedIfSeen_DarkReturnKeepsAMappedRoom(t *testing.T) {
 	u, room := mapVisitRoom(t, 0)

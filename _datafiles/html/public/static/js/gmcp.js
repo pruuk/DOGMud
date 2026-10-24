@@ -211,6 +211,11 @@ class RoomGridSVG {
       this.zoomStep = options.zoomStep || 1.2;
       this.zoomLevel = options.initialZoom || 1;
       this.onRoomClick = options.onRoomClick || NO_ROOM_CLICK;
+      // Called when the map was wiped by anything other than a full Zone.Map,
+      // so the page can ask the server for a whole one (GMCP Zone.Map.Resync,
+      // #650). Null (the builder, tests) means never ask. See requestResync.
+      this.onResync = options.onResync || null;
+      this._resyncTimer = null;
       this.zoomButtonSize = options.zoomButtonSize || 25;
       this.controlsMargin = options.controlsMargin || 10;
       this.biomeTints = options.biomeTints || RoomGridSVG.DEFAULT_BIOME_TINTS;
@@ -323,10 +328,10 @@ class RoomGridSVG {
           entry.room.tags = room.tags;
           entry.room.name = room.name;
           entry.room.biome = room.biome;
+          if (room.fromSnapshot) entry.room.fromSnapshot = true;
 
           // Re-draw the room token by clearing and rebuilding group contents
-          while (entry.group.firstChild) entry.group.removeChild(entry.group.firstChild);
-          this._buildRoomTokenInGroup(entry.group, room, isCurrent, svc);
+          this._rebuildTokenGroup(id, entry.group, room, isCurrent, svc);
 
           // deferEdges exists so a whole-snapshot pass can batch its per-room
           // work. _updateBounds and _applyZoom were not covered by it, which
@@ -401,6 +406,51 @@ class RoomGridSVG {
   }
 
   /**
+   * The map was wiped by something other than a full Zone.Map (#650). Since
+   * the server sends only what changed, nothing would ever redraw the rooms
+   * it thinks the client already has, so ask it for a whole map.
+   *
+   * graceMs > 0: the wipe may be the first half of an ordinary zone or floor
+   * change (Room.Info arrives first, then the server's full Zone.Map), so wait
+   * that long and ask only if no full map arrived meanwhile. A second wipe
+   * inside the wait does not ask again. graceMs 0: ask now (a partial map
+   * that reset the floor proves no full map is coming), replacing any wait.
+   * A full Zone.Map cancels the wait and never asks, so a full map that
+   * itself resets the floor cannot start a loop.
+   */
+  /**
+   * How long the Room handler waits for a full Zone.Map after its Room.Info
+   * wiped the map before asking for one. A fallback only, never the normal
+   * path: the server sends a full map on every zone or floor change, a room
+   * with no map coordinates included (its cz matches the z 999... that
+   * Room.Info reports). The wait must outlast that full map, which for an
+   * explored character is about 273 KB and can take over 2 s on a slow link;
+   * the 2 s grace this replaced made such a link fetch the whole map twice.
+   */
+  static get RESYNC_GRACE_MS() { return 15000; }
+
+  requestResync(graceMs) {
+      if (!this.onResync) return;
+      if (graceMs > 0) {
+          if (this._resyncTimer != null) return;
+          this._resyncTimer = setTimeout(() => {
+              this._resyncTimer = null;
+              this.onResync();
+          }, graceMs);
+          return;
+      }
+      this._cancelResync();
+      this.onResync();
+  }
+
+  _cancelResync() {
+      if (this._resyncTimer != null) {
+          clearTimeout(this._resyncTimer);
+          this._resyncTimer = null;
+      }
+  }
+
+  /**
    * Center & highlight a room. Re-draws that room as the current token.
    */
   centerOnRoom(id) {
@@ -430,15 +480,25 @@ class RoomGridSVG {
           const prevEntry = this.rooms.get(prevCenterId);
           if (prevEntry) {
               const prevSvc = this._serviceFor(prevEntry.room.tags);
-              while (prevEntry.group.firstChild) prevEntry.group.removeChild(prevEntry.group.firstChild);
-              this._buildRoomTokenInGroup(prevEntry.group, prevEntry.room, false, prevSvc);
+              this._rebuildTokenGroup(prevCenterId, prevEntry.group, prevEntry.room, false, prevSvc);
           }
       }
 
       // re-draw new current room as raised token
       const svc = this._serviceFor(entry.room.tags);
-      while (entry.group.firstChild) entry.group.removeChild(entry.group.firstChild);
-      this._buildRoomTokenInGroup(entry.group, entry.room, true, svc);
+      this._rebuildTokenGroup(id, entry.group, entry.room, true, svc);
+
+      // Re-fog every other token whose distance band changed. A full Zone.Map
+      // used to follow every step and rebuild every token from the new centre;
+      // since #650 a step into a known room brings no Zone.Map at all, so the
+      // rooms around the old and new centre are re-fogged here instead. Each
+      // token remembers the fog it was built with (_buildRoomTokenInGroup), so
+      // only the handful that changed are rebuilt.
+      this.rooms.forEach((other, otherId) => {
+          if (otherId === id || other.group._fog === this._fog(other.room)) return;
+          const osvc = this._serviceFor(other.room.tags);
+          this._rebuildTokenGroup(otherId, other.group, other.room, false, osvc);
+      });
 
       this.center = {
           x: entry.room.x * this.spacing,
@@ -460,9 +520,14 @@ class RoomGridSVG {
   /**
    * Ingest a Zone.Map snapshot.
    * party = array of roomIds that hold party members (from Zone.Map payload).
+   * full = false when snapshotRooms holds only the rooms that are new or
+   * changed since the last Zone.Map (#650), to merge into the rooms already
+   * drawn; anything else (true, or absent from an older server) means the
+   * snapshot is every room to draw, so the floor is cleared first.
    */
-  setZoneSnapshot(zone, snapshotRooms, currentZ, party) {
+  setZoneSnapshot(zone, snapshotRooms, currentZ, party, full) {
       currentZ = currentZ || 0;
+      const isFull = full !== false;
 
       // Remember where we were centred BEFORE any reset() below wipes it.
       // On a zone change the client has already handled Room.Info, which does
@@ -472,14 +537,19 @@ class RoomGridSVG {
       // the centre) for the whole of that room's visit.
       const priorCenterId = this.currentCenterId;
 
-      // Build party lookup
+      // Build party lookup, keeping the old one: a partial map re-sends only
+      // changed rooms, so rooms a party member left or entered are rebuilt
+      // below even when the server did not re-send them.
+      const priorParty = this._party;
       this._party = {};
       if (Array.isArray(party)) {
           party.forEach(rid => { this._party[rid] = true; });
       }
 
-      // On zone OR floor change: reset world + re-render surface.
-      if (this._zone !== zone || this._z !== currentZ) {
+      // A full map, or a zone or floor change: reset world + re-render surface.
+      // A partial map on the same zone and floor merges.
+      const didReset = isFull || this._zone !== zone || this._z !== currentZ;
+      if (didReset) {
           this.reset();
           this._zone = zone;
           this._z = currentZ;
@@ -487,6 +557,14 @@ class RoomGridSVG {
           this.surfaceGroup.innerHTML = '';
           this.overlayGroup.innerHTML = '';
           this._renderSurface(zone, currentZ);
+      }
+      // A full map is the whole truth: drop any pending ask. A partial that
+      // reset leaves only its own few rooms drawn while the server believes
+      // the client has them all, so ask now.
+      if (isFull) {
+          this._cancelResync();
+      } else if (didReset) {
+          this.requestResync(0);
       }
 
       // Only render rooms on the current floor
@@ -504,9 +582,23 @@ class RoomGridSVG {
               name: r.name,
               tags: r.tags,
               Exits: (r.exits || []).map(e => ({ RoomId: e.to, kind: e.kind, dx: e.dx, dy: e.dy, dz: e.dz })),
-              ExitsMeta: r.exits || []
+              ExitsMeta: r.exits || [],
+              // Room.Info skips its own addRoom for a room a snapshot drew,
+              // which would otherwise strip the name, tags and exits metadata
+              // that no following Zone.Map puts back (#650).
+              fromSnapshot: true
           }, /* deferEdges = */ true);
       });
+
+      // Party markers on rooms this partial did not re-send.
+      if (!didReset) {
+          const sent = new Set(floor.map(r => r.num));
+          const touched = new Set([...Object.keys(priorParty), ...Object.keys(this._party)]);
+          touched.forEach(rid => {
+              const n = Number(rid);
+              if (!sent.has(n) && !!priorParty[rid] !== !!this._party[rid]) this._rebuildRoomToken(n);
+          });
+      }
 
       // Pass 2: draw connectors/stubs/ticks for newly-seen rooms (edge dedup
       // skips ones already drawn), then the quest next-step arrow on top.
@@ -564,8 +656,31 @@ class RoomGridSVG {
       if (!entry) { return; }
       const isCurrent = (this.currentCenterId === entry.room.RoomId || this.currentCenterId === id);
       const svc = this._serviceFor(entry.room.tags);
-      while (entry.group.firstChild) entry.group.removeChild(entry.group.firstChild);
-      this._buildRoomTokenInGroup(entry.group, entry.room, isCurrent, svc);
+      this._rebuildTokenGroup(entry.room.RoomId, entry.group, entry.room, isCurrent, svc);
+  }
+
+  /**
+   * Empty a placed room's group and build its token again, stair ticks
+   * included. Every rebuild of a placed room goes through here.
+   *
+   * _drawVerticalTick appends the ▲/▼ tick to the room's own group and records
+   * it in drawnVerticalTicks so the edge pass never draws it twice. Emptying
+   * the group removed the tick but left the record, so the tick stayed gone
+   * until the next full map reset the map. Since #650 no Zone.Map follows a
+   * step into a known room, so the ticks around the player vanished. The
+   * record is dropped and the ticks are redrawn from the room's ExitsMeta,
+   * the same exits the edge pass reads.
+   */
+  _rebuildTokenGroup(id, group, room, isCurrent, svc) {
+      while (group.firstChild) group.removeChild(group.firstChild);
+      this._buildRoomTokenInGroup(group, room, isCurrent, svc);
+      this.drawnVerticalTicks.delete(id + ":u");
+      this.drawnVerticalTicks.delete(id + ":d");
+      const entry = this.rooms.get(id);
+      const meta = entry && Array.isArray(entry.room.ExitsMeta) ? entry.room.ExitsMeta : [];
+      meta.forEach(e => {
+          if (e && e.kind === "vertical") this._drawConnection(id, e); // draws only the tick
+      });
   }
 
   /**
@@ -871,6 +986,8 @@ class RoomGridSVG {
       if (!isCurrent) {
           g.setAttribute("opacity", fog);
       }
+      // Remembered so centerOnRoom re-fogs only the tokens whose band changed.
+      g._fog = isCurrent ? null : fog;
 
       // Vertical stair ticks (▲/▼) — drawn from ExitsMeta vertical exits.
       // We just add placeholders here; the actual ticks are added by _drawVerticalTick
