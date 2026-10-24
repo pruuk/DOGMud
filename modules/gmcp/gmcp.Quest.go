@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/questworld"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -36,6 +37,11 @@ type questDeps struct {
 	references func(id int) []questRefEntry
 	reindex    func() // rebuild the questengine trigger index
 	validators quests.QuestValidators
+
+	// loop runs the quest loop rules over the world with q in place, and
+	// backlog returns the shipped loop backlog (#375 phase 2 editor door).
+	loop    func(q quests.Quest) []questloop.Finding
+	backlog func() (questloop.Backlog, error)
 }
 
 func realQuestDeps() questDeps {
@@ -50,6 +56,10 @@ func realQuestDeps() questDeps {
 		references: scanQuestReferences,
 		reindex:    questengine.LoadDataFiles,
 		validators: questworld.Validators(),
+		loop: func(q quests.Quest) []questloop.Finding {
+			return questloop.Validate(questworld.WithQuest(questworld.Registry(), q))
+		},
+		backlog: questworld.LoadBacklog,
 	}
 }
 
@@ -203,6 +213,23 @@ func buildQuestUpdate(d questDeps, q quests.Quest) BuildResult {
 	errs, warns := quests.ValidateQuestRefs(q, d.validators)
 	if len(errs) > 0 {
 		return buildErr("quest %d refused:\n%s", q.QuestId, strings.Join(errs, "\n"))
+	}
+	if d.loop != nil && d.backlog != nil {
+		b, err := d.backlog()
+		if err != nil {
+			return buildErr("quest %d refused: cannot read the loop backlog: %s", q.QuestId, err.Error())
+		}
+		fresh, known, _ := questloop.Ratchet(d.loop(q), b)
+		if len(fresh) > 0 {
+			lines := make([]string, 0, len(fresh))
+			for _, f := range fresh {
+				lines = append(lines, f.String())
+			}
+			return buildErr("quest %d refused:\n%s", q.QuestId, strings.Join(lines, "\n"))
+		}
+		for _, f := range known {
+			warns = append(warns, "known (loop backlog): "+f.String())
+		}
 	}
 	if err := d.save(q); err != nil {
 		return buildErr("could not save quest %d: %s", q.QuestId, err.Error())
