@@ -16,7 +16,7 @@ import (
 // zoneDiffFixture seeds a lit zone of three rooms: the hall 9760 with the
 // gallery 9761 to its north and the pantry 9763 to its east. The returned
 // user stands in the hall, has already mapped the pantry, has never been in
-// the gallery, and has a GMCP-negotiated connection.
+// the gallery, and has a web client connection (the only kind sent diffs).
 func zoneDiffFixture(t *testing.T) *users.UserRecord {
 	t.Helper()
 	mudlog.SetupLogger(nil, ``, ``, false) // the mapper logs when it builds a zone
@@ -43,7 +43,10 @@ func zoneDiffFixture(t *testing.T) *users.UserRecord {
 	u.Character.MarkRoomVisited("DiffZone", 9760)
 	u.Character.MarkRoomVisited("DiffZone", 9763)
 	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{9764: u}))
-	gmcpModule.cache.Add(97764, GMCPSettings{GMCPAccepted: true, HelloReceived: true})
+	// As onNetConnect records a websocket connection.
+	web := GMCPSettings{GMCPAccepted: true, HelloReceived: true}
+	web.Client.Name = `WebClient`
+	gmcpModule.cache.Add(97764, web)
 	t.Cleanup(func() { gmcpModule.cache.Remove(97764) })
 	hall.AddPlayer(9764)
 	events.DrainQueuedByTypeForTest(`GMCPOut`)
@@ -164,6 +167,87 @@ func TestZoneMap_ResyncSendsTheWholeMapAgain(t *testing.T) {
 	require.Len(t, maps, 1)
 	require.True(t, maps[0].Full, "after a resync the next map is whole")
 	require.ElementsMatch(t, []int{9760, 9763}, zoneMapRoomIds(maps[0]))
+}
+
+// A room the mapper has no position for (GetCoordinates errors) is its own
+// floor. Room.Info reports z 999... for it, so the web client's floor key
+// changes and its Room handler wipes the map; the server must see a floor
+// change too and send the whole map, on the way in and on the way out, or the
+// client sat on a wiped map until its resync fallback fired. The payload's cz
+// is the same 999... the client keys on.
+func TestZoneMap_RoomWithNoCoordinatesIsAFloorChange(t *testing.T) {
+	u := zoneDiffFixture(t)
+	g := &GMCPZoneModule{zoneSent: map[int]*zoneSentState{}}
+	g.buildAndSend(GMCPZoneUpdate{UserId: u.UserId})
+	maps := drainZoneMaps(t, u.UserId)
+	require.Len(t, maps, 1)
+	require.Equal(t, 0, maps[0].CurrentZ)
+
+	// The zone's mapper loses the room: an empty mapper stands in for it.
+	real := mapper.GetMapper(9760)
+	mapper.AddMapper(mapper.NewMapper(9760), 9760)
+	t.Cleanup(func() { mapper.AddMapper(real, 9760) })
+	_, _, _, err := mapper.GetMapper(9760).GetCoordinates(9760)
+	require.Error(t, err, "the stand-in mapper has no coordinates for the room")
+
+	g.buildAndSend(GMCPZoneUpdate{UserId: u.UserId})
+	maps = drainZoneMaps(t, u.UserId)
+	require.Len(t, maps, 1, "entering a room with no coordinates sends a map")
+	require.True(t, maps[0].Full, "and it is whole")
+	require.Equal(t, noMapCoordinate, maps[0].CurrentZ, "cz matches the z Room.Info reports")
+
+	mapper.AddMapper(real, 9760)
+	g.buildAndSend(GMCPZoneUpdate{UserId: u.UserId})
+	maps = drainZoneMaps(t, u.UserId)
+	require.Len(t, maps, 1, "leaving it sends a map")
+	require.True(t, maps[0].Full, "and it is whole")
+	require.Equal(t, 0, maps[0].CurrentZ)
+	require.ElementsMatch(t, []int{9760, 9763}, zoneMapRoomIds(maps[0]))
+}
+
+// Diffs are for the web client, which merges them. A telnet GMCP client
+// (a Mudlet script, another tool) was written against a Zone.Map that is
+// always every room, so it still gets that on every update.
+func TestZoneMap_TelnetClientAlwaysGetsTheWholeMap(t *testing.T) {
+	u := zoneDiffFixture(t)
+	telnet := GMCPSettings{GMCPAccepted: true, HelloReceived: true}
+	telnet.Client.Name = `Mudlet`
+	telnet.Client.IsMudlet = true
+	gmcpModule.cache.Add(u.ConnectionId(), telnet)
+	g := &GMCPZoneModule{zoneSent: map[int]*zoneSentState{}}
+
+	for step := 1; step <= 2; step++ {
+		g.buildAndSend(GMCPZoneUpdate{UserId: u.UserId})
+		maps := drainZoneMaps(t, u.UserId)
+		require.Len(t, maps, 1, "step %d sends a map", step)
+		require.True(t, maps[0].Full, "step %d map is whole", step)
+		require.ElementsMatch(t, []int{9760, 9763}, zoneMapRoomIds(maps[0]), "step %d", step)
+	}
+	require.Nil(t, g.zoneSent[u.UserId], "no diff state is kept for a telnet client")
+}
+
+// The module's listeners are what clear a logged-out player's state and answer
+// a client's resync; a registration dropped from registerListeners would leave
+// either one dead with every direct-call test still green.
+func TestZoneModule_RegistersDespawnAndResyncListeners(t *testing.T) {
+	u := zoneDiffFixture(t)
+	t.Cleanup(events.SwapListenersForTest())
+	g := &GMCPZoneModule{zoneSent: map[int]*zoneSentState{}}
+	g.registerListeners()
+
+	events.DoListeners(GMCPZoneUpdate{UserId: u.UserId})
+	require.Len(t, drainZoneMaps(t, u.UserId), 1)
+	require.NotNil(t, g.zoneSent[u.UserId])
+
+	events.DoListeners(events.PlayerDespawn{UserId: u.UserId})
+	require.Nil(t, g.zoneSent[u.UserId], "PlayerDespawn reaches zoneDespawnHandler")
+
+	g.zoneSent[u.UserId] = &zoneSentState{conn: u.ConnectionId()}
+	events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`)
+	t.Cleanup(func() { events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`) })
+	events.DoListeners(GMCPZoneResync{ConnectionId: u.ConnectionId()})
+	require.Nil(t, g.zoneSent[u.UserId], "GMCPZoneResync reaches zoneResyncHandler")
+	require.Len(t, events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`), 1)
 }
 
 // A resync from a connection with no logged-in user does nothing.

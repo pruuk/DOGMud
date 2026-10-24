@@ -51,11 +51,22 @@ func init() {
 		plug:     plugins.New(`gmcp.Zone`, `1.0`),
 		zoneSent: map[int]*zoneSentState{},
 	}
+	g.registerListeners()
+}
+
+// registerListeners wires the module to the event bus. Split from init so a
+// test can register a fresh instance and drive it through DoListeners.
+func (g *GMCPZoneModule) registerListeners() {
 	events.RegisterListener(events.RoomChange{}, g.roomChangeHandler)
 	events.RegisterListener(GMCPZoneUpdate{}, g.buildAndSend)
 	events.RegisterListener(events.PlayerDespawn{}, g.zoneDespawnHandler)
 	events.RegisterListener(GMCPZoneResync{}, g.zoneResyncHandler)
 }
+
+// noMapCoordinate is what Room.Info reports for each axis of a room the
+// mapper has no position for, and so the floor the web client keys such a
+// room on. Zone.Map uses it as cz for that room so the two keys agree (#650).
+const noMapCoordinate = 999999999999999999
 
 // GMCPZoneResync carries a client's Zone.Map.Resync request from the
 // connection goroutine (HandleIAC) to MainWorker, where zoneResyncHandler
@@ -141,7 +152,15 @@ func (g *GMCPZoneModule) buildAndSend(e events.Event) events.ListenerReturn {
 	visited := zoneMapVisited(user, room, m.HasRoom)
 
 	// Current floor (z) so the client shows only the level the player is on.
-	_, _, cz, _ := m.GetCoordinates(room.RoomId)
+	// A room the mapper has no position for is its own floor, keyed exactly as
+	// the web client keys it from Room.Info, so stepping into or out of it is a
+	// floor change on both sides and gets a full map. It used to fall back to
+	// 0: the client wiped its map while the server saw no change and sent
+	// nothing.
+	_, _, cz, err := m.GetCoordinates(room.RoomId)
+	if err != nil {
+		cz = noMapCoordinate
+	}
 
 	// Party-member room positions (excluding self), de-duplicated.
 	party := []int{}
@@ -168,9 +187,21 @@ func (g *GMCPZoneModule) buildAndSend(e events.Event) events.ListenerReturn {
 	// Send the whole map only on a new connection, a zone change or a floor
 	// change; otherwise only the rooms that are new or changed, or nothing
 	// (#650). A fully explored character used to get about 271 KB per step.
+	//
+	// Only the web client merges partial maps. A telnet GMCP client (a Mudlet
+	// script, another tool) was written against a Zone.Map that is every room,
+	// so it gets the whole map on every update, as before #650, and no state
+	// is kept for it.
+	snap := m.Snapshot(visited)
+	var d zoneDiffResult
 	g.zoneMu.Lock()
-	d := zoneDiff(g.zoneSent[evt.UserId], user.ConnectionId(), room.Zone, cz, party, m.Snapshot(visited))
-	g.zoneSent[evt.UserId] = d.next
+	if isWebClientConnection(user.ConnectionId()) {
+		d = zoneDiff(g.zoneSent[evt.UserId], user.ConnectionId(), room.Zone, cz, party, snap)
+		g.zoneSent[evt.UserId] = d.next
+	} else {
+		d = zoneDiffResult{send: true, full: true, rooms: snap, party: party}
+		delete(g.zoneSent, evt.UserId)
+	}
 	g.zoneMu.Unlock()
 	if !d.send {
 		return events.Continue

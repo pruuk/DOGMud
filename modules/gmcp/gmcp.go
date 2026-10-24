@@ -85,6 +85,17 @@ func isGMCPEnabled(connectionId uint64) bool {
 	return false
 }
 
+// isWebClientConnection reports whether a connection is the web client.
+// onNetConnect names every websocket connection `WebClient` (only a Core.Hello
+// renames a client, and the web client sends none), and dispatchGMCP frames
+// GMCP for the web client on the same test.
+func isWebClientConnection(connectionId uint64) bool {
+	if gmcpData, ok := gmcpModule.cache.Get(connectionId); ok {
+		return gmcpData.Client.Name == `WebClient`
+	}
+	return false
+}
+
 // ///////////////////
 // EVENTS
 // ///////////////////
