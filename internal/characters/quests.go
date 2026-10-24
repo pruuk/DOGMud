@@ -203,6 +203,64 @@ func (c *Character) QuestCooldownActive(questId int) bool {
 	return util.GetRoundCount() < miscDataToUint64(v)
 }
 
+// RecordCompletion counts one completed run of a repeatable quest. The
+// completion pass calls it beside the progress reset and the cooldown stamp.
+func (c *Character) RecordCompletion(q *quests.Quest) {
+	if q == nil || !q.Repeatable {
+		return
+	}
+	if c.QuestCompletions == nil {
+		c.QuestCompletions = make(map[int]int)
+	}
+	c.QuestCompletions[q.QuestId]++
+	c.SetQuestCooldown(q.QuestId, uint64(q.CooldownRounds))
+}
+
+// RepeatCapReached reports whether a repeatable quest with a repeat_limit has
+// been completed that many times.
+func (c *Character) RepeatCapReached(q *quests.Quest) bool {
+	return q != nil && q.Repeatable && q.RepeatLimit > 0 && c.QuestCompletions[q.QuestId] >= q.RepeatLimit
+}
+
+// LastRepeat reports whether the next run of a repeatable quest is the last
+// its repeat_limit allows.
+func (c *Character) LastRepeat(q *quests.Quest) bool {
+	return q != nil && q.Repeatable && q.RepeatLimit > 0 && c.QuestCompletions[q.QuestId] == q.RepeatLimit-1
+}
+
+// QuestOpen reports whether q can be offered to this character now: always
+// for a non-repeatable (its gates decide), and for a repeatable only off
+// cooldown and under its cap (#375 P3). It backs PlayerState.QuestOpen.
+func (c *Character) QuestOpen(q *quests.Quest) bool {
+	if q == nil || !q.Repeatable {
+		return true
+	}
+	return !c.QuestCooldownActive(q.QuestId) && !c.RepeatCapReached(q)
+}
+
+// RenameQuestSteps moves saved progress through the step-id manifest's
+// renames ("<qid>-<old>" -> "<qid>-<new>"), following chains. A rename that
+// changes the quest id is ignored: a step cannot move between quests.
+func (c *Character) RenameQuestSteps(renames map[string]string) {
+	if len(renames) == 0 || len(c.QuestProgress) == 0 {
+		return
+	}
+	for qid, step := range c.QuestProgress {
+		tok := quests.PartsToToken(qid, step)
+		for hops := 0; hops < len(renames); hops++ {
+			n, ok := renames[tok]
+			if !ok {
+				break
+			}
+			tok = n
+		}
+		nid, nstep := quests.TokenToParts(tok)
+		if nid == qid {
+			c.QuestProgress[qid] = nstep
+		}
+	}
+}
+
 // miscDataToUint64 coerces a MiscData value to uint64. MiscData stores any,
 // and an integer written as uint64 may return from YAML reload as int,
 // int64, or float64 — handle all of them; anything else yields 0.

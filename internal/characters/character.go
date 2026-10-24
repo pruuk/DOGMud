@@ -317,6 +317,7 @@ type Character struct {
 	Cooldowns               Cooldowns                      `yaml:"cooldowns,omitempty"`           // How many rounds until it is cooled down
 	Settings                map[string]string              `yaml:"settings,omitempty"`            // custom setting tracking, used for anything.
 	QuestProgress           map[int]string                 `yaml:"questprogress,omitempty"`       // quest progress tracking
+	QuestCompletions        map[int]int                    `yaml:"questcompletions,omitempty"`    // completed runs of each repeatable quest (#375 P3)
 	QuestFlags              map[string]string              `yaml:"questflags,omitempty"`          // quest flag tracking (e.g., "11-branch" → "rhett")
 	HeardTopics             []string                       `yaml:"heardtopics,omitempty"`         // heard talk topics, "<mobId>.<key>", sorted (#375)
 	LastQuestId             int                            `yaml:"lastquestid,omitempty"`         // most recently progressed quest
