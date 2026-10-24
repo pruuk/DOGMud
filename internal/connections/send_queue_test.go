@@ -52,8 +52,10 @@ func (l *testLogTee) contains(subs ...string) bool {
 var testLogs = &testLogTee{}
 
 // fastCallLimit is how long one SendTo may take. A blocking socket write
-// costs the full writeTimeout (5 s), so 50 ms separates the two cleanly.
-const fastCallLimit = 50 * time.Millisecond
+// costs the full writeTimeout (5 s). A queued 256 KiB send takes about 1 ms
+// normally, but under -race on a loaded machine one took 92 ms (2026-10-24),
+// so the limit is 250 ms: still 20 times under a single blocked write.
+const fastCallLimit = 250 * time.Millisecond
 
 // waitUntil polls cond until it holds or limit passes. It waits on a
 // condition rather than sleeping a guessed amount.
