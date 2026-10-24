@@ -54,7 +54,13 @@ func triggerCopyover() error {
 		return err
 	}
 
-	serverAlive.Store(false)
+	// Turn new telnet connections away for the handoff. A copyover that
+	// succeeds never returns here (Execute re-execs), so the deferred resume
+	// runs only when this copyover fails: the save-flush abort, an Execute
+	// error, or a panic. Each leaves the server running, and it must keep
+	// accepting players (#670). Shutdown has its own flag, serverAlive.
+	pauseAccepting()
+	defer resumeAccepting()
 
 	// Finds a player was already told about ("Something glints...") and
 	// pickpockets in their pause are on goroutines that need this lock to
@@ -83,7 +89,6 @@ func triggerCopyover() error {
 	if err := hooks.AutosaveQueue().FlushAll(); err != nil {
 		mudlog.Error("copyover", "action", "FlushPendingWrites", "error", err,
 			"message", "aborting copyover rather than discarding unwritten saves")
-		serverAlive.Store(true)
 		return fmt.Errorf("copyover aborted: pending saves could not be flushed: %w", err)
 	}
 
@@ -114,11 +119,10 @@ func triggerCopyover() error {
 
 	// On success Execute never returns. If it fails after the connections
 	// contributor froze output for the handoff, the server keeps running, so
-	// lift the freeze or every player is left with no output. serverAlive is
-	// restored as the save-flush abort above does.
+	// lift the freeze or every player is left with no output. The deferred
+	// resumeAccepting above reopens the telnet listeners.
 	if err := copyover.Execute(binaryPath, os.Args[1:]); err != nil {
 		connections.ThawOutputAfterFailedCopyover()
-		serverAlive.Store(true)
 		return err
 	}
 	return nil
