@@ -351,6 +351,132 @@ func TestWalk_ItemQuestTokenIsAWayIn(t *testing.T) {
 	require.Contains(t, got, "walk-dead-end 53 step firstkill")
 }
 
+// A flag of the walked quest is never faked: a hand-in gated on one that
+// nothing sets is a dead end. Another quest's flag is a prerequisite and is
+// held, like its tokens.
+func TestWalk_OwnFlagNothingSetsIsADeadEnd(t *testing.T) {
+	w := walkWorld()
+	w.Dialogue[0].Topics[1].QuestFlagRequired = map[string]string{"53-cleared": "yes"}
+	got := keys(Walk(w, questloop.Sources{}))
+	require.Contains(t, got, "walk-dead-end 53 mob 9112 topic cull_in")
+	require.Contains(t, got, "walk-dead-end 53 step end")
+
+	// The kill sets it: the hand-in opens.
+	w.Quests[0].Triggers[0].Actions = append(w.Quests[0].Triggers[0].Actions,
+		quests.ActionDef{SetFlag: &quests.QuestFlagAction{Key: "53-cleared", Value: "yes"}})
+	require.Empty(t, Walk(w, questloop.Sources{}))
+
+	// Another quest's flag is held as a prerequisite.
+	w = walkWorld()
+	w.Dialogue[0].Topics[1].QuestFlagRequired = map[string]string{"7-sided": "garve"}
+	w.Quests[0].Triggers[0].Conditions.HasFlag = map[string]string{"8-done": "yes"}
+	require.Empty(t, Walk(w, questloop.Sources{}))
+}
+
+// A flag of the walked quest set by a trigger or topic that grants nothing
+// (quest 72's room_interact set_flag, quest 18's bedroll before the offer)
+// is set by firing that setter, so the gate on it opens. A setter that
+// cannot fire leaves the gate shut.
+func TestWalk_OwnFlagSetByAGrantlessSetterOpensTheGate(t *testing.T) {
+	w := walkWorld()
+	q := w.Quests[0]
+	q.Triggers = append(q.Triggers, quests.TriggerDef{
+		Event: "room_interact", Room: 6078, Noun: "channel",
+		Conditions: quests.Conditions{Has: []string{"53-start"}},
+		Actions:    []quests.ActionDef{{SetFlag: &quests.QuestFlagAction{Key: "53-channel", Value: "found"}}},
+	})
+	// Before the offer: a bedroll sets 53-barn, which an info topic needs,
+	// which the offer needs heard.
+	q.Triggers = append(q.Triggers, quests.TriggerDef{
+		Event: "room_interact", Room: 4050, Noun: "bedroll",
+		Conditions: quests.Conditions{Missing: []string{"53-start"}},
+		Actions:    []quests.ActionDef{{SetFlag: &quests.QuestFlagAction{Key: "53-barn", Value: "seen"}}},
+	})
+	w.Dialogue[0].Topics = append(w.Dialogue[0].Topics, dialogue.Topic{Key: "barn_trace", Kind: dialogue.KindInfo,
+		Label: "Barn", Text: "t", Gates: dialogue.Gates{QuestFlagRequired: map[string]string{"53-barn": "seen"}}})
+	w.Dialogue[0].Topics[0].HeardRequired = []string{"barn_trace"}
+	w.Dialogue[0].Topics[1].QuestFlagRequired = map[string]string{"53-channel": "found"}
+	require.Empty(t, Walk(w, questloop.Sources{}))
+
+	// The channel can be found only after end: the hand-in stays shut.
+	q.Triggers[1].Conditions.Has = []string{"53-end"}
+	require.Contains(t, keys(Walk(w, questloop.Sources{})), "walk-dead-end 53 step end")
+}
+
+// heardRequired holds only when the info topic can be heard in the walk's
+// state: it opens there, or the walk chose it.
+func TestWalk_HeardTopicThatNeverShowsIsADeadEnd(t *testing.T) {
+	w := walkWorld()
+	w.Dialogue[0].Topics = append(w.Dialogue[0].Topics, dialogue.Topic{Key: "lore", Kind: dialogue.KindInfo,
+		Label: "Lore", Text: "t", Gates: dialogue.Gates{QuestRequired: []string{"53-end"}}}) // never open before end
+	w.Dialogue[0].Topics[1].HeardRequired = []string{"lore"}
+	got := keys(Walk(w, questloop.Sources{}))
+	require.Contains(t, got, "walk-dead-end 53 mob 9112 topic cull_in")
+
+	// Open from start: the player can hear it before handing in.
+	w.Dialogue[0].Topics[2].QuestRequired = []string{"53-start"}
+	require.Empty(t, Walk(w, questloop.Sources{}))
+}
+
+// branchWorld has two ways into 53-path, each setting its own 53-route, and
+// a hand-in that wants route b.
+func branchWorld() questloop.World {
+	w := walkWorld()
+	q := w.Quests[0]
+	q.Steps = []quests.QuestStep{{Id: "start", Hint: "h"}, {Id: "path", Hint: "h"}, {Id: "end"}}
+	setRoute := func(v string) quests.ActionDef {
+		return quests.ActionDef{SetFlag: &quests.QuestFlagAction{Key: "53-route", Value: v}}
+	}
+	q.Triggers = []quests.TriggerDef{
+		{Event: "mob_death", Mob: 9110, Conditions: quests.Conditions{Has: []string{"53-start"}, Missing: []string{"53-path"}},
+			Actions: []quests.ActionDef{setRoute("a"), {Grant: "53-path"}}},
+		{Event: "skill_use", Skill: "brawling", Conditions: quests.Conditions{Has: []string{"53-start"}, Missing: []string{"53-path"}},
+			Actions: []quests.ActionDef{setRoute("b"), {Grant: "53-path"}}},
+	}
+	w.Dialogue[0].Topics[1].QuestRequired = []string{"53-path"}
+	w.Dialogue[0].Topics[1].QuestFlagRequired = map[string]string{"53-route": "b"}
+	return w
+}
+
+// Alternatives are judged per branch: the hand-in needs the flag only the
+// second way into path sets, so the walk carries both branches forward.
+func TestWalk_LaterWayReachedThroughTheSecondBranch(t *testing.T) {
+	require.Empty(t, Walk(branchWorld(), questloop.Sources{}))
+}
+
+// Negative gates read the walk's real state: a hand-in that refuses route a
+// is still reached through route b, and one that refuses both is dead.
+func TestWalk_NegativeGatesReadTheRealState(t *testing.T) {
+	w := branchWorld()
+	w.Dialogue[0].Topics[1].QuestFlagRequired = nil
+	w.Dialogue[0].Topics[1].QuestFlagExcluded = map[string]string{"53-route": "a"}
+	require.Empty(t, Walk(w, questloop.Sources{}))
+
+	w.Quests[0].Triggers[1].Actions[0].SetFlag.Value = "a"
+	require.Contains(t, keys(Walk(w, questloop.Sources{})), "walk-dead-end 53 step end")
+}
+
+// A dead step does not stop the source checks: the hand-in after it still
+// reports the item nothing provides.
+func TestWalk_StepsAfterADeadStepAreSourceChecked(t *testing.T) {
+	w := walkWorld()
+	w.Quests[0].Triggers = nil // firstkill is dead
+	w.Dialogue[0].Topics[1].RequiresItem = 4242
+	got := keys(Walk(w, srcWith(nil, map[int]bool{9110: true, 9112: true})))
+	require.Contains(t, got, "walk-dead-end 53 step firstkill")
+	require.Contains(t, got, "walk-no-source 53 mob 9112 topic cull_in")
+}
+
+// A step granted inside a sequence's on_complete is on the trail: the walk
+// runs on_complete through the trail's context (trailCtx.QueueSequence), so
+// the firing passes through the step rather than skipping it.
+func TestWalk_StepGrantedInASequenceIsOnTheTrail(t *testing.T) {
+	w := walkWorld()
+	w.Quests[0].Triggers[0].Actions = []quests.ActionDef{{Sequence: &quests.SequenceDef{
+		OnComplete: []quests.ActionDef{{Grant: "53-firstkill"}}}}}
+	require.Empty(t, Walk(w, questloop.Sources{}))
+}
+
 func TestWalk_GuardCanFail(t *testing.T) {
 	// The clean world must stay clean, and every mutation above must be
 	// caught: this is the proof the walk is capable of failing.

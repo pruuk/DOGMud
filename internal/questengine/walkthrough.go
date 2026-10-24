@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/questloop"
@@ -41,12 +43,7 @@ func Walk(w questloop.World, src questloop.Sources) []questloop.Finding {
 	}
 	ways := questloop.WaysInto(w)
 	questloop.ExternalWays(ways, src.External)
-	env := &walkEnv{eng: eng, src: src, files: map[int]*dialogue.DialogueFile{}}
-	for _, df := range w.Dialogue {
-		if df != nil {
-			env.files[df.MobId] = df
-		}
-	}
+	env := newWalkEnv(eng, src, w.Quests, w.Dialogue)
 	var out []questloop.Finding
 	for _, q := range w.Quests {
 		if q == nil || len(q.Steps) == 0 {
@@ -107,6 +104,113 @@ type walkEnv struct {
 	eng   *Engine
 	src   questloop.Sources
 	files map[int]*dialogue.DialogueFile
+	// heardKeys lists, per NPC in id order, the topics some heardRequired
+	// names: the only topics whose hearing a gate can read.
+	heardKeys []heardKey
+	// setters lists, per "key=value", the triggers and topics that set
+	// that quest flag, with the tokens each also grants (flagSetter).
+	setters map[string][]flagSetter
+	depth   int // setter nesting, bounded by maxSetterDepth
+}
+
+// flagSetter is a trigger or topic that sets a quest flag.
+type flagSetter struct {
+	way    questloop.Way
+	grants []string
+}
+
+// maxSetterDepth bounds how deep one setter's own flag gates may reach for
+// further setters.
+const maxSetterDepth = 3
+
+func flagKV(key, value string) string { return key + "=" + value }
+
+type heardKey struct {
+	mobId int
+	key   string
+}
+
+func newWalkEnv(eng *Engine, src questloop.Sources, qs []*quests.Quest, dialogues []*dialogue.DialogueFile) *walkEnv {
+	env := &walkEnv{eng: eng, src: src, files: map[int]*dialogue.DialogueFile{}, setters: map[string][]flagSetter{}}
+	for _, q := range qs {
+		for i := range q.Triggers {
+			t := &q.Triggers[i]
+			var grants []string
+			var sets []string
+			var walk func([]quests.ActionDef)
+			walk = func(as []quests.ActionDef) {
+				for _, a := range as {
+					if a.Grant != "" && !strings.HasPrefix(a.Grant, "-") {
+						grants = append(grants, a.Grant)
+					}
+					if a.SetFlag != nil {
+						sets = append(sets, flagKV(a.SetFlag.Key, a.SetFlag.Value))
+					}
+					if a.Sequence != nil {
+						walk(a.Sequence.OnComplete)
+					}
+				}
+			}
+			walk(t.Actions)
+			for _, kv := range sets {
+				env.setters[kv] = append(env.setters[kv], flagSetter{way: questloop.Way{Trigger: t, Owner: q.QuestId}, grants: grants})
+			}
+		}
+	}
+	seen := map[heardKey]bool{}
+	for _, df := range dialogues {
+		if df == nil {
+			continue
+		}
+		env.files[df.MobId] = df
+		for i := range df.Topics {
+			t := &df.Topics[i]
+			for _, k := range t.HeardRequired {
+				if hk := (heardKey{df.MobId, k}); !seen[hk] {
+					seen[hk] = true
+					env.heardKeys = append(env.heardKeys, hk)
+				}
+			}
+			if s := t.SetsQuestFlag; s != nil {
+				var grants []string
+				if g := t.GrantsQuest; g != "" && !strings.HasPrefix(g, "-") {
+					grants = []string{g}
+				}
+				kv := flagKV(s.Key, s.Value)
+				env.setters[kv] = append(env.setters[kv], flagSetter{
+					way: questloop.Way{Topic: t, MobId: df.MobId, File: df}, grants: grants})
+			}
+		}
+	}
+	slices.SortFunc(env.heardKeys, func(a, b heardKey) int {
+		return cmp.Or(cmp.Compare(a.mobId, b.mobId), cmp.Compare(a.key, b.key))
+	})
+	return env
+}
+
+// hear marks as heard every info topic a heardRequired names that is open
+// to p now, until nothing more opens: a player can listen to any topic on
+// the menu before choosing the one that needs it. Applying an info topic
+// also marks it (dialogue Apply).
+func (env *walkEnv) hear(p *walkPlayer) {
+	if env == nil {
+		return
+	}
+	ps := p.dialogueState()
+	for changed := true; changed; {
+		changed = false
+		for _, hk := range env.heardKeys {
+			key := dialogue.HeardKey(hk.mobId, hk.key)
+			if p.heard[key] {
+				continue
+			}
+			df := env.files[hk.mobId]
+			if t := df.FindTopic(hk.key); t != nil && t.Kind == dialogue.KindInfo && df.Eligible(t, ps) {
+				p.heard[key] = true
+				changed = true
+			}
+		}
+	}
 }
 
 func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[string][]questloop.Way) []questloop.Finding {
@@ -128,8 +232,14 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 		return nil
 	}
 
-	p := newWalkPlayer(steps)
+	// Source checks need no walk state: every Way into every step, once,
+	// so a step after a dead one is still checked.
+	last := len(q.Steps) - 1
 	out = append(out, checkWay(q, *offer, src)...)
+	out = append(out, checkChained(q, ways, src, 1, last)...)
+
+	p := newWalkPlayer(steps)
+	env.hear(p)
 	trail := fireWay(env, p, *offer, q.QuestId)
 	if !trail[stepToken(q, 0)] {
 		dead(offer.Where, "the offer cannot be taken")
@@ -139,72 +249,135 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 	if k := skipped(trail, q, 0, cur); k >= 0 {
 		dead(offer.Where, fmt.Sprintf("skips to %d-%s, passing %s", q.QuestId, p.progress[q.QuestId], stepToken(q, k)))
 	}
-	out = append(out, checkChained(q, ways, src, 1, cur)...)
 
-	last := len(q.Steps) - 1
-	for cur < last {
-		i := cur + 1
+	// The walk carries every distinct state forward, not only the first Way
+	// that worked: two Ways into one step can leave different flags or items
+	// (a branch), and a later Way may need one branch's. rest[c] holds the
+	// states resting on step c (a quest_granted chain may carry a firing past
+	// several steps, so states rest at different steps). Each step keeps at
+	// most maxWalkStates distinct states, in Way order; the cost per step is
+	// (Ways into it plus the skip probe's) times its states, and shipped
+	// quests carry one or two.
+	rest := map[int]*walkStates{cur: newWalkStates(p)}
+	reach := cur // the furthest step any state has reached
+	for c := 0; c < last; c++ {
+		states := rest[c].list()
+		if len(states) == 0 {
+			continue // passed through by a chain, never rested on
+		}
+		i := c + 1
 		tok, want := stepToken(q, i), q.Steps[i].Id
 
-		// Skip probe: a Way into a later step must not fire from here, or a
-		// player can jump over step i. A Way that also grants step i is the
-		// step's own Way and is judged below.
-		for j := i + 1; j <= last; j++ {
-			for _, wy := range ways[stepToken(q, j)] {
-				if wy.Reward || ownGranted(wy, q.QuestId) || isTreeGrant(wy) || sharesWay(ways[tok], wy) || !itemsHeldEarly(p, wy, q.QuestId, src) {
-					continue
-				}
-				c := p.clone()
-				tr := fireWay(env, c, wy, q.QuestId)
-				if got := stepIndex(c, q); got > i && skipped(tr, q, i, got) >= 0 {
-					dead(wy.Where, fmt.Sprintf("skips to %d-%s from %d-%s, passing %s",
-						q.QuestId, c.progress[q.QuestId], q.QuestId, q.Steps[cur].Id, tok))
+		for _, p := range states {
+			env.hear(p)
+			// Skip probe: a Way into a later step must not fire from here,
+			// or a player can jump over step i. A Way that also grants step
+			// i is the step's own Way and is judged below.
+			for j := i + 1; j <= last; j++ {
+				for _, wy := range ways[stepToken(q, j)] {
+					if wy.Reward || ownGranted(wy, q.QuestId) || isTreeGrant(wy) || sharesWay(ways[tok], wy) || !itemsHeldEarly(p, wy, q.QuestId, src) {
+						continue
+					}
+					cl := p.clone()
+					tr := fireWay(env, cl, wy, q.QuestId)
+					if got := stepIndex(cl, q); got > i && skipped(tr, q, i, got) >= 0 {
+						dead(wy.Where, fmt.Sprintf("skips to %d-%s from %d-%s, passing %s",
+							q.QuestId, cl.progress[q.QuestId], q.QuestId, q.Steps[c].Id, tok))
+					}
 				}
 			}
 		}
 
-		var next *walkPlayer
+		// A Way that fails from one branch's state and works from another's
+		// is that branch's Way, not a broken one: it is reported only when
+		// it works from no state. A skip from any state is reported.
 		var atGrant []questloop.Way
+		worked := map[string]bool{}
+		failed := map[string]bool{}
+		var failOrder []string
 		for _, wy := range ways[tok] {
 			if wy.Reward {
 				continue
 			}
-			out = append(out, checkWay(q, wy, src)...)
 			if ownGranted(wy, q.QuestId) {
 				// It fires only inside the chain of the grant that lands on
 				// its token, which the firing that reached this step ran.
 				atGrant = append(atGrant, wy)
 				continue
 			}
-			c := p.clone()
-			tr := fireWay(env, c, wy, q.QuestId)
-			got := stepIndex(c, q)
-			k := skipped(tr, q, i, got)
-			switch {
-			case got < i:
-				dead(wy.Where, "does not reach "+tok)
-			case k >= 0:
-				dead(wy.Where, fmt.Sprintf("skips to %d-%s, passing %s", q.QuestId, c.progress[q.QuestId], stepToken(q, k)))
-			default:
-				if next == nil {
-					next = c
+			for _, p := range states {
+				cl := p.clone()
+				tr := fireWay(env, cl, wy, q.QuestId)
+				got := stepIndex(cl, q)
+				k := skipped(tr, q, i, got)
+				switch {
+				case got < i:
+					if !failed[wy.Where] {
+						failed[wy.Where] = true
+						failOrder = append(failOrder, wy.Where)
+					}
+				case k >= 0:
+					dead(wy.Where, fmt.Sprintf("skips to %d-%s, passing %s", q.QuestId, cl.progress[q.QuestId], stepToken(q, k)))
+				default:
+					worked[wy.Where] = true
+					// A quest_granted chain may have carried the player past
+					// step i, through every step between (skipped checked it).
+					if rest[got] == nil {
+						rest[got] = &walkStates{}
+					}
+					rest[got].add(cl)
+					reach = max(reach, got)
 				}
 			}
 		}
-		if next == nil {
+		for _, where := range failOrder {
+			if !worked[where] {
+				dead(where, "does not reach "+tok)
+			}
+		}
+		if reach < i {
 			for _, wy := range atGrant {
 				dead(wy.Where, fmt.Sprintf("fires only when %s is granted, and did not carry the player on to %s", wy.Trigger.QuestToken, tok))
 			}
 			dead("step "+want, "no way in reaches "+tok)
 			return out
 		}
-		// A quest_granted chain may have carried the player past step i in
-		// the same firing, through every step between (skipped checked it).
-		got := stepIndex(next, q)
-		out = append(out, checkChained(q, ways, src, i+1, got)...)
-		p, cur = next, got
 	}
 	return out
+}
+
+// maxWalkStates bounds the distinct states the walk keeps on one step.
+const maxWalkStates = 16
+
+// walkStates is the distinct states resting on one step, in arrival order.
+type walkStates struct {
+	seen   map[string]bool
+	states []*walkPlayer
+}
+
+func newWalkStates(p *walkPlayer) *walkStates {
+	s := &walkStates{}
+	s.add(p)
+	return s
+}
+
+func (s *walkStates) add(p *walkPlayer) {
+	if s.seen == nil {
+		s.seen = map[string]bool{}
+	}
+	fp := p.fingerprint()
+	if s.seen[fp] || len(s.states) >= maxWalkStates {
+		return
+	}
+	s.seen[fp] = true
+	s.states = append(s.states, p)
+}
+
+func (s *walkStates) list() []*walkPlayer {
+	if s == nil {
+		return nil
+	}
+	return s.states
 }
 
 // wayItemNeeds lists the items a Way asks the player to hold or hand over:
@@ -304,11 +477,13 @@ func fireWay(env *walkEnv, p *walkPlayer, wy questloop.Way, own int) walkTrail {
 	trail := walkTrail{}
 	switch {
 	case wy.Trigger != nil:
-		fireTrigger(env.eng, p, wy.Trigger, own, trail)
+		fireTrigger(env, p, wy.Trigger, own, trail)
 	case wy.Topic != nil:
-		meetTopic(p, wy.Topic, own)
+		env.meetTopic(p, wy.File, wy.Topic, own)
+		env.hear(p)
 		fireTopic(env.eng, p, wy, trail)
 	case wy.External != nil:
+		env.hear(p)
 		fireExternal(env, p, wy.External, own, trail)
 	}
 	return trail
@@ -392,13 +567,64 @@ func meetToken(p *walkPlayer, token string, own int) {
 	p.hold(token)
 }
 
-// meetTopic gives p what a topic's gates ask for.
-func meetTopic(p *walkPlayer, t *dialogue.Topic, own int) {
+// ownFlag reports whether a quest flag key ("53-route") is quest own's.
+func ownFlag(key string, own int) bool {
+	return strings.HasPrefix(key, strconv.Itoa(own)+"-")
+}
+
+// meetFlag gives p a flag a condition or gate asks for. Another quest's
+// flag is a prerequisite and is held, like its tokens. A flag of the walked
+// quest is never held: only a flag the walk really sets counts. The walk
+// sets it by firing, from p's state, a trigger or topic that sets it and
+// grants no token of the walked quest (quest 72's room_interact set_flag, a
+// bystander's topic): when that firing sets the flag without moving the
+// quest, p takes the flag. A setter that also grants a step is a Way, and
+// the walk fires it as one. With no setter that fires, the gate stays shut.
+func (env *walkEnv) meetFlag(p *walkPlayer, key, value string, own int) {
+	if p.flags[key] == value {
+		return
+	}
+	if !ownFlag(key, own) {
+		p.flags[key] = value
+		return
+	}
+	if env == nil || env.depth >= maxSetterDepth {
+		return
+	}
+	env.depth++
+	defer func() { env.depth-- }()
+	for _, s := range env.setters[flagKV(key, value)] {
+		if slices.ContainsFunc(s.grants, func(tok string) bool { id, _ := splitToken(tok); return id == own }) {
+			continue
+		}
+		cl := p.clone()
+		fireWay(env, cl, s.way, own)
+		if cl.flags[key] == value && cl.progress[own] == p.progress[own] {
+			p.flags[key] = value
+			return
+		}
+	}
+}
+
+// meetTopic gives p what a topic's gates ask for, and the prerequisites (other
+// quests' tokens and flags) of each info topic its heardRequired names, so
+// the walk can hear that topic when it is open (walkEnv.hear).
+func (env *walkEnv) meetTopic(p *walkPlayer, df *dialogue.DialogueFile, t *dialogue.Topic, own int) {
+	for _, k := range t.HeardRequired {
+		if h := df.FindTopic(k); h != nil {
+			for _, tok := range h.QuestRequired {
+				meetToken(p, tok, own)
+			}
+			for k, v := range h.QuestFlagRequired {
+				env.meetFlag(p, k, v, own)
+			}
+		}
+	}
 	for _, tok := range t.QuestRequired {
 		meetToken(p, tok, own)
 	}
 	for k, v := range t.QuestFlagRequired {
-		p.flags[k] = v
+		env.meetFlag(p, k, v, own)
 	}
 	if t.RequiresItem > 0 {
 		p.items[t.RequiresItem] = true
@@ -443,7 +669,7 @@ func fireTopic(eng *Engine, p *walkPlayer, wy questloop.Way, trail walkTrail) bo
 
 // fireTrigger meets the trigger's conditions on p, then sends the event its
 // filters describe through the engine.
-func fireTrigger(eng *Engine, p *walkPlayer, t *quests.TriggerDef, own int, trail walkTrail) bool {
+func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, trail walkTrail) bool {
 	c := t.Conditions
 	for _, tok := range c.Has {
 		meetToken(p, tok, own)
@@ -452,7 +678,7 @@ func fireTrigger(eng *Engine, p *walkPlayer, t *quests.TriggerDef, own int, trai
 		p.items[c.HasItem] = true
 	}
 	for k, v := range c.HasFlag {
-		p.flags[k] = v
+		env.meetFlag(p, k, v, own)
 	}
 	if c.HasGold > p.gold {
 		p.gold = c.HasGold
@@ -484,7 +710,7 @@ func fireTrigger(eng *Engine, p *walkPlayer, t *quests.TriggerDef, own int, trai
 	if d.RoomId != 0 {
 		p.roomId = d.RoomId
 	}
-	return eng.Notify(t.Event, d, p, &trailCtx{walkCtx{p: p}, trail}).Handled
+	return env.eng.Notify(t.Event, d, p, &trailCtx{walkCtx{p: p}, trail}).Handled
 }
 
 func dedupeFindings(fs []questloop.Finding) []questloop.Finding {

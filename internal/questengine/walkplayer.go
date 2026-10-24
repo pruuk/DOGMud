@@ -1,6 +1,7 @@
 package questengine
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 	"strconv"
@@ -21,13 +22,15 @@ type walkPlayer struct {
 	progress   map[int]string   // quest id -> current step id
 	items      map[int]bool
 	flags      map[string]string
+	heard      map[string]bool // dialogue.HeardKey -> heard
 	gold       int
 	roomId     int
 	masterwork bool
 }
 
 func newWalkPlayer(steps map[int][]string) *walkPlayer {
-	return &walkPlayer{steps: steps, progress: map[int]string{}, items: map[int]bool{}, flags: map[string]string{}}
+	return &walkPlayer{steps: steps, progress: map[int]string{}, items: map[int]bool{},
+		flags: map[string]string{}, heard: map[string]bool{}}
 }
 
 func splitToken(token string) (int, string) {
@@ -90,7 +93,30 @@ func (p *walkPlayer) clone() *walkPlayer {
 	c.progress = maps.Clone(p.progress)
 	c.items = maps.Clone(p.items)
 	c.flags = maps.Clone(p.flags)
+	c.heard = maps.Clone(p.heard)
 	return &c
+}
+
+// fingerprint names p's state, so the walk can keep one copy of each
+// distinct branch.
+func (p *walkPlayer) fingerprint() string {
+	var b strings.Builder
+	for _, id := range slices.Sorted(maps.Keys(p.progress)) {
+		fmt.Fprintf(&b, "q%d=%s;", id, p.progress[id])
+	}
+	for _, id := range slices.Sorted(maps.Keys(p.items)) {
+		if p.items[id] {
+			fmt.Fprintf(&b, "i%d;", id)
+		}
+	}
+	for _, k := range slices.Sorted(maps.Keys(p.flags)) {
+		fmt.Fprintf(&b, "f%s=%s;", k, p.flags[k])
+	}
+	for _, k := range slices.Sorted(maps.Keys(p.heard)) {
+		fmt.Fprintf(&b, "h%s;", k)
+	}
+	fmt.Fprintf(&b, "g%d;r%d;m%t", p.gold, p.roomId, p.masterwork)
+	return b.String()
 }
 
 func (p *walkPlayer) HasItem(itemId int) bool        { return p.items[itemId] }
@@ -99,8 +125,9 @@ func (p *walkPlayer) GetQuestFlag(key string) string { return p.flags[key] }
 func (p *walkPlayer) GetGold() int                   { return p.gold }
 func (p *walkPlayer) HasOwnMasterwork(int) bool      { return p.masterwork }
 
-// dialogueState is a dialogue PlayerState over p. Every info topic counts as
-// heard and every quest as open: the walk tests reachability, not pacing.
+// dialogueState is a dialogue PlayerState over p. A topic is heard once the
+// walk marked it (walkEnv.hear, or Apply of an info topic); every quest
+// counts as open, since the walk tests reachability, not pacing.
 func (p *walkPlayer) dialogueState() *dialogue.PlayerState {
 	return &dialogue.PlayerState{
 		HasQuest:    p.HasQuest,
@@ -128,8 +155,8 @@ func (p *walkPlayer) dialogueState() *dialogue.PlayerState {
 			p.gold -= n
 			return true
 		},
-		HasHeard:  func(string) bool { return true },
-		MarkHeard: func(string) {},
+		HasHeard:  func(key string) bool { return p.heard[key] },
+		MarkHeard: func(key string) { p.heard[key] = true },
 		QuestOpen: func(int) bool { return true },
 	}
 }

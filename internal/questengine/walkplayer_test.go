@@ -84,6 +84,9 @@ func TestDialogueState_RoutesToThePlayer(t *testing.T) {
 	require.True(t, ps.HasItem(9))
 	require.True(t, ps.RemoveItem(9))
 	require.False(t, ps.HasItem(9))
-	require.True(t, ps.HasHeard("anything"), "the walk counts every info topic as heard")
+	require.False(t, ps.HasHeard("9112.lore"), "a topic is heard only once marked")
+	ps.MarkHeard("9112.lore")
+	require.True(t, ps.HasHeard("9112.lore"))
+	require.True(t, p.clone().heard["9112.lore"], "a clone keeps what was heard")
 	require.True(t, ps.QuestOpen(53))
 }
