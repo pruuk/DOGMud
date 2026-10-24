@@ -4,7 +4,7 @@
 
 **Goal:** `talk <npc>` is the only way to converse: every one of the 302 dialogue files is converted once into keyed, labelled `info` / `offer` / `handin` topics served through the phase 0 menu, with a saved heard set, topic-only item hand-ins, behavior-tree topics, per-viewer markers and proposed-world validators.
 
-**Spec:** `docs/superpowers/specs/2026-10-20-quest-arc-phase1-talk-design.md` (rulings R1 to R13). Read it first; this plan does not restate the reasons.
+**Spec:** `docs/superpowers/specs/completed/2026-10-20-quest-arc-phase1-talk-design.md` (rulings R1 to R13). Read it first; this plan does not restate the reasons.
 
 **Architecture:** `internal/dialogue` stays pure (no `users`/`characters` import) and gains the topic model, eligibility, markers, opener selection, menu building, effect application and the `World` validator. A new package `internal/conversation` is the glue the commands call: it builds `PlayerState`, runs the talk flow through `users.OpenMenu`, resolves `give`, answers the companion asker and supplies the roster marker through a hook in `internal/rooms`. Stage A builds all of it against fixtures while the shipped files still run on the old engine; stage B converts the content on the branch; stage C switches the commands, deletes the old engine and lands everything in one merge.
 
