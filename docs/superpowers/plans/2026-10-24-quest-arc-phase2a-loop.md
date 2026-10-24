@@ -91,7 +91,7 @@ on, read while writing this plan.
 | `main_quests.go` (new), `main.go` | quest boot door |
 | `modules/gmcp/gmcp.Quest.go` | editor door |
 | `internal/usercommands/quests.go`, `templates/character/quests.template` | `(repeatable)` tag, finished repeatables |
-| `modules/gmcp/gmcp.Char.go`, `webclient-pure.html`, `tools/webclient-tests/quest-panel-refresh.js` | `repeatable` in `Char.Quests` |
+| `modules/gmcp/gmcp.Char.go`, `webclient-pure.html`, `static/css/dashboard.css`, `tools/webclient-tests/quest-panel-refresh.js` | `repeatable` and finished-repeatable `status` rows in `Char.Quests`, the panel's "Repeatable work" group |
 | `_datafiles/world/dogmud/quests/step-ids.txt`, `loop-backlog.txt` (new) | generated manifests |
 | root tests `step_manifest_test.go`, `quest_loop_smoke_test.go` (new) | guards |
 | docs | seven `context.md`, two help files, requirements, roadmap, `docs/README.md` |
@@ -3311,64 +3311,227 @@ EOF
 
 ---
 
-### Task 17: `repeatable` in `Char.Quests` and the web panel
+### Task 17: Repeatables in `Char.Quests` and the web panel
+
+Spec 4.3: active repeatables carry the `(repeatable)` tag; finished repeatables that are not
+at their cap are sent with `status` `ready` or `waiting` and drawn below the active quests
+under "Repeatable work", dimmed, unfocusable, with no map marker. Done-for-good ones are not
+sent. The panel already re-reads `Char.Quests` on every room change
+(`roomChangeHandler`, `gmcp.Char.go:145`), which is how "waiting" turns to "ready".
 
 **Files:**
-- Modify: `modules/gmcp/gmcp.Char.go:660` (payload fill) and `:1143` (struct)
-- Modify: `_datafiles/html/public/webclient-pure.html` (`renderQuests`, about line 962)
+- Modify: `modules/gmcp/gmcp.Char.go` (builder at :632-700, struct at :1143)
+- Create: `modules/gmcp/gmcp.Char_repeat_test.go`
+- Modify: `_datafiles/html/public/webclient-pure.html` (`renderQuests`, :938-997)
+- Modify: `_datafiles/html/public/static/css/dashboard.css` (beside `.qname`)
 - Modify: `tools/webclient-tests/quest-panel-refresh.js`
 
-- [ ] **Step 1: Payload.** Add to `GMCPCharModule_Payload_Quest` after `Name`:
+- [ ] **Step 1: Payload fields.** Add to `GMCPCharModule_Payload_Quest` after `Name`:
 
 ```go
-	Repeatable  bool   `json:"repeatable,omitempty"` // the panel tags it "(repeatable)" (#375 P6)
+	Repeatable bool `json:"repeatable,omitempty"` // the panel tags it "(repeatable)" (#375 P6)
+	// Status is set only on a finished repeatable: "ready" (can be taken
+	// again) or "waiting" (on cooldown). Such a row has no description,
+	// hint or target and cannot be focused (#375 P6).
+	Status string `json:"status,omitempty"`
 ```
 
-and in the builder at :660 set `Repeatable: qDef.Repeatable,`.
+- [ ] **Step 2: The finished rows, as a pure helper** so they test without a GMCP session.
+  Add to `gmcp.Char.go`:
 
-- [ ] **Step 2: Web test first.** In `quest-panel-refresh.js`, add a repeatable quest to a new
-  scenario before the summary line:
+```go
+// Status values for a finished repeatable in Char.Quests (#375 P6).
+const (
+	questStatusReady   = "ready"
+	questStatusWaiting = "waiting"
+)
+
+// finishedRepeatQuests are the Char.Quests rows for repeatables c has
+// finished and holds no progress on, not secret and not at their cap,
+// sorted by id. Done-for-good ones are left to "quests all".
+func finishedRepeatQuests(c *characters.Character, lookup func(int) *quests.Quest) []GMCPCharModule_Payload_Quest {
+	progress := c.GetQuestProgress()
+	var ids []int
+	for id, n := range c.QuestCompletions {
+		if _, inProgress := progress[id]; n > 0 && !inProgress {
+			ids = append(ids, id)
+		}
+	}
+	sort.Ints(ids)
+	var rows []GMCPCharModule_Payload_Quest
+	for _, id := range ids {
+		q := lookup(id)
+		if q == nil || !q.Repeatable || q.Secret || c.RepeatCapReached(q) {
+			continue
+		}
+		status := questStatusReady
+		if c.QuestCooldownActive(id) {
+			status = questStatusWaiting
+		}
+		rows = append(rows, GMCPCharModule_Payload_Quest{Id: id, Name: q.Name, Repeatable: true, Status: status})
+	}
+	return rows
+}
+```
+
+In the builder, set `Repeatable: qDef.Repeatable,` in the in-progress `questPayload` literal
+(:660), and after the progress loop, before `if !all {` (:697):
+
+```go
+		// Finished repeatables, below the active list (#375 P6).
+		payload.Quests = append(payload.Quests, finishedRepeatQuests(user.Character, quests.GetQuestById)...)
+```
+
+Add the `sort`, `characters` and `quests` imports if the file lacks them (`go build ./modules/gmcp/`).
+
+- [ ] **Step 3: Go test** `gmcp.Char_repeat_test.go`
+
+```go
+package gmcp
+
+import (
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/stretchr/testify/require"
+)
+
+func TestFinishedRepeatQuests(t *testing.T) {
+	qs := map[int]*quests.Quest{
+		53: {QuestId: 53, Name: "Cull the Wash", Repeatable: true, CooldownRounds: 300},
+		54: {QuestId: 54, Name: "Back to the Forge", Repeatable: true, CooldownRounds: 300, RepeatLimit: 1},
+		55: {QuestId: 55, Name: "Another Brew", Repeatable: true, CooldownRounds: 300},
+		56: {QuestId: 56, Name: "Hidden", Repeatable: true, Secret: true, CooldownRounds: 300},
+	}
+	lookup := func(id int) *quests.Quest { return qs[id] }
+	util.SetRoundCountForTest(1000)
+	c := &characters.Character{
+		QuestCompletions: map[int]int{53: 1, 54: 1, 55: 2, 56: 1},
+		QuestProgress:    map[int]string{55: "start"}, // in progress again: an ordinary row
+	}
+	c.SetQuestCooldown(53, 300)
+
+	rows := finishedRepeatQuests(c, lookup)
+	require.Equal(t, []GMCPCharModule_Payload_Quest{
+		{Id: 53, Name: "Cull the Wash", Repeatable: true, Status: questStatusWaiting},
+	}, rows, "54 is done for good, 55 is in progress, 56 is secret")
+
+	util.SetRoundCountForTest(1300)
+	require.Equal(t, questStatusReady, finishedRepeatQuests(c, lookup)[0].Status)
+}
+```
+
+Run: `go test ./modules/gmcp/ -run TestFinishedRepeatQuests -v`
+Expected: PASS (write this test before Step 2's helper and see it fail to compile first).
+
+- [ ] **Step 4: Web test first.** In `quest-panel-refresh.js`, before the summary line, add:
 
 ```js
-console.log('SCENARIO 6: a repeatable quest is tagged in words');
+console.log('SCENARIO 6: repeatables are tagged and finished ones are listed in words');
 reset();
 handleGMCP('Char.Quests', [
   { id: 53, name: 'Cull the Wash', completion: 33, focused: true, repeatable: true, hint: 'Type attack scout.' },
   { id: 7, name: 'The Last Delivery', completion: 50, focused: false },
+  { id: 54, name: 'Back to the Forge', repeatable: true, status: 'waiting' },
+  { id: 58, name: 'Reading the Stones', repeatable: true, status: 'ready' },
 ]);
-check('repeatable quest shows "(repeatable)"', /Cull the Wash[^<]*<\/span><span class="qrepeat">\(repeatable\)/.test(panelText()), panelText().slice(0, 240));
-check('a one-off quest has no tag', (panelText().match(/\(repeatable\)/g) || []).length === 1, panelText().slice(0, 240));
+var p6 = panelText();
+check('active repeatable shows "(repeatable)"', /Cull the Wash<\/span><span class="qrepeat">\(repeatable\)/.test(p6), p6.slice(0, 300));
+check('the one-off quest has no tag', !/Last Delivery<\/span><span class="qrepeat">/.test(p6), p6.slice(0, 300));
+check('a "Repeatable work" group follows the active quests', p6.indexOf('Repeatable work') > p6.indexOf('Last Delivery'), p6);
+check('waiting status in words', p6.includes('Back to the Forge') && p6.includes('Not offered again yet.'), p6);
+check('ready status in words', p6.includes('Reading the Stones') && p6.includes('Ready to take on again.'), p6);
+check('finished rows are not focusable rows', !/class="qrow[^"]*" data-quest-id="54"/.test(p6), p6);
+
+console.log('SCENARIO 7: only finished repeatables, nothing active');
+reset();
+handleGMCP('Char.Quests', [{ id: 54, name: 'Back to the Forge', repeatable: true, status: 'ready' }]);
+var p7 = panelText();
+check('empty state still says no active quests', p7.includes('No active quests'), p7);
+check('and the repeatable work is listed', p7.includes('Back to the Forge') && p7.includes('Ready to take on again.'), p7);
 ```
 
 Run: `node tools/webclient-tests/quest-panel-refresh.js`
-Expected: SCENARIO 6 FAILS (no tag yet); scenarios 1 to 5 pass.
+Expected: scenarios 6 and 7 FAIL; 1 to 5 pass.
 
-- [ ] **Step 3: Render the tag.** In `renderQuests`, after the `qname` span:
+- [ ] **Step 5: Render.** In `renderQuests`, split the list after the copy line
+  (`var quests = ...`):
+
+```js
+            // Finished repeatables (status set) are listed under their own
+            // label, dimmed and unfocusable (#375 P6); the rest are active.
+            var repeats = quests.filter(function (q) { return !!q.status; });
+            quests = quests.filter(function (q) { return !q.status; });
+            var repeatsHTML = "";
+            if (repeats.length) {
+                repeats.sort(function (a, b) { return (a.name || "").localeCompare(b.name || ""); });
+                repeatsHTML = '<div class="qgroup">Repeatable work</div>';
+                repeats.forEach(function (q) {
+                    var line = q.status === "ready" ? "Ready to take on again." : "Not offered again yet.";
+                    repeatsHTML += '<div class="qrepeatrow" data-quest-id="' + Number(q.id) + '">'
+                        + '<span class="qname">' + escapeHTML(q.name || "") + '</span>'
+                        + '<span class="qrepeat">(repeatable)</span>'
+                        + '<div class="qhint">' + line + '</div>'
+                        + '</div>';
+                });
+            }
+```
+
+Change the empty branch to keep the repeatable group:
+
+```js
+            if (!quests.length) {
+                writeQuestsHTML(host, '<div class="quests-empty">No active quests.</div>' + repeatsHTML);
+                return;
+            }
+```
+
+In the active row, after the `qname` span:
 
 ```js
                       + '<span class="qname">' + escapeHTML(q.name || "") + '</span>'
                       + (q.repeatable ? '<span class="qrepeat">(repeatable)</span>' : '')
 ```
 
-Add a style beside the existing `.qname` rule (find it with `grep -n "\.qname" _datafiles/html/public/webclient-pure.html`):
+and append the group after the `forEach` over active quests, before the
+`if (writeQuestsHTML(host, html))` line:
+
+```js
+            html += repeatsHTML;
+```
+
+The click binding selects `.qrow` only, so `.qrepeatrow` rows send no focus request. Every
+GMCP string still goes through `escapeHTML` (the escape test in Step 7 checks it).
+
+- [ ] **Step 6: Styles** in `_datafiles/html/public/static/css/dashboard.css`, beside the
+  `.qname` rule (`grep -n "\.qname" _datafiles/html/public/static/css/dashboard.css`):
 
 ```css
 .qrepeat { margin-left: 0.4em; opacity: 0.75; font-size: 0.9em; }
+.qgroup { margin-top: 0.6em; opacity: 0.75; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; }
+.qrepeatrow { opacity: 0.6; padding: 2px 0; cursor: default; }
 ```
 
-The tag is a word, so it carries the meaning without colour (colourblind rule).
+Dimming uses opacity, never a colour change, and the status is in words (colourblind rule).
 
-- [ ] **Step 4: Run**
-
-Run: `node tools/webclient-tests/quest-panel-refresh.js && go test ./modules/gmcp/`
-Expected: `ALL CHECKS PASSED`, `ok`.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Run**
 
 ```bash
-git add modules/gmcp/gmcp.Char.go _datafiles/html/public/webclient-pure.html tools/webclient-tests/quest-panel-refresh.js
+node tools/webclient-tests/quest-panel-refresh.js
+node tools/jstest/webclient-html-escape.test.js
+go test ./modules/gmcp/
+```
+
+Expected: `ALL CHECKS PASSED`, the escape test passes, `ok`.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add modules/gmcp/gmcp.Char.go modules/gmcp/gmcp.Char_repeat_test.go _datafiles/html/public/webclient-pure.html _datafiles/html/public/static/css/dashboard.css tools/webclient-tests/quest-panel-refresh.js
 git commit -F - <<'EOF'
-feat(webclient): quest panel tags repeatable quests (#375 P6)
+feat(webclient): quest panel tags repeatables and lists finished ones (#375 P6)
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 EOF
@@ -3466,7 +3629,9 @@ with its output, never re-run until it passes.
   - finish Find Your Footing at Toke and see the menu come back with the trail offers
     marked (several next offers); finish a quest whose giver has exactly one next offer and
     see its pitch and card follow the reward lines, in that order;
-  - the web client quest panel shows `(repeatable)` on an active repeatable;
+  - the web client quest panel shows `(repeatable)` on an active repeatable, and after
+    finishing it lists the quest under "Repeatable work" as "Not offered again yet.", which
+    turns to "Ready to take on again." on the first move after the cooldown ends;
   - try `give` of an offer's wanted item and see the same card.
   Brief the seats to return findings in their reply (seat subagents cannot write report
   files). File every finding as a GitHub issue (`--repo pruuk/DOGMud`) before the PR.

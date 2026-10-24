@@ -77,7 +77,8 @@ Line numbers were read from the files at that commit.
   the completability walkthrough.
 - **P6 Players can tell a quest is repeatable** (owner 2026-10-24, from playtest-bot
   feedback): the offer card says so, the text and web quest lists tag it `(repeatable)`, and
-  `quests all` shows finished repeatables with whether they can be taken again (section 4.3).
+  `quests all` and the web quest panel show finished repeatables with whether they can be
+  taken again; the panel leaves out those done for good (section 4.3).
 
 ## 3. Offer card
 
@@ -209,6 +210,17 @@ content is written.
   A repeatable in progress is listed as any quest is, with its tag. The plain `quests` view
   (in progress only) does not show finished repeatables, as it hides every finished quest
   today. Secret repeatables stay hidden, like other secret quests.
+- **Finished repeatables in the web quest panel** (owner 2026-10-24):
+  - `Char.Quests` also carries each finished, non-secret repeatable that is not at its cap,
+    with `status` set to `ready` or `waiting` and no description, hint or map target.
+  - The panel draws them below the active quests under a "Repeatable work" label, dimmed,
+    with the status in words ("Ready to take on again." / "Not offered again yet."). They
+    cannot be focused or marked on the map.
+  - "Done for good" repeatables stay out of the panel (a live list, not history); `quests all`
+    shows them.
+  - No event fires when a cooldown ends. The panel already re-reads `Char.Quests` on every
+    room change (`roomChangeHandler`, `modules/gmcp/gmcp.Char.go:145`), so "waiting" becomes
+    "ready" on the player's next move. Accepted; no timer is added.
 
 ## 5. Loop validators
 
