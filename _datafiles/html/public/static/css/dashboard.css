@@ -183,6 +183,12 @@
 /* Hint: clearly secondary — smaller italic, muted, indented under its title
    with a thin brass rule tying it to the quest above. */
 .qhint { margin:0 0 5px 20px; padding:1px 0 1px 8px; border-left:1px solid rgba(203,159,66,.35); font:italic 11px Georgia,serif; line-height:1.4; color:#8a7a58; }
+/* Repeatable tag and the finished-repeatable group (#375 P6). Dimming is by
+   opacity only; the status is carried by words, never by colour. */
+.qrepeat { margin-left: 0.4em; opacity: 0.75; font-size: 0.9em; }
+.qgroup { margin-top: 0.6em; opacity: 0.75; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; }
+.qrepeatrow { opacity: 0.6; padding: 2px 0; cursor: default; }
+.qrepeatrow .qname { font-family:Georgia,serif; font-size:13px; font-weight:600; color:#c9b184; }
 .qonmap { color:#6bb0a0; font-style:normal; white-space:nowrap; }
 #panel-vitals { flex: 0 0 auto; }                    /* content-compact; grows with party rows */
 #panel-art    { flex: 0 1 auto; min-height: 120px; } /* inventory: content-sized, grows w/ eq list */

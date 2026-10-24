@@ -191,5 +191,28 @@ check('does NOT claim a marker that cannot be drawn',
 check('shows the next-step direction instead', panelText().includes('head north'),
   panelText().slice(0, 220));
 
+console.log('SCENARIO 6: repeatables are tagged and finished ones are listed in words');
+reset();
+handleGMCP('Char.Quests', [
+  { id: 53, name: 'Cull the Wash', completion: 33, focused: true, repeatable: true, hint: 'Type attack scout.' },
+  { id: 7, name: 'The Last Delivery', completion: 50, focused: false },
+  { id: 54, name: 'Back to the Forge', repeatable: true, status: 'waiting' },
+  { id: 58, name: 'Reading the Stones', repeatable: true, status: 'ready' },
+]);
+var p6 = panelText();
+check('active repeatable shows "(repeatable)"', /Cull the Wash<\/span><span class="qrepeat">\(repeatable\)/.test(p6), p6.slice(0, 300));
+check('the one-off quest has no tag', !/Last Delivery<\/span><span class="qrepeat">/.test(p6), p6.slice(0, 300));
+check('a "Repeatable work" group follows the active quests', p6.indexOf('Repeatable work') > p6.indexOf('Last Delivery'), p6);
+check('waiting status in words', p6.includes('Back to the Forge') && p6.includes('Not offered again yet.'), p6);
+check('ready status in words', p6.includes('Reading the Stones') && p6.includes('Ready to take on again.'), p6);
+check('finished rows are not focusable rows', !/class="qrow[^"]*" data-quest-id="54"/.test(p6), p6);
+
+console.log('SCENARIO 7: only finished repeatables, nothing active');
+reset();
+handleGMCP('Char.Quests', [{ id: 54, name: 'Back to the Forge', repeatable: true, status: 'ready' }]);
+var p7 = panelText();
+check('empty state still says no active quests', p7.includes('No active quests'), p7);
+check('and the repeatable work is listed', p7.includes('Back to the Forge') && p7.includes('Ready to take on again.'), p7);
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);

@@ -945,8 +945,25 @@
             // signature stale, and the next render whose markup matched that
             // stale value would be skipped -- leaving the panel showing
             // something the player no longer has (finding 19).
+            // Finished repeatables (status set) are listed under their own
+            // label, dimmed and unfocusable (#375 P6); the rest are active.
+            var repeats = quests.filter(function (q) { return !!q.status; });
+            quests = quests.filter(function (q) { return !q.status; });
+            var repeatsHTML = "";
+            if (repeats.length) {
+                repeats.sort(function (a, b) { return (a.name || "").localeCompare(b.name || ""); });
+                repeatsHTML = '<div class="qgroup">Repeatable work</div>';
+                repeats.forEach(function (q) {
+                    var line = q.status === "ready" ? "Ready to take on again." : "Not offered again yet.";
+                    repeatsHTML += '<div class="qrepeatrow" data-quest-id="' + Number(q.id) + '">'
+                        + '<span class="qname">' + escapeHTML(q.name || "") + '</span>'
+                        + '<span class="qrepeat">(repeatable)</span>'
+                        + '<div class="qhint">' + line + '</div>'
+                        + '</div>';
+                });
+            }
             if (!quests.length) {
-                writeQuestsHTML(host, '<div class="quests-empty">No active quests.</div>');
+                writeQuestsHTML(host, '<div class="quests-empty">No active quests.</div>' + repeatsHTML);
                 return;
             }
             quests.sort(function (a, b) {
@@ -960,6 +977,7 @@
                 html += '<div class="qrow' + (focused ? " focus" : "") + '" data-quest-id="' + Number(q.id) + '">'
                       + '<span class="qdot">' + (focused ? "◉" : "◎") + '</span>'
                       + '<span class="qname">' + escapeHTML(q.name || "") + '</span>'
+                      + (q.repeatable ? '<span class="qrepeat">(repeatable)</span>' : '')
                       + '<span class="qbar"><i style="width:' + pct + '%"></i></span>'
                       + '</div>';
                 if (focused && q.hint) {
@@ -984,6 +1002,7 @@
                     html += '<div class="qhint">' + escapeHTML(q.hint) + mark + '</div>';
                 }
             });
+            html += repeatsHTML;
             // Attach handlers ONLY when the markup was actually rewritten. The
             // rows are recreated by that write, so binding without it would add
             // a second listener to rows that already have one, and a single
