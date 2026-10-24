@@ -332,6 +332,10 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string)) 
 			mudlog.Error("Web", "action", "websocket upgrade", "error", err)
 			return
 		}
+		// A backstop for a handler that never registered the connection. On
+		// the normal path the connection's writer closes the socket after
+		// draining queued output, and webSocketHandler waits for that before
+		// it returns, so this close comes after the goodbye, not before it.
 		defer conn.Close()
 
 		// gorilla's default read limit is unlimited, and ReadMessage buffers an

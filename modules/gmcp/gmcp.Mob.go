@@ -542,8 +542,8 @@ type mobRefIterators struct {
 	// questRefs is what the delete would break in the quest loop's refs rule
 	// (mobQuestRefs); it covers every quest field that names a mob.
 	questRefs func(mobId int) []mobRefEntry
-	convPairs       func(yield func(pairFile string, mobIds []int))
-	mercShops        func(yield func(sellerMobId int, name string, mobIds []int))
+	convPairs func(yield func(pairFile string, mobIds []int))
+	mercShops func(yield func(sellerMobId int, name string, mobIds []int))
 }
 
 func scanMobReferencesWith(mobId int, it mobRefIterators) []mobRefEntry {

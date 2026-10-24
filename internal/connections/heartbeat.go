@@ -57,7 +57,9 @@ func (cd *ConnectionDetails) StartHeartbeat(config HeartbeatConfig) error {
 	cd.wsConn.SetReadDeadline(time.Now().Add(hm.config.PongWait))
 	cd.wsConn.SetPongHandler(func(string) error {
 		mudlog.Debug("Heartbeat::Pong", "connectionId", hm.cd.connectionId)
-		cd.wsConn.SetReadDeadline(time.Now().Add(hm.config.PongWait))
+		// Not wsConn.SetReadDeadline directly: after Close has moved the
+		// deadline to now, a late pong must not push it back out.
+		cd.extendReadDeadline(time.Now().Add(hm.config.PongWait))
 		return nil
 	})
 
@@ -107,12 +109,20 @@ func (hm *heartbeatManager) writePing() error {
 	return nil
 }
 
-// stop is idempotent — Close() can run more than once for the same
-// connection (e.g. Kick then a later Remove), and a double close of
-// stopChan would panic.
-func (hm *heartbeatManager) stop() {
+// signalStop tells the ping loop to exit and returns at once. Idempotent:
+// Close() can run more than once for the same connection (e.g. Kick then a
+// later Remove), and a double close of stopChan would panic.
+//
+// Close() calls this under the registry lock, often on the game loop, so it
+// must not wait: the ping loop can be inside a ping write for up to
+// WriteWait. The connection's writer goroutine calls wait() when it exits.
+func (hm *heartbeatManager) signalStop() {
 	hm.stopOnce.Do(func() {
 		close(hm.stopChan)
 	})
+}
+
+// wait blocks until the ping loop has exited. Never call it on the game loop.
+func (hm *heartbeatManager) wait() {
 	hm.wg.Wait()
 }

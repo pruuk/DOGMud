@@ -1,7 +1,9 @@
 package questloop
 
 import (
+	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/quests"
@@ -47,6 +49,26 @@ func ruleEnd(q *quests.Quest, g grants) []Finding {
 	if handins == 0 {
 		out = append(out, Finding{Rule: "end", QuestId: q.QuestId, Where: stepWhere(q, last),
 			Msg: "no hand-in topic grants " + tok})
+	}
+	return out
+}
+
+// HintMaxRunes caps a step hint (owner ruling P8, 2026-10-24): a hint says
+// where, then the one action; the minimap and the quest panel's "head <dir>"
+// line carry the route. Counted in runes after whitespace runs collapse to
+// one space. The web quest panel uses the same number to offer "more".
+const HintMaxRunes = 200
+
+// ruleHintLength: no step's hint runs past HintMaxRunes (P8). A step with
+// no hint is the hint rule's finding, not this one's.
+func ruleHintLength(q *quests.Quest) []Finding {
+	var out []Finding
+	for i := range q.Steps {
+		hint := strings.Join(strings.Fields(q.Steps[i].Hint), " ")
+		if n := utf8.RuneCountInString(hint); n > HintMaxRunes {
+			out = append(out, Finding{Rule: "hint-length", QuestId: q.QuestId, Where: stepWhere(q, i),
+				Msg: fmt.Sprintf("this hint is %d characters; the cap is %d (say where, then the one action)", n, HintMaxRunes)})
+		}
 	}
 	return out
 }

@@ -105,7 +105,13 @@ var (
 	sigChan            = make(chan os.Signal, 1)
 	workerShutdownChan = make(chan bool, 1)
 
+	// serverAlive is false only once shutdown begins, and never goes back:
+	// the telnet accept loops exit on it. Copyover does not touch it.
 	serverAlive atomic.Bool
+	// acceptPaused is true while a copyover runs. The telnet accept loops turn
+	// connections away but keep accepting, so a failed copyover, which lifts
+	// the pause, leaves every listener working (#670).
+	acceptPaused atomic.Bool
 
 	worldManager = NewWorld(sigChan)
 
@@ -1304,6 +1310,18 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string) {
 		// it only acts when the id is still in the registry map, and deletes
 		// the entry as it does so.
 		connections.Remove(connDetails.ConnectionId())
+
+		// Output queued before the close (a quit or kick goodbye, a login
+		// refusal) is still being written by the connection's writer, which
+		// closes the socket itself once drained. web.go's /ws handler closes
+		// the socket as soon as this function returns, so wait for the writer
+		// first or that close cuts the goodbye off. Bounded, and on this
+		// connection's own goroutine, never the game loop.
+		if !connDetails.WaitWriter(connections.WriterDrainTimeout) {
+			mudlog.Warn("WS Close", "connectionId", connDetails.ConnectionId(),
+				"error", "writer still draining; closing the socket anyway",
+				"waited", connections.WriterDrainTimeout)
+		}
 	}()
 
 	// Setup shared state map for this connection's handlers
@@ -1562,67 +1580,112 @@ func TelnetListenOnPort(hostname string, portNum int, wg *sync.WaitGroup, maxCon
 	}
 	mudlog.Info("Telnet", "status", "listening", "port", portNum, "type", connLabel)
 
-	// Start a goroutine to accept incoming connections, so that we can use a signal to stop the server
-	go func() {
+	netCfg := configs.GetNetworkConfig()
 
-		netCfg := configs.GetNetworkConfig()
-
-		// Loop to accept connections
-		for {
-			conn, err := server.Accept()
-
-			if !serverAlive.Load() {
-				mudlog.Warn("Connections disabled.")
+	// admit takes one accepted connection past the connection limits and hands
+	// it to its own handler goroutine, so the accept loop can keep accepting.
+	admit := func(conn net.Conn) {
+		// Enforce overall connection limit
+		if maxConnections > 0 {
+			if connections.ActiveConnectionCount() >= maxConnections {
+				refuseConn(conn, fmt.Sprintf("\n\n\n!!! Server is full (%d connections). Try again later. !!!\n\n\n", connections.ActiveConnectionCount()))
 				return
 			}
-
-			if err != nil {
-				mudlog.Warn("Connection error", "error", err)
-				continue
-			}
-
-			// Enforce overall connection limit
-			if maxConnections > 0 {
-				if connections.ActiveConnectionCount() >= maxConnections {
-					conn.Write([]byte(fmt.Sprintf("\n\n\n!!! Server is full (%d connections). Try again later. !!!\n\n\n", connections.ActiveConnectionCount())))
-					conn.Close()
-					continue
-				}
-			}
-
-			// Enforce per-type connection limits
-			if cType == connections.ConnAI {
-				if connections.ActiveAIConnectionCount() >= int(netCfg.MaxAIConnections) {
-					conn.Write([]byte("\n\n\n!!! AI connection pool is full. Try again later. !!!\n\n\n"))
-					conn.Close()
-					continue
-				}
-			} else {
-				if int(netCfg.MaxHumanConnections) > 0 && connections.ActiveHumanConnectionCount() >= int(netCfg.MaxHumanConnections) {
-					conn.Write([]byte("\n\n\n!!! Human connection pool is full. Try again later. !!!\n\n\n"))
-					conn.Close()
-					continue
-				}
-			}
-
-			connDetails := connections.Add(conn, nil, cType)
-
-			// AI connections get ANSI stripping and are tagged
-			if cType == connections.ConnAI {
-				connDetails.SetStripAnsi(true)
-			}
-
-			wg.Add(1)
-			// hand off the connection to a handler goroutine so that we can continue handling new connections
-			go handleTelnetConnection(
-				connDetails,
-				wg,
-			)
-
 		}
-	}()
+
+		// Enforce per-type connection limits
+		if cType == connections.ConnAI {
+			if connections.ActiveAIConnectionCount() >= int(netCfg.MaxAIConnections) {
+				refuseConn(conn, "\n\n\n!!! AI connection pool is full. Try again later. !!!\n\n\n")
+				return
+			}
+		} else {
+			if int(netCfg.MaxHumanConnections) > 0 && connections.ActiveHumanConnectionCount() >= int(netCfg.MaxHumanConnections) {
+				refuseConn(conn, "\n\n\n!!! Human connection pool is full. Try again later. !!!\n\n\n")
+				return
+			}
+		}
+
+		connDetails := connections.Add(conn, nil, cType)
+
+		// AI connections get ANSI stripping and are tagged
+		if cType == connections.ConnAI {
+			connDetails.SetStripAnsi(true)
+		}
+
+		wg.Add(1)
+		// hand off the connection to a handler goroutine so that we can continue handling new connections
+		go handleTelnetConnection(
+			connDetails,
+			wg,
+		)
+	}
+
+	// Start a goroutine to accept incoming connections, so that we can use a signal to stop the server
+	go telnetAcceptLoop(server, admit)
 
 	return server
+}
+
+// pauseAccepting turns new telnet connections away while a copyover runs.
+// It is temporary: resumeAccepting lifts it when the copyover fails, and a
+// copyover that succeeds re-execs the process, which starts unpaused.
+func pauseAccepting() { acceptPaused.Store(true) }
+
+// resumeAccepting lifts a copyover pause. Every copyover path that returns
+// to the running server calls it (#670).
+func resumeAccepting() { acceptPaused.Store(false) }
+
+// copyoverRejectMessage is what a player who connects mid-copyover sees
+// before the connection closes.
+const copyoverRejectMessage = "\n\n\n!!! The server is restarting. Please reconnect in a moment. !!!\n\n\n"
+
+// acceptDecision decides what the telnet accept loop does with the
+// connection it just accepted. alive is serverAlive (false only at shutdown,
+// for good); paused is acceptPaused (true only during a copyover). Shutdown
+// ends the loop; a pause turns the connection away and keeps accepting, so a
+// copyover that fails leaves the listener working (#670).
+func acceptDecision(alive, paused bool) (exit, reject bool) {
+	if !alive {
+		return true, false
+	}
+	return false, paused
+}
+
+// telnetAcceptLoop accepts connections on server until shutdown, handing
+// each admitted one to admit. The per-connection decision is acceptDecision;
+// this loop only carries it out.
+func telnetAcceptLoop(server net.Listener, admit func(net.Conn)) {
+	for {
+		conn, err := server.Accept()
+
+		exit, reject := acceptDecision(serverAlive.Load(), acceptPaused.Load())
+		if exit {
+			if conn != nil {
+				_ = conn.Close()
+			}
+			mudlog.Warn("Connections disabled.")
+			return
+		}
+		if err != nil {
+			mudlog.Warn("Connection error", "error", err)
+			continue
+		}
+		if reject {
+			mudlog.Info("Connection turned away during copyover", "remote", conn.RemoteAddr().String())
+			refuseConn(conn, copyoverRejectMessage)
+			continue
+		}
+		admit(conn)
+	}
+}
+
+// refuseConn sends msg to a connection the server will not take and closes
+// it. Both are best effort: the peer may already be gone, and there is
+// nothing more to do for a connection being refused.
+func refuseConn(conn net.Conn, msg string) {
+	_, _ = conn.Write([]byte(msg))
+	_ = conn.Close()
 }
 
 // loadAllDataFiles loads every data file. At boot a loader's panic stops the

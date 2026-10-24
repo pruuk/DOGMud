@@ -77,6 +77,10 @@ type ConnectionDetails struct {
     inputDisabled     bool            // Input processing toggle
     clientSettings    ClientSettings  // Client configuration
     heartbeat         *heartbeatManager // WebSocket heartbeat manager
+    out               *sendQueue      // outbound queue + writer (sendqueue.go)
+    outOnce           sync.Once       // starts the writer on first use
+    closeMu           sync.Mutex      // orders Close's read deadline vs pongs
+    readClosed        bool            // Close has unblocked the reader
 }
 ```
 
@@ -138,7 +142,7 @@ func Remove(id ConnectionId) error {
     defer lock.Unlock()
     
     if cd, ok := netConnections[id]; ok {
-        cd.Close()                    // Close underlying connection
+        cd.Close()                    // Drain queued output, then close (never blocks)
         disconnectCounter++           // Track disconnection
         delete(netConnections, id)    // Remove from tracking
         return nil
@@ -377,67 +381,126 @@ func SendTo(b []byte, ids ...ConnectionId)
 
 Both follow the same three-phase shape:
 
-1. **Snapshot under `lock.RLock()`** — resolve ids to `*ConnectionDetails` into
+1. **Snapshot under `lock.RLock()`**: resolve ids to `*ConnectionDetails` into
    a local `[]writeTarget`. `Broadcast` additionally skips connections in
    `Login` state and any id in `skipConnectionIds`.
-2. **Release the lock, then write.** No write ever happens with the package
-   lock held.
-3. **Reap failures** — ids whose `Write` returned an error are passed to
+2. **Release the lock, then queue.** `cd.Write()` only queues; see below.
+3. **Reap failures**: ids whose `Write` returned an error are passed to
    `Remove()` after the loop.
 
 `Broadcast` returns every id it attempted, including ones whose write failed
 (matching the pre-existing contract).
 
-**Why the lock is released before writing (do not "simplify" this back):**
-`cd.Write()` can block for up to `writeTimeout`. Message dispatch runs inside
-`ProcessEvents` on the single game-loop goroutine, so holding the package lock
-across a write queued *every* connection operation — including the `Remove()`
-that would reap the wedged client — behind one stalled socket, freezing the
-game for every player.
+**Consequence of the snapshot:** a connection can be removed between snapshot
+and queueing. `Write()` returns an error (never panics) for a socketless or
+closing connection; the failure path logs via the nil-safe
+`cd.remoteAddrString()` rather than `cd.RemoteAddr().String()`, which would
+panic on a detached connection.
 
-**Consequence:** a connection can be removed between snapshot and write.
-`Write()` returns an error (never panics) for a nil or closed socket; the
-failed-write path logs via the nil-safe `cd.remoteAddrString()` rather than
-`cd.RemoteAddr().String()`, which would panic on a detached connection.
+### Outbound send queue (`sendqueue.go`)
+
+**No game code writes to a socket.** `ConnectionDetails.Write` (and so
+`SendTo`, `Broadcast` and the copyover reconnect-token sends) converts the
+bytes (CRLF, ANSI strip for AI, ASCII mode), appends them to the connection's
+`sendQueue`, and returns at once. One writer goroutine per connection
+(`sendQueue.run`, started lazily by `cd.sendQueue()`) performs every data
+write, in queue order, through `cd.writeNow`, each bounded by `writeTimeout`
+(5 s). Order per connection is the order of `Write` calls, telnet and
+websocket alike; one websocket frame per `Write`.
+
+Why (2026-10-24, production lag): `Write` used to write on the game loop.
+Every room change then sent a web client a full `Zone.Map` (about 271 KB for
+a well-explored character), so one client whose socket stopped draining froze
+the **whole game** for up to 5 s, then got dropped anyway (`SendTo() ... i/o
+timeout` in the log, nothing else for 5 s). Now only that client's writer
+waits. Since #650 a web client gets the full map only on login, a zone change
+or a floor change and otherwise only what changed; a telnet GMCP client still
+gets the full map on every update.
+
+Slow-consumer policy:
+
+- **Cap:** `maxQueuedBytes` = 4 MiB (about 15 full zone maps; worst case
+  about 120 MB at 30 stalled clients on the 961 MB droplet; owner decision
+  2026-10-24, lowered from 8 MiB), counting queued
+  plus in-flight bytes. A `Write` that would pass it closes the socket at
+  once, drops the queue, logs `WARN SendQueueOverCap` (connectionId,
+  remoteAddr, queuedBytes, messageBytes, capBytes) and returns
+  `ErrSendQueueFull`; `SendTo`/`Broadcast` then `Remove()` it, the same path a
+  failed write always took, so the player goes linkdead as before. A single
+  message larger than the cap is still sent to an otherwise idle connection.
+- **Write failure or timeout** in the writer: socket closed, queue dropped,
+  `WARN SendTo()` with the error, then `Remove(id)` from the writer goroutine.
+
+`Close()` (called by `Remove`/`Kick` under the registry lock) never waits on
+the network:
+
+- Output queued **before** Close is still delivered (a goodbye line, a login
+  refusal), telnet and websocket alike, with one shared deadline
+  `writeTimeout` after Close; the writer then closes the socket and exits.
+- **Websocket:** `web.go`'s `/ws` handler has its own `defer conn.Close()`,
+  which runs as soon as `HandleWebSocketConnection` (main.go) returns, and
+  that is right after Close unblocks the reader. So that function's deferred
+  exit path calls `cd.WaitWriter(WriterDrainTimeout)` after its `Remove`:
+  the HTTP handler goroutine waits (never the game loop) until the writer has
+  drained and closed the socket, and only then does the backstop close run.
+  Without the wait a goodbye behind a large frame was cut off silently.
+  `WaitWriter(timeout)` returns whether the writer exited; called before
+  Close it just waits out the timeout. `WriterDrainTimeout` is
+  `writeTimeout + 1 s`.
+- The reader is unblocked at once by moving the read deadline to now
+  (`unblockReader`; for websocket on `NetConn()`, which is safe from any
+  goroutine). The pong handler goes through `extendReadDeadline`, which is a
+  no-op after Close, so a late pong cannot re-block a closed reader.
+- The heartbeat is told to stop (`signalStop`, non-blocking); the writer
+  goroutine waits for the ping loop (`wait`) as it exits. `Close` used to wait
+  for it under the registry lock, and a ping can sit in a write for
+  `WriteWait` (10 s).
+
+Shutdown: `Cleanup()` removes every connection, then waits up to
+`WriterDrainTimeout` (`writeTimeout + 1 s`) in total for every writer to finish, so queued output is
+delivered and no writer goroutine outlives it.
+
+Copyover (`fd_unix.go`): execve discards this process's goroutines, so
+`CopyoverSave` queues the websocket `RELOGTKN` lines and then flushes every
+connection (`flushAllForCopyover`, `writeTimeout` in total) before handing
+over the telnet fds. A client too slow to drain in time loses its tail and
+`WARN CopyoverFlush ... error="output still queued at handoff"` is logged for
+it; a connection already idle is skipped without a WARN even when the budget
+ran out on an earlier one. The flush runs under the registry lock; that cannot
+deadlock because a failing writer marks its queue idle before it calls
+`Remove`. `flushAllForCopyover(conns, budget)` lives in `copyover.go` (not the
+Unix-only file) so its logic is tested on every platform.
+
+**Output freeze (`outputFrozen`, sendqueue.go).** Reader goroutines keep
+running during `CopyoverSave` and can queue a prompt redraw after the flush;
+the writer could then be mid-write at execve and leave half an ANSI, IAC or
+GMCP sequence on a telnet socket the new process inherits. So `CopyoverSave`
+calls `freezeOutput()` after the `RELOGTKN` lines are queued and immediately
+before `flushAllForCopyover`. From then on `enqueue` drops everything, and
+`Write` returns `(0, nil)` (not an error, so `SendTo`/`Broadcast` do not
+`Remove` a connection that is about to be handed over). What was queued
+before the freeze, the reconnect tokens included, is still written by the
+flush. A successful copyover replaces the process, so the freeze lasts its
+lifetime; if `copyover.Execute` fails, `triggerCopyover` (root `copyover.go`)
+calls `ThawOutputAfterFailedCopyover()` so the still-running server gets its
+output back. Windows `CopyoverSave` never freezes (copyover is refused there).
+
+`sendQueue.flush(timeout)` is the general "wait until everything queued so far
+is written" primitive.
 
 ### Protocol-Specific I/O
 ```go
-// Write data with protocol handling
-func (cd *ConnectionDetails) Write(p []byte) (n int, err error) {
-    // Convert line endings for all protocols
-    p = []byte(strings.ReplaceAll(string(p), "\n", "\r\n"))
-    
-    if len(p) == 0 {
-        return 0, nil
-    }
-    
-    if cd.wsConn != nil {
-        cd.wsLock.Lock()
-        defer cd.wsLock.Unlock()
-        
-        // Prevent telnet commands to WebSocket
-        if p[0] == term.TELNET_IAC {
-            mudlog.Error("conn.Write", "error", "Trying to send telnet command to websocket!")
-            return 0, nil
-        }
-        
-        // Bounded, like heartbeat.writePing(). Set inside wsLock.
-        cd.wsConn.SetWriteDeadline(time.Now().Add(writeTimeout))
-        
-        err := cd.wsConn.WriteMessage(websocket.TextMessage, p)
-        if err != nil {
-            return 0, err
-        }
-        return len(p), nil
-    }
-    
-    if cd.conn == nil {
-        return 0, ErrNoConnection // removed between snapshot and write
-    }
-    
-    cd.conn.SetWriteDeadline(time.Now().Add(writeTimeout))
-    return cd.conn.Write(p)
-}
+// Queue p; never waits on the socket. Errors: ErrNoConnection (socketless),
+// ErrConnectionClosing (after Close), ErrSendQueueFull (over cap; closed).
+func (cd *ConnectionDetails) Write(p []byte) (n int, err error)
+
+// Caller-side conversion: CRLF, ANSI strip, ASCII mode, and the refusal to
+// send a telnet IAC frame to a websocket.
+func (cd *ConnectionDetails) prepareOutput(p []byte) ([]byte, bool)
+
+// The only socket write for data. Writer goroutine only. Websocket writes
+// hold wsLock so they serialise with heartbeat pings.
+func (cd *ConnectionDetails) writeNow(p []byte, deadline time.Time) error
 
 // Read data with protocol handling
 func (cd *ConnectionDetails) Read(p []byte) (n int, err error) {
@@ -641,12 +704,9 @@ func SignalShutdown(s os.Signal) {
     }
 }
 
-// Cleanup all connections
-func Cleanup() {
-    for _, id := range GetAllConnectionIds() {
-        Remove(id)
-    }
-}
+// Remove every connection, then wait (writeTimeout + 1 s in total) for each
+// writer to deliver its queued output and exit. See "Outbound send queue".
+func Cleanup()
 ```
 
 ## Usage Examples
@@ -742,7 +802,8 @@ This comprehensive connections system provides robust network connection managem
 | File | Purpose |
 |------|---------|
 | `connections.go` | The connection registry and lifecycle |
-| `connectiondetails.go` | Per-connection state |
+| `connectiondetails.go` | Per-connection state; `Write` (queue), `writeNow` (socket), `Close` |
+| `sendqueue.go` | Per-connection outbound queue, its writer goroutine, the 4 MiB cap |
 | `input_lines.go` | Isolates telnet negotiations and splits one socket read into individual input lines |
 | `clientsettings.go` | Negotiated client capabilities |
 | `heartbeat.go` | Keepalive / zombie detection |

@@ -109,6 +109,24 @@ function noMarkupFrom(html) {
     check('a non-number completion cannot leave its style', html.indexOf('50%"') === -1, true);
 }());
 
+// A hint over the 200-character cap renders the clamp and its "more" toggle
+// (#375 P8); both carry the quest id and the hint text, so both stay escaped.
+(function () {
+    var env = makeEnv({
+        Char: {
+            Quests: [
+                { id: '9" onclick="alert(1)', name: 'n', completion: 1, focused: true,
+                  hint: new Array(12).join(BOTH), next_dir: BOTH }
+            ]
+        }
+    });
+    env.fns.renderQuests();
+    var html = env.html('quests-list');
+    check('a long hint renders its toggle', html.indexOf('qhint-more') !== -1, true);
+    check('no long-hint field becomes markup', noMarkupFrom(html), true);
+    check('a non-number quest id cannot leave the toggle attribute', html.indexOf('onclick') === -1, true);
+}());
+
 // --- the Status panel (webclient-pure.html updateStatusPanel) ---------------------
 
 (function () {
