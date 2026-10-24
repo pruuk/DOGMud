@@ -2,7 +2,7 @@
 
 > Epic #375, phase 2. Target: `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`. Route:
 > `docs/roadmaps/QUEST_DIALOGUE_ROADMAP.md`. Builds on phase 1 (PR #661, `feea56908`).
-> Owner rulings from the 2026-10-24 brainstorm are numbered P1 to P5 below and are not to be
+> Owner rulings from the 2026-10-24 brainstorm are numbered P1 to P6 below and are not to be
 > re-asked. One spec, two plans (P5): plan 2a is sections 3 to 6, plan 2b is section 7.
 
 ## 1. Facts verified against source (master `fd18743db`, 2026-10-24)
@@ -51,6 +51,10 @@ Line numbers were read from the files at that commit.
 | Import direction | `dialogue` imports `quests`; neither reaches `users`, `characters`, `questengine`, `conversation`, `hooks` or `modules/gmcp` (`go list -deps`); `users` and `modules/gmcp` import both. A probe package importing `quests` and `dialogue`, plus a caller importing it with `users` and `modules/gmcp`, built clean | `go list`, throwaway build 2026-10-24 |
 | Headless engine harness | `Engine.Notify(eventType, details, player, ctx)`; test players `fullMockPlayer`, `linearPlayer` | `internal/questengine/engine.go:73`, `newbie_one_command_steps_test.go:30` |
 | Item sources | mob `loot_pool`, character `items` and `equipment`; shop `ItemId`; room `SpawnInfo.ItemId`; quest `give_item`, topic `givesItem`, quest rewards | `internal/mobs/mobs.go:86`, `internal/characters/character.go:144,148`, `internal/characters/shop.go:20`, `internal/rooms/spawninfo.go:14` |
+| Repeatable shown to players | nowhere: only the builder's `questListRow.Repeatable` | `modules/gmcp/gmcp.Quest.go:91` |
+| Text quest list | `usercommands.Quests` builds `QuestRecord{Id, Name, Description, Completion, BarFull, BarEmpty}` from `GetQuestProgress()` only, so a quest with no saved progress is never listed; template `character/quests.template` | `internal/usercommands/quests.go:17`, `_datafiles/world/dogmud/templates/character/quests.template` |
+| Web quest panel payload | `Char.Quests`, `GMCPCharModule_Payload_Quest{Id, Name, Description, Completion, Hint, Focused, TargetRoom, NextRoom, NextDir}`; no repeatable field | `modules/gmcp/gmcp.Char.go:1143` |
+| Web quest panel renderer | reads `Char.Quests` | `_datafiles/html/public/webclient-pure.html`; tests `tools/webclient-tests/quest-panel-refresh.js` |
 | Item sources not yet read | forage tables, crafting outputs | `internal/actions/forage.go`, `internal/crafting` (plan 2b reads them) |
 
 ## 2. Owner rulings (2026-10-24)
@@ -71,6 +75,9 @@ Line numbers were read from the files at that commit.
   a second action.
 - **P5 One spec, two plans.** Plan 2a: card, hand-in, repeats, validators, manifest. Plan 2b:
   the completability walkthrough.
+- **P6 Players can tell a quest is repeatable** (owner 2026-10-24, from playtest-bot
+  feedback): the offer card says so, the text and web quest lists tag it `(repeatable)`, and
+  `quests all` shows finished repeatables with whether they can be taken again (section 4.3).
 
 ## 3. Offer card
 
@@ -174,6 +181,35 @@ quest is not offered back to the player in the same breath.
 - Players who completed a repeatable before this lands start at count 0 (accepted in the
   brainstorm).
 
+### 4.3 Showing that a quest repeats (P6)
+
+All of it is generated from `repeatable`, `repeat_limit` and `QuestCompletions`, so no
+content is written.
+
+- **Offer card:** a repeatable's card gets one more body line after the reward:
+  "You can take this on again after a while." On the last allowed run (a `repeat_limit` set
+  and the count one short of it) the line is instead "This is the last time this work will
+  be offered to you." No round count is shown (player-copy rule). Authored pitches may add
+  their own flavour; no validator asks for it.
+- **Quest lists:** the `quests` command and the web quest panel tag a repeatable with the
+  word `(repeatable)` after its name, never a colour or icon alone.
+  - `QuestRecord` gains `Repeatable bool`, and `quests.template` prints the tag.
+  - `GMCPCharModule_Payload_Quest` gains `Repeatable bool` (`json:"repeatable,omitempty"`),
+    and the web panel prints the same word.
+- **Finished repeatables in `quests all`:** a repeatable with no current progress and a
+  count of at least 1 is listed at full completion with `(repeatable)` and one status line in
+  place of the step description:
+
+  | State | Line |
+  |---|---|
+  | `QuestOpen` true | Ready to take on again. |
+  | on cooldown | Not offered again yet. |
+  | at its `repeat_limit` | Done for good. |
+
+  A repeatable in progress is listed as any quest is, with its tag. The plain `quests` view
+  (in progress only) does not show finished repeatables, as it hides every finished quest
+  today. Secret repeatables stay hidden, like other secret quests.
+
 ## 5. Loop validators
 
 ### 5.1 Package `internal/questloop`
@@ -267,6 +303,11 @@ Every guard ships with a fixture that breaks it and a test that sees it break.
 - **Repeats:** an offer is hidden on cooldown (no Accept then "Rest a while"); hidden at the
   cap; `[!]` clears in both and returns when the cooldown ends; a double Accept or a double
   `give` cannot pass the cap; `QuestCompletions` survives save, load and restart.
+- **Repeat display:** the card's again line and last-time line; `(repeatable)` in the text
+  list and in `Char.Quests` (and the web panel test in `tools/webclient-tests`); a finished
+  repeatable in `quests all` moves from "Not offered again yet" to "Ready to take on again"
+  when the cooldown ends, and to "Done for good" at the cap; it is absent from plain
+  `quests`.
 - **Validators:** one malformed fixture per rule, refused at boot, CI and editor save; the
   ratchet fails on a new finding and on a stale line; the editor checks the proposed world,
   not the cached one.
@@ -322,7 +363,8 @@ to the zone playtests.
   `internal/questengine`, `internal/dialogue`, `internal/conversation`, `internal/menu`,
   `internal/characters`.
 - **Help:** `_datafiles/world/dogmud/templates/help/talk.template` describes the card and the
-  next offer; `quests.template` in the same folder describes repeats.
+  next offer; `quests.template` in the same folder describes repeats, the `(repeatable)` tag
+  and the finished-repeatable lines in `quests all`.
 - **Requirements:** rule 13 becomes "Repeatable quests have a frequency, and a repeat limit
   where wanted"; the done-when line becomes "Repeatable quests enforce their frequency, and
   their limit where set" (P3).
