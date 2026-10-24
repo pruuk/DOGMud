@@ -15,7 +15,7 @@ the world from the live registries, and three doors run it.
 |---|---|
 | `questloop.go` | `World`, `Finding` (`Key`, `String`), `Validate(w)`: every rule, findings sorted by key |
 | `grants.go` | The grant index: which topics and triggers grant each step token, as `way`s (`indexGrants`, `walkGrants`, `ownGrants`), and the stable trigger names (`triggerWheres`, `triggerSignature`) |
-| `rules_loop.go` | `ruleStart`, `ruleEnd`, `ruleHint` |
+| `rules_loop.go` | `ruleStart`, `ruleEnd`, `ruleHint`, `ruleHintLength` and its cap `HintMaxRunes` |
 | `rule_oneaction.go` | `ruleOneAction` and `dedupe` |
 | `rules_more.go` | `ruleChain`, `ruleRepeat`, `ruleReward`, `ruleRefs`, `refsText` |
 | `backlog.go` | `Backlog`, `ParseBacklog`, `FormatBacklog`, `Ratchet` |
@@ -27,6 +27,7 @@ the world from the live registries, and three doors run it.
 | `start` | The first step's token is granted by at least one `offer` topic, and by nothing else |
 | `end` | The final step's token is granted only by `handin` topics, and by at least one |
 | `hint` | Every step except the final one has a non-empty `hint` |
+| `hint-length` | No step's `hint` is over `HintMaxRunes` (200, owner ruling P8): whitespace runs collapse to one space, then runes are counted. Where is `step <id>`. A step with no hint is the `hint` rule's finding. The web quest panel's "more" toggle uses the same 200 |
 | `one-action` | Every non-start step has at least one way in; each way is one trigger or one topic that requires the previous step's token, with no item, flag or gold condition and no `sequence`; a trigger grants at most one step of its own quest |
 | `chain` | An offer gated on quest N's final token sits on a mob that has a `handin` topic for N |
 | `repeat` | A repeatable has `cooldown_rounds` above zero; `repeat_limit` is refused on a non-repeatable and when negative |

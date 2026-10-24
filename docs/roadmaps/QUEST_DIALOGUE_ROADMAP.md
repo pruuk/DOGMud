@@ -195,8 +195,8 @@ check for authors.
 
 **Goal.** Every quest is offered, accepted, finished and chained through the menu.
 
-**Spec:** `docs/superpowers/specs/2026-10-24-quest-arc-phase2-loop-design.md` (rulings P1 to P7
-there). **Plans:** `docs/superpowers/plans/2026-10-24-quest-arc-phase2a-loop.md` (2a: card,
+**Spec:** `docs/superpowers/specs/2026-10-24-quest-arc-phase2-loop-design.md` (rulings P1 to P8
+there; P8 caps a step hint at 200 characters). **Plans:** `docs/superpowers/plans/2026-10-24-quest-arc-phase2a-loop.md` (2a: card,
 hand-in, repeats, loop validators, step-id manifest); plan 2b (the completability
 walkthrough): not written yet.
 

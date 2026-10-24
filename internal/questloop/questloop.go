@@ -64,6 +64,7 @@ func Validate(w World) []Finding {
 		out = append(out, ruleStart(q, g)...)
 		out = append(out, ruleEnd(q, g)...)
 		out = append(out, ruleHint(q)...)
+		out = append(out, ruleHintLength(q)...)
 		out = append(out, ruleOneAction(q, g)...)
 		out = append(out, ruleRepeat(q)...)
 		out = append(out, ruleReward(q, w.Names)...)

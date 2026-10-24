@@ -2,7 +2,7 @@
 
 > Epic #375, phase 2. Target: `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`. Route:
 > `docs/roadmaps/QUEST_DIALOGUE_ROADMAP.md`. Builds on phase 1 (PR #661, `feea56908`).
-> Owner rulings from the 2026-10-24 brainstorm are numbered P1 to P7 below and are not to be
+> Owner rulings from the 2026-10-24 brainstorm are numbered P1 to P8 below and are not to be
 > re-asked. One spec, two plans (P5): plan 2a is sections 3 to 6, plan 2b is section 7.
 
 ## 1. Facts verified against source (master `fd18743db`, 2026-10-24)
@@ -80,6 +80,13 @@ Line numbers were read from the files at that commit.
   `quests all` and the web quest panel show finished repeatables with whether they can be
   taken again; the panel leaves out those done for good (section 4.3).
 - **P7 The admin quest editor is off until phase 6** (owner 2026-10-24): a create or edit there could save a quest that fails the loop rules and stops the next boot; the editor-save loop door (5.4) stays in place for phase 6.
+- **P8 A step hint is at most 200 characters** (owner 2026-10-24): whitespace runs collapse to
+  one space and the count is in runes. A hint says where, then the one action; the minimap and
+  the quest panel's "head <dir>" line carry the route. The `hint-length` rule (5.2) enforces
+  it, with today's 51 long hints of 224 on the backlog (the longest: 76 `start` 872, 67
+  `delivery` 743, 72 `start` 539). The web quest panel clamps the focused hint to three lines
+  with a "more" / "less" toggle on any hint over the cap, and keeps the direction line outside
+  the clamp.
 
 ## 3. Offer card
 
@@ -268,6 +275,7 @@ neither `conversation` nor `questworld` (`go list -deps`, 2026-10-24).
 | `start` | The first step's token is granted by at least one `offer` topic, and by nothing else: no trigger action, no `rewards.questid`, no topic of another kind. |
 | `end` | The final step's token is granted only by `handin` topics, and by at least one. |
 | `hint` | Every step except the final one has a non-empty `hint`. |
+| `hint-length` | No step's `hint`, whitespace runs collapsed, is over 200 runes (P8, `questloop.HintMaxRunes`). A step with no hint is left to `hint`. |
 | `one-action` | For every non-start step: at least one way in; each way is one trigger (its event plus filters) or one topic; each way requires the previous step's token (`conditions.has` or `questRequired`); no way carries `has_item`, `missing_item`, `has_flag`, `missing_flag` or `has_gold`; no trigger grants more than one step of its own quest; no trigger uses a `sequence`. Several ways into one step are alternatives and pass. |
 | `chain` | Every offer whose `questRequired` names quest N's final token sits on a mob that has a `handin` topic for N. |
 | `repeat` | A repeatable has `cooldown_rounds > 0`. `repeat_limit` is refused on a non-repeatable and when negative. |
