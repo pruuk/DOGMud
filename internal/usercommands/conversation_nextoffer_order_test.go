@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -119,6 +120,77 @@ func TestHandIn_NextOfferPitchFollowsTheCompletionLines(t *testing.T) {
 	require.True(t, user.HasOpenMenu())
 	require.True(t, user.RouteMenuInput("1", true), "1 is Accept")
 	require.Equal(t, []string{"12-start"}, questTokensFor(1))
+}
+
+// Spec 4.1 step 3: with several next offers nothing is pitched; the talk
+// menu is re-shown and lists each as a [!] line.
+func TestHandIn_SeveralNextOffersReshowTheMenu(t *testing.T) {
+	const twoOffers = nextOfferFixtureYAML + `  - key: seal
+    kind: offer
+    quest: 15
+    label: "The Broken Seal"
+    playerLine: "What about the seal?"
+    text: "Someone broke my seal."
+    questRequired: [9-end]
+    questExcluded: [15-start, 15-end]
+    grantsQuest: 15-start
+`
+	user, mob, done := fixtureWith(t, twoOffers)
+	defer done()
+	defer quests.SeedQuestsForTest(
+		&quests.Quest{QuestId: 9, Name: "The Lost Purse", Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}},
+		&quests.Quest{QuestId: 12, Name: "The Missing Ledger", Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}},
+		&quests.Quest{QuestId: 15, Name: "The Broken Seal", Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}},
+	)()
+	defer events.DrainAllQueuedEventsForTest()
+	require.True(t, user.Character.GiveQuestToken("9-start"))
+	giveItem(t, user, 10001)
+	conversation.Talk(user, mustRoom(t, user), mob)
+	drained(1)
+	require.True(t, user.RouteMenuInput("1", true), "1 is the hand-in")
+
+	got := deliveredWithNextOffer(t)
+	// The player's lines also show in the menu as sublines; only the spoken
+	// form ("You say") or the NPC's pitch would mean a pitch ran.
+	for _, said := range []string{`saytext">Is there more`, `saytext">What about the seal`, "My ledger went missing too.", "Someone broke my seal."} {
+		require.Equal(t, -1, indexOf(got, said), "no pitch (%s): %q", said, got)
+	}
+	menuAt := indexOf(got, "Talking with")
+	require.Greater(t, menuAt, indexOf(got, "My thanks."), "the talk menu is re-shown: %q", got)
+	require.True(t, user.HasOpenMenu())
+	for _, label := range []string{"The Missing Ledger", "The Broken Seal"} {
+		var line string
+		for _, l := range strings.Split(got[menuAt], "\n") {
+			if strings.Contains(l, label) {
+				line = l
+			}
+		}
+		require.Contains(t, line, "[!]", "%s is a [!] line: %q", label, got[menuAt])
+	}
+}
+
+// Spec 4.1: the NPC left the room before the queued pitch ran. Nothing is
+// said and nothing opens.
+func TestHandIn_NextOfferAfterTheNpcLeftPitchesNothing(t *testing.T) {
+	user, mob, done := fixtureWith(t, nextOfferFixtureYAML)
+	defer done()
+	defer quests.SeedQuestsForTest(
+		&quests.Quest{QuestId: 9, Name: "The Lost Purse", Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}},
+		&quests.Quest{QuestId: 12, Name: "The Missing Ledger", Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}},
+	)()
+	defer events.DrainAllQueuedEventsForTest()
+	require.True(t, user.Character.GiveQuestToken("9-start"))
+	require.True(t, user.Character.GiveQuestToken("9-end"))
+	events.AddToQueue(events.TalkNextOffer{UserId: user.UserId, MobInstanceId: mob.InstanceId, TopicKey: "ledger"}, events.TalkNextOfferPriority)
+	home := mob.Character.RoomId
+	mob.Character.RoomId = home + 1000
+	defer func() { mob.Character.RoomId = home }()
+
+	got := deliveredWithNextOffer(t)
+	require.Equal(t, -1, indexOf(got, "Is there more I can do?"), "no line: %q", got)
+	require.Equal(t, -1, indexOf(got, "My ledger went missing too."), "no pitch: %q", got)
+	require.Equal(t, -1, indexOf(got, "Accept"), "no card: %q", got)
+	require.False(t, user.HasOpenMenu())
 }
 
 // A repeatable offer, plus an info topic so the talk menu still opens once
