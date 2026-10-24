@@ -19,7 +19,8 @@ steps:
     map_target_mob: 9323  # follow Ysolde (schedule np_common_ysolde) — a fixed room is wrong for part of the day
     description: >-
       Teels, a Bloom addict on the Lower Wharf, begged you for help.
-      They pressed a spent wax wrapper into your hands. The copper-flower
+      When you take this on, they press a spent wax wrapper into your
+      hands. The copper-flower
       smell of Bloom is on the cloth, and a healer who knows that smell
       may know what to do.
     hint: >-

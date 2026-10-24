@@ -42,8 +42,8 @@ steps:
   - id: start
     map_target: 5269
     description: >-
-      Falv has handed you a firebomb and set you loose in the marsh. First
-      put down a marsh leech. Keep the firebomb for after the leech is
+      Falv hands you a firebomb when you take this on and sets you loose in
+      the marsh. First put down a marsh leech. Keep the firebomb for after the leech is
       down. If a fight turns bad, type flee: if you fall, you wake at the
       Mending Hut, not in the mud.
     hint: >-

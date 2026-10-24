@@ -18,9 +18,9 @@ secret: false
 steps:
   - id: start
     map_target: 5227
-    description: "You were given a cudgel. Hold it in your hand
-      before you fight. If you already hold it, type remove cudgel, then
-      wield it again."
+    description: "Crier Toke or Drillmaster Vorn hands you a cudgel when you
+      take this on. Hold it in your hand before you fight. If you already
+      hold it, type remove cudgel, then wield it again."
     hint: "Type wield cudgel."
   - id: wield
     map_target: 5227

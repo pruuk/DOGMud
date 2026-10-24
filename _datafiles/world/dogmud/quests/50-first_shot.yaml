@@ -53,7 +53,8 @@ steps:
   - id: start
     map_target: 5350
     description: >-
-      You have a sling and a pouch of shot. First, ready the sling.
+      Crier Toke or Marksman Iden hands you a sling when you take this on,
+      and a pouch of shot if you have none. First, ready the sling.
       Marksman Iden keeps the range.
     hint: >-
       Type equip sling.
