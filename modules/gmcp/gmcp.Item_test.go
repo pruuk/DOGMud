@@ -223,11 +223,14 @@ func TestScanItemReferencesWith_FindsMatchingSources(t *testing.T) {
 		recipes: func(yield func(string, int)) {
 			yield("iron-dagger", 10001) // no match
 		},
-		quests: func(yield func(int, []int)) {
-			yield(10, []int{40163}) // match
-		},
 		containers: func(yield func(int, []int)) {
 			yield(5901, []int{222}) // no match
+		},
+		questRefs: func(id int) []itemRef {
+			if id != 40163 {
+				return nil
+			}
+			return []itemRef{{Kind: "quest", Id: "quest 10 refs: rewards itemid: item 40163 does not exist"}} // match
 		},
 	})
 	if len(refs) != 2 {
@@ -239,12 +242,5 @@ func TestScanItemReferencesWith_FindsMatchingSources(t *testing.T) {
 	}
 	if !kinds["mob"] || !kinds["quest"] {
 		t.Errorf("expected mob + quest kinds, got %+v", refs)
-	}
-}
-
-func TestParseItemInfoIds(t *testing.T) {
-	got := parseItemInfoIds("40163:2, 10001 ,junk,:5")
-	if len(got) != 2 || got[0] != 40163 || got[1] != 10001 {
-		t.Errorf("parseItemInfoIds wrong: %+v", got)
 	}
 }

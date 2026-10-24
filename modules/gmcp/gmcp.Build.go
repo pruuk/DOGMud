@@ -225,6 +225,9 @@ type buildDeps struct {
 	mobExists       func(id int) bool
 	itemExists      func(id int) bool
 	conditionExists func(id int) bool
+	// questRefs lists what a room delete would break in the quest loop's
+	// refs rule, which refuses at boot (roomQuestRefs). Nil skips the check.
+	questRefs func(roomId int) []string
 }
 
 func realBuildDeps() buildDeps {
@@ -247,6 +250,7 @@ func realBuildDeps() buildDeps {
 		mobExists:       func(id int) bool { return mobs.GetMobSpec(mobs.MobId(id)) != nil },
 		itemExists:      func(id int) bool { return items.GetItemSpec(id) != nil },
 		conditionExists: func(id int) bool { return conditions.GetConditionSpec(id) != nil },
+		questRefs:       roomQuestRefs,
 	}
 }
 
@@ -879,10 +883,17 @@ func buildZoneCreateWith(d zoneCreateDeps, req zoneCreateReq) BuildResult {
 }
 
 // buildRoomDelete removes a room after cleaning every exit that points at it,
-// so no dangling exits remain.
+// so no dangling exits remain. It refuses, before changing anything, while a
+// quest names the room: the quest loop's refs rule would stop the next boot.
 func buildRoomDelete(d buildDeps, roomId int) BuildResult {
 	if d.loadTemplate(roomId) == nil {
 		return buildErr("room %d not found", roomId)
+	}
+	if d.questRefs != nil {
+		if refs := d.questRefs(roomId); len(refs) > 0 {
+			return buildErr("room %d is still named by a quest, so the next boot would refuse it. Change these first: %s",
+				roomId, strings.Join(refs, "; "))
+		}
 	}
 	// Clean inbound exits from every other room.
 	for _, id := range d.allRoomIds() {

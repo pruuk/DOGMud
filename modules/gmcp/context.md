@@ -492,6 +492,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Commands.go` | `Commands` | Command state, modes, cooldowns |
 | `gmcp.Behavior.go` | `Behavior` | Behaviour-tree state (admin/builder tooling) |
 | `gmcp.Build.go` | `Build` | The admin web building tools' data feed. Every `Build.Dialogue.*` message is refused by `refuseDialogueBuild` (the dialogue editor is off until quest arc phase 6). Build.Quest.Get/Update/Create/Delete are refused by `refuseQuestBuild` (the quest editor is off until phase 6, P7); `Build.Quest.List` stays open; the loop door in `buildQuestUpdate` is dormant until then |
+| `gmcp.Delete_refs.go` | `Build` | The boot doors' checks for `Build.Room.Delete` and `Build.Item.Delete`: `questRefsWithoutRoom` / `questRefsWithoutItem` run the quest loop with the id gone and `dialogueRefsWithoutItem` the dialogue door, each returning only what the delete adds. `roomQuestRefs` backs `buildDeps.questRefs` (the room delete refuses, naming each quest and where); `itemQuestRefs` backs `refIterators.questRefs` in the item reference scan, which no longer walks quest rewards itself |
 | `gmcp.CharOp.go` | — | `GMCPCharOp` + `handleCharOp`: inbound state-touching `Char.*` ops, deferred to MainWorker |
 | `gmcp.Relay.go` | `Companion.Relay.*` | The companion key relay: installs `companionai.SetRelaySender`, forwards inbound relay messages to `companionai.RelayInbound` |
 | `gmcp.Game.go` | `Game` | Game-level metadata |
