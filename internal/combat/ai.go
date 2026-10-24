@@ -263,7 +263,8 @@ func SpeciesHasBeastMove(char *characters.Character, move string) bool {
 // family: a default attack is what a creature does most of the time and a
 // special move is its rarer flourish (spec 2026-10-16 #541, rulings E and
 // F). Each gate keeps its runtime anatomy check (no hands, legs) beside the
-// list. beast_move_gate_guard_test.go fails a gate that reads the family.
+// list. internal/guards/beast_move_gate_guard_test.go fails a gate that reads
+// the family.
 //
 // ⚠️ THE COOLDOWN CHECKS BELOW DELIBERATELY DO NOT USE actions.SpecialMoveReady.
 //

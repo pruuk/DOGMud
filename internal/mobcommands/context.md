@@ -103,7 +103,7 @@ The `internal/mobcommands` package implements the AI command system for non-play
   room line with the name hidden by each listener's sight, the deafen split
   (unfiltered for a mob) and, for `shout`, the adjacent-room line and waking
   sleepers, all live in the shared body. `speech_wrapper_guard_test.go`
-  (repo root) fails if any of these five re-forks that logic.
+  (internal/guards) fails if any of these five re-forks that logic.
 - **Whisper**: `whisper <target> <text>` (`whisper.go`) reaches one player
   alone, framed in asterisks like a player's whisper so it stands out from
   combat text. The target is usually `@<userId>`: a quest `npc_say` line with
@@ -145,7 +145,7 @@ The `internal/mobcommands` package implements the AI command system for non-play
   (`drink.go`) is a wrapper over `actions.Drink`, the same body a player drinks
   through (drink path unification 2026-09-28), so a mob pays toxicity, reads
   potion freshness and crafter skill, and gets every special potion's effect.
-  The repo-root `drink_wrapper_guard_test.go` fails if the wrapper grows drink
+  The guard `internal/guards/drink_wrapper_guard_test.go` fails if the wrapper grows drink
   rules again.
 - **Alchemy and crafting**: `alchemy` - Automated production behaviors.
   `craft` (`craft.go`) is a thin wrapper over `actions.InitiateCraft`

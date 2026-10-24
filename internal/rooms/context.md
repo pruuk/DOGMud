@@ -77,7 +77,7 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   rather than heard (a free-form emote): the same sight gate and name hiding,
   also marked `IsCommunication` so a deafened player is still spared. Only
   the shared bodies in `internal/actions` call these three
-  (`speech_wrapper_guard_test.go`, repo root).
+  (`speech_wrapper_guard_test.go`, internal/guards).
   `SendTextCommunication` keeps two callers now: `actions.Shout`'s adjacent-
   room line (a player shouting next door) and the AI companion's `ask` line
   (`modules/aicompanion/listeners.go`); NPC speech never uses it, going
@@ -241,8 +241,8 @@ light" into 0 is gone, because a combine of nothing already reads 0.
    same pass. Darknesses combine among themselves on the same sum (two of 50
    take 58) and the combined darkness is SUBTRACTED from the combined light
    in points. That subtraction is the only way a room reads below 0 (owner
-   ruling O1), down to the -100 clamp. The root guard
-   `lighting_no_natural_negative_test.go` holds every shipped room at 0 or
+   ruling O1), down to the -100 clamp. The guard
+   `lighting_no_natural_negative_test.go` (internal/guards) holds every shipped room at 0 or
    above at every sampled hour, season, moon and weather with no darkness
    present.
 
@@ -390,8 +390,8 @@ YAML keys are `skylight` and `lamp`:
   310 35, 503 45, 488 30, 317 50, 314 40, 6032 45, 204 60, 497 60, 498 64,
   493 30, 6200 30, 301 28, 496 28) and nine sky fractions for openings that
   let daylight in (3101 0.50, 5255 0.50, 6403 0.35, 6411 0.25, 490 0.25,
-  4127 0.25, 3102 0.20, 6407 0.15, 6404 0.10). The root test
-  `lighting_promised_light_rooms_test.go` pins every value.
+  4127 0.25, 3102 0.20, 6407 0.15, 6404 0.10). The test
+  `lighting_promised_light_rooms_test.go` (internal/guards) pins every value.
 
   **The `skylight` override ships on twenty-two rooms** (grep `^skylight:`
   under `_datafiles/world/dogmud/rooms`): the nine of plan 6 above and the
@@ -414,8 +414,8 @@ YAML keys are `skylight` and `lamp`:
   4045 (`north_road`), 5245 (`pothole_coulee`), 5378 (`north_road_north`),
   5448, 5449 (`kingsbarrow_vale`), 6114, 6116, 6252 (`the_confluence`) and
   6280 (`greenford`). Street and stall keepers carry an Oil Lantern
-  instead, which is mob content, not a room override. The root guard
-  `shop_night_trade_guard_test.go` asserts every shop keeper can trade at
+  instead, which is mob content, not a room override. The guard
+  `shop_night_trade_guard_test.go` (internal/guards) asserts every shop keeper can trade at
   night while awake, so a new dark shop fails the build.
 
   `fort`'s old granularity gap, sharing one sky fraction between

@@ -12,7 +12,7 @@ import (
 // of the conditions unification renamed the builder field names; this pins
 // them as renamed. Quest enums carry both the trigger-condition vocabulary
 // (`conditions`) and the condition id picker (`statusConditions`). See
-// wire_freeze_test.go at the repo root.
+// internal/guards/wire_freeze_test.go.
 func TestWireFreeze_GMCPJSONFieldNames(t *testing.T) {
 	keysOf := func(v any) map[string]any {
 		b, err := json.Marshal(v)

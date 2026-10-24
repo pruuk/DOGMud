@@ -38,7 +38,7 @@ The `internal/usercommands` package implements the complete command system for p
 - **Drink** (`drink.go`, drink path unification 2026-09-28): `Drink` is a
   wrapper over `actions.Drink`, which holds every drink rule (toxicity, aging,
   crafter scaling, the special potions) for players and mobs alike. Do not add
-  a rule here: the repo-root `drink_wrapper_guard_test.go` fails if this file
+  a rule here: `internal/guards/drink_wrapper_guard_test.go` fails if this file
   or `internal/mobcommands/drink.go` applies drink rules itself.
 - **Carried light (lighting plan 5a)**:
   - `hood` / `unhood` (`hood.go`: `Hood`, `Unhood`, helper `hoodedLight`)
@@ -142,7 +142,7 @@ already known, so no presence leaks.
   `list` shows a living shop's secondhand shelf as a second table,
   "Secondhand goods" (`renderShelfListing` over `buildShelfRows`: the
   listed entries in shelf order, each in the lister's own view, a
-  finder-view site in the root guard), trims the listed cap lazily and
+  finder-view site in the guard in `internal/guards`), trims the listed cap lazily and
   saves; "nothing to sell" fires only when both tables are empty.
 - **Banking**: `bank` - Financial management
 - **Services**: `train` - Character development
@@ -342,7 +342,7 @@ walking into a locked door or triggering an exit message cost a step;
 the mover spotting a hidden occupant) runs through `actions.EntryDetection`
 instead of `go.go`'s own inline rolls; the rare Search-training call
 (`actions.TrainSearchOnMove`) still fires from here, inside the
-`rooms.MoveToRoom` success branch. `move_wrapper_guard_test.go` (repo root)
+`rooms.MoveToRoom` success branch. `move_wrapper_guard_test.go` (internal/guards)
 fails if this file prices or detects a step itself again. The departure line
 ("X leaves to the north.") is judged by the room before the move: `Go` takes
 `room.VisualSnapshot()` just before `rooms.MoveToRoom` and sends with
@@ -367,7 +367,7 @@ player's own action. Everything else has its own category:
   `admin.skillset.go` picks it with the `skillNoticeCat` variable: it starts
   as `CategoryAdmin` and becomes `CategoryWarning` under the condition shown
   in the file (the target is someone else).
-- Root guards: `admin_category_guard_test.go`, `usage_category_guard_test.go`,
+- Guards in `internal/guards`: `admin_category_guard_test.go`, `usage_category_guard_test.go`,
   `system_recipient_guard_test.go`, `system_subject_guard_test.go`
   (see `internal/refusal/context.md`). `special_move_categories_test.go`
   requires taunt, throw, rally and warcry to send nothing on `CategorySystem`.
@@ -635,8 +635,8 @@ a gate.
   rule, 2026-10-05), so an observer blind before a torch was lit learns
   nothing and one the torch's removal leaves in the dark still sees it come
   off. For an item that touches no light the snapshot reads what the room
-  reads after. One call per line keeps the viewpoint walk in the root
-  `messaging_surface_guard_test.go` seeing each line's observer. `remove all`
+  reads after. One call per line keeps the viewpoint walk in
+  `internal/guards/messaging_surface_guard_test.go` seeing each line's observer. `remove all`
   sends no room line. `hood` refuses a darkness in the light
   slot with its existing "has no hood." line (`hoodedLight` reads light
   sources only).
@@ -690,7 +690,7 @@ a gate.
 or actor's name hidden by each listener's sight, and the deafen split all
 live in the shared body. Each wrapper keeps only its own concerns: mute,
 drunk text (`say`, `shout`), uppercase (`shout`), escaping and the speaker's
-own line. `speech_wrapper_guard_test.go` (repo root) fails if any of these
+own line. `speech_wrapper_guard_test.go` (internal/guards) fails if any of these
 five, or their `internal/mobcommands` twins, re-forks that logic, and pins
 each wrapper's call count on its shared body (one per room line it sends).
 

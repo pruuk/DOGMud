@@ -93,7 +93,7 @@ equivalent mob wrappers stay silent.
 players, mobs and the AI companion. It was `usercommands.Drink`; the mob
 command was a separate copy with no toxicity, no aging or crafter scaling and
 no special potions. `usercommands.Drink` and `mobcommands.Drink` are now thin
-wrappers, and the repo-root `drink_wrapper_guard_test.go`
+wrappers, and `internal/guards/drink_wrapper_guard_test.go`
 (`TestDrinkWrappersDoNotReFork`) fails if either grows drink rules again.
 A bare `drink` (nothing named) gets the prompt "Drink what? Try **drink
 &lt;item&gt;**." and `DrinkRefuseNotFound`, before any other check.
@@ -330,8 +330,8 @@ wrappers that render the outcome.
 - **The wrappers must not re-fork the mechanics.** `usercommands.Flee` and
   `mobcommands.Flee` may only call `BeginFlee` and render `FleeBegin`;
   `hooks.handlePlayerFlee` and `hooks.handleMobFlee` may only call
-  `ResolveFlee` and render `FleeOutcome`. `flee_wrapper_guard_test.go` (repo
-  root) greps the four files for a second flee-cost or flee-resolution
+  `ResolveFlee` and render `FleeOutcome`. `flee_wrapper_guard_test.go`
+  (internal/guards) greps the four files for a second flee-cost or flee-resolution
   implementation.
 
 ---
@@ -347,7 +347,7 @@ player and a mob pay the same price for the same step and run the same
 detection contests, through this file. `usercommands.Go` and
 `mobcommands.Go` keep their own lock gates, narration and Search roll
 placement and call these bodies once, right before relocating.
-`move_wrapper_guard_test.go` (repo root) greps both wrapper files for a
+`move_wrapper_guard_test.go` (internal/guards) greps both wrapper files for a
 second price or detection implementation.
 
 **Cost:**
@@ -491,8 +491,8 @@ completed step can earn it too. The full rationale, moved verbatim from
 ## Sight and gates: get, look, remove, equip, craft (slice 5a)
 
 A mob now gets, looks, removes, equips and crafts by the same rules a player
-does, through five shared bodies. `sight_gates_wrapper_guard_test.go` (repo
-root) is an AST test over `internal/usercommands/{get,look,remove,equip,
+does, through five shared bodies. `sight_gates_wrapper_guard_test.go`
+(internal/guards) is an AST test over `internal/usercommands/{get,look,remove,equip,
 craft,gearup}.go` and their `internal/mobcommands` twins: it parses each file
 with comments stripped and fails if a wrapper itself evaluates
 `ParticipantSight`/`CanSeeClearly`/`CanSeeShapes`, `IsCursed`/`Spellcasting`/
@@ -626,7 +626,7 @@ in any light, while mob speech was two-tier with a lit-room shortcut that
 named the speaker to a blinded listener, and a mob shout neither revealed the
 shouter nor carried its words next door. Five shared bodies now own every
 speech and emote room line for both a player and a mob; `speech_wrapper_guard_test.go`
-(repo root) is an AST test over `internal/usercommands/{say,shout,rally,
+(internal/guards) is an AST test over `internal/usercommands/{say,shout,rally,
 warcry,emote}.go` and their `internal/mobcommands` twins: it fails if a
 wrapper itself hides a name, judges sight, reveals, walks the neighbours or
 wakes sleepers, and it also pins each wrapper's call count on its shared
@@ -704,8 +704,8 @@ word on its own line (#430).
 
 - **`ResolveTargetOptions.Viewer`**: every player command that names a creature
   passes the player; a creature they do not perceive cannot be named. Staff
-  tools and mob callers pass none. `lookup_viewer_guard_test.go` in the repo
-  root registers every lookup as viewer or plain, with the reason.
+  tools and mob callers pass none. `lookup_viewer_guard_test.go` in
+  `internal/guards` registers every lookup as viewer or plain, with the reason.
 - **`FindAttackTarget(rest, room, userId, mobId, viewer)`**: the named branch
   and the `*`, `*mob`, `*user` pools skip what `viewer` does not perceive.
 - **`AimBySight(viewer, selfUserId, room, name, verb) (string, string)`**
@@ -1214,7 +1214,7 @@ chance set by the room's biome (`BaubleBiomeChancePct`: buildings 5%, streets
 (`BaubleSkillFactor`, up to `BaubleSkillMaxBonus`), rationed to
 `BaubleRollsPerWindow` rolls per room per `BaubleWindowMinutes` of real time.
 Both bauble rolls pass `SightPenalty: 1 - messaging.SightMult(char, room)`; the
-root sight guard watches `baubles.RollFind` and `actions.searchBaubleRoll`. A
+sight guard in `internal/guards` watches `baubles.RollFind` and `actions.searchBaubleRoll`. A
 find is NOT handed over on the spot: the player is told they are working
 something loose, `SearchResult.
 BaubleFound` is set, and `StartBaubleFind` hands a `BaubleDelivery` to a
@@ -1821,8 +1821,8 @@ the free supply-handoff paths — these are NOT routed through `actions.Sell`.
 - **Content keeps every shop above the gate at night** (merchants slice,
   2026-09-30). Street and stall keepers wear an Oil Lantern (40038) in the
   `light` equipment slot; shops inside buildings authored with an outdoor
-  biome carry room overrides `skylight: 0.15`, `lamp: 50`. The root guard
-  `shop_night_trade_guard_test.go` spawns every real shop keeper alone in
+  biome carry room overrides `skylight: 0.15`, `lamp: 50`. The guard in `internal/guards`,
+  `shop_night_trade_guard_test.go`, spawns every real shop keeper alone in
   each room that spawns it and asserts `ShopSightRefusal` is false for a
   bare `characters.Character` at every sunless hour of three sample days
   while the keeper's schedule has it awake in that room. A new shop in a
@@ -1994,8 +1994,8 @@ hidden caster's lines skip the players who do not perceive them, and at cast
 start those players hear one `cast_started_unseen` line. A room line that
 names a hidden player target (`{actee}`) reads "something" in its place to
 each player who does not perceive that target (`UnseenBy`, #504), as a
-hidden mob target reads. Root guard
-`spell_phase_narration_guard_test.go` keeps every other site from sending
+hidden mob target reads. The guard
+`spell_phase_narration_guard_test.go` (internal/guards) keeps every other site from sending
 these lines itself.
 
 `NarrateCraftPhase` (`craft_phase_lines.go`, M6 row 7) is its sibling for
@@ -2014,7 +2014,7 @@ a mob crafter, so it wraps at the reader's width (owner ruling C, 2026-10-13;
 before, a player crafter's lines rode the non-wrapping `CategoryEmote`).
 `craft_phase_wrap_test.go` pins it with a long crafter name and a
 34-character item name. Lines come from `crafting-messages.yaml` (see
-`internal/crafting/context.md`). Root guard `craft_phase_narration_guard_test.go`
+`internal/crafting/context.md`). The guard `craft_phase_narration_guard_test.go` (internal/guards)
 keeps every other site from sending craft room lines itself.
 
 `MobDisplayName`, `MobSeenName`, `MobHiddenFrom`, `PlayersNotPerceiving` and

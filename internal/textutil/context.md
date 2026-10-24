@@ -41,8 +41,8 @@ moving the second.
 
 - **`Narrate` always passes `narration.FirstPicker`.** A single-variant store
   has nothing to choose, and the default picker would consume a global random
-  draw per narrated phase (`util.Rand(1)` still draws). The root guard
-  `narration_render_callers_guard_test.go` fails the build if this file names
+  draw per narrated phase (`util.Rand(1)` still draws). The guard
+  `narration_render_callers_guard_test.go` (internal/guards) fails the build if this file names
   the default picker or if a store calls `narration.Render` itself. An empty
   pool renders nothing without building the token map; the condition tick calls
   this every round for every character holding a condition.

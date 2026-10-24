@@ -19,7 +19,7 @@ import (
 // included, so they wrap and colour like the room's (#449).
 //
 // Kept on ONE line (rather than the more usual one-field-per-line struct
-// literal): send_trio_only_guard_test.go scans line by line for a guarded
+// literal): internal/guards/send_trio_only_guard_test.go scans line by line for a guarded
 // category (Kick/Trip/Bash) paired with a recognised producer shape on that
 // SAME line, and moveCategories{...} is one of those shapes.
 var tripCategories = moveCategories{Actor: messaging.CategoryTrip, Actee: messaging.CategoryTrip, Observer: messaging.CategoryTrip}

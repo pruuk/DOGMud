@@ -7,7 +7,7 @@ own fix, and a hand-built store list missed `idlemessages` -- 1,285 occurrences
 and the largest narration surface in the game.
 
 So this walks by PROPERTY, not by name. Anything that looks like it holds
-player-facing text is reported, and `messaging_surface_guard_test.go` requires
+player-facing text is reported, and `internal/guards/messaging_surface_guard_test.go` requires
 every key spelling found here to be registered with a reason.
 
 Note: `.template` files (help text, splash prose) are deliberately NOT scanned
@@ -56,7 +56,7 @@ KEY_STEMS = (
 )
 
 # Audience/role keys carry no stem but ARE the narration shape.
-# Kept in step with messaging_surface_guard_test.go's
+# Kept in step with internal/guards/messaging_surface_guard_test.go's
 # messagingSurfaceAudienceKeys, which mirrors this set. M4b's role-key rename
 # replaced toattacker/todefender/toroom (and the separate shape's
 # toattackerroom/todefenderroom, which were never listed here) with the

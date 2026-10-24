@@ -18,7 +18,7 @@ func Pool(text string) []string {
 // narration.Render, and it always passes narration.FirstPicker: these stores
 // hold one line per phase, so there is nothing to choose, and the default
 // picker would consume a global random draw per narrated phase (see
-// FirstPicker). The root guard narration_render_callers_guard_test.go pins
+// FirstPicker). The guard internal/guards/narration_render_callers_guard_test.go pins
 // both facts. An empty pool renders nothing without building the token map;
 // the condition tick calls this every round for every character holding a condition, and most
 // conditions have no trigger text.

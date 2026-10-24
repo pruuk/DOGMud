@@ -190,7 +190,7 @@ func checkSpeech(t *testing.T, sc *speechScene, player bool, send func(Actor), w
 }
 
 // Rally and warcry are heard: the exact room lines the four wrappers pass
-// to SendHeard (speech_wrapper_guard_test.go pins that they do). Authored
+// to SendHeard (internal/guards/speech_wrapper_guard_test.go pins that they do). Authored
 // text, so the deafened listener hears them from either speaker.
 func TestSendHeard_RallyAndWarcry(t *testing.T) {
 	cases := []struct {

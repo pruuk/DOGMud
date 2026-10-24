@@ -71,7 +71,7 @@ Then boot the server once and confirm it reaches the login prompt with no
 panic. CI runs the same checks (`.github/workflows/validate.yml` and
 `run-tests.yml`); a pull request with red checks is not ready for review.
 
-The repo root holds about 34 guard tests (`*_guard_test.go`) that enforce
+`internal/guards` holds the repo-wide guard tests (`*_guard_test.go`) that enforce
 project rules, such as: every item holder is reachable by the bauble sweep,
 every narration site has a viewpoint verdict, shops refuse to trade in the
 dark. `internal/templates` checks that help text shows no raw tuning numbers.

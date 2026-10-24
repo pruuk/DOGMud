@@ -19,7 +19,7 @@ import (
 // Graded lighting arc, plan 1 Task 5: look.go now reads two different
 // thresholds off the same LightLevel() value. LightBlindBelow gates seeing
 // the room at all; LightExitsAbove separately gates seeing THROUGH an exit.
-// The parity golden (lighting_parity_golden_test.go) only covers sight
+// The parity golden (internal/guards/lighting_parity_golden_test.go) only covers sight
 // tiers, not exit-peering, so this is the one automated check for the
 // look.go:258 site.
 //

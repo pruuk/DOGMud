@@ -15,7 +15,7 @@ import (
 // NarrateSpellPhase is the one sender of a caster's own spell lines, for
 // every caster and phase (messaging M6 slice 4): the cast start, each fold
 // round, and the magic line. Landing and disruption lines have their own
-// bodies in hooks; root guard spell_phase_narration_guard_test.go keeps
+// bodies in hooks; guard internal/guards/spell_phase_narration_guard_test.go keeps
 // every other site from rendering a phase itself.
 //
 //   - A player caster reads the phase's *_actor line.

@@ -47,7 +47,7 @@ import (
 // store one role vocabulary. The Go field names keep the submission-specific
 // spelling because they read better at the call sites below, where an
 // attempter really is attacking; only the wire names are canonical. The
-// mirror of this struct in the repo root's shipped_narration_data_guard_test.go
+// mirror of this struct in internal/guards/shipped_narration_data_guard_test.go
 // decodes STRICTLY and must be renamed in lockstep, or a tag changed here
 // alone fails that guard's decode rather than silently yielding empty text.
 type submissionMsgTriple struct {

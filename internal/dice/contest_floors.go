@@ -40,7 +40,7 @@ func clampFloor(v float64) float64 {
 // Flooring both ends means neither a hopeless underdog nor an overwhelming
 // favourite ever faces a foregone conclusion. If you believe you want the
 // unfloored roll, see OpposedRollStatRaw -- and expect to justify it in
-// contest_floor_guard_test.go.
+// internal/guards/contest_floor_guard_test.go.
 //
 // When a floor flips the outcome, the margin is reduced to the smallest value
 // carrying the new sign. A floor save is a BARE success, not a decisive one, and

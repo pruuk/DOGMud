@@ -81,5 +81,5 @@ func TestRoomIsLit(t *testing.T) {
 // mapping left to assert. Coverage for "a cave stays dark" and "a fully open
 // room reads lit" moves to TestRoomIsLit below (behaviour, not exact value)
 // and to internal/rooms/lighting_model_test.go (the model's arithmetic
-// directly). The day-cycle golden (lighting_daycycle_golden_test.go, package
-// main) is what now guards the model's actual numbers room-for-room.
+// directly). The day-cycle golden (internal/guards/lighting_daycycle_golden_test.go,
+// package guards) is what now guards the model's actual numbers room-for-room.

@@ -55,7 +55,7 @@ func TestSomeShippedMobSensesHeat(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(origWD) })
 
-	// Read the REAL shipped config, matching lighting_parity_golden_test.go's
+	// Read the REAL shipped config, matching internal/guards/lighting_parity_golden_test.go's
 	// setup: a bare test binary never reads config.yaml, so condition 0
 	// (Meditating)'s TriggerCount would come back as the Go default 0 and
 	// conditions.LoadDataFiles would panic validating it.

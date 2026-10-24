@@ -417,8 +417,8 @@ It survives save, load and restart.
   unification; its ten conditions became NINE records, 79, 80 and 117 to 123
   (blinded had no producer and was deleted rather than ported), combat reads
   them through `Conditions.Effect`, and producers write them through
-  `Character.AddConditionMagnitude` (`conditions.go`). A root guard,
-  `timed_state_guard_test.go`, fails `go test .` on a second collection or on
+  `Character.AddConditionMagnitude` (`conditions.go`). A guard in `internal/guards`,
+  `timed_state_guard_test.go`, fails `go test ./internal/guards/` on a second collection or on
   any of those spellings coming back.
 - **Aggro system** (`aggro.go`): Combat targeting and threat management
 - **Conditions integration**: Status effects that modify character capabilities
@@ -545,7 +545,7 @@ identical harm through the shared unexported `harm(..., interrupt bool)` with
 the interrupt off, for health loss that is not an attack: the pinnacle blade
 toll, toxicity sickness and stuck-mob decay (#514 R2). A new health-loss site
 that is an attack calls `ApplyHarm`; one that is not calls `ApplyAttrition`.
-The root guard `damage_interrupt_seam_guard_test.go` keeps
+The guard `damage_interrupt_seam_guard_test.go` (internal/guards) keeps
 `TriggerDamageInterrupt` out of every other file.
 
 `source` is `internal/state.ActorRef`. Unexported support: `poolMax`, `setPool`,
@@ -771,8 +771,8 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   a full stat recalculation, and 8 melee call sites depend on it. `ApplyHarm`
   deliberately does not do this. Do not add new callers, and do not "simplify" it
   into `ApplyHarm`.
-- **Direct pool writes are guarded.** `pool_mutation_guard_test.go` at the repo
-  root fails any production assignment to `.Health`/`.Stamina`/`.Conviction`
+- **Direct pool writes are guarded.** `pool_mutation_guard_test.go` in
+  `internal/guards` fails any production assignment to `.Health`/`.Stamina`/`.Conviction`
   outside five declared exemption classes: the primitives themselves, the clamp
   layer, construction/spawn, admin commands, and a test fixture that compiles
   into the binary. A temporary sixth block holds the sites U5b-2 and U5c still
@@ -809,8 +809,8 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   `QuoteActionCost` cannot price a step, whose cap applies after the hidden
   and mutation multipliers `costs.Calc` cannot express.
 
-  **Only `actions.ChargeMove` spends action points.** The repo-root
-  `move_wrapper_guard_test.go` fails `go test .` if `usercommands/go.go` or
+  **Only `actions.ChargeMove` spends action points.** The guard
+  `move_wrapper_guard_test.go` (internal/guards) fails `go test ./internal/guards/` if `usercommands/go.go` or
   `mobcommands/go.go` call `DeductActionPoints` themselves, and a second test
   in the same file walks every non-test `.go` file under `internal/` and
   `modules/` (excluding `internal/actions` and `internal/characters`

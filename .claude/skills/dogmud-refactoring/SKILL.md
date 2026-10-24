@@ -121,8 +121,8 @@ pool as well. Reviewers caught both, tests caught neither.
 For every switch you delete, write the parity table as the OLD cases, pinned
 as literals from `git show master:...`, each mapped to its new input, BEFORE
 deleting the switch. The matching gate rule from the same source (every task
-also runs `go test .` at the repo root, where the line-number allowlist guard
-lives) is in `dogmud-writing-tests`.
+also runs `go test . ./internal/guards/`, where the line-number allowlist
+guard lives in `internal/guards`) is in `dogmud-writing-tests`.
 [[feedback-refactor-parity-and-root-gate]]
 
 ## Shallow copies share pointers

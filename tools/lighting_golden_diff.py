@@ -7,8 +7,8 @@ Read-only. Never writes a golden; it only explains one that moved.
 
 <before> may be a git ref-ish path, in which case pipe it in yourself:
 
-    git show HEAD:testdata/lighting_daycycle.golden > before.tmp
-    python tools/lighting_golden_diff.py before.tmp testdata/lighting_daycycle.golden
+    git show HEAD:internal/guards/testdata/lighting_daycycle.golden > before.tmp
+    python tools/lighting_golden_diff.py before.tmp internal/guards/testdata/lighting_daycycle.golden
 
 Every golden move in the graded lighting arc must be explained room-for-room
 before it is re-recorded. A move you cannot account for is a defect, however

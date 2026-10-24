@@ -572,7 +572,7 @@ The item-only nodes (`holder_asleep`, `worn`, `in_combat`, `chatter_ready`,
 not sit on an item whose worn light is `adjustable` (the trim owns it). A
 fixture (`fixture: light` or `darkness` on the item) cannot be taken off the
 floor; a pulsing fixture must stay inside one light band
-(`item_behaviour_guard_test.go`).
+(`internal/guards/item_behaviour_guard_test.go`).
 
 ### Item voices (item behaviour slice 2)
 
