@@ -22,7 +22,25 @@ import (
 // large (a room, a shop, a forage table, a recipe, a room-spawned mob).
 type itemSource struct {
 	where  string
-	owners []int
+	owners []owner
+}
+
+// owner is one quest an item source belongs to. gates are that quest's
+// tokens the source is gated on (a topic's questRequired): once a player
+// holds them all, the source is open to them at that step. No gates: the
+// source opens only through the quest's own grants.
+type owner struct {
+	quest int
+	gates []string
+}
+
+// questOwners is owners for quest ids with no gates.
+func questOwners(ids ...int) []owner {
+	out := make([]owner, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, owner{quest: id})
+	}
+	return out
 }
 
 // Sources indexes, once, where each item can come from and which mobs are
@@ -30,7 +48,7 @@ type itemSource struct {
 // equipment, loot pool and shop stock count only when that mob is spawned.
 func Sources() questloop.Sources {
 	itemSrc := map[int][]itemSource{}
-	add := func(id int, where string, owners ...int) {
+	add := func(id int, where string, owners ...owner) {
 		if id > 0 {
 			itemSrc[id] = append(itemSrc[id], itemSource{where: where, owners: owners})
 		}
@@ -72,17 +90,17 @@ func Sources() questloop.Sources {
 
 	for _, q := range quests.GetAllQuests() {
 		walkActions(q, func(a quests.ActionDef) {
-			add(a.GiveItem, fmt.Sprintf("quest %d give_item", q.QuestId), q.QuestId)
+			add(a.GiveItem, fmt.Sprintf("quest %d give_item", q.QuestId), questOwners(q.QuestId)...)
 			if a.SpawnItem != nil {
-				add(a.SpawnItem.Id, fmt.Sprintf("quest %d spawn_item", q.QuestId), q.QuestId)
+				add(a.SpawnItem.Id, fmt.Sprintf("quest %d spawn_item", q.QuestId), questOwners(q.QuestId)...)
 			}
 			if a.SpawnMob != nil {
 				spawn(a.SpawnMob.Id, q.QuestId)
 			}
 		})
-		add(q.Rewards.ItemId, fmt.Sprintf("quest %d reward", q.QuestId), q.QuestId)
+		add(q.Rewards.ItemId, fmt.Sprintf("quest %d reward", q.QuestId), questOwners(q.QuestId)...)
 		for _, g := range quests.ParseItemGrants(q.Rewards.ItemInfo) {
-			add(g.ItemId, fmt.Sprintf("quest %d reward", q.QuestId), q.QuestId)
+			add(g.ItemId, fmt.Sprintf("quest %d reward", q.QuestId), questOwners(q.QuestId)...)
 		}
 	}
 
@@ -93,9 +111,9 @@ func Sources() questloop.Sources {
 		// One source per placer, so a mob a room spawns is the world's and
 		// a mob only quest q spawns is q's own.
 		for by := range spawnedBy[int(m.MobId)] {
-			var owners []int
+			var owners []owner
 			if by != 0 {
-				owners = []int{by}
+				owners = questOwners(by)
 			}
 			who := fmt.Sprintf("mob %d", m.MobId)
 			for _, it := range m.Character.Items {
@@ -147,30 +165,61 @@ func Sources() questloop.Sources {
 	return questloop.Sources{
 		ItemSources: func(id int) []string { return names[id] },
 		MobSpawned:  func(id int) bool { return len(spawnedBy[id]) > 0 },
-		ItemOutside: func(id, questId int) bool {
-			for _, s := range itemSrc[id] {
-				if !slices.Contains(s.owners, questId) {
-					return true
-				}
-			}
-			return false
+		ItemAvailable: func(id, questId int, has func(string) bool) bool {
+			return available(itemSrc[id], questId, has)
 		},
 	}
 }
 
+// available reports whether one of ss is open to a player on quest questId
+// whose progress is has: a source questId does not own, or one it owns
+// through gates the player already holds.
+func available(ss []itemSource, questId int, has func(string) bool) bool {
+	for _, s := range ss {
+		i := slices.IndexFunc(s.owners, func(o owner) bool { return o.quest == questId })
+		if i < 0 {
+			return true
+		}
+		if g := s.owners[i].gates; len(g) > 0 && has != nil && !slices.ContainsFunc(g, func(tok string) bool { return !has(tok) }) {
+			return true
+		}
+	}
+	return false
+}
+
 // topicOwners is the quests a topic's item grant belongs to: its own quest,
-// and every quest its questRequired gate names (a "lost the page?" topic
-// gated on 20-vella_journal is quest 20's own replacement).
-func topicOwners(t dialogue.Topic) []int {
-	var out []int
+// every quest its questRequired gate names and the quest of the token it
+// grants, each with the tokens of that quest the gate names or it grants. A "lost the page?" topic gated on 20-vella_journal
+// is quest 20's own replacement, open from that step on; a topic of quest 70
+// gated on 63-start is open to quest 63 from start on.
+func topicOwners(t dialogue.Topic) []owner {
+	var out []owner
+	at := func(id int) int {
+		i := slices.IndexFunc(out, func(o owner) bool { return o.quest == id })
+		if i < 0 {
+			out = append(out, owner{quest: id})
+			i = len(out) - 1
+		}
+		return i
+	}
 	if t.Quest > 0 {
-		out = append(out, t.Quest)
+		at(t.Quest)
+	}
+	gate := func(tok string) {
+		idStr, _, _ := strings.Cut(tok, quests.QuestTokenSeparator)
+		if id, err := strconv.Atoi(idStr); err == nil {
+			i := at(id)
+			out[i].gates = append(out[i].gates, tok)
+		}
 	}
 	for _, tok := range t.QuestRequired {
-		idStr, _, _ := strings.Cut(tok, quests.QuestTokenSeparator)
-		if id, err := strconv.Atoi(idStr); err == nil && !slices.Contains(out, id) {
-			out = append(out, id)
-		}
+		gate(tok)
+	}
+	// A topic that grants a step hands its item over with that step (quest
+	// 20's vellahandoff grants 20-vella_journal and the journal together), so
+	// for that quest it is a source only from that step on.
+	if g := t.GrantsQuest; g != "" && !strings.HasPrefix(g, "-") {
+		gate(g)
 	}
 	return out
 }

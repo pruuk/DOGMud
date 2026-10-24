@@ -196,7 +196,7 @@ func handInNeedsKillItem() questloop.World {
 }
 
 func outside(ids ...int) questloop.Sources {
-	return questloop.Sources{ItemOutside: func(id, questId int) bool {
+	return questloop.Sources{ItemAvailable: func(id, questId int, _ func(string) bool) bool {
 		for _, x := range ids {
 			if x == id {
 				return true
@@ -218,6 +218,40 @@ func TestWalk_HandInItemObtainableOutsideIsASkip(t *testing.T) {
 	got := Walk(handInNeedsKillItem(), outside(900))
 	require.Contains(t, keys(got), "walk-dead-end 53 mob 9112 topic cull_in")
 	require.Contains(t, got[0].Msg, "passing 53-firstkill")
+}
+
+// The six shipped skips' shape (quest 63 tallyhandoff and its kin): the kill
+// that reaches firstkill hands over item 900, a later step (report) follows,
+// and the hand-in is gated only on 53-start plus item 900. The item is the
+// quest's own, so it cannot be held at start, but from firstkill on the
+// player holds it, and the hand-in jumps over report.
+func TestWalk_ItemFromAnEarlierStepOpensASkipFromThatStep(t *testing.T) {
+	w := handInNeedsKillItem()
+	q := w.Quests[0]
+	q.Steps = []quests.QuestStep{{Id: "start", Hint: "h"}, {Id: "firstkill", Hint: "h"}, {Id: "report", Hint: "h"}, {Id: "end"}}
+	q.Triggers = append(q.Triggers, quests.TriggerDef{
+		Event: "skill_use", Skill: "brawling",
+		Conditions: quests.Conditions{Has: []string{"53-firstkill"}, Missing: []string{"53-report"}},
+		Actions:    []quests.ActionDef{{Grant: "53-report"}},
+	})
+	got := Walk(w, outside())
+	require.Contains(t, keys(got), "walk-dead-end 53 mob 9112 topic cull_in", "%v", got)
+	for _, f := range got {
+		if f.Where == "mob 9112 topic cull_in" {
+			require.Equal(t, "skips to 53-end from 53-firstkill, passing 53-report", f.Msg)
+		}
+	}
+}
+
+// An item whose only source opens at 53-start (a topic of another quest
+// gated on 53-start) is available to the probe from start: the hand-in that
+// needs it skips firstkill.
+func TestWalk_ItemOpenFromStartIsASkip(t *testing.T) {
+	src := questloop.Sources{ItemAvailable: func(id, questId int, has func(string) bool) bool {
+		return id == 900 && has("53-start")
+	}}
+	got := keys(Walk(handInNeedsKillItem(), src))
+	require.Contains(t, got, "walk-dead-end 53 mob 9112 topic cull_in")
 }
 
 func TestWalk_OrderBugIsStillASkip(t *testing.T) {

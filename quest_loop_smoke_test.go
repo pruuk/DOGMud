@@ -117,13 +117,14 @@ func TestSmoke_WalkSourcesIndexShippedWorld(t *testing.T) {
 	// player can hold it outside quest 5. Tally 40100 comes only from quest
 	// 63's own give_item actions (quests/63-dock_rat.yaml): it is 63's own,
 	// and outside for any other quest.
-	if !src.ItemOutside(21, 5) {
+	none := func(string) bool { return false }
+	if !src.ItemAvailable(21, 5, none) {
 		t.Error("item 21 should have a source outside quest 5")
 	}
-	if src.ItemOutside(40100, 63) {
+	if src.ItemAvailable(40100, 63, none) {
 		t.Errorf("item 40100 should be quest 63's own: %v", src.ItemSources(40100))
 	}
-	if !src.ItemOutside(40100, 5) {
+	if !src.ItemAvailable(40100, 5, none) {
 		t.Error("item 40100 should count as outside quest 5")
 	}
 	if src.MobSpawned(999999999) {

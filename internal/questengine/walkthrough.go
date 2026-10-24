@@ -135,7 +135,7 @@ func walkQuest(eng *Engine, q *quests.Quest, steps map[int][]string, ways map[st
 		// step's own Way and is judged below.
 		for j := i + 1; j <= last; j++ {
 			for _, wy := range ways[stepToken(q, j)] {
-				if wy.Reward || sharesWay(ways[tok], wy) || !itemsHeldEarly(wy, q.QuestId, src) {
+				if wy.Reward || sharesWay(ways[tok], wy) || !itemsHeldEarly(p, wy, q.QuestId, src) {
 					continue
 				}
 				c := p.clone()
@@ -198,16 +198,17 @@ func wayItemNeeds(wy questloop.Way) []int {
 	return ids
 }
 
-// itemsHeldEarly reports whether a player could hold every item wy needs
-// before reaching the walked quest's later steps: each item has a source
-// outside quest own's own grants. The skip probe fires a later Way only then;
-// an item only the quest's own steps hand out proves those steps were done.
-func itemsHeldEarly(wy questloop.Way, own int, src questloop.Sources) bool {
-	if src.ItemOutside == nil {
-		return true
-	}
+// itemsHeldEarly reports whether the player at p's step could hold every
+// item wy needs: p already holds it (an earlier step of the walk handed it
+// over), or Sources.ItemAvailable says it can be had at p's progress without
+// quest own's later steps. The skip probe fires a later Way only then; an
+// item only those later steps hand out proves they were done.
+func itemsHeldEarly(p *walkPlayer, wy questloop.Way, own int, src questloop.Sources) bool {
 	for _, id := range wayItemNeeds(wy) {
-		if id > 0 && !src.ItemOutside(id, own) {
+		if id <= 0 || p.items[id] {
+			continue
+		}
+		if src.ItemAvailable != nil && !src.ItemAvailable(id, own, p.HasQuest) {
 			return false
 		}
 	}
