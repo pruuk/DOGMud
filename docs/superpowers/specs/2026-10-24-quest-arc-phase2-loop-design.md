@@ -89,7 +89,7 @@ follows becomes:
   Cull the Wash
   Garve has asked you to thin out the bandits in the wash again: a
   bandit scout first, then a bandit squatter.
-  Reward: 6 gold, and training in weapon combat.
+  Reward: 6 gold and training in weapon combat.
 
   1. Accept
   2. Leave
@@ -116,7 +116,7 @@ injected the way `QuestValidators` is, so `quests` gains no registry imports.
 |---|---|
 | `Gold` | `N gold` |
 | `ItemId` | the item's name with its article |
-| `ItemInfo` | each item by name, with a count when more than one (`3 iron ingots`) |
+| `ItemInfo` | each item by name, with a count when more than one (`Iron Ingot (x3)`, the payout line's form) |
 | `RecipeInfo` | `the recipe for <name>` per recipe |
 | `SpellId` | `the spell <name>` |
 | `SkillInfo` | `training in <skill>` per skill |
@@ -174,7 +174,8 @@ quest is not offered back to the player in the same breath.
   every non-repeatable.
 - New `PlayerState.QuestOpen func(questId int) bool`. `Eligible` checks it for a topic of
   kind `offer` with `Quest > 0`. Per the package rule, a nil callback fails closed. The
-  production callback (`conversation.playerState`) and `dialogue.InstallForTest` set it.
+  production callback (`conversation.playerState`) sets it, and every test `PlayerState` that
+  offers a quest sets it too.
 - A hidden offer behaves like any ineligible offer: its breadcrumb speaks, or nothing does,
   and `[!]` clears. The cooldown refusal at `Quest_HandleQuestUpdate.go:206` stays as the
   backstop for a grant from any other path, and also refuses at the cap with the line
