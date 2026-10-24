@@ -244,7 +244,7 @@ type World struct {
 type Finding struct {
     Rule    string // rule id, e.g. "one-action"
     QuestId int
-    Where   string // "step 3 (firstkill)", "mob 9112 topic cull_offer"
+    Where   string // "step firstkill", "mob 9112 topic cull_offer" (format in 5.3)
     Msg     string
 }
 
@@ -291,13 +291,29 @@ per line, with a header comment like the topic manifest's.
 - Phase 7 deletes lines as each zone pass clears them. An empty list means every rule is
   hard. This is the roadmap's "warning list, then hard failure", made mechanical.
 
+A key is `rule questId where`. `where` holds no positions, so inserting a step or a trigger
+moves no other line, and it names the defect class, so a listed defect cannot hide a new one
+at the same place:
+
+| `where` | Names |
+|---|---|
+| `step firstkill` | a step, by id |
+| `quest 53 trigger mob_death mob=9110 grants=53-firstkill` | a trigger, by its event, its non-zero filters and the tokens it grants (sorted); triggers of one quest with the same signature take ` #2`, ` #3` in file order |
+| `quest 53 rewards questid`, `quest 53 rewards summary` | the reward grant, the reward override |
+| `mob 9112 topic cull_in` | a dialogue topic |
+| `quest 53:cooldown`, `:negative`, `:notrepeatable` | the three `repeat` checks |
+| `quest 53 refs: <refusal text>` | one `refs` refusal, on one line, with its leading trigger index and step index named by signature and id |
+
+`one-action` adds the reason to the way: `:none`, `:reward`, `:prev`, `:cond`, `:seq` or
+`:double`. A way broken two ways is two lines.
+
 ### 5.4 Doors
 
 | Door | Where |
 |---|---|
 | Boot | `validateShippedQuests` in a new `main_quests.go`, called beside `validateShippedDialogue`, through the same door and reload semantics as `dialogueDoor` |
 | CI | `TestSmoke_ShippedQuestsPassTheLoop` (repo root) |
-| Editor save | `modules/gmcp/gmcp.Quest.go` runs `questloop.Validate` over the registry world with the edited quest swapped in, after `ValidateQuestRefs` |
+| Editor save | `modules/gmcp/gmcp.Quest.go` runs `questloop.Validate` over the registry world before and after the edited quest is swapped in, after `ValidateQuestRefs`. It refuses only findings the edit adds (not in the world before, not on the list) and warns about the edited quest's other findings. The swapped-in world's step and flag checks read the edited quest, so a step rename that breaks another quest is refused at save |
 
 ### 5.5 Step-id manifest
 
