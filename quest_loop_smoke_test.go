@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -129,6 +130,27 @@ func TestSmoke_WalkSourcesIndexShippedWorld(t *testing.T) {
 	}
 	if src.MobSpawned(999999999) {
 		t.Error("mob 999999999 should not be spawned")
+	}
+
+	// External grants: Hadwen's rite tree grants 30-rite on topic begin or
+	// rite_wait (behaviors/pothole_coulee/9100-cleric_hadwen.yaml), room
+	// 407's tree grants 4-investigate on entry
+	// (behaviors/rooms/dustwalk_road/407.yaml), and the tally stick grants
+	// 14-explore (items/materials-40000/40035-tally_stick.yaml).
+	ext := map[string]questloop.ExternalGrant{}
+	for _, g := range src.External {
+		ext[g.Where] = g
+		t.Logf("external: %s -> %s topics %v item %d", g.Where, g.Token, g.Topics, g.ItemId)
+	}
+	if g := ext["mob 9100 tree grant_quest 30-rite"]; g.Token != "30-rite" || g.MobId != 9100 ||
+		!slices.Equal(g.Topics, []string{"begin", "rite_wait"}) {
+		t.Errorf("Hadwen's 30-rite tree grant: %+v", g)
+	}
+	if g := ext["room 407 tree grant_quest 4-investigate"]; g.Token != "4-investigate" || len(g.Topics) != 0 {
+		t.Errorf("room 407's 4-investigate tree grant: %+v", g)
+	}
+	if g := ext["item 40035 questtoken"]; g.Token != "14-explore" || g.ItemId != 40035 {
+		t.Errorf("item 40035 questtoken: %+v", g)
 	}
 }
 

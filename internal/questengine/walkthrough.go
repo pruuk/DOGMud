@@ -40,12 +40,19 @@ func Walk(w questloop.World, src questloop.Sources) []questloop.Finding {
 		}
 	}
 	ways := questloop.WaysInto(w)
+	questloop.ExternalWays(ways, src.External)
+	env := &walkEnv{eng: eng, src: src, files: map[int]*dialogue.DialogueFile{}}
+	for _, df := range w.Dialogue {
+		if df != nil {
+			env.files[df.MobId] = df
+		}
+	}
 	var out []questloop.Finding
 	for _, q := range w.Quests {
 		if q == nil || len(q.Steps) == 0 {
 			continue
 		}
-		out = append(out, walkQuest(eng, q, steps, ways, src)...)
+		out = append(out, walkQuest(env, q, steps, ways)...)
 	}
 	// Stable, so that when one Way is reported twice under one key the first
 	// report (the skip probe runs before the Way's own step) is the one kept.
@@ -94,7 +101,16 @@ func (c *trailCtx) QueueSequence(s SequenceDef) {
 	}
 }
 
-func walkQuest(eng *Engine, q *quests.Quest, steps map[int][]string, ways map[string][]questloop.Way, src questloop.Sources) []questloop.Finding {
+// walkEnv is what every firing reads: the engine, the world's sources and
+// the dialogue files by NPC (a tree grant checks its NPC's topics).
+type walkEnv struct {
+	eng   *Engine
+	src   questloop.Sources
+	files map[int]*dialogue.DialogueFile
+}
+
+func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[string][]questloop.Way) []questloop.Finding {
+	src := env.src
 	var out []questloop.Finding
 	dead := func(where, msg string) {
 		out = append(out, questloop.Finding{Rule: "walk-dead-end", QuestId: q.QuestId, Where: where, Msg: msg})
@@ -114,7 +130,7 @@ func walkQuest(eng *Engine, q *quests.Quest, steps map[int][]string, ways map[st
 
 	p := newWalkPlayer(steps)
 	out = append(out, checkWay(q, *offer, src)...)
-	trail := fireWay(eng, p, *offer, q.QuestId)
+	trail := fireWay(env, p, *offer, q.QuestId)
 	if !trail[stepToken(q, 0)] {
 		dead(offer.Where, "the offer cannot be taken")
 		return out
@@ -135,11 +151,11 @@ func walkQuest(eng *Engine, q *quests.Quest, steps map[int][]string, ways map[st
 		// step's own Way and is judged below.
 		for j := i + 1; j <= last; j++ {
 			for _, wy := range ways[stepToken(q, j)] {
-				if wy.Reward || ownGranted(wy, q.QuestId) || sharesWay(ways[tok], wy) || !itemsHeldEarly(p, wy, q.QuestId, src) {
+				if wy.Reward || ownGranted(wy, q.QuestId) || isTreeGrant(wy) || sharesWay(ways[tok], wy) || !itemsHeldEarly(p, wy, q.QuestId, src) {
 					continue
 				}
 				c := p.clone()
-				tr := fireWay(eng, c, wy, q.QuestId)
+				tr := fireWay(env, c, wy, q.QuestId)
 				if got := stepIndex(c, q); got > i && skipped(tr, q, i, got) >= 0 {
 					dead(wy.Where, fmt.Sprintf("skips to %d-%s from %d-%s, passing %s",
 						q.QuestId, c.progress[q.QuestId], q.QuestId, q.Steps[cur].Id, tok))
@@ -161,7 +177,7 @@ func walkQuest(eng *Engine, q *quests.Quest, steps map[int][]string, ways map[st
 				continue
 			}
 			c := p.clone()
-			tr := fireWay(eng, c, wy, q.QuestId)
+			tr := fireWay(env, c, wy, q.QuestId)
 			got := stepIndex(c, q)
 			k := skipped(tr, q, i, got)
 			switch {
@@ -204,9 +220,16 @@ func wayItemNeeds(wy questloop.Way) []int {
 		}
 	case wy.Topic != nil:
 		ids = append(ids, wy.Topic.RequiresItem, wy.Topic.CarriesItem)
+	case wy.External != nil:
+		ids = append(ids, wy.External.ItemId)
 	}
 	return ids
 }
+
+// isTreeGrant reports whether wy is a behaviour tree's grant. The walk
+// cannot run a tree's own gates, so it takes the grant only from the step
+// before it (fireExternal) and never fires it in the skip probe.
+func isTreeGrant(wy questloop.Way) bool { return wy.External != nil && wy.External.ItemId == 0 }
 
 // itemsHeldEarly reports whether the player at p's step could hold every
 // item wy needs: p already holds it (an earlier step of the walk handed it
@@ -267,7 +290,8 @@ func ownGranted(wy questloop.Way, own int) bool {
 // sharesWay reports whether wy is the same trigger or topic as one of ws.
 func sharesWay(ws []questloop.Way, wy questloop.Way) bool {
 	for _, x := range ws {
-		if (wy.Trigger != nil && x.Trigger == wy.Trigger) || (wy.Topic != nil && x.Topic == wy.Topic) {
+		if (wy.Trigger != nil && x.Trigger == wy.Trigger) || (wy.Topic != nil && x.Topic == wy.Topic) ||
+			(wy.External != nil && x.External == wy.External) {
 			return true
 		}
 	}
@@ -276,16 +300,76 @@ func sharesWay(ws []questloop.Way, wy questloop.Way) bool {
 
 // fireWay meets a Way's conditions on p and fires it, returning the steps the
 // firing put p on.
-func fireWay(eng *Engine, p *walkPlayer, wy questloop.Way, own int) walkTrail {
+func fireWay(env *walkEnv, p *walkPlayer, wy questloop.Way, own int) walkTrail {
 	trail := walkTrail{}
 	switch {
 	case wy.Trigger != nil:
-		fireTrigger(eng, p, wy.Trigger, own, trail)
+		fireTrigger(env.eng, p, wy.Trigger, own, trail)
 	case wy.Topic != nil:
 		meetTopic(p, wy.Topic, own)
-		fireTopic(eng, p, wy, trail)
+		fireTopic(env.eng, p, wy, trail)
+	case wy.External != nil:
+		fireExternal(env, p, wy.External, own, trail)
 	}
 	return trail
+}
+
+// fireExternal takes an external grant.
+//
+// An item questtoken grants its token once the player holds the item: it
+// fires when p holds it or Sources.ItemAvailable says it can be had now. The
+// quest hook then sees a fresh grant and notifies quest_granted, so the walk
+// runs that chain too.
+//
+// A behaviour tree's grant is taken as given, since the walk cannot run the
+// tree: from the step before it, once one of the topics its branch answers is
+// open (Eligible) at the tree's NPC, or at once when the branch keys on no
+// topic the NPC's dialogue holds. The tree sets the token before the quest
+// hook runs, so the hook sees no fresh grant and runs no quest_granted chain
+// (behaviortree actGrantQuest, Quest_HandleQuestUpdate), and neither does the
+// walk.
+func fireExternal(env *walkEnv, p *walkPlayer, g *questloop.ExternalGrant, own int, trail walkTrail) bool {
+	if g.ItemId > 0 {
+		avail := env.src.ItemAvailable
+		if !p.items[g.ItemId] && avail != nil && !avail(g.ItemId, own, p.HasQuest) {
+			return false
+		}
+		p.items[g.ItemId] = true
+	} else if !treeTopicOpen(env, p, g) {
+		return false
+	}
+	id, _ := splitToken(g.Token)
+	before, had := p.progress[id]
+	p.grant(g.Token)
+	trail.note(p, g.Token)
+	after, has := p.progress[id]
+	if !has || (had && after == before) {
+		return false
+	}
+	if g.ItemId > 0 {
+		env.eng.Notify("quest_granted", EventDetails{RoomId: p.roomId, QuestToken: g.Token}, p, &trailCtx{walkCtx{p: p}, trail})
+	}
+	return true
+}
+
+// treeTopicOpen reports whether a tree grant's branch can be reached: one of
+// its topic_is keys is a topic open to p at the tree's NPC, or the NPC's
+// dialogue holds none of them (the branch keys on something the walk cannot
+// see).
+func treeTopicOpen(env *walkEnv, p *walkPlayer, g *questloop.ExternalGrant) bool {
+	df := env.files[g.MobId]
+	found := false
+	for _, k := range g.Topics {
+		t := df.FindTopic(k)
+		if t == nil {
+			continue
+		}
+		found = true
+		if df.Eligible(t, p.dialogueState()) {
+			return true
+		}
+	}
+	return !found
 }
 
 // meetToken holds a token a condition or gate names, when p lacks it.
@@ -446,6 +530,9 @@ func checkWay(q *quests.Quest, wy questloop.Way, src questloop.Sources) []questl
 		needItem(wy.Topic.RequiresItem, "requiresItem")
 		needItem(wy.Topic.CarriesItem, "carriesItem")
 		needMob(wy.MobId, "the NPC who has this topic")
+	case wy.External != nil:
+		needItem(wy.External.ItemId, "questtoken")
+		needMob(wy.External.MobId, "the NPC whose tree grants it")
 	}
 	return out
 }

@@ -6,17 +6,45 @@ import (
 )
 
 // Way is one thing in the world that grants a quest token, as the rules see
-// it: a trigger, a topic, or a completion reward. Where is its stable backlog
-// name. The walkthrough (questengine.Walk) drives each Way.
+// it: a trigger, a topic, or a completion reward (WaysInto), or for the
+// walkthrough also an external grant (ExternalWays). Where is its stable
+// backlog name. The walkthrough (questengine.Walk) drives each Way.
 type Way struct {
-	Where   string
-	Trigger *quests.TriggerDef // set for a trigger
-	Owner   int                // the quest whose file holds the trigger
-	Nested  bool               // granted inside a sequence's on_complete
-	Topic   *dialogue.Topic    // set for a topic
-	MobId   int                // the topic's NPC
-	File    *dialogue.DialogueFile
-	Reward  bool // rewards.questid
+	Where    string
+	Trigger  *quests.TriggerDef // set for a trigger
+	Owner    int                // the quest whose file holds the trigger
+	Nested   bool               // granted inside a sequence's on_complete
+	Topic    *dialogue.Topic    // set for a topic
+	MobId    int                // the topic's NPC
+	File     *dialogue.DialogueFile
+	Reward   bool           // rewards.questid
+	External *ExternalGrant // set for a behaviour-tree grant or an item questtoken
+}
+
+// ExternalWays adds a Way for each external grant to ways, keyed by token.
+func ExternalWays(ways map[string][]Way, ext []ExternalGrant) {
+	for i := range ext {
+		g := &ext[i]
+		ways[g.Token] = append(ways[g.Token], Way{Where: g.Where, MobId: g.MobId, External: g})
+	}
+}
+
+// ExternalGrant is a grant outside the trigger engine and the dialogue
+// topics, which Validate does not read and the walkthrough does: a
+// behaviour tree's grant_quest action, or an item's questtoken (holding the
+// item grants the token).
+type ExternalGrant struct {
+	// Where is the stable backlog name: "mob 9100 tree grant_quest 30-rite",
+	// "room 407 tree grant_quest 4-investigate", "item 40035 questtoken".
+	Where string
+	Token string
+	// MobId is the tree's NPC (a mob tree); 0 for a room, archetype or item.
+	MobId int
+	// Topics are the topic_is keys the tree branch checks before the grant;
+	// empty when it keys on no topic.
+	Topics []string
+	// ItemId is set for an item questtoken.
+	ItemId int
 }
 
 // WaysInto maps each token ("53-firstkill") to every Way that grants it, the
@@ -60,4 +88,7 @@ type Sources struct {
 	// the walk player already holds it or this holds. Nil: every item counts
 	// as available.
 	ItemAvailable func(itemId, questId int, has func(token string) bool) bool
+	// External lists the grants behaviour trees and item questtokens make.
+	// The walk adds them to the Ways into their tokens.
+	External []ExternalGrant
 }

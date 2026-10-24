@@ -7,9 +7,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/forager"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
@@ -163,12 +165,70 @@ func Sources() questloop.Sources {
 		sort.Strings(names[id])
 	}
 	return questloop.Sources{
+		External:    externalGrants(),
 		ItemSources: func(id int) []string { return names[id] },
 		MobSpawned:  func(id int) bool { return len(spawnedBy[id]) > 0 },
 		ItemAvailable: func(id, questId int, has func(string) bool) bool {
 			return available(itemSrc[id], questId, has)
 		},
 	}
+}
+
+// externalGrants lists the grants outside triggers and topics, sorted by
+// Where: every grant_quest action in a behaviour tree file (mob, room,
+// archetype and item trees), with the topics its branch answers, and every
+// item whose questtoken grants a token. A tree that grants one token from
+// two branches gives one grant with both branches' topics.
+func externalGrants() []questloop.ExternalGrant {
+	byWhere := map[string]*questloop.ExternalGrant{}
+	open := map[string]bool{} // a branch keys on no topic: the grant is taken as is
+	addTree := func(who, path string, mobId int) {
+		gs, err := behaviortree.QuestGrantsInFile(path)
+		if err != nil {
+			return // a tree that does not parse is the behaviour validator's finding
+		}
+		for _, g := range gs {
+			where := fmt.Sprintf("%s tree grant_quest %s", who, g.Token)
+			x := byWhere[where]
+			if x == nil {
+				x = &questloop.ExternalGrant{Where: where, Token: g.Token, MobId: mobId}
+				byWhere[where] = x
+			}
+			if len(g.Topics) == 0 {
+				open[where] = true
+			}
+			for _, k := range g.Topics {
+				if !slices.Contains(x.Topics, k) {
+					x.Topics = append(x.Topics, k)
+				}
+			}
+		}
+	}
+	for _, row := range behaviortree.ListTreeFiles() {
+		switch row.Kind {
+		case "mob":
+			addTree(fmt.Sprintf("mob %d", row.MobId), row.Path, row.MobId)
+		case "room":
+			addTree(fmt.Sprintf("room %d", row.RoomId), row.Path, 0)
+		default:
+			addTree(row.Kind+" "+row.Name, row.Path, 0)
+		}
+	}
+	for _, spec := range items.GetAllItemSpecs() {
+		if tok := spec.QuestToken; tok != "" {
+			where := fmt.Sprintf("item %d questtoken", spec.ItemId)
+			byWhere[where] = &questloop.ExternalGrant{Where: where, Token: tok, ItemId: spec.ItemId}
+		}
+	}
+	out := make([]questloop.ExternalGrant, 0, len(byWhere))
+	for where, g := range byWhere {
+		if open[where] {
+			g.Topics = nil
+		}
+		out = append(out, *g)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Where < out[j].Where })
+	return out
 }
 
 // available reports whether one of ss is open to a player on quest questId
