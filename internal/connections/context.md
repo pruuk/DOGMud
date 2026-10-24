@@ -431,8 +431,18 @@ Slow-consumer policy:
 the network:
 
 - Output queued **before** Close is still delivered (a goodbye line, a login
-  refusal), with one shared deadline `writeTimeout` after Close; the writer
-  then closes the socket and exits.
+  refusal), telnet and websocket alike, with one shared deadline
+  `writeTimeout` after Close; the writer then closes the socket and exits.
+- **Websocket:** `web.go`'s `/ws` handler has its own `defer conn.Close()`,
+  which runs as soon as `HandleWebSocketConnection` (main.go) returns, and
+  that is right after Close unblocks the reader. So that function's deferred
+  exit path calls `cd.WaitWriter(WriterDrainTimeout)` after its `Remove`:
+  the HTTP handler goroutine waits (never the game loop) until the writer has
+  drained and closed the socket, and only then does the backstop close run.
+  Without the wait a goodbye behind a large frame was cut off silently.
+  `WaitWriter(timeout)` returns whether the writer exited; called before
+  Close it just waits out the timeout. `WriterDrainTimeout` is
+  `writeTimeout + 1 s`.
 - The reader is unblocked at once by moving the read deadline to now
   (`unblockReader`; for websocket on `NetConn()`, which is safe from any
   goroutine). The pong handler goes through `extendReadDeadline`, which is a
@@ -443,7 +453,7 @@ the network:
   `WriteWait` (10 s).
 
 Shutdown: `Cleanup()` removes every connection, then waits up to
-`writeTimeout + 1 s` in total for every writer to finish, so queued output is
+`WriterDrainTimeout` (`writeTimeout + 1 s`) in total for every writer to finish, so queued output is
 delivered and no writer goroutine outlives it.
 
 Copyover (`fd_unix.go`): execve discards this process's goroutines, so

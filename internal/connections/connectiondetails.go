@@ -462,6 +462,35 @@ func (cd *ConnectionDetails) Close() {
 	cd.unblockReader()
 }
 
+// WriterDrainTimeout bounds WaitWriter for a connection that has been closed:
+// the writer's drain after Close is itself bounded by writeTimeout, and the
+// extra second covers the socket close and heartbeat exit that follow it.
+const WriterDrainTimeout = writeTimeout + time.Second
+
+// WaitWriter blocks until this connection's writer goroutine has exited, or
+// timeout passes, and reports whether it exited. Call it after Close (Remove
+// or Kick), when the writer is draining what was queued and will then close
+// the socket itself; before Close the writer does not exit and this waits the
+// whole timeout.
+//
+// It waits on the network, so it belongs on the connection's own goroutine,
+// never the game loop. The websocket handler calls it after its deferred
+// Remove so the HTTP handler's own conn.Close cannot cut off a goodbye still
+// being written.
+func (cd *ConnectionDetails) WaitWriter(timeout time.Duration) bool {
+	if cd.wsConn == nil && cd.conn == nil {
+		return true // socketless; never had a writer
+	}
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case <-cd.sendQueue().done:
+		return true
+	case <-timer.C:
+		return false
+	}
+}
+
 // unblockReader makes the connection's pending and future reads fail now.
 func (cd *ConnectionDetails) unblockReader() {
 	cd.closeMu.Lock()

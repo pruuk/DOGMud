@@ -99,10 +99,9 @@ func GetAllConnectionIds() []ConnectionId {
 	return ids
 }
 
-// cleanupWait bounds how long Cleanup waits for writers. Each writer's drain
-// after Close is itself bounded by writeTimeout; the extra second covers the
-// socket close and heartbeat exit that follow it.
-const cleanupWait = writeTimeout + time.Second
+// cleanupWait bounds how long Cleanup waits for writers in total; see
+// WriterDrainTimeout.
+const cleanupWait = WriterDrainTimeout
 
 // Cleanup removes every connection (server shutdown) and waits, bounded by
 // cleanupWait in total, for each writer goroutine to deliver what was queued

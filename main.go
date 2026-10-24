@@ -1304,6 +1304,18 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string) {
 		// it only acts when the id is still in the registry map, and deletes
 		// the entry as it does so.
 		connections.Remove(connDetails.ConnectionId())
+
+		// Output queued before the close (a quit or kick goodbye, a login
+		// refusal) is still being written by the connection's writer, which
+		// closes the socket itself once drained. web.go's /ws handler closes
+		// the socket as soon as this function returns, so wait for the writer
+		// first or that close cuts the goodbye off. Bounded, and on this
+		// connection's own goroutine, never the game loop.
+		if !connDetails.WaitWriter(connections.WriterDrainTimeout) {
+			mudlog.Warn("WS Close", "connectionId", connDetails.ConnectionId(),
+				"error", "writer still draining; closing the socket anyway",
+				"waited", connections.WriterDrainTimeout)
+		}
 	}()
 
 	// Setup shared state map for this connection's handlers
