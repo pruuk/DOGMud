@@ -155,8 +155,8 @@ as before; tests cover number, name, Enter, out-of-range and a stale menu.
 
 **Goal.** `talk <npc>` is the only way to converse, through the menu.
 
-**Spec:** `docs/superpowers/specs/2026-10-20-quest-arc-phase1-talk-design.md` (owner rulings
-R1 to R29 there). **Plan:** `docs/superpowers/plans/2026-10-20-quest-arc-phase1-talk.md`.
+**Spec:** `docs/superpowers/specs/completed/2026-10-20-quest-arc-phase1-talk-design.md` (owner rulings
+R1 to R30 there). **Plan:** `docs/superpowers/plans/completed/2026-10-20-quest-arc-phase1-talk.md`.
 
 **Approach.**
 - Convert once: a one-time converter plus zone subagents rewrite all 302 dialogue files into
