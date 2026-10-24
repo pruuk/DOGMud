@@ -305,8 +305,8 @@ func TestSendQueue_WriterDeadlineClosesStalledConnection(t *testing.T) {
 	if elapsed := time.Since(start); elapsed < writeTimeout/2 {
 		t.Fatalf("removed after only %s: the write deadline does not look applied", elapsed)
 	}
-	if !testLogs.contains("WARN", "i/o timeout") {
-		t.Fatal("no WARN with the write timeout error was logged")
+	if !testLogs.contains("WARN", "SendTo()", fmt.Sprintf("connectionId=%d ", id), "i/o timeout") {
+		t.Fatalf("no WARN with the write timeout error was logged for connection %d", id)
 	}
 }
 
