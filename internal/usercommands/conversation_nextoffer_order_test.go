@@ -3,8 +3,10 @@ package usercommands
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -117,4 +119,58 @@ func TestHandIn_NextOfferPitchFollowsTheCompletionLines(t *testing.T) {
 	require.True(t, user.HasOpenMenu())
 	require.True(t, user.RouteMenuInput("1", true), "1 is Accept")
 	require.Equal(t, []string{"12-start"}, questTokensFor(1))
+}
+
+// #375 review: give hands in while a prompt is open, and the card could not
+// open over it. The queued pitch must not speak a line the player never
+// chose; the offer waits in the talk menu with its [!].
+func TestHandIn_NextOfferWithPromptOpenPitchesNothing(t *testing.T) {
+	user, mob, done := fixtureWith(t, nextOfferFixtureYAML)
+	defer done()
+	defer quests.SeedQuestsForTest(
+		&quests.Quest{QuestId: 9, Name: "The Lost Purse", Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}},
+		&quests.Quest{QuestId: 12, Name: "The Missing Ledger", Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}},
+	)()
+	defer events.DrainAllQueuedEventsForTest()
+	require.True(t, user.Character.GiveQuestToken("9-start"), "the player is on quest 9")
+	itm := giveItem(t, user, 10001)
+	user.StartPrompt("build", "")
+	defer user.ClearPrompt()
+
+	require.True(t, conversation.Give(user, mustRoom(t, user), mob, itm))
+	got := deliveredWithNextOffer(t)
+	require.GreaterOrEqual(t, indexOf(got, "My thanks."), 0, "the hand-in played: %q", got)
+	require.Equal(t, -1, indexOf(got, "Is there more I can do?"), "no line the player never chose: %q", got)
+	require.Equal(t, -1, indexOf(got, "My ledger went missing too."), "no pitch: %q", got)
+	require.Equal(t, -1, indexOf(got, "Accept"), "no card: %q", got)
+	require.False(t, user.HasOpenMenu())
+	require.NotNil(t, user.GetPrompt(), "the prompt is untouched")
+	require.Equal(t, "[!]", conversation.Marker(user.UserId, mob), "the offer still waits")
+}
+
+// The same with a menu gate holding (asleep) when the queued pitch runs.
+func TestHandIn_NextOfferWhileGatedPitchesNothing(t *testing.T) {
+	user, mob, done := fixtureWith(t, nextOfferFixtureYAML)
+	defer done()
+	defer quests.SeedQuestsForTest(
+		&quests.Quest{QuestId: 9, Name: "The Lost Purse", Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}},
+		&quests.Quest{QuestId: 12, Name: "The Missing Ledger", Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}},
+	)()
+	defer events.DrainAllQueuedEventsForTest()
+	require.True(t, user.Character.GiveQuestToken("9-start"))
+	user.Character.GiveQuestToken("9-end")
+	events.AddToQueue(events.TalkNextOffer{UserId: user.UserId, MobInstanceId: mob.InstanceId, TopicKey: "ledger"}, events.TalkNextOfferPriority)
+	const sleepId = 9457
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		sleepId: {ConditionId: sleepId, Name: "Test Sleep", RoundInterval: 1, TriggerCount: 100,
+			Flags: []conditions.Flag{conditions.Sleeping}},
+	}))
+	require.NoError(t, user.Character.AddCondition(sleepId, true))
+	reason, _ := user.MenuBlockedReason()
+	require.NotEqual(t, menu.CloseNone, reason, "fixture: the gate holds")
+
+	got := deliveredWithNextOffer(t)
+	require.Equal(t, -1, indexOf(got, "Is there more I can do?"), "no line the player never chose: %q", got)
+	require.Equal(t, -1, indexOf(got, "My ledger went missing too."), "no pitch: %q", got)
+	require.False(t, user.HasOpenMenu())
 }

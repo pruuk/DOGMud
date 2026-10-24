@@ -155,6 +155,9 @@ Choosing a hand-in pays out exactly as today (`Quest_HandleQuestUpdate`). Then:
 3. With none or several, re-show the talk menu as phase 1 does. Several next offers show as
    `[!]` lines (the Toke trail, the quest 11 branch).
 4. Skip step 2 when the hand-in is a behavior topic that closes the menu (R18).
+5. Skip step 2, saying nothing, when the card could not open when the pitch runs: a menu
+   gate holds (`MenuBlockedReason`) or a prompt is open (`give` hands in over a prompt). The
+   offer waits in the talk menu with its `[!]`.
 
 The hand-in path calls the same `resolve` an offer choice uses, so the pitch, card and
 grant have one code path. For a repeatable, the final token is held only until the

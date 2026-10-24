@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -48,7 +49,9 @@ func queueNextOffer(user *users.UserRecord, mobInstanceId int, df *dialogue.Dial
 // HandleTalkNextOffer pitches the queued next offer as if the player had
 // chosen it: their line, the pitch, then the card. If the NPC is gone or the
 // offer no longer applies, the talk menu is re-shown (or nothing, as
-// openMenu decides).
+// openMenu decides). While a menu gate holds or a prompt is open the card
+// could not open, so nothing is said at all: the player never speaks a line
+// they did not choose, and the offer waits in the talk menu with its [!].
 func HandleTalkNextOffer(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.TalkNextOffer)
 	if !ok {
@@ -56,6 +59,9 @@ func HandleTalkNextOffer(e events.Event) events.ListenerReturn {
 	}
 	user := users.GetByUserId(evt.UserId)
 	if user == nil {
+		return events.Continue
+	}
+	if reason, promptOpen := user.MenuBlockedReason(); reason != menu.CloseNone || promptOpen {
 		return events.Continue
 	}
 	choose(user, evt.MobInstanceId, evt.TopicKey)
