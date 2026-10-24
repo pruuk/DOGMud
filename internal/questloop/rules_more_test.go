@@ -37,14 +37,14 @@ func TestChain_NextOfferElsewhereIsRefused(t *testing.T) {
 func TestRepeat_Rules(t *testing.T) {
 	w := goodWorld()
 	w.Quests[0].Repeatable = true
-	require.Contains(t, rules(Validate(w)), "repeat quest 53", "a repeatable needs a cooldown")
+	require.Contains(t, rules(Validate(w)), "repeat quest 53:cooldown", "a repeatable needs a cooldown")
 	w.Quests[0].CooldownRounds = 300
 	require.Empty(t, Validate(w))
 	w.Quests[0].RepeatLimit = -1
-	require.Contains(t, rules(Validate(w)), "repeat quest 53")
+	require.Contains(t, rules(Validate(w)), "repeat quest 53:negative")
 	w = goodWorld()
 	w.Quests[0].RepeatLimit = 3
-	require.Contains(t, rules(Validate(w)), "repeat quest 53", "a limit on a quest that does not repeat")
+	require.Contains(t, rules(Validate(w)), "repeat quest 53:notrepeatable", "a limit on a quest that does not repeat")
 }
 
 func TestReward_OverrideMustNameWhatIsPaid(t *testing.T) {
@@ -71,7 +71,7 @@ func TestRefs_RefusalsBecomeFindings(t *testing.T) {
 	v := quests.QuestValidators{MobExists: func(id int) bool { return id != 424242 }}
 	fillValidators(&v)
 	w.Refs = &v
-	require.Contains(t, rules(Validate(w)), "refs quest 53 refs")
+	require.Contains(t, rules(Validate(w)), "refs quest 53 refs: trigger mob_death mob=424242 grants=53-firstkill mob filter: mob 424242 does not exist")
 }
 
 // fillValidators sets every unset validator func to an always-true one so

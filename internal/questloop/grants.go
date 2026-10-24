@@ -2,6 +2,8 @@ package questloop
 
 import (
 	"fmt"
+	"slices"
+	"sort"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
@@ -10,7 +12,7 @@ import (
 
 // way is one thing in the world that grants a quest token.
 type way struct {
-	where   string             // "quest 53 trigger 1", "quest 53 rewards questid", "mob 9112 topic cull_in"
+	where   string             // "quest 53 trigger mob_death mob=9110 grants=53-firstkill", "quest 53 rewards questid", "mob 9112 topic cull_in"
 	trigger *quests.TriggerDef // set for a trigger
 	owner   int                // the quest whose file holds the trigger
 	nested  bool               // granted inside a sequence's on_complete
@@ -28,9 +30,10 @@ func indexGrants(w World) grants {
 		if q == nil {
 			continue
 		}
+		wheres := triggerWheres(q)
 		for i := range q.Triggers {
 			t := &q.Triggers[i]
-			where := fmt.Sprintf("quest %d trigger %d", q.QuestId, i)
+			where := wheres[i]
 			walkGrants(t.Actions, false, func(tok string, nested bool) {
 				g[tok] = append(g[tok], way{where: where, trigger: t, owner: q.QuestId, nested: nested})
 			})
@@ -53,6 +56,59 @@ func indexGrants(w World) grants {
 		}
 	}
 	return g
+}
+
+// triggerWheres names each of q's triggers by a signature that does not
+// depend on its position: "quest 53 trigger mob_death mob=9110
+// grants=53-firstkill", the event, its non-zero filters in a fixed order and
+// the tokens it grants (sorted, sequences included). Triggers that share a
+// signature take " #2", " #3" in file order.
+func triggerWheres(q *quests.Quest) []string {
+	out := make([]string, len(q.Triggers))
+	seen := map[string]int{}
+	for i := range q.Triggers {
+		sig := triggerSignature(&q.Triggers[i])
+		seen[sig]++
+		where := fmt.Sprintf("quest %d trigger %s", q.QuestId, sig)
+		if n := seen[sig]; n > 1 {
+			where += fmt.Sprintf(" #%d", n)
+		}
+		out[i] = where
+	}
+	return out
+}
+
+func triggerSignature(t *quests.TriggerDef) string {
+	parts := []string{t.Event}
+	addInt := func(name string, v int) {
+		if v != 0 {
+			parts = append(parts, fmt.Sprintf("%s=%d", name, v))
+		}
+	}
+	addStr := func(name, v string) {
+		if v != "" {
+			parts = append(parts, name+"="+v)
+		}
+	}
+	addInt("room", t.Room)
+	addInt("mob", t.Mob)
+	addInt("item", t.Item)
+	addStr("skill", t.Skill)
+	addStr("command", t.Command)
+	addStr("quest_token", t.QuestToken)
+	addStr("noun", t.Noun)
+	addStr("verb", t.Verb)
+	var toks []string
+	walkGrants(t.Actions, false, func(tok string, _ bool) {
+		if !slices.Contains(toks, tok) {
+			toks = append(toks, tok)
+		}
+	})
+	if len(toks) > 0 {
+		sort.Strings(toks)
+		parts = append(parts, "grants="+strings.Join(toks, ","))
+	}
+	return strings.Join(parts, " ")
 }
 
 // walkGrants visits every grant action, sequences included at any depth.

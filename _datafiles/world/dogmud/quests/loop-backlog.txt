@@ -40,150 +40,161 @@ chain 78 mob 9584 topic teach_prism
 chain 78 mob 9584 topic teach_thornwall
 chain 78 mob 9584 topic teach_wayfarer
 chain 78 mob 9584 topic teach_zephyr
-end 1000000 step 2 (end)
+end 1000000 step end
 end 21 mob 9106 topic newcomer_players
-end 21 step 1 (end)
-end 28 step 25 (end)
-end 29 quest 29 trigger 0
-end 29 quest 29 trigger 1
-end 29 quest 29 trigger 2
-end 29 quest 29 trigger 3
-end 29 step 1 (end)
-end 30 step 2 (end)
-end 34 quest 34 trigger 0
-end 34 quest 34 trigger 1
-end 34 step 1 (end)
-end 35 quest 35 trigger 4
-end 37 quest 37 trigger 0
-end 37 step 1 (end)
-end 40 quest 40 trigger 0
-end 40 step 1 (end)
-end 43 quest 43 trigger 0
-end 43 step 1 (end)
-end 46 quest 46 trigger 0
-end 46 step 1 (end)
-end 52 quest 52 trigger 0
-end 52 step 1 (end)
-end 53 quest 53 trigger 1
-end 53 step 2 (end)
-end 54 quest 54 trigger 0
-end 54 step 1 (end)
-end 55 quest 55 trigger 2
-end 55 step 2 (end)
-end 56 quest 56 trigger 1
-end 56 step 2 (end)
-end 57 quest 57 trigger 0
-end 57 step 1 (end)
-end 58 quest 58 trigger 0
-end 58 step 1 (end)
-end 59 quest 59 trigger 1
-end 59 step 2 (end)
-end 75 quest 75 trigger 2
-end 75 step 4 (end)
-end 76 quest 76 trigger 4
-end 76 step 3 (end)
-end 77 quest 77 trigger 0
-end 77 step 0 (end)
-end 78 quest 78 trigger 0
-end 78 step 1 (end)
-end 79 quest 79 trigger 1
-end 79 step 1 (end)
-end 80 quest 80 trigger 1
-end 80 step 1 (end)
-end 81 quest 81 trigger 1
-end 81 step 1 (end)
-end 82 quest 82 trigger 1
-end 82 step 1 (end)
-end 83 quest 83 trigger 1
-end 83 step 1 (end)
-end 84 quest 84 trigger 1
-end 84 step 1 (end)
-end 85 quest 85 trigger 1
-end 85 step 1 (end)
-end 86 quest 86 trigger 1
-end 86 step 1 (end)
-end 87 quest 87 trigger 1
-end 87 step 1 (end)
-end 88 quest 88 trigger 0
-end 89 quest 89 trigger 0
-hint 21 step 0 (start)
-hint 78 step 0 (start)
-hint 79 step 0 (start)
-hint 80 step 0 (start)
-hint 81 step 0 (start)
-hint 82 step 0 (start)
-hint 83 step 0 (start)
-hint 84 step 0 (start)
-hint 85 step 0 (start)
-hint 86 step 0 (start)
-hint 87 step 0 (start)
-one-action 1000000 step 1 (givegold)
-one-action 1000000 step 2 (end)
-one-action 11 mob 241 topic totem_return
-one-action 11 mob 242 topic sample_return
-one-action 14 mob 94 topic velkhandoff
-one-action 14 quest 14 trigger 4
-one-action 14 quest 14 trigger 6
-one-action 14 quest 14 trigger 7
-one-action 14 quest 14 trigger 8
-one-action 14 step 6 (report)
-one-action 15 mob 250 topic quest_complete_dialogue
-one-action 15 quest 15 trigger 1
-one-action 16 mob 259 topic quest_complete_herbs
-one-action 19 quest 19 trigger 1
-one-action 20 mob 347 topic ullahandoff
-one-action 20 mob 355 topic vellahandoff
-one-action 28 quest 28 trigger 2
-one-action 28 step 25 (end)
-one-action 30 step 1 (rite)
-one-action 30 step 2 (end)
-one-action 32 quest 32 trigger 5
-one-action 32 step 5 (consider)
-one-action 34 quest 34 trigger 0
-one-action 34 quest 34 trigger 1
-one-action 35 quest 35 trigger 3
-one-action 38 quest 38 trigger 3
-one-action 38 quest 38 trigger 4
-one-action 4 mob 83 topic evidence_handoff
-one-action 5 mob 84 topic tolvahandoff
-one-action 50 quest 50 trigger 2
-one-action 60 mob 9208 topic guardhandoff
-one-action 61 quest 61 trigger 0
-one-action 61 quest 61 trigger 3
-one-action 63 mob 9300 topic tallyhandoff
-one-action 63 mob 9316 topic tallyhandoff
-one-action 63 step 2 (report)
-one-action 65 mob 9320 topic sweeperhandoff
-one-action 65 step 2 (report)
-one-action 66 mob 9323 topic escort_close
-one-action 66 mob 9323 topic wrapperhandoff
-one-action 66 step 1 (escort)
-one-action 66 step 2 (detox)
-one-action 67 mob 9316 topic casefilehandoff
-one-action 67 step 6 (report)
-one-action 68 quest 68 trigger 0
-one-action 68 quest 68 trigger 4
-one-action 68 quest 68 trigger 6
-one-action 68 quest 68 trigger 7
-one-action 69 mob 9360 topic give_40116
-one-action 7 mob 89 topic dornhandoff
-one-action 7 quest 7 trigger 2
-one-action 70 mob 9332 topic orinhandoff
-one-action 70 quest 70 trigger 0
-one-action 71 mob 9347 topic ledgerhandoff
-one-action 74 mob 9454 topic marginhandoff
-one-action 74 mob 9464 topic aldrichandoff
-one-action 75 quest 75 trigger 2
-one-action 76 quest 76 trigger 4
-one-action 78 quest 78 trigger 0
-one-action 9 mob 95 topic olenhandoff
-one-action 9 quest 9 trigger 1
-refs 1000000 quest 1000000 refs
-start 1000000 step 0 (start)
-start 21 step 0 (start)
-start 28 quest 28 trigger 0
-start 28 step 0 (start)
-start 29 step 0 (start)
-start 30 quest 30 trigger 0
-start 77 quest 77 trigger 0
-start 77 step 0 (end)
+end 21 step end
+end 28 step end
+end 29 quest 29 trigger quest_granted quest_token=31-start grants=29-end
+end 29 quest 29 trigger quest_granted quest_token=88-start grants=29-end
+end 29 quest 29 trigger quest_granted quest_token=89-start grants=29-end
+end 29 quest 29 trigger room_enter room=468 grants=29-end
+end 29 step end
+end 30 step end
+end 34 quest 34 trigger mob_death mob=9115 grants=34-end
+end 34 quest 34 trigger mob_death mob=9115 grants=34-end #2
+end 34 step end
+end 35 quest 35 trigger command room=5245 mob=9116 item=10009 command=sell grants=35-end
+end 37 quest 37 trigger mob_death mob=9123 grants=37-end
+end 37 step end
+end 40 quest 40 trigger mob_death mob=9135 grants=40-end
+end 40 step end
+end 43 quest 43 trigger mob_death mob=9143 grants=43-end
+end 43 step end
+end 46 quest 46 trigger mob_death mob=9152 grants=46-end
+end 46 step end
+end 52 quest 52 trigger mob_death mob=9169 grants=52-end
+end 52 step end
+end 53 quest 53 trigger mob_death mob=9111 grants=53-end
+end 53 step end
+end 54 quest 54 trigger command room=5245 command=craft grants=54-end
+end 54 step end
+end 55 quest 55 trigger command command=drink grants=55-end
+end 55 step end
+end 56 quest 56 trigger command room=5284 command=forage grants=56-end
+end 56 step end
+end 57 quest 57 trigger mob_death mob=9147 grants=57-end
+end 57 step end
+end 58 quest 58 trigger command room=5343 command=search grants=58-end
+end 58 step end
+end 59 quest 59 trigger mob_death mob=9165 grants=59-end
+end 59 step end
+end 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony
+end 75 step end
+end 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end
+end 76 step end
+end 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
+end 77 step end
+end 78 quest 78 trigger quest_granted quest_token=78-start grants=78-end
+end 78 step end
+end 79 quest 79 trigger item_gain item=40182 grants=79-end
+end 79 step end
+end 80 quest 80 trigger item_gain item=40183 grants=80-end
+end 80 step end
+end 81 quest 81 trigger item_gain item=40184 grants=81-end
+end 81 step end
+end 82 quest 82 trigger item_gain item=40185 grants=82-end
+end 82 step end
+end 83 quest 83 trigger item_gain item=40186 grants=83-end
+end 83 step end
+end 84 quest 84 trigger item_gain item=40187 grants=84-end
+end 84 step end
+end 85 quest 85 trigger item_gain item=40188 grants=85-end
+end 85 step end
+end 86 quest 86 trigger item_gain item=40189 grants=86-end
+end 86 step end
+end 87 quest 87 trigger item_gain item=40181 grants=87-end
+end 87 step end
+end 88 quest 88 trigger quest_granted quest_token=31-start grants=88-end
+end 89 quest 89 trigger room_enter room=468 grants=89-end
+hint 21 step start
+hint 78 step start
+hint 79 step start
+hint 80 step start
+hint 81 step start
+hint 82 step start
+hint 83 step start
+hint 84 step start
+hint 85 step start
+hint 86 step start
+hint 87 step start
+one-action 1000000 step end:none
+one-action 1000000 step givegold:none
+one-action 11 mob 241 topic totem_return:prev
+one-action 11 mob 242 topic sample_return:prev
+one-action 14 mob 94 topic velkhandoff:prev
+one-action 14 quest 14 trigger item_gain item=40034 grants=14-unlock:prev
+one-action 14 quest 14 trigger mob_death mob=249 grants=14-loot:cond
+one-action 14 quest 14 trigger room_enter room=498 grants=14-unlock:cond
+one-action 14 quest 14 trigger room_enter room=498 grants=14-unlock:prev
+one-action 14 quest 14 trigger room_interact room=498 noun=strongbox grants=14-evidence:cond
+one-action 14 quest 14 trigger room_interact room=498 noun=strongbox grants=14-evidence:prev
+one-action 14 step report:none
+one-action 15 mob 250 topic quest_complete_dialogue:prev
+one-action 15 quest 15 trigger quest_granted quest_token=15-start grants=15-return:cond
+one-action 15 quest 15 trigger quest_granted quest_token=15-start grants=15-return:prev
+one-action 16 mob 259 topic quest_complete_herbs:prev
+one-action 19 quest 19 trigger mob_death mob=331 grants=19-hunter:prev
+one-action 20 mob 347 topic ullahandoff:prev
+one-action 20 mob 355 topic vellahandoff:prev
+one-action 28 quest 28 trigger command_issued command=look noun=guide grants=28-examined,28-looked:double
+one-action 28 quest 28 trigger command_issued command=look noun=guide grants=28-examined,28-looked:prev
+one-action 28 step end:none
+one-action 30 step end:none
+one-action 30 step rite:none
+one-action 32 quest 32 trigger command command=combatverbosity grants=32-verbosity:prev
+one-action 32 step consider:none
+one-action 34 quest 34 trigger mob_death mob=9115 grants=34-end #2:cond
+one-action 34 quest 34 trigger mob_death mob=9115 grants=34-end:cond
+one-action 35 quest 35 trigger command room=5245 command=craft grants=35-craft:prev
+one-action 38 quest 38 trigger command room=5265 command=craft grants=38-brew:prev
+one-action 38 quest 38 trigger command room=5267 command=craft grants=38-brew:prev
+one-action 4 mob 83 topic evidence_handoff:prev
+one-action 5 mob 84 topic tolvahandoff:prev
+one-action 50 quest 50 trigger command room=5351 command=fire grants=50-shoot:prev
+one-action 60 mob 9208 topic guardhandoff:prev
+one-action 61 quest 61 trigger mob_death mob=9173 grants=61-bandit:cond
+one-action 61 quest 61 trigger mob_death mob=9173 grants=61-reach:cond
+one-action 61 quest 61 trigger mob_death mob=9173 grants=61-reach:prev
+one-action 63 mob 9300 topic tallyhandoff:prev
+one-action 63 mob 9316 topic tallyhandoff:prev
+one-action 63 step report:none
+one-action 65 mob 9320 topic sweeperhandoff:prev
+one-action 65 step report:none
+one-action 66 mob 9323 topic escort_close:prev
+one-action 66 mob 9323 topic wrapperhandoff:prev
+one-action 66 step detox:none
+one-action 66 step escort:none
+one-action 67 mob 9316 topic casefilehandoff:prev
+one-action 67 step report:none
+one-action 68 quest 68 trigger room_interact room=5720 noun=floorboard grants=68-survey #2:cond
+one-action 68 quest 68 trigger room_interact room=5720 noun=floorboard grants=68-survey:cond
+one-action 68 quest 68 trigger room_interact room=5720 noun=loose floorboard grants=68-survey #2:cond
+one-action 68 quest 68 trigger room_interact room=5720 noun=loose floorboard grants=68-survey:cond
+one-action 69 mob 9360 topic give_40116:prev
+one-action 7 mob 89 topic dornhandoff:prev
+one-action 7 quest 7 trigger quest_granted quest_token=7-start grants=7-deliver:cond
+one-action 7 quest 7 trigger quest_granted quest_token=7-start grants=7-deliver:prev
+one-action 70 mob 9332 topic orinhandoff:prev
+one-action 70 quest 70 trigger room_interact room=6037 noun=symbol grants=70-witness:cond
+one-action 71 mob 9347 topic ledgerhandoff:prev
+one-action 74 mob 9454 topic marginhandoff:prev
+one-action 74 mob 9464 topic aldrichandoff:prev
+one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:double
+one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:prev
+one-action 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end:cond
+one-action 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end:double
+one-action 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end:prev
+one-action 78 quest 78 trigger quest_granted quest_token=78-start grants=78-end:prev
+one-action 9 mob 95 topic olenhandoff:prev
+one-action 9 quest 9 trigger quest_granted quest_token=9-start grants=9-deliver:cond
+one-action 9 quest 9 trigger quest_granted quest_token=9-start grants=9-deliver:prev
+refs 1000000 quest 1000000 refs: rewards conditionid: condition 4 does not exist
+refs 1000000 quest 1000000 refs: rewards skillinfo: skill "map" does not exist
+start 1000000 step start
+start 21 step start
+start 28 quest 28 trigger room_enter room=6258 grants=28-start
+start 28 step start
+start 29 step start
+start 30 quest 30 trigger room_enter room=5200 grants=30-start
+start 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
+start 77 step end

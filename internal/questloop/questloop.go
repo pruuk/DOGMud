@@ -24,7 +24,23 @@ type World struct {
 }
 
 // Finding is one rule failure. Key (rule, quest, where) is its backlog
-// line; Msg explains it and may be reworded without touching the backlog.
+// line; Msg explains it and may be reworded without touching the backlog
+// (except for refs, whose Where carries the refusal text).
+//
+// Where names the thing that fails without positions, so inserting a step
+// or a trigger leaves every other key alone, and it names the defect class,
+// so two different defects never share a key:
+//
+//	step <id>                                  a step ("step firstkill")
+//	quest <id> trigger <signature>             a trigger (see triggerWheres)
+//	quest <id> rewards questid                 a completion reward grant
+//	quest <id> rewards summary                 the reward override
+//	mob <id> topic <key>                       a dialogue topic
+//	quest <id>:<sub-rule>                      repeat (cooldown, negative, notrepeatable)
+//	quest <id> refs: <refusal text>            refs, one key per refusal
+//
+// one-action adds a reason to the way it names: :none, :reward, :prev,
+// :cond, :seq or :double.
 type Finding struct {
 	Rule    string
 	QuestId int
@@ -60,4 +76,6 @@ func Validate(w World) []Finding {
 
 func token(q *quests.Quest, i int) string { return fmt.Sprintf("%d-%s", q.QuestId, q.Steps[i].Id) }
 
-func stepWhere(q *quests.Quest, i int) string { return fmt.Sprintf("step %d (%s)", i, q.Steps[i].Id) }
+// stepWhere names a step by id alone: a step inserted in front of it does
+// not move its key.
+func stepWhere(q *quests.Quest, i int) string { return "step " + q.Steps[i].Id }

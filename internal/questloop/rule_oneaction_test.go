@@ -19,19 +19,19 @@ func TestOneAction_AlternativesPass(t *testing.T) {
 func TestOneAction_NoWayIn(t *testing.T) {
 	w := goodWorld()
 	w.Quests[0].Triggers = nil
-	require.Contains(t, rules(Validate(w)), "one-action step 1 (firstkill)")
+	require.Contains(t, rules(Validate(w)), "one-action step firstkill:none")
 }
 
 func TestOneAction_MustRequirePreviousStep(t *testing.T) {
 	w := goodWorld()
 	w.Quests[0].Triggers[0].Conditions.Has = nil
-	require.Contains(t, rules(Validate(w)), "one-action quest 53 trigger 0")
+	require.Contains(t, rules(Validate(w)), "one-action quest 53 trigger mob_death mob=9110 grants=53-firstkill:prev")
 }
 
 func TestOneAction_TopicMustRequirePreviousStep(t *testing.T) {
 	w := goodWorld()
 	w.Dialogue[0].Topics[1].QuestRequired = nil
-	require.Contains(t, rules(Validate(w)), "one-action mob 9112 topic cull_in")
+	require.Contains(t, rules(Validate(w)), "one-action mob 9112 topic cull_in:prev")
 }
 
 func TestOneAction_ExtraConditionsAreRefused(t *testing.T) {
@@ -45,25 +45,25 @@ func TestOneAction_ExtraConditionsAreRefused(t *testing.T) {
 		w := goodWorld()
 		c.Has = []string{"53-start"}
 		w.Quests[0].Triggers[0].Conditions = c
-		require.Contains(t, rules(Validate(w)), "one-action quest 53 trigger 0", name)
+		require.Contains(t, rules(Validate(w)), "one-action quest 53 trigger mob_death mob=9110 grants=53-firstkill:cond", name)
 	}
 }
 
 func TestOneAction_DoubleGrantIsRefused(t *testing.T) {
 	w := goodWorld()
 	w.Quests[0].Triggers[0].Actions = append(w.Quests[0].Triggers[0].Actions, quests.ActionDef{Grant: "53-end"})
-	require.Contains(t, rules(Validate(w)), "one-action quest 53 trigger 0")
+	require.Contains(t, rules(Validate(w)), "one-action quest 53 trigger mob_death mob=9110 grants=53-end,53-firstkill:double")
 }
 
 func TestOneAction_SequenceGrantIsRefused(t *testing.T) {
 	w := goodWorld()
 	w.Quests[0].Triggers[0].Actions = []quests.ActionDef{{Sequence: &quests.SequenceDef{
 		OnComplete: []quests.ActionDef{{Grant: "53-firstkill"}}}}}
-	require.Contains(t, rules(Validate(w)), "one-action quest 53 trigger 0")
+	require.Contains(t, rules(Validate(w)), "one-action quest 53 trigger mob_death mob=9110 grants=53-firstkill:seq")
 }
 
 func TestOneAction_RewardGrantOfMiddleStepIsRefused(t *testing.T) {
 	w := goodWorld()
 	w.Quests[0].Rewards.QuestId = "53-firstkill"
-	require.Contains(t, rules(Validate(w)), "one-action quest 53 rewards questid")
+	require.Contains(t, rules(Validate(w)), "one-action quest 53 rewards questid:reward")
 }

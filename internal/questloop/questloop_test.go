@@ -52,7 +52,7 @@ func TestStart_TriggerGrantIsRefused(t *testing.T) {
 	w := goodWorld()
 	w.Quests[0].Triggers = append(w.Quests[0].Triggers, quests.TriggerDef{
 		Event: "room_enter", Room: 5, Actions: []quests.ActionDef{{Grant: "53-start"}}})
-	require.Contains(t, rules(Validate(w)), "start quest 53 trigger 1")
+	require.Contains(t, rules(Validate(w)), "start quest 53 trigger room_enter room=5 grants=53-start")
 }
 
 func TestStart_RewardGrantIsRefused(t *testing.T) {
@@ -64,7 +64,7 @@ func TestStart_RewardGrantIsRefused(t *testing.T) {
 func TestStart_NoOfferIsRefused(t *testing.T) {
 	w := goodWorld()
 	w.Dialogue[0].Topics = w.Dialogue[0].Topics[1:]
-	require.Contains(t, rules(Validate(w)), "start step 0 (start)")
+	require.Contains(t, rules(Validate(w)), "start step start")
 }
 
 func TestEnd_TriggerFinishIsRefused(t *testing.T) {
@@ -75,8 +75,8 @@ func TestEnd_TriggerFinishIsRefused(t *testing.T) {
 		Conditions: quests.Conditions{Has: []string{"53-firstkill"}},
 		Actions:    []quests.ActionDef{{Grant: "53-end"}}})
 	got := rules(Validate(w))
-	require.Contains(t, got, "end quest 53 trigger 1")
-	require.Contains(t, got, "end step 2 (end)")
+	require.Contains(t, got, "end quest 53 trigger mob_death mob=9111 grants=53-end")
+	require.Contains(t, got, "end step end")
 }
 
 func TestEnd_OneStepQuestFailsByDesign(t *testing.T) {
@@ -92,7 +92,7 @@ func TestEnd_OneStepQuestFailsByDesign(t *testing.T) {
 func TestHint_MissingHintIsRefused(t *testing.T) {
 	w := goodWorld()
 	w.Quests[0].Steps[1].Hint = "  "
-	require.Contains(t, rules(Validate(w)), "hint step 1 (firstkill)")
+	require.Contains(t, rules(Validate(w)), "hint step firstkill")
 }
 
 func TestHint_FinalStepNeedsNone(t *testing.T) {
@@ -102,7 +102,7 @@ func TestHint_FinalStepNeedsNone(t *testing.T) {
 }
 
 func TestFinding_KeyIsRuleQuestWhere(t *testing.T) {
-	f := Finding{Rule: "hint", QuestId: 53, Where: "step 1 (firstkill)", Msg: "no hint"}
-	require.Equal(t, "hint 53 step 1 (firstkill)", f.Key())
+	f := Finding{Rule: "hint", QuestId: 53, Where: "step firstkill", Msg: "no hint"}
+	require.Equal(t, "hint 53 step firstkill", f.Key())
 	require.False(t, strings.Contains(f.Key(), "no hint"), "the message is not part of the key")
 }

@@ -2,7 +2,9 @@ package questloop
 
 import (
 	"fmt"
+	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
@@ -53,22 +55,23 @@ func ruleChain(w World) []Finding {
 }
 
 // ruleRepeat: a repeatable has a cooldown; repeat_limit is not negative and
-// only appears on a repeatable (P3).
+// only appears on a repeatable (P3). Each sub-rule has its own key
+// ("quest 53:cooldown", ":negative", ":notrepeatable").
 func ruleRepeat(q *quests.Quest) []Finding {
 	var out []Finding
-	add := func(msg string) {
-		out = append(out, Finding{Rule: "repeat", QuestId: q.QuestId, Where: fmt.Sprintf("quest %d", q.QuestId), Msg: msg})
+	add := func(sub, msg string) {
+		out = append(out, Finding{Rule: "repeat", QuestId: q.QuestId, Where: fmt.Sprintf("quest %d:%s", q.QuestId, sub), Msg: msg})
 	}
 	if q.Repeatable && q.CooldownRounds <= 0 {
-		add("a repeatable quest needs cooldown_rounds above zero")
+		add("cooldown", "a repeatable quest needs cooldown_rounds above zero")
 	}
 	if q.RepeatLimit < 0 {
-		add("repeat_limit cannot be negative")
+		add("negative", "repeat_limit cannot be negative")
 	}
 	if q.RepeatLimit > 0 && !q.Repeatable {
-		add("repeat_limit is set on a quest that does not repeat")
+		add("notrepeatable", "repeat_limit is set on a quest that does not repeat")
 	}
-	return dedupe(out)
+	return out
 }
 
 // ruleReward: an authored summary names every item, recipe and spell the
@@ -98,7 +101,10 @@ func ruleReward(q *quests.Quest, n quests.RewardNames) []Finding {
 }
 
 // ruleRefs: ValidateQuestRefs' refusals, so its checks run at every door.
-// Its warnings stay with the editor.
+// Its warnings stay with the editor. Each refusal is its own finding, keyed
+// by its text ("quest 53 refs: <text>"), with ValidateQuestRefs' positional
+// "trigger N" and "step N (id)" prefixes rewritten to the trigger's
+// signature and the step's id so the key survives an insertion.
 func ruleRefs(q *quests.Quest, v *quests.QuestValidators) []Finding {
 	if v == nil {
 		return nil
@@ -106,7 +112,29 @@ func ruleRefs(q *quests.Quest, v *quests.QuestValidators) []Finding {
 	errs, _ := quests.ValidateQuestRefs(*q, *v)
 	var out []Finding
 	for _, e := range errs {
-		out = append(out, Finding{Rule: "refs", QuestId: q.QuestId, Where: fmt.Sprintf("quest %d refs", q.QuestId), Msg: e})
+		text := refsText(q, e)
+		out = append(out, Finding{Rule: "refs", QuestId: q.QuestId, Where: fmt.Sprintf("quest %d refs: %s", q.QuestId, text), Msg: text})
 	}
-	return out
+	return dedupe(out)
+}
+
+var (
+	refsTriggerPrefix = regexp.MustCompile(`^trigger (\d+)\b`)
+	refsStepPrefix    = regexp.MustCompile(`^step (\d+) \(([^)]*)\)`)
+)
+
+// refsText is a refusal as one trimmed line, its leading position named
+// stably. Action indexes inside one trigger stay as they are.
+func refsText(q *quests.Quest, e string) string {
+	text := strings.Join(strings.Fields(e), " ")
+	if m := refsTriggerPrefix.FindStringSubmatch(text); m != nil {
+		if i, err := strconv.Atoi(m[1]); err == nil && i < len(q.Triggers) {
+			sig := strings.TrimPrefix(triggerWheres(q)[i], fmt.Sprintf("quest %d ", q.QuestId))
+			return sig + text[len(m[0]):]
+		}
+	}
+	if m := refsStepPrefix.FindStringSubmatch(text); m != nil {
+		return "step " + m[2] + text[len(m[0]):]
+	}
+	return text
 }
