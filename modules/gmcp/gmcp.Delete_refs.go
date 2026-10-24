@@ -59,6 +59,30 @@ func questRefsWithoutItem(w questloop.World, b questloop.Backlog, itemId int) []
 	return questRefsWithout(w, b, gone)
 }
 
+func questRefsWithoutMob(w questloop.World, b questloop.Backlog, mobId int) []string {
+	if w.Refs == nil {
+		return nil
+	}
+	gone, exists := *w.Refs, w.Refs.MobExists
+	gone.MobExists = func(id int) bool { return id != mobId && exists(id) }
+	return questRefsWithout(w, b, gone)
+}
+
+// mobQuestRefEntries is the mob delete's refusal rows for those findings.
+func mobQuestRefEntries(wheres []string) []mobRefEntry {
+	var out []mobRefEntry
+	for _, s := range wheres {
+		out = append(out, mobRefEntry{Kind: "quest", Id: s})
+	}
+	return out
+}
+
+// mobQuestRefs is mobRefIterators.questRefs over the live registries.
+func mobQuestRefs(mobId int) []mobRefEntry {
+	w, b := loopWorldAndBacklog()
+	return mobQuestRefEntries(questRefsWithoutMob(w, b, mobId))
+}
+
 // dialogueRefsWithoutItem is the dialogue problems w gains when itemId is
 // gone: a topic gate or effect (requiresItem, itemExcluded, carriesItem,
 // givesItem) that names it.

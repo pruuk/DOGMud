@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -69,6 +70,51 @@ func TestQuestRefsWithoutItem_TriggersActionsAndRewards(t *testing.T) {
 		if !strings.Contains(joined, want) {
 			t.Errorf("refusal must name %s, got %q", want, joined)
 		}
+	}
+}
+
+// Every quest field the old mob scan walked, plus the step map_target_mob it
+// missed, must refuse a mob delete and name where.
+func TestQuestRefsWithoutMob_NamesEveryReferencingField(t *testing.T) {
+	w := deleteFixture(func(q *quests.Quest) {
+		q.Steps[1].MapTargetMob = 9300
+		q.Triggers[0].Mob = 9300
+		bounty := &quests.DeclareBountyDef{}
+		bounty.Target = &struct {
+			Type string `yaml:"type" json:"type"`
+			Id   int    `yaml:"id" json:"id"`
+		}{Type: "mob", Id: 9300}
+		q.Triggers[0].Actions = append(q.Triggers[0].Actions,
+			quests.ActionDef{NpcSay: &quests.NpcSayDef{Mob: 9300, Lines: []quests.SayLineDef{{Speaker: 9300, Text: "x"}}}},
+			quests.ActionDef{SpawnMob: &quests.SpawnDef{Id: 9300}},
+			quests.ActionDef{DeclareBounty: bounty})
+	})
+	joined := strings.Join(questRefsWithoutMob(w, questloop.Backlog{}, 9300), "\n")
+	for _, want := range []string{"map_target_mob", "mob filter", "npc_say", "speaker", "spawn_mob", "declare_bounty"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("refusal must name %s, got %q", want, joined)
+		}
+	}
+	if other := questRefsWithoutMob(w, questloop.Backlog{}, 9301); len(other) != 0 {
+		t.Errorf("an unreferenced mob must not refuse, got %v", other)
+	}
+}
+
+func TestBuildMobDelete_RefusedWhileAStepMapTargetMobNamesIt(t *testing.T) {
+	w := deleteFixture(func(q *quests.Quest) { q.Steps[1].MapTargetMob = 9300 })
+	fw := newFakeMobWorld()
+	m := &mobs.Mob{MobId: 9300, Zone: "Testzone"}
+	fw.specs[9300] = m
+	d := fw.deps()
+	d.references = func(id int) []mobRefEntry {
+		return mobQuestRefEntries(questRefsWithoutMob(w, questloop.Backlog{}, id))
+	}
+	res := buildMobDelete(d, 9300)
+	if res.Ok || len(fw.deleted) != 0 {
+		t.Fatalf("a mob a step's map_target_mob names must not delete, got %+v", res)
+	}
+	if len(res.MobRefs) != 1 || res.MobRefs[0].Kind != "quest" || !strings.Contains(res.MobRefs[0].Id, "map_target_mob") {
+		t.Errorf("the refusal must name the step's map_target_mob, got %+v", res.MobRefs)
 	}
 }
 

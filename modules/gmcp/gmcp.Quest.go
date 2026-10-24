@@ -150,13 +150,13 @@ type questDetail struct {
 var questEventVocab = []vocabEntry{
 	{"room_enter", "player walks into a room (filter: room)"},
 	{"room_gate", "player tries to walk into a room; a match REFUSES the step before the move, the actions narrate why (filter: room; in_room is the side the player stands on)"},
-	{"item_give", "player gives an item to a mob — fires AFTER the transfer (filters: mob, item)"},
+	{"item_give", "player gives an item to a mob: fires AFTER the transfer (filters: mob, item)"},
 	{"skill_use", "player uses a skill (filter: skill)"},
 	{"mob_death", "a mob dies with the player involved (filters: mob, room)"},
 	{"command", "a command SUCCEEDED (~27 instrumented commands; filters: command, room)"},
-	{"command_issued", "player TYPED a command, success or not — fires from TryCommand for any command (filters: command, room)"},
+	{"command_issued", "player TYPED a command, success or not: fires from TryCommand for any command (filters: command, room)"},
 	{"item_gain", "an item enters the player's inventory (filter: item)"},
-	{"quest_granted", "a quest token was just granted — the chaining event (filter: quest_token)"},
+	{"quest_granted", "a quest token was just granted: the chaining event (filter: quest_token)"},
 	{"room_interact", "player looked/examined a room noun (filters: room, noun, verb)"},
 }
 
@@ -254,7 +254,7 @@ func buildQuestUpdate(d questDeps, q quests.Quest) BuildResult {
 	}
 	d.reindex()
 	return BuildResult{Ok: true, QuestId: q.QuestId,
-		Message: fmt.Sprintf("quest %d saved — live immediately", q.QuestId), Warnings: warns}
+		Message: fmt.Sprintf("quest %d saved: live immediately", q.QuestId), Warnings: warns}
 }
 
 func buildQuestCreate(d questDeps, name string) BuildResult {
@@ -273,7 +273,7 @@ func buildQuestDelete(d questDeps, questId int) BuildResult {
 	if refs := d.references(questId); len(refs) > 0 {
 		lines := make([]string, 0, len(refs))
 		for _, r := range refs {
-			lines = append(lines, fmt.Sprintf("%s: %s — %s", r.Kind, r.Where, r.Detail))
+			lines = append(lines, fmt.Sprintf("%s: %s: %s", r.Kind, r.Where, r.Detail))
 		}
 		return BuildResult{Ok: false, QuestId: questId, QuestRefs: refs,
 			Error: fmt.Sprintf("quest %d is still referenced:\n%s", questId, strings.Join(lines, "\n"))}

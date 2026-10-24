@@ -182,15 +182,15 @@
   // dropdowns just fill it (no client-side room→zone reverse lookup exists).
   function roomAssist(numEl) {
     var zoneSel = ce("select", {});
-    zoneSel.appendChild(ce("option", { value: "", text: "— zone —" }));
+    zoneSel.appendChild(ce("option", { value: "", text: "(zone)" }));
     Panel.zoneRows.forEach(function (z) {
       zoneSel.appendChild(ce("option", { value: z.zone, text: z.zone }));
     });
     var roomSel = ce("select", {});
-    roomSel.appendChild(ce("option", { value: "", text: "— room —" }));
+    roomSel.appendChild(ce("option", { value: "", text: "(room)" }));
     function fill(zone) {
       roomSel.innerHTML = "";
-      roomSel.appendChild(ce("option", { value: "", text: "— room —" }));
+      roomSel.appendChild(ce("option", { value: "", text: "(room)" }));
       (Panel.roomsByZone[zone] || []).forEach(function (r) {
         roomSel.appendChild(ce("option", { value: String(r.id), text: "#" + r.id + " " + (r.title || "") }));
       });
@@ -382,7 +382,7 @@
       body.appendChild(field("Lines", sqLines.el));
       var lockMsg = textInput(sq.lock_message);
       body.appendChild(field("Lock message (blocks movement while running; empty = no lock)", lockMsg));
-      body.appendChild(ce("div", { style: "font-size:10px;color:var(--gold-dim);margin-top:6px;", text: "On complete — actions run after the last line (a sequence cannot nest another sequence):" }));
+      body.appendChild(ce("div", { style: "font-size:10px;color:var(--gold-dim);margin-top:6px;", text: "On complete, actions run after the last line (a sequence cannot nest another sequence):" }));
       var onC = actionList(sq.on_complete, body, false);
       return function () {
         var out = { delay_between: toInt(delayB.value), lines: sqLines.get() };
@@ -473,7 +473,7 @@
     addSel.appendChild(ce("option", { value: "", text: "+ add action…" }));
     ((Panel.enums.actions) || []).forEach(function (v) {
       if (!allowSequence && v.key === "sequence") return;
-      addSel.appendChild(ce("option", { value: v.key, text: v.key + " — " + v.description }));
+      addSel.appendChild(ce("option", { value: v.key, text: v.key + ": " + v.description }));
     });
     addSel.addEventListener("change", function () {
       if (!addSel.value) return;
@@ -583,7 +583,7 @@
       cBody.appendChild(field("Has masterwork (craft skill ≥)", hasMw));
       body.appendChild(cHead); body.appendChild(cBody);
 
-      body.appendChild(ce("div", { style: "font-weight:bold;color:var(--gold-dim);font-size:11px;margin-top:8px;", text: "Actions — run in ORDER when the trigger fires:" }));
+      body.appendChild(ce("div", { style: "font-weight:bold;color:var(--gold-dim);font-size:11px;margin-top:8px;", text: "Actions run in ORDER when the trigger fires:" }));
       var acts = actionList(t.actions, body, true);
 
       return { gather: function () {
@@ -654,7 +654,7 @@
 
     insp.appendChild(ce("h2", { text: "Quest #" + q.questid }));
     insp.appendChild(ce("div", { style: "font-size:11px;color:var(--gold-dim);margin:2px 0 8px;",
-      text: "Saves are live immediately — no reboot. First save of a hand-authored quest produces a one-time formatting diff (canonicalization); every save after is minimal." }));
+      text: "Saves are live immediately: no reboot. First save of a hand-authored quest produces a one-time formatting diff (canonicalization); every save after is minimal." }));
 
     // datalists
     var dls = [
@@ -713,7 +713,7 @@
         var mt = numInput(s.map_target > 0 ? s.map_target : 0);
         var assist = roomAssist(mt);
         body.appendChild(field("No marker for this step", noMarker,
-          "writes map_target: -1 — suppresses the marker AND trigger inference; for action steps (craft, kill, command) with no travel destination"));
+          "writes map_target: -1: suppresses the marker AND trigger inference; for action steps (craft, kill, command) with no travel destination"));
         body.appendChild(field("Map target room (0 = infer from triggers)", ce("span", {}, [mt, assist])));
         return { gather: function () {
           return { id: id.value.trim(), description: sd.value, hint: hint.value,
@@ -761,7 +761,7 @@
     // ---- flags ----
     insp.appendChild(sectionTitle("Flags (branch tracking)"));
     insp.appendChild(ce("div", { style: "font-size:11px;color:var(--gold-dim);margin:2px 0 6px;",
-      text: "Declare every flag this quest's triggers or NPC dialogue set/gate on — an undeclared reference is refused at save. Dialogue setsQuestFlag keys must match these (full key: " + q.questid + "-<key>)." }));
+      text: "Declare every flag this quest's triggers or NPC dialogue set/gate on: an undeclared reference is refused at save. Dialogue setsQuestFlag keys must match these (full key: " + q.questid + "-<key>)." }));
     var flagBox = ce("div", {});
     insp.appendChild(flagBox);
     function flagRow(f) {
@@ -786,7 +786,7 @@
     // ---- triggers ----
     insp.appendChild(sectionTitle("Triggers (the quest's machinery)"));
     insp.appendChild(ce("div", { style: "font-size:11px;color:var(--gold-dim);margin:2px 0 6px;",
-      text: "Each trigger: an event, optional filters and conditions, and an ordered action list. Dialogue-granted steps live in the NPC's dialogue file, not here — triggers cover everything else (deliveries, kills, arrivals, chained set-pieces)." }));
+      text: "Each trigger: an event, optional filters and conditions, and an ordered action list. Dialogue-granted steps live in the NPC's dialogue file, not here: triggers cover everything else (deliveries, kills, arrivals, chained set-pieces)." }));
     var trigBox = ce("div", {});
     insp.appendChild(trigBox);
     (q.triggers || []).forEach(function (t) { triggerRow(trigBox, t); });
@@ -842,7 +842,7 @@
     if (res && res.ok) {
       if (Panel.deleting) { Panel.deleting = false; toast("Quest deleted.", false); gmcp("Build.Quest.List", {}); return; }
       Panel.saving = false; Panel.dirty = false;
-      toast("Quest saved — live immediately, no reboot.", false);
+      toast("Quest saved: live immediately, no reboot.", false);
       if (warnEl) warnEl.textContent = (res.warnings && res.warnings.length)
         ? ("Warnings:\n" + res.warnings.join("\n")) : "";
       if (errEl) errEl.textContent = "";
@@ -852,7 +852,7 @@
     Panel.saving = false; Panel.deleting = false;
     var msg = (res && res.error) || "Quest error";
     if (errEl) errEl.textContent = msg;
-    toast("Quest refused — see the errors above the form.", true);
+    toast("Quest refused: see the errors above the form.", true);
   };
 
   Panel.onRoomList = function (rows) {

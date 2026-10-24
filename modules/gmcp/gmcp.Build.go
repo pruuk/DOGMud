@@ -752,7 +752,7 @@ func buildRoomUpdate(d buildDeps, req roomUpdateReq) BuildResult {
 		len(r.Containers) != containersBefore ||
 		len(r.Stash) != stashBefore {
 		return buildErr("refusing to save room %d: it would drop content this editor does not manage "+
-			"(mutators %d->%d, containers %d->%d, stash %d->%d) — report this, it is a bug",
+			"(mutators %d->%d, containers %d->%d, stash %d->%d): report this, it is a bug",
 			req.RoomId, mutatorsBefore, len(r.Mutators), containersBefore, len(r.Containers),
 			stashBefore, len(r.Stash))
 	}
@@ -850,7 +850,7 @@ func buildZoneCreateWith(d zoneCreateDeps, req zoneCreateReq) BuildResult {
 	}
 	r.Plane = plane
 	r.X, r.Y, r.Z = 0, 0, 0
-	r.Title = name + " — Entrance"
+	r.Title = name + ": Entrance"
 	r.Description = placeholderRoomDescription
 	if req.Biome != "" {
 		r.Biome = req.Biome

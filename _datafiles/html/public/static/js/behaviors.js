@@ -169,7 +169,7 @@
     body.appendChild(field("Event gate (node only runs for this event)", evSel));
 
     var note = textInput(def.note);
-    body.appendChild(field("Note (design rationale — survives saves; # comments do not)", note));
+    body.appendChild(field("Note (design rationale: survives saves; # comments do not)", note));
 
     // type-specific zone, rebuilt on type change
     var typed = ce("div", {});
@@ -195,7 +195,7 @@
       } else if (tp === "decorator") {
         var modSel = ce("select", {});
         (Panel.enums.decoratorMods || []).forEach(function (m) {
-          var o = ce("option", { value: m.key, text: m.key + " — " + m.description });
+          var o = ce("option", { value: m.key, text: m.key + ": " + m.description });
           if (def.mod === m.key) o.selected = true;
           modSel.appendChild(o);
         });
@@ -223,17 +223,17 @@
         if (def.child) nodeRow(childBox, def.child, depth + 1, false);
         var addChild = ce("button", { "class": "mini", text: "+ set child" });
         addChild.addEventListener("click", function () {
-          if (childRows(childBox).length) { toast("A decorator has exactly one child — remove it first.", true); return; }
+          if (childRows(childBox).length) { toast("A decorator has exactly one child: remove it first.", true); return; }
           nodeRow(childBox, { type: "action" }, depth + 1, true); markDirty();
         });
         typed.appendChild(addChild);
         readers.childBox = childBox;
       } else { // selector / sequence
-        typed.appendChild(ce("div", { style: "font-weight:bold;color:var(--gold-dim);font-size:11px;margin:4px 0;", text: "Children — run in ORDER (" + (tp === "selector" ? "first success wins" : "all must succeed") + "):" }));
+        typed.appendChild(ce("div", { style: "font-weight:bold;color:var(--gold-dim);font-size:11px;margin:4px 0;", text: "Children run in ORDER (" + (tp === "selector" ? "first success wins" : "all must succeed") + "):" }));
         var kidsBox = ce("div", {});
         typed.appendChild(kidsBox);
         if (depth >= MAX_DEPTH) {
-          typed.appendChild(ce("div", { style: "color:#c90;font-size:11px;", text: "Deeply nested (" + depth + " levels) — consider restructuring." }));
+          typed.appendChild(ce("div", { style: "color:#c90;font-size:11px;", text: "Deeply nested (" + depth + " levels): consider restructuring." }));
         }
         (def.children || []).forEach(function (chDef) { nodeRow(kidsBox, chDef, depth + 1, false); });
         var addKid = ce("button", { "class": "mini", text: "+ child" });
@@ -318,7 +318,7 @@
     // Archetypes
     var newArch = ce("button", { "class": "newitem", text: "+ New archetype" });
     newArch.addEventListener("click", function () {
-      var name = window.prompt("New archetype — filesystem-safe name (e.g. pack_howler):", "");
+      var name = window.prompt("New archetype: filesystem-safe name (e.g. pack_howler):", "");
       if (name === null || !name.trim()) return;
       gmcp("Build.Behavior.Create", { kind: "archetype", name: name.trim() });
     });
@@ -423,10 +423,10 @@
 
     if (obj.hasHandComments) {
       insp.appendChild(ce("div", { style: "border:1px solid #c90;color:#c90;font-size:12px;padding:6px 10px;border-radius:4px;margin:6px 0;",
-        text: "This file carries hand-written # comments. The FIRST editor save drops them all (a marshal cannot keep comments) — move anything worth keeping into the note/notes fields before saving." }));
+        text: "This file carries hand-written # comments. The FIRST editor save drops them all (a marshal cannot keep comments): move anything worth keeping into the note/notes fields before saving." }));
     }
     insp.appendChild(ce("div", { style: "font-size:11px;color:var(--gold-dim);margin:2px 0 8px;",
-      text: "Saves are live immediately — the engine hot-reloads this tree; no reboot. Node order IS evaluation order." }));
+      text: "Saves are live immediately: the engine hot-reloads this tree; no reboot. Node order IS evaluation order." }));
 
     insp.appendChild(ce("div", { id: "bt-warnings", style: "color:#c90;font-size:12px;white-space:pre-wrap;" }));
     insp.appendChild(ce("div", { id: "bt-errors", style: "color:var(--danger);font-size:12px;white-space:pre-wrap;" }));
@@ -565,7 +565,7 @@
     if (res && res.ok) {
       if (Panel.deleting) { Panel.deleting = false; Panel.selected = null; toast("Behavior deleted.", false); gmcp("Build.Behavior.List", {}); var insp = document.getElementById("inspector"); if (insp) insp.innerHTML = ""; return; }
       Panel.saving = false; Panel.dirty = false;
-      toast("Behavior saved — live immediately, no reboot.", false);
+      toast("Behavior saved: live immediately, no reboot.", false);
       if (warnEl) warnEl.textContent = (res.warnings && res.warnings.length)
         ? ("Warnings:\n" + res.warnings.join("\n")) : "";
       if (errEl) errEl.textContent = "";
@@ -578,7 +578,7 @@
       msg = (res.error || "Still referenced:") ;
     }
     if (errEl) errEl.textContent = msg;
-    toast("Behavior refused — see the errors above the form.", true);
+    toast("Behavior refused: see the errors above the form.", true);
   };
 
   window.Builder = window.Builder || {};

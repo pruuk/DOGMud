@@ -196,7 +196,7 @@ func buildZoneDelete(d zoneDeps, zone string) BuildResult {
 	}
 	if b := d.blockers(zone); len(b) > 0 {
 		return BuildResult{
-			Error:    "zone is not empty — remove these first",
+			Error:    "zone is not empty: remove these first",
 			ZoneRefs: b,
 		}
 	}
@@ -337,7 +337,7 @@ func buildZoneUpdate(d zoneDeps, req zoneUpdateReq) BuildResult {
 	// non-Euclidean and silently disables collision + reciprocity enforcement
 	// world-wide. Never allow that combination to be saved.
 	if req.NonCartesian && req.DefaultPlane == 0 {
-		return buildErr("a non-Cartesian zone needs its own plane — plane 0 is the overworld, " +
+		return buildErr("a non-Cartesian zone needs its own plane: plane 0 is the overworld, " +
 			"and flagging it non-Euclidean disables map consistency checks for the whole world")
 	}
 
@@ -403,7 +403,7 @@ func buildZoneRename(d zoneDeps, req zoneRenameReq) BuildResult {
 	}
 	if b := d.renameBlockers(req.Zone); len(b) > 0 {
 		return BuildResult{
-			Error:    "zone cannot be renamed right now — these must clear first",
+			Error:    "zone cannot be renamed right now: these must clear first",
 			ZoneRefs: b,
 		}
 	}
