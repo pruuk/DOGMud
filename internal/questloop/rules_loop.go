@@ -61,9 +61,3 @@ func ruleHint(q *quests.Quest) []Finding {
 	}
 	return out
 }
-
-// Stubs: Tasks 12 and 13 replace these with the real rules.
-func ruleRepeat(*quests.Quest) []Finding                        { return nil }
-func ruleReward(*quests.Quest, quests.RewardNames) []Finding    { return nil }
-func ruleRefs(*quests.Quest, *quests.QuestValidators) []Finding { return nil }
-func ruleChain(World) []Finding                                 { return nil }
