@@ -54,6 +54,38 @@ func init() {
 	events.RegisterListener(events.RoomChange{}, g.roomChangeHandler)
 	events.RegisterListener(GMCPZoneUpdate{}, g.buildAndSend)
 	events.RegisterListener(events.PlayerDespawn{}, g.zoneDespawnHandler)
+	events.RegisterListener(GMCPZoneResync{}, g.zoneResyncHandler)
+}
+
+// GMCPZoneResync carries a client's Zone.Map.Resync request from the
+// connection goroutine (HandleIAC) to MainWorker, where zoneResyncHandler
+// resolves the user and touches zoneSent.
+type GMCPZoneResync struct {
+	ConnectionId uint64
+}
+
+func (g GMCPZoneResync) Type() string { return `GMCPZoneResync` }
+
+// zoneResyncHandler answers a client whose map was wiped by something other
+// than a full Zone.Map (for example Room.Info naming a floor that the
+// server's cz does not). It forgets what was sent and queues an update, so
+// the next Zone.Map is whole and the two cannot stay out of step.
+func (g *GMCPZoneModule) zoneResyncHandler(e events.Event) events.ListenerReturn {
+	evt, ok := e.(GMCPZoneResync)
+	if !ok {
+		mudlog.Error("Event", "Expected Type", "GMCPZoneResync", "Actual Type", e.Type())
+		return events.Cancel
+	}
+	uid := userIdForConnection(evt.ConnectionId)
+	if uid <= 0 {
+		return events.Continue
+	}
+	g.zoneMu.Lock()
+	delete(g.zoneSent, uid)
+	g.zoneMu.Unlock()
+	events.AddToQueue(GMCPZoneUpdate{UserId: uid})
+	mudlog.Debug("gmcp.Zone", "userId", uid, "resync", true)
+	return events.Continue
 }
 
 // zoneDespawnHandler forgets what was sent, so the next login gets a full map.

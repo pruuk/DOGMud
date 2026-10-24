@@ -125,6 +125,61 @@ func TestZoneMap_DespawnForgetsWhatWasSent(t *testing.T) {
 	require.ElementsMatch(t, []int{9760, 9763}, zoneMapRoomIds(maps[0]))
 }
 
+// The client asks for Zone.Map.Resync when its map was wiped by anything
+// other than a full Zone.Map (for example Room.Info naming a floor the
+// server's cz does not). HandleIAC runs on the connection goroutine, so it
+// only queues the request, with the connection id it came from.
+func TestHandleIAC_ZoneMapResyncIsQueued(t *testing.T) {
+	mudlog.SetupLogger(nil, ``, ``, false) // HandleIAC logs each command
+	events.DrainQueuedByTypeForTest(`GMCPZoneResync`)
+	t.Cleanup(func() { events.DrainQueuedByTypeForTest(`GMCPZoneResync`) })
+
+	require.True(t, gmcpModule.HandleIAC(90650, gmcpFrame(`Zone.Map.Resync {}`)))
+	require.True(t, gmcpModule.HandleIAC(90651, gmcpFrame(`Zone.Map.Resync`)), "an empty payload is fine too")
+
+	queued := events.DrainQueuedByTypeForTest(`GMCPZoneResync`)
+	require.Len(t, queued, 2)
+	require.Equal(t, uint64(90650), queued[0].(GMCPZoneResync).ConnectionId)
+	require.Equal(t, uint64(90651), queued[1].(GMCPZoneResync).ConnectionId)
+}
+
+// A resync forgets what was sent and queues an update, so the next Zone.Map
+// is whole even though nothing changed on the server.
+func TestZoneMap_ResyncSendsTheWholeMapAgain(t *testing.T) {
+	u := zoneDiffFixture(t)
+	g := &GMCPZoneModule{zoneSent: map[int]*zoneSentState{}}
+	g.buildAndSend(GMCPZoneUpdate{UserId: u.UserId})
+	drainZoneMaps(t, u.UserId)
+	events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`)
+	t.Cleanup(func() { events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`) })
+
+	g.zoneResyncHandler(GMCPZoneResync{ConnectionId: u.ConnectionId()})
+
+	updates := events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`)
+	require.Len(t, updates, 1, "a resync queues one map update")
+	require.Equal(t, u.UserId, updates[0].(GMCPZoneUpdate).UserId)
+
+	g.buildAndSend(updates[0])
+	maps := drainZoneMaps(t, u.UserId)
+	require.Len(t, maps, 1)
+	require.True(t, maps[0].Full, "after a resync the next map is whole")
+	require.ElementsMatch(t, []int{9760, 9763}, zoneMapRoomIds(maps[0]))
+}
+
+// A resync from a connection with no logged-in user does nothing.
+func TestZoneMap_ResyncFromNoUserIsDropped(t *testing.T) {
+	u := zoneDiffFixture(t)
+	g := &GMCPZoneModule{zoneSent: map[int]*zoneSentState{}}
+	g.buildAndSend(GMCPZoneUpdate{UserId: u.UserId})
+	drainZoneMaps(t, u.UserId)
+	events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`)
+
+	g.zoneResyncHandler(GMCPZoneResync{ConnectionId: 90659})
+
+	require.Empty(t, events.DrainQueuedByTypeForTest(`GMCPZoneUpdate`))
+	require.NotNil(t, g.zoneSent[u.UserId], "another user's state is untouched")
+}
+
 type fakeZoneWorld struct {
 	cfgs     map[string]*rooms.ZoneConfig
 	blockers map[string][]rooms.ZoneBlocker

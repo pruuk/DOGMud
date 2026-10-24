@@ -403,6 +403,14 @@ func (g *GMCPModule) HandleIAC(connectionId uint64, iacCmd []byte) bool {
 				Payload:      append([]byte(nil), payload...),
 			})
 
+		// ---- Zone.Map resync (#650) ----
+		// The web client's map was wiped by something other than a full
+		// Zone.Map; the next one must be whole. zoneSent belongs to the event
+		// loop, and resolving the user reads the user records, so defer to
+		// MainWorker like the ops above. The payload is empty.
+		case `Zone.Map.Resync`:
+			events.AddToQueue(GMCPZoneResync{ConnectionId: connectionId})
+
 		// ---- admin web room-builder (admin web-building 1b) ----
 		// Build.* mutates rooms and rebuilds mappers, which write the shared
 		// room manager. HandleIAC runs on the per-connection goroutine, so doing

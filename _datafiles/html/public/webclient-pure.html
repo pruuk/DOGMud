@@ -519,7 +519,10 @@
         /////////////////////////////////////////////
         var gr = null;
         (function initMap() {
-            var mapOptions = { cellSize: 80, cellMargin: 80, initialZoom: 0.5 };
+            var mapOptions = { cellSize: 80, cellMargin: 80, initialZoom: 0.5,
+                // The map was wiped by something other than a full Zone.Map:
+                // ask the server for a whole one (#650, RoomGridSVG.requestResync).
+                onResync: function () { SendGMCP("Zone.Map.Resync", {}); } };
             gr = new RoomGridSVG('#map-render', mapOptions);
         })();
 
@@ -613,6 +616,14 @@
                             allRooms.roomZones[zoneKey] = [];
                         }
                         gr.setRooms(allRooms.roomZones[zoneKey]);
+                        // That wiped every Zone.Map room. On an ordinary zone
+                        // or floor change the server's full Zone.Map follows
+                        // and repaints; when it does not (this Room.Info names
+                        // a floor the server's cz does not, such as a room with
+                        // no map coordinates), the server sends only what
+                        // changed and the map would stay wiped. Ask for a whole
+                        // map unless a full one arrives within the grace (#650).
+                        gr.requestResync(2000);
                     }
 
                     var r = {

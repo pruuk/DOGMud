@@ -21,7 +21,10 @@
  *   5. Room.Info for a room the map already has does not strip that room's
  *      name and service tags (no Zone.Map follows to put them back);
  *   6. moving to a known room re-fogs the rooms around the old and new centre
- *      (no Zone.Map follows to rebuild every token).
+ *      (no Zone.Map follows to rebuild every token);
+ *   7. a map wiped by anything other than a full Zone.Map asks the server for
+ *      a whole one (GMCP Zone.Map.Resync), exactly once per wipe, and a full
+ *      map, including one that itself resets, never asks.
  */
 'use strict';
 
@@ -53,6 +56,8 @@ function funcSrc(src, signature) {
 
 const handlersMap = sliceBalanced(html, html.indexOf('let GMCPUpdateHandlers ='), '{', '}');
 const handleGMCPSrc = funcSrc(html, 'function handleGMCP(');
+// The page's own map construction, so the test runs the page's wiring.
+const initMapSrc = funcSrc(html, 'function initMap(');
 
 // ---------------------------------------------------------------- DOM stub
 function El(tag) {
@@ -96,6 +101,22 @@ global.requestAnimationFrame = (fn) => fn();
 global.GMCPStructs = {};
 global.companionGlue = null;
 
+// Client-to-server GMCP, recorded.
+let sentGMCP = [];
+global.SendGMCP = (pkg, obj) => { sentGMCP.push([pkg, obj]); return true; };
+function resyncsSent() { return sentGMCP.filter(s => s[0] === 'Zone.Map.Resync'); }
+
+// Manual timers: flushTimers() runs whatever is pending, as if time passed.
+let timers = new Map();
+let timerSeq = 0;
+global.setTimeout = (fn) => { const id = ++timerSeq; timers.set(id, fn); return id; };
+global.clearTimeout = (id) => { timers.delete(id); };
+function flushTimers() {
+  const due = [...timers.values()];
+  timers.clear();
+  due.forEach(fn => fn());
+}
+
 const noop = () => {};
 for (const name of [
   'updateStatusPanel', 'renderInventory', 'renderCommsTabs', 'updateVitalsWindow',
@@ -127,7 +148,9 @@ function check(name, cond, detail) {
 // A fresh real map as the page's `gr`, with setZoneSnapshot's arguments recorded.
 let snapshotCalls = [];
 function freshMap() {
-  const g = new globalThis.RoomGridSVG(new El('div'), {});
+  // eslint-disable-next-line no-eval
+  (0, eval)('(' + initMapSrc + ')();'); // assigns the global gr, as the page does
+  const g = global.gr;
   const real = g.setZoneSnapshot.bind(g);
   g.setZoneSnapshot = function () { snapshotCalls.push([...arguments]); return real(...arguments); };
   global.gr = g;
@@ -135,14 +158,16 @@ function freshMap() {
   globalThis.allRooms.roomZones = {};
   global.GMCPStructs = {};
   snapshotCalls = [];
+  sentGMCP = [];
+  timers.clear();
   return g;
 }
 function room(num, x, extra) {
   return Object.assign({ num, x, y: 0, z: 0, symbol: '.', biome: 'road', name: 'r' + num, exits: [] }, extra || {});
 }
 function zoneMap(body) { handleGMCP('Zone.Map', body); }
-function roomInfo(num, x) {
-  handleGMCP('Room.Info', { num, coords: 'Thornwall, ' + x + ', 0, 0', exitsv2: {}, details: [] });
+function roomInfo(num, x, z, zone) {
+  handleGMCP('Room.Info', { num, coords: (zone || 'Thornwall') + ', ' + x + ', 0, ' + (z || 0), exitsv2: {}, details: [] });
 }
 function ids(g) { return [...g.rooms.keys()].sort((a, b) => a - b).join(','); }
 // The party marker is the only circle filled #1c2e2a (see _buildRoomTokenInGroup).
@@ -208,6 +233,82 @@ roomInfo(4, 3); // known room, no Zone.Map follows
 check('room 5, now adjacent, is lightly fogged', String(opacity(g, 5)) === '0.92', 'opacity=' + opacity(g, 5));
 check('room 2, now distant, is fogged', String(opacity(g, 2)) === '0.74', 'opacity=' + opacity(g, 2));
 check('room 3, adjacent to the new centre, is lightly fogged', String(opacity(g, 3)) === '0.92', 'opacity=' + opacity(g, 3));
+
+console.log('SCENARIO 7: a map wiped without a full Zone.Map asks for one, once');
+// 7a. Room.Info names a floor the server's cz does not (a room with no map
+// coordinates reports z 999...), and the server, seeing the same zone and cz,
+// sends nothing. The page's Room handler wiped the map, so it must ask.
+g = freshMap();
+roomInfo(1, 0);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1)], full: true });
+flushTimers();
+check('7a: login (Room.Info, then the full map) asks for nothing', resyncsSent().length === 0,
+  'sent=' + JSON.stringify(sentGMCP));
+roomInfo(9, 0, 999999999);
+check('7a: the Room handler wiped the map', !g.rooms.get(1), 'rooms=' + ids(g));
+check('7a: no resync before the grace period, a full map may still be coming', resyncsSent().length === 0,
+  'sent=' + JSON.stringify(sentGMCP));
+flushTimers();
+check('7a: exactly one Zone.Map.Resync once no full map came', resyncsSent().length === 1,
+  'sent=' + JSON.stringify(sentGMCP));
+check('7a: with an empty payload', resyncsSent()[0] && JSON.stringify(resyncsSent()[0][1]) === '{}',
+  'payload=' + JSON.stringify(resyncsSent()[0] && resyncsSent()[0][1]));
+flushTimers();
+check('7a: and only one', resyncsSent().length === 1, 'sent=' + JSON.stringify(sentGMCP));
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1)], full: true });
+flushTimers();
+check('7a: the full answer asks for nothing more', resyncsSent().length === 1, 'sent=' + JSON.stringify(sentGMCP));
+
+// 7b. An ordinary floor change: Room.Info for the new floor, then the full map.
+g = freshMap();
+roomInfo(1, 0);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0)], full: true });
+roomInfo(5, 0, 1);
+zoneMap({ zone: 'Thornwall', cz: 1, party: [], rooms: [room(5, 0, { z: 1 })], full: true });
+flushTimers();
+check('7b: a floor change answered by a full map asks for nothing', resyncsSent().length === 0,
+  'sent=' + JSON.stringify(sentGMCP));
+check('7b: the new floor is drawn', ids(g) === '5', 'rooms=' + ids(g));
+
+// 7c. A partial map that resets (it names a floor the client is not on) leaves
+// only the partial's rooms drawn, so it asks at once, and cancels the Room
+// handler's pending ask: one resync for the one wipe.
+g = freshMap();
+roomInfo(1, 0);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1)], full: true });
+roomInfo(9, 0, 999999999);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(3, 2)], full: false });
+check('7c: a resetting partial asks at once', resyncsSent().length === 1, 'sent=' + JSON.stringify(sentGMCP));
+flushTimers();
+check('7c: the pending ask was cancelled, still one', resyncsSent().length === 1, 'sent=' + JSON.stringify(sentGMCP));
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1), room(3, 2)], full: true });
+flushTimers();
+check('7c: the full answer asks for nothing more', resyncsSent().length === 1, 'sent=' + JSON.stringify(sentGMCP));
+check('7c: and draws the whole floor', ids(g) === '1,2,3', 'rooms=' + ids(g));
+
+// 7d. A full map that itself resets (same zone, or a new zone) never asks:
+// that is what stops a resync loop.
+g = freshMap();
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0)], full: true });
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1)], full: true });
+zoneMap({ zone: 'Stillwater', cz: 0, party: [], rooms: [room(7, 0)], full: true });
+flushTimers();
+check('7d: full maps that reset never ask', resyncsSent().length === 0, 'sent=' + JSON.stringify(sentGMCP));
+
+// 7e. A partial that merges (same zone and floor) never asks.
+zoneMap({ zone: 'Stillwater', cz: 0, party: [], rooms: [room(8, 1)], full: false });
+flushTimers();
+check('7e: a merging partial never asks', resyncsSent().length === 0, 'sent=' + JSON.stringify(sentGMCP));
+
+// 7f. A zone crossing: Room.Info for the new zone, then its full map.
+g = freshMap();
+roomInfo(1, 0);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0)], full: true });
+roomInfo(7, 0, 0, 'Stillwater');
+zoneMap({ zone: 'Stillwater', cz: 0, party: [], rooms: [room(7, 0)], full: true });
+flushTimers();
+check('7f: a zone crossing answered by a full map asks for nothing', resyncsSent().length === 0,
+  'sent=' + JSON.stringify(sentGMCP));
 
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);

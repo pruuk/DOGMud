@@ -561,6 +561,23 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   rebuilds party markers that moved, `centerOnRoom` re-fogs tokens whose
   distance band changed, and the `Room` handler leaves a room a snapshot drew
   as it is (`fromSnapshot`). `tools/webclient-tests/zone-map-diff.js` runs it.
+- **`Zone.Map.Resync` keeps the two in step (#650).** If the web client's map
+  is wiped by anything other than a `full: true` map, the server, which only
+  sends what changed, would never redraw it. Two client paths do that: the
+  `Room` handler resets when `Room.Info`'s zone or floor differs from the last
+  one (for example a room with no map coordinates reports z 999..., while the
+  server's `cz` stays put), and `setZoneSnapshot` resets on a partial whose zone
+  or floor differs from what is drawn. Both call `RoomGridSVG.requestResync`,
+  which sends GMCP `Zone.Map.Resync` (payload `{}`) through the page's
+  `onResync` option. The `Room` handler waits a 2 s grace first, because on an
+  ordinary zone or floor change the server's full map follows `Room.Info`; a
+  full map cancels the wait and never asks, so a full map that itself resets
+  cannot loop, and a second wipe inside the wait does not ask twice. A
+  resetting partial asks at once. On the server `HandleIAC` queues
+  `GMCPZoneResync{ConnectionId}` (it runs on the connection goroutine), and
+  `zoneResyncHandler` on MainWorker resolves the user, deletes its `zoneSent`
+  entry and queues `GMCPZoneUpdate`, so the next map is full. A connection
+  with no logged-in user is ignored.
 - **Emit only on change where you can.** These push on room change and round
   boundaries; adding an unconditional per-round emit to a large payload is a
   bandwidth regression that will not show up in a local test.
@@ -569,8 +586,9 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   `u.Character`, the room manager) races the world tick and can trigger Go's
   uncatchable `fatal error: concurrent map read and map write`. Do not do that
   work inline: queue an event and handle it on MainWorker, as `GMCPBuildOp` /
-  `handleBuildOp` (`gmcp.Build.go`) and `GMCPCharOp` / `handleCharOp`
-  (`gmcp.CharOp.go`) both do. **Copy the payload** when you queue it — it
+  `handleBuildOp` (`gmcp.Build.go`), `GMCPCharOp` / `handleCharOp`
+  (`gmcp.CharOp.go`) and `GMCPZoneResync` / `zoneResyncHandler`
+  (`gmcp.Zone.go`, no payload) all do. **Copy the payload** when you queue it — it
   aliases the IAC read buffer, which is reused once `HandleIAC` returns.
 - **`Companion.Relay.*` is the one inbound family handled inline.**
   `Companion.Relay.Response`, `.Ready` and `.Gone` touch no game state, so

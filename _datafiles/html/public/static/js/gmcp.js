@@ -211,6 +211,11 @@ class RoomGridSVG {
       this.zoomStep = options.zoomStep || 1.2;
       this.zoomLevel = options.initialZoom || 1;
       this.onRoomClick = options.onRoomClick || NO_ROOM_CLICK;
+      // Called when the map was wiped by anything other than a full Zone.Map,
+      // so the page can ask the server for a whole one (GMCP Zone.Map.Resync,
+      // #650). Null (the builder, tests) means never ask. See requestResync.
+      this.onResync = options.onResync || null;
+      this._resyncTimer = null;
       this.zoomButtonSize = options.zoomButtonSize || 25;
       this.controlsMargin = options.controlsMargin || 10;
       this.biomeTints = options.biomeTints || RoomGridSVG.DEFAULT_BIOME_TINTS;
@@ -402,6 +407,40 @@ class RoomGridSVG {
   }
 
   /**
+   * The map was wiped by something other than a full Zone.Map (#650). Since
+   * the server sends only what changed, nothing would ever redraw the rooms
+   * it thinks the client already has, so ask it for a whole map.
+   *
+   * graceMs > 0: the wipe may be the first half of an ordinary zone or floor
+   * change (Room.Info arrives first, then the server's full Zone.Map), so wait
+   * that long and ask only if no full map arrived meanwhile. A second wipe
+   * inside the wait does not ask again. graceMs 0: ask now (a partial map
+   * that reset the floor proves no full map is coming), replacing any wait.
+   * A full Zone.Map cancels the wait and never asks, so a full map that
+   * itself resets the floor cannot start a loop.
+   */
+  requestResync(graceMs) {
+      if (!this.onResync) return;
+      if (graceMs > 0) {
+          if (this._resyncTimer != null) return;
+          this._resyncTimer = setTimeout(() => {
+              this._resyncTimer = null;
+              this.onResync();
+          }, graceMs);
+          return;
+      }
+      this._cancelResync();
+      this.onResync();
+  }
+
+  _cancelResync() {
+      if (this._resyncTimer != null) {
+          clearTimeout(this._resyncTimer);
+          this._resyncTimer = null;
+      }
+  }
+
+  /**
    * Center & highlight a room. Re-draws that room as the current token.
    */
   centerOnRoom(id) {
@@ -511,6 +550,14 @@ class RoomGridSVG {
           this.surfaceGroup.innerHTML = '';
           this.overlayGroup.innerHTML = '';
           this._renderSurface(zone, currentZ);
+      }
+      // A full map is the whole truth: drop any pending ask. A partial that
+      // reset leaves only its own few rooms drawn while the server believes
+      // the client has them all, so ask now.
+      if (isFull) {
+          this._cancelResync();
+      } else if (didReset) {
+          this.requestResync(0);
       }
 
       // Only render rooms on the current floor
