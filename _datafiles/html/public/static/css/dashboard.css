@@ -183,6 +183,12 @@
 /* Hint: clearly secondary — smaller italic, muted, indented under its title
    with a thin brass rule tying it to the quest above. */
 .qhint { margin:0 0 5px 20px; padding:1px 0 1px 8px; border-left:1px solid rgba(203,159,66,.35); font:italic 11px Georgia,serif; line-height:1.4; color:#8a7a58; }
+/* A hint over the 200-character cap (#375 P8) shows three lines until the
+   player asks for more. Only the text span clamps; the toggle and the
+   direction follow it, outside the clamp, so they always show. */
+.qhint-clamp { display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.qhint-more { font:italic 11px Georgia,serif; color:#c9b184; background:none; border:0; padding:0 2px; cursor:pointer; text-decoration:underline; }
+.qhint-more:hover, .qhint-more:focus-visible { color:#f0dcae; }
 /* Repeatable tag and the finished-repeatable group (#375 P6). Dimming is by
    opacity only; the status is carried by words, never by colour. */
 .qrepeat { margin-left: 0.4em; opacity: 0.75; font-size: 0.9em; }
