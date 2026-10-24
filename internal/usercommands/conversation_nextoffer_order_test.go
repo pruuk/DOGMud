@@ -121,6 +121,64 @@ func TestHandIn_NextOfferPitchFollowsTheCompletionLines(t *testing.T) {
 	require.Equal(t, []string{"12-start"}, questTokensFor(1))
 }
 
+// A repeatable offer, plus an info topic so the talk menu still opens once
+// the offer is hidden.
+const repeatOfferFixtureYAML = `mobid: 1
+zone: TestZone
+topics:
+  - key: wash
+    kind: offer
+    quest: 14
+    label: "Cull the Wash"
+    playerLine: "Any work for me?"
+    text: "The bandits are back in the wash."
+    questExcluded: [14-start, 14-end]
+    grantsQuest: 14-start
+  - key: bones
+    kind: info
+    label: "Why do your bones rattle?"
+    text: "Old age."
+`
+
+// #375 phase 2 wiring: the real card carries the body (objective, reward,
+// repeat line), and a repeatable on cooldown leaves the talk menu and its
+// marker (the production PlayerState.QuestOpen).
+func TestTalk_RepeatableOfferCardAndCooldownWiring(t *testing.T) {
+	user, mob, done := fixtureWith(t, repeatOfferFixtureYAML)
+	defer done()
+	q := &quests.Quest{QuestId: 14, Name: "Cull the Wash", Repeatable: true, CooldownRounds: 50,
+		Steps: []quests.QuestStep{
+			{Id: "start", Description: "Thin out the bandits in the wash."},
+			{Id: "end"},
+		},
+		Rewards: quests.QuestReward{Gold: 6},
+	}
+	defer quests.SeedQuestsForTest(q)()
+	defer events.DrainAllQueuedEventsForTest()
+	room := mustRoom(t, user)
+
+	require.Equal(t, "[!]", conversation.Marker(user.UserId, mob))
+	conversation.Talk(user, room, mob)
+	require.Contains(t, drained(1), "Cull the Wash", "the offer is in the talk menu")
+	require.True(t, user.RouteMenuInput("1", true), "1 is the offer")
+	card := drained(1)
+	require.Contains(t, card, "Accept")
+	require.Contains(t, card, "Thin out the bandits in the wash.")
+	require.Contains(t, card, "Reward: 6 gold")
+	require.Contains(t, card, "You can take this on again after a while.")
+	require.True(t, user.RouteMenuInput("2", true), "2 is Leave")
+	drained(1)
+	user.CloseMenu(menu.CloseNone)
+
+	user.Character.RecordCompletion(q)
+	require.False(t, user.Character.QuestOpen(q), "fixture: on cooldown")
+	require.Equal(t, "", conversation.Marker(user.UserId, mob), "no [!] while on cooldown")
+	conversation.Talk(user, room, mob)
+	menuText := drained(1)
+	require.Contains(t, menuText, "Why do your bones rattle?", "the talk menu opened")
+	require.NotContains(t, menuText, "Cull the Wash", "the offer is hidden on cooldown")
+}
+
 // #375 review: give hands in while a prompt is open, and the card could not
 // open over it. The queued pitch must not speak a line the player never
 // chose; the offer waits in the talk menu with its [!].
