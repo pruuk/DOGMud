@@ -13,6 +13,11 @@ import (
 // (#375 phase 2): every rule over the loaded quests and dialogue, split by
 // the shipped backlog. Load quests, dialogue, mobs, items, spells, recipes
 // and factions first.
+//
+// Boot runs Validate only, never the walkthrough (questengine.Walk). The
+// backlog also holds the walk's lines, which no boot finding matches; boot
+// ignores stale lines, so they cannot refuse it. The CI sweep
+// (quest_loop_smoke_test.go) ratchets Validate plus Walk.
 func validateShippedQuests() (fresh, known []questloop.Finding, stale []string, err error) {
 	b, err := questworld.LoadBacklog()
 	if err != nil {

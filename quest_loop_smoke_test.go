@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/questworld"
@@ -52,7 +53,7 @@ func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
 	loadShippedQuestWorld(t)
 
 	w := questworld.Registry()
-	fs := questloop.Validate(w)
+	fs := append(questloop.Validate(w), questengine.Walk(w, questworld.Sources())...)
 
 	if path := os.Getenv(loopBacklogWriteEnv); path != `` {
 		if err := os.WriteFile(path, questloop.FormatBacklog(fs), 0o644); err != nil {
@@ -111,6 +112,19 @@ func TestSmoke_WalkSourcesIndexShippedWorld(t *testing.T) {
 	}
 	if got := src.ItemSources(999999999); len(got) != 0 {
 		t.Errorf("item 999999999 should have no source: %v", got)
+	}
+	// Ledger 21 lies in room 421 (rooms/watchers_crossing/421.yaml), so a
+	// player can hold it outside quest 5. Tally 40100 comes only from quest
+	// 63's own give_item actions (quests/63-dock_rat.yaml): it is 63's own,
+	// and outside for any other quest.
+	if !src.ItemOutside(21, 5) {
+		t.Error("item 21 should have a source outside quest 5")
+	}
+	if src.ItemOutside(40100, 63) {
+		t.Errorf("item 40100 should be quest 63's own: %v", src.ItemSources(40100))
+	}
+	if !src.ItemOutside(40100, 5) {
+		t.Error("item 40100 should count as outside quest 5")
 	}
 	if src.MobSpawned(999999999) {
 		t.Error("mob 999999999 should not be spawned")
