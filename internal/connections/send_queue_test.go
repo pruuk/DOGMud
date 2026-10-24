@@ -161,7 +161,7 @@ func TestSendQueue_SendToReturnsQuicklyWhenPeerNeverReads(t *testing.T) {
 	id, _ := addPipeConnection(t)
 
 	const msgSize = 256 * 1024
-	for i := 0; i < 20; i++ { // 5 MiB: under the cap, so the connection stays
+	for i := 0; i < 12; i++ { // 3 MiB: under the 4 MiB cap, so the connection stays
 		msg := bigMessage(i, msgSize)
 		var elapsed time.Duration
 		_ = waitFor(t, writeTimeout+5*time.Second, "SendTo", func() error {
@@ -189,7 +189,7 @@ func TestSendQueue_SlowConnectionClosedAtCapHealthyKeepsReceiving(t *testing.T) 
 	healthy := startPipeReader(healthyClient)
 
 	const msgSize = 256 * 1024
-	const total = 40 // 10 MiB: past the 8 MiB cap for the slow peer
+	const total = 24 // 6 MiB: past the 4 MiB cap for the slow peer
 	for i := 0; i < total; i++ {
 		msg := bigMessage(i, msgSize)
 		var elapsed time.Duration

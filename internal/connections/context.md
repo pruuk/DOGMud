@@ -417,7 +417,9 @@ waits.
 
 Slow-consumer policy:
 
-- **Cap:** `maxQueuedBytes` = 8 MiB (about 30 full zone maps), counting queued
+- **Cap:** `maxQueuedBytes` = 4 MiB (about 15 full zone maps; worst case
+  about 120 MB at 30 stalled clients on the 961 MB droplet; owner decision
+  2026-10-24, lowered from 8 MiB), counting queued
   plus in-flight bytes. A `Write` that would pass it closes the socket at
   once, drops the queue, logs `WARN SendQueueOverCap` (connectionId,
   remoteAddr, queuedBytes, messageBytes, capBytes) and returns
@@ -781,7 +783,7 @@ This comprehensive connections system provides robust network connection managem
 |------|---------|
 | `connections.go` | The connection registry and lifecycle |
 | `connectiondetails.go` | Per-connection state; `Write` (queue), `writeNow` (socket), `Close` |
-| `sendqueue.go` | Per-connection outbound queue, its writer goroutine, the 8 MiB cap |
+| `sendqueue.go` | Per-connection outbound queue, its writer goroutine, the 4 MiB cap |
 | `input_lines.go` | Isolates telnet negotiations and splits one socket read into individual input lines |
 | `clientsettings.go` | Negotiated client capabilities |
 | `heartbeat.go` | Keepalive / zombie detection |
