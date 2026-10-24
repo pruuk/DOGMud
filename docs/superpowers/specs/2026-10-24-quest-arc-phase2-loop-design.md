@@ -364,10 +364,21 @@ Every guard ships with a fixture that breaks it and a test that sees it break.
 
 ### 7.1 Driver
 
-It lives in `internal/questengine`, which already imports `dialogue`, and drives the real
-engine headlessly. The mock players (`fullMockPlayer`, `linearPlayer`) move from `_test.go`
-files into one shared test-helper file, so the walkthrough and the existing step tests use
-one copy.
+It lives in `internal/questengine` (`Walk`), which already imports `dialogue`, and drives the
+real engine headlessly. As built, the mock players did not move: the walkthrough is package
+code that the root-package CI sweep calls, so it cannot use `_test.go` types. It has its own
+`walkPlayer` (real step order, built for many quests at once) and `walkCtx` (a no-op
+`ActionContext` except grants, items, gold, flags and a sequence's `on_complete`, which it
+runs as `bridge.go` does). The existing test doubles (`fullMockPlayer`, `linearPlayer`) stay
+where they are. The walkthrough is CI only: boot runs `Validate` and ignores the walk lines
+of the backlog; the CI sweep ratchets `Validate` plus `Walk`.
+
+As built, the walk differs from the sketch below in three ways. It never holds a later step
+of the walked quest (a Way that needs one is a dead end); other quests' tokens are held as
+prerequisites. It detects skips by a trail of every step one firing lands on (a
+`quest_granted` chain through each step is fine, a missing step is a skip), and by a probe
+that fires a later step's Way early, giving only items obtainable outside the walked quest
+(`Sources.ItemOutside`). And it reports the skip rather than requiring "exactly one step".
 
 For each shipped quest:
 

@@ -28,6 +28,8 @@ what a trigger *does*, you edit this package.
 - **map_target.go** — `ResolveQuestTarget`, which feeds the map quest marker.
 - **logging.go** — level-gated logging with per-player debug opt-in.
 - **test_helpers.go** — `ResetEngineForTest() func()`.
+- **walkthrough.go**: `Walk`, the completability walkthrough (see Walkthrough).
+- **walkplayer.go**: `walkPlayer`, `walkCtx`, the dialogue `PlayerState` adapter.
 
 ## The Engine
 
@@ -229,10 +231,65 @@ own, unrelated action param.)
   the mob *before* any handler runs, so consumption is a post-hoc correction —
   see the give.go gotcha in `CLAUDE.md`.
 
+## Walkthrough
+
+`Walk(w questloop.World, src questloop.Sources) []questloop.Finding` (quest arc
+#375 phase 2b, spec section 7) drives every quest that has an `offer` topic
+from its offer to its hand-in through the real `Engine.Notify` and the real
+dialogue topics (`DialogueFile.Eligible` then `Apply`), with no game running.
+It reads the Ways into each step from `questloop.WaysInto`.
+
+- **`walkPlayer`** is the mock player. It has the game's real step order:
+  `HasQuest(t)` holds for the current step and every earlier one, a grant only
+  moves forward, and a quest is entered only at its first step (as
+  `characters.GiveQuestToken` does). It also holds items, flags, gold and room,
+  and `dialogueState()` wraps it as a `dialogue.PlayerState`.
+- **`walkCtx`** is the `ActionContext`. Grants, items, gold and quest flags
+  change the player; narration, spawns, teleports and the rest are no-ops.
+  `QueueSequence` runs the sequence's `on_complete` actions at once, as the
+  real bridge does after the lines finish (`GameBridge.QueueSequence`,
+  `bridge.go`). `trailCtx` wraps it to note every grant.
+- **Prerequisites.** `meetToken` holds a token a condition or gate names, but
+  never a token of the walked quest itself: the walk is already on that quest's
+  real progress, so a Way that needs a LATER step of its own quest cannot fire
+  and is a dead end. Other quests' tokens are held as prerequisites.
+- **Skip detection.** Two checks. (1) A `walkTrail` records every step one
+  firing put the player on: a `quest_granted` chain through each step is fine,
+  a missing step is a skip. (2) A probe fires each Way into a LATER step from
+  the current step. It gives only items obtainable outside the walked quest
+  (`Sources.ItemOutside`; an item only the quest's own steps hand out proves
+  those steps were done), and flags a Way that lands past the next step.
+
+| Rule | Finding |
+|---|---|
+| `walk-dead-end` | A step no Way reaches, an offer that cannot be taken, a Way that does not reach its step, or a firing that skips a step |
+| `walk-no-source` | A Way needs an item (`has_item`, `item_give`, `item_gain`, `requiresItem`, `carriesItem`) that `Sources.ItemSources` says nothing provides |
+| `walk-unspawned` | A Way needs a mob (`mob_death`, `item_give` target, the topic's NPC) that `Sources.MobSpawned` says nothing places |
+
+Findings share `questloop`'s shape and its one backlog. The walk is CI only:
+the sweep `TestSmoke_ShippedQuestsPassTheLoop` (`quest_loop_smoke_test.go`)
+combines `questloop.Validate` and `Walk`; boot (`main_quests.go`) runs
+`Validate` only and ignores the walk lines. Today's backlog holds 26 walk
+lines: 7 steps with no way in and 19 skips (1 real order bug in quest 19, 10
+documented lenient gates, 8 items obtainable outside the quest).
+
+Deviation from spec 7.1: `walkPlayer` and `walkCtx` are package code, not the
+`_test.go` doubles (`fullMockPlayer`, `mockActionContext`, `linearPlayer`),
+because the root-package CI sweep calls `Walk` and cannot use test types. The
+doubles stay where they are.
+
+Known limits:
+
+- Behaviour-tree mob spawns are not indexed by `questworld.Sources`, so a mob
+  placed only that way reads as unspawned.
+- The skip probe sets the flags a later Way needs without checking how they
+  are set.
+- Later steps of a quest that dead-ends early are not checked for sources.
+
 ## Dependencies
 
 `internal/quests` (all definition types), `configs`, `users`, `mobs`, `items`,
-`rooms`, `messaging`, `mudlog`.
+`rooms`, `messaging`, `mudlog`, `dialogue`, `questloop` (the walkthrough).
 
 ## Consumers
 

@@ -13,6 +13,7 @@ condition, mob and room registries to fill them.
 | File | What it holds |
 |---|---|
 | `names.go` | `Names() quests.RewardNames`: item, recipe, spell and faction display names, "" for an unknown id |
+| `sources.go` | `Sources() questloop.Sources`: the walkthrough's item-source and spawn index |
 | `questworld.go` | `Validators()`, `Registry()`, `RegistryWith(v)`, `WithQuest(w, q)` with its step and flag overlays, `BacklogPath()`, `LoadBacklog()` |
 
 ## API
@@ -35,6 +36,17 @@ condition, mob and room registries to fill them.
   pass everything else to `w`'s checks. Without the overlay the refs rule
   judges other quests against the loaded steps, so a step rename that breaks
   another quest's trigger saves clean and the next boot refuses.
+- `Sources() questloop.Sources`: indexes once, from the loaded registries, where
+  each item can come from and which mobs are placed (spec 7.2). Item sources:
+  room spawninfo, floor items, containers and their recipes; quest `give_item`,
+  `spawn_item` and rewards; topics' `givesItem`; forage tables; crafting
+  outputs; and, for a SPAWNED mob only, its carried and worn items, loot pool
+  and shop stock. A mob is spawned when a room's spawninfo or a quest's
+  `spawn_mob` action places it. Each source records the quests that own it
+  (their own grants, a topic of or gated on the quest, a mob only that quest
+  spawns), which backs `ItemOutside`. Behaviour-tree mob spawns are not indexed.
+  Call it after the registries are loaded; `quest_loop_smoke_test.go`
+  (`TestSmoke_WalkSourcesIndexShippedWorld`) checks it against shipped data.
 - `BacklogPath()` and `LoadBacklog()`: the shipped `quests/loop-backlog.txt`; a
   missing file is an empty backlog.
 

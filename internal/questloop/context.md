@@ -18,6 +18,7 @@ the world from the live registries, and three doors run it.
 | `rules_loop.go` | `ruleStart`, `ruleEnd`, `ruleHint`, `ruleHintLength` and its cap `HintMaxRunes` |
 | `rule_oneaction.go` | `ruleOneAction` and `dedupe` |
 | `rules_more.go` | `ruleChain`, `ruleRepeat`, `ruleReward`, `ruleRefs`, `refsText` |
+| `ways.go` | `Way`, `WaysInto`, `Sources`: the walkthrough's inputs |
 | `backlog.go` | `Backlog`, `ParseBacklog`, `FormatBacklog`, `Ratchet` |
 
 ## Rules
@@ -88,11 +89,28 @@ per-rule counts against the old file, then copy it into place.
 | CI | `TestSmoke_ShippedQuestsPassTheLoop` in `quest_loop_smoke_test.go`; setting `DOGMUD_LOOP_BACKLOG_WRITE` writes today's findings as backlog text to that path |
 | Editor save | `buildQuestUpdate` in `modules/gmcp/gmcp.Quest.go` (`loopVerdict`) builds the registry world once (`questworld.RegistryWith(d.validators)`), validates it before and after `questworld.WithQuest(world, q)`, and refuses only findings the edit adds: in the after world, not in the before world, not in the backlog. It warns about the edited quest's own other findings (listed, or already there) and says nothing about other quests' standing findings |
 
-## Still to come
+## The walkthrough contract (plan 2b)
 
-Plan 2b adds the completability walkthrough (spec section 7), a headless walk
-of each quest from a fresh character with item-source checks. It is not
-written yet; its rules will join this package.
+The completability walkthrough (spec section 7) is `questengine.Walk`, because
+it needs the trigger engine; this package only exports what it reads
+(`ways.go`):
+
+- `Way`: one thing that grants a token (a trigger, a topic or a completion
+  reward), with its stable backlog name `Where`, the `Owner` quest, `Nested`
+  for a grant inside a sequence's `on_complete`, the topic's `MobId` and
+  `File`, and `Reward`.
+- `WaysInto(w World) map[string][]Way`: token to every Way that grants it, the
+  same index every rule reads.
+- `Sources`: the world questions the walk asks. `ItemSources(itemId)` names
+  where an item comes from (empty: none); `MobSpawned(mobId)` says a room or a
+  quest spawns it; `ItemOutside(itemId, questId)` says the item has a source
+  that is not that quest's own grants. A nil func skips that check.
+  `questworld.Sources()` fills it from the registries.
+
+The walk's rules (`walk-dead-end`, `walk-no-source`, `walk-unspawned`) share
+the one backlog with the rules above. They are produced by `Walk`, not
+`Validate`: boot runs `Validate` only and ignores the walk lines, and the CI
+sweep ratchets both together.
 
 ## Gotchas
 

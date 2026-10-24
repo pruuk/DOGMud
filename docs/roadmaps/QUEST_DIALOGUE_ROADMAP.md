@@ -197,8 +197,9 @@ check for authors.
 
 **Spec:** `docs/superpowers/specs/2026-10-24-quest-arc-phase2-loop-design.md` (rulings P1 to P8
 there; P8 caps a step hint at 200 characters). **Plans:** `docs/superpowers/plans/2026-10-24-quest-arc-phase2a-loop.md` (2a: card,
-hand-in, repeats, loop validators, step-id manifest); plan 2b (the completability
-walkthrough): not written yet.
+hand-in, repeats, loop validators, step-id manifest);
+`docs/superpowers/plans/2026-10-24-quest-arc-phase2b-walkthrough.md` (2b: the
+completability walkthrough).
 
 **Approach.**
 - Offer card: extends phase 1's bare Accept / Leave with the objective (current step's
@@ -229,7 +230,7 @@ validators report the current backlog; repeat limit enforced.
 limit is an optional lifetime cap (P3); "one action" is a structural rule that allows several
 alternative ways into a step (P4).
 
-**Status:** 2a implemented on `feat/375-phase2a-loop` (not yet merged). 2b not started.
+**Status:** 2a implemented on `feat/375-phase2a-loop` (not yet merged). 2b implemented on `feat/375-phase2b-walkthrough` (not yet merged).
 
 ## Phase 3: Action triggers (engine half)
 
