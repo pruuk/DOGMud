@@ -189,9 +189,11 @@ type writeTarget struct {
 }
 
 // reportSendError logs a failed enqueue. ErrSendQueueFull was already logged
-// (as SendQueueOverCap, with the queued size) where it was detected.
+// (as SendQueueOverCap, with the queued size) where it was detected, and
+// ErrConnectionClosing means whatever closed the connection already logged
+// why; repeating either per queued message is noise.
 func reportSendError(where string, t writeTarget, err error) {
-	if errors.Is(err, ErrSendQueueFull) {
+	if errors.Is(err, ErrSendQueueFull) || errors.Is(err, ErrConnectionClosing) {
 		return
 	}
 	mudlog.Warn(where, "connectionId", t.id, "remoteAddr", t.cd.remoteAddrString(), "error", err)
