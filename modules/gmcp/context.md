@@ -455,8 +455,10 @@ call, for every lane including the sub-module requests:
   `Character.Perceives` them (the `rooms.GetDetails` rule), and a hidden container the viewer has
   not discovered (`HasDiscovery`) is not listed, as in `look`.
 - **Re-push on light:** `sightBandChangedHandler` (`gmcp.Room.go`) answers
-  `events.SightBandChanged` with Room.Info, and, when the player now makes out the room,
-  `actions.MarkRoomMappedIfSeen` plus a `GMCPZoneUpdate`. `gmcp.Char.go` answers the same event
+  `events.SightBandChanged` with Room.Info, and, only when that sight newly puts the room on the
+  map (`actions.MarkRoomMappedIfSeen` returns true), a `GMCPZoneUpdate`. A room already mapped
+  re-sends no Zone.Map: it would be identical, and an explored map is about 271 KB
+  (2026-10-24). `gmcp.Char.go` answers the same event
   with Char.Sight; both listeners run.
 - **Map (owner ruling R5):** `go.go` maps a room only through `actions.MarkRoomMappedIfSeen`, so
   a room walked in the dark stays off `Zone.Map` until seen; rooms already mapped stay.
