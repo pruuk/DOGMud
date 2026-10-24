@@ -287,6 +287,11 @@
   var pendingCreatedId = 0; // set from Build.Result, consumed on the next Zone.Map
 
   window.Builder.onZoneMap = function (payload) {
+    // The play client's fogged Zone.Map reaches this page too, and since #650
+    // a step usually brings a partial one (full:false, only changed rooms).
+    // The canvas replaces its rooms wholesale, so a partial would shrink the
+    // editor to a room or two. Keep the last whole snapshot instead.
+    if (payload.full === false) return;
     // Cache the valid biome list for the new-zone / inspector dropdowns.
     if (payload.biomes && payload.biomes.length) window.Builder.biomes = payload.biomes;
     // Populate the zone switcher from the full zone list (builder-only field).

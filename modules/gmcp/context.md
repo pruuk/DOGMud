@@ -481,7 +481,8 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Char.go` | `Char` | Vitals, stats, status — the core player feed |
 | `gmcp.Automation.go` | `Char.Automation` | Triggers, macros, aliases, the action queue |
 | `gmcp.Room.go` | `Room` | Current room: description, exits, occupants |
-| `gmcp.Zone.go` | `Zone` | The `Zone.Map` snapshot the web mapper draws, plus `party` |
+| `gmcp.Zone.go` | `Zone` | The `Zone.Map` snapshot the web mapper draws, plus `party` and `full`; sent as a diff (see "Zone.Map is sent as a diff") |
+| `gmcp.ZoneDiff.go` | (none) | `zoneDiff`, the pure decision of what `Zone.Map` to send, and `roomFingerprint` |
 | `gmcp.CharVitalsWatch.go` | `Char.Vitals` | The once-a-round on-change check that keeps `Char.Vitals` current (see "When Char.Vitals is sent") |
 | `gmcp.Party.go` | `Party` | Party roster and member vitals. The full `Party` package goes out on `PartyUpdated` and also to a member on `PlayerSpawn` (and once more the next round): a reconnect inside the zombie window keeps the party, and without the push the fresh client had `Party.Vitals` but no `Members`, so the web client's Vitals window showed the viewer twice (playtest 2026-10-17) |
 | `gmcp.Comm.go` | `Comm` | Channel messages |
@@ -539,6 +540,27 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   `zoneMapVisited` (`gmcp.Zone.go`) builds the snapshot's room set and adds
   the current room only when the player's `ParticipantSight` is not
   `SightNone`, so a login in the dark does not name the room (#382 playtest).
+- **`Zone.Map` is sent as a diff (#650).** `GMCPZoneModule.zoneSent` holds,
+  per user id, what was last sent (`zoneSentState`: connection id, zone, floor
+  `cz`, sorted party, a fingerprint per room), guarded by `zoneMu` and cleared
+  by `zoneDespawnHandler` on `events.PlayerDespawn`. `buildAndSend` still
+  builds the snapshot each time and asks `zoneDiff` what to send: the whole map
+  with `full: true` for a new connection id, a zone change or a floor change;
+  otherwise `full: false` with only the rooms whose fingerprint is new or
+  different; and nothing at all when no room and not the party changed (the
+  usual step into a known room). `party` is on every `Zone.Map` (`[]` when
+  none), and a party change alone sends a partial with no rooms. Rooms are
+  never removed, because the visited set only grows. `roomFingerprint` hashes
+  each exit in a sorted order, because `mapper.Snapshot` builds exits from a
+  Go map. Anything that changes what a room looks like must reach the
+  snapshot, or the client never hears of it. The builder's `sendZoneMapFull`
+  (`gmcp.Build.go`) always sets `full: true`; `build.html` ignores a
+  `full: false` play map, which would otherwise shrink the editor canvas. The
+  web client (`setZoneSnapshot` in `static/js/gmcp.js`) resets on `full` and
+  merges otherwise, and no longer relies on a full map after every step: it
+  rebuilds party markers that moved, `centerOnRoom` re-fogs tokens whose
+  distance band changed, and the `Room` handler leaves a room a snapshot drew
+  as it is (`fromSnapshot`). `tools/webclient-tests/zone-map-diff.js` runs it.
 - **Emit only on change where you can.** These push on room change and round
   boundaries; adding an unconditional per-round emit to a large payload is a
   bandwidth regression that will not show up in a local test.

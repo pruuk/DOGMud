@@ -663,7 +663,14 @@
                     }
 
                     allRooms.roomZones[zoneKey].push(r);
-                    gr.addRoom(r);
+                    // A room a Zone.Map already drew keeps that version: this
+                    // Room.Info shape has no name, tags or exit metadata, and
+                    // since #650 no Zone.Map follows a step into a known room
+                    // to put them back. Just centre on it.
+                    var known = gr.rooms.get(r.RoomId);
+                    if ( !(known && known.room.fromSnapshot) ) {
+                        gr.addRoom(r);
+                    }
                     gr.centerOnRoom(r.RoomId);
                 }
 
@@ -792,7 +799,10 @@
                     return;
                 }
                 if ( gr && gr.setZoneSnapshot ) {
-                    gr.setZoneSnapshot(obj.Map.zone, obj.Map.rooms || [], obj.Map.cz || 0, obj.Map.party || []);
+                    // full:false is a partial map (#650): only rooms that are
+                    // new or changed, merged into what is drawn. A missing
+                    // flag (an older server) means the whole map.
+                    gr.setZoneSnapshot(obj.Map.zone, obj.Map.rooms || [], obj.Map.cz || 0, obj.Map.party || [], obj.Map.full !== false);
                     // Update map panel title if we can find it
                     var mapTitle = document.querySelector('#panel-map .ph-title');
                     if (mapTitle) mapTitle.textContent = 'Map (' + obj.Map.zone + ')';

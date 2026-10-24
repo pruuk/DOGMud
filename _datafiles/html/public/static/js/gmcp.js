@@ -323,6 +323,7 @@ class RoomGridSVG {
           entry.room.tags = room.tags;
           entry.room.name = room.name;
           entry.room.biome = room.biome;
+          if (room.fromSnapshot) entry.room.fromSnapshot = true;
 
           // Re-draw the room token by clearing and rebuilding group contents
           while (entry.group.firstChild) entry.group.removeChild(entry.group.firstChild);
@@ -440,6 +441,19 @@ class RoomGridSVG {
       while (entry.group.firstChild) entry.group.removeChild(entry.group.firstChild);
       this._buildRoomTokenInGroup(entry.group, entry.room, true, svc);
 
+      // Re-fog every other token whose distance band changed. A full Zone.Map
+      // used to follow every step and rebuild every token from the new centre;
+      // since #650 a step into a known room brings no Zone.Map at all, so the
+      // rooms around the old and new centre are re-fogged here instead. Each
+      // token remembers the fog it was built with (_buildRoomTokenInGroup), so
+      // only the handful that changed are rebuilt.
+      this.rooms.forEach((other, otherId) => {
+          if (otherId === id || other.group._fog === this._fog(other.room)) return;
+          const osvc = this._serviceFor(other.room.tags);
+          while (other.group.firstChild) other.group.removeChild(other.group.firstChild);
+          this._buildRoomTokenInGroup(other.group, other.room, false, osvc);
+      });
+
       this.center = {
           x: entry.room.x * this.spacing,
           y: entry.room.y * this.spacing
@@ -460,9 +474,14 @@ class RoomGridSVG {
   /**
    * Ingest a Zone.Map snapshot.
    * party = array of roomIds that hold party members (from Zone.Map payload).
+   * full = false when snapshotRooms holds only the rooms that are new or
+   * changed since the last Zone.Map (#650), to merge into the rooms already
+   * drawn; anything else (true, or absent from an older server) means the
+   * snapshot is every room to draw, so the floor is cleared first.
    */
-  setZoneSnapshot(zone, snapshotRooms, currentZ, party) {
+  setZoneSnapshot(zone, snapshotRooms, currentZ, party, full) {
       currentZ = currentZ || 0;
+      const isFull = full !== false;
 
       // Remember where we were centred BEFORE any reset() below wipes it.
       // On a zone change the client has already handled Room.Info, which does
@@ -472,14 +491,19 @@ class RoomGridSVG {
       // the centre) for the whole of that room's visit.
       const priorCenterId = this.currentCenterId;
 
-      // Build party lookup
+      // Build party lookup, keeping the old one: a partial map re-sends only
+      // changed rooms, so rooms a party member left or entered are rebuilt
+      // below even when the server did not re-send them.
+      const priorParty = this._party;
       this._party = {};
       if (Array.isArray(party)) {
           party.forEach(rid => { this._party[rid] = true; });
       }
 
-      // On zone OR floor change: reset world + re-render surface.
-      if (this._zone !== zone || this._z !== currentZ) {
+      // A full map, or a zone or floor change: reset world + re-render surface.
+      // A partial map on the same zone and floor merges.
+      const didReset = isFull || this._zone !== zone || this._z !== currentZ;
+      if (didReset) {
           this.reset();
           this._zone = zone;
           this._z = currentZ;
@@ -504,9 +528,23 @@ class RoomGridSVG {
               name: r.name,
               tags: r.tags,
               Exits: (r.exits || []).map(e => ({ RoomId: e.to, kind: e.kind, dx: e.dx, dy: e.dy, dz: e.dz })),
-              ExitsMeta: r.exits || []
+              ExitsMeta: r.exits || [],
+              // Room.Info skips its own addRoom for a room a snapshot drew,
+              // which would otherwise strip the name, tags and exits metadata
+              // that no following Zone.Map puts back (#650).
+              fromSnapshot: true
           }, /* deferEdges = */ true);
       });
+
+      // Party markers on rooms this partial did not re-send.
+      if (!didReset) {
+          const sent = new Set(floor.map(r => r.num));
+          const touched = new Set([...Object.keys(priorParty), ...Object.keys(this._party)]);
+          touched.forEach(rid => {
+              const n = Number(rid);
+              if (!sent.has(n) && !!priorParty[rid] !== !!this._party[rid]) this._rebuildRoomToken(n);
+          });
+      }
 
       // Pass 2: draw connectors/stubs/ticks for newly-seen rooms (edge dedup
       // skips ones already drawn), then the quest next-step arrow on top.
@@ -871,6 +909,8 @@ class RoomGridSVG {
       if (!isCurrent) {
           g.setAttribute("opacity", fog);
       }
+      // Remembered so centerOnRoom re-fogs only the tokens whose band changed.
+      g._fog = isCurrent ? null : fog;
 
       // Vertical stair ticks (▲/▼) — drawn from ExitsMeta vertical exits.
       // We just add placeholders here; the actual ticks are added by _drawVerticalTick

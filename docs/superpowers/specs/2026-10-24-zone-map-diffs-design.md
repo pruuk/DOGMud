@@ -25,14 +25,22 @@ message stays `Zone.Map`.
   `PlayerDespawn`. A different connection id (a reconnect or a second login) counts as no state.
 - **Full send** (`full: true`, every room): no state for this connection, a zone change, or a floor
   change. The state is replaced.
-- **Partial send** (`full: false`): only rooms whose fingerprint is new or different, and `party`
-  when it changed. Zone and `cz` are always included so the client keys correctly.
+- **Partial send** (`full: false`): only rooms whose fingerprint is new or different. `party` is
+  sent on every Zone.Map (`[]` when none; refined in the plan), and a change in party alone sends a
+  partial with no rooms. Zone and `cz` are always included so the client keys correctly.
 - **No send:** nothing changed (the usual step into a known room).
 - **Fingerprint:** a hash of everything the client draws for a room: position, plane, symbol,
   biome, name, tags, foreign, owner zone and every exit field. Any visible change re-sends that room.
+  Exits are hashed in a sorted order, because `mapper.Snapshot` builds them from a Go map
+  (`mapNode.Exits`) and their order differs between calls.
 - **Client:** `full: true` (or a missing flag, for safety with an older server) clears the current
-  floor's rooms before placing; `full: false` merges as today. Party is applied only when present.
-  The client stays tolerant of an absent `party` and `rooms`.
+  floor's rooms before placing; `full: false` merges as today. The client stays tolerant of an
+  absent `party` and `rooms`. Three things relied on a full map after every step and are handled
+  in the client instead: party markers on rooms a partial did not re-send are rebuilt; moving the
+  centre re-fogs tokens whose distance band changed; and the `Room` handler no longer overwrites a
+  room a snapshot drew with its own shape (no name, tags or exit metadata).
+- **Builder page:** `build.html` also receives the play client's `Zone.Map` and replaces its canvas
+  wholesale, so it ignores a `full: false` map. The builder's own snapshot always sets `full: true`.
 - Rooms are never removed (the visited set only grows), so no delete message is needed.
 - The snapshot is still built each move (about 3 ms locally); trimming that is out of scope.
 
