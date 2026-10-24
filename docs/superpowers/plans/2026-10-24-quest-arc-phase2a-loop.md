@@ -4,7 +4,7 @@
 
 **Goal:** Every quest offer shows its objective and reward, a hand-in plays the next quest's offer, repeatables carry an optional lifetime limit and say that they repeat, and the quest validators run at boot, CI and editor save behind a shrinking backlog.
 
-**Architecture:** Spec `docs/superpowers/specs/2026-10-24-quest-arc-phase2-loop-design.md` (rulings P1 to P6), sections 3 to 6 and 8. The talk flow in `internal/conversation` gains a card body and a deferred next-offer event; `internal/quests` owns reward wording, the repeat fields and the step-id manifest; `internal/characters` saves completion counts; a new pure `internal/questloop` package holds the loop rules and the backlog ratchet. Plan 2b (the completability walkthrough, spec section 7) is a separate plan.
+**Architecture:** Spec `docs/superpowers/specs/2026-10-24-quest-arc-phase2-loop-design.md` (rulings P1 to P7), sections 3 to 6 and 8. The talk flow in `internal/conversation` gains a card body and a deferred next-offer event; `internal/quests` owns reward wording, the repeat fields and the step-id manifest; `internal/characters` saves completion counts; a new pure `internal/questloop` package holds the loop rules and the backlog ratchet. Plan 2b (the completability walkthrough, spec section 7) is a separate plan.
 
 **Tech Stack:** Go 1.x, `gopkg.in/yaml.v2`, testify `require`, the repo's events queue, Node (zero-dependency) for the web client test.
 
@@ -900,7 +900,7 @@ func TestRepeatLimit_RefusesStartAtCap(t *testing.T) {
 	HandleQuestUpdate(events.Quest{UserId: 532, QuestToken: "999053-start"})
 	require.False(t, u.Character.HasQuest("999053-start"))
 	lines := strings.Join(events.DrainQueuedMessagesForTest(532), "\n")
-	require.Contains(t, lines, "You have done all of this work there is to do.")
+	require.Contains(t, lines, "You have done all the work there is here.")
 }
 
 func TestRepeatLimit_NoLimitKeepsRepeating(t *testing.T) {
@@ -936,7 +936,7 @@ Expected: the count test fails (`QuestCompletions` empty), the cap test fails (s
 		if incomingStep == `start` && questInfo.Repeatable {
 			if questUser.Character.RepeatCapReached(questInfo) {
 				questUser.SendText(messaging.CategoryRefusal,
-					`You have done all of this work there is to do.`)
+					`You have done all the work there is here.`)
 				return events.Continue
 			}
 			if questUser.Character.QuestCooldownActive(questInfo.QuestId) {
@@ -3637,7 +3637,7 @@ with its output, never re-run until it passes.
   files). File every finding as a GitHub issue (`--repo pruuk/DOGMud`) before the PR.
 
 - [ ] **Step 5: PR.** Push the branch and open the PR with `gh pr create --repo pruuk/DOGMud`
-  (never a bare `gh`), base `master`. The body: what changed (P1 to P6), the backlog counts,
+  (never a bare `gh`), base `master`. The body: what changed (P1 to P7), the backlog counts,
   the playtest result, deploy notes ("new save field `questcompletions`, starts empty; no
   wipe; phase 1's deploy notes still apply"). No closing keyword for #375 (it is an epic;
   "closes #N" auto-closes). End with the session's PR attribution line. Do not merge: the

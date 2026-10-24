@@ -50,7 +50,7 @@ func TestRepeatLimit_RefusesStartAtCap(t *testing.T) {
 	HandleQuestUpdate(events.Quest{UserId: 532, QuestToken: "999053-start"})
 	require.False(t, u.Character.HasQuest("999053-start"))
 	lines := strings.Join(events.DrainQueuedMessagesForTest(532), "\n")
-	require.Contains(t, lines, "You have done all of this work there is to do.")
+	require.Contains(t, lines, "You have done all the work there is here.")
 }
 
 // The repeat-limit tests set the round count below util.RoundCountMinimum;

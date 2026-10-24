@@ -89,7 +89,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		if incomingStep == `start` && questInfo.Repeatable {
 			if questUser.Character.RepeatCapReached(questInfo) {
 				questUser.SendText(messaging.CategoryRefusal,
-					`You have done all of this work there is to do.`)
+					`You have done all the work there is here.`)
 				return events.Continue
 			}
 			if questUser.Character.QuestCooldownActive(questInfo.QuestId) {

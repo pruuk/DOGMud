@@ -32,7 +32,7 @@ a reward when you finish.
 <ansi fg="yellow">Quests you can repeat: </ansi>
 
   Some work can be taken again after a while. The quest list marks it
-  <ansi fg="yellow">(repeatable)</ansi>. When you offer to do it again, the person tells you so,
+  <ansi fg="yellow">(repeatable)</ansi>. When someone offers it again, the offer says so,
   and some work can only be done a set number of times. Until it is time,
   they do not offer it. Add <ansi fg="command">all</ansi> to the list to see each one you finished:
 

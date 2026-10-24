@@ -183,7 +183,7 @@ quest is not offered back to the player in the same breath.
 - A hidden offer behaves like any ineligible offer: its breadcrumb speaks, or nothing does,
   and `[!]` clears. The cooldown refusal at `Quest_HandleQuestUpdate.go:206` stays as the
   backstop for a grant from any other path, and also refuses at the cap with the line
-  "You have done all of this work there is to do."
+  "You have done all the work there is here."
 - Players who completed a repeatable before this lands start at count 0 (accepted in the
   brainstorm).
 

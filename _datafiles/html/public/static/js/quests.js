@@ -1,8 +1,10 @@
 "use strict";
 /*
  * quests.js — the quest editor (admin web-building 5c), fifth mode of the
- * /build page. Consumes Build.Quests (list) + Build.Quest (detail) GMCP and
- * drives Build.Quest.Update/Create/Delete. Mirrors the removed dialogue editor's collapsible
+ * /build page. Consumes Build.Quests (list) + Build.Quest (detail) GMCP. The
+ * editor is off until quest arc phase 6 (P7): the server refuses
+ * Build.Quest.Get/Update/Create/Delete, so the save and delete calls here are
+ * dormant until then. Mirrors the removed dialogue editor's collapsible
  * (whole-row ▸/▾ toggle) and chip/line helpers; every emitted key is the
  * struct's yaml/json name (they are mirrored server-side).
  */
