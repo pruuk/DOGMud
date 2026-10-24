@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
@@ -130,6 +131,9 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 		},
 		HasHeard:  user.Character.HasHeard,
 		MarkHeard: user.Character.MarkHeard,
+		QuestOpen: func(questId int) bool {
+			return user.Character.QuestOpen(quests.GetQuestById(questId))
+		},
 	}
 }
 

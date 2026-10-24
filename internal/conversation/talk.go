@@ -9,6 +9,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/questworld"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -320,6 +322,9 @@ func after(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue
 func offerCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic, prefer uuid.UUID) {
 	inst, key := mob.InstanceId, t.Key
 	card := menu.Confirm(t.Label, "Accept", "Leave")
+	if q := quests.GetQuestById(t.Quest); q != nil {
+		card.Body = cardBody(q, questworld.Names(), user.Character.LastRepeat(q))
+	}
 	user.OpenMenu(card, session(user, mob, func(e menu.Entry) {
 		granted, closes := "", false
 		if e.Id == "yes" {
