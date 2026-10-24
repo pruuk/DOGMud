@@ -345,6 +345,37 @@ func dedupeFindings(fs []questloop.Finding) []questloop.Finding {
 	return out
 }
 
-// checkWay checks a Way's item and NPC sources before it is fired. Task 4
-// fills it in.
-func checkWay(*quests.Quest, questloop.Way, questloop.Sources) []questloop.Finding { return nil }
+// checkWay reports a Way's needs the world cannot meet (spec 7.2): an item
+// nothing provides, a mob or NPC nothing spawns. A nil Sources func skips
+// that check.
+func checkWay(q *quests.Quest, wy questloop.Way, src questloop.Sources) []questloop.Finding {
+	var out []questloop.Finding
+	needItem := func(id int, what string) {
+		if id > 0 && src.ItemSources != nil && len(src.ItemSources(id)) == 0 {
+			out = append(out, questloop.Finding{Rule: "walk-no-source", QuestId: q.QuestId, Where: wy.Where,
+				Msg: fmt.Sprintf("needs item %d (%s), which no mob, shop, room, forage table, recipe, quest or topic provides", id, what)})
+		}
+	}
+	needMob := func(id int, what string) {
+		if id > 0 && src.MobSpawned != nil && !src.MobSpawned(id) {
+			out = append(out, questloop.Finding{Rule: "walk-unspawned", QuestId: q.QuestId, Where: wy.Where,
+				Msg: fmt.Sprintf("needs mob %d (%s), which no room spawns and no quest spawns", id, what)})
+		}
+	}
+	switch {
+	case wy.Trigger != nil:
+		t := wy.Trigger
+		needItem(t.Conditions.HasItem, "has_item")
+		if t.Event == "item_give" || t.Event == "item_gain" {
+			needItem(t.Item, t.Event)
+		}
+		if t.Event == "mob_death" || t.Event == "item_give" {
+			needMob(t.Mob, t.Event)
+		}
+	case wy.Topic != nil:
+		needItem(wy.Topic.RequiresItem, "requiresItem")
+		needItem(wy.Topic.CarriesItem, "carriesItem")
+		needMob(wy.MobId, "the NPC who has this topic")
+	}
+	return out
+}

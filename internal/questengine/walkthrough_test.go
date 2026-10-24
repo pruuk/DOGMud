@@ -152,6 +152,39 @@ func TestWalk_OfferNeedingItsOwnStepIsADeadEnd(t *testing.T) {
 	require.Contains(t, keys(Walk(w, questloop.Sources{})), "walk-dead-end 53 mob 9112 topic cull_offer")
 }
 
+func srcWith(items map[int][]string, spawned map[int]bool) questloop.Sources {
+	return questloop.Sources{
+		ItemSources: func(id int) []string { return items[id] },
+		MobSpawned:  func(id int) bool { return spawned[id] },
+	}
+}
+
+func TestWalk_ItemWithNoSource(t *testing.T) {
+	w := walkWorld()
+	w.Quests[0].Triggers[0].Conditions.HasItem = 777
+	got := keys(Walk(w, srcWith(nil, map[int]bool{9110: true, 9112: true})))
+	require.Contains(t, got, "walk-no-source 53 quest 53 trigger mob_death mob=9110 grants=53-firstkill")
+}
+
+func TestWalk_ItemWithASourcePasses(t *testing.T) {
+	w := walkWorld()
+	w.Quests[0].Triggers[0].Conditions.HasItem = 777
+	require.Empty(t, Walk(w, srcWith(map[int][]string{777: {"shop 9123"}}, map[int]bool{9110: true, 9112: true})))
+}
+
+func TestWalk_UnspawnedMobAndNPC(t *testing.T) {
+	got := keys(Walk(walkWorld(), srcWith(nil, map[int]bool{})))
+	require.Contains(t, got, "walk-unspawned 53 quest 53 trigger mob_death mob=9110 grants=53-firstkill")
+	require.Contains(t, got, "walk-unspawned 53 mob 9112 topic cull_offer")
+}
+
+func TestWalk_HandInItemNeedsASource(t *testing.T) {
+	w := walkWorld()
+	w.Dialogue[0].Topics[1].RequiresItem = 4242
+	got := keys(Walk(w, srcWith(nil, map[int]bool{9110: true, 9112: true})))
+	require.Contains(t, got, "walk-no-source 53 mob 9112 topic cull_in")
+}
+
 func TestWalk_GuardCanFail(t *testing.T) {
 	// The clean world must stay clean, and every mutation above must be
 	// caught: this is the proof the walk is capable of failing.
