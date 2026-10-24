@@ -221,7 +221,7 @@ It ships a `context.md`.
 type World struct {
     Quests   []*quests.Quest
     Dialogue []*dialogue.DialogueFile
-    Refs     quests.QuestValidators // existence callbacks, reused
+    Refs     *quests.QuestValidators // existence callbacks, reused; nil skips the refs rule
     Names    quests.RewardNames
 }
 
@@ -237,7 +237,12 @@ func (f Finding) Key() string // "rule questId where", the backlog line
 ```
 
 The boot and CI worlds come from the loaded registries. The editor door overlays the quest
-being saved on them.
+being saved on them. A second new package, `internal/questworld`, builds those inputs from
+the live registries: the reward names, the quest reference validators (moved out of
+`modules/gmcp`, which keeps calling them), `Registry()`, `WithQuest(w, q)` and the backlog
+loader. The offer card, the boot door, the CI sweep and the editor all use it. Its imports
+(mobs, rooms, conditions, items, spells, skills, crafting, factions, dialogue, quests) reach
+neither `conversation` nor `questworld` (`go list -deps`, 2026-10-24).
 
 ### 5.2 Rules
 
@@ -359,7 +364,8 @@ to the zone playtests.
 
 ## 8. Docs and rollout
 
-- **`context.md`:** new in `internal/questloop`; updated in `internal/quests`,
+- **`context.md`:** new in `internal/questloop`, `internal/questworld` and `internal/manifest`
+  (the stable-key format the topic and step manifests now share); updated in `internal/quests`,
   `internal/questengine`, `internal/dialogue`, `internal/conversation`, `internal/menu`,
   `internal/characters`.
 - **Help:** `_datafiles/world/dogmud/templates/help/talk.template` describes the card and the
