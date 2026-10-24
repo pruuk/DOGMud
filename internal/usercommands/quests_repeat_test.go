@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -84,6 +85,53 @@ func TestFinishedRepeatRows_SkipsInProgressAndSecret(t *testing.T) {
 		c2 := characters.New()
 		assert.Empty(t, finishedRepeatRows(c2, map[int]string{}, false))
 	})
+}
+
+// A player whose only finished quests are repeatables is pointed at
+// `quests all`, not told they have no quests.
+func TestQuestsCommand_OnlyFinishedRepeatablesPointsAtQuestsAll(t *testing.T) {
+	t.Cleanup(util.ResetRoundCountForTest)
+	util.SetRoundCountForTest(1000)
+	user, room := aimScene(t, aimFull)
+	useDogmudTemplates(t)
+	t.Cleanup(quests.SeedQuestsForTest(repeatTestQuest(0, false)))
+	user.Character.QuestProgress = map[int]string{}
+	user.Character.QuestCompletions = map[int]int{repeatTestQuestId: 1}
+
+	_, err := Quests("", user, room, 0)
+	require.NoError(t, err)
+	told := aimTold(1)
+	assert.NotContains(t, told, "You have no quests yet.")
+	assert.Contains(t, told, "quests all")
+}
+
+// `quests all+` shows a finished repeatable's status row, not a 0% row for
+// the placeholder it gives quests the player holds no progress on.
+func TestQuestsCommand_AllPlusShowsAFinishedRepeatablesStatus(t *testing.T) {
+	t.Cleanup(util.ResetRoundCountForTest)
+	util.SetRoundCountForTest(1000)
+	user, room := aimScene(t, aimFull)
+	useDogmudTemplates(t)
+	t.Cleanup(quests.SeedQuestsForTest(repeatTestQuest(0, false)))
+	user.Role = users.RoleAdmin
+	user.Character.QuestProgress = map[int]string{}
+	user.Character.QuestCompletions = map[int]int{repeatTestQuestId: 1}
+	user.Character.SetQuestCooldown(repeatTestQuestId, 100)
+
+	_, err := Quests("all+", user, room, 0)
+	require.NoError(t, err)
+	told := aimTold(1)
+	t.Log("\n" + told)
+	assert.Contains(t, told, "Not offered again yet.")
+	assert.NotContains(t, told, "Cull the wolves.", "no placeholder description row")
+	rows := 0
+	for _, line := range strings.Split(told, "\n") {
+		if strings.Contains(line, "Wolf Bounty") {
+			rows++
+			assert.Contains(t, line, "100%", line)
+		}
+	}
+	assert.Equal(t, 1, rows, "one row for the quest")
 }
 
 func TestQuestsCommand_TagsRepeatable(t *testing.T) {

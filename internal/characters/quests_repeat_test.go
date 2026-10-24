@@ -78,3 +78,11 @@ func TestRenameQuestSteps(t *testing.T) {
 	require.Equal(t, "scoutdown", c.QuestProgress[53], "chains are followed")
 	require.Equal(t, "deliver", c.QuestProgress[7])
 }
+
+func TestRetiredQuestSteps(t *testing.T) {
+	c := &Character{QuestProgress: map[int]string{53: "firstkill", 7: "deliver", 9: "end"}}
+	got := c.RetiredQuestSteps(map[string]bool{"53-firstkill": true, "9-start": true, "9-end": true})
+	require.Equal(t, []string{"53-firstkill", "9-end"}, got, "sorted, current steps only")
+	require.Equal(t, "firstkill", c.QuestProgress[53], "a retired step is left as is")
+	require.Empty(t, c.RetiredQuestSteps(nil))
+}

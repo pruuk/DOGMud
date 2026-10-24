@@ -570,6 +570,11 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 	// A renamed quest step keeps the player on it (#375 phase 2): renames
 	// come from the step-id manifest, quests/step-ids.txt.
 	loadedUser.Character.RenameQuestSteps(quests.StepRenames())
+	// A retired current step is left as is and logged: it needs a content
+	// decision (spec 5.5).
+	for _, tok := range loadedUser.Character.RetiredQuestSteps(quests.StepRetired()) {
+		mudlog.Warn("LoadUser", "user", loadedUser.Username, "retired quest step", tok)
+	}
 	loadedUser.Character.MigrateLegacyPotions()
 	// U10d ranged detune. MUST precede MigrateEnchantments: ApplyTier does an
 	// unconditional EnchantBaseline.RestoreInto, which would re-install the

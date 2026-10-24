@@ -2,6 +2,7 @@ package characters
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/quests"
@@ -259,6 +260,23 @@ func (c *Character) RenameQuestSteps(renames map[string]string) {
 			c.QuestProgress[qid] = nstep
 		}
 	}
+}
+
+// RetiredQuestSteps lists, sorted, the saved current steps that the step-id
+// manifest retires ("<qid>-<step>"). It changes nothing: a retired current
+// step needs a content decision, so LoadUser only logs it (spec 5.5).
+func (c *Character) RetiredQuestSteps(retired map[string]bool) []string {
+	if len(retired) == 0 {
+		return nil
+	}
+	var out []string
+	for qid, step := range c.QuestProgress {
+		if tok := quests.PartsToToken(qid, step); retired[tok] {
+			out = append(out, tok)
+		}
+	}
+	sort.Strings(out)
+	return out
 }
 
 // miscDataToUint64 coerces a MiscData value to uint64. MiscData stores any,

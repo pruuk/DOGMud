@@ -87,6 +87,11 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			if _, ok := allQuestProgress[quest.QuestId]; ok {
 				continue
 			}
+			// A finished repeatable gets its status row below, not a 0%
+			// placeholder row.
+			if quest.Repeatable && user.Character.QuestCompletions[quest.QuestId] > 0 {
+				continue
+			}
 			allQuestProgress[quest.QuestId] = `all+`
 		}
 	}
@@ -138,10 +143,12 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		}
 	}
 
+	// Finished repeatables count as finished quests either way, so plain
+	// `quests` points at `quests all` rather than saying there are none.
+	finished := finishedRepeatRows(user.Character, allQuestProgress, showHidden)
+	qInfo.QuestsTotal += len(finished)
 	if showComplete {
-		finished := finishedRepeatRows(user.Character, allQuestProgress, showHidden)
 		allQuests = append(allQuests, finished...)
-		qInfo.QuestsTotal += len(finished)
 	}
 
 	qInfo.QuestsFound = len(allQuests)

@@ -28,18 +28,43 @@ func StepTokens(qs []Quest) []string {
 	return out
 }
 
-// StepRenames reads the shipped manifest's renames for the load migration.
-// A missing or unreadable manifest renames nothing.
-func StepRenames() map[string]string {
+// shippedStepManifest reads the shipped manifest. A missing manifest is not
+// an error (ok false); an unreadable one is logged (ok false).
+func shippedStepManifest(caller string) (manifest.Manifest, bool) {
 	path := util.FilePath(string(configs.GetFilePathsConfig().DataFiles) + `/quests/step-ids.txt`)
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil
+		return manifest.Manifest{}, false
 	}
 	m, err := ParseStepManifest(data)
 	if err != nil {
-		mudlog.Warn("quests.StepRenames()", "path", path, "error", err)
+		mudlog.Warn(caller, "path", path, "error", err)
+		return manifest.Manifest{}, false
+	}
+	return m, true
+}
+
+// StepRenames reads the shipped manifest's renames for the load migration.
+// A missing or unreadable manifest renames nothing.
+func StepRenames() map[string]string {
+	m, ok := shippedStepManifest("quests.StepRenames()")
+	if !ok {
 		return nil
 	}
 	return m.Renamed
+}
+
+// StepRetired reads the shipped manifest's retired steps, the set LoadUser
+// checks saved current steps against (spec 5.5: left as is and logged). A
+// missing or unreadable manifest retires nothing.
+func StepRetired() map[string]bool {
+	m, ok := shippedStepManifest("quests.StepRetired()")
+	if !ok || len(m.Retired) == 0 {
+		return nil
+	}
+	out := make(map[string]bool, len(m.Retired))
+	for _, tok := range m.Retired {
+		out[tok] = true
+	}
+	return out
 }
