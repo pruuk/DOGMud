@@ -361,7 +361,7 @@ var stringDataAllowlist = map[string]string{}
 // spellings: tests that assert they no longer bind or resolve, and the
 // migration that renames them in saves.
 var stringGuardNamesOldSpellings = map[string]bool{
-	"wire_freeze_test.go": true,
+	"internal/guards/wire_freeze_test.go":                   true,
 	"internal/keywords/keywords_setcondition_alias_test.go": true,
 	"internal/migration/0.17.0.go":                          true,
 	"internal/migration/0.17.0_test.go":                     true,

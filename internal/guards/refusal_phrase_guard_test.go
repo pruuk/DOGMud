@@ -1,0 +1,246 @@
+package guards
+
+import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
+	"testing"
+)
+
+// Messaging M7 (#371): a refusal lives in internal/refusal. A Go string
+// literal anywhere else in internal/ or modules/ that carries one of these
+// phrases is a copy the helpers replaced. A hit is converted to the helper,
+// or, if it is not that refusal, the phrase here is narrowed; never
+// allow-listed by file. Each phrase's probe proves the pattern can match.
+// Later slices add rows. The prompt rows match a literal that opens with a
+// question: "<Verb> what|whom|who|how much?", "... which <noun>?" and
+// "What would you like to <verb>?". Literals passed straight to
+// cmdPrompt.Ask( are skipped by refusalPhraseHits: interactive questions wait
+// for the player's answer and are not refusals. Since #375 a question can
+// also be a menu, so the same skip covers the Heading of a menu.Menu literal
+// and the question (first) argument of cmdPrompt.AskConfirm( and
+// menu.Confirm(.
+var refusalPhrases = []struct {
+	family string
+	re     *regexp.Regexp
+	probe  string
+}{
+	{"not here", regexp.MustCompile(`You don't see (them|that|those [a-z]+) here`), "You don't see those remains here."},
+	{"not here, echoed", regexp.MustCompile(`You don't see ['"]?%s['"]? here`), `You don't see "%s" here.`},
+	{"not here, floor", regexp.MustCompile(`You don't see (any|a|an) "?%s"? (to pick up|to loot|around)`), "You don't see a %s around."},
+	{"not here, verb", regexp.MustCompile(`Can't find that to `), "Can't find that to pet."},
+	{"not carrying", regexp.MustCompile(`You don't have (a|an|any) "?%s"? (to |that can )`), `You don't have a "%s" to drink.`},
+	{"not carrying, bare", regexp.MustCompile(`You don't have (that|that item)\.`), "You don't have that item."},
+	{"not carrying, inventory", regexp.MustCompile(`You don't have "%s" in your inventory`), `You don't have "%s" in your inventory.`},
+	{"not carrying, seem", regexp.MustCompile(`You don't seem to be carrying`), "You don't seem to be carrying that."},
+	{"no target", regexp.MustCompile(`You have no target`), "You have no target!"},
+	{"cooldown", regexp.MustCompile(`moment to recover before`), "You need a moment to recover before attempting another special move."},
+	{"guild", regexp.MustCompile(`You are not in a guild`), "You are not in a guild."},
+	{"companion", regexp.MustCompile(`no companion travelling with you`), "You have no companion travelling with you."},
+	{"party leader", regexp.MustCompile(`not the leader of your party|Only the party leader can`), "You are not the leader of your party."},
+	{"in combat", regexp.MustCompile(`can't do that while in combat`), "You can't do that while in combat!"},
+	{"failure", regexp.MustCompile(`Something went wrong`), "Something went wrong."},
+	{"in combat, generic gate", regexp.MustCompile(`can't do that while fighting`), "You can't do that while fighting!"},
+	{"no target, gone", regexp.MustCompile(`Your target is gone`), "Your target is gone!"},
+	{"cooldown, moment", regexp.MustCompile(`You need a moment before you can`), "You need a moment before you can do that."},
+	{"not here, nothing by that name", regexp.MustCompile(`Nothing by that name is in this room`), "Nothing by that name is in this room."},
+	{"not here, nobody like that", regexp.MustCompile(`nobody like that here to ask`), "There is nobody like that here to ask."},
+	{"companion, reset", regexp.MustCompile(`You have no companion to`), "You have no companion to reset."},
+	{"not here, who", regexp.MustCompile(`^Who\?\?\?`), "Who???"},
+	{"prompt", regexp.MustCompile(`(?i)^\S+( (on|from|to|at|with|in|into|for|about))? (what|whom|who|how much( gold)?)\?`), "Pet what?"},
+	{"prompt, which", regexp.MustCompile(`(?i)^\S+( \S+){0,3} which \w+\?`), "Switch to which target?"},
+	{"prompt, would you like", regexp.MustCompile(`(?i)^What (would you like|do you want) to \w+\?`), "What would you like to sell?"},
+	{"busy", regexp.MustCompile(`while focused on your work`), "You can't bash while focused on your work. Finish or be interrupted first."},
+	{"busy, working", regexp.MustCompile(`already (busy )?working on something|busy with something else|too busy to cast`), "You're already busy working on something."},
+	{"cost", regexp.MustCompile(`too spent to manage|cannot muster the resolve`), "You are too spent to manage that right now."},
+	{"asleep", regexp.MustCompile(`is fast asleep\. You could make some noise`), "%s is fast asleep. You could make some noise."},
+	{"under attack", regexp.MustCompile(`while you are under attack`), "You can't do that while you are under attack!"},
+	{"not here, vanished", regexp.MustCompile(`seem to have vanished`), "They seem to have vanished."},
+	{"cooldown, rounds", regexp.MustCompile(`more rounds (before|to)`), "You need to wait %d more rounds before you can try that again."},
+	{"party", regexp.MustCompile(`not attached to a party|You are not in a party`), "You are not attached to a party."},
+	{"guild leader", regexp.MustCompile(`Only the guild leader can|Only officers and the leader can`), "Only officers and the leader can invite."},
+	{"storage", regexp.MustCompile(`You don't have .* in storage`), "You don't have a %s in storage."},
+	{"companions full", regexp.MustCompile(`maintain any more companions|as many companions as your will`), "You cannot maintain any more companions."},
+	{"no companions", regexp.MustCompile(`You have no companions`), "You have no companions to dismiss."},
+	{"prompt, specify", regexp.MustCompile(`^Specify what you want|You need to specify a message`), "Specify what you want to sell."},
+}
+
+// refusalPhraseHits reports every literal in src that carries a phrase.
+func refusalPhraseHits(t *testing.T, rel string, src []byte) []string {
+	t.Helper()
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, rel, src, 0)
+	if err != nil {
+		t.Fatalf("%s: %v", rel, err)
+	}
+	// Literal arguments of a cmdPrompt.Ask( call, the question argument of
+	// cmdPrompt.AskConfirm( and menu.Confirm(, and the Heading of a menu.Menu
+	// literal are interactive questions.
+	asked := map[*ast.BasicLit]bool{}
+	isSel := func(e ast.Expr, recv, name string) bool {
+		sel, ok := e.(*ast.SelectorExpr)
+		if !ok || sel.Sel.Name != name {
+			return false
+		}
+		id, ok := sel.X.(*ast.Ident)
+		return ok && id.Name == recv
+	}
+	ast.Inspect(f, func(n ast.Node) bool {
+		switch n := n.(type) {
+		case *ast.CallExpr:
+			switch {
+			case isSel(n.Fun, "cmdPrompt", "Ask"):
+				for _, a := range n.Args {
+					if lit, ok := a.(*ast.BasicLit); ok {
+						asked[lit] = true
+					}
+				}
+			case isSel(n.Fun, "cmdPrompt", "AskConfirm"), isSel(n.Fun, "menu", "Confirm"):
+				if len(n.Args) > 0 {
+					if lit, ok := n.Args[0].(*ast.BasicLit); ok {
+						asked[lit] = true
+					}
+				}
+			}
+		case *ast.CompositeLit:
+			if !isSel(n.Type, "menu", "Menu") {
+				return true
+			}
+			for _, el := range n.Elts {
+				kv, ok := el.(*ast.KeyValueExpr)
+				if !ok {
+					continue
+				}
+				if key, ok := kv.Key.(*ast.Ident); ok && key.Name == "Heading" {
+					if lit, ok := kv.Value.(*ast.BasicLit); ok {
+						asked[lit] = true
+					}
+				}
+			}
+		}
+		return true
+	})
+	var hits []string
+	ast.Inspect(f, func(n ast.Node) bool {
+		lit, ok := n.(*ast.BasicLit)
+		if !ok || lit.Kind != token.STRING || asked[lit] {
+			return true
+		}
+		s, err := strconv.Unquote(lit.Value)
+		if err != nil {
+			s = lit.Value
+		}
+		for _, p := range refusalPhrases {
+			if p.re.MatchString(s) {
+				hits = append(hits, rel+":"+strconv.Itoa(fset.Position(lit.Pos()).Line)+": "+p.family+": "+s)
+			}
+		}
+		return true
+	})
+	return hits
+}
+
+func TestRefusalPhrasesLiveInThePackage(t *testing.T) {
+	root := repoRoot(t)
+	scanned := 0
+	for _, top := range []string{"internal", "modules"} {
+		err := filepath.WalkDir(filepath.Join(root, top), func(path string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+				return err
+			}
+			rel, _ := filepath.Rel(root, path)
+			rel = filepath.ToSlash(rel)
+			if strings.HasPrefix(rel, "internal/refusal/") {
+				return nil
+			}
+			src, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			scanned++
+			for _, h := range refusalPhraseHits(t, rel, src) {
+				t.Errorf("%s (use internal/refusal)", h)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if scanned < 100 {
+		t.Fatalf("scanned only %d Go files; the walk is broken", scanned)
+	}
+}
+
+// TestRefusalPhraseGuardCanFail runs the scanner over a source file holding
+// every probe and requires one hit per phrase.
+func TestRefusalPhraseGuardCanFail(t *testing.T) {
+	var b strings.Builder
+	b.WriteString("package probe\n\nvar probes = []string{\n")
+	for _, p := range refusalPhrases {
+		if !p.re.MatchString(p.probe) {
+			t.Errorf("%s: probe %q does not match its own pattern", p.family, p.probe)
+		}
+		b.WriteString("\t" + strconv.Quote(p.probe) + ",\n")
+	}
+	b.WriteString("}\n")
+	hits := refusalPhraseHits(t, "probe.go", []byte(b.String()))
+	joined := strings.Join(hits, "\n")
+	for _, p := range refusalPhrases {
+		if !strings.Contains(joined, ": "+p.family+": ") {
+			t.Errorf("%s: no hit for its probe:\n%s", p.family, joined)
+		}
+	}
+}
+
+// TestRefusalPhraseGuardSkipsOnlyAskQuestions: a literal handed straight to
+// cmdPrompt.Ask is an interactive question and is skipped; the same phrase
+// anywhere else, even nested inside an Ask call or on another receiver's
+// Ask, is still a hit.
+func TestRefusalPhraseGuardSkipsOnlyAskQuestions(t *testing.T) {
+	src := "package probe\n\nfunc f() {\n" +
+		"\tcmdPrompt.Ask(\"Pet what?\", nil)\n" +
+		"\tcmdPrompt.Ask(wrap(\"Shout what?\"), nil)\n" +
+		"\tother.Ask(\"Say what?\", nil)\n" +
+		"\tsend(\"Get what?\")\n" +
+		"}\n"
+	hits := strings.Join(refusalPhraseHits(t, "probe.go", []byte(src)), "\n")
+	if strings.Contains(hits, "Pet what?") {
+		t.Errorf("a cmdPrompt.Ask question was flagged:\n%s", hits)
+	}
+	for _, want := range []string{"Shout what?", "Say what?", "Get what?"} {
+		if !strings.Contains(hits, want) {
+			t.Errorf("%q should be a hit:\n%s", want, hits)
+		}
+	}
+}
+
+// TestRefusalPhraseGuardSkipsMenuQuestions: a menu's Heading and a confirm's
+// question are interactive questions (#375) and are skipped; a Heading-keyed
+// literal of another type, a menu entry's Label, and a confirm label are
+// still hits.
+func TestRefusalPhraseGuardSkipsMenuQuestions(t *testing.T) {
+	src := "package probe\n\nfunc f() {\n" +
+		"\t_ = menu.Menu{Heading: \"What would you like to do?\", Entries: []menu.Entry{{Label: \"Sell what?\"}}}\n" +
+		"\tcmdPrompt.AskConfirm(\"Give whom?\", \"Steal what?\", \"No\")\n" +
+		"\t_ = menu.Confirm(\"Drop what?\", \"Yes\", \"No\")\n" +
+		"\t_ = other.Menu{Heading: \"Buy what?\"}\n" +
+		"}\n"
+	hits := strings.Join(refusalPhraseHits(t, "probe.go", []byte(src)), "\n")
+	for _, skipped := range []string{"What would you like to do?", "Give whom?", "Drop what?"} {
+		if strings.Contains(hits, skipped) {
+			t.Errorf("menu question %q was flagged:\n%s", skipped, hits)
+		}
+	}
+	for _, want := range []string{"Sell what?", "Steal what?", "Buy what?"} {
+		if !strings.Contains(hits, want) {
+			t.Errorf("%q should be a hit:\n%s", want, hits)
+		}
+	}
+}
