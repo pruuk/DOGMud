@@ -422,7 +422,7 @@ plain carrier ("Curious Trinket").
   `DisplayNameFor`, `NameFor`, `LongDescriptionFor`) show the finder's own
   text, and only to `BaubleView.FinderUserId`; each is the other
   viewer-agnostic accessor's twin, call them only where the output reaches
-  that one viewer (the repo-root guard `bauble_finder_view_guard_test.go`
+  that one viewer (the guard `internal/guards/bauble_finder_view_guard_test.go`
   pins every caller and its call count). `displayNameFrom` and
   `longDescriptionFrom` are the spec-taking bodies of `DisplayName` and
   `GetLongDescription`; `SpecDisplayName(itemId)` is the display name read
@@ -700,7 +700,7 @@ the messaging arc's three leftover token engines and was deleted in M4a. The
 other two, `grapplemessaging.RenderTemplate` and the local `substitute` in
 `internal/hooks/Position_Messaging.go`, went the same way in the same slice.
 Nothing in the package substitutes tokens by hand any more, and
-`token_engine_guard_test.go` at the repo root fails the build if anything
+`token_engine_guard_test.go` (internal/guards) fails the build if anything
 starts again.
 
 ## Durability and Usage System
@@ -819,7 +819,7 @@ potion's base strength for that scaled kind) and scales both it and the
 condition's `TriggerCount` by `durationMult`, capping an infra-reach result at
 `configs.Lighting.InfraReachCap`, then queues through
 `AddConditionMagnitude` instead. A potion carrying a magnitude-scaled
-condition with no `Magnitude` authored is caught by a repo-root guard test
+condition with no `Magnitude` authored is caught by a guard test in `internal/guards`
 over the shipped world (the build, not the boot — a load-time check would
 break every test binary that loads items without conditions), not by
 `ItemSpec` validation itself.
@@ -1511,7 +1511,7 @@ subtype whose swing lines `sub` always borrows; today only `Shooting`, which
 narrates as `Bludgeoning` (a bow swung in melee is a club). The renderer
 (`combat.meleeDisplaySubtype`) and `Validate` both read it, so they cannot
 drift, and `shooting.yaml` authors only `prepare` and `wait` (#541, owner
-ruling C). The root guard `TestShootingKeepsOnlyPrepareAndWait` fails if its
+ruling C). The guard `TestShootingKeepsOnlyPrepareAndWait` (internal/guards) fails if its
 swing intensities come back.
 
 `tools/combat_message_pool_audit.py` reports any group whose pools are

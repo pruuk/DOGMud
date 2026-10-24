@@ -666,8 +666,8 @@ name triggers on the `owned_`, `teach_`, `refuse_` and `price_` nodes
 are distinctive words only (`bandolier`, `blackrazor`, `zephyr`, etc.),
 and the generic `quest`/`task` triggers appear only on the intro and
 `secrets_list` nodes, which grant nothing beyond `78-start`.
-`quest_charge_gold_gate_guard_test.go` and
-`veyra_secrets_dialogue_test.go` pin the purchase.
+`internal/guards/quest_charge_gold_gate_guard_test.go` and
+`internal/guards/veyra_secrets_dialogue_test.go` pin the purchase.
 
 ### Engine additions (Stage 4b)
 

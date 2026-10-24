@@ -12,7 +12,7 @@ import (
 // says so directly: "We can't inspect listener count, but we can verify the
 // function runs"), so this reads hooks.go's own source and asserts each
 // registration line is present, the same source-level technique
-// narration_render_callers_guard_test.go (package main) uses to guard a
+// internal/guards/narration_render_callers_guard_test.go uses to guard a
 // different registry.
 //
 // A missing registration is not a compile error and not a panic: the

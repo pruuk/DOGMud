@@ -16,7 +16,7 @@ import (
 // Layer 1 of the fight read (#301): one side's expected output and defence,
 // built ONLY from the functions live combat calls. Nothing here may carry its
 // own copy of a swing, hit, damage or defence formula; the drift guards in
-// fight_read_drift_guard_test.go (repo root) and fight_expect_stat_test.go
+// internal/guards/fight_read_drift_guard_test.go and fight_expect_stat_test.go
 // hold that line. Everything is pure: no dice, no state written.
 
 // neutralCtx is a prediction's combat context: full sight both ways and no

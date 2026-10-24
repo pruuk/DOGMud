@@ -125,7 +125,7 @@ type Result struct {
 **`internal/combat` calls `RunWithFloors` / `Run`; everything else names the
 `Entry` type only.** The two files that reach the primitives are
 `internal/combat/combat_helpers.go` and `internal/combat/run_contest.go`, and
-`contest_floor_guard_test.go` at the repo root is what keeps that true.
+`internal/guards/contest_floor_guard_test.go` is what keeps that true.
 
 - `runBestOfAllDefense` (melee, U1) calls `Run` directly, and is the one place
   that converts this package's attack-positive margin into `internal/combat`'s

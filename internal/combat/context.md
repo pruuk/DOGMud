@@ -891,7 +891,7 @@ same pattern as Phase 2: the AI `CanUse*` viability check in `ai.go`,
 `Execute*` (defense-in-depth, unreachable for ordinary humanoid players).
 `command_readiness_drift_test.go` rows assert all three sites agree.
 
-Beast moves are decided by `SpeciesHasBeastMove` (the species' `beast_moves`); the attack-family predicates were deleted in #541 slice 2 (D6): #563 will want a proper anatomy model. Every gate pairs that list read with its runtime anatomy check; `species.validateBeastMoves` refuses at load a listed move whose body the species lacks. The root guard `beast_move_gate_guard_test.go` fails any gate that reads the attack family, and fails a mob that scripts a beast move its species does not list.
+Beast moves are decided by `SpeciesHasBeastMove` (the species' `beast_moves`); the attack-family predicates were deleted in #541 slice 2 (D6): #563 will want a proper anatomy model. Every gate pairs that list read with its runtime anatomy check; `species.validateBeastMoves` refuses at load a listed move whose body the species lacks. The guard `beast_move_gate_guard_test.go` (internal/guards) fails any gate that reads the attack family, and fails a mob that scripts a beast move its species does not list.
 
 | Move | Gate (listed in `beast_moves`, plus) | Mechanic |
 |------|------|----------|
@@ -1023,7 +1023,7 @@ reads `PredictFight` (next section).
 
 `consider` and the AI companion read a fight from two layers. Nothing in
 either layer may carry its own swing, hit, damage or defence formula: the
-drift guards (repo root `fight_read_drift_guard_test.go`, plus
+drift guards (`internal/guards/fight_read_drift_guard_test.go`, plus
 `fight_expect_stat_test.go` and `gap_compression_guard_test.go` here)
 fail on a second copy, and PowerScore's melee offense and avoidance sit
 on the same helpers so the three cannot drift.
@@ -1790,8 +1790,8 @@ every player, all the time, not only in the dark), but the SUBSTITUTED value
 is now a self-contained `<ansi fg="mobname">Name</ansi>` span regardless, so
 `messaging.Anonymize`'s `nameTagPattern` matches it wherever it lands --
 nested inside that wrapper, or bare. The content-level guard this enables,
-`TestObserverIdentityTagsAreAnonymizable`, lives in the repo root's
-`shipped_narration_data_guard_test.go` alongside `TestNoLegacyRoleKeysInShippedData`,
+`TestObserverIdentityTagsAreAnonymizable`, lives in
+`internal/guards/shipped_narration_data_guard_test.go` alongside `TestNoLegacyRoleKeysInShippedData`,
 which it is modeled on.
 
 **v. Momentum** — `sourceChar.UpdateMomentum(hit)` — consecutive

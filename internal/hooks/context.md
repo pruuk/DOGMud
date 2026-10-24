@@ -1873,7 +1873,7 @@ resolved, fires supplementary messaging:
   `StaminaWarning`, and `controller`/`controlled` on the gradient and
   transition side keys. The Go field names keep the old spellings; only the
   yaml tags moved. Two things to know before editing the file: the mirror of
-  `submissionMsgTriple` in the repo root's `shipped_narration_data_guard_test.go`
+  `submissionMsgTriple` in `internal/guards/shipped_narration_data_guard_test.go`
   decodes with `KnownFields(true)` and must be renamed in lockstep, and the
   gradient state named `controlled` is authored data rather than a role, so it
   kept its spelling while the side key beside it did not.
@@ -1882,7 +1882,7 @@ resolved, fires supplementary messaging:
   messaging M4a: `{actor}` and `{actee}` for the two grapplers, plus the
   store's own `{position}`, `{old_position}` and `{new_position}`. Rendering
   goes through `narration.Substitute`; the local `substitute` this file used
-  to carry is gone, and `token_engine_guard_test.go` at the repo root fails the
+  to carry is gone, and `token_engine_guard_test.go` (internal/guards) fails the
   build if a replacement grows back. `substitutionsForCharacter` puts the
   controller in the
   actor slot; `staminaWarningSubstitutions` overrides that with the character

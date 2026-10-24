@@ -122,7 +122,7 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// line announcing it lands with the state before. An item that
 		// touches no light changes no one's sight, so the snapshot reads the
 		// same as the room would after; taking it always keeps one call per
-		// line, which the narration guard (messaging_surface_guard_test.go)
+		// line, which the narration guard (internal/guards/messaging_surface_guard_test.go)
 		// needs to see each line's observer.
 		before := room.VisualSnapshot()
 

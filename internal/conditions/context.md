@@ -35,7 +35,7 @@ There is ONE collection of timed state on a character: `Character.Conditions`
 the ten became NINE records under `_datafiles/world/dogmud/conditions/` (79, 80,
 117 to 123), because blinded had no producer and was deleted rather than
 ported. **Do not add a second collection or a Go enum of timed effects**; the
-root guard `timed_state_guard_test.go` fails the build on a struct outside
+guard `timed_state_guard_test.go` (internal/guards) fails the build on a struct outside
 this package that pairs a duration field with a `Magnitude`, on the deleted
 enum's own names, and on an unlisted wrapper method named like the primitive's
 verbs.
@@ -387,15 +387,15 @@ the first flag a spec carries that is not in the list. `ValidateLoadedFlags()`
 walks the loaded registry in id order and panics on the first offender, naming
 the condition id, name and flag; `LoadDataFiles` calls it after the registry is
 live. It is a named function precisely so a test can call it: no test loads
-world YAML, so an inlined check had nothing red to prove it works. The root
-guard `condition_flag_guard_test.go` walks the dogmud condition files and fails
+world YAML, so an inlined check had nothing red to prove it works. The guard
+`condition_flag_guard_test.go` (internal/guards) walks the dogmud condition files and fails
 the build on the same condition, and `TestAllFlagsNamesEveryDeclaredConstant`
 parses the constants out of this package so the list cannot fall behind. Flags
 are compared exactly, nothing is normalised: the Cat's Eye Draught shipped with
 `night-vision` for `nightvision` and did nothing for weeks.
 The call from `LoadDataFiles` itself is pinned by nothing (no test loads world
 YAML, and a clean boot cannot detect a missing negative check); the function is
-pinned by a direct panic test, and the root guard is the gate that blocks a
+pinned by a direct panic test, and the guard in `internal/guards` is the gate that blocks a
 merge. The boot panic is defence in depth for a file edited by hand on prod.
 
 
@@ -1002,7 +1002,7 @@ func (bs *Condition) Name() string
   `Character.AddConditionScaled` apply in place and queue nothing, so
   `ApplyConditions` never runs and no notice reaches the holder.** The
   multiplier rides on `events.Condition.DurationMult`, so a scaled application
-  takes the same door. The root guard `condition_apply_path_guard_test.go`
+  takes the same door. The guard `condition_apply_path_guard_test.go` (internal/guards)
   walks all of `internal/` and `modules/` except the primitive packages
   (`internal/conditions`, `internal/characters`, which define the primitive
   being called) and fails the build on any direct character-level add outside
@@ -1012,7 +1012,7 @@ func (bs *Condition) Name() string
 - **Every non-secret condition in the dogmud world must carry authored
   `start_actee` (unless `silent-start` or `quiet`) AND `end_actee`
   (unless `hidden` or `quiet`), and a secret condition must carry no player
-  text.** The root guard `condition_notice_guard_test.go` fails the build
+  text.** The guard `condition_notice_guard_test.go` (internal/guards) fails the build
   otherwise; the generic line is a runtime net, never the shipped experience.
   `secret: true` also hides the condition from `conditions`.
   `SilentNoticeConditions` exempts the same three flags, so the boot warning
@@ -1041,8 +1041,8 @@ func (bs *Condition) Name() string
 - `Validate` runs `narration.ValidateVariants` over every authored phase, on the
   raw fields, so a whitespace-only line fails the load even where a notice
   would hide it.
-- **No file outside this package reads the six text fields.** The root guard
-  `store_text_fields_guard_test.go` fails the build on one.
+- **No file outside this package reads the six text fields.** The guard
+  `store_text_fields_guard_test.go` (internal/guards) fails the build on one.
 
 The six authored keys are `start_actee` / `start_observer`, `trigger_actee` /
 `trigger_observer` and `end_actee` / `end_observer`. M4b-1 renamed them from

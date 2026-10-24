@@ -17,11 +17,11 @@ import (
 )
 
 // ShadowingConditionId is condition 87, "Shadowing": held while a shadow is
-// live. It is named here and nowhere else (shadow_follow_guard_test.go).
+// live. It is named here and nowhere else (internal/guards/shadow_follow_guard_test.go).
 const ShadowingConditionId = 87
 
 // The two misc-data keys that hold a shadow's quarry. At most one is set.
-// Only this file reads or writes them (shadow_follow_guard_test.go); every
+// Only this file reads or writes them (internal/guards/shadow_follow_guard_test.go); every
 // other package goes through ShadowTargetOf, ClearShadow and EndShadow.
 const (
 	shadowTargetUserKey = "shadow-target-user"

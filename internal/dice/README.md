@@ -89,7 +89,7 @@ the time and a stat-200 thief against a stat-100 mark succeeded 99.1%.
 ### The four legacy opposed functions, all guarded
 
 `OpposedRollStat`, `OpposedRollStatWithFloors`, `OpposedRollStatRaw` and
-`OpposedRoll` still exist, and `contest_floor_guard_test.go` at the repo root
+`OpposedRoll` still exist, and `internal/guards/contest_floor_guard_test.go`
 fails if any is called outside `internal/dice` without an exemption entry
 carrying a written reason. Two different reasons:
 

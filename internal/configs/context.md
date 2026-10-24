@@ -314,8 +314,8 @@ reporting the value as secret rather than risk printing one. Module settings
 are untyped (`Modules map[string]any`), so a module's key is a plain string
 and only its name marks it. The boot log (`logBootConfig` in
 `boot_config_log.go`), the `server set` listing, the `server config` menu and
-`/viewconfig` all read `DisplayConfigData`; the root test
-`config_display_guard_test.go` (`TestNoDisplayReadsRawConfig`) fails on any
+`/viewconfig` all read `DisplayConfigData`; the test
+`config_display_guard_test.go` (internal/guards) (`TestNoDisplayReadsRawConfig`) fails on any
 `AllConfigData`, `DotPaths` or `GetOverrides` call outside this package, and
 on any page template that reaches `Modules` through `.CONFIG` or `getconfig`.
 
@@ -794,7 +794,7 @@ the vision-strength fallback, plan 3a added the eight knobs that turn the
 sky itself into a solar and lunar model, plan 5b added the dazzle edge, and
 plan 6 added the real-light floor. Since lighting plan 6 every one of them
 ships in `_datafiles/config.yaml` (before it, twelve ran unseen at their Go
-defaults); the root guard `lighting_config_surface_test.go` fails if a key
+defaults); the guard `lighting_config_surface_test.go` (internal/guards) fails if a key
 goes missing. Every shipped value is the Go default except
 `LightExitsAbove`, shipped at 55 (owner ruling O5).
 

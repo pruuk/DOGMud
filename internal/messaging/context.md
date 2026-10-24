@@ -35,8 +35,8 @@ the recipient's connection.
    afk message is quoted and the report's vital bars are bracketed.
    A line that ends on a drawn border (box drawing U+2500 to U+257F,
    block elements U+2580 to U+259F, or ASCII `+ | -`) is a table or box
-   bottom and gets no stop (`isBorderRune`, #460); the root test
-   `TestBoxedScreensEndWithoutAStop` renders the boxed screens to prove it.
+   bottom and gets no stop (`isBorderRune`, #460); the test
+   `TestBoxedScreensEndWithoutAStop` (internal/guards) renders the boxed screens to prove it.
 3. **Sight gate** (visual channel only) — per-recipient: CanSeeClearly,
    CanSeeShapes, or skip-visual-deliver-audio. Consumes the chunk-6
    Perception FSM (see `internal/state/perception/`).
@@ -131,8 +131,8 @@ Types and constants:
   `mob-idle` value, so the onlooker color is unchanged.
 - `CategoryRefusal` (messaging M7, #371): every refusal. Slice 1 moved the
   lines `internal/refusal` sends; slice 3 moved every other refusal in the
-  tree, and the root guard `TestRefusalOpenersNeverRideSystem`
-  (`refusal_system_opener_guard_test.go`) fails on a refusal opener sent on
+  tree, and the guard `TestRefusalOpenersNeverRideSystem`
+  (`refusal_system_opener_guard_test.go`, internal/guards) fails on a refusal opener sent on
   `CategorySystem`. Slice 4 moved usage, staff output and narration off
   `CategorySystem` too (the next three entries). Appended after
   `CategoryCraftSeen` so no value shifts. Treated exactly as
@@ -171,8 +171,8 @@ Types and constants:
     sent beside it, because it reaches the defender, not the player who
     typed the command.
   - What `CategorySystem` holds now: reports, tables, help, confirmations of
-    the player's own action, and the bounty player reports. Two root guards
-    keep narration off it: `system_recipient_guard_test.go` (inside a command
+    the player's own action, and the bounty player reports. Two guards in
+    `internal/guards` keep narration off it: `system_recipient_guard_test.go` (inside a command
     handler it reaches only a parameter) and `system_subject_guard_test.go`
     (a line opening with another creature and addressing "you" is narration).
 - `CategoryScreen` (2026-10-17), appended after `CategoryGroup`: a laid-out
@@ -202,13 +202,13 @@ Types and constants:
   event. Built with `Say(cat, text)`.
 - `NoLine` — the zero `Line`. A viewpoint that deliberately has
   nothing to say. Spelled out so a considered silence is legible as
-  one; the root guard requires it rather than an omitted field.
+  one; the guard in `internal/guards` requires it rather than an omitted field.
 - `Trio` — `{Actor, Actee, Observer, RemoteObserver Line}`, one narrated
   event as its FOUR audiences see it. `RemoteObserver` is the second
   room's line: ranged combat narrates to both the attacker's room and
   the defender's room, and until M4d that second audience had no seat
-  here at all — it travelled outside the pipeline. The root guard
-  `TestEveryTrioLiteralNamesAllThreeRoles` (repo root,
+  here at all — it travelled outside the pipeline. The guard
+  `TestEveryTrioLiteralNamesAllThreeRoles` (internal/guards,
   `messaging_surface_guard_test.go`) still requires only the original
   three (`Actor`/`Actee`/`Observer`) on every `messaging.Trio{}`
   literal; `RemoteObserver` is deliberately NOT added to it. A census
@@ -241,7 +241,7 @@ Types and constants:
   `Actee`/`ActeeId`/`ActeeName`, `Room`, and `RemoteRoom`. Ids are passed
   rather than derived because `users.UserRecord.UserId` is a FIELD while
   `actions.Actor` exposes `GetUserId()`. The names are exactly as the lines
-  print them; the root guard requires both on every `Trio` literal.
+  print them; the guard in `internal/guards` requires both on every `Trio` literal.
   `RemoteRoom` is the second room for a ranged event (the defender's room);
   nil sends nothing, which is every event except ranged combat. A nil
   recipient/broadcaster must be assigned as the interface, never as a
@@ -678,8 +678,8 @@ flags). Everything else — `rooms`, `users`, `mobs`, `combat`,
    `pipeline_test.go`, and bump that test's admitted count.
 6. If it is a laid-out screen that spaces itself with blank lines, add it
    to `BlankLineAllowed` in `messaging.go`, to the table in
-   `blank_line_test.go`, and to `blankLineCategoryNames` in the root
-   `blank_line_guard_test.go`. Otherwise `SendBlankLine` refuses it.
+   `blank_line_test.go`, and to `blankLineCategoryNames` in
+   `internal/guards/blank_line_guard_test.go`. Otherwise `SendBlankLine` refuses it.
 
 ## See Also
 

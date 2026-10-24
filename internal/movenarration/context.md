@@ -150,7 +150,7 @@ Widening the set is a deliberate edit to that map.
 validates clean and then tells that audience nothing. An absent role cannot
 simply be banned, because mob-only events legitimately have no `actor` line
 and `shoot`'s arrival events are remote-observer only. The real check is role-set
-agreement with the call site, in the root guard.
+agreement with the call site, in the guard in `internal/guards`.
 
 ## Tests that hold this together
 
@@ -171,7 +171,7 @@ agreement with the call site, in the root guard.
 - `internal/combat/grapple_narration_pin_test.go` - pins grapple's
   crit-failure and disarm events, which live in `internal/combat` rather
   than a mob command file
-- `move_narration_migration_guard_test.go` (root package) -
+- `move_narration_migration_guard_test.go` (internal/guards) -
   `TestMigratedFilesHoldNoNarrationLiterals` walks all 25 migrated files (13
   mob, 12 player) and fails on any backtick prose literal reached from a
   function body. It replaced the M2 freeze machinery (`TestM2LiteralsAreFrozen`,

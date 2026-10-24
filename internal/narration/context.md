@@ -141,7 +141,7 @@ changing any of them:
   file that IS present and fails to parse or validate still panics.
 
 Weather's only net is therefore a BUILD-time one:
-`shipped_narration_data_guard_test.go` at the repo root loads all fourteen
+`internal/guards/shipped_narration_data_guard_test.go` loads all fourteen
 stores from `_datafiles/world/dogmud` and fails the build on bad data. That
 guard covers the event tier too, where it is a nicety (it names the offending
 record instead of handing an operator a stack trace) rather than the only thing
@@ -242,8 +242,8 @@ default picker consumes a global random draw and shifts every later combat
 roll. `Render` cannot special-case `n == 1` because an item tree's speech pool
 may legitimately hold one line, and its draw count must not change (a seeded
 run replays it). The condition, spell, quest and crafting stores reach `Render` only
-through `textutil.Narrate`, which passes `FirstPicker`; the root guard
-`narration_render_callers_guard_test.go` pins both facts.
+through `textutil.Narrate`, which passes `FirstPicker`; the guard
+`narration_render_callers_guard_test.go` (internal/guards) pins both facts.
 
 **The Kind B golden headers describe the recording, not today's builder.**
 `conditions.golden`, `spells.golden`, `quests.golden` and `crafting.golden`
@@ -297,8 +297,8 @@ shipped YAML straight through `fileloader.LoadAllFlatFiles` and
 rather than re-implementing pre-migration logic, because the store and this
 golden were born together in the same plan.
 
-**`Substitute` is the only NARRATION token engine, and a root guard says so.**
-`token_engine_guard_test.go` (repo root) parses every non-test Go file under
+**`Substitute` is the only NARRATION token engine, and a guard says so.**
+`token_engine_guard_test.go` (internal/guards) parses every non-test Go file under
 `internal/` and `modules/`, skips `internal/narration/`, and fails on any
 `strings.Replace`, `strings.ReplaceAll` or `strings.NewReplacer` call handed a
 string literal containing a brace. Its allow-list is empty and should stay that

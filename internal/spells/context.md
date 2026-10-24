@@ -315,7 +315,7 @@ hidden caster hears at cast start (`CastStartedUnseenLine`).
 
 `cast_actee` is the target's own cast-start line, the `Actee` variant of
 `Narration(PhaseCast)`. Every single-target spell that can land on someone
-else authors one (root guard `spell_cast_actee_guard_test.go`).
+else authors one (guard `spell_cast_actee_guard_test.go`, internal/guards).
 
 ### Gotchas
 
@@ -349,12 +349,12 @@ for defence, so a caster sees a repeat every third spell.
 `Phase` (`PhaseCast`, `PhaseWait`, `PhaseMagic`); `Narration(p)` puts
 `*_actor` in Actor and `*_observer` in Observer, and for `PhaseCast` also
 `cast_actee` in Actee; `Narrate(p, ctx)` renders through `textutil.Narrate`.
-`actions.NarrateSpellPhase` is the one sender of every phase (root guard
-`spell_phase_narration_guard_test.go`). `Validate` refuses a whitespace-only
+`actions.NarrateSpellPhase` is the one sender of every phase (guard
+`spell_phase_narration_guard_test.go`, internal/guards). `Validate` refuses a whitespace-only
 line, and since M4a an unknown `{token}` too: the loader panics, so a typo
 cannot render raw to a player.
-No file outside this package reads the seven text fields (root guard
-`store_text_fields_guard_test.go`).
+No file outside this package reads the seven text fields (guard
+`store_text_fields_guard_test.go`, internal/guards).
 
 The seven authored keys are `cast_actor` / `cast_observer`, `cast_actee`,
 `wait_actor` /

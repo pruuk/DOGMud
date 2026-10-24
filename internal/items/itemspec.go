@@ -347,8 +347,8 @@ type ItemSpec struct {
 	// Magnitude is the base strength for a condition in ConditionIds that
 	// reads its magnitude (conditions.ScaledKinds, lighting plan 5c). The
 	// drink path scales it by the same potency multiplier as duration. A
-	// potion carrying such a condition must declare it (repo-root guard
-	// potion_conditions_guard_test.go).
+	// potion carrying such a condition must declare it (guard
+	// internal/guards/potion_conditions_guard_test.go).
 	Magnitude         float64         `yaml:"magnitude,omitempty"`
 	IsBandolier       bool            `yaml:"is_bandolier,omitempty"`       // Belt item that holds potions
 	BandolierCapacity int             `yaml:"bandolier_capacity,omitempty"` // Max potions storable in bandolier
