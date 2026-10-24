@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -18,10 +19,10 @@ import (
 // hand); it never writes the shipped file.
 const loopBacklogWriteEnv = `DOGMUD_LOOP_BACKLOG_WRITE`
 
-// TestSmoke_ShippedQuestsPassTheLoop runs the boot door's quest loop rules
-// over shipped content: a finding not in loop-backlog.txt fails, and so does
-// a backlog line no finding matches (the list only shrinks).
-func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
+// loadShippedQuestWorld loads the shipped data the quest loop sweeps read,
+// skipping unless DOGMUD_BOOT_SMOKE is set.
+func loadShippedQuestWorld(t *testing.T) {
+	t.Helper()
 	if os.Getenv(bootSmokeEnvVar) == `` {
 		t.Skipf("set %s=1 to run the quest loop sweep", bootSmokeEnvVar)
 	}
@@ -36,9 +37,24 @@ func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
 	if len(quests.GetAllQuests()) < 70 {
 		t.Fatalf("only %d quests loaded; the sweep would pass vacuously", len(quests.GetAllQuests()))
 	}
+}
+
+// TestSmoke_ShippedQuestsPassTheLoop runs the quest loop rules and the
+// completability walkthrough over shipped content: a finding not in
+// loop-backlog.txt fails, and so does a backlog line no finding matches (the
+// list only shrinks).
+//
+// The backlog holds both kinds of line. Boot (main_quests.go) runs Validate
+// only and ignores stale lines, so the walk lines in the backlog never
+// affect boot; this sweep ratchets against Validate plus Walk, so in CI a
+// walk line is never stale while its finding stands.
+func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
+	loadShippedQuestWorld(t)
+
+	w := questworld.Registry()
+	fs := questloop.Validate(w)
 
 	if path := os.Getenv(loopBacklogWriteEnv); path != `` {
-		fs := questloop.Validate(questworld.Registry())
 		if err := os.WriteFile(path, questloop.FormatBacklog(fs), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -46,10 +62,11 @@ func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
 		return
 	}
 
-	fresh, known, stale, err := validateShippedQuests()
+	b, err := questworld.LoadBacklog()
 	if err != nil {
 		t.Fatal(err)
 	}
+	fresh, known, stale := questloop.Ratchet(fs, b)
 	for _, f := range fresh {
 		t.Errorf("not in loop-backlog.txt: %s", f.String())
 	}
@@ -57,6 +74,47 @@ func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
 		t.Errorf("loop-backlog.txt line %q matches no finding: delete it", k)
 	}
 	t.Logf("quest loop: %d known backlog findings, %d new, %d stale", len(known), len(fresh), len(stale))
+}
+
+// TestSmoke_WalkSourcesIndexShippedWorld checks the walkthrough's item and
+// spawn index over shipped data, one known answer per source kind, and that
+// an empty answer is possible.
+func TestSmoke_WalkSourcesIndexShippedWorld(t *testing.T) {
+	loadShippedQuestWorld(t)
+	src := questworld.Sources()
+
+	has := func(id int, prefix string) bool {
+		for _, s := range src.ItemSources(id) {
+			if strings.HasPrefix(s, prefix) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Caravan Guard Garve, spawned by rooms/pothole_coulee/5234.yaml.
+	if !src.MobSpawned(9112) {
+		t.Error("mob 9112 should be spawned")
+	}
+	// mobs/greenford/9502-maret_the_miller.yaml stocks 40153 (Maret is
+	// spawned by rooms/greenford/6280.yaml).
+	if !has(40153, "shop 9502") {
+		t.Errorf("item 40153 should come from shop 9502: %v", src.ItemSources(40153))
+	}
+	// recipes/cooking/antidote-broth.yaml makes 30027.
+	if !has(30027, "recipe antidote-broth") {
+		t.Errorf("item 30027 should come from recipe antidote-broth: %v", src.ItemSources(30027))
+	}
+	// forager.ForageYields["forest"] lists 40067 (pine pitch).
+	if !has(40067, "forage forest") {
+		t.Errorf("item 40067 should come from forage forest: %v", src.ItemSources(40067))
+	}
+	if got := src.ItemSources(999999999); len(got) != 0 {
+		t.Errorf("item 999999999 should have no source: %v", got)
+	}
+	if src.MobSpawned(999999999) {
+		t.Error("mob 999999999 should not be spawned")
+	}
 }
 
 // TestQuestDoor_RefusesAFreshFinding: a fresh finding panics at boot and is
