@@ -262,6 +262,20 @@ Test helper (same file): `DrainQueuedNpcMarkersChangedForTest(userId)` removes
 and returns the queued events for one user (0 for all) and frees their unique
 slots, as `ProcessEvents` does, so a later refresh queues again.
 
+### Talk Next-Offer Event (#375 phase 2)
+
+`TalkNextOffer{UserId, MobInstanceId, TopicKey}` (`eventtypes.go`) asks the talk
+flow to pitch an NPC's next quest offer after a hand-in. `conversation.queueNextOffer`
+queues it at `TalkNextOfferPriority` (45), so it runs after the completion banner
+and reward lines (priority 0) and before a menu shown last (priority 50).
+`conversation.HandleTalkNextOffer` (registered in `internal/hooks/hooks.go`)
+handles it.
+
+`DrainAllQueuedEventsForTest` and `DrainQueuedByTypeForTest` free each drained
+unique event's slot, as `ProcessEvents` does, so a later unique event (a
+player's `NpcMarkersChanged`, say) queues again instead of being dropped as a
+duplicate of an event that no longer exists.
+
 ### Unique Events
 
 **Events with automatic deduplication:**

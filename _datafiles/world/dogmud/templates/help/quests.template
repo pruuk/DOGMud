@@ -29,6 +29,17 @@ a reward when you finish.
   shows its name, a progress bar, and what to do for your current step.
   Finished quests are hidden. Add <ansi fg="command">all</ansi> to list them too.
 
+<ansi fg="yellow">Quests you can repeat: </ansi>
+
+  Some work can be taken again after a while. The quest list marks it
+  <ansi fg="yellow">(repeatable)</ansi>. When you offer to do it again, the person tells you so,
+  and some work can only be done a set number of times. Until it is time,
+  they do not offer it. Add <ansi fg="command">all</ansi> to the list to see each one you finished:
+
+  <ansi fg="yellow">Ready to take on again</ansi>   talk to the person and take it once more.
+  <ansi fg="yellow">Not offered again yet</ansi>    wait a while, then it comes back.
+  <ansi fg="yellow">Done for good</ansi>            you have done it as often as it allows.
+
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">quests</ansi>              Show the quests you are working on

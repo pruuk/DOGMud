@@ -195,6 +195,11 @@ check for authors.
 
 **Goal.** Every quest is offered, accepted, finished and chained through the menu.
 
+**Spec:** `docs/superpowers/specs/2026-10-24-quest-arc-phase2-loop-design.md` (rulings P1 to P6
+there). **Plans:** `docs/superpowers/plans/2026-10-24-quest-arc-phase2a-loop.md` (2a: card,
+hand-in, repeats, loop validators, step-id manifest); plan 2b (the completability
+walkthrough): not written yet.
+
 **Approach.**
 - Offer card: extends phase 1's bare Accept / Leave with the objective (current step's
   description) and a reward summary in words where the player-copy rules require it.
@@ -220,10 +225,11 @@ check for authors.
 **Exit.** A test quest goes offer, accept, steps, finish, next offer through the menu; the
 validators report the current backlog; repeat limit enforced.
 
-**Spec questions.** Whether repeat frequency stays in rounds or moves to game days or real
-time; exactly what counts as "one action" for the validator.
+**Spec questions (answered).** Repeat frequency stays in rounds (`cooldown_rounds`) and the
+limit is an optional lifetime cap (P3); "one action" is a structural rule that allows several
+alternative ways into a step (P4).
 
-**Status:** not started.
+**Status:** 2a implemented on `feat/375-phase2a-loop` (not yet merged). 2b not started.
 
 ## Phase 3: Action triggers (engine half)
 

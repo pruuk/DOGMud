@@ -22,6 +22,18 @@ package owns everything that needs a user, a room or a mob.
 
 ## Rules
 
+- The offer card carries a `Body` (`card.go`): the first step's description,
+  the reward line, and for a repeatable the "again" line (and a last-time line
+  when `Character.LastRepeat`). An offer on cooldown or at its cap is not
+  eligible (`dialogue.PlayerState.QuestOpen`), so it shows no `[!]` and no card.
+- A hand-in that grants a quest's final token calls `queueNextOffer`. When
+  exactly one offer on this NPC is gated on that token, `events.TalkNextOffer`
+  is queued at `events.TalkNextOfferPriority` (45): after the completion banner
+  and reward lines (priority 0, queued by `GiveQuest`) and before a menu shown
+  last (priority 50), so the player reads completion, then the next pitch and
+  card. Several next offers, or none, re-show the menu as before (the offers
+  wait with their `[!]`). `HandleTalkNextOffer` says nothing while a menu gate
+  holds or a prompt is open.
 - Observers see a conversation, never a menu: the player's line and the NPC's
   answer go to the room through `actions.Say`; menus, cards and hints go to the
   player only.

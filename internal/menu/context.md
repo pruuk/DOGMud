@@ -34,6 +34,10 @@ send the text. Part of the quest-arc phase 0 work (#375).
 `Menu` is a heading, entries and an optional final Leave entry:
 
 - `Heading`, `Entries`.
+- `Body`: optional paragraphs between the heading and the entries (#375 phase
+  2: the offer card's objective and reward). Each is wrapped at 80 columns on
+  its own line(s); `Render` puts a blank line after the heading and one after
+  the last paragraph. `LintLabels` does not read it.
 - `Leave`: label of the final numbered leave entry; `""` for none.
 - `LeaveAliases`: extra exact words that pick Leave, checked before the
   number branch (so a builder's "0" can mean done); ignored when `Leave` is

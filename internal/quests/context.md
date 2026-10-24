@@ -131,6 +131,41 @@ type QuestReward struct {
 }
 ```
 
+`QuestReward` also carries two offer-card fields (#375 phase 2, P2):
+
+- `Summary` (`rewards.summary`): an authored sentence that replaces the
+  generated reward line on the offer card. The loop validator's `reward` rule
+  requires it to name every item, recipe and spell the quest pays, unless
+  `Surprise` is set.
+- `Surprise` (`rewards.surprise`): the reward is deliberately not spelled out;
+  the card shows only the `Summary`. Setting it with no `Summary` is a finding.
+
+`Quest.RepeatLimit` (`repeat_limit`, #375 P3) is the lifetime number of
+completions of a repeatable; 0 means no cap. The loop `repeat` rule refuses it
+on a non-repeatable and when negative. `characters.Character.QuestCompletions`
+counts runs, and the offer is hidden at the cap.
+
+`RewardSummary(q, names)` (`rewardsummary.go`) is the card's reward text: the
+authored `Summary` when set, else the payout in words, with gold and stockpile
+counts the only numbers shown. `RewardNames{Item, Recipe, Spell, Faction}` are
+the injected name lookups (`internal/questworld.Names()` fills them, so this
+package imports no registry). `RewardPaidNames(q, names)` lists the item,
+recipe and spell names the quest pays, in the summary's order, for the `reward`
+rule.
+
+`rewardparse.go` holds the reward-string parsers, moved here from
+`internal/hooks` so the card and the completion hook read one grammar:
+`ParseSkillGrants`, `ParseStatGrants`, `ParseRecipeGrants`, `ParseItemGrants`
+and the types `SkillGrant`, `StatGrant`, `ItemGrant`.
+
+`manifest.go` is the step-id manifest, mirroring `dialogue/manifest.go` over
+`internal/manifest`: `ParseStepManifest`, `StepTokens(qs)` (every
+`<questId>-<stepId>`) and `StepRenames()` (the shipped
+`quests/step-ids.txt` renames; `users.LoadUser` hands them to
+`Character.RenameQuestSteps`). The root guard `step_manifest_test.go` holds the
+file to content: a step id leaves a quest only through a `# retired` or
+`# renamed` line.
+
 There is no experience/XP field. DOGMud removed character levels and XP
 entirely; skill and stat rewards (`SkillInfo`, `StatInfo`) are the
 progression-granting rewards. `SkillInfo` grants are floor-raises: a grant
@@ -498,7 +533,7 @@ if reward.ItemId > 0 {
     character.StoreItem(item)
 }
 
-// Multi-item stockpile reward (ItemInfo): see parseItemGrants in
+// Multi-item stockpile reward (ItemInfo): see ParseItemGrants (rewardparse.go) and
 // internal/hooks/Quest_HandleQuestUpdate.go for the real grant loop.
 ```
 
@@ -587,22 +622,22 @@ func distributeRewards(questUser *users.UserRecord, rewards QuestReward) {
         character.StoreItem(item)
     }
     // Item-stockpile reward (rewards.ItemInfo) grants N of each listed
-    // item. See parseItemGrants.
+    // item. See ParseItemGrants.
 
     // Skill reward(s): floor-raise, never downgrades
-    for _, grant := range parseSkillGrants(rewards.SkillInfo) {
-        if character.GetSkillLevel(skills.SkillTag(grant.skill)) < grant.level {
-            character.TrainSkill(grant.skill, grant.level)
+    for _, grant := range quests.ParseSkillGrants(rewards.SkillInfo) {
+        if character.GetSkillLevel(skills.SkillTag(grant.Skill)) < grant.Level {
+            character.TrainSkill(grant.Skill, grant.Level)
         }
     }
 
     // Stat reward(s): always additive
-    for _, grant := range parseStatGrants(rewards.StatInfo) {
-        character.IncreaseStat(grant.stat, grant.amount)
+    for _, grant := range quests.ParseStatGrants(rewards.StatInfo) {
+        character.IncreaseStat(grant.Stat, grant.Amount)
     }
 
     // Recipe reward(s)
-    for _, recipeId := range parseRecipeGrants(rewards.RecipeInfo) {
+    for _, recipeId := range quests.ParseRecipeGrants(rewards.RecipeInfo) {
         character.LearnRecipe(recipeId)
     }
 
@@ -1017,7 +1052,10 @@ maintainers know the quests are coupled.
 | `roomtext.go` | `RoomTextProblems` and the observer-line rule `Validate` enforces (every quest room line names `{actor}`, walking nested sequences) |
 | `narration.go` | `ActionDef.Narration`/`Narrate`, `QuestReward.Narration`/`Narrate`, `validateNarration` |
 | `samecommand.go` | `validateSameCommandChains`, which `Validate` runs: the engine fires every matching trigger in file order against live state, so a trigger may not grant, give, consume or set what a later trigger on the same event requires when one command can match both (#495); put the "already done" trigger first |
-| `validate_refs.go` | Cross-reference validation (flags, tokens, ids) |
+| `validate_refs.go` | Cross-reference validation (flags, tokens, ids); the live existence checks come from `questworld.Validators()` and the loop validators (`internal/questloop`) run it at boot, CI and editor save |
+| `rewardparse.go` | `ParseSkillGrants`, `ParseStatGrants`, `ParseRecipeGrants`, `ParseItemGrants` and their grant types (moved from `internal/hooks`) |
+| `rewardsummary.go` | `RewardNames`, `RewardSummary`, `RewardPaidNames`: the offer card's reward line |
+| `manifest.go` | `ParseStepManifest`, `StepTokens`, `StepRenames`: the step-id manifest (`quests/step-ids.txt`) |
 | `test_helpers.go` | `SeedQuestsForTest(qs ...*Quest) func()`: adds quests to the registry for a test (test binaries load no quest data, and `Character.HasQuest` past a quest's start step reads its step order) and returns the restore |
 
 **This package owns the data; `internal/questengine` owns the evaluation.**
