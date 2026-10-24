@@ -461,9 +461,13 @@ delivered and no writer goroutine outlives it.
 Copyover (`fd_unix.go`): execve discards this process's goroutines, so
 `CopyoverSave` queues the websocket `RELOGTKN` lines and then flushes every
 connection (`flushAllForCopyover`, `writeTimeout` in total) before handing
-over the telnet fds. A client too slow to drain in time loses its tail and a
-WARN is logged. The flush runs under the registry lock; that cannot deadlock
-because a failing writer marks its queue idle before it calls `Remove`.
+over the telnet fds. A client too slow to drain in time loses its tail and
+`WARN CopyoverFlush ... error="output still queued at handoff"` is logged for
+it; a connection already idle is skipped without a WARN even when the budget
+ran out on an earlier one. The flush runs under the registry lock; that cannot
+deadlock because a failing writer marks its queue idle before it calls
+`Remove`. `flushAllForCopyover(conns, budget)` lives in `copyover.go` (not the
+Unix-only file) so its logic is tested on every platform.
 
 `sendQueue.flush(timeout)` is the general "wait until everything queued so far
 is written" primitive.

@@ -170,6 +170,13 @@ func (q *sendQueue) flush(timeout time.Duration) bool {
 	}
 }
 
+// idleNow reports, without waiting, whether nothing is queued or in flight.
+func (q *sendQueue) idleNow() bool {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.isIdle
+}
+
 // run is the connection's writer goroutine.
 func (q *sendQueue) run() {
 	defer close(q.done)
