@@ -25,7 +25,15 @@ A copyover can be initiated in several ways:
 All methods ultimately call `triggerCopyover()` in `copyover.go` (package
 `main`), which:
 
-1. Sets `serverAlive` to `false` to stop accepting new connections.
+1. Calls `pauseAccepting()` (sets `acceptPaused`): the telnet accept loops
+   send a "server is restarting" line to any new connection, close it, and
+   keep accepting. A deferred `resumeAccepting()` lifts the pause on every
+   path that returns to the running server (the save-flush abort, an
+   `Execute` error, a panic). `serverAlive` is the shutdown flag only and
+   copyover never touches it; before #670 copyover cleared it, and a
+   connection arriving mid-copyover ended that listener's accept loop for
+   good if the copyover then failed. The websocket path never read either
+   flag.
 2. Flushes rooms, users, and plugins to disk.
 3. Calls `copyover.Execute(binaryPath, os.Args[1:])`.
 
