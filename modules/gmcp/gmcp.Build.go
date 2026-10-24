@@ -1159,7 +1159,9 @@ func sendZoneMapFull(uid int, zone string) {
 
 	payload := GMCPZoneModule_Payload{
 		Zone:   zone,
+		Party:  []int{},
 		Rooms:  snap,
+		Full:   true,            // the builder snapshot is always the whole zone (#650)
 		Zones:  zoneNames,       // let the builder switch to any zone
 		Biomes: validBiomeIds(), // for the new-zone / inspector biome dropdowns
 	}

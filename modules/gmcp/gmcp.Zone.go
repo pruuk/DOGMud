@@ -2,6 +2,7 @@ package gmcp
 
 import (
 	"sort"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
@@ -15,6 +16,13 @@ import (
 
 type GMCPZoneModule struct {
 	plug *plugins.Plugin
+
+	// zoneSent is what each player's client was last sent as a Zone.Map, so a
+	// move sends only what changed (#650). Keyed by user id, cleared on
+	// PlayerDespawn. Every handler runs on the event loop today; the mutex is
+	// cheap insurance.
+	zoneMu   sync.Mutex
+	zoneSent map[int]*zoneSentState
 }
 
 // GMCPZoneUpdate asks the system to (re)send the explored-zone map snapshot.
@@ -26,19 +34,39 @@ func (g GMCPZoneUpdate) Type() string { return `GMCPZoneUpdate` }
 
 type GMCPZoneModule_Payload struct {
 	Zone     string                `json:"zone"`
-	CurrentZ int                   `json:"cz"`              // z-level (floor) of the player's current room
-	Party    []int                 `json:"party,omitempty"` // room IDs currently holding party members
+	CurrentZ int                   `json:"cz"`    // z-level (floor) of the player's current room
+	Party    []int                 `json:"party"` // room IDs currently holding party members; always sent, [] when none
 	Rooms    []mapper.SnapshotRoom `json:"rooms"`
-	Zones    []string              `json:"zones,omitempty"`  // all zone names (builder zone-switcher only; empty for the play client)
-	Biomes   []string              `json:"biomes,omitempty"` // valid biome ids (builder new-zone form; empty for the play client)
+	// Full is true when Rooms is every room to draw (the client resets the
+	// floor first) and false when Rooms holds only new or changed rooms, to
+	// merge into what the client already has (#650).
+	Full   bool     `json:"full"`
+	Zones  []string `json:"zones,omitempty"`  // all zone names (builder zone-switcher only; empty for the play client)
+	Biomes []string `json:"biomes,omitempty"` // valid biome ids (builder new-zone form; empty for the play client)
 }
 
 func init() {
-	g := GMCPZoneModule{
-		plug: plugins.New(`gmcp.Zone`, `1.0`),
+	// One instance, by pointer, so every handler shares zoneSent and zoneMu.
+	g := &GMCPZoneModule{
+		plug:     plugins.New(`gmcp.Zone`, `1.0`),
+		zoneSent: map[int]*zoneSentState{},
 	}
 	events.RegisterListener(events.RoomChange{}, g.roomChangeHandler)
 	events.RegisterListener(GMCPZoneUpdate{}, g.buildAndSend)
+	events.RegisterListener(events.PlayerDespawn{}, g.zoneDespawnHandler)
+}
+
+// zoneDespawnHandler forgets what was sent, so the next login gets a full map.
+func (g *GMCPZoneModule) zoneDespawnHandler(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.PlayerDespawn)
+	if !ok {
+		mudlog.Error("Event", "Expected Type", "PlayerDespawn", "Actual Type", e.Type())
+		return events.Cancel
+	}
+	g.zoneMu.Lock()
+	delete(g.zoneSent, evt.UserId)
+	g.zoneMu.Unlock()
+	return events.Continue
 }
 
 func (g *GMCPZoneModule) roomChangeHandler(e events.Event) events.ListenerReturn {
@@ -105,11 +133,29 @@ func (g *GMCPZoneModule) buildAndSend(e events.Event) events.ListenerReturn {
 		}
 	}
 
+	// Send the whole map only on a new connection, a zone change or a floor
+	// change; otherwise only the rooms that are new or changed, or nothing
+	// (#650). A fully explored character used to get about 271 KB per step.
+	g.zoneMu.Lock()
+	d := zoneDiff(g.zoneSent[evt.UserId], user.ConnectionId(), room.Zone, cz, party, m.Snapshot(visited))
+	g.zoneSent[evt.UserId] = d.next
+	g.zoneMu.Unlock()
+	if !d.send {
+		return events.Continue
+	}
+
 	payload := GMCPZoneModule_Payload{
 		Zone:     room.Zone,
 		CurrentZ: cz,
-		Party:    party,
-		Rooms:    m.Snapshot(visited),
+		Party:    d.party,
+		Rooms:    d.rooms,
+		Full:     d.full,
+	}
+	if payload.Party == nil {
+		payload.Party = []int{}
+	}
+	if payload.Rooms == nil {
+		payload.Rooms = []mapper.SnapshotRoom{} // a party-only send
 	}
 
 	events.AddToQueue(GMCPOut{
@@ -118,7 +164,7 @@ func (g *GMCPZoneModule) buildAndSend(e events.Event) events.ListenerReturn {
 		Payload: payload,
 	})
 
-	mudlog.Debug("gmcp.Zone", "userId", evt.UserId, "zone", room.Zone, "rooms", len(payload.Rooms))
+	mudlog.Debug("gmcp.Zone", "userId", evt.UserId, "zone", room.Zone, "full", payload.Full, "rooms", len(payload.Rooms))
 	return events.Continue
 }
 
