@@ -1180,9 +1180,9 @@ type GMCPCharModule_Payload_Worth struct {
 // Char.Quests
 // /////////////////
 type GMCPCharModule_Payload_Quest struct {
-	Id          int    `json:"id"`
-	Name        string `json:"name"`
-	Repeatable  bool   `json:"repeatable,omitempty"` // the panel tags it "(repeatable)" (#375 P6)
+	Id         int    `json:"id"`
+	Name       string `json:"name"`
+	Repeatable bool   `json:"repeatable,omitempty"` // the panel tags it "(repeatable)" (#375 P6)
 	// Status is set only on a finished repeatable: "ready" (can be taken
 	// again) or "waiting" (on cooldown). Such a row has no description,
 	// hint or target and cannot be focused (#375 P6).
