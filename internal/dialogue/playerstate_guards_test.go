@@ -83,6 +83,7 @@ func TestApplyQuestEffects_PopulatedStateFiresEverything(t *testing.T) {
 	var removed, given, granted, flagged, bumped, gold bool
 
 	ps := &PlayerState{
+		QuestOpen:    func(int) bool { return true },
 		HasQuest:     func(string) bool { return false },
 		HasItem:      func(int) bool { return true },
 		RemoveItem:   func(int) bool { removed = true; return true },

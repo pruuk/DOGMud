@@ -24,6 +24,7 @@ func TestApply_ChargesGold_PaysThenGrants(t *testing.T) {
 	var granted []string
 	var charged []int
 	ps := &PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasQuest:  func(string) bool { return false },
 		GiveQuest: func(tok string) { granted = append(granted, tok) },
 		HasGold:   func(a int) bool { return gold >= a },
@@ -48,6 +49,7 @@ func TestApply_ChargesGold_PaysThenGrants(t *testing.T) {
 func TestApply_ChargesGold_FailedChargeGrantsNothing(t *testing.T) {
 	var granted []string
 	ps := &PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasQuest:  func(string) bool { return false },
 		GiveQuest: func(tok string) { granted = append(granted, tok) },
 		// The check says yes; by the time of the charge the gold is gone.
@@ -64,6 +66,7 @@ func TestApply_ChargesGold_FailedChargeGrantsNothing(t *testing.T) {
 func TestApply_ChargesGold_NilCallbackFailsClosed(t *testing.T) {
 	var granted []string
 	ps := &PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasQuest:  func(string) bool { return false },
 		GiveQuest: func(tok string) { granted = append(granted, tok) },
 		HasGold:   func(int) bool { return true },
@@ -84,6 +87,7 @@ func TestApply_ChargesGold_RefundsOnFailedDelivery(t *testing.T) {
 	}}}
 	var granted []string
 	ps := &PlayerState{
+		QuestOpen:  func(int) bool { return true },
 		HasQuest:   func(string) bool { return false },
 		GiveQuest:  func(tok string) { granted = append(granted, tok) },
 		HasGold:    func(a int) bool { return gold >= a },

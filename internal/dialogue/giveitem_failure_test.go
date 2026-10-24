@@ -21,6 +21,7 @@ func failingGiveState(delivered bool) (*PlayerState, *bool, *bool, *bool, *bool,
 	goldGiven := false
 	heard := map[string]bool{}
 	ps := &PlayerState{
+		QuestOpen:  func(int) bool { return true },
 		HasQuest:   func(string) bool { return false },
 		HasItem:    func(int) bool { return true },
 		RemoveItem: func(int) bool { removed = true; return true },
@@ -95,6 +96,7 @@ func TestApply_NilGiveItemCallback_StillGrants(t *testing.T) {
 	df := failedDeliveryFile()
 	granted := false
 	ps := &PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasQuest:  func(string) bool { return false },
 		HasItem:   func(int) bool { return true },
 		GiveQuest: func(string) { granted = true },

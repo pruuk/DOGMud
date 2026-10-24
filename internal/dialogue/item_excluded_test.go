@@ -21,6 +21,7 @@ func TestEligible_ItemExcludedHidesAHandoutFromAHolder(t *testing.T) {
 	carries := false
 	var given []int
 	ps := &PlayerState{
+		QuestOpen:   func(int) bool { return true },
 		HasQuest:    func(string) bool { return false },
 		CarriesItem: func(id int) bool { return carries && id == 30064 },
 		GiveItem:    func(id int) bool { given = append(given, id); return true },
@@ -42,8 +43,9 @@ func TestEligible_ItemExcludedFallsBackToHasItem(t *testing.T) {
 		Gates: Gates{ItemExcluded: 40017},
 	}}}
 	ps := &PlayerState{
-		HasQuest: func(string) bool { return false },
-		HasItem:  func(id int) bool { return id == 40017 },
+		QuestOpen: func(int) bool { return true },
+		HasQuest:  func(string) bool { return false },
+		HasItem:   func(id int) bool { return id == 40017 },
 	}
 	assert.False(t, df.Eligible(df.FindTopic("salt"), ps))
 }
@@ -54,6 +56,7 @@ func TestOpenerFor_ItemExcludedHidesAVariant(t *testing.T) {
 		Variants: []OpenerVariant{{Gates: Gates{ItemExcluded: 10038}, Text: "You have no sling."}},
 	}}
 	ps := &PlayerState{
+		QuestOpen:   func(int) bool { return true },
 		HasQuest:    func(string) bool { return false },
 		CarriesItem: func(id int) bool { return id == 10038 },
 	}

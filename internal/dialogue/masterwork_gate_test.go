@@ -20,6 +20,7 @@ func TestEligible_MasterworkGate(t *testing.T) {
 	// hasMasterwork toggled by the test to flip HasOwnMasterwork's answer.
 	hasMasterwork := false
 	ps := &PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasQuest:  func(token string) bool { return false },
 		GiveQuest: func(token string) {},
 		HasOwnMasterwork: func(skillMin int) bool {
@@ -35,6 +36,7 @@ func TestEligible_MasterworkGate(t *testing.T) {
 	// Backward compat: a PlayerState with a nil HasOwnMasterwork callback must
 	// not block the gated topic (the nil-guard skips the check entirely).
 	legacyPs := &PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasQuest:  func(token string) bool { return false },
 		GiveQuest: func(token string) {},
 	}
