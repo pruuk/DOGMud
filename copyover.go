@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/apiframework"
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/caravan"
+	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/copyover"
 	"github.com/GoMudEngine/GoMud/internal/forager"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
@@ -111,5 +112,14 @@ func triggerCopyover() error {
 		mudlog.Error("copyover", "action", "plugins.Save", "error", err)
 	}
 
-	return copyover.Execute(binaryPath, os.Args[1:])
+	// On success Execute never returns. If it fails after the connections
+	// contributor froze output for the handoff, the server keeps running, so
+	// lift the freeze or every player is left with no output. serverAlive is
+	// restored as the save-flush abort above does.
+	if err := copyover.Execute(binaryPath, os.Args[1:]); err != nil {
+		connections.ThawOutputAfterFailedCopyover()
+		serverAlive.Store(true)
+		return err
+	}
+	return nil
 }

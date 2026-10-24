@@ -20,6 +20,15 @@ func (c *connectionsCopyoverContributor) CopyoverSave(enc *copyover.Encoder) err
 		ConnectCounter: connectCounter,
 	}
 
+	// Writes are queued (sendqueue.go), and execve discards this process's
+	// goroutines, so whatever is still queued when the image is replaced is
+	// lost. Flush every connection before handing over: websocket clients
+	// must actually receive their RELOGTKN, and a telnet client must not be
+	// left with half of a message. Bounded by writeTimeout in total; a client
+	// too slow to drain in that time loses its tail, the same outcome its
+	// next write would have had. The flush runs at the end of this function,
+	// once the reconnect tokens below are queued.
+
 	for id, cd := range netConnections {
 		if cd.IsWebSocket() {
 			if IssueWebSocketReconnectToken != nil {
@@ -52,6 +61,14 @@ func (c *connectionsCopyoverContributor) CopyoverSave(enc *copyover.Encoder) err
 			ClientSettings: cd.clientSettings,
 		})
 	}
+
+	// Freeze output here: the reconnect tokens above are already queued, so
+	// they and everything before them are delivered by the flush, while any
+	// prompt redraw a reader goroutine queues from now on is dropped instead
+	// of being caught mid-write by execve. Lifted only if the copyover fails
+	// (ThawOutputAfterFailedCopyover).
+	freezeOutput()
+	flushAllForCopyover(netConnections, writeTimeout)
 
 	return enc.WriteSection(c.CopyoverName(), state)
 }
