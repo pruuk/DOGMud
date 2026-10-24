@@ -15,6 +15,7 @@ func TestQuestOpen_NonRepeatableAlwaysOpen(t *testing.T) {
 }
 
 func TestQuestOpen_CooldownAndCap(t *testing.T) {
+	t.Cleanup(util.ResetRoundCountForTest)
 	util.SetRoundCountForTest(1000)
 	q := &quests.Quest{QuestId: 53, Repeatable: true, CooldownRounds: 300, RepeatLimit: 2}
 	c := &Character{}
@@ -35,6 +36,7 @@ func TestQuestOpen_CooldownAndCap(t *testing.T) {
 }
 
 func TestQuestOpen_NoLimitNeverCaps(t *testing.T) {
+	t.Cleanup(util.ResetRoundCountForTest)
 	util.SetRoundCountForTest(1000)
 	q := &quests.Quest{QuestId: 54, Repeatable: true, CooldownRounds: 1}
 	c := &Character{}
@@ -44,6 +46,20 @@ func TestQuestOpen_NoLimitNeverCaps(t *testing.T) {
 	util.SetRoundCountForTest(2000)
 	require.True(t, c.QuestOpen(q))
 	require.False(t, c.LastRepeat(q))
+}
+
+// The tests above set the round count below util.RoundCountMinimum; each
+// must put it back so a later test in the package does not run on a clock
+// the game can never show.
+func TestQuestOpen_TestsRestoreTheRoundCount(t *testing.T) {
+	for name, fn := range map[string]func(*testing.T){
+		"CooldownAndCap":   TestQuestOpen_CooldownAndCap,
+		"NoLimitNeverCaps": TestQuestOpen_NoLimitNeverCaps,
+	} {
+		util.ResetRoundCountForTest()
+		t.Run(name, fn)
+		require.Equal(t, uint64(util.RoundCountMinimum), util.GetRoundCount(), "%s left the round count changed", name)
+	}
 }
 
 func TestQuestCompletions_YAMLRoundTrip(t *testing.T) {

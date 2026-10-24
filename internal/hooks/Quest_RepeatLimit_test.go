@@ -28,6 +28,7 @@ func TestRepeatLimit_CountsEachCompletion(t *testing.T) {
 	defer quests.SeedQuestsForTest(repeatQuest(2))()
 	u := users.NewTestUser(531, "repeatuser", "RepeatUser", 5031)
 	defer users.SeedUsersForTest(map[int]*users.UserRecord{531: u})()
+	t.Cleanup(util.ResetRoundCountForTest)
 	util.SetRoundCountForTest(1000)
 
 	runOnce(t, 531)
@@ -42,6 +43,7 @@ func TestRepeatLimit_RefusesStartAtCap(t *testing.T) {
 	u := users.NewTestUser(532, "capuser", "CapUser", 5032)
 	defer users.SeedUsersForTest(map[int]*users.UserRecord{532: u})()
 	u.Character.QuestCompletions = map[int]int{999053: 2}
+	t.Cleanup(util.ResetRoundCountForTest)
 	util.SetRoundCountForTest(5000)
 	events.DrainQueuedMessagesForTest(532)
 
@@ -51,11 +53,26 @@ func TestRepeatLimit_RefusesStartAtCap(t *testing.T) {
 	require.Contains(t, lines, "You have done all of this work there is to do.")
 }
 
+// The repeat-limit tests set the round count below util.RoundCountMinimum;
+// each must put it back for the tests that follow.
+func TestRepeatLimit_TestsRestoreTheRoundCount(t *testing.T) {
+	for name, fn := range map[string]func(*testing.T){
+		"CountsEachCompletion":  TestRepeatLimit_CountsEachCompletion,
+		"RefusesStartAtCap":     TestRepeatLimit_RefusesStartAtCap,
+		"NoLimitKeepsRepeating": TestRepeatLimit_NoLimitKeepsRepeating,
+	} {
+		util.ResetRoundCountForTest()
+		t.Run(name, fn)
+		require.Equal(t, uint64(util.RoundCountMinimum), util.GetRoundCount(), "%s left the round count changed", name)
+	}
+}
+
 func TestRepeatLimit_NoLimitKeepsRepeating(t *testing.T) {
 	drainEventQueueOnCleanup(t)
 	defer quests.SeedQuestsForTest(repeatQuest(0))()
 	u := users.NewTestUser(533, "againuser", "AgainUser", 5033)
 	defer users.SeedUsersForTest(map[int]*users.UserRecord{533: u})()
+	t.Cleanup(util.ResetRoundCountForTest)
 	for i, round := range []uint64{1000, 1100, 1200} {
 		util.SetRoundCountForTest(round)
 		runOnce(t, 533)
