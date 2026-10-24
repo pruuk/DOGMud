@@ -3,6 +3,7 @@ package connections
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -97,6 +98,10 @@ func (q *sendQueue) setIdleLocked() {
 
 // enqueue appends p (already prepared; the queue owns it) without blocking.
 func (q *sendQueue) enqueue(p []byte) error {
+	if outputFrozen.Load() {
+		return errOutputFrozen
+	}
+
 	q.mu.Lock()
 
 	if q.aborted || q.closing {
@@ -169,6 +174,27 @@ func (q *sendQueue) flush(timeout time.Duration) bool {
 		return false
 	}
 }
+
+// outputFrozen, once set, makes every enqueue drop its output. Copyover sets
+// it in CopyoverSave after the reconnect tokens are queued and before the
+// final flush (fd_unix.go). Without it a reader goroutine could queue a prompt
+// redraw after the flush, and the writer could be mid-write at execve, leaving
+// half an ANSI, IAC or GMCP sequence on a telnet socket the new process then
+// keeps writing to. Output queued before the freeze is still delivered.
+var outputFrozen atomic.Bool
+
+// errOutputFrozen is enqueue's internal "dropped" result; Write reports it as
+// (0, nil) so SendTo and Broadcast do not Remove a connection that is about
+// to be handed over.
+var errOutputFrozen = errors.New("output frozen for copyover")
+
+func freezeOutput() { outputFrozen.Store(true) }
+
+// ThawOutputAfterFailedCopyover lifts the copyover output freeze. A copyover
+// that succeeds replaces the process, so the freeze lasts its lifetime; one
+// that fails after CopyoverSave returns to a live server, and without this
+// every player would be left with no output at all.
+func ThawOutputAfterFailedCopyover() { outputFrozen.Store(false) }
 
 // idleNow reports, without waiting, whether nothing is queued or in flight.
 func (q *sendQueue) idleNow() bool {

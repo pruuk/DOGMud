@@ -316,6 +316,8 @@ func (cd *ConnectionDetails) AddInputHandler(name string, newInputHandler InputH
 // after Close, ErrSendQueueFull when the connection fell too far behind (it
 // has been closed and logged; the caller should Remove it). A socket write
 // that fails later is handled by the writer, which Removes the connection.
+// During a copyover handoff (outputFrozen) output is dropped and Write
+// returns (0, nil).
 func (cd *ConnectionDetails) Write(p []byte) (n int, err error) {
 
 	// A connection removed between snapshot and write (see ErrNoConnection).
@@ -329,6 +331,9 @@ func (cd *ConnectionDetails) Write(p []byte) (n int, err error) {
 	}
 
 	if err := cd.sendQueue().enqueue(p); err != nil {
+		if errors.Is(err, errOutputFrozen) {
+			return 0, nil // dropped: copyover handoff in progress
+		}
 		return 0, err
 	}
 	return len(p), nil

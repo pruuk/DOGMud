@@ -469,6 +469,20 @@ deadlock because a failing writer marks its queue idle before it calls
 `Remove`. `flushAllForCopyover(conns, budget)` lives in `copyover.go` (not the
 Unix-only file) so its logic is tested on every platform.
 
+**Output freeze (`outputFrozen`, sendqueue.go).** Reader goroutines keep
+running during `CopyoverSave` and can queue a prompt redraw after the flush;
+the writer could then be mid-write at execve and leave half an ANSI, IAC or
+GMCP sequence on a telnet socket the new process inherits. So `CopyoverSave`
+calls `freezeOutput()` after the `RELOGTKN` lines are queued and immediately
+before `flushAllForCopyover`. From then on `enqueue` drops everything, and
+`Write` returns `(0, nil)` (not an error, so `SendTo`/`Broadcast` do not
+`Remove` a connection that is about to be handed over). What was queued
+before the freeze, the reconnect tokens included, is still written by the
+flush. A successful copyover replaces the process, so the freeze lasts its
+lifetime; if `copyover.Execute` fails, `triggerCopyover` (root `copyover.go`)
+calls `ThawOutputAfterFailedCopyover()` so the still-running server gets its
+output back. Windows `CopyoverSave` never freezes (copyover is refused there).
+
 `sendQueue.flush(timeout)` is the general "wait until everything queued so far
 is written" primitive.
 
