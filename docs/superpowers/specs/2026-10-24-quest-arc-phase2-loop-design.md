@@ -2,7 +2,7 @@
 
 > Epic #375, phase 2. Target: `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`. Route:
 > `docs/roadmaps/QUEST_DIALOGUE_ROADMAP.md`. Builds on phase 1 (PR #661, `feea56908`).
-> Owner rulings from the 2026-10-24 brainstorm are numbered P1 to P6 below and are not to be
+> Owner rulings from the 2026-10-24 brainstorm are numbered P1 to P7 below and are not to be
 > re-asked. One spec, two plans (P5): plan 2a is sections 3 to 6, plan 2b is section 7.
 
 ## 1. Facts verified against source (master `fd18743db`, 2026-10-24)
@@ -79,6 +79,7 @@ Line numbers were read from the files at that commit.
   feedback): the offer card says so, the text and web quest lists tag it `(repeatable)`, and
   `quests all` and the web quest panel show finished repeatables with whether they can be
   taken again; the panel leaves out those done for good (section 4.3).
+- **P7 The admin quest editor is off until phase 6** (owner 2026-10-24): a create or edit there could save a quest that fails the loop rules and stops the next boot; the editor-save loop door (5.4) stays in place for phase 6.
 
 ## 3. Offer card
 
@@ -313,7 +314,7 @@ at the same place:
 |---|---|
 | Boot | `validateShippedQuests` in a new `main_quests.go`, called beside `validateShippedDialogue`, through the same door and reload semantics as `dialogueDoor` |
 | CI | `TestSmoke_ShippedQuestsPassTheLoop` (repo root) |
-| Editor save | `modules/gmcp/gmcp.Quest.go` runs `questloop.Validate` over the registry world before and after the edited quest is swapped in, after `ValidateQuestRefs`. It refuses only findings the edit adds (not in the world before, not on the list) and warns about the edited quest's other findings. The swapped-in world's step and flag checks read the edited quest, so a step rename that breaks another quest is refused at save |
+| Editor save | `modules/gmcp/gmcp.Quest.go` runs `questloop.Validate` over the registry world before and after the edited quest is swapped in, after `ValidateQuestRefs`. It refuses only findings the edit adds (not in the world before, not on the list) and warns about the edited quest's other findings. The swapped-in world's step and flag checks read the edited quest, so a step rename that breaks another quest is refused at save. Dormant while the editor is off (P7): `refuseQuestBuild` refuses every `Build.Quest.Get/Update/Create/Delete` before dispatch, and phase 6 re-enables this door |
 
 ### 5.5 Step-id manifest
 

@@ -214,14 +214,15 @@
     if (!host) return;
     host.innerHTML = "";
 
-    var newBtn = ce("button", { "class": "newitem", text: "+ New Quest" });
-    newBtn.addEventListener("click", function () {
-      if (Panel.dirty && !window.confirm("Discard unsaved quest changes?")) return;
-      var name = window.prompt("New quest — name?", "");
-      if (name === null || !name.trim()) return;
-      gmcp("Build.Quest.Create", { name: name.trim() });
-    });
-    host.appendChild(newBtn);
+    // The quest editor is off (quest arc phase 2a, P7): a save could break the
+    // quest loop rules and stop the next boot. The server refuses Build.Quest.Get,
+    // Update, Create and Delete; say so here instead of offering their buttons.
+    host.appendChild(ce("div", {
+      "class": "quest-off",
+      style: "font-size:12px;color:var(--gold-dim);margin:6px 0;",
+      text: "Quest editing is off for now. The quest builder arrives in quest arc phase 6. " +
+        "Until then, edit quest files in the repo. The list below is read-only."
+    }));
 
     var search = ce("input", { type: "text", placeholder: "search id or name" });
     search.value = this.search;
@@ -247,12 +248,7 @@
       row.appendChild(ce("span", { "class": "mzone", text: "  " + r.stepCount + " steps · " + r.triggerCount + " triggers" }));
       if (r.secret) row.appendChild(ce("span", { "class": "mbadge", text: "secret" }));
       if (r.repeatable) row.appendChild(ce("span", { "class": "mbadge", text: "repeatable" }));
-      row.addEventListener("click", function () {
-        if (Panel.dirty && !window.confirm("Discard unsaved quest changes?")) return;
-        Panel.selectedId = r.id;
-        Panel.drawRows();
-        gmcp("Build.Quest.Get", { questId: r.id });
-      });
+      // No click-to-open: Build.Quest.Get is refused while the editor is off.
       Panel.listBody.appendChild(row);
     });
     if (!shown) this.listBody.appendChild(ce("div", { "style": "color:var(--gold-dim);font-style:italic;padding:8px;", text: "no quests match" }));

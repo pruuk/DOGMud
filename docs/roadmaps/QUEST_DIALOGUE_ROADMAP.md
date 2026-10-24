@@ -328,6 +328,11 @@ dialogue runs `ValidateDialogueFile` with `RegistryValidators()`
 (`modules/gmcp/gmcp.Dialogue.go:76`); quests run `Validate()` and `ValidateQuestRefs`
 (`modules/gmcp/gmcp.Quest.go:223,226`). Errors block the save; warnings are shown.
 
+**Editors are off until this phase.** The dialogue editor has been off since phase 1. The quest
+editor is off since phase 2a (P7, owner 2026-10-24): `refuseQuestBuild` refuses its get, update,
+create and delete messages, and the editor-save loop door in `buildQuestUpdate` is ready for
+this phase to re-enable.
+
 **Approach: cannot save it malformed.**
 1. Every rule lives in the shared validators, never only in client JavaScript. The server is
    the authority.

@@ -68,6 +68,20 @@ func refuseDialogueBuild(cmd string) (BuildResult, bool) {
 	return BuildResult{}, false
 }
 
+// refuseQuestBuild reports whether cmd is one of the Build.Quest.* messages
+// that read or write a quest file, and the refusal to send for it. A create or
+// edit in the old editor could save a quest that fails the quest loop rules and
+// stops the next boot (owner ruling P7). Build.Quest.List is read-only and stays
+// open. The loop door in buildQuestUpdate is ready for phase 6, which re-enables
+// the editor.
+func refuseQuestBuild(cmd string) (BuildResult, bool) {
+	switch cmd {
+	case `Build.Quest.Get`, `Build.Quest.Update`, `Build.Quest.Create`, `Build.Quest.Delete`:
+		return buildErr("the quest editor is off until the quest builder ships (quest arc phase 6); edit quest files in the repo"), true
+	}
+	return BuildResult{}, false
+}
+
 // ---- client -> server payloads -----------------------------------------------
 
 type roomCreateReq struct {
@@ -287,6 +301,12 @@ func (g *GMCPModule) handleBuildOp(e events.Event) events.ListenerReturn {
 	// The dialogue editor is off (#375 phase 1): refuse before any dispatch so
 	// no Build.Dialogue.* message can reach a handler that writes a file.
 	if res, refused := refuseDialogueBuild(evt.Command); refused {
+		sendBuildResult(uid, res)
+		return events.Continue
+	}
+	// The quest editor is off (quest arc phase 2a, P7); the loop door in
+	// buildQuestUpdate is ready for phase 6.
+	if res, refused := refuseQuestBuild(evt.Command); refused {
 		sendBuildResult(uid, res)
 		return events.Continue
 	}
