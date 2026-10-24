@@ -28,6 +28,17 @@ func TestCardBody_ObjectiveRewardAndRepeat(t *testing.T) {
 	}, body)
 }
 
+// A repeat run pays no training the character already has, so the card
+// does not promise it.
+func TestCardBody_SkillAlreadyMetLeavesTrainingOut(t *testing.T) {
+	user := users.NewTestUser(7103, "trained", "Trainia", 7103)
+	require.Contains(t, cardBody(cullQuest(), cardNames(user.Character), false),
+		"Reward: 6 gold and training in weapon combat.")
+	user.Character.TrainSkill("weapon-combat", 1)
+	require.Contains(t, cardBody(cullQuest(), cardNames(user.Character), false),
+		"Reward: 6 gold.")
+}
+
 func TestCardBody_LastRun(t *testing.T) {
 	body := cardBody(cullQuest(), quests.RewardNames{}, true)
 	require.Equal(t, "This is the last time this work will be offered to you.", body[len(body)-1])

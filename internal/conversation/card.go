@@ -1,6 +1,25 @@
 package conversation
 
-import "github.com/GoMudEngine/GoMud/internal/quests"
+import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/questworld"
+	"github.com/GoMudEngine/GoMud/internal/skills"
+)
+
+// cardNames are the reward names for c's offer card: the live registry
+// names, plus SkillMet from c's skill levels, read the way the completion
+// payout reads them (Quest_HandleQuestUpdate), so the card never promises
+// training a repeat run would not pay.
+func cardNames(c *characters.Character) quests.RewardNames {
+	n := questworld.Names()
+	if c != nil {
+		n.SkillMet = func(skill string, level int) bool {
+			return c.GetSkillLevel(skills.SkillTag(skill)) >= level
+		}
+	}
+	return n
+}
 
 // The repeat lines on an offer card (#375 P6). No round count: the
 // player-copy rule.

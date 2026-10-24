@@ -16,6 +16,11 @@ type RewardNames struct {
 	Recipe  func(id string) string // recipe name
 	Spell   func(id string) string // spell name
 	Faction func(id string) string // faction display name
+	// SkillMet reports whether the reader already has skill at level or
+	// above. The payout only raises a skill below its target, so a met
+	// grant pays nothing and the summary leaves it out. nil means not met
+	// (every grant shows), which is what a caller with no character wants.
+	SkillMet func(skill string, level int) bool
 }
 
 // RewardSummary is the offer card's reward text (#375 P2): the authored
@@ -56,6 +61,9 @@ func RewardSummary(q *Quest, n RewardNames) string {
 		parts = append(parts, "the spell "+name)
 	}
 	for _, g := range ParseSkillGrants(r.SkillInfo) {
+		if n.SkillMet != nil && n.SkillMet(g.Skill, g.Level) {
+			continue
+		}
 		parts = append(parts, "training in "+strings.ReplaceAll(g.Skill, "-", " "))
 	}
 	for _, g := range ParseStatGrants(r.StatInfo) {

@@ -149,7 +149,10 @@ counts runs, and the offer is hidden at the cap.
 authored `Summary` when set, else the payout in words, with gold and stockpile
 counts the only numbers shown. `RewardNames{Item, Recipe, Spell, Faction}` are
 the injected name lookups (`internal/questworld.Names()` fills them, so this
-package imports no registry). `RewardPaidNames(q, names)` lists the item,
+package imports no registry). The optional `SkillMet(skill, level)` drops a
+skill grant the reader already meets, since the payout only raises a skill
+below its target; nil shows every grant, and only the offer card sets it.
+`RewardPaidNames(q, names)` lists the item,
 recipe and spell names the quest pays, in the summary's order, for the `reward`
 rule.
 

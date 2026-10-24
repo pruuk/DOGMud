@@ -45,6 +45,19 @@ func TestRewardSummary_Table(t *testing.T) {
 	}
 }
 
+// A skill grant the character already meets pays nothing (the payout only
+// raises a skill below its target), so the summary leaves it out.
+func TestRewardSummary_SkillMetDropsTheTraining(t *testing.T) {
+	q := &Quest{Rewards: QuestReward{Gold: 6, SkillInfo: "weapon-combat:1,brewing:2"}}
+	n := testNames()
+	n.SkillMet = func(skill string, level int) bool { return skill == "weapon-combat" && level == 1 }
+	require.Equal(t, "6 gold and training in brewing", RewardSummary(q, n))
+	n.SkillMet = func(string, int) bool { return true }
+	require.Equal(t, "6 gold", RewardSummary(q, n))
+	n.SkillMet = nil
+	require.Equal(t, "6 gold, training in weapon combat, and training in brewing", RewardSummary(q, n))
+}
+
 func TestRewardSummary_OverrideWins(t *testing.T) {
 	q := &Quest{Rewards: QuestReward{Gold: 6, Summary: "Garve will make it worth your while."}}
 	require.Equal(t, "Garve will make it worth your while.", RewardSummary(q, testNames()))
