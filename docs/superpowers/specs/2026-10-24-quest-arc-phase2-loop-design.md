@@ -323,8 +323,8 @@ at the same place:
   `topic-keys.txt`.
 - Parser and `StepRenames()` live in `internal/quests` (`quests/manifest.go`), mirroring
   `dialogue/manifest.go`.
-- `step_manifest_test.go` (repo root) holds the manifest to content, with a `_GuardCanFail`
-  twin.
+- `internal/guards/step_manifest_test.go` holds the manifest to content, with a
+  `_GuardCanFail` twin (written in the root, moved with the other guards by #664).
 - `users.LoadUser` calls `Character.RenameQuestSteps(quests.StepRenames())` next to
   `RenameHeardTopics`. A renamed step's saved progress follows the rename. A retired step is
   left as is and logged, because a retired current step needs a content decision.

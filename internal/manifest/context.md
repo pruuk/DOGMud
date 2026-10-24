@@ -17,4 +17,4 @@ hold these keys, so a key may leave content only through a `# retired` line or a
 
 - `dialogue.ParseManifest`, `dialogue.HeardRenames` (topic keys).
 - `quests.ParseStepManifest`, `quests.StepRenames` (step ids).
-- Root guards `topic_manifest_test.go`, `step_manifest_test.go`.
+- Guards `internal/guards/topic_manifest_test.go` and `internal/guards/step_manifest_test.go`.

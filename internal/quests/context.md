@@ -162,7 +162,7 @@ and the types `SkillGrant`, `StatGrant`, `ItemGrant`.
 `internal/manifest`: `ParseStepManifest`, `StepTokens(qs)` (every
 `<questId>-<stepId>`) and `StepRenames()` (the shipped
 `quests/step-ids.txt` renames; `users.LoadUser` hands them to
-`Character.RenameQuestSteps`). The root guard `step_manifest_test.go` holds the
+`Character.RenameQuestSteps`). The guard `internal/guards/step_manifest_test.go` holds the
 file to content: a step id leaves a quest only through a `# retired` or
 `# renamed` line.
 
