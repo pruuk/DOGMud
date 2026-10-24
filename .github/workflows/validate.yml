@@ -93,6 +93,18 @@ jobs:
           done
           exit "$failed"
 
+      # Static checks on the web client (webclient-pure.html), same contract:
+      # plain node, each file exits non-zero on failure.
+      - name: Run web client tests
+        shell: bash
+        run: |
+          failed=0
+          for t in tools/webclient-tests/*.js; do
+            echo "--- $t"
+            node "$t" || failed=1
+          done
+          exit "$failed"
+
   test:
     runs-on: ubuntu-latest
     steps:
