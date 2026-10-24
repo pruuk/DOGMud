@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -58,11 +59,46 @@ func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
 	t.Logf("quest loop: %d known backlog findings, %d new, %d stale", len(known), len(fresh), len(stale))
 }
 
+// TestQuestDoor_RefusesAFreshFinding: a fresh finding panics at boot and is
+// an error on a reload; known findings alone pass; a backlog that cannot be
+// read refuses the same way.
+func TestQuestDoor_RefusesAFreshFinding(t *testing.T) {
+	mudlog.SetupLogger(nil, `LOW`, ``, false)
+	hint := questloop.Finding{Rule: "hint", QuestId: 1, Where: "step start", Msg: "no hint"}
+	fresh := func() ([]questloop.Finding, []questloop.Finding, []string, error) {
+		return []questloop.Finding{hint}, nil, nil, nil
+	}
+	knownOnly := func() ([]questloop.Finding, []questloop.Finding, []string, error) {
+		return nil, []questloop.Finding{hint}, []string{"end 2 step end"}, nil
+	}
+	unreadable := func() ([]questloop.Finding, []questloop.Finding, []string, error) {
+		return nil, nil, nil, errors.New("loop-backlog.txt line 3: repeated line")
+	}
+	for name, src := range map[string]func() ([]questloop.Finding, []questloop.Finding, []string, error){
+		"fresh": fresh, "unreadable": unreadable,
+	} {
+		if err := questDoorFrom(true, src); err == nil {
+			t.Errorf("%s: a reload must return an error", name)
+		}
+		func() {
+			defer func() {
+				if recover() == nil {
+					t.Errorf("%s: boot must panic", name)
+				}
+			}()
+			_ = questDoorFrom(false, src)
+		}()
+	}
+	if err := questDoorFrom(false, knownOnly); err != nil {
+		t.Errorf("known findings and stale lines must not refuse boot: %v", err)
+	}
+}
+
 // TestQuestLoop_GuardCanFail proves the ratchet refuses an unlisted finding
 // and flags a stale line, without the shipped world.
 func TestQuestLoop_GuardCanFail(t *testing.T) {
-	fs := []questloop.Finding{{Rule: "hint", QuestId: 1, Where: "step 0 (start)"}}
-	fresh, _, stale := questloop.Ratchet(fs, questloop.Backlog{"end 2 step 1 (end)": true})
+	fs := []questloop.Finding{{Rule: "hint", QuestId: 1, Where: "step start"}}
+	fresh, _, stale := questloop.Ratchet(fs, questloop.Backlog{"end 2 step end": true})
 	if len(fresh) != 1 || len(stale) != 1 {
 		t.Fatalf("ratchet did not refuse: fresh %v stale %v", fresh, stale)
 	}

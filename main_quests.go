@@ -26,7 +26,13 @@ func validateShippedQuests() (fresh, known []questloop.Finding, stale []string, 
 // fresh one: a panic at boot, an error on a reload (the dialogueDoor rule).
 // Stale backlog lines are CI's job (quest_loop_smoke_test.go), not boot's.
 func questDoor(isReload bool) error {
-	fresh, known, _, err := validateShippedQuests()
+	return questDoorFrom(isReload, validateShippedQuests)
+}
+
+// questDoorFrom is questDoor over any finding source, so its refusals are
+// testable without the shipped world.
+func questDoorFrom(isReload bool, src func() (fresh, known []questloop.Finding, stale []string, err error)) error {
+	fresh, known, _, err := src()
 	if err != nil {
 		mudlog.Error("quests", "backlog", err.Error())
 		if !isReload {
