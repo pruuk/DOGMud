@@ -409,11 +409,13 @@ write, in queue order, through `cd.writeNow`, each bounded by `writeTimeout`
 websocket alike; one websocket frame per `Write`.
 
 Why (2026-10-24, production lag): `Write` used to write on the game loop.
-Every room change sends a web client a full `Zone.Map` (about 271 KB for a
-well-explored character), so one client whose socket stopped draining froze
+Every room change then sent a web client a full `Zone.Map` (about 271 KB for
+a well-explored character), so one client whose socket stopped draining froze
 the **whole game** for up to 5 s, then got dropped anyway (`SendTo() ... i/o
 timeout` in the log, nothing else for 5 s). Now only that client's writer
-waits.
+waits. Since #650 a web client gets the full map only on login, a zone change
+or a floor change and otherwise only what changed; a telnet GMCP client still
+gets the full map on every update.
 
 Slow-consumer policy:
 

@@ -540,7 +540,13 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   `zoneMapVisited` (`gmcp.Zone.go`) builds the snapshot's room set and adds
   the current room only when the player's `ParticipantSight` is not
   `SightNone`, so a login in the dark does not name the room (#382 playtest).
-- **`Zone.Map` is sent as a diff (#650).** `GMCPZoneModule.zoneSent` holds,
+- **`Zone.Map` is sent as a diff (#650), to the web client only.** A telnet
+  GMCP client (Mudlet scripts, other tools) was written against a map that is
+  every room and may not merge a partial, so `buildAndSend` sends it the whole
+  map with `full: true` on every update and keeps no state for it.
+  `isWebClientConnection` (`gmcp.go`) tells them apart by the `WebClient` name
+  `onNetConnect` gives every websocket, the same test `dispatchGMCP` frames on.
+  For the web client, `GMCPZoneModule.zoneSent` holds,
   per user id, what was last sent (`zoneSentState`: connection id, zone, floor
   `cz`, sorted party, a fingerprint per room), guarded by `zoneMu` and cleared
   by `zoneDespawnHandler` on `events.PlayerDespawn`. `buildAndSend` still
@@ -548,7 +554,10 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   with `full: true` for a new connection id, a zone change or a floor change;
   otherwise `full: false` with only the rooms whose fingerprint is new or
   different; and nothing at all when no room and not the party changed (the
-  usual step into a known room). `party` is on every `Zone.Map` (`[]` when
+  usual step into a known room). A room the mapper has no position for
+  (`GetCoordinates` errors) gets `cz` = `noMapCoordinate` (999999999999999999),
+  the z `Room.Info` reports for it, so stepping into or out of it is a floor
+  change on both sides and brings a full map. `party` is on every `Zone.Map` (`[]` when
   none), and a party change alone sends a partial with no rooms. Rooms are
   never removed, because the visited set only grows. `roomFingerprint` hashes
   each exit in a sorted order, because `mapper.Snapshot` builds exits from a
@@ -560,17 +569,22 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   merges otherwise, and no longer relies on a full map after every step: it
   rebuilds party markers that moved, `centerOnRoom` re-fogs tokens whose
   distance band changed, and the `Room` handler leaves a room a snapshot drew
-  as it is (`fromSnapshot`). `tools/webclient-tests/zone-map-diff.js` runs it.
+  as it is (`fromSnapshot`). Every rebuild of a placed token goes through
+  `_rebuildTokenGroup`, which redraws the room's stair ticks: they live in the
+  token's group and `drawnVerticalTicks` would otherwise stop them being
+  drawn again. `tools/webclient-tests/zone-map-diff.js` runs it.
 - **`Zone.Map.Resync` keeps the two in step (#650).** If the web client's map
   is wiped by anything other than a `full: true` map, the server, which only
   sends what changed, would never redraw it. Two client paths do that: the
   `Room` handler resets when `Room.Info`'s zone or floor differs from the last
-  one (for example a room with no map coordinates reports z 999..., while the
-  server's `cz` stays put), and `setZoneSnapshot` resets on a partial whose zone
-  or floor differs from what is drawn. Both call `RoomGridSVG.requestResync`,
-  which sends GMCP `Zone.Map.Resync` (payload `{}`) through the page's
-  `onResync` option. The `Room` handler waits a 2 s grace first, because on an
-  ordinary zone or floor change the server's full map follows `Room.Info`; a
+  one, and `setZoneSnapshot` resets on a partial whose zone or floor differs
+  from what is drawn. Both call `RoomGridSVG.requestResync`, which sends GMCP
+  `Zone.Map.Resync` (payload `{}`) through the page's `onResync` option. The
+  server keys zone and floor exactly as `Room.Info` does (a room with no map
+  coordinates included), so its full map follows every `Room` handler reset;
+  the handler's wait, `RoomGridSVG.RESYNC_GRACE_MS` (15 s), is a fallback and
+  not the normal path. It must outlast a full map of about 273 KB on a slow
+  link: the 2 s grace it replaced made such a link fetch the map twice. A
   full map cancels the wait and never asks, so a full map that itself resets
   cannot loop, and a second wipe inside the wait does not ask twice. A
   resetting partial asks at once. On the server `HandleIAC` queues

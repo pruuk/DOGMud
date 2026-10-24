@@ -44,12 +44,22 @@ message stays `Zone.Map`.
 - **Client-requested resync** (owner-approved direction, added during the build): if the client's
   map is wiped by anything other than a `full: true` map, it sends GMCP `Zone.Map.Resync` (empty
   payload) and the server forgets that user's sent state and queues an update, so the next map is
-  full. The two wipe paths are the `Room` handler (its `Room.Info` zone or floor key changed, as
-  when a room with no map coordinates reports z 999... while the server's `cz` stays put) and a
+  full. The two wipe paths are the `Room` handler (its `Room.Info` zone or floor key changed) and a
   partial map whose zone or floor differs from what is drawn. The `Room` handler asks only if no
-  full map arrives within a 2 s grace, since an ordinary zone or floor change brings one; a
+  full map arrives within a grace, since every zone or floor change brings one; a
   resetting partial asks at once. A full map never asks, which rules out a loop, and one wipe asks
   at most once. Server side, `HandleIAC` queues the request to MainWorker, like `Char.Quests.Focus`.
+- **No-coordinate rooms and the grace (review I1):** a 2 s grace sent the whole map twice on a
+  slow link, because a full map of about 273 KB can take longer than that to arrive. So the server
+  now keys a room with no map coordinates (`GetCoordinates` errors) on the floor
+  `noMapCoordinate` (999999999999999999), the z that `Room.Info` already reports for it, and
+  sends that as `cz`; stepping into or out of such a room is a floor change on both sides and
+  brings a full map. The client's grace is 15 s (`RoomGridSVG.RESYNC_GRACE_MS`), a fallback
+  only.
+- **Telnet GMCP clients (review M6):** diffs go to the web client only (`isWebClientConnection`,
+  the `WebClient` name `onNetConnect` gives every websocket). A telnet GMCP client (Mudlet
+  scripts, other tools) may not merge a partial, so it gets the whole map with `full: true` on
+  every update, as before, and no state is kept for it.
 - Rooms are never removed (the visited set only grows), so no delete message is needed.
 - The snapshot is still built each move (about 3 ms locally); trimming that is out of scope.
 
@@ -59,11 +69,14 @@ message stays `Zone.Map`.
   a repeat step into a known room; exactly one room for a newly visited room and for a tag change
   (a merchant arriving); party-only send when party positions change; a new connection id gets a
   full send; despawn clears the state; `Zone.Map.Resync` is queued from the connection goroutine
-  and its handler clears the state so the next map is full.
+  and its handler clears the state so the next map is full; a room with no coordinates gets a
+  full send on entry and on exit, with `cz` 999999999999999999; a telnet GMCP client gets a
+  full send on a repeat step; the despawn and resync listeners are registered.
 - Client (`tools/webclient-tests/quest-panel-refresh.js` style, a new zone-map test file): a partial
   message merges into the existing rooms; a `full` message resets the floor; a message with no
   `party` leaves party markers as they were; a wipe by anything but a full map sends exactly one
-  `Zone.Map.Resync`, and a full map (even one that resets) sends none.
+  `Zone.Map.Resync` after the 15 s grace, and a full map (even one that resets) sends none; a
+  rebuilt token keeps its stair ticks.
 - End to end: re-run the 10-24 two-client A/B (scratchpad `lag/client`, `e2e/`) and report bytes per
   move before and after.
 
