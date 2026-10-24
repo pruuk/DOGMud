@@ -56,7 +56,7 @@ longer decodes under the strict loader.
   trees read at the runtime's path, unparsable trees reported).
 - **manifest.go**: `Manifest`, `ParseManifest`, `Manifest.Diff`,
   `HeardRenames`: the committed topic-key manifest,
-  `dialogue/topic-keys.txt`. `topic_manifest_test.go` (repo root) holds it
+  `dialogue/topic-keys.txt`. `topic_manifest_test.go` (internal/guards) holds it
   to content, and `users.LoadUser` passes `HeardRenames()` to
   `Character.RenameHeardTopics` after `MigrateQuestFlags`.
 - **validation.go**: `CollectFlagReferences` over topics and opener variants,

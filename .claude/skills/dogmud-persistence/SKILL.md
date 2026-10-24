@@ -74,7 +74,7 @@ instance save. A field tagged `instance:"skip"` does not need the
 [[reference_living_state_persistence_contract]] establishes four rules for
 persisting living state (users, mobs, shops, guilds, bans), adopted
 repo-wide in roadmap chunk 2.8 and now enforced by
-`durable_write_guard_test.go` at the repo root, which walks the AST of every
+`durable_write_guard_test.go` (in `internal/guards`), which walks the AST of every
 non-test `.go` file and fails on `os.WriteFile` outside a reasoned exemption
 list, or on any file that hand-rolls a `.tmp`/`.new` sibling and renames it.
 Adding a writer means either using `util.Save` or writing down why the data

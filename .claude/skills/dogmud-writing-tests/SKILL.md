@@ -45,13 +45,14 @@ decoration. Whenever you add one, produce the input that makes it fire.
 
 ## Every task gate includes the repo root
 
-Run `go test .` at the repo ROOT as part of every task's test gate, not only
-the packages you touched. `condition_apply_path_guard_test.go` at the root is
+Run `go test . ./internal/guards/` (the repo ROOT plus the guards package) as
+part of every task's test gate, not only the packages you touched.
+`condition_apply_path_guard_test.go` in `internal/guards` is
 a LINE-NUMBER allowlist over `spell_resolution.go` and `combat_*.go`, so any
 edit that shifts an allowlisted line re-keys it and the guard goes red in a
 package nobody in the change thought they were touching. In M4b-2 a comment
 insertion broke it and an implementer plus two reviewers all missed it,
-because none of them ran the root package.
+because none of them ran the guards package.
 [[feedback-refactor-parity-and-root-gate]]
 
 ## Tests that fail locally on Windows and are not your fault

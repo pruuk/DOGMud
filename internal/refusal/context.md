@@ -167,7 +167,7 @@ point at the wrapper. Call it directly at each site.
 
 ## Guards
 
-Three root-level tests keep the package the only source of these lines and
+Three tests in `internal/guards` keep the package the only source of these lines and
 keep every refusal on `CategoryRefusal`; four more, below, cover slice 4.
 
 - `refusal_phrase_guard_test.go` (`TestRefusalPhrasesLiveInThePackage`)
@@ -223,7 +223,7 @@ echo through sight) and `internal/usercommands/refusal_commands_test.go`
 
 ## Slice 4 guards
 
-Four more root tests (M7 slice 4, #371) keep usage, staff output and
+Four more tests in `internal/guards` (M7 slice 4, #371) keep usage, staff output and
 narration off `CategorySystem`. Each has a probe test that feeds the scanner
 a planted source and requires it to fail where it should.
 

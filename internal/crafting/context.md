@@ -308,7 +308,7 @@ ships it; the default world has no `recipes/` and does not boot today.
 - `SeedCraftingMessagesForTest(cm)` installs a store and returns the restore
   func.
 
-Call these only through `actions.NarrateCraftPhase`; a root guard enforces it.
+Call these only through `actions.NarrateCraftPhase`; a guard in `internal/guards` enforces it.
 
 ## Global State
 

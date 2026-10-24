@@ -49,8 +49,8 @@ floored, but they are **`Deprecated:`** and have **zero production callers**.
 U6 deletes them; `internal/dice` delegating between them internally is the only
 thing keeping them alive.
 
-**Four functions here are now guarded** by `contest_floor_guard_test.go` at the
-repo root, for two different reasons:
+**Four functions here are now guarded** by `contest_floor_guard_test.go` in
+`internal/guards`, for two different reasons:
 
 | Function | Guarded because |
 |---|---|

@@ -417,8 +417,8 @@ func ResetWindow(roomId int)
   viewer-agnostic view of a finder-only record IS the generic trinket, so
   every render path shows "Trinket" unless it asks the item layer for one
   viewer's view (`items.Item.GetSpecFor` and kin), which only the
-  single-reader functions listed in the repo-root
-  `bauble_finder_view_guard_test.go` do, each with a pinned call count.
+  single-reader functions listed in
+  `internal/guards/bauble_finder_view_guard_test.go` do, each with a pinned call count.
   Never read a record's `Name`, `Description` or `Material` for display
   outside the admin command; use the item accessors or `MaterialFor`.
 - **Admin edits go through `CleanReply` too**, so an admin cannot put
