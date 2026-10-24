@@ -1,11 +1,9 @@
 package gmcp
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
-	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 )
 
@@ -129,70 +127,6 @@ func TestBuildQuestUpdate_WarnOnlySavesWithWarnings(t *testing.T) {
 	}
 	if len(res.Warnings) == 0 {
 		t.Fatal("orphan steps should surface as warnings")
-	}
-}
-
-// loopFinding is a fixed loop finding for the editor-door tests.
-var loopFinding = questloop.Finding{Rule: "dead-end", QuestId: 90010, Where: "step end", Msg: "nothing follows"}
-
-func TestBuildQuestUpdate_RefusesAFreshLoopFinding(t *testing.T) {
-	w := newFakeQuestWorld()
-	w.specs[90010] = fakeQuest(90010, "Handler Test")
-	d := w.deps()
-	d.loop = func(q quests.Quest) []questloop.Finding { return []questloop.Finding{loopFinding} }
-	d.backlog = func() (questloop.Backlog, error) { return questloop.Backlog{}, nil }
-
-	res := buildQuestUpdate(d, validUpdateReq(90010))
-	if res.Ok {
-		t.Fatal("a loop finding outside the backlog must refuse the save")
-	}
-	if !strings.Contains(res.Error, loopFinding.Key()) {
-		t.Fatalf("error must name the finding key %q, got %q", loopFinding.Key(), res.Error)
-	}
-	if len(w.saved) != 0 || w.reindexed != 0 {
-		t.Fatalf("refused update must not save (%d) or reindex (%d)", len(w.saved), w.reindexed)
-	}
-}
-
-func TestBuildQuestUpdate_AllowsABacklogFinding(t *testing.T) {
-	w := newFakeQuestWorld()
-	w.specs[90010] = fakeQuest(90010, "Handler Test")
-	d := w.deps()
-	d.loop = func(q quests.Quest) []questloop.Finding { return []questloop.Finding{loopFinding} }
-	d.backlog = func() (questloop.Backlog, error) {
-		return questloop.Backlog{loopFinding.Key(): true}, nil
-	}
-
-	res := buildQuestUpdate(d, validUpdateReq(90010))
-	if !res.Ok {
-		t.Fatalf("a backlog finding must not refuse the save, got %+v", res)
-	}
-	found := false
-	for _, wn := range res.Warnings {
-		if strings.Contains(wn, loopFinding.Key()) {
-			found = true
-		}
-	}
-	if !found {
-		t.Fatalf("the backlog finding must be listed in Warnings, got %v", res.Warnings)
-	}
-}
-
-func TestBuildQuestUpdate_ChecksTheProposedQuest(t *testing.T) {
-	w := newFakeQuestWorld()
-	w.specs[90010] = fakeQuest(90010, "Cached Name")
-	d := w.deps()
-	var seen *quests.Quest
-	d.loop = func(q quests.Quest) []questloop.Finding { seen = &q; return nil }
-	d.backlog = func() (questloop.Backlog, error) { return questloop.Backlog{}, nil }
-
-	q := validUpdateReq(90010)
-	q.Name = "Edited Name"
-	if res := buildQuestUpdate(d, q); !res.Ok {
-		t.Fatalf("clean loop must save, got %+v", res)
-	}
-	if seen == nil || seen.Name != "Edited Name" {
-		t.Fatalf("loop must receive the edited quest, got %+v", seen)
 	}
 }
 

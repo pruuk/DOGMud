@@ -3,6 +3,9 @@ package questworld
 import (
 	"errors"
 	"os"
+	"slices"
+	"strconv"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -79,18 +82,29 @@ func mobHasDialogueFile(mobId int) bool {
 // dialogue file (strictly decoded; their own problems are the dialogue
 // door's), the live reference checks and reward names.
 func Registry() questloop.World {
+	return RegistryWith(Validators())
+}
+
+// RegistryWith is Registry with reference checks the caller already built,
+// so the quest editor builds them once per save.
+func RegistryWith(v quests.QuestValidators) questloop.World {
 	all := quests.GetAllQuests()
 	qs := make([]*quests.Quest, 0, len(all))
 	for i := range all {
 		qs = append(qs, &all[i])
 	}
 	files, _ := dialogue.LoadAllFiles()
-	v := Validators()
 	return questloop.World{Quests: qs, Dialogue: files, Refs: &v, Names: Names()}
 }
 
 // WithQuest is w with q in place of the quest that has its id (or added),
-// the proposed world an editor save is checked against.
+// the proposed world an editor save is checked against. w is not changed.
+//
+// Its Refs is a copy of w's whose step and flag checks read q for q's own
+// tokens and flags ("<q.QuestId>-..."), so the refs rule judges every other
+// quest against the edited steps and flags rather than the loaded ones: a
+// step rename that breaks another quest's trigger is a finding here, not a
+// boot panic later. Every other token and flag goes to w's checks.
 func WithQuest(w questloop.World, q quests.Quest) questloop.World {
 	out := w
 	out.Quests = nil
@@ -106,7 +120,57 @@ func WithQuest(w questloop.World, q quests.Quest) questloop.World {
 	if !replaced {
 		out.Quests = append(out.Quests, &q)
 	}
+	if w.Refs != nil {
+		r := *w.Refs
+		r.StepExists = overlayStepExists(&q, w.Refs.StepExists)
+		r.FlagDeclared = overlayFlagDeclared(&q, w.Refs.FlagDeclared)
+		out.Refs = &r
+	}
 	return out
+}
+
+// ownPart returns the part of a "<id>-<rest>" token after q's id prefix.
+func ownPart(q *quests.Quest, tok string) (string, bool) {
+	return strings.CutPrefix(tok, strconv.Itoa(q.QuestId)+quests.QuestTokenSeparator)
+}
+
+// overlayStepExists resolves q's tokens the way quests.GetQuest does (a
+// named step, or the "all+" wildcard) against q itself.
+func overlayStepExists(q *quests.Quest, next func(string) bool) func(string) bool {
+	return func(tok string) bool {
+		step, own := ownPart(q, tok)
+		if !own {
+			return next != nil && next(tok)
+		}
+		step, _, _ = strings.Cut(step, quests.QuestTokenSeparator)
+		if step == `all+` {
+			return true
+		}
+		for _, s := range q.Steps {
+			if s.Id == step {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+// overlayFlagDeclared resolves q's flags the way quests.ValidateFlag does
+// (declared, and the value allowed or empty) against q's declarations.
+func overlayFlagDeclared(q *quests.Quest, next func(key, value string) bool) func(key, value string) bool {
+	return func(key, value string) bool {
+		name, own := ownPart(q, key)
+		if !own {
+			return next != nil && next(key, value)
+		}
+		for _, f := range q.Flags {
+			if f.Key != name {
+				continue
+			}
+			return value == "" || slices.Contains(f.Values, value)
+		}
+		return false
+	}
 }
 
 // BacklogPath is the shipped backlog's path.
