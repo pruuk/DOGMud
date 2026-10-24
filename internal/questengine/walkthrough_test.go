@@ -185,6 +185,58 @@ func TestWalk_HandInItemNeedsASource(t *testing.T) {
 	require.Contains(t, got, "walk-no-source 53 mob 9112 topic cull_in")
 }
 
+// handInNeedsKillItem is walkWorld with the kill handing over item 900 and
+// the hand-in gated on 53-start plus that item, not on 53-firstkill.
+func handInNeedsKillItem() questloop.World {
+	w := walkWorld()
+	w.Quests[0].Triggers[0].Actions = append(w.Quests[0].Triggers[0].Actions, quests.ActionDef{GiveItem: 900})
+	w.Dialogue[0].Topics[1].QuestRequired = []string{"53-start"}
+	w.Dialogue[0].Topics[1].RequiresItem = 900
+	return w
+}
+
+func outside(ids ...int) questloop.Sources {
+	return questloop.Sources{ItemOutside: func(id, questId int) bool {
+		for _, x := range ids {
+			if x == id {
+				return true
+			}
+		}
+		return false
+	}}
+}
+
+func TestWalk_HandInItemOnlyTheStepGivesIsNotASkip(t *testing.T) {
+	// Item 900 comes only from the kill, which grants 53-firstkill, so no
+	// player can hold it at 53-start: the hand-in cannot fire early.
+	require.Empty(t, Walk(handInNeedsKillItem(), outside()))
+}
+
+func TestWalk_HandInItemObtainableOutsideIsASkip(t *testing.T) {
+	// Item 900 also sits on a room floor: a player who picks it up first can
+	// hand in at 53-start and pass 53-firstkill.
+	got := Walk(handInNeedsKillItem(), outside(900))
+	require.Contains(t, keys(got), "walk-dead-end 53 mob 9112 topic cull_in")
+	require.Contains(t, got[0].Msg, "passing 53-firstkill")
+}
+
+func TestWalk_OrderBugIsStillASkip(t *testing.T) {
+	// Quest 19's shape: both kills gate on start, so the second kill jumps
+	// over the first one's step. No item is involved.
+	w := walkWorld()
+	q := w.Quests[0]
+	q.Steps = []quests.QuestStep{{Id: "start", Hint: "h"}, {Id: "shrimp", Hint: "h"}, {Id: "hunter", Hint: "h"}, {Id: "end"}}
+	q.Triggers = []quests.TriggerDef{
+		{Event: "mob_death", Mob: 330, Conditions: quests.Conditions{Has: []string{"53-start"}, Missing: []string{"53-shrimp"}},
+			Actions: []quests.ActionDef{{Grant: "53-shrimp"}}},
+		{Event: "mob_death", Mob: 331, Conditions: quests.Conditions{Has: []string{"53-start"}, Missing: []string{"53-hunter"}},
+			Actions: []quests.ActionDef{{Grant: "53-hunter"}}},
+	}
+	w.Dialogue[0].Topics[1].QuestRequired = []string{"53-hunter"}
+	got := keys(Walk(w, outside()))
+	require.Contains(t, got, "walk-dead-end 53 quest 53 trigger mob_death mob=331 grants=53-hunter")
+}
+
 func TestWalk_GuardCanFail(t *testing.T) {
 	// The clean world must stay clean, and every mutation above must be
 	// caught: this is the proof the walk is capable of failing.

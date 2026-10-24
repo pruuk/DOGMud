@@ -50,4 +50,11 @@ type Sources struct {
 	// MobSpawned reports whether a mob template is placed by some room's
 	// spawninfo or a quest spawn_mob action.
 	MobSpawned func(mobId int) bool
+	// ItemOutside reports whether an item has a source that is not one of
+	// quest questId's own grants: its give_item, spawn_item and reward
+	// actions, a topic of that quest or gated on its steps, a mob only that
+	// quest spawns. The walk's skip probe gives a later Way an item only when
+	// this holds, since an item only the quest's own steps hand out cannot be
+	// held before those steps. Nil: every item counts as outside.
+	ItemOutside func(itemId, questId int) bool
 }

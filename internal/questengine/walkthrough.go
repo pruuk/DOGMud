@@ -122,7 +122,7 @@ func walkQuest(eng *Engine, q *quests.Quest, steps map[int][]string, ways map[st
 		// step's own Way and is judged below.
 		for j := i + 1; j <= last; j++ {
 			for _, wy := range ways[stepToken(q, j)] {
-				if wy.Reward || sharesWay(ways[tok], wy) {
+				if wy.Reward || sharesWay(ways[tok], wy) || !itemsHeldEarly(wy, q.QuestId, src) {
 					continue
 				}
 				c := p.clone()
@@ -166,6 +166,39 @@ func walkQuest(eng *Engine, q *quests.Quest, steps map[int][]string, ways map[st
 		p, cur = next, got
 	}
 	return out
+}
+
+// wayItemNeeds lists the items a Way asks the player to hold or hand over:
+// has_item, an item_give or item_gain trigger's item, a topic's requiresItem
+// and carriesItem.
+func wayItemNeeds(wy questloop.Way) []int {
+	var ids []int
+	switch {
+	case wy.Trigger != nil:
+		ids = append(ids, wy.Trigger.Conditions.HasItem)
+		if wy.Trigger.Event == "item_give" || wy.Trigger.Event == "item_gain" {
+			ids = append(ids, wy.Trigger.Item)
+		}
+	case wy.Topic != nil:
+		ids = append(ids, wy.Topic.RequiresItem, wy.Topic.CarriesItem)
+	}
+	return ids
+}
+
+// itemsHeldEarly reports whether a player could hold every item wy needs
+// before reaching the walked quest's later steps: each item has a source
+// outside quest own's own grants. The skip probe fires a later Way only then;
+// an item only the quest's own steps hand out proves those steps were done.
+func itemsHeldEarly(wy questloop.Way, own int, src questloop.Sources) bool {
+	if src.ItemOutside == nil {
+		return true
+	}
+	for _, id := range wayItemNeeds(wy) {
+		if id > 0 && !src.ItemOutside(id, own) {
+			return false
+		}
+	}
+	return true
 }
 
 // skipped is the first step from index from to index to that the trail never
