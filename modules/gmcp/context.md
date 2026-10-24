@@ -445,6 +445,12 @@ call, for every lane including the sub-module requests:
   `environment`, `symbol` and `coords` stay: they place the player on a map they hold.
 - **SightShapes:** the room reads, but every occupant is `unseenOccupant`: name `a figure`
   (`messaging.UnseenNoun`), empty `id` and `adjectives`, `aggro` kept.
+- **NPC talk marker (#375 R9):** each entry in `Contents.Npcs` carries `marker`, a string
+  (`[!]`, `[?]`, `[*]` or empty) from `rooms.NpcMarker`, asked only at `SightFull`. It replaced
+  the NPC `quest_flag` boolean; the item payload's `quest_flag` is unchanged.
+  `npcMarkersChangedHandler` answers `events.NpcMarkersChanged` (queued by
+  `conversation.RefreshMarkers`, e.g. when a quest token lands) with a
+  `Room.Info.Contents.Npcs` update.
 - **Rosters and containers follow the text lane:** players and NPCs are listed only when
   `Character.Perceives` them (the `rooms.GetDetails` rule), and a hidden container the viewer has
   not discovered (`HasDiscovery`) is not listed, as in `look`.
@@ -481,12 +487,11 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Quest.go` / `gmcp.Quest_refs.go` | `Quest` | Quest tracker state and quest reference data |
 | `gmcp.Mob.go` | `Mob` | Mob presence and vitals for the room panel |
 | `gmcp.Mutation.go` | `Mutation` | Mutation roster and reveal events |
-| `gmcp.Dialogue.go` | `Dialogue` | NPC conversation state for the client |
 | `gmcp.Action.go` | `Action` | Clickable action affordances |
 | `gmcp.Menu.go` | `Char.Menu` | Whether a game menu or prompt is open (`{open}`); see "Char.Menu" above |
 | `gmcp.Commands.go` | `Commands` | Command state, modes, cooldowns |
 | `gmcp.Behavior.go` | `Behavior` | Behaviour-tree state (admin/builder tooling) |
-| `gmcp.Build.go` | `Build` | The admin web building tools' data feed |
+| `gmcp.Build.go` | `Build` | The admin web building tools' data feed. Every `Build.Dialogue.*` message is refused by `refuseDialogueBuild` (the dialogue editor is off until quest arc phase 6) |
 | `gmcp.CharOp.go` | — | `GMCPCharOp` + `handleCharOp`: inbound state-touching `Char.*` ops, deferred to MainWorker |
 | `gmcp.Relay.go` | `Companion.Relay.*` | The companion key relay: installs `companionai.SetRelaySender`, forwards inbound relay messages to `companionai.RelayInbound` |
 | `gmcp.Game.go` | `Game` | Game-level metadata |

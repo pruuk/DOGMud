@@ -1,103 +1,202 @@
 mobid: 9491
 zone: Newcomer Antechamber
 defaultMood: friendly
-
-patterns:
-  # Quest 28's ask step (`ask dewey world`). The quest's dialogue trigger
-  # grants 28-asked before this reply is chosen, so these two answer the
-  # asking question itself and end with the way north, the next step. Said
-  # as one line, the answer cannot fall behind the prompt (2026-10-17).
-  # They stop once the player walks into the ring (28-proving_prompt).
-  - keywords: ["world", "gaius", "outside", "beyond"]
-    questRequired: ["28-asked"]
-    questExcluded: ["28-proving_prompt"]
-    responses:
-      - "Gaius. A whole living world: a city, roads, people who lie and help
-          and everything between. It changes while you're not looking. That's
-          how you'll learn half of what matters out there, by asking. The way
-          north is open."
-
-  - keywords: [""]
-    questRequired: ["28-asked"]
-    questExcluded: ["28-proving_prompt"]
-    responses:
-      - "Good question. That's how you'll learn half of what matters out
-          there, by asking. The way north is open."
-
-  - keywords: ["hello", "hi", "greet", "hey", "hail"]
-    responses:
-      - "Hello yourself. Ask me anything while you've got me -- the world, the
-          pools, how you'll grow, or just tell me you're ready."
-
-  - keywords: ["world", "gaius", "outside", "beyond"]
-    responses:
-      - "Gaius. A whole living world -- a city, roads, people who lie and
-          help and everything between. It changes while you're not looking.
-          You'll love it and it'll scare you, both. That's right and proper."
-
-  - keywords: ["pool", "pools", "health", "stamina", "conviction"]
-    responses:
-      - "Three pools sit under your six stats: health, stamina, conviction.
-          Spend them and they refill with time and rest. Type
-          <ansi fg=\"command\">status</ansi> anytime to read them."
-
-  - keywords: ["help", "command", "commands", "forget", "lost"]
-    responses:
-      - "Forget a command and the game remembers for you. Type
-          <ansi fg=\"command\">help</ansi> for the whole index, or
-          <ansi fg=\"command\">help</ansi> and a topic for one thing. No shame
-          in it -- I still look things up."
-
-  - keywords: ["look", "see", "examine", "read"]
-    responses:
-      - "Looking is the first skill and the last one you'll outgrow. Type
-          <ansi fg=\"command\">look</ansi> in any room, and
-          <ansi fg=\"command\">look</ansi> at anything that catches your eye.
-          This world hides its best parts in plain sight."
-
-  - keywords: ["condition", "conditions", "buff", "effect"]
-    responses:
-      - "Conditions are the temporary things riding on you -- a war cry
-          steadying your hand, a poison in your blood, a leg swept out from
-          under you. Good and bad both. Type
-          <ansi fg=\"command\">conditions</ansi> to see what's on you."
-
-  - keywords: ["grow", "growth", "level", "levels", "class", "progress", "mutation", "mutations"]
-    responses:
-      - "No levels here, and no class to cage you. You grow by doing --
-          swing a blade and you sharpen, cast and you deepen, shout and you
-          steady. Over time the way you fight even pulls mutations toward you.
-          You never pick what you become. You earn it."
-
-  # "quest" and "task" MUST live here. Without them `ask dewey quest` reaches
-  # only the catch-all, and deliverDialogue's quest-inquiry branch (ask.go) answers
-  # "I have no task for you right now" -- which is the opposite of the truth
-  # while the player is mid-tutorial. Found 2026-08-04 when a newcomer used it
-  # to get unstuck and was told there was nothing to do.
-  - keywords: ["quest", "task", "next", "objective", "stuck", "now", "todo"]
-    responses:
-      - "Your task is the one you're already walking -- the waking itself. Type
-          <ansi fg=\"command\">hint</ansi> any time and it'll name your next
-          step. And when you reach the landing at the end, type
-          <ansi fg=\"command\">talk dewey</ansi> and I'll carry you through."
-
-  - keywords: ["ready", "go", "leave", "through", "step", "done"]
-    responses:
-      - "Then don't let me keep you. Step on through when you reach the
-          landing -- and welcome to Gaius. I'll be right behind you in spirit."
-
-  - keywords: [""]
-    responses:
-      - "Ask me about the world, the pools, conditions, how you'll grow -- or
-          tell me you're ready."
-      - "I'm patient, and I've got nowhere to be. Ask what you need."
-
-tree:
-  root:
-    text: "Ask me anything -- the world, the pools, conditions, how you grow --
-      or tell me you're ready and I'll see you through."
-    hints: "You could ask Dewey about the world, the pools, conditions, or how
-      you'll grow. When you're ready, say so."
-
-memory:
-  expiryPeriod: ""
+opener:
+  # Promises only what every player can ask from the first room on: the
+  # prompt and fight questions open after the talk lesson (28-asked).
+  text: Ask me anything you like. When you reach the landing at the end, talk to
+    me there and I'll send you through to the world.
+  hints: Each line below is a question. Type the number of a question, then
+    press Enter. Type a number again any time to hear more.
+  variants:
+  # Quest 28's talk lesson in room 6261: the player has said hello and now
+  # chooses a question from Dewey's menu (R20). This is the first menu a
+  # newcomer sees, and its world question is the first [*] they meet, so the
+  # opener says what the mark means (owner 2026-10-21, R24).
+  - questRequired:
+    - 28-said
+    questExcluded:
+    - 28-asked
+    text: Ask me something. Anything at all, but the world is a fine place to start.
+      See the [*] beside it? That mark means I think you should hear it.
+    hints: Each line below is a question. Type the number of the question about
+      the world, then press Enter.
+  # Opener variants carry gates only, not heardRequired, so this cannot tell
+  # which lessons are heard. It points at the [*] questions; the way north
+  # comes from quest 28's `asked` step hint and from Dewey's mob_idle line
+  # in room 6261 (behaviors/newcomer_antechamber/9491-dewey.yaml). Topic
+  # hints cannot say north: these topics stay open in 6262 and 6467, where
+  # north is refused.
+  - questRequired:
+    - 28-asked
+    questExcluded:
+    - 28-proving_prompt
+    text: You asked, and you listened. Half of what matters out there is learned
+      that way. Hear the questions marked [*] before you go. After that, the way
+      north is open.
+    hints: The questions marked [*] are worth hearing before you go on. Type the
+      number of one.
+topics:
+# The lesson topic (R20, quest 28 trigger 16 folded in): choosing it grants
+# 28-asked. The world topic gated on 28-asked that answered the same question
+# is folded into this text. Its hint steers the player to the four lessons it
+# opens (prompt, command, marks, fight), all marked [*], before the walk
+# north (review M1, 2026-10-21): one command, the number.
+- key: asked_28
+  kind: info
+  label: What is the world of Gaius like?
+  text: 'Gaius. A whole living world: a city, roads, people who lie and help and
+    everything between. It changes while you''re not looking. That''s how you''ll
+    learn half of what matters out there, by asking. So ask me more. The new
+    questions marked [*] are worth hearing before you go north.'
+  hints: Four new questions are marked [*]. Hear them before you go on. Type the
+    number of one.
+  marked: true
+  questRequired:
+  - 28-said
+  questExcluded:
+  - 28-asked
+  - 28-end
+  grantsQuest: 28-asked
+# Hidden from the lesson on, so the lesson's question is the only world
+# question in the menu when it is taught.
+- key: world_2
+  kind: info
+  label: What is Gaius like?
+  text: Gaius. A whole living world. A city, roads, people who lie and help and
+    everything between. It changes while you're not looking. You'll love it and it'll
+    scare you, both. That's right and proper.
+  questExcluded:
+  - 28-said
+# The newcomer lessons (R24, owner 2026-10-21): each one is a question about
+# something on the player's screen, marked [*] once, and opened after the talk
+# lesson so the world question is the only [*] in the first menu. Facts are
+# cited in the Task 15 batch 1 report (prompt: config.yaml TextFormats.Prompt
+# and FightPrompt, users/userrecord.prompt.go renderVitalBar; reservation:
+# characters/validate.go GetPoolReservation and help/reservation.template).
+- key: prompt
+  kind: info
+  label: What is the HP, SP, CP line on my screen?
+  text: That line is your prompt. The game prints it again after everything you
+    do, so you always know how you stand. HP is your health. If it runs out, you
+    die. SP is your stamina. It pays for swings, dodges and other moves of the
+    body. CP is your conviction. It pays for spells and shouts. Those three are
+    your pools. In each bar, the lit blocks are what you have left and the dark
+    blocks are what you have spent. All three fill again with time and rest. The
+    sun or moon at the front tells you if it is day or night. While you fight,
+    the line grows longer. It also shows your foe and how hurt it is.
+  hints: To read your pools in words, type status. For more about this line, type
+    help set-prompt.
+  marked: true
+  questRequired:
+  - 28-asked
+# Review M3 (2026-10-21): spent blocks are the dark ░ right after the lit
+# ones (fg 238); a reserved band is ▒ in a lighter grey (fg 244) at the very
+# end, drawn only when something reserves (userrecord.prompt.go
+# renderVitalBar). A newcomer has nothing reserved, so the answer says so
+# first and keeps spent and held apart.
+- key: reserve
+  kind: info
+  label: Why would a bar not fill all the way?
+  text: You have none of this yet, so your bars always fill. The dark blocks after
+    your lit ones are what you have spent, and rest fills them again. Later, some
+    things you keep will hold part of a pool back for as long as you keep them. A
+    piece of enchanted gear does it, and so does a companion who walks with you.
+    That is called reservation. The held part shows as a lighter grey band at the
+    very end of the bar, and rest does not fill it, because you never spent it.
+    Take the gear off or send the companion away, and it comes straight back.
+  hints: To see how much of each pool is held, type status. For more, type help
+    reservation.
+  heardRequired:
+  - prompt
+- key: command
+  kind: info
+  label: What is a command?
+  text: Everything you do here, you do by typing. A command is a word you type to
+    act, and then you press Enter. Some commands work alone. Look is one. Many
+    take a thing to act on, the way a sentence has a verb and an object. Look guide
+    looks at the guide. Get token picks up the token. You have typed several
+    already, and every one of them was a command.
+  hints: To see every command the game knows, type help.
+  marked: true
+  questRequired:
+  - 28-asked
+- key: help
+  kind: info
+  label: What if I forget a command?
+  text: Forget a command and the game remembers for you. Type <ansi fg="command">help</ansi>
+    for the whole list, or <ansi fg="command">help</ansi> and a topic for one thing,
+    like help look. No shame in it. I still look things up.
+  heardRequired:
+  - command
+- key: marks
+  kind: info
+  label: What do the marks next to names mean?
+  text: A mark next to a name means that person has something for you. A [!] means
+    they have a quest to offer. A quest is a task, done one step at a time. Talk
+    to them, choose it from the list, then choose Accept. A [?] means you can
+    finish a quest with them now. A [*] means they have something worth hearing.
+    The mark goes away once you take the quest, finish it, or hear what they had
+    to say.
+  hints: To start a conversation with someone, type talk and their name.
+  marked: true
+  questRequired:
+  - 28-asked
+# Review M2 (2026-10-21): `stand` is the command flee's prone refusal asks
+# for (usercommands/flee.go FleeRefuseProne); death sends a new character to
+# the Mending Hut (characters/respawn_home.go, HomeLocations "default" 5209)
+# with every pool nearly empty (help death).
+- key: fight
+  kind: info
+  label: How do I fight?
+  text: First, size them up. Type consider and their name, and your instincts tell
+    you how a fight would go. If the fight looks fair, type attack and their name.
+    From then on you keep swinging on your own, round after round, until one of
+    you dies or runs. While you swing, you can add a spell, like cast spike, or a
+    trip. If it goes badly, type flee to break away and run. You cannot run from
+    the ground, so if you are knocked down, type stand first. If something holds
+    you, you cannot run until it lets go. Running isn't losing. If you die, you
+    wake in a safe place, the Mending Hut in Pothole Coulee, the first town you
+    will see. You wake tired, with every pool nearly empty, so rest before you go
+    back out.
+  hints: For more about fighting, type help combat.
+  marked: true
+  questRequired:
+  - 28-asked
+- key: look
+  kind: info
+  label: How do I look at things?
+  text: Looking is the first skill, and you will use it every day here. Type <ansi
+    fg="command">look</ansi> in any room. Type <ansi fg="command">look</ansi> and
+    a thing's name to look at that thing closely. This world hides a lot in its
+    rooms, so look at anything that catches your eye.
+- key: condition
+  kind: info
+  label: What are conditions?
+  text: Conditions are effects on you that last a while. A war cry steadying your
+    hand, a poison in your blood, a leg swept out from under you. Some are good
+    and some are bad. Type <ansi fg="command">conditions</ansi> to see yours.
+- key: grow
+  kind: info
+  label: How will I grow stronger?
+  text: You grow by doing. Swing a blade and you sharpen. Cast and you deepen. Shout
+    and you steady. Over time the way you fight even draws changes into your body,
+    and those are called mutations. You never pick what you become. You earn it.
+- key: quest
+  kind: info
+  label: What should I be doing right now?
+  text: You are on a quest right now. A quest is a task, done one step at a time,
+    and yours is the waking itself. Type <ansi fg="command">hint</ansi> any time
+    and it'll name your next step. And when you reach the landing at the end, type
+    <ansi fg="command">talk dewey</ansi> and I'll send you through to the world.
+# Review M4 (2026-10-21): the Landing (behaviors/rooms/newcomer_antechamber/
+# 6467.yaml) refuses a walk and takes `talk dewey`, then moves the player to
+# the Awakening Pool (room 5200) and starts quest 30.
+- key: ready
+  kind: info
+  label: I'm ready to go out into the world.
+  text: Then finish the rooms ahead first. The last one is the practice ring, and
+    when you break away from that fight you reach the landing. There, type <ansi
+    fg="command">talk dewey</ansi>. I'll send you up into the world, to the
+    Awakening Pool in Pothole Coulee, where Cleric Hadwen will open you to it.
+  hints: At the landing, type talk dewey.

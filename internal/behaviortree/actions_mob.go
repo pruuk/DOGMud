@@ -4,11 +4,9 @@ package behaviortree
 // actSpawnMob, actSummonCompanion, actCommand, actCommandMob, actCommandBestOf,
 // actTrySpecialMove, actSweepCompanions, actMove, actOpenInstancePortal,
 // actCreateInstance
-// helpers: splitTwo, parseIntStr
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -423,21 +421,23 @@ func actCreateInstance(params map[string]any, ctx *EvalContext) Result {
 	return Success
 }
 
-// actOpenInstancePortal is a compound action that handles the full Sable
-// portal-vendor flow in a single atomic step. It parses the ask text for
-// the pattern "<zone> <gold>", validates the request, charges gold, clones
-// the instance, and wires up the temporary exit. Failures are self-handling:
-// gold is refunded and the mob says an explanation.
+// actOpenInstancePortal starts the portal-vendor flow for the zone a talk
+// topic names (#375 R14): it shows the zone's guidance and asks the player
+// for the stake through a private amount prompt (startStakePrompt). The
+// answer opens through openInstancePortal, which checks the minimum and
+// the purse, charges, clones the instance, wires up the temporary exit and
+// speaks the result; failures refund.
 //
 // params:
 //
 //	zones        (map: shortname → template zone name, e.g. arena: "Instance Arena")
+//	zone         (string, required: a key of zones)
 //	min_gold     (int, default 100)
 //	exit_expires (string, default "30 real minutes")
+//	guidance     (string, optional: shown above the amount question)
 //
-// On success the mob says the portal-open message and returns Success.
-// On any validation or creation failure the mob says an explanation and
-// returns Success (from the player's perspective the event was handled).
+// A tree whose zone is missing or is not a key of zones does not load
+// (checkOpenInstancePortalParams).
 func actOpenInstancePortal(params map[string]any, ctx *EvalContext) Result {
 	mob := mobs.GetInstance(ctx.InstanceId)
 	if mob == nil {
@@ -447,22 +447,49 @@ func actOpenInstancePortal(params map[string]any, ctx *EvalContext) Result {
 	if user == nil {
 		return Failure
 	}
-
-	text := ctx.Event.Text
-
-	// Parse "<zoneName> <gold>" from ask text.
-	parts := splitTwo(text)
-	if len(parts) < 2 {
-		return Failure // not our pattern — let the tree try other branches
+	zone := portalZone(params)
+	req, ok := portalRequestFor(params, zone)
+	if !ok {
+		mudlog.Error("actOpenInstancePortal", "error", "zone is not a key of zones", "zone", zone, "mobId", ctx.MobId)
+		return Failure
 	}
-	zoneName := parts[0]
-	goldAmount := parseIntStr(parts[1])
-	if goldAmount <= 0 {
-		mob.Command("say Name a place and an amount of gold.")
-		return Success
-	}
+	startStakePrompt(user, mob, ctx.RoomId, req, getStringParam(params, "guidance"))
+	return Success
+}
 
-	// Resolve zone short name → template name.
+// portalZone is the branch's zone param, trimmed and lowered.
+func portalZone(params map[string]any) string {
+	return strings.ToLower(strings.TrimSpace(getStringParam(params, "zone")))
+}
+
+// checkOpenInstancePortalParams refuses, at load, an open_instance_portal
+// node whose zone is missing or is not a key of zones: with no player
+// words to read, such a node could never open anything.
+func checkOpenInstancePortalParams(params map[string]any) error {
+	zone := portalZone(params)
+	if zone == "" {
+		return fmt.Errorf("open_instance_portal needs a zone param (a key of zones)")
+	}
+	if _, ok := portalRequestFor(params, zone); !ok {
+		return fmt.Errorf("open_instance_portal zone %q is not a key of zones", zone)
+	}
+	return nil
+}
+
+// portalRequest is a resolved instance-zone buy-in: everything the open
+// needs except the stake, which the amount prompt carries to
+// openInstancePortal.
+type portalRequest struct {
+	Zone         string // short name, the zones key ("arena")
+	TemplateZone string // the zone cloned ("Instance Arena")
+	MinGold      int
+	Expires      string
+}
+
+// portalRequestFor resolves a zones key against the action's params,
+// applying the min_gold and exit_expires defaults. It reports false when
+// zoneName is not a key of zones.
+func portalRequestFor(params map[string]any, zoneName string) (portalRequest, bool) {
 	templateZone := ""
 	if zonesRaw, ok := params["zones"]; ok {
 		switch zm := zonesRaw.(type) {
@@ -479,20 +506,33 @@ func actOpenInstancePortal(params map[string]any, ctx *EvalContext) Result {
 		}
 	}
 	if templateZone == "" {
-		return Failure // unrecognized zone name — fall through to other branches
+		return portalRequest{}, false
 	}
 
 	minGold := getIntParam(params, "min_gold")
 	if minGold <= 0 {
 		minGold = 100
 	}
+	expires := getStringParam(params, "exit_expires")
+	if expires == "" {
+		expires = "30 real minutes"
+	}
+	return portalRequest{Zone: zoneName, TemplateZone: templateZone, MinGold: minGold, Expires: expires}, true
+}
+
+// openInstancePortal opens the portal once the amount prompt has a stake:
+// the minimum and purse checks, the charge, the
+// clone (scaled by the stake), the temporary exit and the mob's lines.
+// Every outcome is spoken by the mob; failures refund.
+func openInstancePortal(user *users.UserRecord, mob *mobs.Mob, roomId int, req portalRequest, goldAmount int) {
+	zoneName, templateZone, minGold := req.Zone, req.TemplateZone, req.MinGold
 	if goldAmount < minGold {
 		mob.Command(fmt.Sprintf("say That barely covers the runes. I need at least %s gold.", util.FormatNumber(minGold)))
-		return Success
+		return
 	}
 	if user.Character.Gold < goldAmount {
 		mob.Command("say You do not have that much gold.")
-		return Success
+		return
 	}
 
 	// Charge gold before creating the instance.
@@ -507,68 +547,36 @@ func actOpenInstancePortal(params map[string]any, ctx *EvalContext) Result {
 		}
 	}
 
-	inst, err := rooms.CreateZoneInstance(templateZone, goldAmount, user.UserId, authorizedUsers, ctx.RoomId)
+	inst, err := createZoneInstance(templateZone, goldAmount, user.UserId, authorizedUsers, roomId)
 	if err != nil {
 		mudlog.Error("actOpenInstancePortal", "zone", templateZone, "userId", user.UserId, "error", err)
 		user.Character.Gold += goldAmount // refund
 		mob.Command("say The planes resist me. Your gold is returned.")
-		return Success
+		return
 	}
 
-	expires := getStringParam(params, "exit_expires")
-	if expires == "" {
-		expires = "30 real minutes"
-	}
 	exitKey := zoneName + "-" + fmt.Sprintf("%d", user.UserId)
-	room := rooms.LoadRoom(ctx.RoomId)
+	room := rooms.LoadRoom(roomId)
 	if room == nil {
 		user.Character.Gold += goldAmount // refund
-		mudlog.Error("actOpenInstancePortal", "zone", templateZone, "userId", user.UserId, "error", "room did not load", "roomId", ctx.RoomId)
+		mudlog.Error("actOpenInstancePortal", "zone", templateZone, "userId", user.UserId, "error", "room did not load", "roomId", roomId)
 		mob.Command("say The way will not open. Your gold is returned.")
-		return Success
+		return
 	}
 	added := room.AddTemporaryExit(exitKey, exit.TemporaryRoomExit{
 		RoomId:  inst.EntryRoomId,
 		Title:   exitKey + " rift",
 		UserId:  user.UserId,
-		Expires: expires,
+		Expires: req.Expires,
 	})
 	if !added {
 		user.Character.Gold += goldAmount // refund
 		mob.Command("say The archway is already sustaining too many rifts. Your gold is returned.")
-		return Success
+		return
 	}
 
 	mob.Command("say The rift is open. Type " + exitKey + " to enter.")
 	mob.Command("say It will hold for a time. Do not tarry.")
 	room.SendTextToExits("You hear someone talking.", true)
 	room.SendText(messaging.CategoryMobEmote, "The stone archway flares with energy. A shimmering portal appears.")
-	return Success
-}
-
-// splitTwo splits a string on the first whitespace run, returning up to 2 parts.
-func splitTwo(s string) []string {
-	s = strings.TrimSpace(s)
-	for i, c := range s {
-		if c == ' ' || c == '\t' {
-			first := s[:i]
-			rest := strings.TrimSpace(s[i:])
-			return []string{first, rest}
-		}
-	}
-	return []string{s}
-}
-
-// parseIntStr parses the first token from s as an integer. Returns 0 on failure.
-func parseIntStr(s string) int {
-	// Take first whitespace-delimited token in case there are trailing words.
-	token := strings.Fields(s)
-	if len(token) == 0 {
-		return 0
-	}
-	n, err := strconv.Atoi(token[0])
-	if err != nil {
-		return 0
-	}
-	return n
 }

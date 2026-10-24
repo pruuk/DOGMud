@@ -1,156 +1,314 @@
 mobid: 241
 zone: Ironwind Steppe
 defaultMood: hostile
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    moods: ["hostile", "neutral"]
-    responses:
-      - "The steppe does not welcome idle visitors. State your purpose or move on."
-      - "You are far from the road, stranger. The wind tells me what kind of person you are. So far it tells me very little."
-
-  - keywords: ["hello", "hi", "greet"]
-    moods: ["friendly", "grateful"]
-    responses:
-      - "The wind knows you now. You are welcome here."
-
-  - keywords: ["help", "quest", "task"]
-    moods: ["hostile", "neutral"]
-    responses:
-      - "Help? You want to help? Everyone who comes here wants to help themselves. If you are different, prove it."
-
-  - keywords: ["circle", "stone", "sacred", "spiritual"]
-    responses:
-      - "The stone circle is older than any city on Gaius. The wind-paths converge here -- spiritual currents that sustain the steppe's balance. Disturb them and the land itself will sicken."
-
-  - keywords: ["rhett", "geomancer", "scholar", "crystal"]
-    responses:
-      - "The scholar sees only rock and profit. He does not hear the wind's voice in the stone. He does not feel the ancestors watching. He would crack the circle's foundation for trinkets and call it progress."
-
-  - keywords: ["goblin", "ancestors", "spirits"]
-    responses:
-      - "The goblin clans have honoured this circle for generations. Their ancestors rest in the wind-paths. Destroying the circle would scatter those spirits like dust. Even if you do not believe, the harm is real."
-
-  - keywords: [""]
-    responses:
-      - "The wind has nothing further to say."
-      - "Speak plainly, or do not speak."
-
-tree:
-  root:
-    text: "Another one drawn by the wind. Or by the crystal. Which is it?"
-    hints: "A tall woman in layered wool and bone ornaments stands before a circle of ancient standing stones, planting a gnarled cedar staff topped with a bleached wolf skull. You could ask about the circle, the conflict, or what she needs."
-    variants:
-      - questRequired: ["11-start"]
-        questExcluded: ["11-end"]
-        questFlagRequired:
-          "11-branch": "sylara"
-        text: "You listened. That is more than most manage. Have you found my totem? The wolves dragged it into their kill ground to the southwest. Search the bone pile there."
-        hints: "Search the bone pile at the wolf kill ground southwest of here for the carved wolf totem."
-      - questRequired: ["11-start"]
-        questExcluded: ["11-end"]
-        questFlagRequired:
-          "11-branch": "rhett"
-        text: "I can smell the scholar's chalk dust on you. You have made your choice. The wind-paths have no words for those who would crack the earth for trinkets."
-        hints: "She turns her back to you."
-      - questRequired: ["12-start"]
-        questExcluded: ["12-ritual"]
-        text: "You chose the covenant. The spirits will be pleased. I can teach you to hear the steppe's voice -- to call upon the wolf spirits that guard the wind-paths. Are you ready for the ritual?"
-        hints: "You could tell her you are ready for the ritual."
-      - questRequired: ["12-end"]
-        text: "The spirits know you now. You carry the steppe with you wherever you go. If you need more fetishes for the summoning, you have only to ask."
-      - questRequired: ["13-start"]
-        questExcluded: ["13-end"]
-        text: "You are helping the scholar crack the ridge. I can feel it in the wind-paths."
-        hints: "She grips her staff tighter and says nothing more."
-      - questRequired: ["13-end"]
-        text: "You chose the scholar's path. The circle will endure... diminished. I will tend what remains."
-        hints: "She turns away."
-      - questRequired: ["11-end"]
-        questExcluded: ["12-start", "13-start"]
-        questFlagRequired:
-          "11-branch": "rhett"
-        text: "You helped the scholar dig his crystal from the ridge. The wind-paths felt it. The covenant is not for those who crack the earth for trinkets."
-      - questRequired: ["11-end"]
-        questExcluded: ["12-start", "13-start"]
-        questFlagRequired:
-          "11-branch": "sylara"
-        text: "You proved yourself on the steppe. The spirits noticed. I could teach you the old covenant -- to call upon the wolf spirits that guard the wind-paths. It is not offered lightly."
-        hints: "You could ask about the covenant."
-
-  nodes:
-    - id: dismiss_rhett_path
-      triggers: ["quest", "task", "help", "covenant", "teach",
-        "spirits", "circle", "conflict", "wind", "sacred"]
-      questRequired: ["11-start"]
-      questFlagRequired:
-        "11-branch": "rhett"
-      text: "The wind-paths remember what you did. You helped the scholar crack the earth for his crystals. I will tend what remains of the circle, but the covenant is not for those who side with the one who would destroy it."
-
-    - id: her_cause
-      triggers: ["circle", "conflict", "wind", "problem", "sacred", "cause", "why", "quest", "task", "help"]
-      questExcluded: ["11-start", "11-end"]
-      grantsQuest: "11-start"
-      setsQuestFlag:
-        key: "11-branch"
-        value: "sylara"
-      text: "This circle has stood since before the first goblin clan lit a fire on the steppe. The wind-paths -- currents of spiritual energy -- converge here. They sustain the land, the creatures, the balance of everything that lives on the open grass. A Thornwall scholar has found windstone crystal in the ridge. To extract it, he would crack the bedrock beneath the circle. The wind-paths would scatter. The goblin ancestors who rest in those currents would be lost. I will not allow it. If you would stand with me, prove it. The wolves dragged my carved totem into their kill ground to the southwest. Search the bone pile and bring it back. Then I will know you are sincere."
-      hints: "Search the bone pile at the wolf kill ground to the southwest for the carved wolf totem."
-      moodChange: neutral
-
-    - id: totem_return
-      triggers: ["totem", "found", "here", "brought", "return", "have", "quest", "task"]
-      questRequired: ["11-start"]
-      questExcluded: ["11-end"]
-      requiresItem: 40033
-      grantsQuest: "11-end"
-      text: "You found it. The wolf spirit's voice -- I can hear it again. Thank you. You have done more than you know. The spirits noticed what you did. I could teach you the old covenant -- to call upon the wolf spirits that guard the wind-paths. Ask me about it when you are ready."
-      hints: "She takes the totem with both hands and presses it to her chest. For a moment her composure cracks."
-      moodChange: friendly
-
-    - id: offer_covenant
-      triggers: ["covenant", "quest", "task", "teach", "offer", "spirits"]
-      questRequired: ["11-end"]
-      questExcluded: ["12-start", "12-end"]
-      questFlagRequired:
-        "11-branch": "sylara"
-      grantsQuest: "12-start"
-      text: "The covenant is ancient -- older than any clan, older than the circle itself. The wolf spirits that guard the wind-paths will answer the call of one the steppe trusts. I will teach you the ritual of binding. When it is done, you will carry the steppe's voice with you wherever you go. The spirits will come when you call. Tell me when you are ready to begin."
-      hints: "You could tell her you are ready for the ritual."
-      moodChange: friendly
-
-    - id: ritual_begin
-      triggers: ["ready", "ritual", "begin", "teach", "spirit", "covenant",
-        "yes", "quest", "task"]
-      questRequired: ["12-start"]
-      questExcluded: ["12-ritual", "12-end"]
-      grantsQuest: "12-ritual"
-      text: "Come. Stand in the centre of the circle. Do not speak -- only listen. The wind-paths will do the rest."
-      unlocks: ["ritual_complete"]
-
-    - id: ritual_complete
-      triggers: ["hear", "listen", "accept", "yes", "wolf", "spirit", "complete", "quest", "task"]
-      questRequired: ["12-ritual"]
-      questExcluded: ["12-end"]
-      grantsQuest: "12-end"
-      text: "It is done. The steppe knows you now. When you hold a spirit fetish and speak the words of calling, a wolf of wind and light will answer. Take these -- they will sustain the summoning. When they run out, come back to me. The steppe provides for its own."
-      moodChange: grateful
-
-    - id: give_fetish
-      triggers: ["fetish", "component", "spirit", "summon", "more", "need"]
-      questRequired: ["12-end"]
-      givesItem: 40031
-      text: "For the calling. Use it with respect."
-      hints: "She reaches into a pouch at her belt and produces a spirit fetish -- a small bundle of steppe grass, wolf fur, and windstone dust bound with sinew."
-      moodChange: friendly
-
-    - id: give_fetish_noqust
-      triggers: ["fetish", "component", "spirit", "summon"]
-      questExcluded: ["12-end"]
-      givesItem: 40031
-      text: "The wind tells me you already know the calling. I do not know how, but the spirits do not lie. Use it with respect. The steppe remembers those who dishonour its gifts."
-      hints: "She studies you for a long moment, then reaches into a pouch at her belt and produces a spirit fetish."
-      moodChange: friendly
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: "Another one drawn by the wind. Or by the crystal. Which is it?"
+  hints: "A tall woman in layered wool and bone ornaments stands before the
+    circle of standing stones, planting a cedar staff topped with a bleached
+    wolf skull. Choose a line below if you want to hear about the circle, or
+    about who is after the crystal."
+  # Quest 11: the sided variants come before the unsided one, because a
+  # flag map cannot say "no side yet" (#611). Old saves may hold a side
+  # without the 11-sided step.
+  variants:
+  - questRequired:
+    - 11-start
+    questExcluded:
+    - 11-end
+    questFlagRequired:
+      11-branch: sylara
+    text: "You listened. That is more than most manage. Have you found my totem? The
+      wolves dragged it into their kill ground. Search the bones there."
+    hints: "From the Stone Circle, go west three times to the Southern Sagebrush
+      Flats, south twice to the Sandy Creek Bend, east to the Creek Basin Crossing,
+      then south six times to the Kill Ground. Type get totem from bones."
+  - questRequired:
+    - 11-start
+    questExcluded:
+    - 11-end
+    questFlagRequired:
+      11-branch: rhett
+    text: "I can smell the scholar's chalk dust on you. You have made your choice.
+      The wind-paths have no words for those who would crack the earth for
+      trinkets."
+    hints: "She turns her back to you."
+  - questRequired:
+    - 11-start
+    questExcluded:
+    - 11-sided
+    - 11-end
+    text: "So you carry the question now. Then hear what standing with me would cost
+      you, before you decide."
+    hints: "Choose a line below to hear what siding with her would mean."
+  # Old saves finished quest 11 without choosing a side (the shipped Kael
+  # route granted 11-end with no flag). An empty flag value means the flag
+  # is not set; this state can still choose, after the same warning.
+  - questRequired:
+    - 11-end
+    questExcluded:
+    - 12-start
+    - 13-start
+    questFlagRequired:
+      11-branch: ""
+    text: "The steppe remembers what you did out here, but you never said where you
+      stand. Hear what standing with me would cost you, before you decide."
+    hints: "Choose a line below to hear what siding with her would mean."
+  - questRequired:
+    - 12-ritual
+    questExcluded:
+    - 12-end
+    text: "Stand in the centre. Listen. Tell me when you hear them."
+    hints: "You could tell Sylara what you hear."
+  - questRequired:
+    - 12-start
+    questExcluded:
+    - 12-ritual
+    text: "You chose the covenant. The spirits will be pleased. I can teach you to
+      hear the steppe's voice, and to call upon the wolf spirits that guard the
+      wind-paths. Are you ready for the ritual?"
+    hints: "You could tell Sylara you are ready for the ritual."
+  - questRequired:
+    - 12-end
+    text: "The spirits know you now. You carry the steppe with you wherever you go.
+      If you need another fetish for the summoning, you have only to ask."
+  - questRequired:
+    - 13-start
+    questExcluded:
+    - 13-end
+    text: "You are helping the scholar crack the ridge. I can feel it in the
+      wind-paths."
+    hints: "She grips her staff tighter and says nothing more."
+  - questRequired:
+    - 13-end
+    text: "You chose the scholar's path. The circle will endure, diminished. I will
+      tend what remains."
+    hints: "She turns away."
+  - questRequired:
+    - 11-end
+    questExcluded:
+    - 12-start
+    - 13-start
+    questFlagRequired:
+      11-branch: rhett
+    text: "You helped the scholar dig his crystal from the ridge. The wind-paths felt
+      it. The covenant is not for those who crack the earth for trinkets."
+  - questRequired:
+    - 11-end
+    questExcluded:
+    - 12-start
+    - 13-start
+    questFlagRequired:
+      11-branch: sylara
+    text: "You proved yourself on the steppe. The spirits noticed. I could teach you
+      the old covenant, to call upon the wolf spirits that guard the wind-paths. It
+      is not offered lightly."
+    hints: "Choose a line below to learn about the covenant."
+topics:
+# help (pattern) folded into the her_cause pitch.
+- key: her_cause
+  kind: offer
+  quest: 11
+  label: The Windwarden's Dilemma
+  playerLine: What is this about the crystal?
+  text: "Help? Everyone who comes here wants to help themselves. If you are
+    different, listen first. This circle has stood since before the first goblin
+    clan lit a fire on the steppe. The wind-paths, currents of spiritual energy,
+    converge here. They sustain the land, the creatures, the balance of everything
+    that lives on the open grass. A Thornwall scholar has found windstone crystal in
+    the ridge. To take it, he would crack the bedrock beneath the circle. The
+    wind-paths would scatter, and the goblin ancestors who rest in those currents
+    would be lost. I will not allow it. Take this question on, and I will tell you
+    what standing with me would mean."
+  hints: "If you accept, Sylara will tell you what siding with her costs before you
+    choose. Nothing is decided by accepting."
+  questExcluded:
+  - 11-start
+  - 11-end
+  grantsQuest: 11-start
+  moodChange: neutral
+# R28: the side is chosen here, after the must-hear warning.
+- key: sylara_terms
+  kind: info
+  label: What would siding with you mean?
+  text: "It means the scholar will not work with you, now or ever. He will not trust
+    you, and his crystal will not be yours to help with. It means proving yourself
+    to me with your own hands first. If you prove true, I may teach you the old
+    covenant, which he never could. Once you choose, it is done. There is no walking
+    back to his camp after."
+  hints: "Siding with Sylara cannot be undone. Rhett will never work with you
+    afterward."
+  marked: true
+  # Open to anyone holding 11-start (11-end counts) with no side yet, so the
+  # old saves that finished unsided hear it before late_stand_with_sylara.
+  questRequired:
+  - 11-start
+  questExcluded:
+  - 12-start
+  - 13-start
+  questFlagRequired:
+    11-branch: ""
+- key: stand_with_sylara
+  kind: info
+  label: I will stand with you and guard the circle.
+  text: "Then it is done, and it cannot be undone. The scholar will not deal with
+    you now. Prove that you mean it. The wolves dragged my carved totem into their
+    kill ground. Search the bones there and bring it back to me. Then I will know you
+    are sincere."
+  hints: "You have sided with Sylara, and Rhett will not work with you now. From the
+    Stone Circle, go west three times to the Southern Sagebrush Flats, south twice
+    to the Sandy Creek Bend, east to the Creek Basin Crossing, then south six times
+    to the Kill Ground. Type get totem from bones."
+  marked: true
+  heardRequired:
+  - sylara_terms
+  questRequired:
+  - 11-start
+  questExcluded:
+  - 11-sided
+  - 11-end
+  questFlagExcluded:
+    11-branch: rhett
+  setsQuestFlag:
+    key: 11-branch
+    value: sylara
+  grantsQuest: 11-sided
+  moodChange: neutral
+# Recovery for old saves at 11-end with no side: the same choice, after
+# the same warning. It grants nothing (the quest is already finished); the
+# flag alone opens The Warden's Covenant.
+- key: late_stand_with_sylara
+  kind: info
+  label: I will stand with you now and guard the circle.
+  text: "Then it is done, and it cannot be undone. The scholar will not deal with
+    you now. You have already done the steppe a service, and the spirits saw it.
+    Ask me about the covenant when you are ready."
+  hints: "You have sided with Sylara, and Rhett will not work with you now.
+    Choose a line below if you want to hear about the covenant."
+  marked: true
+  heardRequired:
+  - sylara_terms
+  questRequired:
+  - 11-end
+  questExcluded:
+  - 12-start
+  - 13-start
+  questFlagRequired:
+    11-branch: ""
+  setsQuestFlag:
+    key: 11-branch
+    value: sylara
+  moodChange: neutral
+- key: totem_return
+  kind: handin
+  quest: 11
+  label: The Windwarden's Dilemma
+  playerLine: I found your carved wolf totem.
+  text: "You found it. The wolf spirit's voice, I can hear it again. Thank you. You
+    have done more than you know. The spirits noticed what you did. I could teach
+    you the old covenant, to call upon the wolf spirits that guard the wind-paths.
+    Ask me about it when you are ready."
+  hints: "She takes the totem with both hands and presses it to her chest. For a
+    moment her composure cracks."
+  questRequired:
+  - 11-start
+  questExcluded:
+  - 11-end
+  questFlagRequired:
+    11-branch: sylara
+  requiresItem: 40033
+  grantsQuest: 11-end
+  moodChange: friendly
+- key: dismiss_rhett_path
+  kind: info
+  label: Will you still hear me out?
+  text: "The wind-paths remember what you did. You stood with the scholar who would
+    crack the earth for his crystals. I will tend what remains of the circle, but
+    the covenant is not for those who side with the one who would destroy it."
+  questRequired:
+  - 11-start
+  questFlagRequired:
+    11-branch: rhett
+- key: offer_covenant
+  kind: offer
+  quest: 12
+  label: The Warden's Covenant
+  playerLine: Will you teach me the old covenant?
+  text: "The covenant is ancient, older than any clan, older than the circle itself.
+    The wolf spirits that guard the wind-paths will answer the call of one the
+    steppe trusts. I would teach you the ritual of binding. When it is done, you
+    will carry the steppe's voice with you wherever you go, and the spirits will come
+    when you call. Take it, and tell me when you are ready to begin."
+  hints: "If you accept, the ritual happens here in the circle."
+  questRequired:
+  - 11-end
+  questExcluded:
+  - 12-start
+  - 12-end
+  questFlagRequired:
+    11-branch: sylara
+  grantsQuest: 12-start
+  moodChange: friendly
+- key: ritual_begin
+  kind: info
+  label: I am ready for the ritual.
+  text: "Come. Stand in the centre of the circle. Do not speak. Only listen. The
+    wind-paths will do the rest."
+  hints: "Stand still and listen, then tell Sylara what you hear."
+  marked: true
+  questRequired:
+  - 12-start
+  questExcluded:
+  - 12-ritual
+  - 12-end
+  grantsQuest: 12-ritual
+- key: ritual_complete
+  kind: handin
+  quest: 12
+  label: The Warden's Covenant
+  playerLine: I hear them. The wind is answering me.
+  text: "It is done. The steppe knows you now. When you hold a spirit fetish and
+    speak the words of calling, a wolf of wind and light will answer. Take this one.
+    It will sustain the summoning. When you run out, come back to me. The steppe
+    provides for its own."
+  hints: "A spirit fetish is spent each time you call the wolf. With one in your
+    pack, type cast spirit."
+  questRequired:
+  - 12-ritual
+  questExcluded:
+  - 12-end
+  grantsQuest: 12-end
+  moodChange: grateful
+# give_fetish_noqust (the spell known without quest 12) is dropped: quest 12
+# is the only way to learn summon-steppe-spirit, and as a menu topic it would
+# hand a fetish to every visitor.
+- key: give_fetish
+  kind: info
+  label: May I have another spirit fetish?
+  text: "For the calling. Use it with respect."
+  hints: "She reaches into a pouch at her belt and produces a spirit fetish, a small
+    bundle of steppe grass, wolf fur, and windstone dust bound with sinew."
+  questRequired:
+  - 12-end
+  itemExcluded: 40031
+  givesItem: 40031
+  moodChange: friendly
+- key: stone
+  kind: info
+  label: What is this circle of stones?
+  text: "The stone circle is older than any city on Gaius. The wind-paths converge
+    here, spiritual currents that sustain the steppe's balance. Disturb them and the
+    land itself will sicken."
+- key: goblin
+  kind: info
+  label: What lives in the wind-paths?
+  text: "The goblin clans have honoured this circle for generations. Their ancestors
+    rest in the wind-paths. Destroying the circle would scatter those spirits like
+    dust. Even if you do not believe, the harm is real."
+  heardRequired:
+  - stone
+- key: rhett
+  kind: info
+  label: Who is after the crystal?
+  text: "A scholar from Thornwall. He sees only rock and profit. He does not hear the
+    wind's voice in the stone. He does not feel the ancestors watching. He would
+    crack the circle's foundation for trinkets and call it progress."

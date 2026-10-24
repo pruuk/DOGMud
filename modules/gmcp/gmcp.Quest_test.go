@@ -144,10 +144,10 @@ func TestBuildQuestListAndGet(t *testing.T) {
 	if !ok || detail.Quest.QuestId != 90003 {
 		t.Fatalf("get failed: %+v", detail)
 	}
-	// 11 events (room_gate added 2026-10-17), 9 condition kinds, 23 action
-	// types — one vocab entry per TriggerDef/Conditions/ActionDef field
-	// (count them, don't estimate).
-	if len(detail.Enums.Events) != 11 || len(detail.Enums.Actions) != 23 || len(detail.Enums.Conditions) != 9 {
+	// 10 events (room_gate added 2026-10-17, dialogue retired with ask in
+	// #375), 9 condition kinds, 23 action types — one vocab entry per
+	// TriggerDef/Conditions/ActionDef field (count them, don't estimate).
+	if len(detail.Enums.Events) != 10 || len(detail.Enums.Actions) != 23 || len(detail.Enums.Conditions) != 9 {
 		t.Fatalf("vocabulary sizes wrong: events=%d conditions=%d actions=%d",
 			len(detail.Enums.Events), len(detail.Enums.Conditions), len(detail.Enums.Actions))
 	}
@@ -183,14 +183,57 @@ func TestBuildQuestDelete_GuardAndClean(t *testing.T) {
 	}
 }
 
-// A dialogue file with no tree (Tree is a POINTER, nil for pattern-only
-// NPCs — most of the 302 live files) must walk without panicking. Caught by
-// the 5c E2E: the fake deps in the tests above bypass the real walker.
-func TestWalkDialogueGates_NilTree(t *testing.T) {
-	df := &dialogue.DialogueFile{MobId: 9, Patterns: []dialogue.Pattern{{GrantsQuest: "10-start"}}}
+// A dialogue file with no opener (Opener is a POINTER, nil when absent) must
+// walk without panicking. Caught by the 5c E2E on the old tree pointer: the
+// fake deps in the tests above bypass the real walker.
+func TestWalkDialogueGates_NilOpener(t *testing.T) {
+	df := &dialogue.DialogueFile{MobId: 9, Topics: []dialogue.Topic{{Key: "job", Effects: dialogue.Effects{GrantsQuest: "10-start"}}}}
 	seen := 0
 	walkDialogueGates(df, func(where string, g dialogueGate) { seen++ })
 	if seen != 1 {
-		t.Fatalf("expected 1 gate visit for the pattern, got %d", seen)
+		t.Fatalf("expected 1 gate visit for the topic, got %d", seen)
+	}
+}
+
+// Every topic and every opener variant is walked, and each reference to the
+// quest is reported: the topic's quest id, its grant, its gates and the flag
+// it sets, and a variant's gates. Another quest's tokens are not.
+func TestWalkDialogueGates_TopicsAndVariantsReportRefs(t *testing.T) {
+	df := &dialogue.DialogueFile{
+		MobId: 9,
+		Opener: &dialogue.Opener{Text: "Hello.", Variants: []dialogue.OpenerVariant{
+			{Gates: dialogue.Gates{QuestRequired: []string{"10-start"}, QuestFlagExcluded: map[string]string{"10-door": "open"}}, Text: "Back again."},
+		}},
+		Topics: []dialogue.Topic{
+			{Key: "job", Kind: dialogue.KindOffer, Quest: 10,
+				Gates:   dialogue.Gates{QuestExcluded: []string{"10-start", "10-end"}, QuestRequired: []string{"7-end"}},
+				Effects: dialogue.Effects{GrantsQuest: "10-start", SetsQuestFlag: &dialogue.QuestFlagSet{Key: "10-door", Value: "shut"}}},
+			{Key: "weather", Kind: dialogue.KindInfo},
+		},
+	}
+	got := map[string][]string{}
+	walkDialogueGates(df, func(where string, g dialogueGate) { got[where] = append(got[where], g.refs(10)...) })
+
+	want := map[string][]string{
+		"topic job":        {`quest 10`, `grantsQuest "10-start"`, `questExcluded "10-start"`, `questExcluded "10-end"`, `setsQuestFlag "10-door"`},
+		"topic weather":    nil,
+		"opener variant 1": {`questRequired "10-start"`, `questFlagExcluded "10-door"`},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("visited %v, want the keys of %v", got, want)
+	}
+	for where, refs := range want {
+		g, ok := got[where]
+		if !ok {
+			t.Fatalf("%s was not visited: %v", where, got)
+		}
+		if len(g) != len(refs) {
+			t.Fatalf("%s refs = %v, want %v", where, g, refs)
+		}
+		for i := range refs {
+			if g[i] != refs[i] {
+				t.Fatalf("%s refs = %v, want %v", where, g, refs)
+			}
+		}
 	}
 }

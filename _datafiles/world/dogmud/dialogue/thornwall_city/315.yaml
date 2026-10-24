@@ -1,0 +1,54 @@
+mobid: 315
+zone: Thornwall City
+defaultMood: neutral
+# Behavior-only mob (behaviors/thornwall_city/315-sable.yaml). Her greeting
+# branch became the opener; the portal, arena, oasis and talk branches became
+# info topics. open_arena and open_oasis are behavior topics (R12, R14): Task
+# 17 gives each one a tree branch with open_instance_portal, zone: and the
+# guidance: text drafted as a comment in that behavior file. Choosing one
+# closes the menu (R18) and asks "How much gold will you stake?".
+opener:
+  text: I am Sable. I open rifts to places best left undisturbed. For the right price
+    in gold, I can send you and your party somewhere dangerous.
+  hints: Choose a place below to open a rift. For more, type help instances.
+topics:
+- key: portal
+  kind: info
+  label: Where can you send me?
+  text: I can open rifts to dangerous places, for a price. Today I can reach the Arena
+    and the Planar Oasis. Choose a place, then tell me how much gold you will stake.
+    The more gold, the more dangerous the place, and the richer.
+  hints: Only the people in your party when the rift opens can follow you in. To
+    form a party first, type help party.
+  marked: true
+- key: open_arena
+  kind: info
+  label: Open a rift to the Arena.
+  text: The Arena, then.
+  behavior: true
+- key: open_oasis
+  kind: info
+  label: Open a rift to the Planar Oasis.
+  text: The Planar Oasis, then.
+  behavior: true
+- key: arena
+  kind: info
+  label: What is the Arena like?
+  text: The Arena is a brutal proving ground, and there is no second chance. If you
+    die, you are sent out and cannot go back in, and recall magic does not work
+    inside. The fights come one after another. Every room past the entrance holds
+    fighters who attack on sight, and the fallen soon return. On your own, stake 100 to 200 gold if you
+    are a midgame fighter, or 200 to 400 if you are an endgame fighter. Stake 400
+    and up only if you are very brave, or bring a group.
+  hints: For more, type help arena.
+- key: oasis
+  kind: info
+  label: What is the Planar Oasis like?
+  text: The Planar Oasis shimmers between worlds. Dangerous, but if you fall, you may
+    go back in. Recall magic still works there.
+  hints: For more, type help oasis.
+- key: talk
+  kind: info
+  label: What is this archway?
+  text: I tend the rift archway. If you seek passage to dangerous places, I can open
+    the way.

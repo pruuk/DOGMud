@@ -55,7 +55,7 @@ func writeDialogue(t *testing.T, dir, zone string, mobId int, body string) strin
 // The finding: a broken file must be retryable in-process.
 func TestLoad_ParseFailureIsNotCachedSoAFixCanBeRetried(t *testing.T) {
 	dir := withDialogueDir(t)
-	path := writeDialogue(t, dir, "testzone", 1234, "mobid: 1234\npatterns: [unclosed\n")
+	path := writeDialogue(t, dir, "testzone", 1234, "mobid: 1234\ntopics: [unclosed\n")
 
 	require.Nil(t, Load(1234, "testzone"), "a broken file yields no dialogue")
 
@@ -65,6 +65,22 @@ func TestLoad_ParseFailureIsNotCachedSoAFixCanBeRetried(t *testing.T) {
 	df := Load(1234, "testzone")
 	require.NotNil(t, df, "the corrected file must load without restarting the process")
 	assert.Equal(t, 1234, df.MobId)
+}
+
+// An old-format file (patterns, tree, memory) no longer decodes under the
+// strict loader since #375 Task 21 deleted those fields: it yields no
+// dialogue, is not cached, and loads once converted.
+func TestLoad_OldFormatFileIsRefusedAndNotCached(t *testing.T) {
+	dir := withDialogueDir(t)
+	path := writeDialogue(t, dir, "testzone", 1234, "mobid: 1234\npatterns:\n  - keywords: [\"\"]\n    responses: [\"...\"]\n")
+
+	require.Nil(t, Load(1234, "testzone"), "an old-format file yields no dialogue")
+	assert.False(t, nilSentinel["1234:testzone"], "an old-format file is fixable, not absent")
+
+	require.NoError(t, os.WriteFile(path, []byte("mobid: 1234\nopener:\n  text: \"...\"\n"), 0o644))
+	df := Load(1234, "testzone")
+	require.NotNil(t, df, "the converted file loads without a restart")
+	require.NotNil(t, df.Opener)
 }
 
 // A genuinely absent file SHOULD still be cached — that is the optimisation the

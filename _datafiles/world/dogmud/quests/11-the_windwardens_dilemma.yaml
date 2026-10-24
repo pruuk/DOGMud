@@ -14,10 +14,23 @@ steps:
     map_target: -1  # -1: bundled objectives, rooms [3030, 3115]; Phase 2 split review
     description: "A conflict is brewing on the Ironwind Steppe. Visit
       Windwarden Sylara at the stone circle or Geomancer Rhett at the
-      ridge approach and choose a side."
-    hint: "Sylara is at the stone circle (east from the ridge trail).
-      Rhett is at the ridge approach (east from the ridge trail then
-      north). Ask either about the conflict to choose a side."
+      ridge approach, hear what siding with each would mean, and choose
+      a side."
+    hint: "Rhett camps at the Ridge Approach: from the Old Citadel
+      Plaza at Thornwall's eastern edge, go east seven times. Sylara
+      keeps the Stone Circle: from the Ridge Approach, go south twice
+      to the Ridge Trail Junction, then east. Type talk rhett."
+  # sided: the choice is made in talk, after each side's warning (R28).
+  # Old saves that chose a side before this step existed hold the flag
+  # without it; the hand-ins gate on 11-start and the flag, not on this.
+  - id: sided
+    map_target: -1  # -1: the side chosen decides the place (3082 totem or 3032 samples)
+    description: "You have chosen a side in the dispute over the stone
+      circle. Do what they asked of you to prove it."
+    hint: "If you sided with Sylara, bring her the carved wolf totem
+      from the Kill Ground, deep in the wolf runs to the south. If you
+      sided with Rhett, bring him windstone samples from the veins on
+      the Rocky Shelf, just south of his camp."
   - id: end
     description: "You have made your choice and completed the task.
       The consequences remain to be seen."

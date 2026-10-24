@@ -16,8 +16,11 @@ secret: false
 #             the craft cannot begin without both materials in hand. A player
 #             saved on 35-start (the old first step) who already bought them
 #             can craft straight away.
-#   35-end    Rusk's craft_turnin node (gated on 35-craft), or handing her
-#             the dagger (item_give trigger below).
+#   35-end    Rusk's hand-in topics (gated on 35-craft): craft_turnin when
+#             the player carries the dagger (also what giving it to her
+#             resolves to; she never keeps it), craft_turnin_told when not.
+#             One more route also grants it: the sell trigger (selling it
+#             to her shop, R22), below.
 
 steps:
   - id: start
@@ -49,30 +52,26 @@ steps:
     description: "You worked iron at the forge for the first time
       and turned raw materials into something that did not exist
       before. Bring it back to Rusk."
-    hint: "Go to Smith Rusk at the forge and type ask rusk done."
+    hint: "Go to Smith Rusk at the forge and type talk rusk."
   - id: end
-    description: "Rusk has looked the blade over and said nothing
-      that was not a compliment. The coulee is your range now. Go
+    description: "Rusk is satisfied with your first work at the
+      forge. The coulee is your range now. Go
       north to the Quench Shed and west to the talus slope, and
       find Survivor Ovell in the Collapsed Cut."
 
 rewards:
   skillinfo: "blacksmithing:1"
   gold: 15
+  # Neutral on purpose: Rusk's two hand-in topics (the dagger shown, or
+  # her taking the player's word) both end here, and her own reply has
+  # already said where Ovell is.
   actor: >-
-    Rusk takes the dagger and turns it slowly, checking the edge
-    with one thumbnail. The grey forearm catches the forge light.
-    After a moment she sets it back on the anvil and looks at you,
-    not at the blade, with the measuring expression of a smith
-    deciding whether a piece of iron is worth tempering.
-    "Straight seam. Weight is forward where it belongs. You did
-    not rush the quench." She presses coins into your hand with
-    the finality of a door closing. "North through the Quench Shed,
-    then west to the talus. Find Ovell in the Collapsed Cut, south
-    of the Lower Talus. He pulled himself out of a cave-in and has
-    been waiting for someone to notice. Do not make him wait longer."
-  observer: "Rusk examines the dagger briefly, nods once, and
-    presses a few coins into {actor}'s hand."
+    Rusk looks at you, not at the forge, with the measuring expression
+    of a smith deciding whether a piece of iron is worth tempering.
+    Then she nods once and presses a few coins into your hand with the
+    finality of a door closing.
+  observer: "Rusk nods once and presses a few coins into {actor}'s
+    hand."
 
 triggers:
   # ── LIST RUSK'S GOODS (she trades in the smithy, room 5245) ─────
@@ -125,28 +124,29 @@ triggers:
       # teaching lives on the recipe's success_actor
       # (recipes/blacksmithing/iron-dagger.yaml).
       - actor: "The iron dagger is yours, made at the forge. Take it
-          to Rusk and type ask rusk done."
+          to Rusk and type talk rusk."
 
-  # ── TURN IN BY GIVING THE BLADE ──────────────────────────
-  # Alternate completion path to the `ask rusk done` dialogue node:
-  # a player who does the intuitive thing and physically hands the
-  # finished dagger to Rusk completes the quest too. We consume the
-  # crafted blade and hand back a clean one so the newbie keeps a
-  # weapon to wield (Equals compares UUID, so the returned dagger is
-  # a distinct instance and give.go's post-consume RemoveItem is a
-  # no-op). consume_item makes give.go take its consume branch, which
-  # returns before the generic archetype "hands it back" emote, so
-  # the turn-in reads cleanly.
-  - event: item_give
+  # ── TURN IN BY SELLING THE BLADE (owner ruling R22, #375) ──
+  # A crafted dagger is never a hostage to its turn-in: a player who sells
+  # the finished blade to Rusk's shop has handed it over as surely as one
+  # who gives it. The sell action raises this command event only for a
+  # completed sale (a refused one never notifies), carrying the item sold
+  # and the buying shop mob, so item 10009 and mob 9116 here mean exactly
+  # "Rusk bought the dagger". The sale has already taken the blade, so
+  # there is nothing to consume or return. Rewards pay through the same
+  # 35-end grant as the talk hand-ins (Rusk's craft_turnin topics).
+  - event: command
+    command: sell
+    room: 5245
     mob: 9116
     item: 10009
     conditions:
       has: ["35-craft"]
       missing: ["35-end"]
     actions:
-      - actor: "Rusk takes the blade, turns it once, checks the
-          edge with a thumbnail, and presses it straight back into
-          your hand. \"Yours. You made it.\""
-      - consume_item: 10009
-      - give_item: 10009
       - grant: "35-end"
+      - npc_say:
+          mob: 9116
+          lines:
+            - {delay: 1, text: "I love the entrepreneurial spirit. You'll be
+                a smith in no time."}

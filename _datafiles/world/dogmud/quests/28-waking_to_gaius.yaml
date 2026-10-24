@@ -26,8 +26,10 @@ steps:
   - id: start
     map_target: -1  # action step (command/skill) — no travel destination
     description: "You have woken, and Dewey has marked your path."
-    hint: "The hint command always names your next step. Type hint. To see
-      the whole journey, type quests."
+    # Only ever read by typing hint at this step, which finishes it, so it
+    # names the step after (R24, owner 2026-10-21).
+    hint: "Hint names your next step whenever you are not sure. Next, look
+      shows you the room you are in. Type look. For more, type help look."
   - id: hinted
     map_target: -1  # action step (command/skill) — no travel destination
     description: "You read your first hint. That command is your compass now."
@@ -45,11 +47,11 @@ steps:
   - id: status_prompt
     map_target: -1  # action step (command/skill) — no travel destination
     description: "You stepped into the place where you meet yourself."
-    hint: "Status shows your six stats and your three pools. Type status.
-      For more, type help status."
+    hint: "Status shows a page about you: what you are good at, and how much
+      you have left to spend. Type status. For more, type help status."
   - id: statused
     map_target: -1  # action step (command/skill), no travel destination
-    description: "You read your six stats and three pools."
+    description: "You read your six attributes and three pools."
     hint: "Skills are the things you get better at by doing them. Type
       skills. For more, type help skills."
   - id: skilled
@@ -92,11 +94,12 @@ steps:
   - id: said
     map_target: -1  # action step (command/skill) — no travel destination
     description: "You spoke, and the world can hear you."
-    hint: "Ask puts a question to one person about one topic. Type ask
-      dewey world. For more, type help ask."
+    hint: "Talk starts a conversation with one person, and you choose what
+      to ask about. Type talk dewey, then choose the question about the
+      world. For more, type help talk."
   - id: asked
-    description: "You learned to ask. Half of what matters is learned that
-      way."
+    description: "You learned to talk with someone and ask a question. Half
+      of what matters is learned that way."
     hint: "To walk to the next room, type its direction. Type north."
   - id: proving_prompt
     map_target: -1  # action step (command/skill) — no travel destination
@@ -105,8 +108,8 @@ steps:
       For more, type help warcry."
   - id: warcried
     map_target: -1  # action step (command/skill) — no travel destination
-    description: "Your war cry steadied your nerve. It is a condition,
-      riding on you."
+    description: "Your war cry steadied your nerve. It is a condition, an
+      effect on you."
     hint: "Conditions are effects on you, good or bad. Type conditions to
       see yours. For more, type help conditions."
   - id: saw_conditions
@@ -147,7 +150,8 @@ steps:
   - id: fled
     map_target: -1  # -1: no single resolved destination; Phase 2 review
     description: "You broke away. Running is how you live to win the next one."
-    hint: "Talk starts a conversation with someone. Type talk dewey."
+    hint: "Dewey is waiting at the Landing for one last word. Type talk
+      dewey."
   - id: end
     description: "Dewey sent you through to the world. Gaius is waiting."
 
@@ -167,11 +171,16 @@ triggers:
       - npc_say:
           mob: 9491
           lines:
+            # A newcomer has never played a MUD (R24, owner 2026-10-21): say
+            # what a quest and a command are before the first instruction.
             - {delay: 1, text: "There you are, waking up at last. Easy, now.
-                Nothing here can harm you."}
-            - {delay: 2, text: "I have marked your path already. The hint
-                command names your next step, any time you need it. Type
-                hint. I will be right here."}
+                Nothing here can harm you. I am Dewey, your guide."}
+            - {delay: 2, text: "You have a quest now. A quest is a task, done
+                one step at a time. This one teaches you to live here."}
+            - {delay: 2, text: "You act here by typing. The first word you type
+                is the command. Type it, press Enter, and the world answers."}
+            - {delay: 2, text: "Your first command is hint. It names your next
+                step, any time you are not sure. Type hint."}
 
   - event: command_issued
     command: hint
@@ -206,8 +215,8 @@ triggers:
           lines:
             - {delay: 0, text: "That's the whole trick of this world. The
                 ones who read what is in front of them live longest. Any
-                word shown in a different color is worth a look. The way
-                north is open."}
+                word shown in a different color is worth a look. The exits
+                line shows the ways out. To walk north, type north."}
 
   - event: command_issued
     command: look
@@ -222,8 +231,8 @@ triggers:
           lines:
             - {delay: 0, text: "That's the whole trick of this world. The
                 ones who read what is in front of them live longest. Any
-                word shown in a different color is worth a look. The way
-                north is open."}
+                word shown in a different color is worth a look. The exits
+                line shows the ways out. To walk north, type north."}
 
   # Last: it matches look guide too, and would grant what the trigger
   # above requires in the same command.
@@ -253,8 +262,8 @@ triggers:
           mob: 9491
           lines:
             - {delay: 1, text: "This is where you meet yourself. Status shows
-                your six stats and the three pools beneath them. Type
-                status."}
+                a page about you: what you are good at, and how much you have
+                left to spend. Type status."}
 
   # The pools and reservation in plain words (owner ruling 2026-10-17).
   - event: command_issued
@@ -267,17 +276,20 @@ triggers:
       - npc_say:
           mob: 9491
           lines:
-            - {delay: 0, text: "There you are, all of you on one page. You
-                grow by use, not by any level."}
-            - {delay: 2, text: "The three pools matter most. Health keeps you
+            - {delay: 0, text: "There you are, all of you on one page. The six
+                attributes at the top are how strong, quick and sharp you are.
+                They grow when you use them."}
+            - {delay: 2, text: "Your three pools matter most. Health keeps you
                 alive. Stamina pays for swings and other moves of the body.
                 Conviction pays for spells and shouts. All three refill with
                 time and rest."}
+            - {delay: 2, text: "The line at the bottom of your screen shows
+                the same three pools as bars: HP is health, SP is stamina,
+                CP is conviction. That line is your prompt."}
             - {delay: 2, text: "Some things you keep, like a companion or a
                 piece of enchanted gear, hold part of a pool back for as
                 long as you keep them. That is called reservation. Rest
-                does not bring it back, and status shows how much is held.
-                Type help reservation to learn more."}
+                does not bring it back, and status shows how much is held."}
             - {delay: 2, text: "Next, your skills. Skills are the things you
                 get better at by doing them. Type skills."}
 
@@ -324,8 +336,8 @@ triggers:
           mob: 9491
           lines:
             - {delay: 0, text: "Good. Hold still while it gathers. Spells take
-                a moment. When your light fades, cast it again. The way north
-                is open."}
+                a moment. The light lasts a while, then fades. When it fades,
+                cast it again. Once it is up, type north."}
 
   # ── 6260 What You Carry: get token, inventory, help, north ──
   - event: room_enter
@@ -378,11 +390,14 @@ triggers:
       - npc_say:
           mob: 9491
           lines:
-            - {delay: 0, text: "That list is always there. Type help and a
-                topic, like help look, to read about one thing. The way
-                north is open."}
+            - {delay: 0, text: "That list is always there. Help and a topic,
+                like help look, explains one thing. When you are ready, type
+                north."}
 
-  # ── 6261 The World Speaks: say, ask, north ──
+  # ── 6261 The World Speaks: say, talk, north ──
+  #    The talk lesson (R20, #375 phase 1): Dewey's topic asked_28 (the
+  #    question about the world, dialogue/newcomer_antechamber/9491.yaml)
+  #    grants 28-asked when chosen from his talk menu.
   - event: room_enter
     room: 6261
     conditions:
@@ -409,23 +424,10 @@ triggers:
       - npc_say:
           mob: 9491
           lines:
-            - {delay: 0, text: "Ha, and the world will answer, out there. Ask
-                puts a question to one person about one topic. Ask me
-                something. Type ask dewey world."}
-
-  # The question has to reach Dewey: a bare `ask` or `ask world` is refused.
-  # No npc_say here: this trigger runs before Dewey's reply is queued, so its
-  # line would land ahead of the answer. The way north is the end of the
-  # answer itself, in Dewey's dialogue (dialogue/newcomer_antechamber/
-  # 9491.yaml, the patterns gated on 28-asked), which reads the token this
-  # trigger has just granted.
-  - event: dialogue
-    mob: 9491
-    conditions:
-      has: [28-said]
-      missing: [28-asked]
-    actions:
-      - grant: 28-asked
+            - {delay: 0, text: "Ha, and the world will answer, out there. Talk
+                starts a conversation with one person. A numbered list of
+                questions comes up, and you type a number to ask one. Type
+                talk dewey."}
 
   # ── 6262 The Proving: warcry, conditions, cooldowns, consider, attack,
   #    cast, trip, flee ──
@@ -439,7 +441,13 @@ triggers:
       - npc_say:
           mob: 9491
           lines:
-            - {delay: 1, text: "The practice ring, where you make your
+            # Dewey's lesson topics stay open here, and while one is unheard
+            # his name shows [*] (dialogue Marker). Tie the mark the player
+            # met in the first menu back to him (R24). Worded so it holds
+            # whether or not the mark is showing; the warcry prompt stays last.
+            - {delay: 1, text: "When you see [*] beside my name, I still have
+                something worth hearing. If you want it, type talk dewey."}
+            - {delay: 2, text: "The practice ring, where you make your
                 mistakes safely. A war cry is a shout that steadies you
                 before a fight. Type warcry."}
 
@@ -454,7 +462,7 @@ triggers:
           mob: 9491
           lines:
             - {delay: 0, text: "Feel that lift? That is a condition, an effect
-                riding on you. Conditions can be good or bad. Type
+                on you. Conditions can be good or bad. Type
                 conditions to see yours."}
 
   - event: command_issued

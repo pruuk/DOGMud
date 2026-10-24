@@ -87,6 +87,18 @@ func (u *UserRecord) releaseMenuSignal() {
 	}
 }
 
+// MenuBlockedReason reports what would stop OpenMenu right now: the
+// interrupt rule that holds (menu.CloseNone when none does), and whether a
+// prompt is open. A caller checks it before speaking any lines that lead
+// into a menu, so a refused menu never leaves half a conversation behind.
+func (u *UserRecord) MenuBlockedReason() (reason menu.CloseReason, promptOpen bool) {
+	reason = menuGate(u.Character)
+	u.sessionMu.Lock()
+	promptOpen = u.activePrompt != nil
+	u.sessionMu.Unlock()
+	return reason, promptOpen
+}
+
 // OpenMenu opens a game menu and sends it. It refuses, returning the gate's
 // reason, while an interrupt rule holds, and refuses (menu.CloseNone, false)
 // while a prompt is open. An open game menu is replaced.
@@ -108,8 +120,36 @@ func (u *UserRecord) OpenMenu(m menu.Menu, s menu.Session) (menu.CloseReason, bo
 	if old != nil && old.s.OnClose != nil {
 		old.s.OnClose(menu.CloseReplaced)
 	}
-	u.SendText(messaging.CategoryScreen, menu.Render(m))
+	if s.ShowLast {
+		u.sendTextAt(messaging.CategoryScreen, menu.Render(m), menuShowLastPriority)
+	} else {
+		u.SendText(messaging.CategoryScreen, menu.Render(m))
+	}
 	return menu.CloseNone, true
+}
+
+// menuShowLastPriority is the event priority a Session.ShowLast menu is sent
+// at: after the pass's ordinary lines (priority 0, including those queued
+// while the pass runs), before the prompt redraw (priority 100).
+const menuShowLastPriority = 50
+
+// partnerLeftLinePriority is the priority of the line closing a menu whose
+// NPC left: after the pass's ordinary lines, before any menu shown last.
+const partnerLeftLinePriority = 40
+
+// CloseMenuWithMob closes the open game menu when it talks with
+// mobInstanceId (Session.MobInstanceId), telling the player the conversation
+// ended because the NPC left. Room.RemoveMob calls it for every player in
+// the room the NPC leaves, by any route: a move, a despawn or a death.
+func (u *UserRecord) CloseMenuWithMob(mobInstanceId int) {
+	if mobInstanceId == 0 {
+		return
+	}
+	om := u.currentMenu()
+	if om == nil || om.s.MobInstanceId != mobInstanceId {
+		return
+	}
+	u.closeMenuWith(om, menu.ClosePartnerLeft, true)
 }
 
 // closeMenuWith closes om if it is still the open menu (signalling under the
@@ -135,7 +175,13 @@ func (u *UserRecord) closeMenuWith(om *openMenu, r menu.CloseReason, announce bo
 func (u *UserRecord) afterMenuClosed(om *openMenu, r menu.CloseReason, announce bool) {
 	if announce {
 		if line := menu.InterruptLine(r, om.s.Topic); line != "" {
-			u.SendText(messaging.CategoryRefusal, line)
+			if r == menu.ClosePartnerLeft {
+				// After the pass's narration of the NPC going (its exit or
+				// death line), so the cause reads before the effect.
+				u.sendTextAt(messaging.CategoryRefusal, line, partnerLeftLinePriority)
+			} else {
+				u.SendText(messaging.CategoryRefusal, line)
+			}
 		}
 	}
 	if om.s.OnClose != nil {

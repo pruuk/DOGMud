@@ -8,8 +8,10 @@
 # move_player action with a static delay so the transit lines land
 # first. Destination: Thornwall Temple Interior (room 468) -- the same
 # room the "thornwall" sethome key resolves to.
-# Selector order matters: the Opened branch is tried first; the
-# not-yet-opened branch catches the same keywords below it.
+# The crossing is the `passage` talk topic (#375 R12), shown only to the
+# Opened; its text speaks his first line ("So. The coulee has taught you
+# what it can, for now."), and this branch runs the rest. The refusal for
+# a player not yet Opened is the passage_2 topic in his dialogue.
 
 tree:
   type: selector
@@ -17,18 +19,14 @@ tree:
 
     # ── PASSAGE: an Opened player asks to cross ──
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [passage, portal, arch, thornwall, through]
+          check: topic_is
+          topic: passage
         - type: condition
           check: player_has_quest
           quest: "30-end"
-        - type: action
-          do: say
-          text: So. The coulee has taught you what it can, for now.
-          delay: 1.0
         - type: action
           do: emote
           text: >-
@@ -64,22 +62,3 @@ tree:
           delay: 11.0
         # Quest 29 "Two Roads" closes on arrival through its own room_enter
         # trigger on 468, which a move_player teleport raises (#619).
-
-    # ── NOT YET: an unopened player asks to cross ──
-    - type: sequence
-      event: player_ask
-      children:
-        - type: condition
-          check: keyword_match
-          keywords: [passage, portal, arch, thornwall, through]
-        - type: condition
-          check: player_missing_quest
-          quest: "30-end"
-        - type: action
-          do: say
-          text: >-
-            The arch answers the Opened, and you are not yet. The pool
-            comes first -- Cleric Hadwen keeps it, at the heart of
-            town. There is no shame in arriving unready. Only in
-            staying that way.
-          delay: 1.0

@@ -3,9 +3,10 @@
 # Token flow (one command per step, owner ruling 2026-10-17):
 #   50-start      — granted by Marksman Iden's shoot_offer node (requires 30-end),
 #                   which also hands the player a sling (givesItem 10038), or by
-#                   Crier Toke's quest 31 send-off. A quest_granted trigger
+#                   Crier Toke's send_range offer after quest 31 (R21), which
+#                   gives the sling the same way. A quest_granted trigger
 #                   below hands over a pouch of shot (30064) unless the player
-#                   already carries one (Toke's send-off gives one).
+#                   already carries one.
 #   50-equip      — command trigger on `equip` of the sling (item 10038).
 #   50-shoot      — command trigger on `fire` at the Long Terrace (5351): loose a
 #                   stone at the practice butt (9163).
@@ -63,7 +64,7 @@ steps:
       Long Terrace, east of Marksman Iden on the Firing Range. From Hub
       Square, go north to the Awakening Pool, east twice to the Mending Hut,
       north to the Bluff Steps, up, north twice, and up to the Firing Range.
-      Crier Toke knows the way too: ask toke terrace.
+      Crier Toke in Hub Square knows the way too.
     hint: >-
       Go east from the Firing Range to the Long Terrace and type fire butt.
   - id: shoot
@@ -86,7 +87,7 @@ steps:
       You shot from cover and felt the difference. Marksman Iden is waiting
       on the Firing Range, west of the Long Terrace.
     hint: >-
-      Go west to Marksman Iden and type ask iden done.
+      Go west to Marksman Iden and type talk iden.
   - id: end
     description: >-
       Iden has named your eye sound. Scout Bryn, at the Canyon Mouth, will
@@ -111,9 +112,9 @@ rewards:
 
 triggers:
   # ── SHOT: a pouch to feed the sling, unless the player already has one ──
-  # Fires on the grant from either road in (Iden's offer or Toke's quest 31
-  # send-off). Toke's send-off gives the pouch in the same action list, before
-  # this chained trigger runs, so missing_item keeps it to one pouch.
+  # Fires on the grant from either road in (Iden's offer or Toke's send_range
+  # offer). missing_item keeps it to one pouch for a player who already
+  # carries shot.
   - event: quest_granted
     quest_token: 50-start
     conditions:
@@ -176,4 +177,4 @@ triggers:
       - grant: "50-cover_shot"
       - actor: >-
           The stone takes the butt dead center, harder than any shot before
-          it. Go west to Marksman Iden and type ask iden done.
+          it. Go west to Marksman Iden and type talk iden.

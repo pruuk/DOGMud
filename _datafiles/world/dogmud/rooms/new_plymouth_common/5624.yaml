@@ -5,11 +5,11 @@ description: >
   Cold comes before light. The temperature drops on the last
   three steps and does not recover. The foundation
   chamber is low-ceilinged and long, its walls cut from
-  the same grey-blue stone as the lower stair, the joins
+  the same gray-blue stone as the lower stair, the joins
   between courses precise in a way that no current mason
   in New Plymouth can match and no one has asked them
   to replicate. Along the north-facing wall a
-  <ansi fg="itemname">gray-material seam</ansi>
+  <ansi fg="itemname">gray material seam</ansi>
   runs at eye height, three hand-spans wide. It is not stone,
   not mortar, the surface too even, the edges too
   deliberate, as if poured or grown rather than cut. It
@@ -17,7 +17,7 @@ description: >
   does. In the east-facing wall a
   <ansi fg="itemname">sealed niche</ansi> has been
   mortared shut with a careful hand. The mortar is old
-  and grey as the stone, the fill flush and squared.
+  and gray as the stone, the fill flush and squared.
   Whatever was placed in it was placed before the city
   above existed. The chamber is silent in a way that
   silence in occupied buildings is not.
@@ -36,7 +36,7 @@ nouns:
     flush with the surrounding surface, which is
     itself unusual, since it should project or recess
     if it were a repair. Its color is a uniform
-    grey-white, without the natural variation of stone,
+    gray-white, without the natural variation of stone,
     without mortar-lines. The surface is slightly cool
     to the touch even relative to the chamber, which
     is already cold. It does not feel like anything you
@@ -63,7 +63,7 @@ idlemessages:
   the absence has its own texture.
 - The cold does not fluctuate. It simply is, uniform
   and settled, the temperature of deep old stone.
-- The gray-material seam in the north wall catches no
+- The gray material seam in the north wall catches no
   light at all. The chamber's dimness pools against it
   and goes no further.
 - A slow sound arrives from somewhere beyond the east

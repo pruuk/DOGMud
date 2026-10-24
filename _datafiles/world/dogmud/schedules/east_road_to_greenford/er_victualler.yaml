@@ -9,15 +9,15 @@ segments:
     activity: ""
     idlecommands:
       - emote sets out a fresh row of loaves on the counter cloth,
-        spacing them the way she always does -- equal gaps, heels
-        outward -- and steps back to appraise the arrangement.
+        spacing them the way she always does, with equal gaps and the
+        heels outward, and steps back to appraise the arrangement.
       - say I bake before the hamlet wakes. Everything on this counter
         this morning was dough before dawn. Road folk can tell the
         difference and so can I.
       - emote wipes down the worn counter with a damp cloth, lifts the
         corner of the cheese cloth to check the rind, and tucks it back
         with a small approving nod.
-      - say Loaf, hard cheese, a plum from the valley -- that is exactly
+      - say Loaf, hard cheese, a plum from the valley. That is exactly
         what you want on a long road. I know because I ask the folk who
         come back through.
       - emote shades her eyes and watches the road east for a moment,
@@ -32,7 +32,7 @@ segments:
         the back of the counter for the morning, then begins stacking the
         cheese trays for the night.
       - say That is the end of the day's baking. Come back at first light
-        if you want the fresh loaf -- I do not hold yesterday's bread at
+        if you want the fresh loaf. I do not hold yesterday's bread at
         yesterday's price.
       - emote banks the small brazier beneath the stall, tucks the day's
         takings into the belt-purse, and straightens the counter one last

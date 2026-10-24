@@ -1,39 +1,37 @@
 # The Passage Agent — mob 9573 — books passage at the Confluence Barge Dock.
-# Serves BOTH Barge Dock routes -- destination word picks the route.
+# Serves BOTH Barge Dock routes, one talk topic per destination.
 tree:
   type: selector
   children:
 
-    # ── PURCHASE: boarding intent → board_ferry resolves destination,
-    # schedule, fare, and movement. Sits FIRST (grant-node-first SOP). ──
+    # ── PURCHASE: one talk topic per destination (#375 R14). The topic's
+    # destination param picks the route; board_ferry resolves schedule,
+    # fare, and movement. The agent's greeting lives in the dialogue opener. ──
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [passage, board, boarding, ticket, fare, ride, sail, stillwater, plymouth]
+          check: topic_is
+          topic: to_stillwater
         - type: action
           do: board_ferry
+          destination: stillwater
           routes:
             stillwater: stillwater_confluence_barge
             plymouth: confluence_np_barge
 
-    # ── info / greetings ──
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [hello, hi, help, who, what, ferry, boat, barge, agent]
+          check: topic_is
+          topic: to_plymouth
         - type: action
-          do: say
-          text: I see passengers onto the water here. The Grey Heron runs up to Stillwater and the Broadbeam runs down to Plymouth -- pay at the plank, walk off at the far end.
-        - type: action
-          do: say
-          text: Tell me where you're bound when you ask for passage -- Stillwater, or Plymouth. If she's out on the river, I'll tell you when the current brings her back.
-        - type: action
-          do: send_user_text
-          text: '<ansi fg="181">  [Try: ask agent passage plymouth]</ansi>'
+          do: board_ferry
+          destination: plymouth
+          routes:
+            stillwater: stillwater_confluence_barge
+            plymouth: confluence_np_barge
 
     # Silent player_enter no-op: claims the event so composition never
     # falls through to noncombat_passive's "pays you little mind." emote.

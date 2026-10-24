@@ -1,0 +1,18 @@
+itemid: 40507
+name: Embroidered Bookmark
+namesimple: bookmark
+description: |
+  A narrow strip of old sailcloth, hemmed with grey thread and used as a
+  bookmark. Someone from a fishing family has stitched a saying along it
+  in small, careful letters:
+
+    "When we lose someone to the water, we don't look down. We look up."
+
+  The thread has faded, and the cloth still smells faintly of salt.
+type: object
+subtype: mundane
+weight: 0.1
+value: 2
+rarity_tier: 40
+vendor_categories:
+- tailoring

@@ -11,6 +11,6 @@ component be of your own making.
   <ansi fg="yellow">Station:</ansi>     alchemy_bench
   <ansi fg="yellow">Ingredients:</ansi> Reduction Base (x1), Glass Vial (x1), Unmaking Distillate (x1),
                First-Bloom Nectar (x1), Blood-moss (x6), Salt Pouch (x4)
-  <ansi fg="yellow">Learned:</ansi>     buy Veyra's secret: ask veyra teach phial
+  <ansi fg="yellow">Learned:</ansi>     buy Veyra's phial secret: talk veyra
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help craft</ansi>

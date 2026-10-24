@@ -11,14 +11,14 @@ import (
 // reason to run it often — the point is only that it runs at all.
 const dialogueMemorySweepTurnInterval uint64 = 500
 
-// SweepDialogueMemory drops per-(mob instance, player) conversation memories
-// that have gone untouched for a long time.
+// SweepDialogueMemory drops per-(mob instance, player) dialogue memories (the
+// greet-once record) that have gone untouched for a long time.
 //
-// The cache gains one entry per pair that has ever spoken and, until this hook
-// existed, was only emptied by an explicit ResetMemory — so it grew for the
-// life of the process, holding entries for mob instances that despawned long
-// before. The state is per-instance and already lost on restart, so dropping an
-// idle entry costs nothing that a respawn would not.
+// The cache gains one entry per pair an NPC has greeted and, without this
+// hook, would grow for the life of the process, holding entries for mob
+// instances that despawned long before. The state is per-instance and already
+// lost on restart, so dropping an idle entry costs nothing that a respawn
+// would not.
 func SweepDialogueMemory(e events.Event) events.ListenerReturn {
 
 	evt, typeOk := e.(events.NewTurn)

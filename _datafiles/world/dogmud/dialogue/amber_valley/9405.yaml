@@ -1,34 +1,45 @@
 mobid: 9405
 zone: Amber Valley
 defaultMood: friendly
+# Text matched to his description (a finisher with horn fingertips who does
+# inlay and fine stitching): the old lines made him the lane's potter, who in
+# room 6059 is someone else.
 greetings:
-  - text: "Careful, the glaze is still wet on that one. Welcome to the craft lane — mind your sleeves."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Hello! Don't touch the drying rack and we'll be fast friends."
-  - keywords: ["craft", "pottery", "work", "wares", "make"]
-    responses:
-      - "Bowls, jugs, tiles — anything you can shape from good valley clay."
-  - keywords: [""]
-    responses:
-      - "Hm? Say again, my hands were busy and my ears followed them."
-tree:
-  root:
-    text: "Ferris Dale, potter of the craft lane. I throw clay all day and call it a living — and a good one, in a valley that likes its tables set pretty. What can I tell you?"
-    hints: "You could ask Ferris about his craft, about the valley, or about the
-      Chrysalis Rite the valley keeps."
-  nodes:
-    - id: craft
-      triggers: ["craft", "pottery", "clay", "work", "wares", "make"]
-      text: "The valley clay's the secret — comes out of the riverbank a warm amber colour, fires to a glow like honey held to candlelight. I've thrown pots since I was knee-high to the wheel. There's a rhythm to it that empties your head in the best way. Folk think a bowl is a small thing. A small thing you use every single day is not a small thing at all."
-      hints: "You could ask Ferris about the valley, or about the Chrysalis Rite."
-    - id: valley
-      triggers: ["valley", "amber", "lane", "life", "home"]
-      text: "The craft lane's a cheerful row — me at my wheel, a weaver, old Hollin tanning hides at the end and complaining about the smell of his own trade. We work with our doors open and our gossip louder. Amber Valley's good to its makers. There's always a feast wanting plates and a wedding wanting jugs. A potter never goes hungry where people still gather."
-      hints: "You could ask Ferris about his craft, or about the Rite."
-    - id: rite
-      triggers: ["rite", "chrysalis", "mutation", "blooming", "gift", "faith"]
-      text: "The Chrysalis Rite? I'm fond of it, in my potter's way. There's a Blooming and a change is like the firing, see — you put the soft, uncertain thing into the heat and what comes out is harder, truer, finished. We don't fear the kiln here, and we don't fear the change. Both just make a person more themselves. Deacon Pember would put it holier than that. I put it in clay terms because clay's the only sermon I trust."
-      hints: "You could ask Ferris about his craft, or about the valley."
+- text: Careful, that inlay is still setting. Welcome to the craft lane. Mind your
+    sleeves.
+  moods:
+  - friendly
+opener:
+  text: Come and watch, if you like. I work better with an audience. I am Ferris
+    Dale, the finisher of the craft lane. Others make the thing, and I make it
+    fine, and that is a good living in a valley that likes its tables set
+    pretty. What can I tell you?
+  hints: Choose a line below if you would like to hear about his craft, about
+    the valley, or about the Chrysalis Rite the valley keeps.
+topics:
+# craft folds the "craft pottery work wares make" pattern ("anything you
+# can shape from good valley clay"), turned to his own work.
+- key: craft
+  kind: info
+  label: What work do you do here?
+  text: Close work, the kind others bring me. Inlay in a box lid, fine stitching on
+    a wedding sleeve, a pattern scribed too small for an ordinary hand. My Blooming
+    gave me these, see? Horn at every fingertip. Awl, stylus and burnisher, all on
+    the one hand. Folk think the finish is a small thing. A small thing you look at
+    every single day is not a small thing at all.
+- key: valley
+  kind: info
+  label: What is the craft lane like?
+  text: A cheerful row. The cooper in his shed, the potter at her wheel across the
+    way, me at my bench, and old Hollin tanning hides down Tanner's Row and complaining
+    about the smell of his own trade. We work with our doors open and our gossip louder.
+    Amber Valley is good to its makers. There is always a feast wanting plates and
+    a wedding wanting a fine sleeve. A maker never goes hungry where people still gather.
+- key: rite
+  kind: info
+  label: How do you see the Chrysalis Rite?
+  text: I am fond of it, in a finisher's way. The rough thing already has its shape.
+    The finish only brings out what was in it all along. A Blooming is like that,
+    to my eye. We do not fear the change here. It just makes a person more themselves.
+    Deacon Pember would put it holier than that. I put it in bench terms, because
+    the bench is the only sermon I trust.

@@ -81,8 +81,11 @@ func TestTriggerNoun_ExactPreferredOverNumberVariant(t *testing.T) {
 }
 
 // TestTriggerNoun_Quest20PillarsOneTrigger pins the merged pair in quest 20
-// (Ulla's Silence): room 4123 once had one trigger for `pillars` and one for
-// `pillar`; now `look pillar` and `look pillars` each match exactly one.
+// (Ulla's Silence): the pillars once had one trigger for `pillars` and one for
+// `pillar`; now `look pillar` and `look pillars` each match exactly one. The
+// trigger sits on the Temple Approach (4122), the room whose `pillars` noun
+// describes the carved spiral; the sanctuary (4123) has no pillars and
+// matches none (#375 batch 3 zone pass).
 func TestTriggerNoun_Quest20PillarsOneTrigger(t *testing.T) {
 	_, thisFile, _, _ := runtime.Caller(0)
 	path := filepath.Join(filepath.Dir(thisFile), "..", "..", "_datafiles", "world", "dogmud", "quests", "20-ullas_silence.yaml")
@@ -94,16 +97,20 @@ func TestTriggerNoun_Quest20PillarsOneTrigger(t *testing.T) {
 	if err := yaml.Unmarshal(raw, &q); err != nil {
 		t.Fatalf("parse quest 20: %v", err)
 	}
-	for _, typed := range []string{"pillar", "pillars"} {
-		d := EventDetails{UserId: 1, RoomId: 4123, Verb: "look", Noun: typed}
+	count := func(roomId int, typed string) int {
+		d := EventDetails{UserId: 1, RoomId: roomId, Verb: "look", Noun: typed}
 		matches := 0
 		for i := range q.Triggers {
 			tr := &q.Triggers[i]
-			if tr.Event == "room_interact" && matchTriggerFields(tr, d, true) {
+			if tr.Event == "room_interact" && matchTriggerFields(tr, d, nounNumber) {
 				matches++
 			}
 		}
-		assert.Equal(t, 1, matches, "look %s in room 4123 should match exactly one quest 20 trigger", typed)
+		return matches
+	}
+	for _, typed := range []string{"pillar", "pillars"} {
+		assert.Equal(t, 1, count(4122, typed), "look %s in room 4122 should match exactly one quest 20 trigger", typed)
+		assert.Equal(t, 0, count(4123, typed), "look %s in room 4123 (no pillars there) should match no quest 20 trigger", typed)
 	}
 }
 

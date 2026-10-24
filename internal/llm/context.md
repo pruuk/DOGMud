@@ -42,9 +42,9 @@ start another, which bounds concurrent requests to one per NPC.
 
 - **Both callbacks run on the async goroutine, under `util.LockMud()`.**
   `AskAsync` takes the mud lock around `onResponse` *and* `onUnavailable` before
-  invoking them, because every real implementation touches shared game state
-  (`mobs.GetInstance`, `dialogue.Load` / `ShiftMood`, `mob.Command`) and the
-  `internal/dialogue` caches are unguarded maps that `MainWorker` writes. So:
+  invoking them, because a fallback touches shared game state
+  (`mobs.GetInstance`, the `internal/dialogue` caches, `mob.Command`) and those
+  caches are unguarded maps that `MainWorker` writes. So:
   call mob/room/dialogue functions directly from a callback, and **never** take
   the mud lock inside one — `mudLock` is not reentrant and double-locking hangs
   the whole server.
@@ -67,4 +67,6 @@ start another, which bounds concurrent requests to one per NPC.
 
 ## Consumers
 
-`internal/dialogue` fallback paths, gated on config.
+None calls `AskAsync` since quest arc #375 phase 1 took the LLM out of `talk`
+and `ask` (spec R4); LLM topics are #643. `LLMProfile` is still read by
+`internal/mobs` and edited through `modules/gmcp` (`gmcp.Mob.go`).

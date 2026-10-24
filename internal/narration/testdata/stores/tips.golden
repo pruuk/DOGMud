@@ -2,7 +2,7 @@
 # Built 2026-09-15 from PRE-migration data. Every tip in rotation order, as the text
 # after the [Tip] prefix. dimensions: rotation index
 
-tip|0 => Having trouble finding quests? Try <ansi fg="command">ask</ansi> <ansi fg="yellow">[npc-name]</ansi> <ansi fg="command">quest</ansi> at any quest giver.
+tip|0 => Having trouble finding quests? Look for someone marked [!] beside their name and <ansi fg="command">talk</ansi> to them.
 tip|1 => Check the <ansi fg="command">help</ansi> command for a full list of topics. You might learn about mechanics you didn't know about.
 tip|2 => Your stats improve through use. Swing a sword enough and your Strength grows over time.
 tip|3 => Recipes and new spells are discovered by using crafting skills and spellcasting in the game world.

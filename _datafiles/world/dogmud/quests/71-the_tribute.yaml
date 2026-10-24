@@ -17,18 +17,23 @@ steps:
       deposit. She asked you to find out what the tribute pays for and
       whether it can be appealed.
     hint: >-
-      Ask Clerk Vell at the Civic Permit Office about the tribute and the
-      audit on Ostry's shop.
+      Clerk Vell keeps the Permit Office. From Dame Ostry's Armoury, go
+      north to Coin Alley, then north into the Permit Office. He is at his
+      desk by day, eats in the Central Square at midday, and sleeps at
+      night. Type talk vell.
   - id: vell
     map_target: 5820  # fallback when Horst is not spawned
     map_target_mob: 9344  # follow Horst (schedule np_merchant_horst) — a fixed room is wrong for part of the day
     description: >-
       Vell says the rate is set by charter and is not negotiable. The
-      charter derives from the founding -- and you may know more about the
+      charter derives from the founding, and you may know more about the
       founding than Vell does.
     hint: >-
-      The tribute runs upward, past the clerk. Get to Horst at the Gilt
-      Threshold gate and learn where it goes.
+      The tribute runs upward, past the clerk, to Horst at the gate of the
+      watched house. From the Permit Office, go east to the Watched Lane,
+      then north to the Watched House Gate. In the evening he sits in the
+      private parlor of the Gilt Threshold instead, and he sleeps at the gate
+      in the small hours. Type talk horst.
   - id: horst
     map_target: 5815
     description: >-
@@ -36,17 +41,23 @@ steps:
       many words, that the tribute funnels up and discretion is the whole
       arrangement. Papers were left in the parlor.
     hint: >-
-      Examine the papers in the Gilt Threshold parlor for evidence of where
-      the tribute goes.
+      The papers are in the private parlor of the Gilt Threshold, where
+      Horst sits in the evening. From the Watched House Gate, go south
+      twice to the Porters' Dock, west three times to the Gilded Walk,
+      north into the Gilt Threshold, then east into the parlor. Type look
+      paper scrap.
   - id: ledger
     map_target: 5810  # fallback when Dame Ostry is not spawned
     map_target_mob: 9347  # follow Dame Ostry (schedule np_merchant_ostry) — a fixed room is wrong for part of the day
     description: >-
-      You lifted a page of the tribute ledger -- vendor sums all routed to
+      You lifted a page of the tribute ledger: vendor sums all routed to
       one unnamed account, with a note to hold filings until permits clear.
       It does not prove a crime. It proves leverage.
     hint: >-
-      Take the ledger page back to Dame Ostry.
+      Take the ledger page back to Dame Ostry. From the parlor, go west
+      into the Gilt Threshold, south to the Gilded Walk, east to the Square
+      Fountain, east to Coin Alley, then south into Dame Ostry's Armoury.
+      Type talk ostry.
   - id: end
     description: >-
       Ostry cannot break the bloodline, and neither can you. But with the
@@ -71,10 +82,12 @@ rewards:
     nearest thing she has to ceremony.
 
 triggers:
-  # LEDGER: lift the tribute ledger page in the Gilt Threshold parlor (5815)
+  # LEDGER: lift the tribute ledger page in the Gilt Threshold parlor (5815).
+  # The noun is the room's own key (`paper scrap`), so `look paper`, `look
+  # scrap` and `look papers` reach it too; it was `paper-scrap`.
   - event: room_interact
     room: 5815
-    noun: paper-scrap
+    noun: paper scrap
     conditions:
       has: ["71-horst"]
       missing: ["71-ledger"]
@@ -82,36 +95,26 @@ triggers:
       - grant: "71-ledger"
       - give_item: 40119
       - actor: >-
-          The torn scrap on the floor reads "before the permit clears" --
+          The torn scrap on the floor reads "before the permit clears",
           and the page it tore from is still on the table among the
-          cup-rings, slid half under a ledger-board. You take it: a column
+          cup rings, slid half under a ledger-board. You take it: a column
           of quarterly sums against vendor names, every figure routed up to
           one unnamed account. It does not prove a crime. It proves exactly
           where the money goes, and who waits on whom.
-      - observer: "{actor} palms a page from the table among the cup-rings."
+      - observer: "{actor} palms a page from the table among the cup rings."
 
   # paper-scrap, before reaching Horst
   - event: room_interact
     room: 5815
-    noun: paper-scrap
+    noun: paper scrap
     conditions:
       missing: ["71-horst"]
     actions:
       - actor: >-
-          A torn scrap on the floor carries four words -- "before the permit
-          clears" -- in a careful hand. There is more to it somewhere, but
+          A torn scrap on the floor carries four words, "before the permit
+          clears", in a careful hand. There is more to it somewhere, but
           lifting papers from this room uninvited, before you know whose they
           are, is the kind of mistake the Gilt Threshold is built to punish.
-
-  # REPORT: give the ledger page to Ostry (9347) -> grant 71-end directly
-  - event: item_give
-    mob: 9347
-    item: 40119
-    conditions:
-      has: ["71-ledger"]
-      missing: ["71-end"]
-    actions:
-      - grant: "71-end"
 
   # bonus: cooperage rep if the player has already proven the false founding (Q69)
   - event: quest_granted
@@ -120,3 +123,23 @@ triggers:
       has: ["69-end"]
     actions:
       - bump_rep: {faction: cooperage_circle, delta: 5}
+
+  # Lost ledger page (appended 2026-10-21, #375 batch 5): Ostry's hand-in
+  # takes the page, so a player who lost it finds another while the quest
+  # is open. Trigger 0 gives the first page and so blocks this one in the
+  # same command (missing_item).
+  - event: room_interact
+    room: 5815
+    noun: paper scrap
+    conditions:
+      has: ["71-ledger"]
+      missing: ["71-end"]
+      missing_item: 40119
+    actions:
+      - give_item: 40119
+      - actor: >-
+          The ledger-board is still on the table among the cup rings, and
+          another page of the same column has worked loose beneath it. You
+          take it: the same quarterly sums, routed up to the same unnamed
+          account.
+      - observer: "{actor} palms a page from the table among the cup rings."

@@ -47,8 +47,8 @@ steps:
       older than the folk, marked with a sign even the loresingers cannot read.
       You can look at the disc to study it before you bring word to Sere.
     hint: >-
-      Go south and east back to Hermit Sere in the Old Shrine and type ask sere
-      done.
+      Go south and east back to Hermit Sere in the Old Shrine and type talk
+      sere.
   - id: end
     description: >-
       You have seen the thing under the shrine and brought word of it back. You
@@ -97,4 +97,4 @@ triggers:
           coulee does. It feels less like something the folk made and lost than
           like something that was already here when they came, waiting under the
           floor for a hand to lift it. Now yours has. Go back to Sere in the
-          Old Shrine and type ask sere done.
+          Old Shrine and type talk sere.

@@ -1,7 +1,7 @@
 id: np_common_coll
 description: "Coll the Sweeper: sweeps Carter's Rise and listens at the well
   through the day, takes a bowl at the cookshop at midday, then sleeps in
-  his corner near the drain-passage with his hoard of grey fragments."
+  his corner near the drain-passage with his hoard of gray fragments."
 segments:
   - start: 6
     end: 12
@@ -10,7 +10,7 @@ segments:
     idlecommands:
       - emote draws the broom in a slow circle around the well base, then presses
         one ear briefly to the coping-stone and listens.
-      - emote crouches at the drain-cover, picks a grey fragment from the gutter
+      - emote crouches at the drain-cover, picks a gray fragment from the gutter
         with two fingers — examines it — and pockets it without a word.
       - say The well's busiest hour, and I've been here for all of them. More
         than you'd think runs through these stones.
@@ -36,7 +36,7 @@ segments:
         different weight to their feet.
       - emote leans on the broom handle and tilts his head — a long angle,
         as if attending to something running below the paving-stones.
-      - emote finds another grey fragment in the afternoon run-off, holds it
+      - emote finds another gray fragment in the afternoon run-off, holds it
         between two fingers, pockets it without change of expression.
       - say I've heard that particular crack in the well wall getting wider
         for six months. City hasn't patched it. Someone should mark it down.
@@ -45,5 +45,5 @@ segments:
     target_room: 5618
     activity: sleeping
     idlecommands:
-      - emote sleeps in his corner above the drain-passage, the tin of grey
+      - emote sleeps in his corner above the drain-passage, the tin of gray
         fragments on the shelf beside his head.

@@ -2,107 +2,150 @@ mobid: 9454
 zone: The Confluence
 defaultMood: friendly
 greetings:
-  - text: "A moment."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Yes. I am working. Briefly."
-  - keywords: ["what", "doing", "copy", "copying", "mark",
-      "symbol", "measure", "folio", "why", "here",
-      "study", "research"]
-    responses:
-      - "Recording the mark above the doors. The dimensions,
-        the proportions, the chisel technique. The analysis
-        is done upriver. I only record here."
-  - keywords: ["margin", "scholar", "who", "group",
-      "society", "organization", "what", "are"]
-    responses:
-      - "The Margin. Scholars' Quarter, upriver. We keep the
-        source records. If you want the work, go north."
-  - keywords: [""]
-    responses:
-      - "I am working. Questions about the mark or the
-        Margin only."
-tree:
-  root:
-    text: "I am recording the mark above the doors. The
-      proportions, the carving technique, the layering. I do
-      not draw conclusions here. The analysis is in the
-      Scholars' Quarter. What did you want?"
-    hints: "You could ask what is being recorded here, about
-      the mark itself, or about the Margin and the Scholars'
-      Quarter upriver."
-  nodes:
-    - id: marginhandoff
-      triggers: ["rubbing", "undercroft", "reveal", "margin", "truth",
-        "deliver", "hand", "give", "turn", "done", "quest", "task"]
-      questRequired: ["74-reveal"]
-      questExcluded: ["74-end"]
-      requiresItem: 40142
-      grantsQuest: "74-end"
-      setsQuestFlag: {key: "74-allegiance", value: "margin"}
-      givesGold: 40
-      bumpsRep:
-        - {faction: "margin", delta: 20}
-        - {faction: "keepers", delta: -10}
-      text: "Is that -- it is. From below. The Margin will keep it where
-        the temple cannot reorganize it. Thank you. You have no idea what
-        this is worth -- or perhaps you do."
-      hints: "You hand the rubbing to the Margin scholar."
-    - id: q73_aside
-      questRequired: ["73-end"]
-      triggers: ["fourth", "water", "waters", "count", "records",
-        "survey", "notation", "quist", "seen", "scholar",
-        "symbol", "mark", "older", "question", "agree",
-        "disagree", "what", "know", "found", "doctrine",
-        "wrong", "keystone", "carving", "ring", "cocoon"]
-      text: "So you have seen what the records show. Then you
-        already know what I am copying: the keystone is older
-        than the doctrine cut beneath it. The proportions,
-        the chisel work, the weathering sequence -- it does
-        not match the Founding period, not by a generation.
-        I write that down. I do not say it here."
-      hints: "You could ask about the Margin's work, or
-        about the Scholars' Quarter upriver."
-    - id: recording
-      triggers: ["record", "recording", "copy", "copying",
-        "what", "doing", "why", "measure", "dimension",
-        "proportion", "chisel", "technique", "folio",
-        "instrument", "brass", "angle"]
-      text: "Dimensional record of the mark -- the ring
-        geometry, the relief depth at the cocoon element,
-        the chisel sequence. I can read carving technique
-        with enough precision to establish relative dating.
-        That is the purpose. I do not speculate about
-        what it means. That is the work for upriver, with
-        the source surveys laid out properly."
-      hints: "You could ask about the mark itself, or
-        about the Margin and the Scholars' Quarter."
-    - id: the_mark
-      triggers: ["mark", "symbol", "ring", "cocoon",
-        "above", "doors", "stone", "what", "is", "means",
-        "old", "older", "carved", "first", "oldest",
-        "founding", "keepers", "say", "tell"]
-      text: "The Keepers call it the first rendering of
-        the Chrysalis truth -- the sealed soul, the ringed
-        cocoon, the Founders' own hand. That is the official
-        account. I record what I can measure: dimensions,
-        weathering, technique. I do not argue with the
-        account on temple ground. The Scholars' Quarter
-        is north if you want the Margin's reading of it."
-      hints: "You could ask what is being recorded here,
-        or about the Scholars' Quarter and the Margin's work."
-    - id: scholars_quarter
-      triggers: ["scholars", "quarter", "margin", "upriver",
-        "north", "where", "go", "find", "more", "work",
-        "analysis", "library", "archive", "quist", "what",
-        "is", "there"]
-      text: "North along the river, at the top end of the
-        Confluence. The Margin Hall is there -- the library,
-        the source surveys, the cartographers' rooms. If you
-        want the substance of the work rather than the
-        field notes, that is where to go. Ask for the survey
-        room."
-      hints: "You could ask what is being recorded here, or
-        about the mark above the doors."
+- text: A moment.
+  moods:
+  - friendly
+opener:
+  text: Yes. I am working, briefly. I am recording the mark above the doors. The
+    proportions, the carving technique, the layering. I do not draw conclusions
+    here. The analysis is in the Scholars' Quarter. What did you want?
+  hints: Choose a line below to hear what she is recording, about the mark
+    itself, or about the Margin and the Scholars' Quarter upriver.
+  # Quest 74 states first (first match wins). The 74-end pair reacts to the
+  # choice the player made.
+  variants:
+  - questRequired:
+    - 74-end
+    questFlagRequired:
+      74-allegiance: margin
+    text: It is upriver now, in the Margin Hall, copied three times over. No one
+      can reorganize it away. You did that.
+    hints: Choose a line below if you would like to hear about the mark, or
+      about the Margin's work.
+  - questRequired:
+    - 74-end
+    text: Aldric has it, I hear. Filed with the other things the temple keeps. I am
+      still recording the mark. The mark, at least, cannot be filed away.
+    hints: The scholar is polite, and no more than polite. Choose a line below
+      to hear about the mark or the Margin.
+  - questRequired:
+    - 74-descent
+    questExcluded:
+    - 74-end
+    carriesItem: 40142
+    text: You have been down there. I can see charcoal on your hands. Before you
+      give me anything, you should know what it would mean.
+    hints: To hear what giving the scholar the rubbing means, choose her line
+      below. Aldric the Keeper would keep it inside the order instead. Neither
+      choice can be undone. Aldric keeps the Chapter House by day. From the
+      Temple Portico, go south three times to the Crossing, east three times
+      through the warded door to the Cloister Gate, east to the Cloister Garth,
+      north to the North Walk, then west into the Chapter House.
+  - questRequired:
+    - 74-reveal
+    questExcluded:
+    - 74-end
+    text: You went down there, I hear. And you brought nothing up?
+    hints: If you lost the rubbing, Brother Cael can draw you a clean copy. From the
+      Temple Portico, go south three times to the Crossing, east three times through
+      the warded door to the Cloister Gate, east to the Cloister Garth, north to the
+      North Walk, then east into the Archive. Type talk cael.
+  - questRequired:
+    - 73-end
+    text: Yes. I am working, briefly. You have seen the three records, I hear. Then
+      you know why I measure this mark so carefully.
+    hints: Choose a line below to hear what she has found in the mark, what she
+      is recording, or about the Margin and the Scholars' Quarter.
+topics:
+# Quest 74's Margin choice (spec R28): the warning (margin_terms) must be
+# heard first, and both hide once the choice is made (74-end). The Keepers
+# side is Aldric's (9464), built the same way. The hand-in gates on
+# 74-descent, the step before the rubbing is given, plus the rubbing.
+- key: marginhandoff
+  kind: handin
+  quest: 74
+  label: The Undercroft
+  playerLine: Take the rubbing. The Margin should carry it out, for good.
+  text: Is that... it is. From below. They let you down, and you brought this up.
+    Then it is real, and it is out, and it cannot be unknown now. The Margin will
+    keep it where the temple cannot reorganize it. Thank you. You have no idea what
+    this is worth. Or perhaps you do.
+  hints: You gave the rubbing to the Margin. The choice is made and cannot be
+    undone, and the Keepers now count you against them.
+  heardRequired:
+  - margin_terms
+  questRequired:
+  - 74-descent
+  questExcluded:
+  - 74-end
+  requiresItem: 40142
+  grantsQuest: 74-end
+  setsQuestFlag:
+    key: 74-allegiance
+    value: margin
+  bumpsRep:
+  - faction: margin
+    delta: 20
+  - faction: keepers
+    delta: -10
+  givesGold: 40
+- key: margin_terms
+  kind: info
+  label: What happens if I give you the rubbing?
+  text: Then it leaves the temple for good. I take it upriver to the Margin Hall,
+    Quist lays it beside the three records, and it is copied before anyone can ask
+    for it back. The Keepers will know whose hand carried it out. Aldric does not
+    shout, but the cloisters will not trust you again soon. The Margin cannot pay
+    what the temple can, either. Once it is copied, I cannot give it back, and I
+    would not. Be sure.
+  hints: Giving the rubbing to the Margin carries the truth out of the temple for
+    good and sets the Keepers against you. It cannot be undone. If you are sure,
+    choose The Undercroft below.
+  marked: true
+  questRequired:
+  - 74-descent
+  questExcluded:
+  - 74-end
+  carriesItem: 40142
+- key: q73_aside
+  kind: info
+  label: What have you found in the mark?
+  text: 'So you have seen what the records show. Then you already know what I am
+    copying: the keystone is older than the doctrine cut beneath it. The proportions,
+    the chisel work, the weathering sequence. It does not match the Founding period,
+    not by a generation. I write that down. I do not say it here.'
+  marked: true
+  questRequired:
+  - 73-end
+# recording folds the "what doing copy" pattern (kept as topic here): the
+# same account of her work, in fewer words.
+- key: recording
+  kind: info
+  label: What are you recording here?
+  text: A dimensional record of the mark above the doors. The ring geometry, the
+    relief depth at the cocoon element, the chisel sequence. I can read carving
+    technique with enough precision to establish relative dating. That is the
+    purpose. I do not speculate about what it means. That is the work for upriver,
+    with the source surveys laid out properly.
+- key: the_mark
+  kind: info
+  label: What does the mark above the doors mean?
+  text: The Keepers call it the first rendering of the Chrysalis truth. The sealed
+    soul, the ringed cocoon, the Founders' own hand. That is the official account.
+    I record what I can measure. Dimensions, weathering, technique. I do not argue
+    with the account on temple ground. The Scholars' Quarter is upriver if you want
+    the Margin's reading of it.
+# scholars_quarter folds the "margin scholar who" pattern (kept as topic
+# who): the Margin keeps the source records, upriver.
+- key: scholars_quarter
+  kind: info
+  label: Who are the Margin, and where do they work?
+  text: The Margin. We keep the source records. The Scholars' Quarter is upriver,
+    at the top end of the Confluence, and the Margin Hall is there. The library, the
+    source surveys, the cartographers' rooms. If you want the substance of the work
+    rather than the field notes, that is where to go. Ask for Quist.
+  hints: From the Temple Portico, go north to the Temple Steps, west four times
+    across the Causeway to the Temple Forecourt, north four times up Processional
+    Avenue to the Processional Gate, north twice to Tri-Cross Square, then west
+    five times to the Margin Hall.
+  marked: true

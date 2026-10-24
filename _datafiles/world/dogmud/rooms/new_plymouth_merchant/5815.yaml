@@ -4,7 +4,7 @@ title: The Gilt Threshold, Private Parlor
 description: >
   The private parlor is at the end of the east passage,
   behind a heavy
-  <ansi fg="itemname">velvet-curtain</ansi>
+  <ansi fg="itemname">velvet curtain</ansi>
   on a brass rod, the kind of curtain that stops sound
   as much as light, thick enough that someone standing
   in the corridor hears nothing, or catches a phrase,
@@ -14,13 +14,15 @@ description: >
   of polished walnut, four chairs, a lamp on a stand,
   and nothing that does not serve a purpose. At this moment
   the chairs have been pushed back from the table and
-  the surface wiped, but the
-  <ansi fg="itemname">cup-rings</ansi>
+  the surface wiped around a
+  <ansi fg="itemname">ledger board</ansi>
+  left at one edge, but the
+  <ansi fg="itemname">cup rings</ansi>
   left by two vessels have not quite been removed. The
   cloth was in a hurry, or the person using it did not
   care. On the floor near the west-facing chair, almost
   against the baseboard, a small
-  <ansi fg="itemname">paper-scrap</ansi>
+  <ansi fg="itemname">paper scrap</ansi>
   has been missed in whatever tidying was done before
   you arrived. The room smells faintly of a particular
   pipe-tobacco that is expensive and not common. The curtain
@@ -52,13 +54,18 @@ nouns:
     pass. Whoever cleaned this table was quick about
     it, or was thinking of something else. The cups
     themselves are gone.
+  ledger board: A flat board of the kind clerks rest
+    a ledger on, left at the edge of the table where
+    the wiping stopped. The wood is scuffed and ink
+    stained. A page has worked loose beneath it, and
+    only the corner of it shows.
   paper scrap: A torn corner of paper, dropped or
     slid from the table and not retrieved. The visible
     face carries four words in a close, careful hand.
     They read "before the permit clears" and nothing more.
     The edge is a clean tear rather than a scissors
     cut. The rest of whatever this came from is not
-    in this room.
+    on the floor.
 idlemessages:
 - The velvet curtain shifts at the hem as someone
   moves in the corridor beyond.

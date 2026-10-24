@@ -10,6 +10,7 @@ var conditionRegistry = map[string]ConditionFunc{}
 
 func init() {
 	conditionRegistry["keyword_match"] = condKeywordMatch
+	conditionRegistry["topic_is"] = condTopicIs
 	conditionRegistry["player_has_quest"] = condPlayerHasQuest
 	conditionRegistry["player_missing_quest"] = condPlayerMissingQuest
 	conditionRegistry["player_has_item"] = condPlayerHasItem

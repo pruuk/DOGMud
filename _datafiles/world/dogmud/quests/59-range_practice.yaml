@@ -32,7 +32,7 @@ steps:
       when it charges. The drill is done the moment the scout falls.
     hint: >-
       Go north to the Echoing Narrows and type fire scout north.
-      If it is dark, type cast chrysalis-glow first.
+      If it is dark, type cast glow first.
   - id: shoot
     map_target: 5354
     description: >-

@@ -28,8 +28,6 @@ func TestQuest28_RefusableStepsNeedTheCommandToSucceed(t *testing.T) {
 	require.NoError(t, yaml.Unmarshal(data, &q))
 	require.Equal(t, 28, q.QuestId, "loaded the wrong quest file")
 
-	const deweyMobId = 9491
-
 	cases := []struct {
 		name     string
 		has      string // the token that opens the step
@@ -41,9 +39,8 @@ func TestQuest28_RefusableStepsNeedTheCommandToSucceed(t *testing.T) {
 		{"say", "28-speaks_prompt", "28-said",
 			EventDetails{Command: "say"},
 			"command", EventDetails{Command: "say"}},
-		{"ask", "28-said", "28-asked",
-			EventDetails{Command: "ask", Noun: "world"},
-			"dialogue", EventDetails{MobId: deweyMobId, Topic: "world"}},
+		// The ask step (28-asked) is Dewey's talk topic asked_28 since #375
+		// Task 19; no quest trigger grants it (TestQuest28_TalkLessonGrantsTheStepWithItsReply).
 		{"warcry", "28-proving_prompt", "28-warcried",
 			EventDetails{Command: "warcry"},
 			"command", EventDetails{Command: "warcry"}},

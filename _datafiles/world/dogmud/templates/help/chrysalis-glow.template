@@ -12,7 +12,9 @@ it again for full strength, or use <ansi fg="command">cancel glow</ansi> to let 
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">cast chrysalis-glow</ansi>
+  <ansi fg="command">cast glow</ansi>
+
+  The full name, <ansi fg="command">cast chrysalis-glow</ansi>, works too.
 
 <ansi fg="yellow">Details: </ansi>
 

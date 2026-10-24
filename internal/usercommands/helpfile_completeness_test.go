@@ -71,6 +71,9 @@ var commandHelpSkip = map[string]bool{
 	"zombieact": true, // internal zombie AI
 	"print":     true, // debug echo
 	"printline": true, // debug echo
+
+	// re-run by the instance-zone amount prompt (#375 R14)
+	"portalstake": true,
 }
 
 // TestHelpFileCompleteness_Commands ensures every registered user command

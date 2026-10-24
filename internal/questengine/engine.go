@@ -105,23 +105,20 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 
 	triggers := e.triggerIndex[eventType]
 
-	// A typed noun matches a trigger's noun exactly or as a singular/plural
-	// variant ("look slabs" for `noun: slab`). An exact match is preferred:
-	// number variants only count when no trigger matches the typed noun
-	// exactly, so a quest that authors both spellings never double-fires.
-	allowNounVariants := details.Noun != ""
-	if allowNounVariants {
-		for _, t := range triggers {
-			if t.def.Noun == details.Noun && matchTriggerFields(t.def, details, false) {
-				allowNounVariants = false
-				break
-			}
-		}
+	// A trigger noun matches the typed noun exactly, then as a singular/plural
+	// variant ("look slabs" for `noun: slab`), then as the room noun the typed
+	// words name ("look floor board" for `noun: floorboard` where the room
+	// aliases `floor board` to it). The first tier that matches any trigger
+	// is the only one used, so a quest that authors two spellings of one
+	// thing never double-fires.
+	nounTier := nounExact
+	if details.Noun != "" {
+		nounTier = pickNounTier(triggers, details)
 	}
 
 	for _, t := range triggers {
 		// Field matching
-		if !matchTriggerFields(t.def, details, allowNounVariants) {
+		if !matchTriggerFields(t.def, details, nounTier) {
 			continue
 		}
 
@@ -170,10 +167,37 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 	return result
 }
 
+// nounTier is how widely a trigger noun may match the event's noun. Each tier
+// includes the ones before it.
+type nounTier int
+
+const (
+	// nounExact: the trigger noun equals the typed noun.
+	nounExact nounTier = iota
+	// nounNumber: or differs from it only by singular/plural
+	// (util.NounNumberVariants).
+	nounNumber
+	// nounRoom: or equals the room noun the typed words name
+	// (EventDetails.RoomNoun), or a singular/plural spelling of it.
+	nounRoom
+)
+
+// pickNounTier returns the narrowest tier at which any trigger's fields match.
+// When none does, nothing fires whatever the tier, so the widest is returned.
+func pickNounTier(triggers []*indexedTrigger, d EventDetails) nounTier {
+	for _, tier := range []nounTier{nounExact, nounNumber} {
+		for _, t := range triggers {
+			if t.def.Noun != "" && matchTriggerFields(t.def, d, tier) {
+				return tier
+			}
+		}
+	}
+	return nounRoom
+}
+
 // matchTriggerFields checks whether a trigger's field filters match the event
-// details. With nounVariants set, a trigger noun also matches a typed noun that
-// differs from it only by singular/plural (util.NounNumberVariants).
-func matchTriggerFields(t *TriggerDef, d EventDetails, nounVariants bool) bool {
+// details, with the trigger noun matched at the given tier.
+func matchTriggerFields(t *TriggerDef, d EventDetails, tier nounTier) bool {
 	if t.Mob > 0 && t.Mob != d.MobId {
 		return false
 	}
@@ -189,21 +213,36 @@ func matchTriggerFields(t *TriggerDef, d EventDetails, nounVariants bool) bool {
 	if t.Command != "" && t.Command != d.Command {
 		return false
 	}
-	if t.Topic != "" && t.Topic != d.Topic {
-		return false
-	}
 	if t.QuestToken != "" && t.QuestToken != d.QuestToken {
 		return false
 	}
-	if t.Noun != "" && t.Noun != d.Noun {
-		if !nounVariants || !slices.Contains(util.NounNumberVariants(d.Noun), t.Noun) {
-			return false
-		}
+	if t.Noun != "" && !nounMatches(t.Noun, d, tier) {
+		return false
 	}
 	if t.Verb != "" && t.Verb != d.Verb {
 		return false
 	}
 	return true
+}
+
+// nounMatches reports whether trigger noun n matches the event's noun at tier.
+//
+// A hyphen matches a space (util.NounHyphenFold) in the trigger noun, the
+// typed noun and the room noun alike.
+func nounMatches(n string, d EventDetails, tier nounTier) bool {
+	n = util.NounHyphenFold(n)
+	d.Noun = util.NounHyphenFold(d.Noun)
+	d.RoomNoun = util.NounHyphenFold(d.RoomNoun)
+	if n == d.Noun {
+		return true
+	}
+	if tier >= nounNumber && d.Noun != "" && slices.Contains(util.NounNumberVariants(d.Noun), n) {
+		return true
+	}
+	if tier >= nounRoom && d.RoomNoun != "" {
+		return n == d.RoomNoun || slices.Contains(util.NounNumberVariants(d.RoomNoun), n)
+	}
+	return false
 }
 
 // executeActions runs a trigger's actions in order, with panic recovery per

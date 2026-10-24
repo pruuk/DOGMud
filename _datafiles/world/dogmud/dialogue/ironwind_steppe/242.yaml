@@ -1,164 +1,305 @@
 mobid: 242
 zone: Ironwind Steppe
 defaultMood: friendly
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    moods: ["friendly", "neutral"]
-    responses:
-      - "Rhett looks up from his notes, spectacles askew. 'Oh! Hello! Sorry, I was mid-calculation. What can I do for you?'"
-      - "'A visitor! Excellent. I have been talking to rocks for a week and they are terrible conversationalists.'"
-
-  - keywords: ["hello", "hi"]
-    moods: ["grateful"]
-    responses:
-      - "Rhett beams. 'My favourite collaborator! What brings you back?'"
-
-  - keywords: ["help", "quest", "task", "work", "job"]
-    moods: ["friendly", "neutral"]
-    responses:
-      - "'Actually, yes. I could use someone with strong hands and a willingness to crawl around rock outcroppings. The work is fascinating, I promise. Well, I find it fascinating.'"
-
-  - keywords: ["windstone", "crystal", "sample", "rock"]
-    responses:
-      - "'Windstone is remarkable. It resonates with magical frequencies -- healing magic especially. A single refined shard could power a ward that protects an entire district. Thornwall needs this.'"
-
-  - keywords: ["sylara", "windwarden", "druid", "circle"]
-    responses:
-      - "Rhett's enthusiasm dims slightly. 'The Windwarden means well. She does. But she is confusing spiritual tradition with ecological necessity. The stone circle is impressive, yes, but the wind-paths she describes are not measurable by any instrument I have. The crystal, on the other hand, is very real and very useful.'"
-
-  - keywords: ["thornwall", "city", "guild", "healing"]
-    responses:
-      - "'Thornwall's ward-stones are failing. The old ones are cracked and losing potency. Windstone could replace them -- stronger, more efficient, self-sustaining. People would be safer. That is not abstract. That is lives.'"
-
-  - keywords: [""]
-    responses:
-      - "'Hmm? Sorry, I was thinking about crystal lattice structures. What was the question?'"
-      - "'I am not sure I follow. Ask me about the windstone, or whether I need help with anything.'"
-
-tree:
-  root:
-    text: "A young man in a dusty scholar's coat looks up from a spread of rock samples and charts, his face lighting up. 'Oh, wonderful -- someone who is not a bird or a lizard! Are you here about the windstone? Please say you are here about the windstone.'"
-    hints: "Ask about windstone, the conflict, or what he needs."
-    variants:
-      - questRequired: ["11-start"]
-        questExcluded: ["11-end"]
-        questFlagRequired:
-          "11-branch": "sylara"
-        text: "Rhett's smile falters. 'Ah. You went with the
-          Windwarden. I understand -- tradition is comfortable. The
-          crystal will wait for someone with clearer vision.' He turns
-          back to his notes."
-      - questRequired: ["11-start"]
-        questExcluded: ["11-end"]
-        questFlagRequired:
-          "11-branch": "rhett"
-        text: "Rhett waves excitedly. 'You came back! Have you had a
-          chance to look at the rocky shelf? The veins of pale blue
-          crystal there -- I need samples. Just chip off a few chunks
-          from the crystal veins. The shelf is just south of here.'"
-        hints: "Collect windstone samples from the crystal veins on
-          the rocky shelf to the south."
-      - questRequired: ["13-start"]
-        questExcluded: ["13-extraction"]
-        text: "Rhett is practically vibrating with excitement. 'You chose to help! Excellent! The extraction site is prepared. I just need someone steady to help with the final phase. Are you ready?'"
-        hints: "You could tell him you are ready to begin."
-      - questRequired: ["13-end"]
-        text: "Rhett adjusts his spectacles and grins. 'The aegis turned out better than I dared hope. Windstone is remarkable -- it practically shaped itself. Thornwall will hear about what you did here.'"
-      - questRequired: ["12-start"]
-        questExcluded: ["12-end"]
-        text: "Rhett's expression is carefully neutral. 'I hear you
-          are learning the Windwarden's ways. I wish you well with
-          that.' He turns back to his charts with studied
-          indifference."
-      - questRequired: ["12-end"]
-        text: "Rhett's smile is tinged with disappointment. 'You chose the Windwarden. I understand. The crystal will wait -- it has waited this long.' He sighs. 'Perhaps someday someone will find a way that does not require choosing.'"
-      - questRequired: ["11-end"]
-        questExcluded: ["12-start", "13-start"]
-        questFlagRequired:
-          "11-branch": "sylara"
-        text: "Rhett's smile is strained. 'You sided with the
-          Windwarden in the end. I understand -- tradition has a
-          gravity to it.' He turns back to his notes. 'The crystal
-          will wait. It has waited this long.'"
-      - questRequired: ["11-end"]
-        questExcluded: ["12-start", "13-start"]
-        questFlagRequired:
-          "11-branch": "rhett"
-        text: "Rhett's eyes light up. 'Those samples confirmed
-          everything I suspected.' He leans in conspiratorially.
-          'I have been preparing an extraction site. Ask me about
-          the work if you are interested.'"
-        hints: "You could ask about further work with the windstone."
-
-  nodes:
-    - id: dismiss_sylara_path
-      triggers: ["quest", "task", "help", "work", "windstone", "crystal",
-        "extract", "gambit"]
-      questRequired: ["11-start"]
-      questFlagRequired:
-        "11-branch": "sylara"
-      text: "You chose the Windwarden's path. I respect that, even
-        if I think it is a mistake. But I cannot work with someone
-        whose loyalties lie with the people trying to stop me. The
-        crystal will have to wait for another pair of hands."
-
-    - id: his_cause
-      triggers: ["windstone", "crystal", "conflict", "cause", "why", "problem", "quest", "task", "help"]
-      questExcluded: ["11-start", "11-end"]
-      grantsQuest: "11-start"
-      setsQuestFlag:
-        key: "11-branch"
-        value: "rhett"
-      text: "'Windstone. That is what this is about.' Rhett holds up a pale blue crystal shard that catches the light. 'I found veins of it running through the ridge -- thick veins, high quality. This crystal resonates with healing frequencies. A refined shard could power protective wards for an entire city block. Thornwall needs this. Our ward-stones are failing and people are getting hurt.' He pauses. 'The problem is the veins run under a stone circle the local Windwarden considers sacred. Extracting them would crack the bedrock. She will not hear reason on the matter.' He straightens. 'If you believe Thornwall's people matter more than ancient stones, I could use your help. I need windstone samples from the exposed veins on the rocky shelf -- the broad ledge just south of here. Chip off a few chunks of the pale blue crystal from the veins.'"
-      hints: "Collect windstone samples from the crystal veins on the rocky shelf to the south."
-      moodChange: friendly
-
-    - id: sample_return
-      triggers: ["sample", "found", "here", "brought", "return", "have", "windstone", "quest", "task"]
-      questRequired: ["11-start"]
-      questExcluded: ["11-end"]
-      requiresItem: 40032
-      grantsQuest: "11-end"
-      text: "Rhett snatches the samples with eager hands, immediately holding one up to the light. 'Look at that lattice structure! The resonance potential is even higher than my estimates. This could power wards twice as strong as our current ones.' He catches himself and grins sheepishly. 'Sorry. I get excited. These are perfect. Thank you.' He tucks the samples carefully into his satchel. 'I have been preparing an extraction site -- with samples this good, I could pull a full slab of windstone from the ridge. Ask me about the work when you are ready.'"
-      moodChange: friendly
-
-    - id: offer_gambit
-      triggers: ["work", "extract", "gambit", "help", "quest", "task"]
-      questRequired: ["11-end"]
-      questExcluded: ["13-start", "12-start", "13-end"]
-      questFlagRequired:
-        "11-branch": "rhett"
-      grantsQuest: "13-start"
-      text: "'The extraction site is ready. I have mapped the crystal
-        grain, prepared the tools, set the fracture points. All I need
-        is someone with steady hands to hold the brace while I work
-        the seam.' Rhett's eyes are bright with barely contained
-        excitement. 'One clean slab of windstone -- enough to forge a
-        proper aegis for Thornwall''s failing wards. What do you say?
-        Will you help?'"
-      hints: "You could tell him you are ready to help."
-      moodChange: friendly
-
-    - id: extraction_begin
-      triggers: ["ready", "extract", "begin", "help", "yes", "gambit", "quest", "task"]
-      questRequired: ["13-start"]
-      questExcluded: ["13-extraction", "13-end"]
-      grantsQuest: "13-extraction"
-      text: "Right, the extraction site is just over here. The key is controlled fracture -- we follow the crystal's natural grain, not against it. Like splitting wood, but with more math. Now hold this brace steady while I work the seam. If the crystal shatters, we lose everything."
-      unlocks: ["extraction_complete"]
-
-    - id: extraction_complete
-      triggers: ["hold", "steady", "brace", "done", "complete", "yes", "quest", "task"]
-      questRequired: ["13-extraction"]
-      questExcluded: ["13-end"]
-      grantsQuest: "13-end"
-      text: "Beautiful. Absolutely beautiful. Look at that lattice -- perfect separation along the grain. Give me a few hours with this and my tools. I am going to make you something special -- a shield of pure windstone. It is the least I can do."
-      moodChange: grateful
-
-    - id: about_healing
-      triggers: ["healing", "ward", "thornwall", "protect", "safe"]
-      text: "'The ward-stones that protect Thornwall's districts are old. Cracked. Losing potency every year. Last winter a ward failed in the Craftsmen's Quarter and three people were hurt before anyone noticed. Windstone could replace every failing ward in the city. That is not ambition -- that is necessity.'"
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: "Oh, wonderful, someone who is not a bird or a lizard! Are you here about the
+    windstone? Please say you are here about the windstone."
+  hints: "A young man in a dusty scholar's coat looks up from a spread of rock
+    samples and charts, his face lighting up. Choose a line below if you would
+    like to hear about the windstone, about Thornwall's failing wards, or about
+    the Windwarden who guards the circle."
+  # Quest 11: the sided variants come before the unsided one, because a
+  # flag map cannot say "no side yet" (#611).
+  variants:
+  - questRequired:
+    - 11-start
+    questExcluded:
+    - 11-end
+    questFlagRequired:
+      11-branch: sylara
+    text: "Ah. You went with the Windwarden. I understand. Tradition is comfortable.
+      The crystal will wait for someone with clearer vision."
+    hints: "Rhett's smile falters, and he turns back to his notes."
+  - questRequired:
+    - 11-start
+    questExcluded:
+    - 11-end
+    questFlagRequired:
+      11-branch: rhett
+    text: "You came back! Have you been to the rocky shelf yet? The veins of pale
+      blue crystal there, I need samples. Just chip off a few chunks. The shelf is
+      just south of here."
+    hints: "The Rocky Shelf is one room south of Rhett's camp. Type get sample from
+      veins."
+  - questRequired:
+    - 11-start
+    questExcluded:
+    - 11-sided
+    - 11-end
+    text: "You have taken the question on? Good. Before you decide, let me tell you
+      plainly what working with me would mean."
+    hints: "Choose a line below to hear what siding with him would mean."
+  # Old saves finished quest 11 without choosing a side (the shipped Kael
+  # route granted 11-end with no flag). An empty flag value means the flag
+  # is not set; this state can still choose, after the same warning.
+  - questRequired:
+    - 11-end
+    questExcluded:
+    - 12-start
+    - 13-start
+    questFlagRequired:
+      11-branch: ""
+    text: "You finished what you took on out here, but you never said whose side you
+      are on. Let me tell you plainly what working with me would mean."
+    hints: "Choose a line below to hear what siding with him would mean."
+  - questRequired:
+    - 13-extraction
+    questExcluded:
+    - 13-end
+    text: "Hold the brace. Do not let go until the seam opens."
+    hints: "You could tell Rhett the brace held."
+  - questRequired:
+    - 13-start
+    questExcluded:
+    - 13-extraction
+    text: "You chose to help! Excellent! The extraction site is prepared. I just
+      need someone steady for the final phase. Are you ready?"
+    hints: "Rhett is practically vibrating with excitement. You could tell him you
+      are ready to begin."
+  - questRequired:
+    - 13-end
+    text: "The aegis turned out better than I dared hope. Windstone is remarkable. It
+      practically shaped itself. Thornwall will hear about what you did here."
+    hints: "Rhett adjusts his spectacles and grins."
+  - questRequired:
+    - 12-start
+    questExcluded:
+    - 12-end
+    text: "I hear you are learning the Windwarden's ways. I wish you well with that."
+    hints: "Rhett's expression is carefully neutral. He turns back to his charts
+      with studied indifference."
+  - questRequired:
+    - 12-end
+    text: "You chose the Windwarden. I understand. The crystal will wait. It has
+      waited this long. Perhaps someday someone will find a way that does not require
+      choosing."
+    hints: "Rhett's smile is tinged with disappointment."
+  - questRequired:
+    - 11-end
+    questExcluded:
+    - 12-start
+    - 13-start
+    questFlagRequired:
+      11-branch: sylara
+    text: "You sided with the Windwarden in the end. I understand. Tradition has a
+      gravity to it. The crystal will wait. It has waited this long."
+    hints: "Rhett's smile is strained. He turns back to his notes."
+  - questRequired:
+    - 11-end
+    questExcluded:
+    - 12-start
+    - 13-start
+    questFlagRequired:
+      11-branch: rhett
+    text: "I have been preparing an extraction site. Ask me about the work if you
+      are interested."
+    hints: "Rhett leans in conspiratorially. Choose a line below if you want to
+      hear about the extraction site."
+topics:
+- key: his_cause
+  kind: offer
+  quest: 11
+  label: The Windwarden's Dilemma
+  playerLine: I am here about the windstone. What is it?
+  text: "Windstone. That is what this is about. I found veins of it running through
+    the ridge, thick veins, high quality. This crystal resonates with healing
+    frequencies. A refined shard could power protective wards for an entire city
+    block. Thornwall needs this. Our ward-stones are failing and people are getting
+    hurt. The problem is that the veins run under a stone circle the local
+    Windwarden considers sacred. Taking them would crack the bedrock, and she will
+    not hear reason on the matter. Take this question on, and I will tell you
+    plainly what working with me would mean."
+  hints: "Rhett holds up a pale blue crystal shard that catches the light. If you
+    accept, he will tell you what siding with him costs before you choose. Nothing
+    is decided by accepting."
+  questExcluded:
+  - 11-start
+  - 11-end
+  grantsQuest: 11-start
+  moodChange: friendly
+# R28: the side is chosen here, after the must-hear warning.
+- key: rhett_terms
+  kind: info
+  label: What would siding with you mean?
+  text: "It means the Windwarden will never trust you again. She will not teach you
+    her covenant, and her circle will be closed to you. It means getting your hands
+    dusty on the shelf for me first. If the samples are as good as I think, there is
+    bigger work after, and a reward worth having. Once you choose, it is done. You
+    cannot walk back to her circle after."
+  hints: "Siding with Rhett cannot be undone. Sylara will never trust you
+    afterward."
+  marked: true
+  # Open to anyone holding 11-start (11-end counts) with no side yet, so the
+  # old saves that finished unsided hear it before late_stand_with_rhett.
+  questRequired:
+  - 11-start
+  questExcluded:
+  - 12-start
+  - 13-start
+  questFlagRequired:
+    11-branch: ""
+- key: stand_with_rhett
+  kind: info
+  label: I will help you dig the windstone.
+  text: "Then we are agreed, and there is no undoing it. The Windwarden will not deal
+    with you now. I need windstone samples from the exposed veins on the rocky
+    shelf, the broad ledge just south of here. Chip off a few chunks of the pale blue
+    crystal and bring them to me."
+  hints: "You have sided with Rhett, and Sylara will not work with you now. The
+    Rocky Shelf is one room south of his camp. Type get sample from veins."
+  marked: true
+  heardRequired:
+  - rhett_terms
+  questRequired:
+  - 11-start
+  questExcluded:
+  - 11-sided
+  - 11-end
+  questFlagExcluded:
+    11-branch: sylara
+  setsQuestFlag:
+    key: 11-branch
+    value: rhett
+  grantsQuest: 11-sided
+  moodChange: friendly
+# Recovery for old saves at 11-end with no side: the same choice, after
+# the same warning. It grants nothing (the quest is already finished); the
+# flag alone opens The Prospector's Gambit.
+- key: late_stand_with_rhett
+  kind: info
+  label: I will help you dig the windstone after all.
+  text: "Then we are agreed, and there is no undoing it. The Windwarden will not deal
+    with you now. You have already shown you can do the work out here. Ask me about
+    the extraction site when you are ready."
+  hints: "You have sided with Rhett, and Sylara will not work with you now.
+    Choose a line below if you would like to hear about the extraction site."
+  marked: true
+  heardRequired:
+  - rhett_terms
+  questRequired:
+  - 11-end
+  questExcluded:
+  - 12-start
+  - 13-start
+  questFlagRequired:
+    11-branch: ""
+  setsQuestFlag:
+    key: 11-branch
+    value: rhett
+  moodChange: friendly
+- key: sample_return
+  kind: handin
+  quest: 11
+  label: The Windwarden's Dilemma
+  playerLine: I chipped these samples from the veins on the shelf.
+  text: "Look at that lattice structure! The resonance potential is even higher than
+    my estimates. This could power wards twice as strong as our current ones. Sorry.
+    I get excited. These are perfect. Thank you. I have been preparing an extraction
+    site. With samples this good, I could pull a full slab of windstone from the
+    ridge. Ask me about the work when you are ready."
+  hints: "Rhett snatches the samples with eager hands, holds one up to the light,
+    then tucks them carefully into his satchel."
+  questRequired:
+  - 11-start
+  questExcluded:
+  - 11-end
+  questFlagRequired:
+    11-branch: rhett
+  requiresItem: 40032
+  grantsQuest: 11-end
+  moodChange: friendly
+- key: dismiss_sylara_path
+  kind: info
+  label: Will you still hear me out?
+  text: "You chose the Windwarden's path. I respect that, even if I think it is a
+    mistake. But I cannot work with someone whose loyalties lie with the people
+    trying to stop me. The crystal will have to wait for another pair of hands."
+  questRequired:
+  - 11-start
+  questFlagRequired:
+    11-branch: sylara
+- key: offer_gambit
+  kind: offer
+  quest: 13
+  label: The Prospector's Gambit
+  playerLine: Do you want help with the extraction site?
+  text: "The extraction site is ready. I have mapped the crystal grain, prepared the
+    tools, set the fracture points. All I need is someone with steady hands to hold
+    the brace while I work the seam. One clean slab of windstone is enough to forge a
+    proper aegis for Thornwall's failing wards, and I would make something from it
+    for you too. What do you say? Will you help?"
+  hints: "Rhett's eyes are bright with barely contained excitement. If you accept,
+    the work happens here at the Ridge Approach."
+  questRequired:
+  - 11-end
+  questExcluded:
+  - 13-start
+  - 12-start
+  - 13-end
+  questFlagRequired:
+    11-branch: rhett
+  grantsQuest: 13-start
+  moodChange: friendly
+- key: extraction_begin
+  kind: info
+  label: I am ready to hold the brace.
+  text: "Right, the extraction site is just over here. The key is controlled
+    fracture. We follow the crystal's natural grain, not against it. Like splitting
+    wood, but with more math. Now hold this brace steady while I work the seam. If
+    the crystal shatters, we lose everything."
+  hints: "Hold steady, then tell Rhett when the brace has held."
+  marked: true
+  questRequired:
+  - 13-start
+  questExcluded:
+  - 13-extraction
+  - 13-end
+  grantsQuest: 13-extraction
+- key: extraction_complete
+  kind: handin
+  quest: 13
+  label: The Prospector's Gambit
+  playerLine: The brace held, and the slab came away clean.
+  text: "Beautiful. Absolutely beautiful. Look at that lattice. Perfect separation
+    along the grain. Give me a few hours with this and my tools. I am going to make
+    you something special, a shield of pure windstone. It is the least I can do."
+  questRequired:
+  - 13-extraction
+  questExcluded:
+  - 13-end
+  grantsQuest: 13-end
+  moodChange: grateful
+# rock and city (patterns) folded into windstone and about_healing; job
+# (pattern) is covered by the his_cause pitch and rhett_terms.
+- key: windstone
+  kind: info
+  label: What is windstone?
+  text: "Windstone is remarkable. It resonates with magical frequencies, healing
+    magic especially. A single refined shard could power a ward that protects an
+    entire district. Thornwall needs this."
+- key: about_healing
+  kind: info
+  label: What is wrong with Thornwall's wards?
+  text: "The ward-stones that protect Thornwall's districts are old. Cracked. Losing
+    potency every year. Last winter a ward failed in the Craftsmen's Quarter and
+    three people were hurt before anyone noticed. Windstone could replace every
+    failing ward in the city, stronger and self-sustaining. People would be safer.
+    That is not ambition. That is necessity."
+- key: sylara
+  kind: info
+  label: What do you make of the Windwarden?
+  text: "The Windwarden means well. She does. But she is confusing spiritual
+    tradition with ecological necessity. The stone circle is impressive, yes, but the
+    wind-paths she describes are not measurable by any instrument I have. The
+    crystal, on the other hand, is very real and very useful."
+  hints: "Rhett's enthusiasm dims slightly."

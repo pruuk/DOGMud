@@ -1,0 +1,22 @@
+mobid: 9573
+zone: The Confluence
+defaultMood: neutral
+opener:
+  text: I see passengers onto the water from the Barge Dock. The Grey Heron runs up
+    to Stillwater, and the Broadbeam runs down to New Plymouth. You pay the fare at
+    the plank and step off again at the far pier. If the boat is out, I will tell
+    you when the current brings her back.
+  hints: Choose where you want to go below. If the boat is tied up here, the agent
+    takes the fare as soon as you choose and you board at once. On board, wait
+    until she ties up at the far pier, then type gangplank to walk ashore.
+topics:
+- key: to_stillwater
+  kind: info
+  label: Take me to Stillwater.
+  text: ""
+  behavior: true
+- key: to_plymouth
+  kind: info
+  label: Take me to New Plymouth.
+  text: ""
+  behavior: true

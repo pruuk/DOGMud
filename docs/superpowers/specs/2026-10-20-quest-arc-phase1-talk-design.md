@@ -72,6 +72,83 @@ spec; line numbers were read from the files at that commit.
 - **R11 Talk flow** as in section 4; the menu is re-shown after every answer.
 - **R12 Behavior-tree `ask` branches become topics** (raised while planning; section 4.1). A topic
   may name a `behavior` key; choosing it fires the tree with that key.
+- **R14 Instance zone buy-ins are an amount prompt** (owner 2026-10-20, raised while
+  executing). Sable 315 (arena, Planar Oasis) and the Threshold Keeper 9553 (crash site) open
+  instance zones for a player-chosen buy-in. Choosing the zone's topic asks "How much gold
+  will you stake?" with authored guidance on what the ranges mean for that zone (owner's
+  example for the Elemental Oasis: 100 to 300 a midgame solo run, 300 to 600 endgame solo,
+  600 and up for only the bravest solo players or for groups). These are instance zones;
+  "rift" is FinalTwist's separate micro-instance system in #208. Ferries need no prompt: one
+  topic per destination, the destination a fixed action parameter.
+- **R15 to R21: conversion decisions** (owner 2026-10-20, from the converter's held cases):
+  - **R15** Found the item before taking the quest (Malk 15, Delia 16): talk shows the offer,
+    the player accepts, then hands in from the same menu; a `give` before accepting hands the
+    item back. The chain triggers that completed 15 and 16 on accept (a live bug) go.
+  - **R16** Hand-in narration lines that only the old give route printed (quests 35, 68, 69,
+    74) are dropped. No narration field.
+  - **R17** Hadwen grants no new quest from his tree. Quest 29 "Two Roads" is replaced by two
+    quests Hadwen offers after the rite (Toke's road, Esk's road); the player takes either,
+    both or neither. The rite still completes quest 30.
+  - **R18** A behavior topic (a timed scene: Hadwen's rite, Esk's crossing) closes the talk
+    menu instead of re-showing it.
+  - **R19** The bandit leader's talk option is dropped; nothing in conversation stops his
+    ambush.
+  - **R20** Every tutorial that teaches `ask` is converted to a `talk` lesson or dropped
+    (quest 28's lesson in room 6261 becomes a talk lesson). The 98 lines in 36 files that
+    tell players to "type ask" are rewritten or removed in the zone pass.
+  - **R21** No quest is handed out in a batch: Crier Toke offers each of the seven trail
+    quests (32, 35, 38, 41, 44, 47, 50) as its own topic after Find Your Footing, accepted
+    one at a time; the starter items move onto the matching offers. Bridges that chain one
+    quest into the next giver ("go talk to Fred") belong to phase 2's chain mechanism and the
+    Pothole Coulee content pass (roadmap).
+  - **R22** (owner 2026-10-21) A crafting quest's made item is never a hostage to its
+    turn-in. Selling the crafted item to the quest's own smith counts as the turn-in (Rusk,
+    quest 35: "I love the entrepreneurial spirit. You'll be a smith in no time."); a player
+    who still has it shows it and keeps it; a player who sold or lost it elsewhere can still
+    report without crafting again.
+  - **R23** (owner 2026-10-21) With no active quest, `hint` tells every player how to find one:
+    look for someone marked `[!]` and talk to them. One line for every player everywhere; no
+    per-quest fallback.
+  - **R24** (owner 2026-10-21) New-player copy is written for people who have never played a
+    MUD: the player asks about what is on their screen ("What is this h/sp/cp line?", not
+    "What are my three pools?"), and a concept is taught before any line that relies on it
+    (what a command is, before "What if I forget a command?"). The guide's own menu covers
+    the first verbs a newcomer needs, combat included.
+  - **R26** (owner 2026-10-21) Sable's Arena guidance is one step lower than the Oasis: 100 to
+    200 gold for a midgame fighter on their own, 200 to 400 for an endgame fighter on their
+    own, 400 and up only for the bravest alone or a group, with a warning that there is no
+    second chance (death sends you out, no recall inside) and the fights come one after
+    another. Monster gold still scales with the stake as for the Oasis (owner 2026-10-17).
+  - **R27** (owner 2026-10-21) An offer's `playerLine` (spoken before the NPC's pitch) may use
+    only what the player can see at that moment: the quest title in the menu and the opener
+    shown in the same quest state. Where that opener does not name the problem, the line is
+    general ("Is there something I can help with?"). Where the opener always names it (a lock),
+    the specific line stays.
+  - **R28** (owner 2026-10-21) A quest choice that cannot be undone is made in a talk menu with
+    the questgiver(s), never by a room command or a look. The NPC first explains what the player
+    is signing up for in a topic the player must hear (`heardRequired` gates the choice topic on
+    it); the choice topic's own text and hint repeat the warning. Room commands may discover or
+    unlock the choice, never make it. First case: quest 68's circle choice (was `look old guild
+    mark`).
+  - **R29** (owner 2026-10-23) Each NPC speaks in their own voice. No shared template for
+    openers or self-introductions: the clipped "Role, twelve years. Goods, goods, goods. What do
+    you need?" run of fragments reads as a list of facts, and only a character whose description
+    makes them terse (a foreman, a soldier) talks that way. Vary sentence shape, warmth and
+    register by who the NPC is (their description, idle lines, trade). Batch 7 found the pattern
+    in about 45 of 311 openers across every batch.
+  - **R30** (owner 2026-10-23) A talk-menu hint (opener, opener variant or topic `hints`) never
+    uses "ask" as a verb: a player new to MUDs reads it as the `ask` command, which now only
+    redirects to `talk`. The house phrase for pointing at the menu is "choose a line below"
+    ("Choose a line below to hear about the barracks or the market."). An NPC may still say "ask
+    me about the road" in `text`, in their own voice. Enforced by
+    `TestDialogueHints_NeverAskAsAVerb` (`dialogue_hint_ask_test.go`).
+  - **R25** (owner 2026-10-21) The character-creation question "How much of Gaius do you
+    already know?" has no default: Enter asks again, so nobody skips the tutorial by
+    pressing Enter. Pinned by `TestConfirmMenu_StartEnterReasks`.
+  - Settled without asking: `-report` give routes (14, 63, 65, 67) become direct `-end`
+    topics; quest 66 becomes one hand-in topic (fixes the ask-route soft-lock); `requires` on
+    an offer (mobs 95, 96) becomes a quest gate; the Threshold Keeper's disc and Rusk's dagger
+    use the `carriesItem` gate (shown, never taken).
 - **R13 AI companion** (section 4.2): `ask` on the player's own bonded companion still routes to
   the module; `companion-ask` picks one of the NPC's eligible info topics by key, never an offer
   or hand-in. (Planning simplified the mechanism: the owner's words pick the topic at command
@@ -175,14 +252,20 @@ deletion's callers with `codegraph_callers` before removing it.
    offer is still eligible and the NPC still present and named) and applies the effects; a
    failed re-check gives one line and grants nothing. Either answer returns to the talk menu,
    re-shown.
-4. **Hand-in chosen**, and any topic of any kind that takes an item: if the topic has
-   `requiresItem`, the player sees "You give the bandit purse to Warden Velk." and the room sees
-   the same act through the sight rules (the lines `give.go` prints today). Then the player line
-   (the label for info), the NPC text and the effects. A hand-in completes on choice with no
-   card (R6). The menu is re-shown.
+4. **Hand-in chosen**, and any topic of any kind that takes an item: the player line (the label
+   for info), then the handover line, then the NPC reply. The handover line is printed only when
+   the topic has `requiresItem` and the effects took it: the player sees "You give the bandit
+   purse to Warden Velk." and the room sees the same act through the sight rules (the lines
+   `give.go` prints today). The owner's own example: "Here is the evidence you were looking
+   for, Warden", then the purse changes hands, then the Warden answers. A hand-in completes on
+   choice with no card (R6). The menu is re-shown, counting the quest token the choice just
+   granted as held (the grant is queued and lands on a later event pass).
 5. **`give <item> <npc>`** (R8), checked before any transfer and before the quest engine:
-   - an eligible topic on that NPC has `requiresItem` equal to the item: resolve exactly as
-     choosing it (step 4), first such topic in authored order. No menu needs to be open.
+   - an eligible topic on that NPC has `requiresItem` OR `carriesItem` equal to the item:
+     resolve exactly as choosing it (step 4): player line, handover line, NPC reply, first
+     such topic in authored order. A `carriesItem` topic never takes the item and prints no
+     handover line. No menu needs to be open. (corrected 2026-10-21: a shown item was falling
+     through to an ordinary give and was lost)
    - some topic on that NPC wants the item but none is eligible: the NPC hands it back and the
      item never leaves the player ("Warden Velk looks at the bandit purse and hands it back.").
    - otherwise: today's give, unchanged.

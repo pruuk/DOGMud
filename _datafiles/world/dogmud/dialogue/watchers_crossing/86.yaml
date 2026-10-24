@@ -1,115 +1,121 @@
 mobid: 86
 zone: Watchers Crossing
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "good day"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Welcome to the crossing. If you are heading east, there is a toll for the bridge. Five gold, or a road token."
-      - "Traveller. The toll is five gold for the bridge crossing. I can issue a receipt if you need one."
-
-  - keywords: ["hello", "hi", "greet"]
-    moods: ["grateful"]
-    responses:
-      - "Ah, you are back. Cross freely -- you have more than earned it."
-      - "Welcome, friend. The bridge stands a little more securely thanks to you."
-
-  - keywords: ["toll", "pay", "gold", "bridge", "cross", "fee", "tax"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Five gold for the crossing. I know it is not popular, but have you seen the cracks in that bridge? Without repairs, it will not last another decade."
-      - "The toll funds bridge maintenance. Masonry, mortar, labour. I keep records of every coin -- it all goes to the bridge."
-
-  - keywords: ["help", "quest", "task", "work", "job", "report"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "There is something you could do for me, actually. I have written a maintenance report -- documents the cracks, the costs, what happens if repairs stop. If someone could carry it to the Records Office in Thornwall -- Clerk Pell handles filings for the magistrate."
-      - "I need this report delivered to Thornwall. It is everything -- damage assessments, repair costs, projections. Clerk Pell in the Records Office can file it with the magistrate before the innkeeper's complaints shut the toll down."
-
-  - keywords: ["crack", "damage", "repair", "bridge", "stone", "collapse"]
-    responses:
-      - "Go look at the eastern rail. There is a crack running two paces long, deep enough to fit your finger in. The mortar is crumbling between the foundation blocks. This bridge is centuries old and it has not been properly maintained in decades."
-      - "The capstones on the east side have already been replaced once. The stress crack is getting worse. Without the toll, there is no money for masons, and without masons, that bridge will fail."
-
-  - keywords: ["tolva", "inn", "innkeeper", "complaint"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Tolva thinks I am a thief. I understand her frustration -- the toll hurts her business. But she has not stood on that bridge and felt the stone shift under her feet. I have."
-      - "The innkeeper and I disagree. She sees lost customers. I see a bridge that will kill people if it is not repaired. I know which problem is more urgent."
-
-  - keywords: ["ledger", "records", "money", "accounts"]
-    responses:
-      - "Every coin is accounted for. Dates, amounts, what it was spent on. I am not a thief -- I am the only person who cares enough about this bridge to do something about it."
-
-  - keywords: ["authority", "charter", "writ", "legal", "permission"]
-    responses:
-      - "No, I do not have a charter from Thornwall. I applied for one. Twice. They lost the paperwork both times. Meanwhile, the bridge cracks and I watch merchants drive loaded carts over stone that is barely holding together."
-
-  - keywords: [""]
-    responses:
-      - "Five gold for the crossing, or a road token. That is all I ask."
-      - "Is there something else? The toll is five gold."
-
-tree:
-  root:
-    text: "Welcome to the tollhouse. If you are crossing the bridge, the fee is five gold. Road tokens are also accepted. And before you say it -- yes, I know what Tolva thinks. I have heard it all."
-    hints: "Ask me about the toll, the bridge damage, or whether I need any help."
-    variants:
-      - questRequired: ["6-report"]
-        questExcluded: ["6-end"]
-        text: "You are back. Did you get it to Pell? Tell me the report has been filed -- I have been pacing this booth since you left."
-        hints: "Tell Harn the report has been delivered."
-      - questRequired: ["6-start"]
-        questExcluded: ["6-report"]
-        text: "Have you delivered the report yet? Clerk Pell in the Records Office in Thornwall -- he is the one who can file it with the magistrate. Every day without that charter is another day the bridge gets worse."
-        hints: "Find Clerk Pell in the Records Office in Thornwall. Ask him about the report."
-      - questRequired: ["6-end"]
-        text: "The bridge stands a little more securely thanks to you. Cross anytime -- no charge, ever."
-
-  nodes:
-    - id: bridge_damage
-      triggers: ["bridge", "crack", "damage", "repair", "why", "toll", "five gold"]
-      text: "Come look at the bridge sometime. There is a stress crack along the eastern rail -- two paces long and growing. The mortar between the foundation blocks is turning to powder. I have replaced capstones three times this year alone. This bridge is the only crossing for leagues. If it fails, people die. The toll pays for masons and materials. Every coin is accounted for."
-      hints: "You could ask about the maintenance report, the ledger, or Tolva's side of things."
-
-    - id: help_quest
-      triggers: ["help", "report", "quest", "task", "deliver", "thornwall", "magistrate"]
-      questExcluded: ["6-start", "6-end"]
-      grantsQuest: "6-start"
-      givesItem: 31
-      text: "I have documented everything. Damage assessments, repair costs, projected failure timelines. Here -- take this. If Thornwall sees it, they will understand why the toll exists. Take it to the Records Office in Thornwall -- ask for Clerk Pell. He handles filings for the magistrate."
-      hints: "Travel east to Thornwall and find Clerk Pell in the Records Office. Ask him about the report."
-      moodChange: friendly
-
-    - id: lost_report
-      triggers: ["report", "lost", "another", "copy", "quest", "task", "help"]
-      questRequired: ["6-start"]
-      questExcluded: ["6-report"]
-      givesItem: 31
-      text: "You lost the report? I have a second copy -- I always keep duplicates. Here. Clerk Pell, Records Office, Thornwall. Please do not lose this one."
-      hints: "Take the report to Clerk Pell in the Records Office in Thornwall."
-
-    - id: about_tolva
-      triggers: ["tolva", "innkeeper", "complaint", "against you"]
-      text: "Tolva is not wrong that the toll hurts business. I know that. I see the empty carts and the merchants who turn back. But she has not crawled under the bridge and pressed her hand against stone that shifts when the water is high. She sees a number -- five gold. I see the alternative, which is a bridge at the bottom of the river and people with it."
-
-    - id: show_ledger
-      triggers: ["ledger", "records", "proof", "accounts", "show me"]
-      text: "Every coin. Dates, amounts, payees. Stonemason Revik, six gold for capstone replacement. Mortar shipment from Thornwall, eight gold. Labour for crack sealing, four gold. There is no personal enrichment here. I live in the back room of this booth."
-
-    - id: no_charter
-      triggers: ["charter", "authority", "legal", "writ", "permission", "unauthorized"]
-      text: "I applied for a charter. Twice. Thornwall's bureaucracy lost the papers both times. Meanwhile the bridge deteriorates and nobody else is doing anything about it. I made a choice. Maybe it was not the proper one, but the bridge is still standing because of it."
-
-    - id: report_delivered
-      triggers: ["delivered", "filed", "done", "pell", "report",
-        "quest", "task"]
-      questRequired: ["6-report"]
-      questExcluded: ["6-end"]
-      grantsQuest: "6-end"
-      text: "You have my thanks. If the magistrate sees those numbers -- really looks at them -- the toll will be formalized or Thornwall will fund the repairs directly. Either way, the bridge survives. Here -- a receipt for your crossings. As many as you need. You have earned that and more."
-      moodChange: grateful
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: "The toll is five gold to cross the bridge, or a road token if you carry
+    one. And before you say it, yes, I know what Tolva thinks. I have heard it
+    all."
+  hints: "Choose a line below if you want to hear about the bridge, about where
+    the toll money goes, or whether he has a charter for it."
+  variants:
+  - questRequired:
+    - 6-end
+    text: "The bridge stands a little more securely thanks to you. Cross anytime, no
+      charge, ever."
+  - questRequired:
+    - 6-report
+    questExcluded:
+    - 6-end
+    text: "You are back. Did you get it to Pell? Tell me the report has been filed. I
+      have been pacing this booth since you left."
+    hints: "Choose The Collector's Burden below to tell Harn the report is filed."
+  - questRequired:
+    - 6-start
+    questExcluded:
+    - 6-report
+    - 6-end
+    text: "Have you delivered the report yet? Clerk Pell in the Records Office in
+      Thornwall is the one who can file it with the magistrate. Every day without that
+      charter is another day the bridge gets worse."
+    hints: "From the Tollhouse, go east ten times, over the Old Bridge, into
+      Thornwall and along Main Street to its east end. The Records Office is north
+      of there. Type talk pell."
+topics:
+- key: help_quest
+  kind: offer
+  quest: 6
+  label: The Collector's Burden
+  playerLine: Is there something I can help with here?
+  text: "There is, actually. I have documented everything about this bridge. Damage
+    assessments, repair costs, projected failure timelines. If Thornwall sees it,
+    they will understand why the toll exists. I need someone to carry the report to
+    the Records Office in Thornwall and put it in the hands of Clerk Pell. He handles
+    filings for the magistrate, and he can file it before the innkeeper's complaints
+    shut the toll down."
+  hints: "If you accept, Harn gives you the report. From the Tollhouse, go east ten
+    times, over the Old Bridge, into Thornwall and along Main Street to its east
+    end. The Records Office is north of there."
+  questExcluded:
+  - 6-start
+  - 6-end
+  grantsQuest: 6-start
+  givesItem: 31
+  moodChange: friendly
+- key: lost_report
+  kind: info
+  label: I have lost your report.
+  text: "You lost the report? I have a second copy. I always keep duplicates. Here.
+    Clerk Pell, Records Office, Thornwall. Please do not lose this one."
+  hints: "Take the report to Clerk Pell in the Records Office in Thornwall."
+  questRequired:
+  - 6-start
+  questExcluded:
+  - 6-report
+  - 6-end
+  itemExcluded: 31
+  givesItem: 31
+- key: report_delivered
+  kind: handin
+  quest: 6
+  label: The Collector's Burden
+  playerLine: Clerk Pell has filed your report with the magistrate.
+  text: "You have my thanks. If the magistrate sees those numbers, really looks at
+    them, the toll will be formalized or Thornwall will fund the repairs directly.
+    Either way, the bridge survives. Here, a receipt for your crossings. As many as
+    you need. You have earned that and more."
+  questRequired:
+  - 6-report
+  questExcluded:
+  - 6-end
+  grantsQuest: 6-end
+  moodChange: grateful
+# stone (pattern) folded into bridge_damage; pay and money (patterns) into
+# show_ledger; inn (pattern) into about_tolva; authority (pattern) into
+# no_charter; work (pattern) is covered by the help_quest pitch.
+- key: bridge_damage
+  kind: info
+  label: What is wrong with the bridge?
+  text: "Go and look at the eastern rail sometime. There is a stress crack along it,
+    two paces long, deep enough to fit your finger in, and growing. The mortar
+    between the foundation blocks is turning to powder. I have replaced capstones
+    three times this year alone. This bridge is centuries old, it is the only
+    crossing for leagues, and it has not been properly maintained in decades. If it
+    fails, people die. The toll pays for masons and materials."
+  hints: "The Old Bridge is just east of the Tollhouse. To see the crack for
+    yourself, go there and type look crack."
+  marked: true
+- key: about_tolva
+  kind: info
+  label: What do you make of Tolva?
+  text: "Tolva is not wrong that the toll hurts business. I know that. I see the
+    empty carts and the merchants who turn back. But she has not crawled under the
+    bridge and pressed her hand against stone that shifts when the water is high.
+    She sees a number, five gold. I see the alternative, which is a bridge at the
+    bottom of the river and people with it."
+- key: show_ledger
+  kind: info
+  label: Where does the toll money go?
+  text: "Every coin is accounted for. Dates, amounts, payees. Stonemason Revik, six
+    gold for capstone replacement. Mortar shipment from Thornwall, eight gold. Labour
+    for crack sealing, four gold. There is no personal enrichment here. I live in the
+    back room of this booth. I am not a thief. I am the only person who cares enough
+    about this bridge to do something about it."
+  hints: "Harn taps the heavy ledger on the counter."
+- key: no_charter
+  kind: info
+  label: Do you have a charter for this toll?
+  text: "No, I do not have a charter from Thornwall. I applied for one. Twice. They
+    lost the paperwork both times. Meanwhile the bridge cracks, and I watch merchants
+    drive loaded carts over stone that is barely holding together. I made a choice.
+    Maybe it was not the proper one, but the bridge is still standing because of
+    it."

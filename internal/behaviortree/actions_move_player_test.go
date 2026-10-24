@@ -15,7 +15,7 @@ func TestMovePlayer_RegisteredInActionRegistry(t *testing.T) {
 
 func TestMovePlayer_NoTriggeringPlayer_Failure(t *testing.T) {
 	ctx := &EvalContext{
-		Event: EventContext{EventType: "player_ask", UserId: 0},
+		Event: EventContext{EventType: "player_topic", UserId: 0},
 	}
 	if res := actMovePlayer(map[string]any{"room_id": 468}, ctx); res != Failure {
 		t.Errorf("expected Failure with no triggering player, got %v", res)
@@ -24,7 +24,7 @@ func TestMovePlayer_NoTriggeringPlayer_Failure(t *testing.T) {
 
 func TestMovePlayer_MissingRoomParam_Failure(t *testing.T) {
 	ctx := &EvalContext{
-		Event: EventContext{EventType: "player_ask", UserId: 42},
+		Event: EventContext{EventType: "player_topic", UserId: 42},
 	}
 	if res := actMovePlayer(map[string]any{}, ctx); res != Failure {
 		t.Errorf("expected Failure with no room_id param, got %v", res)
@@ -35,7 +35,7 @@ func TestMovePlayer_UnknownUser_Failure(t *testing.T) {
 	// UserId 42 is not registered in the user manager, so MoveToRoom
 	// must error and the action must surface that as Failure.
 	ctx := &EvalContext{
-		Event: EventContext{EventType: "player_ask", UserId: 42},
+		Event: EventContext{EventType: "player_topic", UserId: 42},
 	}
 	if res := actMovePlayer(map[string]any{"room_id": 468}, ctx); res != Failure {
 		t.Errorf("expected Failure for unknown user, got %v", res)

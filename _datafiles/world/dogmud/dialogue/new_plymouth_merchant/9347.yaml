@@ -1,113 +1,142 @@
 mobid: 9347
 zone: New Plymouth Merchant
 defaultMood: neutral
-
 greetings:
-  - text: "What are you after — blades, ingots, or just a look?"
-    moods: ["neutral"]
-  - text: "Good timing. Fresh stock from Halvard came in yesterday."
-    moods: ["friendly"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Name what you need."
-      - "If you are buying, the rack is behind me."
-
-  - keywords: [""]
-    responses:
-      - "Ask it plainly. I am mid-work."
-
-tree:
-  root:
-    text: "I sell steel — finished blades and the raw material for
-      smiths who want to work their own. Ask about the blades and
-      what I carry, about how my supply reaches me from the Crafting
-      Quarter, or about the third arm — people usually get to it
-      eventually."
-    hints: "You could ask Dame Ostry about her blades and the weapons
-      she stocks, about where her supply comes from and how iron
-      moves from the docks to her shop, or about the third arm. Beneath
-      the shop talk there is a tightness about a tribute and an audit she
-      plainly wants to be rid of."
-
-  nodes:
-    - id: ledgerhandoff
-      triggers: ["ledger", "page", "tribute", "scrap", "paper",
-                 "deliver", "hand", "give", "turn", "done",
-                 "report", "quest", "task"]
-      questRequired: ["71-ledger"]
-      questExcluded: ["71-end"]
-      requiresItem: 40119
-      grantsQuest: "71-end"
-      bumpsRep:
-        - {faction: "cooperage_circle", delta: 5}
-      text: "Ostry takes the ledger page and reads it twice before
-        she speaks. \"There it is in the original hand — the
-        tribute amount, the date, and Horst's counter-notation.\"
-        She folds it carefully and sets it on the counter. \"This
-        is what an appeal actually needs. I will not forget this.\""
-      hints: "You hand the ledger page to Dame Ostry."
-
-    - id: q71_start
-      triggers: ["quest", "task", "tribute", "audit", "permit", "deposit",
-                 "vell", "squeeze", "help", "tax", "do"]
-      questExcluded: ["71-start", "71-end"]
-      grantsQuest: "71-start"
-      text: "You want honest work or honest talk? Take talk, it is cheaper.
-        I pay the tribute like everyone -- a cut of gross, every quarter, to
-        the bloodline through Vell's office. Fine. But now there is an audit
-        on my books and my surety deposit is held, and between the two I am
-        bleeding for no reason anyone will put in writing. I am too practical
-        to rage at it. What I want is to understand it. Go and ask Vell what
-        the tribute actually pays for, and whether there is any floor under
-        it at all. Start there. See how far it goes."
-      hints: "Dame Ostry is squeezed by an audit and a held deposit on top of
-        the quarterly tribute. She wants you to ask Clerk Vell, at the Civic
-        Permit Office, what the tribute pays for and whether it can be
-        appealed. You could ask about the quest or the tribute."
-      moodChange: neutral
-
-    - id: blades
-      triggers: ["blade", "sword", "weapon", "steel", "iron", "dagger",
-                 "longsword", "ingot", "stock", "sell", "buy", "wares",
-                 "rack", "carry", "edge", "quality", "price", "cost"]
-      text: "I carry ingots for smiths and finished blades for people
-        who want something ready to use — iron and steel both, in a
-        few lengths and weights. The steel blades are Halvard's work
-        from the Crafting Quarter. The iron pieces come through the
-        docks warehouse. I grade everything that comes in. Nothing
-        on that rack is there by accident."
-      hints: "You could ask about the supply chain from the docks and
-        the Crafting Quarter, or about the third arm."
-      moodChange: friendly
-
-    - id: supply
-      triggers: ["supply", "halvard", "crafting", "docks", "warehouse",
-                 "material", "source", "import", "arrive", "shipment",
-                 "dunmar", "circuit", "runner", "quarter"]
-      text: "The raw iron comes from Dunmar's warehouse on the docks —
-        bulk import, standard grade. That goes to Halvard's forge in
-        the Crafting Quarter. He turns it into something worth selling.
-        His better blades come up to me on a regular schedule — I move
-        them at a proper price rather than the craft-district rate.
-        He gets a fair split and I get quality stock. The arrangement
-        has held for three years."
-      hints: "You could ask about the blades themselves or about
-        the third arm."
-
-    - id: third_arm
-      triggers: ["arm", "third", "extra", "limb", "mutation", "change",
-                 "chrysalis", "bloom", "shoulder", "grew", "three",
-                 "hand", "notice", "different"]
-      text: "It grew in the second year after the Bloom started —
-        slowly at first, then at a pace that was frankly alarming until
-        it finished. Full sensation, full strength, full range of motion.
-        I spent about a week being bothered by it and then I went back
-        to work, because there was work to do and an extra hand turns
-        out to be genuinely useful in this trade. I can grade an edge,
-        test the balance, and hold the piece steady at the same time.
-        I do not miss not having it."
-      hints: "She said it completely matter-of-factly. You could ask
-        about her blades or about the supply chain."
-      moodChange: friendly
+- text: What are you after? Blades, ingots, or just a look?
+  moods:
+  - neutral
+- text: Fresh stock from Halvard came in yesterday. Have a look.
+  moods:
+  - friendly
+opener:
+  text: Steel is my trade, finished blades and the raw metal for smiths who
+    would rather work their own. You may ask about the blades, or how my supply
+    reaches me. You will also ask about the third arm, so you may as well get it
+    over with.
+  hints: Choose a line below to learn about her blades, about where her steel
+    comes from, or about the third arm. Under the shop talk there is a tightness
+    about a tribute and an audit she plainly wants to be rid of. To see what she
+    sells, type list.
+  # Quest 71 states (first match wins; HasQuest is also true at every later step).
+  variants:
+  - questRequired:
+    - 71-end
+    text: My deposit came back this morning and my permit cleared. Nobody said why.
+      Nobody needed to.
+    hints: Choose a line below if you want to hear about her blades, about where
+      her steel comes from, or about the third arm. To see what she sells, type
+      list.
+  - questRequired:
+    - 71-horst
+    questExcluded:
+    - 71-end
+    carriesItem: 40119
+    text: Is that what I think it is? Put it on the counter.
+    hints: Choose The Tribute below to give Dame Ostry the ledger page.
+  - questRequired:
+    - 71-ledger
+    questExcluded:
+    - 71-end
+    text: You found a page? Then where is it? I cannot appeal on your word.
+    hints: If you lost the ledger page, another is still on the table in the private
+      parlor of the Gilt Threshold. From Dame Ostry's Armoury, go north to Coin
+      Alley, west to the Square Fountain, west to the Gilded Walk, north into the
+      Gilt Threshold, then east into the parlor. Type look paper scrap.
+  - questRequired:
+    - 71-horst
+    questExcluded:
+    - 71-ledger
+    - 71-end
+    text: Horst talked to you? Then he told you where to look, whether he meant to or
+      not.
+    hints: The papers are in the private parlor of the Gilt Threshold. From Dame
+      Ostry's Armoury, go north to Coin Alley, west to the Square Fountain, west to
+      the Gilded Walk, north into the Gilt Threshold, then east into the parlor.
+      Type look paper scrap.
+  - questRequired:
+    - 71-vell
+    questExcluded:
+    - 71-horst
+    - 71-end
+    text: Vell sent you upward? Then go up. I want to know who is at the top.
+    hints: Horst keeps the gate of the watched house. From Dame Ostry's Armoury, go
+      north to Coin Alley, then east to the Porters' Dock. Go north to the Watched
+      Lane, then north again to the Watched House Gate. In the evening he sits in
+      the private parlor of the Gilt Threshold instead, and he sleeps at the gate
+      in the small hours. Type talk horst.
+  - questRequired:
+    - 71-start
+    questExcluded:
+    - 71-vell
+    - 71-end
+    text: Have you been to Vell yet? He is right up the alley. He will not like being
+      asked.
+    hints: From Dame Ostry's Armoury, go north to Coin Alley, then north into the
+      Permit Office. Clerk Vell keeps the desk there by day, and eats in the Central
+      Square at midday. Type talk vell.
+topics:
+- key: q71_start
+  kind: offer
+  quest: 71
+  label: The Tribute
+  playerLine: Do you want help with the tribute and the audit?
+  text: Help? Take talk first, it is cheaper. I pay the tribute like everyone. A cut
+    of what I take in, every quarter, to the bloodline through Vell's office. Fine.
+    But now there is an audit on my books and my deposit is held, and between the
+    two I am bleeding for no reason anyone will put in writing. I am too practical
+    to rage at it. What I want is to understand it. If you will do it, go and ask
+    Clerk Vell what the tribute actually pays for, and whether there is any floor
+    under it at all. Start there. See how far it goes.
+  hints: Accept, then go north to Coin Alley and north again into the Permit Office.
+    Type talk vell.
+  questExcluded:
+  - 71-start
+  - 71-end
+  grantsQuest: 71-start
+  moodChange: neutral
+- key: ledgerhandoff
+  kind: handin
+  quest: 71
+  label: The Tribute
+  playerLine: I found a page of the tribute ledger. Here it is.
+  text: Let me see it. There it is in the original hand. The sums, the dates, and
+    Horst's mark beside every one of them. This is what an appeal actually needs.
+    I will not forget this.
+  questRequired:
+  - 71-horst
+  questExcluded:
+  - 71-end
+  requiresItem: 40119
+  grantsQuest: 71-end
+  bumpsRep:
+  - faction: cooperage_circle
+    delta: 5
+- key: blades
+  kind: info
+  label: What blades do you carry?
+  text: Ingots for smiths, and finished blades for people who want something ready
+    to use. Iron and steel both, a dagger and two longswords. The steel is Halvard's
+    work from the Crafting Quarter. The iron comes through the docks warehouse. I
+    grade everything that comes in. Nothing on that rack is there by accident.
+  hints: To see what she sells, type list.
+  moodChange: friendly
+- key: supply
+  kind: info
+  label: Where does your steel come from?
+  text: The raw iron comes from Dunmar's warehouse on the docks. Bulk import,
+    standard grade. That goes to Halvard's forge in the Crafting Quarter. He turns it
+    into something worth selling. His better blades come up to me on a regular
+    schedule, and I move them at a proper price rather than the craft-district rate.
+    He gets a fair split and I get good stock. The arrangement has held for three
+    years.
+- key: third_arm
+  kind: info
+  label: How did you come by the third arm?
+  text: It grew in the second year after the Bloom started. Slowly at first, then at
+    a pace that was frankly alarming until it finished. Full feeling, full strength,
+    full range of motion. I spent about a week being bothered by it and then I went
+    back to work, because there was work to do, and an extra hand turns out to be
+    genuinely useful in this trade. I can grade an edge, test the balance, and hold
+    the piece steady at the same time. I do not miss not having it.
+  hints: She said it completely matter-of-factly.
+  moodChange: friendly

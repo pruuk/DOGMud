@@ -1,234 +1,229 @@
 mobid: 9161
 zone: Pothole Coulee
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "hail"]
-    responses:
-      - "Eyes up. You walk like the canyon floor -- heavy. Up here we
-          learn to be still. What do you need?"
-      - "Mind the chalk-marks. Those are distances. Speak."
-
-  - keywords: ["shoot", "sling", "bow", "range", "learn", "teach", "quest", "task"]
-    responses:
-      - "Shooting is the eye, not the arm. Ask me and I will put a sling
-          in your hand and set you to the butt."
-      - "Reach out and touch a thing from across the open. That is the
-          whole craft. Ask."
-
-  - keywords: ["eye", "eyes", "opened", "mutation", "awakening"]
-    responses:
-      - "The Awakening did something to my eyes -- when I look far off,
-          the distance seems to fold shorter than it should. Out here
-          they call it a good eye and leave it at that. So do I."
-
-  - keywords: ["reload", "ammo", "shot", "equip", "load"]
-    responses:
-      - "Type equip and the weapon's name to ready it, then fire to
-          loose. Your hands find the next round on their own. You only
-          stop when the pouch is empty. Out of shot? Ask me."
-
-  - keywords: ["perception", "stat", "eyesight"]
-    responses:
-      - "Ranged work runs on Perception -- the keen eye, the read of
-          wind and distance. Shoot enough and it sharpens on its own."
-
-  - keywords: [""]
-    responses:
-      - "Say it plain."
-      - "I am watching the range. Talk."
-      - "Out with it."
-
-tree:
-  root:
-    text: "Marksman Iden. I keep the terraces."
-    hints: "You could ask Iden about shooting or your task."
-    variants:
-      # ── Not Opened (the rite is unfinished) ──────────────
-      - questExcluded: ["30-end"]
-        text: "You have not been Opened yet -- I can see it in how you
-          hold still, which is to say you do not. Go down to the cleric
-          in the hub and walk the rite first. The eye I teach needs a
-          mind that has been woken. Come back when it has."
-        hints: "Return to the hub and complete the Awakening rite with
-          Cleric Hadwen before training with Marksman Iden."
-
-      # ── Ready for quest 50 ───────────────────────────────
-      - questRequired: ["30-end"]
-        questExcluded: ["50-start", "50-end"]
-        text: "Opened, and steady enough. Good. The terraces are where
-          the coulee learns to reach past arm's length. Ask me for the
-          sling when you are ready to put a stone in the straw."
-        hints: "Type ask iden shoot to take up the sling and the lesson."
-
-      # ── Mid quest 50, one variant per step (one command each) ─
-      - questRequired: ["50-start"]
-        questExcluded: ["50-equip", "50-shoot", "50-end"]
-        text: "Still at it. A sling does nothing in your pack. Ready it
-          first."
-        hints: "Type equip sling."
-      - questRequired: ["50-equip"]
-        questExcluded: ["50-shoot", "50-end"]
-        text: "The sling is in your hand. The butts are down-range, east
-          on the Long Terrace. Put a stone in the straw."
-        hints: "Go east to the Long Terrace and type fire butt."
-      - questRequired: ["50-shoot"]
-        questExcluded: ["50-ambush", "50-end"]
-        text: "One in the open. Now get out of sight before the next one,
-          so you feel the difference."
-        hints: "On the Long Terrace, type sneak."
-      - questRequired: ["50-ambush"]
-        questExcluded: ["50-cover_shot", "50-end"]
-        text: "You know how to get out of sight. Now take the shot from
-          there, before anything knows where you are."
-        hints: "Go east to the Long Terrace and type fire butt."
-      - questRequired: ["50-cover_shot"]
-        questExcluded: ["50-end"]
-        text: "I heard that one land. Tell me how it felt."
-        hints: "Type ask iden done."
-
-      # ── Quest 50 complete ────────────────────────────────
-      - questRequired: ["50-end"]
-        text: "You have the eye. I knew it when your first stone found
-          the straw and you did not flinch at the noise. East along the
-          terraces and north into the canyon -- Bryn holds the slot, and
-          he will teach you the part I cannot from a safe terrace:
-          shooting a thing that shoots back."
-        hints: "Go east twice to the High Terrace, then north to the Canyon
-          Mouth, where Scout Bryn waits."
-
-  nodes:
-    # ── QUEST 50 OFFER (hands the sling) ──────────────────────
-    - id: shoot_offer
-      triggers: ["shoot", "sling", "learn", "teach", "range", "quest", "task"]
-      questRequired: ["30-end"]
-      questExcluded: ["50-start", "50-end"]
-      grantsQuest: "50-start"
-      givesItem: 10038
-      text: "Here. A sling, plaited cord and a leather cradle, cheap and
-        honest, and a pouch of shot to feed it. Both are yours. Ready the
-        sling first. The cradle fills itself while your eye is still on
-        the mark, so there is no second motion to learn. I will walk you
-        through the rest one thing at a time."
-      hints: "Type equip sling."
-
-    # ── SHOT SUPPLY / RECOVERY ────────────────────────────────
-    # itemExcluded: only a player with no pouch on them gets one. The
-    # pouch is removed when its last stone is spent (combat_reload.go),
-    # so a player who ran dry can always ask again. shot_have answers the
-    # same words for a player who still carries one.
-    - id: shot_supply
-      triggers: ["shot", "ammo", "pouch", "supply", "more", "ammunition"]
-      questRequired: ["50-start"]
-      questExcluded: ["50-end"]
-      itemExcluded: 30064
-      givesItem: 30064
-      text: "Shot for the sling -- a pouch of smooth river stones. Take
-        it. Each shot draws one from the pouch on its own. When the pouch
-        runs dry the sling will tell you, and so will I if you ask. No
-        one learns the eye on an empty sling."
-      hints: "You received a pouch of shot. If you run dry, type ask iden
-        shot."
-    - id: shot_have
-      triggers: ["shot", "ammo", "pouch", "supply", "more", "ammunition"]
-      questRequired: ["50-start"]
-      questExcluded: ["50-end"]
-      text: "You still have a pouch of shot on you. Spend it first. When
-        the last stone is gone, the sling will tell you, and then I will
-        give you another."
-      hints: "You already carry a pouch of shot. You could ask Iden for
-        more once it is empty."
-
-    # ── SLING RECOVERY (lost the weapon) ──────────────────────
-    - id: sling_recovery
-      triggers: ["lost", "another", "replace", "broke", "broken"]
-      questRequired: ["50-start"]
-      questExcluded: ["50-end"]
-      itemExcluded: 10038
-      givesItem: 10038
-      text: "Lost your sling already? It happens to the heavy-handed.
-        Here is another -- mind it this time. Equip it, feed it shot,
-        and get to the butt."
-      hints: "You received a sling. Type equip sling."
-    - id: sling_have
-      triggers: ["lost", "another", "replace", "broke", "broken"]
-      questRequired: ["50-start"]
-      questExcluded: ["50-end"]
-      text: "You have a sling on you already. One is all a shooter needs.
-        If it is not in your hand, ready it."
-      hints: "You already carry a sling. If it is not in your hand, type
-        equip sling."
-
-    # ── FIRE / EQUIP HELP ─────────────────────────────────────
-    # `reload` stays in the triggers on purpose: it is the word a player
-    # who learned the old way will reach for, and this is where they
-    # should land when they do.
-    - id: shoot_help
-      triggers: ["fire", "reload", "equip", "load", "help", "how"]
-      text: "Two motions, not three. Equip: type equip and the weapon's
-        name to ready it in hand. Fire: type fire and the target to
-        loose. Your hands find the next round while your eye is still on
-        the mark, so there is no third motion to learn -- you shoot until
-        the pouch is empty, and the weapon will tell you when it is.
-        Sneak first and the shot lands far harder, but only the once."
-      hints: "Ready the sling with equip sling, then fire butt on the Long
-        Terrace. To shoot from cover, sneak first, then fire."
-
-    # ── QUEST 50 TURN-IN ──────────────────────────────────────
-    - id: shoot_turnin
-      triggers: ["done", "report", "ready", "finished", "quest", "task"]
-      questRequired: ["50-cover_shot"]
-      questExcluded: ["50-end"]
-      grantsQuest: "50-end"
-      text: "Out in the open and again from cover, and the straw has your
-        mark in it both times. You felt the difference. That second one is
-        the shot you save for when it matters, because you only get it
-        once. The sling and the shot are yours. The eye is yours too,
-        though it will want feeding. East along the terraces and north to
-        the canyon when you are ready. Bryn will teach you the rest."
-      hints: "Quest complete. Go east twice to the High Terrace, then north
-        to the Canyon Mouth, where Scout Bryn waits."
-
-    # ── QUEST 50 MID-QUEST COACH (one node per step) ──────────
-    # The words a student reaches for mid-lesson (done, quest, sling,
-    # sneak, butt) would otherwise fall to the patterns, which offer the
-    # sling again, or to the catch-all. Each node answers with the step's
-    # one command, the same as the root greeting for that step. They sit
-    # after shoot_turnin so "done" on the last step still turns in.
-    - id: coach_start
-      triggers: ["done", "report", "finished", "quest", "task", "next", "sling", "sneak", "cover", "hide", "butt", "target", "straw"]
-      questRequired: ["50-start"]
-      questExcluded: ["50-equip", "50-end"]
-      text: "Not yet. A sling does nothing in your pack. Ready it first."
-      hints: "Type equip sling."
-    - id: coach_equip
-      triggers: ["done", "report", "finished", "quest", "task", "next", "sling", "sneak", "cover", "hide", "butt", "target", "straw"]
-      questRequired: ["50-equip"]
-      questExcluded: ["50-shoot", "50-end"]
-      text: "Not yet. The butts are down-range, east on the Long Terrace.
-        Put a stone in the straw."
-      hints: "Go east to the Long Terrace and type fire butt."
-    - id: coach_shoot
-      triggers: ["done", "report", "finished", "quest", "task", "next", "sling", "sneak", "cover", "hide", "butt", "target", "straw"]
-      questRequired: ["50-shoot"]
-      questExcluded: ["50-ambush", "50-end"]
-      text: "One in the open. Now get out of sight before the next one, so
-        you feel the difference."
-      hints: "On the Long Terrace, type sneak."
-    - id: coach_ambush
-      triggers: ["done", "report", "finished", "quest", "task", "next", "sling", "sneak", "cover", "hide", "butt", "target", "straw"]
-      questRequired: ["50-ambush"]
-      questExcluded: ["50-cover_shot", "50-end"]
-      text: "You know how to get out of sight. Now take the shot from
-        there, before anything knows where you are."
-      hints: "Go east to the Long Terrace and type fire butt."
-    - id: coach_cover_shot
-      triggers: ["sling", "sneak", "cover", "hide", "butt", "target", "straw", "next"]
-      questRequired: ["50-cover_shot"]
-      questExcluded: ["50-end"]
-      text: "I heard that one land. That is the lesson done. Tell me how
-        it felt."
-      hints: "Type ask iden done."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Hold still a moment, I'm reading the wind. There. Iden. The bluff-folk
+    send their young to me on these terraces to learn a good eye.
+  hints: Choose a line below if you want to hear about shooting or your task.
+  variants:
+  - questExcluded:
+    - 30-end
+    text: You have not been Opened yet. I can see it in how you hold still, which
+      is to say you do not. Go down to the cleric in the hub and walk the rite first.
+      The eye I teach needs a mind that has been woken. Come back when it has.
+    hints: Return to the hub and complete the Awakening rite with Cleric Hadwen before
+      training with Marksman Iden.
+  - questRequired:
+    - 30-end
+    questExcluded:
+    - 50-start
+    - 50-end
+    text: Opened, and steady enough. Good. The terraces are where the coulee learns
+      to reach past arm's length. When you are ready to put a stone in the straw,
+      I have a sling for you.
+    hints: Choose First Shot below to take up the sling and the lesson.
+  - questRequired:
+    - 50-start
+    questExcluded:
+    - 50-equip
+    - 50-shoot
+    - 50-end
+    text: Still at it. A sling does nothing in your pack. Ready it first.
+    hints: Type equip sling.
+  - questRequired:
+    - 50-equip
+    questExcluded:
+    - 50-shoot
+    - 50-end
+    text: The sling is in your hand. The butts are down-range, east on the Long Terrace.
+      Put a stone in the straw.
+    hints: Go east to the Long Terrace and type fire butt.
+  - questRequired:
+    - 50-shoot
+    questExcluded:
+    - 50-ambush
+    - 50-end
+    text: One in the open. Now get out of sight before the next one, so you feel the
+      difference. Sneaking is a skullduggery skill, and it grows each time you slip
+      out of sight with something near enough to notice you.
+    hints: On the Long Terrace, type sneak. For more, type help skullduggery.
+  - questRequired:
+    - 50-ambush
+    questExcluded:
+    - 50-cover_shot
+    - 50-end
+    text: You know how to get out of sight. Now take the shot from there, before anything
+      knows where you are.
+    hints: Go east to the Long Terrace and type fire butt.
+  - questRequired:
+    - 50-cover_shot
+    questExcluded:
+    - 50-end
+    text: I heard that one land. Tell me how it felt.
+    hints: Choose First Shot below to report.
+  - questRequired:
+    - 50-end
+    text: 'You have the eye. I knew it when your first stone found the straw and you
+      did not flinch at the noise. East along the terraces and north into the canyon.
+      Bryn holds the slot, and he will teach you the part I cannot from a safe
+      terrace: shooting a thing that shoots back.'
+    hints: Go east twice to the High Terrace, then north to the Canyon Mouth, where
+      Scout Bryn waits.
+topics:
+- key: shoot_offer
+  kind: offer
+  quest: 50
+  label: First Shot
+  playerLine: Will you teach me to shoot?
+  text: You get a sling, plaited cord and a leather cradle, cheap and honest, and
+    a pouch of shot to feed it. Both are yours to keep. Ready the sling first. The
+    cradle fills itself while your eye is still on the mark, so there is no second
+    motion to learn. I will walk you through the rest one thing at a time.
+  hints: Accept, and Iden hands you a sling and a pouch of shot. Then type equip sling.
+  questRequired:
+  - 30-end
+  questExcluded:
+  - 50-start
+  - 50-end
+  grantsQuest: 50-start
+  givesItem: 10038
+# Each replacement and its reminder never show together: itemExcluded and
+# carriesItem on the same item are exact opposites.
+- key: shot_supply
+  kind: info
+  label: I'm out of shot.
+  text: Shot for the sling, a pouch of smooth river stones. Take it. Each shot draws
+    one from the pouch on its own. When the pouch runs dry the sling will tell you,
+    and so will I if you ask. No one learns the eye on an empty sling.
+  hints: You received a pouch of shot. If you run dry, talk to Iden again for more.
+  questRequired:
+  - 50-start
+  questExcluded:
+  - 50-end
+  itemExcluded: 30064
+  givesItem: 30064
+- key: shot_have
+  kind: info
+  label: Can I have more shot?
+  text: You still have a pouch of shot on you. Spend it first. When the last stone
+    is gone, the sling will tell you, and then I will give you another.
+  hints: You already carry a pouch of shot. Choose a line below to get more once
+    it is empty.
+  questRequired:
+  - 50-start
+  questExcluded:
+  - 50-end
+  carriesItem: 30064
+- key: sling_recovery
+  kind: info
+  label: I've lost my sling.
+  text: Lost your sling already? It happens to the heavy-handed. Here is another.
+    Mind it this time. Equip it, feed it shot, and get to the butt.
+  hints: You received a sling. Type equip sling.
+  questRequired:
+  - 50-start
+  questExcluded:
+  - 50-end
+  itemExcluded: 10038
+  givesItem: 10038
+- key: sling_have
+  kind: info
+  label: Can I have a second sling?
+  text: You have a sling on you already. One is all a shooter needs. If it is not
+    in your hand, ready it.
+  hints: You already carry a sling. If it is not in your hand, type equip sling.
+  questRequired:
+  - 50-start
+  questExcluded:
+  - 50-end
+  carriesItem: 10038
+- key: shoot_help
+  kind: info
+  label: How does shooting work?
+  text: 'Two motions, not three. Equip: type equip and the weapon''s name to ready
+    it in hand. Fire: type fire and the target to loose. Your hands find the next
+    round while your eye is still on the mark, so there is no third motion to learn.
+    You shoot until the pouch is empty, and the weapon will tell you when it is.
+    Sneak first and the shot lands far harder, but only the once. Sneaking belongs
+    to skullduggery, and it sharpens each time you slip out of sight with something
+    near enough to notice you. Sneaking is useful for staying alive in dangerous
+    places. The other skullduggery abilities are for those unsavory types down the
+    road.'
+  hints: Fire is how you shoot a ready ranged weapon. Type fire and the target's
+    name. For more, type help fire.
+  marked: true
+- key: shoot_turnin
+  kind: handin
+  quest: 50
+  label: First Shot
+  playerLine: I hit the butt in the open, and again from cover.
+  text: Out in the open and again from cover, and the straw has your mark in it both
+    times. You felt the difference. That second one is the shot you save for when
+    it matters, because you only get it once. Sneaking is useful for staying alive
+    in dangerous places. The other skullduggery abilities are for those unsavory
+    types down the road. The sling and the shot are yours. The
+    eye is yours too, though it will want feeding. East along the terraces and north
+    to the canyon when you are ready. Bryn will teach you the rest.
+  hints: Quest complete. Go east twice to the High Terrace, then north to the Canyon
+    Mouth, where Scout Bryn waits.
+  questRequired:
+  - 50-cover_shot
+  questExcluded:
+  - 50-end
+  grantsQuest: 50-end
+- key: coach_start
+  kind: info
+  label: What do I do with the sling?
+  text: Not yet. A sling does nothing in your pack. Ready it first.
+  hints: Type equip sling.
+  questRequired:
+  - 50-start
+  questExcluded:
+  - 50-equip
+  - 50-end
+- key: coach_equip
+  kind: info
+  label: The sling is ready. Now what?
+  text: Not yet. The butts are down-range, east on the Long Terrace. Put a stone in
+    the straw.
+  hints: Go east to the Long Terrace and type fire butt.
+  questRequired:
+  - 50-equip
+  questExcluded:
+  - 50-shoot
+  - 50-end
+- key: coach_shoot
+  kind: info
+  label: I hit the butt. What next?
+  text: One in the open. Now get out of sight before the next one, so you feel the
+    difference. Sneaking is a skullduggery skill, and it grows each time you slip
+    out of sight with something near enough to notice you.
+  hints: On the Long Terrace, type sneak. For more, type help skullduggery.
+  questRequired:
+  - 50-shoot
+  questExcluded:
+  - 50-ambush
+  - 50-end
+- key: coach_ambush
+  kind: info
+  label: I'm out of sight. Now what?
+  text: You know how to get out of sight. Now take the shot from there, before anything
+    knows where you are.
+  hints: Go east to the Long Terrace and type fire butt.
+  questRequired:
+  - 50-ambush
+  questExcluded:
+  - 50-cover_shot
+  - 50-end
+- key: eye
+  kind: info
+  label: How do you see so far?
+  text: The Awakening did something to my eyes. When I look far off, the distance
+    seems to fold shorter than it should. Out here they call it a good eye and leave
+    it at that. So do I.
+- key: perception
+  kind: info
+  label: What makes a good shot?
+  text: Shooting is the eye, not the arm. Reach out and touch a thing from across
+    the open. That is the whole craft. Ranged work runs on Perception, the keen eye,
+    the read of wind and distance. Shoot enough and it sharpens on its own.

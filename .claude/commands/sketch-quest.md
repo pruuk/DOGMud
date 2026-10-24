@@ -31,7 +31,7 @@ _datafiles/world/dogmud/quests/*.yaml
 ```
 Read 2 results (not the generic quest).
 
-Then read 2 existing dialogue YAMLs that contain quest nodes. Glob:
+Then read 2 existing dialogue YAMLs that contain quest topics. Glob:
 ```
 _datafiles/world/dogmud/dialogue/**/*.yaml
 ```
@@ -111,7 +111,7 @@ to the top of this list and only drop down for genuine reasons.
 
 | Tier | Mechanic | Why discoverable |
 |------|----------|------------------|
-| ★★★★ | `ask <npc> quest` (or `task`) | Universal SOP; players try this on every NPC |
+| ★★★★ | `talk <npc>`, then a topic from the menu | The menu lists every topic open to the player; the roster marks NPCs with an open offer or hand-in |
 | ★★★★ | `give <item-just-received> <npc-just-talked-to>` | Players naturally hand off items they were just given |
 | ★★★★ | `attack <obvious hostile mob>` / mob_death of named target | Players fight what's in the room |
 | ★★★ | `<cardinal direction>` to a clearly described room | Players walk through visible exits |
@@ -152,9 +152,10 @@ are fine; unguessable keywords are not.
 For each step, specify:
 - Step ID (e.g. `start`, `investigate`, `evidence`, `end`)
 - What triggers advancement to this step
-- Trigger mechanism: dialogue node (`grantsQuest`), room behavior tree
-  (`room_command`), quest engine `item_give` trigger, behavior tree
-  `player_give` handler, or automatic (e.g. entering a room)
+- Trigger mechanism: dialogue topic (`grantsQuest`; a hand-in topic with
+  `requiresItem` also answers `give`), room behavior tree (`room_command`),
+  or automatic (e.g. entering a room). A quest engine `item_give` trigger
+  may not grant a token.
 - Quest token: `{questid}-{stepid}`
 - Player-facing description and hint
 - **Map destination** — see below. Every step gets one, even if the answer
@@ -213,9 +214,9 @@ token → no marker. See `internal/questengine/map_target.go`.
 
 Format:
 ```
-Step 1: "start" — granted by dialogue node
-  Trigger: ask <npc> quest/task → dialogue node `help_quest` with
-           grantsQuest: "{id}-start"
+Step 1: "start", granted by a dialogue topic
+  Trigger: talk <npc> → offer topic `help_quest` (kind: offer, label =
+           quest title) with grantsQuest: "{id}-start"
   Token: {id}-start
   Description: "..."
   Hint: "..."
@@ -250,9 +251,10 @@ Followup quest gating:
 - Path A quest: `questFlagRequired: {"{questid}-{flagname}": "{path1}"}`
 - Path B quest: `questFlagRequired: {"{questid}-{flagname}": "{path2}"}`
 
-Dismissal nodes needed:
-- Path A NPC must dismiss Path B players (and vice versa)
-- Place at TOP of nodes list in dialogue YAML
+Wrong-path gating:
+- Every Path A topic carries `questFlagExcluded: {"{questid}-{flagname}": "{path2}"}`
+  (and vice versa), so a wrong-path player's menu never shows it
+- An opener variant per path for cross-NPC visits
 
 ---
 
@@ -263,15 +265,15 @@ the alternative and how it will be handled:
 
 ```
 Step 2 alternative: Player uses `give poultice shaman` instead of
-                    `ask shaman poultice`
-  Mechanism: quest engine item_give trigger on quest YAML (mob 74)
+                    choosing the hand-in from `talk shaman`
+  Mechanism: the same hand-in topic (requiresItem: <poultice id>); give
+             resolves to it
   Grants same token: 2-poultices
-  Text: (shaman acceptance dialogue)
+  Text: (the topic's text)
 ```
 
 Always consider:
-- `give <item> <npc>` as alternative to `ask <npc> <topic>` for item delivery
-- `ask <npc> quest` / `ask <npc> task` as universal discovery path (SOP)
+- `give <item> <npc>` and the talk menu reach the same hand-in topic
 - Players trying to skip steps (return to quest giver early)
 
 ---
@@ -281,9 +283,9 @@ Always consider:
 Show the full chain of `questRequired` / `questExcluded` gates:
 
 ```
-[no quest] → ask npc quest → [5-start]
+[no quest] → talk tolva, offer topic → [5-start]
 [5-start] → get ledger (room script) → [5-ledger, 5-evidence]
-[5-evidence] + has item 21 → ask tolva ledger → [5-end] (rewards fire)
+[5-evidence] + has item 21 → hand-in topic (talk or give) → [5-end] (rewards fire)
 ```
 
 Verify:
@@ -302,8 +304,7 @@ List every file that must be created or modified:
 |--------|------|---------|
 | CREATE | `quests/{id}-{name}.yaml` | Quest definition with steps and rewards |
 | CREATE | `dialogue/{zone}/{mobid}.yaml` | New NPC dialogue (if NPC has none) |
-| MODIFY | `dialogue/{zone}/{mobid}.yaml` | Add quest nodes to existing dialogue |
-| MODIFY | `quests/{id}-{name}.yaml` | Add item_give triggers for item delivery steps |
+| MODIFY | `dialogue/{zone}/{mobid}.yaml` | Add quest topics to existing dialogue |
 | MODIFY | `mobs/{zone}/{id}-{name}.yaml` | Add behavior tree player_give handler for item rejection |
 | CREATE | `items/{type}/{id}-{name}.yaml` | New quest item (if needed) |
 | MODIFY | `mobs/{zone}/{id}-{name}.yaml` | Mob group/behavior changes |
@@ -321,15 +322,17 @@ For each file, note:
 The sketch must explicitly verify each of these before being considered
 complete:
 
-- [ ] Every `grantsQuest` dialogue node has `"quest"` and `"task"` in triggers
-- [ ] Every `grantsQuest` pattern entry has `"quest"` and `"task"` in keywords
+- [ ] The quest offer is a `kind: offer` topic labelled with the quest title,
+      granting the start token; each hand-in is a `kind: handin` topic
+      granting the end token (`docs/schemas/dialogue.md`)
 - [ ] **Narrative voice:** NPC `text` uses first person ("I", "my"). Hints
       describe player options from the player's perspective. Never write
       3rd-person self-references like "Ask about why she left" — write
       "You could ask why she left" or "You could ask about the marriage."
-- [ ] **Trigger discoverability:** every trigger word appears in a hint,
-      NPC dialogue, room description, or quest log entry. If the player
-      has to guess a keyword, the quest is broken.
+- [ ] **Trigger discoverability:** every room or command trigger the
+      quest relies on appears in a hint, NPC dialogue, room description,
+      or quest log entry. If the player has to guess a keyword, the quest
+      is broken. (Dialogue needs no keywords: the talk menu lists topics.)
 - [ ] **Player POV walkthrough complete (Step 4a):** every step has
       `Player thinks / Player types / Discovers via` filled in with a
       concrete in-game source the player has reached by that point. No
@@ -358,28 +361,21 @@ complete:
       not character mind-reading. When in doubt, ask: could the
       player observe this with their own eyes right now? If no,
       redesign.
-- [ ] **Prefer `questRequired` over `requires`** for quest-gated nodes.
-      `requires` depends on memory that can expire. Quest tokens are permanent.
-- [ ] **`expiryPeriod` should almost never be set.** Memory expiry bricks
-      quests when `requires`-gated nodes become unreachable. Only use
-      `expiryPeriod` for quests where urgency is the explicit design
-      intent (e.g., "deliver this before the trolls attack"). Default:
-      leave empty or omit entirely.
-- [ ] Item delivery steps have BOTH dialogue path AND quest YAML `item_give`
-      trigger for the quest-accepting NPC
-- [ ] **give.go flow & `consume_item` requirement:** `give.go` calls
-      the quest engine FIRST, then (if not consumed) transfers the
-      item to the mob, then runs the behavior tree `player_give`
-      handler. **Every quest engine `item_give` trigger that
-      represents a successful handover MUST include `consume_item:
-      <itemId>` as one of its actions** — without it, give.go falls
-      through to the behavior tree, and the NPC's archetype default
+- [ ] Gate quest topics on quest tokens (`questRequired`), which are
+      permanent; use `heardRequired` only for "ask about X before Y" on
+      one NPC (heard topics are saved, so it never bricks a quest).
+- [ ] Item delivery steps are a hand-in topic with `requiresItem` on the
+      quest-accepting NPC; `give` and the talk menu both reach it. A quest
+      YAML `item_give` trigger may not grant a token (the boot refuses it).
+- [ ] **give.go flow & `consume_item` requirement:** `give.go` asks the
+      NPC's topics FIRST (a topic wanting the item plays, or the item is
+      handed back), then the quest engine's `item_give` triggers, then (if
+      not consumed) transfers the item to the mob and runs the behavior
+      tree `player_give` handler. An `item_give` trigger that accepts an
+      item for a non-granting reason MUST include `consume_item:
+      <itemId>`, or give.go falls through to the archetype default
       (`noncombat_questgiver` and `noncombat_shopkeeper` both have a
-      "declines politely and hands it back" `player_give` branch)
-      fires AFTER the quest already accepted the handover, so the
-      player sees a confusing decline AND gets the item bounced
-      back. With `consume_item` set, give.go marks the result
-      Handled and skips both the transfer and the behavior tree.
+      "declines politely and hands it back" `player_give` branch).
 - [ ] **`return_item` on the rejection paths:** NPCs that should NOT
       keep a wrong item (e.g., quest giver receiving the wrong item
       type) need a behavior tree `player_give` handler with
@@ -387,12 +383,13 @@ complete:
       requirement above — they cover the wrong-item-given case where
       no quest engine trigger matches.
 - [ ] **Lost item recovery:** Every quest giver who hands out a physical item
-      must have a recovery dialogue node (e.g., `lost_report`) that gives a
-      replacement copy if the player has the quest but lost the item.
-- [ ] **NPC item handoff via dialogue:** Use `givesItem: <itemId>` on dialogue
-      tree nodes to hand quest items to the player. This is preferred over JS
+      must have a recovery topic (e.g., `lost_report`) that gives a
+      replacement copy if the player has the quest but lost the item, with
+      `itemExcluded` so a player who still carries one gets no second.
+- [ ] **NPC item handoff via dialogue:** Use `givesItem: <itemId>` on a
+      topic to hand quest items to the player. This is preferred over JS
       scripts for simple handoffs. The player sees "You receive a <itemname>."
-- [ ] `requiresItem` nodes — confirm item exists, is obtainable, and is in the
+- [ ] `requiresItem` topics: confirm item exists, is obtainable, and is in the
       player's inventory at that point (not consumed earlier)
 - [ ] Room behavior trees that give items — confirm the noun appears in room
       description or nouns section so `get <noun>` feels natural
@@ -401,8 +398,8 @@ complete:
 - [ ] No physical item needed? Use narrative delivery (quest token gating
       only) and document why
 - [ ] Multi-zone quests — confirm NPCs exist and have spawninfo in their rooms
-- [ ] `questExcluded` on completion nodes prevents double-completion
-- [ ] **End-token exclusion:** every `grantsQuest` node excludes BOTH the
+- [ ] `questExcluded` on completion topics prevents double-completion
+- [ ] **End-token exclusion:** every `grantsQuest` topic excludes BOTH the
       granted token AND `{questid}-end` in `questExcluded` — prevents
       re-offering completed quests
 - [ ] Quest YAML `rewards` section is filled out (gold, item, message)
@@ -411,12 +408,11 @@ complete:
 - [ ] No raw numbers in player-facing text
 - [ ] **Branching quests:** If quest has flags, declare them in quest YAML
       with allowed values. Undeclared flags cause startup panic.
-- [ ] **Flag-gated nodes:** Followup quest offers use `questFlagRequired`
+- [ ] **Flag-gated topics:** Followup quest offers use `questFlagRequired`
       to gate on the player's branch choice
-- [ ] **Dismissal nodes:** Every branch NPC has a dismissal node at the
-      TOP of the nodes list for wrong-path players. Without this, keyword
-      patterns fire and players think there's a quest to discover.
-- [ ] **Mid-quest variants:** Root variants exist for all cross-NPC visit
+- [ ] **Wrong-path topics hidden:** Every branch topic carries a flag gate,
+      so a wrong-path player's menu never shows the other branch.
+- [ ] **Mid-quest variants:** Opener variants exist for all cross-NPC visit
       states (wrong-path player visits during Q, after Q, etc.)
 - [ ] **Quest items not components:** Delivery items must NOT have
       `is_component: true` — component pouch is not checked by give/requiresItem
@@ -439,7 +435,7 @@ Room message: "{room-visible text}"
 
 Step-by-step in-game test sequence:
 1. Restart server
-2. Walk to quest giver → `ask <npc> quest` → confirm quest granted
+2. Walk to quest giver → `talk <npc>` → choose the quest → confirm quest granted
 3. For each step: perform the action → confirm quest advances
 4. For each alternative path: test that too
 5. Try to skip steps (go to completion NPC early) → confirm blocked

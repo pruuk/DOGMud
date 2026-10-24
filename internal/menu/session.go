@@ -13,4 +13,12 @@ type Session struct {
 	// StillValid re-checks the caller's context before a choice acts
 	// (phase 1: the NPC is still here and visible by name). nil means valid.
 	StillValid func() bool
+	// ShowLast sends the menu after every line already in flight on this
+	// event pass, including those queued while it runs (a quest banner and
+	// its rewards, printed when the grant is processed), so the menu is the
+	// last thing on screen. The menu is open for input at once either way.
+	ShowLast bool
+	// MobInstanceId is the NPC this menu talks with, or 0. The menu closes,
+	// with a line, when that NPC leaves the room or dies.
+	MobInstanceId int
 }

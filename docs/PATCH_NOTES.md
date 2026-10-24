@@ -1,5 +1,29 @@
 # DOGMud Patch Notes
 
+## 2026-10-23: Talking to people is a menu now
+
+- Type talk and a name to start a conversation. The person speaks, then
+  a numbered list of things you can say appears under their words. Type
+  a number to say it, or press Enter to leave. Any other command ends
+  the conversation and runs.
+- Marks show who has something for you, in the room and in the list:
+  [!] a new quest, [?] a quest you can finish with them, [*] something
+  important you have not heard yet. Lines you have already heard are
+  grey and can be chosen again.
+- Quests are offered with a short card: Accept takes the quest, Leave
+  says no for now, and you can ask again later.
+- To hand something in, choose the quest's line, or give the item to
+  the person. An item they want but cannot take yet is handed back.
+- Every person in the world has been rewritten for the new menus, with
+  clearer directions and hints, and their own voice.
+- Several quests that could get stuck now finish properly, and choices
+  that cannot be undone are now made in conversation, after a warning.
+- ask now speaks only to your own companion. For anyone else, use talk.
+- In a dim place you need more light to talk to someone you can only
+  see as a shape.
+- Builders: dialogue editing in the web builder is off until the new
+  topic editor arrives.
+
 ## 2026-10-21: Less background lag
 
 - The server spends much less effort remembering what townsfolk see as

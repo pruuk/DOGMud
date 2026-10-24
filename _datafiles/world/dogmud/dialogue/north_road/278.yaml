@@ -1,63 +1,58 @@
 mobid: 278
 zone: North Road
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "What will you have?"
-      - "Sit anywhere. Food is on the board."
-
-  - keywords: ["village", "town", "place", "here"]
-    responses:
-      - "No name worth posting. Just a crossroads. People stop
-        because the roads cross and they need to eat. That is
-        the whole story."
-
-  - keywords: ["road", "travel", "north", "south", "bandits"]
-    responses:
-      - "The road north has been rough lately. Bandits working
-        the stretch past the ditch. I posted a notice. Nobody
-        reads notices."
-
-  - keywords: ["girl", "kitchen", "worked", "dark-haired"]
-    responses:
-      - "A girl worked my kitchen for three days. Good hands,
-        quiet. Left one night without collecting what she was
-        owed. That was weeks ago. I do not know where she went."
-
-  - keywords: ["food", "drink", "ale", "buy", "eat"]
-    responses:
-      - "Ale or stew. That is what I have. Both are honest."
-
-  - keywords: ["dessa", "old woman", "hearth"]
-    responses:
-      - "Dessa? She has been sitting by that fire since before
-        I bought the place. She knows everything. She will tell
-        you everything. Whether you asked or not."
-
-  - keywords: ["tam", "farmhand", "drunk"]
-    responses:
-      - "Tam talks loud and drinks fast. Harmless, mostly. Take
-        what he says about the bandits with a grain of salt --
-        he has never been north of the ditch."
-
-  # System mention: bartering (innkeeper's trade voice)
-  - keywords: ["barter", "haggle", "price", "cheaper", "deal"]
-    responses:
-      - "Room rates are fixed. The ale is not. A polite offer and an honest face'll shave a copper or two. Insult me and the price goes up."
-      - "I've haggled with caravan masters and with farmers. The caravan masters have less patience."
-
-  # System mention: tavern gossip (this IS a tavern)
-  - keywords: ["gossip", "news", "rumor", "heard", "talk"]
-    responses:
-      - "This tavern hears everything. The bandits to the north are bolder than they were last season. A woman passed through yesterday who said the Warren is spilling further than it used to. Make of that what you will."
-      - "Listen to the other tables more than you listen to me. The gossip channel carries what the whole region is saying. A smart traveler keeps an ear on it."
-    moodChange: friendly
-
-  - keywords: [""]
-    responses:
-      - "I keep the bar. I do not keep track of questions."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: What will you have? Sit anywhere. Food is on the board.
+  hints: Haral sells stew to travelers. Type list.
+topics:
+- key: village
+  kind: info
+  label: What is this village called?
+  text: No name worth posting. Just a crossroads. People stop because the roads cross
+    and they need to eat. That is the whole story.
+- key: road
+  kind: info
+  label: Is the road north safe?
+  text: The road north has been rough lately. Bandits working the stretch just north
+    of the square. I posted a notice. Nobody reads notices.
+- key: girl
+  kind: info
+  label: Has anyone unusual passed through lately?
+  text: A girl worked my kitchen for three days. Good hands, quiet. Left one night
+    without collecting what she was owed. That was weeks ago. I do not know where
+    she went.
+# food folds the shop line: Haral's shop list is stew alone.
+- key: food
+  kind: info
+  label: What do you serve here?
+  text: Stew. That is what I have. It is honest.
+  hints: To see what Haral sells and for how much, type list.
+- key: dessa
+  kind: info
+  label: Who is the old woman by the fire?
+  text: Dessa? She has been sitting by that fire since before I bought the place.
+    She knows everything. She will tell you everything. Whether you asked or not.
+- key: tam
+  kind: info
+  label: Who is the loud young man at the table?
+  text: Tam talks loud and drinks fast. Harmless, mostly. Take what he says about
+    the bandits with a grain of salt. He has never been north of the ditch.
+# barter folds both responses; the "room rates" line went with the rooms
+# (Haral lets none).
+- key: barter
+  kind: info
+  label: Will you come down on your prices?
+  text: My prices are fair. A polite offer and an honest face will shave a copper
+    or two. Insult me and the price goes up. I have haggled with caravan masters and
+    with farmers. The caravan masters have less patience.
+  hints: Bartering is a skill that improves your prices. Type help bartering.
+# gossip folds both responses; the second spoke of a "gossip channel" the
+# game does not have.
+- key: gossip
+  kind: info
+  label: What news have you heard?
+  text: This tavern hears everything. The bandits to the north are bolder than they
+    were last season. A woman passed through yesterday who said the Warren is spilling
+    further than it used to. Make of that what you will. And listen to the other tables
+    more than you listen to me.
+  moodChange: friendly

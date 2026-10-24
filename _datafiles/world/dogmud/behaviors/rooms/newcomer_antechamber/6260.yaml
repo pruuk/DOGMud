@@ -16,7 +16,7 @@ tree:
           do: mob_say
           mob_id: 9491
           text: >-
-            Not through yet -- if you have lost the thread, type
-            <ansi fg="command">hint</ansi> and it will point you at the next step.
+            Not yet. If you are not sure what to do, type
+            <ansi fg="command">hint</ansi> and it will name your next step.
         - type: action
           do: intercept

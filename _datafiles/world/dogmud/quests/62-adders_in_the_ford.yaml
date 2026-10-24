@@ -11,19 +11,20 @@ steps:
     map_target: 5423
     description: >-
       Tamsin Reed asked you to kill the marsh adder that lairs in the
-      reeds on the south approach to the ford -- it keeps striking her
+      reeds on the south approach to the ford. It keeps striking her
       ferry passengers.
     hint: >-
-      Head south into the reeds before the ford and kill the marsh adder.
-      Come back and tell Tamsin at the ford landing when it is dead.
+      From the Ford Approach, go south twice to Greywater Meadows, where
+      the marsh adder lies hidden in the reeds. Kill it, then come back
+      and tell Tamsin at the Ford Approach.
   - id: adder
     map_target: 5425
     description: >-
       The marsh adder that lairs in the reeds is dead. Report back to
       Tamsin at the ford landing.
     hint: >-
-      Return north to the ford landing and tell Tamsin the adder is dead.
-      Try ask tamsin report.
+      From Greywater Meadows, go north twice to the Ford Approach and
+      tell Tamsin the adder is dead. Type talk tamsin.
   - id: end
     description: >-
       Tamsin can pole her passengers across without watching the reeds
@@ -37,7 +38,7 @@ rewards:
     toward the reeds, where nothing is moving for once. "That thing put
     two of my passengers in the mud this season and near cost me a third.
     It is a kinder crossing without it." She counts out coin and tucks a
-    small stoppered vial in on top. "Antivenom. Keep it -- the reeds breed
+    small stoppered vial in on top. "Antivenom. Keep it. The reeds breed
     more than one of those, and the next might find you before you find
     it."
   observer: >-

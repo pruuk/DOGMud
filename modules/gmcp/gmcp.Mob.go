@@ -131,7 +131,6 @@ type mobUpdateReq struct {
 	ScriptTag         string   `json:"scriptTag"`
 	BehaviorArchetype string   `json:"behaviorArchetype"`
 	ConditionIds      []int    `json:"conditionIds"`
-	QuestFlags        []string `json:"questFlags"`
 	SpawnMutations    []string `json:"spawnMutations"`
 	MutationChance    int      `json:"mutationChance"`
 	LLMProfileJSON    string   `json:"llmProfileJson"` // raw round-trip; "" = clear, "-" sentinel = untouched (Update route only)
@@ -263,7 +262,7 @@ func mobToReq(m *mobs.Mob) mobUpdateReq {
 		KnowsFacts: m.KnowsFacts, DefaultDisposition: m.DefaultDisposition,
 		FoldAnchorRoom: m.FoldAnchorRoom, StorageChestRoom: m.StorageChestRoom,
 		ScriptTag: m.ScriptTag, BehaviorArchetype: m.BehaviorArchetype,
-		ConditionIds: m.ConditionIds, QuestFlags: m.QuestFlags,
+		ConditionIds:   m.ConditionIds,
 		SpawnMutations: m.SpawnMutations, MutationChance: m.MutationChance,
 		CarryCapacity: m.CarryCapacityOverride, HealthMax: m.HealthMaxOverride, StaminaMax: m.StaminaMaxOverride,
 		CorpseName: m.CorpseName, CorpseDescription: m.CorpseDescription,
@@ -387,7 +386,7 @@ func reqToMob(base *mobs.Mob, req mobUpdateReq) mobs.Mob {
 	}
 	m.DefaultDisposition, m.FoldAnchorRoom, m.StorageChestRoom = req.DefaultDisposition, req.FoldAnchorRoom, req.StorageChestRoom
 	m.ScriptTag, m.BehaviorArchetype = req.ScriptTag, req.BehaviorArchetype
-	m.ConditionIds, m.QuestFlags = req.ConditionIds, req.QuestFlags
+	m.ConditionIds = req.ConditionIds
 	m.SpawnMutations, m.MutationChance = req.SpawnMutations, req.MutationChance
 	if req.LLMProfileJSON != "-" {
 		// "-" is the Update route's sentinel meaning "field absent from this

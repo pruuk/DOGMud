@@ -28,8 +28,8 @@ secret: false
 steps:
   - id: start
     map_target: 5260
-    description: "Survivor Ovell has set you on the mine. The Mine Mouth is west of the Upper Talus. From there the way to the Den is down, west, down, then west twice. The mine is pitch black, so cast chrysalis-glow before you go down. Other things live in the workings: type consider on a foe to size it up, and flee if a fight turns."
-    hint: "In the Den at the bottom of the mine, type attack beast. If it is dark, type cast chrysalis-glow first."
+    description: "Survivor Ovell has set you on the mine. The Mine Mouth is west of the Upper Talus. From there the way to the Den is down, west, down, then west twice. The mine is pitch black, so type cast glow before you go down. Other things live in the workings: type consider on a foe to size it up, and flee if a fight turns."
+    hint: "In the Den at the bottom of the mine, type attack beast. If it is dark, type cast glow first."
   - id: end
     description: "The beast is dead and the deep vein is open. You came in not knowing which end of a hammer to hold. You leave a smith."
     hint: "You have taken the mine. Speak with Ovell on the slope if you want to hear what it means."

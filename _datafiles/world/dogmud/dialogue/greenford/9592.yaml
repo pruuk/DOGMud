@@ -1,39 +1,24 @@
 mobid: 9592
 zone: Greenford
 defaultMood: friendly
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Welcome to the Herbalist's Stall. Mind the drying racks overhead."
-      - "Hebb. What ails you, or what are you here to buy?"
-
-  - keywords: ["herb", "alchemy", "wares", "buy", "stock", "potion"]
-    responses:
-      - "Healer's root, bitter thistle, dustwalk herb, glass vials
-        and clay flasks for the bottling. I keep a fair stock and
-        restock whenever the caravans bring in something worth
-        drying."
-      - "Ask specifically and I will tell you what is in season. Not
-        everything grows year round, and I will not sell you a
-        withered bundle and pretend otherwise."
-
-  - keywords: ["craft", "recipe", "make", "brew", "tonic"]
-    responses:
-      - "I can mix a fair range of tonics and draughts, so long as
-        you bring the right ingredients to my bench. Bring me good
-        material and I will measure the dose properly."
-
-  - keywords: [""]
-    responses:
-      - "Mind the bundles overhead. Ask if you need something specific."
-
-tree:
-  root:
-    text: "Welcome to the Herbalist's Stall. Mind the drying racks overhead."
-    hints: "You could ask Hebb about his stock, or about brewing a
-      tonic or draught."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Ah, the bell. Excuse me, I was talking to the thistle. This is the
+    Herbalist's Stall, and I'm Hebb. Are you here to buy, or to brew?
+  hints: Choose a line below to hear about his alchemy bench, or about the herbs
+    he sells. To see what he sells, type list.
+topics:
+- key: craft
+  kind: info
+  label: Can I use your alchemy bench?
+  text: A fair range of tonics and draughts can be mixed at that bench, so long as
+    the right ingredients come to it. You may work there if you keep it clean. Bring
+    good material and measure the dose properly.
+  hints: To see what you know how to make, type craft list.
+- key: herb
+  kind: info
+  label: What herbs do you sell?
+  text: Healer's root, bitter thistle, dustwalk herb, lake mint, two kinds of bark,
+    blood-moss and shadowcap, with glass vials and clay flasks for the bottling. I
+    keep a fair stock and restock whenever the caravans bring in something worth drying.
+    Not everything grows the year round, and I will not sell you a withered bundle
+    and pretend otherwise.

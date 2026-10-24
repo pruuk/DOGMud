@@ -2,80 +2,49 @@ mobid: 9444
 zone: The Confluence
 defaultMood: friendly
 greetings:
-  - text: "History volumes, reference folios, the occasional chart copy.
-      Looking for something specific?"
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Welcome. The display shelf is there -- the Confluence History
-        is the most complete general account if that is what you need."
-  - keywords: ["buy", "sell", "shop", "price", "cost", "stock",
-      "books", "volumes", "folio"]
-    responses:
-      - "The books I stock are priced plainly. The Confluence History
-        is the main general-history volume. Ask if you are looking
-        for something more specific."
-  - keywords: ["chart", "wall", "stained", "damaged", "framed",
-      "pinned", "behind"]
-    responses:
-      - "Not for sale. It was here when I bought the shop, arrived
-        already damaged. The scholars come to look at it occasionally.
-        I leave it up."
-  - keywords: [""]
-    responses:
-      - "Ask me about the books I stock or what is in the quarter."
-tree:
-  root:
-    text: "I carry history volumes and reference folios, mostly for
-      the scholarly trade -- the Margin's people and the students
-      they bring in. What are you looking for?"
-    hints: "You could ask Drunn about the books he stocks, about
-      the old chart on the wall, or about the Scholars' Quarter
-      and the Margin."
-  nodes:
-    - id: books
-      triggers: ["book", "books", "volume", "folio", "history",
-        "confluence", "stock", "carry", "sell", "have", "available",
-        "buy", "reference", "copy", "copied", "text", "what", "find",
-        "general", "account"]
-      text: "The Confluence History is the best general account --
-        covers the three rivers, the founding of the temple city, and
-        the subsequent two centuries in readable form. Scholars buy
-        it for students who need a foundation text. Travelers buy it
-        because it is the only volume on the subject they can actually
-        carry. I have folios on river navigation and natural history
-        when I can get them, but those move quickly. If there is
-        something you are looking for that I do not have, the archive
-        in the Margin Hall keeps a reading-room collection -- not for
-        sale, but available to consult."
-      hints: "You could ask Drunn about the old chart on the wall,
-        or about the quarter and the Margin."
-    - id: old_chart
-      triggers: ["chart", "wall", "old", "stained", "damaged", "water",
-        "behind", "counter", "framed", "pinned", "provenance", "where",
-        "from", "that", "is", "map", "antique"]
-      text: "I do not know its full provenance. It was in the shop
-        when I took it on -- the previous owner had pinned it there
-        and either could not or would not say where it came from.
-        The water damage was pre-existing. The Margin's cartographers
-        come in occasionally to look at it. Riss upstairs has opinions
-        about its date and survey tradition that I cannot evaluate.
-        It is not for sale. It is decoration, by default, and the
-        scholars seem to regard it as something worth preserving."
-      hints: "You could ask Drunn about the books he stocks, or
-        about the quarter."
-    - id: quarter
-      triggers: ["quarter", "scholars", "margin", "around", "here",
-        "where", "more", "visit", "hall", "area", "else", "who",
-        "lives", "layout", "gate"]
-      text: "The Margin Hall is the center of it -- the archive is
-        there, and the cartographers' and copyists' rooms above. The
-        scholars' lodgings are nearby for the members who live in the
-        quarter. The gate-porter at the main entrance can direct you
-        more precisely. I am at the street-level end, so I see
-        everyone who comes through -- researchers, students, and the
-        occasional traveler who has come to see what the fuss about
-        the rivers is."
-      hints: "You could ask Drunn about the books he stocks, or
-        about the old chart on the wall."
+- text: Have a look round. I keep history volumes, reference folios and now and
+    then a chart copy. Something tells me you will find what you came for.
+  moods:
+  - friendly
+opener:
+  text: I carry history volumes and reference folios, mostly for the scholarly trade,
+    the Margin's people and the students they bring in. The Confluence History is
+    the most complete general account, if that is what you need. What are you
+    looking for?
+  hints: Choose a line below to learn about the books he sells, about the old
+    chart by the counter, or about the Scholars' Quarter. To see what he sells,
+    type list.
+topics:
+- key: books
+  kind: info
+  label: What books do you sell?
+  text: The Confluence History is the best general account. It covers the three
+    rivers, the founding of the temple city, and the two centuries since, in a form
+    you can read. Scholars buy it for students who need a foundation text.
+    Travelers buy it because it is the only book on the subject they can actually
+    carry. I price it plainly. I have folios on river navigation and natural history
+    when I can get them, but those sell quickly. If I do not have what you want, the
+    Great Archive past the Margin Hall keeps a reading room. Not for sale, but open
+    to consult.
+  hints: To see what he sells, type list.
+- key: old_chart
+  kind: info
+  label: Where did the old chart come from?
+  text: I do not know its full history. It was in the shop when I took it on. The
+    previous owner kept it in that crate and either could not or would not say
+    where it came from. The water damage was already there. The Margin's
+    cartographers come in now and then to look at it. Riss, in the Cartographers'
+    Room, has opinions about its date and its survey tradition that I cannot judge.
+    It is not for sale. It is decoration, by default, and the scholars seem to think
+    it is worth keeping. So I leave it where it is.
+  hints: To study the chart, type look damaged chart.
+- key: quarter
+  kind: info
+  label: What else is in the Scholars' Quarter?
+  text: The Margin Hall is the center of it, west through the Inkwell Court. The
+    Great Archive is just past the hall, the cartographers work off the court, and
+    the copyists off the hall. The scholars' lodgings are off the court as well, for
+    the members who live in the quarter. The gate-porter just outside my door can
+    direct you more exactly. I am at the gate end, so I see everyone who comes
+    through. Researchers, students, and the occasional traveler who has come to see
+    what the fuss about the rivers is.

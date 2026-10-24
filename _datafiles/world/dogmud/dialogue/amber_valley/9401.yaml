@@ -2,35 +2,86 @@ mobid: 9401
 zone: Amber Valley
 defaultMood: neutral
 greetings:
-  - text: "You'll be wanting to hear about the water, like everyone else. Fine. But you'll hear it straight from me, not from Fenn's mouth downstream."
-    moods: ["neutral"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Hello. You're not the first to come asking, and you'll not be the last."
-  - keywords: ["water", "channel", "fenn"]
-    responses:
-      - "Mine by right, and I'll not apologize for what's mine."
-  - keywords: [""]
-    responses:
-      - "Say it plainer. I've fields to tend and no time for circling."
-tree:
-  root:
-    text: "Ayres. I hold the upstream ground, where the water first comes into the valley. That makes me the villain in every story Fenn tells, so let me guess — you've heard his version already. Sit down and hear the true one."
-    hints: "You could ask Ayres about his farm, about the dispute from his side, or
-      about the old water-right he says is his."
-  nodes:
-    - id: farm
-      triggers: ["farm", "field", "crop", "land", "upstream", "green"]
-      text: "My family's worked the head ground since the valley was first settled. We hold the high fields where the stream enters — good land, but it's good because we made it so, season after season. Fenn looks at my green rows and sees theft. He doesn't see the six generations of Ayres men who dug, and banked, and earned the first share fair. It's not luck. It's not robbery. It's work, the same as his — only mine sits upstream of his, and that he cannot forgive."
-      hints: "You could ask Ayres about the dispute, or about the old water-right he
-        claims."
-    - id: dispute
-      triggers: ["dispute", "channel", "water", "cut", "feud", "trouble", "head-gate", "gate"]
-      text: "Here's my side, and it's the simple one. The head-gate is mine to tend — always has been. In a wet year there's plenty and the channel feeds us both and nobody quarrels. This is not a wet year. The stream's down to a trickle and there isn't enough for two full farms, so I took my share first, as the right allows. Aye, I packed the gate to hold what's mine. Fenn calls that cutting him off. I call it not drowning my own family so his can float. The dry year isn't my doing. I won't be hanged for the weather."
-      hints: "You could ask Ayres about his farm, or about the old water-right that
-        underpins his claim."
-    - id: right
-      triggers: ["right", "old", "tradition", "claim", "law", "share"]
-      text: "There's an old water-right, older than any deed in the valley — the head-ground holds the first share. It's not something I invented to win an argument. Ask any grandfather here and he'll tell you the same. Fenn knows it perfectly well. He just doesn't LIKE it, and lately he's decided not liking a thing is the same as it being unjust. The man's always wanted more than his portion. A dry year only showed everyone what he is. I keep to the right. The right's all that's kept this valley's water from open war these hundred years."
-      hints: "You could ask Ayres about the dispute, or about his farm upstream."
+- text: You will be wanting to hear about the water, like everyone else. Fine. But
+    you will hear it straight from me, not from Fenn's mouth downstream.
+  moods:
+  - neutral
+opener:
+  text: Ayres. I hold the upstream ground, where the water first comes into the valley.
+    That makes me the villain in every story Fenn tells, so let me guess. You have
+    heard his version already. Sit down and hear the true one.
+  hints: Choose a line below to learn about his farm, about the dispute from his
+    side, or about the old water-right he says is his.
+  # Quest 72: one line per ending (first match wins).
+  variants:
+  - questRequired:
+    - 72-end
+    questFlagRequired:
+      72-outcome: mediated
+    text: I keep the gate, and I may not shut it. Hesper calls that fair. I call it
+      done, and I will keep to it.
+  - questRequired:
+    - 72-end
+    questFlagRequired:
+      72-outcome: restored
+    text: The old works up in the hills were down all along. I took my share of a
+      starved stream and called it a dry year. Well. The stream is not starved now.
+  - questRequired:
+    - 72-end
+    questFlagRequired:
+      72-outcome: fenn
+    text: You had it read out to the whole valley. I keep to the right. I always said
+      I would, and now I must, even when it is not the right I thought it was.
+topics:
+# q72_side is the quest step: hearing Ayres out for Hesper sets
+# 72-heard-ayres, which her compromise needs (9397).
+- key: q72_side
+  kind: info
+  label: Hesper sent me to hear your side of it.
+  text: Then take this back to her. I packed the gate, aye. I will not lie about
+    it. The stream that comes down to us is half what it was, and there is not enough
+    for two full farms, so I took the first share, as the right allows. I would share
+    a full stream gladly. I will not let my own rows die so his can live. Find me
+    more water, or show me the right says otherwise, and I will hear it.
+  hints: You have heard Ayres' side. Fenn holds the farm east of the head-gate, two
+    rooms east of here. Type talk fenn.
+  marked: true
+  questRequired:
+  - 72-start
+  questExcluded:
+  - 72-end
+  setsQuestFlag:
+    key: 72-heard-ayres
+    value: "yes"
+- key: farm
+  kind: info
+  label: Why are your fields so green?
+  text: My family has worked the head ground since the valley was first settled.
+    We hold the high fields where the stream enters. Good land, but it is good because
+    we made it so, season after season. Fenn looks at my green rows and sees theft.
+    He does not see the six generations of Ayres men who dug, and banked, and earned
+    the first share fair. It is not luck. It is not robbery. It is work, the same
+    as his, only mine sits upstream of his, and that he cannot forgive.
+# dispute folds the "water channel fenn" pattern ("Mine by right, and I'll
+# not apologize for what's mine."): its closing line.
+- key: dispute
+  kind: info
+  label: Did you shut the water off from Fenn?
+  text: Here is my side, and it is the simple one. The head-gate is mine to tend,
+    and always has been. In a wet year there is plenty, the channel feeds us both,
+    and nobody quarrels. This is not a wet year. The stream is down to a trickle and
+    there is not enough for two full farms, so I took my share first, as the right
+    allows. Aye, I packed the gate to hold what is mine. Fenn calls that cutting him
+    off. I call it not drowning my own family so his can float. The dry year is not
+    my doing, and I will not apologize for what is mine.
+- key: right
+  kind: info
+  label: What is this old water-right of yours?
+  text: There is an old water-right, older than any deed in the valley, and the head
+    ground holds the first share. It is not something I invented to win an argument.
+    Ask any grandfather here and he will tell you the same. Fenn knows it perfectly
+    well. He just does not LIKE it, and lately he has decided not liking a thing is
+    the same as it being unjust. I keep to the right. The right is all that has kept
+    this valley's water from open war these hundred years.
+  hints: The valley keeps its old water-rights among the records in the cedar chest
+    at the Rite pavilion. From here, go east to the head-gate, then north four times.

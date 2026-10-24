@@ -2,36 +2,85 @@ mobid: 9400
 zone: Amber Valley
 defaultMood: hostile
 greetings:
-  - text: "If you've come from Ayres, you can turn right round. If you've come to look at a dying field, well — look your fill."
-    moods: ["hostile"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Aye, hello. Forgive me if I've no smiles left this season."
-  - keywords: ["water", "channel", "ayres"]
-    responses:
-      - "Robbed. That's the word for it. Robbed by my own neighbour."
-  - keywords: [""]
-    responses:
-      - "Speak plain. I've a farm to mourn and no patience for riddles."
-tree:
-  root:
-    text: "Marrow Fenn. I farm the east side — the dry side, the hard side, and harder still this year. You're standing in what should be green and isn't, and I'll tell you exactly whose fault that is if you've the stomach to hear it."
-    hints: "You could ask Marrow about his farm and the drought, about the dispute
-      over the water from his side, or about Ayres, the neighbour he blames."
-  nodes:
-    - id: farm
-      triggers: ["farm", "drought", "field", "crop", "land", "dry"]
-      text: "Three generations my people have worked this ground. It was never easy land — east of the channel, you live and die by what water reaches you. We made it work. We always made it work, because the channel fed us fair. This year the channel's dry as bone and my barley's curling brown in the row. You can't eat righteousness and you can't drink a promise. I'm watching a year's work die in the dirt."
-      hints: "You could ask Marrow about the dispute itself, or about Ayres
-        upstream."
-    - id: dispute
-      triggers: ["dispute", "channel", "water", "cut", "feud", "trouble"]
-      text: "Here's the truth, plain as I can say it. The channel that's fed both our farms since before either of us was born — it got cut this spring, up at the head-gate where Ayres holds the ground. Cut, or packed, or dammed, call it what you like. And funny thing, the water all goes HIS way now and none comes mine. I didn't do that to my own crop. So you tell me who did. The water that reaches the valley was meant for both of us. He took the lot, and he's got a hundred fine words for why that's fair."
-      hints: "You could ask Marrow about his farm, or hear what he has to say about
-        Ayres himself."
-    - id: ayres
-      triggers: ["ayres", "neighbour", "neighbor", "upstream", "him"]
-      text: "Ayres. We grew up two fields apart, and I'd have called him a friend once. But he's got it fixed in his skull that the head-gate's HIS by some old right, that the water's his to share or keep as he pleases. There's no old right that says let your neighbour's children go hungry. He'll smile and talk about tradition while my field dies downstream of his good fortune. If you mean to judge between us, go and look at his fat green rows, then come back and look at mine."
-      hints: "You could ask Marrow more about the dispute, or about his own farm and
-        the drought he's facing."
+- text: If you have come from Ayres, you can turn right round. If you have come to
+    look at a dying field, well, look your fill.
+  moods:
+  - hostile
+opener:
+  text: Look around you. This should be green, and it is not. I am Marrow Fenn,
+    and I farm the east side, the dry side, the hard side, and harder still this
+    year. I will tell you exactly whose fault that is, if you have the stomach
+    to hear it.
+  hints: Choose a line below if you want to hear about his farm and the drought,
+    about the dispute over the water from his side, or about Ayres, the
+    neighbour he blames.
+  # Quest 72: one line per ending (first match wins).
+  variants:
+  - questRequired:
+    - 72-end
+    questFlagRequired:
+      72-outcome: mediated
+    text: A fixed share, every week. It is not all I am owed, but my barley is standing
+      again, and I will take standing barley over being right.
+  - questRequired:
+    - 72-end
+    questFlagRequired:
+      72-outcome: restored
+    text: Water in my ditch, and Ayres up to his knees in the same mud as me to get
+      it there. I never thought I would see the day.
+  - questRequired:
+    - 72-end
+    questFlagRequired:
+      72-outcome: fenn
+    text: The old right says what I always said it said. I will not crow about it.
+      Much.
+topics:
+# q72_side is the quest step: hearing Fenn out for Hesper sets
+# 72-heard-fenn, which her compromise needs (9397).
+- key: q72_side
+  kind: info
+  label: Hesper sent me to hear your side of it.
+  text: Then hear it, and carry it back to her straight. The channel fed both our
+    farms fair for longer than either of us has been alive. This spring the water
+    stopped coming my way, and it did not stop by itself. Ayres sits on the head-gate
+    with a stone wedged behind the screw. I do not want his farm. I want my share.
+    Give me water I can count on, week in, week out, and I will shake his stone hand.
+  hints: You have heard Fenn's side. Ayres holds the farm west of the head-gate,
+    two rooms west of here. Type talk ayres.
+  marked: true
+  questRequired:
+  - 72-start
+  questExcluded:
+  - 72-end
+  setsQuestFlag:
+    key: 72-heard-fenn
+    value: "yes"
+- key: farm
+  kind: info
+  label: How bad is the drought on your farm?
+  text: Three generations my people have worked this ground. It was never easy land.
+    East of the channel, you live and die by what water reaches you. We made it work.
+    We always made it work, because the channel fed us fair. This year the channel
+    is dry as bone and my barley is curling brown in the row. You cannot eat righteousness
+    and you cannot drink a promise. I am watching a year's work die in the dirt.
+# dispute folds the "water channel ayres" pattern ("Robbed. That's the word
+# for it."): same grievance, said in full.
+- key: dispute
+  kind: info
+  label: What happened to the water?
+  text: Here is the truth, plain as I can say it. The channel that has fed both our
+    farms since before either of us was born got cut this spring, up at the head-gate
+    where Ayres holds the ground. Cut, or packed, or dammed, call it what you like.
+    And funny thing, the water all goes HIS way now and none comes mine. I did not
+    do that to my own crop, so you tell me who did. Robbed, that is the word for it.
+    Robbed by my own neighbour, and he has a hundred fine words for why that is fair.
+- key: ayres
+  kind: info
+  label: What kind of man is Ayres?
+  text: We grew up two fields apart, and I would have called him a friend once. But
+    he has it fixed in his skull that the head-gate is HIS by some old right, that
+    the water is his to share or keep as he pleases. There is no old right that says
+    let your neighbour's children go hungry. He will smile and talk about tradition
+    while my field dies downstream of his good fortune. If you mean to judge between
+    us, go and look at his fat green rows, then come back and look at mine.
+  hints: Ayres' holding is west of the head-gate, two rooms west of here.

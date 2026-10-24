@@ -1,99 +1,86 @@
 mobid: 9380
 zone: New Plymouth Old Quarter
 defaultMood: neutral
-
 greetings:
-  - text: "Lamp's due for a trim. Was there something?"
-    moods: ["neutral", "cautious"]
-  - text: "You found your way down. What do you need?"
-    moods: ["friendly"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Lamp needs trimming. What is it?"
-      - "I keep the lights. Yes?"
-
-  - keywords: [""]
-    responses:
-      - "I tend lamps. That is most of what I have to say about things."
-      - "Mm."
-
-tree:
-  root:
-    text: "I light the lamps at dusk, trim the wicks, fill the oil
-      when they run low. I do not ask what the lights show me —
-      that question has never made my life any better."
-    hints: "You could ask Quill about his lamping work and the route
-      he walks, about the iron door at 215 Lintel St and the traffic
-      past it at odd hours, or about who lives in the Old Quarter."
-
-  nodes:
-    - id: bloom_witness
-      triggers: ["traffic", "witness", "testimony", "215", "door",
-                 "case", "constable", "tell", "saw", "seen",
-                 "movement", "iron", "account", "quest", "task"]
-      questRequired: ["67-source"]
-      questExcluded: ["67-witness", "67-end"]
-      grantsQuest: "67-witness"
-      givesItem: 40111
-      text: "You are asking what I have seen. I walk past that door
-        twice a day, every day, for eleven years. I have seen crates
-        moved in the small hours -- heavy ones, by the way the carriers
-        walked. I have seen the steward from the noble house. I have
-        seen the iron door open and close at hours no iron door opens
-        and closes for honest reasons. I will say so, in front of who
-        needs to hear it. [Quill sets down his lamp trimmer and hands
-        you a folded document -- dates, times, descriptions, in a steady
-        unfancy hand.] Take that to the Dock Constable. The record
-        speaks for itself."
-      hints: "Quill has given you eleven years of lamping testimony in
-        a folded document -- the assembled case-file. Take it to the
-        Dock Constable on the New Plymouth Docks to close the trail."
-      moodChange: friendly
-
-    - id: lamps
-      triggers: ["lamps", "lamp", "work", "light", "wick", "oil",
-                 "tend", "lantern", "lighting", "route", "rounds",
-                 "brackets", "trim", "fill"]
-      text: "Six brackets from the canal mouth to the far court —
-        twelve lamps total. Longer than it looks, because the flooded
-        section adds a detour. I do the route twice — once at dusk to
-        light them, once midmorning to trim and check the oil. Eleven
-        years of the same walk. I know every step of it in the dark,
-        which helps, because most of it is."
-      hints: "He described the route with the care of someone who
-        has walked it ten thousand times. You could ask about the
-        traffic he has seen at the iron door at 215, or about the
-        people who live in the Old Quarter."
-
-    - id: traffic
-      triggers: ["traffic", "215", "door", "lintel", "night",
-                 "hours", "movement", "visitors", "iron",
-                 "late", "comes", "goes"]
-      text: "That address is — I carry lamps on a route. The iron
-        door gets light from bracket three. I fill bracket three
-        after dark. Sometimes there are people there at hours when
-        people are not usually at doors. Late hours. Odd hours. I
-        do not know them. I do not look at them any more than the
-        lamp bracket requires. I keep walking."
-      hints: "He confirmed something without saying what it was —
-        a man giving exactly as much as he must and not a word more.
-        You could ask about the lamping route, or about who lives
-        in the Old Quarter."
-      moodChange: cautious
-
-    - id: quarter
-      triggers: ["quarter", "poor", "people", "buried", "canal",
-                 "lives", "drowned", "courts", "who", "live",
-                 "down", "others", "neighbors"]
-      text: "Most people down here were priced out of somewhere
-        higher — the Docks, the Common Quarter, wherever they
-        started. The courts below the waterline are livable in the
-        dry months if you know which walls to keep away from.
-        There are about thirty of us in the main stretch. Gritta
-        goes deeper than any of us. I go as far as the lamp
-        brackets need and no further."
-      hints: "He described the quarter plainly, without pride or
-        complaint. You could ask about the lamping route, or about
-        what moves past the iron door at odd hours."
+- text: Lamp's due for a trim. Was there something?
+  moods:
+  - neutral
+  - cautious
+- text: You found your way down. What do you need?
+  moods:
+  - friendly
+opener:
+  text: I light the lamps at dusk, trim the wicks, fill the oil when they run low.
+    I do not ask what the lights show me. That question has never made my life any
+    better.
+  hints: Choose a line below to learn about his lamp route, about the iron door
+    on Lintel Street and who comes to it at odd hours, or about who lives in the
+    Old Quarter.
+topics:
+- key: bloom_witness
+  kind: info
+  label: Will you tell the watch what you saw at that door?
+  text: You are asking what I have seen. I walk past that door twice a night, every
+    night, for eleven years. I have seen crates moved in the small hours, heavy ones,
+    by the way the carriers walked. I have seen the steward from the noble house. I
+    have seen the iron door open and close at hours no iron door opens and closes for
+    honest reasons. I will say so, in front of whoever needs to hear it. And I wrote
+    it down. Dates, times, what I saw. Here. Take that to the Dock Constable. The
+    record speaks for itself.
+  hints: Quill sets down his wick-trimmer and hands you a folded case file, eleven
+    years of dates and times in a steady, plain hand. Take it to the Dock Constable
+    on the docks. Type talk constable.
+  marked: true
+  questRequired:
+  - 67-source
+  questExcluded:
+  - 67-witness
+  - 67-end
+  grantsQuest: 67-witness
+  givesItem: 40111
+  moodChange: friendly
+# Quest 67 recovery (batch 4 review M1): the case file is the only way to
+# finish, so a player who lost it gets a fresh copy while the hand-in is open.
+- key: lost_case_file
+  kind: info
+  label: I've lost the record you gave me.
+  text: Then I write it again. I have the dates by heart. Eleven years of them.
+    Here. Do not lose this one.
+  hints: Quill writes the case file out again and hands it to you. Take it to the
+    Dock Constable. Type talk constable.
+  questRequired:
+  - 67-witness
+  questExcluded:
+  - 67-end
+  itemExcluded: 40111
+  givesItem: 40111
+- key: lamps
+  kind: info
+  label: What is your lamp route like?
+  text: Six brackets from the canal mouth to the far court, twelve lamps in all.
+    Longer than it looks, because the flooded section adds a detour. I walk the
+    route twice a night. Once at dusk to light them, once before dawn to trim the
+    wicks and check the oil. Eleven years of the same walk. I know every step of it
+    in the dark, which helps, because most of it is.
+  hints: He described the route with the care of someone who has walked it ten
+    thousand times.
+- key: traffic
+  kind: info
+  label: Who comes to the iron door at odd hours?
+  text: That address is... I carry lamps on a route. The iron door gets its light
+    from bracket three. I fill bracket three after dark. Sometimes there are people
+    there at hours when people are not usually at doors. Late hours. Odd hours. I do
+    not know them. I do not look at them any more than the lamp bracket needs. I keep
+    walking.
+  hints: He confirmed something without saying what it was, giving exactly as much
+    as he must and not a word more.
+  moodChange: cautious
+- key: quarter
+  kind: info
+  label: Who lives down here in the Old Quarter?
+  text: Most people down here were priced out of somewhere higher. The docks, the
+    Common Quarter, wherever they started. The courts below the waterline are
+    livable in the dry months if you know which walls to keep away from. There are
+    about thirty of us in the main stretch. Gritta goes deeper than any of us. I go
+    as far as the lamp brackets need and no further.
+  hints: He described the quarter plainly, without pride or complaint.

@@ -2,13 +2,15 @@
 #
 # Owns the Awakening Rite beat of quest 30:
 #   - dialogue (dialogue/pothole_coulee/9100.yaml) grants 30-start
-#   - this tree answers "ask hadwen begin/ready" while 30-start is held,
+#   - this tree answers the player choosing to begin the rite (talk hadwen,
+#     topic `begin`, #375 R17; the topic's text is empty, so this tree
+#     speaks every line) while 30-start is held,
 #     plays the paced rite sequence, and fires 30-end (the "Opened" token).
 #     Blank-slate Awakening: the rite grants NO starter mutation — mutations
 #     are earned afterward through use-based drift.
 # Single-shot: 30-end is granted at the CLOSE of the rite (a delayed
 # action), so for the ~41 s the rite runs the asker still lacks 30-end
-# and token gating alone would let a second `ask hadwen begin` queue a
+# and token gating alone would let a second begin queue a
 # second rite (2026-10-17 audit S6). The `rite_running` state flag closes
 # that window, the way The Landing's tree holds `leaving`
 # (behaviors/rooms/newcomer_antechamber/6467.yaml): set instantly when the
@@ -17,8 +19,8 @@
 # delayed action queued with the rite itself. Queued closures run whether
 # or not the asker is still online, and BehaviorState is not saved
 # (mobs.Mob.BTreeState is yaml:"-"), so a logout or a reboot mid-rite
-# cannot leave the flag stuck. After the rite, a re-ask falls through to
-# dialogue (which has a gentle refusal node).
+# cannot leave the flag stuck. After the rite, the begin topic is hidden by
+# its 30-end gate, so the player cannot choose it again.
 # The flag is PER PLAYER (`per_player: true`, BehaviorState key
 # "rite_running:<user id>"): the 2026-10-17 newbie-duo playtest had two
 # newcomers ask at once, and a mob-wide flag hushed the second one and left
@@ -31,13 +33,14 @@ tree:
   type: selector
   children:
 
-    # ── MID-RITE: ask hadwen begin while the rite is already running ──
+    # ── MID-RITE: the player chooses begin, or the mid-rite topic rite_wait,
+    #    while the rite is already running ──
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [begin, ready]
+          check: topic_is
+          topics: [begin, rite_wait]
         - type: condition
           check: state_equals
           key: rite_running
@@ -50,13 +53,16 @@ tree:
             Hush, now. The pool is still speaking, and it will not be
             hurried. Let it finish.
 
-    # ── THE RITE: ask hadwen begin (30-start held, not yet opened) ──
+    # ── THE RITE: the player chooses to begin (30-start held, not yet opened).
+    #    rite_wait reaches here only when the rite is NOT running although the
+    #    player holds 30-rite: a logout or a restart cut it short (the tree
+    #    state is not saved). The rite then starts again, so no one is stuck. ──
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [begin, ready]
+          check: topic_is
+          topics: [begin, rite_wait]
         - type: condition
           check: player_has_quest
           quest: "30-start"
@@ -73,11 +79,32 @@ tree:
           key: rite_running
           per_player: true
           value: "1"
+        # The rite marks itself on the player at once (#375 phase 1
+        # playtest): Hadwen's dialogue cannot read rite_running, so it gates
+        # its mid-rite opener and the rite_wait topic on 30-rite, and hides
+        # begin. 30-end at the close supersedes it.
         - type: action
-          do: say
-          to_actor: true
-          text: Then we begin. Step to the edge with me.
-          delay: 1.0
+          do: grant_quest
+          quest: "30-rite"
+        - type: selector
+          children:
+            - type: sequence
+              children:
+                - type: condition
+                  check: topic_is
+                  topic: rite_wait
+                - type: action
+                  do: say
+                  to_actor: true
+                  text: >-
+                    The pool went quiet before it was done with you. We
+                    begin again. Step to the edge with me.
+                  delay: 1.0
+            - type: action
+              do: say
+              to_actor: true
+              text: Then we begin. Step to the edge with me.
+              delay: 1.0
         - type: action
           do: respond
           user_text: >-
@@ -191,31 +218,29 @@ tree:
             One gift more, and you carry it from today: a light of your
             own. Gaius keeps true dark in its caves and mines, and the
             dark will blind you. When it does, type
-            <ansi fg="command">cast chrysalis-glow</ansi> and the spores
+            <ansi fg="command">cast glow</ansi> and the spores
             in you will answer.
           delay: 33.0
         - type: action
           do: say
           to_actor: true
           text: >-
-            Now -- two roads from here, and both are good ones. Check
-            what you carry first with <ansi fg="command">inv</ansi> --
-            little enough, I'd wager, and that is the point: the folk
-            down each road will arm you and teach you their trade. If
-            Gaius is new to you, go south to the square and tell Crier
-            Toke you need your footing:
-            <ansi fg="command">ask toke footing</ansi>. He will walk
-            you through the town properly.
+            Now, two roads lead on from here, and both are good ones.
+            Check what you carry first with
+            <ansi fg="command">inv</ansi>. Little enough, I'd wager,
+            and that is the point: the folk down each road will arm you
+            and teach you their trade. Crier Toke's road teaches you
+            the town. Warden Esk's road takes you out to the wider
+            world.
           delay: 36.5
         - type: action
           do: say
           to_actor: true
           text: >-
-            And if you already know this world and only needed the
-            pool, Warden Esk keeps the way out -- south through the
-            market to the Threshold House, then
-            <ansi fg="command">ask esk passage</ansi>. The coulee will
-            still be here either way.
+            Talk to me again when you are ready, with
+            <ansi fg="command">talk hadwen</ansi>, and I will set you
+            on either road, or both. The coulee will still be here
+            either way.
           delay: 40.0
         # Blank-slate Awakening: no starter mutation is granted during the rite.
         # The pool opens the capacity; every mutation is earned afterward through
@@ -227,19 +252,12 @@ tree:
           do: grant_quest
           quest: "30-end"
           delay: 40.5
-        # Immediately hand the freshly-Opened player a persistent objective so
-        # they are never left adrift: "Two Roads" (quest 29) names both onward
-        # paths -- Crier Toke (learn the town) and Warden Esk (leave). Granted
-        # here rather than via a quest_granted 30-end trigger because
-        # behavior-tree grants pre-set the token and do not fire the engine's
-        # quest_granted event (see 29-two_roads.yaml header).
-        - type: action
-          do: grant_quest
-          quest: "29-start"
-          delay: 41.0
+        # No quest 29 grant here any more (#375 R17): the two roads are the
+        # road_toke and road_esk offer topics in his dialogue, which the
+        # closing line above sends the player back to with talk hadwen.
         # The rite is over: clear the flag so the next newcomer can begin.
-        # Queued after both grants (the queue runs in order), so by the time
-        # a re-ask can pass the flag the asker already holds 30-end.
+        # Queued after the 30-end grant (the queue runs in order), so by the
+        # time a second begin can pass the flag the asker already holds 30-end.
         - type: action
           do: set_state
           key: rite_running
@@ -262,10 +280,10 @@ tree:
           do: say
           text: >-
             New to Gaius? Welcome. This is Pothole Coulee, and I keep
-            its pool -- which is waiting for you. Ask me about the
-            <ansi fg="command">rite</ansi> if you want the why of it --
-            or simply tell me you are ready:
-            <ansi fg="command">ask hadwen begin</ansi> starts it.
+            its pool, which is waiting for you. Type
+            <ansi fg="command">talk hadwen</ansi>, then choose what
+            happens in the rite if you want the why of it, or choose
+            to begin the rite when you are ready.
           delay: 2.0
 
     # ── AMBIENT BACKSTOP: every so often, repeat the invitation aloud.
@@ -285,7 +303,6 @@ tree:
         - type: action
           do: say
           text: >-
-            If you are new to Gaius and not yet Opened, ask me
-            about the <ansi fg="command">rite</ansi> -- or say
-            <ansi fg="command">ask hadwen begin</ansi> when you are
-            ready. The pool is patient.
+            If you are new to Gaius and not yet Opened, type
+            <ansi fg="command">talk hadwen</ansi> and choose to begin
+            the rite when you are ready. The pool is patient.

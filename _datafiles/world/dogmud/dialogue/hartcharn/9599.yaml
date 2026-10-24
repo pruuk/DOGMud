@@ -1,46 +1,32 @@
 mobid: 9599
 zone: Hartcharn
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Welcome to the strongbox. What do you need looked after?"
-      - "Vane. I keep the ledger for this end of town."
-  - keywords: ["bank", "storage", "deposit", "withdraw", "store", "gold"]
-    responses:
-      - "You can leave your coin and your goods with me, and take them
-        out again whenever you like. I keep careful count."
-      - "Every deposit gets a line in the ledger. What comes in, comes
-        back out, same as it went in."
-  - keywords: ["strongbox", "safe", "secure"]
-    responses:
-      - "That box has been bolted to this floor since before I took the
-        post. Nobody has moved it and nobody is going to."
-  - keywords: [""]
-    responses:
-      - "Mm."
-      - "The ledger waits for no one, but I have a moment."
-
-tree:
-  root:
-    text: "Welcome to the strongbox. What do you need looked after?"
-    hints: "You could ask Osric Vane about storing your coin or goods,
-      or about the strongbox itself."
-
-  nodes:
-    - id: storage_general
-      triggers: ["bank", "storage", "deposit", "withdraw", "store",
-        "gold", "coin"]
-      text: "I hold coin and goods both, for as long as you need. Ask
-        and I will show you the ledger page with your name on it."
-      hints: "You could ask Osric Vane about the strongbox."
-
-    - id: strongbox_note
-      triggers: ["strongbox", "safe", "secure", "lock"]
-      text: "Bolted through the floor into the stone beneath. Nothing
-        in this hut has ever walked off on its own, and it is not
-        going to start now."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: You want something kept safe, then. I am Osric Vane, and the strongbox
+    and the ledger for this end of town are mine. Every coin in or out gets its
+    line. What am I looking after for you?
+  hints: Choose a line below if you want to hear about keeping your coin,
+    keeping your goods, or the strongbox itself.
+topics:
+# storage_general and the "bank storage deposit" pattern fold into the two
+# topics below, one command each.
+- key: storage_general
+  kind: info
+  label: Can you keep my coin safe?
+  text: You can leave your coin with me and take it out again whenever you like.
+    Every deposit gets a line in the ledger. What comes in comes back out, same as
+    it went in.
+  hints: To put coin in or take it out, type bank.
+- key: goods
+  kind: info
+  label: Will you hold my goods as well?
+  text: Goods too, for as long as you need. I keep careful count, and the page with
+    your name on it does not lie.
+  hints: To leave goods here or collect them, type storage.
+# strongbox folds strongbox_note and the "strongbox safe secure" pattern.
+- key: strongbox
+  kind: info
+  label: Is that strongbox as safe as it looks?
+  text: That box has been bolted to this floor since before I took the post, right
+    through into the stone beneath. Nothing in this hut has ever walked off on its
+    own, and it is not going to start now.

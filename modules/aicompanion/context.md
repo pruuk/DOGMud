@@ -376,6 +376,19 @@ Roadmap and phase plan: `docs/aicompanion/`.
   The errand's memory line and prompt stimulus name the NPC as the owner
   perceives it (`messaging.UnseenNoun`, "a figure" at shapes), never its
   real name, which the companion could otherwise say aloud.
+  **Topic resolution (#375 R13):** the owner's `<what>` must name exactly
+  one of the NPC's eligible **info** topics, by key or by a label holding
+  every typed word (`conversation.CompanionTopic`, imported as `talkflow`).
+  No match or several gets one line listing the info labels ("They have
+  nothing to tell your companion right now." when there are none) and no
+  leave. A match stores the key in `askAuthority.TopicKey`; the leave lasts
+  a minute and still needs the owner's words in what she says
+  (`askAuthority.valid`, `topicPresent`; a typed key is replaced by its
+  label's words). When her authorised `sayto` fires (`actions.go`),
+  `companionai.AskNpc` gets that key, never the model's words, and plays the
+  topic as the owner choosing it (`conversation.AskForOwner`). Offers,
+  hand-ins and behavior topics are never reachable this way, so the model
+  cannot move a quest, an item or gold.
 - **primer.txt**: the common-knowledge world primer given to the model.
 - **relayfor.go**: `relayFor`, the `apiframework.Relay` the module lends to
   other features. It answers only for `apiframework.PurposeFinds`, only for

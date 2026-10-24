@@ -12,16 +12,16 @@ import (
 )
 
 // TestVeyraSecretsDialogue walks Veyra's shipped dialogue for each of her
-// nine secret recipes, over EVERY trigger of each node, and pins who gets
-// which answer:
-//   - asking the bare name states the exact price and how to buy, and never
-//     buys or charges;
-//   - "teach <name>" from a known player who can pay charges the exact price
-//     once and grants the secret;
-//   - "teach <name>" from a player short of gold names the exact price and
-//     grants and charges nothing;
-//   - an owner gets "already carry that one" for any trigger, and nothing
-//     is granted or charged.
+// nine secret recipes and pins who gets which answer. Since #375 each secret
+// is one offer topic (the old price_, teach_, refuse_ and owned_ nodes folded
+// together; see the file's header comment):
+//   - the offer's pitch and the secrets_list topic both state the exact
+//     price, and hearing the list never buys or charges;
+//   - a known player who can pay sees the offer, and choosing it charges the
+//     exact price once and grants the secret;
+//   - a player short of gold does not see the offer (goldRequired), and an
+//     offer forced through anyway charges and grants nothing;
+//   - an owner, and a player Veyra does not know, never see the offer.
 func TestVeyraSecretsDialogue(t *testing.T) {
 	b, err := os.ReadFile("_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml")
 	if err != nil {
@@ -32,20 +32,22 @@ func TestVeyraSecretsDialogue(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	byId := map[string]dialogue.TreeNode{}
 	type secret struct {
-		slug, token string
-		price       int
+		key, token string
+		price      int
 	}
 	var secrets []secret
-	for _, n := range df.Tree.Nodes {
-		byId[n.Id] = n
-		if strings.HasPrefix(n.Id, "teach_") {
-			secrets = append(secrets, secret{strings.TrimPrefix(n.Id, "teach_"), n.GrantsQuest, n.ChargesGold})
+	for _, tp := range df.Topics {
+		if strings.HasPrefix(tp.Key, "teach_") {
+			secrets = append(secrets, secret{tp.Key, tp.GrantsQuest, tp.ChargesGold})
 		}
 	}
 	if len(secrets) != 9 {
-		t.Fatalf("found %d teach_ nodes; want Veyra's nine", len(secrets))
+		t.Fatalf("found %d teach_ topics; want Veyra's nine", len(secrets))
+	}
+	list := df.FindTopic("secrets_list")
+	if list == nil {
+		t.Fatal("Veyra has no secrets_list topic")
 	}
 
 	// Each secret is sold once: no secret's quest may be repeatable, or its
@@ -71,35 +73,28 @@ func TestVeyraSecretsDialogue(t *testing.T) {
 		}
 	}
 
-	// A name trigger of one secret must not appear inside another secret's
-	// triggers, or asking about one would answer for the other.
-	for _, a := range secrets {
-		for _, c := range secrets {
-			if a.slug == c.slug {
-				continue
-			}
-			for _, ta := range byId["price_"+a.slug].Triggers {
-				for _, tc := range append(byId["price_"+c.slug].Triggers, byId["teach_"+c.slug].Triggers...) {
-					if strings.Contains(tc, ta) {
-						t.Errorf("trigger %q of %s is inside %q of %s", ta, a.slug, tc, c.slug)
-					}
-				}
-			}
-		}
-	}
-
-	const mobInst = 958400
-	userId := 9000
+	squash := func(s string) string { return strings.Join(strings.Fields(s), " ") }
 	for _, s := range secrets {
+		tp := df.FindTopic(s.key)
 		end := strings.TrimSuffix(s.token, "-start") + "-end"
 		priceText := util.FormatNumber(s.price) + " gold"
-		ask := func(topic string, gold int, held ...string) (string, string, []string, int) {
-			userId++
+		if s.price <= 0 || tp.Kind != dialogue.KindOffer || tp.GoldRequired != s.price {
+			t.Errorf("%s: want an offer charging and gated at one price, got kind %q, charges %d, goldRequired %d",
+				s.key, tp.Kind, s.price, tp.GoldRequired)
+		}
+		if !strings.Contains(squash(tp.Text), priceText) {
+			t.Errorf("%s: the pitch must state the price %q, got %q", s.key, priceText, tp.Text)
+		}
+		if !strings.Contains(squash(list.Text), util.FormatNumber(s.price)) {
+			t.Errorf("secrets_list must name %s's price %s", s.key, util.FormatNumber(s.price))
+		}
+
+		player := func(gold int, held ...string) (*dialogue.PlayerState, *[]string, *int) {
 			var granted []string
 			paid := 0
 			ps := &dialogue.PlayerState{
 				HasQuest: func(tok string) bool {
-					for _, h := range append([]string{"78-end"}, held...) {
+					for _, h := range held {
 						if h == tok {
 							return true
 						}
@@ -116,40 +111,41 @@ func TestVeyraSecretsDialogue(t *testing.T) {
 					paid += amount
 					return true
 				},
+				HasHeard:  func(string) bool { return false },
+				MarkHeard: func(string) {},
 			}
-			text, hints, _, ok := dialogue.TreeAdvance(&df, mobInst, userId, topic, ps)
-			dialogue.ResetMemory(mobInst, userId)
-			if !ok {
-				t.Fatalf("%s: no tree node answered %q", s.slug, topic)
-			}
-			return text, hints, granted, paid
+			return ps, &granted, &paid
 		}
 
-		for _, topic := range byId["teach_"+s.slug].Triggers {
-			if _, _, g, paid := ask(topic, s.price); len(g) != 1 || g[0] != s.token || paid != s.price {
-				t.Errorf("%s %q, can pay: granted %v, paid %d; want [%s], %d", s.slug, topic, g, paid, s.token, s.price)
-			}
-			if text, _, g, paid := ask(topic, s.price-1); len(g) != 0 || paid != 0 || !strings.Contains(text, priceText) {
-				t.Errorf("%s %q, short: got %q, granted %v, paid %d; want the price %q and nothing taken", s.slug, topic, text, g, paid, priceText)
-			}
+		// Known and able to pay: on the menu, and choosing it buys once.
+		ps, granted, paid := player(s.price, "78-end")
+		if !df.Eligible(tp, ps) {
+			t.Errorf("%s: a known player carrying %s must see the offer", s.key, priceText)
+		} else if !df.Apply(tp, ps) || len(*granted) != 1 || (*granted)[0] != s.token || *paid != s.price {
+			t.Errorf("%s, can pay: granted %v, paid %d; want [%s], %d", s.key, *granted, *paid, s.token, s.price)
 		}
-		for _, topic := range byId["price_"+s.slug].Triggers {
-			text, hints, g, paid := ask(topic, 1000000)
-			if len(g) != 0 || paid != 0 {
-				t.Errorf("%s %q: asking the price granted %v and charged %d", s.slug, topic, g, paid)
-			}
-			if !strings.Contains(text, priceText) || !strings.Contains(hints, "ask veyra teach ") {
-				t.Errorf("%s %q: want the price %q and a teach hint, got %q / %q", s.slug, topic, priceText, text, hints)
-			}
+
+		// Hearing the price list buys and charges nothing.
+		ps, granted, paid = player(1000000, "78-end")
+		if !df.Eligible(list, ps) || !df.Apply(list, ps) || len(*granted) != 0 || *paid != 0 {
+			t.Errorf("secrets_list for %s: granted %v and charged %d", s.key, *granted, *paid)
 		}
-		// Character.HasQuest reports an earlier step as held once a later
-		// one is, so a finished secret answers true for both tokens.
-		for _, held := range [][]string{{s.token}, {s.token, end}} {
-			for _, topic := range append(byId["price_"+s.slug].Triggers, byId["teach_"+s.slug].Triggers...) {
-				text, _, g, paid := ask(topic, 1000000, held...)
-				if len(g) != 0 || paid != 0 || !strings.Contains(text, "already") {
-					t.Errorf("%s %q, owner %v: got %q, granted %v, paid %d", s.slug, topic, held, text, g, paid)
-				}
+
+		// Short of gold: hidden, and forcing it takes nothing.
+		ps, granted, paid = player(s.price-1, "78-end")
+		if df.Eligible(tp, ps) {
+			t.Errorf("%s: a player short of %s must not see the offer", s.key, priceText)
+		}
+		if df.Apply(tp, ps) || len(*granted) != 0 || *paid != 0 {
+			t.Errorf("%s, short: granted %v, paid %d; want nothing taken", s.key, *granted, *paid)
+		}
+
+		// Character.HasQuest reports an earlier step as held once a later one
+		// is, so a finished secret answers true for both tokens.
+		for _, held := range [][]string{{"78-end", s.token}, {"78-end", s.token, end}, {}} {
+			ps, _, _ := player(1000000, held...)
+			if df.Eligible(tp, ps) {
+				t.Errorf("%s, holding %v: the offer must not show", s.key, held)
 			}
 		}
 	}

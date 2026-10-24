@@ -1,0 +1,19 @@
+itemid: 40503
+name: Copied Coast Chart
+namesimple: coast chart
+description: |
+  A careful copy of a very old chart of this coast, made on good paper
+  by a patient copyist. The shoreline and the river mouth are drawn with
+  real skill, but there is no city on it at all: only open ground where
+  New Plymouth now stands, and a few depth marks in the bay.
+
+  Past the eastern edge of the drawn land, someone has added an arrow
+  pointing east and one line in small letters: "There is a hill shaped
+  wrong."
+type: object
+subtype: mundane
+weight: 0.1
+value: 8
+rarity_tier: 40
+vendor_categories:
+- tailoring

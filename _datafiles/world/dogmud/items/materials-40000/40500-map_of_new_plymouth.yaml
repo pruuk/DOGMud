@@ -1,0 +1,19 @@
+itemid: 40500
+name: Map of New Plymouth
+namesimple: city map
+description: |
+  A folded street plan of New Plymouth, printed from a worn wood block
+  and coloured by hand. The docks run along the water. The Long Market
+  crosses the Crafting Quarter to the Central Square, and the
+  Processional links the square to the Grand Temple and the palace gates.
+
+  In the Crafting Quarter, one curving lane carries a small label:
+  "The Inkwalk. Origin of the name not known." Someone has inked a tiny
+  open book beside it.
+type: object
+subtype: mundane
+weight: 0.1
+value: 4
+rarity_tier: 40
+vendor_categories:
+- tailoring

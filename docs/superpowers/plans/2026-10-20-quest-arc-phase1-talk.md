@@ -2001,6 +2001,8 @@ EOF
 - Create: `internal/conversation/talk.go`
 - Test: `internal/usercommands/conversation_talk_test.go` (the `usercommands` test package already seeds a room, users and a mob through `seedAllRegistries`; tests there may call `conversation` directly)
 
+**Also in this task (moved from Task 7):** add `"player_topic": true, // a player chose a behavior talk topic on this mob (Text = topic key)` to `KnownBehaviorEvents` in `internal/behaviortree/events.go` and the test `TestPlayerTopicIsAKnownEvent` (`require.True(t, KnownBehaviorEvents["player_topic"])`) to `internal/behaviortree/topics_test.go`, in the same commit as `talk.go`'s `EventType: "player_topic"` dispatch. `TestEventVocabulary_MatchesDispatchSitesBothWays` fails while an event is registered with no dispatch site, so they must land together.
+
 Output order for a topic that takes an item (owner's own example, "Here is the evidence you were looking for, Warden [hand them the purse]"): the player's line, then the handover line, then the NPC's reply. Update the spec's section 4 items 4 and 5 to this order in this task's commit.
 
 - [ ] **Step 1: Write the fixture helper and failing tests**
@@ -2405,6 +2407,8 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 EOF
 ```
 
+**Follow-ups from the Task 11 review, to apply once the Task 9 fixes land (they touch `talk.go`):** charmed NPCs offer no topics (controller ruling, matching the marker's charm exclusion): `conversation.Talk` on a charmed mob opens nothing beyond today's approach line and nod, and `conversation.Give` returns false for a charmed mob; test both. After `MarkHeard` and after a grant in the talk flow, call `conversation.RefreshMarkers(user.UserId)` so the GMCP NPC marker is not stale.
+
 ### Task 10: `give` resolves as the topic
 
 **Files:**
@@ -2759,6 +2763,18 @@ EOF
 
 (The module change only takes effect once Task 19 installs `AskForOwner` as the asker; until then the old asker receives a key, which is harmless because the module is off by default. If a module test drives the old asker end to end, move Step 4's `actions.go` edit into Task 19.)
 
+### Task 12b: Ferry and instance-zone actions take topic parameters (R14)
+
+**Why:** `actBoardFerry` (`internal/behaviortree/actions_ferry.go`) finds the destination by substring in `Event.Text`, and `actOpenInstancePortal` (`actions_mob.go`, around line 440) parses `"<zone> <gold>"` from it. Under `player_topic`, `Text` is a bare topic key (`^[a-z0-9_]+$`), so both would silently stop working after Task 17 (Task 7 review finding).
+
+**Files:** `internal/behaviortree/actions_ferry.go`, `internal/behaviortree/actions_mob.go`, a new player-facing amount prompt (see below), tests beside each.
+
+- **Ferry:** `board_ferry` gains an optional `destination: <keyword>` param. When set it is used instead of scanning `Event.Text`; it must name a key of `routes` (else Failure with an error log). Task 17 gives each ferry hand one topic per destination ("Take me to Stillwater.", key `to_stillwater`) and one branch per topic with `destination:`. Test: a `player_topic` event with `destination: stillwater` boards the stillwater route; an unknown destination fails; the old Text path still works for any remaining caller.
+- **Instance zones:** `open_instance_portal` gains an optional `zone: <shortname>` param. With `zone` set and no amount in `Event.Text`, it does not open anything: it starts a private amount prompt for the player through the existing prompt flow (`users.(*UserRecord).StartPrompt(command, rest)` re-runs a command with the answer: read `internal/users/userrecord.go:791` and `internal/prompt/prompt.go` first, and follow how an existing player command asks a free-text question). The question shows the zone's `guidance` param (authored text, several lines) and asks "How much gold will you stake?". A whole number at or above `min_gold` opens the portal exactly as today (same charge, clone, exit, lines, gold scaling); anything else gets one refusal line and closes the prompt. Factor the existing open-portal body into one function both paths call, so the typed path and the prompt path cannot drift. Check open issue #641 (free-text prompt steps swallow typed commands): the amount prompt must not swallow a movement command; a non-numeric answer closes the prompt and, if it is a known command, runs as a command (match whatever #641's fix direction is if it has landed; otherwise close and run, and test it).
+- Tests: a `player_topic` with `zone: arena` and no amount starts the prompt and shows the guidance; answering `250` opens the arena with the same charge and lines as the typed path; answering `north` closes the prompt and runs `north`; an amount below `min_gold` refuses.
+- Task 17 then writes, per zone, the topic ("Open a way to the arena.") and its `guidance:` text: arena (spec R26: 100 to 200 midgame solo, 200 to 400 endgame solo, 400 and up for the bravest or groups, plus the no-second-chance warning; drafted in `behaviors/thornwall_city/315-sable.yaml` comments), Planar Oasis (owner's ranges: 100 to 300 midgame solo, 300 to 600 endgame solo, 600 and up for only the bravest solo players or for groups) and the crash site. Guidance for the arena and the crash site is drafted in the owner's style and shown to the owner as samples.
+- Commit: `feat(behaviortree): ferry destination and instance-zone amount prompt for talk topics (#375 R14)`.
+
 # Stage B: convert the content on the branch
 
 Stage B never runs the converted files in the game: the commands still use the old engine until Task 19. The converted files are written into the repo in Task 15 only after the zone passes, and land with Stage C.
@@ -2913,14 +2929,57 @@ go run ./cmd/dialogueconvert -data _datafiles/world/dogmud -out "<scratchpad>/co
 
 - [ ] **Step 4: Re-run** after converter fixes and keep the final output folder path for Task 15.
 
+**Owner rulings for Task 14 (2026-10-20), applied in Tasks 15 to 17 and recorded as spec R15 to R21:**
+- Malk 15 / Delia 16: offer, Accept, hand in; give before accepting hands back; delete the chain triggers that complete them on `-start` (live bug) and the item_give triggers.
+- Drop every hand-in narration (`actor`) line; delete those item_give triggers.
+- Hadwen: one `begin` behavior topic (questRequired [30-start], questExcluded [30-end]); the rite tree keeps granting 30-end and stops granting 29-start; replace quest 29 with two new bridge quests offered by Hadwen after 30-end (Toke's road: ends at Toke; Esk's road: ends at Esk or the arch), each a normal offer topic; retire quest 29 (keep its file only if saves hold 29 tokens: check `_datafiles/world/dogmud/users/*.yaml` for `29:` progress and keep a no-op end for them).
+- Behavior topics close the menu (code change in `internal/conversation/talk.go`: after a `behavior: true` topic, do not call openMenu; test it). Do it in Task 19 if not before.
+- Bandit leader 254: delete the ask branch and its topic; his dialogue stays as info only.
+- Tutorials: quest 28's room 6261 lesson becomes `talk dewey` and choosing the world topic; grep `-i "ask "` across `_datafiles/world/dogmud` (dialogue, quests, rooms, help, templates) and rewrite every instruction to type ask, or drop it (98 lines in 36 files at last count).
+- Toke: remove the seven grants and three give_items from quest 31's `quest_granted 31-end` trigger; Toke gets seven offer topics (32, 35, 38, 41, 44, 47, 50), each gated on 31-end and excluded on its own start and end; each starter item moves onto the offer of the quest it belongs to (`givesItem`). Each trail's existing trailhead offer stays.
+- Quests 14, 63, 65, 67: delete the item_give trigger, keep the topic's `-end` grant, fold npc_say text. Quest 66: one hand-in topic granting 66-end with setsQuestFlag 66-addict-fate saved; delete the trigger and its chain. Mobs 95, 96: replace the offer `requires` with questRequired [9-start] / [10-start].
+
 ### Task 15: Zone passes (labels, lines, text)
 
 One subagent per zone batch (34 zone folders; batch the small ones: about 8 batches, the largest being `the_confluence` 67, `greenford` 38, `pothole_coulee` 29, `stillwater` 22). Model: Opus (judgement: voice and copy).
+
+**The new-player start gets extra validation (owner 2026-10-21).** Batch 1 is `pothole_coulee` plus `newcomer_antechamber` (Dewey, quest 28). Where players start out, a mistake costs the most, so this batch adds, on top of the steps below:
+- The owner reviews every topic in the batch, not five samples: a published page per NPC listing label, player line, reply and gates in plain words.
+- A scripted gate walk over the converted files, from a fresh character's quest state: every quest in the batch can be offered and completed, nothing is re-offered after its end, no topic is a dead end. It is a program, not a reading, and it runs for every later batch too.
+- An adversarial review by a separate Opus subagent (not the writer): copy rules, voice, gates, and that every tutorial instruction names a command that exists after Task 19.
+- Task 26 carries a dedicated new-player scenario (goal 7).
+
+**Batch 7 (greenford and the 17 small zones, 104 files; the last zone batch) copy APPROVED by the owner 2026-10-23** (page https://claude.ai/artifact/SXGcb6HbTWHYfByBjTboiX; data commits 4818a47ae, 8f12db1c5, 9e5540b23, d8b63cc69, cd7141c24, 1a7a9d68a; dialoguecheck fix 21859db3d; reviews `pages/review-batch7-a.md`, `review-batch7-b.md`, `reverify-batch7.md`). Quest 72's choice moved to talk per R28. Rulings (owner 2026-10-23): crash-site guidance for groups of three, stake scaling filed as #657; the surveyor "never came back to the site"; quest 17 is the fight route only, with no letter; quest 11 keeps all three givers and gains step `sided` plus a recovery for unsided saves; Harn's toll stays flavour; Bram's south-road inn is the Full Ladle; old dashes in quest narration go to #383. Owner on the copy: openers fell into a shared terse template, so spec R29 (each NPC in their own voice) and a voice pass over every zone's openers follow before Step 3. Name-after-introduction idea: #658.
+
+**Voice pass (R29, after batch 7):** one pass over the openers, opener variants, greetings and self-introduction topics of all 36 zones, rewriting only lines that fall into the shared terse template. Facts, gates, hints and labels do not change. Same review and re-verify as a batch; the owner sees the changed lines only. **APPROVED by the owner 2026-10-23** ("an improvement ... good enough"; page https://claude.ai/artifact/UBsjqRgz2mk2tsWibZqGxV): 144 lines on 123 NPCs in 22 zones, change lists `pages/voice-{a,b,c,ctrl}.md`, review `pages/review-voice.md`, mob and schedule fixes 61fa8ec96.
+
+**Step 3 is met by `cmd/dialoguecheck`** (2026-10-23): it loads the output folder through `dialogue.LoadAllFiles` and runs `dialogue.ValidateWorld` with the real registries (`main.go:205`). Whole world: VALIDATION 0, DEAD END 0, RE-OFFER 0, UNSTARTABLE QUEST 0; the accepted rest is quest 14's two hint-only steps and `case_close` on mob 94, `escort_close` on 9323 (old saves only) and retired quest 29.
+
+**Batch 6 (the_confluence, 68 files) copy APPROVED by the owner 2026-10-22** (page https://claude.ai/artifact/XVehbHXcmhUA42ea7Czt6a; data commits a349199a2, 457e54b77, ba09f4e81, eca22ebaa; reviews `pages/review-batch6.md`, `pages/reverify-batch6.md`). Quest 74's choice moved to talk per R28. Its five rulings (owner 2026-10-22, all as recommended): Ferrick sells lamp oil (40159; deploy: delete his shop save); the crier's mare has no reward; the Smith sends weapon buyers to Roan; Veyra keeps the short menu; the keystone stays four rings and quest 74 reads "where the temple's teaching keeps to three". Role-named NPCs (49 of 79 in the zone) are out of scope: #656.
+
+**Batch 5 (New Plymouth part 2: new_plymouth_temple, new_plymouth_merchant, new_plymouth_noble, new_plymouth_old_quarter) APPROVED by the owner 2026-10-21** (page https://claude.ai/artifact/YS5gaqGdqtvhF1MuWG1xUQ). Owner: "A few hints are a bit heavy handed, but that's better than being too obtuse to understand."
+
+**Batch 4 (New Plymouth part 1: new_plymouth_docks, new_plymouth_common, new_plymouth_crafting, new_plymouth_outskirts, new_plymouth_sewers) APPROVED by the owner 2026-10-21** (page https://claude.ai/artifact/Mt9F5fYc7eWzWt8yH9KmFC; rulings R28). Owner: Orin drops the glass vial and sells maps and curios, some with subtle Easter eggs and fragments of the novel; info labels must pass the same "what can the player know" test as offer lines.
+
+**Batch 3 (Stillwater: stillwater, stillwater_marsh, ferries) APPROVED by the owner 2026-10-21** (page https://claude.ai/artifact/DoB2zinvZdcfTExLTMUqEP), together with the 23 restored-lore topics in batches 1 and 2 (`C:/tmp/dogmud-375-convert/pages/restored-b1b2.txt`). Owner rulings: the hook-spear is unfinished on Brindle's bench until the confession, then Brindle finishes it and brings it to Ulla, who gives it to the player; R27 (offer player lines use only what the player can see) applies retroactively to batches 1 to 3.
+
+**Batch 2 (Thornwall: thornwall_city, thornwall_outskirts, marches_spur_road) APPROVED by the owner 2026-10-21** (page https://claude.ai/artifact/PBtUK4GZsQHH9dTgNBvdWN; rulings R26; reviews in `C:/tmp/dogmud-375-convert/pages/`).
+
+**Batch 1 APPROVED by the owner 2026-10-21** after three review rounds (page https://claude.ai/artifact/MJ2dj1f7Fahi119VcUXG33, version 3). Its rulings became spec R22 to R25. Working copy: `C:/tmp/dogmud-375-convert/dialogue/{pothole_coulee,newcomer_antechamber}`; gate walk `go run ./cmd/dialoguecheck -data _datafiles/world/dogmud -dialogue C:/tmp/dogmud-375-convert/dialogue -zones <zones> -retired 29`; page generator `C:/tmp/dogmud-375-convert/review_page.py`.
 
 - [ ] **Step 1: Brief each subagent with:**
   - The global Edit/Write rule; files live in the scratchpad output folder, edited with Edit.
   - Read in chunks of at most 400 lines; report "read N of N files" with the list.
   - The nine menu language conventions (`internal/menu/context.md`) and `dogmud-player-copy` (80-column wrap, no raw numbers, ESL-clear, no em or en dashes in new text).
+  - Spec R24: write for players new to the genre wherever a newcomer can plausibly arrive. Labels ask about what the player sees, not game vocabulary; teach a concept before a line relies on it (order with `heardRequired`).
+  - One command per hint (owner style ruling 2026-10-17, quest 28 header): say what the thing is, then the one command, then the help topic. A step hint names only that step's command; a quest step that needs two commands is split. Teach a spell by its short alias (`cast glow`), never only by its full id.
+  - A hand-in that takes an item gates on the quest's `-start` (or the step before) plus `requiresItem`, never on a step granted when the item is picked up: an item can be picked up before the quest is accepted, and that player would hold it with no way to hand it in (batch 2 review B1). A step granted on pickup may drive hints and opener variants only.
+  - Spec R28: an irreversible quest choice is made in a talk menu with the questgiver after a must-hear warning topic, never by a room command. Audit every quest in the batch for choices made by room commands, looks or gives, and move them.
+  - Spec R27: an offer's `playerLine` uses only what the player can see (quest title, the opener in that quest state); otherwise it is general.
+  - The same test for info labels (owner, batch 4 review): a label that names a situation, person or event must be knowable from what the player has seen by then: the opener in that state, the room description, the NPC's description, its idle lines and schedule emotes, or the quest step. Otherwise ask generally ("What is troubling you?") or gate the topic. Writers and reviewers check this per label.
+  - Account for every dropped pattern of the batch's mobs (report "Dropped patterns" and, after the 2026-10-21 converter fix, "Overlap patterns kept"): by meaning, each is COVERED by a named topic, FOLDED, RESTORED as a topic, or SKIPPED with a reason. The first converter dropped 254 overlap answers whose text existed nowhere else (audit `dropped-lore.md`, 2026-10-21); batches 1 to 3 were restored by hand. Reviewers check this list.
+  - Before committing quest or room data, run the full suite (`go test ./...`), not only the touched packages: goldens in other packages read quest data (`internal/narration` quests.golden caught a trigger merge on 2026-10-21). Append new quest triggers at the end of the list so the converter report's trigger numbers stay valid; list any removed or reordered trigger.
+  - Grep `behaviors/` too for player-facing `ask` instructions (batch 1 found the first line of the game there), and teach `whisper`, never `tell` (no such command).
   - For each topic: write `label` (info: the player's line in the player's voice, at most 50 characters; offer and hand-in: already the quest title, keep it); write `playerLine` for offers ("Do you want help ...?") and hand-ins (reporting the result), at most 70 characters; write `breadcrumb` where the converter flagged a gated offer and the NPC would plausibly say "come back later".
   - Fold any `text` holding `\n---\n` into one natural reply.
   - Rewrite every offer's `text` so it reads as a pitch **before** acceptance (no "thank you for agreeing").
@@ -2928,13 +2987,25 @@ One subagent per zone batch (34 zone folders; batch the small ones: about 8 batc
   - Decide `marked` for info topics: writer-flagged lore or directions that matter mark; small talk never marks; mid-quest step topics stay marked.
   - Apply the owner rulings from Task 14 that touch this zone.
   - Return 5 sample topics (one offer, one hand-in, three info) per zone, verbatim.
+  - Walk every quest step's hint against the real route and the step before it: a direction must be true from where the player stands after the previous step (check room exits), and a step's trigger (a `look <noun>`, `get`, a room) must be something the earlier text has already named so the player can guess it. Rewrite hints that say "continue" in a direction the player came from, or that expect a noun nobody mentioned.
+- **Owner notes for specific zones (apply when that batch runs):**
+  - R28 audit (2026-10-21, `set_flag` by event across all quests): quest 72 "The Water Dispute" (amber_valley, room 6078) makes its choice by `room_interact` (flags set at quest lines ~52, ~70); quest 74 "The Undercroft" (the_confluence) makes its choice by which NPC you give the rubbing to (Aldric or the Margin scholar), with no must-hear warning. Both move to talk-menu choices per R28 in their batches.
+  - Stillwater, quest 20 "Ulla's Silence" (owner 2026-10-21): the quest reads oddly and several hints do not line up with the actions. "Continue west to the wardstone circle. The spiral connects the sites in a line." is wrong: the previous step came FROM the west. The step that finishes on `look slab` is unclear, because nothing earlier tells the player there is a slab to look at. Walk the whole quest step by step on the map, fix every hint and description, and make each trigger's noun one the text has named. Singular and plural room nouns (wardstone and wardstones) are fixed in the engine (`rooms.FindNoun`, fix PR from 2026-10-21); confirm quest triggers with `noun:` match both spellings too.
 - [ ] **Step 2: After each batch, show the owner the samples** and wait for approval before the next batch. Corrections become brief changes for the remaining batches.
 - [ ] **Step 3: Validate the whole output** with a small test-only program or `go test` helper that loads the output folder through `dialogue.LoadAllFiles` logic pointed at it and runs `ValidateWorld` with the real registries (load quests and items as `boot_smoke_test.go` does). Zero problems before copying.
 - [ ] **Step 4: Copy into the repo.** Replace each shipped dialogue file with its converted version (`cp` from the output folder; new behavior-only files included). Commit together with Tasks 16 and 17 (end of Task 17). The branch is never merged or deployed between here and Task 25, so the old engine reading converted files on the branch does no harm.
 
 ### Task 16: Remove the converted quest triggers
 
+**Renumbering from master (2026-10-21):** PR #648 merged quest 20's `pillars`/`pillar` trigger pair (0-based index 2 removed, old 3 became 2, every later quest 20 trigger shifts down by one). After this branch merges master, the converter report's `delete quest 20-ullas_silence.yaml trigger 17` and `trigger 18` name triggers 16 and 17. Delete by matching the trigger's content (event, item, grant), never by stale index; re-run the converter after the merge to regenerate the list.
+
 - [ ] For every `delete quest <file> trigger <index>` line in the final report (33 `item_give`, 1 `dialogue`), delete that trigger block from the quest file with Edit, keeping comments that still describe remaining triggers and removing comments that described the deleted one. Then `grep -n "event: item_give" -r _datafiles/world/dogmud/quests` must list only triggers without a `grant` action (expect none) and `grep -n "event: dialogue" -r _datafiles/world/dogmud/quests` must be empty.
+
+**Done 2026-10-23:** 40 of the 41 report lines deleted by content (all indices still matched). Quest 28's `event: dialogue` trigger (mob 9491, grants 28-asked) is kept, per the recorded decision in the quest file (review m16): the old `ask` still answers until Task 19, so **Task 19 deletes it** once `ask` redirects to `talk`. Quest 17's `diplomacy` flag value went with the old 281/286 dialogue at Step 4; Soren 286 has no dialogue file (he attacks on sight).
+
+**Checker trap after this task:** `dialoguecheck -report auto` re-applies the report's delete lines by index, so pointed at `C:/tmp/dogmud-375-convert/dialogue` it now drops live triggers. Run it against the repo folder (`-dialogue _datafiles/world/dogmud/dialogue`, where no sibling report exists) or with `-report none`.
+
+**Tests the plan did not schedule:** about 30 `internal/questengine` per-quest tests (`..._OneCommandPerStep`, `..._MidQuestGreetsAndAnswersEachStep`, handout tests), the give-path tests for quests 35 and 69, and four root tests read the shipped old-format dialogue or the deleted give triggers. They are ported to topics in the content commit, so the suite stays green from here; Tasks 19 and 21 keep their own lists.
 
 ### Task 17: Rewrite the behavior-tree ask branches
 
@@ -2942,6 +3013,8 @@ One subagent per zone batch (34 zone folders; batch the small ones: about 8 batc
   - speech-only branch: delete it (its text now lives in the topic);
   - `grant_quest` branch: delete it (now an offer topic);
   - action branch: `event: player_ask` becomes `event: player_topic`, the `keyword_match` condition becomes `check: topic_is` with `topic: <key>`, and the branch's `say`/`respond` action that the topic's `text` now speaks is removed so the NPC does not speak twice. Keep every other condition and action.
+  - ferry branches: one topic and one branch per destination, with `destination:` on `board_ferry` (Task 12b).
+  - instance-zone branches (Sable 315, Threshold Keeper 9553): one topic per zone, with `zone:` and `guidance:` on `open_instance_portal` (Task 12b, R14); guidance drafts go to the owner as samples.
 - [ ] Update the comment in `behaviors/archetypes/noncombat_questgiver.yaml` that mentions `player_ask`.
 - [ ] Then `grep -rn "player_ask" _datafiles/world/dogmud` must be empty, and every `topic_is` key must name a topic on that mob (Task 18's validator checks this at boot).
 - [ ] **Commit the content** (Tasks 15 to 17) by named paths: `git add _datafiles/world/dogmud/dialogue _datafiles/world/dogmud/quests/<each edited file> _datafiles/world/dogmud/behaviors/<each edited file>`, then `git diff --cached --stat` and check the file count against the report (302 dialogue files plus any new ones, 24 quest files, 1 quest file for the `dialogue` trigger if separate, 12 behavior files plus the archetype comment).
@@ -3001,6 +3074,9 @@ func validateShippedDialogue() []dialogue.Problem {
 }
 
 // behaviorTopicKeys indexes topic_is keys by mob id from behaviors/**/<id>-*.yaml.
+// (Review of Task 6 changed World.BehaviorTopics to map[int][]string so the
+// validator can also report a topic_is on a mob with no dialogue file:
+// return byMob directly instead of the closure below.)
 func behaviorTopicKeys() func(int) []string {
 	byMob := map[int][]string{}
 	root := filepath.Join(string(configs.GetFilePathsConfig().DataFiles), "behaviors")
@@ -3135,6 +3211,7 @@ func init() {
 
 Keep the quest engine notify (no shipped trigger grants on `item_give` any more; the validator refuses one that does) and everything after it.
 
+- [ ] **Step 5b: Quest 28's ask trigger.** Delete the `event: dialogue` trigger in `quests/28-waking_to_gaius.yaml` (mob 9491, grants `28-asked`) and its comment (review m16 kept it until `ask` redirects to `talk`; Task 16 note). Then `grep -n "event: dialogue" -r _datafiles/world/dogmud/quests` must be empty. Regenerate `internal/narration` goldens if they move.
 - [ ] **Step 6: Old-path tests.** Run `go test ./internal/usercommands/ -count=1` and read every failure. For each failing test: if it tests behavior that still exists (gold gates, item delivery failure, sleeping NPC refusal, behaviour-tree broadcast on a give), port it to `talk`/topics/`give`; if it tests typed-topic matching, `ask` answers, the LLM path or tree memory, delete it and list it in the commit message. Expected to be touched: `ask_test.go`, `ask_behaviour_broadcast_test.go`, `talk_gold_test.go`, `talk_giveitem_test.go`, `give_test.go` (the quest-engine-intercept test keeps working: its fixture mob has no dialogue file, so `conversation.Give` returns false).
 - [ ] **Step 7: Run**
 
@@ -3390,6 +3467,7 @@ Follow `dogmud-playtesting` (harness location, an ephemeral goals file, `--check
   4. Relog and server restart: heard topics stay Dim and unmarked.
   5. Interrupts: combat starting, the NPC walking away, darkness falling mid-menu.
   6. `ask <npc> anything` redirects; `ask` on a hired companion behaves as before.
+  7. New-player start, end to end, on a fresh character (owner 2026-10-21, required): wake in the newcomer antechamber, Dewey's talk lesson in room 6261 (quest 28), into Pothole Coulee; every opening NPC's menu; Find Your Footing (31); Crier Toke's seven trail offers accepted one at a time with each starter item arriving on its own offer; Hadwen's rite (quest 30: the menu closes on the scene, the mid-rite talk does not restart it); both roads after the rite, taken and handed in; First Heat turned in three ways on three characters (show the dagger, sell it to Rusk, report after selling it to Onna), each paying the quest reward (R22); no instruction anywhere tells the player to type `ask`. A second fresh character takes neither road and must not be stuck.
 - [ ] File every finding as a GitHub issue (`gh issue create --repo pruuk/DOGMud`; search first), exploit-class bugs excepted per CLAUDE.md. Fix findings that break the phase's exit criteria before the PR; file the rest.
 
 ### Task 27: Push and open the PR

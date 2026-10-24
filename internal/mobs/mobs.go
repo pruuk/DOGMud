@@ -119,7 +119,6 @@ type Mob struct {
 	MaxWander          int             `yaml:"maxwander,omitempty"`           // Max rooms to wander from home
 	WanderCount        int             `yaml:"-"`                             // How many times this mob has wandered
 	ScriptTag          string          `yaml:"scripttag"`                     // Script for this mob: mobs/frostfang/scripts/{mobId}-{mobname}-{ScriptTag}.js
-	QuestFlags         []string        `yaml:"questflags,omitempty,flow"`     // What quest flags are set on this mob?
 	ConditionIds       []int           `yaml:"conditionids,omitempty"`        // Condition Id's this mob always has upon spawn
 	LLMProfile         *llm.LLMProfile `yaml:"llmprofile,omitempty"`          // Optional LLM-driven dialogue profile
 	Archetype          string          `yaml:"archetype,omitempty"`           // "fighting", "casting", or "" (default even distribution)

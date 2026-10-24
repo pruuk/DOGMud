@@ -1,0 +1,21 @@
+mobid: 200
+zone: Zone A
+defaultMood: neutral
+topics:
+- key: plight
+  kind: offer
+  quest: 66
+  label: The Addict's Plight
+  playerLine: Do you want help with Teels?
+  text: Take this wrapper to the healer.
+  questExcluded: [66-start, 66-end]
+  grantsQuest: 66-start
+  givesItem: 500
+- key: wrapperhandoff
+  kind: info
+  label: I brought the wrapper.
+  text: I know this smell.
+  requiresItem: 500
+  questRequired: [66-start]
+  questExcluded: [66-escort]
+  grantsQuest: 66-escort

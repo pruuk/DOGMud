@@ -26,8 +26,8 @@ steps:
       the veil-warped things that wanders back in. The task is done
       the moment the drift-wisp falls.
     hint: >-
-      If it is dark, type cast chrysalis-glow first. Go south to the
-      Grove Edge and type cast conviction-spike wisp until it falls.
+      If it is dark, type cast glow first. Go south to the Grove Edge and
+      type cast spike wisp until it falls.
   - id: end
     description: >-
       The grove is quiet again for now. Orrin will have more work

@@ -2,200 +2,281 @@ mobid: 9516
 zone: Greenford
 defaultMood: friendly
 greetings:
-  - text: "Brennan. If Aldith sent you uphill, or you found the
-      office yourself -- sit. I have a question that needs
-      someone else to ask it."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Brennan. Sit down if you have something to ask."
-  - keywords: ["margin", "scholars", "who"]
-    responses:
-      - "We keep the source records and ask the questions that
-        official accounts consider settled. Mostly harmless,
-        as far as the university is concerned."
-  - keywords: [""]
-    responses:
-      - "Ask me directly. I am working and would rather not
-        guess at what you need."
-tree:
-  root:
-    text: |
-      Thirty years of eastern surveys on that wall and one
-      question I cannot answer from them. I am Brennan. If
-      Aldith sent you up the hill, or if you found the office
-      yourself -- sit. I have something I need done that I
-      cannot do myself.
-    hints: "You could ask Brennan about his work in the eastern
-      surveys and about the surveyor Reth, about the mark on
-      the old maps, or about the university and the department."
-  nodes:
-    - id: knower
-      questRequired: ["77-end"]
-      triggers: ["quest", "task", "truth", "east", "site", "crash",
-        "records", "disc", "moons", "back", "returned", "found"]
-      text: |
-        You went all the way in, didn't you. Sit -- no. Don't tell me.
-        I can see it on you well enough. I sent you east chasing a mark
-        in a margin, a puzzle for a quiet department, and you came back
-        carrying something the rest of us get to not know. I have spent
-        thirty years wanting the answer to that mark. I am no longer
-        certain I want it. Look at me -- I am not going to ask. Whatever
-        the site gave you, keep it close, and be careful who you tell.
-        Some of what people believe up here, they need. And some of what
-        they'd do to a person who unbelieves it out loud, they'd do
-        gladly. You have a look about you now. Mind who sees it.
-      hints: "You could ask Brennan about his eastern work, the mark on
-        the old maps, or the university -- but he does not seem to want
-        to hear what you learned."
-    - id: disc-quest
-      triggers: ["disc", "symbol", "ring", "mark", "key", "quest", "task"]
-      questRequired: ["75-end"]
-      questExcluded: ["76-start", "76-end"]
-      grantsQuest: "76-start"
-      text: |
-        So the eastern site gave up more than a silence. Let me see it
-        -- no, keep it in your hand, I only want to look. A ring struck
-        through with a line, raised in the metal itself. I have chased
-        that mark across a hundred and fifty years of margins and here
-        it is, made solid. This is a key. Inert, though -- dead in the
-        hand, and it will stay dead until someone wakes it, and I do not
-        know how. But a man did. He kept a cottage in Ashwick and he
-        gave his whole life to that thing in the east -- studied how to
-        rouse the key, then went east himself and never came back. His
-        work should still be in the house he left. Go to Ashwick, find
-        the abandoned cottage, and read what he left behind. And bring
-        the disc -- you will need the thing itself.
-      hints: "You could ask Brennan where the disc is, or about the man who
-        went east to wake it."
-    - id: grant
-      questExcluded: ["75-start", "75-end"]
-      grantsQuest: "75-start"
-      triggers: ["quest", "task", "surveyor", "reth", "east",
-        "survey", "help", "work", "aldith", "bookseller",
-        "archive", "report", "asks"]
-      text: |
-        I have been looking at the eastern surveys for three
-        years on one question: Reth retired early, and his
-        field report on the eastern site reads like a careful
-        man saying as little as possible. Three lines for a
-        site that should have warranted a page. I have not
-        been able to get him to explain it. You might manage
-        better -- but before you go to Reth, I want you to
-        read the filed survey yourself. Tess the Archivist
-        has it. She will point you to the right one. Read it.
-        Then come back to me. I want to know what you see
-        in it before you go any further.
-      hints: "You could go to the Archive and ask Tess to
-        point you to Reth's filed eastern survey, then return
-        to Brennan with what you found."
-    - id: turnin
-      questRequired: ["75-survey"]
-      questExcluded: ["75-intro", "75-end"]
-      grantsQuest: "75-intro"
-      triggers: ["quest", "task", "report", "return", "found",
-        "done", "back", "survey", "archive", "read", "reth",
-        "filed", "silence", "silent", "entry"]
-      text: |
-        You read it. And you saw what is not there -- the
-        three lines where there ought to be a page, the site
-        classified as a mineral deposit with no elevation
-        notes, no material samples, no seasonal access. A
-        surveyor who did his job that well everywhere else.
-        That silence is what I have been looking at. Reth
-        will not speak to me -- we have history, and it is
-        not collegial. But I will give you my word to take
-        to him. He lives in the quiet end of the residential
-        streets -- back gate of the college, first right,
-        third house with the overgrown yew. Tell him I sent
-        you, and that I am not asking him to explain anything.
-        I am asking him to let you read the original notes.
-      hints: "You could take Brennan's introduction to Reth --
-        he lives at the quiet end of the residential streets,
-        through the back gate of the college."
-    - id: progress
-      questRequired: ["75-start"]
-      questExcluded: ["75-survey"]
-      triggers: ["quest", "task", "progress", "remind", "where",
-        "again", "still", "report", "archive", "reth", "help",
-        "work", "east", "survey", "lost"]
-      text: |
-        The Archive -- south of the reading room. Tess the
-        Archivist will point you to the right one. The eastern
-        surveys are on the upper tier. Reth's report is the
-        thin one, filed under the date of the last expedition.
-        Read it, then come back to me.
-      hints: "You could go to the Archive and find Reth's filed
-        eastern survey, then return to Brennan."
-    - id: symbol
-      triggers: ["symbol", "mark", "ring", "rings", "nested",
-        "notation", "maps", "recurring", "cartograph", "margins",
-        "annotation", "old-maps", "examples"]
-      text: |
-        It appears in the margins of the oldest surveys -- a
-        mark of nested rings, small and precise, drawn by
-        different hands over decades of fieldwork by people
-        who did not know each other. No notation explains it.
-        No legend. It has been appearing in the surveys for
-        about a hundred and fifty years, coming and going
-        without anyone agreeing on what it marks or why
-        different surveyors drew the same thing. I have three
-        examples on that wall -- different hands, forty years
-        apart. I find them the most interesting problem I
-        have, and I have no answer to offer you. I have asked
-        the Archive. I have written to colleagues at two other
-        institutions. The honest summary: it recurs, and no
-        one knows why.
-      hints: "You could ask about Brennan's survey work and
-        the eastern expeditions, or about the university."
-    - id: work
-      triggers: ["expedition", "fieldwork", "field", "method",
-        "methods", "research", "country", "region", "career",
-        "thirty", "survey"]
-      text: |
-        Thirty years of field survey in the eastern country --
-        the terrain, the routes, the resource classifications.
-        Most of it is exactly what it looks like: methodical
-        documentation of a country that has been documented
-        before. The interesting work is in the discrepancies:
-        where the current surveys differ from the old ones,
-        and where the old ones differ from each other. That
-        is usually where the genuine question lives. Most of
-        my colleagues find the fieldwork repetitive. I find
-        it the part that does not lie.
-      hints: "You could ask about the mark on the old maps, or
-        about the university and the department."
-    - id: reth_after
-      questRequired: ["75-intro"]
-      triggers: ["reth", "introduction", "letter", "retired",
-        "residential", "north", "introduce", "surveyor"]
-      text: |
-        Reth was good at the work -- better than good. Twenty
-        years in the field, thorough, reliable, the kind of
-        surveyor whose reports you could build on without
-        checking. He retired early and did not explain it, and
-        I made the mistake of pressing him, which is why we
-        no longer speak easily. He lives quietly in the
-        residential streets -- quiet end, house with the yew
-        -- and I respect his quiet even when it costs me
-        something. If you have his confidence, keep it
-        carefully. He has earned the right to his silence.
-      hints: "You could ask about the survey work and the
-        eastern expeditions, or about the university."
-    - id: university
-      triggers: ["university", "department", "faculty",
-        "scholars", "academic", "college", "chair",
-        "colleagues", "institution", "campus"]
-      text: |
-        Survey chair, twenty-two years. The university has
-        three departments you could place the work in and has
-        never quite decided which one -- which means I have
-        some independence and a smaller budget than I would
-        like. The department suits me: the library is good,
-        the archive is well-kept, and there are students who
-        find the eastern fieldwork genuinely interesting. I
-        could have gone to the capital. I have not regretted
-        staying.
-      hints: "You could ask about the mark on the old maps,
-        or about the survey work and the eastern country."
+- text: Brennan. If Aldith sent you uphill, or you found the office yourself, sit.
+    I have a question that needs someone else to ask it.
+  moods:
+  - friendly
+opener:
+  text: |
+    Thirty years of eastern surveys on that wall, and one
+    question I cannot answer from them. I am Brennan. If Aldith
+    sent you up the hill, or if you found the office yourself,
+    sit. I have something I need done that I cannot do myself.
+  hints: Choose a line below if you want to hear about his survey work, about
+    the mark on his old maps, or about his place at the university.
+  # Quest states, latest first (first match wins, and HasQuest is also
+  # true at every later step, so each variant excludes the step after it).
+  variants:
+  - questRequired:
+    - 77-end
+    text: You went all the way in, didn't you. No. Do not tell me. I can see it on
+      you well enough.
+    hints: Choose a line below to hear what he sees in you, or about the mark on
+      his old maps.
+  - questRequired:
+    - 76-attune
+    itemExcluded: 40168
+    text: You woke it, and now it is gone from your hand. The Reliquary floor gave
+      up one grey disc. It may give another, and the hearth knows the method.
+    hints: A grey disc still lies in the cracked floor of the old Reliquary at
+      Pothole Coulee, behind the old shrine north of the stone circle. The hearth in
+      the Ashwick cottage will wake it. At the Reliquary, type look disc.
+  - questRequired:
+    - 76-attune
+    text: You woke it. I can see the light it keeps along its lines. Then it is a
+      key, and somewhere east there is a door that fits it. Reth's route will take
+      you there.
+    hints: Reth's route runs north from Hartcharn to Kingsbarrow, then east over the
+      Cascade Pass Road into the Eastern Highlands, to a door in a buried face.
+  - questRequired:
+    - 76-journal
+    questExcluded:
+    - 76-attune
+    text: You read it. Then you know the method, and the hearth is where he meant
+      it done. Take the disc there.
+    hints: If you do not carry the disc yet, it lies in the cracked floor of the old
+      Reliquary at Pothole Coulee, behind the old shrine north of the stone circle.
+      In the cottage, type look hearth marks.
+  - questRequired:
+    - 76-start
+    questExcluded:
+    - 76-journal
+    - 76-attune
+    text: The cottage in Ashwick. Read what he left behind. You will need the disc
+      there.
+    hints: Ashwick is a long road from here. From Brennan's Office, go north, east
+      and north to the University Gate, then down the University Stair and north
+      through the town to the Market Square, down the Town Stair, and north to the
+      Greenford Gate. Then go north over the bridge and west along the road to the
+      Confluence. In the city, cross the Brenn Bridge west to Tri-Cross Square and
+      go north through the quays to the River Gate. Then take the River Road north,
+      through Amber Valley and up the South Road to the Ashwick Crossroads. From
+      there go east five times to the East Edge of the village, then south into the
+      cottage. If you do not carry the disc yet, it lies in the cracked floor of the
+      old Reliquary at Pothole Coulee, behind the old shrine north of the stone
+      circle. Type look journal.
+  - questRequired:
+    - 75-end
+    questExcluded:
+    - 76-start
+    carriesItem: 40167
+    text: So you have Reth's route. And what is that you carry? Hold
+      it up to the light. No, keep it in your hand. I only want to look.
+    hints: Brennan is staring at the grey disc you carry.
+  - questRequired:
+    - 75-end
+    questExcluded:
+    - 76-start
+    text: So you have Reth's route. Then there is one more thing I would ask of
+      you, if you will hear it.
+  - questRequired:
+    - 75-intro
+    questExcluded:
+    - 75-end
+    text: You have my word for Reth. He will not come to you, so go to him.
+    hints: Reth lives at the quiet end of the residential streets. From Brennan's
+      Office, go east to the Cloister Walk, south three times to College Row, west to
+      the Blue Door, then south twice to Reth's Cottage. He is asleep late at
+      night. Type talk reth.
+  - questRequired:
+    - 75-survey
+    questExcluded:
+    - 75-intro
+    - 75-end
+    text: You have read it. I can see it in your face. Well?
+    hints: Choose below to tell Brennan what Reth's survey says.
+  - questRequired:
+    - 75-start
+    questExcluded:
+    - 75-survey
+    - 75-end
+    text: The Archive first. Reth's report is the thin one, filed under his last
+      expedition, and Tess has it out on the reading stand. Read it, then come back
+      to me.
+    hints: From Brennan's Office, go east to the Cloister Walk, east to the Reading
+      Room, then south into the Archive. Type look filed survey.
+topics:
+- key: grant
+  kind: offer
+  quest: 75
+  label: The Surveyor's Report
+  playerLine: Is there something I can help you with?
+  text: |
+    There is. A surveyor named Reth retired early, and his field
+    report on one site in the eastern country reads like a careful
+    man saying as little as possible. Three lines, for a site that
+    should have run to a page. I have not been able to get him to
+    explain it. You might do better. But before you go anywhere
+    near Reth, I want you to read the filed survey yourself. Tess
+    the Archivist keeps it in the Archive. Read it, then come back
+    and tell me what you see in it. I want to know before you go
+    any further. Will you do that?
+  hints: Accept, then read the survey in the Archive. From Brennan's Office, go east
+    to the Cloister Walk, east to the Reading Room, then south into the Archive. Type
+    look filed survey.
+  questExcluded:
+  - 75-start
+  - 75-end
+  grantsQuest: 75-start
+- key: disc_quest
+  kind: offer
+  quest: 76
+  label: The Disc
+  playerLine: Do you know what this disc is?
+  text: |
+    Let me look. A ring struck through with a line, raised in the
+    metal itself. I have chased that mark across a hundred and
+    fifty years of margins, and here it is, made solid. This is a
+    key. I am sure of it. But it is dead in the hand, and it will
+    stay dead until someone wakes it, and I do not know how. A man
+    did. He kept a cottage in Ashwick and gave his whole life to
+    that thing in the east. He studied how to wake the key, then
+    went east himself and never came back. His work should still
+    be in the house he left. Will you go to Ashwick, find the
+    abandoned cottage, and read what he left behind? Take the disc
+    with you. You will need the thing itself.
+  hints: Accept, then take the disc to the abandoned cottage in Ashwick.
+  questRequired:
+  - 75-end
+  questExcluded:
+  - 76-start
+  - 76-end
+  carriesItem: 40167
+  grantsQuest: 76-start
+- key: disc_tale
+  kind: offer
+  quest: 76
+  label: The Disc
+  playerLine: Is there more I can help you with?
+  text: |
+    The mark on my wall, the nested rings. One margin, older than
+    the rest, draws it with a line struck through the ring, and a
+    note beside it: the same mark, cut in grey metal, set into the
+    floor of the old Reliquary at Pothole Coulee. If the note is
+    right, that disc is a key, and a dead one. It will stay dead
+    until someone wakes it, and I do not know how. A man did. He
+    kept a cottage in Ashwick and gave his whole life to that thing
+    in the east. He studied how to wake the key, then went east
+    himself and never came back. His work should still be in the
+    house he left. Will you find the disc, then go to Ashwick, find
+    the abandoned cottage, and read what he left behind? Bring the
+    disc. You will need the thing itself.
+  hints: Accept, then take the disc from the cracked floor of the old Reliquary at
+    Pothole Coulee, behind the old shrine north of the stone circle, and bring it
+    to the abandoned cottage in Ashwick. At the Reliquary, type look disc.
+  questRequired:
+  - 75-end
+  questExcluded:
+  - 76-start
+  - 76-end
+  itemExcluded: 40167
+  grantsQuest: 76-start
+- key: knower
+  kind: info
+  label: What do you see in me?
+  text: |
+    I sent you east chasing a mark in a margin, a puzzle for a
+    quiet department, and you came back carrying something the rest
+    of us get to not know. I have spent thirty years wanting the
+    answer to that mark. I am no longer certain I want it. Look at
+    me. I am not going to ask. Whatever the site gave you, keep it
+    close, and be careful who you tell. Some of what people believe
+    up here, they need. And some of what they would do to a person
+    who unbelieves it out loud, they would do gladly. You have a
+    look about you now. Mind who sees it.
+  marked: true
+  questRequired:
+  - 77-end
+- key: turnin
+  kind: info
+  label: Reth's survey says almost nothing.
+  text: |
+    You read it. And you saw what is not there. Three lines where
+    there ought to be a page, the site called a mineral deposit
+    with no elevation notes, no samples, no seasonal access. From a
+    surveyor who did his job that well everywhere else. That
+    silence is what I have been looking at. Reth will not speak to
+    me. We have history, and it is not friendly. But I will give
+    you my word to take to him. He lives at the quiet end of the
+    residential streets, past the back gate of the college, in the
+    third house down the west lane, the one with the overgrown yew.
+    Tell him I sent you, and that I am not asking him to explain
+    anything. I am asking him to let you read the original notes.
+  hints: From Brennan's Office, go east to the Cloister Walk, south three times to
+    College Row, west to the Blue Door, then south twice to Reth's Cottage. Reth
+    is asleep late at night. Type talk reth.
+  marked: true
+  questRequired:
+  - 75-survey
+  questExcluded:
+  - 75-intro
+  - 75-end
+  grantsQuest: 75-intro
+- key: symbol
+  kind: info
+  label: What is the mark on your old maps?
+  text: |
+    It appears in the margins of the oldest surveys. A mark of
+    nested rings, small and precise, drawn by different hands over
+    decades of fieldwork, by people who did not know each other. No
+    notation explains it. No legend. It has been turning up in the
+    surveys for about a hundred and fifty years, coming and going,
+    without anyone agreeing on what it marks or why different
+    surveyors drew the same thing. I have three examples on that
+    wall, in different hands, forty years apart. I find them the
+    most interesting problem I have, and I have no answer to offer
+    you. I have asked the Archive. I have written to colleagues at
+    two other institutions. The honest summary is that it recurs,
+    and no one knows why.
+  marked: true
+- key: work
+  kind: info
+  label: What do you look for in the surveys?
+  text: |
+    Thirty years of field survey in the eastern country. The
+    terrain, the routes, the resource classifications. Most of it
+    is exactly what it looks like, careful records of a country
+    that has been recorded before. The interesting work is in the
+    differences. Where the current surveys differ from the old ones,
+    and where the old ones differ from each other. That is usually
+    where the real question lives. Most of my colleagues find the
+    fieldwork repetitive. I find it the part that does not lie.
+- key: reth_after
+  kind: info
+  label: What happened between you and Reth?
+  text: |
+    Reth was good at the work. Better than good. Twenty years in
+    the field, thorough, reliable, the kind of surveyor whose
+    reports you could build on without checking. He retired early
+    and did not explain it, and I made the mistake of pressing him,
+    which is why we no longer speak easily. He lives quietly at the
+    end of the west lane, in the house with the yew, and I respect
+    his quiet even when it costs me something. If you have his
+    confidence, keep it carefully. He has earned the right to his
+    silence.
+  questRequired:
+  - 75-intro
+- key: university
+  kind: info
+  label: How long have you held the survey chair?
+  text: |
+    Twenty-two years. The university has three departments it could
+    place the work in and has never quite decided which one, which
+    means I have some freedom and a smaller budget than I would
+    like. Some of us here keep the source records and ask the
+    questions that official accounts consider settled. The Margin,
+    some call us. Mostly harmless, as far as the university is
+    concerned. The department suits me. The library is good, the
+    archive is well kept, and there are students who find the
+    eastern fieldwork truly interesting. I could have gone to the
+    capital. I have not regretted staying.

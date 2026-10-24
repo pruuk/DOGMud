@@ -465,14 +465,15 @@ func (m *AICompanionModule) performAction(c *controller, mob *mobs.Mob, owner *u
 		}
 		mob.Command(`sayto `+who+` `+util.EscapeAnsiTags(a.Query), delay)
 		// An NPC ignores a mob talking at it, so her question is put to it
-		// the way her owner's would be: the same quest, behaviour-tree and
-		// dialogue answers, spoken aloud in the room where she can hear it.
+		// the way her owner's would be: the info topic the owner named
+		// plays as if the owner chose it from the talk menu, spoken aloud
+		// in the room where she can hear it (#375 R13).
 		// An NPC only takes a companion's question seriously when the owner
 		// sent her to ask it: `companion-ask <who> about <what>`. That leave
 		// covers one NPC, one topic, for a minute. Without it her words are
 		// only words, and none of the owner's quests, items or gold move.
 		if t.Kind == `npc` && owner != nil && c.askAuth.valid(t.MobInstanceId, a.Query, time.Now().Unix()) {
-			companionai.AskNpc(owner.UserId, t.MobInstanceId, a.Query, true)
+			companionai.AskNpc(owner.UserId, t.MobInstanceId, c.askAuth.TopicKey, true)
 			c.askAuth = nil
 		}
 		c.mind.addLine(Line{Speaker: c.profile.Name, Kind: `said`, Text: `(to ` + t.Name + `) ` + a.Query}, m.cfg.WorkingMemoryLines)

@@ -87,7 +87,7 @@ keywords: [quest, task, help]
 type: action
 do: respond
 user_text: "I could use your help."
-hints: "Ask about the missing shipment."
+hints: "She may know where the missing shipment went."
 ```
 
 **Decorator nodes** use `mod: <name>` and require a single `child:` block:
@@ -109,25 +109,22 @@ tree:
   type: selector
   children:
 
-    # Player asks — quest offer
+    # Player chose the talk topic `to_plymouth` (behavior: true in the
+    # dialogue file; the Stillwater ferry agent 9571 ships this shape)
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [quest, task, help]
-        - type: condition
-          check: player_missing_quest
-          quest: "10-start"
+          check: topic_is
+          topic: to_plymouth
         - type: action
-          do: respond
-          user_text: "I need someone to clear those bandits out."
-          hints: "Ask about the bandits."
-        - type: action
-          do: grant_quest
-          quest: "10-start"
+          do: board_ferry
+          destination: plymouth
+          routes:
+            plymouth: stillwater_np_packet
 
-    # Player gives a quest item
+    # Player gives the quest item too late: say why and hand it back. The
+    # hand-in itself is a dialogue topic, never a tree branch (#375 R7).
     - type: sequence
       event: player_give
       children:
@@ -136,13 +133,12 @@ tree:
           item_id: 30001
         - type: condition
           check: player_has_quest
-          quest: "10-start"
-        - type: action
-          do: respond
-          user_text: "This is exactly what I needed, thank you!"
-        - type: action
-          do: grant_quest
           quest: "10-end"
+        - type: action
+          do: say
+          text: "You already brought me that. Keep it."
+        - type: action
+          do: return_item
 
     # Idle emote with cooldown
     - type: decorator
@@ -171,8 +167,8 @@ tree:
 
 | Event | Trigger | Notable Context |
 |-------|---------|-----------------|
-| `player_ask` | Player uses `ask <mob> ...` (the `ask` command only — a plain `say` does NOT fire this) | `Text` = spoken text |
-| `player_give` | Player gives an item to the mob | `ItemId` = item given; `ItemUUID` = that exact instance |
+| `player_topic` | Player chose a `behavior: true` talk topic (`internal/conversation`, #375 R12); `ask` fires no tree event since #375 (`player_ask` is gone) | `Text` = the topic's key, read by `topic_is` |
+| `player_give` | Player gives an item to the mob that no talk topic wants (an ordinary give, after the transfer); or a hand-back: a topic wants the item but none is eligible, so it never left the player (`give_handback.go`) | `ItemId` = item given; `ItemUUID` = that exact instance; `HandBack` non-nil on a hand-back |
 | `mob_idle` | Mob's periodic idle tick fires | No player context |
 | `mob_hurt` | Mob takes damage in combat | `UserId` = attacker |
 | `mob_die` | Mob's health reaches zero | `UserId` = killing player |
@@ -188,6 +184,19 @@ tree:
 
 Any node may include `event: <type>` to skip that branch when the event
 does not match. Nodes without an `event` field evaluate on all events.
+
+**Give hand-backs** (`give_handback.go`, #375 review M1). When a talk topic
+wants an item but none is eligible, `conversation.Give` keeps the item with
+the player and fires `player_give` with `EventContext.HandBack` set (a
+`*GiveHandBack`). Only a branch written for that item answers: an event
+branch must hold an `item_matches` condition naming it (`namesItem`) and use
+only speech actions and `return_item` (`handBackActions`, `handBackSafe`);
+any other branch is skipped whole before it speaks, and any other action
+fails without acting, so a hand-back never credits. `return_item` then moves
+nothing, says "<npc> hands back the <item>.", and sets
+`GiveHandBack.Returned`; without it the caller prints its own hand-back line.
+A catch-all give branch ("I have no use for this.") answers ordinary gifts
+only.
 
 ### Combat Phase transition events (chunk 0)
 
@@ -221,6 +230,7 @@ Condition nodes use `type: condition` with `check: <name>`.
 | Condition | Params | Description |
 |-----------|--------|-------------|
 | `keyword_match` | `keywords` (list) | Matches any word in event Text. |
+| `topic_is` | `topic` (string), `topics` (list), or both | A `player_topic` event carrying one of these topic keys (`topics.go`, #375 R12). `TopicIsKeys(params)` reads them for the condition, `TopicKeysInFile` (the dialogue validators) and `cmd/dialoguecheck`. Hadwen's rite answers `topics: [begin, rite_wait]`. |
 
 ### Player State
 
@@ -391,7 +401,7 @@ are subject to perception-scaled reaction delays (see below).
 |--------|--------|-------------|
 | `give_item` | `item_id` (int) | Gives one item copy to player. |
 | `give_item_multiple` | `item_id` (int), `count` (int, default 1) | Gives N copies to player. |
-| `return_item` | none | Returns the event's item to the player (for `player_give` rejection). Hands back the **real** item off the mob's inventory (found via `ctx.Event.ItemUUID`, else the newest `ctx.Event.ItemId` match), never a fresh copy. Fails if the mob isn't holding it. The "hands back" line hides the NPC's name at the player's sight (#454). |
+| `return_item` | none | Returns the event's item to the player (for `player_give` rejection). Hands back the **real** item off the mob's inventory (found via `ctx.Event.ItemUUID`, else the newest `ctx.Event.ItemId` match), never a fresh copy. Fails if the mob isn't holding it. The "hands back" line hides the NPC's name at the player's sight (#454). On a give hand-back the item is still the player's: nothing moves, the line is said, and `GiveHandBack.Returned` is set. |
 | `take_item` | `item_id` (int) | Removes first matching item from player. |
 | `give_gold` | `amount` (int) | Adds N gold to player. |
 | `take_gold` | `amount` (int) | Subtracts N gold (floor 0). |
@@ -856,7 +866,26 @@ These actions were added alongside the room behavior tree system:
 | Action | Params | Description |
 |--------|--------|-------------|
 | `create_instance` | `zone_name` (string), `gold_amount` (int), `state_key` (string, default `"instance_entry_room_id"`) | Clones an instanced zone and stores the entry room ID in BehaviorState. Use `add_temp_exit` with no `room_id` param to consume it. |
-| `open_instance_portal` | `zones` (map), `min_gold` (int, default 100), `exit_expires` (string, default `"30 real minutes"`) | Full portal-vendor flow: parses `"<zone> <gold>"` from ask text, validates, charges gold, creates instance, adds temp exit. Returns Failure if text doesn't match pattern; returns Success with mob dialogue on all other outcomes (success or error). |
+| `open_instance_portal` | `zones` (map), `zone` (string, required: a key of `zones`), `min_gold` (int, default 100), `exit_expires` (string, default `"30 real minutes"`), `guidance` (string, optional) | Portal-vendor flow for the zone a talk topic names (#375 R14): shows the guidance and opens the private amount prompt below; the answer charges, clones the instance and adds the temp exit. The event text is never read. A node whose `zone` is missing or not a key of `zones` fails the tree's load (`checkOpenInstancePortalParams`). |
+| `board_ferry` | `routes` (map: destination key to route id), `destination` (string, required: a key of `routes`) | Boards the route `destination` names, one talk topic per destination (#375 R14); `ferry.Board` does schedule, fare and move. The event text is never read. Returns Failure when the agent is not at port. A node whose `destination` is missing or not a key of `routes` fails the tree's load (`checkBoardFerryParams`). |
+
+**Amount prompt** (`portal_stake.go`, #375 R14). With `zone` set,
+`open_instance_portal` sends the `guidance` text to the player alone and
+opens a non-modal free-text prompt, "How much gold will you stake?", through
+`users.StartPrompt(PortalStakeCommand, "")`. The input loop gives the next
+typed line to it and re-runs the hidden user command `portalstake`
+(`usercommands/portalstake.go`, registered in its `init`), which calls
+`AnswerStake`. A whole number (commas and a trailing `gold` or `g`
+allowed) opens the portal through
+`openInstancePortal` (minimum and
+purse checks, charge, clone scaled by the stake, exit, lines), once the mob is
+still in the room the prompt opened in with the player. Anything else closes
+the prompt with one line; if `TryCommand` would run it
+(`usercommands.isKnownCommandLine`, which shares `SplitInput` and
+`fallbackRoute` with the dispatcher: a registered command, an emote, a known
+spell, the say shortcut, an exit or a compass direction) the command then runs, so free-text #641 does not bite
+here. Only the mob's presence is re-checked at answer time, not the tree's
+other gates. Tests swap `createZoneInstance` and `boardFerry`.
 
 The `zones` param is a YAML mapping of short names to template zone names:
 ```yaml
@@ -999,10 +1028,10 @@ Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tact
 |-------|-------|
 | Core | `engine.go`, `types.go`, `state.go`, `structural.go`, `decorators.go`, `helpers.go`, `params.go`, `references.go` |
 | Loading & validation | `loader.go`, `validate.go`, `save.go`, `test_export.go` |
-| Events | `events.go` |
+| Events | `events.go`, `topics.go` (`topic_is`, `TopicKeysInFile`), `give_handback.go` (`GiveHandBack`, the hand-back branch rules) |
 | Actions — generic | `actions.go`, `actions_mob.go`, `actions_state.go`, `actions_room.go`, `actions_party.go`, `actions_goal.go` |
 | Actions — combat | `actions_combat.go`, `action_cast_best_in_category.go`, `actions_archer.go` |
-| Actions — economy | `actions_forager.go`, `actions_forager_verbs.go`, `actions_forager_storage.go`, `actions_wagon.go`, `actions_ferry.go`, `caravan_reset.go` |
+| Actions — economy | `actions_forager.go`, `actions_forager_verbs.go`, `actions_forager_storage.go`, `actions_wagon.go`, `actions_ferry.go`, `portal_stake.go`, `caravan_reset.go` |
 | Actions — other | `actions_dialogue.go`, `actions_quest.go`, `actions_progression.go`, `actions_mutation.go`, `actions_scout.go`, `actions_skullduggery.go` |
 | Conditions | `conditions.go`, `conditions_combat.go`, `conditions_mob.go`, `conditions_player.go`, `conditions_party.go`, `conditions_position.go`, `conditions_room.go`, `conditions_state.go`, `conditions_scout.go`, `conditions_forager.go`, `conditions_skullduggery.go`, `conditions_submission.go` |
 | Misc | `archetype_shift.go`, `room_state.go` |
@@ -1011,6 +1040,17 @@ Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tact
 The `actions_*` / `conditions_*` split is the whole architecture: a tree is
 authored data, and extending the engine means adding a named action or
 condition to one of these files, not writing tree logic.
+
+**Load-time param checks.** `compileAction` runs `actionParamChecks`
+(`loader.go`), a map from action name to a params check, so a node that
+could never act fails its whole tree's load, and the editor's save, with its
+path. Today it holds `board_ferry` (`destination` must be a key of `routes`)
+and `open_instance_portal` (`zone` must be a key of `zones`): since #375
+retired `player_ask`, no live event carries the player's own words, so these
+actions have no text to fall back on. Trees load lazily, so
+`TestShippedBehaviorTrees_AllCompile` (`roundtrip_test.go`) compiles every
+shipped behavior file through its subject's loader to turn a refused tree
+into a CI failure rather than a runtime log line.
 
 **Behaviour-tree combat events fire before the legacy AI**, and `mob_die`
 handlers must use instant actions (`send_room_text`, not `respond`) because the

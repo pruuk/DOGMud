@@ -25,18 +25,18 @@ steps:
     map_target: 5305
     description: >-
       The Star Chamber is where you first turn the mind. Stand there and
-      loose a spell you know at the practice mote -- conviction-spike, the
+      loose a spell you know at the practice mote. Conviction Spike, the
       attack you woke with, will serve. Adept Grieve keeps the observatory.
     hint: >-
-      Go north into the Star Chamber and type cast conviction-spike mote.
+      Go north into the Star Chamber and type cast spike mote.
   - id: cast
     map_target: 5303
     description: >-
       You shaped a spell and loosed it at the mark. Return to Grieve in the
       Observatory Hall.
     hint: >-
-      Go back to Adept Grieve in the Observatory Hall and type ask grieve
-      done.
+      Go back to Adept Grieve in the Observatory Hall and type talk
+      grieve.
   - id: end
     description: >-
       Grieve has named you a caster of the first and smallest sort. North of
@@ -74,4 +74,4 @@ triggers:
           Your spell leaves you and breaks against the mote in a flare of
           folded light; the mote draws inward and reknits, unharmed. That is
           casting -- will shaped to a purpose and let go. Go back south to
-          Adept Grieve in the Observatory Hall and type ask grieve done.
+          Adept Grieve in the Observatory Hall and type talk grieve.

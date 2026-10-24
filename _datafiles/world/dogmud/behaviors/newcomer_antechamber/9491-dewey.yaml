@@ -20,6 +20,13 @@
 # (has 28-tripped, missing 28-fled) shares Dewey's room, he repeats the
 # prompt every few rounds. ANDing the in-room has/missing conditions is safe
 # here ONLY because the antechamber is a solo ephemeral instance.
+#
+# The mob_idle way-north line (#375 phase 1, R24): in The World Speaks (6261),
+# once the talk lesson is done (has 28-asked) and before the player walks on
+# (missing 28-proving_prompt, granted on entering 6262), Dewey says to type
+# north every few rounds. His lesson topics cannot carry it: their hints are
+# static and the topics stay open in 6262 and 6467, where north is refused.
+# This pair of tokens holds only while the player stands in 6261.
 
 tree:
   type: selector
@@ -49,6 +56,30 @@ tree:
               text: >-
                 No shame in stopping -- straw does not tire, and you cannot
                 break it. Type flee to break away and live.
+    - type: sequence
+      event: mob_idle
+      children:
+        - type: condition
+          check: player_in_room_has_quest
+          quest: "28-asked"
+        - type: condition
+          check: player_in_room_missing_quest
+          quest: "28-proving_prompt"
+        # delay(5) leaves the player about 20 seconds with the world answer
+        # and the lesson menu first; cooldown(8) paces the repeats at about
+        # 32 seconds (Timing.RoundSeconds 4).
+        - type: decorator
+          mod: delay
+          rounds: 5
+          child:
+            type: decorator
+            mod: cooldown
+            rounds: 8
+            child:
+              type: action
+              do: say
+              text: >-
+                Ask me all you like. When you are ready to go on, type north.
     - type: action
       event: mob_idle
       do: try_goal_planner

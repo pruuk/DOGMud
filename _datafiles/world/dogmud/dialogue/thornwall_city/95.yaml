@@ -1,88 +1,100 @@
 mobid: 95
 zone: Thornwall City
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Welcome to the temple. You are here for contemplation, or something more practical?"
-      - "Peace be with you. The temple is open to all. How can I help?"
-
-  - keywords: ["hello", "hi"]
-    moods: ["grateful"]
-    responses:
-      - "Ah, welcome back. The temple remembers those who serve it."
-
-  - keywords: ["tithe", "tax", "merchant", "money", "audit", "cheat"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "The tithes are a matter of concern. Several merchants have been underpaying for months. The temple cannot maintain itself on goodwill alone."
-      - "I suspect the market merchants are under-reporting their income to reduce their tithe obligations. The temple's finances are suffering."
-
-  - keywords: ["help", "quest", "task", "work", "investigate"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "If you are willing, I need someone to look into the tithe discrepancies. Talk to the merchants, find the ledger, see if the numbers match. The truth is all I ask for."
-
-  - keywords: ["temple", "faith", "pray", "worship"]
-    responses:
-      - "The temple serves the community. We provide contemplation, community gathering, and practical services -- healing, counseling, record-keeping. It is less dramatic than the old stories, but more useful."
-
-  - keywords: [""]
-    responses:
-      - "The temple is open if you need it. Candles are by the door."
-      - "Is there something on your mind? I am listening."
-
-tree:
-  root:
-    text: "Welcome to the temple. If you are here for contemplation, the nave is open. If you are here for something else... well, there is a matter I could use help with, if you are the helping sort."
-    hints: "Ask me about the tithe problem, the temple, or how you could help."
-    variants:
-      - questRequired: ["9-start"]
-        questExcluded: ["9-end"]
-        text: "Have you found anything? The tithe ledger should show the discrepancies. Try the Records Office -- clerk Pell keeps copies of all temple filings. I need to see those numbers before I can act."
-        hints: "Visit clerk Pell at the Records Office and ask about the tithe ledger. Then bring it back to Olen."
-      - questRequired: ["9-end"]
-        text: "The audit is underway. Both sides are unhappy, which means we are probably close to the truth. Thank you for bringing it to light."
-
-  nodes:
-    - id: olenhandoff
-      triggers: ["ledger", "tithe", "audit", "book", "deliver",
-        "hand", "give", "turn", "done", "finished", "report",
-        "quest", "task"]
-      questRequired: ["9-start"]
-      questExcluded: ["9-end"]
-      requiresItem: 29
-      grantsQuest: "9-end"
-      text: "Both sides wrong -- I can see it from the first
-        column. This is not comfortable reading, but it is the
-        truth I asked for. Thank you for bringing it to light."
-      hints: "You hand the tithe ledger to Olen."
-      moodChange: grateful
-
-    - id: tithe_problem
-      triggers: ["tithe", "problem", "help", "quest", "task", "ledger", "matter"]
-      questExcluded: ["9-start", "9-end"]
-      grantsQuest: "9-start"
-      text: "The temple collects tithes from the market merchants -- it has for generations. Recently, the payments have dropped. Significantly. Either the merchants have all suddenly become poorer, or they are under-reporting their income. I need someone outside the temple to look into it. Talk to the merchants, find the tithe ledger, compare the numbers. I want the truth, even if it is uncomfortable."
-      hints: "Talk to merchants in the market about their tithes, then find the tithe ledger."
-      unlocks: ["merchant_side"]
-      moodChange: friendly
-
-    - id: merchant_side
-      triggers: ["merchant", "market", "their side", "what do they say"]
-      requires: ["tithe_problem"]
-      text: "The merchants claim the temple inflates its expenses to justify higher tithes. They may not be entirely wrong. The temple has costs -- maintenance, charity, staff. Whether every coin is accounted for as precisely as it should be... that is part of what I need you to find out."
-
-    - id: ledger_return
-      triggers: ["ledger", "found", "evidence", "records", "numbers", "quest", "task"]
-      questRequired: ["9-start"]
-      questExcluded: ["9-end"]
-      requiresItem: 29
-      grantsQuest: "9-end"
-      text: "Both sides. The merchants are under-paying, and our own expense records are... generous. Thank you for your honesty. This will not be pleasant, but it needed to come to light."
-      moodChange: grateful
-
-memory:
-  expiryPeriod: ""
+# Olen's temple (room 468) is where Warden Esk's arch sets players down, so
+# he is the first person a newcomer meets in Thornwall (R24): the temple
+# topic answers "where am I" and names the way back.
+opener:
+  text: Welcome to the temple. If you are here for contemplation, the nave is open.
+    If you are here for something else... well, there is a matter I could use help
+    with, if you are the helping sort.
+  hints: Choose a line below to hear where you are, or about the help he needs.
+  variants:
+  # The hand-in gates on 9-start plus the ledger, not on 9-deliver: a ledger
+  # picked up before accepting grants no deliver step (batch 2 review B1).
+  # So the "you have it" line keys on carrying the ledger, and 9-deliver
+  # marks a player who had the ledger and no longer carries it.
+  - questRequired:
+    - 9-start
+    questExcluded:
+    - 9-end
+    carriesItem: 29
+    text: You have the ledger? Then let me see it.
+    hints: Choose The Temple's Tithe Audit below to hand over the tithe ledger.
+  - questRequired:
+    - 9-deliver
+    questExcluded:
+    - 9-end
+    text: You had the ledger? Then where is it? Clerk Pell keeps the temple's
+      copies. He will have another.
+    hints: From the Temple Interior, go south twice, then east, then north into the
+      Records Office. Type get ledger.
+  - questRequired:
+    - 9-start
+    questExcluded:
+    - 9-deliver
+    - 9-end
+    text: Have you found anything? The tithe ledger should show the discrepancies.
+      Try the Records Office. Clerk Pell keeps copies of all temple filings. I need
+      to see those numbers before I can act.
+    hints: From the Temple Interior, go south twice, then east, then north into the
+      Records Office. Type get ledger.
+  - questRequired:
+    - 9-end
+    text: The audit is underway. Both sides are unhappy, which means we are probably
+      close to the truth. Thank you for bringing it to light.
+topics:
+- key: tithe_problem
+  kind: offer
+  quest: 9
+  label: The Temple's Tithe Audit
+  playerLine: Do you want help with the matter of the tithes?
+  text: The temple collects tithes from the market merchants, and it has for generations.
+    Recently, the payments have dropped. Significantly. Either the merchants have
+    all suddenly become poorer, or they are under-reporting their income. I need someone
+    outside the temple to look into it. Find the tithe ledger and compare the numbers.
+    I want the truth, even if it is uncomfortable.
+  hints: From the Temple Interior, go south twice, then east, then north into the
+    Records Office. Type get ledger.
+  questExcluded:
+  - 9-start
+  - 9-end
+  grantsQuest: 9-start
+  moodChange: friendly
+# Hand-in: the ledger_return node and the quest 9 give trigger (its npc_say
+# lines) are folded in here. Gated on 9-start plus the ledger (B1), so a
+# player who picked up the ledger before accepting can hand it in.
+- key: olenhandoff
+  kind: handin
+  quest: 9
+  label: The Temple's Tithe Audit
+  playerLine: I have the tithe ledger. It shows both sides.
+  text: Let me see that. Both sides. The merchants are under-paying, and our own expense
+    records are... generous. This is not comfortable reading, but it is the truth
+    I asked for. Thank you for your honesty. This will not be pleasant, but it needed
+    to come to light.
+  questRequired:
+  - 9-start
+  questExcluded:
+  - 9-end
+  requiresItem: 29
+  grantsQuest: 9-end
+  moodChange: grateful
+- key: merchant_side
+  kind: info
+  label: What do the merchants say about it?
+  text: The merchants claim the temple inflates its expenses to justify higher tithes.
+    They may not be entirely wrong. The temple has costs, such as maintenance, charity
+    and staff. Whether every coin is accounted for as precisely as it should be...
+    that is part of what I need you to find out.
+  questRequired:
+  - 9-start
+- key: temple
+  kind: info
+  label: Where am I?
+  text: This is the temple in Thornwall, a walled city with a busy market. South of
+    here is the Temple District, and past it Main Street, with the market at its
+    east end. The basalt ring by the door takes you back to the Pothole Coulee whenever
+    you wish.
+  hints: To see a map of the streets around you, type map.
+  marked: true

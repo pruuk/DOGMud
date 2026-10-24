@@ -9,7 +9,7 @@ secret: false
 steps:
   - id: end
     description: "You stood among the oracle-stones and let the buried place
-      tell you what it is. You carry the truth now — of where the people
+      tell you what it is. You carry the truth now: of where the people
       came from, of what the blessing really was, of the immunity that was
       only luck, and of the three lights still waiting overhead. You cannot
       give it back."

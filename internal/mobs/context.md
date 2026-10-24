@@ -125,6 +125,8 @@ list, transition tables, and config knobs.
 ## Mob Structure
 
 ### Core Mob Properties
+Abbreviated; `mobs.go` holds the full struct.
+
 ```go
 type Mob struct {
     MobId           MobId                    // Unique mob type identifier
@@ -135,10 +137,10 @@ type Mob struct {
     
     // Behavior Properties
     ActivityLevel   int                      // 1-100% activity frequency
-    Hostile         bool                     // Attack players on sight
+    AutoAggro       bool                     // Attack players on sight (`auto_aggro:`)
+    LegacyHostile   bool                     // Old `hostile:` key, copied to AutoAggro in Validate()
     MaxWander       int                      // Maximum rooms from home
     WanderCount     int                      // Current wander distance
-    PreventIdle     bool                     // Disable idle behavior
     
     // AI Command Sets
     IdleCommands    []string                 // Commands executed when idle
@@ -148,7 +150,6 @@ type Mob struct {
     // Social Properties
     Groups          []string                 // Group allegiances
     Hates           []string                 // Groups/races this mob hates
-    QuestFlags      []string                 // Quest flags for interactions
     
     // Economy
     ItemDropChance  int                      // Chance to drop items on death
@@ -159,9 +160,7 @@ type Mob struct {
     
     // Runtime State
     LastIdleCommand uint8                    // Track last idle command used
-    BoredomCounter  uint8                    // Rounds since seeing players
     tempDataStore   map[string]any           // Temporary data storage for AI
-    conversationId  int                      // Active conversation ID
     Path            PathQueue                // Movement pathfinding queue
     lastCommandTurn uint64                   // Command scheduling tracking
     playersAttacked map[int]struct{}         // Players this mob has attacked
@@ -359,6 +358,14 @@ idle mob hook (`internal/hooks/NewRound_IdleMobs.go`) drives them with
 `conversations.TickConversation`, through an adapter
 (`internal/conversationadapter`). The old `InConversation`, `SetConversation`
 and `Converse` methods are gone.
+
+Player to NPC conversation (`talk`, quest arc #375 phase 1) lives in
+`internal/dialogue` (the mob's dialogue file, keyed by `MobId` and `Zone`) and
+`internal/conversation` (the talk flow), not on `Mob` either. `Mob` carries no
+quest field: the upstream `QuestFlags` list (and `SpawnInfo.QuestFlags` in
+`internal/rooms`) is deleted. The `[!]`, `[?]` or `[*]` before an NPC's name is
+worked out per viewer from the dialogue file (`conversation.Marker`, installed
+as `rooms.NpcMarker`).
 
 ## Pathfinding and Movement
 

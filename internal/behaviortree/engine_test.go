@@ -72,7 +72,7 @@ func TestSequence_StopsOnFailure(t *testing.T) {
 func TestEventFilter_SkipsMismatch(t *testing.T) {
 	inner := &mockNode{result: Success}
 	filtered := &EventFilterNode{
-		EventType: "player_ask",
+		EventType: "player_topic",
 		Child:     inner,
 	}
 	ctx := &EvalContext{Event: EventContext{EventType: "mob_idle"}}
@@ -87,10 +87,10 @@ func TestEventFilter_SkipsMismatch(t *testing.T) {
 func TestEventFilter_PassesMatch(t *testing.T) {
 	inner := &mockNode{result: Success}
 	filtered := &EventFilterNode{
-		EventType: "player_ask",
+		EventType: "player_topic",
 		Child:     inner,
 	}
-	ctx := &EvalContext{Event: EventContext{EventType: "player_ask"}}
+	ctx := &EvalContext{Event: EventContext{EventType: "player_topic"}}
 	if filtered.Evaluate(ctx) != Success {
 		t.Error("expected Success for matching event")
 	}

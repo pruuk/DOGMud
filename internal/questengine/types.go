@@ -30,6 +30,12 @@ type (
 
 // EventDetails carries context about the event that triggered evaluation.
 // It describes an engine INVOCATION, not a quest definition, so it stays here.
+//
+// Noun is what the player typed, lowercased. RoomNoun is the room's own noun
+// key that Noun names (an alias, a word of a multi-word name or a
+// singular/plural spelling resolve to it; rooms.Room.NounNamedBy), or "" when
+// the typed words name no room noun. A trigger noun matches RoomNoun only when
+// no trigger matches the typed text (see evaluate).
 type EventDetails struct {
 	UserId     int
 	RoomId     int
@@ -37,8 +43,8 @@ type EventDetails struct {
 	ItemId     int
 	Skill      string
 	Command    string
-	Topic      string
 	Noun       string
+	RoomNoun   string
 	Verb       string
 	QuestToken string
 }

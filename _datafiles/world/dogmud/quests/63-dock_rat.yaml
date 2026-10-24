@@ -10,20 +10,24 @@ steps:
     map_target: 5526
     description: >-
       Jesset doesn't buy the theft charge against his hand Teo. He's asked
-      you to find who's really been skimming cargo -- starting with the
-      customs shed and the foreman's books.
+      you to find who's really been skimming cargo. The foreman, Hewd,
+      keeps his books in the office above the constable's post, and Jesset
+      told you to mind the floor there.
     hint: >-
-      Look into the discrepancy. Read the notice board at the constable's
-      post, check the impounded cargo in the customs shed, and search the
-      foreman's office -- mind the floor.
+      From the Long Quay, where Jesset keeps his board, go north five times
+      to the Outer Dock Lane, then east into the Dock Constable's Post and up
+      into the Foreman's Office.
+      Type look floorboard.
   - id: evidence
     map_target: -1  # -1: bundled objectives, rooms [5503, 5525]; Phase 2 split review
     description: >-
-      Beneath a loose floor-board in the foreman's office you found Hewd's
-      hidden tally-book -- two sets of numbers, proof that he is the one
+      Beneath a loose floorboard in the foreman's office you found Hewd's
+      hidden tally-book, with two sets of numbers: proof that he is the one
       skimming and that he hung the shortage on Teo.
     hint: >-
-      Take the tally-book to the Dock Constable, or back to Jesset, as proof.
+      Take the tally-book to the Dock Constable, just down the stair from the
+      Foreman's Office. Jesset on the Long Quay will take it too. Type talk
+      constable.
   - id: report
     map_target: -1  # -1: bundled objectives, rooms [5503, 5525]; Phase 2 split review
     description: >-
@@ -41,20 +45,23 @@ rewards:
   rep_faction: np_dockfolk
   rep_amount: 15
   actor: >-
-    The matter settles the way the docks settle things -- quietly, and for
+    The matter settles the way the docks settle things: quietly, and for
     good. Hewd will answer for the difference between his two columns, and
     Teo goes back on the board in the morning. The dockfolk will hear who
-    sorted it, and down here that is worth more than coin -- though there is
+    sorted it, and down here that is worth more than coin, though there is
     coin in it too.
   observer: >-
     Word moves along the wharves in the way it does, and more than one
     dockhand gives the traveller a short, respectful nod.
 
 triggers:
-  # ── EVIDENCE: pry up the loose floor-board in the foreman's office (5526) ──
+  # ── EVIDENCE: pry up the loose floorboard in the foreman's office (5526) ──
+  # The noun is the room's own key, `floorboard` (it was `floor-board`, then
+  # `floor board`; one word since 2026-10-21 so 63 and 68 teach the same
+  # spelling). Triggers 2 to 5 add `board` and the lost-book recovery.
   - event: room_interact
     room: 5526
-    noun: floor-board
+    noun: floorboard
     conditions:
       has: ["63-start"]
       missing: ["63-evidence"]
@@ -63,60 +70,81 @@ triggers:
       - give_item: 40100
       - actor: >-
           The proud board lifts with a little persuasion. In the gap
-          beneath, wrapped in oilcloth, lies a small tally-book -- and a
+          beneath, wrapped in oilcloth, lies a small tally-book, and a
           glance inside is enough. Two columns of numbers for every
           shipment: the manifest count on the left, the real one on the
           right. Foreman Hewd has been skimming the difference for a long
           time, and the shortage he reported was Teo's only by his choosing.
-      - observer: "{actor} works a loose floor-board free and pockets something wrapped in oilcloth."
+      - observer: "{actor} works a loose floorboard free and pockets something wrapped in oilcloth."
 
-  # ── floor-board, no quest yet ──
+  # ── floorboard, no quest yet ──
   - event: room_interact
     room: 5526
-    noun: floor-board
+    noun: floorboard
     conditions:
       missing: ["63-start"]
     actions:
       - actor: >-
-          One floor-board sits a little proud of its neighbors. You could
-          work it loose -- but prying up another man's floor without a
+          One floorboard sits a little proud of its neighbors. You could
+          work it loose, but prying up another man's floor without a
           reason is a fast way to find trouble you came here to avoid.
 
-  # ── REPORT: tally-book to the Dock Constable (9316) ──
-  - event: item_give
-    mob: 9316
-    item: 40100
+  # ── EVIDENCE, short noun: `look board` reaches the same floorboard ──
+  - event: room_interact
+    room: 5526
+    noun: board
+    conditions:
+      has: ["63-start"]
+      missing: ["63-evidence"]
+    actions:
+      - grant: "63-evidence"
+      - give_item: 40100
+      - actor: >-
+          The proud board lifts with a little persuasion. In the gap
+          beneath, wrapped in oilcloth, lies a small tally-book, and a
+          glance inside is enough. Two columns of numbers for every
+          shipment: the manifest count on the left, the real one on the
+          right. Foreman Hewd has been skimming the difference for a long
+          time, and the shortage he reported was Teo's only by his choosing.
+      - observer: "{actor} works a loose floorboard free and pockets something wrapped in oilcloth."
+
+  # ── board, no quest yet ──
+  - event: room_interact
+    room: 5526
+    noun: board
+    conditions:
+      missing: ["63-start"]
+    actions:
+      - actor: >-
+          One floorboard sits a little proud of its neighbors. You could
+          work it loose, but prying up another man's floor without a
+          reason is a fast way to find trouble you came here to avoid.
+
+  # ── LOST tally-book: Hewd kept a fair copy under the same board ──
+  - event: room_interact
+    room: 5526
+    noun: floorboard
     conditions:
       has: ["63-evidence"]
-      missing: ["63-report"]
-    actions:
-      - grant: "63-report"
-      - npc_say:
-          mob: 9316
-          lines:
-            - {delay: 1, text: "Let me see that."}
-            - {delay: 3, text: "Two columns. Manifest on the left, the true count on the right. That is the foreman's hand."}
-            - {delay: 5, text: "The shortage was never Teo's. I'll have Hewd in by the next bell, and the boy's name off the board."}
-
-  # ── REPORT (alternate): tally-book to Jesset (9300) ──
-  - event: item_give
-    mob: 9300
-    item: 40100
-    conditions:
-      has: ["63-evidence"]
-      missing: ["63-report"]
-    actions:
-      - grant: "63-report"
-      - npc_say:
-          mob: 9300
-          lines:
-            - {delay: 1, text: "Hewd's book. I had a feeling it ran through that office."}
-            - {delay: 3, text: "I'll walk this to the constable myself -- it lands harder from me. Teo's back on the board in the morning. You did right by him."}
-
-  # ── AUTO-COMPLETE: report → end ──
-  - event: quest_granted
-    quest_token: "63-report"
-    conditions:
       missing: ["63-end"]
+      missing_item: 40100
     actions:
-      - grant: "63-end"
+      - give_item: 40100
+      - actor: >-
+          You lift the board again. Hewd kept a fair copy as well as his
+          working book, and it is still there in the oilcloth. You take it.
+      - observer: "{actor} lifts a loose floorboard and takes something wrapped in oilcloth."
+
+  - event: room_interact
+    room: 5526
+    noun: board
+    conditions:
+      has: ["63-evidence"]
+      missing: ["63-end"]
+      missing_item: 40100
+    actions:
+      - give_item: 40100
+      - actor: >-
+          You lift the board again. Hewd kept a fair copy as well as his
+          working book, and it is still there in the oilcloth. You take it.
+      - observer: "{actor} lifts a loose floorboard and takes something wrapped in oilcloth."

@@ -29,8 +29,9 @@ nouns:
     wall, the surface scarred and stained by long use,
     a built-in iron bench-vise mounted at the eastern
     end. The vise's cast-iron handle is dark with old
-    grime. Look closely at the handle. There is
-    something scratched into the underside.
+    grime. Look closely at the handle. There is a
+    carving scratched into the underside. Try
+    `look carving`.
   bird: A half-finished carved wooden bird sits in the
     bench-vise's clamp, one wing's flight-feathers
     detailed to the barbs and the other still blocked
@@ -55,19 +56,14 @@ nouns:
     show where Ulla still climbs up here from time
     to time, but only as far as the bench, and not
     often.
-hidden_nouns:
-  carving:
-    description: |
-      The cast-iron handle of the bench-vise has a small
-      design scratched into the underside, where you would
-      not see it without lifting the handle to look: a long
-      tight spiral set inside an outer circle. Old work,
-      older than the cottage; the kind of mark someone
-      makes when they want to remember a thing without
-      explaining it. Whoever scratched it here knew the
-      symbol meant something.
-    hidden_description: |
-      The bench-vise's cast-iron handle has a small mark scratched on its underside, too regular to be wear. Try `look carving`.
+  carving: The cast-iron handle of the bench-vise has a
+    small design scratched into the underside, where
+    you would not see it without lifting the handle to
+    look, a long tight spiral set inside an outer
+    circle. Old work, older than the cottage, the kind
+    of mark someone makes when they want to remember a
+    thing without explaining it. Whoever scratched it
+    here knew the symbol meant something.
 idlemessages:
 - A drift of sawdust lifts from the bench in a soft draft and resettles.
 - The window's prop-stick creaks faintly as the wind catches the sash.

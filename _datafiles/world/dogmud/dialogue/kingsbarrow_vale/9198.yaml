@@ -1,70 +1,86 @@
 mobid: 9198
 zone: Kingsbarrow Vale
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Tithe-clerk's post. State your business and let me keep my count."
-      - "Verrold. If it is grain you are weighing in, the scales are there."
-  - keywords: ["quest", "task", "work", "job"]
-    responses:
-      - "If you carry a manifest for the relay, ask me about it."
-  - keywords: ["tithe", "ledger", "grain", "granary", "tax"]
-    responses:
-      - "Every sack that leaves this vale for the capital passes my count first. The capital is fed on what I write down."
-  - keywords: ["gossip", "news", "rumor", "rumors"]
-    responses:
-      - "I keep the tithe ledger for the capital. Numbers, not news."
-  - keywords: [""]
-    responses:
-      - "Yes? Be brief."
-
-tree:
-  root:
-    text: "I am Verrold -- tithe-clerk for the vale, and a stage on the capital's post relay when the dispatch comes through. If you carry a manifest, its second leg ends with me."
-    hints: "You could ask Verrold about a quest or task, the tithe, or the granary."
-
-  nodes:
-    - id: verroldhandoff
-      triggers: ["waybill", "parcel", "delivery", "package", "road", "deliver",
-                 "hand", "give", "turn", "done", "report", "quest", "task"]
-      questRequired: ["60-waybill"]
-      questExcluded: ["60-manifest", "60-end"]
-      requiresItem: 40072
-      grantsQuest: "60-manifest"
-      text: "Verrold takes the waybill, checks the counter-sign, and makes his
-        entry in the ledger without looking up. \"Pell's work.\" He stamps the
-        packet and seals it. \"One leg left -- the East Gate guard at New
-        Plymouth. Hand it over at the wall.\""
-      hints: "You hand the waybill to Tithe-Clerk Verrold."
-
-    - id: quest_active
-      triggers: ["quest", "task", "manifest", "ledger", "tithe", "deliver", "stamp", "relay", "post"]
-      questRequired: ["60-waybill"]
-      questExcluded: ["60-manifest", "60-end"]
-      text: "Pell's manifest, from Hartcharn -- give it here. I enter it in the tithe ledger and seal it into a capital packet, and then there is but one leg left. Hand it over and I will set my stamp to it."
-      hints: "Give the counter-signed manifest to Tithe-Clerk Verrold."
-
-    - id: quest_sent
-      triggers: ["quest", "task", "packet", "manifest", "gate", "next"]
-      questRequired: ["60-manifest"]
-      questExcluded: ["60-end"]
-      text: "Sealed, stamped, and entered. The packet is yours to carry the last leg -- to the East Gate guard at New Plymouth. North to the works at Kilnreach, then the outskirts, then the walls. You are nearly there."
-      hints: "Give the sealed capital packet to the East Gate guard at New Plymouth."
-
-    - id: lost_report
-      triggers: ["lost", "dropped", "missing", "replace", "packet", "again"]
-      questRequired: ["60-manifest"]
-      questExcluded: ["60-end"]
-      givesItem: 40073
-      text: "Lost the packet? The ledger entry stands -- I can seal another against it. A moment. There. The East Gate guard, New Plymouth. Lose this one and I cannot help you further."
-      hints: "You have a fresh sealed packet. Give it to the East Gate guard at New Plymouth."
-
-    - id: quest_done
-      triggers: ["quest", "task", "packet", "post"]
-      questRequired: ["60-end"]
-      text: "The packet cleared the gate, then. The ledger is square. The capital is well served by a steady courier."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Tithe-clerk's post. I am Verrold, tithe-clerk for the vale, and a stage on
+    the capital's post relay when a dispatch comes through. State your business and
+    let me keep my count.
+  hints: Choose a line below to learn about the tithe he keeps, or the news of
+    the vale.
+  # Quest 60 states (first match wins); quest_active, quest_sent and
+  # quest_done became these variants.
+  variants:
+  - questRequired:
+    - 60-end
+    text: The packet cleared the gate, then. The ledger is square. The capital is
+      well served by a steady courier.
+  - questRequired:
+    - 60-manifest
+    questExcluded:
+    - 60-end
+    text: Sealed, stamped, and entered. The packet is yours to carry the last leg,
+      to the East Gate guard at New Plymouth. North to the works at Kilnreach, then
+      the outskirts, then the walls. You are nearly there.
+    hints: From the Great Tithe Barn, go east to the Tithe Road, then north until
+      the road ends at the East Gate of New Plymouth. Type talk guard.
+  - questRequired:
+    - 60-waybill
+    questExcluded:
+    - 60-end
+    carriesItem: 40072
+    text: Pell's manifest, from Hartcharn? Give it here. I enter it in the tithe ledger
+      and seal it into a capital packet, and then there is but one leg left.
+    hints: Verrold will take the counter-signed manifest. Choose to hand it to him
+      below.
+  - questRequired:
+    - 60-waybill
+    questExcluded:
+    - 60-end
+    text: Pell sent you on with a manifest, and you have come without it?
+    hints: If you lost the manifest, Severin Pell at Hartcharn can make out another
+      from his counterfoil.
+topics:
+# verroldhandoff merges quest 60 trigger 1's npc_say ("Pell's counter-sign,
+# good. Into the tithe ledger it goes."); the old text described Verrold in
+# the narrator's voice.
+- key: verroldhandoff
+  kind: info
+  label: Here is Pell's counter-signed manifest.
+  text: Pell's counter-sign, good. Into the tithe ledger it goes. There. Sealed and
+    stamped. The East Gate guard at New Plymouth takes it from here. That is the last
+    of the road.
+  hints: Verrold sealed the manifest into a capital packet for the East Gate guard
+    at New Plymouth.
+  marked: true
+  questRequired:
+  - 60-waybill
+  questExcluded:
+  - 60-manifest
+  - 60-end
+  requiresItem: 40072
+  grantsQuest: 60-manifest
+  givesItem: 40073
+- key: lost_report
+  kind: info
+  label: I have lost the packet you sealed.
+  text: Lost the packet? The ledger entry stands, so I can seal another against it.
+    A moment. There. The East Gate guard, New Plymouth. Mind this one.
+  hints: You have a fresh sealed packet. Give it to the East Gate guard at New Plymouth.
+  marked: true
+  questRequired:
+  - 60-manifest
+  questExcluded:
+  - 60-end
+  itemExcluded: 40073
+  givesItem: 40073
+# The "work" pattern (pointing at the manifest) is FOLDED into the 60-waybill
+# opener variants.
+- key: grain
+  kind: info
+  label: What is it you count in this barn?
+  text: Every sack that leaves this vale for the capital passes my count first. One
+    in ten is the capital's. The capital is fed on what I write down.
+- key: gossip
+  kind: info
+  label: Is there any news from the vale?
+  text: I keep the tithe ledger for the capital. Numbers, not news.

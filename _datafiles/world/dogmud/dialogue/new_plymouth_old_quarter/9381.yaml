@@ -1,107 +1,114 @@
 mobid: 9381
 zone: New Plymouth Old Quarter
 defaultMood: neutral
-
 greetings:
-  - text: "Watch your step near the passage — the floor is wet and
-      the stone shifts where the canal has eaten through it."
-    moods: ["neutral", "cautious"]
-  - text: "You made it down. Not many bother. What is it?"
-    moods: ["friendly"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Down here with a question. Make it quick."
-      - "What is it."
-
-  - keywords: [""]
-    responses:
-      - "The stone does not wait for questions to be formed carefully."
-      - "I am between dives. Say what you mean."
-
-tree:
-  root:
-    text: "I work the flooded chambers below — what the water has not
-      taken, the silt has covered, and what the silt has covered I
-      find. If you are down here with a question, the stone can
-      probably answer it better than I can. But ask."
-    hints: "You could ask Gritta about the gray material she senses
-      in the deep stone, about the pre-Founding symbol on the buried
-      lintels, or about where her finds go and who receives them. She
-      studies you the way someone does when they are deciding whether to
-      ask a stranger to witness something for themselves."
-
-  nodes:
-    - id: q70_start
-      triggers: ["quest", "task", "help", "witness", "lintel", "prove",
-                 "outside"]
-      questExcluded: ["70-start", "70-end"]
-      grantsQuest: "70-start"
-      text: "You came down here on your own feet -- that already makes you
-        rarer than most. Then I will ask something of you. The lowest
-        chambers hold a lintel of the gray stone, and on its underside a
-        symbol the colony has no record of -- older than the founding,
-        carved before anyone admits there were people here. I have sent
-        fragments up for years, but a fragment is not the thing. Go west
-        and down, stand beneath the lintel, take a rubbing of the symbol,
-        and look at the sealed canal while you are there. Then carry the
-        rubbing up to Orin in the Crafting Quarter. Someone outside my
-        little chain should witness it and carry the proof to where it can
-        be read."
-      hints: "Gritta asked you to descend to the Buried Lintel, take a
-        examine the eight-pointed symbol on its underside to take a rubbing, and carry it
-        up to Orin the bookseller in the Crafting Quarter. Mind the canal
-        water on the way. You could ask about the quest or the task."
-      moodChange: cautious
-
-    - id: stone
-      triggers: ["gray", "material", "stone", "sense", "feel",
-                 "feeling", "walls", "weight", "pressure", "deep",
-                 "sealed", "mutation", "change"]
-      text: "The deep stone — the gray, the oldest layer — it carries
-        a different quality than the stone above. Not the weight —
-        the weight is what you expect. Something else — a kind of
-        pressure, as though the material is holding a shape it was
-        forced into a very long time ago and has not fully accepted.
-        The newer foundations do not have this. Only the gray stone,
-        and only in the lowest chambers, near the sealed courses."
-      hints: "She described what she senses with the precision of
-        someone who has measured the same thing many times. You could
-        ask about the pre-Founding symbols on the buried lintels, or
-        about who receives her finds."
-
-    - id: founding
-      triggers: ["founding", "symbol", "lintel", "old", "before",
-                 "eight", "orbital", "settlement", "colony",
-                 "inscription", "carving", "markings", "older",
-                 "history", "original"]
-      text: "The lintels in the lowest chambers — the gray-stone
-        ones — carry markings the colony has no record of. Eight
-        points, with an orbital element — the kind of symbol that
-        tracked something, measured something regular. The Founding
-        story has us arriving to empty ground. But the stone below
-        is worked stone. Someone built a passage and set a lintel
-        and carved into it, and then stopped — or was stopped —
-        long before the colony came. I have sent the best fragments
-        to Coll and to Orin. They can read script I cannot."
-      hints: "She named Coll and Orin — contacts up in the city who
-        receive her finds. You could ask about the gray material in
-        the deep stone, or about the finds she sends upward."
-
-    - id: finds
-      triggers: ["finds", "coll", "orin", "fragments", "pieces",
-                 "contacts", "bookseller", "sweeper", "send",
-                 "above", "up", "receives", "routes"]
-      text: "Coll is a street-sweeper in the Common Quarter — he
-        has been collecting fragments longer than I have been sending
-        them, and he knows how to route what he receives to the right
-        people. Orin keeps a book stall in the Crafting Quarter — he
-        has access to old survey records and pre-colony maps that the
-        Archive does not officially hold. Between the two of them,
-        the fragments reach where they need to go. My part is the
-        finding. The reading is theirs."
-      hints: "She named both contacts directly — Coll in the Common
-        Quarter, Orin in the Crafting Quarter. You could ask about
-        the pre-Founding symbols, or about what she senses in the
-        gray stone."
+- text: Watch your step near the passage. The floor is wet and the stone shifts where
+    the canal has eaten through it.
+  moods:
+  - neutral
+  - cautious
+- text: You made it down. Not many bother. What is it?
+  moods:
+  - friendly
+opener:
+  text: I work the flooded chambers below. What the water has not taken, the silt
+    has covered, and what the silt has covered, I find. If you are down here with a
+    question, the stone can probably answer it better than I can. But ask.
+  hints: Choose a line below to hear about the gray material she senses in the
+    deep stone, about the old symbol on the buried lintels, or about who
+    receives her finds. She studies you the way someone does when deciding
+    whether to ask a stranger to witness something for themselves.
+  # Quest 70 states (first match wins; HasQuest is also true at every later step).
+  variants:
+  - questRequired:
+    - 70-end
+    text: Orin has it, then. Good. Someone outside my little chain has seen it with
+      their own eyes. That was the point.
+    hints: Choose a line below to learn about the gray material in the deep
+      stone, about the old symbol on the buried lintels, or about who receives
+      her finds.
+  - questRequired:
+    - 70-witness
+    questExcluded:
+    - 70-end
+    itemExcluded: 40118
+    text: You lost the rubbing? The lintel has not gone anywhere. Take another.
+    hints: The Buried Lintel is west twice from Gritta's Flooded Cellar. Type look
+      symbol there.
+  - questRequired:
+    - 70-witness
+    questExcluded:
+    - 70-end
+    text: You have the rubbing? Then do not show it to me. Take it up to Orin.
+    hints: From Gritta's Flooded Cellar, go up the Flooded Stair, then east twice to
+      Quill's Lamp-Walk. Go south to Lower Lintel Street, east twice into the
+      Underdocks, then up the stair. Go north to the Chandlery, east twice to the
+      Caravan Depot, then north eight times, through Marn's shop and over the canal
+      bridge, to the Inkwalk. Orin's Bookstall is east. Type talk orin.
+  - questRequired:
+    - 70-start
+    questExcluded:
+    - 70-witness
+    - 70-end
+    text: Have you stood under the lintel yet? West, through the old stonework. Look
+      up when you get there.
+    hints: The Buried Lintel is west twice from Gritta's Flooded Cellar. From the
+      Flooded Stair, go down into the cellar first. If you are in the Silted
+      Gallery, the Buried Lintel is just south. Type look symbol there.
+topics:
+- key: q70_start
+  kind: offer
+  quest: 70
+  label: The Pre-Founding Web
+  playerLine: Is there something you want me to witness?
+  text: You came down here on your own feet. That already makes you rarer than most.
+    Then I will ask something of you. The lowest chambers hold a lintel of the gray
+    stone, and on its underside a symbol the colony has no record of. Older than the
+    founding, carved before anyone admits there were people here. I have sent
+    fragments up for years, but a fragment is not the thing. If you will do it, go
+    west from my cellar, stand beneath the lintel, take a rubbing of the symbol, and
+    look at the sealed canal while you are there. Then carry the rubbing up to Orin
+    in the Crafting Quarter. Someone outside my little chain should witness it and
+    carry the proof to where it can be read.
+  hints: Accept, then go west twice from Gritta's Flooded Cellar to the Buried
+    Lintel. If you are in the Silted Gallery, the Buried Lintel is just south.
+    Mind the canal north of the old stonework. It is not empty. Type look symbol
+    there.
+  questExcluded:
+  - 70-start
+  - 70-end
+  grantsQuest: 70-start
+  moodChange: cautious
+- key: stone
+  kind: info
+  label: What do you sense in the gray stone?
+  text: The deep stone, the gray, the oldest layer, carries a different quality than
+    the stone above. Not the weight. The weight is what you expect. Something else. A
+    kind of pressure, as though the material is holding a shape it was forced into a
+    very long time ago and has never fully accepted. The newer foundations do not
+    have this. Only the gray stone, and only in the lowest chambers, near the sealed
+    courses.
+  hints: She described what she senses with the precision of someone who has
+    measured the same thing many times.
+- key: founding
+  kind: info
+  label: What is the symbol on the buried lintels?
+  text: The lintels in the lowest chambers, the gray-stone ones, carry markings the
+    colony has no record of. Eight points, with rings around them, the kind of
+    symbol that tracked something, measured something that came round again. The
+    founding story has us arriving to empty ground. But the stone below is worked
+    stone. Someone built a passage and set a lintel and carved into it, and then
+    stopped, or was stopped, long before the colony came. I have sent the best
+    fragments to Coll and to Orin. They can read what I cannot.
+  hints: She named Coll and Orin, contacts up in the city who receive her finds.
+- key: finds
+  kind: info
+  label: Who receives the things you find?
+  text: Coll is a street sweeper in the Common Quarter. He has been collecting
+    fragments longer than I have been sending them, and he knows how to pass what he
+    receives to the right people. Orin keeps a bookstall in the Crafting Quarter. He
+    has old survey records and maps from before the colony that the Archive does not
+    officially hold. Between the two of them, the fragments reach where they need to
+    go. My part is the finding. The reading is theirs.
+  hints: She named both contacts plainly, Coll in the Common Quarter and Orin in the
+    Crafting Quarter.

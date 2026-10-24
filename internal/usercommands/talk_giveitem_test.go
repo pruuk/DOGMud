@@ -4,12 +4,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// buildPlayerState's GiveItem backs dialogue `givesItem:`. It discarded
+// conversation.PlayerState's GiveItem backs topic `givesItem:`. It discarded
 // StoreItem's return, so an overloaded player was told "You receive a X" for
 // an item that was never stored AND got an ItemOwnership{Gained:true} event —
 // which ItemOwnership_CheckItemQuests uses to fire item_gain quest triggers
@@ -56,7 +57,7 @@ func TestDialogueGiveItem_OverloadedPlayer_NoPhantomDeliveryOrEvent(t *testing.T
 	// beyond 2x that. Zero Strength makes any weighted item unstorable.
 	u.Character.Stats.Strength.ValueAdj = 0
 
-	buildPlayerState(u).GiveItem(tgiItemId)
+	conversation.PlayerState(u).GiveItem(tgiItemId)
 
 	if got := len(u.Character.Items); got != 0 {
 		t.Errorf("player holds %d items; want 0 (nothing was actually stored)", got)
@@ -80,7 +81,7 @@ func TestDialogueGiveItem_HappyPath_StillDeliversAndFiresEvent(t *testing.T) {
 	u, cleanup := seedTalkGiveItemFixture(t)
 	defer cleanup()
 
-	buildPlayerState(u).GiveItem(tgiItemId)
+	conversation.PlayerState(u).GiveItem(tgiItemId)
 
 	if got := len(u.Character.Items); got != 1 {
 		t.Fatalf("player holds %d items; want 1", got)

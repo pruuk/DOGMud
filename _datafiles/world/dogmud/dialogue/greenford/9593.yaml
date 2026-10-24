@@ -1,37 +1,23 @@
 mobid: 9593
 zone: Greenford
 defaultMood: friendly
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Come in, if you must. The circle is drawn fresh."
-      - "Cade. State your business plainly, the light in here is poor."
-
-  - keywords: ["enchant", "sigil", "wares", "buy", "stock", "shard"]
-    responses:
-      - "Chrysalis shards, binding paste, mutation catalyst, a few
-        settings not yet claimed. I keep what the working demands,
-        nothing more."
-      - "Ask specifically and I will tell you what is on the shelf.
-        I do not stock idle curiosities."
-
-  - keywords: ["craft", "recipe", "make", "circle", "working"]
-    responses:
-      - "I can bind a chrysalis setting or work a chrysalis core if
-        you bring the materials to the circle. The working wants
-        precision. I have that in ready supply."
-
-  - keywords: [""]
-    responses:
-      - "Speak plainly. The circle does not tolerate wasted words."
-
-tree:
-  root:
-    text: "Come in, if you must. The circle is drawn fresh."
-    hints: "You could ask Cade about his stock, or about enchanting at
-      the circle."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Come in, if you must. The circle is drawn fresh. I'm Cade. State your
+    business plainly, the light in here is poor.
+  hints: Choose a line below if you want to hear about his enchanting circle, or
+    about the materials he sells. To see what he sells, type list.
+topics:
+- key: craft
+  kind: info
+  label: Can I use your enchanting circle?
+  text: A chrysalis setting can be bound at this circle, or a chrysalis core worked,
+    if you bring the materials to it. You may use it if you keep it clean. The
+    working wants precision. Bring that with you.
+  hints: To see what you know how to make, type craft list.
+- key: enchant
+  kind: info
+  label: What materials do you sell?
+  text: Chrysalis shards and cores, binding paste, mutation catalyst, a few settings
+    not yet claimed. Oak bark, hive fragments and black pearl when the caravans have
+    them. I keep what the working demands, nothing more. I do not stock idle
+    curiosities.

@@ -254,13 +254,16 @@
 
     insp.appendChild(ce("h2", { text: "Mob #" + detail.mobId }));
     insp.appendChild(this.buildTestSpawnRow(detail, enums));
-    // 5b: the dialogue editor opens in a dedicated panel for this mob.
-    var dlgBtn = ce("button", { "class": "mini", text: detail.hasDialogue ? "Dialogue…" : "Add dialogue…" });
-    dlgBtn.addEventListener("click", function () {
-      if (Panel.dirty && !window.confirm("Discard unsaved mob changes?")) return;
-      if (window.Builder.DialoguePanel) window.Builder.DialoguePanel.open(detail.mobId, detail.zone);
-    });
-    insp.appendChild(dlgBtn);
+    // The dialogue editor is off (#375 phase 1): it cannot write topic menus.
+    // The server refuses every Build.Dialogue.* message; say so here.
+    insp.appendChild(ce("div", {
+      "class": "dialogue-off",
+      style: "font-size:12px;color:var(--gold-dim);margin:6px 0;",
+      text: "Dialogue editing is off for now. " +
+        (detail.hasDialogue ? "This mob talks through a dialogue file" : "This mob has no dialogue file") +
+        ", and talking now runs through topic menus that this editor cannot write yet. " +
+        "The topic builder arrives in quest arc phase 6. Until then, edit dialogue files in the repo."
+    }));
 
     // Shared id-picker datalists: items from the login-time Build.Items
     // prefetch, conditions from the server enums.
@@ -320,7 +323,7 @@
     }
 
     // Chip editor for string-array fields (adjectives, groups, routineLinks,
-    // hates, knowsFacts, questFlags, spawnMutations, crafterRecipeIds). An
+    // hates, knowsFacts, spawnMutations, crafterRecipeIds). An
     // optional datalist gives autocomplete suggestions (e.g. observed groups).
     function chipsField(label, key, vals, hint, datalistOpts) {
       var wrap = ce("div", {});
@@ -693,7 +696,6 @@
     });
     body.appendChild(ce("div", { style: "margin:4px 0 8px;" }, [btArchBtn, btMobBtn]));
     body.appendChild(H.idRowsField("Condition ids", "conditionIds", detail.conditionIds, "", "dl-mob-conditions"));
-    body.appendChild(H.chipsField("Quest flags", "questFlags", detail.questFlags));
     body.appendChild(H.chipsField("Spawn mutations", "spawnMutations", detail.spawnMutations));
     body.appendChild(H.numField("Mutation chance %", "mutationChance", detail.mutationChance));
     body.appendChild(H.textAreaField("LLM profile (raw JSON)", "llmProfileJson", detail.llmProfileJson,
@@ -750,7 +752,7 @@
       relationships: g("relationships", []), knowsFacts: g("knowsFacts", []),
       defaultDisposition: g("defaultDisposition", 0), foldAnchorRoom: g("foldAnchorRoom", 0), storageChestRoom: g("storageChestRoom", 0),
       scriptTag: g("scriptTag", ""), behaviorArchetype: g("behaviorArchetype", ""),
-      conditionIds: g("conditionIds", []), questFlags: g("questFlags", []), spawnMutations: g("spawnMutations", []),
+      conditionIds: g("conditionIds", []), spawnMutations: g("spawnMutations", []),
       mutationChance: g("mutationChance", 0), llmProfileJson: g("llmProfileJson", ""),
       carryCapacity: g("carryCapacity", 0), healthMax: g("healthMax", 0), staminaMax: g("staminaMax", 0),
       corpseName: g("corpseName", ""), corpseDescription: g("corpseDescription", ""),

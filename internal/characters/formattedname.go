@@ -43,7 +43,7 @@ type FormattedName struct {
 	Suffix             string // What ansi alias suffix to use (if any)
 	Adjectives         []string
 	UseShortAdjectives bool   // Whether to failover to short adjectives
-	QuestAlert         bool   // Whether this mob is relevant to a current quest
+	Marker             string // the viewer's talk marker, "[!]", "[?]", "[*]" or "" (#375)
 	PetName            string // Name of pet (if any)
 	DuplicateIndex     int    // When > 0, appends #N to name and shifts color for duplicates
 }
@@ -94,8 +94,8 @@ func (f FormattedName) String() string {
 		output += `)</ansi>`
 	}
 
-	if f.QuestAlert {
-		output = `<ansi fg="questflag">★</ansi>` + output
+	if f.Marker != `` {
+		output = `<ansi fg="questflag">` + f.Marker + `</ansi> ` + output
 	}
 
 	if f.PetName != `` {
@@ -175,7 +175,7 @@ func (c *Character) GetCharacterName(ansi bool) string {
 	}
 	f := c.getFormattedName(0, `username`)
 	f.Adjectives = nil
-	f.QuestAlert = false
+	f.Marker = ``
 	f.PetName = ``
 	return f.String()
 }

@@ -1,0 +1,25 @@
+mobid: 100
+zone: Zone A
+defaultMood: neutral
+topics:
+- key: errand
+  kind: offer
+  quest: 1
+  label: Clean Errand
+  playerLine: Do you want help with something?
+  text: Fetch nothing and come back.
+  questExcluded: [1-start, 1-end]
+  grantsQuest: 1-start
+- key: errand_done
+  kind: handin
+  quest: 1
+  label: Clean Errand
+  playerLine: I fetched nothing.
+  text: Well done.
+  questRequired: [1-start]
+  questExcluded: [1-end]
+  grantsQuest: 1-end
+- key: weather
+  kind: info
+  label: How is the weather?
+  text: Dry.

@@ -29,5 +29,5 @@ triggers:
           mob: 9584
           lines:
             - {delay: 1, text: "Good. When you want one of my secrets,
-                ask me for it by name."}
+                come back with the coin for it."}
       - grant: "78-end"

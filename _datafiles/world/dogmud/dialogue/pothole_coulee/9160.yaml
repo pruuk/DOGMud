@@ -1,183 +1,156 @@
 mobid: 9160
 zone: Pothole Coulee
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "hail"]
-    responses:
-      - "You found your way up here. Few do. I am Sere. I keep the shrine, or
-          the shrine keeps me -- after this long it is hard to say which."
-      - "Speak softly. The old places hear better than the new ones, and this
-          is the oldest of all."
-
-  - keywords: ["shrine", "old", "place", "lore", "learn", "keep", "quest",
-      "task"]
-    responses:
-      - "This shrine is older than the stones Hale sings, older than the folk
-          who built the ring below. Someone raised it before any of us, and
-          left -- and left something behind. Ask me, if you have come to help
-          me find out what."
-      - "I have tended this place a long time on the strength of a feeling. Ask,
-          and I will tell you what the feeling is."
-
-  - keywords: ["skull", "translucent", "temples", "mutation", "opened"]
-    responses:
-      - "The thinning shows through me, yes -- the bone of my skull, pale under
-          the skin at the temples. The old place does it to whoever stays in
-          it. I stayed longest. I have made my peace. The shrine and I have
-          worn into the same shape."
-
-  - keywords: ["beneath", "under", "floor", "disc", "stone", "buried"]
-    questRequired: ["49-end"]
-    responses:
-      - "The disc is still down there under the Reliquary floor, where the
-          light can reach it. I go and sit with it some evenings. It does not
-          seem to mind."
-
-  - keywords: ["beneath", "under", "floor", "disc", "stone", "buried"]
-    questExcluded: ["49-start"]
-    responses:
-      - "Something lies under the floor of the innermost chamber -- the
-          Reliquary, the deepest room. I have felt it there for thirty years,
-          under the cracked flags, and never had the hands or the right to lift
-          it. Perhaps you do. Ask me to send you, if you would look."
-
-  - keywords: [""]
-    responses:
-      - "Ask. I have little else to offer but answers."
-      - "The shrine keeps. So do I. Take your time."
-      - "Speak, and I will listen as the old places listen."
-
-tree:
-  root:
-    text: "Sere. Keeper of the old shrine -- or its longest guest."
-    hints: "You could ask Hermit Sere about the shrine, or about what lies
-      beneath it, or your task."
-    variants:
-      # ── Not ready (Hale's task unfinished) ───────────────
-      - questExcluded: ["48-end"]
-        text: "You have come up out of order. The stones come before the shrine
-          -- go down to Hale, learn the folk's story and settle what needs
-          settling, and come back when he has named you sound. What lies here is
-          not for the unready, and I have waited this long. I can wait a little
-          more."
-        hints: "Return to Loresinger Hale at the standing stones and finish his
-          task before coming to Hermit Sere."
-
-      # ── Ready for quest 49 ───────────────────────────────
-      - questRequired: ["48-end"]
-        questExcluded: ["49-start", "49-end"]
-        text: "Hale sent you, and the reckoning-bone is on you -- so you have
-          seen the mark it carries at its oldest end. I have felt that same mark
-          under my floor for thirty years. Ask me about what lies beneath, when
-          you are ready to bring it to light."
-        hints: "Type ask sere beneath to take on the shrine's task."
-
-      # ── Mid quest 49, one variant per step (one command each) ─
-      - questRequired: ["49-start"]
-        questExcluded: ["49-find", "49-end"]
-        text: "It is still down there, under the Reliquary floor. West into the
-          nave, then north, to the deepest chamber, where the flags have
-          cracked and heaved. Search it out with your hands."
-        hints: "Go west into the Collapsed Nave and north into the Reliquary,
-          then type search."
-      - questRequired: ["49-find"]
-        questExcluded: ["49-end"]
-        text: "You have the look of someone who has touched it. Tell me. Is it
-          real?"
-        hints: "Type ask sere done."
-
-      # ── Repeatable 58 open ───────────────────────────────
-      - questRequired: ["58-start"]
-        questExcluded: ["58-end"]
-        text: "The stones are waiting for you in the Reliquary. Go and listen
-          to them. They will tell you themselves when they are done."
-        hints: "Go west into the Collapsed Nave and north into the Reliquary,
-          then type search."
-
-      # ── Quest 49 complete ────────────────────────────────
-      - questRequired: ["49-end"]
-        text: "You looked on it, and you came back, and you carry the wondering
-          the way I have carried it -- lightly, because there is nothing else to
-          do with it. You are a friend of the folk now, and the only soul living
-          who has seen the thing beneath the shrine. That is no small thing to
-          be. Go well, and come back if the world ever tells you what it was."
-        hints: "You have cleared the Lore spoke. To read the stones again, type
-          ask sere work."
-
-  nodes:
-    # ── QUEST 49 OFFER ────────────────────────────────────────
-    - id: shrine_offer
-      triggers: ["beneath", "under", "floor", "disc", "buried", "search",
-        "look", "quest", "task"]
-      questRequired: ["48-end"]
-      questExcluded: ["49-start", "49-end"]
-      grantsQuest: "49-start"
-      text: "Then I will send you where I cannot go on my own account. The
-        Reliquary is the deepest chamber of the shrine: west into the nave
-        from here, then north. Its flagstone floor has cracked and lifted over
-        something that has wanted lifting a long time. Search the floor with
-        your hands and bring out what is under it. Look on it well. Then come
-        and tell me what you saw."
-      hints: "Go west into the Collapsed Nave and north into the Reliquary,
-        then type search."
-
-    # ── QUEST 49 TURN-IN ──────────────────────────────────────
-    - id: shrine_turnin
-      triggers: ["report", "done", "ready", "finished", "real", "found",
-        "disc", "beneath", "under", "floor", "buried", "quest", "task"]
-      questRequired: ["49-find"]
-      questExcluded: ["49-end"]
-      grantsQuest: "49-end"
-      text: "So it is real. I have felt it under the floor for thirty years and
-        never had the hands to lift it -- and you did, in an afternoon. Leave it
-        where the light can reach it. Some things are meant to be found more
-        than once. You came to us a stranger, and you leave the one soul living
-        who has looked on the thing beneath the shrine and carried the wondering
-        back out. Carry it well. The world may tell you what it was, one day,
-        somewhere far from here."
-      hints: "Quest complete. You have cleared the Lore spoke."
-
-    # ── REPEATABLE STONES READING OFFER ──────────────────────
-    #    The search in the Reliquary finishes quest 58 on the spot; there is
-    #    no report back, so nothing here asks the player to return.
-    - id: stones_loop_offer
-      triggers: ["work", "again", "more", "stones", "shrine", "quest", "task"]
-      questRequired: ["49-end"]
-      grantsQuest: "58-start"
-      questExcluded: ["58-start", "58-end"]
-      text: "The shrine speaks differently each time. If you have the
-        patience, go back to the Reliquary and read the stones again. They
-        will tell you what they have to say. You need not come back to tell
-        me. I will hear it in the stones."
-      hints: "Go west into the Collapsed Nave and north into the Reliquary,
-        then type search."
-
-    # ── QUEST 49 MID-QUEST (before the search): answers the report and lesson
-    #    words a player tries early, so they do not reach the patterns. Placed
-    #    after every grant node (the editor validator requires grants first);
-    #    its 49-start gate keeps it off the 58 offer's path. ──
-    - id: shrine_progress
-      triggers: ["report", "done", "ready", "finished", "real", "quest",
-        "task", "search", "disc", "floor", "beneath", "under", "buried",
-        "reliquary", "where", "how", "help"]
-      questRequired: ["49-start"]
-      questExcluded: ["49-find", "49-end"]
-      text: "Not yet. It is still under the Reliquary floor. West into the nave
-        from here, then north. Search the cracked flags with your hands."
-      hints: "Go west into the Collapsed Nave and north into the Reliquary,
-        then type search."
-
-    # ── REPEATABLE 58 OPEN: the reading is still to do ───────
-    - id: stones_loop_progress
-      triggers: ["work", "again", "more", "stones", "shrine", "report",
-        "done", "ready", "quest", "task", "search", "how", "help"]
-      questRequired: ["58-start"]
-      questExcluded: ["58-end"]
-      text: "The stones are waiting for you in the Reliquary, not here with
-        me. Go and search them."
-      hints: "Go west into the Collapsed Nave and north into the Reliquary,
-        then type search."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Sere. Keeper of the old shrine, or its longest guest.
+  hints: Choose a line below if you would like to hear about the shrine, or
+    about what lies beneath it, or your task.
+  variants:
+  - questExcluded:
+    - 48-end
+    text: You have come up out of order. The stones come before the shrine. Go down
+      to Hale, learn the folk's story and settle what needs settling, and come back
+      when he has named you sound. What lies here is not for the unready, and I have
+      waited this long. I can wait a little more.
+    hints: Return to Loresinger Hale at the standing stones and finish his task before
+      coming to Hermit Sere.
+  - questRequired:
+    - 48-end
+    questExcluded:
+    - 49-start
+    - 49-end
+    text: Hale sent you, and the reckoning-bone is on you, so you have seen the
+      mark it carries at its oldest end. I have felt that same mark under my floor
+      for thirty years. When you are ready to bring it to light, I will tell you
+      what lies beneath.
+    hints: Choose The Old Shrine below to take on the shrine's task.
+  - questRequired:
+    - 49-start
+    questExcluded:
+    - 49-find
+    - 49-end
+    text: It is still down there, under the Reliquary floor. West into the nave, then
+      north, to the deepest chamber, where the flags have cracked and heaved. Search
+      it out with your hands.
+    hints: Go west into the Collapsed Nave and north into the Reliquary, then type
+      search.
+  - questRequired:
+    - 49-find
+    questExcluded:
+    - 49-end
+    text: You have the look of someone who has touched it. Tell me. Is it real?
+    hints: Choose The Old Shrine below to report.
+  - questRequired:
+    - 58-start
+    questExcluded:
+    - 58-end
+    text: The stones are waiting for you in the Reliquary. Go and listen to them.
+      They will tell you themselves when they are done.
+    hints: Go west into the Collapsed Nave and north into the Reliquary, then type
+      search.
+  - questRequired:
+    - 49-end
+    text: You looked on it, and you came back, and you carry the wondering the way
+      I have carried it lightly, because there is nothing else to do with it. You
+      are a friend of the folk now, and the only soul living who has seen the thing
+      beneath the shrine. That is no small thing to be. Go well, and come back if
+      the world ever tells you what it was.
+    hints: You have finished the lore trail. To read the stones again, choose Reading
+      the Stones below.
+topics:
+- key: shrine_offer
+  kind: offer
+  quest: 49
+  label: The Old Shrine
+  playerLine: Do you want me to look beneath the shrine?
+  text: 'Then I will send you where I cannot go on my own account. The Reliquary is
+    the deepest chamber of the shrine: west into the nave from here, then north. Its
+    flagstone floor has cracked and lifted over something that has wanted lifting
+    a long time. Search the floor with your hands and bring out what is under it.
+    Look on it well. Then come and tell me what you saw.'
+  hints: Go west into the Collapsed Nave and north into the Reliquary, then type search.
+  questRequired:
+  - 48-end
+  questExcluded:
+  - 49-start
+  - 49-end
+  grantsQuest: 49-start
+- key: shrine_turnin
+  kind: handin
+  quest: 49
+  label: The Old Shrine
+  playerLine: I found it under the Reliquary floor. It is real.
+  text: So it is real. I have felt it under the floor for thirty years and never had
+    the hands to lift it, and you did, in an afternoon. Leave it where the light
+    can reach it. Some things are meant to be found more than once. You came to us
+    a stranger, and you leave the one soul living who has looked on the thing beneath
+    the shrine and carried the wondering back out. Carry it well. The world may tell
+    you what it was, one day, somewhere far from here.
+  hints: Quest complete. You have finished the lore trail.
+  questRequired:
+  - 49-find
+  questExcluded:
+  - 49-end
+  grantsQuest: 49-end
+- key: stones_loop_offer
+  kind: offer
+  quest: 58
+  label: Reading the Stones
+  playerLine: Is there more for me to do at the shrine?
+  text: The shrine speaks differently each time. If you have the patience, go back
+    to the Reliquary and read the stones again. They will tell you what they have
+    to say. You need not come back to tell me. I will hear it in the stones.
+  hints: Go west into the Collapsed Nave and north into the Reliquary, then type search.
+  questRequired:
+  - 49-end
+  questExcluded:
+  - 58-start
+  - 58-end
+  grantsQuest: 58-start
+- key: shrine_progress
+  kind: info
+  label: Where is the thing beneath the floor?
+  text: Not yet. It is still under the Reliquary floor. West into the nave from here,
+    then north. Search the cracked flags with your hands.
+  hints: Go west into the Collapsed Nave and north into the Reliquary, then type search.
+  questRequired:
+  - 49-start
+  questExcluded:
+  - 49-find
+  - 49-end
+- key: stones_loop_progress
+  kind: info
+  label: Where do I read the stones?
+  text: The stones are waiting for you in the Reliquary, not here with me. Go and
+    search them.
+  hints: Go west into the Collapsed Nave and north into the Reliquary, then type search.
+  questRequired:
+  - 58-start
+  questExcluded:
+  - 58-end
+# Restored from the old "beneath" pattern gated on 49-end (dropped by the
+# converter as covered).
+- key: disc
+  kind: info
+  label: Is the disc still down there?
+  text: The disc is still down there under the Reliquary floor, where the light can
+    reach it. I go and sit with it some evenings. It does not seem to mind.
+  questRequired:
+  - 49-end
+- key: shrine
+  kind: info
+  label: How old is this shrine?
+  text: Older than the stones Hale sings, older than the folk who built the ring
+    below. Someone raised it before any of us, and left, and left something behind.
+    I have tended this place a long time on the strength of a feeling. Something
+    lies under the floor of the Reliquary, the deepest room. I have felt it there
+    for thirty years, under the cracked flags, and never had the hands or the right
+    to lift it.
+  questExcluded:
+  - 49-find
+- key: skull
+  kind: info
+  label: Why does your skull show at the temples?
+  text: The thinning shows through me, yes. The bone of my skull is pale under the
+    skin at the temples. The old place does it to whoever stays in it. I stayed longest.
+    I have made my peace. The shrine and I have worn into the same shape.

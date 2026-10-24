@@ -1,39 +1,23 @@
 mobid: 9590
 zone: Greenford
 defaultMood: friendly
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "Welcome to the Guild Forge. Mind the sparks."
-      - "Aldo. Something needs made, mended, or sharpened?"
-
-  - keywords: ["smith", "blacksmith", "wares", "buy", "stock", "forge"]
-    responses:
-      - "Ingots, iron, coal, a few blanks I have not sold yet.
-        I take orders too, if you need something particular made
-        proper instead of bought off a shelf."
-      - "I keep the forge lit most every day. Steel, iron, chain
-        link, wooden stock for hafts and hilts. Ask specifically
-        and I will tell you what is on the rack."
-
-  - keywords: ["craft", "recipe", "make", "blade", "weapon"]
-    responses:
-      - "I can turn out blades, buckles, chain, and a fair bit of
-        plate if you bring the right materials. The forge does not
-        care whose order it is, only whether the metal is honest."
-
-  - keywords: [""]
-    responses:
-      - "Speak up if you need something. The hammer does not stop
-        for conversation."
-
-tree:
-  root:
-    text: "Welcome to the Guild Forge. Mind the sparks."
-    hints: "You could ask Aldo about his stock, or about crafting a
-      blade or piece of gear."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Mind the sparks. This is the Guild Forge, and I'm Aldo. I'd sooner be
+    hammering than talking, so tell me straight. Are you here to buy metal, or
+    to work at the forge?
+  hints: Choose a line below if you want to hear about his forge, or about the
+    materials he sells. To see what he sells, type list.
+topics:
+- key: craft
+  kind: info
+  label: Can I use your forge?
+  text: I keep the forge lit most every day. Blades, buckles, chain, a fair bit of
+    plate, whatever the metal allows. You may work at it if you stay out of my way.
+    Bring the right materials. The forge does not care whose work it is, only
+    whether the metal is honest.
+  hints: To see what you know how to make, type craft list.
+- key: smith
+  kind: info
+  label: What materials do you sell?
+  text: Steel and iron ingots, lake-iron nodules, pine pitch, wooden planks for hafts
+    and hilts, chain link, and coal dust for the fire. The prices are on the list.

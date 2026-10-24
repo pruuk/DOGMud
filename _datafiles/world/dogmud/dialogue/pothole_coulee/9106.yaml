@@ -1,354 +1,414 @@
-# Crier Toke — town crier, Hub Square (5203). Grants and closes
-# quest 31 (Find Your Footing). The mid-quest beats are quest-engine
-# triggers (room_enter 5213, list then buy at 5207, equip, room_enter
-# 5205; one command per step, in order). See
-# quests/31-find_your_footing.yaml.
-
 mobid: 9106
 zone: Pothole Coulee
 defaultMood: friendly
-
 greetings:
-  # Greetings fire once per mob per player per boot with no quest or visit
-  # gate, so a returning character hears this too: it must not call them
-  # new (#620).
-  - text: "Hoy there! I never forget a face. Faces are half my stock in trade."
-    moods: ["friendly", "neutral"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "hoy"]
-    responses:
-      - "Hoy yourself! Stand close, the throat does the loud part."
-      - "Good day for news. Every day is, if you stand in the right square."
-
-  - keywords: [""]
-    responses:
-      - "Speak up or stand back, friend -- the next call is due."
-      - "Hm? The notice-post has anything I forgot to shout."
-
-tree:
-  root:
-    text: >-
-      Toke, town crier, both mouths at your service -- the top one for
-      talk, the low one for distance. Whatever happened in the coulee
-      today, I knew it yesterday.
-    hints: >-
-      You could ask about the news, the seven mouths of the coulee, or
-      a task to find your footing.
-    variants:
-      - questExcluded: ["30-end"]
-        text: >-
-          Hoy, unopened! No offense meant -- I can hear it in how you
-          walk, like the ground might disagree with you. See Cleric
-          Hadwen at the pool first. The town makes more sense from the
-          far side of the water.
-        hints: >-
-          You could ask Hadwen about the rite at the Awakening Pool,
-          north of the square.
-      # Quest 31 mid-quest: one variant per step, in order, each naming
-      # that step's one command (owner ruling 2026-10-17).
-      - questRequired: ["31-start"]
-        questExcluded: ["31-school", "31-end"]
-        text: >-
-          Still walking the town? Good. The slates first: the Chrysalis
-          School Hall, up past the pool and the basalt stair. I will
-          still be shouting when you get back.
-        hints: >-
-          Go north past the Awakening Pool and keep north up the basalt
-          stair to the school hall. Walking in is enough.
-      - questRequired: ["31-school"]
-        questExcluded: ["31-list", "31-end"]
-        text: >-
-          Seen the slates? Good. Now the shelves: Trader Onna's, in
-          Coulee Provisions. See what she has before you spend.
-        hints: >-
-          Go south to Market Row, then east into Coulee Provisions, and
-          type list.
-      - questRequired: ["31-list"]
-        questExcluded: ["31-shop", "31-end"]
-        text: >-
-          Looked over Onna's shelves, have you? The cotton shirt is the
-          one. You have coin enough for it.
-        hints: >-
-          At Coulee Provisions, type buy cotton shirt.
-      - questRequired: ["31-shop"]
-        questExcluded: ["31-equip", "31-end"]
-        text: >-
-          A new shirt, still folded in your pack? It keeps nobody warm
-          there. Put it on.
-        hints: >-
-          Type equip cotton shirt.
-      - questRequired: ["31-equip"]
-        questExcluded: ["31-lantern", "31-end"]
-        text: >-
-          Dressed for the coulee! Now the taps: The Drowned Lantern,
-          the inn off Market Row. Put your head in the door.
-        hints: >-
-          Go south to Market Row, then west into The Drowned Lantern.
-          Walking in is enough.
-      - questRequired: ["31-lantern"]
-        questExcluded: ["31-end"]
-        text: >-
-          There you are! School, shop, and the Lantern's taps -- I had
-          word of you from all three before your boots cleared their
-          doorways. Say the word footing and we will call it done.
-        hints: >-
-          Type ask toke footing to finish the task.
-      - questRequired: ["31-end"]
-        text: >-
-          The town knows your face now -- I made sure of it. When you
-          want more than the hub, ask me about the mouths. The coulee
-          has seven of them, and every one leads somewhere that will
-          teach you something.
-        hints: >-
-          You could ask about the seven mouths, or the day's news.
-
-  nodes:
-    # ── THE WAY TO THE DRILL YARD AND THE LONG TERRACE ──────────
-    # Quests 32 and 50 send a newcomer to these two yards, and nothing
-    # gave the way from the square (2026-10-17 newbie-duo playtest). First
-    # in the list so "where is the drill yard" is answered here, not by a
-    # footing step node that also listens for "where". Routes walked in
-    # the room data: 5203 north 5200, east 5202, east 5209, east 5220,
-    # east 5227; and 5209 north 5226, up 5347, north 5348, north 5349, up
-    # 5350, east 5351.
-    - id: way_drill_yard
-      triggers: ["drill", "yard", "vorn", "dummy"]
-      text: >-
-        The Drill Yard? Easy walking. From this square go north to the
-        pool, then east four times: the shore path, the Mending Hut, the
-        dry coulee mouth, and the yard itself. Drillmaster Vorn will be
-        the one shouting.
-      hints: >-
-        From Hub Square: north, then east four times.
-
-    - id: way_long_terrace
-      triggers: ["terrace", "iden", "range", "butt", "sling"]
-      text: >-
-        The terraces are up on the bluff. From this square go north to
-        the pool, east twice to the Mending Hut, then north to the Bluff
-        Steps. Climb up, go north twice, and up once more to the Firing
-        Range, where Marksman Iden keeps watch. The Long Terrace is just
-        east of her.
-      hints: >-
-        From Hub Square: north, east, east, north, up, north, north, up,
-        then east to the Long Terrace.
-
-    # ── THE WAY TO SCOUT TARN AND THE STEPPE ────────────────────
-    # Quest 41 sends a newcomer to the Open Steppe "south of Scout Tarn",
-    # and nothing gave the way to Tarn (2026-10-17 newbie-duo verify2).
-    # Route walked in the room data: 5203 west 5216, west 5223, south
-    # 5282, south 5283 (Steppe Edge, Tarn 9136), south 5284.
-    - id: way_scout_tarn
-      triggers: ["tarn", "scout", "steppe"]
-      text: >-
-        Scout Tarn? She keeps to the Steppe Edge, out past the scrub.
-        From this square go west twice, along the stilt-house walk and
-        into the scrub draw, then south twice through the scrub mouth.
-        The Open Steppe is one more step south of her.
-      hints: >-
-        From Hub Square: west, west, south, south to the Steppe Edge.
-
-    - id: newcomer_players
-      triggers: ["people", "players", "player", "others", "talk", "say", "who",
-        "tell", "whisper", "chat", "speak", "everyone", "quest", "task"]
-      questRequired: ["21-start"]
-      questExcluded: ["21-end"]
-      grantsQuest: "21-end"
-      text: >-
-        You will not walk Gaius alone -- real folk fill these roads,
-        same as you. A few words to carry: type say followed by your
-        words to speak to everyone in the room, who to see who is
-        about, tell someone's-name then your words to speak just to
-        them, and try an emote like wave or grin. That is the whole of
-        getting on with people. The rest you will pick up by doing. Off
-        you go.
-      hints: >-
-        Type say <words> to speak to the room, who to see who's online,
-        tell <name> <words> to speak privately, and emotes like wave.
-        You've found your footing in Gaius.
-      moodChange: friendly
-
-    - id: footing_offer
-      triggers: ["footing", "task", "quest", "town", "around", "work"]
-      questRequired: ["30-end"]
-      questExcluded: ["31-start", "31-end"]
-      grantsQuest: "31-start"
-      text: >-
-        Newly Opened and nowhere to be? Perfect. Learn the town before
-        the town has to learn you. Three stops. First the Chrysalis
-        School Hall up past the pool. Then kit yourself out at Trader
-        Onna's shelves in Coulee Provisions -- buy a shirt and put it
-        on. And last The Drowned Lantern, the inn with the best taps in
-        the coulee. Do it in that order and come tell me what you saw. I
-        will hear about it anyway, but I like it firsthand. And if you
-        lose your place, the <ansi fg="command">hint</ansi> command
-        tells you the next stop, and <ansi fg="command">quests</ansi>
-        lists everything you have taken on.
-      hints: >-
-        Go north past the Awakening Pool and keep north up the basalt
-        stair to the Chrysalis School Hall. Walking in is enough.
-      moodChange: friendly
-
-    - id: footing_unopened
-      triggers: ["footing", "task", "quest", "work"]
-      questExcluded: ["30-end", "31-start", "31-end"]
-      text: >-
-        Eager! I respect it. But the pool comes first -- that is not
-        my rule, it is just the order the coulee works in. Cleric
-        Hadwen, north side of the square. Come back Opened and I will
-        put your feet to work.
-      hints: >-
-        Ask Hadwen about the rite at the Awakening Pool.
-
-    - id: footing_turnin
-      triggers: ["footing", "done", "finished", "quest", "task"]
-      questRequired: ["31-lantern"]
-      questExcluded: ["31-end"]
-      grantsQuest: "31-end"
-      text: >-
-        And done! Slates, shelves, taps -- the whole hub in one walk. Now
-        listen, because this is the part I save for people who finish things.
-        The coulee has seven mouths -- seven breaks in the rim, and past every
-        one somebody or something that will teach you what the town cannot.
-        Fighting, forge-smoke, the green reek of potions, wild country, the
-        quiet folding art, old stones that talk if you read them, and a far
-        hill where they put things down at distance. I am marking all seven on
-        your slate right now. And here -- take these to start you off: a cudgel
-        for the drill yard, and a sling with a pouch of shot for the range. Go
-        find the seven teachers. Walk the mouths in any order your boots hold.
-      hints: >-
-        Quest complete -- and seven new trails are on your quest log. Type
-        quests to see them all, or hint for a nudge on the nearest. The mouths
-        open off the shore and the square, and the map command shows what you
-        have found.
-      moodChange: friendly
-
-    # ── Quest 31 mid-quest questions (2026-10-17 audit S10) ──
-    # A player partway through Find Your Footing who asks about any word the
-    # quest invites gets the current step, not the catch-all. One node per
-    # step, in order, gated like the root variants above; same triggers on
-    # each so only the step gate picks the answer.
-    - id: footing_step_school
-      triggers: ["footing", "task", "quest", "done", "finished", "next", "help",
-        "how", "where", "lost", "map", "school", "slate", "shop", "shelves",
-        "provisions", "onna", "list", "buy", "shirt", "cotton", "equip", "wear",
-        "lantern", "inn", "taps"]
-      questRequired: ["31-start"]
-      questExcluded: ["31-school", "31-end"]
-      text: >-
-        Not done yet, friend, and the order matters. Slates first: the
-        Chrysalis School Hall, up past the pool and the basalt stair.
-        Shelves and taps after that. If you get turned around, the map
-        command shows where your feet have been.
-      hints: >-
-        Go north past the Awakening Pool and keep north up the basalt
-        stair to the school hall. Walking in is enough.
-
-    - id: footing_step_list
-      triggers: ["footing", "task", "quest", "done", "finished", "next", "help",
-        "how", "where", "lost", "map", "school", "slate", "shop", "shelves",
-        "provisions", "onna", "list", "buy", "shirt", "cotton", "equip", "wear",
-        "lantern", "inn", "taps"]
-      questRequired: ["31-school"]
-      questExcluded: ["31-list", "31-end"]
-      text: >-
-        Slates done, so the shelves are next. Trader Onna keeps Coulee
-        Provisions, off Market Row. Look over her stock before you spend:
-        a buyer who looks first pays less for regret.
-      hints: >-
-        Go south to Market Row, then east into Coulee Provisions, and
-        type list.
-
-    - id: footing_step_buy
-      triggers: ["footing", "task", "quest", "done", "finished", "next", "help",
-        "how", "where", "lost", "map", "school", "slate", "shop", "shelves",
-        "provisions", "onna", "list", "buy", "shirt", "cotton", "equip", "wear",
-        "lantern", "inn", "taps"]
-      questRequired: ["31-list"]
-      questExcluded: ["31-shop", "31-end"]
-      text: >-
-        You have seen Onna's stock. The cotton shirt is the one: cheap,
-        warm, and better than bare skin. You have coin enough.
-      hints: >-
-        At Coulee Provisions, type buy cotton shirt.
-
-    - id: footing_step_equip
-      triggers: ["footing", "task", "quest", "done", "finished", "next", "help",
-        "how", "where", "lost", "map", "school", "slate", "shop", "shelves",
-        "provisions", "onna", "list", "buy", "shirt", "cotton", "equip", "wear",
-        "lantern", "inn", "taps"]
-      questRequired: ["31-shop"]
-      questExcluded: ["31-equip", "31-end"]
-      text: >-
-        A shirt in your pack is a shirt keeping nobody warm. Put it on.
-        Gear only works when you wear it.
-      hints: >-
-        Type equip cotton shirt.
-
-    - id: footing_step_lantern
-      triggers: ["footing", "task", "quest", "done", "finished", "next", "help",
-        "how", "where", "lost", "map", "school", "slate", "shop", "shelves",
-        "provisions", "onna", "list", "buy", "shirt", "cotton", "equip", "wear",
-        "lantern", "inn", "taps"]
-      questRequired: ["31-equip"]
-      questExcluded: ["31-lantern", "31-end"]
-      text: >-
-        Dressed and ready! Last stop is the taps: The Drowned Lantern,
-        the inn off Market Row. Put your head in the door and come back
-        to me.
-      hints: >-
-        Go south to Market Row, then west into The Drowned Lantern.
-        Walking in is enough.
-
-    # All four stops done: footing, done, finished, quest and task reach
-    # footing_turnin above; every other quest word lands here.
-    - id: footing_step_report
-      triggers: ["next", "help", "how", "where", "lost", "map", "school", "slate",
-        "shop", "shelves", "provisions", "onna", "list", "buy", "shirt", "cotton",
-        "equip", "wear", "lantern", "inn", "taps"]
-      questRequired: ["31-lantern"]
-      questExcluded: ["31-end"]
-      text: >-
-        School, shelves, and taps, all three! You have walked the whole
-        hub. Say the word footing and we will call it done.
-      hints: >-
-        Type ask toke footing to finish the task.
-
-    - id: mouths
-      triggers: ["mouths", "mouth", "seven", "coulee", "rim", "spokes", "trails", "trials", "paths", "path"]
-      text: >-
-        Seven breaks in the coulee rim, and a path through every one.
-        I call them mouths because the town eats what they bring back.
-        Fighting in one, smithing in another, brewing, the wilds,
-        folding -- the quiet art, mind you -- old lore, and the far
-        hill where they teach the long shot. The paths are marked off
-        the shore and the square. Walk any of them. Walk all of them
-        if your boots hold.
-      hints: >-
-        The mouths open off the edges of town. The map command shows
-        what you have found so far. You could ask the way to the drill
-        yard, the terrace or the steppe.
-
-    - id: news
-      triggers: ["news", "word", "day", "notice", "happened"]
-      text: >-
-        Today's word: the pool is still patient, Onna's prices are
-        still fair, and Granny Wicker is still older than both. If you
-        want your own word carried, just speak --
-        <ansi fg="command">say</ansi> talks to the room you stand in,
-        <ansi fg="command">tell</ansi> reaches one ear further off,
-        and <ansi fg="command">emote</ansi> is for when words are too
-        small. I use all three before breakfast.
-      hints: >-
-        You could ask about the seven mouths or a task.
-
-    - id: voices
-      triggers: ["voices", "mouth", "throat", "loud", "shout"]
-      text: >-
-        Born with both, and glad of it. The low one carries across the
-        square. The top one does the thinking. They get along better
-        than most married couples. Folk stop noticing inside a week --
-        you will too.
-      hints: >-
-        You could ask about the news or the seven mouths.
+- text: Hoy there! I never forget a face. Faces are half my stock in trade.
+  moods:
+  - friendly
+  - neutral
+opener:
+  # The greeting pattern (hello) is folded in here.
+  text: Hoy yourself! Stand close, the throat does the loud part. Toke, town crier,
+    both mouths at your service. The top one is for talk, the low one for distance.
+    Whatever happened in the coulee today, I knew it yesterday.
+  hints: Choose a line below if you would like to hear about the news, the seven
+    mouths of the coulee, or a task to find your footing.
+  variants:
+  - questExcluded:
+    - 30-end
+    text: Hoy, unopened! No offense meant. I can hear it in how you walk, like the
+      ground might disagree with you. See Cleric Hadwen at the pool first. The town
+      makes more sense from the far side of the water.
+    hints: Go north to the Awakening Pool and type talk hadwen.
+  - questRequired:
+    - 31-start
+    questExcluded:
+    - 31-school
+    - 31-end
+    text: 'Still walking the town? Good. The slates first: the Chrysalis School Hall,
+      up past the pool and the basalt stair. I will still be shouting when you get
+      back.'
+    hints: Go north past the Awakening Pool and keep north up the basalt stair to
+      the school hall. Walking in is enough.
+  - questRequired:
+    - 31-school
+    questExcluded:
+    - 31-list
+    - 31-end
+    text: 'Seen the slates? Good. Now the shelves: Trader Onna''s, in Coulee Provisions.
+      See what she has before you spend.'
+    hints: Go south to Market Row, then east into Coulee Provisions, and type list.
+  - questRequired:
+    - 31-list
+    questExcluded:
+    - 31-shop
+    - 31-end
+    text: Looked over Onna's shelves, have you? The cotton shirt is the one. You have
+      coin enough for it.
+    hints: At Coulee Provisions, type buy cotton shirt.
+  - questRequired:
+    - 31-shop
+    questExcluded:
+    - 31-equip
+    - 31-end
+    text: A new shirt, still folded in your pack? It keeps nobody warm there. Put
+      it on.
+    hints: Type equip cotton shirt.
+  - questRequired:
+    - 31-equip
+    questExcluded:
+    - 31-lantern
+    - 31-end
+    text: 'Dressed for the coulee! Now the taps: The Drowned Lantern, the inn off
+      Market Row. Put your head in the door.'
+    hints: Go south to Market Row, then west into The Drowned Lantern. Walking in
+      is enough.
+  - questRequired:
+    - 31-lantern
+    questExcluded:
+    - 31-end
+    text: There you are! School, shop, and the Lantern's taps. I had word of you
+      from all three before your boots cleared their doorways. Tell me what you saw
+      and we will call it done.
+    hints: Choose Find Your Footing below to finish the task.
+  - questRequired:
+    - 31-end
+    text: The town knows your face now. I made sure of it. When you want more than
+      the hub, pick a mouth and I will send you down it. The coulee has seven of them,
+      and every one leads somewhere that will teach you something.
+    hints: Choose a line below to hear about the seven mouths or the day's news,
+      or take one of the seven trails.
+topics:
+# R17: the end of Toke's Road (quest 88), offered by Cleric Hadwen after the
+# rite. Quest 88 also closes when footing starts (its 31-start trigger), so a
+# player who takes footing first is never left holding it.
+- key: road_toke_end
+  kind: handin
+  quest: 88
+  label: Toke's Road
+  playerLine: Cleric Hadwen sent me to learn the town from you.
+  text: Hadwen sent you? Then you came to the right mouth! Hoy, newly Opened. I can
+    walk you round the whole hub in one go, the school, the shop and the inn, and
+    by the end of it the town will know your face.
+  hints: Toke offers Find Your Footing, a walk around the town. Choose it below.
+  questRequired:
+  - 88-start
+  questExcluded:
+  - 88-end
+  - 31-start
+  grantsQuest: 88-end
+  moodChange: friendly
+# Quest 21 "Newcomer's Path" is secret (not in the quest log), so this is a
+# marked info topic carrying the end grant, not a hand-in: a hand-in would
+# put [?] on Toke for a quest the player cannot see, and [?] outranks the
+# [!] of Find Your Footing on his name (requirements rule 9).
+- key: newcomer_players
+  kind: info
+  label: I'm new here. How do I talk to other people?
+  text: 'You will not walk Gaius alone. Real folk fill these roads, same as you.
+    A few words to carry: type say followed by your words to speak to everyone in
+    the room, who to see who is about, whisper and someone''s name then your words
+    to speak just to them, wherever they are, and try an emote like wave or grin.
+    That is the whole of getting on with people. The rest you will pick up by doing.
+    Off you go.'
+  hints: To speak to everyone in the room, type say and your words. For more, type
+    help say.
+  marked: true
+  questRequired:
+  - 21-start
+  questExcluded:
+  - 21-end
+  grantsQuest: 21-end
+  moodChange: friendly
+- key: footing_offer
+  kind: offer
+  quest: 31
+  label: Find Your Footing
+  playerLine: Will you show me around the town?
+  text: Newly Opened and nowhere to be? Perfect. Learn the town before the town has
+    to learn you. Three stops. First the Chrysalis School Hall up past the pool. Then
+    kit yourself out at Trader Onna's shelves in Coulee Provisions. Buy a shirt
+    and put it on. And last The Drowned Lantern, the inn with the best taps in the
+    coulee. Do it in that order and come tell me what you saw. I will hear about it
+    anyway, but I like it firsthand. And if you lose your place, the <ansi fg="command">hint</ansi>
+    command tells you the next stop, and <ansi fg="command">quests</ansi> lists everything
+    you have taken on.
+  hints: Go north past the Awakening Pool and keep north up the basalt stair to the
+    Chrysalis School Hall. Walking in is enough.
+  questRequired:
+  - 30-end
+  questExcluded:
+  - 31-start
+  - 31-end
+  grantsQuest: 31-start
+  moodChange: friendly
+- key: footing_unopened
+  kind: info
+  label: Do you have any work for me?
+  text: Eager! I respect it. But the pool comes first. The rule is not mine. It
+    is just the order the coulee works in. Cleric Hadwen, north side of the square. Come
+    back Opened and I will put your feet to work.
+  hints: Go north to the Awakening Pool and type talk hadwen.
+  questExcluded:
+  - 30-end
+  - 31-start
+  - 31-end
+- key: footing_turnin
+  kind: handin
+  quest: 31
+  label: Find Your Footing
+  playerLine: I've seen the school, the shop, and the inn.
+  text: 'And done! Slates, shelves, taps: the whole hub in one walk. Now listen,
+    because this is the part I save for people who finish things. The coulee has seven
+    mouths, seven breaks in the rim, and past every one somebody or something that
+    will teach you what the town cannot. Fighting, forge-smoke, the green reek of
+    potions, wild country, the quiet folding art, old stones that talk if you read
+    them, and a far hill where they put things down at distance. Pick any of them
+    and I will point you at its teacher, one at a time, in any order your boots hold.'
+  hints: Quest complete. Toke can now send you down any of the seven trails. Choose
+    one below. The map command shows what you have found.
+  questRequired:
+  - 31-lantern
+  questExcluded:
+  - 31-end
+  grantsQuest: 31-end
+  moodChange: friendly
+# R21: the seven trails, each its own offer after Find Your Footing. Each
+# starter item rides on the offer of the quest it belongs to. Every trail's
+# own trailhead offer stays on its teacher. Quest 50's pouch of shot comes
+# from its own quest_granted 50-start trigger (missing_item 30064).
+- key: send_drill
+  kind: offer
+  quest: 32
+  label: First Blood
+  playerLine: Who can teach me to fight?
+  text: Drillmaster Vorn, at the Drill Yard. He turns raw into ready, and you will
+    hear him before you see him. I have a cudgel for you, to hold in your hand on
+    the way. From this square go north to the pool, then east four times, past the
+    shore path, the Mending Hut and the dry coulee mouth, to the yard itself.
+  hints: Accept, and Toke hands you a cudgel. Then type wield cudgel, and from Hub
+    Square go north, then east four times to the Drill Yard.
+  breadcrumb: Walk the town with me first. After that, I can send you down any of
+    the seven mouths.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 32-start
+  - 32-end
+  grantsQuest: 32-start
+  givesItem: 10043
+- key: send_forge
+  kind: offer
+  quest: 35
+  label: First Heat
+  playerLine: Who can teach me to work iron?
+  text: Smith Rusk, at the Coulee Smithy. Few words and good iron. She will show you
+    how raw stock becomes a blade. From this square go north to the pool, then follow
+    the path west five times to the smithy. Start by looking over her stall.
+  hints: From Hub Square go north, then west five times to the Coulee Smithy. Next
+    to Rusk, type list.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 35-start
+  - 35-end
+  grantsQuest: 35-start
+- key: send_brew
+  kind: offer
+  quest: 38
+  label: First Brew
+  playerLine: Who can teach me to brew?
+  text: Herbalist Birna, at the Sheltered Pool. She makes salves out of roots and
+    patience, and she will teach you both. From this square go south to Market Row,
+    east twice through Coulee Provisions to the Reedwash Mouth, then south twice down
+    to her pool.
+  hints: From Hub Square go south, east, east, south, south to the Sheltered Pool.
+    At Birna's pool, type list.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 38-start
+  - 38-end
+  grantsQuest: 38-start
+- key: send_steppe
+  kind: offer
+  quest: 41
+  label: First Sign
+  playerLine: Who can teach me to read the wild?
+  text: Scout Tarn, out at the Steppe Edge. She reads ground the way Croup reads
+    a ledger. From this square go west twice, along the stilt-house walk and into
+    the scrub draw, then south twice through the scrub mouth. A hare has crossed
+    the Open Steppe just past her. Find its trail.
+  hints: 'From Hub Square: west, west, south, south to the Steppe Edge, then south
+    once more. On the Open Steppe, type track hare.'
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 41-start
+  - 41-end
+  grantsQuest: 41-start
+- key: send_folding
+  kind: offer
+  quest: 44
+  label: First Casting
+  playerLine: Who can teach me to cast spells?
+  text: Adept Grieve, in the old observatory past the reed jetty. Quiet, and stranger
+    than he lets on, but he knows the folding art. From this square go west, then
+    north three times up the shore to the Stargazer Cut, and climb up twice to the
+    Observatory Hall. The practice mark is in the Star Chamber beyond him.
+  hints: From Hub Square go west, north, north, north, up, up to the Observatory Hall.
+    Then go north into the Star Chamber and type cast spike mote.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 44-start
+  - 44-end
+  grantsQuest: 44-start
+- key: send_folk
+  kind: offer
+  quest: 47
+  label: First Words
+  playerLine: Who can teach me the ways of the folk?
+  text: Elder Wenna, at the farmstead up the north shore. Her first lesson is one
+    you can start right here. When you do not know a thing, type help, and the game
+    tells you. Do that, then go and tell her. From this square go east, then north
+    six times, up the east shore and the cartway to the Commons Yard.
+  hints: Type help. Then from Hub Square go east, then north six times to the Commons
+    Yard.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 47-start
+  - 47-end
+  grantsQuest: 47-start
+- key: send_range
+  kind: offer
+  quest: 50
+  label: First Shot
+  playerLine: Who can teach me to shoot?
+  text: Marksman Iden, on the terraces up the bluff. She teaches the long shot. I
+    have a sling for you, to ready before you climb. From this square go north to
+    the pool, east twice to the Mending Hut, then north to the Bluff Steps. Climb up,
+    go north twice, and up once more to the Firing Range.
+  hints: Accept, and Toke hands you a sling. Then type equip sling, and from Hub
+    Square go north, east, east, north, up, north, north, up to the Firing Range.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 50-start
+  - 50-end
+  grantsQuest: 50-start
+  givesItem: 10038
+- key: footing_step_school
+  kind: info
+  label: Where do I go first?
+  text: 'Not done yet, friend, and the order matters. Slates first: the Chrysalis
+    School Hall, up past the pool and the basalt stair. Shelves and taps after that.
+    If you get turned around, the map command shows where your feet have been.'
+  hints: Go north past the Awakening Pool and keep north up the basalt stair to the
+    school hall. Walking in is enough.
+  questRequired:
+  - 31-start
+  questExcluded:
+  - 31-school
+  - 31-end
+- key: footing_step_list
+  kind: info
+  label: Where is the shop?
+  text: 'Slates done, so the shelves are next. Trader Onna keeps Coulee Provisions,
+    off Market Row. Look over her stock before you spend: a buyer who looks first
+    pays less for regret.'
+  hints: Go south to Market Row, then east into Coulee Provisions, and type list.
+  questRequired:
+  - 31-school
+  questExcluded:
+  - 31-list
+  - 31-end
+- key: footing_step_buy
+  kind: info
+  label: What should I buy?
+  text: 'You have seen Onna''s stock. The cotton shirt is the one: cheap, warm, and
+    better than bare skin. You have coin enough.'
+  hints: At Coulee Provisions, type buy cotton shirt.
+  questRequired:
+  - 31-list
+  questExcluded:
+  - 31-shop
+  - 31-end
+- key: footing_step_equip
+  kind: info
+  label: I bought the shirt. What now?
+  text: A shirt in your pack is a shirt keeping nobody warm. Put it on. Gear only
+    works when you wear it.
+  hints: Type equip cotton shirt.
+  questRequired:
+  - 31-shop
+  questExcluded:
+  - 31-equip
+  - 31-end
+- key: footing_step_lantern
+  kind: info
+  label: Where is the inn?
+  text: 'Dressed and ready! Last stop is the taps: The Drowned Lantern, the inn off
+    Market Row. Put your head in the door and come back to me.'
+  hints: Go south to Market Row, then west into The Drowned Lantern. Walking in is
+    enough.
+  questRequired:
+  - 31-equip
+  questExcluded:
+  - 31-lantern
+  - 31-end
+- key: mouths
+  kind: info
+  label: What are the seven mouths of the coulee?
+  text: Seven breaks in the coulee rim, and a path through every one. I call them
+    mouths because the town eats what they bring back. Fighting in one, smithing in
+    another, brewing, the wilds, folding (the quiet art, mind you), old lore, and
+    the far hill where they teach the long shot. The paths are marked off the shore
+    and the square. Walk any of them. Walk all of them if your boots hold.
+  hints: The mouths open off the edges of town. The map command shows what you
+    have found so far. Choose a line below to learn the way to the drill yard,
+    the terrace or the steppe.
+  marked: true
+- key: way_drill_yard
+  kind: info
+  label: How do I get to the Drill Yard?
+  text: 'The Drill Yard? Easy walking. From this square go north to the pool, then
+    east four times: the shore path, the Mending Hut, the dry coulee mouth, and the
+    yard itself. Drillmaster Vorn will be the one shouting.'
+  hints: 'From Hub Square: north, then east four times.'
+- key: way_long_terrace
+  kind: info
+  label: How do I get to the Long Terrace?
+  text: The terraces are up on the bluff. From this square go north to the pool, east
+    twice to the Mending Hut, then north to the Bluff Steps. Climb up, go north twice,
+    and up once more to the Firing Range, where Marksman Iden keeps watch. The Long
+    Terrace is just east of her.
+  hints: 'From Hub Square: north, east, east, north, up, north, north, up, then east
+    to the Long Terrace.'
+- key: way_scout_tarn
+  kind: info
+  label: Where can I find Scout Tarn?
+  text: Scout Tarn? She keeps to the Steppe Edge, out past the scrub. From this square
+    go west twice, along the stilt-house walk and into the scrub draw, then south
+    twice through the scrub mouth. The Open Steppe is one more step south of her.
+  hints: 'From Hub Square: west, west, south, south to the Steppe Edge.'
+- key: news
+  kind: info
+  label: What is the news today?
+  text: 'Good day for news. Every day is, if you stand in the right square. Today''s
+    word: the pool is still patient, Onna''s prices are still fair, and Granny Wicker
+    is still older than both. If you want your own word carried, just speak. <ansi
+    fg="command">say</ansi> talks to the room you stand in, <ansi fg="command">whisper</ansi>
+    reaches one ear anywhere in Gaius, and <ansi fg="command">emote</ansi> is for when
+    words are too small. I use all three before breakfast.'
+  hints: Choose a line below if you want to hear about the seven mouths or a
+    task.
+- key: voices
+  kind: info
+  label: How do you speak with two mouths?
+  text: Born with both, and glad of it. The low one carries across the square. The
+    top one does the thinking. They get along better than most married couples. Folk
+    stop noticing inside a week, and you will too.
+  hints: Choose a line below if you would like to hear about the news or the
+    seven mouths.

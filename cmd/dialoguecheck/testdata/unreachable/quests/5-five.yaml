@@ -1,0 +1,5 @@
+questid: 5
+name: Locked Out
+steps:
+  - id: start
+  - id: end

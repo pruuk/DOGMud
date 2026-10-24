@@ -1,9 +1,33 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">quests</ansi>
 
-The <ansi fg="command">quests</ansi> command lists the quests you are working on. Each one shows
-its name, a progress bar, and what to do for your current step.
+A quest is a task someone in the world asks you to do, like finding a
+lost item or chasing off a beast. Most quests have a few steps. You get
+a reward when you finish.
 
-Finished quests are hidden. Add <ansi fg="command">all</ansi> to list them too.
+<ansi fg="yellow">Finding a quest: </ansi>
+
+  When you look at a room, a mark in front of a person's name tells you
+  they have something for you:
+
+  <ansi fg="yellow">[!]</ansi>  they have a new quest for you.
+  <ansi fg="yellow">[?]</ansi>  you can finish a quest with them now.
+  <ansi fg="yellow">[*]</ansi>  they have something important to tell you, or you can
+       report a step of a quest to them.
+
+  To take a quest, type <ansi fg="command">talk</ansi> <ansi fg="cyan"><name></ansi> and choose the <ansi fg="yellow">[!]</ansi> line from
+  the numbered list. They tell you what they want. Then choose <ansi fg="yellow">Accept</ansi>
+  to take the quest, or <ansi fg="yellow">Leave</ansi> to say no for now.
+
+  To finish a quest, talk to the person marked <ansi fg="yellow">[?]</ansi> and choose the
+  <ansi fg="yellow">[?]</ansi> line. Some steps in the middle of a quest work the same way,
+  through a line marked <ansi fg="yellow">[*]</ansi>. If the quest asks for an item,
+  choosing the line hands it over. See <ansi fg="command">help talk</ansi>.
+
+<ansi fg="yellow">Your quest list: </ansi>
+
+  The <ansi fg="command">quests</ansi> command lists the quests you are working on. Each one
+  shows its name, a progress bar, and what to do for your current step.
+  Finished quests are hidden. Add <ansi fg="command">all</ansi> to list them too.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -11,6 +35,7 @@ Finished quests are hidden. Add <ansi fg="command">all</ansi> to list them too.
   <ansi fg="command">quests all</ansi>          Show every quest you have started, finished ones too
 
 Stuck on a step? <ansi fg="command">hint</ansi> gives a nudge for your current quest, and
-<ansi fg="command">hint [name]</ansi> gives one for a quest you name.
+<ansi fg="command">hint [name]</ansi> gives one for a quest you name. When you have no quest
+in progress, <ansi fg="command">hint</ansi> tells you how to find one.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help hint</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help talk</ansi>, <ansi fg="command">help hint</ansi>

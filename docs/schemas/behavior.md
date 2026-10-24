@@ -4,8 +4,11 @@
 
 Behavior trees are YAML files that define event-driven mob AI. They replace
 JS scripts with declarative, composable logic. Trees evaluate on events
-(`player_ask`, `player_give`, `mob_idle`, `mob_hurt`) **before** JS scripts
-and dialogue, giving behavior trees first priority.
+(`player_topic`, `player_give`, `mob_idle`, `mob_hurt`) **before** JS
+scripts. Talk topics (#375) come first for conversation and item hand-ins:
+a tree hears `player_topic` only when a player chooses a `behavior: true`
+topic, and `player_give` only for an item no topic wants, or as a hand-back
+when a topic wants it but none is eligible (see `internal/behaviortree/context.md`).
 
 **Path formula:**
 ```
@@ -49,8 +52,8 @@ Nodes without an `event` field evaluate on all events.
 
 | Event | Trigger | Context Available |
 |-------|---------|-------------------|
-| `player_ask` | Player asks the mob something | `Text` = the ask text |
-| `player_give` | Player gives an item to the mob | `ItemId` = item given |
+| `player_topic` | Player chose a `behavior: true` talk topic on the mob | `Text` = the topic key (`check: topic_is`) |
+| `player_give` | Player gives an item to the mob | `ItemId` = item given; `HandBack` set on a hand-back |
 | `mob_idle` | Mob's idle tick (periodic) | No player context |
 | `mob_hurt` | Mob takes damage in combat | `UserId` = attacker |
 | `mob_die` | Mob's health reaches zero | `UserId` = killing player |
@@ -283,7 +286,7 @@ tree:
   type: selector
   children:
     - type: sequence
-      event: player_ask     # Only evaluates on ask events
+      event: player_topic   # Only evaluates on talk topic events
       children: [...]
     - type: selector
       event: mob_idle        # Only evaluates on idle ticks
@@ -301,22 +304,20 @@ tree:
 tree:
   type: selector
   children:
-    # --- Player asks about quests ---
+    # --- Player chose the behavior talk topic `ring_bell` ---
+    # (offers and hand-ins are dialogue topics, never tree branches, #375)
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: keyword_match
-          keywords: [quest, task, help]
-        - type: condition
-          check: player_missing_quest
-          quest: "10-start"
+          check: topic_is
+          topic: ring_bell
         - type: action
-          do: respond
-          user_text: "I could use some help around here."
-          hints: "Ask about the trouble in the mines."
+          do: set_state
+          key: bell
+          value: rung
 
-    # --- Player gives an item ---
+    # --- Player gives the quest item too late: say why, hand it back ---
     - type: sequence
       event: player_give
       children:
@@ -325,13 +326,12 @@ tree:
           item_id: 30001
         - type: condition
           check: player_has_quest
-          quest: "10-start"
-        - type: action
-          do: respond
-          user_text: "Ah, you found it! Thank you kindly."
-        - type: action
-          do: grant_quest
           quest: "10-end"
+        - type: action
+          do: say
+          text: "You already brought me that. Keep it."
+        - type: action
+          do: return_item
 
     # --- Idle behavior ---
     - type: selector
@@ -482,7 +482,7 @@ NPC dialogue sequences.
 
 | Action | Params | Description |
 |--------|--------|-------------|
-| `open_instance_portal` | `zones` (map), `min_gold` (int), `exit_expires` (string) | Full portal-vendor flow. Parses `"<zone> <gold>"` from ask text, validates, charges gold, clones instance, adds temp exit. Returns Failure if text doesn't match; otherwise Success with inline mob dialogue. |
+| `open_instance_portal` | `zones` (map), `zone` (string, required: a key of `zones`), `min_gold` (int), `exit_expires` (string), `guidance` (string) | Portal-vendor flow for the zone a `player_topic` branch names: shows `guidance` and asks the player privately for a stake, then charges gold, clones the instance and adds a temp exit. A missing or unknown `zone` fails the tree's load. |
 | `create_instance` | `zone_name` (string), `gold_amount` (int), `state_key` (string) | Clones an instance and stores entry room ID in state. Follow with `add_temp_exit` (omit `room_id` to read from state). |
 
 `open_instance_portal` `zones` param maps short names to template zone names:

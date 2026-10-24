@@ -41,7 +41,7 @@ steps:
       bolts before you go up.
     hint: >-
       From the Canyon Head, go up, then keep north to the Overlook and type
-      fire skell. If it is dark, type cast chrysalis-glow first.
+      fire skell. If it is dark, type cast glow first.
   - id: end
     description: >-
       Skell is down and the overlook is taken. The bluff band has lost the

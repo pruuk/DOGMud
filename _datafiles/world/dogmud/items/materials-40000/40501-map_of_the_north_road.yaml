@@ -1,0 +1,21 @@
+itemid: 40501
+name: Map of the North Road
+namesimple: road map
+description: |
+  A long, narrow strip map of the North Road, made to fold small and
+  ride in a coat pocket. It starts at the edge of the Fernway, passes a
+  crossroads village and a stone bridge, and reaches Stillwater beside
+  its lake. Past Stillwater it runs on by the Tollgate and an old
+  waystone to the place where the green ends and the Empty Reach begins.
+
+  Small marks show the inns, the fords and the farms. A bandit camp is
+  marked in red ink with the words "do not stop here". Near the top
+  edge, in a different and hurried hand, someone has written: "North was
+  the safest direction."
+type: object
+subtype: mundane
+weight: 0.1
+value: 4
+rarity_tier: 40
+vendor_categories:
+- tailoring

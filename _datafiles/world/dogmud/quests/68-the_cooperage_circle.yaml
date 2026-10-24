@@ -18,60 +18,85 @@ steps:
     map_target: 5719  # fallback when Toby the Cooper's Lad is not spawned
     map_target_mob: 9338  # follow Toby the Cooper's Lad (schedule np_crafting_toby) — a fixed room is wrong for part of the day
     description: >-
-      Orin asked you to visit the shuttered cooperage and find Toby -- to
-      see whether anyone still tends the place, and bring back proof.
+      Orin asked you to visit the shuttered cooperage and find Toby, to see
+      whether anyone still tends the place, and bring back proof.
     hint: >-
-      Go to the abandoned cooperage north of Craftwell Square and speak with
-      Toby. Bring Orin proof the place is still kept.
+      From Orin's Bookstall, go west to the Inkwalk, then north twice to the
+      Abandoned Cooperage. Toby keeps it by day. Type talk toby.
   - id: evidence
-    map_target: -1  # -1: bundled objectives, rooms [5706, 5720]; Phase 2 split review
+    map_target: 5720
     description: >-
       Toby keeps the cooperage's tools oiled and its master's bench-mark
       clean, and gave you a rubbing of it. He says Edvar's hidden survey is
-      under a loose floorboard inside -- the pre-founding map the bloodline
-      would seize the place to bury. Clerk Vell has filed to take the
-      cooperage as derelict.
+      under a loose floorboard by the cot: the pre-founding map the
+      bloodline would seize the place to bury. Clerk Vell has filed to take
+      the cooperage as derelict.
     hint: >-
-      Examine the loose floorboard on the cooperage floor to find Edvar's
-      map-fragment, then take what you have back to Orin.
-  - id: choice
-    map_target: -1  # -1: bundled objectives, rooms [5719, 5817]; Phase 2 split review
+      Edvar's survey is under a loose floorboard by the cot. From the
+      cooperage front, go north onto the Cooperage Floor. Type look
+      floorboard.
+  # Inserted 2026-10-21 (#375 batch 4): the evidence step needed two
+  # commands (look floorboard, then talk orin), so the survey is its own
+  # step. Granted by the floorboard triggers; Orin's choice needs it.
+  - id: survey
+    map_target: 5706  # fallback when Orin the Bookseller is not spawned
+    map_target_mob: 9332  # follow Orin the Bookseller (schedule np_crafting_orin)
     description: >-
-      Orin laid out the choice: help the circle hold the cooperage, or take
-      Edvar's survey to Clerk Vell and be paid for it.
+      Under the floorboard you found Edvar's survey, a torn quarter of a map
+      far older than the city's own records. Orin needs to see it.
     hint: >-
-      To aid the circle, examine the old guild-mark over the cooperage door.
-      To side with the bloodline, give Edvar's map-fragment to Clerk Vell in
-      the Merchant Quarter permit office.
+      From the Cooperage Floor, go south three times to the Inkwalk, then
+      east into Orin's Bookstall. Type talk orin.
+  # The choice is made in talk (spec R28, owner 2026-10-21): Orin takes the
+  # circle's side, Clerk Vell the bloodline's. Each first explains what the
+  # player is signing up for, and neither choice can be undone.
+  - id: choice
+    map_target: -1  # -1: bundled objectives, rooms [5706, 5817]; Phase 2 split review
+    description: >-
+      Orin laid out the choice: stand with the circle and leave Edvar's
+      survey in its keeping, or take the survey to Clerk Vell and be paid
+      for it. Whichever you choose is final.
+    hint: >-
+      Orin will tell you what standing with the circle means. Clerk Vell, in
+      the Permit Office in the Merchant Quarter, takes the survey for the
+      bloodline. Hear both out before you choose: neither can be undone.
+      Type talk orin.
   - id: end
     description: >-
-      The matter of the cooperage is settled -- one way, or the other.
+      The matter of the cooperage is settled, one way or the other.
 
 rewards:
   actor: ""
   observer: ""
 
 triggers:
-  # Edvar's map-fragment: under the loose floorboard on the cooperage floor (5720)
+  # Edvar's map-fragment: under the loose floorboard on the cooperage floor (5720).
+  # The nouns here were `loose-floorboard` and `old-guild-mark`, which no
+  # player could guess; they are now `floorboard` and the room's own key
+  # `old guild mark`, and triggers 4 to 9 add the other spellings and the
+  # survey step's catch-up. Since 2026-10-21 (spec R28) the mark only
+  # describes; the choice is made in talk (Orin 9332, Clerk Vell 9349).
   - event: room_interact
     room: 5720
-    noun: loose-floorboard
+    noun: floorboard
     conditions:
       has: ["68-evidence"]
+      missing: ["68-end"]
       missing_item: 40113
     actions:
       - give_item: 40113
+      - grant: "68-survey"
       - actor: >-
           A floorboard by the cot sits proud of its neighbors. Beneath it,
           wrapped in oilcloth against the damp, is a torn quarter of a survey
-          in an old, exact hand -- Edvar's work, the map Toby said was hidden
+          in an old, exact hand: Edvar's work, the map Toby said was hidden
           here. You ease it free and pocket it.
       - observer: "{actor} works a loose floorboard free and lifts something wrapped in oilcloth."
 
   # loose floorboard, before Toby's word
   - event: room_interact
     room: 5720
-    noun: loose-floorboard
+    noun: floorboard
     conditions:
       missing: ["68-evidence"]
     actions:
@@ -80,61 +105,113 @@ triggers:
           up the floor of an occupied workshop without a reason is the kind of
           thing that ends a welcome before it starts. You leave it.
 
-  # CIRCLE BRANCH: re-cut the guild-mark over the cooperage door (5719)
+  # Guild mark while the choice is open (5719). This trigger made the
+  # circle choice until 2026-10-21; under spec R28 the choice is made in
+  # talk with Orin (or Vell), so the mark only describes.
   - event: room_interact
     room: 5719
-    noun: old-guild-mark
+    noun: old guild mark
     conditions:
       has: ["68-choice"]
       missing: ["68-end"]
     actions:
-      - set_flag: {key: "68-allegiance", value: "circle"}
-      - give_gold: 60
-      - bump_rep: {faction: cooperage_circle, delta: 20}
-      - bump_rep: {faction: bloodline_domestic, delta: -15}
-      - give_item: 40114
       - actor: >-
-          You re-cut the old guild-mark over the door until it reads as a
-          working shop again, a cooper's mark a clerk cannot easily call
-          derelict -- and you carry Edvar's survey out to where the circle
-          can keep it safe. Orin presses a copy of the map on you before you
-          go. "The original is below," he says, "where the canal meets the old
-          quarter. Someone outside this should know it is real."
-      - observer: "{actor} re-cuts a faded guild-mark over a shuttered door until it reads as a working shop again."
-      - grant: "68-end"
+          The cooper's guild mark, a stave and hammer, is painted beside
+          the door, the paint cracked and lifting. Re-cut, it would tell any
+          clerk this is a working shop. Whether that happens is the circle's
+          to decide, and Orin speaks for the circle.
 
-  # guild-mark, before the choice
+  # guild mark, before the choice
   - event: room_interact
     room: 5719
-    noun: old-guild-mark
+    noun: old guild mark
     conditions:
       missing: ["68-choice"]
     actions:
       - actor: >-
-          The cooper's guild-mark is set above the door in faded paint -- a
-          stave and hammer. Re-cutting it would be a real act with real
+          The cooper's guild mark, a stave and hammer, is painted beside
+          the door in faded paint. Re-cutting it would be a real act with real
           consequences. You do not yet have a reason to.
 
-  # BLOODLINE BRANCH: give Edvar's map-fragment to Clerk Vell (9349)
-  - event: item_give
-    mob: 9349
-    item: 40113
+  # ── loose floorboard, the room's full noun: same as triggers 0 and 1 ──
+  - event: room_interact
+    room: 5720
+    noun: loose floorboard
+    conditions:
+      has: ["68-evidence"]
+      missing: ["68-end"]
+      missing_item: 40113
+    actions:
+      - give_item: 40113
+      - grant: "68-survey"
+      - actor: >-
+          A floorboard by the cot sits proud of its neighbors. Beneath it,
+          wrapped in oilcloth against the damp, is a torn quarter of a survey
+          in an old, exact hand: Edvar's work, the map Toby said was hidden
+          here. You ease it free and pocket it.
+      - observer: "{actor} works a loose floorboard free and lifts something wrapped in oilcloth."
+
+  - event: room_interact
+    room: 5720
+    noun: loose floorboard
+    conditions:
+      missing: ["68-evidence"]
+    actions:
+      - actor: >-
+          One floorboard near the cot sits a little proud of the rest. Prying
+          up the floor of an occupied workshop without a reason is the kind of
+          thing that ends a welcome before it starts. You leave it.
+
+  # ── SURVEY catch-up: a save at 68-evidence that already took the survey
+  #    (before the survey step existed) moves on when it looks again ──
+  - event: room_interact
+    room: 5720
+    noun: floorboard
+    conditions:
+      has: ["68-evidence"]
+      missing: ["68-survey"]
+      has_item: 40113
+    actions:
+      - grant: "68-survey"
+      - actor: >-
+          The board is loose and the space beneath it is empty. You already
+          have Edvar's survey. Take it to Orin.
+
+  - event: room_interact
+    room: 5720
+    noun: loose floorboard
+    conditions:
+      has: ["68-evidence"]
+      missing: ["68-survey"]
+      has_item: 40113
+    actions:
+      - grant: "68-survey"
+      - actor: >-
+          The board is loose and the space beneath it is empty. You already
+          have Edvar's survey. Take it to Orin.
+
+  # ── guild mark, the short noun: same as triggers 2 and 3 (describes only;
+  #    the choice is made in talk, spec R28) ──
+  - event: room_interact
+    room: 5719
+    noun: guild mark
     conditions:
       has: ["68-choice"]
       missing: ["68-end"]
     actions:
-      - set_flag: {key: "68-allegiance", value: "bloodline"}
-      - give_gold: 100
-      - bump_rep: {faction: bloodline_domestic, delta: 20}
-      - bump_rep: {faction: cooperage_circle, delta: -15}
-      - npc_say:
-          mob: 9349
-          lines:
-            - {delay: 1, text: "Let me see what you have brought me."}
-            - {delay: 4, text: "A pre-founding survey, and the address that keeps it. This resolves the question of whether the cooperage is genuinely derelict. It is not. It is occupied by people without standing to occupy it."}
-            - {delay: 7, text: "The office is grateful. Discretion is part of the arrangement, and the office rewards it. The matter is closed."}
       - actor: >-
-          The cooperage will be seized within the quarter, and Toby put out of
-          the only place he keeps. You have what the office pays for
-          discretion -- and the weight of having earned it.
-      - grant: "68-end"
+          The cooper's guild mark, a stave and hammer, is painted beside
+          the door, the paint cracked and lifting. Re-cut, it would tell any
+          clerk this is a working shop. Whether that happens is the circle's
+          to decide, and Orin speaks for the circle.
+
+  - event: room_interact
+    room: 5719
+    noun: guild mark
+    conditions:
+      missing: ["68-choice"]
+    actions:
+      - actor: >-
+          The cooper's guild mark, a stave and hammer, is painted beside
+          the door in faded paint. Re-cutting it would be a real act with real
+          consequences. You do not yet have a reason to.

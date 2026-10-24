@@ -1134,10 +1134,6 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 					mob.ScriptTag = spawnInfo.ScriptTag
 				}
 
-				if len(spawnInfo.QuestFlags) > 0 {
-					mob.QuestFlags = spawnInfo.QuestFlags
-				}
-
 				// Does this mob have a special name?
 				if len(spawnInfo.Name) > 0 {
 					mob.Character.Name = spawnInfo.Name
@@ -1396,6 +1392,14 @@ func (r *Room) RemoveMob(mobInstanceId int) {
 
 	if len(r.mobs) < 1 {
 		delete(roomManager.roomsWithMobs, r.RoomId)
+	}
+
+	// A player talking with this mob loses the conversation now, whatever
+	// took the mob away: a move, a despawn or a death (#375).
+	for _, userId := range r.players {
+		if u := users.GetByUserId(userId); u != nil {
+			u.CloseMenuWithMob(mobInstanceId)
+		}
 	}
 }
 
@@ -2412,21 +2416,74 @@ func (r *Room) FindHiddenNoun(search string) (string, HiddenNoun, bool) {
 	if close != "" {
 		return close, r.HiddenNouns[close], true
 	}
+	// A hyphen matches a space on both sides (see FindNoun).
+	foldedKeys := make([]string, 0, len(keys))
+	back := make(map[string]string, len(keys))
+	for _, k := range keys {
+		fk := util.NounHyphenFold(k)
+		if prev, dup := back[fk]; dup && prev < k {
+			continue
+		}
+		back[fk] = k
+		foldedKeys = append(foldedKeys, fk)
+	}
+	exact, close = util.FindMatchIn(util.NounHyphenFold(search), foldedKeys...)
+	if exact != "" {
+		return back[exact], r.HiddenNouns[back[exact]], true
+	}
+	if close != "" {
+		return back[close], r.HiddenNouns[back[close]], true
+	}
 	return "", HiddenNoun{}, false
 }
 
+// foldedNouns returns nouns with every key (and alias target) hyphen-folded
+// (util.NounHyphenFold), and a map from each folded key back to the authored
+// key. Two keys that fold alike keep the lexicographically smaller one.
+func foldedNouns(nouns map[string]string) (folded map[string]string, back map[string]string) {
+	folded = make(map[string]string, len(nouns))
+	back = make(map[string]string, len(nouns))
+	for k, v := range nouns {
+		fk := util.NounHyphenFold(k)
+		if prev, dup := back[fk]; dup && prev < k {
+			continue
+		}
+		back[fk] = k
+		if strings.HasPrefix(v, ":") {
+			v = ":" + util.NounHyphenFold(v[1:])
+		}
+		folded[fk] = v
+	}
+	return folded, back
+}
+
+// FindNoun resolves what a player typed to a room noun key and its
+// description. A hyphen matches a space on both sides (the room text shows
+// `nave-lamps` for the noun `nave lamps`), but a key the player typed exactly
+// is taken as authored.
 func (r *Room) FindNoun(noun string) (foundNoun string, nounDescription string) {
 	if len(r.Nouns) == 0 {
 		return "", ""
 	}
+	if _, exact := r.Nouns[strings.ToLower(strings.TrimSpace(noun))]; exact {
+		return findNounIn(r.Nouns, noun)
+	}
+	folded, back := foldedNouns(r.Nouns)
+	key, desc := findNounIn(folded, util.NounHyphenFold(noun))
+	if key == "" {
+		return "", ""
+	}
+	return back[key], desc
+}
 
+func findNounIn(nouns map[string]string, noun string) (foundNoun string, nounDescription string) {
 	// Flatten the room nouns and create single-word aliases for multi-word nouns
 	roomNouns := map[string]string{}
-	for originalNoun, originalDesc := range r.Nouns {
+	for originalNoun, originalDesc := range nouns {
 		roomNouns[originalNoun] = originalDesc
 		if strings.Contains(originalNoun, " ") {
 			for _, part := range strings.Split(originalNoun, " ") {
-				if _, exists := r.Nouns[part]; exists {
+				if _, exists := nouns[part]; exists {
 					continue
 				}
 				if _, exists := roomNouns[part]; exists {
@@ -2519,6 +2576,52 @@ func (r *Room) FindNoun(noun string) (foundNoun string, nounDescription string) 
 	}
 
 	return "", ""
+}
+
+// NounNamedBy returns the key of the room noun that phrase names, or "" when
+// it names none. It resolves through FindNoun, so every name the room accepts
+// for a noun (its key, a data alias, a word of a multi-word name, a
+// singular/plural spelling) resolves to the noun's key. Unlike FindNoun, which
+// is lenient for `look` and settles for any one word it recognises, the
+// result counts only when every word of phrase is a word of one of that
+// noun's names (or a singular/plural spelling of one): "floor board" names
+// `floorboard` through its alias, "i found the board" names nothing. Quest
+// triggers match on it (questengine.EventDetails.RoomNoun), and every
+// command's words reach them, so a sentence must not.
+func (r *Room) NounNamedBy(phrase string) string {
+	phrase = util.NounHyphenFold(strings.ToLower(strings.TrimSpace(phrase)))
+	if phrase == "" || len(r.Nouns) == 0 {
+		return ""
+	}
+	key, _ := r.FindNoun(phrase)
+	if key == "" {
+		return ""
+	}
+	words := map[string]bool{}
+	for name, desc := range r.Nouns {
+		if name != key && desc != ":"+key {
+			continue
+		}
+		for _, w := range strings.Fields(util.NounHyphenFold(strings.ToLower(name))) {
+			words[w] = true
+		}
+	}
+	for _, w := range strings.Fields(phrase) {
+		if words[w] {
+			continue
+		}
+		named := false
+		for _, v := range util.NounNumberVariants(w) {
+			if words[v] {
+				named = true
+				break
+			}
+		}
+		if !named {
+			return ""
+		}
+	}
+	return key
 }
 
 func (r *Room) FindExitByName(exitNameSearch string) (exitName string, exitRoomId int) {

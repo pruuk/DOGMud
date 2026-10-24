@@ -143,6 +143,9 @@ var userOnlyCommands = map[string]string{
 	"use":        "player-mechanic",
 	"zombieact":  "player-mechanic",
 
+	// Hidden: re-run by the instance-zone amount prompt (#375 R14).
+	"portalstake": "player-mechanic",
+
 	// --- Intentionally NOT allowlisted ---
 	// "throw" is deliberately omitted so the CommandParity boot audit keeps
 	// surfacing it as the single standing reminder that the ranged-weapon

@@ -41,7 +41,7 @@ func WalkAllFiles(fn func(mobId int, zone string, df *DialogueFile)) {
 				continue
 			}
 			var df DialogueFile
-			if err := yaml.Unmarshal(data, &df); err != nil {
+			if err := yaml.UnmarshalStrict(data, &df); err != nil {
 				continue
 			}
 			fn(df.MobId, zoneDir.Name(), &df)

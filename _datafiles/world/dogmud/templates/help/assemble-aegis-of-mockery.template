@@ -12,6 +12,6 @@ component be of your own making.
   <ansi fg="yellow">Ingredients:</ansi> Voice-Amber Housing (x1), Resonance Lacquer (x1),
                Resonant Vox-Core (x1), Mockingbird Amber (x1),
                Steel Ingot (x8), Chain Link (x5)
-  <ansi fg="yellow">Learned:</ansi>     buy Veyra's secret: ask veyra teach aegis
+  <ansi fg="yellow">Learned:</ansi>     buy Veyra's aegis secret: talk veyra
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>

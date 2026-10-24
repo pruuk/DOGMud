@@ -11,42 +11,27 @@ steps:
     description: "Toll collector Harn at the tollhouse has given you a maintenance
       report documenting the bridge's structural problems. He needs it delivered to
       Clerk Pell in the Records Office in Thornwall."
-    hint: "Deliver the maintenance report to Records Clerk Pell in Thornwall City.
-      From Watchers Crossing, head north along the road to reach the city."
+    hint: "Take the maintenance report to Clerk Pell in Thornwall. From
+      the Tollhouse, go east ten times, over the Old Bridge, into the
+      city and along Main Street to its east end. The Records Office is
+      north of there. Type talk pell."
   - id: report
     map_target: 421  # fallback when Toll Collector Harn is not spawned
     map_target_mob: 86  # follow Toll Collector Harn (schedule watchers_harn) — a fixed room is wrong for part of the day
     description: "Clerk Pell has filed Harn's maintenance report with the magistrate.
       Return to Harn at Watchers Crossing and tell him the report has been delivered."
-    hint: "Return to Toll Collector Harn at Watchers Crossing and tell him the report
-      has been filed."
+    hint: "Return to Toll Collector Harn at Watchers Crossing. From the
+      Records Office, go south to Main Street, then west ten times to
+      the Tollhouse. In the evening he drinks at the Crossing Inn. He
+      sleeps on a cot by the ledger late at night. Type talk harn."
   - id: end
     description: "The maintenance report has been delivered. Thornwall will review the
       bridge's condition and decide the toll's fate."
 
-triggers:
-  - event: item_give
-    mob: 99
-    item: 31
-    conditions:
-      has: ["6-start"]
-      missing: ["6-report"]
-    actions:
-      - grant: "6-report"
-      - npc_say:
-          mob: 99
-          lines:
-            - delay: 1
-              text: "A maintenance report from the crossing. Let me file
-                this properly."
-            - delay: 3
-              text: "Done. Tell Harn the report is on record. The Council
-                will review it in due course."
-
 rewards:
   actor: "Harn exhales slowly when you confirm the report is on its way.
-    'That is all I can do. If they see the numbers -- what the stone costs, what
-    the masons charge, what happens if that crack reaches the keystone -- they
+    'That is all I can do. If they see the numbers, what the stone costs, what
+    the masons charge, what happens if that crack reaches the keystone, they
     will understand. The toll is not greed. It is the only thing keeping that
     bridge standing.' He produces a stamped receipt. 'For your crossing. You
     have earned it, and then some.'"

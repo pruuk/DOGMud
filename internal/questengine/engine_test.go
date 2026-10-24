@@ -72,7 +72,7 @@ func (m *fullMockActionContext) SetQuestFlag(key, value string) {
 // seedTestQuests creates an Engine loaded with the Scholar's Collection quest (quest 3).
 // Steps: start, totem, sac, end (Linear: false)
 // Triggers:
-//   - dialogue topic "collection" on mob 79 → grants 3-start
+//   - command "collection" at mob 79 → grants 3-start
 //   - item_give item 14 to mob 79 → grants 3-totem (requires 3-start, missing 3-totem)
 //   - item_give item 40008 to mob 79 → grants 3-sac (requires 3-start, missing 3-sac)
 //   - quest_granted token 3-totem (requires 3-sac) → grants 3-end
@@ -89,11 +89,11 @@ func seedTestQuests() *Engine {
 			{Id: "3-end", Description: "Quest complete"},
 		},
 		Triggers: []TriggerDef{
-			// Trigger 0: dialogue start
+			// Trigger 0: the start command at the scholar
 			{
-				Event: "dialogue",
-				Mob:   79,
-				Topic: "collection",
+				Event:   "command",
+				Mob:     79,
+				Command: "collection",
 				Conditions: Conditions{
 					Missing: []string{"3-start"},
 				},
@@ -171,10 +171,10 @@ func TestEngine_BasicTrigger(t *testing.T) {
 	player := newFullMockPlayer(100)
 	ctx := newFullMockActionContext(1, player)
 
-	result := e.Notify("dialogue", EventDetails{
-		UserId: 1,
-		MobId:  79,
-		Topic:  "collection",
+	result := e.Notify("command", EventDetails{
+		UserId:  1,
+		MobId:   79,
+		Command: "collection",
 	}, player, ctx)
 
 	assert.True(t, result.Handled)
@@ -188,19 +188,19 @@ func TestEngine_NoMatch(t *testing.T) {
 	player := newFullMockPlayer(100)
 	ctx := newFullMockActionContext(1, player)
 
-	// Wrong topic
-	result := e.Notify("dialogue", EventDetails{
-		UserId: 1,
-		MobId:  79,
-		Topic:  "weather",
+	// Wrong command
+	result := e.Notify("command", EventDetails{
+		UserId:  1,
+		MobId:   79,
+		Command: "weather",
 	}, player, ctx)
 	assert.False(t, result.Handled)
 
 	// Wrong mob
-	result = e.Notify("dialogue", EventDetails{
-		UserId: 1,
-		MobId:  50,
-		Topic:  "collection",
+	result = e.Notify("command", EventDetails{
+		UserId:  1,
+		MobId:   50,
+		Command: "collection",
 	}, player, ctx)
 	assert.False(t, result.Handled)
 
@@ -273,8 +273,8 @@ func TestEngine_DepthGuard(t *testing.T) {
 		Steps:   []QuestStep{{Id: "100-a"}},
 		Triggers: []TriggerDef{
 			{
-				Event: "dialogue",
-				Topic: "start-loop",
+				Event:   "command",
+				Command: "start-loop",
 				Actions: []ActionDef{
 					{Grant: "100-a"},
 				},
@@ -310,9 +310,9 @@ func TestEngine_DepthGuard(t *testing.T) {
 	ctx := newFullMockActionContext(1, player)
 
 	// Should not crash or infinite loop — guard stops it
-	result := e.Notify("dialogue", EventDetails{
-		UserId: 1,
-		Topic:  "start-loop",
+	result := e.Notify("command", EventDetails{
+		UserId:  1,
+		Command: "start-loop",
 	}, player, ctx)
 
 	assert.True(t, result.Handled)
@@ -328,11 +328,11 @@ func TestEngine_DuplicateGrantNoop(t *testing.T) {
 
 	ctx := newFullMockActionContext(1, player)
 
-	// Try dialogue again — condition missing:3-start blocks it
-	result := e.Notify("dialogue", EventDetails{
-		UserId: 1,
-		MobId:  79,
-		Topic:  "collection",
+	// Try the command again — condition missing:3-start blocks it
+	result := e.Notify("command", EventDetails{
+		UserId:  1,
+		MobId:   79,
+		Command: "collection",
 	}, player, ctx)
 
 	assert.False(t, result.Handled)

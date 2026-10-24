@@ -1,64 +1,111 @@
 mobid: 9171
 zone: North Road North
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "morning"]
-    responses:
-      - "Sit where you like. Stew's on, ale's cold, road's outside where it belongs."
-      - "Welcome to the Lake & Ladle. You look like the road's been at you."
-  - keywords: ["quest", "task", "work", "job", "trouble"]
-    responses:
-      - "There is trouble on the road north, if you are asking. Ask me about the bandits."
-  - keywords: ["buy", "sell", "trade", "shop", "wares", "food", "drink", "list"]
-    responses:
-      - "Kitchen's open -- stew, bread, a drop of wine. Have a look at what's set out."
-  - keywords: ["gossip", "news", "rumor", "rumors"]
-    responses:
-      - "All my news walks in the door and complains about the road. Lately it is the bandits."
-  - keywords: [""]
-    responses:
-      - "Something you need, traveller?"
-
-tree:
-  root:
-    text: "I am Goodwife Pemberton -- I keep the Lake & Ladle, and I would keep it a deal better if the road outside were not robbing my custom blind. Half my lodgers come in bruised, the other half do not come in at all."
-    hints: "You could ask Pemberton about a quest or task, the bandits on the road, or her kitchen."
-
-  nodes:
-    - id: quest_start
-      triggers: ["quest", "task", "bandits", "bandit", "trouble", "help", "work", "problem"]
-      questExcluded: ["61-start", "61-end"]
-      grantsQuest: "61-start"
-      text: "Two of them work the stretch north, and between them they are strangling my trade. One is a hedgerow bandit -- a brute who lies up in the hedges along the road and takes travellers as they pass. The other is worse: a Reach-Touched thing, out in the Empty Reach beyond, that the Chrysalis has hollowed into something that hunts. Put them both down and the road is walkable again. Do that, and you will not pay for a bed or a meal here while I keep the place."
-      hints: "Head north up the road. Kill the hedgerow bandit that works the hedges, and the Reach-Touched out in the Empty Reach beyond. Come back and tell Pemberton when both are down."
-      moodChange: friendly
-
-    - id: quest_turnin
-      triggers: ["report", "done", "cleared", "clear", "finished", "quest", "task", "bandits", "both", "dead"]
-      questRequired: ["61-start", "61-bandit", "61-reach"]
-      questExcluded: ["61-end"]
-      grantsQuest: "61-end"
-      text: "Both of them, then. I watched the road all morning and nobody came in nursing a split lip for the first time in a season. You have given me my trade back, traveller, and I do not forget that."
-      hints: "Quest complete. Pemberton now offers you a bed and board at a friend's rate."
-      moodChange: friendly
-
-    - id: quest_active
-      triggers: ["quest", "task", "bandits", "bandit", "report", "done"]
-      questRequired: ["61-start"]
-      questExcluded: ["61-end"]
-      text: "Not finished yet -- I would know it on my custom if you were. The hedgerow bandit lies up along the road north. The Reach-Touched is further on, out in the Empty Reach. Both have to go down. Come and tell me when they have."
-      hints: "Kill both the hedgerow bandit (on the road north) and the Reach-Touched (in the Empty Reach), then return and tell Pemberton."
-
-    - id: quest_done
-      triggers: ["quest", "task", "bandits", "road"]
-      questRequired: ["61-end"]
-      text: "The road's been quiet since you cleared it -- my lodgers come in whole and stay the night. Your bed and board here are settled, as I said. You are always welcome at the Ladle."
-
-    - id: road_talk
-      triggers: ["road", "north", "travel", "reach", "empty"]
-      text: "The road runs north from here through the Empty Reach -- a long dry nothing of a stretch -- and on toward Hartcharn and the capital beyond. It is a good road when it is not being worked by thieves. Mostly it is being worked by thieves."
-      hints: "You could ask about a quest or task."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: I am Goodwife Pemberton. I keep the Lake and Ladle, and I would keep it a
+    deal better if the road outside were not robbing my custom blind. Half my lodgers
+    come in bruised, and the other half do not come in at all.
+  hints: Choose a line below to hear about the trouble on the road, the road
+    north, or her kitchen.
+  # Quest 61 states (first match wins); quest_done and quest_active became
+  # these variants. The "free bed and board" promise is gone: the inn has
+  # no lodging, only a shop.
+  variants:
+  - questRequired:
+    - 61-end
+    text: The road has been quiet since you cleared it. My lodgers come in whole
+      and stay the night. There is always a seat by my fire for you.
+  - questRequired:
+    - 61-bandit
+    - 61-reach
+    questExcluded:
+    - 61-end
+    text: You have the look of someone who has been out on that road and come back.
+      Well? Tell me.
+  # One of the two down, in either order (61-bandit, or the 61-reach-first
+  # flag), before the general 61-start variant.
+  - questRequired:
+    - 61-bandit
+    questExcluded:
+    - 61-reach
+    - 61-end
+    text: One of them down, then. I heard the reeds have gone quiet. The
+      Reach-Touched is still out there.
+    hints: The Reach-Touched haunts the Abandoned Camp, far up the road north
+      through the Empty Reach.
+  - questRequired:
+    - 61-start
+    questExcluded:
+    - 61-bandit
+    - 61-end
+    questFlagRequired:
+      61-reach-first: "yes"
+    text: They say the thing in the Reach is dead. Then only the brute in the reeds
+      is left.
+    hints: The hedgerow bandit lies hidden in the reeds at the Mire Cutoff. From
+      the common room, go west, then southwest.
+  - questRequired:
+    - 61-start
+    questExcluded:
+    - 61-end
+    text: Not finished yet. I would know it on my custom if you were. Both of them
+      have to go down. Come and tell me when they have.
+    hints: The hedgerow bandit lies hidden in the reeds at the Mire Cutoff. From
+      the common room, go west, then southwest. The Reach-Touched haunts the
+      Abandoned Camp, far up the road north through the Empty Reach.
+topics:
+- key: quest_start
+  kind: offer
+  quest: 61
+  label: Hedgerow Toll
+  playerLine: Do you want help with the trouble on the road?
+  text: Would you? Two of them work this stretch, and between them they are strangling
+    my trade. One is a hedgerow bandit, a brute who lies up in the reeds at the Mire
+    Cutoff, just southwest of my yard, and takes travellers as they pass. The other
+    is worse. A Reach-Touched thing, out in the Empty Reach to the north, that the
+    Chrysalis has hollowed into something that hunts. Put them both down and the road
+    is walkable again, and you will have my thanks and a fair purse for it.
+  hints: Pemberton wants the hedgerow bandit at the Mire Cutoff and the Reach-Touched
+    in the Empty Reach both dead.
+  questExcluded:
+  - 61-start
+  - 61-end
+  grantsQuest: 61-start
+  moodChange: friendly
+- key: quest_turnin
+  kind: handin
+  quest: 61
+  label: Hedgerow Toll
+  playerLine: Both of them are dead. The road is walkable again.
+  text: Both of them, then. I watched the road all morning and nobody came in nursing
+    a split lip for the first time in a season. You have given me my trade back,
+    traveller, and I do not forget that.
+  hints: Pemberton paid you, and her lodgers can walk the road north again.
+  questRequired:
+  - 61-start
+  - 61-bandit
+  - 61-reach
+  questExcluded:
+  - 61-end
+  grantsQuest: 61-end
+  moodChange: friendly
+# The "job" pattern (pointing at the bandits) is FOLDED: the opener hint
+# names the trouble, and the offer is the bandits.
+- key: road_talk
+  kind: info
+  label: Where does the road north lead?
+  text: The road runs north from here through the Empty Reach, a long dry nothing
+    of a stretch, and on toward Hartcharn and the capital beyond. It is a good road
+    when it is not being worked by thieves. Mostly it is being worked by thieves.
+# buy folds the greeting-only "hello" pattern ("Stew's on").
+- key: buy
+  kind: info
+  label: What is cooking in the kitchen?
+  text: Sit where you like. Stew is on, and there is bread, grilled meat, tea, and
+    a drop of spiced wine. Have a look at what is set out.
+  hints: To see what Pemberton sells and for how much, type list.
+- key: gossip
+  kind: info
+  label: What news comes in your door?
+  text: All my news walks in the door and complains about the road. Lately it is
+    the bandits.

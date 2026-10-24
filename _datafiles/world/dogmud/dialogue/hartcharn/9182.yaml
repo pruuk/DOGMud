@@ -1,78 +1,102 @@
 mobid: 9182
 zone: Hartcharn
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "The river crossing here still waits on the water dropping. But
-        the Lakewind Packet runs out of Stillwater now -- sail the lake
-        to Plymouth if you'd rather not walk it."
-      - "Pell, ferry agent. What's your business?"
-  - keywords: ["quest", "task", "work", "job"]
-    responses:
-      - "If you carry for the post relay, ask me about the dispatch."
-  - keywords: ["buy", "sell", "trade", "shop", "wares", "goods", "list"]
-    responses:
-      - "I keep a few provisions for travellers -- have a look at what's on the board."
-  - keywords: ["ferry", "boat", "crossing", "water"]
-    responses:
-      - "This crossing's mine to run when the river allows, which
-        lately it does not. But the packet office at the Stillwater
-        pier books passage now -- the Lakewind Packet runs the lake
-        straight across to Plymouth, no waiting on my river."
-  - keywords: ["gossip", "news", "rumor", "rumors"]
-    responses:
-      - "Post comes through here for the capital. I counter-sign and send it on. That's all the news that's mine to tell."
-  - keywords: [""]
-    responses:
-      - "Mm?"
-
-tree:
-  root:
-    text: "I am Severin Pell -- ferry agent, and the post-house stage for anything bound up the road to the capital. If you carry for the relay, I am your first stop."
-    hints: "You could ask Pell about a quest or task, the ferry, or his goods."
-
-  nodes:
-    - id: pellhandoff
-      triggers: ["dispatch", "parcel", "delivery", "package", "road", "deliver",
-                 "hand", "give", "turn", "done", "report", "quest", "task"]
-      questRequired: ["60-start"]
-      questExcluded: ["60-waybill", "60-end"]
-      requiresItem: 40071
-      grantsQuest: "60-waybill"
-      text: "Pell checks the seal-mark and counter-signs in one motion. \"Garrick's
-        courier -- the relay is well-served.\" He draws out a fresh waybill and
-        holds it out. \"Kingsbarrow Vale, Tithe-Clerk Verrold. He stamps it for
-        the capital and sends you on.\""
-      hints: "You hand the sealed dispatch to Severin Pell."
-
-    - id: quest_active
-      triggers: ["quest", "task", "dispatch", "deliver", "sign", "relay", "post"]
-      questRequired: ["60-start"]
-      questExcluded: ["60-waybill", "60-end"]
-      text: "Garrick's dispatch from the north toll -- I have been expecting it. Hand it here and I will counter-sign it and make out the manifest. From me it goes to Tithe-Clerk Verrold at Kingsbarrow Vale, who enters it in the capital ledger."
-      hints: "Give the sealed dispatch to Severin Pell."
-
-    - id: quest_sent
-      triggers: ["quest", "task", "manifest", "dispatch", "verrold", "next"]
-      questRequired: ["60-waybill"]
-      questExcluded: ["60-end"]
-      text: "The manifest is made out and in your hand. Carry it on to Tithe-Clerk Verrold at Kingsbarrow Vale -- north and a little on, granary country. He enters it in the ledger and seals it for the gate."
-      hints: "Give the counter-signed manifest to Tithe-Clerk Verrold at Kingsbarrow Vale."
-
-    - id: lost_report
-      triggers: ["lost", "dropped", "missing", "replace", "manifest", "again"]
-      questRequired: ["60-waybill"]
-      questExcluded: ["60-manifest", "60-end"]
-      givesItem: 40072
-      text: "Lost the manifest? I keep the counterfoil -- a moment. Here, made out fresh and counter-signed. Verrold, at Kingsbarrow Vale. Mind it this time."
-      hints: "You have a fresh manifest. Give it to Tithe-Clerk Verrold at Kingsbarrow Vale."
-
-    - id: quest_done
-      triggers: ["quest", "task", "dispatch", "post"]
-      questRequired: ["60-end"]
-      text: "The dispatch reached the gate, I hear. The relay holds another week. Safe roads, courier."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: I am Severin Pell, ferry agent, and the post-house stage for anything bound
+    up the road to the capital. If you carry for the relay, I am your first stop.
+  hints: Choose a line below if you would like to hear about the ferry, the news
+    on the road, or the provisions he keeps for travellers.
+  # Quest 60 states (first match wins); quest_active, quest_sent and
+  # quest_done became these variants.
+  variants:
+  - questRequired:
+    - 60-end
+    text: The dispatch reached the gate, I hear. The relay holds another week. Safe
+      roads, courier.
+  - questRequired:
+    - 60-manifest
+    questExcluded:
+    - 60-end
+    text: Verrold has sealed it for the capital, I hear. Then only the gate is left.
+    hints: Carry the sealed capital packet to the East Gate guard at New Plymouth.
+      Type talk guard.
+  - questRequired:
+    - 60-waybill
+    questExcluded:
+    - 60-end
+    text: The manifest is made out and in your hand. Carry it on to Tithe-Clerk Verrold
+      at Kingsbarrow Vale, north over the ford, in the granary country. He enters it
+      in the ledger and seals it for the gate.
+    hints: From the Ferry and Coach Agent, go east to the Market Square and follow
+      the road north out of Hartcharn, over the Greywater ford, to Kingsbarrow Vale.
+      At the Tithe Road, go west into the Great Tithe Barn. Type talk verrold.
+  - questRequired:
+    - 60-start
+    questExcluded:
+    - 60-end
+    carriesItem: 40071
+    text: Garrick's dispatch from the north toll? I have been expecting it. Hand it
+      here and I will counter-sign it and make out the manifest.
+    hints: Pell will take the sealed dispatch. Choose to hand it to him below.
+  - questRequired:
+    - 60-start
+    questExcluded:
+    - 60-end
+    text: Garrick sent you? Then where is his dispatch?
+    hints: If you lost the sealed dispatch, Toller Garrick keeps a copy at the Tollgate,
+      south down the road past the Lake and Ladle.
+topics:
+# pellhandoff merges quest 60 trigger 0's npc_say ("A capital dispatch from
+# the north toll... Carry this manifest to Tithe-Clerk Verrold"); the old
+# text described Pell in the narrator's voice.
+- key: pellhandoff
+  kind: info
+  label: Here is Garrick's sealed dispatch.
+  text: A capital dispatch from the north toll. Right. Let me counter-sign it. There.
+    Garrick's courier, and the relay is well served. Carry this manifest to Tithe-Clerk
+    Verrold at Kingsbarrow Vale. He enters it in the ledger and sends you on.
+  hints: Pell counter-signed the dispatch and gave you a manifest for Tithe-Clerk
+    Verrold at Kingsbarrow Vale.
+  marked: true
+  questRequired:
+  - 60-start
+  questExcluded:
+  - 60-waybill
+  - 60-end
+  requiresItem: 40071
+  grantsQuest: 60-waybill
+  givesItem: 40072
+- key: lost_report
+  kind: info
+  label: I have lost the manifest you made out.
+  text: Lost the manifest? I keep the counterfoil. A moment. Here, made out fresh
+    and counter-signed. Verrold, at Kingsbarrow Vale. Mind it this time.
+  hints: You have a fresh manifest. Take it to Tithe-Clerk Verrold at Kingsbarrow
+    Vale. Type talk verrold.
+  marked: true
+  questRequired:
+  - 60-waybill
+  questExcluded:
+  - 60-manifest
+  - 60-end
+  itemExcluded: 40072
+  givesItem: 40072
+# The "work" pattern (pointing at the dispatch) is FOLDED into the 60-start
+# opener variants.
+- key: buy
+  kind: info
+  label: What provisions do you keep?
+  text: I keep a few provisions for travellers. Rations, a lantern or a torch, bandages,
+    a little tea. Have a look at what is on the board.
+  hints: To see what Pell sells and for how much, type list.
+- key: ferry
+  kind: info
+  label: Does your ferry still cross the river?
+  text: This crossing is mine to run when the river allows, which lately it does
+    not. But the packet office at the Stillwater pier books passage now. The Lakewind
+    Packet runs the lake straight across to Plymouth, no waiting on my river.
+- key: gossip
+  kind: info
+  label: What news passes through your booth?
+  text: Post comes through here for the capital. I counter-sign it and send it on.
+    That is all the news that is mine to tell.

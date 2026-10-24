@@ -1,154 +1,138 @@
 mobid: 9157
 zone: Pothole Coulee
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "hail"]
-    responses:
-      - "Hale. I keep the stones, and the story in them. You have come a long
-          way up from the town to stand in a circle of rock -- so you are
-          either lost or curious. I prefer curious."
-      - "Stand where you like. The stones have stood through worse than a
-          stranger."
-
-  - keywords: ["stones", "story", "lore", "learn", "teach", "tale", "quest",
-      "task"]
-    responses:
-      - "Every stone in this ring is a page, and I am the one who still reads
-          them. Ask, and I will read you some -- or set you a task that earns
-          the deeper telling."
-      - "The story is long and most of it is true. Ask me the old tale when you
-          have the patience to stand and hear it."
-
-  - keywords: ["voice", "doubled", "mutation", "opened", "sing"]
-    responses:
-      - "You hear the second voice. The Awakening put it in me -- when I sing
-          the old lines they come out doubled, a lower tone under the first. I
-          made it part of the craft. The stones were always meant to be sung,
-          and now I sing them in two voices at once."
-
-  - keywords: ["dispute", "quarrel", "garrow", "ferd", "green", "standoff"]
-    questExcluded: ["48-taunt"]
-    responses:
-      - "There is a sourness on the mustering green just now -- young Garrow
-          squared up against old Ferd over a boundary stone, and neither will
-          give. Soft words have only hardened them. It wants a harder word. Ask
-          me about it if you have the nerve to be that word."
-
-  - keywords: ["dispute", "quarrel", "garrow", "ferd", "green", "standoff"]
-    questRequired: ["48-taunt"]
-    responses:
-      - "The green is quiet now. Ferd has his boundary stone back, and Garrow
-          has his pride to nurse somewhere out of sight. That was your doing."
-
-  - keywords: ["origins", "came", "before", "old", "carvings", "world"]
-    responses:
-      - "Where did the folk come from? The carvings say plainly that we came
-          from somewhere -- they do not say where. The oldest marks, up where
-          the weather has been at them longest, are not our script at all.
-          Another hand. Something older and wider than the coulee, that we have
-          only the edge of. I have given my life to those marks and I am no
-          nearer the middle of them."
-
-  - keywords: [""]
-    responses:
-      - "Ask. The stones are patient and so am I."
-      - "Speak. I have stood here longer than you have been alive."
-      - "Say it, and I will tell you what the stones know of it."
-
-tree:
-  root:
-    text: "Hale. Loresinger, keeper of the ring."
-    hints: "You could ask Loresinger Hale about the stones and the old story, or
-      your task."
-    variants:
-      # ── Not ready (Wenna's lesson unfinished) ────────────
-      - questExcluded: ["47-end"]
-        text: "You came up here before you sat with Wenna, I think. The story
-          starts at the farmstead, not the stones -- go and learn the way of
-          the folk from her first, and come back when she names you a friend.
-          The deep telling is not for strangers."
-        hints: "Return to Elder Wenna at the farmstead and finish her lesson
-          before coming to Loresinger Hale."
-
-      # ── Ready for quest 48 ───────────────────────────────
-      - questRequired: ["47-end"]
-        questExcluded: ["48-start", "48-end"]
-        text: "Wenna's charm on you -- so you are one of ours now. Good. Then I
-          can use you, and you can earn the deeper story in the doing. There is
-          a quarrel souring the green that wants settling. Ask me about the
-          stones, or about the dispute, when you are ready to be of use."
-        hints: "Type ask hale stones to take on the loresinger's task, or ask
-          hale dispute about the quarrel on the green."
-
-      # ── Mid quest 48, one variant per step (one command each) ─
-      - questRequired: ["48-start"]
-        questExcluded: ["48-taunt", "48-end"]
-        text: "The green is still sour. Young Garrow will not be reasoned down,
-          so do not reason. Go north to the green and put a hard true word on
-          him, and break the standoff."
-        hints: "Go north to the Mustering Green and type taunt garrow."
-      - questRequired: ["48-taunt"]
-        questExcluded: ["48-end"]
-        text: "The green has gone quiet. I can hear it from here. Tell me how it
-          went."
-        hints: "Type ask hale done."
-
-      # ── Quest 48 complete ────────────────────────────────
-      - questRequired: ["48-end"]
-        text: "You quieted the green with a handful of words. Ferd has not
-          stopped thanking the stones for it. You have the reckoning-bone now --
-          read it when you can, though the oldest end will baffle you as it
-          baffles me. The shrine is north, past the Tall Stone. Sere keeps the
-          thing the bone only points at. Go on."
-        hints: "Head north past the Tall Stone to the old shrine and type ask
-          sere to find Hermit Sere."
-
-  nodes:
-    # ── QUEST 48 OFFER ────────────────────────────────────────
-    - id: stones_offer
-      triggers: ["stones", "story", "lore", "tale", "learn", "teach", "dispute",
-        "quarrel", "garrow", "quest", "task"]
-      questRequired: ["47-end"]
-      questExcluded: ["48-start", "48-end"]
-      grantsQuest: "48-start"
-      text: "Then earn the telling. Just north of here, on the mustering
-        green, young Garrow has squared up against old Ferd and dug in past
-        all reason -- a boundary
-        quarrel swollen out of all sense. Gentle words have only fed it. So do
-        not be gentle. Go and taunt him -- land one hard, true word where his
-        bluster is thinnest -- and break his nerve. Settle the green, and the
-        deep story is yours."
-      hints: "Go north to the Mustering Green and type taunt garrow."
-
-    # ── QUEST 48 TURN-IN ──────────────────────────────────────
-    - id: stones_turnin
-      triggers: ["report", "done", "ready", "finished", "quest", "task"]
-      questRequired: ["48-taunt"]
-      questExcluded: ["48-end"]
-      grantsQuest: "48-end"
-      text: "I felt it from here -- the moment his nerve gave. That is the craft
-        of the true word, and you have the beginnings of it. Take the
-        reckoning-bone. It carries the whole story of us in the old script. And
-        carry this with it: the oldest marks on it are not ours. The folk came
-        from somewhere we no longer name. Sere keeps the proof of it, north at
-        the shrine -- go and look on the thing the bone only points at."
-      hints: "Quest complete. You received the reckoning-bone. Head north past
-        the Tall Stone to the old shrine and type ask sere to find Hermit
-        Sere."
-
-    # ── QUEST 48 MID-QUEST (before the taunt): answers the report and lesson
-    #    words a player tries early, so they do not reach the patterns. ──
-    - id: stones_progress
-      triggers: ["report", "done", "ready", "finished", "quest", "task",
-        "taunt", "garrow", "ferd", "green", "dispute", "quarrel", "standoff",
-        "how", "help"]
-      questRequired: ["48-start"]
-      questExcluded: ["48-taunt", "48-end"]
-      text: "Not yet. The green is still sour. Go north to it and put one hard,
-        true word on Garrow, where his bluster is thinnest. Words alone. No
-        fists."
-      hints: "Go north to the Mustering Green and type taunt garrow."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: I sing the stones of this ring, so that what they carry outlasts the
+    weather on the marks. Hale is my name.
+  hints: Choose a line below to learn about the stones and the old story, or
+    your task.
+  variants:
+  - questExcluded:
+    - 47-end
+    text: You came up here before you sat with Wenna, I think. The story starts at
+      the farmstead, not the stones. Go and learn the way of the folk from her first,
+      and come back when she names you a friend. The deep telling is not for strangers.
+    hints: Return to Elder Wenna at the farmstead and finish her lesson before coming
+      to Loresinger Hale.
+  - questRequired:
+    - 47-end
+    questExcluded:
+    - 48-start
+    - 48-end
+    text: Wenna's charm is on you, so you are one of ours now. Good. Then I can use
+      you, and you can earn the deeper story in the doing. There is a quarrel souring
+      the green that wants settling. When you are ready to be of use, I will tell
+      you about the stones, or about the dispute.
+    hints: Choose The Standing Stones below to take on the loresinger's task, or
+      to hear about the quarrel on the green.
+  - questRequired:
+    - 48-start
+    questExcluded:
+    - 48-taunt
+    - 48-end
+    text: The green is still sour. Young Garrow will not be reasoned down, so do not
+      reason. Go north to the green and put a hard true word on him, and break the
+      standoff.
+    hints: Go north to the Mustering Green and type taunt garrow.
+  - questRequired:
+    - 48-taunt
+    questExcluded:
+    - 48-end
+    text: The green has gone quiet. I can hear it from here. Tell me how it went.
+    hints: Choose The Standing Stones below to report.
+  - questRequired:
+    - 48-end
+    text: You quieted the green with a handful of words. Ferd has not stopped thanking
+      the stones for it. You have the reckoning-bone now. Read it when you can,
+      though the oldest end will baffle you as it baffles me. The shrine is north,
+      past the Tall Stone. Sere keeps the thing the bone only points at. Go on.
+    hints: Head north past the Tall Stone to the old shrine and type talk sere to
+      find Hermit Sere.
+topics:
+- key: stones_offer
+  kind: offer
+  quest: 48
+  label: The Standing Stones
+  playerLine: Do you want help settling the quarrel on the green?
+  text: Then earn the telling. Just north of here, on the mustering green, young Garrow
+    has squared up against old Ferd and dug in past all reason, a boundary quarrel
+    swollen out of all sense. Gentle words have only fed it. So do not be gentle.
+    Go and taunt him. Land one hard, true word where his bluster is thinnest
+    and break his nerve. Settle the green, and the deep story is yours.
+  hints: Go north to the Mustering Green and type taunt garrow.
+  questRequired:
+  - 47-end
+  questExcluded:
+  - 48-start
+  - 48-end
+  grantsQuest: 48-start
+- key: stones_turnin
+  kind: handin
+  quest: 48
+  label: The Standing Stones
+  playerLine: I broke Garrow's nerve. The green is quiet now.
+  text: 'I felt it from here, the moment his nerve gave. That is the craft of the
+    true word, and you have the beginnings of it. Take the reckoning-bone. It carries
+    the whole story of us in the old script. And carry this with it: the oldest marks
+    on it are not ours. The folk came from somewhere we no longer name. Sere keeps
+    the proof of it, north at the shrine. Go and look on the thing the bone only
+    points at.'
+  hints: Quest complete. You received the reckoning-bone. Head north past the Tall
+    Stone to the old shrine and type talk sere to find Hermit Sere.
+  questRequired:
+  - 48-taunt
+  questExcluded:
+  - 48-end
+  grantsQuest: 48-end
+- key: stones_progress
+  kind: info
+  label: How do I break Garrow's nerve?
+  text: Not yet. The green is still sour. Go north to it and put one hard, true word
+    on Garrow, where his bluster is thinnest. Words alone. No fists.
+  hints: Go north to the Mustering Green and type taunt garrow.
+  questRequired:
+  - 48-start
+  questExcluded:
+  - 48-taunt
+  - 48-end
+# Restored from the old dispute patterns (dropped by the converter as
+# covered), because the opener above invites the player to ask about it.
+- key: dispute
+  kind: info
+  label: What is the quarrel on the green?
+  text: There is a sourness on the mustering green just now. Young Garrow has squared
+    up against old Ferd over a boundary stone, and neither will give. Soft words have
+    only hardened them. It wants a harder word. If you have the nerve to be that word,
+    that is the task I have for you.
+  hints: Hale's task for this is The Standing Stones.
+  questExcluded:
+  - 48-taunt
+- key: dispute_settled
+  kind: info
+  label: How is the green now?
+  text: The green is quiet now. Ferd has his boundary stone back, and Garrow has his
+    pride to nurse somewhere out of sight. That was your doing.
+  questRequired:
+  - 48-taunt
+- key: ring
+  kind: info
+  label: What story do these stones tell?
+  text: Every stone in this ring is a page, and I am the one who still reads them.
+    The story is long, and most of it is true. It is the whole story of the folk,
+    and the oldest part is the strangest of all, which is where the folk came from.
+- key: voice
+  kind: info
+  label: Why do you sing in two voices?
+  text: You hear the second voice. The Awakening put it in me. When I sing the old
+    lines they come out doubled, a lower tone under the first. I made it part of the
+    craft. The stones were always meant to be sung, and now I sing them in two voices
+    at once.
+- key: origins
+  kind: info
+  label: Where did the folk come from?
+  text: Where did the folk come from? The carvings say plainly that we came from somewhere,
+    but they do not say where. The oldest marks, up where the weather has been at them
+    longest, are not our script at all. Another hand. Something older and wider than
+    the coulee, that we have only the edge of. I have given my life to those marks
+    and I am no nearer the middle of them.
+  marked: true

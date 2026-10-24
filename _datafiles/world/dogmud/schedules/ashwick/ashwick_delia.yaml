@@ -19,7 +19,7 @@ segments:
     idlecommands:
       - emote pinches back a seed-head and tucks it into her apron.
       - emote crouches to check a low row, muttering about the drainage.
-      - say Mind where you step -- half of this bed isn't in any book.
+      - say Mind where you step. Half of this bed isn't in any book.
       - say I planted these from slips I dried myself. Don't touch.
   - start: 17
     end: 21

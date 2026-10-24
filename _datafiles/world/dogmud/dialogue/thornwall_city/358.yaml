@@ -1,23 +1,21 @@
 mobid: 358
 zone: Thornwall City
-
-patterns:
-  - keywords: [hello, hi, greetings, hail]
-    responses:
-      - 'Hey.'
-
-  - keywords: [hammer, weapon, fight]
-    responses:
-      - 'Old girl has seen things. Most folk who look at her think twice. The ones who do not think at all stop thinking soon enough.'
-
-  - keywords: [bandit, bandits, road]
-    responses:
-      - 'Same crew, every run. They never seem to learn. Suits me. Keeps me in practice.'
-
-  - keywords: [ketil, lars, crew]
-    responses:
-      - 'Boss is steady. Lars hits what he aims at. Would not run with anyone else.'
-
-  - keywords: [""]
-    responses:
-      - 'Hm.'
+defaultMood: ""
+opener:
+  text: Hello there. Go on, look at the hammer. Everybody does. She does not
+    mind.
+  hints: Choose a line below to hear about her hammer, the bandits, or her boss.
+topics:
+- key: hammer
+  kind: info
+  label: That's a big hammer.
+  text: Old girl has seen things. Most folk who look at her think twice. The ones
+    who do not think at all stop thinking soon enough.
+- key: bandit
+  kind: info
+  label: Do the bandits give you trouble?
+  text: Same crew, every run. They never seem to learn. Suits me. Keeps me in practice.
+- key: ketil
+  kind: info
+  label: What is your boss like?
+  text: Boss is steady. Lars hits what he aims at. Would not run with anyone else.

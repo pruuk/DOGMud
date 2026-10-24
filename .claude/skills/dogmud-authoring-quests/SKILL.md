@@ -1,70 +1,123 @@
 ---
 name: dogmud-authoring-quests
-description: Use when writing or editing a quest, a dialogue tree, or any NPC text. Covers the two ways a dialogue file silently mutes its NPC, the questExcluded end-token rule that stops a completed quest being re-offered, first-person NPC text versus narrator hints, quest flags and branching-quest gating, and the give.go trap where an item transfers before any handler can refuse it.
+description: Use when writing or editing a quest, a dialogue file, or any NPC text. Covers the two ways a dialogue file used to mute its NPC (both now refused at boot), the questExcluded end-token rule that stops a completed quest being re-offered, first-person NPC text versus narrator hints, quest flags and branching-quest gating, and the give.go trap where an item transfers before any handler can refuse it.
 ---
 
-This skill covers authoring DOGMud quests, dialogue trees, and NPC text. It
-leads with the two silent-failure modes that mute an NPC with no boot panic
-and no error, because those are the most expensive mistakes in this document
-to debug. It then covers quest re-grant prevention, discoverability, voice,
-the give.go item-transfer trap, quest flags and branching, and the quest
-engine's event-name vocabulary.
+This skill covers authoring DOGMud quests, dialogue files, and NPC text.
+Since quest arc #375 phase 1 a dialogue file is an opener plus a menu of
+keyed topics that `talk <npc>` shows; the old keyword patterns and
+conversation tree are deleted. The skill covers the two old silent-failure
+modes (now refused at boot), quest re-grant prevention, discoverability,
+voice, the give.go item-transfer trap, quest flags and branching, and the
+quest engine's event-name vocabulary.
 
-## Two ways to mute an NPC
+## Two ways a dialogue file used to mute an NPC
 
-Both of these fail silently: no boot panic, no runtime error, the NPC simply
-stops responding to any keyword. The pre-push boot test cannot catch either
-one because dialogue loads lazily, per mob and zone, on first interaction,
-not at startup.
+Both of these once failed silently, with no boot panic and the NPC simply
+mute. Both are now refused at boot (the dialogue door in `main_dialogue.go`
+panics on any problem) and by the CI sweep
+`TestSmoke_ShippedDialoguePassesTheValidators`. Run the boot smoke tests
+before pushing dialogue changes.
 
 **Filename convention.** Dialogue YAML files must be named `<mobId>.yaml`
-only, not `<mobId>-<name>.yaml`. Mob and behavior-tree files use the
-`<mobId>-<name>.yaml` convention, which makes it intuitive (and wrong) to
-assume dialogue follows the same pattern. A `<mobId>-<name>.yaml` dialogue
-file loads with no panic and leaves the NPC silently mute. Caught 2026-04-30
-when all three foragers had dialogue named `371-vella.yaml` etc: the loader
-saw no dialogue file and every keyword got no response. Verification:
-`ls _datafiles/world/dogmud/dialogue/<any>/`, every existing file is just
-`<digits>.yaml`. [[feedback_dialogue_filename_convention]]
+only, not `<mobId>-<name>.yaml`, and sit in the folder of the mob's zone.
+Mob and behavior-tree files use the `<mobId>-<name>.yaml` convention, which
+makes it intuitive (and wrong) to assume dialogue follows the same pattern.
+Caught 2026-04-30 when all three foragers had dialogue named `371-vella.yaml`
+etc and were mute. The loader now reports a file name that is not a mob id, a
+`mobid:` that differs from the file name, and a file in the wrong zone
+folder. [[feedback_dialogue_filename_convention]]
 
-**Bare-scalar list fields.** A dialogue `[]string` field
-(`questRequired`, `questExcluded`, `triggers`, `keywords`) written as a bare
-scalar instead of a one-element list, for example `questRequired: "34-end"`
-instead of `questRequired: ["34-end"]`, causes `yaml.v2` to error on
-unmarshal. The loader treats any unmarshal error as fatal for the whole
-file, logs it, and permanently caches nil for that mob. The NPC goes
-completely mute, every node and pattern, not just the offending node. One
-copy-paste slip silenced 7 quest-giver NPCs in production undetected. Sweep
-grep before shipping dialogue changes:
-`grep -rnE '^\s*(questRequired|questExcluded):\s*["'\'']' <dialogue-dir>`
-(the list form has `[` after the colon, the bare-scalar form has a quote).
+**Bare-scalar list fields.** A dialogue `[]string` field (`questRequired`,
+`questExcluded`, `heardRequired`) written as a bare scalar instead of a
+one-element list, for example `questRequired: "34-end"` instead of
+`questRequired: ["34-end"]`, fails the whole file's decode. That once
+silenced 7 quest-giver NPCs in production undetected. Decoding is now strict
+(an unknown key fails too, so a typo or a leftover `patterns:` cannot be
+ignored) and the boot door reports the file.
 [[feedback_dialogue_bare_scalar_list_mutes_npc]]
+
+## A topic file
+
+`_datafiles/world/dogmud/dialogue/<zone folder>/<mobId>.yaml`. Trimmed from
+Tamsin Reed (`greywater_flats/9191.yaml`, quest 62):
+
+```yaml
+mobid: 9191
+zone: Greywater Flats
+defaultMood: neutral
+opener:                      # said aloud when talk opens, before the menu
+  text: I am Tamsin Reed. I keep the ford crossing here.
+  hints: You could ask Tamsin about whatever is striking her passengers.
+  variants:                  # first one whose gates pass replaces text
+  - questRequired: [62-end]
+    text: The reeds have stayed quiet since you cleared them.
+topics:
+- key: quest_start           # ^[a-z0-9_]+$, unique in the file, in the manifest
+  kind: offer                # [!]; Accept / Leave card, grants on Accept
+  quest: 62
+  label: Adders in the Ford  # must be the quest's title
+  playerLine: Do you want help with whatever is striking your passengers?
+  text: Would you? There is a marsh adder lairing in the reeds.
+  questExcluded: [62-start, 62-end]
+  grantsQuest: 62-start      # an offer grants the start token
+- key: quest_turnin
+  kind: handin               # [?]; completes on choice, no card
+  quest: 62
+  label: Adders in the Ford
+  playerLine: The marsh adder in the reeds is dead.
+  text: Dead, is it. You have made my crossing a kinder one.
+  questRequired: [62-start, 62-adder]
+  questExcluded: [62-end]
+  grantsQuest: 62-end        # a hand-in grants the end token
+- key: ford_talk
+  kind: info                 # grey once heard; [*] while unheard if marked
+  label: How do I cross the ford safely?
+  text: Keep to the line of withy stakes and it is an easy crossing.
+```
+
+- Every new key needs a line `<mobId>.<key>` in
+  `_datafiles/world/dogmud/dialogue/topic-keys.txt`; a removed or renamed
+  key moves to its `# retired` or `# renamed` section, because saved
+  characters hold heard keys (`topic_manifest_test.go`).
+- Labels follow the menu language in `dogmud-player-copy` (player's voice,
+  at most 50 characters, `menu.LintLabels` checks the rest). `playerLine`
+  may use only what the player can see at that moment (R27).
+- An item hand-in adds `requiresItem` (taken) or `carriesItem` (shown and
+  kept). `breadcrumb` (offers only) is a line the NPC says while the offer is
+  still closed. `heardRequired: [key]` opens a topic once an info topic on
+  the same NPC was heard. `behavior: true` fires the mob's tree as
+  `player_topic` and needs a matching `topic_is` branch.
+- A choice that cannot be undone is made in a talk menu, after a topic the
+  player must hear explains it (`heardRequired`), never by a room command
+  (R28).
+- Validate a draft with `go run ./cmd/dialoguecheck -data
+  _datafiles/world/dogmud -dialogue <folder>` before the boot smoke tests.
 
 ## Gating fields at a glance
 
-Three different things gate whether a dialogue node or pattern fires, and
-two of their names differ by one word. Do not reach for one when you mean
-the other.
+Three different things gate whether a topic is on the menu, and two of their
+names differ by one word. Do not reach for one when you mean the other.
 
 - `questExcluded`: a list of quest TOKENS, e.g. `["10-start", "10-end"]`.
-  Hides a node if the player holds one of these tokens (used for quest
+  Hides a topic if the player holds one of these tokens (used for quest
   re-grant prevention, immediately below).
 - `questFlagExcluded`: a map of flag KEY to VALUE, e.g.
-  `{"11-branch": "sylara"}`. Hides a node if a quest flag equals that value
+  `{"11-branch": "sylara"}`. Hides a topic if a quest flag equals that value
   (used for branching-quest gating, in Quest flags and branching below).
-- `triggers` / `keywords`: the words a player must type to reach a node at
-  all. This gates on player input, not on quest state (see Discoverability
-  below).
+- `heardRequired`: a list of info topic KEYS on the same NPC that the player
+  must have heard first. It replaces the old tree's `requires`/`unlocks`, and
+  what a player has heard is saved on the character, so it never expires.
 
 ## Re-grant prevention
 
 ### Quest Re-Grant Prevention SOP
-Every dialogue node or pattern with `grantsQuest` must include the quest's
-**end token** (e.g., `{questid}-end`) in `questExcluded`, not just the token
-being granted. Without this, a player who completed the quest can get it
-re-offered. Example: `grantsQuest: "10-start"` requires
-`questExcluded: ["10-start", "10-end"]`. The dialogue loader logs a warning
-at runtime if this exclusion is missing.
+Every topic with `grantsQuest` must include the quest's **end token** (e.g.,
+`{questid}-end`) in `questExcluded`, not just the token being granted.
+Without this, a player who completed the quest can get it re-offered.
+Example: `grantsQuest: "10-start"` requires
+`questExcluded: ["10-start", "10-end"]`. `dialogue.ValidateWorld` refuses
+either omission, at boot and in CI.
 
 The end-token requirement is the part that gets missed: it is easy to
 exclude the token you just granted (`10-start`) and forget the token the
@@ -74,24 +127,25 @@ player who finished the quest can walk back up and get offered it again.
 ## Discoverability
 
 ### Quest NPC Dialogue SOP
-Every quest-granting dialogue node (any tree node with `grantsQuest`) MUST include
-`"quest"` and `"task"` in its `triggers` list. Similarly, quest-introducing
-`patterns` entries must include `"quest"` and `"task"` in `keywords`. This ensures
-`ask <npcname> quest` always works for discovering available quests.
+There are no trigger words to discover: `talk <npc>` lists every topic the
+player may choose. A quest offer is a topic of `kind: offer` whose `label` is
+the quest's title and whose `grantsQuest` is the quest's start token; a
+hand-in is `kind: handin`, granting the end token. `ValidateWorld` checks
+both. The room roster puts the viewer's best marker before the NPC's name:
+`[?]` an eligible hand-in, else `[!]` an eligible offer, else `[*]` an unheard
+`marked: true` info topic (`DialogueFile.Marker`). Players are taught to look
+for `[!]` (`hint` with no active quest says so, R23), so a quest giver whose
+offer is gated shut shows nothing: leave a `breadcrumb` or an opener hint.
 
-### Dialogue Voice & Trigger Discoverability
+### Dialogue Voice & Discoverability
 - NPC `text` fields are spoken by the NPC, always first person ("I", "my", "me").
 - `hints` are narrator text for the player, describe options from the player's
   perspective. **NEVER** write 3rd-person self-references like "Ask about why she
   left" when "she" is the speaking NPC. Write "You could ask why she left" or
   "You could ask about the marriage."
-- Every trigger word MUST be discoverable, it must appear in a hint, NPC text,
-  room description, or quest log. Undiscoverable triggers are broken triggers.
-- Prefer `questRequired` over `requires` for quest-gated nodes. `requires` depends
-  on per-player memory that can expire and brick quests.
-- `expiryPeriod` should almost never be set. The ONLY valid use is quests
-  where urgency is the design intent (e.g., timed delivery before an attack).
-  For all other NPCs, leave it empty or omit entirely.
+- A topic hidden behind gates the player cannot see should leave a trail:
+  an offer can carry a `breadcrumb` line the NPC says while the offer is
+  closed, and an opener variant or hint can point at what unlocks it.
 
 Provenance note: an earlier implementation rendered hints via
 `mob.Command("say ...")`, which caused exactly the NPC self-reference
@@ -127,26 +181,37 @@ owner call on the quest mechanisms arc, not a fix to make in passing.
 ## Items
 
 ### Quest Item Delivery: give.go Gotcha
-**CRITICAL:** `give.go` transfers the item from the player to the mob BEFORE
-any handler fires. The handler cannot prevent or undo the transfer.
-Consequences:
-- Quest item delivery is handled by the quest engine's `item_give` triggers
-  (in quest YAML) and/or behavior tree `player_give` handlers on the mob
-- NPCs that should NOT keep the item (e.g., the quest giver who handed it
-  out) need a behavior tree `player_give` handler that uses the `return_item`
-  action to give the item back
+Since #375 (R7, R8) an item hand-in is a dialogue topic, never a quest
+trigger: an `item_give` trigger may not carry a `grant` (the boot validators
+refuse it). `give <item> <npc>` asks the NPC's topics first, BEFORE any
+transfer:
+- A topic wanting the item (`requiresItem`, taken; or `carriesItem`, shown
+  and kept) that is eligible plays exactly as if chosen from the talk menu,
+  and takes the instance the player named (`give 2.purse`).
+- A topic wants it but none is eligible: the item never leaves the player.
+  The mob's tree may say why: a `player_give` branch with an `item_matches`
+  condition for that item, using only speech and `return_item`, plays as a
+  hand-back (Arn's "See Drunn first, then come back."). It can credit
+  nothing. Otherwise the player reads "<npc> looks at the <item> and hands
+  it back."
+- No topic wants it: the old give. `give.go` transfers the item to the mob
+  BEFORE the tree's `player_give` fires, so a handler can only react after
+  the fact, typically by giving it back with `return_item`.
 - Quest givers who hand out physical items via `givesItem` must also have a
-  recovery dialogue node that gives a replacement if the player lost the item
+  recovery topic that gives a replacement if the player lost the item
 
 ### Dialogue Engine: givesItem
-Tree nodes and patterns support `givesItem: <itemId>`. When a node fires with
-`givesItem` set, the player receives the item and sees "You receive a <itemname>."
-Use this for NPCs handing quest items to the player during dialogue.
+Topics support `givesItem: <itemId>`. When a topic with `givesItem` is
+chosen, the player receives the item and sees "You receive a <itemname>."
+Use this for NPCs handing quest items to the player during dialogue. If the
+item cannot be carried, nothing else the topic does applies, so it can be
+chosen again once the player makes room.
 
-This is a hard constraint, not advice: by the time any handler runs, the
-item is already gone from the player. A handler cannot inspect the item and
-decide to refuse it, it can only react after the fact (typically by giving
-it back with `return_item`).
+For an item no topic wants this is a hard constraint: by the time any
+handler runs, the item is already gone from the player. A handler cannot
+inspect the item and decide to refuse it, it can only react after the fact
+(typically by giving it back with `return_item`). To refuse a quest item
+before it moves, make a topic want it.
 
 Two more item rules for quests:
 
@@ -182,8 +247,8 @@ flags:
 Flag key convention: `"{questId}-{flagName}"` (e.g., `"11-branch"`).
 
 #### Dialogue Integration
-- `setsQuestFlag: {key: "11-branch", value: "rhett"}`: set a flag on
-  node match
+- `setsQuestFlag: {key: "11-branch", value: "rhett"}`: set a flag when
+  the topic is chosen
 - `questFlagRequired: {"11-branch": "rhett"}`: gate on flag value
 - `questFlagExcluded: {"11-branch": "sylara"}`: hide if flag matches
 
@@ -200,13 +265,13 @@ Flag key convention: `"{questId}-{flagName}"` (e.g., `"11-branch"`).
 #### Branching Quest SOP
 Every branching quest MUST have:
 1. Flag declaration in quest YAML with all valid values
-2. `setsQuestFlag` on each branch NPC's quest-start dialogue node
+2. `setsQuestFlag` on each branch NPC's quest-start topic
 3. `questFlagRequired` on followup quest offers to gate by branch
-4. **Dismissal nodes** at the TOP of each NPC's tree nodes list for
-   wrong-path players. Without these, keyword patterns fire and
-   players think there's a hidden quest
-5. Root variants with `questFlagRequired` for path-specific greetings
-6. Mid-quest root variants for cross-NPC visits during the OTHER quest
+4. `questFlagExcluded` (or `questFlagRequired`) on every branch topic, so a
+   wrong-path player's menu never shows the other branch. The menu lists
+   only eligible topics, so no ordering or dismissal topic is needed.
+5. Opener variants with `questFlagRequired` for path-specific openers
+6. Mid-quest opener variants for cross-NPC visits during the OTHER quest
 
 ### Quest reward YAML keys
 
@@ -232,7 +297,7 @@ to the same two words, so one vocabulary covers both blocks.
 Quest YAML triggers panic at startup if the `event:` name is not in the
 quest engine's hardcoded `validEvents` map (`internal/questengine/loader.go`,
 around line 39-43). The behavior tree event vocabulary
-(`mob_die`, `mob_hurt`, `mob_idle`, `player_ask`, `player_give`,
+(`mob_die`, `mob_hurt`, `mob_idle`, `player_topic`, `player_give`,
 `player_enter`, `mob_flee`) is a separate system and does not overlap with
 quest engine event names. Do not guess an event name from the behavior tree
 vocabulary or from what sounds plausible: `mob_killed` and `mob_die` both

@@ -9,12 +9,12 @@ steps:
   - id: start
     map_target: 421  # the Tollhouse — find the crossing ledger
     description: "Innkeeper Tolva at the Crossing Inn has asked you to investigate the bridge toll. She believes it is unauthorized and wants proof. Find the crossing ledger at the tollhouse."
-    hint: "Get the crossing ledger from the Tollhouse. From the Crossing Inn, the Tollhouse is nearby — check the rooms around the crossing."
+    hint: "From the Crossing Inn, go south to the West Approach, then east into the Tollhouse. The crossing ledger sits on the counter. Type get ledger."
   - id: deliver
     map_target: 423  # fallback when Innkeeper Tolva is not spawned
     map_target_mob: 84  # follow Innkeeper Tolva (schedule watchers_tolva) — a fixed room is wrong for part of the day
     description: "You have the crossing ledger. Bring it back to Innkeeper Tolva at the Crossing Inn."
-    hint: "Return to Innkeeper Tolva at the Crossing Inn with the crossing ledger."
+    hint: "Innkeeper Tolva keeps the Crossing Inn. From the Tollhouse, go west to the West Approach, then north. She sleeps in the back room late at night. Type talk tolva."
   - id: end
     description: "You delivered the ledger to Tolva. She will use the records to petition Thornwall for an official review of the toll."
 
@@ -27,19 +27,6 @@ triggers:
       missing: [5-deliver]
     actions:
       - grant: 5-deliver
-  - event: item_give
-    mob: 84
-    item: 21
-    conditions:
-      has: [5-deliver]
-      missing: [5-end]
-    actions:
-      - grant: 5-end
-      - npc_say:
-          mob: 84
-          lines:
-            - {delay: 1, text: "The crossing ledger. Let me see those numbers."}
-            - {delay: 3, text: "Just as I suspected. The toll rates do not match what Harn is collecting. Someone is skimming."}
 
 rewards:
   actor: "Tolva pages through the ledger with practiced speed, her lips pressed thin. 'Just as I thought. No writ of authority, no commission from Thornwall, no charter. He set this toll up himself.' She closes the book firmly. 'I will send this to the magistrate with my next supply order. You have done this settlement a service.' She slides a wooden token across the counter."

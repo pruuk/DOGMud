@@ -11,12 +11,13 @@ steps:
     map_target: 444  # the Pest Fields — kill pests for a sample
     description: "Farmer Dorn has asked you to clear the crop pests
       from the south fields and bring back a sample."
-    hint: "Kill crop pests until one drops a sample. From Dorn's farm,
-      go east 1 to the fallow field, then south 1 to the pest fields."
+    hint: "From Dorn's farm, go east to the fallow field, then south to
+      the Pest Fields. There, type attack pest."
   - id: deliver
     map_target: 442  # Farmer Dorn's farm
     description: "You have a pest sample. Bring it back to Farmer Dorn."
-    hint: "Return to Farmer Dorn with the pest sample."
+    hint: "Take the pest sample back to Farmer Dorn's farm and type talk
+      dorn."
   - id: end
     description: "You reported back to Dorn. The pest problem is
       under control for now."
@@ -24,7 +25,7 @@ steps:
 rewards:
   actor: "Dorn examines the pest sample with a grim
     expression, then sets it down carefully. 'Bigger than they
-    should be. The fallow field is feeding them -- all that
+    should be. The fallow field is feeding them, all that
     untended root growth, it is a paradise for vermin.' He looks
     toward Thornwall's walls. 'Gareth was a good farmer. The tax
     took everything. And now the rest of us pay for it in
@@ -38,7 +39,6 @@ rewards:
   rep_amount: 15
 
 triggers:
-  # Item delivery via give command
   # A pest drops a sample -> advance to the deliver step.
   - event: item_gain
     item: 24
@@ -47,21 +47,30 @@ triggers:
       missing: [7-deliver]
     actions:
       - grant: 7-deliver
-  - event: item_give
-    mob: 89
-    item: 24
+
+  # Corpses hold the loot (CorpsesEnabled), and every crop pest carries a
+  # sample (item 24 is a carried item, which always drops), so after each
+  # kill the player is told how to search the body.
+  # `loot corpse` reaches the newest corpse at every sight level
+  # (rooms.FindCorpseIndex); the Pest Fields are outdoors and dark at night,
+  # where only the word "corpse" matches.
+  - event: mob_death
+    mob: 91
     conditions:
-      has: [7-deliver]
-      missing: [7-end]
+      has: [7-start]
+      missing: [7-deliver]
+      missing_item: 24
     actions:
-      - grant: 7-end
-      - npc_say:
-          mob: 89
-          lines:
-            - {delay: 1, text: "Too big. This is not natural
-                size."}
-            - {delay: 3, text: "Something in the fallow soil is
-                feeding them. As long as that field sits empty,
-                this will keep happening."}
-            - {delay: 5, text: "You have done what you can. The
-                rest is politics."}
+      - actor: "The pest goes still. To search it for a sample, type loot
+          corpse."
+
+  # A player who found the sample first accepts the offer holding it, so the
+  # step hint moves on to the hand-in. Dialogue grants reach quest_granted
+  # (hooks/Quest_HandleQuestUpdate.go).
+  - event: quest_granted
+    quest_token: "7-start"
+    conditions:
+      missing: [7-deliver]
+      has_item: 24
+    actions:
+      - grant: 7-deliver

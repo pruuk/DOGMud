@@ -27,7 +27,7 @@ steps:
     description: "The cudgel is in your hand. Before you fight, size up the
       training dummy in the Drill Yard. From Hub Square, go north to the
       Awakening Pool, then east four times to the Drill Yard. Crier Toke
-      knows the way too: ask toke yard."
+      in Hub Square knows the way too."
     hint: "From Hub Square, go north, then east four times to the Drill
       Yard. Consider tells you how hard a foe is before you fight it. Type
       consider dummy."
@@ -65,7 +65,7 @@ steps:
     map_target: 5227
     description: "You chose your combat detail. You can change it at any
       time. The Drill Yard has taught you what it can."
-    hint: "Drillmaster Vorn waits in the Drill Yard. Type ask vorn report."
+    hint: "Drillmaster Vorn waits in the Drill Yard. Type talk vorn."
   - id: end
     description: "Drillmaster Vorn has signed off on your first fight. Go
       north to the Sparring Circle, east three times to the Lower Wash,
@@ -162,4 +162,4 @@ triggers:
     actions:
       - grant: "32-verbosity"
       - actor: "Your combat detail is set. Report to Drillmaster Vorn: type
-          ask vorn report."
+          talk vorn."

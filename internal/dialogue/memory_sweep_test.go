@@ -22,7 +22,7 @@ func TestSweepMemories_DropsIdleAndKeepsRecent(t *testing.T) {
 	recent := GetMemory(102, 1)
 	recent.LastVisitRound = util.GetRoundCount()
 
-	// Never visited: created but no node reached yet.
+	// Never marked: created by GetMemory, never greeted.
 	_ = GetMemory(103, 1)
 
 	removed := SweepMemories()
@@ -37,7 +37,40 @@ func TestSweepMemories_DropsIdleAndKeepsRecent(t *testing.T) {
 		t.Error("recently-used memory was swept")
 	}
 	if _, ok := memoryCache[memKey(103, 1)]; !ok {
-		t.Error("never-visited memory was swept; it is at most one round old")
+		t.Error("never-marked memory was swept; it is at most one round old")
+	}
+}
+
+// MarkGreeted stamps the round, so a greeted pair that goes idle ages out of
+// the cache (the only writer of LastVisitRound since #375 Task 21 deleted
+// UpdateMemory), and a pair greeted recently is kept.
+func TestMarkGreeted_StampsTheRoundSoTheSweepAgesItOut(t *testing.T) {
+	defer util.ResetRoundCountForTest()
+	for k := range memoryCache {
+		delete(memoryCache, k)
+	}
+
+	util.SetRoundCountForTest(10)
+	MarkGreeted(301, 1)
+	if got := GetMemory(301, 1).LastVisitRound; got != 10 {
+		t.Fatalf("MarkGreeted must stamp the round, got LastVisitRound %d", got)
+	}
+
+	util.SetRoundCountForTest(10 + memorySweepIdleRounds)
+	MarkGreeted(302, 1)
+	if removed := SweepMemories(); removed != 0 {
+		t.Fatalf("nothing is idle past the window yet, swept %d", removed)
+	}
+
+	util.SetRoundCountForTest(11 + memorySweepIdleRounds)
+	if removed := SweepMemories(); removed != 1 {
+		t.Fatalf("the idle greeting must age out, swept %d", removed)
+	}
+	if HasGreeted(301, 1) {
+		t.Error("the idle pair must greet afresh once swept")
+	}
+	if !HasGreeted(302, 1) {
+		t.Error("the recent greeting must survive the sweep")
 	}
 }
 

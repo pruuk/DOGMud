@@ -1,0 +1,16 @@
+mobid: 117
+zone: Thornwall City
+defaultMood: neutral
+# Behavior-only mob (behaviors/thornwall_city/117-barmaid_dal.yaml); her one
+# ask branch (gossip) became the topic below. The opener is new.
+opener:
+  text: Ale is cheap, wine is not, and I have a room full of thirsty people. What
+    do you need?
+  hints: Choose a line below if you want to hear about the local gossip.
+topics:
+- key: gossip
+  kind: info
+  label: Have you heard any gossip?
+  text: You want gossip? Talk to the old men in the back corner. They have more stories
+    than sense.
+  hints: The Back Corner is south of the bar. There, type talk gobb.

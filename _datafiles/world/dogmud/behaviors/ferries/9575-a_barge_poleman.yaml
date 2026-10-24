@@ -4,21 +4,7 @@ tree:
   type: selector
   children:
 
-    # ── info / greetings ──
-    - type: sequence
-      event: player_ask
-      children:
-        - type: condition
-          check: keyword_match
-          keywords: [hello, hi, help, who, what, where, boat, ferry,
-            packet, barge, crossing, long, far, when]
-        - type: action
-          do: say
-          text: This is the Grey Heron. Book your fare with the agent
-            on the dock, not with me.
-        - type: action
-          do: say
-          text: River crossing is a short one. Keep clear of the pole.
+    # His greeting lives in his dialogue opener (dialogue/ferries/9575.yaml).
 
     # Silent player_enter no-op: claims the event so composition never
     # falls through to noncombat_passive's "pays you little mind." emote.

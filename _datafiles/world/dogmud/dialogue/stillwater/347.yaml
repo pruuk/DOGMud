@@ -1,228 +1,190 @@
 mobid: 347
 zone: Stillwater
 defaultMood: cautious
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    moods: ["neutral", "friendly", "cautious"]
-    responses:
-      - "Welcome. Mind the loose board on the second tread."
-      - "Sit if you like. The kettle is on the hearth."
-
-  - keywords: ["hello", "hi"]
-    moods: ["grateful"]
-    responses:
-      - "You came back. Sit. The kettle is on."
-
-  - keywords: ["who", "you", "yourself", "ulla"]
-    responses:
-      - "Ulla. I have lived in this cottage thirty-eight years -- the last twelve of them alone. I weave. I keep my husband's birds on the mantelpiece. I do not go out much."
-
-  - keywords: ["husband", "elgar", "voss"]
-    moods: ["neutral", "friendly", "cautious"]
-    responses:
-      - "Elgar. He went into the lake twelve years ago, on a fishing trip east -- so the town tells it. There was no body. There was a marker put up at the cemetery. There has been a chair empty at this hearth since."
-
-  - keywords: ["birds", "carving", "kingfisher"]
-    responses:
-      - "His birds. He carved one each winter -- a different bird every year -- and gave it to me each spring. The kingfisher was his favourite. He worked on a kingfisher in the workshop that last winter and never finished it. The clamp is still set."
-
-  - keywords: ["workshop", "upstairs", "stair"]
-    responses:
-      - "Upstairs. I do not go often. The dust there is undisturbed except where I climb to look at the bench. The door has never been locked -- I just have not had the heart."
-
-  - keywords: ["maren"]
-    responses:
-      - "Maren. Elgar's brother's daughter -- a weaver in Thornwall City. She writes when she has the words. I write back when I do."
-
-  - keywords: ["lake", "town", "stillwater"]
-    responses:
-      - "Stillwater is a quieter town than it was when I came here. Fewer boats out. Fewer young people. The lake has been less generous these last years."
-
-  - keywords: [""]
-    responses:
-      - "I am here. The kettle is on."
-      - "Speak quietly. The cottage is small and the walls hear."
-
-tree:
-  root:
-    text: "Welcome. The kettle is on. Sit if you like."
-    hints: "You could ask Ulla about her husband, the workshop upstairs,
-      or the town."
-    variants:
-      # === Cross-quest: full quest 19 + whole truth ending of quest 20 ===
-      - questRequired: ["20-end", "19-end"]
-        questFlagRequired:
-          "20-truth": "whole"
-          "19-completion": "full"
-        text: "Drunn told me you went down into the deep and killed the
-          thing in the sump. Elgar would have wanted to be the one. He'd
-          be glad it was you instead."
-        hints: "You could ask Ulla about Elgar, about the workshop, or
-          about the town."
-
-      # === Cross-quest: full quest 19 + partial-truth ending ===
-      - questRequired: ["20-end", "19-end"]
-        questFlagRequired:
-          "19-completion": "full"
-        text: "Drunn told me you killed the thing in the sump. The lake
-          will be kinder for it. Elgar would have wanted to know the
-          deep was less hungry by one mouth."
-        hints: "You could ask Ulla about Elgar or about the town."
-
-      # === Post-quest: whole truth told ===
-      - questRequired: ["20-end"]
-        questFlagRequired:
-          "20-truth": "whole"
-        text: "Vella. So she knew, and she carried it alone all those
-          years. I will go and see her -- when the words come. Tell her
-          for me, if you see her first, that her brother went down
-          because that is who he was. She could not have stopped him.
-          No one could. I went to the Pike & Lantern for the first
-          time in a long while. Sigrid kept the old seat for me.
-          Vella came with me."
-        hints: "You could ask Ulla about Elgar, the workshop, or the
-          town."
-
-      # === Post-quest: partial truth (default) ===
-      - questRequired: ["20-end"]
-        text: "Thank you. The journal sits on the mantel now beside his
-          birds. I read it again most mornings. It is enough that he
-          left me his last words. I do not need more than that. I went
-          to the Pike & Lantern for the first time in a long while.
-          Sigrid kept the old seat for me."
-        hints: "You could ask Ulla about Elgar, the workshop, or the town.
-          You could also ask her about the truth -- if there is more she
-          should know."
-
-      # === Has journal, ready to deliver ===
-      - questRequired: ["20-vella_journal"]
-        questExcluded: ["20-end"]
-        text: "You have something for me. I can see it in your hand."
-        hints: "Hand Ulla the journal entry."
-
-      # === Has kingfisher, hasn't seen Vella ===
-      - questRequired: ["20-kingfisher_found"]
-        questExcluded: ["20-vella_journal"]
-        text: "You found something at the cemetery. I can see the carving.
-          That goes to Vella -- it was hers to leave there, and hers
-          again now."
-        hints: "Take the carved kingfisher to Vella Thorne at the
-          healer's cottage."
-
-      # === Has Brindle's confession, hasn't found cemetery cache ===
-      - questRequired: ["20-brindle_confession"]
-        questExcluded: ["20-kingfisher_found"]
-        text: "You spoke to Brindle. I can see it. He has not been the
-          same since Elgar went down. He will not be the same again,
-          maybe -- but it is something to be heard."
-        hints: "There is a buried cache at Elgar's empty grave at the
-          cemetery. Search there next."
-
-      # === Mid-investigation: has start, no terminal token yet ===
-      - questRequired: ["20-start"]
-        questExcluded: ["20-brindle_confession"]
-        text: "Have you found anything in his things? Take your time. I
-          have waited twelve years. I can wait a little longer."
-        hints: "Continue investigating. The spiral motif Elgar marked is
-          carried at six places across town -- find them all and the
-          shape of what he was doing should come clear."
-
-  nodes:
-    # ============================================================
-    # ASK-PATH HANDOFF: player holds journal page, asks to hand it over
-    # ============================================================
-    - id: ullahandoff
-      triggers: ["journal", "page", "husband", "truth", "deliver", "hand",
-        "give", "turn", "done", "finished", "report", "quest", "task"]
-      questRequired: ["20-vella_journal"]
-      questExcluded: ["20-end"]
-      requiresItem: 40061
-      grantsQuest: "20-end"
-      setsQuestFlag:
-        key: "20-truth"
-        value: "partial"
-      text: "The journal. I have not seen Elgar's hand in twelve years.
-        Thank you for bringing it home."
-      hints: "You hand the journal page to Ulla."
-      moodChange: friendly
-
-    # ============================================================
-    # QUEST GRANT: accept the inquiry
-    # ============================================================
-    - id: accept_inquiry
-      triggers: ["quest", "task", "elgar", "husband", "workshop", "help"]
-      questExcluded: ["20-start", "20-end"]
-      grantsQuest: "20-start"
-      text: "There is something I have wanted to ask, and have not had
-        the courage. The workshop above this room was Elgar's. His
-        tools are still in it -- his unfinished work, his carvings,
-        his notebooks. I have not been able to look. The dust there is
-        twelve years deep. If you would go through what is up there
-        and tell me what was on his mind in the months before he went
-        away, I would be grateful past words. I cannot pay you much.
-        I will give you what I can, and tell you what I know about him,
-        if you ask."
-      hints: "Climb the stair from this room up to the workshop. Search
-        what you find there -- the bench, the tools, the unfinished
-        carving in the vise."
-      moodChange: friendly
-
-    # ============================================================
-    # ALT PATH: ask ulla journal/kingfisher with the journal in hand
-    # ============================================================
-    - id: ask_journal
-      triggers: ["journal", "kingfisher", "page", "elgar"]
-      questRequired: ["20-vella_journal"]
-      questExcluded: ["20-end"]
-      requiresItem: 40061
-      grantsQuest: "20-end"
-      setsQuestFlag:
-        key: "20-truth"
-        value: "partial"
-      text: "You have something for me. Yes -- the journal. Let me
-        read it before you say anything more."
-      moodChange: friendly
-
-    # ============================================================
-    # QUEST GRANT: tell the whole truth (overwrites partial flag)
-    # ============================================================
-    - id: tell_truth
-      triggers: ["truth", "vella", "whole", "everything"]
-      questRequired: ["20-end"]
-      setsQuestFlag:
-        key: "20-truth"
-        value: "whole"
-      text: "Vella was with him? Vella knew? My god. She has carried
-        that all this time and never said. We sat together at his
-        marker. She held my hand and said nothing -- and that was
-        because there was something she could not say. I see it now.
-        Tell her -- tell her she did not cause it. Tell her her
-        brother went down because that is who he was. Tell her I
-        would like to see her at the loom one afternoon. She used to
-        come and sit while I wove."
-      moodChange: grateful
-
-    # ============================================================
-    # INFO NODES (no grants)
-    # ============================================================
-    - id: spiral_info
-      triggers: ["spiral", "motif", "carving", "design"]
-      questRequired: ["20-workshop_carving"]
-      text: "He never spoke of the spiral to me. I think he did not
-        want to worry me. The carving on the bench-vise is the first
-        time I have seen it -- the temple priest may know more about
-        what it means. Older than the cottage, you said. Older than
-        the temple too, perhaps."
-
-    - id: cemetery_info
-      triggers: ["cemetery", "grave", "marker"]
-      questRequired: ["20-brindle_confession"]
-      text: "His marker is at the western end, near the wall. The
-        grave is empty -- there was no body to bury. I put a small
-        carved fish-sigil at the foot of the marker, the kind that
-        marks Stillwater-born. Vella visited it more than I did, in
-        the early years. I think she may still."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Welcome. The kettle is on. Sit if you like.
+  hints: Choose a line below if you want to hear about herself, her family, or
+    the town. Her task below is about her late husband.
+  variants:
+  - questRequired:
+    - 20-end
+    - 19-end
+    questFlagRequired:
+      19-completion: full
+      20-truth: whole
+    text: Drunn told me you went down into the deep and killed the thing in the sump.
+      Elgar would have wanted to be the one. He'd be glad it was you instead.
+    hints: Choose a line below if you would like to hear about herself, her
+      family, or the town.
+  - questRequired:
+    - 20-end
+    - 19-end
+    questFlagRequired:
+      19-completion: full
+    text: Drunn told me you killed the thing in the sump. The lake will be kinder
+      for it. Elgar would have wanted to know the deep was less hungry by one mouth.
+    hints: Choose a line below to hear about herself, her family, or the town.
+  - questRequired:
+    - 20-end
+    questFlagRequired:
+      20-truth: whole
+    text: Vella. So she knew, and she carried it alone all those years. I will go
+      and see her when the words come. Tell her for me, if you see her first, that
+      her brother went down because that is who he was. She could not have stopped
+      him. No one could. I went to the Pike & Lantern for the first time in a long
+      while. Sigrid kept the old seat for me. Vella came with me.
+    hints: Choose a line below to learn about herself, her family, or the town.
+  - questRequired:
+    - 20-end
+    text: Thank you. The journal sits on the mantel now beside his birds. I read it
+      again most mornings. It is enough that he left me his last words. I do not need
+      more than that. I went to the Pike & Lantern for the first time in a long while.
+      Sigrid kept the old seat for me.
+    hints: If you want to tell Ulla what Vella knew, choose it below.
+  - questRequired:
+    - 20-kingfisher_found
+    questExcluded:
+    - 20-end
+    carriesItem: 40061
+    text: You have something for me. I can see it in your hand.
+    hints: Choose Ulla's Silence below to give her Elgar's journal page.
+  - questRequired:
+    - 20-vella_journal
+    questExcluded:
+    - 20-end
+    text: Vella gave you something for me? Then where is it?
+    hints: If you lost the journal page, Vella keeps a copy. Her Healer's Cottage
+      is just west of here. Type talk vella.
+  - questRequired:
+    - 20-kingfisher_found
+    questExcluded:
+    - 20-vella_journal
+    text: You found something at the cemetery. I can see the carving. That goes to
+      Vella. It was hers to leave there, and hers again now.
+    hints: Vella keeps the Healer's Cottage, just west of here. In the evening she
+      sits here with Ulla. Type talk vella.
+  - questRequired:
+    - 20-brindle_confession
+    questExcluded:
+    - 20-kingfisher_found
+    text: You spoke to Brindle. I can see it. He has not been the same since Elgar
+      went down. He will not be the same again, maybe, but it is something to be
+      heard.
+    hints: The cemetery is west of the Healer's Cottage, which is just west of here.
+      At the foot of Elgar's grave, type look disturbance.
+  - questRequired:
+    - 20-start
+    questExcluded:
+    - 20-brindle_confession
+    text: Have you found anything in his things? Take your time. I have waited twelve
+      years. I can wait a little longer.
+    hints: To see your next step, type hint.
+topics:
+- key: ullahandoff
+  kind: handin
+  quest: 20
+  label: Ulla's Silence
+  playerLine: Vella gave me a page Elgar wrote. It is for you.
+  text: The journal. I have not seen Elgar's hand in twelve years. Thank you for bringing
+    it home.
+  questRequired:
+  - 20-kingfisher_found
+  questExcluded:
+  - 20-end
+  requiresItem: 40061
+  grantsQuest: 20-end
+  setsQuestFlag:
+    key: 20-truth
+    value: partial
+  moodChange: friendly
+- key: accept_inquiry
+  kind: offer
+  quest: 20
+  label: Ulla's Silence
+  playerLine: Is there anything I can do for you?
+  text: There is something I have wanted to ask, and have not had the courage. The
+    workshop above this room was Elgar's. His tools are still in it, his unfinished
+    work, his carvings, his notebooks. I have not been able to look. The dust there
+    is twelve years deep. If you would go through what is up there and tell me what
+    was on his mind in the months before he went away, I would be grateful past words.
+    I cannot pay you much. I will give you what I can, and tell you what I know about
+    him, if you ask.
+  hints: Accept, then go up the stair to the workshop. Something is carved into the
+    handle of the vise on Elgar's bench. Type look carving.
+  questExcluded:
+  - 20-start
+  - 20-end
+  grantsQuest: 20-start
+  moodChange: friendly
+- key: tell_truth
+  kind: info
+  label: Vella knew more than she told you.
+  text: Vella knew? She had his last page all these years? My god. She has carried
+    that all this time and never said. We sat together at his marker. She held my hand and said nothing,
+    and that was because there was something she could not say. I see it now. Tell
+    her she did not cause it. Tell her her brother went down because that is who
+    he was. Tell her I would like to see her at the loom one afternoon. She used to
+    come and sit while I wove.
+  marked: true
+  questRequired:
+  - 20-end
+  questFlagExcluded:
+    20-truth: whole
+  setsQuestFlag:
+    key: 20-truth
+    value: whole
+  moodChange: grateful
+- key: spiral_info
+  kind: info
+  label: Do you know what the spiral means?
+  text: He never spoke of the spiral to me. I think he did not want to worry me. The
+    carving on the bench-vise is the first time I have seen it. The temple priest
+    may know more about what it means. Older than the cottage, you said. Older than
+    the temple too, perhaps.
+  questRequired:
+  - 20-workshop_carving
+- key: cemetery_info
+  kind: info
+  label: Where is Elgar's grave?
+  text: His marker stands apart, near the cemetery's eastern wall. The grave is empty.
+    There was no body to bury. I put a small carved fish-sigil at the foot of the
+    marker, the kind that marks Stillwater-born. Vella visited it more than I did,
+    in the early years. I think she may still.
+  hints: The cemetery is west of the Healer's Cottage, which is just west of here.
+  marked: true
+  questRequired:
+  - 20-brindle_confession
+- key: elgar
+  kind: info
+  label: What happened to your husband?
+  text: Elgar. He went into the lake twelve years ago, on a fishing trip east, so the
+    town tells it. There was no body. There was a marker put up at the cemetery.
+    There has been a chair empty at this hearth since.
+  marked: true
+- key: birds
+  kind: info
+  label: Who carved the birds on the mantel?
+  text: His birds. He carved one each winter, a different bird every year, and gave
+    it to me each spring. The kingfisher was his favourite. He worked on a kingfisher
+    in the workshop that last winter and never finished it. The clamp is still set.
+- key: workshop
+  kind: info
+  label: What is up the stair?
+  text: Elgar's workshop. I do not go often. The dust there is undisturbed except where I
+    climb to look at the bench. The door has never been locked. I just have not had
+    the heart.
+- key: who
+  kind: info
+  label: How long have you lived here?
+  text: I have lived in this cottage thirty-eight years, the last twelve of them alone.
+    I weave. I keep my husband's birds on the mantelpiece. I do not go out much.
+- key: maren
+  kind: info
+  label: Do you have family nearby?
+  text: Maren. Elgar's brother's daughter, a weaver in Thornwall City. She writes
+    when she has the words. I write back when I do.
+- key: lake
+  kind: info
+  label: How has the town changed?
+  text: Stillwater is a quieter town than it was when I came here. Fewer boats out.
+    Fewer young people. The lake has been less generous these last years.

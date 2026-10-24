@@ -471,7 +471,7 @@ func spellDefenceIdentity(char *characters.Character, user *users.UserRecord, ro
 		// remove ("Aliceia and Fang dodges").
 		f := char.GetPlayerName(user.UserId)
 		f.Adjectives = nil
-		f.QuestAlert = false
+		f.Marker = ``
 		f.PetName = ``
 		return f.String()
 	}

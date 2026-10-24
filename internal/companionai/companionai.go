@@ -22,14 +22,11 @@ type IdleFunc func(mobInstanceId int) bool
 // way following does. It returns false when the owner is not online.
 type RejoinFunc func(userId int) bool
 
-// NpcAskFunc puts a question from a companion to an NPC as though the
-// companion's owner had asked it, so the NPC answers with its ordinary
-// dialogue, quest and behaviour-tree responses. It returns false when the
-// question could not be delivered.
-// authorized says the owner asked for this in the moment. Only an
-// authorized question may touch the owner's quests; an unauthorized one is
-// conversation and nothing more.
-type NpcAskFunc func(ownerUserId int, mobInstanceId int, text string, authorized bool) bool
+// NpcAskFunc plays one of an NPC's info talk topics, named by topicKey, as
+// though the companion's owner had chosen it (#375 R13). It returns false
+// when the question could not be delivered. authorized says the owner asked
+// for this in the moment; an unauthorized ask plays nothing.
+type NpcAskFunc func(ownerUserId int, mobInstanceId int, topicKey string, authorized bool) bool
 
 // BondedFunc reports whether a mob instance is somebody's bonded
 // companion. Engine code that keeps its own per-template opinion of a mob
@@ -120,17 +117,19 @@ func HoldPosition(userId int, mobInstanceId int) bool {
 }
 
 // SetNpcAsker installs the NPC question handler. Called by
-// internal/usercommands, which owns the dialogue chain.
+// internal/conversation, which owns the talk topics.
 func SetNpcAsker(f NpcAskFunc) {
 	npcAskFunc = f
 }
 
 // AskNpc delivers a companion's question to an NPC on its owner's behalf.
-func AskNpc(ownerUserId int, mobInstanceId int, text string, authorized bool) bool {
+// topicKey is the info topic the owner's companion-ask resolved (#375 R13),
+// never the model's words.
+func AskNpc(ownerUserId int, mobInstanceId int, topicKey string, authorized bool) bool {
 	if npcAskFunc == nil {
 		return false
 	}
-	return npcAskFunc(ownerUserId, mobInstanceId, text, authorized)
+	return npcAskFunc(ownerUserId, mobInstanceId, topicKey, authorized)
 }
 
 // SetSnapshotter installs the snapshot implementation. Called by

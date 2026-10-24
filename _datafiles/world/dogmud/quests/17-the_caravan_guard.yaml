@@ -1,49 +1,29 @@
 questid: 17
 name: The Caravan Guard
-description: A caravan master at the crossroads village needs
-  protection against bandits operating north of the village.
-  The bandits have a camp off the road near the drainage ditch.
+description: A caravan master at the crossroads village needs the
+  bandits camped just off the north road dealt with. Their leader,
+  Soren, wears an iron pin on his collar.
 secret: false
 
 flags:
+  # One value since the owner removed the crate ending (2026-10-23).
   - key: resolution
-    values: [combat, diplomacy]
+    values: [combat]
     description: "How the player resolved the bandit problem"
 
 steps:
   - id: start
-    map_target: 4052  # Bandit Camp — Soren (mob 286); both branches start here
+    map_target: 4052  # Bandit Camp: Soren (mob 286)
     description: "The caravan master has asked you to deal with
-      the bandit threat on the north road."
-    hint: "The bandits have a camp west of the north road, past
-      the drainage ditch. You can fight them or try to negotiate
-      with their leader, Soren. If you kill Soren, bring proof
-      back to the caravan master."
+      the bandits on the north road and bring back their leader's
+      iron pin as proof."
+    hint: "The bandits camp just west of the north road. From the
+      village square, go north once, then west into the Bandit Camp.
+      Kill their leader, Soren. He carries an iron pin; pick it up
+      when he falls and bring it back to the caravan master in the
+      village square. Type talk caravan."
   - id: end
     description: "The bandit situation has been resolved."
 
 rewards:
   gold: 40
-
-triggers:
-  - event: item_give
-    mob: 281
-    item: 54
-    conditions:
-      has: [17-start]
-      missing: [17-end]
-    actions:
-      - grant: 17-end
-      - set_flag:
-          key: "17-resolution"
-          value: "combat"
-      - consume_item: 54
-      - give_item: 51
-      - npc_say:
-          mob: 281
-          lines:
-            - {delay: 1, text: "Soren's pin. So he is done."}
-            - {delay: 3, text: "The road is ours again. Here --
-                a letter for my brother Edric in Stillwater.
-                Show it at his trading post. He will see you
-                right."}

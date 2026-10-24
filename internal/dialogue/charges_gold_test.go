@@ -6,29 +6,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// chargesGold takes the price in the same step that matches the node, before
-// anything is granted. A gold check that passes and a charge that then fails
-// (the gold left between the two) must grant nothing and fall through to the
-// next matching node, the authored refusal.
+// chargesGold takes the price as the first effect Apply runs, before anything
+// is granted. A gold check that passes and a charge that then fails (the gold
+// left between the two) must grant nothing and report false, so the caller
+// says the refusal. Ported from the old TreeAdvance/Match charge tests
+// (#375 Task 21).
 func chargeFixture() *DialogueFile {
-	return &DialogueFile{
-		MobId:       6200,
-		DefaultMood: "neutral",
-		Tree: &Tree{Nodes: []TreeNode{
-			{
-				Id:           "teach",
-				Triggers:     []string{"teach razor"},
-				GrantsQuest:  "80-start",
-				GoldRequired: 25000,
-				ChargesGold:  25000,
-				Text:         "Listen closely.",
-			},
-			{Id: "refuse", Triggers: []string{"teach razor"}, Text: "You can't pay."},
-		}},
-	}
+	return &DialogueFile{MobId: 6200, Topics: []Topic{{
+		Key: "teach_razor", Kind: KindInfo, Label: "Teach me the razor.", Text: "Listen closely.",
+		Gates:   Gates{GoldRequired: 25000},
+		Effects: Effects{GrantsQuest: "80-start", ChargesGold: 25000},
+	}}}
 }
 
-func TestTreeAdvance_ChargesGold_PaysThenGrants(t *testing.T) {
+func TestApply_ChargesGold_PaysThenGrants(t *testing.T) {
 	gold := 25000
 	var granted []string
 	var charged []int
@@ -45,15 +36,16 @@ func TestTreeAdvance_ChargesGold_PaysThenGrants(t *testing.T) {
 			return true
 		},
 	}
-	text, _, _, _ := TreeAdvance(chargeFixture(), 6200, 630, "teach razor", ps)
-	assert.Equal(t, "Listen closely.", text)
+	df := chargeFixture()
+	tp := df.FindTopic("teach_razor")
+	assert.True(t, df.Eligible(tp, ps))
+	assert.True(t, df.Apply(tp, ps))
 	assert.Equal(t, []int{25000}, charged)
 	assert.Equal(t, 0, gold)
 	assert.Equal(t, []string{"80-start"}, granted)
-	ResetMemory(6200, 630)
 }
 
-func TestTreeAdvance_ChargesGold_FailedChargeGrantsNothing(t *testing.T) {
+func TestApply_ChargesGold_FailedChargeGrantsNothing(t *testing.T) {
 	var granted []string
 	ps := &PlayerState{
 		HasQuest:  func(string) bool { return false },
@@ -62,30 +54,33 @@ func TestTreeAdvance_ChargesGold_FailedChargeGrantsNothing(t *testing.T) {
 		HasGold:    func(int) bool { return true },
 		ChargeGold: func(int) bool { return false },
 	}
-	text, _, _, _ := TreeAdvance(chargeFixture(), 6200, 631, "teach razor", ps)
-	assert.Equal(t, "You can't pay.", text, "a failed charge falls through to the refusal")
+	df := chargeFixture()
+	tp := df.FindTopic("teach_razor")
+	assert.True(t, df.Eligible(tp, ps), "fixture check: the gate passes")
+	assert.False(t, df.Apply(tp, ps), "a failed charge refuses the topic")
 	assert.Empty(t, granted, "a failed charge must grant nothing")
-	ResetMemory(6200, 631)
 }
 
-func TestTreeAdvance_ChargesGold_NilCallbackFailsClosed(t *testing.T) {
+func TestApply_ChargesGold_NilCallbackFailsClosed(t *testing.T) {
 	var granted []string
 	ps := &PlayerState{
 		HasQuest:  func(string) bool { return false },
 		GiveQuest: func(tok string) { granted = append(granted, tok) },
 		HasGold:   func(int) bool { return true },
 	}
-	text, _, _, _ := TreeAdvance(chargeFixture(), 6200, 632, "teach razor", ps)
-	assert.Equal(t, "You can't pay.", text)
+	df := chargeFixture()
+	assert.False(t, df.Apply(df.FindTopic("teach_razor"), ps))
 	assert.Empty(t, granted)
-	ResetMemory(6200, 632)
 }
 
-// A paid node whose item cannot be delivered gives the gold back.
-func TestTreeAdvance_ChargesGold_RefundsOnFailedDelivery(t *testing.T) {
+// A paid topic whose item cannot be delivered gives the gold back and grants
+// nothing.
+func TestApply_ChargesGold_RefundsOnFailedDelivery(t *testing.T) {
 	gold := 500
-	df := &DialogueFile{MobId: 6201, DefaultMood: "neutral", Tree: &Tree{Nodes: []TreeNode{
-		{Id: "buy", Triggers: []string{"buy"}, ChargesGold: 500, GoldRequired: 500, GivesItem: 1, GrantsQuest: "x-start", Text: "Here."},
+	df := &DialogueFile{MobId: 6201, Topics: []Topic{{
+		Key: "buy", Kind: KindInfo, Label: "I want to buy one.", Text: "Here.",
+		Gates:   Gates{GoldRequired: 500},
+		Effects: Effects{ChargesGold: 500, GivesItem: 1, GrantsQuest: "x-start"},
 	}}}
 	var granted []string
 	ps := &PlayerState{
@@ -96,33 +91,7 @@ func TestTreeAdvance_ChargesGold_RefundsOnFailedDelivery(t *testing.T) {
 		GiveGold:   func(a int) { gold += a },
 		GiveItem:   func(int) bool { return false },
 	}
-	TreeAdvance(df, 6201, 633, "buy", ps)
+	assert.False(t, df.Apply(df.FindTopic("buy"), ps))
 	assert.Equal(t, 500, gold, "the charge is refunded when the item cannot be delivered")
 	assert.Empty(t, granted)
-	ResetMemory(6201, 633)
-}
-
-func TestMatch_ChargesGold(t *testing.T) {
-	gold := 100
-	df := &DialogueFile{MobId: 6202, DefaultMood: "neutral", Patterns: []Pattern{
-		{Keywords: []string{"teach"}, ChargesGold: 100, GoldRequired: 100, GrantsQuest: "y-start", Responses: []string{"paid"}},
-		{Keywords: []string{"teach"}, Responses: []string{"short"}},
-	}}
-	var granted []string
-	ps := &PlayerState{
-		HasQuest:   func(string) bool { return false },
-		GiveQuest:  func(tok string) { granted = append(granted, tok) },
-		HasGold:    func(int) bool { return true },
-		ChargeGold: func(a int) bool { return false },
-	}
-	resp, _, _ := Match(df, 6202, "teach", ps)
-	assert.Equal(t, "short", resp)
-	assert.Empty(t, granted)
-
-	ps.ChargeGold = func(a int) bool { gold -= a; return true }
-	resp, _, _ = Match(df, 6202, "teach", ps)
-	assert.Equal(t, "paid", resp)
-	assert.Equal(t, 0, gold)
-	assert.Equal(t, []string{"y-start"}, granted)
-	delete(moodCache, 6202)
 }

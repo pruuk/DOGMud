@@ -168,32 +168,14 @@ func TestSmoke_AllDialogueFilesParse(t *testing.T) {
 		}
 
 		var df dialogue.DialogueFile
-		if unmarshalErr := yaml.Unmarshal(raw, &df); unmarshalErr != nil {
-			// This is exactly the condition that mutes an NPC at runtime.
+		// Strict, exactly as dialogue.Load decodes: an unknown key or a
+		// malformed field would mute this NPC at runtime (Load discards the
+		// whole file), and an unknown key is a value silently dropped.
+		if unmarshalErr := yaml.UnmarshalStrict(raw, &df); unmarshalErr != nil {
 			t.Errorf("%s: would mute this NPC at runtime — dialogue.Load discards the whole "+
-				"file and caches a nil sentinel on this error:\n    %v", path, unmarshalErr)
+				"file on this error:\n    %v", path, unmarshalErr)
 			failed++
 			return nil
-		}
-
-		// Lenient decode succeeded — now catch what it silently DROPPED.
-		// Unknown keys are not an error under lenient decoding, which is how
-		// 186 files' greetings: blocks went unread for months: the drift gate
-		// never sees dialogue (lazy-loaded), and this test only checked that
-		// unmarshal didn't error. Strict-probe the same bytes and fail on any
-		// unknown key not in the baseline. (unknownKeyRe is the drift gate's
-		// own pattern, defined below — reused, not duplicated.)
-		var strictProbe dialogue.DialogueFile
-		if strictErr := yaml.UnmarshalStrict(raw, &strictProbe); strictErr != nil {
-			for _, m := range unknownKeyRe.FindAllStringSubmatch(strictErr.Error(), -1) {
-				key := m[1] + "|" + m[2]
-				if !knownIgnoredDialogueKeys[key] {
-					t.Errorf("%s: authored key %q maps to no field on dialogue types — "+
-						"the value is silently dropped. Add the field, fix the key, or "+
-						"(if deliberate) baseline it in knownIgnoredDialogueKeys.", path, key)
-					failed++
-				}
-			}
 		}
 
 		if len(df.Greetings) > 0 {
@@ -219,16 +201,13 @@ func TestSmoke_AllDialogueFilesParse(t *testing.T) {
 	t.Logf("dialogue files parsed cleanly: %d (failed: %d, with greetings: %d)", checked, failed, greetingFiles)
 }
 
-// TestSmoke_ShippedDialoguePassesTheEditorValidator runs the dialogue editor's
-// own save validator (dialogue.ValidateDialogueFile, with the registry-backed
-// validators) over every shipped dialogue file.
-//
-// That validator only ran when a builder saved through the web editor, so a
-// file written by hand never met it: Hadwen's 9100.yaml shipped a ';' in
-// spoken text, which the command splitter treats as a separator, cutting his
-// answer short in play. Errors here are the same errors that would block a
-// save in the editor.
-func TestSmoke_ShippedDialoguePassesTheEditorValidator(t *testing.T) {
+// TestSmoke_ShippedDialoguePassesTheValidators runs the boot door's validators
+// (validateShippedDialogue: dialogue.RegistryWorld plus dialogue.ValidateWorld)
+// over every shipped dialogue file, against the loaded quests, items and
+// behavior trees. A file written by hand used to meet no validator at all:
+// Hadwen's 9100.yaml shipped a ';' in spoken text, which the command splitter
+// treats as a separator, cutting his answer short in play.
+func TestSmoke_ShippedDialoguePassesTheValidators(t *testing.T) {
 	if os.Getenv(bootSmokeEnvVar) == `` {
 		t.Skipf("set %s=1 to run the shipped-dialogue validator sweep", bootSmokeEnvVar)
 	}
@@ -251,58 +230,23 @@ func TestSmoke_ShippedDialoguePassesTheEditorValidator(t *testing.T) {
 		t.Fatalf("found no dialogue files (err %v); the sweep cannot run", err)
 	}
 
-	v := dialogue.RegistryValidators()
-	novel, baselined := 0, 0
-	seen := map[string]bool{}
-	for _, f := range files {
-		raw, err := os.ReadFile(f)
-		if err != nil {
-			t.Errorf("%s: unreadable: %v", f, err)
-			continue
-		}
-		var df dialogue.DialogueFile
-		if err := yaml.Unmarshal(raw, &df); err != nil {
-			continue // parse failures are TestSmoke_AllDialogueFilesParse's job
-		}
-		errs, _ := dialogue.ValidateDialogueFile(df, v)
-		for _, e := range errs {
-			line := filepath.ToSlash(f) + ": " + e
-			key := dialogueFindingKey(line)
-			if knownDialogueValidatorFindings[key] && !strings.Contains(e, "semicolons") {
-				baselined++
-				seen[key] = true
-				continue
-			}
-			novel++
-			t.Errorf("%s", line)
-		}
+	// No baseline: every problem is an error. This is the same call the boot
+	// door makes (validateShippedDialogue), so CI and boot cannot disagree.
+	probs := validateShippedDialogue()
+	for _, p := range probs {
+		t.Errorf("%s", p.String())
 	}
-	for key := range knownDialogueValidatorFindings {
-		if !seen[key] {
-			t.Logf("baseline entry no longer reported, delete it from knownDialogueValidatorFindings: %s", key)
-		}
-	}
-	t.Logf("dialogue files validated: %d (new findings: %d, baselined: %d)", len(files), novel, baselined)
-}
+	t.Logf("dialogue files validated: %d (problems: %d)", len(files), len(probs))
 
-// dialogueFindingKey cuts a reported finding before its first non-ASCII
-// character, so a baseline key is the file, the place and the rule, not the
-// explanatory tail the validator adds after a dash.
-func dialogueFindingKey(line string) string {
-	for i, r := range line {
-		if r > 127 {
-			return strings.TrimRight(line[:i], " ")
-		}
+	// The behavior-topic rules read each tree at the path TryMobBehavior
+	// loads. Seven shipped trees carry topic_is (Hadwen, Esk, Sable, the
+	// Threshold Keeper and three ferry agents); finding none would mean the
+	// index read the wrong paths and every behavior check passed vacuously.
+	perMob, _, _ := behaviorTopicIndex(mobs.AllMobTemplates())
+	if len(perMob) < 7 {
+		t.Errorf("the behavior-topic index found topic_is in %d trees, want at least 7: %v", len(perMob), perMob)
 	}
-	return line
 }
-
-// knownIgnoredDialogueKeys is the accepted baseline of dialogue YAML keys
-// ("field|type", matching the drift gate's key shape) that map to no field.
-// It starts EMPTY: the one historical entry (greetings, 186 files) was
-// resolved by implementing the field, which is the preferred way to clear an
-// entry.
-var knownIgnoredDialogueKeys = map[string]bool{}
 
 // knownSilentlyIgnoredKeys is the accepted baseline of YAML keys that appear in
 // content files but map to no field on their target type, so the lenient
@@ -522,7 +466,7 @@ func TestSmoke_KaelGreetingFollowsQuest11Branch(t *testing.T) {
 		{"13-extraction", map[int]string{11: `end`, 13: `extraction`}, `rhett`, `Walking the scholar's path.`},
 		{"13-end", map[int]string{11: `end`, 13: `end`}, `rhett`, `Rhett got his crystal.`},
 	}
-	for i, c := range cases {
+	for _, c := range cases {
 		ch := &characters.Character{QuestProgress: c.progress}
 		branch := c.branch
 		ps := &dialogue.PlayerState{
@@ -534,9 +478,11 @@ func TestSmoke_KaelGreetingFollowsQuest11Branch(t *testing.T) {
 				return ``
 			},
 		}
-		text, _, ok := dialogue.Greet(&df, 990000+i, 1, ps)
-		if !ok || !strings.Contains(text, c.want) {
-			t.Errorf("%s: Kael greets with %q, want the greeting containing %q", c.name, text, c.want)
+		// #375: talk opens with OpenerFor (the first variant whose gates
+		// pass); the narrator's half of the greeting is the opener hint.
+		text, hints := df.OpenerFor(ps)
+		if got := strings.Join(strings.Fields(text+" "+hints), " "); !strings.Contains(got, c.want) {
+			t.Errorf("%s: Kael opens with %q, want the opener containing %q", c.name, got, c.want)
 		}
 	}
 }

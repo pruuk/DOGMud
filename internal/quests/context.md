@@ -566,11 +566,11 @@ if quest != nil {
 }
 ```
 
-### Reward Distribution
-The real distribution logic lives in
-`internal/hooks/Quest_HandleQuestUpdate.go`, not in this package (this
-package only defines the data shapes). Condensed and simplified from that
-file:
+### Reward distribution example
+The real distribution logic lives inline in `HandleQuestUpdate`
+(`internal/hooks/Quest_HandleQuestUpdate.go`), not in this package (this
+package only defines the data shapes). No function named `distributeRewards`
+exists; this is that handler's reward block, condensed and simplified:
 ```go
 // Distribute quest completion rewards
 func distributeRewards(questUser *users.UserRecord, rewards QuestReward) {
@@ -667,23 +667,27 @@ for _, quest := range allQuests {
 - `internal/util` - Utility functions for file operations and string conversion
 - `internal/mudlog` - Logging system for debugging and monitoring
 
-## Dialogue-Quest Integration (Phase 27)
+## Dialogue-Quest Integration
 
-The dialogue system can gate conversation options on quest state and advance
-quests through NPC dialogue, connecting YAML-driven dialogue trees with the
-token-based quest progression system.
+Since quest arc #375 phase 1, every NPC conversation is a `talk` menu of keyed
+topics (`internal/dialogue`, served by `internal/conversation`). A topic can be
+gated on quest state and can advance a quest when the player chooses it (or,
+for a hand-in, gives the item it wants). The old keyword patterns and stateful
+tree are gone.
 
-### How It Works
+### How it works: the PlayerState callback pattern
 
-The dialogue engine accepts an optional `PlayerState` callback struct that
-provides quest and inventory checks without importing `characters` or `users`
-(avoids circular deps):
+The dialogue package accepts a `PlayerState` callback struct that provides
+quest and inventory checks without importing `characters` or `users` (avoids
+circular deps). `conversation.PlayerState(user)` builds it from the user's
+character:
 
 ```go
-// internal/dialogue/types.go
+// internal/dialogue/types.go (abbreviated)
 type PlayerState struct {
     HasQuest         func(token string) bool   // checks character.HasQuest()
     HasItem          func(itemId int) bool     // checks backpack for item
+    CarriesItem      func(itemId int) bool     // anywhere on the player; backs itemExcluded and carriesItem
     RemoveItem       func(itemId int) bool     // removes item from backpack
     GiveQuest        func(token string)        // fires events.Quest to advance quest
     GiveItem         func(itemId int) bool     // returns whether the item actually reached the player (false e.g. over carry capacity)
@@ -694,78 +698,87 @@ type PlayerState struct {
     HasOwnMasterwork func(skillMin int) bool
     HasGold          func(amount int) bool     // backs goldRequired; nil fails the gate closed
     ChargeGold       func(amount int) bool     // backs chargesGold: all or nothing; nil fails closed
+    HasHeard         func(key string) bool     // backs heardRequired
+    MarkHeard        func(key string)          // records a heard info topic (saved)
 }
 ```
-`GiveItem` returning false aborts the node's OTHER effects too
+`GiveItem` returning false aborts the topic's OTHER effects too
 (`grantsQuest`, `requiresItem` removal, flags, rep, gold) so a
-`givesItem` + `grantsQuest` node can never burn its quest token on an
-item that didn't actually arrive; the node stays re-triggerable once the
+`givesItem` + `grantsQuest` topic can never burn its quest token on an
+item that didn't actually arrive; the topic stays available once the
 player makes room.
-
-Call sites in `talk.go` and `ask.go` build a `PlayerState` from the user's
-character before calling dialogue engine functions.
 
 ### Dialogue YAML Fields for Quest Gating
 
-Both `TreeNode` and `Pattern` structs support:
+Every topic and every opener variant takes the same gates (`dialogue.Gates`):
 
 | Field | Type | Effect |
 |-------|------|--------|
 | `questRequired` | `[]string` | Player must have these quest tokens |
 | `questExcluded` | `[]string` | Player must NOT have these tokens |
-| `grantsQuest` | `string` | Quest token granted on match |
-| `requiresItem` | `int` | Item ID the player must hold (consumed) |
+| `questFlagRequired` / `questFlagExcluded` | `map[string]string` | Flag gates (see Quest Flags below) |
+| `requiresItem` | `int` | Item ID the player must hold (taken when the topic applies) |
+| `carriesItem` | `int` | Item ID the player must carry anywhere (never taken) |
+| `itemExcluded` | `int` | Hidden while the player carries this item |
 
-### Greeting Variants
+A topic's effects include `grantsQuest` (the quest token granted when the
+topic is chosen). An `offer` topic must grant its quest's start token and a
+`handin` topic its end token; `ValidateWorld` enforces both, and refuses an
+`item_give` quest trigger that grants a token (hand-ins are NPC topics).
 
-`TreeRoot` has an optional `Variants` list of `QuestGreeting` entries. Each
-variant has `questRequired`/`questExcluded` conditions and alternate `text`/
-`hints`. `Greet()` checks variants first; the first match wins.
+### Opener Variants
+
+An `opener` has an optional `variants` list. Each variant has the gates above
+and alternate `text`/`hints`. `OpenerFor` returns the first variant whose gates
+pass, else the opener's own text.
 
 ### Worked Example: Tolva (Mob 84), Quest 5
 
+Abbreviated from `_datafiles/world/dogmud/dialogue/watchers_crossing/84.yaml`:
+
 ```yaml
-# Quest 5 steps: start → ledger → evidence → end
+opener:
+  text: "Welcome to the Crossing Inn. ..."
+  variants:
+    - questRequired: [5-end]
+      text: "Thanks to you, the magistrate will have that ledger ..."
+    - questRequired: [5-start]
+      questExcluded: [5-deliver, 5-end]
+      text: "Any luck with that ledger? ..."
 
-tree:
-  root:
-    text: "Default greeting..."
-    variants:
-      - questRequired: ["5-start"]
-        questExcluded: ["5-end"]
-        text: "Any luck with that ledger?"
-      - questRequired: ["5-end"]
-        text: "Thanks to you, the magistrate will hear about this."
+topics:
+  - key: help_quest
+    kind: offer
+    quest: 5
+    label: The Innkeeper's Complaint
+    playerLine: Do you want help with that toll?
+    text: "Harn keeps a ledger at the tollhouse. ..."
+    questExcluded: [5-start, 5-end]   # gone once accepted or finished
+    grantsQuest: 5-start              # accepting starts the quest
 
-  nodes:
-    - id: help_quest
-      triggers: ["help", "quest"]
-      requires: ["toll_problem"]
-      questExcluded: ["5-start"]       # only shows before quest is accepted
-      grantsQuest: "5-start"           # accepting starts the quest
-      text: "Get me that ledger..."
-
-    - id: ledger_return
-      triggers: ["ledger", "evidence"]
-      requires: ["help_quest"]
-      questRequired: ["5-evidence"]    # only shows at evidence step
-      questExcluded: ["5-end"]         # hidden after quest is done
-      requiresItem: 21                 # consumes the crossing ledger
-      grantsQuest: "5-end"             # completing fires quest rewards
-      text: "No commission. No charter..."
+  - key: tolvahandoff
+    kind: handin
+    quest: 5
+    label: The Innkeeper's Complaint
+    playerLine: I brought you Harn's crossing ledger.
+    text: "The crossing ledger. Let me see those numbers. ..."
+    questRequired: [5-start]
+    questExcluded: [5-end]
+    requiresItem: 21                  # takes the crossing ledger
+    grantsQuest: 5-end                # completing fires quest rewards
 ```
 
-When `grantsQuest` fires, it calls `events.AddToQueue(events.Quest{...})`
-which is processed by `Quest_HandleQuestUpdate.go`. That handler distributes
-all rewards (gold, items, conditions) defined in the quest YAML. No separate
-reward mechanism is needed in the dialogue system.
+When `grantsQuest` fires, the `GiveQuest` callback calls
+`events.AddToQueue(events.Quest{...})`, which is processed by
+`Quest_HandleQuestUpdate.go`. That handler distributes all rewards (gold,
+items, conditions) defined in the quest YAML. No separate reward mechanism is
+needed in the dialogue system.
 
 ### LLM Quest Context
 
-When an NPC has an LLM profile, `talk.go` and `ask.go` populate
-`llm.ConversationContext.QuestContext` with human-readable summaries of the
-player's active quests. These are injected into the LLM system prompt so
-Ollama-powered NPCs can reference quest state naturally.
+`talk` and `ask` make no LLM calls since #375 (R4), so nothing fills
+`llm.ConversationContext.QuestContext` from quest state any more. A future
+hook for model-voiced NPCs is #643.
 
 This comprehensive quests system provides flexible quest management with
 multi-step progression, diverse reward types, secret quest support, and
@@ -841,16 +854,18 @@ any `setsQuestFlag` value is in the declared list at startup.
 
 ### Dialogue Integration
 
-Three new fields on `TreeNode` and `Pattern` support flag-driven gating:
+Three topic fields support flag-driven gating (opener variants take the two
+gates, not `setsQuestFlag`, since a variant carries no effects):
 
 #### `setsQuestFlag`
-Sets a flag when this dialogue node fires. Evaluated after `grantsQuest` so
-both the token and the flag are written atomically from the player's
-perspective.
+Sets a flag when the topic is chosen. It applies with the topic's other
+effects, after `grantsQuest`, so both the token and the flag are written in
+one step from the player's perspective.
 
 ```yaml
-- id: side_with_rhett
-  triggers: ["rhett", "side", "help"]
+- key: side_with_rhett
+  kind: info
+  label: "I will stand with Rhett."
   questRequired: ["11-start"]
   questExcluded: ["11-middle"]
   grantsQuest: "11-middle"
@@ -861,12 +876,13 @@ perspective.
 ```
 
 #### `questFlagRequired`
-Gates the node on an exact flag value. Accepts a map of `key: value` pairs.
-All pairs must match for the node to be eligible.
+Gates the topic on an exact flag value. Accepts a map of `key: value` pairs.
+All pairs must match for the topic to be eligible.
 
 ```yaml
-- id: rhett_midquest_check
-  triggers: ["progress", "seal", "status"]
+- key: rhett_midquest_check
+  kind: info
+  label: "About the seal."
   questRequired: ["11-middle"]
   questFlagRequired:
     "11-branch": "rhett"
@@ -874,17 +890,21 @@ All pairs must match for the node to be eligible.
 ```
 
 #### `questFlagExcluded`
-Hides the node if ANY of the listed key/value pairs match. Useful for
-suppressing irrelevant dialogue on wrong-path players.
+Hides the topic if ANY of the listed key/value pairs match. Useful for
+keeping wrong-path players out of a branch.
 
 ```yaml
-- id: sylara_reward
-  triggers: ["reward", "done", "finished"]
+- key: sylara_reward
+  kind: info
+  label: "It is finished."
   questRequired: ["11-end"]
   questFlagExcluded:
     "11-branch": "rhett"
   text: "You have done well. The Circle will remember this."
 ```
+
+(The examples are illustrative; the shipped quest 11 is "The Windwarden's
+Dilemma" in `ironwind_steppe`.)
 
 ### Quest Engine Condition/Action Integration
 
@@ -944,136 +964,49 @@ Prefer `setsQuestFlag` in dialogue YAML over `SetQuestFlag` in scripts
 wherever possible. Script-side flag setting is best reserved for `onGive`
 handlers or combat hooks where dialogue YAML can't fire.
 
-### Worked Example: Quest 11, The Schism at Veltara
+### Branching Quests on Topics
 
-Quest 11 is a two-NPC branching quest. Sylara and Rhett both offer the
-quest; the player can only side with one. The flag `11-branch` records the
-choice and gates all subsequent dialogue on both NPCs.
-
-**Quest YAML (`11-the_schism_at_veltara.yaml`):**
-
-```yaml
-questid: 11
-name: "The Schism at Veltara"
-flags:
-  - key: branch
-    values: [sylara, rhett]
-    description: "Which NPC the player sided with"
-steps:
-  - id: start
-    description: "Speak to Sylara or Rhett about the schism."
-    hint: "Ask Sylara or Rhett about the schism."
-  - id: middle
-    description: "Carry out your chosen ally's request."
-  - id: end
-    description: "Return to your ally with the proof."
-rewards:
-  gold: 200
-  playerMessage: "The schism is resolved, for better or worse."
-```
-
-**Sylara's dialogue tree (abbreviated):**
-
-```yaml
-tree:
-  root:
-    text: "The Circle fractures around us. Choose your allegiance wisely."
-    variants:
-      # Mid-quest: player is on Sylara's branch
-      - questRequired: ["11-middle"]
-        questFlagRequired: {"11-branch": "sylara"}
-        text: "You serve the Circle still. Bring me the proof."
-      # Mid-quest: player sided with Rhett, show dismissal
-      - questRequired: ["11-middle"]
-        questFlagRequired: {"11-branch": "rhett"}
-        text: "You walk Rhett's path. We have nothing to discuss."
-      # Quest done
-      - questRequired: ["11-end"]
-        text: "It is done. The Circle holds."
-
-  nodes:
-    # DISMISSAL NODE: must appear FIRST so it blocks keyword matches
-    # for players already committed to Rhett's branch
-    - id: rhett_dismiss
-      triggers: ["schism", "quest", "task", "help", "side", "sylara"]
-      questRequired: ["11-middle"]
-      questFlagRequired: {"11-branch": "rhett"}
-      text: "You have chosen Rhett. I have nothing for you."
-
-    # Quest offer: only shows before player has started
-    - id: offer_quest
-      triggers: ["schism", "quest", "task", "help"]
-      questExcluded: ["11-start", "11-middle", "11-end"]
-      grantsQuest: "11-start"
-      setsQuestFlag:
-        key: "11-branch"
-        value: "sylara"
-      text: "Then stand with me. The seal must be destroyed."
-
-    # Mid-quest check: only for Sylara's branch
-    - id: progress_check
-      triggers: ["seal", "progress", "proof"]
-      questRequired: ["11-middle"]
-      questFlagRequired: {"11-branch": "sylara"}
-      questExcluded: ["11-end"]
-      text: "The seal must be destroyed before Rhett can use it."
-
-    # Completion: only for Sylara's branch
-    - id: complete
-      triggers: ["done", "finished", "proof", "seal"]
-      questRequired: ["11-middle"]
-      questFlagRequired: {"11-branch": "sylara"}
-      questExcluded: ["11-end"]
-      requiresItem: 4422
-      grantsQuest: "11-end"
-      text: "The fragments. It is done. You have my gratitude."
-```
-
-**Rhett's dialogue tree follows the mirror pattern** with `questFlagRequired:
-{"11-branch": "rhett"}` and a dismissal node gating `{"11-branch": "sylara"}`
-players out of his quest flow.
+A two-NPC branching quest records the player's choice in a flag and gates
+every later topic and opener variant on both NPCs with it. Because a menu
+shows only eligible topics, a wrong-path player simply does not see the other
+branch's topics; there is no matching order to get wrong. Give each NPC an
+opener variant per branch during the active phase, so a wrong-path player
+gets a closing line rather than the default opener, which often hints at the
+quest.
 
 ### Common Pitfalls
 
-#### 1. Missing dismissal nodes
-The most common mistake. If a player already committed to Rhett's branch
-visits Sylara, her `schism`/`quest`/`task` keyword nodes will still match
-unless a dismissal node sits above them in the nodes list. Dismissal nodes
-**must appear first** in the `nodes:` list so the engine evaluates them
-before reaching the quest-offer nodes.
+#### 1. Missing mid-quest opener variants
+Without a variant for "player is on the other path," the NPC opens with
+their default line for wrong-path players, which often contains hints about
+the quest. Add an opener variant with `questFlagRequired` for both branches
+during the active quest phase.
 
-#### 2. Missing mid-quest root variants
-Without a variant for "player is on the other path," the NPC gives their
-default greeting to wrong-path players, which often contains hints about the
-quest. This leaks quest text and confuses players. Always add a root variant
-with `questFlagRequired` for both branches during the active quest phase.
-
-#### 3. `is_component` on quest items
+#### 2. `is_component` on quest items
 Items with `is_component: true` auto-route to the component bag on pickup.
 Quest items must NOT have `is_component: true`. They belong in the regular
 backpack where quest scripts and `requiresItem` checks can find them.
 
-#### 4. Referencing a flag before the quest declares it
+#### 3. Referencing a flag before the quest declares it
 `ValidateAllFlags()` (`internal/questengine/loader.go`) runs at startup and
-scans every quest engine trigger and every dialogue file for
+scans every quest engine trigger and every dialogue file (topics and opener
+variants, through `dialogue.CollectFlagReferences`) for
 `questFlagRequired`/`questFlagExcluded`/`setsQuestFlag`/`has_flag`/
 `missing_flag`/`set_flag` references. Any key or value not registered by a
-quest's `flags:` block panics the boot. If you write a flag reference in
-dialogue or a quest trigger before adding it to the owning quest's `flags:`
-block, the server will not start. Write the quest YAML `flags:` block
+quest's `flags:` block panics the boot. Write the quest YAML `flags:` block
 first, then reference the key elsewhere.
 
-#### 5. Double-completion guard missing
-Nodes that fire `grantsQuest` for the final step should always include
-`questExcluded: ["{id}-end"]` to prevent re-triggering if the player talks
-to the NPC again after completion. This is the same guard used for all
-completion nodes (see CLAUDE.md "Quest Re-Grant Prevention SOP").
+#### 4. Re-grant guard missing
+A topic that grants a token must also list that token and the quest's end
+token in `questExcluded`, or the offer repeats or a finished quest is
+re-offered. `ValidateWorld` refuses either omission at boot and in CI.
 
-#### 6. Cross-quest flag references
+#### 5. Cross-quest flag references
 If quest 14 needs to know which branch the player took in quest 11, it reads
 `"11-branch"` directly. There is no need to copy the flag into a new key.
 Document the dependency in both quest YAMLs with a comment so future
 maintainers know the quests are coupled.
+
 ## Files
 
 | File | Purpose |
@@ -1085,6 +1018,7 @@ maintainers know the quests are coupled.
 | `narration.go` | `ActionDef.Narration`/`Narrate`, `QuestReward.Narration`/`Narrate`, `validateNarration` |
 | `samecommand.go` | `validateSameCommandChains`, which `Validate` runs: the engine fires every matching trigger in file order against live state, so a trigger may not grant, give, consume or set what a later trigger on the same event requires when one command can match both (#495); put the "already done" trigger first |
 | `validate_refs.go` | Cross-reference validation (flags, tokens, ids) |
+| `test_helpers.go` | `SeedQuestsForTest(qs ...*Quest) func()`: adds quests to the registry for a test (test binaries load no quest data, and `Character.HasQuest` past a quest's start step reads its step order) and returns the restore |
 
 **This package owns the data; `internal/questengine` owns the evaluation.**
 Since the 5c-pre unification, `questengine` only aliases these types. Change a

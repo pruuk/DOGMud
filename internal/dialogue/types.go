@@ -35,6 +35,12 @@ type PlayerState struct {
 	// chargesGold, which is paid in the same step that matches the entry
 	// and before any of its other effects. Nil fails the charge closed.
 	ChargeGold func(amount int) bool
+	// HasHeard reports whether the player has heard a topic, by HeardKey.
+	// It backs heardRequired and the Dim / [*] state. Nil fails
+	// heardRequired closed and treats every topic as unheard.
+	HasHeard func(key string) bool
+	// MarkHeard records a heard info topic on the character (saved).
+	MarkHeard func(key string)
 }
 
 // QuestFlagSet describes a single key/value flag to write on the player's character.
@@ -62,106 +68,21 @@ const (
 	MoodGrateful Mood = "grateful"
 )
 
-// Pattern is a single keyword-triggered response rule in a dialogue file.
-type Pattern struct {
-	Keywords           []string          `yaml:"keywords" json:"keywords,omitempty"`
-	Moods              []string          `yaml:"moods,omitempty" json:"moods,omitempty"`
-	Responses          []string          `yaml:"responses" json:"responses,omitempty"`
-	MoodChange         string            `yaml:"moodChange,omitempty" json:"moodChange,omitempty"`
-	QuestRequired      []string          `yaml:"questRequired,omitempty" json:"questRequired,omitempty"`
-	QuestExcluded      []string          `yaml:"questExcluded,omitempty" json:"questExcluded,omitempty"`
-	GrantsQuest        string            `yaml:"grantsQuest,omitempty" json:"grantsQuest,omitempty"`
-	RequiresItem       int               `yaml:"requiresItem,omitempty" json:"requiresItem,omitempty"`
-	ItemExcluded       int               `yaml:"itemExcluded,omitempty" json:"itemExcluded,omitempty"` // hidden while the player carries this item
-	GivesItem          int               `yaml:"givesItem,omitempty" json:"givesItem,omitempty"`
-	QuestFlagRequired  map[string]string `yaml:"questFlagRequired,omitempty" json:"questFlagRequired,omitempty"`
-	QuestFlagExcluded  map[string]string `yaml:"questFlagExcluded,omitempty" json:"questFlagExcluded,omitempty"`
-	SetsQuestFlag      *QuestFlagSet     `yaml:"setsQuestFlag,omitempty" json:"setsQuestFlag,omitempty"`
-	BumpsRep           []RepBump         `yaml:"bumpsRep,omitempty" json:"bumpsRep,omitempty"`
-	GivesGold          int               `yaml:"givesGold,omitempty" json:"givesGold,omitempty"`
-	ChargesGold        int               `yaml:"chargesGold,omitempty" json:"chargesGold,omitempty"`
-	MasterworkRequired int               `yaml:"masterworkRequired,omitempty" json:"masterworkRequired,omitempty"`
-	GoldRequired       int               `yaml:"goldRequired,omitempty" json:"goldRequired,omitempty"`
-}
-
-// TreeNode is a stateful conversation node gated by triggers and unlock requirements.
-type TreeNode struct {
-	Id                 string            `yaml:"id" json:"id,omitempty"`
-	Triggers           []string          `yaml:"triggers" json:"triggers,omitempty"`
-	Requires           []string          `yaml:"requires,omitempty" json:"requires,omitempty"`
-	Text               string            `yaml:"text" json:"text,omitempty"`
-	Hints              string            `yaml:"hints,omitempty" json:"hints,omitempty"`
-	Unlocks            []string          `yaml:"unlocks,omitempty" json:"unlocks,omitempty"`
-	MoodChange         string            `yaml:"moodChange,omitempty" json:"moodChange,omitempty"`
-	QuestRequired      []string          `yaml:"questRequired,omitempty" json:"questRequired,omitempty"`
-	QuestExcluded      []string          `yaml:"questExcluded,omitempty" json:"questExcluded,omitempty"`
-	GrantsQuest        string            `yaml:"grantsQuest,omitempty" json:"grantsQuest,omitempty"`
-	RequiresItem       int               `yaml:"requiresItem,omitempty" json:"requiresItem,omitempty"`
-	ItemExcluded       int               `yaml:"itemExcluded,omitempty" json:"itemExcluded,omitempty"` // hidden while the player carries this item
-	GivesItem          int               `yaml:"givesItem,omitempty" json:"givesItem,omitempty"`
-	QuestFlagRequired  map[string]string `yaml:"questFlagRequired,omitempty" json:"questFlagRequired,omitempty"`
-	QuestFlagExcluded  map[string]string `yaml:"questFlagExcluded,omitempty" json:"questFlagExcluded,omitempty"`
-	SetsQuestFlag      *QuestFlagSet     `yaml:"setsQuestFlag,omitempty" json:"setsQuestFlag,omitempty"`
-	BumpsRep           []RepBump         `yaml:"bumpsRep,omitempty" json:"bumpsRep,omitempty"`
-	GivesGold          int               `yaml:"givesGold,omitempty" json:"givesGold,omitempty"`
-	ChargesGold        int               `yaml:"chargesGold,omitempty" json:"chargesGold,omitempty"`
-	MasterworkRequired int               `yaml:"masterworkRequired,omitempty" json:"masterworkRequired,omitempty"`
-	GoldRequired       int               `yaml:"goldRequired,omitempty" json:"goldRequired,omitempty"`
-}
-
-// QuestGreeting is an alternative greeting shown when the player matches quest conditions.
-type QuestGreeting struct {
-	QuestRequired      []string          `yaml:"questRequired,omitempty" json:"questRequired,omitempty"`
-	QuestExcluded      []string          `yaml:"questExcluded,omitempty" json:"questExcluded,omitempty"`
-	QuestFlagRequired  map[string]string `yaml:"questFlagRequired,omitempty" json:"questFlagRequired,omitempty"`
-	QuestFlagExcluded  map[string]string `yaml:"questFlagExcluded,omitempty" json:"questFlagExcluded,omitempty"`
-	Text               string            `yaml:"text" json:"text,omitempty"`
-	Hints              string            `yaml:"hints,omitempty" json:"hints,omitempty"`
-	GrantsQuest        string            `yaml:"grantsQuest,omitempty" json:"grantsQuest,omitempty"`
-	GivesItem          int               `yaml:"givesItem,omitempty" json:"givesItem,omitempty"`
-	RequiresItem       int               `yaml:"requiresItem,omitempty" json:"requiresItem,omitempty"`
-	ItemExcluded       int               `yaml:"itemExcluded,omitempty" json:"itemExcluded,omitempty"` // hidden while the player carries this item
-	SetsQuestFlag      *QuestFlagSet     `yaml:"setsQuestFlag,omitempty" json:"setsQuestFlag,omitempty"`
-	BumpsRep           []RepBump         `yaml:"bumpsRep,omitempty" json:"bumpsRep,omitempty"`
-	GivesGold          int               `yaml:"givesGold,omitempty" json:"givesGold,omitempty"`
-	ChargesGold        int               `yaml:"chargesGold,omitempty" json:"chargesGold,omitempty"`
-	MasterworkRequired int               `yaml:"masterworkRequired,omitempty" json:"masterworkRequired,omitempty"`
-	GoldRequired       int               `yaml:"goldRequired,omitempty" json:"goldRequired,omitempty"`
-}
-
-// TreeRoot holds the greeting delivered when a player first uses 'talk'.
-type TreeRoot struct {
-	Text     string          `yaml:"text" json:"text,omitempty"`
-	Hints    string          `yaml:"hints,omitempty" json:"hints,omitempty"`
-	Variants []QuestGreeting `yaml:"variants,omitempty" json:"variants,omitempty"`
-}
-
-// Tree holds all stateful conversation nodes for a mob.
-type Tree struct {
-	Root  TreeRoot   `yaml:"root" json:"root,omitempty"`
-	Nodes []TreeNode `yaml:"nodes" json:"nodes,omitempty"`
-}
-
-// MemoryConfig controls how long per-player memory persists between visits.
-type MemoryConfig struct {
-	ExpiryPeriod string `yaml:"expiryPeriod" json:"expiryPeriod,omitempty"`
-}
-
-// DialogueFile is the top-level structure of a mob's dialogue YAML.
 // Greeting is one ambient line an NPC offers when a player arrives in its
 // room. Authored in 186 dialogue files since long before the engine read
-// them — the struct is shaped to the existing YAML, not the other way round.
+// them; the struct is shaped to the existing YAML, not the other way round.
 type Greeting struct {
 	Text  string   `yaml:"text" json:"text,omitempty"`
 	Moods []string `yaml:"moods,omitempty" json:"moods,omitempty"`
 }
 
+// DialogueFile is the top-level structure of a mob's dialogue YAML: the
+// ambient greetings, the opener talk says first, and the topic menu.
 type DialogueFile struct {
-	MobId       int          `yaml:"mobid" json:"mobid,omitempty"`
-	Zone        string       `yaml:"zone" json:"zone,omitempty"`
-	DefaultMood string       `yaml:"defaultMood" json:"defaultMood,omitempty"`
-	Greetings   []Greeting   `yaml:"greetings,omitempty" json:"greetings,omitempty"`
-	Patterns    []Pattern    `yaml:"patterns" json:"patterns,omitempty"`
-	Tree        *Tree        `yaml:"tree,omitempty" json:"tree,omitempty"`
-	Memory      MemoryConfig `yaml:"memory" json:"memory,omitempty"`
+	MobId       int        `yaml:"mobid" json:"mobid,omitempty"`
+	Zone        string     `yaml:"zone" json:"zone,omitempty"`
+	DefaultMood string     `yaml:"defaultMood" json:"defaultMood,omitempty"`
+	Greetings   []Greeting `yaml:"greetings,omitempty" json:"greetings,omitempty"`
+	Opener      *Opener    `yaml:"opener,omitempty" json:"opener,omitempty"`
+	Topics      []Topic    `yaml:"topics,omitempty" json:"topics,omitempty"`
 }

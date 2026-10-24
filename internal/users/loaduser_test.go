@@ -77,3 +77,36 @@ func TestLoadUserTornFileReturnsErrorNotPanic(t *testing.T) {
 		t.Fatal("torn file was accepted; want an error")
 	}
 }
+
+// #375: a talk topic renamed in the topic-key manifest stays heard. LoadUser
+// reads the renames from dialogue/topic-keys.txt under the data folder.
+func TestLoadUserRenamesHeardTopicsFromTheManifest(t *testing.T) {
+	dir := withUserDataDir(t)
+	if err := os.MkdirAll(filepath.Join(dir, "dialogue"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := "12.new\n94.kept\n# renamed\n12.old -> 12.new\n"
+	if err := os.WriteFile(filepath.Join(dir, "dialogue", "topic-keys.txt"), []byte(manifest), 0644); err != nil {
+		t.Fatal(err)
+	}
+	idx := NewUserIndex()
+	if err := idx.Create(); err != nil {
+		t.Fatal(err)
+	}
+	if err := idx.AddUser(12, "listener"); err != nil {
+		t.Fatal(err)
+	}
+	save := "userid: 12\nusername: listener\ncharacter:\n  name: Listener\n  heardtopics:\n    - 12.old\n    - 94.kept\n"
+	if err := os.WriteFile(filepath.Join(dir, "users", "12.yaml"), []byte(save), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	u, err := LoadUser("listener", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := strings.Join(u.Character.HeardTopics, ",")
+	if got != "12.new,94.kept" {
+		t.Fatalf("heard topics after load = %q, want \"12.new,94.kept\" (the rename applied, the other key kept)", got)
+	}
+}

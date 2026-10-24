@@ -2,81 +2,48 @@ mobid: 9430
 zone: The Confluence
 defaultMood: friendly
 greetings:
-  - text: "Weighhouse is open. Cargo for certification goes to the
-      platform. Tariff questions I can answer now."
-    moods: ["friendly"]
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Morning. Cargo to weigh, or a tariff question?"
-  - keywords: ["tariff", "tax", "toll", "fee", "pay", "cost", "how much",
-      "owe", "assessed"]
-    responses:
-      - "The tariff schedule is posted on the board outside. I can walk
-        you through the applicable rates if the cargo category isn't
-        clear."
-  - keywords: ["weigh", "scale", "balance", "certification", "certified",
-      "how", "process"]
-    responses:
-      - "Bring the cargo to the platform. I weigh it, log it, issue the
-        certificate. The guild accepts my certificates without further
-        check. That's the process."
-  - keywords: [""]
-    responses:
-      - "Cargo and tariff matters I can help with. Otherwise the guild
-        hall is further along the quay."
-tree:
-  root:
-    text: "The city takes its cut of the trade as a tariff on certified
-      cargo weight. The Weighhouse exists to make sure declared weight
-      matches actual weight. I issue certified certificates that the
-      Rivermen's Guild accepts as the official record. It's not a
-      complicated function, but it's a necessary one -- the Confluence
-      has grown large enough that nobody enjoys arguing about weight
-      without a standard."
-    hints: "You could ask Gett about the tariff and how it works, about
-      the weighing process, or about cargo disputes."
-  nodes:
-    - id: tariff
-      triggers: ["tariff", "tax", "city", "cut", "fee", "rate", "how",
-        "much", "owe", "liable", "assessed", "pay", "cost", "commodity",
-        "category", "grade"]
-      text: "The tariff is assessed on certified net weight at the
-        prevailing commodity rate. Grain runs lower than finished goods,
-        finished goods lower than spice, spice lower than metal. The
-        rates are reviewed by the city council annually -- I don't set
-        them, I apply them. If you think the rate for your cargo type
-        is wrong, that's a council matter. If you think I've misread
-        the weight, I'll weigh it again in front of you. I've been
-        asked to do that fourteen times. I was right all fourteen."
-      hints: "You could ask Gett about the weighing process, or about
-        disputes and fraud."
-    - id: weigh
-      triggers: ["weigh", "scale", "balance", "how", "process", "work",
-        "platform", "certified", "certificate", "measurement", "bring",
-        "cargo"]
-      text: "Cargo comes to the platform -- all of it, not a representative
-        sample unless by prior arrangement with the guild. I weigh, log,
-        and certify. The certificate goes with the cargo. No certificate
-        means the guild won't clear the cargo for commercial transaction
-        on the Confluence quay. That's the rule. I didn't write it, but
-        I enforce it without exception, because the exceptions are where
-        the fraud gets in."
-      hints: "You could ask Gett about the tariff rates, or about disputes
-        and fraud."
-    - id: fraud
-      triggers: ["fraud", "cheat", "lie", "wrong", "dispute", "false",
-        "declared", "mismatch", "short", "over", "catch", "thirty",
-        "seven", "cases", "history", "dispute", "file"]
-      text: "Declared weight is an estimate the shipper makes before I've
-        seen the cargo. Some shippers estimate conservatively to avoid
-        over-declaring. Some estimate creatively to reduce tariff
-        liability. I don't distinguish between them -- I weigh what
-        arrives and certify what I find. When the certificate value and
-        the declared value diverge significantly, I file a dispute with
-        the guild, they investigate, and the matter moves out of my
-        hands. I've filed thirty-seven of those. The guild has sustained
-        thirty-three. The other four were legitimate handling discrepancies.
-        I check those twice before I file."
-      hints: "You could ask Gett about the tariff rates, or about the
-        weighing process."
+- text: Weighhouse is open. Cargo for certification goes to the platform. Tariff
+    questions I can answer now.
+  moods:
+  - friendly
+opener:
+  text: The city takes its cut of the trade as a tariff on certified cargo weight.
+    The Weighhouse exists to make sure declared weight matches actual weight. I
+    issue the weight certificates that the Rivermen's Guild accepts as the
+    official record. It's not a complicated job, but it's a necessary one. The
+    Confluence has grown large enough that nobody enjoys arguing about weight
+    without a standard.
+  hints: Choose a line below to hear about the tariff, about how the weighing
+    works, or about what happens when the weights disagree.
+topics:
+- key: tariff
+  kind: info
+  label: How is the tariff worked out?
+  text: The tariff is set on certified net weight at the going rate for the goods.
+    Grain runs lower than finished goods, finished goods lower than spice, spice
+    lower than metal. The city council reviews the rates every year. I don't set
+    them, I apply them, and if the category for a cargo isn't clear I'll tell you
+    which rate it falls under. If you think the rate is wrong, that's a council
+    matter. If you think I've misread the weight, I'll weigh it again in front of
+    you. I've been asked to do that fourteen times. I was right all fourteen.
+- key: weigh
+  kind: info
+  label: How does the weighing work?
+  text: Cargo comes to the platform. All of it, not a sample, unless the guild has
+    agreed otherwise in advance. I weigh it, log it, and issue the certificate,
+    and the certificate goes with the cargo. The guild accepts my certificates
+    without further check. No certificate means the guild won't clear the cargo
+    for trade on the Confluence quay. That's the rule. I didn't write it, but I
+    enforce it without exception, because the exceptions are where the fraud gets
+    in.
+- key: fraud
+  kind: info
+  label: What if the weights disagree?
+  text: Declared weight is an estimate the shipper makes before I've seen the
+    cargo. Some shippers estimate on the low side to avoid over-declaring. Some
+    estimate creatively to pay less tariff. I don't tell them apart. I weigh what
+    arrives and certify what I find. When the certificate and the declaration
+    differ by enough, I file a dispute with the guild, they look into it, and the
+    matter leaves my hands. I've filed thirty-seven of those. The guild has upheld
+    thirty-three. The other four were honest handling errors. I check those twice
+    before I file.

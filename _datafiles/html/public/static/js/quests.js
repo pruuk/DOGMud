@@ -2,7 +2,7 @@
 /*
  * quests.js — the quest editor (admin web-building 5c), fifth mode of the
  * /build page. Consumes Build.Quests (list) + Build.Quest (detail) GMCP and
- * drives Build.Quest.Update/Create/Delete. Mirrors dialogue.js's collapsible
+ * drives Build.Quest.Update/Create/Delete. Mirrors the removed dialogue editor's collapsible
  * (whole-row ▸/▾ toggle) and chip/line helpers; every emitted key is the
  * struct's yaml/json name (they are mirrored server-side).
  */
@@ -144,7 +144,7 @@
     };
   }
 
-  // collapsible row shell — dialogue.js's whole-row ▸/▾ toggle, verbatim.
+  // collapsible row shell — the whole-row ▸/▾ toggle the removed dialogue editor used.
   function collapsible(box, summaryFn, buildBody, ordered) {
     var body = ce("div", { style: "display:none;padding:4px 0 8px 10px;" });
     var sum = ce("span", { text: "▸ " + summaryFn() });
@@ -510,11 +510,11 @@
     room_enter: ["room"], room_gate: ["room"], item_give: ["mob", "item"], skill_use: ["skill"],
     mob_death: ["mob", "room"], command: ["command", "room"],
     command_issued: ["command", "room"], item_gain: ["item"],
-    dialogue: ["mob", "topic"], quest_granted: ["quest_token"],
+    quest_granted: ["quest_token"],
     room_interact: ["room", "noun", "verb"]
   };
   var FILTER_KINDS = { room: "room", mob: "mob", item: "item", skill: "skill",
-    command: "text", topic: "text", quest_token: "token", noun: "text", verb: "text" };
+    command: "text", quest_token: "token", noun: "text", verb: "text" };
 
   function triggerRow(box, t) {
     t = t || { event: "room_enter", actions: [] };

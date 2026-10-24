@@ -82,6 +82,8 @@ func TestWriter_CacheAndSentinelContract(t *testing.T) {
 	}
 	if df := Load(mobId, zone); df == nil {
 		t.Fatal("Load must now see the created file")
+	} else if df.Opener == nil || df.Opener.Text != "..." || len(df.Topics) != 0 {
+		t.Errorf("the skeleton is an opener and no topics, got opener %+v and %d topics", df.Opener, len(df.Topics))
 	}
 
 	// Save replaces the cache entry in place.
@@ -155,9 +157,9 @@ func TestWriter_RoundTripsEveryLiveFile(t *testing.T) {
 			t.Errorf("%s: re-unmarshal: %v", path, err)
 			return nil
 		}
-		// DeepEqual is the WRONG criterion here: a root-only tree unmarshals
-		// with Nodes == nil, marshals as `nodes: []`, and reparses as an
-		// EMPTY slice — semantically identical, DeepEqual-different. The
+		// DeepEqual is the WRONG criterion here: a nil slice can marshal as
+		// `[]` and reparse as an EMPTY slice, semantically identical and
+		// DeepEqual-different (the old tree's `nodes:` did exactly that). The
 		// meaningful invariant for a canonicalizing writer is that its
 		// canonical form is a FIXED POINT: re-reading and re-marshalling its
 		// own output is byte-stable (no churn on every open+save). Gross
@@ -170,17 +172,22 @@ func TestWriter_RoundTripsEveryLiveFile(t *testing.T) {
 		if string(out) != string(out2) {
 			t.Errorf("%s: marshal is not a fixed point — writer output would churn on every save", path)
 		}
-		if len(back.Patterns) != len(orig.Patterns) || len(back.Greetings) != len(orig.Greetings) {
+		if len(back.Topics) != len(orig.Topics) || len(back.Greetings) != len(orig.Greetings) {
 			t.Errorf("%s: section counts changed through round trip", path)
 		}
-		if (orig.Tree == nil) != (back.Tree == nil) {
-			t.Errorf("%s: tree presence changed through round trip", path)
-		} else if orig.Tree != nil {
-			if len(back.Tree.Nodes) != len(orig.Tree.Nodes) || len(back.Tree.Root.Variants) != len(orig.Tree.Root.Variants) {
-				t.Errorf("%s: tree node/variant counts changed through round trip", path)
+		for i := range orig.Topics {
+			if i < len(back.Topics) && !reflect.DeepEqual(orig.Topics[i].Gates, back.Topics[i].Gates) {
+				t.Errorf("%s: topic %q gates changed through round trip", path, orig.Topics[i].Key)
 			}
-			if !reflect.DeepEqual(orig.Tree.Root.Text, back.Tree.Root.Text) {
-				t.Errorf("%s: root text changed through round trip", path)
+		}
+		if (orig.Opener == nil) != (back.Opener == nil) {
+			t.Errorf("%s: opener presence changed through round trip", path)
+		} else if orig.Opener != nil {
+			if len(back.Opener.Variants) != len(orig.Opener.Variants) {
+				t.Errorf("%s: opener variant count changed through round trip", path)
+			}
+			if orig.Opener.Text != back.Opener.Text {
+				t.Errorf("%s: opener text changed through round trip", path)
 			}
 		}
 		checked++

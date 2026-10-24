@@ -1,0 +1,46 @@
+# Quest 89 -- Esk's Road (Pothole Coulee, post-rite bridge)
+#
+# One of the two roads that replace quest 29 "Two Roads" (owner ruling R17,
+# 2026-10-20, #375 phase 1). Cleric Hadwen offers both roads after the rite
+# (30-end); the player takes either, both, or neither. Toke's road is 88.
+#
+# Token flow:
+#   89-start -- granted on Accept of Hadwen's offer topic road_esk
+#               (dialogue/pothole_coulee/9100.yaml).
+#   89-end   -- granted by Warden Esk's hand-in topic road_esk_end
+#               (dialogue/pothole_coulee/9107.yaml), or by the trigger below
+#               when the player arrives through the arch in Thornwall (468)
+#               without handing this in first. The arch transit is a
+#               move_player teleport, which raises room_enter like a walk
+#               (#619).
+
+questid: 89
+name: Esk's Road
+description: >-
+  Cleric Hadwen has pointed you to Warden Esk, who keeps the arch out of
+  Pothole Coulee to Thornwall and the wider world.
+secret: false
+
+steps:
+  - id: start
+    map_target: 5215  # fallback when Warden Esk is not spawned
+    map_target_mob: 9107  # follow Warden Esk (schedule pothole_esk)
+    description: >-
+      Warden Esk keeps the arch in the Threshold House, south of Hub Square
+      through Market Row. The arch opens on Thornwall.
+    hint: >-
+      From the Awakening Pool, go south three times to the Threshold House.
+      Type talk esk.
+  - id: end
+    description: >-
+      You reached Warden Esk and the arch out of the coulee.
+
+triggers:
+  # ── THROUGH THE ARCH: arriving in Thornwall closes this road too. ──
+  - event: room_enter
+    room: 468
+    conditions:
+      has: [89-start]
+      missing: [89-end]
+    actions:
+      - grant: 89-end

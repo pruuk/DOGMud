@@ -1,7 +1,11 @@
 package dialogue
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,25 +21,30 @@ type deliveryCase struct {
 	heldToken  string // quest token the player has at delivery time
 	grantToken string // token the ask-path must grant (END directly for chain quests)
 	itemId     int    // delivery item the player is holding (consumed)
-	topic      string // what the player types: ask <npc> <topic>
+	topic      string // the word the pre-#375 `ask <npc> <topic>` path used (case label only)
 	// optional expected side-effects (zero value = not checked):
 	flagKey   string
 	flagVal   string
 	gold      int
 	givesItem int
 	rep       map[string]int
+	// heard names a warning topic the hand-in requires first (spec R28
+	// choice quests). Before it is heard, giving the item must not complete
+	// the step.
+	heard string
 }
 
 // TestDeliveryAskPathCompletes locks the "every reasonable path resolves the
 // step" guarantee for item-delivery quests (Malia playtest follow-up,
-// 2026-06-29). A player who, instead of `give <item> <npc>`, asks the NPC about
-// the delivery while holding the item must ALSO complete the step with the SAME
-// side-effects as the give-path: the item is consumed (requiresItem), the right
-// token is granted (grantsQuest), and any flag/gold/rep/item rewards match.
+// 2026-06-29). Since #375 the give path and the talk path are one topic: `give
+// <item> <npc>` resolves through ItemTopic to the hand-in that wants the item
+// (Task 10), and the same hand-in is on the talk menu. Choosing or giving it
+// must complete the step with the delivery's side-effects: the item is
+// consumed (requiresItem), the right token is granted (grantsQuest), and any
+// flag/gold/rep/item rewards land.
 //
-// Chain quests (give-path reaches end via a questengine quest_granted trigger
-// the dialogue path can't fire) grant the END token directly; IsTokenAfter
-// permits skipping intermediate steps.
+// Chain quests grant the END token directly; IsTokenAfter permits skipping
+// intermediate steps.
 //
 // Data-driven over the REAL dialogue files so it catches authoring mistakes.
 func TestDeliveryAskPathCompletes(t *testing.T) {
@@ -63,7 +72,9 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 		{
 			name: "Q17 Caravan Guard — pin to master", file: "../../_datafiles/world/dogmud/dialogue/north_road/281.yaml",
 			mobId: 281, heldToken: "17-start", grantToken: "17-end", itemId: 54, topic: "pin",
-			flagKey: "17-resolution", flagVal: "combat", givesItem: 51,
+			// The Letter of Introduction (item 51) was removed from the
+			// quest by the owner, 2026-10-23 (quest 17 file history).
+			flagKey: "17-resolution", flagVal: "combat",
 		},
 		{
 			name: "Q19 Lake Caves — tooth to Drunn", file: "../../_datafiles/world/dogmud/dialogue/stillwater/335.yaml",
@@ -107,7 +118,9 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 		},
 		{
 			name: "Q66 Addict's Plight — wrapper to Ysolde", file: "../../_datafiles/world/dogmud/dialogue/new_plymouth_common/9323.yaml",
-			mobId: 9323, heldToken: "66-start", grantToken: "66-escort", itemId: 40110, topic: "wrapper",
+			// The wrapper hand-in completes the quest: the old ask route
+			// granted 66-escort, which nothing ever completed (9323.yaml).
+			mobId: 9323, heldToken: "66-start", grantToken: "66-end", itemId: 40110, topic: "wrapper",
 		},
 		{
 			name: "Q67 Bloom Trail — case-file to Constable (chain->end, rep)", file: "../../_datafiles/world/dogmud/dialogue/new_plymouth_docks/9316.yaml",
@@ -117,7 +130,7 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 		{
 			name: "Q68 Cooperage — map to Vell (bloodline)", file: "../../_datafiles/world/dogmud/dialogue/new_plymouth_merchant/9349.yaml",
 			mobId: 9349, heldToken: "68-choice", grantToken: "68-end", itemId: 40113, topic: "fragment",
-			flagKey: "68-allegiance", flagVal: "bloodline", gold: 100,
+			flagKey: "68-allegiance", flagVal: "bloodline", gold: 100, heard: "q68_vell_report",
 			rep: map[string]int{"bloodline_domestic": 20, "cooperage_circle": -15},
 		},
 		{
@@ -133,21 +146,19 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 		{
 			name: "Q74 Undercroft — rubbing to Aldric (keepers)", file: "../../_datafiles/world/dogmud/dialogue/the_confluence/9464.yaml",
 			mobId: 9464, heldToken: "74-reveal", grantToken: "74-end", itemId: 40142, topic: "rubbing",
-			flagKey: "74-allegiance", flagVal: "keepers", gold: 80,
+			flagKey: "74-allegiance", flagVal: "keepers", gold: 80, heard: "aldric_terms",
 			rep: map[string]int{"keepers": 20, "margin": -10},
 		},
 		{
 			name: "Q74 Undercroft — rubbing to Margin scholar (margin)", file: "../../_datafiles/world/dogmud/dialogue/the_confluence/9454.yaml",
 			mobId: 9454, heldToken: "74-reveal", grantToken: "74-end", itemId: 40142, topic: "rubbing",
-			flagKey: "74-allegiance", flagVal: "margin", gold: 40,
+			flagKey: "74-allegiance", flagVal: "margin", gold: 40, heard: "margin_terms",
 			rep: map[string]int{"margin": 20, "keepers": -10},
 		},
 	}
 
-	userId := 9000
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			userId++
 
 			data, err := os.ReadFile(tc.file)
 			require.NoError(t, err, "must read the real dialogue file")
@@ -161,13 +172,31 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 			gold := 0
 			gaveItem := 0
 			bumps := map[string]int{}
+			heard := map[string]bool{}
+			// A real character holds one current step per quest, and HasQuest
+			// is true for that step and every step before it
+			// (characters.HasQuest via quests.IsTokenAfter).
+			questId, _ := splitToken(tc.heldToken)
+			steps := questStepsForTest(t, questId)
+			current := stepIndex(steps, tc.heldToken)
+			require.GreaterOrEqual(t, current, 0, "quest %d has no step %s", questId, tc.heldToken)
+			carries := func(id int) bool { return hasItem && id == tc.itemId }
 			ps := &PlayerState{
 				HasQuest: func(tok string) bool {
-					return (tok == tc.heldToken && granted != tc.grantToken) || tok == granted
+					i := stepIndex(steps, tok)
+					return i >= 0 && i <= current
 				},
-				HasItem:      func(id int) bool { return hasItem && id == tc.itemId },
-				RemoveItem:   func(id int) bool { itemRemoved = true; hasItem = false; return true },
-				GiveQuest:    func(tok string) { granted = tok },
+				HasItem:     carries,
+				CarriesItem: carries,
+				RemoveItem:  func(id int) bool { itemRemoved = true; hasItem = false; return true },
+				GiveQuest: func(tok string) {
+					granted = tok
+					if i := stepIndex(steps, tok); i > current {
+						current = i
+					}
+				},
+				HasHeard:     func(k string) bool { return heard[k] },
+				MarkHeard:    func(k string) { heard[k] = true },
 				GiveItem:     func(id int) bool { gaveItem = id; return true },
 				GetQuestFlag: func(key string) string { return flags[key] },
 				SetQuestFlag: func(key, val string) { flags[key] = val },
@@ -175,11 +204,28 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 				GiveGold:     func(amount int) { gold += amount },
 			}
 
-			_, _, _, advanced := TreeAdvance(&df, tc.mobId, userId, tc.topic, ps)
-			assert.True(t, advanced, "a dialogue node must advance for topic %q", tc.topic)
+			require.Equal(t, tc.mobId, df.MobId, "loaded the wrong dialogue file")
+			if tc.heard != "" {
+				require.NotNil(t, df.FindTopic(tc.heard), "no warning topic %s", tc.heard)
+				if early, _ := df.ItemTopic(tc.itemId, ps); early != nil {
+					require.NotEqual(t, tc.grantToken, early.GrantsQuest,
+						"giving item %d before hearing %s must not make the choice", tc.itemId, tc.heard)
+					require.Zero(t, early.RequiresItem, "giving item %d before hearing %s must not take it", tc.itemId, tc.heard)
+				}
+				heard[HeardKey(tc.mobId, tc.heard)] = true
+			}
+			tp, wanted := df.ItemTopic(tc.itemId, ps)
+			require.True(t, wanted, "%d must want item %d", tc.mobId, tc.itemId)
+			require.NotNil(t, tp, "giving item %d on %s must play a topic", tc.itemId, tc.heldToken)
+			if strings.HasSuffix(tc.grantToken, "-end") {
+				assert.Equal(t, KindHandIn, tp.Kind, "the delivery topic %s ends the quest, so it is the hand-in", tp.Key)
+			}
+			assert.Equal(t, tc.itemId, tp.RequiresItem, "the delivery topic %s takes the item", tp.Key)
+			assert.True(t, df.Eligible(tp, ps), "the same topic is on the talk menu")
+			require.True(t, df.Apply(tp, ps), "the delivery topic %s must apply", tp.Key)
 			assert.Equal(t, tc.grantToken, granted,
-				"asking %q while holding the item must grant %s", tc.topic, tc.grantToken)
-			assert.True(t, itemRemoved, "the delivery item must be consumed by the ask-path")
+				"delivering item %d must grant %s", tc.itemId, tc.grantToken)
+			assert.True(t, itemRemoved, "the delivery item must be consumed by the hand-in")
 
 			if tc.flagKey != "" {
 				assert.Equal(t, tc.flagVal, flags[tc.flagKey],
@@ -194,4 +240,56 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 			}
 		})
 	}
+}
+
+// splitToken splits "<quest id>-<step>".
+func splitToken(tok string) (int, string) {
+	id, step, ok := strings.Cut(tok, "-")
+	if !ok {
+		return 0, ""
+	}
+	n, err := strconv.Atoi(id)
+	if err != nil {
+		return 0, ""
+	}
+	return n, step
+}
+
+// stepIndex is the position of tok's step in its quest, or -1 when tok names
+// another quest or no step.
+func stepIndex(steps []string, tok string) int {
+	if len(steps) == 0 {
+		return -1
+	}
+	for i, s := range steps {
+		if tok == s {
+			return i
+		}
+	}
+	return -1
+}
+
+// questStepsForTest reads the shipped quest's step ids as full tokens
+// ("4-start", "4-investigate", ...), in order.
+func questStepsForTest(t *testing.T, questId int) []string {
+	t.Helper()
+	files, err := filepath.Glob(fmt.Sprintf("../../_datafiles/world/dogmud/quests/%d-*.yaml", questId))
+	require.NoError(t, err)
+	require.Len(t, files, 1, "exactly one quest file for quest %d", questId)
+	data, err := os.ReadFile(files[0])
+	require.NoError(t, err)
+	var q struct {
+		QuestId int `yaml:"questid"`
+		Steps   []struct {
+			Id string `yaml:"id"`
+		} `yaml:"steps"`
+	}
+	require.NoError(t, yaml.Unmarshal(data, &q))
+	require.Equal(t, questId, q.QuestId)
+	var out []string
+	for _, s := range q.Steps {
+		out = append(out, fmt.Sprintf("%d-%s", questId, s.Id))
+	}
+	require.NotEmpty(t, out)
+	return out
 }

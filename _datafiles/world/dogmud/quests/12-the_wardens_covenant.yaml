@@ -2,32 +2,33 @@ questid: 12
 name: The Warden's Covenant
 description: You have chosen to support Windwarden Sylara and protect
   the sacred stone circle. She will teach you to call upon the spirits
-  of the steppe. Completing this quest locks The Prospector's Gambit.
+  of the steppe. Siding with Sylara locked The Prospector's Gambit.
 secret: false
 steps:
   - id: start
     map_target: 3115  # travel to Sylara at the Stone Circle
     description: "Windwarden Sylara has offered to teach you the
-      ancient covenant. Travel to her at the stone circle and tell
-      her you are ready for the ritual."
-    hint: "From Thornwall's eastern gate, go east 5, south 2, east 3
-      to the ridge trail junction, then east 1 into the stone circle.
-      Try: ask sylara ritual"
+      ancient covenant. Tell her at the stone circle when you are
+      ready for the ritual."
+    hint: "Stay in the Stone Circle and tell Sylara you are ready for
+      the ritual. If you have left, she keeps the circle: from the Old
+      Citadel Plaza at Thornwall's eastern edge, go east seven times,
+      south twice, then east. Type talk sylara."
   - id: ritual
     map_target: -1  # -1: return-to-giver / in-place (start room 3115); Phase 2 split review
     description: "Sylara has begun the binding ritual at the stone
       circle. Open yourself to the spirits of the steppe and complete
       the binding."
-    hint: "Complete the ritual with Sylara. Listen and accept the
-      spirits' call. Try: ask sylara accept"
+    hint: "Stay in the Stone Circle with Sylara and listen, then tell
+      her what you hear. Type talk sylara."
   - id: end
     description: "The spirits of the steppe answer your call. You
       have earned the Windwarden's trust."
 rewards:
   actor: "Sylara's eyes shine with quiet pride. The steppe
     wind swirls around you like a greeting, and you feel a new
-    connection to the land -- ancient, vast, and watchful. She
-    presses a bundle of spirit fetishes into your hands."
+    connection to the land, ancient, vast, and watchful. She
+    presses a spirit fetish into your hands."
   gold: 15
   itemid: 40031
   spellid: summon-steppe-spirit

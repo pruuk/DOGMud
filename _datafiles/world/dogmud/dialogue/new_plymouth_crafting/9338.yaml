@@ -1,90 +1,120 @@
 mobid: 9338
 zone: New Plymouth Crafting
 defaultMood: cautious
-
 greetings:
-  - text: "This isn't open. What is it you need?"
-    moods: ["cautious"]
-  - text: "You're back."
-    moods: ["neutral"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Hello."
-
-  - keywords: [""]
-    responses:
-      - "Ask what you actually want to know."
-
-tree:
-  root:
-    text: "I keep the place. That's the job. If you want to know about
-      the cooperage, I'll answer what I can. The people who were here
-      — that's a shorter conversation. What's downstairs is not one
-      I'm having."
-    hints: "You could ask Toby about the cooperage and what it used to
-      do, about the people who are no longer here, or about what is
-      downstairs — though he seems very certain about that last one."
-
-  nodes:
-    - id: q68_toby
-      triggers: ["quest", "task", "cooperage", "tools", "circle", "orin",
-                 "kept", "tend", "proof", "rubbing", "edvar", "map", "asha",
-                 "stave"]
-      questRequired: ["68-start"]
-      questExcluded: ["68-evidence", "68-end"]
-      grantsQuest: "68-evidence"
-      givesItem: 40112
-      text: "You came from Orin, then. Yes -- I keep them. Somebody has to.
-        The day they shut this place they did not take the tools, and a tool
-        left to rust is a thing I will not watch happen. So I oil them, and I
-        keep the master's bench-mark clean, and I sleep where the master
-        slept. Here -- a rubbing of the bench-mark, proof enough for Orin.
-        And there is more: Edvar's last survey is under a loose floorboard by
-        the cot inside, the one they would pull this shop down to bury. Vell
-        has filed to call us derelict. Find it, and take it to Orin -- there
-        is not much time."
-      hints: "Toby tends the cooperage alone and gave you a rubbing of the
-        master's bench-mark. He says Edvar's hidden survey is under a loose
-        floorboard by the cot on the cooperage floor inside. Examine the
-        floorboard to find it, then take what you have to Orin."
-      moodChange: cautious
-
-    - id: cooperage
-      triggers: ["cooperage", "barrel", "work", "stave", "hoop",
-                 "craft", "what", "here", "do", "make", "open",
-                 "closed", "shut", "why", "keeper", "keep", "place",
-                 "building", "door", "lock", "job"]
-      text: "It used to make barrels — good ones, export quality.
-        Barrel staves, hoops, the full cooperage trade. There was
-        a full crew here when it was running. It went quiet and I
-        stayed to keep the building sound and the door locked. That
-        is the job. I'm not paid for it. I just do it."
-      hints: "You could ask Toby about the people who were here, or
-        about what is downstairs."
-
-    - id: people
-      triggers: ["people", "crew", "who", "gone", "missing", "left",
-                 "them", "where", "what", "happen", "workers", "asha",
-                 "circle", "others", "names", "remember", "were",
-                 "here", "before", "vanish"]
-      text: "There were good people here. I'm not going to list their
-        names for someone I don't know. They're not here anymore.
-        That's true. Past that — I don't know who sent you, I don't
-        know what you're looking for, and I'm not going to make
-        either easier until I do. The people who were here mattered.
-        I'm not giving them up to curiosity."
-      hints: "Toby is clearly protective of whoever was here. You
-        could ask about the cooperage itself or what is downstairs."
-      moodChange: cautious
-
-    - id: downstairs
-      triggers: ["downstairs", "basement", "below", "under", "down",
-                 "cellar", "floor", "beneath", "what", "inside",
-                 "through", "door", "open", "unlock", "in", "there",
-                 "stairs", "below"]
-      text: "No."
-      hints: "Toby has nothing more to say about what is downstairs.
-        You could ask about the cooperage's history or the people
-        who once worked here."
+- text: This isn't open. What is it you need?
+  moods:
+  - cautious
+- text: You're back.
+  moods:
+  - neutral
+opener:
+  text: I keep the place. That's the job. If you want to know about the cooperage,
+    I'll answer what I can. The people who were here, that's a shorter
+    conversation. What's downstairs is not one I'm having.
+  hints: Choose a line below if you want to hear about the cooperage, about the
+    people who are no longer here, or about what is downstairs, though he seems
+    very sure about that last one.
+  variants:
+  - questRequired:
+    - 68-end
+    questFlagRequired:
+      68-allegiance: bloodline
+    text: Vell's men are coming for the place. You know why. I don't have anything
+      to say to you.
+    hints: Toby does not look at you.
+  - questRequired:
+    - 68-end
+    text: The mark beside the door is re-cut and reads true again. Let the clerk
+      call that derelict. Thank you.
+    hints: Choose a line below if you would like to hear about the cooperage,
+      about the people who are no longer here, or about what is downstairs.
+  # 68-choice before 68-survey: variants are first-match and has 68-survey is
+  # also true at 68-choice.
+  # 68-choice without the survey first: old saves made the choice step before
+  # the survey step existed and never lifted the board (Orin's 9332 variant
+  # sends them back here). Either choice needs the survey.
+  - questRequired:
+    - 68-choice
+    questExcluded:
+    - 68-end
+    itemExcluded: 40113
+    text: You've not got the survey? It's still under the loose floorboard by the
+      cot. North, through there.
+    hints: Go north onto the Cooperage Floor. Type look floorboard.
+  - questRequired:
+    - 68-choice
+    questExcluded:
+    - 68-end
+    text: Orin told you, then. Whatever you choose, choose it soon. The inspection
+      is days away.
+    hints: Orin will tell you what standing with the circle means. Clerk Vell, in
+      the Permit Office in the Merchant Quarter, takes the survey for the
+      bloodline. Neither choice can be undone. From the cooperage front, go south
+      twice to the Inkwalk, then east into Orin's Bookstall. Type talk orin.
+  - questRequired:
+    - 68-survey
+    questExcluded:
+    - 68-end
+    text: You have it? Then take it to Orin. There is not much time.
+    hints: From the cooperage front, go south twice to the Inkwalk, then east into
+      Orin's Bookstall. Type talk orin.
+  - questRequired:
+    - 68-evidence
+    questExcluded:
+    - 68-end
+    text: The survey's under the loose floorboard by the cot. North, through there.
+    hints: Go north onto the Cooperage Floor. Type look floorboard.
+  - questRequired:
+    - 68-start
+    questExcluded:
+    - 68-evidence
+    - 68-end
+    text: You've got the look of someone who was sent. Who sent you?
+    hints: Choose to tell Toby that Orin sent you.
+topics:
+- key: q68_toby
+  kind: info
+  label: Orin sent me. Does someone still keep this place?
+  text: 'You came from Orin, then. Yes, I keep them. Somebody has to. The day they
+    shut this place they did not take the tools, and a tool left to rust is a thing
+    I will not watch happen. So I oil them, and I keep the master''s bench-mark
+    clean, and I sleep where the master slept. Here, a rubbing of the bench-mark.
+    Proof enough for Orin. And there is more: Edvar''s last survey is under a
+    loose floorboard by the cot, the one they would pull this shop down to bury.
+    Vell has filed to call us derelict. Find it, and take it to Orin. There is not
+    much time.'
+  hints: Toby gives you a charcoal rubbing of the master's bench-mark. Edvar's
+    survey is under a loose floorboard by the cot, on the Cooperage Floor just
+    north. Type look floorboard.
+  marked: true
+  questRequired:
+  - 68-start
+  questExcluded:
+  - 68-evidence
+  - 68-end
+  grantsQuest: 68-evidence
+  givesItem: 40112
+  moodChange: cautious
+- key: cooperage
+  kind: info
+  label: What did the cooperage make?
+  text: Barrels. Good ones, fit for export. Staves, hoops, the full cooperage
+    trade. There was a full crew here when it was running. It went quiet, and I
+    stayed to keep the building sound and the door locked. That is the job. I'm
+    not paid for it. I just do it.
+- key: people
+  kind: info
+  label: Who used to work here?
+  text: There were good people here. I'm not going to list their names for
+    someone I don't know. They're not here any more. That's true. Past that, I
+    don't know who sent you, I don't know what you're looking for, and I'm not
+    going to make either easier until I do. The people who were here mattered. I'm
+    not giving them up to curiosity.
+  hints: Toby is clearly protective of whoever was here.
+  moodChange: cautious
+- key: downstairs
+  kind: info
+  label: What is downstairs?
+  text: No.
+  hints: Toby has nothing more to say about what is downstairs.

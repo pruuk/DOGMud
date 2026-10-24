@@ -13,6 +13,6 @@ tree:
       quest: "4-investigate"
     - type: action
       do: send_user_text
-      text: "The scattered debris and fresh boot prints confirm it -- this is\
+      text: "The scattered debris and fresh boot prints confirm it: this is\
         \ where the bandits have been operating. There may be more evidence\
         \ deeper in the gully."

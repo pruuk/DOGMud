@@ -1,95 +1,91 @@
 mobid: 107
 zone: Thornwall City
 defaultMood: nervous
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    moods: ["nervous"]
-    responses:
-      - "I-- please, do not shout. I am not doing anything wrong. I am just... I live here."
-      - "Who sent you? I do not want trouble. Please, just leave me alone."
-
-  - keywords: ["hello", "hi"]
-    moods: ["trusting"]
-    responses:
-      - "You came back. Thank you for... for not telling anyone. Not yet."
-
-  - keywords: ["who", "name", "elara", "missing", "looking"]
-    moods: ["nervous"]
-    responses:
-      - "My name is not important. I am nobody. Please do not ask questions."
-      - "I know people are looking. My father sent them, did he not? He sends everyone."
-
-  - keywords: ["help", "safe", "protect", "trust"]
-    moods: ["nervous"]
-    responses:
-      - "You want to help? Then walk away. Tell them you did not find me. That is the only help I need."
-      - "I do not need rescuing. I need to be left alone. There is a difference."
-
-  - keywords: ["father", "family", "home", "return", "back"]
-    moods: ["nervous", "trusting"]
-    responses:
-      - "My father wants me returned. He wants me to marry a man I have never met, for a business alliance I want no part of. That is not a home. That is a cage with better furniture."
-      - "I will not go back. I would rather live in these alleys than in that house under those conditions. That is my choice, and I have made it."
-
-  - keywords: ["marriage", "arranged", "wedding", "husband"]
-    responses:
-      - "The marriage is a trade deal. My father gets a partnership with the Sevarn Shipping Company, and I get a husband who collects wives the way other men collect horses. I said no. He said it was not my decision. So I left."
-
-  - keywords: ["guard", "captain", "velk", "report", "watch"]
-    moods: ["nervous"]
-    responses:
-      - "The guard captain will return me to my father. That is what the law says -- I am a missing person, and missing persons get returned. The law does not ask if the person wants to be found."
-
-  - keywords: [""]
-    moods: ["nervous"]
-    responses:
-      - "Please. Just go."
-      - "I have nothing else to say."
-
-  - keywords: [""]
-    moods: ["trusting"]
-    responses:
-      - "Thank you for listening. Most people do not."
-      - "I will be all right. I just need time."
-
-tree:
-  root:
-    text: "You are not from the ward. Who are you? Did my father send you? I do not want any trouble. Please, just leave me be."
-    hints: "She seems frightened and unwilling to talk. Perhaps someone in the city knows more about her."
-    variants:
-      - questRequired: ["8-start"]
-        questExcluded: ["8-found"]
-        text: "You are not from the ward. Who are you? Did my father send you? I-- please, I do not want trouble."
-        hints: "She looks frightened. You could try to calm her, or tell her you mean no harm."
-      - questRequired: ["8-found"]
-        text: "You came back. I was not sure you would. Whatever you decide to tell the captain... thank you for listening first."
-
-  nodes:
-    - id: reassure
-      triggers: ["help", "safe", "harm", "friendly", "trust", "calm", "peace", "quest", "task"]
-      questRequired: ["8-start"]
-      questExcluded: ["8-found", "8-end"]
-      grantsQuest: "8-found"
-      text: "You do not look like one of his people. All right. I am Elara. I am sure you have heard the name -- my father has been telling everyone I am missing. I am not missing. I left. There is a difference, but the guard does not care about the distinction."
-      hints: "You could ask why she left, or about her father. Or ask what happens now."
-      moodChange: trusting
-
-    - id: why_she_left
-      triggers: ["why", "left", "run", "hiding", "marriage", "arranged"]
-      questRequired: ["8-found"]
-      text: "My father arranged a marriage. A business alliance with a man from the eastern trade houses -- a man with a reputation for treating wives like property. I told my father no. He told me it was not my decision. So I made it my decision. I took what I could carry and left in the night. I have been here since, living on savings and the kindness of people who do not ask questions."
-
-    - id: about_father
-      triggers: ["father", "family", "aldric", "sevarn"]
-      questRequired: ["8-found"]
-      text: "My father is Aldric Sevarn. Textile merchant. Respected. Successful. Completely certain that he knows what is best for everyone, especially his daughter. He is not a cruel man in the way most people mean. He simply cannot imagine that I might want something different from what he has planned. The marriage would make him rich. My feelings are... inconvenient."
-
-    - id: the_choice
-      triggers: ["what now", "what do", "choice", "decision", "tell", "report", "guard", "velk", "captain"]
-      questRequired: ["8-found"]
-      text: "You have a choice. You can go to the guard captain and report where I am. My father will come with guards, and I will be taken home and married off within the week. Or you can tell the captain you searched and did not find me. I will move again -- I know how to disappear now. Or you could tell him the truth -- that I am alive and hiding by choice, and let him decide what to do with that information. There is no good answer. I know that."
-      hints: "Return to Guard Captain Velk and report what you have found."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: You are not from the ward. Who are you? Did my father send you? I do not want
+    any trouble. Please, just leave me be.
+  hints: She seems frightened and unwilling to talk. Perhaps someone in the city knows
+    more about her.
+  variants:
+  - questRequired:
+    - 8-start
+    questExcluded:
+    - 8-found
+    text: You are not from the ward. Who are you? Did my father send you? I... please,
+      I do not want trouble.
+    hints: She looks frightened. Choose the line that says you mean her no harm.
+  - questRequired:
+    - 8-end
+    text: You came back. I am still here, for now. Thank you for listening first,
+      whatever you told the captain.
+  - questRequired:
+    - 8-found
+    text: You came back. I was not sure you would. Whatever you decide to tell the
+      captain... thank you for listening first.
+    hints: Return to Guard Captain Velk at the barracks and type talk velk.
+topics:
+# Quest 8's step (finding Elara), a mid-quest grant: stays marked.
+- key: reassure
+  kind: info
+  label: I mean you no harm. I only want to talk.
+  text: You do not look like one of his people. All right. I am Elara. I am sure you
+    have heard the name. My father has been telling everyone I am missing. I am not
+    missing. I left. There is a difference, but the guard does not care about the
+    distinction.
+  hints: Choose a line below to hear why she left, about her father, or what
+    happens now.
+  marked: true
+  questRequired:
+  - 8-start
+  questExcluded:
+  - 8-found
+  - 8-end
+  grantsQuest: 8-found
+  moodChange: trusting
+- key: why_she_left
+  kind: info
+  label: Why did you leave home?
+  text: My father arranged a marriage. A business alliance with a man from the eastern
+    trade houses, a man who collects wives the way other men collect horses. I told
+    my father no. He told me it was not my decision. So I made it my decision. I took
+    what I could carry and left in the night. I have been here since, living on savings
+    and the kindness of people who do not ask questions.
+  questRequired:
+  - 8-found
+- key: about_father
+  kind: info
+  label: What is your father like?
+  text: My father is Aldric Sevarn. Textile merchant. Respected. Successful. Completely
+    certain that he knows what is best for everyone, especially his daughter. He is
+    not a cruel man in the way most people mean. He simply cannot imagine that I might
+    want something different from what he has planned. The marriage would make him
+    rich. My feelings are... inconvenient. He wants me returned and married to a
+    man I have never met. That is not a home. That is a cage with better furniture.
+    I will not go back. I would rather live in these alleys than in that house.
+  questRequired:
+  - 8-found
+- key: the_choice
+  kind: info
+  label: What happens now?
+  text: You have a choice. You can go to the guard captain and report where I am.
+    He will return me to my father. That is what the law says. I am a missing person,
+    and missing persons get returned. The law does not ask if the person wants to
+    be found. My father will come with guards, and I will be taken home and married off within
+    the week. Or you can tell the captain you searched and did not find me. I will
+    move again. I know how to disappear now. Or you could tell him the truth, that
+    I am alive and hiding by choice, and let him decide what to do with that information.
+    There is no good answer. I know that.
+  hints: Return to Guard Captain Velk at the barracks and type talk velk.
+  questRequired:
+  - 8-found
+  questExcluded:
+  - 8-end
+- key: who
+  kind: info
+  label: Who are you?
+  text: My name is not important. I am nobody. Please do not ask questions. I know
+    people are looking. My father sent them, did he not? He sends everyone. If you
+    want to help, walk away. Tell them you did not find me. I do not need rescuing.
+    I need to be left alone. There is a difference.
+  questExcluded:
+  - 8-found

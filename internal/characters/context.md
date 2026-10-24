@@ -370,6 +370,24 @@ machine is wired again), `Validate` calls it, and mob characters (user id 0)
 notify nothing. The hook is the push half of the menu gate; the shared busy
 check filed as #640 replaces the gate.
 
+### Heard talk topics (`heard.go`, #375 phase 1)
+
+`Character.HeardTopics` (`heardtopics` in the save, omitted when empty) is the
+sorted, unique list of talk topics the player has heard, each keyed
+`"<mob template id>.<topic key>"` (`dialogue.HeardKey`). It backs a topic's
+`heardRequired` gate, the grey (Dim) state of a heard info line and the `[*]`
+marker on unheard flagged info.
+
+- `HasHeard(key)` is a binary search; `MarkHeard(key)` inserts in order and
+  ignores a repeat. `conversation.PlayerState` wires both into
+  `dialogue.PlayerState`.
+- `RenameHeardTopics(renames)` runs at load (`users.LoadUser`, with
+  `dialogue.HeardRenames()` from the committed topic-key manifest) so a
+  renamed topic stays heard. It follows rename chains and always rebuilds the
+  list sorted and unique, which also repairs a hand-edited save.
+- The list is keyed by mob template, not instance: every copy of an NPC
+  remembers the same conversation. Nothing ever removes a key.
+
 ### Character States and Modifiers
 - 🔑 **Timed state is `Character.Conditions` and nothing else.** Read
   `internal/conditions/context.md` before adding, reading or displaying anything

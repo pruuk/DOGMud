@@ -150,8 +150,8 @@ func TestEskPassageClosesTwoRoads(t *testing.T) {
 		file  string
 		event behaviortree.EventContext
 	}{
-		{"ask esk passage", filepath.Join(behaviors, "pothole_coulee", "9107-warden_esk.yaml"),
-			behaviortree.EventContext{EventType: "player_ask", Text: "passage"}},
+		{"esk passage topic", filepath.Join(behaviors, "pothole_coulee", "9107-warden_esk.yaml"),
+			behaviortree.EventContext{EventType: "player_topic", Text: "passage"}},
 		{"enter arch", filepath.Join(behaviors, "rooms", "pothole_coulee", "5215.yaml"),
 			behaviortree.EventContext{EventType: "room_command", Command: "enter", Rest: "arch"}},
 	}

@@ -1,235 +1,206 @@
 mobid: 9116
 zone: Pothole Coulee
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey", "hail"]
-    responses:
-      - "Rusk. I work iron. You need something, say it."
-      - "If you are here to buy, the stall is right there.
-          If you are here to learn, ask."
-
-  - keywords: ["forge", "craft", "smith", "iron", "make",
-      "dagger", "weapon", "learn", "teach", "quest", "task"]
-    responses:
-      - "The forge does the teaching. I just point you at it."
-      - "Iron ingot, leather strip, craft iron dagger at the
-          forge. That is the whole lesson the first time."
-
-  - keywords: ["arm", "forearm", "iron", "mutation", "opened"]
-    responses:
-      - "The Awakening left its mark. This one is useful --
-          iron does not blister it, and it does not tire. I
-          stopped minding it some years back."
-
-  - keywords: [""]
-    responses:
-      - "Say what you need."
-      - "I am not much for small talk. Ask something."
-      - "The forge is not going to tend itself."
-
-tree:
-  root:
-    text: "Rusk. Smith."
-    hints: "You could ask Rusk about smithing or your task."
-    variants:
-      # ── Not yet Opened (quest 30 incomplete) ─────────────
-      - questExcluded: ["30-end"]
-        text: "You are still green. Not forge-ready green -- raw-
-          stock green. The Awakening comes first. Cleric Hadwen
-          runs it at the reflecting pool south of the hub.
-          Complete the rite and come back."
-        hints: "Find Cleric Hadwen at the reflecting pool. Complete
-          the Awakening before returning to Smith Rusk."
-
-      # ── Opened, quest not yet started ────────────────────
-      - questRequired: ["30-end"]
-        questExcluded: ["35-start", "35-end"]
-        text: "You have been through the rite. Good. I teach the
-          forge if you want it -- iron work, the craft loop,
-          materials and what they become. Ask me about smithing
-          if you are interested."
-        hints: "Type ask rusk craft to learn the forge."
-
-      # ── Mid-quest, one variant per step (owner ruling 2026-10-17:
-      # one command per step, in order) ─────────────────────
-      - questRequired: ["35-start"]
-        questExcluded: ["35-list", "35-end"]
-        text: "First see what I stock. Type list here beside me and
-          my goods come up with their prices. The ingot and the
-          strip are both on it."
-        hints: "Type list."
-
-      - questRequired: ["35-list"]
-        questExcluded: ["35-ingot", "35-end"]
-        text: "The ingot first. That is the blade. Type buy iron
-          ingot."
-        hints: "Type buy iron ingot."
-
-      - questRequired: ["35-ingot"]
-        questExcluded: ["35-strip", "35-end"]
-        text: "Now the leather strip, for the grip. Type buy leather
-          strip."
-        hints: "Type buy leather strip."
-
-      - questRequired: ["35-strip"]
-        questExcluded: ["35-craft", "35-end"]
-        text: "You have both. The forge is right here. Type craft
-          iron dagger and give the iron a few moments to take
-          the heat. A craft can fail. If it does, buy an ingot
-          and a strip again and retry."
-        hints: "At the forge, type craft iron dagger. A craft can
-          fail. If it does, buy an iron ingot and a leather strip
-          again and retry."
-
-      - questRequired: ["35-craft"]
-        questExcluded: ["35-end"]
-        text: "You made something at the forge. Bring it here.
-          Let me look at it."
-        hints: "Type ask rusk done to show Rusk what you made."
-
-      # ── Quest complete ────────────────────────────────────
-      - questRequired: ["35-end"]
-        text: "You are through here. North through the Quench Shed,
-          then west down to the talus. Ovell is in the Collapsed
-          Cut, south of the Lower Talus. The man pulled himself
-          out of a cave-in and has been sitting there since. He
-          could use a hand. Set your home first so you have
-          somewhere to fall back to if things go wrong out there."
-        hints: "Type sethome coulee to set your recall point.
-          Then go north to the Quench Shed, west to the Lower
-          Talus and south into the Collapsed Cut, and type ask
-          ovell to find out what the cave-in survivor needs."
-
-  nodes:
-    # ── OFFER CRAFT LESSON / QUEST START ──────────────────────
-    - id: craft_offer
-      triggers: ["craft", "learn", "smith", "forge", "teach",
-        "quest", "task"]
-      questRequired: ["30-end"]
-      questExcluded: ["35-start", "35-end"]
-      grantsQuest: "35-start"
-      text: "Right. The forge teaches faster than I do, but here
-        is the shape of it. Buy an iron ingot and a leather strip
-        off my stall. List shows you what I stock and what it
-        costs. Take them to the forge here in the smithy and
-        type craft iron dagger. The iron and the leather disappear
-        and a blade appears. That is the whole trick the first
-        time. Once you have a feel for it, type craft list to see
-        everything you know how to make right now with what you
-        are carrying. Come back to me when you have made something.
-        Start with the list."
-      hints: "Here beside Rusk, type list."
-
-    # ── TURN-IN ───────────────────────────────────────────────
-    - id: craft_turnin
-      triggers: ["report", "done", "ready", "finished",
-        "quest", "task"]
-      questRequired: ["35-craft"]
-      questExcluded: ["35-end"]
-      grantsQuest: "35-end"
-      text: "Let me see it. Straight seam. Weight is forward where
-        it belongs -- you did not rush the quench. This is a
-        working blade. Not fancy. Does not need to be. You
-        understand the loop now: raw stock in, finished piece
-        out. Apply that to anything the forge can make. North
-        through the Quench Shed, then west, is the talus slope.
-        There is a man out there named Ovell, in the Collapsed
-        Cut south of the Lower Talus. He survived a cave-in and
-        has been waiting for someone to notice. Set your home
-        here first. You will want a recall point."
-      hints: "Quest complete. Type sethome coulee to set your
-        recall point in Pothole Coulee. Then go north to the
-        Quench Shed, west to the Lower Talus and south into the
-        Collapsed Cut, and type ask ovell to find out what the
-        cave-in survivor needs."
-
-    # ── MID-QUEST QUESTIONS, one node per step (S10) ──────────
-    # A mid-quest player asking about the quest's own words (the ingot,
-    # the strip, the dagger, list, buy, craft, help) gets the current
-    # step's command instead of the catch-all. These sit after
-    # craft_turnin (which owns report/done/quest on the last step) and
-    # before craft_help (which still answers recipes/station/bag/sort/
-    # salvage).
-    - id: heat_list_help
-      triggers: ["ingot", "strip", "leather", "iron", "dagger",
-        "blade", "craft", "forge", "list", "buy", "stall", "goods",
-        "stock", "materials", "help", "how", "next", "what now",
-        "report", "done", "ready", "finished", "quest", "task"]
-      questRequired: ["35-start"]
-      questExcluded: ["35-list", "35-end"]
-      text: "One thing at a time. First see what I sell. Type list
-        here beside me. The ingot and the strip are both on it,
-        with what they cost."
-      hints: "Type list."
-
-    - id: heat_ingot_help
-      triggers: ["ingot", "strip", "leather", "iron", "dagger",
-        "blade", "craft", "forge", "list", "buy", "stall", "goods",
-        "stock", "materials", "help", "how", "next", "what now",
-        "report", "done", "ready", "finished", "quest", "task"]
-      questRequired: ["35-list"]
-      questExcluded: ["35-ingot", "35-end"]
-      text: "The iron ingot first. That is the blade itself. Type
-        buy iron ingot. The strip comes after."
-      hints: "Type buy iron ingot."
-
-    - id: heat_strip_help
-      triggers: ["ingot", "strip", "leather", "iron", "dagger",
-        "blade", "craft", "forge", "list", "buy", "stall", "goods",
-        "stock", "materials", "help", "how", "next", "what now",
-        "report", "done", "ready", "finished", "quest", "task"]
-      questRequired: ["35-ingot"]
-      questExcluded: ["35-strip", "35-end"]
-      text: "You have the ingot. Now the leather strip. It wraps the
-        grip so the blade does not turn in your hand. Type buy
-        leather strip."
-      hints: "Type buy leather strip."
-
-    - id: heat_craft_help
-      triggers: ["ingot", "strip", "leather", "iron", "dagger",
-        "blade", "craft", "forge", "list", "buy", "stall", "goods",
-        "stock", "materials", "help", "how", "next", "what now",
-        "report", "done", "ready", "finished", "quest", "task"]
-      questRequired: ["35-strip"]
-      questExcluded: ["35-craft", "35-end"]
-      text: "You have the ingot and the strip. That is all of it.
-        The forge is right here. Type craft iron dagger, then let
-        the iron take the heat for a few moments. A craft can fail.
-        If it does, buy an ingot and a strip again and retry."
-      hints: "At the forge, type craft iron dagger. A craft can
-        fail. If it does, buy an iron ingot and a leather strip
-        again and retry."
-
-    - id: heat_show_help
-      triggers: ["ingot", "strip", "leather", "iron", "dagger",
-        "blade", "craft", "forge", "list", "buy", "stall", "goods",
-        "stock", "materials", "help", "how", "next", "what now"]
-      questRequired: ["35-craft"]
-      questExcluded: ["35-end"]
-      text: "You worked the iron. Once the blade is in your hands,
-        show it to me. Say you are done, or hand it over."
-      hints: "Type ask rusk done."
-
-    # ── CRAFT MECHANICS HELP ──────────────────────────────────
-    - id: craft_help
-      triggers: ["recipes", "station", "materials", "components",
-        "sort", "help", "bag", "salvage"]
-      text: "Three things worth knowing. First: the forge here is
-        a station -- some recipes need to be made at a specific
-        station, and the craft command will tell you if you are
-        standing in the wrong place. Second: the component bag is
-        where crafting materials live. Pick up an
-        ingot and it routes there automatically. If you have loose
-        materials in your pack already, type sort and it migrates
-        them. Third: salvage breaks a worn or unwanted piece of
-        gear back into materials. You do not always get everything
-        back, but it is better than dropping it in the dirt. Type
-        salvage followed by the item name."
-      hints: "Some recipes require a forge or another crafting
-        station -- the craft command says where. Your component
-        bag auto-collects materials; type sort to move any loose
-        ones in. Type salvage on worn gear to recover materials."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Rusk. I work the iron here, and I teach it to anyone who watches more
+    than they talk.
+  hints: Choose a line below to hear about smithing or your task.
+  variants:
+  - questExcluded:
+    - 30-end
+    text: You are still green. Not forge-ready green, raw-stock green. The Awakening
+      comes first. Cleric Hadwen runs it at the Awakening Pool, north of the hub.
+      Complete the rite and come back.
+    hints: Find Cleric Hadwen at the Awakening Pool, north of Hub Square, and type
+      talk hadwen. Complete the Awakening before returning to Smith Rusk.
+  - questRequired:
+    - 30-end
+    questExcluded:
+    - 35-start
+    - 35-end
+    text: You have been through the rite. Good. I teach the forge if you want it,
+      iron work, and how raw materials become things you can use.
+    hints: Choose First Heat below to learn the forge.
+  - questRequired:
+    - 35-start
+    questExcluded:
+    - 35-list
+    - 35-end
+    text: First see what I stock. Type list here beside me and my goods come up with
+      their prices. The ingot and the strip are both on it.
+    hints: Type list.
+  - questRequired:
+    - 35-list
+    questExcluded:
+    - 35-ingot
+    - 35-end
+    text: The ingot first. That is the blade. Type buy iron ingot.
+    hints: Type buy iron ingot.
+  - questRequired:
+    - 35-ingot
+    questExcluded:
+    - 35-strip
+    - 35-end
+    text: Now the leather strip, for the grip. Type buy leather strip.
+    hints: Type buy leather strip.
+  - questRequired:
+    - 35-strip
+    questExcluded:
+    - 35-craft
+    - 35-end
+    text: You have both. The forge is right here. Type craft iron dagger and give
+      the iron a few moments to take the heat. A craft can fail. If it does, buy an
+      ingot and a strip again and retry.
+    hints: At the forge, type craft iron dagger. A craft can fail. If it does, buy
+      an iron ingot and a leather strip again and retry.
+  - questRequired:
+    - 35-craft
+    questExcluded:
+    - 35-end
+    text: You made something at the forge. Show it to me, or sell it to me if you
+      would rather have the coin. Lost it? Then tell me how the work went.
+    hints: Choose First Heat below to report to Rusk. If you still carry the dagger,
+      she looks it over. If not, she takes your word. Selling her the dagger with
+      sell iron dagger also counts.
+  - questRequired:
+    - 35-end
+    text: You are through here. North through the Quench Shed, then west down to the
+      talus. Ovell is in the Collapsed Cut, south of the Lower Talus. The man pulled
+      himself out of a cave-in and has been sitting there since. He could use a hand.
+      If things go wrong out there and you die, you wake at the Mending Hut.
+    hints: Go north to the Quench Shed, west to the Lower Talus and south into the
+      Collapsed Cut, and type talk ovell to find out what the cave-in survivor needs.
+topics:
+- key: craft_offer
+  kind: offer
+  quest: 35
+  label: First Heat
+  playerLine: Will you teach me to work the forge?
+  text: Right. The forge teaches faster than I do, but here is the shape of it. Buy
+    an iron ingot and a leather strip off my stall. List shows you what I stock and
+    what it costs. Take them to the forge here in the smithy and type craft iron dagger.
+    The iron and the leather disappear and a blade appears. That is the whole trick
+    the first time. Once you have a feel for it, type craft list to see everything
+    you know how to make right now with what you are carrying. Come back to me when
+    you have made something. Start with the list.
+  hints: Here beside Rusk, type list.
+  questRequired:
+  - 30-end
+  questExcluded:
+  - 35-start
+  - 35-end
+  grantsQuest: 35-start
+# Two exclusive hand-ins for First Heat. The old ask route needed no dagger
+# and the old give route did; both survive. craft_turnin (carriesItem 10009)
+# is what `give dagger rusk` resolves to: the dagger is shown, never taken
+# (settled ruling). craft_turnin_told (itemExcluded 10009) is for a player
+# who sold, salvaged or lost the blade: Rusk takes their word, so nobody has
+# to buy and craft a second dagger just to report. The two gates resolve
+# through the same carried-or-worn check, so exactly one is ever eligible.
+- key: craft_turnin
+  kind: handin
+  quest: 35
+  label: First Heat
+  playerLine: I made a dagger at your forge. Here, see for yourself.
+  text: 'Let me see it. Straight seam. Weight is forward where it belongs. You did
+    not rush the quench. This is a working blade. Not fancy. Does not need to be.
+    Keep it. You made it. You understand the loop now: raw stock in, finished piece
+    out. Apply that to anything the forge can make. North through the Quench Shed,
+    then west, is the talus slope. There is a man out there named Ovell, in the Collapsed
+    Cut south of the Lower Talus. He survived a cave-in and has been waiting for someone
+    to notice. If you die out there, you wake at the Mending Hut.'
+  hints: Quest complete. Go north to the Quench Shed, west to the Lower Talus and
+    south into the Collapsed Cut, and type talk ovell to find out what the cave-in
+    survivor needs.
+  questRequired:
+  - 35-craft
+  questExcluded:
+  - 35-end
+  carriesItem: 10009
+  grantsQuest: 35-end
+- key: craft_turnin_told
+  kind: handin
+  quest: 35
+  label: First Heat
+  playerLine: I made a dagger at your forge, but I don't have it now.
+  text: 'Gone already? Then I take your word. The forge does not lie, and neither
+    do you, I think. You understand the loop now: raw stock in, finished piece out.
+    Apply that to anything the forge can make. North through the Quench Shed, then
+    west, is the talus slope. There is a man out there named Ovell, in the Collapsed
+    Cut south of the Lower Talus. He survived a cave-in and has been waiting for
+    someone to notice. If you die out there, you wake at the Mending Hut.'
+  hints: Quest complete. Go north to the Quench Shed, west to the Lower Talus and
+    south into the Collapsed Cut, and type talk ovell to find out what the cave-in
+    survivor needs.
+  questRequired:
+  - 35-craft
+  questExcluded:
+  - 35-end
+  itemExcluded: 10009
+  grantsQuest: 35-end
+- key: heat_list_help
+  kind: info
+  label: What do I need to make a dagger?
+  text: One thing at a time. First see what I sell. Type list here beside me. The
+    ingot and the strip are both on it, with what they cost.
+  hints: Type list.
+  questRequired:
+  - 35-start
+  questExcluded:
+  - 35-list
+  - 35-end
+- key: heat_ingot_help
+  kind: info
+  label: What should I buy first?
+  text: The iron ingot first. That is the blade itself. Type buy iron ingot. The strip
+    comes after.
+  hints: Type buy iron ingot.
+  questRequired:
+  - 35-list
+  questExcluded:
+  - 35-ingot
+  - 35-end
+- key: heat_strip_help
+  kind: info
+  label: I have the ingot. What next?
+  text: You have the ingot. Now the leather strip. It wraps the grip so the blade
+    does not turn in your hand. Type buy leather strip.
+  hints: Type buy leather strip.
+  questRequired:
+  - 35-ingot
+  questExcluded:
+  - 35-strip
+  - 35-end
+- key: heat_craft_help
+  kind: info
+  label: I have the ingot and the strip. Now what?
+  text: You have the ingot and the strip. That is all of it. The forge is right here.
+    Type craft iron dagger, then let the iron take the heat for a few moments. A craft
+    can fail. If it does, buy an ingot and a strip again and retry.
+  hints: At the forge, type craft iron dagger. A craft can fail. If it does, buy an
+    iron ingot and a leather strip again and retry.
+  questRequired:
+  - 35-strip
+  questExcluded:
+  - 35-craft
+  - 35-end
+- key: craft_help
+  kind: info
+  label: What else should I know about crafting?
+  text: 'Three things worth knowing. First: the forge here is a station. Some recipes
+    need to be made at a specific station, and the craft command will tell you if
+    you are standing in the wrong place. Second: a component bag is where crafting
+    materials live. Wear one, and any ingot you pick up goes into it on its own. If
+    you have loose materials in your pack already, type sort and they go into the
+    bag. Third: salvage breaks a worn or unwanted piece of gear back into materials.
+    You do not always get everything back, but it is better than dropping it in the
+    dirt. Type salvage followed by the item name.'
+  hints: Craft makes a thing from its materials, and tells you if you need a station
+    such as a forge. Type craft list to see what you can make. For more, type help
+    craft.
+  marked: true
+- key: arm
+  kind: info
+  label: Why is your forearm like iron?
+  text: The Awakening left its mark. This one is useful. Iron does not blister it,
+    and it does not tire. I stopped minding it some years back.

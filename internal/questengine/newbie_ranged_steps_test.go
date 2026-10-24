@@ -10,7 +10,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/stretchr/testify/require"
-	yaml "gopkg.in/yaml.v3"
 )
 
 // The ranged spoke after the owner ruling (2026-10-17): Across the Canyon
@@ -36,19 +35,6 @@ func squash(s string) string {
 	return strings.ToLower(strings.Join(strings.Fields(s), " "))
 }
 
-func loadCouleeDialogue(t *testing.T, file string) *dialogue.DialogueFile {
-	t.Helper()
-	_, here, _, ok := runtime.Caller(0)
-	require.True(t, ok)
-	path := filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "dialogue", "pothole_coulee", file)
-	raw, err := os.ReadFile(path)
-	require.NoError(t, err)
-	var df dialogue.DialogueFile
-	require.NoError(t, yaml.Unmarshal(raw, &df), "dialogue %s must parse, or the NPC goes mute", file)
-	require.NotNil(t, df.Tree)
-	return &df
-}
-
 func readQuestFile(t *testing.T, file string) string {
 	t.Helper()
 	_, here, _, ok := runtime.Caller(0)
@@ -56,53 +42,6 @@ func readQuestFile(t *testing.T, file string) string {
 	raw, err := os.ReadFile(filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "quests", file))
 	require.NoError(t, err)
 	return string(raw)
-}
-
-// npcTalker drives a giver's dialogue the way usercommands/ask.go does: tree
-// nodes first, then patterns, the empty-keyword catch-all last.
-type npcTalker struct {
-	df      *dialogue.DialogueFile
-	p       *linearPlayer
-	carried map[int]bool
-	given   []int
-	inst    int
-}
-
-var npcTalkerInstance = 70000
-
-func newNpcTalker(df *dialogue.DialogueFile, p *linearPlayer) *npcTalker {
-	npcTalkerInstance++
-	return &npcTalker{df: df, p: p, carried: map[int]bool{}, inst: npcTalkerInstance}
-}
-
-func (n *npcTalker) state() *dialogue.PlayerState {
-	return &dialogue.PlayerState{
-		HasQuest:    n.p.HasQuest,
-		HasItem:     func(id int) bool { return n.carried[id] },
-		CarriesItem: func(id int) bool { return n.carried[id] },
-		GiveItem: func(id int) bool {
-			n.given = append(n.given, id)
-			n.carried[id] = true
-			return true
-		},
-		GiveQuest: n.p.grant,
-	}
-}
-
-// ask returns what the NPC says and the narrator hint, and whether the answer
-// came from a tree node (a quest-aware answer) rather than a pattern.
-func (n *npcTalker) ask(topic string) (text, hints string, fromTree, catchAll bool) {
-	ps := n.state()
-	if txt, h, _, ok := dialogue.TreeAdvance(n.df, n.inst, 1, topic, ps); ok {
-		return txt, h, true, false
-	}
-	resp, _, _, fallback := dialogue.MatchWithFallbackInfo(n.df, n.inst, topic, ps)
-	return resp, "", false, fallback
-}
-
-func (n *npcTalker) greet() (text, hints string) {
-	txt, h, _ := dialogue.Greet(n.df, n.inst, 1, n.state())
-	return txt, h
 }
 
 // playerOn builds a linear player for quest q at step, holding the given
@@ -137,7 +76,7 @@ func TestQuest51AcrossTheCanyon_OneCommandPerStep(t *testing.T) {
 
 	require.Contains(t, questHintFor(t, q, "start"), "type fire scout north")
 	require.Contains(t, questHintFor(t, q, "shoot"), "type fire scout")
-	require.Contains(t, questHintFor(t, q, "kill"), "type ask bryn done")
+	require.Contains(t, questHintFor(t, q, "kill"), "type talk bryn") // R20 (#375): talk replaces ask
 
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
@@ -238,111 +177,45 @@ func TestQuest59RangePractice_OneCommandPerStep(t *testing.T) {
 	})
 }
 
-// Bryn greets each mid-quest step with that step's command, and the obvious
-// questions a mid-quest player asks reach a tree node, not a pattern.
+// Bryn's opener names each mid-quest step's command, and a quest-aware topic
+// on his menu answers it (the topics the old `ask bryn done/quest/scout`
+// words reached). The kill step's hand-in completes Across the Canyon.
 func TestBryn9162_MidQuestGreetsAndAnswersEachStep(t *testing.T) {
-	df := loadCouleeDialogue(t, "9162.yaml")
-	cases := []struct {
-		file   string
-		id     int
-		step   string
-		want   string
-		others []string
-		topics []string
-	}{
-		{"51-across_the_canyon.yaml", 51, "start", "type fire scout north", []string{"50-end"}, []string{"done", "quest", "scout", "fire", "help"}},
-		{"51-across_the_canyon.yaml", 51, "shoot", "type fire scout", []string{"50-end"}, []string{"done", "quest", "scout", "fire", "help"}},
-		{"51-across_the_canyon.yaml", 51, "kill", "type ask bryn done", []string{"50-end"}, nil},
-		{"52-the_overlook.yaml", 52, "start", "type fire skell", []string{"50-end", "51-end"}, []string{"done", "quest", "skell", "ammo", "help"}},
-		{"59-range_practice.yaml", 59, "start", "type fire scout north", []string{"50-end", "51-end", "52-end"}, []string{"done", "quest", "work", "drill", "practice"}},
-		{"59-range_practice.yaml", 59, "shoot", "type fire scout", []string{"50-end", "51-end", "52-end"}, []string{"done", "quest", "work", "drill", "practice"}},
-	}
-	for _, c := range cases {
-		q := loadShippedQuest(t, c.file, c.id)
-		p := playerOn(q, c.step, c.others...)
-		n := newNpcTalker(df, p)
-		_, hints := n.greet()
-		require.Contains(t, squash(hints), c.want, "quest %d step %q: Bryn's greeting must name the step's command", c.id, c.step)
-		require.Equal(t, 1, len(typedCommand.FindAllString(strings.ReplaceAll(squash(hints), squash(darkAside), ""), -1)),
-			"quest %d step %q greeting hint names one command: %q", c.id, c.step, hints)
-		for _, topic := range c.topics {
-			// A fresh player per question: "done" on the last step turns in.
-			_, _, fromTree, catchAll := newNpcTalker(df, playerOn(q, c.step, c.others...)).ask(topic)
-			require.False(t, catchAll, "quest %d step %q: ask bryn %s falls to the catch-all", c.id, c.step, topic)
-			require.True(t, fromTree, "quest %d step %q: ask bryn %s must reach a quest-aware node, not a generic pattern", c.id, c.step, topic)
-		}
-		for _, topic := range []string{"done", "quest"} {
-			if c.step == "kill" {
-				continue // the turn-in answers these
-			}
-			_, h, _, _ := n.ask(topic)
-			require.Contains(t, squash(h), c.want, "quest %d step %q: ask bryn %s must name the step's command", c.id, c.step, topic)
-		}
-	}
+	f51 := "51-across_the_canyon.yaml"
+	checkTopicSteps(t, "bryn", "9162.yaml", []topicStep{
+		{f51, 51, "start", "type fire scout north", []string{"50-end"}, "coach_51_start", false},
+		{f51, 51, "shoot", "type fire scout", []string{"50-end"}, "coach_51_shoot", false},
+		{f51, 51, "kill", "", []string{"50-end"}, "canyon_turnin", true},
+		{"52-the_overlook.yaml", 52, "start", "type fire skell", []string{"50-end", "51-end"}, "coach_52_start", false},
+		{"59-range_practice.yaml", 59, "start", "type fire scout north", []string{"50-end", "51-end", "52-end"}, "coach_59_start", false},
+		{"59-range_practice.yaml", 59, "shoot", "type fire scout", []string{"50-end", "51-end", "52-end"}, "coach_59_shoot", false},
+	})
 }
 
-// Iden greets and answers each quest 50 step with its command (item 5 and S10).
-func TestIden9161_MidQuestGreetsAndAnswersEachStep(t *testing.T) {
-	df := loadCouleeDialogue(t, "9161.yaml")
-	q := loadShippedQuest(t, "50-first_shot.yaml", 50)
-	want := map[string]string{
-		"start":      "type equip sling",
-		"equip":      "type fire butt",
-		"shoot":      "type sneak",
-		"ambush":     "type fire butt",
-		"cover_shot": "type ask iden done",
-	}
-	for step, cmd := range want {
-		require.Contains(t, questHintFor(t, q, step), cmd, "quest 50 step %q changed; update this test and Iden together", step)
-		n := newNpcTalker(df, playerOn(q, step, "30-end"))
-		_, hints := n.greet()
-		require.Contains(t, squash(hints), cmd, "step %q: Iden's greeting must name the step's command", step)
-		for _, topic := range []string{"done", "quest", "sneak", "butt", "help", "sling"} {
-			// A fresh player per question: "done" on the last step turns in.
-			_, _, fromTree, catchAll := newNpcTalker(df, playerOn(q, step, "30-end")).ask(topic)
-			require.False(t, catchAll, "step %q: ask iden %s falls to the catch-all", step, topic)
-			require.True(t, fromTree, "step %q: ask iden %s must reach a quest-aware node", step, topic)
-		}
-		if step == "cover_shot" {
-			continue // "done" is the turn-in here
-		}
-		for _, topic := range []string{"done", "quest"} {
-			_, h, _, _ := n.ask(topic)
-			require.Contains(t, squash(h), cmd, "step %q: ask iden %s must name the step's command", step, topic)
-		}
-	}
-}
-
-// S8: a handout node gives its item once. A player who already carries one
-// hears that they have one, and gets nothing.
+// S8: a handout topic gives its item once. A player who already carries one
+// sees the reminder instead, and gets nothing.
 func TestRangedGivers_HandoutsGiveOnlyWhenTheItemIsMissing(t *testing.T) {
 	q50 := loadShippedQuest(t, "50-first_shot.yaml", 50)
 	q51 := loadShippedQuest(t, "51-across_the_canyon.yaml", 51)
 	q52 := loadShippedQuest(t, "52-the_overlook.yaml", 52)
-	iden := loadCouleeDialogue(t, "9161.yaml")
-	bryn := loadCouleeDialogue(t, "9162.yaml")
+	iden := loadCouleeTopics(t, "9161.yaml")
+	bryn := loadCouleeTopics(t, "9162.yaml")
 
 	cases := []struct {
-		name  string
-		df    *dialogue.DialogueFile
-		p     func() *linearPlayer
-		topic string
-		item  int
+		name         string
+		df           *dialogue.DialogueFile
+		p            func() *linearPlayer
+		supply, have string
+		item         int
 	}{
-		{"iden shot", iden, func() *linearPlayer { return playerOn(q50, "equip", "30-end") }, "shot", pouchOfShot},
-		{"iden sling", iden, func() *linearPlayer { return playerOn(q50, "equip", "30-end") }, "lost", slingItem},
-		{"bryn shot during 51", bryn, func() *linearPlayer { return playerOn(q51, "start", "50-end") }, "ammo", pouchOfShot},
-		{"bryn bolts during 52", bryn, func() *linearPlayer { return playerOn(q52, "start", "50-end", "51-end") }, "ammo", caseOfBolts},
+		{"iden shot", iden, func() *linearPlayer { return playerOn(q50, "equip", "30-end") }, "shot_supply", "shot_have", pouchOfShot},
+		{"iden sling", iden, func() *linearPlayer { return playerOn(q50, "equip", "30-end") }, "sling_recovery", "sling_have", slingItem},
+		{"bryn shot during 51", bryn, func() *linearPlayer { return playerOn(q51, "start", "50-end") }, "canyon_shot_supply", "canyon_shot_have", pouchOfShot},
+		{"bryn bolts during 52", bryn, func() *linearPlayer { return playerOn(q52, "start", "50-end", "51-end") }, "ammo_resupply", "ammo_have", caseOfBolts},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			n := newNpcTalker(c.df, c.p())
-			n.ask(c.topic)
-			require.Equal(t, []int{c.item}, n.given, "a player without one gets one")
-
-			_, _, fromTree, _ := n.ask(c.topic)
-			require.Equal(t, []int{c.item}, n.given, "a player who carries one must not get a second")
-			require.True(t, fromTree, "the already-have-one answer is a tree node with the same triggers")
+			checkHandout(t, newNpcTalker(c.df, c.p()), c.supply, c.have, c.item)
 		})
 	}
 }

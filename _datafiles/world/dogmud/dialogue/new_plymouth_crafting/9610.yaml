@@ -1,35 +1,24 @@
 mobid: 9610
 zone: New Plymouth Crafting
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    moods: ["neutral", "friendly"]
-    responses:
-      - "State your business. I am mid-working and I would
-        rather not lose the thread of it."
-      - "Ansel Rune. If you have chrysalis material worth
-        binding, I am the one to bring it to."
-
-  - keywords: ["enchant", "enchanting", "sigil", "circle", "chrysalis"]
-    responses:
-      - "The circle downstairs is chalked fresh before every
-        working. Bring me a shard or a core and I will tell you
-        what it can be made into."
-      - "Binding a sigil takes a steady hand and an empty room.
-        I keep both. Ask me specifically what you need done."
-
-  - keywords: ["wares", "stock", "sell", "buy", "shop"]
-    responses:
-      - "Shard, paste, catalyst, setting -- I keep a working
-        stock of each. Oak bark and black pearl come in by
-        caravan and I do not always have them, so ask before
-        you plan around them."
-
-  - keywords: [""]
-    responses:
-      - "I am working. Speak plainly if you need something."
-      - "The bench does not wait for conversation. What is it?"
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Ansel Rune. If you have Chrysalis material worth binding, this is the circle
+    to bind it in. I am mid-working, so state your business and I will try not to
+    lose the thread.
+  hints: Choose a line below if you would like to hear about the enchanting
+    circle, or about his materials. To see what he sells, type list.
+topics:
+- key: enchant
+  kind: info
+  label: Can I use your enchanting circle?
+  text: The circle is chalked fresh before every working. Binding a sigil takes a
+    steady hand and an empty room. I keep both, and you may use the circle if you
+    keep it clean. Bring a shard or a core and a setting, and see what you can
+    make.
+  hints: To see what you know how to make, type craft list.
+- key: wares
+  kind: info
+  label: What materials do you sell?
+  text: Shard, paste, catalyst, setting. I keep a working stock of each. Oak bark
+    and black pearl come in by caravan and I do not always have them, so check
+    before you plan around them.

@@ -6673,68 +6673,6 @@ func TestParseZoneRoom(t *testing.T) {
 	})
 }
 
-// ─── buildPlayerCondition ───────────────────────────────────────────────────
-
-func TestBuildPlayerCondition(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-
-	user, _ := getTestUserAndRoom(t)
-
-	t.Run("healthy", func(t *testing.T) {
-		user.Character.Health = 100
-		result := buildPlayerCondition(user)
-		assert.Contains(t, result, "healthy")
-	})
-
-	t.Run("lightly_wounded", func(t *testing.T) {
-		user.Character.Health = 70
-		result := buildPlayerCondition(user)
-		assert.Contains(t, result, "lightly wounded")
-	})
-
-	t.Run("seriously_wounded", func(t *testing.T) {
-		user.Character.Health = 40
-		result := buildPlayerCondition(user)
-		assert.Contains(t, result, "seriously wounded")
-	})
-
-	t.Run("near_death", func(t *testing.T) {
-		user.Character.Health = 10
-		result := buildPlayerCondition(user)
-		assert.Contains(t, result, "near death")
-	})
-
-	user.Character.Health = 100
-}
-
-// ─── buildTutorialContext ───────────────────────────────────────────────────
-
-func TestBuildTutorialContext(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-
-	user, _ := getTestUserAndRoom(t)
-
-	t.Run("no_quest", func(t *testing.T) {
-		result := buildTutorialContext(user)
-		assert.Contains(t, result, "not started")
-	})
-}
-
-// ─── buildQuestContext ──────────────────────────────────────────────────────
-
-func TestBuildQuestContext(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-
-	user, _ := getTestUserAndRoom(t)
-
-	result := buildQuestContext(user, 100)
-	// No quest progress, should return nil
-	assert.Nil(t, result)
-}
-
 // ─── applyStatDecay / applySkillRust ─────────────────────────────────────────
 //
 // These functions moved to internal/hooks/Death_PlayerCleanup.go as

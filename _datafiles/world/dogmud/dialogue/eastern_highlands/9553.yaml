@@ -1,0 +1,62 @@
+mobid: 9553
+zone: Eastern Highlands
+defaultMood: neutral
+# Behavior-only mob (behaviors/eastern_highlands/9553-the_threshold_keeper.yaml).
+# Her two greeting branches became the opener and its 77-end variant; the
+# way and crash branches became info topics. open_crash is a behavior topic
+# (R12, R14): Task 17 gives it a tree branch with open_instance_portal,
+# zone: crash and the guidance: text drafted as a comment in that behavior
+# file. Choosing it closes the menu (R18) and asks "How much gold will you
+# stake?". It is gated on carrying the woken disc (40168), as the tree's
+# player_has_item check was; crash answers a player without it.
+opener:
+  text: I keep the threshold. Others come to look at the door and go home. You have
+    the look of one who means to go in. I can open the way as deep as your coin
+    buys, but not without the key.
+  hints: Choose a line below if you would like to hear about the way through the
+    door.
+  variants:
+  - questRequired:
+    - 77-end
+    text: You went in. And you came back out. Most do, in body. Fewer come back with
+      their face changed like yours. I keep the threshold. I do not go through it, and
+      now I think I never will. I watched a hundred of you go down into it certain,
+      and climb back up quiet. I never asked what you found. I do not ask you either.
+      But mind the road home, and mind your mouth on it. The door I keep is not the
+      only threshold you cross now.
+    hints: Choose a line below to hear about the way through the door. If you
+      carry the woken disc, choose below to have her open it.
+  - carriesItem: 40168
+    text: You carry it. The woken disc. I can feel it from here, warm along its
+      lines. Then the door will answer, and I can open the way as deep as your coin
+      buys.
+    hints: Choose below to have the keeper open the way. For more on staking gold
+      for a dangerous place, type help instances.
+topics:
+- key: way
+  kind: info
+  label: How do I get through the door?
+  text: The door answers the disc. The woken one, warm along its lines. No disc, no
+    way in. It was made, and lost, and found again by someone. With the key in hand,
+    tell me how deep to open. The more you spend, the more of the deep wards I rouse,
+    and the more the place has kept for those who reach it. No one goes in alone
+    and comes out. Bring others. Inside, there is no calling yourself home by
+    magic. If you fall in there, you may come back in while the way stays open.
+  hints: Only the people in your party when the way opens can follow you in. To form
+    a party first, type help party.
+  marked: true
+- key: open_crash
+  kind: info
+  label: Open the way into the buried thing.
+  text: Into the buried thing, then.
+  behavior: true
+  carriesItem: 40168
+- key: crash
+  kind: info
+  label: Will you open the way for me?
+  text: Not without the key. The woken disc, or nothing. Bring it, and we will talk
+    of how deep.
+  hints: If you woke a disc before and lost it, a grey disc still lies in the
+    cracked floor of the old Reliquary at Pothole Coulee, and the hearth in Ashwick
+    where you woke the first will wake it.
+  itemExcluded: 40168

@@ -497,6 +497,13 @@ func (u *UserRecord) lifeEpoch() uint64 {
 // rooms.SendText for channel semantics. CategoryDefault keeps prose
 // uncolored.
 func (u *UserRecord) SendText(cat messaging.Category, txt string) {
+	u.sendTextAt(cat, txt, 0)
+}
+
+// sendTextAt is SendText queued at an event priority: a higher number is
+// delivered after every lower-numbered line in flight, including lines
+// queued later in the same event pass.
+func (u *UserRecord) sendTextAt(cat messaging.Category, txt string, priority int) {
 	rendered := messaging.RenderForRecipient(messaging.RenderInput{
 		Category:  cat,
 		Text:      txt,
@@ -509,7 +516,7 @@ func (u *UserRecord) SendText(cat messaging.Category, txt string) {
 	events.AddToQueue(events.Message{
 		UserId: u.UserId,
 		Text:   rendered + "\n",
-	})
+	}, priority)
 }
 
 // SendBlankLine delivers exactly one empty line to this user (#610). It is
@@ -787,6 +794,10 @@ func (u *UserRecord) ConnectionId() uint64 {
 	return u.connectionId
 }
 
+// PromptDrawnTempKey is the temp-data key holding the last pending question
+// the prompt redraw drew; the redraw skips a question that matches it.
+const PromptDrawnTempKey = `cmdprompt`
+
 // Prompt related functionality
 func (u *UserRecord) StartPrompt(command string, rest string) (*prompt.Prompt, bool) {
 
@@ -811,6 +822,11 @@ func (u *UserRecord) StartPrompt(command string, rest string) (*prompt.Prompt, b
 	u.activeMenu = nil
 	u.activePrompt = prompt.New(command, rest)
 	u.activePrompt.OpenedUnder = openedUnder
+	// A new prompt's question has not been drawn yet, even when it reads the
+	// same as the last one drawn (a second stake at Sable). Forget that draw
+	// so the redraw after the command's own lines puts the question last on
+	// screen instead of deduping it away (#375 R14).
+	delete(u.tempDataStore, PromptDrawnTempKey)
 	p := u.activePrompt
 	u.signalMenuStateLocked(wasOpen)
 	u.sessionMu.Unlock()

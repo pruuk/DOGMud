@@ -92,6 +92,9 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   Nobody arrives seated: `MoveToRoom` (every player move) and `AddMob` (every
   mob room entry) call `Character.StandForMove`, which stands a sitter
   silently, so every move path, present or future, is covered there.
+  `RemoveMob` (every way a mob leaves a room: a move, a despawn, a death)
+  calls `users.(*UserRecord).CloseMenuWithMob` for each player in the room,
+  so a talk menu with that NPC closes at once (#375 phase 1 playtest).
   The "Also here" listing (`roomdetails.go`) reads the same
   `Perceives` rule, with no pet requirement, and then the viewer's
   `messaging.ParticipantSight` in the room (lighting plan 5c): at shapes every
@@ -148,6 +151,12 @@ The `internal/rooms` package is the core world management system for GoMud, hand
 - **Environmental context**: Day/night cycles, lighting, biome effects
 - **User-specific views**: Personalized room information based on character state
 - **Room alerts**: Special notifications for banks, training, storage, etc.
+- **NPC talk marker** (`npcmarker.go`): `rooms.NpcMarker func(viewerUserId int,
+  mob *mobs.Mob) string` is a hook installed at boot (`wireConversationHooks`
+  in the root package, and by `internal/conversation`'s init). `GetDetails`
+  prefixes a mob's name with the result (`FormattedName.Marker`), only when the
+  viewer's `ParticipantSight` is `SightFull`; at Shapes or None the roster is
+  figures or empty. It replaced the unused `Mob.QuestFlags` star (#375 R9).
 - **Description modifiers**: `descriptionWithModifiers` applies each active
   mutator's prepend, append or replace text BEFORE the wrap, and
   `wrapDescriptionParts` wraps each part as plain text, highlights nouns,
@@ -159,6 +168,20 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   (which leaves existing tags alone) and before the minimap joins the line,
   so nouns stay highlighted under a recolour (wildfire), inside a coloured
   modifier, and never rewrite a map tag's attribute (#455).
+- **Noun lookup**: `FindNoun` resolves what a player typed to a noun key
+  and description: exact key, data alias (`board: ":floorboard"`), a word
+  of a multi-word name, singular/plural spellings; it is lenient for `look`
+  and settles for any one word it recognises. `NounNamedBy` returns the key
+  only when every typed word is a word of one of that noun's names, so a
+  sentence that mentions a noun names nothing. Quest triggers match on it
+  (`questengine.EventDetails.RoomNoun`), so a quest written with the room's
+  noun key accepts every name the room accepts.
+  A hyphen matches a space on both sides (`util.NounHyphenFold`): the room
+  text may show `nave-lamps` for the key `nave lamps`, and `look nave-lamps`
+  finds it; a key typed exactly as authored (`bench-vise`) is taken as is
+  first. `FindNoun` folds the keys and alias targets (`foldedNouns`), runs
+  the lookup (`findNounIn`) and maps the result back to the authored key;
+  `NounNamedBy` and `FindHiddenNoun` fold the same way.
 
 ### Biome System (`biomes.go`)
 - **BiomeInfo**: Environmental definitions affecting room behavior
@@ -640,6 +663,7 @@ When writing hidden noun descriptions:
 | `save_and_load.go` | Room YAML + instance-save persistence, `restoreSkipTaggedFields` |
 | `prose_wrap.go` | Re-folds long prose into wrapped `>` block scalars on template save |
 | `roomdetails.go` | Assembled per-look detail payload |
+| `npcmarker.go` | The `NpcMarker` hook: the viewer's talk marker before an NPC's name (#375) |
 | `zoneconfig.go` | Per-zone `zone-config.yaml` (including `non_cartesian` and the `instance_gold` opt-in) |
 | `zone_lifecycle.go` | Zone create/delete lifecycle |
 | `zone_rename.go` | Zone renaming and the reference rewrites it implies |

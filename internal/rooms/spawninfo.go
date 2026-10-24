@@ -26,7 +26,6 @@ type SpawnInfo struct {
 	MaxWander    int      `yaml:"maxwander,omitempty" json:"maxWander,omitempty"`            // (optional) if set, will override the mob's max wander distance
 	IdleCommands []string `yaml:"idlecommands,omitempty" json:"idleCommands,omitempty"`      // (optional) list of commands to override the default of the mob. Useful when you need a mob to be more unique.
 	ScriptTag    string   `yaml:"scripttag,omitempty" json:"scriptTag,omitempty"`            // (optional) if set, will override the mob's script tag
-	QuestFlags   []string `yaml:"questflags,omitempty,flow" json:"questFlags,omitempty"`     // (optional) list of quest flags to set on the mob
 	ConditionIds []int    `yaml:"conditionids,omitempty,flow" json:"conditionIds,omitempty"` // (optional) list of conditions the mob always has active
 	StatPool     int      `yaml:"statpool,omitempty" json:"statPool,omitempty"`              // (optional) force this mob to a specific stat pool
 	StatPoolMod  int      `yaml:"statpoolmod,omitempty" json:"statPoolMod,omitempty"`        // (optional) modify this mob's stat pool by this amount

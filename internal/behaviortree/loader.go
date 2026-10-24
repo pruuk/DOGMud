@@ -270,11 +270,25 @@ func compileAction(def NodeDef, path string) (Node, error) {
 	if err := checkNodeSubject(path, "action", def.Do); err != nil {
 		return nil, err
 	}
+	params := cleanParams(def)
+	if check := actionParamChecks[def.Do]; check != nil {
+		if err := check(params); err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+	}
 	return &ActionNode{
 		Name:   def.Do,
-		Params: cleanParams(def),
+		Params: params,
 		Fn:     fn,
 	}, nil
+}
+
+// actionParamChecks refuse, at load, an action node whose params could
+// never let it act. Every tree loader compiles through compileAction, so a
+// refused node fails the whole tree's load (and the editor's save).
+var actionParamChecks = map[string]func(params map[string]any) error{
+	"board_ferry":          checkBoardFerryParams,
+	"open_instance_portal": checkOpenInstancePortalParams,
 }
 
 func compileDecorator(def NodeDef, path string) (Node, error) {

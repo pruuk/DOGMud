@@ -77,8 +77,8 @@ steps:
     description: >-
       The salve went to work, warm and steady. Tell Birna how it felt.
     hint: >-
-      Go back to Herbalist Birna at the Sheltered Pool and type ask birna
-      done.
+      Go back to Herbalist Birna at the Sheltered Pool and type talk
+      birna.
   - id: end
     description: >-
       Birna has named you brewer enough to leave the pool. The marsh
@@ -175,5 +175,5 @@ triggers:
       - grant: "38-drink"
       - actor: >-
           The salve spreads warm through you, a slow steady mending.
-          That is what a brew is for. Go back to Birna and type ask birna
-          done.
+          That is what a brew is for. Go back to Birna and type talk
+          birna.

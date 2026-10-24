@@ -1,100 +1,71 @@
 mobid: 9379
 zone: New Plymouth Old Quarter
 defaultMood: cautious
-
 greetings:
-  - text: "You found the address. Whatever you came to close is already
-      closed — but ask what you came to ask."
-    moods: ["cautious", "neutral"]
-  - text: "Still here. Still watched. The question you carried all this
-      way deserves to be asked."
-    moods: ["friendly"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Ask what you came to ask."
-      - "I expected someone would come eventually."
-
-  - keywords: [""]
-    responses:
-      - "I have nowhere left to be cautious about. Speak."
-      - "Say it plainly."
-
-tree:
-  root:
-    text: "I have been at this address long enough that my name is on
-      a list somewhere — it has been there for some time. The watch
-      knows where I live. If you came here for a confession, I have
-      nothing to say to you that is not already known to people with
-      the authority to hear it. But ask what you came to ask."
-    hints: "You could ask Deren about the Bloom and the arrangement
-      that ran from this address, about Marn — the Docks contact —
-      or about the captive and the key."
-
-  nodes:
-    - id: bloom_source
-      triggers: ["bloom", "operation", "source", "215", "trade",
-                 "confront", "evidence", "case", "know", "caught",
-                 "over", "done", "arrest", "face", "quest", "task"]
-      questRequired: ["67-delivery"]
-      questExcluded: ["67-source", "67-end"]
-      grantsQuest: "67-source"
-      text: "You have gotten this far. I will concede that much. What
-        you cannot do from here is close it. The bloodline's domestic
-        office has been aware of this address for some time -- they are
-        also aware of the value of what ran through it, and they hold
-        an opinion about interruptions. You have a case that goes
-        nowhere without a witness who has seen what moved through that
-        door and will say so in a venue that matters. I am not that
-        witness. Good luck finding one."
-      hints: "Deren is exposed but untouchable -- the bloodline office
-        stands between him and any consequence you could bring. He named
-        what you need: a witness who has seen what moved through the iron
-        door and will testify. The lamplighter walks this canal every
-        day. You could find him and ask."
-      moodChange: neutral
-
-    - id: operation
-      triggers: ["bloom", "operation", "arrangement", "trade",
-                 "product", "address", "lintel", "distribution",
-                 "supply", "here", "what", "doing", "run", "running"]
-      text: "There was a supply arrangement that moved through this
-        address. I managed the distribution end — the quantities, the
-        timing, the contacts. I did not need to know more than my
-        part, and I did not know more than my part. That arrangement
-        no longer operates from here. Whatever questions remain are
-        for people with the authority to press them — and none of
-        those people are you."
-      hints: "He told you something and nothing in the same sentence.
-        You could ask about Marn — the Docks contact — or about the
-        captive and the key."
-
-    - id: marn
-      triggers: ["marn", "docks", "contact", "draper", "cloth",
-                 "shop", "upstream", "other", "who", "partner"]
-      text: "The Docks end is a man named Marn. He keeps a cloth
-        shop on the docks — clean front, well maintained, nothing
-        that draws attention. He and I did not meet in person. You
-        will understand why. Whether he continues to operate now
-        that this end has gone quiet, I would not know — that is
-        his calculation to make, not mine."
-      hints: "He named the contact and said what he knows about him
-        plainly. You could ask about the captive, or about the
-        arrangement that ran from this address."
-
-    - id: captive
-      triggers: ["captive", "key", "prisoner", "held", "locked",
-                 "hostage", "surrendered", "person", "they",
-                 "someone", "kept"]
-      text: "That situation is resolved. I held a key — to an
-        arrangement that required one party to remain in place. That
-        party has since departed. The key was surrendered to the
-        appropriate people. I did not make decisions about them
-        personally — I managed the logistics of a circumstance
-        someone else created and someone else closed. It is a closed
-        account. I record it as such."
-      hints: "He described the captive like a ledger entry with no
-        outstanding balance. There is nothing more he will give you
-        on this."
-      moodChange: cautious
+- text: You found the address. Whatever you came to close is already closed. But ask
+    what you came to ask.
+  moods:
+  - cautious
+  - neutral
+- text: Still here. Still watched. The question you carried all this way deserves to
+    be asked.
+  moods:
+  - friendly
+opener:
+  text: I have been at this address long enough that my name is on a list somewhere.
+    It has been there for some time. The watch knows where I live. If you came here
+    for a confession, I have nothing to say to you that is not already known to
+    people with the authority to hear it. But ask what you came to ask.
+  hints: Choose a line below if you would like to hear about the arrangement
+    that ran from this address, about Marn, his contact on the docks, or about
+    the captive and the key.
+topics:
+- key: bloom_source
+  kind: info
+  label: I know the Bloom trade runs through this house.
+  text: You have got this far. I will grant that much. What you cannot do from here
+    is close it. The bloodline's domestic office has known about this address for
+    some time. They also know the value of what ran through it, and they hold an
+    opinion about interruptions. You have a case that goes nowhere without a witness
+    who has seen what moved through that door and will say so where it matters. I am
+    not that witness. Good luck finding one.
+  hints: Deren is exposed but out of reach. The bloodline's office stands between him
+    and anything you could bring. He named what you need, a witness who saw what
+    moved through the iron door. The lamplighter Quill walks this canal by night.
+    Type talk quill.
+  marked: true
+  questRequired:
+  - 67-delivery
+  questExcluded:
+  - 67-source
+  - 67-end
+  grantsQuest: 67-source
+  moodChange: neutral
+- key: operation
+  kind: info
+  label: What arrangement ran from this address?
+  text: There was a supply arrangement that moved through this address. I managed
+    the handing out. The quantities, the timing, the contacts. I did not need to know
+    more than my part, and I did not know more than my part. That arrangement no
+    longer runs from here. Whatever questions remain are for people with the
+    authority to press them, and none of those people are you.
+  hints: He told you something and nothing in the same breath.
+- key: marn
+  kind: info
+  label: Who was your contact on the docks?
+  text: The docks end is a man named Marn. He keeps a cloth shop on the docks. Clean
+    front, well kept, nothing that draws attention. He and I never met in person. You
+    will understand why. Whether he carries on now that this end has gone quiet, I
+    would not know. That is his calculation to make, not mine.
+  hints: He named the contact and said plainly what he knows of him.
+- key: captive
+  kind: info
+  label: What happened to the captive?
+  text: That situation is resolved. I held a key to an arrangement that needed one
+    party to stay in place. That party has since left. The key went to the proper
+    people. I did not make decisions about them personally. I managed the details of
+    a situation someone else created and someone else closed. It is a closed account.
+    I record it as such.
+  hints: He described the captive like a ledger entry with nothing left owing. There
+    is nothing more he will give you on this.
+  moodChange: cautious

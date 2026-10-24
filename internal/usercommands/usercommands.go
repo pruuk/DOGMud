@@ -258,6 +258,9 @@ var (
 		// Special command only used upon creating a new account
 		`start`:     {Start, false, true, false},
 		`zombieact`: {ZombieAct, false, true, false},
+		// `portalstake` (hidden, #375 R14) registers in portalstake.go's
+		// init: its handler reads this map, which a literal entry here
+		// would make an initialization cycle.
 	}
 
 	selfKeywords = []string{
@@ -380,10 +383,11 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 			if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
 				bridge := questengine.NewGameBridge(user, room.RoomId)
 				result := questengine.GetEngine().Notify("room_interact", questengine.EventDetails{
-					UserId: user.UserId,
-					RoomId: room.RoomId,
-					Verb:   alias,
-					Noun:   strings.ToLower(rest),
+					UserId:   user.UserId,
+					RoomId:   room.RoomId,
+					Verb:     alias,
+					Noun:     strings.ToLower(rest),
+					RoomNoun: room.NounNamedBy(rest),
 				}, bridge, bridge)
 				if result.Handled {
 					return true, nil
@@ -534,10 +538,11 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 				matchRoom, _ := rooms.OriginalRoomId(room.RoomId)
 				bridge := questengine.NewGameBridge(user, room.RoomId)
 				questengine.GetEngine().Notify("command_issued", questengine.EventDetails{
-					UserId:  user.UserId,
-					RoomId:  matchRoom,
-					Command: cmd,
-					Noun:    strings.ToLower(rest),
+					UserId:   user.UserId,
+					RoomId:   matchRoom,
+					Command:  cmd,
+					Noun:     strings.ToLower(rest),
+					RoomNoun: room.NounNamedBy(rest),
 				}, bridge, bridge)
 			}
 			return handled, err
@@ -545,12 +550,11 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 		}
 	}
 
-	if _, ok := actions.EmoteAliases[cmd]; ok {
+	switch fallbackRoute(user, room, cmd) {
+	case routeEmote:
 		handled, err := Emote(cmd, user, room, flags)
 		return handled, err
-	}
-
-	if spellId := spells.ResolveSpellId(cmd); spellId != "" && user.Character.HasSpell(spellId) {
+	case routeSpell:
 		castCmd := cmd
 		if len(rest) > 0 {
 			castCmd += ` ` + rest
@@ -570,6 +574,67 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 	// end "go" attempt
 
 	return false, nil
+}
+
+// commandRoute is the branch TryCommand takes for a command that is not a
+// registered command the player may run.
+type commandRoute int
+
+const (
+	routeUnknown commandRoute = iota // "not recognized"
+	routeEmote                       // an emote alias ("smile")
+	routeSpell                       // a known spell typed by name
+	routeGo                          // an exit or a compass direction (the "go" attempt)
+)
+
+// fallbackRoute names TryCommand's branch after the registry, in its order:
+// emote, spell, then the go attempt. TryCommand dispatches on it and
+// isKnownCommandLine reads it, so the two cannot drift.
+func fallbackRoute(user *users.UserRecord, room *rooms.Room, cmd string) commandRoute {
+	if _, ok := actions.EmoteAliases[cmd]; ok {
+		return routeEmote
+	}
+	if spellId := spells.ResolveSpellId(cmd); spellId != "" && user.Character.HasSpell(spellId) {
+		return routeSpell
+	}
+	if (room != nil && actions.FindExit(room, cmd).Found) || actions.IsCompassDirection(cmd) {
+		return routeGo
+	}
+	return routeUnknown
+}
+
+// isKnownCommandLine reports whether TryCommand would run line as typed:
+// split as the input loop splits it (SplitInput), aliases expanded, then a
+// registered command the player may run, an emote, a known spell, an exit
+// or a compass direction. Room-tree and quest intercepts are not counted.
+func isKnownCommandLine(user *users.UserRecord, room *rooms.Room, line string) bool {
+	verb, rest := SplitInput(strings.TrimSpace(line))
+	if verb == `` {
+		return false
+	}
+	cmd, _ := actions.ExpandAliases(verb, rest, user.TryCommandAlias)
+	if info, ok := userCommands[cmd]; ok && cmd != behaviortree.PortalStakeCommand {
+		if !info.AdminOnly || user.HasRolePermission(cmd, true) {
+			return true
+		}
+	}
+	return fallbackRoute(user, room, cmd) != routeUnknown
+}
+
+// SplitInput splits a typed line into its command and the rest, as the
+// input loop does: the say and broadcast shortcuts ('.hello', '`hello')
+// take a space after the mark, and a command followed by a space is
+// lowercased (TryCommand lowercases through alias expansion either way).
+func SplitInput(inputText string) (command string, rest string) {
+	if len(inputText) > 1 {
+		if inputText[0] == '`' || inputText[0] == '.' {
+			inputText = fmt.Sprintf(`%s %s`, string(inputText[0]), inputText[1:])
+		}
+	}
+	if index := strings.Index(inputText, " "); index != -1 {
+		return strings.ToLower(inputText[0:index]), inputText[index+1:]
+	}
+	return inputText, ``
 }
 
 // GetAllUserCommands returns the names of all registered user commands.

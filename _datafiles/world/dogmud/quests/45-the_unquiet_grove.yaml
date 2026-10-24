@@ -38,8 +38,8 @@ steps:
       attack on sight. Loose a spell at one with the fight on you. A hit can
       break the casting, so push through it.
     hint: >-
-      If it is dark, type cast chrysalis-glow first. Go west to the Veil
-      Hollow and type cast conviction-spike revenant.
+      If it is dark, type cast glow first. Go west to the Veil Hollow and
+      type cast spike revenant.
   - id: cast
     map_target: 5311
     description: >-
@@ -47,14 +47,14 @@ steps:
       the creature down. A drift-wisp in the Thinning Wood serves as well as
       the revenant.
     hint: >-
-      Keep casting until it falls. Type cast conviction-spike again.
+      Keep casting until it falls. Type cast spike again.
   - id: kill
     map_target: 5309  # Whispering Grove, Orrin
     description: >-
       You cast with a fight on you and put down a veil-warped creature.
       Report to Keeper Orrin in the Whispering Grove.
     hint: >-
-      Go back to Keeper Orrin in the Whispering Grove and type ask orrin done.
+      Go back to Keeper Orrin in the Whispering Grove and type talk orrin.
   - id: end
     description: >-
       Orrin has named your concentration sound. West of the Grove Heart and up
@@ -92,7 +92,7 @@ triggers:
       - actor: >-
           You shape the fold with the fight pressing on you, and it holds.
           That is concentration. Now bring the creature down: type cast
-          conviction-spike again until it falls.
+          spike again until it falls.
   - event: command
     command: cast
     noun: conviction-spike
@@ -105,7 +105,7 @@ triggers:
       - actor: >-
           You shape the fold with the fight pressing on you, and it holds.
           That is concentration. Now bring the creature down: type cast
-          conviction-spike again until it falls.
+          spike again until it falls.
   - event: command
     command: cast
     noun: conviction-spike
@@ -118,7 +118,7 @@ triggers:
       - actor: >-
           You shape the fold with the fight pressing on you, and it holds.
           That is concentration. Now bring the creature down: type cast
-          conviction-spike again until it falls.
+          spike again until it falls.
 
   # ── KILL: defeat a veil-warped grove foe after the cast ─────────────────
   - event: mob_death
@@ -131,7 +131,7 @@ triggers:
       - actor: >-
           The drift-wisp comes apart into the motes it was made of and does
           not gather again. Go back to Keeper Orrin in the Whispering Grove
-          and type ask orrin done.
+          and type talk orrin.
   - event: mob_death
     mob: 9148
     conditions:
@@ -141,4 +141,4 @@ triggers:
       - grant: "45-kill"
       - actor: >-
           The grove revenant folds down and is still. Go back to Keeper Orrin
-          in the Whispering Grove and type ask orrin done.
+          in the Whispering Grove and type talk orrin.

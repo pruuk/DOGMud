@@ -53,7 +53,7 @@ func triggersCanShareAnEvent(a, b *TriggerDef) bool {
 		}
 	}
 	strs := [][2]string{
-		{a.Skill, b.Skill}, {a.Command, b.Command}, {a.Topic, b.Topic},
+		{a.Skill, b.Skill}, {a.Command, b.Command},
 		{a.QuestToken, b.QuestToken}, {a.Noun, b.Noun}, {a.Verb, b.Verb},
 	}
 	for _, p := range strs {

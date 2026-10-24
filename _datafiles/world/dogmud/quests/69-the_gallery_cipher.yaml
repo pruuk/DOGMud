@@ -2,7 +2,7 @@ questid: 69
 name: The Gallery Cipher
 description: >-
   Scholar Dross can prove the Grand Temple's eastern inscription predates
-  the city's official founding -- if he can read the cipher hidden in the
+  the city's official founding, if he can read the cipher hidden in the
   processional reliefs. The key is in the Noble Quarter gallery, behind a
   guide who steers visitors away from it.
 secret: false
@@ -14,8 +14,9 @@ steps:
       Dross needs a rubbing of the hand-position cipher worked into the
       processional relief figures in the Grand Temple nave.
     hint: >-
-      In the Grand Temple sanctuary, examine the processional reliefs to
-      take a rubbing, then bring it to Dross in the temple courtyard.
+      The processional reliefs run along the north wall of the Grand
+      Temple Sanctuary. From the Temple Courtyard, go south twice into the
+      Sanctuary. Type look reliefs.
   - id: rubbing
     map_target: 5916  # fallback when Scholar Dross is not spawned
     map_target_mob: 9360  # follow Scholar Dross (schedule np_temple_dross) — a fixed room is wrong for part of the day
@@ -23,18 +24,26 @@ steps:
       You took the cipher rubbing from the reliefs. Dross can read part of
       it, but the key to the full sequence is in the Noble Quarter gallery.
     hint: >-
-      Take the rubbing to Dross, then go to the Noble Quarter art gallery
-      and find the key to the cipher.
+      Take the rubbing to Scholar Dross. From the Sanctuary, go north twice
+      to the Temple Courtyard, where he argues with the wall by day. In the
+      early morning and the evening he reads in the Archive Reading Room,
+      east of the courtyard, and he sleeps at night. Type talk dross.
   - id: gallery
     map_target: 6007  # fallback when Keeper Lysha is not spawned
     map_target_mob: 9371  # follow Keeper Lysha (schedule np_noble_lysha) — a fixed room is wrong for part of the day
     description: >-
       Dross sent you to the gallery. The guide, Ferrol, steers visitors to
-      the bloodline portraits and away from the older paintings -- and away
+      the bloodline portraits and away from the older paintings, and away
       from the keeper.
     hint: >-
-      In the gallery, get past Ferrol's tour to Keeper Lysha. Ask her about
-      the third panel from the left.
+      Keeper Lysha keeps the Art Gallery in the Noble Quarter. From the
+      Temple Courtyard, go south twice into the Sanctuary, then west six
+      times to the Gilded Walk. Go north into the Gilt Threshold, west twice
+      to the Processional, North End, then north four times to the Palace
+      Processional. Go west into the Administrative Office, then north into
+      the Art Gallery. Lysha keeps the hall in the morning and evening,
+      works upstairs in the afternoon, and sleeps upstairs at night. Type
+      talk lysha.
   - id: reading
     map_target: 5916  # fallback when Scholar Dross is not spawned
     map_target_mob: 9360  # follow Scholar Dross (schedule np_temple_dross) — a fixed room is wrong for part of the day
@@ -43,7 +52,12 @@ steps:
       eight-pointed structure stands at a site inland of the present docks.
       She gave you her annotated reading.
     hint: >-
-      Bring Lysha's annotated reading back to Scholar Dross at the Temple.
+      Bring Lysha's reading back to Scholar Dross. From the Art Gallery, go
+      south, east, then south four times to the Processional, North End. Go
+      east twice to the Gilt Threshold, south to the Gilded Walk, then east
+      six times to the Grand Temple Sanctuary. Go north twice to the Temple
+      Courtyard. In the early morning and the evening Dross reads in the
+      Archive Reading Room, east of the courtyard. Type talk dross.
   - id: end
     description: >-
       Dross has his proof: the founding the city celebrates is not the
@@ -58,7 +72,7 @@ rewards:
   actor: >-
     Dross lays the rubbing and the reading side by side and goes very
     quiet, which for him is remarkable. "It holds," he says. "Every line of
-    it holds." He has a proof now that no honest examiner could dismiss --
+    it holds." He has a proof now that no honest examiner could dismiss,
     and he is, you both understand, a man no one with power has ever been
     obliged to honestly examine. Still. It is known now, and you are one of
     the few who know it.
@@ -67,9 +81,12 @@ rewards:
     cannot be un-read.
 
 triggers:
+  # The noun is the room's own key (`processional reliefs`), so `look
+  # reliefs` and `look relief` reach it too. It was `processional-reliefs`,
+  # which only a player who typed the hyphen could reach.
   - event: room_interact
     room: 5901
-    noun: processional-reliefs
+    noun: processional reliefs
     conditions:
       has: ["69-start"]
       missing: ["69-rubbing"]
@@ -78,7 +95,7 @@ triggers:
       - give_item: 40115
       - actor: >-
           You press paper to the processional relief and work charcoal
-          across it. The figures come up under your hand -- and the longer
+          across it. The figures come up under your hand, and the longer
           you look, the less devotional they seem. Each hand is positioned
           too precisely to be art. Read along the row, they are a sequence:
           a number, set into stone by someone who wanted it kept where it
@@ -87,51 +104,30 @@ triggers:
 
   - event: room_interact
     room: 5901
-    noun: processional-reliefs
+    noun: processional reliefs
     conditions:
       missing: ["69-start"]
     actions:
       - actor: >-
-          The processional figures are very old -- older, somehow, than the
+          The processional figures are very old, older somehow than the
           plaque that names them. Their hands are oddly placed. Without a
           reason to study them you move on.
 
-  # ── GIVE THE RUBBING TO DROSS ────────────────────────────
-  # Alternate path to the q69_gallery dialogue node ("ask dross
-  # rubbing"). The quest log says "Take the rubbing to Dross", so a
-  # player who physically hands it over must advance too. The rubbing
-  # is needed later (Lysha reads it; Dross lays it beside the reading
-  # at the end), so we consume the given copy and hand back a clean
-  # one — same pattern as quest 35 (give.go's consume branch returns
-  # before the generic "hands it back" emote, so it reads cleanly).
-  - event: item_give
-    mob: 9360
-    item: 40115
+  # Lost rubbing (appended 2026-10-21, #375 batch 5): Dross and Lysha both
+  # need to see the rubbing (carriesItem), so a player who lost it takes
+  # another while the quest is open. Trigger 0 gives the first copy and so
+  # blocks this one in the same command (missing_item).
+  - event: room_interact
+    room: 5901
+    noun: processional reliefs
     conditions:
       has: ["69-rubbing"]
-      missing: ["69-gallery"]
-    actions:
-      - actor: >-
-          Dross takes the rubbing and unrolls it across his knee,
-          tracing the figures' hands. "Yes -- yes, this is the
-          sequence." He rolls it carefully and hands it back. "Keep
-          it. You will need it where I am sending you."
-      - consume_item: 40115
-      - give_item: 40115
-      - grant: "69-gallery"
-
-  - event: item_give
-    mob: 9360
-    item: 40116
-    conditions:
-      has: ["69-reading"]
       missing: ["69-end"]
+      missing_item: 40115
     actions:
-      - bump_rep: {faction: cooperage_circle, delta: 5}
-      - npc_say:
-          mob: 9360
-          lines:
-            - {delay: 1, text: "You reached her. You actually reached her."}
-            - {delay: 4, text: "The third panel -- painted from observation, of a structure that stands inland of the docks, exactly where the cipher's geometry points. The rubbing and the panel agree. The same hand, or the same workshop, and they agree."}
-            - {delay: 8, text: "Then it is settled, as far as evidence settles anything. The inscription predates the founding. The founding date is wrong. And everything the bloodline holds in law derives from a date that is wrong. You should know what you have helped prove. And be careful who you prove it to."}
-      - grant: "69-end"
+      - give_item: 40115
+      - actor: >-
+          You press a fresh sheet to the processional relief and work the
+          charcoal across it again. The hands come up in the same precise
+          row, the same counted sequence.
+      - observer: "{actor} takes a careful charcoal rubbing of the old processional reliefs."

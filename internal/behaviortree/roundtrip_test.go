@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -130,6 +131,40 @@ func TestRoundTrip_MarshalFixedPointEveryLiveBehaviorFile(t *testing.T) {
 		}
 		if len(d2.GoalWeights) != len(d1.GoalWeights) || len(d2.DefaultGoals) != len(d1.DefaultGoals) {
 			t.Errorf("%s: archetype extras lost in round-trip", f)
+		}
+	}
+}
+
+// Every live behavior file must compile through the loader its subject uses.
+// Trees load lazily (a mob's on first event), so a tree the loader refuses,
+// such as a board_ferry with no destination, would otherwise surface only as
+// a runtime log line and a mob that silently does nothing.
+func TestShippedBehaviorTrees_AllCompile(t *testing.T) {
+	chdirRepoRootForTest(t)
+
+	root := configs.GetFilePathsConfig().DataFiles.String() + `/behaviors`
+	var files []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err == nil && !info.IsDir() && filepath.Ext(path) == ".yaml" {
+			files = append(files, path)
+		}
+		return nil
+	})
+	if err != nil || len(files) < 70 {
+		t.Fatalf("expected the live behavior tree (~87 files), found %d under %s: %v", len(files), root, err)
+	}
+	for _, f := range files {
+		rel, _ := filepath.Rel(root, f)
+		switch strings.SplitN(filepath.ToSlash(rel), "/", 2)[0] {
+		case "archetypes":
+			_, _, _, err = LoadArchetypeYAMLFromFile(f)
+		case "items":
+			_, _, err = LoadItemTreeFromFile(f)
+		default:
+			_, err = LoadTreeFromFile(f)
+		}
+		if err != nil {
+			t.Errorf("%s does not load: %v", rel, err)
 		}
 	}
 }

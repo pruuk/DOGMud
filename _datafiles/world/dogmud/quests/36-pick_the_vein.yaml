@@ -45,10 +45,10 @@ steps:
       Ovell needs the slope cleared, starting with a scree scavenger.
       They crawl the Lower Talus just north of his cut, and the Scree
       Field and Upper Talus beyond it. If a fight turns against you,
-      flee: you wake at the Mending Hut, not in the rock.
+      flee. If you die, you wake at the Mending Hut, not in the rock.
     hint: >-
       Go north from the Collapsed Cut to the Lower Talus and type
-      attack scavenger. If it is dark, type cast chrysalis-glow first.
+      attack scavenger. If it is dark, type cast glow first.
   - id: scavenger
     map_target: 5252
     description: >-
@@ -74,18 +74,16 @@ steps:
       Report back to Ovell in the Collapsed Cut.
     hint: >-
       Go back to Survivor Ovell in the Collapsed Cut, east of the Ore
-      Pocket, and type ask ovell done.
+      Pocket, and type talk ovell.
   - id: end
     description: >-
       The slope is clear and you have worked the vein. Ovell
-      pressed a component pouch into your hands: your crafting
-      materials now route into it automatically. The mine below
-      still holds something he would not name.
+      pressed a component pouch into your hands. Once you wear
+      it, your crafting materials go into it on their own. The
+      mine below still holds something he would not name.
     hint: >-
-      You have cleared Spoke B of the forge path. Ovell mentioned
-      the mine below the slope is pitch dark and something waits
-      in it. Make sure you can cast chrysalis-glow before you
-      go down.
+      Ovell says the mine below the slope is pitch dark and
+      something waits in it. Before you go down, type cast glow.
 
 rewards:
   skillinfo: "blacksmithing:1"
@@ -98,7 +96,7 @@ rewards:
     light. "You cleared it. Worked the vein. I did not know if you
     would come back." He presses the component pouch into your hands
     and curls your fingers around the strap. "Materials go in on
-    their own once you carry it. Sort if you have loose ones already.
+    their own once you wear it. Sort if you have loose ones already.
     And if you ever want to break a piece of kit back down,
     salvage it. The slope gives back what you put into it, mostly."
 
@@ -142,7 +140,7 @@ triggers:
       - actor: >-
           You work the exposed vein for whatever it will give. The
           seam is open to anyone now. Go back to Ovell in the
-          Collapsed Cut and type ask ovell done.
+          Collapsed Cut and type talk ovell.
 
   # ── ORE: forage the basalt-iron vein (room 5252 — ore pocket) ───────
   - event: command
@@ -156,4 +154,4 @@ triggers:
       - actor: >-
           You pick through the rubble where the vein crosses the ore
           pocket. The seam is open to anyone now. Go back to Ovell,
-          just east of here, and type ask ovell done.
+          just east of here, and type talk ovell.

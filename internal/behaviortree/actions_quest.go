@@ -148,6 +148,27 @@ func actReturnItem(params map[string]any, ctx *EvalContext) Result {
 		return Failure
 	}
 
+	// The NPC's name is hidden at the player's sight (#454): a player who gave
+	// to a shape never learned it.
+	sight := messaging.SightFull
+	if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
+		sight = messaging.ParticipantSight(user.Character, room)
+	}
+
+	// A give hand-back: the item never left the player, so nothing moves and
+	// the line says it came back (give_handback.go).
+	if hb := ctx.Event.HandBack; hb != nil {
+		item, found := findHeldItem(user.Character, itemId, ctx.Event.ItemUUID)
+		if !found {
+			return Failure
+		}
+		user.SendText(messaging.CategoryMobEmote, messaging.HideNames(
+			fmt.Sprintf("%s hands back the %s.\n", ctx.MobName, item.Name()),
+			[]string{ctx.MobName}, sight))
+		hb.Returned = true
+		return Success
+	}
+
 	mob := mobs.GetInstance(ctx.InstanceId)
 	if mob == nil {
 		mudlog.Warn("actReturnItem", "msg", "mob instance not found",
@@ -174,12 +195,6 @@ func actReturnItem(params map[string]any, ctx *EvalContext) Result {
 		return Failure
 	}
 
-	// The NPC's name is hidden at the player's sight (#454): a player who gave
-	// to a shape never learned it.
-	sight := messaging.SightFull
-	if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
-		sight = messaging.ParticipantSight(user.Character, room)
-	}
 	user.SendText(messaging.CategoryMobEmote, messaging.HideNames(
 		fmt.Sprintf("%s hands back the %s.\n", ctx.MobName, item.Name()),
 		[]string{ctx.MobName}, sight))

@@ -1,46 +1,28 @@
 mobid: 9600
 zone: Hartcharn
 defaultMood: friendly
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Welcome to the weaving shed. Looking for cloth or thread?"
-      - "Harrow. Mind the shuttle, it swings wide sometimes."
-  - keywords: ["buy", "sell", "shop", "wares", "goods", "cloth", "wool",
-      "thread"]
-    responses:
-      - "Thread, needles, and a bit of beeswax for waxing the seams.
-        Have a look at what is on the shelf."
-      - "Wool comes off the hill flocks and I turn it into whatever the
-        town needs. Cloaks, satchels, the odd bandolier."
-  - keywords: ["loom", "weave", "weaving"]
-    responses:
-      - "This loom has been in the family longer than I have. Treadle
-        it wrong and it lets you know."
-  - keywords: [""]
-    responses:
-      - "Have a look around the shed."
-      - "The loom does not stop for chatter, but I am listening."
-
-tree:
-  root:
-    text: "Welcome to the weaving shed. Looking for cloth or thread?"
-    hints: "You could ask Bryd Harrow about her wares or the loom."
-
-  nodes:
-    - id: stock_general
-      triggers: ["buy", "sell", "shop", "wares", "goods", "cloth",
-        "wool", "thread", "stock"]
-      text: "Thread spools, bone needles, beeswax for the seams, and a
-        length of cloth when the loom is caught up. Ask specific and I
-        will tell you what is on hand."
-      hints: "You could ask Bryd Harrow about the loom."
-
-    - id: loom_note
-      triggers: ["loom", "weave", "weaving", "shuttle"]
-      text: "Feed the wool through even and let the treadle do the
-        work. Rush it and the weave comes out lumpy, same as bread."
-
-memory:
-  expiryPeriod: ""
+opener:
+  text: Mind the shuttle there, it swings wide when the loom gets going. I'm
+    Bryd Harrow. My mother wove in this shed before me, and I turn the hill wool
+    into cloth and thread the same as she did. Were you after either?
+  hints: Choose a line below to learn about her wares or the loom.
+topics:
+# stock_general folds the "buy sell shop" pattern (both responses). The
+# cloaks, satchels and bandoliers are her crafter recipes (crafter: true);
+# mobs/crafter.go puts each craft into her shop stock, hence "when the loom
+# is caught up".
+- key: stock_general
+  kind: info
+  label: What do you have for sale?
+  text: Thread spools, bone needles, and beeswax for waxing the seams. Wool comes
+    off the hill flocks and I turn it into whatever the town needs. Cloaks,
+    satchels, the odd bandolier, when the loom is caught up. Have a look at what is
+    on the shelf.
+  hints: To see what Bryd sells and for how much, type list.
+# loom folds loom_note and the "loom weave weaving" pattern.
+- key: loom
+  kind: info
+  label: How old is that loom?
+  text: This loom has been in the family longer than I have. Feed the wool through
+    even and let the treadle do the work. Rush it and the weave comes out lumpy, same
+    as bread. Treadle it wrong and it lets you know.

@@ -242,6 +242,10 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 	visibleFriendlyMobs := []string{}
 
+	// Read once: the talk marker below needs it, and so does the roster
+	// rewrite after the loop.
+	sight := messaging.ParticipantSight(user.Character, r)
+
 	// Count visible mob names for duplicate detection
 	mobNameCount := map[string]int{}
 	for _, mobInstanceId := range r.mobs {
@@ -291,11 +295,8 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 				mobName.DuplicateIndex = mobNameIndex[mob.Character.Name]
 			}
 
-			for _, qFlag := range mob.QuestFlags {
-				if user.Character.HasQuest(qFlag) || (len(qFlag) >= 5 && qFlag[len(qFlag)-5:] == `start`) {
-					mobName.QuestAlert = true
-					break
-				}
+			if NpcMarker != nil && sight == messaging.SightFull {
+				mobName.Marker = NpcMarker(user.UserId, mob)
 			}
 
 			// Build the mob name string once, then optionally decorate.
@@ -333,7 +334,6 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	// that color alone would sort them. The count stays. None: nobody is
 	// listed. look refuses before it gets here, but who and peering into
 	// the next room do not.
-	sight := messaging.ParticipantSight(user.Character, r)
 	switch sight {
 	case messaging.SightShapes:
 		figures := make([]string, 0, len(details.VisiblePlayers)+len(details.VisibleMobs))

@@ -1,87 +1,52 @@
 # The Threshold-Keeper — mob 9553 — opens the way into the buried thing.
 # Modeled on Sable (315). Gates the portal on the Attuned Disc (40168);
 # gold sets the tier. The disc is NOT consumed (a reusable key).
+#
+# Her greetings (and the 77-end variant for those who came back knowing),
+# the way and the no-disc refusal live in her dialogue
+# (dialogue/eastern_highlands/9553.yaml). Choosing open_crash there (a
+# topic gated carriesItem: 40168) fires the branch below (#375 R14):
+# open_instance_portal with zone set shows the guidance and asks "How
+# much gold will you stake?" privately.
+#
+# Guidance approved by the owner 2026-10-23 (batch 7): the zone is a group
+# effort from the start, ranges for groups of three. Facts from
+# rooms/crash_site_interior/zone-config.yaml: death_policy rejoin,
+# allow_recall false, no instance_gold, min_gold 200 here. Gold and
+# material scaling with the stake is filed as #657 (not implemented).
 tree:
   type: selector
   children:
 
-    # ── the ones who came back knowing (77-end) ──
-    # Must sit ABOVE the generic greeting so a returning knower gets this
-    # instead. Gated on the revelation token; only intercepts greeting-
-    # style keywords, so the way/key/crash branches below are untouched.
+    # ── PURCHASE: topic open_crash, gated on the Attuned Disc ──
     - type: sequence
-      event: player_ask
+      event: player_topic
       children:
         - type: condition
-          check: player_has_quest
-          quest: "77-end"
-        - type: condition
-          check: keyword_match
-          keywords: [hello, hi, help, who, what, keeper, back, again]
-        - type: action
-          do: say
-          text: You went in. And you came back out -- most do, in body. Fewer come back with their face changed like yours. I keep the threshold; I do not go through it, and now I think I never will.
-        - type: action
-          do: say
-          text: I watched a hundred of you go down into it certain, and climb back up quiet. I never asked what you found. I do not ask you either. But mind the road home, and mind your mouth on it. The door I keep is not the only threshold you cross now.
-
-    # ── greetings / help ──
-    - type: sequence
-      event: player_ask
-      children:
-        - type: condition
-          check: keyword_match
-          keywords: [hello, hi, help, who, what, quest, keeper]
-        - type: action
-          do: say
-          text: I keep the threshold. Others come to look at the door and go home. You have the look of one who means to go in.
-        - type: action
-          do: say
-          text: I can open the way as deep as your coin buys -- but not without the key. Ask me about the way, or the key.
-
-    # ── info: the way / the key ──
-    - type: sequence
-      event: player_ask
-      children:
-        - type: condition
-          check: keyword_match
-          keywords: [way, deep, portal, door, price, gold, key, disc]
-        - type: action
-          do: say
-          text: The door answers the disc -- the woken one, warm along its lines. No disc, no way in. It was made, and lost, and found again by someone. Come back with it.
-        - type: action
-          do: say
-          text: With the key in hand, tell me how deep to open. The more you spend, the more of the deep wards I rouse, and the more the place has kept for those who reach it.
-        - type: action
-          do: send_user_text
-          text: '<ansi fg="181">  [With the disc: ask keeper crash 300]</ansi>'
-
-    # ── PURCHASE: gated on the Attuned Disc, then open the scaled portal ──
-    # open_instance_portal parses "crash <gold>" and fails-through if the
-    # text does not match, so this must sit above the no-disc fallback.
-    - type: sequence
-      event: player_ask
-      children:
+          check: topic_is
+          topic: open_crash
         - type: condition
           check: player_has_item
           item_id: 40168
         - type: action
           do: open_instance_portal
+          zone: crash
           min_gold: 200
           exit_expires: "30 real minutes"
           zones:
             crash: "Crash Site Interior"
-
-    # ── fallback: asked to open but has no disc ──
-    - type: sequence
-      event: player_ask
-      children:
-        - type: condition
-          check: keyword_match
-          keywords: [crash, open, enter]
-        - type: action
-          do: say
-          text: Not without the key. The woken disc, or nothing. Bring it, and we will talk of how deep.
+          guidance: |-
+            No one goes into the buried thing alone and comes out. Bring others.
+            The more gold you stake, the more of the deep wards wake, and the
+            more the place has kept for those who reach it.
+            Two hundred to four hundred gold suits three of you, moderately well
+            armed and armoured. Four hundred to eight hundred wants three of you
+            very well armed and armoured. Eight hundred and more, and you should
+            bring a great many friends, every one of them at the height of their
+            strength.
+            I take no less than two hundred. If you fall inside, you may come
+            back in while the way stays open, but no magic calls you home from
+            there.
 
     # Silent player_enter no-op: claims the event so composition never
     # falls through to noncombat_passive's "pays you little mind." emote.

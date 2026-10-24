@@ -1,0 +1,5 @@
+questid: 1
+name: Clean Errand
+steps:
+  - id: start
+  - id: end

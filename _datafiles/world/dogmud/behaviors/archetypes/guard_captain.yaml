@@ -99,8 +99,10 @@ tree:
       event: mob_idle
       do: try_goal_planner
 
-    # Politely decline non-quest gifts (quest item_give is handled before the
-    # btree in give.go, so this only fires for ordinary gifts).
+    # Politely decline gifts. A hand-in a talk topic takes never reaches the
+    # tree; a wanted item given at the wrong step arrives as a hand-back
+    # (#375 R8), which this branch also answers, since it only speaks and
+    # returns the item.
     - type: sequence
       event: player_give
       children:

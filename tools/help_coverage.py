@@ -137,7 +137,7 @@ def main():
     internal_commands = {
         "start", "zombieact", "noop", "default", "gearup",
         "print", "printline", "save", "cancel", "target",
-        "submit", "suicide", "experience",
+        "submit", "suicide", "experience", "portalstake",
     }
 
     # Mutation commands that are abilities, not general commands

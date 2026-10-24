@@ -38,8 +38,8 @@ steps:
       From Hub Square: west, west, south, south to Tarn on the Steppe Edge,
       then south once more.
     hint: >-
-      On the Open Steppe, type track hare. If it is dark, type cast
-      chrysalis-glow first.
+      On the Open Steppe, type track hare. If it is dark, type cast glow
+      first.
   - id: track
     map_target: 5284
     description: >-
@@ -53,7 +53,7 @@ steps:
       You tracked and you foraged. Scout Tarn is waiting at the Steppe Edge,
       north of the Open Steppe.
     hint: >-
-      Go back to Scout Tarn on the Steppe Edge and type ask tarn done.
+      Go back to Scout Tarn on the Steppe Edge and type talk tarn.
   - id: end
     description: >-
       Tarn has named you fit to read the ground. South of the steppe the
@@ -101,7 +101,7 @@ triggers:
       - actor: >-
           That is foraging: searching the scrub for what grows there. Some
           days your hands come up empty, and that is part of it. Go north to
-          Scout Tarn and type ask tarn done.
+          Scout Tarn and type talk tarn.
   - event: command
     command: forage
     room: 5285
@@ -112,5 +112,5 @@ triggers:
       - grant: "41-forage"
       - actor: >-
           The sage flat rewards a patient hand, even on a day it gives up
-          little. Go back to Scout Tarn on the Steppe Edge and type ask tarn
-          done.
+          little. Go back to Scout Tarn on the Steppe Edge and type talk
+          tarn.

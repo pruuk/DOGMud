@@ -48,10 +48,12 @@ func askHadwen(state *BehaviorState, text string) int {
 	return askHadwenAs(state, 8142, text)
 }
 
+// askHadwenAs chooses a talk topic on Hadwen (#375 R17: the rite is the
+// `begin` topic, so text is a topic key).
 func askHadwenAs(state *BehaviorState, userId int, text string) int {
 	before := hadwenQueueLen()
 	GetEngine().EvaluateEvent(9100, 91000, EventContext{
-		EventType: "player_ask", UserId: userId, Text: text, RoomId: 5200,
+		EventType: "player_topic", UserId: userId, Text: text, RoomId: 5200,
 	}, state)
 	return hadwenQueueLen() - before
 }
@@ -138,8 +140,11 @@ func TestHadwenRiteRunsForTwoPlayersAskingAtOnce(t *testing.T) {
 	require.LessOrEqual(t, askHadwenAs(state, 8143, "begin"), 1, "the second asker's re-ask replayed the rite")
 
 	DrainAllDelayedActionsForTest(t)
-	require.Equal(t, []string{"30-end", "29-start"}, granted[8142], "the first asker must be Opened exactly once")
-	require.Equal(t, []string{"30-end", "29-start"}, granted[8143], "the second asker must be Opened exactly once")
+	// 30-rite as the rite starts, then 30-end once: the two roads are offer
+	// topics in his dialogue now, so the rite no longer grants quest 29
+	// (#375 R17).
+	require.Equal(t, []string{"30-rite", "30-end"}, granted[8142], "the first asker must be Opened exactly once")
+	require.Equal(t, []string{"30-rite", "30-end"}, granted[8143], "the second asker must be Opened exactly once")
 }
 
 func TestHadwenRiteDoesNotReplayMidRite(t *testing.T) {

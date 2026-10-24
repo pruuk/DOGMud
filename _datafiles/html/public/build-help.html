@@ -75,9 +75,9 @@
   <a href="#intersections">Where the tabs meet</a>
 </nav>
 
-<p><code>/build</code> is the full content workshop: six tabs (plus the
-dialogue panel inside Mobs) that together cover everything a zone is made
-of. This guide explains each tab in depth, with things worth trying, and —
+<p><code>/build</code> is the full content workshop: six tabs that together
+cover everything a zone is made of (dialogue editing is off for now, see
+<a href="#dialogue">Dialogue</a>). This guide explains each tab in depth, with things worth trying, and —
 because no piece of content lives alone — how the tabs feed each other.</p>
 
 <h2 id="basics">Basics that apply everywhere</h2>
@@ -188,8 +188,8 @@ shops.</p>
 <li><b>Test spawn</b> — an admin tool ONLY: drops a disposable copy in a
     room you pick, so you can fight/talk to your edits immediately. It says
     nothing about where the mob really spawns (that's rooms).</li>
-<li><b>Dialogue…</b> — opens the <a href="#dialogue">dialogue panel</a> for
-    this mob. Reads "Add dialogue…" for a mute mob.</li>
+<li><b>Dialogue note</b> — a short line saying dialogue editing is off for
+    now (see <a href="#dialogue">Dialogue</a>).</li>
 <li><b>Identity</b> — name (renames move the file AND the mob's behavior
     tree), description, species, adjectives, groups.</li>
 <li><b>Stats &amp; combat</b> — stat pool + per-stat training,
@@ -208,48 +208,18 @@ shops.</p>
 <div class="try"><b>Try:</b> make a shopkeeper from nothing: + New Mob in a
 zone → name and describe them → <code>non_combatant</code> on → add shop
 stock rows → give them a schedule if the zone has one → Save → test-spawn
-them next to you and <code>list</code>. Then open Dialogue… and give them a
-greeting and a "wares" pattern so they feel staffed, not stocked.</div>
+them next to you and <code>list</code>.</div>
 
-<h2 id="dialogue">Dialogue (inside the Mobs tab)</h2>
+<h2 id="dialogue">Dialogue (editing is off for now)</h2>
 
-<p>Everything an NPC can say. Opened per-mob from the mob form. Three
-layers, from ambience to conversation:</p>
+<p>The dialogue editor is off. Talking to an NPC now runs through topic
+menus (<code>talk</code>), and the old editor cannot write them: saving
+with it would drop the topics. The server refuses every dialogue save from
+the builder, and the Mobs tab shows a note where the editor's button used
+to be.</p>
 
-<table>
-<tr><th>Layer</th><th>Fires on</th><th>Use for</th></tr>
-<tr><td><b>Greetings</b></td><td>a player entering the room (once per
-    player per NPC per boot; skipped for sneakers and busy NPCs)</td>
-    <td>flavor one-liners, mood-matched</td></tr>
-<tr><td><b>Patterns</b></td><td><code>ask &lt;npc&gt; &lt;topic&gt;</code>
-    keyword match</td><td>the NPC's standing FAQ — town, trade, rumors.
-    An empty-string keyword is the catch-all.</td></tr>
-<tr><td><b>Tree</b></td><td><code>talk</code> (root) and
-    <code>ask</code> (nodes, matched IN ORDER)</td><td>real conversation
-    and ALL quest logic: gated root variants, quest-granting nodes,
-    requires/unlocks chains.</td></tr>
-</table>
-
-<h3>House rules the editor enforces</h3>
-<ul>
-<li><span class="rule">Refused:</span> a <code>grantsQuest</code> without
-    BOTH its own token and the quest's <code>-end</code> token in
-    <code>questExcluded</code> (else completed players get re-offered);
-    grant nodes missing <code>quest</code>/<code>task</code> triggers;
-    grant nodes listed after lore nodes (order is matching priority);
-    semicolons in spoken text; unknown tokens/flags/items.</li>
-<li><span class="warn">Warned:</span> undiscoverable trigger words (if no
-    hint or text ever shows the word, the branch does not exist);
-    memory expiry set (bricks quest chains — timed quests only).</li>
-<li>NPC text is first person. Hints are the narrator: "You could ask about
-    the marriage," never "Ask her why she left."</li>
-</ul>
-
-<div class="try"><b>Try:</b> the smallest quest-giver: a root that mentions
-a problem, a hint pointing at it, ONE node with triggers
-<code>problem, help, quest, task</code> that grants the quest — with both
-exclusions — and a root variant for while it's active. Then
-<code>talk</code>/<code>ask</code> it live; edits apply mid-conversation.</div>
+<p>The topic builder arrives in quest arc phase 6. Until then, edit
+dialogue files in the repo.</p>
 
 <h2 id="zones">Zones</h2>
 
@@ -397,15 +367,14 @@ this is the map of them.</p>
     room's Spawns list names mob and item ids. A mob template never knows
     its spawn rooms — to move a mob, edit rooms. Deleting a mob or item is
     blocked by every spawn list that names it.</td></tr>
-<tr><td><b>Mobs → Dialogue</b></td><td>A dialogue file belongs to one mob
-    (its Dialogue… button). Deleting the file makes the NPC mute — the
-    delete warns; nothing else breaks.</td></tr>
+<tr><td><b>Mobs → Dialogue</b></td><td>A dialogue file belongs to one mob.
+    The builder cannot edit it for now (see
+    <a href="#dialogue">Dialogue</a>); edit the file in the repo.</td></tr>
 <tr><td><b>Dialogue ↔ Quests</b></td><td>The load-bearing seam. Dialogue
     grants quest tokens (<code>grantsQuest</code>) and gates lines on quest
-    state; quests declare the flags dialogue sets. The dialogue editor's
-    token pickers list real quest steps; the quest editor warns when a step
-    is granted by nothing; quest deletion is blocked by every dialogue gate
-    that names it. Convention: dialogue owns quest OFFERS (talking to
+    state; quests declare the flags dialogue sets. The quest editor warns
+    when a step is granted by nothing; quest deletion is blocked by every
+    dialogue gate that names it. Convention: dialogue owns quest OFFERS (talking to
     people), quest triggers own world events (giving, killing,
     arriving).</td></tr>
 <tr><td><b>Quests → everything</b></td><td>Trigger filters and actions name
@@ -436,9 +405,8 @@ this is the map of them.</p>
 <li><b>Quests:</b> the fetch quest — steps with map targets, an
     <code>item_give</code> trigger (hermit + pearl) that consumes, thanks,
     and grants the end token; a small reward.</li>
-<li><b>Dialogue:</b> his voice — greetings, a pattern about the shrine,
-    and the quest-granting node (with both exclusions and
-    quest/task triggers), plus an active-quest root variant.</li>
+<li><b>Dialogue:</b> his voice. The builder cannot edit dialogue for now,
+    so this step is a dialogue file written in the repo.</li>
 <li><b>Behaviors:</b> nothing! <code>noncombat_questgiver</code> already
     covers him — which is the archetype system working. If he needed a
     quirk (fleeing chatter when hurt), you'd fork a per-mob tree.</li>

@@ -78,7 +78,7 @@ in-game prompt. The fight prompt (<ansi fg="command">fprompt</ansi>) appears dur
     <ansi fg="magenta">{\n}</ansi>    New Line
 
 The default prompt is:
-<ansi fg="246">{8}[{t} {T} {255}HP:{hp}{8}/{HP} {255}MP:{13}{mp}{8}/{13}{MP}{8}]{239}{h}{8}:</ansi>
+<ansi fg="246">{8}[{t} {255}HP:{hpbar} {255}SP:{stbar} {255}CP:{cvbar}{8}]{239}{h}{8}:</ansi>
 
 The default fight prompt is assembled automatically from your toggle settings.
 Use <ansi fg="command">set fprompt default</ansi> to restore all defaults at any time.

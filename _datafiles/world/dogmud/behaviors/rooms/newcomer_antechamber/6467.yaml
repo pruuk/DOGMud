@@ -11,14 +11,12 @@
 #      to the Awakening Pool (5200), grants quest 30, and completes 28-end.
 #   4. Block a plain walk and redirect the player to the talk-handoff.
 #
-# `talk` is deliberately the canonical verb even though quest 28 never teaches
-# it: reaching the end of the tutorial should leave the player knowing that both
-# `talk` (start a conversation) and `ask` (dig into one) exist, and using it once
-# is what makes it stick. So the prompts NAME it. `say` and `ask` are accepted as
-# fallbacks purely so a player who reaches for the verb the tutorial DID teach is
-# never dead-ended: before 2026-08-04 `ask dewey quest` here fell through to the
-# generic "I have no task for you right now", which tells a stuck newcomer the
-# exact opposite of the truth.
+# `talk` is the canonical verb, and quest 28 teaches it in room 6261 (R20, #375
+# phase 1: conversations happen through talk, and `ask` only redirects to it).
+# The prompts NAME it. `say` and `ask` are accepted as fallbacks so a player who
+# reaches for another verb is never dead-ended: before 2026-08-04 `ask dewey
+# quest` here fell through to the generic "I have no task for you right now",
+# which tells a stuck newcomer the exact opposite of the truth.
 #
 # The `leaving` flag guards against a second talk re-firing the sequence during
 # the ~4.5s transition (28-end is granted at the end, so gating on it alone would
@@ -81,22 +79,22 @@ tree:
           do: mob_say
           mob_id: 9491
           text: >-
-            That's the last of it. Steady, now -- this part feels strange the
+            That's the last of it. Steady, now. This part feels strange the
             first time, but it's gentle. I've got you.
         - type: action
           do: send_user_text
           delay: 1.5
           text: >-
             Dewey rests a hand on your shoulder, and the grey begins to thin
-            around you -- unspooling like thread pulled loose, brightening from
+            around you, unspooling like thread pulled loose, brightening from
             the edges inward.
         - type: action
           do: send_user_text
           delay: 3.0
           text: >-
             The pale blue-green light rises up to meet you. For a breath there is
-            only warmth and a weightless sense of falling upward into it -- and
-            then the world takes shape around you, solid and real and loud with
+            only warmth and a weightless sense of falling upward into it. Then
+            the world takes shape around you, solid and real and loud with
             life.
         - type: action
           do: move_player
@@ -129,7 +127,7 @@ tree:
           do: mob_say
           mob_id: 9491
           text: >-
-            One step left, and it is not a walk -- type
+            One step left, and it is not a walk. Type
             <ansi fg="command">talk dewey</ansi> and I will carry you through.
         - type: action
           do: intercept
@@ -164,9 +162,9 @@ tree:
           mob_id: 9491
           delay: 4.0
           text: >-
-            One thing left, and it is a command you have not used yet -- type
-            <ansi fg="command">talk dewey</ansi>. Talk is how you start a
-            conversation. Ask is how you dig into one.
+            One thing left, and you already know the command. Type
+            <ansi fg="command">talk dewey</ansi> once more and I will carry
+            you through.
 
     # ── re-prompt: the first line is easy to lose in the combat text ──
     # room_idle fires once per round (4s) while a player is present. The counter

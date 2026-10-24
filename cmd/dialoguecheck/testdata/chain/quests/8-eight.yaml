@@ -1,0 +1,14 @@
+# 8-mid is granted only by a behavior tree, and a tree grant does not fire
+# quest_granted (actGrantQuest pre-sets the token), so the chain to 8-end
+# never runs.
+questid: 8
+name: Broken Chain
+steps:
+  - id: start
+  - id: mid
+  - id: end
+triggers:
+  - event: quest_granted
+    quest_token: 8-mid
+    actions:
+      - grant: 8-end

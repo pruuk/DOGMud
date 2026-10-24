@@ -1,0 +1,18 @@
+itemid: 40505
+name: Pressed Flower in a Page
+namesimple: pressed flower
+description: |
+  A small white flower, pressed flat and dry, kept inside a single page
+  torn from a book of temple readings. The page is from the Recitation
+  of First Light, as it is spoken at the Grand Temple. Where the flower
+  lay the ink has faded, but these lines can still be read:
+
+    "And the Three Witnesses moved through the dark, and they saw the
+    world below, and they said: here. Here is where it begins."
+type: object
+subtype: mundane
+weight: 0.1
+value: 2
+rarity_tier: 40
+vendor_categories:
+- tailoring

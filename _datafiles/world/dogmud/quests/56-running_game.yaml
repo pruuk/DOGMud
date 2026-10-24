@@ -34,7 +34,7 @@ steps:
       Trail.
     hint: >-
       In the Thornbrake, north of Delk's camp, type attack pronghorn. If it
-      is dark, type cast chrysalis-glow first.
+      is dark, type cast glow first.
   - id: hunt
     map_target: 5284
     description: >-
@@ -54,7 +54,7 @@ rewards:
   actor: >-
     The run is done: clean kill, eyes open, and the land worked after it.
     The fringe teaches you different things each pass. When you want
-    another run, ask Delk for work.
+    another run, talk to Delk for work.
   observer: ""
 
 triggers:

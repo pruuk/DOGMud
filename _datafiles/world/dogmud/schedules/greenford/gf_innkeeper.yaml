@@ -9,12 +9,12 @@ segments:
     idlecommands:
       - emote polishes the bar with a worn cloth, turning it end over end at an
         unhurried pace, then folds it and sets it behind the counter.
-      - say Room and board, meals twice a day, the fire kept up. That is the Rest.
+      - say Broth and bread, meals twice a day, the fire kept up. That is the Rest.
         Sit down when you are ready.
       - emote stands at the near end of the bar and listens toward the stair for
         a moment, then relaxes and goes back to setting out cups.
-      - say Breakfast is the same every morning -- bread, soft cheese, whatever
-        fruit came in with the last trade cart. Simple but honest.
+      - say Breakfast is the same every morning. Bread from the mill and broth
+        from the pot. Simple but honest.
       - emote carries a stack of clean cups from under the counter to the shelf
         above the bar, lining them rim-down in a row without looking.
   - start: 18

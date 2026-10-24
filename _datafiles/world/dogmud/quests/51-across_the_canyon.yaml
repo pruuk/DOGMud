@@ -44,7 +44,7 @@ steps:
       exit into the chamber to the north. When it charges, finish it.
     hint: >-
       Go north to the Echoing Narrows and type fire scout north.
-      If it is dark, type cast chrysalis-glow first.
+      If it is dark, type cast glow first.
   - id: shoot
     map_target: 5354  # Echoing Narrows — hold this ground; the scout charges to you (was 5356, where it no longer is)
     description: >-
@@ -59,7 +59,7 @@ steps:
       when the fight came to you. Scout Bryn waits in the Canyon Mouth.
     hint: >-
       Go back to Scout Bryn in the Canyon Mouth, south of the Narrows, and
-      type ask bryn done.
+      type talk bryn.
   - id: end
     description: >-
       Bryn has seen you reach across the canyon and connect. Up the chimney
@@ -109,4 +109,4 @@ triggers:
       - actor: >-
           The canyon scout drops, run up the slot by your own shot. That is
           the whole of it: reach out, then stand your ground. Go back to
-          Scout Bryn in the Canyon Mouth and type ask bryn done.
+          Scout Bryn in the Canyon Mouth and type talk bryn.

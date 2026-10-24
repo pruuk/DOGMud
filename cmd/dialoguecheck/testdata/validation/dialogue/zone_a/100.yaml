@@ -1,0 +1,13 @@
+mobid: 100
+zone: Zone A
+defaultMood: neutral
+topics:
+# Quest 99999 does not exist in the shipped quest registry.
+- key: ghost
+  kind: offer
+  quest: 99999
+  label: Ghost Quest
+  playerLine: Do you want help?
+  text: There is no such quest.
+  questExcluded: [99999-start, 99999-end]
+  grantsQuest: 99999-start

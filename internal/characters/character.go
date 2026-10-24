@@ -318,6 +318,7 @@ type Character struct {
 	Settings                map[string]string              `yaml:"settings,omitempty"`            // custom setting tracking, used for anything.
 	QuestProgress           map[int]string                 `yaml:"questprogress,omitempty"`       // quest progress tracking
 	QuestFlags              map[string]string              `yaml:"questflags,omitempty"`          // quest flag tracking (e.g., "11-branch" → "rhett")
+	HeardTopics             []string                       `yaml:"heardtopics,omitempty"`         // heard talk topics, "<mobId>.<key>", sorted (#375)
 	LastQuestId             int                            `yaml:"lastquestid,omitempty"`         // most recently progressed quest
 	KeyRing                 map[string]string              `yaml:"keyring,omitempty"`             // key is the lock id, value is the sequence
 	KD                      KDStats                        `yaml:"kd,omitempty"`                  // Kill/Death stats

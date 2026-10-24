@@ -8,9 +8,8 @@
 
 tips:
   - >-
-    Having trouble finding quests? Try
-    <ansi fg="command">ask</ansi> <ansi fg="yellow">[npc-name]</ansi>
-    <ansi fg="command">quest</ansi> at any quest giver.
+    Having trouble finding quests? Look for someone marked [!] beside
+    their name and <ansi fg="command">talk</ansi> to them.
   - >-
     Check the <ansi fg="command">help</ansi> command for a full list of
     topics. You might learn about mechanics you didn't know about.

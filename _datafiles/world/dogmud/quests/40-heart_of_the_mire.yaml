@@ -38,8 +38,7 @@ steps:
       turns against you.
     hint: >-
       Go down the sinkhole at the Sulphur Flats, then south to the Heart of
-      the Mire, and type attack spirit. If it is dark, type cast
-      chrysalis-glow first.
+      the Mire, and type attack spirit. If it is dark, type cast glow first.
   - id: end
     description: >-
       The spirit of the swamp is broken and the mire runs clear. You came

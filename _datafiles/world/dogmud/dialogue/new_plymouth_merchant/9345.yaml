@@ -1,118 +1,84 @@
 mobid: 9345
 zone: New Plymouth Merchant
 defaultMood: neutral
-
 greetings:
-  - text: "Something catch your eye — or are you here for the books?"
-    moods: ["neutral"]
-  - text: "Good timing. I have fresh stock on the tray."
-    moods: ["friendly"]
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "What can I do for you?"
-      - "Afternoon. Browsing, or did you have something specific in mind?"
-
-  - keywords: [""]
-    responses:
-      - "Name it and I will tell you if I have it."
-      - "Ask plainly. I keep records."
-
-tree:
-  root:
-    text: "I run the Exchange — auction lots, curios, quality goods
-      that move through this district. I also handle property
-      registrations and estate transfers for the Square. Ask about
-      the wares, about the auction floor, or about records — though
-      I will be selective about the last."
-    hints: "You could ask Falk about his wares and the auction floor,
-      about the Square and how commerce works here, or about property
-      records and who owns what in New Plymouth."
-
-  nodes:
-    - id: bloom_lintel
-      triggers: ["lintel", "address", "215", "street", "canal",
-                 "quest", "task"]
-      questRequired: ["67-front"]
-      questExcluded: ["67-lintel", "67-end"]
-      grantsQuest: "67-lintel"
-      text: "You are further into this than I would have gone. The
-        address in my books is 215 Lintel Street -- registered as a
-        private residence in the canal district, the Old Quarter. The
-        owner on paper is a name I do not expect to find breathing if
-        anyone looked. The gold behind it came through the same quiet
-        source as three other properties I could name -- I will not
-        name them. But 215 is the one you want. The back entrance is
-        the working one. That is what the register shows, and that is
-        as far as I go."
-      hints: "Falk has given you the specific address -- 215 Lintel
-        Street in the Old Quarter, a registered private residence with
-        a working back entrance and a paper owner. Follow the trail
-        from there."
-      moodChange: cautious
-
-    - id: wares
-      triggers: ["wares", "goods", "stock", "auction", "lot", "curio",
-                 "sell", "buy", "pendant", "ring", "necklace", "jewelry",
-                 "item", "bid", "floor", "gavel", "exchange", "carry",
-                 "browse", "show"]
-      text: "I carry quality pieces — jewelry, curios, things that hold
-        their value and move quickly when the right buyer arrives. The
-        auction floor takes sealed bids on lots twice a week. If you
-        have something worth selling, I will appraise it and tell you
-        honestly what it will fetch. If you want to buy, the tray
-        behind me has what I am holding today."
-      hints: "You could ask about the Square and how commerce runs
-        here, or about property records — if you have an interest in
-        ownership questions."
-      moodChange: friendly
-
-    - id: square
-      triggers: ["square", "commerce", "market", "district", "merchant",
-                 "trade", "quarter", "city", "business", "here",
-                 "crowd", "busy", "capital", "new_plymouth"]
-      text: "The Square is the commercial center of the capital — most
-        of what moves through New Plymouth eventually touches this
-        district in one way or another. The Exchange sits at the
-        center of that. Goods, valuables, property transfers — we
-        see all of it. The district has been stable for a long time.
-        Stability is good for business."
-      hints: "You could ask about the property records Falk keeps, or
-        go back to the wares on the auction floor."
-
-    - id: property
-      triggers: ["property", "record", "deed", "estate", "title",
-                 "ownership", "land", "register", "owns", "owned",
-                 "transfer", "survey", "building", "who"]
-      text: "The Exchange maintains the district's transfer ledgers —
-        every sale, every conveyance, every estate that changed hands
-        in the last thirty years is in the register. That is a matter
-        of public record. What is not entirely public is the pattern —
-        who has been acquiring, what they paid, and what sits between
-        the registered owner and the actual interest. I know the
-        pattern. I am careful about what I say about it, and to whom."
-      hints: "He let something slip — the shape of something he is not
-        saying. You could press him on the pattern he hinted at, or
-        return to the wares."
-      moodChange: neutral
-
-    - id: pattern
-      triggers: ["pattern", "press", "arrangement", "acquiring",
-                 "interest", "lintel", "canal", "hidden", "actual",
-                 "between", "more"]
-      text: "Since you press — and since you do not look like one of
-        theirs — here is the shape of it. Several properties have
-        changed hands to owners who exist only on paper, and the gold
-        behind every one of them runs back to the same quiet quarter.
-        One in particular sits down in the old canal district, on
-        Lintel Street — registered as a private residence, paid
-        current, never any trouble on the books. But goods move in and
-        out of it at hours no residence keeps, and the carters who
-        service it service nothing else in the city. I do not ask
-        whose interest it is. A man who keeps the district's records
-        learns which questions shorten his life."
-      hints: "Falk has pointed you toward the old canal district — a
-        property on Lintel Street that is more than it claims. You
-        could ask about his wares, or about the Square."
-      moodChange: neutral
+- text: Something catch your eye, or are you here about the records?
+  moods:
+  - neutral
+- text: I remember you. There is fresh stock on the tray.
+  moods:
+  - friendly
+opener:
+  text: Every face that crosses this floor, I remember, and every price called
+    on it. The Exchange's auction floor is mine, with the lots, curios and good
+    pieces that move through this district. I also keep the Square's property
+    registrations and estate transfers. The wares and the Square I will discuss
+    freely. About the records, I choose what I say.
+  hints: Choose a line below if you would like to hear about his wares, about
+    the Square and how trade runs here, or about the property records he keeps.
+    To see what he sells, type list.
+topics:
+- key: bloom_lintel
+  kind: info
+  label: Who holds the house on Lintel Street?
+  text: You are further into this than I would have gone. My register has 215
+    Lintel Street as a private residence in the Old Quarter, down by the canals. The
+    owner on paper is a name I do not expect to find breathing if anyone looked. The
+    gold behind it came through the same quiet source as three other properties I
+    could name, and will not. But the goods do not come and go by the front door. My
+    porters say carts from that house call before dawn at an estate in the Noble
+    Quarter. A servant there, a girl called Wenna, sees them come and go. She
+    frightens easily. Be gentle with her. That is as far as I go.
+  hints: Falk named the servant Wenna, in the Noble Quarter, who has seen the carts.
+    Type talk wenna.
+  marked: true
+  questRequired:
+  - 67-front
+  questExcluded:
+  - 67-lintel
+  - 67-end
+  grantsQuest: 67-lintel
+  moodChange: cautious
+- key: wares
+  kind: info
+  label: What do you have for sale?
+  text: Good pieces. Jewelry, mostly, the kind that holds its value and moves quickly
+    when the right buyer comes in. The auction floor runs on sealed bids from the
+    houses I know. The tray behind me is for anyone with coin. If you have
+    something worth selling, I will appraise it for a small fee and tell you
+    honestly what it will fetch.
+  hints: To have him value something you carry, type appraise and the item's
+    name.
+  moodChange: friendly
+- key: square
+  kind: info
+  label: How does trade run in the Square?
+  text: The Square is the trading heart of the capital. Most of what moves through
+    New Plymouth touches this district sooner or later. The Exchange sits at the
+    center of that. Goods, valuables, property transfers, we see all of it. The
+    district has been stable for a long time. Stability is good for business.
+- key: property
+  kind: info
+  label: What property records do you keep?
+  text: The Exchange keeps the district's transfer ledgers. Every sale, every
+    conveyance, every estate that changed hands in the last thirty years is in the
+    register. That is a matter of public record. What is not entirely public is the
+    pattern. Who has been buying, what they paid, and what sits between the
+    registered owner and the real interest. I know the pattern. I am careful about
+    what I say about it, and to whom.
+  hints: He let something slip, the shape of something he is not saying.
+  moodChange: neutral
+- key: pattern
+  kind: info
+  label: What pattern do you see in the sales?
+  text: Since you press, and since you do not look like one of theirs, here is the
+    shape of it. Several properties have passed to owners who exist only on paper,
+    and the gold behind every one of them runs back to the same quiet quarter. One in
+    particular sits down in the old canal district, on Lintel Street. Registered as a
+    private residence, paid up, never any trouble on the books. But goods move in
+    and out of it at hours no residence keeps, and the carters who serve it serve
+    nothing else in the city. I do not ask whose interest it is. A man who keeps the
+    district's records learns which questions shorten his life.
+  heardRequired:
+  - property
+  moodChange: neutral

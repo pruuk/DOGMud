@@ -1,51 +1,43 @@
 mobid: 279
 zone: North Road
 defaultMood: neutral
-
-patterns:
-  - keywords: ["hello", "hi", "greet", "hey"]
-    responses:
-      - "Sit, sit. You look like someone with a story. Everyone
-        who comes through here has a story."
-
-  - keywords: ["road", "travel", "north", "news", "rumor"]
-    responses:
-      - "The road north is busy. More busy than usual. Riders
-        came through twice last month, asking after some girl.
-        Official types -- good coats, better swords. They did
-        not buy anything."
-
-  - keywords: ["bandit", "attack", "danger", "camp"]
-    responses:
-      - "The bandits have been getting bolder. Used to be just
-        petty thieves lifting a chicken or two. Now they have
-        got a caster with them. A real one, not some hedge
-        witch with a candle. People are nervous."
-
-  - keywords: ["betta", "farm", "woman", "north"]
-    responses:
-      - "Betta? She keeps to herself, that one. Lives on the
-        farm north of here with her boy. Good turnips. Good
-        sheep. Not much for conversation. But she feeds anyone
-        who knocks, I will give her that."
-
-  - keywords: ["girl", "dark-haired", "kitchen", "worked"]
-    responses:
-      - "A girl worked Haral's kitchen for a few days. Quiet
-        thing. Left without a word. People do that sometimes --
-        the road takes them."
-
-  - keywords: ["agent", "rider", "bloodline", "official"]
-    responses:
-      - "Those riders. Asking questions, writing things down.
-        Looking for someone. They would not say who. But you
-        could tell it was important by the way they asked --
-        careful, like they had practiced."
-
-  - keywords: [""]
-    responses:
-      - "I have been sitting by this fire longer than Haral has
-        owned this place. You pick things up."
-
-memory:
-  expiryPeriod: ""
+# The opener's second sentence pair restores the dropped catchall ("I have
+# been sitting by this fire longer than Haral has owned this place").
+opener:
+  text: Sit, sit. You look like someone with a story. Everyone who comes through here
+    has a story. I have been sitting by this fire longer than Haral has owned this
+    place. You pick things up.
+  hints: Choose a line below if you want to hear about the road, the bandits,
+    the farm folk nearby, or strangers passing through.
+topics:
+- key: road
+  kind: info
+  label: What news is there from the road?
+  text: The road north is busy. More busy than usual. Riders came through twice last
+    month, asking after some girl. Official types. Good coats, better swords. They
+    did not buy anything.
+- key: bandit
+  kind: info
+  label: Are the bandits as bad as people say?
+  text: The bandits have been getting bolder. Used to be just petty thieves lifting
+    a chicken or two. Now they have got a caster with them. A real one, not some hedge
+    witch with a candle. People are nervous.
+- key: betta
+  kind: info
+  label: Who lives out on the farms nearby?
+  text: Betta keeps to herself, that one. Lives on the farm north and west of here
+    with her boy. Good turnips. Good sheep. Not much for conversation. But she feeds
+    anyone who knocks, I will give her that.
+- key: girl
+  kind: info
+  label: Has any stranger stayed in the village?
+  text: A girl worked Haral's kitchen for a few days. Quiet thing. Left without a
+    word. People do that sometimes. The road takes them.
+- key: agent
+  kind: info
+  label: Who were those riders asking questions?
+  text: Those riders. Asking questions, writing things down. Looking for someone.
+    They would not say who. But you could tell it was important by the way they asked.
+    Careful, like they had practiced.
+  heardRequired:
+  - road

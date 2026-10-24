@@ -25,6 +25,7 @@ const (
 	numberColor  = "command"
 	markerColor  = "yellow-bold"
 	dimColor     = "8"
+	labelColor   = "menu-label" // undimmed lines; brighter than the grey screen category
 	columnWidth  = 39
 	leftMargin   = "  "
 	markerColumn = 4
@@ -102,11 +103,18 @@ func markerText(marker string) string {
 		strings.Repeat(" ", max(0, markerColumn-utf8.RuneCountInString(marker)))
 }
 
-func labelText(e Entry) string {
+// lineColor is the colour of an entry's label and detail. Every line gets an
+// explicit colour: menus ride grey categories (screen, admin), so a dimmed
+// line is only dimmer when the others are coloured brighter.
+func lineColor(e Entry) string {
 	if e.Dim {
-		return fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, dimColor, e.Label)
+		return dimColor
 	}
-	return e.Label
+	return labelColor
+}
+
+func labelText(e Entry) string {
+	return fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, lineColor(e), e.Label)
 }
 
 func renderEntry(b *strings.Builder, n, numW int, e Entry) {
@@ -122,7 +130,7 @@ func renderEntry(b *strings.Builder, n, numW int, e Entry) {
 	indent := strings.Repeat(" ", len(leftMargin)+numW+2+markerColumn)
 	for _, line := range wrap(e.Detail, lineWidth-len(indent)) {
 		b.WriteString(indent)
-		b.WriteString(line)
+		fmt.Fprintf(b, `<ansi fg="%s">%s</ansi>`, lineColor(e), line)
 		b.WriteString("\n")
 	}
 }

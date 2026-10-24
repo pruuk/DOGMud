@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
-	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/gamelock"
@@ -47,7 +46,7 @@ type BuildResult struct {
 	MobRefs      []mobRefEntry       `json:"mobRefs,omitempty"`      // Build.Mob.Delete: what still references a blocked mob
 	ZoneRefs     []rooms.ZoneBlocker `json:"zoneRefs,omitempty"`     // Build.Zone.Delete: what blocks a delete
 	Message      string              `json:"message,omitempty"`      // e.g. Build.Mob.Spawn's "<name> spawned in room <id>"
-	Warnings     []string            `json:"warnings,omitempty"`     // non-blocking validation notes (Build.Dialogue.Update first)
+	Warnings     []string            `json:"warnings,omitempty"`     // non-blocking validation notes (Build.Quest.Update, Build.Behavior.Update)
 	QuestId      int                 `json:"questId,omitempty"`      // e.g. the created/updated quest
 	QuestRefs    []questRefEntry     `json:"questRefs,omitempty"`    // Build.Quest.Delete: what still references a blocked quest
 	BehaviorRefs []string            `json:"behaviorRefs,omitempty"` // Build.Behavior.Delete: what still references a blocked archetype
@@ -55,6 +54,18 @@ type BuildResult struct {
 
 func buildErr(format string, args ...any) BuildResult {
 	return BuildResult{Error: fmt.Sprintf(format, args...)}
+}
+
+// refuseDialogueBuild reports whether cmd is one of the Build.Dialogue.*
+// messages, and the refusal to send for it. The old editor drops `topics` and
+// `opener` on save, so it must not write the converted dialogue files; the
+// topic builder (quest arc phase 6) replaces it.
+func refuseDialogueBuild(cmd string) (BuildResult, bool) {
+	switch cmd {
+	case `Build.Dialogue.Get`, `Build.Dialogue.Update`, `Build.Dialogue.Create`, `Build.Dialogue.Delete`:
+		return buildErr("the dialogue editor is off until the topic builder ships (quest arc phase 6); edit dialogue files in the repo"), true
+	}
+	return BuildResult{}, false
 }
 
 // ---- client -> server payloads -----------------------------------------------
@@ -273,6 +284,12 @@ func (g *GMCPModule) handleBuildOp(e events.Event) events.ListenerReturn {
 	if !ok {
 		return events.Continue // non-admins are silently refused
 	}
+	// The dialogue editor is off (#375 phase 1): refuse before any dispatch so
+	// no Build.Dialogue.* message can reach a handler that writes a file.
+	if res, refused := refuseDialogueBuild(evt.Command); refused {
+		sendBuildResult(uid, res)
+		return events.Continue
+	}
 	d := realBuildDeps()
 
 	switch evt.Command {
@@ -395,42 +412,6 @@ func (g *GMCPModule) handleBuildOp(e events.Event) events.ListenerReturn {
 		}
 		sendBuildResult(uid, res)
 		sendZoneList(uid)
-	case `Build.Dialogue.Get`:
-		var req dialogueGetReq
-		if json.Unmarshal(evt.Payload, &req) != nil {
-			sendBuildResult(uid, buildErr("bad Build.Dialogue.Get payload"))
-			break
-		}
-		detail, _ := buildDialogueGet(realDialogueDeps(), req.MobId, req.Zone)
-		sendGMCP(uid, `Build.Dialogue`, detail)
-	case `Build.Dialogue.Update`:
-		var df dialogue.DialogueFile
-		if json.Unmarshal(evt.Payload, &df) != nil {
-			sendBuildResult(uid, buildErr("bad Build.Dialogue.Update payload"))
-			break
-		}
-		sendBuildResult(uid, buildDialogueUpdate(realDialogueDeps(), df))
-	case `Build.Dialogue.Create`:
-		var req dialogueGetReq
-		if json.Unmarshal(evt.Payload, &req) != nil {
-			sendBuildResult(uid, buildErr("bad Build.Dialogue.Create payload"))
-			break
-		}
-		res := buildDialogueCreate(realDialogueDeps(), req.MobId, req.Zone)
-		sendBuildResult(uid, res)
-		if res.Ok {
-			if detail, ok := buildDialogueGet(realDialogueDeps(), req.MobId, req.Zone); ok {
-				sendGMCP(uid, `Build.Dialogue`, detail)
-			}
-		}
-	case `Build.Dialogue.Delete`:
-		var req dialogueGetReq
-		if json.Unmarshal(evt.Payload, &req) != nil {
-			sendBuildResult(uid, buildErr("bad Build.Dialogue.Delete payload"))
-			break
-		}
-		sendBuildResult(uid, buildDialogueDelete(realDialogueDeps(), req.MobId, req.Zone))
-
 	case `Build.Quest.List`:
 		sendGMCP(uid, `Build.Quests`, buildQuestList(realQuestDeps()))
 	case `Build.Quest.Get`:

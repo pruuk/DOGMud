@@ -11,13 +11,14 @@ type LLMProfile struct {
 	DefaultMood  string `yaml:"defaultmood"`  // fallback mood for context injection
 }
 
-// ConversationContext is passed from ask.go / talk.go — no mobs/dialogue imports needed here.
+// ConversationContext is what a caller tells AskAsync about the conversation,
+// so this package needs no mobs/dialogue imports. talk and ask no longer fill
+// it: quest arc #375 phase 1 took the LLM out of both (R4).
 type ConversationContext struct {
 	MobName          string
 	ZoneName         string
 	PlayerName       string
 	CurrentMood      string
-	RecentTopics     []string // last 5 topics from dialogue.GetMemory()
 	QuestContext     []string // human-readable quest summaries relevant to this NPC
 	PlayerCondition  string   // e.g. "healthy", "seriously wounded, has died 2 times"
 	TutorialProgress string   // structured tutorial step summary for Sanctum Trials
