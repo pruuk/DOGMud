@@ -135,7 +135,7 @@ func walkQuest(eng *Engine, q *quests.Quest, steps map[int][]string, ways map[st
 		// step's own Way and is judged below.
 		for j := i + 1; j <= last; j++ {
 			for _, wy := range ways[stepToken(q, j)] {
-				if wy.Reward || sharesWay(ways[tok], wy) || !itemsHeldEarly(p, wy, q.QuestId, src) {
+				if wy.Reward || ownGranted(wy, q.QuestId) || sharesWay(ways[tok], wy) || !itemsHeldEarly(p, wy, q.QuestId, src) {
 					continue
 				}
 				c := p.clone()
@@ -148,11 +148,18 @@ func walkQuest(eng *Engine, q *quests.Quest, steps map[int][]string, ways map[st
 		}
 
 		var next *walkPlayer
+		var atGrant []questloop.Way
 		for _, wy := range ways[tok] {
 			if wy.Reward {
 				continue
 			}
 			out = append(out, checkWay(q, wy, src)...)
+			if ownGranted(wy, q.QuestId) {
+				// It fires only inside the chain of the grant that lands on
+				// its token, which the firing that reached this step ran.
+				atGrant = append(atGrant, wy)
+				continue
+			}
 			c := p.clone()
 			tr := fireWay(eng, c, wy, q.QuestId)
 			got := stepIndex(c, q)
@@ -169,6 +176,9 @@ func walkQuest(eng *Engine, q *quests.Quest, steps map[int][]string, ways map[st
 			}
 		}
 		if next == nil {
+			for _, wy := range atGrant {
+				dead(wy.Where, fmt.Sprintf("fires only when %s is granted, and did not carry the player on to %s", wy.Trigger.QuestToken, tok))
+			}
 			dead("step "+want, "no way in reaches "+tok)
 			return out
 		}
@@ -239,6 +249,19 @@ func checkChained(q *quests.Quest, ways map[string][]questloop.Way, src questloo
 		}
 	}
 	return out
+}
+
+// ownGranted reports whether wy is a quest_granted trigger on a token of
+// quest own. The game fires it only in the chain of the grant that lands on
+// that token (the engine's chain, or the quest hook on a fresh dialogue
+// grant), so the walk never fires it directly: it counts only when a firing
+// that grants its token runs it.
+func ownGranted(wy questloop.Way, own int) bool {
+	if wy.Trigger == nil || wy.Trigger.Event != "quest_granted" {
+		return false
+	}
+	id, _ := splitToken(wy.Trigger.QuestToken)
+	return id == own
 }
 
 // sharesWay reports whether wy is the same trigger or topic as one of ws.
@@ -360,11 +383,11 @@ func fireTrigger(eng *Engine, p *walkPlayer, t *quests.TriggerDef, own int, trai
 		p.items[t.Item] = true
 	}
 	// quest_granted fires only when its token is granted. For the walked
-	// quest that is the moment p lands on that step, so it fires only from
-	// exactly that step; another quest's token is a prerequisite and is held.
+	// quest that is inside the chain of the grant itself, never fired
+	// directly (ownGranted); another quest's token is a prerequisite and is
+	// held.
 	if t.Event == "quest_granted" && t.QuestToken != "" {
-		id, step := splitToken(t.QuestToken)
-		if id == own && p.progress[own] != step {
+		if id, _ := splitToken(t.QuestToken); id == own {
 			return false
 		}
 		meetToken(p, t.QuestToken, own)

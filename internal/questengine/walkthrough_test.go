@@ -106,9 +106,8 @@ func TestWalk_QuestGrantedChainOffTheOfferFinishes(t *testing.T) {
 	}}
 	require.Empty(t, Walk(w, questloop.Sources{}))
 
-	// The offer's own firing lands on firstkill: the chain ran inside it.
-	// (Walk alone cannot show this, since it also fires the quest_granted
-	// Way from start directly and lands in the same place.)
+	// The offer's own firing lands on firstkill: the chain ran inside it
+	// (the walk never fires the quest_granted Way directly).
 	eng := NewEngine()
 	eng.RegisterQuest(w.Quests[0])
 	p := newWalkPlayer(map[int][]string{53: {"start", "firstkill", "end"}})
@@ -120,6 +119,25 @@ func TestWalk_QuestGrantedChainOffTheOfferFinishes(t *testing.T) {
 	// Without the trigger, firstkill is dead.
 	w.Quests[0].Triggers = nil
 	require.Contains(t, keys(Walk(w, questloop.Sources{})), "walk-dead-end 53 step firstkill")
+}
+
+// A quest_granted Way of the walked quest fires only inside the chain of the
+// grant that lands on its token, as in the game, never directly from a later
+// rest on that step: here it needs item 900 at the moment 53-start is
+// granted, and nothing gives 900 by then.
+func TestWalk_OwnQuestGrantedFiresOnlyAtTheGrant(t *testing.T) {
+	w := walkWorld()
+	w.Quests[0].Triggers = []quests.TriggerDef{{
+		Event: "quest_granted", QuestToken: "53-start",
+		Conditions: quests.Conditions{HasItem: 900},
+		Actions:    []quests.ActionDef{{Grant: "53-firstkill"}},
+	}}
+	got := keys(Walk(w, questloop.Sources{}))
+	require.Contains(t, got, "walk-dead-end 53 step firstkill")
+
+	// The offer hands item 900 over with the grant: the chain then fires.
+	w.Dialogue[0].Topics[0].GivesItem = 900
+	require.Empty(t, Walk(w, questloop.Sources{}))
 }
 
 func TestWalk_ChainThatSkipsAStepIsReported(t *testing.T) {
