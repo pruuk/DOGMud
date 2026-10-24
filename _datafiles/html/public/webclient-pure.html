@@ -616,14 +616,14 @@
                             allRooms.roomZones[zoneKey] = [];
                         }
                         gr.setRooms(allRooms.roomZones[zoneKey]);
-                        // That wiped every Zone.Map room. On an ordinary zone
-                        // or floor change the server's full Zone.Map follows
-                        // and repaints; when it does not (this Room.Info names
-                        // a floor the server's cz does not, such as a room with
-                        // no map coordinates), the server sends only what
-                        // changed and the map would stay wiped. Ask for a whole
-                        // map unless a full one arrives within the grace (#650).
-                        gr.requestResync(2000);
+                        // That wiped every Zone.Map room. The server's full
+                        // Zone.Map follows every zone or floor change (a room
+                        // with no map coordinates included) and repaints. If
+                        // none arrives within the grace, a safety net and not
+                        // the normal path, ask for a whole map, since the
+                        // server sends only what changed and the map would
+                        // stay wiped (#650, RoomGridSVG.RESYNC_GRACE_MS).
+                        gr.requestResync(RoomGridSVG.RESYNC_GRACE_MS);
                     }
 
                     var r = {

@@ -23,8 +23,12 @@
  *   6. moving to a known room re-fogs the rooms around the old and new centre
  *      (no Zone.Map follows to rebuild every token);
  *   7. a map wiped by anything other than a full Zone.Map asks the server for
- *      a whole one (GMCP Zone.Map.Resync), exactly once per wipe, and a full
- *      map, including one that itself resets, never asks.
+ *      a whole one (GMCP Zone.Map.Resync), exactly once per wipe, after a
+ *      15 s fallback grace, and a full map, including one that itself resets,
+ *      never asks; a room with no map coordinates keys the same floor on both
+ *      sides;
+ *   8. a rebuilt room token (a partial, a re-centre, a re-fog, a party
+ *      marker) keeps its stair ticks.
  */
 'use strict';
 
@@ -107,9 +111,11 @@ global.SendGMCP = (pkg, obj) => { sentGMCP.push([pkg, obj]); return true; };
 function resyncsSent() { return sentGMCP.filter(s => s[0] === 'Zone.Map.Resync'); }
 
 // Manual timers: flushTimers() runs whatever is pending, as if time passed.
+// timerDelays records the delay each setTimeout asked for.
 let timers = new Map();
 let timerSeq = 0;
-global.setTimeout = (fn) => { const id = ++timerSeq; timers.set(id, fn); return id; };
+let timerDelays = [];
+global.setTimeout = (fn, ms) => { const id = ++timerSeq; timers.set(id, fn); timerDelays.push(ms); return id; };
 global.clearTimeout = (id) => { timers.delete(id); };
 function flushTimers() {
   const due = [...timers.values()];
@@ -160,6 +166,7 @@ function freshMap() {
   snapshotCalls = [];
   sentGMCP = [];
   timers.clear();
+  timerDelays = [];
   return g;
 }
 function room(num, x, extra) {
@@ -235,9 +242,10 @@ check('room 2, now distant, is fogged', String(opacity(g, 2)) === '0.74', 'opaci
 check('room 3, adjacent to the new centre, is lightly fogged', String(opacity(g, 3)) === '0.92', 'opacity=' + opacity(g, 3));
 
 console.log('SCENARIO 7: a map wiped without a full Zone.Map asks for one, once');
-// 7a. Room.Info names a floor the server's cz does not (a room with no map
-// coordinates reports z 999...), and the server, seeing the same zone and cz,
-// sends nothing. The page's Room handler wiped the map, so it must ask.
+// 7a. The Room handler wiped the map (its Room.Info zone or floor key changed)
+// and no full map followed. The server sends a full map on every such change,
+// a room with no map coordinates included, so this is only a safety net: the
+// grace is long enough that a large full map on a slow link lands first.
 g = freshMap();
 roomInfo(1, 0);
 zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1)], full: true });
@@ -248,6 +256,10 @@ roomInfo(9, 0, 999999999);
 check('7a: the Room handler wiped the map', !g.rooms.get(1), 'rooms=' + ids(g));
 check('7a: no resync before the grace period, a full map may still be coming', resyncsSent().length === 0,
   'sent=' + JSON.stringify(sentGMCP));
+// A 273 KB full map can take over 2 s on a slow link; a 2 s grace asked for a
+// second full map behind the first.
+check('7a: the grace is 15 s, a fallback well past a slow full map',
+  timerDelays[timerDelays.length - 1] === 15000, 'delays=' + JSON.stringify(timerDelays));
 flushTimers();
 check('7a: exactly one Zone.Map.Resync once no full map came', resyncsSent().length === 1,
   'sent=' + JSON.stringify(sentGMCP));
@@ -309,6 +321,58 @@ zoneMap({ zone: 'Stillwater', cz: 0, party: [], rooms: [room(7, 0)], full: true 
 flushTimers();
 check('7f: a zone crossing answered by a full map asks for nothing', resyncsSent().length === 0,
   'sent=' + JSON.stringify(sentGMCP));
+
+// 7g. A room with no map coordinates: Room.Info reports z 999999999999999999
+// and the server's full map carries the same cz, so the two keys agree and
+// nothing asks, on entry or on the way back out.
+const NO_COORD = '999999999999999999';
+g = freshMap();
+roomInfo(1, 0);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1)], full: true });
+roomInfo(9, NO_COORD, NO_COORD);
+zoneMap({ zone: 'Thornwall', cz: JSON.parse(NO_COORD), party: [], rooms: [room(1, 0), room(2, 1)], full: true });
+check('7g: the map floor matches the Room.Info floor', g._z === parseInt(NO_COORD),
+  'map z=' + g._z + ' Room.Info z=' + parseInt(NO_COORD));
+roomInfo(1, 0);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0), room(2, 1)], full: true });
+flushTimers();
+check('7g: entering and leaving a room with no coordinates asks for nothing', resyncsSent().length === 0,
+  'sent=' + JSON.stringify(sentGMCP));
+check('7g: back out, the floor is drawn again', ids(g) === '1,2', 'rooms=' + ids(g));
+
+console.log('SCENARIO 8: rebuilding a token keeps its stair ticks');
+// _drawVerticalTick appends the tick to the room's own group and records it
+// in drawnVerticalTicks; a rebuilt token empties the group, so the tick must
+// be redrawn, or it vanishes until the next full map (none follows a step).
+function hasTick(g, id, glyph) {
+  const e = g.rooms.get(id);
+  return !!e && e.group.children.some(c => c.tag === 'text' && c.textContent === glyph);
+}
+const stairs = { exits: [{ to: 50, dx: 0, dy: 0, dz: 1, kind: 'vertical' }, { to: 51, dx: 0, dy: 0, dz: -1, kind: 'vertical' }] };
+g = freshMap();
+roomInfo(1, 0);
+zoneMap({ zone: 'Thornwall', cz: 0, party: [],
+  rooms: [room(1, 0, stairs), room(2, 1), room(3, 2), room(4, 3)], full: true });
+check('8: room 1 shows its up and down ticks', hasTick(g, 1, '▲') && hasTick(g, 1, '▼'),
+  'up=' + hasTick(g, 1, '▲') + ' down=' + hasTick(g, 1, '▼'));
+zoneMap({ zone: 'Thornwall', cz: 0, party: [], rooms: [room(1, 0, Object.assign({ tags: ['bank'] }, stairs))], full: false });
+check('8: after a partial re-sends room 1, its ticks remain', hasTick(g, 1, '▲') && hasTick(g, 1, '▼'),
+  'up=' + hasTick(g, 1, '▲') + ' down=' + hasTick(g, 1, '▼'));
+roomInfo(2, 1); // room 1 stops being the centre: its token is rebuilt
+check('8: after leaving room 1, its ticks remain', hasTick(g, 1, '▲') && hasTick(g, 1, '▼'),
+  'up=' + hasTick(g, 1, '▲') + ' down=' + hasTick(g, 1, '▼'));
+roomInfo(4, 3); // room 1 is re-fogged from 0.92 to 0.74
+check('8: after a re-fog, room 1 keeps its ticks', hasTick(g, 1, '▲') && hasTick(g, 1, '▼'),
+  'up=' + hasTick(g, 1, '▲') + ' down=' + hasTick(g, 1, '▼'));
+zoneMap({ zone: 'Thornwall', cz: 0, party: [1], rooms: [], full: false }); // party marker: _rebuildRoomToken
+check('8: after a party marker rebuild, room 1 keeps its ticks', hasTick(g, 1, '▲') && hasTick(g, 1, '▼'),
+  'up=' + hasTick(g, 1, '▲') + ' down=' + hasTick(g, 1, '▼'));
+check('8: one tick each, never doubled',
+  g.rooms.get(1).group.children.filter(c => c.tag === 'text' && (c.textContent === '▲' || c.textContent === '▼')).length === 2,
+  'children=' + g.rooms.get(1).group.children.map(c => c.tag + ':' + c.textContent).join(' '));
+roomInfo(1, 0); // back into room 1: it is rebuilt as the current token
+check('8: as the current room again, room 1 keeps its ticks', hasTick(g, 1, '▲') && hasTick(g, 1, '▼'),
+  'up=' + hasTick(g, 1, '▲') + ' down=' + hasTick(g, 1, '▼'));
 
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);

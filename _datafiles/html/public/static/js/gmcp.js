@@ -331,8 +331,7 @@ class RoomGridSVG {
           if (room.fromSnapshot) entry.room.fromSnapshot = true;
 
           // Re-draw the room token by clearing and rebuilding group contents
-          while (entry.group.firstChild) entry.group.removeChild(entry.group.firstChild);
-          this._buildRoomTokenInGroup(entry.group, room, isCurrent, svc);
+          this._rebuildTokenGroup(id, entry.group, room, isCurrent, svc);
 
           // deferEdges exists so a whole-snapshot pass can batch its per-room
           // work. _updateBounds and _applyZoom were not covered by it, which
@@ -419,6 +418,17 @@ class RoomGridSVG {
    * A full Zone.Map cancels the wait and never asks, so a full map that
    * itself resets the floor cannot start a loop.
    */
+  /**
+   * How long the Room handler waits for a full Zone.Map after its Room.Info
+   * wiped the map before asking for one. A fallback only, never the normal
+   * path: the server sends a full map on every zone or floor change, a room
+   * with no map coordinates included (its cz matches the z 999... that
+   * Room.Info reports). The wait must outlast that full map, which for an
+   * explored character is about 273 KB and can take over 2 s on a slow link;
+   * the 2 s grace this replaced made such a link fetch the whole map twice.
+   */
+  static get RESYNC_GRACE_MS() { return 15000; }
+
   requestResync(graceMs) {
       if (!this.onResync) return;
       if (graceMs > 0) {
@@ -470,15 +480,13 @@ class RoomGridSVG {
           const prevEntry = this.rooms.get(prevCenterId);
           if (prevEntry) {
               const prevSvc = this._serviceFor(prevEntry.room.tags);
-              while (prevEntry.group.firstChild) prevEntry.group.removeChild(prevEntry.group.firstChild);
-              this._buildRoomTokenInGroup(prevEntry.group, prevEntry.room, false, prevSvc);
+              this._rebuildTokenGroup(prevCenterId, prevEntry.group, prevEntry.room, false, prevSvc);
           }
       }
 
       // re-draw new current room as raised token
       const svc = this._serviceFor(entry.room.tags);
-      while (entry.group.firstChild) entry.group.removeChild(entry.group.firstChild);
-      this._buildRoomTokenInGroup(entry.group, entry.room, true, svc);
+      this._rebuildTokenGroup(id, entry.group, entry.room, true, svc);
 
       // Re-fog every other token whose distance band changed. A full Zone.Map
       // used to follow every step and rebuild every token from the new centre;
@@ -489,8 +497,7 @@ class RoomGridSVG {
       this.rooms.forEach((other, otherId) => {
           if (otherId === id || other.group._fog === this._fog(other.room)) return;
           const osvc = this._serviceFor(other.room.tags);
-          while (other.group.firstChild) other.group.removeChild(other.group.firstChild);
-          this._buildRoomTokenInGroup(other.group, other.room, false, osvc);
+          this._rebuildTokenGroup(otherId, other.group, other.room, false, osvc);
       });
 
       this.center = {
@@ -649,8 +656,31 @@ class RoomGridSVG {
       if (!entry) { return; }
       const isCurrent = (this.currentCenterId === entry.room.RoomId || this.currentCenterId === id);
       const svc = this._serviceFor(entry.room.tags);
-      while (entry.group.firstChild) entry.group.removeChild(entry.group.firstChild);
-      this._buildRoomTokenInGroup(entry.group, entry.room, isCurrent, svc);
+      this._rebuildTokenGroup(entry.room.RoomId, entry.group, entry.room, isCurrent, svc);
+  }
+
+  /**
+   * Empty a placed room's group and build its token again, stair ticks
+   * included. Every rebuild of a placed room goes through here.
+   *
+   * _drawVerticalTick appends the ▲/▼ tick to the room's own group and records
+   * it in drawnVerticalTicks so the edge pass never draws it twice. Emptying
+   * the group removed the tick but left the record, so the tick stayed gone
+   * until the next full map reset the map. Since #650 no Zone.Map follows a
+   * step into a known room, so the ticks around the player vanished. The
+   * record is dropped and the ticks are redrawn from the room's ExitsMeta,
+   * the same exits the edge pass reads.
+   */
+  _rebuildTokenGroup(id, group, room, isCurrent, svc) {
+      while (group.firstChild) group.removeChild(group.firstChild);
+      this._buildRoomTokenInGroup(group, room, isCurrent, svc);
+      this.drawnVerticalTicks.delete(id + ":u");
+      this.drawnVerticalTicks.delete(id + ":d");
+      const entry = this.rooms.get(id);
+      const meta = entry && Array.isArray(entry.room.ExitsMeta) ? entry.room.ExitsMeta : [];
+      meta.forEach(e => {
+          if (e && e.kind === "vertical") this._drawConnection(id, e); // draws only the tick
+      });
   }
 
   /**
