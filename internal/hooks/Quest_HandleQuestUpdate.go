@@ -80,16 +80,23 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
-	// Repeatable-quest cooldown gate: refuse to (re)start a repeatable quest
-	// whose post-completion cooldown has not yet elapsed. Parse the step
-	// up-front so we can check before advancing the token.
+	// Repeatable-quest gate: refuse to (re)start a repeatable quest on its
+	// post-completion cooldown or at its lifetime repeat_limit. The talk
+	// menu already hides such an offer (PlayerState.QuestOpen); this is the
+	// backstop for any other grant path.
 	{
 		_, incomingStep := quests.TokenToParts(evt.QuestToken)
-		if incomingStep == `start` && questInfo.Repeatable &&
-			questUser.Character.QuestCooldownActive(questInfo.QuestId) {
-			questUser.SendText(messaging.CategoryRefusal,
-				`You have put in the work recently. Rest a while before taking this on again.`)
-			return events.Continue
+		if incomingStep == `start` && questInfo.Repeatable {
+			if questUser.Character.RepeatCapReached(questInfo) {
+				questUser.SendText(messaging.CategoryRefusal,
+					`You have done all of this work there is to do.`)
+				return events.Continue
+			}
+			if questUser.Character.QuestCooldownActive(questInfo.QuestId) {
+				questUser.SendText(messaging.CategoryRefusal,
+					`You have put in the work recently. Rest a while before taking this on again.`)
+				return events.Continue
+			}
 		}
 	}
 
@@ -320,12 +327,12 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			factions.BumpRep(questInfo.Rewards.RepFaction, questUser.UserId, questInfo.Rewards.RepAmount)
 		}
 
-		// Repeatable quest: reset progress so it can be taken again, and stamp
-		// a cooldown so it cannot be farmed back-to-back. (Non-repeatable
-		// quests are unaffected — Repeatable defaults false.)
+		// Repeatable quest: reset progress so it can be taken again, count
+		// the run and stamp its cooldown (RecordCompletion). Non-repeatable
+		// quests are unaffected.
 		if questInfo.Repeatable {
 			questUser.Character.ClearQuestToken(evt.QuestToken)
-			questUser.Character.SetQuestCooldown(questInfo.QuestId, uint64(questInfo.CooldownRounds))
+			questUser.Character.RecordCompletion(questInfo)
 		}
 	} else {
 		if !questInfo.Secret {
