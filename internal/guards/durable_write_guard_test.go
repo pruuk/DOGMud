@@ -95,6 +95,7 @@ func TestLivingStateWritesAreDurable(t *testing.T) {
 
 	var offenders []string
 	fset := token.NewFileSet()
+	scanned := 0
 
 	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -139,6 +140,7 @@ func TestLivingStateWritesAreDurable(t *testing.T) {
 			// test's. Skipping it keeps failures attributable.
 			return nil
 		}
+		scanned++
 
 		ast.Inspect(file, func(n ast.Node) bool {
 			call, ok := n.(*ast.CallExpr)
@@ -163,6 +165,10 @@ func TestLivingStateWritesAreDurable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("walk repo: %v", err)
 	}
+	// A walk that parsed nothing would report no offenders.
+	if scanned < 500 {
+		t.Fatalf("parsed only %d production Go files under %s; the walk is not seeing the repo, so a pass proves nothing", scanned, root)
+	}
 
 	if len(offenders) > 0 {
 		sort.Strings(offenders)
@@ -186,6 +192,7 @@ func TestNoHandRolledTempRename(t *testing.T) {
 
 	var offenders []string
 	fset := token.NewFileSet()
+	scanned := 0
 
 	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -228,6 +235,7 @@ func TestNoHandRolledTempRename(t *testing.T) {
 		if perr != nil {
 			return nil
 		}
+		scanned++
 
 		var suffixLine, renameLine int
 		ast.Inspect(file, func(n ast.Node) bool {
@@ -259,6 +267,10 @@ func TestNoHandRolledTempRename(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("walk repo: %v", err)
+	}
+	// A walk that parsed nothing would report no offenders.
+	if scanned < 500 {
+		t.Fatalf("parsed only %d production Go files under %s; the walk is not seeing the repo, so a pass proves nothing", scanned, root)
 	}
 
 	if len(offenders) > 0 {

@@ -445,6 +445,7 @@ func TestM2FileListsAgree(t *testing.T) {
 func TestEveryAudienceLiteralPairsIdsWithRecipients(t *testing.T) {
 	pairs := map[string]string{"Actor": "ActorId", "Actee": "ActeeId"}
 	var bad []string
+	scanned, audiences := 0, 0
 
 	for _, root := range []string{"internal", "modules"} {
 		fset := token.NewFileSet()
@@ -465,6 +466,7 @@ func TestEveryAudienceLiteralPairsIdsWithRecipients(t *testing.T) {
 			if perr != nil {
 				return nil
 			}
+			scanned++
 			ast.Inspect(file, func(n ast.Node) bool {
 				cl, ok := n.(*ast.CompositeLit)
 				if !ok {
@@ -477,6 +479,7 @@ func TestEveryAudienceLiteralPairsIdsWithRecipients(t *testing.T) {
 				if pkg, ok := sel.X.(*ast.Ident); !ok || pkg.Name != "messaging" {
 					return true
 				}
+				audiences++
 				named := map[string]bool{}
 				for _, elt := range cl.Elts {
 					if kv, ok := elt.(*ast.KeyValueExpr); ok {
@@ -509,6 +512,12 @@ func TestEveryAudienceLiteralPairsIdsWithRecipients(t *testing.T) {
 		if err != nil {
 			t.Fatalf("walk %s: %v", root, err)
 		}
+	}
+
+	// A walk that saw no files, or no Audience literal, would pass with
+	// nothing incomplete.
+	if scanned < 500 || audiences == 0 {
+		t.Fatalf("parsed %d Go files and found %d messaging.Audience literals; the walk is not seeing the tree, so a pass proves nothing", scanned, audiences)
 	}
 
 	sort.Strings(bad)

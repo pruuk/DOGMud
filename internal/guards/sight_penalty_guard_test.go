@@ -376,6 +376,11 @@ func parseProductionGoFiles(t *testing.T) (*token.FileSet, []sightFile) {
 	if productionParseErr != nil {
 		t.Fatalf("walk repo: %v", productionParseErr)
 	}
+	// Every caller checks the walk for an absence, so a walk that parsed
+	// nothing would pass them all.
+	if len(productionParseFiles) < 500 {
+		t.Fatalf("the production walk parsed only %d files; it is not seeing the repo, so a pass proves nothing", len(productionParseFiles))
+	}
 	return productionParseFset, productionParseFiles
 }
 

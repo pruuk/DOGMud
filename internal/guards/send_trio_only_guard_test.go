@@ -144,6 +144,7 @@ var sendTrioOnlyProducerRE = regexp.MustCompile(`messaging\.Say\(|acteeDefenceLi
 func TestNarrationTrioOnlyCategoriesLeaveOnlyThroughSendTrio(t *testing.T) {
 	seen := map[string]bool{}
 	var outside []string
+	scanned := 0
 
 	for _, root := range messagingSurfaceGoRoots {
 		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
@@ -160,6 +161,7 @@ func TestNarrationTrioOnlyCategoriesLeaveOnlyThroughSendTrio(t *testing.T) {
 			if rerr != nil {
 				return rerr
 			}
+			scanned++
 			rel := filepath.ToSlash(path)
 			for i, line := range strings.Split(string(src), "\n") {
 				if !sendTrioOnlyCategoryRE.MatchString(line) {
@@ -179,6 +181,11 @@ func TestNarrationTrioOnlyCategoriesLeaveOnlyThroughSendTrio(t *testing.T) {
 		if err != nil {
 			t.Fatalf("walk %s: %v", root, err)
 		}
+	}
+
+	// A walk that found no files would pass with nothing outside.
+	if scanned < 100 {
+		t.Fatalf("read only %d Go files under %v; the walk is not seeing the tree, so a pass proves nothing", scanned, messagingSurfaceGoRoots)
 	}
 
 	// Each allowlist entry must still match, which also proves the pattern

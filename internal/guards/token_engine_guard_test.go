@@ -75,6 +75,7 @@ var tokenEngineAllowed = map[string]string{}
 func TestNoSecondTokenEngine(t *testing.T) {
 	var offenders []string
 	seen := map[string]bool{}
+	scanned := 0
 
 	for _, root := range messagingSurfaceGoRoots {
 		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
@@ -99,6 +100,7 @@ func TestNoSecondTokenEngine(t *testing.T) {
 			if perr != nil {
 				return perr
 			}
+			scanned++
 			ast.Inspect(file, func(n ast.Node) bool {
 				call, ok := n.(*ast.CallExpr)
 				if !ok {
@@ -136,6 +138,12 @@ func TestNoSecondTokenEngine(t *testing.T) {
 		if err != nil {
 			t.Fatalf("walk %s: %v", root, err)
 		}
+	}
+
+	// The allowlist is empty, so nothing above proves the walk saw the tree:
+	// a walk that found no files would pass with no offenders.
+	if scanned < 100 {
+		t.Fatalf("parsed only %d Go files under %v; the walk is not seeing the tree, so a pass proves nothing", scanned, messagingSurfaceGoRoots)
 	}
 
 	// Every allowlist entry must still match. Without this the map rots into

@@ -131,6 +131,7 @@ func TestPoolMutationGoesThroughThePrimitives(t *testing.T) {
 
 	var offenders []string
 	fset := token.NewFileSet()
+	scanned := 0
 
 	for _, sub := range poolWriteRoots {
 		walkRoot := filepath.Join(root, sub)
@@ -172,6 +173,7 @@ func TestPoolMutationGoesThroughThePrimitives(t *testing.T) {
 				// test's. Skipping it keeps failures attributable.
 				return nil
 			}
+			scanned++
 
 			report := func(lhs ast.Expr, form string) {
 				sel, ok := lhs.(*ast.SelectorExpr)
@@ -201,6 +203,10 @@ func TestPoolMutationGoesThroughThePrimitives(t *testing.T) {
 		if err != nil {
 			t.Fatalf("walk %s: %v", sub, err)
 		}
+	}
+	// A walk that parsed nothing would report no offenders.
+	if scanned < 500 {
+		t.Fatalf("parsed only %d production Go files under %v; the walk is not seeing the tree, so a pass proves nothing", scanned, poolWriteRoots)
 	}
 
 	if len(offenders) > 0 {

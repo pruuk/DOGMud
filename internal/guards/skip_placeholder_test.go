@@ -42,6 +42,7 @@ func TestNoSkipOnlyPlaceholderTests(t *testing.T) {
 
 	var offenders []string
 	fset := token.NewFileSet()
+	scanned := 0
 
 	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -70,6 +71,7 @@ func TestNoSkipOnlyPlaceholderTests(t *testing.T) {
 			// test's. Skipping it here keeps failures attributable.
 			return nil
 		}
+		scanned++
 
 		for _, decl := range file.Decls {
 			fn, ok := decl.(*ast.FuncDecl)
@@ -106,6 +108,10 @@ func TestNoSkipOnlyPlaceholderTests(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("walk repo: %v", err)
+	}
+	// A walk that parsed no test files would report no placeholders.
+	if scanned < 500 {
+		t.Fatalf("parsed only %d _test.go files under %s; the walk is not seeing the repo, so a pass proves nothing", scanned, root)
 	}
 
 	if len(offenders) > 0 {

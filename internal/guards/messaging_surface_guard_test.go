@@ -1593,6 +1593,7 @@ var m2FrozenFiles = map[string]string{}
 func TestEveryTrioLiteralNamesAllThreeRoles(t *testing.T) {
 	roles := []string{"Actor", "Actee", "Observer"}
 	var bad []string
+	trios := 0
 
 	for _, root := range messagingSurfaceGoRoots {
 		fset := token.NewFileSet()
@@ -1627,6 +1628,7 @@ func TestEveryTrioLiteralNamesAllThreeRoles(t *testing.T) {
 				if pkg, ok := sel.X.(*ast.Ident); !ok || pkg.Name != "messaging" {
 					return true
 				}
+				trios++
 				named := map[string]bool{}
 				for _, elt := range cl.Elts {
 					kv, ok := elt.(*ast.KeyValueExpr)
@@ -1655,6 +1657,12 @@ func TestEveryTrioLiteralNamesAllThreeRoles(t *testing.T) {
 		if err != nil {
 			t.Fatalf("walk %s: %v", root, err)
 		}
+	}
+
+	// 71 lines open a messaging.Trio literal in production code (grep,
+	// 2026-10-24); a walk that found none would pass with nothing missing.
+	if trios < 30 {
+		t.Fatalf("found only %d messaging.Trio literals under %v; the walk is not seeing the tree, so a pass proves nothing", trios, messagingSurfaceGoRoots)
 	}
 
 	sort.Strings(bad)
@@ -1702,6 +1710,7 @@ func TestEveryTrioLiteralNamesAllThreeRoles(t *testing.T) {
 // for the failure text.
 func TestRemoteRoomIsPairedWithRemoteObserver(t *testing.T) {
 	var bad []string
+	funcs := 0
 
 	for _, root := range messagingSurfaceGoRoots {
 		fset := token.NewFileSet()
@@ -1756,6 +1765,7 @@ func TestRemoteRoomIsPairedWithRemoteObserver(t *testing.T) {
 					return true
 				})
 
+				funcs++
 				if setsRemoteRoom && !setsRemoteObserver {
 					bad = append(bad, filepath.ToSlash(path)+":"+
 						strconv.Itoa(fset.Position(fn.Pos()).Line)+
@@ -1770,6 +1780,13 @@ func TestRemoteRoomIsPairedWithRemoteObserver(t *testing.T) {
 		if err != nil {
 			t.Fatalf("walk %s: %v", root, err)
 		}
+	}
+
+	// No production function sets RemoteRoom today, so this guard holds for
+	// the next one (its failure was proven by the probe described above). A
+	// walk that reached no function bodies would pass the same way.
+	if funcs < 1000 {
+		t.Fatalf("walked only %d function bodies under %v; the walk is not seeing the tree, so a pass proves nothing", funcs, messagingSurfaceGoRoots)
 	}
 
 	sort.Strings(bad)
