@@ -3,6 +3,7 @@ package hooks
 import (
 	"github.com/GoMudEngine/GoMud/internal/caravan"
 	"github.com/GoMudEngine/GoMud/internal/companionai"
+	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/forager"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -102,6 +103,8 @@ func RegisterListeners() {
 	events.RegisterListener(events.MSP{}, PlaySound)
 	// Quest Events
 	events.RegisterListener(events.Quest{}, HandleQuestUpdate)
+	// A hand-in pitches the one next offer it unlocked (#375 P1)
+	events.RegisterListener(events.TalkNextOffer{}, conversation.HandleTalkNextOffer)
 	// Spawn events
 	events.RegisterListener(events.PlayerSpawn{}, HandleJoin)
 	events.RegisterListener(events.PlayerSpawn{}, LightNoticeOnSpawn)

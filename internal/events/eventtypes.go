@@ -102,6 +102,21 @@ type Quest struct {
 
 func (q Quest) Type() string { return `Quest` }
 
+// TalkNextOffer asks the talk flow to pitch an NPC's next quest offer after
+// a hand-in (#375 phase 2). It is queued at TalkNextOfferPriority, so it runs
+// after the hand-in's completion banner and reward lines (priority 0) and
+// before a menu shown last (priority 50).
+type TalkNextOffer struct {
+	UserId        int
+	MobInstanceId int
+	TopicKey      string
+}
+
+func (t TalkNextOffer) Type() string { return `TalkNextOffer` }
+
+// TalkNextOfferPriority is the queue priority of TalkNextOffer.
+const TalkNextOfferPriority = 45
+
 // For special room-targetting actions
 type RoomAction struct {
 	RoomId       int

@@ -27,3 +27,15 @@ func TestNpcMarkersChanged_DrainFreesTheUniqueSlot(t *testing.T) {
 	AddToQueue(NpcMarkersChanged{UserId: 63})
 	require.Len(t, DrainQueuedNpcMarkersChangedForTest(63), 1)
 }
+
+// The catch-all drains free the slot too: a test cleaning up with
+// DrainAllQueuedEventsForTest once silently dropped the next test's refresh.
+func TestNpcMarkersChanged_DrainAllAndByTypeFreeTheUniqueSlot(t *testing.T) {
+	DrainQueuedNpcMarkersChangedForTest(0)
+	AddToQueue(NpcMarkersChanged{UserId: 64})
+	DrainAllQueuedEventsForTest()
+	AddToQueue(NpcMarkersChanged{UserId: 64})
+	require.Len(t, DrainQueuedByTypeForTest(`NpcMarkersChanged`), 1, "DrainAll freed the slot")
+	AddToQueue(NpcMarkersChanged{UserId: 64})
+	require.Len(t, DrainQueuedNpcMarkersChangedForTest(64), 1, "DrainQueuedByType freed the slot")
+}

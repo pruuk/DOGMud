@@ -263,6 +263,9 @@ func resolve(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialog
 	if applied && t.Behavior {
 		return // a timed scene is under way: the menu closes (R18)
 	}
+	if applied && t.Kind == dialogue.KindHandIn && queueNextOffer(user, mob.InstanceId, df, granted) {
+		return // the next offer's pitch and card follow the completion lines
+	}
 	openMenu(user, mob.InstanceId, granted)
 }
 

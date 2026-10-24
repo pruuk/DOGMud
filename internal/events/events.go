@@ -818,6 +818,14 @@ func DrainAllQueuedEventsForTest() int {
 	qLock.Lock()
 	defer qLock.Unlock()
 	n := len(globalQueue)
+	// Free each drained unique event's slot, as ProcessEvents does, or the
+	// next one queued (a player's NpcMarkersChanged, say) is dropped as a
+	// duplicate of an event that no longer exists.
+	for _, pe := range globalQueue {
+		if ue, ok := pe.event.(uniqueEvent); ok {
+			delete(uniqueMap, ue.UniqueID())
+		}
+	}
 	globalQueue = priorityQueue{}
 	heap.Init(&globalQueue)
 	return n
@@ -837,6 +845,9 @@ func DrainQueuedByTypeForTest(typeName string) []Event {
 	for _, pe := range globalQueue {
 		if pe.event.Type() == typeName {
 			found = append(found, pe.event)
+			if ue, ok := pe.event.(uniqueEvent); ok {
+				delete(uniqueMap, ue.UniqueID()) // as ProcessEvents does
+			}
 			continue
 		}
 		remaining = append(remaining, pe)
