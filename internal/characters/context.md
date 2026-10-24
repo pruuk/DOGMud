@@ -751,8 +751,8 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   a full stat recalculation, and 8 melee call sites depend on it. `ApplyHarm`
   deliberately does not do this. Do not add new callers, and do not "simplify" it
   into `ApplyHarm`.
-- **Direct pool writes are guarded.** `pool_mutation_guard_test.go` at the repo
-  root fails any production assignment to `.Health`/`.Stamina`/`.Conviction`
+- **Direct pool writes are guarded.** `pool_mutation_guard_test.go` in
+  `internal/guards` fails any production assignment to `.Health`/`.Stamina`/`.Conviction`
   outside five declared exemption classes: the primitives themselves, the clamp
   layer, construction/spawn, admin commands, and a test fixture that compiles
   into the binary. A temporary sixth block holds the sites U5b-2 and U5c still

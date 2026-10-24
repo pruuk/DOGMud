@@ -79,7 +79,7 @@ topics:
 - Every new key needs a line `<mobId>.<key>` in
   `_datafiles/world/dogmud/dialogue/topic-keys.txt`; a removed or renamed
   key moves to its `# retired` or `# renamed` section, because saved
-  characters hold heard keys (`topic_manifest_test.go`).
+  characters hold heard keys (`internal/guards/topic_manifest_test.go`).
 - Labels follow the menu language in `dogmud-player-copy` (player's voice,
   at most 50 characters, `menu.LintLabels` checks the rest). `playerLine`
   may use only what the player can see at that moment (R27).

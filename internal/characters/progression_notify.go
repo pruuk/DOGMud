@@ -7,7 +7,7 @@ package characters
 // tests.
 //
 // 🔴 A missing registration silences ALL progression text while every unit
-// test stays green. The root guard progression_notifier_guard_test.go asserts
+// test stays green. The guard internal/guards/progression_notifier_guard_test.go asserts
 // main.go registers it.
 var progressionNotifyFn func(userId int, text string)
 

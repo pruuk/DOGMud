@@ -337,7 +337,7 @@ func TestNoTemplateReadsABuffField(t *testing.T) {
 
 	// A stale allowlist entry pardons a match that has moved or is gone,
 	// which pardons whatever happens to sit at that key now instead (the
-	// same staleness check condition_apply_path_guard_test.go runs on
+	// same staleness check internal/guards/condition_apply_path_guard_test.go runs on
 	// conditionApplyPathAllowlist).
 	var stale []string
 	for key := range templateBuffFieldAllowlist {

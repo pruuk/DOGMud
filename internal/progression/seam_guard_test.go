@@ -133,8 +133,7 @@ var progressionCalls = map[string]bool{
 // progression logic duplicated on both the attack and defence sides. This
 // test is what stops the duplication from coming back.
 //
-// Modelled on the U5b AST pool-mutation guard (pool_mutation_guard_test.go at
-// the repo root): walk the guarded packages, parse each non-test file, and
+// Modelled on the U5b AST pool-mutation guard (internal/guards/pool_mutation_guard_test.go): walk the guarded packages, parse each non-test file, and
 // flag any call whose selector name matches a guarded method -- unless the
 // file is on the allow-list, in which case the exemption (and its reason) is
 // recorded above rather than left as an accident of which files got scanned.

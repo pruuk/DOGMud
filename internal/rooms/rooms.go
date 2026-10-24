@@ -291,7 +291,7 @@ func (r *Room) SendTextVisualHidingNames(cat messaging.Category, txt string, nam
 // player's free text that is seen rather than heard (a free-form emote): the
 // same sight gate and name hiding, with every message marked IsCommunication
 // so the Deafened moderation filter spares a deafened player. Only the shared
-// bodies in internal/actions call it (speech_wrapper_guard_test.go).
+// bodies in internal/actions call it (internal/guards/speech_wrapper_guard_test.go).
 func (r *Room) SendVisualCommunicationHidingNames(cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
 	r.sendTextVisualJudgedBy(cat, txt, names, true, excludeUserIds...)
 }
@@ -314,7 +314,7 @@ func (r *Room) SendTextHidingNames(cat messaging.Category, txt string, names []s
 // messaging.HideSpeakerNames at that listener's sight, and every message is
 // marked IsCommunication so the Deafened moderation filter still applies.
 // Only the shared bodies in internal/actions call it
-// (speech_wrapper_guard_test.go).
+// (internal/guards/speech_wrapper_guard_test.go).
 func (r *Room) SendCommunicationHidingNames(cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
 	r.sendAudioHidingNames(cat, txt, names, messaging.HideSpeakerNames, true, excludeUserIds...)
 }

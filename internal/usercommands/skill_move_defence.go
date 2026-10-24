@@ -81,7 +81,7 @@ func moveDefenceLines(user *users.UserRecord, room *rooms.Room, target actions.A
 // category of the defence line sent beside it, since it reaches the defender
 // and not the player who typed the command (M7 slice 4, #371). It leaves
 // through SendTrio as the actee's line because Kick, Trip and Bash leave only
-// through SendTrio (send_trio_only_guard_test.go). An empty Shortage (no
+// through SendTrio (internal/guards/send_trio_only_guard_test.go). An empty Shortage (no
 // player defender, or no shortage) sends nothing.
 func sendMoveDefenceShortage(note messaging.Line, aud messaging.Audience) {
 	// Private to the defender: the attacker and the room are not told that

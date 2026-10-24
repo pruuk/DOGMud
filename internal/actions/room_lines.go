@@ -9,7 +9,7 @@ import (
 // emote wrapper, player and mob, sends its room line through one of these, so
 // the name each listener reads follows that listener's sight, and the deafen
 // filter applies to a player's free text only (owner rulings 3, 6 and 7).
-// speech_wrapper_guard_test.go stops a wrapper sending its own.
+// internal/guards/speech_wrapper_guard_test.go stops a wrapper sending its own.
 
 // SendHeard sends a line the actor made heard (a rally, a warcry) to everyone
 // else in its room, whatever they can see: the actor's name at clear sight,

@@ -3,7 +3,7 @@
 # ruling 2026-10-17: every Pothole Coulee NPC and quest giver carries a light
 # so a new player can address them by name at any hour. never_drops keeps the
 # new-player area from becoming a free lantern farm; the sold Oil Lantern
-# (40038) stays as it was. Guarded by coulee_npc_light_guard_test.go.
+# (40038) stays as it was. Guarded by internal/guards/coulee_npc_light_guard_test.go.
 itemid: 20134
 name: Keeper's Lantern
 namesimple: lantern

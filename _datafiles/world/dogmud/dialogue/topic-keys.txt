@@ -4,7 +4,8 @@
 # Saved characters hold these keys, so a key may leave dialogue content only
 # by moving to the "# retired" section (the topic is gone) or the "# renamed"
 # section as "old -> new" (LoadUser rewrites heard keys through it). A new
-# topic key must be added to the list. topic_manifest_test.go enforces both.
+# topic key must be added to the list. internal/guards/topic_manifest_test.go
+# enforces both.
 107.about_father
 107.reassure
 107.the_choice

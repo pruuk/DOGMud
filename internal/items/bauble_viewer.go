@@ -6,7 +6,7 @@ package items
 // NameComplex, GetLongDescription, and so every template and GMCP payload
 // built on them) shows the generic trinket, and these show its own text to
 // its finder alone. Call them only where the output reaches that one
-// viewer: the repo-root guard (bauble_finder_view_guard_test.go) lists
+// viewer: the guard (internal/guards/bauble_finder_view_guard_test.go) lists
 // every caller. For any other item each is its viewer-agnostic twin.
 
 // GetSpecFor is GetSpec as viewerUserId sees it.
