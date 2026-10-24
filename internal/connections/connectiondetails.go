@@ -20,12 +20,13 @@ var ansiRegexp = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 // writeTimeout bounds every socket write.
 //
 // Without a deadline, a write to a client whose TCP receive window is full
-// blocks for as long as the OS retransmission timeout allows — potentially
-// minutes. Message dispatch runs inside ProcessEvents on the single game-loop
-// goroutine, so an unbounded write couples one stalled client to the entire
-// game: every player freezes, and the stalled connection cannot even be kicked
-// while it is stuck. 5 seconds is far longer than any healthy client needs and
-// short enough that a wedged socket is dropped rather than tolerated.
+// blocks for as long as the OS retransmission timeout allows, potentially
+// minutes. 5 seconds is far longer than any healthy client needs and short
+// enough that a wedged socket is dropped rather than tolerated.
+//
+// Only the connection's own writer goroutine (sendqueue.go) waits on this.
+// Until 2026-10-24 the write ran on the game loop, so one stalled web client
+// froze the whole game for the full 5 seconds before it was dropped.
 const writeTimeout = 5 * time.Second
 
 // ErrNoConnection is returned by Write when the ConnectionDetails has neither a
@@ -178,6 +179,18 @@ type ConnectionDetails struct {
 	// to the socket peer. See internal/web/clientip.go for how it is resolved
 	// and why X-Forwarded-For is only believed from a trusted peer.
 	clientIP string
+
+	// out is the outbound queue and its writer goroutine (sendqueue.go),
+	// created on first use through sendQueue().
+	out     *sendQueue
+	outOnce sync.Once
+
+	// readClosed is set by Close, which also moves the read deadline to now so
+	// the connection's reader returns at once while queued output drains.
+	// closeMu orders that against the websocket pong handler, which would
+	// otherwise push the read deadline back out.
+	closeMu    sync.Mutex
+	readClosed bool
 }
 
 // SetClientIP records the proxy-resolved source address. Only the websocket
@@ -295,19 +308,49 @@ func (cd *ConnectionDetails) AddInputHandler(name string, newInputHandler InputH
 	cd.inputHandlers = append(cd.inputHandlers, newInputHandler)
 }
 
+// Write queues p for this connection's writer goroutine and returns at once;
+// it never waits on the socket. The returned n is the number of bytes queued
+// after line-ending, ANSI and ASCII conversion.
+//
+// Errors: ErrNoConnection for a socketless connection, ErrConnectionClosing
+// after Close, ErrSendQueueFull when the connection fell too far behind (it
+// has been closed and logged; the caller should Remove it). A socket write
+// that fails later is handled by the writer, which Removes the connection.
 func (cd *ConnectionDetails) Write(p []byte) (n int, err error) {
+
+	// A connection removed between snapshot and write (see ErrNoConnection).
+	if cd.wsConn == nil && cd.conn == nil {
+		return 0, ErrNoConnection
+	}
+
+	p, ok := cd.prepareOutput(p)
+	if !ok {
+		return 0, nil
+	}
+
+	if err := cd.sendQueue().enqueue(p); err != nil {
+		return 0, err
+	}
+	return len(p), nil
+}
+
+// prepareOutput converts p to what goes on the wire, as a fresh slice the
+// queue can own. Runs on the caller's goroutine, so clientSettings and
+// stripAnsi are read where they always were. ok is false when there is
+// nothing to send.
+func (cd *ConnectionDetails) prepareOutput(p []byte) (out []byte, ok bool) {
 
 	p = []byte(strings.ReplaceAll(string(p), "\n", "\r\n"))
 
 	if len(p) == 0 {
-		return 0, nil
+		return nil, false
 	}
 
 	// Strip ANSI escape codes for AI connections (not telnet IAC commands)
 	if cd.stripAnsi && p[0] != term.TELNET_IAC {
 		p = ansiRegexp.ReplaceAll(p, nil)
 		if len(p) == 0 {
-			return 0, nil
+			return nil, false
 		}
 	}
 
@@ -315,44 +358,47 @@ func (cd *ConnectionDetails) Write(p []byte) (n int, err error) {
 	if cd.clientSettings.AsciiMode && p[0] != term.TELNET_IAC {
 		p = []byte(util.ConvertToAscii(string(p)))
 		if len(p) == 0 {
-			return 0, nil
+			return nil, false
 		}
 	}
 
+	// If this isn't caught and avoided, lots of stuff goes wrong.
+	// Websocket client complains, disconnects, error is rasised: close 1002 (protocol error): Invalid UTF-8 in text frame
+	// Then a panic ensues as the server tries to write to a socket that's nil.
+	// TODO: Investigate cleaning up this condition better.
+	if cd.wsConn != nil && p[0] == term.TELNET_IAC {
+		mudlog.Error("conn.Write", "error", "Trying to send telnet command to websocket!", "bytes", p, "string", string(p))
+		return nil, false
+	}
+
+	return p, true
+}
+
+// writeNow is the one place data reaches the socket. Only the writer goroutine
+// (sendQueue.run) calls it, so only that goroutine ever waits on a slow peer.
+func (cd *ConnectionDetails) writeNow(p []byte, deadline time.Time) error {
+
 	if cd.wsConn != nil {
+		// wsLock serialises data frames with the heartbeat's ping frames.
 		cd.wsLock.Lock()
 		defer cd.wsLock.Unlock()
 
-		// If this isn't caught and avoided, lots of stuff goes wrong.
-		// Websocket client complains, disconnects, error is rasised: close 1002 (protocol error): Invalid UTF-8 in text frame
-		// Then a panic ensues as the server tries to write to a socket that's nil.
-		// TODO: Investigate cleaning up this condition better.
-		if p[0] == term.TELNET_IAC {
-			mudlog.Error("conn.Write", "error", "Trying to send telnet command to websocket!", "bytes", p, "string", string(p))
-			return 0, nil
-		}
-
 		// Bound the write the same way heartbeat.writePing() bounds its control
 		// frame. Set inside wsLock, immediately before the write it applies to.
-		cd.wsConn.SetWriteDeadline(time.Now().Add(writeTimeout))
-
-		err := cd.wsConn.WriteMessage(websocket.TextMessage, p)
-		if err != nil {
-			return 0, err
-		}
-		return len(p), nil
+		_ = cd.wsConn.SetWriteDeadline(deadline)
+		return cd.wsConn.WriteMessage(websocket.TextMessage, p)
 	}
 
-	// A connection removed between snapshot and write (see ErrNoConnection).
 	if cd.conn == nil {
-		return 0, ErrNoConnection
+		return ErrNoConnection
 	}
 
 	// Ignore the deadline error: a transport that does not support deadlines
 	// should still get the write attempt.
-	cd.conn.SetWriteDeadline(time.Now().Add(writeTimeout))
+	_ = cd.conn.SetWriteDeadline(deadline)
 
-	return cd.conn.Write(p)
+	_, err := cd.conn.Write(p)
+	return err
 }
 
 // Read returns at most one input line per call.
@@ -395,19 +441,66 @@ func (cd *ConnectionDetails) Read(p []byte) (n int, err error) {
 	return n, nil
 }
 
+// Close ends the connection without waiting on the network: Remove and Kick
+// call it under the registry lock, often from the game loop.
+//
+// Output queued before Close is still delivered (a goodbye line, a login
+// refusal), bounded by writeTimeout; the writer goroutine then closes the
+// socket. The reader is unblocked at once by moving its deadline to now, so a
+// kicked player's input stops immediately, exactly as when Close shut the
+// socket directly.
 func (cd *ConnectionDetails) Close() {
 	if cd.heartbeat != nil {
-		cd.heartbeat.stop()
+		cd.heartbeat.signalStop()
 	}
 
+	if cd.wsConn == nil && cd.conn == nil {
+		return
+	}
+
+	cd.sendQueue().close()
+	cd.unblockReader()
+}
+
+// unblockReader makes the connection's pending and future reads fail now.
+func (cd *ConnectionDetails) unblockReader() {
+	cd.closeMu.Lock()
+	defer cd.closeMu.Unlock()
+
+	cd.readClosed = true
 	if cd.wsConn != nil {
-		cd.wsConn.Close()
+		// The underlying net.Conn, not wsConn.SetReadDeadline: gorilla allows
+		// only the reading goroutine to call its read methods, while a
+		// net.Conn deadline is safe from any goroutine.
+		_ = cd.wsConn.NetConn().SetReadDeadline(time.Now())
+		return
+	}
+	_ = cd.conn.SetReadDeadline(time.Now())
+}
+
+// extendReadDeadline is the heartbeat pong handler's deadline push. It is a
+// no-op once Close has run, so a late pong cannot re-block a closed reader.
+func (cd *ConnectionDetails) extendReadDeadline(t time.Time) {
+	cd.closeMu.Lock()
+	defer cd.closeMu.Unlock()
+
+	if cd.readClosed {
+		return
+	}
+	_ = cd.wsConn.SetReadDeadline(t)
+}
+
+// closeSocket closes the socket itself. Called by the writer once its queue
+// is drained, or at once when the queue is aborted.
+func (cd *ConnectionDetails) closeSocket() {
+	if cd.wsConn != nil {
+		_ = cd.wsConn.Close()
 		return
 	}
 	if cd.conn == nil {
 		return
 	}
-	cd.conn.Close()
+	_ = cd.conn.Close()
 }
 
 func (cd *ConnectionDetails) RemoteAddr() net.Addr {

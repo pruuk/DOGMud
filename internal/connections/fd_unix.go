@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/copyover"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -19,6 +20,15 @@ func (c *connectionsCopyoverContributor) CopyoverSave(enc *copyover.Encoder) err
 	state := connectionsState{
 		ConnectCounter: connectCounter,
 	}
+
+	// Writes are queued (sendqueue.go), and execve discards this process's
+	// goroutines, so whatever is still queued when the image is replaced is
+	// lost. Flush every connection before handing over: websocket clients
+	// must actually receive their RELOGTKN, and a telnet client must not be
+	// left with half of a message. Bounded by writeTimeout in total; a client
+	// too slow to drain in that time loses its tail, the same outcome its
+	// next write would have had. The flush runs at the end of this function,
+	// once the reconnect tokens below are queued.
 
 	for id, cd := range netConnections {
 		if cd.IsWebSocket() {
@@ -53,7 +63,26 @@ func (c *connectionsCopyoverContributor) CopyoverSave(enc *copyover.Encoder) err
 		})
 	}
 
+	flushAllForCopyover(netConnections)
+
 	return enc.WriteSection(c.CopyoverName(), state)
+}
+
+// flushAllForCopyover waits, writeTimeout in total, for every connection's
+// queued output to reach its socket. The caller holds the registry lock; that
+// is safe because a writer marks its queue idle before it calls Remove on a
+// failed write, so a failing writer cannot hold this wait up.
+func flushAllForCopyover(conns map[ConnectionId]*ConnectionDetails) {
+	deadline := time.Now().Add(writeTimeout)
+	for id, cd := range conns {
+		if cd.wsConn == nil && cd.conn == nil {
+			continue
+		}
+		remaining := time.Until(deadline)
+		if remaining <= 0 || !cd.sendQueue().flush(remaining) {
+			mudlog.Warn("copyover: output still queued at handoff", "connectionId", id)
+		}
+	}
 }
 
 func (c *connectionsCopyoverContributor) CopyoverRestore(dec *copyover.Decoder) error {

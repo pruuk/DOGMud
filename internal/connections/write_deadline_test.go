@@ -15,7 +15,7 @@ import (
 // runs - without this, exercising the failure path panics inside the logger
 // instead of testing the connection layer.
 func TestMain(m *testing.M) {
-	mudlog.SetupLogger(nil, `L`, ``, false)
+	mudlog.SetupLogger(testLogs, `L`, ``, false)
 	os.Exit(m.Run())
 }
 
@@ -70,9 +70,10 @@ func TestWriteDeadlineBoundsBlockedWrite(t *testing.T) {
 	start := time.Now()
 
 	// Generous ceiling: we are asserting "bounded", not "exactly 5s".
-	err := waitFor(t, writeTimeout+10*time.Second, "ConnectionDetails.Write", func() error {
-		_, werr := cd.Write([]byte("this write has no reader on the other end"))
-		return werr
+	// writeNow is the writer goroutine's socket write; the deadline it is
+	// given is the one the writer computes (now + writeTimeout).
+	err := waitFor(t, writeTimeout+10*time.Second, "ConnectionDetails.writeNow", func() error {
+		return cd.writeNow([]byte("this write has no reader on the other end"), time.Now().Add(writeTimeout))
 	})
 
 	elapsed := time.Since(start)
@@ -122,18 +123,17 @@ func TestWriteToDetachedConnectionDoesNotPanic(t *testing.T) {
 
 	closedCd := &ConnectionDetails{connectionId: 90004, conn: clientSide}
 	err := waitFor(t, 5*time.Second, "Write to closed pipe", func() error {
-		_, werr := closedCd.Write([]byte("hello"))
-		return werr
+		return closedCd.writeNow([]byte("hello"), time.Now().Add(writeTimeout))
 	})
 	if err == nil {
 		t.Fatal("expected an error writing to a closed connection, got nil")
 	}
 }
 
-// TestSendToReleasesLockBeforeWriting proves step 2 of the fix: while SendTo is
-// parked inside a blocking write, the package lock must be free. Before the
-// fix, the Lock() below could not be acquired until the write finished - which
-// is why a wedged client could not even be kicked.
+// TestSendToReleasesLockBeforeWriting: while a connection's write is parked on
+// a peer that never reads, the package lock must be free, or a wedged client
+// could not even be kicked. Since 2026-10-24 the parked write is on the
+// connection's writer goroutine and SendTo itself returns at once.
 func TestSendToReleasesLockBeforeWriting(t *testing.T) {
 
 	clientSide, peerSide := net.Pipe()
@@ -162,20 +162,26 @@ func TestSendToReleasesLockBeforeWriting(t *testing.T) {
 		SendTo([]byte("a message nobody will read"), testId)
 	}()
 
-	// Give SendTo time to reach the (blocking) write.
-	time.Sleep(250 * time.Millisecond)
+	// Wait until the writer has taken the message and is inside the write.
+	lock.RLock()
+	q := netConnections[testId].sendQueue()
+	lock.RUnlock()
+	waitUntil(t, 2*time.Second, "writer is mid-write", func() bool {
+		q.mu.Lock()
+		defer q.mu.Unlock()
+		return len(q.items) == 0 && q.queuedBytes > 0
+	})
 
-	// Remove() takes the exclusive package lock. If SendTo still held it across
+	// Remove() takes the exclusive package lock. If anything held it across
 	// the write, this would block for the full writeTimeout.
-	waitFor(t, 2*time.Second, "Remove() while SendTo is mid-write", func() error {
+	waitFor(t, 2*time.Second, "Remove() while a write is parked", func() error {
 		Remove(999999) // not a real connection; we only care that it can lock
 		return nil
 	})
 
-	// Let SendTo unwind so the goroutine does not outlive the test.
 	select {
 	case <-sendDone:
-	case <-time.After(writeTimeout + 10*time.Second):
-		t.Fatal("SendTo never returned")
+	case <-time.After(fastCallLimit):
+		t.Fatal("SendTo did not return at once")
 	}
 }
