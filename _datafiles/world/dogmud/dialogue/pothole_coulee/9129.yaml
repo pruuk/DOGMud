@@ -93,7 +93,7 @@ opener:
       long time. You came in a pool-brewer and you walk out something the marsh respects.
       That is rarer than you know. Go on, then. The world is bigger than this mud.
     hints: You have cleared the marsh and the mire, and finished the brewing trail.
-      For more work at the bench, choose Another Brew below.
+      When there is more work at the bench, choose Another Brew below.
 topics:
 - key: marsh_offer
   kind: offer

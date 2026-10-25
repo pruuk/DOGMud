@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/quests"
@@ -14,28 +15,67 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+// questRecord is one row of the quests list.
+type questRecord struct {
+	Id          int
+	Name        string
+	Repeatable  bool
+	Description string
+	Completion  string
+	BarFull     string
+	BarEmpty    string
+}
 
-	type QuestRecord struct {
-		Id          int
-		Name        string
-		Description string
-		Completion  string
-		BarFull     string
-		BarEmpty    string
+// The finished-repeatable status lines in "quests all" (#375 P6).
+const (
+	repeatReadyLine = "Ready to take on again."
+	repeatWaitLine  = "Not offered again yet."
+	repeatDoneLine  = "Done for good."
+)
+
+// finishedRepeatRows are the "quests all" rows for repeatables the player
+// has finished and holds no progress on (completion clears it), with their
+// status line in place of a step description.
+func finishedRepeatRows(c *characters.Character, progress map[int]string, showHidden bool) []questRecord {
+	var rows []questRecord
+	for questId, n := range c.QuestCompletions {
+		if n < 1 {
+			continue
+		}
+		if _, inProgress := progress[questId]; inProgress {
+			continue
+		}
+		q := quests.GetQuestById(questId)
+		if q == nil || !q.Repeatable || (q.Secret && !showHidden) {
+			continue
+		}
+		line := repeatReadyLine
+		switch {
+		case c.RepeatCapReached(q):
+			line = repeatDoneLine
+		case c.QuestCooldownActive(q.QuestId):
+			line = repeatWaitLine
+		}
+		full, empty := util.ProgressBar(1, 25)
+		rows = append(rows, questRecord{Id: q.QuestId, Name: q.Name, Repeatable: true,
+			Description: line, Completion: "100%", BarFull: full, BarEmpty: empty})
 	}
+	return rows
+}
+
+func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	type QuestInfo struct {
 		QuestsTotal int
 		QuestsFound int
-		Records     []QuestRecord
+		Records     []questRecord
 	}
 
 	showHidden := questsShowHidden(rest, user)
 	showComplete := rest == `all` || rest == `all+`
 
 	qInfo := QuestInfo{}
-	allQuests := []QuestRecord{}
+	allQuests := []questRecord{}
 	var completion float64
 
 	qInfo.QuestsTotal = 0
@@ -45,6 +85,11 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if showHidden {
 		for _, quest := range quests.GetAllQuests() {
 			if _, ok := allQuestProgress[quest.QuestId]; ok {
+				continue
+			}
+			// A finished repeatable gets its status row below, not a 0%
+			// placeholder row.
+			if quest.Repeatable && user.Character.QuestCompletions[quest.QuestId] > 0 {
 				continue
 			}
 			allQuestProgress[quest.QuestId] = `all+`
@@ -84,9 +129,10 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			barFull, barEmpty := util.ProgressBar(completion, 25)
 
-			qDisplay := QuestRecord{
+			qDisplay := questRecord{
 				Id:          questInfo.QuestId,
 				Name:        questInfo.Name,
+				Repeatable:  questInfo.Repeatable,
 				Description: description,
 				Completion:  fmt.Sprintf(`%d%%`, int(math.Floor(completion*100))),
 				BarFull:     barFull,
@@ -95,6 +141,14 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			allQuests = append(allQuests, qDisplay)
 		}
+	}
+
+	// Finished repeatables count as finished quests either way, so plain
+	// `quests` points at `quests all` rather than saying there are none.
+	finished := finishedRepeatRows(user.Character, allQuestProgress, showHidden)
+	qInfo.QuestsTotal += len(finished)
+	if showComplete {
+		allQuests = append(allQuests, finished...)
 	}
 
 	qInfo.QuestsFound = len(allQuests)

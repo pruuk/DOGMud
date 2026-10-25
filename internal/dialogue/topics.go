@@ -33,6 +33,9 @@ func (df *DialogueFile) Eligible(t *Topic, ps *PlayerState) bool {
 	if ps == nil {
 		return true
 	}
+	if t.Kind == KindOffer && t.Quest > 0 && (ps.QuestOpen == nil || !ps.QuestOpen(t.Quest)) {
+		return false
+	}
 	for _, k := range t.HeardRequired {
 		if ps.HasHeard == nil || !ps.HasHeard(HeardKey(df.MobId, k)) {
 			return false

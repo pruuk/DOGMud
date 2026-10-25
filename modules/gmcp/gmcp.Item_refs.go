@@ -7,12 +7,9 @@ package gmcp
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
@@ -27,8 +24,10 @@ type mobRef struct {
 type refIterators struct {
 	mobs       func(yield func(mobRef))
 	recipes    func(yield func(recipeId string, outputId int))
-	quests     func(yield func(questId int, rewardIds []int))
 	containers func(yield func(roomId int, itemIds []int))
+	// questRefs is what the delete would break at the boot doors: the quest
+	// loop's refs rule and the dialogue item check (itemQuestRefs).
+	questRefs func(itemId int) []itemRef
 }
 
 func scanItemReferencesWith(itemId int, it refIterators) []itemRef {
@@ -47,19 +46,15 @@ func scanItemReferencesWith(itemId int, it refIterators) []itemRef {
 			}
 		})
 	}
-	if it.quests != nil {
-		it.quests(func(qid int, rewardIds []int) {
-			if containsInt(rewardIds, itemId) {
-				out = append(out, itemRef{Kind: "quest", Id: fmt.Sprintf("quest %d", qid)})
-			}
-		})
-	}
 	if it.containers != nil {
 		it.containers(func(roomId int, itemIds []int) {
 			if containsInt(itemIds, itemId) {
 				out = append(out, itemRef{Kind: "container", Id: fmt.Sprintf("room %d chest", roomId)})
 			}
 		})
+	}
+	if it.questRefs != nil {
+		out = append(out, it.questRefs(itemId)...)
 	}
 	return out
 }
@@ -73,30 +68,14 @@ func containsInt(s []int, v int) bool {
 	return false
 }
 
-// parseItemInfoIds parses a quest ItemInfo stockpile string ("itemid[:qty],...")
-// into item ids, skipping non-numeric tokens.
-func parseItemInfoIds(s string) []int {
-	out := []int{}
-	for _, part := range strings.Split(s, ",") {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-		if i := strings.IndexByte(part, ':'); i >= 0 {
-			part = part[:i]
-		}
-		if n, err := strconv.Atoi(strings.TrimSpace(part)); err == nil {
-			out = append(out, n)
-		}
-	}
-	return out
-}
-
 // scanItemReferences wires the real world iterators. Recipe INGREDIENTS reference
 // items by component tag (not id), so only the recipe OUTPUT id is scanned. Shop
 // stock is dynamic living state (self-heals on restock), so it is NOT scanned.
+// Quests and dialogue are checked by the boot doors' own rules
+// (itemQuestRefs), which visit every item field they carry.
 func scanItemReferences(itemId int) []itemRef {
 	return scanItemReferencesWith(itemId, refIterators{
+		questRefs: itemQuestRefs,
 		mobs: func(yield func(mobRef)) {
 			for _, m := range mobs.AllMobTemplates() {
 				ids := append(append([]int{}, m.LootPool...), m.CrafterRestockMaterials...)
@@ -106,16 +85,6 @@ func scanItemReferences(itemId int) []itemRef {
 		recipes: func(yield func(string, int)) {
 			for id, r := range crafting.GetAll() {
 				yield(id, r.Output.ItemId)
-			}
-		},
-		quests: func(yield func(int, []int)) {
-			for _, q := range quests.GetAllQuests() {
-				ids := []int{}
-				if q.Rewards.ItemId > 0 {
-					ids = append(ids, q.Rewards.ItemId)
-				}
-				ids = append(ids, parseItemInfoIds(q.Rewards.ItemInfo)...)
-				yield(q.QuestId, ids)
 			}
 		},
 		containers: func(yield func(int, []int)) {

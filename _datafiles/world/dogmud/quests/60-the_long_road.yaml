@@ -8,8 +8,8 @@ secret: false
 steps:
   - id: start
     map_target: 5409
-    description: "Toller Garrick has entrusted you with a sealed dispatch
-      bound for New Plymouth. Carry it north to Severin Pell, the ferry
+    description: "Toller Garrick hands you a sealed dispatch bound for New
+      Plymouth when you take this on. Carry it north to Severin Pell, the ferry
       agent at Hartcharn, who handles the first stage of the post relay."
     hint: "Follow the road north from the Tollgate, past the Lake & Ladle
       and through the Empty Reach, to the South Gate of Hartcharn. From

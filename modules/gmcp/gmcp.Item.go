@@ -109,7 +109,7 @@ type itemDetail struct {
 	Elements      []string              `json:"elements"`
 	Stats         []string              `json:"stats"`
 	VendorCats    []string              `json:"vendorCats"`       // valid vendor categories for the checkboxes
-	Ranges        map[string][2]float64 `json:"ranges,omitempty"` // observed min–max per numeric field, across items of this type
+	Ranges        map[string][2]float64 `json:"ranges,omitempty"` // observed min-max per numeric field, across items of this type
 }
 
 // itemListRow is one row of Build.Items.
@@ -253,7 +253,7 @@ func buildItemUpdate(d itemDeps, req itemUpdateReq) BuildResult {
 	// panics), so refuse to save it into that state — surface the fix instead.
 	if !req.NotSalable && req.QuestToken == "" {
 		if len(req.VendorCategories) == 0 {
-			return buildErr("a salable item needs at least one vendor category (%s) — or mark it not-salable", strings.Join(shops.ValidVendorCategories, ", "))
+			return buildErr("a salable item needs at least one vendor category (%s). Or mark it not-salable", strings.Join(shops.ValidVendorCategories, ", "))
 		}
 		for _, c := range req.VendorCategories {
 			if !shops.IsValidVendorCategory(c) {
@@ -272,7 +272,7 @@ func buildItemDelete(d itemDeps, itemId int) BuildResult {
 		return buildErr("item %d not found", itemId)
 	}
 	if refs := d.references(itemId); len(refs) > 0 {
-		return BuildResult{Error: "item is still referenced — remove these first", Refs: refs}
+		return BuildResult{Error: "item is still referenced: remove these first", Refs: refs}
 	}
 	if err := d.del(itemId); err != nil {
 		return buildErr("could not delete item %d: %s", itemId, err.Error())

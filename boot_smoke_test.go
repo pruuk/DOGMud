@@ -470,7 +470,8 @@ func TestSmoke_KaelGreetingFollowsQuest11Branch(t *testing.T) {
 		ch := &characters.Character{QuestProgress: c.progress}
 		branch := c.branch
 		ps := &dialogue.PlayerState{
-			HasQuest: ch.HasQuest,
+			QuestOpen: func(int) bool { return true },
+			HasQuest:  ch.HasQuest,
 			GetQuestFlag: func(key string) string {
 				if key == `11-branch` {
 					return branch

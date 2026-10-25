@@ -22,6 +22,7 @@ func TestEligible_GoldGate(t *testing.T) {
 	gold := 1400
 	var granted []string
 	ps := &PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasQuest:  func(string) bool { return false },
 		GiveQuest: func(token string) { granted = append(granted, token) },
 		HasGold:   func(amount int) bool { return gold >= amount },
@@ -41,6 +42,7 @@ func TestEligible_GoldGate(t *testing.T) {
 	// A PlayerState with no HasGold callback cannot confirm the player can
 	// pay, so the gate fails closed (as requiresItem does), never open.
 	legacy := &PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasQuest:  func(string) bool { return false },
 		GiveQuest: func(string) {},
 	}
@@ -54,7 +56,10 @@ func TestOpenerFor_GoldGate(t *testing.T) {
 		Variants: []OpenerVariant{{Gates: Gates{GoldRequired: 100}, Text: "rich"}},
 	}}
 	gold := 50
-	ps := &PlayerState{HasGold: func(amount int) bool { return gold >= amount }}
+	ps := &PlayerState{
+		QuestOpen: func(int) bool { return true },
+		HasGold:   func(amount int) bool { return gold >= amount },
+	}
 
 	text, _ := df.OpenerFor(ps)
 	assert.Equal(t, "plain", text)

@@ -21,6 +21,7 @@ func TestApply_TopicBumpsRep(t *testing.T) {
 	bumps := map[string]int{}
 	granted := ""
 	ps := &PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasQuest:  func(tok string) bool { return tok == "x-mid" },
 		GiveQuest: func(tok string) { granted = tok },
 		BumpRep:   func(faction string, delta int) { bumps[faction] += delta },
@@ -45,6 +46,7 @@ func TestApply_TopicGivesGold(t *testing.T) {
 
 	gold := 0
 	ps := &PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasQuest:  func(tok string) bool { return tok == "x-mid" },
 		GiveQuest: func(string) {},
 		GiveGold:  func(amount int) { gold += amount },

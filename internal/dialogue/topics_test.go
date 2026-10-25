@@ -18,6 +18,7 @@ type fakePlayer struct {
 
 func (f *fakePlayer) ps() *PlayerState {
 	return &PlayerState{
+		QuestOpen:    func(int) bool { return true },
 		HasQuest:     func(t string) bool { return f.tokens[t] },
 		HasItem:      func(id int) bool { return f.items[id] },
 		HasHeard:     func(k string) bool { return f.heard[k] },

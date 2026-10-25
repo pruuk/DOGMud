@@ -110,3 +110,35 @@ func TestLoadUserRenamesHeardTopicsFromTheManifest(t *testing.T) {
 		t.Fatalf("heard topics after load = %q, want \"12.new,94.kept\" (the rename applied, the other key kept)", got)
 	}
 }
+
+// #375 phase 2: a quest step renamed in the step-id manifest keeps the player
+// on it. LoadUser reads the renames from quests/step-ids.txt.
+func TestLoadUserRenamesQuestStepsFromTheManifest(t *testing.T) {
+	dir := withUserDataDir(t)
+	if err := os.MkdirAll(filepath.Join(dir, "quests"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := "# renamed\n53-firstkill -> 53-scout\n"
+	if err := os.WriteFile(filepath.Join(dir, "quests", "step-ids.txt"), []byte(manifest), 0644); err != nil {
+		t.Fatal(err)
+	}
+	idx := NewUserIndex()
+	if err := idx.Create(); err != nil {
+		t.Fatal(err)
+	}
+	if err := idx.AddUser(13, "stepper"); err != nil {
+		t.Fatal(err)
+	}
+	save := "userid: 13\nusername: stepper\ncharacter:\n  name: Stepper\n  questprogress:\n    53: firstkill\n"
+	if err := os.WriteFile(filepath.Join(dir, "users", "13.yaml"), []byte(save), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	u, err := LoadUser("stepper", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := u.Character.QuestProgress[53]; got != "scout" {
+		t.Fatalf("quest 53 step after load = %q, want \"scout\"", got)
+	}
+}

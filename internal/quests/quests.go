@@ -52,6 +52,11 @@ type QuestReward struct {
 	RoomId        int    `yaml:"roomid,omitempty" json:"roomid,omitempty"` // roomId to move player to
 	RepFaction    string `yaml:"rep_faction,omitempty" json:"rep_faction,omitempty"`
 	RepAmount     int    `yaml:"rep_amount,omitempty" json:"rep_amount,omitempty"`
+	// Summary replaces the generated reward line on the offer card
+	// (RewardSummary). The loop validator's reward rule requires it to name
+	// every item, recipe and spell paid unless Surprise is set (#375 P2).
+	Summary  string `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Surprise bool   `yaml:"surprise,omitempty" json:"surprise,omitempty"`
 }
 
 // Quest is THE quest definition — the single parse of quest YAML (5c-pre
@@ -68,6 +73,7 @@ type Quest struct {
 	Flags          []QuestFlagDef `yaml:"flags,omitempty" json:"flags,omitempty"`
 	Repeatable     bool           `yaml:"repeatable,omitempty" json:"repeatable,omitempty"`           // completing clears progress so it can be re-taken (after CooldownRounds)
 	CooldownRounds int            `yaml:"cooldown_rounds,omitempty" json:"cooldown_rounds,omitempty"` // rounds after completion before a repeatable quest can be re-taken
+	RepeatLimit    int            `yaml:"repeat_limit,omitempty" json:"repeat_limit,omitempty"`       // lifetime completions of a repeatable; 0 = no cap (#375 P3)
 }
 
 type QuestStep struct {

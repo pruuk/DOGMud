@@ -388,6 +388,26 @@ marker on unheard flagged info.
 - The list is keyed by mob template, not instance: every copy of an NPC
   remembers the same conversation. Nothing ever removes a key.
 
+### Repeatable quest counts (`quests.go`, #375 phase 2)
+
+`Character.QuestCompletions` (`questcompletions` in the save, omitted when
+empty) is the number of completed runs of each repeatable quest, by quest id.
+It survives save, load and restart.
+
+- `RecordCompletion(q)` counts one run of a repeatable and stamps its cooldown
+  (`SetQuestCooldown`); the completion pass in `internal/hooks` calls it beside
+  the progress reset. Non-repeatables are ignored.
+- `RepeatCapReached(q)`: the run count has reached `q.RepeatLimit` (false when
+  the limit is 0). `LastRepeat(q)`: the next run is the last one the limit
+  allows (the card says so).
+- `QuestOpen(q)`: true for a non-repeatable (its gates decide), and for a
+  repeatable only off cooldown and under its cap. It backs
+  `dialogue.PlayerState.QuestOpen`.
+- `RenameQuestSteps(renames)` runs at load (`users.LoadUser`, with
+  `quests.StepRenames()` from `quests/step-ids.txt`) so saved progress follows a
+  renamed step id. It follows rename chains and ignores a rename that changes
+  the quest id.
+
 ### Character States and Modifiers
 - 🔑 **Timed state is `Character.Conditions` and nothing else.** Read
   `internal/conditions/context.md` before adding, reading or displaying anything

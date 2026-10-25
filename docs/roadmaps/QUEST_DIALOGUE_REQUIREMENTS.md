@@ -41,7 +41,8 @@ to the next.
 11. Heard topics are saved by stable key, never by menu position. Quest state comes from quest
     tokens.
 12. Abandon keeps progress. Re-taking resumes where the player left off.
-13. Repeatable quests have a frequency and a repeat limit.
+13. Repeatable quests have a frequency, and a repeat limit where wanted.
+    (Owner 2026-10-24, phase 2 ruling P3.)
 14. Quest steps progress on real actions (cast, explore, acquire, talk, observe, use), never on
     a typed noun the player has to guess.
 15. Minimap guidance points at a room, an NPC, a zone or an area. "Destination unknown" is
@@ -64,7 +65,7 @@ to the next.
 - [ ] Zero typed-noun `room_interact` triggers remain.
 - [ ] Every quest step has a minimap target; any "destination unknown" is logged and listed.
 - [ ] Abandon and focus work by command and in the web client; abandon cannot reset progress.
-- [ ] Repeatable quests enforce both frequency and limit.
+- [ ] Repeatable quests enforce their frequency, and their limit where set.
 - [ ] All dialogue files are ported to keyed, labelled topics with `[*]` decided.
 - [ ] All quests are rewritten to atomic, hinted, action-triggered steps.
 - [ ] Zero em or en dashes in dialogue, quests and conversations, and the dash guards no

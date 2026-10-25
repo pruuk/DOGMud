@@ -52,6 +52,7 @@ func velkState(progress map[string]string, carrying ...int) *PlayerState {
 		return false
 	}
 	return &PlayerState{
+		QuestOpen:    func(int) bool { return true },
 		HasQuest:     has,
 		HasItem:      carries,
 		CarriesItem:  carries,

@@ -2,8 +2,6 @@ package hooks
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
@@ -22,127 +20,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
-
-// skillGrant is one parsed skill reward (skill tag + target level).
-type skillGrant struct {
-	skill string
-	level int
-}
-
-// parseSkillGrants parses a quest's skill_info reward into zero or more
-// grants. Format: a comma-separated list of "skill:level" entries, e.g.
-// "weapon-combat:1,unarmed-combat:1" or the legacy single "map:1".
-// Malformed entries (no colon, unparseable level) are skipped.
-func parseSkillGrants(skillInfo string) []skillGrant {
-	if skillInfo == `` {
-		return nil
-	}
-	var grants []skillGrant
-	for _, entry := range strings.Split(skillInfo, `,`) {
-		details := strings.Split(strings.TrimSpace(entry), `:`)
-		if len(details) <= 1 {
-			continue
-		}
-		skillName := strings.ToLower(strings.TrimSpace(details[0]))
-		level, err := strconv.Atoi(strings.TrimSpace(details[1]))
-		if err != nil || skillName == `` {
-			continue
-		}
-		grants = append(grants, skillGrant{skill: skillName, level: level})
-	}
-	return grants
-}
-
-// statGrant is one parsed stat reward (stat name + additive amount).
-type statGrant struct {
-	stat   string
-	amount int
-}
-
-// parseStatGrants parses a quest's stat_info reward into zero or more
-// grants. Format: a comma-separated list of "stat:amount" entries, e.g.
-// "strength:5" or "strength:3,vitality:2".
-// Valid stat names (lowercase): strength, dexterity, perception,
-// vitality, willpower, charisma.
-// Malformed entries (no colon, unparseable amount, empty name) are skipped.
-func parseStatGrants(statInfo string) []statGrant {
-	if statInfo == `` {
-		return nil
-	}
-	var grants []statGrant
-	for _, entry := range strings.Split(statInfo, `,`) {
-		details := strings.Split(strings.TrimSpace(entry), `:`)
-		if len(details) <= 1 {
-			continue
-		}
-		statName := strings.ToLower(strings.TrimSpace(details[0]))
-		amount, err := strconv.Atoi(strings.TrimSpace(details[1]))
-		if err != nil || statName == `` {
-			continue
-		}
-		grants = append(grants, statGrant{stat: statName, amount: amount})
-	}
-	return grants
-}
-
-// parseRecipeGrants parses a quest's recipe_info reward into zero or more
-// recipe IDs. Format: a comma-separated list of recipe IDs, e.g.
-// "iron-dagger" or "iron-dagger,iron-buckler".
-// Empty entries (from trailing commas, double-commas, etc.) are skipped.
-func parseRecipeGrants(recipeInfo string) []string {
-	if recipeInfo == `` {
-		return nil
-	}
-	var ids []string
-	for _, entry := range strings.Split(recipeInfo, `,`) {
-		id := strings.TrimSpace(entry)
-		if id == `` {
-			continue
-		}
-		ids = append(ids, id)
-	}
-	return ids
-}
-
-// itemGrant is one parsed item-stockpile reward (item id + quantity).
-type itemGrant struct {
-	itemId int
-	qty    int
-}
-
-// parseItemGrants parses a quest's item_info reward into zero or more item
-// grants. Format: a comma-separated list of "itemid[:qty]" entries, e.g.
-// "30036:3,30028:2,30058" (three healing salves, two antidotes, one firebomb).
-// A bare itemid with no colon defaults to a quantity of one. Malformed entries
-// (unparseable id, non-positive qty) are skipped. This backs multi-item
-// "starter kit / stockpile" rewards, mirroring parseSkillGrants/parseStatGrants.
-func parseItemGrants(itemInfo string) []itemGrant {
-	if itemInfo == `` {
-		return nil
-	}
-	var grants []itemGrant
-	for _, entry := range strings.Split(itemInfo, `,`) {
-		entry = strings.TrimSpace(entry)
-		if entry == `` {
-			continue
-		}
-		details := strings.Split(entry, `:`)
-		itemId, err := strconv.Atoi(strings.TrimSpace(details[0]))
-		if err != nil || itemId <= 0 {
-			continue
-		}
-		qty := 1
-		if len(details) > 1 {
-			q, qErr := strconv.Atoi(strings.TrimSpace(details[1]))
-			if qErr != nil || q <= 0 {
-				continue
-			}
-			qty = q
-		}
-		grants = append(grants, itemGrant{itemId: itemId, qty: qty})
-	}
-	return grants
-}
 
 // statGainDescriptions maps lowercase stat names to a flavourful gain phrase.
 // No hard numbers — per the project no-hard-numbers rule.
@@ -203,16 +80,23 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
-	// Repeatable-quest cooldown gate: refuse to (re)start a repeatable quest
-	// whose post-completion cooldown has not yet elapsed. Parse the step
-	// up-front so we can check before advancing the token.
+	// Repeatable-quest gate: refuse to (re)start a repeatable quest on its
+	// post-completion cooldown or at its lifetime repeat_limit. The talk
+	// menu already hides such an offer (PlayerState.QuestOpen); this is the
+	// backstop for any other grant path.
 	{
 		_, incomingStep := quests.TokenToParts(evt.QuestToken)
-		if incomingStep == `start` && questInfo.Repeatable &&
-			questUser.Character.QuestCooldownActive(questInfo.QuestId) {
-			questUser.SendText(messaging.CategoryRefusal,
-				`You have put in the work recently. Rest a while before taking this on again.`)
-			return events.Continue
+		if incomingStep == `start` && questInfo.Repeatable {
+			if questUser.Character.RepeatCapReached(questInfo) {
+				questUser.SendText(messaging.CategoryRefusal,
+					`You have done all the work there is here.`)
+				return events.Continue
+			}
+			if questUser.Character.QuestCooldownActive(questInfo.QuestId) {
+				questUser.SendText(messaging.CategoryRefusal,
+					`You have put in the work recently. Rest a while before taking this on again.`)
+				return events.Continue
+			}
 		}
 	}
 
@@ -337,14 +221,14 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			}
 		}
 		// Item-stockpile reward? Grants N of each listed item (see
-		// parseItemGrants). Routes through StoreItem so potions auto-fill a
+		// quests.ParseItemGrants). Routes through StoreItem so potions auto-fill a
 		// bandolier, components a component bag, etc. Reusable "starter kit"
 		// reward, mirroring the skill/stat/recipe multi-grants above.
-		for _, grant := range parseItemGrants(questInfo.Rewards.ItemInfo) {
+		for _, grant := range quests.ParseItemGrants(questInfo.Rewards.ItemInfo) {
 			var firstName string
 			granted := 0
-			for i := 0; i < grant.qty; i++ {
-				newItm := items.New(grant.itemId)
+			for i := 0; i < grant.Qty; i++ {
+				newItm := items.New(grant.ItemId)
 				if newItm.ItemId == 0 {
 					break // unknown item id — skip the whole grant
 				}
@@ -354,7 +238,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			}
 			if granted == 0 {
 				mudlog.Warn("Quest ItemReward", "token", evt.QuestToken,
-					"itemId", grant.itemId, "error", "unknown item id — skipped")
+					"itemId", grant.ItemId, "error", "unknown item id — skipped")
 				continue
 			}
 			if granted > 1 {
@@ -368,19 +252,19 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			questUser.AddCondition(questInfo.Rewards.ConditionId, `quest`)
 		}
 		// Stage 3.5: XP rewards removed. Progression is skill-based.
-		// Skill reward? Supports one OR several skills (see parseSkillGrants).
+		// Skill reward? Supports one OR several skills (see quests.ParseSkillGrants).
 		// Each grant is a floor-raise — it never downgrades a player already
 		// above the target (so a veteran replaying a newbie spoke keeps rank).
-		for _, grant := range parseSkillGrants(questInfo.Rewards.SkillInfo) {
-			currentLevel := questUser.Character.GetSkillLevel(skills.SkillTag(grant.skill))
-			if currentLevel < grant.level {
-				newLevel := questUser.Character.TrainSkill(grant.skill, grant.level)
+		for _, grant := range quests.ParseSkillGrants(questInfo.Rewards.SkillInfo) {
+			currentLevel := questUser.Character.GetSkillLevel(skills.SkillTag(grant.Skill))
+			if currentLevel < grant.Level {
+				newLevel := questUser.Character.TrainSkill(grant.Skill, grant.Level)
 
 				skillData := struct {
 					SkillName  string
 					SkillLevel int
 				}{
-					SkillName:  grant.skill,
+					SkillName:  grant.Skill,
 					SkillLevel: newLevel,
 				}
 				skillUpTxt, _ := templates.Process("character/skillup", skillData, questUser.UserId)
@@ -388,13 +272,13 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			}
 		}
 		// Stat reward? Additive — permanently increases the named stat's
-		// Training value. Supports one OR several stats (see parseStatGrants).
+		// Training value. Supports one OR several stats (see quests.ParseStatGrants).
 		// Unlike skill grants these are NOT floor-raises; each grant always
 		// adds its amount (quests are one-shot linear, so re-grant isn't
 		// a concern).
-		for _, grant := range parseStatGrants(questInfo.Rewards.StatInfo) {
-			if questUser.Character.IncreaseStat(grant.stat, grant.amount) {
-				msg, ok := statGainDescriptions[grant.stat]
+		for _, grant := range quests.ParseStatGrants(questInfo.Rewards.StatInfo) {
+			if questUser.Character.IncreaseStat(grant.Stat, grant.Amount) {
+				msg, ok := statGainDescriptions[grant.Stat]
 				if !ok {
 					msg = "You feel a subtle but permanent improvement wash over you."
 				}
@@ -402,12 +286,12 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 				questUser.SendText(messaging.CategorySkillProgress, statUpTxt)
 			} else {
 				mudlog.Warn("Quest StatReward", "token", evt.QuestToken,
-					"stat", grant.stat, "error", "unknown stat name — skipped")
+					"stat", grant.Stat, "error", "unknown stat name — skipped")
 			}
 		}
 		// Recipe reward? Grants each recipe ID to the player's KnownRecipes.
 		// Silently skips recipes the player already knows (idempotent).
-		for _, recipeId := range parseRecipeGrants(questInfo.Rewards.RecipeInfo) {
+		for _, recipeId := range quests.ParseRecipeGrants(questInfo.Rewards.RecipeInfo) {
 			if questUser.Character.LearnRecipe(recipeId) {
 				name := recipeId // fallback: use the id if the recipe spec isn't found
 				if spec := crafting.GetRecipe(recipeId); spec != nil {
@@ -443,12 +327,12 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			factions.BumpRep(questInfo.Rewards.RepFaction, questUser.UserId, questInfo.Rewards.RepAmount)
 		}
 
-		// Repeatable quest: reset progress so it can be taken again, and stamp
-		// a cooldown so it cannot be farmed back-to-back. (Non-repeatable
-		// quests are unaffected — Repeatable defaults false.)
+		// Repeatable quest: reset progress so it can be taken again, count
+		// the run and stamp its cooldown (RecordCompletion). Non-repeatable
+		// quests are unaffected.
 		if questInfo.Repeatable {
 			questUser.Character.ClearQuestToken(evt.QuestToken)
-			questUser.Character.SetQuestCooldown(questInfo.QuestId, uint64(questInfo.CooldownRounds))
+			questUser.Character.RecordCompletion(questInfo)
 		}
 	} else {
 		if !questInfo.Secret {

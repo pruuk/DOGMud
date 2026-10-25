@@ -22,7 +22,12 @@ longer decodes under the strict loader.
 ## Files
 
 - **types.go**: `PlayerState`, `QuestFlagSet`, `RepBump`, `Mood`, `Greeting`,
-  `DialogueFile`.
+  `DialogueFile`. `PlayerState.QuestOpen(questId)` (#375 P3) reports whether a
+  quest can be offered now: false for a repeatable on its cooldown or at its
+  `repeat_limit`. The offer gate in `Eligible` (`topics.go`) asks it for every
+  `offer` topic that has a quest, so such an offer is hidden (no `[!]`, no
+  Accept); a nil callback fails closed like every interrogative callback.
+  `conversation.PlayerState` wires it to `Character.QuestOpen`.
 - **topic.go**: `Gates`, `Effects`, `Topic`, `Opener`, `OpenerVariant`, the
   kind constants `KindInfo` / `KindOffer` / `KindHandIn`, and `HeardKey`.
 - **topics.go**: the `DialogueFile` methods `FindTopic`, `Eligible`,
@@ -54,7 +59,8 @@ longer decodes under the strict loader.
   `ArchetypeTopics` and adds the file-placement rules only the loaded mob
   templates can judge (dialogue folder equals the mob's zone folder, behavior
   trees read at the runtime's path, unparsable trees reported).
-- **manifest.go**: `Manifest`, `ParseManifest`, `Manifest.Diff`,
+- **manifest.go**: `Manifest` (an alias of `manifest.Manifest` from
+  `internal/manifest`, which `Diff` lives in), `ParseManifest`,
   `HeardRenames`: the committed topic-key manifest,
   `dialogue/topic-keys.txt`. `topic_manifest_test.go` (internal/guards) holds it
   to content, and `users.LoadUser` passes `HeardRenames()` to

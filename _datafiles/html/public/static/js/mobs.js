@@ -140,7 +140,7 @@
     // window.prompt returns null on Cancel but "" on OK with an empty field —
     // the latter is a deliberate "(no zone)" choice (a summon-only / not-yet-
     // placed template) and must NOT be treated as a cancel.
-    var z = window.prompt("New mob — which zone? Leave blank for (no zone).\n(" + zones.join(", ") + ")", dflt);
+    var z = window.prompt("New mob: which zone? Leave blank for (no zone).\n(" + zones.join(", ") + ")", dflt);
     if (z === null) return;
     z = z.trim();
     Panel.creating = true;
@@ -165,7 +165,7 @@
     var wrap = ce("div", { style: "border:1px solid var(--tooled);border-radius:5px;padding:8px;margin-bottom:12px;" });
     wrap.appendChild(ce("h3", { text: "Test spawn", style: "margin-top:0;" }));
     wrap.appendChild(ce("div", { style: "font-size:10px;color:var(--gold-dim);margin:2px 0 6px;",
-      text: "Admin test tool only — drops a disposable copy wherever you pick. Where this mob REALLY spawns is authored on rooms: Rooms tab → the room → Spawns." }));
+      text: "Admin test tool only: drops a disposable copy wherever you pick. Where this mob REALLY spawns is authored on rooms: Rooms tab → the room → Spawns." }));
 
     var zoneSel = ce("select", {});
     (enums.zones || []).forEach(function (z) {
@@ -219,7 +219,7 @@
     wrap.appendChild(ce("div", { "class": "row" }, [labelWrap("Zone", zoneSel), labelWrap("Room", roomSel)]));
     wrap.appendChild(ce("div", { style: "margin-top:6px;display:flex;align-items:center;gap:8px;" },
       [spawnBtn, statusEl]));
-    fillRoomPlaceholder("— pick a room —");
+    fillRoomPlaceholder("(pick a room)");
     requestRooms();
     return wrap;
   };
@@ -233,9 +233,9 @@
     // rather than repopulating the dropdown with the wrong zone's rooms.
     if (ui.pendingZone !== ui.zoneSel.value) return;
     ui.roomSel.innerHTML = "";
-    ui.roomSel.appendChild(ce("option", { value: "", text: "— pick a room —", disabled: "disabled", selected: "selected" }));
+    ui.roomSel.appendChild(ce("option", { value: "", text: "(pick a room)", disabled: "disabled", selected: "selected" }));
     (rows || []).forEach(function (r) {
-      ui.roomSel.appendChild(ce("option", { value: String(r.id), text: "#" + r.id + " — " + (r.title || "(untitled)") }));
+      ui.roomSel.appendChild(ce("option", { value: String(r.id), text: "#" + r.id + ": " + (r.title || "(untitled)") }));
     });
     ui.spawnBtn.disabled = true;
     ui.statusEl.textContent = (rows || []).length ? "" : "no rooms in this zone";
@@ -547,7 +547,7 @@
     // ---- Identity ----
     insp.appendChild(sectionTitle("Identity"));
     insp.appendChild(textField("Name", "name", detail.name));
-    insp.appendChild(textAreaField("Description", "description", detail.description, "shown to players — wraps at ~78 chars"));
+    insp.appendChild(textAreaField("Description", "description", detail.description, "shown to players: wraps at ~78 chars"));
     // "(no zone)" is a summon-only / not-yet-placed template — a legal state
     // the server accepts (Filepath() routes it to the unzoned/ folder).
     var zoneOpts = [{ v: "", t: "(no zone)" }].concat(enums.zones || []);
@@ -602,7 +602,7 @@
     // ---- Flavor ----
     insp.appendChild(sectionTitle("Flavor"));
     insp.appendChild(commandListField("Idle commands", "idleCommands", detail.idleCommands,
-      "blank rows are intentional “do nothing” pool entries — don't delete them to tidy up"));
+      "blank rows are intentional “do nothing” pool entries: don't delete them to tidy up"));
     insp.appendChild(commandListField("Combat commands", "combatCommands", detail.combatCommands));
     insp.appendChild(commandListField("Angry commands", "angryCommands", detail.angryCommands));
 
@@ -699,7 +699,7 @@
     body.appendChild(H.chipsField("Spawn mutations", "spawnMutations", detail.spawnMutations));
     body.appendChild(H.numField("Mutation chance %", "mutationChance", detail.mutationChance));
     body.appendChild(H.textAreaField("LLM profile (raw JSON)", "llmProfileJson", detail.llmProfileJson,
-      "advanced — raw JSON; leave empty for none"));
+      "advanced: raw JSON; leave empty for none"));
 
     // Overrides & flags
     body.appendChild(H.sectionTitle("Overrides & flags"));
@@ -813,7 +813,7 @@
   Panel.showDeleteRefs = function (refs) {
     var el = document.getElementById("mob-refs");
     if (!el) return;
-    el.textContent = "Still referenced: " + refs.map(function (r) { return r.kind + " " + r.id; }).join(", ") + " — remove these first.";
+    el.textContent = "Still referenced: " + refs.map(function (r) { return r.kind + " " + r.id; }).join(", ") + ": remove these first.";
   };
 
   // ---- inspector placeholder ----

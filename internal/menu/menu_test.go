@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 var tagRe = regexp.MustCompile(`<[^>]+>`)
@@ -178,5 +179,43 @@ func TestRender_EmptyMenuStillShowsHeadingAndFooter(t *testing.T) {
 	got := plain(Render(Menu{Heading: "Nothing here."}))
 	if got != "Nothing here.\n\nType a number." {
 		t.Fatalf("empty menu: %q", got)
+	}
+}
+
+func TestRender_BodyWrapsBetweenHeadingAndEntries(t *testing.T) {
+	m := Confirm("Cull the Wash", "Accept", "Leave")
+	m.Body = []string{
+		"Garve has asked you to thin out the bandits in the wash again: a bandit scout first, then a bandit squatter.",
+		"Reward: 6 gold, and training in weapon combat.",
+	}
+	got := plain(Render(m))
+	want := strings.Join([]string{
+		`Cull the Wash`,
+		``,
+		`Garve has asked you to thin out the bandits in the wash again: a bandit scout`,
+		`first, then a bandit squatter.`,
+		`Reward: 6 gold, and training in weapon combat.`,
+		``,
+		`  1.     Accept`,
+		`  2.     Leave`,
+		``,
+		`Type a number, or press Enter for 2.`,
+	}, "\n")
+	if got != want {
+		t.Fatalf("render mismatch\n got:\n%s\nwant:\n%s", got, want)
+	}
+	for _, line := range strings.Split(got, "\n") {
+		if n := utf8.RuneCountInString(line); n > lineWidth {
+			t.Fatalf("line over %d columns (%d): %q", lineWidth, n, line)
+		}
+	}
+}
+
+func TestRender_NoBodyIsUnchanged(t *testing.T) {
+	m := talkMenu()
+	before := Render(m)
+	m.Body = nil
+	if Render(m) != before {
+		t.Fatal("a nil Body changed the render")
 	}
 }

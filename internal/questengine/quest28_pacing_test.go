@@ -127,6 +127,7 @@ func TestQuest28_TalkLessonGrantsTheStepWithItsReply(t *testing.T) {
 	df := loadShippedDialogue(t, "newcomer_antechamber", "9491.yaml")
 	set := map[string]bool{"28-start": true, "28-said": true}
 	ps := &dialogue.PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasQuest:  func(tok string) bool { return set[tok] },
 		GiveQuest: func(tok string) { set[tok] = true },
 		HasHeard:  func(string) bool { return false },

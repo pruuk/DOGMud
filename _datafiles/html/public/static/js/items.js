@@ -12,8 +12,8 @@
     "wrist", "back", "shoulders", "legs", "feet", "tail", "componentbag"];
   var CONSUMABLE = ["potion", "food", "drink"];
   var RARITY = [
-    { v: 0, t: "untiered" }, { v: 10, t: "10 — legendary" }, { v: 20, t: "20 — epic" },
-    { v: 30, t: "30 — rare" }, { v: 40, t: "40 — uncommon" }, { v: 50, t: "50 — common" }
+    { v: 0, t: "untiered" }, { v: 10, t: "10: legendary" }, { v: 20, t: "20: epic" },
+    { v: 30, t: "30: rare" }, { v: 40, t: "40: uncommon" }, { v: 50, t: "50: common" }
   ];
   var CASTER = { wand: 1, sceptre: 1, staff: 1 };
 
@@ -21,49 +21,49 @@
   // percent, etc.) so the editor makes the field's meaning obvious instead of
   // presenting a bare number box. Keyed by the form field key.
   var HINTS = {
-    value: "gold value — whole number (auto-set if left 0)",
+    value: "gold value: whole number (auto-set if left 0)",
     weight: "pounds (decimals ok)",
-    uses: "charges — whole number (0 = unlimited)",
-    description: "shown to players — wraps at ~78 chars",
+    uses: "charges: whole number (0 = unlimited)",
+    description: "shown to players: wraps at ~78 chars",
     vendorCategories: "comma-separated shop categories",
     // weapon
-    damageMultiplier: "multiplier — 1.0 = baseline",
-    spellDamageMultiplier: "multiplier — 1.0 = baseline",
-    speedMultiplier: "multiplier — 1.0 = baseline",
-    hands: "1 or 2 — whole number",
-    parryRating: "flat parry bonus — whole number",
-    staminaCost: "per swing — whole number",
-    waitRounds: "extra rounds — whole number",
+    damageMultiplier: "multiplier: 1.0 = baseline",
+    spellDamageMultiplier: "multiplier: 1.0 = baseline",
+    speedMultiplier: "multiplier: 1.0 = baseline",
+    hands: "1 or 2: whole number",
+    parryRating: "flat parry bonus: whole number",
+    staminaCost: "per swing: whole number",
+    waitRounds: "extra rounds: whole number",
     minStrength: "whole number",
     reach: "meters (e.g. 1.0)",
     grappleModifier: "additive modifier (decimals ok)",
     // armor
-    physicalMitigation: "percent — whole number (0–75)",
-    magicalMitigation: "percent — whole number (0–75)",
-    convictionMitigation: "percent — whole number (0–75)",
-    blockRating: "flat block bonus — whole number",
+    physicalMitigation: "percent: whole number (0-75)",
+    magicalMitigation: "percent: whole number (0-75)",
+    convictionMitigation: "percent: whole number (0-75)",
+    blockRating: "flat block bonus: whole number",
     escapeModifier: "additive modifier (decimals ok)",
     // consumable
     conditionIds: "comma-separated condition ids applied on use",
     toxicity: "whole number",
     bottleAgingMultiplier: "multiplier",
-    fermentRounds: "rounds — whole number",
-    peakRounds: "rounds — whole number",
-    decayRounds: "rounds — whole number",
-    spoilRounds: "rounds — whole number",
+    fermentRounds: "rounds: whole number",
+    peakRounds: "rounds: whole number",
+    decayRounds: "rounds: whole number",
+    spoilRounds: "rounds: whole number",
     bandolierCapacity: "whole number",
     // component
-    weightReduction: "fraction 0–1 (0.30 = 30% lighter)",
+    weightReduction: "fraction 0-1 (0.30 = 30% lighter)",
     bagCapacity: "whole number",
     // advanced / pinnacle
-    reserveHealthPct: "fraction 0–1 of max HP locked while equipped",
-    reserveStaminaPct: "fraction 0–1 of max stamina locked while equipped",
-    reserveConvictionPct: "fraction 0–1 of max conviction locked while equipped",
+    reserveHealthPct: "fraction 0-1 of max HP locked while equipped",
+    reserveStaminaPct: "fraction 0-1 of max stamina locked while equipped",
+    reserveConvictionPct: "fraction 0-1 of max conviction locked while equipped",
     hungerRounds: "rounds without a kill before it feeds on the wielder (0 = never)",
-    hungerDrainPct: "fraction 0–1 of max HP drained per hungry round",
+    hungerDrainPct: "fraction 0-1 of max HP drained per hungry round",
     mutationTickInterval: "rounds between mutation rolls while worn (0 = never)",
-    mutationTickChance: "percent chance per roll (0–100)",
-    mutationRarityFloor: "min mutation rarity in the pool (0–10)",
+    mutationTickChance: "percent chance per roll (0-100)",
+    mutationRarityFloor: "min mutation rarity in the pool (0-10)",
     wornConditionIds: "comma-separated condition ids applied while worn",
   };
 
@@ -161,7 +161,7 @@
 
   function promptNewItem() {
     var types = Panel.types.length ? Panel.types : distinctTypes();
-    var t = window.prompt("New item — type?\n(" + types.join(", ") + ")", "weapon");
+    var t = window.prompt("New item: type?\n(" + types.join(", ") + ")", "weapon");
     if (!t) return;
     t = t.trim().toLowerCase();
     if (types.indexOf(t) === -1) { toast("Unknown item type: " + t, true); return; }
@@ -193,7 +193,7 @@
       var base = HINTS[key] || "";
       var r = RANGES[key];
       if (r && r.length === 2) {
-        var span = "seen " + fmtNum(r[0], isInt) + "–" + fmtNum(r[1], isInt);
+        var span = "seen " + fmtNum(r[0], isInt) + "-" + fmtNum(r[1], isInt);
         base = base ? base + " · " + span : span;
       }
       return base;
@@ -267,7 +267,7 @@
     });
     F.vendorCategories = function () { return vcChecks.filter(function (x) { return x.cb.checked; }).map(function (x) { return x.cat; }); };
     insp.appendChild(ce("div", {}, [ce("label", { text: "Vendor categories" }), vcBox,
-      ce("div", { style: "font-size:10px;color:var(--gold-dim);margin-top:2px;", text: "Shop disciplines that stock this item. A salable item needs at least one — otherwise check “not-salable” below." })]));
+      ce("div", { style: "font-size:10px;color:var(--gold-dim);margin-top:2px;", text: "Shop disciplines that stock this item. A salable item needs at least one. Otherwise check “not-salable” below." })]));
     var flags = ce("div", { "class": "flags" }, [
       checkField("not-salable", "notSalable", detail.notSalable),
       checkField("never-drops", "neverDrops", detail.neverDrops),
@@ -275,7 +275,7 @@
       checkField("cursed", "cursed", detail.cursed)
     ]);
     insp.appendChild(flags);
-    insp.appendChild(ce("div", { style: "font-size:10px;color:var(--gold-dim);margin-top:2px;", text: "not-salable: never stocked by shops (quest items, drops, unique gear) — exempt from the vendor-category requirement." }));
+    insp.appendChild(ce("div", { style: "font-size:10px;color:var(--gold-dim);margin-top:2px;", text: "not-salable: never stocked by shops (quest items, drops, unique gear): exempt from the vendor-category requirement." }));
     insp.appendChild(textField("Quest token", "questToken", detail.questToken));
 
     // StatMods
@@ -519,7 +519,7 @@
     } else {
       this.saving = false; this.deleting = false;
       if (obj && obj.refs && obj.refs.length && refsEl) {
-        refsEl.textContent = "Still used by: " + obj.refs.map(function (r) { return r.id; }).join(", ") + " — remove those first.";
+        refsEl.textContent = "Still used by: " + obj.refs.map(function (r) { return r.id; }).join(", ") + ": remove those first.";
       }
       toast((obj && obj.error) || "Item error", true);
     }

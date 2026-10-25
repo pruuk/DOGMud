@@ -195,6 +195,11 @@ check for authors.
 
 **Goal.** Every quest is offered, accepted, finished and chained through the menu.
 
+**Spec:** `docs/superpowers/specs/2026-10-24-quest-arc-phase2-loop-design.md` (rulings P1 to P8
+there; P8 caps a step hint at 200 characters). **Plans:** `docs/superpowers/plans/2026-10-24-quest-arc-phase2a-loop.md` (2a: card,
+hand-in, repeats, loop validators, step-id manifest); plan 2b (the completability
+walkthrough): not written yet.
+
 **Approach.**
 - Offer card: extends phase 1's bare Accept / Leave with the objective (current step's
   description) and a reward summary in words where the player-copy rules require it.
@@ -220,10 +225,11 @@ check for authors.
 **Exit.** A test quest goes offer, accept, steps, finish, next offer through the menu; the
 validators report the current backlog; repeat limit enforced.
 
-**Spec questions.** Whether repeat frequency stays in rounds or moves to game days or real
-time; exactly what counts as "one action" for the validator.
+**Spec questions (answered).** Repeat frequency stays in rounds (`cooldown_rounds`) and the
+limit is an optional lifetime cap (P3); "one action" is a structural rule that allows several
+alternative ways into a step (P4).
 
-**Status:** not started.
+**Status:** 2a implemented on `feat/375-phase2a-loop` (not yet merged). 2b not started.
 
 ## Phase 3: Action triggers (engine half)
 
@@ -321,6 +327,11 @@ cannot save a malformed quest or dialogue.
 dialogue runs `ValidateDialogueFile` with `RegistryValidators()`
 (`modules/gmcp/gmcp.Dialogue.go:76`); quests run `Validate()` and `ValidateQuestRefs`
 (`modules/gmcp/gmcp.Quest.go:223,226`). Errors block the save; warnings are shown.
+
+**Editors are off until this phase.** The dialogue editor has been off since phase 1. The quest
+editor is off since phase 2a (P7, owner 2026-10-24): `refuseQuestBuild` refuses its get, update,
+create and delete messages, and the editor-save loop door in `buildQuestUpdate` is ready for
+this phase to re-enable.
 
 **Approach: cannot save it malformed.**
 1. Every rule lives in the shared validators, never only in client JavaScript. The server is

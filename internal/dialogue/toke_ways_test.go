@@ -31,6 +31,7 @@ func TestTokeGivesTheWay(t *testing.T) {
 		{"way_scout_tarn", "From Hub Square: west, west, south, south to the Steppe Edge."},
 	}
 	ps := &PlayerState{
+		QuestOpen:    func(int) bool { return true },
 		HasQuest:     func(string) bool { return false },
 		HasItem:      func(int) bool { return false },
 		GetQuestFlag: func(string) string { return "" },

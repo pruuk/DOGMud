@@ -41,6 +41,11 @@ type PlayerState struct {
 	HasHeard func(key string) bool
 	// MarkHeard records a heard info topic on the character (saved).
 	MarkHeard func(key string)
+	// QuestOpen reports whether a quest can be offered now: false for a
+	// repeatable on its cooldown or at its repeat_limit (#375 P3). Eligible
+	// asks it for every offer topic with a quest; nil fails those closed,
+	// like every interrogative callback here.
+	QuestOpen func(questId int) bool
 }
 
 // QuestFlagSet describes a single key/value flag to write on the player's character.

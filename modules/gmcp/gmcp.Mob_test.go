@@ -400,26 +400,19 @@ func TestScanMobReferences_FindsSpawnAndRelationship(t *testing.T) {
 	}
 }
 
-// TestScanMobReferences_FindsQuestRef covers the quest iterator: verified via
-// codegraph that internal/quests.Quest carries no mob-id fields at all (it's
-// the legacy simple-reward model), but the real quest CONTENT authored in
-// internal/questengine's expanded QuestDef DOES carry structured mob-id
-// references (TriggerDef.Mob, NpcSay.Mob/.Lines[].Speaker, SpawnMob.Id,
-// DeclareBounty.Target.Id when Target.Type=="mob") — scanMobReferences (the
-// real wiring) collects those per quest. This test exercises the injected
-// iterator only (not real quest data), matching the pure-function contract of
-// scanMobReferencesWith.
+// TestScanMobReferences_FindsQuestRef covers the questRefs seam: the quest
+// loop's refs findings (mobQuestRefs) block the delete as "quest" rows.
 func TestScanMobReferences_FindsQuestRef(t *testing.T) {
+	where := "quest 76 refs: step 1 (b) map_target_mob: mob 9538 does not exist"
 	refs := scanMobReferencesWith(9538, mobRefIterators{
-		quests: func(yield func(questToken string, mobIds []int)) {
-			yield("76 (Disc Questline)", []int{9538})
-			yield("22 (Unrelated Quest)", []int{1})
+		questRefs: func(mobId int) []mobRefEntry {
+			return mobQuestRefEntries([]string{where})
 		},
 	})
 	if len(refs) != 1 {
 		t.Fatalf("expected 1 ref, got %+v", refs)
 	}
-	if refs[0].Kind != "quest" || refs[0].Id != "quest 76 (Disc Questline)" {
+	if refs[0].Kind != "quest" || refs[0].Id != where {
 		t.Errorf("wrong quest ref: %+v", refs[0])
 	}
 }

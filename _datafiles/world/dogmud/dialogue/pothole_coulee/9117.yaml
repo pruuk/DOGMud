@@ -115,7 +115,8 @@ opener:
       up here not knowing a hammer from your hand. Look at you.
     hints: You have finished the forge trail. You earned a basalt-iron blade, the
       work put lasting strength in your arms, and you know now how to forge the dark
-      ore into edges of your own. For more forge work, choose Back to the Forge below.
+      ore into edges of your own. When there is more forge work, choose Back to
+      the Forge below.
 topics:
 - key: vein_offer
   kind: offer

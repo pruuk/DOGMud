@@ -68,6 +68,20 @@ func refuseDialogueBuild(cmd string) (BuildResult, bool) {
 	return BuildResult{}, false
 }
 
+// refuseQuestBuild reports whether cmd is one of the Build.Quest.* messages
+// that read or write a quest file, and the refusal to send for it. A create or
+// edit in the old editor could save a quest that fails the quest loop rules and
+// stops the next boot (owner ruling P7). Build.Quest.List is read-only and stays
+// open. The loop door in buildQuestUpdate is ready for phase 6, which re-enables
+// the editor.
+func refuseQuestBuild(cmd string) (BuildResult, bool) {
+	switch cmd {
+	case `Build.Quest.Get`, `Build.Quest.Update`, `Build.Quest.Create`, `Build.Quest.Delete`:
+		return buildErr("the quest editor is off until the quest builder ships (quest arc phase 6); edit quest files in the repo"), true
+	}
+	return BuildResult{}, false
+}
+
 // ---- client -> server payloads -----------------------------------------------
 
 type roomCreateReq struct {
@@ -211,6 +225,9 @@ type buildDeps struct {
 	mobExists       func(id int) bool
 	itemExists      func(id int) bool
 	conditionExists func(id int) bool
+	// questRefs lists what a room delete would break in the quest loop's
+	// refs rule, which refuses at boot (roomQuestRefs). Nil skips the check.
+	questRefs func(roomId int) []string
 }
 
 func realBuildDeps() buildDeps {
@@ -233,6 +250,7 @@ func realBuildDeps() buildDeps {
 		mobExists:       func(id int) bool { return mobs.GetMobSpec(mobs.MobId(id)) != nil },
 		itemExists:      func(id int) bool { return items.GetItemSpec(id) != nil },
 		conditionExists: func(id int) bool { return conditions.GetConditionSpec(id) != nil },
+		questRefs:       roomQuestRefs,
 	}
 }
 
@@ -287,6 +305,12 @@ func (g *GMCPModule) handleBuildOp(e events.Event) events.ListenerReturn {
 	// The dialogue editor is off (#375 phase 1): refuse before any dispatch so
 	// no Build.Dialogue.* message can reach a handler that writes a file.
 	if res, refused := refuseDialogueBuild(evt.Command); refused {
+		sendBuildResult(uid, res)
+		return events.Continue
+	}
+	// The quest editor is off (quest arc phase 2a, P7); the loop door in
+	// buildQuestUpdate is ready for phase 6.
+	if res, refused := refuseQuestBuild(evt.Command); refused {
 		sendBuildResult(uid, res)
 		return events.Continue
 	}
@@ -728,7 +752,7 @@ func buildRoomUpdate(d buildDeps, req roomUpdateReq) BuildResult {
 		len(r.Containers) != containersBefore ||
 		len(r.Stash) != stashBefore {
 		return buildErr("refusing to save room %d: it would drop content this editor does not manage "+
-			"(mutators %d->%d, containers %d->%d, stash %d->%d) — report this, it is a bug",
+			"(mutators %d->%d, containers %d->%d, stash %d->%d): report this, it is a bug",
 			req.RoomId, mutatorsBefore, len(r.Mutators), containersBefore, len(r.Containers),
 			stashBefore, len(r.Stash))
 	}
@@ -826,7 +850,7 @@ func buildZoneCreateWith(d zoneCreateDeps, req zoneCreateReq) BuildResult {
 	}
 	r.Plane = plane
 	r.X, r.Y, r.Z = 0, 0, 0
-	r.Title = name + " — Entrance"
+	r.Title = name + ": Entrance"
 	r.Description = placeholderRoomDescription
 	if req.Biome != "" {
 		r.Biome = req.Biome
@@ -859,10 +883,17 @@ func buildZoneCreateWith(d zoneCreateDeps, req zoneCreateReq) BuildResult {
 }
 
 // buildRoomDelete removes a room after cleaning every exit that points at it,
-// so no dangling exits remain.
+// so no dangling exits remain. It refuses, before changing anything, while a
+// quest names the room: the quest loop's refs rule would stop the next boot.
 func buildRoomDelete(d buildDeps, roomId int) BuildResult {
 	if d.loadTemplate(roomId) == nil {
 		return buildErr("room %d not found", roomId)
+	}
+	if d.questRefs != nil {
+		if refs := d.questRefs(roomId); len(refs) > 0 {
+			return buildErr("room %d is still named by a quest, so the next boot would refuse it. Change these first: %s",
+				roomId, strings.Join(refs, "; "))
+		}
 	}
 	// Clean inbound exits from every other room.
 	for _, id := range d.allRoomIds() {

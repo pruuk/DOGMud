@@ -244,7 +244,7 @@ func buildBehaviorUpdate(d behaviorDeps, req behaviorUpdateReq) BuildResult {
 	if err != nil {
 		return buildErr("behavior refused: %s", err.Error())
 	}
-	return BuildResult{Ok: true, Message: "behavior saved — live immediately", Warnings: warns}
+	return BuildResult{Ok: true, Message: "behavior saved: live immediately", Warnings: warns}
 }
 
 func buildBehaviorCreate(d behaviorDeps, req behaviorCreateReq) BuildResult {
@@ -274,7 +274,7 @@ func buildBehaviorCreate(d behaviorDeps, req behaviorCreateReq) BuildResult {
 		if _, err := d.saveMob(req.MobId, m.Zone, m.Character.Name, seed); err != nil {
 			return buildErr("%s", err.Error())
 		}
-		return BuildResult{Ok: true, MobId: req.MobId, Message: fmt.Sprintf("per-mob tree created for %s — it specializes the archetype (the archetype still fires when this tree returns Failure)", m.Character.Name)}
+		return BuildResult{Ok: true, MobId: req.MobId, Message: fmt.Sprintf("per-mob tree created for %s: it specializes the archetype (the archetype still fires when this tree returns Failure)", m.Character.Name)}
 	case "room":
 		if req.RoomId == 0 {
 			return buildErr("room kind needs a roomId")
@@ -282,7 +282,7 @@ func buildBehaviorCreate(d behaviorDeps, req behaviorCreateReq) BuildResult {
 		seed := behaviortree.TreeDef{
 			Notes: "Describe what this room's tree does here.",
 			Tree: behaviortree.NodeDef{Type: "selector", Children: []behaviortree.NodeDef{
-				{Type: "action", Event: "room_idle", Do: "room_message", Note: "example node — replace",
+				{Type: "action", Event: "room_idle", Do: "room_message", Note: "example node: replace",
 					Params: map[string]any{"text": "The room stirs."}},
 			}},
 		}
@@ -313,7 +313,7 @@ func buildBehaviorDelete(d behaviorDeps, req behaviorGetReq) BuildResult {
 		if err := d.delMob(req.MobId, m.Zone, m.Character.Name); err != nil {
 			return buildErr("%s", err.Error())
 		}
-		return BuildResult{Ok: true, MobId: req.MobId, Message: fmt.Sprintf("per-mob tree deleted — %s falls back to its archetype", m.Character.Name)}
+		return BuildResult{Ok: true, MobId: req.MobId, Message: fmt.Sprintf("per-mob tree deleted: %s falls back to its archetype", m.Character.Name)}
 	case "room":
 		if err := d.delRoom(req.RoomId, req.Zone); err != nil {
 			return buildErr("%s", err.Error())

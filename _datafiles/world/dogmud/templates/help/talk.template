@@ -34,6 +34,12 @@ light first.
   says no for now. Pressing Enter also means Leave. Either way, the list
   comes back, and you can ask about the quest again later.
 
+  Above those two lines, the quest shows what to do first and what you
+  get for it. Sometimes the reward is a surprise, and you only get a
+  hint of it. When you finish a quest with someone, they may start
+  their next one for you right away. You can still say Leave and talk to
+  them again later.
+
 <ansi fg="yellow">Marks: </ansi>
 
   A mark in front of a line in the list tells you what it is:

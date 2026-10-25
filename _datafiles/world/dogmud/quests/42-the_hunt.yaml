@@ -46,7 +46,8 @@ steps:
   - id: start
     map_target: 5289
     description: >-
-      Delk has given you salt and set you hunting. Pronghorn graze the
+      Delk hands you salt when you take this on and sets you hunting.
+      Pronghorn graze the
       Thornbrake, north of his camp, and the Carrion Flat, south of the Game
       Trail. First read the ground for one.
     hint: >-

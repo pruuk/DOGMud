@@ -93,6 +93,7 @@ func TestVeyraSecretsDialogue(t *testing.T) {
 			var granted []string
 			paid := 0
 			ps := &dialogue.PlayerState{
+				QuestOpen: func(int) bool { return true },
 				HasQuest: func(tok string) bool {
 					for _, h := range held {
 						if h == tok {

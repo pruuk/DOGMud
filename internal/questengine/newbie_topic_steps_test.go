@@ -55,6 +55,7 @@ func newNpcTalker(df *dialogue.DialogueFile, p *linearPlayer) *npcTalker {
 func (n *npcTalker) state() *dialogue.PlayerState {
 	carries := func(id int) bool { return n.p.items[id] }
 	return &dialogue.PlayerState{
+		QuestOpen:   func(int) bool { return true },
 		HasQuest:    n.p.HasQuest,
 		GiveQuest:   n.p.grant,
 		HasItem:     carries,
@@ -229,6 +230,7 @@ func TestRusk9116_HandInWithOrWithoutTheDagger(t *testing.T) {
 		p := playerOn(q, "craft", "30-end")
 		removed := false
 		ps := &dialogue.PlayerState{
+			QuestOpen:   func(int) bool { return true },
 			HasQuest:    p.HasQuest,
 			GiveQuest:   p.grant,
 			HasItem:     func(id int) bool { return carries && id == ironDagger },

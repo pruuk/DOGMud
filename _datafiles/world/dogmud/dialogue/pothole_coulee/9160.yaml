@@ -55,8 +55,8 @@ opener:
       are a friend of the folk now, and the only soul living who has seen the thing
       beneath the shrine. That is no small thing to be. Go well, and come back if
       the world ever tells you what it was.
-    hints: You have finished the lore trail. To read the stones again, choose Reading
-      the Stones below.
+    hints: You have finished the lore trail. When the stones have more to tell,
+      choose Reading the Stones below.
 topics:
 - key: shrine_offer
   kind: offer

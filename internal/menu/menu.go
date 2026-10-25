@@ -43,7 +43,11 @@ type Entry struct {
 
 // Menu is a heading, numbered entries, and an optional final Leave entry.
 type Menu struct {
-	Heading    string
+	Heading string
+	// Body is optional paragraphs between the heading and the entries,
+	// each wrapped at the 80-column width (an offer card's objective and
+	// reward). The labels lint does not read it.
+	Body       []string
 	Entries    []Entry
 	Leave      string // label of the final numbered leave entry; "" for none
 	Default    string // Id chosen on Enter; "" for none
@@ -74,6 +78,15 @@ func Render(m Menu) string {
 	if m.Heading != "" {
 		b.WriteString(m.Heading)
 		b.WriteString("\n\n")
+	}
+	if len(m.Body) > 0 {
+		for _, para := range m.Body {
+			for _, line := range wrap(para, lineWidth) {
+				b.WriteString(line)
+				b.WriteString("\n")
+			}
+		}
+		b.WriteString("\n")
 	}
 	entries := m.all()
 	if len(entries) > 0 {

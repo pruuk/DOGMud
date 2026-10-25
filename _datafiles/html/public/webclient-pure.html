@@ -973,8 +973,25 @@
             // signature stale, and the next render whose markup matched that
             // stale value would be skipped -- leaving the panel showing
             // something the player no longer has (finding 19).
+            // Finished repeatables (status set) are listed under their own
+            // label, dimmed and unfocusable (#375 P6); the rest are active.
+            var repeats = quests.filter(function (q) { return !!q.status; });
+            quests = quests.filter(function (q) { return !q.status; });
+            var repeatsHTML = "";
+            if (repeats.length) {
+                repeats.sort(function (a, b) { return (a.name || "").localeCompare(b.name || ""); });
+                repeatsHTML = '<div class="qgroup">Repeatable work</div>';
+                repeats.forEach(function (q) {
+                    var line = q.status === "ready" ? "Ready to take on again." : "Not offered again yet.";
+                    repeatsHTML += '<div class="qrepeatrow" data-quest-id="' + Number(q.id) + '">'
+                        + '<span class="qname">' + escapeHTML(q.name || "") + '</span>'
+                        + '<span class="qrepeat">(repeatable)</span>'
+                        + '<div class="qhint">' + line + '</div>'
+                        + '</div>';
+                });
+            }
             if (!quests.length) {
-                writeQuestsHTML(host, '<div class="quests-empty">No active quests.</div>');
+                writeQuestsHTML(host, '<div class="quests-empty">No active quests.</div>' + repeatsHTML);
                 return;
             }
             quests.sort(function (a, b) {
@@ -982,12 +999,19 @@
                 return (a.name || "").localeCompare(b.name || "");
             });
             var html = "";
+            // Which long hints the player expanded, by quest id. Kept on the
+            // function so it outlives each render, and read into the markup,
+            // so a re-render (new push or a toggle click) keeps the choice.
+            var hintOpen = renderQuests.hintOpen || {};
+            var keepOpen = {};
             quests.forEach(function (q) {
                 var focused = !!q.focused;
+                if (hintOpen[Number(q.id)]) { keepOpen[Number(q.id)] = true; }
                 var pct = Math.max(0, Math.min(100, q.completion || 0));
                 html += '<div class="qrow' + (focused ? " focus" : "") + '" data-quest-id="' + Number(q.id) + '">'
                       + '<span class="qdot">' + (focused ? "◉" : "◎") + '</span>'
                       + '<span class="qname">' + escapeHTML(q.name || "") + '</span>'
+                      + (q.repeatable ? '<span class="qrepeat">(repeatable)</span>' : '')
                       + '<span class="qbar"><i style="width:' + pct + '%"></i></span>'
                       + '</div>';
                 if (focused && q.hint) {
@@ -1009,9 +1033,26 @@
                     } else if (q.next_dir) {
                         mark = ' <span class="qonmap">→ head ' + escapeHTML(q.next_dir) + '</span>';
                     }
-                    html += '<div class="qhint">' + escapeHTML(q.hint) + mark + '</div>';
+                    // A hint over the cap (#375 P8: 200 characters once
+                    // whitespace collapses, questloop.HintMaxRunes) is clamped
+                    // to three lines with a "more" / "less" toggle, so one long
+                    // hint cannot flood the panel. Shorter hints show in full.
+                    // The toggle and the direction sit outside the clamped
+                    // span, so clamping never hides where to head.
+                    var hintText = String(q.hint).replace(/\s+/g, " ").trim();
+                    var qid = Number(q.id);
+                    var hintBody = '<span class="qhint-text">' + escapeHTML(q.hint) + '</span>';
+                    if (Array.from(hintText).length > 200) {
+                        var open = !!hintOpen[qid];
+                        hintBody = '<span class="qhint-text' + (open ? '' : ' qhint-clamp') + '">' + escapeHTML(q.hint) + '</span>'
+                            + ' <button type="button" class="qhint-more" data-quest-id="' + qid + '" aria-expanded="' + open + '">'
+                            + (open ? "less" : "more") + '</button>';
+                    }
+                    html += '<div class="qhint">' + hintBody + mark + '</div>';
                 }
             });
+            renderQuests.hintOpen = keepOpen; // forget quests that left the panel
+            html += repeatsHTML;
             // Attach handlers ONLY when the markup was actually rewritten. The
             // rows are recreated by that write, so binding without it would add
             // a second listener to rows that already have one, and a single
@@ -1021,6 +1062,19 @@
                     row.addEventListener("click", function () {
                         var id = parseInt(row.getAttribute("data-quest-id"), 10);
                         if (!isNaN(id)) { SendGMCP("Char.Quests.Focus", { id: id }); }
+                    });
+                });
+                // The toggle flips its quest's state and re-renders: the
+                // markup changes, so the guard rewrites and this binds again.
+                // It stops propagation so a click never reaches a focus handler.
+                Array.prototype.forEach.call(host.querySelectorAll(".qhint-more"), function (btn) {
+                    btn.addEventListener("click", function (ev) {
+                        if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+                        var id = parseInt(btn.getAttribute("data-quest-id"), 10);
+                        if (isNaN(id)) { return; }
+                        var state = renderQuests.hintOpen || (renderQuests.hintOpen = {});
+                        state[id] = !state[id];
+                        renderQuests();
                     });
                 });
             }

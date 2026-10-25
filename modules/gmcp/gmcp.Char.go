@@ -2,6 +2,7 @@ package gmcp
 
 import (
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,10 +19,44 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
+
+// Status values for a finished repeatable in Char.Quests (#375 P6).
+const (
+	questStatusReady   = "ready"
+	questStatusWaiting = "waiting"
+)
+
+// finishedRepeatQuests are the Char.Quests rows for repeatables c has
+// finished and holds no progress on, not secret and not at their cap,
+// sorted by id. Done-for-good ones are left to "quests all".
+func finishedRepeatQuests(c *characters.Character, lookup func(int) *quests.Quest) []GMCPCharModule_Payload_Quest {
+	progress := c.GetQuestProgress()
+	var ids []int
+	for id, n := range c.QuestCompletions {
+		if _, inProgress := progress[id]; n > 0 && !inProgress {
+			ids = append(ids, id)
+		}
+	}
+	sort.Ints(ids)
+	var rows []GMCPCharModule_Payload_Quest
+	for _, id := range ids {
+		q := lookup(id)
+		if q == nil || !q.Repeatable || q.Secret || c.RepeatCapReached(q) {
+			continue
+		}
+		status := questStatusReady
+		if c.QuestCooldownActive(id) {
+			status = questStatusWaiting
+		}
+		rows = append(rows, GMCPCharModule_Payload_Quest{Id: id, Name: q.Name, Repeatable: true, Status: status})
+	}
+	return rows
+}
 
 // pendingCharSpawnRefresh tracks userIds that spawned but may not have received
 // their initial full Char push yet (e.g. a web client whose websocket GMCP frame
@@ -660,6 +695,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 			questPayload := GMCPCharModule_Payload_Quest{
 				Id:          questId,
 				Name:        qDef.Name,
+				Repeatable:  qDef.Repeatable,
 				Description: qDef.Description,
 				Completion:  0,
 				Focused:     questId == focusId,
@@ -695,6 +731,9 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 			// Add to the returned output
 			payload.Quests = append(payload.Quests, questPayload)
 		}
+
+		// Finished repeatables, below the active list (#375 P6).
+		payload.Quests = append(payload.Quests, finishedRepeatQuests(user.Character, quests.GetQuestById)...)
 
 		if !all {
 			return payload.Quests, `Char.Quests`
@@ -1141,8 +1180,13 @@ type GMCPCharModule_Payload_Worth struct {
 // Char.Quests
 // /////////////////
 type GMCPCharModule_Payload_Quest struct {
-	Id          int    `json:"id"`
-	Name        string `json:"name"`
+	Id         int    `json:"id"`
+	Name       string `json:"name"`
+	Repeatable bool   `json:"repeatable,omitempty"` // the panel tags it "(repeatable)" (#375 P6)
+	// Status is set only on a finished repeatable: "ready" (can be taken
+	// again) or "waiting" (on cooldown). Such a row has no description,
+	// hint or target and cannot be focused (#375 P6).
+	Status      string `json:"status,omitempty"`
 	Description string `json:"description"`
 	Completion  int    `json:"completion"`
 	Hint        string `json:"hint,omitempty"`

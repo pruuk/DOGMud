@@ -28,7 +28,7 @@ func TestRefuseDialogueBuild_RefusesEveryDialogueMessage(t *testing.T) {
 }
 
 func TestRefuseDialogueBuild_LeavesOtherBuildMessagesAlone(t *testing.T) {
-	for _, cmd := range []string{`Build.Quest.Update`, `Build.Mob.Get`, `Build.Room.Get`, `Build.Dialogue`} {
+	for _, cmd := range []string{`Build.Quest.List`, `Build.Mob.Get`, `Build.Room.Get`, `Build.Dialogue`} {
 		if _, refused := refuseDialogueBuild(cmd); refused {
 			t.Errorf("%s: must not be refused", cmd)
 		}

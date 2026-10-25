@@ -8,9 +8,10 @@ secret: false
 steps:
   - id: start
     map_target: 476
-    description: "Toll collector Harn at the tollhouse has given you a maintenance
-      report documenting the bridge's structural problems. He needs it delivered to
-      Clerk Pell in the Records Office in Thornwall."
+    description: "Toll collector Harn at the tollhouse hands you a maintenance
+      report when you take this on. It documents the bridge's structural
+      problems. He needs it delivered to Clerk Pell in the Records Office in
+      Thornwall."
     hint: "Take the maintenance report to Clerk Pell in Thornwall. From
       the Tollhouse, go east ten times, over the Old Bridge, into the
       city and along Main Street to its east end. The Records Office is

@@ -32,6 +32,7 @@ func TestIntegration_OfferThenFollowUpWithQuestGates(t *testing.T) {
 
 	tokens := map[string]bool{}
 	ps := &PlayerState{
+		QuestOpen:  func(int) bool { return true },
 		HasQuest:   func(token string) bool { return tokens[token] },
 		HasItem:    func(itemId int) bool { return false },
 		RemoveItem: func(itemId int) bool { return false },
@@ -78,6 +79,7 @@ func TestIntegration_HeardRequiredChain(t *testing.T) {
 	}}
 	heard := map[string]bool{}
 	ps := &PlayerState{
+		QuestOpen: func(int) bool { return true },
 		HasHeard:  func(k string) bool { return heard[k] },
 		MarkHeard: func(k string) { heard[k] = true },
 	}

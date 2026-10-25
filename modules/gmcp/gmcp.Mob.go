@@ -33,7 +33,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/llm"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -425,7 +424,7 @@ func buildMobUpdate(d mobDeps, req mobUpdateReq) BuildResult {
 	if resolved, ok := characters.ResolveDescriptionToken(req.Description); ok {
 		req.Description = resolved
 	} else {
-		return buildErr("description is an unresolvable interned token (%.20s…) — reload the builder page and retype the description", req.Description)
+		return buildErr("description is an unresolvable interned token (%.20s…): reload the builder page and retype the description", req.Description)
 	}
 	// Empty zone is legal (a summon-only / not-yet-placed template) and is
 	// NOT run through zoneExists — only a non-empty, UNKNOWN zone is rejected.
@@ -486,7 +485,7 @@ func buildMobDelete(d mobDeps, mobId int) BuildResult {
 		return buildErr("mob %d not found", mobId)
 	}
 	if refs := d.references(mobId); len(refs) > 0 {
-		return BuildResult{Error: "mob is still referenced — remove these first", MobRefs: refs}
+		return BuildResult{Error: "mob is still referenced: remove these first", MobRefs: refs}
 	}
 	if err := d.del(mobId); err != nil {
 		return buildErr("could not delete mob %d: %s", mobId, err.Error())
@@ -535,14 +534,16 @@ func spawnMobInRoom(mobId, roomId int) (string, error) {
 //
 // mobRefIterators is the injected-iterator seam behind scanMobReferencesWith
 // so the pure matching logic (does mobId appear in this candidate's id list)
-// is unit-testable without touching the rooms/mobs/questengine/conversations
+// is unit-testable without touching the rooms/mobs/quest registry/conversations
 // package globals. scanMobReferences (below) wires it to the real world.
 type mobRefIterators struct {
 	roomSpawns       func(yield func(roomId int, mobIds []int))
 	mobRelationships func(yield func(fromMobId int, name string, toIds []int))
-	quests           func(yield func(questToken string, mobIds []int))
-	convPairs        func(yield func(pairFile string, mobIds []int))
-	mercShops        func(yield func(sellerMobId int, name string, mobIds []int))
+	// questRefs is what the delete would break in the quest loop's refs rule
+	// (mobQuestRefs); it covers every quest field that names a mob.
+	questRefs func(mobId int) []mobRefEntry
+	convPairs func(yield func(pairFile string, mobIds []int))
+	mercShops func(yield func(sellerMobId int, name string, mobIds []int))
 }
 
 func scanMobReferencesWith(mobId int, it mobRefIterators) []mobRefEntry {
@@ -561,12 +562,8 @@ func scanMobReferencesWith(mobId int, it mobRefIterators) []mobRefEntry {
 			}
 		})
 	}
-	if it.quests != nil {
-		it.quests(func(token string, ids []int) {
-			if containsInt(ids, mobId) {
-				out = append(out, mobRefEntry{Kind: "quest", Id: "quest " + token})
-			}
-		})
+	if it.questRefs != nil {
+		out = append(out, it.questRefs(mobId)...)
 	}
 	if it.convPairs != nil {
 		it.convPairs(func(file string, ids []int) {
@@ -591,19 +588,12 @@ func scanMobReferencesWith(mobId int, it mobRefIterators) []mobRefEntry {
 //   - mobRelationships: every OTHER mob template's Relationships (RelationshipYAMLEntry.To).
 //   - mercShops: every OTHER mob template's Character.Shop rows with MobId > 0
 //     (mercenary-for-sale rows — see characters.ShopItem.MobId).
-//   - quests: verified via codegraph — internal/quests.Quest/QuestStep carry NO
-//     mob-id fields at all (that package is the legacy simple-reward quest
-//     model: QuestId/Name/Description/Steps/Rewards/Flags, and QuestStep is
-//     just Id/Description/Hint). The real quest CONTENT that names mob ids
-//     lives in the separate internal/questengine package's expanded QuestDef
-//     (loaded from _datafiles/world/dogmud/quests/*.yaml, registered on
-//     questengine.GetEngine(), enumerable via (*Engine).AllQuests()).
-//     QuestDef.Triggers ([]TriggerDef) carries mob ids in several places:
-//     TriggerDef.Mob (the mob-death/etc. filter), ActionDef.NpcSay.Mob +
-//     .Lines[].Speaker (which mob speaks), ActionDef.SpawnMob.Id (mob to
-//     spawn — SpawnDef is shared with SpawnItem, so only SpawnMob is scanned,
-//     never SpawnItem), and ActionDef.DeclareBounty.Target.Id when
-//     Target.Type == "mob". All of these are collected per quest below.
+//   - questRefs: mobQuestRefs (gmcp.Delete_refs.go) runs the quest loop's
+//     refs rule with this mob id treated as missing and reports the findings
+//     the delete would add. That rule visits every mob field a quest carries
+//     (trigger mob filter, npc_say mob and line speakers, spawn_mob,
+//     declare_bounty mob target, sequence line speakers, step
+//     map_target_mob), so no separate quest walk lives here.
 //   - convPairs: verified via internal/conversations/loader.go + conversation.go
 //     — pair overrides are loaded from {DataFiles}/conversations/pairs/*.yaml,
 //     filename convention "<lowerMobId>_<higherMobId>.yaml" (loader.go enforces
@@ -652,38 +642,7 @@ func scanMobReferences(mobId int) []mobRefEntry {
 				}
 			}
 		},
-		quests: func(yield func(string, []int)) {
-			for _, q := range questengine.GetEngine().AllQuests() {
-				ids := []int{}
-				for _, t := range q.Triggers {
-					if t.Mob > 0 {
-						ids = append(ids, t.Mob)
-					}
-					for _, a := range t.Actions {
-						if a.NpcSay != nil {
-							if a.NpcSay.Mob > 0 {
-								ids = append(ids, a.NpcSay.Mob)
-							}
-							for _, line := range a.NpcSay.Lines {
-								if line.Speaker > 0 {
-									ids = append(ids, line.Speaker)
-								}
-							}
-						}
-						if a.SpawnMob != nil && a.SpawnMob.Id > 0 {
-							ids = append(ids, a.SpawnMob.Id)
-						}
-						if a.DeclareBounty != nil && a.DeclareBounty.Target != nil &&
-							a.DeclareBounty.Target.Type == "mob" && a.DeclareBounty.Target.Id > 0 {
-							ids = append(ids, a.DeclareBounty.Target.Id)
-						}
-					}
-				}
-				if len(ids) > 0 {
-					yield(fmt.Sprintf("%d (%s)", q.QuestId, q.Name), ids)
-				}
-			}
-		},
+		questRefs: mobQuestRefs,
 		mercShops: func(yield func(int, string, []int)) {
 			for _, other := range mobs.AllMobTemplates() {
 				if int(other.MobId) == mobId {
@@ -704,7 +663,7 @@ func scanMobReferences(mobId int) []mobRefEntry {
 			dir := util.FilePath(dataRoot, `/`, `conversations`, `/`, `pairs`)
 			entries, err := os.ReadDir(dir)
 			if err != nil {
-				return // no pairs directory — nothing to scan (optional content)
+				return // no pairs directory: nothing to scan (optional content)
 			}
 			for _, en := range entries {
 				if en.IsDir() {

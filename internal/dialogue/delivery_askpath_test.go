@@ -182,6 +182,7 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 			require.GreaterOrEqual(t, current, 0, "quest %d has no step %s", questId, tc.heldToken)
 			carries := func(id int) bool { return hasItem && id == tc.itemId }
 			ps := &PlayerState{
+				QuestOpen: func(int) bool { return true },
 				HasQuest: func(tok string) bool {
 					i := stepIndex(steps, tok)
 					return i >= 0 && i <= current

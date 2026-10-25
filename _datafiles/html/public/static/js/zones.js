@@ -51,14 +51,14 @@
     deleting: false,
     creating: false,      // a Build.Zone.Create is in flight
     renaming: false,      // a Build.Zone.Rename is in flight
-    pendingRenameName: "", // remembered rename target — Build.Result for
+    pendingRenameName: "", // remembered rename target: Build.Result for
                            // Zone.Rename does not echo the new name either
-    pendingCreateName: "", // remembered create-form name — Build.Result for
+    pendingCreateName: "", // remembered create-form name: Build.Result for
                            // Zone.Create doesn't echo it, only roomId
-    lastEnums: null,      // enums from the most recently viewed zone detail —
+    lastEnums: null,      // enums from the most recently viewed zone detail :
                            // fallback biome source if window.Builder.biomes
                            // hasn't been populated yet (Zone.Map not seen)
-    guardBlocked: false, // non-Cartesian-on-plane-0 — Save stays disabled regardless of dirty
+    guardBlocked: false, // non-Cartesian-on-plane-0: Save stays disabled regardless of dirty
   };
 
   // ---- list ----
@@ -138,7 +138,7 @@
 
     var nc = ce("input", { type: "checkbox" });
     insp.appendChild(ce("div", { "class": "flags", "style": "margin-top:8px;" }, [
-      ce("label", { "class": "chk" }, [nc, ce("span", { text: " Non-Cartesian (maze / toroidal — skips grid checks)" })])
+      ce("label", { "class": "chk" }, [nc, ce("span", { text: " Non-Cartesian (maze / toroidal: skips grid checks)" })])
     ]));
 
     var errEl = ce("div", { id: "zone-nz-err", "style": "color:var(--danger);font-size:12px;min-height:1em;margin-top:8px;" });
@@ -272,7 +272,7 @@
       style: "font-size:10px;color:var(--gold-dim);margin-top:4px;line-height:1.4;",
       text: "Moves every directory this zone owns and rewrites its name inside "
         + "each file. Blocked while anyone is in the zone. Players' explored-map "
-        + "history for this zone is not carried over — it will look unexplored "
+        + "history for this zone is not carried over: it will look unexplored "
         + "to them again. That is expected, not a bug."
     }));
     var renameErr = ce("div", { id: "zone-rn-err", style: "color:var(--danger);font-size:12px;min-height:1em;margin-top:4px;" });
@@ -335,7 +335,7 @@
 
     insp.appendChild(field("Default plane", planeInput));
     insp.appendChild(ce("div", { "class": "flags" }, [
-      ce("label", { "class": "chk" }, [ncInput, ce("span", { text: " Non-Cartesian (maze / toroidal — skips grid checks)" })])
+      ce("label", { "class": "chk" }, [ncInput, ce("span", { text: " Non-Cartesian (maze / toroidal: skips grid checks)" })])
     ]));
     insp.appendChild(ncWarn);
 
@@ -350,7 +350,7 @@
     var instBlock = ce("div", {});
     instBlock.appendChild(numField("Entry room id", "entryRoom", detail.entryRoom));
     instBlock.appendChild(textField("Portal duration", "portalDuration", detail.portalDuration,
-      "free text, engine-parsed — e.g. \"10m\", \"1h\""));
+      "free text, engine-parsed: e.g. \"10m\", \"1h\""));
     var deathPolicyOpts = [{ v: "", t: "" }].concat(enums.deathPolicies || []);
     instBlock.appendChild(selectField("Death policy", "deathPolicy", detail.deathPolicy, deathPolicyOpts));
     instBlock.appendChild(ce("div", { "class": "flags" }, [checkField("Allow recall", "allowRecall", detail.allowRecall)]));
@@ -389,7 +389,7 @@
     var d = this.detail || {};
     function g(k, dflt) { return F[k] ? F[k]() : (d[k] !== undefined ? d[k] : dflt); }
     return {
-      name: d.name, // not editable via Save — renaming is its own guarded action
+      name: d.name, // not editable via Save: renaming is its own guarded action
       roomId: g("roomId", 0),
       defaultBiome: g("defaultBiome", ""),
       region: g("region", ""),
@@ -485,7 +485,7 @@
   Panel.showDeleteRefs = function (refs) {
     var el = document.getElementById("zone-refs");
     if (!el) return;
-    el.textContent = "Still referenced: " + refs.map(function (r) { return r.kind + " — " + r.id; }).join("; ") + " — remove these first.";
+    el.textContent = "Still referenced: " + refs.map(function (r) { return r.kind + ": " + r.id; }).join("; ") + ": remove these first.";
   };
 
   // ---- inspector placeholder ----

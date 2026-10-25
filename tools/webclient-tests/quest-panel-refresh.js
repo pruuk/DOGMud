@@ -191,5 +191,97 @@ check('does NOT claim a marker that cannot be drawn',
 check('shows the next-step direction instead', panelText().includes('head north'),
   panelText().slice(0, 220));
 
+console.log('SCENARIO 6: repeatables are tagged and finished ones are listed in words');
+reset();
+handleGMCP('Char.Quests', [
+  { id: 53, name: 'Cull the Wash', completion: 33, focused: true, repeatable: true, hint: 'Type attack scout.' },
+  { id: 7, name: 'The Last Delivery', completion: 50, focused: false },
+  { id: 54, name: 'Back to the Forge', repeatable: true, status: 'waiting' },
+  { id: 58, name: 'Reading the Stones', repeatable: true, status: 'ready' },
+]);
+var p6 = panelText();
+check('active repeatable shows "(repeatable)"', /Cull the Wash<\/span><span class="qrepeat">\(repeatable\)/.test(p6), p6.slice(0, 300));
+check('the one-off quest has no tag', !/Last Delivery<\/span><span class="qrepeat">/.test(p6), p6.slice(0, 300));
+check('a "Repeatable work" group follows the active quests', p6.indexOf('Repeatable work') > p6.indexOf('Last Delivery'), p6);
+check('waiting status in words', p6.includes('Back to the Forge') && p6.includes('Not offered again yet.'), p6);
+check('ready status in words', p6.includes('Reading the Stones') && p6.includes('Ready to take on again.'), p6);
+check('finished rows are not focusable rows', !/class="qrow[^"]*" data-quest-id="54"/.test(p6), p6);
+
+console.log('SCENARIO 7: only finished repeatables, nothing active');
+reset();
+handleGMCP('Char.Quests', [{ id: 54, name: 'Back to the Forge', repeatable: true, status: 'ready' }]);
+var p7 = panelText();
+check('empty state still says no active quests', p7.includes('No active quests'), p7);
+check('and the repeatable work is listed', p7.includes('Back to the Forge') && p7.includes('Ready to take on again.'), p7);
+
+console.log('SCENARIO 8: a long hint is clamped with a "more" toggle; the direction stays outside the clamp (#375 P8)');
+// The cap is 200 characters after whitespace collapses (questloop.HintMaxRunes).
+const LONG_HINT = 'Walk the old road east past the ruined mill. '.repeat(5) + '  \n  Then type talk pell.'; // over 200
+const AT_CAP = 'x'.repeat(200);
+function longQuests(hint) {
+  return [{ id: 76, name: 'The Long Road', completion: 10, focused: true, hint: hint, next_dir: 'east' }];
+}
+// The stub's querySelectorAll returns nothing, so to drive the toggle's
+// click handler this scenario hands back one fake button for ".qhint-more"
+// and records the listener the page binds to it.
+function withToggleCapture() {
+  const host = el('quests-list');
+  const bound = [];
+  host.querySelectorAll = (sel) => {
+    if (sel !== '.qhint-more') return [];
+    const m = /class="qhint-more"[^>]*data-quest-id="(\d+)"/.exec(host.innerHTML);
+    if (!m) return [];
+    return [{
+      getAttribute: (a) => (a === 'data-quest-id' ? m[1] : null),
+      addEventListener: (ev, fn) => bound.push({ ev, fn }),
+    }];
+  };
+  return bound;
+}
+reset();
+mapRooms.clear();
+let bound = withToggleCapture();
+handleGMCP('Char.Quests', longQuests(LONG_HINT));
+let p8 = panelText();
+check('a long hint renders the clamp class', /class="qhint-text qhint-clamp"/.test(p8), p8);
+check('a long hint renders a toggle labelled "more"', /<button type="button" class="qhint-more"[^>]*>more<\/button>/.test(p8), p8);
+// The clamped span holds only escaped text, so its first "</span>" ends it.
+const clampStart = p8.indexOf('class="qhint-text');
+const clampEnd = clampStart < 0 ? -1 : p8.indexOf('</span>', clampStart);
+check('the direction suffix is outside the clamped element',
+  clampEnd > -1 && p8.indexOf('head east') > clampEnd && !p8.slice(clampStart, clampEnd).includes('qonmap'), p8);
+check('the toggle is outside the clamped element', clampEnd > -1 && p8.indexOf('qhint-more') > clampEnd, p8);
+check('one click handler bound to the toggle', bound.length === 1 && bound[0].ev === 'click', JSON.stringify(bound));
+const noClick = [{ fn: () => {} }];
+if (!bound.length) bound = noClick;
+let stopped = false;
+bound[0].fn({ stopPropagation: () => { stopped = true; }, preventDefault: () => {} });
+p8 = panelText();
+check('the click does not reach the row focus handler (stopPropagation)', stopped, 'stopPropagation not called');
+check('after a click the clamp is lifted and the toggle says "less"',
+  /class="qhint-text"/.test(p8) && !/qhint-clamp/.test(p8) && />less<\/button>/.test(p8), p8);
+bound = withToggleCapture();
+handleGMCP('Char.Quests', longQuests(LONG_HINT + ' Mind the dogs.'));
+p8 = panelText();
+check('a re-render from a new push keeps the hint expanded', />less<\/button>/.test(p8) && !/qhint-clamp/.test(p8), p8);
+if (!bound.length) bound = noClick;
+bound[0].fn({ stopPropagation: () => {}, preventDefault: () => {} });
+check('a second click clamps it again', /qhint-clamp/.test(panelText()) && />more<\/button>/.test(panelText()), panelText());
+
+reset();
+handleGMCP('Char.Quests', longQuests(AT_CAP));
+let p8s = panelText();
+check('a hint of exactly 200 characters renders no clamp', !/qhint-clamp/.test(p8s), p8s);
+check('and no toggle', !/qhint-more/.test(p8s), p8s);
+reset();
+handleGMCP('Char.Quests', longQuests('Type talk pell.'));
+p8s = panelText();
+check('a short hint renders neither clamp nor toggle', !/qhint-clamp/.test(p8s) && !/qhint-more/.test(p8s), p8s);
+check('a short hint still shows the direction', p8s.includes('head east'), p8s);
+reset();
+handleGMCP('Char.Quests', longQuests('a ' + ' \n\t '.repeat(300) + 'b'));
+p8s = panelText();
+check('whitespace runs collapse before counting', !/qhint-more/.test(p8s), p8s);
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);

@@ -347,7 +347,7 @@
     zn.textContent = oz.length > 13 ? oz.slice(0, 12) + "…" : oz;
     g.appendChild(zn);
     var title = el("title");
-    title.textContent = (r.name || ("#" + r.num)) + " — " + oz + " (click to edit that zone)";
+    title.textContent = (r.name || ("#" + r.num)) + ": " + oz + " (click to edit that zone)";
     g.appendChild(title);
     g.addEventListener("click", function (ev) {
       ev.stopPropagation();
