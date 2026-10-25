@@ -237,41 +237,79 @@ own, unrelated action param.)
 #375 phase 2b, spec section 7) drives every quest that has an `offer` topic
 from its offer to its hand-in through the real `Engine.Notify` and the real
 dialogue topics (`DialogueFile.Eligible` then `Apply`), with no game running.
-It reads the Ways into each step from `questloop.WaysInto`.
+It sorts the quests by id first, so the engine's trigger order does not depend
+on the caller's order. It reads the Ways into each step from
+`questloop.WaysInto`, plus `Sources.External` (`questloop.ExternalWays`).
 
 - **`walkPlayer`** is the mock player. It has the game's real step order:
   `HasQuest(t)` holds for the current step and every earlier one, a grant only
-  moves forward, and a quest is entered only at its first step (as
-  `characters.GiveQuestToken` does). It also holds items, flags, gold and room,
-  and `dialogueState()` wraps it as a `dialogue.PlayerState`.
+  moves forward, and a quest is entered only at `start` (or the only step of a
+  one-step quest), as `quests.IsTokenAfter` allows. It also holds items,
+  flags, heard topics, gold and room, and `dialogueState()` wraps it as a
+  `dialogue.PlayerState`.
 - **`walkCtx`** is the `ActionContext`. Grants, items, gold and quest flags
   change the player; narration, spawns, teleports and the rest are no-ops.
   `QueueSequence` runs the sequence's `on_complete` actions at once, as the
   real bridge does after the lines finish (`GameBridge.QueueSequence`,
   `bridge.go`). `trailCtx` wraps it to note every grant.
+- **`walkEnv`** is what every firing reads: the engine, the sources, the
+  dialogue files by NPC, the topics some `heardRequired` names, and the flag
+  setters.
 - **Prerequisites.** `meetToken` holds a token a condition or gate names, but
   never a token of the walked quest itself: the walk is already on that quest's
   real progress, so a Way that needs a LATER step of its own quest cannot fire
-  and is a dead end. Other quests' tokens are held as prerequisites.
+  and is a dead end. Other quests' tokens and flags are held as prerequisites.
+- **Own flags are never faked.** `walkEnv.meetFlag` gives a flag of the walked
+  quest only when the walk sets it: a Way that sets it, or a "setter" (a
+  trigger or topic that sets it and grants no step of the quest, such as quest
+  72's `room_interact` `set_flag`) fired from the current state without moving
+  the quest. Setters nest at most `maxSetterDepth` deep.
+- **Heard topics.** `walkEnv.hear` marks as heard every info topic a
+  `heardRequired` names that is open in the current state; applying an info
+  topic marks it too. A topic whose heard topic never opens is a dead end.
+- **Negative gates** (`missing`, `missing_item`, `missing_flag`,
+  `questExcluded`, `itemExcluded`, `questFlagExcluded`) read the walk's real
+  state.
+- **Branches.** The walk carries every distinct successful state forward
+  (`walkStates`, at most `maxWalkStates` = 16 per step, by `fingerprint`), so a
+  later Way that needs one branch's flag is reached through that branch. A Way
+  is reported as not reaching its step only when it works from no state; a
+  skip from any state is reported.
+- **`quest_granted` of the walked quest** is never fired directly. It fires
+  only inside the chain of the grant that lands on its token, which every
+  firing runs (the engine's chain, and `fireTopic` notifies `quest_granted`
+  on a fresh dialogue grant as `Quest_HandleQuestUpdate.go` does). When the
+  step it grants is dead, the Way is named too.
+- **External grants.** A behaviour tree's `grant_quest` cannot be run, so the
+  walk takes it from the step before it, once a topic its branch answers is
+  open at the tree's NPC (or at once when the branch keys on no topic). The
+  tree sets the token before the quest hook runs, so no `quest_granted` chain
+  follows, in the game or the walk. An item `questtoken` fires once the walk
+  holds the item or `Sources.ItemAvailable` says it can be had, and its chain
+  runs. Tree grants are never fired by the skip probe.
 - **Skip detection.** Two checks. (1) A `walkTrail` records every step one
   firing put the player on: a `quest_granted` chain through each step is fine,
   a missing step is a skip. (2) A probe fires each Way into a LATER step from
-  the current step. It gives only items obtainable outside the walked quest
-  (`Sources.ItemOutside`; an item only the quest's own steps hand out proves
-  those steps were done), and flags a Way that lands past the next step.
+  each state resting on the current step. It gives an item only when the walk
+  already holds it (an earlier step handed it over) or
+  `Sources.ItemAvailable(item, quest, p.HasQuest)` says it can be had at this
+  progress, and flags a Way that lands past the next step.
+- **Source checks** run once for every Way into every step, so the steps after
+  a dead step are still checked.
 
 | Rule | Finding |
 |---|---|
 | `walk-dead-end` | A step no Way reaches, an offer that cannot be taken, a Way that does not reach its step, or a firing that skips a step |
-| `walk-no-source` | A Way needs an item (`has_item`, `item_give`, `item_gain`, `requiresItem`, `carriesItem`) that `Sources.ItemSources` says nothing provides |
-| `walk-unspawned` | A Way needs a mob (`mob_death`, `item_give` target, the topic's NPC) that `Sources.MobSpawned` says nothing places |
+| `walk-no-source` | A Way needs an item (`has_item`, `item_give`, `item_gain`, `requiresItem`, `carriesItem`, an item `questtoken`) that `Sources.ItemSources` says nothing provides |
+| `walk-unspawned` | A Way needs a mob (`mob_death`, `item_give` target, the topic's NPC, a tree grant's NPC) that `Sources.MobSpawned` says nothing places |
 
 Findings share `questloop`'s shape and its one backlog. The walk is CI only:
 the sweep `TestSmoke_ShippedQuestsPassTheLoop` (`quest_loop_smoke_test.go`)
 combines `questloop.Validate` and `Walk`; boot (`main_quests.go`) runs
-`Validate` only and ignores the walk lines. Today's backlog holds 26 walk
-lines: 7 steps with no way in and 19 skips (1 real order bug in quest 19, 10
-documented lenient gates, 8 items obtainable outside the quest).
+`Validate` only and ignores the walk lines. Today's backlog holds 29 walk
+lines, all `walk-dead-end`: 6 steps with no way in and 23 skips. Six of the
+skips are hand-ins gated only on `start` plus an item an earlier step hands
+over (quests 14, 63 twice, 65, 66, 67).
 
 Deviation from spec 7.1: `walkPlayer` and `walkCtx` are package code, not the
 `_test.go` doubles (`fullMockPlayer`, `mockActionContext`, `linearPlayer`),
@@ -282,9 +320,11 @@ Known limits:
 
 - Behaviour-tree mob spawns are not indexed by `questworld.Sources`, so a mob
   placed only that way reads as unspawned.
-- The skip probe sets the flags a later Way needs without checking how they
-  are set.
-- Later steps of a quest that dead-ends early are not checked for sources.
+- A tree's own conditions (`player_has_quest`, state flags) are not read: a
+  tree grant is taken from the step before it whenever its topic is open.
+- A setter's other effects (items, gold) are not carried over; only the flag.
+- A topic heard only at a step a `quest_granted` chain passes through without
+  resting there is not marked.
 
 ## Dependencies
 

@@ -13,8 +13,7 @@ condition, mob and room registries to fill them.
 | File | What it holds |
 |---|---|
 | `names.go` | `Names() quests.RewardNames`: item, recipe, spell and faction display names, "" for an unknown id |
-| `sources.go` | `Sources() questloop.Sources`: the walkthrough's item-source and spawn index |
-| `questworld.go` | `Validators()`, `Registry()`, `RegistryWith(v)`, `WithQuest(w, q)` with its step and flag overlays, `BacklogPath()`, `LoadBacklog()` |
+| `sources.go` | `Sources() questloop.Sources`: the walkthrough's item-source and spawn index, and its external grants || `questworld.go` | `Validators()`, `Registry()`, `RegistryWith(v)`, `WithQuest(w, q)` with its step and flag overlays, `BacklogPath()`, `LoadBacklog()` |
 
 ## API
 
@@ -43,8 +42,17 @@ condition, mob and room registries to fill them.
   outputs; and, for a SPAWNED mob only, its carried and worn items, loot pool
   and shop stock. A mob is spawned when a room's spawninfo or a quest's
   `spawn_mob` action places it. Each source records the quests that own it
-  (their own grants, a topic of or gated on the quest, a mob only that quest
-  spawns), which backs `ItemOutside`. Behaviour-tree mob spawns are not indexed.
+  (`owner`: their own grants, a topic of or gated on the quest, a mob only
+  that quest spawns), which backs `ItemAvailable`. A topic's owner entry
+  carries the tokens of that quest its `questRequired` names and the token it
+  grants (`topicOwners`): the source opens to that quest once the player holds
+  them all (a topic of quest 70 gated on 63-start is open to quest 63 from
+  start on; quest 20's `vellahandoff`, which grants 20-vella_journal with the
+  journal, is no source before that step). Behaviour-tree mob spawns are not
+  indexed. `External` lists every behaviour tree `grant_quest` action (mob,
+  room, archetype and item trees, via `behaviortree.ListTreeFiles` and
+  `behaviortree.QuestGrantsInFile`, named "mob 9100 tree grant_quest 30-rite")
+  and every item `questtoken` ("item 40035 questtoken"), sorted by name.
   Call it after the registries are loaded; `quest_loop_smoke_test.go`
   (`TestSmoke_WalkSourcesIndexShippedWorld`) checks it against shipped data.
 - `BacklogPath()` and `LoadBacklog()`: the shipped `quests/loop-backlog.txt`; a

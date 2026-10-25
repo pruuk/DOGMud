@@ -98,14 +98,22 @@ it needs the trigger engine; this package only exports what it reads
 - `Way`: one thing that grants a token (a trigger, a topic or a completion
   reward), with its stable backlog name `Where`, the `Owner` quest, `Nested`
   for a grant inside a sequence's `on_complete`, the topic's `MobId` and
-  `File`, and `Reward`.
+  `File`, `Reward`, and `External` for an external grant.
 - `WaysInto(w World) map[string][]Way`: token to every Way that grants it, the
   same index every rule reads.
+- `ExternalGrant` and `ExternalWays(ways, ext)`: a grant outside triggers and
+  topics, a behaviour tree's `grant_quest` (with the tree's `MobId` and the
+  `Topics` its branch answers) or an item's `questtoken` (`ItemId`).
+  `ExternalWays` adds them to a Ways map. Only the walk reads them: `Validate`
+  and its rules use `indexGrants`, which does not, so a step only a tree
+  grants still reads as `one-action ...:none` there (Hadwen's `30-rite`).
 - `Sources`: the world questions the walk asks. `ItemSources(itemId)` names
   where an item comes from (empty: none); `MobSpawned(mobId)` says a room or a
-  quest spawns it; `ItemOutside(itemId, questId)` says the item has a source
-  that is not that quest's own grants. A nil func skips that check.
-  `questworld.Sources()` fills it from the registries.
+  quest spawns it; `ItemAvailable(itemId, questId, has)` says a player on that
+  quest with progress `has` can obtain the item without the quest's later
+  steps (a source the quest does not own, or one it owns through gates `has`
+  already holds); `External` lists the external grants. A nil func skips that
+  check. `questworld.Sources()` fills it from the registries.
 
 The walk's rules (`walk-dead-end`, `walk-no-source`, `walk-unspawned`) share
 the one backlog with the rules above. They are produced by `Walk`, not

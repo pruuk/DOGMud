@@ -373,12 +373,21 @@ runs as `bridge.go` does). The existing test doubles (`fullMockPlayer`, `linearP
 where they are. The walkthrough is CI only: boot runs `Validate` and ignores the walk lines
 of the backlog; the CI sweep ratchets `Validate` plus `Walk`.
 
-As built, the walk differs from the sketch below in three ways. It never holds a later step
-of the walked quest (a Way that needs one is a dead end); other quests' tokens are held as
-prerequisites. It detects skips by a trail of every step one firing lands on (a
+As built, the walk differs from the sketch below in these ways. It never holds a later step
+of the walked quest (a Way that needs one is a dead end), nor a flag of the walked quest:
+only a flag the walk sets counts, through a Way or a grantless setter (a trigger or topic
+that sets it and grants no step) fired from the current state. Other quests' tokens and
+flags are held as prerequisites. `heardRequired` holds once the info topic has been open in
+the walk's state, and negative gates read the real state. It carries every distinct
+successful state forward (at most 16 per step), so alternatives are judged per branch. It
+fires the walked quest's own `quest_granted` triggers only inside the chain of the grant
+that lands on their token. Behaviour-tree `grant_quest` actions and item `questtoken`s are
+Ways too (`Sources.External`): a tree grant is taken from the step before it once a topic
+its branch answers is open. It detects skips by a trail of every step one firing lands on (a
 `quest_granted` chain through each step is fine, a missing step is a skip), and by a probe
-that fires a later step's Way early, giving only items obtainable outside the walked quest
-(`Sources.ItemOutside`). And it reports the skip rather than requiring "exactly one step".
+that fires a later step's Way early, giving an item only when the walk already holds it or
+it can be had at the current progress (`Sources.ItemAvailable`). And it reports the skip
+rather than requiring "exactly one step".
 
 For each shipped quest:
 

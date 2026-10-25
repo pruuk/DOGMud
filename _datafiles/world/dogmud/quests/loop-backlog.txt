@@ -249,8 +249,7 @@ start 29 step start
 start 30 quest 30 trigger room_enter room=5200 grants=30-start
 start 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
 start 77 step end
-walk-dead-end 11 mob 241 topic totem_return
-walk-dead-end 11 mob 242 topic sample_return
+walk-dead-end 14 mob 94 topic velkhandoff
 walk-dead-end 14 quest 14 trigger item_gain item=40034 grants=14-unlock
 walk-dead-end 14 quest 14 trigger room_enter room=498 grants=14-unlock
 walk-dead-end 14 quest 14 trigger room_interact room=498 noun=strongbox grants=14-evidence
@@ -258,7 +257,6 @@ walk-dead-end 14 step report
 walk-dead-end 15 mob 250 topic quest_complete_dialogue
 walk-dead-end 16 mob 259 topic quest_complete_herbs
 walk-dead-end 19 quest 19 trigger mob_death mob=331 grants=19-hunter
-walk-dead-end 30 step rite
 walk-dead-end 32 quest 32 trigger command command=combatverbosity grants=32-verbosity
 walk-dead-end 32 step consider
 walk-dead-end 35 quest 35 trigger command room=5245 command=craft grants=35-craft
@@ -269,9 +267,14 @@ walk-dead-end 5 mob 84 topic tolvahandoff
 walk-dead-end 50 quest 50 trigger command room=5351 command=fire grants=50-cover_shot
 walk-dead-end 50 quest 50 trigger command room=5351 command=fire grants=50-shoot
 walk-dead-end 61 quest 61 trigger mob_death mob=9173 grants=61-reach
+walk-dead-end 63 mob 9300 topic tallyhandoff
+walk-dead-end 63 mob 9316 topic tallyhandoff
 walk-dead-end 63 step report
+walk-dead-end 65 mob 9320 topic sweeperhandoff
 walk-dead-end 65 step report
+walk-dead-end 66 mob 9323 topic wrapperhandoff
 walk-dead-end 66 step escort
+walk-dead-end 67 mob 9316 topic casefilehandoff
 walk-dead-end 67 step report
 walk-dead-end 7 mob 89 topic dornhandoff
 walk-dead-end 9 mob 95 topic olenhandoff

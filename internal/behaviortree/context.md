@@ -230,7 +230,7 @@ Condition nodes use `type: condition` with `check: <name>`.
 | Condition | Params | Description |
 |-----------|--------|-------------|
 | `keyword_match` | `keywords` (list) | Matches any word in event Text. |
-| `topic_is` | `topic` (string), `topics` (list), or both | A `player_topic` event carrying one of these topic keys (`topics.go`, #375 R12). `TopicIsKeys(params)` reads them for the condition, `TopicKeysInFile` (the dialogue validators) and `cmd/dialoguecheck`. Hadwen's rite answers `topics: [begin, rite_wait]`. |
+| `topic_is` | `topic` (string), `topics` (list), or both | A `player_topic` event carrying one of these topic keys (`topics.go`, #375 R12). `TopicIsKeys(params)` reads them for the condition, `TopicKeysInFile` (the dialogue validators) and `cmd/dialoguecheck`. Hadwen's rite answers `topics: [begin, rite_wait]`. `QuestGrantsInFile(path)` lists a tree's `grant_quest` actions as `TreeQuestGrant` (token, the branch's event, and the `topic_is` keys a sequence checks before the grant), for the quest walkthrough (`questworld.Sources().External`). |
 
 ### Player State
 
@@ -1028,7 +1028,7 @@ Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tact
 |-------|-------|
 | Core | `engine.go`, `types.go`, `state.go`, `structural.go`, `decorators.go`, `helpers.go`, `params.go`, `references.go` |
 | Loading & validation | `loader.go`, `validate.go`, `save.go`, `test_export.go` |
-| Events | `events.go`, `topics.go` (`topic_is`, `TopicKeysInFile`), `give_handback.go` (`GiveHandBack`, the hand-back branch rules) |
+| Events | `events.go`, `topics.go` (`topic_is`, `TopicKeysInFile`, `QuestGrantsInFile`), `give_handback.go` (`GiveHandBack`, the hand-back branch rules) |
 | Actions — generic | `actions.go`, `actions_mob.go`, `actions_state.go`, `actions_room.go`, `actions_party.go`, `actions_goal.go` |
 | Actions — combat | `actions_combat.go`, `action_cast_best_in_category.go`, `actions_archer.go` |
 | Actions — economy | `actions_forager.go`, `actions_forager_verbs.go`, `actions_forager_storage.go`, `actions_wagon.go`, `actions_ferry.go`, `portal_stake.go`, `caravan_reset.go` |
