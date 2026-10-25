@@ -14,7 +14,7 @@ description: >
   hand that knows the working of reagents. The recess goes no further.
   The only way out is back the way you came.
 exits:
-  west:
+  east:
     roomid: 6384
 nouns:
   vials: >
@@ -35,7 +35,7 @@ idlemessages:
 - Dust lies undisturbed on the shelves, older than any dust should be.
 mutators:
 - mutatorid: hull_suppression
-x: 7
+x: 5
 y: -1
 z: -1
 plane: 2

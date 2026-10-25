@@ -3,7 +3,7 @@ zone: Crash Site Interior
 title: The Sealed Shuttle Bay
 biome: interior
 description: >
-  East of the array the grey draws back into a great shut bay, and the
+  North of the array the grey draws back into a great shut bay, and the
   cold light gives out early in it, so that most of the room is dark. What
   the dark holds is a craft. It sits cradled in folded grey arms at the
   centre of the bay, smaller than the buried thing that carries it but made
@@ -16,10 +16,10 @@ description: >
   runs in it, no seam gives, and
   the great doors overhead are shut fast with ten thousand years of the
   world settled against them. There is a way up in this room, and it does
-  not open. Not now. Not by any hand you have. Perhaps not yet. West lies
+  not open. Not now. Not by any hand you have. Perhaps not yet. South lies
   the array and the way back.
 exits:
-  west:
+  south:
     roomid: 6399
 nouns:
   craft: >
@@ -48,6 +48,6 @@ idlemessages:
 - There is a way off the world in this room, and it does not open. Not yet.
 mutators:
 - mutatorid: hull_suppression
-x: 7
-y: -5
+x: 6
+y: -6
 plane: 2
