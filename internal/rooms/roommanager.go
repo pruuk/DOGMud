@@ -748,6 +748,12 @@ func addRoomToMemory(room *Room, forceOverWrite ...bool) error {
 func GetZoneRoot(zone string) (int, error) {
 
 	if zoneInfo, ok := roomManager.zones[zone]; ok {
+		// An instanced zone names its first room as entry_room and leaves
+		// roomid unset; without this the root read as room 0 and the boot
+		// map check crawled another zone's map instead.
+		if zoneInfo.RoomId == 0 && zoneInfo.EntryRoom != 0 {
+			return zoneInfo.EntryRoom, nil
+		}
 		return zoneInfo.RoomId, nil
 	}
 

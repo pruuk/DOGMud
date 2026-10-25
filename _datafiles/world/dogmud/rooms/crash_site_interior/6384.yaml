@@ -13,11 +13,11 @@ description: >
   of the grey holds ranks of small even marks, cataloguing something in a
   reckoning you cannot read. Whatever was studied here was studied a long
   time, and carefully, and not once was it asked whether it wished to be.
-  A Cold-Light Sentinel keeps the place still. The way on lies east.
+  A Cold-Light Sentinel keeps the place still. The way on lies west.
 exits:
   south:
     roomid: 6383
-  east:
+  west:
     roomid: 6385
 nouns:
   slab: >

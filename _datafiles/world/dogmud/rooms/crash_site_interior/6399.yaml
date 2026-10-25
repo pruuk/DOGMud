@@ -20,12 +20,12 @@ description: >
   speak to them. But the array is broken. The filaments hang dark and the
   seat is cold and the reach is folded and still, and press what you will,
   nothing wakes; the voice was silenced in the fall and what would raise it
-  is not here, not yet. East the grey gives onto a sealed bay. South lies
-  the gallery.
+  is not here, not yet. Further north the grey gives onto a sealed bay.
+  South lies the gallery.
 exits:
   south:
     roomid: 6398
-  east:
+  north:
     roomid: 6400
 nouns:
   array: >
