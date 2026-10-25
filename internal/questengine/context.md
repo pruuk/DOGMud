@@ -239,7 +239,8 @@ from its offer to its hand-in through the real `Engine.Notify` and the real
 dialogue topics (`DialogueFile.Eligible` then `Apply`), with no game running.
 It sorts the quests by id first, so the engine's trigger order does not depend
 on the caller's order. It reads the Ways into each step from
-`questloop.WaysInto`, plus `Sources.External` (`questloop.ExternalWays`).
+`questloop.WaysInto`, which includes the world's external grants
+(`World.External`).
 
 - **`walkPlayer`** is the mock player. It has the game's real step order:
   `HasQuest(t)` holds for the current step and every earlier one, a grant only

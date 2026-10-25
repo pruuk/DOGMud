@@ -6,33 +6,26 @@ import (
 )
 
 // Way is one thing in the world that grants a quest token, as the rules see
-// it: a trigger, a topic, or a completion reward (WaysInto), or for the
-// walkthrough also an external grant (ExternalWays). Where is its stable
-// backlog name. The walkthrough (questengine.Walk) drives each Way.
+// it: a trigger, a topic, a completion reward or an external grant. Where
+// is its stable backlog name. The walkthrough (questengine.Walk) drives each
+// Way.
 type Way struct {
 	Where    string
 	Trigger  *quests.TriggerDef // set for a trigger
 	Owner    int                // the quest whose file holds the trigger
 	Nested   bool               // granted inside a sequence's on_complete
 	Topic    *dialogue.Topic    // set for a topic
-	MobId    int                // the topic's NPC
+	MobId    int                // the topic's NPC, or a mob tree's NPC
 	File     *dialogue.DialogueFile
 	Reward   bool           // rewards.questid
 	External *ExternalGrant // set for a behaviour-tree grant or an item questtoken
 }
 
-// ExternalWays adds a Way for each external grant to ways, keyed by token.
-func ExternalWays(ways map[string][]Way, ext []ExternalGrant) {
-	for i := range ext {
-		g := &ext[i]
-		ways[g.Token] = append(ways[g.Token], Way{Where: g.Where, MobId: g.MobId, External: g})
-	}
-}
-
 // ExternalGrant is a grant outside the trigger engine and the dialogue
-// topics, which Validate does not read and the walkthrough does: a
-// behaviour tree's grant_quest action, or an item's questtoken (holding the
-// item grants the token).
+// topics (World.External): a behaviour tree's grant_quest action, or an
+// item's questtoken (holding the item grants the token). Validate counts it
+// as a way in (see way.external for how each rule treats it); the
+// walkthrough drives it.
 type ExternalGrant struct {
 	// Where is the stable backlog name: "mob 9100 tree grant_quest 30-rite",
 	// "room 407 tree grant_quest 4-investigate", "item 40035 questtoken".
@@ -48,7 +41,7 @@ type ExternalGrant struct {
 }
 
 // WaysInto maps each token ("53-firstkill") to every Way that grants it, the
-// same index every rule reads.
+// same index every rule reads, external grants included.
 func WaysInto(w World) map[string][]Way {
 	out := map[string][]Way{}
 	files := map[int]*dialogue.DialogueFile{}
@@ -59,10 +52,14 @@ func WaysInto(w World) map[string][]Way {
 	}
 	for tok, ws := range indexGrants(w) {
 		for _, x := range ws {
-			out[tok] = append(out[tok], Way{
+			wy := Way{
 				Where: x.where, Trigger: x.trigger, Owner: x.owner, Nested: x.nested,
-				Topic: x.topic, MobId: x.mobId, File: files[x.mobId], Reward: x.reward,
-			})
+				Topic: x.topic, MobId: x.mobId, Reward: x.reward, External: x.external,
+			}
+			if x.topic != nil {
+				wy.File = files[x.mobId]
+			}
+			out[tok] = append(out[tok], wy)
 		}
 	}
 	return out
@@ -88,7 +85,4 @@ type Sources struct {
 	// the walk player already holds it or this holds. Nil: every item counts
 	// as available.
 	ItemAvailable func(itemId, questId int, has func(token string) bool) bool
-	// External lists the grants behaviour trees and item questtokens make.
-	// The walk adds them to the Ways into their tokens.
-	External []ExternalGrant
 }

@@ -137,8 +137,10 @@ func TestSmoke_WalkSourcesIndexShippedWorld(t *testing.T) {
 	// 407's tree grants 4-investigate on entry
 	// (behaviors/rooms/dustwalk_road/407.yaml), and the tally stick grants
 	// 14-explore (items/materials-40000/40035-tally_stick.yaml).
+	// They live on the loop world (questworld.Registry), which boot, CI and
+	// the quest editor all build.
 	ext := map[string]questloop.ExternalGrant{}
-	for _, g := range src.External {
+	for _, g := range questworld.Registry().External {
 		ext[g.Where] = g
 		t.Logf("external: %s -> %s topics %v item %d", g.Where, g.Token, g.Topics, g.ItemId)
 	}

@@ -61,6 +61,28 @@ func TestStart_RewardGrantIsRefused(t *testing.T) {
 	require.Contains(t, rules(Validate(w)), "start quest 53 rewards questid")
 }
 
+// Only an NPC offer may start a quest: a behaviour tree or an item that
+// grants the start token is a start finding, and does not stand in for the
+// missing offer.
+func TestStart_ExternalGrantIsRefused(t *testing.T) {
+	w := goodWorld()
+	w.External = []ExternalGrant{{Where: "mob 9112 tree grant_quest 53-start", Token: "53-start", MobId: 9112}}
+	require.Equal(t, []string{"start mob 9112 tree grant_quest 53-start"}, rules(Validate(w)))
+
+	w.Dialogue[0].Topics = w.Dialogue[0].Topics[1:]
+	got := rules(Validate(w))
+	require.Contains(t, got, "start mob 9112 tree grant_quest 53-start")
+	require.Contains(t, got, "start step start", "a tree grant is not an offer")
+}
+
+// Only an NPC hand-in may finish a quest: an external grant of the end token
+// is an end finding.
+func TestEnd_ExternalGrantIsRefused(t *testing.T) {
+	w := goodWorld()
+	w.External = []ExternalGrant{{Where: "item 900 questtoken", Token: "53-end", ItemId: 900}}
+	require.Equal(t, []string{"end item 900 questtoken"}, rules(Validate(w)))
+}
+
 func TestStart_NoOfferIsRefused(t *testing.T) {
 	w := goodWorld()
 	w.Dialogue[0].Topics = w.Dialogue[0].Topics[1:]

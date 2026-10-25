@@ -19,6 +19,17 @@ type way struct {
 	topic   *dialogue.Topic    // set for a topic
 	mobId   int                // the topic's NPC
 	reward  bool               // rewards.questid
+	// external is set for a behaviour-tree grant or an item questtoken. It
+	// is a way in like any other, so a step only it grants is not a
+	// one-action :none finding. The other rules treat it as follows:
+	//   - start and end: it is neither an offer nor a hand-in, so a grant of
+	//     a quest's start or end token is a start or end finding, and it
+	//     never stands in for the missing offer or hand-in.
+	//   - one-action :prev, :cond, :seq, :double: not checked. It carries no
+	//     trigger conditions to read; its gate is the topic that fires the
+	//     tree (or the room or item event behind it), or getting the item.
+	//     The walkthrough checks those gates (questengine.Walk).
+	external *ExternalGrant
 }
 
 // grants maps a token ("53-firstkill") to every way that grants it.
@@ -54,6 +65,13 @@ func indexGrants(w World) grants {
 			g[t.GrantsQuest] = append(g[t.GrantsQuest], way{
 				where: fmt.Sprintf("mob %d topic %s", df.MobId, t.Key), topic: t, mobId: df.MobId})
 		}
+	}
+	for i := range w.External {
+		x := &w.External[i]
+		if x.Token == "" || strings.HasPrefix(x.Token, "-") {
+			continue
+		}
+		g[x.Token] = append(g[x.Token], way{where: x.Where, mobId: x.MobId, external: x})
 	}
 	return g
 }

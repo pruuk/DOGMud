@@ -230,7 +230,7 @@ Condition nodes use `type: condition` with `check: <name>`.
 | Condition | Params | Description |
 |-----------|--------|-------------|
 | `keyword_match` | `keywords` (list) | Matches any word in event Text. |
-| `topic_is` | `topic` (string), `topics` (list), or both | A `player_topic` event carrying one of these topic keys (`topics.go`, #375 R12). `TopicIsKeys(params)` reads them for the condition, `TopicKeysInFile` (the dialogue validators) and `cmd/dialoguecheck`. Hadwen's rite answers `topics: [begin, rite_wait]`. `QuestGrantsInFile(path)` lists a tree's `grant_quest` actions as `TreeQuestGrant` (token, the branch's event, and the `topic_is` keys a sequence checks before the grant), for the quest walkthrough (`questworld.Sources().External`). |
+| `topic_is` | `topic` (string), `topics` (list), or both | A `player_topic` event carrying one of these topic keys (`topics.go`, #375 R12). `TopicIsKeys(params)` reads them for the condition, `TopicKeysInFile` (the dialogue validators) and `cmd/dialoguecheck`. Hadwen's rite answers `topics: [begin, rite_wait]`. `QuestGrantsInFile(path)` lists a tree's `grant_quest` actions as `TreeQuestGrant` (token, the branch's event, and the `topic_is` keys a sequence checks before the grant), for the quest loop rules and walkthrough (`questworld.Registry().External`). |
 
 ### Player State
 

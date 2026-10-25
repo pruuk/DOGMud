@@ -41,8 +41,7 @@ func Walk(w questloop.World, src questloop.Sources) []questloop.Finding {
 			steps[q.QuestId] = append(steps[q.QuestId], s.Id)
 		}
 	}
-	ways := questloop.WaysInto(w)
-	questloop.ExternalWays(ways, src.External)
+	ways := questloop.WaysInto(w) // external grants included (w.External)
 	env := newWalkEnv(eng, src, w.Quests, w.Dialogue)
 	var out []questloop.Finding
 	for _, q := range w.Quests {

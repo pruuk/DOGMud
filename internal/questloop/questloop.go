@@ -21,6 +21,10 @@ type World struct {
 	Dialogue []*dialogue.DialogueFile
 	Refs     *quests.QuestValidators // nil skips the refs rule
 	Names    quests.RewardNames
+	// External is every grant outside the trigger engine and the dialogue
+	// topics (behaviour-tree grant_quest actions, item questtokens). The
+	// rules and the walkthrough index them with the rest (see indexGrants).
+	External []ExternalGrant
 }
 
 // Finding is one rule failure. Key (rule, quest, where) is its backlog

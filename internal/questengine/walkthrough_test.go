@@ -322,17 +322,18 @@ func TestWalk_StepGrantedByATreeIsNotADeadEnd(t *testing.T) {
 	tree := questloop.ExternalGrant{Where: "mob 9112 tree grant_quest 53-firstkill", Token: "53-firstkill",
 		MobId: 9112, Topics: []string{"hunt"}}
 	require.Contains(t, keys(Walk(w, questloop.Sources{})), "walk-dead-end 53 step firstkill", "no tree: dead")
-	require.Empty(t, Walk(w, questloop.Sources{External: []questloop.ExternalGrant{tree}}))
+	w.External = []questloop.ExternalGrant{tree}
+	require.Empty(t, Walk(w, questloop.Sources{}))
 
 	// The tree answers a topic that never opens: the tree Way is dead.
 	w.Dialogue[0].Topics[2].QuestRequired = []string{"53-end"}
-	got := keys(Walk(w, questloop.Sources{External: []questloop.ExternalGrant{tree}}))
+	got := keys(Walk(w, questloop.Sources{}))
 	require.Contains(t, got, "walk-dead-end 53 mob 9112 tree grant_quest 53-firstkill")
 	require.Contains(t, got, "walk-dead-end 53 step firstkill")
 
 	// A branch that keys on no topic (a room_enter tree) is taken as is.
-	room := questloop.ExternalGrant{Where: "room 407 tree grant_quest 53-firstkill", Token: "53-firstkill"}
-	require.Empty(t, Walk(w, questloop.Sources{External: []questloop.ExternalGrant{room}}))
+	w.External = []questloop.ExternalGrant{{Where: "room 407 tree grant_quest 53-firstkill", Token: "53-firstkill"}}
+	require.Empty(t, Walk(w, questloop.Sources{}))
 }
 
 // An item questtoken (item 40035 grants 14-explore) is a Way in once the
@@ -340,8 +341,8 @@ func TestWalk_StepGrantedByATreeIsNotADeadEnd(t *testing.T) {
 func TestWalk_ItemQuestTokenIsAWayIn(t *testing.T) {
 	w := walkWorld()
 	w.Quests[0].Triggers = nil
-	tok := questloop.ExternalGrant{Where: "item 900 questtoken", Token: "53-firstkill", ItemId: 900}
-	ok := questloop.Sources{External: []questloop.ExternalGrant{tok}, ItemAvailable: func(id, _ int, _ func(string) bool) bool { return id == 900 }}
+	w.External = []questloop.ExternalGrant{{Where: "item 900 questtoken", Token: "53-firstkill", ItemId: 900}}
+	ok := questloop.Sources{ItemAvailable: func(id, _ int, _ func(string) bool) bool { return id == 900 }}
 	require.Empty(t, Walk(w, ok))
 
 	never := ok

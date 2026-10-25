@@ -80,7 +80,8 @@ func mobHasDialogueFile(mobId int) bool {
 
 // Registry is the loop world over the loaded registries: every quest, every
 // dialogue file (strictly decoded; their own problems are the dialogue
-// door's), the live reference checks and reward names.
+// door's), the live reference checks, reward names and the external grants
+// (behaviour-tree grant_quest actions and item questtokens, externalGrants).
 func Registry() questloop.World {
 	return RegistryWith(Validators())
 }
@@ -94,11 +95,12 @@ func RegistryWith(v quests.QuestValidators) questloop.World {
 		qs = append(qs, &all[i])
 	}
 	files, _ := dialogue.LoadAllFiles()
-	return questloop.World{Quests: qs, Dialogue: files, Refs: &v, Names: Names()}
+	return questloop.World{Quests: qs, Dialogue: files, Refs: &v, Names: Names(), External: externalGrants()}
 }
 
 // WithQuest is w with q in place of the quest that has its id (or added),
-// the proposed world an editor save is checked against. w is not changed.
+// the proposed world an editor save is checked against. w is not changed;
+// its dialogue, names and external grants carry over as they are.
 //
 // Its Refs is a copy of w's whose step and flag checks read q for q's own
 // tokens and flags ("<q.QuestId>-..."), so the refs rule judges every other

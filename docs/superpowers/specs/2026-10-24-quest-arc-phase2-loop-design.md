@@ -382,7 +382,8 @@ the walk's state, and negative gates read the real state. It carries every disti
 successful state forward (at most 16 per step), so alternatives are judged per branch. It
 fires the walked quest's own `quest_granted` triggers only inside the chain of the grant
 that lands on their token. Behaviour-tree `grant_quest` actions and item `questtoken`s are
-Ways too (`Sources.External`): a tree grant is taken from the step before it once a topic
+Ways too (`World.External`, which `Validate` also counts as a way in, though never as an
+offer or a hand-in): a tree grant is taken from the step before it once a topic
 its branch answers is open. It detects skips by a trail of every step one firing lands on (a
 `quest_granted` chain through each step is fine, a missing step is a skip), and by a probe
 that fires a later step's Way early, giving an item only when the walk already holds it or

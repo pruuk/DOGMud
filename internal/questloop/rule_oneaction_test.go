@@ -22,6 +22,22 @@ func TestOneAction_NoWayIn(t *testing.T) {
 	require.Contains(t, rules(Validate(w)), "one-action step firstkill:none")
 }
 
+// A step only a behaviour tree or an item questtoken grants (Hadwen's tree
+// grants 30-rite) has a way in. The grant has no trigger conditions, so it
+// is never a :prev or :cond finding: the topic that fires the tree, or
+// getting the item, is its gate.
+func TestOneAction_ExternalGrantIsAWayIn(t *testing.T) {
+	for _, g := range []ExternalGrant{
+		{Where: "mob 9112 tree grant_quest 53-firstkill", Token: "53-firstkill", MobId: 9112, Topics: []string{"hunt"}},
+		{Where: "item 900 questtoken", Token: "53-firstkill", ItemId: 900},
+	} {
+		w := goodWorld()
+		w.Quests[0].Triggers = nil
+		w.External = []ExternalGrant{g}
+		require.Empty(t, Validate(w), g.Where)
+	}
+}
+
 func TestOneAction_MustRequirePreviousStep(t *testing.T) {
 	w := goodWorld()
 	w.Quests[0].Triggers[0].Conditions.Has = nil

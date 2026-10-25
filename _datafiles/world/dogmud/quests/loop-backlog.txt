@@ -43,12 +43,14 @@ chain 78 mob 9584 topic teach_zephyr
 end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
+end 28 room 6467 tree grant_quest 28-end
 end 28 step end
 end 29 quest 29 trigger quest_granted quest_token=31-start grants=29-end
 end 29 quest 29 trigger quest_granted quest_token=88-start grants=29-end
 end 29 quest 29 trigger quest_granted quest_token=89-start grants=29-end
 end 29 quest 29 trigger room_enter room=468 grants=29-end
 end 29 step end
+end 30 mob 9100 tree grant_quest 30-end
 end 30 step end
 end 34 quest 34 trigger mob_death mob=9115 grants=34-end
 end 34 quest 34 trigger mob_death mob=9115 grants=34-end #2
@@ -189,9 +191,6 @@ one-action 20 mob 347 topic ullahandoff:prev
 one-action 20 mob 355 topic vellahandoff:prev
 one-action 28 quest 28 trigger command_issued command=look noun=guide grants=28-examined,28-looked:double
 one-action 28 quest 28 trigger command_issued command=look noun=guide grants=28-examined,28-looked:prev
-one-action 28 step end:none
-one-action 30 step end:none
-one-action 30 step rite:none
 one-action 32 quest 32 trigger command command=combatverbosity grants=32-verbosity:prev
 one-action 32 step consider:none
 one-action 34 quest 34 trigger mob_death mob=9115 grants=34-end #2:cond
@@ -247,6 +246,7 @@ start 28 quest 28 trigger room_enter room=6258 grants=28-start
 start 28 step start
 start 29 step start
 start 30 quest 30 trigger room_enter room=5200 grants=30-start
+start 30 room 6467 tree grant_quest 30-start
 start 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
 start 77 step end
 walk-dead-end 14 mob 94 topic velkhandoff

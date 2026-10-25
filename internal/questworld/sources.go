@@ -165,7 +165,6 @@ func Sources() questloop.Sources {
 		sort.Strings(names[id])
 	}
 	return questloop.Sources{
-		External:    externalGrants(),
 		ItemSources: func(id int) []string { return names[id] },
 		MobSpawned:  func(id int) bool { return len(spawnedBy[id]) > 0 },
 		ItemAvailable: func(id, questId int, has func(string) bool) bool {
@@ -174,7 +173,8 @@ func Sources() questloop.Sources {
 	}
 }
 
-// externalGrants lists the grants outside triggers and topics, sorted by
+// externalGrants is World.External (Registry): the grants outside triggers
+// and topics, sorted by
 // Where: every grant_quest action in a behaviour tree file (mob, room,
 // archetype and item trees), with the topics its branch answers, and every
 // item whose questtoken grants a token. A tree that grants one token from
