@@ -63,3 +63,60 @@ func TestTopicKeysInFile(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"fare", "ferry", "rumor"}, keys)
 }
+
+// QuestGrantsInFile reads every grant_quest action with the event its branch
+// answers and the topic_is keys checked before it on the way down (Hadwen's
+// rite shape), so the walkthrough can treat a tree grant as a Way in.
+func TestQuestGrantsInFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "9100-cleric_hadwen.yaml")
+	require.NoError(t, os.WriteFile(path, []byte(`tree:
+  type: selector
+  children:
+    - type: sequence
+      event: player_topic
+      children:
+        - type: condition
+          check: topic_is
+          topics: [begin, rite_wait]
+        - type: condition
+          check: player_has_quest
+          quest: "30-start"
+        - type: action
+          do: grant_quest
+          quest: "30-rite"
+        - type: selector
+          children:
+            - type: action
+              do: say
+              text: "Hush."
+        - type: action
+          do: grant_quest_to_user
+          quest: "30-end"
+    - type: sequence
+      event: room_enter
+      children:
+        - type: action
+          do: grant_quest
+          quest: "4-investigate"
+    - type: decorator
+      mod: cooldown
+      child:
+        type: sequence
+        event: player_topic
+        children:
+          - type: action
+            do: grant_quest
+            quest: "7-start"
+          - type: condition
+            check: topic_is
+            topic: late
+`), 0644))
+	got, err := QuestGrantsInFile(path)
+	require.NoError(t, err)
+	require.Equal(t, []TreeQuestGrant{
+		{Token: "30-rite", Event: "player_topic", Topics: []string{"begin", "rite_wait"}},
+		{Token: "30-end", Event: "player_topic", Topics: []string{"begin", "rite_wait"}},
+		{Token: "4-investigate", Event: "room_enter"},
+		{Token: "7-start", Event: "player_topic"},
+	}, got, "a topic_is after the grant does not gate it")
+}

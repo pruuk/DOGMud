@@ -3,10 +3,13 @@ package main
 import (
 	"errors"
 	"os"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/questworld"
@@ -18,10 +21,10 @@ import (
 // hand); it never writes the shipped file.
 const loopBacklogWriteEnv = `DOGMUD_LOOP_BACKLOG_WRITE`
 
-// TestSmoke_ShippedQuestsPassTheLoop runs the boot door's quest loop rules
-// over shipped content: a finding not in loop-backlog.txt fails, and so does
-// a backlog line no finding matches (the list only shrinks).
-func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
+// loadShippedQuestWorld loads the shipped data the quest loop sweeps read,
+// skipping unless DOGMUD_BOOT_SMOKE is set.
+func loadShippedQuestWorld(t *testing.T) {
+	t.Helper()
 	if os.Getenv(bootSmokeEnvVar) == `` {
 		t.Skipf("set %s=1 to run the quest loop sweep", bootSmokeEnvVar)
 	}
@@ -36,9 +39,24 @@ func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
 	if len(quests.GetAllQuests()) < 70 {
 		t.Fatalf("only %d quests loaded; the sweep would pass vacuously", len(quests.GetAllQuests()))
 	}
+}
+
+// TestSmoke_ShippedQuestsPassTheLoop runs the quest loop rules and the
+// completability walkthrough over shipped content: a finding not in
+// loop-backlog.txt fails, and so does a backlog line no finding matches (the
+// list only shrinks).
+//
+// The backlog holds both kinds of line. Boot (main_quests.go) runs Validate
+// only and ignores stale lines, so the walk lines in the backlog never
+// affect boot; this sweep ratchets against Validate plus Walk, so in CI a
+// walk line is never stale while its finding stands.
+func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
+	loadShippedQuestWorld(t)
+
+	w := questworld.Registry()
+	fs := append(questloop.Validate(w), questengine.Walk(w, questworld.Sources())...)
 
 	if path := os.Getenv(loopBacklogWriteEnv); path != `` {
-		fs := questloop.Validate(questworld.Registry())
 		if err := os.WriteFile(path, questloop.FormatBacklog(fs), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -46,10 +64,11 @@ func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
 		return
 	}
 
-	fresh, known, stale, err := validateShippedQuests()
+	b, err := questworld.LoadBacklog()
 	if err != nil {
 		t.Fatal(err)
 	}
+	fresh, known, stale := questloop.Ratchet(fs, b)
 	for _, f := range fresh {
 		t.Errorf("not in loop-backlog.txt: %s", f.String())
 	}
@@ -57,6 +76,84 @@ func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
 		t.Errorf("loop-backlog.txt line %q matches no finding: delete it", k)
 	}
 	t.Logf("quest loop: %d known backlog findings, %d new, %d stale", len(known), len(fresh), len(stale))
+}
+
+// TestSmoke_WalkSourcesIndexShippedWorld checks the walkthrough's item and
+// spawn index over shipped data, one known answer per source kind, and that
+// an empty answer is possible.
+func TestSmoke_WalkSourcesIndexShippedWorld(t *testing.T) {
+	loadShippedQuestWorld(t)
+	src := questworld.Sources()
+
+	has := func(id int, prefix string) bool {
+		for _, s := range src.ItemSources(id) {
+			if strings.HasPrefix(s, prefix) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Caravan Guard Garve, spawned by rooms/pothole_coulee/5234.yaml.
+	if !src.MobSpawned(9112) {
+		t.Error("mob 9112 should be spawned")
+	}
+	// mobs/greenford/9502-maret_the_miller.yaml stocks 40153 (Maret is
+	// spawned by rooms/greenford/6280.yaml).
+	if !has(40153, "shop 9502") {
+		t.Errorf("item 40153 should come from shop 9502: %v", src.ItemSources(40153))
+	}
+	// recipes/cooking/antidote-broth.yaml makes 30027.
+	if !has(30027, "recipe antidote-broth") {
+		t.Errorf("item 30027 should come from recipe antidote-broth: %v", src.ItemSources(30027))
+	}
+	// forager.ForageYields["forest"] lists 40067 (pine pitch).
+	if !has(40067, "forage forest") {
+		t.Errorf("item 40067 should come from forage forest: %v", src.ItemSources(40067))
+	}
+	if got := src.ItemSources(999999999); len(got) != 0 {
+		t.Errorf("item 999999999 should have no source: %v", got)
+	}
+	// Ledger 21 lies in room 421 (rooms/watchers_crossing/421.yaml), so a
+	// player can hold it outside quest 5. Tally 40100 comes only from quest
+	// 63's own give_item actions (quests/63-dock_rat.yaml): it is 63's own,
+	// and outside for any other quest.
+	none := func(string) bool { return false }
+	if !src.ItemAvailable(21, 5, none) {
+		t.Error("item 21 should have a source outside quest 5")
+	}
+	if src.ItemAvailable(40100, 63, none) {
+		t.Errorf("item 40100 should be quest 63's own: %v", src.ItemSources(40100))
+	}
+	if !src.ItemAvailable(40100, 5, none) {
+		t.Error("item 40100 should count as outside quest 5")
+	}
+	if src.MobSpawned(999999999) {
+		t.Error("mob 999999999 should not be spawned")
+	}
+
+	// External grants: Hadwen's rite tree grants 30-rite on topic begin or
+	// rite_wait (behaviors/pothole_coulee/9100-cleric_hadwen.yaml), room
+	// 407's tree grants 4-investigate on entry
+	// (behaviors/rooms/dustwalk_road/407.yaml), and the tally stick grants
+	// 14-explore (items/materials-40000/40035-tally_stick.yaml).
+	// They live on the loop world (questworld.Registry), which boot, CI and
+	// the quest editor all build.
+	ext := map[string]questloop.ExternalGrant{}
+	for _, g := range questworld.Registry().External {
+		ext[g.Where] = g
+		t.Logf("external: %s -> %s topics %v item %d", g.Where, g.Token, g.Topics, g.ItemId)
+	}
+	if g := ext["mob 9100 tree grant_quest 30-rite"]; g.Token != "30-rite" || g.MobId != 9100 ||
+		!slices.Equal(g.Topics, []string{"begin", "rite_wait"}) {
+		t.Errorf("Hadwen's 30-rite tree grant: %+v", g)
+	}
+	if g := ext["room 407 tree grant_quest 4-investigate"]; g.Token != "4-investigate" || len(g.Topics) != 0 {
+		t.Errorf("room 407's 4-investigate tree grant: %+v", g)
+	}
+	if g := ext["item 40035 questtoken"]; g.Token != "14-explore" || g.ItemId != 40035 {
+		t.Errorf("item 40035 questtoken: %+v", g)
+	}
 }
 
 // TestQuestDoor_RefusesAFreshFinding: a fresh finding panics at boot and is

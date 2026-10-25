@@ -97,6 +97,14 @@ func TestWithQuest_AddsANewId(t *testing.T) {
 	require.True(t, out.Refs.StepExists("77-start"), "a new quest's steps resolve")
 }
 
+// The editor's proposed world keeps the external grants, so a save is
+// judged with the same ways in as boot and CI.
+func TestWithQuest_KeepsTheExternalGrants(t *testing.T) {
+	w := world()
+	w.External = []questloop.ExternalGrant{{Where: "mob 9100 tree grant_quest 53-firstkill", Token: "53-firstkill", MobId: 9100}}
+	require.Equal(t, w.External, WithQuest(w, *q53()).External)
+}
+
 func TestWithQuest_NilRefsStaysNil(t *testing.T) {
 	w := world()
 	w.Refs = nil

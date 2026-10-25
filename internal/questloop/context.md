@@ -5,7 +5,8 @@
 `internal/questloop` holds the quest loop rules (quest arc #375 phase 2, spec
 section 5): the checks that every quest is a closed loop, offered by an NPC,
 walked one action per step, and handed in. It is pure. It reads a proposed
-`World` (quests, dialogue files, reference callbacks, reward names) and
+`World` (quests, dialogue files, reference callbacks, reward names, external
+grants) and
 returns `Finding`s; it opens no registry itself. `internal/questworld` builds
 the world from the live registries, and three doors run it.
 
@@ -14,10 +15,11 @@ the world from the live registries, and three doors run it.
 | File | What it holds |
 |---|---|
 | `questloop.go` | `World`, `Finding` (`Key`, `String`), `Validate(w)`: every rule, findings sorted by key |
-| `grants.go` | The grant index: which topics and triggers grant each step token, as `way`s (`indexGrants`, `walkGrants`, `ownGrants`), and the stable trigger names (`triggerWheres`, `triggerSignature`) |
+| `grants.go` | The grant index: which topics, triggers, completion rewards and external grants (`World.External`) grant each step token, as `way`s (`indexGrants`, `walkGrants`, `ownGrants`), and the stable trigger names (`triggerWheres`, `triggerSignature`) |
 | `rules_loop.go` | `ruleStart`, `ruleEnd`, `ruleHint`, `ruleHintLength` and its cap `HintMaxRunes` |
 | `rule_oneaction.go` | `ruleOneAction` and `dedupe` |
 | `rules_more.go` | `ruleChain`, `ruleRepeat`, `ruleReward`, `ruleRefs`, `refsText` |
+| `ways.go` | `Way`, `WaysInto`, `Sources`: the walkthrough's inputs |
 | `backlog.go` | `Backlog`, `ParseBacklog`, `FormatBacklog`, `Ratchet` |
 
 ## Rules
@@ -88,11 +90,43 @@ per-rule counts against the old file, then copy it into place.
 | CI | `TestSmoke_ShippedQuestsPassTheLoop` in `quest_loop_smoke_test.go`; setting `DOGMUD_LOOP_BACKLOG_WRITE` writes today's findings as backlog text to that path |
 | Editor save | `buildQuestUpdate` in `modules/gmcp/gmcp.Quest.go` (`loopVerdict`) builds the registry world once (`questworld.RegistryWith(d.validators)`), validates it before and after `questworld.WithQuest(world, q)`, and refuses only findings the edit adds: in the after world, not in the before world, not in the backlog. It warns about the edited quest's own other findings (listed, or already there) and says nothing about other quests' standing findings |
 
-## Still to come
+## The walkthrough contract (plan 2b)
 
-Plan 2b adds the completability walkthrough (spec section 7), a headless walk
-of each quest from a fresh character with item-source checks. It is not
-written yet; its rules will join this package.
+The completability walkthrough (spec section 7) is `questengine.Walk`, because
+it needs the trigger engine; this package only exports what it reads
+(`ways.go`):
+
+- `Way`: one thing that grants a token (a trigger, a topic, a completion
+  reward or an external grant), with its stable backlog name `Where`, the
+  `Owner` quest, `Nested` for a grant inside a sequence's `on_complete`, the
+  topic's (or mob tree's) `MobId`, the topic's `File`, `Reward`, and
+  `External` for an external grant.
+- `WaysInto(w World) map[string][]Way`: token to every Way that grants it, the
+  same index every rule reads, external grants included.
+- `ExternalGrant` (`World.External`): a grant outside triggers and topics, a
+  behaviour tree's `grant_quest` (with the tree's `MobId` and the `Topics` its
+  branch answers) or an item's `questtoken` (`ItemId`).
+  `questworld.Registry` fills them, so boot, CI and the editor door all see
+  them. In `Validate` an external grant is a way in: a step only a tree
+  grants is not `one-action ...:none` (Hadwen's `30-rite`). It is neither an
+  offer nor a hand-in, so a grant of a start or end token is a `start` or
+  `end` finding (room 6467's tree grants `30-start` and `28-end`; Hadwen's
+  grants `30-end`). One-action's `:prev`, `:cond`, `:seq` and `:double` are
+  not checked for it: it has no trigger conditions, and its gate (the topic
+  that fires the tree, or getting the item) is the walk's to check. The
+  rule-by-rule choice is commented on `way.external` in `grants.go`.
+- `Sources`: the world questions the walk asks. `ItemSources(itemId)` names
+  where an item comes from (empty: none); `MobSpawned(mobId)` says a room or a
+  quest spawns it; `ItemAvailable(itemId, questId, has)` says a player on that
+  quest with progress `has` can obtain the item without the quest's later
+  steps (a source the quest does not own, or one it owns through gates `has`
+  already holds). A nil func skips that
+  check. `questworld.Sources()` fills it from the registries.
+
+The walk's rules (`walk-dead-end`, `walk-no-source`, `walk-unspawned`) share
+the one backlog with the rules above. They are produced by `Walk`, not
+`Validate`: boot runs `Validate` only and ignores the walk lines, and the CI
+sweep ratchets both together.
 
 ## Gotchas
 

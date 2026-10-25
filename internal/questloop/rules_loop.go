@@ -10,7 +10,7 @@ import (
 )
 
 // ruleStart: the first step's token is granted by at least one offer topic
-// and by nothing else.
+// and by nothing else (an external grant included: see way.external).
 func ruleStart(q *quests.Quest, g grants) []Finding {
 	tok := token(q, 0)
 	var out []Finding
@@ -31,7 +31,7 @@ func ruleStart(q *quests.Quest, g grants) []Finding {
 }
 
 // ruleEnd: the final step's token is granted by at least one hand-in topic
-// and by nothing else. A one-step quest's only token is also its start, so
+// and by nothing else (an external grant included). A one-step quest's only token is also its start, so
 // it cannot pass both start and end: intended (spec 5.2).
 func ruleEnd(q *quests.Quest, g grants) []Finding {
 	last := len(q.Steps) - 1

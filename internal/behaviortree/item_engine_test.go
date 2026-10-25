@@ -169,7 +169,9 @@ func TestValidateItemBehaviorsRefusesAMissingOrBrokenTree(t *testing.T) {
 			t.Errorf("error %q does not name %q", err, want)
 		}
 	}
-	if strings.Contains(err.Error(), "9913") {
+	// "item 9913", not "9913": the temp dir in the error text is random and
+	// once read ...2991318724..., which failed a correct run.
+	if strings.Contains(err.Error(), "item 9913") {
 		t.Errorf("error names an item with no behavior: %q", err)
 	}
 }

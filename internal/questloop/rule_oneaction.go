@@ -30,6 +30,9 @@ func ruleOneAction(q *quests.Quest, g grants) []Finding {
 				continue
 			}
 			switch {
+			case w.external != nil:
+				// A tree grant or item questtoken: a way in with no
+				// conditions to check (see way.external).
 			case w.topic != nil:
 				if !slices.Contains(w.topic.QuestRequired, prev) {
 					add(w.where, "prev", "grants "+tok+" without requiring "+prev)
