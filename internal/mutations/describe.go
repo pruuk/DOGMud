@@ -102,7 +102,7 @@ func DescribeEffect(e MutationEffect) string {
 	case "shout_amp":
 		return "Your rallying shouts and war cries carry further and land with far greater force."
 	case "size":
-		return "At its full growth you are large enough to wield a two-handed weapon in your weapon hand alone."
+		return "In its later stages you grow large enough to wield a two-handed weapon in your weapon hand alone."
 	case "flag":
 		return flagPhrase(e.Target)
 	}

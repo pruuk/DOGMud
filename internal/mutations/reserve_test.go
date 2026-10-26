@@ -91,6 +91,9 @@ func TestValidateRejectsBadReserveAndSize(t *testing.T) {
 }
 
 func TestDescribeSizeAndGrip(t *testing.T) {
-	assert.NotEmpty(t, DescribeEffect(MutationEffect{Type: "size", Target: "large", Value: 3}))
+	// The size step lands at rank 3 of 4, so the line must not promise it only
+	// at full growth.
+	assert.Equal(t, "In its later stages you grow large enough to wield a two-handed weapon in your weapon hand alone.",
+		DescribeEffect(MutationEffect{Type: "size", Target: "large", Value: 3}))
 	assert.NotEmpty(t, DescribeEffect(MutationEffect{Type: "flag", Target: "colossal-grip", Value: 1}))
 }
