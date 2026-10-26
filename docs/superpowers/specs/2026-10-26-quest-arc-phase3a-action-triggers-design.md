@@ -87,7 +87,12 @@ way it fails with every exit locked. Teleports, system moves and the ferry are u
   back to the room feature when the player holds nothing by that name.
 - `EventDetails.Verb` carries `look` for the whole look family and `search` for search. A trigger's
   `verb` is empty (means look), `look`, or `search`; the loader rejects anything else.
-- A `verb: search` trigger fires on `search <noun>` naming its feature, after the search runs.
+- A `verb: search` trigger fires on `search <noun>` naming its feature, after the search runs, with
+  no roll (a teaching step never stalls on dice; ruling 3's "attempting is enough").
+- Plain `search` can uncover the same quest secret (ruling 6): for each `verb: search` trigger
+  whose feature is in the room, it rolls at `SearchRoomHiddenDifficulty`, and on a success fires
+  the trigger with that feature as the noun and prints the thorough-search line. The engine lists
+  a room's search-trigger features so search need not read quest files.
 - The event matches the template room (`rooms.OriginalRoomId`), like every other trigger, so it
   works in instanced rooms.
 - Any other verb typed with a word that names a room feature, when no command handles it, gets a
