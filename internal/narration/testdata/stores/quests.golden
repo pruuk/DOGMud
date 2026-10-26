@@ -74,6 +74,8 @@ quest|20|trigger14|action2|actor => Inside the buried wooden box: a single small
 quest|20|trigger15|action1|actor => There was another small carving wrapped beneath the first. You can take this one to Vella in place of the one you lost.
 quest|20|trigger16|action2|actor => Inside the buried wooden box: a single small carved kingfisher in dark wood, unmistakably Elgar's work, and a folded note in a different hand reading 'He was your brother. V.' The kingfisher is yours now. Bring it to Vella at the Healer's Cottage.
 quest|28|rewards|actor => Dewey's voice stays with you a moment after the grey lets go: steady, warm, already a little proud. You are awake now, and the world is real.
+quest|28|trigger5|action0|actor => You crouch for a closer look at the threshold-stone. Its surface is polished to a shine, hollowed at the center by every soul who ever woke here and stepped through. The fine lines around its edge are names, hundreds of them, small and neat, no two written alike. Toward the hollowed center the oldest have worn almost smooth, and one of them still reads Dewey.
+quest|28|trigger6|action1|actor => You crouch for a closer look at the threshold-stone. Its surface is polished to a shine, hollowed at the center by every soul who ever woke here and stepped through. The fine lines around its edge are names, hundreds of them, small and neat, no two written alike. Toward the hollowed center the oldest have worn almost smooth, and one of them still reads Dewey.
 quest|30|rewards|actor => Something under your skin settles into place, the way silt settles in still water. You are not quite who you were when you arrived. A small light waits in you now too: in any dark place, type cast glow.
 quest|31|rewards|actor => Toke presses a small purse into your palm with his upper mouth still talking and the lower one already calling the next notice.
 quest|31|trigger0|action1|actor => A tutor glances up from a slate as you enter. "Newly Opened. When the changes start and you want to know what is happening to you, this hall is where you come." Next, go to Coulee Provisions, south past Hub Square to Market Row and then east, and type list.
@@ -153,8 +155,9 @@ quest|47|rewards|observer => Wenna presses a small plaited charm into the newcom
 quest|47|trigger0|action1|actor => That is the in-game help -- your long-term reference, more patient than any person and always to hand. The folk set their lore in stone for the same reason: so it outlasts the remembering. Go back to Elder Wenna and type talk wenna.
 quest|48|rewards|actor => Hale's doubled voice settles to a single tone as he regards you. "I felt that from here -- the moment his nerve went. That is rhetoric: not the loud word, but the true one, landed where it weighs most. You have the beginnings of it." He lifts a flat strip of carved bone from among the stones and sets it in your hands. "A reckoning -- the folk's whole story in the old script, small enough to carry. Read it when you have the patience. The oldest end is the part none of us can, any longer." He looks north, to where the ground rises past the ring. "There is a thing the bone only points at. Sere keeps it, at the old shrine past the Tall Stone. Go and see."
 quest|48|trigger0|action1|actor => Your words find the gap in his bluster and go straight through it. The fight goes out of Garrow all at once -- he throws up his heavy hands, mutters a surrender, and quits the green. Old Ferd lets out a breath he has been holding for days. Go south to Hale at the Stone Circle and type talk hale.
-quest|49|rewards|actor => Sere listens to your account with the stillness of someone who has waited a long time to hear it, the pale shape of her skull faintly lit from within. "So it is real," she says at last, very quietly. "I have felt it under the floor for thirty years and never had the hands or the right to lift it. You did." She does not ask you to bring it to her; she seems to understand it is not a thing to be owned. "Leave it where the light can reach it. Some things are meant to be found more than once." Then, with a gravity that settles over you like a mantle: "You came to us a stranger. You leave a friend of the coulee folk -- and the only living soul who has looked on the thing beneath the shrine and carried the wondering back out. Carry it well. One day, somewhere, it may come to mean more than either of us can see from here."
-quest|49|trigger0|action1|actor => Your fingers find the lifted edge of a flagstone, and under it something that is not stone -- cool, smooth, regular. You work it free: a disc of pale grey metal the size of a spread hand, and nothing about it belongs here. It is neither cast nor forged nor any process the folk have a word for, its face made smooth the way still water is smooth. Fine raised lines branch and rejoin across it with a cold regularity, threading inward toward a single mark pressed deep at the center -- a ring with a line struck through it, the very mark the reckoning-bone carries at its oldest, deepest end. It stays cool in your warm hands. You do not understand it, and you are fairly certain no one in the coulee does. It feels less like something the folk made and lost than like something that was already here when they came, waiting under the floor for a hand to lift it. Now yours has. Go back to Sere in the Old Shrine and type talk sere.
+quest|49|rewards|actor => Sere listens to your account with the stillness of someone who has waited a long time to hear it, the pale shape of her skull faintly lit from within. "So it is real," she says at last, very quietly. "I have felt it under the floor for thirty years and never had the hands or the right to lift it. You did." She does not ask you to bring it to her; she seems to understand it is not a thing to be owned. "Leave it where the light can reach it. Some things are meant to be found more than once." Then, with a gravity that settles over you like a mantle: "You came to us a stranger. You leave a friend of the coulee folk, and the only living soul who has looked on the thing beneath the shrine and carried the wondering back out. Carry it well. One day, somewhere, it may come to mean more than either of us can see from here."
+quest|49|trigger0|action2|actor => Your fingers find the lifted edge of a flagstone, and under it something that is not stone: cool, smooth, regular. You work it free, a disc of pale grey metal the size of a spread hand, and nothing about it belongs here. It is neither cast nor forged nor any process the folk have a word for, its face made smooth the way still water is smooth. Fine raised lines branch and rejoin across it with a cold regularity, threading inward toward a single mark pressed deep at the center: a ring with a line struck through it, the very mark the reckoning-bone carries at its oldest, deepest end. It stays cool in your warm hands. You do not understand it, and you are fairly certain no one in the coulee does. It feels less like something the folk made and lost than like something that was already here when they came, waiting under the floor for a hand to lift it. Now yours has.
+quest|49|trigger0|action3|actor => Go back to Sere in the Old Shrine and type talk sere.
 quest|50|rewards|actor => Iden watches the stone bury itself in the straw and gives a single nod. "There. A sling readies itself while your eye is still on the mark, so the only thing you have to think about is the mark. And you have the other half already: a shot from cover lands like nothing else, and it works once, because afterward they know where you are. The eye is the thing that matters now. Not the arm -- the eye. Keep the sling and the shot; they are yours." She tips her head north, toward the canyon mouth. "Bryn holds the slot below the raider bluffs. He will show you the next part -- how to put a shot into something a whole room away, before it ever knows you are there."
 quest|50|rewards|observer => Marksman Iden nods as the newcomer's shot finds the straw.
 quest|50|trigger1|action1|actor => The sling settles in your hand, a stone already in its cradle. Go to the Long Terrace, east of the Firing Range, and type fire butt.
@@ -186,7 +189,7 @@ quest|57|rewards|observer => The grove settles around the caster, as if it appro
 quest|57|trigger0|action1|actor => The drift-wisp unravels and is gone. The grove is a little quieter, and the task is done.
 quest|58|rewards|actor => You sit back on your heels in the quiet of the Reliquary and let what the stones showed you settle. It is not quite what they said last time. Sere was right: very old places keep speaking, and the words shift with the listener. Come again when you have the patience for it.
 quest|58|rewards|observer => <ansi fg="username">Aliceia</ansi> kneels by the cracked floor, quiet, as though listening to something no one else can hear.
-quest|58|trigger0|action1|actor => The stones give up a little more than they did before -- not much, but something. The mark at the center of the disc catches your eye again, unchanged and patient.
+quest|58|trigger0|action1|actor => The stones give up a little more than they did before. It is not much, but it is something. The mark at the center of the disc catches your eye again, unchanged and patient.
 quest|59|rewards|actor => Bryn's voice carries up the slot from the canyon mouth, low and level. "Good reach. Stood when it came. Come and find me when the eye starts to drift. It always drifts."
 quest|59|rewards|observer => A low voice carries up the slot from the canyon mouth.
 quest|59|trigger0|action1|actor => The shot crosses the slot and bites. Now it will come at you. When it reaches you, type fire scout until it falls.
@@ -300,16 +303,17 @@ quest|75|trigger2|action5|observer => <ansi fg="username">Aliceia</ansi> takes t
 quest|75|trigger3|action0|actor => A retired surveyor's old papers spread across the table — terrain charts and route sketches in a close, careful hand. Without his leave they are not yours to take, and they say little to a stranger at the window.
 quest|76|rewards|actor => The disc is awake in your hand, warm along its lines, and it answers a shape you have not yet reached. A father's work, finished by a stranger, in the cottage he left to chase it. What it opens waits east, in the broken country, behind a door in the buried face.
 quest|76|trigger0|action0|actor => The crack in the floor is empty now. You already carry what lay beneath it.
-quest|76|trigger1|action1|actor => You work your fingers into the crack and lift the disc free of the floor — cool, too smooth, heavier than its size. Fine raised lines thread across its face to a ring struck through with a line. You do not understand it. You are fairly certain no one here does. You put it away.
+quest|76|trigger1|action1|actor => You work your fingers into the crack and lift the disc free of the floor: cool, too smooth, heavier than its size. Fine raised lines thread across its face to a ring struck through with a line. You do not understand it. You are fairly certain no one here does. You put it away.
 quest|76|trigger1|action2|observer => <ansi fg="username">Aliceia</ansi> works something free of the cracked floor and pockets it.
-quest|76|trigger2|action1|actor => You sit at the cold table and read the man's life backward.
-Years of it — a hand that starts careful and turns driven, the
+quest|76|trigger2|action0|actor => You work the loose stone free of its neighbors. It grinds aside and shows a small cavity in the wall behind it. Inside, a folded letter lies against the back of the hollow, hidden there on purpose.
+quest|76|trigger3|action1|actor => You sit at the cold table and read the man's life backward.
+Years of it: a hand that starts careful and turns driven, the
 same questions put a hundred ways to one buried thing far to
 the east. Something made, he is certain, and old past any
 reckoning, and wrong in a way he never quite sets down in
 words. He calls it only the thing. The ring struck through with
 a line is inked in every margin, worried at like a sore tooth.
-Then, near the end, the part you came for without knowing it —
+Then, near the end, the part you came for without knowing it:
 a method, worked out slow and sure across many pages, for
 waking the grey disc that is its key, and the marked hearth for
 the place to do it. The last line is not about the thing at
@@ -317,30 +321,30 @@ all. It is a name, set down once and gently, as if to keep one
 soft thing safe. Maren. He went east to finish this. He did not
 come back to her.
 
-quest|76|trigger2|action2|observer => <ansi fg="username">Aliceia</ansi> reads a long while at the cottage table.
-quest|76|trigger3|action0|actor => A field journal lies open on the table, its pages dense with a careful obsessive hand and sketches of a mark you have half-seen elsewhere. Without knowing what you are looking for, it is only a lonely man's long notes.
-quest|76|trigger4|action4|actor => You do as the journal says. You set the disc into the cut
+quest|76|trigger3|action2|observer => <ansi fg="username">Aliceia</ansi> reads a long while at the cottage table.
+quest|76|trigger4|action0|actor => A field journal lies open on the table, its pages dense with a careful obsessive hand and sketches of a mark you have half-seen elsewhere. Without knowing what you are looking for, it is only a lonely man's long notes.
+quest|76|trigger5|action4|actor => You do as the journal says. You set the disc into the cut
 center of the hearthstone, where the marks draw inward to a
-single point, and you follow his method through — the order of
+single point, and you follow his method through: the order of
 it, the patience of it, the small exact things a driven man
 learned alone and wrote down so a stranger might one day do
 this right. For a long moment, nothing. Then the grey face
-warms under your fingers — not with your warmth but its own.
+warms under your fingers, not with your warmth but its own.
 The fine raised lines take the thin light from the shutter gap
 and keep it, holding a glow a half-breath past when it should
 fade, and the ring-struck mark at the center wakes and steadies,
 sure of itself now, sure of where it belongs. The disc is a key,
-and it knows its door — east, in the broken country, in the
+and it knows its door: east, in the broken country, in the
 buried face he gave his years to. His work, done at last, by a
 stranger's hand in the cottage he left to chase it. And a name
 comes to you off the last page, unbidden. Maren. He kept her,
 all the way to the end of himself. You hope, wherever she is,
 she never learns how far he went.
 
-quest|76|trigger4|action5|observer => <ansi fg="username">Aliceia</ansi> does something careful at the marked hearth, and the air goes briefly strange.
-quest|76|trigger5|action0|actor => The marks are cut for a thing you do not have in hand. Without the disc, they are only scratches in old stone. The disc lies in the cracked floor of the old Reliquary at Pothole Coulee. Type look disc there.
-quest|76|trigger6|action0|actor => Marks are cut into the hearthstone in a deliberate pattern — a method for something, though you cannot read it yet.
-quest|76|trigger7|action2|actor => You set the grey disc into the cut center of the hearthstone and follow his method again. The lines warm, and the mark at the center wakes.
+quest|76|trigger5|action5|observer => <ansi fg="username">Aliceia</ansi> does something careful at the marked hearth, and the air goes briefly strange.
+quest|76|trigger6|action0|actor => The marks are cut for a thing you do not have in hand. Without the disc, they are only scratches in old stone. The disc lies in the cracked floor of the old Reliquary at Pothole Coulee. Type look disc there.
+quest|76|trigger7|action0|actor => Marks are cut into the hearthstone in a deliberate pattern, a method for something, though you cannot read it yet.
+quest|76|trigger8|action2|actor => You set the grey disc into the cut center of the hearthstone and follow his method again. The lines warm, and the mark at the center wakes.
 quest|77|rewards|actor => You know now. It sits in you like a swallowed stone. The sky will never look the same, and neither will the blessed, and neither will you. Be careful who you tell.
 quest|77|trigger0|action2|actor => You stand among the stones and let the light find them, and one
 by one they wake — a slow inner glow, a drift of moving marks —
