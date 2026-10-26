@@ -16,9 +16,10 @@ description: >
   the lake's drowned, the sailors and fishermen the
   water has taken back over the years. Near the eastern
   wall, set apart, a smaller plot holds a single newer
-  marker: Elgar Voss's empty grave, no body ever
-  recovered, the name carved in a hand the grief in which
-  is still legible.
+  marker: <ansi fg="itemname">Elgar's grave</ansi>, empty, no
+  body ever recovered, the name carved in a hand still
+  heavy with grief. The <ansi fg="itemname">turf</ansi> at
+  its foot sits a little higher than the rest.
 biome: plains
 coord:
   x: -21
@@ -88,7 +89,7 @@ hidden_nouns:
       a different hand reading "He was your brother. V."
     hidden_description: |
       The turf at the foot of Elgar's marker is slightly raised, as if
-      disturbed and patted back not long ago. Try `look disturbance`.
+      disturbed and patted back not long ago. Try <ansi fg="command">look disturbance</ansi>.
 idlemessages:
 - The lake-wind moves through the cemetery with a low constant rush.
 - A piece of old lichen frays loose from a marker and is carried briefly across the gravel.

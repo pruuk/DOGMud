@@ -59,6 +59,6 @@ triggers:
     actions:
       - grant: "58-end"
       - actor: >-
-          The stones give up a little more than they did before --
-          not much, but something. The mark at the center of the
+          The stones give up a little more than they did before. It is
+          not much, but it is something. The mark at the center of the
           disc catches your eye again, unchanged and patient.

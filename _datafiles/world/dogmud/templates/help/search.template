@@ -45,7 +45,7 @@ discover things you previously missed.
 
 <ansi fg="yellow">━━━ Search Applications ━━━</ansi>
 
-Your <ansi fg="skill">search</ansi> skill opens doors to three distinct arts:
+Your <ansi fg="skill">search</ansi> skill also powers two other commands:
 
   <ansi fg="command">track</ansi>  Follow trails left by creatures and players.
             Higher search skill lets you follow trails farther and read

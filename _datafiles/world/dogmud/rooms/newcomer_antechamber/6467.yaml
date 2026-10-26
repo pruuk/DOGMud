@@ -4,8 +4,8 @@ title: The Landing
 description: >
   The grey thins to almost nothing here. Ahead, a pool of pale blue-green light
   hangs where the between-place wears through into the real world. It is close
-  enough now to step into. Dewey stands easy at the threshold, hands in
-  pockets, unhurried as ever.
+  now, but this last step is not a walk. Dewey stands easy at the threshold,
+  hands in pockets, ready to see you through.
 biome: ether
 exits: {}
 spawninfo:
@@ -15,9 +15,10 @@ nouns:
     A pool of steady blue-green light hangs where the grey gives out. It is the
     same glow you glimpsed under the still water, but whole and near now. It is
     the Awakening Pool, and the world around it, waiting for you to arrive.
-  archway: >-
+  threshold: >-
     Not so much a door as a thinning, a place where this grey between-world
-    wears through into the real one. Step through it and you wake for good.
+    wears through into the real one. Dewey will carry you through it when you
+    talk to him.
   dewey: >-
     Dewey stands easy at the threshold, hands in pockets. 'I stay here. There's
     always another one waking up. But you, you go on. You'll do fine.'

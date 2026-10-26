@@ -2,10 +2,11 @@ roomid: 6259
 zone: Newcomer Antechamber
 title: Knowing Yourself
 description: >
-  The grey brightens here over a wide, still surface, dark and smooth as poured
-  glass. It lies flat and silent, giving back the faint shape of whoever leans
-  over it, and something deeper glimmers far beneath. Dewey waits a step back
-  from the edge, unhurried, leaving you room to look.
+  The grey brightens here over a wide, still surface of water, dark and smooth
+  as poured glass. It lies flat and silent, giving back the faint shape of
+  whoever leans over it. Far beneath, small lights hang in a slow pattern, and
+  three embers drift below them. Dewey waits a step back from the edge,
+  unhurried, leaving you room to look.
 biome: ether
 exits:
   north:
@@ -22,7 +23,7 @@ nouns:
     Six faint points of light hang in the depths in a slow ring: Strength,
     Dexterity, Perception, Vitality, Willpower, Charisma. Every soul that wakes
     here carries all six, each one centered on the same human measure. What you
-    *do* with them is what makes you different.
+    do with them is what makes you different.
   embers: >-
     Three small embers drift beneath the surface: one red, one green, one gold.
     They are your health, your stamina, your conviction. They dim when you

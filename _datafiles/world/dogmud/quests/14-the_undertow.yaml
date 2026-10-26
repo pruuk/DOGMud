@@ -39,7 +39,8 @@ steps:
   - id: unlock
     map_target: 498  # Operations Room, where the strongbox is
     description: "You have the key to Torvan's strongbox."
-    hint: "Type look strongbox."
+    hint: "With the key in hand, look at the strongbox to open it. Type
+      look strongbox."
   - id: evidence
     map_target: 473  # fallback when Guard Captain Velk is not spawned
     map_target_mob: 94  # follow Guard Captain Velk (schedule thornwall_guard_captain) — a fixed room is wrong for part of the day

@@ -7,7 +7,7 @@ thing and tells you more about it.
 <ansi fg="yellow">Looking closely at a room: </ansi>
 
 A room's description is more than scenery. Some of the words in it are
-shown in a different colour. Those are things you can look at. Type
+shown in a different color. Those are things you can look at. Type
 <ansi fg="command">look</ansi> and the word to read more. Sometimes a closer look turns up
 something new, such as a clue, a hidden item, or a way forward. If a
 description mentions something that seems worth a second thought, look
@@ -19,7 +19,7 @@ thing. For a sign, a book or writing on a wall, <ansi fg="command">read</ansi> w
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">look</ansi>              Look at the room you are in.
-  <ansi fg="command">look [thing]</ansi>      Look closely at a coloured word in the room.
+  <ansi fg="command">look [thing]</ansi>      Look closely at a colored word in the room.
   <ansi fg="command">look north</ansi>        Peer into the room to the north.
   <ansi fg="command">look dave</ansi>         Look at the player or NPC named dave.
   <ansi fg="command">look sword</ansi>        Examine a sword you are carrying or wearing.
@@ -34,8 +34,9 @@ The game tells you where the item is (backpack or equipment slot).
 
 <ansi fg="command">look</ansi> and <ansi fg="command">search</ansi> are the two ways you deal with the things in a room.
 If something looks disturbed, out of place, or worth digging into,
-try <ansi fg="command">search</ansi> on it. You do not need other words such as push or pry.
-If you try one, the game suggests <ansi fg="command">look</ansi> or <ansi fg="command">search</ansi> instead.
+type <ansi fg="command">search</ansi> and its name, such as <ansi fg="command">search floor</ansi>. Other words
+such as push or pry are not needed. If you type one, the game will
+point you to <ansi fg="command">look</ansi> or <ansi fg="command">search</ansi>.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help search</ansi>, <ansi fg="command">help item-names</ansi>, <ansi fg="command">help identify</ansi>
 

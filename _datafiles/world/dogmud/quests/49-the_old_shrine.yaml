@@ -8,7 +8,8 @@
 #              `stones`) fires it with no roll; plain `search` can reach it
 #              too, at the room difficulty (#375 phase 3a). The beat's text
 #              delivers the core discovery, so the capstone reads even if
-#              the hidden-noun roll fails.
+#              the hidden-noun roll fails, and its `discover: disc` marks
+#              the disc found, so look and search treat it as known.
 #   49-end   — granted by Sere's shrine_turnin node (needs 49-find).
 #
 # Looking at the disc is not a step (2026-10-17): the search beat already
@@ -27,7 +28,7 @@ name: The Old Shrine
 description: >-
   Hermit Sere keeps a shrine older than the standing stones, older than the folk
   who half-remember it. Something lies under the cracked floor of its innermost
-  chamber -- the reckoning-bone points at it, and Sere has waited a long time for
+  chamber. The reckoning-bone points at it, and Sere has waited a long time for
   a patient hand to bring it to light.
 secret: false
 
@@ -41,16 +42,18 @@ steps:
       to study it.
     # The search lesson (#375 phase 3a, owner ruling 9): search the one thing
     # that looks disturbed, or the whole room at worse odds. One command is
-    # typed; the whole-room search is named but not asked for. At 199
-    # characters this sits just under the loop's 200 cap (HintMaxRunes).
+    # typed; the whole-room search is named but not asked for. It starts
+    # from the Old Shrine, where Sere gives the quest, so the directions
+    # hold wherever hint is typed. The loop caps a hint at 200 characters
+    # (HintMaxRunes).
     hint: >-
-      Go west into the Collapsed Nave, then north into the Reliquary. To
-      search the cracked floor, type search floor. Search alone searches the
-      whole room, slower and less sure. For more, type help search.
+      From the Old Shrine, go west, then north into the Reliquary. Type
+      search floor. Typing just search covers the whole room, slower and
+      less sure. For more, type help search.
   - id: find
     map_target: 5341
     description: >-
-      You worked a disc of pale, impossible metal free of the floor -- a thing
+      You worked a disc of pale, impossible metal free of the floor: a thing
       older than the folk, marked with a sign even the loresingers cannot read.
       You can look at the disc to study it before you bring word to Sere.
     hint: >-
@@ -60,7 +63,7 @@ steps:
     description: >-
       You have seen the thing under the shrine and brought word of it back. You
       do not understand it. Neither does Sere, nor Hale, nor the oldest reckoning
-      the folk keep. But you have seen it -- and the coulee folk will not forget
+      the folk keep. But you have seen it, and the coulee folk will not forget
       that you were the one who did.
 
 rewards:
@@ -75,7 +78,7 @@ rewards:
     not a thing to be owned. "Leave it where the light can reach it. Some things
     are meant to be found more than once." Then, with a gravity that settles over
     you like a mantle: "You came to us a stranger. You leave a friend of the
-    coulee folk -- and the only living soul who has looked on the thing beneath
+    coulee folk, and the only living soul who has looked on the thing beneath
     the shrine and carried the wondering back out. Carry it well. One day,
     somewhere, it may come to mean more than either of us can see from here."
   observer: ""
@@ -91,18 +94,21 @@ triggers:
       missing: ["49-find"]
     actions:
       - grant: "49-find"
+      # The disc is now a known feature of the room, as if a search roll had
+      # found it, so look disc and search treat it as found.
+      - discover: disc
       - actor: >-
           Your fingers find the lifted edge of a flagstone, and under it
-          something that is not stone -- cool, smooth, regular. You work it free:
+          something that is not stone: cool, smooth, regular. You work it free,
           a disc of pale grey metal the size of a spread hand, and nothing about
           it belongs here. It is neither cast nor forged nor any process the folk
           have a word for, its face made smooth the way still water is smooth.
           Fine raised lines branch and rejoin across it with a cold regularity,
-          threading inward toward a single mark pressed deep at the center -- a
+          threading inward toward a single mark pressed deep at the center: a
           ring with a line struck through it, the very mark the reckoning-bone
           carries at its oldest, deepest end. It stays cool in your warm hands.
           You do not understand it, and you are fairly certain no one in the
           coulee does. It feels less like something the folk made and lost than
           like something that was already here when they came, waiting under the
-          floor for a hand to lift it. Now yours has. Go back to Sere in the
-          Old Shrine and type talk sere.
+          floor for a hand to lift it. Now yours has.
+      - actor: "Go back to Sere in the Old Shrine and type talk sere."

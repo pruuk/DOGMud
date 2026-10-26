@@ -68,7 +68,7 @@ hidden_nouns:
       The note is older than its careful folding suggests.
     hidden_description: |
       The cairn's base hides a small cache: moved-stone shadows betray a
-      depression in the floor below. Try `look cache`.
+      depression in the floor below. Try <ansi fg="command">look cache</ansi>.
 idlemessages:
 - A piece of fish-bone shifts in the gravel as a draft moves through the alcove.
 - A drip from the western passage echoes in briefly and is gone.

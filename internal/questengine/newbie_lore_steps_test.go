@@ -153,6 +153,8 @@ func TestQuest49OldShrine_OneCommandPerStep(t *testing.T) {
 	loreOnlyFinalStepReports(t, q, "sere")
 	start := strings.ToLower(loreStepHint(t, q, "start"))
 	require.Contains(t, start, "type search")
+	require.True(t, strings.HasPrefix(start, "from the old shrine"),
+		"hint can be typed anywhere, so the directions start from where Sere gives the quest")
 	require.NotContains(t, start, "look at", "looking at the find is not a step; it belongs in the description")
 	require.NotContains(t, start, "go up", "the Reliquary is west then north of the shrine, not up")
 	// The search lesson (#375 phase 3a, owner ruling 9): search the one
@@ -183,9 +185,12 @@ func TestQuest49OldShrine_OneCommandPerStep(t *testing.T) {
 		w.notify("room_interact", look)
 		require.Equal(t, "start", w.p.current, "looking at the floor is not searching it")
 
+		require.Empty(t, w.ctx.discovered)
 		w.notify("room_interact", searchFloor(reliquary))
 		require.Equal(t, "find", w.p.current)
 		require.True(t, holdsAll(w.p, turnIn))
+		require.Equal(t, []string{"disc"}, w.ctx.discovered,
+			"the find marks the disc found, so look disc and search treat it as known")
 	})
 
 	t.Run("player saved on find can turn in", func(t *testing.T) {

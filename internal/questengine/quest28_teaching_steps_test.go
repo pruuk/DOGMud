@@ -44,6 +44,7 @@ type orderedPlayer struct {
 	steps   []string
 	current string
 	roomId  int
+	flags   map[string]string
 }
 
 func (p *orderedPlayer) index(token string) int {
@@ -66,12 +67,12 @@ func (p *orderedPlayer) HasQuest(token string) bool {
 	want := p.index(token)
 	return want >= 0 && want <= p.index("28-"+p.current)
 }
-func (p *orderedPlayer) HasItem(int) bool           { return false }
-func (p *orderedPlayer) GetRoomId() int             { return p.roomId }
-func (p *orderedPlayer) GetQuestFlag(string) string { return "" }
-func (p *orderedPlayer) GetGold() int               { return 0 }
-func (p *orderedPlayer) HasOwnMasterwork(int) bool  { return false }
-func (p *orderedPlayer) step() string               { return p.current }
+func (p *orderedPlayer) HasItem(int) bool             { return false }
+func (p *orderedPlayer) GetRoomId() int               { return p.roomId }
+func (p *orderedPlayer) GetQuestFlag(k string) string { return p.flags[k] }
+func (p *orderedPlayer) GetGold() int                 { return 0 }
+func (p *orderedPlayer) HasOwnMasterwork(int) bool    { return false }
+func (p *orderedPlayer) step() string                 { return p.current }
 
 type orderedCtx struct {
 	*mockActionContext
@@ -84,6 +85,15 @@ func (c *orderedCtx) GrantQuest(token string) {
 	if c.player.current == "" || c.player.index(token) > c.player.index("28-"+c.player.current) {
 		c.player.current = strings.SplitN(token, "-", 2)[1]
 	}
+}
+
+// SetQuestFlag records the flag on the player, so has_flag and missing_flag
+// conditions see it on the next event.
+func (c *orderedCtx) SetQuestFlag(key, value string) {
+	if c.player.flags == nil {
+		c.player.flags = map[string]string{}
+	}
+	c.player.flags[key] = value
 }
 
 func newQuest28Walk(t *testing.T, savedStep string, roomId int) (*Engine, *orderedPlayer, *orderedCtx) {
@@ -253,7 +263,7 @@ func TestQuest28_LookLessonRewardsACloseLook(t *testing.T) {
 	require.Regexp(t, `\bstone\b`, room.Description, "the description must show the noun the lesson points at")
 	require.Contains(t, room.Nouns["stone"], "lines", "the stone's look text hints at what a close look finds")
 
-	const showLook = `Type <ansi fg="command">look stone</ansi>.`
+	const showLook = `Type look stone.`
 	q := loadQuest28(t)
 	guideLines := 0
 	for _, tr := range q.Triggers {
@@ -296,6 +306,12 @@ func TestQuest28_LookLessonRewardsACloseLook(t *testing.T) {
 		search := lookStone
 		search.Verb = "search"
 		require.False(t, e.Notify("room_interact", search, p, ctx).Handled, "a look, not a search, finds the names")
+
+		// A second look shows the names again; Dewey does not repeat himself.
+		require.True(t, e.Notify("room_interact", lookStone, p, ctx).Handled)
+		require.Len(t, ctx.sentTexts, 2)
+		require.Equal(t, ctx.sentTexts[0], ctx.sentTexts[1])
+		require.Len(t, ctx.npcSays, 1, "Dewey speaks on the first look only")
 	})
 
 	t.Run("once the player walked on it fires no more", func(t *testing.T) {
