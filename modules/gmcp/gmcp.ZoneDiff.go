@@ -15,7 +15,7 @@ import (
 type zoneSentState struct {
 	conn  uint64
 	zone  string
-	cz    int
+	cz    int64
 	party []int
 	rooms map[int]uint64 // room id -> fingerprint
 }
@@ -34,7 +34,7 @@ type zoneDiffResult struct {
 // connection, a zone change or a floor change sends the full map; otherwise
 // only new or changed rooms, and a send at all only when a room or the party
 // changed. Rooms are never removed: the visited set only grows.
-func zoneDiff(prev *zoneSentState, conn uint64, zone string, cz int, party []int, snap []mapper.SnapshotRoom) zoneDiffResult {
+func zoneDiff(prev *zoneSentState, conn uint64, zone string, cz int64, party []int, snap []mapper.SnapshotRoom) zoneDiffResult {
 	sortedParty := slices.Clone(party)
 	slices.Sort(sortedParty)
 	next := &zoneSentState{conn: conn, zone: zone, cz: cz, party: sortedParty, rooms: make(map[int]uint64, len(snap))}

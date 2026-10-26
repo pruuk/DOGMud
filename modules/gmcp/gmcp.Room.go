@@ -466,7 +466,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 		m := mapper.GetMapper(room.RoomId)
 		x, y, z, err := m.GetCoordinates(room.RoomId)
 		if err != nil {
-			nc := strconv.Itoa(noMapCoordinate)
+			nc := strconv.FormatInt(noMapCoordinate, 10)
 			payload.Coordinates += `, ` + nc + `, ` + nc + `, ` + nc
 		} else {
 			payload.Coordinates += `, ` + strconv.Itoa(x) + `, ` + strconv.Itoa(y) + `, ` + strconv.Itoa(z)
