@@ -41,9 +41,15 @@ func TestWeightedPoolHonoursPrereqsAndBudget(t *testing.T) {
 	pool := GetWeightedPool(map[string]int{"titan-growth": 1, "dense-muscles": 1}, nil)
 	assert.NotContains(t, pool, "colossus-form", "prerequisites now apply to the weighted pool")
 
-	full := GetWeightedPool(map[string]int{"titan-growth": 3, "extra-arms": 3}, nil)
-	assert.NotContains(t, full, "colossus-form")
-	assert.Contains(t, full, "dense-muscles")
+	// Every prerequisite met (Titan Growth 4, Dense Muscles 1) and six units
+	// owned: Colossus Form's one unit is refused by the budget alone. The
+	// control one unit lighter proves nothing else refuses it.
+	pinShippedMaxLevel(t)
+	full := GetWeightedPool(map[string]int{"titan-growth": 4, "dense-muscles": 1, "extra-arms": 2}, nil)
+	assert.NotContains(t, full, "colossus-form", "seven units would pass the budget of six")
+	assert.Contains(t, full, "padded-soles", "a zero-unit mutation still fits")
+	roomy := GetWeightedPool(map[string]int{"titan-growth": 4, "dense-muscles": 1, "extra-arms": 1}, nil)
+	assert.Contains(t, roomy, "colossus-form", "control: at five units Colossus Form fits")
 }
 
 func TestRelatedFitPrefersTheRefusedPicksCluster(t *testing.T) {
