@@ -15,8 +15,10 @@ what a trigger *does*, you edit this package.
 
 ## Files
 
-- **engine.go** — `Engine`, the trigger index, `Notify`, and the recursive
-  evaluator.
+- **engine.go** — `Engine`, the trigger index, `Notify`, the recursive
+  evaluator, and `fieldMatches`, the match step it shares with `WouldFire`.
+- **dryrun.go**: `WouldFire` (side-effect-free "would Notify fire?") and
+  `SearchFeatures` (a room's quest search nouns).
 - **types.go** — type aliases onto `internal/quests`, plus `EventDetails` and
   `NotifyResult` (which describe an engine *invocation*, so they stay here).
 - **conditions.go** — `PlayerState` interface and `EvalConditions`.
@@ -45,7 +47,17 @@ func (e *Engine) RegisterQuest(q *QuestDef)
 func (e *Engine) GetQuest(questId int) *QuestDef
 func (e *Engine) AllQuests() []*QuestDef       // unordered
 func (e *Engine) Notify(eventType string, details EventDetails, player PlayerState, ctx ActionContext) NotifyResult
+func (e *Engine) WouldFire(eventType string, d EventDetails, player PlayerState) bool
+func (e *Engine) SearchFeatures(roomId int) []string
 ```
+
+`WouldFire` runs the same match step as `Notify` (`fieldMatches`, then
+`EvalConditions` against the player's current state) and stops there: no
+action runs, no token is granted, no text is sent, no `quest_granted` chain is
+followed, no `EvalGuard` is touched. It is for gates that must ask before the
+event happens (a quest gate on an exit). `SearchFeatures` returns the sorted,
+distinct nouns of `room_interact` triggers with `verb: search` and `room:`
+equal to the given id, regardless of conditions.
 
 `RegisterQuest` flattens every trigger into `triggerIndex` keyed by event type,
 so `Notify` never scans quests it cannot match. Each trigger gets an
@@ -85,6 +97,11 @@ keep it that way.
 
 That last step is what makes quest chains work: granting `10-end` can
 immediately fire the trigger that grants `11-start`.
+
+Step 1 is `fieldMatches`, computed once up front because it depends only on
+the event. Steps 2 and 3 stay inside the loop: an earlier trigger's actions
+and chains change the player state a later trigger's conditions read, and a
+trigger is marked visited even when its conditions then fail.
 
 ## `EvalGuard`
 
