@@ -54,6 +54,12 @@ func Mutations(rest string, user *users.UserRecord, room *rooms.Room, flags even
 				user.SendText(messaging.CategorySystem, indented(`      `, fmt.Sprintf(`<ansi fg="red">- %s</ansi>`, d)))
 			}
 		}
+		// Reserve units are not an effect, so they need their own line: the
+		// help page names this drawback and this list must agree (#680).
+		if len(spec.ReserveUnits) > 0 {
+			user.SendText(messaging.CategorySystem, indented(`      `,
+				`<ansi fg="red">- Holds part of your conviction in reserve, leaving less for companions.</ansi>`))
+		}
 	}
 
 	user.SendBlankLine(messaging.CategorySystem)
