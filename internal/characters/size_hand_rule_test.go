@@ -17,7 +17,8 @@ func seedGrowthMutations(t *testing.T) {
 			Pros: []mutations.MutationEffect{{Type: "size", Target: "large", Value: 3}}},
 		"colossus-form": {MutationId: "colossus-form", Name: "Colossus Form", Rarity: 9, MaxRank: 1,
 			Clusters: []string{"colossus"}, ReserveUnits: []int{1},
-			Pros: []mutations.MutationEffect{{Type: "flag", Target: "colossal-grip", Value: 1}}},
+			Prerequisites: []mutations.MutationPrereq{{Id: "dense-muscles", MinLevel: 1}, {Id: "titan-growth", MinLevel: 4}},
+			Pros:          []mutations.MutationEffect{{Type: "flag", Target: "colossal-grip", Value: 1}}},
 		"extra-arms": {MutationId: "extra-arms", Name: "Extra Arms", Rarity: 8, MaxRank: 4,
 			Clusters: []string{"colossus"}, ReserveUnits: []int{1, 1, 1, 2}},
 	}))

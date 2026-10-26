@@ -7,20 +7,18 @@ import (
 	"math/rand"
 	"sort"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/species"
 )
 
 // BloomAdvanceMutation accelerates the character's mutation progression
 // (the Bloom drug's signature effect). It advances the character's strongest
-// existing mutation one level (cap-aware), or seeds a new mid/high-tier
-// mutation if the character has none — or if all owned mutations are already
-// at the global maximum level.
+// existing mutation one level, or seeds a new mid/high-tier mutation if the
+// character has none, or if no owned mutation can take another rank.
 //
 // "Strongest" means highest current level; ties are broken alphabetically by
-// mutation ID for determinism. The global cap is Balance.MutationMaxLevel.
+// mutation ID for determinism. Whether a rank can be taken is
+// mutations.CanGain: the mutation's own max rank and the reserve budget.
 //
 // When seeding a new mutation, candidates are weighted by Rarity (higher
 // rarity = higher weight), giving Bloom its signature bias toward mid/high-
@@ -33,8 +31,6 @@ import (
 // rng is injectable for deterministic testing; pass nil to use the default
 // global math/rand source.
 func (c *Character) BloomAdvanceMutation(rng *rand.Rand) (string, int) {
-	maxLevel := int(configs.GetBalanceConfig().MutationMaxLevel)
-
 	// ── Has owned mutations: advance the strongest one below the cap ──────────
 	if len(c.Mutations) > 0 {
 		type ownedEntry struct {
@@ -54,7 +50,7 @@ func (c *Character) BloomAdvanceMutation(rng *rand.Rand) (string, int) {
 		})
 
 		for _, e := range entries {
-			if e.level < maxLevel {
+			if mutations.CanGain(c.Mutations, e.id, e.level+1, nil) {
 				c.Mutations[e.id] = e.level + 1
 				return e.id, e.level + 1
 			}
@@ -85,19 +81,7 @@ func (c *Character) BloomSeedNewMutation(rng *rand.Rand) (string, int) {
 	}
 	candidates := make([]candidate, 0, len(allSpecs))
 	for id, spec := range allSpecs {
-		if _, owned := c.Mutations[id]; owned {
-			continue
-		}
-		if mutations.HasConflict(c.Mutations, id) {
-			continue
-		}
-		if !spec.CanApplyTo(sp) {
-			continue
-		}
-		// Moon-gated flavor (Reflect Skin): only the variant matching the
-		// current moon bucket is eligible now, so the moon at the moment of
-		// acquisition decides which flavor the Chrysalis grants.
-		if spec.MoonFlavor != 0 && spec.MoonFlavor != gametime.CurrentMoonFlavorBucket() {
+		if !mutations.CanGain(c.Mutations, id, 1, sp) {
 			continue
 		}
 		// Weight = Rarity (1=common … 10=very rare). Bloom biases toward
