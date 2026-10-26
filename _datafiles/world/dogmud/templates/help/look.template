@@ -13,7 +13,7 @@ something new, such as a clue, a hidden item, or a way forward. If a
 description mentions something that seems worth a second thought, look
 at it.
 
-You can also use <ansi fg="command">l</ansi>, <ansi fg="command">examine</ansi> or <ansi fg="command">exam</ansi> instead of <ansi fg="command">look</ansi>. They all do the same
+You can also use <ansi fg="command">examine</ansi> or <ansi fg="command">exam</ansi> instead of <ansi fg="command">look</ansi>. They all do the same
 thing. For a sign, a book or writing on a wall, <ansi fg="command">read</ansi> works too.
 
 <ansi fg="yellow">Usage: </ansi>
