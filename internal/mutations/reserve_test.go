@@ -58,6 +58,19 @@ func TestFitsReserveBudget(t *testing.T) {
 		"a rank with no units always fits")
 }
 
+// A body already past the budget (the knob was lowered, or an authored set
+// skipped it) can still gain anything that adds no units, but never a rank
+// that adds units.
+func TestFitsReserveBudgetOverBudgetAllowsOnlyZeroDelta(t *testing.T) {
+	seedColossus(t)
+	over := map[string]int{"titan-growth": 4, "extra-arms": 4} // 9 units
+	assert.True(t, FitsReserveBudget(over, "dense-muscles", 1), "a new zero-unit mutation")
+	assert.True(t, FitsReserveBudget(over, "padded-soles", 3), "a zero-unit deepening")
+	assert.False(t, FitsReserveBudget(over, "colossus-form", 1), "adds a unit while over")
+	over["extra-arms"] = 3 // 8 units
+	assert.False(t, FitsReserveBudget(over, "extra-arms", 4), "adds two units while over")
+}
+
 func TestGrowsLargeAtTitanThree(t *testing.T) {
 	seedColossus(t)
 	assert.False(t, GrowsLarge(map[string]int{"titan-growth": 2}))

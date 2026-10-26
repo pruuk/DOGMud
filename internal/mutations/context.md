@@ -147,7 +147,9 @@ Conflicting mutations are excluded from `GetWeightedPool()` during acquisition.
 the Conviction units a mutation sets aside at each rank; `ReserveUnitsAt(rank)`
 reads it. `OwnedReserveUnits(owned)` totals a character's mutations,
 `ReserveUnitBudget()` is the ceiling, and `FitsReserveBudget(owned, id,
-newRank)` says whether a rank would stay under it. `GrowsLarge(owned)` is true
+newRank)` says whether a rank would stay under it. A gain that adds no units
+always fits, so a body already past the budget (a lowered knob, an authored
+set) can still gain mutations that hold nothing. `GrowsLarge(owned)` is true
 once a `size` effect (`Target: large`, `Value` = the rank it starts at; Titan
 Growth) has reached its rank; `characters.Size()` reads it. The `colossal-grip`
 flag (Colossus Form) lets a Large body hold a two-hander in every hand.

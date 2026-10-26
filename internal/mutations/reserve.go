@@ -43,13 +43,20 @@ func ReserveUnitBudget() int {
 // FitsReserveBudget reports whether owning `id` at newRank keeps the owned
 // units within ReserveUnitBudget. Gear and companions never count here: the
 // budget is the body's alone (owner, 2026-10-26).
+//
+// A gain that adds no units always fits, so a body already past the budget
+// (the knob was lowered, or an authored set) can still gain mutations that
+// hold nothing; any gain that adds units must end within the budget.
 func FitsReserveBudget(owned map[string]int, id string, newRank int) bool {
 	spec := GetMutation(id)
 	if spec == nil {
 		return true
 	}
-	units := OwnedReserveUnits(owned) - spec.ReserveUnitsAt(owned[id]) + spec.ReserveUnitsAt(newRank)
-	return units <= ReserveUnitBudget()
+	delta := spec.ReserveUnitsAt(newRank) - spec.ReserveUnitsAt(owned[id])
+	if delta <= 0 {
+		return true
+	}
+	return OwnedReserveUnits(owned)+delta <= ReserveUnitBudget()
 }
 
 // GrowsLarge reports whether an owned mutation's size effect has reached the
