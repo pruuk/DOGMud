@@ -10,6 +10,7 @@ type Gained struct {
 	MutationId string
 	Rank       int  // new rank after the change (1 for acquisitions)
 	IsNew      bool // false = an owned mutation deepened
+	Silent     bool // the grant site already narrated it (Bloom, Phial): no reveal
 }
 
 func (Gained) Type() string { return `MutationGained` }

@@ -116,6 +116,9 @@ func MutationGained_Reveal(e events.Event) events.ListenerReturn {
 	if user == nil {
 		return events.Continue
 	}
+	if evt.Silent {
+		return events.Continue
+	}
 	spec := mutations.GetMutation(evt.MutationId)
 	if spec == nil {
 		return events.Continue

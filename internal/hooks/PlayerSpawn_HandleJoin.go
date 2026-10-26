@@ -73,8 +73,14 @@ func respawnCompanions(user *users.UserRecord) {
 	// mid-life, which makes login the only place a rebase can reach a returning
 	// veteran. This never dismisses anyone; reservation is refused on addition
 	// only, and a recompute that leaves them further over says so rather than
-	// letting a silently dearer bond read as a bug.
+	// letting a silently dearer bond read as a bug. The one exception is the
+	// body's own share (#680), handled by releaseCompanionsForUser.
 	refreshCompanionReservesOnLogin(user)
+
+	// #680: a body that grew while away (or before this rule shipped) may
+	// hold more than the ceiling leaves for bonds. Runs before the companions
+	// are spawned, so only records are dropped.
+	releaseCompanionsForUser(user)
 
 	for i := range user.Character.Companions {
 		comp := &user.Character.Companions[i]
