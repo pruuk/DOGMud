@@ -52,20 +52,13 @@ func TransferItemToBackpack(item items.Item, toChar *characters.Character, toUse
 	// Remove from source
 	removeFrom(item)
 
-	// Try to store in destination
-	if !toChar.StoreItem(item) {
+	// Store through the acquire seam, which raises the gain event only when
+	// the item lands. Its one caller is the floor pickup (TakeFloorItem).
+	if !AcquireItemForChar(toChar, toUserId, toMobInstanceId, item, AcquireGet) {
 		// Restore to source on failure
 		rollback(item)
 		return ErrInventoryFull
 	}
-
-	// Fire ItemOwnership event for gain
-	events.AddToQueue(events.ItemOwnership{
-		UserId:        toUserId,
-		MobInstanceId: toMobInstanceId,
-		Item:          item,
-		Gained:        true,
-	})
 
 	return nil
 }
@@ -79,9 +72,12 @@ func TransferItemBetweenChars(item items.Item, fromChar *characters.Character, f
 		return fmt.Errorf("item not found in source inventory")
 	}
 
-	// Try to store in destination
-	if !toChar.StoreItem(item) {
-		// Rollback: restore to source
+	// Store through the acquire seam, which raises the receiver's gain event
+	// only when the item lands. Callers are give (player or mob) and the
+	// behaviour tree's return_item, all a hand-over, so the reason is give.
+	if !AcquireItemForChar(toChar, toUserId, toMobInstanceId, item, AcquireGive) {
+		// Rollback: restore to source. Not an acquisition: the item never
+		// left the source's ownership as far as any listener heard.
 		if !fromChar.StoreItem(item) {
 			// This should never happen since we just removed it
 			return fmt.Errorf("critical error: failed to rollback item to source")
@@ -89,19 +85,14 @@ func TransferItemBetweenChars(item items.Item, fromChar *characters.Character, f
 		return ErrInventoryFull
 	}
 
-	// Fire ItemOwnership events
+	// The giver's loss event. It now queues after the receiver's gain (the
+	// seam queues on store); listeners key on each event's own owner, so the
+	// order between two owners' events carries nothing.
 	events.AddToQueue(events.ItemOwnership{
 		UserId:        fromUserId,
 		MobInstanceId: fromMobInstanceId,
 		Item:          item,
 		Gained:        false,
-	})
-
-	events.AddToQueue(events.ItemOwnership{
-		UserId:        toUserId,
-		MobInstanceId: toMobInstanceId,
-		Item:          item,
-		Gained:        true,
 	})
 
 	return nil

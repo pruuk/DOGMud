@@ -523,6 +523,17 @@ refusal for the giver, not a server fault: test with `errors.Is`, and answer
 with `refusal.RecipientFull` (as `usercommands/give.go` does), never
 `refusal.Failed`.
 
+**`acquire.go`** (#375 phase 3a): the acquire seam. `AcquireItem(user
+*users.UserRecord, itm items.Item, reason AcquireReason) bool` stores the item
+and, only when `StoreItem` accepts it, queues one `events.ItemOwnership{Gained:
+true, Reason}`. `AcquireItemForChar(char, userId, mobInstanceId, itm, reason)`
+is the same for a route holding a bare character (it serves mob receivers
+too). `AcquireReason` is a string type with one constant per route (`get`,
+`give`, `buy`, `craft`, `reward`, and so on). `TransferItemToBackpack` gains
+through it with `AcquireGet`, `TransferItemBetweenChars` with `AcquireGive`
+(the giver's loss event now queues after the receiver's gain). A refused
+store raises nothing.
+
 **`look.go`** (new file, slice 5a): `ResolveLook(actor Actor, lookAt string)
 LookResolution` (`:49`) is the shared look body, in the player's exact order:
 sight first, then no-target (the room), then a creature (resolved with the
