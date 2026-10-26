@@ -314,6 +314,7 @@ type Character struct {
 	Mutations               map[string]int                 `yaml:"mutations,omitempty"`           // mutationId → level (Stage 12.1)
 	MutationProgress        float64                        `yaml:"mutationprogress,omitempty"`    // accumulates toward next mutation (Stage 12.1)
 	MutationRerollBonus     int                            `yaml:"mutationrerollbonus,omitempty"` // post-scour charges: while >0, re-acquired mutations bias hard toward rare, one charge consumed per new mutation
+	MutationReserveHeld     int                            `yaml:"mutationreserveheld,omitempty"` // #680: mutations.OwnedReserveUnits as of the last companion-release check; the release in internal/hooks frees companions only to cover growth past this mark (ruling 6, D4). A pre-rule save loads 0, so its first login treats the whole body share as new growth; a scour just lowers it
 	Cooldowns               Cooldowns                      `yaml:"cooldowns,omitempty"`           // How many rounds until it is cooled down
 	Settings                map[string]string              `yaml:"settings,omitempty"`            // custom setting tracking, used for anything.
 	QuestProgress           map[int]string                 `yaml:"questprogress,omitempty"`       // quest progress tracking

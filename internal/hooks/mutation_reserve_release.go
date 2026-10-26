@@ -12,21 +12,33 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// releaseCompanionsOverCeiling drops companion records, newest first, while
-// the Conviction reservation is past the ceiling (#680). It acts only when
-// the body holds part of the pool: a gained rank of Titan Growth, Colossus
-// Form or Extra Arms crowds out bonds, while an overage from re-pricing or
-// gear alone stays grandfathered (D4). Bonded companions hold no reserve and
-// are never released. Gear is never removed. Returns the records it removed.
+// releaseCompanionsOverCeiling drops companion records, newest first, to
+// cover the body's GROWTH since it was last acknowledged (#680, ruling 6).
+// Character.MutationReserveHeld marks the units already acknowledged.
+// When the owned units have not grown past it (a login re-price, a zero-unit
+// gain, a scour), nothing is released and the mark follows the units down.
+// When they have, only the overage the growth itself added is released: the
+// overage that was there before (gear, re-priced bonds) stays grandfathered
+// (D4). A save from before the rule holds 0, so its first check treats the
+// whole body share as new growth. Bonded companions hold no reserve and are
+// never released. Gear is never removed. Returns the records it removed.
 //
 // It reads the pool maximum as it stands and does not recalculate stats; the
 // caller (releaseCompanionsForUser) does that first.
 func releaseCompanionsOverCeiling(ch *characters.Character) []characters.CompanionInfo {
-	if mutations.OwnedReserveUnits(ch.Mutations) == 0 {
+	units := mutations.OwnedReserveUnits(ch.Mutations)
+	held := ch.MutationReserveHeld
+	ch.MutationReserveHeld = units
+	if units <= held {
 		return nil
 	}
+	increase := ch.MutationReservePoints(units) - ch.MutationReservePoints(held)
+	grandfathered := ch.ReservationOverages().Conviction - increase
+	if grandfathered < 0 {
+		grandfathered = 0
+	}
 	var released []characters.CompanionInfo
-	for ch.ReservationOverages().Conviction > 0 {
+	for ch.ReservationOverages().Conviction > grandfathered {
 		idx := -1
 		for i := len(ch.Companions) - 1; i >= 0; i-- {
 			if ch.Companions[i].ConvictionReserve > 0 {

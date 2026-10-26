@@ -341,7 +341,18 @@ func (s reserveSources) remedies() string {
 // floored and clamped to the ceiling. Takes the pool max for the same
 // mid-derivation reason itemReserveOnPoolWithMax does.
 func (c *Character) mutationReserveWithMax(poolMax int) int {
-	units := mutations.OwnedReserveUnits(c.Mutations)
+	return mutationReservePointsWithMax(mutations.OwnedReserveUnits(c.Mutations), poolMax)
+}
+
+// MutationReservePoints is what `units` mutation reserve units set aside on
+// this character's Conviction as the pool stands: the same floor and ceiling
+// clamp GetPoolReservation applies to the body. The companion release in
+// internal/hooks prices the body before and after a gain with it.
+func (c *Character) MutationReservePoints(units int) int {
+	return mutationReservePointsWithMax(units, c.poolMax(PoolConviction))
+}
+
+func mutationReservePointsWithMax(units, poolMax int) int {
 	if units <= 0 || poolMax <= 0 {
 		return 0
 	}
