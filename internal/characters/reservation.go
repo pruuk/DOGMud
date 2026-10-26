@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/enchantments"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
@@ -212,11 +213,12 @@ type reserveSources struct {
 	drainingItem bool // an item whose own spec reserves (reserve_*_pct)
 	enchantment  bool // a Chrysalis enchantment on something worn
 	companion    bool // a fielded companion, conviction only
+	body         bool // reserving mutations, conviction only; nothing removes it
 }
 
 func (s reserveSources) gear() bool { return s.drainingItem || s.enchantment }
 
-func (s reserveSources) any() bool { return s.gear() || s.companion }
+func (s reserveSources) any() bool { return s.gear() || s.companion || s.body }
 
 // reserveSourcesOn walks the same two places GetPoolReservation totals, so the
 // subject of a sentence can never name a source that contributed nothing to the
@@ -248,6 +250,9 @@ func (c *Character) reserveSourcesOn(p Pool) reserveSources {
 	}
 
 	if p == PoolConviction {
+		if c.mutationReserveWithMax(poolMax) > 0 {
+			s.body = true
+		}
 		for i := range c.Companions {
 			if c.Companions[i].ConvictionReserve > 0 {
 				s.companion = true
@@ -264,6 +269,7 @@ func (s reserveSources) merge(o reserveSources) reserveSources {
 		drainingItem: s.drainingItem || o.drainingItem,
 		enchantment:  s.enchantment || o.enchantment,
 		companion:    s.companion || o.companion,
+		body:         s.body || o.body,
 	}
 }
 
@@ -274,24 +280,37 @@ func (s reserveSources) merge(o reserveSources) reserveSources {
 // sentence built from a set with nothing in it has no business asserting either
 // source. In practice every caller has already established that the reservation
 // is positive, so the fallback is unreachable; it exists so that a future caller
-// that has not cannot reintroduce the falsehood.
+// that has not cannot reintroduce the falsehood. The body comes first: it is
+// the one holder nothing can remove.
 func (s reserveSources) subject() string {
-	switch {
-	case s.gear() && s.companion:
-		return `Your gear and bonds`
-	case s.gear():
-		return `Your gear`
-	case s.companion:
-		return `Your bonds`
+	var held []string
+	if s.body {
+		held = append(held, `body`)
 	}
-	return `What you carry`
+	if s.gear() {
+		held = append(held, `gear`)
+	}
+	if s.companion {
+		held = append(held, `bonds`)
+	}
+	if len(held) == 0 {
+		return `What you carry`
+	}
+	return `Your ` + joinWithAnd(held)
 }
 
 // verb is the present-tense form of "hold" that agrees with subject(). Kept
 // beside it because a variable subject with a fixed verb is how "Your gear now
-// hold a heavy share" gets shipped.
+// hold a heavy share" gets shipped. "holds" for one singular holder (body,
+// gear, or the fallback), "hold" for bonds or any list.
 func (s reserveSources) verb() string {
-	if s.subject() == `Your gear` || s.subject() == `What you carry` {
+	n := 0
+	for _, b := range []bool{s.body, s.gear(), s.companion} {
+		if b {
+			n++
+		}
+	}
+	if n == 0 || (n == 1 && !s.companion) {
 		return `holds`
 	}
 	return `hold`
@@ -315,6 +334,23 @@ func (s reserveSources) remedies() string {
 		parts = append(parts, `dismiss a companion`)
 	}
 	return joinWithOr(parts)
+}
+
+// mutationReserveWithMax is what the body sets aside on Conviction (#680):
+// the owned mutations' reserve units times MutationReserveUnitPct of the pool,
+// floored and clamped to the ceiling. Takes the pool max for the same
+// mid-derivation reason itemReserveOnPoolWithMax does.
+func (c *Character) mutationReserveWithMax(poolMax int) int {
+	units := mutations.OwnedReserveUnits(c.Mutations)
+	if units <= 0 || poolMax <= 0 {
+		return 0
+	}
+	pct := float64(configs.GetBalanceConfig().MutationReserveUnitPct)
+	r := int(math.Floor(float64(poolMax) * float64(units) * pct))
+	if cap := reservationCapFor(poolMax); r > cap {
+		r = cap
+	}
+	return r
 }
 
 // ReservationHolders returns the sentence subject naming what is really holding
@@ -682,9 +718,13 @@ func (c *Character) ReservationRefusal(p Pool, added int) string {
 	max := c.poolMax(p)
 	share := ReserveShareBand(c.GetPoolReservation(string(p), max), max)
 	sources := c.reserveSourcesOn(p)
+	tail := `You cannot take on more until you make room: ` + sources.remedies() + `.`
+	if sources.remedies() == `` {
+		// Only the body holds it, and the body cannot be put down (#680).
+		tail = `Your changed body holds that share, and nothing you put down will free it.`
+	}
 	return sources.subject() + ` already ` + sources.verb() + ` ` + share +
-		` of your ` + pool + ` in reserve. You cannot take on more until you ` +
-		`make room: ` + sources.remedies() + `.`
+		` of your ` + pool + ` in reserve. ` + tail
 }
 
 func poolDisplayName(p Pool) string {

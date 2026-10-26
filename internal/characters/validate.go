@@ -278,6 +278,8 @@ func (c *Character) GetPoolReservation(pool string, poolMax int) int {
 		for i := range c.Companions {
 			total += c.Companions[i].ConvictionReserve
 		}
+		// The body: Titan Growth, Colossus Form and Extra Arms (#680).
+		total += c.mutationReserveWithMax(poolMax)
 	}
 
 	return total
