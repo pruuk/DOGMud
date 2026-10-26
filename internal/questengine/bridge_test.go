@@ -77,6 +77,17 @@ func TestGameBridge_HasQuest_False_DifferentStep(t *testing.T) {
 	_ = result // value depends on quest registry; just ensure no panic
 }
 
+// TestGameBridge_DiscoverHiddenNoun records the hidden noun as discovered in
+// the bridge's own room, the room id look and search check (room.RoomId).
+func TestGameBridge_DiscoverHiddenNoun(t *testing.T) {
+	u := newBridgeUser(1)
+	b := questengine.NewGameBridge(u, 5343)
+	assert.False(t, u.Character.HasDiscovery(5343, "disc"))
+	b.DiscoverHiddenNoun("disc")
+	assert.True(t, u.Character.HasDiscovery(5343, "disc"))
+	assert.False(t, u.Character.HasDiscovery(5342, "disc"), "only the bridge's room learns the noun")
+}
+
 // TestGameBridge_GiveMutation_EmitsGainedEvent verifies GiveMutation (used by
 // quest reward blocks) queues a mutations.Gained event (UserId, MutationId,
 // Rank=1, IsNew=true) — Task 3 moved reveal text to the hooks listener that

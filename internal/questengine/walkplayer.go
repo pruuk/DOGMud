@@ -186,6 +186,7 @@ func (c *walkCtx) LockExits(ExitLock)                      {}
 func (c *walkCtx) UnlockExits(ExitLock)                    {}
 func (c *walkCtx) QueueNpcSay(NpcSayDef)                   {}
 func (c *walkCtx) GiveMutation()                           {}
+func (c *walkCtx) DiscoverHiddenNoun(string)               {}
 func (c *walkCtx) SetQuestFlag(key, value string)          { c.p.flags[key] = value }
 func (c *walkCtx) BumpRep(string, int)                     {}
 func (c *walkCtx) GetUserId() int                          { return 0 }

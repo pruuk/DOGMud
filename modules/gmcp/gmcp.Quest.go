@@ -197,6 +197,7 @@ var questActionVocab = []vocabEntry{
 	{"teleport", "move the player to a room"},
 	{"give_mutation", "roll and grant a random mutation"},
 	{"set_flag", "record a quest flag (key+value must be declared)"},
+	{"discover", "mark a hidden noun of the trigger's room as found by the player"},
 	{"sequence", "timed line sequence with optional on-complete actions and movement lock"},
 	{"bump_rep", "adjust faction reputation"},
 	{"declare_bounty", "post a bounty (issuer, target, condition, overrides)"},

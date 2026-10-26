@@ -401,6 +401,13 @@ func (b *GameBridge) UnlockExits(e ExitLock) {
 	}
 }
 
+// DiscoverHiddenNoun records key as discovered in the bridge's room, the
+// real room the player stands in (room.RoomId), which is the id look and
+// search check and record with.
+func (b *GameBridge) DiscoverHiddenNoun(key string) {
+	b.user.Character.AddDiscovery(b.roomId, key)
+}
+
 // SetQuestFlag sets a quest flag on the player's character.
 func (b *GameBridge) SetQuestFlag(key, value string) {
 	b.user.Character.SetQuestFlag(key, value)

@@ -45,6 +45,7 @@ func (c *recordingCtx) UnlockExits(ExitLock)                    {}
 func (c *recordingCtx) QueueNpcSay(NpcSayDef)                   {}
 func (c *recordingCtx) QueueSequence(SequenceDef)               {}
 func (c *recordingCtx) GiveMutation()                           {}
+func (c *recordingCtx) DiscoverHiddenNoun(string)               {}
 func (c *recordingCtx) BumpRep(string, int)                     {}
 func (c *recordingCtx) GetUserId() int                          { return 1 }
 

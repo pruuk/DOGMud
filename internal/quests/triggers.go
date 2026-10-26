@@ -84,6 +84,12 @@ type ActionDef struct {
 	Sequence             *SequenceDef        `yaml:"sequence,omitempty" json:"sequence,omitempty"`
 	BumpRep              *BumpRepDef         `yaml:"bump_rep,omitempty" json:"bump_rep,omitempty"`
 	DeclareBounty        *DeclareBountyDef   `yaml:"declare_bounty,omitempty" json:"declare_bounty,omitempty"`
+	// Discover records a hidden noun of the player's room as found, as a
+	// successful search would, so look and search treat it as a known
+	// feature afterwards. The key must be a hidden noun of the trigger's room
+	// (its room filter, else its in_room condition); ValidateQuestRefs
+	// refuses one that is not, or a trigger that names no room.
+	Discover string `yaml:"discover,omitempty" json:"discover,omitempty"`
 }
 
 // BumpRepDef parameters for the bump_rep action: which faction

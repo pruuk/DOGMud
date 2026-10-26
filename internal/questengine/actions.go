@@ -41,6 +41,9 @@ type ActionContext interface {
 	QueueNpcSay(n NpcSayDef)
 	QueueSequence(s SequenceDef)
 	GiveMutation()
+	// DiscoverHiddenNoun records a hidden noun of the player's room as found,
+	// as a successful search does (the discover action).
+	DiscoverHiddenNoun(key string)
 	SetQuestFlag(key, value string)
 	BumpRep(factionId string, delta int)
 	GetUserId() int
@@ -133,6 +136,11 @@ func ExecuteAction(a ActionDef, ctx ActionContext) error {
 	if a.GiveMutation {
 		LogVerboseF(ctx.GetUserId(), "give_mutation")
 		ctx.GiveMutation()
+		return nil
+	}
+	if a.Discover != "" {
+		LogVerboseF(ctx.GetUserId(), "discover hidden noun %s", a.Discover)
+		ctx.DiscoverHiddenNoun(a.Discover)
 		return nil
 	}
 	if a.SetFlag != nil {

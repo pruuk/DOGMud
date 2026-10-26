@@ -138,7 +138,17 @@ the read side (`HasQuest`, `HasItem`, `GetQuestFlag`, `GetGold`, `GetRoomId`,
 `GetUserId`, `HasOwnMasterwork`) and the write side — grant/consume/give,
 gold, text, mob and item spawning, spell teaching, skill training, stat
 increases, recipe learning, conditions, teleport, exit locking, quest flags, faction
-rep, mutation grants, NPC dialogue queueing, and timed sequences.
+rep, mutation grants, hidden-noun discovery, NPC dialogue queueing, and timed
+sequences.
+
+`DiscoverHiddenNoun(key)` backs the `discover` action (#375 phase 3a): it
+records `Character.AddDiscovery(roomId, key)` on the bridge's own room id, the
+real room the player stands in (`room.RoomId`), which is the id `search`
+records a find under and `look` checks. Afterwards `look <key>` and
+`search <key>` treat the hidden noun as found, and plain `search` no longer
+rolls for it. `ValidateQuestRefs` (`internal/quests`) checks the key against
+the trigger's room at every door; the bridge does not look the room up.
+Quest 49's floor search discovers `disc` in the Reliquary (5343).
 
 `ChargeGold(amount) error` takes the whole charge or nothing. A charge
 larger than the player's gold takes nothing, sends no "You pay" line, logs a
@@ -274,7 +284,8 @@ on the caller's order. It reads the Ways into each step from
   flags, heard topics, gold and room, and `dialogueState()` wraps it as a
   `dialogue.PlayerState`.
 - **`walkCtx`** is the `ActionContext`. Grants, items, gold and quest flags
-  change the player; narration, spawns, teleports and the rest are no-ops.
+  change the player; narration, spawns, teleports, `discover` and the rest
+  are no-ops.
   `QueueSequence` runs the sequence's `on_complete` actions at once, as the
   real bridge does after the lines finish (`GameBridge.QueueSequence`,
   `bridge.go`). `trailCtx` wraps it to note every grant.

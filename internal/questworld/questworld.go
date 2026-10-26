@@ -49,6 +49,14 @@ func Validators() quests.QuestValidators {
 		},
 		DialogueGrants: func(token string) bool { return dlgGrants[token] },
 		MobHasDialogue: mobHasDialogueFile,
+		HiddenNounExists: func(roomId int, key string) bool {
+			r := rooms.LoadRoomTemplate(roomId)
+			if r == nil {
+				return false
+			}
+			_, ok := r.HiddenNouns[key]
+			return ok
+		},
 	}
 }
 
