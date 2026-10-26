@@ -446,7 +446,23 @@ if b.PackScalingEnabled {
 }
 ```
 
+### Body reserve release (`mutation_reserve_release.go`, #680)
+Titan Growth, Colossus Form and Extra Arms hold part of a player's Conviction
+in reserve, so a grown body can leave less room than the companions it already
+has. `releaseCompanionsOverCeiling(ch)` removes companion records, newest
+first, while the Conviction overage is positive; it acts only when the body
+holds units (`mutations.OwnedReserveUnits`), so an overage from gear or
+re-pricing alone stays grandfathered. `releaseCompanionsForUser(user)`
+recalculates stats, runs it, dismisses the live mobs (charmed creatures leave
+peacefully, summoned ones dissolve), tells the player and republishes the
+pool. Two callers: `MutationGained_ReleaseCompanions`, registered on
+`mutations.Gained` (every player rank gain, silent Bloom and Phial grants
+included), and `PlayerSpawn_HandleJoin`, which runs it before companions are
+spawned so only records are dropped.
+
 ### Mob Mutation Acquisition (inside per-mob loop)
+Progress resets only when a mutation is granted: a tick where `CanGain` leaves
+nothing that fits keeps its progress for the next tick (#680).
 After condition triggers and before `Validate()`:
 ```go
 // Guard: MobMutationEnabled && mob.Character.Aggro != nil

@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-10-26: Bigger bodies, fewer bonds
+
+- Titan Growth now makes you large at its later ranks. A large body
+  holds a two-handed weapon in one hand.
+- Colossus Form now needs the fullest Titan Growth, and it lets every
+  hand wield a two-handed weapon.
+- Extra Arms can now grow up to six arms.
+- These mutations hold part of your conviction in reserve. A deeply
+  grown body can field fewer companions. If a new rank leaves too
+  little room, your newest companion is sent away. Mutations that
+  would not fit are skipped, and something else grows instead.
+
 ## 2026-10-26: Large creatures show both hands
 
 - A large creature holds a two-handed weapon in one hand. When it does,

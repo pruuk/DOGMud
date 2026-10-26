@@ -141,6 +141,25 @@ checks both directions:
 
 Conflicting mutations are excluded from `GetWeightedPool()` during acquisition.
 
+### Conviction reserve and size (#680)
+
+`MutationSpec.ReserveUnits []int` (`reserve.go`, field in `mutations.go`) lists
+the Conviction units a mutation sets aside at each rank; `ReserveUnitsAt(rank)`
+reads it. `OwnedReserveUnits(owned)` totals a character's mutations,
+`ReserveUnitBudget()` is the ceiling, and `FitsReserveBudget(owned, id,
+newRank)` says whether a rank would stay under it. `GrowsLarge(owned)` is true
+once a `size` effect (`Target: large`, `Value` = the rank it starts at; Titan
+Growth) has reached its rank; `characters.Size()` reads it. The `colossal-grip`
+flag (Colossus Form) lets a Large body hold a two-hander in every hand.
+
+`CanGain(owned, id, newRank, sp)` (`eligibility.go`) is the one gate for
+gaining or deepening a rank: it checks the reserve budget along with the usual
+conflict and body-plan gates. `CanDeepen`, `RollDeepening`, `GetGraphPool` and
+`GetWeightedPoolWithFloor` all go through it. `MaxRankOf(id)` gives a
+mutation's top rank; `RelatedFit(refused, fit)` names a related mutation that
+does fit when one is refused. `Gained.Silent` (`reveal.go`) marks a grant whose
+site already narrated it (Bloom, Phial), so no reveal plays.
+
 ### Helper Functions
 
 ```go
@@ -271,6 +290,8 @@ No Go code changes are required for existing effect types.
 | `affinity.go` | Play-pattern signals that steer drift toward a cluster |
 | `describe.go` | Player-facing description assembly |
 | `reveal.go` | The emergence/reveal moment and its splash |
+| `reserve.go` | Conviction reserve units, the budget, `GrowsLarge` |
+| `eligibility.go` | `CanGain`, `MaxRankOf`, `RelatedFit` |
 | `aura.go` | Aura-type effects |
 | `flight.go` | Flight movement effects |
 | `ironhide.go` | Ironhide cluster specifics |
