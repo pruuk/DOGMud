@@ -181,7 +181,7 @@ func TestZoneMap_RoomWithNoCoordinatesIsAFloorChange(t *testing.T) {
 	g.buildAndSend(GMCPZoneUpdate{UserId: u.UserId})
 	maps := drainZoneMaps(t, u.UserId)
 	require.Len(t, maps, 1)
-	require.Equal(t, 0, maps[0].CurrentZ)
+	require.Equal(t, int64(0), maps[0].CurrentZ)
 
 	// The zone's mapper loses the room: an empty mapper stands in for it.
 	real := mapper.GetMapper(9760)
@@ -201,7 +201,7 @@ func TestZoneMap_RoomWithNoCoordinatesIsAFloorChange(t *testing.T) {
 	maps = drainZoneMaps(t, u.UserId)
 	require.Len(t, maps, 1, "leaving it sends a map")
 	require.True(t, maps[0].Full, "and it is whole")
-	require.Equal(t, 0, maps[0].CurrentZ)
+	require.Equal(t, int64(0), maps[0].CurrentZ)
 	require.ElementsMatch(t, []int{9760, 9763}, zoneMapRoomIds(maps[0]))
 }
 

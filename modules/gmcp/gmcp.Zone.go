@@ -34,7 +34,7 @@ func (g GMCPZoneUpdate) Type() string { return `GMCPZoneUpdate` }
 
 type GMCPZoneModule_Payload struct {
 	Zone     string                `json:"zone"`
-	CurrentZ int                   `json:"cz"`    // z-level (floor) of the player's current room
+	CurrentZ int64                 `json:"cz"`    // z-level (floor) of the player's current room
 	Party    []int                 `json:"party"` // room IDs currently holding party members; always sent, [] when none
 	Rooms    []mapper.SnapshotRoom `json:"rooms"`
 	// Full is true when Rooms is every room to draw (the client resets the
@@ -66,7 +66,7 @@ func (g *GMCPZoneModule) registerListeners() {
 // noMapCoordinate is what Room.Info reports for each axis of a room the
 // mapper has no position for, and so the floor the web client keys such a
 // room on. Zone.Map uses it as cz for that room so the two keys agree (#650).
-const noMapCoordinate = 999999999999999999
+const noMapCoordinate int64 = 999999999999999999
 
 // GMCPZoneResync carries a client's Zone.Map.Resync request from the
 // connection goroutine (HandleIAC) to MainWorker, where zoneResyncHandler
@@ -157,7 +157,8 @@ func (g *GMCPZoneModule) buildAndSend(e events.Event) events.ListenerReturn {
 	// floor change on both sides and gets a full map. It used to fall back to
 	// 0: the client wiped its map while the server saw no change and sent
 	// nothing.
-	_, _, cz, err := m.GetCoordinates(room.RoomId)
+	_, _, mapZ, err := m.GetCoordinates(room.RoomId)
+	cz := int64(mapZ)
 	if err != nil {
 		cz = noMapCoordinate
 	}
