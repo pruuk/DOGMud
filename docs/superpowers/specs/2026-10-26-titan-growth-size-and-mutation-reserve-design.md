@@ -48,6 +48,8 @@ Brainstormed with the owner 2026-10-26.
    dismissed newest first. Gear is never forced off.
 7. Players and mobs share every rule here.
 8. `ChanceToTame` is dead code and goes.
+9. Prerequisites govern earned growth only. Authored mutation sets (species
+   intrinsics, mob spawn lists, presets) may skip them but must fit the budget.
 
 ## Design
 
@@ -129,8 +131,12 @@ Related replacement:
   quest and Bloom grants already treat "nothing qualified" as a no-op.
 
 Authored grants (species intrinsics, `SpawnMutations`, the Homunculus preset)
-bypass the roll, so a guard test checks every authored set fits the budget and
-meets prerequisites.
+bypass the roll, so a guard test checks every authored set fits the budget.
+Prerequisites govern earned growth only: an authored set may skip them (owner,
+2026-10-26, option B). The four mobs that spawn with Colossus Form and Titan
+Growth 1 (9541, 9547, 9552, 229) keep their data unchanged. Colossus Form on a
+Titan Growth 1 mob adds its stats only, since its grip rule needs Large and the
+three Large-species mobs already wield in every hand.
 
 ### 5. Companions dismissed, newest first
 
@@ -158,9 +164,6 @@ plural). `remedies()` never offers anything for the body: it cannot be removed.
   #259.
 - `colossus-form.yaml`: prerequisite Titan Growth `min_level: 4`; add the
   `colossal-grip` flag.
-- Windscour Wyrm (229): needs Titan Growth 4 to keep Colossus Form honest.
-  `SpawnMutations` gains a way to state a rank; the plan picks the YAML shape
-  (beware the unquoted-colon trap) and the guard in section 4 checks it.
 - Help: `titan-growth`, `colossus-form`, `extra-arms`, `reservation` (the body
   as a source), and the `species` size lines (Large: main hand only for a grown
   character, every hand with Colossus Form or as a Large species).
@@ -180,7 +183,7 @@ plural). `remedies()` never offers anything for the body: it cannot be removed.
 - Newest-first dismissal on a rank gain and at login; gear untouched.
 - Guards: no reader of species size outside `Size()`; every `reserve_units`
   list is as long as the mutation's max rank; every authored mutation set fits
-  the budget and meets prerequisites.
+  the budget (authored sets are exempt from prerequisites).
 
 ## Out of scope
 
