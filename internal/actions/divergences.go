@@ -32,6 +32,7 @@ var userOnlyCommands = map[string]string{
 	"mob":          "admin",
 	"modify":       "admin",
 	"mudmail":      "admin",
+	"mutate":       "admin",
 	"mute":         "admin",
 	"opinion":      "admin",
 	"paz":          "admin",
