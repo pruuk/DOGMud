@@ -1,0 +1,15 @@
+The <ansi fg="command">mutate</ansi> command is a playtest lever for the
+mutation system.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+<ansi fg="command">mutate earn [player]</ansi>
+  Spends one earned mutation event for the player (yourself
+  if none is named), through the same code a fight runs. It
+  deepens or acquires a mutation under every rule, including
+  the Conviction reserve budget. If nothing fits, it says so
+  and the player keeps their progress.
+
+<ansi fg="yellow-bold">Notes:</ansi>
+  - The player must be online.
+  - With no arguments, this page is shown.
