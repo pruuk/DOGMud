@@ -101,6 +101,8 @@ func DescribeEffect(e MutationEffect) string {
 		return "Your backlash leaves a lingering affliction on whoever struck you."
 	case "shout_amp":
 		return "Your rallying shouts and war cries carry further and land with far greater force."
+	case "size":
+		return "In its later stages you grow large enough to wield a two-handed weapon in your weapon hand alone."
 	case "flag":
 		return flagPhrase(e.Target)
 	}
@@ -147,6 +149,8 @@ func flagPhrase(target string) string {
 		return "You can keep more companions at your side at once."
 	case "brood-mother":
 		return "You endlessly birth and sustain a brood, and are never left without a companion."
+	case "colossal-grip":
+		return "Every hand you have can wield a two-handed weapon alone."
 	case "control-immune":
 		return "Nothing can take you off your feet. You cannot be knocked down or grappled."
 	case "shout-stacking":

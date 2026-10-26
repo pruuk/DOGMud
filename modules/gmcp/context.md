@@ -489,7 +489,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Item.go` / `gmcp.Item_refs.go` | `Char.Items` | Inventory and equipment, plus item reference data |
 | `gmcp.Quest.go` / `gmcp.Quest_refs.go` | `Quest` | Quest tracker state and quest reference data |
 | `gmcp.Mob.go` | `Mob` | Mob presence and vitals for the room panel |
-| `gmcp.Mutation.go` | `Mutation` | Mutation roster and reveal events |
+| `gmcp.Mutation.go` | `Mutation` | Mutation roster and reveal events (`Char.Mutation`; a `Silent` gain pushes no card, #680) |
 | `gmcp.Action.go` | `Action` | Clickable action affordances |
 | `gmcp.Menu.go` | `Char.Menu` | Whether a game menu or prompt is open (`{open}`); see "Char.Menu" above |
 | `gmcp.Commands.go` | `Commands` | Command state, modes, cooldowns |

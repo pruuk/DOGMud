@@ -207,6 +207,7 @@ help:
       - command
       - deafen
       - devtool
+      - earnmutation
       - item
       - locate
       - mob

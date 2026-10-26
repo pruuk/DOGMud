@@ -22,13 +22,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
-	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/GoMudEngine/GoMud/internal/worldevents"
 )
 
 // enchantTierUpBlockedCooldown throttles the "this cannot deepen" line. The
@@ -439,74 +437,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						threshold := float64(mb.MutationBaseProgress) *
 							math.Pow(float64(mb.MutationProgressScale), load)
 						if user.Character.MutationProgress >= threshold {
-							user.Character.MutationProgress = 0
-							// Mutation-graph drift fades on each mutation event so recent behavior dominates.
-							mutations.DecayAffinity(user.Character.ClusterAffinity, float64(mb.MutationAffinityDecay))
-							// Decide: deepen existing mutation or acquire new one
-							doDeepen := false
-							if canAcquire && canDeepen {
-								// Both possible — coin flip weighted toward deepening
-								if util.Rand(100) < int(mb.MutationDeepenChance*100) {
-									doDeepen = true
-								}
-							} else if canDeepen && !canAcquire {
-								// At max count — must deepen
-								doDeepen = true
-							}
-							// else: canAcquire && !canDeepen — acquire new (doDeepen stays false)
-
-							if doDeepen {
-								mutId := mutations.RollDeepening(user.Character.Mutations)
-								if mutId != "" {
-									user.Character.Mutations[mutId]++
-									events.AddToQueue(mutations.Gained{
-										UserId:     user.UserId,
-										MutationId: mutId,
-										Rank:       user.Character.Mutations[mutId],
-										IsNew:      false,
-									})
-								}
-							} else if canAcquire {
-								// Pass the user's species so body-part requirements gate the pool.
-								sp := species.GetSpecies(user.Character.SpeciesId)
-								aff := mutations.EffectiveAffinity(user.Character.Mutations, user.Character.ClusterAffinity)
-								pool := mutations.GetGraphPool(user.Character.Mutations, aff, sp)
-								if len(pool) > 0 {
-									mutId := mutations.RollAcquisition(pool)
-									if user.Character.Mutations == nil {
-										user.Character.Mutations = make(map[string]int)
-									}
-									user.Character.Mutations[mutId] = 1
-									events.AddToQueue(mutations.Gained{
-										UserId:     user.UserId,
-										MutationId: mutId,
-										Rank:       1,
-										IsNew:      true,
-									})
-									spec := mutations.GetMutation(mutId)
-									if spec != nil {
-										// Emit world event for gossip system
-										sig := worldevents.Regional
-										if spec.Rarity >= 8 {
-											sig = worldevents.Global
-										}
-										zone := user.Character.Zone
-										region := ""
-										if zCfg := rooms.GetZoneConfig(zone); zCfg != nil {
-											region = zCfg.Region
-										}
-										worldevents.EmitWorldEvent(worldevents.WorldEvent{
-											Type:         worldevents.PlayerMutationMilestone,
-											Significance: sig,
-											ZoneName:     zone,
-											RegionName:   region,
-											PlayerName:   user.Character.Name,
-											Description: fmt.Sprintf("%s has undergone a mutation: %s.",
-												user.Character.Name, spec.Name),
-										})
-									}
-								}
-							}
+							actions.EarnMutation(user)
 						}
 					}
 				}

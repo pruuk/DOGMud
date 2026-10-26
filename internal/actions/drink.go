@@ -5,8 +5,10 @@ import (
 	"math/rand"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
@@ -430,6 +432,7 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 		if mutId != "" {
 			actor.SendText(messaging.CategoryWarning,
 				`Something under your skin shifts and settles differently.`)
+			emitSilentMutationGained(actor, char, mutId)
 		}
 
 		// Euphoric onset message. It follows the generic "you drink" that was
@@ -461,6 +464,7 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 		char.ScourMutations(0)
 		granted := char.GrantRandomMutationRare(phialRarityFloor)
 		if granted != "" {
+			emitSilentMutationGained(actor, char, granted)
 			if spec := mutations.GetMutation(granted); spec != nil {
 				actor.SendText(messaging.CategoryWarning, fmt.Sprintf(
 					`<ansi fg="magenta">Your flesh unwrites itself: every change the Chrysalis ever made dissolves. Then, from the stillness, something singular takes root: <ansi fg="yellow">%s</ansi>.</ansi>`, spec.Name))
@@ -472,4 +476,17 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 	}
 
 	return DrinkResult{Drank: true, ItemId: matchItem.ItemId}
+}
+
+// emitSilentMutationGained queues a Gained event for a Bloom or Phial grant
+// (#680). The drink already narrated the change, so the reveal stays quiet;
+// the event exists so the companion release runs on a gain past the ceiling.
+// A mob drinker has no user id and nothing listens for it.
+func emitSilentMutationGained(actor DrinkActor, char *characters.Character, mutId string) {
+	userId := actor.GetUserId()
+	if userId <= 0 {
+		return
+	}
+	events.AddToQueue(mutations.Gained{UserId: userId, MutationId: mutId,
+		Rank: char.Mutations[mutId], IsNew: char.Mutations[mutId] == 1, Silent: true})
 }

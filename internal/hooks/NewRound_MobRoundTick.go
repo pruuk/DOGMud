@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"strings"
 	"time"
@@ -332,9 +333,8 @@ func tickMobMutationAcquisition(mob *mobs.Mob, mb *configs.Balance) {
 	if mob.Character.MutationProgress < threshold {
 		return
 	}
-	mob.Character.MutationProgress = 0
-	// Mutation-graph drift fades on each mutation event so recent behavior dominates.
-	mutations.DecayAffinity(mob.Character.ClusterAffinity, float64(mb.MutationAffinityDecay))
+	// Progress resets, and graph drift fades, only when something was granted:
+	// a tick where nothing fits keeps its progress for the next one (#680).
 	doDeepen := false
 	if canAcquire && canDeepen {
 		if util.Rand(100) < int(mb.MutationDeepenChance*100) {
@@ -346,6 +346,7 @@ func tickMobMutationAcquisition(mob *mobs.Mob, mb *configs.Balance) {
 
 	if doDeepen {
 		if mutId := mutations.RollDeepening(mob.Character.Mutations); mutId != "" {
+			resetMobMutationProgress(mob, mb)
 			mob.Character.Mutations[mutId]++
 			newLevel := mob.Character.Mutations[mutId]
 			if spec := mutations.GetMutation(mutId); spec != nil {
@@ -378,18 +379,32 @@ func tickMobMutationAcquisition(mob *mobs.Mob, mb *configs.Balance) {
 						mob.Character.Name, spec.Name, newLevel),
 				})
 			}
+			return
 		}
-		return
+		// No owned mutation could take another rank: fall through to acquiring.
 	}
 
 	if canAcquire {
+		// The roll reads the drift as faded by this mutation event; the faded
+		// copy is kept only if something is granted.
+		decayed := maps.Clone(mob.Character.ClusterAffinity)
+		mutations.DecayAffinity(decayed, float64(mb.MutationAffinityDecay))
 		sp := species.GetSpecies(mob.Character.SpeciesId)
-		aff := mutations.EffectiveAffinity(mob.Character.Mutations, mob.Character.ClusterAffinity)
+		aff := mutations.EffectiveAffinity(mob.Character.Mutations, decayed)
 		pool := mutations.GetGraphPool(mob.Character.Mutations, aff, sp)
 		if mutId := mutations.RollAcquisition(pool); mutId != "" {
+			mob.Character.ClusterAffinity = decayed
+			mob.Character.MutationProgress = 0
 			applyAcquiredMutation(mob, mutId)
 		}
 	}
+}
+
+// resetMobMutationProgress clears a mob's mutation progress after a grant and
+// fades its mutation-graph drift so recent behavior dominates.
+func resetMobMutationProgress(mob *mobs.Mob, mb *configs.Balance) {
+	mob.Character.MutationProgress = 0
+	mutations.DecayAffinity(mob.Character.ClusterAffinity, float64(mb.MutationAffinityDecay))
 }
 
 // applyAcquiredMutation applies a newly rolled mutation to a mob:

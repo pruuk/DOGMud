@@ -81,6 +81,7 @@ type Overlays struct {
 	SetQuestTokens []string          `yaml:"set_quest_tokens,omitempty"`
 	SetQuestFlags  map[string]string `yaml:"set_quest_flags,omitempty"`
 	SetGold        *int              `yaml:"set_gold,omitempty"`
+	SetMutations   map[string]int    `yaml:"set_mutations,omitempty"`
 }
 
 // CredsFile is the run-local credential artifact (control bind).

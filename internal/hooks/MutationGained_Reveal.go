@@ -52,6 +52,8 @@ func displacedGearText(g characters.DisplacedGear) string {
 		return `Your extra arm is gone, so you take off ` + item + `.`
 	case characters.DisplacedBySpecies:
 		return `Your body has no place for ` + item + `, so you take it off.`
+	case characters.DisplacedByTwoHandedGrip:
+		return `Your weapon needs both hands again, so you let go of ` + item + `.`
 	}
 	return `Your body no longer has room for ` + item + `, so you take it off.`
 }
@@ -90,10 +92,12 @@ func DisplacedGear_Notify(e events.Event) events.ListenerReturn {
 
 // endOfRoundValidate is the round tick's closing validate for one player,
 // and the one drain point every mutation grant reaches: the round tick,
-// pinnacle tick and quest grants queue mutations.Gained, but the Bloom Wafer
-// and the Phial of Second Birth narrate their own grant and queue nothing.
-// Whatever closed a slot since the last tick, the displacement is recorded by
-// then, and the notice is queued behind any reveal already waiting.
+// pinnacle tick and quest grants queue a loud mutations.Gained, while the
+// Bloom Wafer and the Phial of Second Birth narrate their own grant and queue
+// a Silent one (#680), which no reveal and no web card answers. A scour
+// queues nothing. Whatever closed a slot since the last tick, the
+// displacement is recorded by then, and the notice is queued behind any
+// reveal already waiting.
 func endOfRoundValidate(user *users.UserRecord) {
 	if err := user.Character.Validate(); err != nil {
 		mudlog.Warn("endOfRoundValidate", "userId", user.UserId, "error", err)
@@ -114,6 +118,9 @@ func MutationGained_Reveal(e events.Event) events.ListenerReturn {
 	}
 	user := users.GetByUserId(evt.UserId)
 	if user == nil {
+		return events.Continue
+	}
+	if evt.Silent {
 		return events.Continue
 	}
 	spec := mutations.GetMutation(evt.MutationId)

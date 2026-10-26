@@ -278,6 +278,8 @@ func (c *Character) GetPoolReservation(pool string, poolMax int) int {
 		for i := range c.Companions {
 			total += c.Companions[i].ConvictionReserve
 		}
+		// The body: Titan Growth, Colossus Form and Extra Arms (#680).
+		total += c.mutationReserveWithMax(poolMax)
 	}
 
 	return total
@@ -501,6 +503,10 @@ const (
 	DisplacedByLostArm = "lost-arm"
 	// DisplacedBySpecies: the character's species has no such slot.
 	DisplacedBySpecies = "species"
+	// DisplacedByTwoHandedGrip: the pair's first hand holds a weapon that
+	// needs both hands again (Titan Growth or Colossus Form is gone, #680),
+	// so the partner hand let go of its item.
+	DisplacedByTwoHandedGrip = "two-handed-grip"
 )
 
 // DisplacedGear is one worn item pushed out of its slot into the pack (#481),
@@ -615,6 +621,24 @@ func (c *Character) validateMutationSlots() {
 			mudlog.Debug("Mutation Check", "info", "Item returned from legs slot (tail mutation)", "name", c.Equipment.Legs.Name(), "character", c.Name)
 		}
 		c.Equipment.Legs = items.ItemDisabledSlot
+	}
+
+	c.releaseTwoHandedPartners()
+}
+
+// releaseTwoHandedPartners empties the second hand of every pair whose first
+// hand holds a weapon that, for this wearer in that hand, needs both hands
+// (#680). Size can shrink under worn gear: a scour that takes Titan Growth or
+// Colossus Form makes a held two-hander need its pair again, and the partner's
+// item goes to the pack with a displaced-gear notice. Runs after the arm
+// slots above, so GetHandPairs reads the current arm count.
+func (c *Character) releaseTwoHandedPartners() {
+	for _, p := range c.GetHandPairs() {
+		if p.IsHalfPair() || p.Second.ItemPtr.ItemId < 1 || !p.First.Is2H(c) {
+			continue
+		}
+		c.displaceSlotItem(*p.Second.ItemPtr, DisplacedByTwoHandedGrip)
+		*p.Second.ItemPtr = items.Item{}
 	}
 }
 

@@ -120,8 +120,9 @@ events.RegisterListener(mutations.Gained{}, MutationGained_Reveal) // Mutation r
 
 Gear a closed slot pushed off a player (#481) is told by
 `DisplacedGear_Notify` (in `MutationGained_Reveal.go`), not by the reveal:
-the Bloom Wafer and the Phial of Second Birth grant mutations without
-queueing `mutations.Gained`. The round tick's closing `endOfRoundValidate`
+the Bloom Wafer and the Phial of Second Birth narrate their own grant and
+queue a `Silent` `mutations.Gained` that neither the reveal nor the gmcp
+`Char.Mutation` card answers (#680), and a scour queues nothing. The round tick's closing `endOfRoundValidate`
 validates each player and, when `Character.HasDisplacedGear()`, queues a
 `displacedGearNotice` at priority 50. That runs after every priority-0
 event, including the `splash.Splash` the reveal queues, so the line follows
@@ -446,7 +447,32 @@ if b.PackScalingEnabled {
 }
 ```
 
+### Body reserve release (`mutation_reserve_release.go`, #680)
+Titan Growth, Colossus Form and Extra Arms hold part of a player's Conviction
+in reserve, so a grown body can leave less room than the companions it already
+has. `releaseCompanionsOverCeiling(ch)` releases companions only to cover the
+body's GROWTH since it was last acknowledged (ruling 6, D4). The mark is the
+saved `Character.MutationReserveHeld`. If `mutations.OwnedReserveUnits` has
+not risen past it (a login re-price, a zero-unit gain, a scour), nothing is
+released and the mark follows the units down. If it has, the growth's points
+are `Character.MutationReservePoints(units) - MutationReservePoints(held)`;
+the overage beyond that increase stays grandfathered, and companion records
+are removed newest first (bonded ones never) until the Conviction overage is
+back at the grandfathered figure. The mark is then set to the units. A save
+from before the rule holds 0, so its first login treats the whole body share
+as growth. `releaseCompanionsForUser(user)`
+recalculates stats, runs it, dismisses the live mobs (charmed creatures run
+their charm's expired command, which may leave them in the room; summoned ones
+dissolve), tells the player and republishes the pool. The room line comes from
+`releaseRoomLine`: "{name} slips its bond." for a charmed creature, "{name}
+slips its bond and leaves." for one that despawns. Two callers: `MutationGained_ReleaseCompanions`, registered on
+`mutations.Gained` (every player rank gain, silent Bloom and Phial grants
+included), and `PlayerSpawn_HandleJoin`, which runs it before companions are
+spawned so only records are dropped.
+
 ### Mob Mutation Acquisition (inside per-mob loop)
+Progress resets only when a mutation is granted: a tick where `CanGain` leaves
+nothing that fits keeps its progress for the next tick (#680).
 After condition triggers and before `Validate()`:
 ```go
 // Guard: MobMutationEnabled && mob.Character.Aggro != nil

@@ -676,7 +676,8 @@ type Balance struct {
 	DiscoveryDifficultyWeightScale ConfigFloat `yaml:"DiscoveryDifficultyWeightScale"` // Per-point difficulty bias on discovery candidate choice (default 0.02)
 
 	// ── POOL RESERVATION ─────────────────────────────────────────────────────
-	PoolReservationCapPct ConfigFloat `yaml:"PoolReservationCapPct"` // Ceiling on TOTAL reservation per pool, as a fraction of that pool's max (default 0.66)
+	PoolReservationCapPct  ConfigFloat `yaml:"PoolReservationCapPct"`  // Ceiling on TOTAL reservation per pool, as a fraction of that pool's max (default 0.66)
+	MutationReserveUnitPct ConfigFloat `yaml:"MutationReserveUnitPct"` // One mutation reserve unit (#680) as a fraction of max Conviction (default 0.11)
 
 	// ── ENCHANTMENTS ─────────────────────────────────────────────────────────
 	EnchantTierUpBaseChance     ConfigFloat `yaml:"EnchantTierUpBaseChance"`     // Chance per use (once threshold met) to advance tier (default 0.02)

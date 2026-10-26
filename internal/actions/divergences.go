@@ -23,6 +23,7 @@ var userOnlyCommands = map[string]string{
 	"crime":        "admin",
 	"deafen":       "admin",
 	"devtool":      "admin",
+	"earnmutation": "admin",
 	"fact":         "admin",
 	"faction":      "admin",
 	"goal":         "admin", // admin.goal.go: inspect/seed mob goals (Phase 4)

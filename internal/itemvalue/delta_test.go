@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mutations"
 )
 
 // newTestChar returns a bare Character with no equipment and
@@ -165,6 +166,44 @@ func TestPlacementBonus_DualWieldRequiresMainHandWeapon(t *testing.T) {
 	got := placementBonus(PhysicalBruiser, spec, SlotOffhand, char)
 	if got != 0 {
 		t.Errorf("DualWieldBonus on empty hands = %f, want 0", got)
+	}
+}
+
+// #680: the dual-wield bonus reads the wearer's grip on the main hand, not the
+// weapon's spec. A Large species and a character grown Large hold a
+// two-hander in the weapon hand alone, so the offhand is free to dual wield; a
+// Medium wearer's two-hander fills it.
+func TestPlacementBonus_DualWieldReadsTheWearersGrip(t *testing.T) {
+	seedAgreementSpecies(t)
+	t.Cleanup(mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
+		"titan-growth": {MutationId: "titan-growth", Name: "Titan Growth", Rarity: 7, MaxRank: 4,
+			ReserveUnits: []int{1, 1, 1, 1},
+			Pros:         []mutations.MutationEffect{{Type: "size", Target: "large", Value: 3}}},
+	}))
+	great := items.ItemSpec{ItemId: 68020, Type: items.Weapon, Subtype: items.Slashing, Hands: items.TwoHanded}
+	sword := items.ItemSpec{Type: items.Weapon, Subtype: items.Slashing, Hands: items.OneHanded}
+	wielding := func(speciesId, titan int) *characters.Character {
+		c := newTestChar()
+		c.SpeciesId = speciesId
+		if titan > 0 {
+			c.Mutations["titan-growth"] = titan
+		}
+		c.Equipment.Weapon = items.Item{ItemId: 68020, Spec: &great}
+		return c
+	}
+
+	for _, tc := range []struct {
+		name string
+		char *characters.Character
+		want float64
+	}{
+		{"Large species", wielding(2, 0), PhysicalBruiser.DualWieldBonus},
+		{"grown Large (Titan 3)", wielding(0, 3), PhysicalBruiser.DualWieldBonus},
+		{"Medium (Titan 2)", wielding(0, 2), 0},
+	} {
+		if got := placementBonus(PhysicalBruiser, sword, SlotOffhand, tc.char); got != tc.want {
+			t.Errorf("%s: offhand sword bonus = %f, want %f", tc.name, got, tc.want)
+		}
 	}
 }
 

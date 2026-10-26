@@ -50,6 +50,11 @@ func (g *GMCPMutationModule) onMutationGained(e events.Event) events.ListenerRet
 	if !ok {
 		return events.Continue
 	}
+	// A silent grant (Bloom Wafer, Phial of Second Birth) narrates itself and
+	// queues the event only for the companion release, so no card (#680).
+	if evt.Silent {
+		return events.Continue
+	}
 	payload, ok := buildMutationPayload(evt)
 	if !ok {
 		return events.Continue

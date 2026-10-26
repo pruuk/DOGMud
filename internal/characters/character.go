@@ -307,13 +307,14 @@ type Character struct {
 	DefensesThisRound       int                            `yaml:"-"`                             // Stage 9.4: Tracks recent defenses for stance calculation. Don't store this.
 	ConsecutiveHits         int                            `yaml:"-"`                             // Stage 9.4: Consecutive successful hits for momentum. Don't store this.
 	ConsecutiveMisses       int                            `yaml:"-"`                             // Stage 9.4: Consecutive misses for momentum. Don't store this.
-	ExtraArms               int                            `yaml:"-"`                             // Derived from extra-arms mutation level (0-2). Don't store this.
+	ExtraArms               int                            `yaml:"-"`                             // Derived from extra-arms mutation level (0-4). Don't store this.
 	IsMob                   bool                           `yaml:"-"`                             // True for mob characters; used for progression caps. Don't store this.
 	MobInstanceId           int                            `yaml:"-"`                             // Non-zero for mob characters; mirrors Mob.InstanceId. Don't store this.
 	Skills                  map[string]int                 `yaml:"skills,omitempty"`              // The skills the character has, and what level they are at
 	Mutations               map[string]int                 `yaml:"mutations,omitempty"`           // mutationId → level (Stage 12.1)
 	MutationProgress        float64                        `yaml:"mutationprogress,omitempty"`    // accumulates toward next mutation (Stage 12.1)
 	MutationRerollBonus     int                            `yaml:"mutationrerollbonus,omitempty"` // post-scour charges: while >0, re-acquired mutations bias hard toward rare, one charge consumed per new mutation
+	MutationReserveHeld     int                            `yaml:"mutationreserveheld,omitempty"` // #680: mutations.OwnedReserveUnits as of the last companion-release check; the release in internal/hooks frees companions only to cover growth past this mark (ruling 6, D4). A pre-rule save loads 0, so its first login treats the whole body share as new growth; a scour just lowers it
 	Cooldowns               Cooldowns                      `yaml:"cooldowns,omitempty"`           // How many rounds until it is cooled down
 	Settings                map[string]string              `yaml:"settings,omitempty"`            // custom setting tracking, used for anything.
 	QuestProgress           map[int]string                 `yaml:"questprogress,omitempty"`       // quest progress tracking

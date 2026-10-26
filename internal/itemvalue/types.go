@@ -74,7 +74,7 @@ type WeightProfile struct {
 	// Offhand-strategy bonuses, applied symmetrically to both
 	// the candidate (at its prospective slot) and any
 	// displaced items (at their current slots).
-	DualWieldBonus float64 // Weapon placed in Offhand (CONDITIONAL on pre-swap main hand having a 1H weapon)
+	DualWieldBonus float64 // Weapon placed in Offhand (CONDITIONAL on the pre-swap main hand's weapon leaving the offhand free for this wearer)
 	ShieldBonus    float64 // Offhand-type placed in Offhand
 	TwoHandedBonus float64 // 2H Weapon candidate
 }

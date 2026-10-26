@@ -4,7 +4,6 @@ import (
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/species"
 )
 
@@ -77,24 +76,9 @@ func affinityFor(spec *MutationSpec, aff map[string]float64) float64 {
 // skip body filtering.
 func GetGraphPool(owned map[string]int, aff map[string]float64, sp *species.Species) []string {
 	rarityBonus := calcRarityBonus(owned)
-	moonBucket := gametime.CurrentMoonFlavorBucket()
 	pool := make([]string, 0, len(allMutations)*4)
 	for id, spec := range allMutations {
-		if _, has := owned[id]; has {
-			continue
-		}
-		if HasConflict(owned, id) {
-			continue
-		}
-		if !spec.CanApplyTo(sp) {
-			continue
-		}
-		if !PrereqsMet(owned, spec) {
-			continue
-		}
-		// Moon-gated flavor (Reflect Skin): only the variant matching the
-		// current moon bucket is eligible now.
-		if spec.MoonFlavor != 0 && spec.MoonFlavor != moonBucket {
+		if !CanGain(owned, id, 1, sp) {
 			continue
 		}
 		a := affinityFor(spec, aff)

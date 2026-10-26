@@ -39,7 +39,8 @@ func companionBaseReserveFor(mobId int) int {
 // to 126 each on his next login with no action from him.
 //
 // It NEVER dismisses a companion, whatever the recomputed total comes to
-// (D4 grandfathering). Reservation is refused on ADDITION only.
+// (D4 grandfathering). Reservation is refused on ADDITION only. The one
+// exception is the body's own share (#680), handled by releaseCompanionsForUser.
 //
 // Returns true if any reserve moved, so the caller knows whether to recalculate.
 func refreshCompanionReserves(ch *characters.Character) bool {
@@ -69,7 +70,9 @@ func refreshCompanionReserves(ch *characters.Character) bool {
 // NEXT login, with no action of theirs in between. Silent, that is
 // indistinguishable from a bug.
 //
-// Nothing is dismissed either way (D4). The refusal is on addition only.
+// Nothing is dismissed either way (D4). The refusal is on addition only. The
+// one exception is the body's own share (#680), handled by
+// releaseCompanionsForUser.
 func refreshCompanionReservesOnLogin(user *users.UserRecord) {
 	ch := user.Character
 	before := ch.ReservationOverages()

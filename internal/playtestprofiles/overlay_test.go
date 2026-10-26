@@ -73,3 +73,18 @@ func TestApplyOverlaysSetsQuestFlag(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "rhett", u.Character.GetQuestFlag("11-branch"))
 }
+
+func TestApplyOverlaysSetsMutations(t *testing.T) {
+	u := baseUser()
+	world := WorldChecks{MutationOK: func(id string) bool { return id == "titan-growth" || id == "extra-arms" }}
+	err := ApplyOverlays(u, 1, Overlays{SetMutations: map[string]int{"titan-growth": 3, "extra-arms": 2}}, world)
+	require.NoError(t, err)
+	require.Equal(t, 3, u.Character.Mutations["titan-growth"])
+	require.Equal(t, 2, u.Character.Mutations["extra-arms"])
+}
+
+func TestApplyOverlaysRejectsBadMutation(t *testing.T) {
+	world := WorldChecks{MutationOK: func(id string) bool { return id == "titan-growth" }}
+	require.Error(t, ApplyOverlays(baseUser(), 1, Overlays{SetMutations: map[string]int{"wings": 1}}, world))
+	require.Error(t, ApplyOverlays(baseUser(), 1, Overlays{SetMutations: map[string]int{"titan-growth": 0}}, world))
+}

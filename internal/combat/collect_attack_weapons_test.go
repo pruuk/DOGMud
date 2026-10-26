@@ -212,6 +212,33 @@ func TestCollectAttackWeapons_LargeTwoHander_OffhandStillAttacks(t *testing.T) {
 		"Medium wearer: the two-hander fills the offhand, no fist")
 }
 
+// #680: a partner hand IsBlockedBy2H calls blocked swings nothing, its weapon
+// included. A scour can shrink a grown wearer under worn gear; until the
+// validate pass moves the partner's item to the pack, combat must agree with
+// the hand rule rather than swing a hand the two-hander fills.
+func TestCollectAttackWeapons_BlockedPartnerWeaponDoesNotSwing(t *testing.T) {
+	const mediumId = 9683
+	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
+		mediumId: {SpeciesId: mediumId, Name: "human", Size: species.Medium},
+	}))
+	twoHander := func(id int) items.Item {
+		return items.Item{ItemId: id, Spec: &items.ItemSpec{
+			Type: items.Weapon, Subtype: items.Slashing, Hands: 2}}
+	}
+	c := newCharWithArms(4)
+	c.SpeciesId = mediumId
+	c.Equipment.Weapon = twoHander(30)
+	c.Equipment.Offhand = makeSword()
+	c.Equipment.ExtraArm1 = twoHander(31)
+	c.Equipment.ExtraArm2 = items.Item{ItemId: 11, Spec: &items.ItemSpec{Type: items.Weapon}}
+	c.Equipment.ExtraArm3 = twoHander(32)
+	c.Equipment.ExtraArm4 = items.Item{ItemId: 12, Spec: &items.ItemSpec{Type: items.Weapon}}
+
+	assert.True(t, c.IsBlockedBy2H("offhand"))
+	assert.Equal(t, []int{30, 31, 32}, weaponIds(collectAttackWeapons(c)),
+		"only the three two-handers swing; their blocked partners swing nothing")
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // Regression suite for the 2026-08-19 adversarial-playtest finding: a
 // character who removed both wielded Drowned Claws and wielded a Hunting

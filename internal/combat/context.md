@@ -1620,6 +1620,9 @@ Then multiplied by:
 - Main hand: sword (ItemId > 0) — added.
 - Offhand: shield (Type = Shield, NOT Weapon) — not added.
 - Extra arms (mutation): `ExtraArm1`/`ExtraArm2` added as additional weapons.
+- A pair's second hand that `Character.IsBlockedBy2H` reports filled by its
+  partner's two-hander swings nothing, neither a fist nor a weapon still
+  held there (#680: a scour can shrink a grown wearer under worn gear).
 - Result: 1 weapon (the sword). No dual-wield penalty applies.
 
 **Step 3: Per-pass loop** (3 passes for DEX 120):

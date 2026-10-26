@@ -13,7 +13,7 @@ prerequisites:
   - id: dense-muscles
     min_level: 1
   - id: titan-growth
-    min_level: 1
+    min_level: 4
 visual: A towering giant of corded muscle and heavy bone, each footfall landing with the weight of a siege engine.
 pros:
   - type: stat_multiplier
@@ -24,9 +24,13 @@ pros:
   - type: flag
     target: control-immune
     value: 1
+  - type: flag
+    target: colossal-grip
+    value: 1
   - type: aggro_magnet
     target: aggro
     value: 1.0
 cons:
   - type: dodge_modifier
     value: -18
+reserve_units: [1]

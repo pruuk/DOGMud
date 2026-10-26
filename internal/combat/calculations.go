@@ -4,11 +4,8 @@ import (
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
-	"github.com/GoMudEngine/GoMud/internal/species"
-	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // powerScoreTerms are PowerScore's components, kept apart so drift guard 2
@@ -98,72 +95,6 @@ func powerScoreParts(char characters.Character) powerScoreTerms {
 // avoidance are the fight read's shared terms (powerScoreParts).
 func PowerScore(char characters.Character) float64 {
 	return powerScoreParts(char).total()
-}
-
-func ChanceToTame(s *users.UserRecord, t *mobs.Mob) int {
-
-	var MOD_SKILL_MIN int = 1   // Minimum base tame ability
-	var MOD_SKILL_MAX int = 100 // Maximum base tame ability
-
-	var MOD_SIZE_SMALL int = 0    // Modifier for small creatures
-	var MOD_SIZE_MEDIUM int = -10 // Modifier for medium creatures
-	var MOD_SIZE_LARGE int = -25  // Modifier for large creatures
-
-	var MOD_SKILLDIFF_MIN int = -4 // Lowest skill delta modifier
-	var MOD_SKILLDIFF_MAX int = 4  // Highest skill delta modifier
-	var SKILL_SCALE int = 6        // Scale factor to preserve impact range (4*6=24, similar to old ±25)
-
-	var MOD_HEALTHPERCENT_MAX float64 = 50 // Highest possible bonus for target HP being reduced
-
-	var FACTOR_IS_AGGRO float64 = .50 // Overall reduction of chance if target is aggro
-
-	proficiencyModifier := s.Character.MobMastery.GetTame(int(t.MobId))
-
-	if proficiencyModifier < MOD_SKILL_MIN {
-		proficiencyModifier = MOD_SKILL_MIN
-	} else if proficiencyModifier > MOD_SKILL_MAX {
-		proficiencyModifier = MOD_SKILL_MAX
-	}
-
-	speciesInfo := species.GetSpecies(s.Character.SpeciesId)
-
-	sizeModifier := 0
-	switch speciesInfo.Size {
-	case species.Large:
-		sizeModifier = MOD_SIZE_LARGE
-	case species.Small:
-		sizeModifier = MOD_SIZE_SMALL
-	case species.Medium:
-	default:
-		sizeModifier = MOD_SIZE_MEDIUM
-	}
-
-	// Taming is now handled via spellcasting; use spellcasting skill vs mob combat skill
-	tamerSkill := s.Character.GetSkillLevel(skills.Spellcasting)
-	mobSkill := t.Character.GetCombatSkillLevel()
-	skillDiff := tamerSkill - mobSkill
-	if skillDiff > MOD_SKILLDIFF_MAX {
-		skillDiff = MOD_SKILLDIFF_MAX
-	} else if skillDiff < MOD_SKILLDIFF_MIN {
-		skillDiff = MOD_SKILLDIFF_MIN
-	}
-	scaledSkillDiff := skillDiff * SKILL_SCALE
-
-	// Percentage-of-max read, so it measures the pool the tamer can actually
-	// reach (U7 Task 11). Against the raw max a reserved tamer never reaches the
-	// full-health end of this scale even at a full pool.
-	healthPoolMax := s.Character.EffectivePoolMax(characters.PoolHealth)
-	healthModifier := 0.0
-	if healthPoolMax > 0 {
-		healthModifier = MOD_HEALTHPERCENT_MAX - math.Ceil(float64(s.Character.Health)/float64(healthPoolMax)*MOD_HEALTHPERCENT_MAX)
-	}
-
-	var aggroModifier float64 = 1
-	if t.Character.IsAggro(s.UserId, 0) {
-		aggroModifier = FACTOR_IS_AGGRO
-	}
-
-	return int(math.Ceil((float64(proficiencyModifier) + float64(scaledSkillDiff) + healthModifier + float64(sizeModifier)) * aggroModifier))
 }
 
 // ChanceToSwitchTarget calculates the percentage chance (0-100) that a character

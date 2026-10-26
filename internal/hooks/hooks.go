@@ -33,6 +33,8 @@ func RegisterListeners() {
 
 	// Mutation reveal (terminal ceremony/flourish; web card via gmcp module)
 	events.RegisterListener(mutations.Gained{}, MutationGained_Reveal)
+	// #680: a gained rank of a reserving mutation may crowd out companions.
+	events.RegisterListener(mutations.Gained{}, MutationGained_ReleaseCompanions)
 	// Gear a closed slot pushed into the pack (#481); queued by the round
 	// tick's endOfRoundValidate, after any reveal.
 	events.RegisterListener(displacedGearNotice{}, DisplacedGear_Notify)

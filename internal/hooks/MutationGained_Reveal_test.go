@@ -174,10 +174,11 @@ func TestDisplacedGear_ToldOnAGrantWithNoGainedEvent(t *testing.T) {
 // Each cause has its own wording.
 func TestDisplacedGearText_NamesTheCause(t *testing.T) {
 	cases := map[string]string{
-		characters.DisplacedByDisabledLegs: "Your new tail leaves no room for",
-		characters.DisplacedByLostTail:     "Your tail is gone",
-		characters.DisplacedByLostArm:      "Your extra arm is gone",
-		characters.DisplacedBySpecies:      "Your body has no place for",
+		characters.DisplacedByDisabledLegs:  "Your new tail leaves no room for",
+		characters.DisplacedByLostTail:      "Your tail is gone",
+		characters.DisplacedByLostArm:       "Your extra arm is gone",
+		characters.DisplacedBySpecies:       "Your body has no place for",
+		characters.DisplacedByTwoHandedGrip: "Your weapon needs both hands again",
 	}
 	for reason, want := range cases {
 		got := displacedGearText(characters.DisplacedGear{ItemName: "Iron Greaves", Reason: reason})
