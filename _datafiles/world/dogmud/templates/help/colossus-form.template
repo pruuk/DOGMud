@@ -5,15 +5,18 @@ with the weight of a falling wall.
 
 <ansi fg="yellow">Type:</ansi>     Transformation (apex)
 <ansi fg="yellow">Rarity:</ansi>   Apex
-<ansi fg="yellow">Requires:</ansi> Dense Muscles and Titan Growth
+<ansi fg="yellow">Requires:</ansi> Dense Muscles and the fullest Titan Growth
 
 <ansi fg="yellow">Benefits:</ansi>
   Tremendous strength, vastly deepened reserves of health, you cannot
   be knocked down or grappled, and your looming bulk draws enemies to
   attack you first
+  Every hand you have can wield a two-handed weapon alone
 
 <ansi fg="yellow">Drawbacks:</ansi>
   A target this size is easy to hit — you lose much of your ability to
   dodge
+  Your growing body holds part of your conviction in reserve, leaving
+  less for companions
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help mutations</ansi>

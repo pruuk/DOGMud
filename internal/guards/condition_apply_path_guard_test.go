@@ -233,7 +233,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// through it. Re-keyed when the room lines moved to
 	// SendTextVisualHidingNames and their comment grew, and again when the
 	// bare-drink prompt went in above the busy check (2026-10-17) ─────────────
-	"internal/actions/drink.go|362": "potion at its item magnitude scaled by potency, player or mob: the EVENT door (DrinkActor.AddConditionMagnitude reaches users.UserRecord / mobs.Mob AddConditionMagnitude, both queue events.Condition); listed only because arity cannot tell it from the silent character door",
+	"internal/actions/drink.go|364": "potion at its item magnitude scaled by potency, player or mob: the EVENT door (DrinkActor.AddConditionMagnitude reaches users.UserRecord / mobs.Mob AddConditionMagnitude, both queue events.Condition); listed only because arity cannot tell it from the silent character door",
 
 	// ── the DrinkActor doors (drink path unification): a.User is a
 	// *users.UserRecord and a.Mob is a *mobs.Mob, whose AddConditionMagnitude

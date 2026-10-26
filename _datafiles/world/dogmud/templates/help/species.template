@@ -13,7 +13,8 @@ Species are affected by Size:
     <ansi fg="yellow">Small</ansi>  - 1-Handed weapons require 2 hands. 2-Handed weapons cannot be used.
     <ansi fg="yellow">Medium</ansi> - Can use 1-Handed weapons with a shield, and sometimes dual-wield.
     <ansi fg="yellow">Large</ansi>  - 2-Handed weapons require 1 hand. Can sometimes dual-wield 2-Handed
-             weapons.
+             weapons. A body grown large by mutation grips one only in the
+             weapon hand, until Colossus Form.
 
 Here is some useful species detail:
 

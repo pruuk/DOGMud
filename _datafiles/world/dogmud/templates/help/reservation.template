@@ -62,6 +62,16 @@ longer words, so you can match one to the other without doing any sums:
   <ansi fg="red-bold">near limit</ansi>        nearly all you can set aside
   <ansi fg="red-bold">at limit</ansi>          all you can set aside
 
+<ansi fg="yellow">━━━ Your Body ━━━</ansi>
+
+Some changes to your body hold part of your conviction too. Titan
+Growth, Extra Arms and Colossus Form each set some aside for as long
+as you keep them. A deeply grown body leaves less room for companions,
+and if it grows past what your bonds leave room for, your newest
+companion is sent away to make space.
+
+Nothing you put down frees what the body holds.
+
 <ansi fg="yellow">━━━ Making Room ━━━</ansi>
 
 Remove a draining item, disenchant something you wear, or dismiss a

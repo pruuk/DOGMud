@@ -307,7 +307,7 @@ type Character struct {
 	DefensesThisRound       int                            `yaml:"-"`                             // Stage 9.4: Tracks recent defenses for stance calculation. Don't store this.
 	ConsecutiveHits         int                            `yaml:"-"`                             // Stage 9.4: Consecutive successful hits for momentum. Don't store this.
 	ConsecutiveMisses       int                            `yaml:"-"`                             // Stage 9.4: Consecutive misses for momentum. Don't store this.
-	ExtraArms               int                            `yaml:"-"`                             // Derived from extra-arms mutation level (0-2). Don't store this.
+	ExtraArms               int                            `yaml:"-"`                             // Derived from extra-arms mutation level (0-4). Don't store this.
 	IsMob                   bool                           `yaml:"-"`                             // True for mob characters; used for progression caps. Don't store this.
 	MobInstanceId           int                            `yaml:"-"`                             // Non-zero for mob characters; mirrors Mob.InstanceId. Don't store this.
 	Skills                  map[string]int                 `yaml:"skills,omitempty"`              // The skills the character has, and what level they are at

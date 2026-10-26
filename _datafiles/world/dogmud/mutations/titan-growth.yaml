@@ -13,6 +13,11 @@ visual: They loom a full head taller than they should, shoulders blotting out th
 pros:
   - type: health_multiplier
     value: 0.20
+  - type: size
+    target: large
+    value: 3
 cons:
   - type: dodge_modifier
     value: -15
+max_rank: 4  # explicit: the Go default MutationMaxLevel is 3, config.yaml ships 4
+reserve_units: [1, 1, 1, 1]
