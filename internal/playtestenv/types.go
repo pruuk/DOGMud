@@ -117,6 +117,7 @@ type ProfileOverlays struct {
 	SetQuestTokens []string          `yaml:"set_quest_tokens,omitempty" json:"set_quest_tokens,omitempty"`
 	SetQuestFlags  map[string]string `yaml:"set_quest_flags,omitempty" json:"set_quest_flags,omitempty"`
 	SetGold        *int              `yaml:"set_gold,omitempty" json:"set_gold,omitempty"`
+	SetMutations   map[string]int    `yaml:"set_mutations,omitempty" json:"set_mutations,omitempty"`
 }
 
 // GitEntry is one path/status record from a machine-readable Git status line.

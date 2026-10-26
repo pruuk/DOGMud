@@ -43,6 +43,7 @@ type Overlays struct {
     SetQuestTokens []string          `yaml:"set_quest_tokens,omitempty"`
     SetQuestFlags  map[string]string `yaml:"set_quest_flags,omitempty"`
     SetGold        *int              `yaml:"set_gold,omitempty"`
+    SetMutations   map[string]int    `yaml:"set_mutations,omitempty"` // id -> rank, written as given (#680)
 }
 ```
 
@@ -57,7 +58,7 @@ func LoadTemplate(profilesDir, profileID string) (*users.UserRecord, error)
 func SanitizeTemplate(profileID string, u *users.UserRecord) error
 
 func ApplyOverlays(u *users.UserRecord, startRoom int, o Overlays, world WorldChecks) error
-func DefaultWorldChecks() WorldChecks
+func DefaultWorldChecks() WorldChecks // WorldChecks.MutationOK validates set_mutations ids
 
 // Usernames: pt_<profile>_<suffix> (underscores; hyphens fail NameRejectRegex)
 func GenerateCredentials(u *users.UserRecord, profileID string) (username, password string, err error)

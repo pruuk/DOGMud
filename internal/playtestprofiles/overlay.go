@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -16,6 +17,7 @@ type WorldChecks struct {
 	SpellOK    func(spellID string) bool
 	ItemOK     func(itemID int) bool
 	FlagOK     func(key, value string) error
+	MutationOK func(id string) bool
 }
 
 // DefaultWorldChecks uses the live rooms/spells/items/quest-flag registries.
@@ -31,6 +33,9 @@ func DefaultWorldChecks() WorldChecks {
 			return items.GetItemSpec(itemID) != nil
 		},
 		FlagOK: quests.ValidateFlag,
+		MutationOK: func(id string) bool {
+			return mutations.GetMutation(id) != nil
+		},
 	}
 }
 
@@ -46,6 +51,28 @@ func ApplyOverlays(u *users.UserRecord, startRoom int, o Overlays, world WorldCh
 		return fmt.Errorf("playtestprofiles: start_room %d does not exist", startRoom)
 	}
 	u.Character.RoomId = startRoom
+
+	// set_mutations is an authored set (#680): ranks are written as given,
+	// with no prerequisite or budget check, so a seat can start exactly at
+	// the edge a playtest needs. It runs first so extra-arm slots exist
+	// before equip runs.
+	for id, rank := range o.SetMutations {
+		if rank < 1 {
+			return fmt.Errorf("playtestprofiles: set_mutations %q rank must be >= 1", id)
+		}
+		if world.MutationOK != nil && !world.MutationOK(id) {
+			return fmt.Errorf("playtestprofiles: unknown mutation %q", id)
+		}
+		if u.Character.Mutations == nil {
+			u.Character.Mutations = map[string]int{}
+		}
+		u.Character.Mutations[id] = rank
+	}
+	if len(o.SetMutations) > 0 {
+		if err := u.Character.Validate(); err != nil {
+			return fmt.Errorf("playtestprofiles: validate after set_mutations: %w", err)
+		}
+	}
 
 	if u.Character.SpellBook == nil {
 		u.Character.SpellBook = map[string]int{}
