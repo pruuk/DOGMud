@@ -131,6 +131,20 @@ func TestUnitDecreaseLowersHeld(t *testing.T) {
 	assert.Equal(t, 1, ch.MutationReserveHeld)
 }
 
+// A charmed wild creature may stay in the room after its bond slips (an empty
+// ExpiredCommand), so its room line must not say it leaves. A summoned,
+// raised or conjured companion despawns, so its line does.
+func TestReleaseRoomLineMatchesWhatTheMobDoes(t *testing.T) {
+	charmed := releaseRoomLine(characters.CompanionInfo{Name: "a grey wolf", SourceType: characters.CompanionCharmed})
+	assert.Contains(t, charmed, "a grey wolf")
+	assert.Contains(t, charmed, "slips its bond.")
+	assert.NotContains(t, charmed, "leaves")
+
+	crafted := releaseRoomLine(characters.CompanionInfo{Name: "a bone servant", SourceType: characters.CompanionSummoned})
+	assert.Contains(t, crafted, "a bone servant")
+	assert.Contains(t, crafted, "slips its bond and leaves.")
+}
+
 func TestBondedCompanionsAreNeverReleased(t *testing.T) {
 	seedTitan(t)
 	ch := characters.New()

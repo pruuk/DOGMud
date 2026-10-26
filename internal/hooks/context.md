@@ -461,9 +461,11 @@ are removed newest first (bonded ones never) until the Conviction overage is
 back at the grandfathered figure. The mark is then set to the units. A save
 from before the rule holds 0, so its first login treats the whole body share
 as growth. `releaseCompanionsForUser(user)`
-recalculates stats, runs it, dismisses the live mobs (charmed creatures leave
-peacefully, summoned ones dissolve), tells the player and republishes the
-pool. Two callers: `MutationGained_ReleaseCompanions`, registered on
+recalculates stats, runs it, dismisses the live mobs (charmed creatures run
+their charm's expired command, which may leave them in the room; summoned ones
+dissolve), tells the player and republishes the pool. The room line comes from
+`releaseRoomLine`: "{name} slips its bond." for a charmed creature, "{name}
+slips its bond and leaves." for one that despawns. Two callers: `MutationGained_ReleaseCompanions`, registered on
 `mutations.Gained` (every player rank gain, silent Bloom and Phial grants
 included), and `PlayerSpawn_HandleJoin`, which runs it before companions are
 spawned so only records are dropped.

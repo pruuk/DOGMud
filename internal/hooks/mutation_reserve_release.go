@@ -91,8 +91,7 @@ func releaseCompanionsForUser(user *users.UserRecord) {
 			mob.Character.RemoveCharm()
 		}
 		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
-				`<ansi fg="mobname">%s</ansi> slips its bond and leaves.`, comp.Name), user.UserId)
+			room.SendTextVisual(messaging.CategoryMobEmote, releaseRoomLine(comp), user.UserId)
 		}
 		if comp.SourceType == characters.CompanionCharmed {
 			runCharmExpiredCommand(mob, cmd)
@@ -102,6 +101,17 @@ func releaseCompanionsForUser(user *users.UserRecord) {
 	}
 	user.Character.RecalculateStats()
 	events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
+}
+
+// releaseRoomLine is what the room sees when a companion is released. A
+// charmed wild creature runs its ExpiredCommand, which may be empty and leave
+// it standing in the room, so its line does not say it leaves. A summoned,
+// raised or conjured companion despawns, so its line does.
+func releaseRoomLine(comp characters.CompanionInfo) string {
+	if comp.SourceType == characters.CompanionCharmed {
+		return fmt.Sprintf(`<ansi fg="mobname">%s</ansi> slips its bond.`, comp.Name)
+	}
+	return fmt.Sprintf(`<ansi fg="mobname">%s</ansi> slips its bond and leaves.`, comp.Name)
 }
 
 // MutationGained_ReleaseCompanions runs the release after every player rank
