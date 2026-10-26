@@ -39,9 +39,14 @@ steps:
       deepest back-chamber, the flagstone floor has cracked and heaved over
       something. Search it out. Once it is uncovered, you can look at the disc
       to study it.
+    # The search lesson (#375 phase 3a, owner ruling 9): search the one thing
+    # that looks disturbed, or the whole room at worse odds. One command is
+    # typed; the whole-room search is named but not asked for. At 199
+    # characters this sits just under the loop's 200 cap (HintMaxRunes).
     hint: >-
-      From the Old Shrine, go west into the Collapsed Nave and north into the
-      Reliquary, then type search floor.
+      Go west into the Collapsed Nave, then north into the Reliquary. To
+      search the cracked floor, type search floor. Search alone searches the
+      whole room, slower and less sure. For more, type help search.
   - id: find
     map_target: 5341
     description: >-

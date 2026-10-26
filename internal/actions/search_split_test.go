@@ -283,6 +283,33 @@ func TestSearch_PlainSearchRollsQuestFeatures(t *testing.T) {
 			t.Fatalf("result %+v rolls %v", result, log.difficulties)
 		}
 	})
+	// #375 phase 3a, Task 10: the quest's own text answers a feature search
+	// of its spot (the caller raises the trigger after the search), so the
+	// search must not first say it found nothing. Another feature, or the
+	// same feature with no quest spot, still says it.
+	t.Run("a feature search of a quest spot leaves the answer to the quest", func(t *testing.T) {
+		say := func(name string, uid int, feature string, spots []string) bool {
+			room := newSearchTestRoom(9700 + uid%100)
+			room.Nouns = map[string]string{"hearth": "A hearth.", "altar": "An altar."}
+			room.HiddenNouns = map[string]rooms.HiddenNoun{
+				"ash key": {Description: "A key.", HiddenDescription: "A key lies in the ash.", On: "hearth"},
+			}
+			actor := newSearchFakeActor(name, room, true, uid)
+			stubBaubleSearch(t, false, actor)
+			pinSearchRoll(t, false)
+			Search(actor, SearchOptions{Feature: feature, QuestFeatures: spots})
+			return searchSaid(actor, "You find nothing of interest.")
+		}
+		if say("Quester4", 7741, "hearth", []string{"hearth"}) {
+			t.Fatal("a feature search of a quest spot must not say it found nothing")
+		}
+		if !say("Quester5", 7742, "hearth", nil) {
+			t.Fatal("probe: the same failed search with no quest spot says it found nothing")
+		}
+		if !say("Quester6", 7743, "altar", []string{"hearth"}) {
+			t.Fatal("a feature search of another feature still says it found nothing")
+		}
+	})
 }
 
 // "You find nothing of interest." is the same words whether nothing is there

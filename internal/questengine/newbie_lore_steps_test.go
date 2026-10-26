@@ -1,11 +1,32 @@
 package questengine
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	yaml "gopkg.in/yaml.v3"
 )
+
+// topicHints is the lowercased hint of one topic in a Pothole Coulee
+// dialogue file.
+func topicHints(t *testing.T, file, key string) string {
+	t.Helper()
+	tp := loadCouleeTopics(t, file).FindTopic(key)
+	require.NotNil(t, tp, "%s has no topic %s", file, key)
+	return strings.ToLower(tp.Hints)
+}
+
+// roomDescription is a shipped room's description.
+func roomDescription(t *testing.T, zoneFolder string, roomId int) string {
+	t.Helper()
+	var room struct {
+		Description string `yaml:"description"`
+	}
+	require.NoError(t, yaml.Unmarshal(repoFile(t, "_datafiles", "world", "dogmud", "rooms", zoneFolder, fmt.Sprintf("%d.yaml", roomId)), &room))
+	return room.Description
+}
 
 // The Lore spoke (Pothole Coulee quests 47, 48, 49 and the repeatable 58),
 // walked through the real YAML under the owner ruling of 2026-10-17: one
@@ -134,6 +155,22 @@ func TestQuest49OldShrine_OneCommandPerStep(t *testing.T) {
 	require.Contains(t, start, "type search")
 	require.NotContains(t, start, "look at", "looking at the find is not a step; it belongs in the description")
 	require.NotContains(t, start, "go up", "the Reliquary is west then north of the shrine, not up")
+	// The search lesson (#375 phase 3a, owner ruling 9): search the one
+	// thing that looks disturbed, or the whole room, slower and less sure.
+	// Only the first is typed; the second is named, not asked for.
+	require.Contains(t, start, "type search floor")
+	require.Contains(t, start, "whole room")
+	require.Contains(t, start, "less sure")
+	require.Contains(t, start, "type help search", "the lesson points at its help page")
+	offer := topicHints(t, "9160.yaml", "shrine_offer")
+	require.Contains(t, offer, "type search floor", "Sere's offer teaches the same two routes")
+	require.Contains(t, offer, "whole room")
+
+	t.Run("the Reliquary hints at the floor and never instructs", func(t *testing.T) {
+		desc := strings.ToLower(roomDescription(t, "pothole_coulee", 5343))
+		require.Contains(t, desc, "flagstone floor")
+		require.NotContains(t, desc, "search", "a room hints at its secret; the step hint teaches the command (ruling 7)")
+	})
 
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")

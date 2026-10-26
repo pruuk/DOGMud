@@ -236,6 +236,74 @@ func TestQuest28_LookLessonIsAHighlightedNoun(t *testing.T) {
 	require.True(t, found, "the look lesson listens for look guide")
 }
 
+// TestQuest28_LookLessonRewardsACloseLook (#375 phase 3a, owner ruling 9):
+// after the guide lesson Dewey shows one new command, look stone, and a
+// look-family room_interact on the threshold stone rewards it with the names
+// cut into it. The stone is named in the description (so it shows
+// highlighted) and its noun text hints at the find (ruling 7). Before the
+// guide lesson a look at the stone stays an ordinary look, so the bare-look
+// lesson still counts it; once the player has walked on, it fires no more.
+func TestQuest28_LookLessonRewardsACloseLook(t *testing.T) {
+	var room struct {
+		Description string            `yaml:"description"`
+		Nouns       map[string]string `yaml:"nouns"`
+	}
+	require.NoError(t, yaml.Unmarshal(repoFile(t, "_datafiles", "world", "dogmud", "rooms", "newcomer_antechamber", "6258.yaml"), &room))
+	require.Contains(t, room.Nouns, "stone")
+	require.Regexp(t, `\bstone\b`, room.Description, "the description must show the noun the lesson points at")
+	require.Contains(t, room.Nouns["stone"], "lines", "the stone's look text hints at what a close look finds")
+
+	const showLook = `Type <ansi fg="command">look stone</ansi>.`
+	q := loadQuest28(t)
+	guideLines := 0
+	for _, tr := range q.Triggers {
+		if tr.Event != "command_issued" || tr.Noun != "guide" {
+			continue
+		}
+		for _, a := range tr.Actions {
+			if a.NpcSay == nil {
+				continue
+			}
+			last := a.NpcSay.Lines[len(a.NpcSay.Lines)-1].Text
+			guideLines++
+			require.True(t, strings.HasSuffix(last, showLook), "the guide lesson ends on the one new command: %q", last)
+			require.Equal(t, 1, strings.Count(strings.ToLower(last), "type "), "one command per line: %q", last)
+		}
+	}
+	require.Equal(t, 2, guideLines, "both guide-lesson triggers carry the line")
+
+	lookStone := EventDetails{UserId: 1, RoomId: 6258, Verb: "look", Noun: "stone", RoomNoun: "stone"}
+
+	t.Run("before the guide lesson it is an ordinary look", func(t *testing.T) {
+		e, p, ctx := newQuest28Walk(t, "hinted", 6258)
+		require.False(t, e.Notify("room_interact", lookStone, p, ctx).Handled)
+		e.Notify("command_issued", EventDetails{UserId: 1, RoomId: 6258, Command: "look", Noun: "stone", RoomNoun: "stone"}, p, ctx)
+		require.Equal(t, "looked", p.step(), "the bare-look lesson still counts a look at the stone")
+	})
+
+	t.Run("after it the stone shows the names and Dewey sends the player on", func(t *testing.T) {
+		e, p, ctx := newQuest28Walk(t, "examined", 6258)
+		require.True(t, e.Notify("room_interact", lookStone, p, ctx).Handled)
+		require.Equal(t, "examined", p.step(), "the reward is not a step")
+		require.Len(t, ctx.sentTexts, 1)
+		require.Contains(t, ctx.sentTexts[0], "names")
+		require.Contains(t, ctx.sentTexts[0], "Dewey")
+		require.Len(t, ctx.npcSays, 1)
+		lines := ctx.npcSays[0].Lines
+		require.True(t, strings.HasSuffix(strings.ToLower(lines[len(lines)-1].Text), "type north."),
+			"the walk north is still the step, so it comes last")
+
+		search := lookStone
+		search.Verb = "search"
+		require.False(t, e.Notify("room_interact", search, p, ctx).Handled, "a look, not a search, finds the names")
+	})
+
+	t.Run("once the player walked on it fires no more", func(t *testing.T) {
+		e, p, ctx := newQuest28Walk(t, "status_prompt", 6259)
+		require.False(t, e.Notify("room_interact", lookStone, p, ctx).Handled)
+	})
+}
+
 // TestNpcCommand_WhisperAddressesThePlayer: a whispered line becomes the mob
 // whisper command aimed at the triggering player by id.
 func TestNpcCommand_WhisperAddressesThePlayer(t *testing.T) {

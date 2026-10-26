@@ -215,8 +215,10 @@ triggers:
           lines:
             - {delay: 0, text: "That's the whole trick of this world. The
                 ones who read what is in front of them live longest. Any
-                word shown in a different color is worth a look. The exits
-                line shows the ways out. To walk north, type north."}
+                word shown in a different color is worth a look, and a close
+                look often shows you more than the room did. Try the stone
+                under your feet. Type <ansi fg=\"command\">look
+                stone</ansi>."}
 
   - event: command_issued
     command: look
@@ -231,8 +233,10 @@ triggers:
           lines:
             - {delay: 0, text: "That's the whole trick of this world. The
                 ones who read what is in front of them live longest. Any
-                word shown in a different color is worth a look. The exits
-                line shows the ways out. To walk north, type north."}
+                word shown in a different color is worth a look, and a close
+                look often shows you more than the room did. Try the stone
+                under your feet. Type <ansi fg=\"command\">look
+                stone</ansi>."}
 
   # Last: it matches look guide too, and would grant what the trigger
   # above requires in the same command.
@@ -249,6 +253,35 @@ triggers:
             - {delay: 0, text: "Good. See the words shown in a different
                 color? Those are things you can look at more closely. Try
                 one. Type look guide."}
+
+  # The look lesson's reward (#375 phase 3a, owner ruling 9): a close look
+  # at the threshold stone finds the names of everyone who woke here, Dewey's
+  # among the oldest. A look-family room_interact, so look, l, examine, exam
+  # and read all reach it; its text replaces the stone's noun text, which
+  # hints at the find (ruling 7). Only after the guide lesson: a handled
+  # room_interact skips command_issued, so an earlier `look stone` must stay
+  # an ordinary look that the bare-look lesson above can count. Not a step:
+  # the walk north is still the step, so Dewey's line ends with it.
+  - event: room_interact
+    room: 6258
+    noun: stone
+    conditions:
+      has: [28-examined]
+      missing: [28-status_prompt]
+    actions:
+      - actor: >-
+          You crouch for a closer look at the threshold-stone. Its surface is
+          polished to a shine, hollowed at the center by every soul who ever
+          woke here and stepped through. The fine lines around its edge are
+          names, hundreds of them, small and neat, no two written alike. Near
+          the center, worn almost smooth, one of the oldest still reads Dewey.
+      - npc_say:
+          mob: 9491
+          lines:
+            - {delay: 1, text: "You found the names. Mine is one of the
+                oldest. Look closely like that out in the world, and you
+                will find things other people walk past. The exits line
+                shows the ways out. To walk north, type north."}
 
   # ── 6259 Knowing Yourself: status, skills, spells, cast glow, north ──
   - event: room_enter

@@ -74,6 +74,27 @@ triggers:
           line. You do not understand it. You are fairly certain no one
           here does. You put it away.
       - observer: "{actor} works something free of the cracked floor and pockets it."
+  # Maren's letter (item 40041), for any player, on or off this quest: the
+  # loose stone by the hearth hides it. Moved here from the room's behaviour
+  # tree, which answered push, move, pull, shift and press (#375 phase 3a,
+  # owner ruling 5: look and search are the only interaction verbs). Being a
+  # `verb: search` trigger, `search stone` runs the search (and its cooldown)
+  # first, and a plain search can find it at the room difficulty. Carrying
+  # the letter, the stone holds nothing more, and the search says so. Story
+  # first, so a full pack hears what is there before the refusal.
+  - event: room_interact
+    verb: search
+    room: 4023
+    noun: stone
+    conditions:
+      missing_item: 40041
+    actions:
+      - actor: >-
+          You work the loose stone free of its neighbors. It grinds aside and
+          shows a small cavity in the wall behind it. Inside, a folded letter
+          rests against the smooth stone, hidden on purpose, waiting for
+          someone to look.
+      - give_item: 40041
   - event: room_interact
     room: 4023
     noun: journal

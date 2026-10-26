@@ -305,11 +305,28 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 	// made a fruitless-but-resolved search pay ProgressionFailureFraction, and
 	// that award is INVISIBLE here on purpose. Progression must not leak level
 	// design.
-	if actor.IsPlayer() && !result.FoundAnything() {
+	//
+	// One exception: `search <feature>` on a quest search spot whose trigger
+	// will fire. The caller raises that trigger right after this returns, and
+	// its text says what the player found, so "nothing" first would contradict
+	// it (the Reliquary floor, #375 phase 3a). It is no oracle: the quest's
+	// own text follows in the same command either way.
+	if actor.IsPlayer() && !result.FoundAnything() && !(hasFeature && isQuestSpot(feature.Name, opts.QuestFeatures)) {
 		actor.SendText(messaging.CategorySystem, "You find nothing of interest.\n")
 	}
 
 	return result
+}
+
+// isQuestSpot reports whether a feature is one of the quest search spots
+// the caller passed (the features whose `verb: search` trigger would fire).
+func isQuestSpot(feature string, spots []string) bool {
+	for _, spot := range spots {
+		if strings.EqualFold(strings.TrimSpace(spot), feature) {
+			return true
+		}
+	}
+	return false
 }
 
 // revealSpotted ends the hiding of everything a PLAYER's search found, for

@@ -66,10 +66,12 @@ topics:
   text: 'Then I will send you where I cannot go on my own account. The Reliquary is
     the deepest chamber of the shrine: west into the nave from here, then north. Its
     flagstone floor has cracked and lifted over something that has wanted lifting
-    a long time. Search the floor with your hands and bring out what is under it.
-    Look on it well. Then come and tell me what you saw.'
-  hints: Go west into the Collapsed Nave and north into the Reliquary, then type
-    search floor.
+    a long time. Search the floor where it has lifted, and bring out what is
+    under it. You could search the whole chamber instead, but that is slower,
+    and less sure. Look on it well. Then come and tell me what you saw.'
+  hints: Go west into the Collapsed Nave, then north into the Reliquary. To
+    search the cracked floor, type search floor. Search alone searches the
+    whole room, slower and less sure.
   questRequired:
   - 48-end
   questExcluded:
