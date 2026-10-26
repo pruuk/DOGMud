@@ -651,7 +651,7 @@ import (
 func seedGrowthMutations(t *testing.T) {
 	t.Helper()
 	t.Cleanup(mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
-		"titan-growth": {MutationId: "titan-growth", Name: "Titan Growth", Rarity: 7,
+		"titan-growth": {MutationId: "titan-growth", Name: "Titan Growth", Rarity: 7, MaxRank: 4,
 			Clusters: []string{"colossus"}, ReserveUnits: []int{1, 1, 1, 1},
 			Pros: []mutations.MutationEffect{{Type: "size", Target: "large", Value: 3}}},
 		"colossus-form": {MutationId: "colossus-form", Name: "Colossus Form", Rarity: 9, MaxRank: 1,
@@ -1252,7 +1252,7 @@ import (
 func seedEarnMutations(t *testing.T) {
 	t.Helper()
 	t.Cleanup(mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
-		"titan-growth": {MutationId: "titan-growth", Name: "Titan Growth", Rarity: 7,
+		"titan-growth": {MutationId: "titan-growth", Name: "Titan Growth", Rarity: 7, MaxRank: 4,
 			Clusters: []string{"colossus"}, ReserveUnits: []int{1, 1, 1, 1}},
 		"extra-arms": {MutationId: "extra-arms", Name: "Extra Arms", Rarity: 8, MaxRank: 4,
 			Clusters: []string{"colossus"}, ReserveUnits: []int{1, 1, 1, 2}},
@@ -1410,7 +1410,7 @@ import (
 func seedTitan(t *testing.T) {
 	t.Helper()
 	t.Cleanup(mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
-		"titan-growth": {MutationId: "titan-growth", Name: "Titan Growth", Rarity: 7,
+		"titan-growth": {MutationId: "titan-growth", Name: "Titan Growth", Rarity: 7, MaxRank: 4,
 			ReserveUnits: []int{1, 1, 1, 1}},
 		"extra-arms": {MutationId: "extra-arms", Name: "Extra Arms", Rarity: 8, MaxRank: 4,
 			ReserveUnits: []int{1, 1, 1, 2}},
@@ -1704,8 +1704,13 @@ Expected: FAIL, the three mutations "must declare reserve_units".
 and at the end of the file:
 
 ```yaml
+max_rank: 4  # explicit: the Go default MutationMaxLevel is 3, config.yaml ships 4
 reserve_units: [1, 1, 1, 1]
 ```
+
+(Without the explicit `max_rank`, tests and guards, which run on Go
+defaults, would read Titan Growth's max as 3 and the reserve_units length
+guard would fail against a list of four.)
 
 - [ ] **Step 4: `extra-arms.yaml`**: set `max_rank: 4` and drop the "binary (no deepen)" comment; replace `description:` and `visual:`:
 
