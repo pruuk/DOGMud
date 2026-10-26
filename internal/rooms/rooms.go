@@ -1524,6 +1524,13 @@ func (r *Room) GetExitInfo(exitName string) (exitInfo exit.RoomExit, ok bool) {
 }
 
 func (r *Room) GetRandomExit() (exitName string, roomId int) {
+	return r.GetRandomExitWhere(nil)
+}
+
+// GetRandomExitWhere is GetRandomExit restricted to the exits keep accepts
+// (nil keeps every one). Secret and locked exits are excluded before keep is
+// asked. Flee passes the fleeing player's quest gate check (#588).
+func (r *Room) GetRandomExitWhere(keep func(exitName string, roomId int) bool) (exitName string, roomId int) {
 
 	allExits := map[string]int{}
 
@@ -1548,6 +1555,14 @@ func (r *Room) GetRandomExit() (exitName string, roomId int) {
 				continue
 			}
 			allExits[exitName] = exit.RoomId
+		}
+	}
+
+	if keep != nil {
+		for exitName, roomId := range allExits {
+			if !keep(exitName, roomId) {
+				delete(allExits, exitName)
+			}
 		}
 	}
 
