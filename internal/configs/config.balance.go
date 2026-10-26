@@ -445,6 +445,11 @@ type Balance struct {
 	// counted every step (see movementTrainsSearch in usercommands/go.go).
 	// Zero or negative switches travel-training off entirely.
 	MovementSearchTrainChance ConfigFloat `yaml:"MovementSearchTrainChance"` // Chance a successful move records a search use (default 0.005, i.e. 1 in 200)
+	// #375 phase 3a (owner, 2026-10-26): `search <feature>` searches only that
+	// feature, so the hidden nouns tucked into it are easier to find there than
+	// by plain `search`, which works through the whole room at worse odds.
+	SearchRoomHiddenDifficulty    ConfigFloat `yaml:"SearchRoomHiddenDifficulty"`    // Difficulty plain `search` rolls against for each hidden noun and quest search feature (default 175)
+	SearchFeatureHiddenDifficulty ConfigFloat `yaml:"SearchFeatureHiddenDifficulty"` // Difficulty `search <feature>` rolls against for each hidden noun tucked into that feature (default 125)
 	// U7 Task 7 deleted UnarmedAttackStaminaCost. It was the fallback arm of a
 	// per-round, per-weapon attack charge that no longer exists; attacking is
 	// priced per swing by AttackBaseStaminaCost above, armed or not. The key may

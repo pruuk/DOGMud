@@ -1216,8 +1216,8 @@ see the searcher. A mob's find ends nothing (slice F).
 
 **Progression:** No stat/skill use triggered.
 
-**Cooldown:** Shares the `search` key (configurable duration, typically
-  2 rounds).
+**Cooldown:** Claims the shared special-move cooldown (`ClaimSpecialMove`,
+  `Balance.SpecialMoveCooldown`), players and mobs alike (#375 phase 3a).
 
 **Baubles (`search_bauble.go`, docs/baubles Phases 3, 4 and 5b).** After every
 contested tier, a PLAYER's search takes a bauble roll (`baubles.RollFind`): a

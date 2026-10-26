@@ -7,8 +7,10 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
@@ -91,7 +93,18 @@ type SearchOptions struct {
 	// `search under the table`). Empty searches the whole room. Only players
 	// search features; a mob's search ignores it. See search_feature.go.
 	Feature string
+
+	// QuestFeatures are the room's quest search spots a plain search may
+	// uncover: the features of `verb: search` room_interact triggers that
+	// would fire for this player now (the caller asks the quest engine). A
+	// plain search rolls each at SearchRoomHiddenDifficulty; a feature
+	// search ignores them (its trigger fires with no roll).
+	QuestFeatures []string
 }
+
+// searchRoll is the static-difficulty roll every non-opposed search tier
+// makes. A variable so tests can pin the dice and read the difficulty.
+var searchRoll = contest.AgainstDifficulty
 
 // SearchStashedItem represents a stashed item discovered by Tier 2.
 type SearchStashedItem struct {
@@ -107,6 +120,7 @@ type SearchResult struct {
 	HiddenPlayersFound    []int    // Tier 2 — user ids
 	HiddenMobsFound       []int    // Tier 2 — mob instance ids
 	HiddenNounsFound      []string // Tier 3 — player flavor
+	QuestFeaturesFound    []string // Tier 3: quest search spots a plain search uncovered (the caller raises room_interact)
 	BaubleFound           bool     // Tier 4: a bauble is on its way to the player (see search_bauble.go)
 
 	// Feature is the room's name for what `search <feature>` searched;
@@ -114,7 +128,7 @@ type SearchResult struct {
 	// feature (the search is then a plain one, as `search <anything>`
 	// always was). FeatureSearched is the feature's bauble roll already
 	// spent this BaubleFeatureWindowMinutes (the room's roll was taken
-	// instead). A feature search is ALWAYS the whole room search as well.
+	// instead). A feature search searches only that feature (#375 phase 3a).
 	Feature         string
 	FeatureNotFound bool
 	FeatureSearched bool
@@ -147,13 +161,15 @@ func (r SearchResult) foundByContest() bool {
 		len(r.StashedItemsFound) > 0 ||
 		len(r.HiddenPlayersFound) > 0 ||
 		len(r.HiddenMobsFound) > 0 ||
-		len(r.HiddenNounsFound) > 0
+		len(r.HiddenNounsFound) > 0 ||
+		len(r.QuestFeaturesFound) > 0
 }
 
-// Search rolls Perception+Search per discovery candidate in the room.
+// Search rolls Perception+Search per discovery candidate in the room, or,
+// for `search <feature>`, per secret tucked into that feature.
 // UserActor receives template-rendered output; MobActor is silent
-// (no broadcast, no template). Cooldown is shared with the player path
-// (2 rounds on the "search" key).
+// (no broadcast, no template). Players and mobs both claim the shared
+// special-move cooldown (ClaimSpecialMove).
 func Search(actor Actor, opts SearchOptions) SearchResult {
 	result := SearchResult{}
 	char := actor.GetCharacter()
@@ -162,10 +178,10 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		return result
 	}
 
-	// `search <feature>` is this whole search, every tier as always (quests
-	// hide their items behind `search shelf` and the like), plus one thing:
-	// the bauble roll is that feature's own (search_feature.go). Words that
-	// name no feature are a plain search, as `search <anything>` always was.
+	// `search <feature>` searches only that feature: the hidden nouns tucked
+	// into it, plus the feature's own bauble roll (search_feature.go). Words
+	// that name no feature are a plain search, as `search <anything>` always
+	// was.
 	//
 	// A searcher who makes out nothing at all here (lighting plan 5c, the
 	// same test `look` refuses on) cannot pick a feature out either: what
@@ -185,10 +201,14 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		}
 	}
 
-	if !char.TryCooldown("search", "2 rounds") {
+	// Both searches claim the shared special-move cooldown, players and mobs
+	// alike (owner, 2026-10-26: a deliberate tradeoff against bash, trip,
+	// kick and spells). Nothing past this point aborts, so the claim is never
+	// released: every search that gets here runs.
+	if !ClaimSpecialMove(char) {
 		result.OnCooldown = true
 		if actor.IsPlayer() {
-			refusal.Cooldown(actor, "search again")
+			refusal.Cooldown(actor, "search")
 		}
 		return result
 	}
@@ -197,6 +217,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 	// the static AgainstDifficulty tiers; the hidden-occupant tiers go through
 	// spotsHider, whose CalcDetectionScore pays the ramp itself.
 	searchScore := CalcSearchScore(char) * messaging.SightMult(char, room)
+	balance := configs.GetBalanceConfig()
 
 	if actor.IsPlayer() {
 		if hasFeature {
@@ -217,182 +238,15 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		}
 	}
 
-	rolledAgainstSomething := false
-
-	// ── Tier 1 (target 125): Secret exits ────────────────────────
-	for exitName, exitInfo := range room.Exits {
-		if !exitInfo.Secret {
-			continue
-		}
-		// 🔴 A FOUND SECRET EXIT IS NOT ROLLED AGAIN. Until 2026-08-29 this tier
-		// set rolledAgainstSomething for every secret exit in the room and never
-		// skipped one already found, because secret exits recorded no discovery
-		// at all — hidden containers below and hidden nouns in tier 6 both guard
-		// with HasDiscovery and record on a find. A room with a secret exit was
-		// therefore a PERMANENT progression candidate on a 2-round cooldown,
-		// roughly 450 uses an hour, against the ~150/hr that `search`'s own
-		// multiplier was solved on (the assumption is written into config.yaml
-		// and skills.go).
-		//
-		// ⚠️ It is still REPORTED, which is where this deliberately differs from
-		// the container and noun tiers that `continue` outright. A found
-		// container is reachable afterwards through `get`, but a secret exit
-		// stays out of the room's exit list until the player VISITS the room
-		// beyond it (roomdetails.go gates on HasVisited, not on a discovery). So
-		// skipping it silently would leave someone who found it and did not walk
-		// through with no way to be reminded of the name. Reporting costs
-		// nothing they have not already earned; the roll and the award are what
-		// close the farm.
-		if char.HasDiscovery(room.RoomId, secretExitDiscoveryKey(exitName)) {
-			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
-			continue
-		}
-		rolledAgainstSomething = true
-		if contest.AgainstDifficulty(searchScore, 125.0).Success {
-			char.AddDiscovery(room.RoomId, secretExitDiscoveryKey(exitName))
-			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
-			if actor.IsPlayer() {
-				actor.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`You found a secret exit: <ansi fg="secret-exit">%s</ansi>`, exitName))
-			}
-		}
-	}
-
-	// ── Tier 1 (target 125): Hidden containers ──────────────────
-	for containerName, container := range room.Containers {
-		if !container.Hidden {
-			continue
-		}
-		if char.HasDiscovery(room.RoomId, containerName) {
-			continue
-		}
-		rolledAgainstSomething = true
-		if contest.AgainstDifficulty(searchScore, 125.0).Success {
-			char.AddDiscovery(room.RoomId, containerName)
-			result.HiddenContainersFound = append(result.HiddenContainersFound, containerName)
-			if actor.IsPlayer() {
-				actor.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`You discover a hidden <ansi fg="container">%s</ansi>!`, containerName))
-			}
-		}
-	}
-
-	// ── Tier 2 (target 135): Stashed items ──────────────────────
-	stashedNames := []string{}
-	for _, item := range room.Stash {
-		if !item.IsValid() {
-			room.RemoveItem(item, true)
-			continue
-		}
-		rolledAgainstSomething = true
-		if contest.AgainstDifficulty(searchScore, 135.0).Success {
-			result.StashedItemsFound = append(result.StashedItemsFound, SearchStashedItem{
-				ItemId:      item.ItemId,
-				DisplayName: item.DisplayName(),
-			})
-			if actor.IsPlayer() {
-				stashedNames = append(stashedNames, item.DisplayName()+` <ansi fg="item-stashed">(stashed)</ansi>`)
-			}
-		}
-	}
-	if actor.IsPlayer() && len(stashedNames) > 0 {
-		actor.SendText(messaging.CategorySystem,
-			RenderGround(stashedNames, !room.IsLit(), gametime.IsNight(), actor.GetUserId()))
-	}
-
-	// U10b-1b PHASE C: hidden detection is an OPPOSED contest, reconciled onto
-	// the form usercommands/go.go already used.
-	//
-	// It answered "does the observer spot the hider?" with a flat 135 threshold
-	// that NEVER READ THE HIDER'S SNEAK SCORE, while go.go resolved the identical
-	// question as observerScore vs hiddenScore. A hider's skill decided the
-	// outcome in one path and was ignored in the other. Mobs reached the broken
-	// path too, via behaviortree/actions_scout.go's actTrySearch, gated by the
-	// cheap condRoomHasHiddenEntity pre-check in conditions_scout.go.
-	//
-	// ⚠️ THIS IS THE SLICE'S ONE DELIBERATE BEHAVIOUR CHANGE. Investing in
-	// stealth now works against a searcher, where before it did nothing at all.
-	// U4 declined it precisely because converting a flat threshold into a contest
-	// is a behaviour change and U1-U5 are contracted as provable no-ops.
-	//
-	// It uses combat.RunContest, NOT contest.AgainstDifficulty: there is a real
-	// opponent, so it belongs on the opposed seam and takes ContestFloor like
-	// every other opposed contest. The four static tiers in this file are the
-	// other kind and stay on AgainstDifficulty.
-
-	// The room's light is invariant across every hidden occupant checked
-	// below, so it is composed once here rather than inside spotsHider on
-	// every iteration.
-	roomLight := messaging.FixedLight(room.LightLevel())
-
-	// ── Tier 2 (target 135): Hidden players ─────────────────────
-	hiddenPlayerNames := []string{}
-	for _, pId := range room.GetPlayers() {
-		if pId == actor.GetUserId() {
-			continue
-		}
-		p := users.GetByUserId(pId)
-		if p == nil || !p.Character.IsHidden() {
-			continue
-		}
-		rolledAgainstSomething = true
-		if spotsHider(char, p.Character, roomLight) {
-			result.HiddenPlayersFound = append(result.HiddenPlayersFound, pId)
-			if actor.IsPlayer() {
-				hiddenPlayerNames = append(hiddenPlayerNames, p.Character.Name)
-			}
-		}
-	}
-	if actor.IsPlayer() && len(hiddenPlayerNames) > 0 {
-		showFoundHiders(actor, room, hiddenPlayerNames, "username")
-	}
-
-	// ── Tier 2 (target 135): Hidden mobs ────────────────────────
-	hiddenMobNames := []string{}
-	for _, mId := range room.GetMobs() {
-		m := mobs.GetInstance(mId)
-		if m == nil || !m.Character.IsHidden() {
-			continue
-		}
-		rolledAgainstSomething = true
-		if spotsHider(char, &m.Character, roomLight) {
-			result.HiddenMobsFound = append(result.HiddenMobsFound, mId)
-			if actor.IsPlayer() {
-				hiddenMobNames = append(hiddenMobNames, m.Character.Name)
-			}
-		}
-	}
-	if actor.IsPlayer() && len(hiddenMobNames) > 0 {
-		showFoundHiders(actor, room, hiddenMobNames, "mob")
-	}
-
-	// Owner ruling 10 (follow-up slice A): a player's find ends the hider's
-	// hiding for everyone, as walking in and spotting them already does.
-	revealSpotted(actor, result, room)
-
-	// ── Tier 3 (target 175): Hidden nouns ───────────────────────
-	// Sort keys for deterministic output order.
-	nounKeys := make([]string, 0, len(room.HiddenNouns))
-	for k := range room.HiddenNouns {
-		nounKeys = append(nounKeys, k)
-	}
-	sort.Strings(nounKeys)
-
-	for _, nounKey := range nounKeys {
-		if char.HasDiscovery(room.RoomId, nounKey) {
-			continue
-		}
-		hiddenNoun := room.HiddenNouns[nounKey]
-		rolledAgainstSomething = true
-		if contest.AgainstDifficulty(searchScore, 175.0).Success {
-			char.AddDiscovery(room.RoomId, nounKey)
-			result.HiddenNounsFound = append(result.HiddenNounsFound, nounKey)
-			if actor.IsPlayer() {
-				actor.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`You discover something: <ansi fg="noun">%s</ansi>`, nounKey))
-				actor.SendText(messaging.CategorySystem, hiddenNoun.HiddenDescription)
-			}
-		}
+	// A feature search searches only that feature; a plain search the whole
+	// room at worse odds (owner, 2026-10-26; see search_feature.go).
+	var rolledAgainstSomething bool
+	if hasFeature {
+		rolledAgainstSomething = searchFeatureSecrets(actor, room, feature, searchScore,
+			float64(balance.SearchFeatureHiddenDifficulty), &result)
+	} else {
+		rolledAgainstSomething = searchWholeRoom(actor, room, opts, searchScore,
+			float64(balance.SearchRoomHiddenDifficulty), &result)
 	}
 
 	// ── Tier 4 (no contest): Baubles ────────────────────────────
@@ -518,7 +372,7 @@ func endHidingOnSpot(searcher string, searcherIsPlayer bool, hider *characters.C
 //   - A bauble roll that found nothing pays NOTHING, and never makes a room a
 //     progression candidate on its own: every room offers bauble rolls, and
 //     letting a roll count would turn every room into the secret-exit farm
-//     described in the Tier 1 comment above.
+//     described in searchWholeRoom's Tier 1 comment.
 //
 // Still one award per search, however many tiers found things.
 func awardSearch(actor Actor, char *characters.Character, result SearchResult, rolledAgainstSomething bool) {
@@ -526,4 +380,278 @@ func awardSearch(actor Actor, char *characters.Character, result SearchResult, r
 		return
 	}
 	actor.AwardResolved(result.FoundAnything(), char.CandidateFor(string(skills.Search)))
+}
+
+// searchWholeRoom is a plain search: every tier of the room, hidden nouns and
+// quest search spots at hiddenDifficulty (SearchRoomHiddenDifficulty). It
+// reports whether any contest was rolled (the progression gate).
+func searchWholeRoom(actor Actor, room *rooms.Room, opts SearchOptions, searchScore, hiddenDifficulty float64, result *SearchResult) bool {
+	char := actor.GetCharacter()
+	rolledAgainstSomething := false
+
+	// ── Tier 1 (target 125): Secret exits ────────────────────────
+	for exitName, exitInfo := range room.Exits {
+		if !exitInfo.Secret {
+			continue
+		}
+		// 🔴 A FOUND SECRET EXIT IS NOT ROLLED AGAIN. Until 2026-08-29 this tier
+		// set rolledAgainstSomething for every secret exit in the room and never
+		// skipped one already found, because secret exits recorded no discovery
+		// at all — hidden containers below and hidden nouns in tier 6 both guard
+		// with HasDiscovery and record on a find. A room with a secret exit was
+		// therefore a PERMANENT progression candidate on what was then a
+		// 2-round cooldown (search has claimed the shared special-move cooldown
+		// since #375 phase 3a), roughly 450 uses an hour, against the ~150/hr
+		// that `search`'s own multiplier was solved on at the time.
+		//
+		// ⚠️ It is still REPORTED, which is where this deliberately differs from
+		// the container and noun tiers that `continue` outright. A found
+		// container is reachable afterwards through `get`, but a secret exit
+		// stays out of the room's exit list until the player VISITS the room
+		// beyond it (roomdetails.go gates on HasVisited, not on a discovery). So
+		// skipping it silently would leave someone who found it and did not walk
+		// through with no way to be reminded of the name. Reporting costs
+		// nothing they have not already earned; the roll and the award are what
+		// close the farm.
+		if char.HasDiscovery(room.RoomId, secretExitDiscoveryKey(exitName)) {
+			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
+			continue
+		}
+		rolledAgainstSomething = true
+		if searchRoll(searchScore, 125.0).Success {
+			char.AddDiscovery(room.RoomId, secretExitDiscoveryKey(exitName))
+			result.HiddenExitsFound = append(result.HiddenExitsFound, exitName)
+			if actor.IsPlayer() {
+				actor.SendText(messaging.CategorySystem,
+					fmt.Sprintf(`You found a secret exit: <ansi fg="secret-exit">%s</ansi>`, exitName))
+			}
+		}
+	}
+
+	// ── Tier 1 (target 125): Hidden containers ──────────────────
+	for containerName, container := range room.Containers {
+		if !container.Hidden {
+			continue
+		}
+		if char.HasDiscovery(room.RoomId, containerName) {
+			continue
+		}
+		rolledAgainstSomething = true
+		if searchRoll(searchScore, 125.0).Success {
+			char.AddDiscovery(room.RoomId, containerName)
+			result.HiddenContainersFound = append(result.HiddenContainersFound, containerName)
+			if actor.IsPlayer() {
+				actor.SendText(messaging.CategorySystem,
+					fmt.Sprintf(`You discover a hidden <ansi fg="container">%s</ansi>!`, containerName))
+			}
+		}
+	}
+
+	// ── Tier 2 (target 135): Stashed items ──────────────────────
+	stashedNames := []string{}
+	for _, item := range room.Stash {
+		if !item.IsValid() {
+			room.RemoveItem(item, true)
+			continue
+		}
+		rolledAgainstSomething = true
+		if searchRoll(searchScore, 135.0).Success {
+			result.StashedItemsFound = append(result.StashedItemsFound, SearchStashedItem{
+				ItemId:      item.ItemId,
+				DisplayName: item.DisplayName(),
+			})
+			if actor.IsPlayer() {
+				stashedNames = append(stashedNames, item.DisplayName()+` <ansi fg="item-stashed">(stashed)</ansi>`)
+			}
+		}
+	}
+	if actor.IsPlayer() && len(stashedNames) > 0 {
+		actor.SendText(messaging.CategorySystem,
+			RenderGround(stashedNames, !room.IsLit(), gametime.IsNight(), actor.GetUserId()))
+	}
+
+	// U10b-1b PHASE C: hidden detection is an OPPOSED contest, reconciled onto
+	// the form usercommands/go.go already used.
+	//
+	// It answered "does the observer spot the hider?" with a flat 135 threshold
+	// that NEVER READ THE HIDER'S SNEAK SCORE, while go.go resolved the identical
+	// question as observerScore vs hiddenScore. A hider's skill decided the
+	// outcome in one path and was ignored in the other. Mobs reached the broken
+	// path too, via behaviortree/actions_scout.go's actTrySearch, gated by the
+	// cheap condRoomHasHiddenEntity pre-check in conditions_scout.go.
+	//
+	// ⚠️ THIS IS THE SLICE'S ONE DELIBERATE BEHAVIOUR CHANGE. Investing in
+	// stealth now works against a searcher, where before it did nothing at all.
+	// U4 declined it precisely because converting a flat threshold into a contest
+	// is a behaviour change and U1-U5 are contracted as provable no-ops.
+	//
+	// It uses combat.RunContest, NOT contest.AgainstDifficulty: there is a real
+	// opponent, so it belongs on the opposed seam and takes ContestFloor like
+	// every other opposed contest. The four static tiers in this file are the
+	// other kind and stay on AgainstDifficulty.
+
+	// The room's light is invariant across every hidden occupant checked
+	// below, so it is composed once here rather than inside spotsHider on
+	// every iteration.
+	roomLight := messaging.FixedLight(room.LightLevel())
+
+	// ── Tier 2 (target 135): Hidden players ─────────────────────
+	hiddenPlayerNames := []string{}
+	for _, pId := range room.GetPlayers() {
+		if pId == actor.GetUserId() {
+			continue
+		}
+		p := users.GetByUserId(pId)
+		if p == nil || !p.Character.IsHidden() {
+			continue
+		}
+		rolledAgainstSomething = true
+		if spotsHider(char, p.Character, roomLight) {
+			result.HiddenPlayersFound = append(result.HiddenPlayersFound, pId)
+			if actor.IsPlayer() {
+				hiddenPlayerNames = append(hiddenPlayerNames, p.Character.Name)
+			}
+		}
+	}
+	if actor.IsPlayer() && len(hiddenPlayerNames) > 0 {
+		showFoundHiders(actor, room, hiddenPlayerNames, "username")
+	}
+
+	// ── Tier 2 (target 135): Hidden mobs ────────────────────────
+	hiddenMobNames := []string{}
+	for _, mId := range room.GetMobs() {
+		m := mobs.GetInstance(mId)
+		if m == nil || !m.Character.IsHidden() {
+			continue
+		}
+		rolledAgainstSomething = true
+		if spotsHider(char, &m.Character, roomLight) {
+			result.HiddenMobsFound = append(result.HiddenMobsFound, mId)
+			if actor.IsPlayer() {
+				hiddenMobNames = append(hiddenMobNames, m.Character.Name)
+			}
+		}
+	}
+	if actor.IsPlayer() && len(hiddenMobNames) > 0 {
+		showFoundHiders(actor, room, hiddenMobNames, "mob")
+	}
+
+	// Owner ruling 10 (follow-up slice A): a player's find ends the hider's
+	// hiding for everyone, as walking in and spotting them already does.
+	revealSpotted(actor, *result, room)
+
+	// ── Tier 3 (SearchRoomHiddenDifficulty): Hidden nouns ───────
+	// A hidden noun tucked into another hidden noun (a chain) waits until the
+	// searcher has found that one: the thorough line names where a find was
+	// tucked, and must not name a secret not yet found. Which ones are
+	// reachable is fixed before any roll, so a find in this search does not
+	// open the next step of its chain in the same search.
+	nounKeys := sortedHiddenNouns(room)
+	reachable := make(map[string]bool, len(nounKeys))
+	for _, nounKey := range nounKeys {
+		reachable[nounKey] = tuckedIntoSomethingKnown(char, room, room.HiddenNouns[nounKey])
+	}
+	for _, nounKey := range nounKeys {
+		if char.HasDiscovery(room.RoomId, nounKey) || !reachable[nounKey] {
+			continue
+		}
+		hiddenNoun := room.HiddenNouns[nounKey]
+		rolledAgainstSomething = true
+		if searchRoll(searchScore, hiddenDifficulty).Success {
+			char.AddDiscovery(room.RoomId, nounKey)
+			result.HiddenNounsFound = append(result.HiddenNounsFound, nounKey)
+			if actor.IsPlayer() {
+				actor.SendText(messaging.CategorySystem, thoroughFindLine(strings.TrimSpace(hiddenNoun.On), nounKey))
+				actor.SendText(messaging.CategorySystem, hiddenNoun.HiddenDescription)
+			}
+		}
+	}
+
+	// ── Tier 3 (SearchRoomHiddenDifficulty): Quest search spots ─
+	// Players only: the caller passes the spots whose `verb: search` trigger
+	// would fire for this player now, and raises room_interact for each one
+	// found. A spot stops being offered once its step is done, so it is no
+	// lasting progression candidate.
+	if actor.IsPlayer() {
+		for _, spot := range opts.QuestFeatures {
+			rolledAgainstSomething = true
+			if searchRoll(searchScore, hiddenDifficulty).Success {
+				result.QuestFeaturesFound = append(result.QuestFeaturesFound, spot)
+				actor.SendText(messaging.CategorySystem, thoroughSpotLine(spot))
+			}
+		}
+	}
+	return rolledAgainstSomething
+}
+
+// searchFeatureSecrets is `search <feature>`: it rolls only the undiscovered
+// hidden nouns tucked into that feature (their On names it), at
+// hiddenDifficulty (SearchFeatureHiddenDifficulty). It reports whether any
+// contest was rolled.
+func searchFeatureSecrets(actor Actor, room *rooms.Room, feature SearchFeature, searchScore, hiddenDifficulty float64, result *SearchResult) bool {
+	char := actor.GetCharacter()
+	rolled := false
+	for _, nounKey := range sortedHiddenNouns(room) {
+		hiddenNoun := room.HiddenNouns[nounKey]
+		if !strings.EqualFold(strings.TrimSpace(hiddenNoun.On), feature.Name) || char.HasDiscovery(room.RoomId, nounKey) {
+			continue
+		}
+		rolled = true
+		if searchRoll(searchScore, hiddenDifficulty).Success {
+			char.AddDiscovery(room.RoomId, nounKey)
+			result.HiddenNounsFound = append(result.HiddenNounsFound, nounKey)
+			actor.SendText(messaging.CategorySystem,
+				fmt.Sprintf(`You discover something: <ansi fg="noun">%s</ansi>`, nounKey))
+			actor.SendText(messaging.CategorySystem, hiddenNoun.HiddenDescription)
+		}
+	}
+	return rolled
+}
+
+// sortedHiddenNouns lists the room's hidden noun keys in a fixed order, so
+// rolls and output are deterministic.
+func sortedHiddenNouns(room *rooms.Room) []string {
+	keys := make([]string, 0, len(room.HiddenNouns))
+	for k := range room.HiddenNouns {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// tuckedIntoSomethingKnown reports whether a plain search may find this
+// hidden noun: always, unless its On names another hidden noun of the room
+// that the searcher has not found yet.
+func tuckedIntoSomethingKnown(char *characters.Character, room *rooms.Room, hn rooms.HiddenNoun) bool {
+	on := strings.TrimSpace(hn.On)
+	if on == `` {
+		return true
+	}
+	for key := range room.HiddenNouns {
+		if strings.EqualFold(key, on) {
+			return char.HasDiscovery(room.RoomId, key)
+		}
+	}
+	return true
+}
+
+// thoroughSearchLead opens every line a plain search uses to announce a
+// secret, so a find reads as the fruit of working through the whole room.
+const thoroughSearchLead = `You work through the room inch by inch.`
+
+// thoroughFindLine announces a hidden noun a plain search found, naming the
+// thing it was tucked into when it has one.
+func thoroughFindLine(on, noun string) string {
+	found := items.ArticlePrefix(noun) + `<ansi fg="noun">` + noun + `</ansi>`
+	if on == `` {
+		return thoroughSearchLead + ` You find ` + found + `.`
+	}
+	return thoroughSearchLead + ` Tucked into the <ansi fg="noun">` + on + `</ansi>, you find ` + found + `.`
+}
+
+// thoroughSpotLine announces a quest search spot a plain search found. The
+// quest's own text, which follows, says what is there.
+func thoroughSpotLine(spot string) string {
+	return strings.TrimSuffix(thoroughSearchLead, `.`) +
+		`, and your search leads you to the <ansi fg="noun">` + spot + `</ansi>.`
 }

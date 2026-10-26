@@ -46,6 +46,13 @@ func (b *Balance) validateMisc() {
 	if b.MovementSearchTrainChance > 1.0 {
 		b.MovementSearchTrainChance = 1.0
 	}
+	// #375 phase 3a: search difficulties. config.yaml ships the same values.
+	if b.SearchRoomHiddenDifficulty <= 0 {
+		b.SearchRoomHiddenDifficulty = 175
+	}
+	if b.SearchFeatureHiddenDifficulty <= 0 {
+		b.SearchFeatureHiddenDifficulty = 125
+	}
 	// U7 Task 7 deleted UnarmedAttackStaminaCost's default with the field. The
 	// attack charge is per swing now and lives in validateCombat with the rest of
 	// the U7 cost knobs.

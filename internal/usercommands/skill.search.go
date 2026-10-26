@@ -23,7 +23,10 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	actor := &actions.UserActor{User: user, Room: room}
 	// A search refused for cooldown never ran, so it sends no quest event: a
 	// quest step advances only when the action succeeds (owner, 2026-10-17).
-	result := actions.Search(actor, actions.SearchOptions{Feature: rest})
+	result := actions.Search(actor, actions.SearchOptions{
+		Feature:       rest,
+		QuestFeatures: questSearchSpots(user, room),
+	})
 	if result.OnCooldown {
 		return true, nil
 	}
@@ -32,9 +35,13 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// room_interact after the search has run, so a `verb: search` trigger on
 	// that feature fires with no roll. Only a resolved feature counts (a room
 	// noun, a discovered hidden noun or a visible container, as the search
-	// itself resolved it). Plain search's quest rolls are Task 7's.
+	// itself resolved it). A plain search raises it for each quest search
+	// spot it uncovered at the room difficulty.
 	if result.Feature != `` {
 		notifyRoomInteract(user, room, quests.VerbSearch, rest, result.Feature)
+	}
+	for _, spot := range result.QuestFeaturesFound {
+		notifyRoomInteract(user, room, quests.VerbSearch, spot, spot)
 	}
 
 	// Quest engine: command notification — lets a quest gate a step on the
@@ -50,4 +57,28 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}, bridge, bridge)
 
 	return true, nil
+}
+
+// questSearchSpots lists the room's quest search spots (the features of its
+// `verb: search` room_interact triggers, matched on the template room) whose
+// trigger would fire for this player now. Only these are rolled by a plain
+// search: a spot of a quest the player is not on, or a step already done,
+// is never rolled, so the thorough-search line cannot hint at it.
+func questSearchSpots(user *users.UserRecord, room *rooms.Room) []string {
+	matchRoom, _ := rooms.OriginalRoomId(room.RoomId)
+	engine := questengine.GetEngine()
+	var spots []string
+	for _, spot := range engine.SearchFeatures(matchRoom) {
+		bridge := questengine.NewGameBridge(user, room.RoomId)
+		if engine.WouldFire("room_interact", questengine.EventDetails{
+			UserId:   user.UserId,
+			RoomId:   matchRoom,
+			Verb:     quests.VerbSearch,
+			Noun:     spot,
+			RoomNoun: spot,
+		}, bridge) {
+			spots = append(spots, spot)
+		}
+	}
+	return spots
 }

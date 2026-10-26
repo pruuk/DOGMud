@@ -1338,6 +1338,14 @@ Balance:
   #   skill lagging behind. Set to 0 for the default; set NEGATIVE to disable
   #   the training entirely.
   MovementSearchTrainChance: 0.005
+  # SearchRoomHiddenDifficulty / SearchFeatureHiddenDifficulty: how hard a
+  #   hidden noun is to find. `search <feature>` searches only that feature and
+  #   rolls each hidden noun tucked into it against the feature difficulty.
+  #   Plain `search` works through the whole room and rolls each hidden noun
+  #   (and each quest search spot) against the room difficulty: the same
+  #   secret, at worse odds. Higher is harder.
+  SearchRoomHiddenDifficulty: 175
+  SearchFeatureHiddenDifficulty: 125
   #
   # AttackBaseStaminaCost: what ONE swing costs before multipliers, armed or
   #   unarmed alike. It replaces UnarmedAttackStaminaCost (retired at 4), which
