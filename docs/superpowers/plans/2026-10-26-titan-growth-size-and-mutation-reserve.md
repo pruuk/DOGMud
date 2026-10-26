@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Titan Growth 3 makes a character Large (two-hander in the weapon hand; every hand with Colossus Form), and Titan Growth, Colossus Form and Extra Arms reserve Conviction in units under one eligibility rule for every mutation grant.
+**Goal:** Titan Growth 3 makes a character Large (two-hander in the weapon hand; every hand with Colossus Form), and Titan Growth, Colossus Form and Extra Arms reserve Conviction in units under one eligibility rule for every mutation grant. Playtest tooling (a `mutate earn` admin command and a `set_mutations` profile overlay) lets an adversarial playtest force each edge before merge.
 
 **Architecture:** `mutations` gains reserve units, a derived unit budget, a `size` effect and one `CanGain` filter that every pool and deepening pick uses. `characters` gains one size reader (`Size()`), a slot-aware `HandsRequiredAt`, and the body as a reservation source. `hooks` releases companions newest first when a gained rank passes the ceiling, on a `mutations.Gained` listener and at login.
 
@@ -1198,22 +1198,7 @@ and delete the `maxLevel` local. The loop already walks from the strongest down,
 
 Remove imports this leaves unused (`gametime`, `configs`).
 
-- [ ] **Step 5: Player tick.** In `NewRound_UserRoundTick.go` inside `if user.Character.MutationProgress >= threshold {` (F22):
-  1. Delete `user.Character.MutationProgress = 0` and the `mutations.DecayAffinity(...)` line from the top of the block.
-  2. Declare `granted := false` before `doDeepen`.
-  3. In the deepen branch, set `granted = true` inside `if mutId != "" {`.
-  4. Change `} else if canAcquire {` to `}` followed by `if !granted && canAcquire {` so a deepening that found nothing falls to acquiring, and set `granted = true` inside `if len(pool) > 0 {` after the rank is written.
-  5. After the acquire block, add:
-
-```go
-							// Progress is spent only on a grant. When nothing
-							// fits (#680) it carries to the next event.
-							if granted {
-								user.Character.MutationProgress = 0
-								// Mutation-graph drift fades on each mutation event so recent behavior dominates.
-								mutations.DecayAffinity(user.Character.ClusterAffinity, float64(mb.MutationAffinityDecay))
-							}
-```
+- [ ] **Step 5: Player tick:** Task 7 moves it into `actions.EarnMutation`; leave it for now.
 
 - [ ] **Step 6: Mob tick.** Same shape in `NewRound_MobRoundTick.go` (F23): remove the early `mob.Character.MutationProgress = 0` and `DecayAffinity`; track `granted`; after a deepen that returns `""`, fall through to the acquire block instead of `return`; reset progress and decay affinity only when `granted`. Keep the existing `return` after a successful deepen.
 
@@ -1225,9 +1210,9 @@ Expected: PASS.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add internal/characters/bloom_mutation.go internal/characters/bloom_mutation_reserve_test.go internal/hooks/NewRound_UserRoundTick.go internal/hooks/NewRound_MobRoundTick.go
+git add internal/characters/bloom_mutation.go internal/characters/bloom_mutation_reserve_test.go internal/hooks/NewRound_MobRoundTick.go
 git commit -F - <<'EOF'
-feat(mutations): grant sites keep progress when nothing fits; Bloom honours CanGain (#680)
+feat(mutations): mob tick keeps progress when nothing fits; Bloom honours CanGain (#680)
 
 Closes the Bloom half of #259: Bloom no longer deepens past max_rank.
 
@@ -1237,7 +1222,167 @@ EOF
 
 ---
 
-### Task 7: Companions released newest first when a gain passes the ceiling
+### Task 7: One earned-mutation event, `actions.EarnMutation`
+
+The player tick's grant block moves into one function that the tick and the
+`mutate earn` admin command (Tasks 10-12) both call, so a playtest forces the
+exact code a fight runs. `hooks` and `usercommands` both already import
+`actions`, and `actions` already imports `users`, `mutations`, `events` and
+`species`; `worldevents` imports only `configs`, `mudlog` and `util`, so
+`actions` can import it without a cycle.
+
+**Files:**
+- Create: `internal/actions/mutation_earn.go`
+- Modify: `internal/hooks/NewRound_UserRoundTick.go:440-510` (F22)
+- Test: `internal/actions/mutation_earn_test.go`
+
+- [ ] **Step 1: Write the failing tests**
+
+```go
+package actions
+
+import (
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/stretchr/testify/assert"
+)
+
+func seedEarnMutations(t *testing.T) {
+	t.Helper()
+	t.Cleanup(mutations.SeedMutationsForTest(map[string]*mutations.MutationSpec{
+		"titan-growth": {MutationId: "titan-growth", Name: "Titan Growth", Rarity: 7,
+			Clusters: []string{"colossus"}, ReserveUnits: []int{1, 1, 1, 1}},
+		"extra-arms": {MutationId: "extra-arms", Name: "Extra Arms", Rarity: 8, MaxRank: 4,
+			Clusters: []string{"colossus"}, ReserveUnits: []int{1, 1, 1, 2}},
+	}))
+}
+
+func TestEarnMutationKeepsProgressWhenNothingFits(t *testing.T) {
+	seedEarnMutations(t)
+	u := users.NewTestUser(9801, "earner", "Earner", uint64(9801))
+	u.Character.Mutations = map[string]int{"titan-growth": 3, "extra-arms": 3}
+	u.Character.MutationProgress = 42
+	assert.Equal(t, "", EarnMutation(u))
+	assert.Equal(t, 42.0, u.Character.MutationProgress)
+	assert.Equal(t, 3, u.Character.Mutations["titan-growth"])
+}
+
+func TestEarnMutationSpendsProgressOnAGrant(t *testing.T) {
+	seedEarnMutations(t)
+	u := users.NewTestUser(9802, "earner2", "Earner2", uint64(9802))
+	u.Character.Mutations = map[string]int{"titan-growth": 2}
+	u.Character.MutationProgress = 42
+	got := EarnMutation(u)
+	assert.NotEqual(t, "", got)
+	assert.Equal(t, 0.0, u.Character.MutationProgress)
+}
+```
+
+- [ ] **Step 2: Run and watch them fail**
+
+Run: `go test ./internal/actions/ -run EarnMutation`
+Expected: build failure, `undefined: EarnMutation`.
+
+- [ ] **Step 3: Create `internal/actions/mutation_earn.go`.** Read the tick block at F22 first: the acquire branch's world-event emission (zone, region, significance from rarity) moves here verbatim as `emitMutationMilestone`.
+
+```go
+package actions
+
+import (
+	// configs, events, mutations, species, users, util, worldevents, rooms, fmt
+)
+
+// EarnMutation spends one earned mutation event for a player (#680). The
+// combat tick calls it when progress crosses the threshold; the `mutate earn`
+// admin command calls it directly, so a playtest forces the code a fight runs.
+//
+// It deepens or acquires as the tick always has, through CanDeepen,
+// RollDeepening and GetGraphPool, all of which honour CanGain. A deepening
+// that finds nothing falls to acquiring. Progress is spent only on a grant:
+// when nothing fits it carries to the next event. Returns the mutation id
+// granted, or "".
+func EarnMutation(user *users.UserRecord) string {
+	c := user.Character
+	mb := configs.GetBalanceConfig()
+	canAcquire := len(c.Mutations) < int(mb.MutationMaxCount)
+	canDeepen := mutations.CanDeepen(c.Mutations)
+
+	doDeepen := false
+	if canAcquire && canDeepen {
+		doDeepen = util.Rand(100) < int(mb.MutationDeepenChance*100)
+	} else if canDeepen {
+		doDeepen = true
+	}
+
+	granted := ``
+	if doDeepen {
+		if id := mutations.RollDeepening(c.Mutations); id != `` {
+			c.Mutations[id]++
+			events.AddToQueue(mutations.Gained{UserId: user.UserId, MutationId: id, Rank: c.Mutations[id]})
+			granted = id
+		}
+	}
+	if granted == `` && canAcquire {
+		sp := species.GetSpecies(c.SpeciesId)
+		aff := mutations.EffectiveAffinity(c.Mutations, c.ClusterAffinity)
+		if pool := mutations.GetGraphPool(c.Mutations, aff, sp); len(pool) > 0 {
+			id := mutations.RollAcquisition(pool)
+			if c.Mutations == nil {
+				c.Mutations = make(map[string]int)
+			}
+			c.Mutations[id] = 1
+			events.AddToQueue(mutations.Gained{UserId: user.UserId, MutationId: id, Rank: 1, IsNew: true})
+			emitMutationMilestone(user, id)
+			granted = id
+		}
+	}
+	if granted == `` {
+		return ``
+	}
+	c.MutationProgress = 0
+	// Mutation-graph drift fades on each mutation event so recent behavior dominates.
+	mutations.DecayAffinity(c.ClusterAffinity, float64(mb.MutationAffinityDecay))
+	c.Validate()
+	return granted
+}
+```
+
+`emitMutationMilestone(user, id)` holds the tick's `worldevents.EmitWorldEvent(...)` block for a new mutation, unchanged. Fill the import list from what the moved code uses.
+
+- [ ] **Step 4: Call it from the tick.** In `NewRound_UserRoundTick.go`, replace the whole body of `if user.Character.MutationProgress >= threshold { ... }` with:
+
+```go
+						if user.Character.MutationProgress >= threshold {
+							actions.EarnMutation(user)
+						}
+```
+
+Keep the `canAcquire || canDeepen` gate around progress accumulation as it is. Remove imports the tick no longer uses.
+
+- [ ] **Step 5: Run**
+
+Run: `go test ./internal/actions/ ./internal/hooks/`
+Expected: PASS.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add internal/actions/mutation_earn.go internal/actions/mutation_earn_test.go internal/hooks/NewRound_UserRoundTick.go
+git commit -F - <<'EOF'
+refactor(mutations): one earned-mutation event, actions.EarnMutation (#680)
+
+The player tick calls it; progress is spent only on a grant, and a
+deepening that finds nothing falls to acquiring.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+EOF
+```
+
+---
+
+### Task 8: Companions released newest first when a gain passes the ceiling
 
 **Files:**
 - Modify: `internal/mutations/reveal.go` (F26)
@@ -1477,7 +1622,7 @@ EOF
 
 ---
 
-### Task 8: World data, help and the data guard
+### Task 9: World data, help and the data guard
 
 **Files:**
 - Modify: `_datafiles/world/dogmud/mutations/titan-growth.yaml`, `extra-arms.yaml`, `colossus-form.yaml`
@@ -1609,18 +1754,277 @@ EOF
 
 ---
 
-### Task 9: Docs
+The next three tasks add the `mutate` admin command. Per the
+`dogmud-refactoring` admin-command checklist, handler, registration and help
+are separate tasks: collapsing them is how a registration gets dropped.
+
+### Task 10: `mutate` handler
+
+**Files:**
+- Create: `internal/usercommands/admin.mutate.go`
+
+- [ ] **Step 1: Create the handler** (shape of `admin.questtoken.go`):
+
+```go
+package usercommands
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/templates"
+	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
+)
+
+/*
+* Role Permissions:
+* mutate 				(All)
+ */
+
+// Mutate is the playtest lever for #680. `mutate earn [player]` spends one
+// earned mutation event through actions.EarnMutation, the code the combat
+// tick runs, without waiting for progress to fill. With no player it acts on
+// the admin.
+func Mutate(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	args := util.SplitButRespectQuotes(rest)
+	if len(args) == 0 || !strings.EqualFold(args[0], `earn`) {
+		infoOutput, _ := templates.Process("admincommands/help/command.mutate", nil, user.UserId)
+		user.SendText(messaging.CategoryUsage, infoOutput)
+		return true, nil
+	}
+
+	target := user
+	if len(args) > 1 {
+		if target = users.GetByCharacterName(args[1]); target == nil {
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+				`No player named "%s" is online.`, refusal.Echo(args[1])))
+			return true, nil
+		}
+	}
+
+	id := actions.EarnMutation(target)
+	if id == `` {
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
+			`%s earned nothing: no mutation fits. Their progress is kept.`, target.Character.Name))
+		return true, nil
+	}
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
+		`%s earned %s, now rank %d.`, target.Character.Name, id, target.Character.Mutations[id]))
+	return true, nil
+}
+```
+
+- [ ] **Step 2: Build**
+
+Run: `go build ./internal/usercommands/`
+Expected: success. If `messaging.CategoryAdmin` is named differently, use the category the M7 admin ledger assigned admin output (`grep -n "CategoryAdmin" internal/messaging/*.go`).
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add internal/usercommands/admin.mutate.go
+git commit -F - <<'EOF'
+feat(admin): mutate earn handler (#680)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+EOF
+```
+
+---
+
+### Task 11: `mutate` registration
+
+**Files:**
+- Modify: `internal/usercommands/usercommands.go` (command table, beside `setcondition` at line 94)
+- Modify: `internal/actions/divergences.go` (the admin map, beside `"mob": "admin"`)
+- Modify: `_datafiles/world/dogmud/keywords.yaml` (the admin help list, alphabetical, beside `mute`)
+- Test: `internal/usercommands/admin_mutate_test.go`
+
+- [ ] **Step 1: Write the failing test.** Mirror `usercommands_test.go:2011-2040` (the `setcondition` registration test): build the same fixture, then assert `TryCommand("mutate", "", <adminUserId>, events.CmdSkipScripts)` returns `handled == true` and no error.
+
+- [ ] **Step 2: Run and watch it fail**
+
+Run: `go test ./internal/usercommands/ -run Mutate`
+Expected: FAIL, the command is not handled.
+
+- [ ] **Step 3: Register** in the command table:
+
+```go
+		`mutate`:          {Mutate, false, true, true}, // Admin only
+```
+
+- [ ] **Step 4: `divergences.go`:** add `"mutate":       "admin",` in alphabetical order.
+
+- [ ] **Step 5: `keywords.yaml`:** add `      - mutate` to the admin command help list in alphabetical order.
+
+- [ ] **Step 6: Run**
+
+Run: `go test ./internal/usercommands/ ./internal/actions/ ./internal/keywords/`
+Expected: PASS (any test that checks the command table against `divergences.go` or `keywords.yaml` now agrees).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add internal/usercommands/usercommands.go internal/actions/divergences.go _datafiles/world/dogmud/keywords.yaml internal/usercommands/admin_mutate_test.go
+git commit -F - <<'EOF'
+feat(admin): register mutate (#680)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+EOF
+```
+
+---
+
+### Task 12: `mutate` help template
+
+**Files:**
+- Create: `_datafiles/world/dogmud/templates/admincommands/help/command.mutate.template`
+
+- [ ] **Step 1: Create it** in the layout of `command.questtoken.template` (read that file first and copy its markup):
+
+```
+Usage:
+
+  mutate earn [player]
+
+  Spends one earned mutation event for the player (yourself if none is
+  named), through the same code a fight runs: it deepens or acquires a
+  mutation under every rule, including the Conviction reserve budget. If
+  nothing fits, it says so and the player keeps their progress.
+```
+
+- [ ] **Step 2: Smoke it** in the Task 15 boot check: `help mutate` shows this page, and `mutate` with no arguments shows it too.
+- [ ] **Step 3: Commit**
+
+```bash
+git add _datafiles/world/dogmud/templates/admincommands/help/command.mutate.template
+git commit -F - <<'EOF'
+docs(admin): mutate help page (#680)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+EOF
+```
+
+---
+
+### Task 13: `set_mutations` playtest profile overlay
+
+The overlay crosses two structs: the harness side (`playtestenv.ProfileOverlays`)
+serialises it into the manifest, and the server side
+(`playtestprofiles.Overlays`) reads it with `KnownFields`, so a field missing
+from either is rejected or dropped.
+
+**Files:**
+- Modify: `internal/playtestprofiles/types.go:76-84` (`Overlays`)
+- Modify: `internal/playtestenv/types.go:111-120` (`ProfileOverlays`)
+- Modify: `internal/playtestprofiles/overlay.go` (`WorldChecks`, `DefaultWorldChecks`, `ApplyOverlays`)
+- Modify: `internal/playtestprofiles/context.md`
+- Test: `internal/playtestprofiles/overlay_test.go`
+
+- [ ] **Step 1: Write the failing tests** in `overlay_test.go`, using its `baseUser()` fixture:
+
+```go
+func TestApplyOverlaysSetsMutations(t *testing.T) {
+	u := baseUser()
+	world := WorldChecks{MutationOK: func(id string) bool { return id == "titan-growth" || id == "extra-arms" }}
+	err := ApplyOverlays(u, 1, Overlays{SetMutations: map[string]int{"titan-growth": 3, "extra-arms": 2}}, world)
+	require.NoError(t, err)
+	assert.Equal(t, 3, u.Character.Mutations["titan-growth"])
+	assert.Equal(t, 2, u.Character.Mutations["extra-arms"])
+}
+
+func TestApplyOverlaysRejectsBadMutation(t *testing.T) {
+	world := WorldChecks{MutationOK: func(id string) bool { return id == "titan-growth" }}
+	assert.Error(t, ApplyOverlays(baseUser(), 1, Overlays{SetMutations: map[string]int{"wings": 1}}, world))
+	assert.Error(t, ApplyOverlays(baseUser(), 1, Overlays{SetMutations: map[string]int{"titan-growth": 0}}, world))
+}
+```
+
+Match the file's existing assert/require imports.
+
+- [ ] **Step 2: Run and watch them fail**
+
+Run: `go test ./internal/playtestprofiles/ -run Mutation`
+Expected: build failure, `unknown field SetMutations`.
+
+- [ ] **Step 3: The fields.** `playtestprofiles.Overlays`:
+
+```go
+	SetMutations   map[string]int    `yaml:"set_mutations,omitempty"`
+```
+
+`playtestenv.ProfileOverlays`:
+
+```go
+	SetMutations   map[string]int    `yaml:"set_mutations,omitempty" json:"set_mutations,omitempty"`
+```
+
+- [ ] **Step 4: The world check.** Add `MutationOK func(id string) bool` to `WorldChecks`, and in `DefaultWorldChecks`:
+
+```go
+		MutationOK: func(id string) bool {
+			return mutations.GetMutation(id) != nil
+		},
+```
+
+- [ ] **Step 5: Apply it first,** at the top of `ApplyOverlays` right after `u.Character.RoomId = startRoom`, so extra-arm slots exist before `equip` runs:
+
+```go
+	// set_mutations is an authored set (#680): ranks are written as given,
+	// with no prerequisite or budget check, so a seat can start exactly at
+	// the edge a playtest needs.
+	for id, rank := range o.SetMutations {
+		if rank < 1 {
+			return fmt.Errorf("playtestprofiles: set_mutations %q rank must be >= 1", id)
+		}
+		if world.MutationOK != nil && !world.MutationOK(id) {
+			return fmt.Errorf("playtestprofiles: unknown mutation %q", id)
+		}
+		if u.Character.Mutations == nil {
+			u.Character.Mutations = map[string]int{}
+		}
+		u.Character.Mutations[id] = rank
+	}
+	u.Character.Validate()
+```
+
+- [ ] **Step 6: Run**
+
+Run: `go test ./internal/playtestprofiles/ ./internal/playtestenv/ ./internal/playtestrun/`
+Expected: PASS.
+
+- [ ] **Step 7: `context.md`:** add `set_mutations` to the overlay list and `MutationOK` to `WorldChecks`.
+- [ ] **Step 8: Commit**
+
+```bash
+git add internal/playtestprofiles/types.go internal/playtestenv/types.go internal/playtestprofiles/overlay.go internal/playtestprofiles/overlay_test.go internal/playtestprofiles/context.md
+git commit -F - <<'EOF'
+feat(playtest): set_mutations profile overlay (#680)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+EOF
+```
+
+---
+
+### Task 14: Docs
 
 **Files:**
 - Modify: `internal/mutations/context.md`, `internal/characters/context.md`, `internal/hooks/context.md`
 - Modify: `docs/PATCH_NOTES.md`, `docs/README.md` (this plan's row)
 
-- [ ] **Step 1: `context.md` files.** Name only symbols that exist (`codegraph_search` each): `mutations` gains `ReserveUnits`, `ReserveUnitsAt`, `OwnedReserveUnits`, `ReserveUnitBudget`, `FitsReserveBudget`, `GrowsLarge`, `CanGain`, `MaxRankOf`, `RelatedFit`, the `size` effect, the `colossal-grip` flag, `Gained.Silent`. `characters` gains `Size`, `HandsRequiredAt`, the body reservation source. `hooks` gains `releaseCompanionsForUser` and `MutationGained_ReleaseCompanions`. Then run `python tools/context_md_audit.py` and fix anything it reports.
+- [ ] **Step 1: `context.md` files.** Name only symbols that exist (`codegraph_search` each): `mutations` gains `ReserveUnits`, `ReserveUnitsAt`, `OwnedReserveUnits`, `ReserveUnitBudget`, `FitsReserveBudget`, `GrowsLarge`, `CanGain`, `MaxRankOf`, `RelatedFit`, the `size` effect, the `colossal-grip` flag, `Gained.Silent`. `characters` gains `Size`, `HandsRequiredAt`, the body reservation source. `hooks` gains `releaseCompanionsForUser` and `MutationGained_ReleaseCompanions`. `actions` gains `EarnMutation`; `usercommands` gains `Mutate` (`mutate earn`). Add `internal/actions/context.md` and `internal/usercommands/context.md` to the `git add` below. Then run `python tools/context_md_audit.py` and fix anything it reports.
 - [ ] **Step 2: PATCH_NOTES.** Add a dated 2026-10-26 entry in the file's existing style, player-facing, no numbers: Titan Growth makes you large at its later ranks; Colossus Form now needs the fullest Titan Growth and lets every hand wield a two-hander; Extra Arms grows up to six arms; these mutations hold part of your conviction in reserve, so a deeply grown body fields fewer companions and sends the newest away when it outgrows them.
 - [ ] **Step 3: Commit** (the plan's own README row landed with the plan)
 
 ```bash
-git add internal/mutations/context.md internal/characters/context.md internal/hooks/context.md docs/PATCH_NOTES.md docs/README.md
+git add internal/mutations/context.md internal/characters/context.md internal/hooks/context.md internal/actions/context.md internal/usercommands/context.md docs/PATCH_NOTES.md
 git commit -F - <<'EOF'
 docs: #680 context.md, patch notes and plan index
 
@@ -1630,8 +2034,37 @@ EOF
 
 ---
 
-### Task 10: Full gate and PR
+### Task 15: Full gate and PR
 
-- [ ] **Step 1:** Load `dogmud-shipping` and follow its pre-push gate: `gofmt -l .` (empty), `go vet ./...`, `go test ./...`, `golangci-lint run --new-from-merge-base=origin/master`, and the detached-worktree boot check (this change touches world YAML).
+- [ ] **Step 1:** Load `dogmud-shipping` and follow its pre-push gate: `gofmt -l .` (empty), `go vet ./...`, `go test ./...`, `golangci-lint run --new-from-merge-base=origin/master`, `GOOS=linux GOARCH=arm GOARM=5 go build .`, and the detached-worktree boot check (this change touches world YAML). In the booted server, smoke `help mutate` and a bare `mutate` (Task 12).
 - [ ] **Step 2:** Push and open the PR with `gh pr create --repo pruuk/DOGMud --base master`. Body: what players see first, then the mechanism; `Closes #680` and `Closes #259` as the only closing keywords; ends with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
-- [ ] **Step 3:** Report the PR URL and the gate output. Do not merge without the controller's review.
+- [ ] **Step 3:** Report the PR URL and the gate output. Do not merge: Task 16 runs first.
+
+---
+
+### Task 16: Adversarial playtest
+
+Run against the PR branch before merge. Load `dogmud-playtesting` first: it
+covers the external harness, the ephemeral goals file (scratchpad, not the
+repo), `--checkout`, private ports, killing only the PIDs you started, and
+filing findings as GitHub issues (reports are gitignored). One subagent per
+seat (lesson from the #541 playtests).
+
+Every seat starts from a profile with `start_room` in a safe town room and
+these overlays. Items: Heavy Greatsword `10007` (two-handed), Seething Prism
+`40187` (neck, `reserve_conviction_pct: 0.15`), Bloom Wafer `40108`.
+
+| Seat | Overlays | Actions | Pass when |
+|---|---|---|---|
+| A. Cusp of Large | `set_mutations: {titan-growth: 2}`, `grant_items: [10007, 10007]` | `equip` both greatswords; `inventory`; `mutate earn` until Titan Growth reaches 3 (other grants are fine, note them); `equip` again; `inventory`; one round of combat on a training dummy | Before: one greatsword held across both hands. After rank 3: one greatsword in the weapon hand alone, the offhand free and listed, and it attacks; `help titan-growth` and `mutations` describe the size step |
+| B. Budget full | `set_mutations: {titan-growth: 3, extra-arms: 3, dense-muscles: 1}` | `mutate earn` five times; `mutations`; `status` | Titan Growth stays 3 and Extra Arms stays 3 every time; grants land on Dense Muscles or a new zero-unit mutation, or the command says nothing fits; the status reserve row names the body |
+| C. Companions at the ceiling | `set_mutations: {titan-growth: 3, extra-arms: 1}`, `grant_spells: {conjure-water: 1}`, `grant_skills: {manifestation: 50}` | Rest to full; cast `conjure-water` until refused; read the refusal; then `mutate earn` until Titan Growth or Extra Arms gains a rank | The refusal names "Your body and bonds"; on the gain, the newest companion leaves with "Your changing body claims more of your will. ... slips its bond and leaves you."; older companions stay; `status` shows the reserve at or under the limit |
+| D. Gear at the ceiling | `set_mutations: {titan-growth: 2}`, `equip: {neck: 40187}` | `status`; `mutate earn` until Titan Growth reaches 3; `status`; `inventory` | The rank lands; the prism stays worn; no companion message; the reserve row names body and gear |
+| E. Apex grip | `set_mutations: {titan-growth: 4, dense-muscles: 1, colossus-form: 1, extra-arms: 1}` (six units, at the ceiling), `grant_items: [10007, 10007, 10007]` | `equip` all three greatswords (`equip <item> arm2` and `arm3` for the second and third); `inventory`; one combat round; `mutate earn` once | Three greatswords held, one per hand, all listed; three weapon attacks in the round; the earn grants no reserving rank |
+| F. Bloom | `set_mutations: {titan-growth: 3, extra-arms: 3}`, `grant_items: [40108 x6]` | Eat wafers one at a time, `mutations` after each | Neither Titan Growth nor Extra Arms passes 3; Bloom grants land elsewhere or nothing happens |
+| G. Login release | Seat C after its first summons, with `set_mutations` raised to `{titan-growth: 4, extra-arms: 2}` by quitting and relaunching the seat with the new overlay | Log in | Companions over the ceiling are released at login with the same line, before they appear |
+
+- [ ] **Step 1:** Write the goals file and per-seat profiles in the session scratchpad.
+- [ ] **Step 2:** Run the seats (one subagent each), collecting transcripts.
+- [ ] **Step 3:** Triage every failure: a defect in this PR is fixed on the branch (TDD) and the seat re-run; anything pre-existing is filed as a GitHub issue under #388 with the transcript excerpt.
+- [ ] **Step 4:** Post a playtest summary comment on the PR: seat, pass or fail, issue links.
