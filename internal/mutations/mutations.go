@@ -8,11 +8,11 @@ package mutations
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
-	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -263,7 +263,8 @@ func calcRarityBonus(owned map[string]int) int {
 
 // GetWeightedPool builds a weighted slice of mutation IDs suitable for random selection.
 // Each mutation appears (11 - Rarity) times so rarer mutations are less likely.
-// Mutations already owned or conflicting with owned mutations are excluded.
+// Eligibility is CanGain at rank 1: owned, conflicting, prerequisite-unmet,
+// off-moon and over-budget mutations are excluded (#680).
 // sp filters out mutations whose body-part requirements the species does not meet.
 // Pass nil for sp to disable body-part filtering (fail-open for players/unknown species).
 //
@@ -279,24 +280,13 @@ func GetWeightedPool(owned map[string]int, sp *species.Species) []string {
 func GetWeightedPoolWithFloor(owned map[string]int, sp *species.Species, minRarity int) []string {
 	// Rarity uplift: reduce common mutation weights for advanced players
 	rarityBonus := calcRarityBonus(owned)
-	moonBucket := gametime.CurrentMoonFlavorBucket()
 
 	pool := make([]string, 0, len(allMutations)*5)
 	for id, spec := range allMutations {
 		if spec.Rarity < minRarity {
 			continue
 		}
-		if _, has := owned[id]; has {
-			continue
-		}
-		if HasConflict(owned, id) {
-			continue
-		}
-		if !spec.CanApplyTo(sp) {
-			continue
-		}
-		// Moon-gated flavor (Reflect Skin): only the current-bucket variant.
-		if spec.MoonFlavor != 0 && spec.MoonFlavor != moonBucket {
+		if !CanGain(owned, id, 1, sp) {
 			continue
 		}
 		weight := 11 - spec.Rarity - rarityBonus
@@ -387,31 +377,41 @@ func effectiveMax(id string, globalMax int) int {
 	return globalMax
 }
 
-// CanDeepen returns true if any owned mutation is below its per-mutation ceiling.
+// CanDeepen reports whether any owned mutation may take its next rank.
 func CanDeepen(owned map[string]int) bool {
-	globalMax := int(configs.GetBalanceConfig().MutationMaxLevel)
 	for id, level := range owned {
-		if level < effectiveMax(id, globalMax) {
+		if CanGain(owned, id, level+1, nil) {
 			return true
 		}
 	}
 	return false
 }
 
-// RollDeepening picks a random owned mutation below its per-mutation ceiling.
-// Returns "" if all mutations are already at their cap or owned is empty.
+// RollDeepening picks an owned mutation to deepen. It rolls among every owned
+// mutation below its max rank, as it always has; if the pick's next rank does
+// not fit the reserve budget, a fitting one is chosen instead, preferring the
+// pick's own cluster (#680). "" when nothing can deepen.
 func RollDeepening(owned map[string]int) string {
-	globalMax := int(configs.GetBalanceConfig().MutationMaxLevel)
-	var candidates []string
+	var open, fit []string
 	for id, level := range owned {
-		if level < effectiveMax(id, globalMax) {
-			candidates = append(candidates, id)
+		if level >= MaxRankOf(id) {
+			continue
+		}
+		open = append(open, id)
+		if CanGain(owned, id, level+1, nil) {
+			fit = append(fit, id)
 		}
 	}
-	if len(candidates) == 0 {
+	if len(open) == 0 {
 		return ""
 	}
-	return candidates[util.Rand(len(candidates))]
+	sort.Strings(open)
+	sort.Strings(fit)
+	pick := open[util.Rand(len(open))]
+	if CanGain(owned, pick, owned[pick]+1, nil) {
+		return pick
+	}
+	return RelatedFit(pick, fit)
 }
 
 // GetAdrenalSurgeBonus returns the level-scaled conditional_damage_low_hp bonus.
