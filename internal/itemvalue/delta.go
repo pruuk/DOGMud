@@ -230,7 +230,10 @@ func displacedItemsForSlot(char *characters.Character, targetSlot SlotName, cand
 // placementBonus returns the additional score a spec earns
 // when placed at slot, evaluated against pre-swap char state.
 // Used SYMMETRICALLY for candidate and displaced. DualWieldBonus
-// is conditional on the pre-swap main hand having a 1H weapon.
+// is conditional on the pre-swap main hand holding a weapon that
+// leaves the offhand free for THIS wearer: the slot-aware hand rule
+// (IsBlockedBy2H), so a Large species or a character grown Large
+// dual wields beside a two-hander (#680).
 func placementBonus(profile WeightProfile, spec items.ItemSpec, slot SlotName, char *characters.Character) float64 {
 	bonus := 0.0
 
@@ -241,7 +244,7 @@ func placementBonus(profile WeightProfile, spec items.ItemSpec, slot SlotName, c
 	if slot == SlotOffhand {
 		if spec.Type == items.Weapon {
 			if char.Equipment.Weapon.ItemId > 0 &&
-				char.Equipment.Weapon.GetSpec().Hands != items.TwoHanded {
+				!char.IsBlockedBy2H(`offhand`) {
 				bonus += profile.DualWieldBonus
 			}
 		} else if spec.Type == items.Offhand {

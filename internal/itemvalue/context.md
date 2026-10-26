@@ -103,7 +103,8 @@ those never had more than one candidate slot.
      a swap `Wear` refuses.
    - Compute placement bonus on the candidate
      (`TwoHandedBonus` if 2H, `DualWieldBonus` if Weapon at
-     Offhand AND main is 1H, `ShieldBonus` if Offhand-type
+     Offhand AND the main hand's weapon leaves the offhand free for this
+     wearer, `ShieldBonus` if Offhand-type
      at Offhand).
    - Score displaced items symmetrically (their current-slot
      bonuses included).
@@ -169,7 +170,11 @@ The three bonuses (`DualWieldBonus`, `ShieldBonus`,
 math evaluated against pre-swap state, applied to both
 candidate (at prospective slot) and displaced items (at their
 current slots). `DualWieldBonus` is **conditional**: only fires
-when the (pre-swap) main hand has a 1H weapon. Without that
+when the (pre-swap) main hand holds a weapon and
+`Character.IsBlockedBy2H("offhand")` is false, the wearer's slot-aware
+grip: a Large species or a character grown Large holds a two-hander in
+the weapon hand alone and still dual wields, a Small wearer's one-hander
+fills the offhand (#680). Without that
 conditional, empty-handed mobs would score a wand-in-offhand
 above a wand-in-main, sending the wand to the wrong slot.
 
