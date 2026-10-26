@@ -22,7 +22,7 @@ or like it could be hiding something.
 <ansi fg="command">search [thing]</ansi> searches that one thing and nothing else. It is the
 better choice when a room points at something, such as a loose stone, a
 shifted bookshelf or a disturbed patch of ground. Try
-<ansi fg="command">search bookshelf</ansi> or <ansi fg="command">search under the table</ansi>.
+<ansi fg="command">search bookshelf</ansi> or <ansi fg="command">search table</ansi>.
 
 A plain <ansi fg="command">search</ansi> goes over the whole room. It is slower to pay off and
 less certain. It can turn up the same secrets as a careful search of one
