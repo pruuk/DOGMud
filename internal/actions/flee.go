@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // FleeRefusal says why a flee did not begin.
@@ -188,7 +189,11 @@ func ResolveFlee(actor Actor, room *rooms.Room) FleeOutcome {
 		return out
 	}
 
-	exitName, exitRoomId := fleeExit(room, admission.PreferredExit)
+	var fleer *users.UserRecord
+	if ua, ok := actor.(*UserActor); ok {
+		fleer = ua.User
+	}
+	exitName, exitRoomId := fleeExit(room, admission.PreferredExit, fleer)
 	if exitName == `` {
 		out.NoExit = true
 		settleFlee(c, false)
@@ -207,13 +212,20 @@ func settleFlee(c *characters.Character, success bool) {
 	}
 }
 
-// fleeExit is the preferred exit when it is still there and unlocked, else a
-// random passable one (secret and locked exits excluded).
-func fleeExit(room *rooms.Room, preferred string) (string, int) {
+// fleeExit is the preferred exit when it is still there, unlocked and not
+// quest-gated, else a random passable one (secret, locked and quest-gated
+// exits excluded). Quest gates are asked only for a fleeing player (user
+// non-nil); a mob's flee ignores them, as its walking does (#588). With every
+// exit excluded it returns no exit, so a fully gated room fails a flee
+// exactly as a fully locked one does.
+func fleeExit(room *rooms.Room, preferred string, user *users.UserRecord) (string, int) {
+	walkable := func(_ string, destRoomId int) bool {
+		return user == nil || !questGateBlocksRoomId(user, room.RoomId, destRoomId)
+	}
 	if preferred != `` {
-		if info, ok := room.GetExitInfo(preferred); ok && !info.Lock.IsLocked() {
+		if info, ok := room.GetExitInfo(preferred); ok && !info.Lock.IsLocked() && walkable(preferred, info.RoomId) {
 			return preferred, info.RoomId
 		}
 	}
-	return room.GetRandomExit()
+	return room.GetRandomExitWhere(walkable)
 }

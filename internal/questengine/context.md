@@ -15,8 +15,10 @@ what a trigger *does*, you edit this package.
 
 ## Files
 
-- **engine.go** — `Engine`, the trigger index, `Notify`, and the recursive
-  evaluator.
+- **engine.go** — `Engine`, the trigger index, `Notify`, the recursive
+  evaluator, and `fieldMatches`, the match step it shares with `WouldFire`.
+- **dryrun.go**: `WouldFire` (side-effect-free "would Notify fire?") and
+  `SearchFeatures` (a room's quest search nouns).
 - **types.go** — type aliases onto `internal/quests`, plus `EventDetails` and
   `NotifyResult` (which describe an engine *invocation*, so they stay here).
 - **conditions.go** — `PlayerState` interface and `EvalConditions`.
@@ -45,7 +47,17 @@ func (e *Engine) RegisterQuest(q *QuestDef)
 func (e *Engine) GetQuest(questId int) *QuestDef
 func (e *Engine) AllQuests() []*QuestDef       // unordered
 func (e *Engine) Notify(eventType string, details EventDetails, player PlayerState, ctx ActionContext) NotifyResult
+func (e *Engine) WouldFire(eventType string, d EventDetails, player PlayerState) bool
+func (e *Engine) SearchFeatures(roomId int) []string
 ```
+
+`WouldFire` runs the same match step as `Notify` (`fieldMatches`, then
+`EvalConditions` against the player's current state) and stops there: no
+action runs, no token is granted, no text is sent, no `quest_granted` chain is
+followed, no `EvalGuard` is touched. It is for gates that must ask before the
+event happens (a quest gate on an exit). `SearchFeatures` returns the sorted,
+distinct nouns of `room_interact` triggers with `verb: search` and `room:`
+equal to the given id, regardless of conditions.
 
 `RegisterQuest` flattens every trigger into `triggerIndex` keyed by event type,
 so `Notify` never scans quests it cannot match. Each trigger gets an
@@ -77,6 +89,14 @@ keep it that way.
    A hyphen matches a space (`util.NounHyphenFold`) in `nounMatches` on the
    trigger noun, the typed noun and `RoomNoun`, so `look
    processional-reliefs` fires `noun: processional reliefs`.
+   A trigger `verb:` names a `room_interact` verb family (#375 phase 3a):
+   empty means `look` (`quests.InteractVerb`), so a look trigger never
+   fires on search and a `verb: search` trigger never fires on look. The
+   dispatcher raises `room_interact` with `Verb: look` for look (and its
+   aliases l, examine, exam) and `read` raises it when nothing carried
+   matches; `search <feature>` raises `Verb: search` after the search runs.
+   Every raise matches the template room (`rooms.OriginalRoomId`). The
+   walkthrough sends `quests.InteractVerb(t.Verb)`.
 2. **Visit guard** — `MarkVisited(trigId)`; a trigger fires at most once per
    chain.
 3. **Conditions** — `EvalConditions(t.Conditions, player)`.
@@ -85,6 +105,11 @@ keep it that way.
 
 That last step is what makes quest chains work: granting `10-end` can
 immediately fire the trigger that grants `11-start`.
+
+Step 1 is `fieldMatches`, computed once up front because it depends only on
+the event. Steps 2 and 3 stay inside the loop: an earlier trigger's actions
+and chains change the player state a later trigger's conditions read, and a
+trigger is marked visited even when its conditions then fail.
 
 ## `EvalGuard`
 
@@ -113,7 +138,17 @@ the read side (`HasQuest`, `HasItem`, `GetQuestFlag`, `GetGold`, `GetRoomId`,
 `GetUserId`, `HasOwnMasterwork`) and the write side — grant/consume/give,
 gold, text, mob and item spawning, spell teaching, skill training, stat
 increases, recipe learning, conditions, teleport, exit locking, quest flags, faction
-rep, mutation grants, NPC dialogue queueing, and timed sequences.
+rep, mutation grants, hidden-noun discovery, NPC dialogue queueing, and timed
+sequences.
+
+`DiscoverHiddenNoun(key)` backs the `discover` action (#375 phase 3a): it
+records `Character.AddDiscovery(roomId, key)` on the bridge's own room id, the
+real room the player stands in (`room.RoomId`), which is the id `search`
+records a find under and `look` checks. Afterwards `look <key>` and
+`search <key>` treat the hidden noun as found, and plain `search` no longer
+rolls for it. `ValidateQuestRefs` (`internal/quests`) checks the key against
+the trigger's room at every door; the bridge does not look the room up.
+Quest 49's floor search discovers `disc` in the Reliquary (5343).
 
 `ChargeGold(amount) error` takes the whole charge or nothing. A charge
 larger than the player's gold takes nothing, sends no "You pay" line, logs a
@@ -249,7 +284,8 @@ on the caller's order. It reads the Ways into each step from
   flags, heard topics, gold and room, and `dialogueState()` wraps it as a
   `dialogue.PlayerState`.
 - **`walkCtx`** is the `ActionContext`. Grants, items, gold and quest flags
-  change the player; narration, spawns, teleports and the rest are no-ops.
+  change the player; narration, spawns, teleports, `discover` and the rest
+  are no-ops.
   `QueueSequence` runs the sequence's `on_complete` actions at once, as the
   real bridge does after the lines finish (`GameBridge.QueueSequence`,
   `bridge.go`). `trailCtx` wraps it to note every grant.

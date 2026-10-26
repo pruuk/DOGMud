@@ -22,6 +22,24 @@ type TriggerDef struct {
 	Actions    []ActionDef `yaml:"actions" json:"actions"`
 }
 
+// The two room_interact verb families (#375 phase 3a, owner ruling 5: look
+// and search are the only interaction verbs). look, l, examine, exam and read
+// raise VerbLook; search raises VerbSearch. A trigger's empty verb means
+// VerbLook; the loader refuses any other value.
+const (
+	VerbLook   = "look"
+	VerbSearch = "search"
+)
+
+// InteractVerb is the verb family a room_interact trigger listens for: its
+// own verb, or VerbLook when it names none.
+func InteractVerb(verb string) string {
+	if verb == "" {
+		return VerbLook
+	}
+	return verb
+}
+
 // Conditions for trigger evaluation.
 type Conditions struct {
 	Has           []string          `yaml:"has,omitempty" json:"has,omitempty"`                       // player must have ALL these quest tokens
@@ -66,6 +84,12 @@ type ActionDef struct {
 	Sequence             *SequenceDef        `yaml:"sequence,omitempty" json:"sequence,omitempty"`
 	BumpRep              *BumpRepDef         `yaml:"bump_rep,omitempty" json:"bump_rep,omitempty"`
 	DeclareBounty        *DeclareBountyDef   `yaml:"declare_bounty,omitempty" json:"declare_bounty,omitempty"`
+	// Discover records a hidden noun of the player's room as found, as a
+	// successful search would, so look and search treat it as a known
+	// feature afterwards. The key must be a hidden noun of the trigger's room
+	// (its room filter, else its in_room condition); ValidateQuestRefs
+	// refuses one that is not, or a trigger that names no room.
+	Discover string `yaml:"discover,omitempty" json:"discover,omitempty"`
 }
 
 // BumpRepDef parameters for the bump_rep action: which faction

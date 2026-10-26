@@ -118,6 +118,10 @@ var sightExemptSites = map[string]string{
 	// Forage: ForageCore is pure; its one caller (actions.Forage) multiplies
 	// the SearchScore once before building the attempt.
 	"internal/forager/forage_core.go|ForageCore": "pure core: actions.Forage multiplies SearchScore once before calling",
+	// Search: the two search bodies take the score Search already multiplied
+	// through messaging.SightMult once, before it dispatches to one of them.
+	"internal/actions/search.go|searchWholeRoom":      "score multiplied once by SightMult in Search before dispatch",
+	"internal/actions/search.go|searchFeatureSecrets": "score multiplied once by SightMult in Search before dispatch",
 	// Rhetoric is voice, exempt by ruling.
 	"internal/actions/combat_counter.go|executeCounterTaunt": "rhetoric (voice) is exempt by ruling, owner 2026-09-26",
 	// The bauble roll seam: a package-level initialiser that only forwards

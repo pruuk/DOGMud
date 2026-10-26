@@ -5,6 +5,10 @@ description: >-
   Learn the first handful of things every soul needs before it steps into
   the world, one at a time, at your own pace.
 secret: false
+flags:
+  - key: stone
+    values: [read]
+    description: "Dewey has spoken about the names on the threshold stone"
 
 # Hint style (owner ruling 2026-10-17): one command per step. Say what the
 # thing IS first, then the command, then the help topic to read for more.
@@ -43,7 +47,10 @@ steps:
   - id: examined
     description: "You looked closely at your guide. Reading is the first
       survival skill."
-    hint: "To walk to the next room, type its direction. Type north."
+    # The stone is optional (Dewey's line offers it); the walk north is the
+    # step, so the hint names both, as Dewey does.
+    hint: "A close look often shows more. Type look stone to look closer,
+      or type north to walk on."
   - id: status_prompt
     map_target: -1  # action step (command/skill) — no travel destination
     description: "You stepped into the place where you meet yourself."
@@ -215,8 +222,9 @@ triggers:
           lines:
             - {delay: 0, text: "That's the whole trick of this world. The
                 ones who read what is in front of them live longest. Any
-                word shown in a different color is worth a look. The exits
-                line shows the ways out. To walk north, type north."}
+                word shown in a different color is worth a look, and a close
+                look often shows you more than the room did. Try the stone
+                under your feet. Type look stone."}
 
   - event: command_issued
     command: look
@@ -231,8 +239,9 @@ triggers:
           lines:
             - {delay: 0, text: "That's the whole trick of this world. The
                 ones who read what is in front of them live longest. Any
-                word shown in a different color is worth a look. The exits
-                line shows the ways out. To walk north, type north."}
+                word shown in a different color is worth a look, and a close
+                look often shows you more than the room did. Try the stone
+                under your feet. Type look stone."}
 
   # Last: it matches look guide too, and would grant what the trigger
   # above requires in the same command.
@@ -249,6 +258,58 @@ triggers:
             - {delay: 0, text: "Good. See the words shown in a different
                 color? Those are things you can look at more closely. Try
                 one. Type look guide."}
+
+  # The look lesson's reward (#375 phase 3a, owner ruling 9): a close look
+  # at the threshold stone finds the names of everyone who woke here, Dewey's
+  # among the oldest. A look-family room_interact, so look, l, examine, exam
+  # and read all reach it; its text replaces the stone's noun text, which
+  # hints at the find (ruling 7). Only after the guide lesson: a handled
+  # room_interact skips command_issued, so an earlier `look stone` must stay
+  # an ordinary look that the bare-look lesson above can count. Not a step:
+  # the walk north is still the step, so Dewey's line ends with it.
+  #
+  # Dewey speaks on the first look only (flag 28-stone); a second look shows
+  # the names again without his speech. The repeat look comes first, so the
+  # flag the first look sets does not fire it in the same command (#495).
+  - event: room_interact
+    room: 6258
+    noun: stone
+    conditions:
+      has: [28-examined]
+      missing: [28-status_prompt]
+      has_flag: {"28-stone": "read"}
+    actions:
+      - actor: >-
+          You crouch for a closer look at the threshold-stone. Its surface is
+          polished to a shine, hollowed at the center by every soul who ever
+          woke here and stepped through. The fine lines around its edge are
+          names, hundreds of them, small and neat, no two written alike. Toward
+          the hollowed center the oldest have worn almost smooth, and one of
+          them still reads Dewey.
+
+  - event: room_interact
+    room: 6258
+    noun: stone
+    conditions:
+      has: [28-examined]
+      missing: [28-status_prompt]
+      missing_flag: {"28-stone": "read"}
+    actions:
+      - set_flag: {key: "28-stone", value: "read"}
+      - actor: >-
+          You crouch for a closer look at the threshold-stone. Its surface is
+          polished to a shine, hollowed at the center by every soul who ever
+          woke here and stepped through. The fine lines around its edge are
+          names, hundreds of them, small and neat, no two written alike. Toward
+          the hollowed center the oldest have worn almost smooth, and one of
+          them still reads Dewey.
+      - npc_say:
+          mob: 9491
+          lines:
+            - {delay: 1, text: "You found the names. I stood where you stand,
+                a long time ago. Look closely like that out in the world,
+                and you will find things other people walk past. The exits
+                line shows the ways out. To walk north, type north."}
 
   # ── 6259 Knowing Yourself: status, skills, spells, cast glow, north ──
   - event: room_enter

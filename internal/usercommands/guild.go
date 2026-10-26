@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/guilds"
@@ -660,18 +661,19 @@ func guildTake(user *users.UserRecord, remainder string) {
 	// Item-loss guard: prove the item fits in the taker's pack BEFORE removing it
 	// from the vault, so a full pack never destroys a vault item.
 	it := g.Vault[idx]
-	if !user.Character.StoreItem(it) {
+	if !acquire.AcquireItem(user, it, acquire.AcquireVault) {
 		user.SendText(messaging.CategoryRefusal, `Your pack is too full to carry that.`)
 		return
 	}
 	itemName := it.DisplayName()
 	if _, err := guilds.TakeItem(g.Tag, idx); err != nil {
 		// Vault changed under us; undo the store so nothing is duplicated.
+		// The seam already queued the gain, so queue the matching loss.
 		user.Character.RemoveItem(it)
+		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: it, Gained: false})
 		user.SendText(messaging.CategoryRefusal, `Cannot take that item right now.`)
 		return
 	}
-	events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: it, Gained: true})
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You take %s from the guild vault.`, itemName))
 	announceGuild(g, fmt.Sprintf(`<ansi fg="username">%s</ansi> took %s from the guild vault.`, user.Character.Name, itemName), user.UserId)
 }

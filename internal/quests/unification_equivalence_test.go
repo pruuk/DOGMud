@@ -171,6 +171,10 @@ type oldActionDef struct {
 	Sequence       *oldSequenceDef      `yaml:"sequence,omitempty"`
 	BumpRep        *oldBumpRepDef       `yaml:"bump_rep,omitempty"`
 	DeclareBounty  *oldDeclareBountyDef `yaml:"declare_bounty,omitempty"`
+	// A new action, not drift: #375 phase 3a added `discover` after the
+	// unification, so neither old parser had it. Without it here the
+	// re-marshal drops the key and every quest using it reads as a mismatch.
+	Discover string `yaml:"discover,omitempty"`
 }
 
 type oldBumpRepDef struct {

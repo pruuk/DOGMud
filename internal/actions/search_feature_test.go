@@ -148,14 +148,15 @@ func TestSearchFeature_FindNamesTheFeature(t *testing.T) {
 	}
 }
 
-// A feature search is the whole room search: the contested tiers roll as
-// always (quest items hide behind `search shelf`), so what the room hides
-// is found, and the search trains like any other.
-func TestSearchFeature_IsTheWholeRoomSearch(t *testing.T) {
+// A feature search is NOT the whole room search (owner, 2026-10-26,
+// overturning 2026-09-26/27): what the room hides elsewhere (here a hidden
+// noun tucked into nothing and a hidden container) is not found, no contest
+// is rolled, and the shared special-move cooldown is claimed.
+func TestSearchFeature_IsNotTheWholeRoomSearch(t *testing.T) {
 	pinConfigForTest(t)
 	room := featureRoom(9604)
 	actor := newSearchFakeActor("Rummager2", room, true, 7604)
-	actor.char.Stats.Perception.ValueAdj = 100000 // wins any contest it rolls
+	actor.char.Stats.Perception.ValueAdj = 100000 // would win any contest it rolled
 	h := stubBaubleSearch(t, false, actor)
 
 	result := Search(actor, SearchOptions{Feature: "hearth"})
@@ -163,17 +164,17 @@ func TestSearchFeature_IsTheWholeRoomSearch(t *testing.T) {
 	if result.Feature != "hearth" || h.rolls != 1 || result.BaubleFound {
 		t.Fatalf("result %+v rolls=%d", result, h.rolls)
 	}
-	if !actor.char.HasDiscovery(room.RoomId, "loose brick") || !actor.char.HasDiscovery(room.RoomId, "strongbox") {
-		t.Fatal("the room's hidden things are found by a feature search too")
+	if actor.char.HasDiscovery(room.RoomId, "loose brick") || actor.char.HasDiscovery(room.RoomId, "strongbox") {
+		t.Fatal("a feature search finds nothing elsewhere in the room")
 	}
-	if len(actor.awards) != 1 || !actor.awards[0].won {
-		t.Fatalf("a search that rolled a contest trains as always: %+v", actor.awards)
+	if len(actor.awards) != 0 {
+		t.Fatalf("a search that rolled no contest does not train: %+v", actor.awards)
 	}
-	if !searchSaid(actor, "You search the") || searchSaid(actor, "You find nothing of interest.") {
+	if !searchSaid(actor, "You search the") || !searchSaid(actor, "You find nothing of interest.") {
 		t.Fatalf("messages: %q", actor.sent)
 	}
-	if actor.char.GetCooldown("search") == 0 {
-		t.Fatal("the search cooldown applies")
+	if SpecialMoveReady(actor.char) {
+		t.Fatal("the search claims the shared special-move cooldown")
 	}
 }
 

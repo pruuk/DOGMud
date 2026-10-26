@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -660,7 +661,7 @@ func tryPurchaseFromInventory(buyer Actor, request string, shopMob *mobs.Mob, sh
 			return BuyResult{Reason: BuyReasonOutOfStock}
 		}
 		bought.UUID = items.NewItemUUID()
-		if !char.StoreItem(bought) {
+		if !acquire.AcquireItemForChar(char, buyer.GetUserId(), buyer.GetMobInstanceId(), bought, acquire.AcquireBuy) {
 			// Roll back on carry failure: the same entry in the same place,
 			// its relist price and listing time unchanged (a re-add would
 			// stamp a new time at the barter-discounted price). Defensive:
@@ -675,7 +676,6 @@ func tryPurchaseFromInventory(buyer Actor, request string, shopMob *mobs.Mob, sh
 		char.Gold -= matched.price
 		shopInv.Gold += matched.price
 		if buyer.IsPlayer() {
-			events.AddToQueue(events.ItemOwnership{UserId: buyer.GetUserId(), Item: bought, Gained: true})
 			events.AddToQueue(events.EquipmentChange{UserId: buyer.GetUserId(), GoldChange: -matched.price})
 		}
 		if err := shops.SaveShop(shopInv.Zone, shopInv.MobId, shopInv.RoomId); err != nil {
@@ -754,17 +754,6 @@ func executePurchaseItem(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRec
 		if u := users.GetByUserId(userId); u != nil {
 			u.PlaySound(`purchase`, `other`)
 		}
-		events.AddToQueue(events.ItemOwnership{
-			UserId: userId,
-			Item:   newItm,
-			Gained: true,
-		})
-	} else {
-		events.AddToQueue(events.ItemOwnership{
-			MobInstanceId: buyer.GetMobInstanceId(),
-			Item:          newItm,
-			Gained:        true,
-		})
 	}
 
 	buyerName := buyer.GetName()
@@ -792,7 +781,10 @@ func executePurchaseItem(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRec
 		}
 	}
 
-	buyer.GetCharacter().StoreItem(newItm)
+	// The seam raises the buyer's gain only when the item lands. A refused
+	// store is still not refused here (the encumbrance gate in Buy refuses
+	// first), as before; it no longer raises a gain for an item never held.
+	acquire.AcquireItemForChar(buyer.GetCharacter(), buyer.GetUserId(), buyer.GetMobInstanceId(), newItm, acquire.AcquireBuy)
 }
 
 // executePurchaseCondition applies the bought condition to the buyer and

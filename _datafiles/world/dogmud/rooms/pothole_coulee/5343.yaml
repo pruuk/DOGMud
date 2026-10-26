@@ -12,9 +12,8 @@ description: >
   something beneath them pushed, or settled unevenly, or simply
   shifted across a very long time. The disturbed section has been
   scratched clean of the grime that covers the rest of the floor,
-  recently, or often, as though someone has been checking it. Press
-  the stones or search the floor carefully and you might learn
-  whether the disturbance has a cause that can be touched.
+  recently, or often, as though someone has been checking it.
+  Whatever pushed those flags up may still be lying under them.
 biome: fort
 coord:
   x: 42
@@ -31,12 +30,16 @@ nouns:
     cracked and heaved and been scratched clean as though by repeated
     examination. The gap between two of the lifted flags is just wide
     enough to admit a finger.
+  flagstones: ":floor"
+  flags: ":floor"
+  stones: ":floor"
   niches: The reliquary niches are the widest in the shrine, their
     interior surfaces dressed to a careful smoothness. They hold nothing
     now. The emptiness feels intentional, a deliberate clearing rather
     than simple loss.
 hidden_nouns:
   disc:
+    on: floor
     description: |
       It is a disc of pale grey metal, the size of a spread hand, and
       nothing about it belongs here. The folk work in stone and bone and

@@ -34,6 +34,8 @@ nouns:
     near; the slack dark ones have already given up whatever they
     held. Put an ear near a full one and there is a sound inside it,
     a dry patient stirring, many small stirrings folded into one.
+    Behind the slack dark ones the wall seems to curve back further
+    than a wall should.
   arches:
     A pair of low silk-hung openings in opposite walls, left hand and
     right. They look away from one another. They do not lead away from
@@ -42,12 +44,12 @@ nouns:
     mouths and one throat.
 hidden_nouns:
   brood-cache:
+    on: egg sacs
     description: |
-      Behind the slack dark egg-sacs, where the wall curves back on
-      itself further than a wall should, a deeper pocket has been spun
-      shut: a hoard-purse, not a nursery-sac, packed tight with
-      folded silk laid down in careful lengths and kept apart from the
-      rest. The Foldweave stores something here it does not intend to
+      Behind the slack dark egg-sacs, in the hollow where the wall
+      gives way, a deeper pocket has been spun shut: a hoard-purse,
+      not a nursery-sac, packed tight with folded silk laid down in
+      careful lengths and kept apart from the rest. The Foldweave stores something here it does not intend to
       hatch.
     hidden_description: |
       A pocket in the wall behind the dark sacs has been spun shut over

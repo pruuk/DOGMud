@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -104,12 +105,7 @@ func lootCorpseAll(user *users.UserRecord, room *rooms.Room, corpseIdx int) {
 		if !corpse.CanTakeItem(it.UUID.String(), user.UserId, now) {
 			continue
 		}
-		if user.Character.StoreItem(it) {
-			events.AddToQueue(events.ItemOwnership{
-				UserId: user.UserId,
-				Item:   it,
-				Gained: true,
-			})
+		if acquire.AcquireItem(user, it, acquire.AcquireLoot) {
 			corpse.Loot.RemoveItem(it)
 
 			user.SendText(messaging.CategorySystem,

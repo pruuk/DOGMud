@@ -324,7 +324,7 @@ command-aliases:
   status:             ['sta', 'stat', 'stats', 'score', 'info']
   online:             ['who']
   inventory:          ['i', 'inv', 'eq', 'equipment']
-  look:               ['l', 'examine']
+  look:               ['l', 'examine', 'exam']
   go:                 ['enter']
   map:                ['m']
   conditions:         ['c', 'cond', 'conds']

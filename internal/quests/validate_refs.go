@@ -27,6 +27,9 @@ type QuestValidators struct {
 	FlagDeclared    func(key, value string) bool // foreign quests' flag declarations
 	DialogueGrants  func(token string) bool      // some dialogue file grants this token
 	MobHasDialogue  func(mobId int) bool
+	// HiddenNounExists reports whether the room template has a hidden noun
+	// with exactly this key (the discover action's target).
+	HiddenNounExists func(roomId int, key string) bool
 }
 
 // refsCtx accumulates findings and carries the incoming definition, since
@@ -120,9 +123,20 @@ func (c *refsCtx) checkPairList(where, list, kind string, exists func(string) bo
 	}
 }
 
-func (c *refsCtx) checkActions(where string, actions []ActionDef, depth int) {
+// checkActions validates a trigger's actions. roomId is the room the trigger
+// fires in (its room filter, else its in_room condition), 0 when it names
+// none; a discover action needs it.
+func (c *refsCtx) checkActions(where string, actions []ActionDef, depth int, roomId int) {
 	for i, a := range actions {
 		aw := fmt.Sprintf("%s action %d", where, i)
+		if a.Discover != "" {
+			switch {
+			case roomId <= 0:
+				c.errf("%s: discover %q: the trigger names no room (set room or in_room), so the hidden noun has no room to be found in", aw, a.Discover)
+			case c.v.RoomExists(roomId) && !c.v.HiddenNounExists(roomId, a.Discover):
+				c.errf("%s: discover %q: room %d has no hidden noun with that key", aw, a.Discover, roomId)
+			}
+		}
 		c.checkToken(aw+" grant", a.Grant)
 		c.checkItem(aw+" consume_item", a.ConsumeItem)
 		c.checkItem(aw+" give_item", a.GiveItem)
@@ -183,7 +197,7 @@ func (c *refsCtx) checkActions(where string, actions []ActionDef, depth int) {
 			// nesting is unbounded at runtime and a reference three levels down
 			// is just as live. A definition from YAML or the editor's JSON
 			// cannot be cyclic, so the recursion always ends.
-			c.checkActions(aw+" sequence on_complete", a.Sequence.OnComplete, depth+1)
+			c.checkActions(aw+" sequence on_complete", a.Sequence.OnComplete, depth+1, roomId)
 		}
 	}
 }
@@ -283,7 +297,11 @@ func ValidateQuestRefs(q Quest, v QuestValidators) (errs []string, warns []strin
 			c.checkFlag(tw+" missing_flag", k, val)
 		}
 
-		c.checkActions(tw, t.Actions, 0)
+		triggerRoom := t.Room
+		if triggerRoom <= 0 {
+			triggerRoom = t.Conditions.InRoom
+		}
+		c.checkActions(tw, t.Actions, 0, triggerRoom)
 	}
 
 	// Rewards.

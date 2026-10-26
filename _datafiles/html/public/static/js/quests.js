@@ -272,6 +272,7 @@
     teach_spell:   [{ k: "teach_spell", kind: "spell", label: "Spell" }],
     teleport:      [{ k: "teleport", kind: "room", label: "Room" }],
     give_mutation: [{ k: "give_mutation", kind: "bool", label: "Roll a random mutation" }],
+    discover:      [{ k: "discover", kind: "text", label: "Hidden noun key (trigger's room)" }],
     npc_say:       "custom",
     spawn_mob:     [{ k: "id", kind: "mob", label: "Mob", nest: true }, { k: "room", kind: "room", label: "Room", nest: true }],
     spawn_item:    [{ k: "id", kind: "item", label: "Item", nest: true }, { k: "room", kind: "room", label: "Room", nest: true }],

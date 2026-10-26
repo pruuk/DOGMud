@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -420,7 +421,7 @@ func storeRecovered(actor Actor, recovered []crafting.RecipeIngredient, result *
 				continue
 			}
 			newItem := items.New(matSpec.ItemId)
-			char.StoreItem(newItem)
+			acquire.AcquireItemForChar(char, actor.GetUserId(), actor.GetMobInstanceId(), newItem, acquire.AcquireSalvage)
 			result.MaterialIds = append(result.MaterialIds, matSpec.ItemId)
 		}
 	}

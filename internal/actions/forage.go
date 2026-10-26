@@ -3,8 +3,8 @@ package actions
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/forager"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -150,14 +150,7 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 		return result
 	}
 
-	char.StoreItem(newItem)
-	if actor.GetUserId() != 0 {
-		events.AddToQueue(events.ItemOwnership{
-			UserId: actor.GetUserId(),
-			Item:   newItem,
-			Gained: true,
-		})
-	}
+	acquire.AcquireItemForChar(char, actor.GetUserId(), actor.GetMobInstanceId(), newItem, acquire.AcquireForage)
 	if actor.IsPlayer() {
 		actor.SendText(messaging.CategorySystem,
 			fmt.Sprintf(`You find %s<ansi fg="itemname">%s</ansi>.`, items.ArticlePrefix(newItem.DisplayName()), items.MidSentenceName(newItem.DisplayName())))

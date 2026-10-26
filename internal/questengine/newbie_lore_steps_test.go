@@ -1,11 +1,32 @@
 package questengine
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	yaml "gopkg.in/yaml.v3"
 )
+
+// topicHints is the lowercased hint of one topic in a Pothole Coulee
+// dialogue file.
+func topicHints(t *testing.T, file, key string) string {
+	t.Helper()
+	tp := loadCouleeTopics(t, file).FindTopic(key)
+	require.NotNil(t, tp, "%s has no topic %s", file, key)
+	return strings.ToLower(tp.Hints)
+}
+
+// roomDescription is a shipped room's description.
+func roomDescription(t *testing.T, zoneFolder string, roomId int) string {
+	t.Helper()
+	var room struct {
+		Description string `yaml:"description"`
+	}
+	require.NoError(t, yaml.Unmarshal(repoFile(t, "_datafiles", "world", "dogmud", "rooms", zoneFolder, fmt.Sprintf("%d.yaml", roomId)), &room))
+	return room.Description
+}
 
 // The Lore spoke (Pothole Coulee quests 47, 48, 49 and the repeatable 58),
 // walked through the real YAML under the owner ruling of 2026-10-17: one
@@ -116,6 +137,12 @@ func TestQuest48StandingStones_OneCommandPerStep(t *testing.T) {
 	})
 }
 
+// searchFloor is `search floor` in a room: since #375 phase 3a quests 49
+// and 58 listen for a search of the Reliquary floor, where the disc lies.
+func searchFloor(roomId int) EventDetails {
+	return EventDetails{RoomId: roomId, Verb: "search", Noun: "floor", RoomNoun: "floor"}
+}
+
 func TestQuest49OldShrine_OneCommandPerStep(t *testing.T) {
 	const reliquary, nave = 5343, 5342
 	q := loadShippedQuest(t, "49-the_old_shrine.yaml", 49)
@@ -126,18 +153,44 @@ func TestQuest49OldShrine_OneCommandPerStep(t *testing.T) {
 	loreOnlyFinalStepReports(t, q, "sere")
 	start := strings.ToLower(loreStepHint(t, q, "start"))
 	require.Contains(t, start, "type search")
+	require.True(t, strings.HasPrefix(start, "from the old shrine"),
+		"hint can be typed anywhere, so the directions start from where Sere gives the quest")
 	require.NotContains(t, start, "look at", "looking at the find is not a step; it belongs in the description")
 	require.NotContains(t, start, "go up", "the Reliquary is west then north of the shrine, not up")
+	// The search lesson (#375 phase 3a, owner ruling 9): search the one
+	// thing that looks disturbed, or the whole room, slower and less sure.
+	// Only the first is typed; the second is named, not asked for.
+	require.Contains(t, start, "type search floor")
+	require.Contains(t, start, "whole room")
+	require.Contains(t, start, "less sure")
+	require.Contains(t, start, "type help search", "the lesson points at its help page")
+	offer := topicHints(t, "9160.yaml", "shrine_offer")
+	require.Contains(t, offer, "type search floor", "Sere's offer teaches the same two routes")
+	require.Contains(t, offer, "whole room")
+
+	t.Run("the Reliquary hints at the floor and never instructs", func(t *testing.T) {
+		desc := strings.ToLower(roomDescription(t, "pothole_coulee", 5343))
+		require.Contains(t, desc, "flagstone floor")
+		require.NotContains(t, desc, "search", "a room hints at its secret; the step hint teaches the command (ruling 7)")
+	})
 
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
-		w.notify("command", EventDetails{Command: "search", RoomId: nave})
+		w.notify("room_interact", searchFloor(nave))
 		require.Equal(t, "start", w.p.current, "a search outside the Reliquary must not count")
 		require.False(t, holdsAll(w.p, turnIn))
 
-		w.notify("command", EventDetails{Command: "search", RoomId: reliquary})
+		look := searchFloor(reliquary)
+		look.Verb = "look"
+		w.notify("room_interact", look)
+		require.Equal(t, "start", w.p.current, "looking at the floor is not searching it")
+
+		require.Empty(t, w.ctx.discovered)
+		w.notify("room_interact", searchFloor(reliquary))
 		require.Equal(t, "find", w.p.current)
 		require.True(t, holdsAll(w.p, turnIn))
+		require.Equal(t, []string{"disc"}, w.ctx.discovered,
+			"the find marks the disc found, so look disc and search treat it as known")
 	})
 
 	t.Run("player saved on find can turn in", func(t *testing.T) {
@@ -178,9 +231,9 @@ func TestQuest58ReadingTheStones_FinishesWhereItSays(t *testing.T) {
 	}
 
 	w := newQuestWalker(q).at("start")
-	w.notify("command", EventDetails{Command: "search", RoomId: 5342})
+	w.notify("room_interact", searchFloor(5342))
 	require.Equal(t, "start", w.p.current, "a search outside the Reliquary must not count")
-	w.notify("command", EventDetails{Command: "search", RoomId: reliquary})
+	w.notify("room_interact", searchFloor(reliquary))
 	require.Equal(t, "end", w.p.current)
 
 	t.Run("Sere's greeting names the search while it is open", func(t *testing.T) {

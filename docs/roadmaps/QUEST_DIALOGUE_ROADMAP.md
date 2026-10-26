@@ -248,7 +248,11 @@ alternative ways into a step (P4).
 **Exit.** Each new event has a test proving it fires on the real action and not on a
 look-alike; #588 closed.
 
-**Status:** not started.
+**Status:** split 2026-10-26 (owner). 3a, the engine half existing quests rely on (one acquire
+seam, walking gates, look and search as the only interaction verbs, the search rework, teaching
+look and search): spec `docs/superpowers/specs/2026-10-26-quest-arc-phase3a-action-triggers-design.md`.
+3b, new trigger kinds (talk, use with a target, observe, explore by area): not started.
+3a is implemented on branch `feat/375-phase3a` (PR pending).
 
 ## Phase 4: Minimap guidance (engine half)
 

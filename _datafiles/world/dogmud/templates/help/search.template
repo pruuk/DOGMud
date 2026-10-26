@@ -1,7 +1,7 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">search</ansi> (skill)
 
 The <ansi fg="skill">search</ansi> skill governs your ability to find hidden
-things — secret exits, concealed containers, stashed items, hidden creatures,
+things: secret exits, concealed containers, stashed items, hidden creatures,
 and obscured objects. It also powers your capacity to track creatures and
 forage for materials.
 
@@ -11,47 +11,59 @@ skilled you are, the more you can uncover.
 
 <ansi fg="yellow">━━━ The search Command ━━━</ansi>
 
-  <ansi fg="command">search</ansi>          Scour the current room for hidden things.
-  <ansi fg="command">search [thing]</ansi>  Search one thing in the room closely.
+  <ansi fg="command">search</ansi>          Search the whole room.
+  <ansi fg="command">search [thing]</ansi>  Search one thing in the room, carefully.
 
-A close search looks at one thing you can see in the room: something
-named in its description, a chest, or a hidden thing you have already
-found. Try <ansi fg="command">search bookshelf</ansi> or <ansi fg="command">search under the table</ansi>.
-It searches the whole room as well, so nothing a plain search would
-find is missed, and small lost things are often tucked away about the
-thing itself: a close search is a fresh chance to find one. Each
-thing gives that fresh chance once an hour; search it again sooner
-and it is an ordinary search of the room.
+<ansi fg="command">look</ansi> and <ansi fg="command">search</ansi> are the two ways you deal with the things in a room. Use
+<ansi fg="command">look</ansi> to learn more about something the description mentions (see
+<ansi fg="command">help look</ansi>). Use <ansi fg="command">search</ansi> when something looks disturbed, out of place,
+or like it could be hiding something.
+
+<ansi fg="command">search [thing]</ansi> searches that one thing and nothing else. It is the
+better choice when a room points at something, such as a loose stone, a
+shifted bookshelf or a disturbed patch of ground. Try
+<ansi fg="command">search bookshelf</ansi> or <ansi fg="command">search table</ansi>.
+
+A plain <ansi fg="command">search</ansi> goes over the whole room. It is slower to pay off and
+less certain. It can turn up the same secrets as a careful search of one
+thing, and it can also find what only a whole-room search can: hidden
+exits, stashes, and creatures that are hiding.
 
 Search someone's home while they are about, and what you turn up stays
 where you found it: it is theirs. Taking it is stealing, with
 <ansi fg="command">steal</ansi> (see <ansi fg="command">help steal</ansi>). Things left lying untouched are gone within a day.
 
-You can search once every couple of rounds. As your <ansi fg="skill">search</ansi>
-skill improves through repeated use, you may discover things you previously
-missed.
+<ansi fg="yellow">━━━ Recovery Time ━━━</ansi>
+
+Searching takes the same recovery time (cooldown) as special moves and
+spells. You cannot search and then use a special move or cast a spell
+straight away, or the other way round. Wait for the cooldown to end first.
+Type <ansi fg="command">cooldowns</ansi> to check (see <ansi fg="command">help cooldowns</ansi>).
+
+As your <ansi fg="skill">search</ansi> skill improves through repeated use, you may
+discover things you previously missed.
 
 <ansi fg="yellow">━━━ Search Applications ━━━</ansi>
 
-Your <ansi fg="skill">search</ansi> skill opens doors to three distinct arts:
+Your <ansi fg="skill">search</ansi> skill also powers two other commands:
 
-  <ansi fg="command">track</ansi>  — Follow trails left by creatures and players.
+  <ansi fg="command">track</ansi>  Follow trails left by creatures and players.
             Higher search skill lets you follow trails farther and read
             more detail from the tracks you find.
 
-  <ansi fg="command">forage</ansi> — Gather herbs, wood, ore, and materials from
+  <ansi fg="command">forage</ansi> Gather herbs, wood, ore, and materials from
             natural environments. Your search skill determines what
             quality materials you can uncover, and how rare the finds
             might be.
 
 <ansi fg="yellow">━━━ Skill Progression ━━━</ansi>
 
-The <ansi fg="skill">search</ansi> skill improves through use — every search
+The <ansi fg="skill">search</ansi> skill improves through use. Every search
 attempt has a small chance to deepen your mastery. Over time, your
 <ansi fg="yellow">Perception</ansi> and your accumulated rank in
 <ansi fg="skill">search</ansi> will determine what you can find.
 
 <ansi fg="yellow">See Also:</ansi>
 
-  <ansi fg="command">help track</ansi>, <ansi fg="command">help forage</ansi>,
-  <ansi fg="command">help perception</ansi>, <ansi fg="command">help skills</ansi>
+  <ansi fg="command">help look</ansi>, <ansi fg="command">help cooldowns</ansi>, <ansi fg="command">help track</ansi>,
+  <ansi fg="command">help forage</ansi>, <ansi fg="command">help perception</ansi>, <ansi fg="command">help skills</ansi>

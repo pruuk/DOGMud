@@ -157,7 +157,7 @@ var questEventVocab = []vocabEntry{
 	{"command_issued", "player TYPED a command, success or not: fires from TryCommand for any command (filters: command, room)"},
 	{"item_gain", "an item enters the player's inventory (filter: item)"},
 	{"quest_granted", "a quest token was just granted: the chaining event (filter: quest_token)"},
-	{"room_interact", "player looked/examined a room noun (filters: room, noun, verb)"},
+	{"room_interact", "player looked at or searched a room feature (filters: room, noun, verb: look or search; empty means look)"},
 }
 
 var questConditionVocab = []vocabEntry{
@@ -197,6 +197,7 @@ var questActionVocab = []vocabEntry{
 	{"teleport", "move the player to a room"},
 	{"give_mutation", "roll and grant a random mutation"},
 	{"set_flag", "record a quest flag (key+value must be declared)"},
+	{"discover", "mark a hidden noun of the trigger's room as found by the player"},
 	{"sequence", "timed line sequence with optional on-complete actions and movement lock"},
 	{"bump_rep", "adjust faction reputation"},
 	{"declare_bounty", "post a bounty (issuer, target, condition, overrides)"},

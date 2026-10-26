@@ -57,7 +57,7 @@ opener:
     text: You had a ledger full of names? Then where is it? Without it, I cannot
       arrest anyone.
     hints: If you lost the bribe ledger, go back to the strongbox in Torvan's
-      Operations Room and type open strongbox.
+      Operations Room and type look strongbox.
   - questRequired:
     - 14-end
     text: The tunnel operation is shut down and the arrests are underway. That ledger

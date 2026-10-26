@@ -3,7 +3,8 @@
 # Token flow:
 #   58-start — granted by Hermit Sere's dialogue (stones_loop_offer node).
 #              Requires 49-end (The Old Shrine). Repeatable with cooldown.
-#   58-end   — command trigger on search in the Reliquary room (5343).
+#   58-end: a `verb: search` room_interact on the Reliquary floor (5343),
+#              the feature quest 49's disc is tucked into (#375 phase 3a).
 #              Requires 58-start. Auto-grants reward + clears for repeat.
 #              There is no report back (2026-10-17): the hint, Sere's offer
 #              and the reward lines all say the search finishes it, and the
@@ -28,7 +29,7 @@ steps:
       old stones again. The search itself completes the reading.
     hint: >-
       From the Old Shrine, go west into the Collapsed Nave and north
-      into the Reliquary, then type search.
+      into the Reliquary, then type search floor.
   - id: end
     description: >-
       You read the stones again. Sere will have more for you when the
@@ -48,8 +49,9 @@ rewards:
     something no one else can hear.
 
 triggers:
-  - event: command
-    command: search
+  - event: room_interact
+    verb: search
+    noun: floor
     room: 5343
     conditions:
       has: ["58-start"]
@@ -57,6 +59,6 @@ triggers:
     actions:
       - grant: "58-end"
       - actor: >-
-          The stones give up a little more than they did before --
-          not much, but something. The mark at the center of the
+          The stones give up a little more than they did before. It is
+          not much, but it is something. The mark at the center of the
           disc catches your eye again, unchanged and patient.

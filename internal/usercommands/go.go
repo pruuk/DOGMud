@@ -18,7 +18,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
-	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/relationships"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -46,21 +45,6 @@ func unlockExit(user *users.UserRecord, room *rooms.Room, exitName string, exitI
 	room.PlaySound(`change`, `other`)
 	exitInfo.Lock.SetUnlocked()
 	room.SetExitLock(exitName, false)
-}
-
-// questGateRefuses runs the quest engine's room_gate triggers for a step from
-// room into destRoom and reports whether one refused it. A room_gate trigger
-// fires BEFORE the move; its actions narrate the refusal and the player stays
-// where they are. Its conditions are read with the player still in room, so
-// in_room names the side the gate stands on. destRoom matches by its template
-// id, as room_enter does.
-func questGateRefuses(user *users.UserRecord, room *rooms.Room, destRoom *rooms.Room) bool {
-	matchRoom, _ := rooms.OriginalRoomId(destRoom.RoomId)
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	return questengine.GetEngine().Notify("room_gate", questengine.EventDetails{
-		UserId: user.UserId,
-		RoomId: matchRoom,
-	}, bridge, bridge).Handled
 }
 
 // PartyFollowLostLine is what a party member reads when the leader leaves
@@ -216,8 +200,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		// destination's creatures never notice a player who never arrived.
 		// It used to be a room_enter trigger that teleported the player back,
 		// so the player read the refusal, then "You head downward.", then the
-		// destination's detection line (#558, 2026-10-17 playtest).
-		if questGateRefuses(user, room, destRoom) {
+		// destination's detection line (#558, 2026-10-17 playtest). Flee
+		// shares the gate through actions.QuestGateBlocks (#588).
+		if actions.QuestGateRefuses(user, room, destRoom) {
 			return true, nil
 		}
 

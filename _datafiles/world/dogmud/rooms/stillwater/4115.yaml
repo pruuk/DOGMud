@@ -54,7 +54,9 @@ nouns:
     beyond the high water, smoothed glass-pale by the
     lake's working. Long enough to sit on, dry enough
     to be a bench in fair weather. Faint claw-marks on
-    one end are too big for a crayfish.
+    one end are too big for a crayfish. On its landward
+    side a smaller piece of wood sits wedged against it,
+    more neatly than any wave would leave it.
   pebbles: A narrow strand of black basalt and
     water-rounded gravel, rolling and clicking
     underfoot. Each step sounds louder than your
@@ -63,6 +65,7 @@ nouns:
     long arcing throws.
 hidden_nouns:
   loose driftwood:
+    on: log
     description: |
       A wedge of driftwood, set just inside the larger log,
       shifts when you press it, and beneath it, half-buried
@@ -70,7 +73,8 @@ hidden_nouns:
       cached here recently. The cache is empty for now.
       A fisherman's discreet stash, perhaps; or a smuggler's.
     hidden_description: |
-      A wedge of smaller driftwood is set just inside the larger log, too neat to be the lake's work.
+      A wedge of smaller driftwood is set just inside the larger log,
+      too neat to be the lake's work.
 idlemessages:
 - A pebble shifts under the lap of a small wave with a flat dry click.
 - A gull drops onto the driftwood log, considers you, and lifts away.

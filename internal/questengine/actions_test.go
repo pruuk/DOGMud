@@ -41,6 +41,7 @@ type mockActionContext struct {
 	bumpedRep         []BumpRepCall
 	increasedStats    []StatIncreaseCall
 	learnedRecipes    []string
+	discovered        []string
 	userId            int
 }
 
@@ -93,6 +94,7 @@ func (m *mockActionContext) UnlockExits(e ExitLock)         { m.unlockedExits = 
 func (m *mockActionContext) QueueNpcSay(n NpcSayDef)        { m.npcSays = append(m.npcSays, n) }
 func (m *mockActionContext) QueueSequence(s SequenceDef)    { m.sequences = append(m.sequences, s) }
 func (m *mockActionContext) GiveMutation()                  {}
+func (m *mockActionContext) DiscoverHiddenNoun(key string)  { m.discovered = append(m.discovered, key) }
 func (m *mockActionContext) SetQuestFlag(key, value string) {}
 func (m *mockActionContext) BumpRep(factionId string, delta int) {
 	m.bumpedRep = append(m.bumpedRep, BumpRepCall{Faction: factionId, Delta: delta})
@@ -162,6 +164,15 @@ func TestExecuteAction_Sequence(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, ctx.sequences, 1)
 	assert.Equal(t, 2, len(ctx.sequences[0].Lines))
+}
+
+// A discover action records a room hidden noun as found for the player, so
+// look and search treat it as a known feature afterwards (#375 phase 3a).
+func TestExecuteAction_Discover(t *testing.T) {
+	ctx := newMockActionContext(1)
+	err := ExecuteAction(ActionDef{Discover: "disc"}, ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"disc"}, ctx.discovered)
 }
 
 func TestExecuteAction_EmptyAction(t *testing.T) {

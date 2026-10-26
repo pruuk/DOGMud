@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -152,7 +153,9 @@ func (b *GameBridge) ConsumeItem(itemId int) {
 
 // GiveItem creates a new item and places it in the player's inventory.
 //
-// StoreItem refuses when carried weight would exceed twice carry capacity —
+// It acquires through the seam (internal/acquire), which raises
+// ItemOwnership{Gained} only when the item lands. StoreItem underneath
+// refuses when carried weight would exceed twice carry capacity —
 // the game's own "crushed" encumbrance tier, which players do reach. Ignoring
 // that boolean told the player they had received a quest item that does not
 // exist, and let the rest of the trigger (typically the quest-advance grant)
@@ -165,7 +168,7 @@ func (b *GameBridge) GiveItem(itemId int) error {
 		mudlog.Error("GameBridge.GiveItem", "error", fmt.Sprintf("item %d not found", itemId))
 		return fmt.Errorf("give_item: item %d not found", itemId)
 	}
-	if !b.user.Character.StoreItem(newItem) {
+	if !acquire.AcquireItem(b.user, newItem, acquire.AcquireQuestGive) {
 		b.user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 			"You are carrying too much to take the <ansi fg=\"item\">%s</ansi>. "+
 				"Put something down, then try again.", newItem.DisplayName()))
@@ -396,6 +399,13 @@ func (b *GameBridge) UnlockExits(e ExitLock) {
 	for exitName := range room.Exits {
 		room.SetExitLock(exitName, false)
 	}
+}
+
+// DiscoverHiddenNoun records key as discovered in the bridge's room, the
+// real room the player stands in (room.RoomId), which is the id look and
+// search check and record with.
+func (b *GameBridge) DiscoverHiddenNoun(key string) {
+	b.user.Character.AddDiscovery(b.roomId, key)
 }
 
 // SetQuestFlag sets a quest flag on the player's character.

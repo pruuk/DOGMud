@@ -3,6 +3,7 @@ package actions
 import (
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -238,7 +239,7 @@ func InitiateCraft(actor Actor, recipeName string) CraftResult {
 		if crafting.ShouldStampMakerName(newItem.CraftSkill, newItem.GetSpec()) {
 			newItem.MakerName = char.Name
 		}
-		char.StoreItem(newItem)
+		acquire.AcquireItemForChar(char, actor.GetUserId(), actor.GetMobInstanceId(), newItem, acquire.AcquireCraft)
 		res.OutputName = newItem.DisplayName()
 		res.ImmediateComplete = true
 		return res

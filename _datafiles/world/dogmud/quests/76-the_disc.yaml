@@ -69,11 +69,31 @@ triggers:
       - give_item: 40167
       - actor: >-
           You work your fingers into the crack and lift the disc free of
-          the floor — cool, too smooth, heavier than its size. Fine raised
+          the floor: cool, too smooth, heavier than its size. Fine raised
           lines thread across its face to a ring struck through with a
           line. You do not understand it. You are fairly certain no one
           here does. You put it away.
       - observer: "{actor} works something free of the cracked floor and pockets it."
+  # Maren's letter (item 40041), for any player, on or off this quest: the
+  # loose stone by the hearth hides it. Moved here from the room's behaviour
+  # tree, which answered push, move, pull, shift and press (#375 phase 3a,
+  # owner ruling 5: look and search are the only interaction verbs). Being a
+  # `verb: search` trigger, `search stone` runs the search (and its cooldown)
+  # first, and a plain search can find it at the room difficulty. Carrying
+  # the letter, the stone holds nothing more, and the search says so. Story
+  # first, so a full pack hears what is there before the refusal.
+  - event: room_interact
+    verb: search
+    room: 4023
+    noun: stone
+    conditions:
+      missing_item: 40041
+    actions:
+      - actor: >-
+          You work the loose stone free of its neighbors. It grinds aside and
+          shows a small cavity in the wall behind it. Inside, a folded letter
+          lies against the back of the hollow, hidden there on purpose.
+      - give_item: 40041
   - event: room_interact
     room: 4023
     noun: journal
@@ -84,13 +104,13 @@ triggers:
       - grant: "76-journal"
       - actor: |
           You sit at the cold table and read the man's life backward.
-          Years of it — a hand that starts careful and turns driven, the
+          Years of it: a hand that starts careful and turns driven, the
           same questions put a hundred ways to one buried thing far to
           the east. Something made, he is certain, and old past any
           reckoning, and wrong in a way he never quite sets down in
           words. He calls it only the thing. The ring struck through with
           a line is inked in every margin, worried at like a sore tooth.
-          Then, near the end, the part you came for without knowing it —
+          Then, near the end, the part you came for without knowing it:
           a method, worked out slow and sure across many pages, for
           waking the grey disc that is its key, and the marked hearth for
           the place to do it. The last line is not about the thing at
@@ -124,16 +144,16 @@ triggers:
       - actor: |
           You do as the journal says. You set the disc into the cut
           center of the hearthstone, where the marks draw inward to a
-          single point, and you follow his method through — the order of
+          single point, and you follow his method through: the order of
           it, the patience of it, the small exact things a driven man
           learned alone and wrote down so a stranger might one day do
           this right. For a long moment, nothing. Then the grey face
-          warms under your fingers — not with your warmth but its own.
+          warms under your fingers, not with your warmth but its own.
           The fine raised lines take the thin light from the shutter gap
           and keep it, holding a glow a half-breath past when it should
           fade, and the ring-struck mark at the center wakes and steadies,
           sure of itself now, sure of where it belongs. The disc is a key,
-          and it knows its door — east, in the broken country, in the
+          and it knows its door: east, in the broken country, in the
           buried face he gave his years to. His work, done at last, by a
           stranger's hand in the cottage he left to chase it. And a name
           comes to you off the last page, unbidden. Maren. He kept her,
@@ -155,7 +175,7 @@ triggers:
     conditions:
       missing: ["76-journal"]
     actions:
-      - actor: "Marks are cut into the hearthstone in a deliberate pattern — a method for something, though you cannot read it yet."
+      - actor: "Marks are cut into the hearthstone in a deliberate pattern, a method for something, though you cannot read it yet."
   # Recovery: a player who finished the quest and lost the woken disc takes
   # a fresh grey disc from the Reliquary (5343 gives one while it is
   # missing) and wakes it here again. Without this the keeper (9553) turns

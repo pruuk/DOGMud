@@ -3,6 +3,7 @@ package conversation
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/factions"
@@ -75,8 +76,9 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 			// encumbrance tier). Claiming delivery anyway, and worse,
 			// queueing ItemOwnership{Gained:true}, which fires item_gain
 			// quest triggers and auto-grants QuestTokens, advanced quest
-			// state on an item the player never received.
-			if !user.Character.StoreItem(newItem) {
+			// state on an item the player never received. The acquire seam
+			// raises the gain only when the item lands.
+			if !acquire.AcquireItem(user, newItem, acquire.AcquireTopic) {
 				send(messaging.CategoryRefusal, fmt.Sprintf(
 					`You can't carry the <ansi fg="itemname">%s</ansi>. `+
 						`Drop something, then ask again.`, newItem.DisplayName()))
@@ -85,11 +87,6 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 				return false
 			}
 			send(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>.`, items.ArticlePrefix(newItem.DisplayName()), items.MidSentenceName(newItem.DisplayName())))
-			events.AddToQueue(events.ItemOwnership{
-				UserId: user.UserId,
-				Item:   newItem,
-				Gained: true,
-			})
 			return true
 		},
 		GetQuestFlag: func(key string) string {

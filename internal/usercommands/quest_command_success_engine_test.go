@@ -3,6 +3,7 @@ package usercommands
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
@@ -67,7 +68,7 @@ func TestSearch_QuestCommandEventNotOnACooldownRefusal(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, fired(), "a search that runs must send the search command event")
 
-	require.False(t, user.Character.CooldownReady("search"), "fixture: the search spent its cooldown")
+	require.False(t, actions.SpecialMoveReady(user.Character), "fixture: the search claimed the special-move cooldown")
 	fired = listenForCommand(t, user, 999244, "search")
 	_, err = Search("", user, room, 0)
 	require.NoError(t, err)

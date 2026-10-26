@@ -1194,16 +1194,12 @@ func handleOffhandBreakUserDef(roundResult combat.AttackResult, defUser *users.U
 	// Visual (owner ruling 2026-09-21).
 	defRoom.SendTextVisualHidingNames(messaging.CategoryEquipment, fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> The <ansi fg="item">%s</ansi> <ansi fg="username">%s</ansi> was carrying breaks! <ansi fg="202">***</ansi></ansi>`, br.BrokenItemName, defUser.Character.Name), []string{defUser.Character.Name}, defUser.UserId)
 
+	// The replacement's gain was raised by the acquire seam in
+	// tryWeaponBreak, and only if it landed.
 	events.AddToQueue(events.ItemOwnership{
 		UserId: defUser.UserId,
 		Item:   br.BrokenItem,
 		Gained: false,
-	})
-
-	events.AddToQueue(events.ItemOwnership{
-		UserId: defUser.UserId,
-		Item:   br.ReplacementItem,
-		Gained: true,
 	})
 }
 
@@ -1220,16 +1216,12 @@ func handleOffhandBreakMobDef(roundResult combat.AttackResult, defMob *mobs.Mob)
 		defRoom.SendTextVisualHidingNames(messaging.CategoryEquipment, fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> The <ansi fg="item">%s</ansi> <ansi fg="mobname">%s</ansi> was carrying breaks! <ansi fg="202">***</ansi></ansi>`, br.BrokenItemName, defMob.Character.Name), []string{defMob.Character.Name})
 	}
 
+	// The replacement's gain was raised by the acquire seam in
+	// tryWeaponBreak, and only if it landed.
 	events.AddToQueue(events.ItemOwnership{
 		MobInstanceId: defMob.InstanceId,
 		Item:          br.BrokenItem,
 		Gained:        false,
-	})
-
-	events.AddToQueue(events.ItemOwnership{
-		MobInstanceId: defMob.InstanceId,
-		Item:          br.ReplacementItem,
-		Gained:        true,
 	})
 }
 

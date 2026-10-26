@@ -136,7 +136,7 @@ func TestSearch_CooldownGate(t *testing.T) {
 	second := Search(actor, SearchOptions{})
 
 	if !second.OnCooldown {
-		t.Error("second call within 2-round window should return OnCooldown=true")
+		t.Error("second call within the special-move cooldown should return OnCooldown=true")
 	}
 }
 

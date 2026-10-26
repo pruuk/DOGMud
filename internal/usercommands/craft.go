@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
@@ -761,7 +762,7 @@ func ingredientSummary(r *crafting.RecipeSpec) string {
 func completeCraft(user *users.UserRecord, room *rooms.Room, recipe *crafting.RecipeSpec) {
 	user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
 	newItem := items.New(recipe.Output.ItemId)
-	user.Character.StoreItem(newItem)
+	acquire.AcquireItem(user, newItem, acquire.AcquireCraft)
 	roles := recipe.Narrate(crafting.PhaseSuccess, textutil.TokenContext{
 		ActorName:      user.Character.GetCharacterName(true),
 		ActorPlainName: user.Character.GetCharacterName(false),

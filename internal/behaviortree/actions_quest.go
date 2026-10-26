@@ -7,6 +7,7 @@ package behaviortree
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -117,7 +118,7 @@ func actGiveItem(params map[string]any, ctx *EvalContext) Result {
 		return Failure
 	}
 	item := items.New(itemId)
-	if !user.Character.StoreItem(item) {
+	if !acquire.AcquireItem(user, item, acquire.AcquireTreeGive) {
 		return Failure
 	}
 	user.SendText(messaging.CategoryLoot, fmt.Sprintf("You receive a %s.\n", item.Name()))
@@ -188,7 +189,7 @@ func actReturnItem(params map[string]any, ctx *EvalContext) Result {
 	// both inventories or in neither.
 	if err := actions.TransferItemBetweenChars(item,
 		&mob.Character, 0, mob.InstanceId,
-		user.Character, user.UserId, 0,
+		user.Character, user.UserId, 0, acquire.AcquireTreeGive,
 	); err != nil {
 		mudlog.Warn("actReturnItem", "msg", "transfer failed",
 			"instanceId", ctx.InstanceId, "itemId", itemId, "userId", user.UserId, "error", err)
@@ -265,7 +266,7 @@ func actGiveItemMultiple(params map[string]any, ctx *EvalContext) Result {
 	}
 	for i := 0; i < count; i++ {
 		item := items.New(itemId)
-		user.Character.StoreItem(item)
+		acquire.AcquireItem(user, item, acquire.AcquireTreeGive)
 	}
 	return Success
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -383,14 +384,9 @@ func storageAddQuiet(user *users.UserRecord, itm items.Item) bool {
 // No player-facing message is sent; the caller is expected to print a
 // summary. Returns false if the player cannot carry the item.
 func storageRemoveQuiet(user *users.UserRecord, itm items.Item) bool {
-	if !user.Character.StoreItem(itm) {
+	if !acquire.AcquireItem(user, itm, acquire.AcquireStorage) {
 		return false
 	}
-	events.AddToQueue(events.ItemOwnership{
-		UserId: user.UserId,
-		Item:   itm,
-		Gained: true,
-	})
 	user.ItemStorage.RemoveItem(itm)
 	return true
 }

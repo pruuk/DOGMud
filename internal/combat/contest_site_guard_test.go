@@ -77,7 +77,7 @@ var contestSiteOwners = map[string]string{
 	// NOT channel attacks — there is no defender, only a fixed target number —
 	// so ResolveChannelAttack does not apply. They use contest.AgainstDifficulty,
 	// which is deliberately unfloored per combat.RunContest's scope note.
-	"internal/actions/search.go:Search":            "U10b-1b Phase A: four static-difficulty search tiers (125/125/135/175)",
+	"internal/actions/search.go:var searchRoll":    "U10b-1b Phase A: four static-difficulty search tiers (125/125/135/175); #375 3a moved the contest from Search into the searchRoll var",
 	"internal/actions/search.go:spotsHider":        "U10b-1b Phase C: hidden detection reconciled onto the OPPOSED form usercommands/go.go already used — the flat 135 threshold never read the hider's score",
 	"internal/forager/forage_core.go:ForageCore":   "U10b-1b Phase A: the per-biome forage difficulty. ForageCore is pure, so this is the whole of its uncertainty",
 	"internal/actions/track.go:resolveTrailDetail": "U10b-1b: the nested 125/135/175 trail-read ladder, static difficulty like search and forage",

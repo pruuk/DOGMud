@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -103,25 +104,7 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 
 	result := NotifyResult{}
 
-	triggers := e.triggerIndex[eventType]
-
-	// A trigger noun matches the typed noun exactly, then as a singular/plural
-	// variant ("look slabs" for `noun: slab`), then as the room noun the typed
-	// words name ("look floor board" for `noun: floorboard` where the room
-	// aliases `floor board` to it). The first tier that matches any trigger
-	// is the only one used, so a quest that authors two spellings of one
-	// thing never double-fires.
-	nounTier := nounExact
-	if details.Noun != "" {
-		nounTier = pickNounTier(triggers, details)
-	}
-
-	for _, t := range triggers {
-		// Field matching
-		if !matchTriggerFields(t.def, details, nounTier) {
-			continue
-		}
-
+	for _, t := range e.fieldMatches(eventType, details) {
 		// Visit tracking — prevent re-entry of same trigger in one chain
 		if !guard.MarkVisited(t.trigId) {
 			continue
@@ -165,6 +148,39 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 	}
 
 	return result
+}
+
+// fieldMatches returns, in index order, the triggers for eventType whose field
+// filters match the event details. It is the match step shared by evaluate
+// and WouldFire, so a dry run and a real notify can never disagree on which
+// triggers an event reaches.
+//
+// Conditions are deliberately not checked here. evaluate checks them per
+// trigger, after earlier triggers' actions (and their quest_granted chains)
+// have run, because those actions change the player state a later trigger's
+// conditions read. Field matching depends only on the event, so computing it
+// up front changes nothing.
+func (e *Engine) fieldMatches(eventType string, details EventDetails) []*indexedTrigger {
+	triggers := e.triggerIndex[eventType]
+
+	// A trigger noun matches the typed noun exactly, then as a singular/plural
+	// variant ("look slabs" for `noun: slab`), then as the room noun the typed
+	// words name ("look floor board" for `noun: floorboard` where the room
+	// aliases `floor board` to it). The first tier that matches any trigger
+	// is the only one used, so a quest that authors two spellings of one
+	// thing never double-fires.
+	nounTier := nounExact
+	if details.Noun != "" {
+		nounTier = pickNounTier(triggers, details)
+	}
+
+	var out []*indexedTrigger
+	for _, t := range triggers {
+		if matchTriggerFields(t.def, details, nounTier) {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
 // nounTier is how widely a trigger noun may match the event's noun. Each tier
@@ -219,8 +235,12 @@ func matchTriggerFields(t *TriggerDef, d EventDetails, tier nounTier) bool {
 	if t.Noun != "" && !nounMatches(t.Noun, d, tier) {
 		return false
 	}
-	if t.Verb != "" && t.Verb != d.Verb {
-		return false
+	// Only room_interact carries a verb: an empty trigger verb means look
+	// (#375 phase 3a), so a look trigger never fires on search.
+	if t.Verb != "" || d.Verb != "" {
+		if quests.InteractVerb(t.Verb) != d.Verb {
+			return false
+		}
 	}
 	return true
 }

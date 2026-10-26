@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -459,18 +460,12 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		} else {
 
 			if user.Character.Pet.RemoveItem(matchItem) {
-				if !user.Character.StoreItem(matchItem) {
+				if !acquire.AcquireItem(user, matchItem, acquire.AcquireGet) {
 					user.Character.Pet.StoreItem(matchItem)
 					user.SendText(messaging.CategoryRefusal,
 						fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
 					)
 				} else {
-
-					events.AddToQueue(events.ItemOwnership{
-						UserId: user.UserId,
-						Item:   matchItem,
-						Gained: true,
-					})
 
 					user.SendText(messaging.CategorySystem,
 						fmt.Sprintf(`You remove %s<ansi fg="itemname">%s</ansi> from %s.`, items.ArticlePrefix(matchItem.DisplayName()), items.MidSentenceName(matchItem.DisplayName()), user.Character.Pet.DisplayName()),
@@ -543,13 +538,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
 
 			// Trigger onFound event
-			if user.Character.StoreItem(matchItem) {
-
-				events.AddToQueue(events.ItemOwnership{
-					UserId: user.UserId,
-					Item:   matchItem,
-					Gained: true,
-				})
+			if acquire.AcquireItem(user, matchItem, acquire.AcquireGet) {
 
 				// Swap the item location
 				container.RemoveItem(matchItem)
@@ -810,17 +799,12 @@ func takeCorpseItem(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corp
 
 	user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
 
-	if !user.Character.StoreItem(matchItem) {
+	if !acquire.AcquireItem(user, matchItem, acquire.AcquireLoot) {
 		user.SendText(messaging.CategoryRefusal,
 			fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
 		)
 		return
 	}
-	events.AddToQueue(events.ItemOwnership{
-		UserId: user.UserId,
-		Item:   matchItem,
-		Gained: true,
-	})
 	corpse.Loot.RemoveItem(matchItem)
 
 	user.SendText(messaging.CategorySystem,

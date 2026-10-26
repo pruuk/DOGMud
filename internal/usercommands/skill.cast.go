@@ -373,7 +373,9 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 	}
 
-	// 14. Announce the cast start (skill progression now fires in InitiateCast).
+	// 14. Announce the cast start. Skill progression fires when the spell
+	// resolves (hooks/spell_resolution.go: one award per resolved cast), not
+	// here and not in InitiateCast.
 	user.SendText(messaging.CategorySpellFold, spells.GetCastMessage("cast_started", spellInfo.Name))
 
 	// Quest engine: command notification — the cast successfully initiated.

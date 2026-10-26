@@ -13,7 +13,8 @@ description: >
   current of dry air moving through, from somewhere you cannot
   follow it to. The fall itself is total; no gap admits more than
   a hand. Across the bed a faint scuffed track shows in the silt,
-  running toward the north wall and ending at it. The channel bed
+  running toward the north <ansi fg="itemname">wall</ansi> and
+  ending at it. The channel bed
   carries on east and west.
 biome: sewer
 coord:
@@ -40,6 +41,12 @@ nouns:
     different dressing and a different age from the courses on
     this side, and the thin dry air threading out of it smells of
     nothing at all.
+  wall: The north wall is old dressed stone, its courses dark with
+    age and seamed with the stains of water long gone. The scuffed
+    track in the silt runs right up to it and stops, as though
+    whoever made it walked into the stone. Low down, where the track
+    ends, the dust on the wall has been rubbed away in a small patch,
+    about the height of a knee.
 idlemessages:
 - The dry air out of the collapse keeps up its faint, steady
   draw.
@@ -48,6 +55,7 @@ idlemessages:
 - Fine dust sifts from between the fallen blocks and settles.
 hidden_nouns:
   coopers mark:
+    on: wall
     description: |
       Scratched at knee height beside a hairline seam in the north
       wall: a small sigil of curved strokes, a barrel stave in

@@ -10,10 +10,8 @@ description: >
   from the open nave to the east and releasing it in a faint
   exhalation through gaps in the north wall. Niches cut into the
   walls stand empty, their edges worn where offerings were set and
-  later removed or simply fell to the drift. The niches go deep.
-  Some of them, if you pressed your hand to the back, might reveal
-  a gap, a seam, a hollow that the rubble and dust have not
-  entirely filled. The kind of place where things wait.
+  later removed or simply fell to the drift. The niches go deep,
+  but grit and old ash are all they hold now.
 biome: ruins
 coord:
   x: 42
@@ -34,13 +32,10 @@ nouns:
   niches: Cut into the wall at regular intervals, the niches are
     roughly palm-width and deep enough to have held something
     significant. Their floors are dusted with grit and old ash.
-    The deepest ones are shadowed enough that the back wall
-    is not clearly visible from a standing position.
 idlemessages:
 - Dust shifts in the air above the <ansi fg="cyan">rubble</ansi>, moving against no
   visible current.
-- One of the <ansi fg="cyan">niches</ansi> exhales a faint, cool breath, as though
-  connected to something deeper than the wall's thickness suggests.
+- One of the <ansi fg="cyan">niches</ansi> exhales a faint, cool breath.
 - A piece of the ceiling mortar drops from a surviving section
   and disappears into a gap between two stones.
 - The dust settles. Then, slowly, it rises again.

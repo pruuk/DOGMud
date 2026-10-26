@@ -2,7 +2,8 @@ roomid: 6435
 zone: The Foldweave
 title: The Unreachable Overlook
 description: >
-  The sidepocket opens onto a shelf of hard-set silk that hangs out
+  The sidepocket opens onto a <ansi fg="itemname">shelf</ansi> of
+  hard-set silk that hangs out
   over the hung deep like a balcony, and from it you can see the
   <ansi fg="itemname">far side</ansi> plainly: another shelf across
   the gulf, close enough to call across, close enough to make out the
@@ -36,6 +37,12 @@ nouns:
     set apart, a hoard of something the weaver values, laid up where
     only the weaver's own long legs and folded roads can reach it. From
     here it is a thing to want and not to have.
+  shelf: >
+    The shelf you stand on is hard-set silk, pale and smooth, jutting
+    out over the deep like a balcony with no rail. At its edge the silk
+    curls back under itself to make a thick underlip, and along one
+    stretch of that lip the curl is lumpier than the rest, as though
+    something had been folded in and spun over.
 idlemessages:
 - A strand leaves the shelf toward the far side, bends partway across,
   and comes gently back to rest at your feet.
@@ -47,6 +54,7 @@ idlemessages:
   from across, and then the wrongness passes.
 hidden_nouns:
   fold-seam:
+    on: shelf
     description: |
       Along the shelf's underlip, where the hard silk curls back, a
       seam has been spun that does not match the rest: a folded pocket

@@ -76,7 +76,7 @@ end 56 quest 56 trigger command room=5284 command=forage grants=56-end
 end 56 step end
 end 57 quest 57 trigger mob_death mob=9147 grants=57-end
 end 57 step end
-end 58 quest 58 trigger command room=5343 command=search grants=58-end
+end 58 quest 58 trigger room_interact room=5343 noun=floor verb=search grants=58-end
 end 58 step end
 end 59 quest 59 trigger mob_death mob=9165 grants=59-end
 end 59 step end

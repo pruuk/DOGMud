@@ -7,19 +7,20 @@ import (
 
 func permissiveQuestValidators() QuestValidators {
 	return QuestValidators{
-		StepExists:      func(string) bool { return true },
-		MobExists:       func(int) bool { return true },
-		ItemExists:      func(int) bool { return true },
-		RoomExists:      func(int) bool { return true },
-		ConditionExists: func(int) bool { return true },
-		SpellExists:     func(string) bool { return true },
-		SkillExists:     func(string) bool { return true },
-		StatExists:      func(string) bool { return true },
-		RecipeExists:    func(string) bool { return true },
-		FactionExists:   func(string) bool { return true },
-		FlagDeclared:    func(string, string) bool { return true },
-		DialogueGrants:  func(string) bool { return true },
-		MobHasDialogue:  func(int) bool { return true },
+		StepExists:       func(string) bool { return true },
+		MobExists:        func(int) bool { return true },
+		ItemExists:       func(int) bool { return true },
+		RoomExists:       func(int) bool { return true },
+		ConditionExists:  func(int) bool { return true },
+		SpellExists:      func(string) bool { return true },
+		SkillExists:      func(string) bool { return true },
+		StatExists:       func(string) bool { return true },
+		RecipeExists:     func(string) bool { return true },
+		FactionExists:    func(string) bool { return true },
+		FlagDeclared:     func(string, string) bool { return true },
+		DialogueGrants:   func(string) bool { return true },
+		MobHasDialogue:   func(int) bool { return true },
+		HiddenNounExists: func(int, string) bool { return true },
 	}
 }
 
@@ -102,6 +103,44 @@ func TestValidateRefs_IdExistence(t *testing.T) {
 	errsContainingRefs(t, errs, "room 777")
 	errsContainingRefs(t, errs, "condition 666")
 	errsContainingRefs(t, errs, "map_target")
+}
+
+// A discover action names a hidden noun of the trigger's room (its room
+// filter, else its in_room condition). The key must exist there, and a
+// trigger that names no room cannot say where the noun is (#375 phase 3a).
+func TestValidateRefs_DiscoverNamesAHiddenNounOfTheTriggerRoom(t *testing.T) {
+	v := permissiveQuestValidators()
+	v.HiddenNounExists = func(roomId int, key string) bool { return roomId == 100 && key == "disc" }
+
+	ok := refsBaseQuest()
+	ok.Triggers[0].Actions = append(ok.Triggers[0].Actions, ActionDef{Discover: "disc"})
+	if errs, _ := ValidateQuestRefs(ok, v); len(errs) != 0 {
+		t.Fatalf("disc is a hidden noun of room 100, got %v", errs)
+	}
+
+	missing := refsBaseQuest()
+	missing.Triggers[0].Actions = append(missing.Triggers[0].Actions, ActionDef{Discover: "ghost"})
+	errs, _ := ValidateQuestRefs(missing, v)
+	errsContainingRefs(t, errs, `discover "ghost"`)
+
+	nested := refsBaseQuest()
+	nested.Triggers[0].Actions = append(nested.Triggers[0].Actions, ActionDef{Sequence: &SequenceDef{
+		OnComplete: []ActionDef{{Discover: "ghost"}},
+	}})
+	errs, _ = ValidateQuestRefs(nested, v)
+	errsContainingRefs(t, errs, `discover "ghost"`)
+
+	inRoom := refsBaseQuest()
+	inRoom.Triggers[1].Conditions.InRoom = 100
+	inRoom.Triggers[1].Actions = append(inRoom.Triggers[1].Actions, ActionDef{Discover: "disc"})
+	if errs, _ := ValidateQuestRefs(inRoom, v); len(errs) != 0 {
+		t.Fatalf("in_room 100 places the trigger, got %v", errs)
+	}
+
+	noRoom := refsBaseQuest()
+	noRoom.Triggers[1].Actions = append(noRoom.Triggers[1].Actions, ActionDef{Discover: "disc"})
+	errs, _ = ValidateQuestRefs(noRoom, v)
+	errsContainingRefs(t, errs, "names no room")
 }
 
 func TestValidateRefs_NamedRegistries(t *testing.T) {

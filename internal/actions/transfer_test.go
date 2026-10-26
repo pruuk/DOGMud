@@ -3,6 +3,7 @@ package actions
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -205,7 +206,7 @@ func TestTransferItemBetweenChars_Happy(t *testing.T) {
 
 	beforeTotal := countCharItems(charA) + countCharItems(charB)
 
-	err := TransferItemBetweenChars(itm, charA, 1, 0, charB, 2, 0)
+	err := TransferItemBetweenChars(itm, charA, 1, 0, charB, 2, 0, acquire.AcquireGive)
 	require.NoError(t, err)
 
 	afterTotal := countCharItems(charA) + countCharItems(charB)
@@ -225,7 +226,7 @@ func TestTransferItemBetweenChars_NotFound(t *testing.T) {
 
 	beforeTotal := countCharItems(charA) + countCharItems(charB)
 
-	err := TransferItemBetweenChars(itm, charA, 1, 0, charB, 2, 0)
+	err := TransferItemBetweenChars(itm, charA, 1, 0, charB, 2, 0, acquire.AcquireGive)
 	assert.Error(t, err, "should error when item not in source")
 
 	afterTotal := countCharItems(charA) + countCharItems(charB)
@@ -244,7 +245,7 @@ func TestTransferItemBetweenChars_DestFull(t *testing.T) {
 
 	beforeTotal := countCharItems(charA) + countCharItems(charB)
 
-	err := TransferItemBetweenChars(itm, charA, 1, 0, charB, 2, 0)
+	err := TransferItemBetweenChars(itm, charA, 1, 0, charB, 2, 0, acquire.AcquireGive)
 	assert.ErrorIs(t, err, ErrInventoryFull, "should error when destination is full")
 
 	afterTotal := countCharItems(charA) + countCharItems(charB)

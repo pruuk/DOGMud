@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -46,6 +47,18 @@ func Read(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			foundItemDescription = desc
 		} else {
 			carriedWithoutText = true
+		}
+	}
+
+	// Nothing carried by that name: read is in the look family (#375 phase
+	// 3a, owner ruling 5), so it answers a room feature ("read the
+	// inscription") as look would, quest triggers first.
+	if !carriedWithoutText && len(foundItemName) == 0 {
+		if notifyRoomInteract(user, room, quests.VerbLook, rest, room.NounNamedBy(rest)) {
+			return true, nil
+		}
+		if featureNamedBy(user, room, rest) != `` {
+			return Look(rest, user, room, flags)
 		}
 	}
 

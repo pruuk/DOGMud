@@ -702,7 +702,12 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 		meetToken(p, t.QuestToken, own)
 	}
 	d := EventDetails{RoomId: t.Room, MobId: t.Mob, ItemId: t.Item, Skill: t.Skill,
-		Command: t.Command, Noun: t.Noun, Verb: t.Verb, QuestToken: t.QuestToken}
+		Command: t.Command, Noun: t.Noun, QuestToken: t.QuestToken}
+	if t.Event == "room_interact" {
+		// The dispatcher always sends a verb family; an empty trigger verb
+		// means look (#375 phase 3a).
+		d.Verb = quests.InteractVerb(t.Verb)
+	}
 	if d.RoomId == 0 {
 		d.RoomId = c.InRoom
 	}

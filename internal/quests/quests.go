@@ -129,6 +129,16 @@ func (r *Quest) Validate() error {
 		if len(t.Actions) == 0 {
 			return fmt.Errorf("quest %d (%s): trigger %d has no actions", r.QuestId, r.Name, i)
 		}
+		// Look and search are the only interaction verbs (#375 phase 3a,
+		// owner ruling 5); only room_interact carries a verb at all.
+		if t.Verb != "" {
+			if t.Event != "room_interact" {
+				return fmt.Errorf("quest %d (%s): trigger %d sets verb %q on a %s trigger; only room_interact has a verb", r.QuestId, r.Name, i, t.Verb, t.Event)
+			}
+			if t.Verb != VerbLook && t.Verb != VerbSearch {
+				return fmt.Errorf("quest %d (%s): trigger %d has invalid verb %q (use %s or %s; empty means %s)", r.QuestId, r.Name, i, t.Verb, VerbLook, VerbSearch, VerbLook)
+			}
+		}
 	}
 
 	// Check for duplicate step IDs

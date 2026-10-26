@@ -1,5 +1,19 @@
 # DOGMud Patch Notes
 
+## 2026-10-26: Look and search
+
+- Look and search are now the two ways to deal with things in a room.
+  Look closely at the colored words in a room to learn more about them.
+  If something looks disturbed, search it. You can also search the
+  whole room, but that is slower and less sure.
+- Other words typed at a thing in a room, like pry or poke, now point
+  you to look and search instead of saying the word is not recognized.
+- Searching now shares its recovery time with special moves and spells,
+  so you cannot search and bash back to back.
+- Fleeing no longer slips past a place a quest has closed to you.
+- Quest rewards and other ways of getting items, like salvaging, now
+  count for quests that ask you to obtain something.
+
 ## 2026-10-26: Bigger bodies, fewer bonds
 
 - Titan Growth now makes you large at its later ranks. A large body

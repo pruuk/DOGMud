@@ -13,16 +13,27 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// Targeted search: `search bookshelf` (owner rulings, 2026-09-26 and 27).
+// Targeted search: `search bookshelf` (owner ruling, 2026-10-26, #375 phase
+// 3a; it overturns the 2026-09-26/27 ruling that a targeted search was the
+// whole room search plus a feature roll).
 //
-// `search <feature>` is the whole room search, every tier exactly as a
-// plain `search` (secret exits, hidden containers, stashes, hiders, hidden
-// nouns: quests hide their items behind `search shelf`, `search floor` and
-// the like, so a targeted search must never find less), plus one thing:
-// its bauble roll is the feature's own. A feature is a room noun (what
-// `look <noun>` describes), a hidden noun the player has already
-// discovered, or a container they can see. Words that name no feature are
-// a plain search, as `search <anything>` always was.
+// `search <feature>` searches ONLY that feature: the hidden nouns tucked
+// into it (HiddenNoun.On names it) roll at SearchFeatureHiddenDifficulty,
+// plus the feature's own bauble roll. It finds no secret exits, containers,
+// stashes or hiders elsewhere in the room. A `verb: search` quest trigger
+// on the feature fires with no roll (usercommands/skill.search.go).
+//
+// Plain `search` works through the whole room: every tier, with hidden
+// nouns (and quest search spots) at the worse SearchRoomHiddenDifficulty,
+// and a find there is announced by a thorough line naming where it was
+// tucked. A hidden noun with no On is reachable only this way.
+//
+// Both searches claim the shared special-move cooldown.
+//
+// A feature is a room noun (what `look <noun>` describes), a hidden noun
+// the player has already discovered, or a container they can see. Words
+// that name no feature are a plain search, as `search <anything>` always
+// was.
 //
 // Only BAUBLES are limited per feature: each feature offers one bauble roll
 // per BaubleFeatureWindowMinutes (60, real time), by anyone (or per player

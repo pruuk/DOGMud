@@ -21,7 +21,8 @@ condition, mob and room registries to fill them.
   the `reward` loop rule.
 - `Validators() quests.QuestValidators`: the existence checks
   `quests.ValidateQuestRefs` runs. Moved here from `modules/gmcp`, which now
-  calls it for the editor's reference check.
+  calls it for the editor's reference check. `HiddenNounExists` reads the
+  room template's `HiddenNouns` (the `discover` action's target).
 - `Registry() questloop.World`: every loaded quest, every dialogue file
   (`dialogue.LoadAllFiles`; their own problems are the dialogue door's), the
   live `Validators()` and `Names()`, and `External`: every behaviour tree

@@ -310,6 +310,7 @@ type ItemOwnership struct {
 	MobInstanceId int
 	Item          items.Item
 	Gained        bool
+	Reason        string // #375 3a: how the item arrived (acquire.AcquireReason); "" for losses
 }
 
 func (i ItemOwnership) Type() string { return `ItemOwnership` }
