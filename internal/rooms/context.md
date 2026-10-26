@@ -588,6 +588,7 @@ Rooms can contain hidden objects (containers, nouns) that are invisible until pl
 type HiddenNoun struct {
     Description       string // What `look <noun>` shows after discovery
     HiddenDescription string // Text appended to room description for discoverers
+    On                string // Optional room feature this secret is tucked into (yaml `on`)
 }
 ```
 
@@ -595,6 +596,9 @@ type HiddenNoun struct {
 - `Description` — Rich text shown when player runs `look <noun>` after finding it
 - `HiddenDescription` — Flavor text appended to the room description when a discoverer enters the room (e.g., "You notice strange scratchmarks on the wall here.")
 - No formal parent link; references to parent objects are pure prose (e.g., "gouged into the wooden wall")
+- `On` (yaml `on`, #375 phase 3a) names the room feature the secret is tucked into. `search <feature>` rolls only the secrets whose `On` names it, at the easier feature difficulty; a plain `search` rolls every hidden noun at the room difficulty. `hidden_noun_on_guard_test.go` (internal/guards) checks that each `on` names a real feature.
+- `Room.GetRandomExitWhere(keep)` is `GetRandomExit` restricted to exits `keep` accepts (secret and locked exits are still excluded first); flee passes the quest gate check through it (#588).
+- `SetOriginalRoomIdForTest(roomId, templateId)` registers an instance copy for cross-package tests of template-room matching and returns a cleanup func.
 - Hidden nouns are stored on `Room.HiddenNouns map[string]*HiddenNoun`
 - Marked `instance:"skip"` in the YAML schema — always loaded from template, never overridden by instance saves
 

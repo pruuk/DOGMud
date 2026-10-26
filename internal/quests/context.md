@@ -969,6 +969,13 @@ steps:
 - `set_flag: {key: "11-branch", value: "rhett"}`: programmatically set a
   flag (used in JS scripts when dialogue-layer flag setting isn't sufficient)
 
+### Trigger field: `verb` (#375 phase 3a)
+
+A `room_interact` trigger's `verb` is `look`, `search` or empty (`VerbLook`,
+`VerbSearch`; empty means look, via `InteractVerb`). The loader refuses any
+other value. Two triggers differing only in verb are different triggers
+(`samecommand.go`).
+
 ### Trigger action: `discover`
 
 `discover: <hidden noun key>` (`ActionDef.Discover`, #375 phase 3a) marks a

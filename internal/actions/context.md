@@ -1331,6 +1331,28 @@ Rules:
   noun's. `RoomSearchFeatures(room)` lists every feature, hidden ones
   included, for the admin `bauble window` view.
 
+**Search split and cooldown (`search.go`, #375 phase 3a).** `Search` claims
+the shared special-move cooldown (`ClaimSpecialMove`) for players and mobs
+alike, after the feature is resolved and before any roll; a refused claim
+sets `SearchResult.OnCooldown`. The body is two functions over one roll
+helper (`searchRoll`): `searchWholeRoom` rolls every hidden candidate at
+`Balance.SearchRoomHiddenDifficulty` (hidden nouns and quest search spots,
+the harder, less sure road), and `searchFeatureSecrets` rolls only the
+secrets tucked into the named feature (`HiddenNoun.On`) at the easier
+`Balance.SearchFeatureHiddenDifficulty`. `SearchResult.QuestFeaturesFound`
+lists the quest search spots a whole-room search turned up. After the roll,
+`usercommands/skill.search.go` raises `room_interact` with `Verb: search`
+for the feature typed.
+
+**Quest gates on movement (`quest_gate.go`, #588).** `QuestGateRefuses(user,
+room, destRoom)` notifies the engine's `room_gate` trigger and reports
+whether it handled (refused) the step; it runs the trigger's actions, so it
+is for a real step. `QuestGateBlocks` asks the same question without running
+anything (the engine's `WouldFire` dry run). Flee uses `QuestGateBlocks` as
+the `keep` of `Room.GetRandomExitWhere`, so a fleeing player never picks an
+exit a quest has closed; with no ungated exit the flee fails like an
+all-locked room.
+
 **Stolen baubles after the theft (`stolen_bauble.go`, docs/baubles Phase 6c).**
 Selling is `sell_bauble.go`'s (above); storage (`usercommands/storage.go`,
 `storageRefusesStolen`) and the auction house (`modules/auctions`,
@@ -1644,7 +1666,10 @@ silent.
 **Progression:** No stat/skill use triggered (scout actions planned as
   skill-less in Phase 1).
 
-**Cooldown:** Shares the `search` key (typically 2 rounds).
+**Cooldown:** Track keeps its own use of the `search` key (typically 2
+rounds). `search` itself no longer uses that key: since #375 phase 3a it
+claims the shared special-move cooldown (`ClaimSpecialMove`), so it and
+bash, trip, kick and spells block one another.
 
 **Result struct:**
 ```go

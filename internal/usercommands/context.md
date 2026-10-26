@@ -337,10 +337,26 @@ already known, so no presence leaks.
   change so the `gmcp.Automation` module immediately re-pushes
   `Char.Automation` and the web automation panel stays in sync.
 
+#### **Interaction verbs: look and search (`usercommands.go`, `skill.search.go`; #375 phase 3a)**
+Look and search are the only two verbs that work on a room feature (owner
+ruling). `interactionFamily` maps a dispatched command to its family: look,
+with its aliases l, examine and exam expanded to it, raises `room_interact`
+with `Verb: quests.VerbLook` through `notifyRoomInteract` (matched on the
+template room, so an instance room fires); `read` raises it itself when
+nothing carried matches. `skill.search.go` raises `Verb: quests.VerbSearch`
+after the search ran: once for a resolved `search <feature>`, and once per
+quest search spot a plain search turned up (`questSearchSpots`, which asks the
+engine's `SearchFeatures` and `WouldFire`, so a spot of a quest the player is
+not on is never rolled). Any other word typed at a feature
+("pry floorboard") falls through the registry, emote, spell and go attempts
+to `featureNamedBy`, which sends `InteractNudgeText(noun)` ("Try look X or
+search X.") on `CategoryUsage` instead of "not recognized". Say, whisper,
+help and get raise nothing.
+
 #### **Movement (`go.go`, movement parity 4b)**
 
 `Go` is now a thin wrapper: it keeps the lock gate (pick, key ring, backpack
-key), the quest gate (`questGateRefuses`: the quest engine's `room_gate`
+key), the quest gate (`actions.QuestGateRefuses`: the quest engine's `room_gate`
 triggers, right after the lock gate, so a refused step prints no departure
 line, costs nothing and never arrives; #558), the narration, and the
 exit-message requeue, but the step's price and

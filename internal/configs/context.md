@@ -354,6 +354,14 @@ func (n *Network) Validate() {
 }
 ```
 
+### Search difficulty knobs (#375 phase 3a)
+`SearchRoomHiddenDifficulty` is what a plain `search` rolls against for each
+hidden noun and quest search spot in the room; `SearchFeatureHiddenDifficulty`
+is what `search <feature>` rolls against for each hidden noun tucked into that
+feature (`HiddenNoun.On`). Both fall back when zero or negative
+(`config.balance.misc.go`); `config.yaml` ships them. Read by
+`actions.searchWholeRoom` and `actions.searchFeatureSecrets`.
+
 ### Mitigation curve knobs (#465)
 Twelve `Balance` knobs, four per channel, read by `combat.MitigationCurveFor`:
 `PhysicalMitigationKnee`, `PhysicalMitigationCap`, `PhysicalMitigationAim`,
