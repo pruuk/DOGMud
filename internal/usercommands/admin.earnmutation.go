@@ -2,40 +2,34 @@ package usercommands
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 /*
 * Role Permissions:
-* mutate 				(All)
+* earnmutation 			(Admin)
  */
 
-// Mutate is the playtest lever for #680. `mutate earn [player]` spends one
-// earned mutation event through actions.EarnMutation, the code the combat
+// EarnMutation is the playtest lever for #680. `earnmutation [player]` spends
+// one earned mutation event through actions.EarnMutation, the code the combat
 // tick runs, without waiting for progress to fill. With no player it acts on
-// the admin.
-func Mutate(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+// the admin. (Not `mutate earn`: `mutate` is a player help alias for the
+// mutations page, and the admin page would be shadowed.)
+func EarnMutation(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	args := util.SplitButRespectQuotes(rest)
-	if len(args) == 0 || !strings.EqualFold(args[0], `earn`) {
-		infoOutput, _ := templates.Process("admincommands/help/command.mutate", nil, user.UserId)
-		user.SendText(messaging.CategoryUsage, infoOutput)
-		return true, nil
-	}
 
 	target := user
-	if len(args) > 1 {
-		if target = users.GetByCharacterName(args[1]); target == nil {
+	if len(args) > 0 {
+		if target = users.GetByCharacterName(args[0]); target == nil {
 			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
-				`No player named "%s" is online.`, refusal.Echo(args[1])))
+				`No player named "%s" is online.`, refusal.Echo(args[0])))
 			return true, nil
 		}
 	}

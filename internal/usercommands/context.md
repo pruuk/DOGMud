@@ -222,14 +222,16 @@ already known, so no presence leaks.
 - **Punishment system**: Muting, deafening, and other disciplinary actions
 - **Server monitoring**: System status and performance monitoring
 
-#### **Mutation earn** (`admin.mutate.go`, #680)
-- `Mutate` handles `mutate earn [player]`: it spends one earned mutation
+#### **Mutation earn** (`admin.earnmutation.go`, #680)
+- `EarnMutation` handles `earnmutation [player]`: it spends one earned mutation
   event through `actions.EarnMutation`, the same function the combat round
   tick calls, without waiting for progress to fill. With no player it acts on
   the admin. It then calls `Character.Validate` (the round tick's end-of-round
   validate does not run for an admin command) and reports the mutation and
-  rank gained, or that nothing fit and progress was kept. A bare `mutate`
-  shows the `admincommands/help/command.mutate` page.
+  rank gained, or that nothing fit and progress was kept. The command is not
+  called `mutate`: that is a player help alias for the mutations page, and
+  player topics win over admin help pages. `help earnmutation` shows the
+  `admincommands/help/command.earnmutation` page.
 
 #### **Bauble catalog** (`admin.bauble.go`, docs/baubles)
 - `bauble status | stats | list | show | prompt | spawn | edit | regen |

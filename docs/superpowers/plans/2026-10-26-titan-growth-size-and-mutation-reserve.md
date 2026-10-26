@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Titan Growth 3 makes a character Large (two-hander in the weapon hand; every hand with Colossus Form), and Titan Growth, Colossus Form and Extra Arms reserve Conviction in units under one eligibility rule for every mutation grant. Playtest tooling (a `mutate earn` admin command and a `set_mutations` profile overlay) lets an adversarial playtest force each edge before merge.
+**Goal:** Titan Growth 3 makes a character Large (two-hander in the weapon hand; every hand with Colossus Form), and Titan Growth, Colossus Form and Extra Arms reserve Conviction in units under one eligibility rule for every mutation grant. Playtest tooling (an `earnmutation` admin command and a `set_mutations` profile overlay) lets an adversarial playtest force each edge before merge.
 
 **Architecture:** `mutations` gains reserve units, a derived unit budget, a `size` effect and one `CanGain` filter that every pool and deepening pick uses. `characters` gains one size reader (`Size()`), a slot-aware `HandsRequiredAt`, and the body as a reservation source. `hooks` releases companions newest first when a gained rank passes the ceiling, on a `mutations.Gained` listener and at login.
 
@@ -1225,7 +1225,7 @@ EOF
 ### Task 7: One earned-mutation event, `actions.EarnMutation`
 
 The player tick's grant block moves into one function that the tick and the
-`mutate earn` admin command (Tasks 10-12) both call, so a playtest forces the
+`earnmutation` admin command (Tasks 10-12) both call, so a playtest forces the
 exact code a fight runs. `hooks` and `usercommands` both already import
 `actions`, and `actions` already imports `users`, `mutations`, `events` and
 `species`; `worldevents` imports only `configs`, `mudlog` and `util`, so
@@ -1295,7 +1295,7 @@ import (
 )
 
 // EarnMutation spends one earned mutation event for a player (#680). The
-// combat tick calls it when progress crosses the threshold; the `mutate earn`
+// combat tick calls it when progress crosses the threshold; the `earnmutation`
 // admin command calls it directly, so a playtest forces the code a fight runs.
 //
 // It deepens or acquires as the tick always has, through CanDeepen,
@@ -1759,14 +1759,14 @@ EOF
 
 ---
 
-The next three tasks add the `mutate` admin command. Per the
+The next three tasks add the `earnmutation` admin command. Per the
 `dogmud-refactoring` admin-command checklist, handler, registration and help
 are separate tasks: collapsing them is how a registration gets dropped.
 
-### Task 10: `mutate` handler
+### Task 10: `earnmutation` handler
 
 **Files:**
-- Create: `internal/usercommands/admin.mutate.go`
+- Create: `internal/usercommands/admin.earnmutation.go`
 
 - [ ] **Step 1: Create the handler** (shape of `admin.questtoken.go`):
 
@@ -1775,40 +1775,34 @@ package usercommands
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 /*
 * Role Permissions:
-* mutate 				(All)
+* earnmutation 			(Admin)
  */
 
-// Mutate is the playtest lever for #680. `mutate earn [player]` spends one
-// earned mutation event through actions.EarnMutation, the code the combat
+// EarnMutation is the playtest lever for #680. `earnmutation [player]` spends
+// one earned mutation event through actions.EarnMutation, the code the combat
 // tick runs, without waiting for progress to fill. With no player it acts on
-// the admin.
-func Mutate(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+// the admin. (Not `mutate earn`: `mutate` is a player help alias for the
+// mutations page, and the admin page would be shadowed.)
+func EarnMutation(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	args := util.SplitButRespectQuotes(rest)
-	if len(args) == 0 || !strings.EqualFold(args[0], `earn`) {
-		infoOutput, _ := templates.Process("admincommands/help/command.mutate", nil, user.UserId)
-		user.SendText(messaging.CategoryUsage, infoOutput)
-		return true, nil
-	}
 
 	target := user
-	if len(args) > 1 {
-		if target = users.GetByCharacterName(args[1]); target == nil {
+	if len(args) > 0 {
+		if target = users.GetByCharacterName(args[0]); target == nil {
 			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
-				`No player named "%s" is online.`, refusal.Echo(args[1])))
+				`No player named "%s" is online.`, refusal.Echo(args[0])))
 			return true, nil
 		}
 	}
@@ -1833,9 +1827,9 @@ Expected: success. If `messaging.CategoryAdmin` is named differently, use the ca
 - [ ] **Step 3: Commit**
 
 ```bash
-git add internal/usercommands/admin.mutate.go
+git add internal/usercommands/admin.earnmutation.go
 git commit -F - <<'EOF'
-feat(admin): mutate earn handler (#680)
+feat(admin): earnmutation handler (#680)
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 EOF
@@ -1843,30 +1837,30 @@ EOF
 
 ---
 
-### Task 11: `mutate` registration
+### Task 11: `earnmutation` registration
 
 **Files:**
 - Modify: `internal/usercommands/usercommands.go` (command table, beside `setcondition` at line 94)
 - Modify: `internal/actions/divergences.go` (the admin map, beside `"mob": "admin"`)
-- Modify: `_datafiles/world/dogmud/keywords.yaml` (the admin help list, alphabetical, beside `mute`)
-- Test: `internal/usercommands/admin_mutate_test.go`
+- Modify: `_datafiles/world/dogmud/keywords.yaml` (the admin help list, alphabetical, beside `devtool`)
+- Test: `internal/usercommands/admin_earnmutation_test.go`
 
-- [ ] **Step 1: Write the failing test.** Mirror `usercommands_test.go:2011-2040` (the `setcondition` registration test): build the same fixture, then assert `TryCommand("mutate", "", <adminUserId>, events.CmdSkipScripts)` returns `handled == true` and no error.
+- [ ] **Step 1: Write the failing test.** Mirror `usercommands_test.go:2011-2040` (the `setcondition` registration test): build the same fixture, then assert `TryCommand("earnmutation", "", <adminUserId>, events.CmdSkipScripts)` returns `handled == true` and no error.
 
 - [ ] **Step 2: Run and watch it fail**
 
-Run: `go test ./internal/usercommands/ -run Mutate`
+Run: `go test ./internal/usercommands/ -run EarnMutation`
 Expected: FAIL, the command is not handled.
 
 - [ ] **Step 3: Register** in the command table:
 
 ```go
-		`mutate`:          {Mutate, false, true, true}, // Admin only
+		`earnmutation`:    {EarnMutation, false, true, true}, // Admin only
 ```
 
-- [ ] **Step 4: `divergences.go`:** add `"mutate":       "admin",` in alphabetical order.
+- [ ] **Step 4: `divergences.go`:** add `"earnmutation": "admin",` in alphabetical order.
 
-- [ ] **Step 5: `keywords.yaml`:** add `      - mutate` to the admin command help list in alphabetical order.
+- [ ] **Step 5: `keywords.yaml`:** add `      - earnmutation` to the admin command help list in alphabetical order.
 
 - [ ] **Step 6: Run**
 
@@ -1876,9 +1870,9 @@ Expected: PASS (any test that checks the command table against `divergences.go` 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add internal/usercommands/usercommands.go internal/actions/divergences.go _datafiles/world/dogmud/keywords.yaml internal/usercommands/admin_mutate_test.go
+git add internal/usercommands/usercommands.go internal/actions/divergences.go _datafiles/world/dogmud/keywords.yaml internal/usercommands/admin_earnmutation_test.go
 git commit -F - <<'EOF'
-feat(admin): register mutate (#680)
+feat(admin): register earnmutation (#680)
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 EOF
@@ -1886,17 +1880,19 @@ EOF
 
 ---
 
-### Task 12: `mutate` help template
+### Task 12: `earnmutation` help template
+
+Rename note (2026-10-26): the command was first planned as `mutate earn`. `mutate` is a player help alias for the mutations topic (`keywords.yaml`: `mutations: [mutation, chrysalis, mutate]`) and player topics are consulted before admin pages, so `help mutate` could never show the admin page. The command is `earnmutation [player]`, with no subcommand.
 
 **Files:**
-- Create: `_datafiles/world/dogmud/templates/admincommands/help/command.mutate.template`
+- Create: `_datafiles/world/dogmud/templates/admincommands/help/command.earnmutation.template`
 
 - [ ] **Step 1: Create it** in the layout of `command.questtoken.template` (read that file first and copy its markup):
 
 ```
 Usage:
 
-  mutate earn [player]
+  earnmutation [player]
 
   Spends one earned mutation event for the player (yourself if none is
   named), through the same code a fight runs: it deepens or acquires a
@@ -1904,13 +1900,13 @@ Usage:
   nothing fits, it says so and the player keeps their progress.
 ```
 
-- [ ] **Step 2: Smoke it** in the Task 15 boot check: `help mutate` shows this page, and `mutate` with no arguments shows it too.
+- [ ] **Step 2: Smoke it** in the Task 15 boot check: `help earnmutation` shows this page, and `help mutate` still shows the player mutations topic.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add _datafiles/world/dogmud/templates/admincommands/help/command.mutate.template
+git add _datafiles/world/dogmud/templates/admincommands/help/command.earnmutation.template
 git commit -F - <<'EOF'
-docs(admin): mutate help page (#680)
+docs(admin): earnmutation help page (#680)
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 EOF
@@ -2024,7 +2020,7 @@ EOF
 - Modify: `internal/mutations/context.md`, `internal/characters/context.md`, `internal/hooks/context.md`
 - Modify: `docs/PATCH_NOTES.md`, `docs/README.md` (this plan's row)
 
-- [ ] **Step 1: `context.md` files.** Name only symbols that exist (`codegraph_search` each): `mutations` gains `ReserveUnits`, `ReserveUnitsAt`, `OwnedReserveUnits`, `ReserveUnitBudget`, `FitsReserveBudget`, `GrowsLarge`, `CanGain`, `MaxRankOf`, `RelatedFit`, the `size` effect, the `colossal-grip` flag, `Gained.Silent`. `characters` gains `Size`, `HandsRequiredAt`, the body reservation source. `hooks` gains `releaseCompanionsForUser` and `MutationGained_ReleaseCompanions`. `actions` gains `EarnMutation`; `usercommands` gains `Mutate` (`mutate earn`). Add `internal/actions/context.md` and `internal/usercommands/context.md` to the `git add` below. Then run `python tools/context_md_audit.py` and fix anything it reports.
+- [ ] **Step 1: `context.md` files.** Name only symbols that exist (`codegraph_search` each): `mutations` gains `ReserveUnits`, `ReserveUnitsAt`, `OwnedReserveUnits`, `ReserveUnitBudget`, `FitsReserveBudget`, `GrowsLarge`, `CanGain`, `MaxRankOf`, `RelatedFit`, the `size` effect, the `colossal-grip` flag, `Gained.Silent`. `characters` gains `Size`, `HandsRequiredAt`, the body reservation source. `hooks` gains `releaseCompanionsForUser` and `MutationGained_ReleaseCompanions`. `actions` gains `EarnMutation`; `usercommands` gains `EarnMutation` (`earnmutation`). Add `internal/actions/context.md` and `internal/usercommands/context.md` to the `git add` below. Then run `python tools/context_md_audit.py` and fix anything it reports.
 - [ ] **Step 2: PATCH_NOTES.** Add a dated 2026-10-26 entry in the file's existing style, player-facing, no numbers: Titan Growth makes you large at its later ranks; Colossus Form now needs the fullest Titan Growth and lets every hand wield a two-hander; Extra Arms grows up to six arms; these mutations hold part of your conviction in reserve, so a deeply grown body fields fewer companions and sends the newest away when it outgrows them.
 - [ ] **Step 3: Commit** (the plan's own README row landed with the plan)
 
@@ -2061,11 +2057,11 @@ these overlays. Items: Heavy Greatsword `10007` (two-handed), Seething Prism
 
 | Seat | Overlays | Actions | Pass when |
 |---|---|---|---|
-| A. Cusp of Large | `set_mutations: {titan-growth: 2}`, `grant_items: [10007, 10007]` | `equip` both greatswords; `inventory`; `mutate earn` until Titan Growth reaches 3 (other grants are fine, note them); `equip` again; `inventory`; one round of combat on a training dummy | Before: one greatsword held across both hands. After rank 3: one greatsword in the weapon hand alone, the offhand free and listed, and it attacks; `help titan-growth` and `mutations` describe the size step |
-| B. Budget full | `set_mutations: {titan-growth: 3, extra-arms: 3, dense-muscles: 1}` | `mutate earn` five times; `mutations`; `status` | Titan Growth stays 3 and Extra Arms stays 3 every time; grants land on Dense Muscles or a new zero-unit mutation, or the command says nothing fits; the status reserve row names the body |
-| C. Companions at the ceiling | `set_mutations: {titan-growth: 3, extra-arms: 1}`, `grant_spells: {conjure-water: 1}`, `grant_skills: {manifestation: 50}` | Rest to full; cast `conjure-water` until refused; read the refusal; then `mutate earn` until Titan Growth or Extra Arms gains a rank | The refusal names "Your body and bonds"; on the gain, the newest companion leaves with "Your changing body claims more of your will. ... slips its bond and leaves you."; older companions stay; `status` shows the reserve at or under the limit |
-| D. Gear at the ceiling | `set_mutations: {titan-growth: 2}`, `equip: {neck: 40187}` | `status`; `mutate earn` until Titan Growth reaches 3; `status`; `inventory` | The rank lands; the prism stays worn; no companion message; the reserve row names body and gear |
-| E. Apex grip | `set_mutations: {titan-growth: 4, dense-muscles: 1, colossus-form: 1, extra-arms: 1}` (six units, at the ceiling), `grant_items: [10007, 10007, 10007]` | `equip` all three greatswords (`equip <item> arm2` and `arm3` for the second and third); `inventory`; one combat round; `mutate earn` once | Three greatswords held, one per hand, all listed; three weapon attacks in the round; the earn grants no reserving rank |
+| A. Cusp of Large | `set_mutations: {titan-growth: 2}`, `grant_items: [10007, 10007]` | `equip` both greatswords; `inventory`; `earnmutation` until Titan Growth reaches 3 (other grants are fine, note them); `equip` again; `inventory`; one round of combat on a training dummy | Before: one greatsword held across both hands. After rank 3: one greatsword in the weapon hand alone, the offhand free and listed, and it attacks; `help titan-growth` and `mutations` describe the size step |
+| B. Budget full | `set_mutations: {titan-growth: 3, extra-arms: 3, dense-muscles: 1}` | `earnmutation` five times; `mutations`; `status` | Titan Growth stays 3 and Extra Arms stays 3 every time; grants land on Dense Muscles or a new zero-unit mutation, or the command says nothing fits; the status reserve row names the body |
+| C. Companions at the ceiling | `set_mutations: {titan-growth: 3, extra-arms: 1}`, `grant_spells: {conjure-water: 1}`, `grant_skills: {manifestation: 50}` | Rest to full; cast `conjure-water` until refused; read the refusal; then `earnmutation` until Titan Growth or Extra Arms gains a rank | The refusal names "Your body and bonds"; on the gain, the newest companion leaves with "Your changing body claims more of your will. ... slips its bond and leaves you."; older companions stay; `status` shows the reserve at or under the limit |
+| D. Gear at the ceiling | `set_mutations: {titan-growth: 2}`, `equip: {neck: 40187}` | `status`; `earnmutation` until Titan Growth reaches 3; `status`; `inventory` | The rank lands; the prism stays worn; no companion message; the reserve row names body and gear |
+| E. Apex grip | `set_mutations: {titan-growth: 4, dense-muscles: 1, colossus-form: 1, extra-arms: 1}` (six units, at the ceiling), `grant_items: [10007, 10007, 10007]` | `equip` all three greatswords (`equip <item> arm2` and `arm3` for the second and third); `inventory`; one combat round; `earnmutation` once | Three greatswords held, one per hand, all listed; three weapon attacks in the round; the earn grants no reserving rank |
 | F. Bloom | `set_mutations: {titan-growth: 3, extra-arms: 3}`, `grant_items: [40108 x6]` | Eat wafers one at a time, `mutations` after each | Neither Titan Growth nor Extra Arms passes 3; Bloom grants land elsewhere or nothing happens |
 | G. Login release | Seat C after its first summons, with `set_mutations` raised to `{titan-growth: 4, extra-arms: 2}` by quitting and relaunching the seat with the new overlay | Log in | Companions over the ceiling are released at login with the same line, before they appear |
 

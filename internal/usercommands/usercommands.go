@@ -92,7 +92,7 @@ var (
 		`break`:           {Break, false, true, false},
 		`build`:           {Build, false, true, true},        // Admin only
 		`setcondition`:    {SetCondition, false, true, true}, // Admin only
-		`mutate`:          {Mutate, false, true, true},       // Admin only
+		`earnmutation`:    {EarnMutation, false, true, true}, // Admin only
 		`buy`:             {Buy, false, true, false},
 		`caravan`:         {Caravan, true, true, true}, // Admin only
 		`cancel`:          {Cancel, true, true, false},

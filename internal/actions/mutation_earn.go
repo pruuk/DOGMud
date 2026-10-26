@@ -15,7 +15,7 @@ import (
 )
 
 // EarnMutation spends one earned mutation event for a player (#680). The
-// combat tick calls it when progress crosses the threshold; the `mutate earn`
+// combat tick calls it when progress crosses the threshold; the `earnmutation`
 // admin command calls it directly, so a playtest forces the code a fight runs.
 //
 // It deepens or acquires as the tick always has, through CanDeepen,

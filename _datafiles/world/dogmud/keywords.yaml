@@ -207,12 +207,12 @@ help:
       - command
       - deafen
       - devtool
+      - earnmutation
       - item
       - locate
       - mob
       - modify
       - mudmail
-      - mutate
       - mute
       - paz
       - prepare
