@@ -114,6 +114,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 
 			invData := map[string]any{
+				`Character`: u.Character,
 				`Equipment`: &u.Character.Equipment,
 				`ItemNames`: itemNames,
 			}
@@ -143,6 +144,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 
 			invData := map[string]any{
+				`Character`:     &m.Character,
 				`Equipment`:     &m.Character.Equipment,
 				`ItemNames`:     itemNames,
 				`HideEquipment`: m.HideEquipmentSlots,

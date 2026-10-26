@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-10-26: Large creatures show both hands
+
+- A large creature holds a two-handed weapon in one hand. When it does,
+  the weapon in its other hand now shows in inventory and when you look
+  at it, and an empty other hand now throws a punch in combat.
+
 ## 2026-10-23: Talking to people is a menu now
 
 - Type talk and a name to start a conversation. The person speaks, then

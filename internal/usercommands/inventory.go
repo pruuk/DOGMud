@@ -428,6 +428,7 @@ func Inventory(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	encLabel, encColor := characters.EncumbranceTier(user.Character.GetCarriedWeight(), user.Character.CarryCapacity())
 
 	invData := map[string]any{
+		`Character`:               user.Character,
 		`Equipment`:               &user.Character.Equipment,
 		`ItemNames`:               itemNames,
 		`ItemNamesFormatted`:      itemNamesFormatted,
