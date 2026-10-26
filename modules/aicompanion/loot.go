@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
-	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -77,10 +77,9 @@ func mobCompanionLoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error
 		if !corpse.CanTakeItem(it.UUID.String(), ownerId, now) {
 			continue
 		}
-		if !mob.Character.StoreItem(it) {
+		if !acquire.AcquireItemForChar(&mob.Character, 0, mob.InstanceId, it, acquire.AcquireLoot) {
 			break // too heavy to carry more
 		}
-		events.AddToQueue(events.ItemOwnership{MobInstanceId: mob.InstanceId, Item: it, Gained: true})
 		corpse.Loot.RemoveItem(it)
 		took = true
 	}
@@ -134,10 +133,9 @@ func mobCompanionTakeout(rest string, mob *mobs.Mob, room *rooms.Room) (bool, er
 		return true, nil
 	}
 	it, found := findContainerItem(container, itemId, uuidPart)
-	if !found || !mob.Character.StoreItem(it) {
+	if !found || !acquire.AcquireItemForChar(&mob.Character, 0, mob.InstanceId, it, acquire.AcquireGet) {
 		return true, nil
 	}
-	events.AddToQueue(events.ItemOwnership{MobInstanceId: mob.InstanceId, Item: it, Gained: true})
 	container.RemoveItem(it)
 	room.Containers[name] = container
 

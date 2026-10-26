@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -360,8 +360,7 @@ func (d BaubleDelivery) deliver(res baubles.GenResult, randn func(n int) int) {
 		return
 	}
 
-	if who.char.StoreItem(itm) {
-		events.AddToQueue(events.ItemOwnership{UserId: d.UserId, Item: itm, Gained: true})
+	if acquire.AcquireItemForChar(who.char, d.UserId, 0, itm, acquire.AcquireSearch) {
 		who.send(fmt.Sprintf(`You work it free: <ansi fg="itemname">%s</ansi>. You pocket it.`, name))
 	} else {
 		// The spot only means something in the room it was found in.

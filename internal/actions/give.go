@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
@@ -31,6 +32,7 @@ func GiveItemToChar(actor Actor, itemName string, toChar *characters.Character, 
 		toChar,
 		toUserId,
 		toMobInstanceId,
+		acquire.AcquireGive,
 	)
 
 	return GiveItemResult{Item: matchItem, Found: true, Err: err}

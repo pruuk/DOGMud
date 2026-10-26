@@ -4,7 +4,7 @@
 
 **Goal:** One acquire seam; quest gates on go and flee; look and search as the only interaction verbs; the search rework; and look and search taught in the newbie areas with copy that has passed an independent read and the owner's review.
 
-**Architecture:** `actions.AcquireItem` becomes the only way an item is acquired (guarded). The quest engine gains a side-effect-free `WouldFire` and a per-room list of search features; `go` and flee share `actions.QuestGateRefuses`. The command dispatcher raises `room_interact` only for the look family and search, matching template rooms. `actions.Search` splits into a whole-room search and a feature search, both on the shared special-move cooldown, with difficulties in config.yaml.
+**Architecture:** `acquire.AcquireItem` (leaf package `internal/acquire`) becomes the only way an item is acquired (guarded). The quest engine gains a side-effect-free `WouldFire` and a per-room list of search features; `go` and flee share `actions.QuestGateRefuses`. The command dispatcher raises `room_interact` only for the look family and search, matching template rooms. `actions.Search` splits into a whole-room search and a feature search, both on the shared special-move cooldown, with difficulties in config.yaml.
 
 **Tech Stack:** Go, testify, world YAML, help templates.
 
@@ -55,7 +55,7 @@
 
 ## File map
 
-- Create `internal/actions/acquire.go` (`AcquireReason`, `AcquireItem`), `internal/guards/acquire_seam_guard_test.go`.
+- Create `internal/acquire/acquire.go` (`AcquireReason`, `AcquireItem`, `AcquireItemForChar`) with its `context.md`, `internal/guards/acquire_seam_guard_test.go`.
 - Create `internal/actions/quest_gate.go` (`QuestGateRefuses`, `WalkableExit`).
 - Create `internal/questengine/dryrun.go` (`WouldFire`, `SearchFeatures`).
 - Create `internal/guards/hidden_noun_on_guard_test.go`, `internal/guards/search_trigger_noun_guard_test.go`.
@@ -65,15 +65,17 @@
 
 ### Task 1: The acquire seam
 
-**Files:** Create `internal/actions/acquire.go`, `internal/actions/acquire_test.go`; modify `internal/events/eventtypes.go:308-313`.
+**Files:** Create `internal/acquire/acquire.go`, `internal/acquire/acquire_test.go`, `internal/acquire/context.md`; modify `internal/events/eventtypes.go:308-313`.
+
+> **Amended 2026-10-26 (Task 2):** the seam was first written as `internal/actions/acquire.go`, then moved to its own leaf package `internal/acquire` because `internal/actions` imports `internal/questengine`, so the quest bridge's `give_item` (`questengine/bridge.go`) could not call it. Callers write `acquire.AcquireItem(..., acquire.AcquireGet)`. The transfer-helper tests stay in `internal/actions/transfer_gain_test.go`.
 
 - [ ] **Step 1: Failing tests** in `acquire_test.go`: `AcquireItem` on a user with room stores the item and queues exactly one `ItemOwnership{Gained:true, Reason:"get"}`; on a user whose `StoreItem` refuses (over twice carry capacity: build the fixture the way `bridge.go:155-168`'s comment describes), it returns false and queues nothing. Use `events.DrainQueuedEventsForTest` or the package's existing event-capture helper (grep `ItemOwnership` in existing `_test.go` files for the pattern).
 - [ ] **Step 2: Run, watch it fail** (`undefined: AcquireItem`).
-- [ ] **Step 3:** Add `Reason string // #375 3a: how the item arrived (actions.AcquireReason); "" for losses` to `ItemOwnership`.
+- [ ] **Step 3:** Add `Reason string // #375 3a: how the item arrived (acquire.AcquireReason); "" for losses` to `ItemOwnership`.
 - [ ] **Step 4:** Create `acquire.go`:
 
 ```go
-package actions
+package acquire
 
 // AcquireReason names how an item reached a player (#375 phase 3a). It rides
 // on events.ItemOwnership so a later trigger filter can tell "crafted it" from
@@ -132,14 +134,14 @@ If a route acquires for a character with no `UserRecord` in reach, add `AcquireI
 
 - [ ] **Step 1: Failing tests**, one per formerly missing route (F5), each asserting exactly one `item_gain`-producing `ItemOwnership{Gained:true}` with its reason after the action: quest trigger `give_item` (questengine bridge), quest reward item and item grants (Quest_HandleQuestUpdate), behaviour-tree `give_item` and `give_item_multiple`, salvage, instant craft (both sites), mail, shield replacement. Plus: buy second path and steal with a refused store raise nothing.
 - [ ] **Step 2: Run, watch them fail.**
-- [ ] **Step 3:** Replace each F4 site's `StoreItem` + hand-placed `ItemOwnership` pair with one `AcquireItem(..., reason)` call, and each F5 `StoreItem` with `AcquireItem`. Keep each site's existing refusal handling (a false return still does what a false `StoreItem` did). In `Quest_HandleQuestUpdate.go:211` remove the hand-fired item QuestToken notify only if `CheckItemQuests` now covers it (it does for `Gained` with a QuestToken item; verify by test that the token is granted exactly once).
+- [ ] **Step 3:** Replace each F4 site's `StoreItem` + hand-placed `ItemOwnership` pair with one `acquire.AcquireItem(..., reason)` call (or `acquire.AcquireItemForChar` for an `Actor` or bare character), and each F5 `StoreItem` with the seam. Keep each site's existing refusal handling (a false return still does what a false `StoreItem` did). In `Quest_HandleQuestUpdate.go:211` remove the hand-fired item QuestToken notify only if `CheckItemQuests` now covers it (it does for `Gained` with a QuestToken item; verify by test that the token is granted exactly once).
 - [ ] **Step 4:** `go test ./...` passes. Commit.
 
 ### Task 3: The StoreItem guard and the validator's sources
 
 **Files:** Create `internal/guards/acquire_seam_guard_test.go`; modify `internal/questworld/sources.go` only if a source no longer matches a firing route.
 
-- [ ] **Step 1:** Write the guard: walk production `.go` files under `internal/` and `modules/` (pattern of `walkGoCalls` in `internal/guards/blank_line_guard_test.go:105`), find calls to a method named `StoreItem`, and fail for any outside `internal/actions/acquire.go` and an allowlist map `{"path/file.go": "reason"}` of non-acquisition moves (unequip, displaced gear, own-container moves, companion inventories, mob inventories). Every allowlist entry carries a one-line reason.
+- [ ] **Step 1:** Write the guard: walk production `.go` files under `internal/` and `modules/` (pattern of `walkGoCalls` in `internal/guards/blank_line_guard_test.go:105`), find calls to a method named `StoreItem`, and fail for any outside `internal/acquire/acquire.go` and an allowlist map `{"path/file.go": "reason"}` of non-acquisition moves (unequip, displaced gear, own-container moves, companion inventories, mob inventories). Every allowlist entry carries a one-line reason.
 - [ ] **Step 2: Prove it can fail:** add a temporary `StoreItem` call in a scratch production file, run, see the failure naming it, remove it.
 - [ ] **Step 3:** Add a test in `internal/questworld` asserting every source kind `sources.go:95-105` counts maps to a route that now raises the event (the reward and `give_item` kinds).
 - [ ] **Step 4:** Run guards and questworld. Commit.
@@ -231,7 +233,7 @@ The owner asked for extra review here: nothing goofy or confusing in the intro a
 
 ### Task 13: Docs
 
-- [ ] `context.md` for `actions` (AcquireItem, QuestGateRefuses/Blocks, search split), `questengine` (WouldFire, SearchFeatures), `usercommands` (verb families, nudge, read fallback), `rooms` (HiddenNoun.On), `quests` (verb values); `docs/PATCH_NOTES.md` player-facing entry (look and search are how you find things; flee no longer slips past quest gates); roadmap phase 3 status; run `python tools/context_md_audit.py`. Commit.
+- [ ] `context.md` for `acquire` (shipped in Task 2; refresh if later tasks touch it), `actions` (QuestGateRefuses/Blocks, search split), `questengine` (WouldFire, SearchFeatures), `usercommands` (verb families, nudge, read fallback), `rooms` (HiddenNoun.On), `quests` (verb values); `docs/PATCH_NOTES.md` player-facing entry (look and search are how you find things; flee no longer slips past quest gates); roadmap phase 3 status; run `python tools/context_md_audit.py`. Commit.
 
 ### Task 14: Gate and PR
 

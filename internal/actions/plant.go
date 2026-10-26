@@ -3,6 +3,7 @@ package actions
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
@@ -150,14 +151,8 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item, t theftAtt
 	room := actor.GetRoom()
 
 	if success {
-		m.Character.StoreItem(plantItem)
+		acquire.AcquireItemForChar(&m.Character, 0, m.InstanceId, plantItem, acquire.AcquirePlant)
 		actor.GetCharacter().RemoveItem(plantItem)
-
-		events.AddToQueue(events.ItemOwnership{
-			MobInstanceId: m.InstanceId,
-			Item:          plantItem,
-			Gained:        true,
-		})
 
 		if actor.IsPlayer() {
 			events.AddToQueue(events.ItemOwnership{
@@ -296,7 +291,7 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item, t theftA
 
 	// Success — transfer item to target player.
 	actor.GetCharacter().RemoveItem(plantItem)
-	targetUser.Character.StoreItem(plantItem)
+	acquire.AcquireItem(targetUser, plantItem, acquire.AcquirePlant)
 
 	if actor.IsPlayer() {
 		events.AddToQueue(events.ItemOwnership{
@@ -311,11 +306,6 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item, t theftA
 			Gained:        false,
 		})
 	}
-	events.AddToQueue(events.ItemOwnership{
-		UserId: targetUserId,
-		Item:   plantItem,
-		Gained: true,
-	})
 
 	result := PlantResult{
 		Succeeded:     true,

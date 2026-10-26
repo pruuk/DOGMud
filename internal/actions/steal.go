@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
@@ -332,7 +333,8 @@ func takeFromMob(actor Actor, m *mobs.Mob, extra []items.Item) StealResult {
 
 		if itemStolen, found := m.Character.GetRandomStealableItem(); found {
 			m.Character.RemoveItem(itemStolen)
-			actor.GetCharacter().StoreItem(itemStolen)
+			// The seam raises the thief's gain only when the item lands.
+			acquire.AcquireItemForChar(actor.GetCharacter(), actor.GetUserId(), actor.GetMobInstanceId(), itemStolen, acquire.AcquireSteal)
 			if itemStolen.IsBauble() && actor.IsPlayer() {
 				markPocketStolen(itemStolen, actor.GetUserId(), actor.GetRoom(), m)
 			}
@@ -345,20 +347,6 @@ func takeFromMob(actor Actor, m *mobs.Mob, extra []items.Item) StealResult {
 				Gained:        false,
 			})
 
-			if actor.IsPlayer() {
-				events.AddToQueue(events.ItemOwnership{
-					UserId: actor.GetUserId(),
-					Item:   itemStolen,
-					Gained: true,
-				})
-			} else {
-				events.AddToQueue(events.ItemOwnership{
-					MobInstanceId: actor.GetMobInstanceId(),
-					Item:          itemStolen,
-					Gained:        true,
-				})
-			}
-
 			stolenStuff = append(stolenStuff,
 				fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, itemStolen.DisplayNameFor(actor.GetUserId())))
 		}
@@ -367,15 +355,12 @@ func takeFromMob(actor Actor, m *mobs.Mob, extra []items.Item) StealResult {
 		// for it; the caller queued the mark's loss when it had one). Too
 		// heavy to carry after all, it falls at the thief's feet.
 		for _, b := range extra {
-			if !actor.GetCharacter().StoreItem(b) {
+			if !acquire.AcquireItemForChar(actor.GetCharacter(), actor.GetUserId(), actor.GetMobInstanceId(), b, acquire.AcquireSteal) {
 				b.LeaveBaubleAt(``, 0, baubleNow())
 				actor.GetRoom().AddItem(b, false)
 				stolenStuff = append(stolenStuff,
 					fmt.Sprintf(`<ansi fg="itemname">%s</ansi> (too much to carry: it falls at your feet)`, b.DisplayNameFor(actor.GetUserId())))
 				continue
-			}
-			if actor.IsPlayer() {
-				events.AddToQueue(events.ItemOwnership{UserId: actor.GetUserId(), Item: b, Gained: true})
 			}
 			stolenStuff = append(stolenStuff,
 				fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, b.DisplayNameFor(actor.GetUserId())))
@@ -608,23 +593,9 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 		stolen := container.Items[idx]
 		container.RemoveItem(stolen)
 		room.Containers[containerName] = container
-		actor.GetCharacter().StoreItem(stolen)
+		acquire.AcquireItemForChar(actor.GetCharacter(), actor.GetUserId(), actor.GetMobInstanceId(), stolen, acquire.AcquireSteal)
 		result.StoleItemId = stolen.ItemId
 		result.StoleItemName = stolen.DisplayName()
-
-		if actor.IsPlayer() {
-			events.AddToQueue(events.ItemOwnership{
-				UserId: actor.GetUserId(),
-				Item:   stolen,
-				Gained: true,
-			})
-		} else {
-			events.AddToQueue(events.ItemOwnership{
-				MobInstanceId: actor.GetMobInstanceId(),
-				Item:          stolen,
-				Gained:        true,
-			})
-		}
 
 		actor.SendText(messaging.CategoryLoot, fmt.Sprintf(
 			`You quietly slip <ansi fg="itemname">%s</ansi> from the `+
@@ -914,16 +885,11 @@ func stealHouseholdBauble(actor Actor, itm items.Item, t theftAttempt) StealResu
 		return StealResult{Detected: true, DefenderName: spotterName, Reason: "detected"}
 	}
 
-	if !char.StoreItem(itm) {
+	if !acquire.AcquireItemForChar(char, actor.GetUserId(), actor.GetMobInstanceId(), itm, acquire.AcquireSteal) {
 		actor.SendText(messaging.CategoryRefusal, `You can't carry that. You're already overloaded!`)
 		return StealResult{Reason: "overloaded"}
 	}
 	room.RemoveItem(itm, false)
-	if actor.IsPlayer() {
-		events.AddToQueue(events.ItemOwnership{UserId: actor.GetUserId(), Item: itm, Gained: true})
-	} else {
-		events.AddToQueue(events.ItemOwnership{MobInstanceId: actor.GetMobInstanceId(), Item: itm, Gained: true})
-	}
 
 	theft := baubles.Theft{ByUserId: actor.GetUserId(), RoomId: room.RoomId, Zone: room.Zone}
 	if resident, ok := HouseholdResident(room); ok {

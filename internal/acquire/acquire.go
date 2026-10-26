@@ -1,4 +1,7 @@
-package actions
+// Package acquire is the one way an item is acquired (#375 phase 3a). It is
+// a leaf package, not part of internal/actions, because actions imports
+// internal/questengine and the quest bridge's give_item must acquire too.
+package acquire
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -32,6 +35,7 @@ const (
 	AcquireTreeGive   AcquireReason = `tree_give`
 	AcquireMail       AcquireReason = `mail`
 	AcquireShieldSwap AcquireReason = `shield_swap`
+	AcquirePlant      AcquireReason = `plant` // a thief slipped it into the holder's pack
 )
 
 // AcquireItem is the one way an item is acquired by a player: it stores the
@@ -47,8 +51,8 @@ func AcquireItem(user *users.UserRecord, itm items.Item, reason AcquireReason) b
 }
 
 // AcquireItemForChar is AcquireItem for a route that holds a bare character
-// and its ids rather than a UserRecord. The transfer helpers (transfer.go)
-// are the reason it exists: they take a character plus userId and
+// and its ids rather than a UserRecord. The transfer helpers
+// (actions/transfer.go) are the reason it exists: they take a character plus userId and
 // mobInstanceId, and they serve mob receivers (a player giving to a mob) as
 // well as players, so the gain event keeps whichever id the caller passed.
 func AcquireItemForChar(char *characters.Character, userId int, mobInstanceId int, itm items.Item, reason AcquireReason) bool {

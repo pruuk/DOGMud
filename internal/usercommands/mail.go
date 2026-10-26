@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -27,7 +28,7 @@ func applyMailReceipt(user *users.UserRecord, msg *users.Message) bool {
 	}
 	// Try the item first: on failure, defer the whole message (no gold credit).
 	if msg.Item != nil {
-		if !user.Character.StoreItem(*msg.Item) {
+		if !acquire.AcquireItem(user, *msg.Item, acquire.AcquireMail) {
 			return false
 		}
 	}

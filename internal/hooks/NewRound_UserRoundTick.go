@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -626,8 +627,7 @@ func tickUserCrafting(user *users.UserRecord, room *rooms.Room) {
 					if crafting.ShouldStampMakerName(newItem.CraftSkill, newSpec) {
 						newItem.MakerName = user.Character.Name
 					}
-					user.Character.StoreItem(newItem)
-					events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: newItem, Gained: true})
+					acquire.AcquireItem(user, newItem, acquire.AcquireCraft)
 				}
 				successRoles := recipe.Narrate(crafting.PhaseSuccess, textutil.TokenContext{
 					ActorName:      user.Character.GetCharacterName(true),

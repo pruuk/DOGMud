@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -54,7 +55,7 @@ func TransferItemToBackpack(item items.Item, toChar *characters.Character, toUse
 
 	// Store through the acquire seam, which raises the gain event only when
 	// the item lands. Its one caller is the floor pickup (TakeFloorItem).
-	if !AcquireItemForChar(toChar, toUserId, toMobInstanceId, item, AcquireGet) {
+	if !acquire.AcquireItemForChar(toChar, toUserId, toMobInstanceId, item, acquire.AcquireGet) {
 		// Restore to source on failure
 		rollback(item)
 		return ErrInventoryFull
@@ -66,16 +67,17 @@ func TransferItemToBackpack(item items.Item, toChar *characters.Character, toUse
 // TransferItemBetweenChars moves an item from one character to another.
 // Rolls back if the destination cannot accept the item.
 // Returns an error if the item cannot be removed from the source or stored in the destination.
-func TransferItemBetweenChars(item items.Item, fromChar *characters.Character, fromUserId int, fromMobInstanceId int, toChar *characters.Character, toUserId int, toMobInstanceId int) error {
+// reason rides on the receiver's gain event: give for player and mob give,
+// tree_give for the behaviour tree's return_item.
+func TransferItemBetweenChars(item items.Item, fromChar *characters.Character, fromUserId int, fromMobInstanceId int, toChar *characters.Character, toUserId int, toMobInstanceId int, reason acquire.AcquireReason) error {
 	// Remove from source
 	if !fromChar.RemoveItem(item) {
 		return fmt.Errorf("item not found in source inventory")
 	}
 
 	// Store through the acquire seam, which raises the receiver's gain event
-	// only when the item lands. Callers are give (player or mob) and the
-	// behaviour tree's return_item, all a hand-over, so the reason is give.
-	if !AcquireItemForChar(toChar, toUserId, toMobInstanceId, item, AcquireGive) {
+	// only when the item lands, carrying the caller's reason.
+	if !acquire.AcquireItemForChar(toChar, toUserId, toMobInstanceId, item, reason) {
 		// Rollback: restore to source. Not an acquisition: the item never
 		// left the source's ownership as far as any listener heard.
 		if !fromChar.StoreItem(item) {

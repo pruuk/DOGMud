@@ -3,6 +3,7 @@ package hooks
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -208,20 +209,15 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		if questInfo.Rewards.ItemId > 0 {
 			newItm := items.New(questInfo.Rewards.ItemId)
 			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive %s<ansi fg="itemname">%s</ansi>!`, items.ArticlePrefix(newItm.DisplayName()), items.MidSentenceName(newItm.DisplayName())))
-			questUser.Character.StoreItem(newItm)
-
-			iSpec := newItm.GetSpec()
-			if iSpec.QuestToken != `` {
-
-				events.AddToQueue(events.Quest{
-					UserId:     questUser.UserId,
-					QuestToken: iSpec.QuestToken,
-				})
-
-			}
+			// The seam raises ItemOwnership{Gained}, and CheckItemQuests
+			// grants the item's QuestToken from it, so the token is not
+			// hand-fired here (it used to be, when this site raised no
+			// event; firing both would grant it twice).
+			acquire.AcquireItem(questUser, newItm, acquire.AcquireReward)
 		}
 		// Item-stockpile reward? Grants N of each listed item (see
-		// quests.ParseItemGrants). Routes through StoreItem so potions auto-fill a
+		// quests.ParseItemGrants). Routes through the acquire seam (StoreItem
+		// underneath) so potions auto-fill a
 		// bandolier, components a component bag, etc. Reusable "starter kit"
 		// reward, mirroring the skill/stat/recipe multi-grants above.
 		for _, grant := range quests.ParseItemGrants(questInfo.Rewards.ItemInfo) {
@@ -233,7 +229,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 					break // unknown item id — skip the whole grant
 				}
 				firstName = newItm.DisplayName()
-				questUser.Character.StoreItem(newItm)
+				acquire.AcquireItem(questUser, newItm, acquire.AcquireReward)
 				granted++
 			}
 			if granted == 0 {

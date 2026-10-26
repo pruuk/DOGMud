@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
@@ -187,8 +188,9 @@ type WeaponBreakResult struct {
 }
 
 // tryWeaponBreak tests offhand breakage for any character and performs the
-// item swap (remove broken offhand, create broken-item #20). Returns the
-// result so callers can emit ItemOwnership events and messages.
+// item swap (remove broken offhand, create broken-item #20). The
+// replacement's gain event comes from the acquire seam; the result lets
+// callers emit the broken item's loss event and the messages.
 // The room param is used as a fallback for item drops; nil-safe.
 func tryWeaponBreak(defender *characters.Character, roundResult combat.AttackResult, room *rooms.Room) WeaponBreakResult {
 	result := WeaponBreakResult{}
@@ -222,7 +224,9 @@ func tryWeaponBreak(defender *characters.Character, roundResult combat.AttackRes
 
 	itm := items.New(20) // Broken item
 	result.ReplacementItem = itm
-	if !defender.StoreItem(itm) {
+	// The seam raises the replacement's gain only when it lands; dropped to
+	// the floor, it is no gain.
+	if !acquire.AcquireItemForChar(defender, defender.GetUserId(), defender.GetMobInstanceId(), itm, acquire.AcquireShieldSwap) {
 		if room != nil {
 			room.AddItem(itm, false)
 		}

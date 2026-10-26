@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -528,13 +529,7 @@ func (mod *AuctionsModule) newRoundHandler(e events.Event) events.ListenerReturn
 		} else if auctionNow.HighestBidUserId > 0 || auctionNow.HighestBidIsNPC {
 
 			if user := users.GetByUserId(auctionNow.HighestBidUserId); user != nil {
-				if user.Character.StoreItem(auctionNow.ItemData) {
-
-					events.AddToQueue(events.ItemOwnership{
-						UserId: user.UserId,
-						Item:   auctionNow.ItemData,
-						Gained: true,
-					})
+				if acquire.AcquireItem(user, auctionNow.ItemData, acquire.AcquireAuction) {
 
 					msg := fmt.Sprintf(`<ansi fg="yellow">You have won the auction for the <ansi fg="item">%s</ansi>! It has been added to your backpack.</ansi>`, auctionNow.ItemData.DisplayName())
 					user.SendText(messaging.CategorySystem, msg)
@@ -955,8 +950,7 @@ func (mod *AuctionsModule) resolveSeizedLot(a *AuctionItem) {
 			// mailed instead (StoreItem returns false when over ~2x capacity).
 			mailed := 0
 			for i := 0; i < count; i++ {
-				if winner.Character.StoreItem(a.ItemData) {
-					events.AddToQueue(events.ItemOwnership{UserId: winner.UserId, Item: a.ItemData, Gained: true})
+				if acquire.AcquireItem(winner, a.ItemData, acquire.AcquireAuction) {
 					continue
 				}
 				itemCopy := a.ItemData

@@ -80,3 +80,6 @@ package owns everything that needs a user, a room or a mob.
   `OpenMenu` itself while a gate rule holds or a prompt is open.
 - `RemoveItem` queues `events.ItemOwnership{Gained: false}` for the taken
   item, as `give.go` does for a consumed hand-in.
+- `GiveItem` acquires through `acquire.AcquireItem` with
+  `acquire.AcquireTopic` (#375 phase 3a), which raises the gain event only
+  when the item lands; a refused store returns false and raises nothing.

@@ -52,7 +52,9 @@ use with a target, observe, explore by area). Closes #588. Brainstormed with the
 
 ### 1. One acquire seam
 
-`actions.AcquireItem(user *users.UserRecord, itm items.Item, reason AcquireReason) bool` stores the
+`acquire.AcquireItem(user *users.UserRecord, itm items.Item, reason AcquireReason) bool`, in its
+own leaf package `internal/acquire` (not `internal/actions`, which imports `internal/questengine`:
+the quest bridge's `give_item` must call the seam too; amended during implementation), stores the
 item (`StoreItem`) and, only when the store succeeds, queues `events.ItemOwnership{UserId, Item,
 Gained: true, Reason}`. Returns whether it landed. `AcquireReason` is a string type with constants
 named for routes: get, buy, loot, give, reward, quest_give, tree_give, craft, salvage, forage,

@@ -523,16 +523,17 @@ refusal for the giver, not a server fault: test with `errors.Is`, and answer
 with `refusal.RecipientFull` (as `usercommands/give.go` does), never
 `refusal.Failed`.
 
-**`acquire.go`** (#375 phase 3a): the acquire seam. `AcquireItem(user
-*users.UserRecord, itm items.Item, reason AcquireReason) bool` stores the item
-and, only when `StoreItem` accepts it, queues one `events.ItemOwnership{Gained:
-true, Reason}`. `AcquireItemForChar(char, userId, mobInstanceId, itm, reason)`
-is the same for a route holding a bare character (it serves mob receivers
-too). `AcquireReason` is a string type with one constant per route (`get`,
-`give`, `buy`, `craft`, `reward`, and so on). `TransferItemToBackpack` gains
-through it with `AcquireGet`, `TransferItemBetweenChars` with `AcquireGive`
-(the giver's loss event now queues after the receiver's gain). A refused
-store raises nothing.
+**The acquire seam** (#375 phase 3a) lives in its own leaf package,
+`internal/acquire` (see its `context.md`), because this package imports
+`internal/questengine` and the quest bridge must acquire too. Every
+acquisition route here (buy, craft, forage, plant, salvage, search_bauble,
+steal) calls `acquire.AcquireItemForChar` with the actor's ids instead of
+`StoreItem` plus a hand-placed `ItemOwnership`. `TransferItemToBackpack` gains
+through it with `acquire.AcquireGet`; `TransferItemBetweenChars` takes a
+`reason acquire.AcquireReason` as its last parameter (`GiveItemToChar` passes
+`AcquireGive`, the behaviour tree's `return_item` passes `AcquireTreeGive`),
+and the giver's loss event queues after the receiver's gain. A refused store
+raises nothing.
 
 **`look.go`** (new file, slice 5a): `ResolveLook(actor Actor, lookAt string)
 LookResolution` (`:49`) is the shared look body, in the player's exact order:
