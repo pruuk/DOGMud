@@ -72,6 +72,12 @@ type MutationSpec struct {
 	// Prerequisites lists mutations (with min level) that must be owned
 	// before this one can be acquired. Gates apex/spine mutations.
 	Prerequisites []MutationPrereq `yaml:"prerequisites,omitempty"`
+
+	// ReserveUnits is the Conviction this mutation sets aside, in units of
+	// MutationReserveUnitPct, one entry per rank (#680). Rank N holds the sum
+	// of the first N entries. Empty reserves nothing. A guard requires the
+	// list to be as long as the mutation's max rank.
+	ReserveUnits []int `yaml:"reserve_units,omitempty"`
 }
 
 // Id implements fileloader.Loadable.
@@ -123,6 +129,17 @@ func (m *MutationSpec) Validate() error {
 		}
 		if !found {
 			m.Cons = append(m.Cons, m.Con)
+		}
+	}
+
+	for i, u := range m.ReserveUnits {
+		if u < 0 {
+			return fmt.Errorf("mutation %q: reserve_units[%d] must be >= 0, got %d", m.MutationId, i, u)
+		}
+	}
+	for _, p := range m.Pros {
+		if p.Type == "size" && (p.Target != "large" || p.Value < 1) {
+			return fmt.Errorf("mutation %q: a size effect needs target large and a rank value of 1 or more", m.MutationId)
 		}
 	}
 
