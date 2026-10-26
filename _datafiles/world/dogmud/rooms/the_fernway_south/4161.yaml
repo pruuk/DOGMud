@@ -77,6 +77,7 @@ nouns:
     sweetish and wrong, rising from somewhere below the roots.
 hidden_nouns:
   root-gap:
+    on: root tangle
     description: |
       Down inside the root-tangle, behind the first snarl of
       roots, the earth does not close again. It drops. A gap

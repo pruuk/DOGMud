@@ -56,6 +56,7 @@ nouns:
     larder by something living deeper in.
 hidden_nouns:
   cache:
+    on: cairn
     description: |
       Lifting the topmost stones of the cairn reveals a small
       natural depression in the floor, and inside it, an
@@ -66,7 +67,8 @@ hidden_nouns:
       Don't come looking. E.V." The pearl is small but real.
       The note is older than its careful folding suggests.
     hidden_description: |
-      The cairn's base hides a small cache: moved-stone shadows betray a depression in the floor below. Try `look cache`.
+      The cairn's base hides a small cache: moved-stone shadows betray a
+      depression in the floor below. Try `look cache`.
 idlemessages:
 - A piece of fish-bone shifts in the gravel as a draft moves through the alcove.
 - A drip from the western passage echoes in briefly and is gone.

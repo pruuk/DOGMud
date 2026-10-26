@@ -44,11 +44,11 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		notifyRoomInteract(user, room, quests.VerbSearch, spot, spot)
 	}
 
-	// Quest engine: command notification — lets a quest gate a step on the
-	// `search` command (the newbie Lore spoke's shrine beat: searching out the
-	// hidden Orbital Stone in the Reliquary). Mirrors forage/drink/throw/cast.
-	// Sent for a feature search too, as before for every search: a player led
-	// to the Reliquary may well type `search floor` rather than `search`.
+	// Quest engine: command notification, so a quest can gate a step on the
+	// `search` command anywhere in a room. Mirrors forage/drink/throw/cast.
+	// No shipped quest uses it since quests 49 and 58 moved to a `verb:
+	// search` room_interact on the Reliquary floor (#375 phase 3a); a quest
+	// step tied to one feature belongs there.
 	bridge := questengine.NewGameBridge(user, room.RoomId)
 	questengine.GetEngine().Notify("command", questengine.EventDetails{
 		UserId:  user.UserId,

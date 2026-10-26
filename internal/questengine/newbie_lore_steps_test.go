@@ -116,6 +116,12 @@ func TestQuest48StandingStones_OneCommandPerStep(t *testing.T) {
 	})
 }
 
+// searchFloor is `search floor` in a room: since #375 phase 3a quests 49
+// and 58 listen for a search of the Reliquary floor, where the disc lies.
+func searchFloor(roomId int) EventDetails {
+	return EventDetails{RoomId: roomId, Verb: "search", Noun: "floor", RoomNoun: "floor"}
+}
+
 func TestQuest49OldShrine_OneCommandPerStep(t *testing.T) {
 	const reliquary, nave = 5343, 5342
 	q := loadShippedQuest(t, "49-the_old_shrine.yaml", 49)
@@ -131,11 +137,16 @@ func TestQuest49OldShrine_OneCommandPerStep(t *testing.T) {
 
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
-		w.notify("command", EventDetails{Command: "search", RoomId: nave})
+		w.notify("room_interact", searchFloor(nave))
 		require.Equal(t, "start", w.p.current, "a search outside the Reliquary must not count")
 		require.False(t, holdsAll(w.p, turnIn))
 
-		w.notify("command", EventDetails{Command: "search", RoomId: reliquary})
+		look := searchFloor(reliquary)
+		look.Verb = "look"
+		w.notify("room_interact", look)
+		require.Equal(t, "start", w.p.current, "looking at the floor is not searching it")
+
+		w.notify("room_interact", searchFloor(reliquary))
 		require.Equal(t, "find", w.p.current)
 		require.True(t, holdsAll(w.p, turnIn))
 	})
@@ -178,9 +189,9 @@ func TestQuest58ReadingTheStones_FinishesWhereItSays(t *testing.T) {
 	}
 
 	w := newQuestWalker(q).at("start")
-	w.notify("command", EventDetails{Command: "search", RoomId: 5342})
+	w.notify("room_interact", searchFloor(5342))
 	require.Equal(t, "start", w.p.current, "a search outside the Reliquary must not count")
-	w.notify("command", EventDetails{Command: "search", RoomId: reliquary})
+	w.notify("room_interact", searchFloor(reliquary))
 	require.Equal(t, "end", w.p.current)
 
 	t.Run("Sere's greeting names the search while it is open", func(t *testing.T) {

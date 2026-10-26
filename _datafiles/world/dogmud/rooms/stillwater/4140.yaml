@@ -63,6 +63,10 @@ nouns:
     sigil on the Stillwater-built skiffs and on
     the railing of Mill Creek Footbridge. The turf
     at the foot of the marker looks disturbed.
+  turf: Short cemetery turf, kept trimmed between the
+    rows. At the foot of Elgar's marker a square of it
+    sits a little higher than the rest, its edges cut
+    clean and pressed back down by hand, not long ago.
   wall: A low mortared lake-stone wall encloses the
     cemetery on three sides, mossed and weathered.
     The fourth side is open to the lake. It was a deliberate
@@ -72,6 +76,7 @@ nouns:
     propped open with a smooth river-stone.
 hidden_nouns:
   disturbance:
+    on: turf
     description: |
       Beneath the loose turf at the foot of Elgar Voss's marker
       a small wooden box has been buried, perhaps a hand's
@@ -82,7 +87,8 @@ hidden_nouns:
       unmistakably Ulla's husband's hand, and a short note in
       a different hand reading "He was your brother. V."
     hidden_description: |
-      The turf at the foot of Elgar's marker is slightly raised, as if disturbed and patted back not long ago. Try `look disturbance`.
+      The turf at the foot of Elgar's marker is slightly raised, as if
+      disturbed and patted back not long ago. Try `look disturbance`.
 idlemessages:
 - The lake-wind moves through the cemetery with a low constant rush.
 - A piece of old lichen frays loose from a marker and is carried briefly across the gravel.

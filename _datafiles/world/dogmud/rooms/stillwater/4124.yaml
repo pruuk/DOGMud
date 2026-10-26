@@ -52,7 +52,8 @@ nouns:
     still green this season. Used by the kitchen at
     the inn for jelly in autumn. The acolyte ties a
     small ribbon around the trunk each spring for
-    luck.
+    luck. At its foot the roots have pushed the earth
+    up around an edge of flat grey stone.
   elderberry: A long row of late-flowering elderberry
     along the eastern fence, the flat creamy
     flower-heads still open this late, the sweet
@@ -62,6 +63,7 @@ nouns:
     midsummer.
 hidden_nouns:
   buried marker:
+    on: crab apple
     description: |
       A flat slab of weathered stone half-buried at the foot of
       the crab-apple tree, the carving on its upper face worn
@@ -71,7 +73,8 @@ hidden_nouns:
       garden. Whoever planted the crab-apple chose to plant it
       directly over the marker.
     hidden_description: |
-      A flat slab of weathered stone, a buried marker, lies at the foot of the crab-apple tree. Try `look marker`.
+      A flat slab of weathered stone, a buried marker, lies at the foot
+      of the crab-apple tree. Try `look marker`.
 idlemessages:
 - A bee moves slowly between the elderberry flowers along the eastern fence.
 - A breeze lifts the smell of crushed marsh-sage briefly across the garden.

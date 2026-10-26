@@ -2,11 +2,13 @@
 #
 # Token flow:
 #   49-start — granted by Hermit Sere's shrine_offer node (requires 48-end).
-#   49-find  — command trigger on `search` in the Reliquary (5343). Searching
-#              reveals the hidden `disc` noun (the Orbital Stone) AND fires the
-#              beat; the beat's send_text also delivers the core discovery, so
-#              the capstone reads even if the hidden-noun roll lags. The
-#              search-command Notify was added this chunk.
+#   49-find: a `verb: search` room_interact on the Reliquary floor (5343),
+#              where the hidden `disc` (the Orbital Stone) is tucked (its
+#              `on: floor`). `search floor` (or `flagstones`, `flags`,
+#              `stones`) fires it with no roll; plain `search` can reach it
+#              too, at the room difficulty (#375 phase 3a). The beat's text
+#              delivers the core discovery, so the capstone reads even if
+#              the hidden-noun roll fails.
 #   49-end   — granted by Sere's shrine_turnin node (needs 49-find).
 #
 # Looking at the disc is not a step (2026-10-17): the search beat already
@@ -39,7 +41,7 @@ steps:
       to study it.
     hint: >-
       From the Old Shrine, go west into the Collapsed Nave and north into the
-      Reliquary, then type search.
+      Reliquary, then type search floor.
   - id: find
     map_target: 5341
     description: >-
@@ -75,8 +77,9 @@ rewards:
 
 triggers:
   # ── SEARCH: uncover the buried disc in the Reliquary (5343) ────────────
-  - event: command
-    command: search
+  - event: room_interact
+    verb: search
+    noun: floor
     room: 5343
     conditions:
       has: ["49-start"]

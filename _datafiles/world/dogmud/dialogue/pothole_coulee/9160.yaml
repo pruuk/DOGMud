@@ -33,7 +33,7 @@ opener:
       north, to the deepest chamber, where the flags have cracked and heaved. Search
       it out with your hands.
     hints: Go west into the Collapsed Nave and north into the Reliquary, then type
-      search.
+      search floor.
   - questRequired:
     - 49-find
     questExcluded:
@@ -47,7 +47,7 @@ opener:
     text: The stones are waiting for you in the Reliquary. Go and listen to them.
       They will tell you themselves when they are done.
     hints: Go west into the Collapsed Nave and north into the Reliquary, then type
-      search.
+      search floor.
   - questRequired:
     - 49-end
     text: You looked on it, and you came back, and you carry the wondering the way
@@ -68,7 +68,8 @@ topics:
     flagstone floor has cracked and lifted over something that has wanted lifting
     a long time. Search the floor with your hands and bring out what is under it.
     Look on it well. Then come and tell me what you saw.'
-  hints: Go west into the Collapsed Nave and north into the Reliquary, then type search.
+  hints: Go west into the Collapsed Nave and north into the Reliquary, then type
+    search floor.
   questRequired:
   - 48-end
   questExcluded:
@@ -100,7 +101,8 @@ topics:
   text: The shrine speaks differently each time. If you have the patience, go back
     to the Reliquary and read the stones again. They will tell you what they have
     to say. You need not come back to tell me. I will hear it in the stones.
-  hints: Go west into the Collapsed Nave and north into the Reliquary, then type search.
+  hints: Go west into the Collapsed Nave and north into the Reliquary, then type
+    search floor.
   questRequired:
   - 49-end
   questExcluded:
@@ -112,7 +114,8 @@ topics:
   label: Where is the thing beneath the floor?
   text: Not yet. It is still under the Reliquary floor. West into the nave from here,
     then north. Search the cracked flags with your hands.
-  hints: Go west into the Collapsed Nave and north into the Reliquary, then type search.
+  hints: Go west into the Collapsed Nave and north into the Reliquary, then type
+    search floor.
   questRequired:
   - 49-start
   questExcluded:
@@ -123,7 +126,8 @@ topics:
   label: Where do I read the stones?
   text: The stones are waiting for you in the Reliquary, not here with me. Go and
     search them.
-  hints: Go west into the Collapsed Nave and north into the Reliquary, then type search.
+  hints: Go west into the Collapsed Nave and north into the Reliquary, then type
+    search floor.
   questRequired:
   - 58-start
   questExcluded:
