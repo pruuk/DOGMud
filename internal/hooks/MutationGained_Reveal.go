@@ -92,10 +92,12 @@ func DisplacedGear_Notify(e events.Event) events.ListenerReturn {
 
 // endOfRoundValidate is the round tick's closing validate for one player,
 // and the one drain point every mutation grant reaches: the round tick,
-// pinnacle tick and quest grants queue mutations.Gained, but the Bloom Wafer
-// and the Phial of Second Birth narrate their own grant and queue nothing.
-// Whatever closed a slot since the last tick, the displacement is recorded by
-// then, and the notice is queued behind any reveal already waiting.
+// pinnacle tick and quest grants queue a loud mutations.Gained, while the
+// Bloom Wafer and the Phial of Second Birth narrate their own grant and queue
+// a Silent one (#680), which no reveal and no web card answers. A scour
+// queues nothing. Whatever closed a slot since the last tick, the
+// displacement is recorded by then, and the notice is queued behind any
+// reveal already waiting.
 func endOfRoundValidate(user *users.UserRecord) {
 	if err := user.Character.Validate(); err != nil {
 		mudlog.Warn("endOfRoundValidate", "userId", user.UserId, "error", err)

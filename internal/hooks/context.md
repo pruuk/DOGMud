@@ -120,8 +120,9 @@ events.RegisterListener(mutations.Gained{}, MutationGained_Reveal) // Mutation r
 
 Gear a closed slot pushed off a player (#481) is told by
 `DisplacedGear_Notify` (in `MutationGained_Reveal.go`), not by the reveal:
-the Bloom Wafer and the Phial of Second Birth grant mutations without
-queueing `mutations.Gained`. The round tick's closing `endOfRoundValidate`
+the Bloom Wafer and the Phial of Second Birth narrate their own grant and
+queue a `Silent` `mutations.Gained` that neither the reveal nor the gmcp
+`Char.Mutation` card answers (#680), and a scour queues nothing. The round tick's closing `endOfRoundValidate`
 validates each player and, when `Character.HasDisplacedGear()`, queues a
 `displacedGearNotice` at priority 50. That runs after every priority-0
 event, including the `splash.Splash` the reveal queues, so the line follows
