@@ -258,35 +258,37 @@ func GetAllSlotTypes() []string {
 	}
 }
 
+// HandsRequired is HandsRequiredAt with no hand named: the grip the character
+// has in every hand. The "too many hands" checks and the whole-pair
+// two-hander search read this.
 func (c *Character) HandsRequired(i items.Item) int {
+	return c.HandsRequiredAt(i, ``)
+}
 
+// HandsRequiredAt returns how many hands item i needs in the named hand slot
+// ("wielded", "offhand", "extra arm 1" to "extra arm 4"; "" for no particular
+// hand).
+//
+// Shooting weapons ignore size. A Large species holds anything in one hand.
+// A character grown Large by mutation holds a two-hander alone in the weapon
+// hand only, and in every hand once they carry Colossus Form (#680). Small
+// needs one hand more.
+func (c *Character) HandsRequiredAt(i items.Item, slot string) int {
 	if i.ItemId < 1 {
 		return 0
 	}
-
 	iSpec := i.GetSpec()
-
-	// Shooting weapnos don't benefit from creature size
-	// when determining how many hands they require
 	if iSpec.Subtype == items.Shooting {
 		return iSpec.Hands
 	}
-
-	// An unregistered species reads as Medium. The upgrade scorer reaches
-	// this for every weapon it weighs (slice 5a), and a nil here used to be a
-	// panic, never a rule.
-	speciesInfo := species.GetSpecies(c.SpeciesId)
-	if speciesInfo == nil {
-		return iSpec.Hands
-	}
-	if speciesInfo.Size == species.Large {
-		return 1
-	}
-
-	if speciesInfo.Size == species.Small {
+	switch c.Size() {
+	case species.Large:
+		if slot == `wielded` || c.gripsInEveryHand() {
+			return 1
+		}
+	case species.Small:
 		return iSpec.Hands + 1
 	}
-
 	return iSpec.Hands
 }
 

@@ -184,6 +184,14 @@ func (c *Character) handCandidates(i items.Item, spec items.ItemSpec) (fill, swa
 		}
 		swap = append([]slotCandidate(nil), fill...)
 		sort.SliceStable(swap, func(a, b int) bool { return len(swap[a].displaced) < len(swap[b].displaced) })
+		// #680: a character grown Large without Colossus Form holds a
+		// two-hander alone in the weapon hand only, so that hand is offered
+		// first, as one slot.
+		if c.HandsRequiredAt(i, pairs[0].First.Label) < 2 {
+			main := occupant(pairs[0].First.ItemPtr)
+			fill = append([]slotCandidate{main}, fill...)
+			swap = append([]slotCandidate{main}, swap...)
+		}
 		return fill, swap, `You have no free pair of hands for a two-handed weapon.`
 	}
 
@@ -282,7 +290,11 @@ func (c *Character) chooseArm(i items.Item, spec items.ItemSpec, arm int) (SlotC
 		return SlotChoice{}, `That requires too many hands.`
 	}
 	pair := pairs[pairIdx]
-	twoHanded := c.HandsRequired(i) >= 2
+	target := pair.First
+	if slotInPair == 1 {
+		target = pair.Second
+	}
+	twoHanded := c.HandsRequiredAt(i, target.Label) >= 2
 	if twoHanded {
 		if slotInPair != 0 {
 			return SlotChoice{}, `A two-handed weapon needs a pair of arms. Try arm 1, 3, or 5.`
@@ -290,10 +302,6 @@ func (c *Character) chooseArm(i items.Item, spec items.ItemSpec, arm int) (SlotC
 		if pair.IsHalfPair() {
 			return SlotChoice{}, `That arm doesn't have a partner for a two-handed weapon.`
 		}
-	}
-	target := pair.First
-	if slotInPair == 1 {
-		target = pair.Second
 	}
 
 	cand := slotCandidate{slots: []*items.Item{target.ItemPtr}}
