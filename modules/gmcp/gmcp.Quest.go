@@ -157,7 +157,7 @@ var questEventVocab = []vocabEntry{
 	{"command_issued", "player TYPED a command, success or not: fires from TryCommand for any command (filters: command, room)"},
 	{"item_gain", "an item enters the player's inventory (filter: item)"},
 	{"quest_granted", "a quest token was just granted: the chaining event (filter: quest_token)"},
-	{"room_interact", "player looked/examined a room noun (filters: room, noun, verb)"},
+	{"room_interact", "player looked at or searched a room feature (filters: room, noun, verb: look or search; empty means look)"},
 }
 
 var questConditionVocab = []vocabEntry{

@@ -22,6 +22,24 @@ type TriggerDef struct {
 	Actions    []ActionDef `yaml:"actions" json:"actions"`
 }
 
+// The two room_interact verb families (#375 phase 3a, owner ruling 5: look
+// and search are the only interaction verbs). look, l, examine, exam and read
+// raise VerbLook; search raises VerbSearch. A trigger's empty verb means
+// VerbLook; the loader refuses any other value.
+const (
+	VerbLook   = "look"
+	VerbSearch = "search"
+)
+
+// InteractVerb is the verb family a room_interact trigger listens for: its
+// own verb, or VerbLook when it names none.
+func InteractVerb(verb string) string {
+	if verb == "" {
+		return VerbLook
+	}
+	return verb
+}
+
 // Conditions for trigger evaluation.
 type Conditions struct {
 	Has           []string          `yaml:"has,omitempty" json:"has,omitempty"`                       // player must have ALL these quest tokens

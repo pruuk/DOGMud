@@ -60,6 +60,28 @@ func TestValidateRefusesTheRetiredDialogueEvent(t *testing.T) {
 	}
 }
 
+// #375 phase 3a (owner ruling 5): look and search are the only interaction
+// verbs, so a room_interact trigger's verb is empty (look), look or search.
+func TestValidateRoomInteractVerbs(t *testing.T) {
+	for _, verb := range []string{"", "look", "search"} {
+		q := validQuest(ActionDef{Grant: "9001-start"})
+		q.Triggers[0].Event, q.Triggers[0].Verb = "room_interact", verb
+		if err := q.Validate(); err != nil {
+			t.Fatalf("verb %q refused: %v", verb, err)
+		}
+	}
+	q := validQuest(ActionDef{Grant: "9001-start"})
+	q.Triggers[0].Event, q.Triggers[0].Verb = "room_interact", "lift"
+	if err := q.Validate(); err == nil || !strings.Contains(err.Error(), `verb "lift"`) {
+		t.Fatalf("verb lift must be refused, got %v", err)
+	}
+	q = validQuest(ActionDef{Grant: "9001-start"})
+	q.Triggers[0].Verb = "look"
+	if err := q.Validate(); err == nil || !strings.Contains(err.Error(), "verb") {
+		t.Fatalf("a verb on a command trigger must be refused, got %v", err)
+	}
+}
+
 func TestValidateRefusesAnActionThatSetsBothTexts(t *testing.T) {
 	err := validQuest(ActionDef{SendText: "You see it.", RoomText: "{actor} sees it."}).Validate()
 	if err == nil || !strings.Contains(err.Error(), "both actor and observer") {

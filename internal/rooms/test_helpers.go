@@ -33,6 +33,22 @@ func UnloadRoomForTest(roomId int) {
 	delete(roomManager.rooms, roomId)
 }
 
+// SetOriginalRoomIdForTest records roomId as an instance copy of templateId,
+// as CreateEphemeralRoomIds does, so OriginalRoomId(roomId) returns
+// templateId. The returned cleanup restores the previous entry.
+// Intended for cross-package tests of template-room matching.
+func SetOriginalRoomIdForTest(roomId, templateId int) func() {
+	prev, had := originalRoomIdLookups[roomId]
+	originalRoomIdLookups[roomId] = templateId
+	return func() {
+		if had {
+			originalRoomIdLookups[roomId] = prev
+		} else {
+			delete(originalRoomIdLookups, roomId)
+		}
+	}
+}
+
 // MarkRoomOccupancy updates the roomManager tracking maps so that
 // GetRoomsWithPlayers / GetRoomsWithMobs return correct results in tests.
 // Call this after AddPlayer/AddMob on the room objects.

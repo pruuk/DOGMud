@@ -4,6 +4,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -22,8 +23,18 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	actor := &actions.UserActor{User: user, Room: room}
 	// A search refused for cooldown never ran, so it sends no quest event: a
 	// quest step advances only when the action succeeds (owner, 2026-10-17).
-	if actions.Search(actor, actions.SearchOptions{Feature: rest}).OnCooldown {
+	result := actions.Search(actor, actions.SearchOptions{Feature: rest})
+	if result.OnCooldown {
 		return true, nil
+	}
+
+	// #375 phase 3a: `search <feature>` raises the search-family
+	// room_interact after the search has run, so a `verb: search` trigger on
+	// that feature fires with no roll. Only a resolved feature counts (a room
+	// noun, a discovered hidden noun or a visible container, as the search
+	// itself resolved it). Plain search's quest rolls are Task 7's.
+	if result.Feature != `` {
+		notifyRoomInteract(user, room, quests.VerbSearch, rest, result.Feature)
 	}
 
 	// Quest engine: command notification — lets a quest gate a step on the

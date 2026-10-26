@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -379,18 +380,14 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 			}
 		}
 
-		if !skipScript {
-			// Quest engine: room_interact notification
+		// Quest engine: room_interact for the look family only (#375 phase
+		// 3a, owner ruling 5: look and search are the only interaction
+		// verbs). read raises it itself when nothing carried matches, and
+		// search after the search runs (skill.search.go), so a cooldown
+		// refusal sends nothing.
+		if !skipScript && interactionFamily(alias) == quests.VerbLook {
 			if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
-				bridge := questengine.NewGameBridge(user, room.RoomId)
-				result := questengine.GetEngine().Notify("room_interact", questengine.EventDetails{
-					UserId:   user.UserId,
-					RoomId:   room.RoomId,
-					Verb:     alias,
-					Noun:     strings.ToLower(rest),
-					RoomNoun: room.NounNamedBy(rest),
-				}, bridge, bridge)
-				if result.Handled {
+				if notifyRoomInteract(user, room, quests.VerbLook, rest, room.NounNamedBy(rest)) {
 					return true, nil
 				}
 			}
@@ -574,7 +571,68 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 	}
 	// end "go" attempt
 
+	// No command runs this. When the words after it name a feature of the
+	// room ("pry floorboard"), point at the two verbs that work on features
+	// instead of the "not recognized" line (#375 phase 3a).
+	if noun := featureNamedBy(user, room, rest); noun != `` {
+		user.SendText(messaging.CategoryUsage, InteractNudgeText(noun))
+		return true, nil
+	}
+
 	return false, nil
+}
+
+// interactionFamily is the room_interact verb family a dispatched command
+// belongs to: look for look (its aliases l, examine and exam expand to it
+// before this runs), "" for everything else. read and search raise their
+// own events in their handlers.
+func interactionFamily(cmd string) string {
+	if cmd == `look` {
+		return quests.VerbLook
+	}
+	return ``
+}
+
+// notifyRoomInteract raises room_interact for a verb family, matched on the
+// template room (rooms.OriginalRoomId, as command_issued is) so a trigger
+// fires inside an instance; the bridge keeps the real room. It reports
+// whether a trigger handled the event.
+func notifyRoomInteract(user *users.UserRecord, room *rooms.Room, verb, typed, roomNoun string) bool {
+	matchRoom, _ := rooms.OriginalRoomId(room.RoomId)
+	bridge := questengine.NewGameBridge(user, room.RoomId)
+	return questengine.GetEngine().Notify("room_interact", questengine.EventDetails{
+		UserId:   user.UserId,
+		RoomId:   matchRoom,
+		Verb:     verb,
+		Noun:     strings.ToLower(strings.TrimSpace(typed)),
+		RoomNoun: roomNoun,
+	}, bridge, bridge).Handled
+}
+
+// featureNamedBy returns the key of the room feature typed names: a room
+// noun, or a hidden noun this character has already discovered (an
+// undiscovered one is never confirmed). "" when it names none.
+func featureNamedBy(user *users.UserRecord, room *rooms.Room, typed string) string {
+	if noun := room.NounNamedBy(typed); noun != `` {
+		return noun
+	}
+	want := util.NounHyphenFold(strings.ToLower(strings.TrimSpace(typed)))
+	if want == `` {
+		return ``
+	}
+	for key := range room.HiddenNouns {
+		if util.NounHyphenFold(strings.ToLower(key)) == want && user.Character.HasDiscovery(room.RoomId, key) {
+			return key
+		}
+	}
+	return ``
+}
+
+// InteractNudgeText answers an unknown verb typed at a room feature: look
+// and search are the only verbs that work on one (owner ruling 5).
+func InteractNudgeText(noun string) string {
+	noun = util.EscapeAnsiTags(noun)
+	return `Try <ansi fg="command">look ` + noun + `</ansi> or <ansi fg="command">search ` + noun + `</ansi>.`
 }
 
 // commandRoute is the branch TryCommand takes for a command that is not a

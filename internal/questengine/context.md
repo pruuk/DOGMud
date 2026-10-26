@@ -89,6 +89,14 @@ keep it that way.
    A hyphen matches a space (`util.NounHyphenFold`) in `nounMatches` on the
    trigger noun, the typed noun and `RoomNoun`, so `look
    processional-reliefs` fires `noun: processional reliefs`.
+   A trigger `verb:` names a `room_interact` verb family (#375 phase 3a):
+   empty means `look` (`quests.InteractVerb`), so a look trigger never
+   fires on search and a `verb: search` trigger never fires on look. The
+   dispatcher raises `room_interact` with `Verb: look` for look (and its
+   aliases l, examine, exam) and `read` raises it when nothing carried
+   matches; `search <feature>` raises `Verb: search` after the search runs.
+   Every raise matches the template room (`rooms.OriginalRoomId`). The
+   walkthrough sends `quests.InteractVerb(t.Verb)`.
 2. **Visit guard** — `MarkVisited(trigId)`; a trigger fires at most once per
    chain.
 3. **Conditions** — `EvalConditions(t.Conditions, player)`.
