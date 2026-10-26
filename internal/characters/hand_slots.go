@@ -98,6 +98,25 @@ func (s HandSlot) Is2H(c *Character) bool {
 	return c.HandsRequired(*s.ItemPtr) >= 2
 }
 
+// IsBlockedBy2H returns true if the given slot is the second slot of a hand
+// pair whose first slot holds a weapon that fills both of this character's
+// hands. It reads the wearer's HandsRequired through Is2H, so a Large wearer's
+// two-hander leaves the partner free (#681). The inventory templates use it to
+// hide "Offhand: -nothing-", and combat uses it to skip the partner's fist.
+func (c *Character) IsBlockedBy2H(slot string) bool {
+	// Map each "second" slot to its pair's "first" slot
+	partnerMap := map[string]*items.Item{
+		"offhand":     &c.Equipment.Weapon,
+		"extra arm 2": &c.Equipment.ExtraArm1,
+		"extra arm 4": &c.Equipment.ExtraArm3,
+	}
+	partner, ok := partnerMap[slot]
+	if !ok {
+		return false
+	}
+	return HandSlot{ItemPtr: partner}.Is2H(c)
+}
+
 // IsEmpty returns true if the slot has no item or is a nil half-pair slot.
 func (s HandSlot) IsEmpty() bool {
 	return s.ItemPtr == nil || s.ItemPtr.ItemId < 1 || s.ItemPtr.IsDisabled()

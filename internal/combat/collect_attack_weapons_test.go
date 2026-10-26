@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -178,6 +179,37 @@ func TestCollectAttackWeapons_TwoHandedInExtraArm3_NoExtraArm4Fist(t *testing.T)
 	// Shields in ExtraArm1/2 and the 2H-blocked ExtraArm4 contribute 0.
 	assert.Equal(t, 3, len(got),
 		"sword + offhand-fist + 2H in arm5; got: %+v", got)
+}
+
+// #681: a Large wearer holds a two-hander in one hand, so the offhand is free.
+// An empty offhand must still swing a fist, and a weapon there must swing; a
+// Medium wearer's two-hander still blocks the offhand fist.
+func TestCollectAttackWeapons_LargeTwoHander_OffhandStillAttacks(t *testing.T) {
+	const largeId, mediumId = 9681, 9682
+	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
+		largeId:  {SpeciesId: largeId, Name: "golem", Size: species.Large},
+		mediumId: {SpeciesId: mediumId, Name: "human", Size: species.Medium},
+	}))
+	twoHander := items.Item{ItemId: 30, Spec: &items.ItemSpec{
+		Type: items.Weapon, Subtype: items.Slashing, Hands: 2}}
+
+	large := newCharWithArms(0)
+	large.SpeciesId = largeId
+	large.Equipment.Weapon = twoHander
+	large.Equipment.Offhand = items.Item{ItemId: 0}
+	assert.Equal(t, []int{30, 0}, weaponIds(collectAttackWeapons(large)),
+		"Large wearer: two-hander plus the offhand fist")
+
+	large.Equipment.Offhand = makeSword()
+	assert.Equal(t, []int{30, 10}, weaponIds(collectAttackWeapons(large)),
+		"Large wearer: two-hander plus the offhand weapon")
+
+	medium := newCharWithArms(0)
+	medium.SpeciesId = mediumId
+	medium.Equipment.Weapon = twoHander
+	medium.Equipment.Offhand = items.Item{ItemId: 0}
+	assert.Equal(t, []int{30}, weaponIds(collectAttackWeapons(medium)),
+		"Medium wearer: the two-hander fills the offhand, no fist")
 }
 
 // ─────────────────────────────────────────────────────────────────────────

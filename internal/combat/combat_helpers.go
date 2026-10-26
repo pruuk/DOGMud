@@ -366,7 +366,7 @@ func collectAttackWeapons(sourceChar *characters.Character) []items.Item {
 	}
 	// Offhand empty → fist, unless blocked by a 2H in the main hand.
 	if sourceChar.Equipment.Offhand.ItemId == 0 &&
-		!sourceChar.Equipment.IsBlockedBy2H("offhand") {
+		!sourceChar.IsBlockedBy2H("offhand") {
 		attackWeapons = append(attackWeapons, emptyArm)
 	}
 	// Extra arm empty slots → fist. Even-numbered extras (2, 4) may be
@@ -375,14 +375,14 @@ func collectAttackWeapons(sourceChar *characters.Character) []items.Item {
 		attackWeapons = append(attackWeapons, emptyArm)
 	}
 	if sourceChar.ExtraArms >= 2 && sourceChar.Equipment.ExtraArm2.ItemId == 0 &&
-		!sourceChar.Equipment.IsBlockedBy2H("extra arm 2") {
+		!sourceChar.IsBlockedBy2H("extra arm 2") {
 		attackWeapons = append(attackWeapons, emptyArm)
 	}
 	if sourceChar.ExtraArms >= 3 && sourceChar.Equipment.ExtraArm3.ItemId == 0 {
 		attackWeapons = append(attackWeapons, emptyArm)
 	}
 	if sourceChar.ExtraArms >= 4 && sourceChar.Equipment.ExtraArm4.ItemId == 0 &&
-		!sourceChar.Equipment.IsBlockedBy2H("extra arm 4") {
+		!sourceChar.IsBlockedBy2H("extra arm 4") {
 		attackWeapons = append(attackWeapons, emptyArm)
 	}
 
