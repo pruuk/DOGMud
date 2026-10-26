@@ -8,7 +8,7 @@ expire before using that ability again.
 <ansi fg="yellow">Special Combat Moves: </ansi>
 
 Special moves (<ansi fg="command">bash</ansi>, <ansi fg="command">trip</ansi>, <ansi fg="command">kick</ansi> and the like), spells
-and shots with <ansi fg="command">fire</ansi> share a single cooldown. <ansi fg="command">consider</ansi> uses it too. Using any one of
+and shots with <ansi fg="command">fire</ansi> share a single cooldown. <ansi fg="command">consider</ansi> and <ansi fg="command">search</ansi> use it too. Using any one of
 them prevents you from using the others until the
 cooldown expires. This encourages tactical timing rather
 than chaining knockdown attempts. See <ansi fg="command">help special</ansi>.
@@ -22,4 +22,5 @@ than chaining knockdown attempts. See <ansi fg="command">help special</ansi>.
   <ansi fg="command">help trip</ansi>
   <ansi fg="command">help kick</ansi>
   <ansi fg="command">help combat</ansi>
+  <ansi fg="command">help search</ansi>
 

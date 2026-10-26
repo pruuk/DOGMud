@@ -1,11 +1,25 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">look</ansi>
 
-The <ansi fg="command">look</ansi> command looks at things in the room around
-you.
+The <ansi fg="command">look</ansi> command shows you what is around you. By itself it
+shows the room you are in. Followed by a word, it looks closely at one
+thing and tells you more about it.
+
+<ansi fg="yellow">Looking closely at a room: </ansi>
+
+A room's description is more than scenery. Some of the words in it are
+shown in a different colour. Those are things you can look at. Type
+<ansi fg="command">look</ansi> and the word to read more. Sometimes a closer look turns up
+something new, such as a clue, a hidden item, or a way forward. If a
+description mentions something that seems worth a second thought, look
+at it.
+
+You can also use <ansi fg="command">l</ansi>, <ansi fg="command">examine</ansi> or <ansi fg="command">exam</ansi> instead of <ansi fg="command">look</ansi>. They all do the same
+thing. For a sign, a book or writing on a wall, <ansi fg="command">read</ansi> works too.
 
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">look</ansi>              Look at the room you are in.
+  <ansi fg="command">look [thing]</ansi>      Look closely at a coloured word in the room.
   <ansi fg="command">look north</ansi>        Peer into the room to the north.
   <ansi fg="command">look dave</ansi>         Look at the player or NPC named dave.
   <ansi fg="command">look sword</ansi>        Examine a sword you are carrying or wearing.
@@ -16,9 +30,12 @@ items as a single pool. If you have a dagger in your pack and
 another one wielded, <ansi fg="command">look 2.dagger</ansi> examines the wielded one.
 The game tells you where the item is (backpack or equipment slot).
 
-Sometimes there is text in a room description that warrants a
-closer look. You can often look at highlighted words for more
-information.
+<ansi fg="yellow">When looking is not enough: </ansi>
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help item-names</ansi>, <ansi fg="command">help identify</ansi>
+<ansi fg="command">look</ansi> and <ansi fg="command">search</ansi> are the two ways you deal with the things in a room.
+If something looks disturbed, out of place, or worth digging into,
+try <ansi fg="command">search</ansi> on it. You do not need other words such as push or pry.
+If you try one, the game suggests <ansi fg="command">look</ansi> or <ansi fg="command">search</ansi> instead.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help search</ansi>, <ansi fg="command">help item-names</ansi>, <ansi fg="command">help identify</ansi>
 

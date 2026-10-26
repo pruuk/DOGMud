@@ -13,4 +13,4 @@ It only works for characters still at the very start of their journey. Once
 you have made real progress in the world, the coulee is behind you and the
 command politely declines.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help look</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help look</ansi>, <ansi fg="command">help search</ansi>

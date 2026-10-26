@@ -49,4 +49,4 @@ Stuck on a step? <ansi fg="command">hint</ansi> gives a nudge for your current q
 <ansi fg="command">hint [name]</ansi> gives one for a quest you name. When you have no quest
 in progress, <ansi fg="command">hint</ansi> tells you how to find one.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help talk</ansi>, <ansi fg="command">help hint</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help talk</ansi>, <ansi fg="command">help hint</ansi>, <ansi fg="command">help look</ansi>, <ansi fg="command">help search</ansi>
