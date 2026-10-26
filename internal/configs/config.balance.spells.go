@@ -59,6 +59,11 @@ func (b *Balance) validateSpells() {
 		// which is the one failure mode nobody would notice until U8 shipped.
 		b.PoolReservationCapPct = 0.66
 	}
+	if b.MutationReserveUnitPct <= 0 || b.MutationReserveUnitPct > b.PoolReservationCapPct {
+		// 0.11 (#680): six units fill the 0.66 ceiling. A unit wider than the
+		// ceiling would make every reserving rank unreachable.
+		b.MutationReserveUnitPct = 0.11
+	}
 
 	// ── ENCHANTMENTS ─────────────────────────────────────────────────────────
 	if b.EnchantTierUpBaseChance <= 0 {

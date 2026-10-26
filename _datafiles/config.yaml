@@ -2028,6 +2028,14 @@ Balance:
   # until U8's skill-strip made an over-reserved pool crippling.
   PoolReservationCapPct: 0.66
 
+  # One mutation reserve unit (#680), as a fraction of max Conviction.
+  # Titan Growth, Colossus Form and Extra Arms set aside units per rank
+  # (reserve_units in each mutation file). The unit budget is
+  # PoolReservationCapPct / MutationReserveUnitPct rounded down: 6 at the
+  # shipped values, so Titan 3 + Arms 3 and Titan 4 + Colossus + Arms 1 sit
+  # exactly at the ceiling. 0 or wider than the ceiling falls back to 0.11.
+  MutationReserveUnitPct: 0.11
+
   # ── ENCHANT SALVAGE BANDS ───────────────────────────────────────────────────
   # Tiered potion → enchanting-mat mapping, keyed by alchemy recipe
   # skill_minimum. Band 1 (below Band2Min) always yields binding-paste.
