@@ -343,7 +343,7 @@ Hand candidates (`handCandidates`): a two-hander only offers whole pairs, ordere
 
 The body is a Conviction reservation source (#680): `mutationReserveWithMax` totals the owned mutations' `ReserveUnits`, and `reserveSources.body` marks it so the status reserve row names the body. Bloom's advance and seed paths go through `mutations.CanGain`, so they cannot push Titan Growth or Extra Arms past the reserve budget.
 
-`(*Character).IsBlockedBy2H(slot string) bool` (`hand_slots.go`) says whether a pair's second slot (`"offhand"`, `"extra arm 2"`, `"extra arm 4"`) is filled by a two-hander in its partner. It goes through `HandSlot.Is2H`, so it reads the wearer's `HandsRequiredAt` for that slot: a Large wearer's two-hander leaves the partner free, a Small wearer's one-hander fills it (#681). It was a `Worn` method reading the item's own `Hands`, which hid a Large wielder's offhand in `inventory`/`look` and dropped its offhand fist. The `character/inventory` and `character/inventory-look` templates call it as `.Character.IsBlockedBy2H`, so every caller of those templates passes a `Character` key; `collectAttackWeapons` in `internal/combat` uses it to skip a blocked partner's fist.
+`(*Character).IsBlockedBy2H(slot string) bool` (`hand_slots.go`) says whether a pair's second slot (`"offhand"`, `"extra arm 2"`, `"extra arm 4"`) is filled by a two-hander in its partner. It goes through `HandSlot.Is2H`, so it reads the wearer's `HandsRequiredAt` for that slot: a Large wearer's two-hander leaves the partner free, a Small wearer's one-hander fills it (#681). It was a `Worn` method reading the item's own `Hands`, which hid a Large wielder's offhand in `inventory`/`look` and dropped its offhand fist. The `character/inventory` and `character/inventory-look` templates call it as `.Character.IsBlockedBy2H`, so every caller of those templates passes a `Character` key; `collectAttackWeapons` in `internal/combat` uses it to skip a blocked partner's fist and its weapon (#680).
 
 ### Carried light and item nouns (plan 5a)
 - `LightTerms() []float64` (`light.go`): one light-scale term per held light
@@ -2359,8 +2359,14 @@ the item. For a player (non-zero user id), every such removal goes through
 `displaceSlotItem` and is recorded as a `DisplacedGear{ItemName, Reason}`
 (the name only, so no `WalkItems` has a second item copy to visit). Reasons:
 `DisplacedByDisabledLegs` (the tail closed legs), `DisplacedByLostTail`,
-`DisplacedByLostArm` (arm or wrist of a lost extra-arms level) and
-`DisplacedBySpecies`. `HasDisplacedGear()` reports a pending record;
+`DisplacedByLostArm` (arm or wrist of a lost extra-arms level),
+`DisplacedBySpecies` and `DisplacedByTwoHandedGrip`. The last comes from
+`releaseTwoHandedPartners`, which `validateMutationSlots` runs after the arm
+slots: for every full hand pair whose `First.Is2H(c)` is true for this
+wearer, the `Second` item goes to the pack. It covers size shrinking under
+worn gear (#680): a scour that takes Titan Growth or Colossus Form makes a
+weapon hand or extra-arm two-hander need its pair again, and the partner
+must let go. `HasDisplacedGear()` reports a pending record;
 `TakeDisplacedGear()` returns it and clears it. The hooks round tick drains
 it to tell the player (see `internal/hooks/context.md`). The record is
 runtime only, and a mob's displacement is not recorded.

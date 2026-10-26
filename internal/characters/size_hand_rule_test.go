@@ -93,3 +93,51 @@ func TestGrownArmEquipRules(t *testing.T) {
 	_, refusal = c.ChooseWornSlot(great, 2)
 	assert.Contains(t, refusal, "needs a pair of arms", "the offhand never grips a two-hander alone")
 }
+
+// Losing Titan Growth (a scour) makes the weapon hand's two-hander need both
+// hands again, so the validate pass moves the partner's item to the pack and
+// records it for the displaced-gear notice.
+func TestLosingTitanGrowthFreesTheWeaponHandsPartner(t *testing.T) {
+	c := grown(t, 0, 3, false)
+	c.SetUserId(68001)
+	c.Equipment.Weapon = goldenItem(9251, goldenGreat, false)
+	c.Equipment.Offhand = goldenItem(9252, goldenSword, false)
+	c.validateMutationSlots()
+	require.Equal(t, 9252, c.Equipment.Offhand.ItemId, "Large: the offhand stays")
+	require.Empty(t, c.TakeDisplacedGear())
+
+	delete(c.Mutations, "titan-growth")
+	c.validateMutationSlots()
+
+	assert.Equal(t, 9251, c.Equipment.Weapon.ItemId, "the two-hander stays in the weapon hand")
+	assert.Zero(t, c.Equipment.Offhand.ItemId, "the offhand item leaves the hand")
+	require.Len(t, c.Items, 1)
+	assert.Equal(t, 9252, c.Items[0].ItemId, "the offhand item is in the pack")
+	got := c.TakeDisplacedGear()
+	require.Len(t, got, 1)
+	assert.Equal(t, DisplacedByTwoHandedGrip, got[0].Reason)
+	assert.True(t, c.IsBlockedBy2H("offhand"))
+}
+
+// Losing Colossus Form does the same for an extra-arm pair; the weapon hand
+// keeps its grown grip and its partner.
+func TestLosingColossusFormFreesAnExtraPairsPartner(t *testing.T) {
+	c := grown(t, 2, 4, true)
+	c.SetUserId(68002)
+	c.Equipment.Weapon = goldenItem(9261, goldenGreat, false)
+	c.Equipment.Offhand = goldenItem(9262, goldenSword, false)
+	c.Equipment.ExtraArm1 = goldenItem(9263, goldenGreat, false)
+	c.Equipment.ExtraArm2 = goldenItem(9264, goldenSword, false)
+	c.validateMutationSlots()
+	require.Empty(t, c.TakeDisplacedGear())
+
+	delete(c.Mutations, "colossus-form")
+	c.validateMutationSlots()
+
+	assert.Equal(t, 9262, c.Equipment.Offhand.ItemId, "Titan 4 still grips in the weapon hand")
+	assert.Equal(t, 9263, c.Equipment.ExtraArm1.ItemId)
+	assert.Zero(t, c.Equipment.ExtraArm2.ItemId)
+	require.Len(t, c.Items, 1)
+	assert.Equal(t, 9264, c.Items[0].ItemId)
+	require.Len(t, c.TakeDisplacedGear(), 1)
+}

@@ -336,7 +336,11 @@ func collectAttackWeapons(sourceChar *characters.Character) []items.Item {
 		attackWeapons = append(attackWeapons, sourceChar.Equipment.Weapon)
 	}
 
-	if sourceChar.Equipment.Offhand.ItemId > 0 && sourceChar.Equipment.Offhand.GetSpec().Type == items.Weapon {
+	// A partner hand IsBlockedBy2H calls filled by its pair's two-hander swings
+	// nothing, its own weapon included (#680): a scour can shrink a grown
+	// wearer under worn gear until the validate pass empties that hand.
+	if sourceChar.Equipment.Offhand.ItemId > 0 && sourceChar.Equipment.Offhand.GetSpec().Type == items.Weapon &&
+		!sourceChar.IsBlockedBy2H("offhand") {
 		attackWeapons = append(attackWeapons, sourceChar.Equipment.Offhand)
 	}
 
@@ -344,13 +348,15 @@ func collectAttackWeapons(sourceChar *characters.Character) []items.Item {
 	if sourceChar.ExtraArms >= 1 && sourceChar.Equipment.ExtraArm1.ItemId > 0 && sourceChar.Equipment.ExtraArm1.GetSpec().Type == items.Weapon {
 		attackWeapons = append(attackWeapons, sourceChar.Equipment.ExtraArm1)
 	}
-	if sourceChar.ExtraArms >= 2 && sourceChar.Equipment.ExtraArm2.ItemId > 0 && sourceChar.Equipment.ExtraArm2.GetSpec().Type == items.Weapon {
+	if sourceChar.ExtraArms >= 2 && sourceChar.Equipment.ExtraArm2.ItemId > 0 && sourceChar.Equipment.ExtraArm2.GetSpec().Type == items.Weapon &&
+		!sourceChar.IsBlockedBy2H("extra arm 2") {
 		attackWeapons = append(attackWeapons, sourceChar.Equipment.ExtraArm2)
 	}
 	if sourceChar.ExtraArms >= 3 && sourceChar.Equipment.ExtraArm3.ItemId > 0 && sourceChar.Equipment.ExtraArm3.GetSpec().Type == items.Weapon {
 		attackWeapons = append(attackWeapons, sourceChar.Equipment.ExtraArm3)
 	}
-	if sourceChar.ExtraArms >= 4 && sourceChar.Equipment.ExtraArm4.ItemId > 0 && sourceChar.Equipment.ExtraArm4.GetSpec().Type == items.Weapon {
+	if sourceChar.ExtraArms >= 4 && sourceChar.Equipment.ExtraArm4.ItemId > 0 && sourceChar.Equipment.ExtraArm4.GetSpec().Type == items.Weapon &&
+		!sourceChar.IsBlockedBy2H("extra arm 4") {
 		attackWeapons = append(attackWeapons, sourceChar.Equipment.ExtraArm4)
 	}
 

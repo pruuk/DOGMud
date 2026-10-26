@@ -103,7 +103,7 @@ func (s HandSlot) Is2H(c *Character) bool {
 // hands. It reads the wearer's grip in the partner's own hand through Is2H, so
 // a Large wearer's two-hander leaves the partner free (#681, #680). The
 // inventory templates use it to hide "Offhand: -nothing-", and combat uses it
-// to skip the partner's fist.
+// to skip the partner's fist and any weapon still in that hand.
 func (c *Character) IsBlockedBy2H(slot string) bool {
 	// Map each "second" slot to its pair's "first" slot
 	partners := map[string]HandSlot{
