@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -283,6 +284,9 @@ func play(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.
 	if !applyWithHandover(user, room, mob, df, t, ps, buf) {
 		return "", false
 	}
+	// Quest engine: topic_heard, once the topic's own effects have landed
+	// (#375 phase 3b slice 1). A refused charge returned above.
+	questengine.NotifyTopicHeard(user, room.RoomId, int(mob.MobId), t.Key)
 	npcSay(mob, room, t.Text)
 	sendHints(user, t.Hints)
 	after(user, room, mob, df, t)
