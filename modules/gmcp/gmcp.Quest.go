@@ -147,19 +147,24 @@ type questDetail struct {
 
 // ---- vocabulary tables (source of truth for the client's pickers) ----
 
+// Every event also takes area or zone (the event's room lies in it), and
+// every event but room_gate, room_interact and item_give takes count (fire on
+// the Nth match) with a label for its progress line (quests.CountAllowed).
+// The editor's EVENT_FILTERS in quests.js offers the same fields
+// (TestQuestBuilderFiltersMatchTheVocab).
 var questEventVocab = []vocabEntry{
-	{"room_enter", "player walks into a room (filter: room)"},
-	{"room_gate", "player tries to walk into a room; a match REFUSES the step before the move, the actions narrate why (filter: room; in_room is the side the player stands on)"},
-	{"item_give", "player gives an item to a mob: fires AFTER the transfer (filters: mob, item)"},
-	{"skill_use", "player uses a skill (filter: skill)"},
-	{"mob_death", "a mob dies with the player involved (filters: mob, room)"},
-	{"command", "a command SUCCEEDED (~27 instrumented commands; filters: command, room, target (self, mob, player, item or container), mob, item)"},
-	{"command_issued", "player TYPED a command, success or not: fires from TryCommand for any command (filters: command, room)"},
-	{"item_gain", "an item enters the player's inventory (filter: item)"},
-	{"quest_granted", "a quest token was just granted: the chaining event (filter: quest_token)"},
-	{"room_interact", "player looked at or searched a room feature (filters: room, noun, verb: look or search; empty means look)"},
-	{"spell_landed", "a player's spell landed on a target, once per cast (filters: noun as the spell id, effect as its effect_type such as heal, target (self, mob, player, item or container), mob, item, room)"},
-	{"topic_heard", "player played an NPC's talk topic, after its effects landed: a menu choice or an accepted offer (filters: mob as the NPC's template id, topic as the topic key)"},
+	{"room_enter", "player walks into a room (filters: room, area, zone; count, label; distinct with an area makes an explore step: all or N of the area's rooms on the player's map, explored_line said if already mapped)"},
+	{"room_gate", "player tries to walk into a room; a match REFUSES the step before the move, the actions narrate why (filters: room, area, zone; in_room is the side the player stands on; no count)"},
+	{"item_give", "player gives an item to a mob: fires AFTER the transfer (filters: mob, item, area, zone; no count)"},
+	{"skill_use", "player uses a skill (filters: skill, area, zone; count, label)"},
+	{"mob_death", "a mob dies with the player involved (filters: mob, room, area, zone; count, label)"},
+	{"command", "a command SUCCEEDED (~27 instrumented commands; filters: command, noun, room, target (self, mob, player, item or container), mob, item, area, zone; count, label)"},
+	{"command_issued", "player TYPED a command, success or not: fires from TryCommand for any command (filters: command, room, area, zone; count, label)"},
+	{"item_gain", "an item enters the player's inventory (filters: item, area, zone; count, label)"},
+	{"quest_granted", "a quest token was just granted: the chaining event (filters: quest_token, area, zone; count, label)"},
+	{"room_interact", "player looked at or searched a room feature (filters: room, noun, verb: look or search; empty means look; area, zone; no count)"},
+	{"spell_landed", "a player's spell landed on a target, once per cast (filters: noun as the spell id, effect as its effect_type such as heal, target (self, mob, player, item or container), mob, item, room, area, zone; count, label)"},
+	{"topic_heard", "player played an NPC's talk topic, after its effects landed: a menu choice or an accepted offer (filters: mob as the NPC's template id, topic as the topic key, area, zone; count, label)"},
 }
 
 var questConditionVocab = []vocabEntry{

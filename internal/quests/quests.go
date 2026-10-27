@@ -103,6 +103,11 @@ func (r *Quest) Id() int {
 // they take no count.
 var countSwallowsCommand = map[string]bool{"room_gate": true, "room_interact": true, "item_give": true}
 
+// CountAllowed reports whether a trigger on event may take count (and so a
+// label): every event but those in countSwallowsCommand. The quest builder's
+// field lists follow it.
+func CountAllowed(event string) bool { return !countSwallowsCommand[event] }
+
 // MaxLabelLength caps a count or distinct label: "<label>: N of M" with the
 // quest log's indent stays inside 80 columns.
 const MaxLabelLength = 40

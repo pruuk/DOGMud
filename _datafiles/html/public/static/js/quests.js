@@ -513,18 +513,40 @@
 
   // ---- triggers ---------------------------------------------------------
 
+  // The trigger fields each event offers. Only listed fields are read back
+  // on save, so a field missing here is dropped from the quest file. Every
+  // event takes area and zone; count and label are refused on room_gate,
+  // room_interact and item_give (a partial count would swallow the command);
+  // distinct and explored_line are room_enter's (an explore step). Kept in
+  // step with questEventVocab in modules/gmcp/gmcp.Quest.go by
+  // TestQuestBuilderFiltersMatchTheVocab.
   var EVENT_FILTERS = {
-    room_enter: ["room"], room_gate: ["room"], item_give: ["mob", "item"], skill_use: ["skill"],
-    mob_death: ["mob", "room"], command: ["command", "room", "target", "mob", "item"],
-    command_issued: ["command", "room"], item_gain: ["item"],
-    quest_granted: ["quest_token"],
-    room_interact: ["room", "noun", "verb"],
-    spell_landed: ["noun", "effect", "target", "mob", "item", "room"],
-    topic_heard: ["mob", "topic"]
+    room_enter: ["room", "area", "zone", "count", "label", "distinct", "explored_line"],
+    room_gate: ["room", "area", "zone"],
+    item_give: ["mob", "item", "area", "zone"],
+    skill_use: ["skill", "area", "zone", "count", "label"],
+    mob_death: ["mob", "room", "area", "zone", "count", "label"],
+    command: ["command", "noun", "room", "target", "mob", "item", "area", "zone", "count", "label"],
+    command_issued: ["command", "room", "area", "zone", "count", "label"],
+    item_gain: ["item", "area", "zone", "count", "label"],
+    quest_granted: ["quest_token", "area", "zone", "count", "label"],
+    room_interact: ["room", "noun", "verb", "area", "zone"],
+    spell_landed: ["noun", "effect", "target", "mob", "item", "room", "area", "zone", "count", "label"],
+    topic_heard: ["mob", "topic", "area", "zone", "count", "label"]
   };
   var FILTER_KINDS = { room: "room", mob: "mob", item: "item", skill: "skill",
     command: "text", quest_token: "token", noun: "text", verb: "text",
-    effect: "text", topic: "text", target: "target" };
+    effect: "text", topic: "text", target: "target",
+    area: "text", zone: "text", count: "num", label: "text",
+    distinct: "text", explored_line: "text" };
+  // Fields that shape the trigger rather than filter its event get their own
+  // label in the form.
+  var FIELD_LABELS = {
+    count: "Count: fire on the Nth match (empty = first)",
+    label: "Progress label (with count or distinct)",
+    distinct: "Distinct: rooms of the area to map (all or a number)",
+    explored_line: "Explored line (said when the area is already mapped)"
+  };
   // The values a trigger's target filter may take (quests.TriggerTargetKinds);
   // empty means any target.
   var TARGET_KINDS = ["self", "mob", "player", "item", "container"];
@@ -558,7 +580,7 @@
         (EVENT_FILTERS[ev] || []).forEach(function (fk) {
           var kind = FILTER_KINDS[fk];
           var input = kindInput(kind, t[fk]);
-          filterHost.appendChild(field("Filter: " + fk + " (empty = any)", input.el || input));
+          filterHost.appendChild(field(FIELD_LABELS[fk] || ("Filter: " + fk + " (empty = any)"), input.el || input));
           filterReaders[fk] = { kind: kind, input: input };
         });
       }
