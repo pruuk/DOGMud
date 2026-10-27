@@ -232,6 +232,9 @@ func matchTriggerFields(t *TriggerDef, d EventDetails, tier nounTier) bool {
 	if t.QuestToken != "" && t.QuestToken != d.QuestToken {
 		return false
 	}
+	if t.Target != "" && t.Target != d.TargetKind {
+		return false
+	}
 	if t.Noun != "" && !nounMatches(t.Noun, d, tier) {
 		return false
 	}
