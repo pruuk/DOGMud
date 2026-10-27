@@ -43,7 +43,9 @@ package owns everything that needs a user, a room or a mob.
   line.
 - Quest grants are queued (`events.Quest`), so the menu re-shown after a
   choice counts the token that choice granted as held (`heldAlso`); without
-  it the re-shown menu still lists an offer the player just accepted.
+  it the re-shown menu still lists an offer the player just accepted. The
+  `[*]` objective marker (`PlayerState.Objective`, a `WouldFire` dry run)
+  reads that same `HasQuest`, so the next step's topic is marked at once.
 - Every played topic raises the quest engine's `topic_heard`
   (`questengine.NotifyTopicHeard`) from `applyWithHandover`, once the topic's
   own effects landed: a menu choice, an accepted offer, and a companion's ask,

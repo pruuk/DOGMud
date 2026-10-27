@@ -170,7 +170,8 @@ func talkState(user *users.UserRecord, buf *lineBuffer) *dialogue.PlayerState {
 // token and the quest engine records it on a later event pass, so the menu
 // re-shown straight after a grant would otherwise still list the topic the
 // player just took (an accepted offer, a hand-in or a step whose
-// questExcluded names its own grant).
+// questExcluded names its own grant). The objective marker sees it too:
+// PlayerState's Objective asks the quest engine through ps.HasQuest.
 func heldAlso(ps *dialogue.PlayerState, granted string) *dialogue.PlayerState {
 	if granted == "" || ps == nil || ps.HasQuest == nil {
 		return ps
