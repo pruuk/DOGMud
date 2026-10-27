@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -80,9 +81,21 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	side := spellAttackSideFor(spellData, user.Character, combat.SightRoom(room))
 	magnitude := spellData.EffectMagnitude
 
+	// Quest engine: spell_landed, one target per creature the spell landed
+	// on (#375 phase 3b slice 3). Collected below and raised once on every
+	// return, so the identify and Go-hook early returns raise it too; a cast
+	// that landed on nothing raises nothing. The spell id is the loaded
+	// spell's own canonical id, the key of the spells registry.
+	var landedOn []questengine.Target
+	defer func() {
+		questengine.NotifySpellLanded(user, room.RoomId, spellData.SpellId, spellData.EffectType, landedOn...)
+	}()
+
 	// --- Identify: resolve against caster's item, no targets ---
 	if spellData.EffectType == "identify" {
-		resolveIdentify(user, cs.SpellRest, room)
+		if resolveIdentify(user, cs.SpellRest, room) {
+			landedOn = append(landedOn, questengine.NoTarget())
+		}
 		// Uncontested: there is no defence to beat, so it landed.
 		return true
 	}
@@ -136,6 +149,12 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 		castFumbled = castFumbled || fumbled
 		anyLanded = anyLanded || landed
 		targetsResolved++
+		// Charm's landed is the contest verdict, and a won contest can still
+		// bind nothing (an immune mind, a full companion roster, a reserve
+		// the pool cannot carry), so for charm the quest event asks the mob.
+		if landed && (spellData.EffectType != "charm" || mob.Character.IsCharmed(user.UserId)) {
+			landedOn = append(landedOn, questengine.TargetMob(mob))
+		}
 	}
 
 	// --- Resolve against player targets ---
@@ -163,6 +182,10 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 		castFumbled = castFumbled || fumbled
 		anyLanded = anyLanded || landed
 		targetsResolved++
+		if landed {
+			// The caster in their own target list (a self-cast) reads as self.
+			landedOn = append(landedOn, questengine.TargetActor(user.UserId, targetUser.UserId, 0))
+		}
 	}
 
 	// --- Empty room / no valid targets feedback ---
@@ -208,7 +231,9 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 
 	// Resolve companion summon (if configured)
 	if !castFumbled && spellData != nil && spellData.SummonMobId > 0 {
-		resolveCompanionSummon(user, spellData, cs.SpellRest, room)
+		if resolveCompanionSummon(user, spellData, cs.SpellRest, room) {
+			landedOn = append(landedOn, questengine.NoTarget())
+		}
 	}
 	// Charm used to resolve HERE, in a second private contest run after the
 	// loop above had already contested every target and thrown the verdict
@@ -228,10 +253,13 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 		switch cs.SpellId {
 		case "fold-anchor":
 			resolveFoldAnchor(actions.NewUserActorInRoom(user, room))
+			landedOn = append(landedOn, questengine.TargetSelf())
 			// Uncontested utility cast: no defence to beat.
 			return true
 		case "fold-recall":
-			resolveFoldRecall(actions.NewUserActorInRoom(user, room))
+			if resolveFoldRecall(actions.NewUserActorInRoom(user, room)) {
+				landedOn = append(landedOn, questengine.TargetSelf())
+			}
 			// Uncontested utility cast: no defence to beat.
 			return true
 		case "purge-affliction":
@@ -252,6 +280,9 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 				if targetUser := users.GetByUserId(cs.TargetUserIds[0]); targetUser != nil {
 					t := purgeTarget{char: targetUser.Character, user: targetUser, name: targetUser.Character.Name}
 					if t.stillPresent(room, false) {
+						// spell_landed already holds this target: purge is a
+						// help spell, so the player loop above resolved it
+						// uncontested and counted it landed.
 						resolvePurgeAffliction(user, room, t)
 					}
 				}
@@ -259,11 +290,15 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 				if tMob := mobs.GetInstance(cs.TargetMobInstanceIds[0]); tMob != nil {
 					t := purgeTarget{char: &tMob.Character, name: tMob.Character.Name, display: mobDisplayName(tMob, room, user.UserId)}
 					if t.stillPresent(room, true) {
+						// spell_landed already holds this target, from the
+						// mob loop above, as for the player arm.
 						resolvePurgeAffliction(user, room, t)
 					}
 				}
 			default:
 				resolvePurgeAffliction(user, room, purgeTarget{char: user.Character, user: user, name: user.Character.Name}) // self-cast
+				// No target list, so the loops counted nothing: self is added here.
+				landedOn = append(landedOn, questengine.TargetSelf())
 			}
 			// Uncontested utility cast: no defence to beat.
 			return true
@@ -849,11 +884,15 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 
 // resolveIdentify finds the named item on the caster and renders
 // the identify template with descriptive item properties.
-func resolveIdentify(user *users.UserRecord, itemName string, room *rooms.Room) {
+//
+// It reports whether an item was identified: a refusal (no item named, or one
+// the caster does not carry) identified nothing, so the spell_landed event
+// does not count it (#375 phase 3b slice 3).
+func resolveIdentify(user *users.UserRecord, itemName string, room *rooms.Room) bool {
 
 	if itemName == "" {
 		refusal.Prompt(user, "identify", refusal.What, "cast identify <item>")
-		return
+		return false
 	}
 
 	// Search backpack and equipped items as a single pool
@@ -861,7 +900,7 @@ func resolveIdentify(user *users.UserRecord, itemName string, room *rooms.Room) 
 
 	if !found {
 		refusal.NotCarrying(user, itemName)
-		return
+		return false
 	}
 
 	iSpec := matchItem.GetSpec()
@@ -889,6 +928,7 @@ func resolveIdentify(user *users.UserRecord, itemName string, room *rooms.Room) 
 
 	identifyTxt, _ := templates.Process("descriptions/identify", details, user.UserId)
 	user.SendText(messaging.CategorySpellMental, identifyTxt)
+	return true
 }
 
 // charmInCombatMult is charm's attack-side penalty for reaching into a mind that
