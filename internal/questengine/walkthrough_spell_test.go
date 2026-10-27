@@ -116,9 +116,12 @@ func TestWalkSpell_NilSpellEffectSkipsTheCheck(t *testing.T) {
 	require.Empty(t, Walk(mendWorld(), src))
 }
 
-// A spell taught on a later step does not let an earlier state jump to the
-// step that needs it, and the skip probe's refusal is no finding.
-func TestWalkSpell_SpellTaughtLaterIsNoSkipAndNoFinding(t *testing.T) {
+// The walk's held spells are a minimum, right for proving a step reachable.
+// The skip probe needs the opposite: a player may know any spell (random
+// discovery, a book), so a spell taught on a later step does not stop an
+// earlier state jumping to the step that needs it. A spell_landed trigger
+// with no Has on the teaching step is a skip.
+func TestWalkSpell_SpellTaughtLaterStillSkipsWithoutAHasOnTheTeachingStep(t *testing.T) {
 	w := mendWorld()
 	q := w.Quests[0]
 	q.Steps = []quests.QuestStep{{Id: "start", Hint: "h"}, {Id: "taught", Hint: "h"}, {Id: "mended", Hint: "h"}, {Id: "end"}}
@@ -128,5 +131,12 @@ func TestWalkSpell_SpellTaughtLaterIsNoSkipAndNoFinding(t *testing.T) {
 		Conditions: quests.Conditions{Has: []string{"60-start"}, Missing: []string{"60-taught"}},
 		Actions:    []quests.ActionDef{{Grant: "60-taught"}, {TeachSpell: "heal"}},
 	})
+	fs := Walk(w, spellSrc())
+	require.Contains(t, keys(fs), "walk-dead-end 60 quest 60 trigger spell_landed mob=9113 effect=heal grants=60-mended",
+		"a player who already knows a heal jumps from 60-start over 60-taught: %v", fs)
+	require.Empty(t, noSpell(fs), "the probe's spell is assumed, so it is no walk-no-spell")
+
+	// Gated on the teaching step, the trigger cannot fire before it: no skip.
+	q.Triggers[0].Conditions = quests.Conditions{Has: []string{"60-taught"}, Missing: []string{"60-mended"}}
 	require.Empty(t, Walk(w, spellSrc()))
 }

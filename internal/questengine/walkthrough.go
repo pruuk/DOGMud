@@ -121,6 +121,12 @@ type walkEnv struct {
 	// spellRefused is set when fireTrigger refused a top-level (not a flag
 	// setter's) spell_landed trigger because no held spell can land it.
 	spellRefused bool
+	// probing is set while the skip probe fires a later Way. The spells the
+	// walk holds are a minimum (starters, teach_spell, spellid rewards),
+	// right for proving a step reachable; a skip needs the opposite, since a
+	// player may know any spell (random discovery, a book), so a probing
+	// spell_landed trigger is never refused for want of a spell.
+	probing bool
 }
 
 // flagSetter is a trigger or topic that sets a quest flag.
@@ -339,7 +345,9 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 						continue
 					}
 					cl := p.clone()
+					env.probing = true
 					tr := fireWay(env, cl, wy, q.QuestId)
+					env.probing = false
 					if got := stepIndex(cl, q); got > i && skipped(tr, q, i, got) >= 0 {
 						dead(wy.Where, fmt.Sprintf("skips to %d-%s from %d-%s, passing %s",
 							q.QuestId, cl.progress[q.QuestId], q.QuestId, q.Steps[c].Id, tok))
@@ -801,8 +809,9 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 	// A spell_landed event needs a spell p holds that can land it (its
 	// conditions met first, since a prerequisite token they hold may be what
 	// teaches it). Refused, nothing fires; when the trigger would have fired
-	// with the spell, a top-level firing notes it, for walk-no-spell.
-	if t.Event == "spell_landed" && !env.spellReachable(p, t, own) {
+	// with the spell, a top-level firing notes it, for walk-no-spell. The skip
+	// probe assumes any spell (walkEnv.probing).
+	if t.Event == "spell_landed" && !env.probing && !env.spellReachable(p, t, own) {
 		if env.depth == 0 {
 			cl := p.clone()
 			env.spellRefused = env.eng.Notify(t.Event, d, cl, &trailCtx{walkCtx{p: cl}, walkTrail{}}).Handled
