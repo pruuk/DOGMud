@@ -147,6 +147,18 @@ scratchpads): report it, do not delete it.
    deleting). Never touch another project's scratchpad folders: that
    project's own EOD owns them.
 
+8. **Leftover follower processes: list them and ask the owner** (owner,
+   2026-10-27). Playtest seats and log watches leave `tail.exe -f` and
+   `mudagent.exe` processes running after their session ends, and they pile
+   up across days. List every `tail.exe` or `mudagent.exe` started more than
+   a day ago, with its PID, start date and full command line (PowerShell:
+   `Get-CimInstance Win32_Process -Filter "Name='tail.exe' OR
+   Name='mudagent.exe'"`), say which project and folder each follows, and ask
+   the owner whether to stop them. Stop only the ones the owner says yes to,
+   by PID, after re-reading each PID's command line (a PID can be reused).
+   Never stop one without asking, and never by name. Describe each from its
+   full command line, not a truncated one.
+
 Before building anything large in a scratchpad (a `CARGO_TARGET_DIR`, a full
 copy of the repo), remember it is not cleaned for you: delete it when the
 work it served is merged.
