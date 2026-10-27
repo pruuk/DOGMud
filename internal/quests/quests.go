@@ -118,6 +118,7 @@ func (r *Quest) Validate() error {
 		"mob_death": true, "command": true, "item_gain": true,
 		"quest_granted": true, "room_interact": true,
 		"command_issued": true, "spell_landed": true,
+		"topic_heard": true,
 	}
 
 	for i, t := range r.Triggers {
@@ -153,6 +154,18 @@ func (r *Quest) Validate() error {
 		// loaded spells by ValidateQuestRefs.
 		if t.Effect != "" && t.Event != "spell_landed" {
 			return fmt.Errorf("quest %d (%s): trigger %d sets effect %q on a %s trigger; only spell_landed has an effect", r.QuestId, r.Name, i, t.Effect, t.Event)
+		}
+		// A topic_heard trigger names one NPC's topic; the topic must exist on
+		// that NPC (ValidateQuestRefs checks it against the dialogue files).
+		if t.Event == "topic_heard" {
+			if t.Mob <= 0 {
+				return fmt.Errorf("quest %d (%s): trigger %d: topic_heard needs a mob (the NPC whose topic it is)", r.QuestId, r.Name, i)
+			}
+			if t.Topic == "" {
+				return fmt.Errorf("quest %d (%s): trigger %d: topic_heard needs a topic (the topic key)", r.QuestId, r.Name, i)
+			}
+		} else if t.Topic != "" {
+			return fmt.Errorf("quest %d (%s): trigger %d sets topic %q on a %s trigger; only topic_heard has a topic", r.QuestId, r.Name, i, t.Topic, t.Event)
 		}
 	}
 

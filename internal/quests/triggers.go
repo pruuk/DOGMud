@@ -9,7 +9,7 @@ package quests
 
 // TriggerDef defines when and how a quest step fires.
 type TriggerDef struct {
-	Event      string      `yaml:"event" json:"event"`                                 // room_enter, room_gate, item_give, skill_use, mob_death, command, command_issued, item_gain, quest_granted, room_interact, spell_landed
+	Event      string      `yaml:"event" json:"event"`                                 // room_enter, room_gate, item_give, skill_use, mob_death, command, command_issued, item_gain, quest_granted, room_interact, spell_landed, topic_heard
 	Room       int         `yaml:"room,omitempty" json:"room,omitempty"`               // room ID filter
 	Mob        int         `yaml:"mob,omitempty" json:"mob,omitempty"`                 // mob ID filter
 	Item       int         `yaml:"item,omitempty" json:"item,omitempty"`               // item ID filter
@@ -20,6 +20,7 @@ type TriggerDef struct {
 	Verb       string      `yaml:"verb,omitempty" json:"verb,omitempty"`               // room interaction verb filter
 	Target     string      `yaml:"target,omitempty" json:"target,omitempty"`           // command target kind filter: self, mob, player, item, container (#375 3b)
 	Effect     string      `yaml:"effect,omitempty" json:"effect,omitempty"`           // spell_landed: the spell's effect_type (heal, damage, ...) (#375 3b)
+	Topic      string      `yaml:"topic,omitempty" json:"topic,omitempty"`             // topic_heard: the NPC's topic key (#375 3b)
 	Conditions Conditions  `yaml:"conditions,omitempty" json:"conditions,omitempty"`
 	Actions    []ActionDef `yaml:"actions" json:"actions"`
 }
