@@ -1,0 +1,26 @@
+# #375 phase 3b slice 4: quest 45's grove cast step now uses one area: trigger
+# (unquiet_grove: rooms 5311, 5312, 5313) instead of three copied room
+# triggers. Two seats cast from different grove rooms; the second also walks
+# the grove so the run records whether mapping new rooms adds lines or lag.
+name: 375-3b4-areas
+mode: party
+summary: >-
+  Quest 45's cast step advances once from any grove room; walking and mapping
+  the grove reads as before.
+on_actor_stop: continue
+budgets:
+  wall_clock: 30m
+requires:
+  max_connections: 20
+roster:
+  - id: hollow
+    personality: bug-finder
+    goals: goals/scenarios/375-3b4-areas/hollow.yaml
+  - id: heart
+    personality: bug-finder
+    goals: goals/scenarios/375-3b4-areas/heart.yaml
+
+group_goals:
+  - id: grove-cast-once
+    do: Each seat casts Conviction Spike in a grove fight from its own room.
+    verify: The cast step advances exactly once for each seat, whichever grove room it is in.
