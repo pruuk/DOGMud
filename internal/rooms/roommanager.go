@@ -716,6 +716,7 @@ func addRoomToMemory(room *Room, forceOverWrite ...bool) error {
 
 	// Save filepath to cache
 	roomManager.setCachedFilePathIfAbsent(room.RoomId, room.Filepath())
+	setTemplateZone(room.RoomId, room.Zone)
 
 	// Track whatever the last room id created is so we know what to number the next one.
 	if room.RoomId < ephemeralRoomIdMinimum && room.RoomId >= GetNextRoomId() {

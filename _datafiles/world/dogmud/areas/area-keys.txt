@@ -1,0 +1,8 @@
+# Area-key manifest (#375). One line per shipped area, the "key" of each file
+# in this directory (the file name without ".yaml").
+#
+# Quest triggers name areas (area:), so a key may leave content only by
+# moving to the "# retired" section (the area is gone) or the "# renamed"
+# section as "old -> new". A new area key must be added to the list.
+# internal/guards/area_manifest_test.go enforces both.
+unquiet_grove

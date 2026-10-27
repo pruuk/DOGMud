@@ -588,6 +588,7 @@ func loadAllRoomZones() error {
 
 		// Cache the file path for every roomId
 		roomManager.setCachedFilePath(loadedRoom.RoomId, loadedRoom.Filepath())
+		setTemplateZone(loadedRoom.RoomId, loadedRoom.Zone)
 
 		// Update the zone info cache
 		if _, ok := roomManager.zones[loadedRoom.Zone]; !ok {
