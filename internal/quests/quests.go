@@ -98,6 +98,41 @@ func (r *Quest) Id() int {
 	return r.QuestId
 }
 
+// validateAreaCount checks the #375 phase 3b slice 4 fields: area or zone
+// (any event, not both), count (2 or more), distinct (room_enter with an
+// area, all or a whole number, never with count), label (with count or
+// distinct) and explored_line (with distinct). Area and zone names are
+// checked against the world by ValidateQuestRefs.
+func validateAreaCount(t TriggerDef) error {
+	if t.Area != "" && t.Zone != "" {
+		return fmt.Errorf("sets area %q and zone %q; set area or zone, not both", t.Area, t.Zone)
+	}
+	if t.Count != 0 && t.Count < 2 {
+		return fmt.Errorf("count %d: count must be 2 or more (leave it out to fire on the first match)", t.Count)
+	}
+	if t.Distinct != "" {
+		if t.Count != 0 {
+			return fmt.Errorf("sets count and distinct; set count or distinct, not both")
+		}
+		if _, ok := DistinctNeed(t.Distinct, 0); !ok {
+			return fmt.Errorf("distinct %q must be all or a whole number of 1 or more", t.Distinct)
+		}
+		if t.Event != "room_enter" {
+			return fmt.Errorf("distinct on a %s trigger: distinct needs a room_enter trigger", t.Event)
+		}
+		if t.Area == "" {
+			return fmt.Errorf("distinct needs an area (the rooms to explore)")
+		}
+	}
+	if t.Label != "" && t.Count == 0 && t.Distinct == "" {
+		return fmt.Errorf("label %q: label needs count or distinct (it names their progress line)", t.Label)
+	}
+	if t.ExploredLine != "" && t.Distinct == "" {
+		return fmt.Errorf("explored_line needs distinct (it is said when the area is already explored)")
+	}
+	return nil
+}
+
 // Validate implements fileloader.Loadable — it runs on EVERY parse, so a
 // broken quest file fails the boot (and, later, an editor save) instead of
 // loading half-formed. Body moved from questengine's old validateQuestDef in
@@ -166,6 +201,9 @@ func (r *Quest) Validate() error {
 			}
 		} else if t.Topic != "" {
 			return fmt.Errorf("quest %d (%s): trigger %d sets topic %q on a %s trigger; only topic_heard has a topic", r.QuestId, r.Name, i, t.Topic, t.Event)
+		}
+		if err := validateAreaCount(t); err != nil {
+			return fmt.Errorf("quest %d (%s): trigger %d: %w", r.QuestId, r.Name, i, err)
 		}
 	}
 

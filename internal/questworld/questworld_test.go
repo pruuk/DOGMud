@@ -47,6 +47,20 @@ func liveRefs(loaded []*quests.Quest) *quests.QuestValidators {
 		FactionExists: yesS, DialogueGrants: yesS, MobHasDialogue: yesI,
 		TopicExists: func(int, string) bool { return true },
 		TopicGrant:  func(int, string) string { return "" },
+		AreaExists:  yesS, ZoneExists: yesS,
+		AreaSize:      func(string) int { return 3 },
+		AreaGatedRoom: func(string) (int, bool) { return 0, false },
+	}
+}
+
+// #375 phase 3b slice 4: the lowest gated room of an area, or none.
+func TestGatedRoomIn(t *testing.T) {
+	gated := map[int]bool{5313: true, 5312: true, 99: true}
+	if id, ok := gatedRoomIn([]int{5311, 5312, 5313}, gated); !ok || id != 5312 {
+		t.Fatalf("gatedRoomIn = %d %v, want 5312", id, ok)
+	}
+	if _, ok := gatedRoomIn([]int{5311}, gated); ok {
+		t.Fatal("an open area reported a gated room")
 	}
 }
 
