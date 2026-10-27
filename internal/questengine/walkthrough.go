@@ -810,11 +810,15 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 	// conditions met first, since a prerequisite token they hold may be what
 	// teaches it). Refused, nothing fires; when the trigger would have fired
 	// with the spell, a top-level firing notes it, for walk-no-spell. The skip
-	// probe assumes any spell (walkEnv.probing).
+	// probe assumes any spell (walkEnv.probing). The probe asks whether THIS
+	// trigger would fire (its fields, as the engine matches them, and its
+	// conditions): another spell_landed trigger the same event reaches is its
+	// own Way, and its fire says nothing about this one.
 	if t.Event == "spell_landed" && !env.probing && !env.spellReachable(p, t, own) {
 		if env.depth == 0 {
-			cl := p.clone()
-			env.spellRefused = env.eng.Notify(t.Event, d, cl, &trailCtx{walkCtx{p: cl}, walkTrail{}}).Handled
+			env.spellRefused = slices.ContainsFunc(env.eng.fieldMatches(t.Event, d), func(it *indexedTrigger) bool {
+				return it.def == t
+			}) && EvalConditions(t.Conditions, p)
 		}
 		return false
 	}

@@ -110,6 +110,26 @@ func TestWalkSpell_PrerequisiteRewardSpellHoldsIt(t *testing.T) {
 	require.Len(t, noSpell(Walk(w, spellSrc())), 1)
 }
 
+// Two spell_landed Ways into one step. The heal one needs a heal nobody
+// holds AND a token no player can have, so it is a dead end whatever the
+// spell. The other matches the heal one's event and can fire from a starter.
+// The refusal probe must ask whether the heal trigger itself would fire, not
+// whether anything did, or the other trigger's fire reads as "only the spell
+// was missing".
+func TestWalkSpell_NoSpellBlamesOnlyTheRefusedTrigger(t *testing.T) {
+	w := mendWorld()
+	q := w.Quests[0]
+	q.Triggers[0].Conditions = quests.Conditions{Has: []string{"60-start", "60-end"}, Missing: []string{"60-mended"}}
+	q.Triggers = append(q.Triggers, quests.TriggerDef{
+		Event: "spell_landed", Mob: 9113,
+		Conditions: quests.Conditions{Has: []string{"60-start"}, Missing: []string{"60-mended"}},
+		Actions:    []quests.ActionDef{{Grant: "60-mended"}},
+	})
+	fs := Walk(w, spellSrc())
+	require.Empty(t, noSpell(fs), "the heal trigger fails on its token, not its spell: %v", fs)
+	require.Contains(t, keys(fs), "walk-dead-end 60 quest 60 trigger spell_landed mob=9113 effect=heal grants=60-mended")
+}
+
 func TestWalkSpell_NilSpellEffectSkipsTheCheck(t *testing.T) {
 	src := spellSrc()
 	src.SpellEffect = nil
