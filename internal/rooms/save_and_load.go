@@ -414,6 +414,7 @@ func DeleteRoomTemplate(roomId int) error {
 	// Drop from memory/caches. ClearRoomCache returns an error only when the
 	// room isn't cached, which is fine here (the file is already gone).
 	ClearRoomCache(roomId)
+	deleteTemplateZone(roomId)
 	return nil
 }
 

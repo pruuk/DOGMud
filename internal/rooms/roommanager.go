@@ -888,6 +888,10 @@ func MoveToZone(roomId int, newZoneName string) error {
 
 	newZoneInfo.RoomIds[roomId] = struct{}{}
 	roomManager.zones[newZoneName] = newZoneInfo
+	// The file has moved, so the index moves with it here, not only when
+	// SaveRoomTemplate reaches addRoomToMemory (it returns early on a
+	// failed write).
+	setTemplateZone(roomId, newZoneName)
 
 	SaveRoomTemplate(*tplRoom)
 

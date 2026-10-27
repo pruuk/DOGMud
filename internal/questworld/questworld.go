@@ -106,7 +106,7 @@ func (g *gatedRooms) get() map[int]bool {
 
 // loadGatedRooms lists every template room a player may be unable to walk
 // into: the destination of an exit with a lock, and the room of any loaded
-// quest's room_gate trigger.
+// quest's room_gate trigger (addGateTriggerRooms).
 func loadGatedRooms() map[int]bool {
 	set := map[int]bool{}
 	for _, id := range rooms.GetAllRoomIds() {
@@ -120,14 +120,44 @@ func loadGatedRooms() map[int]bool {
 			}
 		}
 	}
-	for _, q := range quests.GetAllQuests() {
+	addGateTriggerRooms(set, quests.GetAllQuests(), rooms.TemplateRoomZones())
+	return set
+}
+
+// addGateTriggerRooms adds the rooms each room_gate trigger can refuse: its
+// room, every room of its area, or every template room of its zone
+// (roomZones, template room id to zone).
+func addGateTriggerRooms(set map[int]bool, qs []quests.Quest, roomZones map[int]string) {
+	var gateZones map[string]bool
+	for _, q := range qs {
 		for _, t := range q.Triggers {
-			if t.Event == "room_gate" && t.Room > 0 {
+			if t.Event != "room_gate" {
+				continue
+			}
+			if t.Room > 0 {
 				set[t.Room] = true
+			}
+			if t.Area != "" {
+				for _, id := range areas.Rooms(t.Area) {
+					set[id] = true
+				}
+			}
+			if t.Zone != "" {
+				if gateZones == nil {
+					gateZones = map[string]bool{}
+				}
+				gateZones[t.Zone] = true
 			}
 		}
 	}
-	return set
+	if len(gateZones) == 0 {
+		return
+	}
+	for id, z := range roomZones {
+		if gateZones[z] {
+			set[id] = true
+		}
+	}
 }
 
 // gatedRoomIn returns the lowest room of areaRooms (sorted) that is gated.
