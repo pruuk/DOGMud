@@ -7,6 +7,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestSpellLandedDetails(t *testing.T) {
+	d := SpellLandedDetails(1, 5305, "heal", "heal", TargetActor(1, 1, 0))
+	assert.Equal(t, EventDetails{UserId: 1, RoomId: 5305, Noun: "heal", Effect: "heal", TargetKind: quests.TargetSelf}, d)
+
+	d = SpellLandedDetails(1, 5305, "identify", "identify", Target{})
+	assert.Equal(t, quests.TargetNone, d.TargetKind)
+	assert.Equal(t, "identify", d.Noun)
+	assert.Empty(t, d.Command, "spell_landed is not a command event")
+}
+
 // seedMendQuest: one step, any heal that lands on mob 9112.
 func seedMendQuest() *Engine {
 	e := NewEngine()

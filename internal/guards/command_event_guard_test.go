@@ -10,21 +10,23 @@ import (
 	"testing"
 )
 
-// commandEventFile is the one file allowed to raise the quest "command" event
-// by hand: questengine.NotifyCommand builds every command event's target
-// fields (#375 phase 3b slice 2). A hand-built Notify("command", ...) skips
+// commandEventFile is the one file allowed to raise the quest "command" and
+// "spell_landed" events by hand: questengine.NotifyCommand and
+// NotifySpellLanded build every such event's target fields (#375 phase 3b
+// slices 2 and 3). A hand-built Notify("command", ...) skips
 // them, and a quest step that names a target would never fire there.
 const commandEventFile = "internal/questengine/command_event.go"
 
-// isCommandNotify reports whether call is X.Notify("command", ...) or
-// X.NotifyAll("command", ...) with the literal event name.
-func isCommandNotify(call *ast.CallExpr) bool {
+// isGuardedNotify reports whether call is X.Notify(E, ...) or
+// X.NotifyAll(E, ...) with E the literal event name "command" or
+// "spell_landed" (#375 phase 3b slices 2 and 3).
+func isGuardedNotify(call *ast.CallExpr) bool {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok || (sel.Sel.Name != "Notify" && sel.Sel.Name != "NotifyAll") || len(call.Args) == 0 {
 		return false
 	}
 	lit, ok := call.Args[0].(*ast.BasicLit)
-	return ok && lit.Kind == token.STRING && lit.Value == `"command"`
+	return ok && lit.Kind == token.STRING && (lit.Value == `"command"` || lit.Value == `"spell_landed"`)
 }
 
 func TestCommandEventsOnlyThroughNotifyCommand(t *testing.T) {
@@ -32,7 +34,7 @@ func TestCommandEventsOnlyThroughNotifyCommand(t *testing.T) {
 	seenHelper := false
 	var violations []string
 	for _, c := range calls {
-		if !isCommandNotify(c.call) {
+		if !isGuardedNotify(c.call) {
 			continue
 		}
 		if c.file == commandEventFile {
@@ -43,7 +45,7 @@ func TestCommandEventsOnlyThroughNotifyCommand(t *testing.T) {
 	}
 	sort.Strings(violations)
 	if len(violations) > 0 {
-		t.Fatalf("quest command event raised by hand (use questengine.NotifyCommand with the command's target):\n  %s",
+		t.Fatalf("quest command or spell_landed event raised by hand (use questengine.NotifyCommand or NotifySpellLanded with the target):\n  %s",
 			strings.Join(violations, "\n  "))
 	}
 	if !seenHelper {
@@ -59,13 +61,15 @@ func TestCommandEventGuardCanFail(t *testing.T) {
 		`e.NotifyAll("command", ds, b, b)`:                          true,
 		`questengine.GetEngine().Notify("command_issued", d, b, b)`: false,
 		`questengine.GetEngine().Notify("room_enter", d, b, b)`:     false,
+		`e.NotifyAll("spell_landed", ds, b, b)`:                     true,
+		`questengine.GetEngine().Notify("spell_cast", d, b, b)`:     false,
 	} {
 		expr, err := parser.ParseExpr(src)
 		if err != nil {
 			t.Fatalf("parse %q: %v", src, err)
 		}
-		if got := isCommandNotify(expr.(*ast.CallExpr)); got != want {
-			t.Errorf("isCommandNotify(%s) = %v, want %v", src, got, want)
+		if got := isGuardedNotify(expr.(*ast.CallExpr)); got != want {
+			t.Errorf("isGuardedNotify(%s) = %v, want %v", src, got, want)
 		}
 	}
 }
