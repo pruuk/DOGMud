@@ -1,0 +1,24 @@
+# HANDOFF seat: quest 60 The Long Road, in Hartcharn with Severin Pell. You
+# carry Garrick's sealed dispatch. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: mid
+  start_room: 5409
+  overlays:
+    set_quest_tokens: ["60-start"]
+    grant_items: [40071]
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `inventory`, `quests` and `look`. Quote what quest 60 says and confirm
+    you carry the dispatch.
+  - >-
+    Type `talk pell` (or the name `look` shows) and quote the menu with its
+    markers. Pick the topic handing over Garrick's dispatch. Quote every line:
+    the handover, anything you are given, and any quest banner.
+  - >-
+    Type `inventory` and `quests`: the dispatch must be gone, any item Pell
+    gave must be in your pack, and the quest step must have advanced exactly
+    once. `talk pell` again: the hand-over topic must be gone.

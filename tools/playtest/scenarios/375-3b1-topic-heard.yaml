@@ -1,0 +1,32 @@
+# #375 phase 3b slice 1: mid-quest talk steps moved from topic grantsQuest onto
+# quest-side topic_heard triggers. Four seats walk a migrated talk step each:
+# a three-way branch (18), Dewey's lesson (28), an item hand-off (60) and a
+# flag-setting choice (67).
+name: 375-3b1-topic-heard
+mode: party
+summary: >-
+  Migrated talk steps advance once when their topic is heard, keep their item
+  and flag effects, show [*] on the objective topic, and stop offering it after.
+on_actor_stop: continue
+budgets:
+  wall_clock: 35m
+requires:
+  max_connections: 20
+roster:
+  - id: branch
+    personality: bug-finder
+    goals: goals/scenarios/375-3b1-topic-heard/branch.yaml
+  - id: dewey
+    personality: bug-finder
+    goals: goals/scenarios/375-3b1-topic-heard/dewey.yaml
+  - id: handoff
+    personality: bug-finder
+    goals: goals/scenarios/375-3b1-topic-heard/handoff.yaml
+  - id: bloom
+    personality: bug-finder
+    goals: goals/scenarios/375-3b1-topic-heard/bloom.yaml
+
+group_goals:
+  - id: talk-steps-advance-once
+    do: Each seat talks to its NPC and picks the topic its quest step needs.
+    verify: The step advances exactly once, any item or flag lands, and the topic does not advance anything again.
