@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -169,7 +170,8 @@ func talkState(user *users.UserRecord, buf *lineBuffer) *dialogue.PlayerState {
 // token and the quest engine records it on a later event pass, so the menu
 // re-shown straight after a grant would otherwise still list the topic the
 // player just took (an accepted offer, a hand-in or a step whose
-// questExcluded names its own grant).
+// questExcluded names its own grant). The objective marker sees it too:
+// PlayerState's Objective asks the quest engine through ps.HasQuest.
 func heldAlso(ps *dialogue.PlayerState, granted string) *dialogue.PlayerState {
 	if granted == "" || ps == nil || ps.HasQuest == nil {
 		return ps
@@ -290,7 +292,11 @@ func play(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.
 }
 
 // applyWithHandover applies t and, when it took an item, prints the handover
-// lines; then it flushes the callbacks' private lines, refused or not.
+// lines; then it flushes the callbacks' private lines, refused or not. It is
+// the one place a topic plays (a menu choice, an accepted offer, a
+// companion's ask for its owner), so it raises the quest engine's
+// topic_heard for user once t's own effects have landed (#375 phase 3b
+// slice 1). A refused apply (a price or a delivery failed) raises nothing.
 func applyWithHandover(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic, ps *dialogue.PlayerState, buf *lineBuffer) bool {
 	buf.taken = ""
 	ok := df.Apply(t, ps)
@@ -298,6 +304,9 @@ func applyWithHandover(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, 
 		handoverLines(user, room, mob, buf.taken)
 	}
 	buf.flush()
+	if ok {
+		questengine.NotifyTopicHeard(user, room.RoomId, int(mob.MobId), t.Key)
+	}
 	return ok
 }
 

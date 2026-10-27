@@ -64,7 +64,6 @@ topics:
   - 60-waybill
   - 60-end
   requiresItem: 40071
-  grantsQuest: 60-waybill
   givesItem: 40072
 - key: lost_report
   kind: info

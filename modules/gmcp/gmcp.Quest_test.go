@@ -46,6 +46,8 @@ func (w *fakeQuestWorld) deps() questDeps {
 		FlagDeclared:    func(string, string) bool { return true },
 		DialogueGrants:  func(string) bool { return false },
 		MobHasDialogue:  func(int) bool { return true },
+		TopicExists:     func(int, string) bool { return true },
+		TopicGrant:      func(int, string) string { return "" },
 	}
 	return questDeps{
 		load: func(id int) *quests.Quest { return w.specs[id] },
@@ -145,8 +147,8 @@ func TestBuildQuestListAndGet(t *testing.T) {
 	if !ok || detail.Quest.QuestId != 90003 {
 		t.Fatalf("get failed: %+v", detail)
 	}
-	// 11 events (room_gate added 2026-10-17, dialogue retired with ask in
-	// #375, spell_landed added in #375 phase 3b), 9 condition kinds, 24
+	// 12 events (room_gate added 2026-10-17, dialogue retired with ask in
+	// #375, spell_landed and topic_heard added in #375 phase 3b), 9 condition kinds, 24
 	// action types (discover added in #375 phase 3a) — one vocab entry per
 	// TriggerDef/Conditions/ActionDef field (count them, don't estimate).
 	offersSpellLanded := false
@@ -156,7 +158,7 @@ func TestBuildQuestListAndGet(t *testing.T) {
 	if !offersSpellLanded {
 		t.Fatalf("the builder's event picker must offer spell_landed: %+v", detail.Enums.Events)
 	}
-	if len(detail.Enums.Events) != 11 || len(detail.Enums.Actions) != 24 || len(detail.Enums.Conditions) != 9 {
+	if len(detail.Enums.Events) != 12 || len(detail.Enums.Actions) != 24 || len(detail.Enums.Conditions) != 9 {
 		t.Fatalf("vocabulary sizes wrong: events=%d conditions=%d actions=%d",
 			len(detail.Enums.Events), len(detail.Enums.Conditions), len(detail.Enums.Actions))
 	}

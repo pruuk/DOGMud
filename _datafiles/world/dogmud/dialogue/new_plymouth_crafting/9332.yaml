@@ -140,7 +140,6 @@ topics:
   questExcluded:
   - 68-choice
   - 68-end
-  grantsQuest: 68-choice
   moodChange: cautious
 # Quest 68's circle choice (spec R28): the warning must be heard first
 # (heardRequired), and both topics hide once the choice is made (68-end).

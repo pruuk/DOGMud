@@ -170,7 +170,6 @@ topics:
   setsQuestFlag:
     key: 11-branch
     value: rhett
-  grantsQuest: 11-sided
   moodChange: friendly
 # Recovery for old saves at 11-end with no side: the same choice, after
 # the same warning. It grants nothing (the quest is already finished); the
@@ -264,7 +263,6 @@ topics:
   questExcluded:
   - 13-extraction
   - 13-end
-  grantsQuest: 13-extraction
 - key: extraction_complete
   kind: handin
   quest: 13

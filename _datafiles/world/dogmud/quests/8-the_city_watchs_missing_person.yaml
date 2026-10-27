@@ -31,3 +31,15 @@ rewards:
   gold: 15
   rep_faction: thornwall_guards
   rep_amount: 15
+
+triggers:
+  # found: hearing Elara's "reassure" topic (moved from the topic's
+  # grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 107
+    topic: reassure
+    conditions:
+      has: ["8-start"]
+      missing: ["8-found"]
+    actions:
+      - grant: "8-found"

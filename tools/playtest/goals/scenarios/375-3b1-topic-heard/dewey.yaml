@@ -1,0 +1,24 @@
+# DEWEY seat: quest 28 in the newcomer antechamber. You have already said
+# hello; Dewey's next lesson is asking about the world. Quote every game line
+# VERBATIM.
+
+ephemeral:
+  profile: fresh
+  start_room: 6258
+  overlays:
+    set_quest_tokens: ["28-start", "28-said"]
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `look`. If Dewey is not here, try the room next door (`look` for exits)
+    and find him. Type `quests` and quote what it says.
+  - >-
+    Type `talk dewey` and quote the whole menu, including [*] markers. Pick the
+    topic about the world of Gaius. Quote every line, including any quest
+    progress banner.
+  - >-
+    Type `quests`: the step must have advanced once. `talk dewey` again and
+    quote the menu: report whether that topic still shows [*] and whether
+    picking it again advances anything (it must not).

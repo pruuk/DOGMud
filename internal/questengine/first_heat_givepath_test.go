@@ -51,8 +51,9 @@ func TestQuest35_GiveDaggerCompletesFirstHeat(t *testing.T) {
 // Cipher quest (F3 audit, 2026-06-29). The quest log says "Take the rubbing to
 // Dross", and a player who physically gave the rubbing (item 40115) to Dross
 // (mob 9360) must advance rubbing to gallery. Since #375 the give resolves as
-// Dross's q69_gallery topic (carriesItem 40115), which grants 69-gallery and
-// leaves the rubbing with the player, who needs it at the gallery.
+// Dross's q69_gallery topic (carriesItem 40115), which leaves the rubbing with
+// the player, who needs it at the gallery. Since #375 phase 3b the quest's
+// topic_heard trigger on that topic grants 69-gallery once it is heard.
 func TestQuest69_GiveRubbingAdvancesGalleryStep(t *testing.T) {
 	const (
 		drossMobId  = 9360
@@ -70,6 +71,12 @@ func TestQuest69_GiveRubbingAdvancesGalleryStep(t *testing.T) {
 	require.NotNil(t, tp, "giving the rubbing to Dross must play a topic")
 	require.Equal(t, "q69_gallery", tp.Key)
 	require.True(t, dross.Apply(tp, n.state()))
+	require.False(t, p.HasQuest("69-gallery"), "the topic grants nothing itself; the quest's topic_heard trigger does")
+
+	e := NewEngine()
+	e.RegisterQuest(q)
+	ctx := &linearCtx{mockActionContext: newMockActionContext(1), p: p}
+	e.Notify("topic_heard", EventDetails{UserId: 1, MobId: drossMobId, Topic: tp.Key}, p, ctx)
 	require.True(t, p.HasQuest("69-gallery"), "giving the rubbing to Dross must advance the quest (grant 69-gallery)")
 	require.True(t, p.items[rubbingItem], "the player must keep a rubbing (needed at the gallery and at turn-in)")
 	require.Empty(t, n.removed, "Dross takes nothing")

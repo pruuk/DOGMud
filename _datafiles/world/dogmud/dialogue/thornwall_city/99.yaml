@@ -32,7 +32,6 @@ topics:
   - 6-report
   - 6-end
   requiresItem: 31
-  grantsQuest: 6-report
   moodChange: friendly
 - key: already_filed
   kind: info

@@ -34,7 +34,6 @@ topics:
   questExcluded:
   - 67-delivery
   - 67-end
-  grantsQuest: 67-delivery
   moodChange: cautious
 - key: work
   kind: info

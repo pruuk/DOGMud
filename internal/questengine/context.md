@@ -23,7 +23,8 @@ what a trigger *does*, you edit this package.
   `TargetActor`, the refiners `WithMob`, `WithItem`, `WithNoun`,
   `CommandDetails` (builds one `EventDetails`) and `NotifyCommand`. It also
   holds the one way to raise a `spell_landed` event, `SpellLandedDetails` and
-  `NotifySpellLanded`.
+  `NotifySpellLanded`, and the one way to raise `topic_heard`,
+  `TopicHeardDetails` and `NotifyTopicHeard`.
 - **dryrun.go**: `WouldFire` (side-effect-free "would Notify fire?") and
   `SearchFeatures` (a room's quest search nouns).
 - **types.go** — type aliases onto `internal/quests`, plus `EventDetails` and
@@ -110,6 +111,30 @@ both `"command"` and `"spell_landed"`: a hand-built `Notify` of either fails
 it outside `command_event.go`. `internal/hooks/spell_resolution.go` is the
 production caller (see `internal/hooks/context.md`). `command: cast` stays the
 attempt event.
+
+### Talk events (#375 phase 3b slice 1)
+
+`topic_heard` is raised when a player plays an NPC's talk topic. Its
+`EventDetails` carry `MobId` (the NPC's template id), the new
+`EventDetails.Topic` (the topic key) and the template room (as `command`
+does). A trigger's `topic:` filter is compared with `Topic` in
+`matchTriggerFields`.
+
+`TopicHeardDetails(userId, roomId, mobId, topic)` builds the detail;
+`NotifyTopicHeard(user, roomId, mobId, topic)` raises it through `NotifyAll`
+(nothing for a nil user, a mob id of 0 or an empty topic). The only
+production caller is `conversation.applyWithHandover`, so a menu choice, an
+accepted offer and an AI companion's ask on its owner's behalf each raise
+exactly one event, after the topic's own effects landed; a refused apply
+raises none. The topic's own `grantsQuest` is queued (`events.Quest`) and
+lands after the event, so a `topic_heard` trigger sees the topic's flags,
+items and gold but not its own grant. The guard
+(`internal/guards/command_event_guard_test.go`) covers `"topic_heard"` too;
+its allowlist adds `walkthrough.go`, whose simulated raise (below) is the
+second legitimate caller.
+
+`WouldFire("topic_heard", ...)` backs the `[*]` objective marker
+(`dialogue.PlayerState.Objective`, see `internal/dialogue/context.md`).
 
 `RegisterQuest` flattens every trigger into `triggerIndex` keyed by event type,
 so `Notify` never scans quests it cannot match. Each trigger gets an
@@ -357,6 +382,16 @@ on the caller's order. It reads the Ways into each step from
 - **Heard topics.** `walkEnv.hear` marks as heard every info topic a
   `heardRequired` names that is open in the current state; applying an info
   topic marks it too. A topic whose heard topic never opens is a dead end.
+- **Talk steps** (#375 phase 3b slice 1). A `topic_heard` trigger fires in
+  the walk by playing its topic: `fireTrigger` finds the NPC's file and topic
+  (`walkEnv.heardTopic`), meets the topic's gates (`meetTopic`), then
+  `fireTopic` runs Eligible and Apply and raises `topic_heard`, as
+  `conversation.applyWithHandover` does. `fireTopic` holds the topic's own
+  queued grant until after that event (as the game does) and then lands it
+  and chains `quest_granted`. A trigger whose NPC lacks the topic cannot fire.
+  The topic's `requiresItem`/`carriesItem` and its NPC count as the Way's
+  needs (`wayItemNeeds`, `checkWay`), so `walk-no-source` and `walk-unspawned`
+  cover them.
 - **Negative gates** (`missing`, `missing_item`, `missing_flag`,
   `questExcluded`, `itemExcluded`, `questFlagExcluded`) read the walk's real
   state.

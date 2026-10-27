@@ -1,0 +1,25 @@
+# BLOOM seat: quest 67 The Bloom Trail, at Marn the Draper on the New
+# Plymouth docks. The trail has started. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: mid
+  start_room: 5523
+  overlays:
+    set_quest_tokens: ["67-start"]
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `quests` and quote quest 67. Type `look` and find Marn. Type
+    `talk marn` and quote the whole menu, including every [*], [!] and [?]
+    marker: report which topics carry [*].
+  - >-
+    Two topics should lead the trail forward (one about the stock not kept out
+    front, one about evidence). Pick the one about the stock not kept out
+    front. Quote every line, including any quest banner.
+  - >-
+    Type `quests`: the step must have advanced exactly once, and the quest's
+    next instruction should follow from the choice you made. `talk marn`
+    again: the other trail topic must be gone or harmless, and nothing may
+    advance the quest a second time.

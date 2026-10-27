@@ -29,8 +29,9 @@ steps:
       Fork. When you meet the agent, you will have to
       choose what to say, and it cannot be taken back. Type talk
       agent."
-  # Inserted 2026-10-23 (#375 batch 7, spec R28): the agent's answers
-  # grant this step, so the first answer is final and the others close.
+  # Inserted 2026-10-23 (#375 batch 7, spec R28): hearing one of the
+  # agent's answers grants this step (the topic_heard triggers below), so
+  # the first answer is final and the others close.
   - id: answered
     map_target: 4049
     description: "You have dealt with the bloodline agent. Betta
@@ -64,6 +65,39 @@ triggers:
           few dark hairs cling to the blanket, and beside it lies a
           withered apple core. Someone stayed here. Betta, out in the
           yard, must know who.
+
+  # answered: hearing the Bloodline Agent's "say_nothing" topic (moved from
+  # the topic's grantsQuest, #375 phase 3b; the topic sets 18-resolution).
+  - event: topic_heard
+    mob: 287
+    topic: say_nothing
+    conditions:
+      has: ["18-start"]
+      missing: ["18-answered"]
+    actions:
+      - grant: "18-answered"
+
+  # answered: hearing the Bloodline Agent's "misdirect" topic (moved from
+  # the topic's grantsQuest, #375 phase 3b; the topic sets 18-resolution).
+  - event: topic_heard
+    mob: 287
+    topic: misdirect
+    conditions:
+      has: ["18-start"]
+      missing: ["18-answered"]
+    actions:
+      - grant: "18-answered"
+
+  # answered: hearing the Bloodline Agent's "tell_truth" topic (moved from
+  # the topic's grantsQuest, #375 phase 3b; the topic sets 18-resolution).
+  - event: topic_heard
+    mob: 287
+    topic: tell_truth
+    conditions:
+      has: ["18-start"]
+      missing: ["18-answered"]
+    actions:
+      - grant: "18-answered"
 
   # Killing the bloodline agent (287) while the quest is open answers the
   # agent too; Betta takes it badly (277 result_killed).

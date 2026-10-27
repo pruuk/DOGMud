@@ -356,6 +356,45 @@ discovery or from a book does not count: the walk cannot know they have it.
 `ValidateQuestRefs` refuses an unknown spell id and an `effect` no loaded spell
 has.
 
+## Talk steps: `topic_heard`
+
+A mid-quest talk step ("the scout tells you where the cache is") is a quest
+trigger, not a topic grant (#375 phase 3b slice 1). `event: topic_heard`
+fires when the player plays an NPC's topic: `mob` is the NPC's template id and
+`topic` is the topic key. Both are required; the loader refuses `topic` on any
+other event, and boot refuses a topic the NPC's dialogue file lacks.
+
+```yaml
+  - event: topic_heard
+    mob: 107
+    topic: reassure
+    conditions:
+      has: ["8-start"]
+      missing: ["8-found"]
+    actions:
+      - grant: "8-found"
+```
+
+- The topic keeps its gates (`questRequired`, `questExcluded`) and its other
+  effects (flags, items, gold). It never carries `grantsQuest` for a mid step;
+  only a quest's first step (an offer) and final step (a hand-in) are granted
+  by topics. The `talk-on-quest` loop rule flags any other topic grant.
+- A trigger may not grant the token its topic's own `grantsQuest` grants:
+  boot refuses it (the token would be queued twice, and an `-end` token would
+  pay its rewards twice).
+- The event fires after the topic's effects landed, for a menu choice, an
+  accepted offer, or a companion asking for its owner. A refused topic (a
+  price the player cannot pay) raises nothing.
+- The topic that is the current step's objective shows `[*]` in the talk menu
+  even when the player has already heard it, and the NPC's name shows `[*]`
+  in the room.
+- A topic heard before the step does not count: the trigger needs the
+  previous step's token when the topic is played, so the player picks the
+  topic again. Gate the topic on `questRequired` so it is offered then.
+- A topic that hands out an item for the step is a source for that quest only
+  once the trigger's grant is held; the walkthrough and the item-source check
+  read the trigger's grants the same way.
+
 ## Verify event names against the loader
 
 Quest YAML triggers panic at startup if the `event:` name is not in the
@@ -368,7 +407,7 @@ vocabulary or from what sounds plausible: `mob_killed` and `mob_die` both
 sound right for a mob-death trigger, and the actual quest engine event is
 `mob_death`. The events are: `room_enter`, `room_gate`, `item_give`,
 `skill_use`, `mob_death`, `command`, `command_issued`, `item_gain`,
-`quest_granted`, `room_interact`, `spell_landed`. Before writing a trigger, grep `validEvents` in
+`quest_granted`, `room_interact`, `spell_landed`, `topic_heard`. Before writing a trigger, grep `validEvents` in
 `internal/questengine/loader.go` for the current canonical list, or copy the
 spelling from an existing quest YAML that uses the event you want.
 [[feedback_quest_engine_event_names]]

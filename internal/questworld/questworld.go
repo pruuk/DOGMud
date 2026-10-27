@@ -56,6 +56,8 @@ func Validators() quests.QuestValidators {
 		},
 		DialogueGrants: func(token string) bool { return dlgGrants[token] },
 		MobHasDialogue: mobHasDialogueFile,
+		TopicExists:    topicExistsOnMob,
+		TopicGrant:     topicGrantOnMob,
 		HiddenNounExists: func(roomId int, key string) bool {
 			r := rooms.LoadRoomTemplate(roomId)
 			if r == nil {
@@ -91,6 +93,31 @@ func mobHasDialogueFile(mobId int) bool {
 		return false
 	}
 	return dialogue.Load(mobId, m.Zone) != nil
+}
+
+// topicExistsOnMob reports whether the mob's dialogue file has the topic key
+// (a topic_heard trigger's topic, #375 phase 3b slice 1).
+func topicExistsOnMob(mobId int, key string) bool {
+	m := mobs.GetMobSpec(mobs.MobId(mobId))
+	if m == nil {
+		return false
+	}
+	df := dialogue.Load(mobId, m.Zone)
+	return df != nil && df.FindTopic(key) != nil
+}
+
+// topicGrantOnMob is the token the mob's topic grants through its own
+// grantsQuest, or "" (none, or no such topic). A topic_heard trigger on that
+// topic may not grant it again.
+func topicGrantOnMob(mobId int, key string) string {
+	m := mobs.GetMobSpec(mobs.MobId(mobId))
+	if m == nil {
+		return ""
+	}
+	if t := dialogue.Load(mobId, m.Zone).FindTopic(key); t != nil {
+		return t.GrantsQuest
+	}
+	return ""
 }
 
 // Registry is the loop world over the loaded registries: every quest, every

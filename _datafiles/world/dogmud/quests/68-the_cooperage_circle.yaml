@@ -70,10 +70,32 @@ rewards:
   observer: ""
 
 triggers:
+  # evidence: hearing Toby the Cooper's Lad's "q68_toby" topic, which gives
+  # the bench-mark rubbing (moved from the topic's grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 9338
+    topic: q68_toby
+    conditions:
+      has: ["68-start"]
+      missing: ["68-evidence"]
+    actions:
+      - grant: "68-evidence"
+
+  # choice: hearing Orin the Bookseller's "q68_choice" topic (moved from the
+  # topic's grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 9332
+    topic: q68_choice
+    conditions:
+      has: ["68-survey"]
+      missing: ["68-choice"]
+    actions:
+      - grant: "68-choice"
+
   # Edvar's map-fragment: under the loose floorboard on the cooperage floor (5720).
   # The nouns here were `loose-floorboard` and `old-guild-mark`, which no
   # player could guess; they are now `floorboard` and the room's own key
-  # `old guild mark`, and triggers 4 to 9 add the other spellings and the
+  # `old guild mark`, and triggers 6 to 11 add the other spellings and the
   # survey step's catch-up. Since 2026-10-21 (spec R28) the mark only
   # describes; the choice is made in talk (Orin 9332, Clerk Vell 9349).
   - event: room_interact
@@ -133,7 +155,7 @@ triggers:
           the door in faded paint. Re-cutting it would be a real act with real
           consequences. You do not yet have a reason to.
 
-  # ── loose floorboard, the room's full noun: same as triggers 0 and 1 ──
+  # ── loose floorboard, the room's full noun: same as triggers 2 and 3 ──
   - event: room_interact
     room: 5720
     noun: loose floorboard
@@ -190,7 +212,7 @@ triggers:
           The board is loose and the space beneath it is empty. You already
           have Edvar's survey. Take it to Orin.
 
-  # ── guild mark, the short noun: same as triggers 2 and 3 (describes only;
+  # ── guild mark, the short noun: same as triggers 4 and 5 (describes only;
   #    the choice is made in talk, spec R28) ──
   - event: room_interact
     room: 5719

@@ -44,7 +44,6 @@ topics:
   questExcluded:
   - 67-front
   - 67-end
-  grantsQuest: 67-front
   setsQuestFlag:
     key: 67-entry
     value: undercover
@@ -67,7 +66,6 @@ topics:
   questExcluded:
   - 67-front
   - 67-end
-  grantsQuest: 67-front
   setsQuestFlag:
     key: 67-entry
     value: evidence

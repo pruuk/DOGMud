@@ -28,6 +28,10 @@ type QuestValidators struct {
 	FlagDeclared    func(key, value string) bool // foreign quests' flag declarations
 	DialogueGrants  func(token string) bool      // some dialogue file grants this token
 	MobHasDialogue  func(mobId int) bool
+	TopicExists     func(mobId int, key string) bool // the NPC's dialogue file has this topic key
+	// TopicGrant is the token that NPC topic's own grantsQuest grants, or ""
+	// (none, or no such topic).
+	TopicGrant func(mobId int, key string) string
 	// HiddenNounExists reports whether the room template has a hidden noun
 	// with exactly this key (the discover action's target).
 	HiddenNounExists func(roomId int, key string) bool
@@ -229,6 +233,20 @@ func (c *refsCtx) grantedSteps() map[string]bool {
 	return granted
 }
 
+// grantsTokenDeep is grantsToken at any sequence depth (nested sequences run
+// at any depth, as in grantedSteps).
+func grantsTokenDeep(actions []ActionDef, token string) bool {
+	for _, a := range actions {
+		if a.Grant == token {
+			return true
+		}
+		if a.Sequence != nil && grantsTokenDeep(a.Sequence.OnComplete, token) {
+			return true
+		}
+	}
+	return false
+}
+
 // ValidateQuestRefs checks every id/token/name the quest references against
 // the live registries. Returns refusals and warnings.
 func ValidateQuestRefs(q Quest, v QuestValidators) (errs []string, warns []string) {
@@ -286,6 +304,16 @@ func ValidateQuestRefs(q Quest, v QuestValidators) (errs []string, warns []strin
 			}
 			if t.Effect != "" && !c.v.EffectExists(t.Effect) {
 				c.errf("%s: effect %q is not the effect_type of any spell", tw, t.Effect)
+			}
+		}
+		if t.Event == "topic_heard" && t.Mob > 0 && t.Topic != "" && c.v.MobExists(t.Mob) {
+			if !c.v.TopicExists(t.Mob, t.Topic) {
+				c.errf("%s: mob %d has no topic %q", tw, t.Mob, t.Topic)
+			} else if own := c.v.TopicGrant(t.Mob, t.Topic); own != "" && grantsTokenDeep(t.Actions, own) {
+				// The topic queues its own grant and the trigger grants it
+				// again: for an -end token the second event pays the rewards
+				// a second time.
+				c.errf("%s: topic_heard on mob %d topic %q grants %s, which that topic's grantsQuest already grants", tw, t.Mob, t.Topic, own)
 			}
 		}
 		c.checkToken(tw+" quest_token filter", t.QuestToken)

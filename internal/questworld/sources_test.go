@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/stretchr/testify/require"
 )
 
@@ -47,6 +48,29 @@ func TestTopicOwners_TopicThatGrantsAStepGatesItsItemOnThatStep(t *testing.T) {
 		"taking the topic grants vella_journal, so it is no source before that step")
 	require.True(t, available(ss, 20, holds("20-start", "20-brindle", "20-kingfisher", "20-vella_journal")))
 	require.True(t, available(ss, 5, holds()))
+}
+
+// Quest 20's ullahandoff after #375 phase 3b: the topic hands out an item
+// and carries no grantsQuest; a topic_heard trigger on (mob 347,
+// ullahandoff) grants 20-vella_journal instead. Hearing the topic still
+// moves the quest, so its item waits for that step as a grantsQuest would.
+func TestTopicOwners_TopicHeardGrantGatesItsItemOnThatStep(t *testing.T) {
+	qs := []quests.Quest{{QuestId: 20, Triggers: []quests.TriggerDef{{
+		Event: "topic_heard", Mob: 347, Topic: "ullahandoff",
+		Conditions: quests.Conditions{Has: []string{"20-kingfisher_found"}},
+		Actions:    []quests.ActionDef{{Grant: "20-vella_journal"}},
+	}}}}
+	heard := topicHeardGrants(qs)
+	tp := dialogue.Topic{Key: "ullahandoff", Kind: dialogue.KindInfo,
+		Gates:   dialogue.Gates{QuestRequired: []string{"20-kingfisher_found"}},
+		Effects: dialogue.Effects{GivesItem: 40061}}
+	ss := []itemSource{{where: "mob 347 topic ullahandoff", owners: topicOwners(tp, heard[mobTopic{347, "ullahandoff"}]...)}}
+
+	require.False(t, available(ss, 20, holds("20-start", "20-kingfisher_found")),
+		"hearing the topic grants vella_journal, so it is no source before that step")
+	require.True(t, available(ss, 20, holds("20-start", "20-kingfisher_found", "20-vella_journal")))
+	require.True(t, available(ss, 5, holds()))
+	require.Empty(t, heard[mobTopic{347, "other"}], "another topic of the mob grants nothing")
 }
 
 // A replacement topic of quest 20 gated on its own step 20-journal is open

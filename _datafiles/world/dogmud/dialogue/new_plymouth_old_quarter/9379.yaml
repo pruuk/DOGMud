@@ -39,7 +39,6 @@ topics:
   questExcluded:
   - 67-source
   - 67-end
-  grantsQuest: 67-source
   moodChange: neutral
 - key: operation
   kind: info

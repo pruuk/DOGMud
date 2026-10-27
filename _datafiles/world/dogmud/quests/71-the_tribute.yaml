@@ -82,6 +82,28 @@ rewards:
     nearest thing she has to ceremony.
 
 triggers:
+  # VELL: hearing Clerk Vell's "q71_vell" topic (moved from the topic's
+  # grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 9349
+    topic: q71_vell
+    conditions:
+      has: ["71-start"]
+      missing: ["71-vell"]
+    actions:
+      - grant: "71-vell"
+
+  # HORST: hearing Horst's "q71_horst" topic (moved from the topic's
+  # grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 9344
+    topic: q71_horst
+    conditions:
+      has: ["71-vell"]
+      missing: ["71-horst"]
+    actions:
+      - grant: "71-horst"
+
   # LEDGER: lift the tribute ledger page in the Gilt Threshold parlor (5815).
   # The noun is the room's own key (`paper scrap`), so `look paper`, `look
   # scrap` and `look papers` reach it too; it was `paper-scrap`.
@@ -126,7 +148,7 @@ triggers:
 
   # Lost ledger page (appended 2026-10-21, #375 batch 5): Ostry's hand-in
   # takes the page, so a player who lost it finds another while the quest
-  # is open. Trigger 0 gives the first page and so blocks this one in the
+  # is open. Trigger 2 gives the first page and so blocks this one in the
   # same command (missing_item).
   - event: room_interact
     room: 5815

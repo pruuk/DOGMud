@@ -35,7 +35,6 @@ topics:
   questExcluded:
   - 71-horst
   - 71-end
-  grantsQuest: 71-horst
   moodChange: cautious
 - key: house
   kind: info

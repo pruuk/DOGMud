@@ -32,6 +32,10 @@ type deliveryCase struct {
 	// choice quests). Before it is heard, giving the item must not complete
 	// the step.
 	heard string
+	// viaTopicHeard marks a mid-quest delivery whose token comes from the
+	// quest's topic_heard trigger on the delivery topic, not from the topic
+	// itself (#375 phase 3b).
+	viaTopicHeard bool
 }
 
 // TestDeliveryAskPathCompletes locks the "every reasonable path resolves the
@@ -40,7 +44,8 @@ type deliveryCase struct {
 // <item> <npc>` resolves through ItemTopic to the hand-in that wants the item
 // (Task 10), and the same hand-in is on the talk menu. Choosing or giving it
 // must complete the step with the delivery's side-effects: the item is
-// consumed (requiresItem), the right token is granted (grantsQuest), and any
+// consumed (requiresItem), the right token is granted (grantsQuest, or for a
+// mid-quest step the quest's topic_heard trigger on that topic), and any
 // flag/gold/rep/item rewards land.
 //
 // Chain quests grant the END token directly; IsTokenAfter permits skipping
@@ -89,7 +94,7 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 		{
 			name: "Q20 Ulla — kingfisher to Vella", file: "../../_datafiles/world/dogmud/dialogue/stillwater/355.yaml",
 			mobId: 355, heldToken: "20-kingfisher_found", grantToken: "20-vella_journal", itemId: 40060, topic: "kingfisher",
-			givesItem: 40061,
+			givesItem: 40061, viaTopicHeard: true,
 		},
 		{
 			name: "Q20 Ulla — journal to Ulla", file: "../../_datafiles/world/dogmud/dialogue/stillwater/347.yaml",
@@ -99,10 +104,12 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 		{
 			name: "Q60 Long Road — dispatch to Pell", file: "../../_datafiles/world/dogmud/dialogue/hartcharn/9182.yaml",
 			mobId: 9182, heldToken: "60-start", grantToken: "60-waybill", itemId: 40071, topic: "dispatch",
+			viaTopicHeard: true,
 		},
 		{
 			name: "Q60 Long Road — waybill to Verrold", file: "../../_datafiles/world/dogmud/dialogue/kingsbarrow_vale/9198.yaml",
 			mobId: 9198, heldToken: "60-waybill", grantToken: "60-manifest", itemId: 40072, topic: "waybill",
+			viaTopicHeard: true,
 		},
 		{
 			name: "Q60 Long Road — manifest to gate guard", file: "../../_datafiles/world/dogmud/dialogue/new_plymouth_outskirts/9208.yaml",
@@ -224,6 +231,10 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 			assert.Equal(t, tc.itemId, tp.RequiresItem, "the delivery topic %s takes the item", tp.Key)
 			assert.True(t, df.Eligible(tp, ps), "the same topic is on the talk menu")
 			require.True(t, df.Apply(tp, ps), "the delivery topic %s must apply", tp.Key)
+			if tc.viaTopicHeard {
+				assert.Empty(t, granted, "the delivery topic %s grants nothing itself", tp.Key)
+				granted = questTopicHeardGrant(t, questId, tc.mobId, tp.Key)
+			}
 			assert.Equal(t, tc.grantToken, granted,
 				"delivering item %d must grant %s", tc.itemId, tc.grantToken)
 			assert.True(t, itemRemoved, "the delivery item must be consumed by the hand-in")
@@ -268,6 +279,39 @@ func stepIndex(steps []string, tok string) int {
 		}
 	}
 	return -1
+}
+
+// questTopicHeardGrant reads the shipped quest's topic_heard trigger on the
+// NPC's topic and returns the token it grants ("" when there is none).
+func questTopicHeardGrant(t *testing.T, questId, mobId int, topic string) string {
+	t.Helper()
+	files, err := filepath.Glob(fmt.Sprintf("../../_datafiles/world/dogmud/quests/%d-*.yaml", questId))
+	require.NoError(t, err)
+	require.Len(t, files, 1, "exactly one quest file for quest %d", questId)
+	data, err := os.ReadFile(files[0])
+	require.NoError(t, err)
+	var q struct {
+		Triggers []struct {
+			Event   string `yaml:"event"`
+			Mob     int    `yaml:"mob"`
+			Topic   string `yaml:"topic"`
+			Actions []struct {
+				Grant string `yaml:"grant"`
+			} `yaml:"actions"`
+		} `yaml:"triggers"`
+	}
+	require.NoError(t, yaml.Unmarshal(data, &q))
+	for _, tr := range q.Triggers {
+		if tr.Event != "topic_heard" || tr.Mob != mobId || tr.Topic != topic {
+			continue
+		}
+		for _, a := range tr.Actions {
+			if a.Grant != "" {
+				return a.Grant
+			}
+		}
+	}
+	return ""
 }
 
 // questStepsForTest reads the shipped quest's step ids as full tokens

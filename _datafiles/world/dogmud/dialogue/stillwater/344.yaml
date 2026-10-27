@@ -48,7 +48,6 @@ topics:
   questExcluded:
   - 20-temple_pillars
   - 20-end
-  grantsQuest: 20-temple_pillars
   moodChange: friendly
 - key: older_lore
   kind: info

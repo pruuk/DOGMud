@@ -152,3 +152,22 @@ func NotifySpellLanded(user *users.UserRecord, roomId int, spellId, effect strin
 	bridge := NewGameBridge(user, roomId)
 	return GetEngine().NotifyAll("spell_landed", details, bridge, bridge)
 }
+
+// TopicHeardDetails builds the topic_heard event: the NPC's template id and
+// the topic key, in the template room (#375 phase 3b slice 1).
+func TopicHeardDetails(userId, roomId, mobId int, topic string) EventDetails {
+	matchRoom, _ := rooms.OriginalRoomId(roomId)
+	return EventDetails{UserId: userId, RoomId: matchRoom, MobId: mobId, Topic: topic}
+}
+
+// NotifyTopicHeard is THE topic_heard event, raised by
+// conversation.applyWithHandover once a played topic's effects have landed (a
+// menu choice, an accepted offer, a companion's ask for its owner; a refused
+// charge raises nothing).
+func NotifyTopicHeard(user *users.UserRecord, roomId, mobId int, topic string) NotifyResult {
+	if user == nil || mobId <= 0 || topic == "" {
+		return NotifyResult{}
+	}
+	bridge := NewGameBridge(user, roomId)
+	return GetEngine().NotifyAll("topic_heard", []EventDetails{TopicHeardDetails(user.UserId, roomId, mobId, topic)}, bridge, bridge)
+}

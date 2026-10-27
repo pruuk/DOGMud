@@ -74,22 +74,30 @@ playtest (owner, 2026-10-27). Brainstormed with the owner 2026-10-27.
 `mob` filter (template id). Both are required on a `topic_heard` trigger; the loader refuses either
 missing, and refuses `topic` on any other event.
 
-**When it fires.** In `conversation.play`, after `applyWithHandover` returns true and before
-`after`, for every topic kind:
-`Notify("topic_heard", EventDetails{UserId, RoomId: template room, MobId: mob template id, Topic:
-key})`. A topic whose charge or effect refused fires nothing. `EventDetails` gains `Topic string`.
+**When it fires (as built).** In `conversation.applyWithHandover`, once `df.Apply` returned true,
+for every topic kind, through `questengine.NotifyTopicHeard(user, roomId, mobId, topic)` (details
+from `TopicHeardDetails`, template room). `applyWithHandover` is the one place a topic plays, so a
+menu choice, an accepted offer and an AI companion's ask on its owner's behalf each raise the
+event exactly once. A topic whose charge or effect refused fires nothing. `EventDetails` gains
+`Topic string`. The topic's own `grantsQuest` is queued and lands after the event, so a trigger
+sees the topic's flags, items and gold but not its own grant. The command-event guard covers
+`"topic_heard"`; its allowlist holds `questengine/command_event.go` and `walkthrough.go` (the
+walk's simulated raise).
 
 **Heard before the step does not count.** The trigger fires on hearing the topic while the step is
 current (its `conditions.has` names the previous step's token, as `one-action` already requires).
 A player who heard the topic earlier picks it again. The reason: the line should land when the
 quest makes it matter.
 
-**The objective marker.** A topic that is the current step's objective shows `[*]` even when
-heard. `dialogue.PlayerState` gains `Objective func(mobId int, key string) bool`;
-`conversation.PlayerState` wires it to `questengine.GetEngine().WouldFire("topic_heard", ...)`.
-`TopicMarker` returns `MarkerInfo` when `Objective` reports true, before its `Marked && !heard`
-check. The NPC's name marker (`Marker`) follows, so the roster shows `[*]` on the NPC too. A nil
-callback reports false.
+**The objective marker (as built).** A topic that is the current step's objective shows `[*]` even
+when heard. `dialogue.PlayerState` gains `Objective func(mobId int, key string) bool`;
+`conversation.PlayerState` wires it to `Engine.WouldFire("topic_heard", ...)`. The engine's view
+of the player is a `heldQuests` adapter whose `HasQuest` is the PlayerState's own, so a quest
+accepted a moment ago (granted but still queued, counted by `heldAlso`) marks its next topic in the
+re-shown menu. `TopicMarker` returns `MarkerInfo` for an `info` topic when `Objective` reports
+true, before its `Marked && !heard` check; offer and hand-in topics keep their own markers. The
+NPC's name marker (`Marker`) follows, so the roster shows `[*]` on the NPC too. A nil callback
+reports false.
 
 **Migration of the 32.** Each mid-step `grantsQuest` on an info topic becomes:
 - the topic loses `grantsQuest` and keeps its gates (`questRequired`, `questExcluded`) so it is
@@ -98,14 +106,28 @@ callback reports false.
   token]`, `missing: [this token]`, and `grant: this token`, plus any other effect the topic
   carried that belongs to the quest (none move unless the plan finds one).
 
-The plan lists the 32 with their files from the grep above. The walkthrough
-(`questengine/walkthrough.go`) learns `topic_heard` as a way into a step, so every migrated quest
-still walks.
+The plan lists the 32 with their files from the grep above. A side effect: a grant that now goes
+through a quest trigger shows the "You've made progress on the quest" banner for a mid-step talk
+grant, which the topic grant path did not.
 
-**Validators.** `questloop` gains rule `talk-on-quest`: a topic granting a token that is neither
-its quest's first step nor its final step is a warning (in `loop-backlog.txt`), becoming an error
-after phase 7 like the other loop rules. A `topic_heard` trigger whose `mob` has no dialogue file,
-or whose file has no topic `topic`, is a boot error.
+**The walkthrough (as built).** `questengine/walkthrough.go` plays a `topic_heard` trigger's topic
+before firing it: the NPC's file and topic, its gates met, Eligible, then Apply, then the
+`topic_heard` event. `fireTopic` holds a topic's own queued grant until after that event (as the
+game does) and then lands it and chains `quest_granted`. The trigger's topic items (`requiresItem`,
+`carriesItem`) and its NPC count as the Way's needs, so `walk-no-source` and `walk-unspawned` cover
+them. `questworld.topicOwners` gates a topic's item on the tokens that `topic_heard` triggers on
+that topic grant, as it does for the topic's own `grantsQuest`, so the item stays a source for its
+quest only from that step on.
+
+**Validators (as built).** `questloop` gains rule `talk-on-quest` (`rule_talk.go`): a topic
+granting a token that is neither its quest's first step nor its final step is a finding (the
+shipped backlog holds none after the migration; it would become an error after phase 7 like the
+other loop rules). The loader requires `mob` and `topic` on a `topic_heard` trigger and refuses
+`topic` elsewhere. `ValidateQuestRefs` refuses a `mob` without that topic
+(`QuestValidators.TopicExists`) and a trigger that grants, at any sequence depth, the token the
+topic's own `grantsQuest` grants (`QuestValidators.TopicGrant`): the token would be queued twice
+and an `-end` token would pay its rewards twice. The builder (GMCP `questEventVocab` and
+`quests.js`) offers `topic_heard` with the `mob` and `topic` filters.
 
 ### 2. Slice 2: targets on `command` events
 

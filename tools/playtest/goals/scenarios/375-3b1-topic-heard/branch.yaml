@@ -1,0 +1,26 @@
+# BRANCH seat: quest 18, on the North Road. The quest has started; the
+# Bloodline Agent here wants an answer. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: mid
+  start_room: 4038
+  overlays:
+    set_quest_tokens: ["18-start"]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and quote what it says about quest 18. Type `look` and find
+    the Bloodline Agent. Type `talk agent` (or the name `look` shows) and quote
+    the whole menu, including any [*], [!] or [?] markers.
+  - >-
+    The menu should offer three different answers. Pick the one that
+    misdirects (read the labels; choose by its number). Quote every line,
+    including any quest progress banner.
+  - >-
+    Type `quests` and quote quest 18: the step must have advanced once. Then
+    `talk agent` again and quote the menu: the other two answers must be gone,
+    and nothing you pick may advance the quest again.
+  - >-
+    If a fight starts at any point, fight or flee and note it.

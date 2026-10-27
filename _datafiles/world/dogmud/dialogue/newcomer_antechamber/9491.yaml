@@ -37,8 +37,8 @@ opener:
     hints: The questions marked [*] are worth hearing before you go on. Type the
       number of one.
 topics:
-# The lesson topic (R20, quest 28 trigger 16 folded in): choosing it grants
-# 28-asked. The world topic gated on 28-asked that answered the same question
+# The lesson topic (R20, quest 28 trigger 16 folded in): hearing it grants
+# 28-asked, through quest 28's topic_heard trigger. The world topic gated on 28-asked that answered the same question
 # is folded into this text. Its hint steers the player to the four lessons it
 # opens (prompt, command, marks, fight), all marked [*], before the walk
 # north (review M1, 2026-10-21): one command, the number.
@@ -57,7 +57,6 @@ topics:
   questExcluded:
   - 28-asked
   - 28-end
-  grantsQuest: 28-asked
 # Hidden from the lesson on, so the lesson's question is the only world
 # question in the menu when it is taught.
 - key: world_2

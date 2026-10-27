@@ -93,7 +93,6 @@ topics:
   questExcluded:
   - 68-evidence
   - 68-end
-  grantsQuest: 68-evidence
   givesItem: 40112
   moodChange: cautious
 - key: cooperage

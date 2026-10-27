@@ -41,3 +41,16 @@ rewards:
   itemid: 28
   rep_faction: thornwall_citizens
   rep_amount: 15
+
+triggers:
+  # report: hearing Guard Captain Velk's "protection_report" topic, which
+  # takes the protection notice (moved from the topic's grantsQuest, #375
+  # phase 3b).
+  - event: topic_heard
+    mob: 94
+    topic: protection_report
+    conditions:
+      has: ["10-start"]
+      missing: ["10-report"]
+    actions:
+      - grant: "10-report"

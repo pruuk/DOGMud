@@ -39,3 +39,15 @@ rewards:
   observer: "Harn nods with quiet relief, adjusting the ledger on his counter."
   gold: 10
   itemid: 18
+
+triggers:
+  # report: hearing Records Clerk Pell's "bridge_report" topic, which takes
+  # the maintenance report (moved from the topic's grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 99
+    topic: bridge_report
+    conditions:
+      has: ["6-start"]
+      missing: ["6-report"]
+    actions:
+      - grant: "6-report"

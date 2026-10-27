@@ -43,3 +43,28 @@ rewards:
   observer: "The East Gate guard takes the sealed packet, checks its seal
     against the gate ledger, and logs it in."
   gold: 150
+
+triggers:
+  # waybill: hearing Severin Pell's "pellhandoff" topic, which takes the
+  # dispatch and gives the manifest (moved from the topic's grantsQuest,
+  # #375 phase 3b).
+  - event: topic_heard
+    mob: 9182
+    topic: pellhandoff
+    conditions:
+      has: ["60-start"]
+      missing: ["60-waybill"]
+    actions:
+      - grant: "60-waybill"
+
+  # manifest: hearing Tithe-Clerk Verrold's "verroldhandoff" topic, which
+  # takes the manifest and gives the sealed packet (moved from the topic's
+  # grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 9198
+    topic: verroldhandoff
+    conditions:
+      has: ["60-waybill"]
+      missing: ["60-manifest"]
+    actions:
+      - grant: "60-manifest"

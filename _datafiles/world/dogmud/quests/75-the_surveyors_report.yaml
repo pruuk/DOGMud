@@ -90,6 +90,17 @@ triggers:
           technical. Without a reason to read it closely, it is only
           a brief, dull entry.
 
+  # ── Intro: hearing Brennan the Surveyor's "turnin" topic (moved from the
+  #    topic's grantsQuest, #375 phase 3b) ──
+  - event: topic_heard
+    mob: 9516
+    topic: turnin
+    conditions:
+      has: ["75-survey"]
+      missing: ["75-intro"]
+    actions:
+      - grant: "75-intro"
+
   # ── Reth's field-notes (6315, Reth's Cottage) -- gated: has 75-intro, missing 75-end ──
   - event: room_interact
     room: 6315

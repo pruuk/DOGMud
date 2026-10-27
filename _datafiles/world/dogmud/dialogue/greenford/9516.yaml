@@ -221,7 +221,6 @@ topics:
   questExcluded:
   - 75-intro
   - 75-end
-  grantsQuest: 75-intro
 - key: symbol
   kind: info
   label: What is the mark on your old maps?

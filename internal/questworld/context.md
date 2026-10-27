@@ -23,6 +23,9 @@ condition, mob and room registries to fill them.
   `quests.ValidateQuestRefs` runs. Moved here from `modules/gmcp`, which now
   calls it for the editor's reference check. `HiddenNounExists` reads the
   room template's `HiddenNouns` (the `discover` action's target).
+  `TopicExists` and `TopicGrant` (`topicExistsOnMob`, `topicGrantOnMob`) read
+  the NPC's dialogue file for a `topic_heard` trigger's topic and for that
+  topic's own `grantsQuest`.
 - `Registry() questloop.World`: every loaded quest, every dialogue file
   (`dialogue.LoadAllFiles`; their own problems are the dialogue door's), the
   live `Validators()` and `Names()`, and `External`: every behaviour tree
@@ -53,7 +56,8 @@ condition, mob and room registries to fill them.
   (`owner`: their own grants, a topic of or gated on the quest, a mob only
   that quest spawns), which backs `ItemAvailable`. A topic's owner entry
   carries the tokens of that quest its `questRequired` names and the token it
-  grants (`topicOwners`): the source opens to that quest once the player holds
+  grants (`topicOwners`; with no `grantsQuest`, the tokens the `topic_heard`
+  triggers on that mob and topic grant, from `topicHeardGrants`): the source opens to that quest once the player holds
   them all (a topic of quest 70 gated on 63-start is open to quest 63 from
   start on; quest 20's `vellahandoff`, which grants 20-vella_journal with the
   journal, is no source before that step). Behaviour-tree mob spawns are not
@@ -82,4 +86,4 @@ condition, mob and room registries to fill them.
 - A new `QuestValidators` callback that reads quest data (steps, flags) needs
   the same overlay in `WithQuest`, or the editor judges against stale data.
   Today only `StepExists` and `FlagDeclared` read quests; `DialogueGrants`
-  and `MobHasDialogue` read dialogue, which an editor save does not change.
+  `MobHasDialogue`, `TopicExists` and `TopicGrant` read dialogue, which an editor save does not change.

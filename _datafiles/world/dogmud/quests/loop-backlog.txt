@@ -188,7 +188,7 @@ one-action 15 quest 15 trigger quest_granted quest_token=15-start grants=15-retu
 one-action 16 mob 259 topic quest_complete_herbs:prev
 one-action 19 quest 19 trigger mob_death mob=331 grants=19-hunter:prev
 one-action 20 mob 347 topic ullahandoff:prev
-one-action 20 mob 355 topic vellahandoff:prev
+one-action 20 quest 20 trigger topic_heard mob=355 topic=vellahandoff grants=20-vella_journal:prev
 one-action 28 quest 28 trigger command_issued command=look noun=guide grants=28-examined,28-looked:double
 one-action 28 quest 28 trigger command_issued command=look noun=guide grants=28-examined,28-looked:prev
 one-action 32 quest 32 trigger command command=combatverbosity grants=32-verbosity:prev

@@ -63,7 +63,6 @@ topics:
   questExcluded:
   - 16-forager
   - 16-end
-  grantsQuest: 16-forager
   moodChange: neutral
 - key: negotiate_done
   kind: info

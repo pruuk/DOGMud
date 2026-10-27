@@ -309,3 +309,37 @@ func TestNilFileIsSafe(t *testing.T) {
 	text, hints := df.OpenerFor(nil)
 	require.Equal(t, "", text+hints)
 }
+
+// A topic the player's quest is waiting on shows [*] even when already heard
+// and not authored `marked` (#375 phase 3b slice 1). The Objective callback
+// is the only difference between the cases.
+func TestTopicMarker_ObjectiveShowsEvenWhenHeard(t *testing.T) {
+	df := loadFixture(t, `mobid: 60
+zone: testzone
+topics:
+  - key: directions
+    kind: info
+    label: "Which way?"
+    text: "North."
+  - key: weather
+    kind: info
+    label: "Weather?"
+    text: "Wet."
+`)
+	f := newFake()
+	f.heard["60.directions"] = true
+	f.heard["60.weather"] = true
+	want := func(mobId int, key string) bool { return mobId == 60 && key == "directions" }
+
+	ps := f.ps()
+	require.Equal(t, "", df.TopicMarker(df.FindTopic("directions"), ps), "nil Objective: a heard topic is unmarked")
+	require.Equal(t, "", df.Marker(ps))
+
+	ps.Objective = func(int, string) bool { return false }
+	require.Equal(t, "", df.TopicMarker(df.FindTopic("directions"), ps), "Objective false: unmarked")
+
+	ps.Objective = want
+	require.Equal(t, menu.MarkerInfo, df.TopicMarker(df.FindTopic("directions"), ps), "the objective topic is lit though heard")
+	require.Equal(t, "", df.TopicMarker(df.FindTopic("weather"), ps), "another heard topic stays unmarked")
+	require.Equal(t, menu.MarkerInfo, df.Marker(ps), "the NPC's marker shows the objective")
+}

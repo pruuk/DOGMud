@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -27,7 +28,7 @@ func PlayerState(user *users.UserRecord) *dialogue.PlayerState {
 // a lineBuffer's add so those lines land after the handover line and before
 // the NPC's reply.
 func playerState(user *users.UserRecord, send func(messaging.Category, string)) *dialogue.PlayerState {
-	return &dialogue.PlayerState{
+	ps := &dialogue.PlayerState{
 		HasQuest: user.Character.HasQuest,
 		HasItem: func(itemId int) bool {
 			for _, itm := range user.Character.GetAllBackpackItems() {
@@ -132,7 +133,28 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 			return user.Character.QuestOpen(quests.GetQuestById(questId))
 		},
 	}
+	// Objective lights a topic a topic_heard trigger of the player's quests
+	// would act on right now (a dry run; nothing fires). Its quest checks go
+	// through ps.HasQuest as it stands when asked, so a menu that counts a
+	// just-granted, still queued token as held (heldAlso) marks that quest's
+	// next topic too.
+	ps.Objective = func(mobId int, key string) bool {
+		player := heldQuests{questengine.NewGameBridge(user, user.Character.RoomId), ps.HasQuest}
+		return questengine.GetEngine().WouldFire("topic_heard",
+			questengine.TopicHeardDetails(user.UserId, user.Character.RoomId, mobId, key), player)
+	}
+	return ps
 }
+
+// heldQuests is the quest engine's view of the player with HasQuest taken
+// from the dialogue PlayerState, so a token heldAlso counts as held reaches
+// the engine's dry run.
+type heldQuests struct {
+	*questengine.GameBridge
+	has func(string) bool
+}
+
+func (h heldQuests) HasQuest(token string) bool { return h.has(token) }
 
 // removeBackpackItem takes one itemId item from the player's backpack and
 // returns it: the instance prefer names when it is there with that id (the

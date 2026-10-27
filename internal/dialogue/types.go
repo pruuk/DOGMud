@@ -46,6 +46,10 @@ type PlayerState struct {
 	// asks it for every offer topic with a quest; nil fails those closed,
 	// like every interrogative callback here.
 	QuestOpen func(questId int) bool
+	// Objective reports whether hearing this NPC's topic would advance one of
+	// the player's quests now (a topic_heard trigger would fire). Such a
+	// topic shows [*] even when heard (#375 phase 3b slice 1). Nil: false.
+	Objective func(mobId int, key string) bool
 }
 
 // QuestFlagSet describes a single key/value flag to write on the player's character.
