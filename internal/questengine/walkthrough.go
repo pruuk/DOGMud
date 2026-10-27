@@ -889,6 +889,11 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 		}
 		return false
 	}
+	// An explore step never matches an event: the game reads it when a room
+	// of its area is mapped, and so does the walk (#375 phase 3b slice 4).
+	if t.Distinct != "" {
+		return env.eng.CheckExplore(d.RoomId, p, &trailCtx{walkCtx{p: p}, trail}).Handled
+	}
 	return env.eng.Notify(t.Event, d, p, &trailCtx{walkCtx{p: p}, trail}).Handled
 }
 

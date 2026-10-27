@@ -163,6 +163,20 @@ func NotifySpellLanded(user *users.UserRecord, roomId int, spellId, effect strin
 	return GetEngine().NotifyAll("spell_landed", details, bridge, bridge)
 }
 
+// NotifyRoomMapped is raised when a room joined the player's map
+// (actions.MarkRoomMappedIfSeen returned true): it checks the explore steps
+// of every area holding the room (#375 phase 3b slice 4). It raises no event
+// name; CheckExplore reads explore triggers from their own index. roomId is
+// the room the player stands in; the bridge keeps it and CheckExplore maps
+// it to its template.
+func NotifyRoomMapped(user *users.UserRecord, roomId int) NotifyResult {
+	if user == nil {
+		return NotifyResult{}
+	}
+	bridge := NewGameBridge(user, roomId)
+	return GetEngine().CheckExplore(roomId, bridge, bridge)
+}
+
 // TopicHeardDetails builds the topic_heard event: the NPC's template id and
 // the topic key, in the template room (#375 phase 3b slice 1).
 func TopicHeardDetails(userId, roomId, mobId int, topic string) EventDetails {

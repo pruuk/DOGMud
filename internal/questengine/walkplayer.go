@@ -130,6 +130,10 @@ func (p *walkPlayer) GetQuestFlag(key string) string { return p.flags[key] }
 func (p *walkPlayer) GetGold() int                   { return p.gold }
 func (p *walkPlayer) HasOwnMasterwork(int) bool      { return p.masterwork }
 
+// MappedCount reads a full map (MapReader): the walk proves an explore step
+// reachable, so every room of its area counts as seen.
+func (p *walkPlayer) MappedCount(roomIds []int) int { return len(roomIds) }
+
 // dialogueState is a dialogue PlayerState over p. A topic is heard once the
 // walk marked it (walkEnv.hear, or Apply of an info topic); every quest
 // counts as open, since the walk tests reachability, not pacing.

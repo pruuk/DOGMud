@@ -76,6 +76,31 @@ func (b *GameBridge) HasOwnMasterwork(skillMin int) bool {
 	return b.user.Character.HasOwnMasterwork(skillMin)
 }
 
+// MappedCount counts how many of these template rooms are on the player's
+// map (MapReader). The map is kept per zone, so one set is built from the
+// zones the rooms lie in, once per call.
+func (b *GameBridge) MappedCount(roomIds []int) int {
+	seen := map[int]bool{}
+	zones := map[string]bool{}
+	for _, id := range roomIds {
+		z := roomZoneOf(id)
+		if zones[z] {
+			continue
+		}
+		zones[z] = true
+		for _, v := range b.user.Character.GetVisitedRooms(z) {
+			seen[v] = true
+		}
+	}
+	n := 0
+	for _, id := range roomIds {
+		if seen[id] {
+			n++
+		}
+	}
+	return n
+}
+
 // --- ActionContext ---
 
 // BumpStepCount bumps the count: N progress of the player's current step of
