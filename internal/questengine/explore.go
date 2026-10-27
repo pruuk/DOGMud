@@ -69,14 +69,30 @@ func (e *Engine) CheckExplore(roomId int, player PlayerState, ctx ActionContext)
 	}
 	defer guard.PopDepth()
 	d := EventDetails{UserId: userId, RoomId: roomId}
+	pw, _ := ctx.(ProgressWatcher)
 	for _, key := range keys {
 		for _, t := range e.exploreByArea[key] {
-			if exploreReady(t, player) {
+			if !EvalConditions(t.def.Conditions, player) {
+				continue
+			}
+			// The step is live and one more of its area is mapped, so its
+			// progress line moved whether or not it is met.
+			if pw != nil {
+				pw.QuestProgressChanged(t.questId)
+			}
+			if exploreMet(t, player) {
 				result.merge(e.fire("explore", t, d, player, ctx, guard, nil))
 			}
 		}
 	}
 	return result
+}
+
+// ProgressWatcher is implemented by action contexts that show quest progress
+// (GameBridge: the web tracker). CheckExplore tells it when a live explore
+// step's mapped count moved; a count's bump is the StepCounter's own news.
+type ProgressWatcher interface {
+	QuestProgressChanged(questId int)
 }
 
 // exploreAtStepStart checks the granted quest's explore triggers as a step

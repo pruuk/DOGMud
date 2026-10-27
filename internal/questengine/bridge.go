@@ -112,7 +112,27 @@ func (b *GameBridge) BumpStepCount(questId int, step, key string) (int, bool) {
 	if !held || cur != step {
 		return 0, false
 	}
-	return b.user.Character.BumpQuestStepCount(key), true
+	n := b.user.Character.BumpQuestStepCount(key)
+	b.QuestProgressChanged(questId)
+	return n, true
+}
+
+// QuestProgressChanged refreshes the web tracker (Char.Quests) after a
+// step's progress line moved without the step changing: a count bump or a
+// newly mapped room of an explore step (ProgressWatcher). It queues the same
+// marker-only Quest event a mid-quest step advance does (GrantQuest), which
+// the GMCP quest handler turns into a Char.Quests push and HandleQuestUpdate
+// skips, so no banner repeats.
+func (b *GameBridge) QuestProgressChanged(questId int) {
+	step, held := b.user.Character.QuestProgress[questId]
+	if !held {
+		return
+	}
+	events.AddToQueue(events.Quest{
+		UserId:     b.user.UserId,
+		QuestToken: quests.PartsToToken(questId, step),
+		MarkerOnly: true,
+	})
 }
 
 // GetUserId returns the user's ID.

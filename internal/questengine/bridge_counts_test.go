@@ -3,6 +3,7 @@ package questengine_test
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/stretchr/testify/assert"
@@ -19,6 +20,24 @@ func TestGameBridge_BumpStepCount(t *testing.T) {
 	n, _ = sc.BumpStepCount(53, "hunt", "53-hunt-t0")
 	assert.Equal(t, 2, n)
 	assert.Equal(t, 2, u.Character.QuestStepCount("53-hunt-t0"))
+}
+
+// A bump refreshes the web tracker (Char.Quests) as a step advance does: a
+// marker-only Quest event, so no banner is repeated. A refused bump queues
+// nothing.
+func TestGameBridge_BumpStepCountRefreshesTheTracker(t *testing.T) {
+	events.DrainQueuedQuestsForTest()
+	t.Cleanup(func() { events.DrainQueuedQuestsForTest() })
+	u := newBridgeUser(1)
+	u.Character.QuestProgress = map[int]string{53: "hunt"}
+	b := questengine.NewGameBridge(u, 1)
+
+	b.BumpStepCount(53, "hunt", "53-hunt-t0")
+	got := events.DrainQueuedQuestsForTest()
+	assert.Equal(t, []events.Quest{{UserId: 1, QuestToken: "53-hunt", MarkerOnly: true}}, got)
+
+	b.BumpStepCount(53, "other", "53-other-t0")
+	assert.Empty(t, events.DrainQueuedQuestsForTest())
 }
 
 // A count for one step is not bumped while the player is on another, and a
