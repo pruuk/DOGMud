@@ -3,6 +3,7 @@ package questengine
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/stretchr/testify/assert"
 )
@@ -100,4 +101,32 @@ func TestNotifyAllMatchesALaterTarget(t *testing.T) {
 	}
 	e.NotifyAll("command", details, player, newFullMockActionContext(1, player))
 	assert.True(t, player.HasQuest("300-boar"), "the boar was the second target")
+}
+
+func TestCommandDetailsCarryTheTarget(t *testing.T) {
+	d := CommandDetails(1, 5305, "cast", NoTarget().WithNoun("heal"))
+	assert.Equal(t, EventDetails{UserId: 1, RoomId: 5305, Command: "cast", Noun: "heal", TargetKind: quests.TargetNone}, d)
+
+	d = CommandDetails(1, 5305, "throw", Target{})
+	assert.Equal(t, quests.TargetNone, d.TargetKind, "the zero Target reads as none")
+
+	d = CommandDetails(1, 5305, "sell", TargetItem(10009).WithMob(&mobs.Mob{MobId: 9116}))
+	assert.Equal(t, quests.TargetItem, d.TargetKind)
+	assert.Equal(t, 10009, d.ItemId)
+	assert.Equal(t, 9116, d.MobId)
+
+	d = CommandDetails(1, 5305, "plant", TargetContainer("crate").WithItem(4))
+	assert.Equal(t, EventDetails{UserId: 1, RoomId: 5305, Command: "plant", Noun: "crate", ItemId: 4, TargetKind: quests.TargetContainer}, d)
+}
+
+func TestTargetConstructors(t *testing.T) {
+	assert.Equal(t, quests.TargetMob, TargetMob(&mobs.Mob{MobId: 9112}).Kind)
+	assert.Equal(t, 9112, TargetMob(&mobs.Mob{MobId: 9112}).MobId)
+	assert.Equal(t, quests.TargetNone, TargetMob(nil).Kind, "a vanished mob is no target")
+	assert.Equal(t, quests.TargetNone, TargetItem(0).Kind)
+	assert.Equal(t, quests.TargetSelf, TargetActor(1, 1, 0).Kind)
+	assert.Equal(t, quests.TargetPlayer, TargetActor(1, 2, 0).Kind)
+	assert.Equal(t, quests.TargetNone, TargetActor(1, 0, 0).Kind)
+	// A mob instance id that resolves to nothing (no world loaded here) is no target.
+	assert.Equal(t, quests.TargetNone, TargetActor(1, 0, 999999).Kind)
 }

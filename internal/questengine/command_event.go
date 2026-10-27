@@ -1,0 +1,128 @@
+package questengine
+
+import (
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
+)
+
+// Target is what a command was aimed at, for the command event's target
+// filters (#375 phase 3b slice 2). Build it with the constructors below; the
+// zero value reads as NoTarget.
+type Target struct {
+	Kind   string // a quests.Target* kind; "" reads as quests.TargetNone
+	MobId  int    // mob template id: the mob aimed at, or the counterparty (sell's shopkeeper)
+	ItemId int    // item template id: the item used, aimed at or traded
+	Noun   string // the command's own noun: cast's canonical spell id, a container's name
+}
+
+// NoTarget is a command aimed at nothing (help, sleep, a grenade that hit no one).
+func NoTarget() Target { return Target{Kind: quests.TargetNone} }
+
+// TargetSelf is a command aimed at its own actor (a self-cast).
+func TargetSelf() Target { return Target{Kind: quests.TargetSelf} }
+
+// TargetPlayer is a command aimed at another player.
+func TargetPlayer() Target { return Target{Kind: quests.TargetPlayer} }
+
+// TargetMob is a command aimed at a mob, by its template id. A nil mob (it
+// died or left before the event) is no target.
+func TargetMob(m *mobs.Mob) Target {
+	if m == nil {
+		return NoTarget()
+	}
+	return Target{Kind: quests.TargetMob, MobId: int(m.MobId)}
+}
+
+// TargetItem is a command aimed at, using or trading an item, by its
+// template id. Zero (a condition sale, no item) is no target.
+func TargetItem(itemId int) Target {
+	if itemId <= 0 {
+		return NoTarget()
+	}
+	return Target{Kind: quests.TargetItem, ItemId: itemId}
+}
+
+// TargetContainer is a command aimed at a room container, by its name.
+func TargetContainer(name string) Target {
+	return Target{Kind: quests.TargetContainer, Noun: name}
+}
+
+// TargetActor resolves the {userId, mobInstanceId} pair a combat or move
+// result carries: the actor's own id is self, another user is a player, a
+// live mob instance is that mob's template, and nothing is no target.
+func TargetActor(actorUserId, userId, mobInstanceId int) Target {
+	switch {
+	case userId > 0 && userId == actorUserId:
+		return TargetSelf()
+	case userId > 0:
+		return TargetPlayer()
+	case mobInstanceId > 0:
+		return TargetMob(mobs.GetInstance(mobInstanceId))
+	}
+	return NoTarget()
+}
+
+// WithMob adds a counterparty mob (sell's shopkeeper) to a target.
+func (t Target) WithMob(m *mobs.Mob) Target {
+	if m != nil {
+		t.MobId = int(m.MobId)
+	}
+	return t
+}
+
+// WithItem adds the item a command used on its target (the item planted).
+func (t Target) WithItem(itemId int) Target {
+	if itemId > 0 {
+		t.ItemId = itemId
+	}
+	return t
+}
+
+// WithNoun sets the command's own noun (cast's canonical spell id).
+func (t Target) WithNoun(noun string) Target {
+	t.Noun = noun
+	return t
+}
+
+// CommandDetails builds the command event for one target. RoomId is the
+// template room (rooms.OriginalRoomId), as command_issued and flee already
+// match, so room-scoped triggers work in ephemeral instances.
+func CommandDetails(userId, roomId int, command string, t Target) EventDetails {
+	kind := t.Kind
+	if kind == "" {
+		kind = quests.TargetNone
+	}
+	matchRoom, _ := rooms.OriginalRoomId(roomId)
+	return EventDetails{
+		UserId:     userId,
+		RoomId:     matchRoom,
+		Command:    command,
+		MobId:      t.MobId,
+		ItemId:     t.ItemId,
+		Noun:       t.Noun,
+		TargetKind: kind,
+	}
+}
+
+// NotifyCommand is THE command event: every production `command` site calls
+// it (internal/guards/command_event_guard_test.go holds them to it). It
+// raises one event per target under one guard (NotifyAll), so a trigger
+// fires at most once per command; no targets means one event aimed at
+// nothing. roomId is the room the command happened in; the bridge keeps the
+// real id for mob and item resolution.
+func NotifyCommand(user *users.UserRecord, roomId int, command string, targets ...Target) NotifyResult {
+	if user == nil {
+		return NotifyResult{}
+	}
+	if len(targets) == 0 {
+		targets = []Target{NoTarget()}
+	}
+	details := make([]EventDetails, 0, len(targets))
+	for _, t := range targets {
+		details = append(details, CommandDetails(user.UserId, roomId, command, t))
+	}
+	bridge := NewGameBridge(user, roomId)
+	return GetEngine().NotifyAll("command", details, bridge, bridge)
+}
