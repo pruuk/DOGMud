@@ -72,6 +72,14 @@ func (e *Engine) AllQuests() []*QuestDef {
 // event type and returns a result indicating whether anything fired and whether
 // an item should be consumed.
 func (e *Engine) Notify(eventType string, details EventDetails, player PlayerState, ctx ActionContext) NotifyResult {
+	return e.NotifyAll(eventType, []EventDetails{details}, player, ctx)
+}
+
+// NotifyAll raises one event for several details under ONE guard, so each
+// trigger fires at most once however many of the details it matches: a
+// command aimed at three mobs advances an untargeted step once, and a step
+// that names one of them still fires on that one (#375 phase 3b slice 2).
+func (e *Engine) NotifyAll(eventType string, details []EventDetails, player PlayerState, ctx ActionContext) NotifyResult {
 	bal := configs.GetBalanceConfig()
 	maxDepth := int(bal.QuestChainDepthLimit)
 	warnMs := int64(bal.QuestPerformanceWarnMs)
@@ -79,16 +87,23 @@ func (e *Engine) Notify(eventType string, details EventDetails, player PlayerSta
 	guard := NewEvalGuard(maxDepth)
 	start := time.Now()
 
-	result := e.evaluate(eventType, details, player, ctx, guard)
+	result := NotifyResult{}
+	userId := 0
+	for _, d := range details {
+		userId = d.UserId
+		r := e.evaluate(eventType, d, player, ctx, guard)
+		result.Handled = result.Handled || r.Handled
+		result.ConsumeItem = result.ConsumeItem || r.ConsumeItem
+	}
 
 	elapsed := time.Since(start).Milliseconds()
 	if elapsed > warnMs {
 		LogWarn("Notify(%s) for user %d took %dms (threshold %dms), trace: %v",
-			eventType, details.UserId, elapsed, warnMs, guard.GetTrace())
+			eventType, userId, elapsed, warnMs, guard.GetTrace())
 	}
 	if guard.DepthExceeded() {
 		LogError("depth limit %d exceeded for user %d event %s, trace: %v",
-			maxDepth, details.UserId, eventType, guard.GetTrace())
+			maxDepth, userId, eventType, guard.GetTrace())
 	}
 
 	return result

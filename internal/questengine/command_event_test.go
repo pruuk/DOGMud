@@ -62,3 +62,42 @@ func TestTargetFilterKindMustMatch(t *testing.T) {
 	e.Notify("command", EventDetails{UserId: 1, Command: "throw", TargetKind: quests.TargetItem, MobId: 9112}, player, newFullMockActionContext(1, player))
 	assert.False(t, player.HasQuest("300-boar"))
 }
+
+func TestNotifyAllFiresEachTriggerOnce(t *testing.T) {
+	q := &QuestDef{
+		QuestId: 301,
+		Name:    "Once Per Command",
+		Steps:   []QuestStep{{Id: "301-start"}, {Id: "301-thrown"}},
+		Triggers: []TriggerDef{{
+			Event: "command", Command: "throw",
+			Conditions: Conditions{Has: []string{"301-start"}},
+			Actions:    []ActionDef{{GiveGold: 5}},
+		}},
+	}
+	e := NewEngine()
+	e.RegisterQuest(q)
+	player := newFullMockPlayer(100)
+	player.quests["301-start"] = true
+	ctx := newFullMockActionContext(1, player)
+
+	three := []EventDetails{
+		{UserId: 1, Command: "throw", TargetKind: quests.TargetMob, MobId: 1},
+		{UserId: 1, Command: "throw", TargetKind: quests.TargetMob, MobId: 2},
+		{UserId: 1, Command: "throw", TargetKind: quests.TargetMob, MobId: 3},
+	}
+	r := e.NotifyAll("command", three, player, ctx)
+	assert.True(t, r.Handled)
+	assert.Equal(t, 5, ctx.givenGold, "an untargeted trigger must fire once per command, not once per target")
+}
+
+func TestNotifyAllMatchesALaterTarget(t *testing.T) {
+	e := seedTargetQuest()
+	player := newFullMockPlayer(100)
+	player.quests["300-start"] = true
+	details := []EventDetails{
+		{UserId: 1, Command: "throw", TargetKind: quests.TargetMob, MobId: 7},
+		{UserId: 1, Command: "throw", TargetKind: quests.TargetMob, MobId: 9112},
+	}
+	e.NotifyAll("command", details, player, newFullMockActionContext(1, player))
+	assert.True(t, player.HasQuest("300-boar"), "the boar was the second target")
+}
