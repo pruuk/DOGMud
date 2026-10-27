@@ -4,19 +4,43 @@ package questengine
 // (#375 phase 3b slice 4). A context without it treats a count as reached on
 // the first match.
 type StepCounter interface {
-	BumpStepCount(questId int) int // bumps the player's current step of questId, returns the new count
+	// BumpStepCount adds one to the count saved under key and returns the
+	// new count, but only while the player's current step of questId is
+	// step; otherwise it bumps nothing and ok is false.
+	BumpStepCount(questId int, step, key string) (count int, ok bool)
 }
 
-// countReached bumps a count: N trigger's progress and reports whether this
-// match is the Nth. A trigger without a count, or a context that keeps no
-// counts, is reached at once.
-func countReached(t *indexedTrigger, ctx ActionContext) bool {
+// countResult is what one match does to a count: N trigger.
+type countResult int
+
+const (
+	// countReached: the trigger fires (no count, no counter, or the Nth).
+	countReached countResult = iota
+	// countCounted: the match was counted, short of N.
+	countCounted
+	// countSkipped: the player is not on the trigger's own step, so the
+	// match was not counted.
+	countSkipped
+)
+
+// countMatch bumps a count: N trigger's own count (keyed by the trigger and
+// its own step, quests.CountKey) and reports whether this match is the Nth.
+// Each count trigger keeps its own count, so two on one step never credit
+// each other.
+func countMatch(t *indexedTrigger, ctx ActionContext) countResult {
 	if t.def.Count < 2 {
-		return true
+		return countReached
 	}
 	sc, ok := ctx.(StepCounter)
 	if !ok {
-		return true
+		return countReached
 	}
-	return sc.BumpStepCount(t.questId) >= t.def.Count
+	n, ok := sc.BumpStepCount(t.questId, t.countStep, t.countKey)
+	if !ok {
+		return countSkipped
+	}
+	if n >= t.def.Count {
+		return countReached
+	}
+	return countCounted
 }

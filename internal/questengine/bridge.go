@@ -103,12 +103,16 @@ func (b *GameBridge) MappedCount(roomIds []int) int {
 
 // --- ActionContext ---
 
-// BumpStepCount bumps the count: N progress of the player's current step of
-// questId (StepCounter) and returns the new count. The count is saved on the
-// character and cleared when the quest's progress moves.
-func (b *GameBridge) BumpStepCount(questId int) int {
-	step := b.user.Character.QuestProgress[questId]
-	return b.user.Character.BumpQuestStepCount(quests.PartsToToken(questId, step))
+// BumpStepCount bumps the count: N progress saved under key (StepCounter)
+// and returns the new count, but only while the player's current step of
+// questId is step: a count trigger counts on its own step alone. The count
+// is saved on the character and cleared when the quest's progress moves.
+func (b *GameBridge) BumpStepCount(questId int, step, key string) (int, bool) {
+	cur, held := b.user.Character.QuestProgress[questId]
+	if !held || cur != step {
+		return 0, false
+	}
+	return b.user.Character.BumpQuestStepCount(key), true
 }
 
 // GetUserId returns the user's ID.

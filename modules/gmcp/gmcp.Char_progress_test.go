@@ -29,7 +29,7 @@ func TestCharQuests_CarriesCountProgress(t *testing.T) {
 	})
 	u := users.NewTestUser(9763, "tracker", "Tracker", 97630)
 	u.Character.QuestProgress = map[int]string{900055: "start"}
-	u.Character.QuestStepCounts = map[string]int{"900055-start": 3}
+	u.Character.QuestStepCounts = map[string]int{"900055-start-t0": 3}
 
 	g := &GMCPCharModule{}
 	data, name := g.GetCharNode(u, `Char.Quests`)

@@ -21,6 +21,11 @@ type indexedTrigger struct {
 	def     *TriggerDef
 	questId int
 	trigId  string
+	// countStep and countKey are a count: N trigger's own step and the key
+	// its progress is saved under (quests.CountStep, quests.CountKey); empty
+	// for a trigger without a count.
+	countStep string
+	countKey  string
 }
 
 // Engine holds quest definitions and a trigger index for fast lookup by event type.
@@ -53,6 +58,10 @@ func (e *Engine) RegisterQuest(q *QuestDef) {
 			def:     t,
 			questId: q.QuestId,
 			trigId:  fmt.Sprintf("q%d-t%d", q.QuestId, i),
+		}
+		if t.Count >= 2 {
+			it.countStep = q.CountStep(*t)
+			it.countKey = quests.CountKey(q.QuestId, it.countStep, i)
 		}
 		e.triggerIndex[t.Event] = append(e.triggerIndex[t.Event], it)
 		if t.Distinct != "" && t.Area != "" {
@@ -195,8 +204,12 @@ func (e *Engine) fire(eventType string, t *indexedTrigger, details EventDetails,
 
 	// count: N (#375 phase 3b slice 4). The match is counted once per
 	// event (the trigger is already marked visited) and is a handled
-	// event, but the actions wait for the Nth.
-	if !countReached(t, ctx) {
+	// event, but the actions wait for the Nth. A match off the trigger's
+	// own step is not counted and handles nothing.
+	switch countMatch(t, ctx) {
+	case countSkipped:
+		return result
+	case countCounted:
 		result.Handled = true
 		return result
 	}

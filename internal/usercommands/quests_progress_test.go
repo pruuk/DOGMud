@@ -35,7 +35,7 @@ func TestQuestLog_ShowsCountProgress(t *testing.T) {
 	questengine.GetEngine().RegisterQuest(q)
 
 	u := users.NewTestUser(9762, "questlog", "Questlog", 97620)
-	u.Character.QuestStepCounts = map[string]int{"900054-start": 2}
+	u.Character.QuestStepCounts = map[string]int{"900054-start-t0": 2}
 
 	rec, _ := activeQuestRecord(u, q, "start")
 	assert.Equal(t, "Dig up roots in the grove.", rec.Description)

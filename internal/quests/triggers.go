@@ -7,7 +7,10 @@ package quests
 // tracks per-trigger identity (questId/trigId) in its own index wrapper, NOT
 // on these structs.
 
-import "strconv"
+import (
+	"slices"
+	"strconv"
+)
 
 // TriggerDef defines when and how a quest step fires.
 type TriggerDef struct {
@@ -32,6 +35,26 @@ type TriggerDef struct {
 	ExploredLine string      `yaml:"explored_line,omitempty" json:"explored_line,omitempty"` // distinct: said when the area is already explored at step start
 	Conditions   Conditions  `yaml:"conditions,omitempty" json:"conditions,omitempty"`
 	Actions      []ActionDef `yaml:"actions" json:"actions"`
+}
+
+// CountStep is the step a count trigger counts on: the latest step of its
+// own quest, by step order, that its has condition names. It is "" when has
+// names no step of the quest (Validate refuses such a count trigger).
+func (r *Quest) CountStep(t TriggerDef) string {
+	step := ""
+	for _, s := range r.Steps {
+		if slices.Contains(t.Conditions.Has, PartsToToken(r.QuestId, s.Id)) {
+			step = s.Id
+		}
+	}
+	return step
+}
+
+// CountKey is the key a count trigger's progress is saved under on the
+// character: "<questId>-<step>-t<triggerIndex>". It starts "<questId>-", so
+// clearing a quest's counts by that prefix clears every trigger's.
+func CountKey(questId int, step string, triggerIndex int) string {
+	return PartsToToken(questId, step) + "-t" + strconv.Itoa(triggerIndex)
 }
 
 // DistinctAll is the distinct value meaning every room of the area.

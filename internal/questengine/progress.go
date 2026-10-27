@@ -15,8 +15,9 @@ const defaultProgressLabel = "Progress"
 // StepProgress is the progress of a step reached by a count or distinct
 // trigger (#375 phase 3b slice 4), for the quest log and the web tracker:
 // the first trigger of the quest that needs the step's token and counts
-// (count: N) or explores (distinct). have is the step's saved count, read
-// through counts with the step's token as the key, or the number of the
+// (count: N) or explores (distinct). A count trigger leads out of its own
+// step (quests.CountStep). have is that trigger's saved count, read through
+// counts by its key (quests.CountKey), or the number of the
 // area's rooms on the player's map, never more than need. ok is false for a
 // step no such trigger leads from, and for an explore step when the player
 // state cannot read a map.
@@ -28,7 +29,17 @@ func (e *Engine) StepProgress(questId int, step string, player PlayerState, coun
 	token := quests.PartsToToken(questId, step)
 	for i := range q.Triggers {
 		t := &q.Triggers[i]
-		if (t.Count < 2 && t.Distinct == "") || !slices.Contains(t.Conditions.Has, token) {
+		switch {
+		case t.Count >= 2:
+			// A count trigger leads out of its own step (CountStep).
+			if q.CountStep(*t) != step {
+				continue
+			}
+		case t.Distinct != "":
+			if !slices.Contains(t.Conditions.Has, token) {
+				continue
+			}
+		default:
 			continue
 		}
 		label = t.Label
@@ -36,7 +47,7 @@ func (e *Engine) StepProgress(questId int, step string, player PlayerState, coun
 			label = defaultProgressLabel
 		}
 		if t.Distinct == "" {
-			return label, min(counts(token), t.Count), t.Count, true
+			return label, min(counts(quests.CountKey(questId, step, i)), t.Count), t.Count, true
 		}
 		mr, isMap := player.(MapReader)
 		rs := areas.Rooms(t.Area)

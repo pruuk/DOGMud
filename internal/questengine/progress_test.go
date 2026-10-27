@@ -14,13 +14,51 @@ func TestStepProgress_Count(t *testing.T) {
 	q := huntQuest()
 	q.Triggers[0].Label = "Wolves culled"
 	e.RegisterQuest(q)
-	counts := map[string]int{"53-start": 2}
+	counts := map[string]int{"53-start-t0": 2}
 
 	label, have, need, ok := e.StepProgress(53, "start", newFullMockPlayer(100), func(k string) int { return counts[k] })
 	assert.True(t, ok)
 	assert.Equal(t, "Wolves culled", label)
 	assert.Equal(t, 2, have)
 	assert.Equal(t, 3, need)
+}
+
+// The progress line reads the count of the trigger that leads out of the
+// step (its own-quest has step), by that trigger's key: a later trigger's
+// count on another step, and a trigger that only also holds the step, are
+// not this step's progress.
+func TestStepProgress_ReadsTheTriggerOutOfTheStep(t *testing.T) {
+	e := NewEngine()
+	e.RegisterQuest(&QuestDef{
+		QuestId: 53, Name: "Hunt",
+		Steps: []QuestStep{{Id: "start"}, {Id: "hunt"}, {Id: "end"}},
+		Triggers: []TriggerDef{
+			{
+				Event: "mob_death", Mob: 1, Count: 4,
+				Conditions: Conditions{Has: []string{"53-start", "53-hunt"}, Missing: []string{"53-end"}},
+				Actions:    []ActionDef{{Grant: "53-end"}},
+			},
+			{
+				Event: "mob_death", Mob: 2, Count: 3, Label: "Boars",
+				Conditions: Conditions{Has: []string{"53-start"}, Missing: []string{"53-hunt"}},
+				Actions:    []ActionDef{{Grant: "53-hunt"}},
+			},
+		},
+	})
+	counts := map[string]int{"53-hunt-t0": 1, "53-start-t1": 2}
+	read := func(k string) int { return counts[k] }
+
+	label, have, need, ok := e.StepProgress(53, "start", newFullMockPlayer(100), read)
+	assert.True(t, ok)
+	assert.Equal(t, "Boars", label)
+	assert.Equal(t, 2, have)
+	assert.Equal(t, 3, need)
+
+	label, have, need, ok = e.StepProgress(53, "hunt", newFullMockPlayer(100), read)
+	assert.True(t, ok)
+	assert.Equal(t, "Progress", label)
+	assert.Equal(t, 1, have)
+	assert.Equal(t, 4, need)
 }
 
 func TestStepProgress_LabelDefaultsToProgress(t *testing.T) {
@@ -88,7 +126,7 @@ func TestUserStepProgress_ReadsTheCharacter(t *testing.T) {
 	e.RegisterQuest(huntQuest())
 	e.RegisterQuest(exploreQuest("all", ""))
 	u := users.NewTestUser(9761, "progress", "Progress", 97610)
-	u.Character.QuestStepCounts = map[string]int{"53-start": 1}
+	u.Character.QuestStepCounts = map[string]int{"53-start-t0": 1}
 	u.Character.VisitedRooms = map[string][]int{"Pothole Coulee": {5311, 5313}}
 
 	assert.Equal(t, "Progress: 1 of 3", e.UserStepProgress(u, 53, "start"))

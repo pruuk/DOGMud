@@ -127,8 +127,9 @@ func (c *Character) GiveQuestToken(questToken string) bool {
 	return false
 }
 
-// QuestStepCount is the saved count: N progress of a step, keyed
-// "<questId>-<stepId>" (#375 phase 3b slice 4).
+// QuestStepCount is the saved count: N progress of one count trigger on its
+// own step, keyed "<questId>-<stepId>-t<triggerIndex>" (quests.CountKey,
+// #375 phase 3b slice 4).
 func (c *Character) QuestStepCount(key string) int {
 	return c.QuestStepCounts[key]
 }

@@ -152,6 +152,35 @@ func validateAreaCount(t TriggerDef) error {
 	return nil
 }
 
+// validateCountStep keeps a count trigger's progress on its own step: the
+// trigger must hold a step of its own quest (CountStep, which keys the count)
+// and must wait for a token its actions grant, so it stops counting once it
+// has fired. Without these a count could bump on a quest the player does not
+// hold, or on whatever step the player has moved on to.
+func (r *Quest) validateCountStep(t TriggerDef) error {
+	if t.Count == 0 {
+		return nil
+	}
+	if r.CountStep(t) == "" {
+		return fmt.Errorf("count needs a has naming a step of quest %d (the step it counts on)", r.QuestId)
+	}
+	var grants []string
+	for _, a := range t.Actions {
+		if a.Grant != "" {
+			grants = append(grants, a.Grant)
+		}
+	}
+	if len(grants) == 0 {
+		return fmt.Errorf("count needs an action that grants a step (the step it leads to)")
+	}
+	for _, g := range grants {
+		if slices.Contains(t.Conditions.Missing, g) {
+			return nil
+		}
+	}
+	return fmt.Errorf("count needs a missing naming the token its actions grant (%q), so it stops counting once it fires", grants[0])
+}
+
 // Validate implements fileloader.Loadable — it runs on EVERY parse, so a
 // broken quest file fails the boot (and, later, an editor save) instead of
 // loading half-formed. Body moved from questengine's old validateQuestDef in
@@ -222,6 +251,9 @@ func (r *Quest) Validate() error {
 			return fmt.Errorf("quest %d (%s): trigger %d sets topic %q on a %s trigger; only topic_heard has a topic", r.QuestId, r.Name, i, t.Topic, t.Event)
 		}
 		if err := validateAreaCount(t); err != nil {
+			return fmt.Errorf("quest %d (%s): trigger %d: %w", r.QuestId, r.Name, i, err)
+		}
+		if err := r.validateCountStep(t); err != nil {
 			return fmt.Errorf("quest %d (%s): trigger %d: %w", r.QuestId, r.Name, i, err)
 		}
 	}
