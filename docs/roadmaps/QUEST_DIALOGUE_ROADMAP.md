@@ -252,7 +252,7 @@ look-alike; #588 closed.
 seam, walking gates, look and search as the only interaction verbs, the search rework, teaching
 look and search): spec `docs/superpowers/specs/completed/2026-10-26-quest-arc-phase3a-action-triggers-design.md`,
 **merged 2026-10-26 (PR #688, closes #588)**.
-3b, new trigger kinds: spec `docs/superpowers/specs/2026-10-27-quest-arc-phase3b-trigger-kinds-design.md`
+3b, new trigger kinds: spec `docs/superpowers/specs/completed/2026-10-27-quest-arc-phase3b-trigger-kinds-design.md`
 (owner 2026-10-27), four slices with a plan each, in order: targets on `command` events, effect
 spells (`spell_landed`), talk (`topic_heard`, moving the 32 mid-step topic grants), areas with
 counts and explore. **3b is complete across slices 1 to 4** (PRs #699, #693, #698, and slice 4,
