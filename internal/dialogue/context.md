@@ -28,6 +28,14 @@ longer decodes under the strict loader.
   `offer` topic that has a quest, so such an offer is hidden (no `[!]`, no
   Accept); a nil callback fails closed like every interrogative callback.
   `conversation.PlayerState` wires it to `Character.QuestOpen`.
+  `PlayerState.Objective(mobId, key)` (#375 phase 3b slice 1) reports whether
+  hearing that NPC topic would advance one of the player's quests now;
+  `conversation.PlayerState` wires it to a `questengine` `WouldFire` of
+  `topic_heard`, reading the PlayerState's own `HasQuest` (so a just-accepted
+  quest counts). `TopicMarker` returns `[*]` for an `info` topic when it
+  reports true, even if the topic was heard, before its `Marked && !heard`
+  check; `Marker` (the NPC's roster mark) follows because it ranks eligible
+  topics' markers. Offer and hand-in topics keep `[!]` and `[?]`. Nil: false.
 - **topic.go**: `Gates`, `Effects`, `Topic`, `Opener`, `OpenerVariant`, the
   kind constants `KindInfo` / `KindOffer` / `KindHandIn`, and `HeardKey`.
 - **topics.go**: the `DialogueFile` methods `FindTopic`, `Eligible`,

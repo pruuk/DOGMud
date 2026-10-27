@@ -23,6 +23,9 @@ condition, mob and room registries to fill them.
   `quests.ValidateQuestRefs` runs. Moved here from `modules/gmcp`, which now
   calls it for the editor's reference check. `HiddenNounExists` reads the
   room template's `HiddenNouns` (the `discover` action's target).
+  `TopicExists` and `TopicGrant` (`topicExistsOnMob`, `topicGrantOnMob`) read
+  the NPC's dialogue file for a `topic_heard` trigger's topic and for that
+  topic's own `grantsQuest`.
 - `Registry() questloop.World`: every loaded quest, every dialogue file
   (`dialogue.LoadAllFiles`; their own problems are the dialogue door's), the
   live `Validators()` and `Names()`, and `External`: every behaviour tree
@@ -83,4 +86,4 @@ condition, mob and room registries to fill them.
 - A new `QuestValidators` callback that reads quest data (steps, flags) needs
   the same overlay in `WithQuest`, or the editor judges against stale data.
   Today only `StepExists` and `FlagDeclared` read quests; `DialogueGrants`
-  and `MobHasDialogue` read dialogue, which an editor save does not change.
+  `MobHasDialogue`, `TopicExists` and `TopicGrant` read dialogue, which an editor save does not change.

@@ -999,7 +999,9 @@ as on `command`. The loader refuses `effect` on any other event.
 caught at boot. `questloop` includes `effect` in a trigger's signature.
 
 `topic_heard` fires when a player plays an NPC's topic (`mob` is the NPC's
-template id, `topic` (`TriggerDef.Topic`) its topic key). `ValidateQuestRefs`
+template id, `topic` (`TriggerDef.Topic`) its topic key). `Quest.Validate`
+requires both on a `topic_heard` trigger and refuses `topic` on any other
+event. `ValidateQuestRefs`
 refuses a topic the NPC's dialogue file lacks (`QuestValidators.TopicExists`)
 and a trigger that grants, at any sequence depth, the token that topic's own
 `grantsQuest` already grants (`QuestValidators.TopicGrant`): the token would
