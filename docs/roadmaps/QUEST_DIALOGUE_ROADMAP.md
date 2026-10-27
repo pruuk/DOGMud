@@ -255,7 +255,8 @@ look and search): spec `docs/superpowers/specs/completed/2026-10-26-quest-arc-ph
 3b, new trigger kinds: spec `docs/superpowers/specs/2026-10-27-quest-arc-phase3b-trigger-kinds-design.md`
 (owner 2026-10-27), four slices with a plan each, in order: targets on `command` events, effect
 spells (`spell_landed`), talk (`topic_heard`, moving the 32 mid-step topic grants), areas with
-counts and explore. Observe is dropped (a step completes on something the player does); it
+counts and explore. **3b is complete across slices 1 to 4** (PRs #699, #693, #698, and slice 4,
+areas, counts and explore, in this branch's PR). Observe is dropped (a step completes on something the player does); it
 returns only if a phase 7 zone pass needs it, from the design kept in that spec.
 
 ## Phase 4: Minimap guidance (engine half)
@@ -269,6 +270,8 @@ returns only if a phase 7 zone pass needs it, from the design kept in that spec.
   the set or labels "somewhere in this zone".
 - "Destination unknown": explicit, logged as a warning at boot, listed by the validator.
 - GMCP and the web client minimap carry the new target shapes.
+- Areas now exist for the map targets (phase 3b slice 4): `internal/areas` and
+  `_datafiles/world/dogmud/areas/`, with `areas.Rooms(key)` for the nearest-room arrow.
 
 **Exit.** Each target kind renders in the web client; boot lists every unknown destination.
 

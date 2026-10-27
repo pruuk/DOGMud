@@ -50,3 +50,28 @@ through a `# retired` or `# renamed` line.
   safe from any goroutine. Room ids are template ids: map an instance room
   through `rooms.OriginalRoomId` before asking.
 - A missing `areas/` directory loads no areas.
+- Zone names in `zones:` are display names as rooms store them (`Pothole
+  Coulee`), not file-style keys. The caller supplies them as
+  `rooms.TemplateRoomZones()` (template room id to zone; see
+  `internal/rooms/context.md`), so every template room is known at boot even
+  though rooms load lazily.
+
+## Consumers
+
+- `internal/questengine`: `matchTriggerFields` tests a trigger's `area:` with
+  `Contains(key, templateRoomId)`; `CheckExplore` finds the areas holding a
+  newly mapped room with `AreasOf`; `StepProgress` and `exploreMet` read
+  `Rooms(key)`; the explore line names the area through `Get(key).Name`; the
+  walkthrough's `walkRoomIn` stands a synthetic event in the area's lowest room.
+- `internal/questworld`: `Validators()` wires `AreaExists`, `AreaSize` and
+  `AreaGatedRoom` from `Get` and `Rooms`, and `addGateTriggerRooms` marks every
+  room of a `room_gate` trigger's area as gated.
+- `internal/guards/area_manifest_test.go`: the key manifest guard.
+
+## Gotchas
+
+- A trigger's `area:` is a key, never the player-facing `name`.
+- Instance rooms are not in any area. Event sources already pass the template
+  room (`questengine.EventAt`); do the same for any new reader.
+- A new area file is a new key: add it to `area-keys.txt` or the manifest guard
+  fails.
