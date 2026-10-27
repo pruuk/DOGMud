@@ -88,7 +88,7 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	// spell's own canonical id, the key of the spells registry.
 	var landedOn []questengine.Target
 	defer func() {
-		questengine.NotifySpellLanded(user, room.RoomId, spellData.SpellId, spellData.EffectType, landedOn...)
+		notifySpellLanded(user, room.RoomId, spellData.SpellId, spellData.EffectType, landedOn...)
 	}()
 
 	// --- Identify: resolve against caster's item, no targets ---
@@ -152,7 +152,10 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 		// Charm's landed is the contest verdict, and a won contest can still
 		// bind nothing (an immune mind, a full companion roster, a reserve
 		// the pool cannot carry), so for charm the quest event asks the mob.
-		if landed && (spellData.EffectType != "charm" || mob.Character.IsCharmed(user.UserId)) {
+		// A Go-hook spell's effect happens in the hook switch below, which
+		// adds its own target only when the hook succeeds.
+		if landed && !spellNarratedByGoHook(cs.SpellId) &&
+			(spellData.EffectType != "charm" || mob.Character.IsCharmed(user.UserId)) {
 			landedOn = append(landedOn, questengine.TargetMob(mob))
 		}
 	}
@@ -182,7 +185,9 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 		castFumbled = castFumbled || fumbled
 		anyLanded = anyLanded || landed
 		targetsResolved++
-		if landed {
+		// A Go-hook spell (a no-argument fold-recall carries the caster
+		// here) adds its own target in the hook switch below, only on success.
+		if landed && !spellNarratedByGoHook(cs.SpellId) {
 			// The caster in their own target list (a self-cast) reads as self.
 			landedOn = append(landedOn, questengine.TargetActor(user.UserId, targetUser.UserId, 0))
 		}
@@ -280,24 +285,20 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 				if targetUser := users.GetByUserId(cs.TargetUserIds[0]); targetUser != nil {
 					t := purgeTarget{char: targetUser.Character, user: targetUser, name: targetUser.Character.Name}
 					if t.stillPresent(room, false) {
-						// spell_landed already holds this target: purge is a
-						// help spell, so the player loop above resolved it
-						// uncontested and counted it landed.
 						resolvePurgeAffliction(user, room, t)
+						landedOn = append(landedOn, questengine.TargetActor(user.UserId, targetUser.UserId, 0))
 					}
 				}
 			case len(cs.TargetMobInstanceIds) > 0:
 				if tMob := mobs.GetInstance(cs.TargetMobInstanceIds[0]); tMob != nil {
 					t := purgeTarget{char: &tMob.Character, name: tMob.Character.Name, display: mobDisplayName(tMob, room, user.UserId)}
 					if t.stillPresent(room, true) {
-						// spell_landed already holds this target, from the
-						// mob loop above, as for the player arm.
 						resolvePurgeAffliction(user, room, t)
+						landedOn = append(landedOn, questengine.TargetMob(tMob))
 					}
 				}
 			default:
 				resolvePurgeAffliction(user, room, purgeTarget{char: user.Character, user: user, name: user.Character.Name}) // self-cast
-				// No target list, so the loops counted nothing: self is added here.
 				landedOn = append(landedOn, questengine.TargetSelf())
 			}
 			// Uncontested utility cast: no defence to beat.
@@ -322,6 +323,11 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 // (cost admission, the progression bonus tier) leave this alone and swap the
 // contest core via combat.SetChannelAttackContestRunnerForTest instead.
 var runSpellChannelAttack = combat.ResolveChannelAttack
+
+// notifySpellLanded is resolveSpell's spell_landed seam: production raises the
+// event through questengine.NotifySpellLanded, and same-package tests swap it
+// for a recorder (restored with t.Cleanup) to read the exact target list.
+var notifySpellLanded = questengine.NotifySpellLanded
 
 // spellAttackSideFor builds the caster's half of the one spell contest. The
 // hit contest finally honours the spell's U9 primarystat: the score is the

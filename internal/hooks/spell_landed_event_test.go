@@ -189,6 +189,63 @@ func TestResolveSpell_IdentifyRaisesSpellLandedWhenItIdentifies(t *testing.T) {
 	require.Equal(t, 1, fired(), "identify that identified an item must raise spell_landed")
 }
 
+// captureSpellLanded replaces the spell_landed seam for the test and returns
+// the targets of every event resolveSpell raised, one slice per cast.
+func captureSpellLanded(t *testing.T) *[][]questengine.Target {
+	t.Helper()
+	var casts [][]questengine.Target
+	original := notifySpellLanded
+	notifySpellLanded = func(_ *users.UserRecord, _ int, _, _ string, targets ...questengine.Target) questengine.NotifyResult {
+		casts = append(casts, append([]questengine.Target(nil), targets...))
+		return questengine.NotifyResult{}
+	}
+	t.Cleanup(func() { notifySpellLanded = original })
+	return &casts
+}
+
+func goHookSpell(id string) *spells.SpellData {
+	return &spells.SpellData{SpellId: id, Name: id, AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSingle}
+}
+
+// fold-recall is a single-target help spell: cast with no argument it carries
+// the caster in TargetUserIds, and the player loop resolves that uncontested.
+// A recall with no anchor moved nobody, so it landed on nothing.
+func TestResolveSpell_FoldRecallWithNoAnchorRaisesNoSpellLanded(t *testing.T) {
+	caster, room, _ := spellLandedScene(t)
+	pinSpellContest(t)
+	casts := captureSpellLanded(t)
+	caster.Character.SetMiscData("fold-anchor-room", nil)
+
+	resolveSpell(caster, activity.CastingData{SpellId: "fold-recall", TargetUserIds: []int{caster.UserId}}, goHookSpell("fold-recall"), room)
+
+	require.Len(t, *casts, 1, "fixture: one cast, one notify call")
+	require.Empty(t, (*casts)[0], "a recall that found no anchor landed on nothing")
+}
+
+func TestResolveSpell_FoldRecallWithAnAnchorRaisesOneSelfEvent(t *testing.T) {
+	caster, room, _ := spellLandedScene(t)
+	pinSpellContest(t)
+	casts := captureSpellLanded(t)
+	caster.Character.SetMiscData("fold-anchor-room", 2)
+	t.Cleanup(func() { caster.Character.SetMiscData("fold-anchor-room", nil) })
+
+	resolveSpell(caster, activity.CastingData{SpellId: "fold-recall", TargetUserIds: []int{caster.UserId}}, goHookSpell("fold-recall"), room)
+
+	require.Equal(t, 2, caster.Character.RoomId, "fixture: the recall must move the caster")
+	require.Equal(t, [][]questengine.Target{{questengine.TargetSelf()}}, *casts, "a recall that moved the caster lands once, on self")
+}
+
+// Purge on a named mob lands once, on that mob, from the hook's own branch.
+func TestResolveSpell_PurgeOnANamedMobRaisesOneMobEvent(t *testing.T) {
+	caster, room, mob := spellLandedScene(t)
+	pinSpellContest(t)
+	casts := captureSpellLanded(t)
+
+	resolveSpell(caster, activity.CastingData{SpellId: "purge-affliction", TargetMobInstanceIds: []int{mob.InstanceId}}, goHookSpell("purge-affliction"), room)
+
+	require.Equal(t, [][]questengine.Target{{questengine.TargetMob(mob)}}, *casts, "purge on a mob lands once, on the mob")
+}
+
 // Charm resolves inside the mob loop, where `landed` is the contest verdict.
 // A won contest on a charm-immune mob charms nothing, so it must not count.
 func TestResolveSpell_CharmThatDidNotTakeRaisesNoSpellLanded(t *testing.T) {
