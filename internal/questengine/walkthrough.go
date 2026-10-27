@@ -280,7 +280,6 @@ func (env *walkEnv) hear(p *walkPlayer) {
 }
 
 func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[string][]questloop.Way) []questloop.Finding {
-	src := env.src
 	var out []questloop.Finding
 	dead := func(where, msg string) {
 		out = append(out, questloop.Finding{Rule: "walk-dead-end", QuestId: q.QuestId, Where: where, Msg: msg})
@@ -301,8 +300,8 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 	// Source checks need no walk state: every Way into every step, once,
 	// so a step after a dead one is still checked.
 	last := len(q.Steps) - 1
-	out = append(out, checkWay(q, *offer, src)...)
-	out = append(out, checkChained(q, ways, src, 1, last)...)
+	out = append(out, env.checkWay(q, *offer)...)
+	out = append(out, env.checkChained(q, ways, 1, last)...)
 
 	p := newWalkPlayer(steps)
 	env.hear(p)
@@ -341,7 +340,7 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 			// i is the step's own Way and is judged below.
 			for j := i + 1; j <= last; j++ {
 				for _, wy := range ways[stepToken(q, j)] {
-					if wy.Reward || ownGranted(wy, q.QuestId) || isTreeGrant(wy) || sharesWay(ways[tok], wy) || !itemsHeldEarly(p, wy, q.QuestId, src) {
+					if wy.Reward || ownGranted(wy, q.QuestId) || isTreeGrant(wy) || sharesWay(ways[tok], wy) || !env.itemsHeldEarly(p, wy, q.QuestId) {
 						continue
 					}
 					cl := p.clone()
@@ -471,16 +470,28 @@ func (s *walkStates) list() []*walkPlayer {
 	return s.states
 }
 
+// heardTopic is the NPC's topic a topic_heard trigger listens to, or nil.
+func (env *walkEnv) heardTopic(t *quests.TriggerDef) *dialogue.Topic {
+	if env == nil || t == nil || t.Event != "topic_heard" {
+		return nil
+	}
+	return env.files[t.Mob].FindTopic(t.Topic)
+}
+
 // wayItemNeeds lists the items a Way asks the player to hold or hand over:
 // has_item, an item_give or item_gain trigger's item, a topic's requiresItem
-// and carriesItem.
-func wayItemNeeds(wy questloop.Way) []int {
+// and carriesItem (a topic_heard trigger's topic included, since the walk
+// plays it).
+func (env *walkEnv) wayItemNeeds(wy questloop.Way) []int {
 	var ids []int
 	switch {
 	case wy.Trigger != nil:
 		ids = append(ids, wy.Trigger.Conditions.HasItem)
 		if wy.Trigger.Event == "item_give" || wy.Trigger.Event == "item_gain" {
 			ids = append(ids, wy.Trigger.Item)
+		}
+		if tp := env.heardTopic(wy.Trigger); tp != nil {
+			ids = append(ids, tp.RequiresItem, tp.CarriesItem)
 		}
 	case wy.Topic != nil:
 		ids = append(ids, wy.Topic.RequiresItem, wy.Topic.CarriesItem)
@@ -500,8 +511,9 @@ func isTreeGrant(wy questloop.Way) bool { return wy.External != nil && wy.Extern
 // over), or Sources.ItemAvailable says it can be had at p's progress without
 // quest own's later steps. The skip probe fires a later Way only then; an
 // item only those later steps hand out proves they were done.
-func itemsHeldEarly(p *walkPlayer, wy questloop.Way, own int, src questloop.Sources) bool {
-	for _, id := range wayItemNeeds(wy) {
+func (env *walkEnv) itemsHeldEarly(p *walkPlayer, wy questloop.Way, own int) bool {
+	src := env.src
+	for _, id := range env.wayItemNeeds(wy) {
 		if id <= 0 || p.items[id] {
 			continue
 		}
@@ -526,12 +538,12 @@ func skipped(trail walkTrail, q *quests.Quest, from, to int) int {
 // checkChained source-checks the Ways into steps from index from to index to,
 // which a quest_granted chain reached inside one firing. They are not fired:
 // no walk state sits on the step before them.
-func checkChained(q *quests.Quest, ways map[string][]questloop.Way, src questloop.Sources, from, to int) []questloop.Finding {
+func (env *walkEnv) checkChained(q *quests.Quest, ways map[string][]questloop.Way, from, to int) []questloop.Finding {
 	var out []questloop.Finding
 	for k := from; k <= to; k++ {
 		for _, wy := range ways[stepToken(q, k)] {
 			if !wy.Reward {
-				out = append(out, checkWay(q, wy, src)...)
+				out = append(out, env.checkWay(q, wy)...)
 			}
 		}
 	}
@@ -735,25 +747,33 @@ func (env *walkEnv) meetTopic(p *walkPlayer, df *dialogue.DialogueFile, t *dialo
 // fireTopic runs a topic as the talk menu does: Eligible, then Apply. A grant
 // that moved the quest is then chained through quest_granted triggers, as
 // the game's hook does (Quest_HandleQuestUpdate.go notifies quest_granted on
-// a fresh dialogue grant, because the dialogue grant path does not).
+// a fresh dialogue grant, because the dialogue grant path does not). Before
+// that grant lands it raises topic_heard, as conversation.play does.
 func fireTopic(eng *Engine, p *walkPlayer, wy questloop.Way, trail walkTrail) bool {
 	ps := p.dialogueState()
-	give := ps.GiveQuest
-	ps.GiveQuest = func(token string) {
-		give(token)
-		trail.note(p, token)
-	}
+	// The game queues a dialogue grant (conversation PlayerState.GiveQuest
+	// adds an events.Quest), while flags, items and gold land at once. So
+	// topic_heard, raised synchronously by conversation.play, sees the
+	// topic's other effects but not its own grant, which lands afterwards.
+	var queued []string
+	ps.GiveQuest = func(token string) { queued = append(queued, token) }
 	if wy.File == nil || !wy.File.Eligible(wy.Topic, ps) {
 		return false
 	}
-	tok := wy.Topic.GrantsQuest
-	id, _ := splitToken(tok)
-	before, had := p.progress[id]
 	if !wy.File.Apply(wy.Topic, ps) {
 		return false
 	}
-	if after, has := p.progress[id]; tok != "" && has && (!had || after != before) {
-		eng.Notify("quest_granted", EventDetails{RoomId: p.roomId, QuestToken: tok}, p, &trailCtx{walkCtx{p: p}, trail})
+	// conversation.play raises topic_heard for every played topic, so a
+	// trigger may listen to an offer, a hand-in or an info topic (#375 3b).
+	eng.Notify("topic_heard", EventDetails{RoomId: p.roomId, MobId: wy.MobId, Topic: wy.Topic.Key}, p, &trailCtx{walkCtx{p: p}, trail})
+	for _, tok := range queued {
+		id, _ := splitToken(tok)
+		before, had := p.progress[id]
+		p.grant(tok)
+		trail.note(p, tok)
+		if after, has := p.progress[id]; has && (!had || after != before) {
+			eng.Notify("quest_granted", EventDetails{RoomId: p.roomId, QuestToken: tok}, p, &trailCtx{walkCtx{p: p}, trail})
+		}
 	}
 	return true
 }
@@ -806,6 +826,21 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 	if d.RoomId != 0 {
 		p.roomId = d.RoomId
 	}
+	// topic_heard is raised only by playing the topic (conversation.play), so
+	// the walk plays it: the NPC's topic, its gates met, Eligible, then Apply,
+	// whose effects (a flag, an item) later steps may read. fireTopic then
+	// sends the event, as the game does after every played topic. A topic the
+	// NPC lacks, or one that never opens, cannot be heard.
+	if t.Event == "topic_heard" {
+		df := env.files[t.Mob]
+		tp := df.FindTopic(t.Topic)
+		if df == nil || tp == nil {
+			return false
+		}
+		env.meetTopic(p, df, tp, own)
+		env.hear(p)
+		return fireTopic(env.eng, p, questloop.Way{Topic: tp, MobId: t.Mob, File: df}, trail)
+	}
 	// A spell_landed event needs a spell p holds that can land it (its
 	// conditions met first, since a prerequisite token they hold may be what
 	// teaches it). Refused, nothing fires; when the trigger would have fired
@@ -839,8 +874,10 @@ func dedupeFindings(fs []questloop.Finding) []questloop.Finding {
 
 // checkWay reports a Way's needs the world cannot meet (spec 7.2): an item
 // nothing provides, a mob or NPC nothing spawns. A nil Sources func skips
-// that check.
-func checkWay(q *quests.Quest, wy questloop.Way, src questloop.Sources) []questloop.Finding {
+// that check. A topic_heard trigger needs what its topic needs: the NPC, and
+// the topic's requiresItem and carriesItem.
+func (env *walkEnv) checkWay(q *quests.Quest, wy questloop.Way) []questloop.Finding {
+	src := env.src
 	var out []questloop.Finding
 	needItem := func(id int, what string) {
 		if id > 0 && src.ItemSources != nil && len(src.ItemSources(id)) == 0 {
@@ -863,6 +900,13 @@ func checkWay(q *quests.Quest, wy questloop.Way, src questloop.Sources) []questl
 		}
 		if t.Event == "mob_death" || t.Event == "item_give" {
 			needMob(t.Mob, t.Event)
+		}
+		if t.Event == "topic_heard" {
+			needMob(t.Mob, "the NPC who has this topic")
+			if tp := env.heardTopic(t); tp != nil {
+				needItem(tp.RequiresItem, "requiresItem")
+				needItem(tp.CarriesItem, "carriesItem")
+			}
 		}
 	case wy.Topic != nil:
 		needItem(wy.Topic.RequiresItem, "requiresItem")
