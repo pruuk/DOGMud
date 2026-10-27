@@ -56,6 +56,7 @@ func Validators() quests.QuestValidators {
 		},
 		DialogueGrants: func(token string) bool { return dlgGrants[token] },
 		MobHasDialogue: mobHasDialogueFile,
+		TopicExists:    topicExistsOnMob,
 		HiddenNounExists: func(roomId int, key string) bool {
 			r := rooms.LoadRoomTemplate(roomId)
 			if r == nil {
@@ -91,6 +92,17 @@ func mobHasDialogueFile(mobId int) bool {
 		return false
 	}
 	return dialogue.Load(mobId, m.Zone) != nil
+}
+
+// topicExistsOnMob reports whether the mob's dialogue file has the topic key
+// (a topic_heard trigger's topic, #375 phase 3b slice 1).
+func topicExistsOnMob(mobId int, key string) bool {
+	m := mobs.GetMobSpec(mobs.MobId(mobId))
+	if m == nil {
+		return false
+	}
+	df := dialogue.Load(mobId, m.Zone)
+	return df != nil && df.FindTopic(key) != nil
 }
 
 // Registry is the loop world over the loaded registries: every quest, every

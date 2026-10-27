@@ -21,6 +21,7 @@ func permissiveQuestValidators() QuestValidators {
 		FlagDeclared:     func(string, string) bool { return true },
 		DialogueGrants:   func(string) bool { return true },
 		MobHasDialogue:   func(int) bool { return true },
+		TopicExists:      func(int, string) bool { return true },
 		HiddenNounExists: func(int, string) bool { return true },
 	}
 }
@@ -271,5 +272,21 @@ func TestValidateRefsSpellLanded(t *testing.T) {
 	}
 	if !strings.Contains(joined, `effect "mending" is not the effect_type of any spell`) {
 		t.Errorf("unknown effect not refused: %v", errs)
+	}
+}
+
+func TestValidateRefsTopicHeard(t *testing.T) {
+	v := permissiveQuestValidators()
+	v.TopicExists = func(mobId int, key string) bool { return mobId == 9112 && key == "directions" }
+	q := Quest{QuestId: 9003, Name: "Ask", Steps: []QuestStep{{Id: "start"}, {Id: "asked"}},
+		Triggers: []TriggerDef{{Event: "topic_heard", Mob: 9112, Topic: "directions",
+			Conditions: Conditions{Has: []string{"9003-start"}}, Actions: []ActionDef{{Grant: "9003-asked"}}}}}
+	if errs, _ := ValidateQuestRefs(q, v); len(errs) > 0 {
+		t.Fatalf("a real topic refused: %v", errs)
+	}
+	q.Triggers[0].Topic = "rumours"
+	errs, _ := ValidateQuestRefs(q, v)
+	if !strings.Contains(strings.Join(errs, "\n"), `mob 9112 has no topic "rumours"`) {
+		t.Fatalf("unknown topic not refused: %v", errs)
 	}
 }

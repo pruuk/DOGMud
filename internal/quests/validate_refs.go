@@ -28,6 +28,7 @@ type QuestValidators struct {
 	FlagDeclared    func(key, value string) bool // foreign quests' flag declarations
 	DialogueGrants  func(token string) bool      // some dialogue file grants this token
 	MobHasDialogue  func(mobId int) bool
+	TopicExists     func(mobId int, key string) bool // the NPC's dialogue file has this topic key
 	// HiddenNounExists reports whether the room template has a hidden noun
 	// with exactly this key (the discover action's target).
 	HiddenNounExists func(roomId int, key string) bool
@@ -287,6 +288,9 @@ func ValidateQuestRefs(q Quest, v QuestValidators) (errs []string, warns []strin
 			if t.Effect != "" && !c.v.EffectExists(t.Effect) {
 				c.errf("%s: effect %q is not the effect_type of any spell", tw, t.Effect)
 			}
+		}
+		if t.Event == "topic_heard" && t.Mob > 0 && t.Topic != "" && c.v.MobExists(t.Mob) && !c.v.TopicExists(t.Mob, t.Topic) {
+			c.errf("%s: mob %d has no topic %q", tw, t.Mob, t.Topic)
 		}
 		c.checkToken(tw+" quest_token filter", t.QuestToken)
 

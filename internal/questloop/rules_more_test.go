@@ -121,4 +121,7 @@ func fillValidators(v *quests.QuestValidators) {
 	if v.MobHasDialogue == nil {
 		v.MobHasDialogue = yesI
 	}
+	if v.TopicExists == nil {
+		v.TopicExists = func(int, string) bool { return true }
+	}
 }
