@@ -3,6 +3,7 @@ package questengine
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"slices"
 	"sort"
 	"strconv"
@@ -15,8 +16,9 @@ import (
 
 // Walk drives every quest in w through the real trigger engine and the real
 // dialogue topics, from its offer to its hand-in (spec 7), and reports what
-// cannot be completed: walk-dead-end, walk-no-source, walk-unspawned. Findings
-// share questloop's shape and backlog. A quest with no offer is skipped: the
+// cannot be completed: walk-dead-end, walk-no-source, walk-unspawned,
+// walk-no-spell (a spell_landed Way no state on the path holds a spell for).
+// Findings share questloop's shape and backlog. A quest with no offer is skipped: the
 // start rule reports it.
 func Walk(w questloop.World, src questloop.Sources) []questloop.Finding {
 	// Sorted by id, so the engine's trigger order (and so every firing) does
@@ -110,6 +112,15 @@ type walkEnv struct {
 	// that quest flag, with the tokens each also grants (flagSetter).
 	setters map[string][]flagSetter
 	depth   int // setter nesting, bounded by maxSetterDepth
+	// teachers lists, per spell id, the tokens whose holder knows the spell:
+	// every token a trigger that teaches it grants (and a quest_granted
+	// trigger's own token), and a quest's final step when its rewards.spellid
+	// teaches it. It covers a prerequisite quest held by meetToken, which
+	// the walk never fires.
+	teachers map[string][]string
+	// spellRefused is set when fireTrigger refused a top-level (not a flag
+	// setter's) spell_landed trigger because no held spell can land it.
+	spellRefused bool
 }
 
 // flagSetter is a trigger or topic that sets a quest flag.
@@ -130,12 +141,14 @@ type heardKey struct {
 }
 
 func newWalkEnv(eng *Engine, src questloop.Sources, qs []*quests.Quest, dialogues []*dialogue.DialogueFile) *walkEnv {
-	env := &walkEnv{eng: eng, src: src, files: map[int]*dialogue.DialogueFile{}, setters: map[string][]flagSetter{}}
+	env := &walkEnv{eng: eng, src: src, files: map[int]*dialogue.DialogueFile{}, setters: map[string][]flagSetter{},
+		teachers: map[string][]string{}}
 	for _, q := range qs {
 		for i := range q.Triggers {
 			t := &q.Triggers[i]
 			var grants []string
 			var sets []string
+			var teaches []string
 			var walk func([]quests.ActionDef)
 			walk = func(as []quests.ActionDef) {
 				for _, a := range as {
@@ -144,6 +157,9 @@ func newWalkEnv(eng *Engine, src questloop.Sources, qs []*quests.Quest, dialogue
 					}
 					if a.SetFlag != nil {
 						sets = append(sets, flagKV(a.SetFlag.Key, a.SetFlag.Value))
+					}
+					if a.TeachSpell != "" {
+						teaches = append(teaches, a.TeachSpell)
 					}
 					if a.Sequence != nil {
 						walk(a.Sequence.OnComplete)
@@ -154,6 +170,17 @@ func newWalkEnv(eng *Engine, src questloop.Sources, qs []*quests.Quest, dialogue
 			for _, kv := range sets {
 				env.setters[kv] = append(env.setters[kv], flagSetter{way: questloop.Way{Trigger: t, Owner: q.QuestId}, grants: grants})
 			}
+			knowers := grants
+			if t.Event == "quest_granted" && t.QuestToken != "" {
+				// It fires as its token is granted: every holder ran it.
+				knowers = append(slices.Clone(grants), t.QuestToken)
+			}
+			for _, s := range teaches {
+				env.teachers[s] = append(env.teachers[s], knowers...)
+			}
+		}
+		if s := q.Rewards.SpellId; s != "" && len(q.Steps) > 0 {
+			env.teachers[s] = append(env.teachers[s], stepToken(q, len(q.Steps)-1))
 		}
 	}
 	seen := map[heardKey]bool{}
@@ -185,6 +212,40 @@ func newWalkEnv(eng *Engine, src questloop.Sources, qs []*quests.Quest, dialogue
 		return cmp.Or(cmp.Compare(a.mobId, b.mobId), cmp.Compare(a.key, b.key))
 	})
 	return env
+}
+
+// holds reports whether p knows a spell on quest own's walk: a starter, a
+// spell a teach_spell taught during this walk, or a spell another quest
+// teaches to whoever holds a token of it p holds (teachers). The walked
+// quest's own teachers are not read: the walk fired its Ways, so p.spells
+// already says exactly which of them this state ran.
+func (env *walkEnv) holds(p *walkPlayer, spellId string, own int) bool {
+	if slices.Contains(env.src.StarterSpells, spellId) || p.spells[spellId] {
+		return true
+	}
+	return slices.ContainsFunc(env.teachers[spellId], func(tok string) bool {
+		id, _ := splitToken(tok)
+		return id != own && p.HasQuest(tok)
+	})
+}
+
+// spellReachable reports whether p holds a spell that can land a
+// spell_landed trigger t: its noun (the spell id) and its effect both
+// match. A nil Sources.SpellEffect skips the check.
+func (env *walkEnv) spellReachable(p *walkPlayer, t *quests.TriggerDef, own int) bool {
+	if env.src.SpellEffect == nil {
+		return true
+	}
+	fits := func(id string) bool {
+		return (t.Noun == "" || id == t.Noun) && (t.Effect == "" || env.src.SpellEffect(id) == t.Effect) &&
+			env.holds(p, id, own)
+	}
+	if t.Noun != "" {
+		return fits(t.Noun)
+	}
+	return slices.ContainsFunc(env.src.StarterSpells, fits) ||
+		slices.ContainsFunc(slices.Collect(maps.Keys(p.spells)), fits) ||
+		slices.ContainsFunc(slices.Collect(maps.Keys(env.teachers)), fits)
 }
 
 // hear marks as heard every info topic a heardRequired names that is open
@@ -293,6 +354,10 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 		var atGrant []questloop.Way
 		worked := map[string]bool{}
 		failed := map[string]bool{}
+		// otherFail marks a Way that failed from some state for a reason
+		// other than a spell no state holds; one that failed only for want
+		// of a spell is reported as walk-no-spell, not as a dead end.
+		otherFail := map[string]bool{}
 		var failOrder []string
 		for _, wy := range ways[tok] {
 			if wy.Reward {
@@ -306,6 +371,7 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 			}
 			for _, p := range states {
 				cl := p.clone()
+				env.spellRefused = false
 				tr := fireWay(env, cl, wy, q.QuestId)
 				got := stepIndex(cl, q)
 				k := skipped(tr, q, i, got)
@@ -314,6 +380,9 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 					if !failed[wy.Where] {
 						failed[wy.Where] = true
 						failOrder = append(failOrder, wy.Where)
+					}
+					if !env.spellRefused {
+						otherFail[wy.Where] = true
 					}
 				case k >= 0:
 					dead(wy.Where, fmt.Sprintf("skips to %d-%s, passing %s", q.QuestId, cl.progress[q.QuestId], stepToken(q, k)))
@@ -330,7 +399,12 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 			}
 		}
 		for _, where := range failOrder {
-			if !worked[where] {
+			switch {
+			case worked[where]:
+			case !otherFail[where]:
+				out = append(out, questloop.Finding{Rule: "walk-no-spell", QuestId: q.QuestId, Where: where,
+					Msg: fmt.Sprintf("does not reach %s: it needs a spell that lands (%s), and no spell a player holds on this path (starters, teach_spell, spellid rewards) does", tok, spellWant(ways[tok], where))})
+			default:
 				dead(where, "does not reach "+tok)
 			}
 		}
@@ -343,6 +417,16 @@ func walkQuest(env *walkEnv, q *quests.Quest, steps map[int][]string, ways map[s
 		}
 	}
 	return out
+}
+
+// spellWant names what the spell_landed Way at where asks a spell for.
+func spellWant(ws []questloop.Way, where string) string {
+	for _, wy := range ws {
+		if wy.Where == where && wy.Trigger != nil {
+			return fmt.Sprintf("effect %q, spell %q", wy.Trigger.Effect, wy.Trigger.Noun)
+		}
+	}
+	return "?"
 }
 
 // maxWalkStates bounds the distinct states the walk keeps on one step.
@@ -713,6 +797,17 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 	}
 	if d.RoomId != 0 {
 		p.roomId = d.RoomId
+	}
+	// A spell_landed event needs a spell p holds that can land it (its
+	// conditions met first, since a prerequisite token they hold may be what
+	// teaches it). Refused, nothing fires; when the trigger would have fired
+	// with the spell, a top-level firing notes it, for walk-no-spell.
+	if t.Event == "spell_landed" && !env.spellReachable(p, t, own) {
+		if env.depth == 0 {
+			cl := p.clone()
+			env.spellRefused = env.eng.Notify(t.Event, d, cl, &trailCtx{walkCtx{p: cl}, walkTrail{}}).Handled
+		}
+		return false
 	}
 	return env.eng.Notify(t.Event, d, p, &trailCtx{walkCtx{p: p}, trail}).Handled
 }

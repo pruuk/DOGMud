@@ -85,4 +85,9 @@ type Sources struct {
 	// the walk player already holds it or this holds. Nil: every item counts
 	// as available.
 	ItemAvailable func(itemId, questId int, has func(token string) bool) bool
+	// SpellEffect is a spell's effect_type ("" for an unknown spell), for the
+	// walk's spell_landed reachability check. Nil: the check is skipped.
+	SpellEffect func(spellId string) string
+	// StarterSpells are the spells every new character holds.
+	StarterSpells []string
 }

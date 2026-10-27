@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/forager"
@@ -16,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 )
 
 // itemSource is one place an item comes from. owners are the quests whose
@@ -170,6 +172,13 @@ func Sources() questloop.Sources {
 		ItemAvailable: func(id, questId int, has func(string) bool) bool {
 			return available(itemSrc[id], questId, has)
 		},
+		SpellEffect: func(id string) string {
+			if s := spells.GetSpell(id); s != nil {
+				return s.EffectType
+			}
+			return ""
+		},
+		StarterSpells: slices.Clone(characters.StarterSpells),
 	}
 }
 

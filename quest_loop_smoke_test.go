@@ -131,6 +131,17 @@ func TestSmoke_WalkSourcesIndexShippedWorld(t *testing.T) {
 	if src.MobSpawned(999999999) {
 		t.Error("mob 999999999 should not be spawned")
 	}
+	// spells/conviction-spike.yaml has effect_type damage, and it is a
+	// starter spell (characters.StarterSpells).
+	if got := src.SpellEffect("conviction-spike"); got != "damage" {
+		t.Errorf("conviction-spike effect should be damage: %q", got)
+	}
+	if got := src.SpellEffect("no-such-spell"); got != "" {
+		t.Errorf("an unknown spell should have no effect: %q", got)
+	}
+	if !slices.Contains(src.StarterSpells, "conviction-spike") {
+		t.Errorf("conviction-spike should be a starter spell: %v", src.StarterSpells)
+	}
 
 	// External grants: Hadwen's rite tree grants 30-rite on topic begin or
 	// rite_wait (behaviors/pothole_coulee/9100-cleric_hadwen.yaml), room
