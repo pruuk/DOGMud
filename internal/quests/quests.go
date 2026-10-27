@@ -98,6 +98,15 @@ func (r *Quest) Id() int {
 	return r.QuestId
 }
 
+// countSwallowsCommand are the events whose callers read a handled result as
+// "the quest took this command" (room_gate, room_interact, item_give), so
+// they take no count.
+var countSwallowsCommand = map[string]bool{"room_gate": true, "room_interact": true, "item_give": true}
+
+// MaxLabelLength caps a count or distinct label: "<label>: N of M" with the
+// quest log's indent stays inside 80 columns.
+const MaxLabelLength = 40
+
 // validateAreaCount checks the #375 phase 3b slice 4 fields: area or zone
 // (any event, not both), count (2 or more), distinct (room_enter with an
 // area, all or a whole number, never with count), label (with count or
@@ -109,6 +118,16 @@ func validateAreaCount(t TriggerDef) error {
 	}
 	if t.Count != 0 && t.Count < 2 {
 		return fmt.Errorf("count %d: count must be 2 or more (leave it out to fire on the first match)", t.Count)
+	}
+	// A match that has not reached its count is still a handled event, and
+	// on these events a handled event means the quest took the command: a
+	// gate refuses the move, look and read print nothing, give skips
+	// consuming the item. A partial count there would swallow the command.
+	if t.Count != 0 && countSwallowsCommand[t.Event] {
+		return fmt.Errorf("count on a %s trigger: a match short of the count would swallow the player's command (count is refused on room_gate, room_interact and item_give)", t.Event)
+	}
+	if len(t.Label) > MaxLabelLength {
+		return fmt.Errorf("label %q is %d characters; a label must be %d characters or fewer so its progress line fits the screen", t.Label, len(t.Label), MaxLabelLength)
 	}
 	if t.Distinct != "" {
 		if t.Count != 0 {

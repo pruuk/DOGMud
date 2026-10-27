@@ -50,6 +50,52 @@ func TestValidateCount(t *testing.T) {
 	}
 }
 
+// countQuest is a quest whose one trigger counts on event: it holds its
+// own start step and waits for the end its actions grant.
+func countQuest(event string) *Quest {
+	return &Quest{
+		QuestId: 9001, Name: "Probe",
+		Steps: []QuestStep{{Id: "start"}, {Id: "end"}},
+		Triggers: []TriggerDef{{
+			Event: event, Count: 3,
+			Conditions: Conditions{Has: []string{"9001-start"}, Missing: []string{"9001-end"}},
+			Actions:    []ActionDef{{Grant: "9001-end"}},
+		}},
+	}
+}
+
+// A partial count marks the event handled, and on these three events a
+// handled event means the quest took the command: the gate refuses the move
+// in silence, look and read print nothing, give keeps the item unconsumed.
+// So count is refused there.
+func TestValidateCountRefusedWhereAMatchSwallowsTheCommand(t *testing.T) {
+	for _, ev := range []string{"room_gate", "room_interact", "item_give"} {
+		q := countQuest(ev)
+		err := q.Validate()
+		if err == nil || !strings.Contains(err.Error(), "count on a "+ev+" trigger") {
+			t.Errorf("%s: want the count refused, got %v", ev, err)
+		}
+	}
+	for _, ev := range []string{"mob_death", "command", "item_gain", "spell_landed"} {
+		if err := countQuest(ev).Validate(); err != nil {
+			t.Errorf("count on %s refused: %v", ev, err)
+		}
+	}
+}
+
+// "<label>: N of M" fits 80 columns with the log's indent at 40 characters.
+func TestValidateLabelLength(t *testing.T) {
+	q := countQuest("mob_death")
+	q.Triggers[0].Label = strings.Repeat("a", 40)
+	if err := q.Validate(); err != nil {
+		t.Fatalf("a 40-character label refused: %v", err)
+	}
+	q.Triggers[0].Label = strings.Repeat("a", 41)
+	if err := q.Validate(); err == nil || !strings.Contains(err.Error(), "40 characters or fewer") {
+		t.Fatalf("a 41-character label must be refused, got %v", err)
+	}
+}
+
 func TestValidateDistinct(t *testing.T) {
 	for _, d := range []string{"all", "1", "12"} {
 		q := validQuest(ActionDef{Grant: "9001-start"})
