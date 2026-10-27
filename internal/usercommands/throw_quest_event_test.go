@@ -68,7 +68,8 @@ func TestThrowEvent_OtherMobTemplateDoesNotFire(t *testing.T) {
 		"a trigger keyed to another mob template must not fire")
 }
 
-func TestThrowEvent_UnfilteredTriggerFiresOnceForSeveralMobs(t *testing.T) {
+// Once-per-command is covered by TestNotifyAllFiresEachTriggerOnce in questengine.
+func TestThrowEvent_UnfilteredTriggerFiresForSeveralMobs(t *testing.T) {
 	user, room, _ := seedThrowSeamFixture(t, 3, 0, 0)
 	throwEventProbe(t, quests.TriggerDef{})
 	restore := combat.SetChannelAttackContestRunnerForTest(func(atkScore float64, entries []contest.Entry) contest.Result {
