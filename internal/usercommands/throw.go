@@ -292,15 +292,6 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	// Quest engine: command notification — a successful throw advances
-	// "throw a grenade" quest steps (e.g. the Spoke C grenade lesson).
-	questBridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "throw",
-	}, questBridge, questBridge)
-
 	// AoE resolution — U6b Task 15: every hostile in the room contests the ONE
 	// grenade independently through the channel seam. Per target: its own
 	// equipment-gated defence set (dodge for everyone; block only behind a
@@ -355,6 +346,8 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// Everything the throw connected with, so an out-of-combat opener can
 	// engage both sides once the blast is resolved. See engageAfterThrow.
 	hitMobs := []*mobs.Mob{}
+	// Everything the blast reached, hit or not, for the quest event below.
+	var thrownAt []questengine.Target
 
 	liveTargetIDs := make(map[int]bool, len(stagedTargets))
 	for _, instanceID := range room.GetMobs(rooms.FindAll) {
@@ -365,6 +358,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		if mob == nil {
 			continue
 		}
+		thrownAt = append(thrownAt, questengine.TargetMob(mob))
 
 		// ONE contest per target through the seam: the defender's set is
 		// quoted, charged, and progressed inside; the attacker's crit and
@@ -491,6 +485,13 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			hitMobs = append(hitMobs, mob)
 		}
 	}
+
+	// Quest engine: command notification — a successful throw advances
+	// "throw a grenade" quest steps (e.g. the Spoke C grenade lesson). One
+	// target per mob the blast reached (hit or not); a throw that reached no
+	// one is aimed at nothing. It goes out after the blast so a step that
+	// names a mob sees the throw that reached it (#375 phase 3b slice 2).
+	questengine.NotifyCommand(user, room.RoomId, "throw", thrownAt...)
 
 	if !fumbled {
 		if len(hitMobs) == 0 {
