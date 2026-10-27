@@ -2467,6 +2467,26 @@ its lines use the context. `channel_defence_routing_test.go` parses
 `spell_resolution.go`, `spell_effects.go` and `spell_help_effects.go` and
 allows the contest seam only in the four resolvers.
 
+### `spell_landed` quest event (#375 phase 3b slice 3)
+
+`resolveSpell` (player casters) collects the creatures its spell landed on
+and raises `questengine.NotifySpellLanded` once, in a defer, through the
+`notifySpellLanded` package var (the seam same-package tests swap for a
+recorder). A mob or player target counts when its resolver's `landed` verdict
+is true; a self-cast reads as `TargetSelf`. A cast that landed on nothing
+raises nothing. Details by spell kind:
+
+- A Go-hook spell (`spellNarratedByGoHook`: fold-anchor, fold-recall,
+  purge-affliction) adds its own target in the hook switch, only on its own
+  success: fold-recall counts only when `resolveFoldRecall` reports the
+  actor arrived, purge counts the target it purged.
+- Charm counts only if the mob is charmed after (`IsCharmed`): a won contest
+  can still bind nothing.
+- Identify counts only when `resolveIdentify` reports an item was identified.
+  A summon counts when `resolveCompanionSummon` reports it. Both pass
+  `NoTarget()`.
+- Mob casters (`resolveMobSpell*`) raise nothing: a mob has no quests.
+
 ## Counter tier wiring (U6b Task 10)
 
 `counter_tier.go` hosts `fireSpellCounterTier`, called at all FOUR spell

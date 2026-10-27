@@ -23,6 +23,7 @@ type walkPlayer struct {
 	items      map[int]bool
 	flags      map[string]string
 	heard      map[string]bool // dialogue.HeardKey -> heard
+	spells     map[string]bool // spells a teach_spell taught during the walk
 	gold       int
 	roomId     int
 	masterwork bool
@@ -30,7 +31,7 @@ type walkPlayer struct {
 
 func newWalkPlayer(steps map[int][]string) *walkPlayer {
 	return &walkPlayer{steps: steps, progress: map[int]string{}, items: map[int]bool{},
-		flags: map[string]string{}, heard: map[string]bool{}}
+		flags: map[string]string{}, heard: map[string]bool{}, spells: map[string]bool{}}
 }
 
 func splitToken(token string) (int, string) {
@@ -94,6 +95,7 @@ func (p *walkPlayer) clone() *walkPlayer {
 	c.items = maps.Clone(p.items)
 	c.flags = maps.Clone(p.flags)
 	c.heard = maps.Clone(p.heard)
+	c.spells = maps.Clone(p.spells)
 	return &c
 }
 
@@ -114,6 +116,9 @@ func (p *walkPlayer) fingerprint() string {
 	}
 	for _, k := range slices.Sorted(maps.Keys(p.heard)) {
 		fmt.Fprintf(&b, "h%s;", k)
+	}
+	for _, k := range slices.Sorted(maps.Keys(p.spells)) {
+		fmt.Fprintf(&b, "s%s;", k)
 	}
 	fmt.Fprintf(&b, "g%d;r%d;m%t", p.gold, p.roomId, p.masterwork)
 	return b.String()
@@ -161,8 +166,8 @@ func (p *walkPlayer) dialogueState() *dialogue.PlayerState {
 	}
 }
 
-// walkCtx is the walkthrough's ActionContext: grants, items, gold and flags
-// change the walk player; everything else (narration, spawns, teleports,
+// walkCtx is the walkthrough's ActionContext: grants, items, gold, flags and
+// taught spells change the walk player; everything else (narration, spawns, teleports,
 // timed scenes) is a no-op, because the walk follows quest state only.
 // QueueSequence runs the sequence's on_complete actions, as the real bridge
 // does after the lines finish.
@@ -176,7 +181,7 @@ func (c *walkCtx) ChargeGold(amount int) error             { c.p.gold -= amount;
 func (c *walkCtx) Narrate(narration.Variants)              {}
 func (c *walkCtx) SpawnMob(SpawnDef)                       {}
 func (c *walkCtx) SpawnItem(SpawnDef)                      {}
-func (c *walkCtx) TeachSpell(string)                       {}
+func (c *walkCtx) TeachSpell(spellId string)               { c.p.spells[spellId] = true }
 func (c *walkCtx) TrainSkill(string, int)                  {}
 func (c *walkCtx) IncreaseStat(string, int)                {}
 func (c *walkCtx) LearnRecipe(string)                      {}

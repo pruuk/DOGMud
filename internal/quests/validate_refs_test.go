@@ -13,6 +13,7 @@ func permissiveQuestValidators() QuestValidators {
 		RoomExists:       func(int) bool { return true },
 		ConditionExists:  func(int) bool { return true },
 		SpellExists:      func(string) bool { return true },
+		EffectExists:     func(string) bool { return true },
 		SkillExists:      func(string) bool { return true },
 		StatExists:       func(string) bool { return true },
 		RecipeExists:     func(string) bool { return true },
@@ -247,5 +248,28 @@ func TestValidateRefs_Warnings(t *testing.T) {
 		if strings.Contains(w, `"start"`) || strings.Contains(w, `"end"`) {
 			t.Errorf("granted steps must not warn: %v", w)
 		}
+	}
+}
+
+func TestValidateRefsSpellLanded(t *testing.T) {
+	v := permissiveQuestValidators()
+	v.SpellExists = func(id string) bool { return id == "heal" }
+	v.EffectExists = func(e string) bool { return e == "heal" }
+
+	q := Quest{QuestId: 9002, Name: "Mend", Steps: []QuestStep{{Id: "start"}, {Id: "mended"}},
+		Triggers: []TriggerDef{{Event: "spell_landed", Noun: "heal", Effect: "heal",
+			Conditions: Conditions{Has: []string{"9002-start"}}, Actions: []ActionDef{{Grant: "9002-mended"}}}}}
+	if errs, _ := ValidateQuestRefs(q, v); len(errs) > 0 {
+		t.Fatalf("a known spell and effect refused: %v", errs)
+	}
+
+	q.Triggers[0].Noun, q.Triggers[0].Effect = "mend-everything", "mending"
+	errs, _ := ValidateQuestRefs(q, v)
+	joined := strings.Join(errs, "\n")
+	if !strings.Contains(joined, `spell "mend-everything" does not exist`) {
+		t.Errorf("unknown spell noun not refused: %v", errs)
+	}
+	if !strings.Contains(joined, `effect "mending" is not the effect_type of any spell`) {
+		t.Errorf("unknown effect not refused: %v", errs)
 	}
 }

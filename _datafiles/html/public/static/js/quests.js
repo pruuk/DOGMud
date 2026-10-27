@@ -296,6 +296,14 @@
   function kindInput(kind, val) {
     if (kind === "bool") return boolInput(val);
     if (kind === "text") return textInput(val);
+    if (kind === "target") {
+      var sel = ce("select", {});
+      [""].concat(TARGET_KINDS).forEach(function (k) {
+        var o = ce("option", { value: k, text: k || "(any)" }); if ((val || "") === k) o.selected = true; sel.appendChild(o);
+      });
+      sel.addEventListener("change", markDirty);
+      return { el: sel, read: function () { return sel.value; } };
+    }
     if (kind === "room") {
       var n = numInput(val);
       return { el: ce("span", {}, [n, roomAssist(n)]), read: function () { return toInt(n.value); } };
@@ -507,13 +515,18 @@
 
   var EVENT_FILTERS = {
     room_enter: ["room"], room_gate: ["room"], item_give: ["mob", "item"], skill_use: ["skill"],
-    mob_death: ["mob", "room"], command: ["command", "room"],
+    mob_death: ["mob", "room"], command: ["command", "room", "target", "mob", "item"],
     command_issued: ["command", "room"], item_gain: ["item"],
     quest_granted: ["quest_token"],
-    room_interact: ["room", "noun", "verb"]
+    room_interact: ["room", "noun", "verb"],
+    spell_landed: ["noun", "effect", "target", "mob", "item", "room"]
   };
   var FILTER_KINDS = { room: "room", mob: "mob", item: "item", skill: "skill",
-    command: "text", quest_token: "token", noun: "text", verb: "text" };
+    command: "text", quest_token: "token", noun: "text", verb: "text",
+    effect: "text", target: "target" };
+  // The values a trigger's target filter may take (quests.TriggerTargetKinds);
+  // empty means any target.
+  var TARGET_KINDS = ["self", "mob", "player", "item", "container"];
 
   function triggerRow(box, t) {
     t = t || { event: "room_enter", actions: [] };

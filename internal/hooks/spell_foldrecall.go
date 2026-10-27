@@ -53,18 +53,20 @@ func validateFoldRecall(actor actions.Actor) bool {
 	return true
 }
 
-// resolveFoldRecall is called during the onMagic phase.
-func resolveFoldRecall(actor actions.Actor) {
+// resolveFoldRecall is called during the onMagic phase. It reports whether
+// the actor arrived at the anchor: a collapsed fold moved no one, so a player
+// caster's spell_landed event does not count it (#375 phase 3b slice 3).
+func resolveFoldRecall(actor actions.Actor) bool {
 	char := actor.GetCharacter()
 	if char == nil {
-		return
+		return false
 	}
 	anchorRoom := getMiscDataInt(char, "fold-anchor-room")
 	currentRoomId := char.RoomId
 
 	if anchorRoom <= 0 || anchorRoom == currentRoomId {
 		actor.SendText(messaging.CategorySpellFold, "The fold collapses. No valid anchor found.")
-		return
+		return false
 	}
 
 	// Clear combat state before teleporting.
@@ -84,7 +86,7 @@ func resolveFoldRecall(actor actions.Actor) {
 	// doesn't leave the departure room thinking the actor vanished.
 	if !teleportActor(actor, anchorRoom) {
 		actor.SendText(messaging.CategorySpellFold, "The fold collapses. No valid anchor found.")
-		return
+		return false
 	}
 
 	// Departure broadcast on the room the actor LEFT (use the snapshotted
@@ -113,6 +115,7 @@ func resolveFoldRecall(actor actions.Actor) {
 			u.Command("look")
 		}
 	}
+	return true
 }
 
 // teleportActor moves the actor to the destination room. For players this

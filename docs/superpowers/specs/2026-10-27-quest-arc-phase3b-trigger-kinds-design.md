@@ -143,30 +143,51 @@ the 49 shipped `command` triggers keep working.
 
 ### 3. Slice 3: effect spells (`spell_landed`)
 
-**Event.** `spell_landed`, raised once per target a spell lands on, from the resolver's own
-`landed` verdict: `resolveAgainstMob`, `resolveAgainstPlayer`, the self-cast path, and the three
-Go-hook spells (fold-anchor, fold-recall, purge-affliction, which land on their target or the
-caster when not fumbled). Mob casters raise it through `resolveMobSpell*` with the same shape.
-Details: `Noun` = spell id, `Skill` unused, new `Effect string` = the spell's `EffectType`, and the
-target fields from slice 2. A miss, fizzle, fumble or defended help spell raises nothing.
+Built (plan `plans/2026-10-27-quest-arc-phase3b-slice3-spell-landed.md`). Three amendments to
+the design as first written: mob casters raise nothing; there is no effect-name manifest; and
+spells with no creature target raise one `none` event on success.
 
-**Trigger.** New field `effect` (matched against `Effect`), plus `noun` (spell id), `mob`, `item`,
-`target`, `room`, and slice 4's `area`/`zone`. "Mend the scout" is
-`event: spell_landed, effect: heal, mob: 9112`.
+**Event.** `spell_landed`, raised once per target a player's spell lands on, from `resolveSpell`'s
+own per-target verdicts (`resolveAgainstMob`, `resolveAgainstPlayer`, a self-cast reading as
+`self`), through `questengine.NotifySpellLanded` under one guard (`NotifyAll`), via the
+`notifySpellLanded` seam. Details: `Noun` = spell id, new `EventDetails.Effect` = the spell's
+`EffectType`, and the target fields from slice 2. A miss, fizzle, fumble or defended help spell
+raises nothing, and a cast that landed on nothing raises nothing.
+
+- **Mob casters raise nothing.** The event is matched against the caster's quests and a mob has
+  none (slice 2 found the same for `command`). "Be healed by the priest" is a different event and
+  out of scope.
+- **No creature target.** Identify (when an item was identified), a summon, fold-anchor and
+  fold-recall raise one event aimed at nothing (`none`) or at `self` on success, so `noun:` and
+  `effect:` steps work for them.
+- **Go-hook spells add their own target only on success.** Fold-anchor, fold-recall and
+  purge-affliction resolve in the hook switch; each adds its target there. Fold-recall counts only
+  when the actor arrived at the anchor; identify counts only when an item was identified.
+- **Charm counts only when it took.** A won contest can still bind nothing, so charm adds its
+  target only if the mob is charmed after.
+
+**Trigger.** New field `effect` (matched against `Effect`; the loader refuses it on any other
+event), plus `noun` (spell id), `mob`, `item`, `target`, `room`, and slice 4's `area`/`zone`.
+"Mend the scout" is `event: spell_landed, effect: heal, mob: 9112`.
 
 **`command: cast` stays** as the attempt event ("try casting at the mark" lessons). `events.Healed`
 is left alone; it serves the AI companion and means "tried to tend".
 
-**Reachability.** The walkthrough tracks the spells a walking player holds (starters from
-`StarterSpells`, plus `teach_spell` actions and `spellid` rewards met earlier on the path,
-including quests that gate the offer through `questRequired`). A `spell_landed` way into a step is
-reachable when some held spell matches its `effect` or `noun`. An unreachable effect step is a
-walkthrough failure (warning list until phase 7, like the walkthrough's other findings). The
-writer fixes it by teaching the spell earlier, or by gating the offer on a quest that teaches it
-and giving the hidden offer a breadcrumb that names the teacher.
+**References.** No effect-name manifest: `ValidateQuestRefs` checks a `spell_landed` trigger's
+`noun` against the loaded spells (`SpellExists`) and its `effect` against the loaded spells'
+effect types (`EffectExists`), which catches a renamed effect at boot, the job the manifest was for.
 
-**Effect names are vocabulary.** `EffectType` values used by a shipped `effect:` filter go into a
-manifest (`quests/effect-names.txt`); renaming one strands content and the guard says so.
+**Reachability.** The walkthrough tracks the spells a walking player holds (starters from
+`Sources.StarterSpells`, plus `teach_spell` actions and `spellid` rewards met earlier on the path,
+including quests that gate the offer through `questRequired`). A `spell_landed` way into a step is
+reachable when some held spell matches its `noun` and `effect` (`Sources.SpellEffect`). An
+unreachable effect step is reported as `walk-no-spell`, only when the Way failed in every state for
+want of a spell (warning list until phase 7, like the walkthrough's other findings). The writer
+fixes it by teaching the spell earlier, or by gating the offer on a quest that teaches it and
+giving the hidden offer a breadcrumb that names the teacher. A spell a player may learn only by
+random discovery or from a book does not satisfy reachability. The skip probe, which asks whether a
+later Way could be fired early, assumes the player may know any spell, since the held spells are a
+minimum.
 
 ### 4. Slice 4: areas, counts and explore
 

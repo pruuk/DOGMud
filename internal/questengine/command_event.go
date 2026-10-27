@@ -126,3 +126,29 @@ func NotifyCommand(user *users.UserRecord, roomId int, command string, targets .
 	bridge := NewGameBridge(user, roomId)
 	return GetEngine().NotifyAll("command", details, bridge, bridge)
 }
+
+// SpellLandedDetails builds the spell_landed event for one target: Noun is
+// the canonical spell id and Effect the spell's effect_type (#375 phase 3b
+// slice 3). The target's own Noun is replaced by the spell id.
+func SpellLandedDetails(userId, roomId int, spellId, effect string, t Target) EventDetails {
+	d := CommandDetails(userId, roomId, "", t.WithNoun(spellId))
+	d.Effect = effect
+	return d
+}
+
+// NotifySpellLanded is THE spell_landed event: one detail per target the
+// spell landed on, under one guard (NotifyAll), so a trigger fires at most
+// once per cast. A cast that landed on nothing raises nothing; a spell with
+// no creature target that succeeded passes NoTarget. Raised only for player
+// casters: the event is matched against the caster's quests.
+func NotifySpellLanded(user *users.UserRecord, roomId int, spellId, effect string, targets ...Target) NotifyResult {
+	if user == nil || len(targets) == 0 {
+		return NotifyResult{}
+	}
+	details := make([]EventDetails, 0, len(targets))
+	for _, t := range targets {
+		details = append(details, SpellLandedDetails(user.UserId, roomId, spellId, effect, t))
+	}
+	bridge := NewGameBridge(user, roomId)
+	return GetEngine().NotifyAll("spell_landed", details, bridge, bridge)
+}

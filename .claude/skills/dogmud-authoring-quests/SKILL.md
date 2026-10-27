@@ -319,6 +319,43 @@ one event per target under one guard, so a trigger fires at most once per
 command however many targets it matches. A trigger with no `target:` filter
 fires once for the whole command, not once per target.
 
+## Spell triggers: `spell_landed` and `effect`
+
+`event: spell_landed` fires when a player's spell actually lands on a target
+(#375 phase 3b slice 3): a heal that reaches its mark, a bolt that hits. A
+miss, a fizzle, a fumble or a defended help spell raises nothing. Filters:
+`noun:` is the spell id, `effect:` is the spell's `effect_type` (`heal`,
+`damage`, `shield`, `condition`, `charm`, ...), plus `target`, `mob`, `item`
+and `room` as on `command`. "Mend the scout":
+
+```yaml
+  - event: spell_landed
+    effect: heal
+    mob: 9112
+    conditions:
+      has: ["41-start"]
+    actions:
+      - grant: "41-mended"
+```
+
+`command: cast` stays the ATTEMPT event ("try casting at the dummy" lessons);
+`spell_landed` is the success event. Mob casters raise nothing, so "be healed
+by the priest" is not expressible. A cast over several targets raises one
+event per target under one guard, so a trigger fires at most once per cast.
+A spell with no creature target (identify, a summon, fold-anchor) raises one
+event with no target when it succeeds.
+
+Reachability. The walkthrough reports `walk-no-spell` when the player on the
+quest's path holds no spell that can land the step. A spell counts when it is
+a starter, when a `teach_spell` action or a `spellid` reward met earlier on
+the path teaches it, or when the offer is gated on another quest that teaches
+it. Fix an unreachable step by teaching the spell earlier on the path, or by
+gating the offer on a quest that teaches it and giving the hidden offer a
+breadcrumb that names the teacher. A spell a player may learn only by random
+discovery or from a book does not count: the walk cannot know they have it.
+`ValidateQuestRefs` refuses an unknown spell id and an `effect` no loaded spell
+has.
+
 ## Verify event names against the loader
 
 Quest YAML triggers panic at startup if the `event:` name is not in the
@@ -329,7 +366,9 @@ around line 39-43). The behavior tree event vocabulary
 quest engine event names. Do not guess an event name from the behavior tree
 vocabulary or from what sounds plausible: `mob_killed` and `mob_die` both
 sound right for a mob-death trigger, and the actual quest engine event is
-`mob_death`. Before writing a trigger, grep `validEvents` in
+`mob_death`. The events are: `room_enter`, `room_gate`, `item_give`,
+`skill_use`, `mob_death`, `command`, `command_issued`, `item_gain`,
+`quest_granted`, `room_interact`, `spell_landed`. Before writing a trigger, grep `validEvents` in
 `internal/questengine/loader.go` for the current canonical list, or copy the
 spelling from an existing quest YAML that uses the event you want.
 [[feedback_quest_engine_event_names]]

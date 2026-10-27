@@ -25,7 +25,7 @@ func TestValidateCommandTargets(t *testing.T) {
 	}
 	q = validQuest(ActionDef{Grant: "9001-start"})
 	q.Triggers[0].Event, q.Triggers[0].Target = "mob_death", TargetMob
-	if err := q.Validate(); err == nil || !strings.Contains(err.Error(), "only command has a target") {
+	if err := q.Validate(); err == nil || !strings.Contains(err.Error(), "only command and spell_landed have a target") {
 		t.Fatalf("a target on a mob_death trigger must be refused, got %v", err)
 	}
 }

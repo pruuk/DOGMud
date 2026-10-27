@@ -117,6 +117,7 @@ func triggerSignature(t *quests.TriggerDef) string {
 	addStr("noun", t.Noun)
 	addStr("verb", t.Verb)
 	addStr("target", t.Target)
+	addStr("effect", t.Effect)
 	var toks []string
 	walkGrants(t.Actions, false, func(tok string, _ bool) {
 		if !slices.Contains(toks, tok) {

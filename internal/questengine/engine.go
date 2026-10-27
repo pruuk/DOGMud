@@ -253,6 +253,9 @@ func matchTriggerFields(t *TriggerDef, d EventDetails, tier nounTier) bool {
 	if t.Target != "" && t.Target != d.TargetKind {
 		return false
 	}
+	if t.Effect != "" && t.Effect != d.Effect {
+		return false
+	}
 	if t.Noun != "" && !nounMatches(t.Noun, d, tier) {
 		return false
 	}

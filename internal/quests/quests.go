@@ -117,7 +117,7 @@ func (r *Quest) Validate() error {
 		"room_enter": true, "room_gate": true, "item_give": true, "skill_use": true,
 		"mob_death": true, "command": true, "item_gain": true,
 		"quest_granted": true, "room_interact": true,
-		"command_issued": true,
+		"command_issued": true, "spell_landed": true,
 	}
 
 	for i, t := range r.Triggers {
@@ -140,14 +140,19 @@ func (r *Quest) Validate() error {
 				return fmt.Errorf("quest %d (%s): trigger %d has invalid verb %q (use %s or %s; empty means %s)", r.QuestId, r.Name, i, t.Verb, VerbLook, VerbSearch, VerbLook)
 			}
 		}
-		// Only a command event names a target (#375 phase 3b slice 2).
+		// Only a command or a landed spell names a target (#375 phase 3b).
 		if t.Target != "" {
-			if t.Event != "command" {
-				return fmt.Errorf("quest %d (%s): trigger %d sets target %q on a %s trigger; only command has a target", r.QuestId, r.Name, i, t.Target, t.Event)
+			if t.Event != "command" && t.Event != "spell_landed" {
+				return fmt.Errorf("quest %d (%s): trigger %d sets target %q on a %s trigger; only command and spell_landed have a target", r.QuestId, r.Name, i, t.Target, t.Event)
 			}
 			if !slices.Contains(TriggerTargetKinds, t.Target) {
 				return fmt.Errorf("quest %d (%s): trigger %d has invalid target %q (use one of %s)", r.QuestId, r.Name, i, t.Target, strings.Join(TriggerTargetKinds, ", "))
 			}
+		}
+		// Only a landed spell has an effect; the name is checked against the
+		// loaded spells by ValidateQuestRefs.
+		if t.Effect != "" && t.Event != "spell_landed" {
+			return fmt.Errorf("quest %d (%s): trigger %d sets effect %q on a %s trigger; only spell_landed has an effect", r.QuestId, r.Name, i, t.Effect, t.Event)
 		}
 	}
 

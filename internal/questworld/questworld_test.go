@@ -43,7 +43,7 @@ func liveRefs(loaded []*quests.Quest) *quests.QuestValidators {
 			return false
 		},
 		MobExists: yesI, ItemExists: yesI, RoomExists: yesI, ConditionExists: yesI,
-		SpellExists: yesS, SkillExists: yesS, StatExists: yesS, RecipeExists: yesS,
+		SpellExists: yesS, EffectExists: yesS, SkillExists: yesS, StatExists: yesS, RecipeExists: yesS,
 		FactionExists: yesS, DialogueGrants: yesS, MobHasDialogue: yesI,
 	}
 }

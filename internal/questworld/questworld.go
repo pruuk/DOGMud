@@ -33,6 +33,12 @@ func Validators() quests.QuestValidators {
 		skillNames[string(s)] = true
 	}
 	dlgGrants := dialogueGrantTokens()
+	effects := map[string]bool{}
+	for _, sp := range spells.GetAllSpells() {
+		if sp.EffectType != "" {
+			effects[sp.EffectType] = true
+		}
+	}
 	return quests.QuestValidators{
 		StepExists:      func(tok string) bool { return quests.GetQuest(tok) != nil },
 		MobExists:       func(id int) bool { return mobs.GetMobSpec(mobs.MobId(id)) != nil },
@@ -40,6 +46,7 @@ func Validators() quests.QuestValidators {
 		RoomExists:      func(id int) bool { return rooms.LoadRoomTemplate(id) != nil },
 		ConditionExists: func(id int) bool { return conditions.GetConditionSpec(id) != nil },
 		SpellExists:     func(id string) bool { return spells.GetSpell(id) != nil },
+		EffectExists:    func(e string) bool { return effects[e] },
 		SkillExists:     func(name string) bool { return skillNames[name] },
 		StatExists:      func(name string) bool { return statNames[name] },
 		RecipeExists:    func(id string) bool { return crafting.GetRecipe(id) != nil },

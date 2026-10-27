@@ -1,0 +1,23 @@
+# #375 phase 3b slice 3 (PR #698): resolveSpell now raises spell_landed per
+# landed target. No shipped quest listens for it yet, so this is a regression
+# check that every cast still reads and resolves normally and that quest 44's
+# cast step (the attempt event) still advances once.
+name: 375-3b3-spell-landed
+mode: party
+summary: >-
+  Casting reads and resolves normally after resolveSpell gained the
+  spell_landed event; quest 44's cast step advances once.
+on_actor_stop: continue
+budgets:
+  wall_clock: 30m
+requires:
+  max_connections: 20
+roster:
+  - id: caster
+    personality: bug-finder
+    goals: goals/scenarios/375-3b3-spell-landed/caster.yaml
+
+group_goals:
+  - id: casts-read-normally
+    do: The caster casts at the mote, heals itself, casts a light with no target, and identifies an item.
+    verify: Every cast resolves with its normal lines, no error appears, and quest 44's cast step advances exactly once.

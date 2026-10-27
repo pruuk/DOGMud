@@ -20,6 +20,7 @@ type QuestValidators struct {
 	RoomExists      func(id int) bool
 	ConditionExists func(id int) bool
 	SpellExists     func(id string) bool
+	EffectExists    func(effect string) bool // some loaded spell has this effect_type (spell_landed effect filter)
 	SkillExists     func(name string) bool
 	StatExists      func(name string) bool
 	RecipeExists    func(id string) bool
@@ -278,6 +279,14 @@ func ValidateQuestRefs(q Quest, v QuestValidators) (errs []string, warns []strin
 		c.checkRoom(tw+" room filter", t.Room)
 		if t.Skill != "" && !c.v.SkillExists(t.Skill) {
 			c.errf("%s: skill filter %q does not exist", tw, t.Skill)
+		}
+		if t.Event == "spell_landed" {
+			if t.Noun != "" && !c.v.SpellExists(t.Noun) {
+				c.errf("%s: spell %q does not exist", tw, t.Noun)
+			}
+			if t.Effect != "" && !c.v.EffectExists(t.Effect) {
+				c.errf("%s: effect %q is not the effect_type of any spell", tw, t.Effect)
+			}
 		}
 		c.checkToken(tw+" quest_token filter", t.QuestToken)
 
