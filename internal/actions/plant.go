@@ -350,12 +350,7 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item, t
 	// Quest engine notification — player actors only.
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
-			bridge := questengine.NewGameBridge(u, room.RoomId)
-			questengine.GetEngine().Notify("command", questengine.EventDetails{
-				UserId:  actor.GetUserId(),
-				RoomId:  room.RoomId,
-				Command: "plant",
-			}, bridge, bridge)
+			questengine.NotifyCommand(u, room.RoomId, "plant", questengine.TargetContainer(containerName).WithItem(plantItem.ItemId))
 		}
 	}
 

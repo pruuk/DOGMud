@@ -546,12 +546,7 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 	// Quest engine notification — player actors only.
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
-			bridge := questengine.NewGameBridge(u, room.RoomId)
-			questengine.GetEngine().Notify("command", questengine.EventDetails{
-				UserId:  actor.GetUserId(),
-				RoomId:  room.RoomId,
-				Command: "steal",
-			}, bridge, bridge)
+			questengine.NotifyCommand(u, room.RoomId, "steal", questengine.TargetContainer(containerName))
 		}
 	}
 
@@ -857,12 +852,7 @@ func stealHouseholdBauble(actor Actor, itm items.Item, t theftAttempt) StealResu
 
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
-			bridge := questengine.NewGameBridge(u, room.RoomId)
-			questengine.GetEngine().Notify("command", questengine.EventDetails{
-				UserId:  actor.GetUserId(),
-				RoomId:  room.RoomId,
-				Command: "steal",
-			}, bridge, bridge)
+			questengine.NotifyCommand(u, room.RoomId, "steal", questengine.TargetItem(itm.ItemId))
 		}
 	}
 

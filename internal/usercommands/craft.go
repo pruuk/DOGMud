@@ -192,7 +192,7 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			ActorPlainName: user.Character.GetCharacterName(false),
 		})
 		craftDeliverInstant(user, room, result.Recipe, roles)
-		notifyCraftQuest(user, room)
+		notifyCraftQuest(user, room, result.Recipe.Output.ItemId)
 		return true, nil
 
 	case result.Initiated:
@@ -430,13 +430,8 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 // advances only when the action succeeds (owner, 2026-10-17; a failed brew
 // used to grant quest 38's brew step). The timed-craft twin of this call is in
 // tickUserCrafting (hooks/NewRound_UserRoundTick.go).
-func notifyCraftQuest(user *users.UserRecord, room *rooms.Room) {
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "craft",
-	}, bridge, bridge)
+func notifyCraftQuest(user *users.UserRecord, room *rooms.Room, itemId int) {
+	questengine.NotifyCommand(user, room.RoomId, "craft", questengine.TargetItem(itemId))
 }
 
 // classifyRecipe buckets a known recipe for the current room: "ready" (makeable
@@ -768,7 +763,7 @@ func completeCraft(user *users.UserRecord, room *rooms.Room, recipe *crafting.Re
 		ActorPlainName: user.Character.GetCharacterName(false),
 	})
 	craftDeliverInstant(user, room, recipe, roles)
-	notifyCraftQuest(user, room)
+	notifyCraftQuest(user, room, recipe.Output.ItemId)
 }
 
 // titleCase capitalises the first letter of each space-separated word.

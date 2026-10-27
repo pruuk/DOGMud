@@ -573,6 +573,7 @@ func tickUserCrafting(user *users.UserRecord, room *rooms.Room) {
 				var bottleAgingMult float64
 				// The room hears a failure when an enchant does not apply.
 				roomPhase := crafting.PhaseSuccess
+				craftedItemId := 0 // what the quest event names: the enchanted item or the output
 				for _, itm := range consumed {
 					if spec := itm.GetSpec(); spec.ComponentTag == "bottle" && spec.BottleAgingMultiplier > 0 {
 						bottleAgingMult = spec.BottleAgingMultiplier
@@ -601,6 +602,7 @@ func tickUserCrafting(user *users.UserRecord, room *rooms.Room) {
 						user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
 						eDef := enchantments.GetEnchantment(recipe.EnchantType)
 						if eDef != nil {
+							craftedItemId = targetItem.ItemId
 							targetItem.EnchantType = recipe.EnchantType
 							targetItem.EnchantTier = 0
 							targetItem.EnchantUses = 0
@@ -614,6 +616,7 @@ func tickUserCrafting(user *users.UserRecord, room *rooms.Room) {
 						user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
 					}
 					// Normal crafting: produce output item
+					craftedItemId = recipe.Output.ItemId
 					newItem := items.New(recipe.Output.ItemId)
 					newItem.CraftedRound = util.GetRoundCount()
 					newItem.CraftSkill = user.Character.CraftQualityLevel(user.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))) // Faithwrought quality lift
@@ -644,12 +647,7 @@ func tickUserCrafting(user *users.UserRecord, room *rooms.Room) {
 				// does not count. The instant-craft twin is notifyCraftQuest
 				// in usercommands/craft.go.
 				if roomPhase == crafting.PhaseSuccess {
-					bridge := questengine.NewGameBridge(user, room.RoomId)
-					questengine.GetEngine().Notify("command", questengine.EventDetails{
-						UserId:  user.UserId,
-						RoomId:  room.RoomId,
-						Command: "craft",
-					}, bridge, bridge)
+					questengine.NotifyCommand(user, room.RoomId, "craft", questengine.TargetItem(craftedItemId))
 				}
 
 				// Stage 31.1: Recipe discovery roll

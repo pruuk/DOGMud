@@ -36,6 +36,9 @@ func TestBuy_AffixedStockItem(t *testing.T) {
 	if !res.Success {
 		t.Fatalf("affixed purchase failed: %+v", res)
 	}
+	if res.ItemId != sellTestItemId {
+		t.Errorf("BuyResult.ItemId = %d; want %d (the template id of the item bought)", res.ItemId, sellTestItemId)
+	}
 	if len(shopInv.AffixedStock) != 0 {
 		t.Errorf("affixed entry should be removed after purchase; have %d", len(shopInv.AffixedStock))
 	}
