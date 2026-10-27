@@ -211,48 +211,87 @@ random discovery or from a book does not satisfy reachability. The skip probe, w
 later Way could be fired early, assumes the player may know any spell, since the held spells are a
 minimum.
 
-### 4. Slice 4: areas, counts and explore
+### 4. Slice 4: areas, counts and explore (built)
 
-**Area files.** `_datafiles/world/dogmud/areas/<key>.yaml` (flat: an area may span zones):
+Built in `feat/375-3b-areas`. Where the text below differs from the original design, the plan's
+three amendments and the review corrections are the record, and they are marked.
+
+**Area files.** `_datafiles/world/dogmud/areas/<key>.yaml` (flat: an area may span zones; the
+folder is `<DataFiles>/areas/` with DataFiles `_datafiles/world/dogmud`). Zone names are the
+display names rooms store, not file-style keys:
 
 ```yaml
-key: grove_heart
-name: the Grove            # player-facing, used by the minimap (phase 4) and the tracker
-zones: [pothole_coulee]    # optional: every room in each zone
+key: unquiet_grove         # must equal the file name without .yaml
+name: the unquiet grove    # player-facing, used in the explored line (and by phase 4)
+zones: [Pothole Coulee]    # optional: every room in each zone
 rooms: [5311, 5312, 5313]  # optional: individual rooms
 ```
 
-A new leaf package `internal/areas` loads them, resolves each to a set of template room ids at boot
-(zones through the loaded rooms' `zone`), and builds the reverse index `roomId -> []areaKey`. The
-loader refuses an unknown zone, an unknown room, a key that is not the file name, and an area that
-resolves to no rooms; it warns on a listed room already inside a listed zone. Area keys go into the
-stable-id manifest (`areas/area-keys.txt`). Ships a `context.md`.
+The leaf package `internal/areas` loads them (strict decoding), resolves each to a set of template
+room ids at boot (zones through `rooms.TemplateRoomZones()`), and builds the reverse index
+`roomId -> []areaKey`. The loader refuses an unknown zone, an unknown room, a key that is not the
+file name, and an area that resolves to no rooms; it warns on a listed room already inside a
+listed zone. Area keys are in `areas/area-keys.txt`, guarded by
+`internal/guards/area_manifest_test.go`. `internal/areas/context.md` documents it. One area ships:
+`unquiet_grove`, and quest 45's three copied cast triggers are now one with `area:`.
 
-**`area` and `zone` filter every event.** Two new trigger fields. `matchTriggerFields` tests the
-event's template room against the area's set (one map lookup) or the room's zone. Quest 45's three
-triggers become one with `area:`.
+`rooms.TemplateRoomZone` and `TemplateRoomZones` (`internal/rooms/template_zones.go`) are a new
+template-room-to-zone index, built at load and kept current on move, rename and delete, because
+`ZoneConfig.RoomIds` holds only the rooms in memory.
 
-**Counts.** New trigger field `count: N` (N >= 2; 1 is the default and is refused when written).
-Each match whose conditions pass increments a saved counter for (quest, step); the trigger's
-actions run only when the counter reaches N. The counter is saved on the character in a new map
-`QuestStepCounts map[string]int` keyed `"<questId>-<stepId>"`, cleared when the quest's token
-advances past that step, and kept when the quest is abandoned (phase 5), like the step token.
-Tracker and quest log show "<label>: 2 of 5". A count trigger may carry `label:` for that line;
-without one the line uses the step description. (Counts are not among the number classes the
-player-copy rules forbid: damage, healing, armour, durations.)
+**`area` and `zone` filter every event.** `matchTriggerFields` tests the event's template room
+against the area's set (one map lookup) or the room's zone. For the filter to hold inside an
+instance, `questengine.EventAt` builds the event in the template room, and `mob_death`,
+`item_gain`, `skill_use`, `item_give` and the `quest_granted` hook now use it (the command-event
+builders already did). A trigger sets area or zone, not both.
 
-**Explore (`distinct`).** New trigger field `distinct: all|N` on a `room_enter` trigger with an
-`area`. It counts distinct rooms of the area on the player's map, so prior mapping counts and an
-unseen room counts for nothing. Progress uses the same `QuestStepCounts` entry.
-- **Seeded at step start.** When the previous step's token is granted, one pass over the area's
-  rooms against `VisitedRooms` (through a set built for the pass) sets the count. If it already
-  meets the target, the trigger fires at once and the player reads the step's `explored_line`, or
-  by default "You already know every corner of <area name>."
-- **Advanced only on a newly mapped room.** `MarkRoomMappedIfSeen` returning true raises a quest
-  check for that room; if the room is in an area with an active `distinct` step, the count goes up
-  by one. A room already on the map costs nothing.
-- **Validator.** `distinct: all` on an area containing a room behind a quest gate or a locked exit
-  is a boot error; an area over 40 rooms with `distinct: all` is a warning.
+**Counts.** Trigger field `count: N` (N >= 2; 1 is the default and is refused when written). Review
+corrections to the first design, which keyed one counter per step:
+- **Progress is per trigger.** The saved key is `<questId>-<step>-t<triggerIndex>`
+  (`quests.CountKey`), in `Character.QuestStepCounts map[string]int`. Two count triggers on one
+  step never credit each other.
+- **The loader requires** a `count` trigger to hold a `has` naming a step of its own quest
+  (`Quest.CountStep` is the step the count belongs to), a `missing` naming a token it grants, and
+  a grant, so it cannot count on another quest or after it fires.
+- **It bumps only while the player is on that step**, through
+  `StepCounter.BumpStepCount(questId, step, key) (int, bool)` (an optional interface on the action
+  context). Counts clear when the quest's progress moves or clears, and are kept when the quest is
+  abandoned (phase 5).
+- **`count` is refused on `room_gate`, `room_interact` and `item_give`** (`quests.CountAllowed`):
+  a match short of the count is a handled event, which on those events means the quest took the
+  command, so a partial count would swallow the move, look or give.
+- **`label` is at most 40 characters.** The tracker and quest log show "<label>: 2 of 5"; a count
+  or explore line with no label reads "Progress: 2 of 5". (Counts are not among the number classes
+  the player-copy rules forbid: damage, healing, armour, durations.)
+
+**Explore (`distinct`).** Trigger field `distinct: all|N` on a `room_enter` trigger with an `area`
+(never with `count`). It counts distinct rooms of the area on the player's map, so prior mapping
+counts and an unseen room counts for nothing. Amended from the first design:
+- **Progress is read from the map, not saved** (plan amendment 1). It is the number of the area's
+  rooms in the player's `VisitedRooms`, read through the optional `MapReader.MappedCount`, so there
+  is no second copy of the same fact to drift. `QuestStepCounts` holds only `count:` progress.
+- **Two moments only** (plan amendment 2): when a room of the area is newly mapped
+  (`NotifyRoomMapped`, raised wherever `actions.MarkRoomMappedIfSeen` returns true, held there by
+  `internal/guards/room_mapped_guard_test.go`) and when the step starts (inside the `quest_granted`
+  chain). A `distinct` trigger is never matched on ordinary room entry.
+- If the area is already mapped enough at step start the trigger fires at once and the player
+  reads the step's `explored_line`, or by default "You already know every corner of <area name>."
+  for `all` and "You have already seen enough of <area name>." for N.
+- **Validator.** `distinct: all` on an area containing a room behind a locked exit or a
+  `room_gate` trigger is a boot error; N larger than the area is an error; an area over 40 rooms
+  with `distinct: all` is a warning.
+
+**Optional interfaces** (plan amendment 3). Counting and map reading go through `StepCounter` (on
+the action context) and `MapReader` (on the player state), type-asserted, so existing
+implementations and test mocks need no change. A context without `StepCounter` treats `count` as
+reached on the first match; a player state without `MapReader` never satisfies `distinct`. The
+walkthrough's player implements both (a count is reached, an explore is met).
+
+**The tracker refreshes** on a count bump or an explore change (`GameBridge.QuestProgressChanged`,
+through the `ProgressWatcher` interface), with no repeated banner. The quest log and the Char.Quests
+GMCP payload carry the progress line (`Engine.UserStepProgress`). The builder's `EVENT_FILTERS` and
+the GMCP `questEventVocab` list the new fields and are held in step by
+`TestQuestBuilderFiltersMatchTheVocab`.
 
 **Map targets are phase 4.** This slice ships the area data, the filters and the counters. Phase 4
 adds `map_target_area`, the nearest-room arrow, the in-area outline and the "explored N of M"
@@ -276,15 +315,29 @@ Outlines and fog markers use shape or pattern; green against blue never carries 
 |---|---|---|
 | Any event | `area`/`zone` filter: one map lookup, only on triggers already selected by event type and passing the cheaper filters first | O(1) per candidate trigger |
 | `count` | Increment a saved int after conditions pass | O(1), only on a real match |
-| Explore | Only when a room is newly mapped; reverse-index lookup | O(areas containing the room), zero on rooms already mapped |
-| Explore seed | One pass over the area's rooms | Once per step start |
+| Explore | Only when a room is newly mapped; reverse-index lookup, then one map read of the area | O(areas containing the room), plus O(area size) per live explore step; zero on rooms already mapped |
+| Explore at step start | One pass over the area's rooms against the map | Once per step start |
 | `topic_heard` | One Notify per topic played | Once per menu choice |
 | Objective marker | `WouldFire` per eligible info topic when a menu or roster marker is built | Per menu build, never per round |
 | `spell_landed`, `command` targets | One Notify per affected target | Already per action |
 
-**Measured, not assumed.** Slice 4's PR carries a Go benchmark of `Notify("room_enter")` with the
-shipped quests plus 50 synthetic area triggers loaded, before and after, and fails review if the
-per-call cost rises more than 10%. The slice 4 playtest records CPU the way the 10-24 lag fix did.
+**Measured, not assumed.** Slice 4 carries `BenchmarkNotifyRoomEnter` (`internal/questengine/area_bench_test.go`,
+`area_bench_areas_test.go`): `Notify("room_enter")` over the 81 shipped quests, and again with 50
+synthetic area-scoped triggers over a 30-room area. The bar was a rise of no more than 10%.
+Result (Ryzen 9 5900X, `-count=5`, raw numbers in the slice 4 benchmark log):
+
+| Case | ns/op |
+|---|---|
+| master `a84384183`, shipped quests, room outside every area | about 322 |
+| branch before the fix (the guard moved to the heap by the `fire` refactor, `GetBalanceConfig` read per call) | about 380 |
+| branch, `Engine.fire`/`guarded` refactor plus `configs.QuestGuardLimits` | about 195 |
+| branch, shipped quests plus 50 area triggers, room outside the area | about 1,050 |
+| branch, shipped quests plus 50 area triggers, room inside the area | about 2,600 |
+
+The first run missed the bar (about +18%). The fix kept the `EvalGuard` on the caller's stack
+(`guardedRun`) and narrowed the two guard knobs through `configs.QuestGuardLimits`, which is also
+what drops the shipped case below master. The slice 4 playtest records CPU the way the 10-24 lag
+fix did.
 
 ### 6. Docs and help
 

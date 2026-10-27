@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/areas"
 	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/stretchr/testify/require"
@@ -47,6 +48,36 @@ func liveRefs(loaded []*quests.Quest) *quests.QuestValidators {
 		FactionExists: yesS, DialogueGrants: yesS, MobHasDialogue: yesI,
 		TopicExists: func(int, string) bool { return true },
 		TopicGrant:  func(int, string) string { return "" },
+		AreaExists:  yesS, ZoneExists: yesS,
+		AreaSize:      func(string) int { return 3 },
+		AreaGatedRoom: func(string) (int, bool) { return 0, false },
+	}
+}
+
+// A room_gate trigger gates its room, every room of its area, or every
+// template room of its zone; other events gate nothing.
+func TestGateTriggerRooms(t *testing.T) {
+	zones := map[int]string{5311: "Pothole Coulee", 5312: "Pothole Coulee", 5400: "Thornwall", 5401: "Thornwall"}
+	t.Cleanup(areas.InstallForTest([]areas.Area{{Key: "grove", Name: "the grove", Rooms: []int{5311, 5312}}}, zones))
+	qs := []quests.Quest{{Triggers: []quests.TriggerDef{
+		{Event: "room_gate", Room: 7},
+		{Event: "room_gate", Area: "grove"},
+		{Event: "room_gate", Zone: "Thornwall"},
+		{Event: "room_enter", Room: 8},
+	}}}
+	set := map[int]bool{}
+	addGateTriggerRooms(set, qs, zones)
+	require.Equal(t, map[int]bool{7: true, 5311: true, 5312: true, 5400: true, 5401: true}, set)
+}
+
+// #375 phase 3b slice 4: the lowest gated room of an area, or none.
+func TestGatedRoomIn(t *testing.T) {
+	gated := map[int]bool{5313: true, 5312: true, 99: true}
+	if id, ok := gatedRoomIn([]int{5311, 5312, 5313}, gated); !ok || id != 5312 {
+		t.Fatalf("gatedRoomIn = %d %v, want 5312", id, ok)
+	}
+	if _, ok := gatedRoomIn([]int{5311}, gated); ok {
+		t.Fatal("an open area reported a gated room")
 	}
 }
 

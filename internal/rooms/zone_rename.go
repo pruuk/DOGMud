@@ -260,6 +260,8 @@ func RenameZone(oldName, newName string) error {
 			r.Zone = newName
 		}
 	}
+	// The template zone index holds every template room, loaded or not.
+	renameTemplateZone(oldName, newName)
 
 	// roomIdToFileCache stores "<zoneFolder>/<id>.yaml"; a stale entry points
 	// at the pre-move path. GetFilePath would self-heal by walking the whole

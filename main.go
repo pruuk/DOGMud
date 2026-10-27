@@ -20,6 +20,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/apiframework"
+	"github.com/GoMudEngine/GoMud/internal/areas"
 	"github.com/GoMudEngine/GoMud/internal/audio"
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
@@ -1720,7 +1721,18 @@ func loadAllDataFiles(isReload bool) (reloadErr error) {
 		return rooms.LoadRoom(roomId) != nil
 	})
 	rooms.RebuildZonePlayerCount() // build the zone → player-count index
-	conditions.LoadDataFiles()     // Load conditions before items for cost calculation reasons
+	// Areas (#375 phase 3b slice 4): named room sets resolved over the
+	// template rooms just loaded, before the quest engine registers triggers
+	// that name them. A bad area file stops the boot; on a reload the old
+	// areas stay and the error is reported.
+	areasErr := areas.LoadDataFiles(rooms.TemplateRoomZones())
+	if areasErr != nil {
+		if !isReload {
+			panic(areasErr)
+		}
+		mudlog.Error("areas", "error", areasErr)
+	}
+	conditions.LoadDataFiles() // Load conditions before items for cost calculation reasons
 	items.LoadDataFiles()
 	// Baubles: the catalog behind item 900 (docs/baubles). Loaded after items
 	// so the carrier exists; installs the resolver GetSpec reads names from.
@@ -1967,6 +1979,9 @@ func loadAllDataFiles(isReload bool) (reloadErr error) {
 	reloadErr = dialogueDoor(validateShippedDialogue(), isReload)
 	if err := questDoor(isReload); err != nil && reloadErr == nil {
 		reloadErr = err
+	}
+	if areasErr != nil && reloadErr == nil {
+		reloadErr = areasErr
 	}
 	templates.LoadAliases(plugins.GetPluginRegistry())
 	keywords.LoadAliases(plugins.GetPluginRegistry())

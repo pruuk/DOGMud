@@ -985,6 +985,14 @@ narrowed. `internal/gametime`'s `SunLight`, `MoonLight` and
 `CelestialLight`, and `internal/rooms`'s `Room.LightLevel()`/`IsLit()`, all
 read through this accessor rather than `GetBalanceConfig()`.
 
+**`QuestGuardLimits() (maxDepth int, warnMs int64)`**
+(`config.quest_guard_accessor.go`) is the same narrowing for the quest
+engine's two guard knobs, `QuestChainDepthLimit` and
+`QuestPerformanceWarnMs`, which `questengine` reads on every event a player
+raises (room_enter on every step). Measured in `BenchmarkNotifyRoomEnter`
+over the shipped quests: 320 ns per call reading through
+`GetBalanceConfig()`, 190 ns through this accessor (#375 phase 3b slice 4).
+
 ### Bleed stacks (conditions unification slice 1b)
 
 Fifteen `ConfigInt` knobs, three per bleed move, in the Bleed stacks block of

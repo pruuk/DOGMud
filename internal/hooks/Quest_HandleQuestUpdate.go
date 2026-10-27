@@ -125,11 +125,9 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 	// here — preventing a double-fire of the same trigger.
 	if freshlyGranted {
 		qbridge := questengine.NewGameBridge(questUser, questUser.Character.RoomId)
-		questengine.GetEngine().Notify("quest_granted", questengine.EventDetails{
-			UserId:     questUser.UserId,
-			RoomId:     questUser.Character.RoomId,
-			QuestToken: evt.QuestToken,
-		}, qbridge, qbridge)
+		d := questengine.EventAt(questUser.UserId, questUser.Character.RoomId) // template room
+		d.QuestToken = evt.QuestToken
+		questengine.GetEngine().Notify("quest_granted", d, qbridge, qbridge)
 	}
 
 	_, stepName := quests.TokenToParts(evt.QuestToken)

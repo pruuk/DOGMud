@@ -1008,6 +1008,34 @@ and a trigger that grants, at any sequence depth, the token that topic's own
 be queued twice, and for an `-end` token the second event pays the rewards
 again.
 
+### Trigger fields: `area`, `zone`, `count`, `distinct`, `label`, `explored_line` (#375 phase 3b slice 4)
+
+- `area` (an `areas/` key) and `zone` (a zone display name such as `Pothole
+  Coulee`) filter any event by the event's room. One or the other, not both.
+  `ValidateQuestRefs` (`checkArea`) refuses an unknown area or zone.
+- `count: N` (N >= 2; 1 is the default and refused when written) fires the
+  trigger on its Nth match. `Validate` (`validateCountStep`) requires the
+  trigger to hold a `has` naming a step of its own quest (`Quest.CountStep`
+  picks the latest such step by order, and keys the count), a `missing` naming
+  a token its actions grant (so it stops counting once it fires), and a
+  grant. Progress is per trigger, saved under `CountKey(questId, step,
+  triggerIndex)` = `<questId>-<step>-t<triggerIndex>`, and bumps only while the
+  player is on that step.
+- `count` is refused on `room_gate`, `room_interact` and `item_give`
+  (`CountAllowed`, the `countSwallowsCommand` set): a partial match is a handled
+  event, and on those events handled means the quest took the command.
+- `distinct: all|N` is `room_enter` + `area` only, never with `count`
+  (`DistinctAll`, `DistinctNeed(distinct, areaSize)`). `ValidateQuestRefs` also
+  refuses N larger than the area, refuses `all` on an area with a gated room
+  (`QuestValidators.AreaGatedRoom`: behind a locked exit or a `room_gate`
+  trigger), and warns past `ExploreAllWarnRooms` (40) rooms.
+- `label` names the progress line ("<label>: 2 of 5"), needs `count` or
+  `distinct`, and is at most `MaxLabelLength` (40) characters; with no label
+  the line reads "Progress: N of M". `explored_line` needs `distinct`.
+- `QuestValidators` gained `AreaExists`, `ZoneExists`, `AreaSize` and
+  `AreaGatedRoom`; `questworld.Validators` fills them. `questloop`'s trigger
+  signature includes area, zone, count and distinct.
+
 ### Trigger action: `discover`
 
 `discover: <hidden noun key>` (`ActionDef.Discover`, #375 phase 3a) marks a

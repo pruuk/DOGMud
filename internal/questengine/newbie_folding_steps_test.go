@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/areas"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -77,6 +78,23 @@ func foldingSpawns(t *testing.T, room int, mob int) bool {
 	return false
 }
 
+// foldingInstallGrove installs the shipped unquiet_grove area (quest 45's
+// cast step is scoped to it) over the coulee rooms it names.
+func foldingInstallGrove(t *testing.T) {
+	t.Helper()
+	_, here, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "areas", "unquiet_grove.yaml"))
+	require.NoError(t, err)
+	var a areas.Area
+	require.NoError(t, yaml.Unmarshal(data, &a))
+	zones := map[int]string{}
+	for _, id := range []int{foldingOrrinRoom, foldingGroveEdge, foldingVeilHollow, foldingThinningWood, foldingGroveHeart, foldingThinnestPlace} {
+		zones[id] = "Pothole Coulee"
+	}
+	t.Cleanup(areas.InstallForTest([]areas.Area{a}, zones))
+}
+
 func foldingHint(q *QuestDef, id string) string {
 	for _, s := range q.Steps {
 		if s.Id == id {
@@ -91,6 +109,7 @@ func foldingHint(q *QuestDef, id string) string {
 // with "a fight on you"; casting at the creature and then bringing it down is
 // one fight. Killing first and casting after needs a second fight.
 func TestQuest45UnquietGrove_CastThenKill(t *testing.T) {
+	foldingInstallGrove(t)
 	q := loadShippedQuest(t, "45-the_unquiet_grove.yaml", 45)
 	require.Equal(t, []string{"start", "cast", "kill", "end"}, newLinearPlayer(q).steps,
 		"cast comes before kill; both ids survive so a saved player resumes")

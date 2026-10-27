@@ -144,6 +144,13 @@ The `internal/rooms` package is the core world management system for GoMud, hand
 - **Zone management**: Organizing rooms into logical zones with metadata
 - **File system integration**: Room data persistence and template loading
 - **Cache optimization**: Room file path caching and efficient lookups
+- **Template room zones** (`template_zones.go`, #375 3b): `TemplateRoomZone(id)`
+  and `TemplateRoomZones()` read every template room's zone from boot.
+  `ZoneConfig.RoomIds` holds only rooms in memory (rooms load lazily), so use
+  these, never `GetAllZoneRoomsIds`, for "which zone is this room in". Built in
+  `loadAllRoomZones`, kept current by `addRoomToMemory`, `MoveToZone`,
+  `RenameZone` and `DeleteRoomTemplate`; ephemeral ids are never indexed. `areas.LoadDataFiles` and the quest engine's `zone:` filter
+  read it.
 
 ### Room Details and Presentation (`roomdetails.go`)
 - **RoomTemplateDetails**: Rich room information for client rendering

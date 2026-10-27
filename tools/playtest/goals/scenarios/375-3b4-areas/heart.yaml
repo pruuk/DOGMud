@@ -1,0 +1,26 @@
+# HEART seat: quest 45 The Unquiet Grove, starting in the Grove Heart (5313).
+# Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5313
+  overlays:
+    set_quest_tokens: ["45-start"]
+    grant_spells:
+      conviction-spike: 1
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `quests` and quote The Unquiet Grove. Type `look`.
+  - >-
+    Fight a grove creature here or in the next grove room, and cast Conviction
+    Spike at it during the fight. Quote every line. `quests`: the cast step
+    must have advanced exactly once; note the room.
+  - >-
+    After the fight, walk every room you can reach in the grove and one room
+    beyond it, typing `look` in each, and `quests` at the end. Report any line
+    that looks new or wrong (especially anything about exploring, areas or
+    progress counts, which no shipped quest should show yet), and whether any
+    command felt slow.

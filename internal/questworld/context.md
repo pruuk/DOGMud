@@ -26,6 +26,14 @@ condition, mob and room registries to fill them.
   `TopicExists` and `TopicGrant` (`topicExistsOnMob`, `topicGrantOnMob`) read
   the NPC's dialogue file for a `topic_heard` trigger's topic and for that
   topic's own `grantsQuest`.
+- Area and zone checks (#375 phase 3b slice 4): `Validators()` fills
+  `AreaExists` and `AreaSize` from `areas.Get` and `areas.Rooms`, `ZoneExists`
+  from `zoneExists` (a zone display name some template room carries), and
+  `AreaGatedRoom` from `gatedRoomIn` over a set built lazily, once per
+  `Validators()` value, by `loadGatedRooms` (the destination of every locked
+  exit plus every room a `room_gate` trigger can refuse, `addGateTriggerRooms`:
+  its room, its area's rooms, its zone's rooms). Only an explore-all step asks,
+  so most boots never build it.
 - `Registry() questloop.World`: every loaded quest, every dialogue file
   (`dialogue.LoadAllFiles`; their own problems are the dialogue door's), the
   live `Validators()` and `Names()`, and `External`: every behaviour tree

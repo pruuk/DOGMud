@@ -25,6 +25,11 @@ what a trigger *does*, you edit this package.
   holds the one way to raise a `spell_landed` event, `SpellLandedDetails` and
   `NotifySpellLanded`, and the one way to raise `topic_heard`,
   `TopicHeardDetails` and `NotifyTopicHeard`.
+- **counts.go**: `StepCounter` and `countMatch` (`count: N`).
+- **explore.go**: `MapReader`, `ProgressWatcher`, `Engine.CheckExplore`,
+  `exploreAtStepStart`, `exploredLine` (`distinct` explore steps).
+- **progress.go**: `Engine.StepProgress`, `ProgressLine`,
+  `Engine.UserStepProgress` (the "Progress: 2 of 5" line).
 - **dryrun.go**: `WouldFire` (side-effect-free "would Notify fire?") and
   `SearchFeatures` (a room's quest search nouns).
 - **types.go** — type aliases onto `internal/quests`, plus `EventDetails` and
@@ -143,11 +148,74 @@ that replaced an older pattern of mutating unexported fields *on* the shared
 definition struct. Definitions are immutable shared data owned by `quests`;
 keep it that way.
 
+### Areas, counts and explore (#375 phase 3b slice 4)
+
+**`area:` and `zone:`** filter every event in `matchTriggerFields`: the event's
+template room must be in the area (`areas.Contains`) or have that zone
+(`roomZoneOf`, which is `rooms.TemplateRoomZone`). They are checked after the
+cheaper filters. `EventAt(userId, roomId)` builds an event in the template
+room (`rooms.OriginalRoomId`); `mob_death`, `item_gain`, `skill_use`,
+`item_give` and the `quest_granted` hook use it, as `CommandDetails` and the
+other command-event builders already did, so the filters hold inside an
+instance. The source's bridge keeps the real room.
+
+**`count: N`** (N >= 2). `fire` calls `countMatch` after the conditions and the
+visit mark. Progress is per trigger: `indexedTrigger` carries `countStep`
+(`Quest.CountStep`, the step the trigger's `has` names) and `countKey`
+(`quests.CountKey`, `<questId>-<step>-t<triggerIndex>`), so two count triggers
+on one step never credit each other. `countMatch` asks the action context for
+`StepCounter.BumpStepCount(questId, step, key) (int, bool)`: it bumps only
+while the player's current step is that step, otherwise the match is not
+counted and handles nothing (`countSkipped`). A counted match short of N is a
+handled event (`countCounted`) whose actions wait for the Nth. A context
+without `StepCounter` treats every match as the Nth. `GameBridge` implements it
+over `Character.BumpQuestStepCount` and calls `QuestProgressChanged`. The loader
+refuses `count` on `room_gate`, `room_interact` and `item_give`
+(`quests.CountAllowed`), where a partial match would swallow the command.
+
+**`distinct`** (an explore step: `room_enter` with an `area`). It is skipped in
+`matchTriggerFields`, so it never fires on ordinary room entry. Progress is not
+saved: it is `MapReader.MappedCount(areaRooms)`, the rooms of the area on the
+player's map, so rooms seen before the quest count and a room crossed in the
+dark does not. It is checked at two moments only: `CheckExplore`, raised by
+`NotifyRoomMapped` when `actions.MarkRoomMappedIfSeen` newly maps a room
+(`internal/guards/room_mapped_guard_test.go` keeps every caller raising it), and
+`exploreAtStepStart`, inside `evaluate` when a `quest_granted` token starts the
+step. Both go through `fire`, so an explore step is guarded, marked and chained
+like any trigger. The default line when the area is already explored at step
+start (`exploredLine`) is "You already know every corner of <area name>." for
+`all` and "You have already seen enough of <area name>." for N; `explored_line`
+overrides it. A player state without `MapReader` never satisfies an explore
+step (the walk's `walkPlayer` implements it as always met).
+
+**Progress line.** `StepProgress` finds the first count or distinct trigger
+leading from a step and returns label, have and need (have capped at need);
+`UserStepProgress` reads the character, `ProgressLine` formats it. A trigger
+with no `label` reads "Progress: N of M"; labels are capped at 40 characters
+(`quests.MaxLabelLength`). The quest log (`usercommands/quests.go`) and the web
+tracker (`gmcp.Char.go`, `Progress` in the Char.Quests payload) both call
+`UserStepProgress`. `GameBridge.QuestProgressChanged` (the `ProgressWatcher`
+method) queues a marker-only `events.Quest` so the tracker refreshes on a count
+bump or an explore change without repeating a banner.
+
+**Refactor.** `Engine.fire` is the one firing path (conditions, visit mark,
+count, actions, chain); `evaluate` and `CheckExplore` both use it. `guardedRun`
+(`beginGuarded`, `end`) holds the limits and timing shared by `NotifyAll` and
+`CheckExplore`, with the `EvalGuard` made on the caller's stack so room_enter
+(run on every step) allocates nothing for it. `beginGuarded` reads
+`configs.QuestGuardLimits`.
+
+**Cost** (`BenchmarkNotifyRoomEnter`, 81 shipped quests, Ryzen 9 5900X,
+2026-10-27): master about 322 ns/op, this branch about 195 ns/op for a room
+outside every area (the accessor narrowing more than pays for the area
+filter); with 50 synthetic area triggers added, 1.05 us outside the area and
+2.6 us inside it.
+
 ## Evaluation flow
 
 `Notify` → `evaluate` (recursive), per matching trigger:
 
-1. **Field match** (`matchTriggerFields`) — mob, room, item, skill, command,
+1. **Field match** (`matchTriggerFields`): mob, room, area, zone, item, skill, command,
    topic, questToken, noun, verb, target. A trigger `noun:` matches in three tiers
    (`nounTier`, picked by `pickNounTier`): the typed noun exactly; else its
    singular/plural variant (`util.NounNumberVariants`); else

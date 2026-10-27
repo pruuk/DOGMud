@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/relationships"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -281,7 +282,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			// Record this room on the fog-of-war web map, by its template id,
 			// only if the player can make anything out there: a room walked
 			// through in the dark stays off the map (#252, ruling R5).
-			actions.MarkRoomMappedIfSeen(user.Character, destRoom)
+			// A newly mapped room may finish an explore step (#375); the
+			// check runs after the arrival look below, so its lines follow
+			// the room the player just saw.
+			newlyMapped := actions.MarkRoomMappedIfSeen(user.Character, destRoom)
 
 			// U7 Task 10: a completed move rarely trains search. Inside the
 			// MoveToRoom success branch on purpose: a refused or locked move
@@ -581,6 +585,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				Look(``, user, destRoom, events.CmdSecretly)
 			} else {
 				Look(``, user, destRoom, events.CmdSecretly)
+			}
+
+			if newlyMapped {
+				questengine.NotifyRoomMapped(user, destRoom.RoomId)
 			}
 
 			room.PlaySound(`room-exit`, `movement`, user.UserId)

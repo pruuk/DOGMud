@@ -86,6 +86,16 @@ func (t Target) WithNoun(noun string) Target {
 	return t
 }
 
+// EventAt starts an event in a room: the user and the template room
+// (rooms.OriginalRoomId, a no-op for a normal room). Every event source
+// matches on the template room, so room, area and zone filters hold inside
+// an instance; the source's bridge keeps the real room (#375 phase 3b
+// slice 4).
+func EventAt(userId, roomId int) EventDetails {
+	matchRoom, _ := rooms.OriginalRoomId(roomId)
+	return EventDetails{UserId: userId, RoomId: matchRoom}
+}
+
 // CommandDetails builds the command event for one target. RoomId is the
 // template room (rooms.OriginalRoomId), as command_issued and flee already
 // match, so room-scoped triggers work in ephemeral instances.
@@ -151,6 +161,20 @@ func NotifySpellLanded(user *users.UserRecord, roomId int, spellId, effect strin
 	}
 	bridge := NewGameBridge(user, roomId)
 	return GetEngine().NotifyAll("spell_landed", details, bridge, bridge)
+}
+
+// NotifyRoomMapped is raised when a room joined the player's map
+// (actions.MarkRoomMappedIfSeen returned true): it checks the explore steps
+// of every area holding the room (#375 phase 3b slice 4). It raises no event
+// name; CheckExplore reads explore triggers from their own index. roomId is
+// the room the player stands in; the bridge keeps it and CheckExplore maps
+// it to its template.
+func NotifyRoomMapped(user *users.UserRecord, roomId int) NotifyResult {
+	if user == nil {
+		return NotifyResult{}
+	}
+	bridge := NewGameBridge(user, roomId)
+	return GetEngine().CheckExplore(roomId, bridge, bridge)
 }
 
 // TopicHeardDetails builds the topic_heard event: the NPC's template id and

@@ -21,11 +21,9 @@ func MobDeathQuestNotify(e events.Event) events.ListenerReturn {
 	for _, userId := range killCreditUserIds(evt.PlayerDamage, evt.RoomId) {
 		if u := users.GetByUserId(userId); u != nil {
 			bridge := questengine.NewGameBridge(u, evt.RoomId)
-			questengine.GetEngine().Notify("mob_death", questengine.EventDetails{
-				UserId: userId,
-				RoomId: evt.RoomId,
-				MobId:  evt.MobId,
-			}, bridge, bridge)
+			d := questengine.EventAt(userId, evt.RoomId) // template room
+			d.MobId = evt.MobId
+			questengine.GetEngine().Notify("mob_death", d, bridge, bridge)
 		}
 	}
 

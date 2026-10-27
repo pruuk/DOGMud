@@ -24,7 +24,69 @@ func permissiveQuestValidators() QuestValidators {
 		TopicExists:      func(int, string) bool { return true },
 		TopicGrant:       func(int, string) string { return "" },
 		HiddenNounExists: func(int, string) bool { return true },
+		AreaExists:       func(string) bool { return true },
+		ZoneExists:       func(string) bool { return true },
+		AreaSize:         func(string) int { return 3 },
+		AreaGatedRoom:    func(string) (int, bool) { return 0, false },
 	}
+}
+
+// #375 phase 3b slice 4: area and zone names resolve; an explore-all area is
+// small and has no gated room.
+func TestValidateRefsAreasAndZones(t *testing.T) {
+	v := permissiveQuestValidators()
+	v.AreaExists = func(k string) bool { return k == "grove" }
+	v.ZoneExists = func(z string) bool { return z == "Thornwall" }
+	q := refsBaseQuest()
+	q.Triggers[1].Area = "grove"
+	if errs, _ := ValidateQuestRefs(q, v); len(errs) > 0 {
+		t.Fatalf("a known area refused: %v", errs)
+	}
+	q.Triggers[1].Area = "nowhere"
+	errs, _ := ValidateQuestRefs(q, v)
+	errsContainingRefs(t, errs, `area "nowhere" does not exist`)
+
+	q = refsBaseQuest()
+	q.Triggers[1].Zone = "Thornwall"
+	if errs, _ := ValidateQuestRefs(q, v); len(errs) > 0 {
+		t.Fatalf("a known zone refused: %v", errs)
+	}
+	q.Triggers[1].Zone = "Atlantis"
+	errs, _ = ValidateQuestRefs(q, v)
+	errsContainingRefs(t, errs, `zone "Atlantis" does not exist`)
+}
+
+func TestValidateRefsExploreAll(t *testing.T) {
+	explore := func(distinct string) Quest {
+		q := refsBaseQuest()
+		q.Triggers = append(q.Triggers, TriggerDef{Event: "room_enter", Area: "grove", Distinct: distinct,
+			Conditions: Conditions{Has: []string{"500-start"}}, Actions: []ActionDef{{Grant: "500-end"}}})
+		return q
+	}
+	v := permissiveQuestValidators()
+	if errs, warns := ValidateQuestRefs(explore("all"), v); len(errs) > 0 || len(warns) > 0 {
+		t.Fatalf("a small open explore-all area: errs %v warns %v", errs, warns)
+	}
+
+	v.AreaSize = func(string) int { return 41 }
+	_, warns := ValidateQuestRefs(explore("all"), v)
+	warnsContainingRefs(t, warns, "explore-all area grove has 41 rooms")
+	if _, warns := ValidateQuestRefs(explore("5"), v); len(warns) > 0 {
+		t.Errorf("distinct N on a large area needs no warning, got %v", warns)
+	}
+
+	v = permissiveQuestValidators()
+	v.AreaGatedRoom = func(k string) (int, bool) { return 5312, k == "grove" }
+	errs, _ := ValidateQuestRefs(explore("all"), v)
+	errsContainingRefs(t, errs, "explore-all area has a gated room 5312")
+	if errs, _ := ValidateQuestRefs(explore("2"), v); len(errs) > 0 {
+		t.Errorf("distinct N may skip a gated room, got %v", errs)
+	}
+
+	v = permissiveQuestValidators()
+	v.AreaSize = func(string) int { return 2 }
+	errs, _ = ValidateQuestRefs(explore("3"), v)
+	errsContainingRefs(t, errs, "distinct 3 is more rooms than area grove has (2)")
 }
 
 func refsBaseQuest() Quest {

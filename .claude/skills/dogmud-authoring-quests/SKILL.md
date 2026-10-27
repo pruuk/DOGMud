@@ -395,6 +395,108 @@ other event, and boot refuses a topic the NPC's dialogue file lacks.
   once the trigger's grant is held; the walkthrough and the item-source check
   read the trigger's grants the same way.
 
+## Areas, counts and explore
+
+Areas, `count` and `distinct` landed in #375 phase 3b slice 4. They let a step
+say "kill wolves on the steppe", "gather 5 roots" or "explore the Grove".
+
+**Area files.** One file per area in `_datafiles/world/dogmud/areas/<key>.yaml`
+(`<DataFiles>/areas/`; `internal/areas/context.md` has the loader):
+
+```yaml
+key: unquiet_grove          # must equal the file name without .yaml
+name: the unquiet grove     # player-facing, used in the explored line
+zones: [Pothole Coulee]     # optional: every room in each zone (display name)
+rooms: [5311, 5312, 5313]   # optional: single template room ids
+```
+
+An area is a named set of template rooms and may span zones. Zone names are
+the display names rooms store (`Pothole Coulee`), not file-style keys. The
+loader refuses an unknown zone or room, a key that is not the file name, an
+unknown field and an area that resolves to no rooms. Every new key goes in
+`areas/area-keys.txt`; a key may leave only through a `# retired` or
+`# renamed` line (`internal/guards/area_manifest_test.go`).
+
+**`area:` and `zone:`** on any trigger match the room the event happened in
+(its template room, so an instance counts). Use one or the other. Quest 45's
+grove cast step is one `area: unquiet_grove` trigger instead of three copies
+with a `room:` each.
+
+**`count: N`** (N 2 or more) fires the trigger on its Nth match. The ids and
+the `the_steppe` area below are illustrative; no shipped quest counts yet.
+
+```yaml
+  - event: item_gain
+    item: 1201
+    area: the_steppe
+    count: 5
+    label: Roots gathered
+    conditions:
+      has: ["80-start"]
+      missing: ["80-gathered"]
+    actions:
+      - grant: "80-gathered"
+```
+
+- The trigger needs a `has` naming a step of its own quest (the step it counts
+  on), a `missing` naming a token it grants, and a grant. The loader refuses
+  it otherwise.
+- Progress is per trigger and saved as `<questId>-<step>-t<triggerIndex>`. It
+  counts only while the player is on that step, and clears when the quest's
+  progress moves.
+- `count` is refused on `room_gate`, `room_interact` and `item_give`: a match
+  short of the count would swallow the player's move, look or give.
+- `label` (at most 40 characters) names the tracker and quest log line
+  ("Roots gathered: 2 of 5"); with none it reads "Progress: 2 of 5". Label
+  needs `count` or `distinct`.
+
+**`distinct: all|N`** on a `room_enter` trigger with an `area` is an explore
+step. It is never matched on ordinary room entry. Progress is how many of the
+area's rooms are on the player's map, so rooms mapped before the quest count
+and a room crossed in the dark does not. It is checked when a room of the area
+is newly mapped and when the step starts.
+
+```yaml
+  - event: room_enter
+    area: unquiet_grove
+    distinct: all
+    label: Grove explored
+    explored_line: You know this grove already.   # optional
+    conditions:
+      has: ["80-start"]
+      missing: ["80-explored"]
+    actions:
+      - grant: "80-explored"
+```
+
+- Default line when the area is already mapped at step start: "You already
+  know every corner of <area name>." for `all`, "You have already seen enough
+  of <area name>." for N. `explored_line` overrides it.
+- `distinct` never combines with `count`. Boot refuses `all` on an area with a
+  gated room (behind a locked exit or a `room_gate` trigger), refuses N larger
+  than the area, and warns past 40 rooms.
+
+**The builder and GMCP** already offer these fields. `EVENT_FILTERS` and
+`FILTER_KINDS` in `_datafiles/html/public/static/js/quests.js` and
+`questEventVocab` in `modules/gmcp/gmcp.Quest.go` list `area`, `zone`,
+`count`, `label`, `distinct` and `explored_line` per event, with count and
+label left off the three events that refuse count, and
+`TestQuestBuilderFiltersMatchTheVocab` keeps the two lists in step.
+
+**The seven quest shapes** (the owner's list; phase 4 draws the map side):
+
+| Quest shape | Resolves on | Map outside the area | Map inside, not done |
+|---|---|---|---|
+| Go to area | `room_enter` + `area` | Arrow to the nearest area room | Done on arrival |
+| Gather mats there | `item_gain` + `item` + `area` + `count` | Arrow | Area outlined; tracker count |
+| Kill mobs there | `mob_death` + `mob` + `area` + `count` | Arrow | Area outlined; tracker count |
+| Find a specific room | `room_enter` + `room` | Arrow to the area, never the room | Area outlined; room not revealed |
+| Explore it fully | `room_enter` + `area` + `distinct: all` | Arrow | Rooms not yet mapped marked; tracker count |
+| Find a wandering NPC | the action on that NPC (topic, give, kill) | Arrow to the area | Area outlined; NPC not tracked |
+| Rare drop anywhere there | `item_gain` + `item` + `area` | Arrow | Area outlined |
+
+The map columns are phase 4's work; today the arrow and outline do not exist.
+
 ## Verify event names against the loader
 
 Quest YAML triggers panic at startup if the `event:` name is not in the

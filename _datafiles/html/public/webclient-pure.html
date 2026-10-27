@@ -1050,6 +1050,11 @@
                     }
                     html += '<div class="qhint">' + hintBody + mark + '</div>';
                 }
+                // A count or explore step's progress, "Roots gathered: 2 of 5"
+                // (#375 phase 3b slice 4), plain text under the row.
+                if (q.progress) {
+                    html += '<div class="qprogress">' + escapeHTML(q.progress) + '</div>';
+                }
             });
             renderQuests.hintOpen = keepOpen; // forget quests that left the panel
             html += repeatsHTML;

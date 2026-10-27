@@ -709,6 +709,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 					break
 				}
 			}
+			questPayload.Progress = engine.UserStepProgress(user, questId, questStep)
 
 			if totalSteps > 0 {
 				// Scale THEN floor — the old `Floor(ratio) * 100` floored the 0..1
@@ -1190,7 +1191,10 @@ type GMCPCharModule_Payload_Quest struct {
 	Description string `json:"description"`
 	Completion  int    `json:"completion"`
 	Hint        string `json:"hint,omitempty"`
-	Focused     bool   `json:"focused,omitempty"`
+	// Progress is "Roots gathered: 2 of 5" on a step reached by a count or
+	// explore trigger, else omitted (#375 phase 3b slice 4).
+	Progress string `json:"progress,omitempty"`
+	Focused  bool   `json:"focused,omitempty"`
 	// Focused quest only; omitted/zero when there is no resolvable target.
 	TargetRoom int    `json:"target_room,omitempty"`
 	NextRoom   int    `json:"next_room,omitempty"`

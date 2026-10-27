@@ -98,6 +98,94 @@ func (r *Quest) Id() int {
 	return r.QuestId
 }
 
+// countSwallowsCommand are the events whose callers read a handled result as
+// "the quest took this command" (room_gate, room_interact, item_give), so
+// they take no count.
+var countSwallowsCommand = map[string]bool{"room_gate": true, "room_interact": true, "item_give": true}
+
+// CountAllowed reports whether a trigger on event may take count (and so a
+// label): every event but those in countSwallowsCommand. The quest builder's
+// field lists follow it.
+func CountAllowed(event string) bool { return !countSwallowsCommand[event] }
+
+// MaxLabelLength caps a count or distinct label: "<label>: N of M" with the
+// quest log's indent stays inside 80 columns.
+const MaxLabelLength = 40
+
+// validateAreaCount checks the #375 phase 3b slice 4 fields: area or zone
+// (any event, not both), count (2 or more), distinct (room_enter with an
+// area, all or a whole number, never with count), label (with count or
+// distinct) and explored_line (with distinct). Area and zone names are
+// checked against the world by ValidateQuestRefs.
+func validateAreaCount(t TriggerDef) error {
+	if t.Area != "" && t.Zone != "" {
+		return fmt.Errorf("sets area %q and zone %q; set area or zone, not both", t.Area, t.Zone)
+	}
+	if t.Count != 0 && t.Count < 2 {
+		return fmt.Errorf("count %d: count must be 2 or more (leave it out to fire on the first match)", t.Count)
+	}
+	// A match that has not reached its count is still a handled event, and
+	// on these events a handled event means the quest took the command: a
+	// gate refuses the move, look and read print nothing, give skips
+	// consuming the item. A partial count there would swallow the command.
+	if t.Count != 0 && countSwallowsCommand[t.Event] {
+		return fmt.Errorf("count on a %s trigger: a match short of the count would swallow the player's command (count is refused on room_gate, room_interact and item_give)", t.Event)
+	}
+	if len(t.Label) > MaxLabelLength {
+		return fmt.Errorf("label %q is %d characters; a label must be %d characters or fewer so its progress line fits the screen", t.Label, len(t.Label), MaxLabelLength)
+	}
+	if t.Distinct != "" {
+		if t.Count != 0 {
+			return fmt.Errorf("sets count and distinct; set count or distinct, not both")
+		}
+		if _, ok := DistinctNeed(t.Distinct, 0); !ok {
+			return fmt.Errorf("distinct %q must be all or a whole number of 1 or more", t.Distinct)
+		}
+		if t.Event != "room_enter" {
+			return fmt.Errorf("distinct on a %s trigger: distinct needs a room_enter trigger", t.Event)
+		}
+		if t.Area == "" {
+			return fmt.Errorf("distinct needs an area (the rooms to explore)")
+		}
+	}
+	if t.Label != "" && t.Count == 0 && t.Distinct == "" {
+		return fmt.Errorf("label %q: label needs count or distinct (it names their progress line)", t.Label)
+	}
+	if t.ExploredLine != "" && t.Distinct == "" {
+		return fmt.Errorf("explored_line needs distinct (it is said when the area is already explored)")
+	}
+	return nil
+}
+
+// validateCountStep keeps a count trigger's progress on its own step: the
+// trigger must hold a step of its own quest (CountStep, which keys the count)
+// and must wait for a token its actions grant, so it stops counting once it
+// has fired. Without these a count could bump on a quest the player does not
+// hold, or on whatever step the player has moved on to.
+func (r *Quest) validateCountStep(t TriggerDef) error {
+	if t.Count == 0 {
+		return nil
+	}
+	if r.CountStep(t) == "" {
+		return fmt.Errorf("count needs a has naming a step of quest %d (the step it counts on)", r.QuestId)
+	}
+	var grants []string
+	for _, a := range t.Actions {
+		if a.Grant != "" {
+			grants = append(grants, a.Grant)
+		}
+	}
+	if len(grants) == 0 {
+		return fmt.Errorf("count needs an action that grants a step (the step it leads to)")
+	}
+	for _, g := range grants {
+		if slices.Contains(t.Conditions.Missing, g) {
+			return nil
+		}
+	}
+	return fmt.Errorf("count needs a missing naming the token its actions grant (%q), so it stops counting once it fires", grants[0])
+}
+
 // Validate implements fileloader.Loadable — it runs on EVERY parse, so a
 // broken quest file fails the boot (and, later, an editor save) instead of
 // loading half-formed. Body moved from questengine's old validateQuestDef in
@@ -166,6 +254,12 @@ func (r *Quest) Validate() error {
 			}
 		} else if t.Topic != "" {
 			return fmt.Errorf("quest %d (%s): trigger %d sets topic %q on a %s trigger; only topic_heard has a topic", r.QuestId, r.Name, i, t.Topic, t.Event)
+		}
+		if err := validateAreaCount(t); err != nil {
+			return fmt.Errorf("quest %d (%s): trigger %d: %w", r.QuestId, r.Name, i, err)
+		}
+		if err := r.validateCountStep(t); err != nil {
+			return fmt.Errorf("quest %d (%s): trigger %d: %w", r.QuestId, r.Name, i, err)
 		}
 	}
 

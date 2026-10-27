@@ -118,18 +118,28 @@ type oldEngineRewards struct {
 }
 
 type oldTriggerDef struct {
-	Event      string         `yaml:"event"`
-	Room       int            `yaml:"room,omitempty"`
-	Mob        int            `yaml:"mob,omitempty"`
-	Item       int            `yaml:"item,omitempty"`
-	Skill      string         `yaml:"skill,omitempty"`
-	Command    string         `yaml:"command,omitempty"`
-	Topic      string         `yaml:"topic,omitempty"`
-	QuestToken string         `yaml:"quest_token,omitempty"`
-	Noun       string         `yaml:"noun,omitempty"`
-	Verb       string         `yaml:"verb,omitempty"`
-	Conditions oldConditions  `yaml:"conditions,omitempty"`
-	Actions    []oldActionDef `yaml:"actions"`
+	Event      string `yaml:"event"`
+	Room       int    `yaml:"room,omitempty"`
+	Mob        int    `yaml:"mob,omitempty"`
+	Item       int    `yaml:"item,omitempty"`
+	Skill      string `yaml:"skill,omitempty"`
+	Command    string `yaml:"command,omitempty"`
+	Topic      string `yaml:"topic,omitempty"`
+	QuestToken string `yaml:"quest_token,omitempty"`
+	Noun       string `yaml:"noun,omitempty"`
+	Verb       string `yaml:"verb,omitempty"`
+	// New keys, not drift: #375 phase 3b slice 4 added area, zone, count,
+	// distinct, label and explored_line after the unification (quest 45's
+	// cast step uses area). In production field order, so the re-marshal of
+	// a trigger using them matches.
+	Area         string         `yaml:"area,omitempty"`
+	Zone         string         `yaml:"zone,omitempty"`
+	Count        int            `yaml:"count,omitempty"`
+	Distinct     string         `yaml:"distinct,omitempty"`
+	Label        string         `yaml:"label,omitempty"`
+	ExploredLine string         `yaml:"explored_line,omitempty"`
+	Conditions   oldConditions  `yaml:"conditions,omitempty"`
+	Actions      []oldActionDef `yaml:"actions"`
 }
 
 type oldConditions struct {

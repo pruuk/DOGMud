@@ -7,22 +7,71 @@ package quests
 // tracks per-trigger identity (questId/trigId) in its own index wrapper, NOT
 // on these structs.
 
+import (
+	"slices"
+	"strconv"
+)
+
 // TriggerDef defines when and how a quest step fires.
 type TriggerDef struct {
-	Event      string      `yaml:"event" json:"event"`                                 // room_enter, room_gate, item_give, skill_use, mob_death, command, command_issued, item_gain, quest_granted, room_interact, spell_landed, topic_heard
-	Room       int         `yaml:"room,omitempty" json:"room,omitempty"`               // room ID filter
-	Mob        int         `yaml:"mob,omitempty" json:"mob,omitempty"`                 // mob ID filter
-	Item       int         `yaml:"item,omitempty" json:"item,omitempty"`               // item ID filter
-	Skill      string      `yaml:"skill,omitempty" json:"skill,omitempty"`             // skill name filter
-	Command    string      `yaml:"command,omitempty" json:"command,omitempty"`         // command name filter
-	QuestToken string      `yaml:"quest_token,omitempty" json:"quest_token,omitempty"` // for quest_granted event
-	Noun       string      `yaml:"noun,omitempty" json:"noun,omitempty"`               // room noun filter
-	Verb       string      `yaml:"verb,omitempty" json:"verb,omitempty"`               // room interaction verb filter
-	Target     string      `yaml:"target,omitempty" json:"target,omitempty"`           // command target kind filter: self, mob, player, item, container (#375 3b)
-	Effect     string      `yaml:"effect,omitempty" json:"effect,omitempty"`           // spell_landed: the spell's effect_type (heal, damage, ...) (#375 3b)
-	Topic      string      `yaml:"topic,omitempty" json:"topic,omitempty"`             // topic_heard: the NPC's topic key (#375 3b)
-	Conditions Conditions  `yaml:"conditions,omitempty" json:"conditions,omitempty"`
-	Actions    []ActionDef `yaml:"actions" json:"actions"`
+	Event      string `yaml:"event" json:"event"`                                 // room_enter, room_gate, item_give, skill_use, mob_death, command, command_issued, item_gain, quest_granted, room_interact, spell_landed, topic_heard
+	Room       int    `yaml:"room,omitempty" json:"room,omitempty"`               // room ID filter
+	Mob        int    `yaml:"mob,omitempty" json:"mob,omitempty"`                 // mob ID filter
+	Item       int    `yaml:"item,omitempty" json:"item,omitempty"`               // item ID filter
+	Skill      string `yaml:"skill,omitempty" json:"skill,omitempty"`             // skill name filter
+	Command    string `yaml:"command,omitempty" json:"command,omitempty"`         // command name filter
+	QuestToken string `yaml:"quest_token,omitempty" json:"quest_token,omitempty"` // for quest_granted event
+	Noun       string `yaml:"noun,omitempty" json:"noun,omitempty"`               // room noun filter
+	Verb       string `yaml:"verb,omitempty" json:"verb,omitempty"`               // room interaction verb filter
+	Target     string `yaml:"target,omitempty" json:"target,omitempty"`           // command target kind filter: self, mob, player, item, container (#375 3b)
+	Effect     string `yaml:"effect,omitempty" json:"effect,omitempty"`           // spell_landed: the spell's effect_type (heal, damage, ...) (#375 3b)
+	Topic      string `yaml:"topic,omitempty" json:"topic,omitempty"`             // topic_heard: the NPC's topic key (#375 3b)
+	// #375 phase 3b slice 4: where, how many, how much of an area.
+	Area         string      `yaml:"area,omitempty" json:"area,omitempty"`                   // the event's room is in this area (#375 3b)
+	Zone         string      `yaml:"zone,omitempty" json:"zone,omitempty"`                   // the event's room is in this zone
+	Count        int         `yaml:"count,omitempty" json:"count,omitempty"`                 // fire on the Nth match in this step (N >= 2)
+	Distinct     string      `yaml:"distinct,omitempty" json:"distinct,omitempty"`           // room_enter + area: "all" or N rooms of the area on the player's map
+	Label        string      `yaml:"label,omitempty" json:"label,omitempty"`                 // progress line label for count/distinct
+	ExploredLine string      `yaml:"explored_line,omitempty" json:"explored_line,omitempty"` // distinct: said when the area is already explored at step start
+	Conditions   Conditions  `yaml:"conditions,omitempty" json:"conditions,omitempty"`
+	Actions      []ActionDef `yaml:"actions" json:"actions"`
+}
+
+// CountStep is the step a count trigger counts on: the latest step of its
+// own quest, by step order, that its has condition names. It is "" when has
+// names no step of the quest (Validate refuses such a count trigger).
+func (r *Quest) CountStep(t TriggerDef) string {
+	step := ""
+	for _, s := range r.Steps {
+		if slices.Contains(t.Conditions.Has, PartsToToken(r.QuestId, s.Id)) {
+			step = s.Id
+		}
+	}
+	return step
+}
+
+// CountKey is the key a count trigger's progress is saved under on the
+// character: "<questId>-<step>-t<triggerIndex>". It starts "<questId>-", so
+// clearing a quest's counts by that prefix clears every trigger's.
+func CountKey(questId int, step string, triggerIndex int) string {
+	return PartsToToken(questId, step) + "-t" + strconv.Itoa(triggerIndex)
+}
+
+// DistinctAll is the distinct value meaning every room of the area.
+const DistinctAll = "all"
+
+// DistinctNeed is how many of an area's rooms a distinct trigger needs on
+// the player's map: areaSize for "all", else the number. ok is false for an
+// unset or malformed value (Validate refuses those).
+func DistinctNeed(distinct string, areaSize int) (need int, ok bool) {
+	if distinct == DistinctAll {
+		return areaSize, true
+	}
+	n, err := strconv.Atoi(distinct)
+	if err != nil || n < 1 {
+		return 0, false
+	}
+	return n, true
 }
 
 // The two room_interact verb families (#375 phase 3a, owner ruling 5: look

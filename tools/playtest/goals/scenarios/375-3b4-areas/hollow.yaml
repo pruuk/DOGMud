@@ -1,0 +1,25 @@
+# HOLLOW seat: quest 45 The Unquiet Grove, starting in Veil Hollow (5311).
+# Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5311
+  overlays:
+    set_quest_tokens: ["45-start"]
+    grant_spells:
+      conviction-spike: 1
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `quests` and quote what it says about The Unquiet Grove. Type `look`.
+  - >-
+    If a creature is here, attack it (`attack <name>`); if none, wait or step
+    into the next grove room (north or west, read the exits) until one appears,
+    and attack it. While fighting, cast Conviction Spike at it
+    (`cast conviction-spike <name>`). Quote every line.
+  - >-
+    Type `quests`: the cast step must have advanced exactly once, wherever in
+    the grove you cast. Note which room you were in. Cast again in the fight
+    and confirm nothing advances a second time. Finish or flee the fight.

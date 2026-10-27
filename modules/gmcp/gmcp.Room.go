@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -87,6 +88,8 @@ func (g *GMCPRoomModule) sightBandChangedHandler(e events.Event) events.Listener
 	if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
 		if actions.MarkRoomMappedIfSeen(user.Character, room) {
 			events.AddToQueue(GMCPZoneUpdate{UserId: evt.UserId})
+			// A newly mapped room may finish an explore step (#375).
+			questengine.NotifyRoomMapped(user, room.RoomId)
 		}
 	}
 

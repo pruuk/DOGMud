@@ -35,7 +35,19 @@ type QuestValidators struct {
 	// HiddenNounExists reports whether the room template has a hidden noun
 	// with exactly this key (the discover action's target).
 	HiddenNounExists func(roomId int, key string) bool
+	// #375 phase 3b slice 4. AreaExists and ZoneExists resolve a trigger's
+	// area and zone filters; AreaSize is an area's room count; AreaGatedRoom
+	// names a room of the area behind a locked exit or a room_gate trigger,
+	// which an explore-all step could never be sure of reaching.
+	AreaExists    func(key string) bool
+	ZoneExists    func(zone string) bool
+	AreaSize      func(key string) int
+	AreaGatedRoom func(key string) (roomId int, ok bool)
 }
+
+// ExploreAllWarnRooms is the area size past which a distinct: all step
+// draws a warning: exploring every room of a large area is a chore.
+const ExploreAllWarnRooms = 40
 
 // refsCtx accumulates findings and carries the incoming definition, since
 // own-quest tokens and flags must validate against the definition BEING
@@ -111,6 +123,37 @@ func (c *refsCtx) checkItem(where string, id int) {
 func (c *refsCtx) checkRoom(where string, id int) {
 	if id > 0 && !c.v.RoomExists(id) {
 		c.errf("%s: room %d does not exist", where, id)
+	}
+}
+
+// checkArea resolves a trigger's area and zone filters and checks an
+// explore step against its area (#375 phase 3b slice 4).
+func (c *refsCtx) checkArea(where string, t TriggerDef) {
+	if t.Zone != "" && !c.v.ZoneExists(t.Zone) {
+		c.errf("%s: zone %q does not exist", where, t.Zone)
+	}
+	if t.Area == "" {
+		return
+	}
+	if !c.v.AreaExists(t.Area) {
+		c.errf("%s: area %q does not exist", where, t.Area)
+		return
+	}
+	if t.Distinct == "" {
+		return
+	}
+	size := c.v.AreaSize(t.Area)
+	if t.Distinct == DistinctAll {
+		if size > ExploreAllWarnRooms {
+			c.warnf("%s: explore-all area %s has %d rooms (more than %d); consider distinct: N", where, t.Area, size, ExploreAllWarnRooms)
+		}
+		if id, ok := c.v.AreaGatedRoom(t.Area); ok {
+			c.errf("%s: explore-all area has a gated room %d (behind a locked exit or a room_gate); use distinct: N or drop the room from area %s", where, id, t.Area)
+		}
+		return
+	}
+	if need, ok := DistinctNeed(t.Distinct, size); ok && need > size {
+		c.errf("%s: distinct %d is more rooms than area %s has (%d)", where, need, t.Area, size)
 	}
 }
 
@@ -317,6 +360,7 @@ func ValidateQuestRefs(q Quest, v QuestValidators) (errs []string, warns []strin
 			}
 		}
 		c.checkToken(tw+" quest_token filter", t.QuestToken)
+		c.checkArea(tw, t)
 
 		for _, tok := range t.Conditions.Has {
 			c.checkToken(tw+" has", tok)

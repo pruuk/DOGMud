@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/areas"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
@@ -39,6 +40,7 @@ func Validators() quests.QuestValidators {
 			effects[sp.EffectType] = true
 		}
 	}
+	gates := &gatedRooms{}
 	return quests.QuestValidators{
 		StepExists:      func(tok string) bool { return quests.GetQuest(tok) != nil },
 		MobExists:       func(id int) bool { return mobs.GetMobSpec(mobs.MobId(id)) != nil },
@@ -66,7 +68,106 @@ func Validators() quests.QuestValidators {
 			_, ok := r.HiddenNouns[key]
 			return ok
 		},
+		AreaExists: func(key string) bool { _, ok := areas.Get(key); return ok },
+		ZoneExists: zoneExists,
+		AreaSize:   func(key string) int { return len(areas.Rooms(key)) },
+		AreaGatedRoom: func(key string) (int, bool) {
+			return gatedRoomIn(areas.Rooms(key), gates.get())
+		},
 	}
+}
+
+// zoneExists reports whether some template room is in the zone (zone names
+// as rooms store them: "Pothole Coulee").
+func zoneExists(zone string) bool {
+	for _, z := range rooms.GetAllZoneNames() {
+		if z == zone {
+			return true
+		}
+	}
+	return false
+}
+
+// gatedRooms is built on the first AreaGatedRoom call of a Validators()
+// value, since it reads every room template and only an explore-all step
+// asks.
+type gatedRooms struct {
+	built bool
+	set   map[int]bool
+}
+
+func (g *gatedRooms) get() map[int]bool {
+	if !g.built {
+		g.set = loadGatedRooms()
+		g.built = true
+	}
+	return g.set
+}
+
+// loadGatedRooms lists every template room a player may be unable to walk
+// into: the destination of an exit with a lock, and the room of any loaded
+// quest's room_gate trigger (addGateTriggerRooms).
+func loadGatedRooms() map[int]bool {
+	set := map[int]bool{}
+	for _, id := range rooms.GetAllRoomIds() {
+		r := rooms.LoadRoomTemplate(id)
+		if r == nil {
+			continue
+		}
+		for _, ex := range r.Exits {
+			if ex.HasLock() {
+				set[ex.RoomId] = true
+			}
+		}
+	}
+	addGateTriggerRooms(set, quests.GetAllQuests(), rooms.TemplateRoomZones())
+	return set
+}
+
+// addGateTriggerRooms adds the rooms each room_gate trigger can refuse: its
+// room, every room of its area, or every template room of its zone
+// (roomZones, template room id to zone).
+func addGateTriggerRooms(set map[int]bool, qs []quests.Quest, roomZones map[int]string) {
+	var gateZones map[string]bool
+	for _, q := range qs {
+		for _, t := range q.Triggers {
+			if t.Event != "room_gate" {
+				continue
+			}
+			if t.Room > 0 {
+				set[t.Room] = true
+			}
+			if t.Area != "" {
+				for _, id := range areas.Rooms(t.Area) {
+					set[id] = true
+				}
+			}
+			if t.Zone != "" {
+				if gateZones == nil {
+					gateZones = map[string]bool{}
+				}
+				gateZones[t.Zone] = true
+			}
+		}
+	}
+	if len(gateZones) == 0 {
+		return
+	}
+	for id, z := range roomZones {
+		if gateZones[z] {
+			set[id] = true
+		}
+	}
+}
+
+// gatedRoomIn returns the lowest room of areaRooms (sorted) that is gated.
+func gatedRoomIn(areaRooms []int, gated map[int]bool) (int, bool) {
+	for _, id := range areaRooms {
+		if gated[id] {
+			return id, true
+		}
+	}
+	return 0, false
 }
 
 // dialogueGrantTokens indexes every token any dialogue file grants, the "is

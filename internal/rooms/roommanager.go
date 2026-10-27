@@ -716,6 +716,7 @@ func addRoomToMemory(room *Room, forceOverWrite ...bool) error {
 
 	// Save filepath to cache
 	roomManager.setCachedFilePathIfAbsent(room.RoomId, room.Filepath())
+	setTemplateZone(room.RoomId, room.Zone)
 
 	// Track whatever the last room id created is so we know what to number the next one.
 	if room.RoomId < ephemeralRoomIdMinimum && room.RoomId >= GetNextRoomId() {
@@ -887,6 +888,10 @@ func MoveToZone(roomId int, newZoneName string) error {
 
 	newZoneInfo.RoomIds[roomId] = struct{}{}
 	roomManager.zones[newZoneName] = newZoneInfo
+	// The file has moved, so the index moves with it here, not only when
+	// SaveRoomTemplate reaches addRoomToMemory (it returns early on a
+	// failed write).
+	setTemplateZone(roomId, newZoneName)
 
 	SaveRoomTemplate(*tplRoom)
 

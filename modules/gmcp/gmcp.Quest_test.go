@@ -48,6 +48,10 @@ func (w *fakeQuestWorld) deps() questDeps {
 		MobHasDialogue:  func(int) bool { return true },
 		TopicExists:     func(int, string) bool { return true },
 		TopicGrant:      func(int, string) string { return "" },
+		AreaExists:      func(string) bool { return true },
+		ZoneExists:      func(string) bool { return true },
+		AreaSize:        func(string) int { return 3 },
+		AreaGatedRoom:   func(string) (int, bool) { return 0, false },
 	}
 	return questDeps{
 		load: func(id int) *quests.Quest { return w.specs[id] },

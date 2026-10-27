@@ -6,8 +6,10 @@ import (
 	"sort"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/areas"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -19,19 +21,31 @@ type indexedTrigger struct {
 	def     *TriggerDef
 	questId int
 	trigId  string
+	// countStep and countKey are a count: N trigger's own step and the key
+	// its progress is saved under (quests.CountStep, quests.CountKey); empty
+	// for a trigger without a count.
+	countStep string
+	countKey  string
 }
 
 // Engine holds quest definitions and a trigger index for fast lookup by event type.
 type Engine struct {
 	quests       map[int]*QuestDef
 	triggerIndex map[string][]*indexedTrigger
+	// Explore (distinct) triggers by area key and by quest id (#375 phase 3b
+	// slice 4): CheckExplore reads the first, the step-start check the
+	// second. They are in triggerIndex too, where they never match.
+	exploreByArea  map[string][]*indexedTrigger
+	exploreByQuest map[int][]*indexedTrigger
 }
 
 // NewEngine creates an empty quest engine.
 func NewEngine() *Engine {
 	return &Engine{
-		quests:       make(map[int]*QuestDef),
-		triggerIndex: make(map[string][]*indexedTrigger),
+		quests:         make(map[int]*QuestDef),
+		triggerIndex:   make(map[string][]*indexedTrigger),
+		exploreByArea:  make(map[string][]*indexedTrigger),
+		exploreByQuest: make(map[int][]*indexedTrigger),
 	}
 }
 
@@ -40,11 +54,20 @@ func (e *Engine) RegisterQuest(q *QuestDef) {
 	e.quests[q.QuestId] = q
 	for i := range q.Triggers {
 		t := &q.Triggers[i]
-		e.triggerIndex[t.Event] = append(e.triggerIndex[t.Event], &indexedTrigger{
+		it := &indexedTrigger{
 			def:     t,
 			questId: q.QuestId,
 			trigId:  fmt.Sprintf("q%d-t%d", q.QuestId, i),
-		})
+		}
+		if t.Count >= 2 {
+			it.countStep = q.CountStep(*t)
+			it.countKey = quests.CountKey(q.QuestId, it.countStep, i)
+		}
+		e.triggerIndex[t.Event] = append(e.triggerIndex[t.Event], it)
+		if t.Distinct != "" && t.Area != "" {
+			e.exploreByArea[t.Area] = append(e.exploreByArea[t.Area], it)
+			e.exploreByQuest[q.QuestId] = append(e.exploreByQuest[q.QuestId], it)
+		}
 	}
 }
 
@@ -80,37 +103,65 @@ func (e *Engine) Notify(eventType string, details EventDetails, player PlayerSta
 // command aimed at three mobs advances an untargeted step once, and a step
 // that names one of them still fires on that one (#375 phase 3b slice 2).
 func (e *Engine) NotifyAll(eventType string, details []EventDetails, player PlayerState, ctx ActionContext) NotifyResult {
-	bal := configs.GetBalanceConfig()
-	maxDepth := int(bal.QuestChainDepthLimit)
-	warnMs := int64(bal.QuestPerformanceWarnMs)
-
-	guard := NewEvalGuard(maxDepth)
-	start := time.Now()
-
-	result := NotifyResult{}
 	userId := 0
+	if len(details) > 0 {
+		userId = details[len(details)-1].UserId
+	}
+	run := beginGuarded()
+	guard := NewEvalGuard(run.maxDepth)
+	result := NotifyResult{}
 	for _, d := range details {
-		userId = d.UserId
-		r := e.evaluate(eventType, d, player, ctx, guard)
-		result.Handled = result.Handled || r.Handled
-		result.ConsumeItem = result.ConsumeItem || r.ConsumeItem
+		result.merge(e.evaluate(eventType, d, player, ctx, guard))
 	}
-
-	elapsed := time.Since(start).Milliseconds()
-	if elapsed > warnMs {
-		LogWarn("Notify(%s) for user %d took %dms (threshold %dms), trace: %v",
-			eventType, userId, elapsed, warnMs, guard.GetTrace())
-	}
-	if guard.DepthExceeded() {
-		LogError("depth limit %d exceeded for user %d event %s, trace: %v",
-			maxDepth, userId, eventType, guard.GetTrace())
-	}
-
+	run.end(guard, eventType, userId)
 	return result
 }
 
+// guardedRun is the limits and start time of one evaluation under one fresh
+// EvalGuard: beginGuarded starts it, the caller makes the guard from
+// maxDepth, and end logs a slow run and a depth-limit hit. It is shared by
+// NotifyAll and CheckExplore, so every evaluation starts from the same
+// limits. The guard is made by the caller, not returned or reached through
+// a callback, so it stays on the caller's stack: room_enter runs on every
+// step a player takes, and a heap guard costs an allocation each time.
+type guardedRun struct {
+	start    time.Time
+	maxDepth int
+	warnMs   int64
+}
+
+func beginGuarded() guardedRun {
+	maxDepth, warnMs := configs.QuestGuardLimits()
+	return guardedRun{
+		start:    time.Now(),
+		maxDepth: maxDepth,
+		warnMs:   warnMs,
+	}
+}
+
+func (r guardedRun) end(guard *EvalGuard, eventType string, userId int) {
+	elapsed := time.Since(r.start).Milliseconds()
+	if elapsed > r.warnMs {
+		LogWarn("Notify(%s) for user %d took %dms (threshold %dms), trace: %v",
+			eventType, userId, elapsed, r.warnMs, guard.GetTrace())
+	}
+	if guard.DepthExceeded() {
+		LogError("depth limit %d exceeded for user %d event %s, trace: %v",
+			r.maxDepth, userId, eventType, guard.GetTrace())
+	}
+}
+
+// merge folds another result into r.
+func (r *NotifyResult) merge(o NotifyResult) {
+	r.Handled = r.Handled || o.Handled
+	r.ConsumeItem = r.ConsumeItem || o.ConsumeItem
+}
+
 // evaluate is the internal recursive function that matches triggers and
-// executes actions. It chains through quest_granted events when tokens are granted.
+// executes actions. It chains through quest_granted events when tokens are
+// granted, and a quest_granted event is also a step start: the granted
+// quest's explore triggers are checked against the map (#375 phase 3b
+// slice 4).
 func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerState, ctx ActionContext, guard *EvalGuard) NotifyResult {
 	if !guard.PushDepth() {
 		return NotifyResult{}
@@ -120,48 +171,81 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 	result := NotifyResult{}
 
 	for _, t := range e.fieldMatches(eventType, details) {
-		// Condition evaluation
-		if !EvalConditions(t.def.Conditions, player) {
-			continue
-		}
+		result.merge(e.fire(eventType, t, details, player, ctx, guard, nil))
+	}
 
-		// Visit tracking: "visited" means "fired in this chain". A trigger is
-		// marked before its actions run, so it cannot re-enter itself, and it
-		// fires at most once per Notify/NotifyAll. A trigger whose conditions
-		// failed is not marked, so a later detail can still fire it.
-		if !guard.MarkVisited(t.trigId) {
-			continue
-		}
+	if eventType == "quest_granted" && details.QuestToken != "" {
+		result.merge(e.exploreAtStepStart(details, player, ctx, guard))
+	}
 
-		guard.AddToTrace(fmt.Sprintf("%s:%s", eventType, t.trigId))
-		LogVerboseF(details.UserId, "trigger %s matched for event %s", t.trigId, eventType)
+	return result
+}
 
-		// Execute actions
-		grantedTokens := e.executeActions(t, ctx, guard, details.UserId)
+// fire runs one field-matched trigger: its conditions, the visit mark, its
+// count, then (when it fires) onFire, its actions, item consumption and the
+// quest_granted chain of every token granted. It is the one firing path:
+// evaluate and the explore checks both use it, so an explore step is
+// guarded, marked and chained exactly as any other trigger.
+func (e *Engine) fire(eventType string, t *indexedTrigger, details EventDetails, player PlayerState, ctx ActionContext, guard *EvalGuard, onFire func()) NotifyResult {
+	result := NotifyResult{}
 
+	// Condition evaluation
+	if !EvalConditions(t.def.Conditions, player) {
+		return result
+	}
+
+	// Visit tracking: "visited" means "fired in this chain". A trigger is
+	// marked before its actions run, so it cannot re-enter itself, and it
+	// fires at most once per Notify/NotifyAll. A trigger whose conditions
+	// failed is not marked, so a later detail can still fire it.
+	if !guard.MarkVisited(t.trigId) {
+		return result
+	}
+
+	// count: N (#375 phase 3b slice 4). The match is counted once per
+	// event (the trigger is already marked visited) and is a handled
+	// event, but the actions wait for the Nth. A match off the trigger's
+	// own step is not counted and handles nothing.
+	switch countMatch(t, ctx) {
+	case countSkipped:
+		return result
+	case countCounted:
 		result.Handled = true
+		return result
+	}
 
-		// Check for item consumption on item_give events
-		if eventType == "item_give" {
-			for _, a := range t.def.Actions {
-				if a.ConsumeItem > 0 {
-					result.ConsumeItem = true
-					break
-				}
+	guard.AddToTrace(fmt.Sprintf("%s:%s", eventType, t.trigId))
+	LogVerboseF(details.UserId, "trigger %s matched for event %s", t.trigId, eventType)
+
+	if onFire != nil {
+		onFire()
+	}
+
+	// Execute actions
+	grantedTokens := e.executeActions(t, ctx, guard, details.UserId)
+
+	result.Handled = true
+
+	// Check for item consumption on item_give events
+	if eventType == "item_give" {
+		for _, a := range t.def.Actions {
+			if a.ConsumeItem > 0 {
+				result.ConsumeItem = true
+				break
 			}
 		}
+	}
 
-		// Chain: for each granted token, evaluate quest_granted triggers
-		for _, token := range grantedTokens {
-			chainDetails := EventDetails{
-				UserId:     details.UserId,
-				RoomId:     details.RoomId,
-				QuestToken: token,
-			}
-			chainResult := e.evaluate("quest_granted", chainDetails, player, ctx, guard)
-			if chainResult.Handled {
-				result.Handled = true
-			}
+	// Chain: for each granted token, evaluate quest_granted triggers
+	for _, token := range grantedTokens {
+		chainDetails := EventDetails{
+			UserId:     details.UserId,
+			RoomId:     details.RoomId,
+			QuestToken: token,
+		}
+		chainResult := e.evaluate("quest_granted", chainDetails, player, ctx, guard)
+		if chainResult.Handled {
+			result.Handled = true
 		}
 	}
 
@@ -231,11 +315,29 @@ func pickNounTier(triggers []*indexedTrigger, d EventDetails) nounTier {
 
 // matchTriggerFields checks whether a trigger's field filters match the event
 // details, with the trigger noun matched at the given tier.
+// roomZoneOf is the zone of a template room, for the zone: filter. A seam so
+// tests need no world; the live index costs a map read, no file read.
+var roomZoneOf = rooms.TemplateRoomZone
+
 func matchTriggerFields(t *TriggerDef, d EventDetails, tier nounTier) bool {
+	// An explore (distinct) trigger is read from the map at two moments only,
+	// CheckExplore and step start, never matched on an event (#375 phase 3b
+	// slice 4).
+	if t.Distinct != "" {
+		return false
+	}
 	if t.Mob > 0 && t.Mob != d.MobId {
 		return false
 	}
 	if t.Room > 0 && t.Room != d.RoomId {
+		return false
+	}
+	// Area and zone filters read the event's template room (#375 phase 3b
+	// slice 4): every event source passes rooms.OriginalRoomId.
+	if t.Area != "" && !areas.Contains(t.Area, d.RoomId) {
+		return false
+	}
+	if t.Zone != "" && roomZoneOf(d.RoomId) != t.Zone {
 		return false
 	}
 	if t.Item > 0 && t.Item != d.ItemId {

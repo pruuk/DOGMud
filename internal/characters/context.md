@@ -394,6 +394,20 @@ marker on unheard flagged info.
 - The list is keyed by mob template, not instance: every copy of an NPC
   remembers the same conversation. Nothing ever removes a key.
 
+### Quest step counts (`quests.go`, #375 phase 3b slice 4)
+
+`Character.QuestStepCounts` (`queststepcounts` in the save, omitted when empty)
+is the saved progress of `count: N` triggers, keyed
+`<questId>-<stepId>-t<triggerIndex>` (`quests.CountKey`). Explore (`distinct`)
+progress is not stored here: it is read from the map (`VisitedRooms`).
+
+- `QuestStepCount(key)` reads one; `BumpQuestStepCount(key)` adds one and
+  returns the new value.
+- `clearQuestStepCounts(questId)` drops every key with the `<questId>-` prefix.
+  `GiveQuestToken` and `ClearQuestToken` call it, so a quest's counts go when
+  its progress moves or is cleared. A planned abandon (phase 5) must not call
+  it: an abandoned step keeps its counts.
+
 ### Repeatable quest counts (`quests.go`, #375 phase 2)
 
 `Character.QuestCompletions` (`questcompletions` in the save, omitted when

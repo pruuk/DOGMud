@@ -76,7 +76,64 @@ func (b *GameBridge) HasOwnMasterwork(skillMin int) bool {
 	return b.user.Character.HasOwnMasterwork(skillMin)
 }
 
+// MappedCount counts how many of these template rooms are on the player's
+// map (MapReader). The map is kept per zone, so one set is built from the
+// zones the rooms lie in, once per call.
+func (b *GameBridge) MappedCount(roomIds []int) int {
+	seen := map[int]bool{}
+	zones := map[string]bool{}
+	for _, id := range roomIds {
+		z := roomZoneOf(id)
+		if zones[z] {
+			continue
+		}
+		zones[z] = true
+		for _, v := range b.user.Character.GetVisitedRooms(z) {
+			seen[v] = true
+		}
+	}
+	n := 0
+	for _, id := range roomIds {
+		if seen[id] {
+			n++
+		}
+	}
+	return n
+}
+
 // --- ActionContext ---
+
+// BumpStepCount bumps the count: N progress saved under key (StepCounter)
+// and returns the new count, but only while the player's current step of
+// questId is step: a count trigger counts on its own step alone. The count
+// is saved on the character and cleared when the quest's progress moves.
+func (b *GameBridge) BumpStepCount(questId int, step, key string) (int, bool) {
+	cur, held := b.user.Character.QuestProgress[questId]
+	if !held || cur != step {
+		return 0, false
+	}
+	n := b.user.Character.BumpQuestStepCount(key)
+	b.QuestProgressChanged(questId)
+	return n, true
+}
+
+// QuestProgressChanged refreshes the web tracker (Char.Quests) after a
+// step's progress line moved without the step changing: a count bump or a
+// newly mapped room of an explore step (ProgressWatcher). It queues the same
+// marker-only Quest event a mid-quest step advance does (GrantQuest), which
+// the GMCP quest handler turns into a Char.Quests push and HandleQuestUpdate
+// skips, so no banner repeats.
+func (b *GameBridge) QuestProgressChanged(questId int) {
+	step, held := b.user.Character.QuestProgress[questId]
+	if !held {
+		return
+	}
+	events.AddToQueue(events.Quest{
+		UserId:     b.user.UserId,
+		QuestToken: quests.PartsToToken(questId, step),
+		MarkerOnly: true,
+	})
+}
 
 // GetUserId returns the user's ID.
 func (b *GameBridge) GetUserId() int {

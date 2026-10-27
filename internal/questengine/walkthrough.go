@@ -9,9 +9,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/areas"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
 // Walk drives every quest in w through the real trigger engine and the real
@@ -781,6 +783,32 @@ func fireTopic(eng *Engine, p *walkPlayer, wy questloop.Way, trail walkTrail) bo
 
 // fireTrigger meets the trigger's conditions on p, then sends the event its
 // filters describe through the engine.
+// templateRoomZones is the template room to zone index the walk reads for a
+// zone trigger's room; a seam so tests need no world.
+var templateRoomZones = rooms.TemplateRoomZones
+
+// walkRoomIn is the room the walk's synthetic event stands in for a trigger
+// that names no room: the lowest room of its area, else of its zone, else 0
+// (#375 phase 3b slice 4).
+func walkRoomIn(area, zone string) int {
+	if area != "" {
+		if rs := areas.Rooms(area); len(rs) > 0 {
+			return rs[0]
+		}
+		return 0
+	}
+	if zone == "" {
+		return 0
+	}
+	best := 0
+	for id, z := range templateRoomZones() {
+		if z == zone && (best == 0 || id < best) {
+			best = id
+		}
+	}
+	return best
+}
+
 func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, trail walkTrail) bool {
 	c := t.Conditions
 	for _, tok := range c.Has {
@@ -824,6 +852,9 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 	if d.RoomId == 0 {
 		d.RoomId = c.InRoom
 	}
+	if d.RoomId == 0 {
+		d.RoomId = walkRoomIn(t.Area, t.Zone)
+	}
 	if d.RoomId != 0 {
 		p.roomId = d.RoomId
 	}
@@ -857,6 +888,11 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 			}) && EvalConditions(t.Conditions, p)
 		}
 		return false
+	}
+	// An explore step never matches an event: the game reads it when a room
+	// of its area is mapped, and so does the walk (#375 phase 3b slice 4).
+	if t.Distinct != "" {
+		return env.eng.CheckExplore(d.RoomId, p, &trailCtx{walkCtx{p: p}, trail}).Handled
 	}
 	return env.eng.Notify(t.Event, d, p, &trailCtx{walkCtx{p: p}, trail}).Handled
 }

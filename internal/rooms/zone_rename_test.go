@@ -183,6 +183,7 @@ func TestRenameZone_MovesRewritesAndRekeys(t *testing.T) {
 	}
 
 	// Caches rekeyed.
+	assert.Equal(t, newName, TemplateRoomZone(roomId), "the template zone index follows the rename")
 	assert.NotContains(t, GetAllZoneNames(), oldName)
 	assert.Contains(t, GetAllZoneNames(), newName)
 	if cfg := GetZoneConfig(newName); assert.NotNil(t, cfg) {

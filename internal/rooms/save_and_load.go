@@ -414,6 +414,7 @@ func DeleteRoomTemplate(roomId int) error {
 	// Drop from memory/caches. ClearRoomCache returns an error only when the
 	// room isn't cached, which is fine here (the file is already gone).
 	ClearRoomCache(roomId)
+	deleteTemplateZone(roomId)
 	return nil
 }
 
@@ -588,6 +589,7 @@ func loadAllRoomZones() error {
 
 		// Cache the file path for every roomId
 		roomManager.setCachedFilePath(loadedRoom.RoomId, loadedRoom.Filepath())
+		setTemplateZone(loadedRoom.RoomId, loadedRoom.Zone)
 
 		// Update the zone info cache
 		if _, ok := roomManager.zones[loadedRoom.Zone]; !ok {
