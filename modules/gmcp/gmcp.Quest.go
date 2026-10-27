@@ -159,6 +159,7 @@ var questEventVocab = []vocabEntry{
 	{"quest_granted", "a quest token was just granted: the chaining event (filter: quest_token)"},
 	{"room_interact", "player looked at or searched a room feature (filters: room, noun, verb: look or search; empty means look)"},
 	{"spell_landed", "a player's spell landed on a target, once per cast (filters: noun as the spell id, effect as its effect_type such as heal, target (self, mob, player, item or container), mob, item, room)"},
+	{"topic_heard", "player played an NPC's talk topic, after its effects landed: a menu choice or an accepted offer (filters: mob as the NPC's template id, topic as the topic key)"},
 }
 
 var questConditionVocab = []vocabEntry{

@@ -519,11 +519,12 @@
     command_issued: ["command", "room"], item_gain: ["item"],
     quest_granted: ["quest_token"],
     room_interact: ["room", "noun", "verb"],
-    spell_landed: ["noun", "effect", "target", "mob", "item", "room"]
+    spell_landed: ["noun", "effect", "target", "mob", "item", "room"],
+    topic_heard: ["mob", "topic"]
   };
   var FILTER_KINDS = { room: "room", mob: "mob", item: "item", skill: "skill",
     command: "text", quest_token: "token", noun: "text", verb: "text",
-    effect: "text", target: "target" };
+    effect: "text", topic: "text", target: "target" };
   // The values a trigger's target filter may take (quests.TriggerTargetKinds);
   // empty means any target.
   var TARGET_KINDS = ["self", "mob", "player", "item", "container"];
