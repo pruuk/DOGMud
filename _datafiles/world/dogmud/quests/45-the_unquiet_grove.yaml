@@ -2,9 +2,12 @@
 #
 # Token flow (steps run in order, one command each; owner ruling 2026-10-17):
 #   45-start — granted by Keeper Orrin's grove_offer node (requires 44-end).
-#   45-cast  — command trigger on `cast conviction-spike` in a grove combat
-#              room (5311/5312/5313), the creatures there being hostile:
-#              casting with a fight on you. Gates on 45-start.
+#   45-cast  — command trigger on `cast conviction-spike` in the
+#              unquiet_grove area (areas/unquiet_grove.yaml: the grove combat
+#              rooms 5311/5312/5313), the creatures there being hostile:
+#              casting with a fight on you. Gates on 45-start. One trigger
+#              with `area:` since #375 phase 3b slice 4 (it was three
+#              copies, one per room).
 #   45-kill  — mob_death of a veil-warped grove foe (Drift-Wisp 9147 OR Grove
 #              Revenant 9148); two triggers, either grants it. Gates on 45-cast.
 #   45-end   — granted by Orrin's grove_turnin node (needs 45-kill).
@@ -79,37 +82,11 @@ rewards:
   observer: ""
 
 triggers:
-  # ── CAST: conviction-spike mid-fight in the grove (5311 / 5312 / 5313) ──
+  # ── CAST: conviction-spike mid-fight anywhere in the unquiet_grove area ──
   - event: command
     command: cast
     noun: conviction-spike
-    room: 5311
-    conditions:
-      has: ["45-start"]
-      missing: ["45-cast"]
-    actions:
-      - grant: "45-cast"
-      - actor: >-
-          You shape the fold with the fight pressing on you, and it holds.
-          That is concentration. Now bring the creature down: type cast
-          spike again until it falls.
-  - event: command
-    command: cast
-    noun: conviction-spike
-    room: 5312
-    conditions:
-      has: ["45-start"]
-      missing: ["45-cast"]
-    actions:
-      - grant: "45-cast"
-      - actor: >-
-          You shape the fold with the fight pressing on you, and it holds.
-          That is concentration. Now bring the creature down: type cast
-          spike again until it falls.
-  - event: command
-    command: cast
-    noun: conviction-spike
-    room: 5313
+    area: unquiet_grove
     conditions:
       has: ["45-start"]
       missing: ["45-cast"]

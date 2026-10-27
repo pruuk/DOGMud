@@ -195,6 +195,23 @@ func TestExplore_WalkPlayerReadsAFullMap(t *testing.T) {
 	assert.Equal(t, 3, mr.MappedCount([]int{5311, 5312, 5313}))
 }
 
+// A count: N step walks: the walk proves the step reachable, not repeated.
+func TestWalk_CountStepFinishes(t *testing.T) {
+	w := walkWorld()
+	w.Quests[0].Triggers[0].Count = 5
+	require.Empty(t, Walk(w, questloop.Sources{}))
+}
+
+// A count scoped to an area walks too: the synthetic event lands in a room
+// of the area.
+func TestWalk_AreaCountStepFinishes(t *testing.T) {
+	installGrove(t)
+	w := walkWorld()
+	td := &w.Quests[0].Triggers[0]
+	td.Area, td.Count = "grove", 3
+	require.Empty(t, Walk(w, questloop.Sources{}))
+}
+
 func TestWalk_ExploreStepFinishes(t *testing.T) {
 	installGrove(t)
 	w := walkWorld()
