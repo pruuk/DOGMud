@@ -171,7 +171,6 @@ topics:
   setsQuestFlag:
     key: 11-branch
     value: sylara
-  grantsQuest: 11-sided
   moodChange: neutral
 # Recovery for old saves at 11-end with no side: the same choice, after
 # the same warning. It grants nothing (the quest is already finished); the
@@ -260,7 +259,6 @@ topics:
   questExcluded:
   - 12-ritual
   - 12-end
-  grantsQuest: 12-ritual
 - key: ritual_complete
   kind: handin
   quest: 12

@@ -40,7 +40,6 @@ topics:
   questExcluded:
   - 8-found
   - 8-end
-  grantsQuest: 8-found
   moodChange: trusting
 - key: why_she_left
   kind: info

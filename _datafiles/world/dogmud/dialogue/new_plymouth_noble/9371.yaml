@@ -65,7 +65,6 @@ topics:
   - 69-reading
   - 69-end
   carriesItem: 40115
-  grantsQuest: 69-reading
   givesItem: 40116
   moodChange: cautious
 # Quest 69 recovery: the reading is the only way to finish, so a player who

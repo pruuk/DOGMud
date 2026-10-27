@@ -210,6 +210,18 @@ triggers:
           than the temple behind them. The temple garden, south of
           the temple, may hold more of the same."
 
+  # ── Step 3b: hearing Temple Priest Seren's "acknowledge_spiral" topic,
+  #    the other way to this step (moved from the topic's grantsQuest,
+  #    #375 phase 3b) ──
+  - event: topic_heard
+    mob: 344
+    topic: acknowledge_spiral
+    conditions:
+      has: ["20-workshop_carving"]
+      missing: ["20-temple_pillars"]
+    actions:
+      - grant: "20-temple_pillars"
+
   # ── Step 4: buried marker in the temple garden (4124) — covers
   #    `marker` and the verbose `buried marker` ──
   - event: room_interact
@@ -368,6 +380,17 @@ triggers:
           lie with it; you leave them where he set them. Brindle
           needs to know you found this."
 
+  # ── Step 8: hearing Smith Brindle's "confession" topic (moved from the
+  #    topic's grantsQuest, #375 phase 3b) ──
+  - event: topic_heard
+    mob: 337
+    topic: confession
+    conditions:
+      has: ["20-bone_shoals_cache"]
+      missing: ["20-brindle_confession"]
+    actions:
+      - grant: "20-brindle_confession"
+
   # ── Step 9: cemetery disturbance (4140) — covers `disturbance` and
   #    the room noun `elgar's grave` (trigger nouns are compared
   #    lowercased, so the old `beneath Elgar's marker` never matched).
@@ -433,3 +456,15 @@ triggers:
           and a folded note in a different hand reading 'He was your
           brother. V.' The kingfisher is yours now. Bring it to Vella
           at the Healer's Cottage."
+
+  # ── Step 10: hearing Mistress Vella Thorne's "vellahandoff" topic,
+  #    which takes the kingfisher and gives the journal page (moved from
+  #    the topic's grantsQuest, #375 phase 3b) ──
+  - event: topic_heard
+    mob: 355
+    topic: vellahandoff
+    conditions:
+      has: ["20-brindle_confession"]
+      missing: ["20-vella_journal"]
+    actions:
+      - grant: "20-vella_journal"

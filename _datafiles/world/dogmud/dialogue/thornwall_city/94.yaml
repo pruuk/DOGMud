@@ -169,7 +169,6 @@ topics:
   - 10-report
   - 10-end
   requiresItem: 30
-  grantsQuest: 10-report
   moodChange: friendly
 # Hand-in for quest 14. The tunnel_report node and the give trigger's npc_say
 # lines are folded in. It grants 14-end directly (settled ruling: the

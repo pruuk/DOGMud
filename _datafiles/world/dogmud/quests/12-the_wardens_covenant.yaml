@@ -32,3 +32,14 @@ rewards:
   gold: 15
   itemid: 40031
   spellid: summon-steppe-spirit
+triggers:
+  # ritual: hearing Windwarden Sylara's "ritual_begin" topic (moved from
+  # the topic's grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 241
+    topic: ritual_begin
+    conditions:
+      has: ["12-start"]
+      missing: ["12-ritual"]
+    actions:
+      - grant: "12-ritual"

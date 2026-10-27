@@ -458,7 +458,8 @@ triggers:
   # ── 6261 The World Speaks: say, talk, north ──
   #    The talk lesson (R20, #375 phase 1): Dewey's topic asked_28 (the
   #    question about the world, dialogue/newcomer_antechamber/9491.yaml)
-  #    grants 28-asked when chosen from his talk menu.
+  #    grants 28-asked when heard from his talk menu, through the
+  #    topic_heard trigger after the say lesson below.
   - event: room_enter
     room: 6261
     conditions:
@@ -489,6 +490,17 @@ triggers:
                 starts a conversation with one person. A numbered list of
                 questions comes up, and you type a number to ask one. Type
                 talk dewey."}
+
+  # asked: hearing Dewey's "asked_28" topic (moved from the topic's
+  # grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 9491
+    topic: asked_28
+    conditions:
+      has: ["28-said"]
+      missing: ["28-asked"]
+    actions:
+      - grant: "28-asked"
 
   # ── 6262 The Proving: warcry, conditions, cooldowns, consider, attack,
   #    cast, trip, flee ──

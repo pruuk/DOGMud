@@ -24,8 +24,9 @@ opener:
       agent wants first. Whatever you answer is final.
 topics:
 # Quest 18's choice (spec R28): the agent's question (inquiries) must be
-# heard first, and the first answer grants 18-answered, which closes the
-# other two. Betta (277) hands in each result.
+# heard first, and hearing the first answer grants 18-answered (a
+# topic_heard trigger in quest 18), which closes the other two. Betta (277)
+# hands in each result.
 - key: inquiries
   kind: info
   label: What are you asking travelers about?
@@ -52,7 +53,6 @@ topics:
   questExcluded:
   - 18-answered
   - 18-end
-  grantsQuest: 18-answered
   setsQuestFlag:
     key: 18-resolution
     value: quiet
@@ -71,7 +71,6 @@ topics:
   questExcluded:
   - 18-answered
   - 18-end
-  grantsQuest: 18-answered
   setsQuestFlag:
     key: 18-resolution
     value: quiet
@@ -92,7 +91,6 @@ topics:
   questExcluded:
   - 18-answered
   - 18-end
-  grantsQuest: 18-answered
   setsQuestFlag:
     key: 18-resolution
     value: told

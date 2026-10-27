@@ -30,3 +30,14 @@ rewards:
     a shield of pale blue crystal to his companion."
   gold: 15
   itemid: 20053
+triggers:
+  # extraction: hearing Geomancer Rhett's "extraction_begin" topic (moved
+  # from the topic's grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 242
+    topic: extraction_begin
+    conditions:
+      has: ["13-start"]
+      missing: ["13-extraction"]
+    actions:
+      - grant: "13-extraction"

@@ -37,7 +37,6 @@ topics:
   questExcluded:
   - 67-lintel
   - 67-end
-  grantsQuest: 67-lintel
   moodChange: cautious
 - key: wares
   kind: info

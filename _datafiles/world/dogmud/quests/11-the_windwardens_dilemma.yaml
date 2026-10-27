@@ -21,7 +21,8 @@ steps:
       keeps the Stone Circle: from the Ridge Approach, go south twice
       to the Ridge Trail Junction, then east. Type talk rhett."
   # sided: the choice is made in talk, after each side's warning (R28).
-  # Old saves that chose a side before this step existed hold the flag
+  # Hearing either side's stand topic grants it (the topic_heard triggers
+  # below; the topic sets the 11-branch flag). Old saves that chose a side before this step existed hold the flag
   # without it; the hand-ins gate on 11-start and the flag, not on this.
   - id: sided
     map_target: -1  # -1: the side chosen decides the place (3082 totem or 3032 samples)
@@ -38,3 +39,25 @@ rewards:
   actor: "You have chosen your path. The steppe will
     remember."
   gold: 10
+triggers:
+  # sided: hearing Windwarden Sylara's "stand_with_sylara" topic (moved
+  # from the topic's grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 241
+    topic: stand_with_sylara
+    conditions:
+      has: ["11-start"]
+      missing: ["11-sided"]
+    actions:
+      - grant: "11-sided"
+
+  # sided: hearing Geomancer Rhett's "stand_with_rhett" topic (moved from
+  # the topic's grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 242
+    topic: stand_with_rhett
+    conditions:
+      has: ["11-start"]
+      missing: ["11-sided"]
+    actions:
+      - grant: "11-sided"

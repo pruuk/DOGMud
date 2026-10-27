@@ -130,7 +130,6 @@ topics:
   questExcluded:
   - 19-signed
   - 19-end
-  grantsQuest: 19-signed
   moodChange: friendly
 - key: take_partial
   kind: handin

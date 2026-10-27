@@ -71,7 +71,6 @@ topics:
   - 20-vella_journal
   - 20-end
   requiresItem: 40060
-  grantsQuest: 20-vella_journal
   givesItem: 40061
   moodChange: friendly
 - key: redirect_no_quest

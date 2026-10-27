@@ -139,7 +139,6 @@ topics:
   questExcluded:
   - 74-descent
   - 74-end
-  grantsQuest: 74-descent
 - key: q74_recovery
   kind: info
   label: I have lost the rubbing of the old sky.

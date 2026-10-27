@@ -125,3 +125,67 @@ rewards:
   observer: >-
     A wharfside quiet settles over the traveller, the look of someone
     who has done what could be done.
+
+# Each talk step below is granted by hearing the NPC's topic (moved from the
+# topics' grantsQuest, #375 phase 3b); the topics keep their flags and items.
+triggers:
+  # front: hearing Marn the Draper's "bloom_evidence" topic.
+  - event: topic_heard
+    mob: 9305
+    topic: bloom_evidence
+    conditions:
+      has: ["67-start"]
+      missing: ["67-front"]
+    actions:
+      - grant: "67-front"
+
+  # front: hearing Marn the Draper's "bloom_undercover" topic.
+  - event: topic_heard
+    mob: 9305
+    topic: bloom_undercover
+    conditions:
+      has: ["67-start"]
+      missing: ["67-front"]
+    actions:
+      - grant: "67-front"
+
+  # lintel: hearing Falk the Auctioneer's "bloom_lintel" topic.
+  - event: topic_heard
+    mob: 9345
+    topic: bloom_lintel
+    conditions:
+      has: ["67-front"]
+      missing: ["67-lintel"]
+    actions:
+      - grant: "67-lintel"
+
+  # delivery: hearing Wenna the Servant's "bloom_delivery" topic.
+  - event: topic_heard
+    mob: 9369
+    topic: bloom_delivery
+    conditions:
+      has: ["67-lintel"]
+      missing: ["67-delivery"]
+    actions:
+      - grant: "67-delivery"
+
+  # source: hearing Deren's "bloom_source" topic.
+  - event: topic_heard
+    mob: 9379
+    topic: bloom_source
+    conditions:
+      has: ["67-delivery"]
+      missing: ["67-source"]
+    actions:
+      - grant: "67-source"
+
+  # witness: hearing Quill the Lamplighter's "bloom_witness" topic, which
+  # gives the case file.
+  - event: topic_heard
+    mob: 9380
+    topic: bloom_witness
+    conditions:
+      has: ["67-source"]
+      missing: ["67-witness"]
+    actions:
+      - grant: "67-witness"

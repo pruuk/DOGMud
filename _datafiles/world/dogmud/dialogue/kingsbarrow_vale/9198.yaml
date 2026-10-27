@@ -58,7 +58,6 @@ topics:
   - 60-manifest
   - 60-end
   requiresItem: 40072
-  grantsQuest: 60-manifest
   givesItem: 40073
 - key: lost_report
   kind: info

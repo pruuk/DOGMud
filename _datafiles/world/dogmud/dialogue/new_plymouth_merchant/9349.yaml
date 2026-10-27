@@ -103,7 +103,6 @@ topics:
   questExcluded:
   - 71-vell
   - 71-end
-  grantsQuest: 71-vell
   moodChange: cautious
 - key: q71_vell_charter_aside
   kind: info

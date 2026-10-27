@@ -163,7 +163,6 @@ topics:
   - 69-gallery
   - 69-end
   carriesItem: 40115
-  grantsQuest: 69-gallery
   moodChange: friendly
 - key: knower
   kind: info

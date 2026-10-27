@@ -44,3 +44,15 @@ rewards:
   observer: "Delia's expression shifts from concern to
     quiet satisfaction as the herb supply problem is resolved."
   gold: 12
+
+triggers:
+  # forager: hearing The Forager's "negotiate" topic (moved from the
+  # topic's grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 262
+    topic: negotiate
+    conditions:
+      has: ["16-start"]
+      missing: ["16-forager"]
+    actions:
+      - grant: "16-forager"

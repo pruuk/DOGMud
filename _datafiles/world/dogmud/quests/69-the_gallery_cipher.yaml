@@ -113,6 +113,28 @@ triggers:
           plaque that names them. Their hands are oddly placed. Without a
           reason to study them you move on.
 
+  # gallery: hearing Scholar Dross's "q69_gallery" topic, shown the rubbing
+  # (moved from the topic's grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 9360
+    topic: q69_gallery
+    conditions:
+      has: ["69-rubbing"]
+      missing: ["69-gallery"]
+    actions:
+      - grant: "69-gallery"
+
+  # reading: hearing Keeper Lysha's "q69_lysha" topic, which gives her
+  # written reading (moved from the topic's grantsQuest, #375 phase 3b).
+  - event: topic_heard
+    mob: 9371
+    topic: q69_lysha
+    conditions:
+      has: ["69-gallery"]
+      missing: ["69-reading"]
+    actions:
+      - grant: "69-reading"
+
   # Lost rubbing (appended 2026-10-21, #375 batch 5): Dross and Lysha both
   # need to see the rubbing (carriesItem), so a player who lost it takes
   # another while the quest is open. Trigger 0 gives the first copy and so

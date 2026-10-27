@@ -36,7 +36,6 @@ topics:
   questExcluded:
   - 67-witness
   - 67-end
-  grantsQuest: 67-witness
   givesItem: 40111
   moodChange: friendly
 # Quest 67 recovery (batch 4 review M1): the case file is the only way to

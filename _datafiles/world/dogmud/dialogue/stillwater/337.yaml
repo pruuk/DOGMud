@@ -56,7 +56,6 @@ topics:
   questExcluded:
   - 20-brindle_confession
   - 20-end
-  grantsQuest: 20-brindle_confession
   moodChange: friendly
 - key: redirect_no_quest
   kind: info

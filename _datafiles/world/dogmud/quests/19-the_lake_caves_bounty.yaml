@@ -85,3 +85,14 @@ triggers:
       - grant: "19-hunter"
       - actor: "The drowned hunter is dead. The shallows are meaningfully
           safer."
+
+  # ── SIGNED: hearing Constable Drunn's "sign_bounty" topic (moved from
+  #    the topic's grantsQuest, #375 phase 3b) ──
+  - event: topic_heard
+    mob: 335
+    topic: sign_bounty
+    conditions:
+      has: ["19-shrimp", "19-hunter"]
+      missing: ["19-signed"]
+    actions:
+      - grant: "19-signed"

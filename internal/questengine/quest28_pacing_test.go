@@ -106,24 +106,30 @@ func npcSaySeconds(n *NpcSayDef) int {
 	return total
 }
 
-// The 28-asked step is Dewey's talk lesson topic (#375 R20, Task 19): no
-// quest trigger grants it, choosing the topic grants it with its reply, the
-// reply ends on the way north, and his opener then says the way is open.
+// The 28-asked step is Dewey's talk lesson topic (#375 R20, Task 19): only
+// hearing that topic grants it (the quest's one topic_heard trigger on it,
+// #375 phase 3b), the reply ends on the way north, and his opener then says
+// the way is open.
 func TestQuest28_TalkLessonGrantsTheStepWithItsReply(t *testing.T) {
 	q := loadQuest28(t)
+	lessonTriggers := 0
 	for i, tr := range q.Triggers {
 		require.NotEqual(t, "dialogue", tr.Event,
 			"trigger %d: the ask chain that fired dialogue triggers is gone (#375 Task 19); the lesson is a talk topic", i)
 		for _, a := range tr.Actions {
-			require.NotEqual(t, "28-asked", a.Grant,
-				"trigger %d grants 28-asked: only Dewey's talk topic may, or the step skips the talk lesson", i)
+			if a.Grant != "28-asked" {
+				continue
+			}
+			require.True(t, tr.Event == "topic_heard" && tr.Mob == 9491 && tr.Topic == "asked_28",
+				"trigger %d grants 28-asked: only hearing Dewey's talk topic may, or the step skips the talk lesson", i)
+			lessonTriggers++
 		}
 	}
+	require.Equal(t, 1, lessonTriggers, "one topic_heard trigger on Dewey's asked_28 grants 28-asked")
 
 	// #375 (R20): the ask step is Dewey's lesson topic. Choosing it plays the
-	// reply and grants 28-asked in the same step (Apply), so no quest line can
-	// land between the question and the answer, and the reply itself ends on
-	// the way north.
+	// reply, and hearing it fires the quest's topic_heard trigger, which grants
+	// 28-asked; the reply itself ends on the way north.
 	df := loadShippedDialogue(t, "newcomer_antechamber", "9491.yaml")
 	set := map[string]bool{"28-start": true, "28-said": true}
 	ps := &dialogue.PlayerState{
@@ -136,11 +142,21 @@ func TestQuest28_TalkLessonGrantsTheStepWithItsReply(t *testing.T) {
 	lesson := df.FindTopic("asked_28")
 	require.NotNil(t, lesson, "Dewey's talk lesson topic")
 	require.True(t, df.Eligible(lesson, ps), "the lesson is on the menu on the ask step")
-	require.Equal(t, "28-asked", lesson.GrantsQuest)
+	require.Empty(t, lesson.GrantsQuest, "the topic grants nothing itself; the quest's topic_heard trigger does")
 	require.True(t, strings.HasSuffix(strings.TrimSpace(squash(lesson.Text)), "before you go north."),
 		"the lesson's reply must end with the way north; got %q", lesson.Text)
 	require.True(t, df.Apply(lesson, ps))
-	require.True(t, set["28-asked"], "choosing the lesson grants 28-asked with the reply")
+	require.False(t, set["28-asked"], "Apply alone grants nothing")
+
+	e := NewEngine()
+	e.RegisterQuest(&q)
+	player := newFullMockPlayer(0)
+	for tok := range set {
+		player.quests[tok] = true
+	}
+	e.Notify("topic_heard", EventDetails{UserId: 1, MobId: 9491, Topic: "asked_28"}, player, newFullMockActionContext(1, player))
+	require.True(t, player.quests["28-asked"], "hearing the lesson grants 28-asked")
+	set["28-asked"] = true
 
 	// After the lesson Dewey's opener says the way north is open; once the
 	// player has walked on, it is not repeated.
