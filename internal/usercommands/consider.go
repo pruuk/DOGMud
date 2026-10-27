@@ -57,12 +57,8 @@ func Consider(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	// Quest engine: command notification
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "consider",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "consider",
+		questengine.TargetActor(user.UserId, target.GetUserId(), target.GetMobInstanceId()))
 
 	return true, nil
 }

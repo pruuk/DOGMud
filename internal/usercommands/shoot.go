@@ -249,12 +249,8 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// foe across the canyon" beats). Mirrors forage/drink/throw/cast. RoomId is
 	// the SHOOTER's room — for a cross-room shot the quest gates on the room the
 	// player shoots FROM, not the target's room.
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: questNotifyCommand,
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, questNotifyCommand,
+		questengine.TargetActor(user.UserId, result.TargetUserId, result.TargetMobInstanceId))
 
 	// The chambering that followed the shot. This is the ONLY place a player
 	// learns they are dry: firing readies the next round silently when it can,

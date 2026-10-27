@@ -383,13 +383,25 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// spoke's "cast at the practice mark" beat). Mirrors forage/drink/throw.
 	// Noun is the canonical spell id, so a step can ask for one spell
 	// whichever alias the player typed; a trigger with no noun matches any.
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "cast",
-		Noun:    spellInfo.SpellId,
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "cast", castTargets(user.UserId, result, spellInfo.SpellId)...)
 
 	return true, nil
+}
+
+// castTargets is one command-event target per creature the cast was aimed
+// at, each carrying the canonical spell id, so `noun: <spell>` and a target
+// filter both work; a cast at no creature (an area with nobody in it, a
+// summon) is one target of none.
+func castTargets(casterUserId int, result actions.CastResult, spellId string) []questengine.Target {
+	var out []questengine.Target
+	for _, uid := range result.TargetUserIds {
+		out = append(out, questengine.TargetActor(casterUserId, uid, 0).WithNoun(spellId))
+	}
+	for _, mid := range result.TargetMobInstanceIds {
+		out = append(out, questengine.TargetActor(casterUserId, 0, mid).WithNoun(spellId))
+	}
+	if len(out) == 0 {
+		out = append(out, questengine.NoTarget().WithNoun(spellId))
+	}
+	return out
 }

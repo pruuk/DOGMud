@@ -314,12 +314,7 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 	// "drink a potion" quest steps (e.g. the Spoke C alchemy cert). Only a
 	// player has quests.
 	if ua, ok := actor.(*UserActor); ok && room != nil {
-		questBridge := questengine.NewGameBridge(ua.User, room.RoomId)
-		questengine.GetEngine().Notify("command", questengine.EventDetails{
-			UserId:  ua.User.UserId,
-			RoomId:  room.RoomId,
-			Command: "drink",
-		}, questBridge, questBridge)
+		questengine.NotifyCommand(ua.User, room.RoomId, "drink", questengine.TargetItem(matchItem.ItemId))
 	}
 
 	actor.SendText(messaging.CategorySystem, fmt.Sprintf(

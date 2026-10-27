@@ -562,12 +562,7 @@ func cmdSetCombatVerbosity(user *users.UserRecord, args []string) (bool, error) 
 	// Quest engine: command notification (logical command "combatverbosity",
 	// even though it is reached via `set combatverbosity`). Lets combat
 	// tutorials gate on the player tuning their output.
-	bridge := questengine.NewGameBridge(user, user.Character.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  user.Character.RoomId,
-		Command: "combatverbosity",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, user.Character.RoomId, "combatverbosity")
 
 	return true, nil
 }

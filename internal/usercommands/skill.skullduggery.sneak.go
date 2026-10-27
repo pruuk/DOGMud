@@ -122,10 +122,5 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 // spotted sneak sends nothing. The skill_use event AwardResolved emits is a
 // different event and does not reach a `command` trigger.
 func notifySneakQuest(user *users.UserRecord, room *rooms.Room) {
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "sneak",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "sneak")
 }

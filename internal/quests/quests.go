@@ -2,6 +2,7 @@ package quests
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -137,6 +138,15 @@ func (r *Quest) Validate() error {
 			}
 			if t.Verb != VerbLook && t.Verb != VerbSearch {
 				return fmt.Errorf("quest %d (%s): trigger %d has invalid verb %q (use %s or %s; empty means %s)", r.QuestId, r.Name, i, t.Verb, VerbLook, VerbSearch, VerbLook)
+			}
+		}
+		// Only a command event names a target (#375 phase 3b slice 2).
+		if t.Target != "" {
+			if t.Event != "command" {
+				return fmt.Errorf("quest %d (%s): trigger %d sets target %q on a %s trigger; only command has a target", r.QuestId, r.Name, i, t.Target, t.Event)
+			}
+			if !slices.Contains(TriggerTargetKinds, t.Target) {
+				return fmt.Errorf("quest %d (%s): trigger %d has invalid target %q (use one of %s)", r.QuestId, r.Name, i, t.Target, strings.Join(TriggerTargetKinds, ", "))
 			}
 		}
 	}

@@ -18,6 +18,7 @@ type TriggerDef struct {
 	QuestToken string      `yaml:"quest_token,omitempty" json:"quest_token,omitempty"` // for quest_granted event
 	Noun       string      `yaml:"noun,omitempty" json:"noun,omitempty"`               // room noun filter
 	Verb       string      `yaml:"verb,omitempty" json:"verb,omitempty"`               // room interaction verb filter
+	Target     string      `yaml:"target,omitempty" json:"target,omitempty"`           // command target kind filter: self, mob, player, item, container (#375 3b)
 	Conditions Conditions  `yaml:"conditions,omitempty" json:"conditions,omitempty"`
 	Actions    []ActionDef `yaml:"actions" json:"actions"`
 }
@@ -39,6 +40,21 @@ func InteractVerb(verb string) string {
 	}
 	return verb
 }
+
+// The kinds of thing a command event names as its target (#375 phase 3b
+// slice 2). Every command event carries one; TargetNone is an event value
+// only, so a trigger that does not care about the target omits the filter.
+const (
+	TargetNone      = "none"
+	TargetSelf      = "self"
+	TargetMob       = "mob"
+	TargetPlayer    = "player"
+	TargetItem      = "item"
+	TargetContainer = "container"
+)
+
+// TriggerTargetKinds are the values a trigger's target filter may take.
+var TriggerTargetKinds = []string{TargetSelf, TargetMob, TargetPlayer, TargetItem, TargetContainer}
 
 // Conditions for trigger evaluation.
 type Conditions struct {

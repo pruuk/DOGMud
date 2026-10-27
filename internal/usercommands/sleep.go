@@ -23,12 +23,7 @@ func Sleep(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// Quest engine: command notification — sleeping advances "rest in the
 	// field" quest steps (e.g. the Spoke D wilderness cert). Mirrors the
 	// drink/throw/forage command Notify pattern.
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "sleep",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "sleep")
 
 	return true, nil
 }

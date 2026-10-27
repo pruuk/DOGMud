@@ -1,0 +1,27 @@
+# CASTER seat: quest 44 First Casting, in the Star Chamber (5305) where the
+# Practice Mote hangs. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5305
+  overlays:
+    set_quest_tokens: ["44-start"]
+    grant_spells:
+      conviction-spike: 1
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `quests` and quote what it says about First Casting. Type `look` and
+    `spells`.
+  - >-
+    Cast Conviction Spike at the practice mote (`cast conviction-spike mote`,
+    or the target name `look` shows). Wait for the cast to finish. Quote every
+    line. Check the quest log: the cast step must be done.
+  - >-
+    Wait for the cooldown, then cast again the same way. Check the quest log:
+    nothing may advance again, and the game must not show an error.
+  - >-
+    Cast Chrysalis Glow with no target if you have it (`cast chrysalis-glow`).
+    Quote the reply; it must work normally.

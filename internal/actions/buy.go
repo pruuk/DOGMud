@@ -46,6 +46,7 @@ type BuyResult struct {
 	Purchased int    // actual units purchased (may be < Requested)
 	Requested int    // requested quantity (1 if unspecified)
 	SaleType  string // "item" | "condition" | "" on failure
+	ItemId    int    // template id of the item bought; 0 for a condition sale
 	Reason    string // populated on failure
 }
 
@@ -396,6 +397,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 			Purchased: purchased,
 			Requested: quantity,
 			SaleType:  first.SaleType,
+			ItemId:    first.ItemId,
 		}, true
 	}
 
@@ -411,7 +413,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 		result, sold := tryMerchant(func(isFirst bool) BuyResult {
 			r := tryPurchaseLegacy(buyer, itemRequest, nil, shopUser)
 			if r.Success {
-				postSuccessBookkeeping(buyer, nil, shopUser, isFirst)
+				postSuccessBookkeeping(buyer, nil, shopUser, r.ItemId, isFirst)
 			}
 			return r
 		})
@@ -434,7 +436,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 			result, sold := tryMerchant(func(isFirst bool) BuyResult {
 				r := tryPurchaseFromInventory(buyer, itemRequest, shopMob, shopInv)
 				if r.Success {
-					postSuccessBookkeeping(buyer, shopMob, nil, isFirst)
+					postSuccessBookkeeping(buyer, shopMob, nil, r.ItemId, isFirst)
 				}
 				return r
 			})
@@ -446,7 +448,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 				shopMob.Character.Shop.Restock()
 				r := tryPurchaseLegacy(buyer, itemRequest, shopMob, nil)
 				if r.Success {
-					postSuccessBookkeeping(buyer, shopMob, nil, isFirst)
+					postSuccessBookkeeping(buyer, shopMob, nil, r.ItemId, isFirst)
 				}
 				return r
 			})
@@ -499,7 +501,7 @@ func tryPurchaseLegacy(buyer Actor, request string, shopMob *mobs.Mob, shopUser 
 
 	if ctx.matchedShopItem.ItemId > 0 {
 		executePurchaseItem(buyer, shopMob, shopUser, ctx.matchedShopItem, ctx.price, ctx.tradeInString)
-		return BuyResult{Success: true, Purchased: 1, SaleType: "item"}
+		return BuyResult{Success: true, Purchased: 1, SaleType: "item", ItemId: ctx.matchedShopItem.ItemId}
 	}
 	if ctx.matchedShopItem.ConditionId > 0 {
 		executePurchaseCondition(buyer, shopMob, shopUser, ctx.matchedShopItem, ctx.price, ctx.tradeInString)
@@ -691,7 +693,7 @@ func tryPurchaseFromInventory(buyer Actor, request string, shopMob *mobs.Mob, sh
 		if room := buyer.GetRoom(); room != nil {
 			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> buys the <ansi fg="itemname">%s</ansi>.`, buyer.GetName(), bought.DisplayName()), buyer.GetUserId())
 		}
-		return BuyResult{Success: true, Purchased: 1, SaleType: "item"}
+		return BuyResult{Success: true, Purchased: 1, SaleType: "item", ItemId: bought.ItemId}
 	}
 
 	if matched.entry.Current <= 0 {
@@ -741,7 +743,7 @@ func tryPurchaseFromInventory(buyer Actor, request string, shopMob *mobs.Mob, sh
 		characters.ShopItem{ItemId: matched.entry.ItemId},
 		matched.price, tradeInString)
 
-	return BuyResult{Success: true, Purchased: 1, SaleType: "item"}
+	return BuyResult{Success: true, Purchased: 1, SaleType: "item", ItemId: matched.entry.ItemId}
 }
 
 // executePurchaseItem lands a purchased item in the buyer's
@@ -835,7 +837,7 @@ func executePurchaseCondition(buyer Actor, shopMob *mobs.Mob, shopUser *users.Us
 // charisma roll and the quest notification stay PER UNIT: quest steps count
 // items, so collapsing them would break "buy N of X" objectives.
 func postSuccessBookkeeping(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRecord,
-	awardProgression bool) {
+	itemId int, awardProgression bool) {
 	// U10b-1 Task 18c: won is unconditionally true. This runs inside
 	// postSuccessBookkeeping -- every refusal path (no stock, cannot afford,
 	// carry capacity) returns before it -- so a completed trade is a success by
@@ -857,12 +859,7 @@ func postSuccessBookkeeping(buyer Actor, shopMob *mobs.Mob, shopUser *users.User
 		userId := buyer.GetUserId()
 		if u := users.GetByUserId(userId); u != nil {
 			room := buyer.GetRoom()
-			bridge := questengine.NewGameBridge(u, room.RoomId)
-			questengine.GetEngine().Notify("command", questengine.EventDetails{
-				UserId:  userId,
-				RoomId:  room.RoomId,
-				Command: "buy",
-			}, bridge, bridge)
+			questengine.NotifyCommand(u, room.RoomId, "buy", questengine.TargetItem(itemId).WithMob(shopMob))
 		}
 	}
 }

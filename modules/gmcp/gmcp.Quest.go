@@ -153,7 +153,7 @@ var questEventVocab = []vocabEntry{
 	{"item_give", "player gives an item to a mob: fires AFTER the transfer (filters: mob, item)"},
 	{"skill_use", "player uses a skill (filter: skill)"},
 	{"mob_death", "a mob dies with the player involved (filters: mob, room)"},
-	{"command", "a command SUCCEEDED (~27 instrumented commands; filters: command, room)"},
+	{"command", "a command SUCCEEDED (~27 instrumented commands; filters: command, room, target (self, mob, player, item or container), mob, item)"},
 	{"command_issued", "player TYPED a command, success or not: fires from TryCommand for any command (filters: command, room)"},
 	{"item_gain", "an item enters the player's inventory (filter: item)"},
 	{"quest_granted", "a quest token was just granted: the chaining event (filter: quest_token)"},

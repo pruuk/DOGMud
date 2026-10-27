@@ -17,6 +17,11 @@ what a trigger *does*, you edit this package.
 
 - **engine.go** — `Engine`, the trigger index, `Notify`, the recursive
   evaluator, and `fieldMatches`, the match step it shares with `WouldFire`.
+- **command_event.go**: the one way to raise a `command` event. `Target`
+  (`Kind`, `MobId`, `ItemId`, `Noun`), its constructors `NoTarget`,
+  `TargetSelf`, `TargetPlayer`, `TargetMob`, `TargetItem`, `TargetContainer`,
+  `TargetActor`, the refiners `WithMob`, `WithItem`, `WithNoun`,
+  `CommandDetails` (builds one `EventDetails`) and `NotifyCommand`.
 - **dryrun.go**: `WouldFire` (side-effect-free "would Notify fire?") and
   `SearchFeatures` (a room's quest search nouns).
 - **types.go** — type aliases onto `internal/quests`, plus `EventDetails` and
@@ -47,6 +52,7 @@ func (e *Engine) RegisterQuest(q *QuestDef)
 func (e *Engine) GetQuest(questId int) *QuestDef
 func (e *Engine) AllQuests() []*QuestDef       // unordered
 func (e *Engine) Notify(eventType string, details EventDetails, player PlayerState, ctx ActionContext) NotifyResult
+func (e *Engine) NotifyAll(eventType string, details []EventDetails, player PlayerState, ctx ActionContext) NotifyResult
 func (e *Engine) WouldFire(eventType string, d EventDetails, player PlayerState) bool
 func (e *Engine) SearchFeatures(roomId int) []string
 ```
@@ -58,6 +64,28 @@ followed, no `EvalGuard` is touched. It is for gates that must ask before the
 event happens (a quest gate on an exit). `SearchFeatures` returns the sorted,
 distinct nouns of `room_interact` triggers with `verb: search` and `room:`
 equal to the given id, regardless of conditions.
+
+`NotifyAll` raises several `EventDetails` of one event type under ONE
+`EvalGuard`, so each trigger fires at most once however many details it
+matches; `Notify` is `NotifyAll` with one detail.
+
+### Command events and targets (#375 phase 3b slice 2)
+
+`EventDetails.TargetKind` says what a `command` event was aimed at: one of
+the `quests.Target*` kinds `self`, `mob`, `player`, `item`, `container`, or
+`none` (an event-only value; a trigger cannot filter on it). A trigger's
+`target:` filter compares against it, and the existing `mob:` and `item:`
+filters now see `MobId` and `ItemId` on command events.
+
+`NotifyCommand(user, roomId, command, targets ...Target)` builds one
+`EventDetails` per target (template room, `MobId`, `ItemId`, `Noun`,
+`TargetKind`) and raises them with `NotifyAll`; no target means one event
+aimed at nothing. A `container` target names the room container in `Noun`.
+Throw raises one target per mob its blast contested, after the blast. No
+mob-actor site raises a command event today.
+
+Every command event goes through `NotifyCommand`; a hand-built
+`Notify("command", ...)` fails `internal/guards/command_event_guard_test.go`.
 
 `RegisterQuest` flattens every trigger into `triggerIndex` keyed by event type,
 so `Notify` never scans quests it cannot match. Each trigger gets an
@@ -71,7 +99,7 @@ keep it that way.
 `Notify` → `evaluate` (recursive), per matching trigger:
 
 1. **Field match** (`matchTriggerFields`) — mob, room, item, skill, command,
-   topic, questToken, noun, verb. A trigger `noun:` matches in three tiers
+   topic, questToken, noun, verb, target. A trigger `noun:` matches in three tiers
    (`nounTier`, picked by `pickNounTier`): the typed noun exactly; else its
    singular/plural variant (`util.NounNumberVariants`); else
    `EventDetails.RoomNoun`, the room's own noun key the typed words name
@@ -97,9 +125,9 @@ keep it that way.
    matches; `search <feature>` raises `Verb: search` after the search runs.
    Every raise matches the template room (`rooms.OriginalRoomId`). The
    walkthrough sends `quests.InteractVerb(t.Verb)`.
-2. **Visit guard** — `MarkVisited(trigId)`; a trigger fires at most once per
-   chain.
-3. **Conditions** — `EvalConditions(t.Conditions, player)`.
+2. **Conditions**: `EvalConditions(t.Conditions, player)`.
+3. **Visit guard**: `MarkVisited(trigId)`, after the conditions pass; a
+   trigger fires at most once per chain (and per `NotifyAll`).
 4. **Actions** — `executeActions`, which returns the tokens granted.
 5. **Chain** — for each granted token, recurse into `quest_granted` triggers.
 
@@ -109,7 +137,8 @@ immediately fire the trigger that grants `11-start`.
 Step 1 is `fieldMatches`, computed once up front because it depends only on
 the event. Steps 2 and 3 stay inside the loop: an earlier trigger's actions
 and chains change the player state a later trigger's conditions read, and a
-trigger is marked visited even when its conditions then fail.
+trigger is marked visited only when it fires: one whose conditions failed can
+still fire on a later detail of the same `NotifyAll`.
 
 ## `EvalGuard`
 

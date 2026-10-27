@@ -146,12 +146,8 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	// Quest engine: command notification
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "kick",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "kick",
+		questengine.TargetActor(user.UserId, res.Target.UserId, res.Target.MobInstanceId))
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
 	actions.DispatchCounterMessages(actor, res.Counter)

@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // TestBuy_AffixedStockItem: a shop's per-instance affixed stock is listed and,
@@ -36,6 +37,9 @@ func TestBuy_AffixedStockItem(t *testing.T) {
 	if !res.Success {
 		t.Fatalf("affixed purchase failed: %+v", res)
 	}
+	if res.ItemId != sellTestItemId {
+		t.Errorf("BuyResult.ItemId = %d; want %d (the template id of the item bought)", res.ItemId, sellTestItemId)
+	}
 	if len(shopInv.AffixedStock) != 0 {
 		t.Errorf("affixed entry should be removed after purchase; have %d", len(shopInv.AffixedStock))
 	}
@@ -48,6 +52,72 @@ func TestBuy_AffixedStockItem(t *testing.T) {
 	}
 	if m.Character.Gold != 600 { // 1000 - relist 400
 		t.Errorf("buyer gold = %d; want 600", m.Character.Gold)
+	}
+}
+
+func newBuyItemIdBuyer() *MobActor {
+	m := &mobs.Mob{}
+	m.Character.Name = "Buyer"
+	m.Character.Gold = 1000
+	m.Character.Conditions = conditions.New()
+	m.Character.Stats.Strength.ValueAdj = 100 // carry capacity
+	return &MobActor{Mob: m}
+}
+
+// TestBuy_StockedInventoryItemId: the regular stocked path reports the
+// template id of the item bought.
+func TestBuy_StockedInventoryItemId(t *testing.T) {
+	defer seedSellItemSpecs()()
+
+	shopInv := &shops.ShopInventory{Gold: 1000}
+	shopInv.AddStock(sellTestItemId, 3)
+	shopMob := &mobs.Mob{Character: characters.Character{Name: "Merchant"}}
+
+	res := tryPurchaseFromInventory(newBuyItemIdBuyer(), "iron sword", shopMob, shopInv)
+	if !res.Success {
+		t.Fatalf("stocked purchase failed: %+v", res)
+	}
+	if res.ItemId != sellTestItemId {
+		t.Errorf("BuyResult.ItemId = %d; want %d", res.ItemId, sellTestItemId)
+	}
+}
+
+// TestBuy_LegacyShopItemId: the legacy per-mob shop path reports the
+// template id of the item bought.
+func TestBuy_LegacyShopItemId(t *testing.T) {
+	defer seedSellItemSpecs()()
+
+	shopMob := &mobs.Mob{Character: characters.Character{Name: "Merchant"}}
+	shopMob.Character.Shop = characters.Shop{
+		{ItemId: sellTestItemId, Price: 50, Quantity: 2, QuantityMax: 2},
+	}
+
+	res := tryPurchaseLegacy(newBuyItemIdBuyer(), "iron sword", shopMob, nil)
+	if !res.Success {
+		t.Fatalf("legacy purchase failed: %+v", res)
+	}
+	if res.ItemId != sellTestItemId {
+		t.Errorf("BuyResult.ItemId = %d; want %d", res.ItemId, sellTestItemId)
+	}
+}
+
+// TestBuy_PlayerShopItemId: a player's shop goes through the legacy path with
+// a shopUser; it reports the template id too.
+func TestBuy_PlayerShopItemId(t *testing.T) {
+	defer seedSellItemSpecs()()
+
+	shopUser := users.NewUserRecord(9001, 0)
+	shopUser.Character.Name = "Vendor"
+	shopUser.Character.Shop = characters.Shop{
+		{ItemId: sellTestItemId, Price: 50, Quantity: 2, QuantityMax: 2},
+	}
+
+	res := tryPurchaseLegacy(newBuyItemIdBuyer(), "iron sword", nil, shopUser)
+	if !res.Success {
+		t.Fatalf("player-shop purchase failed: %+v", res)
+	}
+	if res.ItemId != sellTestItemId {
+		t.Errorf("BuyResult.ItemId = %d; want %d", res.ItemId, sellTestItemId)
 	}
 }
 

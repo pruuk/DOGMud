@@ -1,0 +1,37 @@
+# #375 phase 3b slice 2 (PR #693): every quest `command` event now names its
+# target through questengine.NotifyCommand. No shipped quest filters on a
+# target yet, so this run is a regression check: each Pothole Coulee teaching
+# step that rides a converted command site (list, buy, craft, sell, drink,
+# throw, forage, cast, equip, fire, sneak) must still advance exactly once.
+# Steal and plant on a player are covered by unit tests (multi-agent refuses PvP).
+name: 375-3b2-targets
+mode: party
+summary: >-
+  The Pothole Coulee command-step quests (35, 38, 39, 44, 50) still advance
+  once each after the command event gained targets.
+on_actor_stop: continue
+budgets:
+  wall_clock: 35m
+requires:
+  max_connections: 20
+roster:
+  - id: forge
+    personality: bug-finder
+    goals: goals/scenarios/375-3b2-targets/forge.yaml
+  - id: brew
+    personality: bug-finder
+    goals: goals/scenarios/375-3b2-targets/brew.yaml
+  - id: marsh
+    personality: bug-finder
+    goals: goals/scenarios/375-3b2-targets/marsh.yaml
+  - id: caster
+    personality: bug-finder
+    goals: goals/scenarios/375-3b2-targets/caster.yaml
+  - id: ranged
+    personality: bug-finder
+    goals: goals/scenarios/375-3b2-targets/ranged.yaml
+
+group_goals:
+  - id: steps-advance-once
+    do: Each seat performs its quest's command steps in order and checks the quest log after each.
+    verify: Every step advances on its real action, exactly once, and no step advances on a repeat of the same command.

@@ -47,6 +47,7 @@ type EventDetails struct {
 	RoomNoun   string
 	Verb       string
 	QuestToken string
+	TargetKind string // command events: what the command was aimed at, a quests.Target* kind (#375 3b)
 }
 
 // NotifyResult is returned by Notify to inform the caller how the event was handled.

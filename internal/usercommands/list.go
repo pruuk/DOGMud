@@ -125,12 +125,7 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// quests can credit browsing a shop and not only purchasing (mirrors the
 	// "buy" notification in actions.Buy). Gated on having actually listed a
 	// merchant so a no-op `list` in an empty room doesn't fire.
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "list",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "list")
 
 	return true, nil
 }

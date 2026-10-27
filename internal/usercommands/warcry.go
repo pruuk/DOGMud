@@ -123,12 +123,7 @@ func Warcry(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 // only when the player ends the command under a warcry, never on a cost,
 // busy or cooldown refusal (command_issued fires on those too).
 func notifyWarcry(user *users.UserRecord, room *rooms.Room) {
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "warcry",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "warcry")
 }
 
 // shoutReachesAllies reports whether a warcry or rally from user would reach

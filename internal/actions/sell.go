@@ -428,17 +428,7 @@ func notifySaleToQuests(seller Actor, item items.Item, mob *mobs.Mob) {
 	if u == nil || room == nil {
 		return
 	}
-	details := questengine.EventDetails{
-		UserId:  userId,
-		RoomId:  room.RoomId,
-		Command: "sell",
-		ItemId:  item.ItemId,
-	}
-	if mob != nil {
-		details.MobId = int(mob.MobId)
-	}
-	bridge := questengine.NewGameBridge(u, room.RoomId)
-	questengine.GetEngine().Notify("command", details, bridge, bridge)
+	questengine.NotifyCommand(u, room.RoomId, "sell", questengine.TargetItem(item.ItemId).WithMob(mob))
 }
 
 // sellFindItemInChar searches backpack → potions → components for a match.

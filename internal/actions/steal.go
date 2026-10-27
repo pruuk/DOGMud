@@ -267,12 +267,7 @@ func stealFromMob(actor Actor, mobInstanceId int, t theftAttempt) StealResult {
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
 			room := actor.GetRoom()
-			bridge := questengine.NewGameBridge(u, room.RoomId)
-			questengine.GetEngine().Notify("command", questengine.EventDetails{
-				UserId:  actor.GetUserId(),
-				RoomId:  room.RoomId,
-				Command: "steal",
-			}, bridge, bridge)
+			questengine.NotifyCommand(u, room.RoomId, "steal", questengine.TargetMob(m))
 		}
 	}
 
@@ -437,6 +432,15 @@ func stealFromPlayer(actor Actor, targetUserId int, t theftAttempt) StealResult 
 		}
 	}
 
+	// Quest engine notification, player actors only. A steal on a player
+	// raised no command event before #375 phase 3b slice 2; it sits where its
+	// mob sibling's does, after the rank check and before the contest.
+	if actor.IsPlayer() {
+		if u := users.GetByUserId(actor.GetUserId()); u != nil {
+			questengine.NotifyCommand(u, actor.GetRoom().RoomId, "steal", questengine.TargetPlayer())
+		}
+	}
+
 	defenderScore := stealVictimScore(targetUser.Character, combat.SightRoom(actor.GetRoom()))
 	success := combat.RunContest(t.score(), []contest.Entry{{Score: defenderScore}}).Success
 	// U10b-1 Task 18: moved DOWN from before the contest, and it now carries
@@ -542,12 +546,7 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 	// Quest engine notification — player actors only.
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
-			bridge := questengine.NewGameBridge(u, room.RoomId)
-			questengine.GetEngine().Notify("command", questengine.EventDetails{
-				UserId:  actor.GetUserId(),
-				RoomId:  room.RoomId,
-				Command: "steal",
-			}, bridge, bridge)
+			questengine.NotifyCommand(u, room.RoomId, "steal", questengine.TargetContainer(containerName))
 		}
 	}
 
@@ -853,12 +852,7 @@ func stealHouseholdBauble(actor Actor, itm items.Item, t theftAttempt) StealResu
 
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
-			bridge := questengine.NewGameBridge(u, room.RoomId)
-			questengine.GetEngine().Notify("command", questengine.EventDetails{
-				UserId:  actor.GetUserId(),
-				RoomId:  room.RoomId,
-				Command: "steal",
-			}, bridge, bridge)
+			questengine.NotifyCommand(u, room.RoomId, "steal", questengine.TargetItem(itm.ItemId))
 		}
 	}
 

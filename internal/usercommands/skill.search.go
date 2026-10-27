@@ -49,12 +49,7 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// No shipped quest uses it since quests 49 and 58 moved to a `verb:
 	// search` room_interact on the Reliquary floor (#375 phase 3a); a quest
 	// step tied to one feature belongs there.
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "search",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "search")
 
 	return true, nil
 }

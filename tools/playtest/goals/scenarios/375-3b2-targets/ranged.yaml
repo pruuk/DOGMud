@@ -1,0 +1,26 @@
+# RANGED seat: quest 50 First Shot, on the Long Terrace (5351) with the
+# practice butt. You carry the quest sling and a pouch of shot. Quote every
+# game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5351
+  overlays:
+    set_quest_tokens: ["50-start"]
+    grant_items: [10038, 30064]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and quote what it says about First Shot. Type `inventory`
+    and `look`.
+  - >-
+    Equip the sling (`equip sling`). Check the quest log: the equip step must
+    be done.
+  - >-
+    Fire at the practice butt (`fire butt`, or the name `look` shows). Check
+    the quest log: the shooting step must be done.
+  - >-
+    Sneak (`sneak`), then fire again from cover. Check the quest log after
+    each: the ambush and cover-shot steps must be done, in that order.
