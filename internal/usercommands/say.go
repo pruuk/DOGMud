@@ -48,12 +48,7 @@ func Say(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	// Quest engine: command notification, sent only once something was
 	// actually said. The tutorial's "type say hello" step listens here rather
 	// than on command_issued, which a refused bare `say` also fires.
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "say",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "say")
 
 	return true, nil
 }

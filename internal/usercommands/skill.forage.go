@@ -25,12 +25,7 @@ func Forage(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if !result.RollHappened {
 		return true, nil
 	}
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "forage",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "forage")
 
 	return true, nil
 }

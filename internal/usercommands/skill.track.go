@@ -32,12 +32,8 @@ func Track(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	if opts.CancelTracking || result.OnCooldown {
 		return true, nil
 	}
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "track",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "track",
+		questengine.TargetActor(user.UserId, result.ActiveTargetUserId, result.ActiveTargetMobInstId))
 
 	return true, nil
 }

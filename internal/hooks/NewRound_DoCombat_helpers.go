@@ -1062,17 +1062,11 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 // flee is refused, blocked or finds no exit; command_issued fires at the
 // moment `flee` is typed, a round before any of that is known. Sent from the
 // room fled INTO, so an NPC there can answer (the tutorial's guide waits on
-// the far side). The event matches on the template id, as command_issued
+// the far side). NotifyCommand matches on the template id, as command_issued
 // does, so room-scoped triggers work in ephemeral instances; the bridge keeps
-// the real id for mob resolution.
+// the real id.
 func notifyFleeSucceeded(user *users.UserRecord, arrivedRoomId int) {
-	matchRoom, _ := rooms.OriginalRoomId(arrivedRoomId)
-	bridge := questengine.NewGameBridge(user, arrivedRoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  matchRoom,
-		Command: "flee",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, arrivedRoomId, "flee")
 }
 
 // handleMobFlee is the mob twin of handlePlayerFlee: the same
