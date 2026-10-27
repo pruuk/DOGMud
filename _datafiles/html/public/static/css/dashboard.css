@@ -189,6 +189,10 @@
 .qhint-clamp { display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .qhint-more { font:italic 11px Georgia,serif; color:#c9b184; background:none; border:0; padding:0 2px; cursor:pointer; text-decoration:underline; }
 .qhint-more:hover, .qhint-more:focus-visible { color:#f0dcae; }
+/* Progress of a count or explore step (#375 phase 3b slice 4): plain text
+   under its quest, indented like the hint, in the hint's muted colour. */
+.qprogress { margin:0 0 5px 20px; padding:0 0 0 9px; font:11px Georgia,serif; line-height:1.4; color:#8a7a58; }
+.qprogress + .qrow { margin-top:1px; }
 /* Repeatable tag and the finished-repeatable group (#375 P6). Dimming is by
    opacity only; the status is carried by words, never by colour. */
 .qrepeat { margin-left: 0.4em; opacity: 0.75; font-size: 0.9em; }

@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -21,6 +22,7 @@ type questRecord struct {
 	Name        string
 	Repeatable  bool
 	Description string
+	Progress    string // "Roots gathered: 2 of 5" for a count or explore step, else ""
 	Completion  string
 	BarFull     string
 	BarEmpty    string
@@ -61,6 +63,42 @@ func finishedRepeatRows(c *characters.Character, progress map[int]string, showHi
 			Description: line, Completion: "100%", BarFull: full, BarEmpty: empty})
 	}
 	return rows
+}
+
+// activeQuestRecord is the quests row of a quest the player holds at
+// questStep (`all+` for an admin's unstarted row), with its completion. A
+// step reached by a count or distinct trigger carries its progress line
+// (#375 phase 3b slice 4).
+func activeQuestRecord(user *users.UserRecord, questInfo *quests.Quest, questStep string) (questRecord, float64) {
+	totalSteps := len(questInfo.Steps)
+	completedSteps := 0
+	description := questInfo.Description
+	progress := ``
+
+	if questStep != `all+` {
+		for _, step := range questInfo.Steps {
+			completedSteps++
+			if step.Id == questStep {
+				description = step.Description
+				break
+			}
+		}
+		progress = questengine.GetEngine().UserStepProgress(user, questInfo.QuestId, questStep)
+	}
+
+	completion := float64(completedSteps) / float64(totalSteps)
+	barFull, barEmpty := util.ProgressBar(completion, 25)
+
+	return questRecord{
+		Id:          questInfo.QuestId,
+		Name:        questInfo.Name,
+		Repeatable:  questInfo.Repeatable,
+		Description: description,
+		Progress:    progress,
+		Completion:  fmt.Sprintf(`%d%%`, int(math.Floor(completion*100))),
+		BarFull:     barFull,
+		BarEmpty:    barEmpty,
+	}, completion
 }
 
 func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -107,36 +145,11 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			qInfo.QuestsTotal++
 
-			totalSteps := len(questInfo.Steps)
-			completedSteps := 0
-			description := questInfo.Description
-
-			if questStep != `all+` {
-				for _, step := range questInfo.Steps {
-					completedSteps++
-					if step.Id == questStep {
-						description = step.Description
-						break
-					}
-				}
-			}
-
-			completion = float64(completedSteps) / float64(totalSteps)
+			var qDisplay questRecord
+			qDisplay, completion = activeQuestRecord(user, questInfo, questStep)
 
 			if !showComplete && completion >= 1 {
 				continue
-			}
-
-			barFull, barEmpty := util.ProgressBar(completion, 25)
-
-			qDisplay := questRecord{
-				Id:          questInfo.QuestId,
-				Name:        questInfo.Name,
-				Repeatable:  questInfo.Repeatable,
-				Description: description,
-				Completion:  fmt.Sprintf(`%d%%`, int(math.Floor(completion*100))),
-				BarFull:     barFull,
-				BarEmpty:    barEmpty,
 			}
 
 			allQuests = append(allQuests, qDisplay)
