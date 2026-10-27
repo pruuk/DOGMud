@@ -55,6 +55,9 @@ func (df *DialogueFile) TopicMarker(t *Topic, ps *PlayerState) string {
 	case KindOffer:
 		return menu.MarkerQuest
 	}
+	if t.Kind == KindInfo && ps != nil && ps.Objective != nil && ps.Objective(df.MobId, t.Key) {
+		return menu.MarkerInfo
+	}
 	if t.Marked && !df.heard(t, ps) {
 		return menu.MarkerInfo
 	}

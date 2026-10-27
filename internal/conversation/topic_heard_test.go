@@ -64,6 +64,17 @@ func topicHeardScene(t *testing.T) (*users.UserRecord, func(t *dialogue.Topic) b
 	}
 }
 
+// PlayerState.Objective is the topic_heard dry run: true for a topic a
+// registered trigger would act on, false for any other, and it fires nothing.
+func TestPlayerStateObjectiveIsADryRun(t *testing.T) {
+	user, _ := topicHeardScene(t)
+	ps := PlayerState(user)
+	require.True(t, ps.Objective(topicHeardMobId, "free"), "a trigger waits on this topic")
+	require.False(t, ps.Objective(topicHeardMobId, "other"), "no trigger names this topic")
+	require.False(t, ps.Objective(7, "free"), "no trigger names this NPC")
+	require.False(t, user.Character.HasQuest(freeToken), "asking fires nothing")
+}
+
 // play raises topic_heard once the topic's effects landed; a refused price
 // raises nothing. The free topic is the positive control: the same trigger
 // path fires for it, so the paid topic's silence is a real result.

@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -128,6 +129,13 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 		},
 		HasHeard:  user.Character.HasHeard,
 		MarkHeard: user.Character.MarkHeard,
+		// Objective lights a topic a topic_heard trigger of the player's
+		// quests would act on right now (a dry run; nothing fires).
+		Objective: func(mobId int, key string) bool {
+			bridge := questengine.NewGameBridge(user, user.Character.RoomId)
+			return questengine.GetEngine().WouldFire("topic_heard",
+				questengine.TopicHeardDetails(user.UserId, user.Character.RoomId, mobId, key), bridge)
+		},
 		QuestOpen: func(questId int) bool {
 			return user.Character.QuestOpen(quests.GetQuestById(questId))
 		},
