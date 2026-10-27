@@ -86,6 +86,16 @@ func (t Target) WithNoun(noun string) Target {
 	return t
 }
 
+// EventAt starts an event in a room: the user and the template room
+// (rooms.OriginalRoomId, a no-op for a normal room). Every event source
+// matches on the template room, so room, area and zone filters hold inside
+// an instance; the source's bridge keeps the real room (#375 phase 3b
+// slice 4).
+func EventAt(userId, roomId int) EventDetails {
+	matchRoom, _ := rooms.OriginalRoomId(roomId)
+	return EventDetails{UserId: userId, RoomId: matchRoom}
+}
+
 // CommandDetails builds the command event for one target. RoomId is the
 // template room (rooms.OriginalRoomId), as command_issued and flee already
 // match, so room-scoped triggers work in ephemeral instances.

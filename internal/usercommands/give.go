@@ -204,12 +204,9 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				// Check quest engine first — it may intercept the give before
 				// the item is transferred to the mob.
 				bridge := questengine.NewGameBridge(user, room.RoomId)
-				qResult := questengine.GetEngine().Notify("item_give", questengine.EventDetails{
-					UserId: user.UserId,
-					RoomId: room.RoomId,
-					MobId:  int(m.MobId),
-					ItemId: giveItem.ItemId,
-				}, bridge, bridge)
+				qd := questengine.EventAt(user.UserId, room.RoomId) // template room
+				qd.MobId, qd.ItemId = int(m.MobId), giveItem.ItemId
+				qResult := questengine.GetEngine().Notify("item_give", qd, bridge, bridge)
 
 				if qResult.Handled && qResult.ConsumeItem {
 					// Quest engine consumed the item — remove from player only,

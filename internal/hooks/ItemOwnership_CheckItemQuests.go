@@ -37,11 +37,9 @@ func CheckItemQuests(e events.Event) events.ListenerReturn {
 		// Quest engine: item_gain notification
 		if u := users.GetByUserId(evt.UserId); u != nil {
 			bridge := questengine.NewGameBridge(u, u.Character.RoomId)
-			questengine.GetEngine().Notify("item_gain", questengine.EventDetails{
-				UserId: evt.UserId,
-				RoomId: u.Character.RoomId,
-				ItemId: evt.Item.ItemId,
-			}, bridge, bridge)
+			d := questengine.EventAt(evt.UserId, u.Character.RoomId) // template room
+			d.ItemId = evt.Item.ItemId
+			questengine.GetEngine().Notify("item_gain", d, bridge, bridge)
 		}
 
 	}

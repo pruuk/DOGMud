@@ -31,11 +31,9 @@ func SkillUseQuestNotify(e events.Event) events.ListenerReturn {
 	bridge := questengine.NewGameBridge(u, u.Character.RoomId)
 
 	// Notify the quest engine
-	questengine.GetEngine().Notify("skill_use", questengine.EventDetails{
-		UserId: evt.UserId,
-		RoomId: u.Character.RoomId,
-		Skill:  string(evt.Skill),
-	}, bridge, bridge)
+	d := questengine.EventAt(evt.UserId, u.Character.RoomId) // template room
+	d.Skill = string(evt.Skill)
+	questengine.GetEngine().Notify("skill_use", d, bridge, bridge)
 
 	return events.Continue
 }

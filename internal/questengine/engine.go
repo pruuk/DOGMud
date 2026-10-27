@@ -6,8 +6,10 @@ import (
 	"sort"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/areas"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -231,11 +233,23 @@ func pickNounTier(triggers []*indexedTrigger, d EventDetails) nounTier {
 
 // matchTriggerFields checks whether a trigger's field filters match the event
 // details, with the trigger noun matched at the given tier.
+// roomZoneOf is the zone of a template room, for the zone: filter. A seam so
+// tests need no world; the live index costs a map read, no file read.
+var roomZoneOf = rooms.TemplateRoomZone
+
 func matchTriggerFields(t *TriggerDef, d EventDetails, tier nounTier) bool {
 	if t.Mob > 0 && t.Mob != d.MobId {
 		return false
 	}
 	if t.Room > 0 && t.Room != d.RoomId {
+		return false
+	}
+	// Area and zone filters read the event's template room (#375 phase 3b
+	// slice 4): every event source passes rooms.OriginalRoomId.
+	if t.Area != "" && !areas.Contains(t.Area, d.RoomId) {
+		return false
+	}
+	if t.Zone != "" && roomZoneOf(d.RoomId) != t.Zone {
 		return false
 	}
 	if t.Item > 0 && t.Item != d.ItemId {
