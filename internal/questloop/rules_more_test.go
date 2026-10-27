@@ -97,6 +97,9 @@ func fillValidators(v *quests.QuestValidators) {
 	if v.SpellExists == nil {
 		v.SpellExists = yesS
 	}
+	if v.EffectExists == nil {
+		v.EffectExists = yesS
+	}
 	if v.SkillExists == nil {
 		v.SkillExists = yesS
 	}

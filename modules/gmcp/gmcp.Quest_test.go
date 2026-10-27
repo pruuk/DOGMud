@@ -38,6 +38,7 @@ func (w *fakeQuestWorld) deps() questDeps {
 		RoomExists:      func(int) bool { return true },
 		ConditionExists: func(int) bool { return true },
 		SpellExists:     func(string) bool { return true },
+		EffectExists:    func(string) bool { return true },
 		SkillExists:     func(string) bool { return true },
 		StatExists:      func(string) bool { return true },
 		RecipeExists:    func(string) bool { return true },
