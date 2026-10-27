@@ -1,0 +1,29 @@
+# FORGE seat: quest 35 First Heat, in Rusk's smithy (5245). You are on the
+# first step. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5245
+  overlays:
+    set_quest_tokens: ["35-start"]
+    set_gold: 300
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` (or `quest`) and quote what it says about First Heat. Then
+    type `list` and quote the shop list. Check the quest log again: the step
+    must have moved on from listing. Type `list` a second time and confirm the
+    quest step does NOT move again.
+  - >-
+    Buy an iron ingot and a leather strip from Rusk (`buy ingot`, `buy strip`;
+    read the list for the real names). Check the quest log after each buy.
+  - >-
+    Craft the dagger at the forge (`craft` to see recipes, then craft the one
+    the quest asks for). Wait for it to finish. Check the quest log: the craft
+    step must be done.
+  - >-
+    Sell the dagger to Rusk (`sell dagger`). Quote the reply and check the
+    quest log: First Heat must be complete. If a talk menu offers a hand-in
+    instead, say so, but do the sell.

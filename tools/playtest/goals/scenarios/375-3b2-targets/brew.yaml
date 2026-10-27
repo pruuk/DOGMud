@@ -1,0 +1,27 @@
+# BREW seat: quest 38 First Brew, at Herbalist Birna's pool (5265). You are on
+# the first step. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5265
+  overlays:
+    set_quest_tokens: ["38-start"]
+    set_gold: 300
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and quote what it says about First Brew. Type `list` and
+    quote the list. Check the quest log: the listing step must be done.
+  - >-
+    Buy a glass vial and a healer's root (read the list for the real names).
+    Check the quest log after each buy.
+  - >-
+    Brew the healing salve (`craft` to see recipes, then craft it here or in
+    the bench room next door if this room has no bench). Wait for it to
+    finish. Check the quest log: the brew step must be done.
+  - >-
+    Drink the salve or another potion you carry (`drink <name>`). Check the
+    quest log: the drink step must be done. Drink a second one if you have
+    one and confirm nothing else advances.

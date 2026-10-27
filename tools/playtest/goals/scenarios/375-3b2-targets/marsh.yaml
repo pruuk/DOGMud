@@ -1,0 +1,28 @@
+# MARSH seat: quest 39 Wade the Marsh. The leech step is already done; you
+# carry two firebombs. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5270
+  overlays:
+    set_quest_tokens: ["39-start", "39-leech"]
+    grant_items: [30058, 30058]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and quote what it says about Wade the Marsh. Type `look` and
+    note every creature listed.
+  - >-
+    Throw a firebomb (`throw firebomb`). Quote every line of the reply in
+    order, including any quest lines. Check the quest log: the throw step
+    must be done. Report whether any creature was in the room.
+  - >-
+    Move to a room with a creature in it if the first throw had none (or to an
+    empty room if the first had one), and throw the second firebomb. Quote
+    the reply. Check the quest log: nothing may advance a second time.
+  - >-
+    Forage in the marsh (rooms you were told about in the quest; `forage`).
+    Check the quest log: the forage step must be done. If you get into a
+    fight, flee or finish it, and note it.
