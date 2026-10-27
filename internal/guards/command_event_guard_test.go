@@ -17,6 +17,15 @@ import (
 // them, and a quest step that names a target would never fire there.
 const commandEventFile = "internal/questengine/command_event.go"
 
+// commandEventAllowlist names every other production file that raises one of
+// the guarded events by hand, with the reason. Keyed by file, not line, so
+// edits do not break it. A new entry needs a reason a reviewer accepts: a
+// real game event belongs in the questengine helpers.
+var commandEventAllowlist = map[string]string{
+	"internal/questengine/walkthrough.go": "the quest walk's simulated engine replays a played topic's topic_heard " +
+		"on its own walk engine, as conversation.play does in game; no player or room is involved",
+}
+
 // isGuardedNotify reports whether call is X.Notify(E, ...) or
 // X.NotifyAll(E, ...) with E the literal event name "command" or
 // "spell_landed" or "topic_heard" (#375 phase 3b slices 1 to 3).
@@ -32,6 +41,7 @@ func isGuardedNotify(call *ast.CallExpr) bool {
 func TestCommandEventsOnlyThroughNotifyCommand(t *testing.T) {
 	calls, _ := walkGoCalls(t, map[string]bool{"Notify": true, "NotifyAll": true})
 	seenHelper := false
+	seen := map[string]bool{}
 	var violations []string
 	for _, c := range calls {
 		if !isGuardedNotify(c.call) {
@@ -39,6 +49,10 @@ func TestCommandEventsOnlyThroughNotifyCommand(t *testing.T) {
 		}
 		if c.file == commandEventFile {
 			seenHelper = true
+			continue
+		}
+		if _, ok := commandEventAllowlist[c.file]; ok {
+			seen[c.file] = true
 			continue
 		}
 		violations = append(violations, c.file+":"+strconv.Itoa(c.line))
@@ -50,6 +64,11 @@ func TestCommandEventsOnlyThroughNotifyCommand(t *testing.T) {
 	}
 	if !seenHelper {
 		t.Fatalf("the scan never saw %s raise the command event: the guard cannot find calls", commandEventFile)
+	}
+	for file := range commandEventAllowlist {
+		if !seen[file] {
+			t.Errorf("allowlist entry %s raises no guarded event by hand any more: remove it", file)
+		}
 	}
 }
 
