@@ -43,8 +43,9 @@ to the next.
 12. Abandon keeps progress. Re-taking resumes where the player left off.
 13. Repeatable quests have a frequency, and a repeat limit where wanted.
     (Owner 2026-10-24, phase 2 ruling P3.)
-14. Quest steps progress on real actions (cast, explore, acquire, talk, observe, use), never on
-    a typed noun the player has to guess.
+14. Quest steps progress on real actions (cast, explore, acquire, talk, use), never on
+    a typed noun the player has to guess. A step completes on something the player does
+    (owner 2026-10-27, dropping observe; phase 3b spec).
 15. Minimap guidance points at a room, an NPC, a zone or an area. "Destination unknown" is
     rare and logs a warning.
 16. Pinnacle recipes are sold, not quested. Info that cannot be a closed loop is a topic, not
