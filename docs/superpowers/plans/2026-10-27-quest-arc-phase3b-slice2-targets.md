@@ -860,7 +860,7 @@ target, plus track.
 mob sibling (after the target is found and the rank check passes, before the contest):
 
 ```go
-	// Quest engine notification — player actors only.
+	// Quest engine notification, player actors only.
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
 			questengine.NotifyCommand(u, actor.GetRoom().RoomId, "steal", questengine.TargetPlayer())
