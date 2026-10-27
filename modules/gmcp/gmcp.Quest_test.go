@@ -158,7 +158,7 @@ func TestBuildQuestListAndGet(t *testing.T) {
 	if !offersSpellLanded {
 		t.Fatalf("the builder's event picker must offer spell_landed: %+v", detail.Enums.Events)
 	}
-	if len(detail.Enums.Events) != 12|| len(detail.Enums.Actions) != 24 || len(detail.Enums.Conditions) != 9 {
+	if len(detail.Enums.Events) != 12 || len(detail.Enums.Actions) != 24 || len(detail.Enums.Conditions) != 9 {
 		t.Fatalf("vocabulary sizes wrong: events=%d conditions=%d actions=%d",
 			len(detail.Enums.Events), len(detail.Enums.Conditions), len(detail.Enums.Actions))
 	}
