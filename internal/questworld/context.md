@@ -53,7 +53,8 @@ condition, mob and room registries to fill them.
   (`owner`: their own grants, a topic of or gated on the quest, a mob only
   that quest spawns), which backs `ItemAvailable`. A topic's owner entry
   carries the tokens of that quest its `questRequired` names and the token it
-  grants (`topicOwners`): the source opens to that quest once the player holds
+  grants (`topicOwners`; with no `grantsQuest`, the tokens the `topic_heard`
+  triggers on that mob and topic grant, from `topicHeardGrants`): the source opens to that quest once the player holds
   them all (a topic of quest 70 gated on 63-start is open to quest 63 from
   start on; quest 20's `vellahandoff`, which grants 20-vella_journal with the
   journal, is no source before that step). Behaviour-tree mob spawns are not

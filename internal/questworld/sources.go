@@ -135,13 +135,15 @@ func Sources() questloop.Sources {
 		}
 	}
 
+	heard := topicHeardGrants(quests.GetAllQuests())
 	files, _ := dialogue.LoadAllFiles()
 	for _, df := range files {
 		if df == nil {
 			continue
 		}
 		for _, t := range df.Topics {
-			add(t.GivesItem, fmt.Sprintf("mob %d topic %s", df.MobId, t.Key), topicOwners(t)...)
+			add(t.GivesItem, fmt.Sprintf("mob %d topic %s", df.MobId, t.Key),
+				topicOwners(t, heard[mobTopic{mob: df.MobId, key: t.Key}]...)...)
 		}
 	}
 
@@ -261,7 +263,43 @@ func available(ss []itemSource, questId int, has func(string) bool) bool {
 // grants, each with the tokens of that quest the gate names or it grants. A "lost the page?" topic gated on 20-vella_journal
 // is quest 20's own replacement, open from that step on; a topic of quest 70
 // gated on 63-start is open to quest 63 from start on.
-func topicOwners(t dialogue.Topic) []owner {
+// mobTopic names one NPC's topic: the mob template id and the topic key.
+type mobTopic struct {
+	mob int
+	key string
+}
+
+// topicHeardGrants is, per NPC topic, the tokens the topic_heard triggers on
+// it grant (#375 phase 3b moved mid-quest grantsQuest onto those triggers).
+// Revokes (a leading "-") are left out.
+func topicHeardGrants(qs []quests.Quest) map[mobTopic][]string {
+	out := map[mobTopic][]string{}
+	for _, q := range qs {
+		for _, t := range q.Triggers {
+			if t.Event != "topic_heard" || t.Mob <= 0 || t.Topic == "" {
+				continue
+			}
+			k := mobTopic{mob: t.Mob, key: t.Topic}
+			var walk func([]quests.ActionDef)
+			walk = func(as []quests.ActionDef) {
+				for _, a := range as {
+					if g := a.Grant; g != "" && !strings.HasPrefix(g, "-") && !slices.Contains(out[k], g) {
+						out[k] = append(out[k], g)
+					}
+					if a.Sequence != nil {
+						walk(a.Sequence.OnComplete)
+					}
+				}
+			}
+			walk(t.Actions)
+		}
+	}
+	return out
+}
+
+// topicOwners takes heard, the tokens topic_heard triggers on the topic
+// grant; they stand in for GrantsQuest when the topic carries none.
+func topicOwners(t dialogue.Topic, heard ...string) []owner {
 	var out []owner
 	at := func(id int) int {
 		i := slices.IndexFunc(out, func(o owner) bool { return o.quest == id })
@@ -287,8 +325,13 @@ func topicOwners(t dialogue.Topic) []owner {
 	// A topic that grants a step hands its item over with that step (quest
 	// 20's vellahandoff grants 20-vella_journal and the journal together), so
 	// for that quest it is a source only from that step on.
+	// A topic whose grant moved onto a topic_heard trigger does the same.
 	if g := t.GrantsQuest; g != "" && !strings.HasPrefix(g, "-") {
 		gate(g)
+	} else if g == "" {
+		for _, tok := range heard {
+			gate(tok)
+		}
 	}
 	return out
 }
