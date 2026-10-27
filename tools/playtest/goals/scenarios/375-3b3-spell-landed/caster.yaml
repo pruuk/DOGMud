@@ -1,0 +1,39 @@
+# CASTER seat: quest 44 First Casting, in the Star Chamber (5305) where the
+# Practice Mote hangs. You know four spells. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5305
+  overlays:
+    set_quest_tokens: ["44-start"]
+    grant_spells:
+      conviction-spike: 1
+      heal: 1
+      chrysalis-glow: 1
+      identify: 1
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `quests`, `look` and `spells`. Quote what the quest log says about
+    First Casting and the spell list.
+  - >-
+    Cast Conviction Spike at the practice mote (`cast conviction-spike mote`,
+    or the name `look` shows). Wait for it to finish. Check the quest log: the
+    cast step must have advanced exactly once. If the mote fights back, finish
+    or flee the fight and note it.
+  - >-
+    Wait for the cooldown, then cast Mend Flesh on yourself (`cast heal` with
+    no target, or `cast heal me` if that is refused). Quote every line. It
+    must read as a heal on you, with no error.
+  - >-
+    Wait for the cooldown, then cast Chrysalis Glow with no target
+    (`cast chrysalis-glow`). Quote the reply; it must work normally.
+  - >-
+    Wait for the cooldown, then `cast identify` on an item you carry (try
+    `cast identify salve` or the name `inventory` shows). Quote the reply.
+    Then try `cast identify nothinghere` and quote the refusal.
+  - >-
+    Check the quest log one last time: nothing may have advanced except the
+    one cast step.
