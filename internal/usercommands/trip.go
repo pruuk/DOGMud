@@ -61,12 +61,8 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// already holds, so the quest engine hears it as a trip. Without this
 		// the tutorial's trip step could not be finished while an automatic
 		// SWEEP keeps the effigy prone. Every other refusal stays silent.
-		bridge := questengine.NewGameBridge(user, room.RoomId)
-		questengine.GetEngine().Notify("command", questengine.EventDetails{
-			UserId:  user.UserId,
-			RoomId:  room.RoomId,
-			Command: "trip",
-		}, bridge, bridge)
+		questengine.NotifyCommand(user, room.RoomId, "trip",
+			questengine.TargetActor(user.UserId, res.Target.UserId, res.Target.MobInstanceId))
 		return true, nil
 	}
 
@@ -163,12 +159,8 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	// Quest engine: command notification
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "trip",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "trip",
+		questengine.TargetActor(user.UserId, res.Target.UserId, res.Target.MobInstanceId))
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.
 	actions.DispatchCounterMessages(actor, res.Counter)

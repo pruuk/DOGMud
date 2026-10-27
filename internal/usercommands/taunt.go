@@ -136,12 +136,8 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// Quest engine: command notification — the player executed a taunt (the
 	// newbie Lore spoke's "talk down the belligerent" rhetoric beat). Fires
 	// after a real taunt (past the cooldown/no-target guards). Mirrors cast.
-	bridge := questengine.NewGameBridge(user, room.RoomId)
-	questengine.GetEngine().Notify("command", questengine.EventDetails{
-		UserId:  user.UserId,
-		RoomId:  room.RoomId,
-		Command: "taunt",
-	}, bridge, bridge)
+	questengine.NotifyCommand(user, room.RoomId, "taunt",
+		questengine.TargetActor(user.UserId, result.Target.UserId, result.Target.MobInstanceId))
 
 	return true, nil
 }

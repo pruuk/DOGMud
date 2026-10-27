@@ -130,12 +130,7 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item, t theftAtt
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
 			room := actor.GetRoom()
-			bridge := questengine.NewGameBridge(u, room.RoomId)
-			questengine.GetEngine().Notify("command", questengine.EventDetails{
-				UserId:  actor.GetUserId(),
-				RoomId:  room.RoomId,
-				Command: "plant",
-			}, bridge, bridge)
+			questengine.NotifyCommand(u, room.RoomId, "plant", questengine.TargetMob(m).WithItem(plantItem.ItemId))
 		}
 	}
 
@@ -264,6 +259,15 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item, t theftA
 	if targetUser == nil {
 		refusal.NotHereCreature(actor)
 		return PlantResult{Reason: "target not found"}
+	}
+
+	// Quest engine notification, player actors only. A plant on a player
+	// raised no command event before #375 phase 3b slice 2; it sits where its
+	// mob sibling's does, after the target is found and before the contest.
+	if actor.IsPlayer() {
+		if u := users.GetByUserId(actor.GetUserId()); u != nil {
+			questengine.NotifyCommand(u, actor.GetRoom().RoomId, "plant", questengine.TargetPlayer().WithItem(plantItem.ItemId))
+		}
 	}
 
 	defenderScore := stealVictimScore(targetUser.Character, combat.SightRoom(actor.GetRoom()))

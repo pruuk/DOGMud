@@ -120,12 +120,7 @@ func shadowMob(actor Actor, mobInstanceId int) ShadowResult {
 	// Quest engine notification — player actors only.
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
-			bridge := questengine.NewGameBridge(u, room.RoomId)
-			questengine.GetEngine().Notify("command", questengine.EventDetails{
-				UserId:  actor.GetUserId(),
-				RoomId:  room.RoomId,
-				Command: "shadow",
-			}, bridge, bridge)
+			questengine.NotifyCommand(u, room.RoomId, "shadow", questengine.TargetMob(m))
 
 		}
 	}
@@ -161,12 +156,7 @@ func shadowPlayer(actor Actor, targetUserId int) ShadowResult {
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
 			room := actor.GetRoom()
-			bridge := questengine.NewGameBridge(u, room.RoomId)
-			questengine.GetEngine().Notify("command", questengine.EventDetails{
-				UserId:  actor.GetUserId(),
-				RoomId:  room.RoomId,
-				Command: "shadow",
-			}, bridge, bridge)
+			questengine.NotifyCommand(u, room.RoomId, "shadow", questengine.TargetPlayer())
 
 		}
 	}
