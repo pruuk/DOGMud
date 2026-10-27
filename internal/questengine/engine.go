@@ -98,39 +98,48 @@ func (e *Engine) NotifyAll(eventType string, details []EventDetails, player Play
 	if len(details) > 0 {
 		userId = details[len(details)-1].UserId
 	}
-	return e.guarded(eventType, userId, func(guard *EvalGuard) NotifyResult {
-		result := NotifyResult{}
-		for _, d := range details {
-			result.merge(e.evaluate(eventType, d, player, ctx, guard))
-		}
-		return result
-	})
+	run := beginGuarded()
+	guard := NewEvalGuard(run.maxDepth)
+	result := NotifyResult{}
+	for _, d := range details {
+		result.merge(e.evaluate(eventType, d, player, ctx, guard))
+	}
+	run.end(guard, eventType, userId)
+	return result
 }
 
-// guarded runs body under one fresh EvalGuard, logging a slow run and a
-// depth-limit hit. It is the entry shared by NotifyAll and CheckExplore, so
-// every evaluation starts from the same limits.
-func (e *Engine) guarded(eventType string, userId int, body func(*EvalGuard) NotifyResult) NotifyResult {
-	bal := configs.GetBalanceConfig()
-	maxDepth := int(bal.QuestChainDepthLimit)
-	warnMs := int64(bal.QuestPerformanceWarnMs)
+// guardedRun is the limits and start time of one evaluation under one fresh
+// EvalGuard: beginGuarded starts it, the caller makes the guard from
+// maxDepth, and end logs a slow run and a depth-limit hit. It is shared by
+// NotifyAll and CheckExplore, so every evaluation starts from the same
+// limits. The guard is made by the caller, not returned or reached through
+// a callback, so it stays on the caller's stack: room_enter runs on every
+// step a player takes, and a heap guard costs an allocation each time.
+type guardedRun struct {
+	start    time.Time
+	maxDepth int
+	warnMs   int64
+}
 
-	guard := NewEvalGuard(maxDepth)
-	start := time.Now()
+func beginGuarded() guardedRun {
+	maxDepth, warnMs := configs.QuestGuardLimits()
+	return guardedRun{
+		start:    time.Now(),
+		maxDepth: maxDepth,
+		warnMs:   warnMs,
+	}
+}
 
-	result := body(guard)
-
-	elapsed := time.Since(start).Milliseconds()
-	if elapsed > warnMs {
+func (r guardedRun) end(guard *EvalGuard, eventType string, userId int) {
+	elapsed := time.Since(r.start).Milliseconds()
+	if elapsed > r.warnMs {
 		LogWarn("Notify(%s) for user %d took %dms (threshold %dms), trace: %v",
-			eventType, userId, elapsed, warnMs, guard.GetTrace())
+			eventType, userId, elapsed, r.warnMs, guard.GetTrace())
 	}
 	if guard.DepthExceeded() {
 		LogError("depth limit %d exceeded for user %d event %s, trace: %v",
-			maxDepth, userId, eventType, guard.GetTrace())
+			r.maxDepth, userId, eventType, guard.GetTrace())
 	}
-
-	return result
 }
 
 // merge folds another result into r.

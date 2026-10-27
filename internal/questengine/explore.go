@@ -60,22 +60,23 @@ func (e *Engine) CheckExplore(roomId int, player PlayerState, ctx ActionContext)
 		return NotifyResult{}
 	}
 	userId := ctx.GetUserId()
-	return e.guarded("explore", userId, func(guard *EvalGuard) NotifyResult {
-		result := NotifyResult{}
-		if !guard.PushDepth() {
-			return result
-		}
-		defer guard.PopDepth()
-		d := EventDetails{UserId: userId, RoomId: roomId}
-		for _, key := range keys {
-			for _, t := range e.exploreByArea[key] {
-				if exploreReady(t, player) {
-					result.merge(e.fire("explore", t, d, player, ctx, guard, nil))
-				}
+	run := beginGuarded()
+	guard := NewEvalGuard(run.maxDepth)
+	defer run.end(guard, "explore", userId)
+	result := NotifyResult{}
+	if !guard.PushDepth() {
+		return result
+	}
+	defer guard.PopDepth()
+	d := EventDetails{UserId: userId, RoomId: roomId}
+	for _, key := range keys {
+		for _, t := range e.exploreByArea[key] {
+			if exploreReady(t, player) {
+				result.merge(e.fire("explore", t, d, player, ctx, guard, nil))
 			}
 		}
-		return result
-	})
+	}
+	return result
 }
 
 // exploreAtStepStart checks the granted quest's explore triggers as a step
