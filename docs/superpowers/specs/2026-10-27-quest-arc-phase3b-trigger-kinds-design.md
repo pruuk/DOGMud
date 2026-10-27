@@ -109,26 +109,34 @@ or whose file has no topic `topic`, is a boot error.
 
 ### 2. Slice 2: targets on `command` events
 
-**One helper.** `questengine.CommandEvent(actor, room, command string, target Target)` builds the
-`EventDetails` for every `command` site; the 32 sites call it instead of building the struct by hand.
-`Target` holds `Kind` (`self`, `mob`, `player`, `item`, `none`), `MobId` (template), `ItemId`
-(template) and the existing `Noun` (spell id for cast). `EventDetails` gains `TargetKind string`.
-A trigger gains `target: self|mob|player|item` (optional), matched against `TargetKind`; the
-existing `mob:` and `item:` filters now match on `command` events too.
+**One helper.** `questengine.NotifyCommand(user, roomId, command, targets ...Target)` builds the
+`EventDetails` for every `command` site and raises the event; the 32 sites call it instead of
+building the struct by hand. `Target` holds `Kind` (`self`, `mob`, `player`, `item`, `container`),
+`MobId` (template), `ItemId` (template) and the existing `Noun` (spell id for cast; the room
+container's name for a `container` target). `none` is an event-only value: a trigger cannot filter
+on it, so a trigger that does not care omits `target`. `EventDetails` gains `TargetKind string`.
+A trigger gains `target: self|mob|player|item|container` (optional), matched against `TargetKind`;
+the existing `mob:` and `item:` filters now match on `command` events too.
 
 **Which target.** The command's own resolved target, after `AimBySight` or the item match the
-command already does. Never re-resolved. A command with several targets (an area grenade) raises
-one event per target that was affected, kind `mob` or `player`; a grenade that hits nothing raises
-one event with kind `none`. A command with no target (help, list, sleep) passes `none`.
+command already does. Never re-resolved. A command with several targets raises one event per
+target under one evaluation guard (`Engine.NotifyAll`), so a trigger fires at most once per
+command however many targets it matches. A trigger is marked visited only when it fires, so a
+trigger whose conditions failed on one target can still fire on another. Throw raises one target
+per mob its blast contested (hit or not), after the blast; a throw that reached no one raises one
+event of kind `none`. A command with no target (help, list, sleep) passes no targets and raises
+one event of kind `none`.
 
 **Guard.** `internal/guards` gains a test that every `Notify("command"` in production code goes
-through `CommandEvent` (an AST walk, like the existing call-site guards), with a must-fail fixture
+through `NotifyCommand` (an AST walk, like the existing call-site guards), with a must-fail fixture
 proving the guard can fail.
 
-**Mobs share the rule.** A mob actor raising the same command (a mob that trips, throws, casts)
-builds the same event through the helper; quests never listen for mob actors today, and the
-engine's per-user `PlayerState` means a mob event matches no quest trigger, but the event shape is
-one.
+**Mobs share the rule.** No mob-actor site raises a command event today, so nothing is added for
+mobs. The event shape is one, and a mob site added later builds it through the same helper; the
+engine's per-user `PlayerState` means a mob event would match no quest trigger.
+
+**Steal and plant.** Steal and plant on a player raised no command event; they now raise one, as
+their mob and container siblings do.
 
 **Existing triggers unchanged.** A trigger with no `target`, `mob` or `item` matches as today, so
 the 49 shipped `command` triggers keep working.

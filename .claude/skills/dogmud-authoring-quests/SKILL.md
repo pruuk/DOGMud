@@ -292,6 +292,33 @@ explicitly tagged. M4b-1 renamed them from `playermessage` and `roommessage`,
 and renamed the two narrating trigger actions from `send_text` and `room_text`
 to the same two words, so one vocabulary covers both blocks.
 
+## Command trigger filters: `target`, `mob`, `item`
+
+A `command` trigger can say what the command was aimed at (#375 phase 3b
+slice 2). `target:` is one of `self`, `mob`, `player`, `item`, `container`;
+omit it to accept any target (including none). The loader refuses `target` on
+any other event and any other value. `mob:` (a mob template id) and `item:`
+(an item template id) now also work on `command` triggers: they match the
+mob or item the command was aimed at, used or traded. For `container`
+targets (steal, plant) `noun:` names the room container.
+
+```yaml
+  - event: command
+    command: throw
+    target: mob
+    mob: 9112
+    conditions:
+      has: ["39-leech"]
+      missing: ["39-boar"]
+    actions:
+      - grant: "39-boar"
+```
+
+A command aimed at several targets (a thrown blast over three mobs) raises
+one event per target under one guard, so a trigger fires at most once per
+command however many targets it matches. A trigger with no `target:` filter
+fires once for the whole command, not once per target.
+
 ## Verify event names against the loader
 
 Quest YAML triggers panic at startup if the `event:` name is not in the

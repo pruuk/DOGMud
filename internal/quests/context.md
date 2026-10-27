@@ -976,6 +976,16 @@ A `room_interact` trigger's `verb` is `look`, `search` or empty (`VerbLook`,
 other value. Two triggers differing only in verb are different triggers
 (`samecommand.go`).
 
+### Trigger field: `target` (#375 phase 3b slice 2)
+
+`TriggerDef.Target` filters a `command` trigger on what the command was aimed
+at. Its values are `TriggerTargetKinds`: `self`, `mob`, `player`, `item`,
+`container`. `TargetNone` ("none") exists as the value of an untargeted event
+but is not a legal filter; omit `target` to accept any. The loader refuses
+`target` on any event other than `command`, and any value outside
+`TriggerTargetKinds`. `questloop` includes `target` in a trigger's signature,
+so two triggers differing only in target are different triggers.
+
 ### Trigger action: `discover`
 
 `discover: <hidden noun key>` (`ActionDef.Discover`, #375 phase 3a) marks a
