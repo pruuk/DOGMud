@@ -99,7 +99,8 @@ func (e *Engine) exploreAtStepStart(d EventDetails, player PlayerState, ctx Acti
 }
 
 // exploredLine is what the player is told when an explore step starts with
-// its area already mapped.
+// its area already mapped. The default line claims every corner only for
+// distinct: all; a step needing some of the area says enough was seen.
 func exploredLine(t *TriggerDef) string {
 	if t.ExploredLine != "" {
 		return t.ExploredLine
@@ -107,6 +108,9 @@ func exploredLine(t *TriggerDef) string {
 	name := t.Area
 	if a, ok := areas.Get(t.Area); ok && a.Name != "" {
 		name = a.Name
+	}
+	if t.Distinct != quests.DistinctAll {
+		return fmt.Sprintf("You have already seen enough of %s.", name)
 	}
 	return fmt.Sprintf("You already know every corner of %s.", name)
 }

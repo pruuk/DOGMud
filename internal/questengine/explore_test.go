@@ -125,12 +125,13 @@ func TestExplore_NoMapReaderNeverFires(t *testing.T) {
 // explored line: the area's name by default, the trigger's own when set.
 func TestExplore_StepStartInTheGrantChain(t *testing.T) {
 	installGrove(t)
-	for _, c := range []struct{ line, want string }{
-		{"", "You already know every corner of the grove."},
-		{"You know these trees.", "You know these trees."},
+	for _, c := range []struct{ distinct, line, want string }{
+		{"all", "", "You already know every corner of the grove."},
+		{"2", "", "You have already seen enough of the grove."},
+		{"all", "You know these trees.", "You know these trees."},
 	} {
 		e := NewEngine()
-		e.RegisterQuest(exploreQuest("all", c.line))
+		e.RegisterQuest(exploreQuest(c.distinct, c.line))
 		p := newMapPlayer(5311, 5312, 5313)
 		p.quests["340-start"] = true
 		ctx := newFullMockActionContext(1, p.fullMockPlayer)
