@@ -135,6 +135,14 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 			continue
 		}
 
+		// count: N (#375 phase 3b slice 4). The match is counted once per
+		// event (the trigger is already marked visited) and is a handled
+		// event, but the actions wait for the Nth.
+		if !countReached(t, ctx) {
+			result.Handled = true
+			continue
+		}
+
 		guard.AddToTrace(fmt.Sprintf("%s:%s", eventType, t.trigId))
 		LogVerboseF(details.UserId, "trigger %s matched for event %s", t.trigId, eventType)
 

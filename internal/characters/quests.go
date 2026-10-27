@@ -3,6 +3,8 @@ package characters
 import (
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/quests"
@@ -112,6 +114,7 @@ func (c *Character) GiveQuestToken(questToken string) bool {
 
 	if quests.IsTokenAfter(currentToken, questToken) {
 		c.QuestProgress[questId] = newStep
+		c.clearQuestStepCounts(questId)
 		// A secret quest is a hidden marker the player never sees, so it must
 		// not steal the focus (hint, Quests panel, minimap marker) from the
 		// quest the player is actually working on.
@@ -124,6 +127,38 @@ func (c *Character) GiveQuestToken(questToken string) bool {
 	return false
 }
 
+// QuestStepCount is the saved count: N progress of a step, keyed
+// "<questId>-<stepId>" (#375 phase 3b slice 4).
+func (c *Character) QuestStepCount(key string) int {
+	return c.QuestStepCounts[key]
+}
+
+// BumpQuestStepCount adds one to a step's count: N progress and returns the
+// new count.
+func (c *Character) BumpQuestStepCount(key string) int {
+	if c.QuestStepCounts == nil {
+		c.QuestStepCounts = map[string]int{}
+	}
+	c.QuestStepCounts[key]++
+	return c.QuestStepCounts[key]
+}
+
+// clearQuestStepCounts drops every count of questId: a count belongs to the
+// step the player was on, so it goes when that quest's progress moves or is
+// cleared (a removal, a repeatable quest's reset). An abandon (planned, #375
+// phase 5) must NOT call this: an abandoned step keeps its counts.
+func (c *Character) clearQuestStepCounts(questId int) {
+	prefix := strconv.Itoa(questId) + "-"
+	for key := range c.QuestStepCounts {
+		if strings.HasPrefix(key, prefix) {
+			delete(c.QuestStepCounts, key)
+		}
+	}
+	if len(c.QuestStepCounts) == 0 {
+		c.QuestStepCounts = nil
+	}
+}
+
 func (c *Character) ClearQuestToken(questToken string) {
 
 	if c.QuestProgress == nil {
@@ -133,6 +168,7 @@ func (c *Character) ClearQuestToken(questToken string) {
 	questId, _ := quests.TokenToParts(questToken)
 
 	delete(c.QuestProgress, questId)
+	c.clearQuestStepCounts(questId)
 
 	// Don't leave the focus quest dangling at a quest we just removed. This
 	// fires on the common repeatable-quest-completion reset (and explicit quest

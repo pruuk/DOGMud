@@ -78,6 +78,14 @@ func (b *GameBridge) HasOwnMasterwork(skillMin int) bool {
 
 // --- ActionContext ---
 
+// BumpStepCount bumps the count: N progress of the player's current step of
+// questId (StepCounter) and returns the new count. The count is saved on the
+// character and cleared when the quest's progress moves.
+func (b *GameBridge) BumpStepCount(questId int) int {
+	step := b.user.Character.QuestProgress[questId]
+	return b.user.Character.BumpQuestStepCount(quests.PartsToToken(questId, step))
+}
+
 // GetUserId returns the user's ID.
 func (b *GameBridge) GetUserId() int {
 	return b.user.UserId

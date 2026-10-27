@@ -173,6 +173,10 @@ func (p *walkPlayer) dialogueState() *dialogue.PlayerState {
 // does after the lines finish.
 type walkCtx struct{ p *walkPlayer }
 
+// BumpStepCount reaches every count: N at once (StepCounter): the walk
+// proves a step is reachable, not that it can be repeated.
+func (c *walkCtx) BumpStepCount(int) int { return 1 << 30 }
+
 func (c *walkCtx) GrantQuest(token string)                 { c.p.grant(token) }
 func (c *walkCtx) ConsumeItem(itemId int)                  { delete(c.p.items, itemId) }
 func (c *walkCtx) GiveItem(itemId int) error               { c.p.items[itemId] = true; return nil }

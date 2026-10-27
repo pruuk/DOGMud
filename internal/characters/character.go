@@ -320,6 +320,7 @@ type Character struct {
 	QuestProgress           map[int]string                 `yaml:"questprogress,omitempty"`       // quest progress tracking
 	QuestCompletions        map[int]int                    `yaml:"questcompletions,omitempty"`    // completed runs of each repeatable quest (#375 P3)
 	QuestFlags              map[string]string              `yaml:"questflags,omitempty"`          // quest flag tracking (e.g., "11-branch" → "rhett")
+	QuestStepCounts         map[string]int                 `yaml:"queststepcounts,omitempty"`     // count: N progress, "<questId>-<stepId>" of the step the player is on (#375)
 	HeardTopics             []string                       `yaml:"heardtopics,omitempty"`         // heard talk topics, "<mobId>.<key>", sorted (#375)
 	LastQuestId             int                            `yaml:"lastquestid,omitempty"`         // most recently progressed quest
 	KeyRing                 map[string]string              `yaml:"keyring,omitempty"`             // key is the lock id, value is the sequence
