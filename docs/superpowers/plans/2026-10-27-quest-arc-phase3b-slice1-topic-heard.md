@@ -362,9 +362,9 @@ Read `walkthrough.go` fully (chunks of at most 400 lines) and `walkthrough_test.
 | `ashwick/262.yaml` | negotiate | 16-forager | |
 | `greenford/9516.yaml` | turnin | 75-intro | |
 | `hartcharn/9182.yaml` | pellhandoff | 60-waybill | givesItem |
-| `ironwind_steppe/241.yaml` | 11-branch | 11-sided | |
+| `ironwind_steppe/241.yaml` | stand_with_sylara | 11-sided | setsQuestFlag |
 | `ironwind_steppe/241.yaml` | ritual_begin | 12-ritual | |
-| `ironwind_steppe/242.yaml` | 11-branch | 11-sided | |
+| `ironwind_steppe/242.yaml` | stand_with_rhett | 11-sided | setsQuestFlag |
 | `ironwind_steppe/242.yaml` | extraction_begin | 13-extraction | |
 | `kingsbarrow_vale/9198.yaml` | verroldhandoff | 60-manifest | givesItem |
 | `newcomer_antechamber/9491.yaml` | asked_28 | 28-asked | |
