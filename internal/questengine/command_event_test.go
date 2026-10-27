@@ -101,6 +101,16 @@ func TestNotifyAllMatchesALaterTarget(t *testing.T) {
 	}
 	e.NotifyAll("command", details, player, newFullMockActionContext(1, player))
 	assert.True(t, player.HasQuest("300-boar"), "the boar was the second target")
+	assert.True(t, player.HasQuest("300-any"), "the any-throw trigger must retry on the boar after failing its conditions on mob 7")
+
+	// The other order reaches the same end state.
+	e = seedTargetQuest()
+	player = newFullMockPlayer(100)
+	player.quests["300-start"] = true
+	details = []EventDetails{details[1], details[0]}
+	e.NotifyAll("command", details, player, newFullMockActionContext(1, player))
+	assert.True(t, player.HasQuest("300-boar"))
+	assert.True(t, player.HasQuest("300-any"))
 }
 
 func TestCommandDetailsCarryTheTarget(t *testing.T) {

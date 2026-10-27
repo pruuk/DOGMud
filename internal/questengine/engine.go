@@ -120,13 +120,16 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 	result := NotifyResult{}
 
 	for _, t := range e.fieldMatches(eventType, details) {
-		// Visit tracking — prevent re-entry of same trigger in one chain
-		if !guard.MarkVisited(t.trigId) {
+		// Condition evaluation
+		if !EvalConditions(t.def.Conditions, player) {
 			continue
 		}
 
-		// Condition evaluation
-		if !EvalConditions(t.def.Conditions, player) {
+		// Visit tracking: "visited" means "fired in this chain". A trigger is
+		// marked before its actions run, so it cannot re-enter itself, and it
+		// fires at most once per Notify/NotifyAll. A trigger whose conditions
+		// failed is not marked, so a later detail can still fire it.
+		if !guard.MarkVisited(t.trigId) {
 			continue
 		}
 
