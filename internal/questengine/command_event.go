@@ -160,8 +160,10 @@ func TopicHeardDetails(userId, roomId, mobId int, topic string) EventDetails {
 	return EventDetails{UserId: userId, RoomId: matchRoom, MobId: mobId, Topic: topic}
 }
 
-// NotifyTopicHeard is THE topic_heard event, raised by conversation.play once
-// a chosen topic's effects have landed (a refused charge raises nothing).
+// NotifyTopicHeard is THE topic_heard event, raised by
+// conversation.applyWithHandover once a played topic's effects have landed (a
+// menu choice, an accepted offer, a companion's ask for its owner; a refused
+// charge raises nothing).
 func NotifyTopicHeard(user *users.UserRecord, roomId, mobId int, topic string) NotifyResult {
 	if user == nil || mobId <= 0 || topic == "" {
 		return NotifyResult{}

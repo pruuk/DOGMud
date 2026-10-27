@@ -23,7 +23,7 @@ const commandEventFile = "internal/questengine/command_event.go"
 // real game event belongs in the questengine helpers.
 var commandEventAllowlist = map[string]string{
 	"internal/questengine/walkthrough.go": "the quest walk's simulated engine replays a played topic's topic_heard " +
-		"on its own walk engine, as conversation.play does in game; no player or room is involved",
+		"on its own walk engine, as conversation.applyWithHandover does in game; no player or room is involved",
 }
 
 // isGuardedNotify reports whether call is X.Notify(E, ...) or

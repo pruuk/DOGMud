@@ -748,12 +748,13 @@ func (env *walkEnv) meetTopic(p *walkPlayer, df *dialogue.DialogueFile, t *dialo
 // that moved the quest is then chained through quest_granted triggers, as
 // the game's hook does (Quest_HandleQuestUpdate.go notifies quest_granted on
 // a fresh dialogue grant, because the dialogue grant path does not). Before
-// that grant lands it raises topic_heard, as conversation.play does.
+// that grant lands it raises topic_heard, as conversation.applyWithHandover
+// does.
 func fireTopic(eng *Engine, p *walkPlayer, wy questloop.Way, trail walkTrail) bool {
 	ps := p.dialogueState()
 	// The game queues a dialogue grant (conversation PlayerState.GiveQuest
 	// adds an events.Quest), while flags, items and gold land at once. So
-	// topic_heard, raised synchronously by conversation.play, sees the
+	// topic_heard, raised synchronously by conversation.applyWithHandover, sees the
 	// topic's other effects but not its own grant, which lands afterwards.
 	var queued []string
 	ps.GiveQuest = func(token string) { queued = append(queued, token) }
@@ -763,7 +764,7 @@ func fireTopic(eng *Engine, p *walkPlayer, wy questloop.Way, trail walkTrail) bo
 	if !wy.File.Apply(wy.Topic, ps) {
 		return false
 	}
-	// conversation.play raises topic_heard for every played topic, so a
+	// conversation.applyWithHandover raises topic_heard for every played topic, so a
 	// trigger may listen to an offer, a hand-in or an info topic (#375 3b).
 	eng.Notify("topic_heard", EventDetails{RoomId: p.roomId, MobId: wy.MobId, Topic: wy.Topic.Key}, p, &trailCtx{walkCtx{p: p}, trail})
 	for _, tok := range queued {
@@ -826,7 +827,7 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 	if d.RoomId != 0 {
 		p.roomId = d.RoomId
 	}
-	// topic_heard is raised only by playing the topic (conversation.play), so
+	// topic_heard is raised only by playing the topic (conversation.applyWithHandover), so
 	// the walk plays it: the NPC's topic, its gates met, Eligible, then Apply,
 	// whose effects (a flag, an item) later steps may read. fireTopic then
 	// sends the event, as the game does after every played topic. A topic the

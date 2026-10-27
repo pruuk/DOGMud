@@ -284,9 +284,6 @@ func play(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.
 	if !applyWithHandover(user, room, mob, df, t, ps, buf) {
 		return "", false
 	}
-	// Quest engine: topic_heard, once the topic's own effects have landed
-	// (#375 phase 3b slice 1). A refused charge returned above.
-	questengine.NotifyTopicHeard(user, room.RoomId, int(mob.MobId), t.Key)
 	npcSay(mob, room, t.Text)
 	sendHints(user, t.Hints)
 	after(user, room, mob, df, t)
@@ -294,7 +291,11 @@ func play(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.
 }
 
 // applyWithHandover applies t and, when it took an item, prints the handover
-// lines; then it flushes the callbacks' private lines, refused or not.
+// lines; then it flushes the callbacks' private lines, refused or not. It is
+// the one place a topic plays (a menu choice, an accepted offer, a
+// companion's ask for its owner), so it raises the quest engine's
+// topic_heard for user once t's own effects have landed (#375 phase 3b
+// slice 1). A refused apply (a price or a delivery failed) raises nothing.
 func applyWithHandover(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic, ps *dialogue.PlayerState, buf *lineBuffer) bool {
 	buf.taken = ""
 	ok := df.Apply(t, ps)
@@ -302,6 +303,9 @@ func applyWithHandover(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, 
 		handoverLines(user, room, mob, buf.taken)
 	}
 	buf.flush()
+	if ok {
+		questengine.NotifyTopicHeard(user, room.RoomId, int(mob.MobId), t.Key)
+	}
 	return ok
 }
 

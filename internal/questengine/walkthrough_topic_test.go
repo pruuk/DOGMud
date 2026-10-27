@@ -111,7 +111,7 @@ func TestWalk_PlayedTopicRaisesTopicHeard(t *testing.T) {
 	require.Equal(t, "yes", p.flags["53-boasted"], "fireTopic raised topic_heard")
 }
 
-// conversation.play raises topic_heard before the topic's own grant lands
+// conversation.applyWithHandover raises topic_heard before the topic's own grant lands
 // (the game queues a dialogue grant), so a trigger on the offer that needs
 // the offer's own token never fires: its step is a dead end. The offer hides
 // once taken (questExcluded on its own start, as shipped offers do), so it
