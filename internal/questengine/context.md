@@ -21,7 +21,9 @@ what a trigger *does*, you edit this package.
   (`Kind`, `MobId`, `ItemId`, `Noun`), its constructors `NoTarget`,
   `TargetSelf`, `TargetPlayer`, `TargetMob`, `TargetItem`, `TargetContainer`,
   `TargetActor`, the refiners `WithMob`, `WithItem`, `WithNoun`,
-  `CommandDetails` (builds one `EventDetails`) and `NotifyCommand`.
+  `CommandDetails` (builds one `EventDetails`) and `NotifyCommand`. It also
+  holds the one way to raise a `spell_landed` event, `SpellLandedDetails` and
+  `NotifySpellLanded`.
 - **dryrun.go**: `WouldFire` (side-effect-free "would Notify fire?") and
   `SearchFeatures` (a room's quest search nouns).
 - **types.go** — type aliases onto `internal/quests`, plus `EventDetails` and
@@ -86,6 +88,28 @@ mob-actor site raises a command event today.
 
 Every command event goes through `NotifyCommand`; a hand-built
 `Notify("command", ...)` fails `internal/guards/command_event_guard_test.go`.
+
+### Spell events (#375 phase 3b slice 3)
+
+`spell_landed` is raised when a player's spell lands on a target. Its
+`EventDetails` carry `Noun` = the canonical spell id, the new
+`EventDetails.Effect` = the spell's `EffectType`, and the slice 2 target
+fields (`TargetKind`, `MobId`, `ItemId`). A trigger's `effect:` filter is
+compared with `Effect` in `matchTriggerFields`; `noun:` is the spell id.
+
+`SpellLandedDetails(userId, roomId, spellId, effect, target)` builds one
+detail (the target's own `Noun` is replaced by the spell id).
+`NotifySpellLanded(user, roomId, spellId, effect, targets ...Target)` raises
+one detail per target the spell landed on with `NotifyAll`, so a trigger
+fires at most once per cast. No targets means no event (a cast that landed on
+nothing raises nothing); a spell with no creature target that succeeded
+passes `NoTarget()`, so `noun:` and `effect:` steps work for it too. Only
+player casters raise it: the event is matched against the caster's quests,
+and a mob has none. `internal/guards/command_event_guard_test.go` now guards
+both `"command"` and `"spell_landed"`: a hand-built `Notify` of either fails
+it outside `command_event.go`. `internal/hooks/spell_resolution.go` is the
+production caller (see `internal/hooks/context.md`). `command: cast` stays the
+attempt event.
 
 `RegisterQuest` flattens every trigger into `triggerIndex` keyed by event type,
 so `Notify` never scans quests it cannot match. Each trigger gets an
@@ -362,12 +386,41 @@ on the caller's order. It reads the Ways into each step from
   progress, and flags a Way that lands past the next step.
 - **Source checks** run once for every Way into every step, so the steps after
   a dead step are still checked.
+- **Held spells** (#375 phase 3b slice 3). A `spell_landed` trigger fires in
+  the walk only if the walking player holds a spell that can land it: its
+  `noun` (spell id) and `effect` (`Sources.SpellEffect`) both fit
+  (`walkEnv.spellReachable`, `walkEnv.holds`). A player holds a spell when it
+  is a starter (`Sources.StarterSpells`), when a `teach_spell` action taught
+  it during this walk (`walkPlayer.spells`, set by `walkCtx.TeachSpell`, part
+  of `clone` and `fingerprint`), or when a foreign quest's token the player
+  holds teaches it. `walkEnv.teachers` is that static index, per spell id: the
+  tokens granted by every trigger that teaches it, a `quest_granted`
+  trigger's own token, and the final step of a quest whose `rewards.spellid`
+  teaches it. The walked quest's own entries are skipped, because the walk
+  already fired its Ways and `walkPlayer.spells` says which ran. A nil
+  `Sources.SpellEffect` skips the check.
+- **Skip probe assumes any spell.** The held spells are a minimum, right for
+  proving a step reachable. A skip needs the opposite, since a real player may
+  know any spell (random discovery, a book), so while the probe fires a later
+  Way (`walkEnv.probing`) a `spell_landed` trigger is never refused for want of
+  a spell.
 
 | Rule | Finding |
 |---|---|
 | `walk-dead-end` | A step no Way reaches, an offer that cannot be taken, a Way that does not reach its step, or a firing that skips a step |
 | `walk-no-source` | A Way needs an item (`has_item`, `item_give`, `item_gain`, `requiresItem`, `carriesItem`, an item `questtoken`) that `Sources.ItemSources` says nothing provides |
 | `walk-unspawned` | A Way needs a mob (`mob_death`, `item_give` target, the topic's NPC, a tree grant's NPC) that `Sources.MobSpawned` says nothing places |
+| `walk-no-spell` | A `spell_landed` Way that failed in every state for want of a held spell, and for no other reason (`walkEnv.spellRefused`, set only when the refused trigger itself would have fired) |
+
+`walk-no-spell` blames only the refused trigger: another `spell_landed`
+trigger the same event reaches is its own Way. A Way that fails for any other
+reason in any state stays `walk-dead-end`.
+
+Known limits of the teacher index: it credits every teach on a foreign
+quest's earlier steps when a later step is held (holding `N-end` credits a
+`teach_spell` on `N-start`), and a `quest_granted` teacher is credited
+without checking its trigger conditions. Both can only make the check pass
+when a player might not have the spell, never fail wrongly.
 
 Findings share `questloop`'s shape and its one backlog. The walk is CI only:
 the sweep `TestSmoke_ShippedQuestsPassTheLoop` (`quest_loop_smoke_test.go`)

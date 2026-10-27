@@ -982,9 +982,21 @@ other value. Two triggers differing only in verb are different triggers
 at. Its values are `TriggerTargetKinds`: `self`, `mob`, `player`, `item`,
 `container`. `TargetNone` ("none") exists as the value of an untargeted event
 but is not a legal filter; omit `target` to accept any. The loader refuses
-`target` on any event other than `command`, and any value outside
-`TriggerTargetKinds`. `questloop` includes `target` in a trigger's signature,
-so two triggers differing only in target are different triggers.
+`target` on any event other than `command` and `spell_landed`, and any value
+outside `TriggerTargetKinds`. `questloop` includes `target` in a trigger's
+signature, so two triggers differing only in target are different triggers.
+
+### Trigger event and field: `spell_landed`, `effect` (#375 phase 3b slice 3)
+
+`spell_landed` fires when a player's spell lands on a target. `noun` is the
+spell id, `effect` (`TriggerDef.Effect`) is the spell's `effect_type`
+(`heal`, `damage`, `shield`, ...), and `target`, `mob`, `item`, `room` filter
+as on `command`. The loader refuses `effect` on any other event.
+`ValidateQuestRefs` checks a `spell_landed` trigger's `noun` with
+`QuestValidators.SpellExists` and its `effect` with the new
+`QuestValidators.EffectExists` (true when some loaded spell has that
+`effect_type`; `questworld.Validators()` fills it), so a renamed effect is
+caught at boot. `questloop` includes `effect` in a trigger's signature.
 
 ### Trigger action: `discover`
 

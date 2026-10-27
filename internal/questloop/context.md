@@ -121,9 +121,13 @@ it needs the trigger engine; this package only exports what it reads
   quest with progress `has` can obtain the item without the quest's later
   steps (a source the quest does not own, or one it owns through gates `has`
   already holds). A nil func skips that
-  check. `questworld.Sources()` fills it from the registries.
+  check. `SpellEffect(spellId)` is a spell's `effect_type` ("" for an unknown
+  spell) and `StarterSpells` the spells every new character holds, for the
+  `spell_landed` reachability check; a nil `SpellEffect` skips it.
+  `questworld.Sources()` fills it from the registries.
 
-The walk's rules (`walk-dead-end`, `walk-no-source`, `walk-unspawned`) share
+The walk's rules (`walk-dead-end`, `walk-no-source`, `walk-unspawned`,
+`walk-no-spell`: a `spell_landed` Way no spell on the path can land) share
 the one backlog with the rules above. They are produced by `Walk`, not
 `Validate`: boot runs `Validate` only and ignores the walk lines, and the CI
 sweep ratchets both together.
