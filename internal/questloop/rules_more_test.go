@@ -124,4 +124,7 @@ func fillValidators(v *quests.QuestValidators) {
 	if v.TopicExists == nil {
 		v.TopicExists = func(int, string) bool { return true }
 	}
+	if v.TopicGrant == nil {
+		v.TopicGrant = func(int, string) string { return "" }
+	}
 }

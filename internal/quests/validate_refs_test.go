@@ -22,6 +22,7 @@ func permissiveQuestValidators() QuestValidators {
 		DialogueGrants:   func(string) bool { return true },
 		MobHasDialogue:   func(int) bool { return true },
 		TopicExists:      func(int, string) bool { return true },
+		TopicGrant:       func(int, string) string { return "" },
 		HiddenNounExists: func(int, string) bool { return true },
 	}
 }
@@ -288,5 +289,39 @@ func TestValidateRefsTopicHeard(t *testing.T) {
 	errs, _ := ValidateQuestRefs(q, v)
 	if !strings.Contains(strings.Join(errs, "\n"), `mob 9112 has no topic "rumours"`) {
 		t.Fatalf("unknown topic not refused: %v", errs)
+	}
+}
+
+// A topic_heard trigger may not grant the token its topic's own grantsQuest
+// already grants: the token would be queued twice, and for an -end token the
+// second event pays the rewards again. Checked at any sequence depth.
+func TestValidateRefsTopicHeardRepeatsTopicGrant(t *testing.T) {
+	v := permissiveQuestValidators()
+	v.TopicGrant = func(mobId int, key string) string {
+		if mobId == 9112 && key == "done" {
+			return "9004-end"
+		}
+		return ""
+	}
+	const want = `topic_heard on mob 9112 topic "done" grants 9004-end, which that topic's grantsQuest already grants`
+	q := Quest{QuestId: 9004, Name: "Ask", Steps: []QuestStep{{Id: "start"}, {Id: "end"}},
+		Triggers: []TriggerDef{
+			{Event: "room_enter", Room: 100, Actions: []ActionDef{{Grant: "9004-start"}}},
+			{Event: "topic_heard", Mob: 9112, Topic: "other", Actions: []ActionDef{{Grant: "9004-end"}}},
+		}}
+	if errs, _ := ValidateQuestRefs(q, v); len(errs) > 0 {
+		t.Fatalf("a topic with no grantsQuest of its own refused: %v", errs)
+	}
+
+	q.Triggers[1].Topic = "done"
+	errs, _ := ValidateQuestRefs(q, v)
+	if !strings.Contains(strings.Join(errs, "\n"), want) {
+		t.Fatalf("a repeated grant not refused: %v", errs)
+	}
+
+	q.Triggers[1].Actions = []ActionDef{{Sequence: &SequenceDef{OnComplete: []ActionDef{{Grant: "9004-end"}}}}}
+	errs, _ = ValidateQuestRefs(q, v)
+	if !strings.Contains(strings.Join(errs, "\n"), want) {
+		t.Fatalf("a repeated grant inside a sequence not refused: %v", errs)
 	}
 }

@@ -46,6 +46,7 @@ func liveRefs(loaded []*quests.Quest) *quests.QuestValidators {
 		SpellExists: yesS, EffectExists: yesS, SkillExists: yesS, StatExists: yesS, RecipeExists: yesS,
 		FactionExists: yesS, DialogueGrants: yesS, MobHasDialogue: yesI,
 		TopicExists: func(int, string) bool { return true },
+		TopicGrant:  func(int, string) string { return "" },
 	}
 }
 

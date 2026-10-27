@@ -47,6 +47,7 @@ func (w *fakeQuestWorld) deps() questDeps {
 		DialogueGrants:  func(string) bool { return false },
 		MobHasDialogue:  func(int) bool { return true },
 		TopicExists:     func(int, string) bool { return true },
+		TopicGrant:      func(int, string) string { return "" },
 	}
 	return questDeps{
 		load: func(id int) *quests.Quest { return w.specs[id] },

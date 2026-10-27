@@ -258,11 +258,6 @@ func available(ss []itemSource, questId int, has func(string) bool) bool {
 	return false
 }
 
-// topicOwners is the quests a topic's item grant belongs to: its own quest,
-// every quest its questRequired gate names and the quest of the token it
-// grants, each with the tokens of that quest the gate names or it grants. A "lost the page?" topic gated on 20-vella_journal
-// is quest 20's own replacement, open from that step on; a topic of quest 70
-// gated on 63-start is open to quest 63 from start on.
 // mobTopic names one NPC's topic: the mob template id and the topic key.
 type mobTopic struct {
 	mob int
@@ -297,8 +292,14 @@ func topicHeardGrants(qs []quests.Quest) map[mobTopic][]string {
 	return out
 }
 
-// topicOwners takes heard, the tokens topic_heard triggers on the topic
-// grant; they stand in for GrantsQuest when the topic carries none.
+// topicOwners is the quests a topic's item grant belongs to: its own quest,
+// every quest its questRequired gate names and the quest of the token it
+// grants, each with the tokens of that quest the gate names or it grants. A
+// "lost the page?" topic gated on 20-vella_journal is quest 20's own
+// replacement, open from that step on; a topic of quest 70 gated on 63-start
+// is open to quest 63 from start on. heard is the tokens topic_heard triggers
+// on the topic grant; they stand in for GrantsQuest when the topic carries
+// none.
 func topicOwners(t dialogue.Topic, heard ...string) []owner {
 	var out []owner
 	at := func(id int) int {
