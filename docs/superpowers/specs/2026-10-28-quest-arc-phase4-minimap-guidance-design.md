@@ -357,15 +357,22 @@ follow, ferry factors, planners) routes across zones today.
 4. **Web map.** `Zone.Map` keeps showing explored rooms outside the current zone: the snapshot
    gathers the player's visited rooms from the maps of the zones they visited
    (`VisitedRooms` is keyed by zone), the same rooms it shows today.
-5. **ASCII map.** `GetLimitedMap` stops queueing rooms beyond its draw radius (today it walks the
-   whole reachable world per `map` or look). No visual change.
+5. **ASCII map (ruling 19, owner).** `GetLimitedMap` stops walking rooms: it gathers the rooms
+   whose positions fall inside the drawing from the position grids of the nearby zones' maps, so
+   its cost is bounded by the drawing size. Measured first: on master each render walks the
+   whole reachable world (a canvas-edge cut instead would change 898 of 7,830 shipped renders).
+   Gate: the 7,830-render shipped comparison matches master; any difference goes to the owner.
 6. **Call for help.** `FindRoomsInDistance` searches the maps of every zone within the radius, so
    helpers across a border still come.
 7. **Checks.** `CheckConsistency` checks a border exit against the far room's node in its own
    map; `ValidateZoneConsistency` adds a world-wide collision check per plane, so the cross-zone
    reciprocity, delta and collision checks keep running.
-8. **Builder.** The builder's view of rooms just outside the zone reads them from the template
-   zone index and their own maps; `admin build <dir>` checks placement before building.
+8. **Builder.** The builder's view of rooms just outside the zone, and `build room <dir>` /
+   `teleport <dir>` lookups of a neighbouring cell, read the joined zones' maps
+   (`mapper.WebMap`), matching master on every shipped zone and lookup. `build room <dir>` keeps
+   master's behaviour of connecting to a room already in the cell; a refusal would change what
+   builders see. (Pre-existing, filed separately: from Dustwalk Road 400, `down` finds The
+   Foldweave's 6427 on plane 5.)
 9. **Caches.** A forced map rebuild and `ClearCache` purge `pathCache` and call
    `InvalidateZoneGraph` (no caller today, so builder edits leave both stale).
 10. **Measure.** The real-zone benchmark (`destination_nearest_bench_test.go`) reports master's
