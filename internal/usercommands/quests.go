@@ -23,6 +23,7 @@ type questRecord struct {
 	Repeatable  bool
 	Description string
 	Progress    string // "Roots gathered: 2 of 5" for a count or explore step, else ""
+	Guide       string // the destination line (questengine.GuideLine), else ""
 	Completion  string
 	BarFull     string
 	BarEmpty    string
@@ -74,6 +75,7 @@ func activeQuestRecord(user *users.UserRecord, questInfo *quests.Quest, questSte
 	completedSteps := 0
 	description := questInfo.Description
 	progress := ``
+	guide := ``
 
 	if questStep != `all+` {
 		for _, step := range questInfo.Steps {
@@ -84,6 +86,7 @@ func activeQuestRecord(user *users.UserRecord, questInfo *quests.Quest, questSte
 			}
 		}
 		progress = questengine.GetEngine().UserStepProgress(user, questInfo.QuestId, questStep)
+		guide = questengine.GuideLine(questengine.GetEngine().ResolveDestination(user, questInfo.QuestId, questStep))
 	}
 
 	completion := float64(completedSteps) / float64(totalSteps)
@@ -95,6 +98,7 @@ func activeQuestRecord(user *users.UserRecord, questInfo *quests.Quest, questSte
 		Repeatable:  questInfo.Repeatable,
 		Description: description,
 		Progress:    progress,
+		Guide:       guide,
 		Completion:  fmt.Sprintf(`%d%%`, int(math.Floor(completion*100))),
 		BarFull:     barFull,
 		BarEmpty:    barEmpty,
