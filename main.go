@@ -1981,6 +1981,7 @@ func loadAllDataFiles(isReload bool) (reloadErr error) {
 		reloadErr = err
 	}
 	destinationDoor()
+	offerIndexDoor()
 	if areasErr != nil && reloadErr == nil {
 		reloadErr = areasErr
 	}

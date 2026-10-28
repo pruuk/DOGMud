@@ -4,12 +4,21 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/questworld"
 )
+
+// offerIndexDoor builds the dialogue offer index (#375 phase 5): which NPCs
+// offer each quest, for `quests abandon`. Dialogue loads lazily, so this reads
+// every file once.
+func offerIndexDoor() {
+	files, _ := dialogue.LoadAllFiles()
+	dialogue.BuildOfferIndex(files)
+}
 
 // destinationDoor logs every quest step whose minimap destination is unknown
 // or mistagged (#375 phase 4) as a warning, and the inferred count. It never
