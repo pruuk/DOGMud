@@ -1,45 +1,25 @@
 package usercommands
 
 import (
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/events"
-	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
 
-// chdirRepoRootForTest points the test at the real repo config + data tree
-// (test binaries run with CWD = their own package dir).
+// chdirRepoRootForTest points the test at the real dogmud data tree. It does
+// not chdir or reload the shipped config: this package's tests rely on the Go
+// defaults, and a ReloadConfig leaks into every later test in the binary
+// (taunt, shoot). useDogmudTemplates scopes the data path to this test.
 func chdirRepoRootForTest(t *testing.T) {
 	t.Helper()
-	mudlog.SetupLogger(nil, `LOW`, ``, false)
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	root := wd
-	for i := 0; i < 6; i++ {
-		if _, err := os.Stat(filepath.Join(root, "go.mod")); err == nil {
-			break
-		}
-		root = filepath.Dir(root)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(wd) })
-	if err := configs.ReloadConfig(); err != nil {
-		t.Fatalf("ReloadConfig: %v", err)
-	}
+	useDogmudTemplates(t)
 }
 
 func questlogFixture(t *testing.T) *users.UserRecord {
