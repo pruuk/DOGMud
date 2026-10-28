@@ -1,0 +1,26 @@
+# REACH seat: quest 61, Hedgerow Toll, second step: the hedgerow bandit is
+# dead; put down the Reach-Touched in The Empty Reach to the north. It hides
+# and strikes from ambush. You start at the Lake & Ladle. Quote every game
+# line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5378
+  overlays:
+    set_quest_tokens: ["61-start", "61-bandit"]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and quote the whole entry for Hedgerow Toll, including the
+    last line under it.
+  - >-
+    Follow that line one move at a time, typing `quests` after each move and
+    quoting the line, until it says you are in The Empty Reach. Note any
+    direction that is not an exit of your room.
+  - >-
+    Inside The Empty Reach, use the step's hint to reach the Abandoned Camp.
+    Quote the quest line in each room on the way: it should keep saying you
+    are in The Empty Reach and never point at the Reach-Touched itself. If the
+    Reach-Touched attacks, fight it and quote the quest line after it falls.

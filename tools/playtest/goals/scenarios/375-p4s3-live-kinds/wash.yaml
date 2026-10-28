@@ -1,0 +1,26 @@
+# WASH seat: quest 33, Hold the Wash, first step: kill a bandit scout. Several
+# scouts spawn along the wash. You start in Squatter's Hollow. Quote every
+# game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5234
+  overlays:
+    set_quest_tokens: ["33-start"]
+    grant_spells: {chrysalis-glow: 1}
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and quote the whole entry for Hold the Wash, including the
+    last line under it.
+  - >-
+    Follow that line one move at a time, typing `quests` after each move and
+    quoting the line, until a bandit scout is in your room. Say how many moves
+    it took and whether the scout was in the first room the line led you to.
+    If it is dark, type `cast glow` first, and say whether the line changed
+    when the room lit.
+  - >-
+    Kill the scout (`attack scout`). After it falls, quote the quest line for
+    the next step.
