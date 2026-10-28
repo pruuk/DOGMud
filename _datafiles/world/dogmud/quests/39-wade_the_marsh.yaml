@@ -40,7 +40,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5269
+    destination:
+      room: 5269
     description: >-
       Falv hands you a firebomb when you take this on and sets you loose in
       the marsh. First put down a marsh leech. Keep the firebomb for after the leech is
@@ -50,7 +51,8 @@ steps:
       Go west from Falv's camp to the Reed Beds and type attack leech. If
       it is dark, type cast glow first.
   - id: leech
-    map_target: 5272
+    destination:
+      room: 5272
     description: >-
       One marsh leech is down. Now the firebomb: throw it where a foe can
       feel it, and the fight starts with a burst of flame. A thrown
@@ -61,7 +63,8 @@ steps:
     hint: >-
       With a foe in the room, type throw firebomb.
   - id: throw
-    map_target: 5270
+    destination:
+      room: 5270
     description: >-
       The firebomb burst where you wanted it. Now forage the marsh herbs
       Falv asked for. The Sunken Path and the Black Pool south of it grow
@@ -70,7 +73,8 @@ steps:
     hint: >-
       On the Sunken Path or at the Black Pool, type forage.
   - id: forage
-    map_target: 5271
+    destination:
+      room: 5271
     description: >-
       You have blooded yourself, thrown the firebomb, and worked the
       marsh for herbs. Report back to Falv at his camp.

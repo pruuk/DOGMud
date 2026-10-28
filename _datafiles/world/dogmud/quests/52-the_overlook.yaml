@@ -31,7 +31,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5364
+    destination:
+      room: 5364
     description: >-
       Bryn has set you against Bowmaster Skell. Climb from the Canyon Head to
       the raider overlook, fight up past the raider shooters, and bring down

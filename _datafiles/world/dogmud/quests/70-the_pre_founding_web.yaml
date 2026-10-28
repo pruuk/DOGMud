@@ -10,7 +10,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 6037  # the Buried Lintel — take a rubbing
+    destination:
+      room: 6037  # the Buried Lintel — take a rubbing
     description: >-
       Gritta asked you to go deeper, to see the Buried Lintel and the
       sealed Deep Canal with your own eyes, take a rubbing of the lintel
@@ -22,8 +23,9 @@ steps:
       afternoon, the Buried Lintel is just south. Mind the canal north of
       the stonework: it is not empty. Type look symbol.
   - id: witness
-    map_target: 5706  # fallback when Orin the Bookseller is not spawned
-    map_target_mob: 9332  # follow Orin the Bookseller (schedule np_crafting_orin) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9332  # follow Orin the Bookseller (schedule np_crafting_orin) — a fixed room is wrong for part of the day
+      room: 5706  # fallback when Orin the Bookseller is not spawned
     description: >-
       You stood beneath the Buried Lintel and took a rubbing of the
       eight-pointed symbol, the original the gallery's oldest painting

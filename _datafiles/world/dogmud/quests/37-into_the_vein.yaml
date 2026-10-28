@@ -27,7 +27,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5260
+    destination:
+      room: 5260
     description: "Survivor Ovell has set you on the mine. The Mine Mouth is west of the Upper Talus. From there the way to the Den is down, west, down, then west twice. The mine is pitch black, so type cast glow before you go down. Other things live in the workings: type consider on a foe to size it up, and flee if a fight turns."
     hint: "In the Den at the bottom of the mine, type attack beast. If it is dark, type cast glow first."
   - id: end

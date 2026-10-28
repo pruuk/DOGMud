@@ -158,59 +158,61 @@ For each step, specify:
   may not grant a token.
 - Quest token: `{questid}-{stepid}`
 - Player-facing description and hint
-- **Map destination** — see below. Every step gets one, even if the answer
-  is "deliberately none".
+- **Map destination**: see below. Every step but the final one gets one,
+  even if the answer is `anywhere`.
 
 ---
 
 **MAP DESTINATION (do not skip this)**
 
-If a step sends the player somewhere, the minimap must point the way. A step
-with no destination decision is a step where a lost player has nothing to
-follow. Pick exactly one:
+If a step sends the player somewhere, the minimap and the quest log must point
+the way. Every step but the final one gets a `destination:` block, or relies on
+inference from its triggers on purpose. Pick one shape:
 
 | Situation | What to write |
 |---|---|
-| Go see a **named NPC** (deliver, report, ask) | `map_target_mob: <mobid>` **plus** `map_target: <their usual room>` |
-| Go to a **place or fixture** (a room, a chest, a carving, an item's spawn room) | `map_target: <roomid>` |
-| Done wherever the player stands (type a command, cast during any fight) | `map_target: -1` |
-| Player chooses between two+ destinations | `map_target: -1`, and say why in a comment |
+| Go see a **named NPC** (deliver, report, ask) | `destination: {mob: <mobid>}`, optionally with `room: <their usual room>` as the fallback |
+| Any one of **several NPCs** will do | `destination: {mob: [<id>, <id>]}` (a list; the nearest copy wins) |
+| Go to a **place or fixture** (a room, a chest, a carving, an item's spawn room) | `destination: {room: <roomid>}` |
+| Somewhere in a **named area** (hunt, gather, explore) | `destination: {area: <area key>}` (`_datafiles/world/dogmud/areas/`) |
+| Somewhere in a **whole zone** | `destination: {zone: <Zone Name>}` (the display name rooms store, e.g. `Pothole Coulee`) |
+| Done wherever the player stands (type a command, cast during any fight) | `destination: anywhere` |
+| No block | inferred from every place field of the triggers gated on the step (`room`, `conditions.in_room`, `mob`, `area`, `zone`); mixed kinds give a set of rooms |
 
-**Why `map_target_mob` for NPCs:** most named NPCs carry a `schedule_id` and
-move during the day. A fixed room is therefore *wrong for part of every day* —
-a tavern keeper who serves until 22:00 and then sleeps upstairs will have the
-marker pointing at an empty common room all night. `map_target_mob` resolves to
-wherever that NPC currently is. Always pair it with a `map_target` fallback for
-when the NPC is dead or not yet spawned; the validator warns if you don't.
+A mob destination may add exactly one of `room`, `area` or `zone` as its
+fallback; no other two keys combine, and any unknown key or word refuses the
+file at boot. A step that needs several conversations is split into one step
+per conversation, each with its own destination (owner ruling 15).
 
-**⚠ Do NOT build quest objectives around generic mobs.**
-`map_target_mob` needs to name *one* creature. If the template has several live
-instances — "a marsh adder", "a bandit scout", "a dock rat" — the engine cannot
-know which one you meant, so it declines and the marker silently falls back or
-disappears. That is a symptom of a deeper authoring problem: a quest step whose
-target is an interchangeable generic mob is also a step the player cannot be
-guided to, cannot reliably find, and cannot tell they have finished.
+**Why `mob:` for NPCs:** most named NPCs carry a `schedule_id` and move during
+the day, so a fixed room is wrong for part of every day. A mob destination is
+the rooms of the live copies the player perceives at full sight (a hidden copy,
+or one in a room too dark for them, does not count; a copy inside an instance
+counts only for a player in that instance), and the arrow goes to the nearest.
+With none perceived it uses the declared fallback, else the union of the mobs'
+spawn rooms, else it is unknown.
 
-So when a quest needs a specific creature or contact:
-- Give it a **unique name** ("Torvan Cresk", not "a smuggler") and a **single
-  spawn room**, and target it with `map_target_mob`.
-- If it genuinely must be a generic mob (clear N of a roaming type), do **not**
-  use `map_target_mob`. Point `map_target` at the sub-area's entrance or anchor
-  room so the player is at least sent to the right region, and say so in a
-  comment.
-- Never point `map_target_mob` at a **hunt target**. Live-tracking a monster
-  turns a hunt into a guided kill — that is a gameplay change, not guidance.
+**Generic mobs and hunts.** A mob destination on an interchangeable mob ("a
+marsh adder") points at whichever copy is nearest, which turns a hunt into a
+guided kill. For "clear N of them" or "find the rare drop", point at the place
+instead: `area:` (or `zone:` for a roaming type, such as the oasis elementals),
+so the player is sent to the right region and searches it themselves. Give a
+contact the player must find a **unique name** and a single spawn room.
 
-**Cross-zone targets currently render NOTHING.** The marker needs the room to be
-on the player's current-zone map, and the next-step arrow is computed from the
-start room's zone. If a step's destination is in a different zone from where the
-player will be standing, expect no marker and no arrow until cross-zone stitching
-lands. Prefer keeping a step's destination inside one zone; if you cannot, put
-walking directions in the `hint` text as the fallback.
+**Cross-zone destinations.** The arrow crosses zones: inside the player's zone
+the guide heads for the nearest border room toward the destination's zone. The
+pin is drawn only once the destination is in the player's current zone, and a
+zone or area destination shows the banner "Somewhere in <name>" once the player
+is inside it. Guidance never routes through a secret exit the player has not
+found. Walking directions in the `hint` still help a player on the ASCII map.
 
-The engine's resolution order is: `map_target: -1` (hard off) → `map_target_mob`
-→ `map_target` → inference from a `room_enter` trigger gated on this step's
-token → no marker. See `internal/questengine/map_target.go`.
+**Checks.** The quest loop sweep (`DOGMUD_BOOT_SMOKE=1 go test . -run
+TestSmoke_ShippedQuestsPassTheLoop -count=1`) runs the destination rule: a step
+that resolves to nothing is `walk-destination`, and an `anywhere` step whose
+triggers name a place is `walk-destination-anywhere`; a new finding fails CI.
+`TestQuestFilesCarryNoMapTargetKey` (`internal/guards`) fails on any leftover
+`map_target` key. The resolver is `questengine.ResolveDestination`
+(`internal/questengine/destination.go`).
 
 Format:
 ```

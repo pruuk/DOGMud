@@ -21,7 +21,8 @@ cooldown_rounds: 300
 
 steps:
   - id: start
-    map_target: 5232  # Lower Wash, north of Squatter's Hollow: Bandit Scout (mob 9110)
+    destination:
+      room: 5232  # Lower Wash, north of Squatter's Hollow: Bandit Scout (mob 9110)
     description: >-
       Garve has asked you to thin out the bandits in the wash again: a
       bandit scout first, then a bandit squatter. The nearest scout is in
@@ -30,7 +31,8 @@ steps:
       Go north from Squatter's Hollow to the Lower Wash and type attack
       scout. If it is dark, type cast glow first.
   - id: firstkill
-    map_target: 5235  # Cracked Cistern: Bandit Squatter (mob 9111)
+    destination:
+      room: 5235  # Cracked Cistern: Bandit Squatter (mob 9111)
     description: >-
       One bandit scout is down. Now the bandit squatter, in the Cracked
       Cistern east of Squatter's Hollow. The job is done when it falls.

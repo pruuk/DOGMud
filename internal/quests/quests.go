@@ -81,17 +81,9 @@ type QuestStep struct {
 	Id          string `yaml:"id" json:"id"` // identifies this step, e.g. "start"
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 	Hint        string `yaml:"hint,omitempty" json:"hint,omitempty"`
-	MapTarget   int    `yaml:"map_target,omitempty" json:"map_target,omitempty"` // room the minimap marker points at during this step (0 = infer from room_enter triggers, -1 = deliberate NO marker; see questengine.ResolveQuestTarget)
-	// MapTargetMob points the minimap marker at an NPC's CURRENT room instead of
-	// a fixed one — use it whenever the destination is "go see <named NPC>".
-	// A static map_target is wrong for part of every day for any NPC on a
-	// schedule (e.g. a tavern keeper who sleeps upstairs from 22:00).
-	//
-	// ONLY for unique, named NPCs. If the template has several live instances
-	// the resolver cannot know which one you meant, so it declines and falls
-	// back to map_target. Set map_target as well to give it that fallback for
-	// when the NPC is dead or not yet spawned.
-	MapTargetMob int `yaml:"map_target_mob,omitempty" json:"map_target_mob,omitempty"`
+	// Destination is where the minimap and the quest log point during this
+	// step (#375 phase 4); see StepDestination.
+	Destination StepDestination `yaml:"destination,omitempty" json:"destination,omitempty"`
 }
 
 func (r *Quest) Id() int {
@@ -273,6 +265,9 @@ func (r *Quest) Validate() error {
 			return fmt.Errorf("quest %d (%s): duplicate step id %q", r.QuestId, r.Name, s.Id)
 		}
 		seen[s.Id] = true
+		if err := s.Destination.Validate(); err != nil {
+			return fmt.Errorf("quest %d (%s): step %q destination: %w", r.QuestId, r.Name, s.Id, err)
+		}
 	}
 
 	// Validate flag declarations

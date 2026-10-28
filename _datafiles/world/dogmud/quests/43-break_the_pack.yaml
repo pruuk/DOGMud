@@ -25,7 +25,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5298
+    destination:
+      room: 5298
     description: >-
       Delk has set you on the pack. Cook a meal and carry it before you go:
       the pack comes at you in numbers, two and three to a room. From the

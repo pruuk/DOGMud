@@ -495,7 +495,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Commands.go` | `Commands` | Command state, modes, cooldowns |
 | `gmcp.Behavior.go` | `Behavior` | Behaviour-tree state (admin/builder tooling) |
 | `gmcp.Build.go` | `Build` | The admin web building tools' data feed. Every `Build.Dialogue.*` message is refused by `refuseDialogueBuild` (the dialogue editor is off until quest arc phase 6). Build.Quest.Get/Update/Create/Delete are refused by `refuseQuestBuild` (the quest editor is off until phase 6, P7); `Build.Quest.List` stays open; the loop door in `buildQuestUpdate` is dormant until then |
-| `gmcp.Delete_refs.go` | `Build` | The boot doors' checks for `Build.Room.Delete`, `Build.Item.Delete` and `Build.Mob.Delete`: `questRefsWithoutRoom` / `questRefsWithoutItem` / `questRefsWithoutMob` run the quest loop with the id gone and `dialogueRefsWithoutItem` the dialogue door, each returning only what the delete adds. `roomQuestRefs` backs `buildDeps.questRefs` (the room delete refuses, naming each quest and where); `itemQuestRefs` backs `refIterators.questRefs` in the item reference scan, which no longer walks quest rewards itself; `mobQuestRefs` backs `mobRefIterators.questRefs` in the mob scan, which no longer walks quest triggers itself (and now covers step `map_target_mob`) |
+| `gmcp.Delete_refs.go` | `Build` | The boot doors' checks for `Build.Room.Delete`, `Build.Item.Delete` and `Build.Mob.Delete`: `questRefsWithoutRoom` / `questRefsWithoutItem` / `questRefsWithoutMob` run the quest loop with the id gone and `dialogueRefsWithoutItem` the dialogue door, each returning only what the delete adds. `roomQuestRefs` backs `buildDeps.questRefs` (the room delete refuses, naming each quest and where); `itemQuestRefs` backs `refIterators.questRefs` in the item reference scan, which no longer walks quest rewards itself; `mobQuestRefs` backs `mobRefIterators.questRefs` in the mob scan, which no longer walks quest triggers itself (and covers a step `destination:` block's `mob`) |
 | `gmcp.CharOp.go` | — | `GMCPCharOp` + `handleCharOp`: inbound state-touching `Char.*` ops, deferred to MainWorker |
 | `gmcp.Relay.go` | `Companion.Relay.*` | The companion key relay: installs `companionai.SetRelaySender`, forwards inbound relay messages to `companionai.RelayInbound` |
 | `gmcp.Game.go` | `Game` | Game-level metadata |
@@ -527,6 +527,25 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   `deferred` and reason `menu open`. Every exit from that handler must reply,
   or the client parks its action queue.
 
+## Char.Quests: destination fields (`gmcp.Char.go`, #375 phase 4)
+
+`GMCPCharModule_Payload_Quest` carries the focused quest's destination, from
+`questengine.ResolveDestination` (other quests leave these empty). Five fields
+are new, beside the older `target_room`, `next_room` and `next_dir`:
+
+| Field | Meaning |
+|---|---|
+| `target_kind` | `anywhere`, `room`, `mob`, `area`, `zone` or `unknown` (`questengine.DestKind`) |
+| `target_label` | the area or zone name, else the NPC's name |
+| `target_rooms` | the destination's template rooms in the player's zone, for the map wash |
+| `inside` | the player stands in the destination |
+| `guide` | `questengine.GuideLine`, the same line the `quest` command prints |
+
+`target_room` is now the nearest destination room on the player's map (0 when
+it lies in another zone, where only `next_dir` guides). `roomChangeHandler`
+re-sends Char.Quests on every move, since all of these depend on the player's
+current room.
+
 ## Gotchas
 
 - **The web client is the primary consumer of every one of these.** A payload
@@ -541,6 +560,18 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   `zoneMapVisited` (`gmcp.Zone.go`) builds the snapshot's room set and adds
   the current room only when the player's `ParticipantSight` is not
   `SightNone`, so a login in the dark does not name the room (#382 playtest).
+- **`Zone.Map` draws explored rooms of other zones** (owner, 2026-07-30).
+  A zone's map stops at its border (#375 phase 4), so `buildAndSend` draws
+  `mapper.WebMap`, the zone's map plus the map of every zone its border
+  exits reach, and bounds the visited set by its `HasRoom`. On shipped data
+  it gives master's payload for every room (1,305 rooms, a fully and a half
+  explored character, compared 2026-10-28 against 8534cf6a1);
+  `TestZoneMap_ExploredRoomsOfAJoinedZoneMatchMaster` pins a two-zone fixture
+  to master's payload. The builder's `sendZoneMapFull` takes its rooms from
+  the same view (`WebMap.RoomIds`): the zone's own rooms, then same-plane
+  rooms of other zones within 2 cells of the zone's box as `foreign`. On
+  shipped data every zone's builder payload matches 8534cf6a1 (48 of 48);
+  `TestSendZoneMapFull_ForeignRoomsMatchMaster` pins a fixture.
 - **`Zone.Map` is sent as a diff (#650), to the web client only.** A telnet
   GMCP client (Mudlet scripts, other tools) was written against a map that is
   every room and may not merge a partial, so `buildAndSend` sends it the whole

@@ -40,7 +40,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5249
+    destination:
+      room: 5249
     description: >-
       Ovell needs the slope cleared, starting with a scree scavenger.
       They crawl the Lower Talus just north of his cut, and the Scree
@@ -50,7 +51,8 @@ steps:
       Go north from the Collapsed Cut to the Lower Talus and type
       attack scavenger. If it is dark, type cast glow first.
   - id: scavenger
-    map_target: 5252
+    destination:
+      room: 5252
     description: >-
       One scree scavenger is down. Next is a talus lurker. One waits
       in the Ore Pocket, west of Ovell's cut and south of the Scree
@@ -59,7 +61,8 @@ steps:
     hint: >-
       In the Ore Pocket, west of the Collapsed Cut, type attack lurker.
   - id: lurker
-    map_target: 5250
+    destination:
+      room: 5250
     description: >-
       The talus lurker is down. Now work the basalt-iron vein. It
       shows in the bluff above the Scree Field and runs into the
@@ -68,7 +71,8 @@ steps:
       In the Ore Pocket or on the Scree Field just north of it, type
       forage.
   - id: ore
-    map_target: 5251
+    destination:
+      room: 5251
     description: >-
       You have worked the basalt-iron vein, and the slope is cleared.
       Report back to Ovell in the Collapsed Cut.

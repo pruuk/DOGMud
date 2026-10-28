@@ -29,4 +29,9 @@ type nodeExit struct {
 	OneWay         bool   // intentional one-way spatial exit (skips reciprocity check)
 	Gate           bool   // exit is a threshold/gate (has an ExitMessage)
 	Direction      positionDelta
+	// ToZone is the zone of the room the exit leads to, recorded at crawl
+	// time. A zone's map stops at its border, so the far room of a border
+	// exit is not in this map; Snapshot reads ToZone for that exit's label
+	// without loading the room.
+	ToZone string
 }

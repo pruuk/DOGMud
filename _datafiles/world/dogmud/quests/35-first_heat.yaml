@@ -24,23 +24,27 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5245
+    destination:
+      room: 5245
     description: "The forge is where iron learns its shape. First see
       what Smith Rusk sells. She stands at the forge in the Coulee
       Smithy, and her goods are on her stall."
     hint: "In the Coulee Smithy, next to Rusk, type list."
   - id: list
-    map_target: 5245
+    destination:
+      room: 5245
     description: "You have seen Rusk's goods. The dagger needs an iron
       ingot and a leather strip. Buy the ingot first."
     hint: "Type buy iron ingot."
   - id: ingot
-    map_target: 5245
+    destination:
+      room: 5245
     description: "You have an iron ingot. Now buy the leather strip for
       the grip."
     hint: "Type buy leather strip."
   - id: strip
-    map_target: 5245
+    destination:
+      room: 5245
     description: "You have both materials. Stand at the forge in the
       Coulee Smithy and make the dagger. The forge takes a few moments
       to finish the work."
@@ -48,7 +52,8 @@ steps:
       A craft can fail. If it does, buy an iron ingot and a leather
       strip again and retry."
   - id: craft
-    map_target: 5245
+    destination:
+      room: 5245
     description: "You worked iron at the forge for the first time
       and turned raw materials into something that did not exist
       before. Bring it back to Rusk."

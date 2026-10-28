@@ -160,14 +160,14 @@ func TestValidateRefs_IdExistence(t *testing.T) {
 		ActionDef{SpawnItem: &SpawnDef{Id: 888, Room: 777}},
 		ActionDef{ApplyStatusCondition: &StatusConditionDef{Condition: 666}},
 	)
-	q.Steps[0].MapTarget = 777
+	q.Steps[0].Destination.Room = 777
 	q.Rewards.ItemId = 888
 	errs, _ := ValidateQuestRefs(q, v)
 	errsContainingRefs(t, errs, "mob 999")
 	errsContainingRefs(t, errs, "item 888")
 	errsContainingRefs(t, errs, "room 777")
 	errsContainingRefs(t, errs, "condition 666")
-	errsContainingRefs(t, errs, "map_target")
+	errsContainingRefs(t, errs, "destination room")
 }
 
 // A discover action names a hidden noun of the trigger's room (its room

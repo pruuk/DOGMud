@@ -28,21 +28,36 @@ flags:
     description: "The player read the old water-right in the records (6060)"
 
 steps:
+  # Owner ruling 15 (2026-10-28, #375 phase 4): one conversation per step,
+  # in a fixed order. Hear Fenn, then Ayres, then settle it with Hesper.
+  # The channel (6078) and the records (6060) stay optional finds.
   - id: start
-    map_target: -1  # -1: branching investigation: hear two farmers (6072, 6073), then settle it with Hesper (6061); the channel (6078) and records (6060) are optional finds
+    destination: {mob: 9400}
     description: >-
       Amber Valley's two dryside farms are feuding over a cut irrigation
-      channel. Hear both sides, and find a way to settle it with Hesper at
-      the Golden Bough.
+      channel. Hesper at the Golden Bough wants you to hear Marrow Fenn's
+      side first.
     hint: >-
-      Hear both farmers out. From the Golden Bough, go west twice to the
-      Market Square, then south six times to the Irrigation Head-Gate. Marrow
-      Fenn's holding is east of it and Ayres' holding is west. Type talk
-      fenn. Two places may show you more: the records in the cedar chest at
-      the Rite pavilion, on the way south, and the collapsed channel in the
-      foothills, south three times from the head-gate, west twice, then
-      north. Hesper will tell you what each way of ending it means before
-      you choose. Hesper sleeps behind the taproom late at night.
+      From the Golden Bough, go west twice to the Market Square, then south
+      six times to the Irrigation Head-Gate. Fenn's holding is east of it.
+      Type talk fenn.
+  - id: heard_fenn
+    destination: {mob: 9401}
+    description: >-
+      You have heard Marrow Fenn out. Now hear Ayres, who holds the upstream
+      ground where the water comes into the valley.
+    hint: >-
+      Ayres' holding is west of the Irrigation Head-Gate. From Fenn's
+      holding, go west twice. Type talk ayres.
+  - id: heard_ayres
+    destination: {mob: 9397}
+    description: >-
+      You have heard both farmers. Go back to Hesper at the Golden Bough and
+      find a way to settle it.
+    hint: >-
+      From Ayres' holding, go east, north six times, then east twice to the
+      Golden Bough. Type talk hesper. Late at night she sleeps behind the
+      taproom.
   - id: end
     description: >-
       The water dispute is settled, one way or another. The valley's dry
@@ -101,6 +116,28 @@ triggers:
           taken more than his due for years. It is not a kind answer. It is
           the true one, and it favours Fenn. Hesper at the Golden Bough
           would know what reading it aloud would do to the valley.
+
+  # heard_fenn: hearing Marrow Fenn's "q72_side" topic (owner ruling 15,
+  # #375 phase 4; the topic still sets 72-heard-fenn).
+  - event: topic_heard
+    mob: 9400
+    topic: q72_side
+    conditions:
+      has: ["72-start"]
+      missing: ["72-heard_fenn"]
+    actions:
+      - grant: "72-heard_fenn"
+
+  # heard_ayres: hearing Ayres' "q72_side" topic, offered only once Fenn is
+  # heard (owner ruling 15; the topic still sets 72-heard-ayres).
+  - event: topic_heard
+    mob: 9401
+    topic: q72_side
+    conditions:
+      has: ["72-heard_fenn"]
+      missing: ["72-heard_ayres"]
+    actions:
+      - grant: "72-heard_ayres"
 
   # The three endings are Hesper Vane's hand-in topics (9397): each grants
   # 72-end and sets 72-outcome. The reward block above fires on 72-end

@@ -10,14 +10,16 @@ secret: false
 
 steps:
   - id: start
-    map_target: 6226
+    destination:
+      room: 6226
     description: "Quist the Elder at the Margin Hall has set you to examine the
       three disagreeing records of the Confluence's waters."
     hint: "First, the damaged chart in the bookseller's shop. From the Margin
       Hall, go east twice to the Scholars' Gate, then south into the
       Bookseller's. Type look damaged chart."
   - id: chart
-    map_target: 6131
+    destination:
+      room: 6131
     description: "The bookseller's damaged chart shows a fourth channel at the
       junction, drawn as a distinct waterway."
     hint: "Next, Tallis's old charts at the Scriveners' Stall. From the
@@ -26,7 +28,8 @@ steps:
       to the Weighhouse Yard, then west into the Scriveners' Stall. Type look
       old charts."
   - id: scrivener
-    map_target: 6143
+    destination:
+      room: 6143
     description: "Tallis's oldest charts agree: a fourth channel, struck and
       re-marked across sixty years of surveys."
     hint: "Last, the marginal note on the great map in the Municipal Hall. From
@@ -34,7 +37,8 @@ steps:
       to the North Cross, west to the Hall Steps, then south into the Municipal
       Hall. Type look marginal note."
   - id: map
-    map_target: 6220
+    destination:
+      room: 6220
     description: "The Municipal Hall's own map carries the fourth channel in its
       margin, half struck through. Three independent records, the same
       disagreement."

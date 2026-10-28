@@ -11,6 +11,17 @@ One `mapper` exists per zone, cached and keyed by room id. Everything below —
 consistency checking, fog-of-war snapshots, cross-zone routing — is built on
 the same crawl.
 
+**A zone's map stops at its zone's border** (#375 phase 4, spec ruling 18).
+`discover` and `startByCrawl` do not queue an exit whose destination is in
+another zone (zone from `rooms.TemplateRoomZone`, falling back to `LoadRoom`
+for an instance room id, in `roomZone`). The exit stays on its node and
+records the far room's zone in `nodeExit.ToZone`. `buildMapper` (which
+`GetMapper` calls) claims only rooms of the map's own zone, so every room belongs to its own zone's map
+whichever map is built first. On shipped data (2026-10-28) that is 50 maps
+over 1,305 rooms, the largest 175 rooms (Pothole Coulee), no map holding two
+zones; Ferries alone has 3 maps, its rooms being unconnected. Before, one map
+crawled 1,209 rooms across 38 zones.
+
 ## Files
 
 - **mapper.go** — direction/delta tables, the `mapper` type, the crawl, the
@@ -37,6 +48,8 @@ the same crawl.
 - **mapper.consistency.go** — the Cartesian consistency engine (see below).
 - **mapper.snapshot.go** — the fog-of-war snapshot for the web map.
 - **mapper.crosszone.go** — the coarse zone graph and cross-zone hop routing.
+- **mapper.nearest.go**: `NearestOf`, the nearest-of-a-set search for quest
+  destinations (see Nearest of a set below).
 
 ## Coordinates: authored first, crawl second
 
@@ -84,7 +97,27 @@ func (m *mapper) OverrideRoomIds(replacements map[int]int)
 ```
 
 `PreCacheMaps` builds every zone's mapper at boot, then warms the cross-zone
-graph and runs `ValidateZoneConsistency`. `GetCopy`/`OverrideRoomIds` exist for
+graph and runs `ValidateZoneConsistency`.
+
+**Refreshing the caches** (#375 phase 4 Task 21). `ClearCache` drops every
+map, the path cache and the zone graph, then rebuilds every zone's map as
+`PreCacheMaps` does (`buildAllMaps`): the web map, call for help and
+adjacency reach a joined zone only through its cached map, so a cache refilled
+one zone at a time would stop them at the border. It runs only on admin
+`reload mapcache` and a builder's zone rename or delete. A rebuild drops the
+map it replaces from the cache by key, so no stale second map keeps holding
+its rooms. `GetMapper(id, true)` rebuilds the
+room's map and, through `rebuildJoinedMaps`, every map its border exits reach
+(directly or through other zones, each from its own root), then drops the
+path cache and the zone graph. Before zone maps stopped at their border, a
+forced rebuild re-crawled the one map of the connected world, so the builder's
+zone view (`sendZoneMapFull`, which forces its zone's map) and the web map of
+a joined zone (`WebMap`, which reads neighbouring maps from the cache) showed
+an edit made next door; rebuilding the joined maps keeps that, at master's
+cost (the same rooms crawled). Before Task 21 neither refresh touched the path
+cache, so a cached failure outlived the edit that opened the route.
+`TestCacheRefreshDropsPathsAndZoneGraph` and
+`TestForcedRebuildShowsAnEditInAJoinedZone` pin both. `GetCopy`/`OverrideRoomIds` exist for
 ephemeral instance rooms, which reuse a template zone's geometry under
 different room ids.
 
@@ -97,6 +130,34 @@ func (r *mapper) GetCoordinates(roomId int) (x, y, z int, err error)
 func (r *mapper) FindRoomsInDistance(centerRoomId int, xyRadius int, zRadiusOpt ...int) []int
 func (r *mapper) FindAdjacentRoom(centerRoomId int, direction string, limitDistance ...int) (roomId, distance int)
 ```
+
+`FindRoomsInDistance` (call for help, `mobcommands/callforhelp.go`) returns
+every room other than the centre within `xyRadius` on each axis whose signed
+offset sum `|dx + dy|` is at most `xyRadius`, and within the z radius (0 when
+omitted). That is master's range, kept as shipped: it takes a room at
+(+2, -2) at radius 2 (sum 0) and leaves out (-1, -1) at radius 1. It is not
+Manhattan distance; changing it is a balance call (#707), and
+`TestFindRoomsInDistanceKeepsMastersSignedSum` pins master's result. Since
+maps stop at their border it also searches, when this map sits at authored
+coordinates (`mapper.authored`, set by `placeByAuthoredCoords`), the cached
+maps of every zone the zone graph joins to this one, keeping rooms on the
+centre's plane; an instance room or instance map searches only its own map
+(#375 phase 4 Task 19). Fixed with it: no z radius indexed an empty slice
+(panic). Measured against the pre-split tree on shipped data with the
+Manhattan form then in place (every room, radius 1 to 4): every room within
+range was still found but 22, which sit on another plane (The Foldweave,
+plane 5, over plane 0 rooms); none was new.
+
+`FindAdjacentRoom` (`build room <dir>`, `teleport <dir>`) walks cells in a
+direction to the first room. Since maps stop at their border it reads a cell
+this map lacks from the maps of `WebMap` (`adjacentInOthers`: a room on the
+centre's plane first, else one on another plane) and stops outside all of
+them, as it stopped outside the one map that held them all (#375 phase 4
+Task 20). Compared with 8534cf6a1 on shipped data (every room, ten
+directions, one step and unbounded, 13,050 lookups): identical. That
+includes a quirk kept on purpose: the one map kept one room per cell
+whatever its plane, so from Dustwalk Road 400 `down` finds The Foldweave's
+6427 (plane 5), and `build room down` there would join the two planes.
 
 ### Rendering
 
@@ -131,6 +192,21 @@ code writes such as "Party Member" (`TestEveryMultiWordLegendHasSlugAlias`).
 `GetLimitedMap` is the player-facing one — the visible radius scales with
 Perception. `GetFullMap` is unbounded and used by admin tooling.
 
+`GetLimitedMap` walks every room reachable from the player, across zone
+borders, as it did when one map held the connected world. It reads a room
+through `drawNode`: this map, else the room's own zone's map, else the room
+itself, so with every zone's map built (`PreCacheMaps`) it loads no room
+(`TestGetLimitedMapLoadsNoRoomWhenMapsAreBuilt`); between the split and #375
+phase 4 Task 19 it reloaded every cold room across a border on each look.
+`TestGetLimitedMapGolden` pins a two-zone render. **The walk is not bounded
+by the canvas, on purpose:** a room on the canvas can be reachable only by a
+path that leaves it (the east side of Stillwater from room 4100 comes round
+by the farm road). Measured on shipped data (1,305 rooms, 6 configs, 2026-10-28),
+a walk stopped at the canvas plus 3 rooms changed 898 of 7,830 renders, one
+stopped at twice the canvas still changed 4 in Cartesian zones; the unbounded
+walk matches the pre-change renders but for 1 tie in the toroidal Endless
+Trashheap, whose tie order varies run to run on either tree.
+
 ### Pathfinding
 
 ```go
@@ -143,11 +219,81 @@ func (p pathStep) Waypoint() bool
 ```
 
 A\* over the crawled graph (`heuristic` + a `priorityQueue` of `nodeRecord`),
-with results memoised in a path cache keyed by start/end. `GetPath` is
-**per-zone by construction** — it resolves its mapper from the cache using the
-*start* room, so a target in another zone fails outright. `NextStep` is the
-wrapper that falls back to `crossZoneHop` in that case; see Cross-Zone Routing
-below.
+with results memoised in a path cache keyed by start/end. `GetPath` **searches
+across zone maps**: `findPath` reads each room from its own zone's map
+(`nodeFor`: this map, else `GetMapperIfExists`, else `GetMapper`), so a route
+crosses borders exactly as it did when one map crawled the whole connected
+world, and a waypoint in another zone is accepted. Scores start empty and grow
+as rooms are reached, so the cost is the rooms the search touches, not a map's
+size. The heuristic is the Manhattan distance between node positions (the
+authored coordinates, unless a zone fell back to the exit-delta crawl).
+`TestShippedRoutesSurviveZoneBoundedMaps` (repo root, `DOGMUD_BOOT_SMOKE`)
+holds the (from, to, length) triples of
+`testdata/mapper_route_lengths.golden`, recorded from master's mapper, as a
+regression baseline: each route may be shorter than recorded or equal, never
+longer, and a recorded failure must still fail. A triple whose room no longer
+exists is skipped and counted. It also checks the 13 cross-zone patrol and
+schedule legs. `NextStep` still falls back to `crossZoneHop` when `GetPath`
+fails across zones; see Cross-Zone Routing below.
+
+### Nearest of a set (`mapper.nearest.go`, #375 phase 4)
+
+```go
+type SecretExitKnown func(roomId int, exitName string, toRoomId int) bool
+func NearestOf(fromRoomId int, in func(roomId int) bool, zones []string, known SecretExitKnown) (pin, nextRoomId int, exitName string, found bool)
+```
+
+Where to head toward the nearest room of a set (a quest destination: an
+area, an NPC's rooms, a zone). `zones` lists every zone the set touches.
+
+**Secret exits.** Guidance takes a secret exit only when `known` lets it
+through (nil: never), in the zone (`nearestIn`) and across a border (the zone
+graph marks a secret link, `zoneLink.secret`; `nearestZoneHop` and
+`hopToward` skip one `known` refuses). The quest engine passes the player's
+own knowledge (`questengine.secretExitsKnownTo`): `search` found the exit, or
+the room beyond is on their map, or they were there recently, which is when
+the game already discloses that exit to them. Mob routing (`GetPath`,
+`pathto`, `NextStep` and its `crossZoneHop` fallback) takes every secret exit,
+as before. On shipped data, from room 6323 (The Hedge-Gap Trail, root of
+Cascade Pass Road) 1,179 of 1,228 one-room destinations used to route first
+through its secret west exit; with the exit unknown none does, and only the
+49 other rooms of Cascade Pass Road (20 rooms) and the Eastern Highlands (30)
+beyond it get a direction: that pocket joins the rest of the world only
+through this secret passage (5441 east in Kingsbarrow Vale, 6323 west back).
+A player who walked in through it has 5441 on their map, so their guidance
+uses it.
+
+- **Start zone.** Only when the start room's zone is in `zones`
+  (`searchesHere`), it runs `nearestIn` on that zone's mapper: a
+  breadth-first search that stops at the first member, every exit costing 1
+  as in `findPath`, exits taken in name order so a tie always goes the same
+  way. The start room is never the answer, and the search never enters a room
+  of another zone: not one the map lacks, nor one it holds from another zone
+  (#375 phase 4 Task 17). Its cost is bounded by the zone;
+  `TestNearestIn_CostDoesNotGrowOutsideTheZone` doubles the rooms outside the
+  zone and holds the visit count. It returns that room as `pin` with the first
+  hop.
+- **Zone hop.** When the start zone is not in `zones`, or no member there is
+  reachable, `nearestZoneHop` (`mapper.crosszone.go`) picks the next zone
+  toward the zone of `zones` with the fewest zone crossings, and `hopToward`
+  runs the same in-zone `nearestIn` to the NEAREST border room among every
+  link from the start zone to that next zone (or, standing on one, returns its
+  crossing). `pin` is then 0: the room is not on the player's drawn map.
+- `found` is false when neither works.
+
+**Cost** (`mapper.nearest_bench_test.go`, a 20x20 grid from one corner to
+three rooms in the far corner, Ryzen 9 5900X, 2026-10-28):
+`BenchmarkNearestIn400` about 126 us/op, `BenchmarkFindPath400` (uncached A*
+to the same room) about 108 us/op. The web quest panel re-resolves the focused
+quest on every move, so `searchesHere` skips that crawl whenever the player's
+zone holds no member of the set.
+
+On shipped zones (`destination_nearest_bench_test.go`, repo root,
+`DOGMUD_BOOT_SMOKE=1 go test . -run x -bench DestinationNearest -count=5`,
+medians, one machine, 2026-10-28), master `8534cf6a1` cold `NextStep` against
+this tree, largest zone / Greenford: master `NextStep` 90.8 / 82.2 us; new
+`GetPath` 13.1 / 6.1 us; `NearestOf` one room 22.7 / 7.3 us, 40 rooms
+1.5 / 0.45 us.
 
 ## Gotchas
 
@@ -159,9 +305,17 @@ below.
   survives; a collision is invisible there and visible in `crawledRooms`.
 - **`ClearCache` is a package-level name that also exists in several other
   packages.** Confirm which one you are calling.
-- **A mapper is per-zone even though the crawl can cross zone boundaries.**
-  Findings and renders are filtered back to the owning zone afterwards
-  (`FilterFindingsToZone`); the crawl itself does not stop at the border.
+- **A map holds only its own zone's rooms.** Anything that reads
+  `crawledRooms` for a room across a border (an exit's far room, a radius
+  search, a render) finds nothing in this map; look the room up in its own
+  zone's map (`GetMapperIfExists` / `GetMapper`), as `findPath` does. The
+  destination search (Task 17), the ASCII map and `FindRoomsInDistance`
+  (Task 19), the web map (`WebMap`, Task 18), the consistency checks, the
+  builder's zone view and `FindAdjacentRoom` (Task 20) follow that rule.
+- **Fixture room ids in tests must not repeat across tests.** The template
+  zone index (`rooms.TemplateRoomZone`), which the crawl reads for an exit's
+  zone, outlives a test, so a reused id keeps the zone an earlier test gave
+  it and the crawl stops where it should not.
 
 ## Dependencies
 
@@ -171,7 +325,8 @@ context during render), plus `container/heap` for the A\* queue.
 ## Consumers
 
 `internal/usercommands` (`map`, `pathto`, `cartcheck`), `internal/mobs`
-(schedule and patrol movement), `internal/questengine` (map markers),
+(schedule and patrol movement), `internal/questengine` (`NearestOf` for quest
+destinations),
 `internal/rooms`, and `modules/gmcp` (the `Zone.Map` payload).
 
 ## Cartesian Consistency Engine
@@ -187,7 +342,12 @@ command (`internal/usercommands/admin.cartcheck.go`).
 
 ```go
 (*mapper).CheckConsistency(zone string, nonCartesian bool) []Finding
+func CheckZone(zone string) []Finding
 ```
+
+`CheckZone` (boot and `cartcheck`) runs `CheckConsistency` over every map of
+the zone (`zoneMaps`: a room its root reaches only through another zone has
+a map of its own) and scopes the findings to the zone.
 
 Scans `crawledRooms` (the `map[int]*mapNode` populated during BFS
 crawl) for the zone and returns a slice of findings. `RoomGrid` is a
@@ -264,14 +424,24 @@ The engine automatically skips:
   entire zone as toroidal/maze geometry; skips the three hard checks
   zone-wide.
 
-### Known Limitation: Cross-Zone Crawl
+### Cross-Zone Exits and Collisions
 
-`CheckConsistency` operates on the BFS-populated `crawledRooms` map,
-which follows all exits and can cross zone boundaries. This is mitigated
-at the reporting layer by `FilterFindingsToZone`, which drops any finding
-whose room's owning `zone:` field does not match the zone being checked.
-Both `ValidateZoneConsistency` (startup) and `CartCheck` (admin command)
-apply this filter, so findings are correctly scoped to their owning zone.
+Since the crawl stops at the zone border (#375 phase 4), a border exit's
+far room is not in the map. `CheckConsistency` reads it from its own zone's
+map (`farNode`); reciprocity and the plane check always run, the delta and
+long-crossing checks only when both maps sit at authored coordinates (one
+frame). Collisions with other zones come from `joinedCells`: the rooms of
+the maps of `WebMap` by (plane, x, y, z), one finding per cell under the
+zone of its lowest room id, as one map of the connected world reported a
+collision group. It is NOT every map: the jail cell 5107 (no exit reaches
+it, unplaced at the origin) shares Dustwalk Road 400's cell, which master
+never checked and which, in boot's panic mode, would stop the server.
+`TestShippedRoutesSurviveZoneBoundedMaps` (repo root, `DOGMUD_BOOT_SMOKE`)
+fails on any shipped finding; master and this tree both have 0 (2026-10-28).
+`mapper.consistency_border_test.go` pins a cross-zone missing return,
+delta mismatch and collision (each also reported on 8534cf6a1, none on the
+tree before Task 20). `FilterFindingsToZone` still drops any finding whose
+room's owning `zone:` is not the zone being checked.
 
 ## Fog-of-War Snapshot (Web Map)
 
@@ -305,7 +475,29 @@ type SnapshotExit struct {
 
 ```go
 func (r *mapper) Snapshot(visited map[int]struct{}) []SnapshotRoom
+func (r *mapper) WebMap() *WebMap
+func (w *WebMap) HasRoom(roomId int) bool
+func (w *WebMap) Snapshot(visited map[int]struct{}) []SnapshotRoom
 ```
+
+**The play client draws `WebMap`, not one zone's `Snapshot`** (#375 phase 4
+Task 18). The owner's 2026-07-30 rule is that the web map shows every room
+the player has explored whatever zone it is in. Before ruling 18 one map
+crawled every room a compass exit reached, so its snapshot did that; now
+`WebMap` gathers the same maps: the zone's map, then breadth-first the map of
+each room in a map's `borderRooms` (the far rooms of its border exits,
+recorded by the crawl), found with `GetMapperIfExists`, so it builds no map.
+A map at crawl positions or an instance copy has its own frame: as the root
+it draws alone, as a joined map it is walked through but not drawn. Its
+`Snapshot` draws each visited room from its own map (once, should a stale map
+also hold it) and makes an exit a full edge when the far room is a visited
+room of any drawn map, as the one shared map did. Compared on shipped data
+against 8534cf6a1 (every room as the current room, a fully and a seeded half
+explored character): all 2,610 payloads identical, including `cz`. Cost about
+master's (0.8 to 0.9 ms for the 1,209-room overworld view, both trees, one
+machine, one run). The builder's zone view (`sendZoneMapFull` in
+`gmcp.Build.go`) also reads `WebMap` (`RoomIds`, `Snapshot`): the zone's
+rooms its root reaches through another zone, and the neighbours it dims.
 
 Iterates `crawledRooms` and returns only rooms whose ID is present in
 `visited`. For each included room, exits are also filtered: an exit is
@@ -314,8 +506,8 @@ client never learns about rooms the player hasn't been to). Each exit's
 `Kind` is set by `classifyKind(nominal, actual)` — the same classifier
 used by the consistency engine.
 
-This method is the sole output consumed by the `gmcp.Zone` module
-(`modules/gmcp/gmcp.Zone.go`), which builds the `Zone.Map` GMCP payload
+Through `WebMap.Snapshot` this is the output consumed by the `gmcp.Zone`
+module (`modules/gmcp/gmcp.Zone.go`), which builds the `Zone.Map` GMCP payload
 and sends it to the web client on every room change. The web client
 renderer (`RoomGridSVG` in `gmcp.js`) uses the `kind` field to route
 each exit to its correct visual treatment: connector line (`normal`/
@@ -328,7 +520,11 @@ the live-only `shop` tag. An unloaded room reads the template fields
 `getMapNode` copied onto its `mapNode` at crawl time (`Title`, `Zone`,
 `Biome`, `IsBank`, `IsStorage`, all `instance:"skip"` on `rooms.Room`);
 its biome name still resolves through `Room.GetBiome`. Exit `ToZone`
-comes from `snapshotZone`, the same live-or-node rule. Before this, an
+comes from `snapshotZone`, the same live-or-node rule, then the zone the
+exit itself recorded at crawl time (`nodeExit.ToZone`): a border exit's far
+room is in another zone's map, so only the exit names its zone. A border
+exit is a `Stub` in one zone's own `Snapshot`, and a full edge in
+`WebMap.Snapshot` when the far room is visited. Before this, an
 idle-unloaded room was reparsed from disk per snapshot (~180 ms for 960
 cold rooms locally). `mapper.snapshot_cold_test.go` pins both the
 no-load rule and the payload against a golden from the loading version.
@@ -442,9 +638,10 @@ Connection-type styling and party markers are **web-only** — the ASCII
 `map` command does not reflect these.
 ## Cross-Zone Routing (`mapper.crosszone.go`)
 
-`GetPath` is per-zone by construction — it resolves its mapper from
-`mapperZoneCache[zone]` keyed off the **start** room, so it fails outright on a
-target in another zone. Before 2026-07-30 that made every cross-zone quest
+History: until #375 phase 4, `GetPath` resolved its mapper from
+`mapperZoneCache[zone]` keyed off the **start** room and rejected a target the
+start map did not hold. It now searches across zone maps (see Pathfinding), so
+the fallback below fires only when `GetPath` fails. Before 2026-07-30 that made every cross-zone quest
 marker inert: no destination dot (the room isn't in the current zone's
 snapshot) and no next-step arrow. Six quests were affected; quest 67 crosses
 four New Plymouth districts, so its guidance went dark exactly when a player
@@ -454,23 +651,30 @@ was trying to find the right one.
 rooms are in different zones. The approach is deliberately **not** a global
 room-level pathfinder:
 
-1. A coarse zone graph (`zoneGraph`) records, per zone, one outbound link per
-   neighbouring zone: `zoneLink{toZone, exitRoom, exitName, destRoom}`.
-2. `nextZoneHop` BFSes zone-to-zone and returns the **first** leg — the border
-   out of the player's current zone, even when the target is several zones off.
-3. `crossZoneHop` then reuses the in-zone `GetPath` to walk to that border room
-   (or returns the crossing exit itself if the player is already standing on
-   it).
+1. A coarse zone graph (`zoneGraph`) records, per zone, every outbound border
+   link (#375 phase 4 Task 17; before, one per neighbouring zone):
+   `zoneLink{toZone, exitRoom, exitName, destRoom, secret}`, sorted by `toZone`,
+   `exitRoom`, `exitName` so the pick is the same on every boot.
+2. `nextZoneHop` / `nearestZoneHop` BFS zone-to-zone and return the **first**
+   leg, whose `toZone` is the next zone out of the player's current zone, even
+   when the target is several zones off.
+3. `hopToward` then runs the in-zone `nearestIn` to the nearest border room
+   among every link from the current zone to that next zone (or returns the
+   crossing exit itself if the player is already standing on one). A border
+   the player cannot reach inside the zone is passed over for another.
 
-The hot path therefore stays on the cached per-zone mapper. The graph is built
-once and warmed in `PreCacheMaps` (every room is already loaded there);
-`InvalidateZoneGraph()` is exported for zone rename/delete/re-zone.
+The hot path therefore stays on the cached per-zone mapper, bounded by the
+zone. The graph is built once and warmed in `PreCacheMaps` (every room is
+already loaded there); `ClearCache` and a forced `GetMapper` rebuild call
+`InvalidateZoneGraph()`, so the next query rebuilds it from the edited rooms
+(#375 phase 4 Task 21).
 
-Real-world shape at boot: **39 zones with outbound links, 82 links.**
+Real-world shape (shipped data, re-measured 2026-10-28 by the same scan as
+`buildZoneGraph`): **39 zones with outbound links, 83 links**, one per
+ordered zone pair, so keeping every link (Task 17) adds none today.
 
-**Limitation:** one border is kept per zone pair. If that crossing is
-unreachable from where the player stands, the arrow is dropped rather than a
-second crossing tried — degrading to the old behaviour rather than misleading.
+**Limitation:** the in-zone leg does not leave the zone, so a border room
+reachable only through another zone gives no arrow.
 
 **The web marker still needs the room to be in the current zone's snapshot**, so
 cross-zone journeys get the *arrow* but not the destination dot until the player

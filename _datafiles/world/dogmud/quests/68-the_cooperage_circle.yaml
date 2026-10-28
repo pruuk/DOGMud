@@ -15,8 +15,9 @@ flags:
 
 steps:
   - id: start
-    map_target: 5719  # fallback when Toby the Cooper's Lad is not spawned
-    map_target_mob: 9338  # follow Toby the Cooper's Lad (schedule np_crafting_toby) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9338  # follow Toby the Cooper's Lad (schedule np_crafting_toby) — a fixed room is wrong for part of the day
+      room: 5719  # fallback when Toby the Cooper's Lad is not spawned
     description: >-
       Orin asked you to visit the shuttered cooperage and find Toby, to see
       whether anyone still tends the place, and bring back proof.
@@ -24,7 +25,8 @@ steps:
       From Orin's Bookstall, go west to the Inkwalk, then north twice to the
       Abandoned Cooperage. Toby keeps it by day. Type talk toby.
   - id: evidence
-    map_target: 5720
+    destination:
+      room: 5720
     description: >-
       Toby keeps the cooperage's tools oiled and its master's bench-mark
       clean, and gave you a rubbing of it. He says Edvar's hidden survey is
@@ -39,8 +41,9 @@ steps:
   # commands (look floorboard, then talk orin), so the survey is its own
   # step. Granted by the floorboard triggers; Orin's choice needs it.
   - id: survey
-    map_target: 5706  # fallback when Orin the Bookseller is not spawned
-    map_target_mob: 9332  # follow Orin the Bookseller (schedule np_crafting_orin)
+    destination:
+      mob: 9332  # follow Orin the Bookseller (schedule np_crafting_orin)
+      room: 5706  # fallback when Orin the Bookseller is not spawned
     description: >-
       Under the floorboard you found Edvar's survey, a torn quarter of a map
       far older than the city's own records. Orin needs to see it.
@@ -51,7 +54,8 @@ steps:
   # circle's side, Clerk Vell the bloodline's. Each first explains what the
   # player is signing up for, and neither choice can be undone.
   - id: choice
-    map_target: -1  # -1: bundled objectives, rooms [5706, 5817]; Phase 2 split review
+    destination:
+      mob: [9332, 9349]  # Orin (the circle) or Clerk Vell (the bloodline) takes the survey (owner ruling 16)
     description: >-
       Orin laid out the choice: stand with the circle and leave Edvar's
       survey in its keeping, or take the survey to Clerk Vell and be paid

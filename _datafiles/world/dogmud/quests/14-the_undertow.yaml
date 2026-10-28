@@ -8,7 +8,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 492  # Stash Room — sole spawn of the tally stick (item 40035)
+    destination:
+      room: 492  # Stash Room — sole spawn of the tally stick (item 40035)
     description: "Marek at the Drowning Post has been hearing noises from his
       cellar: scraping, voices, the sound of things being moved. The old
       drainage tunnels run beneath the tavern. He hands you a lantern when you
@@ -23,7 +24,7 @@ steps:
     hint: "Follow the tunnels south. The chalk arrows point toward whoever is
       in charge of the operation."
   - id: confront
-    map_target: -1  # -1: return-to-giver / in-place (start room 498); Phase 2 split review
+    # destination inferred from triggers (#375 p4); was: return-to-giver / in-place (start room 498); Phase 2 split review
     description: "You have reached the operations room at the heart of the
       smuggling tunnels. A man named Torvan Cresk runs the whole operation from
       here. A locked strongbox beneath his table likely holds the real
@@ -33,24 +34,29 @@ steps:
   # (owner ruling: one command per hint). Inserted steps are save-safe:
   # progress is one step id, read in this order (quests.IsTokenAfter).
   - id: loot
-    map_target: 498  # Operations Room, where Torvan falls
+    destination:
+      room: 498  # Operations Room, where Torvan falls
     description: "Torvan is down. His strongbox key is on his body."
     hint: "Type loot torvan to take the key."
   - id: unlock
-    map_target: 498  # Operations Room, where the strongbox is
+    destination:
+      room: 498  # Operations Room, where the strongbox is
     description: "You have the key to Torvan's strongbox."
     hint: "With the key in hand, look at the strongbox to open it. Type
       look strongbox."
   - id: evidence
-    map_target: 473  # fallback when Guard Captain Velk is not spawned
-    map_target_mob: 94  # follow Guard Captain Velk (schedule thornwall_guard_captain) — a fixed room is wrong for part of the day
+    destination:
+      mob: 94  # follow Guard Captain Velk (schedule thornwall_guard_captain) — a fixed room is wrong for part of the day
+      room: 473  # fallback when Guard Captain Velk is not spawned
     description: "You have obtained a bribe ledger from the strongbox. It
       names corrupt city officials taking payments to look the other way.
       Guard Captain Velk needs to see this."
     hint: "Take the bribe ledger to Guard Captain Velk at the barracks and
       type talk velk."
   - id: report
-    map_target: -1  # -1: return-to-giver / in-place (start room 473); Phase 2 split review
+    destination:
+      mob: 94  # Guard Captain Velk (the hint: talk velk); the strongbox room's trigger is not where to go
+      room: 473  # fallback when Velk is not spawned
     description: "Guard Captain Velk has the bribe ledger and is reviewing the
       names. He is ready to act."
     hint: "Type talk velk to close the case."

@@ -12,15 +12,17 @@ secret: false
 
 steps:
   - id: start
-    map_target: 6303
+    destination:
+      room: 6303
     description: "Brennan has set you to read the survey Reth filed on the
       eastern country, the one that says nothing."
     hint: "Reth's filed survey lies on the reading stand in the university
       Archive. From Brennan's Office, go east to the Cloister Walk, east to
       the Reading Room, then south into the Archive. Type look filed survey."
   - id: survey
-    map_target: 6305  # fallback when Brennan the Surveyor is not spawned
-    map_target_mob: 9516  # follow Brennan the Surveyor (schedule gf_brennan) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9516  # follow Brennan the Surveyor (schedule gf_brennan) — a fixed room is wrong for part of the day
+      room: 6305  # fallback when Brennan the Surveyor is not spawned
     description: "You found Reth's filed survey: a mineral deposit entry,
       strangely empty, from a man who saw something out there and chose
       not to write it down."
@@ -28,8 +30,9 @@ steps:
       the Reading Room, west to the Cloister Walk, then west into Brennan's
       Office. He sleeps at his desk late at night. Type talk brennan."
   - id: intro
-    map_target: 6315  # fallback when Reth is not spawned
-    map_target_mob: 9524  # follow Reth (schedule gf_reth) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9524  # follow Reth (schedule gf_reth) — a fixed room is wrong for part of the day
+      room: 6315  # fallback when Reth is not spawned
     description: "Brennan, convinced, has given you his word to take to
       Reth, who lives retired at the quiet end of the residential streets.
       Brennan asks only that Reth let you read his original field notes."
@@ -38,7 +41,7 @@ steps:
       Reth's Cottage. With Brennan's word, Reth's notes on the table are
       yours to read. Type look field notes."
   - id: testimony
-    map_target: -1  # -1: return-to-giver / in-place (start room 6315); Phase 2 split review
+    # destination inferred from triggers (#375 p4); was: return-to-giver / in-place (start room 6315); Phase 2 split review
     description: "You found Reth's notes, and with Brennan's word they are
       yours: directions and landmarks toward the eastern highlands, and a
       warning that whatever is out there is not natural."

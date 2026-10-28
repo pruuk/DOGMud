@@ -9,7 +9,8 @@ steps:
   hint: Bring a healing salve to the Tunnel Shaman in the Low Junction, just below
     the Narrow Descent at the warren's entrance. Apothecary Ilsa in Stillwater sells
     healing salves, and alchemists can make them. Type talk shaman.
-  map_target: 301  # Low Junction — Tunnel Shaman (mob 74) delivery target
+  destination:
+    room: 301  # Low Junction — Tunnel Shaman (mob 74) delivery target
 - id: end
   description: You have earned a fragile peace with the warren.
 rewards:

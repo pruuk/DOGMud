@@ -1,0 +1,29 @@
+# VELK seat: quest 10, The Drowning Post's Debt, first step: take the notice
+# to Guard Captain Velk. You start in the Drowning Post tavern. Quote every
+# game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 472
+  overlays:
+    set_quest_tokens: ["10-start"]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and quote the whole entry for The Drowning Post's Debt,
+    including the last line under it (the line that says where to head).
+  - >-
+    Follow that line only: if it says "Head <direction>.", type that direction,
+    then type `quests` again and quote the new line. Repeat until the line
+    changes to something else. Note any step where the direction it names is
+    not an exit of the room you are in (type `look` to check exits).
+  - >-
+    When the line stops giving a direction, type `look` and say whether Guard
+    Captain Velk is in the room. Quote the line. Then type `talk velk` and
+    follow the menu to hand over the notice; check `quests` afterwards and
+    quote the new destination line for the next step (back to Marek).
+  - >-
+    Follow the new line back toward Marek the same way, quoting each line,
+    until it says you are where you need to be or Marek is in the room.

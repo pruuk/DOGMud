@@ -7,7 +7,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 4007  # Ruined Barn — sole spawn of the freight crate (item 40039)
+    destination:
+      room: 4007  # Ruined Barn — sole spawn of the freight crate (item 40039)
     description: "Peddler Malk has been waiting on a freight
       shipment for days. He suspects bandits intercepted it. Find
       the missing freight crate."
@@ -19,8 +20,9 @@ steps:
   # 15-start plus the crate, so a save at 15-start holding the crate still
   # hands in (batch 2 review B1).
   - id: return
-    map_target: 4003  # fallback when Peddler Malk is not spawned
-    map_target_mob: 250  # follow Peddler Malk
+    destination:
+      mob: 250  # follow Peddler Malk
+      room: 4003  # fallback when Peddler Malk is not spawned
     description: "You have Malk's freight crate. Take it back to his camp."
     hint: "From the ruined barn, go east, then north three times, then
       west into Malk's camp. Type talk malk."

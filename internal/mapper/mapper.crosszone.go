@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -9,19 +10,22 @@ import (
 
 // Cross-zone routing.
 //
-// GetPath is per-zone by construction: it resolves its mapper via
-// mapperZoneCache[zone] keyed off the START room, so it can never route to a
-// room in another zone. That left every cross-zone quest marker inert — no
+// History: until #375 phase 4, GetPath resolved its mapper off the START room
+// and rejected a target that map did not hold, so it could not route to a room
+// in another zone. That left every cross-zone quest marker inert: no
 // destination dot (the room is not in the current zone's snapshot) and no
 // next-step arrow. Six quests were affected, worst being the New Plymouth
 // questline, whose guidance went dark exactly when a player was hunting for
-// the right district.
+// the right district. GetPath now searches across zone maps (findPath reads
+// each room from its own zone's map), so this graph serves the quest
+// destination search (NearestOf) and NextStep's fallback when GetPath fails.
 //
-// The fix is deliberately NOT a global room-level pathfinder. Zones are joined
-// by ordinary exits, so a coarse zone-level graph is enough: work out which
-// neighbouring zone to head for, then reuse the existing in-zone GetPath to
-// walk to that border room. The player gets a correct arrow the whole way, one
-// zone at a time, and the hot path stays on the cached per-zone mapper.
+// The destination search is deliberately NOT a global room-level search.
+// Zones are joined by ordinary exits, so a coarse zone-level graph is enough:
+// work out which neighbouring zone to head for, then search inside the zone
+// for the nearest border room toward it (hopToward). The player gets a correct
+// arrow the whole way, one zone at a time, and each search is bounded by the
+// player's zone.
 //
 // ---------------------------------------------------------------------------
 // YES, THIS IS THE SECOND ZONE-ADJACENCY CRAWL IN THE CODEBASE. ON PURPOSE.
@@ -72,11 +76,13 @@ import (
 //
 // KNOWN BEHAVIOURAL DIFFERENCES (both intentional):
 //   - Secret exits: weather can exclude them (Options.IncludeSecretExits);
-//     this graph always counts them. That matches GetPath and the in-zone
-//     mapper, neither of which filters secret exits (the mapper only RENDERS
-//     them, as SecretSymbol). Filtering here alone would make cross-zone
-//     routing disagree with in-zone routing, which is worse than either rule
-//     applied consistently.
+//     this graph records every link and marks a secret one (zoneLink.secret).
+//     Mob routing (GetPath, NextStep's fallback) crosses every link, as it
+//     takes secret exits in a zone. Quest guidance (NearestOf) crosses a
+//     secret link only when the player knows that exit (SecretExitKnown), the
+//     same rule its in-zone search (nearestIn) applies, so the two never
+//     disagree. joinedMaps reads the graph for which maps sit side by side,
+//     where secrecy does not matter.
 //   - Zone exclusion: weather skips instance_*/ephemeral_* zones; this graph
 //     does not. Currently moot — those zones have zero authored cross-zone
 //     exits (they are entered by teleport), so they contribute no links either
@@ -103,6 +109,13 @@ type zoneLink struct {
 	exitRoom int
 	exitName string
 	destRoom int
+	secret   bool // the crossing exit is secret
+}
+
+// usable reports whether a journey may cross l: always for an open exit, and
+// for a secret one only when known lets it through.
+func (l zoneLink) usable(known SecretExitKnown) bool {
+	return !l.secret || known.allows(l.exitRoom, l.exitName, l.destRoom)
 }
 
 var (
@@ -123,9 +136,12 @@ func InvalidateZoneGraph() {
 // buildZoneGraph walks every room once and records each exit whose destination
 // lies in a different zone. Built lazily on first use and cached; the world is
 // ~1400 rooms, so this is a one-off scan, not a per-move cost.
+//
+// Every border link of a zone pair is kept (#375 p4 Task 17), so the in-zone
+// leg can head for the nearest of them (hopToward) rather than whichever one
+// the scan met first.
 func buildZoneGraph() {
 	g := map[string][]zoneLink{}
-	seen := map[string]map[string]bool{} // fromZone -> toZone -> already linked
 
 	for _, roomId := range rooms.GetAllRoomIds() {
 		room := rooms.LoadRoom(roomId)
@@ -137,26 +153,29 @@ func buildZoneGraph() {
 			if dest == nil || dest.Zone == "" || dest.Zone == room.Zone {
 				continue
 			}
-			// One link per zone pair is enough to route; the in-zone leg to
-			// that border room is computed by GetPath.
-			if seen[room.Zone] == nil {
-				seen[room.Zone] = map[string]bool{}
-			}
-			if seen[room.Zone][dest.Zone] {
-				continue
-			}
-			seen[room.Zone][dest.Zone] = true
 			g[room.Zone] = append(g[room.Zone], zoneLink{
 				toZone:   dest.Zone,
 				exitRoom: roomId,
 				exitName: exitName,
 				destRoom: ex.RoomId,
+				secret:   ex.Secret,
 			})
 		}
 	}
 
+	// Room ids and exits come out of maps in no fixed order; sort each zone's
+	// links so the zone hop picks the same next zone on every boot.
 	links := 0
 	for _, v := range g {
+		sort.Slice(v, func(i, j int) bool {
+			if v[i].toZone != v[j].toZone {
+				return v[i].toZone < v[j].toZone
+			}
+			if v[i].exitRoom != v[j].exitRoom {
+				return v[i].exitRoom < v[j].exitRoom
+			}
+			return v[i].exitName < v[j].exitName
+		})
 		links += len(v)
 	}
 	mudlog.Info("mapper.buildZoneGraph", "zones", len(g), "links", links)
@@ -182,9 +201,26 @@ func ensureZoneGraph() {
 // nextZoneHop returns the link to take FIRST when travelling from fromZone to
 // toZone — i.e. the border out of the caller's current zone, even when the
 // destination is several zones away. Breadth-first, so it is the fewest-zones
-// route.
+// route. It crosses secret borders, as GetPath takes secret exits.
 func nextZoneHop(fromZone, toZone string) (zoneLink, bool) {
-	if fromZone == "" || toZone == "" || fromZone == toZone {
+	if toZone == "" {
+		return zoneLink{}, false
+	}
+	return nearestZoneHop(fromZone, []string{toZone}, anySecretExit)
+}
+
+// nearestZoneHop is nextZoneHop toward whichever of toZones is the fewest
+// zone crossings away (#375 phase 4: an area or an NPC's rooms can span
+// zones). fromZone itself and "" are never targets. A link through a secret
+// exit counts only when known lets it through (nil: never).
+func nearestZoneHop(fromZone string, toZones []string, known SecretExitKnown) (zoneLink, bool) {
+	want := map[string]bool{}
+	for _, z := range toZones {
+		if z != "" && z != fromZone {
+			want[z] = true
+		}
+	}
+	if fromZone == "" || len(want) == 0 {
 		return zoneLink{}, false
 	}
 	ensureZoneGraph()
@@ -200,7 +236,10 @@ func nextZoneHop(fromZone, toZone string) (zoneLink, bool) {
 	queue := make([]node, 0, len(zoneGraph[fromZone]))
 	seen := map[string]bool{fromZone: true}
 	for _, l := range zoneGraph[fromZone] {
-		if l.toZone == toZone {
+		if !l.usable(known) {
+			continue
+		}
+		if want[l.toZone] {
 			return l, true // direct neighbour
 		}
 		if !seen[l.toZone] {
@@ -212,7 +251,10 @@ func nextZoneHop(fromZone, toZone string) (zoneLink, bool) {
 		n := queue[0]
 		queue = queue[1:]
 		for _, l := range zoneGraph[n.zone] {
-			if l.toZone == toZone {
+			if !l.usable(known) {
+				continue
+			}
+			if want[l.toZone] {
 				return n.first, true // keep the FIRST leg, not this one
 			}
 			if !seen[l.toZone] {
@@ -225,26 +267,49 @@ func nextZoneHop(fromZone, toZone string) (zoneLink, bool) {
 }
 
 // crossZoneHop returns the next room + exit for a journey that leaves the
-// caller's zone. Standing on the border room, that is the crossing exit itself;
-// otherwise it is the first in-zone step toward the border room.
-//
-// Known limitation: buildZoneGraph keeps ONE border per zone pair. If that
-// particular border happens to be unreachable from where the player stands
-// (behind a locked door, say) this returns false and the player gets no arrow,
-// even though a second crossing might have worked. That degrades to today's
-// behaviour rather than misleading anyone, so it is left as-is; storing every
-// border and trying each is the fix if it ever bites.
+// caller's zone. Standing on a border room toward the next zone, that is the
+// crossing exit itself; otherwise it is the first in-zone step toward the
+// nearest such border room (hopToward).
 func crossZoneHop(fromRoomId int, fromZone, toZone string) (nextRoomId int, exitName string, found bool) {
 	link, ok := nextZoneHop(fromZone, toZone)
 	if !ok {
 		return 0, "", false
 	}
-	if fromRoomId == link.exitRoom {
-		return link.destRoom, link.exitName, true
+	return hopToward(fromRoomId, fromZone, link.toZone, anySecretExit)
+}
+
+// hopToward is the first step from fromRoomId (in fromZone) toward nextZone,
+// a neighbouring zone (#375 p4 Task 17). Standing on a border room of a link
+// to nextZone, it is that link's crossing. Otherwise it is the first step of
+// the in-zone search (nearestIn) to the nearest border room among every link
+// from fromZone to nextZone, so the cost is bounded by the zone and a border
+// the player cannot reach (behind a locked door, say) leaves the others. A
+// secret exit, in the zone or across the border, is taken only when known
+// lets it through (nil: never).
+func hopToward(fromRoomId int, fromZone, nextZone string, known SecretExitKnown) (nextRoomId int, exitName string, found bool) {
+	zoneGraphMu.RLock()
+	var links []zoneLink
+	for _, l := range zoneGraph[fromZone] {
+		if l.toZone == nextZone && l.usable(known) {
+			links = append(links, l)
+		}
 	}
-	path, err := GetPath(fromRoomId, link.exitRoom) // same zone — GetPath can do this
-	if err != nil {
+	zoneGraphMu.RUnlock()
+
+	borders := make(map[int]bool, len(links))
+	for _, l := range links { // sorted by exitRoom then exitName: a fixed pick
+		if l.exitRoom == fromRoomId {
+			return l.destRoom, l.exitName, true
+		}
+		borders[l.exitRoom] = true
+	}
+	if len(borders) == 0 {
 		return 0, "", false
 	}
-	return firstHop(path)
+	m := GetMapper(fromRoomId)
+	if m == nil {
+		return 0, "", false
+	}
+	_, next, exit, ok := m.nearestIn(fromRoomId, func(roomId int) bool { return borders[roomId] }, known)
+	return next, exit, ok
 }

@@ -83,6 +83,34 @@ one of two zones (quest 42). 220 steps across all quests (secret included) set `
     not done while it has `walk-destination` lines in the backlog.
 14. **The block is named `destination:`**, not `target:`, because a trigger's `target:` already
     means the command target kind and both sit in one quest file.
+15. **A step that needs several conversations is split into discrete steps**, one destination
+    each. Instance: quest 72 becomes hear Marrow Fenn, hear Ayres, settle with Hesper, in that
+    fixed order (owner, after the plan's Task 12 check found its one step bundling all three).
+    All three of Hesper's endings now come after hearing both farmers; before, only the
+    compromise needed them, and the channel and records endings did not. The channel and the
+    records stay optional finds during the Hesper step.
+17. *(Superseded by 18.)* **Directions come from cached per-destination tables, not a search per move** (owner, after
+    the per-move search measured above the bar). For a fixed destination (a room, an area, a
+    zone's border toward the next zone) one search outward from the destination fills, for every
+    room of the zone, the exit that leads closer and the destination room it reaches; every
+    player reads their next step from it. Tables are built on first use, shared, capped, and
+    dropped when a zone's map or the zone graph is rebuilt. The zone graph keeps every border
+    link of a zone pair, so a cross-zone table starts from all of them and the arrow aims at the
+    nearest border. NPC destinations, whose rooms move, keep the per-call search.
+18. **Zone maps stop at their zone's borders, fixed in this slice** (owner). Measured 2026-10-28:
+    `mapper.discover` follows every exit with no zone check, and `GetMapper` lets the first map
+    claim every room it crawls, so 38 of the 48 loaded zones share one 1,209-room map (13 maps
+    in all), and master's per-move A* sets up state for all of its rooms (about 100 µs cold on
+    shipped data). That cost grows with the world, not the zone. Section 10 is the design. With
+    zone-bounded maps, the destination search is bounded by the player's zone; cross-zone routes
+    go through the zone graph to the nearest border room. Ruling 17's tables are superseded:
+    measured on real zones the bounded search is cheaper than master's, and needs no cache. The
+    design follows a trace of every map consumer (pathto, mob pathing, map rendering, instances).
+16. **A destination may name several NPCs** when any one of them will do: `mob: [9316, 9300]`.
+    The set is every perceived copy of any of them, so the arrow goes to the nearest; with none
+    perceived, the declared fallback, else the union of their spawn rooms. Instances: quest 63
+    `evidence` (the Dock Constable or Jesset takes the tally-book), quest 68 `choice` (Orin or
+    Clerk Vell takes the survey).
 
 ## 1. The `destination:` block
 
@@ -108,7 +136,8 @@ steps:
 taking the scalar `anywhere` or a mapping of the keys `room`, `mob`, `area`, `zone`, and
 `MarshalYAML` writing them back the same way, so the round-trip test stays a fixed point. Allowed
 shapes, checked in `Quest.Validate`: `anywhere`; `room`; `area`; `zone`; `mob` alone or with exactly
-one of `room`, `area`, `zone` as its fallback. Any other scalar, an unknown key, or two of
+one of `room`, `area`, `zone` as its fallback. `mob` takes one id or a list (ruling 16); in Go it
+is `Mobs []int`, written back as a single id when it holds one. Any other scalar, an unknown key, or two of
 room/area/zone is a load refusal. `ValidateQuestRefs` checks the room, mob, area key and zone name
 exist, under the labels `destination room`, `destination mob`, `destination area`, `destination
 zone`, which the builder's delete refusals then name. The warning "room referenced by no trigger"
@@ -156,8 +185,10 @@ Order:
    `rooms.SpawnRooms(mobId)` (Kind area, no Label, Npc kept), else unknown. This applies to a
    single-copy NPC too: a hidden or unlit quest giver is no longer tracked through walls.
 4. `room` (that room), `area` (`areas.Contains`), `zone` (rooms whose template zone is that zone).
-5. No block: the union of what every trigger gated on the step (`conditions.has` contains the
-   step token) names: `room`, `conditions.in_room`, `area`, `zone`, `mob` (as rule 3, with no
+5. No block: the union of what every trigger that belongs to the step names, where a trigger
+   belongs to the step `Quest.CountStep` gives it (the latest step of its own quest its
+   `conditions.has` lists, so a trigger gated on two steps counts for the later one only):
+   `room`, `conditions.in_room`, `area`, `zone`, `mob` (as rule 3, with no
    declared fallback). One kind keeps its kind and label; mixed kinds give Kind room over the union.
    `Inferred` is set.
 6. Nothing: Kind unknown.
@@ -167,8 +198,9 @@ call: a zone is its name, an area gains `areas.ZonesOf(key)` and `areas.RoomsIn(
 once at load, a mob set is the handful of perceived rooms.
 
 **Nearest and direction.** New `mapper.NearestOf(fromRoomId int, in func(roomId int) bool, zones
-[]string) (pin, nextRoom int, exit string, ok bool)`: a breadth-first search over the start room's
-zone mapper (the same exits as `findPath`, exits taken in name order so ties are stable) that stops
+[]string) (pin, nextRoom int, exit string, ok bool)`: when the start room's zone is one of `zones`
+(`searchesHere`; otherwise it goes straight to the zone hop below), a breadth-first search over the
+start room's zone mapper (the same exits as `findPath`, exits taken in name order so ties are stable) that stops
 at the first room `in` accepts. When no room of the player's zone qualifies, it takes the zone of
 `zones` with the fewest zone hops (`nearestZoneHop`, the multi-target form of `nextZoneHop`, which
 then calls it with one zone) and the same border step `crossZoneHop` takes; Pin is then 0 (the room
@@ -220,7 +252,7 @@ Web client (slice 2):
 | route known, compass exit | `Head north.` |
 | route known, any other exit | `Take the gate.` (the exit name, plain text: the web panel escapes markup) |
 | inside, with a Label | `You are in the unquiet grove.` |
-| inside a fallback set of a mob destination | `You are where <npc> is usually found.` |
+| inside a fallback set of a mob destination | `Usually found around here: <npc>.` (mob names carry no article) |
 | inside otherwise | `You are where you need to be.` |
 | anywhere | `You can do this anywhere.` |
 | destination known, no route from here | `You can't find a way there from here.` |
@@ -294,3 +326,56 @@ the step gets a destination or `anywhere`. The sweep logs each inferred step for
 `context.md` for `questengine`, `quests`, `mapper`, `rooms`, `areas`, `modules/gmcp`; the roadmap
 (phase 4 status, phase 6 editor form, phase 7 exit); the `dogmud-authoring-quests` skill (the
 `destination:` block); PATCH_NOTES; `docs/README.md` for this spec and each plan.
+
+## 10. Zone-bounded maps (ruling 18)
+
+**Principle:** the split changes cost, not behaviour. Every route, map view, help call and
+check that works across zones today keeps working, and the owner's 2026-07-30 rule stands: the
+web map shows rooms a player has explored whatever zone they are in.
+
+Facts (traced 2026-10-28 on shipped data, file:line in the trace report kept with the slice 1
+PR): 13 maps cover 1,305 rooms; one map holds 1,209 rooms across 38 zones; 80 cross-zone
+direction exits leave 78 border rooms; largest zones Pothole Coulee 175, The Confluence 160,
+Ironwind Steppe 123; 13 shipped patrol and schedule legs cross zones and panic at boot if a
+path cannot; every mob `pathto` caller (schedules, patrols, foragers, home recovery, party
+follow, ferry factors, planners) routes across zones today.
+
+1. **Crawl.** `discover` and `startByCrawl` do not queue an exit whose destination lies in
+   another zone. The exit stays on the node (rendering, stubs) and records its destination zone
+   on `nodeExit`, which `Snapshot` reads for `ToZone`, so a border stub to an unloaded room keeps
+   its label. `GetMapper` claims only rooms of the map's own zone; `PreCacheMaps` builds one map
+   per zone.
+2. **Paths.** `GetPath` and `findPath` search across maps: each node is looked up in its own
+   zone's map, scores start empty and grow as rooms are reached (no state for every room up
+   front), authored coordinates stay the heuristic. Same routes as today (prototype: identical
+   length on 2,567 of 2,569 sampled pairs, 2 shorter, same 428 failures), so patrols, schedules
+   and `pathto` behave as before.
+3. **Destination search.** `nearestIn` stays inside the player's zone map. A cross-zone
+   destination takes `nearestZoneHop` for the next zone, then the same in-zone search to the
+   nearest border room toward it (the zone graph keeps every border link of a zone pair, not the
+   first found), replacing `hopToward`'s `GetPath`. Per-move cost is bounded by the zone's size.
+4. **Web map.** `Zone.Map` keeps showing explored rooms outside the current zone: the snapshot
+   gathers the player's visited rooms from the maps of the zones they visited
+   (`VisitedRooms` is keyed by zone), the same rooms it shows today.
+5. **ASCII map (ruling 19, revised).** `GetLimitedMap` keeps master's walk of every reachable
+   room, but reads rooms from the in-memory zone maps instead of loading them; output is
+   identical to master. The owner first chose drawing by position; that prototype failed its
+   gate (889 of 7,830 renders differ, including rooms behind locked doors and secret exits being
+   drawn), so the owner kept the walk for this slice and the bounded rework is #706.
+6. **Call for help.** `FindRoomsInDistance` searches the maps of every zone within the radius, so
+   helpers across a border still come.
+7. **Checks.** `CheckConsistency` checks a border exit against the far room's node in its own
+   map; `ValidateZoneConsistency` adds a world-wide collision check per plane, so the cross-zone
+   reciprocity, delta and collision checks keep running.
+8. **Builder.** The builder's view of rooms just outside the zone, and `build room <dir>` /
+   `teleport <dir>` lookups of a neighbouring cell, read the joined zones' maps
+   (`mapper.WebMap`), matching master on every shipped zone and lookup. `build room <dir>` keeps
+   master's behaviour of connecting to a room already in the cell; a refusal would change what
+   builders see. (Pre-existing, filed separately: from Dustwalk Road 400, `down` finds The
+   Foldweave's 6427 on plane 5.)
+9. **Caches.** A forced map rebuild and `ClearCache` purge `pathCache` and call
+   `InvalidateZoneGraph` (no caller today, so builder edits leave both stale).
+10. **Measure.** The real-zone benchmark (`destination_nearest_bench_test.go`) reports master's
+    cold `NextStep` against the new `GetPath` and `NearestOf` on the largest zone and a town;
+    neither may be slower than master, and the destination search must not grow with world
+    size (a synthetic test doubles the world outside the zone and checks the per-call cost holds).

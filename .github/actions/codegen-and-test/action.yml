@@ -50,11 +50,15 @@ runs:
     # materially longer under the race detector, which buys nothing here since
     # loading is single-threaded. The main suite below skips it automatically
     # because the env var is unset there.
+    #
+    # TestShippedRoutesSurviveZoneBoundedMaps (#375 phase 4) holds 200 shipped
+    # route lengths to master's and the 13 cross-zone patrol and schedule legs,
+    # and fails on any shipped map consistency finding.
     - name: Data-file boot smoke test
       shell: bash
       env:
         DOGMUD_BOOT_SMOKE: "1"
-      run: go test -run "TestSmoke_ServerBootsCleanWithRealData|TestSmoke_AllDialogueFilesParse|TestSmoke_ShippedDialoguePassesTheValidators|TestSmoke_NoNewSilentlyIgnoredYAMLKeys" -timeout 300s .
+      run: go test -run "TestSmoke_ServerBootsCleanWithRealData|TestSmoke_AllDialogueFilesParse|TestSmoke_ShippedDialoguePassesTheValidators|TestSmoke_NoNewSilentlyIgnoredYAMLKeys|TestShippedRoutesSurviveZoneBoundedMaps" -timeout 300s .
 
     # #536: the two melee statistical sweeps were about 330s of internal/combat's
     # 390 to 405s under -race (local Docker, 2026-10-17), and runner variance took

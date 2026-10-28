@@ -1,0 +1,25 @@
+# ANYWHERE seat: quest 31, Find Your Footing. Its `list` and `shop` steps can
+# be done anywhere there is a shop, so the quest log should say so instead of
+# pointing at a room. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5213
+  overlays:
+    set_quest_tokens: ["31-start", "31-school"]
+    set_gold: 200
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `quests` and quote the whole entry for Find Your Footing, including
+    its last line. Say whether the last line reads "You can do this anywhere."
+  - >-
+    Walk two rooms in any direction and type `quests` again. The last line must
+    not change into a direction. Quote it.
+  - >-
+    Do what the step's hint asks (find a shop and type `list`, then buy what
+    it asks). After each step change, type `quests` and quote the new last
+    line. When a step points at a place again (for example the equip or lantern
+    step), follow its direction line for three moves, quoting it each time.

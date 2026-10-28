@@ -50,3 +50,26 @@ func TestQuestLog_ShowsCountProgress(t *testing.T) {
 	rec, _ = activeQuestRecord(u, q, "end")
 	assert.Empty(t, rec.Progress, "a step no count trigger leads from has no progress line")
 }
+
+// #375 phase 4: each active quest shows where to head under its progress.
+func TestQuestLog_ShowsTheDestinationLine(t *testing.T) {
+	useDogmudTemplates(t)
+	t.Cleanup(questengine.ResetEngineForTest())
+	q := &quests.Quest{QuestId: 900055, Name: "Anywhere Quest", Steps: []quests.QuestStep{
+		{Id: "start", Description: "Practise.", Destination: quests.StepDestination{Anywhere: true}},
+		{Id: "end", Description: "Done."},
+	}}
+	questengine.GetEngine().RegisterQuest(q)
+	u := users.NewTestUser(9763, "questdest", "Questdest", 97630)
+
+	rec, _ := activeQuestRecord(u, q, "start")
+	assert.Equal(t, "You can do this anywhere.", rec.Guide)
+	out, err := templates.Process("character/quests", map[string]any{
+		"QuestsFound": 1, "QuestsTotal": 1, "Records": []questRecord{rec},
+	}, 0)
+	require.NoError(t, err)
+	assert.Contains(t, out, "You can do this anywhere.")
+
+	rec, _ = activeQuestRecord(u, q, "end")
+	assert.Empty(t, rec.Guide, "the final step has no destination line")
+}

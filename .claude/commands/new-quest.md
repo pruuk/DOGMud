@@ -109,18 +109,24 @@ After all files are written:
 1. Run `go build ./...` to verify no compilation errors, then
    `DOGMUD_BOOT_SMOKE=1 go test . -run 'TestSmoke_' -count=1`: the dialogue
    validators refuse every rule in 4c
-2. **Check every step has a map destination.** For each step in the new quest,
-   confirm exactly one of: `map_target_mob` + a `map_target` fallback (go see a
-   named NPC), `map_target: <roomid>` (go to a place/fixture), or
-   `map_target: -1` (done in place, or a player-choice branch). A step that
-   sends the player somewhere with no marker leaves a lost player nothing to
-   follow. Rules and rationale: `/sketch-quest`, "MAP DESTINATION".
-   - `map_target_mob` is for **unique named NPCs only** — a generic mob with
-     several live instances is ambiguous, so the marker silently vanishes.
-     If a step's target is a generic mob, that is a sign the step should name a
-     unique NPC instead.
-   - Run `go test ./internal/questengine/ -run TestQuestMapTargets` — it fails
-     if any `map_target` names a room that does not exist.
+2. **Check every step (but the final one) has a destination.** Each step
+   either declares a `destination:` block or lets inference find one from the
+   triggers gated on it. The shapes: `destination: {room: <id>}` (a place or
+   fixture), `{area: <key>}`, `{zone: <Zone Name>}`, `{mob: <id>}` or
+   `{mob: [<id>, <id>]}` (go see an NPC; any one of a list will do), a mob
+   with one of `room`, `area` or `zone` as its fallback, or
+   `destination: anywhere` (done wherever the player stands). With no block,
+   the destination is inferred from every place field (`room`,
+   `conditions.in_room`, `mob`, `area`, `zone`) of the step's triggers. Rules and rationale:
+   `/sketch-quest`, "MAP DESTINATION".
+   - The quest loop sweep (`DOGMUD_BOOT_SMOKE=1 go test . -run
+     TestSmoke_ShippedQuestsPassTheLoop -count=1`) runs the destination rule:
+     a step that resolves to nothing is a `walk-destination` finding, and an
+     `anywhere` step whose triggers name a place is a
+     `walk-destination-anywhere` finding. A new finding fails CI.
+   - Boot refuses an unknown room, mob, area or zone in a block
+     (`ValidateQuestRefs`), and `TestQuestFilesCarryNoMapTargetKey`
+     (`internal/guards`) fails on any leftover `map_target` key.
 3. List all instance saves that need deletion:
    ```
    _datafiles/world/dogmud/rooms.instances/{zone}/

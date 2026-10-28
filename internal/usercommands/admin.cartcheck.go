@@ -42,11 +42,12 @@ func CartCheck(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		if err != nil {
 			continue
 		}
-		m := mapper.GetMapper(rootRoomId)
-		if m == nil {
+		if mapper.GetMapper(rootRoomId) == nil { // builds the zone's map if need be
 			continue
 		}
-		findings := mapper.FilterFindingsToZone(m.CheckConsistency(zoneName, rooms.IsZoneNonCartesian(zoneName)), zoneName)
+		// Every map of the zone, border exits checked against their far
+		// rooms' maps (#375 phase 4), as the boot check does.
+		findings := mapper.CheckZone(zoneName)
 		if len(findings) == 0 {
 			continue
 		}

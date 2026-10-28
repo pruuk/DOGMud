@@ -23,8 +23,9 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5215  # fallback when Warden Esk is not spawned
-    map_target_mob: 9107  # follow Warden Esk (schedule pothole_esk)
+    destination:
+      mob: 9107  # follow Warden Esk (schedule pothole_esk)
+      room: 5215  # fallback when Warden Esk is not spawned
     description: >-
       Warden Esk keeps the arch in the Threshold House, south of Hub Square
       through Market Row. The arch opens on Thornwall.

@@ -6,7 +6,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 408  # the Bandit Hollow (search the camp)
+    destination:
+      room: 408  # the Bandit Hollow (search the camp)
     description: "Road Warden Tessara at the Warden's Post on Dustwalk Road has asked\
       \ you to investigate a bandit camp in the gullies to the south. Search the\
       \ abandoned campsite and the hollow beyond for evidence of their operations."
@@ -14,7 +15,8 @@ steps:
       \ Abandoned Campsite, where the bandits have been working."
 
   - id: investigate
-    map_target: 408  # the Bandit Hollow — find the purse here
+    destination:
+      room: 408  # the Bandit Hollow — find the purse here
     description: "You have reached the bandit camp. Search the Bandit Hollow for\
       \ evidence. A purse containing incriminating documents should prove the\
       \ scope of their operation."
@@ -22,7 +24,8 @@ steps:
       \ the stolen goods for a purse. Type get purse."
 
   - id: evidence
-    map_target: 405
+    destination:
+      room: 405
     description: "You found the bandit's purse containing caravan schedules and\
       \ route information. Return to Road Warden Tessara at the Warden's Post\
       \ with this evidence."

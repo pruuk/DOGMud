@@ -24,26 +24,30 @@ steps:
     description: "Crier Toke wants you to learn the town before the town has to learn you. Start at the Chrysalis School Hall. If you lose your way, the map command shows where you have been."
     hint: "From Hub Square go north past the Awakening Pool, then keep north up the basalt stair to the Chrysalis School Hall. Walking in is enough."
   - id: school
-    map_target: 5207  # fallback when Trader Onna is not spawned
-    map_target_mob: 9104  # follow Trader Onna (schedule pothole_onna) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9104  # follow Trader Onna (schedule pothole_onna) — a fixed room is wrong for part of the day
+      room: 5207  # fallback when Trader Onna is not spawned
     description: "You found the school hall. Next, kit yourself out at Coulee Provisions, Trader Onna's shop. First see what she sells."
     hint: "From the school hall go south four times to Hub Square, south again to Market Row, then east into Coulee Provisions. There, type list."
   # list: inserted 2026-10-17 (one command per step). A player saved on
   # `school` is told to list; one saved on `shop` or later is past it.
   - id: list
-    map_target: -1  # action step (command/skill): no travel destination
+    destination:
+      mob: 9104  # Trader Onna sells the shirt; the buy needs her shop (playtest 2026-10-28)
+      room: 5207  # Coulee Provisions
     description: "Onna's wares are laid out. Buy a cotton shirt. You start with coin to spare."
     hint: "Type buy cotton shirt."
   - id: shop
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You bought a cotton shirt. Now put it on. Gear does nothing folded in your pack."
     hint: "Type equip cotton shirt."
   - id: equip
     description: "You are dressed for the coulee. Now put your head into The Drowned Lantern, the town's inn."
     hint: "The Drowned Lantern is the inn off Market Row. From Coulee Provisions go west twice. Walking in is enough."
   - id: lantern
-    map_target: 5203  # fallback when Crier Toke is not spawned
-    map_target_mob: 9106  # follow Crier Toke (schedule pothole_toke) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9106  # follow Crier Toke (schedule pothole_toke) — a fixed room is wrong for part of the day
+      room: 5203  # fallback when Crier Toke is not spawned
     description: "You have seen the school, kitted out at the shop, and found the inn. Report back to Crier Toke in Hub Square."
     hint: "From the inn go east to Market Row, then north to Hub Square. Find Toke at the notice post, type talk toke, and choose Find Your Footing to finish."
   - id: end

@@ -19,7 +19,7 @@ flags:
 
 steps:
   - id: start
-    map_target: -1  # -1: bundled objectives, rooms [5376, 5395]; Phase 2 split review
+    # destination inferred from triggers (#375 p4); was: bundled objectives, rooms [5376, 5395]; Phase 2 split review
     description: >-
       Goodwife Pemberton asked you to clear the two preying on the road:
       a hedgerow bandit hidden in the reeds at the Mire Cutoff, and a
@@ -30,7 +30,8 @@ steps:
       the Abandoned Camp, far up the road north through the Empty Reach.
       Kill both, in either order, then come back and tell Pemberton.
   - id: bandit
-    map_target: 5395
+    destination:
+      room: 5395
     description: >-
       The hedgerow bandit at the Mire Cutoff is dead. The Reach-Touched
       still haunts the Empty Reach to the north.
@@ -39,7 +40,8 @@ steps:
       follow the road north through the Empty Reach to the Abandoned
       Camp, and put down the Reach-Touched.
   - id: reach
-    map_target: 5378
+    destination:
+      room: 5378
     description: >-
       The Reach-Touched is down, and so is the hedgerow bandit. Report
       back to Pemberton at the Lake & Ladle.

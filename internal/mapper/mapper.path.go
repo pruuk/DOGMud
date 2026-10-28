@@ -87,18 +87,41 @@ func (pq *priorityQueue) update(n *nodeRecord, newF float64) {
 	heap.Fix(pq, n.index)
 }
 
-// heuristic is the 3D Manhattan distance.
+// heuristic is the 3D Manhattan distance between two nodes' coordinates (the
+// authored ones, unless the zone fell back to the exit-delta crawl).
 // This should be redone - rooms can be one space away exit-wise, but 2+ spacex in grid space.
 // Example: Frostfang city walls
-func (r *mapper) heuristic(a, b int) float64 {
-	ax, ay, az, _ := r.GetCoordinates(a)
-	bx, by, bz, _ := r.GetCoordinates(b)
-	return math.Abs(float64(ax-bx)) +
-		math.Abs(float64(ay-by)) +
-		math.Abs(float64(az-bz))
+func heuristic(a, b *mapNode) float64 {
+	return math.Abs(float64(a.Pos.x-b.Pos.x)) +
+		math.Abs(float64(a.Pos.y-b.Pos.y)) +
+		math.Abs(float64(a.Pos.z-b.Pos.z))
+}
+
+// nodeFor returns a room's node from its own zone's map: this map when it
+// holds the room, else the map that owns it, built on first use the way
+// GetPath has always built a start room's map. nil when no map holds the
+// room (it does not exist). A zone's map stops at its border, so a path
+// that crosses zones reads each room from its own zone's map.
+func (r *mapper) nodeFor(roomId int) *mapNode {
+	if n, ok := r.crawledRooms[roomId]; ok {
+		return n
+	}
+	m := GetMapperIfExists(roomId)
+	if m == nil {
+		m = GetMapper(roomId)
+	}
+	if m == nil {
+		return nil
+	}
+	return m.crawledRooms[roomId]
 }
 
 // FindPath returns the sequence of ExitName/RoomID steps from startRoom to goalRoom.
+//
+// The search starts in this map and follows exits into other zones' maps
+// (nodeFor), so a route crosses zone borders exactly as it did when one map
+// crawled the whole connected world. Scores start empty and grow as rooms are
+// reached: the cost is the rooms the search touches, not the size of a map.
 func (r *mapper) findPath(startRoom, goalRoom int) ([]pathStep, error) {
 
 	if startRoom == goalRoom {
@@ -106,30 +129,26 @@ func (r *mapper) findPath(startRoom, goalRoom int) ([]pathStep, error) {
 	}
 
 	// sanity check
-	if _, ok := r.crawledRooms[startRoom]; !ok {
+	startNode := r.nodeFor(startRoom)
+	if startNode == nil {
 		return nil, ErrRoomNotFound
 	}
-	if _, ok := r.crawledRooms[goalRoom]; !ok {
+	goalNode := r.nodeFor(goalRoom)
+	if goalNode == nil {
 		return nil, ErrRoomNotFound
 	}
 
 	// cameFrom holds, for each room, how we got there.
-	cameFrom := make(map[int]prevInfo, len(r.crawledRooms))
+	cameFrom := map[int]prevInfo{}
 
-	// gScore: cost from start to here; fScore = gScore + heuristic
-	gScore := make(map[int]float64, len(r.crawledRooms))
-	fScore := make(map[int]float64, len(r.crawledRooms))
-	for id := range r.crawledRooms {
-		gScore[id] = math.Inf(1)
-		fScore[id] = math.Inf(1)
-	}
-	gScore[startRoom] = 0
-	fScore[startRoom] = r.heuristic(startRoom, goalRoom)
+	// gScore: cost from start to each room reached so far. A room absent
+	// from it has not been reached (infinite cost).
+	gScore := map[int]float64{startRoom: 0}
 
 	// open set as a priority queue
-	openSet := make(priorityQueue, 0, len(r.crawledRooms))
+	openSet := make(priorityQueue, 0, 64)
 	heap.Init(&openSet)
-	heap.Push(&openSet, &nodeRecord{roomId: startRoom, fScore: fScore[startRoom]})
+	heap.Push(&openSet, &nodeRecord{roomId: startRoom, fScore: heuristic(startNode, goalNode)})
 	inOpen := map[int]*nodeRecord{startRoom: openSet[0]}
 
 	for openSet.Len() > 0 {
@@ -165,27 +184,37 @@ func (r *mapper) findPath(startRoom, goalRoom int) ([]pathStep, error) {
 		}
 
 		// expand neighbors
-		node := r.crawledRooms[current.roomId]
+		node := r.nodeFor(current.roomId)
+		if node == nil {
+			continue
+		}
 		for exitName, exitInfo := range node.Exits {
 			neighbor := exitInfo.RoomId
 			tentativeG := gScore[current.roomId] + 1 // uniform cost
 
-			if tentativeG < gScore[neighbor] {
-				// this is a better path to neighbor
-				cameFrom[neighbor] = prevInfo{
-					prevRoom: current.roomId,
-					viaExit:  exitName,
-				}
-				gScore[neighbor] = tentativeG
-				fScore[neighbor] = tentativeG + r.heuristic(neighbor, goalRoom)
+			if g, reached := gScore[neighbor]; reached && tentativeG >= g {
+				continue
+			}
+			// An exit to a room no map holds is not taken (it does not exist).
+			neighborNode := r.nodeFor(neighbor)
+			if neighborNode == nil {
+				continue
+			}
 
-				if nr, ok := inOpen[neighbor]; ok {
-					openSet.update(nr, fScore[neighbor])
-				} else {
-					nr := &nodeRecord{roomId: neighbor, fScore: fScore[neighbor]}
-					heap.Push(&openSet, nr)
-					inOpen[neighbor] = nr
-				}
+			// this is a better path to neighbor
+			cameFrom[neighbor] = prevInfo{
+				prevRoom: current.roomId,
+				viaExit:  exitName,
+			}
+			gScore[neighbor] = tentativeG
+			f := tentativeG + heuristic(neighborNode, goalNode)
+
+			if nr, ok := inOpen[neighbor]; ok {
+				openSet.update(nr, f)
+			} else {
+				nr := &nodeRecord{roomId: neighbor, fScore: f}
+				heap.Push(&openSet, nr)
+				inOpen[neighbor] = nr
 			}
 		}
 	}
@@ -237,12 +266,9 @@ func GetPath(startRoomId int, endRoomId ...int) ([]pathStep, error) {
 			continue
 		}
 
-		if !m.HasRoom(roomId) {
-			err := fmt.Errorf("%d => %d (room not in mapper): %w", rNow, roomId, ErrPathNotFound)
-			pathCache.Add(cacheKey, pathCacheValue{steps: nil, err: err})
-			return []pathStep{}, err
-		}
-
+		// No start-map HasRoom check: a waypoint in another zone is found in
+		// its own zone's map (findPath crosses maps). A waypoint no map holds
+		// fails in findPath with ErrRoomNotFound and is cached like any miss.
 		p, err := m.findPath(rNow, roomId)
 		if err != nil {
 			pathCache.Add(cacheKey, pathCacheValue{steps: p, err: err})
@@ -278,12 +304,11 @@ func firstHop(path []pathStep) (nextRoomId int, exitName string, found bool) {
 // toRoomId, and the compass exit name to take. found is false when from == to
 // or the target is genuinely unreachable.
 //
-// Same-zone journeys use the cached per-zone GetPath (as `pathto` does).
-// Cross-zone journeys fall back to zone-level routing: head for the border of
-// the neighbouring zone that leads toward the target. GetPath alone cannot do
-// this — it resolves its mapper from the START room's zone, so it fails
-// outright on a target elsewhere, which used to leave cross-zone quest markers
-// with no arrow at all. See mapper.crosszone.go.
+// It takes GetPath's first step (as `pathto` does); GetPath searches across
+// zone maps, so that covers cross-zone journeys too. When GetPath fails and
+// the rooms are in different zones, it falls back to zone-level routing: head
+// for the border of the neighbouring zone that leads toward the target. See
+// mapper.crosszone.go.
 func NextStep(fromRoomId, toRoomId int) (nextRoomId int, exitName string, found bool) {
 	if fromRoomId == toRoomId {
 		return 0, "", false

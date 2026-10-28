@@ -13,7 +13,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -180,7 +179,7 @@ func (g *GMCPCharModule) sightBandChangedHandler(e events.Event) events.Listener
 // roomChangeHandler re-pushes Char.Quests when a player moves.
 //
 // The quest marker's next_room and next_dir are derived from the player's
-// CURRENT room (mapper.NextStep in the Char.Quests build), so they are stale
+// CURRENT room (ResolveDestination in the Char.Quests build), so they are stale
 // the instant the player takes a step. Only Char.Quests is re-sent — not the
 // whole Char node — because movement already pushes Room.Info and Zone.Map, and
 // a full Char push on every step would be pointless traffic.
@@ -718,14 +717,20 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 				questPayload.Completion = int(math.Floor(float64(completedSteps) / float64(totalSteps) * 100))
 			}
 
-			// Marker data is computed for the focused quest only.
+			// Destination data is computed for the focused quest only (#375 phase 4).
 			if questPayload.Focused {
-				if target := engine.ResolveQuestTarget(questId, questStep); target != 0 {
-					questPayload.TargetRoom = target
-					if next, dir, ok := mapper.NextStep(user.Character.RoomId, target); ok {
-						questPayload.NextRoom = next
-						questPayload.NextDir = dir
+				if d := engine.ResolveDestination(user, questId, questStep); d.Kind != questengine.DestNone {
+					questPayload.TargetKind = string(d.Kind)
+					questPayload.TargetLabel = d.Label
+					if questPayload.TargetLabel == "" {
+						questPayload.TargetLabel = d.Npc
 					}
+					questPayload.TargetRooms = d.ZoneRooms
+					questPayload.Inside = d.Inside
+					questPayload.Guide = questengine.GuideLine(d)
+					questPayload.TargetRoom = d.Pin
+					questPayload.NextRoom = d.NextRoom
+					questPayload.NextDir = d.NextDir
 				}
 			}
 
@@ -1199,6 +1204,13 @@ type GMCPCharModule_Payload_Quest struct {
 	TargetRoom int    `json:"target_room,omitempty"`
 	NextRoom   int    `json:"next_room,omitempty"`
 	NextDir    string `json:"next_dir,omitempty"`
+	// #375 phase 4 (focused quest only). TargetRoom is the nearest room of the
+	// destination on the player's map (0 when it lies in another zone).
+	TargetKind  string `json:"target_kind,omitempty"`  // anywhere, room, mob, area, zone, unknown
+	TargetLabel string `json:"target_label,omitempty"` // area or zone name, else the NPC's name
+	TargetRooms []int  `json:"target_rooms,omitempty"` // the destination's rooms in this zone (map wash)
+	Inside      bool   `json:"inside,omitempty"`
+	Guide       string `json:"guide,omitempty"` // questengine.GuideLine, the quest log's line
 }
 
 // /////////////////

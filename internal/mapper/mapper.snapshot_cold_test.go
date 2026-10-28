@@ -67,16 +67,21 @@ func ex(to int, dir string) exit.RoomExit { return exit.RoomExit{RoomId: to, Map
 
 var zoneMapFixtureIds = []int{9001, 9002, 9003, 9004, 9005, 9006}
 
-// setupZoneMapFixture writes a small two-zone world to disk, crawls it from
-// 9001 (which loads every room, as the boot-time PreCacheMaps does), and
-// returns the mapper plus the player's fog set.
+// setupZoneMapFixture writes a small two-zone world to disk, crawls each
+// zone's map (which loads every room, as the boot-time PreCacheMaps does), and
+// returns zone zm_a's map (from 9001), zone zm_b's map (from 9005) and the
+// player's fog set.
 //
 //	9006 Far            (unvisited: fog stub from 9002)
 //	9002 Bank           isbank, biome forest
 //	9005 9001 9003      9005 is zone zm_b (cross-zone exits both ways);
 //	                    9001 has a mapsymbol; 9003 isstorage, locked exit back
 //	9004 Hidden         behind a SECRET exit from 9001, unvisited (omitted)
-func setupZoneMapFixture(t *testing.T) (*mapper, map[int]struct{}) {
+//
+// A zone's map stops at its border (#375 phase 4, ruling 18), so 9005 is in
+// zm_b's map only and each side of the 9001/9005 border is a stub in its own
+// zone's map, still labelled with the far zone.
+func setupZoneMapFixture(t *testing.T) (*mapper, *mapper, map[int]struct{}) {
 	t.Helper()
 	dataDir := useTempDataFilesTB(t)
 
@@ -109,12 +114,24 @@ func setupZoneMapFixture(t *testing.T) (*mapper, map[int]struct{}) {
 		writeRoomTemplate(t, dataDir, r)
 	}
 
-	m := NewMapper(9001)
-	m.Start()
-	if len(m.crawledRooms) != len(zoneMapFixtureIds) {
-		t.Fatalf("fixture crawl reached %d rooms, want %d", len(m.crawledRooms), len(zoneMapFixtureIds))
+	// Built and cached as PreCacheMaps does, so the web map view finds zm_b's
+	// map from zm_a's border.
+	m := GetMapper(9001, true)
+	if got := fmt.Sprint(sortedCrawl(m)); got != "[9001 9002 9003 9004 9006]" {
+		t.Fatalf("zone zm_a's crawl reached %s, want [9001 9002 9003 9004 9006]", got)
 	}
-	return m, map[int]struct{}{9001: {}, 9002: {}, 9003: {}, 9005: {}}
+	mb := GetMapper(9005, true)
+	if got := fmt.Sprint(sortedCrawl(mb)); got != "[9005]" {
+		t.Fatalf("zone zm_b's crawl reached %s, want [9005]", got)
+	}
+	return m, mb, map[int]struct{}{9001: {}, 9002: {}, 9003: {}, 9005: {}}
+}
+
+// zoneMapSnapshot is the Zone.Map snapshot a player in zm_a gets for the
+// fixture's fog set: zm_a's web map view, which gathers zm_b's rooms from
+// zm_b's own map.
+func zoneMapSnapshot(m *mapper, visited map[int]struct{}) []SnapshotRoom {
+	return m.WebMap().Snapshot(visited)
 }
 
 // canonicalSnapshot sorts rooms and exits (Snapshot iterates maps) and returns
@@ -137,6 +154,10 @@ func canonicalSnapshot(t *testing.T, snap []SnapshotRoom) string {
 // and per exit destination) produced for this fixture, captured on master
 // 5ab3d54c2 before the change. Fog: 9004 (secret, unvisited) is omitted, 9006
 // is a stub. Cross-zone: 9001 <-> 9005 carry tozone.
+//
+// Zone maps stop at their border (#375 phase 4, ruling 18), so 9005 is in
+// zm_b's map; the web map view (WebMap) gathers it from there and the border
+// 9001 <-> 9005 is a full edge again, byte for byte the loading version's.
 const zoneMapGolden = `[{"num":9001,"x":0,"y":0,"z":0,"plane":0,"symbol":"T","biome":"Plains","name":"Square","exits":[{"to":9002,"dx":0,"dy":-1,"dz":0,"kind":"normal"},{"to":9003,"dx":1,"dy":0,"dz":0,"kind":"normal"},{"to":9005,"dx":-1,"dy":0,"dz":0,"kind":"normal","tozone":"zm_b"}]},{"num":9002,"x":0,"y":-1,"z":0,"plane":0,"symbol":"♣","biome":"Forest","name":"Bank","tags":["bank"],"exits":[{"to":9001,"dx":0,"dy":1,"dz":0,"kind":"normal"},{"to":9006,"dx":0,"dy":-1,"dz":0,"kind":"normal","stub":true}]},{"num":9003,"x":1,"y":0,"z":0,"plane":0,"symbol":"\"","biome":"Plains","name":"Store","tags":["storage"],"exits":[{"to":9001,"dx":-1,"dy":0,"dz":0,"kind":"normal","locked":true}]},{"num":9005,"x":-1,"y":0,"z":0,"plane":0,"symbol":"♣","biome":"Forest","name":"Neighbour","exits":[{"to":9001,"dx":1,"dy":0,"dz":0,"kind":"normal","tozone":"zm_a"}]}]`
 
 // TestSnapshot_LoadedRoomReadsLiveState pins that a room still in memory is
@@ -144,7 +165,7 @@ const zoneMapGolden = `[{"num":9001,"x":0,"y":0,"z":0,"plane":0,"symbol":"T","bi
 // standing in the room right now, so a loaded room must keep that path. A
 // change made only to the in-memory room shows; the disk and node never saw it.
 func TestSnapshot_LoadedRoomReadsLiveState(t *testing.T) {
-	m, visited := setupZoneMapFixture(t)
+	m, _, visited := setupZoneMapFixture(t)
 	live := rooms.LoadRoom(9001) // still loaded from the crawl: a memory hit
 	live.Title = "Square (live)"
 	live.IsBank = true
@@ -165,9 +186,15 @@ func TestSnapshot_LoadedRoomReadsLiveState(t *testing.T) {
 }
 
 func TestSnapshot_WarmPayloadMatchesGolden(t *testing.T) {
-	m, visited := setupZoneMapFixture(t)
-	if got := canonicalSnapshot(t, m.Snapshot(visited)); got != zoneMapGolden {
+	m, _, visited := setupZoneMapFixture(t)
+	if got := canonicalSnapshot(t, zoneMapSnapshot(m, visited)); got != zoneMapGolden {
 		t.Fatalf("warm Zone.Map payload changed.\n got: %s\nwant: %s", got, zoneMapGolden)
+	}
+	// The zone's own map alone still stops at the border: 9005 is not in it.
+	for _, r := range m.Snapshot(visited) {
+		if r.RoomId == 9005 {
+			t.Fatal("zm_a's own Snapshot drew zm_b's room 9005")
+		}
 	}
 }
 
@@ -175,12 +202,12 @@ func TestSnapshot_WarmPayloadMatchesGolden(t *testing.T) {
 // rooms idle unloading has dropped must not read them back from disk, and must
 // still send exactly the payload the loading version sent.
 func TestSnapshot_ColdRoomsStayUnloaded(t *testing.T) {
-	m, visited := setupZoneMapFixture(t)
+	m, _, visited := setupZoneMapFixture(t)
 	for _, id := range zoneMapFixtureIds {
 		rooms.UnloadRoomForTest(id)
 	}
 
-	got := canonicalSnapshot(t, m.Snapshot(visited))
+	got := canonicalSnapshot(t, zoneMapSnapshot(m, visited))
 
 	var loaded []string
 	for _, id := range zoneMapFixtureIds {

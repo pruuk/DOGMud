@@ -645,7 +645,7 @@ func (w *walker) assignQuestZones() {
 		}
 	}
 	// A quest no NPC offers or hands in belongs to the zones of the rooms
-	// its triggers watch and of its steps' map targets (room or NPC).
+	// its triggers watch and of its steps' destinations (room or NPC).
 	for _, m := range w.qs {
 		if len(m.zones) > 0 {
 			continue
@@ -658,11 +658,13 @@ func (w *walker) assignQuestZones() {
 			}
 		}
 		for _, st := range m.q.Steps {
-			if z := w.in.RoomZones[st.MapTarget]; z != "" {
+			if z := w.in.RoomZones[st.Destination.Room]; z != "" {
 				m.zones[z] = true
 			}
-			if z := w.mobFolder[st.MapTargetMob]; z != "" {
-				m.zones[z] = true
+			for _, mob := range st.Destination.Mobs {
+				if z := w.mobFolder[mob]; z != "" {
+					m.zones[z] = true
+				}
 			}
 		}
 	}

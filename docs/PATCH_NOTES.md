@@ -1,5 +1,16 @@
 # DOGMud Patch Notes
 
+## 2026-10-28: The quest log says where to head next
+
+- The quest log now tells you where to head next for the quest you are
+  following, like "Head north." When you get there, it says so. Some
+  steps can be done anywhere, and the log says that too.
+- When a step can happen in several places, such as hunting a beast
+  that roams a wide area, the map now points to the nearest of them.
+- A person you are looking for is only tracked while you could
+  actually see them where they stand. If they are hidden or in the
+  dark, the map points to where they are usually found instead.
+
 ## 2026-10-26: Look and search
 
 - Look and search are now the two ways to deal with things in a room.

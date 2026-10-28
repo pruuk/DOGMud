@@ -593,7 +593,7 @@ func scanMobReferencesWith(mobId int, it mobRefIterators) []mobRefEntry {
 //     the delete would add. That rule visits every mob field a quest carries
 //     (trigger mob filter, npc_say mob and line speakers, spawn_mob,
 //     declare_bounty mob target, sequence line speakers, step
-//     map_target_mob), so no separate quest walk lives here.
+//     destination mob), so no separate quest walk lives here.
 //   - convPairs: verified via internal/conversations/loader.go + conversation.go
 //     — pair overrides are loaded from {DataFiles}/conversations/pairs/*.yaml,
 //     filename convention "<lowerMobId>_<higherMobId>.yaml" (loader.go enforces

@@ -44,7 +44,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5289
+    destination:
+      room: 5289
     description: >-
       Delk hands you salt when you take this on and sets you hunting.
       Pronghorn graze the
@@ -54,7 +55,8 @@ steps:
       In the Thornbrake, north of Delk's camp, type track pronghorn. If it is
       dark, type cast glow first.
   - id: track
-    map_target: 5289
+    destination:
+      room: 5289
     description: >-
       You have the pronghorn's line. Now bring one down. A pronghorn does not
       start a fight, so you choose the moment. Type consider pronghorn first
@@ -62,7 +64,7 @@ steps:
     hint: >-
       Type attack pronghorn.
   - id: hunt
-    map_target: -1  # -1: the kill can fall in the Thornbrake or the Carrion Flat
+    # destination inferred from triggers (#375 p4); was: the kill can fall in the Thornbrake or the Carrion Flat
     description: >-
       The pronghorn is down and its meat is on the carcass. If you already
       took the meat from an earlier kill, bring down another pronghorn and
@@ -70,7 +72,7 @@ steps:
     hint: >-
       Type loot corpse.
   - id: meat
-    map_target: -1  # -1: sleep anywhere
+    destination: anywhere
     description: >-
       You have the meat. Before you cook, rest rough the way a hunter does.
       Sleep where nothing hostile is near: any harm wakes you, and so does
@@ -78,7 +80,8 @@ steps:
     hint: >-
       Type sleep.
   - id: rest
-    map_target: 5290
+    destination:
+      room: 5290
     description: >-
       You slept rough and woke stronger. Now cook the kill at Delk's fire in
       Hunter's Hollow. You need the raw meat and the salt-pouch. No meat?
@@ -87,7 +90,8 @@ steps:
       At Delk's camp fire in Hunter's Hollow, type craft grilled meat. A
       craft can fail. If it does, hunt another pronghorn for meat and retry.
   - id: cook
-    map_target: 5290
+    destination:
+      room: 5290
     description: >-
       You cooked the kill over the fire. Delk is at his camp in Hunter's
       Hollow.

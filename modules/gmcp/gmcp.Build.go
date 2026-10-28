@@ -1132,7 +1132,12 @@ func sendZoneMapFull(uid int, zone string) {
 	if m == nil {
 		return
 	}
-	crawled := m.CrawledRoomIds()
+	// The zone's map plus the maps of the zones its border exits reach: the
+	// rooms this forced crawl reached before zone maps stopped at their
+	// border (#375 phase 4), including the zone's own rooms its root reaches
+	// only through another zone, and the neighbours pass 2 dims.
+	view := m.WebMap()
+	crawled := view.RoomIds()
 
 	// Pass 1: the current zone's rooms + their per-plane bounding box.
 	type bbox struct{ minX, maxX, minY, maxY int }
@@ -1177,7 +1182,7 @@ func sendZoneMapFull(uid int, zone string) {
 		visited[id] = struct{}{}
 	}
 
-	snap := m.Snapshot(visited)
+	snap := view.Snapshot(visited)
 	for i := range snap {
 		if r := rooms.LoadRoom(snap[i].RoomId); r != nil && r.Zone != zone {
 			snap[i].Foreign = true

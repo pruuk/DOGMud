@@ -17,13 +17,15 @@ secret: false
 # gates on special, which a player on consider also holds.
 steps:
   - id: start
-    map_target: 5227
+    destination:
+      room: 5227
     description: "Crier Toke or Drillmaster Vorn hands you a cudgel when you
       take this on. Hold it in your hand before you fight. If you already
       hold it, type remove cudgel, then wield it again."
     hint: "Type wield cudgel."
   - id: wield
-    map_target: 5227
+    destination:
+      room: 5227
     description: "The cudgel is in your hand. Before you fight, size up the
       training dummy in the Drill Yard. From Hub Square, go north to the
       Awakening Pool, then east four times to the Drill Yard. Crier Toke
@@ -32,20 +34,23 @@ steps:
       Yard. Consider tells you how hard a foe is before you fight it. Type
       consider dummy."
   - id: sized_up
-    map_target: 5227
+    destination:
+      room: 5227
     description: "You sized up the training dummy. Consider tells you how
       dangerous a foe is before you start a fight. Now fight the dummy
       until it falls."
     hint: "Type attack dummy."
   - id: strike
-    map_target: 5227
+    destination:
+      room: 5227
     description: "You beat the training dummy. A new dummy stands up in the
       yard after a short wait. Now try a special move on it: a kick hits
       hard, and a trip (trip dummy) puts it on the ground. Either one
       counts."
     hint: "Type kick dummy."
   - id: special
-    map_target: 5227
+    destination:
+      room: 5227
     description: "You used a special move. Kicks and trips cost stamina,
       so use them when they help most. Next, choose how much combat detail
       you see: full shows every swing, medium shows only the hits, and
@@ -54,7 +59,8 @@ steps:
       combatverbosity full. For more, type help combatverbosity."
   # No longer granted (see the note above steps); kept for saved players.
   - id: consider
-    map_target: 5227
+    destination:
+      room: 5227
     description: "You sized up the training dummy. Consider tells you how
       dangerous a foe is before you start a fight. Next, choose how much
       combat detail you see: full shows every swing, medium shows only the
@@ -62,7 +68,8 @@ steps:
     hint: "Combat verbosity sets how much fight text you see. Type set
       combatverbosity full. For more, type help combatverbosity."
   - id: verbosity
-    map_target: 5227
+    destination:
+      room: 5227
     description: "You chose your combat detail. You can change it at any
       time. The Drill Yard has taught you what it can."
     hint: "Drillmaster Vorn waits in the Drill Yard. Type talk vorn."

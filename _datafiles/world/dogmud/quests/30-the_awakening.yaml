@@ -20,8 +20,9 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5200  # fallback when Cleric Hadwen is not spawned
-    map_target_mob: 9100  # follow Cleric Hadwen (schedule pothole_hadwen) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9100  # follow Cleric Hadwen (schedule pothole_hadwen) — a fixed room is wrong for part of the day
+      room: 5200  # fallback when Cleric Hadwen is not spawned
     description: "Cleric Hadwen will open the pool for you when you are ready. Talk to him at the pool and choose to begin the rite."
     hint: "Stand at the Awakening Pool and type talk hadwen. When you are ready, choose to begin the rite."
   # Granted by Hadwen's tree the moment the rite starts, so his dialogue can
@@ -29,8 +30,9 @@ steps:
   # A rite cut short by a logout or a restart leaves a player here; his
   # rite_wait topic then starts the rite again.
   - id: rite
-    map_target: 5200
-    map_target_mob: 9100
+    destination:
+      mob: 9100
+      room: 5200
     description: "The rite has begun. Stay by the Awakening Pool until Cleric Hadwen is done."
     hint: "Stay by the Awakening Pool until the rite is done. If nothing is happening, type talk hadwen and choose Is the rite still going?"
   - id: end

@@ -34,7 +34,8 @@ flags:
 
 steps:
   - id: start
-    map_target: 5242
+    destination:
+      room: 5242
     description: >-
       Garve has set you on the tower. From Squatter's Hollow, go east to
       the Cracked Cistern, northeast to the Upper Wash, then east twice to

@@ -35,7 +35,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5265
+    destination:
+      room: 5265
     description: >-
       The alchemy bench at the sheltered pool is where brewing begins.
       First see what Birna sells. If you already carry a glass vial and two
@@ -43,21 +44,24 @@ steps:
     hint: >-
       At Birna's pool, type list.
   - id: list
-    map_target: 5265
+    destination:
+      room: 5265
     description: >-
       You have seen Birna's stock. A healing salve needs one glass vial and
       two healer's roots. Start with the vial.
     hint: >-
       Type buy glass vial.
   - id: vial
-    map_target: 5265
+    destination:
+      room: 5265
     description: >-
       You have a glass vial. Now the roots: a healing salve takes two.
       Foraged roots work just as well as bought ones.
     hint: >-
       Type buy 2 healers root.
   - id: roots
-    map_target: 5265
+    destination:
+      room: 5265
     description: >-
       You have the glass vial and the roots. The bench at Birna's pool is an
       alchemy bench, and so is the one on the Drying Racks just west of it.
@@ -66,14 +70,16 @@ steps:
       At the alchemy bench, type craft healing salve. A craft can fail. If
       it does, buy a glass vial and two healer's roots again and retry.
   - id: brew
-    map_target: 5265
+    destination:
+      room: 5265
     description: >-
       You brewed a healing salve. Now drink it. A brew is only worth what
       it does.
     hint: >-
       Type drink healing salve.
   - id: drink
-    map_target: 5265
+    destination:
+      room: 5265
     description: >-
       The salve went to work, warm and steady. Tell Birna how it felt.
     hint: >-

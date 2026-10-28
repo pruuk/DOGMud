@@ -51,7 +51,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5350
+    destination:
+      room: 5350
     description: >-
       Crier Toke or Marksman Iden hands you a sling when you take this on,
       and a pouch of shot if you have none. First, ready the sling.
@@ -59,7 +60,8 @@ steps:
     hint: >-
       Type equip sling.
   - id: equip
-    map_target: 5351
+    destination:
+      room: 5351
     description: >-
       The sling is in your hand. The practice butt stands down-range on the
       Long Terrace, east of Marksman Iden on the Firing Range. From Hub
@@ -69,21 +71,24 @@ steps:
     hint: >-
       Go east from the Firing Range to the Long Terrace and type fire butt.
   - id: shoot
-    map_target: 5351
+    destination:
+      room: 5351
     description: >-
       You put a stone into the butt, and the sling readied itself without
       being told. Iden wants you to try it once more from cover.
     hint: >-
       Type sneak.
   - id: ambush
-    map_target: 5351
+    destination:
+      room: 5351
     description: >-
       You are out of sight. A shot taken from cover lands far harder than one
       the target saw coming, and it gives your place away when it lands.
     hint: >-
       Type fire butt.
   - id: cover_shot
-    map_target: 5350
+    destination:
+      room: 5350
     description: >-
       You shot from cover and felt the difference. Marksman Iden is waiting
       on the Firing Range, west of the Long Terrace.

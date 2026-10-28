@@ -8,13 +8,15 @@ secret: false
 
 steps:
   - id: start
-    map_target: 444  # the Pest Fields — kill pests for a sample
+    destination:
+      room: 444  # the Pest Fields — kill pests for a sample
     description: "Farmer Dorn has asked you to clear the crop pests
       from the south fields and bring back a sample."
     hint: "From Dorn's farm, go east to the fallow field, then south to
       the Pest Fields. There, type attack pest."
   - id: deliver
-    map_target: 442  # Farmer Dorn's farm
+    destination:
+      room: 442  # Farmer Dorn's farm
     description: "You have a pest sample. Bring it back to Farmer Dorn."
     hint: "Take the pest sample back to Farmer Dorn's farm and type talk
       dorn."

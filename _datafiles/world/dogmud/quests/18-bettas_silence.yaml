@@ -18,8 +18,9 @@ flags:
 
 steps:
   - id: start
-    map_target: 4038  # fallback when Bloodline Agent is not spawned
-    map_target_mob: 287  # follow Bloodline Agent (maxwander 6): a fixed room is wrong for part of the day
+    destination:
+      mob: 287  # follow Bloodline Agent (maxwander 6): a fixed room is wrong for part of the day
+      room: 4038  # fallback when Bloodline Agent is not spawned
     description: "Betta has asked you to keep quiet about the
       girl who slept in her barn."
     hint: "A bloodline agent in a dark coat walks the road around
@@ -33,7 +34,8 @@ steps:
   # agent's answers grants this step (the topic_heard triggers below), so
   # the first answer is final and the others close.
   - id: answered
-    map_target: 4049
+    destination:
+      room: 4049
     description: "You have dealt with the bloodline agent. Betta
       will want to know how it went."
     hint: "Betta keeps the farmstead west of the Drainage Ditch.

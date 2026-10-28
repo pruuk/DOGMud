@@ -510,6 +510,13 @@ question).
 - **InstanceTier** (`yaml:"-" json:"-"`): the authored stat-pool multiplier
   kept by `ScaleSpawnStatPools`; picks a paid-instance mob's gold rate
 - **Quest integration**: Quest flags and condition assignments for spawned entities
+- **Spawn index** (`spawn_rooms.go`, #375 phase 4): `SpawnRooms(mobId)` lists
+  the template rooms whose spawninfo place a mob template, sorted, nil when
+  none does. A quest destination falls back to it when no live copy of the NPC
+  is perceived. Built in `loadAllRoomZones`, replaced for a room by
+  `SaveRoomTemplate`, dropped by `DeleteRoomTemplate`; ephemeral rooms are
+  never indexed. The slice is shared: do not change it (slices are replaced,
+  never edited in place, so a reader's copy stays valid).
 
 ### Container System (`container.go`)
 - **Container**: In-room storage with locking mechanisms
@@ -526,6 +533,10 @@ question).
 - **Memory optimization**: Automatic cleanup when rooms are no longer needed
 - **Zone duplication**: Creating temporary copies of entire zones
 - **ID mapping**: Tracking relationships between original and ephemeral rooms
+- **Same copy**: `SameEphemeralCopy(a, b)` is true when both rooms are
+  ephemeral and in one chunk (one `CreateEphemeralRoomIds` call, so one zone
+  instance); quest guidance uses it to count an NPC standing in an instance
+  only for a player in that instance
 
 ### Zone Instance Options (`instances.go`)
 
@@ -688,6 +699,7 @@ When writing hidden noun descriptions:
 | `corpse.go` / `corpse_roundrobin.go` | Corpses and fair-share corpse looting |
 | `baubles_untaken.go` | Found baubles left lying untaken for `BaubleUntakenHours` (24) vanish: `removeUntakenBaubles`, run from `RoundTick` (rooms with players) and `Prepare` (before a visitor sees the floor); records `baubles.MarkVanished` |
 | `spawninfo.go` / `spawninfo_validate.go` | Room spawn lists and their validation |
+| `spawn_rooms.go` | The mob spawn index: `SpawnRooms(mobId)`, the template rooms that place a mob (#375 phase 4) |
 | `instances.go` / `ephemeral.go` | Instanced and ephemeral rooms |
 | `cubegen.go` | Generated cube/maze room structures |
 | `memory.go` | Memory reporting for the admin report |

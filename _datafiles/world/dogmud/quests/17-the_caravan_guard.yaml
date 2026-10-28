@@ -13,7 +13,8 @@ flags:
 
 steps:
   - id: start
-    map_target: 4052  # Bandit Camp: Soren (mob 286)
+    destination:
+      room: 4052  # Bandit Camp: Soren (mob 286)
     description: "The caravan master has asked you to deal with
       the bandits on the north road and bring back their leader's
       iron pin as proof."

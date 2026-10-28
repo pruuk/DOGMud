@@ -159,7 +159,6 @@ hint-length 71 step horst
 hint-length 71 step ledger
 hint-length 71 step start
 hint-length 71 step vell
-hint-length 72 step start
 hint-length 73 step chart
 hint-length 73 step scrivener
 hint-length 74 step descent
@@ -278,3 +277,20 @@ walk-dead-end 67 mob 9316 topic casefilehandoff
 walk-dead-end 67 step report
 walk-dead-end 7 mob 89 topic dornhandoff
 walk-dead-end 9 mob 95 topic olenhandoff
+walk-destination 1000000 step givegold
+walk-destination 1000000 step start
+walk-destination 11 step sided
+walk-destination 12 step ritual
+walk-destination 13 step extraction
+walk-destination 19 step signed
+walk-destination 28 step fled
+walk-destination 42 step hunt
+walk-destination 63 step report
+walk-destination 65 step report
+walk-destination 66 step detox
+walk-destination 66 step escort
+walk-destination 67 step report
+walk-destination 74 step reveal
+walk-destination 75 step testimony
+walk-destination 76 step attune
+walk-destination 78 step start

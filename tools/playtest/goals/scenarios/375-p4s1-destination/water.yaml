@@ -1,0 +1,36 @@
+# WATER seat: quest 72, The Water Dispute, which is now three steps: hear
+# Marrow Fenn, hear Ayres, then settle it with Hesper at the Golden Bough.
+# You start in the Golden Bough without the quest. Quote every game line
+# VERBATIM. Hesper sleeps late at night; if she is asleep, say so and wait or
+# shout to wake her rather than giving up.
+
+ephemeral:
+  profile: early
+  start_room: 6061
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    Type `talk hesper` and take the water dispute quest from her menu. Then
+    type `quests` and quote the whole entry, including its last line (where to
+    head).
+  - >-
+    Go to AYRES first, on purpose, before Fenn: from the Golden Bough go west
+    twice, south six times to the Irrigation Head-Gate, then west. Type `talk
+    ayres` and quote what he says and what the menu offers. Say whether he
+    sends you to Fenn. Check `quests`: the step must NOT have moved on.
+  - >-
+    Now go to Fenn (east twice from Ayres' holding) following the quest log's
+    destination line, quoting it after each move. `talk fenn`, choose the line
+    about Hesper sending you. Check `quests`: quote the new step and its
+    destination line.
+  - >-
+    Go back to Ayres following the destination line. `talk ayres`, choose the
+    Hesper line. Quote his hints. Check `quests`: quote the new step, its hint
+    and its destination line.
+  - >-
+    Follow the destination line back to Hesper, quoting it after each move.
+    `talk hesper`: quote the menu. Hear what she says about the compromise,
+    then choose the compromise ending. Check `quests` (and `quests all`): the
+    quest must be complete. Quote the reward line.

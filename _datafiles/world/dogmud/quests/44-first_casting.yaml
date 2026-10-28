@@ -22,7 +22,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5305
+    destination:
+      room: 5305
     description: >-
       The Star Chamber is where you first turn the mind. Stand there and
       loose a spell you know at the practice mote. Conviction Spike, the
@@ -30,7 +31,8 @@ steps:
     hint: >-
       Go north into the Star Chamber and type cast spike mote.
   - id: cast
-    map_target: 5303
+    destination:
+      room: 5303
     description: >-
       You shaped a spell and loosed it at the mark. Return to Grieve in the
       Observatory Hall.
