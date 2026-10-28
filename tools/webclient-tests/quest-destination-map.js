@@ -155,7 +155,8 @@ function roomInfo(num, x, z, zone) {
 }
 
 // The wash group is the first child of worldSvg (under connections and rooms).
-function washTiles(g) { return g.washGroup.children.filter(c => c.tag === 'rect'); }
+// Tiles only: the label's backing plate is also a rect, tagged data-wash-label.
+function washTiles(g) { return g.washGroup.children.filter(c => c.tag === 'rect' && c.attrs['data-wash-label'] !== '1'); }
 function washEdges(g) { return g.washGroup.children.filter(c => c.tag === 'line'); }
 function washLabel(g) { return g.washGroup.children.filter(c => c.tag === 'text').map(t => t.textContent).join('|'); }
 

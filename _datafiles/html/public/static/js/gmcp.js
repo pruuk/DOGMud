@@ -694,16 +694,23 @@ class RoomGridSVG {
           if (!top || r.y < top.y || (r.y === top.y && r.x < top.x)) { top = r; }
       });
       if (qm.label) {
-          g.appendChild(lTxt({ x: top.x * sp, y: top.y * sp - half - 3, 'text-anchor': 'middle',
+          // In the lower half of the topmost tile, under its room, on a small plate: a fitted
+          // view can cut through the top row's upper half (seen in the demo page's screenshot),
+          // and room names are drawn only for the player's own room, so this spot is free.
+          const lw = 8 + qm.label.length * 4.6, ly = top.y * sp + 19;
+          g.appendChild(lEl('rect', { x: top.x * sp - lw / 2, y: ly - 8.5, width: lw, height: 11, rx: 2,
+              fill: L.legendBg, opacity: '0.85', 'data-wash-label': '1' }));
+          g.appendChild(lTxt({ x: top.x * sp, y: ly, 'text-anchor': 'middle',
               'font-family': 'Georgia,serif', 'font-size': '9', 'font-style': 'italic', fill: L.title }, qm.label));
       }
   }
 
   /**
    * "Somewhere in <name>" while the player stands inside an area or zone destination (#375 phase 4,
-   * spec ruling 9). Drawn in the design-coordinate overlay so zoom and pan never move it. Placed at
-   * the bottom-left of the frame (x 30 to 182, y 260 to 273): the legend card owns x 188 to 292 and
-   * y 221 to 289, the compass sits top-right, the title top-centre, and the inner border is y 276.
+   * spec ruling 9). Drawn in the design-coordinate overlay so zoom and pan never move it. Placed
+   * centred just under the zone title (y 49 to 62, at most 200 wide, so x 60 to 260): the bottom
+   * strip is taken by the HTML zoom buttons (left) and the legend card (x 188 to 292), and the
+   * compass reaches x 266 at the top right. Seen in the demo page's screenshot, 2026-10-28.
    * The elements carry data-quest-banner so a redraw removes only them.
    */
   _drawQuestBanner() {
@@ -715,11 +722,11 @@ class RoomGridSVG {
       if (!qm || !qm.inside || !qm.label || (qm.kind !== 'area' && qm.kind !== 'zone')) { return; }
       const L = RoomGridSVG.LEATHER;
       let text = 'Somewhere in ' + qm.label;
-      if (text.length > 36) { text = text.slice(0, 33) + '...'; }
-      const w = Math.min(152, 12 + text.length * 3.9);
-      ov.appendChild(lEl('rect', { x: 30, y: 260, width: w, height: 13, rx: 3, fill: L.legendBg,
+      if (text.length > 48) { text = text.slice(0, 45) + '...'; }
+      const w = Math.min(200, 12 + text.length * 3.9);
+      ov.appendChild(lEl('rect', { x: 160 - w / 2, y: 49, width: w, height: 13, rx: 3, fill: L.legendBg,
           stroke: L.questGold, 'stroke-width': 0.8, opacity: '0.92', 'data-quest-banner': '1' }));
-      ov.appendChild(lTxt({ x: 30 + w / 2, y: 269.2, 'text-anchor': 'middle', 'font-family': 'Georgia,serif',
+      ov.appendChild(lTxt({ x: 160, y: 58.2, 'text-anchor': 'middle', 'font-family': 'Georgia,serif',
           'font-size': '7.5', 'font-style': 'italic', fill: L.title, 'data-quest-banner': '1' }, text));
   }
 
