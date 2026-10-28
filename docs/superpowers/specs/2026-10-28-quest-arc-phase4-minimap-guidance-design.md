@@ -134,6 +134,7 @@ type Destination struct {
     Kind      DestKind // "" (none: final step), anywhere, room, mob, area, zone, unknown
     Label     string   // area or zone name ("the unquiet grove"); "" otherwise
     Npc       string   // the NPC's name for a mob destination, also when it fell back
+    Fallback  bool     // a mob destination showing its fallback set (no copy perceived)
     ZoneRooms []int    // the set's template rooms in the player's zone, sorted (for the wash)
     Pin       int      // nearest set room reachable inside the player's zone; 0 if none
     Inside    bool     // the player's room is in the set
@@ -217,7 +218,7 @@ Web client (slice 2):
 | Case | Line |
 |---|---|
 | route known, compass exit | `Head north.` |
-| route known, any other exit | `Take the gate.` (the exit name, `command` colour) |
+| route known, any other exit | `Take the gate.` (the exit name, plain text: the web panel escapes markup) |
 | inside, with a Label | `You are in the unquiet grove.` |
 | inside a fallback set of a mob destination | `You are where <npc> is usually found.` |
 | inside otherwise | `You are where you need to be.` |
@@ -248,7 +249,10 @@ the step gets a destination or `anywhere`. The sweep logs each inferred step for
 
 ## 6. Content
 
-- The 220-step conversion (section 1), done by a subagent with Edit, never a script rewrite.
+- The 220-step conversion (section 1): a line-based converter (every pair is adjacent,
+  `map_target` first; indents 2 or 4) writes each converted file to the session scratchpad, the
+  diff is reviewed, and the files are copied into place. No YAML re-serialization, so nothing else
+  in a file moves.
 - After it, any `walk-destination-anywhere` finding drops that step's `anywhere` (its trigger names
   the place, so inference gives it a destination); the PR lists each.
 - One live step of each new kind: quest 45 resolves to `unquiet_grove` by inference; one zone step
