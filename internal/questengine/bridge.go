@@ -32,11 +32,45 @@ import (
 type GameBridge struct {
 	user   *users.UserRecord
 	roomId int
+	// resumed marks a chain that takes a shelved quest back up (#375 phase
+	// 5). A bridge lives for one event's Notify, so the mark covers the
+	// rest of that event: the resuming trigger's own later actions and its
+	// quest_granted chain.
+	resumed bool
 }
 
 // NewGameBridge creates a GameBridge for the given user positioned in roomId.
 func NewGameBridge(user *users.UserRecord, roomId int) *GameBridge {
 	return &GameBridge{user: user, roomId: roomId}
+}
+
+// SetResumed marks the bridge's chain as a resume: GiveItem and GiveGold then
+// follow owner ruling 2 (nothing of value is handed over). The hook sets it
+// for a dialogue grant; GrantQuest sets it for an engine grant.
+func (b *GameBridge) SetResumed(v bool) { b.resumed = v }
+
+// Resumed reports whether the bridge's chain is a resume.
+func (b *GameBridge) Resumed() bool { return b.resumed }
+
+// resumeMayGive is owner ruling 2 for trigger handouts: only an item worth
+// nothing that the player does not carry or wear (the same "anywhere on the
+// player" the dialogue CarriesItem callback checks, conversation/playerstate.go).
+func resumeMayGive(user *users.UserRecord, itemId int) bool {
+	spec := items.GetItemSpec(itemId)
+	if spec == nil || spec.Value > 0 {
+		return false
+	}
+	for _, itm := range user.Character.GetAllCarriedItems() {
+		if itm.ItemId == itemId {
+			return false
+		}
+	}
+	for _, itm := range user.Character.GetAllWornItems() {
+		if itm.ItemId == itemId {
+			return false
+		}
+	}
+	return true
 }
 
 // --- PlayerState ---
@@ -149,7 +183,17 @@ func (b *GameBridge) GrantQuest(token string) {
 	}
 
 	// Look up quest name for the banner
-	_, stepName := quests.TokenToParts(token)
+	questId, stepName := quests.TokenToParts(token)
+
+	// A start grant may have taken a shelved quest back up (GiveQuestToken
+	// resumes it). This grant queues only a MarkerOnly event for a start
+	// step, which HandleQuestUpdate skips, so the mark is read here, once,
+	// and this banner is the only one. The whole chain on this bridge is
+	// then a resume (owner ruling 2).
+	resumed := stepName == "start" && b.user.Character.TakeResumed(questId)
+	if resumed {
+		b.resumed = true
+	}
 	questInfo := quests.GetQuest(token)
 	questName := ""
 	if questInfo != nil {
@@ -172,7 +216,9 @@ func (b *GameBridge) GrantQuest(token string) {
 	}
 
 	var bannerMsg string
-	if stepName == "start" {
+	if resumed {
+		bannerMsg = fmt.Sprintf("You take up <ansi fg=\"questname\">%s</ansi> again.", questName)
+	} else if stepName == "start" {
 		bannerMsg = fmt.Sprintf("You have been given a new quest: <ansi fg=\"questname\">%s</ansi>!", questName)
 	} else {
 		bannerMsg = fmt.Sprintf("You've made progress on the quest: <ansi fg=\"questname\">%s</ansi>!", questName)
@@ -220,6 +266,9 @@ func (b *GameBridge) ConsumeItem(itemId int) {
 // actions of this trigger, so the quest does not tick forward on an
 // undelivered item and the player can retry after making room.
 func (b *GameBridge) GiveItem(itemId int) error {
+	if b.resumed && !resumeMayGive(b.user, itemId) {
+		return nil // a resume hands over nothing of value; the first accept did
+	}
 	newItem := items.New(itemId)
 	if newItem.ItemId < 1 {
 		mudlog.Error("GameBridge.GiveItem", "error", fmt.Sprintf("item %d not found", itemId))
@@ -237,8 +286,12 @@ func (b *GameBridge) GiveItem(itemId int) error {
 	return nil
 }
 
-// GiveGold adds gold to the player's character and notifies the client.
+// GiveGold adds gold to the player's character and notifies the client. A
+// resumed chain gives none (owner ruling 2).
 func (b *GameBridge) GiveGold(amount int) {
+	if b.resumed {
+		return
+	}
 	b.user.Character.Gold += amount
 	b.user.SendText(messaging.CategoryLoot, fmt.Sprintf("You receive <ansi fg=\"gold\">%s gold</ansi>.", util.FormatNumber(amount)))
 	events.AddToQueue(events.EquipmentChange{
