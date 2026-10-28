@@ -630,6 +630,7 @@ class RoomGridSVG {
 
       this._drawQuestArrow();
       this._drawQuestWash();
+      this._drawQuestBanner(); // a reset empties overlayGroup
       this._applyZoom();
   }
 
@@ -697,7 +698,30 @@ class RoomGridSVG {
               'font-family': 'Georgia,serif', 'font-size': '9', 'font-style': 'italic', fill: L.title }, qm.label));
       }
   }
-  _drawQuestBanner() {}
+
+  /**
+   * "Somewhere in <name>" while the player stands inside an area or zone destination (#375 phase 4,
+   * spec ruling 9). Drawn in the design-coordinate overlay so zoom and pan never move it. Placed at
+   * the bottom-left of the frame (x 30 to 182, y 260 to 273): the legend card owns x 188 to 292 and
+   * y 221 to 289, the compass sits top-right, the title top-centre, and the inner border is y 276.
+   * The elements carry data-quest-banner so a redraw removes only them.
+   */
+  _drawQuestBanner() {
+      const ov = this.overlayGroup;
+      Array.from(ov.children || []).forEach(c => {
+          if (c.getAttribute && c.getAttribute('data-quest-banner') === '1') { ov.removeChild(c); }
+      });
+      const qm = this._questMarker;
+      if (!qm || !qm.inside || !qm.label || (qm.kind !== 'area' && qm.kind !== 'zone')) { return; }
+      const L = RoomGridSVG.LEATHER;
+      let text = 'Somewhere in ' + qm.label;
+      if (text.length > 36) { text = text.slice(0, 33) + '...'; }
+      const w = Math.min(152, 12 + text.length * 3.9);
+      ov.appendChild(lEl('rect', { x: 30, y: 260, width: w, height: 13, rx: 3, fill: L.legendBg,
+          stroke: L.questGold, 'stroke-width': 0.8, opacity: '0.92', 'data-quest-banner': '1' }));
+      ov.appendChild(lTxt({ x: 30 + w / 2, y: 269.2, 'text-anchor': 'middle', 'font-family': 'Georgia,serif',
+          'font-size': '7.5', 'font-style': 'italic', fill: L.title, 'data-quest-banner': '1' }, text));
+  }
 
   /** Rebuild a single room's token in place (e.g. to add/remove its marker). */
   _rebuildRoomToken(id) {

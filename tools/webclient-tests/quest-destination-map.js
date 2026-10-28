@@ -190,5 +190,22 @@ g.setQuestMarker({ targetRoom: 1, nextRoom: 2, nextDir: 'west', name: 'Grove', k
 zoneMap({ zone: 'Grove', cz: 0, party: [], full: true, rooms: [ room(1, 0), room(2, 1), room(3, 1, { y: 1 }), room(4, 2) ] });
 check('redrawn after reset', washTiles(g).length === 3, washTiles(g).length);
 
+function bannerText(g) {
+  return g.overlayGroup.children.filter(c => c.attrs && c.attrs['data-quest-banner'] === '1')
+    .map(c => c.textContent || '').join('|');
+}
+console.log('SCENARIO 5: inside an area or zone, a banner names it; outside, none');
+g = freshMap();
+zoneMap({ zone: 'Pothole Coulee', cz: 0, party: [], full: true, rooms: [ room(1, 0), room(2, 1) ] });
+g.setQuestMarker({ targetRoom: 0, nextRoom: 0, nextDir: '', name: 'Q', kind: 'zone', label: 'Pothole Coulee', targetRooms: [], inside: true });
+check('banner says Somewhere in <label>', bannerText(g).indexOf('Somewhere in Pothole Coulee') >= 0, bannerText(g));
+g.setQuestMarker({ targetRoom: 0, nextRoom: 2, nextDir: 'east', name: 'Q', kind: 'zone', label: 'Pothole Coulee', targetRooms: [], inside: false });
+check('no banner outside', bannerText(g) === '', bannerText(g));
+g.setQuestMarker({ targetRoom: 1, nextRoom: 0, nextDir: '', name: 'Q', kind: 'room', label: '', targetRooms: [], inside: true });
+check('no banner for a room destination', bannerText(g) === '', bannerText(g));
+g.setQuestMarker({ targetRoom: 0, nextRoom: 0, nextDir: '', name: 'Q', kind: 'area', label: 'the unquiet grove', targetRooms: [1, 2], inside: true });
+zoneMap({ zone: 'Pothole Coulee', cz: 0, party: [], full: true, rooms: [ room(1, 0), room(2, 1) ] });
+check('banner survives a full map reset', bannerText(g).indexOf('Somewhere in the unquiet grove') >= 0, bannerText(g));
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);
