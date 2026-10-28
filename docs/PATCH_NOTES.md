@@ -11,6 +11,14 @@
   rest of the map.
 - The quest panel now shows the same where-to-go line as the quest
   log.
+- The Unquiet Grove's first step now shades the whole grove on the
+  map, since a spell cast anywhere in it counts.
+- The Unquiet Grove's hunt points you to the nearest drift-wisp or
+  grove revenant, since either one counts.
+- Hold the Wash points you to the nearest bandit scout, or to the
+  places they keep watch when none is in sight.
+- In Hedgerow Toll, the Reach-Touched hides, so the map sends you to
+  The Empty Reach and leaves the finding to you.
 
 ## 2026-10-28: The quest log says where to head next
 

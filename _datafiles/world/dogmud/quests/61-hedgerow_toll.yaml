@@ -31,7 +31,8 @@ steps:
       Kill both, in either order, then come back and tell Pemberton.
   - id: bandit
     destination:
-      room: 5395
+      mob: 9178  # the Reach-Touched, a hidden ambusher: tracked only by a player who sees hidden
+      zone: The Empty Reach  # otherwise the zone it haunts (owner 2026-10-28, ruling 11)
     description: >-
       The hedgerow bandit at the Mire Cutoff is dead. The Reach-Touched
       still haunts the Empty Reach to the north.

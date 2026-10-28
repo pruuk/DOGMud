@@ -112,6 +112,14 @@ one of two zones (quest 42). 220 steps across all quests (secret included) set `
     `evidence` (the Dock Constable or Jesset takes the tally-book), quest 68 `choice` (Orin or
     Clerk Vell takes the survey).
 
+20. **Whether a copy is perceived is decided by the light where the copy stands**, never by
+    the light where the player stands (owner, 2026-10-28, after the slice 3 screenshots).
+    The player's own light is in the player's room, so it counts only for a copy in that room.
+    Rule 3's "judged as if the player stood in that copy's room" means the room's own light
+    level (`sightIn` reads that room's `LightLevel`, which includes what anyone there carries);
+    the player's carried light is not moved there. Instance: in the dim Pothole Coulee wash, a
+    player with glow up still gets the scouts' spawn rooms for every scout further off.
+
 ## 1. The `destination:` block
 
 ```yaml

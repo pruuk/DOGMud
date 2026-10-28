@@ -7,7 +7,8 @@
 #                 death-wake-at-Mending-Hut loop as a designed lesson.
 #   33-scout    — mob_death trigger on Bandit Scout (9110). Requires
 #                 33-start. Scouts hold the Lower Wash (5232, north of
-#                 Garve's hollow), Gravel Bend (5233) and Upper Wash (5236).
+#                 Garve's hollow), Gravel Bend (5233), Upper Wash (5236)
+#                 and Broken Gate (5238).
 #   33-squatter — mob_death trigger on Bandit Squatter (9111). Requires
 #                 33-scout: Garve's order is scout first, squatter second.
 #                 The squatter camps in the Cracked Cistern (5235, east of
@@ -32,7 +33,7 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 5232  # Lower Wash, north of Squatter's Hollow: Bandit Scout (mob 9110)
+      mob: 9110  # the nearest Bandit Scout the player can see; else the four rooms that spawn one
     description: >-
       Garve needs the wash cleared: a bandit scout first, then a bandit
       squatter. The nearest scout is in the Lower Wash, just north of

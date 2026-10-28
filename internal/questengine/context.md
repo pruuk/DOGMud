@@ -261,8 +261,8 @@ exit.
 north.", "Take the stairs.", "You are in the grove.", "You can do this
 anywhere.", "Destination unknown.", and so on. The `quest` command
 (`usercommands/quests.go`) prints it, and the GMCP quest payload
-(`gmcp.Char.go`) carries it as the `guide` field. The web client does not
-read `guide` yet: the quest panel shows it from phase 4 slice 2.
+(`gmcp.Char.go`) carries it as the `guide` field. The web quest panel shows
+it when the pin is not on the drawn map.
 
 **`Destinations(qs) (findings, inferred)`** is the static rule, a walk rule
 like the walkthrough: boot (`destinationDoor` in `main_quests.go`) logs its

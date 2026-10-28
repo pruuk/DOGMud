@@ -1,0 +1,27 @@
+# GROVE seat: quest 45, The Unquiet Grove, first step: cast a spell with a
+# fight on you anywhere in the unquiet grove. You start in the Whispering
+# Grove with Keeper Orrin. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5309
+  overlays:
+    set_quest_tokens: ["45-start"]
+    grant_spells: {chrysalis-glow: 1, conviction-spike: 1}
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and quote the whole entry for The Unquiet Grove, including
+    the last line under it (the line that says where to head).
+  - >-
+    Follow that line: if it says "Head <direction>.", type that direction,
+    then `quests` again and quote the new line. Repeat until it changes. Note
+    any direction that is not an exit of your room (type `look` to check).
+  - >-
+    When the line says you are in the unquiet grove, quote it. Walk to one
+    other grove room by its exits and quote the line there too: it should
+    still say you are in the grove. Then fight a creature there and type
+    `cast spike <creature>`; quote what the game says and the quest line
+    after it.

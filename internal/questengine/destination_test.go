@@ -384,3 +384,30 @@ func TestResolveDestination_SeveralNpcs(t *testing.T) {
 		}
 	})
 }
+
+// Owner ruling 20: a copy is perceived by the light of the room it stands
+// in, never the light where the player stands, so the player's own light
+// counts only for a copy in the player's room. The sight question must be
+// asked of the copy's room.
+func TestResolveDestination_SightIsJudgedInTheCopysRoom(t *testing.T) {
+	w := destWorld{zones: map[int]string{1: "z", 9: "z"}, copies: map[int][]liveCopy{},
+		spawns: map[int][]int{50: {9}}, names: map[int]string{50: "a scout"}}
+	w.copies[50] = []liveCopy{destCopy(t, 9, false)}
+	installDestWorld(t, w)
+	var asked []int
+	sightIn = func(_ *characters.Character, roomId int) messaging.SightDecision {
+		asked = append(asked, roomId)
+		if roomId == 1 { // the player's room is lit; the copy's room is dim
+			return messaging.SightFull
+		}
+		return messaging.SightShapes
+	}
+	e := destEngine([]QuestStep{{Id: "start", Destination: quests.StepDestination{Mobs: []int{50}}}})
+	d := e.ResolveDestination(destUser(1), 700, "start")
+	if !reflect.DeepEqual(asked, []int{9}) {
+		t.Errorf("sight must be judged in the copy's room 9 only, asked about %v", asked)
+	}
+	if d.Kind != DestArea || !d.Fallback {
+		t.Errorf("a copy in a dim room is not perceived, whatever the player's room: %+v", d)
+	}
+}

@@ -278,11 +278,12 @@ returns only if a phase 7 zone pass needs it, from the design kept in that spec.
 **Status:** spec `docs/superpowers/specs/2026-10-28-quest-arc-phase4-minimap-guidance-design.md`
 (owner 2026-10-28), three slices. Slice 1 (engine: the step `destination:` block, `ResolveDestination`,
 `mapper.NearestOf`, the GMCP fields, the quest log's guide line, the `walk-destination` rule)
-is in PR, plan `docs/superpowers/plans/2026-10-28-quest-arc-phase4-slice1-engine.md`. Slice 2
+merged (#709), plan `docs/superpowers/plans/2026-10-28-quest-arc-phase4-slice1-engine.md`. Slice 2
 (web client: the brass area wash, the "Somewhere in ..." banner, the brass pin, the quest
-panel's guide line) is in PR, plan
-`docs/superpowers/plans/2026-10-28-quest-arc-phase4-slice2-webclient.md`. Slice 3 (content and
-playtest) to come.
+panel's guide line) merged (#710), plan
+`docs/superpowers/plans/2026-10-28-quest-arc-phase4-slice2-webclient.md`. Slice 3 (live area,
+several-copies and zone-fallback steps, the playtest, screenshots from the real web client) is
+in PR, plan `docs/superpowers/plans/2026-10-28-quest-arc-phase4-slice3-content.md`.
 
 ## Phase 5: Quest log actions (engine half)
 

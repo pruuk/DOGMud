@@ -35,7 +35,7 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 5311  # Veil Hollow, west of Orrin; a grove revenant spawns
+      area: unquiet_grove  # the cast counts in any grove room (the cast trigger's area)
     description: >-
       Orrin wants you to fight in the grove and cast while you do it. The
       creatures in the Veil Hollow, the Thinning Wood and the Grove Heart
@@ -46,7 +46,7 @@ steps:
       type cast spike revenant.
   - id: cast
     destination:
-      room: 5311
+      mob: [9147, 9148]  # a drift-wisp or a grove revenant, either kill counts; else every room that spawns one
     description: >-
       You held a casting together while the grove worked at you. Now bring
       the creature down. A drift-wisp in the Thinning Wood serves as well as

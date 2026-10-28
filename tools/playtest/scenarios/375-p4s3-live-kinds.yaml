@@ -1,0 +1,29 @@
+# #375 phase 4 slice 3: one live step of each new destination kind. A seat on
+# quest 45 casts inside the unquiet grove (an area), a seat on quest 33 hunts
+# the nearest Bandit Scout (several copies), a seat on quest 61 hunts the
+# hidden Reach-Touched across The Empty Reach (a zone fallback).
+name: 375-p4s3-live-kinds
+mode: party
+summary: >-
+  The quest log's destination line leads each seat to its step's place: the
+  grove area, the nearest bandit scout, and The Empty Reach.
+on_actor_stop: continue
+budgets:
+  wall_clock: 40m
+requires:
+  max_connections: 20
+roster:
+  - id: grove
+    personality: bug-finder
+    goals: goals/scenarios/375-p4s3-live-kinds/grove.yaml
+  - id: wash
+    personality: bug-finder
+    goals: goals/scenarios/375-p4s3-live-kinds/wash.yaml
+  - id: reach
+    personality: bug-finder
+    goals: goals/scenarios/375-p4s3-live-kinds/reach.yaml
+
+group_goals:
+  - id: destination-line-guides
+    do: Each seat reads the quest log's destination line after every move and follows it.
+    verify: The line always names a real exit of the current room or the right "you are in" message, and following it reaches the step's place.

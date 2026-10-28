@@ -3,10 +3,9 @@ package questengine
 import "github.com/GoMudEngine/GoMud/internal/mapper"
 
 // GuideLine is the one destination line (#375 phase 4, spec section 4): the
-// `quest` command prints it, and the GMCP quest payload carries it as `guide`
-// so the web quest panel can say the same words. The web client does not read
-// `guide` yet; it shows the line from phase 4 slice 2. Plain text: the panel
-// will escape markup.
+// `quest` command prints it, and the GMCP quest payload carries it as `guide`,
+// which the web quest panel shows, so both say the same words. Plain text: the
+// panel escapes markup.
 func GuideLine(d Destination) string {
 	switch d.Kind {
 	case DestNone:
