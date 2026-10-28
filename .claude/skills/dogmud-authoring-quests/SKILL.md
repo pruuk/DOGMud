@@ -544,10 +544,11 @@ steps:                 # the room and mob ids here are illustrative
   `area:`, because the player will rarely see it and its spawn room would
   give away where it hides (quest 61 `bandit`, the Reach-Touched in The Empty
   Reach). Inside a zone or area fallback the log reads "You are in <name>.".
-- **Seen means seen where it stands.** A copy counts only when the room it
-  stands in is bright enough for the player. That room's light includes what
-  anyone there carries, so the player's own light helps only for a copy in
-  the player's room. In a dim place (the wash in Pothole Coulee by day) the
+- **Seen means seen where it stands** (owner ruling 20). A copy counts only
+  when the room it stands in is bright enough for the player: the light of
+  the destination room decides, never the light where the player is. That
+  room's light includes what anyone there carries, so the player's own light
+  helps only for a copy in the player's room. In a dim place (the wash in Pothole Coulee by day) the
   map shows the spawn rooms or the fallback for every scout further off.
 - **Live examples of each kind** are held by
   `TestShippedContent_EveryDestinationKindHasALiveStep`
