@@ -834,7 +834,8 @@
                 if (gr && gr.setQuestMarker) {
                     var data = (GMCPStructs.Char && GMCPStructs.Char.Quests) ? GMCPStructs.Char.Quests : [];
                     var f = Array.isArray(data) ? data.filter(function (q) { return q.focused; })[0] : null;
-                    if (f && f.target_room) {
+                    // A cross-zone destination has no room on this map (target_room 0) but still a next hop (#375 p4).
+                    if (f && (f.target_room || f.next_room)) {
                         gr.setQuestMarker({ targetRoom: f.target_room, nextRoom: f.next_room || 0, nextDir: f.next_dir || "", name: f.name || "" });
                     } else {
                         gr.setQuestMarker(null);

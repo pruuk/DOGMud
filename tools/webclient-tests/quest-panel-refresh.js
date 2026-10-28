@@ -283,5 +283,12 @@ handleGMCP('Char.Quests', longQuests('a ' + ' \n\t '.repeat(300) + 'b'));
 p8s = panelText();
 check('whitespace runs collapse before counting', !/qhint-more/.test(p8s), p8s);
 
+console.log('SCENARIO 9: a cross-zone destination sends next_room but no target_room');
+reset();
+handleGMCP('Char.Quests', [{ id: 9, name: 'Far Off', completion: 10, focused: true,
+  hint: 'Go far.', target_room: 0, next_room: 420, next_dir: 'west', target_kind: 'area' }]);
+check('the off-map arrow still gets a marker', markerCalls.length > 0 && markerCalls[markerCalls.length - 1] &&
+  markerCalls[markerCalls.length - 1].nextRoom === 420, JSON.stringify(markerCalls));
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);
