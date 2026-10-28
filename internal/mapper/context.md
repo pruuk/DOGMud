@@ -11,6 +11,17 @@ One `mapper` exists per zone, cached and keyed by room id. Everything below —
 consistency checking, fog-of-war snapshots, cross-zone routing — is built on
 the same crawl.
 
+**A zone's map stops at its zone's border** (#375 phase 4, spec ruling 18).
+`discover` and `startByCrawl` do not queue an exit whose destination is in
+another zone (zone from `rooms.TemplateRoomZone`, falling back to `LoadRoom`
+for an instance room id, in `roomZone`). The exit stays on its node and
+records the far room's zone in `nodeExit.ToZone`. `GetMapper` claims only
+rooms of the map's own zone, so every room belongs to its own zone's map
+whichever map is built first. On shipped data (2026-10-28) that is 50 maps
+over 1,305 rooms, the largest 175 rooms (Pothole Coulee), no map holding two
+zones; Ferries alone has 3 maps, its rooms being unconnected. Before, one map
+crawled 1,209 rooms across 38 zones.
+
 ## Files
 
 - **mapper.go** — direction/delta tables, the `mapper` type, the crawl, the
@@ -145,11 +156,19 @@ func (p pathStep) Waypoint() bool
 ```
 
 A\* over the crawled graph (`heuristic` + a `priorityQueue` of `nodeRecord`),
-with results memoised in a path cache keyed by start/end. `GetPath` is
-**per-zone by construction** — it resolves its mapper from the cache using the
-*start* room, so a target in another zone fails outright. `NextStep` is the
-wrapper that falls back to `crossZoneHop` in that case; see Cross-Zone Routing
-below.
+with results memoised in a path cache keyed by start/end. `GetPath` **searches
+across zone maps**: `findPath` reads each room from its own zone's map
+(`nodeFor`: this map, else `GetMapperIfExists`, else `GetMapper`), so a route
+crosses borders exactly as it did when one map crawled the whole connected
+world, and a waypoint in another zone is accepted. Scores start empty and grow
+as rooms are reached, so the cost is the rooms the search touches, not a map's
+size. The heuristic is the Manhattan distance between node positions (the
+authored coordinates, unless a zone fell back to the exit-delta crawl).
+`TestShippedRoutesSurviveZoneBoundedMaps` (repo root, `DOGMUD_BOOT_SMOKE`)
+holds 200 seeded shipped pairs to master's lengths
+(`testdata/mapper_route_lengths.golden`) and checks the 13 cross-zone patrol
+and schedule legs. `NextStep` still falls back to `crossZoneHop` when `GetPath`
+fails across zones; see Cross-Zone Routing below.
 
 ### Nearest of a set (`mapper.nearest.go`, #375 phase 4)
 
@@ -190,9 +209,12 @@ zone holds no member of the set.
   survives; a collision is invisible there and visible in `crawledRooms`.
 - **`ClearCache` is a package-level name that also exists in several other
   packages.** Confirm which one you are calling.
-- **A mapper is per-zone even though the crawl can cross zone boundaries.**
-  Findings and renders are filtered back to the owning zone afterwards
-  (`FilterFindingsToZone`); the crawl itself does not stop at the border.
+- **A map holds only its own zone's rooms.** Anything that reads
+  `crawledRooms` for a room across a border (an exit's far room, a radius
+  search, a render) finds nothing in this map; look the room up in its own
+  zone's map (`GetMapperIfExists` / `GetMapper`), as `findPath` does. The web
+  map, the ASCII map, `FindRoomsInDistance`, the consistency checks and the
+  builder view are moving to that rule in #375 phase 4 Tasks 17 to 21.
 
 ## Dependencies
 
@@ -296,14 +318,16 @@ The engine automatically skips:
   entire zone as toroidal/maze geometry; skips the three hard checks
   zone-wide.
 
-### Known Limitation: Cross-Zone Crawl
+### Known Limitation: Cross-Zone Exits
 
-`CheckConsistency` operates on the BFS-populated `crawledRooms` map,
-which follows all exits and can cross zone boundaries. This is mitigated
-at the reporting layer by `FilterFindingsToZone`, which drops any finding
-whose room's owning `zone:` field does not match the zone being checked.
-Both `ValidateZoneConsistency` (startup) and `CartCheck` (admin command)
-apply this filter, so findings are correctly scoped to their owning zone.
+`CheckConsistency` operates on the BFS-populated `crawledRooms` map.
+Since the crawl stops at the zone border (#375 phase 4), a border exit's
+far room is not in the map, so the reciprocity, delta and collision checks
+do not see the far side of a border; restoring them against the far room's
+own map is #375 phase 4 Task 20. `FilterFindingsToZone`, which drops any
+finding whose room's owning `zone:` field does not match the zone being
+checked, still runs in `ValidateZoneConsistency` (startup) and `CartCheck`
+(admin command).
 
 ## Fog-of-War Snapshot (Web Map)
 
@@ -360,7 +384,10 @@ the live-only `shop` tag. An unloaded room reads the template fields
 `getMapNode` copied onto its `mapNode` at crawl time (`Title`, `Zone`,
 `Biome`, `IsBank`, `IsStorage`, all `instance:"skip"` on `rooms.Room`);
 its biome name still resolves through `Room.GetBiome`. Exit `ToZone`
-comes from `snapshotZone`, the same live-or-node rule. Before this, an
+comes from `snapshotZone`, the same live-or-node rule, then the zone the
+exit itself recorded at crawl time (`nodeExit.ToZone`): a border exit's far
+room is in another zone's map, so only the exit names its zone. A border
+exit is always a `Stub` in its own zone's snapshot. Before this, an
 idle-unloaded room was reparsed from disk per snapshot (~180 ms for 960
 cold rooms locally). `mapper.snapshot_cold_test.go` pins both the
 no-load rule and the payload against a golden from the loading version.
@@ -474,9 +501,10 @@ Connection-type styling and party markers are **web-only** — the ASCII
 `map` command does not reflect these.
 ## Cross-Zone Routing (`mapper.crosszone.go`)
 
-`GetPath` is per-zone by construction — it resolves its mapper from
-`mapperZoneCache[zone]` keyed off the **start** room, so it fails outright on a
-target in another zone. Before 2026-07-30 that made every cross-zone quest
+History: until #375 phase 4, `GetPath` resolved its mapper from
+`mapperZoneCache[zone]` keyed off the **start** room and rejected a target the
+start map did not hold. It now searches across zone maps (see Pathfinding), so
+the fallback below fires only when `GetPath` fails. Before 2026-07-30 that made every cross-zone quest
 marker inert: no destination dot (the room isn't in the current zone's
 snapshot) and no next-step arrow. Six quests were affected; quest 67 crosses
 four New Plymouth districts, so its guidance went dark exactly when a player

@@ -97,7 +97,8 @@ M2_RECORD_ROUTING=1 go test ./internal/guards/ -run TestM2RoutingIsFrozen
 Tests that call code in package main stay in the repository root until that
 code moves into a package (issue #663): the boot smoke tests
 (`boot_smoke_test.go`, which CI runs by name with `DOGMUD_BOOT_SMOKE=1`),
-`move_route_stamina_test.go`, `main_dialogue_test.go`,
+`move_route_stamina_test.go`, `mapper_zone_routes_test.go` (with its golden
+in the root `testdata/`), `main_dialogue_test.go`,
 `boot_config_log_test.go`, `conversation_wiring_test.go`,
 `world_unhandled_mob_command_test.go` and `bauble_sweep_test.go`. Three guards
 stay with them because they share helpers with a root test:

@@ -162,7 +162,7 @@ func (r *mapper) Snapshot(visited map[int]struct{}) []SnapshotRoom {
 				se.Stub = true
 				se.Kind = classifyKind(e.Direction, e.Direction) // nominal placement
 			}
-			if dz := r.snapshotZone(e.RoomId); dz != "" && dz != srcZone {
+			if dz := r.snapshotZone(e); dz != "" && dz != srcZone {
 				se.ToZone = dz
 			}
 			sr.Exits = append(sr.Exits, se)
@@ -172,19 +172,20 @@ func (r *mapper) Snapshot(visited map[int]struct{}) []SnapshotRoom {
 	return out
 }
 
-// snapshotZone is a room's zone for an exit's ToZone, without loading it: the
-// live room when it is in memory, else the zone its mapNode copied at crawl
-// time. The crawl follows every exit of every node it records, so an exit's
-// destination is either crawled or a room that failed to load at crawl time
-// (which LoadRoom would also have returned nil for); either way "" is right.
-func (r *mapper) snapshotZone(roomId int) string {
-	if rooms.IsRoomLoaded(roomId) {
-		if room := rooms.LoadRoom(roomId); room != nil { // memory hit, no disk
+// snapshotZone is the zone an exit leads to, for its ToZone, without loading
+// the far room: the live room when it is in memory, else the zone its mapNode
+// copied at crawl time, else the zone the exit recorded at crawl time. A
+// zone's map stops at its border, so a border exit's far room is in another
+// zone's map and only the exit's own record names its zone; an exit to a
+// room that does not exist recorded "".
+func (r *mapper) snapshotZone(e nodeExit) string {
+	if rooms.IsRoomLoaded(e.RoomId) {
+		if room := rooms.LoadRoom(e.RoomId); room != nil { // memory hit, no disk
 			return room.Zone
 		}
 	}
-	if n, ok := r.crawledRooms[roomId]; ok {
+	if n, ok := r.crawledRooms[e.RoomId]; ok {
 		return n.Zone
 	}
-	return ""
+	return e.ToZone
 }

@@ -318,11 +318,38 @@ func (r *mapper) Start() {
 	r.startByCrawl()
 }
 
+// roomZone is a room's zone for the crawl's border check and an exit's
+// ToZone: the template room index first (no load), else the room itself (an
+// instance room id, which the index never holds, or a room it has not seen).
+// "" when the room does not exist.
+func roomZone(roomId int) string {
+	if z := rooms.TemplateRoomZone(roomId); z != `` {
+		return z
+	}
+	if room := rooms.LoadRoom(roomId); room != nil {
+		return room.Zone
+	}
+	return ``
+}
+
+// rootZone is the zone of the map's root room, the zone the crawl stays in.
+func (r *mapper) rootZone() string {
+	if n, ok := r.crawledRooms[r.rootRoomId]; ok {
+		return n.Zone
+	}
+	return roomZone(r.rootRoomId)
+}
+
 // discover performs a breadth-first walk from the root over the exit graph,
 // recording each reachable room's mapNode (with authored Pos + Plane) in
 // crawledRooms. It does not compute positions — placement is decided by the
 // caller based on whether the authored layout is clean.
+//
+// The walk stays in the root's zone: an exit to another zone's room stays on
+// its node (rendering, border stubs, ToZone) but is not followed, so each
+// zone's map holds only its own rooms (#375 phase 4, ruling 18).
 func (r *mapper) discover() {
+	zone := r.rootZone()
 	queue := []int{r.rootRoomId}
 	for len(queue) > 0 {
 		roomId := queue[0]
@@ -339,6 +366,9 @@ func (r *mapper) discover() {
 		r.crawledRooms[node.RoomId] = node
 
 		for _, exitInfo := range node.Exits {
+			if exitInfo.ToZone != zone {
+				continue
+			}
 			if _, ok := r.crawledRooms[exitInfo.RoomId]; !ok {
 				queue = append(queue, exitInfo.RoomId)
 			}
@@ -415,6 +445,8 @@ func (r *mapper) startByCrawl() {
 
 	minX, maxX, minY, maxY, minZ, maxZ := 0, 0, 0, 0, 0, 0
 
+	zone := r.rootZone() // the crawl stays in the root's zone, as discover does
+
 	r.crawlQueue = make([]crawlRoom, 0, 100) // pre-allocate 100 capacity
 
 	lowestRoomId := 0
@@ -446,6 +478,9 @@ func (r *mapper) startByCrawl() {
 		// Now process it
 		for _, exitInfo := range node.Exits {
 			if _, ok := r.crawledRooms[exitInfo.RoomId]; ok {
+				continue
+			}
+			if exitInfo.ToZone != zone {
 				continue
 			}
 
@@ -1087,6 +1122,8 @@ func (r *mapper) getMapNode(roomId int) *mapNode {
 			continue
 		}
 
+		exitNode.ToZone = roomZone(exitInfo.RoomId)
+
 		mNode.Exits[exitName] = exitNode
 	}
 
@@ -1149,7 +1186,13 @@ func GetMapper(roomId int, forceRefresh ...bool) *mapper {
 
 	roomIdToMapperCache[roomId] = zoneName
 
-	for _, crawledRoomId := range m.CrawledRoomIds() {
+	// A map claims only rooms of its own zone, so every room belongs to its
+	// own zone's map whichever map was built first. The crawl already stops
+	// at the zone border; this keeps the rule should a node ever disagree.
+	for crawledRoomId, node := range m.crawledRooms {
+		if node.Zone != room.Zone {
+			continue
+		}
 		if _, ok := roomIdToMapperCache[crawledRoomId]; !ok {
 			roomIdToMapperCache[crawledRoomId] = zoneName
 		}
@@ -1165,6 +1208,10 @@ func PreCacheMaps() {
 	// Check biomes for all rooms
 	validateRoomBiomes()
 
+	// One map per zone, built from the zone's root. A map stops at its zone's
+	// border, so this no longer lets the first zone's map swallow its
+	// neighbours. A room its zone's root cannot reach inside the zone (only
+	// through another zone, or not at all) gets a map of its own below.
 	for _, name := range rooms.GetAllZoneNames() {
 		rootRoomId, _ := rooms.GetZoneRoot(name)
 		GetMapper(rootRoomId)
