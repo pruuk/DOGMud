@@ -1,0 +1,33 @@
+package questengine
+
+import "github.com/GoMudEngine/GoMud/internal/mapper"
+
+// GuideLine is the one destination line (#375 phase 4, spec section 4): the
+// `quest` command prints it and the web quest panel shows it, so both say the
+// same words. Plain text: the web panel escapes markup.
+func GuideLine(d Destination) string {
+	switch d.Kind {
+	case DestNone:
+		return ""
+	case DestAnywhere:
+		return "You can do this anywhere."
+	case DestUnknown:
+		return "Destination unknown."
+	}
+	if d.Inside {
+		switch {
+		case d.Label != "":
+			return "You are in " + d.Label + "."
+		case d.Fallback && d.Npc != "":
+			return "You are where " + d.Npc + " is usually found."
+		}
+		return "You are where you need to be."
+	}
+	if d.NextDir == "" {
+		return "You can't find a way there from here."
+	}
+	if mapper.IsCompassDirection(d.NextDir) {
+		return "Head " + d.NextDir + "."
+	}
+	return "Take the " + d.NextDir + "."
+}
