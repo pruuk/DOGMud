@@ -274,6 +274,9 @@ class RoomGridSVG {
       this.svg.appendChild(this.worldSvg);
 
       // Connections under rooms (both inside worldSvg, world coords):
+      // Quest destination wash (#375 p4): under connections and rooms, world coords.
+      this.washGroup = document.createElementNS(LEATHER_NS, 'g');
+      this.worldSvg.appendChild(this.washGroup);
       this.connectionsGroup = document.createElementNS(LEATHER_NS, 'g');
       this.worldSvg.appendChild(this.connectionsGroup);
       this.roomsGroup = document.createElementNS(LEATHER_NS, 'g');
@@ -403,6 +406,7 @@ class RoomGridSVG {
       this.worldSvg.setAttribute('viewBox', '0 0 1 1');
       this.roomsGroup.innerHTML = '';
       this.connectionsGroup.innerHTML = '';
+      this.washGroup.innerHTML = '';
   }
 
   /**
@@ -625,6 +629,7 @@ class RoomGridSVG {
       }
 
       this._drawQuestArrow();
+      this._drawQuestWash();
       this._applyZoom();
   }
 
@@ -654,7 +659,44 @@ class RoomGridSVG {
       this._drawQuestBanner();
   }
 
-  _drawQuestWash() {}
+  /**
+   * Brass wash over the focused quest's destination rooms on this floor (#375 phase 4, spec ruling 8):
+   * one tile per room, a dashed brass edge on every side that does not border another washed room,
+   * and the area's name above the topmost tile. Only an area, or a room set of two or more,
+   * is washed; a single room has its pin and a zone has its banner.
+   */
+  _drawQuestWash() {
+      const g = this.washGroup;
+      while (g.firstChild) g.removeChild(g.firstChild);
+      const qm = this._questMarker;
+      if (!qm || !Array.isArray(qm.targetRooms) || qm.targetRooms.length === 0) { return; }
+      if (qm.kind !== 'area' && qm.targetRooms.length < 2) { return; }
+      const L = RoomGridSVG.LEATHER, sp = this.spacing, half = sp / 2;
+      const cells = new Map(); // "x,y" -> room
+      qm.targetRooms.forEach(id => {
+          const e = this.rooms.get(id) || this.rooms.get(String(id));
+          if (!e || (e.room.z || 0) !== (this._z || 0)) { return; }
+          cells.set(e.room.x + ',' + e.room.y, e.room);
+      });
+      if (cells.size === 0) { return; }
+      let top = null;
+      cells.forEach(r => {
+          const x = r.x * sp, y = r.y * sp;
+          g.appendChild(lEl('rect', { x: x - half, y: y - half, width: sp, height: sp, fill: L.questGold, opacity: '0.13' }));
+          const sides = [[0, -1, x - half, y - half, x + half, y - half], [0, 1, x - half, y + half, x + half, y + half],
+                         [-1, 0, x - half, y - half, x - half, y + half], [1, 0, x + half, y - half, x + half, y + half]];
+          sides.forEach(s => {
+              if (cells.has((r.x + s[0]) + ',' + (r.y + s[1]))) { return; }
+              g.appendChild(lEl('line', { x1: s[2], y1: s[3], x2: s[4], y2: s[5], stroke: L.questGold,
+                  'stroke-width': 1.2, 'stroke-dasharray': '4 3', opacity: '0.85' }));
+          });
+          if (!top || r.y < top.y || (r.y === top.y && r.x < top.x)) { top = r; }
+      });
+      if (qm.label) {
+          g.appendChild(lTxt({ x: top.x * sp, y: top.y * sp - half - 3, 'text-anchor': 'middle',
+              'font-family': 'Georgia,serif', 'font-size': '9', 'font-style': 'italic', fill: L.title }, qm.label));
+      }
+  }
   _drawQuestBanner() {}
 
   /** Rebuild a single room's token in place (e.g. to add/remove its marker). */
