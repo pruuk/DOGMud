@@ -244,11 +244,16 @@ trigger.
 `Fallback`, `ZoneRooms` (the set's template rooms in the player's zone, for
 the map wash; shared with the areas index, do not change it), `Inside`, and
 `Pin`, `NextRoom`, `NextDir` from `mapper.NearestOf` when the player is not
-inside. `Pin` is 0 when the nearest member lies in another zone.
+inside. `Pin` is 0 when the nearest member lies in another zone. The search
+takes a secret exit only when `secretExitsKnownTo(user)` allows it: `search`
+found it (`characters.SecretExitDiscoveryKey`), the room beyond is on the
+player's map (`Character.HasVisitedRoom`), or they were there recently
+(`Room.HasVisited`, what the exit list reads). Mob paths take every secret
+exit.
 
 **Seams.** Package vars the tests stub (`installDestWorld` in
 `destination_test.go`): `liveCopies`, `sightIn`, `templateRoom`, `roomZone`,
-`spawnRoomsOf`, `npcName`, `nearestOf`.
+`spawnRoomsOf`, `npcName`, `nearestOf`, `secretExitsKnownTo`.
 
 **`GuideLine(Destination) string`** is the one line both the `quest` command
 (`usercommands/quests.go`) and the web quest panel (`gmcp.Char.go`, the

@@ -361,10 +361,33 @@ func (e *Engine) ResolveDestination(user *users.UserRecord, questId int, step st
 	if !ok {
 		return Destination{Kind: DestUnknown, Inferred: inferred}
 	}
-	return finishDestination(set, user.Character.RoomId, inferred)
+	return finishDestination(set, user.Character.RoomId, inferred, secretExitsKnownTo(user))
 }
 
-func finishDestination(set destSet, playerRoom int, inferred bool) Destination {
+// secretExitsKnownTo is the secret exits guidance may send user through, the
+// ones the game already discloses to that player: `search` found it (a
+// discovery record, actions/search.go), or the room beyond is on their map
+// (Character.VisitedRooms: the web and ASCII maps draw a secret exit once the
+// far room is visited, mapper.snapshot.go), or they were there recently (the
+// room's exit list shows it then, rooms/roomdetails.go). Any other secret
+// exit is left out of the route, in the zone and across a border, so "Head
+// west." never names an exit the player has not found. Mob paths take them
+// all.
+var secretExitsKnownTo = func(user *users.UserRecord) mapper.SecretExitKnown {
+	return func(roomId int, exitName string, toRoomId int) bool {
+		if user.Character.HasDiscovery(roomId, characters.SecretExitDiscoveryKey(exitName)) {
+			return true
+		}
+		to := rooms.LoadRoom(toRoomId)
+		if to == nil {
+			return false
+		}
+		tpl, _ := rooms.OriginalRoomId(toRoomId)
+		return user.Character.HasVisitedRoom(to.Zone, tpl) || to.HasVisited(user.UserId, rooms.VisitorUser)
+	}
+}
+
+func finishDestination(set destSet, playerRoom int, inferred bool, known mapper.SecretExitKnown) Destination {
 	from := templateRoom(playerRoom)
 	d := Destination{Kind: set.kind, Label: set.label, Npc: set.npc, Fallback: set.fallback, Inferred: inferred}
 	if set.zoneRooms != nil {
@@ -377,7 +400,7 @@ func finishDestination(set destSet, playerRoom int, inferred bool) Destination {
 		return d
 	}
 	in := func(r int) bool { return set.in(templateRoom(r)) }
-	if pin, next, exit, ok := nearestOf(playerRoom, in, set.zones); ok {
+	if pin, next, exit, ok := nearestOf(playerRoom, in, set.zones, known); ok {
 		d.Pin, d.NextRoom, d.NextDir = templateRoom(pin), templateRoom(next), exit
 	}
 	return d

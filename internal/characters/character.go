@@ -655,6 +655,16 @@ func (c *Character) GetMiscDataKeys(prefixMatch ...string) []string {
 	return retKeys
 }
 
+// SecretExitDiscoveryKey is the discovery key `search` records when it finds
+// the secret exit exitName (actions/search.go). Discoveries share one key
+// space per room with authored container and noun names, so the "exit:"
+// prefix keeps an exit named "gate" apart from a container of that name.
+// Quest guidance reads it too, to send a player only through secret exits
+// they have found.
+func SecretExitDiscoveryKey(exitName string) string {
+	return "exit:" + exitName
+}
+
 func (c *Character) HasDiscovery(roomId int, key string) bool {
 	if c.Discoveries == nil {
 		return false

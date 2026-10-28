@@ -16,8 +16,9 @@ import (
 // first room on the way and the exit to it. fromRoomId itself is never the
 // answer. The search stays in fromRoomId's zone (#375 p4 Task 17): a
 // neighbour this map lacks, or one it holds from another zone, is never
-// entered, so the cost is bounded by the zone, not the world.
-func (r *mapper) nearestIn(fromRoomId int, in func(roomId int) bool) (pin, nextRoomId int, exitName string, found bool) {
+// entered, so the cost is bounded by the zone, not the world. A secret exit
+// is taken only when known lets it through (nil: never).
+func (r *mapper) nearestIn(fromRoomId int, in func(roomId int) bool, known SecretExitKnown) (pin, nextRoomId int, exitName string, found bool) {
 	start, ok := r.crawledRooms[fromRoomId]
 	if !ok {
 		return 0, 0, "", false
@@ -37,8 +38,12 @@ func (r *mapper) nearestIn(fromRoomId int, in func(roomId int) bool) (pin, nextR
 		}
 		sort.Strings(names)
 		for _, name := range names {
-			next := node.Exits[name].RoomId
+			ex := node.Exits[name]
+			next := ex.RoomId
 			if seen[next] {
+				continue
+			}
+			if ex.Secret && !known.allows(at.room, name, next) {
 				continue
 			}
 			if n, ok := r.crawledRooms[next]; !ok || n.Zone != zone {
@@ -71,6 +76,19 @@ func searchesHere(fromZone string, zones []string) bool {
 	return slices.Contains(zones, fromZone)
 }
 
+// SecretExitKnown reports whether quest guidance may send its traveller
+// through the secret exit exitName of roomId, which leads to toRoomId. Only
+// guidance asks: a mob's path (GetPath, `pathto`) takes every secret exit.
+// A nil SecretExitKnown lets none through.
+type SecretExitKnown func(roomId int, exitName string, toRoomId int) bool
+
+func (k SecretExitKnown) allows(roomId int, exitName string, toRoomId int) bool {
+	return k != nil && k(roomId, exitName, toRoomId)
+}
+
+// anySecretExit lets every secret exit through, as GetPath does.
+func anySecretExit(int, string, int) bool { return true }
+
 // NearestOf is where to head from fromRoomId toward the nearest room in
 // accepts (#375 phase 4: quest destinations). Inside the start room's zone it
 // searches the map and returns that room as pin with the first hop. When no
@@ -78,7 +96,12 @@ func searchesHere(fromZone string, zones []string) bool {
 // zone crossings, the way crossZoneHop does, by the nearest border room
 // toward the next zone (hopToward), and pin is 0: the room is not on the
 // player's drawn map. found is false when neither works.
-func NearestOf(fromRoomId int, in func(roomId int) bool, zones []string) (pin, nextRoomId int, exitName string, found bool) {
+//
+// It is guidance, so it never sends the player through a secret exit known
+// does not let through, in the zone or across a border: "Head west." through
+// an exit the player has not found would be a direction they cannot follow
+// and a spoiler of the secret.
+func NearestOf(fromRoomId int, in func(roomId int) bool, zones []string, known SecretExitKnown) (pin, nextRoomId int, exitName string, found bool) {
 	start := time.Now()
 	defer func() { util.TrackTime(`mapper.NearestOf()`, time.Since(start).Seconds()) }()
 
@@ -88,15 +111,15 @@ func NearestOf(fromRoomId int, in func(roomId int) bool, zones []string) (pin, n
 	}
 	if searchesHere(fromRoom.Zone, zones) {
 		if m := GetMapper(fromRoomId); m != nil {
-			if pin, next, exit, ok := m.nearestIn(fromRoomId, in); ok {
+			if pin, next, exit, ok := m.nearestIn(fromRoomId, in, known); ok {
 				return pin, next, exit, true
 			}
 		}
 	}
-	link, ok := nearestZoneHop(fromRoom.Zone, zones)
+	link, ok := nearestZoneHop(fromRoom.Zone, zones, known)
 	if !ok {
 		return 0, 0, "", false
 	}
-	next, exit, ok := hopToward(fromRoomId, fromRoom.Zone, link.toZone)
+	next, exit, ok := hopToward(fromRoomId, fromRoom.Zone, link.toZone, known)
 	return 0, next, exit, ok
 }

@@ -215,14 +215,14 @@ var destBenchCases = []destBenchCase{
 		setup: func(*testing.B, destBenchZone) {},
 		step: func(z destBenchZone, i int) {
 			p := z.pairs[i%len(z.pairs)]
-			mapper.NearestOf(p.from, func(id int) bool { return id == p.to }, z.zones)
+			mapper.NearestOf(p.from, func(id int) bool { return id == p.to }, z.zones, nil)
 		},
 	},
 	{
 		name:  `NearestOf/set40`,
 		setup: func(*testing.B, destBenchZone) {},
 		step: func(z destBenchZone, i int) {
-			mapper.NearestOf(z.pairs[i%len(z.pairs)].from, func(id int) bool { return z.set40[id] }, z.zones)
+			mapper.NearestOf(z.pairs[i%len(z.pairs)].from, func(id int) bool { return z.set40[id] }, z.zones, nil)
 		},
 	},
 }

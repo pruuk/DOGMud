@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/areas"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -21,7 +22,7 @@ type destWorld struct {
 	dark   map[int]messaging.SightDecision // room -> sight; absent = full
 	spawns map[int][]int
 	names  map[int]string
-	near   func(from int, in func(int) bool, zones []string) (int, int, string, bool)
+	near   func(from int, in func(int) bool, zones []string, known mapper.SecretExitKnown) (int, int, string, bool)
 }
 
 func installDestWorld(t *testing.T, w destWorld) {
@@ -40,7 +41,7 @@ func installDestWorld(t *testing.T, w destWorld) {
 	templateRoom = func(id int) int { return id }
 	nearestOf = w.near
 	if nearestOf == nil {
-		nearestOf = func(from int, in func(int) bool, zones []string) (int, int, string, bool) {
+		nearestOf = func(from int, in func(int) bool, zones []string, _ mapper.SecretExitKnown) (int, int, string, bool) {
 			for id := 1; id < 100000; id++ { // the lowest member, one hop "north"
 				if id != from && in(id) {
 					return id, id, "north", true
@@ -264,7 +265,7 @@ func TestResolveDestination_InstanceRooms(t *testing.T) {
 	}
 
 	var sawIn bool
-	nearestOf = func(from int, in func(int) bool, zones []string) (int, int, string, bool) {
+	nearestOf = func(from int, in func(int) bool, zones []string, _ mapper.SecretExitKnown) (int, int, string, bool) {
 		sawIn = in(inst9)
 		return inst9, inst9, "east", sawIn
 	}

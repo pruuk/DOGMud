@@ -40,7 +40,7 @@ func inSet(ids ...int) func(int) bool {
 
 func TestNearestIn_PicksTheClosestMember(t *testing.T) {
 	m := buildGridMapper()
-	pin, next, exit, ok := m.nearestIn(1, inSet(9, 3))
+	pin, next, exit, ok := m.nearestIn(1, inSet(9, 3), nil)
 	if !ok || pin != 3 || next != 2 || exit != "east" {
 		t.Fatalf("from 1 toward {3,9}: got pin %d next %d %q ok %v; want 3 via 2 east", pin, next, exit, ok)
 	}
@@ -53,7 +53,7 @@ func TestNearestIn_MatchesFindPathDistance(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		pin, _, _, ok := m.nearestIn(1, inSet(goal))
+		pin, _, _, ok := m.nearestIn(1, inSet(goal), nil)
 		if !ok || pin != goal {
 			t.Fatalf("goal %d: nearestIn found %d", goal, pin)
 		}
@@ -67,7 +67,7 @@ func TestNearestIn_TiesResolveTheSameWay(t *testing.T) {
 	m := buildGridMapper()
 	// 2 and 4 are both one step from 1; exits are taken in name order, east before south.
 	for i := 0; i < 20; i++ {
-		if pin, _, exit, _ := m.nearestIn(1, inSet(2, 4)); pin != 2 || exit != "east" {
+		if pin, _, exit, _ := m.nearestIn(1, inSet(2, 4), nil); pin != 2 || exit != "east" {
 			t.Fatalf("tie went to %d via %q", pin, exit)
 		}
 	}
@@ -75,27 +75,27 @@ func TestNearestIn_TiesResolveTheSameWay(t *testing.T) {
 
 func TestNearestIn_NoneAndSelf(t *testing.T) {
 	m := buildGridMapper()
-	if _, _, _, ok := m.nearestIn(1, inSet(42)); ok {
+	if _, _, _, ok := m.nearestIn(1, inSet(42), nil); ok {
 		t.Error("a set with no reachable room must not resolve")
 	}
-	if pin, _, _, ok := m.nearestIn(1, inSet(1, 5)); !ok || pin != 5 {
+	if pin, _, _, ok := m.nearestIn(1, inSet(1, 5), nil); !ok || pin != 5 {
 		t.Errorf("the start room is never the answer: got %d %v", pin, ok)
 	}
-	if _, _, _, ok := m.nearestIn(77, inSet(5)); ok {
+	if _, _, _, ok := m.nearestIn(77, inSet(5), nil); ok {
 		t.Error("a start room the map lacks must not resolve")
 	}
 }
 
 func TestNearestZoneHop_FewestZones(t *testing.T) {
 	npStub(t)
-	l, ok := nearestZoneHop("Docks", []string{"Noble", "Old Quarter"})
+	l, ok := nearestZoneHop("Docks", []string{"Noble", "Old Quarter"}, nil)
 	if !ok || l.toZone != "Old Quarter" || l.exitRoom != 5520 {
 		t.Fatalf("want the Old Quarter border, got %+v %v", l, ok)
 	}
-	if _, ok := nearestZoneHop("Docks", []string{"Docks"}); ok {
+	if _, ok := nearestZoneHop("Docks", []string{"Docks"}, nil); ok {
 		t.Error("the start zone is not a hop")
 	}
-	if _, ok := nearestZoneHop("Docks", nil); ok {
+	if _, ok := nearestZoneHop("Docks", nil, nil); ok {
 		t.Error("no zones, no hop")
 	}
 }
@@ -162,10 +162,10 @@ func zonedGrid(foreign ...int) *mapper {
 // 5, which is in zb, so the search goes round by 1, 2 and 3.
 func TestNearestIn_NeverEntersAnotherZone(t *testing.T) {
 	m := zonedGrid(5)
-	if pin, _, _, ok := m.nearestIn(4, inSet(5)); ok {
+	if pin, _, _, ok := m.nearestIn(4, inSet(5), nil); ok {
 		t.Fatalf("a room of another zone must not be the answer, got %d", pin)
 	}
-	pin, next, exit, ok := m.nearestIn(4, inSet(6))
+	pin, next, exit, ok := m.nearestIn(4, inSet(6), nil)
 	if !ok || pin != 6 || next != 1 || exit != "north" {
 		t.Fatalf("from 4 to 6 round zb's room 5: got pin %d next %d %q ok %v; want 6 via 1 north", pin, next, exit, ok)
 	}
@@ -177,7 +177,7 @@ func TestNearestIn_NeverEntersAnotherZone(t *testing.T) {
 func TestNearestIn_CostDoesNotGrowOutsideTheZone(t *testing.T) {
 	visits := func(m *mapper, from int) int {
 		n := 0
-		m.nearestIn(from, func(int) bool { n++; return false })
+		m.nearestIn(from, func(int) bool { n++; return false }, nil)
 		return n
 	}
 
@@ -301,7 +301,7 @@ func TestNearestOf_HeadsForTheNearestBorder(t *testing.T) {
 		{9605, 9615, "north"},
 	}
 	for _, c := range cases {
-		pin, next, exit, ok := NearestOf(c.from, toB, []string{"zn_b"})
+		pin, next, exit, ok := NearestOf(c.from, toB, []string{"zn_b"}, nil)
 		if !ok || pin != 0 || next != c.next || exit != c.exit {
 			t.Errorf("from %d: got pin %d next %d %q ok %v; want %d via %q", c.from, pin, next, exit, ok, c.next, c.exit)
 		}

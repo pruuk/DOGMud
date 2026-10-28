@@ -39,19 +39,19 @@ var farCorner = inSet(380, 399, 400)
 
 func BenchmarkNearestIn400(b *testing.B) {
 	m := buildGridMapperN(20)
-	if _, _, _, ok := m.nearestIn(1, farCorner); !ok {
+	if _, _, _, ok := m.nearestIn(1, farCorner, nil); !ok {
 		b.Fatal("no member found")
 	}
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m.nearestIn(1, farCorner)
+		m.nearestIn(1, farCorner, nil)
 	}
 }
 
 func BenchmarkFindPath400(b *testing.B) {
 	m := buildGridMapperN(20)
-	goal, _, _, ok := m.nearestIn(1, farCorner)
+	goal, _, _, ok := m.nearestIn(1, farCorner, nil)
 	if !ok {
 		b.Fatal("no member found")
 	}

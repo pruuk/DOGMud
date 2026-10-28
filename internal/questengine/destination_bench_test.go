@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/areas"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -40,7 +41,7 @@ func installDestBench(b *testing.B, copies map[int][]liveCopy) {
 	spawnRoomsOf = func(int) []int { return nil }
 	npcName = func(int) string { return "a bench mob" }
 	templateRoom = func(id int) int { return id }
-	nearestOf = func(from int, _ func(int) bool, _ []string) (int, int, string, bool) {
+	nearestOf = func(from int, _ func(int) bool, _ []string, _ mapper.SecretExitKnown) (int, int, string, bool) {
 		return from + 1, from + 1, "north", true
 	}
 	b.Cleanup(func() {

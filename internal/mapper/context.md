@@ -230,11 +230,29 @@ fails across zones; see Cross-Zone Routing below.
 ### Nearest of a set (`mapper.nearest.go`, #375 phase 4)
 
 ```go
-func NearestOf(fromRoomId int, in func(roomId int) bool, zones []string) (pin, nextRoomId int, exitName string, found bool)
+type SecretExitKnown func(roomId int, exitName string, toRoomId int) bool
+func NearestOf(fromRoomId int, in func(roomId int) bool, zones []string, known SecretExitKnown) (pin, nextRoomId int, exitName string, found bool)
 ```
 
 Where to head toward the nearest room of a set (a quest destination: an
 area, an NPC's rooms, a zone). `zones` lists every zone the set touches.
+
+**Secret exits.** Guidance takes a secret exit only when `known` lets it
+through (nil: never), in the zone (`nearestIn`) and across a border (the zone
+graph marks a secret link, `zoneLink.secret`; `nearestZoneHop` and
+`hopToward` skip one `known` refuses). The quest engine passes the player's
+own knowledge (`questengine.secretExitsKnownTo`): `search` found the exit, or
+the room beyond is on their map, or they were there recently, which is when
+the game already discloses that exit to them. Mob routing (`GetPath`,
+`pathto`, `NextStep` and its `crossZoneHop` fallback) takes every secret exit,
+as before. On shipped data, from room 6323 (The Hedge-Gap Trail, root of
+Cascade Pass Road) 1,179 of 1,228 one-room destinations used to route first
+through its secret west exit; with the exit unknown none does, and only the
+49 other rooms of Cascade Pass Road (20 rooms) and the Eastern Highlands (30)
+beyond it get a direction: that pocket joins the rest of the world only
+through this secret passage (5441 east in Kingsbarrow Vale, 6323 west back).
+A player who walked in through it has 5441 on their map, so their guidance
+uses it.
 
 - **Start zone.** Only when the start room's zone is in `zones`
   (`searchesHere`), it runs `nearestIn` on that zone's mapper: a
@@ -626,7 +644,7 @@ room-level pathfinder:
 
 1. A coarse zone graph (`zoneGraph`) records, per zone, every outbound border
    link (#375 phase 4 Task 17; before, one per neighbouring zone):
-   `zoneLink{toZone, exitRoom, exitName, destRoom}`, sorted by `toZone`,
+   `zoneLink{toZone, exitRoom, exitName, destRoom, secret}`, sorted by `toZone`,
    `exitRoom`, `exitName` so the pick is the same on every boot.
 2. `nextZoneHop` / `nearestZoneHop` BFS zone-to-zone and return the **first**
    leg, whose `toZone` is the next zone out of the player's current zone, even

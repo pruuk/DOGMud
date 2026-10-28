@@ -26,9 +26,11 @@ import (
 // Discoveries share one key space per room (Character.Discoveries is
 // map[roomId][]string), and container names and hidden-noun keys are authored
 // strings that could collide with a direction. The prefix keeps an exit named
-// "gate" from being confused with a hidden container of the same name.
+// "gate" from being confused with a hidden container of the same name. The
+// key lives in characters (SecretExitDiscoveryKey) because quest guidance
+// reads it too.
 func secretExitDiscoveryKey(exitName string) string {
-	return "exit:" + exitName
+	return characters.SecretExitDiscoveryKey(exitName)
 }
 
 // spotsHider resolves "does the observer spot this hider?" as an OPPOSED
