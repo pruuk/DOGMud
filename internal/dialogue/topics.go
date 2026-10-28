@@ -1,6 +1,41 @@
 package dialogue
 
-import "github.com/GoMudEngine/GoMud/internal/menu"
+import (
+	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/menu"
+	"github.com/GoMudEngine/GoMud/internal/quests"
+)
+
+// itemValue is the item's sale value, a seam for tests.
+var itemValue = func(itemId int) int {
+	if s := items.GetItemSpec(itemId); s != nil {
+		return s.Value
+	}
+	return 0
+}
+
+// SetItemValueForTest replaces itemValue and returns a restore func.
+func SetItemValueForTest(values map[int]int) func() {
+	prev := itemValue
+	itemValue = func(id int) int { return values[id] }
+	return func() { itemValue = prev }
+}
+
+// resuming reports whether choosing t takes a shelved quest back up: t grants
+// a quest's start step and the player has that quest on the shelf.
+func resuming(t *Topic, ps *PlayerState) bool {
+	if t == nil || t.GrantsQuest == "" || ps == nil || ps.Shelved == nil {
+		return false
+	}
+	qid, step := quests.TokenToParts(t.GrantsQuest)
+	return step == `start` && qid > 0 && ps.Shelved(qid)
+}
+
+// resumeGivesItem is owner ruling 2: on a resume, only an item worth nothing
+// that the player does not carry is handed over again.
+func resumeGivesItem(itemId int, ps *PlayerState) bool {
+	return itemId > 0 && itemValue(itemId) == 0 && !carriesItemPasses(itemId, ps)
+}
 
 // markerRank orders name markers: [?] over [!] over [*] (requirements rule 9).
 var markerRank = map[string]int{menu.MarkerInfo: 1, menu.MarkerQuest: 2, menu.MarkerHandIn: 3}
@@ -176,10 +211,17 @@ func (df *DialogueFile) Apply(t *Topic, ps *PlayerState) bool {
 	if df == nil || t == nil {
 		return false
 	}
-	if !tryCharge(t.ChargesGold, ps) {
+	charge, give := t.ChargesGold, t.GivesItem
+	if resuming(t, ps) {
+		charge = 0
+		if !resumeGivesItem(give, ps) {
+			give = 0
+		}
+	}
+	if !tryCharge(charge, ps) {
 		return false
 	}
-	if !applyPaidEffects(t.ChargesGold, t.GrantsQuest, t.RequiresItem, t.GivesItem,
+	if !applyPaidEffects(charge, t.GrantsQuest, t.RequiresItem, give,
 		t.SetsQuestFlag, t.BumpsRep, t.GivesGold, ps) {
 		return false
 	}
