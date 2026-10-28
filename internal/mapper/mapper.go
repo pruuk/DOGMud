@@ -108,9 +108,15 @@ var (
 // exits modified, mapsymbols set) and the cached layout is stale. The
 // engine never auto-invalidates this cache, so this is the only way short
 // of a server restart to refresh the `map` command's output.
+//
+// It also drops the cached paths, whose routes (and cached failures) were
+// found on the old maps, and the zone graph, so both follow the new room data
+// (#375 phase 4).
 func ClearCache() {
 	mapperZoneCache = map[string]*mapper{}
 	roomIdToMapperCache = map[int]string{}
+	pathCache.Purge()
+	InvalidateZoneGraph()
 }
 
 // This is a useful function to help enforce map coherence when building
@@ -1299,20 +1305,73 @@ func GetMapperIfExists(roomId int) *mapper {
 	return nil
 }
 
-// Get the mapper if it exists, otherwises generates a new map from the roomId
+// Get the mapper if it exists, otherwises generates a new map from the roomId.
+//
+// forceRefresh rebuilds the room's map from the current room data, and with
+// it every map its border exits reach, directly or through other zones: before
+// zone maps stopped at their border (#375 phase 4) a forced rebuild re-crawled
+// the one map that held the whole connected world, so the builder's view of a
+// zone (sendZoneMapFull) and the web map of a joined zone (WebMap) showed an
+// edit made in a neighbouring zone. It also drops the cached paths (a route,
+// or a cached failure, the edit may have changed) and the zone graph.
 func GetMapper(roomId int, forceRefresh ...bool) *mapper {
 
 	var cachedMap *mapper = nil
 	// Check the room-to-cache lookup
 
+	force := len(forceRefresh) > 0 && forceRefresh[0]
 	if zoneName, ok := roomIdToMapperCache[roomId]; ok {
 		cachedMap = mapperZoneCache[zoneName]
-		if len(forceRefresh) == 0 || !forceRefresh[0] {
+		if !force {
 			return cachedMap
 		}
 	}
 
-	// We are force rebuilding (or building if not exists) at this point
+	m := buildMapper(roomId, cachedMap)
+	if force {
+		if m != nil {
+			rebuildJoinedMaps(m)
+		}
+		pathCache.Purge()
+		InvalidateZoneGraph()
+	}
+	return m
+}
+
+// rebuildJoinedMaps rebuilds, once each, every map the border exits of root
+// reach, directly or through other zones (the maps WebMap walks), each from
+// its own root, following the rebuilt maps' borders so an edit that adds a
+// border is followed too. A border room no map holds gets a map of its own,
+// as PreCacheMaps gives it.
+func rebuildJoinedMaps(root *mapper) {
+	done := map[*mapper]bool{root: true}
+	queue := []*mapper{root}
+	for len(queue) > 0 {
+		cur := queue[0]
+		queue = queue[1:]
+		for _, id := range cur.borderRooms {
+			old := GetMapperIfExists(id)
+			if old != nil && done[old] {
+				continue
+			}
+			var m *mapper
+			if old != nil && !rooms.IsEphemeralRoomId(old.rootRoomId) {
+				m = buildMapper(old.rootRoomId, old)
+			} else if old == nil {
+				m = buildMapper(id, nil)
+			}
+			if m == nil || done[m] {
+				continue
+			}
+			done[m] = true
+			queue = append(queue, m)
+		}
+	}
+}
+
+// buildMapper builds roomId's map, replacing cachedMap (nil: none) in the
+// cache.
+func buildMapper(roomId int, cachedMap *mapper) *mapper {
 
 	// Since we will be regenerating the whole map,
 	// lets clear out any roomId's tracked for this room.

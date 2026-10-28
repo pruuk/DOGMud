@@ -97,7 +97,21 @@ func (m *mapper) OverrideRoomIds(replacements map[int]int)
 ```
 
 `PreCacheMaps` builds every zone's mapper at boot, then warms the cross-zone
-graph and runs `ValidateZoneConsistency`. `GetCopy`/`OverrideRoomIds` exist for
+graph and runs `ValidateZoneConsistency`.
+
+**Refreshing the caches** (#375 phase 4 Task 21). `ClearCache` drops every
+map, the path cache and the zone graph. `GetMapper(id, true)` rebuilds the
+room's map and, through `rebuildJoinedMaps`, every map its border exits reach
+(directly or through other zones, each from its own root), then drops the
+path cache and the zone graph. Before zone maps stopped at their border, a
+forced rebuild re-crawled the one map of the connected world, so the builder's
+zone view (`sendZoneMapFull`, which forces its zone's map) and the web map of
+a joined zone (`WebMap`, which reads neighbouring maps from the cache) showed
+an edit made next door; rebuilding the joined maps keeps that, at master's
+cost (the same rooms crawled). Before Task 21 neither refresh touched the path
+cache, so a cached failure outlived the edit that opened the route.
+`TestCacheRefreshDropsPathsAndZoneGraph` and
+`TestForcedRebuildShowsAnEditInAJoinedZone` pin both. `GetCopy`/`OverrideRoomIds` exist for
 ephemeral instance rooms, which reuse a template zone's geometry under
 different room ids.
 
@@ -243,6 +257,13 @@ three rooms in the far corner, Ryzen 9 5900X, 2026-10-28):
 to the same room) about 108 us/op. The web quest panel re-resolves the focused
 quest on every move, so `searchesHere` skips that crawl whenever the player's
 zone holds no member of the set.
+
+On shipped zones (`destination_nearest_bench_test.go`, repo root,
+`DOGMUD_BOOT_SMOKE=1 go test . -run x -bench DestinationNearest -count=5`,
+medians, one machine, 2026-10-28), master `8534cf6a1` cold `NextStep` against
+this tree, largest zone / Greenford: master `NextStep` 90.8 / 82.2 us; new
+`GetPath` 13.1 / 6.1 us; `NearestOf` one room 22.7 / 7.3 us, 40 rooms
+1.5 / 0.45 us.
 
 ## Gotchas
 
@@ -614,11 +635,13 @@ room-level pathfinder:
 
 The hot path therefore stays on the cached per-zone mapper, bounded by the
 zone. The graph is built once and warmed in `PreCacheMaps` (every room is
-already loaded there); `InvalidateZoneGraph()` is exported for zone
-rename/delete/re-zone.
+already loaded there); `ClearCache` and a forced `GetMapper` rebuild call
+`InvalidateZoneGraph()`, so the next query rebuilds it from the edited rooms
+(#375 phase 4 Task 21).
 
-Real-world shape at boot (one link per pair, before Task 17): **39 zones with
-outbound links, 82 links.**
+Real-world shape (shipped data, re-measured 2026-10-28 by the same scan as
+`buildZoneGraph`): **39 zones with outbound links, 83 links**, one per
+ordered zone pair, so keeping every link (Task 17) adds none today.
 
 **Limitation:** the in-zone leg does not leave the zone, so a border room
 reachable only through another zone gives no arrow.

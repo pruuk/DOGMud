@@ -483,3 +483,119 @@ func TestFindRoomsInDistanceIsManhattan(t *testing.T) {
 		t.Errorf("found %d rooms within radius 2 of a grid's centre, want 12", len(got))
 	}
 }
+
+// linkRooms is a builder edit: it gives two loaded rooms an exit to each
+// other, in memory, as the builder's exit edit leaves them.
+func linkRooms(t *testing.T, a int, aDir string, b int, bDir string) {
+	t.Helper()
+	ra, rb := rooms.LoadRoom(a), rooms.LoadRoom(b)
+	if ra == nil || rb == nil {
+		t.Fatalf("fixture rooms %d and %d must load", a, b)
+	}
+	ra.Exits[aDir] = ex(b, "")
+	rb.Exits[bDir] = ex(a, "")
+}
+
+// ClearCache and a forced rebuild drop the cached paths, so a route an edit
+// opens is found (a cached failure no longer returns), and the zone graph,
+// so a border the edit adds is routed through (#375 phase 4 Task 21).
+func TestCacheRefreshDropsPathsAndZoneGraph(t *testing.T) {
+	for _, c := range []struct {
+		name    string
+		base    int
+		refresh func(base int)
+	}{
+		{"ClearCache", 44000, func(int) { ClearCache() }},
+		{"forced rebuild", 44100, func(base int) { GetMapper(base+1, true) }},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			isolateMapperCaches(t)
+			b := c.base
+			// zp_a: b+1 - b+2; zp_b: b+3, not yet joined to zp_a.
+			writeFixtureWorld(t, []fixtureRoom{
+				{id: b + 1, x: 0, zone: "zp_a", exits: map[string]int{"east": b + 2}},
+				{id: b + 2, x: 1, zone: "zp_a", exits: map[string]int{"west": b + 1}},
+				{id: b + 3, x: 2, zone: "zp_b", exits: map[string]int{}},
+			})
+			GetMapper(b + 1)
+			GetMapper(b + 3)
+			zoneGraphFromFixture(t)
+
+			if _, err := GetPath(b+1, b+3); err == nil {
+				t.Fatalf("%d to %d must fail before the edit", b+1, b+3)
+			}
+			if _, ok := nextZoneHop("zp_a", "zp_b"); ok {
+				t.Fatalf("zp_a and zp_b must not be joined before the edit")
+			}
+
+			linkRooms(t, b+2, "east", b+3, "west")
+			c.refresh(b)
+
+			if p, err := GetPath(b+1, b+3); err != nil || len(p) != 2 {
+				t.Errorf("after the edit and %s, %d to %d: %v, %v; want a 2-step path", c.name, b+1, b+3, p, err)
+			}
+			if l, ok := nextZoneHop("zp_a", "zp_b"); !ok || l.exitRoom != b+2 {
+				t.Errorf("after the edit and %s, the zone graph's zp_a to zp_b link: %+v, %v; want one from %d", c.name, l, ok, b+2)
+			}
+		})
+	}
+}
+
+// joinedEditWorld is two joined zones: zq_a b+1 over b+3, zq_b b+2 over
+// b+4, joined b+1 - b+2; b+5 (zq_a, below b+3) has no exit yet. Both maps
+// are built, as PreCacheMaps builds them.
+func joinedEditWorld(t *testing.T, b int) {
+	writeFixtureWorld(t, []fixtureRoom{
+		{id: b + 1, x: 0, y: 0, zone: "zq_a", exits: map[string]int{"east": b + 2, "south": b + 3}},
+		{id: b + 3, x: 0, y: 1, zone: "zq_a", exits: map[string]int{"north": b + 1}},
+		{id: b + 5, x: 0, y: 2, zone: "zq_a", exits: map[string]int{}},
+		{id: b + 2, x: 1, y: 0, zone: "zq_b", exits: map[string]int{"west": b + 1, "south": b + 4}},
+		{id: b + 4, x: 1, y: 1, zone: "zq_b", exits: map[string]int{"north": b + 2}},
+	})
+	GetMapper(b + 1)
+	GetMapper(b + 2)
+}
+
+// A builder edit in one zone shows in the builder's view and the web map of
+// the zone it joins. Before zone maps stopped at their border, the forced
+// rebuild behind the builder's view re-crawled the one map of the connected
+// world; now it rebuilds the maps its borders reach (#375 phase 4 Task 21).
+func TestForcedRebuildShowsAnEditInAJoinedZone(t *testing.T) {
+	t.Run("builder view of the joined zone", func(t *testing.T) {
+		isolateMapperCaches(t)
+		const b = 45000
+		joinedEditWorld(t, b)
+		linkRooms(t, b+3, "south", b+5, "north") // a new room in zq_a
+
+		ids := GetMapper(b+2, true).WebMap().RoomIds() // sendZoneMapFull(zq_b)
+		sort.Ints(ids)
+		if fmt.Sprint(ids) != fmt.Sprint([]int{b + 1, b + 2, b + 3, b + 4, b + 5}) {
+			t.Errorf("zq_b's builder view after an edit in zq_a: %v; want zq_a's new room %d in it", ids, b+5)
+		}
+	})
+
+	t.Run("web map of the joined zone", func(t *testing.T) {
+		isolateMapperCaches(t)
+		const b = 45100
+		joinedEditWorld(t, b)
+		linkRooms(t, b+3, "east", b+4, "west") // a second border
+		GetMapper(b+1, true)                   // the builder's refresh of zq_a's view
+
+		visited := map[int]struct{}{b + 1: {}, b + 2: {}, b + 3: {}, b + 4: {}}
+		var edge *SnapshotExit
+		for _, r := range GetMapper(b + 2).WebMap().Snapshot(visited) {
+			if r.RoomId != b+4 {
+				continue
+			}
+			for i := range r.Exits {
+				if r.Exits[i].ToRoomId == b+3 {
+					e := r.Exits[i]
+					edge = &e
+				}
+			}
+		}
+		if edge == nil || edge.Stub {
+			t.Errorf("zq_b's web map after a border added in zq_a: %d's exit to %d is %+v; want a full edge", b+4, b+3, edge)
+		}
+	})
+}

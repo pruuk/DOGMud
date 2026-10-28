@@ -22,12 +22,14 @@ import (
 // pairs inside one zone. NextStep/cold uses those 200 unique pairs, which is
 // more than the 128-entry path cache holds, so every call misses it (a moving
 // player changes "from" every move). NextStep/warm repeats one pair.
+// GetPath/cold is GetPath on the same 200 pairs (pathto, mob schedules).
 // NearestOf/single is a one-room set; NearestOf/set40 is 40 rooms of the zone.
 // The cases are the table destBenchCases, so a new resolver is one more row.
+// Every zone's map is built first, as PreCacheMaps builds them at boot.
 //
-// Every zone's map crawls the whole connected world (getMapNode does not stop
-// at a zone border), so the zone choice changes where the pairs lie, not how
-// big the graph is.
+// Since #375 phase 4 (ruling 18) a zone's map holds only its own rooms; on
+// master one map crawled 1,209 rooms across 38 zones, so there the zone
+// choice changed where the pairs lie, not how big the graph was.
 
 const destBenchPairs = 200
 
@@ -52,6 +54,7 @@ func loadShippedWorldTB(tb testing.TB) {
 		func() {
 			defer func() { _ = recover() }() // boot failures are the boot test's job
 			loadAllDataFiles(false)
+			mapper.PreCacheMaps()
 		}()
 	})
 	if destBenchErr != nil {
@@ -196,6 +199,15 @@ var destBenchCases = []destBenchCase{
 		},
 		step: func(z destBenchZone, _ int) {
 			mapper.NextStep(z.pairs[0].from, z.pairs[0].to)
+		},
+	},
+	{
+		// GetPath on the same 200 pairs: they overflow the path cache too.
+		name:  `GetPath/cold`,
+		setup: func(*testing.B, destBenchZone) {},
+		step: func(z destBenchZone, i int) {
+			p := z.pairs[i%len(z.pairs)]
+			mapper.GetPath(p.from, p.to)
 		},
 	},
 	{

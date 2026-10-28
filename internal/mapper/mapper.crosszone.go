@@ -10,19 +10,22 @@ import (
 
 // Cross-zone routing.
 //
-// GetPath is per-zone by construction: it resolves its mapper via
-// mapperZoneCache[zone] keyed off the START room, so it can never route to a
-// room in another zone. That left every cross-zone quest marker inert — no
+// History: until #375 phase 4, GetPath resolved its mapper off the START room
+// and rejected a target that map did not hold, so it could not route to a room
+// in another zone. That left every cross-zone quest marker inert: no
 // destination dot (the room is not in the current zone's snapshot) and no
 // next-step arrow. Six quests were affected, worst being the New Plymouth
 // questline, whose guidance went dark exactly when a player was hunting for
-// the right district.
+// the right district. GetPath now searches across zone maps (findPath reads
+// each room from its own zone's map), so this graph serves the quest
+// destination search (NearestOf) and NextStep's fallback when GetPath fails.
 //
-// The fix is deliberately NOT a global room-level pathfinder. Zones are joined
-// by ordinary exits, so a coarse zone-level graph is enough: work out which
-// neighbouring zone to head for, then search inside the zone for the nearest
-// border room toward it (hopToward). The player gets a correct arrow the whole way, one
-// zone at a time, and the hot path stays on the cached per-zone mapper.
+// The destination search is deliberately NOT a global room-level search.
+// Zones are joined by ordinary exits, so a coarse zone-level graph is enough:
+// work out which neighbouring zone to head for, then search inside the zone
+// for the nearest border room toward it (hopToward). The player gets a correct
+// arrow the whole way, one zone at a time, and each search is bounded by the
+// player's zone.
 //
 // ---------------------------------------------------------------------------
 // YES, THIS IS THE SECOND ZONE-ADJACENCY CRAWL IN THE CODEBASE. ON PURPOSE.
