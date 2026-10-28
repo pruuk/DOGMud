@@ -34,7 +34,9 @@ opener:
       I would, and now I must, even when it is not the right I thought it was.
 topics:
 # q72_side is the quest step: hearing Ayres out for Hesper sets
-# 72-heard-ayres, which her compromise needs (9397).
+# 72-heard-ayres, and quest 72's topic_heard trigger grants 72-heard_ayres,
+# which all three of Hesper's endings need (9397). Offered only once Fenn is
+# heard (owner ruling 15: Fenn, then Ayres, then Hesper).
 - key: q72_side
   kind: info
   label: Hesper sent me to hear your side of it.
@@ -43,11 +45,11 @@ topics:
     for two full farms, so I took the first share, as the right allows. I would share
     a full stream gladly. I will not let my own rows die so his can live. Find me
     more water, or show me the right says otherwise, and I will hear it.
-  hints: You have heard Ayres' side. Fenn holds the farm east of the head-gate, two
-    rooms east of here. Type talk fenn.
+  hints: You have heard both sides. Take them back to Hesper at the Golden Bough.
+    From here, go east, north six times, then east twice. Type talk hesper.
   marked: true
   questRequired:
-  - 72-start
+  - 72-heard_fenn
   questExcluded:
   - 72-end
   setsQuestFlag:

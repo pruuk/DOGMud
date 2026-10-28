@@ -263,6 +263,8 @@
 71-start
 71-vell
 72-end
+72-heard_ayres
+72-heard_fenn
 72-start
 73-chart
 73-end

@@ -15,7 +15,8 @@ opener:
     the water, which has been souring her common room. A level-headed traveller
     might be just what she has been wishing would walk through the door.
   # Quest 72 states first (first match wins): the three endings, then the
-  # player who has heard both farmers, then the quest in progress.
+  # player who has heard both farmers (step heard_ayres), then the quest in
+  # progress (steps start and heard_fenn).
   variants:
   - questRequired:
     - 72-end
@@ -44,12 +45,9 @@ opener:
     hints: Choose a line below to hear about the inn and the valley, or about
       the Chrysalis Rite.
   - questRequired:
-    - 72-start
+    - 72-heard_ayres
     questExcluded:
     - 72-end
-    questFlagRequired:
-      72-heard-fenn: "yes"
-      72-heard-ayres: "yes"
     text: You have been out to both farms. I can see the dust on your boots. Well?
       Do you think they could live with a fair split?
     hints: Hesper will tell you what a brokered compromise would mean before you
@@ -63,7 +61,7 @@ opener:
       come back to me with only half the story.
     hints: From the Golden Bough, go west twice to the Market Square, then south
       six times to the Irrigation Head-Gate. Fenn's holding is east of it and Ayres'
-      holding is west. Type talk fenn. The records at the Rite pavilion and the
+      holding is west. Hear Fenn first, then Ayres. Type talk fenn. The records at the Rite pavilion and the
       collapsed channel up in the foothills may show you more. If you found
       something at the old channel or in the records, she will hear that too.
 topics:
@@ -92,7 +90,9 @@ topics:
 # each after its own warning topic (heardRequired). The room looks at the
 # fallen channel (6078) and the records (6060) only discover a way; they set
 # 72-channel and 72-record. Hearing both farmers sets 72-heard-fenn and
-# 72-heard-ayres (9400, 9401). Every ending is final and hides the others.
+# 72-heard-ayres (9400, 9401) and moves the quest to step heard_ayres, which
+# every ending and its warning topic need (owner ruling 15). Every ending is
+# final and hides the others.
 - key: water_mediate
   kind: handin
   quest: 72
@@ -109,7 +109,7 @@ topics:
   heardRequired:
   - mediate_terms
   questRequired:
-  - 72-start
+  - 72-heard_ayres
   questExcluded:
   - 72-end
   questFlagRequired:
@@ -134,7 +134,7 @@ topics:
   heardRequired:
   - channel_terms
   questRequired:
-  - 72-start
+  - 72-heard_ayres
   questExcluded:
   - 72-end
   questFlagRequired:
@@ -158,7 +158,7 @@ topics:
   heardRequired:
   - record_terms
   questRequired:
-  - 72-start
+  - 72-heard_ayres
   questExcluded:
   - 72-end
   questFlagRequired:
@@ -182,7 +182,7 @@ topics:
     the line "Both men can live with a fair split. Let us make it binding."
   marked: true
   questRequired:
-  - 72-start
+  - 72-heard_ayres
   questExcluded:
   - 72-end
   questFlagRequired:
@@ -204,7 +204,7 @@ topics:
     water both farms."
   marked: true
   questRequired:
-  - 72-start
+  - 72-heard_ayres
   questExcluded:
   - 72-end
   questFlagRequired:
@@ -224,7 +224,7 @@ topics:
     water-right favours Fenn. Let it settle the matter."
   marked: true
   questRequired:
-  - 72-start
+  - 72-heard_ayres
   questExcluded:
   - 72-end
   questFlagRequired:

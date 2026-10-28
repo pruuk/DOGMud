@@ -159,7 +159,6 @@ hint-length 71 step horst
 hint-length 71 step ledger
 hint-length 71 step start
 hint-length 71 step vell
-hint-length 72 step start
 hint-length 73 step chart
 hint-length 73 step scrivener
 hint-length 74 step descent

@@ -36,7 +36,8 @@ opener:
       Much.
 topics:
 # q72_side is the quest step: hearing Fenn out for Hesper sets
-# 72-heard-fenn, which her compromise needs (9397).
+# 72-heard-fenn, and quest 72's topic_heard trigger grants 72-heard_fenn,
+# which opens Ayres' side (9401).
 - key: q72_side
   kind: info
   label: Hesper sent me to hear your side of it.
