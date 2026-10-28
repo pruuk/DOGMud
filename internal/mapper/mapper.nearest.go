@@ -14,11 +14,15 @@ import (
 // as in findPath, so the first room found is a nearest one; exits are taken
 // in name order so a tie always goes the same way. It returns that room, the
 // first room on the way and the exit to it. fromRoomId itself is never the
-// answer, and an exit to a room this map lacks (another zone) is not taken.
+// answer. The search stays in fromRoomId's zone (#375 p4 Task 17): a
+// neighbour this map lacks, or one it holds from another zone, is never
+// entered, so the cost is bounded by the zone, not the world.
 func (r *mapper) nearestIn(fromRoomId int, in func(roomId int) bool) (pin, nextRoomId int, exitName string, found bool) {
-	if _, ok := r.crawledRooms[fromRoomId]; !ok {
+	start, ok := r.crawledRooms[fromRoomId]
+	if !ok {
 		return 0, 0, "", false
 	}
+	zone := start.Zone
 	type hop struct {
 		room, first int
 		exit        string
@@ -37,7 +41,7 @@ func (r *mapper) nearestIn(fromRoomId int, in func(roomId int) bool) (pin, nextR
 			if seen[next] {
 				continue
 			}
-			if _, ok := r.crawledRooms[next]; !ok {
+			if n, ok := r.crawledRooms[next]; !ok || n.Zone != zone {
 				continue
 			}
 			seen[next] = true
@@ -71,8 +75,9 @@ func searchesHere(fromZone string, zones []string) bool {
 // accepts (#375 phase 4: quest destinations). Inside the start room's zone it
 // searches the map and returns that room as pin with the first hop. When no
 // room of that zone qualifies, it heads for the zone in zones with the fewest
-// zone crossings, the way crossZoneHop does, and pin is 0: the room is not on
-// the player's drawn map. found is false when neither works.
+// zone crossings, the way crossZoneHop does, by the nearest border room
+// toward the next zone (hopToward), and pin is 0: the room is not on the
+// player's drawn map. found is false when neither works.
 func NearestOf(fromRoomId int, in func(roomId int) bool, zones []string) (pin, nextRoomId int, exitName string, found bool) {
 	start := time.Now()
 	defer func() { util.TrackTime(`mapper.NearestOf()`, time.Since(start).Seconds()) }()
@@ -92,6 +97,6 @@ func NearestOf(fromRoomId int, in func(roomId int) bool, zones []string) (pin, n
 	if !ok {
 		return 0, 0, "", false
 	}
-	next, exit, ok := hopToward(fromRoomId, link)
+	next, exit, ok := hopToward(fromRoomId, fromRoom.Zone, link.toZone)
 	return 0, next, exit, ok
 }

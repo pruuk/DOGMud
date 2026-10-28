@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -19,8 +20,8 @@ import (
 //
 // The fix is deliberately NOT a global room-level pathfinder. Zones are joined
 // by ordinary exits, so a coarse zone-level graph is enough: work out which
-// neighbouring zone to head for, then reuse the existing in-zone GetPath to
-// walk to that border room. The player gets a correct arrow the whole way, one
+// neighbouring zone to head for, then search inside the zone for the nearest
+// border room toward it (hopToward). The player gets a correct arrow the whole way, one
 // zone at a time, and the hot path stays on the cached per-zone mapper.
 //
 // ---------------------------------------------------------------------------
@@ -123,9 +124,12 @@ func InvalidateZoneGraph() {
 // buildZoneGraph walks every room once and records each exit whose destination
 // lies in a different zone. Built lazily on first use and cached; the world is
 // ~1400 rooms, so this is a one-off scan, not a per-move cost.
+//
+// Every border link of a zone pair is kept (#375 p4 Task 17), so the in-zone
+// leg can head for the nearest of them (hopToward) rather than whichever one
+// the scan met first.
 func buildZoneGraph() {
 	g := map[string][]zoneLink{}
-	seen := map[string]map[string]bool{} // fromZone -> toZone -> already linked
 
 	for _, roomId := range rooms.GetAllRoomIds() {
 		room := rooms.LoadRoom(roomId)
@@ -137,15 +141,6 @@ func buildZoneGraph() {
 			if dest == nil || dest.Zone == "" || dest.Zone == room.Zone {
 				continue
 			}
-			// One link per zone pair is enough to route; the in-zone leg to
-			// that border room is computed by GetPath.
-			if seen[room.Zone] == nil {
-				seen[room.Zone] = map[string]bool{}
-			}
-			if seen[room.Zone][dest.Zone] {
-				continue
-			}
-			seen[room.Zone][dest.Zone] = true
 			g[room.Zone] = append(g[room.Zone], zoneLink{
 				toZone:   dest.Zone,
 				exitRoom: roomId,
@@ -155,8 +150,19 @@ func buildZoneGraph() {
 		}
 	}
 
+	// Room ids and exits come out of maps in no fixed order; sort each zone's
+	// links so the zone hop picks the same next zone on every boot.
 	links := 0
 	for _, v := range g {
+		sort.Slice(v, func(i, j int) bool {
+			if v[i].toZone != v[j].toZone {
+				return v[i].toZone < v[j].toZone
+			}
+			if v[i].exitRoom != v[j].exitRoom {
+				return v[i].exitRoom < v[j].exitRoom
+			}
+			return v[i].exitName < v[j].exitName
+		})
 		links += len(v)
 	}
 	mudlog.Info("mapper.buildZoneGraph", "zones", len(g), "links", links)
@@ -241,32 +247,47 @@ func nearestZoneHop(fromZone string, toZones []string) (zoneLink, bool) {
 }
 
 // crossZoneHop returns the next room + exit for a journey that leaves the
-// caller's zone. Standing on the border room, that is the crossing exit itself;
-// otherwise it is the first in-zone step toward the border room.
-//
-// Known limitation: buildZoneGraph keeps ONE border per zone pair. If that
-// particular border happens to be unreachable from where the player stands
-// (behind a locked door, say) this returns false and the player gets no arrow,
-// even though a second crossing might have worked. That degrades to today's
-// behaviour rather than misleading anyone, so it is left as-is; storing every
-// border and trying each is the fix if it ever bites.
+// caller's zone. Standing on a border room toward the next zone, that is the
+// crossing exit itself; otherwise it is the first in-zone step toward the
+// nearest such border room (hopToward).
 func crossZoneHop(fromRoomId int, fromZone, toZone string) (nextRoomId int, exitName string, found bool) {
 	link, ok := nextZoneHop(fromZone, toZone)
 	if !ok {
 		return 0, "", false
 	}
-	return hopToward(fromRoomId, link)
+	return hopToward(fromRoomId, fromZone, link.toZone)
 }
 
-// hopToward is the first step from fromRoomId to the border room of link, or
-// the crossing itself when standing on it.
-func hopToward(fromRoomId int, link zoneLink) (nextRoomId int, exitName string, found bool) {
-	if fromRoomId == link.exitRoom {
-		return link.destRoom, link.exitName, true
+// hopToward is the first step from fromRoomId (in fromZone) toward nextZone,
+// a neighbouring zone (#375 p4 Task 17). Standing on a border room of a link
+// to nextZone, it is that link's crossing. Otherwise it is the first step of
+// the in-zone search (nearestIn) to the nearest border room among every link
+// from fromZone to nextZone, so the cost is bounded by the zone and a border
+// the player cannot reach (behind a locked door, say) leaves the others.
+func hopToward(fromRoomId int, fromZone, nextZone string) (nextRoomId int, exitName string, found bool) {
+	zoneGraphMu.RLock()
+	var links []zoneLink
+	for _, l := range zoneGraph[fromZone] {
+		if l.toZone == nextZone {
+			links = append(links, l)
+		}
 	}
-	path, err := GetPath(fromRoomId, link.exitRoom) // same zone, GetPath can do this
-	if err != nil {
+	zoneGraphMu.RUnlock()
+
+	borders := make(map[int]bool, len(links))
+	for _, l := range links { // sorted by exitRoom then exitName: a fixed pick
+		if l.exitRoom == fromRoomId {
+			return l.destRoom, l.exitName, true
+		}
+		borders[l.exitRoom] = true
+	}
+	if len(borders) == 0 {
 		return 0, "", false
 	}
-	return firstHop(path)
+	m := GetMapper(fromRoomId)
+	if m == nil {
+		return 0, "", false
+	}
+	_, next, exit, ok := m.nearestIn(fromRoomId, func(roomId int) bool { return borders[roomId] })
+	return next, exit, ok
 }

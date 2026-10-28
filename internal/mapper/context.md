@@ -183,13 +183,18 @@ area, an NPC's rooms, a zone). `zones` lists every zone the set touches.
   (`searchesHere`), it runs `nearestIn` on that zone's mapper: a
   breadth-first search that stops at the first member, every exit costing 1
   as in `findPath`, exits taken in name order so a tie always goes the same
-  way. The start room is never the answer, and an exit to a room the map lacks
-  is not taken. It returns that room as `pin` with the first hop.
+  way. The start room is never the answer, and the search never enters a room
+  of another zone: not one the map lacks, nor one it holds from another zone
+  (#375 phase 4 Task 17). Its cost is bounded by the zone;
+  `TestNearestIn_CostDoesNotGrowOutsideTheZone` doubles the rooms outside the
+  zone and holds the visit count. It returns that room as `pin` with the first
+  hop.
 - **Zone hop.** When the start zone is not in `zones`, or no member there is
-  reachable, `nearestZoneHop` (`mapper.crosszone.go`) picks the zone of
-  `zones` with the fewest zone crossings, and `hopToward` gives the first step
-  to its border (or the crossing itself). `pin` is then 0: the room is not on
-  the player's drawn map.
+  reachable, `nearestZoneHop` (`mapper.crosszone.go`) picks the next zone
+  toward the zone of `zones` with the fewest zone crossings, and `hopToward`
+  runs the same in-zone `nearestIn` to the NEAREST border room among every
+  link from the start zone to that next zone (or, standing on one, returns its
+  crossing). `pin` is then 0: the room is not on the player's drawn map.
 - `found` is false when neither works.
 
 **Cost** (`mapper.nearest_bench_test.go`, a 20x20 grid from one corner to
@@ -212,9 +217,10 @@ zone holds no member of the set.
 - **A map holds only its own zone's rooms.** Anything that reads
   `crawledRooms` for a room across a border (an exit's far room, a radius
   search, a render) finds nothing in this map; look the room up in its own
-  zone's map (`GetMapperIfExists` / `GetMapper`), as `findPath` does. The web
-  map, the ASCII map, `FindRoomsInDistance`, the consistency checks and the
-  builder view are moving to that rule in #375 phase 4 Tasks 17 to 21.
+  zone's map (`GetMapperIfExists` / `GetMapper`), as `findPath` does. The
+  destination search follows that rule (Task 17); the web map, the ASCII map,
+  `FindRoomsInDistance`, the consistency checks and the builder view are
+  moving to it in #375 phase 4 Tasks 18 to 21.
 
 ## Dependencies
 
@@ -514,23 +520,28 @@ was trying to find the right one.
 rooms are in different zones. The approach is deliberately **not** a global
 room-level pathfinder:
 
-1. A coarse zone graph (`zoneGraph`) records, per zone, one outbound link per
-   neighbouring zone: `zoneLink{toZone, exitRoom, exitName, destRoom}`.
-2. `nextZoneHop` BFSes zone-to-zone and returns the **first** leg — the border
-   out of the player's current zone, even when the target is several zones off.
-3. `crossZoneHop` then reuses the in-zone `GetPath` to walk to that border room
-   (or returns the crossing exit itself if the player is already standing on
-   it).
+1. A coarse zone graph (`zoneGraph`) records, per zone, every outbound border
+   link (#375 phase 4 Task 17; before, one per neighbouring zone):
+   `zoneLink{toZone, exitRoom, exitName, destRoom}`, sorted by `toZone`,
+   `exitRoom`, `exitName` so the pick is the same on every boot.
+2. `nextZoneHop` / `nearestZoneHop` BFS zone-to-zone and return the **first**
+   leg, whose `toZone` is the next zone out of the player's current zone, even
+   when the target is several zones off.
+3. `hopToward` then runs the in-zone `nearestIn` to the nearest border room
+   among every link from the current zone to that next zone (or returns the
+   crossing exit itself if the player is already standing on one). A border
+   the player cannot reach inside the zone is passed over for another.
 
-The hot path therefore stays on the cached per-zone mapper. The graph is built
-once and warmed in `PreCacheMaps` (every room is already loaded there);
-`InvalidateZoneGraph()` is exported for zone rename/delete/re-zone.
+The hot path therefore stays on the cached per-zone mapper, bounded by the
+zone. The graph is built once and warmed in `PreCacheMaps` (every room is
+already loaded there); `InvalidateZoneGraph()` is exported for zone
+rename/delete/re-zone.
 
-Real-world shape at boot: **39 zones with outbound links, 82 links.**
+Real-world shape at boot (one link per pair, before Task 17): **39 zones with
+outbound links, 82 links.**
 
-**Limitation:** one border is kept per zone pair. If that crossing is
-unreachable from where the player stands, the arrow is dropped rather than a
-second crossing tried — degrading to the old behaviour rather than misleading.
+**Limitation:** the in-zone leg does not leave the zone, so a border room
+reachable only through another zone gives no arrow.
 
 **The web marker still needs the room to be in the current zone's snapshot**, so
 cross-zone journeys get the *arrow* but not the destination dot until the player
