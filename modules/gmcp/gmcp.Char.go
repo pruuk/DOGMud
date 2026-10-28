@@ -21,6 +21,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -698,6 +699,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 				Description: qDef.Description,
 				Completion:  0,
 				Focused:     questId == focusId,
+				Abandonable: usercommands.Abandonable(user.Character, questId),
 			}
 
 			for _, step := range qDef.Steps {
@@ -1200,6 +1202,9 @@ type GMCPCharModule_Payload_Quest struct {
 	// explore trigger, else omitted (#375 phase 3b slice 4).
 	Progress string `json:"progress,omitempty"`
 	Focused  bool   `json:"focused,omitempty"`
+	// Abandonable: the player may set this quest aside (#375 phase 5): active,
+	// not secret, offered by some NPC.
+	Abandonable bool `json:"abandonable,omitempty"`
 	// Focused quest only; omitted/zero when there is no resolvable target.
 	TargetRoom int    `json:"target_room,omitempty"`
 	NextRoom   int    `json:"next_room,omitempty"`

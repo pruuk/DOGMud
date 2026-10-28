@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -147,19 +148,39 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 		if u == nil {
 			break
 		}
-		// Only allow focusing an active quest, and never a secret one.
-		if _, ok := u.Character.GetQuestProgress()[req.Id]; !ok {
+		// Only an active quest, and never a secret one (FocusQuest checks).
+		if !usercommands.FocusQuest(u, req.Id) {
 			break
 		}
-		if characters.IsSecretQuest(req.Id) {
-			break
-		}
-		u.Character.LastQuestId = req.Id
 		// Re-emit Char.Quests so the panel, marker, and `hint` all follow.
 		events.AddToQueue(GMCPCharUpdate{
 			UserId:     uid,
 			Identifier: `Char.Quests`,
 		})
+
+	case `Char.Quests.Abandon`:
+		var req struct {
+			Id int `json:"id"`
+		}
+		if err := json.Unmarshal(evt.Payload, &req); err != nil {
+			break
+		}
+		uid := userIdForConnection(evt.ConnectionId)
+		if uid <= 0 {
+			break
+		}
+		u := users.GetByUserId(uid)
+		if u == nil {
+			break
+		}
+		// AbandonQuest queues the MarkerOnly quest event whose listener
+		// re-sends Char.Quests, so no GMCPCharUpdate is queued here.
+		ok, line := usercommands.AbandonQuest(u, req.Id)
+		cat := messaging.CategorySystem
+		if !ok {
+			cat = messaging.CategoryRefusal
+		}
+		u.SendText(cat, line)
 
 	}
 
