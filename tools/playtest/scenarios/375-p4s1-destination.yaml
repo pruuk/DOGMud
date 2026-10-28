@@ -1,0 +1,30 @@
+# #375 phase 4 slice 1: quest destinations. The quest log gains a destination
+# line ("Head north.", "You can do this anywhere.", ...), NPC destinations
+# follow the nearest copy the player can see, and quest 72 is split into
+# hear Fenn, hear Ayres, settle with Hesper. Zone maps now stop at their
+# borders, so walking between zones must still guide correctly.
+name: 375-p4s1-destination
+mode: party
+summary: >-
+  The quest log's destination line guides a player to Velk (quest 10), through
+  quest 72's three new steps, and says "anywhere" on quest 31's shop steps.
+on_actor_stop: continue
+budgets:
+  wall_clock: 40m
+requires:
+  max_connections: 20
+roster:
+  - id: velk
+    personality: bug-finder
+    goals: goals/scenarios/375-p4s1-destination/velk.yaml
+  - id: water
+    personality: bug-finder
+    goals: goals/scenarios/375-p4s1-destination/water.yaml
+  - id: anywhere
+    personality: bug-finder
+    goals: goals/scenarios/375-p4s1-destination/anywhere.yaml
+
+group_goals:
+  - id: destination-line-guides
+    do: Each seat reads the quest log's destination line after every move or step change and follows it.
+    verify: The line always names a real exit from the current room or the right "you are here" message, and following it reaches the quest's NPC or place.
