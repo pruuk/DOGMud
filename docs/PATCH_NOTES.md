@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-10-28: The map shows where your quest leads
+
+- When the place you are looking for is an area, the web map now
+  shades it and writes its name. The shading stops at the edge of the
+  area, with a dashed outline.
+- When you are already inside the area or zone you are looking for,
+  the map says "Somewhere in" and its name.
+- The quest marker on the map is now brass, so it stands out from the
+  rest of the map.
+- The quest panel now shows the same where-to-go line as the quest
+  log.
+
 ## 2026-10-28: The quest log says where to head next
 
 - The quest log now tells you where to head next for the quest you are
