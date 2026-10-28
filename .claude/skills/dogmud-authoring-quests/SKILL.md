@@ -537,6 +537,21 @@ steps:                 # the room and mob ids here are illustrative
   of them; with none perceived, the declared fallback, else every room that
   spawns any of them. A list with no fallback is a finding only when none of
   its mobs is spawned anywhere. One id is written back as a single id.
+- **Choosing a mob's fallback.** An NPC that stays put needs none: its spawn
+  room is the fallback. A beast with several spawns takes a bare `mob`, so an
+  unseen one points at every room that spawns it (quest 33 `start`, the Bandit
+  Scout). A hidden or wandering NPC takes the place it haunts, `zone:` or
+  `area:`, because the player will rarely see it and its spawn room would
+  give away where it hides (quest 61 `bandit`, the Reach-Touched in The Empty
+  Reach). Inside a zone or area fallback the log reads "You are in <name>.".
+- **Seen means seen from where it stands.** A copy counts only when its own
+  room is bright enough for the player; the player's carried light does not
+  reach it. In a dim place (the wash in Pothole Coulee by day) the map shows
+  the spawn rooms or the fallback even with a light up.
+- **Live examples of each kind** are held by
+  `TestShippedContent_EveryDestinationKindHasALiveStep`
+  (`internal/quests/live_destination_kinds_test.go`): area, quest 45 `start`;
+  zone, quest 61 `bandit`. Moving the last step of a kind fails it.
 - **No block:** the destination is inferred from the step's triggers. A
   trigger belongs to the latest step of its own quest that its `has` lists
   (`Quest.CountStep`), and its `room`, `conditions.in_room`, `mob`, `area`
