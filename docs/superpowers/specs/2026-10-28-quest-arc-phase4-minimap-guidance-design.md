@@ -252,7 +252,7 @@ Web client (slice 2):
 | route known, compass exit | `Head north.` |
 | route known, any other exit | `Take the gate.` (the exit name, plain text: the web panel escapes markup) |
 | inside, with a Label | `You are in the unquiet grove.` |
-| inside a fallback set of a mob destination | `You are where <npc> is usually found.` |
+| inside a fallback set of a mob destination | `Usually found around here: <npc>.` (mob names carry no article) |
 | inside otherwise | `You are where you need to be.` |
 | anywhere | `You can do this anywhere.` |
 | destination known, no route from here | `You can't find a way there from here.` |

@@ -15,9 +15,11 @@ func TestGuideLine_EveryCase(t *testing.T) {
 		{Destination{Kind: DestRoom, NextRoom: 2, NextDir: "gate"}, "Take the gate."},
 		{Destination{Kind: DestArea, Label: "the unquiet grove", Inside: true}, "You are in the unquiet grove."},
 		{Destination{Kind: DestZone, Label: "Pothole Coulee", Inside: true}, "You are in Pothole Coulee."},
-		{Destination{Kind: DestArea, Npc: "a wolf", Fallback: true, Inside: true}, "You are where a wolf is usually found."},
-		{Destination{Kind: DestArea, Npc: "the Dock Constable or Jesset", Fallback: true, Inside: true},
-			"You are where the Dock Constable or Jesset is usually found."},
+		// Mob names carry no article ("Dock Constable"), so the line puts
+		// the names after a colon, where any name reads right.
+		{Destination{Kind: DestArea, Npc: "Dock Constable", Fallback: true, Inside: true}, "Usually found around here: Dock Constable."},
+		{Destination{Kind: DestArea, Npc: "Dock Constable or Jesset", Fallback: true, Inside: true},
+			"Usually found around here: Dock Constable or Jesset."},
 		{Destination{Kind: DestMob, Npc: "Velk", Inside: true}, "You are where you need to be."},
 		{Destination{Kind: DestRoom, Inside: true}, "You are where you need to be."},
 		{Destination{Kind: DestRoom}, "You can't find a way there from here."},

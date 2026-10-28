@@ -19,7 +19,7 @@ func GuideLine(d Destination) string {
 		case d.Label != "":
 			return "You are in " + d.Label + "."
 		case d.Fallback && d.Npc != "":
-			return "You are where " + d.Npc + " is usually found."
+			return "Usually found around here: " + d.Npc + "." // names carry no article, so they follow a colon
 		}
 		return "You are where you need to be."
 	}
