@@ -415,7 +415,7 @@ func MoveToRoom(userId int, toRoomId int, isSpawn ...bool) error {
 	// Mender double-spawned (the copy inherits the room's spawn list and spawns
 	// her again), the minimap drew stray connectors from off the grid (the copy
 	// is on another plane with an id above a billion), and quest directional
-	// guidance died (the player's room id matches no quest map_target).
+	// guidance died (the player's room id matches no quest destination).
 	//
 	// Nothing in the room data was ever wrong, which is why cartcheck reported
 	// zero collisions and a panic-mode boot passed: the duplicate was

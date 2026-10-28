@@ -13,7 +13,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -180,7 +179,7 @@ func (g *GMCPCharModule) sightBandChangedHandler(e events.Event) events.Listener
 // roomChangeHandler re-pushes Char.Quests when a player moves.
 //
 // The quest marker's next_room and next_dir are derived from the player's
-// CURRENT room (mapper.NextStep in the Char.Quests build), so they are stale
+// CURRENT room (ResolveDestination in the Char.Quests build), so they are stale
 // the instant the player takes a step. Only Char.Quests is re-sent — not the
 // whole Char node — because movement already pushes Room.Info and Zone.Map, and
 // a full Char push on every step would be pointless traffic.
@@ -720,12 +719,10 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 			// Marker data is computed for the focused quest only.
 			if questPayload.Focused {
-				if target := engine.ResolveQuestTarget(questId, questStep); target != 0 {
-					questPayload.TargetRoom = target
-					if next, dir, ok := mapper.NextStep(user.Character.RoomId, target); ok {
-						questPayload.NextRoom = next
-						questPayload.NextDir = dir
-					}
+				if d := engine.ResolveDestination(user, questId, questStep); d.Kind != questengine.DestNone {
+					questPayload.TargetRoom = d.Pin
+					questPayload.NextRoom = d.NextRoom
+					questPayload.NextDir = d.NextDir
 				}
 			}
 

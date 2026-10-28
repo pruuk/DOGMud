@@ -403,7 +403,7 @@ func TestScanMobReferences_FindsSpawnAndRelationship(t *testing.T) {
 // TestScanMobReferences_FindsQuestRef covers the questRefs seam: the quest
 // loop's refs findings (mobQuestRefs) block the delete as "quest" rows.
 func TestScanMobReferences_FindsQuestRef(t *testing.T) {
-	where := "quest 76 refs: step 1 (b) map_target_mob: mob 9538 does not exist"
+	where := "quest 76 refs: step 1 (b) destination mob: mob 9538 does not exist"
 	refs := scanMobReferencesWith(9538, mobRefIterators{
 		questRefs: func(mobId int) []mobRefEntry {
 			return mobQuestRefEntries([]string{where})

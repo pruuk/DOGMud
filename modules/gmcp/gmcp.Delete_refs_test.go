@@ -28,12 +28,12 @@ func deleteFixture(mod func(q10 *quests.Quest)) questloop.World {
 func TestQuestRefsWithoutRoom_NamesEveryReferencingField(t *testing.T) {
 	w := deleteFixture(func(q *quests.Quest) {
 		q.Triggers[0].Conditions.InRoom = 9001
-		q.Steps[1].MapTarget = 9001
+		q.Steps[1].Destination.Room = 9001
 		q.Rewards.RoomId = 9001
 	})
 	got := questRefsWithoutRoom(w, questloop.Backlog{}, 9001)
 	joined := strings.Join(got, "\n")
-	for _, want := range []string{"in_room", "map_target", "rewards roomid"} {
+	for _, want := range []string{"in_room", "destination room", "rewards roomid"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("refusal must name %s, got %v", want, got)
 		}
@@ -73,11 +73,11 @@ func TestQuestRefsWithoutItem_TriggersActionsAndRewards(t *testing.T) {
 	}
 }
 
-// Every quest field the old mob scan walked, plus the step map_target_mob it
+// Every quest field the old mob scan walked, plus the step destination mob it
 // missed, must refuse a mob delete and name where.
 func TestQuestRefsWithoutMob_NamesEveryReferencingField(t *testing.T) {
 	w := deleteFixture(func(q *quests.Quest) {
-		q.Steps[1].MapTargetMob = 9300
+		q.Steps[1].Destination = quests.StepDestination{Mob: 9300}
 		q.Triggers[0].Mob = 9300
 		bounty := &quests.DeclareBountyDef{}
 		bounty.Target = &struct {
@@ -90,7 +90,7 @@ func TestQuestRefsWithoutMob_NamesEveryReferencingField(t *testing.T) {
 			quests.ActionDef{DeclareBounty: bounty})
 	})
 	joined := strings.Join(questRefsWithoutMob(w, questloop.Backlog{}, 9300), "\n")
-	for _, want := range []string{"map_target_mob", "mob filter", "npc_say", "speaker", "spawn_mob", "declare_bounty"} {
+	for _, want := range []string{"destination mob", "mob filter", "npc_say", "speaker", "spawn_mob", "declare_bounty"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("refusal must name %s, got %q", want, joined)
 		}
@@ -100,8 +100,8 @@ func TestQuestRefsWithoutMob_NamesEveryReferencingField(t *testing.T) {
 	}
 }
 
-func TestBuildMobDelete_RefusedWhileAStepMapTargetMobNamesIt(t *testing.T) {
-	w := deleteFixture(func(q *quests.Quest) { q.Steps[1].MapTargetMob = 9300 })
+func TestBuildMobDelete_RefusedWhileAStepDestinationNamesIt(t *testing.T) {
+	w := deleteFixture(func(q *quests.Quest) { q.Steps[1].Destination = quests.StepDestination{Mob: 9300} })
 	fw := newFakeMobWorld()
 	m := &mobs.Mob{MobId: 9300, Zone: "Testzone"}
 	fw.specs[9300] = m
@@ -111,10 +111,10 @@ func TestBuildMobDelete_RefusedWhileAStepMapTargetMobNamesIt(t *testing.T) {
 	}
 	res := buildMobDelete(d, 9300)
 	if res.Ok || len(fw.deleted) != 0 {
-		t.Fatalf("a mob a step's map_target_mob names must not delete, got %+v", res)
+		t.Fatalf("a mob a step's destination mob names must not delete, got %+v", res)
 	}
-	if len(res.MobRefs) != 1 || res.MobRefs[0].Kind != "quest" || !strings.Contains(res.MobRefs[0].Id, "map_target_mob") {
-		t.Errorf("the refusal must name the step's map_target_mob, got %+v", res.MobRefs)
+	if len(res.MobRefs) != 1 || res.MobRefs[0].Kind != "quest" || !strings.Contains(res.MobRefs[0].Id, "destination mob") {
+		t.Errorf("the refusal must name the step's destination mob, got %+v", res.MobRefs)
 	}
 }
 
@@ -137,13 +137,13 @@ func TestBuildRoomDelete_RefusedWhileAQuestNamesIt(t *testing.T) {
 	w.put(&rooms.Room{RoomId: 2, Zone: "Over", Y: -1})
 	d := w.deps()
 	d.questRefs = func(id int) []string {
-		return []string{"quest 90010 refs: step firstkill map_target: room 2 does not exist"}
+		return []string{"quest 90010 refs: step firstkill destination room: room 2 does not exist"}
 	}
 	res := buildRoomDelete(d, 2)
 	if res.Ok {
 		t.Fatal("a room a quest names must not delete")
 	}
-	if !strings.Contains(res.Error, "quest 90010 refs: step firstkill map_target") {
+	if !strings.Contains(res.Error, "quest 90010 refs: step firstkill destination room") {
 		t.Errorf("the refusal must name the quest and where, got %q", res.Error)
 	}
 	if len(w.deleted) != 0 || len(w.saved) != 0 {

@@ -101,7 +101,6 @@ type oldEngineStep struct {
 	Id          string `yaml:"id"`
 	Description string `yaml:"description,omitempty"`
 	Hint        string `yaml:"hint,omitempty"`
-	MapTarget   int    `yaml:"map_target,omitempty"`
 }
 
 type oldEngineRewards struct {
@@ -363,7 +362,7 @@ func TestUnification_EquivalentToBothOldParses(t *testing.T) {
 		}
 		for i := range od.Steps {
 			if nq.Steps[i].Id != od.Steps[i].Id || nq.Steps[i].Description != od.Steps[i].Description ||
-				nq.Steps[i].Hint != od.Steps[i].Hint || nq.Steps[i].MapTarget != od.Steps[i].MapTarget {
+				nq.Steps[i].Hint != od.Steps[i].Hint {
 				t.Errorf("%s: step %d mismatch vs old questengine parse", f, i)
 			}
 		}

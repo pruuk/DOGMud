@@ -26,8 +26,7 @@ func TestKeys_RefsErrorsDoNotCollide(t *testing.T) {
 	w.Refs = &v
 	w.Quests[0].Triggers[0].Mob = 424242
 	w.Quests[0].Rewards.ItemId = 0
-	w.Quests[0].Steps[0].MapTargetMob = 424243
-	w.Quests[0].Steps[0].MapTarget = 5
+	w.Quests[0].Steps[0].Destination = quests.StepDestination{Mob: 424243, Room: 5}
 	fresh, known2, _ := Ratchet(Validate(w), b)
 	require.Len(t, known2, 1)
 	require.Len(t, fresh, 1, "the second refs error is fresh, got %v", fresh)
@@ -99,7 +98,7 @@ func TestKeys_RefsTextIsStable(t *testing.T) {
 	q := &quests.Quest{QuestId: 53, Triggers: []quests.TriggerDef{{Event: "room_enter", Room: 5}}}
 	require.Equal(t, "trigger room_enter room=5 mob filter: mob 9 does not exist",
 		refsText(q, "trigger 0 mob filter: mob 9 does not exist\n"))
-	require.Equal(t, "step start map_target: room 9 does not exist",
-		refsText(q, " step 0 (start) map_target: room 9 does not exist"))
+	require.Equal(t, "step start destination room: room 9 does not exist",
+		refsText(q, " step 0 (start) destination room: room 9 does not exist"))
 	require.Equal(t, "rewards itemid: item 9 does not exist", refsText(q, "rewards itemid: item 9 does not exist"))
 }
