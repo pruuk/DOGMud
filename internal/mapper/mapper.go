@@ -113,6 +113,12 @@ var (
 // found on the old maps, and the zone graph, so both follow the new room data
 // (#375 phase 4).
 func ClearCache() {
+	resetCaches()
+	buildAllMaps()
+}
+
+// resetCaches empties the map, path and zone-graph caches and builds nothing.
+func resetCaches() {
 	mapperZoneCache = map[string]*mapper{}
 	roomIdToMapperCache = map[int]string{}
 	pathCache.Purge()
@@ -613,8 +619,10 @@ func (r *mapper) GetCoordinates(roomId int) (x, y, z int, err error) {
 }
 
 // FindRoomsInDistance returns every room other than the centre within
-// xyRadius of it by Manhattan distance (|dx| + |dy|) and within the z radius
-// (0 when omitted) up or down. Call for help uses it.
+// xyRadius of it on each axis whose signed offset sum |dx + dy| is at most
+// xyRadius (master's range, kept as shipped: it takes (+2, -2) at radius 2
+// and leaves out (-1, -1) at radius 1), and within the z radius (0 when
+// omitted) up or down. Call for help uses it.
 //
 // A zone's map stops at its border (#375 p4), so when this map sits at
 // authored coordinates it also searches the maps of the zones joined to this
@@ -648,7 +656,8 @@ func (r *mapper) FindRoomsInDistance(centerRoomId int, xyRadius int, zRadiusOpt 
 	if len(foundRooms) == own {
 		return foundRooms
 	}
-	// A stale map left by a forced rebuild can hold a room another map holds.
+	// Report a room once should two maps ever hold it (a forced rebuild now
+	// drops the map it replaces, so none is expected).
 	seen := make(map[int]bool, len(foundRooms))
 	out := foundRooms[:0]
 	for _, id := range foundRooms {
@@ -673,7 +682,10 @@ func (r *mapper) roomsInDistance(center positionDelta, skipRoomId, xyRadius, zRa
 	for z := minZ; z <= maxZ; z++ {
 		for y := minY; y <= maxY; y++ {
 			for x := minX; x <= maxX; x++ {
-				if absInt(center.x-x)+absInt(center.y-y) > xyRadius {
+				// Master's range, kept as shipped: the signed sum |dx + dy|
+				// within the per-axis box, so (+2, -2) is in range at
+				// radius 2. Changing it is a balance call.
+				if absInt((center.x-x)+(center.y-y)) > xyRadius {
 					continue
 				}
 				roomId, _ := r.GetRoomId(x, y, z)
@@ -1381,6 +1393,14 @@ func buildMapper(roomId int, cachedMap *mapper) *mapper {
 		for crawledRoomId, _ := range cachedMap.crawledRooms {
 			delete(roomIdToMapperCache, crawledRoomId)
 		}
+		// Drop the replaced map by its key too: the new map's key names the
+		// room it is built from, so when that is not the old map's root the
+		// old map would stay cached beside it, a second map holding its rooms.
+		for key, m := range mapperZoneCache {
+			if m == cachedMap {
+				delete(mapperZoneCache, key)
+			}
+		}
 	}
 
 	room := rooms.LoadRoom(roomId)
@@ -1428,6 +1448,30 @@ func PreCacheMaps() {
 	// Check biomes for all rooms
 	validateRoomBiomes()
 
+	buildAllMaps()
+
+	// Build the plane registry (which planes are non-Euclidean) before the
+	// consistency pass consults it.
+	rooms.RebuildPlaneRegistry()
+
+	// Warm the cross-zone routing graph here rather than lazily. Every room is
+	// already loaded by this point, so it is nearly free now; deferring it
+	// would stall whichever player first focuses a cross-zone quest.
+	ensureZoneGraph()
+
+	ValidateZoneConsistency()
+}
+
+// buildAllMaps builds every map not yet cached, as boot builds them.
+//
+// ClearCache calls it too. The web map, call for help and adjacency reach a
+// joined zone only through that zone's cached map (WebMap, joinedMaps), so a
+// cache cleared and refilled one zone at a time would stop them at the border
+// until a player happened to visit every neighbour. Rebuilding everything here
+// puts the cache back in its boot state; ClearCache runs only on admin
+// `reload mapcache` and a builder's zone rename or delete, so the cost of a
+// full rebuild is paid rarely, and the hot paths stay free of on-demand checks.
+func buildAllMaps() {
 	// One map per zone, built from the zone's root. A map stops at its zone's
 	// border, so this no longer lets the first zone's map swallow its
 	// neighbours. A room its zone's root cannot reach inside the zone (only
@@ -1440,17 +1484,6 @@ func PreCacheMaps() {
 	for _, roomId := range rooms.GetAllRoomIds() {
 		GetMapper(roomId)
 	}
-
-	// Build the plane registry (which planes are non-Euclidean) before the
-	// consistency pass consults it.
-	rooms.RebuildPlaneRegistry()
-
-	// Warm the cross-zone routing graph here rather than lazily. Every room is
-	// already loaded by this point, so it is nearly free now; deferring it
-	// would stall whichever player first focuses a cross-zone quest.
-	ensureZoneGraph()
-
-	ValidateZoneConsistency()
 }
 
 func validateRoomBiomes() {

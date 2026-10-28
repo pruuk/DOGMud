@@ -21,7 +21,7 @@ import (
 func isolateMapperCaches(t *testing.T) {
 	t.Helper()
 	prevZone, prevRoom := mapperZoneCache, roomIdToMapperCache
-	ClearCache()
+	resetCaches()
 	pathCache.Purge()
 	t.Cleanup(func() {
 		mapperZoneCache, roomIdToMapperCache = prevZone, prevRoom
@@ -457,30 +457,41 @@ func TestFindRoomsInDistanceWithoutZRadius(t *testing.T) {
 	}
 }
 
-// The distance is |dx| + |dy| (pre-existing: |dx + dy|, so a room at dx +2,
-// dy -2 counted as distance 0).
-func TestFindRoomsInDistanceIsManhattan(t *testing.T) {
+// Call for help keeps master's range (cac4f7178): a room within xyRadius of
+// the centre on each axis counts when the signed sum |dx + dy| is at most
+// xyRadius. So the offset (+2, -2) is in range at radius 2 (its sum is 0) and
+// (-1, -1) is not at radius 1. Changing that is a balance call, not a fix.
+func TestFindRoomsInDistanceKeepsMastersSignedSum(t *testing.T) {
 	isolateMapperCaches(t)
 	const base = 43000
 	gridWorld(t, base, 5, 5, func(x, y int) (string, string, bool) { return "zm_one", "", true })
 	id := func(x, y int) int { return base + y*100 + x + 1 }
 	m := GetMapper(id(2, 2))
-	got := map[int]bool{}
-	for _, r := range m.FindRoomsInDistance(id(2, 2), 2, 0) {
-		got[r] = true
-	}
-	for _, xy := range [][2]int{{4, 0}, {0, 4}, {0, 0}, {4, 4}, {4, 1}} {
-		if got[id(xy[0], xy[1])] {
-			t.Errorf("room at (%d,%d) is %d steps from (2,2), outside radius 2", xy[0], xy[1], absInt(xy[0]-2)+absInt(xy[1]-2))
+
+	// Master's result on this grid, cell by cell: (x, y) with x + y in 2..6.
+	var want []int
+	for y := 0; y < 5; y++ {
+		for x := 0; x < 5; x++ {
+			if s := x + y; s >= 2 && s <= 6 && (x != 2 || y != 2) {
+				want = append(want, id(x, y))
+			}
 		}
 	}
-	for _, xy := range [][2]int{{4, 2}, {2, 0}, {3, 1}, {1, 3}, {3, 3}, {1, 1}, {2, 3}} {
-		if !got[id(xy[0], xy[1])] {
-			t.Errorf("room at (%d,%d) is within radius 2 of (2,2) and was not found", xy[0], xy[1])
-		}
+	got := m.FindRoomsInDistance(id(2, 2), 2, 0)
+	sort.Ints(got)
+	sort.Ints(want)
+	if fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("radius 2 from the grid's centre: %v\nwant master's %v", got, want)
 	}
-	if len(got) != 12 {
-		t.Errorf("found %d rooms within radius 2 of a grid's centre, want 12", len(got))
+	inRange := map[int]bool{}
+	for _, r := range got {
+		inRange[r] = true
+	}
+	if !inRange[id(4, 0)] {
+		t.Errorf("the room at offset (+2, -2) must be in range at radius 2, as on master")
+	}
+	if inRange[id(0, 0)] {
+		t.Errorf("the room at offset (-2, -2) must be out of range at radius 2, as on master")
 	}
 }
 
@@ -598,4 +609,53 @@ func TestForcedRebuildShowsAnEditInAJoinedZone(t *testing.T) {
 			t.Errorf("zq_b's web map after a border added in zq_a: %d's exit to %d is %+v; want a full edge", b+4, b+3, edge)
 		}
 	})
+}
+
+// ClearCache (admin `reload mapcache`, a zone rename or delete) leaves every
+// zone's map built, as PreCacheMaps leaves them at boot, so the web map, call
+// for help and adjacency still cross a border afterwards.
+func TestClearCacheRebuildsJoinedMaps(t *testing.T) {
+	isolateMapperCaches(t)
+	const b = 47000
+	joinedEditWorld(t, b)
+	before := GetMapper(b + 2).WebMap().RoomIds()
+	sort.Ints(before)
+
+	ClearCache()
+
+	after := GetMapper(b + 2).WebMap().RoomIds()
+	sort.Ints(after)
+	if fmt.Sprint(after) != fmt.Sprint(before) {
+		t.Errorf("zq_b's web map after ClearCache: %v; before: %v", after, before)
+	}
+	found := false
+	for _, id := range GetMapper(b+2).FindRoomsInDistance(b+2, 1, 0) {
+		found = found || id == b+1
+	}
+	if !found {
+		t.Errorf("call for help from %d after ClearCache misses %d across the border", b+2, b+1)
+	}
+	if id, _ := GetMapper(b+2).FindAdjacentRoom(b+2, "west", 1); id != b+1 {
+		t.Errorf("FindAdjacentRoom west of %d after ClearCache = %d, want %d", b+2, id, b+1)
+	}
+}
+
+// A forced rebuild drops the map it replaces from the cache, whatever room
+// that map was rooted at, so no two cached maps hold one room.
+func TestForcedRebuildDropsTheMapItReplaces(t *testing.T) {
+	isolateMapperCaches(t)
+	const b = 47100
+	joinedEditWorld(t, b)
+	resetCaches()
+	GetMapper(b + 3) // zq_a's map rooted at b+3, as a player's lookup builds it
+	GetMapper(b+1, true)
+	var holders []string
+	for k, m := range mapperZoneCache {
+		if m.HasRoom(b + 1) {
+			holders = append(holders, k)
+		}
+	}
+	if len(holders) != 1 {
+		t.Errorf("cached maps holding %d after a forced rebuild: %v; want exactly one", b+1, holders)
+	}
 }

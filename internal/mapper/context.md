@@ -126,18 +126,21 @@ func (r *mapper) FindAdjacentRoom(centerRoomId int, direction string, limitDista
 ```
 
 `FindRoomsInDistance` (call for help, `mobcommands/callforhelp.go`) returns
-every room other than the centre within `xyRadius` by Manhattan distance
-(`|dx| + |dy|`) and within the z radius (0 when omitted). Since maps stop at
-their border it also searches, when this map sits at authored coordinates
-(`mapper.authored`, set by `placeByAuthoredCoords`), the cached maps of every
-zone the zone graph joins to this one, keeping rooms on the centre's plane;
-an instance room or instance map searches only its own map (#375 phase 4
-Task 19). Fixed with it: no z radius indexed an empty slice (panic), and the
-distance was the signed `|dx + dy|`, so a room at dx +2, dy -2 counted as 0.
-Measured against the pre-split tree on shipped data (every room, radius 1 to
-4): every room within the true distance is still found but 22, which sit on
-another plane (The Foldweave, plane 5, over plane 0 rooms); none is new; the
-11,848 dropped are the signed-sum rooms.
+every room other than the centre within `xyRadius` on each axis whose signed
+offset sum `|dx + dy|` is at most `xyRadius`, and within the z radius (0 when
+omitted). That is master's range, kept as shipped: it takes a room at
+(+2, -2) at radius 2 (sum 0) and leaves out (-1, -1) at radius 1. It is not
+Manhattan distance; changing it is a balance call (#707), and
+`TestFindRoomsInDistanceKeepsMastersSignedSum` pins master's result. Since
+maps stop at their border it also searches, when this map sits at authored
+coordinates (`mapper.authored`, set by `placeByAuthoredCoords`), the cached
+maps of every zone the zone graph joins to this one, keeping rooms on the
+centre's plane; an instance room or instance map searches only its own map
+(#375 phase 4 Task 19). Fixed with it: no z radius indexed an empty slice
+(panic). Measured against the pre-split tree on shipped data with the
+Manhattan form then in place (every room, radius 1 to 4): every room within
+range was still found but 22, which sit on another plane (The Foldweave,
+plane 5, over plane 0 rooms); none was new.
 
 `FindAdjacentRoom` (`build room <dir>`, `teleport <dir>`) walks cells in a
 direction to the first room. Since maps stop at their border it reads a cell
