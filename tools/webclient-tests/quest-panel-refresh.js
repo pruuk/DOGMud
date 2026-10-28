@@ -290,5 +290,22 @@ handleGMCP('Char.Quests', [{ id: 9, name: 'Far Off', completion: 10, focused: tr
 check('the off-map arrow still gets a marker', markerCalls.length > 0 && markerCalls[markerCalls.length - 1] &&
   markerCalls[markerCalls.length - 1].nextRoom === 420, JSON.stringify(markerCalls));
 
+console.log('SCENARIO 10: the marker carries the destination fields');
+reset();
+handleGMCP('Char.Quests', [{ id: 45, name: 'The Unquiet Grove', completion: 40, focused: true, hint: 'Cast in the grove.',
+  target_room: 5311, next_room: 5310, next_dir: 'north', target_kind: 'area', target_label: 'the unquiet grove',
+  target_rooms: [5311, 5312, 5313], inside: false, guide: 'Head north.' }]);
+const m10 = markerCalls[markerCalls.length - 1] || {};
+check('kind passed', m10.kind === 'area', JSON.stringify(m10));
+check('label passed', m10.label === 'the unquiet grove', JSON.stringify(m10));
+check('rooms passed', JSON.stringify(m10.targetRooms) === '[5311,5312,5313]', JSON.stringify(m10));
+check('inside passed', m10.inside === false, JSON.stringify(m10));
+reset();
+handleGMCP('Char.Quests', [{ id: 45, name: 'The Unquiet Grove', completion: 40, focused: true, hint: 'Cast.',
+  target_kind: 'zone', target_label: 'Pothole Coulee', inside: true, guide: 'You are in Pothole Coulee.' }]);
+const m10b = markerCalls[markerCalls.length - 1];
+check('an inside destination with no pin or hop still reaches the map', !!m10b && m10b.inside === true && m10b.kind === 'zone',
+  JSON.stringify(markerCalls));
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);

@@ -834,9 +834,15 @@
                 if (gr && gr.setQuestMarker) {
                     var data = (GMCPStructs.Char && GMCPStructs.Char.Quests) ? GMCPStructs.Char.Quests : [];
                     var f = Array.isArray(data) ? data.filter(function (q) { return q.focused; })[0] : null;
-                    // A cross-zone destination has no room on this map (target_room 0) but still a next hop (#375 p4).
-                    if (f && (f.target_room || f.next_room)) {
-                        gr.setQuestMarker({ targetRoom: f.target_room, nextRoom: f.next_room || 0, nextDir: f.next_dir || "", name: f.name || "" });
+                    // A cross-zone destination has no room on this map (target_room 0) but still a
+                    // next hop, and an area or zone the player stands in has neither but still draws
+                    // its wash and banner (#375 p4).
+                    if (f && (f.target_room || f.next_room || f.inside || (f.target_rooms && f.target_rooms.length))) {
+                        gr.setQuestMarker({
+                            targetRoom: f.target_room || 0, nextRoom: f.next_room || 0, nextDir: f.next_dir || "",
+                            name: f.name || "", kind: f.target_kind || "", label: f.target_label || "",
+                            targetRooms: Array.isArray(f.target_rooms) ? f.target_rooms : [], inside: !!f.inside
+                        });
                     } else {
                         gr.setQuestMarker(null);
                     }

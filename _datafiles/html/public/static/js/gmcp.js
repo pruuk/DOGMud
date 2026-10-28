@@ -638,7 +638,9 @@ class RoomGridSVG {
       const a = this._questMarker, b = marker;
       const same = (!a && !b) || (!!a && !!b
           && a.targetRoom === b.targetRoom && a.nextRoom === b.nextRoom
-          && a.nextDir === b.nextDir && a.name === b.name);
+          && a.nextDir === b.nextDir && a.name === b.name
+          && a.kind === b.kind && a.label === b.label && !!a.inside === !!b.inside
+          && String(a.targetRooms || []) === String(b.targetRooms || []));
       if (same) { return; }
       const oldTarget = a ? a.targetRoom : 0;
       this._questMarker = marker;
@@ -648,7 +650,12 @@ class RoomGridSVG {
       if (newTarget) { this._rebuildRoomToken(newTarget); }
       // Redraw the next-step arrow (removes any prior arrow).
       this._drawQuestArrow();
+      this._drawQuestWash();
+      this._drawQuestBanner();
   }
+
+  _drawQuestWash() {}
+  _drawQuestBanner() {}
 
   /** Rebuild a single room's token in place (e.g. to add/remove its marker). */
   _rebuildRoomToken(id) {
