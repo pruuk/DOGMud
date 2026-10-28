@@ -83,6 +83,14 @@ one of two zones (quest 42). 220 steps across all quests (secret included) set `
     not done while it has `walk-destination` lines in the backlog.
 14. **The block is named `destination:`**, not `target:`, because a trigger's `target:` already
     means the command target kind and both sit in one quest file.
+15. **A step that needs several conversations is split into discrete steps**, one destination
+    each. Instance: quest 72 becomes hear Marrow Fenn, hear Ayres, settle with Hesper, in that
+    fixed order (owner, after the plan's Task 12 check found its one step bundling all three).
+16. **A destination may name several NPCs** when any one of them will do: `mob: [9316, 9300]`.
+    The set is every perceived copy of any of them, so the arrow goes to the nearest; with none
+    perceived, the declared fallback, else the union of their spawn rooms. Instances: quest 63
+    `evidence` (the Dock Constable or Jesset takes the tally-book), quest 68 `choice` (Orin or
+    Clerk Vell takes the survey).
 
 ## 1. The `destination:` block
 
@@ -108,7 +116,8 @@ steps:
 taking the scalar `anywhere` or a mapping of the keys `room`, `mob`, `area`, `zone`, and
 `MarshalYAML` writing them back the same way, so the round-trip test stays a fixed point. Allowed
 shapes, checked in `Quest.Validate`: `anywhere`; `room`; `area`; `zone`; `mob` alone or with exactly
-one of `room`, `area`, `zone` as its fallback. Any other scalar, an unknown key, or two of
+one of `room`, `area`, `zone` as its fallback. `mob` takes one id or a list (ruling 16); in Go it
+is `Mobs []int`, written back as a single id when it holds one. Any other scalar, an unknown key, or two of
 room/area/zone is a load refusal. `ValidateQuestRefs` checks the room, mob, area key and zone name
 exist, under the labels `destination room`, `destination mob`, `destination area`, `destination
 zone`, which the builder's delete refusals then name. The warning "room referenced by no trigger"
