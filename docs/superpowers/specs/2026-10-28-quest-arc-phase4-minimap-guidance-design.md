@@ -89,7 +89,7 @@ one of two zones (quest 42). 220 steps across all quests (secret included) set `
     All three of Hesper's endings now come after hearing both farmers; before, only the
     compromise needed them, and the channel and records endings did not. The channel and the
     records stay optional finds during the Hesper step.
-17. **Directions come from cached per-destination tables, not a search per move** (owner, after
+17. *(Superseded by 18.)* **Directions come from cached per-destination tables, not a search per move** (owner, after
     the per-move search measured above the bar). For a fixed destination (a room, an area, a
     zone's border toward the next zone) one search outward from the destination fills, for every
     room of the zone, the exit that leads closer and the destination room it reaches; every
@@ -97,6 +97,15 @@ one of two zones (quest 42). 220 steps across all quests (secret included) set `
     dropped when a zone's map or the zone graph is rebuilt. The zone graph keeps every border
     link of a zone pair, so a cross-zone table starts from all of them and the arrow aims at the
     nearest border. NPC destinations, whose rooms move, keep the per-call search.
+18. **Zone maps stop at their zone's borders, fixed in this slice** (owner). Measured 2026-10-28:
+    `mapper.discover` follows every exit with no zone check, and `GetMapper` lets the first map
+    claim every room it crawls, so 38 of the 48 loaded zones share one 1,209-room map (13 maps
+    in all), and master's per-move A* sets up state for all of its rooms (about 100 µs cold on
+    shipped data). That cost grows with the world, not the zone. Section 10 is the design. With
+    zone-bounded maps, the destination search is bounded by the player's zone; cross-zone routes
+    go through the zone graph to the nearest border room. Ruling 17's tables are superseded:
+    measured on real zones the bounded search is cheaper than master's, and needs no cache. The
+    design follows a trace of every map consumer (pathto, mob pathing, map rendering, instances).
 16. **A destination may name several NPCs** when any one of them will do: `mob: [9316, 9300]`.
     The set is every perceived copy of any of them, so the arrow goes to the nearest; with none
     perceived, the declared fallback, else the union of their spawn rooms. Instances: quest 63
@@ -317,3 +326,49 @@ the step gets a destination or `anywhere`. The sweep logs each inferred step for
 `context.md` for `questengine`, `quests`, `mapper`, `rooms`, `areas`, `modules/gmcp`; the roadmap
 (phase 4 status, phase 6 editor form, phase 7 exit); the `dogmud-authoring-quests` skill (the
 `destination:` block); PATCH_NOTES; `docs/README.md` for this spec and each plan.
+
+## 10. Zone-bounded maps (ruling 18)
+
+**Principle:** the split changes cost, not behaviour. Every route, map view, help call and
+check that works across zones today keeps working, and the owner's 2026-07-30 rule stands: the
+web map shows rooms a player has explored whatever zone they are in.
+
+Facts (traced 2026-10-28 on shipped data, file:line in the trace report kept with the slice 1
+PR): 13 maps cover 1,305 rooms; one map holds 1,209 rooms across 38 zones; 80 cross-zone
+direction exits leave 78 border rooms; largest zones Pothole Coulee 175, The Confluence 160,
+Ironwind Steppe 123; 13 shipped patrol and schedule legs cross zones and panic at boot if a
+path cannot; every mob `pathto` caller (schedules, patrols, foragers, home recovery, party
+follow, ferry factors, planners) routes across zones today.
+
+1. **Crawl.** `discover` and `startByCrawl` do not queue an exit whose destination lies in
+   another zone. The exit stays on the node (rendering, stubs) and records its destination zone
+   on `nodeExit`, which `Snapshot` reads for `ToZone`, so a border stub to an unloaded room keeps
+   its label. `GetMapper` claims only rooms of the map's own zone; `PreCacheMaps` builds one map
+   per zone.
+2. **Paths.** `GetPath` and `findPath` search across maps: each node is looked up in its own
+   zone's map, scores start empty and grow as rooms are reached (no state for every room up
+   front), authored coordinates stay the heuristic. Same routes as today (prototype: identical
+   length on 2,567 of 2,569 sampled pairs, 2 shorter, same 428 failures), so patrols, schedules
+   and `pathto` behave as before.
+3. **Destination search.** `nearestIn` stays inside the player's zone map. A cross-zone
+   destination takes `nearestZoneHop` for the next zone, then the same in-zone search to the
+   nearest border room toward it (the zone graph keeps every border link of a zone pair, not the
+   first found), replacing `hopToward`'s `GetPath`. Per-move cost is bounded by the zone's size.
+4. **Web map.** `Zone.Map` keeps showing explored rooms outside the current zone: the snapshot
+   gathers the player's visited rooms from the maps of the zones they visited
+   (`VisitedRooms` is keyed by zone), the same rooms it shows today.
+5. **ASCII map.** `GetLimitedMap` stops queueing rooms beyond its draw radius (today it walks the
+   whole reachable world per `map` or look). No visual change.
+6. **Call for help.** `FindRoomsInDistance` searches the maps of every zone within the radius, so
+   helpers across a border still come.
+7. **Checks.** `CheckConsistency` checks a border exit against the far room's node in its own
+   map; `ValidateZoneConsistency` adds a world-wide collision check per plane, so the cross-zone
+   reciprocity, delta and collision checks keep running.
+8. **Builder.** The builder's view of rooms just outside the zone reads them from the template
+   zone index and their own maps; `admin build <dir>` checks placement before building.
+9. **Caches.** A forced map rebuild and `ClearCache` purge `pathCache` and call
+   `InvalidateZoneGraph` (no caller today, so builder edits leave both stale).
+10. **Measure.** The real-zone benchmark (`destination_nearest_bench_test.go`) reports master's
+    cold `NextStep` against the new `GetPath` and `NearestOf` on the largest zone and a town;
+    neither may be slower than master, and the destination search must not grow with world
+    size (a synthetic test doubles the world outside the zone and checks the per-call cost holds).

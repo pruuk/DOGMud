@@ -2163,6 +2163,94 @@ func TestQuestLog_ShowsTheDestinationLine(t *testing.T) {
 
 ---
 
+## Tasks 15 to 21: zone-bounded maps (spec ruling 18, section 10)
+
+Added 2026-10-28 after the owner ruled the map crawl is fixed in this slice. They run BEFORE
+Task 14 (gate, playtest, PR). Each is TDD: the new test fails on the current tree first.
+Prototype code from the trace (a reference, not to copy blindly; it ran only as a
+`go test -overlay`): `<scratchpad>/probe/mapper_bounded.go` (crawl stop) and
+`<scratchpad>/probe/mapper_path_global.go` (cross-map A*), where `<scratchpad>` is this
+session's scratchpad. The trace's evidence and file:line list is in that folder too.
+
+**Order matters:** Tasks 15 and 16 land in one commit, because a crawl stop without the
+cross-map `GetPath` panics boot (patrol `marsh_forager_delivery`, 4143 to 4198).
+
+### Task 15+16: Crawl stops at the zone border; `GetPath` searches across maps
+
+**Files:** `internal/mapper/mapper.go` (`discover`, `startByCrawl`, `GetMapper` claim rule,
+`PreCacheMaps`), `internal/mapper/mapper.node.go` (`nodeExit` gains the destination zone),
+`internal/mapper/mapper.path.go` (`GetPath`, `findPath`), `internal/mapper/mapper.snapshot.go`
+(`ToZone` from the exit), `internal/mapper/mapper.snapshot_cold_test.go` (fixture).
+
+- [ ] Tests first: (a) a crawl over a two-zone fixture holds only its own zone's rooms and keeps
+  the border exit with its destination zone; (b) border rooms are owned by their own zone's map
+  whichever map is built first; (c) `GetPath` across the two fixture zones returns the same path
+  as a single-map search of the same graph; (d) a shipped-data test (DOGMUD_BOOT_SMOKE gated, repo
+  root) that all 13 cross-zone patrol and schedule legs still path, and that 200 seeded room pairs
+  give the same path length as master (record master's lengths into the test from a master run).
+- [ ] Implement: in `discover`/`startByCrawl` skip queuing a destination whose zone differs
+  (zone from `rooms.TemplateRoomZone`, falling back to `LoadRoom` for ephemeral ids); record the
+  destination zone on the exit; `GetMapper` claims only own-zone rooms; `findPath` keeps A* with
+  scores in maps that grow as rooms are reached (no per-room prefill), looks each neighbour up in
+  its owning map, and `GetPath` drops the start-map `HasRoom` check.
+- [ ] Rework `mapper.snapshot_cold_test.go`: the border room of zone `zm_b` becomes a stub that
+  keeps `tozone`. Boot smoke and `TestSmoke_*` pass; `go test ./internal/mapper/ ./internal/mobcommands/ ./internal/hooks/ ./modules/gmcp/` pass.
+- [ ] One commit: `refactor(mapper): zone maps stop at their border; paths cross maps (#375 p4)`.
+
+### Task 17: Destination search bounded to the zone, nearest border
+
+**Files:** `internal/mapper/mapper.nearest.go`, `internal/mapper/mapper.crosszone.go`
+(`buildZoneGraph` keeps every border link per pair; `hopToward` replaced).
+
+- [ ] Tests: `nearestIn` never returns or passes through a room of another zone; a cross-zone
+  destination's first hop leads to the NEAREST border room toward the next zone (fixture with
+  two border links to the same zone at different distances); a test that doubles the rooms
+  outside the player's zone and asserts `nearestIn` visits the same number of rooms.
+- [ ] Implement; `searchesHere` stays.
+- [ ] Commit.
+
+### Task 18: Web map keeps explored rooms of other zones
+
+**Files:** `modules/gmcp/gmcp.Zone.go` (`zoneMapVisited`), its tests.
+
+- [ ] Test first: a player who visited rooms in zones A and B, standing in A, gets the same
+  `Zone.Map` room set as on master (a two-zone fixture; compare against the pre-change output
+  recorded in the test).
+- [ ] Implement: gather visited rooms from the maps of each zone in `VisitedRooms`.
+- [ ] The #650 diff tests (`gmcp.ZoneDiff*`) still pass. Commit.
+
+### Task 19: ASCII map bounded by its radius; call for help across borders
+
+**Files:** `internal/mapper/mapper.go` (`GetLimitedMap`, `FindRoomsInDistance`, and the
+pre-existing missing z-radius panic and signed distance at `mapper.go:561-563`).
+
+- [ ] Tests: `GetLimitedMap` output is unchanged for a fixture (golden) and its walk stops at the
+  radius (count loads); `FindRoomsInDistance` finds a room across a zone border within the
+  radius; called with no z-radius it does not panic; distance is not a signed sum.
+- [ ] Implement. Commit.
+
+### Task 20: Consistency and builder
+
+**Files:** `internal/mapper/mapper.consistency.go`, `ValidateZoneConsistency` (find it),
+`modules/gmcp/gmcp.Build.go` (`sendZoneMapFull` pass 2), `internal/usercommands/admin.build.go`.
+
+- [ ] Tests: a cross-zone non-reciprocal exit and a cross-zone coordinate collision are still
+  reported; the builder's foreign-room list for a zone matches master's on a fixture; `admin build
+  <dir>` refuses a placement onto an occupied cell of a neighbouring zone.
+- [ ] Implement. Shipped data still has 0 consistency findings. Commit.
+
+### Task 21: Caches and measurement
+
+**Files:** `internal/mapper/mapper.go` (`ClearCache`, forced `GetMapper`), `mapper.path.go`,
+`mapper.crosszone.go`, `destination_nearest_bench_test.go`, `internal/mapper/context.md`,
+`mapper.crosszone.go` header comment, `internal/characters/character.go:708-715` comment.
+
+- [ ] Tests: `ClearCache` and a forced rebuild purge `pathCache` (a cached failure no longer
+  returns) and the zone graph rebuilds on next use.
+- [ ] Re-run the real-zone benchmark: master cold `NextStep` vs new `GetPath` (same pairs) vs
+  `NearestOf`, largest zone and a town, `-count=5` medians. Neither may be slower than master;
+  record the table for the PR. Fix the false comments the trace listed. Commit.
+
 ## Self-review
 
 - Spec coverage: section 1 (Tasks 1, 8, 9), section 2 (Tasks 3, 4, 5), section 3 slice 1 part
