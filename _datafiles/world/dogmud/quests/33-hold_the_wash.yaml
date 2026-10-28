@@ -32,7 +32,7 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 5232  # Lower Wash, north of Squatter's Hollow: Bandit Scout (mob 9110)
+      mob: 9110  # the nearest Bandit Scout the player can see; else the four rooms that spawn one
     description: >-
       Garve needs the wash cleared: a bandit scout first, then a bandit
       squatter. The nearest scout is in the Lower Wash, just north of

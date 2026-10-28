@@ -35,7 +35,7 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 5311  # Veil Hollow, west of Orrin; a grove revenant spawns
+      area: unquiet_grove  # the cast counts in any grove room (the cast trigger's area)
     description: >-
       Orrin wants you to fight in the grove and cast while you do it. The
       creatures in the Veil Hollow, the Thinning Wood and the Grove Heart
