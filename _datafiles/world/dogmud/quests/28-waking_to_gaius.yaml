@@ -99,7 +99,7 @@ steps:
     hint: "Say speaks out loud to everyone in the room. Type say hello.
       For more, type help say."
   - id: said
-    destination: anywhere
+    # destination inferred from triggers (#375 p4): the topic_heard on Dewey (mob 9491)
     description: "You spoke, and the world can hear you."
     hint: "Talk starts a conversation with one person, and you choose what
       to ask about. Type talk dewey, then choose the question about the
