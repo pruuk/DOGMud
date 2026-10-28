@@ -320,6 +320,7 @@ type Character struct {
 	QuestProgress           map[int]string                 `yaml:"questprogress,omitempty"`       // quest progress tracking
 	QuestCompletions        map[int]int                    `yaml:"questcompletions,omitempty"`    // completed runs of each repeatable quest (#375 P3)
 	QuestFlags              map[string]string              `yaml:"questflags,omitempty"`          // quest flag tracking (e.g., "11-branch" → "rhett")
+	ShelvedQuests           map[int]string                 `yaml:"shelvedquests,omitempty"`       // abandoned quests: id -> step reached (#375 phase 5)
 	QuestStepCounts         map[string]int                 `yaml:"queststepcounts,omitempty"`     // count: N progress per count trigger, "<questId>-<stepId>-t<triggerIndex>" (quests.CountKey, #375)
 	HeardTopics             []string                       `yaml:"heardtopics,omitempty"`         // heard talk topics, "<mobId>.<key>", sorted (#375)
 	LastQuestId             int                            `yaml:"lastquestid,omitempty"`         // most recently progressed quest
@@ -350,6 +351,7 @@ type Character struct {
 	LastAttackRejectedRound uint64                         `yaml:"-"` // runtime only — round of last player_attack_rejected event fire, for dedupe
 	permanentConditionIds   []int                          // Condition Id's that are always present for this character
 	userId                  int                            // User ID of the character if any
+	resumedQuests           map[int]bool                   // quests resumed from the shelf, until the grant banner takes them (#375 phase 5); not saved
 	busyWired               busyWiring                     // which machines carry the menu busy observer (#375); not saved
 	displacedGear           []DisplacedGear                // runtime only: gear a mutation or species pushed off the body, drained by TakeDisplacedGear (#481)
 	combatPhaseWired        bool                           `yaml:"-"` // true after OnCharacterCreated callbacks have fired once

@@ -108,6 +108,14 @@ func (c *Character) GiveQuestToken(questToken string) bool {
 	}
 
 	questId, newStep := quests.TokenToParts(questToken)
+
+	// An accept of a shelved quest takes it back up where it was (#375 phase 5).
+	if newStep == `start` {
+		if _, resumed := c.ResumeShelvedQuest(questId); resumed {
+			return true
+		}
+	}
+
 	currentProgress := c.QuestProgress[questId]
 
 	currentToken := quests.PartsToToken(questId, currentProgress)
@@ -180,6 +188,67 @@ func (c *Character) ClearQuestToken(questToken string) {
 	if c.LastQuestId == questId {
 		c.LastQuestId = 0
 	}
+}
+
+// ShelveQuest sets an active quest aside (#375 phase 5, owner ruling 1): its
+// step moves from QuestProgress to ShelvedQuests, so every reader of "held"
+// sees it as not held. Flags and step counts stay for the resume. A finished
+// quest, or one not held, is refused.
+func (c *Character) ShelveQuest(questId int) bool {
+	step, ok := c.QuestProgress[questId]
+	if !ok || step == `end` {
+		return false
+	}
+	if c.ShelvedQuests == nil {
+		c.ShelvedQuests = make(map[int]string)
+	}
+	c.ShelvedQuests[questId] = step
+	delete(c.QuestProgress, questId)
+	if c.LastQuestId == questId {
+		c.LastQuestId = 0
+	}
+	return true
+}
+
+// IsShelved reports whether questId is set aside.
+func (c *Character) IsShelved(questId int) bool {
+	_, ok := c.ShelvedQuests[questId]
+	return ok
+}
+
+// ResumeShelvedQuest takes a shelved quest back up at the step it was set
+// aside on, and marks it resumed until TakeResumed reads it.
+func (c *Character) ResumeShelvedQuest(questId int) (string, bool) {
+	step, ok := c.ShelvedQuests[questId]
+	if !ok {
+		return ``, false
+	}
+	delete(c.ShelvedQuests, questId)
+	if len(c.ShelvedQuests) == 0 {
+		c.ShelvedQuests = nil
+	}
+	if c.QuestProgress == nil {
+		c.QuestProgress = make(map[int]string)
+	}
+	c.QuestProgress[questId] = step
+	if !questIsSecret(questId) {
+		c.LastQuestId = questId
+	}
+	if c.resumedQuests == nil {
+		c.resumedQuests = make(map[int]bool)
+	}
+	c.resumedQuests[questId] = true
+	return step, true
+}
+
+// TakeResumed reports, once, whether questId was just resumed from the shelf:
+// the grant banner reads it to say "You take up ... again".
+func (c *Character) TakeResumed(questId int) bool {
+	if !c.resumedQuests[questId] {
+		return false
+	}
+	delete(c.resumedQuests, questId)
+	return true
 }
 
 func (c *Character) SetQuestFlag(key, value string) {
