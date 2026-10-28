@@ -263,6 +263,12 @@ type mapper struct {
 	// (placeByAuthoredCoords), a frame every authored zone shares, and false
 	// after the exit-delta crawl, whose positions are relative to this map.
 	authored bool
+
+	// borderRooms are the far rooms of this map's border exits (an exit to
+	// another zone's room, which the crawl records but does not follow), one
+	// entry per exit, set by the crawl. The web map walks them to the zones
+	// this map joins (WebMap).
+	borderRooms []int
 }
 
 func NewMapper(rootRoomId int) *mapper {
@@ -322,6 +328,7 @@ func (r *mapper) Start() {
 	// rebuild positions the historical way (exit-delta crawl from the root).
 	mudlog.Warn(`mapper`, `detail`, fmt.Sprintf(`zone root %d lacks a clean authored layout; falling back to exit-delta crawl`, r.rootRoomId))
 	r.crawledRooms = make(map[int]*mapNode, 100)
+	r.borderRooms = nil
 	r.startByCrawl()
 }
 
@@ -374,6 +381,7 @@ func (r *mapper) discover() {
 
 		for _, exitInfo := range node.Exits {
 			if exitInfo.ToZone != zone {
+				r.borderRooms = append(r.borderRooms, exitInfo.RoomId)
 				continue
 			}
 			if _, ok := r.crawledRooms[exitInfo.RoomId]; !ok {
@@ -484,10 +492,11 @@ func (r *mapper) startByCrawl() {
 
 		// Now process it
 		for _, exitInfo := range node.Exits {
-			if _, ok := r.crawledRooms[exitInfo.RoomId]; ok {
+			if exitInfo.ToZone != zone {
+				r.borderRooms = append(r.borderRooms, exitInfo.RoomId)
 				continue
 			}
-			if exitInfo.ToZone != zone {
+			if _, ok := r.crawledRooms[exitInfo.RoomId]; ok {
 				continue
 			}
 

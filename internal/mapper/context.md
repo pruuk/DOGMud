@@ -248,8 +248,9 @@ zone holds no member of the set.
   search, a render) finds nothing in this map; look the room up in its own
   zone's map (`GetMapperIfExists` / `GetMapper`), as `findPath` does. The
   destination search (Task 17), the ASCII map and `FindRoomsInDistance`
-  (Task 19) follow that rule; the web map, the consistency checks and the
-  builder view are moving to it in #375 phase 4 Tasks 18, 20 and 21.
+  (Task 19) and the web map (`WebMap`, Task 18) follow that rule; the
+  consistency checks and the builder view are moving to it in #375 phase 4
+  Tasks 20 and 21.
 - **Fixture room ids in tests must not repeat across tests.** The template
   zone index (`rooms.TemplateRoomZone`), which the crawl reads for an exit's
   zone, outlives a test, so a reused id keeps the zone an earlier test gave
@@ -400,7 +401,28 @@ type SnapshotExit struct {
 
 ```go
 func (r *mapper) Snapshot(visited map[int]struct{}) []SnapshotRoom
+func (r *mapper) WebMap() *WebMap
+func (w *WebMap) HasRoom(roomId int) bool
+func (w *WebMap) Snapshot(visited map[int]struct{}) []SnapshotRoom
 ```
+
+**The play client draws `WebMap`, not one zone's `Snapshot`** (#375 phase 4
+Task 18). The owner's 2026-07-30 rule is that the web map shows every room
+the player has explored whatever zone it is in. Before ruling 18 one map
+crawled every room a compass exit reached, so its snapshot did that; now
+`WebMap` gathers the same maps: the zone's map, then breadth-first the map of
+each room in a map's `borderRooms` (the far rooms of its border exits,
+recorded by the crawl), found with `GetMapperIfExists`, so it builds no map.
+A map at crawl positions or an instance copy has its own frame: as the root
+it draws alone, as a joined map it is walked through but not drawn. Its
+`Snapshot` draws each visited room from its own map (once, should a stale map
+also hold it) and makes an exit a full edge when the far room is a visited
+room of any drawn map, as the one shared map did. Compared on shipped data
+against 8534cf6a1 (every room as the current room, a fully and a seeded half
+explored character): all 2,610 payloads identical, including `cz`. Cost about
+master's (0.8 to 0.9 ms for the 1,209-room overworld view, both trees, one
+machine, one run). The builder (`gmcp.Build.go`) still uses one map's
+`Snapshot`.
 
 Iterates `crawledRooms` and returns only rooms whose ID is present in
 `visited`. For each included room, exits are also filtered: an exit is
@@ -409,8 +431,8 @@ client never learns about rooms the player hasn't been to). Each exit's
 `Kind` is set by `classifyKind(nominal, actual)` — the same classifier
 used by the consistency engine.
 
-This method is the sole output consumed by the `gmcp.Zone` module
-(`modules/gmcp/gmcp.Zone.go`), which builds the `Zone.Map` GMCP payload
+Through `WebMap.Snapshot` this is the output consumed by the `gmcp.Zone`
+module (`modules/gmcp/gmcp.Zone.go`), which builds the `Zone.Map` GMCP payload
 and sends it to the web client on every room change. The web client
 renderer (`RoomGridSVG` in `gmcp.js`) uses the `kind` field to route
 each exit to its correct visual treatment: connector line (`normal`/
@@ -426,7 +448,8 @@ its biome name still resolves through `Room.GetBiome`. Exit `ToZone`
 comes from `snapshotZone`, the same live-or-node rule, then the zone the
 exit itself recorded at crawl time (`nodeExit.ToZone`): a border exit's far
 room is in another zone's map, so only the exit names its zone. A border
-exit is always a `Stub` in its own zone's snapshot. Before this, an
+exit is a `Stub` in one zone's own `Snapshot`, and a full edge in
+`WebMap.Snapshot` when the far room is visited. Before this, an
 idle-unloaded room was reparsed from disk per snapshot (~180 ms for 960
 cold rooms locally). `mapper.snapshot_cold_test.go` pins both the
 no-load rule and the payload against a golden from the loading version.

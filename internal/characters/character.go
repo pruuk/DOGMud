@@ -710,9 +710,9 @@ func (c *Character) GetVisitedRooms(zone string) []int {
 // The map is drawn per-zone, but a zone boundary is an engine concept, not a
 // player-facing one: having walked a room, you should keep seeing it when you
 // step over a line you cannot perceive. Callers are expected to intersect this
-// with the current mapper (mapper.HasRoom), which bounds the result to that
-// zone plus the ring of neighbouring rooms its crawl reached — so this does not
-// leak distant geography into a snapshot.
+// with the current zone's web map view (mapper.WebMap HasRoom), which bounds
+// the result to that zone and the zones its exits join, so this does not leak
+// geography the map cannot place into a snapshot.
 func (c *Character) GetAllVisitedRooms() []int {
 	total := 0
 	for _, ids := range c.VisitedRooms {

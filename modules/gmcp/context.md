@@ -560,6 +560,14 @@ current room.
   `zoneMapVisited` (`gmcp.Zone.go`) builds the snapshot's room set and adds
   the current room only when the player's `ParticipantSight` is not
   `SightNone`, so a login in the dark does not name the room (#382 playtest).
+- **`Zone.Map` draws explored rooms of other zones** (owner, 2026-07-30).
+  A zone's map stops at its border (#375 phase 4), so `buildAndSend` draws
+  `mapper.WebMap`, the zone's map plus the map of every zone its border
+  exits reach, and bounds the visited set by its `HasRoom`. On shipped data
+  it gives master's payload for every room (1,305 rooms, a fully and a half
+  explored character, compared 2026-10-28 against 8534cf6a1);
+  `TestZoneMap_ExploredRoomsOfAJoinedZoneMatchMaster` pins a two-zone fixture
+  to master's payload.
 - **`Zone.Map` is sent as a diff (#650), to the web client only.** A telnet
   GMCP client (Mudlet scripts, other tools) was written against a map that is
   every room and may not merge a partial, so `buildAndSend` sends it the whole

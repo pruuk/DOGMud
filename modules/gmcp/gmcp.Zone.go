@@ -149,7 +149,11 @@ func (g *GMCPZoneModule) buildAndSend(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
-	visited := zoneMapVisited(user, room, m.HasRoom)
+	// The zone's map plus the maps of the zones it joins: a zone's map stops
+	// at its border (#375 phase 4), and the web map keeps every explored room
+	// of the joined zones, as it did when one map crawled them all.
+	view := m.WebMap()
+	visited := zoneMapVisited(user, room, view.HasRoom)
 
 	// Current floor (z) so the client shows only the level the player is on.
 	// A room the mapper has no position for is its own floor, keyed exactly as
@@ -193,7 +197,7 @@ func (g *GMCPZoneModule) buildAndSend(e events.Event) events.ListenerReturn {
 	// script, another tool) was written against a Zone.Map that is every room,
 	// so it gets the whole map on every update, as before #650, and no state
 	// is kept for it.
-	snap := m.Snapshot(visited)
+	snap := view.Snapshot(visited)
 	var d zoneDiffResult
 	g.zoneMu.Lock()
 	if isWebClientConnection(user.ConnectionId()) {
@@ -236,11 +240,11 @@ func (g *GMCPZoneModule) buildAndSend(e events.Event) events.ListenerReturn {
 //
 // Every visited room, not just this zone's — a zone boundary is an engine
 // concept the player cannot see, and blanking the map on crossing one reads
-// as amnesia. inCrawl (the zone mapper's HasRoom) bounds this to rooms THIS
-// zone's crawl reached, which is the zone itself plus the ring of neighbours
-// just over its edges; the crawl already spans boundaries (it is how the
-// builder finds foreign rooms to dim), and those neighbours carry positions in
-// this zone's frame, so they place correctly with no coordinate translation.
+// as amnesia. inCrawl (the zone's mapper.WebMap HasRoom) bounds this to the
+// rooms of this zone's map and of the maps of every zone its border exits
+// reach, the rooms one map crawled before zone maps stopped at their border
+// (#375 phase 4). Those maps sit at authored coordinates, one frame for every
+// zone, so the rooms place correctly with no coordinate translation.
 func zoneMapVisited(user *users.UserRecord, room *rooms.Room, inCrawl func(int) bool) map[int]struct{} {
 	visited := map[int]struct{}{}
 	for _, id := range user.Character.GetAllVisitedRooms() {
