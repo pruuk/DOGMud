@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quest destination map demo</title>
+<!--
+  Quest destination map demo (#375 phase 4 slice 2).
+
+  What this is for: the owner's visual check of how the web client's map draws
+  a quest destination. It is NOT loaded by the game and needs no server: open
+  this file straight from disk in a browser.
+
+  It loads the real RoomGridSVG from static/js/gmcp.js and builds three maps in
+  320x300 boxes (the size of the web client's map panel), each fed a small
+  fixture through setZoneSnapshot and centerOnRoom, then given a quest marker:
+
+    1. An L-shaped area the player is NOT in, with the arrow's next room
+       beside the player: brass wash, dashed outline, area name.
+    2. The player INSIDE a zone destination: the "Somewhere in ..." banner.
+    3. A single-room destination: the brass pin plus a next-step arrow.
+
+  Automated checks for the same code live in quest-destination-map.js.
+-->
+<style>
+  body { background: #1a1410; color: #e8dcc0; font-family: sans-serif; margin: 16px; }
+  .row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .cell { width: 320px; }
+  .map { width: 320px; height: 300px; background: #000; }
+  .cap { margin-top: 6px; font-size: 13px; line-height: 1.35; }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="cell"><div id="map1" class="map"></div>
+    <div class="cap">1. Area ahead: the wash covers the six-room L, dashed outline and name. The arrow leaves the player toward it.</div></div>
+  <div class="cell"><div id="map2" class="map"></div>
+    <div class="cap">2. Player inside the zone destination: banner reads "Somewhere in Pothole Coulee".</div></div>
+  <div class="cell"><div id="map3" class="map"></div>
+    <div class="cap">3. One-room destination: brass pin plus a next-step arrow.</div></div>
+</div>
+
+<script src="../../_datafiles/html/public/static/js/gmcp.js"></script>
+<script>
+// The map only calls these when the server is attached; stub them for disk use.
+window.SendGMCP = function () { return true; };
+
+// rooms: [num, x, y, name]. Exits are made between every orthogonal neighbour,
+// so the connectors draw like they do for a real zone.
+function fixture(list) {
+  var at = {};
+  list.forEach(function (r) { at[r[1] + ',' + r[2]] = r[0]; });
+  return list.map(function (r) {
+    var exits = [];
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+      var to = at[(r[1] + d[0]) + ',' + (r[2] + d[1])];
+      if (to != null) exits.push({ to: to, dx: d[0], dy: d[1], dz: 0 });
+    });
+    return { num: r[0], x: r[1], y: r[2], z: 0, symbol: '.', biome: 'road', name: r[3], exits: exits };
+  });
+}
+
+function makeMap(sel, zone, rooms, playerRoom, marker, fit) {
+  var gr = new RoomGridSVG(sel, { cellSize: 80, cellMargin: 80, initialZoom: 0.5 });
+  gr.setZoneSnapshot(zone, fixture(rooms), 0, [], true);
+  gr.centerOnRoom(playerRoom);
+  gr.setQuestMarker(marker);
+  if (fit) gr.fit(); // the same as the panel's "fit" button
+  return gr;
+}
+
+// 1. Player at room 1; room 2 is the road; the area is the L of rooms 3-8.
+makeMap('#map1', 'Grove', [
+  [1, 0, 0, 'Trailhead'], [2, 1, 0, 'Fallen Fence'],
+  [3, 2, 0, 'Grove Edge'], [4, 3, 0, 'Pale Birches'], [5, 4, 0, 'Bent Oak'],
+  [6, 4, 1, 'Mossy Hollow'], [7, 4, 2, 'Root Tangle'], [8, 4, 3, 'Unquiet Clearing']
+], 1, { targetRoom: 8, nextRoom: 2, nextDir: 'east', name: 'The Unquiet Grove', kind: 'area',
+        label: 'the unquiet grove', targetRooms: [3, 4, 5, 6, 7, 8], inside: false }, true);
+
+// 2. Player inside a zone destination (no per-room wash for a whole zone).
+makeMap('#map2', 'Pothole Coulee', [
+  [1, 0, 0, 'Dry Wash'], [2, 1, 0, 'Gravel Bend'], [3, 2, 0, 'Pothole Rim'],
+  [4, 1, 1, 'Sinkhole'], [5, 2, 1, 'Scrub Flat']
+], 2, { targetRoom: 99, nextRoom: 3, nextDir: 'east', name: 'Find the old well', kind: 'zone',
+        label: 'Pothole Coulee', targetRooms: [], inside: true });
+
+// 3. One-room destination, two steps away.
+makeMap('#map3', 'Thornwall', [
+  [1, 0, 0, 'South Gate'], [2, 1, 0, 'Market Row'], [3, 2, 0, 'Chandler Lane'],
+  [4, 2, 1, 'Old Chapel'], [5, 3, 0, 'Quiet Alley']
+], 1, { targetRoom: 4, nextRoom: 2, nextDir: 'east', name: 'Speak to the sexton', kind: 'room',
+        label: '', targetRooms: [], inside: false });
+</script>
+</body>
+</html>
