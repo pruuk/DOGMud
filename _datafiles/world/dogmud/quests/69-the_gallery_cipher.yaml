@@ -9,7 +9,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5901
+    destination:
+      room: 5901
     description: >-
       Dross needs a rubbing of the hand-position cipher worked into the
       processional relief figures in the Grand Temple nave.
@@ -18,8 +19,9 @@ steps:
       Temple Sanctuary. From the Temple Courtyard, go south twice into the
       Sanctuary. Type look reliefs.
   - id: rubbing
-    map_target: 5916  # fallback when Scholar Dross is not spawned
-    map_target_mob: 9360  # follow Scholar Dross (schedule np_temple_dross) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9360  # follow Scholar Dross (schedule np_temple_dross) — a fixed room is wrong for part of the day
+      room: 5916  # fallback when Scholar Dross is not spawned
     description: >-
       You took the cipher rubbing from the reliefs. Dross can read part of
       it, but the key to the full sequence is in the Noble Quarter gallery.
@@ -29,8 +31,9 @@ steps:
       early morning and the evening he reads in the Archive Reading Room,
       east of the courtyard, and he sleeps at night. Type talk dross.
   - id: gallery
-    map_target: 6007  # fallback when Keeper Lysha is not spawned
-    map_target_mob: 9371  # follow Keeper Lysha (schedule np_noble_lysha) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9371  # follow Keeper Lysha (schedule np_noble_lysha) — a fixed room is wrong for part of the day
+      room: 6007  # fallback when Keeper Lysha is not spawned
     description: >-
       Dross sent you to the gallery. The guide, Ferrol, steers visitors to
       the bloodline portraits and away from the older paintings, and away
@@ -45,8 +48,9 @@ steps:
       works upstairs in the afternoon, and sleeps upstairs at night. Type
       talk lysha.
   - id: reading
-    map_target: 5916  # fallback when Scholar Dross is not spawned
-    map_target_mob: 9360  # follow Scholar Dross (schedule np_temple_dross) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9360  # follow Scholar Dross (schedule np_temple_dross) — a fixed room is wrong for part of the day
+      room: 5916  # fallback when Scholar Dross is not spawned
     description: >-
       Keeper Lysha read the third panel against your rubbing: the
       eight-pointed structure stands at a site inland of the present docks.

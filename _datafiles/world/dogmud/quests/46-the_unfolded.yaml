@@ -27,7 +27,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5320
+    destination:
+      room: 5320
     description: >-
       Orrin has set you against the Unfolded. Climb out of the grove through
       the Veil Tear, cross the Folded Distance and the Unraveling, and defeat

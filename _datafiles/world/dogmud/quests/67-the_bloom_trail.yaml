@@ -15,8 +15,9 @@ flags:
 
 steps:
   - id: start
-    map_target: 5523  # fallback when Marn the Draper is not spawned
-    map_target_mob: 9305  # follow Marn the Draper (schedule np_docks_marn) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9305  # follow Marn the Draper (schedule np_docks_marn) — a fixed room is wrong for part of the day
+      room: 5523  # fallback when Marn the Draper is not spawned
     description: >-
       Trace the Bloom to its source. It starts with a clean little
       draper's shop on the docks.
@@ -27,8 +28,9 @@ steps:
       three times to the Outer Dock Lane, then north into Marn's shop. Type
       talk marn.
   - id: front
-    map_target: 5808  # fallback when Falk the Auctioneer is not spawned
-    map_target_mob: 9345  # follow Falk the Auctioneer (schedule np_merchant_falk) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9345  # follow Falk the Auctioneer (schedule np_merchant_falk) — a fixed room is wrong for part of the day
+      room: 5808  # fallback when Falk the Auctioneer is not spawned
     description: >-
       You got past Marn's front. The supply comes up from an address in
       the Old Quarter, 215 Lintel Street, routed through people who
@@ -40,8 +42,9 @@ steps:
       Market Stalls, east, south, east, then south into Falk's Auction
       House. Type talk falk.
   - id: lintel
-    map_target: 6013  # fallback when Wenna the Servant is not spawned
-    map_target_mob: 9369  # follow Wenna the Servant (schedule np_noble_wenna) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9369  # follow Wenna the Servant (schedule np_noble_wenna) — a fixed room is wrong for part of the day
+      room: 6013  # fallback when Wenna the Servant is not spawned
     description: >-
       Falk knows the Lintel Street address as a quiet property held
       through nominal owners.
@@ -55,8 +58,9 @@ steps:
       evening she is in her garret, north twice from the Service Court, and
       she sleeps at night. Type talk wenna.
   - id: delivery
-    map_target: 6029  # fallback when Deren is not spawned
-    map_target_mob: 9379  # follow Deren (schedule np_oldquarter_deren) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9379  # follow Deren (schedule np_oldquarter_deren) — a fixed room is wrong for part of the day
+      room: 6029  # fallback when Deren is not spawned
     description: >-
       Wenna confirmed the delivery house: unmarked goods at odd hours,
       under the bloodline office's eye.
@@ -74,8 +78,9 @@ steps:
       Lower Lintel Street in the late evening, and sleeps at night. Type
       talk deren.
   - id: source
-    map_target: 6031  # fallback when Quill the Lamplighter is not spawned
-    map_target_mob: 9380  # follow Quill the Lamplighter (schedule np_oldquarter_quill) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9380  # follow Quill the Lamplighter (schedule np_oldquarter_quill) — a fixed room is wrong for part of the day
+      room: 6031  # fallback when Quill the Lamplighter is not spawned
     description: >-
       You found 215 Lintel Street: the production room, the apparatus,
       and Deren, exposed but untouchable, the bloodline office at his
@@ -88,7 +93,8 @@ steps:
       of that. He sleeps through the day and is up from late afternoon
       until dawn, in his hovel or out on the Lamp-Walk. Type talk quill.
   - id: witness
-    map_target: 5525
+    destination:
+      room: 5525
     description: >-
       Quill gave his account. With the wrapper, the address, the
       delivery note, and the testimony, you have a case the watch
@@ -100,7 +106,7 @@ steps:
       twice to the Caravan Depot. Go north four times to the Outer Dock Lane,
       then east into the Dock Constable's Post. Type talk constable.
   - id: report
-    map_target: -1  # -1: return-to-giver / in-place (start room 5525); Phase 2 split review
+    # destination inferred from triggers (#375 p4); was: return-to-giver / in-place (start room 5525); Phase 2 split review
     description: >-
       The Dock Constable has the case file. The trade will be broken up,
       but Deren himself stays beyond his reach.

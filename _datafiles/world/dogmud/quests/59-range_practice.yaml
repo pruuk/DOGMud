@@ -25,7 +25,8 @@ cooldown_rounds: 300
 
 steps:
   - id: start
-    map_target: 5354
+    destination:
+      room: 5354
     description: >-
       Bryn has sent you to the Echoing Narrows to put a shot across the
       exit at the canyon scout on the Sounding Floor, then bring it down
@@ -34,7 +35,8 @@ steps:
       Go north to the Echoing Narrows and type fire scout north.
       If it is dark, type cast glow first.
   - id: shoot
-    map_target: 5354
+    destination:
+      room: 5354
     description: >-
       The shot crossed the slot. Stand your ground in the Narrows and finish
       the scout when it reaches you. The drill ends when it falls.

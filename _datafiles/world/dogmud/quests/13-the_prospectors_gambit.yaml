@@ -6,14 +6,15 @@ description: You have chosen to help Geomancer Rhett extract windstone
 secret: false
 steps:
   - id: start
-    map_target: 3030  # travel to Rhett at the Ridge Approach
+    destination:
+      room: 3030  # travel to Rhett at the Ridge Approach
     description: "Tell Geomancer Rhett at the Ridge Approach when you
       are ready to help him begin the windstone extraction."
     hint: "Tell Rhett you are ready to hold the brace. He camps at the
       Ridge Approach: from the Old Citadel Plaza at Thornwall's eastern
       edge, go east seven times. Type talk rhett."
   - id: extraction
-    map_target: -1  # -1: return-to-giver / in-place (start room 3030); Phase 2 split review
+    # destination inferred from triggers (#375 p4); was: return-to-giver / in-place (start room 3030); Phase 2 split review
     description: "Assist Rhett with the delicate extraction process.
       The crystal must be removed without shattering."
     hint: "Hold the brace for Rhett at the Ridge Approach, then tell

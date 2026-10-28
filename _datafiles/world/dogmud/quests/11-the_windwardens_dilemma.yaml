@@ -11,7 +11,7 @@ flags:
     description: "Which NPC the player sided with"
 steps:
   - id: start
-    map_target: -1  # -1: bundled objectives, rooms [3030, 3115]; Phase 2 split review
+    # destination inferred from triggers (#375 p4); was: bundled objectives, rooms [3030, 3115]; Phase 2 split review
     description: "A conflict is brewing on the Ironwind Steppe. Visit
       Windwarden Sylara at the stone circle or Geomancer Rhett at the
       ridge approach, hear what siding with each would mean, and choose
@@ -25,7 +25,7 @@ steps:
   # below; the topic sets the 11-branch flag). Old saves that chose a side before this step existed hold the flag
   # without it; the hand-ins gate on 11-start and the flag, not on this.
   - id: sided
-    map_target: -1  # -1: the side chosen decides the place (3082 totem or 3032 samples)
+    # destination inferred from triggers (#375 p4); was: the side chosen decides the place (3082 totem or 3032 samples)
     description: "You have chosen a side in the dispute over the stone
       circle. Do what they asked of you to prove it."
     hint: "If you sided with Sylara, bring her the carved wolf totem

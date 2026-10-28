@@ -23,7 +23,8 @@ cooldown_rounds: 300
 
 steps:
   - id: start
-    map_target: 5343
+    destination:
+      room: 5343
     description: >-
       Sere has asked you to go back to the Reliquary and search the
       old stones again. The search itself completes the reading.

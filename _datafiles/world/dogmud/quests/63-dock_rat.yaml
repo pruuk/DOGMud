@@ -7,7 +7,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5526
+    destination:
+      room: 5526
     description: >-
       Jesset doesn't buy the theft charge against his hand Teo. He's asked
       you to find who's really been skimming cargo. The foreman, Hewd,
@@ -19,7 +20,7 @@ steps:
       into the Foreman's Office.
       Type look floorboard.
   - id: evidence
-    map_target: -1  # -1: bundled objectives, rooms [5503, 5525]; Phase 2 split review
+    # destination inferred from triggers (#375 p4); was: bundled objectives, rooms [5503, 5525]; Phase 2 split review
     description: >-
       Beneath a loose floorboard in the foreman's office you found Hewd's
       hidden tally-book, with two sets of numbers: proof that he is the one
@@ -29,7 +30,7 @@ steps:
       Foreman's Office. Jesset on the Long Quay will take it too. Type talk
       constable.
   - id: report
-    map_target: -1  # -1: bundled objectives, rooms [5503, 5525]; Phase 2 split review
+    # destination inferred from triggers (#375 p4); was: bundled objectives, rooms [5503, 5525]; Phase 2 split review
     description: >-
       The tally-book is in trusted hands and Hewd's skimming is exposed.
       Teo is in the clear.

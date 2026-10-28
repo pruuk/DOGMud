@@ -10,8 +10,9 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5817  # fallback when Clerk Vell is not spawned
-    map_target_mob: 9349  # follow Clerk Vell (schedule np_merchant_vell) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9349  # follow Clerk Vell (schedule np_merchant_vell) — a fixed room is wrong for part of the day
+      room: 5817  # fallback when Clerk Vell is not spawned
     description: >-
       Dame Ostry is squeezed by Clerk Vell's audit and a held surety
       deposit. She asked you to find out what the tribute pays for and
@@ -22,8 +23,9 @@ steps:
       desk by day, eats in the Central Square at midday, and sleeps at
       night. Type talk vell.
   - id: vell
-    map_target: 5820  # fallback when Horst is not spawned
-    map_target_mob: 9344  # follow Horst (schedule np_merchant_horst) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9344  # follow Horst (schedule np_merchant_horst) — a fixed room is wrong for part of the day
+      room: 5820  # fallback when Horst is not spawned
     description: >-
       Vell says the rate is set by charter and is not negotiable. The
       charter derives from the founding, and you may know more about the
@@ -35,7 +37,8 @@ steps:
       private parlor of the Gilt Threshold instead, and he sleeps at the gate
       in the small hours. Type talk horst.
   - id: horst
-    map_target: 5815
+    destination:
+      room: 5815
     description: >-
       Horst gatekeeps the bloodline's private business and told you, in so
       many words, that the tribute funnels up and discretion is the whole
@@ -47,8 +50,9 @@ steps:
       north into the Gilt Threshold, then east into the parlor. Type look
       paper scrap.
   - id: ledger
-    map_target: 5810  # fallback when Dame Ostry is not spawned
-    map_target_mob: 9347  # follow Dame Ostry (schedule np_merchant_ostry) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9347  # follow Dame Ostry (schedule np_merchant_ostry) — a fixed room is wrong for part of the day
+      room: 5810  # fallback when Dame Ostry is not spawned
     description: >-
       You lifted a page of the tribute ledger: vendor sums all routed to
       one unnamed account, with a note to hold filings until permits clear.

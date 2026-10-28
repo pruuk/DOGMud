@@ -7,7 +7,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 476  # the Records Office — find the tithe ledger
+    destination:
+      room: 476  # the Records Office — find the tithe ledger
     description: "Temple Priest Olen has asked you to investigate discrepancies in
       the tithe records. He suspects merchants in the market are under-reporting
       their income to avoid full tithes. Find the tithe ledger in the Records
@@ -15,8 +16,9 @@ steps:
     hint: "From the Temple Interior, go south twice, then east, then north
       into the Records Office. Type get ledger."
   - id: deliver
-    map_target: 468  # fallback when Temple Priest Olen is not spawned
-    map_target_mob: 95  # follow Temple Priest Olen (schedule thornwall_temple_priest) — a fixed room is wrong for part of the day
+    destination:
+      mob: 95  # follow Temple Priest Olen (schedule thornwall_temple_priest) — a fixed room is wrong for part of the day
+      room: 468  # fallback when Temple Priest Olen is not spawned
     description: "You have the tithe ledger. Take it to Temple Priest Olen. Its
       contents damn both the merchants and the temple."
     hint: "Take the tithe ledger to Temple Priest Olen in the Temple Interior

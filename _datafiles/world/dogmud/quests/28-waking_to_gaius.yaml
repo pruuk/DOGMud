@@ -28,19 +28,19 @@ flags:
 
 steps:
   - id: start
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You have woken, and Dewey has marked your path."
     # Only ever read by typing hint at this step, which finishes it, so it
     # names the step after (R24, owner 2026-10-21).
     hint: "Hint names your next step whenever you are not sure. Next, look
       shows you the room you are in. Type look. For more, type help look."
   - id: hinted
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You read your first hint. That command is your compass now."
     hint: "Look shows you the room you are in. Type look. For more, type
       help look."
   - id: looked
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You took in the room around you."
     hint: "Words shown in a different color in a room are things you can
       look at. Type look guide."
@@ -52,22 +52,22 @@ steps:
     hint: "A close look often shows more. Type look stone to look closer,
       or type north to walk on."
   - id: status_prompt
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You stepped into the place where you meet yourself."
     hint: "Status shows a page about you: what you are good at, and how much
       you have left to spend. Type status. For more, type help status."
   - id: statused
-    map_target: -1  # action step (command/skill), no travel destination
+    destination: anywhere
     description: "You read your six attributes and three pools."
     hint: "Skills are the things you get better at by doing them. Type
       skills. For more, type help skills."
   - id: skilled
-    map_target: -1  # action step (command/skill), no travel destination
+    destination: anywhere
     description: "You read your skills. Each one grows when you use it."
     hint: "Spells are the magic you know. Type spells to list yours. For
       more, type help spells."
   - id: spelled
-    map_target: -1  # action step (command/skill), no travel destination
+    destination: anywhere
     description: "You read the list of spells you know."
     hint: "Chrysalis Glow is a spell that makes a soft light around you. Type
       cast glow. For more, type help chrysalis-glow."
@@ -76,17 +76,17 @@ steps:
       places."
     hint: "To walk to the next room, type its direction. Type north."
   - id: carry_prompt
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "Small things matter out there."
     hint: "Get picks a thing up and puts it in your pack. Type get token.
       For more, type help get."
   - id: got
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "The token is yours now."
     hint: "Inventory lists what you carry and what you wear. Type
       inventory."
   - id: invd
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You checked what you are carrying."
     hint: "Help lists every topic the game can explain. Type help."
   - id: helped
@@ -94,12 +94,12 @@ steps:
       reference."
     hint: "To walk to the next room, type its direction. Type north."
   - id: speaks_prompt
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "Out in the world, people answer when you speak."
     hint: "Say speaks out loud to everyone in the room. Type say hello.
       For more, type help say."
   - id: said
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You spoke, and the world can hear you."
     hint: "Talk starts a conversation with one person, and you choose what
       to ask about. Type talk dewey, then choose the question about the
@@ -109,53 +109,53 @@ steps:
       of what matters is learned that way."
     hint: "To walk to the next room, type its direction. Type north."
   - id: proving_prompt
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "The practice ring, where you make your mistakes safely."
     hint: "A war cry is a shout that steadies you for a fight. Type warcry.
       For more, type help warcry."
   - id: warcried
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "Your war cry steadied your nerve. It is a condition, an
       effect on you."
     hint: "Conditions are effects on you, good or bad. Type conditions to
       see yours. For more, type help conditions."
   - id: saw_conditions
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You read your conditions. They can be good or bad."
     hint: "Big moves need time to rest after you use them. Type cooldowns to
       see which ones are resting. An empty list means they have all rested.
       For more, type help cooldowns."
   - id: checked_cooldowns
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You checked your cooldowns. Your big moves share one
       well."
     hint: "Consider tells you how hard a foe is before you fight it. Type
       consider effigy. For more, type help consider."
   - id: considered
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You read the effigy true. Some fights cannot be won."
     hint: "The ring is safe, so fight anyway. Attack starts a fight. Type
       attack effigy."
   - id: attacked
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You closed with the effigy. Your swings keep going on
       their own."
     hint: "Conviction Spike is a spell that strikes your foe with the force
       of belief. Once your shout has rested, type cast spike. For more, type
       help conviction-spike."
   - id: cast_spike
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You loosed a spike of conviction. Belief is a weapon here."
     hint: "A trip knocks your foe to the ground. Once your spike has rested,
       type trip. For more, type help trip."
   - id: tripped
-    map_target: -1  # action step (command/skill) — no travel destination
+    destination: anywhere
     description: "You put the effigy down: voice, belief, and body, all
       yours."
     hint: "This fight cannot be won. Flee breaks you out of a fight and
       runs you to safety. Type flee. For more, type help flee."
   - id: fled
-    map_target: -1  # -1: no single resolved destination; Phase 2 review
+    # destination inferred from triggers (#375 p4); was: no single resolved destination; Phase 2 review
     description: "You broke away. Running is how you live to win the next one."
     hint: "Dewey is waiting at the Landing for one last word. Type talk
       dewey."

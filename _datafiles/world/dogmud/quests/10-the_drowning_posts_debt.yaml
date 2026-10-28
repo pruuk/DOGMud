@@ -7,8 +7,9 @@ secret: false
 
 steps:
   - id: start
-    map_target: 473  # fallback when Guard Captain Velk is not spawned
-    map_target_mob: 94  # follow Guard Captain Velk (schedule thornwall_guard_captain) — a fixed room is wrong for part of the day
+    destination:
+      mob: 94  # follow Guard Captain Velk (schedule thornwall_guard_captain) — a fixed room is wrong for part of the day
+      room: 473  # fallback when Guard Captain Velk is not spawned
     description: "Tavern keeper Marek at the Drowning Post hands you a protection
       notice when you take this on, as evidence of the racket squeezing his
       business. Take it to Guard Captain Velk at the barracks."
@@ -16,8 +17,9 @@ steps:
       Drowning Post, go north twice, then west twice, then north into the
       barracks. Type talk velk."
   - id: report
-    map_target: 472  # fallback when Tavern Keeper Marek is not spawned
-    map_target_mob: 96  # follow Tavern Keeper Marek (schedule thornwall_tavern_keeper) — a fixed room is wrong for part of the day
+    destination:
+      mob: 96  # follow Tavern Keeper Marek (schedule thornwall_tavern_keeper) — a fixed room is wrong for part of the day
+      room: 472  # fallback when Tavern Keeper Marek is not spawned
     description: "Guard Captain Velk has seen the evidence and will act on it.
       Return to Marek with the good news."
     hint: "Go back to Marek at the Drowning Post tavern and type talk

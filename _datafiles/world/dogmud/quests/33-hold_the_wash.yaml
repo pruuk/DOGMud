@@ -31,7 +31,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5232  # Lower Wash, north of Squatter's Hollow: Bandit Scout (mob 9110)
+    destination:
+      room: 5232  # Lower Wash, north of Squatter's Hollow: Bandit Scout (mob 9110)
     description: >-
       Garve needs the wash cleared: a bandit scout first, then a bandit
       squatter. The nearest scout is in the Lower Wash, just north of
@@ -42,7 +43,8 @@ steps:
       Go north from Squatter's Hollow to the Lower Wash and type attack
       scout. If it is dark, type cast glow first.
   - id: scout
-    map_target: 5235  # Cracked Cistern: Bandit Squatter (mob 9111)
+    destination:
+      room: 5235  # Cracked Cistern: Bandit Squatter (mob 9111)
     description: >-
       One bandit scout is down. The squatter camps in the Cracked
       Cistern, east of Squatter's Hollow. Type flee if the fight turns
@@ -52,7 +54,8 @@ steps:
       From Squatter's Hollow, go east to the Cracked Cistern and type
       attack squatter.
   - id: squatter
-    map_target: 5234
+    destination:
+      room: 5234
     description: >-
       The bandit squatter is down too. Garve waits in Squatter's Hollow,
       west of the Cracked Cistern.

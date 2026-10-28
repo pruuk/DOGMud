@@ -26,7 +26,8 @@ cooldown_rounds: 300
 
 steps:
   - id: start
-    map_target: 5289
+    destination:
+      room: 5289
     description: >-
       Delk wants you to bring down a pronghorn and then forage the Open
       Steppe before you lose the feel for the country. Pronghorn graze the
@@ -36,7 +37,8 @@ steps:
       In the Thornbrake, north of Delk's camp, type attack pronghorn. If it
       is dark, type cast glow first.
   - id: hunt
-    map_target: 5284
+    destination:
+      room: 5284
     description: >-
       One pronghorn down. Forage the Open Steppe, north of the Steppe Fringe,
       to finish the run. The forage ends it; you do not need to go back to

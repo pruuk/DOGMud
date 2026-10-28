@@ -7,7 +7,7 @@ secret: false
 
 steps:
   - id: start
-    map_target: -1  # -1: no single resolved destination (near [6438]); Phase 2 review
+    # destination inferred from triggers (#375 p4); was: no single resolved destination (near [6438]); Phase 2 review
     description: >-
       You have shown Veyra a piece of your own making. She will share a
       secret recipe now.

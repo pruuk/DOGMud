@@ -20,7 +20,8 @@ cooldown_rounds: 300
 
 steps:
   - id: start
-    map_target: 5245
+    destination:
+      room: 5245
     description: >-
       Ovell has asked you to put your blacksmithing to work once more.
       Any recipe made at the forge in the Coulee Smithy counts, and the

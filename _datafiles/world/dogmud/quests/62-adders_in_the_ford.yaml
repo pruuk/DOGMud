@@ -8,7 +8,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5423
+    destination:
+      room: 5423
     description: >-
       Tamsin Reed asked you to kill the marsh adder that lairs in the
       reeds on the south approach to the ford. It keeps striking her
@@ -18,7 +19,8 @@ steps:
       the marsh adder lies hidden in the reeds. Kill it, then come back
       and tell Tamsin at the Ford Approach.
   - id: adder
-    map_target: 5425
+    destination:
+      room: 5425
     description: >-
       The marsh adder that lairs in the reeds is dead. Report back to
       Tamsin at the ford landing.

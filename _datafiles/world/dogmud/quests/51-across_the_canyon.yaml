@@ -36,7 +36,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5354  # Echoing Narrows — the shoot trigger is scoped to this room
+    destination:
+      room: 5354  # Echoing Narrows — the shoot trigger is scoped to this room
     description: >-
       Bryn wants you to take the canyon scout posted on the Sounding Floor,
       and to do it the hard way: with a shot from the chamber below, before
@@ -46,14 +47,16 @@ steps:
       Go north to the Echoing Narrows and type fire scout north.
       If it is dark, type cast glow first.
   - id: shoot
-    map_target: 5354  # Echoing Narrows — hold this ground; the scout charges to you (was 5356, where it no longer is)
+    destination:
+      room: 5354  # Echoing Narrows — hold this ground; the scout charges to you (was 5356, where it no longer is)
     description: >-
       Your shot crossed the gap and bit. The scout is coming for you. Hold
       your ground in the Narrows and put it down when it arrives.
     hint: >-
       When the scout reaches you, type fire scout until it falls.
   - id: kill
-    map_target: 5353
+    destination:
+      room: 5353
     description: >-
       The scout is down. You reached across the canyon and stood your ground
       when the fight came to you. Scout Bryn waits in the Canyon Mouth.

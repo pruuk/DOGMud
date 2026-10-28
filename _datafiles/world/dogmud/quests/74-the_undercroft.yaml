@@ -10,14 +10,16 @@ secret: false
 
 steps:
   - id: start
-    map_target: 6189  # fallback when Brother Cael is not spawned
-    map_target_mob: 9465  # follow Brother Cael (schedule cf_cael) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9465  # follow Brother Cael (schedule cf_cael) — a fixed room is wrong for part of the day
+      room: 6189  # fallback when Brother Cael is not spawned
     description: "Brother Cael has set you to examine three of the temple's
       construction records that disagree with its founding story."
     hint: "First, the building ledger open on the stand in the Archive, beside
       Brother Cael. Type look ledger."
   - id: ledger
-    map_target: 6188
+    destination:
+      room: 6188
     description: "The building ledger accounts for the temple's raising in
       meticulous detail, and is oddly silent on the oldest, lowest courses,
       as if the foundation were received, not built."
@@ -25,7 +27,8 @@ steps:
       Archive, go west to the North Walk, then west into the Chapter House.
       Type look record."
   - id: record
-    map_target: 6198
+    destination:
+      room: 6198
     description: "The consecration record's own wording gives it away: the
       Founders consecrated the site, language that assumes something was
       already standing there to consecrate."
@@ -34,8 +37,9 @@ steps:
       east twice to the Prioress's Oratory, then south into the Older East
       Corridor. Type look survey."
   - id: survey
-    map_target: 6189  # fallback when Brother Cael is not spawned
-    map_target_mob: 9465  # follow Brother Cael (schedule cf_cael) — a fixed room is wrong for part of the day
+    destination:
+      mob: 9465  # follow Brother Cael (schedule cf_cael) — a fixed room is wrong for part of the day
+      room: 6189  # fallback when Brother Cael is not spawned
     description: "The mason's survey is plainest of all: the lower courses are
       older work, cut by hands the temple's records do not name. Three records,
       one conclusion: the temple was raised on something older."
@@ -44,7 +48,8 @@ steps:
       Cloister Garth, north to the North Walk, then east into the Archive. He
       sleeps in the archive chair late at night. Type talk cael."
   - id: descent
-    map_target: 6215
+    destination:
+      room: 6215
     description: "Cael has heard you out, and Aldric, reluctantly, has granted
       a supervised descent. The stair down lies past the Older East Corridor.
       Go down when you are ready."
@@ -59,7 +64,7 @@ steps:
   # out. Each first explains what the player is signing up for, and
   # neither choice can be undone.
   - id: reveal
-    map_target: -1  # -1: bundled objectives, rooms [6167, 6188]; Phase 2 split review
+    # destination inferred from triggers (#375 p4); was: bundled objectives, rooms [6167, 6188]; Phase 2 split review
     description: "In a sealed chamber beneath the temple you found the old sky
       carved in four rings, where the temple's teaching keeps to three, and took a
       rubbing of it. There was a fourth. Aldric the Keeper would keep the proof

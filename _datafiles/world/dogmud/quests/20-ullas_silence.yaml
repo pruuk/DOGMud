@@ -14,7 +14,8 @@ flags:
 
 steps:
   - id: start
-    map_target: 4138
+    destination:
+      room: 4138
     description: "Ulla has asked you to look through her late husband
       Elgar's things in the workshop above her parlor. She cannot bring
       herself to do it. She wants to know what was on his mind in the
@@ -23,7 +24,8 @@ steps:
       Something is carved into the handle of the vise on Elgar's
       bench. Type look carving."
   - id: workshop_carving
-    map_target: 4122
+    destination:
+      room: 4122
     description: "Beneath the cast-iron handle of Elgar's bench-vise,
       a long tight spiral inside an outer circle has been scratched
       into the metal. Old work. Older than the cottage. Whoever
@@ -33,7 +35,8 @@ steps:
       south twice to Lakefront Square, then east three times to the
       Temple Approach. Type look pillars."
   - id: temple_pillars
-    map_target: 4124
+    destination:
+      room: 4124
     description: "The two stone pillars on the Temple Approach carry
       the same spiral as Elgar's bench-vise, cut long before the
       present temple was built. The temple garden, south of the
@@ -42,7 +45,8 @@ steps:
       south into the Temple Garden. A marker is buried at the foot of
       the crab-apple tree. Type look marker."
   - id: garden_marker
-    map_target: 4144
+    destination:
+      room: 4144
     description: "The marker beneath the crab-apple tree carries the
       same spiral, older than the temple. Northwest of the town, on a
       low rise, stand a circle of wardstones and the ruin of an old
@@ -53,7 +57,8 @@ steps:
       Old Chapel Ruin is west of the circle. Go west, and type look
       altar."
   - id: chapel_altar
-    map_target: 4145
+    destination:
+      room: 4145
     description: "The altar stone in the Old Chapel Ruin bears the
       same spiral. The chapel stood here long before the temple was
       built in town. The Wardstone Circle, just east, has a carved
@@ -61,7 +66,8 @@ steps:
     hint: "Go back east into the Wardstone Circle. A carved altar slab
       lies at its centre. Type look slab."
   - id: wardstone_altar
-    map_target: 4130
+    destination:
+      room: 4130
     description: "The altar slab in the Wardstone Circle carries the
       spiral too, the fourth site, and a worn line, almost a channel,
       pointing east toward the lake. The chapel and the wardstones
@@ -78,8 +84,9 @@ steps:
       west into the Bone Shoals. A cache is hidden under the cairn
       there. Type look cache."
   - id: bone_shoals_cache
-    map_target: 4106  # fallback when Smith Brindle is not spawned
-    map_target_mob: 337  # follow Smith Brindle (schedule brindle) — a fixed room is wrong for part of the day
+    destination:
+      mob: 337  # follow Smith Brindle (schedule brindle) — a fixed room is wrong for part of the day
+      room: 4106  # fallback when Smith Brindle is not spawned
     description: "Elgar's cache lay where he hid it before going
       deeper: an oilskin pouch with a folded note to Brindle the
       smith, a small Stillwater Black Pearl, and a curl of waxed
@@ -97,7 +104,8 @@ steps:
       Pike & Lantern instead, just west of Lakefront Square. He
       sleeps at night. Type talk brindle."
   - id: brindle_confession
-    map_target: 4140
+    destination:
+      room: 4140
     description: "Brindle was Elgar's friend and was meant to go down
       with him. He did not go that day. The hook-spear Elgar ordered
       has sat half-finished on his bench ever since. Now that he has
@@ -110,8 +118,9 @@ steps:
       Cottage, into Stillwater Cemetery. The turf at the foot of
       Elgar's grave has been disturbed. Type look disturbance."
   - id: kingfisher_found
-    map_target: 4136  # fallback when Vella Thorne is not spawned
-    map_target_mob: 355  # follow Vella Thorne (schedule vella) — a fixed room is wrong for part of the day
+    destination:
+      mob: 355  # follow Vella Thorne (schedule vella) — a fixed room is wrong for part of the day
+      room: 4136  # fallback when Vella Thorne is not spawned
     description: "Beneath Elgar's empty grave, Vella buried a small
       wooden box with a single carved kingfisher and a note in her
       own hand reading 'He was your brother.' The kingfisher is
@@ -122,7 +131,8 @@ steps:
       sits with Ulla in Ulla's Parlor. She sleeps at night. Type talk
       vella."
   - id: vella_journal
-    map_target: 4137
+    destination:
+      room: 4137
     description: "Vella has accepted the kingfisher and entrusted you
       with Elgar's last journal entry, the page he wrote the morning
       before he went down. The page records what he expected to

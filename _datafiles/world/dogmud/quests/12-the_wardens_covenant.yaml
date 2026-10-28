@@ -6,7 +6,8 @@ description: You have chosen to support Windwarden Sylara and protect
 secret: false
 steps:
   - id: start
-    map_target: 3115  # travel to Sylara at the Stone Circle
+    destination:
+      room: 3115  # travel to Sylara at the Stone Circle
     description: "Windwarden Sylara has offered to teach you the
       ancient covenant. Tell her at the stone circle when you are
       ready for the ritual."
@@ -15,7 +16,7 @@ steps:
       Citadel Plaza at Thornwall's eastern edge, go east seven times,
       south twice, then east. Type talk sylara."
   - id: ritual
-    map_target: -1  # -1: return-to-giver / in-place (start room 3115); Phase 2 split review
+    # destination inferred from triggers (#375 p4); was: return-to-giver / in-place (start room 3115); Phase 2 split review
     description: "Sylara has begun the binding ritual at the stone
       circle. Open yourself to the spirits of the steppe and complete
       the binding."

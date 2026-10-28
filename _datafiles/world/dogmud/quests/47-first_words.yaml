@@ -21,14 +21,16 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5324
+    destination:
+      room: 5324
     description: >-
       The way of the folk is mostly the way of asking, and of knowing where
       to look a thing up. Start with the in-game help.
     hint: >-
       Type help.
   - id: help
-    map_target: 5324
+    destination:
+      room: 5324
     description: >-
       You opened the help reference -- your surest guide when memory fails.
       Return to Wenna.

@@ -27,7 +27,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5280
+    destination:
+      room: 5280
     description: >-
       Falv has set you on the mire. The spirit of the swamp is a hard
       fight: brew healing salves and carry firebombs before you go. From

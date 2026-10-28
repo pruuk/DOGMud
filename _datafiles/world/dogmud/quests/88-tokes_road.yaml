@@ -13,7 +13,7 @@
 #               when the player accepts Toke's footing walk (31-start) without
 #               handing this in first, so the quest never lingers.
 #
-# map_target 5203 (Hub Square) is the fallback; Toke follows his schedule
+# destination room 5203 (Hub Square) is the fallback; Toke follows his schedule
 # (pothole_toke), so the marker follows him.
 
 questid: 88
@@ -25,8 +25,9 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5203  # fallback when Crier Toke is not spawned
-    map_target_mob: 9106  # follow Crier Toke (schedule pothole_toke)
+    destination:
+      mob: 9106  # follow Crier Toke (schedule pothole_toke)
+      room: 5203  # fallback when Crier Toke is not spawned
     description: >-
       Crier Toke waits in Hub Square, just south of the Awakening Pool. He
       will teach you the town.

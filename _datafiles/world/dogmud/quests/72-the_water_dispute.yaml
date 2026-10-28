@@ -29,7 +29,7 @@ flags:
 
 steps:
   - id: start
-    map_target: -1  # -1: branching investigation: hear two farmers (6072, 6073), then settle it with Hesper (6061); the channel (6078) and records (6060) are optional finds
+    # destination inferred from triggers (#375 p4); was: branching investigation: hear two farmers (6072, 6073), then settle it with Hesper (6061); the channel (6078) and records (6060) are optional finds
     description: >-
       Amber Valley's two dryside farms are feuding over a cut irrigation
       channel. Hear both sides, and find a way to settle it with Hesper at

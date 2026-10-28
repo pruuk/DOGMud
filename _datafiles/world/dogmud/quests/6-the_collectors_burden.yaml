@@ -7,7 +7,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 476
+    destination:
+      room: 476
     description: "Toll collector Harn at the tollhouse hands you a maintenance
       report when you take this on. It documents the bridge's structural
       problems. He needs it delivered to Clerk Pell in the Records Office in
@@ -17,8 +18,9 @@ steps:
       city and along Main Street to its east end. The Records Office is
       north of there. Type talk pell."
   - id: report
-    map_target: 421  # fallback when Toll Collector Harn is not spawned
-    map_target_mob: 86  # follow Toll Collector Harn (schedule watchers_harn) — a fixed room is wrong for part of the day
+    destination:
+      mob: 86  # follow Toll Collector Harn (schedule watchers_harn) — a fixed room is wrong for part of the day
+      room: 421  # fallback when Toll Collector Harn is not spawned
     description: "Clerk Pell has filed Harn's maintenance report with the magistrate.
       Return to Harn at Watchers Crossing and tell him the report has been delivered."
     hint: "Return to Toll Collector Harn at Watchers Crossing. From the

@@ -14,7 +14,8 @@ flags:
 
 steps:
   - id: start
-    map_target: 4121  # Cave Mouth — sole entrance to the cave system (down -> 4127)
+    destination:
+      room: 4121  # Cave Mouth — sole entrance to the cave system (down -> 4127)
     description: "Constable Drunn has posted a bounty on the lake-cave creatures.
       Clear the shallows of shrimp swarms, deal with at least one drowned
       hunter, then come back to the constabulary for further instructions.
@@ -26,15 +27,17 @@ steps:
       Dripping Antechamber. Skitter-shrimp swarms gather there. Type
       attack swarm."
   - id: shrimp
-    map_target: 4128  # Pool Chamber — first room a Drowned Hunter (mob 331) can hold
+    destination:
+      room: 4128  # Pool Chamber — first room a Drowned Hunter (mob 331) can hold
     description: "You have cleared a swarm of skitter-shrimp from the cave
       shallows. The fishing nets will hold longer."
     hint: "Drowned hunters hide deeper in the caves and strike first.
       From the Dripping Antechamber, go north into the Pool Chamber.
       When a hunter attacks, type attack hunter."
   - id: hunter
-    map_target: 4110  # fallback when Constable Drunn is not spawned
-    map_target_mob: 335  # follow Constable Drunn (maxwander 2) — a fixed room is wrong for part of the day
+    destination:
+      mob: 335  # follow Constable Drunn (maxwander 2) — a fixed room is wrong for part of the day
+      room: 4110  # fallback when Constable Drunn is not spawned
     description: "You have killed a drowned hunter. The shallows are
       meaningfully safer."
     hint: "Report to Constable Drunn. Go back to the Dripping
@@ -43,7 +46,7 @@ steps:
       twice to Lakefront Square. Go north twice to North Square, then
       east into the Constabulary. Type talk drunn."
   - id: signed
-    map_target: -1  # -1: bundled objectives, rooms [4110, 4116]; Phase 2 split review
+    # destination inferred from triggers (#375 p4); was: bundled objectives, rooms [4110, 4116]; Phase 2 split review
     description: "Drunn has signed the upgraded bounty. The constabulary will
       pay handsomely for proof that the deepest threat in the sump has been
       put down, but the warrant is now yours to pursue or to walk away

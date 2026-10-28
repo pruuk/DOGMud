@@ -34,7 +34,8 @@ secret: false
 
 steps:
   - id: start
-    map_target: 5343
+    destination:
+      room: 5343
     description: >-
       Sere wants you to find what lies beneath the shrine. In the Reliquary, the
       deepest back-chamber, the flagstone floor has cracked and heaved over
@@ -51,7 +52,8 @@ steps:
       search floor. Typing just search covers the whole room, slower and
       less sure. For more, type help search.
   - id: find
-    map_target: 5341
+    destination:
+      room: 5341
     description: >-
       You worked a disc of pale, impossible metal free of the floor: a thing
       older than the folk, marked with a sign even the loresingers cannot read.
