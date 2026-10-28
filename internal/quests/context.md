@@ -116,11 +116,11 @@ It replaced the retired `map_target` and `map_target_mob` fields. Shapes:
 
 ```yaml
 destination: anywhere          # no marker, no unknown-destination warning
-destination: {room: 5012}      # one room
-destination: {area: grove}     # a named area (internal/areas)
-destination: {zone: Frostfang} # a whole zone
-destination: {mob: 84}         # the live copies of an NPC the player perceives
-destination: {mob: 84, area: grove}  # a mob with a fallback (room, area or zone)
+destination: {room: 5200}             # one room
+destination: {area: unquiet_grove}    # a named area (internal/areas)
+destination: {zone: Pothole Coulee}   # a whole zone, by the display name rooms store
+destination: {mob: 84}                # the live copies of an NPC the player perceives
+destination: {mob: 84, area: unquiet_grove}  # a mob with a fallback (room, area or zone)
 destination: {mob: [9316, 9300]}     # several NPCs, any one of which will do
 ```
 

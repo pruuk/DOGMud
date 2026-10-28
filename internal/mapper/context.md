@@ -15,8 +15,8 @@ the same crawl.
 `discover` and `startByCrawl` do not queue an exit whose destination is in
 another zone (zone from `rooms.TemplateRoomZone`, falling back to `LoadRoom`
 for an instance room id, in `roomZone`). The exit stays on its node and
-records the far room's zone in `nodeExit.ToZone`. `GetMapper` claims only
-rooms of the map's own zone, so every room belongs to its own zone's map
+records the far room's zone in `nodeExit.ToZone`. `buildMapper` (which
+`GetMapper` calls) claims only rooms of the map's own zone, so every room belongs to its own zone's map
 whichever map is built first. On shipped data (2026-10-28) that is 50 maps
 over 1,305 rooms, the largest 175 rooms (Pothole Coulee), no map holding two
 zones; Ferries alone has 3 maps, its rooms being unconnected. Before, one map
@@ -100,7 +100,13 @@ func (m *mapper) OverrideRoomIds(replacements map[int]int)
 graph and runs `ValidateZoneConsistency`.
 
 **Refreshing the caches** (#375 phase 4 Task 21). `ClearCache` drops every
-map, the path cache and the zone graph. `GetMapper(id, true)` rebuilds the
+map, the path cache and the zone graph, then rebuilds every zone's map as
+`PreCacheMaps` does (`buildAllMaps`): the web map, call for help and
+adjacency reach a joined zone only through its cached map, so a cache refilled
+one zone at a time would stop them at the border. It runs only on admin
+`reload mapcache` and a builder's zone rename or delete. A rebuild drops the
+map it replaces from the cache by key, so no stale second map keeps holding
+its rooms. `GetMapper(id, true)` rebuilds the
 room's map and, through `rebuildJoinedMaps`, every map its border exits reach
 (directly or through other zones, each from its own root), then drops the
 path cache and the zone graph. Before zone maps stopped at their border, a
@@ -222,9 +228,12 @@ as rooms are reached, so the cost is the rooms the search touches, not a map's
 size. The heuristic is the Manhattan distance between node positions (the
 authored coordinates, unless a zone fell back to the exit-delta crawl).
 `TestShippedRoutesSurviveZoneBoundedMaps` (repo root, `DOGMUD_BOOT_SMOKE`)
-holds 200 seeded shipped pairs to master's lengths
-(`testdata/mapper_route_lengths.golden`) and checks the 13 cross-zone patrol
-and schedule legs. `NextStep` still falls back to `crossZoneHop` when `GetPath`
+holds the (from, to, length) triples of
+`testdata/mapper_route_lengths.golden`, recorded from master's mapper, as a
+regression baseline: each route may be shorter than recorded or equal, never
+longer, and a recorded failure must still fail. A triple whose room no longer
+exists is skipped and counted. It also checks the 13 cross-zone patrol and
+schedule legs. `NextStep` still falls back to `crossZoneHop` when `GetPath`
 fails across zones; see Cross-Zone Routing below.
 
 ### Nearest of a set (`mapper.nearest.go`, #375 phase 4)

@@ -368,6 +368,10 @@ this phase to re-enable.
 8. Pickers for mobs, items, rooms, quests, spells and areas; a dropdown for trigger events; no
    raw YAML editing. Each step gets a `destination:` editor (room, mob with an optional
    fallback, area, zone, or `anywhere`) that shows the inferred destination when left empty.
+   The editor's step form (`quests.js`, the "No marker" and "Map target room" fields around
+   lines 749 to 757) still writes `map_target`, which the loader no longer reads and
+   `TestQuestFilesCarryNoMapTargetKey` refuses: it must write `destination:` and stop
+   writing `map_target` before the editor is switched back on.
 9. A "New quest" wizard that creates the giver's offer topic, a first step with its hint slot,
    and the hand-in topic, so the loop exists from the first click.
 10. A live rule checklist beside the editor (starts and ends at an NPC, every step hinted, one

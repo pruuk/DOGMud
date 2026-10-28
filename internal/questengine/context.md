@@ -257,10 +257,12 @@ exit.
 `destination_test.go`): `liveCopies`, `sightIn`, `templateRoom`, `roomZone`,
 `spawnRoomsOf`, `npcName`, `nearestOf`, `secretExitsKnownTo`.
 
-**`GuideLine(Destination) string`** is the one line both the `quest` command
-(`usercommands/quests.go`) and the web quest panel (`gmcp.Char.go`, the
-`guide` field) show: "Head north.", "Take the stairs.", "You are in the
-grove.", "You can do this anywhere.", "Destination unknown.", and so on.
+**`GuideLine(Destination) string`** is the one destination line: "Head
+north.", "Take the stairs.", "You are in the grove.", "You can do this
+anywhere.", "Destination unknown.", and so on. The `quest` command
+(`usercommands/quests.go`) prints it, and the GMCP quest payload
+(`gmcp.Char.go`) carries it as the `guide` field. The web client does not
+read `guide` yet: the quest panel shows it from phase 4 slice 2.
 
 **`Destinations(qs) (findings, inferred)`** is the static rule, a walk rule
 like the walkthrough: boot (`destinationDoor` in `main_quests.go`) logs its

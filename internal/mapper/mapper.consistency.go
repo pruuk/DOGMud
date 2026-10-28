@@ -329,9 +329,10 @@ func sign(v int) int {
 }
 
 // FilterFindingsToZone drops findings whose room belongs to a different zone.
-// The per-zone crawl can cross zone boundaries, so CheckConsistency may return
-// findings for foreign rooms; this scopes them to their owning zone for accurate
-// reporting/attribution.
+// Since #375 phase 4 a zone's crawl stops at its border, so a zone map's
+// CheckConsistency findings name only its own rooms and this filter keeps
+// them all; it stays as a guard for the callers (internal/guards) that scope
+// findings to the zone they report on.
 func FilterFindingsToZone(findings []Finding, zone string) []Finding {
 	out := findings[:0:0] // new backing array, preserve nil-vs-empty sanity
 	for _, f := range findings {
