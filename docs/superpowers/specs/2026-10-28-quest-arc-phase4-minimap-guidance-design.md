@@ -357,11 +357,11 @@ follow, ferry factors, planners) routes across zones today.
 4. **Web map.** `Zone.Map` keeps showing explored rooms outside the current zone: the snapshot
    gathers the player's visited rooms from the maps of the zones they visited
    (`VisitedRooms` is keyed by zone), the same rooms it shows today.
-5. **ASCII map (ruling 19, owner).** `GetLimitedMap` stops walking rooms: it gathers the rooms
-   whose positions fall inside the drawing from the position grids of the nearby zones' maps, so
-   its cost is bounded by the drawing size. Measured first: on master each render walks the
-   whole reachable world (a canvas-edge cut instead would change 898 of 7,830 shipped renders).
-   Gate: the 7,830-render shipped comparison matches master; any difference goes to the owner.
+5. **ASCII map (ruling 19, revised).** `GetLimitedMap` keeps master's walk of every reachable
+   room, but reads rooms from the in-memory zone maps instead of loading them; output is
+   identical to master. The owner first chose drawing by position; that prototype failed its
+   gate (889 of 7,830 renders differ, including rooms behind locked doors and secret exits being
+   drawn), so the owner kept the walk for this slice and the bounded rework is #706.
 6. **Call for help.** `FindRoomsInDistance` searches the maps of every zone within the radius, so
    helpers across a border still come.
 7. **Checks.** `CheckConsistency` checks a border exit against the far room's node in its own
