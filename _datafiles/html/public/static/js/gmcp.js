@@ -274,6 +274,9 @@ class RoomGridSVG {
       this.svg.appendChild(this.worldSvg);
 
       // Connections under rooms (both inside worldSvg, world coords):
+      // Quest destination wash (#375 p4): under connections and rooms, world coords.
+      this.washGroup = document.createElementNS(LEATHER_NS, 'g');
+      this.worldSvg.appendChild(this.washGroup);
       this.connectionsGroup = document.createElementNS(LEATHER_NS, 'g');
       this.worldSvg.appendChild(this.connectionsGroup);
       this.roomsGroup = document.createElementNS(LEATHER_NS, 'g');
@@ -403,6 +406,7 @@ class RoomGridSVG {
       this.worldSvg.setAttribute('viewBox', '0 0 1 1');
       this.roomsGroup.innerHTML = '';
       this.connectionsGroup.innerHTML = '';
+      this.washGroup.innerHTML = '';
   }
 
   /**
@@ -625,6 +629,8 @@ class RoomGridSVG {
       }
 
       this._drawQuestArrow();
+      this._drawQuestWash();
+      this._drawQuestBanner(); // a reset empties overlayGroup
       this._applyZoom();
   }
 
@@ -638,7 +644,9 @@ class RoomGridSVG {
       const a = this._questMarker, b = marker;
       const same = (!a && !b) || (!!a && !!b
           && a.targetRoom === b.targetRoom && a.nextRoom === b.nextRoom
-          && a.nextDir === b.nextDir && a.name === b.name);
+          && a.nextDir === b.nextDir && a.name === b.name
+          && a.kind === b.kind && a.label === b.label && !!a.inside === !!b.inside
+          && String(a.targetRooms || []) === String(b.targetRooms || []));
       if (same) { return; }
       const oldTarget = a ? a.targetRoom : 0;
       this._questMarker = marker;
@@ -648,6 +656,78 @@ class RoomGridSVG {
       if (newTarget) { this._rebuildRoomToken(newTarget); }
       // Redraw the next-step arrow (removes any prior arrow).
       this._drawQuestArrow();
+      this._drawQuestWash();
+      this._drawQuestBanner();
+  }
+
+  /**
+   * Brass wash over the focused quest's destination rooms on this floor (#375 phase 4, spec ruling 8):
+   * one tile per room, a dashed brass edge on every side that does not border another washed room,
+   * and the area's name above the topmost tile. Only an area, or a room set of two or more,
+   * is washed; a single room has its pin and a zone has its banner.
+   */
+  _drawQuestWash() {
+      const g = this.washGroup;
+      while (g.firstChild) g.removeChild(g.firstChild);
+      const qm = this._questMarker;
+      if (!qm || !Array.isArray(qm.targetRooms) || qm.targetRooms.length === 0) { return; }
+      if (qm.kind !== 'area' && qm.targetRooms.length < 2) { return; }
+      const L = RoomGridSVG.LEATHER, sp = this.spacing, half = sp / 2;
+      const cells = new Map(); // "x,y" -> room
+      qm.targetRooms.forEach(id => {
+          const e = this.rooms.get(id) || this.rooms.get(String(id));
+          if (!e || (e.room.z || 0) !== (this._z || 0)) { return; }
+          cells.set(e.room.x + ',' + e.room.y, e.room);
+      });
+      if (cells.size === 0) { return; }
+      let top = null;
+      cells.forEach(r => {
+          const x = r.x * sp, y = r.y * sp;
+          g.appendChild(lEl('rect', { x: x - half, y: y - half, width: sp, height: sp, fill: L.questGold, opacity: '0.13' }));
+          const sides = [[0, -1, x - half, y - half, x + half, y - half], [0, 1, x - half, y + half, x + half, y + half],
+                         [-1, 0, x - half, y - half, x - half, y + half], [1, 0, x + half, y - half, x + half, y + half]];
+          sides.forEach(s => {
+              if (cells.has((r.x + s[0]) + ',' + (r.y + s[1]))) { return; }
+              g.appendChild(lEl('line', { x1: s[2], y1: s[3], x2: s[4], y2: s[5], stroke: L.questGold,
+                  'stroke-width': 1.2, 'stroke-dasharray': '4 3', opacity: '0.85' }));
+          });
+          if (!top || r.y < top.y || (r.y === top.y && r.x < top.x)) { top = r; }
+      });
+      if (qm.label) {
+          // In the lower half of the topmost tile, under its room, on a small plate: a fitted
+          // view can cut through the top row's upper half (seen in the demo page's screenshot),
+          // and room names are drawn only for the player's own room, so this spot is free.
+          const lw = 8 + qm.label.length * 4.6, ly = top.y * sp + 19;
+          g.appendChild(lEl('rect', { x: top.x * sp - lw / 2, y: ly - 8.5, width: lw, height: 11, rx: 2,
+              fill: L.legendBg, opacity: '0.85', 'data-wash-label': '1' }));
+          g.appendChild(lTxt({ x: top.x * sp, y: ly, 'text-anchor': 'middle',
+              'font-family': 'Georgia,serif', 'font-size': '9', 'font-style': 'italic', fill: L.title }, qm.label));
+      }
+  }
+
+  /**
+   * "Somewhere in <name>" while the player stands inside an area or zone destination (#375 phase 4,
+   * spec ruling 9). Drawn in the design-coordinate overlay so zoom and pan never move it. Placed
+   * centred just under the zone title (y 49 to 62, at most 200 wide, so x 60 to 260): the bottom
+   * strip is taken by the HTML zoom buttons (left) and the legend card (x 188 to 292), and the
+   * compass reaches x 266 at the top right. Seen in the demo page's screenshot, 2026-10-28.
+   * The elements carry data-quest-banner so a redraw removes only them.
+   */
+  _drawQuestBanner() {
+      const ov = this.overlayGroup;
+      Array.from(ov.children || []).forEach(c => {
+          if (c.getAttribute && c.getAttribute('data-quest-banner') === '1') { ov.removeChild(c); }
+      });
+      const qm = this._questMarker;
+      if (!qm || !qm.inside || !qm.label || (qm.kind !== 'area' && qm.kind !== 'zone')) { return; }
+      const L = RoomGridSVG.LEATHER;
+      let text = 'Somewhere in ' + qm.label;
+      if (text.length > 48) { text = text.slice(0, 45) + '...'; }
+      const w = Math.min(200, 12 + text.length * 3.9);
+      ov.appendChild(lEl('rect', { x: 160 - w / 2, y: 49, width: w, height: 13, rx: 3, fill: L.legendBg,
+          stroke: L.questGold, 'stroke-width': 0.8, opacity: '0.92', 'data-quest-banner': '1' }));
+      ov.appendChild(lTxt({ x: 160, y: 58.2, 'text-anchor': 'middle', 'font-family': 'Georgia,serif',
+          'font-size': '7.5', 'font-style': 'italic', fill: L.title, 'data-quest-banner': '1' }, text));
   }
 
   /** Rebuild a single room's token in place (e.g. to add/remove its marker). */
@@ -918,9 +998,9 @@ class RoomGridSVG {
           } else if (rw[0] === "stairs") {
               ov.appendChild(lTxt({ x: sxc, y: yy + 1, "text-anchor": "middle", "font-size": 7, "font-weight": "bold", fill: L.ink }, "▲"));
           } else if (rw[0] === "quest") {
-              // Brass destination ring + patina core
+              // Brass destination ring + brass core
               ov.appendChild(lEl("circle", { cx: sxc, cy: yy - 2, r: 3.2, fill: L.roomFill, stroke: "url(#" + questBrassId + ")", "stroke-width": 1.4 }));
-              ov.appendChild(lEl("circle", { cx: sxc, cy: yy - 2, r: 1.2, fill: L.questPatina }));
+              ov.appendChild(lEl("circle", { cx: sxc, cy: yy - 2, r: 1.2, fill: L.questGold }));
           } else if (rw[0] === "qstep") {
               // Short gold next-step line with arrowhead
               ov.appendChild(lEl("line", { x1: sxc - 5, y1: yy - 2, x2: sxc + 3, y2: yy - 2, stroke: L.questGold, "stroke-width": 1.4, "marker-end": "url(#" + questHeadId + ")" }));
@@ -1004,20 +1084,20 @@ class RoomGridSVG {
           g.appendChild(lEl("path", { d: "M" + (mx - 2) + "," + (my + 2.6) + " Q" + mx + "," + (my - 0.4) + " " + (mx + 2) + "," + (my + 2.6) + " Z", fill: L.party }));
       }
 
-      // Focused-quest destination marker (brass ring + copper-patina glow +
+      // Focused-quest destination marker (brass ring + brass glow +
       // brass pin + italic name) on the target room.
       const qm = this._questMarker;
       if (qm && qm.targetRoom && (qm.targetRoom === id || qm.targetRoom === String(id))) {
-          g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 12, fill: L.questPatina, opacity: "0.30" }));
+          g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 12, fill: L.questGold, opacity: "0.30" }));
           g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 8.5, fill: L.roomFill, stroke: "url(#" + this._questBrassId + ")", "stroke-width": 2.2 }));
-          g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 3, fill: L.questPatina }));
+          g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 3, fill: L.questGold }));
           g.appendChild(lEl("path", { d: "M" + cx + "," + (cy - 14) + " L" + cx + "," + (cy - 24), stroke: "#cb9f42", "stroke-width": 1.6 }));
           g.appendChild(lEl("path", { d: "M" + cx + "," + (cy - 24) + " L" + (cx + 8) + "," + (cy - 21) + " L" + cx + "," + (cy - 18) + " Z", fill: "url(#" + this._questBrassId + ")" }));
           if (qm.name) {
               g.appendChild(lTxt({
                   x: cx, y: cy + 21, "text-anchor": "middle",
                   "font-family": "Georgia,serif", "font-size": "7.5",
-                  "font-style": "italic", fill: L.questPatina
+                  "font-style": "italic", fill: L.title
               }, qm.name));
           }
       }
@@ -1400,7 +1480,7 @@ RoomGridSVG.LEATHER = {
   label: "#e8d8b8", locked: "#d0633f", water: "#6f99c0", trail: "#a98a55",
   road: "#c9a86a", ridge: "#a98a55", plain: "#9c8048",
   legendBg: "#241810", party: "#6bb0a0", partyDk: "#243f3a",
-  questGold: "#e8b84a", questPatina: "#6bb0a0",
+  questGold: "#e8b84a",
   emboss: 0.6, fray: 3.4, nickP: 0.08, crackStep: 24, crackJit: 9, vig: 0.5
 };
 

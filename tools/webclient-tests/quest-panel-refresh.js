@@ -290,5 +290,41 @@ handleGMCP('Char.Quests', [{ id: 9, name: 'Far Off', completion: 10, focused: tr
 check('the off-map arrow still gets a marker', markerCalls.length > 0 && markerCalls[markerCalls.length - 1] &&
   markerCalls[markerCalls.length - 1].nextRoom === 420, JSON.stringify(markerCalls));
 
+console.log('SCENARIO 10: the marker carries the destination fields');
+reset();
+handleGMCP('Char.Quests', [{ id: 45, name: 'The Unquiet Grove', completion: 40, focused: true, hint: 'Cast in the grove.',
+  target_room: 5311, next_room: 5310, next_dir: 'north', target_kind: 'area', target_label: 'the unquiet grove',
+  target_rooms: [5311, 5312, 5313], inside: false, guide: 'Head north.' }]);
+const m10 = markerCalls[markerCalls.length - 1] || {};
+check('kind passed', m10.kind === 'area', JSON.stringify(m10));
+check('label passed', m10.label === 'the unquiet grove', JSON.stringify(m10));
+check('rooms passed', JSON.stringify(m10.targetRooms) === '[5311,5312,5313]', JSON.stringify(m10));
+check('inside passed', m10.inside === false, JSON.stringify(m10));
+reset();
+handleGMCP('Char.Quests', [{ id: 45, name: 'The Unquiet Grove', completion: 40, focused: true, hint: 'Cast.',
+  target_kind: 'zone', target_label: 'Pothole Coulee', inside: true, guide: 'You are in Pothole Coulee.' }]);
+const m10b = markerCalls[markerCalls.length - 1];
+check('an inside destination with no pin or hop still reaches the map', !!m10b && m10b.inside === true && m10b.kind === 'zone',
+  JSON.stringify(markerCalls));
+
+console.log('SCENARIO 11: the panel shows the server destination line when the pin is not on this map');
+reset();
+mapRooms.clear();
+handleGMCP('Char.Quests', [{ id: 9, name: 'Far Off', completion: 10, focused: true, hint: 'Go far.',
+  target_room: 0, next_room: 420, next_dir: 'west', target_kind: 'area', guide: 'Head west.' }]);
+check('guide shown', panelText().includes('Head west.'), panelText().slice(0, 240));
+check('the old arrow text is not doubled', !panelText().includes('→ head west'), panelText().slice(0, 240));
+reset();
+mapRooms.clear();
+handleGMCP('Char.Quests', [{ id: 9, name: 'Anywhere', completion: 10, focused: true, hint: 'Cast.',
+  target_kind: 'anywhere', guide: 'You can do this anywhere.' }]);
+check('anywhere shown', panelText().includes('You can do this anywhere.'), panelText().slice(0, 240));
+reset();
+mapRooms.clear();
+mapRooms.set(301, { room: { RoomId: 301 } });
+handleGMCP('Char.Quests', [{ id: 2, name: 'Here', completion: 50, focused: true, hint: 'Talk.',
+  target_room: 301, next_room: 300, next_dir: 'north', guide: 'Head north.' }]);
+check('on-map pin still says marked on map', panelText().includes('marked on map'), panelText().slice(0, 240));
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);
