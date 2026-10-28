@@ -32,6 +32,18 @@ opener:
       72-outcome: fenn
     text: You had it read out to the whole valley. I keep to the right. I always said
       I would, and now I must, even when it is not the right I thought it was.
+  # Quest 72 out of order (owner ruling 15: Fenn, then Ayres): a player Hesper
+  # sent who has not heard Fenn yet is sent to him first.
+  - questRequired:
+    - 72-start
+    questExcluded:
+    - 72-heard_fenn
+    - 72-end
+    text: Hesper sent you, did she? Then go and hear Fenn first. He will tell it
+      loud and crooked, and I would rather you heard his version before mine, so
+      you can set the two side by side.
+    hints: Ayres wants you to hear Fenn first. Fenn's holding is east of the
+      Irrigation Head-Gate. From here, go east twice. Type talk fenn.
 topics:
 # q72_side is the quest step: hearing Ayres out for Hesper sets
 # 72-heard-ayres, and quest 72's topic_heard trigger grants 72-heard_ayres,
@@ -46,7 +58,11 @@ topics:
     a full stream gladly. I will not let my own rows die so his can live. Find me
     more water, or show me the right says otherwise, and I will hear it.
   hints: You have heard both sides. Take them back to Hesper at the Golden Bough.
-    From here, go east, north six times, then east twice. Type talk hesper.
+    From here, go east, north six times, then east twice. Type talk hesper. Late
+    at night she sleeps behind the taproom. Two places may show you more first.
+    The records in the cedar chest at the Rite pavilion are east, then north four
+    times. The collapsed channel in the foothills is south three times from the
+    head-gate, west twice, then north.
   marked: true
   questRequired:
   - 72-heard_fenn

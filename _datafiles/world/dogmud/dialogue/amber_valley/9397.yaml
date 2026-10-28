@@ -54,16 +54,29 @@ opener:
       propose one. If you found the fallen channel in the foothills or read the
       old water-right in the Rite pavilion, she will hear about that too.
   - questRequired:
+    - 72-heard_fenn
+    questExcluded:
+    - 72-end
+    text: So you have had Fenn's side, and loudly, I expect. Now go and hear Ayres
+      before you bring me anything. Half a story is worse than none.
+    hints: From the Golden Bough, go west twice to the Market Square, then south
+      six times to the Irrigation Head-Gate. Ayres' holding is west of it. Type
+      talk ayres. The records at the Rite pavilion and the collapsed channel up in
+      the foothills may show you more. If you found something at the old channel
+      or in the records, she will hear that too.
+  - questRequired:
     - 72-start
     questExcluded:
+    - 72-heard_fenn
     - 72-end
     text: Have you heard them both yet? Fenn on the dry side, Ayres upstream. Do not
       come back to me with only half the story.
     hints: From the Golden Bough, go west twice to the Market Square, then south
       six times to the Irrigation Head-Gate. Fenn's holding is east of it and Ayres'
-      holding is west. Hear Fenn first, then Ayres. Type talk fenn. The records at the Rite pavilion and the
-      collapsed channel up in the foothills may show you more. If you found
-      something at the old channel or in the records, she will hear that too.
+      holding is west. Hear Fenn first, then Ayres. Type talk fenn. The records at
+      the Rite pavilion and the collapsed channel up in the foothills may show you
+      more. If you found something at the old channel or in the records, she will
+      hear that too.
 topics:
 - key: water_start
   kind: offer
