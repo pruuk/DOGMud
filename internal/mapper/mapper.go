@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -257,6 +258,11 @@ type mapper struct {
 	crawledRooms map[int]*mapNode // A look up table of rooms already crawled
 
 	roomGrid RoomGrid
+
+	// authored is true when the rooms sit at their authored coordinates
+	// (placeByAuthoredCoords), a frame every authored zone shares, and false
+	// after the exit-delta crawl, whose positions are relative to this map.
+	authored bool
 }
 
 func NewMapper(rootRoomId int) *mapper {
@@ -308,6 +314,7 @@ func (r *mapper) Start() {
 
 	if r.authoredLayoutClean() {
 		r.placeByAuthoredCoords()
+		r.authored = true
 		return
 	}
 
@@ -582,7 +589,15 @@ func (r *mapper) GetCoordinates(roomId int) (x, y, z int, err error) {
 	return node.Pos.x, node.Pos.y, node.Pos.z, nil
 }
 
-// Returns all rooms of the map within a certain manhattan distance
+// FindRoomsInDistance returns every room other than the centre within
+// xyRadius of it by Manhattan distance (|dx| + |dy|) and within the z radius
+// (0 when omitted) up or down. Call for help uses it.
+//
+// A zone's map stops at its border (#375 p4), so when this map sits at
+// authored coordinates it also searches the maps of the zones joined to this
+// one through the zone graph whose rooms come within the radius (authored
+// maps on the centre's plane, instance maps aside), and helpers across a
+// border still come, as they did when one map held the connected world.
 func (r *mapper) FindRoomsInDistance(centerRoomId int, xyRadius int, zRadiusOpt ...int) []int {
 	foundRooms := []int{}
 
@@ -591,43 +606,102 @@ func (r *mapper) FindRoomsInDistance(centerRoomId int, xyRadius int, zRadiusOpt 
 		return foundRooms
 	}
 
-	xyRadius = int(math.Abs(float64(xyRadius)))
+	xyRadius = absInt(xyRadius)
 	zRadius := 0
-	if len(zRadiusOpt) == 0 {
-		zRadius = int(math.Abs(float64(zRadiusOpt[0])))
+	if len(zRadiusOpt) > 0 {
+		zRadius = absInt(zRadiusOpt[0])
 	}
 
-	minX, maxX := startNode.Pos.x-xyRadius, startNode.Pos.x+xyRadius
-	minY, maxY := startNode.Pos.y-xyRadius, startNode.Pos.y+xyRadius
-	minZ, maxZ := startNode.Pos.z-zRadius, startNode.Pos.z+zRadius
+	foundRooms = r.roomsInDistance(startNode.Pos, centerRoomId, xyRadius, zRadius, nil, foundRooms)
 
-	maxXYDist := float64(xyRadius)
-	maxZDist := float64(zRadius)
+	if !r.authored || rooms.IsEphemeralRoomId(centerRoomId) {
+		return foundRooms
+	}
+	plane := startNode.Plane
+	own := len(foundRooms)
+	for _, m := range r.joinedMaps(startNode.Zone) {
+		foundRooms = m.roomsInDistance(startNode.Pos, centerRoomId, xyRadius, zRadius, &plane, foundRooms)
+	}
+	if len(foundRooms) == own {
+		return foundRooms
+	}
+	// A stale map left by a forced rebuild can hold a room another map holds.
+	seen := make(map[int]bool, len(foundRooms))
+	out := foundRooms[:0]
+	for _, id := range foundRooms {
+		if !seen[id] {
+			seen[id] = true
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+// roomsInDistance appends to found the rooms of this map within the radii of
+// center (in this map's frame), skipping skipRoomId and, when plane is set,
+// rooms on another plane.
+func (r *mapper) roomsInDistance(center positionDelta, skipRoomId, xyRadius, zRadius int, plane *int, found []int) []int {
+	g := &r.roomGrid
+	// Clip the search box to the grid; a map wholly outside it costs nothing.
+	minX, maxX := max(center.x-xyRadius, -g.roomOffset.x), min(center.x+xyRadius, g.size.x-1-g.roomOffset.x)
+	minY, maxY := max(center.y-xyRadius, -g.roomOffset.y), min(center.y+xyRadius, g.size.y-1-g.roomOffset.y)
+	minZ, maxZ := max(center.z-zRadius, -g.roomOffset.z), min(center.z+zRadius, g.size.z-1-g.roomOffset.z)
 
 	for z := minZ; z <= maxZ; z++ {
 		for y := minY; y <= maxY; y++ {
 			for x := minX; x <= maxX; x++ {
-
-				if math.Abs(float64((startNode.Pos.x-x)+(startNode.Pos.y-y))) > maxXYDist {
+				if absInt(center.x-x)+absInt(center.y-y) > xyRadius {
 					continue
 				}
-
-				if math.Abs(float64(startNode.Pos.z-z)) > maxZDist {
+				roomId, _ := r.GetRoomId(x, y, z)
+				if roomId == 0 || roomId == skipRoomId {
 					continue
 				}
-
-				// fmt.Println(x, y, z, `=`, ((startNode.Pos.x - x) + (startNode.Pos.y - y)))
-				if roomId, _ := r.GetRoomId(x, y, z); roomId != 0 {
-					if roomId == centerRoomId {
+				if plane != nil {
+					if n := r.crawledRooms[roomId]; n == nil || n.Plane != *plane {
 						continue
 					}
-					foundRooms = append(foundRooms, roomId)
 				}
+				found = append(found, roomId)
 			}
 		}
 	}
+	return found
+}
 
-	return foundRooms
+// joinedMaps is every cached map, other than this one, of a zone the zone
+// graph joins to zone (directly or through other zones), that sits at
+// authored coordinates and is not an instance's copy. PreCacheMaps builds
+// every zone's map at boot.
+func (r *mapper) joinedMaps(zone string) []*mapper {
+	ensureZoneGraph()
+	joined := map[string]bool{zone: true}
+	queue := []string{zone}
+	zoneGraphMu.RLock()
+	for len(queue) > 0 {
+		z := queue[0]
+		queue = queue[1:]
+		for _, l := range zoneGraph[z] {
+			if !joined[l.toZone] {
+				joined[l.toZone] = true
+				queue = append(queue, l.toZone)
+			}
+		}
+	}
+	zoneGraphMu.RUnlock()
+
+	var out []*mapper
+	for _, m := range mapperZoneCache {
+		if m == r || !m.authored || rooms.IsEphemeralRoomId(m.rootRoomId) {
+			continue
+		}
+		if joined[m.rootZone()] {
+			out = append(out, m)
+		}
+	}
+	// The cache is a Go map; a fixed order keeps the found rooms' order fixed.
+	sort.Slice(out, func(i, j int) bool { return out[i].rootRoomId < out[j].rootRoomId })
+	return out
 }
 
 // Finds the first room in a given direction
@@ -744,6 +818,14 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender {
 	// This is because we're doing a unique crawl right now, independent of the "global crawl"
 	tmpCrawledTracker := map[int]struct{}{}
 
+	// The walk is NOT bounded by the canvas (#375 p4 Task 19, measured): a
+	// room on the canvas can be reachable only by a path that leaves it (the
+	// east side of Stillwater from room 4100 comes round by the farm road), so
+	// a walk stopped at the canvas plus 3 rooms changed 898 of 7,830 shipped
+	// renders and one stopped at twice the canvas still changed 4 in Cartesian
+	// zones. Its cost is kept down by drawNode instead: no room is loaded once
+	// every zone's map is built.
+
 	//var lastNode *mapNode = nil
 	r.crawlQueue = append(r.crawlQueue, crawlRoom{RoomId: node.RoomId, Pos: dstPos})
 
@@ -761,7 +843,7 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender {
 
 		dstPos = roomNow.Pos
 
-		node := r.getMapNode(roomNow.RoomId)
+		node := r.drawNode(roomNow.RoomId)
 		if node == nil {
 			continue
 		}
@@ -1060,6 +1142,23 @@ func (r *mapper) GetFullMap(centerRoomId int, c Config) mapRender {
 	return out
 }
 
+// drawNode is a room's node for the ASCII map's walk, which crosses zone
+// borders as the walk did when one map held the whole connected world: this
+// map's node, else the node in the room's own zone's map when that is built
+// (PreCacheMaps builds them all), else one read from the room. It never builds
+// a map.
+func (r *mapper) drawNode(roomId int) *mapNode {
+	if n, ok := r.crawledRooms[roomId]; ok {
+		return n
+	}
+	if m := GetMapperIfExists(roomId); m != nil {
+		if n, ok := m.crawledRooms[roomId]; ok {
+			return n
+		}
+	}
+	return r.getMapNode(roomId)
+}
+
 func (r *mapper) getMapNode(roomId int) *mapNode {
 
 	if r, ok := r.crawledRooms[roomId]; ok {
@@ -1356,6 +1455,7 @@ func (m *mapper) GetCopy() *mapper {
 		roomGrid: RoomGrid{
 			rooms: [][][]*mapNode{},
 		},
+		authored: m.authored,
 	}
 
 	mNew.roomGrid.size = m.roomGrid.size

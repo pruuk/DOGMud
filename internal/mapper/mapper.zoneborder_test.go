@@ -3,6 +3,7 @@ package mapper
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/exit"
@@ -33,6 +34,7 @@ type fixtureRoom struct {
 	id, x, y int
 	zone     string
 	exits    map[string]int
+	symbol   string // mapsymbol, legend "Mark"; "" for the zone's biome
 }
 
 // writeFixtureWorld writes rooms to a temp data tree and seeds the zones they
@@ -54,6 +56,9 @@ func writeFixtureWorld(t *testing.T, rs []fixtureRoom) {
 	for _, r := range rs {
 		room := &rooms.Room{RoomId: r.id, Zone: r.zone, Title: fmt.Sprintf("Room %d", r.id), X: r.x, Y: r.y,
 			Exits: map[string]exit.RoomExit{}}
+		if r.symbol != "" {
+			room.MapSymbol, room.MapLegend = r.symbol, "Mark"
+		}
 		for dir, to := range r.exits {
 			room.Exits[dir] = ex(to, "")
 		}
@@ -230,5 +235,251 @@ func TestGetPathAcrossZonesMatchesSingleMap(t *testing.T) {
 	}
 	if GetMapperIfExists(multi + 1).HasRoom(multi + 11) {
 		t.Fatal("fixture premise: zone zc_a's map must not hold zone zc_b's rooms")
+	}
+}
+
+// gridWorld writes a cols x rows grid of rooms at authored (x, y), id
+// base + y*100 + x + 1, every room linked to its four neighbours. cell
+// gives each cell's zone and symbol; ok false leaves the cell empty. Give
+// each test its own id range: the template zone index (rooms.TemplateRoomZone,
+// which the crawl reads) outlives a test, so a reused id keeps the zone an
+// earlier test gave it.
+func gridWorld(t *testing.T, base, cols, rows int, cell func(x, y int) (zone, symbol string, ok bool)) {
+	t.Helper()
+	id := func(x, y int) int { return base + y*100 + x + 1 }
+	has := func(x, y int) bool {
+		if x < 0 || y < 0 || x >= cols || y >= rows {
+			return false
+		}
+		_, _, ok := cell(x, y)
+		return ok
+	}
+	var rs []fixtureRoom
+	for y := 0; y < rows; y++ {
+		for x := 0; x < cols; x++ {
+			zone, symbol, ok := cell(x, y)
+			if !ok {
+				continue
+			}
+			exits := map[string]int{}
+			for dir, d := range map[string][2]int{"east": {1, 0}, "west": {-1, 0}, "north": {0, -1}, "south": {0, 1}} {
+				if has(x+d[0], y+d[1]) {
+					exits[dir] = id(x+d[0], y+d[1])
+				}
+			}
+			rs = append(rs, fixtureRoom{id: id(x, y), x: x, y: y, zone: zone, symbol: symbol, exits: exits})
+		}
+	}
+	writeFixtureWorld(t, rs)
+}
+
+// renderText is a map render as text lines plus its legend, sorted.
+func renderText(m mapRender) string {
+	s := ""
+	for _, line := range m.Render {
+		s += string(line) + "|\n"
+	}
+	keys := make([]string, 0, len(m.legend))
+	for r, name := range m.legend {
+		keys = append(keys, fmt.Sprintf("%c=%s", r, name))
+	}
+	sort.Strings(keys)
+	return s + fmt.Sprint(keys)
+}
+
+// The ASCII map's output for a two-zone fixture, recorded on the tree before
+// #375 p4 Task 19 changed how GetLimitedMap reads rooms: zone zl_a
+// (x 0-4, the biome's ") and zone zl_b (x 5-9, #), a hole at (3,1), the
+// player at (3,2). The map still draws across the border, from the zone's
+// map alone (the far zone's rooms loaded) or with every zone's map built.
+func TestGetLimitedMapGolden(t *testing.T) {
+	const base = 40000
+	world := func(t *testing.T) {
+		isolateMapperCaches(t)
+		gridWorld(t, base, 10, 5, func(x, y int) (string, string, bool) {
+			if x == 3 && y == 1 {
+				return "", "", false
+			}
+			if x >= 5 {
+				return "zl_b", "#", true
+			}
+			return "zl_a", "", true
+		})
+	}
+	center := base + 2*100 + 3 + 1
+	configs := []struct {
+		name string
+		c    Config
+		want string
+	}{
+		{"minimap", Config{ZoomLevel: 1, Width: 5, Height: 5}, goldenMinimap},
+		{"zoom 0", Config{ZoomLevel: 0, Width: 21, Height: 9}, goldenZoom0},
+		{"zoom 1", Config{ZoomLevel: 1, Width: 21, Height: 9}, goldenZoom1},
+	}
+	for _, built := range []string{"own zone's map", "every zone's map"} {
+		for _, cfg := range configs {
+			t.Run(built+"/"+cfg.name, func(t *testing.T) {
+				world(t)
+				m := GetMapper(center)
+				if built == "every zone's map" {
+					GetMapper(base + 9 + 1)
+				}
+				c := cfg.c
+				c.OverrideSymbol(center, '@', `You`)
+				if got := renderText(m.GetLimitedMap(center, c)); got != cfg.want {
+					t.Fatalf("render changed:\n%s\nwant:\n%s", got, cfg.want)
+				}
+			})
+		}
+	}
+}
+
+// Recorded on bac109a5f, before Task 19.
+const goldenMinimap = `"   "|
+│   │|
+"─@─"|
+│ │ │|
+"─"─"|
+["=Plains @=You]`
+
+const goldenZoom0 = `                     |
+                     |
+       """""#####    |
+       """ "#####    |
+       """@"#####    |
+       """""#####    |
+       """""#####    |
+                     |
+                     |
+["=Plains #=Mark @=You]`
+
+const goldenZoom1 = `    "─"─"─"─"─#─#─#─#|
+    │ │ │   │ │ │ │ │|
+    "─"─"   "─#─#─#─#|
+    │ │ │   │ │ │ │ │|
+    "─"─"─@─"─#─#─#─#|
+    │ │ │ │ │ │ │ │ │|
+    "─"─"─"─"─#─#─#─#|
+    │ │ │ │ │ │ │ │ │|
+    "─"─"─"─"─#─#─#─#|
+["=Plains #=Mark @=You]`
+
+// GetLimitedMap's walk loads no room once every zone's map is built (#375 p4
+// Task 19). It still walks every room reachable from the player, as on
+// master (bounding it by the canvas changed shipped renders; see the comment
+// in GetLimitedMap), but it reads a room across a border from that room's
+// own zone's map, as master read every room from its one big map. Before,
+// it reloaded every cold room across the border on each look and map.
+func TestGetLimitedMapLoadsNoRoomWhenMapsAreBuilt(t *testing.T) {
+	const base = 41000
+	isolateMapperCaches(t)
+	gridWorld(t, base, 12, 9, func(x, y int) (string, string, bool) {
+		if x >= 2 {
+			return "zr_b", "", true
+		}
+		return "zr_a", "", true
+	})
+	center := base + 4*100 + 1 + 1
+	m := GetMapper(center)
+	GetMapper(base + 2 + 1) // zr_b's map, as PreCacheMaps builds it
+	var far []int
+	for y := 0; y < 9; y++ {
+		for x := 2; x < 12; x++ {
+			far = append(far, base+y*100+x+1)
+		}
+	}
+	for _, id := range far {
+		rooms.UnloadRoomForTest(id)
+	}
+
+	got := renderText(m.GetLimitedMap(center, Config{ZoomLevel: 1, Width: 41, Height: 21}))
+	loaded := 0
+	for _, id := range far {
+		if rooms.IsRoomLoaded(id) {
+			loaded++
+		}
+	}
+	if loaded != 0 {
+		t.Fatalf("the walk loaded %d of zr_b's %d cold rooms; it must read them from zr_b's map", loaded, len(far))
+	}
+	if strings.Count(got, "\"") != 9*12+1 { // each room's biome mark and the legend's
+		t.Fatalf("the map must still draw both zones' rooms:\n%s", got)
+	}
+}
+
+// zoneGraphFromFixture rebuilds the zone graph from the written fixture and
+// restores the package's graph afterwards.
+func zoneGraphFromFixture(t *testing.T) {
+	t.Helper()
+	stubZoneGraph(t, nil)
+	InvalidateZoneGraph()
+}
+
+// FindRoomsInDistance (call for help) finds rooms across a zone border within
+// its radius, as it did when one map held both zones (#375 p4 Task 19).
+func TestFindRoomsInDistanceCrossesZoneBorder(t *testing.T) {
+	isolateMapperCaches(t)
+	twoZoneLine(t)
+	GetMapper(9101)
+	GetMapper(9104)
+	zoneGraphFromFixture(t)
+
+	m := GetMapper(9102)
+	for _, c := range []struct {
+		radius int
+		want   string
+	}{{1, "[9101 9103]"}, {2, "[9101 9103 9104]"}} {
+		got := m.FindRoomsInDistance(9102, c.radius, 0)
+		sort.Ints(got)
+		if fmt.Sprint(got) != c.want {
+			t.Errorf("radius %d from 9102: %v, want %s", c.radius, got, c.want)
+		}
+	}
+}
+
+// Called with no z radius it searches the room's own level and does not
+// panic (pre-existing: it indexed the empty option list).
+func TestFindRoomsInDistanceWithoutZRadius(t *testing.T) {
+	isolateMapperCaches(t)
+	twoZoneLine(t)
+	m := GetMapper(9101)
+	var got []int
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("FindRoomsInDistance without a z radius panicked: %v", r)
+			}
+		}()
+		got = m.FindRoomsInDistance(9101, 1)
+	}()
+	if fmt.Sprint(got) != "[9102]" {
+		t.Fatalf("radius 1 from 9101: %v, want [9102]", got)
+	}
+}
+
+// The distance is |dx| + |dy| (pre-existing: |dx + dy|, so a room at dx +2,
+// dy -2 counted as distance 0).
+func TestFindRoomsInDistanceIsManhattan(t *testing.T) {
+	isolateMapperCaches(t)
+	const base = 43000
+	gridWorld(t, base, 5, 5, func(x, y int) (string, string, bool) { return "zm_one", "", true })
+	id := func(x, y int) int { return base + y*100 + x + 1 }
+	m := GetMapper(id(2, 2))
+	got := map[int]bool{}
+	for _, r := range m.FindRoomsInDistance(id(2, 2), 2, 0) {
+		got[r] = true
+	}
+	for _, xy := range [][2]int{{4, 0}, {0, 4}, {0, 0}, {4, 4}, {4, 1}} {
+		if got[id(xy[0], xy[1])] {
+			t.Errorf("room at (%d,%d) is %d steps from (2,2), outside radius 2", xy[0], xy[1], absInt(xy[0]-2)+absInt(xy[1]-2))
+		}
+	}
+	for _, xy := range [][2]int{{4, 2}, {2, 0}, {3, 1}, {1, 3}, {3, 3}, {1, 1}, {2, 3}} {
+		if !got[id(xy[0], xy[1])] {
+			t.Errorf("room at (%d,%d) is within radius 2 of (2,2) and was not found", xy[0], xy[1])
+		}
+	}
+	if len(got) != 12 {
+		t.Errorf("found %d rooms within radius 2 of a grid's centre, want 12", len(got))
 	}
 }

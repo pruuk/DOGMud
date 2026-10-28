@@ -111,6 +111,20 @@ func (r *mapper) FindRoomsInDistance(centerRoomId int, xyRadius int, zRadiusOpt 
 func (r *mapper) FindAdjacentRoom(centerRoomId int, direction string, limitDistance ...int) (roomId, distance int)
 ```
 
+`FindRoomsInDistance` (call for help, `mobcommands/callforhelp.go`) returns
+every room other than the centre within `xyRadius` by Manhattan distance
+(`|dx| + |dy|`) and within the z radius (0 when omitted). Since maps stop at
+their border it also searches, when this map sits at authored coordinates
+(`mapper.authored`, set by `placeByAuthoredCoords`), the cached maps of every
+zone the zone graph joins to this one, keeping rooms on the centre's plane;
+an instance room or instance map searches only its own map (#375 phase 4
+Task 19). Fixed with it: no z radius indexed an empty slice (panic), and the
+distance was the signed `|dx + dy|`, so a room at dx +2, dy -2 counted as 0.
+Measured against the pre-split tree on shipped data (every room, radius 1 to
+4): every room within the true distance is still found but 22, which sit on
+another plane (The Foldweave, plane 5, over plane 0 rooms); none is new; the
+11,848 dropped are the signed-sum rooms.
+
 ### Rendering
 
 ```go
@@ -143,6 +157,21 @@ code writes such as "Party Member" (`TestEveryMultiWordLegendHasSlugAlias`).
 
 `GetLimitedMap` is the player-facing one — the visible radius scales with
 Perception. `GetFullMap` is unbounded and used by admin tooling.
+
+`GetLimitedMap` walks every room reachable from the player, across zone
+borders, as it did when one map held the connected world. It reads a room
+through `drawNode`: this map, else the room's own zone's map, else the room
+itself, so with every zone's map built (`PreCacheMaps`) it loads no room
+(`TestGetLimitedMapLoadsNoRoomWhenMapsAreBuilt`); between the split and #375
+phase 4 Task 19 it reloaded every cold room across a border on each look.
+`TestGetLimitedMapGolden` pins a two-zone render. **The walk is not bounded
+by the canvas, on purpose:** a room on the canvas can be reachable only by a
+path that leaves it (the east side of Stillwater from room 4100 comes round
+by the farm road). Measured on shipped data (1,305 rooms, 6 configs, 2026-10-28),
+a walk stopped at the canvas plus 3 rooms changed 898 of 7,830 renders, one
+stopped at twice the canvas still changed 4 in Cartesian zones; the unbounded
+walk matches the pre-change renders but for 1 tie in the toroidal Endless
+Trashheap, whose tie order varies run to run on either tree.
 
 ### Pathfinding
 
@@ -218,9 +247,13 @@ zone holds no member of the set.
   `crawledRooms` for a room across a border (an exit's far room, a radius
   search, a render) finds nothing in this map; look the room up in its own
   zone's map (`GetMapperIfExists` / `GetMapper`), as `findPath` does. The
-  destination search follows that rule (Task 17); the web map, the ASCII map,
-  `FindRoomsInDistance`, the consistency checks and the builder view are
-  moving to it in #375 phase 4 Tasks 18 to 21.
+  destination search (Task 17), the ASCII map and `FindRoomsInDistance`
+  (Task 19) follow that rule; the web map, the consistency checks and the
+  builder view are moving to it in #375 phase 4 Tasks 18, 20 and 21.
+- **Fixture room ids in tests must not repeat across tests.** The template
+  zone index (`rooms.TemplateRoomZone`), which the crawl reads for an exit's
+  zone, outlives a test, so a reused id keeps the zone an earlier test gave
+  it and the crawl stops where it should not.
 
 ## Dependencies
 
