@@ -24,7 +24,7 @@ Every phase spec re-verifies the facts it builds on; this table is the starting 
 | Valid trigger events: room_enter, room_gate, item_give, skill_use, mob_death, command, item_gain, dialogue, quest_granted, room_interact, command_issued | `internal/quests/quests.go:109` |
 | Shipped trigger counts: room_interact 64, command 49, item_give 32, mob_death 27, quest_granted 21, item_gain 20, command_issued 14, room_enter 11, room_gate 1, dialogue 1 | grep of `quests/` |
 | Mid-quest rewards exist: trigger actions `give_item` 27, `learn_recipe` 26, `give_gold` 6 | grep of `quests/` |
-| Minimap target today: one room, or a unique NPC's current room; no zone or area target | `internal/questengine/map_target.go` |
+| Minimap target today: one room, or a unique NPC's current room; no zone or area target. Since phase 4 slice 1 (2026-10-28): a step's `destination:` block (room, mob, area, zone, or `anywhere`), else inferred from its triggers, resolved to the nearest room of the set | `internal/questengine/destination.go` (`map_target.go` retired) |
 | Repeatable quests exist: `repeatable` plus `cooldown_rounds`, cooldown saved in MiscData; 7 shipped (53 to 59). No limit on repeat count | `quests.go:69`, `internal/characters/quests.go:192`, `internal/hooks/Quest_HandleQuestUpdate.go:207,442` |
 | No quest abandon command exists | grep of `usercommands`, `quests`, `questengine`, `characters` |
 | 5 quests start from a trigger grant instead of an NPC: 15, 16, 28, 30, 31 | grep `grant: N-start` |
@@ -275,7 +275,11 @@ returns only if a phase 7 zone pass needs it, from the design kept in that spec.
 
 **Exit.** Each target kind renders in the web client; boot lists every unknown destination.
 
-**Status:** not started.
+**Status:** spec `docs/superpowers/specs/2026-10-28-quest-arc-phase4-minimap-guidance-design.md`
+(owner 2026-10-28), three slices. Slice 1 (engine: the step `destination:` block, `ResolveDestination`,
+`mapper.NearestOf`, the GMCP fields, the quest log's guide line, the `walk-destination` rule)
+is in PR, plan `docs/superpowers/plans/2026-10-28-quest-arc-phase4-slice1-engine.md`. Slices 2
+(web client) and 3 (content, playtest) to come.
 
 ## Phase 5: Quest log actions (engine half)
 
@@ -308,7 +312,8 @@ the minimap.
    add bridge quests between givers.
 3. Move any trigger-started quest to an NPC start.
 4. Clear dashes from the zone's dialogue and quest text.
-5. Clear the zone from every validator warning list.
+5. Clear the zone from every validator warning list, including its `walk-destination`
+   lines in `loop-backlog.txt`. A zone pass is not done while one is left.
 6. Adversarial playtest; file findings.
 
 **Zone order.** Pothole Coulee first (new players land there). The rest is set in the phase 7
@@ -361,7 +366,8 @@ this phase to re-enable.
 
 **Approach: helped not to build it wrong.**
 8. Pickers for mobs, items, rooms, quests, spells and areas; a dropdown for trigger events; no
-   raw YAML editing.
+   raw YAML editing. Each step gets a `destination:` editor (room, mob with an optional
+   fallback, area, zone, or `anywhere`) that shows the inferred destination when left empty.
 9. A "New quest" wizard that creates the giver's offer topic, a first step with its hint slot,
    and the hand-in topic, so the loop exists from the first click.
 10. A live rule checklist beside the editor (starts and ends at an NPC, every step hinted, one

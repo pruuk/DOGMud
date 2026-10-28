@@ -40,7 +40,11 @@ what a trigger *does*, you edit this package.
   against real users/rooms/mobs. The biggest file in the package.
 - **guards.go** — `EvalGuard`: depth limit, visit tracking, grant dedupe, trace.
 - **loader.go** — `GetEngine` singleton, `LoadDataFiles`, `ValidateAllFlags`.
-- **map_target.go** — `ResolveQuestTarget`, which feeds the map quest marker.
+- **destination.go**: `Engine.ResolveDestination`, `Destination`, `DestKind`,
+  the step destination resolver that feeds the minimap and the quest log
+  (see Destinations below).
+- **guide.go**: `GuideLine`, the one destination line.
+- **destinations_rule.go**: `Destinations`, the static destination rule.
 - **logging.go** — level-gated logging with per-player debug opt-in.
 - **test_helpers.go** — `ResetEngineForTest() func()`.
 - **walkthrough.go**: `Walk`, the completability walkthrough (see Walkthrough).
@@ -210,6 +214,55 @@ count, actions, chain); `evaluate` and `CheckExplore` both use it. `guardedRun`
 outside every area (the accessor narrowing more than pays for the area
 filter); with 50 synthetic area triggers added, 1.05 us outside the area and
 2.6 us inside it.
+
+### Destinations (#375 phase 4)
+
+**`Engine.ResolveDestination(user, questId, step) Destination`** is where a
+step points one player right now. The final step, an unknown quest or step,
+and a nil user give `DestNone`. A step's `destination: anywhere` gives
+`DestAnywhere` and marks nothing. A declared block (`quests.StepDestination`)
+resolves to a room, area (`areas.Get`, `areas.Contains`), zone, or mob set.
+A step with no block is inferred (`Destination.Inferred`): `placesOf` takes
+the places named by the triggers that `Quest.CountStep` assigns to that step
+(the latest step of the quest its `has` lists, so a trigger gated on two steps
+counts for the later one only) and `inferredSet` joins them; one kind keeps
+its kind, mixed kinds give a room set. Nothing resolvable gives `DestUnknown`.
+
+**Mob sets.** The rooms of the live copies the player perceives
+(`Character.Perceives` for hidden copies, and `messaging.ParticipantSight`
+at `SightFull`, judged as if standing in each copy's room, once per room).
+With none perceived, the block's fallback room, area or zone, else the mob's
+spawn rooms (`rooms.SpawnRooms`); `Fallback` is then set and `Npc` keeps the
+NPC's name for the guide line.
+
+**Output.** `Destination` carries `Kind`, `Label` (area or zone name), `Npc`,
+`Fallback`, `ZoneRooms` (the set's template rooms in the player's zone, for
+the map wash; shared with the areas index, do not change it), `Inside`, and
+`Pin`, `NextRoom`, `NextDir` from `mapper.NearestOf` when the player is not
+inside. `Pin` is 0 when the nearest member lies in another zone.
+
+**Seams.** Package vars the tests stub (`installDestWorld` in
+`destination_test.go`): `liveCopies`, `sightIn`, `templateRoom`, `roomZone`,
+`spawnRoomsOf`, `npcName`, `nearestOf`.
+
+**`GuideLine(Destination) string`** is the one line both the `quest` command
+(`usercommands/quests.go`) and the web quest panel (`gmcp.Char.go`, the
+`guide` field) show: "Head north.", "Take the stairs.", "You are in the
+grove.", "You can do this anywhere.", "Destination unknown.", and so on.
+
+**`Destinations(qs) (findings, inferred)`** is the static rule, a walk rule
+like the walkthrough: boot (`destinationDoor` in `main_quests.go`) logs its
+findings as warnings and never refuses, and the CI sweep
+(`quest_loop_smoke_test.go`) ratchets them against `loop-backlog.txt`. It
+skips secret quests and each final step. `walk-destination` is a step that
+resolves to unknown (no block and no trigger place, or a bare mob that no room
+spawns); `walk-destination-anywhere` is an `anywhere` step whose triggers name
+a place. `inferred` lists each step whose destination is inferred.
+
+**Cost** (Ryzen 9 5900X, 2026-10-28, `nearestOf` stubbed to answer at once):
+`BenchmarkResolveDestinationMob30` (30 copies, half hidden, the real sight
+check) about 6.4 us/op; `BenchmarkResolveDestinationArea40` (a 40-room area)
+about 190 ns/op. The map search is benchmarked in `internal/mapper`.
 
 ## Evaluation flow
 
@@ -551,10 +604,12 @@ Known limits:
 ## Dependencies
 
 `internal/quests` (all definition types), `configs`, `users`, `mobs`, `items`,
-`rooms`, `messaging`, `mudlog`, `dialogue`, `questloop` (the walkthrough).
+`rooms`, `messaging`, `mudlog`, `dialogue`, `questloop` (the walkthrough),
+`areas` and `mapper` (destinations).
 
 ## Consumers
 
 `internal/hooks` (event dispatch), `internal/usercommands`, `internal/dialogue`
-(quest grants from dialogue nodes), and `internal/mapper` consumers that render
-the quest marker via `ResolveQuestTarget`.
+(quest grants from dialogue nodes), `modules/gmcp` (the Char.Quests destination
+fields via `ResolveDestination` and `GuideLine`), and `main_quests.go` /
+`quest_loop_smoke_test.go` (`Destinations`).

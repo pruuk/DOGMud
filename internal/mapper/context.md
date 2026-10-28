@@ -37,6 +37,8 @@ the same crawl.
 - **mapper.consistency.go** — the Cartesian consistency engine (see below).
 - **mapper.snapshot.go** — the fog-of-war snapshot for the web map.
 - **mapper.crosszone.go** — the coarse zone graph and cross-zone hop routing.
+- **mapper.nearest.go**: `NearestOf`, the nearest-of-a-set search for quest
+  destinations (see Nearest of a set below).
 
 ## Coordinates: authored first, crawl second
 
@@ -149,6 +151,35 @@ with results memoised in a path cache keyed by start/end. `GetPath` is
 wrapper that falls back to `crossZoneHop` in that case; see Cross-Zone Routing
 below.
 
+### Nearest of a set (`mapper.nearest.go`, #375 phase 4)
+
+```go
+func NearestOf(fromRoomId int, in func(roomId int) bool, zones []string) (pin, nextRoomId int, exitName string, found bool)
+```
+
+Where to head toward the nearest room of a set (a quest destination: an
+area, an NPC's rooms, a zone). `zones` lists every zone the set touches.
+
+- **Start zone.** Only when the start room's zone is in `zones`
+  (`searchesHere`), it runs `nearestIn` on that zone's mapper: a
+  breadth-first search that stops at the first member, every exit costing 1
+  as in `findPath`, exits taken in name order so a tie always goes the same
+  way. The start room is never the answer, and an exit to a room the map lacks
+  is not taken. It returns that room as `pin` with the first hop.
+- **Zone hop.** When the start zone is not in `zones`, or no member there is
+  reachable, `nearestZoneHop` (`mapper.crosszone.go`) picks the zone of
+  `zones` with the fewest zone crossings, and `hopToward` gives the first step
+  to its border (or the crossing itself). `pin` is then 0: the room is not on
+  the player's drawn map.
+- `found` is false when neither works.
+
+**Cost** (`mapper.nearest_bench_test.go`, a 20x20 grid from one corner to
+three rooms in the far corner, Ryzen 9 5900X, 2026-10-28):
+`BenchmarkNearestIn400` about 126 us/op, `BenchmarkFindPath400` (uncached A*
+to the same room) about 108 us/op. The web quest panel re-resolves the focused
+quest on every move, so `searchesHere` skips that crawl whenever the player's
+zone holds no member of the set.
+
 ## Gotchas
 
 - **Never compare `positionDelta` values with `==`.** Use `samePos`, which
@@ -171,7 +202,8 @@ context during render), plus `container/heap` for the A\* queue.
 ## Consumers
 
 `internal/usercommands` (`map`, `pathto`, `cartcheck`), `internal/mobs`
-(schedule and patrol movement), `internal/questengine` (map markers),
+(schedule and patrol movement), `internal/questengine` (`NearestOf` for quest
+destinations),
 `internal/rooms`, and `modules/gmcp` (the `Zone.Map` payload).
 
 ## Cartesian Consistency Engine

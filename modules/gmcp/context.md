@@ -495,7 +495,7 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Commands.go` | `Commands` | Command state, modes, cooldowns |
 | `gmcp.Behavior.go` | `Behavior` | Behaviour-tree state (admin/builder tooling) |
 | `gmcp.Build.go` | `Build` | The admin web building tools' data feed. Every `Build.Dialogue.*` message is refused by `refuseDialogueBuild` (the dialogue editor is off until quest arc phase 6). Build.Quest.Get/Update/Create/Delete are refused by `refuseQuestBuild` (the quest editor is off until phase 6, P7); `Build.Quest.List` stays open; the loop door in `buildQuestUpdate` is dormant until then |
-| `gmcp.Delete_refs.go` | `Build` | The boot doors' checks for `Build.Room.Delete`, `Build.Item.Delete` and `Build.Mob.Delete`: `questRefsWithoutRoom` / `questRefsWithoutItem` / `questRefsWithoutMob` run the quest loop with the id gone and `dialogueRefsWithoutItem` the dialogue door, each returning only what the delete adds. `roomQuestRefs` backs `buildDeps.questRefs` (the room delete refuses, naming each quest and where); `itemQuestRefs` backs `refIterators.questRefs` in the item reference scan, which no longer walks quest rewards itself; `mobQuestRefs` backs `mobRefIterators.questRefs` in the mob scan, which no longer walks quest triggers itself (and now covers step `map_target_mob`) |
+| `gmcp.Delete_refs.go` | `Build` | The boot doors' checks for `Build.Room.Delete`, `Build.Item.Delete` and `Build.Mob.Delete`: `questRefsWithoutRoom` / `questRefsWithoutItem` / `questRefsWithoutMob` run the quest loop with the id gone and `dialogueRefsWithoutItem` the dialogue door, each returning only what the delete adds. `roomQuestRefs` backs `buildDeps.questRefs` (the room delete refuses, naming each quest and where); `itemQuestRefs` backs `refIterators.questRefs` in the item reference scan, which no longer walks quest rewards itself; `mobQuestRefs` backs `mobRefIterators.questRefs` in the mob scan, which no longer walks quest triggers itself (and covers a step `destination:` block's `mob`) |
 | `gmcp.CharOp.go` | — | `GMCPCharOp` + `handleCharOp`: inbound state-touching `Char.*` ops, deferred to MainWorker |
 | `gmcp.Relay.go` | `Companion.Relay.*` | The companion key relay: installs `companionai.SetRelaySender`, forwards inbound relay messages to `companionai.RelayInbound` |
 | `gmcp.Game.go` | `Game` | Game-level metadata |
@@ -526,6 +526,25 @@ while it is `true`; telnet clients with GMCP can read the same signal.
   queued action is not run; the module replies `Char.Action.Result` with status
   `deferred` and reason `menu open`. Every exit from that handler must reply,
   or the client parks its action queue.
+
+## Char.Quests: destination fields (`gmcp.Char.go`, #375 phase 4)
+
+`GMCPCharModule_Payload_Quest` carries the focused quest's destination, from
+`questengine.ResolveDestination` (other quests leave these empty). Five fields
+are new, beside the older `target_room`, `next_room` and `next_dir`:
+
+| Field | Meaning |
+|---|---|
+| `target_kind` | `anywhere`, `room`, `mob`, `area`, `zone` or `unknown` (`questengine.DestKind`) |
+| `target_label` | the area or zone name, else the NPC's name |
+| `target_rooms` | the destination's template rooms in the player's zone, for the map wash |
+| `inside` | the player stands in the destination |
+| `guide` | `questengine.GuideLine`, the same line the `quest` command prints |
+
+`target_room` is now the nearest destination room on the player's map (0 when
+it lies in another zone, where only `next_dir` guides). `roomChangeHandler`
+re-sends Char.Quests on every move, since all of these depend on the player's
+current room.
 
 ## Gotchas
 

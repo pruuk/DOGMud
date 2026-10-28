@@ -495,7 +495,58 @@ label left off the three events that refuse count, and
 | Find a wandering NPC | the action on that NPC (topic, give, kill) | Arrow to the area | Area outlined; NPC not tracked |
 | Rare drop anywhere there | `item_gain` + `item` + `area` | Arrow | Area outlined |
 
-The map columns are phase 4's work; today the arrow and outline do not exist.
+Phase 4 slice 1 gives the arrow (the quest log's guide line and the GMCP
+`next_dir`) and sends the outline's rooms (`target_rooms`); the web client
+draws the outline in slice 2. "Arrow to the area, never the room" is a
+`destination: {area: ...}` on that step, so the room is not given away.
+
+## Step destinations: `destination:`
+
+Each step can say where the map and the quest log point while the player is
+on it (#375 phase 4; it replaced `map_target` and `map_target_mob`, which
+are gone). The engine resolves it per player (`questengine.ResolveDestination`)
+and the quest log prints one line from it ("Head north.", "You are in the
+unquiet grove.", "Destination unknown.").
+
+```yaml
+steps:                 # the room and mob ids here are illustrative
+  - id: start
+    description: Find the hermit in the grove.
+    destination: {mob: 5120, area: unquiet_grove}   # the NPC, else the area
+  - id: hunt
+    destination: {area: unquiet_grove}
+  - id: report
+    destination: {room: 5012}
+  - id: think
+    destination: anywhere      # no marker, and no warning
+  - id: end
+```
+
+- **Shapes:** `anywhere`; `room`; `area` (a key from
+  `_datafiles/world/dogmud/areas/`); `zone`; or `mob`, alone or with one of
+  `room`, `area`, `zone` as its fallback. Any other word or key refuses the
+  file; naming two of room, area and zone refuses it too.
+- **`mob`** points at the live copies the player could actually see where
+  they stand. A hidden copy, or one in a room too dark for the player, is not
+  tracked: the map falls back to the step's room, area or zone, else to the
+  rooms that spawn the mob. A bare `mob` that no room spawns is a
+  `walk-destination` finding.
+- **No block:** the destination is inferred from the step's triggers. A
+  trigger belongs to the latest step of its own quest that its `has` lists
+  (`Quest.CountStep`), and its `room`, `conditions.in_room`, `mob`, `area`
+  and `zone` are the places. Write a block when the inference would point at
+  the wrong place, or would give away a room the player should find.
+- **A trigger's `target:` is a different thing.** It filters what a
+  `command` was aimed at (self, mob, item...) and never feeds the
+  destination.
+- **The final step** has no destination; leave it off.
+- **`anywhere`** is for steps that truly can happen anywhere. If a trigger on
+  that step names a place, `walk-destination-anywhere` says so: drop
+  `anywhere` and let it infer.
+- **Findings:** boot logs `walk-destination` and `walk-destination-anywhere`
+  as warnings and never refuses. The CI sweep ratchets them against
+  `_datafiles/world/dogmud/quests/loop-backlog.txt`; a new quest must add
+  none.
 
 ## Verify event names against the loader
 

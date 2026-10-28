@@ -36,7 +36,11 @@ through a `# retired` or `# renamed` line.
 - **loader.go**: `DataPath()` (`<DataFiles>/areas`),
   `LoadDataFiles(roomZones map[int]string) error`, and the read API:
   `Get(key)`, `Contains(key, roomId)`, `AreasOf(roomId)` (sorted keys, shared
-  slice), `Rooms(key)` (sorted ids), `Keys()` (sorted).
+  slice), `Rooms(key)` (sorted ids), `Keys()` (sorted), and for quest
+  destinations (#375 phase 4) `ZonesOf(key)` (the zones the area's rooms lie
+  in, sorted) and `RoomsIn(key, zone)` (the area's template rooms in one zone,
+  sorted, nil when it has none there). Both hand out shared slices: do not
+  change them.
   `InstallForTest(areas, roomZones) (restore func())` installs areas for
   another package's tests.
 
@@ -63,6 +67,8 @@ through a `# retired` or `# renamed` line.
   newly mapped room with `AreasOf`; `StepProgress` and `exploreMet` read
   `Rooms(key)`; the explore line names the area through `Get(key).Name`; the
   walkthrough's `walkRoomIn` stands a synthetic event in the area's lowest room.
+  For destinations, `ResolveDestination`'s area set tests membership with
+  `Contains`, routes with `ZonesOf` and washes the map with `RoomsIn`.
 - `internal/questworld`: `Validators()` wires `AreaExists`, `AreaSize` and
   `AreaGatedRoom` from `Get` and `Rooms`, and `addGateTriggerRooms` marks every
   room of a `room_gate` trigger's area as gated.

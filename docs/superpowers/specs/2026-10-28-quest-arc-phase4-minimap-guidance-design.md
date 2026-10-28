@@ -156,8 +156,10 @@ Order:
    `rooms.SpawnRooms(mobId)` (Kind area, no Label, Npc kept), else unknown. This applies to a
    single-copy NPC too: a hidden or unlit quest giver is no longer tracked through walls.
 4. `room` (that room), `area` (`areas.Contains`), `zone` (rooms whose template zone is that zone).
-5. No block: the union of what every trigger gated on the step (`conditions.has` contains the
-   step token) names: `room`, `conditions.in_room`, `area`, `zone`, `mob` (as rule 3, with no
+5. No block: the union of what every trigger that belongs to the step names, where a trigger
+   belongs to the step `Quest.CountStep` gives it (the latest step of its own quest its
+   `conditions.has` lists, so a trigger gated on two steps counts for the later one only):
+   `room`, `conditions.in_room`, `area`, `zone`, `mob` (as rule 3, with no
    declared fallback). One kind keeps its kind and label; mixed kinds give Kind room over the union.
    `Inferred` is set.
 6. Nothing: Kind unknown.
@@ -167,8 +169,9 @@ call: a zone is its name, an area gains `areas.ZonesOf(key)` and `areas.RoomsIn(
 once at load, a mob set is the handful of perceived rooms.
 
 **Nearest and direction.** New `mapper.NearestOf(fromRoomId int, in func(roomId int) bool, zones
-[]string) (pin, nextRoom int, exit string, ok bool)`: a breadth-first search over the start room's
-zone mapper (the same exits as `findPath`, exits taken in name order so ties are stable) that stops
+[]string) (pin, nextRoom int, exit string, ok bool)`: when the start room's zone is one of `zones`
+(`searchesHere`; otherwise it goes straight to the zone hop below), a breadth-first search over the
+start room's zone mapper (the same exits as `findPath`, exits taken in name order so ties are stable) that stops
 at the first room `in` accepts. When no room of the player's zone qualifies, it takes the zone of
 `zones` with the fewest zone hops (`nearestZoneHop`, the multi-target form of `nextZoneHop`, which
 then calls it with one zone) and the same border step `crossZoneHop` takes; Pin is then 0 (the room

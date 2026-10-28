@@ -101,15 +101,40 @@ type Quest struct {
 ### Quest Step Structure
 ```go
 type QuestStep struct {
-    Id           string // Step identifier (e.g., "start", "middle", "end")
-    Description  string // Step description for players
-    Hint         string // Optional hint for completing step
-    MapTarget    int    // Room the minimap marker points at during this step
-                         // (0 = infer from room_enter triggers, -1 = deliberate no marker)
-    MapTargetMob int    // Points the minimap marker at a unique NPC's CURRENT room
-                         // instead of a fixed room (falls back to MapTarget if unresolved)
+    Id          string          // Step identifier (e.g., "start", "middle", "end")
+    Description string          // Step description for players
+    Hint        string          // Optional hint for completing step
+    Destination StepDestination // Where the minimap and the quest log point (#375 phase 4)
 }
 ```
+
+### Step destination (`destination.go`, #375 phase 4)
+
+`StepDestination` is a step's `destination:` block: where the minimap marks
+and where the quest log's guide line points while the player is on that step.
+It replaced the retired `map_target` and `map_target_mob` fields. Shapes:
+
+```yaml
+destination: anywhere          # no marker, no unknown-destination warning
+destination: {room: 5012}      # one room
+destination: {area: grove}     # a named area (internal/areas)
+destination: {zone: Frostfang} # a whole zone
+destination: {mob: 84}         # the live copies of an NPC the player perceives
+destination: {mob: 84, area: grove}  # a mob with a fallback (room, area or zone)
+```
+
+- `DestinationAnywhere` is the one scalar word; `UnmarshalYAML` refuses any
+  other word or key, and `MarshalYAML` writes `anywhere` back as the scalar.
+- `Validate` checks the shape only: at most one of room, area and zone (a mob
+  may add one as its fallback), positive ids, `anywhere` alone. Existence of
+  the room, mob, area and zone is `ValidateQuestRefs`' job.
+- `IsZero` means the step has no block: the destination is then inferred
+  from the step's triggers. Each trigger belongs to the step `CountStep`
+  names (the latest step of its own quest its `has` lists), and that step
+  takes the trigger's `room`, `conditions.in_room`, `mob`, `area` and `zone`.
+- A trigger's `target:` (a noun, #375 phase 3b slice 2) is a different thing
+  and never feeds the destination.
+- `questengine.ResolveDestination` resolves the block for one player.
 
 ### Quest Reward Structure
 ```go
