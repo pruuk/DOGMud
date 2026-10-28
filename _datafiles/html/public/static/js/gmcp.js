@@ -991,9 +991,9 @@ class RoomGridSVG {
           } else if (rw[0] === "stairs") {
               ov.appendChild(lTxt({ x: sxc, y: yy + 1, "text-anchor": "middle", "font-size": 7, "font-weight": "bold", fill: L.ink }, "▲"));
           } else if (rw[0] === "quest") {
-              // Brass destination ring + patina core
+              // Brass destination ring + brass core
               ov.appendChild(lEl("circle", { cx: sxc, cy: yy - 2, r: 3.2, fill: L.roomFill, stroke: "url(#" + questBrassId + ")", "stroke-width": 1.4 }));
-              ov.appendChild(lEl("circle", { cx: sxc, cy: yy - 2, r: 1.2, fill: L.questPatina }));
+              ov.appendChild(lEl("circle", { cx: sxc, cy: yy - 2, r: 1.2, fill: L.questGold }));
           } else if (rw[0] === "qstep") {
               // Short gold next-step line with arrowhead
               ov.appendChild(lEl("line", { x1: sxc - 5, y1: yy - 2, x2: sxc + 3, y2: yy - 2, stroke: L.questGold, "stroke-width": 1.4, "marker-end": "url(#" + questHeadId + ")" }));
@@ -1077,20 +1077,20 @@ class RoomGridSVG {
           g.appendChild(lEl("path", { d: "M" + (mx - 2) + "," + (my + 2.6) + " Q" + mx + "," + (my - 0.4) + " " + (mx + 2) + "," + (my + 2.6) + " Z", fill: L.party }));
       }
 
-      // Focused-quest destination marker (brass ring + copper-patina glow +
+      // Focused-quest destination marker (brass ring + brass glow +
       // brass pin + italic name) on the target room.
       const qm = this._questMarker;
       if (qm && qm.targetRoom && (qm.targetRoom === id || qm.targetRoom === String(id))) {
-          g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 12, fill: L.questPatina, opacity: "0.30" }));
+          g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 12, fill: L.questGold, opacity: "0.30" }));
           g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 8.5, fill: L.roomFill, stroke: "url(#" + this._questBrassId + ")", "stroke-width": 2.2 }));
-          g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 3, fill: L.questPatina }));
+          g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 3, fill: L.questGold }));
           g.appendChild(lEl("path", { d: "M" + cx + "," + (cy - 14) + " L" + cx + "," + (cy - 24), stroke: "#cb9f42", "stroke-width": 1.6 }));
           g.appendChild(lEl("path", { d: "M" + cx + "," + (cy - 24) + " L" + (cx + 8) + "," + (cy - 21) + " L" + cx + "," + (cy - 18) + " Z", fill: "url(#" + this._questBrassId + ")" }));
           if (qm.name) {
               g.appendChild(lTxt({
                   x: cx, y: cy + 21, "text-anchor": "middle",
                   "font-family": "Georgia,serif", "font-size": "7.5",
-                  "font-style": "italic", fill: L.questPatina
+                  "font-style": "italic", fill: L.title
               }, qm.name));
           }
       }
@@ -1473,7 +1473,7 @@ RoomGridSVG.LEATHER = {
   label: "#e8d8b8", locked: "#d0633f", water: "#6f99c0", trail: "#a98a55",
   road: "#c9a86a", ridge: "#a98a55", plain: "#9c8048",
   legendBg: "#241810", party: "#6bb0a0", partyDk: "#243f3a",
-  questGold: "#e8b84a", questPatina: "#6bb0a0",
+  questGold: "#e8b84a",
   emboss: 0.6, fray: 3.4, nickP: 0.08, crackStep: 24, crackJit: 9, vig: 0.5
 };
 

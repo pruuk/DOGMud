@@ -1037,6 +1037,10 @@
                     var mark = '';
                     if (onMap) {
                         mark = ' <span class="qonmap">◆ marked on map</span>';
+                    } else if (q.guide) {
+                        // The server's destination line (#375 phase 4, questengine.GuideLine), the same
+                        // words the `quest` command prints.
+                        mark = ' <span class="qonmap">' + escapeHTML(q.guide) + '</span>';
                     } else if (q.next_dir) {
                         mark = ' <span class="qonmap">→ head ' + escapeHTML(q.next_dir) + '</span>';
                     }

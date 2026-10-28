@@ -207,5 +207,14 @@ g.setQuestMarker({ targetRoom: 0, nextRoom: 0, nextDir: '', name: 'Q', kind: 'ar
 zoneMap({ zone: 'Pothole Coulee', cz: 0, party: [], full: true, rooms: [ room(1, 0), room(2, 1) ] });
 check('banner survives a full map reset', bannerText(g).indexOf('Somewhere in the unquiet grove') >= 0, bannerText(g));
 
+console.log('SCENARIO 6: the pin is brass, never the party teal');
+g = freshMap();
+zoneMap({ zone: 'T', cz: 0, party: [], full: true, rooms: [ room(1, 0), room(2, 1) ] });
+g.setQuestMarker({ targetRoom: 1, nextRoom: 1, nextDir: 'west', name: 'Velk', kind: 'mob', label: 'Velk', targetRooms: [1], inside: false });
+const pinFills = g.rooms.get(1).group.children.map(c => c.attrs && c.attrs.fill).filter(Boolean);
+check('the pin was drawn (brass halo present)', pinFills.indexOf(RoomGridSVG.LEATHER.questGold) >= 0, JSON.stringify(pinFills));
+check('no teal in the pin', pinFills.indexOf('#6bb0a0') < 0, JSON.stringify(pinFills));
+check('questPatina is gone from the palette', !('questPatina' in RoomGridSVG.LEATHER), JSON.stringify(Object.keys(RoomGridSVG.LEATHER)));
+
 console.log(fails === 0 ? '\nALL CHECKS PASSED' : '\n' + fails + ' CHECK(S) FAILED');
 process.exit(fails ? 1 : 0);
