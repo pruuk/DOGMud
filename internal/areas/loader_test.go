@@ -79,3 +79,22 @@ func TestPublicAPI(t *testing.T) {
 		t.Errorf("Keys() = %v", got)
 	}
 }
+
+func TestZonesOfAndRoomsIn(t *testing.T) {
+	restore := InstallForTest([]Area{
+		{Key: "grove", Name: "the Grove", Zones: []string{"thornwall"}, Rooms: []int{5313, 5311}},
+	}, testRooms())
+	defer restore()
+	if got := ZonesOf("grove"); !reflect.DeepEqual(got, []string{"pothole_coulee", "thornwall"}) {
+		t.Errorf("ZonesOf(grove) = %v", got)
+	}
+	if got := RoomsIn("grove", "pothole_coulee"); !reflect.DeepEqual(got, []int{5311, 5313}) {
+		t.Errorf("RoomsIn(grove, pothole_coulee) = %v", got)
+	}
+	if got := RoomsIn("grove", "nowhere"); got != nil {
+		t.Errorf("RoomsIn on a zone the area misses = %v, want nil", got)
+	}
+	if ZonesOf("nope") != nil || RoomsIn("nope", "thornwall") != nil {
+		t.Error("an unknown key has no zones and no rooms")
+	}
+}

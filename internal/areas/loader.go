@@ -87,7 +87,7 @@ func loadDir(dir string, roomZones map[int]string) (*registry, []string, error) 
 			return nil, nil, fmt.Errorf("%s: %w", e.Name(), err)
 		}
 		warns = append(warns, w...)
-		r.add(a, set)
+		r.add(a, set, roomZones)
 	}
 	return r, warns, nil
 }
@@ -120,6 +120,14 @@ func Rooms(key string) []int {
 	return out
 }
 
+// ZonesOf lists the zones the area's rooms lie in, sorted (#375 phase 4: the
+// minimap routes to the nearest of them). Shared: do not change it.
+func ZonesOf(key string) []string { return current().zones[key] }
+
+// RoomsIn lists the area's template rooms in zone, sorted, for the minimap's
+// wash. Shared: do not change it. Nil when the area has none there.
+func RoomsIn(key, zone string) []int { return current().inZone[key][zone] }
+
 // Keys lists every loaded area key, sorted.
 func Keys() []string {
 	r := current()
@@ -141,7 +149,7 @@ func InstallForTest(list []Area, roomZones map[int]string) (restore func()) {
 		if err != nil {
 			panic(err)
 		}
-		r.add(a, set)
+		r.add(a, set, roomZones)
 	}
 	prev := reg.Swap(r)
 	return func() { reg.Store(prev) }

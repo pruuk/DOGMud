@@ -19,21 +19,35 @@ type Area struct {
 
 type registry struct {
 	areas  map[string]Area
-	rooms  map[string]map[int]bool // key -> template room ids
-	byRoom map[int][]string        // template room id -> area keys, sorted
+	rooms  map[string]map[int]bool     // key -> template room ids
+	byRoom map[int][]string            // template room id -> area keys, sorted
+	zones  map[string][]string         // key -> zones its rooms lie in, sorted (#375 phase 4)
+	inZone map[string]map[string][]int // key -> zone -> its rooms there, sorted
 }
 
 func newRegistry() *registry {
-	return &registry{areas: map[string]Area{}, rooms: map[string]map[int]bool{}, byRoom: map[int][]string{}}
+	return &registry{areas: map[string]Area{}, rooms: map[string]map[int]bool{}, byRoom: map[int][]string{},
+		zones: map[string][]string{}, inZone: map[string]map[string][]int{}}
 }
 
-func (r *registry) add(a Area, set map[int]bool) {
+func (r *registry) add(a Area, set map[int]bool, roomZones map[int]string) {
 	r.areas[a.Key] = a
 	r.rooms[a.Key] = set
+	byZone := map[string][]int{}
 	for id := range set {
 		r.byRoom[id] = append(r.byRoom[id], a.Key)
 		sort.Strings(r.byRoom[id])
+		z := roomZones[id]
+		byZone[z] = append(byZone[z], id)
 	}
+	zs := make([]string, 0, len(byZone))
+	for z, ids := range byZone {
+		sort.Ints(ids)
+		zs = append(zs, z)
+	}
+	sort.Strings(zs)
+	r.zones[a.Key] = zs
+	r.inZone[a.Key] = byZone
 }
 
 func (r *registry) contains(key string, roomId int) bool { return r.rooms[key][roomId] }

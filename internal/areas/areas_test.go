@@ -50,8 +50,8 @@ func TestResolveRefusesAndWarns(t *testing.T) {
 
 func TestIndexAndContains(t *testing.T) {
 	r := newRegistry()
-	r.add(Area{Key: "grove", Name: "the Grove", Rooms: []int{5311, 5312}}, map[int]bool{5311: true, 5312: true})
-	r.add(Area{Key: "wood", Name: "the Wood", Rooms: []int{5312}}, map[int]bool{5312: true})
+	r.add(Area{Key: "grove", Name: "the Grove", Rooms: []int{5311, 5312}}, map[int]bool{5311: true, 5312: true}, testRooms())
+	r.add(Area{Key: "wood", Name: "the Wood", Rooms: []int{5312}}, map[int]bool{5312: true}, testRooms())
 	if !r.contains("grove", 5311) || r.contains("wood", 5311) {
 		t.Fatal("contains wrong")
 	}
