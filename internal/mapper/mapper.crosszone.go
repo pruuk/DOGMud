@@ -184,7 +184,23 @@ func ensureZoneGraph() {
 // destination is several zones away. Breadth-first, so it is the fewest-zones
 // route.
 func nextZoneHop(fromZone, toZone string) (zoneLink, bool) {
-	if fromZone == "" || toZone == "" || fromZone == toZone {
+	if toZone == "" {
+		return zoneLink{}, false
+	}
+	return nearestZoneHop(fromZone, []string{toZone})
+}
+
+// nearestZoneHop is nextZoneHop toward whichever of toZones is the fewest
+// zone crossings away (#375 phase 4: an area or an NPC's rooms can span
+// zones). fromZone itself and "" are never targets.
+func nearestZoneHop(fromZone string, toZones []string) (zoneLink, bool) {
+	want := map[string]bool{}
+	for _, z := range toZones {
+		if z != "" && z != fromZone {
+			want[z] = true
+		}
+	}
+	if fromZone == "" || len(want) == 0 {
 		return zoneLink{}, false
 	}
 	ensureZoneGraph()
@@ -200,7 +216,7 @@ func nextZoneHop(fromZone, toZone string) (zoneLink, bool) {
 	queue := make([]node, 0, len(zoneGraph[fromZone]))
 	seen := map[string]bool{fromZone: true}
 	for _, l := range zoneGraph[fromZone] {
-		if l.toZone == toZone {
+		if want[l.toZone] {
 			return l, true // direct neighbour
 		}
 		if !seen[l.toZone] {
@@ -212,7 +228,7 @@ func nextZoneHop(fromZone, toZone string) (zoneLink, bool) {
 		n := queue[0]
 		queue = queue[1:]
 		for _, l := range zoneGraph[n.zone] {
-			if l.toZone == toZone {
+			if want[l.toZone] {
 				return n.first, true // keep the FIRST leg, not this one
 			}
 			if !seen[l.toZone] {
@@ -239,10 +255,16 @@ func crossZoneHop(fromRoomId int, fromZone, toZone string) (nextRoomId int, exit
 	if !ok {
 		return 0, "", false
 	}
+	return hopToward(fromRoomId, link)
+}
+
+// hopToward is the first step from fromRoomId to the border room of link, or
+// the crossing itself when standing on it.
+func hopToward(fromRoomId int, link zoneLink) (nextRoomId int, exitName string, found bool) {
 	if fromRoomId == link.exitRoom {
 		return link.destRoom, link.exitName, true
 	}
-	path, err := GetPath(fromRoomId, link.exitRoom) // same zone — GetPath can do this
+	path, err := GetPath(fromRoomId, link.exitRoom) // same zone, GetPath can do this
 	if err != nil {
 		return 0, "", false
 	}
