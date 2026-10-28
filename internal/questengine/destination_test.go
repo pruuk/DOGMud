@@ -153,7 +153,7 @@ func TestResolveDestination_NearestPerceivedCopy(t *testing.T) {
 	}
 	w.copies[50] = []liveCopy{destCopy(t, 4, true), destCopy(t, 6, false), destCopy(t, 8, false), destCopy(t, 9, false)}
 	installDestWorld(t, w)
-	e := destEngine([]QuestStep{{Id: "start", Destination: quests.StepDestination{Mob: 50}}})
+	e := destEngine([]QuestStep{{Id: "start", Destination: quests.StepDestination{Mobs: []int{50}}}})
 	d := e.ResolveDestination(destUser(1), 700, "start")
 	// 4 is hidden, 6 is dark, 8 is shapes only: only 9 counts.
 	if d.Kind != DestMob || d.Pin != 9 || d.Npc != "a wolf" || d.Fallback {
@@ -169,9 +169,9 @@ func TestResolveDestination_MobFallsBack(t *testing.T) {
 	installDestWorld(t, w)
 
 	e := destEngine([]QuestStep{
-		{Id: "start", Destination: quests.StepDestination{Mob: 50, Room: 7}},
-		{Id: "spawn", Destination: quests.StepDestination{Mob: 50}},
-		{Id: "none", Destination: quests.StepDestination{Mob: 51}},
+		{Id: "start", Destination: quests.StepDestination{Mobs: []int{50}, Room: 7}},
+		{Id: "spawn", Destination: quests.StepDestination{Mobs: []int{50}}},
+		{Id: "none", Destination: quests.StepDestination{Mobs: []int{51}}},
 	})
 	d := e.ResolveDestination(destUser(1), 700, "start")
 	if d.Kind != DestRoom || d.Pin != 7 || d.Npc != "Velk" || !d.Fallback {
@@ -252,7 +252,7 @@ func TestResolveDestination_InstanceRooms(t *testing.T) {
 	}
 
 	e := destEngine([]QuestStep{
-		{Id: "start", Destination: quests.StepDestination{Mob: 50}},
+		{Id: "start", Destination: quests.StepDestination{Mobs: []int{50}}},
 		{Id: "room", Destination: quests.StepDestination{Room: 5}},
 	})
 	d := e.ResolveDestination(destUser(1), 700, "start")
@@ -282,8 +282,8 @@ func TestResolveDestination_MobDeclaredAreaAndZoneFallback(t *testing.T) {
 	t.Cleanup(areas.InstallForTest([]areas.Area{{Key: "g", Name: "the grove", Rooms: []int{20, 21}}}, zones))
 
 	e := destEngine([]QuestStep{
-		{Id: "area", Destination: quests.StepDestination{Mob: 50, Area: "g"}},
-		{Id: "zone", Destination: quests.StepDestination{Mob: 50, Zone: "grove"}},
+		{Id: "area", Destination: quests.StepDestination{Mobs: []int{50}, Area: "g"}},
+		{Id: "zone", Destination: quests.StepDestination{Mobs: []int{50}, Zone: "grove"}},
 	})
 	d := e.ResolveDestination(destUser(1), 700, "area")
 	if d.Kind != DestArea || d.Label != "the grove" || d.Npc != "Velk" || !d.Fallback {
@@ -300,9 +300,54 @@ func TestResolveDestination_NearestOfSeveralCopies(t *testing.T) {
 		names: map[int]string{50: "a wolf"}}
 	w.copies[50] = []liveCopy{destCopy(t, 9, false), destCopy(t, 4, false)}
 	installDestWorld(t, w) // the stub nearestOf picks the lowest member by in
-	e := destEngine([]QuestStep{{Id: "start", Destination: quests.StepDestination{Mob: 50}}})
+	e := destEngine([]QuestStep{{Id: "start", Destination: quests.StepDestination{Mobs: []int{50}}}})
 	d := e.ResolveDestination(destUser(1), 700, "start")
 	if d.Kind != DestMob || d.Pin != 4 || !reflect.DeepEqual(d.ZoneRooms, []int{4, 9}) {
 		t.Errorf("both copies count and the nearest is pinned: %+v", d)
 	}
+}
+
+// Owner ruling 16: a destination naming several NPCs takes every perceived
+// copy of any of them; the stub nearestOf picks the lowest member.
+func TestResolveDestination_SeveralNpcs(t *testing.T) {
+	zones := map[int]string{1: "z", 4: "z", 6: "z", 9: "z", 12: "z", 13: "z", 14: "z"}
+	names := map[int]string{50: "the Dock Constable", 51: "Jesset"}
+	step := []QuestStep{{Id: "start", Destination: quests.StepDestination{Mobs: []int{50, 51}}}}
+
+	t.Run("both visible, nearest wins", func(t *testing.T) {
+		w := destWorld{zones: zones, copies: map[int][]liveCopy{}, names: names}
+		w.copies[50] = []liveCopy{destCopy(t, 9, false)}
+		w.copies[51] = []liveCopy{destCopy(t, 4, false)}
+		installDestWorld(t, w)
+		d := destEngine(step).ResolveDestination(destUser(1), 700, "start")
+		if d.Kind != DestMob || d.Pin != 4 || d.Fallback || d.Npc != "the Dock Constable or Jesset" ||
+			!reflect.DeepEqual(d.ZoneRooms, []int{4, 9}) {
+			t.Errorf("both NPCs count and the nearest is pinned: %+v", d)
+		}
+	})
+	t.Run("one hidden, the other visible", func(t *testing.T) {
+		w := destWorld{zones: zones, copies: map[int][]liveCopy{}, names: names,
+			dark: map[int]messaging.SightDecision{4: messaging.SightNone}}
+		w.copies[50] = []liveCopy{destCopy(t, 6, true), destCopy(t, 4, false)} // hidden, and unlit
+		w.copies[51] = []liveCopy{destCopy(t, 9, false)}
+		installDestWorld(t, w)
+		d := destEngine(step).ResolveDestination(destUser(1), 700, "start")
+		if d.Kind != DestMob || d.Pin != 9 || d.Fallback {
+			t.Errorf("only the perceived NPC counts: %+v", d)
+		}
+	})
+	t.Run("neither perceived: the union of their spawn rooms", func(t *testing.T) {
+		w := destWorld{zones: zones, copies: map[int][]liveCopy{}, names: names,
+			spawns: map[int][]int{50: {13, 12}, 51: {14, 12}}}
+		w.copies[50] = []liveCopy{destCopy(t, 4, true)}
+		installDestWorld(t, w)
+		d := destEngine(step).ResolveDestination(destUser(1), 700, "start")
+		if d.Kind != DestArea || !d.Fallback || d.Pin != 12 || d.Npc != "the Dock Constable or Jesset" ||
+			!reflect.DeepEqual(d.ZoneRooms, []int{12, 13, 14}) {
+			t.Errorf("want the union of both NPCs' spawn rooms: %+v", d)
+		}
+		if got := w.spawns[50]; !reflect.DeepEqual(got, []int{13, 12}) {
+			t.Errorf("the shared spawn slice was changed: %v", got)
+		}
+	})
 }

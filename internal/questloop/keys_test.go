@@ -26,7 +26,7 @@ func TestKeys_RefsErrorsDoNotCollide(t *testing.T) {
 	w.Refs = &v
 	w.Quests[0].Triggers[0].Mob = 424242
 	w.Quests[0].Rewards.ItemId = 0
-	w.Quests[0].Steps[0].Destination = quests.StepDestination{Mob: 424243, Room: 5}
+	w.Quests[0].Steps[0].Destination = quests.StepDestination{Mobs: []int{424243}, Room: 5}
 	fresh, known2, _ := Ratchet(Validate(w), b)
 	require.Len(t, known2, 1)
 	require.Len(t, fresh, 1, "the second refs error is fresh, got %v", fresh)

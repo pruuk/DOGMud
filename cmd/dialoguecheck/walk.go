@@ -661,8 +661,10 @@ func (w *walker) assignQuestZones() {
 			if z := w.in.RoomZones[st.Destination.Room]; z != "" {
 				m.zones[z] = true
 			}
-			if z := w.mobFolder[st.Destination.Mob]; z != "" {
-				m.zones[z] = true
+			for _, mob := range st.Destination.Mobs {
+				if z := w.mobFolder[mob]; z != "" {
+					m.zones[z] = true
+				}
 			}
 		}
 	}

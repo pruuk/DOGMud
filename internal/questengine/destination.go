@@ -3,6 +3,7 @@ package questengine
 import (
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/areas"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -132,40 +133,56 @@ func roomsSet(kind DestKind, ids []int) destSet {
 		}}
 }
 
-// perceivedRooms lists the template rooms of the live copies of mobId the
-// viewer perceives at full sight, judged as if standing in each copy's room:
-// Character.Perceives (hidden) and ParticipantSight == SightFull (owner
-// rulings 4 and 5). The sight is judged once per room.
-func perceivedRooms(viewer *characters.Character, mobId int) []int {
+// perceivedRooms lists the template rooms of the live copies of any of
+// mobIds the viewer perceives at full sight, judged as if standing in each
+// copy's room: Character.Perceives (hidden) and ParticipantSight == SightFull
+// (owner rulings 4, 5 and 16). The sight is judged once per room per call.
+func perceivedRooms(viewer *characters.Character, mobIds []int) []int {
 	sight := map[int]bool{}
 	seen := map[int]bool{}
 	var out []int
-	for _, c := range liveCopies(mobId) {
-		if !viewer.Perceives(c.char) {
-			continue
-		}
-		ok, judged := sight[c.roomId]
-		if !judged {
-			ok = sightIn(viewer, c.roomId) == messaging.SightFull
-			sight[c.roomId] = ok
-		}
-		if !ok {
-			continue
-		}
-		if tpl := templateRoom(c.roomId); !seen[tpl] {
-			seen[tpl] = true
-			out = append(out, tpl)
+	for _, mobId := range mobIds {
+		for _, c := range liveCopies(mobId) {
+			if !viewer.Perceives(c.char) {
+				continue
+			}
+			ok, judged := sight[c.roomId]
+			if !judged {
+				ok = sightIn(viewer, c.roomId) == messaging.SightFull
+				sight[c.roomId] = ok
+			}
+			if !ok {
+				continue
+			}
+			if tpl := templateRoom(c.roomId); !seen[tpl] {
+				seen[tpl] = true
+				out = append(out, tpl)
+			}
 		}
 	}
 	sort.Ints(out)
 	return out
 }
 
-// mobSet is a mob destination: its perceived copies, else the fallback the
-// step declares (room, area or zone), else its spawn rooms (owner ruling 6).
-func mobSet(viewer *characters.Character, mobId int, fallback quests.StepDestination) (destSet, bool) {
-	npc := npcName(mobId)
-	if ids := perceivedRooms(viewer, mobId); len(ids) > 0 {
+// npcNames is the destination's NPC name: one name, or several joined with
+// " or " in list order (owner ruling 16).
+func npcNames(mobIds []int) string {
+	var names []string
+	for _, m := range mobIds {
+		if n := npcName(m); n != "" {
+			names = append(names, n)
+		}
+	}
+	return strings.Join(names, " or ")
+}
+
+// mobSet is a mob destination naming one NPC or several, any of which will
+// do: the perceived copies of any of them, else the fallback the step
+// declares (room, area or zone), else the union of their spawn rooms (owner
+// rulings 6 and 16).
+func mobSet(viewer *characters.Character, mobIds []int, fallback quests.StepDestination) (destSet, bool) {
+	npc := npcNames(mobIds)
+	if ids := perceivedRooms(viewer, mobIds); len(ids) > 0 {
 		s := roomsSet(DestMob, ids)
 		s.npc = npc
 		return s, true
@@ -179,11 +196,15 @@ func mobSet(viewer *characters.Character, mobId int, fallback quests.StepDestina
 	case fallback.Zone != "":
 		s = zoneSet(fallback.Zone)
 	default:
-		ids := spawnRoomsOf(mobId)
+		var ids []int // appended, never aliased: rooms.SpawnRooms slices are shared
+		for _, m := range mobIds {
+			ids = append(ids, spawnRoomsOf(m)...)
+		}
 		if len(ids) == 0 {
 			return destSet{}, false
 		}
-		s = roomsSet(DestArea, ids)
+		slices.Sort(ids)
+		s = roomsSet(DestArea, slices.Compact(ids))
 	}
 	s.npc, s.fallback = npc, true
 	return s, true
@@ -191,8 +212,8 @@ func mobSet(viewer *characters.Character, mobId int, fallback quests.StepDestina
 
 func declaredSet(viewer *characters.Character, d quests.StepDestination) (destSet, bool) {
 	switch {
-	case d.Mob > 0:
-		return mobSet(viewer, d.Mob, d)
+	case len(d.Mobs) > 0:
+		return mobSet(viewer, d.Mobs, d)
 	case d.Room > 0:
 		return roomSet(d.Room), true
 	case d.Area != "":
@@ -252,7 +273,7 @@ func inferredSet(viewer *characters.Character, p stepPlaces) (destSet, bool) {
 		parts = append(parts, roomsSet(DestRoom, p.rooms))
 	}
 	for _, m := range p.mobs {
-		if s, ok := mobSet(viewer, m, quests.StepDestination{}); ok {
+		if s, ok := mobSet(viewer, []int{m}, quests.StepDestination{}); ok {
 			parts = append(parts, s)
 		}
 	}

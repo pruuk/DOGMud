@@ -314,7 +314,9 @@ func ValidateQuestRefs(q Quest, v QuestValidators) (errs []string, warns []strin
 		d := s.Destination
 		where := fmt.Sprintf("step %d (%s) destination", i, s.Id)
 		c.checkRoom(where+" room", d.Room)
-		c.checkMob(where+" mob", d.Mob)
+		for _, m := range d.Mobs {
+			c.checkMob(where+" mob", m)
+		}
 		// An empty Area or Zone is never looked up, so a partial validator
 		// that leaves AreaExists or ZoneExists nil is safe, as in checkArea.
 		if d.Area != "" && !c.v.AreaExists(d.Area) {
@@ -323,7 +325,7 @@ func ValidateQuestRefs(q Quest, v QuestValidators) (errs []string, warns []strin
 		if d.Zone != "" && !c.v.ZoneExists(d.Zone) {
 			c.errf("%s zone: zone %q does not exist", where, d.Zone)
 		}
-		if d.Room > 0 && d.Mob == 0 && hasRoomFilters && !roomFiltered[d.Room] && c.v.RoomExists(d.Room) {
+		if d.Room > 0 && len(d.Mobs) == 0 && hasRoomFilters && !roomFiltered[d.Room] && c.v.RoomExists(d.Room) {
 			c.warnf("step %d (%s): destination room %d is referenced by no trigger; double-check it is the intended destination", i, s.Id, d.Room)
 		}
 	}

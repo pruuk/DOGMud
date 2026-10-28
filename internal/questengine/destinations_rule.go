@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
@@ -38,9 +39,12 @@ func Destinations(qs []*quests.Quest) (findings []questloop.Finding, inferred []
 						Msg: "marked anywhere, but a trigger on this step names a place; drop anywhere so the destination is inferred"})
 				}
 			case !d.IsZero():
-				if d.Mob > 0 && d.Room == 0 && d.Area == "" && d.Zone == "" && len(spawnRoomsOf(d.Mob)) == 0 {
+				// A mob list with no declared fallback needs only one of
+				// its mobs to have spawn rooms (owner ruling 16).
+				if len(d.Mobs) > 0 && d.Room == 0 && d.Area == "" && d.Zone == "" &&
+					!slices.ContainsFunc(d.Mobs, func(m int) bool { return len(spawnRoomsOf(m)) > 0 }) {
 					findings = append(findings, questloop.Finding{Rule: "walk-destination", QuestId: q.QuestId, Where: where,
-						Msg: fmt.Sprintf("mob %d has no fallback and no room spawns it; add room, area or zone", d.Mob)})
+						Msg: fmt.Sprintf("%s has no fallback and no room spawns it; add room, area or zone", mobIdsText(d.Mobs))})
 				}
 			default:
 				if staticInferable(p) {
@@ -54,6 +58,20 @@ func Destinations(qs []*quests.Quest) (findings []questloop.Finding, inferred []
 	}
 	slices.SortFunc(findings, func(a, b questloop.Finding) int { return cmp.Compare(a.Key(), b.Key()) })
 	return findings, inferred
+}
+
+// mobIdsText names a destination's mobs for a finding: "mob 94", or
+// "mobs 9316, 9300" for a list. A single id keeps the message the backlog
+// already records.
+func mobIdsText(ids []int) string {
+	if len(ids) == 1 {
+		return fmt.Sprintf("mob %d", ids[0])
+	}
+	parts := make([]string, len(ids))
+	for i, id := range ids {
+		parts[i] = fmt.Sprint(id)
+	}
+	return "mobs " + strings.Join(parts, ", ")
 }
 
 // staticInferable reports whether a step's trigger places resolve without a

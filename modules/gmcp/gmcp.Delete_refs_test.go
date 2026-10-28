@@ -77,7 +77,7 @@ func TestQuestRefsWithoutItem_TriggersActionsAndRewards(t *testing.T) {
 // missed, must refuse a mob delete and name where.
 func TestQuestRefsWithoutMob_NamesEveryReferencingField(t *testing.T) {
 	w := deleteFixture(func(q *quests.Quest) {
-		q.Steps[1].Destination = quests.StepDestination{Mob: 9300}
+		q.Steps[1].Destination = quests.StepDestination{Mobs: []int{9300}}
 		q.Triggers[0].Mob = 9300
 		bounty := &quests.DeclareBountyDef{}
 		bounty.Target = &struct {
@@ -101,7 +101,7 @@ func TestQuestRefsWithoutMob_NamesEveryReferencingField(t *testing.T) {
 }
 
 func TestBuildMobDelete_RefusedWhileAStepDestinationNamesIt(t *testing.T) {
-	w := deleteFixture(func(q *quests.Quest) { q.Steps[1].Destination = quests.StepDestination{Mob: 9300} })
+	w := deleteFixture(func(q *quests.Quest) { q.Steps[1].Destination = quests.StepDestination{Mobs: []int{9300}} })
 	fw := newFakeMobWorld()
 	m := &mobs.Mob{MobId: 9300, Zone: "Testzone"}
 	fw.specs[9300] = m

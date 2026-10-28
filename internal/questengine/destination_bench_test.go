@@ -70,7 +70,7 @@ func BenchmarkResolveDestinationMob30(b *testing.B) {
 		copies = append(copies, benchCopy(b, 101+i, i%2 == 1))
 	}
 	installDestBench(b, map[int][]liveCopy{mobId: copies})
-	e := destEngine([]QuestStep{{Id: "start", Destination: quests.StepDestination{Mob: mobId}}})
+	e := destEngine([]QuestStep{{Id: "start", Destination: quests.StepDestination{Mobs: []int{mobId}}}})
 	u := destUser(1)
 	if d := e.ResolveDestination(u, 700, "start"); d.Kind != DestMob || len(d.ZoneRooms) != 15 {
 		b.Fatalf("want a mob destination over 15 perceived rooms: %+v", d)
