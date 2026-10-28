@@ -233,7 +233,9 @@ will do (`StepDestination.Mobs`, owner ruling 16). The set is the rooms of
 the live copies of any of them the player perceives (`Character.Perceives`
 for hidden copies, and `messaging.ParticipantSight` at `SightFull`, judged as
 if standing in each copy's room, once per room per call), so the nearest
-wins. With none perceived, the block's fallback room, area or zone, else the
+wins. A copy standing in an instance room counts only for a player in that
+same instance (`rooms.SameEphemeralCopy`); for anyone else its template room
+is a room the NPC is not in. With none perceived, the block's fallback room, area or zone, else the
 union of their spawn rooms (`rooms.SpawnRooms`, appended into a fresh slice
 because the index slices are shared, then sorted and de-duplicated);
 `Fallback` is then set. `Npc` is the NPC's name, or the names joined with

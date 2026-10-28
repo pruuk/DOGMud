@@ -256,9 +256,9 @@ func TestResolveDestination_InstanceRooms(t *testing.T) {
 		{Id: "start", Destination: quests.StepDestination{Mobs: []int{50}}},
 		{Id: "room", Destination: quests.StepDestination{Room: 5}},
 	})
-	d := e.ResolveDestination(destUser(1), 700, "start")
+	d := e.ResolveDestination(destUser(inst5), 700, "start")
 	if d.Kind != DestMob || d.Pin != 9 || d.Fallback {
-		t.Errorf("a copy in an instance room counts by its template room: %+v", d)
+		t.Errorf("a copy in the player's own instance counts by its template room: %+v", d)
 	}
 	if d := e.ResolveDestination(destUser(inst5), 700, "room"); !d.Inside || d.Pin != 0 {
 		t.Errorf("a player in an instance of the room is inside it: %+v", d)
@@ -269,9 +269,41 @@ func TestResolveDestination_InstanceRooms(t *testing.T) {
 		sawIn = in(inst9)
 		return inst9, inst9, "east", sawIn
 	}
-	d = e.ResolveDestination(destUser(1), 700, "start")
+	d = e.ResolveDestination(destUser(inst5), 700, "start")
 	if !sawIn || d.Pin != 9 || d.NextRoom != 9 || d.NextDir != "east" {
 		t.Errorf("in maps instance ids, and Pin and NextRoom are template ids: sawIn=%v %+v", sawIn, d)
+	}
+}
+
+// A live copy standing in an instance room is where the NPC is only for a
+// player in that same instance. For anyone else its template room is a room
+// the NPC is not in (another party's instance, or the world outside), so the
+// copy does not count and the destination falls back.
+func TestResolveDestination_InstanceCopyCountsOnlyInItsInstance(t *testing.T) {
+	const instA5, instA9, instB9 = 1000000005, 1000000009, 1000000259 // A: chunk 0, B: chunk 1
+	w := destWorld{zones: map[int]string{1: "z", 5: "z", 9: "z"}, copies: map[int][]liveCopy{},
+		names: map[int]string{50: "a wolf"}, spawns: map[int][]int{50: {7}}}
+	w.zones[7] = "z"
+	w.copies[50] = []liveCopy{destCopy(t, instA9, false)}
+	installDestWorld(t, w)
+	templateRoom = func(id int) int {
+		switch id {
+		case instA5:
+			return 5
+		case instA9, instB9:
+			return 9
+		}
+		return id
+	}
+	e := destEngine([]QuestStep{{Id: "start", Destination: quests.StepDestination{Mobs: []int{50}}}})
+
+	if d := e.ResolveDestination(destUser(instA5), 700, "start"); d.Kind != DestMob || d.Pin != 9 || d.Fallback {
+		t.Errorf("a player in the copy's instance: %+v; want the copy's room 9", d)
+	}
+	for _, room := range []int{1, instB9} {
+		if d := e.ResolveDestination(destUser(room), 700, "start"); !d.Fallback || d.Pin == 9 {
+			t.Errorf("a player in room %d, outside the copy's instance: %+v; want the fallback (spawn room 7), not 9", room, d)
+		}
 	}
 }
 

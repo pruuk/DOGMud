@@ -137,12 +137,19 @@ func roomsSet(kind DestKind, ids []int) destSet {
 // mobIds the viewer perceives at full sight, judged as if standing in each
 // copy's room: Character.Perceives (hidden) and ParticipantSight == SightFull
 // (owner rulings 4, 5 and 16). The sight is judged once per room per call.
+//
+// A copy standing in an instance room counts only for a viewer in that same
+// instance: for anyone else its template room is a room the NPC is not in
+// (the world outside, or another party's copy of the zone).
 func perceivedRooms(viewer *characters.Character, mobIds []int) []int {
 	sight := map[int]bool{}
 	seen := map[int]bool{}
 	var out []int
 	for _, mobId := range mobIds {
 		for _, c := range liveCopies(mobId) {
+			if rooms.IsEphemeralRoomId(c.roomId) && !rooms.SameEphemeralCopy(c.roomId, viewer.RoomId) {
+				continue
+			}
 			if !viewer.Perceives(c.char) {
 				continue
 			}

@@ -533,6 +533,10 @@ question).
 - **Memory optimization**: Automatic cleanup when rooms are no longer needed
 - **Zone duplication**: Creating temporary copies of entire zones
 - **ID mapping**: Tracking relationships between original and ephemeral rooms
+- **Same copy**: `SameEphemeralCopy(a, b)` is true when both rooms are
+  ephemeral and in one chunk (one `CreateEphemeralRoomIds` call, so one zone
+  instance); quest guidance uses it to count an NPC standing in an instance
+  only for a player in that instance
 
 ### Zone Instance Options (`instances.go`)
 

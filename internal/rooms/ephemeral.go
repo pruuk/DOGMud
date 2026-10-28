@@ -173,6 +173,17 @@ func IsEphemeralRoomId(roomId int) bool {
 	return roomId >= ephemeralRoomIdMinimum
 }
 
+// SameEphemeralCopy reports whether two rooms are in one ephemeral copy: both
+// ephemeral and in the same chunk. Each CreateEphemeralRoomIds call (one zone
+// instance) reserves a chunk of its own, so rooms of two instances never
+// share one, and a template room is in none.
+func SameEphemeralCopy(a, b int) bool {
+	if !IsEphemeralRoomId(a) || !IsEphemeralRoomId(b) {
+		return false
+	}
+	return (a-ephemeralRoomIdMinimum)/ephemeralChunkSize == (b-ephemeralRoomIdMinimum)/ephemeralChunkSize
+}
+
 func TryEphemeralCleanup(ephemeralRoomId int) []int {
 
 	chunkId := int(math.Floor(float64(ephemeralRoomId-ephemeralRoomIdMinimum) / ephemeralChunkSize))
