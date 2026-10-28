@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"slices"
 	"sort"
 	"time"
 
@@ -59,6 +60,13 @@ func (r *mapper) nearestIn(fromRoomId int, in func(roomId int) bool) (pin, nextR
 	return 0, 0, "", false
 }
 
+// searchesHere reports whether NearestOf crawls the start zone's map. zones
+// lists every zone the set's rooms touch, so a start zone outside it holds no
+// member and the crawl (a whole zone, per move) is skipped for the zone hop.
+func searchesHere(fromZone string, zones []string) bool {
+	return slices.Contains(zones, fromZone)
+}
+
 // NearestOf is where to head from fromRoomId toward the nearest room in
 // accepts (#375 phase 4: quest destinations). Inside the start room's zone it
 // searches the map and returns that room as pin with the first hop. When no
@@ -73,9 +81,11 @@ func NearestOf(fromRoomId int, in func(roomId int) bool, zones []string) (pin, n
 	if fromRoom == nil {
 		return 0, 0, "", false
 	}
-	if m := GetMapper(fromRoomId); m != nil {
-		if pin, next, exit, ok := m.nearestIn(fromRoomId, in); ok {
-			return pin, next, exit, true
+	if searchesHere(fromRoom.Zone, zones) {
+		if m := GetMapper(fromRoomId); m != nil {
+			if pin, next, exit, ok := m.nearestIn(fromRoomId, in); ok {
+				return pin, next, exit, true
+			}
 		}
 	}
 	link, ok := nearestZoneHop(fromRoom.Zone, zones)

@@ -100,6 +100,21 @@ func TestNearestZoneHop_FewestZones(t *testing.T) {
 	}
 }
 
+// The start zone's map is crawled only when the set touches that zone; a
+// cross-zone set goes straight to the zone hop (#375 p4 review: a full crawl
+// per move otherwise).
+func TestSearchesHere_OnlyWhenTheSetTouchesTheStartZone(t *testing.T) {
+	if !searchesHere("Docks", []string{"Docks", "Noble"}) {
+		t.Error("a set touching the start zone must search it")
+	}
+	if searchesHere("Docks", []string{"Noble", "Old Quarter"}) {
+		t.Error("a set outside the start zone must not crawl it")
+	}
+	if searchesHere("Docks", nil) {
+		t.Error("no zones: nothing to search")
+	}
+}
+
 // distanceForTest is the breadth-first step count from a to b (-1 if none).
 func (r *mapper) distanceForTest(a, b int) int {
 	dist := map[int]int{a: 0}

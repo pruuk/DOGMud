@@ -33,7 +33,7 @@ type Destination struct {
 	Label     string // area or zone name; "" otherwise
 	Npc       string // the NPC's name for a mob destination, also when it fell back
 	Fallback  bool   // a mob destination showing its fallback set (no copy perceived)
-	ZoneRooms []int  // the set's template rooms in the player's zone, for the map wash
+	ZoneRooms []int  // the set's template rooms in the player's zone, sorted, for the map wash; may be shared with the areas index: do not change it
 	Pin       int    // nearest set room inside the player's zone; 0 if none
 	Inside    bool   // the player's room is in the set
 	NextRoom  int
@@ -106,8 +106,11 @@ func zoneSet(zone string) destSet {
 	return destSet{kind: DestZone, label: zone, in: func(r int) bool { return roomZone(r) == zone }, zones: []string{zone}}
 }
 
-// roomsSet is a set of listed rooms: an NPC's rooms, spawn rooms, an inferred union.
+// roomsSet is a set of listed rooms: an NPC's rooms, spawn rooms, an inferred
+// union. ids is cloned before sorting: rooms.SpawnRooms hands out a shared slice.
 func roomsSet(kind DestKind, ids []int) destSet {
+	ids = slices.Clone(ids)
+	slices.Sort(ids)
 	member := make(map[int]bool, len(ids))
 	var zones []string
 	for _, id := range ids {
@@ -213,12 +216,14 @@ func (p stepPlaces) empty() bool {
 	return len(p.rooms)+len(p.mobs)+len(p.areas)+len(p.zones) == 0
 }
 
+// A trigger belongs to the step Quest.CountStep names (the latest step of the
+// quest its has lists), so a trigger gated on two steps counts for the later
+// one only: it cannot fire before the player holds both tokens.
 func placesOf(q *quests.Quest, step string) stepPlaces {
-	token := quests.PartsToToken(q.QuestId, step)
 	var p stepPlaces
 	for i := range q.Triggers {
 		t := &q.Triggers[i]
-		if !slices.Contains(t.Conditions.Has, token) {
+		if q.CountStep(*t) != step {
 			continue
 		}
 		for _, r := range []int{t.Room, t.Conditions.InRoom} {
@@ -352,7 +357,7 @@ func finishDestination(set destSet, playerRoom int, inferred bool) Destination {
 	}
 	in := func(r int) bool { return set.in(templateRoom(r)) }
 	if pin, next, exit, ok := nearestOf(playerRoom, in, set.zones); ok {
-		d.Pin, d.NextRoom, d.NextDir = templateRoom(pin), next, exit
+		d.Pin, d.NextRoom, d.NextDir = templateRoom(pin), templateRoom(next), exit
 	}
 	return d
 }
