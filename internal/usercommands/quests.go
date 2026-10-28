@@ -133,6 +133,18 @@ func shelvedRows(c *characters.Character) []questRecord {
 	return rows
 }
 
+// SendQuestLogLine sends a quest log action's reply (#375 phase 5): a system
+// line on success, a refusal otherwise, wrapped to the reader's width because
+// CategorySystem is never wrapped by the pipeline (it carries tables), and the
+// abandon line runs past 80 columns.
+func SendQuestLogLine(user *users.UserRecord, ok bool, line string) {
+	cat := messaging.CategorySystem
+	if !ok {
+		cat = messaging.CategoryRefusal
+	}
+	user.SendText(cat, messaging.WrapAnsi(line, user.GetLineWidth()))
+}
+
 func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	switch sub := questsSubcommand(rest); sub[0] {
@@ -146,18 +158,14 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			if FocusQuest(user, id) {
 				// Re-send Char.Quests so the panel and marker follow.
 				events.AddToQueue(events.Quest{UserId: user.UserId, QuestToken: quests.PartsToToken(id, user.Character.GetQuestProgress()[id]), MarkerOnly: true})
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You turn your attention to %s.`, quests.GetQuestById(id).Name))
+				SendQuestLogLine(user, true, fmt.Sprintf(`You turn your attention to %s.`, quests.GetQuestById(id).Name))
 			} else {
 				user.SendText(messaging.CategoryRefusal, questNoSuchLine)
 			}
 			return true, nil
 		}
 		ok, line := AbandonQuest(user, id)
-		cat := messaging.CategorySystem
-		if !ok {
-			cat = messaging.CategoryRefusal
-		}
-		user.SendText(cat, line)
+		SendQuestLogLine(user, ok, line)
 		return true, nil
 	}
 

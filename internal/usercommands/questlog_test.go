@@ -162,6 +162,23 @@ func stripAnsiTags(s string) string {
 	return regexp.MustCompile(`<[^>]*ansi[^>]*>|</ansi>`).ReplaceAllString(s, ``)
 }
 
+// The abandon line runs past 80 columns and CategorySystem is not wrapped by
+// the pipeline, so the sender wraps it (seen breaking mid-word in the web
+// client during the phase 5 screenshots).
+func TestSendQuestLogLine_WrapsToTheReader(t *testing.T) {
+	u := questlogFixture(t)
+	events.DrainQueuedMessagesForTest(u.UserId)
+	_, line := AbandonQuest(u, 42)
+	events.DrainQueuedMessagesForTest(u.UserId)
+	require.Greater(t, len(line), 80)
+	SendQuestLogLine(u, true, line)
+	msgs := events.DrainQueuedMessagesForTest(u.UserId)
+	require.Len(t, msgs, 1)
+	for _, ln := range strings.Split(strings.TrimRight(msgs[0], "\r\n"), "\n") {
+		require.LessOrEqual(t, len([]rune(stripAnsiTags(strings.TrimRight(ln, "\r")))), 80, ln)
+	}
+}
+
 // On shipped data, quest 28 (started by walking into a room) has no offer.
 func TestShippedOfferIndex_Quest28HasNoOffer(t *testing.T) {
 	chdirRepoRootForTest(t)

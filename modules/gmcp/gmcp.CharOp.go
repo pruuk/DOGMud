@@ -5,7 +5,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
-	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -176,11 +175,7 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 		// AbandonQuest queues the MarkerOnly quest event whose listener
 		// re-sends Char.Quests, so no GMCPCharUpdate is queued here.
 		ok, line := usercommands.AbandonQuest(u, req.Id)
-		cat := messaging.CategorySystem
-		if !ok {
-			cat = messaging.CategoryRefusal
-		}
-		u.SendText(cat, line)
+		usercommands.SendQuestLogLine(u, ok, line)
 
 	}
 
