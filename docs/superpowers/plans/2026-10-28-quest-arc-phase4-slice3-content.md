@@ -222,6 +222,11 @@ with
   The `cast` step keeps `room: 5311` (the kill can fall outside the area: drift-wisps also spawn
   at 5308 and 5310, so the area would be wrong there).
 
+  *Amended after the playtest (2026-10-28):* keeping `room: 5311` was wrong. The step text says a
+  drift-wisp in the Thinning Wood serves as well, and a seat standing there with a wisp was told
+  "Head south.". The step now reads `mob: [9147, 9148]` (ruling 16): the nearest wisp or revenant
+  the player sees, else every room that spawns one (commit `069e2ef62`).
+
 - [ ] **Step 2: Quest 33 `start`.** In `_datafiles/world/dogmud/quests/33-hold_the_wash.yaml` replace
 
 ```yaml

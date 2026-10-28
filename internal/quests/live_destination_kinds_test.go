@@ -50,6 +50,9 @@ func TestShippedContent_EveryDestinationKindHasALiveStep(t *testing.T) {
 			}
 			if len(d.Mobs) > 0 {
 				note("mob", where)
+				if d.Room == 0 && d.Area == "" && d.Zone == "" {
+					note("mob, spawn rooms", where) // no fallback: unseen, it washes its spawn rooms
+				}
 			}
 			if d.Room > 0 {
 				note("room", where)
@@ -62,7 +65,7 @@ func TestShippedContent_EveryDestinationKindHasALiveStep(t *testing.T) {
 			}
 		}
 	}
-	for _, kind := range []string{"anywhere", "room", "mob", "area", "zone"} {
+	for _, kind := range []string{"anywhere", "room", "mob", "mob, spawn rooms", "area", "zone"} {
 		if where, ok := seen[kind]; ok {
 			t.Logf("%s: %s", kind, where)
 		} else {
