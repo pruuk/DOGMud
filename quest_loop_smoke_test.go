@@ -55,6 +55,11 @@ func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
 
 	w := questworld.Registry()
 	fs := append(questloop.Validate(w), questengine.Walk(w, questworld.Sources())...)
+	dest, inferred := questengine.Destinations(w.Quests)
+	fs = append(fs, dest...)
+	for _, s := range inferred {
+		t.Logf("destination inferred: %s", s)
+	}
 
 	if path := os.Getenv(loopBacklogWriteEnv); path != `` {
 		if err := os.WriteFile(path, questloop.FormatBacklog(fs), 0o644); err != nil {
@@ -199,6 +204,16 @@ func TestQuestDoor_RefusesAFreshFinding(t *testing.T) {
 	}
 	if err := questDoorFrom(false, knownOnly); err != nil {
 		t.Errorf("known findings and stale lines must not refuse boot: %v", err)
+	}
+}
+
+func TestDestinationDoor_WarnsAndNeverRefuses(t *testing.T) {
+	mudlog.SetupLogger(nil, `LOW`, ``, false)
+	n := destinationDoorFrom(func() ([]questloop.Finding, []string) {
+		return []questloop.Finding{{Rule: "walk-destination", QuestId: 1, Where: "step a", Msg: "m"}}, nil
+	})
+	if n != 1 {
+		t.Fatalf("logged %d findings, want 1", n)
 	}
 }
 

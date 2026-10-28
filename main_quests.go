@@ -5,9 +5,36 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/questloop"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/questworld"
 )
+
+// destinationDoor logs every quest step whose minimap destination is unknown
+// or mistagged (#375 phase 4) as a warning, and the inferred count. It never
+// refuses: the CI sweep ratchets these findings against the backlog.
+func destinationDoor() int {
+	return destinationDoorFrom(func() ([]questloop.Finding, []string) {
+		all := quests.GetAllQuests()
+		qs := make([]*quests.Quest, 0, len(all))
+		for i := range all {
+			qs = append(qs, &all[i])
+		}
+		return questengine.Destinations(qs)
+	})
+}
+
+// destinationDoorFrom is destinationDoor over any source, for tests. It
+// returns how many findings it logged.
+func destinationDoorFrom(src func() ([]questloop.Finding, []string)) int {
+	fs, inferred := src()
+	for _, f := range fs {
+		mudlog.Warn("quests", "destination", f.String())
+	}
+	mudlog.Info("quests", "inferred destinations", len(inferred))
+	return len(fs)
+}
 
 // validateShippedQuests is the boot door of the quest loop validators
 // (#375 phase 2): every rule over the loaded quests and dialogue, split by
