@@ -20,7 +20,8 @@ steps:
       into the Foreman's Office.
       Type look floorboard.
   - id: evidence
-    # destination inferred from triggers (#375 p4); was: bundled objectives, rooms [5503, 5525]; Phase 2 split review
+    destination:
+      mob: [9316, 9300]  # the Dock Constable or Jesset takes the tally-book (owner ruling 16)
     description: >-
       Beneath a loose floorboard in the foreman's office you found Hewd's
       hidden tally-book, with two sets of numbers: proof that he is the one

@@ -121,13 +121,20 @@ destination: {area: grove}     # a named area (internal/areas)
 destination: {zone: Frostfang} # a whole zone
 destination: {mob: 84}         # the live copies of an NPC the player perceives
 destination: {mob: 84, area: grove}  # a mob with a fallback (room, area or zone)
+destination: {mob: [9316, 9300]}     # several NPCs, any one of which will do
 ```
+
+- `mob` takes one id or a list (owner ruling 16). In Go it is `Mobs []int`
+  (JSON key `mob`); `MarshalYAML` writes a single id when it holds one and a
+  list otherwise, so a file stays a round-trip fixed point. The struct holds
+  a slice, so it is not comparable: use `IsZero` or `reflect.DeepEqual`.
 
 - `DestinationAnywhere` is the one scalar word; `UnmarshalYAML` refuses any
   other word or key, and `MarshalYAML` writes `anywhere` back as the scalar.
 - `Validate` checks the shape only: at most one of room, area and zone (a mob
-  may add one as its fallback), positive ids, `anywhere` alone. Existence of
-  the room, mob, area and zone is `ValidateQuestRefs`' job.
+  may add one as its fallback), positive ids (every listed mob), no empty
+  `mob: []`, `anywhere` alone. Existence of the room, every mob, the area and
+  the zone is `ValidateQuestRefs`' job (label `destination mob`).
 - `IsZero` means the step has no block: the destination is then inferred
   from the step's triggers. Each trigger belongs to the step `CountStep`
   names (the latest step of its own quest its `has` lists), and that step

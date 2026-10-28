@@ -531,6 +531,12 @@ steps:                 # the room and mob ids here are illustrative
   tracked: the map falls back to the step's room, area or zone, else to the
   rooms that spawn the mob. A bare `mob` that no room spawns is a
   `walk-destination` finding.
+- **`mob` takes one id or a list** when any one of several NPCs will do:
+  `destination: {mob: [9316, 9300]}` (quest 63, the Dock Constable or Jesset
+  takes the tally-book). The map points at the nearest perceived copy of any
+  of them; with none perceived, the declared fallback, else every room that
+  spawns any of them. A list with no fallback is a finding only when none of
+  its mobs is spawned anywhere. One id is written back as a single id.
 - **No block:** the destination is inferred from the step's triggers. A
   trigger belongs to the latest step of its own quest that its `has` lists
   (`Quest.CountStep`), and its `room`, `conditions.in_room`, `mob`, `area`

@@ -228,12 +228,17 @@ the places named by the triggers that `Quest.CountStep` assigns to that step
 counts for the later one only) and `inferredSet` joins them; one kind keeps
 its kind, mixed kinds give a room set. Nothing resolvable gives `DestUnknown`.
 
-**Mob sets.** The rooms of the live copies the player perceives
-(`Character.Perceives` for hidden copies, and `messaging.ParticipantSight`
-at `SightFull`, judged as if standing in each copy's room, once per room).
-With none perceived, the block's fallback room, area or zone, else the mob's
-spawn rooms (`rooms.SpawnRooms`); `Fallback` is then set and `Npc` keeps the
-NPC's name for the guide line.
+**Mob sets.** A block's `mob` names one NPC or several, any one of which
+will do (`StepDestination.Mobs`, owner ruling 16). The set is the rooms of
+the live copies of any of them the player perceives (`Character.Perceives`
+for hidden copies, and `messaging.ParticipantSight` at `SightFull`, judged as
+if standing in each copy's room, once per room per call), so the nearest
+wins. With none perceived, the block's fallback room, area or zone, else the
+union of their spawn rooms (`rooms.SpawnRooms`, appended into a fresh slice
+because the index slices are shared, then sorted and de-duplicated);
+`Fallback` is then set. `Npc` is the NPC's name, or the names joined with
+" or " in list order, for the guide line. Inference still takes one mob per
+trigger.
 
 **Output.** `Destination` carries `Kind`, `Label` (area or zone name), `Npc`,
 `Fallback`, `ZoneRooms` (the set's template rooms in the player's zone, for
@@ -255,8 +260,9 @@ like the walkthrough: boot (`destinationDoor` in `main_quests.go`) logs its
 findings as warnings and never refuses, and the CI sweep
 (`quest_loop_smoke_test.go`) ratchets them against `loop-backlog.txt`. It
 skips secret quests and each final step. `walk-destination` is a step that
-resolves to unknown (no block and no trigger place, or a bare mob that no room
-spawns); `walk-destination-anywhere` is an `anywhere` step whose triggers name
+resolves to unknown (no block and no trigger place, or a bare mob, or mob
+list, that no room spawns: a list passes when any one of its mobs has spawn
+rooms); `walk-destination-anywhere` is an `anywhere` step whose triggers name
 a place. `inferred` lists each step whose destination is inferred.
 
 **Cost** (Ryzen 9 5900X, 2026-10-28, `nearestOf` stubbed to answer at once):

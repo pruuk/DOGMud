@@ -54,7 +54,8 @@ steps:
   # circle's side, Clerk Vell the bloodline's. Each first explains what the
   # player is signing up for, and neither choice can be undone.
   - id: choice
-    # destination inferred from triggers (#375 p4); was: bundled objectives, rooms [5706, 5817]; Phase 2 split review
+    destination:
+      mob: [9332, 9349]  # Orin (the circle) or Clerk Vell (the bloodline) takes the survey (owner ruling 16)
     description: >-
       Orin laid out the choice: stand with the circle and leave Edvar's
       survey in its keeping, or take the survey to Clerk Vell and be paid
