@@ -819,6 +819,55 @@
   border-top: 1px solid rgba(58, 42, 24, 0.7);
 }
 
+/* ── Quest context menu (#375 p5) — mirrors .auto-ctx ────────────────────── */
+.quest-ctx {
+  position: fixed;
+  min-width: 120px;
+  background: var(--ink-deep, #1a110b);
+  border: 1px solid var(--gold-rule, #c9a86a);
+  border-radius: 5px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+  z-index: 9000;
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 12px;
+}
+.quest-ctx .ctx-header {
+  padding: 5px 10px 4px;
+  font-size: 10px;
+  font-style: italic;
+  color: var(--text-secondary, #9a8a6a);
+  border-bottom: 1px solid rgba(58, 42, 24, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+  pointer-events: none;
+  user-select: none;
+}
+.quest-ctx .ctx-row {
+  padding: 5px 10px;
+  color: var(--vellum, #d9c39e);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.quest-ctx .ctx-row:hover,
+.quest-ctx .ctx-row.ctx-default {
+  background: var(--panel-border, #4a6b5d);
+  color: var(--ink-gold, #e8d2a0);
+}
+.quest-ctx .ctx-sep {
+  border-top: 1px solid rgba(58, 42, 24, 0.7);
+}
+/* Dimmed and italic: shape and brightness carry the meaning, no hue. */
+.quest-ctx .ctx-row.ctx-disabled,
+.quest-ctx .ctx-row.ctx-disabled:hover {
+  color: var(--text-secondary, #9a8a6a);
+  background: none;
+  font-style: italic;
+  cursor: default;
+}
+
 /* ── Automation modal overlay ────────────────────────────────────────────── */
 .auto-scrim {
   position: absolute;
