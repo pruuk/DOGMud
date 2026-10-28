@@ -108,6 +108,21 @@ func (w *WebMap) HasRoom(roomId int) bool {
 	return m != nil && w.drawn[m] && m.HasRoom(roomId)
 }
 
+// RoomIds is every room the view draws, each once.
+func (w *WebMap) RoomIds() []int {
+	seen := map[int]bool{}
+	var out []int
+	for _, m := range w.maps {
+		for id := range m.crawledRooms {
+			if !seen[id] {
+				seen[id] = true
+				out = append(out, id)
+			}
+		}
+	}
+	return out
+}
+
 // Snapshot is the visited rooms of every map in the view, each from its own
 // map, with each exit a full edge when its far room is a visited room the
 // view draws, as the one map's Snapshot made it when that map held them all.

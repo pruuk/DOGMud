@@ -125,6 +125,17 @@ Measured against the pre-split tree on shipped data (every room, radius 1 to
 another plane (The Foldweave, plane 5, over plane 0 rooms); none is new; the
 11,848 dropped are the signed-sum rooms.
 
+`FindAdjacentRoom` (`build room <dir>`, `teleport <dir>`) walks cells in a
+direction to the first room. Since maps stop at their border it reads a cell
+this map lacks from the maps of `WebMap` (`adjacentInOthers`: a room on the
+centre's plane first, else one on another plane) and stops outside all of
+them, as it stopped outside the one map that held them all (#375 phase 4
+Task 20). Compared with 8534cf6a1 on shipped data (every room, ten
+directions, one step and unbounded, 13,050 lookups): identical. That
+includes a quirk kept on purpose: the one map kept one room per cell
+whatever its plane, so from Dustwalk Road 400 `down` finds The Foldweave's
+6427 (plane 5), and `build room down` there would join the two planes.
+
 ### Rendering
 
 ```go
@@ -248,9 +259,8 @@ zone holds no member of the set.
   search, a render) finds nothing in this map; look the room up in its own
   zone's map (`GetMapperIfExists` / `GetMapper`), as `findPath` does. The
   destination search (Task 17), the ASCII map and `FindRoomsInDistance`
-  (Task 19) and the web map (`WebMap`, Task 18) follow that rule; the
-  consistency checks and the builder view are moving to it in #375 phase 4
-  Tasks 20 and 21.
+  (Task 19), the web map (`WebMap`, Task 18), the consistency checks, the
+  builder's zone view and `FindAdjacentRoom` (Task 20) follow that rule.
 - **Fixture room ids in tests must not repeat across tests.** The template
   zone index (`rooms.TemplateRoomZone`), which the crawl reads for an exit's
   zone, outlives a test, so a reused id keeps the zone an earlier test gave
@@ -281,7 +291,12 @@ command (`internal/usercommands/admin.cartcheck.go`).
 
 ```go
 (*mapper).CheckConsistency(zone string, nonCartesian bool) []Finding
+func CheckZone(zone string) []Finding
 ```
+
+`CheckZone` (boot and `cartcheck`) runs `CheckConsistency` over every map of
+the zone (`zoneMaps`: a room its root reaches only through another zone has
+a map of its own) and scopes the findings to the zone.
 
 Scans `crawledRooms` (the `map[int]*mapNode` populated during BFS
 crawl) for the zone and returns a slice of findings. `RoomGrid` is a
@@ -358,16 +373,24 @@ The engine automatically skips:
   entire zone as toroidal/maze geometry; skips the three hard checks
   zone-wide.
 
-### Known Limitation: Cross-Zone Exits
+### Cross-Zone Exits and Collisions
 
-`CheckConsistency` operates on the BFS-populated `crawledRooms` map.
 Since the crawl stops at the zone border (#375 phase 4), a border exit's
-far room is not in the map, so the reciprocity, delta and collision checks
-do not see the far side of a border; restoring them against the far room's
-own map is #375 phase 4 Task 20. `FilterFindingsToZone`, which drops any
-finding whose room's owning `zone:` field does not match the zone being
-checked, still runs in `ValidateZoneConsistency` (startup) and `CartCheck`
-(admin command).
+far room is not in the map. `CheckConsistency` reads it from its own zone's
+map (`farNode`); reciprocity and the plane check always run, the delta and
+long-crossing checks only when both maps sit at authored coordinates (one
+frame). Collisions with other zones come from `joinedCells`: the rooms of
+the maps of `WebMap` by (plane, x, y, z), one finding per cell under the
+zone of its lowest room id, as one map of the connected world reported a
+collision group. It is NOT every map: the jail cell 5107 (no exit reaches
+it, unplaced at the origin) shares Dustwalk Road 400's cell, which master
+never checked and which, in boot's panic mode, would stop the server.
+`TestShippedRoutesSurviveZoneBoundedMaps` (repo root, `DOGMUD_BOOT_SMOKE`)
+fails on any shipped finding; master and this tree both have 0 (2026-10-28).
+`mapper.consistency_border_test.go` pins a cross-zone missing return,
+delta mismatch and collision (each also reported on 8534cf6a1, none on the
+tree before Task 20). `FilterFindingsToZone` still drops any finding whose
+room's owning `zone:` is not the zone being checked.
 
 ## Fog-of-War Snapshot (Web Map)
 
@@ -421,8 +444,9 @@ room of any drawn map, as the one shared map did. Compared on shipped data
 against 8534cf6a1 (every room as the current room, a fully and a seeded half
 explored character): all 2,610 payloads identical, including `cz`. Cost about
 master's (0.8 to 0.9 ms for the 1,209-room overworld view, both trees, one
-machine, one run). The builder (`gmcp.Build.go`) still uses one map's
-`Snapshot`.
+machine, one run). The builder's zone view (`sendZoneMapFull` in
+`gmcp.Build.go`) also reads `WebMap` (`RoomIds`, `Snapshot`): the zone's
+rooms its root reaches through another zone, and the neighbours it dims.
 
 Iterates `crawledRooms` and returns only rooms whose ID is present in
 `visited`. For each included room, exits are also filtered: an exit is

@@ -88,6 +88,15 @@ func TestShippedRoutesSurviveZoneBoundedMaps(t *testing.T) {
 	loadAllDataFiles(false)
 	mapper.PreCacheMaps()
 
+	// The consistency checks see across borders again (#375 phase 4 Task
+	// 20); shipped data has none, as on master, or boot (panic mode in
+	// config.yaml) would not come up.
+	for _, zone := range rooms.GetAllZoneNames() {
+		for _, f := range mapper.CheckZone(zone) {
+			t.Errorf("consistency finding on shipped data: %s", f)
+		}
+	}
+
 	for _, leg := range crossZoneLegs {
 		za, zb := rooms.TemplateRoomZone(leg[0]), rooms.TemplateRoomZone(leg[1])
 		if za == `` || za == zb {

@@ -567,7 +567,11 @@ current room.
   it gives master's payload for every room (1,305 rooms, a fully and a half
   explored character, compared 2026-10-28 against 8534cf6a1);
   `TestZoneMap_ExploredRoomsOfAJoinedZoneMatchMaster` pins a two-zone fixture
-  to master's payload.
+  to master's payload. The builder's `sendZoneMapFull` takes its rooms from
+  the same view (`WebMap.RoomIds`): the zone's own rooms, then same-plane
+  rooms of other zones within 2 cells of the zone's box as `foreign`. On
+  shipped data every zone's builder payload matches 8534cf6a1 (48 of 48);
+  `TestSendZoneMapFull_ForeignRoomsMatchMaster` pins a fixture.
 - **`Zone.Map` is sent as a diff (#650), to the web client only.** A telnet
   GMCP client (Mudlet scripts, other tools) was written against a map that is
   every room and may not merge a partial, so `buildAndSend` sends it the whole

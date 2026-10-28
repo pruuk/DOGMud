@@ -222,6 +222,14 @@ type RoomGrid struct {
 	rooms      [][][]*mapNode // All rooms in a relative position
 }
 
+// bounds is the lowest and highest cell the grid covers, in map coordinates
+// (hi below lo on an axis when the grid is empty).
+func (r *RoomGrid) bounds() (lo, hi positionDelta) {
+	lo = positionDelta{x: -r.roomOffset.x, y: -r.roomOffset.y, z: -r.roomOffset.z}
+	hi = positionDelta{x: lo.x + r.size.x - 1, y: lo.y + r.size.y - 1, z: lo.z + r.size.z - 1}
+	return lo, hi
+}
+
 func (r *RoomGrid) initialize(minX, maxX, minY, maxY, minZ, maxZ int) {
 
 	r.size.x = maxX - minX + 1
@@ -713,6 +721,34 @@ func (r *mapper) joinedMaps(zone string) []*mapper {
 	return out
 }
 
+// adjacentInOthers is the room in cell (x, y, z) of the joined maps: one on
+// plane first, else one on another plane. The one map of the connected world
+// that FindAdjacentRoom read before zone maps stopped at their border kept a
+// single room per cell whatever its plane, so a plane-0 room looking into a
+// cell only The Foldweave (plane 5) fills found the Foldweave room (400 down
+// gives 6427); where both planes fill the cell it held the plane-0 room.
+// Measured on shipped data (every room, ten directions, one step and
+// unbounded, 13,050 lookups) this matches it exactly.
+func adjacentInOthers(others []*mapper, x, y, z, plane int) (int, error) {
+	other := 0
+	for _, m := range others {
+		id, err := m.GetRoomId(x, y, z)
+		if err != nil {
+			continue
+		}
+		if m.crawledRooms[id].Plane == plane {
+			return id, nil
+		}
+		if other == 0 {
+			other = id
+		}
+	}
+	if other != 0 {
+		return other, nil
+	}
+	return 0, ErrRoomNotFound
+}
+
 // Finds the first room in a given direction
 // Allowed directions:
 func (r *mapper) FindAdjacentRoom(centerRoomId int, direction string, limitDistance ...int) (roomId int, distance int) {
@@ -753,6 +789,21 @@ func (r *mapper) FindAdjacentRoom(centerRoomId int, direction string, limitDista
 		return 0, 0
 	}
 
+	// A zone's map stops at its border (#375 phase 4), so the cells beyond it
+	// are read from the maps of the zones it joins (WebMap), keeping rooms on
+	// the centre's plane, and the walk ends outside all of them, as it ended
+	// outside the one map that held them all (#375 phase 4 Task 20).
+	others := []*mapper{}
+	if r.authored && !rooms.IsEphemeralRoomId(centerRoomId) {
+		others = r.WebMap().maps[1:]
+	}
+	lo, hi := r.roomGrid.bounds()
+	for _, m := range others {
+		mlo, mhi := m.roomGrid.bounds()
+		lo = positionDelta{x: min(lo.x, mlo.x), y: min(lo.y, mlo.y), z: min(lo.z, mlo.z)}
+		hi = positionDelta{x: max(hi.x, mhi.x), y: max(hi.y, mhi.y), z: max(hi.z, mhi.z)}
+	}
+
 	x, y, z := startNode.Pos.x, startNode.Pos.y, startNode.Pos.z
 	steps := 0
 	for {
@@ -768,14 +819,16 @@ func (r *mapper) FindAdjacentRoom(centerRoomId int, direction string, limitDista
 			}
 		}
 
+		if x < lo.x || x > hi.x || y < lo.y || y > hi.y || z < lo.z || z > hi.z {
+			return 0, 0
+		}
+
 		roomId, err := r.GetRoomId(x, y, z)
 		if err != nil {
-
-			if err == ErrOutOfBounds {
-				return 0, 0
-			}
-
-			// Otherwise keep searching until out of bounds or no error.
+			roomId, err = adjacentInOthers(others, x, y, z, startNode.Plane)
+		}
+		if err != nil {
+			// Keep searching until out of bounds or a room.
 			continue
 		}
 
