@@ -309,6 +309,7 @@ func SaveRoomTemplate(roomTpl Room) error {
 	// baking a template edit into the instance file, where it then shadows
 	// future template edits (chunk 4.6).
 	InvalidateTemplateCache(roomTpl.RoomId)
+	setTemplateSpawns(roomTpl.RoomId, roomTpl.SpawnInfo)
 
 	// Get zone root
 	cfg := GetZoneConfig(roomTpl.Zone)
@@ -415,6 +416,7 @@ func DeleteRoomTemplate(roomId int) error {
 	// room isn't cached, which is fine here (the file is already gone).
 	ClearRoomCache(roomId)
 	deleteTemplateZone(roomId)
+	deleteTemplateSpawns(roomId)
 	return nil
 }
 
@@ -590,6 +592,7 @@ func loadAllRoomZones() error {
 		// Cache the file path for every roomId
 		roomManager.setCachedFilePath(loadedRoom.RoomId, loadedRoom.Filepath())
 		setTemplateZone(loadedRoom.RoomId, loadedRoom.Zone)
+		setTemplateSpawns(loadedRoom.RoomId, loadedRoom.SpawnInfo)
 
 		// Update the zone info cache
 		if _, ok := roomManager.zones[loadedRoom.Zone]; !ok {
