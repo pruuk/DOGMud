@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -105,7 +106,60 @@ func activeQuestRecord(user *users.UserRecord, questInfo *quests.Quest, questSte
 	}, completion
 }
 
+// questsSubcommand splits `quests abandon <name>` / `quests focus <name>`;
+// anything else is the list's own argument ("", "all", "all+").
+func questsSubcommand(rest string) [2]string {
+	word, arg, _ := strings.Cut(strings.TrimSpace(rest), ` `)
+	switch strings.ToLower(word) {
+	case `abandon`, `focus`:
+		return [2]string{strings.ToLower(word), strings.TrimSpace(arg)}
+	}
+	return [2]string{``, rest}
+}
+
+// shelvedRows are the `quests all` rows for quests set aside, in quest id
+// order. They carry no step description, bar or percentage.
+func shelvedRows(c *characters.Character) []questRecord {
+	var rows []questRecord
+	for questId := range c.ShelvedQuests {
+		q := quests.GetQuestById(questId)
+		if q == nil || q.Secret {
+			continue
+		}
+		rows = append(rows, questRecord{Id: q.QuestId, Name: q.Name,
+			Description: fmt.Sprintf(`Set aside. Talk to %s to take it up again.`, QuestGiver(questId))})
+	}
+	sort.Slice(rows, func(i, j int) bool { return rows[i].Id < rows[j].Id })
+	return rows
+}
+
 func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+
+	switch sub := questsSubcommand(rest); sub[0] {
+	case `abandon`, `focus`:
+		id := findActiveQuest(user, sub[1])
+		if id == 0 {
+			user.SendText(messaging.CategoryRefusal, questNoSuchLine)
+			return true, nil
+		}
+		if sub[0] == `focus` {
+			if FocusQuest(user, id) {
+				// Re-send Char.Quests so the panel and marker follow.
+				events.AddToQueue(events.Quest{UserId: user.UserId, QuestToken: quests.PartsToToken(id, user.Character.GetQuestProgress()[id]), MarkerOnly: true})
+				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You turn your attention to %s.`, quests.GetQuestById(id).Name))
+			} else {
+				user.SendText(messaging.CategoryRefusal, questNoSuchLine)
+			}
+			return true, nil
+		}
+		ok, line := AbandonQuest(user, id)
+		cat := messaging.CategorySystem
+		if !ok {
+			cat = messaging.CategoryRefusal
+		}
+		user.SendText(cat, line)
+		return true, nil
+	}
 
 	type QuestInfo struct {
 		QuestsTotal int
@@ -127,6 +181,10 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if showHidden {
 		for _, quest := range quests.GetAllQuests() {
 			if _, ok := allQuestProgress[quest.QuestId]; ok {
+				continue
+			}
+			// A shelved quest gets its set-aside row below.
+			if user.Character.IsShelved(quest.QuestId) {
 				continue
 			}
 			// A finished repeatable gets its status row below, not a 0%
@@ -168,13 +226,21 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		allQuests = append(allQuests, finished...)
 	}
 
-	qInfo.QuestsFound = len(allQuests)
-	qInfo.Records = allQuests
-
 	// Sort lexigraphically
 	sort.Slice(allQuests, func(i, j int) bool {
 		return allQuests[i].Id < allQuests[j].Id
 	})
+
+	// Quests set aside count as unshown in plain `quests`; `quests all` lists
+	// them after the active ones.
+	shelved := shelvedRows(user.Character)
+	qInfo.QuestsTotal += len(shelved)
+	if showComplete {
+		allQuests = append(allQuests, shelved...)
+	}
+
+	qInfo.QuestsFound = len(allQuests)
+	qInfo.Records = allQuests
 
 	if line := questsNoneShownLine(qInfo.QuestsFound, qInfo.QuestsTotal); line != `` {
 		user.SendText(messaging.CategorySystem, line)

@@ -3,6 +3,8 @@ package usercommands
 import (
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -10,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -112,6 +115,71 @@ func TestFocusQuest(t *testing.T) {
 	require.Equal(t, 42, u.Character.LastQuestId)
 	require.False(t, FocusQuest(u, 85))
 	require.False(t, FocusQuest(u, 7))
+}
+
+func TestQuestsCommand_AbandonAndFocusWords(t *testing.T) {
+	require.Equal(t, [2]string{"abandon", "the hunt"}, questsSubcommand("abandon the hunt"))
+	require.Equal(t, [2]string{"focus", "hunt"}, questsSubcommand("focus hunt"))
+	require.Equal(t, [2]string{"", "all"}, questsSubcommand("all"))
+}
+
+func TestShelvedRows(t *testing.T) {
+	u := questlogFixture(t)
+	_, _ = AbandonQuest(u, 42)
+	rows := shelvedRows(u.Character)
+	require.Len(t, rows, 1)
+	require.Equal(t, "The Hunt", rows[0].Name)
+	require.Equal(t, "Set aside. Talk to Hunter Delk to take it up again.", rows[0].Description)
+}
+
+// A set-aside row has no bar and no percentage; the template must not print a
+// stray percent sign for it.
+func TestShelvedRowRendersWithoutBarOrPercent(t *testing.T) {
+	useDogmudTemplates(t)
+	u := questlogFixture(t)
+	_, _ = AbandonQuest(u, 42)
+	type info struct {
+		QuestsTotal int
+		QuestsFound int
+		Records     []questRecord
+	}
+	txt, err := templates.Process("character/quests", info{QuestsTotal: 1, QuestsFound: 1, Records: shelvedRows(u.Character)}, u.UserId)
+	require.NoError(t, err)
+	require.Contains(t, txt, "The Hunt")
+	require.Contains(t, txt, "Set aside. Talk to Hunter Delk to take it up again.")
+	require.NotContains(t, txt, "%")
+	t.Log("\n" + txt)
+}
+
+func TestQuestsCommand_WiresAbandonAndFocus(t *testing.T) {
+	u := questlogFixture(t)
+
+	ok, err := Quests("focus hunt", u, nil, 0)
+	require.True(t, ok)
+	require.NoError(t, err)
+	require.Equal(t, 42, u.Character.LastQuestId)
+
+	_, _ = Quests("abandon waking", u, nil, 0)
+	require.False(t, u.Character.IsShelved(28), "quest 28 has no offer")
+
+	_, _ = Quests("abandon hunt", u, nil, 0)
+	require.True(t, u.Character.IsShelved(42))
+	require.Equal(t, 0, u.Character.LastQuestId, "abandoning the focused quest clears focus")
+}
+
+func TestHelpQuestsNamesFocusAndAbandon(t *testing.T) {
+	useDogmudTemplates(t)
+	txt, err := templates.Process("help/quests", nil, 0)
+	require.NoError(t, err)
+	require.Contains(t, txt, "quests focus <name>")
+	require.Contains(t, txt, "quests abandon <name>")
+	for _, ln := range strings.Split(txt, "\n") {
+		require.LessOrEqual(t, len([]rune(stripAnsiTags(ln))), 80, ln)
+	}
+}
+
+func stripAnsiTags(s string) string {
+	return regexp.MustCompile(`<[^>]*ansi[^>]*>|</ansi>`).ReplaceAllString(s, ``)
 }
 
 // On shipped data, quest 28 (started by walking into a room) has no offer.
