@@ -86,6 +86,17 @@ one of two zones (quest 42). 220 steps across all quests (secret included) set `
 15. **A step that needs several conversations is split into discrete steps**, one destination
     each. Instance: quest 72 becomes hear Marrow Fenn, hear Ayres, settle with Hesper, in that
     fixed order (owner, after the plan's Task 12 check found its one step bundling all three).
+    All three of Hesper's endings now come after hearing both farmers; before, only the
+    compromise needed them, and the channel and records endings did not. The channel and the
+    records stay optional finds during the Hesper step.
+17. **Directions come from cached per-destination tables, not a search per move** (owner, after
+    the per-move search measured above the bar). For a fixed destination (a room, an area, a
+    zone's border toward the next zone) one search outward from the destination fills, for every
+    room of the zone, the exit that leads closer and the destination room it reaches; every
+    player reads their next step from it. Tables are built on first use, shared, capped, and
+    dropped when a zone's map or the zone graph is rebuilt. The zone graph keeps every border
+    link of a zone pair, so a cross-zone table starts from all of them and the arrow aims at the
+    nearest border. NPC destinations, whose rooms move, keep the per-call search.
 16. **A destination may name several NPCs** when any one of them will do: `mob: [9316, 9300]`.
     The set is every perceived copy of any of them, so the arrow goes to the nearest; with none
     perceived, the declared fallback, else the union of their spawn rooms. Instances: quest 63
