@@ -32,7 +32,9 @@ steps:
   # list: inserted 2026-10-17 (one command per step). A player saved on
   # `school` is told to list; one saved on `shop` or later is past it.
   - id: list
-    destination: anywhere
+    destination:
+      mob: 9104  # Trader Onna sells the shirt; the buy needs her shop (playtest 2026-10-28)
+      room: 5207  # Coulee Provisions
     description: "Onna's wares are laid out. Buy a cotton shirt. You start with coin to spare."
     hint: "Type buy cotton shirt."
   - id: shop
