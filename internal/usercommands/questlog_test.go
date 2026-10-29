@@ -131,6 +131,28 @@ func TestShelvedRowRendersWithoutBarOrPercent(t *testing.T) {
 	t.Log("\n" + txt)
 }
 
+// The quest log marks the quest the map and hint follow, so `quests focus`
+// shows its effect in text too (the web panel marks it with its dot; the
+// phase 5 playtest found the text log showed nothing).
+func TestQuestsLog_MarksTheFollowedQuest(t *testing.T) {
+	useDogmudTemplates(t)
+	u := questlogFixture(t)
+	require.True(t, FocusQuest(u, 42))
+	type info struct {
+		QuestsTotal int
+		QuestsFound int
+		Records     []questRecord
+	}
+	hunt, _ := activeQuestRecord(u, quests.GetQuestById(42), "track")
+	waking, _ := activeQuestRecord(u, quests.GetQuestById(28), "start")
+	require.True(t, hunt.Following)
+	require.False(t, waking.Following)
+	txt, err := templates.Process("character/quests", info{QuestsTotal: 2, QuestsFound: 2, Records: []questRecord{hunt, waking}}, u.UserId)
+	require.NoError(t, err)
+	require.Contains(t, stripAnsiTags(txt), "The Hunt (following)")
+	require.NotContains(t, stripAnsiTags(txt), "Waking to Gaius (following)")
+}
+
 func TestQuestsCommand_WiresAbandonAndFocus(t *testing.T) {
 	u := questlogFixture(t)
 

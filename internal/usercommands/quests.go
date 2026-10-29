@@ -22,6 +22,7 @@ type questRecord struct {
 	Id          int
 	Name        string
 	Repeatable  bool
+	Following   bool // the quest the map and hint follow, marked "(following)" (#375 phase 5)
 	Description string
 	Progress    string // "Roots gathered: 2 of 5" for a count or explore step, else ""
 	Guide       string // the destination line (questengine.GuideLine), else ""
@@ -97,6 +98,7 @@ func activeQuestRecord(user *users.UserRecord, questInfo *quests.Quest, questSte
 		Id:          questInfo.QuestId,
 		Name:        questInfo.Name,
 		Repeatable:  questInfo.Repeatable,
+		Following:   questStep != `all+` && questStep != `end` && questInfo.QuestId == user.Character.GetFocusQuestId(),
 		Description: description,
 		Progress:    progress,
 		Guide:       guide,
