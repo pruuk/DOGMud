@@ -6,7 +6,7 @@ ephemeral:
   profile: early
   start_room: 5290
   overlays:
-    set_quest_tokens: ["42-start", "42-track"]
+    set_quest_tokens: ["41-end", "42-start", "42-track"]  # 41-end: Delk's offer needs First Sign done
     grant_items: [40017]
   budgets:
     wall_clock: 30m
