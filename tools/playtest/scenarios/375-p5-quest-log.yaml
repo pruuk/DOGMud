@@ -1,0 +1,26 @@
+# #375 phase 5: quest log actions. A seat on quest 42 sets The Hunt aside,
+# checks it stops counting and that Hunter Delk offers it again, then takes it
+# back up where it left off with no second Salt Pouch. A second seat tries to
+# set aside the tutorial (refused) and switches focus between two quests.
+name: 375-p5-quest-log
+mode: party
+summary: >-
+  Abandon shelves a quest and re-accepting resumes it; a quest nobody offers
+  cannot be abandoned; quests focus moves the guide line.
+on_actor_stop: continue
+budgets:
+  wall_clock: 40m
+requires:
+  max_connections: 20
+roster:
+  - id: hunt
+    personality: bug-finder
+    goals: goals/scenarios/375-p5-quest-log/hunt.yaml
+  - id: tutor
+    personality: bug-finder
+    goals: goals/scenarios/375-p5-quest-log/tutor.yaml
+
+group_goals:
+  - id: quest-log-actions
+    do: Each seat uses quests abandon and quests focus and reads the quest log after each.
+    verify: An abandoned quest leaves the log, stops counting, and comes back at the same step; a refused abandon says why; focus changes which quest the log's guide line follows.

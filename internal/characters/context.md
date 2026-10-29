@@ -405,8 +405,37 @@ progress is not stored here: it is read from the map (`VisitedRooms`).
   returns the new value.
 - `clearQuestStepCounts(questId)` drops every key with the `<questId>-` prefix.
   `GiveQuestToken` and `ClearQuestToken` call it, so a quest's counts go when
-  its progress moves or is cleared. A planned abandon (phase 5) must not call
-  it: an abandoned step keeps its counts.
+  its progress moves or is cleared. `ShelveQuest` (phase 5) does not call
+  it: a shelved step keeps its counts.
+
+### The quest shelf (`quests.go`, #375 phase 5)
+
+`Character.ShelvedQuests map[int]string` (`shelvedquests` in the save, omitted
+when empty) holds quests the player set aside: quest id to the step reached.
+A shelved quest has no `QuestProgress` entry, so every reader of "held"
+(`HasQuest`, triggers, dialogue gates, the log, the map) sees it as not held
+with no change. Flags and step counts stay where they are for the resume.
+
+- `ShelveQuest(questId) bool`: moves the step from `QuestProgress` to the
+  shelf and clears `LastQuestId` if it was the focus. Refuses a quest not held
+  or at `end`.
+- `IsShelved(questId) bool`: backs `dialogue.PlayerState.Shelved`.
+- `ResumeShelvedQuest(questId) (step string, ok bool)`: puts the step back,
+  clears the shelf entry, sets `LastQuestId` (not for a secret quest) and marks
+  the quest resumed.
+- `TakeResumed(questId) bool`: reads and clears that mark once. The grant
+  banner (the hook's, or `GameBridge.GrantQuest`'s) reads it to say "You take
+  up ... again" instead of "given a new quest". The mark is runtime only
+  (`resumedQuests`, not saved).
+- `GiveQuestToken` calls `ResumeShelvedQuest` for any `N-start` token, so every
+  grant path (dialogue, questengine, behaviour tree, overlays) resumes the
+  same way, and returns true.
+- Migrations reach the shelf as they reach `QuestProgress`: `RenameQuestSteps`
+  renames shelved steps, `RetiredShelvedSteps(retired)` lists retired shelved
+  steps (logged by `users.LoadUser`, left as is, like `RetiredQuestSteps`),
+  `users.DoQuestStepMigration` resets a removed shelved step to `start` and
+  drops a deleted quest, and `ClearQuestToken` deletes the quest's shelf entry
+  so a removed quest cannot come back on the next accept.
 
 ### Repeatable quest counts (`quests.go`, #375 phase 2)
 
@@ -426,7 +455,7 @@ It survives save, load and restart.
 - `RenameQuestSteps(renames)` runs at load (`users.LoadUser`, with
   `quests.StepRenames()` from `quests/step-ids.txt`) so saved progress follows a
   renamed step id. It follows rename chains and ignores a rename that changes
-  the quest id.
+  the quest id. It renames `ShelvedQuests` the same way.
 
 ### Character States and Modifiers
 - 🔑 **Timed state is `Character.Conditions` and nothing else.** Read

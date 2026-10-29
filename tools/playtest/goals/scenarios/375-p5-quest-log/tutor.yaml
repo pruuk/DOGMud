@@ -1,0 +1,26 @@
+# TUTOR seat: you hold the tutorial quest (Waking to Gaius) and Hold the Wash.
+# You start in Squatter's Hollow. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5234
+  overlays:
+    set_quest_tokens: ["28-start", "33-start"]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and quote both entries, including each one's last line.
+  - >-
+    Type `quests abandon waking` and quote the reply. Type `quests` again and
+    say whether Waking to Gaius is still listed.
+  - >-
+    Type `quests focus wash` and quote the reply, then `quests` and quote the
+    last line under Hold the Wash. Type `hint` and quote it.
+  - >-
+    Type `quests focus waking`, then `hint`, and quote both. Say whether the
+    hint now follows the tutorial.
+  - >-
+    Type `quests abandon dragon` (a quest you do not have) and quote the
+    reply. Type `help quests` and quote the lines about focus and abandon.

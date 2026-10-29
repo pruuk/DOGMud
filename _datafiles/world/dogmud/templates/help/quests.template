@@ -44,6 +44,11 @@ a reward when you finish.
 
   <ansi fg="command">quests</ansi>              Show the quests you are working on
   <ansi fg="command">quests all</ansi>          Show every quest you have started, finished ones too
+  <ansi fg="command">quests focus <name></ansi>
+        Follow that quest: the map and the hint point to it.
+  <ansi fg="command">quests abandon <name></ansi>
+        Set the quest aside. Talk to whoever gave it to you to take it up
+        again, right where you left off.
 
 Stuck on a step? <ansi fg="command">hint</ansi> gives a nudge for your current quest, and
 <ansi fg="command">hint [name]</ansi> gives one for a quest you name. When you have no quest

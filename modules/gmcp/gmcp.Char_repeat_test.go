@@ -32,4 +32,9 @@ func TestFinishedRepeatQuests(t *testing.T) {
 
 	util.SetRoundCountForTest(1300)
 	require.Equal(t, questStatusReady, finishedRepeatQuests(c, lookup)[0].Status)
+
+	// A shelved repeatable is not finished: no ready or waiting row (#375
+	// phase 5).
+	c.ShelvedQuests = map[int]string{53: "start"}
+	require.Empty(t, finishedRepeatQuests(c, lookup))
 }

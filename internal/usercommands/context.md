@@ -377,6 +377,49 @@ fails if this file prices or detects a step itself again. The departure line
 they carry out (#456, owner ruling 2026-10-09). Arrival lines are judged
 after the move.
 
+### Quest log actions (`questlog.go`, `quests.go`; #375 phase 5)
+
+`questlog.go` holds the shared bodies for the `quests` command and the web
+panel (GMCP `Char.Quests.Abandon` and `Char.Quests.Focus`). Both call these
+functions; do not reimplement them.
+
+- `AbandonQuest(user, questId) (ok bool, line string)`: refuses a quest not
+  active, finished or secret ("You have no quest called that.") and one that
+  is not `Abandonable` ("Nobody would take this back from you. It has to be
+  finished.");
+  otherwise `Character.ShelveQuest`, and queues a `MarkerOnly` `events.Quest`
+  whose listeners re-send `Char.Quests` and refresh NPC markers.
+- `FocusQuest(user, questId) bool`: active and not secret, sets `LastQuestId`.
+  The caller re-sends `Char.Quests`.
+- `Abandonable(c, questId) bool`: active, unfinished, not secret and
+  `dialogue.Resumable` (some offer can show again while it is shelved; an
+  offer hidden by another quest's token, like quest 88's, cannot), and its
+  `-start` is not granted automatically (owner ruling 6: a quest trigger or
+  behaviour tree that grants it would take it back up without the player
+  choosing to; quest 30, granted by `room_enter 5200` and room 6467's tree).
+  The GMCP `abandonable` field calls it.
+- `SetAutoStarted(questIds)` replaces that automatic set; the offer index
+  door in `main_quests.go` sets it at boot (and on a reload) from
+  `questloop.AutoStarts`. It lives here, not in the dialogue offer index,
+  because it is abandon policy, not a fact about offers: `dialogue.Resumable`
+  keeps meaning "an offer can show again". `SetAutoStartedForTest` returns a
+  restore func.
+- `QuestGiver(questId) string`: the first resuming NPC's name (else the first
+  offering NPC's), else "the one who gave it to you".
+- `SendQuestLogLine(user, ok, line)`: sends the reply, wrapped to the reader's
+  width with `messaging.WrapAnsi` because `CategorySystem` is never wrapped.
+
+`quests.go`: `quests abandon <name>` and `quests focus <name>` (`questsSubcommand`
+splits them from the list's own `all` / `all+`); `findActiveQuest(user, name)
+(id int, ambiguous bool)` matches the name with `util.FindMatchIn` over the
+sorted names of active, unfinished, non-secret quests: a full match wins, a
+partial match wins only when it is the one name that fits; several partial
+fits report ambiguous and `Quests` replies "More than one quest matches that.
+Type more of its name." (a numbered search such as `2.the` is taken as typed).
+`quests all` lists set-aside quests after the active ones (`shelvedRows`) with
+"Set aside. Talk to <giver> to take it up again." and no bar; plain `quests`
+does not show them.
+
 ## Message categories (messaging M7 slice 4, #371)
 
 `CategorySystem` keeps reports, tables, help and confirmations of the acting

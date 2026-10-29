@@ -879,7 +879,10 @@ restores a captured baseline before re-deriving the spec. Copy that. Note
 - `internal/messaging` - `SendText` categories, combat-verbosity parsing, and
   the `SightDecision` the prompt sight check returns
 - `internal/mobs` - Charm tracking cleanup on login/zombie/removal
-- `internal/quests` - Quest step migration (`DoQuestStepMigration`)
+- `internal/quests` - Quest step migration (`DoQuestStepMigration`, per user
+  `migrateQuestSteps`: over `QuestProgress` and `ShelvedQuests`, a deleted
+  quest is dropped and a removed step resets to `start`; the quest is looked
+  up with `GetQuestById`, since `GetQuest` is nil for an unknown step)
 - `internal/skills` - Title derivation for `OnlineInfo.Title`
 - `internal/spells`, `internal/gametime`, `internal/term` - prompt token
   rendering (`userrecord.prompt.go`)

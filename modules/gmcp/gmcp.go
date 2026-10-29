@@ -407,7 +407,7 @@ func (g *GMCPModule) HandleIAC(connectionId uint64, iacCmd []byte) bool {
 		// payload — it aliases the IAC read buffer, which is reused after
 		// HandleIAC returns.
 		case `Char.Automation.Set`, `Char.Automation.Remove`,
-			`Char.Action.Try`, `Char.Quests.Focus`:
+			`Char.Action.Try`, `Char.Quests.Focus`, `Char.Quests.Abandon`:
 			events.AddToQueue(GMCPCharOp{
 				ConnectionId: connectionId,
 				Command:      command,

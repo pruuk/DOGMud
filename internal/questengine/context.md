@@ -364,6 +364,17 @@ rolls for it. `ValidateQuestRefs` (`internal/quests`) checks the key against
 the trigger's room at every door; the bridge does not look the room up.
 Quest 49's floor search discovers `disc` in the Reliquary (5343).
 
+**Resumed chains (#375 phase 5).** `SetResumed(bool)` / `Resumed()` mark a
+bridge whose chain takes a shelved quest back up. A bridge lives for one
+event's `Notify`, so the mark covers the rest of that event. While resumed,
+`GiveGold` gives nothing and `GiveItem` gives only an item worth nothing that
+the player neither carries nor wears (`resumeMayGive`); a refused handout
+returns nil, so the trigger's later actions still run (owner ruling 2: a resume
+hands over nothing of resale value, from any source). `GrantQuest` reads
+`Character.TakeResumed` for a `start` token, sets the mark, and prints "You
+take up <quest> again." in place of "You have been given a new quest". The
+dialogue path sets the mark in the hook (`internal/hooks`).
+
 `ChargeGold(amount) error` takes the whole charge or nothing. A charge
 larger than the player's gold takes nothing, sends no "You pay" line, logs a
 warning, and its error makes `executeActions` abandon the rest of the

@@ -47,6 +47,7 @@ func SaveDialogueFile(df DialogueFile) error {
 	key := fmt.Sprintf("%d:%s", df.MobId, df.Zone)
 	cp := df
 	dialogueCache[key] = &cp
+	UpdateOfferIndex(&cp)
 	delete(nilSentinel, key) // a save proves the file exists
 	return nil
 }

@@ -64,3 +64,15 @@ func TestPlayerState_SetsQuestOpen(t *testing.T) {
 	user := users.NewTestUser(7102, "qopen", "Qopenia", 7102)
 	require.NotNil(t, PlayerState(user).QuestOpen)
 }
+
+// Shelved reads the character's shelf, so a resumed offer follows owner
+// ruling 2 (#375 phase 5).
+func TestPlayerState_ShelvedReadsTheShelf(t *testing.T) {
+	user := users.NewTestUser(7103, "qshelf", "Qshelfia", 7103)
+	user.Character.QuestProgress = map[int]string{42: "track"}
+	ps := PlayerState(user)
+	require.NotNil(t, ps.Shelved)
+	require.False(t, ps.Shelved(42))
+	require.True(t, user.Character.ShelveQuest(42))
+	require.True(t, ps.Shelved(42))
+}

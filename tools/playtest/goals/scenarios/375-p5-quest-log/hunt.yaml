@@ -1,0 +1,34 @@
+# HUNT seat: quest 42, The Hunt, on the step "bring down a pronghorn". You
+# start at Hunter Delk's camp in Hunter's Hollow, carrying the Salt Pouch he
+# hands out with the quest. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5290
+  overlays:
+    set_quest_tokens: ["41-end", "42-start", "42-track"]  # 41-end: Delk's offer needs First Sign done
+    grant_items: [40017]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and quote The Hunt's entry. Type `inventory` and say how many
+    salt pouches you carry.
+  - >-
+    Type `quests abandon hunt` and quote the reply. Then type `quests` and
+    `quests all` and quote what each shows for The Hunt.
+  - >-
+    Type `look` and say whether Hunter Delk's name shows [!] in front of it.
+  - >-
+    Go north to the Thornbrake and kill a pronghorn (`attack pronghorn`; if it
+    is too dark to see, say so and attack anyway). After it falls, type `quests` and
+    say whether The Hunt came back or moved on.
+  - >-
+    Go back south to Hunter Delk, type `talk delk`, and take The Hunt again
+    from his menu. Quote the line the game prints when you take it. Type
+    `quests` and quote The Hunt's entry: it should be on the same step as
+    before. Type `inventory` and say how many salt pouches you carry now.
+  - >-
+    Go north again, kill another pronghorn, and quote the progress line and
+    the quest entry after it.

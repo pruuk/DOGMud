@@ -1015,7 +1015,7 @@
                 var focused = !!q.focused;
                 if (hintOpen[Number(q.id)]) { keepOpen[Number(q.id)] = true; }
                 var pct = Math.max(0, Math.min(100, q.completion || 0));
-                html += '<div class="qrow' + (focused ? " focus" : "") + '" data-quest-id="' + Number(q.id) + '">'
+                html += '<div class="qrow' + (focused ? " focus" : "") + '" data-quest-id="' + Number(q.id) + '" data-abandonable="' + (q.abandonable ? 1 : 0) + '">'
                       + '<span class="qdot">' + (focused ? "◉" : "◎") + '</span>'
                       + '<span class="qname">' + escapeHTML(q.name || "") + '</span>'
                       + (q.repeatable ? '<span class="qrepeat">(repeatable)</span>' : '')
@@ -3842,6 +3842,111 @@
             });
         })();
         // ── End automation context menu ──────────────────────────────────────
+
+        /////////////////////////////////////////////
+        //
+        // Quest right-click context menu (Focus / Abandon, #375 p5)
+        //
+        /////////////////////////////////////////////
+        (function() {
+            var menu = null;
+
+            function buildMenu() {
+                var el = document.createElement("div");
+                el.className = "quest-ctx";
+                el.style.display = "none";
+                document.body.appendChild(el);
+                return el;
+            }
+
+            function closeMenu() {
+                if (!menu) return;
+                menu.style.display = "none";
+                document.removeEventListener("click",   closeOnOutside, true);
+                document.removeEventListener("keydown", closeOnEscape,  true);
+                document.removeEventListener("scroll",  closeMenu,      true);
+            }
+
+            function closeOnOutside(e) {
+                if (menu && !menu.contains(e.target)) closeMenu();
+            }
+            function closeOnEscape(e) {
+                if (e.key === "Escape") closeMenu();
+            }
+
+            function makeCtxRow(label, isDefault, onAction) {
+                var row = document.createElement("div");
+                row.className = "ctx-row" + (isDefault ? " ctx-default" : "");
+                row.textContent = label;
+                row.addEventListener("click", function() {
+                    closeMenu();
+                    onAction();
+                });
+                return row;
+            }
+
+            function openMenu(e, row) {
+                var id = parseInt(row.getAttribute("data-quest-id"), 10);
+                if (isNaN(id)) return;
+                if (!menu) menu = buildMenu();
+                while (menu.firstChild) menu.removeChild(menu.firstChild);
+
+                var nameEl = row.querySelector(".qname");
+                var hdr = document.createElement("div");
+                hdr.className = "ctx-header";
+                hdr.textContent = nameEl ? nameEl.textContent : "";
+                menu.appendChild(hdr);
+
+                menu.appendChild(makeCtxRow("Focus", true, function() {
+                    SendGMCP("Char.Quests.Focus", { id: id });
+                }));
+
+                var sep = document.createElement("div");
+                sep.className = "ctx-sep";
+                menu.appendChild(sep);
+
+                // A quest the server does not offer to set aside stays in the
+                // menu, dimmed and italic with its reason as a tooltip, so
+                // the player learns why instead of wondering where it went.
+                var canDrop = row.getAttribute("data-abandonable") === "1";
+                var drop = makeCtxRow("Abandon", false, function() {
+                    if (canDrop) SendGMCP("Char.Quests.Abandon", { id: id });
+                });
+                if (!canDrop) {
+                    drop.className += " ctx-disabled";
+                    drop.title = "Nobody would take this back from you. It has to be finished.";
+                }
+                menu.appendChild(drop);
+
+                // Position: clamp to viewport
+                menu.style.display = "block";
+                var vw = window.innerWidth  || document.documentElement.clientWidth;
+                var vh = window.innerHeight || document.documentElement.clientHeight;
+                var mw = menu.offsetWidth || 0;
+                var mh = menu.offsetHeight || 0;
+                var x  = Math.min(e.clientX, vw - mw - 4);
+                var y  = Math.min(e.clientY, vh - mh - 4);
+                if (x < 0) x = 0;
+                if (y < 0) y = 0;
+                menu.style.left = x + "px";
+                menu.style.top  = y + "px";
+
+                document.addEventListener("click",   closeOnOutside, true);
+                document.addEventListener("keydown", closeOnEscape,  true);
+                document.addEventListener("scroll",  closeMenu,      true);
+            }
+
+            // The menu lives on document.body, outside the row, so its own
+            // clicks never reach the row's left-click Focus handler. Finished
+            // repeatables render as .qrepeatrow and get no menu.
+            document.addEventListener("contextmenu", function(e) {
+                var row = e.target.closest(".qrow[data-quest-id]");
+                if (!row) return;
+                e.preventDefault();
+                openMenu(e, row);
+            });
+        })();
+        // ── End quest context menu ───────────────────────────────────────────
 
         /////////////////////////////////////////////
         //

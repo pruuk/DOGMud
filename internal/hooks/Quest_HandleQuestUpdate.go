@@ -113,6 +113,14 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		}
 	}
 
+	// A start grant may have taken a shelved quest back up (#375 phase 5):
+	// GiveQuestToken above resumed it, or a behaviour tree's GiveQuestToken
+	// did before queueing this event. The mark is read once, here; an engine
+	// grant reads it in GameBridge.GrantQuest and queues only a MarkerOnly
+	// event for a start step, which returned above.
+	questId, stepName := quests.TokenToParts(evt.QuestToken)
+	resumed := stepName == `start` && questUser.Character.TakeResumed(questId)
+
 	// The token has landed: the talk markers on NPCs may have changed.
 	conversation.RefreshMarkers(questUser.UserId)
 
@@ -125,13 +133,23 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 	// here — preventing a double-fire of the same trigger.
 	if freshlyGranted {
 		qbridge := questengine.NewGameBridge(questUser, questUser.Character.RoomId)
+		// On a resume the chain runs but hands over nothing of value
+		// (owner ruling 2): quest 50's pouch of shot does not come again.
+		qbridge.SetResumed(resumed)
 		d := questengine.EventAt(questUser.UserId, questUser.Character.RoomId) // template room
 		d.QuestToken = evt.QuestToken
 		questengine.GetEngine().Notify("quest_granted", d, qbridge, qbridge)
 	}
 
-	_, stepName := quests.TokenToParts(evt.QuestToken)
-	if stepName == `start` {
+	if stepName == `start` && resumed {
+		if !questInfo.Secret {
+
+			questUser.EventLog.Add(`quest`, fmt.Sprintf(`Took up a quest again: <ansi fg="questname">%s</ansi>`, questInfo.Name))
+
+			questUpTxt, _ := templates.Process("character/questup", fmt.Sprintf(`You take up <ansi fg="questname">%s</ansi> again.`, questInfo.Name), questUser.UserId)
+			questUser.SendText(messaging.CategorySystem, questUpTxt)
+		}
+	} else if stepName == `start` {
 		if !questInfo.Secret {
 
 			questUser.EventLog.Add(`quest`, fmt.Sprintf(`Given a new quest: <ansi fg="questname">%s</ansi>`, questInfo.Name))

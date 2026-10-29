@@ -271,6 +271,22 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 // - Chained quest activation
 ```
 
+### Resumed quests (`Quest_HandleQuestUpdate.go`, #375 phase 5)
+
+`HandleQuestUpdate` asks `Character.TakeResumed(questId)` for a `start` token,
+once, after `GiveQuestToken` has run (a grant of `N-start` to a shelved quest
+resumes it there). On a resume it:
+
+- marks the `GameBridge` with `SetResumed(true)` before the `quest_granted`
+  chain, so the chain's `give_item` and `give_gold` hand over nothing of value
+  (quest 50's pouch of shot does not come twice); state-gated chains still run;
+- prints "You take up <quest> again." and logs "Took up a quest again" in place
+  of the "given a new quest" banner.
+
+An engine grant (`GameBridge.GrantQuest`) queues only a `MarkerOnly` event for
+a start step, which this hook returns on before the read, so `GrantQuest`
+reads the mark itself and prints the one banner.
+
 ## Player Lifecycle Management
 
 ### Player Join Processing

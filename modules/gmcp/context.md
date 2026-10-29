@@ -555,6 +555,18 @@ the area name over `target_rooms` that are on the map (`_drawQuestWash`), a
 `guide`. `tools/webclient-tests/quest-destination-map.js` runs it, and
 `quest-destination-demo.html` draws it in a browser.
 
+## Char.Quests: abandon (`gmcp.CharOp.go`, `gmcp.Char.go`; #375 phase 5)
+
+- `GMCPCharModule_Payload_Quest.Abandonable` (`abandonable`, omitted when
+  false) is `usercommands.Abandonable`: active, unfinished, not secret, and
+  some NPC offers it through a topic that can show again while it is shelved. The web panel greys its Abandon item when it is false.
+- Inbound `Char.Quests.Abandon {id}` is routed in `gmcp.go` `HandleIAC` with
+  `Char.Quests.Focus` into `GMCPCharOp`, and handled in `handleCharOp`: it calls
+  `usercommands.AbandonQuest` and sends the reply with
+  `usercommands.SendQuestLogLine`. `AbandonQuest` queues the `MarkerOnly`
+  quest event that re-sends `Char.Quests`, so the handler queues no
+  `GMCPCharUpdate`. `Char.Quests.Focus` now calls `usercommands.FocusQuest`.
+
 ## Gotchas
 
 - **The web client is the primary consumer of every one of these.** A payload

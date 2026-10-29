@@ -132,6 +132,7 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 		QuestOpen: func(questId int) bool {
 			return user.Character.QuestOpen(quests.GetQuestById(questId))
 		},
+		Shelved: user.Character.IsShelved,
 	}
 	// Objective lights a topic a topic_heard trigger of the player's quests
 	// would act on right now (a dry run; nothing fires). Its quest checks go

@@ -50,6 +50,11 @@ type PlayerState struct {
 	// the player's quests now (a topic_heard trigger would fire). Such a
 	// topic shows [*] even when heard (#375 phase 3b slice 1). Nil: false.
 	Objective func(mobId int, key string) bool
+	// Shelved reports whether the player set this quest aside (#375 phase 5).
+	// A topic granting a shelved quest's start resumes it: Apply then takes
+	// no charge and gives only a worthless item the player lacks (owner
+	// ruling 2). Nil means never shelved.
+	Shelved func(questId int) bool
 }
 
 // QuestFlagSet describes a single key/value flag to write on the player's character.

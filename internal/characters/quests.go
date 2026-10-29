@@ -108,6 +108,14 @@ func (c *Character) GiveQuestToken(questToken string) bool {
 	}
 
 	questId, newStep := quests.TokenToParts(questToken)
+
+	// An accept of a shelved quest takes it back up where it was (#375 phase 5).
+	if newStep == `start` {
+		if _, resumed := c.ResumeShelvedQuest(questId); resumed {
+			return true
+		}
+	}
+
 	currentProgress := c.QuestProgress[questId]
 
 	currentToken := quests.PartsToToken(questId, currentProgress)
@@ -170,6 +178,11 @@ func (c *Character) ClearQuestToken(questToken string) {
 
 	delete(c.QuestProgress, questId)
 	c.clearQuestStepCounts(questId)
+	// A removed quest must not come back off the shelf on the next accept.
+	delete(c.ShelvedQuests, questId)
+	if len(c.ShelvedQuests) == 0 {
+		c.ShelvedQuests = nil
+	}
 
 	// Don't leave the focus quest dangling at a quest we just removed. This
 	// fires on the common repeatable-quest-completion reset (and explicit quest
@@ -180,6 +193,67 @@ func (c *Character) ClearQuestToken(questToken string) {
 	if c.LastQuestId == questId {
 		c.LastQuestId = 0
 	}
+}
+
+// ShelveQuest sets an active quest aside (#375 phase 5, owner ruling 1): its
+// step moves from QuestProgress to ShelvedQuests, so every reader of "held"
+// sees it as not held. Flags and step counts stay for the resume. A finished
+// quest, or one not held, is refused.
+func (c *Character) ShelveQuest(questId int) bool {
+	step, ok := c.QuestProgress[questId]
+	if !ok || step == `end` {
+		return false
+	}
+	if c.ShelvedQuests == nil {
+		c.ShelvedQuests = make(map[int]string)
+	}
+	c.ShelvedQuests[questId] = step
+	delete(c.QuestProgress, questId)
+	if c.LastQuestId == questId {
+		c.LastQuestId = 0
+	}
+	return true
+}
+
+// IsShelved reports whether questId is set aside.
+func (c *Character) IsShelved(questId int) bool {
+	_, ok := c.ShelvedQuests[questId]
+	return ok
+}
+
+// ResumeShelvedQuest takes a shelved quest back up at the step it was set
+// aside on, and marks it resumed until TakeResumed reads it.
+func (c *Character) ResumeShelvedQuest(questId int) (string, bool) {
+	step, ok := c.ShelvedQuests[questId]
+	if !ok {
+		return ``, false
+	}
+	delete(c.ShelvedQuests, questId)
+	if len(c.ShelvedQuests) == 0 {
+		c.ShelvedQuests = nil
+	}
+	if c.QuestProgress == nil {
+		c.QuestProgress = make(map[int]string)
+	}
+	c.QuestProgress[questId] = step
+	if !questIsSecret(questId) {
+		c.LastQuestId = questId
+	}
+	if c.resumedQuests == nil {
+		c.resumedQuests = make(map[int]bool)
+	}
+	c.resumedQuests[questId] = true
+	return step, true
+}
+
+// TakeResumed reports, once, whether questId was just resumed from the shelf:
+// the grant banner reads it to say "You take up ... again".
+func (c *Character) TakeResumed(questId int) bool {
+	if !c.resumedQuests[questId] {
+		return false
+	}
+	delete(c.resumedQuests, questId)
+	return true
 }
 
 func (c *Character) SetQuestFlag(key, value string) {
@@ -279,11 +353,17 @@ func (c *Character) QuestOpen(q *quests.Quest) bool {
 // RenameQuestSteps moves saved progress through the step-id manifest's
 // renames ("<qid>-<old>" -> "<qid>-<new>"), following chains. A rename that
 // changes the quest id is ignored: a step cannot move between quests.
+// The shelf holds steps the same way, so it is renamed too (#375 phase 5).
 func (c *Character) RenameQuestSteps(renames map[string]string) {
-	if len(renames) == 0 || len(c.QuestProgress) == 0 {
+	renameQuestSteps(c.QuestProgress, renames)
+	renameQuestSteps(c.ShelvedQuests, renames)
+}
+
+func renameQuestSteps(progress map[int]string, renames map[string]string) {
+	if len(renames) == 0 || len(progress) == 0 {
 		return
 	}
-	for qid, step := range c.QuestProgress {
+	for qid, step := range progress {
 		tok := quests.PartsToToken(qid, step)
 		for hops := 0; hops < len(renames); hops++ {
 			n, ok := renames[tok]
@@ -294,7 +374,7 @@ func (c *Character) RenameQuestSteps(renames map[string]string) {
 		}
 		nid, nstep := quests.TokenToParts(tok)
 		if nid == qid {
-			c.QuestProgress[qid] = nstep
+			progress[qid] = nstep
 		}
 	}
 }
@@ -303,11 +383,21 @@ func (c *Character) RenameQuestSteps(renames map[string]string) {
 // manifest retires ("<qid>-<step>"). It changes nothing: a retired current
 // step needs a content decision, so LoadUser only logs it (spec 5.5).
 func (c *Character) RetiredQuestSteps(retired map[string]bool) []string {
+	return retiredQuestSteps(c.QuestProgress, retired)
+}
+
+// RetiredShelvedSteps is RetiredQuestSteps over the shelf (#375 phase 5):
+// a shelved step resumes as is, so a retired one needs the same decision.
+func (c *Character) RetiredShelvedSteps(retired map[string]bool) []string {
+	return retiredQuestSteps(c.ShelvedQuests, retired)
+}
+
+func retiredQuestSteps(progress map[int]string, retired map[string]bool) []string {
 	if len(retired) == 0 {
 		return nil
 	}
 	var out []string
-	for qid, step := range c.QuestProgress {
+	for qid, step := range progress {
 		if tok := quests.PartsToToken(qid, step); retired[tok] {
 			out = append(out, tok)
 		}

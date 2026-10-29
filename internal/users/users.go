@@ -575,6 +575,10 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 	for _, tok := range loadedUser.Character.RetiredQuestSteps(quests.StepRetired()) {
 		mudlog.Warn("LoadUser", "user", loadedUser.Username, "retired quest step", tok)
 	}
+	// The shelf resumes its step as is, so a retired one there is logged too.
+	for _, tok := range loadedUser.Character.RetiredShelvedSteps(quests.StepRetired()) {
+		mudlog.Warn("LoadUser", "user", loadedUser.Username, "retired shelved quest step", tok)
+	}
 	loadedUser.Character.MigrateLegacyPotions()
 	// U10d ranged detune. MUST precede MigrateEnchantments: ApplyTier does an
 	// unconditional EnchantBaseline.RestoreInto, which would re-install the
