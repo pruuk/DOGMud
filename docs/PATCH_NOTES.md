@@ -1,5 +1,20 @@
 # DOGMud Patch Notes
 
+## 2026-10-28: Set a quest aside, or follow another
+
+- You can set a quest aside. Type `quests abandon <name>`, or right-click
+  the quest in the quest panel on the web client and choose Abandon. The
+  quest leaves your log, and the person who gave it to you offers it
+  again.
+- When you take it up again, you pick up where you left off. You do not
+  get its starting gear a second time.
+- A few quests, like the opening one, have to be finished. Nobody would
+  take them back, so they cannot be set aside.
+- `quests focus <name>`, or a right-click on the quest and Focus, chooses
+  which quest the map and the hints follow.
+- `quests all` lists the quests you have set aside, and who to talk to
+  to take them up again.
+
 ## 2026-10-28: The map shows where your quest leads
 
 - When the place you are looking for is an area, the web map now

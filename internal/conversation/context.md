@@ -22,6 +22,9 @@ package owns everything that needs a user, a room or a mob.
 
 ## Rules
 
+- `PlayerState` wires `Shelved` to `Character.IsShelved` (#375 phase 5), so
+  `dialogue.Apply` can tell a resume of a set-aside quest from a first accept
+  (no charge, no valued item again); see `internal/dialogue`.
 - The offer card carries a `Body` (`card.go`): the first step's description,
   the reward line, and for a repeatable the "again" line (and a last-time line
   when `Character.LastRepeat`). An offer on cooldown or at its cap is not

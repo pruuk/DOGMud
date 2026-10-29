@@ -181,7 +181,28 @@ func SaveDialogueFile(df DialogueFile) error
 func CreateNewDialogueFile(mobId int, zone string) error
 func DeleteDialogueFile(mobId int, zone string) error
 func InstallForTest(df *DialogueFile) func()
+
+func BuildOfferIndex(files []*DialogueFile)
+func UpdateOfferIndex(df *DialogueFile)
+func Offerers(questId int) []int
+func SetOfferIndexForTest(byQuest map[int][]int) func()
 ```
+
+### The offer index and resume effects (`offers.go`, `topics.go`; #375 phase 5)
+
+- The offer index maps each quest id to the NPCs that offer it, meaning some
+  topic's `grantsQuest` is that quest's `-start`. `BuildOfferIndex` is fed
+  every file at boot (`main_quests.go` `offerIndexDoor`, from `LoadAllFiles`);
+  `SaveDialogueFile` calls `UpdateOfferIndex`, so a builder save keeps it
+  current. `Offerers(questId)` returns the sorted mob ids (shared; do not
+  modify). A quest is abandonable only when this list is not empty.
+  `SetOfferIndexForTest` swaps the index and returns a restore func.
+- `PlayerState.Shelved(questId)` reports a set-aside quest (nil: never). In
+  `Apply`, a topic granting `N-start` while `Shelved(N)` is a resume: the
+  `chargesGold` is not taken, and `givesItem` is given only when the item's
+  `Value` is 0 and the player carries none (`resumeGivesItem`); otherwise it is
+  skipped and counts as delivered. `setsQuestFlag`, `bumpsRep` and the rest
+  apply as usual. A first accept is unchanged.
 
 ## Per-instance memory
 

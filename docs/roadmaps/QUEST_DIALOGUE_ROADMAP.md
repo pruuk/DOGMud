@@ -304,7 +304,9 @@ in PR, plan `docs/superpowers/plans/2026-10-28-quest-arc-phase4-slice3-content.m
 **Exit.** Abandon then re-accept resumes at the same step with no repeat rewards; focus drives
 the minimap.
 
-**Status:** not started.
+**Status:** in PR (branch `feat/375-p5-quest-log`). Spec
+`docs/superpowers/specs/2026-10-28-quest-arc-phase5-quest-log-actions-design.md`, plan
+`docs/superpowers/plans/2026-10-28-quest-arc-phase5-quest-log-actions.md`.
 
 ## Phase 7: Content migration, zone by zone
 
