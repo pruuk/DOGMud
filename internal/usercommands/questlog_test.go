@@ -272,6 +272,20 @@ func TestAbandonable_NeedsAResumingOffer(t *testing.T) {
 	require.False(t, u.Character.IsShelved(42))
 }
 
+// A quest whose -start a trigger or behaviour tree grants by itself cannot be
+// abandoned, even with a clean offer: that grant would take it back up
+// without the player choosing to (owner ruling 6, #375 phase 5).
+func TestAbandonable_RefusesAutoStartedQuest(t *testing.T) {
+	u := questlogFixture(t)
+	require.True(t, Abandonable(u.Character, 42), "the fixture offer is clean")
+	t.Cleanup(SetAutoStartedForTest([]int{42}))
+	require.False(t, Abandonable(u.Character, 42))
+	ok, line := AbandonQuest(u, 42)
+	require.False(t, ok)
+	require.Equal(t, questNoWayBackLine, line)
+	require.False(t, u.Character.IsShelved(42))
+}
+
 // On shipped data, quest 88's only offer (road_toke) excludes 31-start and
 // 29-end, so 88 is not abandonable; quest 42's offer excludes only its own
 // tokens.

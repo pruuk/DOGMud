@@ -384,16 +384,26 @@ panel (GMCP `Char.Quests.Abandon` and `Char.Quests.Focus`). Both call these
 functions; do not reimplement them.
 
 - `AbandonQuest(user, questId) (ok bool, line string)`: refuses a quest not
-  active, finished or secret ("You have no quest called that.") and one no NPC
-  offers ("Nobody would take this back from you. It has to be finished.");
+  active, finished or secret ("You have no quest called that.") and one that
+  is not `Abandonable` ("Nobody would take this back from you. It has to be
+  finished.");
   otherwise `Character.ShelveQuest`, and queues a `MarkerOnly` `events.Quest`
   whose listeners re-send `Char.Quests` and refresh NPC markers.
 - `FocusQuest(user, questId) bool`: active and not secret, sets `LastQuestId`.
   The caller re-sends `Char.Quests`.
 - `Abandonable(c, questId) bool`: active, unfinished, not secret and
   `dialogue.Resumable` (some offer can show again while it is shelved; an
-  offer hidden by another quest's token, like quest 88's, cannot). The GMCP
-  `abandonable` field calls it.
+  offer hidden by another quest's token, like quest 88's, cannot), and its
+  `-start` is not granted automatically (owner ruling 6: a quest trigger or
+  behaviour tree that grants it would take it back up without the player
+  choosing to; quest 30, granted by `room_enter 5200` and room 6467's tree).
+  The GMCP `abandonable` field calls it.
+- `SetAutoStarted(questIds)` replaces that automatic set; the offer index
+  door in `main_quests.go` sets it at boot (and on a reload) from
+  `questloop.AutoStarts`. It lives here, not in the dialogue offer index,
+  because it is abandon policy, not a fact about offers: `dialogue.Resumable`
+  keeps meaning "an offer can show again". `SetAutoStartedForTest` returns a
+  restore func.
 - `QuestGiver(questId) string`: the first resuming NPC's name (else the first
   offering NPC's), else "the one who gave it to you".
 - `SendQuestLogLine(user, ok, line)`: sends the reply, wrapped to the reader's

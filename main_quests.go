@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -10,28 +11,51 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/questloop"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/questworld"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 )
 
-// offerIndexDoor builds the dialogue offer index (#375 phase 5): which NPCs
-// offer each quest, for `quests abandon`. Dialogue loads lazily, so this reads
-// every file once.
+// offerIndexDoor builds what `quests abandon` reads (#375 phase 5): the
+// dialogue offer index (which NPCs offer each quest; dialogue loads lazily,
+// so this reads every file once) and the quests whose -start a trigger or
+// behaviour tree grants by itself (owner ruling 6).
 func offerIndexDoor() {
-	files, _ := dialogue.LoadAllFiles()
-	offerIndexDoorFrom(files)
+	offerIndexDoorFrom(questworldForOfferDoor())
 }
 
-// offerIndexDoorFrom builds the index from files and logs, as information,
-// the quests an NPC offers that cannot be abandoned because no offer of
-// theirs can show again while shelved (an offer hidden by another quest's
-// token or flag, like quest 88's). That is by design, not a fault. It returns
-// the quest ids it logged.
-func offerIndexDoorFrom(files []*dialogue.DialogueFile) []int {
-	dialogue.BuildOfferIndex(files)
-	ids := dialogue.Unresumable()
-	if len(ids) > 0 {
-		mudlog.Info("quests", "offered but not abandonable (an offer hides on another quest)", fmt.Sprint(ids))
+// questworldForOfferDoor is the quest loop world without reference checks:
+// the door reads only its quests, dialogue and external grants.
+func questworldForOfferDoor() questloop.World {
+	return questworld.RegistryWith(quests.QuestValidators{})
+}
+
+// offerIndexDoorFrom builds the offer index from w's dialogue, hands the
+// automatically started quests (questloop.AutoStarts) to usercommands, and
+// logs, as information, the quests an NPC offers that cannot be abandoned,
+// by reason: no offer can show again while shelved (an offer hidden by
+// another quest's token or flag, like quest 88's), or a quest trigger or
+// behaviour tree grants the quest's start by itself, which would take it
+// back up without the player choosing to (owner ruling 6, quest 30). That is
+// by design, not a fault. It returns the quest ids it logged for each
+// reason; a quest may appear in both.
+func offerIndexDoorFrom(w questloop.World) (hides, auto []int) {
+	dialogue.BuildOfferIndex(w.Dialogue)
+	autoStarts := questloop.AutoStarts(w)
+	all := make([]int, 0, len(autoStarts))
+	for id := range autoStarts {
+		all = append(all, id)
+		if len(dialogue.Offerers(id)) > 0 {
+			auto = append(auto, id)
+		}
 	}
-	return ids
+	usercommands.SetAutoStarted(all)
+	slices.Sort(auto)
+	hides = dialogue.Unresumable()
+	if len(hides) > 0 || len(auto) > 0 {
+		mudlog.Info("quests",
+			"offered but not abandonable (an offer hides on another quest)", fmt.Sprint(hides),
+			"offered but not abandonable (a trigger or behaviour tree grants its start)", fmt.Sprint(auto))
+	}
+	return hides, auto
 }
 
 // destinationDoor logs every quest step whose minimap destination is unknown

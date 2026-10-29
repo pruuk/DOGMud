@@ -205,7 +205,8 @@ func SetOfferIndexForTest(byQuest map[int][]int) func()
   hides for good once the player gains it, so a quest shelved behind it would
   be lost. `Resumers(questId)` is the sorted mob ids with such an offer,
   `Resumable(questId)` is whether there is one, and a quest is abandonable only
-  when it is resumable. `Unresumable()` lists quests offered but not
+  when it is resumable (and not started automatically, which
+  `usercommands.Abandonable` checks; owner ruling 6). `Unresumable()` lists quests offered but not
   resumable; `offerIndexDoor` logs it as `mudlog.Info` at boot (by design,
   not a fault). Shipped 2026-10-28: 13 (excludes `12-start`), 88 (excludes
   `31-start`, `29-end`), 89 (excludes `29-end`).

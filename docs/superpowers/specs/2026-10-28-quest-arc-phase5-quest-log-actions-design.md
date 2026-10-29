@@ -58,6 +58,14 @@ pinnacle quests 79 to 87, which phase 7 turns into recipe sales. Quest 34's two 
    a finished quest cannot be abandoned. Scan 2026-10-28 (310 dialogue files, 76 offered quests):
    the only accept-time pick is quest 34 (Garve's `tower_might` / `tower_finesse`, the `34-boon`
    flag paid at the boss kill); the mid-quest picks are quests 11, 18, 67 and 72.
+6. **A quest whose `-start` is granted automatically cannot be abandoned.** Any quest trigger
+   action or any behaviour tree that grants `N-start` would take a shelved quest N back up
+   without the player choosing to, so N is not abandonable even when an NPC offers it.
+   Instance: quest 30 (The Awakening), whose `30-start` is granted by `room_enter 5200`
+   (`quests/30-the_awakening.yaml`) and by the antechamber room tree
+   (`behaviors/rooms/newcomer_antechamber/6467.yaml`), though Hadwen (9100) offers it. Scan
+   2026-10-28: the automatic `-start` grants are quests 28 and 30 only (28 has no offer, so the
+   rule changes only quest 30).
 
 ## 1. The shelf
 
@@ -101,6 +109,7 @@ Refused, with the line shown to the player:
 | no full match, and the name fits more than one quest in part (typed command only) | `More than one quest matches that. Type more of its name.` |
 | secret quest | (never matched: secret quests are not listed) |
 | no NPC offers it (ruling 3) | `Nobody would take this back from you. It has to be finished.` |
+| a trigger or behaviour tree grants its `-start` (ruling 6) | `Nobody would take this back from you. It has to be finished.` |
 
 On success: `You set <quest> aside. Talk to <giver> to take it up again. You will pick up where
 you left off.` No confirmation prompt: abandoning loses nothing. If it was the focused quest,
@@ -119,6 +128,16 @@ fine: a shelved quest is not held). An offer hidden by another quest's token hid
 the player gains that token, and a quest shelved behind it would be lost. Instance: quest 88's
 only offer (`pothole_coulee/9100.yaml` `road_toke`) excludes `31-start` and `29-end`, so 88 cannot
 be abandoned. The boot door logs such quests as information (13, 88 and 89 on 2026-10-28).
+
+**No automatic start (ruling 6).** The same boot door computes `questloop.AutoStarts` over the
+quest loop world (`questworld.RegistryWith`, the index every loop rule reads): every quest whose
+`-start` a quest trigger's `grant` (a sequence's `on_complete` included) or a behaviour tree's
+`grant_quest` gives. Offers, `rewards.questid` and item questtokens do not count. It hands the
+set to `usercommands.SetAutoStarted`, and `Abandonable` refuses those quests. The set lives in
+`usercommands`, not the dialogue offer index, because it is abandon policy: `dialogue.Resumable`
+keeps meaning "an offer can show again". The boot Info line `offered but not abandonable` names
+both reasons: `an offer hides on another quest` and `a trigger or behaviour tree grants its
+start` (30 on 2026-10-28).
 
 Name matching: `util.FindMatchIn` over the sorted names of the player's active non-secret quests,
 exact match first, then a close match only when it is the one name that fits in part. The web client sends the quest id over GMCP.
@@ -173,7 +192,9 @@ have no quest called that.`
   give nothing; a worthless missing item is given; a chain `grant` still advances (quest 7's
   shape: resumed at `start` while holding the item).
 - The `[!]` returns after abandon and leaves after resume.
-- Refusals: unknown name, no offering NPC (quest 28 on shipped data).
+- Refusals: unknown name, no offering NPC (quest 28 on shipped data), an automatic start
+  (ruling 6: a fixture trigger granting `N-start`; quest 30 refused and quest 42 allowed on
+  shipped data).
 - Focus by name and by click; abandoning the focused quest moves focus.
 - `quests all` row for a shelved quest; `help quests` lines.
 - GMCP: `abandonable` true and false; `Char.Quests.Abandon` with an id that cannot be abandoned

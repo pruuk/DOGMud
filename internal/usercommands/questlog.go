@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
@@ -54,16 +55,58 @@ func QuestGiver(questId int) string {
 	return questGiverFallback
 }
 
+// autoStarted is the quests whose -start a quest trigger or a behaviour tree
+// grants by itself (questloop.AutoStarts), set at boot by the offer index
+// door in main_quests.go.
+var (
+	autoStartedMu sync.RWMutex
+	autoStarted   = map[int]bool{}
+)
+
+// SetAutoStarted replaces the quests whose -start is granted automatically
+// (owner ruling 6): none of them can be abandoned.
+func SetAutoStarted(questIds []int) {
+	m := make(map[int]bool, len(questIds))
+	for _, id := range questIds {
+		m[id] = true
+	}
+	autoStartedMu.Lock()
+	autoStarted = m
+	autoStartedMu.Unlock()
+}
+
+// SetAutoStartedForTest is SetAutoStarted with a restore func.
+func SetAutoStartedForTest(questIds []int) func() {
+	autoStartedMu.RLock()
+	prev := autoStarted
+	autoStartedMu.RUnlock()
+	SetAutoStarted(questIds)
+	return func() {
+		autoStartedMu.Lock()
+		autoStarted = prev
+		autoStartedMu.Unlock()
+	}
+}
+
+func isAutoStarted(questId int) bool {
+	autoStartedMu.RLock()
+	defer autoStartedMu.RUnlock()
+	return autoStarted[questId]
+}
+
 // Abandonable reports whether the player may set questId aside: active, not
 // finished, not secret, and offered by some NPC (owner ruling 3) through a
 // topic that can show again while it is shelved (dialogue.Resumable: an offer
-// hidden by another quest's token, like quest 88's, would lose it).
+// hidden by another quest's token, like quest 88's, would lose it), and its
+// -start is not granted automatically by a quest trigger or a behaviour tree
+// (owner ruling 6: that grant would take it back up without the player
+// choosing to, like quest 30's room_enter 5200).
 func Abandonable(c *characters.Character, questId int) bool {
 	step, ok := c.GetQuestProgress()[questId]
 	if !ok || step == `end` || characters.IsSecretQuest(questId) {
 		return false
 	}
-	return dialogue.Resumable(questId)
+	return dialogue.Resumable(questId) && !isAutoStarted(questId)
 }
 
 // findActiveQuest matches name against the player's active, non-secret,

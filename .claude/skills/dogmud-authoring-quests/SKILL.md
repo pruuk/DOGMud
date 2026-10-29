@@ -573,7 +573,7 @@ steps:                 # the room and mob ids here are illustrative
 
 ## Abandon and resume
 
-Players can set a quest aside (`quests abandon`, or the web panel). Four rules
+Players can set a quest aside (`quests abandon`, or the web panel). Five rules
 follow for authors (#375 phase 5):
 
 1. **An abandoned quest is shelved, not held.** Its triggers stop counting, it
@@ -590,6 +590,16 @@ follow for authors (#375 phase 5):
 4. **A pick made in the offer can change through abandon.** A player may abandon
    and take the other offer on resume (quest 34's `34-boon`). A pick that must
    stick belongs mid-quest, where the shelf keeps the flags and the step reached.
+5. **A quest started automatically cannot be abandoned, even with an offer.** If
+   any quest trigger's `grant:` (a sequence's `on_complete` included) or any
+   behaviour tree's `grant_quest` gives `N-start`, that grant would take the
+   shelved quest back up without the player choosing to, so quest N stays
+   unabandonable (owner ruling 6). Quest 30 is the instance: `room_enter 5200`
+   and room 6467's antechamber tree grant `30-start`, though Hadwen offers it.
+   An offer, a `rewards.questid` and an item `questtoken` do not count. Boot
+   logs every offered quest this rule (or a hidden offer) blocks, as `offered
+   but not abandonable`. To make such a quest abandonable, start it only through
+   an NPC offer.
 
 ## Verify event names against the loader
 

@@ -21,6 +21,7 @@ the world from the live registries, and three doors run it.
 | `rule_talk.go` | `ruleTalkOnQuest` (rule `talk-on-quest`) |
 | `rules_more.go` | `ruleChain`, `ruleRepeat`, `ruleReward`, `ruleRefs`, `refsText` |
 | `ways.go` | `Way`, `WaysInto`, `Sources`: the walkthrough's inputs |
+| `autostarts.go` | `AutoStarts(w) map[int][]string`: quests whose `-start` a trigger (sequence `on_complete` included) or a behaviour tree `grant_quest` grants by itself, to those grants' `Where`s, sorted, read off `indexGrants`. Offers, `rewards.questid` and item questtokens do not count. The offer index door (`main_quests.go`) hands them to `usercommands.SetAutoStarted`: such a quest cannot be abandoned (#375 phase 5, owner ruling 6) |
 | `backlog.go` | `Backlog`, `ParseBacklog`, `FormatBacklog`, `Ratchet` |
 
 ## Rules
