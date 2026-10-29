@@ -8,8 +8,8 @@ import (
 
 type resumeProbe struct {
 	charged, given, granted, paid int
-	flags                   map[string]string
-	carries                 bool
+	flags                         map[string]string
+	carries                       bool
 }
 
 func (p *resumeProbe) state(shelved bool) *PlayerState {
