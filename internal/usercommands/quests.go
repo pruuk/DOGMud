@@ -50,6 +50,10 @@ func finishedRepeatRows(c *characters.Character, progress map[int]string, showHi
 		if _, inProgress := progress[questId]; inProgress {
 			continue
 		}
+		// A shelved run has its set-aside row (shelvedRows).
+		if c.IsShelved(questId) {
+			continue
+		}
 		q := quests.GetQuestById(questId)
 		if q == nil || !q.Repeatable || (q.Secret && !showHidden) {
 			continue

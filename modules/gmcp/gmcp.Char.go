@@ -38,7 +38,8 @@ func finishedRepeatQuests(c *characters.Character, lookup func(int) *quests.Ques
 	progress := c.GetQuestProgress()
 	var ids []int
 	for id, n := range c.QuestCompletions {
-		if _, inProgress := progress[id]; n > 0 && !inProgress {
+		// A shelved run is set aside, not finished (#375 phase 5).
+		if _, inProgress := progress[id]; n > 0 && !inProgress && !c.IsShelved(id) {
 			ids = append(ids, id)
 		}
 	}

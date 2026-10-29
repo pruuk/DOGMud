@@ -80,6 +80,16 @@ func TestFinishedRepeatRows_SkipsInProgressAndSecret(t *testing.T) {
 		assert.Len(t, finishedRepeatRows(c, map[int]string{}, true), 1)
 	})
 
+	// A shelved repeatable is held, just set aside: it gets its set-aside
+	// row, not a finished one (#375 phase 5).
+	t.Run("shelved", func(t *testing.T) {
+		t.Cleanup(quests.SeedQuestsForTest(repeatTestQuest(0, false)))
+		c3 := characters.New()
+		c3.QuestCompletions = map[int]int{repeatTestQuestId: 1}
+		c3.ShelvedQuests = map[int]string{repeatTestQuestId: "start"}
+		assert.Empty(t, finishedRepeatRows(c3, map[int]string{}, false))
+	})
+
 	t.Run("never completed", func(t *testing.T) {
 		t.Cleanup(quests.SeedQuestsForTest(repeatTestQuest(0, false)))
 		c2 := characters.New()
