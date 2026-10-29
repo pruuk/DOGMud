@@ -210,3 +210,34 @@ func TestShippedOfferIndex_Quest28HasNoOffer(t *testing.T) {
 	require.Empty(t, dialogue.Offerers(28))
 	require.NotEmpty(t, dialogue.Offerers(42))
 }
+
+// An offer that hides on another quest's token cannot take its quest back
+// off the shelf, so that quest is not abandonable (#375 phase 5).
+func TestAbandonable_NeedsAResumingOffer(t *testing.T) {
+	u := questlogFixture(t)
+	dialogue.BuildOfferIndex([]*dialogue.DialogueFile{{MobId: 9137, Topics: []dialogue.Topic{
+		{Key: "hunt", Kind: dialogue.KindOffer, Gates: dialogue.Gates{QuestExcluded: []string{"42-start", "31-start"}},
+			Effects: dialogue.Effects{GrantsQuest: "42-start"}},
+	}}})
+	require.False(t, Abandonable(u.Character, 42))
+	ok, line := AbandonQuest(u, 42)
+	require.False(t, ok)
+	require.Equal(t, questNoWayBackLine, line)
+	require.False(t, u.Character.IsShelved(42))
+}
+
+// On shipped data, quest 88's only offer (road_toke) excludes 31-start and
+// 29-end, so 88 is not abandonable; quest 42's offer excludes only its own
+// tokens.
+func TestShippedOfferIndex_Quest88NotAbandonable(t *testing.T) {
+	chdirRepoRootForTest(t)
+	files, _ := dialogue.LoadAllFiles()
+	t.Cleanup(dialogue.SetOfferIndexForTest(nil))
+	dialogue.BuildOfferIndex(files)
+	u := users.NewTestUser(97102, "ql2", "Questlog", 97102)
+	u.Character.QuestProgress = map[int]string{42: "track", 88: "start"}
+	require.NotEmpty(t, dialogue.Offerers(88))
+	require.False(t, Abandonable(u.Character, 88))
+	require.True(t, Abandonable(u.Character, 42))
+	t.Log("offered but not abandonable:", dialogue.Unresumable())
+}

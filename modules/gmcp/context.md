@@ -559,7 +559,7 @@ the area name over `target_rooms` that are on the map (`_drawQuestWash`), a
 
 - `GMCPCharModule_Payload_Quest.Abandonable` (`abandonable`, omitted when
   false) is `usercommands.Abandonable`: active, unfinished, not secret, and
-  some NPC offers it. The web panel greys its Abandon item when it is false.
+  some NPC offers it through a topic that can show again while it is shelved. The web panel greys its Abandon item when it is false.
 - Inbound `Char.Quests.Abandon {id}` is routed in `gmcp.go` `HandleIAC` with
   `Char.Quests.Focus` into `GMCPCharOp`, and handled in `handleCharOp`: it calls
   `usercommands.AbandonQuest` and sends the reply with

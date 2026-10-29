@@ -17,7 +17,21 @@ import (
 // every file once.
 func offerIndexDoor() {
 	files, _ := dialogue.LoadAllFiles()
+	offerIndexDoorFrom(files)
+}
+
+// offerIndexDoorFrom builds the index from files and logs, as information,
+// the quests an NPC offers that cannot be abandoned because no offer of
+// theirs can show again while shelved (an offer hidden by another quest's
+// token or flag, like quest 88's). That is by design, not a fault. It returns
+// the quest ids it logged.
+func offerIndexDoorFrom(files []*dialogue.DialogueFile) []int {
 	dialogue.BuildOfferIndex(files)
+	ids := dialogue.Unresumable()
+	if len(ids) > 0 {
+		mudlog.Info("quests", "offered but not abandonable (an offer hides on another quest)", fmt.Sprint(ids))
+	}
+	return ids
 }
 
 // destinationDoor logs every quest step whose minimap destination is unknown

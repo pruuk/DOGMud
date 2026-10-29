@@ -112,6 +112,13 @@ NPCs (every topic whose `grantsQuest` is that quest's `-start`), with the first 
 the lines above. A quest is abandonable when the index has it. `dialogue.SaveDialogueFile`
 updates the index for the file it writes, so a builder save keeps it current.
 
+**The offer must be able to show again.** A quest is abandonable only when some offering topic's
+`questExcluded` tokens and `questFlagExcluded` keys name no other quest (its own quest's are
+fine: a shelved quest is not held). An offer hidden by another quest's token hides for good once
+the player gains that token, and a quest shelved behind it would be lost. Instance: quest 88's
+only offer (`pothole_coulee/9100.yaml` `road_toke`) excludes `31-start` and `29-end`, so 88 cannot
+be abandoned. The boot door logs such quests as information (13, 88 and 89 on 2026-10-28).
+
 Name matching: `util.FindMatchIn` over the names of the player's active non-secret quests, exact
 match first, then a close match. The web client sends the quest id over GMCP.
 

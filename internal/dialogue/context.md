@@ -185,6 +185,9 @@ func InstallForTest(df *DialogueFile) func()
 func BuildOfferIndex(files []*DialogueFile)
 func UpdateOfferIndex(df *DialogueFile)
 func Offerers(questId int) []int
+func Resumers(questId int) []int
+func Resumable(questId int) bool
+func Unresumable() []int
 func SetOfferIndexForTest(byQuest map[int][]int) func()
 ```
 
@@ -195,8 +198,19 @@ func SetOfferIndexForTest(byQuest map[int][]int) func()
   every file at boot (`main_quests.go` `offerIndexDoor`, from `LoadAllFiles`);
   `SaveDialogueFile` calls `UpdateOfferIndex`, so a builder save keeps it
   current. `Offerers(questId)` returns the sorted mob ids (shared; do not
-  modify). A quest is abandonable only when this list is not empty.
-  `SetOfferIndexForTest` swaps the index and returns a restore func.
+  modify).
+- An offering topic *resumes* its quest when its `questExcluded` tokens and
+  `questFlagExcluded` keys name no other quest (its own quest's are fine: a
+  shelved quest is not held). An offer that hides on another quest's token
+  hides for good once the player gains it, so a quest shelved behind it would
+  be lost. `Resumers(questId)` is the sorted mob ids with such an offer,
+  `Resumable(questId)` is whether there is one, and a quest is abandonable only
+  when it is resumable. `Unresumable()` lists quests offered but not
+  resumable; `offerIndexDoor` logs it as `mudlog.Info` at boot (by design,
+  not a fault). Shipped 2026-10-28: 13 (excludes `12-start`), 88 (excludes
+  `31-start`, `29-end`), 89 (excludes `29-end`).
+  `SetOfferIndexForTest` swaps the index and returns a restore func; every
+  offer it sets resumes.
 - `PlayerState.Shelved(questId)` reports a set-aside quest (nil: never). In
   `Apply`, a topic granting `N-start` while `Shelved(N)` is a resume: the
   `chargesGold` is not taken, and `givesItem` is given only when the item's

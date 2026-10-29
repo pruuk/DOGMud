@@ -36,10 +36,15 @@ func setGiverNameForTest(names map[int]string) func() {
 	return func() { giverName = prev }
 }
 
-// QuestGiver is the name of the first NPC that offers questId, or a plain
-// stand-in phrase when none is known.
+// QuestGiver is the name of the first NPC whose offer can take questId back
+// off the shelf (else the first that offers it), or a plain stand-in phrase
+// when none is known.
 func QuestGiver(questId int) string {
-	if ids := dialogue.Offerers(questId); len(ids) > 0 {
+	ids := dialogue.Resumers(questId)
+	if len(ids) == 0 {
+		ids = dialogue.Offerers(questId)
+	}
+	if len(ids) > 0 {
 		if name := giverName(ids[0]); name != `` {
 			return name
 		}
@@ -48,13 +53,15 @@ func QuestGiver(questId int) string {
 }
 
 // Abandonable reports whether the player may set questId aside: active, not
-// finished, not secret, and offered by some NPC (owner ruling 3).
+// finished, not secret, and offered by some NPC (owner ruling 3) through a
+// topic that can show again while it is shelved (dialogue.Resumable: an offer
+// hidden by another quest's token, like quest 88's, would lose it).
 func Abandonable(c *characters.Character, questId int) bool {
 	step, ok := c.GetQuestProgress()[questId]
 	if !ok || step == `end` || characters.IsSecretQuest(questId) {
 		return false
 	}
-	return len(dialogue.Offerers(questId)) > 0
+	return dialogue.Resumable(questId)
 }
 
 // findActiveQuest matches name against the player's active, non-secret,

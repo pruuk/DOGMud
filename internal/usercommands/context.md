@@ -391,9 +391,11 @@ functions; do not reimplement them.
 - `FocusQuest(user, questId) bool`: active and not secret, sets `LastQuestId`.
   The caller re-sends `Char.Quests`.
 - `Abandonable(c, questId) bool`: active, unfinished, not secret and
-  `dialogue.Offerers` non-empty. The GMCP `abandonable` field calls it.
-- `QuestGiver(questId) string`: the first offering NPC's name, else "the one
-  who gave it to you".
+  `dialogue.Resumable` (some offer can show again while it is shelved; an
+  offer hidden by another quest's token, like quest 88's, cannot). The GMCP
+  `abandonable` field calls it.
+- `QuestGiver(questId) string`: the first resuming NPC's name (else the first
+  offering NPC's), else "the one who gave it to you".
 - `SendQuestLogLine(user, ok, line)`: sends the reply, wrapped to the reader's
   width with `messaging.WrapAnsi` because `CategorySystem` is never wrapped.
 
