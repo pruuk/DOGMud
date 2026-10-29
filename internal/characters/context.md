@@ -430,6 +430,12 @@ with no change. Flags and step counts stay where they are for the resume.
 - `GiveQuestToken` calls `ResumeShelvedQuest` for any `N-start` token, so every
   grant path (dialogue, questengine, behaviour tree, overlays) resumes the
   same way, and returns true.
+- Migrations reach the shelf as they reach `QuestProgress`: `RenameQuestSteps`
+  renames shelved steps, `RetiredShelvedSteps(retired)` lists retired shelved
+  steps (logged by `users.LoadUser`, left as is, like `RetiredQuestSteps`),
+  `users.DoQuestStepMigration` resets a removed shelved step to `start` and
+  drops a deleted quest, and `ClearQuestToken` deletes the quest's shelf entry
+  so a removed quest cannot come back on the next accept.
 
 ### Repeatable quest counts (`quests.go`, #375 phase 2)
 
@@ -449,7 +455,7 @@ It survives save, load and restart.
 - `RenameQuestSteps(renames)` runs at load (`users.LoadUser`, with
   `quests.StepRenames()` from `quests/step-ids.txt`) so saved progress follows a
   renamed step id. It follows rename chains and ignores a rename that changes
-  the quest id.
+  the quest id. It renames `ShelvedQuests` the same way.
 
 ### Character States and Modifiers
 - 🔑 **Timed state is `Character.Conditions` and nothing else.** Read

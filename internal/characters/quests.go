@@ -178,6 +178,11 @@ func (c *Character) ClearQuestToken(questToken string) {
 
 	delete(c.QuestProgress, questId)
 	c.clearQuestStepCounts(questId)
+	// A removed quest must not come back off the shelf on the next accept.
+	delete(c.ShelvedQuests, questId)
+	if len(c.ShelvedQuests) == 0 {
+		c.ShelvedQuests = nil
+	}
 
 	// Don't leave the focus quest dangling at a quest we just removed. This
 	// fires on the common repeatable-quest-completion reset (and explicit quest
@@ -348,11 +353,17 @@ func (c *Character) QuestOpen(q *quests.Quest) bool {
 // RenameQuestSteps moves saved progress through the step-id manifest's
 // renames ("<qid>-<old>" -> "<qid>-<new>"), following chains. A rename that
 // changes the quest id is ignored: a step cannot move between quests.
+// The shelf holds steps the same way, so it is renamed too (#375 phase 5).
 func (c *Character) RenameQuestSteps(renames map[string]string) {
-	if len(renames) == 0 || len(c.QuestProgress) == 0 {
+	renameQuestSteps(c.QuestProgress, renames)
+	renameQuestSteps(c.ShelvedQuests, renames)
+}
+
+func renameQuestSteps(progress map[int]string, renames map[string]string) {
+	if len(renames) == 0 || len(progress) == 0 {
 		return
 	}
-	for qid, step := range c.QuestProgress {
+	for qid, step := range progress {
 		tok := quests.PartsToToken(qid, step)
 		for hops := 0; hops < len(renames); hops++ {
 			n, ok := renames[tok]
@@ -363,7 +374,7 @@ func (c *Character) RenameQuestSteps(renames map[string]string) {
 		}
 		nid, nstep := quests.TokenToParts(tok)
 		if nid == qid {
-			c.QuestProgress[qid] = nstep
+			progress[qid] = nstep
 		}
 	}
 }
@@ -372,11 +383,21 @@ func (c *Character) RenameQuestSteps(renames map[string]string) {
 // manifest retires ("<qid>-<step>"). It changes nothing: a retired current
 // step needs a content decision, so LoadUser only logs it (spec 5.5).
 func (c *Character) RetiredQuestSteps(retired map[string]bool) []string {
+	return retiredQuestSteps(c.QuestProgress, retired)
+}
+
+// RetiredShelvedSteps is RetiredQuestSteps over the shelf (#375 phase 5):
+// a shelved step resumes as is, so a retired one needs the same decision.
+func (c *Character) RetiredShelvedSteps(retired map[string]bool) []string {
+	return retiredQuestSteps(c.ShelvedQuests, retired)
+}
+
+func retiredQuestSteps(progress map[int]string, retired map[string]bool) []string {
 	if len(retired) == 0 {
 		return nil
 	}
 	var out []string
-	for qid, step := range c.QuestProgress {
+	for qid, step := range progress {
 		if tok := quests.PartsToToken(qid, step); retired[tok] {
 			out = append(out, tok)
 		}

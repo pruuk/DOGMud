@@ -30,48 +30,12 @@ func DoUserMigrations() {
 // DoQuestStepMigration checks all players for quest progress on steps that
 // no longer exist (removed during quest engine port). Players stuck on
 // deleted steps are bumped to "start" so they can redo the quest cleanly.
+// The shelf (#375 phase 5) is migrated the same way.
 func DoQuestStepMigration() {
 	migrated := 0
 
 	SearchOfflineUsers(func(u *UserRecord) bool {
-		if u.Character.QuestProgress == nil {
-			return true
-		}
-
-		changed := false
-		for questId, currentStep := range u.Character.QuestProgress {
-			q := quests.GetQuest(quests.PartsToToken(questId, currentStep))
-			if q == nil {
-				// Quest itself was deleted (e.g., Q17) — remove progress
-				delete(u.Character.QuestProgress, questId)
-				mudlog.Info("DoQuestStepMigration", "info",
-					"Removed deleted quest progress",
-					"user", u.Username, "questId", questId, "step", currentStep)
-				changed = true
-				continue
-			}
-
-			// Check if the step still exists in the quest definition
-			stepExists := false
-			for _, step := range q.Steps {
-				if step.Id == currentStep {
-					stepExists = true
-					break
-				}
-			}
-
-			if !stepExists {
-				// Step was removed — reset to "start"
-				u.Character.QuestProgress[questId] = "start"
-				mudlog.Info("DoQuestStepMigration", "info",
-					"Migrated removed quest step to start",
-					"user", u.Username, "questId", questId,
-					"oldStep", currentStep, "newStep", "start")
-				changed = true
-			}
-		}
-
-		if changed {
+		if migrateQuestSteps(u) {
 			migrated++
 			SaveUser(u)
 		}
@@ -82,6 +46,59 @@ func DoQuestStepMigration() {
 		mudlog.Info("DoQuestStepMigration", "info",
 			"Quest step migration complete", "usersUpdated", migrated)
 	}
+}
+
+// migrateQuestSteps runs the step migration over one user's QuestProgress
+// and ShelvedQuests, and reports whether anything changed.
+func migrateQuestSteps(u *UserRecord) bool {
+	changed := migrateQuestStepMap(u.Username, `progress`, u.Character.QuestProgress)
+	if migrateQuestStepMap(u.Username, `shelf`, u.Character.ShelvedQuests) {
+		changed = true
+	}
+	if len(u.Character.ShelvedQuests) == 0 {
+		u.Character.ShelvedQuests = nil
+	}
+	return changed
+}
+
+// migrateQuestStepMap drops a deleted quest from progress and resets a
+// removed step to "start". where names the map in the log.
+func migrateQuestStepMap(username, where string, progress map[int]string) bool {
+	changed := false
+	for questId, currentStep := range progress {
+		// GetQuestById, not GetQuest: GetQuest is nil for a live quest on an
+		// unknown step, which would drop the progress instead of resetting it.
+		q := quests.GetQuestById(questId)
+		if q == nil {
+			// Quest itself was deleted (e.g., Q17): remove progress
+			delete(progress, questId)
+			mudlog.Info("DoQuestStepMigration", "info",
+				"Removed deleted quest progress",
+				"user", username, "map", where, "questId", questId, "step", currentStep)
+			changed = true
+			continue
+		}
+
+		// Check if the step still exists in the quest definition
+		stepExists := false
+		for _, step := range q.Steps {
+			if step.Id == currentStep {
+				stepExists = true
+				break
+			}
+		}
+
+		if !stepExists {
+			// Step was removed: reset to "start"
+			progress[questId] = "start"
+			mudlog.Info("DoQuestStepMigration", "info",
+				"Migrated removed quest step to start",
+				"user", username, "map", where, "questId", questId,
+				"oldStep", currentStep, "newStep", "start")
+			changed = true
+		}
+	}
+	return changed
 }
 
 func DoFilenameMigrationV1() error {

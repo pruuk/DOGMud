@@ -86,3 +86,33 @@ func TestRetiredQuestSteps(t *testing.T) {
 	require.Equal(t, "firstkill", c.QuestProgress[53], "a retired step is left as is")
 	require.Empty(t, c.RetiredQuestSteps(nil))
 }
+
+// The shelf holds a step like QuestProgress does, so a rename reaches it
+// (#375 phase 5): a resumed quest must land on a step that exists.
+func TestRenameQuestSteps_ReachesTheShelf(t *testing.T) {
+	c := &Character{ShelvedQuests: map[int]string{53: "firstkill", 7: "deliver"}}
+	c.RenameQuestSteps(map[string]string{"53-firstkill": "53-scout", "53-scout": "53-scoutdown", "7-deliver": "8-deliver"})
+	require.Equal(t, "scoutdown", c.ShelvedQuests[53], "chains are followed")
+	require.Equal(t, "deliver", c.ShelvedQuests[7], "a step cannot move between quests")
+}
+
+// A retired shelved step is listed (and left as is) like an active one.
+func TestRetiredQuestSteps_ReachesTheShelf(t *testing.T) {
+	c := &Character{QuestProgress: map[int]string{9: "end"}, ShelvedQuests: map[int]string{53: "firstkill", 7: "deliver"}}
+	retired := map[string]bool{"53-firstkill": true, "9-end": true}
+	require.Equal(t, []string{"9-end"}, c.RetiredQuestSteps(retired))
+	require.Equal(t, []string{"53-firstkill"}, c.RetiredShelvedSteps(retired))
+	require.Equal(t, "firstkill", c.ShelvedQuests[53], "a retired step is left as is")
+	require.Empty(t, c.RetiredShelvedSteps(nil))
+}
+
+// Clearing a quest also clears it off the shelf: a removed quest must not
+// come back on the next accept.
+func TestClearQuestToken_ClearsTheShelf(t *testing.T) {
+	c := &Character{ShelvedQuests: map[int]string{42: "track", 7: "start"}}
+	c.ClearQuestToken("42-start")
+	require.False(t, c.IsShelved(42))
+	require.True(t, c.IsShelved(7))
+	c.ClearQuestToken("7-start")
+	require.Nil(t, c.ShelvedQuests, "an empty shelf is dropped")
+}
