@@ -127,7 +127,7 @@ match first, then a close match. The web client sends the quest id over GMCP.
 `PlayerState` gains `Shelved func(questId int) bool`. In `DialogueFile.Apply`, when the topic's
 `grantsQuest` is `N-start` and `Shelved(N)`:
 
-- `chargesGold` is not taken.
+- `chargesGold` is not taken, and `givesGold` is not paid (no handout with resale value).
 - `givesItem` is given only when `CarriesItem(item)` is false and the item's `Value` is 0
   (ruling 2). Otherwise it is skipped and counts as delivered.
 - `setsQuestFlag`, `bumpsRep`, `moodChange` apply as usual. A player who resumes quest 34

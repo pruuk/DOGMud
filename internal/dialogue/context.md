@@ -213,7 +213,7 @@ func SetOfferIndexForTest(byQuest map[int][]int) func()
   offer it sets resumes.
 - `PlayerState.Shelved(questId)` reports a set-aside quest (nil: never). In
   `Apply`, a topic granting `N-start` while `Shelved(N)` is a resume: the
-  `chargesGold` is not taken, and `givesItem` is given only when the item's
+  `chargesGold` is not taken, `givesGold` is not paid, and `givesItem` is given only when the item's
   `Value` is 0 and the player carries none (`resumeGivesItem`); otherwise it is
   skipped and counts as delivered. `setsQuestFlag`, `bumpsRep` and the rest
   apply as usual. A first accept is unchanged.

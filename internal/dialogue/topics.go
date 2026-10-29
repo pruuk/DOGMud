@@ -211,9 +211,10 @@ func (df *DialogueFile) Apply(t *Topic, ps *PlayerState) bool {
 	if df == nil || t == nil {
 		return false
 	}
-	charge, give := t.ChargesGold, t.GivesItem
+	charge, give, gold := t.ChargesGold, t.GivesItem, t.GivesGold
 	if resuming(t, ps) {
-		charge = 0
+		// No handout with resale value on a resume (owner ruling 2).
+		charge, gold = 0, 0
 		if !resumeGivesItem(give, ps) {
 			give = 0
 		}
@@ -222,7 +223,7 @@ func (df *DialogueFile) Apply(t *Topic, ps *PlayerState) bool {
 		return false
 	}
 	if !applyPaidEffects(charge, t.GrantsQuest, t.RequiresItem, give,
-		t.SetsQuestFlag, t.BumpsRep, t.GivesGold, ps) {
+		t.SetsQuestFlag, t.BumpsRep, gold, ps) {
 		return false
 	}
 	if t.Kind == KindInfo && ps != nil && ps.MarkHeard != nil {

@@ -7,7 +7,7 @@ import (
 )
 
 type resumeProbe struct {
-	charged, given, granted int
+	charged, given, granted, paid int
 	flags                   map[string]string
 	carries                 bool
 }
@@ -17,7 +17,7 @@ func (p *resumeProbe) state(shelved bool) *PlayerState {
 		Shelved:     func(int) bool { return shelved },
 		CarriesItem: func(int) bool { return p.carries },
 		ChargeGold:  func(n int) bool { p.charged += n; return true },
-		GiveGold:    func(int) {},
+		GiveGold:    func(n int) { p.paid += n },
 		GiveItem:    func(int) bool { p.given++; return true },
 		GiveQuest:   func(string) { p.granted++ },
 		SetQuestFlag: func(k, v string) {
@@ -61,4 +61,20 @@ func TestApply_ResumeEffects(t *testing.T) {
 	p = &resumeProbe{}
 	require.True(t, df.Apply(notice, p.state(false)))
 	require.Equal(t, 5, p.charged, "a first accept still pays")
+}
+
+// A resume pays out no givesGold either (ruling 2: no handout with resale
+// value on a resume); a first accept still pays it.
+func TestApply_ResumePaysNoGold(t *testing.T) {
+	df := &DialogueFile{MobId: 1}
+	purse := &Topic{Key: "p", Kind: KindOffer, Effects: Effects{GrantsQuest: "10-start", GivesGold: 7}}
+
+	p := &resumeProbe{}
+	require.True(t, df.Apply(purse, p.state(true)))
+	require.Equal(t, 0, p.paid, "a resume pays nothing")
+	require.Equal(t, 1, p.granted)
+
+	p = &resumeProbe{}
+	require.True(t, df.Apply(purse, p.state(false)))
+	require.Equal(t, 7, p.paid, "a first accept pays")
 }
