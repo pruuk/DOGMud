@@ -155,7 +155,11 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	switch sub := questsSubcommand(rest); sub[0] {
 	case `abandon`, `focus`:
-		id := findActiveQuest(user, sub[1])
+		id, ambiguous := findActiveQuest(user, sub[1])
+		if ambiguous {
+			user.SendText(messaging.CategoryRefusal, questAmbiguousLine)
+			return true, nil
+		}
 		if id == 0 {
 			user.SendText(messaging.CategoryRefusal, questNoSuchLine)
 			return true, nil

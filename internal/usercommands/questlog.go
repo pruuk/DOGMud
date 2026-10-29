@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -17,6 +18,7 @@ import (
 const (
 	questNoSuchLine    = `You have no quest called that.`
 	questNoWayBackLine = `Nobody would take this back from you. It has to be finished.`
+	questAmbiguousLine = `More than one quest matches that. Type more of its name.`
 
 	// questGiverFallback stands in when the offering NPC has no name.
 	questGiverFallback = `the one who gave it to you`
@@ -65,8 +67,13 @@ func Abandonable(c *characters.Character, questId int) bool {
 }
 
 // findActiveQuest matches name against the player's active, non-secret,
-// unfinished quests: a full match first, then a close match. 0 when none.
-func findActiveQuest(user *users.UserRecord, name string) int {
+// unfinished quests, sorted by name so the answer never depends on map
+// order: a full match first, then a close match (util.FindMatchIn). When no
+// name matches in full and more than one matches in part, it picks none and
+// reports ambiguous, so the player is asked for more of the name. A numbered
+// search ("2.the") is the player choosing among them and goes to FindMatchIn
+// as typed. 0 and false when nothing matches.
+func findActiveQuest(user *users.UserRecord, name string) (id int, ambiguous bool) {
 	ids := map[string]int{}
 	var names []string
 	for id, step := range user.Character.GetQuestProgress() {
@@ -77,11 +84,28 @@ func findActiveQuest(user *users.UserRecord, name string) int {
 		ids[q.Name] = id
 		names = append(names, q.Name)
 	}
-	match, closeMatch := util.FindMatchIn(strings.TrimSpace(name), names...)
+	slices.Sort(names)
+	search := strings.TrimSpace(name)
+	match, closeMatch := util.FindMatchIn(search, names...)
 	if match != `` {
-		return ids[match]
+		return ids[match], false
 	}
-	return ids[closeMatch]
+	if closeMatch == `` {
+		return 0, false
+	}
+	if _, n := util.GetMatchNumber(search); n > 1 {
+		return ids[closeMatch], false
+	}
+	partial := 0
+	for _, n := range names {
+		if _, c := util.FindMatchIn(search, n); c != `` {
+			partial++
+		}
+	}
+	if partial > 1 {
+		return 0, true
+	}
+	return ids[closeMatch], false
 }
 
 // AbandonQuest sets questId aside and returns the line to show the player.

@@ -83,10 +83,56 @@ func TestAbandonQuest_EmptyGiverNameFallsBack(t *testing.T) {
 
 func TestFindActiveQuest(t *testing.T) {
 	u := questlogFixture(t)
-	require.Equal(t, 42, findActiveQuest(u, "hunt"))
-	require.Equal(t, 42, findActiveQuest(u, "The Hunt"))
-	require.Equal(t, 0, findActiveQuest(u, "secret"), "secret quests are never matched")
-	require.Equal(t, 0, findActiveQuest(u, "dragon"))
+	for name, want := range map[string]int{"hunt": 42, "The Hunt": 42, "secret": 0, "dragon": 0} {
+		id, ambiguous := findActiveQuest(u, name)
+		require.Equal(t, want, id, name)
+		require.False(t, ambiguous, name)
+	}
+}
+
+// An exact name wins, a partial name that fits one quest wins, and a partial
+// name that fits several is refused as ambiguous rather than picking one by
+// map order (#375 phase 5 review).
+func TestFindActiveQuest_Ambiguous(t *testing.T) {
+	u := questlogFixture(t)
+	t.Cleanup(quests.SeedQuestsForTest(
+		&quests.Quest{QuestId: 43, Name: "The Hunt Beyond", Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}},
+		&quests.Quest{QuestId: 44, Name: "The Hunter's Due", Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}},
+	))
+	u.Character.QuestProgress[43] = "start"
+	u.Character.QuestProgress[44] = "start"
+
+	for range 20 { // map order varies run to run
+		id, ambiguous := findActiveQuest(u, "the hunt")
+		require.Equal(t, 42, id, "an exact match wins")
+		require.False(t, ambiguous)
+
+		id, ambiguous = findActiveQuest(u, "beyond")
+		require.Equal(t, 43, id, "a unique partial match wins")
+		require.False(t, ambiguous)
+
+		id, ambiguous = findActiveQuest(u, "the hun")
+		require.Equal(t, 0, id, "several partial matches pick none")
+		require.True(t, ambiguous)
+	}
+
+	id, ambiguous := findActiveQuest(u, "dragon")
+	require.Equal(t, 0, id)
+	require.False(t, ambiguous, "no match is not ambiguous")
+
+	events.DrainQueuedMessagesForTest(u.UserId)
+	_, _ = Quests("abandon the hun", u, nil, 0)
+	msgs := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), "")
+	require.Contains(t, msgs, "More than one quest matches that. Type more of its name.")
+	require.False(t, u.Character.IsShelved(42) || u.Character.IsShelved(43) || u.Character.IsShelved(44))
+
+	_, _ = Quests("focus the hun", u, nil, 0)
+	msgs = strings.Join(events.DrainQueuedMessagesForTest(u.UserId), "")
+	require.Contains(t, msgs, "More than one quest matches that. Type more of its name.")
+
+	_, _ = Quests("focus dragon", u, nil, 0)
+	msgs = strings.Join(events.DrainQueuedMessagesForTest(u.UserId), "")
+	require.Contains(t, msgs, "You have no quest called that.")
 }
 
 func TestFocusQuest(t *testing.T) {

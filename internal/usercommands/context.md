@@ -400,8 +400,12 @@ functions; do not reimplement them.
   width with `messaging.WrapAnsi` because `CategorySystem` is never wrapped.
 
 `quests.go`: `quests abandon <name>` and `quests focus <name>` (`questsSubcommand`
-splits them from the list's own `all` / `all+`); `findActiveQuest` matches the
-name with `util.FindMatchIn` over active, unfinished, non-secret quests.
+splits them from the list's own `all` / `all+`); `findActiveQuest(user, name)
+(id int, ambiguous bool)` matches the name with `util.FindMatchIn` over the
+sorted names of active, unfinished, non-secret quests: a full match wins, a
+partial match wins only when it is the one name that fits; several partial
+fits report ambiguous and `Quests` replies "More than one quest matches that.
+Type more of its name." (a numbered search such as `2.the` is taken as typed).
 `quests all` lists set-aside quests after the active ones (`shelvedRows`) with
 "Set aside. Talk to <giver> to take it up again." and no bar; plain `quests`
 does not show them.

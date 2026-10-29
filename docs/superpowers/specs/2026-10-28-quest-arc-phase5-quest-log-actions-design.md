@@ -98,6 +98,7 @@ Refused, with the line shown to the player:
 | Case | Line |
 |---|---|
 | no active quest matches | `You have no quest called that.` |
+| no full match, and the name fits more than one quest in part (typed command only) | `More than one quest matches that. Type more of its name.` |
 | secret quest | (never matched: secret quests are not listed) |
 | no NPC offers it (ruling 3) | `Nobody would take this back from you. It has to be finished.` |
 
@@ -119,8 +120,8 @@ the player gains that token, and a quest shelved behind it would be lost. Instan
 only offer (`pothole_coulee/9100.yaml` `road_toke`) excludes `31-start` and `29-end`, so 88 cannot
 be abandoned. The boot door logs such quests as information (13, 88 and 89 on 2026-10-28).
 
-Name matching: `util.FindMatchIn` over the names of the player's active non-secret quests, exact
-match first, then a close match. The web client sends the quest id over GMCP.
+Name matching: `util.FindMatchIn` over the sorted names of the player's active non-secret quests,
+exact match first, then a close match only when it is the one name that fits in part. The web client sends the quest id over GMCP.
 
 ## 3. Re-accepting and the offer's effects
 
