@@ -5,7 +5,7 @@ package dialogue
 // called here: a caller checks the proposed world with ValidateWorld first
 // (the spawn-editor lesson: hardwiring real registries into the save path
 // makes it untestable without a loaded world). Nothing outside the tests
-// calls these while the builder's dialogue editor is off; the phase 6 topic
+// calls these while the web builder is off (owner 2026-10-28); the phase 6 topic
 // builder is their intended caller.
 
 import (

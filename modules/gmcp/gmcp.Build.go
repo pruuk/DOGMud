@@ -56,28 +56,17 @@ func buildErr(format string, args ...any) BuildResult {
 	return BuildResult{Error: fmt.Sprintf(format, args...)}
 }
 
-// refuseDialogueBuild reports whether cmd is one of the Build.Dialogue.*
-// messages, and the refusal to send for it. The old editor drops `topics` and
-// `opener` on save, so it must not write the converted dialogue files; the
-// topic builder (quest arc phase 6) replaces it.
-func refuseDialogueBuild(cmd string) (BuildResult, bool) {
-	switch cmd {
-	case `Build.Dialogue.Get`, `Build.Dialogue.Update`, `Build.Dialogue.Create`, `Build.Dialogue.Delete`:
-		return buildErr("the dialogue editor is off until the topic builder ships (quest arc phase 6); edit dialogue files in the repo"), true
-	}
-	return BuildResult{}, false
-}
-
-// refuseQuestBuild reports whether cmd is one of the Build.Quest.* messages
-// that read or write a quest file, and the refusal to send for it. A create or
-// edit in the old editor could save a quest that fails the quest loop rules and
-// stops the next boot (owner ruling P7). Build.Quest.List is read-only and stays
-// open. The loop door in buildQuestUpdate is ready for phase 6, which re-enables
-// the editor.
-func refuseQuestBuild(cmd string) (BuildResult, bool) {
-	switch cmd {
-	case `Build.Quest.Get`, `Build.Quest.Update`, `Build.Quest.Create`, `Build.Quest.Delete`:
-		return buildErr("the quest editor is off until the quest builder ships (quest arc phase 6); edit quest files in the repo"), true
+// refuseWebBuilder reports whether cmd is a Build.* message, and the refusal
+// to send for it. The whole admin web builder is off until several big
+// content arcs land (owner 2026-10-28): every arc reshapes the data it writes,
+// so it would be rebuilt after each one (#375 phase 6, postponed). Before
+// that, the dialogue editor was off because it drops `topics` and `opener` on
+// save, and the quest editor because a save could fail the quest loop rules
+// and stop the next boot (P7); both reasons still hold when it returns. The
+// handlers stay in place for that return.
+func refuseWebBuilder(cmd string) (BuildResult, bool) {
+	if strings.HasPrefix(cmd, `Build.`) {
+		return buildErr("the web builder is off while the big content arcs land; edit the files in the repo"), true
 	}
 	return BuildResult{}, false
 }
@@ -302,15 +291,9 @@ func (g *GMCPModule) handleBuildOp(e events.Event) events.ListenerReturn {
 	if !ok {
 		return events.Continue // non-admins are silently refused
 	}
-	// The dialogue editor is off (#375 phase 1): refuse before any dispatch so
-	// no Build.Dialogue.* message can reach a handler that writes a file.
-	if res, refused := refuseDialogueBuild(evt.Command); refused {
-		sendBuildResult(uid, res)
-		return events.Continue
-	}
-	// The quest editor is off (quest arc phase 2a, P7); the loop door in
-	// buildQuestUpdate is ready for phase 6.
-	if res, refused := refuseQuestBuild(evt.Command); refused {
+	// The web builder is off (owner 2026-10-28): refuse before any dispatch so
+	// no Build.* message reaches a handler that reads or writes a file.
+	if res, refused := refuseWebBuilder(evt.Command); refused {
 		sendBuildResult(uid, res)
 		return events.Continue
 	}

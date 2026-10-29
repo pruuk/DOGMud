@@ -47,7 +47,7 @@ longer decodes under the strict loader.
   zone-name sanitising.
 - **save.go**: `SaveDialogueFile`, `CreateNewDialogueFile` (writes an opener
   skeleton), `DeleteDialogueFile`. No caller outside the tests while the
-  builder's dialogue editor is off; the phase 6 topic builder is their
+  web builder is off (owner 2026-10-28); the phase 6 topic builder is their
   intended caller.
 - **memory.go**: per-(mob instance, player) memory, now only the greet-once
   record.
@@ -281,6 +281,6 @@ no compile-time dependency on the quest engine.
 (boot door), `modules/gmcp` (quest reference guard, `hasDialogue`),
 `modules/aicompanion`, and the dev tool `cmd/dialoguecheck`. The one-time
 converter `cmd/dialogueconvert` did its job and was deleted in plan Task 24
-(git history keeps it). The admin web dialogue editor is off (every
-`Build.Dialogue.*` message is refused in `modules/gmcp`) until the topic
-builder of quest arc phase 6.
+(git history keeps it). The admin web builder is off (every `Build.*`
+message is refused in `modules/gmcp`, owner 2026-10-28) until the topic
+builder of quest arc phase 6, which is postponed until more big arcs land.
