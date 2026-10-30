@@ -1,0 +1,28 @@
+# #317 ambient: the town seat sits in three Thornwall rooms for twelve
+# minutes each and tallies every line nobody asked for.
+name: 317-ambient-town
+summary: Sit in the tavern, Main Street and the market; tally unprompted lines.
+goals:
+  - id: tally-town
+    do: >-
+      Stay quiet and watch. Do not talk to anyone, attack, shop or start
+      anything; looking around and typing time are fine. Spend twelve
+      minutes in The Drowning Post Tavern, where you start. Then go north
+      twice to Main Street, Central and spend twelve minutes there. Then go
+      east three times to Market Square, Center and spend twelve minutes
+      there. Every five minutes, type time and write one tally row: the
+      room, the game time, and how many lines you saw that you did not
+      cause, split into NPC speech, NPC actions (emotes), NPCs walking in or
+      out, room flavour lines, weather or season lines, gossip, tips, and
+      conversations between NPCs. Quote at least three of those lines
+      word for word in each room. For each room, say in your own words how
+      lively it felt to sit in.
+    verify: >-
+      Three rooms visited for about twelve minutes each; at least six tally
+      rows; a feel note per room with quoted lines.
+
+ephemeral:
+  profile: mid
+  start_room: 472
+  budgets:
+    wall_clock: 50m

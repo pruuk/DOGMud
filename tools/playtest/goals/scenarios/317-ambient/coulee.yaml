@@ -1,0 +1,25 @@
+# #317 ambient: the coulee seat sits at the Pothole Coulee hub and tallies
+# every line nobody asked for.
+name: 317-ambient-coulee
+summary: Sit at Hub Square in Pothole Coulee; tally unprompted lines.
+goals:
+  - id: tally-coulee
+    do: >-
+      Stay quiet and watch at Hub Square, where you start, for forty
+      minutes. Do not talk to anyone, take quests, attack or shop; looking
+      around and typing time are fine. Every five minutes, type time and
+      write one tally row: the game time, and how many lines you saw that
+      you did not cause, split into NPC speech, NPC actions (emotes), NPCs
+      walking in or out, room flavour lines, weather or season lines,
+      gossip, tips, and conversations between NPCs. Quote at least three of
+      those lines word for word in each row. At the end, say in your own
+      words how lively it felt to stand here.
+    verify: >-
+      At least seven tally rows from Hub Square, quoted lines, and a closing
+      feel note.
+
+ephemeral:
+  profile: mid
+  start_room: 5203
+  budgets:
+    wall_clock: 50m
