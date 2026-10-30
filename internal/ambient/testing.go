@@ -33,6 +33,20 @@ func ResetForTest() func() {
 	}
 }
 
+// MovesForTest returns a copy of the mob moves telemetry has counted in
+// roomId this window, by kind. Empty when none were.
+func MovesForTest(roomId int) map[MoveKind]int {
+	telMu.Lock()
+	defer telMu.Unlock()
+	out := map[MoveKind]int{}
+	if rc := telRooms[roomId]; rc != nil {
+		for k, v := range rc.moves {
+			out[k] = v
+		}
+	}
+	return out
+}
+
 // ChargeForTest sets the round userId may next hear an ambient line.
 func ChargeForTest(userId int, nextRound uint64) {
 	budgetMu.Lock()

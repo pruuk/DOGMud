@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -166,6 +167,9 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		sneaking := actions.MobIsSneaking(mob)
 
+		if exitName == mobPortalExitName {
+			ambient.CountMove(room.RoomId, ambient.MoveIdle)
+		}
 		actions.RelocateMob(mob, room, exitName, destRoom, sneaking)
 
 		// The rare Search roll and hidden detection on entry, both ways

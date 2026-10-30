@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -93,6 +94,25 @@ func TestHandleIdleMobs_WanderMultipliers(t *testing.T) {
 	rooms.GetZoneConfig("TestZone").AmbientMultiplier = rooms.MultiplierPtr(0)
 	for _, in := range idleInputs(200) {
 		require.False(t, strings.HasPrefix(in, "ambient "), "zone ambientmultiplier 0 must silence idle chatter, got %q", in)
+	}
+}
+
+// The idle roll only queues a movement command; whether the mob changes
+// room is decided when the command runs (mobcommands counts it there). So
+// the roll itself counts no move, and a sneak, which rides the movement
+// roll but hides in place, is never counted at all.
+func TestHandleIdleMobs_RollCountsNoMove(t *testing.T) {
+	for _, verb := range []string{"sneak", "wander"} {
+		t.Run(verb, func(t *testing.T) {
+			idleMobFixture(t, 100, []string{verb}, 1, 1)
+			cfg := configs.GetConfig()
+			cfg.Balance.AmbientTelemetry = true
+			configs.SetConfigForTest(t, cfg)
+			t.Cleanup(ambient.ResetForTest())
+
+			require.Contains(t, idleInputs(1), verb, "fixture premise: the roll picked %s", verb)
+			require.Empty(t, ambient.MovesForTest(1), "the idle roll must not count a move")
+		})
 	}
 }
 

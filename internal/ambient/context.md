@@ -21,7 +21,7 @@ imported back. Check with `go list -deps ./internal/ambient/`.
   unexported counters, `countLine` (called by `Plan`) and `telemetryTick`
   (called by `RoundTick`).
 - **testing.go**: `ResetForTest` (budget, visits and telemetry),
-  `ChargeForTest`, for tests in any package.
+  `ChargeForTest`, `MovesForTest`, for tests in any package.
 
 ## How a send site uses it
 
@@ -78,13 +78,25 @@ code permanently, for the next retune.
   line in: offered = delivered + suppressed (suppressed means over budget or
   hushed). A player the caller excluded or who does not perceive the line is
   not counted. `say_echo` is counted in the room that receives the echo,
-  since its `Plan` names that room. `CountMove(roomId, kind)` counts a mob
-  move in the room it starts from; the three call sites are the idle roll
-  (`hooks/MobIdle_HandleIdleMobs.go`, `MoveIdle`), the path walker
-  (`hooks/NewRound_IdleMobs.go`, `MovePath`, which also carries goal planner
-  `pathto` walks) and `move_toward_tracked`
-  (`behaviortree/actions_scout.go`, `MoveTrack`). Each round adds the
-  players present to every occupied room's listener rounds.
+  since its `Plan` names that room.
+- `CountMove(roomId, kind)` counts a real room change, in the room the mob
+  leaves, at the point the step is committed:
+  - `MoveIdle`: `mobcommands.Wander` once its step is paid for (not when
+    it is scattered, a pack follower, sent home, over budget, too tired or
+    facing an exit out of its zone), once more for each pack follower that
+    goes with it, and `mobcommands.Go` for a step through a mob's own dark
+    portal (`Portal` only opens it). The idle roll in
+    `hooks/MobIdle_HandleIdleMobs.go` counts nothing, since it only queues
+    the command.
+  - `MovePath`: the path walker (`hooks/NewRound_IdleMobs.go`), which also
+    carries goal planner `pathto` walks.
+  - `MoveTrack`: `move_toward_tracked` (`behaviortree/actions_scout.go`).
+  `sneak` rides the idle movement roll, so the chatter scale does not
+  change how often thieves hide, but it hides in place: it is not a move
+  and is never counted.
+- Each round adds the players present to every occupied room's listener
+  rounds. A window is exactly `window_rounds` rounds, counting the round it
+  starts on.
 - When the window is up, one Info line per room with any listener rounds,
   line or move is written, sorted by room id, and every counter resets.
   The line's message is `ambient.telemetry` and its keys, in order, are

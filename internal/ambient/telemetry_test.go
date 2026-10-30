@@ -61,7 +61,7 @@ func TestTelemetry_OnCountsAndWritesOneLinePerRoom(t *testing.T) {
 	}
 	CountMove(ambRoom, MovePath)
 
-	for r := ambNow + 1; r <= ambNow+16; r++ {
+	for r := ambNow + 1; r <= ambNow+15; r++ {
 		RoundTick(r)
 	}
 	if len(*lines) != 1 {
@@ -70,7 +70,7 @@ func TestTelemetry_OnCountsAndWritesOneLinePerRoom(t *testing.T) {
 	l := (*lines)[0]
 	want := map[string]any{
 		"window": 1, "room": ambRoom, "zone": ambZone, "round_seconds": 4, "window_rounds": 15,
-		"listener_rounds":       32, // two players for 16 ticks
+		"listener_rounds":       30, // two players for the window's 15 ticks
 		"mob_chatter_offered":   2,
 		"mob_chatter_delivered": 1, "mob_chatter_suppressed": 1,
 		"room_idle_offered": 0, "move_idle": 3, "move_track": 0, "move_path": 1,
@@ -81,12 +81,46 @@ func TestTelemetry_OnCountsAndWritesOneLinePerRoom(t *testing.T) {
 		}
 	}
 
-	// The window reset its counters: the next line has listeners only.
-	for r := ambNow + 17; r <= ambNow+31; r++ {
+	// The window reset its counters: the next line has listeners only, over
+	// exactly as many rounds as the first.
+	for r := ambNow + 16; r <= ambNow+30; r++ {
 		RoundTick(r)
 	}
-	if len(*lines) != 2 || (*lines)[1]["mob_chatter_offered"] != 0 || (*lines)[1]["move_idle"] != 0 {
-		t.Fatalf("second window must start from zero: %v", *lines)
+	if len(*lines) != 2 || (*lines)[1]["mob_chatter_offered"] != 0 || (*lines)[1]["move_idle"] != 0 ||
+		(*lines)[1]["listener_rounds"] != 30 {
+		t.Fatalf("second window must start from zero and last 15 rounds: %v", *lines)
+	}
+}
+
+// Switching telemetry off drops what an on period kept, so switching it
+// back on starts clean rather than reporting stale counts.
+func TestTelemetry_OnToOffClearsEverything(t *testing.T) {
+	room := seedAmbientRoom(t, 0, nil, listenA, listenB)
+	pinTelemetry(t, true, 1)
+	lines := captureEmit(t)
+	Plan(Line{Room: room, Source: SourceMobChatter})
+	CountMove(ambRoom, MoveIdle)
+	RoundTick(ambNow + 1)
+
+	pinTelemetry(t, false, 1)
+	RoundTick(ambNow + 2)
+	telMu.Lock()
+	n, next := len(telRooms), telNextReport
+	telMu.Unlock()
+	if n != 0 || next != 0 || telKept.Load() {
+		t.Fatalf("off must drop everything kept: rooms %d, next report %d, kept %v", n, next, telKept.Load())
+	}
+
+	pinTelemetry(t, true, 1)
+	for r := ambNow + 3; r <= ambNow+17; r++ {
+		RoundTick(r)
+	}
+	if len(*lines) != 1 {
+		t.Fatalf("one window after switching back on: want 1 line, got %v", *lines)
+	}
+	l := (*lines)[0]
+	if l["mob_chatter_offered"] != 0 || l["move_idle"] != 0 || l["listener_rounds"] != 30 {
+		t.Fatalf("stale counts survived the off period: %v", l)
 	}
 }
 

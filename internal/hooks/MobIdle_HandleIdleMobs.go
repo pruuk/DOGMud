@@ -325,7 +325,9 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 			issueIdleChatter(mob, chatterCmd)
 		}
 		if moveCmd != `` {
-			ambient.CountMove(mob.Character.RoomId, ambient.MoveIdle)
+			// Telemetry counts the move where the room change happens
+			// (mobcommands Wander and Go), not here: a sneak hides in place
+			// and a wander can find no step.
 			mob.Command(moveCmd)
 		}
 

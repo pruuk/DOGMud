@@ -15,7 +15,10 @@ const (
 	// IdleChatter is anything seen or heard in place: emote, say, consume,
 	// cast and the rest.
 	IdleChatter IdleClass = iota
-	// IdleMovement leaves the room: wander, sneak, portal.
+	// IdleMovement is the movement roll: wander and portal, which leave the
+	// room, and sneak. Sneak hides in place, but it rides the movement roll
+	// so the chatter scale does not change how often thieves hide. It is
+	// not a move, and ambient telemetry never counts it as one.
 	IdleMovement
 )
 

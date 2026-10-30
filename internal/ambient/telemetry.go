@@ -15,7 +15,7 @@ import (
 type MoveKind string
 
 const (
-	MoveIdle  MoveKind = "move_idle"  // a wander, sneak or portal from the idle roll
+	MoveIdle  MoveKind = "move_idle"  // a wander step (alpha or pack follower) or a trip through a mob's dark portal
 	MoveTrack MoveKind = "move_track" // a step toward a tracked target (move_toward_tracked)
 	MovePath  MoveKind = "move_path"  // one step along a path: schedule, patrol, goal planner, home
 )
@@ -144,7 +144,9 @@ func telemetryTick(round uint64) {
 	telMu.Lock()
 	defer telMu.Unlock()
 	if telNextReport == 0 {
-		telNextReport = round + window
+		// This round is the window's first, so it reports after window
+		// rounds counting this one.
+		telNextReport = round + window - 1
 		telKept.Store(true)
 	}
 	for _, o := range occ {
