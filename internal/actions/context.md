@@ -89,6 +89,9 @@ equivalent mob wrappers stay silent.
   `mobcommands.Ambient`). `SendSeen` and `sendSpoken` add it to the room
   line's excludes (`roomLineExcludes`), and `Say` copies it onto
   `events.Communication.ExcludeUserIds` (`ambientSkip`).
+  `MobActor.EchoExclude func(*rooms.Room) []int`, set only by
+  `mobcommands.Ambient` on an ambient say, names who to leave out of the
+  say's echo in each neighbouring room (`sendSayEcho`).
 
 ---
 
@@ -651,7 +654,9 @@ body, one per room line the wrapper sends.
 
 **`say.go`**: `Say(actor Actor, text string) SayResult` reveals a hidden
 speaker, echoes "You hear someone talking." through the exits
-(`Room.SendTextToExits`), fires `events.Communication`, then sends the room
+(`sendSayEcho`: `Room.SendTextToExits`, or for a `MobActor` with
+`EchoExclude` set, an ambient say, `Room.SendTextToExitsExcluding` with
+each neighbour's over-budget listeners left out, #317), fires `events.Communication`, then sends the room
 line through the private `sendSpoken`. `FormatSayText` builds the line
 itself, so both the player and the mob path share the one formatter
 (`speech_wrapper_guard_test.go`'s `TestSayRoomLineHasOneFormatter` pins it).

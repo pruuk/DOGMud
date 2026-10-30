@@ -4,16 +4,16 @@
 
 The one gate every unprompted ("ambient") line passes on its way to players
 (#317): the per-listener budget and the once-per-visit rule for a room with
-a single idle line. Leaf package: it imports `configs`, `messaging`,
-`rooms`, `users` and `util`, and nothing that imports it (hooks,
+a single idle line. Leaf package: it imports `conditions`, `configs`,
+`messaging`, `rooms`, `users` and `util`, and nothing that imports it (hooks,
 behaviortree, mobcommands, usercommands, the weather engine) may be
 imported back. Check with `go list -deps ./internal/ambient/`.
 
 ## Files
 
 - **ambient.go**: `Source` and `Sources` (`room_idle`, `mob_chatter`,
-  `weather`, `gossip`, `item_chatter`), `ParseSource`, `Line`, `Routing`,
-  `Plan`, `Sees`, `AllHaveBudget`, `SingleLineHeard`,
+  `weather`, `gossip`, `item_chatter`, `say_echo`), `ParseSource`, `Line`,
+  `Routing`, `Plan`, `Sees`, `HearsQuiet`, `AllHaveBudget`, `SingleLineHeard`,
   `MarkSingleLineHeard`, `RoundTick`.
 - **testing.go**: `ResetForTest`, `ChargeForTest` for tests in any package.
 
@@ -28,6 +28,15 @@ caller keeps its own sender, so sight gating, name hiding and categories
 stay where they were. Pass `Perceives: ambient.Sees(room)` for a visual
 line, so a player who cannot see it is not charged. A player the caller
 already excludes is never charged.
+
+An ambient say's echo next door ("You hear someone talking.", owner
+2026-10-30) is planned once per neighbouring room, from
+`mobcommands.Ambient` through `actions.MobActor.EchoExclude` and
+`rooms.Room.SendTextToExitsExcluding`, with source `say_echo` and
+`Perceives: ambient.HearsQuiet`. The echo is a quiet message, which the
+delivery hook gives only to a player with the `superhearing` condition
+flag, so only such a player is charged; no shipped condition grants it
+today. Every other say's echo never comes here.
 
 `AllHaveBudget` reports, without charging, whether every player present
 could hear a line now; an NPC conversation start is gated on it so none is

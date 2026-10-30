@@ -108,7 +108,11 @@ The `internal/mobcommands` package implements the AI command system for non-play
   #317) is mob-only and never authored in content; only the idle roll and
   the gossip tick issue it. It asks `ambient.Plan` and sends through the
   same bodies as `emote` and `say` (`emoteAs`, `sayAs`) with the
-  over-budget listeners in `actions.MobActor.Skip`. A plain `emote` or
+  over-budget listeners in `actions.MobActor.Skip`. An ambient say also
+  sets `actions.MobActor.EchoExclude`, so its "You hear someone talking."
+  echo next door is planned per neighbouring room (source `say_echo`,
+  `Perceives: ambient.HearsQuiet`): those listeners are charged and an
+  over-budget one is left out (owner 2026-10-30). A plain `emote` or
   `say` (a reaction, a quest or conversation line) is never budgeted. A
   bad source, a verb other than emote or say, or empty text is a handled
   error that charges nobody; source and verb read case-blind.

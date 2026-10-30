@@ -239,7 +239,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// *users.UserRecord and a.Mob is a *mobs.Mob, whose AddConditionMagnitude
 	// both queue events.Condition, so the drinker reads the start line ──────
 	"internal/actions/actor_user.go|79": "DrinkActor magnitude door for a player: the EVENT door (users.UserRecord.AddConditionMagnitude queues events.Condition); listed only because arity cannot tell it from the silent character door",
-	"internal/actions/actor_mob.go|81":  "DrinkActor magnitude door for a mob: the EVENT door (mobs.Mob.AddConditionMagnitude queues events.Condition); listed only because arity cannot tell it from the silent character door",
+	"internal/actions/actor_mob.go|85":  "DrinkActor magnitude door for a mob: the EVENT door (mobs.Mob.AddConditionMagnitude queues events.Condition); listed only because arity cannot tell it from the silent character door",
 
 	// ── admin setcondition of a magnitude-scaled condition (lighting plan 5c
 	// final review): target is a *users.UserRecord or a *mobs.Mob, both of

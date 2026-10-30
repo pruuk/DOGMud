@@ -62,5 +62,10 @@ func Ambient(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// Communication event.
 		return true, nil
 	}
-	return sayAs(&actions.MobActor{Mob: mob, Room: room, Skip: plan.Exclude}, text)
+	// The echo next door is ambient too: each neighbour's listeners are
+	// charged and an over-budget one is left out (owner 2026-10-30).
+	echo := func(tgt *rooms.Room) []int {
+		return ambient.Plan(ambient.Line{Room: tgt, Source: ambient.SourceSayEcho, Perceives: ambient.HearsQuiet}).Exclude
+	}
+	return sayAs(&actions.MobActor{Mob: mob, Room: room, Skip: plan.Exclude, EchoExclude: echo}, text)
 }

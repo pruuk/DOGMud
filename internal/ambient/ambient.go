@@ -15,6 +15,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -32,10 +33,13 @@ const (
 	SourceWeather     Source = "weather"
 	SourceGossip      Source = "gossip"
 	SourceItemChatter Source = "item_chatter"
+	// SourceSayEcho is "You hear someone talking." in a room next to an
+	// ambient say, counted in the receiving room (owner 2026-10-30).
+	SourceSayEcho Source = "say_echo"
 )
 
 // Sources lists every counted source, in report order.
-var Sources = []Source{SourceRoomIdle, SourceMobChatter, SourceWeather, SourceGossip, SourceItemChatter}
+var Sources = []Source{SourceRoomIdle, SourceMobChatter, SourceWeather, SourceGossip, SourceItemChatter, SourceSayEcho}
 
 // ParseSource maps a source word, as the `ambient` mob command carries it,
 // back to its Source.
@@ -91,6 +95,14 @@ func Sees(room *rooms.Room) func(*users.UserRecord) bool {
 	return func(u *users.UserRecord) bool {
 		return messaging.ReaderSight(u.Character, room) != messaging.SightNone
 	}
+}
+
+// HearsQuiet is the Perceives for a quiet line (a say's echo next door):
+// the delivery hook gives a quiet message only to a player with the
+// superhearing flag (hooks/Message_SendMessages.go), so only such a player
+// takes it in and is charged.
+func HearsQuiet(u *users.UserRecord) bool {
+	return u.Character.HasConditionFlag(conditions.SuperHearing)
 }
 
 // budgetWindow is the budget window in rounds for a room in zone: the knob
