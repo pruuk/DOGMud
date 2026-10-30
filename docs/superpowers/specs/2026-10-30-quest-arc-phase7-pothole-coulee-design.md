@@ -152,19 +152,60 @@ before adding a mob, and runs `tools/id_inventory.py` before choosing any id.
 - **Issue fixes:**
   - #694: quest 39's throw trigger gains `target: mob`; recheck the step hint.
   - #695: quest 38's roots step uses `count: 2`; the hint becomes `buy healer's root`.
-  - #697: the First Casting line stops calling the mote unharmed; `drink.go` prints "You drink"
-    before notifying the quest engine; Rusk's post-craft line mentions the sell route; the
+  - #697: the First Casting line stops calling the mote unharmed; the potion path (now `quaff`)
+    prints its "You drink" line before notifying the quest engine; Rusk's post-craft line mentions the sell route; the
     `early` kit salve's starting age is checked and fixed if it reads "freshly brewed" wrongly.
   - #689: the lore line starts from Toke like every line; Hale's directions read west, then
     north; the School Hall notice board names a command that works (`talk`, not `ask`).
   - #690: every checklist item. The engine ones: `hint.go:19` escaping (confirm on the telnet
     port first), `consider` copy at `fight_read.go:192` ("them" and "an age" twice), the Straw
     Effigy "DEVASTATING BLOW" while it stays healthy, and Garrow's taunt (quest 48) promising
-    he leaves when a real fight starts. Menu renumbering: see "Open question" below.
+    he leaves when a real fight starts. Menu renumbering: see the owner ruling below.
 - **Dashes:** every player-facing dash in the pass's quests, dialogue and the three conversation
   pairs is rewritten as a sentence without one. A new guard test holds the Coulee and antechamber
   quest, dialogue and conversation files dash-free; the global guard's exemption is untouched
   until phase 7 closes.
+
+## Skill coverage (audit and owner rulings, 2026-10-30)
+
+An Opus audit compared every skill's help page with what the zone teaches (103 files read). The
+claims below were rechecked against source before this section was written.
+
+**Rulings**
+- **Potions are drunk with `quaff`; `eat` and `drink` become aliases for each other** and consume
+  cooking output (food and drinks). Today Herbal Tea (30024) is typed `potion`, while Spiced Wine
+  (30025) and Antidote Broth (30027) are typed `food` and need `eat`. Cooking drinks move to the
+  existing but unused item type `drink` (`internal/items/itemspec.go:142`); `eat` and `drink`
+  accept both `food` and `drink`. `quaff` takes over today's potion path (`internal/actions/drink.go`,
+  including its quest notify, renamed to `quaff`). Blast radius measured: 2 quest triggers
+  (quests 38, 55), 10 player-facing "drink" lines in YAML and help, 17 Go references, 3 web-client
+  references. `drink` or `eat` on a potion consumes nothing and answers with one line naming
+  `quaff` (Claude's call; owner may overrule). The plan checks whether Herbal Tea relies on the
+  potion pipeline (magnitude, aging) before retyping it: `eat` applies `ConditionIds` only
+  (`internal/usercommands/eat.go:89`). Ships in PR 1.
+- **Manifestation is taught in dialogue on the casting line** (Grieve 9144, Orrin 9145): what
+  manifestation is, conjure, raise, charm, and `assess` on a corpse before raising it. No quest
+  step: there is no starter summon spell.
+- **Passive defences** (dodge, parry, block, reach) get a breadcrumb to `help combat`, on Vorn.
+- **The scab-hide jerkin** (quest 43's recipe reward) drops to `skill_minimum: 1`
+  (`recipes/tailoring/scab-hide-jerkin.yaml:5`, today 8), so a fresh player can make it.
+- **Enchanter Skell (9606) is renamed.** Bowmaster Skell (9169) keeps the name; he is quest 52's
+  boss. The plan picks the new name and updates every reference.
+
+**Additions**
+
+| Kind | Where | Addition |
+|---|---|---|
+| Quest step | Quest 42 | `eat` the cooked meal, after the cook step (quest 43 then sends the player into the pack fight carrying food; nothing in the zone says `eat` today) |
+| Info topics | Vorn 9108 | grapple; shield `bash`; why a kick can read as stomp, knee or tailsweep; passive defences pointing to `help combat` |
+| Info topics | Hale 9157 | rally and warcry |
+| Info topics | Grieve 9144 | new spells come from casting, not trainers; manifestation topics as above (shared with Orrin) |
+| Info topics | Onna 9104 | `appraise`, `offer`, the free `identify` spell, bartering skill and prices |
+| Info topics | Bex 9605, Vurl 9607, Skell 9606, Hesk 9608 | how to craft at their station, naming a recipe a fresh player can make; Skell also covers `disenchant` |
+| Info topics | Cutpurse (new) | getting caught, hot goods and fences; where lockpicks and disarm kits come from; defuse framed as a rank 3 skill learned later (`internal/actions/defuse.go:65`) |
+| Corrections | Vorn's `shouts_help` (`9108.yaml:211-219`) | Shouts do not come later: rally has no rank gate, and quest 28 already teaches warcry |
+| Corrections | `templates/help/steal.template:22`, `plant.template:20` | Both say rank 2; plant's code checks rank 1, and steal follows `StealMinRank` |
+| Left out | | player `trade`; salvage (already taught by Rusk and Ovell) |
 
 ## Quest 76, interim disc home (owner option A)
 
@@ -179,7 +220,7 @@ before adding a mob, and runs `tools/id_inventory.py` before choosing any id.
 
 | PR | Contents |
 |---|---|
-| 1. Engine and config | `StealMinRank`; `drink.go` ordering; the #690 engine nits; their tests |
+| 1. Engine and config | `StealMinRank`; `quaff` and the `eat`/`drink` aliases, with item retyping; `drink.go` ordering; the #690 engine nits; the menu-close notice; their tests |
 | 2. Spine | Quests 28, 30, 88; 29 retired; Toke as the only line starter; Hadwen's skip info topic |
 | 3. Seven lines | Conversions, issue fixes, dashes, typed nouns, bridges 90 to 96, quest 76's interim home |
 | 4. Shadows line and leaving | New NPCs, practice mark, lockbox, quests 97 to 101, info topics; quest 89 moves to Toke; Toke and Esk flavour trees |
@@ -204,10 +245,12 @@ all eight bridges exist for Toke's offer to gate on.
 - `docs/roadmaps/QUEST_DIALOGUE_ROADMAP.md` phase 7 records this zone as done; `context.md`
   files for any touched package are updated; `PATCH_NOTES.md` has a player-facing entry.
 
-## Open question for the owner (does not block the plan)
+## Owner ruling: menu renumbering (#690, 2026-10-30)
 
-**Menu renumbering (#690).** A `[*]` topic that appears mid-list shifts the numbers below it, so
-a remembered number picks a different line; typing a command while a menu is open closes it
-silently. Options: (a) leave the numbering and print a one-line "menu closed" notice; (b) append
-newly eligible topics at the end of the menu instead of in file order. (a) is a one-line change;
-(b) changes every NPC's menu order. Recommendation: (a).
+A talk menu numbers lines by position (quest lines first, then info lines in file order,
+ineligible lines skipped: `internal/dialogue/topics.go:157`), so a newly unlocked line or a
+quest appearing shifts the numbers. Ruled **(a)**: the numbering stays, and a typed command that
+closes an open menu now prints one line naming the conversation it ended. This reverses phase
+0's silent close for `CloseOtherCommand` (`internal/menu/lines.go:35`). Rejected: (b) appending
+newly eligible lines at the bottom (writers lose control of menu order, and quest lines still
+shift everything). Ships in PR 1.
