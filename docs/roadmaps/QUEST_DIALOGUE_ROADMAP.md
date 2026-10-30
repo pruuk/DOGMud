@@ -304,7 +304,7 @@ merged (#712), plan `docs/superpowers/plans/completed/2026-10-28-quest-arc-phase
 **Exit.** Abandon then re-accept resumes at the same step with no repeat rewards; focus drives
 the minimap.
 
-**Status:** in PR (branch `feat/375-p5-quest-log`). Spec
+**Status: done (2026-10-28), merged in #713.** Spec
 `docs/superpowers/specs/2026-10-28-quest-arc-phase5-quest-log-actions-design.md`, plan
 `docs/superpowers/plans/2026-10-28-quest-arc-phase5-quest-log-actions.md`.
 
@@ -341,7 +341,15 @@ guards stop exempting dialogue, quests and conversations.
 
 **Status:** not started.
 
-## Phase 6: Web builder (last)
+## Phase 6: Web builder (postponed)
+
+**Postponed (owner, 2026-10-28).** This arc ends with phase 7. The builder waits until several
+more of the big arcs have landed, because each arc reshapes the data it writes and the builder
+would be redone after every one. Until then the whole admin web builder is off:
+`refuseWebBuilder` (`modules/gmcp/gmcp.Build.go`) refuses every `Build.*` message before
+dispatch, rooms, zones, mobs, items and behaviours as well as quests and dialogue. Content is
+edited in the repo. When an arc changes a data shape the builder writes, note the form that will
+need it here.
 
 **Goal.** An admin can author to these rules without reading this page, and the builder
 cannot save a malformed quest or dialogue.
@@ -351,10 +359,11 @@ dialogue runs `ValidateDialogueFile` with `RegistryValidators()`
 (`modules/gmcp/gmcp.Dialogue.go:76`); quests run `Validate()` and `ValidateQuestRefs`
 (`modules/gmcp/gmcp.Quest.go:223,226`). Errors block the save; warnings are shown.
 
-**Editors are off until this phase.** The dialogue editor has been off since phase 1. The quest
-editor is off since phase 2a (P7, owner 2026-10-24): `refuseQuestBuild` refuses its get, update,
-create and delete messages, and the editor-save loop door in `buildQuestUpdate` is ready for
-this phase to re-enable.
+**Editors are off until this phase.** The dialogue editor has been off since phase 1 (it drops
+`topics` and `opener` on save). The quest editor has been off since phase 2a (P7, owner
+2026-10-24: a save could fail the loop rules and stop the next boot); the editor-save loop door
+in `buildQuestUpdate` is ready for this phase. Since 2026-10-28 the whole builder is off (see
+above); both reasons still hold when it returns.
 
 **Approach: cannot save it malformed.**
 1. Every rule lives in the shared validators, never only in client JavaScript. The server is
@@ -393,4 +402,4 @@ this phase to re-enable.
 a builder round trip loads unchanged at boot; a new admin can build a chained quest with the
 wizard and pass the checklist.
 
-**Status:** not started.
+**Status:** postponed (owner, 2026-10-28); the builder is off.
