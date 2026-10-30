@@ -37,7 +37,7 @@ shopkeeper talking about their goods.
 | Source | Knob | Today | Ships at |
 |---|---|---|---|
 | Mob idle chatter (emote, say, consume, cast) | `Balance.MobIdleChatterScale` | none | 0.5 |
-| Mob idle movement (wander, sneak, portal) | `Balance.MobIdleMovementScale` | none | 1.0 |
+| Mob idle movement (wander, portal; sneak rides this roll) | `Balance.MobIdleMovementScale` | none | 1.0 |
 | Room idle lines | `Balance.RoomIdleChancePct` (room -1 keeps 4x) | hardcoded 5 | 3 |
 | Weather cadence | `Modules.weather.EmoteEveryRounds` (existing) | 24 | 48 |
 | Seasonal weather line | `Modules.weather.SeasonalEmoteOneIn` (new; 0 off) | hardcoded 3 | 4 |
@@ -63,7 +63,10 @@ shopkeeper talking about their goods.
   dropped; its effect on rates is under 1%.
 - **Verb classes** are a fixed table in code (chatter: emote, say, consume, cast; movement:
   wander, sneak, portal; anything else, e.g. wear, alchemy: chatter). A guard test fails on an
-  idle verb in shipped content that the table does not classify.
+  idle verb in shipped content that the table does not classify. `sneak` does not leave the
+  room (it hides the mob in place); it rides the movement roll only so the chatter scale does
+  not change how often thieves hide, and telemetry never counts it as a move (correction found
+  in the Task 12 review, 2026-10-30).
 - **Single-line rooms** fire their line at most once per player visit.
 
 ### 2. The listener budget
