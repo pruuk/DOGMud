@@ -38,6 +38,9 @@ func chdirRepoRootForTest(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
+	// Snapshot first so the cleanup restores the config this test found,
+	// not the shipped file ReloadConfig loads (it carries live balance knobs).
+	configs.SetConfigForTest(t, configs.GetConfig())
 	if err := configs.ReloadConfig(); err != nil {
 		t.Fatalf("ReloadConfig: %v", err)
 	}
