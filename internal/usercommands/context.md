@@ -870,3 +870,8 @@ still." while it does not. `look <name>` still finds it ("You look at the
 <Name> here:"). `get <fixture>` and `steal <fixture>` answer "The <Name> is
 fixed in place." (`fixedInPlace`); `get all` passes fixtures without a word,
 and `get all <name>` that only matches a fixture says it is fixed in place.
+
+### Arrival conversations and the ambient budget (#317)
+
+`go.go`'s player-arrival conversation boost starts a conversation only if
+`ambient.AllHaveBudget(destRoom)`: every player present can hear it out.

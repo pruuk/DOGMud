@@ -622,12 +622,11 @@ func IdleMobs(e events.Event) events.ListenerReturn {
             continue
         }
 
-        // Check activity level for idle behavior
-        if util.Rand(100) < mob.ActivityLevel {
-            events.AddToQueue(events.MobIdle{
-                MobInstanceId: mobInstanceId,
-            })
-        }
+        // Every idle mob gets one MobIdle a round; the ActivityLevel
+        // rolls live in HandleIdleMobs (mobs.Mob.RollIdle, #317).
+        events.AddToQueue(events.MobIdle{
+            MobInstanceId: mobInstanceId,
+        })
     }
 
     return events.Continue
@@ -675,11 +674,11 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
         // Emit MobCraftedRare world event if SkillMinimum >= CrafterRareThreshold
     }
 
-    // Execute idle command (runs alongside crafting)
-    idleCommand := mob.GetIdleCommand()
-    if idleCommand != "" {
-        mob.Command(idleCommand)
-    }
+    // Idle roll (#317): chatter and movement roll apart, each weighted by
+    // its share of the pool (mobs.Mob.RollIdle). An emote or say goes out
+    // whole as `ambient mob_chatter <cmd>` (issueIdleChatter); a round with
+    // neither looks for trouble.
+    chatterCmd, moveCmd := mob.RollIdle(idleRollInput(mob, idleRoom), util.Rand)
 
     return events.Continue
 }
@@ -2778,3 +2777,20 @@ player, or a mob charmed by one). The player need not be online: the damage
 map and the killer ref are keyed by id. The zero-health backstops stay
 anonymous: a tick routes through `ApplyHarm`, which queues an attributed
 death and sets `DeathQueued`, so no tick reaches them.
+
+## Ambient lines (#317)
+
+- `MobIdle_idle_roll.go`: `idleRollInput` (global scales, the room's zone
+  multipliers, the mob's `wandermultiplier`) and `issueIdleChatter`.
+  Gossip goes out as `ambient gossip say <line>`; `GossipIntervalRounds` 0
+  turns it off.
+- `NewRound_RoomIdle.go`: `roomIdleChancePer10k` (`RoomIdleChancePct`,
+  room -1 four times, zone `ambientmultiplier`) and `sendRoomIdleLine`
+  (budget, and a one-line room shows its line once per visit).
+- `UserRoundTick` calls `ambient.RoundTick` each round.
+- `BroadcastTips` reads `TipIntervalRounds` (0 off).
+- `conversationStartRoll` (`ConversationBaseChancePct`, 0 never); a
+  conversation starts only if `ambient.AllHaveBudget(room)`.
+- Telemetry: `advanceMobPath` counts path steps (`move_path`). The idle
+  roll in `HandleIdleMobs` counts nothing; the move is counted when
+  `mobcommands.Wander` commits its step.

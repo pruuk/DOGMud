@@ -49,8 +49,8 @@ func TestWanderTelemetry_StepCountsOnce(t *testing.T) {
 	require.Equal(t, 1, ambient.MovesForTest(1)[ambient.MoveIdle])
 }
 
-// A wander that goes nowhere is no move: telemetry counts only real room
-// changes.
+// A wander that goes nowhere is no move: telemetry counts only a committed
+// wander step.
 func TestWanderTelemetry_NoStepCountsNothing(t *testing.T) {
 	for _, tc := range []struct {
 		name  string

@@ -1,5 +1,18 @@
 # DOGMud Patch Notes
 
+## 2026-10-30: A quieter world
+
+- The world is a little quieter. Townsfolk, shopkeepers and guards
+  chatter less often, and the weather speaks up less.
+- Busy places stay busy: a crowded tavern still feels crowded, but you
+  are no longer buried in lines while you stand still.
+- When many things want your attention at once, you hear them one at a
+  time, a few seconds apart. Conversations between people nearby are
+  never cut off halfway.
+- A room with only one thing to show you shows it once each time you
+  walk in, instead of repeating it.
+- Some townsfolk lines that used to stop halfway now show in full.
+
 ## 2026-10-28: Set a quest aside, or follow another
 
 - You can set a quest aside. Type `quests abandon <name>`, or right-click

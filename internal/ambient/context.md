@@ -79,8 +79,10 @@ code permanently, for the next retune.
   hushed). A player the caller excluded or who does not perceive the line is
   not counted. `say_echo` is counted in the room that receives the echo,
   since its `Plan` names that room.
-- `CountMove(roomId, kind)` counts a real room change, in the room the mob
-  leaves, at the point the step is committed:
+- `CountMove(roomId, kind)` counts a committed wander step, in the room the
+  mob leaves, at the point the step is committed (a rooted mob or a locked
+  exit can still refuse the queued `go`, so a count is a step taken, not a
+  guaranteed arrival):
   - `MoveIdle`: `mobcommands.Wander` once its step is paid for (not when
     it is scattered, a pack follower, sent home, over budget, too tired or
     facing an exit out of its zone), once more for each pack follower that

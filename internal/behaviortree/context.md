@@ -1227,3 +1227,12 @@ shield spell while any ward is up, a heal spell while any heal is
 any other spell while one of its `ConditionIds` is held. Each shield and
 heal spell lands its own condition, and a new one only replaces the old, so
 casting a second ward or heal would swap one for another.
+
+## Ambient budget (#317)
+
+An `item_idle` line from `speak` goes through `ambient.Plan` (source
+`item_chatter`): a player over the ambient listener budget, the holder
+included, skips it. A holder-only line (`to: holder`) charges only the
+holder. Event lines are never budgeted. The item listener cap
+(`listenerCapNext`) is unchanged and still gates `chatter_ready`.
+`move_toward_tracked` counts a `move_track` for ambient telemetry.

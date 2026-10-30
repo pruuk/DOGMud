@@ -47,7 +47,8 @@ SOP including the `behavior_archetype` priority order.
 | `charm_immune` | bool | no | Mob cannot be charmed (resists charm spells/effects). Default: false. |
 | `pack_flee_immune` | bool | no | Mob does not flee when a packmate dies (overrides species-based pack flee). Default: false. |
 | `maxwander` | int | no | Max rooms the mob will wander from its home room. 0 = stationary. |
-| `activitylevel` | int | no | 1–100. How often the mob executes idle commands. Higher = more active. |
+| `activitylevel` | int | no | 1–100. How often the mob executes idle commands. Higher = more active. Chatter and movement each roll at this level times their share of the pool. |
+| `wandermultiplier` | float | no | Scales this mob's idle movement roll (wander, sneak, portal). Unset is 1.0; 0 is never. Chatter and movement roll apart, each weighted by its share of `idlecommands` (blank entries count in the size). #317 |
 | `itemdropchance` | int | no | Percent chance (0–100) to drop carried items on death. |
 | `statpool` | int | no | Stat points distributed across stats on spawn (weighted by archetype). |
 | `archetype` | string | no | Stat distribution archetype: `"fighting"` (80% physical), `"casting"` (80% mental), or `""` (even). |
