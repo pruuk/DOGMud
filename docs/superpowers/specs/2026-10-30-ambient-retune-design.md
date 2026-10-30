@@ -45,12 +45,22 @@ shopkeeper talking about their goods.
 | Tips | `Balance.TipIntervalRounds` | hardcoded 75 | 75 |
 | Gossip | `GossipIntervalRounds` (existing); 0 now means off | 75 | 75 |
 
-- **Split roll.** Each idle round a mob makes two independent rolls against its `activitylevel`:
-  chatter (`AL x MobIdleChatterScale x zone ambient multiplier`) picks among its chatter entries;
-  movement (`AL x MobIdleMovementScale x mob wander multiplier x zone wander multiplier`) picks
-  among its movement entries. Blank pool entries stop mattering. A mob whose pool has no entry of
-  a class skips that roll. `lookfortrouble` still runs on a round where neither roll picks a
-  command, as today. `ActivityLevel` itself is untouched (combat AI keeps reading it).
+- **Split roll, weighted so 1.0 means no change** (review finding 2026-10-30). Each idle round a
+  mob makes two independent rolls, each weighted by that class's share of the whole pool, blank
+  entries included in the pool size:
+  - chatter chance = `AL x MobIdleChatterScale x zone ambient multiplier x (chatter entries / pool size)`,
+    then a uniform pick among the chatter entries;
+  - movement chance = `AL x MobIdleMovementScale x mob wander multiplier x zone wander multiplier x (movement entries / pool size)`,
+    then a uniform pick among the movement entries.
+
+  At every multiplier 1.0 each mob's expected chatter and movement rates equal today's (today:
+  one `AL` roll, then a uniform pick over the pool, blanks falling to `lookfortrouble`). Blank
+  entries keep working as the authors' rate dial. The one behaviour change at 1.0: a mob can
+  now speak and move in the same round, which today's single pick never allowed; at these rates
+  it is rare and accepted. A mob whose pool has no entry of a class never passes that roll.
+  `lookfortrouble` still runs on a round where neither roll picks a command. `ActivityLevel`
+  itself is untouched (combat AI keeps reading it). The 1% forced-blank in `GetIdleCommand` is
+  dropped; its effect on rates is under 1%.
 - **Verb classes** are a fixed table in code (chatter: emote, say, consume, cast; movement:
   wander, sneak, portal; anything else, e.g. wear, alchemy: chatter). A guard test fails on an
   idle verb in shipped content that the table does not classify.
@@ -98,8 +108,12 @@ stay; retuning is a config edit.
 
 - Each new knob: the shipped value is read (config test), and 0 silences its source (unit test that
   would fail if the source still fired).
-- Split roll: a mob with only chatter entries never moves; with only movement entries never speaks;
-  the movement roll honours both wander multipliers; `ActivityLevel` is unchanged after a round.
+- Split roll: at every multiplier 1.0, the expected chatter rate and movement rate (computed from
+  the formula, and checked by a seeded many-round run) equal today's single-roll rates for a
+  padded pool (e.g. the Sand Elemental's: one `wander` in eight entries), a schedule pool with no
+  blanks, and a movement-only pool; a mob with only chatter entries never moves; with only
+  movement entries never speaks; the movement roll honours both wander multipliers;
+  `ActivityLevel` is unchanged after a round.
 - Budget: two ambient lines within the window reach a player once; a second player who has budget
   still hears the line; exempt categories bypass it; a conversation does not start while a present
   player is over budget.
