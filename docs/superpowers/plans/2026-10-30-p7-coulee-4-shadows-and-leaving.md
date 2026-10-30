@@ -4,7 +4,7 @@
 
 **Goal:** Ship PR 4 of the Pothole Coulee pass: the new Shadows line (Lamplighter Gethin, Cutpurse Dace, the Pocket Dummy, a practice lockbox, quests 97 to 101), quest 89 moved from Cleric Hadwen to Crier Toke behind all eight bridges, the Toke and Esk flavour lines, and the close-out of every Coulee line in `loop-backlog.txt`.
 
-**Architecture:** Content is YAML under `_datafiles/world/dogmud/`. Three quest steps need actions the quest engine cannot hear today (`hood`, `picklock`, a strike from hiding), so each gets one `questengine.NotifyCommand` call at its success point, with a probe-quest test. The practice mark's purse is restocked by one new behaviour-tree action, `stock_item`. The flavour lines are per-mob behaviour trees (`player_enter`, `player_has_quest` x8, `random_chance`, a random-decorator cascade, `respond` with `user_text` only). A guard test keeps the zone's backlog lines at zero.
+**Architecture:** Content is YAML under `_datafiles/world/dogmud/`. Three quest steps need actions the quest engine cannot hear today (`hood`, `picklock`, a strike from hiding), so each gets one `questengine.NotifyCommand` call at its success point, with a probe-quest test. The practice mark's purse is restocked by one new behaviour-tree action, `stock_item`. The flavour lines are per-mob behaviour trees (`player_enter`, `player_has_quest` x8, `random_chance`, a random-decorator cascade, `respond` with `user_text` only). A guard test keeps the zone's backlog lines at zero. By owner ruling, a caught plant and a foiled opener raise new tree events (`caught_planting`, `ambush_foiled`) through a `mobs` seam, and the dummy (with Dace) and two mine creatures answer with a gentle jibe.
 
 **Tech Stack:** Go 1.x, YAML content under `_datafiles/world/dogmud/`
 
@@ -73,6 +73,12 @@
 | Free ids: mobs 9125, 9126, 9127 (grep -w over all YAML and Go: 0 hits; control 9123: 3 hits); item 60 (no `itemid: 60`); quests 97 to 101; area key `coulee_mine` | `tools/id_inventory.py`; greps |
 | Name checks: `Gethin`, `Dace`, `Pocket Dummy`, `Sand Purse` clash with no mob, item or novel name. Rejected: `Tove` (Tova exists), `Ilse` (Apothecary Ilsa), `token` (four other token items would catch `plant token`) | mob name list (642 names), `novel/`, `docs/world.md` (control: `Hob` found) |
 | `steal_quest_event_test.go` uses quest id 98 as a probe in an isolated engine | `internal/actions/steal_quest_event_test.go:20-21` |
+| No behaviour-tree event fires on a caught plant or a foiled ambush; a caught plant on a mob narrates, records a faction crime, then `m.Command("attack @<user>")` | `internal/behaviortree/events.go:16-41`; `internal/actions/plant.go:178-246` |
+| `actions` cannot import `behaviortree` (behaviortree imports actions), so mob events from lower packages go through a `mobs` callback var that behaviortree sets at init: `mobs.AttackRejectedTryMobBehavior` / `FireAttackRejected` | `internal/mobs/attack_rejection.go:7-40`; `internal/behaviortree/engine.go:50-61` |
+| `events_test.go` requires every `KnownBehaviorEvents` entry to appear as an `EventType: "<name>"` literal in non-test Go under `internal/` or `modules/`, and every such literal to be listed | `internal/behaviortree/events_test.go:17-61` |
+| `mob_say {mob_id, text}` makes the first mob of that id in the room say the text and fails if none is there; `mob_in_room {mob_id}` is the condition form; `send_room_text {text}` sends to the whole room | `internal/behaviortree/actions_dialogue.go:111-140`; `conditions_mob.go:62-75` |
+| `AttackResult.CleanHit` means at least one swing won its contest; a dodged, parried or blocked opener leaves it false | `internal/combat/attackresult.go:150-162` |
+| `ExecuteFire` knows `targetMobInstanceId`, `surpriseShot` and `result.MoveResult.Hit`; it runs for player and mob shooters | `internal/actions/combat_fire.go:374,393-397,501-504` |
 
 ## Spec deviations found
 
@@ -82,8 +88,9 @@
 4. **Two extra steps.** 98 gains `equip` (hood refuses a lantern that is not in the light slot, `hood.go:20-23`). 100 gains `hidden` (sneak) before the strike, the one-action split quest 50 already uses.
 5. **The lockbox holds no token.** Nothing refills a room container, so a token would be gone after the first student. The step completes on the pick.
 6. **The practice mark restocks itself.** A theft never refills a mob and a mob restocks only by dying. The Pocket Dummy's tree calls the new `stock_item` action on idle.
-7. **Steal and plant fire on the attempt.** Both raise their command event before the contest. The steal step listens on `item_gain` of the purse instead (success only). The plant step listens on `command: plant` and so counts a caught attempt; its copy says so. Owner ruling 2026-10-17 ("a step advances only when the action succeeds") was given for craft, sleep and search. **Decision for the owner at plan review:** keep this, or widen Task 1 to move all three `plant` notifies after success (three sites in `plant.go`, three tests in `steal_quest_event_test.go`).
-8. **The ambush event fires on the opener, landed or not** (the opener is spent either way, `templates/help/ambush.template:20-23`). Gating it on a clean hit is a one-line change; same review.
+7. **Steal and plant fire on the attempt.** Both raise their command event before the contest. The steal step listens on `item_gain` of the purse instead (success only). The plant step listens on `command: plant` and so counts a caught attempt. **Owner ruling 2026-10-30:** keep it, as lenient tutorial practice.
+8. **The ambush event fires on the opener, landed or not** (the opener is spent either way, `templates/help/ambush.template:20-23`). **Owner ruling 2026-10-30:** keep it, as lenient tutorial practice.
+8a. **Added by owner ruling 2026-10-30: light mockery on a fail.** A caught plant on the Pocket Dummy, and an opening ambush blow that misses or is turned aside, earn one short good-natured line. No behaviour-tree event exists for either failure (`internal/behaviortree/events.go:16-41`; `plant.go:178-246` only narrates and attacks), so Task 8b adds two events, `caught_planting` and `ambush_foiled`, fired on the mob through a `mobs` seam shaped like `FireAttackRejected` (`internal/mobs/attack_rejection.go:19-40`, registered in `internal/behaviortree/engine.go:54-61`). They fire for player and mob actors alike. Dace speaks the plant line when she is on the jetty, else the room carries it; the mine crawler and tunnel brute (the creatures the quest text points at) carry the ambush line to the striker. The stone-crusted lurker and the stone-blooded beast turn a foiled ambush aside silently (their archetypes are untouched).
 9. **Mine spawns moved.** A hostile crawler at the Mine Head would attack students at Gethin's post, and a crawler plus brute would meet a quest-1 student in the first dark room. They move to 5259 and 5261; 5257's brute stays as quest 100's target. The road to the Mine Head still crosses three hostile talus rooms; the offer and step text warn, and the playtest (plan 5) judges it.
 10. **Sneak step has no room filter.** Dace and the dummy watch 5218 and may spot a student, so the lesson lets them hide anywhere.
 11. **Flavour lines:** four on Toke and four on Esk, one per Giver 2 across the pair, rather than all eight on each.
@@ -108,11 +115,16 @@
 | `internal/hooks/ambush_quest_notify_test.go` | Create | Melee ambush event test |
 | `internal/behaviortree/actions_stock_test.go`, `coulee_flavour_trees_test.go` | Create | `stock_item` tests; Toke and Esk tree tests |
 | `internal/dialogue/esk_road_test.go` | Create | Esk's passage with and without 89; Toke's gate on 89 |
+| `internal/mobs/mob_events.go`, `internal/mobs/mob_events_test.go` | Create | `FireCaughtPlanting`, `FireAmbushFoiled` and their dispatch callback |
+| `internal/behaviortree/engine.go`, `internal/behaviortree/events.go` | Modify | Register the callback; add the two events to the vocabulary |
+| `internal/actions/plant.go`, `internal/actions/combat_fire.go` | Modify | Fire `caught_planting` on a caught plant; `ambush_foiled` on a missed shot from cover |
+| `internal/actions/plant_caught_event_test.go`, `internal/actions/combat_fire_foiled_test.go`, `internal/hooks/ambush_foiled_test.go`, `internal/behaviortree/coulee_mockery_trees_test.go` | Create | Tests for the two events and the mockery lines |
+| `_datafiles/world/dogmud/behaviors/pothole_coulee/9120-mine_crawler.yaml`, `9121-tunnel_brute.yaml` | Create | Ambush mockery lines |
 | `internal/guards/coulee_backlog_guard_test.go` | Create | No backlog line names a Coulee quest |
 | `_datafiles/world/dogmud/items/other-0/60-sand_purse.yaml` | Create | The practice purse |
 | `_datafiles/world/dogmud/areas/coulee_mine.yaml`, `areas/area-keys.txt` | Create / Modify | The mine as an area |
 | `_datafiles/world/dogmud/mobs/pothole_coulee/9125-lamplighter_gethin.yaml`, `9126-cutpurse_dace.yaml`, `9127-pocket_dummy.yaml` | Create | Giver 1, Giver 2, practice mark |
-| `_datafiles/world/dogmud/behaviors/pothole_coulee/9127-pocket_dummy.yaml` | Create | Purse restock on idle |
+| `_datafiles/world/dogmud/behaviors/pothole_coulee/9127-pocket_dummy.yaml` | Create (Task 4), Modify (Task 8b) | Purse restock on idle; the caught-plant line |
 | `_datafiles/world/dogmud/behaviors/pothole_coulee/9106-crier_toke.yaml` | Create | Toke's flavour lines |
 | `_datafiles/world/dogmud/behaviors/pothole_coulee/9107-warden_esk.yaml` | Modify | Esk's flavour branch |
 | `_datafiles/world/dogmud/rooms/pothole_coulee/5218.yaml`, `5255.yaml`, `5256.yaml`, `5259.yaml`, `5261.yaml` | Modify | Jetty spawns and lockbox; mine spawns |
@@ -2964,6 +2976,651 @@ EOF
 
 ---
 
+### Task 8b: light mockery on a caught plant or a foiled ambush (Opus)
+
+Owner ruling 2026-10-30: quests 99 and 100 keep counting a caught plant and a dodged opener, and the fail earns one short good-natured line. Players and mobs share the rule: the events fire for any actor; only a player can read a line.
+
+**Files:**
+- Create: `internal/mobs/mob_events.go`, `internal/mobs/mob_events_test.go`, `internal/actions/plant_caught_event_test.go`, `internal/actions/combat_fire_foiled_test.go`, `internal/hooks/ambush_foiled_test.go`, `internal/behaviortree/coulee_mockery_trees_test.go`, `_datafiles/world/dogmud/behaviors/pothole_coulee/9120-mine_crawler.yaml`, `_datafiles/world/dogmud/behaviors/pothole_coulee/9121-tunnel_brute.yaml`
+- Modify: `internal/behaviortree/engine.go`, `internal/behaviortree/events.go`, `internal/actions/plant.go`, `internal/actions/combat_fire.go`, `internal/hooks/NewRound_DoCombat_unified.go`, `_datafiles/world/dogmud/behaviors/pothole_coulee/9127-pocket_dummy.yaml`, `internal/behaviortree/context.md`
+
+- [ ] **Step 1: Failing seam test.** Write `internal/mobs/mob_events_test.go`:
+
+```go
+package mobs
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+// #375 phase 7: a caught plant and a foiled ambush are behaviour-tree events
+// on the mob, dispatched through MobEventTryMobBehavior (set by behaviortree
+// at init, as AttackRejectedTryMobBehavior is). A mob actor passes user 0.
+func TestFireCaughtPlantingAndAmbushFoiled_Dispatch(t *testing.T) {
+	var ids []int
+	var got []EventContext
+	orig := MobEventTryMobBehavior
+	MobEventTryMobBehavior = func(id int, ctx EventContext) bool {
+		ids = append(ids, id)
+		got = append(got, ctx)
+		return true
+	}
+	t.Cleanup(func() { MobEventTryMobBehavior = orig })
+
+	m := &Mob{InstanceId: 4242}
+	FireCaughtPlanting(m, 7)
+	FireAmbushFoiled(m, 0)
+	FireCaughtPlanting(nil, 7)
+	FireAmbushFoiled(nil, 7)
+
+	require.Equal(t, []int{4242, 4242}, ids)
+	require.Equal(t, EventContext{EventType: "caught_planting", UserId: 7}, got[0])
+	require.Equal(t, EventContext{EventType: "ambush_foiled", UserId: 0}, got[1])
+}
+```
+
+Run: `go test ./internal/mobs/ -run TestFireCaughtPlanting -count=1`. Expected: build failure, `undefined: MobEventTryMobBehavior`.
+
+- [ ] **Step 2: The seam.** Write `internal/mobs/mob_events.go`:
+
+```go
+package mobs
+
+// MobEventTryMobBehavior dispatches a behaviour-tree event on a mob instance.
+// behaviortree sets it at init (mobs cannot import behaviortree); the default
+// does nothing, for tests and before registration. Tests swap it.
+var MobEventTryMobBehavior TryMobBehaviorFunc = func(mobInstanceId int, ctx EventContext) bool {
+	return false
+}
+
+// FireCaughtPlanting fires caught_planting on a mob that caught someone
+// planting an item on it (#375 phase 7). userId is the planter, 0 for a mob.
+func FireCaughtPlanting(mob *Mob, userId int) {
+	if mob == nil {
+		return
+	}
+	MobEventTryMobBehavior(mob.InstanceId, EventContext{EventType: "caught_planting", UserId: userId})
+}
+
+// FireAmbushFoiled fires ambush_foiled on a mob that was missed by, or turned
+// aside, an opening strike from hiding, melee or a shot from cover (#375
+// phase 7). userId is the striker, 0 for a mob.
+func FireAmbushFoiled(mob *Mob, userId int) {
+	if mob == nil {
+		return
+	}
+	MobEventTryMobBehavior(mob.InstanceId, EventContext{EventType: "ambush_foiled", UserId: userId})
+}
+```
+
+In `internal/behaviortree/engine.go` replace:
+
+```go
+	// Register the attack rejection callback so FireAttackRejected can fire btree events
+```
+
+with:
+
+```go
+	// Mob events raised below behaviortree (mobs.FireCaughtPlanting,
+	// mobs.FireAmbushFoiled; #375 phase 7) dispatch here.
+	mobs.MobEventTryMobBehavior = func(mobInstanceId int, ctx mobs.EventContext) bool {
+		return TryMobBehavior(mobInstanceId, EventContext{
+			EventType: ctx.EventType,
+			UserId:    ctx.UserId,
+			MobId:     ctx.MobId,
+		})
+	}
+
+	// Register the attack rejection callback so FireAttackRejected can fire btree events
+```
+
+In `internal/behaviortree/events.go` replace:
+
+```go
+	"heard_callforhelp":      true, // a routine-matched packmate in an adjacent room called for help
+```
+
+with:
+
+```go
+	"ambush_foiled":          true, // an opening strike from hiding missed or was turned aside (mobs.FireAmbushFoiled; UserId = striker, 0 for a mob)
+	"caught_planting":        true, // the mob caught someone planting an item on it (mobs.FireCaughtPlanting; UserId = planter, 0 for a mob)
+	"heard_callforhelp":      true, // a routine-matched packmate in an adjacent room called for help
+```
+
+Do not run `gofmt -w` on repo files (the Edit/Write rule); run `gofmt -l internal/behaviortree/ internal/mobs/` and fix any alignment it reports with the Edit tool. Then `go test ./internal/mobs/ -run TestFireCaughtPlanting -count=1` (PASS) and `go test ./internal/behaviortree/ -run TestEventVocabulary -count=1` (PASS: both literals are in `mob_events.go` and both names are listed).
+
+- [ ] **Step 3: Failing plant test.** Write `internal/actions/plant_caught_event_test.go`:
+
+```go
+package actions
+
+import (
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/stretchr/testify/require"
+)
+
+// #375 phase 7: a caught plant fires caught_planting on the mark, so its
+// tree can answer (the Pocket Dummy mocks the try). An unseen plant fires
+// nothing.
+func stubMobEvents(t *testing.T) *[]mobs.EventContext {
+	t.Helper()
+	var fired []mobs.EventContext
+	orig := mobs.MobEventTryMobBehavior
+	mobs.MobEventTryMobBehavior = func(id int, ctx mobs.EventContext) bool {
+		fired = append(fired, ctx)
+		return true
+	}
+	t.Cleanup(func() { mobs.MobEventTryMobBehavior = orig })
+	return &fired
+}
+
+func TestPlant_CaughtFiresCaughtPlantingOnTheMark(t *testing.T) {
+	fired := stubMobEvents(t)
+	mob := newPlantTestMob(testPlantMobInstId, 100000) // sees everything
+	mobs.SetInstanceForTest(testPlantMobInstId, mob)
+	defer mobs.SetInstanceForTest(testPlantMobInstId, nil)
+
+	actor := newPlantPlayerActor(1, 1)
+	seedPlantItem(actor)
+	res := Plant(actor, PlantOptions{TargetMobInstanceId: testPlantMobInstId, ItemNoun: "!1"})
+
+	require.True(t, res.Detected, "precondition: the plant was caught")
+	require.Equal(t, []mobs.EventContext{{EventType: "caught_planting", UserId: 1002}}, *fired)
+}
+
+func TestPlant_UnseenFiresNothing(t *testing.T) {
+	fired := stubMobEvents(t)
+	mob := newPlantTestMob(testPlantMobInstId, 1)
+	mobs.SetInstanceForTest(testPlantMobInstId, mob)
+	defer mobs.SetInstanceForTest(testPlantMobInstId, nil)
+
+	actor := newPlantPlayerActor(100000, 8)
+	seedPlantItem(actor)
+	res := Plant(actor, PlantOptions{TargetMobInstanceId: testPlantMobInstId, ItemNoun: "!1"})
+
+	require.True(t, res.Succeeded, "precondition: the plant went unseen")
+	require.Empty(t, *fired)
+}
+```
+
+Run: `go test ./internal/actions/ -run 'TestPlant_CaughtFires|TestPlant_UnseenFires' -count=1`. Expected: the caught test FAILS (no event); the unseen test passes.
+
+- [ ] **Step 4: Fire it from the caught path.** In `internal/actions/plant.go` (`plantOnMob`, the "Failure, detected" branch) replace:
+
+```go
+	m.Command(fmt.Sprintf(`attack @%d`, actor.GetUserId()))
+
+	return PlantResult{
+		Detected:     true,
+```
+
+with:
+
+```go
+	// #375 phase 7: the mark's tree may answer a caught plant (the Coulee's
+	// Pocket Dummy mocks the try). Player and mob planters alike.
+	mobs.FireCaughtPlanting(m, actor.GetUserId())
+
+	m.Command(fmt.Sprintf(`attack @%d`, actor.GetUserId()))
+
+	return PlantResult{
+		Detected:     true,
+```
+
+Rerun Step 3: both PASS. Comment out the new call, confirm the caught test fails, restore.
+
+- [ ] **Step 5: Failing ambush tests.** Write `internal/hooks/ambush_foiled_test.go`:
+
+```go
+package hooks
+
+import (
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/stretchr/testify/require"
+)
+
+// #375 phase 7: an opening strike from hiding that wins no swing (missed,
+// dodged, parried or blocked) fires ambush_foiled on the mob it was aimed
+// at, for its tree to answer. A clean opener fires nothing.
+func stubHookMobEvents(t *testing.T) *[]mobs.EventContext {
+	t.Helper()
+	var fired []mobs.EventContext
+	orig := mobs.MobEventTryMobBehavior
+	mobs.MobEventTryMobBehavior = func(id int, ctx mobs.EventContext) bool {
+		fired = append(fired, ctx)
+		return true
+	}
+	t.Cleanup(func() { mobs.MobEventTryMobBehavior = orig })
+	return &fired
+}
+
+func TestSurpriseRound_TurnedAsideFiresAmbushFoiled(t *testing.T) {
+	atk, def := newCombatPairForTest(t)
+	fired := stubHookMobEvents(t)
+
+	runProgressionPhaseForTest(t, atk, def, combat.AttackResult{
+		WasSurpriseAttack:   true,
+		WeaponHits:          surpriseWeaponHits(1, false),
+		DefenderWasAttacked: true,
+	})
+
+	require.Equal(t, []mobs.EventContext{{EventType: "ambush_foiled", UserId: 1}}, *fired)
+}
+
+func TestSurpriseRound_CleanOpenerFiresNoAmbushFoiled(t *testing.T) {
+	atk, def := newCombatPairForTest(t)
+	fired := stubHookMobEvents(t)
+
+	runProgressionPhaseForTest(t, atk, def, combat.AttackResult{
+		Hit:                 true,
+		CleanHit:            true,
+		WasSurpriseAttack:   true,
+		WeaponHits:          surpriseWeaponHits(1, true),
+		DefenderWasAttacked: true,
+	})
+
+	require.Empty(t, *fired)
+}
+```
+
+Write `internal/actions/combat_fire_foiled_test.go`:
+
+```go
+package actions
+
+import (
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/stretchr/testify/require"
+)
+
+// #375 phase 7: a same-room shot from hiding that misses fires ambush_foiled
+// on the target mob. A shot that lands, or an ordinary shot, fires nothing.
+func TestFireAmbushFoiled_OnlyAMissedShotFromCover(t *testing.T) {
+	fired := stubMobEvents(t)
+	mob := newStealTestMob(testMobInstId, 0, 1)
+	mobs.SetInstanceForTest(testMobInstId, mob)
+	defer mobs.SetInstanceForTest(testMobInstId, nil)
+	actor := newStealPlayerActor(100, 1) // user 1001
+
+	fireAmbushFoiled(actor, testMobInstId, true, true)   // landed
+	fireAmbushFoiled(actor, testMobInstId, false, false) // ordinary miss
+	fireAmbushFoiled(actor, 0, true, false)              // a player target
+	require.Empty(t, *fired)
+
+	fireAmbushFoiled(actor, testMobInstId, true, false)
+	require.Equal(t, []mobs.EventContext{{EventType: "ambush_foiled", UserId: 1001}}, *fired)
+}
+```
+
+Run: `go test ./internal/hooks/ -run 'TestSurpriseRound_TurnedAside|TestSurpriseRound_CleanOpener' -count=1` (the first FAILS) and `go test ./internal/actions/ -run TestFireAmbushFoiled -count=1` (build failure, `undefined: fireAmbushFoiled`).
+
+- [ ] **Step 6: Fire it from both strike paths.** In `internal/hooks/NewRound_DoCombat_unified.go` replace (the block Task 2 added):
+
+```go
+	if atk.IsPlayer() && res.WasSurpriseAttack {
+		notifyAmbushQuest(atk, def)
+	}
+```
+
+with:
+
+```go
+	if atk.IsPlayer() && res.WasSurpriseAttack {
+		notifyAmbushQuest(atk, def)
+	}
+	// An opener that won no swing is a foiled ambush, for the target mob's
+	// tree to answer (#375 phase 7). Any attacker; only a mob has a tree.
+	if res.WasSurpriseAttack && !res.CleanHit && !def.IsPlayer() {
+		mobs.FireAmbushFoiled(asMob(def), atkUid)
+	}
+```
+
+In `internal/actions/combat_fire.go` replace:
+
+```go
+	awardFireProgression(actor, surpriseShot, result.MoveResult.Hit)
+```
+
+with:
+
+```go
+	awardFireProgression(actor, surpriseShot, result.MoveResult.Hit)
+	fireAmbushFoiled(actor, targetMobInstanceId, surpriseShot, result.MoveResult.Hit)
+```
+
+and add after `ExecuteFire`'s closing brace:
+
+```go
+// fireAmbushFoiled fires ambush_foiled on the target mob when a same-room
+// shot from hiding missed (#375 phase 7), for its tree to answer. Player and
+// mob shooters alike; a player target has no tree, so nothing fires.
+func fireAmbushFoiled(actor Actor, targetMobInstanceId int, surpriseShot bool, hit bool) {
+	if !surpriseShot || hit || targetMobInstanceId == 0 {
+		return
+	}
+	mobs.FireAmbushFoiled(mobs.GetInstance(targetMobInstanceId), actor.GetUserId())
+}
+```
+
+Rerun the Step 5 commands: all PASS. Prove each red: drop `&& !res.CleanHit` (the clean-opener test fails), restore; change `|| hit` to `|| !hit` (the ranged test fails), restore.
+
+- [ ] **Step 7: Failing tree tests.** Write `internal/behaviortree/coulee_mockery_trees_test.go` (it reuses `loadCouleeTree` and `recordFlavour` from `coulee_flavour_trees_test.go`):
+
+```go
+package behaviortree
+
+import (
+	"testing"
+	"unicode/utf8"
+
+	"github.com/stretchr/testify/require"
+)
+
+// Owner ruling 2026-10-30: a caught plant on the Pocket Dummy and a foiled
+// opener on a mine creature earn one short good-natured line. Dace says the
+// plant line when she is in the room, else the room carries it; the mine
+// creatures carry the ambush line to the striker alone.
+
+func distinctCount(lines []string) int {
+	seen := map[string]bool{}
+	for _, l := range lines {
+		seen[l] = true
+	}
+	return len(seen)
+}
+
+func TestPocketDummyMocksACaughtPlant(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		dace bool
+	}{{"dace on the jetty", true}, {"dace away", false}} {
+		t.Run(tc.name, func(t *testing.T) {
+			var said, narrated []string
+			origSay, origRoom, origIn := actionRegistry["mob_say"], actionRegistry["send_room_text"], conditionRegistry["mob_in_room"]
+			actionRegistry["mob_say"] = func(p map[string]any, ctx *EvalContext) Result {
+				if getIntParam(p, "mob_id") != 9126 {
+					return Failure
+				}
+				said = append(said, getStringParam(p, "text"))
+				return Success
+			}
+			actionRegistry["send_room_text"] = func(p map[string]any, ctx *EvalContext) Result {
+				narrated = append(narrated, getStringParam(p, "text"))
+				return Success
+			}
+			conditionRegistry["mob_in_room"] = func(p map[string]any, ctx *EvalContext) Result {
+				if tc.dace && getIntParam(p, "mob_id") == 9126 {
+					return Success
+				}
+				return Failure
+			}
+			t.Cleanup(func() {
+				actionRegistry["mob_say"], actionRegistry["send_room_text"], conditionRegistry["mob_in_room"] = origSay, origRoom, origIn
+			})
+			loadCouleeTree(t, 9127, "9127-pocket_dummy.yaml")
+			DrainAllDelayedActionsForTest(t)
+			state := NewBehaviorState()
+			for i := 0; i < 60; i++ {
+				GetEngine().EvaluateEvent(9127, 9127, EventContext{EventType: "caught_planting", UserId: 8603}, state)
+			}
+			DrainAllDelayedActionsForTest(t)
+
+			lines := narrated
+			if tc.dace {
+				require.Empty(t, narrated, "Dace speaks; the room adds nothing")
+				lines = said
+			} else {
+				require.Empty(t, said, "Dace is away and says nothing")
+			}
+			require.Len(t, lines, 60, "every caught plant earns a line")
+			require.Equal(t, 3, distinctCount(lines), "all three lines can be picked")
+			for _, l := range lines {
+				require.LessOrEqual(t, utf8.RuneCountInString(l), 80, "line over 80 columns: %q", l)
+			}
+		})
+	}
+}
+
+func TestMineCreaturesMockAFoiledAmbush(t *testing.T) {
+	for _, tc := range []struct {
+		mobId int
+		file  string
+	}{{9120, "9120-mine_crawler.yaml"}, {9121, "9121-tunnel_brute.yaml"}} {
+		t.Run(tc.file, func(t *testing.T) {
+			calls := recordFlavour(t)
+			loadCouleeTree(t, tc.mobId, tc.file)
+			DrainAllDelayedActionsForTest(t)
+			state := NewBehaviorState()
+			for i := 0; i < 60; i++ {
+				GetEngine().EvaluateEvent(tc.mobId, tc.mobId, EventContext{EventType: "ambush_foiled", UserId: 8604}, state)
+			}
+			DrainAllDelayedActionsForTest(t)
+
+			var lines []string
+			for _, c := range *calls {
+				require.Empty(t, c.room, "the striker alone hears it")
+				lines = append(lines, c.user)
+			}
+			require.Len(t, lines, 60, "every foiled opener earns a line")
+			require.Equal(t, 3, distinctCount(lines), "all three lines can be picked")
+		})
+	}
+}
+```
+
+Run: `go test ./internal/behaviortree/ -run 'TestPocketDummyMocks|TestMineCreaturesMock' -count=1`. Expected: FAIL (no `caught_planting` branch; no 9120 or 9121 tree file).
+
+- [ ] **Step 8: The dummy's line.** Append to the end of `_datafiles/world/dogmud/behaviors/pothole_coulee/9127-pocket_dummy.yaml` (four-space indent: a new child of `tree.children`):
+
+```yaml
+
+    # ── CAUGHT: a plant on the dummy was caught (caught_planting, fired by
+    #    actions.plantOnMob through mobs.FireCaughtPlanting). Owner ruling
+    #    2026-10-30: quest 99 still counts the try, and one short line mocks
+    #    it. Dace says it when she is on the jetty, so the student and the
+    #    room hear her; otherwise the room carries it. One of three, picked
+    #    evenly (33, 50, last). ──
+    - type: selector
+      event: caught_planting
+      children:
+        - type: sequence
+          children:
+            - type: condition
+              check: mob_in_room
+              mob_id: 9126
+            - type: selector
+              children:
+                - type: decorator
+                  mod: random
+                  percent: 33
+                  child:
+                    type: action
+                    do: mob_say
+                    mob_id: 9126
+                    text: Caught by a straw dummy. I will tell no one. Much.
+                - type: decorator
+                  mod: random
+                  percent: 50
+                  child:
+                    type: action
+                    do: mob_say
+                    mob_id: 9126
+                    text: The bells sang that time. Softer hands, friend.
+                - type: action
+                  do: mob_say
+                  mob_id: 9126
+                  text: Even the dummy saw that one coming.
+        - type: selector
+          children:
+            - type: decorator
+              mod: random
+              percent: 33
+              child:
+                type: action
+                do: send_room_text
+                text: The pocket dummy's bells jingle, and it sounds a lot like laughing.
+            - type: decorator
+              mod: random
+              percent: 50
+              child:
+                type: action
+                do: send_room_text
+                text: Out in the reeds, someone snorts at a clumsy plant.
+            - type: action
+              do: send_room_text
+              text: The dummy sways on its peg, as smug as straw can be.
+```
+
+Also change the header comment line `# Every other event falls through to its combat_passive archetype.` to `# A caught plant earns a short mocking line (branch at the end). Every other event falls through to its combat_passive archetype.` (wrap it at 78 columns).
+
+- [ ] **Step 9: The mine creatures' lines.** Write `_datafiles/world/dogmud/behaviors/pothole_coulee/9120-mine_crawler.yaml`:
+
+```yaml
+# Mine Crawler (9120), the old mine (coulee_mine).
+#
+# #375 phase 7 (owner ruling 2026-10-30): an opening strike from hiding that
+# misses or is turned aside (ambush_foiled, fired from the combat round and
+# the shot from cover through mobs.FireAmbushFoiled) earns the striker one
+# short good-natured line, to them alone (respond, user_text only). Quest 100
+# counts the try anyway. One of three, picked evenly (33, 50, last).
+#
+# Every other event falls through to its generic_fighter archetype.
+
+tree:
+  type: selector
+  children:
+    - type: selector
+      event: ambush_foiled
+      children:
+        - type: decorator
+          mod: random
+          percent: 33
+          child:
+            type: action
+            do: respond
+            user_text: >-
+              {actor} skitters aside at the last moment, and your blow finds
+              only stone. Somewhere far above, you can almost hear Dace
+              laughing.
+        - type: decorator
+          mod: random
+          percent: 50
+          child:
+            type: action
+            do: respond
+            user_text: >-
+              {actor} felt you coming through the rock. So much for the
+              quiet strike.
+        - type: action
+          do: respond
+          user_text: >-
+            Your opening blow goes wide. {actor} clicks its mandibles, more
+            insulted than hurt.
+```
+
+Write `_datafiles/world/dogmud/behaviors/pothole_coulee/9121-tunnel_brute.yaml`:
+
+```yaml
+# Tunnel Brute (9121), the old mine (coulee_mine).
+#
+# #375 phase 7 (owner ruling 2026-10-30): an opening strike from hiding that
+# misses or is turned aside (ambush_foiled, fired from the combat round and
+# the shot from cover through mobs.FireAmbushFoiled) earns the striker one
+# short good-natured line, to them alone (respond, user_text only). Quest 100
+# counts the try anyway. One of three, picked evenly (33, 50, last).
+#
+# Every other event falls through to its generic_fighter archetype.
+
+tree:
+  type: selector
+  children:
+    - type: selector
+      event: ambush_foiled
+      children:
+        - type: decorator
+          mod: random
+          percent: 33
+          child:
+            type: action
+            do: respond
+            user_text: >-
+              {actor} turns at the last moment, and your blow glances off
+              stone knuckles. Somewhere far above, you can almost hear Dace
+              laughing.
+        - type: decorator
+          mod: random
+          percent: 50
+          child:
+            type: action
+            do: respond
+            user_text: >-
+              {actor} was not as asleep as it looked. So much for the quiet
+              strike.
+        - type: action
+          do: respond
+          user_text: >-
+            Your opening blow goes wide. {actor} snorts, more insulted than
+            hurt.
+```
+
+- [ ] **Step 10: Run green, prove red, document, commit.** Rerun Step 7: PASS. Change the dummy's `mob_id: 9126` in the `mob_in_room` condition to `9125`, confirm the "dace on the jetty" subtest fails, restore.
+
+In `internal/behaviortree/context.md` replace:
+
+```
+| `mob_hurt` | Mob takes damage in combat | `UserId` = attacker |
+```
+
+with:
+
+```
+| `mob_hurt` | Mob takes damage in combat | `UserId` = attacker |
+| `caught_planting` | The mob caught someone planting an item on it (`actions.plantOnMob` through `mobs.FireCaughtPlanting`, #375 phase 7) | `UserId` = planter, 0 for a mob |
+| `ambush_foiled` | An opening strike from hiding at the mob won no swing, melee (`hooks.applyCombatProgression`) or a missed shot from cover (`actions.fireAmbushFoiled`), through `mobs.FireAmbushFoiled` | `UserId` = striker, 0 for a mob |
+```
+
+```bash
+grep -nE ' -- |—|–' _datafiles/world/dogmud/behaviors/pothole_coulee/9120-mine_crawler.yaml _datafiles/world/dogmud/behaviors/pothole_coulee/9121-tunnel_brute.yaml _datafiles/world/dogmud/behaviors/pothole_coulee/9127-pocket_dummy.yaml
+```
+
+Expected: no output.
+
+```bash
+gofmt -l internal/
+go test ./internal/mobs/ ./internal/actions/ ./internal/hooks/ ./internal/behaviortree/ ./internal/usercommands/ -count=1
+go test . ./internal/guards/ -count=1
+git add internal/mobs/mob_events.go internal/mobs/mob_events_test.go internal/behaviortree/engine.go internal/behaviortree/events.go internal/behaviortree/context.md internal/behaviortree/coulee_mockery_trees_test.go internal/actions/plant.go internal/actions/plant_caught_event_test.go internal/actions/combat_fire.go internal/actions/combat_fire_foiled_test.go internal/hooks/NewRound_DoCombat_unified.go internal/hooks/ambush_foiled_test.go _datafiles/world/dogmud/behaviors/pothole_coulee/9127-pocket_dummy.yaml _datafiles/world/dogmud/behaviors/pothole_coulee/9120-mine_crawler.yaml _datafiles/world/dogmud/behaviors/pothole_coulee/9121-tunnel_brute.yaml
+git commit -F - <<'EOF'
+feat(coulee): a caught plant or a foiled ambush earns a gentle jibe
+
+#375 phase 7, Pothole Coulee plan 4 (owner ruling 2026-10-30). Quests 99
+and 100 keep counting a caught plant and a dodged opener as practice, and
+now the fail is answered. Two behaviour-tree events, caught_planting and
+ambush_foiled, fire on the mob through a mobs seam shaped like
+FireAttackRejected, for player and mob actors alike: from plantOnMob's
+caught path, from a surprise round that won no swing, and from a missed
+shot from cover. The Pocket Dummy has Cutpurse Dace say one of three lines
+when she is on the jetty, else the room carries one; the mine crawler and
+tunnel brute give the striker one of three lines. Tests for each event and
+each tree, proven red.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+EOF
+```
+
+---
+
 ### Task 9: close out the zone's backlog (Sonnet)
 
 **Files:**
@@ -3191,7 +3848,7 @@ The other zones are not started.
 - [ ] **Step 6: README row.** If `docs/README.md` has no row for this plan, add one after the row for `superpowers/specs/2026-10-30-quest-arc-phase7-pothole-coulee-design.md` (or after the last `2026-10-30-p7-coulee-` plan row, if plans 1 to 3 added theirs):
 
 ```
-| [`superpowers/plans/2026-10-30-p7-coulee-4-shadows-and-leaving.md`](superpowers/plans/2026-10-30-p7-coulee-4-shadows-and-leaving.md) | Plan 4 of the Coulee pass in 13 tasks: quest events for `hood`, `picklock` and a strike from hiding; the `stock_item` action; Gethin, Dace, the Pocket Dummy and the jetty lockbox; quests 97 to 101; Esk's Road moved to Toke behind all eight bridges; Toke and Esk flavour trees; a guard that keeps the zone's backlog empty; docs, playtest, gate |
+| [`superpowers/plans/2026-10-30-p7-coulee-4-shadows-and-leaving.md`](superpowers/plans/2026-10-30-p7-coulee-4-shadows-and-leaving.md) | Plan 4 of the Coulee pass in 14 tasks: quest events for `hood`, `picklock` and a strike from hiding; the `stock_item` action; `caught_planting` and `ambush_foiled` tree events with gentle mockery lines; Gethin, Dace, the Pocket Dummy and the jetty lockbox; quests 97 to 101; Esk's Road moved to Toke behind all eight bridges; Toke and Esk flavour trees; a guard that keeps the zone's backlog empty; docs, playtest, gate |
 ```
 
 - [ ] **Step 7: Check and commit**
@@ -3228,7 +3885,7 @@ The full adversarial playtest of the whole flow is plan 5. This one checks this 
 - [ ] **Step 1: Load the `dogmud-playtesting` skill** and follow it: restore the harness if missing, use private ports, kill only the server you start, by PID, never the owner's.
 
 - [ ] **Step 2: Write an ephemeral goals file** in the session scratchpad with `--checkout C:/tmp/dogmud-375-p7-coulee-shadows` and two naive-newbie seats, each a fresh character set up with the harness's quest-token fixture:
-  - Seat A, tokens `30-end`, `31-end`: talk to Toke, take First Light, walk to the Mine Head, and play 98, 99, 100, 101 and 97 to the end using only the hints. Read every line. Report any step whose hint does not get a new player through it, any refusal the hint did not prepare them for (dark aiming, being spotted, the lockbox already open, broken picks), and the danger of the talus walk and the brute fight.
+  - Seat A, tokens `30-end`, `31-end`: talk to Toke, take First Light, walk to the Mine Head, and play 98, 99, 100, 101 and 97 to the end using only the hints. Read every line. Get caught planting at least once (with Dace on the jetty) and have one opener turned aside if the dice allow, and report whether the mocking line reads as friendly. Report any step whose hint does not get a new player through it, any refusal the hint did not prepare them for (dark aiming, being spotted, the lockbox already open, broken picks), and the danger of the talus walk and the brute fight.
   - Seat B, tokens `30-end`, `31-end` and `90-end` to `97-end`: enter Hub Square and the Threshold House at least twelve times each and record every flavour line; take Esk's Road from Toke, hand it in at Esk, cross with `passage`. Then, on a second character with `30-end` only, confirm Esk's passage still works and Toke shows no Esk's Road.
 
 - [ ] **Step 3: Run, read the report, act.** Fix every defect in this plan's own content in the branch (rerun the affected task's checks and commit by name with a `fix(coulee):` message and the attribution line). File anything outside this plan's files as a GitHub issue with `gh issue create --repo pruuk/DOGMud`, searching first with `gh issue list --repo pruuk/DOGMud --search "<words>"`. Reports are gitignored; the issues are the record.
@@ -3250,7 +3907,7 @@ Expected: no output.
 
 ```bash
 go build ./...
-go test ./internal/usercommands/ ./internal/hooks/ ./internal/behaviortree/ ./internal/dialogue/ ./internal/questengine/ ./internal/questloop/ ./internal/quests/ ./internal/actions/ -count=1
+go test ./internal/usercommands/ ./internal/hooks/ ./internal/behaviortree/ ./internal/dialogue/ ./internal/questengine/ ./internal/questloop/ ./internal/quests/ ./internal/actions/ ./internal/mobs/ -count=1
 go test ./internal/guards/... -count=1
 DOGMUD_BOOT_SMOKE=1 go test -run 'TestSmoke_|TestQuestDoor|TestDestinationDoor|TestQuestLoop' . -count=1 -v 2>&1 | grep -E '^--- |^ok|^FAIL'
 go test . -count=1
@@ -3306,7 +3963,7 @@ Confirm the URL `gh` prints says `pruuk/DOGMud`. The body (no closing keyword an
 - **Close-out.** No `loop-backlog.txt` line names quests 28 to 59, 76, 88, 89 or 90 to 101, held by a new guard test.
 - **Docs.** context.md for questengine, behaviortree and hooks; roadmap status; patch notes.
 
-Decisions recorded in the plan for review: the plant step counts a caught attempt (plant raises its event before the contest), and the ambush event fires on the opener whether or not it lands.
+- **Gentle mockery (owner ruling 2026-10-30).** The plant step counts a caught attempt and the ambush step counts a dodged opener, as tutorial practice; the fail now earns one short line. New tree events `caught_planting` and `ambush_foiled` fire on the mob (player and mob actors alike); Cutpurse Dace, or the room when she is away, answers a caught plant on the Pocket Dummy, and the mine crawler and tunnel brute answer a foiled opener.
 
 Part of #315. Part of #375. The whole-flow adversarial playtest is PR 5.
 

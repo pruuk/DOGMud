@@ -25,7 +25,7 @@
 7. **Lenient grants end.** `35-craft` and `38-brew` gated on `-start` on purpose (`internal/questengine/newbie_one_command_steps_test.go:367-371`); that is exactly the `one-action ...:prev` and `walk-dead-end` finding. They now gate on the step before. A player saved on `35-start` or `38-start` with materials in hand talks to the giver and buys again.
 8. **`eat` raises no quest event today** (`internal/usercommands/eat.go:19-96` has no `NotifyCommand`). Task 1 adds it unless plan 1 already did.
 9. **Playtest.** `dogmud-authoring-content` asks every content plan to end with an adversarial playtest; the spec's Delivery table puts the one naive-newbie playtest across the whole flow in PR 5. This plan follows the spec and ends at the gate.
-10. **Owner call surfaced, not taken:** at `skill_minimum: 1` the scab-hide jerkin becomes a random discovery for any tailor at rank 1 (`internal/crafting/crafting.go:603-626`), which thins quest 43's recipe reward. `learn_only: true` exists (`crafting.go:39`, `:613`). The spec ruling is `skill_minimum: 1`; this plan does only that.
+10. **Jerkin `learn_only` (owner ruling 2026-10-30):** at `skill_minimum: 1` the scab-hide jerkin would become a random discovery for any tailor at rank 1 (`internal/crafting/crafting.go:603-626`). The owner ruled it also gets `learn_only: true` (`crafting.go:39`, skipped in discovery at `:613`). Quest 43's `recipe_info` reward still teaches it: `Quest_HandleQuestUpdate.go:306-307` calls `Character.LearnRecipe`, which never reads `LearnOnly` (`internal/characters/spells.go:133-142`). Task 6 Step 10.
 11. **Help mismatch:** `templates/help/enchanting.template:72` says disenchant works on "an equipped item"; the code reads the backpack (`items.FindMatchIn(rest, user.Character.Items...)`, `internal/usercommands/skill.disenchant.go:33-41`, after the `enchanting_circle` check at `:28`) and `disenchant.template` agrees with the code. Controller ruling: Task 7 fixes the line next to Daff's disenchant topic.
 
 ## Facts verified against source (worktree base: master `c4af0286b`, 2026-10-30)
@@ -107,7 +107,7 @@ Line numbers are from `c4af0286b`; plans 1 and 2 shift some of them. Task 0 re-c
 | `_datafiles/world/dogmud/mobs/pothole_coulee/9606-enchanter_skell.yaml` | Rename to `9606-enchanter_daff.yaml`, name field |
 | `_datafiles/world/dogmud/mobs/pothole_coulee/9607-jeweler_vurl.yaml` | Edit: one shop comment |
 | `_datafiles/world/dogmud/schedules/pothole_coulee/pothole_coulee_enchanter.yaml` | Edit: description |
-| `_datafiles/world/dogmud/recipes/tailoring/scab-hide-jerkin.yaml` | Edit: `skill_minimum: 1` |
+| `_datafiles/world/dogmud/recipes/tailoring/scab-hide-jerkin.yaml` | Edit: `skill_minimum: 1`, `learn_only: true` |
 | `_datafiles/world/dogmud/templates/help/enchanting.template` | Edit: line 72, disenchant takes an item from the pack |
 | `_datafiles/world/dogmud/conversations/pairs/9103_9105.yaml`, `9106_9107.yaml` | Edit: one dash line each |
 | `_datafiles/world/dogmud/quests/step-ids.txt`, `dialogue/topic-keys.txt`, `quests/loop-backlog.txt` | Edit: new ids and keys, renames, 39 lines deleted |
@@ -5782,10 +5782,14 @@ func TestQuest43BreakThePack_KillThenReport(t *testing.T) {
 }
 
 // The jerkin (quest 43's recipe reward) is sewable by a fresh player once
-// known (spec "Skill coverage" ruling).
-func TestScabHideJerkin_SkillMinimumOne(t *testing.T) {
+// known (spec "Skill coverage" ruling), and learned only from that reward,
+// never discovered at random (owner ruling 2026-10-30, learn_only).
+func TestScabHideJerkin_SkillMinimumOneAndLearnOnly(t *testing.T) {
 	raw := string(repoFile(t, "_datafiles", "world", "dogmud", "recipes", "tailoring", "scab-hide-jerkin.yaml"))
 	require.Regexp(t, regexp.MustCompile(`(?m)^skill_minimum: 1\r?$`), raw)
+	require.Regexp(t, regexp.MustCompile(`(?m)^learn_only: true\r?$`), raw)
+	q := loadShippedQuest(t, "43-break_the_pack.yaml", 43)
+	require.Contains(t, q.Rewards.RecipeInfo, "scab-hide-jerkin", "quest 43's reward is the only way to learn it")
 }
 
 func TestQuest56RunningGame_EndsAtDelk(t *testing.T) {
@@ -6460,7 +6464,26 @@ steps:
       Toke has your news, and the steppe folk will sleep easier for it.
 ```
 
-- [ ] **Step 10: The jerkin recipe.** In `_datafiles/world/dogmud/recipes/tailoring/scab-hide-jerkin.yaml` replace `skill_minimum: 8` with `skill_minimum: 1`.
+- [ ] **Step 10: The jerkin recipe** (spec ruling `skill_minimum: 1`; owner ruling 2026-10-30 adds `learn_only: true`). First confirm the field and the reward path:
+
+```bash
+grep -n "LearnOnly" internal/crafting/crafting.go
+grep -n "ParseRecipeGrants" -A3 internal/hooks/Quest_HandleQuestUpdate.go
+grep -n "func (c \*Character) LearnRecipe" -A9 internal/characters/spells.go
+```
+
+Expected: `LearnOnly bool \`yaml:"learn_only,omitempty"\`` (crafting.go:39) and its skip in `GetEligibleRecipes` (crafting.go:613); the quest reward calls `Character.LearnRecipe` for each `recipe_info` id (Quest_HandleQuestUpdate.go:306-307), and `LearnRecipe` never reads `LearnOnly` (spells.go:133-142). So quest 43's reward still teaches the recipe, and random discovery never offers it. Then in `_datafiles/world/dogmud/recipes/tailoring/scab-hide-jerkin.yaml` replace:
+
+```yaml
+skill_minimum: 8
+```
+
+with:
+
+```yaml
+skill_minimum: 1
+learn_only: true
+```
 
 - [ ] **Step 11: Replace `_datafiles/world/dogmud/dialogue/pothole_coulee/9137.yaml`** (Hunter Delk) with:
 
@@ -7148,7 +7171,8 @@ First Sign (41) starts with a talk to Tarn. Tarn offers The Hunt (42)
 with the salt pouch; it starts with a talk to Delk and gains an eat
 step after the cook. Break the Pack (43) and Running Game (56) end at
 Delk's new hand-ins; Delk offers Report to Toke (Tracking) (93). The
-scab-hide jerkin recipe drops to skill_minimum 1. Clears 7
+scab-hide jerkin recipe drops to skill_minimum 1 and is learn_only, so
+only quest 43's reward teaches it. Clears 7
 loop-backlog lines.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
@@ -7524,13 +7548,14 @@ Expected: the potion path (plan 1's `quaff`, or `drink.go`) gates its age line o
   how prices move. The crafters in town each name something you can
   make at their station.
 - The enchanter in the Warder's Dugout is now Enchanter Daff.
-- Anyone who learns the scab-hide jerkin can sew it.
+- Hunter Delk's scab-hide jerkin recipe can be sewn by anyone who earns
+  it by breaking the pack. It is not found any other way.
 ```
 
 - [ ] **Step 3: Docs index.** In `docs/README.md`, directly below the row for `superpowers/specs/2026-10-30-quest-arc-phase7-pothole-coulee-design.md`, add:
 
 ```markdown
-| [`superpowers/plans/2026-10-30-p7-coulee-3a-lines-fight-smith-brew-track.md`](superpowers/plans/2026-10-30-p7-coulee-3a-lines-fight-smith-brew-track.md) | Plan 3a of the #375 phase 7 Coulee spec: the fighting, smithing, brewing and tracking lines run Toke, giver, giver, with every finale and repeatable ending at a hand-in and bridges 90 to 93 back to Toke; the `eat` command event and quest 42's eat step; Vorn, Onna and crafter skill topics; Enchanter Skell renamed Enchanter Daff; the jerkin at rank 1; 39 backlog lines cleared. Records that bridge file names follow `ConvertForFilename` (`90-report_to_toke__fighting_.yaml`) |
+| [`superpowers/plans/2026-10-30-p7-coulee-3a-lines-fight-smith-brew-track.md`](superpowers/plans/2026-10-30-p7-coulee-3a-lines-fight-smith-brew-track.md) | Plan 3a of the #375 phase 7 Coulee spec: the fighting, smithing, brewing and tracking lines run Toke, giver, giver, with every finale and repeatable ending at a hand-in and bridges 90 to 93 back to Toke; the `eat` command event and quest 42's eat step; Vorn, Onna and crafter skill topics; Enchanter Skell renamed Enchanter Daff; the jerkin at rank 1 and `learn_only`; 39 backlog lines cleared. Records that bridge file names follow `ConvertForFilename` (`90-report_to_toke__fighting_.yaml`) |
 ```
 
 - [ ] **Step 4: Commit.**
@@ -7632,7 +7657,7 @@ Expected: `exit 124` (the server stayed up until the timeout), `0` panics, `1` `
 - Each line runs Toke, Giver 1, Giver 2, Toke. Quest 1 starts with a talk to Giver 1, quest 2 (now offered by Giver 1) with a talk to Giver 2.
 - Every finale (34, 37, 40, 43) and repeatable (53, 54, 55, 56) ends at a hand-in on Giver 2. Bridges 90 to 93 (Report to Toke) are offered by Giver 2 and handed in at Toke.
 - Issue fixes: #694 (throw must reach a creature), #695 (two roots, `buy 2 healer's root`), #697 (First Heat names the sell route; kit salve finding recorded on the issue), #690 (dashes in these quests and two conversation pairs).
-- Skill coverage: `eat` raises a command event and The Hunt gains an eat step; Vorn, Onna and the crafters gain teaching topics; Vorn's shouts topic corrected; Enchanter Skell renamed Enchanter Daff; the scab-hide jerkin at skill_minimum 1.
+- Skill coverage: `eat` raises a command event and The Hunt gains an eat step; Vorn, Onna and the crafters gain teaching topics; Vorn's shouts topic corrected; Enchanter Skell renamed Enchanter Daff; the scab-hide jerkin at skill_minimum 1 and `learn_only: true` (only quest 43's reward teaches it).
 - 39 loop-backlog lines cleared. No line names quests 32-43, 53-56 or 90-93.
 
 ## Notes for review

@@ -245,6 +245,20 @@ all eight bridges exist for Toke's offer to gate on.
 - `docs/roadmaps/QUEST_DIALOGUE_ROADMAP.md` phase 7 records this zone as done; `context.md`
   files for any touched package are updated; `PATCH_NOTES.md` has a player-facing entry.
 
+## Owner rulings at plan review (2026-10-30)
+
+1. **Mob thieves wake.** `StealMinRank: 1` is shared with mobs, so the five `thief`-archetype
+   mobs (all at skullduggery rank 1, refused by today's rank-2 gate) start stealing. Intended;
+   the patch notes say so.
+2. **The scab-hide jerkin** recipe is `learn_only: true` as well as `skill_minimum: 1`: learned
+   only from quest 43, never discovered at random.
+3. **Shadows leniency stays:** a caught plant counts, and the ambush step counts the opening blow
+   even if it is dodged. A failed plant or a missed opening draws a light, good-natured mocking
+   line.
+4. **Herbal Tea** drops its toxicity when it becomes a cooking drink.
+5. **Quest 76's attune** is `cast glow` at the cottage hearth (no real `read` or `use` action
+   exists).
+
 ## Owner ruling: menu renumbering (#690, 2026-10-30)
 
 A talk menu numbers lines by position (quest lines first, then info lines in file order,
