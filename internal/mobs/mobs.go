@@ -1202,24 +1202,6 @@ func (m *Mob) GetAngryCommand() string {
 	return ``
 }
 
-func (m *Mob) GetIdleCommand() string {
-
-	// Always a 1 in 100 chance it will do nothing for an idle.
-	// This is to prevent requiring Admins to assign an empy idlecommand to mob definitions
-	// while still allowing "no idle command found" behavior to run.
-	// Empty idle commands can still be defined in mobs, however.
-	if util.Rand(100) == 0 {
-		return ``
-	}
-
-	// First check if the mob has a specific action
-	if len(m.IdleCommands) > 0 {
-		return m.IdleCommands[util.Rand(len(m.IdleCommands))]
-	}
-
-	return ``
-}
-
 func (r *Mob) ConsidersAnAlly(m *Mob) bool {
 
 	// Same mob type always allies
