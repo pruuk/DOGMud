@@ -46,7 +46,7 @@ func SendSeen(actor Actor, cat messaging.Category, text string, chatter bool) {
 		room.SendVisualCommunicationHidingNames(cat, text, names, actor.GetUserId())
 		return
 	}
-	room.SendTextVisualHidingNames(cat, text, names, actor.GetUserId())
+	room.SendTextVisualHidingNames(cat, text, names, roomLineExcludes(actor)...)
 }
 
 // sendSpoken sends a speech line (say, shout) the actor spoke to everyone else
@@ -67,5 +67,17 @@ func sendSpoken(actor Actor, room *rooms.Room, cat messaging.Category, line stri
 		room.SendCommunicationHidingNames(cat, line, names, actor.GetUserId())
 		return
 	}
-	room.SendTextHidingNames(cat, line, names, messaging.HideSpeakerNames)
+	room.SendTextHidingNames(cat, line, names, messaging.HideSpeakerNames, roomLineExcludes(actor)...)
+}
+
+// roomLineExcludes is who an actor's room line leaves out: the actor itself
+// (a player does not read its own line; a mob's id 0 matches nobody), and,
+// for a MobActor, every listener in Skip (an ambient line over budget,
+// #317).
+func roomLineExcludes(actor Actor) []int {
+	ex := []int{actor.GetUserId()}
+	if m, ok := actor.(*MobActor); ok {
+		ex = append(ex, m.Skip...)
+	}
+	return ex
 }

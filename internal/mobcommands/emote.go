@@ -19,11 +19,15 @@ func Emote(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
-	actor := &actions.MobActor{Mob: mob, Room: room}
+	return emoteAs(&actions.MobActor{Mob: mob, Room: room}, rest)
+}
 
+// emoteAs is Emote's body for a given actor, so an ambient emote (#317,
+// ambient.go) sends the same line with its Skip list.
+func emoteAs(actor *actions.MobActor, rest string) (bool, error) {
 	if len(rest) == 0 {
 		actions.SendSeen(actor, messaging.CategoryMobEmote,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> emotes.`, mob.Character.Name), false)
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> emotes.`, actor.Mob.Character.Name), false)
 		return true, nil
 	}
 
@@ -37,7 +41,7 @@ func Emote(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	actions.SendSeen(actor, messaging.CategoryMobEmote,
-		actions.FormatMobEmoteText(mob.Character.Name, emoteText), false)
+		actions.FormatMobEmoteText(actor.Mob.Character.Name, emoteText), false)
 
 	return true, nil
 }

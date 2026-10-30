@@ -12,6 +12,10 @@ import (
 type MobActor struct {
 	Mob  *mobs.Mob
 	Room *rooms.Room
+	// Skip lists players this actor's room line leaves out: the listeners an
+	// ambient line is over budget for (#317, mobcommands.Ambient). Empty
+	// for every other line.
+	Skip []int
 }
 
 var _ Actor = (*MobActor)(nil)

@@ -24,6 +24,7 @@ type CommandAccess struct {
 var (
 	mobCommands map[string]CommandAccess = map[string]CommandAccess{
 		"aid":            {Aid, false},
+		"ambient":        {Ambient, true},
 		"attack":         {Attack, false},
 		"bash":           {Bash, false},
 		"befriend":       {Befriend, false},
