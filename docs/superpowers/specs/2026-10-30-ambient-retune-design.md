@@ -74,7 +74,7 @@ still hears it. The budget is in-memory per player, on the item-chatter `listene
 0 turns the budget off.
 
 - **Counts toward the budget:** room idle lines, mob idle chatter, weather ambient emotes, gossip,
-  item chatter.
+  item chatter, and the "You hear someone talking." echo of an ambient say into neighbouring rooms (owner 2026-10-30; telemetry source `say_echo`, counted per receiving room).
 - **Exempt:** NPC conversations (the budget only gates whether one starts, and a conversation
   starts only if every player present has budget, so none is cut off mid-exchange); anything a
   player's own action triggers (arrival greetings, `player_enter` emotes); tips (`set tips`);

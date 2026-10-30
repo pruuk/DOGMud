@@ -39,8 +39,9 @@
 7. **`ambientmultiplier: 0` with the budget off.** The spec divides the budget window by the multiplier. This plan reads 0 literally: with the budget on, the window is endless, so no budgeted line reaches anyone in that zone; with the budget off (knob 0), the zone's mob chatter and room idle are still 0 (they are scaled), and weather, gossip and item lines are untouched. No shipped zone sets 0.
 8. **Go defaults reproduce today; `config.yaml` carries the retune.** Every new knob's Go default is today's behaviour (scales 1.0, room idle 5, tips 75, budget 0, weather cadence 24, seasonal 3), so test binaries and a config without the keys behave as master does. The shipped values (0.5, 3, 5, 48, 4) live only in `config.yaml`, per `dogmud-balance-config`.
 
+9. **The echo of an ambient say is budgeted (owner ruling 2026-10-30, added to spec section 2).** `actions.Say` echoes "You hear someone talking." into every neighbouring room with an exit back (`internal/actions/say.go:40`, `Room.SendTextToExits(..., true)`, `internal/rooms/rooms.go:681-712`). The echo is a quiet RoomId message, and the delivery hook gives a quiet message only to a player with the `superhearing` condition flag (`internal/hooks/Message_SendMessages.go:50-52,89-93`); its own comment notes no shipped condition grants that flag. So the budgeting (Task 8A) charges and counts only players with `superhearing`, and today it changes nothing a player sees; the `say_echo` telemetry rows will read 0 in both playtests. It becomes live the day a condition grants the flag. Non-ambient says echo exactly as today.
+
 Observations, not changed (each would widen #317 past its spec; listed for the owner in the final summary):
-- A mob's idle `say` still echoes "You hear someone talking." into neighbouring rooms (`internal/actions/say.go:40`), unbudgeted.
 - Behaviour-tree idle lines (`mob_idle` branches such as Cleric Hadwen's 4% hint, `behaviors/pothole_coulee/9100-cleric_hadwen.yaml:301-306`) and room behaviour trees (`room_idle`) are not touched by the knobs or the budget.
 - `dogmud-balance-config` keeps dated knob counts, not a knob list, so it needs no edit.
 
@@ -78,6 +79,10 @@ Observations, not changed (each would widen #317 past its spec; listed for the o
 | Speech guard: `mobcommands/emote.go` must call `actions.SendSeen(` exactly 2 times, `mobcommands/say.go` `actions.Say(` once, and neither may name `HidingNames`, `room.SendText(` etc. | `internal/guards/speech_wrapper_guard_test.go:25-55` |
 | Mob command table and `TryCommand`; mob-only commands are listed in `mobOnlyCommands` or the boot parity audit warns | `internal/mobcommands/mobcommands.go:25-105,118-203`; `internal/actions/divergences.go:184-205,224-262` |
 | Mob input is split at the first space only (`processMobInput`), so one queued input keeps its `;` | `world.go:1079-1111` |
+| Say echo: `room.SendTextToExits("You hear someone talking.", true)` before the room line | `internal/actions/say.go:40` |
+| `SendTextToExits(txt, isQuiet, excludeUserIds...)` queues one RoomId `events.Message` per exit in each neighbour that leads back, `(From <exit>) ` prefixed, all sharing one exclude list; 6 production callers | `internal/rooms/rooms.go:681-712`; grep `SendTextToExits(` |
+| RoomId messages honour `ExcludeUserIds`; a quiet one reaches only a player with the `superhearing` flag (`conditions.SuperHearing`), which no shipped condition grants | `internal/hooks/Message_SendMessages.go:50-52,66-93`; `internal/conditions/conditionspec.go:66` |
+| `events.DrainQueuedRoomMessagesForTest(roomId)` returns queued RoomId messages | `internal/events/events.go:486-502` |
 | Item chatter: holder line `holderUser.SendText`, room line `room.SendTextHidingNames(..., exclude...)`, cap `listenerCapNext` set after an `item_idle` line | `internal/behaviortree/actions_item_voice.go:45-50,226-260` |
 | Weather: `seasonalEmoteOneIn = 3` const; weather line and seasonal line both `room.SendText(messaging.CategoryWeather, line)`; signature ends `mildChancePct, strongChancePct int, roll func(int) int`; one test caller | `modules/weather/engine/emotes.go:12-15,40-43,83-97`; `modules/weather/engine/emotes_config_test.go:63` |
 | Weather pass gate `m.cfg.EmoteMode == EmoteModeModule && evt.RoundNumber >= m.nextEmote` | `modules/weather/weather.go:88-91` |
@@ -127,14 +132,14 @@ Observations, not changed (each would widen #317 past its spec; listed for the o
 | `internal/rooms/zoneconfig.go` | Modify | `AmbientMultiplier`, `WanderMultiplier`, validation, lookups |
 | `internal/rooms/test_helpers.go` | Modify | `MultiplierPtr` |
 | `internal/rooms/zoneconfig_multiplier_test.go` | Create | Unset, zero, negative, YAML round trip |
-| `internal/ambient/ambient.go` | Create | `Plan`, `AllHaveBudget`, single-line visits, `RoundTick` |
+| `internal/ambient/ambient.go` | Create | `Plan`, `AllHaveBudget`, single-line visits, `RoundTick`; `SourceSayEcho` and `HearsQuiet` (Task 8A) |
 | `internal/ambient/telemetry.go` | Create (Task 12) | Counters, `CountMove`, summary lines |
 | `internal/ambient/testing.go` | Create | `ResetForTest`, `ChargeForTest` |
 | `internal/ambient/ambient_test.go` | Create | Budget, perception, exclusion, zone window, visits |
 | `internal/ambient/telemetry_test.go` | Create (Task 12) | Off keeps nothing; on counts and writes one line per room |
 | `internal/ambient/main_test.go` | Create | Logger setup |
 | `internal/ambient/context.md` | Create | Package doc |
-| `internal/actions/actor_mob.go` | Modify | `MobActor.Skip` |
+| `internal/actions/actor_mob.go` | Modify | `MobActor.Skip`; `MobActor.EchoExclude` (Task 8A) |
 | `internal/actions/room_lines.go` | Modify | `roomLineExcludes` in the mob branches |
 | `internal/actions/room_line_excludes_test.go` | Create | Skip list reaches the excludes |
 | `internal/actions/divergences.go` | Modify | `ambient` in `mobOnlyCommands` |
@@ -142,6 +147,11 @@ Observations, not changed (each would widen #317 past its spec; listed for the o
 | `internal/mobcommands/ambient.go` | Create | The `ambient` mob command |
 | `internal/mobcommands/mobcommands.go` | Modify | Register `ambient` |
 | `internal/mobcommands/ambient_test.go` | Create | Budgeted say and emote; plain say untouched |
+| `internal/rooms/rooms.go` | Modify (Task 8A) | `SendTextToExitsExcluding`; `SendTextToExits` delegates to it |
+| `internal/rooms/send_to_exits_test.go` | Create (Task 8A) | Per-neighbour excludes |
+| `internal/actions/say.go` | Modify (Task 8A) | `sendSayEcho` honours `MobActor.EchoExclude` |
+| `internal/actions/say_echo_test.go` | Create (Task 8A) | A player's say still echoes unbudgeted |
+| `internal/mobcommands/ambient_echo_test.go` | Create (Task 8A) | Over-budget neighbour left out, in-budget one charged |
 | `internal/hooks/MobIdle_idle_roll.go` | Create | `idleRollInput`, `issueIdleChatter` |
 | `internal/hooks/idle_roll_wiring_test.go` | Create | Wrapping, zeros, `;`, multipliers, gossip |
 | `internal/hooks/NewRound_RoomIdle.go` | Create | `roomIdleChancePer10k`, `sendRoomIdleLine` |
@@ -2775,6 +2785,481 @@ EOF
 
 ---
 
+## Task 8A: Budget the echo of an ambient say (Opus)
+
+Owner ruling 2026-10-30. When an ambient say (the `ambient` mob command: idle chatter and gossip) echoes "You hear someone talking." into neighbouring rooms, each listener there is charged against the same per-listener budget and left out if over it; telemetry counts it under source `say_echo` in the receiving room. Every other say (players, reactions, quests, conversations) echoes exactly as today. See spec deviation 9: the echo is quiet, so only a player with the `superhearing` flag takes it in, and only such a player is charged.
+
+Design: `rooms` cannot import `ambient` (ambient imports rooms), so `Room.SendTextToExitsExcluding` takes a callback that names the excludes for each neighbouring room; `SendTextToExits` delegates to it with a fixed list. `MobActor` gains `EchoExclude func(*rooms.Room) []int`, which only `mobcommands.Ambient` sets; `actions.Say` uses it when present.
+
+**Files:** `internal/rooms/rooms.go`, `internal/rooms/send_to_exits_test.go`, `internal/ambient/ambient.go`, `internal/actions/actor_mob.go`, `internal/actions/say.go`, `internal/actions/say_echo_test.go`, `internal/mobcommands/ambient.go`, `internal/mobcommands/ambient_echo_test.go`
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `internal/rooms/send_to_exits_test.go`:
+
+```go
+package rooms
+
+import (
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/exit"
+)
+
+// SendTextToExitsExcluding asks for the excludes once per neighbouring room
+// with an exit back, and puts them on that room's message only (#317).
+func TestSendTextToExitsExcluding_PerNeighbourExcludes(t *testing.T) {
+	a := &Room{RoomId: 3190, Exits: map[string]exit.RoomExit{"north": {RoomId: 3191}, "east": {RoomId: 3192}}}
+	b := &Room{RoomId: 3191, Exits: map[string]exit.RoomExit{"south": {RoomId: 3190}}}
+	c := &Room{RoomId: 3192, Exits: map[string]exit.RoomExit{"west": {RoomId: 3190}}}
+	defer SeedRoomsForTest(map[int]*Room{3190: a, 3191: b, 3192: c}, map[string]*ZoneConfig{})()
+	defer events.DrainAllQueuedEventsForTest()
+
+	asked := map[int]int{}
+	a.SendTextToExitsExcluding("You hear someone talking.", true, func(tgt *Room) []int {
+		asked[tgt.RoomId]++
+		return []int{tgt.RoomId * 10}
+	})
+	for _, tc := range []struct {
+		room    int
+		exit    string
+		exclude int
+	}{{3191, "south", 31910}, {3192, "west", 31920}} {
+		msgs := events.DrainQueuedRoomMessagesForTest(tc.room)
+		if len(msgs) != 1 {
+			t.Fatalf("room %d: %d messages, want 1", tc.room, len(msgs))
+		}
+		m := msgs[0]
+		if !strings.Contains(m.Text, tc.exit) || !strings.Contains(m.Text, "You hear someone talking.") || !m.IsQuiet {
+			t.Errorf("room %d message %+v", tc.room, m)
+		}
+		if !slices.Equal(m.ExcludeUserIds, []int{tc.exclude}) {
+			t.Errorf("room %d excludes %v, want only its own [%d]", tc.room, m.ExcludeUserIds, tc.exclude)
+		}
+		if asked[tc.room] != 1 {
+			t.Errorf("room %d: excludes asked %d times, want once", tc.room, asked[tc.room])
+		}
+	}
+
+	// The plain sender still puts one list on every neighbour.
+	a.SendTextToExits("A bell rings.", false, 7)
+	for _, room := range []int{3191, 3192} {
+		msgs := events.DrainQueuedRoomMessagesForTest(room)
+		if len(msgs) != 1 || !slices.Equal(msgs[0].ExcludeUserIds, []int{7}) {
+			t.Errorf("SendTextToExits room %d: %+v", room, msgs)
+		}
+	}
+}
+```
+
+Create `internal/mobcommands/ambient_echo_test.go`:
+
+```go
+package mobcommands
+
+import (
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/ambient"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
+)
+
+const keenEarsConditionId = 3170
+
+// seedEchoNeighbour: the ambient fixture with user 2 moved next door into
+// room 2 (room 1's north neighbour, which leads back south) and given the
+// superhearing flag, the only thing that lets a quiet echo reach a player.
+func seedEchoNeighbour(t *testing.T, budget int) {
+	t.Helper()
+	seedAmbientCommand(t, budget)
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		keenEarsConditionId: {ConditionId: keenEarsConditionId, Name: "Keen Ears", RoundInterval: 1, TriggerCount: 1000,
+			Flags: []conditions.Flag{conditions.SuperHearing}},
+	}))
+	u2 := users.GetByUserId(2)
+	rooms.LoadRoom(1).RemovePlayer(2)
+	u2.Character.RoomId = 2
+	rooms.LoadRoom(2).AddPlayer(2)
+	u2.Character.Conditions.AddCondition(keenEarsConditionId, false)
+	if !u2.Character.HasConditionFlag(conditions.SuperHearing) {
+		t.Fatal("fixture: user 2 must hold the superhearing flag")
+	}
+	events.DrainQueuedRoomMessagesForTest(2)
+}
+
+func echoTo(t *testing.T, roomId int) events.Message {
+	t.Helper()
+	for _, m := range events.DrainQueuedRoomMessagesForTest(roomId) {
+		if strings.Contains(m.Text, "You hear someone talking.") {
+			return m
+		}
+	}
+	t.Fatalf("no echo queued for room %d", roomId)
+	return events.Message{}
+}
+
+func TestAmbientSayEcho_OverBudgetNeighbourIsLeftOut(t *testing.T) {
+	seedEchoNeighbour(t, 5)
+	ambient.ChargeForTest(2, 6005)
+	TryCommand("ambient", "mob_chatter say Fresh bread!", 100)
+	if m := echoTo(t, 2); !slices.Contains(m.ExcludeUserIds, 2) {
+		t.Fatalf("user 2 is over budget and must be left out of the echo, excludes %v", m.ExcludeUserIds)
+	}
+}
+
+func TestAmbientSayEcho_InBudgetNeighbourHearsAndIsCharged(t *testing.T) {
+	seedEchoNeighbour(t, 5)
+	TryCommand("ambient", "gossip say Heard about the bridge?", 100)
+	if m := echoTo(t, 2); slices.Contains(m.ExcludeUserIds, 2) {
+		t.Fatalf("user 2 has budget and must get the echo, excludes %v", m.ExcludeUserIds)
+	}
+	// The echo charged user 2. (A second ambient say would not show it: user
+	// 1 in the speaker's room is now over budget too, and a say nobody in its
+	// own room hears is dropped whole, echo included.)
+	if ambient.AllHaveBudget(rooms.LoadRoom(2)) {
+		t.Fatal("the echo must have charged user 2 against the ambient budget")
+	}
+}
+
+func TestPlainMobSayEcho_IsNeverBudgeted(t *testing.T) {
+	seedEchoNeighbour(t, 5)
+	ambient.ChargeForTest(2, 6005)
+	TryCommand("say", "Halt, who goes there?", 100)
+	if m := echoTo(t, 2); slices.Contains(m.ExcludeUserIds, 2) {
+		t.Fatalf("a plain say is not ambient; its echo must not leave anyone out, excludes %v", m.ExcludeUserIds)
+	}
+}
+```
+
+Create `internal/actions/say_echo_test.go`:
+
+```go
+package actions
+
+import (
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/ambient"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
+)
+
+// A player's say still echoes next door unbudgeted (#317): even with the
+// neighbour over budget, nobody is left out of the echo.
+func TestPlayerSayEcho_IsNeverBudgeted(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.Balance.AmbientListenerBudgetRounds = 5
+	configs.SetConfigForTest(t, cfg)
+	t.Cleanup(ambient.ResetForTest())
+	t.Cleanup(util.ResetRoundCountForTest)
+	util.SetRoundCountForTest(6000)
+
+	here := &rooms.Room{RoomId: 3195, Exits: map[string]exit.RoomExit{"north": {RoomId: 3196}}}
+	next := &rooms.Room{RoomId: 3196, Exits: map[string]exit.RoomExit{"south": {RoomId: 3195}}}
+	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{3195: here, 3196: next}, map[string]*rooms.ZoneConfig{}))
+	speaker := users.NewTestUser(31951, "echospk", "Echospk", 0)
+	speaker.Character.RoomId = 3195
+	neighbour := users.NewTestUser(31961, "echonb", "Echonb", 0)
+	neighbour.Character.RoomId = 3196
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{31951: speaker, 31961: neighbour}))
+	here.AddPlayer(31951)
+	next.AddPlayer(31961)
+	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
+	ambient.ChargeForTest(31961, 6005)
+
+	Say(NewUserActorInRoom(speaker, here), "Hello?")
+	var echo *events.Message
+	for _, m := range events.DrainQueuedRoomMessagesForTest(3196) {
+		if strings.Contains(m.Text, "You hear someone talking.") {
+			echo = &m
+			break
+		}
+	}
+	if echo == nil {
+		t.Fatal("a player's say must still echo into the neighbouring room")
+	}
+	if slices.Contains(echo.ExcludeUserIds, 31961) {
+		t.Fatalf("a player's say is never budgeted, excludes %v", echo.ExcludeUserIds)
+	}
+}
+```
+
+- [ ] **Step 2: Run them and see them fail**
+
+```bash
+go test ./internal/rooms/ -run TestSendTextToExitsExcluding -count=1
+go test ./internal/mobcommands/ -run 'TestAmbientSayEcho|TestPlainMobSayEcho' -count=1
+go test ./internal/actions/ -run TestPlayerSayEcho -count=1
+```
+
+Expected: `a.SendTextToExitsExcluding undefined`; `TestAmbientSayEcho_OverBudgetNeighbourIsLeftOut` fails with `user 2 is over budget and must be left out of the echo, excludes []`; the plain-say and player-say tests already pass (they pin today's behaviour, and must stay green after Step 3).
+
+- [ ] **Step 3: Implement**
+
+`internal/rooms/rooms.go`, replace the whole `SendTextToExits` function:
+
+```go
+func (r *Room) SendTextToExits(txt string, isQuiet bool, excludeUserIds ...int) {
+
+	testExitIds := []int{}
+	for _, rExit := range r.Exits {
+		testExitIds = append(testExitIds, rExit.RoomId)
+	}
+	for _, tExit := range r.ExitsTemp {
+		testExitIds = append(testExitIds, tExit.RoomId)
+	}
+
+	for _, roomId := range testExitIds {
+
+		tgtRoom := LoadRoom(roomId)
+		if tgtRoom == nil {
+			continue
+		}
+
+		for exitName, tExit := range tgtRoom.Exits {
+			if tExit.RoomId != r.RoomId {
+				continue
+			}
+
+			events.AddToQueue(events.Message{
+				RoomId:         tgtRoom.RoomId,
+				Text:           fmt.Sprintf(`(From <ansi fg="exit">%s</ansi>) `, exitName) + txt + "\n",
+				IsQuiet:        isQuiet,
+				ExcludeUserIds: excludeUserIds,
+			})
+		}
+
+	}
+
+}
+```
+
+with:
+
+```go
+func (r *Room) SendTextToExits(txt string, isQuiet bool, excludeUserIds ...int) {
+	r.SendTextToExitsExcluding(txt, isQuiet, func(*Room) []int { return excludeUserIds })
+}
+
+// SendTextToExitsExcluding is SendTextToExits with the excludes named per
+// neighbouring room: exclude is asked once for each neighbour that has an
+// exit back, the first time one is found, and its answer goes on that
+// room's messages only. An ambient say's echo uses it to leave out the
+// listeners over their ambient budget in each room (#317).
+func (r *Room) SendTextToExitsExcluding(txt string, isQuiet bool, exclude func(tgt *Room) []int) {
+
+	testExitIds := []int{}
+	for _, rExit := range r.Exits {
+		testExitIds = append(testExitIds, rExit.RoomId)
+	}
+	for _, tExit := range r.ExitsTemp {
+		testExitIds = append(testExitIds, tExit.RoomId)
+	}
+
+	excludes := map[int][]int{}
+	for _, roomId := range testExitIds {
+
+		tgtRoom := LoadRoom(roomId)
+		if tgtRoom == nil {
+			continue
+		}
+
+		for exitName, tExit := range tgtRoom.Exits {
+			if tExit.RoomId != r.RoomId {
+				continue
+			}
+
+			ex, asked := excludes[tgtRoom.RoomId]
+			if !asked {
+				ex = exclude(tgtRoom)
+				excludes[tgtRoom.RoomId] = ex
+			}
+
+			events.AddToQueue(events.Message{
+				RoomId:         tgtRoom.RoomId,
+				Text:           fmt.Sprintf(`(From <ansi fg="exit">%s</ansi>) `, exitName) + txt + "\n",
+				IsQuiet:        isQuiet,
+				ExcludeUserIds: ex,
+			})
+		}
+
+	}
+
+}
+```
+
+`internal/ambient/ambient.go`: replace the `Source` constants and `Sources`:
+
+```go
+const (
+	SourceRoomIdle    Source = "room_idle"
+	SourceMobChatter  Source = "mob_chatter"
+	SourceWeather     Source = "weather"
+	SourceGossip      Source = "gossip"
+	SourceItemChatter Source = "item_chatter"
+)
+
+// Sources lists every counted source, in report order.
+var Sources = []Source{SourceRoomIdle, SourceMobChatter, SourceWeather, SourceGossip, SourceItemChatter}
+```
+
+with:
+
+```go
+const (
+	SourceRoomIdle    Source = "room_idle"
+	SourceMobChatter  Source = "mob_chatter"
+	SourceWeather     Source = "weather"
+	SourceGossip      Source = "gossip"
+	SourceItemChatter Source = "item_chatter"
+	// SourceSayEcho is "You hear someone talking." in a room next to an
+	// ambient say, counted in the receiving room (owner 2026-10-30).
+	SourceSayEcho Source = "say_echo"
+)
+
+// Sources lists every counted source, in report order.
+var Sources = []Source{SourceRoomIdle, SourceMobChatter, SourceWeather, SourceGossip, SourceItemChatter, SourceSayEcho}
+```
+
+and append to the same file (adding `"github.com/GoMudEngine/GoMud/internal/conditions"` to its imports):
+
+```go
+// HearsQuiet is the Perceives for a quiet line (a say's echo next door):
+// the delivery hook gives a quiet message only to a player with the
+// superhearing flag (hooks/Message_SendMessages.go), so only such a player
+// takes it in and is charged.
+func HearsQuiet(u *users.UserRecord) bool {
+	return u.Character.HasConditionFlag(conditions.SuperHearing)
+}
+```
+
+`internal/actions/actor_mob.go`, replace the Task 8 struct:
+
+```go
+	// Skip lists players this actor's room line leaves out: the listeners an
+	// ambient line is over budget for (#317, mobcommands.Ambient). Empty
+	// for every other line.
+	Skip []int
+}
+```
+
+with:
+
+```go
+	// Skip lists players this actor's room line leaves out: the listeners an
+	// ambient line is over budget for (#317, mobcommands.Ambient). Empty
+	// for every other line.
+	Skip []int
+	// EchoExclude, when set, names the players to leave out of a say's
+	// "You hear someone talking." echo in each neighbouring room. Only an
+	// ambient say sets it (#317); every other say echoes to everyone.
+	EchoExclude func(*rooms.Room) []int
+}
+```
+
+`internal/actions/say.go`, replace:
+
+```go
+	room := actor.GetRoom()
+	room.SendTextToExits(`You hear someone talking.`, true)
+```
+
+with:
+
+```go
+	room := actor.GetRoom()
+	sendSayEcho(actor, room)
+```
+
+and append:
+
+```go
+// sayEchoText is what a neighbouring room hears of a say.
+const sayEchoText = `You hear someone talking.`
+
+// sendSayEcho echoes a say into the neighbouring rooms. An ambient say
+// (a MobActor with EchoExclude, #317) leaves out each neighbour's
+// over-budget listeners; every other say echoes exactly as before.
+func sendSayEcho(actor Actor, room *rooms.Room) {
+	if m, ok := actor.(*MobActor); ok && m.EchoExclude != nil {
+		room.SendTextToExitsExcluding(sayEchoText, true, m.EchoExclude)
+		return
+	}
+	room.SendTextToExits(sayEchoText, true)
+}
+```
+
+adding `"github.com/GoMudEngine/GoMud/internal/rooms"` to `say.go`'s imports.
+
+`internal/mobcommands/ambient.go`, replace the say branch's last line:
+
+```go
+	return sayAs(&actions.MobActor{Mob: mob, Room: room, Skip: plan.Exclude}, text)
+}
+```
+
+with:
+
+```go
+	// The echo next door is ambient too: each neighbour's listeners are
+	// charged and an over-budget one is left out (owner 2026-10-30).
+	echo := func(tgt *rooms.Room) []int {
+		return ambient.Plan(ambient.Line{Room: tgt, Source: ambient.SourceSayEcho, Perceives: ambient.HearsQuiet}).Exclude
+	}
+	return sayAs(&actions.MobActor{Mob: mob, Room: room, Skip: plan.Exclude, EchoExclude: echo}, text)
+}
+```
+
+- [ ] **Step 4: Run and pass**
+
+```bash
+gofmt -l internal/ modules/
+go build ./...
+go test ./internal/rooms/ ./internal/actions/ ./internal/mobcommands/ ./internal/ambient/ -count=1
+go test . ./internal/guards/ -count=1
+```
+
+Expected: gofmt empty; all `ok`. `TestSpeechWrappersDoNotReFork` stays green (`actions/say.go` is not a wrapper file, and the wrappers are unchanged). If `echoTo` finds no echo for room 2, check the mobcommands fixture's room 2 has an exit back to room 1 (`internal/mobcommands/mobcommands_test.go`, `room2.Exits`); if it has none, add `"south": {RoomId: 1}` to room 2's exits inside `seedEchoNeighbour` before moving user 2, rather than changing the shared fixture.
+
+- [ ] **Step 5: Prove the echo test can fail**
+
+Sabotage `sendSayEcho`: delete its `if m, ok := actor.(*MobActor); ok && m.EchoExclude != nil { ... }` block. Run `go test ./internal/mobcommands/ -run 'TestAmbientSayEcho' -count=1`; expected red with `user 2 is over budget and must be left out of the echo, excludes []`. Restore; green.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add internal/rooms/rooms.go internal/rooms/send_to_exits_test.go internal/ambient/ambient.go internal/actions/actor_mob.go internal/actions/say.go internal/actions/say_echo_test.go internal/mobcommands/ambient.go internal/mobcommands/ambient_echo_test.go
+git commit -F - <<'EOF'
+feat: #317 budget the echo of an ambient say next door
+
+Owner ruling 2026-10-30. An ambient say's "You hear someone talking."
+echo charges each neighbouring room's listeners against the ambient budget
+and leaves out the over-budget ones; telemetry source say_echo, counted in
+the receiving room. Room.SendTextToExitsExcluding names excludes per
+neighbour; MobActor.EchoExclude is set only by the ambient command, so
+every other say echoes as before. The echo is quiet, so only a player
+with the superhearing flag takes it in or is charged.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+EOF
+```
+
+---
+
 ## Task 9: Wire the split roll and gossip into `HandleIdleMobs` (Opus)
 
 **Files:** `internal/hooks/MobIdle_idle_roll.go`, `internal/hooks/MobIdle_HandleIdleMobs.go`, `internal/hooks/idle_roll_wiring_test.go`, `internal/mobs/mobs.go`, `internal/mobs/mobs_test.go`
@@ -3909,7 +4394,7 @@ EOF
 
 **Files:** `internal/ambient/telemetry.go`, `internal/ambient/telemetry_test.go`, `internal/ambient/ambient.go`, `internal/ambient/testing.go`, `internal/hooks/MobIdle_HandleIdleMobs.go`, `internal/hooks/NewRound_IdleMobs.go`, `internal/behaviortree/actions_scout.go`
 
-Line format (stable; `tools/ambient_report.py` reads it): message `ambient.telemetry`, then in this order `window` (report number), `room`, `zone`, `round_seconds`, `window_rounds`, `listener_rounds` (players present summed over the window's rounds), then for each source in `room_idle, mob_chatter, weather, gossip, item_chatter` the three keys `<source>_offered`, `<source>_delivered`, `<source>_suppressed` (per listener: offered = delivered + suppressed), then `move_idle`, `move_track`, `move_path`. One line per room with any listener rounds, line or move in the window.
+Line format (stable; `tools/ambient_report.py` reads it): message `ambient.telemetry`, then in this order `window` (report number), `room`, `zone`, `round_seconds`, `window_rounds`, `listener_rounds` (players present summed over the window's rounds), then for each source in `room_idle, mob_chatter, weather, gossip, item_chatter, say_echo` (Task 8A added `say_echo`, counted in the room that receives the echo) the three keys `<source>_offered`, `<source>_delivered`, `<source>_suppressed` (per listener: offered = delivered + suppressed), then `move_idle`, `move_track`, `move_path`. One line per room with any listener rounds, line or move in the window.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -4005,6 +4490,21 @@ func TestTelemetry_OnCountsAndWritesOneLinePerRoom(t *testing.T) {
 	}
 	if len(*lines) != 2 || (*lines)[1]["mob_chatter_offered"] != 0 || (*lines)[1]["move_idle"] != 0 {
 		t.Fatalf("second window must start from zero: %v", *lines)
+	}
+}
+
+// An ambient say's echo (Task 8A) is planned against the neighbouring room,
+// so it is counted there under say_echo, apart from the speaker's room.
+func TestTelemetry_SayEchoCountsInTheReceivingRoom(t *testing.T) {
+	neighbour := seedAmbientRoom(t, 0, nil, listenA, listenB)
+	pinTelemetry(t, true, 1)
+	lines := captureEmit(t)
+	Plan(Line{Room: neighbour, Source: SourceSayEcho})
+	for r := ambNow + 1; r <= ambNow+16; r++ {
+		RoundTick(r)
+	}
+	if len(*lines) != 1 || (*lines)[0]["room"] != ambRoom || (*lines)[0]["say_echo_delivered"] != 2 || (*lines)[0]["mob_chatter_offered"] != 0 {
+		t.Fatalf("the echo must be counted as say_echo in the receiving room: %v", *lines)
 	}
 }
 ```
@@ -4399,7 +4899,7 @@ import sys
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 PAIR = re.compile(r'(\w+)=("(?:[^"\\]|\\.)*"|\S+)')
 MARK = "ambient.telemetry"
-SOURCES = ["room_idle", "mob_chatter", "weather", "gossip", "item_chatter"]
+SOURCES = ["room_idle", "mob_chatter", "weather", "gossip", "item_chatter", "say_echo"]
 MOVES = ["move_idle", "move_track", "move_path"]
 
 
@@ -5186,9 +5686,9 @@ weather engine) may be imported back.
 ## Files
 
 - **ambient.go**: `Source` and `Sources` (`room_idle`, `mob_chatter`,
-  `weather`, `gossip`, `item_chatter`), `ParseSource`, `Line`, `Routing`,
-  `Plan`, `Sees`, `AllHaveBudget`, `SingleLineHeard`,
-  `MarkSingleLineHeard`, `RoundTick`.
+  `weather`, `gossip`, `item_chatter`, `say_echo`), `ParseSource`, `Line`,
+  `Routing`, `Plan`, `Sees`, `HearsQuiet`, `AllHaveBudget`,
+  `SingleLineHeard`, `MarkSingleLineHeard`, `RoundTick`.
 - **telemetry.go**: `MoveKind` and `MoveKinds` (`move_idle`, `move_track`,
   `move_path`), `TelemetryMessage`, `TelemetryEnabled`, `CountMove`, and
   the per-window summary.
@@ -5209,7 +5709,11 @@ Counted sources and their sites: room idle (`hooks.sendRoomIdleLine`), mob
 idle emote and say and gossip (the `ambient` mob command,
 `mobcommands.Ambient`), weather and season lines
 (`weather/engine.sendAmbientWeather`), item `item_idle` lines
-(`behaviortree.actSpeak`). Exempt: NPC conversations (only their start is
+(`behaviortree.actSpeak`), and the "You hear someone talking." echo of an
+ambient say in each neighbouring room (`say_echo`, through
+`MobActor.EchoExclude` and `rooms.Room.SendTextToExitsExcluding`, with
+`Perceives: ambient.HearsQuiet` since the echo is quiet and only a
+`superhearing` player hears it). Exempt: NPC conversations (only their start is
 gated, by `AllHaveBudget`), anything a player's own action triggers, tips,
 and event lines.
 
@@ -5390,7 +5894,10 @@ Append to `internal/actions/context.md`:
 `MobActor.Skip` lists players a mob's room line leaves out: the listeners
 an ambient emote or say is over budget for. `SendSeen` and `sendSpoken`
 pass `roomLineExcludes(actor)` (the actor's own id plus `Skip`) to the
-room senders. Empty for every other line.
+room senders. Empty for every other line. `MobActor.EchoExclude`, set only
+by an ambient say, names the over-budget listeners to leave out of the
+"You hear someone talking." echo in each neighbouring room
+(`sendSayEcho` in `say.go`); every other say echoes as before.
 ```
 
 Append to `internal/rooms/context.md`:
@@ -5406,6 +5913,11 @@ fails `Validate` (and boot). Read with `ZoneAmbientMultiplier(zone)` and
 `ZoneWanderMultiplier(zone)`. An instance clone keeps its template room's
 `Zone`, so a paid instance uses its template zone's values. Test helper
 `MultiplierPtr`.
+
+`SendTextToExitsExcluding(txt, isQuiet, exclude)` is `SendTextToExits` with
+the excludes named per neighbouring room (asked once per neighbour with an
+exit back); `SendTextToExits` delegates to it. The ambient say echo uses
+it (#317).
 ```
 
 In `internal/configs/context.md`, replace:
@@ -5590,6 +6102,7 @@ Write the PR body with Write into your scratchpad (`pr-body.md`):
 - Mob idle chatter and movement roll apart, each weighted by its share of the pool, so every scale at 1.0 keeps today's rates (tested by formula and a seeded million-round run). A guard holds the verb table complete.
 - A one-line room shows its line once per visit.
 - `internal/ambient`: a per-listener budget (`AmbientListenerBudgetRounds`, ships 5) for room idle, mob idle chatter, weather, gossip and item chatter; conversations start only when everyone present has budget.
+- The "You hear someone talking." echo of an ambient say charges each neighbouring room's listeners too (owner ruling 2026-10-30, telemetry `say_echo`). The echo is quiet, so today it reaches only players with the superhearing flag; other says echo as before.
 - Zone `ambientmultiplier` / `wandermultiplier` and mob `wandermultiplier` (unset 1.0, 0 never). Planar Oasis `wandermultiplier`: <value, or "left unset">.
 - Telemetry behind `AmbientTelemetry` (off) and `tools/ambient_report.py`.
 - <If Task 16 ran: "The zone wander multiplier also slows tracking and goal walks (run 1 showed the royals' moves dominate)." Else: "Tracking and goal walks are not scaled; run 1 showed idle moves dominate (numbers on #317).">
@@ -5633,6 +6146,7 @@ Read the printed URL: it must be `https://github.com/pruuk/DOGMud/pull/...`. The
 | Verb table and guard that can fail | 4, 5 |
 | Single-line rooms once per visit | 7, 10 |
 | Section 2 budget, counted and exempt sources, one helper, conversations gated | 7, 8, 10, 11 |
+| Section 2 echo of an ambient say budgeted, `say_echo` telemetry (owner 2026-10-30) | 8A, 12 |
 | Section 3 zone and mob multipliers, pointers, Oasis value after baseline, conditional tracking and goal scaling | 4, 6, 9, 15, 16, 17 |
 | Section 4 telemetry, report script, two playtests on #317 | 12, 13, 14, 15, 18 |
 | Testing list (knob config tests and 0 silences; parity; budget; zone multiplier; single line; guard; telemetry; script) | 2 to 13 |
