@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -70,7 +71,11 @@ func seedVoiceWorld(t *testing.T) (bearer, listener *users.UserRecord) {
 	cfg.Balance.ItemChatterNormalChancePct = 100
 	cfg.Balance.ItemChatterNormalCooldownRounds = 20
 	cfg.Balance.ItemChatterListenerCapRounds = 10
+	// The ambient listener budget (#317) is off here: these tests are about
+	// the item voice, and an earlier test may have loaded the shipped value.
+	cfg.Balance.AmbientListenerBudgetRounds = 0
 	configs.SetConfigForTest(t, cfg)
+	t.Cleanup(ambient.ResetForTest())
 
 	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{}))
 	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{

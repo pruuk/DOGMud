@@ -2867,9 +2867,14 @@ Modules:
     # Thin spawns for more clear-sky stretches between systems.
     SpawnRateScale: 0.7
     EmoteMode: module
-    EmoteEveryRounds: 24
+    # A weather or season line pass runs every EmoteEveryRounds rounds, give
+    # or take a quarter (48 is about 3 minutes); 0 turns them off. In calm
+    # weather a seasonal line plays on 1 pass in SeasonalEmoteOneIn (0 =
+    # never). Each line counts toward Balance.AmbientListenerBudgetRounds.
+    EmoteEveryRounds: 48
     EmoteMildChancePct: 30
     EmoteStrongChancePct: 100
+    SeasonalEmoteOneIn: 4
     ConditionsEnabled: false
     Persist: true
     IncludeSecretExits: true

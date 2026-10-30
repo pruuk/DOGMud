@@ -60,7 +60,7 @@ func TestEmitAmbient_ReadsConfiguredStrongFeltThreshold(t *testing.T) {
 		c.Balance.WeatherStrongFeltThreshold = configs.ConfigFloat(threshold)
 		configs.SetConfigForTest(t, c)
 
-		return EmitAmbient(g, fronts, simCfg, weather, nil, tables, nil, 100, 100, roll)
+		return EmitAmbient(g, fronts, simCfg, weather, nil, tables, nil, 100, 100, 3, roll)
 	}
 
 	t.Run("shipped 0.5: felt 0.6 reaches Strong", func(t *testing.T) {

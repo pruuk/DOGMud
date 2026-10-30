@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -566,7 +567,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			{
 				cfg := configs.GetBalanceConfig()
 				boostPct := int(cfg.ConversationPlayerArrivalBoostPct)
-				if boostPct > 0 && util.Rand(100) < boostPct {
+				// Only if everyone here can hear it out without going over
+				// their ambient budget (#317).
+				if boostPct > 0 && util.Rand(100) < boostPct && ambient.AllHaveBudget(destRoom) {
 					if pairs := findRelateableEligiblePairsInRoom(destRoom); len(pairs) > 0 {
 						p := pairs[util.Rand(len(pairs))]
 						conversations.TryStartBetween(

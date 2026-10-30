@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/conversationadapter"
@@ -157,7 +158,9 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 		// Phase 2: if fully idle and not on cooldown, roll for a new
 		// conversation (conversationStartRoll).
 		if conversationsTriggerEligible(mob) && conversationStartRoll(util.Rand) {
-			if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+			// A conversation starts only if every player here can hear it
+			// out without going over their ambient budget (#317).
+			if room := rooms.LoadRoom(mob.Character.RoomId); room != nil && ambient.AllHaveBudget(room) {
 				conversations.TryStart(conversationadapter.AdaptMob(mob), room.GetMobs())
 			}
 		}

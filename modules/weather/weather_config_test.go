@@ -127,3 +127,22 @@ func TestBuildConfig_EmoteChanceKnobs(t *testing.T) {
 			c.EmoteMildChancePct, c.EmoteStrongChancePct)
 	}
 }
+
+// #317: the seasonal layer's 1-in-N is a knob (0 = never), and a cadence of
+// 0 turns the ambient pass off instead of clamping to 5.
+func TestBuildConfig_SeasonalAndZeroCadence(t *testing.T) {
+	c := buildConfig(func(string) any { return nil })
+	if c.SeasonalEmoteOneIn != 3 {
+		t.Errorf("SeasonalEmoteOneIn default = %d, want today's 3", c.SeasonalEmoteOneIn)
+	}
+	vals := map[string]any{"EmoteEveryRounds": 0, "SeasonalEmoteOneIn": 0}
+	c = buildConfig(func(k string) any { return vals[k] })
+	if c.EmoteEveryRounds != 0 || c.SeasonalEmoteOneIn != 0 {
+		t.Errorf("0 must stay 0 (off): cadence %d seasonal %d", c.EmoteEveryRounds, c.SeasonalEmoteOneIn)
+	}
+	vals = map[string]any{"SeasonalEmoteOneIn": -2}
+	c = buildConfig(func(k string) any { return vals[k] })
+	if c.SeasonalEmoteOneIn != 0 {
+		t.Errorf("a negative SeasonalEmoteOneIn clamps to 0, got %d", c.SeasonalEmoteOneIn)
+	}
+}

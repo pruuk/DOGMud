@@ -28,7 +28,8 @@ type Config struct {
 	MaxActiveFronts      int     // global front budget (>= 1)
 	SpawnRateScale       float64 // multiplier on the default spawn chance
 	EmoteMode            string  // EmoteModeModule | EmoteModeTagOnly
-	EmoteEveryRounds     int     // ambient emote cadence in rounds (jittered ±25%, >= 5)
+	EmoteEveryRounds     int     // ambient emote cadence in rounds (jittered ±25%, >= 5); 0 = off (#317)
+	SeasonalEmoteOneIn   int     // calm zones get a seasonal line on 1 pass in N; 0 = never (#317)
 	EmoteMildChancePct   int     // ambient emit chance (%) at felt intensity 0
 	EmoteStrongChancePct int     // ambient emit chance (%) at felt intensity 1
 	ConditionsEnabled    bool    // false strips condition ids from weather mutator specs
@@ -108,6 +109,7 @@ func buildConfig(get getter) Config {
 		EmoteEveryRounds:     intOr(get("EmoteEveryRounds"), 24),
 		EmoteMildChancePct:   intOr(get("EmoteMildChancePct"), 30),
 		EmoteStrongChancePct: intOr(get("EmoteStrongChancePct"), 100),
+		SeasonalEmoteOneIn:   intOr(get("SeasonalEmoteOneIn"), 3),
 		ConditionsEnabled:    boolOr(get("ConditionsEnabled"), true),
 		Persist:              boolOr(get("Persist"), true),
 		SeasonsEnabled:       boolOr(get("SeasonsEnabled"), true),
@@ -118,8 +120,14 @@ func buildConfig(get getter) Config {
 	if c.MaxActiveFronts < 1 {
 		c.MaxActiveFronts = 1
 	}
-	if c.EmoteEveryRounds < 5 {
+	// 0 turns the ambient pass off (#317); 1 to 4 still clamp to 5.
+	if c.EmoteEveryRounds < 0 {
+		c.EmoteEveryRounds = 0
+	} else if c.EmoteEveryRounds > 0 && c.EmoteEveryRounds < 5 {
 		c.EmoteEveryRounds = 5
+	}
+	if c.SeasonalEmoteOneIn < 0 {
+		c.SeasonalEmoteOneIn = 0
 	}
 	if c.SpawnRateScale < 0 {
 		c.SpawnRateScale = 0
