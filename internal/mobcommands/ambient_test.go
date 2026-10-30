@@ -103,6 +103,29 @@ func TestAmbient_RefusesAnUnknownSourceOrVerb(t *testing.T) {
 	}
 }
 
+// say_echo is charged only by an ambient say's echo next door, never issued
+// as a command: typed as a source it is a handled error that sends nothing
+// and charges nobody, in any case.
+func TestAmbient_RefusesSayEchoAsATypedSource(t *testing.T) {
+	seedAmbientCommand(t, 5)
+	for _, line := range []string{"say_echo say Typed echo.", "SAY_ECHO emote Typed echo."} {
+		if handled, err := TryCommand("ambient", line, 100); err == nil || !handled {
+			t.Errorf("%q: say_echo is not a typed source and must be a handled error: handled %v err %v", line, handled, err)
+		}
+	}
+	for _, uid := range []int{1, 2} {
+		if n := heard(uid, "Typed echo"); n != 0 {
+			t.Errorf("user %d heard a refused say_echo line %d times, want 0", uid, n)
+		}
+	}
+	TryCommand("ambient", "mob_chatter say After the echo ones.", 100)
+	for _, uid := range []int{1, 2} {
+		if n := heard(uid, "After the echo ones"); n != 1 {
+			t.Errorf("user %d was charged by a refused say_echo line: heard the next line %d times, want 1", uid, n)
+		}
+	}
+}
+
 // An ambient line with no text is refused before the budget is asked, so
 // nobody is charged for an empty say.
 func TestAmbient_RefusesEmptyTextAndChargesNobody(t *testing.T) {

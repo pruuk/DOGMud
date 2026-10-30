@@ -29,6 +29,10 @@ func Ambient(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if !ok {
 		return true, fmt.Errorf(`ambient: unknown source %q`, srcWord)
 	}
+	if src == ambient.SourceSayEcho {
+		// Charged only by an ambient say's echo next door, never issued.
+		return true, fmt.Errorf(`ambient: %s is not a source a line can name`, src)
+	}
 	verb = strings.ToLower(verb)
 	if verb != `emote` && verb != `say` {
 		return true, fmt.Errorf(`ambient: %q is not an ambient verb`, verb)

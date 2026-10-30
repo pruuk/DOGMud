@@ -114,8 +114,9 @@ The `internal/mobcommands` package implements the AI command system for non-play
   `Perceives: ambient.HearsQuiet`): those listeners are charged and an
   over-budget one is left out (owner 2026-10-30). A plain `emote` or
   `say` (a reaction, a quest or conversation line) is never budgeted. A
-  bad source, a verb other than emote or say, or empty text is a handled
-  error that charges nobody; source and verb read case-blind.
+  bad source (`say_echo` included: only the echo path charges it), a verb
+  other than emote or say, or empty text is a handled error that charges
+  nobody; source and verb read case-blind.
 - **Whisper**: `whisper <target> <text>` (`whisper.go`) reaches one player
   alone, framed in asterisks like a player's whisper so it stands out from
   combat text. The target is usually `@<userId>`: a quest `npc_say` line with
