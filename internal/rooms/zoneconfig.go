@@ -1,6 +1,8 @@
 package rooms
 
 import (
+	"fmt"
+
 	"github.com/GoMudEngine/GoMud/internal/mutators"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -21,7 +23,13 @@ type ZoneConfig struct {
 	InstanceGold   bool                 `yaml:"instance_gold,omitempty"`   // true = mobs in a paid instance of this zone carry gold scaled by the entry (InstanceMobGold); false keeps template gold
 	NonCartesian   bool                 `yaml:"non_cartesian,omitempty"`   // true = zone is intentionally non-Euclidean (toroidal/maze); skip Cartesian consistency checks and render wrap exits as edge stubs
 	DefaultPlane   int                  `yaml:"default_plane,omitempty"`   // builder convenience: default plane for new rooms in this zone (rooms' own plane is authoritative)
-	RoomIds        map[int]struct{}     `yaml:"-"`                         // Does not get written. Built dyanmically when rooms are loaded.
+	// AmbientMultiplier scales this zone's idle mob chatter roll and room
+	// idle chance and divides the ambient budget window (#317): 1.5 is
+	// livelier, 0.5 hushed. WanderMultiplier scales idle mob movement here.
+	// Pointers: unset (nil) is 1.0 and 0 is never.
+	AmbientMultiplier *float64         `yaml:"ambientmultiplier,omitempty"`
+	WanderMultiplier  *float64         `yaml:"wandermultiplier,omitempty"`
+	RoomIds           map[int]struct{} `yaml:"-"` // Does not get written. Built dyanmically when rooms are loaded.
 }
 
 func (z *ZoneConfig) Id() string {
@@ -41,7 +49,32 @@ func (z *ZoneConfig) Validate() error {
 		z.PortalDuration = "30 real minutes"
 	}
 
+	if z.AmbientMultiplier != nil && *z.AmbientMultiplier < 0 {
+		return fmt.Errorf("zone %q: ambientmultiplier must be 0 or more, got %v", z.Name, *z.AmbientMultiplier)
+	}
+	if z.WanderMultiplier != nil && *z.WanderMultiplier < 0 {
+		return fmt.Errorf("zone %q: wandermultiplier must be 0 or more, got %v", z.Name, *z.WanderMultiplier)
+	}
+
 	return nil
+}
+
+// ZoneAmbientMultiplier is zone's ambientmultiplier, 1.0 when the zone or
+// the field is unset (#317). An instance clone keeps its template room's
+// Zone, so a paid instance reads its template zone's value.
+func ZoneAmbientMultiplier(zone string) float64 {
+	if z := GetZoneConfig(zone); z != nil && z.AmbientMultiplier != nil {
+		return *z.AmbientMultiplier
+	}
+	return 1.0
+}
+
+// ZoneWanderMultiplier is zone's wandermultiplier, 1.0 when unset (#317).
+func ZoneWanderMultiplier(zone string) float64 {
+	if z := GetZoneConfig(zone); z != nil && z.WanderMultiplier != nil {
+		return *z.WanderMultiplier
+	}
+	return 1.0
 }
 
 func (z *ZoneConfig) Filename() string {

@@ -82,6 +82,10 @@ func SeedBiomesForTest(biomeMap map[string]*BiomeInfo) func() {
 func SkyLightPtr(f float64) *float64 { return &f }
 func LampPtr(n int) *int             { return &n }
 
+// MultiplierPtr returns a pointer to v for a zone or mob multiplier in a
+// test fixture (#317).
+func MultiplierPtr(v float64) *float64 { return &v }
+
 // LightTermsAtForTest composes this room's light with the celestial term,
 // whether the street lamps are lit (gametime.LampsLitAt on the caller's own
 // night and celestial) and the weather sky filter supplied, rather than read
