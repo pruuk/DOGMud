@@ -135,6 +135,7 @@ func Plan(l Line) Routing {
 	}
 	now := util.GetRoundCount()
 	window, hushed := budgetWindow(l.Room.Zone)
+	suppressed := 0
 
 	budgetMu.Lock()
 	for _, uid := range l.Room.GetPlayers() {
@@ -150,6 +151,7 @@ func Plan(l Line) Routing {
 		}
 		if hushed || (window > 0 && now < budgetNext[uid]) {
 			r.Exclude = append(r.Exclude, uid)
+			suppressed++
 			continue
 		}
 		if window > 0 {
@@ -159,6 +161,7 @@ func Plan(l Line) Routing {
 	}
 	budgetMu.Unlock()
 
+	countLine(l.Room, l.Source, len(r.Delivered), suppressed)
 	return r
 }
 
@@ -216,7 +219,8 @@ func MarkSingleLineHeard(roomId int, userIds []int) {
 
 // RoundTick runs once a round from hooks.UserRoundTick. It ends the visits
 // of players who left or logged out, and drops spent budget entries, so
-// neither map grows past the players online.
+// neither map grows past the players online. Then it runs the telemetry
+// tick (telemetry.go), which does nothing while the switch is off.
 func RoundTick(round uint64) {
 	visitMu.Lock()
 	for uid, roomId := range singleHeard {
@@ -233,4 +237,6 @@ func RoundTick(round uint64) {
 		}
 	}
 	budgetMu.Unlock()
+
+	telemetryTick(round)
 }

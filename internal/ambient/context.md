@@ -3,9 +3,10 @@
 ## Purpose
 
 The one gate every unprompted ("ambient") line passes on its way to players
-(#317): the per-listener budget and the once-per-visit rule for a room with
-a single idle line. Leaf package: it imports `conditions`, `configs`,
-`messaging`, `rooms`, `users` and `util`, and nothing that imports it (hooks,
+(#317): the per-listener budget, the once-per-visit rule for a room with
+a single idle line, and the switchable telemetry that measures both. Leaf
+package: it imports `conditions`, `configs`, `messaging`, `mudlog`, `rooms`,
+`users` and `util`, and nothing that imports it (hooks,
 behaviortree, mobcommands, usercommands, the weather engine) may be
 imported back. Check with `go list -deps ./internal/ambient/`.
 
@@ -15,7 +16,12 @@ imported back. Check with `go list -deps ./internal/ambient/`.
   `weather`, `gossip`, `item_chatter`, `say_echo`), `ParseSource`, `Line`,
   `Routing`, `Plan`, `Sees`, `HearsQuiet`, `AllHaveBudget`, `SingleLineHeard`,
   `MarkSingleLineHeard`, `RoundTick`.
-- **testing.go**: `ResetForTest`, `ChargeForTest` for tests in any package.
+- **telemetry.go**: `MoveKind` and `MoveKinds` (`move_idle`, `move_track`,
+  `move_path`), `TelemetryMessage`, `TelemetryEnabled`, `CountMove`; the
+  unexported counters, `countLine` (called by `Plan`) and `telemetryTick`
+  (called by `RoundTick`).
+- **testing.go**: `ResetForTest` (budget, visits and telemetry),
+  `ChargeForTest`, for tests in any package.
 
 ## How a send site uses it
 
@@ -57,3 +63,33 @@ budget entries.
 - State is in memory only (`budgetNext`, `singleHeard`), the shape of the
   item chatter listener cap. A restart clears it, which is harmless. Both
   maps are mutex guarded, so calls are safe from the game loop.
+
+## Telemetry
+
+`Balance.AmbientTelemetry` (ships `false`) switches it on;
+`Balance.AmbientTelemetryReportMinutes` (ships 5) is the window in real
+minutes, turned into rounds through `Timing.RoundSeconds`. It stays in the
+code permanently, for the next retune.
+
+- **Off**, nothing is counted or kept: `countLine` and `CountMove` return
+  after the switch check, and `telemetryTick` drops anything left from an
+  earlier on period once, then costs one atomic load a round.
+- **On**, each `Plan` counts per room and source, per listener taking the
+  line in: offered = delivered + suppressed (suppressed means over budget or
+  hushed). A player the caller excluded or who does not perceive the line is
+  not counted. `say_echo` is counted in the room that receives the echo,
+  since its `Plan` names that room. `CountMove(roomId, kind)` counts a mob
+  move in the room it starts from; the three call sites are the idle roll
+  (`hooks/MobIdle_HandleIdleMobs.go`, `MoveIdle`), the path walker
+  (`hooks/NewRound_IdleMobs.go`, `MovePath`, which also carries goal planner
+  `pathto` walks) and `move_toward_tracked`
+  (`behaviortree/actions_scout.go`, `MoveTrack`). Each round adds the
+  players present to every occupied room's listener rounds.
+- When the window is up, one Info line per room with any listener rounds,
+  line or move is written, sorted by room id, and every counter resets.
+  The line's message is `ambient.telemetry` and its keys, in order, are
+  `window`, `room`, `zone`, `round_seconds`, `window_rounds`,
+  `listener_rounds`, then `<source>_offered`, `<source>_delivered`,
+  `<source>_suppressed` for each source in `Sources` order, then
+  `move_idle`, `move_track`, `move_path`. `tools/ambient_report.py` reads
+  this format, so keep it stable.

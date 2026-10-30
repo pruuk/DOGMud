@@ -219,6 +219,7 @@ func advanceMobPath(mob *mobs.Mob) bool {
 
 	if nextStep, quote, ok := quoteMobPathStep(mob); ok {
 		if quote.OK() {
+			ambient.CountMove(mob.Character.RoomId, ambient.MovePath)
 			mob.Path.Next()
 			mob.Command(nextStep.ExitName())
 			// Stage 2 caravan: pace caravan crews a shade slower than

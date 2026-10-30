@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -213,6 +214,7 @@ func actMoveTowardTracked(params map[string]any, ctx *EvalContext) Result {
 	}
 
 	// Dispatch `go <direction>` via the engine command pipeline.
+	ambient.CountMove(room.RoomId, ambient.MoveTrack)
 	mob.Command("go " + dir)
 	return Success
 }

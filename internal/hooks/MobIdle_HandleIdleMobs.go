@@ -325,6 +325,7 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 			issueIdleChatter(mob, chatterCmd)
 		}
 		if moveCmd != `` {
+			ambient.CountMove(mob.Character.RoomId, ambient.MoveIdle)
 			mob.Command(moveCmd)
 		}
 
