@@ -13,8 +13,13 @@ The log can be the playtest's tools/playtest/.run/<run_id>/server.log, a
 are stripped, so either mudlog handler's output parses.
 
 The server numbers its report windows from 1 on every boot. A log that spans
-a restart is counted by distinct (boot, window) pairs: a window number that
-does not increase, or the boot banner, starts a new boot.
+a restart is counted by distinct (boot, window) pairs: a "Server Ready" line
+(logged once per process), or a window number that falls, starts a new boot.
+"Minutes measured" counts the windows that had at least one active room; a
+fully quiet window writes no lines, so it is not counted.
+
+SOURCES and MOVES below mirror ambient.Sources and ambient.MoveKinds in
+internal/ambient and must be kept in step with them.
 
 Usage:
   python -I tools/ambient_report.py <server.log>
@@ -27,8 +32,8 @@ import sys
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 PAIR = re.compile(r'(\w+)=("(?:[^"\\]|\\.)*"|\S+)')
 MARK = "ambient.telemetry"
-# The last line of the ASCII banner main.go logs at every boot.
-BANNER = r"|_|  |_|\__,_|\__,_|"
+# main.go logs this once per process, the same text in both log handlers.
+BOOT_MARK = "Server Ready"
 SOURCES = ["room_idle", "mob_chatter", "weather", "gossip", "item_chatter", "say_echo"]
 MOVES = ["move_idle", "move_track", "move_path"]
 
@@ -60,7 +65,7 @@ def read_records(lines):
     boot = 0
     last_window = None
     for line in lines:
-        if BANNER in ANSI.sub("", line):
+        if BOOT_MARK in ANSI.sub("", line):
             boot += 1
             last_window = None
             continue
@@ -206,19 +211,53 @@ def self_test():
         return 1
 
     # A log spanning restarts. Windows run 1, 2, then 1 again after a restart
-    # (the window number fell), then 1 again after a banner (the restart came
-    # before the number could fall). That is four distinct (boot, window)
-    # pairs of 5 minutes each, with 4 + 4 + 4 + 4 idle moves.
+    # (the window number fell), then 1 again after a Server Ready line (the
+    # restart came before the number could fall). That is four distinct
+    # (boot, window) pairs of 5 minutes each, with 4 + 4 + 4 + 4 idle moves.
     def moves(window):
         return _fixture_line(False, **rec(window=window, room=5003, zone="Instance Planar Oasis",
                                           round_seconds=4, window_rounds=75, listener_rounds=0, move_idle=4))
 
-    restart = [moves(1), moves(2), moves(1), BANNER, moves(1)]
+    ready = 'time=12:00:00 level=INFO msg="Server Ready" "Time Taken"=2.1s'
+    restart = [moves(1), moves(2), moves(1), ready, moves(1)]
     rout = report(restart)
     rwant = "| Instance Planar Oasis | 0.80 | 0.00 | 0.00 | 0.80 |"
     if "## Mob moves per minute by zone (20 minutes measured)" not in rout or rwant not in rout:
         print("self-test FAILED (restart)")
         print(rout)
+        return 1
+
+    # The plain slog text handler: msg is quoted and padded, strings are
+    # quoted only when they need it, and an empty string is "".
+    def plain(window, room, zone, **kv):
+        d = rec(window=window, room=room, round_seconds=4, window_rounds=75, listener_rounds=75)
+        d.update(kv)
+        d.pop("window"), d.pop("room")
+        tail = "".join(f"{k}={v} " for k, v in d.items())
+        return (f'time=12:00:00 level=INFO msg="ambient.telemetry       " window={window} room={room} '
+                f'zone={zone} ' + tail)
+
+    pfix = [
+        plain(1, 472, "Plain", mob_chatter_offered=3, mob_chatter_delivered=3),
+        plain(1, 473, '"Thornwall City"', weather_offered=5, weather_delivered=4, weather_suppressed=1),
+        plain(1, 474, '""', gossip_offered=2, gossip_delivered=2),
+        'time=12:00:00 level=INFO msg="Server Ready" "Time Taken"=2.1s',
+        plain(1, 472, "Plain", mob_chatter_offered=3, mob_chatter_delivered=3),
+    ]
+    pout = report(pfix)
+    pwant = [
+        "| 472 | Plain | mob_chatter | 10.0 | 6 | 6 | 0 | 0.60 |",
+        "| 473 | Thornwall City | weather | 5.0 | 5 | 4 | 1 | 0.80 |",
+        "| 474 |  | gossip | 5.0 | 2 | 2 | 0 | 0.40 |",
+    ]
+    pmissing = [w for w in pwant if w not in pout]
+    # Room 472 is heard in two boots (10 listener-minutes); the other rooms
+    # in one (5). Two distinct (boot, window) pairs of 5 minutes make 10.
+    if pmissing or "(10 minutes measured)" not in pout:
+        print("self-test FAILED (plain)")
+        for w in pmissing:
+            print("  missing: " + w)
+        print(pout)
         return 1
     print("self-test ok")
     return 0
