@@ -94,6 +94,19 @@ func TestSayDeliveries_MobSpeechReachesTheDeafened(t *testing.T) {
 	require.Equal(t, map[int]string{9741: `Crier`, 9742: `Crier`, 9743: `Crier`}, got)
 }
 
+// #317: an ambient say's ExcludeUserIds (the listeners over their ambient
+// budget) get no Comm.Channel payload, as they get no room line; everyone
+// else still does. A say with no excludes reaches the whole room as before.
+func TestSayDeliveries_ExcludedListenerGetsNoPayload(t *testing.T) {
+	sayFixture(t, 60)
+	got := sendersByUser(events.Communication{SourceMobInstanceId: 741, CommType: `say`, Name: `Crier`,
+		Message: `fresh bread`, ExcludeUserIds: []int{9742}})
+	require.Equal(t, map[int]string{9741: `Crier`, 9743: `Crier`}, got)
+
+	got = sendersByUser(events.Communication{SourceMobInstanceId: 741, CommType: `say`, Name: `Crier`, Message: `fresh bread`})
+	require.Equal(t, map[int]string{9741: `Crier`, 9742: `Crier`, 9743: `Crier`}, got)
+}
+
 // A mob's sayto to one player reaches only that player, not the room.
 func TestSayDeliveries_TargetedSayReachesOnlyTheTarget(t *testing.T) {
 	sayFixture(t, 60)

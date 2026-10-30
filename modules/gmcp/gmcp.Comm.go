@@ -1,6 +1,7 @@
 package gmcp
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/channels"
@@ -149,6 +150,8 @@ type commDelivery struct {
 //   - A say aimed at one player (a mob's sayto, TargetUserId) reaches only
 //     that player and the speaker; any other say reaches everyone in the
 //     speaker's room.
+//   - A listener in ExcludeUserIds (an ambient say they were over budget
+//     for, #317) got no room line, so gets no payload either.
 //   - A player's words are chatter: a deafened listener does not receive
 //     them. An NPC's are authored and reach a deafened listener (ruling 6).
 //   - The sender reads by the listener's sight of the room: the name at clear
@@ -179,6 +182,9 @@ func sayDeliveries(evt events.Communication, base GMCPCommModule_Payload) []comm
 
 	deliveries := []commDelivery{}
 	for _, uid := range listenerIds {
+		if slices.Contains(evt.ExcludeUserIds, uid) {
+			continue
+		}
 		u := users.GetByUserId(uid)
 		if u == nil {
 			continue

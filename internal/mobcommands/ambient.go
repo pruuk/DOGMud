@@ -16,17 +16,26 @@ import (
 // everyone else gets it exactly as a plain emote or say. A player's own
 // command, a reaction, a quest line or a conversation line never comes this
 // way, so none of them is ever budgeted. Content never authors it.
+//
+// A malformed line returns handled with its error, so world.go logs it once
+// as an error and not again as an unknown command. The source and the verb
+// read case-blind.
 func Ambient(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	srcWord, after, _ := strings.Cut(strings.TrimSpace(rest), ` `)
 	verb, text, _ := strings.Cut(strings.TrimSpace(after), ` `)
+	text = strings.TrimSpace(text)
 
-	src, ok := ambient.ParseSource(srcWord)
+	src, ok := ambient.ParseSource(strings.ToLower(srcWord))
 	if !ok {
-		return false, fmt.Errorf(`ambient: unknown source %q`, srcWord)
+		return true, fmt.Errorf(`ambient: unknown source %q`, srcWord)
 	}
 	verb = strings.ToLower(verb)
 	if verb != `emote` && verb != `say` {
-		return false, fmt.Errorf(`ambient: %q is not an ambient verb`, verb)
+		return true, fmt.Errorf(`ambient: %q is not an ambient verb`, verb)
+	}
+	if text == `` {
+		// Refused before the budget is asked, so nobody is charged for it.
+		return true, fmt.Errorf(`ambient: %s %s has no text`, src, verb)
 	}
 
 	// Don't bother if no players are present

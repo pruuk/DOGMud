@@ -199,6 +199,11 @@ type Communication struct {
 	Name                string
 	Message             string
 	SpeakerHidden       bool // a say spoken while still hidden: no listener but the speaker learns who (#252)
+	// ExcludeUserIds lists players who did not receive the room line: the
+	// listeners an ambient say was over budget for (#317). The GMCP say
+	// lane and the AI companion leave them out too. Empty for every other
+	// line.
+	ExcludeUserIds []int
 }
 
 func (m Communication) Type() string { return `Communication` }

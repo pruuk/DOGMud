@@ -104,6 +104,14 @@ The `internal/mobcommands` package implements the AI command system for non-play
   (unfiltered for a mob) and, for `shout`, the adjacent-room line and waking
   sleepers, all live in the shared body. `speech_wrapper_guard_test.go`
   (internal/guards) fails if any of these five re-forks that logic.
+- **Ambient lines**: `ambient <source> <emote|say> <text>` (`ambient.go`,
+  #317) is mob-only and never authored in content; only the idle roll and
+  the gossip tick issue it. It asks `ambient.Plan` and sends through the
+  same bodies as `emote` and `say` (`emoteAs`, `sayAs`) with the
+  over-budget listeners in `actions.MobActor.Skip`. A plain `emote` or
+  `say` (a reaction, a quest or conversation line) is never budgeted. A
+  bad source, a verb other than emote or say, or empty text is a handled
+  error that charges nobody; source and verb read case-blind.
 - **Whisper**: `whisper <target> <text>` (`whisper.go`) reaches one player
   alone, framed in asterisks like a player's whisper so it stands out from
   combat text. The target is usually `@<userId>`: a quest `npc_say` line with

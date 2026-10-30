@@ -1,6 +1,7 @@
 package mobcommands
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -90,12 +91,73 @@ func TestAmbientEmote_BudgetSkipsTheListenerOverIt(t *testing.T) {
 	}
 }
 
+// A malformed line is an error, and it is still handled, so world.go logs
+// it once as an error rather than again as an unknown command.
 func TestAmbient_RefusesAnUnknownSourceOrVerb(t *testing.T) {
 	seedAmbientCommand(t, 0)
-	if _, err := TryCommand("ambient", "tips say hello", 100); err == nil {
-		t.Error("an unknown source must be an error, so a typo shows in the log")
+	if handled, err := TryCommand("ambient", "tips say hello", 100); err == nil || !handled {
+		t.Errorf("an unknown source must be a handled error, so a typo shows once in the log: handled %v err %v", handled, err)
 	}
-	if _, err := TryCommand("ambient", "mob_chatter wander", 100); err == nil {
-		t.Error("only emote and say are ambient lines")
+	if handled, err := TryCommand("ambient", "mob_chatter wander", 100); err == nil || !handled {
+		t.Errorf("only emote and say are ambient lines: handled %v err %v", handled, err)
+	}
+}
+
+// An ambient line with no text is refused before the budget is asked, so
+// nobody is charged for an empty say.
+func TestAmbient_RefusesEmptyTextAndChargesNobody(t *testing.T) {
+	seedAmbientCommand(t, 5)
+	for _, line := range []string{"mob_chatter say", "mob_chatter say   ", "mob_chatter emote"} {
+		if _, err := TryCommand("ambient", line, 100); err == nil {
+			t.Errorf("%q: an ambient line with no text must be an error", line)
+		}
+	}
+	TryCommand("ambient", "mob_chatter say After the empty ones.", 100)
+	for _, uid := range []int{1, 2} {
+		if n := heard(uid, "After the empty ones"); n != 1 {
+			t.Errorf("user %d was charged by an empty line: heard the next line %d times, want 1", uid, n)
+		}
+	}
+}
+
+// The source word reads case-blind, as the verb does.
+func TestAmbient_SourceAndVerbAreCaseBlind(t *testing.T) {
+	seedAmbientCommand(t, 0)
+	if handled, err := TryCommand("ambient", "Mob_Chatter SAY Loud and clear.", 100); !handled || err != nil {
+		t.Fatalf("handled %v err %v", handled, err)
+	}
+	if n := heard(1, "Loud and clear"); n != 1 {
+		t.Errorf("user 1 heard the line %d times, want 1", n)
+	}
+}
+
+// sayEvents drains the queued Communication events.
+func sayEvents() []events.Communication {
+	var out []events.Communication
+	for _, e := range events.DrainQueuedByTypeForTest(`Communication`) {
+		if c, ok := e.(events.Communication); ok {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// The Communication event of an ambient say carries the over-budget
+// listeners, so the web client's Say tab and the AI companion skip them
+// too; a plain say carries none.
+func TestAmbientSay_CommunicationCarriesTheSkip(t *testing.T) {
+	seedAmbientCommand(t, 5)
+	events.DrainQueuedByTypeForTest(`Communication`)
+	ambient.ChargeForTest(1, 6005)
+	TryCommand("ambient", "mob_chatter say Budgeted words.", 100)
+	got := sayEvents()
+	if len(got) != 1 || !slices.Equal(got[0].ExcludeUserIds, []int{1}) {
+		t.Errorf("ambient say: want one Communication excluding [1], got %+v", got)
+	}
+
+	TryCommand("say", "Plain words.", 100)
+	got = sayEvents()
+	if len(got) != 1 || len(got[0].ExcludeUserIds) != 0 {
+		t.Errorf("plain say: want one Communication with no excludes, got %+v", got)
 	}
 }

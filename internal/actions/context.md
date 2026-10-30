@@ -84,6 +84,11 @@ equivalent mob wrappers stay silent.
   through `Say`/`Shout`/`SendHeard`/`SendSeen` below, not through the Actor
   interface itself (`SendRoomCommunication` is deleted, sight gates slice
   5b). Skill progression goes through `mob.Character.OnSkillUse()`.
+  `MobActor.Skip` lists players that actor's room line leaves out: the
+  listeners an ambient line is over budget for (#317, set only by
+  `mobcommands.Ambient`). `SendSeen` and `sendSpoken` add it to the room
+  line's excludes (`roomLineExcludes`), and `Say` copies it onto
+  `events.Communication.ExcludeUserIds` (`ambientSkip`).
 
 ---
 

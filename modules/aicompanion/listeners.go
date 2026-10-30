@@ -2,6 +2,7 @@ package aicompanion
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -103,6 +104,12 @@ func (m *AICompanionModule) onCommunication(e events.Event) events.ListenerRetur
 	}
 
 	for _, c := range m.companionsInRoom(roomId) {
+		// Her owner skipped this line (an ambient say over their budget,
+		// #317), so she does not take it in either: she never brings up
+		// something her owner was not shown.
+		if slices.Contains(evt.ExcludeUserIds, c.ownerUserId) {
+			continue
+		}
 		mob := mobs.GetInstance(c.instanceId)
 		others := 0
 		heardFrom := speaker

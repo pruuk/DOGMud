@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
@@ -75,9 +77,15 @@ func sendSpoken(actor Actor, room *rooms.Room, cat messaging.Category, line stri
 // for a MobActor, every listener in Skip (an ambient line over budget,
 // #317).
 func roomLineExcludes(actor Actor) []int {
-	ex := []int{actor.GetUserId()}
-	if m, ok := actor.(*MobActor); ok {
-		ex = append(ex, m.Skip...)
+	return append([]int{actor.GetUserId()}, ambientSkip(actor)...)
+}
+
+// ambientSkip is a MobActor's Skip list (#317), a copy, and nil for any
+// other actor or an empty list. Say puts it on the Communication event so
+// the GMCP say lane and the AI companion leave the same listeners out.
+func ambientSkip(actor Actor) []int {
+	if m, ok := actor.(*MobActor); ok && len(m.Skip) > 0 {
+		return slices.Clone(m.Skip)
 	}
-	return ex
+	return nil
 }

@@ -47,6 +47,7 @@ func Say(actor Actor, text string) SayResult {
 		Name:                actor.GetName(),
 		Message:             text,
 		SpeakerHidden:       isSneaking,
+		ExcludeUserIds:      ambientSkip(actor),
 	})
 
 	nameColor, textColor := "mobname", "saytext-mob"
