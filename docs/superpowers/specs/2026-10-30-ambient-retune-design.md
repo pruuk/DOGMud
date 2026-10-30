@@ -92,17 +92,33 @@ still hears it. The budget is in-memory per player, on the item-chatter `listene
 
 - Unset and 0 must be told apart (0 is a legal "never"), so the fields are pointers in Go.
 - No existing zone or mob is set except the Elemental Oasis. Its value is chosen after the
-  before-measure (section 4). If the measure shows the royals' tracking or goal-planner moves are
+  baseline playtest's telemetry (section 4). If it shows the royals' tracking or goal-planner moves are
   what read as too fast, the zone wander multiplier also scales `move_toward_tracked` and goal
   `pathto` while no player is the tracked target; otherwise it scales idle movement only.
 
-### 4. Measurement
+### 4. Measurement: ambient telemetry and two playtests (owner 2026-10-30)
 
-Before and after the change, an admin sits idle for 10 real minutes in each of: tavern 472,
-Thornwall street 462, Market Square 465, steppe 3116 (night), and the Elemental Oasis (an instance;
-count mob arrivals and departures per minute). Every unprompted line and every mob move is counted
-by source. Both tables are posted on #317. The "after" numbers decide whether the shipped values
-stay; retuning is a config edit.
+**Telemetry, kept behind a switch.** `Balance.AmbientTelemetry` (bool, ships `false`). When on,
+the ambient helper and the idle-movement path count, per room and per source: lines offered,
+lines delivered, lines suppressed by the budget, and mob moves; plus listener-minutes (players
+present x minutes) so rooms visited briefly compare fairly with rooms sat in. Every
+`AmbientTelemetryReportMinutes` (ships 5) it writes one summary log line per room with activity,
+then resets. Off costs nothing beyond a bool check. It stays in the code after tuning as the tool
+for zone tuning (owner: keep it, defaulted off).
+
+**Report script.** `tools/ambient_report.py` reads a server log and prints, per room and source,
+lines per listener-minute, delivered and suppressed, sorted worst first, plus mob moves per minute
+per zone.
+
+**Two playtests** with the same feel-tester seats walking fixed routes (tavern 472, Market Square
+465, Thornwall street 462, the Pothole Coulee hub, steppe 3116 at night, the Elemental Oasis
+instance), telemetry on:
+1. **Baseline:** every multiplier and knob at its "today" value (scales 1.0, room idle 5,
+   weather 24, budget 0). This equals today's behaviour.
+2. **Shipped values.**
+
+Each run yields the seats' feel reports and the script's table; both go on #317. The Oasis
+wander multiplier is chosen from run 1's movement numbers. Tuning after run 2 is a config edit.
 
 ## Testing
 
@@ -121,6 +137,9 @@ stay; retuning is a config edit.
   halves the window.
 - Single-line room fires once per visit.
 - The verb-class guard can fail (planted unknown verb).
+- Telemetry: off writes nothing and keeps no counters; on counts offered, delivered and suppressed
+  per room and source and writes one line per active room per report window; the report script
+  parses a fixture log into the expected table.
 - Boot check, full test suite, lint, as `dogmud-shipping`.
 
 ## Docs
