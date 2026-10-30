@@ -167,6 +167,17 @@ func TestAllHaveBudget(t *testing.T) {
 	}
 }
 
+func TestAllHaveBudget_HushedZone(t *testing.T) {
+	hushed := seedAmbientRoom(t, 5, rooms.MultiplierPtr(0), listenA)
+	if AllHaveBudget(hushed) {
+		t.Fatal("a hushed zone (multiplier 0, budget on) starts no conversation")
+	}
+	off := seedAmbientRoom(t, 0, rooms.MultiplierPtr(0), listenA)
+	if !AllHaveBudget(off) {
+		t.Fatal("with the budget off a zero multiplier does not gate conversations")
+	}
+}
+
 func TestSingleLineHeard_OncePerVisit(t *testing.T) {
 	seedAmbientRoom(t, 0, nil, listenA, listenB)
 	MarkSingleLineHeard(ambRoom, []int{listenA})

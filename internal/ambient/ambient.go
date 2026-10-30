@@ -226,10 +226,9 @@ func RoundTick(round uint64) {
 	}
 	visitMu.Unlock()
 
-	now := util.GetRoundCount()
 	budgetMu.Lock()
 	for uid, next := range budgetNext {
-		if now >= next {
+		if round >= next {
 			delete(budgetNext, uid)
 		}
 	}

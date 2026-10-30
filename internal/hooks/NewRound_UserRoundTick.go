@@ -9,6 +9,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -147,6 +148,10 @@ func tickChrysalisEnchantments(ch *characters.Character, randN func(int) int) []
 
 func UserRoundTick(e events.Event) events.ListenerReturn {
 
+	if evt, ok := e.(events.NewRound); ok {
+		ambient.RoundTick(evt.RoundNumber)
+	}
+
 	roomsWithPlayers := rooms.GetRoomsWithPlayers()
 	for _, roomId := range roomsWithPlayers {
 		// Get rooom
@@ -167,11 +172,6 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 
 			if allowIdleMessages {
 
-				chanceIn100 := 5
-				if room.RoomId == -1 {
-					chanceIn100 = 20
-				}
-
 				var idleMsgs []string
 
 				if len(room.IdleMessages) > 0 {
@@ -185,7 +185,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 				}
 
 				idleMsgCt := len(idleMsgs)
-				if idleMsgCt > 0 && util.Rand(100) < chanceIn100 {
+				if idleMsgCt > 0 && util.Rand(10000) < roomIdleChancePer10k(room) {
 
 					if targetRoomId, err := strconv.Atoi(idleMsgs[0]); err == nil {
 						idleMsgCt = 0
@@ -207,12 +207,12 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 
 							msg := idleMsgs[idleMsgIndex]
 							if msg != `` {
-								wrappedMsg := util.SplitStringNL(msg, 80)
 								// Idle flavor text is visual; the visual
 								// pipeline judges each reader's sight, dark room
-								// or lit. The dark-room branch that tested the
-								// nightvision FLAG is gone (lighting plan 5c).
-								sendVisualRoomText(room, messaging.CategoryRoomDescription, wrappedMsg)
+								// or lit. It is ambient: the listener budget and
+								// the once-per-visit rule for a one-line room
+								// apply (#317).
+								sendRoomIdleLine(room, util.SplitStringNL(msg, 80), idleMsgCt == 1)
 							}
 
 						}
