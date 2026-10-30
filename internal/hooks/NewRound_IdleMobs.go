@@ -155,15 +155,10 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 		}
 
 		// Phase 2: if fully idle and not on cooldown, roll for a new
-		// conversation. ConversationBaseChancePct is a float percent
-		// (1.0 = 1 %), so multiply by 100 and roll out of 10 000 to
-		// preserve fractional precision.
-		if conversationsTriggerEligible(mob) {
-			cfg := configs.GetBalanceConfig()
-			if util.Rand(10000) < int(float64(cfg.ConversationBaseChancePct)*100) {
-				if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-					conversations.TryStart(conversationadapter.AdaptMob(mob), room.GetMobs())
-				}
+		// conversation (conversationStartRoll).
+		if conversationsTriggerEligible(mob) && conversationStartRoll(util.Rand) {
+			if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+				conversations.TryStart(conversationadapter.AdaptMob(mob), room.GetMobs())
 			}
 		}
 		convDur += time.Since(tConv)
@@ -307,4 +302,12 @@ func conversationsTriggerEligible(mob *mobs.Mob) bool {
 		return false
 	}
 	return true
+}
+
+// conversationStartRoll is the per-tick roll for a fully idle mob to open a
+// conversation. ConversationBaseChancePct is a float percent (1.0 = 1%),
+// rolled out of 10000 to keep the fraction; 0 never passes (#317).
+func conversationStartRoll(randN func(int) int) bool {
+	pct := float64(configs.GetBalanceConfig().ConversationBaseChancePct)
+	return pct > 0 && randN(10000) < int(pct*100)
 }

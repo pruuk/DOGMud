@@ -242,8 +242,7 @@ func TickConversation(self MobConversant, partnerId int) {
 // finalizeConversation clears state on both NPCs and stamps cooldown.
 func finalizeConversation(a, b MobConversant) {
 	roundNow := util.GetRoundCount()
-	cooldown := uint64(int(configs.GetBalanceConfig().ConversationCooldownRounds))
-	until := roundNow + cooldown
+	until := cooldownUntil(roundNow)
 
 	exchangeId, _ := a.ConvGetMiscData(MiscDataExchangeId).(int)
 	clearActiveExchange(exchangeId)
@@ -389,4 +388,10 @@ func clearActiveExchange(id int) {
 	activeExchangesMu.Lock()
 	defer activeExchangesMu.Unlock()
 	delete(activeExchanges, id)
+}
+
+// cooldownUntil is the round a pair that just finished talking may start
+// again. ConversationCooldownRounds 0 means no cooldown (#317).
+func cooldownUntil(roundNow uint64) uint64 {
+	return roundNow + uint64(int(configs.GetBalanceConfig().ConversationCooldownRounds))
 }

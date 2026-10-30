@@ -233,9 +233,9 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 		EquipBestFloorItem(mob, room)
 	}
 
-	// Stage 42.5: Gossiper mob tick — broadcast world event gossip
-	if mobHasGroup(mob, "gossiper") {
-		gossipIntervalRounds := uint64(configs.GetBalanceConfig().GossipIntervalRounds)
+	// Stage 42.5: Gossiper mob tick, broadcasting world event gossip.
+	// GossipIntervalRounds 0 turns gossip off (#317).
+	if gossipIntervalRounds := uint64(configs.GetBalanceConfig().GossipIntervalRounds); gossipIntervalRounds > 0 && mobHasGroup(mob, "gossiper") {
 		// Stagger by MobId so patrons don't all talk at the same time
 		stagger := uint64(mob.MobId%3) * (gossipIntervalRounds / 3)
 		roundNow := util.GetRoundCount()
