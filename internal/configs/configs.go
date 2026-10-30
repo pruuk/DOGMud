@@ -504,6 +504,15 @@ func newUnloadedConfig() Config {
 	c := Config{}
 	c.Balance.ProgressionFailureFraction = -1
 	c.Balance.ProneAutoStandRounds = -1
+	// #317: each of these has 0 as its off switch and a non-zero default.
+	c.Balance.MobIdleChatterScale = -1
+	c.Balance.MobIdleMovementScale = -1
+	c.Balance.RoomIdleChancePct = -1
+	c.Balance.TipIntervalRounds = -1
+	c.Balance.ConversationBaseChancePct = -1
+	c.Balance.ConversationPlayerArrivalBoostPct = -1
+	c.Balance.ConversationCooldownRounds = -1
+	c.Balance.GossipIntervalRounds = -1
 	return c
 }
 
