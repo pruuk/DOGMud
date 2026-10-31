@@ -17,7 +17,9 @@ type EquipItemResult struct {
 	Equipped       bool
 	FailureReason  string
 	// ArmLabel is how the player reads the arm the item went into ("weapon
-	// hand", "offhand", "arm 3"), set only by EquipItemInArm.
+	// hand", "offhand", "arm 3"). EquipItemInArm always sets it; EquipItem
+	// sets it when its automatic choice landed in any arm but the weapon
+	// hand, so the line says where the item went (#686).
 	ArmLabel string
 }
 
@@ -28,7 +30,15 @@ type EquipItemResult struct {
 // Messaging, condition onStart triggers, and quest-engine notifications
 // remain in the callers.
 func EquipItem(actor Actor, itemName string) EquipItemResult {
-	return equipItem(actor, itemName, (*characters.Character).Wear)
+	char := actor.GetCharacter()
+	before := char.HandItems()
+	res := equipItem(actor, itemName, (*characters.Character).Wear)
+	if res.Equipped {
+		if arm := characters.ArmFilled(before, char.HandItems(), res.Item.ItemId); arm > 1 {
+			res.ArmLabel = char.ArmDisplayName(arm)
+		}
+	}
+	return res
 }
 
 // EquipItemInArm is `equip X armN` (spec ruling 11): EquipItem with the

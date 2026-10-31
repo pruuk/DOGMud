@@ -73,6 +73,38 @@ func (c *Character) ArmLabel(arm int) string {
 	return pairs[pairIdx].Second.Label
 }
 
+// HandItems is a copy of what each arm holds, indexed arm-1 (arm 1 to 6,
+// numbered as ArmLabel numbers them); an arm the character lacks reads as an
+// empty item. Compare a snapshot from before an equip with one after to find
+// the arm an automatic placement chose (#686).
+func (c *Character) HandItems() []items.Item {
+	out := make([]items.Item, 0, 6)
+	for _, pair := range c.GetHandPairs() {
+		for _, slot := range []HandSlot{pair.First, pair.Second} {
+			if slot.ItemPtr != nil {
+				out = append(out, *slot.ItemPtr)
+			} else {
+				out = append(out, items.Item{})
+			}
+		}
+	}
+	return out
+}
+
+// ArmFilled is the lowest arm (1 to 6) that holds an item of itemId in after
+// and held something else in before, or 0 when none did.
+func ArmFilled(before, after []items.Item, itemId int) int {
+	for i, it := range after {
+		if it.ItemId != itemId {
+			continue
+		}
+		if i >= len(before) || before[i].ItemId != it.ItemId || before[i].UUID != it.UUID {
+			return i + 1
+		}
+	}
+	return 0
+}
+
 // ArmDisplayName is how a player reads arm N (1 to 6): "weapon hand",
 // "offhand", then "arm 3" to "arm 6", as the equipment list numbers them
 // (#270). "" when the character has no such arm. ArmLabel stays the slot key.
