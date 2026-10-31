@@ -242,6 +242,16 @@ unauthenticated flood of `/build` used to race an admin authenticating anywhere
 in the admin UI and kill the process with `concurrent map read and map write`.
 Do not "fix" that by wrapping `/build` in `RunWithMUDLocked`.
 
+**Gotcha — the builder pages live in the PUBLIC html folder.** `serveTemplate`
+is the catch-all `/` handler and serves any public `.html` file, resolving
+`/build.html`, `/build/` and `/build` alike to `build.html`. So the password on
+`GET /build` alone protected nothing: every other spelling reached the page.
+`adminOnlyPages` (`build.go`) lists files `serveTemplate` refuses (as a 404)
+unless the request came through `serveBuildPage`, which marks it admin-served
+and is only reachable behind `doBasicAuth`. A new admin page placed in the
+public folder must be added to `adminOnlyPages`, or better, live under
+`AdminHtml` like the `/admin/*` pages.
+
 **Gotcha — the failure tracker is keyed by attacker-controlled connection
 data.** It is swept every write and hard-capped at `authTrackerMaxEntries`,
 evicting the least-recently-failed entry at capacity. Any future per-source map
@@ -561,7 +571,7 @@ This web system provides a robust foundation for both player-facing web interfac
 | `wsguard.go` | Websocket admission control: connection cap + origin check |
 | `template_func.go` | Template helper functions |
 | `stats.go` | Public stats endpoints |
-| `build.go` | The admin world-building tool backend |
+| `build.go` | The admin world-building page handler and `adminOnlyPages`, the public-folder pages only its gated route may serve |
 | `admin.go` | Admin routing and shared handlers |
 | `admin.rooms.go` | Room editor |
 | `admin.mobs.go` | Mob editor |
