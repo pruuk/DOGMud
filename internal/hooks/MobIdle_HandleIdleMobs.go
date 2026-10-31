@@ -132,7 +132,10 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 		didRestock = mobs.TickMobShopRestock(mob)
 	}
 	if didRestock {
-		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+		// The shelves refill on every restock; the delivery line waits out
+		// ShopRestockNarrationRounds, counted from the last one a player saw
+		// (#725).
+		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil && room.PlayerCt() > 0 && restockNarrationDue(mob.InstanceId, util.GetRoundCount()) {
 			msgs := []string{
 				`A supply cart pulls up outside. <ansi fg="mobname">%s</ansi> sorts through a fresh delivery.`,
 				`<ansi fg="mobname">%s</ansi> unpacks a crate of supplies and restocks the shelves.`,
