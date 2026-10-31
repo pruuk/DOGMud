@@ -305,8 +305,8 @@ merged (#712), plan `docs/superpowers/plans/completed/2026-10-28-quest-arc-phase
 the minimap.
 
 **Status: done (2026-10-28), merged in #713.** Spec
-`docs/superpowers/specs/2026-10-28-quest-arc-phase5-quest-log-actions-design.md`, plan
-`docs/superpowers/plans/2026-10-28-quest-arc-phase5-quest-log-actions.md`.
+`docs/superpowers/specs/completed/2026-10-28-quest-arc-phase5-quest-log-actions-design.md`, plan
+`docs/superpowers/plans/completed/2026-10-28-quest-arc-phase5-quest-log-actions.md`.
 
 ## Phase 7: Content migration, zone by zone
 
