@@ -2,7 +2,7 @@
 # tally every unprompted line while the server's ambient telemetry counts the
 # same rooms. Telemetry is switched on in the playtest checkout's
 # config.yaml, never in a commit. Run once at the baseline values and once at
-# the shipped values; docs/superpowers/plans/2026-10-30-317-ambient-retune.md
+# the shipped values; docs/superpowers/plans/completed/2026-10-30-317-ambient-retune.md
 # has the steps. Both runs start a fresh container at the same game time, so
 # NPC schedules line up between them.
 name: 317-ambient
