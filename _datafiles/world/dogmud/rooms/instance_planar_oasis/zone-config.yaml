@@ -6,3 +6,6 @@ portal_duration: "30 real minutes"
 entry_room: 5003
 allow_recall: true
 instance_gold: true
+# Idle wandering here runs at this share of the authored rate (#317,
+# chosen from the 2026-10-30 baseline playtest's telemetry).
+wandermultiplier: 0.25
