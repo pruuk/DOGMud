@@ -6,9 +6,9 @@ season: winter
 # changes; before this it would have been silently dropped by the parser.
 outdoor:
   default:
-    - "A skin of ice creaks at the edges of still water."
+    - "Hoarfrost crusts the ground and crunches faintly underfoot."
     - "Your breath plumes white and hangs in the frozen air."
-    - "The cold presses in steady and even, without a hint of wind."
+    - "The cold works its way into every fold of your clothing."
     - "Frost furs every blade of grass still standing in the open."
     - "The light sits low and pale, casting long, thin shadows."
     - "Bare branches stand stark and black against a colorless sky."
@@ -23,8 +23,8 @@ outdoor:
     - "Icicles hang fanged from every eave along the street."
     - "Chimney smoke rises arrow-straight into the cold above the rooftops."
     - "Frost silvers every cobblestone, and boots ring hard on the street."
-    - "Windows fog thick from warmth trapped just behind the glass."
-    - "Doorways stand shut tight, and the street feels emptied of people."
+    - "Windows fog over where warm rooms press against the cold glass."
+    - "Doors open only in quick bursts, shut fast again against the cold."
     - "A thin crust of ice rims every puddle between the cobbles."
   city_backstreet: *city_winter
 indoor:
@@ -33,6 +33,6 @@ indoor:
       - "Deep-winter cold seeps through the walls despite the shelter."
       - "Frost feathers the inside of the windowpanes by midday."
       - "The hearth throws heat only a few steps before it fades."
-      - "Floorboards creak sharp and brittle in the deep cold."
+      - "A draft slips under the door and curls around your ankles."
       - "Daylight through the shutters stays thin, pale, and short."
       - "A faint smell of banked embers clings to every room."
