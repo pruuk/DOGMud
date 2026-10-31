@@ -362,6 +362,15 @@ func (b *Balance) validateMisc() {
 	if b.SkillWeight <= 0 {
 		b.SkillWeight = 2.0
 	}
+	// The knee knobs are read only through WeightedSkill. The SkillWeight
+	// default is set in validateProgression too; this validator runs last
+	// (config.balance.go Validate), so SkillWeight is already positive here.
+	if b.SkillWeightKneeRank < 0 {
+		b.SkillWeightKneeRank = 0
+	}
+	if b.SkillWeightAboveKnee < 0 {
+		b.SkillWeightAboveKnee = b.SkillWeight
+	}
 
 	// ── CARAVAN SYSTEM ───────────────────────────────────────────────────────
 	if len(b.CaravanServedZones) == 0 {
