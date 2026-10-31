@@ -2076,7 +2076,44 @@ Balance:
   MobBTreeReactionBase: 2.0       # Base delay before perception reduction (seconds)
 
   # ── GOSSIP SYSTEM ───────────────────────────────────────────────────────────
-  GossipIntervalRounds: 75  # Rounds between gossip broadcasts for "gossiper" mobs (min 20)
+  GossipIntervalRounds: 75  # Rounds between gossip broadcasts for "gossiper" mobs; 0 turns gossip off, 1 to 19 read as 75
+
+  # ── AMBIENT (#317) ──────────────────────────────────────────────────────────
+  # Unprompted lines, one knob per source. 0 turns a source off. A round is
+  # 4 seconds (Timing.RoundSeconds), so 15 rounds is a real minute.
+  # MobIdleChatterScale: scales every idle mob's chance to emote, say, eat or
+  #   cast on its own. 1.0 is the rate its activitylevel and idle pool give.
+  # MobIdleMovementScale: the same for idle wandering (wander, sneak,
+  #   portal), rolled apart from chatter, so a quieter town keeps its feet.
+  # RoomIdleChancePct: percent chance each round that a room with players
+  #   shows one of its idle lines (room -1 gets four times this).
+  # TipIntervalRounds: rounds between gameplay tips (75 is 5 minutes).
+  # AmbientListenerBudgetRounds: a player hears at most one ambient line
+  #   (room idle, mob idle chatter, weather, gossip, item chatter) per this
+  #   many rounds; the rest of the room still hears a line one player skips.
+  #   An NPC conversation starts only when everyone present has budget left.
+  # AmbientRepeatLimit / AmbientRepeatWindowRounds: a player takes in the
+  #   same ambient line (one mob template's, room's or item's exact line) at
+  #   most Limit times per Window rounds (900 is an hour); the rest of the
+  #   room still hears it. Either 0 turns the limit off.
+  # Conversation*: NPC conversations. BaseChancePct is a per-round percent
+  #   (1.0 = 1%), PlayerArrivalBoostPct the chance one starts as a player
+  #   walks in, CooldownRounds the rest between two; 0 turns each off.
+  # AmbientTelemetry: count ambient lines and mob moves per room and log one
+  #   "ambient.telemetry" line per active room every
+  #   AmbientTelemetryReportMinutes; read it with tools/ambient_report.py.
+  MobIdleChatterScale: 0.5
+  MobIdleMovementScale: 1.0
+  RoomIdleChancePct: 3
+  TipIntervalRounds: 75
+  AmbientListenerBudgetRounds: 5
+  AmbientRepeatLimit: 1
+  AmbientRepeatWindowRounds: 900
+  ConversationBaseChancePct: 1.0
+  ConversationPlayerArrivalBoostPct: 25
+  ConversationCooldownRounds: 50
+  AmbientTelemetry: false
+  AmbientTelemetryReportMinutes: 5
 
   # ── MOON PHASES ─────────────────────────────────────────────────────────────
   MoonStatModMax: 0.10  # Max fractional stat modifier from moon phases (±10% at full/new moon)
@@ -2836,9 +2873,14 @@ Modules:
     # Thin spawns for more clear-sky stretches between systems.
     SpawnRateScale: 0.7
     EmoteMode: module
-    EmoteEveryRounds: 24
+    # A weather or season line pass runs every EmoteEveryRounds rounds, give
+    # or take a quarter (48 is about 3 minutes); 0 turns them off. In calm
+    # weather a seasonal line plays on 1 pass in SeasonalEmoteOneIn (0 =
+    # never). Each line counts toward Balance.AmbientListenerBudgetRounds.
+    EmoteEveryRounds: 48
     EmoteMildChancePct: 30
     EmoteStrongChancePct: 100
+    SeasonalEmoteOneIn: 4
     ConditionsEnabled: false
     Persist: true
     IncludeSecretExits: true

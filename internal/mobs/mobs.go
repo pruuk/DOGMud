@@ -108,8 +108,13 @@ type Mob struct {
 	// here so it receives the camp's call-for-help.
 	RoutineLinks []string `yaml:"routine_links,omitempty"`
 
-	Hates              []string       `yaml:"hates,omitempty"`        // What NPC groups or races do they hate and probably fight if encountered?
-	IdleCommands       []string       `yaml:"idlecommands,omitempty"` // Commands they may do while idle (not in combat)
+	Hates        []string `yaml:"hates,omitempty"`        // What NPC groups or races do they hate and probably fight if encountered?
+	IdleCommands []string `yaml:"idlecommands,omitempty"` // Commands they may do while idle (not in combat)
+	// WanderMultiplier scales this mob's idle movement roll (#317). nil
+	// (unset) is 1.0 and 0 is never; a pointer so the two differ. Spawned
+	// instances share the template's pointer (mob := *m), which is safe only
+	// because nothing writes through it.
+	WanderMultiplier   *float64       `yaml:"wandermultiplier,omitempty"`
 	AngryCommands      []string       // randomly chosen to queue when they are angry/entering combat.
 	CombatCommands     []string       `yaml:"combatcommands,omitempty"`    // Commands they may do while in combat
 	AIProfile          string         `yaml:"aiprofile,omitempty"`         // Combat AI profile: "default", "aggressive", "defensive", "grappler", "brawler", "tactical" (Stage 8.9)
@@ -1197,24 +1202,6 @@ func (m *Mob) GetAngryCommand() string {
 	return ``
 }
 
-func (m *Mob) GetIdleCommand() string {
-
-	// Always a 1 in 100 chance it will do nothing for an idle.
-	// This is to prevent requiring Admins to assign an empy idlecommand to mob definitions
-	// while still allowing "no idle command found" behavior to run.
-	// Empty idle commands can still be defined in mobs, however.
-	if util.Rand(100) == 0 {
-		return ``
-	}
-
-	// First check if the mob has a specific action
-	if len(m.IdleCommands) > 0 {
-		return m.IdleCommands[util.Rand(len(m.IdleCommands))]
-	}
-
-	return ``
-}
-
 func (r *Mob) ConsidersAnAlly(m *Mob) bool {
 
 	// Same mob type always allies
@@ -1270,6 +1257,11 @@ func (r *Mob) Validate() error {
 		r.ActivityLevel = 10
 	} else if r.ActivityLevel > 100 {
 		r.ActivityLevel = 100
+	}
+
+	// A negative wandermultiplier is an authoring error; refuse it (#317).
+	if r.WanderMultiplier != nil && *r.WanderMultiplier < 0 {
+		return fmt.Errorf("mob %d: wandermultiplier must be 0 or more, got %v", r.MobId, *r.WanderMultiplier)
 	}
 
 	// Sync legacy Mob.NonCombatant → Character.NonCombatant.

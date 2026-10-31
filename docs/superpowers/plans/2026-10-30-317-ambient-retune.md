@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Give every unprompted ("ambient") line source its own config knob with 0 as off, roll mob idle chatter and idle movement apart (weighted so every scale at 1.0 keeps today's rates), show a one-line room's line once per visit, cap what each player hears with a per-listener ambient budget, add zone and mob multipliers, and measure the result with switchable telemetry, a report script and two playtests.
+**Goal:** Give every unprompted ("ambient") line source its own config knob with 0 as off, roll mob idle chatter and idle movement apart (weighted so every scale at 1.0 keeps today's rates), show a one-line room's line once per visit, cap what each player hears with a per-listener ambient budget, hold back a line a player has already heard within the hour (the repeat limit, Task 16A, owner 2026-10-31), add zone and mob multipliers, and measure the result with switchable telemetry, a report script and two playtests.
 
 **Architecture:** A new leaf package `internal/ambient` is the one gate every counted send site calls (`ambient.Plan`): it charges each listener's budget and returns the players to leave out, which the caller passes to the room sender it already uses, so sight gating, name hiding and categories stay where they are. Mob idle emotes and says reach it through a new mob-only command `ambient <source> <emote|say> <text>` that only the idle path and the gossip tick issue. The split idle roll is a pure function on `mobs.Mob`; zone multipliers are pointer fields on `rooms.ZoneConfig`. Telemetry lives in the same package behind `Balance.AmbientTelemetry`.
 
@@ -5581,6 +5581,399 @@ EOF
 
 ---
 
+## Task 16A: The repeat limit (Opus)
+
+Spec section 2b (owner 2026-10-31). A player takes in one ambient line at most `AmbientRepeatLimit` times per `AmbientRepeatWindowRounds`; over that, the player is left out of that line only. Behaviour-tree dialogue is out of scope (#719).
+
+**Files:**
+- Modify: `internal/configs/config.balance.go` (two fields after `AmbientListenerBudgetRounds`, line 872)
+- Modify: `internal/configs/config.balance.mobs.go` (floors after line 176)
+- Modify: `internal/configs/config_ambient_test.go` (absent loads 0; shipped 1 and 900)
+- Modify: `_datafiles/config.yaml` (comment block and values near line 2091-2105)
+- Modify: `internal/ambient/ambient.go`, `internal/ambient/telemetry.go`, `internal/ambient/testing.go`
+- Modify: `internal/ambient/ambient_test.go`, `internal/ambient/telemetry_test.go`
+- Modify: `internal/mobcommands/ambient.go`, `internal/hooks/NewRound_RoomIdle.go`, `internal/behaviortree/actions_item_voice.go`, `modules/weather/engine/emotes.go`
+- Create: `internal/guards/ambient_line_key_guard_test.go`
+- Modify: `tools/ambient_report.py` (a `_repeat` count and Repeat column; self-test fixtures)
+- Modify: `internal/ambient/context.md`, `docs/PATCH_NOTES.md` (the `A quieter world` entry)
+
+- [ ] **Step 1: Config surface**
+
+In `config.balance.go`, after the `AmbientListenerBudgetRounds` line, matching its column alignment:
+
+```go
+	AmbientRepeatLimit            ConfigInt   `yaml:"AmbientRepeatLimit"`            // A player takes in one ambient line at most this many times per AmbientRepeatWindowRounds; 0 = no limit (default 0)
+	AmbientRepeatWindowRounds     ConfigInt   `yaml:"AmbientRepeatWindowRounds"`     // The repeat limit's window in rounds; 0 = no limit (default 0)
+```
+
+In `config.balance.mobs.go`, after the `AmbientListenerBudgetRounds` floor:
+
+```go
+	if b.AmbientRepeatLimit < 0 {
+		b.AmbientRepeatLimit = 0
+	}
+	if b.AmbientRepeatWindowRounds < 0 {
+		b.AmbientRepeatWindowRounds = 0
+	}
+```
+
+In `config.yaml`, after the `AmbientListenerBudgetRounds` comment paragraph, add:
+
+```yaml
+  # AmbientRepeatLimit / AmbientRepeatWindowRounds: a player takes in the
+  #   same ambient line (one mob template's, room's or item's exact line) at
+  #   most Limit times per Window rounds (900 is an hour); the rest of the
+  #   room still hears it. Either 0 turns the limit off.
+```
+
+and after `AmbientListenerBudgetRounds: 5`:
+
+```yaml
+  AmbientRepeatLimit: 1
+  AmbientRepeatWindowRounds: 900
+```
+
+In `config_ambient_test.go`: the absent-keys test also requires both new fields to load 0; the zero-keys test's YAML and map gain both keys at 0; the shipped-config test requires `AmbientRepeatLimit == 1` and `AmbientRepeatWindowRounds == 900` (extend the existing condition and message). Run `go test ./internal/configs/ -run Ambient -count=1`: green. Sabotage: set `AmbientRepeatLimit: 2` in `config.yaml`, watch the shipped test fail naming it, restore.
+
+- [ ] **Step 2: Write the failing core tests**
+
+Append to `internal/ambient/ambient_test.go`:
+
+```go
+// pinRepeat sets the repeat limit knobs on top of seedAmbientRoom's config.
+func pinRepeat(t *testing.T, limit, window int) {
+	t.Helper()
+	cfg := configs.GetConfig()
+	cfg.Balance.AmbientRepeatLimit = configs.ConfigInt(limit)
+	cfg.Balance.AmbientRepeatWindowRounds = configs.ConfigInt(window)
+	configs.SetConfigForTest(t, cfg)
+}
+
+func TestPlan_RepeatReachesAListenerOnce(t *testing.T) {
+	room := seedAmbientRoom(t, 0, nil, listenA)
+	pinRepeat(t, 1, 900)
+	key := LineKey(`mob`, 7, `polishes a glass.`)
+	if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: key}); !slices.Equal(r.Delivered, []int{listenA}) {
+		t.Fatalf("first time: delivered %v, want the listener", r.Delivered)
+	}
+	util.SetRoundCountForTest(ambNow + 899)
+	if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: key}); len(r.Delivered) != 0 || !slices.Equal(r.Exclude, []int{listenA}) {
+		t.Fatalf("repeat inside the window: delivered %v exclude %v, want left out", r.Delivered, r.Exclude)
+	}
+	if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: LineKey(`mob`, 7, `wipes the bar.`)}); !slices.Equal(r.Delivered, []int{listenA}) {
+		t.Fatalf("a different line: delivered %v, want the listener", r.Delivered)
+	}
+	util.SetRoundCountForTest(ambNow + 900)
+	if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: key}); !slices.Equal(r.Delivered, []int{listenA}) {
+		t.Fatalf("window passed: delivered %v, want the listener", r.Delivered)
+	}
+}
+
+func TestPlan_RepeatSparesAListenerWhoHasNotHeardIt(t *testing.T) {
+	room := seedAmbientRoom(t, 0, nil, listenA, listenB)
+	pinRepeat(t, 1, 900)
+	key := LineKey(`room`, ambRoom, `A cart rattles past.`)
+	Plan(Line{Room: room, Source: SourceRoomIdle, Key: key, Exclude: []int{listenB}}) // only A hears it
+	r := Plan(Line{Room: room, Source: SourceRoomIdle, Key: key})
+	if !slices.Equal(r.Exclude, []int{listenA}) || !slices.Equal(r.Delivered, []int{listenB}) {
+		t.Fatalf("exclude %v delivered %v, want A left out and B hearing", r.Exclude, r.Delivered)
+	}
+}
+
+func TestPlan_HeldBackRepeatDoesNotChargeTheBudget(t *testing.T) {
+	room := seedAmbientRoom(t, 5, nil, listenA)
+	pinRepeat(t, 1, 900)
+	key := LineKey(`item`, 12, `Feed me.`)
+	Plan(Line{Room: room, Source: SourceItemChatter, Key: key})
+	util.SetRoundCountForTest(ambNow + 5) // budget open again
+	Plan(Line{Room: room, Source: SourceItemChatter, Key: key}) // held back as a repeat
+	if r := Plan(Line{Room: room, Source: SourceWeather, Key: LineKey(`weather`, 0, `Rain falls.`)}); !slices.Equal(r.Delivered, []int{listenA}) {
+		t.Fatalf("fresh line after a held-back repeat: delivered %v, want the listener (the repeat must not charge the budget)", r.Delivered)
+	}
+}
+
+func TestPlan_BudgetHeldLineIsNotRecordedAsSeen(t *testing.T) {
+	room := seedAmbientRoom(t, 5, nil, listenA)
+	pinRepeat(t, 1, 900)
+	ChargeForTest(listenA, ambNow+5)
+	key := LineKey(`mob`, 7, `hums.`)
+	Plan(Line{Room: room, Source: SourceMobChatter, Key: key}) // budget holds it back
+	util.SetRoundCountForTest(ambNow + 5)
+	if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: key}); !slices.Equal(r.Delivered, []int{listenA}) {
+		t.Fatalf("delivered %v: a line the budget held back was recorded as seen", r.Delivered)
+	}
+}
+
+func TestPlan_RepeatOffSwitches(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		limit, window int
+		key           string
+	}{
+		{"empty key", 1, 900, ``},
+		{"limit 0", 0, 900, LineKey(`mob`, 7, `x`)},
+		{"window 0", 1, 0, LineKey(`mob`, 7, `x`)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			room := seedAmbientRoom(t, 0, nil, listenA)
+			pinRepeat(t, tc.limit, tc.window)
+			for i := 0; i < 3; i++ {
+				if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: tc.key}); !slices.Equal(r.Delivered, []int{listenA}) {
+					t.Fatalf("send %d: delivered %v, want the listener every time", i, r.Delivered)
+				}
+			}
+		})
+	}
+}
+
+func TestRoundTick_PrunesRepeatMemory(t *testing.T) {
+	room := seedAmbientRoom(t, 0, nil, listenA)
+	pinRepeat(t, 1, 900)
+	Plan(Line{Room: room, Source: SourceMobChatter, Key: LineKey(`mob`, 7, `x`)})
+	RoundTick(ambNow + 899)
+	if n := RepeatKeysForTest(listenA); n != 1 {
+		t.Fatalf("inside the window: %d keys remembered, want 1", n)
+	}
+	RoundTick(ambNow + 900)
+	if n := RepeatKeysForTest(listenA); n != 0 {
+		t.Fatalf("window passed: %d keys remembered, want 0", n)
+	}
+}
+```
+
+Run `go test ./internal/ambient/ -run 'Repeat|BudgetHeld' -count=1`. Expected: build failure (`LineKey`, `Key`, `RepeatKeysForTest` undefined). That is the red.
+
+- [ ] **Step 3: Implement the core**
+
+In `internal/ambient/ambient.go`:
+
+1. Package comment: after "the once-per-visit rule for a room with a single idle line," add "the repeat limit (Balance.AmbientRepeatLimit per AmbientRepeatWindowRounds),".
+2. Add `"strconv"` to the imports.
+3. In `Line`, after `Exclude`:
+
+```go
+	// Key is the line's repeat-limit identity, from LineKey. Empty skips
+	// the repeat limit (owner 2026-10-31).
+	Key string
+```
+
+4. After `Routing`:
+
+```go
+// LineKey is an ambient line's repeat-limit identity: the kind of speaker
+// (mob, room, item, weather), its template or room id, and the raw text
+// before names are filled in, so two mobs of one template share it.
+func LineKey(kind string, id int, text string) string {
+	return kind + `:` + strconv.Itoa(id) + `:` + text
+}
+```
+
+5. In the `var (...)` block, after `singleHeard`:
+
+```go
+	repeatMu sync.Mutex
+	// repeatSeen is, per player, the rounds each line key reached them,
+	// oldest first. Taken inside budgetMu when both are held. In memory
+	// only; RoundTick prunes it.
+	repeatSeen = map[int]map[string][]uint64{}
+```
+
+6. After `budgetWindow`:
+
+```go
+// repeatLimits is the repeat limit and its window in rounds; 0, 0 when
+// either knob is 0 (the limit is off).
+func repeatLimits() (limit int, window uint64) {
+	b := configs.GetBalanceConfig()
+	if b.AmbientRepeatLimit <= 0 || b.AmbientRepeatWindowRounds <= 0 {
+		return 0, 0
+	}
+	return int(b.AmbientRepeatLimit), uint64(b.AmbientRepeatWindowRounds)
+}
+
+// seenLocked counts the times key reached userId inside the window ending
+// at now. repeatMu held.
+func seenLocked(userId int, key string, now, window uint64) int {
+	n := 0
+	for _, at := range repeatSeen[userId][key] {
+		if at+window > now {
+			n++
+		}
+	}
+	return n
+}
+```
+
+7. Replace `Plan`'s body from `now := util.GetRoundCount()` through `countLine(...)` with:
+
+```go
+	now := util.GetRoundCount()
+	window, hushed := budgetWindow(l.Room.Zone)
+	limit, repeatWindow := repeatLimits()
+	checkRepeat := l.Key != `` && limit > 0
+	suppressed, repeated := 0, 0
+
+	budgetMu.Lock()
+	repeatMu.Lock()
+	for _, uid := range l.Room.GetPlayers() {
+		if slices.Contains(l.Exclude, uid) {
+			continue
+		}
+		u := users.GetByUserId(uid)
+		if u == nil {
+			continue
+		}
+		if l.Perceives != nil && !l.Perceives(u) {
+			continue
+		}
+		// A repeat is held back before the budget is asked, so it charges
+		// nothing and the next fresh line still gets through.
+		if checkRepeat && seenLocked(uid, l.Key, now, repeatWindow) >= limit {
+			r.Exclude = append(r.Exclude, uid)
+			repeated++
+			continue
+		}
+		if hushed || (window > 0 && now < budgetNext[uid]) {
+			r.Exclude = append(r.Exclude, uid)
+			suppressed++
+			continue
+		}
+		if window > 0 {
+			budgetNext[uid] = now + window
+		}
+		if checkRepeat {
+			if repeatSeen[uid] == nil {
+				repeatSeen[uid] = map[string][]uint64{}
+			}
+			repeatSeen[uid][l.Key] = append(repeatSeen[uid][l.Key], now)
+		}
+		r.Delivered = append(r.Delivered, uid)
+	}
+	repeatMu.Unlock()
+	budgetMu.Unlock()
+
+	countLine(l.Room, l.Source, len(r.Delivered), suppressed, repeated)
+```
+
+Update `Plan`'s doc comment: "A player who has taken in this line's Key the repeat limit's times inside its window, or who is over budget, is added to Exclude: ..."
+
+8. In `RoundTick`, after the budget prune and before `telemetryTick(round)`:
+
+```go
+	_, repeatWindow := repeatLimits()
+	repeatMu.Lock()
+	for uid, keys := range repeatSeen {
+		if repeatWindow == 0 || users.GetByUserId(uid) == nil {
+			delete(repeatSeen, uid)
+			continue
+		}
+		for key, rounds := range keys {
+			i := 0
+			for i < len(rounds) && rounds[i]+repeatWindow <= round {
+				i++
+			}
+			if i == len(rounds) {
+				delete(keys, key)
+			} else if i > 0 {
+				keys[key] = rounds[i:]
+			}
+		}
+		if len(keys) == 0 {
+			delete(repeatSeen, uid)
+		}
+	}
+	repeatMu.Unlock()
+```
+
+and add "and the repeat memory of lines whose window has passed or of players no longer online" to its doc comment.
+
+In `internal/ambient/telemetry.go`: `lineCounts` gains `repeat`; `countLine` takes `repeated int` after `suppressed`, its early return becomes `delivered+suppressed+repeated == 0`, `offered` adds `repeated`, and `lc.repeat += repeated`; `flushLocked` appends `string(src)+"_repeat", lc.repeat` after `_suppressed`. Update `countLine`'s comment ("delivered, suppressed by the budget, held back as a repeat").
+
+In `internal/ambient/testing.go`: `ResetForTest` saves, empties and restores `repeatSeen` under `repeatMu` exactly as it does `singleHeard`; add
+
+```go
+// RepeatKeysForTest returns how many line keys the repeat limit remembers
+// for userId.
+func RepeatKeysForTest(userId int) int {
+	repeatMu.Lock()
+	defer repeatMu.Unlock()
+	return len(repeatSeen[userId])
+}
+```
+
+In `telemetry_test.go`, add `"<source>_repeat": 0` (or the expected count) wherever a test asserts the full set of emitted fields, and add one case to `TestTelemetry_OnCountsAndWritesOneLinePerRoom` (or a new test) that sends one keyed line twice to one listener with the limit on and asserts `mob_chatter_repeat` 1 and `mob_chatter_offered` 2.
+
+Run `go test ./internal/ambient/ -count=1`: all green. Sabotage: delete the `checkRepeat && seenLocked(...)` branch, watch `TestPlan_RepeatReachesAListenerOnce` fail on "repeat inside the window", restore. Then move the `repeatSeen` append above the budget check, watch `TestPlan_BudgetHeldLineIsNotRecordedAsSeen` fail, restore.
+
+- [ ] **Step 4: Give every call site its key**
+
+`internal/mobcommands/ambient.go`, after the empty-text check; then `Key: key` in the emote and say literals and `Key: key + ":echo"` in the echo's literal:
+
+```go
+	// The repeat limit's identity: the template, so two of one kind share it.
+	key := ambient.LineKey(`mob`, int(mob.MobId), text)
+```
+
+The other three literals gain one field each:
+
+```go
+	Key: ambient.LineKey(`room`, room.RoomId, msg),             // hooks/NewRound_RoomIdle.go sendRoomIdleLine
+	Key: ambient.LineKey(`item`, ctx.Item.ItemId, line),        // behaviortree/actions_item_voice.go, the al literal
+	Key: ambient.LineKey(`weather`, 0, line),                   // weather/engine/emotes.go sendAmbientWeather
+```
+
+Add one keyed-repeat test beside each site's existing budget test (`internal/mobcommands/ambient_test.go`, `internal/hooks/room_idle_ambient_test.go`, `internal/behaviortree/item_voice_ambient_test.go`, `modules/weather/engine/emotes_ambient_test.go`): with budget 0 and the limit pinned to 1 per 900, the same line sent twice reaches the listener once; a different line still reaches them. Pin the knobs with `configs.SetConfigForTest` in the file's existing seed helper's style. For the mob test, also send the same text from a second mob of the same `MobId` and assert it is held back (the template shares a memory).
+
+Run those four packages: green.
+
+- [ ] **Step 5: The key guard**
+
+Create `internal/guards/ambient_line_key_guard_test.go` on the shape of `aim_refusal_category_guard_test.go` (same package, reuses `repoRoot`): walk `internal` and `modules` non-test `.go` files, skipping `internal/ambient/`; parse each; for every `*ast.CompositeLit` whose `Type` is the selector `ambient.Line`, require a `KeyValueExpr` whose key is the ident `Key`; report `file:line: ambient.Line without Key`. Fail if fewer than 100 files were scanned or fewer than 6 literals were found ("the finder is broken"). A `TestAmbientLineKeyGuardCanFail` feeds the finder one literal with `Key:` and one without and expects exactly one report naming the second's line, and 2 literals found.
+
+Run `go test ./internal/guards/ -run AmbientLineKey -count=1`: green. Sabotage: remove `Key:` from the weather literal, watch the guard name `modules/weather/engine/emotes.go`, restore.
+
+- [ ] **Step 6: The report script**
+
+In `tools/ambient_report.py`: read `s + "_repeat"` into a fourth slot of each `room["src"][s]` (`[0, 0, 0, 0]`); add a `Repeat` column after `Suppressed` in both the per-source and all-sources tables (totals sum it too); add `"_repeat"` to the self-test's `base` field tuple; give one self-test fixture line a non-zero `mob_chatter_repeat` and assert it appears in the rendered table. Update the module docstring's field list. Old logs without `_repeat` fields read 0 (the `num` helper already defaults a missing field, check it does).
+
+Run `python -I tools/ambient_report.py --self-test`: `self-test ok`.
+
+- [ ] **Step 7: Docs**
+
+- `internal/ambient/context.md`: in "Rules", a repeat-limit paragraph (knobs, order before the budget, `LineKey` forms, empty key skips, the window does not scale by zone, behaviour-tree lines out of scope #719); in "How a send site uses it", that every `Line` sets `Key` from `LineKey` and the guard enforces it; in "Telemetry", the `_repeat` field.
+- `docs/PATCH_NOTES.md`, the `A quieter world` entry: one sentence in player voice, e.g. "A shopkeeper or a room no longer tells you the same line over and over: you hear each one once, then it waits a good while before you hear it again." Follow `dogmud-player-copy` (no numbers).
+
+- [ ] **Step 8: Gate and commit**
+
+```bash
+cd C:/tmp/dogmud-317-ambient
+gofmt -l internal/ modules/
+go build ./...
+go test ./internal/ambient/ ./internal/configs/ ./internal/mobcommands/ ./internal/hooks/ ./internal/behaviortree/ ./modules/weather/... -count=1
+go test . ./internal/guards/ -count=1
+python -I tools/ambient_report.py --self-test
+git add internal/configs/config.balance.go internal/configs/config.balance.mobs.go internal/configs/config_ambient_test.go _datafiles/config.yaml internal/ambient/ambient.go internal/ambient/telemetry.go internal/ambient/testing.go internal/ambient/ambient_test.go internal/ambient/telemetry_test.go internal/ambient/context.md internal/mobcommands/ambient.go internal/mobcommands/ambient_test.go internal/hooks/NewRound_RoomIdle.go internal/hooks/room_idle_ambient_test.go internal/behaviortree/actions_item_voice.go internal/behaviortree/item_voice_ambient_test.go modules/weather/engine/emotes.go modules/weather/engine/emotes_ambient_test.go internal/guards/ambient_line_key_guard_test.go tools/ambient_report.py docs/PATCH_NOTES.md
+git status --short
+git commit -F - <<'EOF'
+feat(ambient): #317 a player hears each ambient line once an hour
+
+Owner 2026-10-31: the problem is hearing the same line again, not the
+total. Plan now holds back a line a player has already taken in
+AmbientRepeatLimit times inside AmbientRepeatWindowRounds (shipped 1
+per 900 rounds); the rest of the room still hears it, and a held-back
+repeat charges no budget. Every call site keys its line by speaker
+template and raw text through LineKey, enforced by a guard. Telemetry
+and the report gain a repeat count. Behaviour-tree dialogue stays out
+of scope (#719).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+EOF
+```
+
+Expected: gofmt prints nothing; every test `ok`; `self-test ok`; `git status --short` shows nothing staged-but-uncommitted from this task and no unexpected file.
+
+---
+
 ## Task 17: Set the Oasis wander multiplier (Sonnet)
 
 Only with the owner's value from Task 15 Step 8. If the owner chose to leave it unset, record that in the PR body and skip to Task 18.
@@ -5649,7 +6042,7 @@ Repeat Task 15 Steps 3 to 6 with `run2-shipped` in every evidence file name.
 
 - [ ] **Step 3: Post on #317**
 
-Comment with: header (run 2, shipped values, commit, run id), the run 2 table, the seats' feel summaries, and a short side-by-side of each route room's all-sources rate in run 1 and run 2 plus the Oasis moves per minute in both runs. `gh issue comment 317 --repo pruuk/DOGMud --body-file ...`; check the URL. Any defect a seat found that is not this change's goes to a GitHub issue per `dogmud-playtesting` ("After a run"), searched first.
+Comment with: header (run 2, shipped values, commit, run id), the run 2 table, the seats' feel summaries, and a short side-by-side of each route room's all-sources rate in run 1 and run 2 plus the Oasis moves per minute in both runs, and the repeat count per source (run 2 only; the repeat limit is on at its shipped 1 per 900 rounds). `gh issue comment 317 --repo pruuk/DOGMud --body-file ...`; check the URL. Any defect a seat found that is not this change's goes to a GitHub issue per `dogmud-playtesting` ("After a run"), searched first.
 
 - [ ] **Step 4: Remove the playtest checkout**
 

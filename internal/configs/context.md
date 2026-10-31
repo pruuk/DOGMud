@@ -756,7 +756,14 @@ is seeded in `newUnloadedConfig`; if it is, the shape is correct and load-bearin
 
 Seeded knobs today: `ProgressionFailureFraction` and `ProneAutoStandRounds`
 (#398; `< 0` restores the default 5 in `config.balance.misc.go`, 0 turns the
-auto-stand guard off, `config_proneautostand_test.go` covers the load path).
+auto-stand guard off, `config_proneautostand_test.go` covers the load path),
+and the #317 ambient knobs `MobIdleChatterScale`, `MobIdleMovementScale`,
+`RoomIdleChancePct`, `TipIntervalRounds`, `ConversationBaseChancePct`,
+`ConversationPlayerArrivalBoostPct`, `ConversationCooldownRounds`,
+`GossipIntervalRounds`, `AmbientListenerBudgetRounds`, `AmbientTelemetry`
+and `AmbientTelemetryReportMinutes` (declared in `config.balance.go`,
+load path in `config_ambient_test.go`). Their Go defaults are today's
+behaviour (budget and telemetry off); the retune ships in `config.yaml`.
 
 ### Gotcha: the special-move cooldown comments are stale in two places
 

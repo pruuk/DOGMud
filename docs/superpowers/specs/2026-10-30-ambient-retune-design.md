@@ -1,6 +1,7 @@
 # #317 Ambient retune: per-source knobs, a listener budget, zone and mob multipliers
 
-**Status:** design approved in brainstorm 2026-10-30; awaiting owner review of this file.
+**Status:** design approved in brainstorm 2026-10-30; section 2b (repeat limit) approved in
+brainstorm 2026-10-31, awaiting owner review.
 **Issue:** #317 (last open item under the messaging epic #381; M6 #370 and M7 #371 are closed).
 **Sequencing (owner 2026-10-30):** ships before the #375 phase 7 Pothole Coulee plans execute.
 **Owner requirement (recorded on #317):** idle movement and each idle chatter source are configured
@@ -37,7 +38,7 @@ shopkeeper talking about their goods.
 | Source | Knob | Today | Ships at |
 |---|---|---|---|
 | Mob idle chatter (emote, say, consume, cast) | `Balance.MobIdleChatterScale` | none | 0.5 |
-| Mob idle movement (wander, sneak, portal) | `Balance.MobIdleMovementScale` | none | 1.0 |
+| Mob idle movement (wander, portal; sneak rides this roll) | `Balance.MobIdleMovementScale` | none | 1.0 |
 | Room idle lines | `Balance.RoomIdleChancePct` (room -1 keeps 4x) | hardcoded 5 | 3 |
 | Weather cadence | `Modules.weather.EmoteEveryRounds` (existing) | 24 | 48 |
 | Seasonal weather line | `Modules.weather.SeasonalEmoteOneIn` (new; 0 off) | hardcoded 3 | 4 |
@@ -63,7 +64,10 @@ shopkeeper talking about their goods.
   dropped; its effect on rates is under 1%.
 - **Verb classes** are a fixed table in code (chatter: emote, say, consume, cast; movement:
   wander, sneak, portal; anything else, e.g. wear, alchemy: chatter). A guard test fails on an
-  idle verb in shipped content that the table does not classify.
+  idle verb in shipped content that the table does not classify. `sneak` does not leave the
+  room (it hides the mob in place); it rides the movement roll only so the chatter scale does
+  not change how often thieves hide, and telemetry never counts it as a move (correction found
+  in the Task 12 review, 2026-10-30).
 - **Single-line rooms** fire their line at most once per player visit.
 
 ### 2. The listener budget
@@ -81,6 +85,51 @@ still hears it. The budget is in-memory per player, on the item-chatter `listene
   event lines (sunrise and moon splashes, severe-weather onset, ferry, caravans, shop restock).
 - Each counted send site marks its send as ambient through one helper, so the budget check lives
   in one place.
+
+### 2b. The repeat limit (owner 2026-10-31)
+
+Owner, after the baseline playtest: "we probably need a knob for number of times you see the same
+message from a mob. That is the problem to solve, not the total number of messages." The budget
+caps how many lines a player hears; the repeat limit caps how often a player hears the same one.
+
+**Facts verified against source (branch `feat/317-ambient-retune` at `758b013e8`, 2026-10-31)**
+
+| Fact | Source |
+|---|---|
+| Six `ambient.Plan` call sites: mob emote, mob say (gossip comes through the same `ambient` mob command), the say echo, room idle, item chatter, weather | `internal/mobcommands/ambient.go:56,63,72`; `internal/hooks/NewRound_RoomIdle.go:32`; `internal/behaviortree/actions_item_voice.go:245`; `modules/weather/engine/emotes.go:108` |
+| `ambient.Line` carries `Room`, `Source`, `Perceives`, `Exclude`; no text and no speaker | `internal/ambient/ambient.go:55-67` |
+| `Plan` walks the room's players, skips `Exclude` and non-perceivers, then charges the budget; telemetry counts delivered and suppressed per listener | `internal/ambient/ambient.go:131-166` |
+| Budget state is `budgetNext map[int]uint64` behind `budgetMu`; `RoundTick` prunes it each round | `internal/ambient/ambient.go:77-90,224-242` |
+| Each site has the raw line and a stable speaker id at the call: mob `mob.MobId` and `text`; room `room.RoomId` and `msg`; item `ctx.Item.ItemId` and `line`; weather `line` | the files above |
+| Budget knob shape: `config.balance.go:872`, floor in `config.balance.mobs.go:176`, shipped in `config.yaml:2105`, pinned by `config_ambient_test.go` | files |
+| Telemetry writes `<source>_offered/_delivered/_suppressed` per room; `tools/ambient_report.py` reads them by those names | `internal/ambient/telemetry.go:163-190`; `tools/ambient_report.py:97-103` |
+
+**Rule.** A player takes in one ambient line at most `Balance.AmbientRepeatLimit` times per
+`Balance.AmbientRepeatWindowRounds`. Shipped 1 and 900 (about one hour). Either at 0 turns the
+limit off; both Go defaults are 0, so tests and a config without the keys behave as today. Over
+the limit, that player is left out of that line only; everyone else present still gets it.
+
+- **Order in `Plan`.** After `Exclude` and `Perceives`, before the budget. A held-back repeat is
+  neither charged to the budget nor counted as delivered, so the next fresh line still gets
+  through. A line the budget holds back is not recorded as seen.
+- **What "the same line" is.** A new `Line.Key`, built by one helper `ambient.LineKey(kind, id,
+  text)` so the six sites cannot drift apart: `mob:<MobId>:<text>`, `room:<RoomId>:<text>`,
+  `item:<ItemId>:<text>`, `weather:0:<line>`. The text is the raw line before names are filled
+  in, so two goblins of one template share a memory. The say echo uses the echoed say's key with
+  `:echo` appended. An empty `Key` skips the check (a future site that forgets degrades to today).
+- **Window does not scale by zone.** The repeat window answers "how often this exact line", which
+  a livelier zone does not change; `ambientmultiplier` keeps scaling chance and the budget only.
+- **State.** Per player, key to the rounds it was seen, in memory behind its own mutex, on the
+  `budgetNext` shape. `RoundTick` drops rounds older than the window and every entry of a player
+  no longer online. `ResetForTest` empties it too.
+- **Telemetry.** A fourth per-source count, `<source>_repeat`, in the summary line, and a
+  Repeat column in both report tables.
+- **Unchanged.** NPC conversations never reach `Plan` and stay exempt. The single-line-room rule
+  stays: within a visit shorter than the window the repeat limit would cover it, but a long stay
+  is a visit the limit would let repeat.
+- **Out of scope (owner 2026-10-31).** Behaviour-tree dialogue (`mob_idle` and `room_idle` branches)
+  never reaches `Plan`, so neither the budget nor the repeat limit covers it. It is addressed in
+  the behaviour arc rework; tracked as #719.
 
 ### 3. Zone and mob multipliers (owner 2026-10-30)
 
@@ -115,7 +164,8 @@ per zone.
 instance), telemetry on:
 1. **Baseline:** every multiplier and knob at its "today" value (scales 1.0, room idle 5,
    weather 24, budget 0). This equals today's behaviour.
-2. **Shipped values.**
+2. **Shipped values,** repeat limit on (1 per 900 rounds); the table adds the repeat count per
+   source.
 
 Each run yields the seats' feel reports and the script's table; both go on #317. The Oasis
 wander multiplier is chosen from run 1's movement numbers. Tuning after run 2 is a config edit.
@@ -133,6 +183,11 @@ wander multiplier is chosen from run 1's movement numbers. Tuning after run 2 is
 - Budget: two ambient lines within the window reach a player once; a second player who has budget
   still hears the line; exempt categories bypass it; a conversation does not start while a present
   player is over budget.
+- Repeat limit: one key reaches a player once, the second send leaves them out; a player who has
+  not heard it still gets it; a held-back repeat leaves that player's budget untouched; a line the
+  budget held back is not recorded as seen; the limit lifts once the window passes; an empty key,
+  limit 0 and window 0 each turn it off; a guard that can fail proves every `ambient.Line` literal
+  outside `internal/ambient` sets `Key`.
 - Zone multiplier: unset behaves as 1.0; 0 silences the zone's chatter; 2.0 doubles the chance and
   halves the window.
 - Single-line room fires once per visit.

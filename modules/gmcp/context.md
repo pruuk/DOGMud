@@ -467,7 +467,9 @@ call, for every lane including the sub-module requests:
 matching the text lane (`actions.sendSpoken`): `sender` is the name at clear sight, `A figure`
 at shapes, `Someone` at none or when `events.Communication.SpeakerHidden`; a player speaker's
 words skip deafened listeners, an NPC's do not (ruling 6); a say with `TargetUserId` reaches
-only that player. Other channels are unchanged.
+only that player; a listener in `events.Communication.ExcludeUserIds` (an ambient say they
+were over budget for, #317) gets no payload, as they got no room line. Other channels are
+unchanged.
 
 ## Module index
 

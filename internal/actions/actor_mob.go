@@ -12,6 +12,14 @@ import (
 type MobActor struct {
 	Mob  *mobs.Mob
 	Room *rooms.Room
+	// Skip lists players this actor's room line leaves out: the listeners an
+	// ambient line is over budget for (#317, mobcommands.Ambient). Empty
+	// for every other line.
+	Skip []int
+	// EchoExclude, when set, names the players to leave out of a say's
+	// "You hear someone talking." echo in each neighbouring room. Only an
+	// ambient say sets it (#317); every other say echoes to everyone.
+	EchoExclude func(*rooms.Room) []int
 }
 
 var _ Actor = (*MobActor)(nil)

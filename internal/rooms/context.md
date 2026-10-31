@@ -83,6 +83,13 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   (`modules/aicompanion/listeners.go`); NPC speech never uses it, going
   through `SendTextHidingNames` unfiltered instead so a moderated player
   still hears quest content.
+  `SendTextToExits(txt, isQuiet, excludeUserIds...)` queues one RoomId
+  message, prefixed `(From <exit>) `, into every neighbouring room with an
+  exit back, all sharing one exclude list. It delegates to
+  `SendTextToExitsExcluding(txt, isQuiet, exclude func(tgt *Room) []int)`,
+  which asks `exclude` once per such neighbour and puts its answer on that
+  room's messages only; an ambient say's echo uses it to leave out each
+  neighbour's over-budget listeners (#317, `actions.MobActor.EchoExclude`).
 - **Naming a creature**: `FindByNameSeenBy(viewer, name, flags...)` skips
   every creature `viewer` does not perceive (`characters.Character.Perceives`)
   before matching, so a hidden creature cannot be named and does not count

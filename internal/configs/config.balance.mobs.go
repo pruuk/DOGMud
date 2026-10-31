@@ -40,13 +40,16 @@ func (b *Balance) validateMobs() {
 	}
 
 	// ── NPC-NPC IDLE CONVERSATIONS ───────────────────────────────────────────
-	if b.ConversationBaseChancePct <= 0 {
+	// 0 is the off switch for each (#317), so not `<= 0`; an absent key
+	// still reaches the default through the -1 sentinel seeded in
+	// newUnloadedConfig.
+	if b.ConversationBaseChancePct < 0 {
 		b.ConversationBaseChancePct = 1.0
 	}
-	if b.ConversationPlayerArrivalBoostPct <= 0 {
+	if b.ConversationPlayerArrivalBoostPct < 0 {
 		b.ConversationPlayerArrivalBoostPct = 25
 	}
-	if b.ConversationCooldownRounds < 1 {
+	if b.ConversationCooldownRounds < 0 {
 		b.ConversationCooldownRounds = 50
 	}
 
@@ -146,8 +149,41 @@ func (b *Balance) validateMobs() {
 	// (PackMaxSize and PackScatterRounds covered in PACK SCALING above)
 
 	// ── GOSSIP ───────────────────────────────────────────────────────────────
-	if b.GossipIntervalRounds < 20 {
+	// 0 turns gossip off (#317); an absent key reaches 75 through the -1
+	// sentinel. 1 to 19 keep the old floor and read as 75.
+	if b.GossipIntervalRounds < 0 || (b.GossipIntervalRounds > 0 && b.GossipIntervalRounds < 20) {
 		b.GossipIntervalRounds = 75
+	}
+
+	// ── AMBIENT (#317) ───────────────────────────────────────────────────────
+	// Defaults are today's behaviour. 0 is legal and means off for every
+	// knob but the report window, so the guards are `< 0`, reached by an
+	// absent key through the -1 sentinels in newUnloadedConfig.
+	if b.MobIdleChatterScale < 0 {
+		b.MobIdleChatterScale = 1.0
+	}
+	if b.MobIdleMovementScale < 0 {
+		b.MobIdleMovementScale = 1.0
+	}
+	if b.RoomIdleChancePct < 0 {
+		b.RoomIdleChancePct = 5
+	} else if b.RoomIdleChancePct > 100 {
+		b.RoomIdleChancePct = 100
+	}
+	if b.TipIntervalRounds < 0 {
+		b.TipIntervalRounds = 75
+	}
+	if b.AmbientListenerBudgetRounds < 0 {
+		b.AmbientListenerBudgetRounds = 0
+	}
+	if b.AmbientRepeatLimit < 0 {
+		b.AmbientRepeatLimit = 0
+	}
+	if b.AmbientRepeatWindowRounds < 0 {
+		b.AmbientRepeatWindowRounds = 0
+	}
+	if b.AmbientTelemetryReportMinutes <= 0 {
+		b.AmbientTelemetryReportMinutes = 5
 	}
 
 	// ── MOON PHASES ───────────────────────────────────────────────────────────

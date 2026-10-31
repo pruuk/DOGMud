@@ -1,0 +1,30 @@
+# #317 ambient: the oasis seat pays Sable for a Planar Oasis rift and
+# watches how often its creatures move.
+name: 317-ambient-oasis
+summary: Open a rift to the Planar Oasis and watch how often its creatures move.
+goals:
+  - id: watch-oasis
+    do: >-
+      You start in the Rift Chamber. Type talk sable and choose the topic
+      that opens a rift to the Planar Oasis. When Sable asks how much gold
+      you will stake, answer 200. Sable then tells you what to type to step
+      through; type it. Inside, stay at the first room (Oasis Threshold) or
+      the nearest room where you can watch creatures, for thirty-five
+      minutes. If a creature attacks, fight it; you are revived if you fall,
+      and you can go back in. Every five minutes, write one tally row: how
+      many creatures walked into or out of your room, which kinds (sand or
+      storm elementals, or the elemental king, queen, prince or princess),
+      and how many other lines you saw. Quote at least three of the movement
+      lines word for word. At the end, say in your own words how the
+      creatures' movement felt to watch.
+    verify: >-
+      Entered the Planar Oasis; at least six tally rows with quoted lines;
+      a closing feel note.
+
+ephemeral:
+  profile: veteran
+  start_room: 5000
+  overlays:
+    set_gold: 400
+  budgets:
+    wall_clock: 50m

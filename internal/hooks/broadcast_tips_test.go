@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/tips"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -22,6 +23,7 @@ func TestBroadcastTips(t *testing.T) {
 		events.DrainQueuedMessagesForTest(id)
 	}
 
+	tipIntervalRounds := uint64(configs.GetBalanceConfig().TipIntervalRounds)
 	BroadcastTips(events.NewRound{RoundNumber: tipIntervalRounds - 1})
 	if got := events.DrainQueuedMessagesForTest(9301); len(got) != 0 {
 		t.Fatalf("off-interval round sent %q", got)
@@ -42,5 +44,24 @@ func TestBroadcastTips(t *testing.T) {
 	BroadcastTips(events.NewRound{RoundNumber: 2 * tipIntervalRounds})
 	if got := events.DrainQueuedMessagesForTest(9301); len(got) != 1 || !strings.Contains(got[0], "Second tip.") {
 		t.Errorf("second broadcast = %q, want Second tip.", got)
+	}
+}
+
+// TipIntervalRounds 0 turns tips off (#317): no round sends one.
+func TestBroadcastTips_ZeroIntervalIsOff(t *testing.T) {
+	drainEventQueueOnCleanup(t)
+	on := users.NewTestUser(9311, "tipzero", "Tipzero", 19311)
+	defer users.SeedUsersForTest(map[int]*users.UserRecord{9311: on})()
+	defer tips.SeedForTest([]string{"A tip."})()
+	cfg := configs.GetConfig()
+	cfg.Balance.TipIntervalRounds = 0
+	configs.SetConfigForTest(t, cfg)
+	events.DrainQueuedMessagesForTest(9311)
+
+	for _, round := range []uint64{0, 1, 75, 150} {
+		BroadcastTips(events.NewRound{RoundNumber: round})
+	}
+	if got := events.DrainQueuedMessagesForTest(9311); len(got) != 0 {
+		t.Fatalf("TipIntervalRounds 0 must send no tip, got %q", got)
 	}
 }

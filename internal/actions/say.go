@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -38,7 +39,7 @@ func Say(actor Actor, text string) SayResult {
 	isSneaking := char.IsHidden()
 
 	room := actor.GetRoom()
-	room.SendTextToExits(`You hear someone talking.`, true)
+	sendSayEcho(actor, room)
 
 	events.AddToQueue(events.Communication{
 		SourceUserId:        actor.GetUserId(),
@@ -47,6 +48,7 @@ func Say(actor Actor, text string) SayResult {
 		Name:                actor.GetName(),
 		Message:             text,
 		SpeakerHidden:       isSneaking,
+		ExcludeUserIds:      ambientSkip(actor),
 	})
 
 	nameColor, textColor := "mobname", "saytext-mob"
@@ -67,4 +69,18 @@ func Say(actor Actor, text string) SayResult {
 func FormatSayText(name string, text string, nameColor string, textColor string) string {
 	msg := fmt.Sprintf(`<ansi fg="%s">%s</ansi> says, "<ansi fg="%s">%s</ansi>"`, nameColor, name, textColor, text)
 	return util.SplitStringNL(msg, 80)
+}
+
+// sayEchoText is what a neighbouring room hears of a say.
+const sayEchoText = `You hear someone talking.`
+
+// sendSayEcho echoes a say into the neighbouring rooms. An ambient say
+// (a MobActor with EchoExclude, #317) leaves out each neighbour's
+// over-budget listeners; every other say echoes exactly as before.
+func sendSayEcho(actor Actor, room *rooms.Room) {
+	if m, ok := actor.(*MobActor); ok && m.EchoExclude != nil {
+		room.SendTextToExitsExcluding(sayEchoText, true, m.EchoExclude)
+		return
+	}
+	room.SendTextToExits(sayEchoText, true)
 }

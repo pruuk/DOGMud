@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -46,7 +47,6 @@ func Wander(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if mob.Character.IsCharmed() {
 		return true, errors.New("friendly mobs don't wander")
 	}
-
 	// Stage 42.8: Pack roaming — scattered mobs skip wander
 	if mob.ScatterRounds > 0 {
 		return true, nil
@@ -120,13 +120,20 @@ func Wander(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				}
 
 				mob.WanderCount++
+				ambient.CountMove(room.RoomId, ambient.MoveIdle)
 				mob.Command(fmt.Sprintf("go %s", exitName))
 
 				// Stage 42.8: Move pack followers through the same exit. Each
-				// pays its own step.
+				// pays its own step. canStep is MovePackFollowers' last check
+				// before it moves a follower, so a true here is a follower
+				// that goes, and telemetry counts it.
 				if mob.IsPackAlpha && len(preMoveRoomMobs) > 0 {
 					mobs.MovePackFollowers(mob, exitName, preMoveRoomMobs, func(f *mobs.Mob) bool {
-						return actions.QuoteMobStep(f, exitName).OK()
+						if !actions.QuoteMobStep(f, exitName).OK() {
+							return false
+						}
+						ambient.CountMove(room.RoomId, ambient.MoveIdle)
+						return true
 					})
 				}
 

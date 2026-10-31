@@ -37,8 +37,10 @@ Roadmap and phase plan: `docs/aicompanion/`.
   and `GoldGiven` for coin, `onGoldGiven`, which names the real giver),
   attacks (`PlayerAttackedMob`), healing (`events.Healed`) and the `ask`
   hook; an owner speaking to the companion interrupts an errand. They record what the
-  companion perceived and queue stimuli; they never call the model. The
-  per-companion halves (`hearSaid`, `seeEmote`, `hearAsked`) read the
+  companion perceived and queue stimuli; they never call the model. A say
+  whose `ExcludeUserIds` holds her owner (an ambient say the owner was over
+  budget for, #317) is skipped for that companion, so she never brings up a
+  line her owner was not shown. The per-companion halves (`hearSaid`, `seeEmote`, `hearAsked`) read the
   owner's literal "i agree"/"i decline" first, and before consent write
   nothing into the mind while still queueing the stimulus, so dispatch
   answers with set lines. The same holds for every deed with a person's

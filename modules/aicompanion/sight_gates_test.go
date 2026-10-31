@@ -320,3 +320,24 @@ func TestCompanionAsk_SaytoHandsTheTopicKeyToTheAsker(t *testing.T) {
 		t.Error("the leave should be spent")
 	}
 }
+
+// #317: an ambient say her owner was over budget for never reached the
+// owner, so she does not take it in either; the same say with no excludes
+// is overheard as before.
+func TestCompanionSkipsASayHerOwnerWasExcludedFrom(t *testing.T) {
+	m, c, owner, _ := askForScene(t, true, true)
+	m.cfg.RecordBystanderSpeech = true
+	say := events.Communication{SourceMobInstanceId: 300, CommType: `say`, Name: `Smith`,
+		Message: `Fresh bread, warm from the oven!`, ExcludeUserIds: []int{owner.UserId}}
+
+	m.onCommunication(say)
+	if n := len(c.mind.RecentLines); n != 0 {
+		t.Fatalf("her owner skipped the line, so she must not hear it: %+v", c.mind.RecentLines)
+	}
+
+	say.ExcludeUserIds = nil
+	m.onCommunication(say)
+	if n := len(c.mind.RecentLines); n != 1 {
+		t.Fatalf("a say her owner heard is overheard: %d lines, want 1", n)
+	}
+}

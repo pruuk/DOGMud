@@ -85,8 +85,8 @@ func (m *weatherModule) onNewRound(e events.Event) events.ListenerReturn {
 	if !m.simReady {
 		return events.Continue
 	}
-	if m.cfg.EmoteMode == EmoteModeModule && evt.RoundNumber >= m.nextEmote {
-		engine.EmitAmbient(m.graph, m.state.Fronts, m.simCfg, m.state.Weather, m.zoneSeasons, m.tables, m.seasonalTables, m.cfg.EmoteMildChancePct, m.cfg.EmoteStrongChancePct, util.Rand)
+	if m.cfg.EmoteMode == EmoteModeModule && m.cfg.EmoteEveryRounds > 0 && evt.RoundNumber >= m.nextEmote {
+		engine.EmitAmbient(m.graph, m.state.Fronts, m.simCfg, m.state.Weather, m.zoneSeasons, m.tables, m.seasonalTables, m.cfg.EmoteMildChancePct, m.cfg.EmoteStrongChancePct, m.cfg.SeasonalEmoteOneIn, util.Rand)
 		m.scheduleEmote(evt.RoundNumber)
 	}
 	if evt.RoundNumber >= m.nextTick {

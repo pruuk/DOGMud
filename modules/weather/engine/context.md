@@ -50,7 +50,10 @@ module portable across GoMud and DOGMud.
   down as an explicit parameter to both `content.Tables.Pick` and
   `content.SeasonalTables.Pick`; the deleted `content.StrongFeltThreshold`
   const is gone. Lines are sent with
-  `messaging.CategoryWeather`. `roll` is the presentation RNG (pass
+  `messaging.CategoryWeather` through `sendAmbientWeather`, which charges the
+  ambient listener budget (`ambient.Plan`, #317). The full signature ends
+  `mildChancePct, strongChancePct, seasonalOneIn int, roll`; `seasonalOneIn`
+  is `Modules.weather.SeasonalEmoteOneIn` (0 = no seasonal line). `roll` is the presentation RNG (pass
   `util.Rand`) — NEVER the sim RNG. Returns lines sent.
 
 ## Dependencies

@@ -679,6 +679,15 @@ func (r *Room) PlaySound(soundId string, category string, excludeUserIds ...int)
 }
 
 func (r *Room) SendTextToExits(txt string, isQuiet bool, excludeUserIds ...int) {
+	r.SendTextToExitsExcluding(txt, isQuiet, func(*Room) []int { return excludeUserIds })
+}
+
+// SendTextToExitsExcluding is SendTextToExits with the excludes named per
+// neighbouring room: exclude is asked once for each neighbour that has an
+// exit back, the first time one is found, and its answer goes on that
+// room's messages only. An ambient say's echo uses it to leave out the
+// listeners over their ambient budget in each room (#317).
+func (r *Room) SendTextToExitsExcluding(txt string, isQuiet bool, exclude func(tgt *Room) []int) {
 
 	testExitIds := []int{}
 	for _, rExit := range r.Exits {
@@ -688,6 +697,7 @@ func (r *Room) SendTextToExits(txt string, isQuiet bool, excludeUserIds ...int) 
 		testExitIds = append(testExitIds, tExit.RoomId)
 	}
 
+	excludes := map[int][]int{}
 	for _, roomId := range testExitIds {
 
 		tgtRoom := LoadRoom(roomId)
@@ -700,11 +710,17 @@ func (r *Room) SendTextToExits(txt string, isQuiet bool, excludeUserIds ...int) 
 				continue
 			}
 
+			ex, asked := excludes[tgtRoom.RoomId]
+			if !asked {
+				ex = exclude(tgtRoom)
+				excludes[tgtRoom.RoomId] = ex
+			}
+
 			events.AddToQueue(events.Message{
 				RoomId:         tgtRoom.RoomId,
 				Text:           fmt.Sprintf(`(From <ansi fg="exit">%s</ansi>) `, exitName) + txt + "\n",
 				IsQuiet:        isQuiet,
-				ExcludeUserIds: excludeUserIds,
+				ExcludeUserIds: ex,
 			})
 		}
 

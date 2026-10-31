@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/tips"
@@ -9,17 +10,16 @@ import (
 
 // BroadcastTips sends the next gameplay tip (internal/tips) to every active
 // player who is not deafened and has not turned tips off with `set tips`,
-// every tipIntervalRounds rounds (~5 minutes at 4-second rounds).
+// every Balance.TipIntervalRounds rounds (75 is about 5 minutes at 4-second
+// rounds; 0 turns tips off, #317).
 
-const (
-	tipIntervalRounds = 75
-	tipsConfigKey     = `tips`
-)
+const tipsConfigKey = `tips`
 
 func BroadcastTips(e events.Event) events.ListenerReturn {
 	evt := e.(events.NewRound)
 
-	if evt.RoundNumber%tipIntervalRounds != 0 {
+	interval := uint64(configs.GetBalanceConfig().TipIntervalRounds)
+	if interval == 0 || evt.RoundNumber%interval != 0 {
 		return events.Continue
 	}
 

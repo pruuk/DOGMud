@@ -61,6 +61,8 @@ Zone-config fields are defined at `_datafiles/world/dogmud/{zone_folder}/zone-co
 | Field | Type | Notes |
 |-------|------|-------|
 | `non_cartesian` | bool | Marks a zone whose exit graph is intentionally non-Euclidean (e.g. a toroidal zone where edge exits wrap to the opposite edge, or a deliberate maze). Exempts the zone from the collision + reciprocity consistency checks, and switches the web mapper to render wrap exits as edge stubs instead of long connectors. Default false. |
+| `ambientmultiplier` | float | Scales the zone's idle mob chatter roll and room idle chance, and divides the ambient listener budget window (1.5 livelier, 0.5 hushed). Unset is 1.0; 0 is never. #317 |
+| `wandermultiplier` | float | Scales idle mob movement (wander, sneak, portal) in the zone. Unset is 1.0; 0 is never. #317 |
 
 ### Exit Sub-fields
 

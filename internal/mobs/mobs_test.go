@@ -350,33 +350,6 @@ func TestAreaHarmSpares(t *testing.T) {
 
 // ─── Idle/Angry Commands ────────────────────────────────────────────────────
 
-func TestGetIdleCommand(t *testing.T) {
-	cleanup := seedRegistry()
-	defer cleanup()
-
-	t.Run("mob with idle commands returns one", func(t *testing.T) {
-		mob := GetInstance(100)
-		mob.IdleCommands = []string{"emote lurks.", "emote growls."}
-		// Run several times — at least one should return a command
-		found := false
-		for i := 0; i < 200; i++ {
-			cmd := mob.GetIdleCommand()
-			if cmd != "" {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "should return an idle command at least sometimes")
-	})
-
-	t.Run("mob with no idle commands returns empty", func(t *testing.T) {
-		mob := GetInstance(102) // Shadow Wolf has no idle commands
-		mob.IdleCommands = []string{}
-		cmd := mob.GetIdleCommand()
-		assert.Equal(t, "", cmd)
-	})
-}
-
 func TestGetAngryCommand(t *testing.T) {
 	cleanup := seedRegistry()
 	defer cleanup()

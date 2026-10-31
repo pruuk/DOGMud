@@ -1,0 +1,28 @@
+# #317 ambient: the steppe seat stays at Badlands Crossing through dusk into
+# night and tallies every line nobody asked for.
+name: 317-ambient-steppe
+summary: Stay at Badlands Crossing on the Ironwind Steppe into the night; tally lines.
+goals:
+  - id: tally-steppe
+    do: >-
+      Stay at Badlands Crossing, where you start, for the whole session. A
+      game day here lasts about an hour of real time and night falls for a
+      third of it, so night will come while you wait. Do not explore. If a
+      creature attacks you, fight back or step one room away and come
+      straight back. Every five minutes, type time and write one tally row:
+      the game time, whether it is day or night and whether you can see,
+      and how many lines you saw or heard that you did not cause, split
+      into NPC or creature lines, creatures walking in or out, room flavour
+      lines, weather or season lines, gossip and tips. In the dark you may
+      see nothing; write that down too. Quote at least three of those lines
+      word for word in each row that has them. At the end, say in your own
+      words how lively the place felt by day and how it felt by night.
+    verify: >-
+      Tally rows across the session, at least two of them at night, quoted
+      lines, and a feel note covering day and night.
+
+ephemeral:
+  profile: mid
+  start_room: 3116
+  budgets:
+    wall_clock: 50m

@@ -2,9 +2,11 @@ package behaviortree
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -228,14 +230,27 @@ func actSpeak(params map[string]any, ctx *EvalContext) Result {
 	// each line is capitalised here: a mob holder "ogre" reads "Ogre's Probe
 	// Shield mutters". The hidden-name list carries the same spelling so the
 	// hider still finds the tag.
-	if holderUser != nil {
+	room := rooms.LoadRoom(ctx.RoomId)
+	// An ambient (item_idle) line counts toward the listener budget (#317):
+	// a player over budget, the holder included, skips it. Event lines
+	// (on_equip, on_kill...) are never budgeted. A holder-only line is heard
+	// by the holder alone, so only the holder is charged for it.
+	var overBudget []int
+	if ctx.Event.EventType == `item_idle` && room != nil {
+		al := ambient.Line{Room: room, Source: ambient.SourceItemChatter, Key: ambient.LineKey(`item`, ctx.Item.ItemId, line)}
+		if !toRoom {
+			holderId := holderUser.UserId // a mob holder with !toRoom already failed above
+			al.Perceives = func(u *users.UserRecord) bool { return u.UserId == holderId }
+		}
+		overBudget = ambient.Plan(al).Exclude
+	}
+	if holderUser != nil && !slices.Contains(overBudget, holderUser.UserId) {
 		holderUser.SendText(messaging.CategoryNPCDialogue, fmt.Sprintf(
 			`<ansi fg="item">%s</ansi> says, "<ansi fg="yellow">%s</ansi>"`, messaging.CapitalizeStart(spec.Name), line))
 	}
-	room := rooms.LoadRoom(ctx.RoomId)
 	roomHeard := toRoom && room != nil
 	if roomHeard {
-		exclude := []int{}
+		exclude := slices.Clone(overBudget)
 		if holderUser != nil {
 			exclude = append(exclude, holderUser.UserId)
 		}

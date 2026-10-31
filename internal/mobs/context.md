@@ -249,20 +249,9 @@ func (m *Mob) Sleep(seconds int) {
 
 ### Behavioral Command Selection
 ```go
-// Get idle command based on mob or race defaults
-func (m *Mob) GetIdleCommand() string {
-    // 1% chance to do nothing (prevents required empty commands)
-    if util.Rand(100) == 0 {
-        return ""
-    }
-    
-    // Check mob-specific idle commands
-    if len(m.IdleCommands) > 0 {
-        return m.IdleCommands[util.Rand(len(m.IdleCommands))]
-    }
-    
-    return ""
-}
+// Idle roll (#317, idle_roll.go): two independent rolls, each weighted by
+// its class's share of the pool (blanks count in the size).
+func (m *Mob) RollIdle(in IdleRollInput, randN func(int) int) (chatter, movement string)
 
 // Get angry command when entering combat
 func (m *Mob) GetAngryCommand() string {
@@ -998,13 +987,8 @@ mob.Command("look; smile", 1.0) // Multiple commands
 
 ### AI Behavior Implementation
 ```go
-// Idle behavior processing
-if mob.ActivityLevel > util.Rand(100) {
-    idleCmd := mob.GetIdleCommand()
-    if idleCmd != "" {
-        mob.Command(idleCmd)
-    }
-}
+// Idle behavior processing (hooks.HandleIdleMobs)
+chatterCmd, moveCmd := mob.RollIdle(in, util.Rand)
 
 // Combat initiation
 if mob.Hostile && playerInRoom {
@@ -1204,3 +1188,28 @@ from the template or the saved instance) joins `items`' holder index at the
 end of `newMobByIdInternal` (`Character.IndexTreedItems`), so the item tick
 reaches it. `Mob.AdoptCharacter` does the same for a character swapped in
 afterwards.
+
+## Idle roll (#317)
+
+`idle_roll.go`: `IdleClass` (`IdleChatter`, `IdleMovement`), the verb
+table `idleVerbClass` (chatter: emote, say, consume, cast, wear, alchemy;
+movement: wander, sneak, portal; an unknown verb rolls as chatter and
+`internal/guards/idle_verb_class_guard_test.go` fails on one in shipped
+content), `IdleVerb`, `ClassifyIdleVerb`, `IdlePool`, `SplitIdlePool`,
+`IdleRollInput`, `IdleChances`, `RollIdle`, `WanderScale`,
+`CommandNoSplit`.
+
+- chatter chance = AL x `MobIdleChatterScale` x zone `ambientmultiplier`
+  x chatter entries / pool size; movement chance = AL x
+  `MobIdleMovementScale` x mob `wandermultiplier` x zone
+  `wandermultiplier` x movement entries / pool size. At every multiplier
+  1.0 the rates equal the old single roll's divided by 0.99 (the 1% forced
+  blank is gone).
+- `ActivityLevel` is never written by the roll; combat AI reads it.
+- `Mob.WanderMultiplier` (yaml `wandermultiplier`): a pointer, nil = 1.0,
+  0 = never, negative refuses boot (`Validate`). Spawned instances share
+  the template's pointer, so nothing may write through it.
+- `CommandNoSplit` queues one input whole; `Command` still splits on `;`
+  (the loot goblin's multi-command entries rely on it).
+- `sneak` rides the movement roll but is not a move: it hides in place
+  and telemetry never counts it.

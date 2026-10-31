@@ -753,18 +753,18 @@ type Balance struct {
 	// ── NPC-NPC IDLE CONVERSATIONS (chunk 3.6) ───────────────────────────────────
 	// ConversationBaseChancePct is the per-tick percentage chance that a
 	// fully-idle NPC will attempt to start an idle conversation with an
-	// in-room partner that has a relationship edge. Default 1.0 → ~once
-	// per 100 ticks per NPC. Chunk 3.6.
+	// in-room partner that has a relationship edge. Default 1.0, about once
+	// per 100 ticks per NPC; 0 turns idle conversations off (#317). Chunk 3.6.
 	ConversationBaseChancePct ConfigFloat `yaml:"ConversationBaseChancePct"`
 
 	// ConversationPlayerArrivalBoostPct is the percentage chance that
 	// a conversation will start when a player arrives in a room with 2+
-	// relateable, idle NPCs. Default 25. Chunk 3.6.
+	// relateable, idle NPCs. Default 25; 0 turns the boost off (#317).
 	ConversationPlayerArrivalBoostPct ConfigInt `yaml:"ConversationPlayerArrivalBoostPct"`
 
 	// ConversationCooldownRounds is the cooldown applied to both NPCs
 	// after a conversation completes, before either can initiate another.
-	// Default 50 (~200 sec real-time). Chunk 3.6.
+	// Default 50 (about 200 seconds); 0 means no cooldown (#317).
 	ConversationCooldownRounds ConfigInt `yaml:"ConversationCooldownRounds"`
 
 	// ── GOAL SELECTION (chunk 4.2) ────────────────────────────────────────────
@@ -858,7 +858,22 @@ type Balance struct {
 	RestockCadenceTier10Days  ConfigInt `yaml:"RestockCadenceTier10Days"`
 
 	// ── GOSSIP SYSTEM ────────────────────────────────────────────────────────
-	GossipIntervalRounds ConfigInt `yaml:"GossipIntervalRounds"` // Rounds between gossip broadcasts for "gossiper" group mobs (default 75)
+	GossipIntervalRounds ConfigInt `yaml:"GossipIntervalRounds"` // Rounds between gossip broadcasts for "gossiper" group mobs; 0 turns gossip off, 1 to 19 read as 75 (default 75)
+
+	// ── AMBIENT (#317) ───────────────────────────────────────────────────────
+	// One knob per unprompted-line source. 0 turns a source off; an absent
+	// key keeps today's behaviour through the -1 sentinel seeded in
+	// newUnloadedConfig (the ProneAutoStandRounds idiom). The retune itself
+	// lives in config.yaml, never in these defaults.
+	MobIdleChatterScale           ConfigFloat `yaml:"MobIdleChatterScale"`           // Scales every idle mob's chatter roll (emote, say, consume, cast...); 1.0 = the authored rate, 0 = off (default 1.0)
+	MobIdleMovementScale          ConfigFloat `yaml:"MobIdleMovementScale"`          // Scales every idle mob's movement roll (wander, sneak, portal); 1.0 = the authored rate, 0 = off (default 1.0)
+	RoomIdleChancePct             ConfigInt   `yaml:"RoomIdleChancePct"`             // Percent chance per round that a room with players shows an idle line; room -1 gets 4x; 0 = off (default 5)
+	TipIntervalRounds             ConfigInt   `yaml:"TipIntervalRounds"`             // Rounds between gameplay tips; 0 = off (default 75)
+	AmbientListenerBudgetRounds   ConfigInt   `yaml:"AmbientListenerBudgetRounds"`   // A player hears at most one ambient line per this many rounds; 0 = no budget (default 0)
+	AmbientRepeatLimit            ConfigInt   `yaml:"AmbientRepeatLimit"`            // A player takes in one ambient line at most this many times per AmbientRepeatWindowRounds; 0 = no limit (default 0)
+	AmbientRepeatWindowRounds     ConfigInt   `yaml:"AmbientRepeatWindowRounds"`     // The repeat limit's window in rounds; 0 = no limit (default 0)
+	AmbientTelemetry              ConfigBool  `yaml:"AmbientTelemetry"`              // Count ambient lines and mob moves per room and log a summary (default false)
+	AmbientTelemetryReportMinutes ConfigInt   `yaml:"AmbientTelemetryReportMinutes"` // Real minutes between telemetry summary lines (default 5)
 
 	// ── MOON PHASES ───────────────────────────────────────────────────────────
 	MoonStatModMax          ConfigFloat `yaml:"MoonStatModMax"`          // Max fractional stat modifier from moon phases, e.g. 0.05 = ±5% (default 0.05)

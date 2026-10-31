@@ -13,6 +13,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
+// mobPortalExitName is the temporary exit Portal opens. Go counts a step
+// through it as a mob move for ambient telemetry: Portal only opens the
+// way, and the room change is the `go portal` that follows.
+const mobPortalExitName = `dark portal`
+
 // Mob portaling is different than player portaling.
 // Mob portals are open for shorter periods, and go to specific locations.
 func Portal(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
@@ -75,7 +80,7 @@ func Portal(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// Target = portalTargetRoomId
 	// Current = user.Character.RoomId
 	// At this point we have no open portals, we can create a new one.
-	newPortalExitName := `dark portal`
+	newPortalExitName := mobPortalExitName
 	newPortal := exit.TemporaryRoomExit{
 		RoomId:  portalTargetRoomId,
 		Title:   colorpatterns.ApplyColorPattern(newPortalExitName, `gray`),

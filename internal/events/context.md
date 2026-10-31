@@ -163,6 +163,7 @@ type Communication struct {
     Name                string
     Message             string
     SpeakerHidden       bool // a say spoken while still hidden (#252)
+    ExcludeUserIds      []int // listeners the room line left out: an ambient say over budget (#317)
 }
 
 type Broadcast struct {

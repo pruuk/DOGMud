@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -8,11 +9,6 @@ import (
 	"github.com/GoMudEngine/GoMud/modules/weather/seasons"
 	"github.com/GoMudEngine/GoMud/modules/weather/sim"
 )
-
-// seasonalEmoteOneIn throttles the seasonal-ambience layer: it fires on
-// roughly 1 in N emote passes, only in calm zones — strictly quieter than
-// weather (spec S-R1). Promote to config only if play feel demands.
-const seasonalEmoteOneIn = 3
 
 // emitChance maps a zone's felt weather intensity (0..1) to the percent chance
 // that an ambient weather line fires this pass: mildPct at felt<=0 rising
@@ -37,10 +33,14 @@ func emitChance(mildPct, strongPct int, felt float64) int {
 // is the presentation RNG (pass util.Rand) — NEVER the sim RNG. Returns lines
 // sent. A nil graph is tolerated: felt intensity resolves to 0 (indoor rooms
 // fall to the mild/silent band).
+//
+// seasonalOneIn is Modules.weather.SeasonalEmoteOneIn (#317): a calm zone
+// gets its seasonal line on roughly 1 pass in N, and 0 turns the seasonal
+// layer off. Every line goes through the ambient listener budget.
 func EmitAmbient(g *sim.Graph, fronts []sim.Front, simCfg sim.Config,
 	weather map[sim.ZoneId]sim.WeatherType, zoneSeasons map[sim.ZoneId]seasons.ZoneSeason,
 	tables content.Tables, seasonal content.SeasonalTables,
-	mildChancePct, strongChancePct int, roll func(int) int) int {
+	mildChancePct, strongChancePct, seasonalOneIn int, roll func(int) int) int {
 
 	sent := 0
 	felt := map[sim.ZoneId]float64{}
@@ -81,7 +81,7 @@ func EmitAmbient(g *sim.Graph, fronts []sim.Front, simCfg sim.Config,
 				season = zs.Season
 			}
 			if line := tables.Pick(w, biomeId, indoor, f, strongFeltThreshold, season, roll); line != "" {
-				room.SendText(messaging.CategoryWeather, line)
+				sendAmbientWeather(room, line)
 				sent++
 			}
 			continue
@@ -90,12 +90,21 @@ func EmitAmbient(g *sim.Graph, fronts []sim.Front, simCfg sim.Config,
 		// Calm zone: occasional seasonal ambience. The season is always
 		// "felt" (it is the season's persistent voice, not weather through
 		// walls), so indoor ambience uses the Strong band.
-		if hasSeason && seasonal != nil && roll(seasonalEmoteOneIn) == 0 {
+		if hasSeason && seasonal != nil && seasonalOneIn > 0 && roll(seasonalOneIn) == 0 {
 			if line := seasonal.Pick(zs.Track, zs.Season, biomeId, indoor, 1.0, strongFeltThreshold, roll); line != "" {
-				room.SendText(messaging.CategoryWeather, line)
+				sendAmbientWeather(room, line)
 				sent++
 			}
 		}
 	}
 	return sent
+}
+
+// sendAmbientWeather sends a weather or season line into room through the
+// ambient listener budget (#317): a player over budget skips it, the rest
+// of the room hears it. Severe-weather onset and season splashes are event
+// lines and do not come here.
+func sendAmbientWeather(room *rooms.Room, line string) {
+	plan := ambient.Plan(ambient.Line{Room: room, Source: ambient.SourceWeather, Key: ambient.LineKey(`weather`, 0, line)})
+	room.SendText(messaging.CategoryWeather, line, plan.Exclude...)
 }

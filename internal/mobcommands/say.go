@@ -16,7 +16,12 @@ func Say(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
-	actions.Say(&actions.MobActor{Mob: mob, Room: room}, rest)
+	return sayAs(&actions.MobActor{Mob: mob, Room: room}, rest)
+}
 
+// sayAs is Say's body for a given actor, so an ambient say (#317,
+// ambient.go) sends the same line with its Skip list.
+func sayAs(actor *actions.MobActor, rest string) (bool, error) {
+	actions.Say(actor, rest)
 	return true, nil
 }

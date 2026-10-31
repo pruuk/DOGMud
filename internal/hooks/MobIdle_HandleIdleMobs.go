@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/companionai"
@@ -233,9 +234,9 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 		EquipBestFloorItem(mob, room)
 	}
 
-	// Stage 42.5: Gossiper mob tick — broadcast world event gossip
-	if mobHasGroup(mob, "gossiper") {
-		gossipIntervalRounds := uint64(configs.GetBalanceConfig().GossipIntervalRounds)
+	// Stage 42.5: Gossiper mob tick, broadcasting world event gossip.
+	// GossipIntervalRounds 0 turns gossip off (#317).
+	if gossipIntervalRounds := uint64(configs.GetBalanceConfig().GossipIntervalRounds); gossipIntervalRounds > 0 && mobHasGroup(mob, "gossiper") {
 		// Stagger by MobId so patrons don't all talk at the same time
 		stagger := uint64(mob.MobId%3) * (gossipIntervalRounds / 3)
 		roundNow := util.GetRoundCount()
@@ -249,7 +250,8 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 		if roundNow >= lastGossip+gossipIntervalRounds+stagger || lastGossip == 0 {
 			line := buildGossipLine(mob)
 			if line != "" {
-				mob.Command("say " + line)
+				// Gossip is ambient (#317): the listener budget applies.
+				mob.CommandNoSplit("ambient " + string(ambient.SourceGossip) + " say " + line)
 				mob.SetTempData("lastGossipRound", roundNow)
 			}
 		}
@@ -308,16 +310,26 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 		}
 
 		//
-		// Look for trouble
+		// Idle roll (#317): chatter and movement roll apart, each weighted
+		// by its share of the pool, so at every multiplier 1.0 a mob speaks
+		// and moves as often as the old single roll let it. A round where
+		// neither roll picks a command looks for trouble.
 		//
-		idleCmd := `lookfortrouble`
-		if util.Rand(100) < mob.ActivityLevel {
-			idleCmd = mob.GetIdleCommand()
-			if idleCmd == `` {
-				idleCmd = `lookfortrouble`
-			}
+		idleRoom := rooms.LoadRoom(mob.Character.RoomId)
+		chatterCmd, moveCmd := mob.RollIdle(idleRollInput(mob, idleRoom), util.Rand)
+		if chatterCmd == `` && moveCmd == `` {
+			mob.Command(`lookfortrouble`)
+			return events.Continue
 		}
-		mob.Command(idleCmd)
+		if chatterCmd != `` {
+			issueIdleChatter(mob, chatterCmd)
+		}
+		if moveCmd != `` {
+			// Telemetry counts the move where the room change happens
+			// (mobcommands Wander and Go), not here: a sneak hides in place
+			// and a wander can find no step.
+			mob.Command(moveCmd)
+		}
 
 	}
 

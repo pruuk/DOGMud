@@ -186,6 +186,7 @@ var userOnlyCommands = map[string]string{
 var mobOnlyCommands = map[string]string{
 	// --- Mob AI behaviours ---
 	"aid":            "mob-ai",
+	"ambient":        "mob-ai: an idle emote or say counted against each listener's ambient budget (#317)",
 	"befriend":       "mob-ai",
 	"callforhelp":    "mob-ai",
 	"charge":         "mob-ai",

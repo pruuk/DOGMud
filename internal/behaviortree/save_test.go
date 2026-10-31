@@ -33,12 +33,14 @@ func overrideBTDataFilesDir(t *testing.T) string {
 		t.Fatalf("WriteFile: %v", err)
 	}
 	t.Setenv("CONFIG_PATH", filepath.ToSlash(overridePath))
+	// Snapshot first: its cleanup restores the config this test found, where
+	// reloading the shipped file would leave live balance knobs loaded.
+	configs.SetConfigForTest(t, configs.GetConfig())
 	if err := configs.ReloadConfig(); err != nil {
 		t.Fatalf("ReloadConfig with override: %v", err)
 	}
 	t.Cleanup(func() {
 		os.Unsetenv("CONFIG_PATH")
-		_ = configs.ReloadConfig()
 	})
 	return dir
 }
