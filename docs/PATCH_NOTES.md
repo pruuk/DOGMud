@@ -1,5 +1,12 @@
 # DOGMud Patch Notes
 
+## 2026-10-31: Mastery levels off
+
+- Skill still pays off all the way up to grandmaster. Past grandmaster, each
+  extra rank helps less than it did on the way up.
+- Critical hits land a little less hard at every level, and they stop
+  growing once you reach grandmaster.
+
 ## 2026-10-30: A quieter world
 
 - The world is a little quieter. Townsfolk, shopkeepers and guards

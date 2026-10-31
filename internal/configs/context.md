@@ -362,6 +362,17 @@ feature (`HiddenNoun.On`). Both fall back when zero or negative
 (`config.balance.misc.go`); `config.yaml` ships them. Read by
 `actions.searchWholeRoom` and `actions.searchFeatureSecrets`.
 
+### Skill weight knee (owner 2026-10-31)
+`WeightedSkill(rank)` is a skill rank's contribution to any additive score:
+`rank x SkillWeight` up to `SkillWeightKneeRank`, then `SkillWeightAboveKnee`
+per rank above it. `WeightedSkillFor(b, rank)` is the same against a `Balance`
+the caller already holds (use it where a function takes a `Balance` parameter).
+A knee of 0 is the old straight line. `config.yaml` ships a knee of 65 and an
+above-knee weight of 1.0. `CritDamageRankCap` (0 = off, ships 65) is read by
+`combat.CritDamageMultiplier`. Nothing outside this package may read
+`SkillWeight`: `internal/guards/skill_weight_reader_guard_test.go` fails on a
+direct read.
+
 ### Mitigation curve knobs (#465)
 Twelve `Balance` knobs, four per channel, read by `combat.MitigationCurveFor`:
 `PhysicalMitigationKnee`, `PhysicalMitigationCap`, `PhysicalMitigationAim`,

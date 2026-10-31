@@ -1180,6 +1180,15 @@ Balance:
   # while handing mobs +3 points. Deliberate. See tools/balance/matrix.py.
   SkillWeight: 5.0
   #
+  # Skill weight knee (owner 2026-10-31, the endgame power leak). A rank counts
+  # at SkillWeight up to SkillWeightKneeRank, and at SkillWeightAboveKnee per
+  # rank above it. 65 is the grandmaster threshold: skill pays in full all the
+  # way there, then flattens. Meirok's weapon-combat 89 scores 445 on a
+  # straight line and 349 with the knee (65 x 5 + 24 x 1.0). Every reader goes
+  # through configs.WeightedSkill. SkillWeightKneeRank 0 = no knee.
+  SkillWeightKneeRank: 65
+  SkillWeightAboveKnee: 1.0
+  #
   # Crit damage (roadmap chunk 5.11g). critMult = base + perSkill * skillRank,
   # applied to a crit's pre-mitigation damage ON TOP of the mitigation bypass.
   # Skill 1 = 2.05x, 25 = 3.25x, 50 = 4.50x, 69 = 5.45x, 100 = 7.00x.
@@ -1199,7 +1208,14 @@ Balance:
   # the loader treats 0 as absent and falls back. To disable skill scaling, set
   # CritDamagePerSkill to a negligible value instead.
   CritDamageBase: 2.0
-  CritDamagePerSkill: 0.05
+  #
+  # Owner 2026-10-31 (the endgame power leak): CritDamagePerSkill halved to
+  # 0.025 and crit damage stops growing at CritDamageRankCap (65, the
+  # grandmaster threshold). Max crit is 3.625x; rank 25 crits 3.25x -> 2.63x
+  # (the owner chose to move every player). The table above is the old line.
+  # CritDamageRankCap 0 = no cap.
+  CritDamagePerSkill: 0.025
+  CritDamageRankCap: 65
   #
   # SurpriseOpeningStrikeMultiplier: extra multiplier on the opening strike of a
   # MELEE surprise attack, on top of the stacked combat-skill and skullduggery

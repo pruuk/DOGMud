@@ -2,6 +2,9 @@ package configs
 
 import (
 	"math"
+	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -42,6 +45,45 @@ func TestWeightedSkill(t *testing.T) {
 				t.Errorf("WeightedSkill(%v) = %v, want %v", c.rank, got, c.want)
 			}
 		})
+	}
+}
+
+func loadShippedBalance(t *testing.T) Balance {
+	t.Helper()
+	_, self, _, _ := runtime.Caller(0)
+	raw, err := os.ReadFile(filepath.Join(filepath.Dir(self), "..", "..", "_datafiles", "config.yaml"))
+	if err != nil {
+		t.Fatalf("read shipped config: %v", err)
+	}
+	cfg, err := loadConfig(raw)
+	if err != nil {
+		t.Fatalf("loadConfig: %v", err)
+	}
+	cfg.Validate()
+	return cfg.Balance
+}
+
+func TestSkillWeightKnee_ShippedValues(t *testing.T) {
+	b := loadShippedBalance(t)
+	if b.SkillWeight != 5.0 || b.SkillWeightKneeRank != 65 || b.SkillWeightAboveKnee != 1.0 ||
+		b.CritDamagePerSkill != 0.025 || b.CritDamageRankCap != 65 {
+		t.Errorf("shipped SkillWeight/KneeRank/AboveKnee/CritDamagePerSkill/CritDamageRankCap = %v/%v/%v/%v/%v, want 5/65/1/0.025/65",
+			b.SkillWeight, b.SkillWeightKneeRank, b.SkillWeightAboveKnee, b.CritDamagePerSkill, b.CritDamageRankCap)
+	}
+}
+
+func TestSkillWeightKnee_AbsentKeysKeepTodaysBehaviour(t *testing.T) {
+	b := loadAndValidate(t, "Balance:\n  StandMinStamina: 0.15\n")
+	if b.SkillWeightKneeRank != 0 || b.CritDamageRankCap != 0 {
+		t.Errorf("absent knee and cap must load 0/0 (off), got %v/%v", b.SkillWeightKneeRank, b.CritDamageRankCap)
+	}
+	if b.CritDamagePerSkill != 0.05 {
+		t.Errorf("absent CritDamagePerSkill must load the 0.05 Go default, got %v", b.CritDamagePerSkill)
+	}
+	// With the knee off, SkillWeightAboveKnee is never read.
+	pinKnee(t, float64(b.SkillWeight), float64(b.SkillWeightKneeRank), float64(b.SkillWeightAboveKnee))
+	if got, want := WeightedSkill(89), 89*float64(b.SkillWeight); got != want {
+		t.Errorf("WeightedSkill(89) with absent keys = %v, want the straight line %v", got, want)
 	}
 }
 
