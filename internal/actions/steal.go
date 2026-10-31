@@ -90,8 +90,7 @@ type StealResult struct {
 // *rooms.Room that may be nil.
 func stealVictimScore(c *characters.Character, room messaging.RoomVisibility) float64 {
 	return (float64(c.Stats.Perception.ValueAdj) +
-		float64(c.GetSkillLevel(skills.Skullduggery))*
-			float64(configs.GetBalanceConfig().SkillWeight)) *
+		configs.WeightedSkill(float64(c.GetSkillLevel(skills.Skullduggery)))) *
 		messaging.SightMult(c, room)
 }
 

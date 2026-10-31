@@ -23,10 +23,9 @@ import (
 // always take the paid exit instead: the manual stand command is
 // uncontested by design.)
 func recoveryContest(ch *characters.Character) func() bool {
-	w := float64(configs.GetBalanceConfig().SkillWeight)
 	score := func(c *characters.Character) float64 {
 		return float64(c.Stats.Dexterity.ValueAdj) +
-			float64(c.GetSkillLevel(skills.UnarmedCombat))*w
+			configs.WeightedSkill(float64(c.GetSkillLevel(skills.UnarmedCombat)))
 	}
 
 	var best *characters.Character

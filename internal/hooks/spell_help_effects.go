@@ -223,7 +223,7 @@ func applySpellShield(c spellEffectCtx) int {
 		return 0
 	}
 	stat, skill := spellCasterStatAndSkill(c.spell, c.casterChar)
-	weightedSkill := int(math.Round(float64(skill) * float64(configs.GetBalanceConfig().SkillWeight)))
+	weightedSkill := int(math.Round(configs.WeightedSkill(float64(skill))))
 	shieldBonus := (stat + weightedSkill) / 3
 	if shieldBonus < 1 {
 		shieldBonus = 1

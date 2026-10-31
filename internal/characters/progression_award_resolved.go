@@ -128,8 +128,7 @@ func (c *Character) CandidateFor(skill string) progression.Candidate {
 		return progression.Candidate{}
 	}
 	level := c.GetSkillLevel(skills.SkillTag(skill))
-	weight := float64(configs.GetBalanceConfig().SkillWeight)
-	score := float64(c.GetStatValue(stat)) + float64(level)*weight
+	score := float64(c.GetStatValue(stat)) + configs.WeightedSkill(float64(level))
 	return progression.Candidate{
 		Skill: skill,
 		Roll:  dice.RollStat(score).Value,

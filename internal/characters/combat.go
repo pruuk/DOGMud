@@ -283,14 +283,13 @@ func (c *Character) GetConvictionMitigation() float64 {
 // equipment, condition, and mutation term.
 func (c *Character) GetDefenseScoreFor(defenseType combatvocab.Defence, includeSkill bool) float64 {
 	dex := float64(c.GetEffectiveDexterity())
-	skillWeight := float64(configs.GetBalanceConfig().SkillWeight)
 
 	switch defenseType {
 	case combatvocab.DefenceDodge:
 		// Dodge: Dexterity + UnarmedCombat skill + mutation dodge modifier
 		unarmedSkill := 0.0
 		if includeSkill {
-			unarmedSkill = float64(c.GetSkillLevel(skills.UnarmedCombat)) * skillWeight
+			unarmedSkill = configs.WeightedSkill(float64(c.GetSkillLevel(skills.UnarmedCombat)))
 		}
 		score := dex + unarmedSkill + mutations.GetDodgeModifier(c.Mutations)
 		// The `dodge_mult` vocabulary key has its reader here even though no
@@ -306,7 +305,7 @@ func (c *Character) GetDefenseScoreFor(defenseType combatvocab.Defence, includeS
 		// Parry: Dexterity + WeaponCombat skill + best weapon ParryRating
 		weaponSkill := 0.0
 		if includeSkill {
-			weaponSkill = float64(c.GetSkillLevel(skills.WeaponCombat)) * skillWeight
+			weaponSkill = configs.WeightedSkill(float64(c.GetSkillLevel(skills.WeaponCombat)))
 		}
 		parryRating := c.BestParryRating()
 		return dex + weaponSkill + float64(parryRating)
@@ -316,7 +315,7 @@ func (c *Character) GetDefenseScoreFor(defenseType combatvocab.Defence, includeS
 		str := float64(c.Stats.Strength.ValueAdj)
 		weaponSkill := 0.0
 		if includeSkill {
-			weaponSkill = float64(c.GetSkillLevel(skills.WeaponCombat)) * skillWeight
+			weaponSkill = configs.WeightedSkill(float64(c.GetSkillLevel(skills.WeaponCombat)))
 		}
 		blockRating := c.BestBlockRating()
 		return (str+dex)/2 + weaponSkill + float64(blockRating)
@@ -325,7 +324,7 @@ func (c *Character) GetDefenseScoreFor(defenseType combatvocab.Defence, includeS
 		// Mental-spell defence. Costs CONVICTION, not stamina.
 		spellcasting := 0.0
 		if includeSkill {
-			spellcasting = float64(c.GetSkillLevel(skills.Spellcasting)) * skillWeight
+			spellcasting = configs.WeightedSkill(float64(c.GetSkillLevel(skills.Spellcasting)))
 		}
 		return float64(c.Stats.Willpower.ValueAdj) + spellcasting
 
@@ -333,7 +332,7 @@ func (c *Character) GetDefenseScoreFor(defenseType combatvocab.Defence, includeS
 		// Social defence. Costs CONVICTION, not stamina.
 		rhetoric := 0.0
 		if includeSkill {
-			rhetoric = float64(c.GetSkillLevel(skills.Rhetoric)) * skillWeight
+			rhetoric = configs.WeightedSkill(float64(c.GetSkillLevel(skills.Rhetoric)))
 		}
 		return float64(c.Stats.Willpower.ValueAdj) + rhetoric
 

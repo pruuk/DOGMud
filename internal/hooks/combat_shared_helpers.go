@@ -173,10 +173,10 @@ func awardConcentration(ch *characters.Character, held bool) {
 }
 
 // concentrationScore is the caster's side of every concentration contest:
-// Wil + spellcasting x SkillWeight, the arc's standard shape.
+// Wil + spellcasting weighted by configs.WeightedSkill, the arc's standard shape.
 func concentrationScore(ch *characters.Character) float64 {
 	return float64(ch.Stats.Willpower.ValueAdj) +
-		float64(ch.GetSkillLevel(skills.Spellcasting))*float64(configs.GetBalanceConfig().SkillWeight)
+		configs.WeightedSkill(float64(ch.GetSkillLevel(skills.Spellcasting)))
 }
 
 // WeaponBreakResult holds the outcome of a weapon break test.

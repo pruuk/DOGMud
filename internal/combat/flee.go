@@ -125,8 +125,7 @@ func fleeContestScore(fleer *characters.Character, includeSkill bool) float64 {
 	}
 	score := float64(fleer.GetEffectiveDexterity())
 	if includeSkill {
-		score += float64(fleer.GetSkillLevel(skills.Skullduggery)) *
-			float64(configs.GetBalanceConfig().SkillWeight)
+		score += configs.WeightedSkill(float64(fleer.GetSkillLevel(skills.Skullduggery)))
 	}
 	pronePenalty := 1.0
 	if fleer.IsProne() || fleer.IsSupine() {
@@ -136,12 +135,11 @@ func fleeContestScore(fleer *characters.Character, includeSkill bool) float64 {
 }
 
 // fleeBlockScore is a would-be blocker's side of the flee contest:
-// Dex + UnarmedCombat × SkillWeight. Shared by the mob and player
-// blocker loops in ResolveFleeBlockers.
+// Dex + UnarmedCombat weighted by configs.WeightedSkill. Shared by the mob and
+// player blocker loops in ResolveFleeBlockers.
 func fleeBlockScore(blocker *characters.Character) float64 {
 	return float64(blocker.GetEffectiveDexterity()) +
-		float64(blocker.GetSkillLevel(skills.UnarmedCombat))*
-			float64(configs.GetBalanceConfig().SkillWeight)
+		configs.WeightedSkill(float64(blocker.GetSkillLevel(skills.UnarmedCombat)))
 }
 
 // mobTargetsFleer reports whether mob m's aggro points at the fleer

@@ -24,8 +24,7 @@ import (
 // tailoring/jewelcrafting dexterity (skills.SkillPrimaryStats). Callers resolve
 // it; this function must not guess, because guessing wrong is silent.
 func CraftScore(stat float64, skillLevel int) float64 {
-	w := float64(configs.GetBalanceConfig().SkillWeight)
-	return stat + float64(skillLevel)*w
+	return stat + configs.WeightedSkill(float64(skillLevel))
 }
 
 // CraftPrimaryStat names the stat that drives a recipe's discipline.

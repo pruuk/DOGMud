@@ -81,11 +81,10 @@ func normalizedContestMargin(margin float64, roll dice.RollResult) float64 {
 func AttemptGrapple(attacker *characters.Character, defender *characters.Character, room messaging.RoomVisibility) GrappleResult {
 	result := GrappleResult{}
 	cfg := configs.GetBalanceConfig()
-	skillWeight := float64(cfg.SkillWeight)
 
-	// Base scores: Dex + Combat Skill × SkillWeight
-	attackerCombatSkill := float64(attacker.GetCombatSkillLevel()) * skillWeight
-	defenderCombatSkill := float64(defender.GetCombatSkillLevel()) * skillWeight
+	// Base scores: Dex + Combat Skill weighted by configs.WeightedSkill
+	attackerCombatSkill := configs.WeightedSkill(float64(attacker.GetCombatSkillLevel()))
+	defenderCombatSkill := configs.WeightedSkill(float64(defender.GetCombatSkillLevel()))
 
 	// Check for 1-round grapple opportunity from prior dodge crit (Stage 8.4)
 	opportunityBonus := GetGrappleOpportunityBonus(attacker)

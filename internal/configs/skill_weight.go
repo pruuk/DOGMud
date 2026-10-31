@@ -10,7 +10,16 @@ func WeightedSkill(rank float64) float64 {
 	if rank <= 0 {
 		return 0
 	}
-	b := GetBalanceConfig()
+	return WeightedSkillFor(GetBalanceConfig(), rank)
+}
+
+// WeightedSkillFor is WeightedSkill against a balance snapshot the caller
+// already holds, for functions that take a Balance as a parameter (their
+// tests inject one) and must not read the global behind its back.
+func WeightedSkillFor(b Balance, rank float64) float64 {
+	if rank <= 0 {
+		return 0
+	}
 	sw := float64(b.SkillWeight)
 	knee := float64(b.SkillWeightKneeRank)
 	if knee <= 0 || rank <= knee {

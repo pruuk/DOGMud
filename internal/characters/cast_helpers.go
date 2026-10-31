@@ -23,7 +23,7 @@ func NextPowerOfTwo(n int) int {
 func CalcFoldsPerRound(primaryStat, skillLevel int) int {
 	b := configs.GetBalanceConfig()
 	skillFactor := int(b.SpellFoldsSkillFactor)
-	weightedSkill := int(math.Round(float64(skillLevel) * float64(b.SkillWeight)))
+	weightedSkill := int(math.Round(configs.WeightedSkill(float64(skillLevel))))
 	result := int(math.Round(float64(primaryStat+weightedSkill*skillFactor) / 100.0))
 	if result < 1 {
 		return 1
