@@ -4,7 +4,7 @@
 
 **Goal:** `SkillWeight` applies at 5.0 up to a knee rank (65) and at a second weight (1.0) above it, through one helper used by every site; crit damage stops growing at a rank cap (65) and `CritDamagePerSkill` ships 0.025.
 
-**Spec:** `docs/superpowers/specs/2026-10-31-skill-weight-knee-design.md` (owner rulings 2026-10-31). Facts table there; the 24 sites are listed in it.
+**Spec:** `docs/superpowers/specs/completed/2026-10-31-skill-weight-knee-design.md` (owner rulings 2026-10-31). Facts table there; the 24 sites are listed in it.
 
 **Branch / worktree:** `feat/skill-weight-knee`, worktree `C:/tmp/dogmud-skill-knee`, draft PR #732.
 

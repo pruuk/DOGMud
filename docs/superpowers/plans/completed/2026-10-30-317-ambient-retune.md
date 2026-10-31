@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25, YAML config in `_datafiles/config.yaml`, YAML content under `_datafiles/world/dogmud/`, Python 3 for `tools/ambient_report.py`, the Docker playtest harness (`cmd/playtestrun`, `internal/playtestenv`, external `mudagent`).
 
-**Spec:** `docs/superpowers/specs/2026-10-30-ambient-retune-design.md` (issue #317, last open item under #381)
+**Spec:** `docs/superpowers/specs/completed/2026-10-30-ambient-retune-design.md` (issue #317, last open item under #381)
 
 **Branch / worktree:** branch `feat/317-ambient-retune`, worktree `C:/tmp/dogmud-317-ambient` off `origin/master`. Two more `C:/tmp` folders this plan creates and that must outlive a session until the PR merges: the playtest checkout `C:/tmp/dogmud-317-playtest` (a detached worktree whose `config.yaml` is edited for each run and never committed) and the evidence folder `C:/tmp/dogmud-317-evidence` (server logs and report tables from both runs).
 
