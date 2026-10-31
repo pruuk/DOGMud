@@ -1717,6 +1717,11 @@ Balance:
   RestockCadenceTier30Hours: 6
   RestockCadenceTier20Hours: 24
   RestockCadenceTier10Days:  5   # game-days
+  # A non-crafter shop announces a delivery ("A supply cart pulls up
+  # outside...") at most once per this many rounds; restocks in between
+  # are silent (#725: tier-50 stock refills every game hour, about 2.5 real
+  # minutes). 225 rounds is 15 real minutes. 0 narrates every restock.
+  ShopRestockNarrationRounds: 225
   CrafterEnabled: true            # Enable mob autonomous crafting
   CrafterMaterialRestockRate: 75  # Rounds between restock/craft ticks (~5 min)
 

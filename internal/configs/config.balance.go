@@ -859,6 +859,10 @@ type Balance struct {
 	RestockCadenceTier30Hours ConfigInt `yaml:"RestockCadenceTier30Hours"`
 	RestockCadenceTier20Hours ConfigInt `yaml:"RestockCadenceTier20Hours"`
 	RestockCadenceTier10Days  ConfigInt `yaml:"RestockCadenceTier10Days"`
+	// A non-crafter shop announces a delivery at most once per this many
+	// rounds; restocks inside the window are silent (#725). 0 narrates every
+	// restock (default 0).
+	ShopRestockNarrationRounds ConfigInt `yaml:"ShopRestockNarrationRounds"`
 
 	// ── GOSSIP SYSTEM ────────────────────────────────────────────────────────
 	GossipIntervalRounds ConfigInt `yaml:"GossipIntervalRounds"` // Rounds between gossip broadcasts for "gossiper" group mobs; 0 turns gossip off, 1 to 19 read as 75 (default 75)

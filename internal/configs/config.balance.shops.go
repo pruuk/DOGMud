@@ -88,6 +88,9 @@ func (b *Balance) validateShops() {
 	if b.RestockCadenceTier10Days == 0 {
 		b.RestockCadenceTier10Days = 5
 	}
+	if b.ShopRestockNarrationRounds < 0 {
+		b.ShopRestockNarrationRounds = 0
+	}
 
 	// ── CRAFTING ──────────────────────────────────────────────────────────────
 	if b.CraftingBaseSuccessChance <= 0 || b.CraftingBaseSuccessChance > 100 {
