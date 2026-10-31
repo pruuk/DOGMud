@@ -1,7 +1,8 @@
 // Package ambient is the one gate every unprompted ("ambient") line passes
 // on its way to players (#317). It owns the per-listener budget
 // (Balance.AmbientListenerBudgetRounds), the once-per-visit rule for a room
-// with a single idle line, and the telemetry that measures how much each
+// with a single idle line, the repeat limit (Balance.AmbientRepeatLimit per
+// AmbientRepeatWindowRounds), and the telemetry that measures how much each
 // room hears.
 //
 // A counted send site asks Plan who the line may reach and passes the
@@ -13,6 +14,7 @@ package ambient
 import (
 	"math"
 	"slices"
+	"strconv"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -64,6 +66,9 @@ type Line struct {
 	// Exclude lists players the caller already leaves out. They are never
 	// charged or counted, and they come back in Routing.Exclude.
 	Exclude []int
+	// Key is the line's repeat-limit identity, from LineKey. Empty skips
+	// the repeat limit (owner 2026-10-31).
+	Key string
 }
 
 // Routing is Plan's answer. Exclude goes to the room sender as its
@@ -72,6 +77,13 @@ type Line struct {
 type Routing struct {
 	Exclude   []int
 	Delivered []int
+}
+
+// LineKey is an ambient line's repeat-limit identity: the kind of speaker
+// (mob, room, item, weather), its template or room id, and the raw text
+// before names are filled in, so two mobs of one template share it.
+func LineKey(kind string, id int, text string) string {
+	return kind + `:` + strconv.Itoa(id) + `:` + text
 }
 
 var (
@@ -86,6 +98,12 @@ var (
 	// since walking in. RoundTick drops an entry once the player is anywhere
 	// else, which ends the visit.
 	singleHeard = map[int]int{}
+
+	repeatMu sync.Mutex
+	// repeatSeen is, per player, the rounds each line key reached them,
+	// oldest first. Taken inside budgetMu when both are held. In memory
+	// only; RoundTick prunes it.
+	repeatSeen = map[int]map[string][]uint64{}
 )
 
 // Sees is the Perceives for a visual line in room: a reader who makes out at
@@ -125,9 +143,32 @@ func budgetWindow(zone string) (window uint64, hushed bool) {
 	return uint64(w), false
 }
 
+// repeatLimits is the repeat limit and its window in rounds; 0, 0 when
+// either knob is 0 (the limit is off).
+func repeatLimits() (limit int, window uint64) {
+	b := configs.GetBalanceConfig()
+	if b.AmbientRepeatLimit <= 0 || b.AmbientRepeatWindowRounds <= 0 {
+		return 0, 0
+	}
+	return int(b.AmbientRepeatLimit), uint64(b.AmbientRepeatWindowRounds)
+}
+
+// seenLocked counts the times key reached userId inside the window ending
+// at now. repeatMu held.
+func seenLocked(userId int, key string, now, window uint64) int {
+	n := 0
+	for _, at := range repeatSeen[userId][key] {
+		if at+window > now {
+			n++
+		}
+	}
+	return n
+}
+
 // Plan decides who an ambient line reaches and charges each of them. A
-// player over budget is added to Exclude: that player skips the line, and
-// everyone else in the room still gets it.
+// player who has taken in this line's Key the repeat limit's times inside
+// its window, or who is over budget, is added to Exclude: that player skips
+// the line, and everyone else in the room still gets it.
 func Plan(l Line) Routing {
 	r := Routing{Exclude: slices.Clone(l.Exclude)}
 	if l.Room == nil {
@@ -135,9 +176,12 @@ func Plan(l Line) Routing {
 	}
 	now := util.GetRoundCount()
 	window, hushed := budgetWindow(l.Room.Zone)
-	suppressed := 0
+	limit, repeatWindow := repeatLimits()
+	checkRepeat := l.Key != `` && limit > 0
+	suppressed, repeated := 0, 0
 
 	budgetMu.Lock()
+	repeatMu.Lock()
 	for _, uid := range l.Room.GetPlayers() {
 		if slices.Contains(l.Exclude, uid) {
 			continue
@@ -149,6 +193,13 @@ func Plan(l Line) Routing {
 		if l.Perceives != nil && !l.Perceives(u) {
 			continue
 		}
+		// A repeat is held back before the budget is asked, so it charges
+		// nothing and the next fresh line still gets through.
+		if checkRepeat && seenLocked(uid, l.Key, now, repeatWindow) >= limit {
+			r.Exclude = append(r.Exclude, uid)
+			repeated++
+			continue
+		}
 		if hushed || (window > 0 && now < budgetNext[uid]) {
 			r.Exclude = append(r.Exclude, uid)
 			suppressed++
@@ -157,11 +208,18 @@ func Plan(l Line) Routing {
 		if window > 0 {
 			budgetNext[uid] = now + window
 		}
+		if checkRepeat {
+			if repeatSeen[uid] == nil {
+				repeatSeen[uid] = map[string][]uint64{}
+			}
+			repeatSeen[uid][l.Key] = append(repeatSeen[uid][l.Key], now)
+		}
 		r.Delivered = append(r.Delivered, uid)
 	}
+	repeatMu.Unlock()
 	budgetMu.Unlock()
 
-	countLine(l.Room, l.Source, len(r.Delivered), suppressed)
+	countLine(l.Room, l.Source, len(r.Delivered), suppressed, repeated)
 	return r
 }
 
@@ -218,8 +276,9 @@ func MarkSingleLineHeard(roomId int, userIds []int) {
 }
 
 // RoundTick runs once a round from hooks.UserRoundTick. It ends the visits
-// of players who left or logged out, and drops spent budget entries, so
-// neither map grows past the players online. Then it runs the telemetry
+// of players who left or logged out, drops spent budget entries, and drops
+// the repeat memory of lines whose window has passed or of players no longer
+// online, so no map grows past the players online. Then it runs the telemetry
 // tick (telemetry.go), which does nothing while the switch is off.
 func RoundTick(round uint64) {
 	visitMu.Lock()
@@ -237,6 +296,30 @@ func RoundTick(round uint64) {
 		}
 	}
 	budgetMu.Unlock()
+
+	_, repeatWindow := repeatLimits()
+	repeatMu.Lock()
+	for uid, keys := range repeatSeen {
+		if repeatWindow == 0 || users.GetByUserId(uid) == nil {
+			delete(repeatSeen, uid)
+			continue
+		}
+		for key, rounds := range keys {
+			i := 0
+			for i < len(rounds) && rounds[i]+repeatWindow <= round {
+				i++
+			}
+			if i == len(rounds) {
+				delete(keys, key)
+			} else if i > 0 {
+				keys[key] = rounds[i:]
+			}
+		}
+		if len(keys) == 0 {
+			delete(repeatSeen, uid)
+		}
+	}
+	repeatMu.Unlock()
 
 	telemetryTick(round)
 }

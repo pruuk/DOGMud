@@ -215,3 +215,103 @@ func TestParseSource(t *testing.T) {
 		t.Error("tips are exempt and are not a source")
 	}
 }
+
+// pinRepeat sets the repeat limit knobs on top of seedAmbientRoom's config.
+func pinRepeat(t *testing.T, limit, window int) {
+	t.Helper()
+	cfg := configs.GetConfig()
+	cfg.Balance.AmbientRepeatLimit = configs.ConfigInt(limit)
+	cfg.Balance.AmbientRepeatWindowRounds = configs.ConfigInt(window)
+	configs.SetConfigForTest(t, cfg)
+}
+
+func TestPlan_RepeatReachesAListenerOnce(t *testing.T) {
+	room := seedAmbientRoom(t, 0, nil, listenA)
+	pinRepeat(t, 1, 900)
+	key := LineKey(`mob`, 7, `polishes a glass.`)
+	if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: key}); !slices.Equal(r.Delivered, []int{listenA}) {
+		t.Fatalf("first time: delivered %v, want the listener", r.Delivered)
+	}
+	util.SetRoundCountForTest(ambNow + 899)
+	if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: key}); len(r.Delivered) != 0 || !slices.Equal(r.Exclude, []int{listenA}) {
+		t.Fatalf("repeat inside the window: delivered %v exclude %v, want left out", r.Delivered, r.Exclude)
+	}
+	if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: LineKey(`mob`, 7, `wipes the bar.`)}); !slices.Equal(r.Delivered, []int{listenA}) {
+		t.Fatalf("a different line: delivered %v, want the listener", r.Delivered)
+	}
+	util.SetRoundCountForTest(ambNow + 900)
+	if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: key}); !slices.Equal(r.Delivered, []int{listenA}) {
+		t.Fatalf("window passed: delivered %v, want the listener", r.Delivered)
+	}
+}
+
+func TestPlan_RepeatSparesAListenerWhoHasNotHeardIt(t *testing.T) {
+	room := seedAmbientRoom(t, 0, nil, listenA, listenB)
+	pinRepeat(t, 1, 900)
+	key := LineKey(`room`, ambRoom, `A cart rattles past.`)
+	Plan(Line{Room: room, Source: SourceRoomIdle, Key: key, Exclude: []int{listenB}}) // only A hears it
+	r := Plan(Line{Room: room, Source: SourceRoomIdle, Key: key})
+	if !slices.Equal(r.Exclude, []int{listenA}) || !slices.Equal(r.Delivered, []int{listenB}) {
+		t.Fatalf("exclude %v delivered %v, want A left out and B hearing", r.Exclude, r.Delivered)
+	}
+}
+
+func TestPlan_HeldBackRepeatDoesNotChargeTheBudget(t *testing.T) {
+	room := seedAmbientRoom(t, 5, nil, listenA)
+	pinRepeat(t, 1, 900)
+	key := LineKey(`item`, 12, `Feed me.`)
+	Plan(Line{Room: room, Source: SourceItemChatter, Key: key})
+	util.SetRoundCountForTest(ambNow + 5)                       // budget open again
+	Plan(Line{Room: room, Source: SourceItemChatter, Key: key}) // held back as a repeat
+	if r := Plan(Line{Room: room, Source: SourceWeather, Key: LineKey(`weather`, 0, `Rain falls.`)}); !slices.Equal(r.Delivered, []int{listenA}) {
+		t.Fatalf("fresh line after a held-back repeat: delivered %v, want the listener (the repeat must not charge the budget)", r.Delivered)
+	}
+}
+
+func TestPlan_BudgetHeldLineIsNotRecordedAsSeen(t *testing.T) {
+	room := seedAmbientRoom(t, 5, nil, listenA)
+	pinRepeat(t, 1, 900)
+	ChargeForTest(listenA, ambNow+5)
+	key := LineKey(`mob`, 7, `hums.`)
+	Plan(Line{Room: room, Source: SourceMobChatter, Key: key}) // budget holds it back
+	util.SetRoundCountForTest(ambNow + 5)
+	if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: key}); !slices.Equal(r.Delivered, []int{listenA}) {
+		t.Fatalf("delivered %v: a line the budget held back was recorded as seen", r.Delivered)
+	}
+}
+
+func TestPlan_RepeatOffSwitches(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		limit, window int
+		key           string
+	}{
+		{"empty key", 1, 900, ``},
+		{"limit 0", 0, 900, LineKey(`mob`, 7, `x`)},
+		{"window 0", 1, 0, LineKey(`mob`, 7, `x`)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			room := seedAmbientRoom(t, 0, nil, listenA)
+			pinRepeat(t, tc.limit, tc.window)
+			for i := 0; i < 3; i++ {
+				if r := Plan(Line{Room: room, Source: SourceMobChatter, Key: tc.key}); !slices.Equal(r.Delivered, []int{listenA}) {
+					t.Fatalf("send %d: delivered %v, want the listener every time", i, r.Delivered)
+				}
+			}
+		})
+	}
+}
+
+func TestRoundTick_PrunesRepeatMemory(t *testing.T) {
+	room := seedAmbientRoom(t, 0, nil, listenA)
+	pinRepeat(t, 1, 900)
+	Plan(Line{Room: room, Source: SourceMobChatter, Key: LineKey(`mob`, 7, `x`)})
+	RoundTick(ambNow + 899)
+	if n := RepeatKeysForTest(listenA); n != 1 {
+		t.Fatalf("inside the window: %d keys remembered, want 1", n)
+	}
+	RoundTick(ambNow + 900)
+	if n := RepeatKeysForTest(listenA); n != 0 {
+		t.Fatalf("window passed: %d keys remembered, want 0", n)
+	}
+}

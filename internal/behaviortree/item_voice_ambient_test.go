@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -73,6 +74,54 @@ tree:
 `
 
 const voiceHolderIdleItemId = 9903
+
+// voiceRepeatTree speaks one room-wide idle line unpaced, so neither the
+// item cooldown nor the listener cap holds a second send back.
+const voiceRepeatTreeFmt = `
+speech:
+  on_idle: ["%s"]
+tree:
+  type: action
+  event: item_idle
+  do: speak
+  pool: on_idle
+  paced: false
+`
+
+const (
+	voiceRepeatItemId  = 9905
+	voiceRepeatItemId2 = 9906
+)
+
+// The repeat limit: with no budget, the same item line twice reaches each
+// player once; another item's different line still reaches them.
+func TestItemIdleLine_RepeatReachesEachListenerOnce(t *testing.T) {
+	seedVoiceWorld(t)
+	pinAmbientBudget(t, 0)
+	cfg := configs.GetConfig()
+	cfg.Balance.AmbientRepeatLimit = 1
+	cfg.Balance.AmbientRepeatWindowRounds = 900
+	configs.SetConfigForTest(t, cfg)
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		voiceRepeatItemId:  {ItemId: voiceRepeatItemId, Name: "Hungry Ring", Type: items.Offhand, Behavior: "voice_repeat_a"},
+		voiceRepeatItemId2: {ItemId: voiceRepeatItemId2, Name: "Sleepy Ring", Type: items.Offhand, Behavior: "voice_repeat_b"},
+	}))
+	LoadItemTreeForTest(t, "voice_repeat_a", fmt.Sprintf(voiceRepeatTreeFmt, "Feed me."))
+	LoadItemTreeForTest(t, "voice_repeat_b", fmt.Sprintf(voiceRepeatTreeFmt, "So tired."))
+
+	TryItemBehavior(voiceEvent("item_idle"), wornProbe(voiceRepeatItemId, 3))
+	TryItemBehavior(voiceEvent("item_idle"), wornProbe(voiceRepeatItemId, 3))
+	TryItemBehavior(voiceEvent("item_idle"), wornProbe(voiceRepeatItemId2, 4))
+	for _, uid := range []int{voiceBearerId, voiceListenerId} {
+		got := drained(uid)
+		if n := strings.Count(got, "Feed me."); n != 1 {
+			t.Errorf("user %d read the repeated line %d times, want 1: %q", uid, n, got)
+		}
+		if n := strings.Count(got, "So tired."); n != 1 {
+			t.Errorf("user %d read a different line %d times, want 1: %q", uid, n, got)
+		}
+	}
+}
 
 // A holder-only idle line is heard by the holder alone, so only the holder
 // is charged: a bystander keeps their budget (controller fix, Task 7 review).

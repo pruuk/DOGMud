@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/ambient"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -151,6 +152,52 @@ func TestAmbient_SourceAndVerbAreCaseBlind(t *testing.T) {
 	}
 	if n := heard(1, "Loud and clear"); n != 1 {
 		t.Errorf("user 1 heard the line %d times, want 1", n)
+	}
+}
+
+// pinAmbientRepeat sets the repeat limit knobs on top of seedAmbientCommand.
+func pinAmbientRepeat(t *testing.T, limit, window int) {
+	t.Helper()
+	cfg := configs.GetConfig()
+	cfg.Balance.AmbientRepeatLimit = configs.ConfigInt(limit)
+	cfg.Balance.AmbientRepeatWindowRounds = configs.ConfigInt(window)
+	configs.SetConfigForTest(t, cfg)
+}
+
+// The repeat limit: with no budget, the same line twice reaches each
+// listener once, a different line still reaches them, and another mob of
+// the same template saying it is held back too (the template shares a
+// memory), while a mob of another template is not.
+func TestAmbientSay_RepeatReachesEachListenerOnce(t *testing.T) {
+	seedAmbientCommand(t, 0)
+	pinAmbientRepeat(t, 1, 900)
+	TryCommand("ambient", "mob_chatter say Fresh bread!", 100)
+	TryCommand("ambient", "mob_chatter say Fresh bread!", 100)
+	TryCommand("ambient", "mob_chatter say Warm pies!", 100)
+	for _, uid := range []int{1, 2} {
+		msgs := strings.Join(events.DrainQueuedMessagesForTest(uid), "\n")
+		if n := strings.Count(msgs, "Fresh bread"); n != 1 {
+			t.Errorf("user %d heard the repeated line %d times, want 1: %q", uid, n, msgs)
+		}
+		if n := strings.Count(msgs, "Warm pies"); n != 1 {
+			t.Errorf("user %d heard a different line %d times, want 1: %q", uid, n, msgs)
+		}
+	}
+
+	// Mob 200 is template 2: the same text from another template is a new line.
+	TryCommand("ambient", "mob_chatter say Fresh bread!", 200)
+	if n := heard(1, "Fresh bread"); n != 1 {
+		t.Errorf("another template's line is its own: user 1 heard it %d times, want 1", n)
+	}
+	events.DrainQueuedMessagesForTest(2)
+
+	// Relabelled as template 1, mob 200 shares mob 100's memory.
+	m := mobs.GetInstance(200)
+	m.MobId = 1
+	TryCommand("ambient", "mob_chatter emote Fresh bread smell.", 100)
+	TryCommand("ambient", "mob_chatter emote Fresh bread smell.", 200)
+	if n := heard(1, "Fresh bread smell"); n != 1 {
+		t.Errorf("two mobs of one template share the repeat memory: user 1 saw the line %d times, want 1", n)
 	}
 }
 

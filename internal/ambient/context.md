@@ -25,8 +25,14 @@ imported back. Check with `go list -deps ./internal/ambient/`.
 
 ## How a send site uses it
 
-    plan := ambient.Plan(ambient.Line{Room: room, Source: ambient.SourceWeather})
+    plan := ambient.Plan(ambient.Line{Room: room, Source: ambient.SourceWeather,
+        Key: ambient.LineKey(`weather`, 0, line)})
     room.SendText(messaging.CategoryWeather, line, plan.Exclude...)
+
+Every `Line` sets `Key` from `LineKey(kind, id, text)`, the line's
+repeat-limit identity. `internal/guards/ambient_line_key_guard_test.go`
+fails on any `ambient.Line` literal outside this package without a `Key:`
+field.
 
 `Plan` charges every player who takes the line in and returns, in
 `Exclude`, the caller's own exclusions plus every player over budget. The
@@ -48,8 +54,9 @@ today. Every other say's echo never comes here.
 could hear a line now; an NPC conversation start is gated on it so none is
 cut off halfway. `SingleLineHeard` and `MarkSingleLineHeard` hold the
 once-per-visit rule for a room with one idle line. `RoundTick` runs once a
-round: it ends visits of players who left or logged out and prunes spent
-budget entries.
+round: it ends visits of players who left or logged out, prunes spent
+budget entries, and drops repeat memory whose window has passed or whose
+player is offline.
 
 ## Rules
 
@@ -60,9 +67,25 @@ budget entries.
   budget on makes the window endless, so no budgeted line gets through.
 - An over-budget line is skipped for that player only; everyone else in
   the room still gets it.
-- State is in memory only (`budgetNext`, `singleHeard`), the shape of the
-  item chatter listener cap. A restart clears it, which is harmless. Both
-  maps are mutex guarded, so calls are safe from the game loop.
+- The repeat limit (owner 2026-10-31): a player takes in one line `Key` at
+  most `Balance.AmbientRepeatLimit` times per
+  `Balance.AmbientRepeatWindowRounds` rounds (Go defaults 0 and 0, off;
+  `config.yaml` ships 1 per 900, an hour). Over that, the player is left
+  out of that line only; the rest of the room still gets it. Either knob at
+  0 turns it off, and an empty `Key` skips it. The repeat check runs before
+  the budget, so a held-back repeat charges no budget, and a line the
+  budget holds back is not recorded as seen. The window is the raw knob: it
+  does not scale by the zone `ambientmultiplier`.
+- `LineKey` forms: `mob:<MobId>:<text>` (the template, so two mobs of one
+  kind share a memory; a say's echo next door appends `:echo`),
+  `room:<RoomId>:<text>`, `item:<ItemId>:<text>`, `weather:0:<text>`. The
+  text is the raw line before names are filled in.
+- Behaviour-tree dialogue (a mob tree's own say lines) does not pass
+  through `Plan` and is out of the repeat limit's scope (#719).
+- State is in memory only (`budgetNext`, `singleHeard`, `repeatSeen`), the
+  shape of the item chatter listener cap. A restart clears it, which is
+  harmless. Every map is mutex guarded (`repeatMu` is taken inside
+  `budgetMu`), so calls are safe from the game loop.
 
 ## Telemetry
 
@@ -75,8 +98,8 @@ code permanently, for the next retune.
   after the switch check, and `telemetryTick` drops anything left from an
   earlier on period once, then costs one atomic load a round.
 - **On**, each `Plan` counts per room and source, per listener taking the
-  line in: offered = delivered + suppressed (suppressed means over budget or
-  hushed). A player the caller excluded or who does not perceive the line is
+  line in: offered = delivered + suppressed + repeat (suppressed means over
+  budget or hushed; repeat means held back by the repeat limit). A player the caller excluded or who does not perceive the line is
   not counted. `say_echo` is counted in the room that receives the echo,
   since its `Plan` names that room.
 - `CountMove(roomId, kind)` counts a committed wander step, in the room the
@@ -104,6 +127,6 @@ code permanently, for the next retune.
   The line's message is `ambient.telemetry` and its keys, in order, are
   `window`, `room`, `zone`, `round_seconds`, `window_rounds`,
   `listener_rounds`, then `<source>_offered`, `<source>_delivered`,
-  `<source>_suppressed` for each source in `Sources` order, then
+  `<source>_suppressed`, `<source>_repeat` for each source in `Sources` order, then
   `move_idle`, `move_track`, `move_path`. `tools/ambient_report.py` reads
   this format, so keep it stable.

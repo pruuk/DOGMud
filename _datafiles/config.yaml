@@ -2092,6 +2092,10 @@ Balance:
   #   (room idle, mob idle chatter, weather, gossip, item chatter) per this
   #   many rounds; the rest of the room still hears a line one player skips.
   #   An NPC conversation starts only when everyone present has budget left.
+  # AmbientRepeatLimit / AmbientRepeatWindowRounds: a player takes in the
+  #   same ambient line (one mob template's, room's or item's exact line) at
+  #   most Limit times per Window rounds (900 is an hour); the rest of the
+  #   room still hears it. Either 0 turns the limit off.
   # Conversation*: NPC conversations. BaseChancePct is a per-round percent
   #   (1.0 = 1%), PlayerArrivalBoostPct the chance one starts as a player
   #   walks in, CooldownRounds the rest between two; 0 turns each off.
@@ -2103,6 +2107,8 @@ Balance:
   RoomIdleChancePct: 3
   TipIntervalRounds: 75
   AmbientListenerBudgetRounds: 5
+  AmbientRepeatLimit: 1
+  AmbientRepeatWindowRounds: 900
   ConversationBaseChancePct: 1.0
   ConversationPlayerArrivalBoostPct: 25
   ConversationCooldownRounds: 50

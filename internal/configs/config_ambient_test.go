@@ -36,6 +36,9 @@ func TestAmbientKnobs_AbsentKeysKeepTodaysBehaviour(t *testing.T) {
 	if b.AmbientListenerBudgetRounds != 0 {
 		t.Errorf("AmbientListenerBudgetRounds absent must load 0 (no budget, as today), got %v", b.AmbientListenerBudgetRounds)
 	}
+	if b.AmbientRepeatLimit != 0 || b.AmbientRepeatWindowRounds != 0 {
+		t.Errorf("repeat limit absent must load 0/0 (no limit, as today), got %v/%v", b.AmbientRepeatLimit, b.AmbientRepeatWindowRounds)
+	}
 	if bool(b.AmbientTelemetry) || b.AmbientTelemetryReportMinutes != 5 {
 		t.Errorf("telemetry absent must load off with a 5 minute window, got %v/%v", b.AmbientTelemetry, b.AmbientTelemetryReportMinutes)
 	}
@@ -52,6 +55,7 @@ func TestAmbientKnobs_ExplicitZeroIsOff(t *testing.T) {
 	b := loadAndValidate(t, "Balance:\n"+
 		"  MobIdleChatterScale: 0\n  MobIdleMovementScale: 0\n  RoomIdleChancePct: 0\n"+
 		"  TipIntervalRounds: 0\n  AmbientListenerBudgetRounds: 0\n"+
+		"  AmbientRepeatLimit: 0\n  AmbientRepeatWindowRounds: 0\n"+
 		"  ConversationBaseChancePct: 0\n  ConversationPlayerArrivalBoostPct: 0\n  ConversationCooldownRounds: 0\n"+
 		"  GossipIntervalRounds: 0\n  AmbientTelemetryReportMinutes: 0\n")
 	zeros := map[string]float64{
@@ -60,6 +64,8 @@ func TestAmbientKnobs_ExplicitZeroIsOff(t *testing.T) {
 		"RoomIdleChancePct":                 float64(b.RoomIdleChancePct),
 		"TipIntervalRounds":                 float64(b.TipIntervalRounds),
 		"AmbientListenerBudgetRounds":       float64(b.AmbientListenerBudgetRounds),
+		"AmbientRepeatLimit":                float64(b.AmbientRepeatLimit),
+		"AmbientRepeatWindowRounds":         float64(b.AmbientRepeatWindowRounds),
 		"ConversationBaseChancePct":         float64(b.ConversationBaseChancePct),
 		"ConversationPlayerArrivalBoostPct": float64(b.ConversationPlayerArrivalBoostPct),
 		"ConversationCooldownRounds":        float64(b.ConversationCooldownRounds),
@@ -99,10 +105,11 @@ func TestAmbientKnobs_ShippedValues(t *testing.T) {
 	b := cfg.Balance
 	if b.MobIdleChatterScale != 0.5 || b.MobIdleMovementScale != 1.0 || b.RoomIdleChancePct != 3 ||
 		b.TipIntervalRounds != 75 || b.AmbientListenerBudgetRounds != 5 || bool(b.AmbientTelemetry) ||
-		b.AmbientTelemetryReportMinutes != 5 {
-		t.Errorf("shipped ambient knobs: chatter %v movement %v room %v tips %v budget %v telemetry %v/%v; want 0.5 1.0 3 75 5 false/5",
+		b.AmbientTelemetryReportMinutes != 5 || b.AmbientRepeatLimit != 1 || b.AmbientRepeatWindowRounds != 900 {
+		t.Errorf("shipped ambient knobs: chatter %v movement %v room %v tips %v budget %v telemetry %v/%v AmbientRepeatLimit %v AmbientRepeatWindowRounds %v; want 0.5 1.0 3 75 5 false/5 1 900",
 			b.MobIdleChatterScale, b.MobIdleMovementScale, b.RoomIdleChancePct, b.TipIntervalRounds,
-			b.AmbientListenerBudgetRounds, b.AmbientTelemetry, b.AmbientTelemetryReportMinutes)
+			b.AmbientListenerBudgetRounds, b.AmbientTelemetry, b.AmbientTelemetryReportMinutes,
+			b.AmbientRepeatLimit, b.AmbientRepeatWindowRounds)
 	}
 	if b.ConversationBaseChancePct != 1.0 || b.ConversationPlayerArrivalBoostPct != 25 || b.ConversationCooldownRounds != 50 || b.GossipIntervalRounds != 75 {
 		t.Errorf("shipped conversation/gossip knobs %v/%v/%v/%v, want today's 1.0/25/50/75",

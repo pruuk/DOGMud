@@ -26,7 +26,7 @@ var MoveKinds = []MoveKind{MoveIdle, MoveTrack, MovePath}
 // TelemetryMessage is the log message every summary line carries.
 const TelemetryMessage = "ambient.telemetry"
 
-type lineCounts struct{ offered, delivered, suppressed int }
+type lineCounts struct{ offered, delivered, suppressed, repeat int }
 
 type roomCounts struct {
 	zone           string
@@ -64,9 +64,10 @@ func roomEntryLocked(roomId int, zone string) *roomCounts {
 	return rc
 }
 
-// countLine records one Plan: per listener, delivered and suppressed.
-func countLine(room *rooms.Room, src Source, delivered, suppressed int) {
-	if room == nil || delivered+suppressed == 0 || !TelemetryEnabled() {
+// countLine records one Plan: per listener, delivered, suppressed by the
+// budget, held back as a repeat.
+func countLine(room *rooms.Room, src Source, delivered, suppressed, repeated int) {
+	if room == nil || delivered+suppressed+repeated == 0 || !TelemetryEnabled() {
 		return
 	}
 	telMu.Lock()
@@ -77,9 +78,10 @@ func countLine(room *rooms.Room, src Source, delivered, suppressed int) {
 		lc = &lineCounts{}
 		rc.lines[src] = lc
 	}
-	lc.offered += delivered + suppressed
+	lc.offered += delivered + suppressed + repeated
 	lc.delivered += delivered
 	lc.suppressed += suppressed
+	lc.repeat += repeated
 }
 
 // CountMove counts one mob move that starts in roomId.
@@ -179,7 +181,8 @@ func flushLocked(window uint64) {
 			args = append(args,
 				string(src)+"_offered", lc.offered,
 				string(src)+"_delivered", lc.delivered,
-				string(src)+"_suppressed", lc.suppressed)
+				string(src)+"_suppressed", lc.suppressed,
+				string(src)+"_repeat", lc.repeat)
 		}
 		for _, mk := range MoveKinds {
 			args = append(args, string(mk), rc.moves[mk])

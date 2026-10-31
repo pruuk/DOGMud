@@ -870,6 +870,8 @@ type Balance struct {
 	RoomIdleChancePct             ConfigInt   `yaml:"RoomIdleChancePct"`             // Percent chance per round that a room with players shows an idle line; room -1 gets 4x; 0 = off (default 5)
 	TipIntervalRounds             ConfigInt   `yaml:"TipIntervalRounds"`             // Rounds between gameplay tips; 0 = off (default 75)
 	AmbientListenerBudgetRounds   ConfigInt   `yaml:"AmbientListenerBudgetRounds"`   // A player hears at most one ambient line per this many rounds; 0 = no budget (default 0)
+	AmbientRepeatLimit            ConfigInt   `yaml:"AmbientRepeatLimit"`            // A player takes in one ambient line at most this many times per AmbientRepeatWindowRounds; 0 = no limit (default 0)
+	AmbientRepeatWindowRounds     ConfigInt   `yaml:"AmbientRepeatWindowRounds"`     // The repeat limit's window in rounds; 0 = no limit (default 0)
 	AmbientTelemetry              ConfigBool  `yaml:"AmbientTelemetry"`              // Count ambient lines and mob moves per room and log a summary (default false)
 	AmbientTelemetryReportMinutes ConfigInt   `yaml:"AmbientTelemetryReportMinutes"` // Real minutes between telemetry summary lines (default 5)
 

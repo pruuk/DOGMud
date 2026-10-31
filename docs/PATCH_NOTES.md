@@ -11,6 +11,9 @@
   never cut off halfway.
 - A room with only one thing to show you shows it once each time you
   walk in, instead of repeating it.
+- A shopkeeper, a room or the weather no longer tells you the same line
+  over and over: you hear each one once, then it waits a good while before
+  you hear it again.
 - Some townsfolk lines that used to stop halfway now show in full.
 
 ## 2026-10-28: Set a quest aside, or follow another

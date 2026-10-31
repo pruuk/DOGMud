@@ -72,8 +72,8 @@ func TestTelemetry_OnCountsAndWritesOneLinePerRoom(t *testing.T) {
 		"window": 1, "room": ambRoom, "zone": ambZone, "round_seconds": 4, "window_rounds": 15,
 		"listener_rounds":       30, // two players for the window's 15 ticks
 		"mob_chatter_offered":   2,
-		"mob_chatter_delivered": 1, "mob_chatter_suppressed": 1,
-		"room_idle_offered": 0, "move_idle": 3, "move_track": 0, "move_path": 1,
+		"mob_chatter_delivered": 1, "mob_chatter_suppressed": 1, "mob_chatter_repeat": 0,
+		"room_idle_offered": 0, "room_idle_repeat": 0, "move_idle": 3, "move_track": 0, "move_path": 1,
 	}
 	for k, v := range want {
 		if l[k] != v {
@@ -136,5 +136,30 @@ func TestTelemetry_SayEchoCountsInTheReceivingRoom(t *testing.T) {
 	}
 	if len(*lines) != 1 || (*lines)[0]["room"] != ambRoom || (*lines)[0]["say_echo_delivered"] != 2 || (*lines)[0]["mob_chatter_offered"] != 0 {
 		t.Fatalf("the echo must be counted as say_echo in the receiving room: %v", *lines)
+	}
+}
+
+// A line held back by the repeat limit is offered and counted as a repeat,
+// apart from a budget suppression.
+func TestTelemetry_CountsHeldBackRepeats(t *testing.T) {
+	room := seedAmbientRoom(t, 0, nil, listenA)
+	pinRepeat(t, 1, 900)
+	pinTelemetry(t, true, 1)
+	lines := captureEmit(t)
+	key := LineKey(`mob`, 7, `hums.`)
+	Plan(Line{Room: room, Source: SourceMobChatter, Key: key})
+	Plan(Line{Room: room, Source: SourceMobChatter, Key: key})
+	for r := ambNow + 1; r <= ambNow+15; r++ {
+		RoundTick(r)
+	}
+	if len(*lines) != 1 {
+		t.Fatalf("want 1 line, got %v", *lines)
+	}
+	l := (*lines)[0]
+	want := map[string]any{"mob_chatter_offered": 2, "mob_chatter_delivered": 1, "mob_chatter_suppressed": 0, "mob_chatter_repeat": 1}
+	for k, v := range want {
+		if l[k] != v {
+			t.Errorf("%s = %v, want %v (line %v)", k, l[k], v, l)
+		}
 	}
 }

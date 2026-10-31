@@ -77,6 +77,29 @@ func TestEmitAmbient_SeasonalOneIn(t *testing.T) {
 	}
 }
 
+// The repeat limit: with no budget, the same weather line twice reaches each
+// listener once; a different line still reaches them.
+func TestSendAmbientWeather_RepeatReachesEachListenerOnce(t *testing.T) {
+	seedWeatherRoom(t, 0)
+	cfg := configs.GetConfig()
+	cfg.Balance.AmbientRepeatLimit = 1
+	cfg.Balance.AmbientRepeatWindowRounds = 900
+	configs.SetConfigForTest(t, cfg)
+	room := rooms.LoadRoom(1)
+	sendAmbientWeather(room, "Rain falls softly.")
+	sendAmbientWeather(room, "Rain falls softly.")
+	sendAmbientWeather(room, "Wind gusts.")
+	for _, uid := range []int{9001, 9002} {
+		got := strings.Join(events.DrainQueuedMessagesForTest(uid), "\n")
+		if n := strings.Count(got, "Rain falls softly."); n != 1 {
+			t.Errorf("%d read the repeated line %d times, want 1: %q", uid, n, got)
+		}
+		if n := strings.Count(got, "Wind gusts."); n != 1 {
+			t.Errorf("%d read a different line %d times, want 1: %q", uid, n, got)
+		}
+	}
+}
+
 func TestEmitAmbient_SeasonalLineHonoursTheBudget(t *testing.T) {
 	seedWeatherRoom(t, 5)
 	ambient.ChargeForTest(9001, 7005)

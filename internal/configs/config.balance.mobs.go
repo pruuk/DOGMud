@@ -176,6 +176,12 @@ func (b *Balance) validateMobs() {
 	if b.AmbientListenerBudgetRounds < 0 {
 		b.AmbientListenerBudgetRounds = 0
 	}
+	if b.AmbientRepeatLimit < 0 {
+		b.AmbientRepeatLimit = 0
+	}
+	if b.AmbientRepeatWindowRounds < 0 {
+		b.AmbientRepeatWindowRounds = 0
+	}
 	if b.AmbientTelemetryReportMinutes <= 0 {
 		b.AmbientTelemetryReportMinutes = 5
 	}

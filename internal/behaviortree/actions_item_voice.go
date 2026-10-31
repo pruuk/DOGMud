@@ -237,7 +237,7 @@ func actSpeak(params map[string]any, ctx *EvalContext) Result {
 	// by the holder alone, so only the holder is charged for it.
 	var overBudget []int
 	if ctx.Event.EventType == `item_idle` && room != nil {
-		al := ambient.Line{Room: room, Source: ambient.SourceItemChatter}
+		al := ambient.Line{Room: room, Source: ambient.SourceItemChatter, Key: ambient.LineKey(`item`, ctx.Item.ItemId, line)}
 		if !toRoom {
 			holderId := holderUser.UserId // a mob holder with !toRoom already failed above
 			al.Perceives = func(u *users.UserRecord) bool { return u.UserId == holderId }

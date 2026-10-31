@@ -34,6 +34,7 @@ func sendRoomIdleLine(room *rooms.Room, msg string, singleLine bool) {
 		Source:    ambient.SourceRoomIdle,
 		Perceives: ambient.Sees(room),
 		Exclude:   already,
+		Key:       ambient.LineKey(`room`, room.RoomId, msg),
 	})
 	sendVisualRoomText(room, messaging.CategoryRoomDescription, msg, plan.Exclude...)
 	if singleLine {

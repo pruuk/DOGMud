@@ -4,7 +4,8 @@
 Reads a DOGMud server log with Balance.AmbientTelemetry on and prints, as
 Markdown:
   1. lines per listener-minute for each room and source, worst first, with
-     offered, delivered and suppressed counts (per listener);
+     offered, delivered, suppressed (by the listener budget) and repeat
+     (held back by the repeat limit) counts, per listener;
   2. each room's total across sources, worst first;
   3. mob moves per minute per zone (idle, tracking, path).
 
@@ -17,6 +18,10 @@ a restart is counted by distinct (boot, window) pairs: a "Server Ready" line
 (logged once per process), or a window number that falls, starts a new boot.
 "Minutes measured" counts the windows that had at least one active room; a
 fully quiet window writes no lines, so it is not counted.
+
+Each line carries, per source, <source>_offered, _delivered, _suppressed and
+_repeat. A log written before the repeat limit has no _repeat fields; they
+read as 0.
 
 SOURCES and MOVES below mirror ambient.Sources and ambient.MoveKinds in
 internal/ambient and must be kept in step with them.
@@ -93,13 +98,14 @@ def build(records):
         room = rooms.setdefault(rec["room"], {
             "zone": rec.get("zone", ""),
             "listener_seconds": 0,
-            "src": {s: [0, 0, 0] for s in SOURCES},
+            "src": {s: [0, 0, 0, 0] for s in SOURCES},
         })
         room["listener_seconds"] += num(rec, "listener_rounds") * secs
         for s in SOURCES:
             room["src"][s][0] += num(rec, s + "_offered")
             room["src"][s][1] += num(rec, s + "_delivered")
             room["src"][s][2] += num(rec, s + "_suppressed")
+            room["src"][s][3] += num(rec, s + "_repeat")
         zone = zones.setdefault(rec.get("zone", ""), {m: 0 for m in MOVES})
         for m in MOVES:
             zone[m] += num(rec, m)
@@ -115,30 +121,30 @@ def render(rooms, zones, minutes):
         lm = room["listener_seconds"] / 60.0
         if lm <= 0:
             continue
-        all_off = all_del = all_sup = 0
+        all_off = all_del = all_sup = all_rep = 0
         for s in SOURCES:
-            off, dl, sup = room["src"][s]
-            all_off, all_del, all_sup = all_off + off, all_del + dl, all_sup + sup
+            off, dl, sup, rep = room["src"][s]
+            all_off, all_del, all_sup, all_rep = all_off + off, all_del + dl, all_sup + sup, all_rep + rep
             if off == 0:
                 continue
-            rows.append((dl / lm, room_id, room["zone"], s, lm, off, dl, sup))
-        totals.append((all_del / lm, room_id, room["zone"], lm, all_off, all_del, all_sup))
+            rows.append((dl / lm, room_id, room["zone"], s, lm, off, dl, sup, rep))
+        totals.append((all_del / lm, room_id, room["zone"], lm, all_off, all_del, all_sup, all_rep))
     rows.sort(key=lambda r: (-r[0], r[1], r[3]))
     totals.sort(key=lambda r: (-r[0], r[1]))
 
     out.append("## Ambient lines per listener-minute (worst first)")
     out.append("")
-    out.append("| Room | Zone | Source | Listener-min | Offered | Delivered | Suppressed | Delivered per listener-min |")
-    out.append("|---|---|---|---|---|---|---|---|")
-    for rate, room_id, zone, s, lm, off, dl, sup in rows:
-        out.append(f"| {room_id} | {zone} | {s} | {lm:.1f} | {off} | {dl} | {sup} | {rate:.2f} |")
+    out.append("| Room | Zone | Source | Listener-min | Offered | Delivered | Suppressed | Repeat | Delivered per listener-min |")
+    out.append("|---|---|---|---|---|---|---|---|---|")
+    for rate, room_id, zone, s, lm, off, dl, sup, rep in rows:
+        out.append(f"| {room_id} | {zone} | {s} | {lm:.1f} | {off} | {dl} | {sup} | {rep} | {rate:.2f} |")
     out.append("")
     out.append("## Rooms, all sources (worst first)")
     out.append("")
-    out.append("| Room | Zone | Listener-min | Offered | Delivered | Suppressed | Delivered per listener-min |")
-    out.append("|---|---|---|---|---|---|---|")
-    for rate, room_id, zone, lm, off, dl, sup in totals:
-        out.append(f"| {room_id} | {zone} | {lm:.1f} | {off} | {dl} | {sup} | {rate:.2f} |")
+    out.append("| Room | Zone | Listener-min | Offered | Delivered | Suppressed | Repeat | Delivered per listener-min |")
+    out.append("|---|---|---|---|---|---|---|---|")
+    for rate, room_id, zone, lm, off, dl, sup, rep in totals:
+        out.append(f"| {room_id} | {zone} | {lm:.1f} | {off} | {dl} | {sup} | {rep} | {rate:.2f} |")
     out.append("")
     out.append(f"## Mob moves per minute by zone ({minutes:.0f} minutes measured)")
     out.append("")
@@ -171,7 +177,7 @@ def _fixture_line(colour, **kv):
 
 
 def self_test():
-    base = {s + k: 0 for s in SOURCES for k in ("_offered", "_delivered", "_suppressed")}
+    base = {s + k: 0 for s in SOURCES for k in ("_offered", "_delivered", "_suppressed", "_repeat")}
     base.update({m: 0 for m in MOVES})
 
     def rec(**kv):
@@ -182,8 +188,9 @@ def self_test():
     fixture = [
         "unrelated line=1",
         _fixture_line(True, **rec(window=1, room=472, zone="Thornwall City", round_seconds=4, window_rounds=75,
-                                  listener_rounds=75, mob_chatter_offered=12, mob_chatter_delivered=10,
-                                  mob_chatter_suppressed=2, room_idle_offered=2, room_idle_delivered=2)),
+                                  listener_rounds=75, mob_chatter_offered=15, mob_chatter_delivered=10,
+                                  mob_chatter_suppressed=2, mob_chatter_repeat=3,
+                                  room_idle_offered=2, room_idle_delivered=2)),
         _fixture_line(False, **rec(window=1, room=5003, zone="Instance Planar Oasis", round_seconds=4,
                                    window_rounds=75, listener_rounds=0, move_idle=6, move_path=4)),
         _fixture_line(False, **rec(window=2, room=472, zone="Thornwall City", round_seconds=4, window_rounds=75,
@@ -193,9 +200,9 @@ def self_test():
     ]
     out = report(fixture)
     want = [
-        "| 472 | Thornwall City | mob_chatter | 10.0 | 20 | 18 | 2 | 1.80 |",
-        "| 472 | Thornwall City | room_idle | 10.0 | 2 | 2 | 0 | 0.20 |",
-        "| 472 | Thornwall City | 10.0 | 22 | 20 | 2 | 2.00 |",
+        "| 472 | Thornwall City | mob_chatter | 10.0 | 23 | 18 | 2 | 3 | 1.80 |",
+        "| 472 | Thornwall City | room_idle | 10.0 | 2 | 2 | 0 | 0 | 0.20 |",
+        "| 472 | Thornwall City | 10.0 | 25 | 20 | 2 | 3 | 2.00 |",
         "## Mob moves per minute by zone (10 minutes measured)",
         "| Instance Planar Oasis | 1.00 | 0.00 | 0.40 | 1.40 |",
     ]
@@ -246,9 +253,9 @@ def self_test():
     ]
     pout = report(pfix)
     pwant = [
-        "| 472 | Plain | mob_chatter | 10.0 | 6 | 6 | 0 | 0.60 |",
-        "| 473 | Thornwall City | weather | 5.0 | 5 | 4 | 1 | 0.80 |",
-        "| 474 |  | gossip | 5.0 | 2 | 2 | 0 | 0.40 |",
+        "| 472 | Plain | mob_chatter | 10.0 | 6 | 6 | 0 | 0 | 0.60 |",
+        "| 473 | Thornwall City | weather | 5.0 | 5 | 4 | 1 | 0 | 0.80 |",
+        "| 474 |  | gossip | 5.0 | 2 | 2 | 0 | 0 | 0.40 |",
     ]
     pmissing = [w for w in pwant if w not in pout]
     # Room 472 is heard in two boots (10 listener-minutes); the other rooms
@@ -258,6 +265,16 @@ def self_test():
         for w in pmissing:
             print("  missing: " + w)
         print(pout)
+        return 1
+
+    # A log written before the repeat limit has no _repeat fields: they read 0.
+    old = ("time=12:00:00 level=INFO msg=ambient.telemetry window=1 room=480 zone=Old round_seconds=4 "
+           "window_rounds=75 listener_rounds=75 weather_offered=3 weather_delivered=2 weather_suppressed=1 ")
+    oout = report([old])
+    owant = "| 480 | Old | weather | 5.0 | 3 | 2 | 1 | 0 | 0.40 |"
+    if owant not in oout:
+        print("self-test FAILED (old log without _repeat)")
+        print(oout)
         return 1
     print("self-test ok")
     return 0

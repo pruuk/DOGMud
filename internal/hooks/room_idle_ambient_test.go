@@ -83,6 +83,26 @@ func TestRoomIdle_BudgetCapsALongStay(t *testing.T) {
 	require.GreaterOrEqual(t, capped, 1)
 }
 
+// The repeat limit: with no budget, the same idle line twice reaches each
+// listener once; a different line still reaches them.
+func TestRoomIdle_RepeatReachesEachListenerOnce(t *testing.T) {
+	roomIdleFixture(t, []string{"A cart rattles past.", "A dog barks."}, 0, 0)
+	cfg := configs.GetConfig()
+	cfg.Balance.AmbientRepeatLimit = 1
+	cfg.Balance.AmbientRepeatWindowRounds = 900
+	configs.SetConfigForTest(t, cfg)
+	util.SetRoundCountForTest(1000)
+	room := rooms.LoadRoom(1)
+	sendRoomIdleLine(room, "A cart rattles past.", false)
+	sendRoomIdleLine(room, "A cart rattles past.", false)
+	sendRoomIdleLine(room, "A dog barks.", false)
+	for _, uid := range []int{1, 2} {
+		got := drainPlain(uid)
+		require.Equal(t, 1, countContaining(got, "cart rattles past"), "user %d: the repeated line reaches once: %v", uid, got)
+		require.Equal(t, 1, countContaining(got, "dog barks"), "user %d: a different line still reaches: %v", uid, got)
+	}
+}
+
 func TestRoomIdleChancePer10k(t *testing.T) {
 	t.Cleanup(seedAllRegistries())
 	cfg := configs.GetConfig()

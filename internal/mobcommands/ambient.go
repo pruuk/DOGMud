@@ -41,6 +41,8 @@ func Ambient(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// Refused before the budget is asked, so nobody is charged for it.
 		return true, fmt.Errorf(`ambient: %s %s has no text`, src, verb)
 	}
+	// The repeat limit's identity: the template, so two of one kind share it.
+	key := ambient.LineKey(`mob`, int(mob.MobId), text)
 
 	// Don't bother if no players are present
 	if room.PlayerCt() < 1 {
@@ -53,14 +55,14 @@ func Ambient(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		if mob.Character.IsHidden() {
 			return true, nil
 		}
-		plan := ambient.Plan(ambient.Line{Room: room, Source: src, Perceives: ambient.Sees(room)})
+		plan := ambient.Plan(ambient.Line{Room: room, Source: src, Perceives: ambient.Sees(room), Key: key})
 		if len(plan.Delivered) == 0 {
 			return true, nil
 		}
 		return emoteAs(&actions.MobActor{Mob: mob, Room: room, Skip: plan.Exclude}, text)
 	}
 
-	plan := ambient.Plan(ambient.Line{Room: room, Source: src})
+	plan := ambient.Plan(ambient.Line{Room: room, Source: src, Key: key})
 	if len(plan.Delivered) == 0 {
 		// Nobody would hear it: no reveal, no echo next door, no
 		// Communication event.
@@ -69,7 +71,7 @@ func Ambient(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// The echo next door is ambient too: each neighbour's listeners are
 	// charged and an over-budget one is left out (owner 2026-10-30).
 	echo := func(tgt *rooms.Room) []int {
-		return ambient.Plan(ambient.Line{Room: tgt, Source: ambient.SourceSayEcho, Perceives: ambient.HearsQuiet}).Exclude
+		return ambient.Plan(ambient.Line{Room: tgt, Source: ambient.SourceSayEcho, Perceives: ambient.HearsQuiet, Key: key + `:echo`}).Exclude
 	}
 	return sayAs(&actions.MobActor{Mob: mob, Room: room, Skip: plan.Exclude, EchoExclude: echo}, text)
 }

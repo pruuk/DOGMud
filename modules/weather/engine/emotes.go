@@ -105,6 +105,6 @@ func EmitAmbient(g *sim.Graph, fronts []sim.Front, simCfg sim.Config,
 // of the room hears it. Severe-weather onset and season splashes are event
 // lines and do not come here.
 func sendAmbientWeather(room *rooms.Room, line string) {
-	plan := ambient.Plan(ambient.Line{Room: room, Source: ambient.SourceWeather})
+	plan := ambient.Plan(ambient.Line{Room: room, Source: ambient.SourceWeather, Key: ambient.LineKey(`weather`, 0, line)})
 	room.SendText(messaging.CategoryWeather, line, plan.Exclude...)
 }

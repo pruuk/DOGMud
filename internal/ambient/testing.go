@@ -1,6 +1,6 @@
 package ambient
 
-// ResetForTest empties the budget, the visits and the telemetry and returns
+// ResetForTest empties the budget, the visits, the repeat memory and the telemetry and returns
 // a restore func. For tests in any package.
 func ResetForTest() func() {
 	budgetMu.Lock()
@@ -12,6 +12,11 @@ func ResetForTest() func() {
 	origVisits := singleHeard
 	singleHeard = map[int]int{}
 	visitMu.Unlock()
+
+	repeatMu.Lock()
+	origRepeat := repeatSeen
+	repeatSeen = map[int]map[string][]uint64{}
+	repeatMu.Unlock()
 
 	telMu.Lock()
 	origRooms, origNext, origWindow, origKept := telRooms, telNextReport, telWindow, telKept.Load()
@@ -26,6 +31,9 @@ func ResetForTest() func() {
 		visitMu.Lock()
 		singleHeard = origVisits
 		visitMu.Unlock()
+		repeatMu.Lock()
+		repeatSeen = origRepeat
+		repeatMu.Unlock()
 		telMu.Lock()
 		telRooms, telNextReport, telWindow = origRooms, origNext, origWindow
 		telKept.Store(origKept)
@@ -45,6 +53,14 @@ func MovesForTest(roomId int) map[MoveKind]int {
 		}
 	}
 	return out
+}
+
+// RepeatKeysForTest returns how many line keys the repeat limit remembers
+// for userId.
+func RepeatKeysForTest(userId int) int {
+	repeatMu.Lock()
+	defer repeatMu.Unlock()
+	return len(repeatSeen[userId])
 }
 
 // ChargeForTest sets the round userId may next hear an ambient line.
