@@ -116,6 +116,12 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// An admin-only page reached by any path but its gated route reads as
+	// absent, so it does not even confirm the page exists (build.go).
+	if adminOnlyPages[fileBase] && !adminServed(r) {
+		pageFound = false
+	}
+
 	if !pageFound || len(fileBase) > 0 && fileBase[0] == '_' {
 		mudlog.Info("Web", "ip", r.RemoteAddr, "ref", r.Header.Get("Referer"), "file path", fullPath, "file extension", fileExt, "error", "Not found")
 
