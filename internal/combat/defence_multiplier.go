@@ -95,7 +95,7 @@ func (s AttackSide) score() float64 {
 	if m == 0 {
 		m = 1.0
 	}
-	return (float64(s.Stat) + float64(s.SkillRank)*float64(configs.GetBalanceConfig().SkillWeight)) * m
+	return (float64(s.Stat) + configs.WeightedSkill(float64(s.SkillRank))) * m
 }
 
 // defenceEffectiveness returns the config multiplier applied to a defence's

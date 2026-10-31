@@ -150,6 +150,10 @@ own file.
 // - U10d surprise opening strike: crits on a clean contest win, ONE swing
 ```
 
+Crit damage is `CritDamageBase + CritDamagePerSkill x min(rank, CritDamageRankCap)`
+(`CritDamageMultiplier`; a cap of 0 means no cap). Skill ranks in score
+formulas go through `configs.WeightedSkill`, never `SkillWeight` directly.
+
 ### Dual Wielding
 - Skill level 2: 50% chance to use both weapons
 - Skill level 3+: Always dual wield

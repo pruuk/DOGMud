@@ -22,15 +22,15 @@ import (
 const shroudSpellId = "empathic-shroud"
 
 // ShroudScore is an Empathic Shroud hide score: the spell's stat plus
-// Spellcasting rank x SkillWeight. The spell hook stamps the CASTER's score
-// on the record as its magnitude (hooks.applySpellCondition).
+// Spellcasting rank weighted by configs.WeightedSkill. The spell hook stamps
+// the CASTER's score on the record as its magnitude (hooks.applySpellCondition).
 func ShroudScore(stat, spellcastingRank int) float64 {
-	return float64(stat) + float64(spellcastingRank)*float64(configs.GetBalanceConfig().SkillWeight)
+	return float64(stat) + configs.WeightedSkill(float64(spellcastingRank))
 }
 
 // OwnShroudScore is the score c would cast the shroud at: the spell's stat
 // (willpower as shipped; willpower too if the spell is not loaded) plus c's
-// Spellcasting rank x SkillWeight.
+// Spellcasting rank weighted by configs.WeightedSkill.
 func (c *Character) OwnShroudScore() float64 {
 	stat := c.Stats.Willpower.ValueAdj
 	if sd := spells.GetSpell(shroudSpellId); sd != nil {
@@ -45,7 +45,7 @@ func (c *Character) OwnShroudScore() float64 {
 // the stronger-hide comparison leaves them out.
 func (c *Character) SneakBaseScore() float64 {
 	return float64(c.Stats.Dexterity.ValueAdj) +
-		float64(c.GetSkillLevel(skills.Skullduggery))*float64(configs.GetBalanceConfig().SkillWeight)
+		configs.WeightedSkill(float64(c.GetSkillLevel(skills.Skullduggery)))
 }
 
 // HideBaseScore is the base score c hides at in every opposed roll

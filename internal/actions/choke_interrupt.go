@@ -27,10 +27,8 @@ func chokeCastInterrupt(actor Actor, char, targetChar *characters.Character, sig
 			return false
 		}
 	}
-	cfg := configs.GetBalanceConfig()
-	w := float64(cfg.SkillWeight)
-	grip := float64(char.Stats.Dexterity.ValueAdj) + float64(char.GetSkillLevel(skills.UnarmedCombat))*w
-	hold := float64(targetChar.Stats.Willpower.ValueAdj) + float64(targetChar.GetSkillLevel(skills.Spellcasting))*w
+	grip := float64(char.Stats.Dexterity.ValueAdj) + configs.WeightedSkill(float64(char.GetSkillLevel(skills.UnarmedCombat)))
+	hold := float64(targetChar.Stats.Willpower.ValueAdj) + configs.WeightedSkill(float64(targetChar.GetSkillLevel(skills.Spellcasting)))
 	hold *= messaging.SightMult(targetChar, sightRoom)
 	res := combat.RunConcentrationContest(hold, grip)
 	// The DEFENDER's concentration award, win or lose. res.Success is the

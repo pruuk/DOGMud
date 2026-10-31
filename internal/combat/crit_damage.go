@@ -41,9 +41,11 @@ import (
 // attacker's value for 36% of the skill, which reintroduces the exact
 // complaint chunk 5.7 opened with — investment past the middle stops paying.
 //
-// It also deliberately does NOT clamp at the skill soft cap, unlike
-// SkillMultiplier. "Skill past the soft cap must do something" is the premise
-// 5.11 exists to answer, and this is one of the two places it does.
+// It does not clamp at the skill soft cap, unlike SkillMultiplier. It does
+// clamp at CritDamageRankCap (owner 2026-10-31, the endgame power leak): rank
+// past the cap adds nothing to crit worth. A cap of 0 keeps the old unclamped
+// line. Rank past the soft cap still pays through crit rate and the other
+// skill terms, which is the 5.11 premise.
 //
 // There is no runaway risk from rate and magnitude both scaling with skill:
 // crit rate is bounded by 1.0, so damage-per-hit converges to this multiplier
@@ -59,7 +61,11 @@ func CritDamageMultiplier(skillRank int) float64 {
 		return base
 	}
 
-	return base + float64(bal.CritDamagePerSkill)*float64(skillRank)
+	rank := float64(skillRank)
+	if limit := float64(bal.CritDamageRankCap); limit > 0 && rank > limit {
+		rank = limit
+	}
+	return base + float64(bal.CritDamagePerSkill)*rank
 }
 
 // OpeningStrikeMultiplier is the extra crit worth carried by the single opening

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
@@ -47,6 +48,36 @@ func TestCritDamageMultiplier_FloorsAtBase(t *testing.T) {
 	if got := CritDamageMultiplier(-10); math.Abs(got-2.0) > 0.001 {
 		t.Errorf("CritDamageMultiplier(-10) = %f, want 2.0 (no negative scaling)", got)
 	}
+}
+
+func TestCritDamageMultiplier_RankCap(t *testing.T) {
+	pin := func(t *testing.T, per, limit float64) {
+		t.Helper()
+		cfg := configs.Config{}
+		cfg.Balance.CritDamageBase = 2.0
+		cfg.Balance.CritDamagePerSkill = configs.ConfigFloat(per)
+		cfg.Balance.CritDamageRankCap = configs.ConfigFloat(limit)
+		configs.SetConfigForTest(t, cfg)
+	}
+
+	t.Run("cap off keeps the straight line", func(t *testing.T) {
+		pin(t, 0.05, 0)
+		if got := CritDamageMultiplier(89); math.Abs(got-6.45) > 0.001 {
+			t.Errorf("CritDamageMultiplier(89) = %f, want 6.45", got)
+		}
+	})
+
+	t.Run("cap 65 stops growth", func(t *testing.T) {
+		pin(t, 0.025, 65)
+		for _, c := range []struct {
+			rank int
+			want float64
+		}{{0, 2.0}, {10, 2.25}, {65, 3.625}, {89, 3.625}, {200, 3.625}} {
+			if got := CritDamageMultiplier(c.rank); math.Abs(got-c.want) > 0.001 {
+				t.Errorf("CritDamageMultiplier(%d) = %f, want %f", c.rank, got, c.want)
+			}
+		}
+	})
 }
 
 func TestCritDamageMultiplier_IsLinearNotSqrt(t *testing.T) {

@@ -103,11 +103,10 @@ func CalcHearingScore(c *characters.Character) float64 {
 }
 
 // detectionBase is an observer's detection before any sense prices it:
-// Perception + rank(search)*SkillWeight.
+// Perception + the search rank weighted by configs.WeightedSkill.
 func detectionBase(c *characters.Character) float64 {
 	return float64(c.Stats.Perception.ValueAdj) +
-		float64(c.GetSkillLevel(skills.Search))*
-			float64(configs.GetBalanceConfig().SkillWeight)
+		configs.WeightedSkill(float64(c.GetSkillLevel(skills.Search)))
 }
 
 // CalcSearchScore returns the observation score for a character detecting

@@ -281,7 +281,7 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 		// and its win only logged a refused Prone->Prone transition.
 		if !mutations.IsControlImmune(p.Defender.Mutations) && p.KnockdownFactor > 0 && p.Defender.IsStanding() {
 			defScore := float64(p.Defender.Stats.Dexterity.ValueAdj) +
-				float64(p.Defender.GetSkillLevel(skills.UnarmedCombat))*float64(configs.GetBalanceConfig().SkillWeight)
+				configs.WeightedSkill(float64(p.Defender.GetSkillLevel(skills.UnarmedCombat)))
 			// sight ramp (plan 5b): resisting a knockdown is a defence, so the
 			// defender pays the shape's defence-side sight row. The attacker's
 			// side already carries its row inside p.Attack.Mult.

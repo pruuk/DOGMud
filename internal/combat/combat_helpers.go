@@ -238,7 +238,7 @@ func calcSwingCount(sourceChar *characters.Character, weapon items.Item, weaponS
 	}
 
 	dex := float64(sourceChar.GetEffectiveDexterity())
-	skillLevel := float64(sourceChar.GetCombatSkillLevelFor(weapon)) * float64(bal.SkillWeight)
+	skillLevel := configs.WeightedSkill(float64(sourceChar.GetCombatSkillLevelFor(weapon)))
 
 	// Core swing count formula
 	swings := 1.0 + (dex-50.0)/100.0*weaponSpeed*(1.0+skillLevel/softCap)
@@ -259,7 +259,7 @@ func calcSwingCount(sourceChar *characters.Character, weapon items.Item, weaponS
 		if sourceChar.IsUnarmedStyle() {
 			dualSkill = float64(sourceChar.GetSkillLevel(skills.UnarmedCombat))
 		}
-		dualSkill *= float64(bal.SkillWeight)
+		dualSkill = configs.WeightedSkill(dualSkill)
 		dualWieldMod := 0.5 + (dualSkill/50.0)*0.5
 		swings *= dualWieldMod
 	}
@@ -604,7 +604,7 @@ func calcAttackScore(sourceChar *characters.Character, targetChar *characters.Ch
 	bal := configs.GetBalanceConfig()
 	attackScore := float64(sourceChar.GetEffectiveDexterity())
 	if !ctx.omitAttackSkill {
-		attackScore += float64(sourceChar.GetCombatSkillLevelFor(weapon)) * float64(bal.SkillWeight)
+		attackScore += configs.WeightedSkill(float64(sourceChar.GetCombatSkillLevelFor(weapon)))
 	}
 	attackScore -= float64(penalty)
 

@@ -421,6 +421,9 @@ func (b *Balance) validateCombat() {
 	if b.CritDamagePerSkill <= 0 {
 		b.CritDamagePerSkill = 0.05
 	}
+	if b.CritDamageRankCap < 0 {
+		b.CritDamageRankCap = 0
+	}
 
 	// ── SURPRISE ATTACK (chunk U10d) ────────────────────────────────────────
 	// All three default to 1.0 on ANY non-positive value, including the zero an

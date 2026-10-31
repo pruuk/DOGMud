@@ -83,16 +83,14 @@ func RollSubmissionAttempt(
 	subType position.SubmissionType,
 	room messaging.RoomVisibility,
 ) SubmissionAttemptResult {
-	cfg := configs.GetBalanceConfig()
-	skillWeight := float64(cfg.SkillWeight)
 	atkRank := attempter.GetSkillLevel(skills.UnarmedCombat)
 	defRank := recipient.GetSkillLevel(skills.UnarmedCombat)
 
 	atkScore := float64(attempter.Stats.Strength.ValueAdj) +
-		float64(atkRank)*skillWeight
+		configs.WeightedSkill(float64(atkRank))
 	defScore := float64(recipient.Stats.Strength.ValueAdj) +
 		float64(recipient.Stats.Vitality.ValueAdj) +
-		float64(defRank)*skillWeight
+		configs.WeightedSkill(float64(defRank))
 	// sight ramp (plan 5b): attempter and recipient both need to see, each
 	// through their own eyes.
 	atkScore *= messaging.SightMult(attempter, room)

@@ -56,12 +56,12 @@ func Consider(actor Actor, target Actor) ConsiderResult {
 
 	bal := configs.GetBalanceConfig()
 	readScore := float64(selfChar.Stats.Perception.ValueAdj) +
-		float64(selfChar.GetSkillLevel(skills.Search))*float64(bal.SkillWeight)
+		configs.WeightedSkill(float64(selfChar.GetSkillLevel(skills.Search)))
 	// sight ramp (plan 5b): the reader needs to see the target to size it up.
 	// The target's side is voice and bearing, so it takes none.
 	readScore *= messaging.SightMult(selfChar, combat.SightRoom(actor.GetRoom()))
 	targetScore := float64(targetChar.Stats.Charisma.ValueAdj) +
-		float64(targetChar.GetSkillLevel(skills.Rhetoric))*float64(bal.SkillWeight)
+		configs.WeightedSkill(float64(targetChar.GetSkillLevel(skills.Rhetoric)))
 	roll := considerContest(readScore, []contest.Entry{{Name: string(skills.Rhetoric), Score: targetScore}})
 	result.Quality = readQualityFor(roll, readScore, bal)
 	// The resolved-contest convention (U10b-1): full weight on a won read,

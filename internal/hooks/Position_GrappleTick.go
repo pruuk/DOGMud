@@ -764,7 +764,7 @@ func grappleScore(c *characters.Character, isAggressor bool, cfg configs.Balance
 		skill = float64(c.GetSkillLevel(skills.UnarmedCombat))
 	}
 
-	base := 0.7*strVal + 0.3*dexVal + float64(cfg.SkillWeight)*skill
+	base := 0.7*strVal + 0.3*dexVal + configs.WeightedSkillFor(cfg, skill)
 	score := base * grappleStaminaMultiplier(c, cfg) * grappleEncumbranceMultiplier(c, cfg)
 	if isAggressor {
 		score *= float64(cfg.GrappleAggressorDriftBonus)
