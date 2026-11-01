@@ -372,10 +372,10 @@ var lenientGrants = map[string]bool{
 
 // retiredSteps are steps no trigger grants any more. Each stays in its
 // quest's step list only so a character saved on it resumes, so the step
-// gate skips over it when it looks for the step before a grant.
-var retiredSteps = map[string]bool{
-	"32-consider": true, // consider moved ahead of the fight as sized_up (owner 2026-10-19)
-}
+// gate skips over it when it looks for the step before a grant. None today:
+// quest 32's old consider step was renamed to special in step-ids.txt
+// (#375 phase 7), which moves a saved player on instead of keeping the step.
+var retiredSteps = map[string]bool{}
 
 func TestQuest41FirstSign_OneCommandPerStep(t *testing.T) {
 	q := loadShippedQuest(t, "41-first_sign.yaml", 41)

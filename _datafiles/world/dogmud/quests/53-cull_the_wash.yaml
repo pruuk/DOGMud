@@ -1,20 +1,17 @@
-# Quest 53 — Cull the Wash (Pothole Coulee, Spoke A repeatable)
+# Quest 53, Cull the Wash (Pothole Coulee, fighting line repeatable).
 #
-# Token flow (one command per step, in order; owner ruling 2026-10-17):
-#   53-start     — granted by Caravan Guard Garve's dialogue (cull_offer node).
-#                  Requires 34-end (Take the Tower). Repeatable with cooldown.
-#   53-firstkill — mob_death trigger on Bandit Scout (9110). Requires 53-start.
-#   53-end       — mob_death trigger on Bandit Squatter (9111). Requires
-#                  53-firstkill. The quest completes on this kill, wherever
-#                  it happens: there is no turn-in at Garve. Completion
-#                  grants the reward and clears progress for the repeat.
+# Caravan Guard Garve (9112) offers it (cull_offer) once Take the Tower (34)
+# is handed in. Repeatable with a cooldown; completion clears progress.
+#   start      kill a bandit scout (9110)
+#   firstkill  kill a bandit squatter (9111), after the scout
+#   culled     report to Garve
+#   end        Garve's hand-in cull_in (#375 phase 7: every run ends at Garve)
 
 questid: 53
 name: Cull the Wash
 description: >-
   Garve always has more work clearing bandits out of the wash. Kill a
-  bandit scout, then a bandit squatter. The job is done the moment the
-  squatter falls, and the pay comes to you then.
+  bandit scout, then a bandit squatter, and go back to Garve for the pay.
 secret: false
 repeatable: true
 cooldown_rounds: 300
@@ -35,22 +32,28 @@ steps:
       room: 5235  # Cracked Cistern: Bandit Squatter (mob 9111)
     description: >-
       One bandit scout is down. Now the bandit squatter, in the Cracked
-      Cistern east of Squatter's Hollow. The job is done when it falls.
+      Cistern east of Squatter's Hollow.
     hint: >-
       From Squatter's Hollow, go east to the Cracked Cistern and type
       attack squatter.
+  - id: culled
+    destination:
+      mob: 9112
+      room: 5234
+    description: >-
+      The scout and the squatter are down. Garve pays in Squatter's Hollow.
+    hint: >-
+      Go back to Caravan Guard Garve in Squatter's Hollow. Type talk garve.
   - id: end
     description: >-
-      You thinned the wash again. Garve will have more work after a
-      while.
+      You thinned the wash again. Garve will have more work after a while.
 
 rewards:
   gold: 6
   skillinfo: "weapon-combat:1"
   actor: >-
-    The wash is quiet for now. Garve's pay finds its way to you: a few
-    coins, and a surer hand with your weapon. He will have more work
-    after a while.
+    Garve counts a few coins into your palm with his good hand. "The wash
+    is quiet again. Come back when it is not. It never stays quiet long."
   observer: ""
 
 triggers:
@@ -69,9 +72,9 @@ triggers:
     mob: 9111
     conditions:
       has: ["53-firstkill"]
-      missing: ["53-end"]
+      missing: ["53-culled"]
     actions:
-      - grant: "53-end"
+      - grant: "53-culled"
       - actor: >-
-          The squatter drops. The wash is clear for now, and Garve's job
-          is done.
+          The squatter drops. Go back to Garve in Squatter's Hollow and
+          type talk garve for your pay.

@@ -97,8 +97,8 @@
 31-school
 31-shop
 31-start
-32-consider
 32-end
+32-met
 32-sized_up
 32-special
 32-start
@@ -106,10 +106,12 @@
 32-verbosity
 32-wield
 33-end
+33-met
 33-scout
 33-squatter
 33-start
 34-end
+34-slain
 34-start
 35-craft
 35-end
@@ -188,6 +190,7 @@
 51-start
 52-end
 52-start
+53-culled
 53-end
 53-firstkill
 53-start
@@ -317,8 +320,13 @@
 9-deliver
 9-end
 9-start
+90-end
+90-start
 # retired
 # Quest 29 Two Roads (#375 phase 7): no road grants it; users.LoadUser drops
 # it from saves (quests.RetiredQuests).
 29-end
 29-start
+
+# renamed
+32-consider -> 32-special

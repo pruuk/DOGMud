@@ -28,6 +28,14 @@ opener:
   - questRequired:
     - 32-start
     questExcluded:
+    - 32-met
+    - 32-end
+    text: Toke sent you, with a cudgel by the look of it. Good. Tell me why you came,
+      and I will tell you how this yard works.
+    hints: Choose Crier Toke sent me to learn to fight below.
+  - questRequired:
+    - 32-met
+    questExcluded:
     - 32-wield
     - 32-end
     text: You are not done. That cudgel goes in your hand, not your pack. If it is
@@ -73,12 +81,26 @@ opener:
     hints: Choose First Blood below to report.
   - questRequired:
     - 32-end
-    text: You are through here. Garve is running caravan guard work out in the wash.
-      Go north to the Sparring Circle and follow the wash east. He waits in Squatter's
-      Hollow, south of the Lower Wash. That is where the real schooling starts. Set
-      your home first. You will want a fallback point.
-    hints: Type sethome coulee first to make this your home, where you wake if you
-      die.
+    questExcluded:
+    - 33-start
+    - 33-end
+    text: You passed my yard. Garve, a caravan guard, holds a hollow out in the wash
+      on one good arm, and he needs a fighter. Say the word and I will send you.
+    hints: Choose Hold the Wash below to take the job.
+  - questRequired:
+    - 33-start
+    questExcluded:
+    - 33-met
+    - 33-end
+    text: Garve is waiting. North to the Sparring Circle, east three times along the
+      wash, then south into Squatter's Hollow.
+    hints: From the Drill Yard, go north, east three times, then south to Squatter's
+      Hollow. Type talk garve.
+  - questRequired:
+    - 32-end
+    text: You are through here. The wash is Garve's business now. Set your home first
+      if you have not. You will want a fallback point.
+    hints: Type sethome coulee to make this your home, where you wake if you die.
 topics:
 - key: train_turnin
   kind: handin
@@ -87,18 +109,50 @@ topics:
   playerLine: I've worked through your whole checklist.
   text: Good. You hit the dummy, used your feet, read your opponent, and tuned your
     output. That is the checklist. You are not a soldier yet, but you are not dead
-    weight either. Take the coin. Garve is running caravan guard work in the wash
-    and he could use someone who knows which end of a cudgel to hold. Go north to
-    the Sparring Circle and follow the wash east, then south to Squatter's Hollow.
-    If the wash kills you, you wake at the Mending Hut. Walk back and try again.
-  hints: Quest complete. Go north to the Sparring Circle, east three times to the
-    Lower Wash, and south to Squatter's Hollow, and type talk garve to find out what
-    Caravan Guard Garve needs.
+    weight either. Take the coin. And if you want work that matters, there is a caravan
+    guard out in the wash who could use someone who knows which end of a cudgel to
+    hold. Ask me about it.
+  hints: Quest complete. Choose Hold the Wash below to hear what Caravan Guard Garve
+    needs.
   questRequired:
   - 32-verbosity
   questExcluded:
   - 32-end
   grantsQuest: 32-end
+- key: drill_arrive
+  kind: info
+  label: Crier Toke sent me to learn to fight.
+  text: Then stand straight and listen. That cudgel Toke gave you is nothing fancy,
+    nothing that will embarrass you in a real fight. First, take it in your hand. Then
+    consider the training dummy in this yard, to see what you are walking into. Then
+    hit it until it stops hitting back. After that, kick it or trip it once, to learn
+    that you have options beyond the basic swing. Last, set combatverbosity to your
+    taste. It controls how much combat detail you see. Then come back to me and report.
+  hints: Type wield cudgel.
+  questRequired:
+  - 32-start
+  questExcluded:
+  - 32-met
+  - 32-end
+- key: wash_offer
+  kind: offer
+  quest: 33
+  label: Hold the Wash
+  playerLine: Do you want me to help Garve hold the wash?
+  text: Garve rode caravan guard until the bandits caught his convoy in the wash. He
+    holds Squatter's Hollow now on one good arm, with a scout watching him from the
+    north and a squatter dug in to the east. Go and see him. North to the Sparring
+    Circle, east three times along the wash, then south into the hollow. If the wash
+    kills you, you wake at the Mending Hut. Walk back and try again.
+  hints: From the Drill Yard, go north, east three times, then south to Squatter's
+    Hollow. Type talk garve.
+  questRequired:
+  - 32-end
+  questExcluded:
+  - 33-start
+  - 33-end
+  grantsQuest: 33-start
+  moodChange: neutral
 # The replacement and the reminder never show together: itemExcluded and
 # carriesItem on the same item are exact opposites.
 - key: cudgel_replace
@@ -129,7 +183,7 @@ topics:
   text: Not yet. First the cudgel goes in your hand. Then we talk about the dummy.
   hints: Type wield cudgel.
   questRequired:
-  - 32-start
+  - 32-met
   questExcluded:
   - 32-wield
   - 32-end

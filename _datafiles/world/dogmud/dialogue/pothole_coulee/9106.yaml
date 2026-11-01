@@ -215,11 +215,11 @@ topics:
   label: First Blood
   playerLine: Who can teach me to fight?
   text: Drillmaster Vorn, at the Drill Yard. He turns raw into ready, and you will
-    hear him before you see him. I have a cudgel for you, to hold in your hand on
-    the way. From this square go north to the pool, then east four times, past the
-    shore path, the Mending Hut and the dry coulee mouth, to the yard itself.
-  hints: Accept, and Toke hands you a cudgel. Then type wield cudgel, and from Hub
-    Square go north, then east four times to the Drill Yard.
+    hear him before you see him. Take this cudgel to him. He will tell you when to
+    pick it up. From this square go north to the pool, then east four times, past
+    the shore path, the Mending Hut and the dry coulee mouth, to the yard itself.
+  hints: Accept, and Toke hands you a cudgel. From Hub Square, go north, then east
+    four times to the Drill Yard. Type talk vorn.
   breadcrumb: Walk the town with me first. After that, I can send you down any of
     the seven mouths.
   questRequired:
@@ -331,6 +331,24 @@ topics:
   - 50-end
   grantsQuest: 50-start
   givesItem: 10038
+# #375 phase 7: each line's last giver sends the player back to Toke with a
+# Report to Toke bridge (quests 90 to 97). Toke takes every bridge hand-in.
+- key: report_fighting_in
+  kind: handin
+  quest: 90
+  label: Report to Toke (Fighting)
+  playerLine: Garve sends word. The bandit tower has fallen.
+  text: Fallen? Hoy! The low mouth will have that across the square before you finish
+    your sentence. Garve's tower, taken by someone who could not hold a cudgel a few
+    days ago. That is the kind of news I like best. The fighting trail is yours, and
+    any mouth you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 90-start
+  questExcluded:
+  - 90-end
+  grantsQuest: 90-end
+  moodChange: friendly
 - key: footing_step_school
   kind: info
   label: Where do I go first?

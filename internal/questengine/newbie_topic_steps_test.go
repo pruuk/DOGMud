@@ -218,6 +218,54 @@ func checkHandout(t *testing.T, n *npcTalker, supply, have string, item int) {
 	require.Equal(t, []int{item}, n.given, "a player who carries one must not get a second")
 }
 
+// checkArriveTopic pins a "go see the giver" step (#375 phase 7): the
+// quest's start step hint teaches `talk <npc>`, the giver's arrive topic is
+// an info topic on the menu only while the player is on the start step, it
+// grants nothing itself, and the quest's topic_heard trigger on it moves the
+// player from start to met.
+func checkArriveTopic(t *testing.T, npc, dfile string, q *QuestDef, mobId int, key string, pre []string) {
+	t.Helper()
+	require.Contains(t, questHintFor(t, q, "start"), "type talk "+npc,
+		"quest %d: the start step sends the player to %s with talk", q.QuestId, npc)
+	df := loadCouleeTopics(t, dfile)
+	require.Equal(t, mobId, df.MobId)
+	tp := df.FindTopic(key)
+	require.NotNil(t, tp, "%s has no topic %q", dfile, key)
+	require.Equal(t, dialogue.KindInfo, tp.Kind, "%s is a talk step, an info topic", key)
+	require.Empty(t, tp.GrantsQuest, "%s grants nothing itself; the quest's topic_heard trigger does", key)
+
+	require.Nil(t, newNpcTalker(df, playerOn(q, "", pre...)).eligible(key),
+		"%s must stay shut before quest %d is taken", key, q.QuestId)
+	require.NotNil(t, newNpcTalker(df, playerOn(q, "start", pre...)).eligible(key),
+		"%s must be on the menu on quest %d's start step", key, q.QuestId)
+	require.Nil(t, newNpcTalker(df, playerOn(q, "met", pre...)).eligible(key),
+		"%s must close once the player has met %s", key, npc)
+
+	w := newQuestWalker(q).at("start")
+	w.notify("topic_heard", EventDetails{MobId: mobId, Topic: key})
+	require.Equal(t, "met", w.p.current, "hearing %s must move the player onto met", key)
+}
+
+// checkOfferMoved: a line's quest 2 is offered by the giver who took quest
+// 1's hand-in (#375 phase 7, ruleChain), and the second giver no longer
+// offers it.
+func checkOfferMoved(t *testing.T, offerFile, key string, q *QuestDef, after, oldFile string) {
+	t.Helper()
+	df := loadCouleeTopics(t, offerFile)
+	tp := df.FindTopic(key)
+	require.NotNil(t, tp, "%s has no topic %q", offerFile, key)
+	require.Equal(t, dialogue.KindOffer, tp.Kind)
+	require.Equal(t, q.QuestId, tp.Quest)
+	require.Equal(t, fmt.Sprintf("%d-start", q.QuestId), tp.GrantsQuest)
+	require.Equal(t, []string{after}, tp.QuestRequired, "%s opens on quest 1's hand-in", key)
+	old := loadCouleeTopics(t, oldFile)
+	for i := range old.Topics {
+		o := &old.Topics[i]
+		require.False(t, o.Kind == dialogue.KindOffer && o.Quest == q.QuestId,
+			"%s still offers quest %d (topic %s); only the first giver offers it", oldFile, q.QuestId, o.Key)
+	}
+}
+
 // Rusk's First Heat hand-in (batch 1 review M7): a player who still carries
 // the dagger shows it (craft_turnin, what `give` resolves to), and a player who
 // sold or lost it reports on their word (craft_turnin_told). Exactly one is

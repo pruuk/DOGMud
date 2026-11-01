@@ -414,6 +414,7 @@
 9106.mouths
 9106.newcomer_players
 9106.news
+9106.report_fighting_in
 9106.road_toke_end
 9106.send_brew
 9106.send_drill
@@ -435,6 +436,7 @@
 9108.combat_help
 9108.cudgel_have
 9108.cudgel_replace
+9108.drill_arrive
 9108.progress_sized_up
 9108.progress_special
 9108.progress_start
@@ -442,18 +444,22 @@
 9108.progress_wield
 9108.shouts_help
 9108.train_turnin
+9108.wash_offer
 9112.ambush_lore
 9112.arm_wound
+9112.cull_in
 9112.cull_offer
 9112.cull_progress_firstkill
 9112.cull_progress_start
 9112.eyes_lambent
+9112.report_fighting_offer
 9112.tower_finesse
 9112.tower_hint
+9112.tower_in
 9112.tower_might
 9112.tower_offer
 9112.tower_progress
-9112.wash_offer
+9112.wash_arrive
 9112.wash_progress_scout
 9112.wash_progress_start
 9112.wash_turnin
@@ -1349,3 +1355,5 @@
 9144.cast_offer
 9153.words_offer
 9161.shoot_offer
+# renamed
+9112.wash_offer -> 9108.wash_offer
