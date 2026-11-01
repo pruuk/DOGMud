@@ -218,6 +218,54 @@ func checkHandout(t *testing.T, n *npcTalker, supply, have string, item int) {
 	require.Equal(t, []int{item}, n.given, "a player who carries one must not get a second")
 }
 
+// checkArriveTopic pins a "go see the giver" step (#375 phase 7): the
+// quest's start step hint teaches `talk <npc>`, the giver's arrive topic is
+// an info topic on the menu only while the player is on the start step, it
+// grants nothing itself, and the quest's topic_heard trigger on it moves the
+// player from start to met.
+func checkArriveTopic(t *testing.T, npc, dfile string, q *QuestDef, mobId int, key string, pre []string) {
+	t.Helper()
+	require.Contains(t, questHintFor(t, q, "start"), "type talk "+npc,
+		"quest %d: the start step sends the player to %s with talk", q.QuestId, npc)
+	df := loadCouleeTopics(t, dfile)
+	require.Equal(t, mobId, df.MobId)
+	tp := df.FindTopic(key)
+	require.NotNil(t, tp, "%s has no topic %q", dfile, key)
+	require.Equal(t, dialogue.KindInfo, tp.Kind, "%s is a talk step, an info topic", key)
+	require.Empty(t, tp.GrantsQuest, "%s grants nothing itself; the quest's topic_heard trigger does", key)
+
+	require.Nil(t, newNpcTalker(df, playerOn(q, "", pre...)).eligible(key),
+		"%s must stay shut before quest %d is taken", key, q.QuestId)
+	require.NotNil(t, newNpcTalker(df, playerOn(q, "start", pre...)).eligible(key),
+		"%s must be on the menu on quest %d's start step", key, q.QuestId)
+	require.Nil(t, newNpcTalker(df, playerOn(q, "met", pre...)).eligible(key),
+		"%s must close once the player has met %s", key, npc)
+
+	w := newQuestWalker(q).at("start")
+	w.notify("topic_heard", EventDetails{MobId: mobId, Topic: key})
+	require.Equal(t, "met", w.p.current, "hearing %s must move the player onto met", key)
+}
+
+// checkOfferMoved: a line's quest 2 is offered by the giver who took quest
+// 1's hand-in (#375 phase 7, ruleChain), and the second giver no longer
+// offers it.
+func checkOfferMoved(t *testing.T, offerFile, key string, q *QuestDef, after, oldFile string) {
+	t.Helper()
+	df := loadCouleeTopics(t, offerFile)
+	tp := df.FindTopic(key)
+	require.NotNil(t, tp, "%s has no topic %q", offerFile, key)
+	require.Equal(t, dialogue.KindOffer, tp.Kind)
+	require.Equal(t, q.QuestId, tp.Quest)
+	require.Equal(t, fmt.Sprintf("%d-start", q.QuestId), tp.GrantsQuest)
+	require.Equal(t, []string{after}, tp.QuestRequired, "%s opens on quest 1's hand-in", key)
+	old := loadCouleeTopics(t, oldFile)
+	for i := range old.Topics {
+		o := &old.Topics[i]
+		require.False(t, o.Kind == dialogue.KindOffer && o.Quest == q.QuestId,
+			"%s still offers quest %d (topic %s); only the first giver offers it", oldFile, q.QuestId, o.Key)
+	}
+}
+
 // Rusk's First Heat hand-in (batch 1 review M7): a player who still carries
 // the dagger shows it (craft_turnin, what `give` resolves to), and a player who
 // sold or lost it reports on their word (craft_turnin_told). Exactly one is
@@ -264,11 +312,11 @@ func TestRusk9116_HandInWithOrWithoutTheDagger(t *testing.T) {
 
 func TestBirna9128_TopicsNameEachStep(t *testing.T) {
 	f := "38-first_brew.yaml"
-	pre := []string{"30-end"}
+	pre := []string{"30-end", "31-end"}
 	checkTopicSteps(t, "birna", "9128.yaml", []topicStep{
-		{f, 38, "start", "type list", pre, "brew_step_list", false},
+		{f, 38, "met", "type list", pre, "brew_step_list", false},
 		{f, 38, "list", "type buy glass vial", pre, "brew_step_vial", false},
-		{f, 38, "vial", "type buy 2 healers root", pre, "brew_step_roots", false},
+		{f, 38, "vial", "type buy 2 healer's root", pre, "brew_step_roots", false},
 		{f, 38, "roots", "type craft healing salve", pre, "brew_step_craft", false},
 		{f, 38, "brew", "type quaff healing salve", pre, "brew_step_drink", false},
 		{f, 38, "drink", "", pre, "brew_turnin", true},
@@ -277,14 +325,19 @@ func TestBirna9128_TopicsNameEachStep(t *testing.T) {
 
 func TestFalv9129_TopicsNameEachStep(t *testing.T) {
 	f39 := "39-wade_the_marsh.yaml"
+	pre39 := []string{"30-end", "38-end"}
+	pre40 := []string{"30-end", "38-end", "39-end"}
+	pre55 := []string{"30-end", "38-end", "39-end", "40-end"}
 	checkTopicSteps(t, "falv", "9129.yaml", []topicStep{
-		{f39, 39, "start", "type attack leech", []string{"38-end"}, "marsh_step_leech", false},
-		{f39, 39, "leech", "type throw firebomb", []string{"38-end"}, "marsh_step_throw", false},
-		{f39, 39, "throw", "type forage", []string{"38-end"}, "marsh_step_forage", false},
-		{f39, 39, "forage", "", []string{"38-end"}, "marsh_turnin", true},
-		{"40-heart_of_the_mire.yaml", 40, "start", "type attack spirit", []string{"38-end", "39-end"}, "mire_step_help", false},
-		{"55-another_brew.yaml", 55, "start", "type craft healing salve", []string{"38-end", "39-end", "40-end"}, "brew_loop_step_craft", false},
-		{"55-another_brew.yaml", 55, "brew", "type quaff healing salve", []string{"38-end", "39-end", "40-end"}, "brew_loop_step_drink", false},
+		{f39, 39, "met", "type attack leech", pre39, "marsh_step_leech", false},
+		{f39, 39, "leech", "type throw firebomb", pre39, "marsh_step_throw", false},
+		{f39, 39, "throw", "type forage", pre39, "marsh_step_forage", false},
+		{f39, 39, "forage", "", pre39, "marsh_turnin", true},
+		{"40-heart_of_the_mire.yaml", 40, "start", "type attack spirit", pre40, "mire_step_help", false},
+		{"40-heart_of_the_mire.yaml", 40, "slain", "", pre40, "mire_in", true},
+		{"55-another_brew.yaml", 55, "start", "type craft healing salve", pre55, "brew_loop_step_craft", false},
+		{"55-another_brew.yaml", 55, "brew", "type quaff healing salve", pre55, "brew_loop_step_drink", false},
+		{"55-another_brew.yaml", 55, "quaffed", "", pre55, "brew_loop_in", true},
 	})
 }
 

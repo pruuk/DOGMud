@@ -2,7 +2,8 @@ id: scab-hide-jerkin
 name: Scab-Hide Jerkin
 aliases: [jerkin]
 skill: tailoring
-skill_minimum: 8
+skill_minimum: 1
+learn_only: true
 station: loom
 time_rounds: 5
 ingredients:

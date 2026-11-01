@@ -361,35 +361,37 @@ func TestNewbieQuestTriggersGateOnThePreviousStep(t *testing.T) {
 
 // lenientGrants are the grants that gate on an EARLIER step than the one
 // before them, on purpose: the command cannot succeed unless the skipped
-// steps' result is already in hand (a crafted item needs its materials, a
-// shot needs a readied weapon), so a player saved before a step was inserted
-// is never held on a step whose lesson they already learned.
+// steps' result is already in hand (a shot needs a readied weapon), so a
+// player saved before a step was inserted is never held on a step whose
+// lesson they already learned.
 var lenientGrants = map[string]bool{
 	"50-shoot": true, // fire needs the sling readied (the equip step)
-	"35-craft": true, // crafting the dagger needs the bought ingot and strip
-	"38-brew":  true, // brewing the salve needs the bought vial and roots
 }
 
 // retiredSteps are steps no trigger grants any more. Each stays in its
 // quest's step list only so a character saved on it resumes, so the step
-// gate skips over it when it looks for the step before a grant.
-var retiredSteps = map[string]bool{
-	"32-consider": true, // consider moved ahead of the fight as sized_up (owner 2026-10-19)
-}
+// gate skips over it when it looks for the step before a grant. None today:
+// quest 32's old consider step was renamed to special in step-ids.txt
+// (#375 phase 7), which moves a saved player on instead of keeping the step.
+var retiredSteps = map[string]bool{}
 
 func TestQuest41FirstSign_OneCommandPerStep(t *testing.T) {
 	q := loadShippedQuest(t, "41-first_sign.yaml", 41)
-	require.Equal(t, []string{"start", "track", "forage", "end"}, newLinearPlayer(q).steps,
-		"the step ids are what a saved character stores; keep them so a player mid-quest resumes")
+	require.Equal(t, []string{"start", "met", "track", "forage", "end"}, newLinearPlayer(q).steps,
+		"start, track and forage are what a saved character stores; met is inserted after start")
 	turnIn := turnInRequires(t, "9136.yaml", "sign_turnin")
+	heard := EventDetails{Command: "", MobId: 9136, Topic: "sign_arrive", RoomId: 5283}
 
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
+		w.notify("command", EventDetails{Command: "track", RoomId: 5284})
+		require.Equal(t, "start", w.p.current, "tracking before Tarn has spoken must not skip the talk")
+		w.notify("topic_heard", heard)
+		require.Equal(t, "met", w.p.current)
 
-		// Foraging before tracking must not skip the track step.
 		w.notify("command", EventDetails{Command: "forage", RoomId: 5284})
-		require.Equal(t, "start", w.p.current, "forage out of order must not skip the track step")
-		require.False(t, holdsAll(w.p, turnIn), "turn-in must not open from start")
+		require.Equal(t, "met", w.p.current, "forage out of order must not skip the track step")
+		require.False(t, holdsAll(w.p, turnIn), "turn-in must not open early")
 
 		w.notify("command", EventDetails{Command: "track", RoomId: 5284})
 		require.Equal(t, "track", w.p.current)

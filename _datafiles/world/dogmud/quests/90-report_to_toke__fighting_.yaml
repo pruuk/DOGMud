@@ -1,0 +1,29 @@
+# Quest 90, Report to Toke (Fighting) (Pothole Coulee, fighting line bridge).
+#
+# Caravan Guard Garve (9112) offers it (report_fighting_offer) once Take the
+# Tower (34) is handed in. Crier Toke (9106) takes the hand-in
+# (report_fighting_in). Bridges 90 to 97 share this shape, one per line, and
+# the completer (quest 89) gates on all eight hand-ins. The file name is the
+# quest name through ConvertForFilename, as the loader requires.
+
+questid: 90
+name: Report to Toke (Fighting)
+description: >-
+  Caravan Guard Garve has asked you to carry the news of the bandit tower to
+  Crier Toke in Hub Square.
+secret: false
+
+steps:
+  - id: start
+    destination:
+      mob: 9106  # follow Crier Toke (schedule pothole_toke)
+      room: 5203  # fallback when Crier Toke is not spawned
+    description: >-
+      The wash is held and the bandit tower has fallen. Crier Toke, who sent
+      you to Drillmaster Vorn, waits in Hub Square for the news.
+    hint: >-
+      Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk
+      toke.
+  - id: end
+    description: >-
+      Toke has your news, and the whole coulee will have it by nightfall.

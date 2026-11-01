@@ -13,7 +13,7 @@ exchanges:
         text: "Not yet."
   - lines:
       - speaker: B
-        text: "That one with the long coat -- you recognize the face?"
+        text: "That one with the long coat. Do you know the face?"
       - speaker: A
         text: "New to the coulee. Road-worn, but not trouble-worn. Not yet."
       - speaker: B

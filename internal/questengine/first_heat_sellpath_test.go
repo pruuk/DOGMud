@@ -9,10 +9,11 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-// R22 (#375): selling the crafted iron dagger to Smith Rusk is a turn-in of
-// quest 35 "First Heat", the same as giving it to her or asking her. These
-// tests load the REAL quest 35 file and fire the command event the sell action
-// raises (command "sell", the item sold, the buying shop mob, the room).
+// R22 (#375) let a sale of the crafted iron dagger to Smith Rusk complete
+// First Heat (35). #375 phase 7 ends every quest at a hand-in (ruleEnd), so
+// the sale now only draws Rusk's line, and the player tells her how the work
+// went (craft_turnin_told, pinned in newbie_topic_steps_test.go). These load
+// the REAL quest 35 file and fire the command event the sell action raises.
 
 const (
 	sellPathRusk   = 9116
@@ -20,7 +21,7 @@ const (
 	sellPathForge  = 5245
 )
 
-func loadQuest35ForSell(t *testing.T) *Engine {
+func loadQuest35ForSell(t *testing.T) (*Engine, *QuestDef) {
 	t.Helper()
 	data, err := os.ReadFile("../../_datafiles/world/dogmud/quests/35-first_heat.yaml")
 	require.NoError(t, err, "must be able to read the real quest 35 YAML")
@@ -29,7 +30,7 @@ func loadQuest35ForSell(t *testing.T) *Engine {
 	require.Equal(t, 35, q.QuestId)
 	e := NewEngine()
 	e.RegisterQuest(&q)
-	return e
+	return e, &q
 }
 
 func crafted35Player() *fullMockPlayer {
@@ -39,8 +40,17 @@ func crafted35Player() *fullMockPlayer {
 	return p
 }
 
-func TestQuest35_SellingDaggerToRuskCompletesFirstHeat(t *testing.T) {
-	e := loadQuest35ForSell(t)
+func TestQuest35_NoTriggerGrantsTheEnd(t *testing.T) {
+	_, q := loadQuest35ForSell(t)
+	for i, tr := range q.Triggers {
+		for _, a := range tr.Actions {
+			require.NotEqual(t, "35-end", a.Grant, "trigger %d grants 35-end; only Rusk's hand-in may", i)
+		}
+	}
+}
+
+func TestQuest35_SellingDaggerToRuskPointsToTheHandIn(t *testing.T) {
+	e, _ := loadQuest35ForSell(t)
 	player := crafted35Player()
 	ctx := newFullMockActionContext(1, player)
 
@@ -49,17 +59,17 @@ func TestQuest35_SellingDaggerToRuskCompletesFirstHeat(t *testing.T) {
 		ItemId: sellPathDagger, MobId: sellPathRusk,
 	}, player, ctx)
 
-	assert.True(t, result.Handled, "selling the dagger to Rusk must hit a quest trigger")
-	assert.True(t, player.HasQuest("35-end"), "the sale must complete First Heat")
+	assert.True(t, result.Handled, "selling the dagger to Rusk draws her line")
+	assert.False(t, player.HasQuest("35-end"), "the sale alone does not complete First Heat")
 	require.Len(t, ctx.npcSays, 1, "Rusk must answer the sale")
 	assert.Equal(t, sellPathRusk, ctx.npcSays[0].Mob)
 	require.Len(t, ctx.npcSays[0].Lines, 1)
-	assert.Equal(t, "I love the entrepreneurial spirit. You'll be a smith in no time.",
+	assert.Equal(t, "I love the entrepreneurial spirit. Now tell me how the work went.",
 		ctx.npcSays[0].Lines[0].Text)
 }
 
-func TestQuest35_SellingOtherItemToRuskDoesNotComplete(t *testing.T) {
-	e := loadQuest35ForSell(t)
+func TestQuest35_SellingOtherItemToRuskSaysNothing(t *testing.T) {
+	e, _ := loadQuest35ForSell(t)
 	player := crafted35Player()
 	ctx := newFullMockActionContext(1, player)
 
@@ -68,12 +78,11 @@ func TestQuest35_SellingOtherItemToRuskDoesNotComplete(t *testing.T) {
 		ItemId: 40001, MobId: sellPathRusk,
 	}, player, ctx)
 
-	assert.False(t, player.HasQuest("35-end"), "selling an iron ingot is not the turn-in")
-	assert.Empty(t, ctx.npcSays)
+	assert.Empty(t, ctx.npcSays, "selling an iron ingot is not the dagger")
 }
 
-func TestQuest35_SellingDaggerToAnotherShopDoesNotComplete(t *testing.T) {
-	e := loadQuest35ForSell(t)
+func TestQuest35_SellingDaggerToAnotherShopSaysNothing(t *testing.T) {
+	e, _ := loadQuest35ForSell(t)
 	player := crafted35Player()
 	ctx := newFullMockActionContext(1, player)
 
@@ -82,12 +91,11 @@ func TestQuest35_SellingDaggerToAnotherShopDoesNotComplete(t *testing.T) {
 		ItemId: sellPathDagger, MobId: 9117,
 	}, player, ctx)
 
-	assert.False(t, player.HasQuest("35-end"), "only Rusk's shop counts")
-	assert.Empty(t, ctx.npcSays)
+	assert.Empty(t, ctx.npcSays, "only Rusk's shop answers")
 }
 
-func TestQuest35_SellingDaggerBeforeCraftingDoesNotComplete(t *testing.T) {
-	e := loadQuest35ForSell(t)
+func TestQuest35_SellingDaggerBeforeCraftingSaysNothing(t *testing.T) {
+	e, _ := loadQuest35ForSell(t)
 	player := newFullMockPlayer(sellPathForge)
 	player.quests["35-start"] = true
 	ctx := newFullMockActionContext(1, player)
@@ -97,5 +105,6 @@ func TestQuest35_SellingDaggerBeforeCraftingDoesNotComplete(t *testing.T) {
 		ItemId: sellPathDagger, MobId: sellPathRusk,
 	}, player, ctx)
 
-	assert.False(t, player.HasQuest("35-end"), "the turn-in needs 35-craft first")
+	assert.Empty(t, ctx.npcSays, "the line waits for 35-craft")
+	assert.False(t, player.HasQuest("35-end"))
 }

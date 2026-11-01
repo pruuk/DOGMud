@@ -28,11 +28,20 @@ opener:
   - questRequired:
     - 32-start
     questExcluded:
+    - 32-met
+    - 32-end
+    text: Toke sent you, with a cudgel by the look of it. Good. Tell me why you came,
+      and I will tell you how this yard works.
+    hints: Choose Crier Toke sent me to learn to fight below.
+  - questRequired:
+    - 32-met
+    questExcluded:
     - 32-wield
     - 32-end
     text: You are not done. That cudgel goes in your hand, not your pack. If it is
       already in your hand, put it away and take it up again so I can see you do it.
-    hints: Type wield cudgel.
+    hints: Type wield cudgel. If it is already in your hand, that will not work,
+      so first use remove cudgel to put it back in your pack.
   - questRequired:
     - 32-wield
     questExcluded:
@@ -73,12 +82,26 @@ opener:
     hints: Choose First Blood below to report.
   - questRequired:
     - 32-end
-    text: You are through here. Garve is running caravan guard work out in the wash.
-      Go north to the Sparring Circle and follow the wash east. He waits in Squatter's
-      Hollow, south of the Lower Wash. That is where the real schooling starts. Set
-      your home first. You will want a fallback point.
-    hints: Type sethome coulee first to make this your home, where you wake if you
-      die.
+    questExcluded:
+    - 33-start
+    - 33-end
+    text: You passed my yard. Garve, a caravan guard, holds a hollow out in the wash
+      on one good arm, and he needs a fighter. Say the word and I will send you.
+    hints: Choose Hold the Wash below to take the job.
+  - questRequired:
+    - 33-start
+    questExcluded:
+    - 33-met
+    - 33-end
+    text: Garve is waiting. North to the Sparring Circle, east three times along the
+      wash, then south into Squatter's Hollow.
+    hints: From the Drill Yard, go north, east three times, then south to Squatter's
+      Hollow. Type talk garve.
+  - questRequired:
+    - 32-end
+    text: You are through here. The wash is Garve's business now. Set your home first
+      if you have not. You will want a fallback point.
+    hints: Type sethome coulee to make this your home, where you wake if you die.
 topics:
 - key: train_turnin
   kind: handin
@@ -87,18 +110,51 @@ topics:
   playerLine: I've worked through your whole checklist.
   text: Good. You hit the dummy, used your feet, read your opponent, and tuned your
     output. That is the checklist. You are not a soldier yet, but you are not dead
-    weight either. Take the coin. Garve is running caravan guard work in the wash
-    and he could use someone who knows which end of a cudgel to hold. Go north to
-    the Sparring Circle and follow the wash east, then south to Squatter's Hollow.
-    If the wash kills you, you wake at the Mending Hut. Walk back and try again.
-  hints: Quest complete. Go north to the Sparring Circle, east three times to the
-    Lower Wash, and south to Squatter's Hollow, and type talk garve to find out what
-    Caravan Guard Garve needs.
+    weight either. Take the coin. And if you want work that matters, there is a caravan
+    guard out in the wash who could use someone who knows which end of a cudgel to
+    hold. Ask me about it.
+  hints: Quest complete. Choose Hold the Wash below to hear what Caravan Guard Garve
+    needs.
   questRequired:
   - 32-verbosity
   questExcluded:
   - 32-end
   grantsQuest: 32-end
+- key: drill_arrive
+  kind: info
+  label: Crier Toke sent me to learn to fight.
+  text: Then stand straight and listen. That cudgel Toke gave you is nothing fancy,
+    nothing that will embarrass you in a real fight. First, take it in your hand. Then
+    consider the training dummy in this yard, to see what you are walking into. Then
+    hit it until it stops hitting back. After that, kick it or trip it once, to learn
+    that you have options beyond the basic swing. Last, set combatverbosity to your
+    taste. It controls how much combat detail you see. Then come back to me and report.
+  hints: Type wield cudgel. If it is already in your hand, that will not work, so
+    first use remove cudgel to put it back in your pack.
+  questRequired:
+  - 32-start
+  questExcluded:
+  - 32-met
+  - 32-end
+- key: wash_offer
+  kind: offer
+  quest: 33
+  label: Hold the Wash
+  playerLine: Do you want me to help Garve hold the wash?
+  text: Garve rode caravan guard until the bandits caught his convoy in the wash. He
+    holds Squatter's Hollow now on one good arm, with a scout watching him from the
+    north and a squatter dug in to the east. Go and see him. North to the Sparring
+    Circle, east three times along the wash, then south into the hollow. If the wash
+    kills you, you wake at the Mending Hut. Walk back and try again.
+  hints: From the Drill Yard, go north, east three times, then south to Squatter's
+    Hollow. Type talk garve.
+  questRequired:
+  - 32-end
+  questExcluded:
+  - 33-start
+  - 33-end
+  grantsQuest: 33-start
+  moodChange: neutral
 # The replacement and the reminder never show together: itemExcluded and
 # carriesItem on the same item are exact opposites.
 - key: cudgel_replace
@@ -117,7 +173,7 @@ topics:
   label: I can't find my cudgel.
   text: You already have a cudgel. Check your hands and your pack. If it is not in
     your hand, take it up.
-  hints: Type wield cudgel.
+  hints: Type inventory to see what you carry and what you hold.
   questRequired:
   - 32-start
   questExcluded:
@@ -127,9 +183,10 @@ topics:
   kind: info
   label: What do I do with the cudgel?
   text: Not yet. First the cudgel goes in your hand. Then we talk about the dummy.
-  hints: Type wield cudgel.
+  hints: Type wield cudgel. If it is already in your hand, that will not work, so
+    first use remove cudgel to put it back in your pack.
   questRequired:
-  - 32-start
+  - 32-met
   questExcluded:
   - 32-wield
   - 32-end
@@ -196,9 +253,50 @@ topics:
 - key: shouts_help
   kind: info
   label: What are battle-shouts?
-  text: There is more to a fight than the swing. A battle-shout can turn one. Rally
-    steadies your nerve and your allies', and warcry hardens the whole line. They
-    lean on a silver tongue, not a strong arm, so they come to you later. For now,
-    know they exist.
-  hints: Battle-shouts, rally and warcry, come later. To read about them when you
-    are ready, type help warcry.
+  text: There is more to a fight than the swing. A battle-shout can turn one. You
+    already know warcry. You shouted it in the practice ring before you ever reached
+    the pool, and it makes your blows land harder, yours and your allies'. Rally is
+    the other one. It steadies your guard and the guard of anyone fighting beside you,
+    so dodges, parries and blocks come easier. Both lean on a silver tongue, not a
+    strong arm, and they share the wait with kicks and trips.
+  hints: Rally is a shout that steadies your defences and your allies'. Type rally.
+    For more, type help rally.
+- key: grapple_help
+  kind: info
+  label: How does grappling work?
+  text: Grab a foe and hold on, and they cannot flee. Each round you both struggle,
+    and the stronger, better trained wrestler gains ground, on top, behind, or pinned
+    underneath. From a strong hold your kick turns into a knee. A long weapon is clumsy
+    that close, so if you mean to wrestle, carry a short blade into the fight or go
+    in bare-handed.
+  hints: Grapple locks a foe in a hold so they cannot flee. Type grapple and the foe's
+    name in a fight. For more, type help grapple.
+  marked: true
+- key: bash_help
+  kind: info
+  label: How do I fight with a shield?
+  text: With a shield on your arm you can bash. You slam it into your foe. It hits
+    less hard than a swing, but it can knock them to the ground, and a foe on the ground
+    fights badly. It costs stamina and shares the wait with kick and trip. No shield,
+    no bash, so strap one on before the fight if you want it.
+  hints: Bash hits with your shield and may knock a foe down. Type bash in a fight.
+    For more, type help bash.
+- key: kick_help
+  kind: info
+  label: Why did my kick come out as a stomp?
+  text: Your kick reads the fight for you. Kick a foe who is standing and it is a
+    kick. Kick one already on the ground and it comes out as a stomp, which hits hard
+    and keeps them down. Kick from on top in a grapple and it is a knee. Trips work
+    the same way. Anyone born with a tail sweeps with it, and that is a tailsweep. You
+    type the same word, and your body picks the move.
+  hints: Kick changes with the fight, a stomp on a foe who is down and a knee in a
+    grapple. For more, type help kick.
+- key: defence_help
+  kind: info
+  label: How do I avoid getting hit?
+  text: You defend without thinking about it. Every blow aimed at you meets a dodge,
+    a parry with your weapon, or a block with your shield, whichever you are best at.
+    Bare hands can only dodge. A weapon lets you parry. A shield lets you block. Choose
+    your gear before the fight with that in mind. Some weapons reach further than others,
+    and that matters more the closer a fight gets.
+  hints: Dodge, parry and block happen on their own. For more, type help combat.

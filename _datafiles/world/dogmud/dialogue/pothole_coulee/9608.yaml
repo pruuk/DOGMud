@@ -15,3 +15,13 @@ topics:
     put in front of them and come back asking for more.
   hints: To see what Hesk sells and what it costs, type list. For more, type help
     buy.
+- key: station_help
+  kind: info
+  label: Can I cook at your fire?
+  text: Pull up a stone. This is a cooking fire, and anyone can use it. The easiest
+    thing is trail rations. One raw meat and a salt pouch, and I sell you both. Dry
+    the meat over the coals and it keeps for the road. Grilled meat takes the same
+    two and wants eating hot. When it is done, eat it, or carry it.
+  hints: The fire is a cooking station. Type craft trail rations beside it. For more,
+    type help cooking.
+  marked: true

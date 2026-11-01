@@ -1,46 +1,48 @@
-# Quest 38 — First Brew (Pothole Coulee, Spoke C / Alchemy inner ring, cert)
+# Quest 38, First Brew (Pothole Coulee, brewing line, quest 1).
 #
-# Token flow (one command per step, owner ruling 2026-10-17):
-#   38-start: granted by Crier Toke's send_brew offer (9106.yaml, requires
-#             31-end; #375 phase 7).
-#   38-list:  command trigger on `list` at Birna's pool (5265).
-#   38-vial:  item_gain of a Glass Vial (40006), once the stock is listed.
-#   38-roots: item_gain of a Healer's Root (40004), once the vial is in hand.
-#             A foraged root counts too; the lesson is having the root.
-#   38-brew:  command trigger on craft in the bench rooms (5265 or 5267).
-#   38-drink: command trigger on quaff (anywhere). Teaches the quaff command.
-#   38-end:   granted by Birna's brew_turnin dialogue node (needs 38-drink).
-#
-# The steps run IN ORDER. The old start step asked for list, two purchases and
-# the craft at once, which this engine cannot track (a character holds ONE
-# current step per quest). start, brew and drink keep their ids so a player
-# saved on them resumes. The brew trigger gates on 38-start, not 38-roots, on
-# purpose (lenient grant 38-brew): craft cannot succeed without the vial and
-# the roots in hand, and a player saved on the old start step may already
-# carry both.
-#
-# Design: healing-salve is a skill_minimum 0 recipe (every character knows it),
-# so the lesson is the LOOP (buy/forage -> craft at a station -> drink), not the
-# recipe. The reward grants the minor-antidote recipe (skill 8 -- a real new
-# recipe to grow into) plus a couple of spare vials (item_info) to keep brewing.
+# Crier Toke offers it (send_brew, dialogue 9106). Herbalist Birna (9128)
+# takes the hand-in (brew_turnin) and then offers Wade the Marsh (39).
+#   start  go to the Sheltered Pool and talk to Birna
+#   met    topic_heard on Birna's brew_arrive topic
+#   list   list at Birna's pool (5265)
+#   vial   item_gain of a Glass Vial (40006)
+#   roots  item_gain of a Healer's Root (40004), count 2 (#695); foraged
+#          roots count too
+#   brew   craft a healing salve at an alchemy bench (5265 or 5267), after the
+#          roots
+#   drink  quaff (potions are taken with quaff since plan 1); the step id
+#          stays "drink" because saved characters hold it
+#   end    Birna's hand-in
+# Healing salve is a skill_minimum 0 recipe, so the lesson is the loop, not
+# the recipe. The reward grants the minor-antidote recipe and two vials.
 
 questid: 38
 name: First Brew
 description: >-
   Herbalist Birna keeps the drying-racks at the sheltered pool, and the
   first brew waits there. Buy a glass vial and a pair of healer's roots
-  from her stall, grind and steep them at the alchemy bench into a
-  healing salve, then drink it down.
+  from her stall, grind and steep them at the alchemy bench into a healing
+  salve, then quaff it down.
 secret: false
 
 steps:
   - id: start
     destination:
+      mob: 9128
       room: 5265
     description: >-
-      The alchemy bench at the sheltered pool is where brewing begins.
-      First see what Birna sells. If you already carry a glass vial and two
-      healer's roots, you can go straight to the bench and brew.
+      Crier Toke has sent you to Herbalist Birna at the Sheltered Pool. From
+      Hub Square, go south to Market Row, east twice to the Reedwash Mouth,
+      then south twice to her pool.
+    hint: >-
+      From Hub Square, go south, east, east, south, south to the Sheltered
+      Pool. Type talk birna.
+  - id: met
+    destination:
+      room: 5265
+    description: >-
+      Birna has told you how a brew is made. First see what she sells. Her
+      racks behind her are her stall.
     hint: >-
       At Birna's pool, type list.
   - id: list
@@ -55,40 +57,40 @@ steps:
     destination:
       room: 5265
     description: >-
-      You have a glass vial. Now the roots: a healing salve takes two.
+      You have a glass vial. Now the roots. A healing salve takes two.
       Foraged roots work just as well as bought ones.
     hint: >-
-      Type buy 2 healers root.
+      A healing salve takes two roots. Type buy 2 healer's root.
   - id: roots
     destination:
       room: 5265
     description: >-
       You have the glass vial and the roots. The bench at Birna's pool is an
       alchemy bench, and so is the one on the Drying Racks just west of it.
-      Type craft list at a bench to see everything you can make.
+      Type craft list at a bench to see everything you can make. Only a
+      healing salve counts for Birna.
     hint: >-
       At the alchemy bench, type craft healing salve. A craft can fail. If
       it does, buy a glass vial and two healer's roots again and retry.
   - id: brew
-    destination:
-      room: 5265
+    destination: anywhere
     description: >-
-      You brewed a healing salve. Now drink it. A brew is only worth what
-      it does.
+      You brewed a healing salve. Now take it. A potion is taken with
+      quaff, and a brew is only worth what it does.
     hint: >-
       Type quaff healing salve.
   - id: drink
     destination:
+      mob: 9128
       room: 5265
     description: >-
       The salve went to work, warm and steady. Tell Birna how it felt.
     hint: >-
-      Go back to Herbalist Birna at the Sheltered Pool and type talk
-      birna.
+      Go back to Herbalist Birna at the Sheltered Pool and type talk birna.
   - id: end
     description: >-
-      Birna has named you brewer enough to leave the pool. The marsh
-      lies south; a fenwalker named Falv keeps a camp in the reeds.
+      Birna has named you brewer enough to leave the pool, and she knows a
+      fenwalker in the marsh who will teach you the rest.
 
 rewards:
   skillinfo: "alchemy:1"
@@ -98,22 +100,34 @@ rewards:
   actor: >-
     Birna takes the empty vial back and turns it to the light, checking
     the film the salve left behind. The green-gold veining in her hands
-    catches the same light. "Clean steep. You did not scorch the root --
-    most do, the first time." She tucks a pair of empty vials into your
+    catches the same light. "Clean steep. You did not scorch the root.
+    Most do, the first time." She tucks a pair of empty vials into your
     pack and presses a folded scrap of waxed paper after them. "The
     antidote formula. You will want it before the marsh teaches you why.
-    Falv keeps a camp south in the reeds -- he is rough, but he knows the
-    water. Set your home here first so you have somewhere to wake."
+    Set your home here first, so you have somewhere to wake."
   observer: "Birna inspects the empty vial, nods, and tucks a few
     things into the newcomer's pack."
 
 triggers:
-  # ── LIST: browse Birna's stall (room 5265) ───────────────────────────
+  # met: hearing Birna's brew_arrive topic.
+  - event: topic_heard
+    mob: 9128
+    topic: brew_arrive
+    conditions:
+      has: ["38-start"]
+      missing: ["38-met"]
+    actions:
+      - grant: "38-met"
+      - actor: >-
+          Birna has shown you the shape of it. Start with her racks. Type
+          list.
+
+  # list: Birna's stall (room 5265).
   - event: command
     command: list
     room: 5265
     conditions:
-      has: ["38-start"]
+      has: ["38-met"]
       missing: ["38-list"]
     actions:
       - grant: "38-list"
@@ -121,7 +135,7 @@ triggers:
           That is Birna's stock. A healing salve needs one glass vial and
           two healer's roots. Type buy glass vial.
 
-  # ── VIAL: a glass vial in hand, after the list ───────────────────────
+  # vial: a glass vial in hand, after the list.
   - event: item_gain
     item: 40006
     conditions:
@@ -130,29 +144,33 @@ triggers:
     actions:
       - grant: "38-vial"
       - actor: >-
-          The glass vial will hold the salve. Now the roots. Type buy 2
-          healers root.
+          The glass vial will hold the salve. Now the roots, two of them.
+          Type buy 2 healer's root.
 
-  # ── ROOTS: a healer's root in hand, after the vial ───────────────────
+  # roots: two healer's roots in hand, after the vial (#695).
   - event: item_gain
     item: 40004
+    count: 2
+    label: Healer's roots
     conditions:
       has: ["38-vial"]
       missing: ["38-roots"]
     actions:
       - grant: "38-roots"
       - actor: >-
-          Healer's root, pale and bitter-smelling. With two roots and the
-          vial, you have a salve's worth. At the alchemy bench, type craft
-          healing salve.
+          Two healer's roots, pale and bitter-smelling. With the vial, you
+          have a salve's worth. At the alchemy bench, type craft healing
+          salve.
 
-  # ── BREW: craft at an alchemy bench (rooms 5265 / 5267) ──────────────
-  # Lenient on 38-start: craft fails without the vial and roots in hand.
+  # brew: a healing salve (30036) at an alchemy bench, after the roots. The
+  # event names what was made, so a stamina tonic from the same bench does not
+  # count.
   - event: command
     command: craft
     room: 5265
+    item: 30036
     conditions:
-      has: ["38-start"]
+      has: ["38-roots"]
       missing: ["38-brew"]
     actions:
       - grant: "38-brew"
@@ -162,8 +180,9 @@ triggers:
   - event: command
     command: craft
     room: 5267
+    item: 30036
     conditions:
-      has: ["38-start"]
+      has: ["38-roots"]
       missing: ["38-brew"]
     actions:
       - grant: "38-brew"
@@ -171,7 +190,7 @@ triggers:
           The root ground to paste, the water drew it green, and the
           healing salve is sealed in the vial. Type quaff healing salve.
 
-  # ── DRINK: quaff the salve (anywhere) ───────────────────────────────
+  # drink: quaff the salve (anywhere).
   - event: command
     command: quaff
     conditions:

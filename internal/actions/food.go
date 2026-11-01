@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -122,6 +123,15 @@ func ConsumeFood(actor Actor, verb string, rest string) {
 
 	for _, conditionId := range itemSpec.ConditionIds {
 		actor.AddCondition(conditionId, `food`)
+	}
+
+	// Quest engine: command notification, after the eat lines and the meal's
+	// effects, so a step line reads after "You eat" (the order #697 asked of
+	// quaff). eat and drink are one command, so both verbs raise "eat". Quest
+	// 42's eat step listens for it (#375 phase 7). Only a player has quests,
+	// as in Quaff, so a mob eating raises nothing.
+	if ua, ok := actor.(*UserActor); ok && room != nil {
+		questengine.NotifyCommand(ua.User, room.RoomId, "eat", questengine.TargetItem(matchItem.ItemId))
 	}
 }
 

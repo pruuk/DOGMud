@@ -13,5 +13,17 @@ topics:
     see what I have and what it costs, without wasting either of our time. Ward-work
     does not forgive carelessness. I do mine slow and underground, where the light
     behaves and the sigils hold their shape.
-  hints: To see what Skell sells and what it costs, type list. For more, type help
+  hints: To see what Daff sells and what it costs, type list. For more, type help
     buy.
+- key: station_help
+  kind: info
+  label: What can I do at your circle?
+  text: The ring in this floor is an enchanting circle. Stand inside it to work. The
+    first working anyone can manage is honed-edge. One binding paste, which I sell,
+    and one healer's root, from Birna or the cook. Hold the weapon you mean to sharpen
+    and work the paste into it, and the edge cuts cleaner. If you ever want an enchantment
+    out again, bring the item here in your pack, not your hand, and disenchant it.
+    Mind that it pulls at you. The weakness passes, in time.
+  hints: The circle is an enchanting station. Type craft honed-edge while you hold
+    a weapon. For more, type help enchanting.
+  marked: true

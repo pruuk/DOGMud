@@ -21,7 +21,7 @@ idlecommands:
   - ''
 activitylevel: 10
 character:
-  name: Enchanter Skell
+  name: Enchanter Daff
   description: |
     I keep the dugout below Provisions because the wards hold better
     in packed earth than in open air, and because the coulee sun does
@@ -44,7 +44,7 @@ character:
     charisma:
       base: 90
   shop:
-    # Thornwall chrysalis (in-shop crafted) — Skell's specialty
+    # Thornwall chrysalis (in-shop crafted), Daff's specialty
     - itemid: 40010    # Chrysalis Core
       quantity: 0
       quantitymax: 0

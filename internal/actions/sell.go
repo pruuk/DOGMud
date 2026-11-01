@@ -415,7 +415,7 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 // notifySaleToQuests tells the quest engine a player's sale completed, as
 // postSuccessBookkeeping does for a purchase, but with the item sold and the
 // shop mob that bought it, so a trigger can key on either (R22, #375: selling
-// Smith Rusk the crafted dagger turns in First Heat). It runs only on the
+// Smith Rusk the crafted dagger draws her First Heat line). It runs only on the
 // success paths, once per unit, so a refused sale never reaches it. Mob sellers
 // have no quest log and are skipped.
 func notifySaleToQuests(seller Actor, item items.Item, mob *mobs.Mob) {

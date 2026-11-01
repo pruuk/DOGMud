@@ -1,25 +1,18 @@
-# Quest 56 — Running Game (Pothole Coulee, Spoke D repeatable)
+# Quest 56, Running Game (Pothole Coulee, tracking line repeatable).
 #
-# Token flow (one command per step, owner ruling 2026-10-17):
-#   56-start — granted by Hunter Delk's dialogue (game_loop_offer node).
-#              Requires 43-end (Break the Pack). Repeatable with cooldown.
-#   56-hunt: mob_death trigger on a Pronghorn (9139). Requires 56-start.
-#   56-end:  command trigger on forage on the Open Steppe (5284).
-#              Requires 56-hunt. Auto-grants reward + clears for repeat.
-#
-# The run finishes on the forage itself, with no visit back to Delk, and the
-# forage counts only on the Open Steppe. The hints used to send the player to
-# forage "at the camp" (Delk's camp is Hunter's Hollow, 5290, where the
-# trigger does not listen) and to "come back to Delk", which completes
-# nothing. They now say what completes each step. Step ids are unchanged, so
-# a player saved on start or hunt resumes as before.
+# Hunter Delk (9137) offers it (game_loop_offer) once Break the Pack (43) is
+# handed in. Repeatable with a cooldown; completion clears progress.
+#   start    kill a pronghorn (9139)
+#   hunt     forage on the Open Steppe (5284)
+#   foraged  report to Delk
+#   end      Delk's hand-in game_loop_in (#375 phase 7)
 
 questid: 56
 name: Running Game
 description: >-
-  Delk keeps a close eye on what moves through the fringe. He wants
-  you to bring down a pronghorn and forage the country before you
-  let the land get strange on you.
+  Delk keeps a close eye on what moves through the fringe. He wants you to
+  bring down a pronghorn, forage the Open Steppe, and tell him what the
+  country gave you.
 secret: false
 repeatable: true
 cooldown_rounds: 300
@@ -40,23 +33,29 @@ steps:
     destination:
       room: 5284
     description: >-
-      One pronghorn down. Forage the Open Steppe, north of the Steppe Fringe,
-      to finish the run. The forage ends it; you do not need to go back to
-      the camp.
+      One pronghorn down. Forage the Open Steppe, north of the Steppe Fringe.
     hint: >-
       On the Open Steppe, type forage.
+  - id: foraged
+    destination:
+      mob: 9137
+      room: 5290
+    description: >-
+      You took game and worked the land. Delk waits in Hunter's Hollow.
+    hint: >-
+      Go back to Hunter Delk in Hunter's Hollow. Type talk delk.
   - id: end
     description: >-
-      You took game and worked the land. Delk will have another run
-      waiting before long.
+      You took game and worked the land. Delk will have another run waiting
+      before long.
 
 rewards:
   gold: 6
   skillinfo: "search:1"
   actor: >-
-    The run is done: clean kill, eyes open, and the land worked after it.
-    The fringe teaches you different things each pass. When you want
-    another run, talk to Delk for work.
+    Delk listens to the run and grunts. "Clean kill, eyes open, and the land
+    worked after it." He hands over a few coins. "The fringe teaches you
+    different things each pass."
   observer: ""
 
 triggers:
@@ -76,9 +75,9 @@ triggers:
     room: 5284
     conditions:
       has: ["56-hunt"]
-      missing: ["56-end"]
+      missing: ["56-foraged"]
     actions:
-      - grant: "56-end"
+      - grant: "56-foraged"
       - actor: >-
           You work the steppe for what it gives. Some days that is little,
-          and the run still counts.
+          and the run still counts. Go back to Delk and type talk delk.

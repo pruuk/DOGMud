@@ -1,3 +1,22 @@
+# Quest 32, First Blood (Pothole Coulee, fighting line, quest 1).
+#
+# Crier Toke offers it (topic send_drill, dialogue 9106) and hands over the
+# Drillyard Cudgel (10043). Drillmaster Vorn (9108) takes the hand-in
+# (train_turnin) and then offers Hold the Wash (33).
+#
+# One command per step, each trigger gated on the step before it (owner
+# ruling 2026-10-17):
+#   start      go to the Drill Yard and talk to Vorn
+#   met        topic_heard on Vorn's drill_arrive topic
+#   wield      equip the cudgel (the equip event names its item)
+#   sized_up   consider the training dummy, before the fight
+#   strike     kill the training dummy (9109)
+#   special    kick or trip it
+#   verbosity  set combatverbosity
+#   end        Vorn's hand-in
+# The old consider step (after special) is renamed to special in
+# step-ids.txt (#375 phase 7), so a player saved on it resumes at verbosity.
+
 questid: 32
 name: First Blood
 description: A cudgel, a training dummy, and Drillmaster Vorn's Drill Yard.
@@ -5,78 +24,78 @@ description: A cudgel, a training dummy, and Drillmaster Vorn's Drill Yard.
   they can kill you.
 secret: false
 
-# One command per step, in order (owner ruling 2026-10-17). Each trigger
-# gates on the step before it. Step ids start, wield, strike, special,
-# consider and verbosity are what saved characters hold, so each keeps its
-# place in the order. wield was inserted between start and strike, so a
-# player saved on start is told to wield and resumes.
-#
-# Consider comes first, before the fight (owner 2026-10-19): sized_up was
-# inserted after wield. The old consider step (after special) is no longer
-# granted; it stays so a player saved on it resumes, and the verbosity step
-# gates on special, which a player on consider also holds.
 steps:
   - id: start
     destination:
+      mob: 9108
       room: 5227
-    description: "Crier Toke hands you a cudgel when you
-      take this on. Hold it in your hand before you fight. If you already
-      hold it, type remove cudgel, then wield it again."
-    hint: "Type wield cudgel."
+    description: >-
+      Crier Toke hands you a cudgel when you take this on and sends you to
+      Drillmaster Vorn in the Drill Yard. From Hub Square, go north to the
+      Awakening Pool, then east four times to the Drill Yard.
+    hint: >-
+      From Hub Square, go north, then east four times to the Drill Yard.
+      Type talk vorn.
+  - id: met
+    destination:
+      room: 5227
+    description: >-
+      Vorn has told you how his yard works. First the cudgel goes in your
+      hand, and he wants to see you do it. If it is already in your hand,
+      use remove cudgel to put it back in your pack, then use wield cudgel.
+    hint: >-
+      Type wield cudgel. If it is already in your hand, that will not work:
+      first use remove cudgel to put it back in your pack.
   - id: wield
     destination:
       room: 5227
-    description: "The cudgel is in your hand. Before you fight, size up the
-      training dummy in the Drill Yard. From Hub Square, go north to the
-      Awakening Pool, then east four times to the Drill Yard. Crier Toke
-      in Hub Square knows the way too."
-    hint: "From Hub Square, go north, then east four times to the Drill
-      Yard. Consider tells you how hard a foe is before you fight it. Type
-      consider dummy."
+    description: >-
+      The cudgel is in your hand. Before you fight, size up the training
+      dummy in the Drill Yard.
+    hint: >-
+      Consider tells you how hard a foe is before you fight it. Type
+      consider dummy.
   - id: sized_up
     destination:
       room: 5227
-    description: "You sized up the training dummy. Consider tells you how
-      dangerous a foe is before you start a fight. Now fight the dummy
-      until it falls."
-    hint: "Type attack dummy."
+    description: >-
+      You sized up the training dummy. Consider tells you how dangerous a
+      foe is before you start a fight. Now fight the dummy until it falls.
+    hint: >-
+      Type attack dummy.
   - id: strike
     destination:
       room: 5227
-    description: "You beat the training dummy. A new dummy stands up in the
-      yard after a short wait. Now try a special move on it: a kick hits
-      hard, and a trip (trip dummy) puts it on the ground. Either one
-      counts."
-    hint: "Type kick dummy."
+    description: >-
+      You beat the training dummy. A new dummy stands up in the yard after
+      a short wait. Now try a special move on it. A kick hits hard, and a
+      trip puts it on the ground. Either one counts.
+    hint: >-
+      Type kick dummy.
   - id: special
     destination:
       room: 5227
-    description: "You used a special move. Kicks and trips cost stamina,
-      so use them when they help most. Next, choose how much combat detail
-      you see: full shows every swing, medium shows only the hits, and
-      light shows one line a round."
-    hint: "Combat verbosity sets how much fight text you see. Type set
-      combatverbosity full. For more, type help combatverbosity."
-  # No longer granted (see the note above steps); kept for saved players.
-  - id: consider
-    destination:
-      room: 5227
-    description: "You sized up the training dummy. Consider tells you how
-      dangerous a foe is before you start a fight. Next, choose how much
-      combat detail you see: full shows every swing, medium shows only the
-      hits, and light shows one line a round."
-    hint: "Combat verbosity sets how much fight text you see. Type set
-      combatverbosity full. For more, type help combatverbosity."
+    description: >-
+      You used a special move. Kicks and trips cost stamina, so use them
+      when they help most. Next, choose how much combat detail you see.
+      Full shows every swing, medium shows only the hits, and light shows
+      one line a round.
+    hint: >-
+      Combat verbosity sets how much fight text you see. Type set
+      combatverbosity full. For more, type help combatverbosity.
   - id: verbosity
     destination:
+      mob: 9108
       room: 5227
-    description: "You chose your combat detail. You can change it at any
-      time. The Drill Yard has taught you what it can."
-    hint: "Drillmaster Vorn waits in the Drill Yard. Type talk vorn."
+    description: >-
+      You chose your combat detail. You can change it at any time. The
+      Drill Yard has taught you what it can. Tell Vorn.
+    hint: >-
+      Drillmaster Vorn waits in the Drill Yard. Type talk vorn.
   - id: end
-    description: "Drillmaster Vorn has signed off on your first fight. Go
-      north to the Sparring Circle, east three times to the Lower Wash,
-      then south to Squatter's Hollow, where Caravan Guard Garve waits."
+    description: >-
+      Drillmaster Vorn has signed off on your first fight, and he has work
+      for you out in the wash.
 
 rewards:
   gold: 15
@@ -87,26 +106,41 @@ rewards:
     once, short, like it costs him something. "Passable. You did not
     freeze, you did not panic, and you remembered to think between
     swings. That is more than most manage on the first day." He
-    presses a few coins into your hand. "Go north, then east along
-    the wash. Find Garve. He will put that edge to use."
+    presses a few coins into your hand. "There is real work out in
+    the wash. Ask me about it when you are ready."
   observer: "Vorn nods at {actor} with a gruff, brief approval."
 
 triggers:
-  # ── WIELD: the cudgel (10043); the equip event names its item ──
+  # met: hearing Vorn's drill_arrive topic.
+  - event: topic_heard
+    mob: 9108
+    topic: drill_arrive
+    conditions:
+      has: ["32-start"]
+      missing: ["32-met"]
+    actions:
+      - grant: "32-met"
+      - actor: "Vorn has your measure now. Take up the cudgel: type wield
+          cudgel. If it is already in your hand, first use remove cudgel."
+
+  # wield: the cudgel (10043); the equip event names its item. Nothing checks
+  # a cudgel wielded before 32-met (equip reads only the pack, and has_item
+  # reads only the pack too), so the hints above and Vorn's lines teach
+  # remove cudgel, then wield cudgel.
   - event: command
     command: equip
     item: 10043
     conditions:
-      has: ["32-start"]
+      has: ["32-met"]
       missing: ["32-wield"]
     actions:
       - grant: "32-wield"
       - actor: "The cudgel sits in your hand. Before you fight, size up
           the training dummy: type consider dummy."
 
-  # ── CONSIDER, before the fight ────────────────────────
-  # event: command: consider sends it only once its target resolves, so
-  # `consider dummy` while the dummy is down does not count.
+  # sized_up: consider, before the fight. The command event goes out only
+  # once its target resolves, so consider while the dummy is down does not
+  # count.
   - event: command
     command: consider
     conditions:
@@ -116,7 +150,7 @@ triggers:
       - grant: "32-sized_up"
       - actor: "Now you know what you face. Fight it: type attack dummy."
 
-  # ── DUMMY DEFEATED (mob 9109) ─────────────────────────
+  # strike: the training dummy (9109) falls.
   - event: mob_death
     mob: 9109
     conditions:
@@ -128,15 +162,8 @@ triggers:
           remember the rhythm of it: weight, angle, follow through. A new
           dummy stands up soon. When it does, type kick dummy."
 
-  # ── SPECIAL MOVE: kick or trip ────────────────────────
-  # event: command, not command_issued. kick and trip send `command` only
-  # once the move resolves against a target (a hit or a miss; a trip on a
-  # target already on the ground also counts), so a refused move ("no
-  # target", not enough stamina, on cooldown) does not finish the step.
-  # This depends on the training dummy standing back up promptly after the
-  # 32-strike kill (the room 5227 respawn fix, 2026-10-17): the dummy is
-  # fragile, and a player who arrives here while it is still down has
-  # nothing to kick until it returns.
+  # special: kick or trip. Both send the command event only once the move
+  # resolves against a target, so a refused move does not count.
   - event: command
     command: kick
     conditions:
@@ -157,10 +184,8 @@ triggers:
       - actor: "That is a special move. Now choose how much combat detail
           you see: type set combatverbosity full."
 
-  # ── COMBATVERBOSITY ───────────────────────────────────
-  # Reached via `set combatverbosity`, which fires a logical
-  # "combatverbosity" command event (set.go). Gates on special, so a player
-  # saved on the old consider step (after special) resumes here too.
+  # verbosity: set combatverbosity fires a logical "combatverbosity" command
+  # event (set.go).
   - event: command
     command: combatverbosity
     conditions:

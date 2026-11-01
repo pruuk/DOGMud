@@ -53,13 +53,20 @@ opener:
     questExcluded:
     - 33-start
     - 33-end
-    text: Trained and still standing. Then maybe we can do each other some good. North
-      of here, the Lower Wash has a scout on watch, and a squatter has dug into the
-      old cistern east of this hollow. I cannot move on this arm. You might be able
-      to move on their heads.
-    hints: Choose Hold the Wash below to hear what he needs.
+    text: Trained and still standing, by the look of you. Vorn sends me the ones he
+      trusts with the wash. If he has not sent you yet, ask him about it.
+    hints: 'Go back to Drillmaster Vorn in the Drill Yard: north to the Lower Wash,
+      west three times to the Sparring Circle, then south. Type talk vorn.'
   - questRequired:
     - 33-start
+    questExcluded:
+    - 33-met
+    - 33-end
+    text: Vorn sent you? Good. Sit a moment and I will tell you what the wash is and
+      what I need from it.
+    hints: Choose Drillmaster Vorn sent me to help you below.
+  - questRequired:
+    - 33-met
     questExcluded:
     - 33-scout
     - 33-end
@@ -73,7 +80,7 @@ opener:
     questExcluded:
     - 33-squatter
     - 33-end
-    text: 'The scout is down. Good. Now the squatter. He has dug into the old cistern,
+    text: 'The scout is down. Good. Now the squatter. She has dug into the old cistern,
       east of this hollow. Same rule as before: if it turns on you, flee.'
     hints: From Squatter's Hollow, go east to the Cracked Cistern and type attack
       squatter.
@@ -100,6 +107,7 @@ opener:
   - questRequired:
     - 34-start
     questExcluded:
+    - 34-slain
     - 34-end
     text: Still down here? The captain is still up there. Go east to the cistern,
       northeast to the Upper Wash, and east twice to the Broken Gate. The tower is
@@ -107,6 +115,13 @@ opener:
       holds the gate, and a lieutenant sits in the barracks east of it. Flee and come
       back if you have to. The Mending Hut still has your name.
     hints: In the Watch Room at the top of the tower, type attack captain.
+  - questRequired:
+    - 34-slain
+    questExcluded:
+    - 34-end
+    text: You came down from that tower on your own feet. Tell me how it went up
+      there.
+    hints: Choose Take the Tower below to report.
   - questRequired:
     - 53-start
     questExcluded:
@@ -118,26 +133,46 @@ opener:
   - questRequired:
     - 53-firstkill
     questExcluded:
+    - 53-culled
     - 53-end
-    text: One scout down. Now the squatter in the old cistern, east of here. The job
-      is done when he falls.
+    text: One scout down. Now the squatter in the old cistern, east of here. Then
+      come back and tell me.
     hints: From Squatter's Hollow, go east to the Cracked Cistern and type attack
       squatter.
   - questRequired:
+    - 53-culled
+    questExcluded:
+    - 53-end
+    text: The wash sounds quieter. Tell me what you put down out there.
+    hints: Choose Cull the Wash below to report.
+  - questRequired:
     - 34-end
+    questExcluded:
+    - 90-start
+    - 90-end
     text: You took the tower. I heard it go quiet up there and I knew. Whatever the
-      captain was guarding is the coulee's problem now, not just mine, and that
-      is a better class of problem. You came in raw this morning. You are not raw
-      anymore. The road out runs east when you want it. Until then, the coulee is
-      glad to have you.
-    hints: You have finished the fighting trail. The way deeper into the world runs east when
-      you are ready.
+      captain was guarding is the coulee's problem now, not just mine, and that is a
+      better class of problem. Crier Toke will want the news from your own mouth. He
+      sent you down this road in the first place.
+    hints: Choose Report to Toke (Fighting) below to carry the news to Toke.
+  - questRequired:
+    - 90-start
+    questExcluded:
+    - 90-end
+    text: Still here? Toke is waiting on that news in Hub Square. Go and tell him.
+    hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk
+      toke.
+  - questRequired:
+    - 34-end
+    text: You came in raw. You are not raw anymore. The road out runs east when you
+      want it. Until then, the coulee is glad to have you, and the wash always has
+      more bandits.
+    hints: You have finished the fighting trail. When you want more work in the wash,
+      choose Cull the Wash below.
 topics:
-- key: wash_offer
-  kind: offer
-  quest: 33
-  label: Hold the Wash
-  playerLine: Do you want help clearing the wash?
+- key: wash_arrive
+  kind: info
+  label: Drillmaster Vorn sent me to help you.
   text: 'Here is what I am asking. There is a scout in the Lower Wash, just north
     of here, and more of them up the bend. East of this hollow, a squatter has claimed
     the old cistern. Between them they own the lower wash and I cannot push them without
@@ -151,11 +186,10 @@ topics:
     you plenty.'
   hints: Go north from Squatter's Hollow to the Lower Wash and type attack scout.
   questRequired:
-  - 32-end
-  questExcluded:
   - 33-start
+  questExcluded:
+  - 33-met
   - 33-end
-  grantsQuest: 33-start
   moodChange: neutral
 - key: wash_turnin
   kind: handin
@@ -185,14 +219,14 @@ topics:
     the squatter in the cistern, east of here.
   hints: Go north from Squatter's Hollow to the Lower Wash and type attack scout.
   questRequired:
-  - 33-start
+  - 33-met
   questExcluded:
   - 33-scout
   - 33-end
 - key: wash_progress_scout
   kind: info
   label: The scout is down. Where is the squatter?
-  text: The scout is down. Now the squatter. He holds the old cistern, east of this
+  text: The scout is down. Now the squatter. She holds the old cistern, east of this
     hollow. If the fight turns on you, flee.
   hints: From Squatter's Hollow, go east to the Cracked Cistern and type attack squatter.
   questRequired:
@@ -277,7 +311,25 @@ topics:
   questRequired:
   - 34-start
   questExcluded:
+  - 34-slain
   - 34-end
+- key: tower_in
+  kind: handin
+  quest: 34
+  label: Take the Tower
+  playerLine: The captain is dead and the tower is quiet.
+  text: Dead. Good. I heard the watch room go quiet and did not trust my own ears.
+    You took the hard one, and you came back down to tell it. Whatever she was guarding
+    is the coulee's problem now, and that is a better class of problem than bandits
+    in my wash. Crier Toke will want to hear this from you.
+  hints: Quest complete. Choose Report to Toke (Fighting) below to carry the news to
+    Toke.
+  questRequired:
+  - 34-slain
+  questExcluded:
+  - 34-end
+  grantsQuest: 34-end
+  moodChange: friendly
 - key: arm_wound
   kind: info
   label: What happened to your arm?
@@ -316,14 +368,30 @@ topics:
     come back.
   questExcluded:
   - 33-end
+# The bridge comes before the repeatable, so the menu lists it first.
+- key: report_fighting_offer
+  kind: offer
+  quest: 90
+  label: Report to Toke (Fighting)
+  playerLine: Should I take the news of the tower to Toke?
+  text: Do that. Toke sent you down this road, and he likes his news firsthand. He
+    keeps to Hub Square, south of the Awakening Pool, and he shouts the day's word
+    to anyone who stands still. Tell him the wash is held and the tower is ours.
+  hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk toke.
+  questRequired:
+  - 34-end
+  questExcluded:
+  - 90-start
+  - 90-end
+  grantsQuest: 90-start
+  moodChange: friendly
 - key: cull_offer
   kind: offer
   quest: 53
   label: Cull the Wash
   playerLine: Do you want the wash thinned out again?
-  text: 'There is always more work in the wash. Thin them out again: a scout first,
-    then the squatter, same as before. The job is done when the squatter falls, and
-    the coin finds you then.'
+  text: There is always more work in the wash. Thin them out again, a scout first,
+    then the squatter, same as before. Then come back to me and the coin is yours.
   hints: Go north from Squatter's Hollow to the Lower Wash and type attack scout.
   questRequired:
   - 34-end
@@ -336,8 +404,8 @@ topics:
   kind: info
   label: Where do I start the cull?
   text: Scout first, same as before. There is usually one in the Lower Wash, just
-    north of here. Then the squatter in the cistern. The job is done when he falls.
-    You do not need to come back to me for the pay.
+    north of here. Then the squatter in the cistern. Then come back to me for the
+    pay.
   hints: Go north from Squatter's Hollow to the Lower Wash and type attack scout.
   questRequired:
   - 53-start
@@ -347,10 +415,25 @@ topics:
 - key: cull_progress_firstkill
   kind: info
   label: One scout is down. What is next?
-  text: One scout down. Now the squatter in the old cistern, east of here. The job
-    is done when he falls.
+  text: One scout down. Now the squatter in the old cistern, east of here. Then come
+    back to me.
   hints: From Squatter's Hollow, go east to the Cracked Cistern and type attack squatter.
   questRequired:
   - 53-firstkill
   questExcluded:
+  - 53-culled
   - 53-end
+- key: cull_in
+  kind: handin
+  quest: 53
+  label: Cull the Wash
+  playerLine: The scout and the squatter are down again.
+  text: Good. That buys the hollow a few quiet days. Here is your pay. Come back when
+    the wash fills up again, and it will.
+  hints: Quest complete. Garve will have more work in the wash after a while.
+  questRequired:
+  - 53-culled
+  questExcluded:
+  - 53-end
+  grantsQuest: 53-end
+  moodChange: friendly

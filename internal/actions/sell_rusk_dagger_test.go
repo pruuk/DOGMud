@@ -23,11 +23,13 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-// R22 (#375): a completed sale of the crafted Iron Dagger (item 10009) to Smith
-// Rusk (mob 9116) turns in quest 35 "First Heat". That only works if Rusk
-// actually BUYS the dagger on a fresh world, where her mob template says
-// `gold: 0`. This test runs the real Sell path against the REAL item, mob and
-// quest files, with a fresh (empty) shop store.
+// R22 (#375): a player may sell the crafted Iron Dagger (item 10009) to Smith
+// Rusk (mob 9116) instead of showing it to her. Since #375 phase 7 the sale no
+// longer completes quest 35 "First Heat" (every quest ends at a hand-in): the
+// player tells Rusk afterwards. The sale itself must still go through on a
+// fresh world, where her mob template says `gold: 0`. This test runs the real
+// Sell path against the REAL item, mob and quest files, with a fresh (empty)
+// shop store.
 //
 // Why she can pay: RegisterMobShop (internal/mobs/crafter.go) floors a shop's
 // seed gold at 500 whatever the YAML says, so Rusk opens with Gold 500 and
@@ -47,7 +49,7 @@ const (
 	firstHeatId = 35
 )
 
-func TestSell_RuskBuysTheCraftedDaggerOnAFreshWorldAndFirstHeatTurnsIn(t *testing.T) {
+func TestSell_RuskBuysTheCraftedDaggerOnAFreshWorld(t *testing.T) {
 	_, here, _, ok := runtime.Caller(0)
 	require.True(t, ok)
 	repo := filepath.Join(filepath.Dir(here), "..", "..")
@@ -146,6 +148,6 @@ func TestSell_RuskBuysTheCraftedDaggerOnAFreshWorldAndFirstHeatTurnsIn(t *testin
 	_, still := u.Character.FindInBackpack("dagger")
 	assert.False(t, still, "the dagger leaves the player's pack")
 	assert.Equal(t, 500-8, inv.Gold, "her shop purse pays, not her mob gold")
-	assert.True(t, u.Character.HasQuest("35-end"), "the completed sale must turn in First Heat")
+	assert.False(t, u.Character.HasQuest("35-end"), "a sale no longer turns First Heat in; Rusk's hand-in does")
 	assert.Equal(t, 8, u.Character.Gold, "the player is paid the sale price")
 }

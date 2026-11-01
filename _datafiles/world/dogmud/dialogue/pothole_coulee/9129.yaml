@@ -17,12 +17,20 @@ opener:
     questExcluded:
     - 39-start
     - 39-end
-    text: Birna's brewer, then. Good enough. The marsh past my fire will teach you
-      the rest, combat and how to throw a firebomb without losing a hand. Tell me
-      when you are ready to wade in, and I will set you to it.
-    hints: Choose Wade the Marsh below to take on the marsh.
+    text: Birna's brewer, then. She sends me the ones worth teaching. If she has not
+      sent you out yet, ask her about the marsh.
+    hints: Go west to the Reed Beds, then north twice to the Sheltered Pool. Type talk
+      birna.
   - questRequired:
     - 39-start
+    questExcluded:
+    - 39-met
+    - 39-end
+    text: Birna sent you. Good. Come to the fire and I will tell you what the marsh
+      will try to do to you.
+    hints: Choose Herbalist Birna sent me to learn the marsh below.
+  - questRequired:
+    - 39-met
     questExcluded:
     - 39-leech
     - 39-end
@@ -36,8 +44,8 @@ opener:
     - 39-end
     text: One leech down. Now the firebomb. Find something else that wants to bite
       you, another leech at the Black Pool or the lurker on the Mudflat south of here,
-      and throw it. One trick every few breaths, remember.
-    hints: With a foe in the room, type throw firebomb.
+      and throw it so the blast reaches it. One trick every few breaths, remember.
+    hints: With a creature in the room, type throw firebomb.
   - questRequired:
     - 39-throw
     questExcluded:
@@ -66,12 +74,19 @@ opener:
   - questRequired:
     - 40-start
     questExcluded:
+    - 40-slain
     - 40-end
     text: It is still down there. Brew your kit, fill the bandolier, and go put the
       spirit of the swamp down. Past the Black Pool and the Miasma Edge, keep south
       to the Sulphur Flats. The sinkhole there takes you under.
     hints: Go down the sinkhole at the Sulphur Flats, then south to the Heart of the
       Mire, and type attack spirit.
+  - questRequired:
+    - 40-slain
+    questExcluded:
+    - 40-end
+    text: You came back out of the mire, and the water smells different. Tell me.
+    hints: Choose Heart of the Mire below to report.
   - questRequired:
     - 55-start
     questExcluded:
@@ -84,41 +99,57 @@ opener:
   - questRequired:
     - 55-brew
     questExcluded:
+    - 55-quaffed
     - 55-end
-    text: You brewed. Now drink it. That is all I need to know.
+    text: You brewed. Now take it. A potion goes down with quaff.
     hints: Type quaff healing salve.
   - questRequired:
+    - 55-quaffed
+    questExcluded:
+    - 55-end
+    text: Brewed and taken, by the look of you. Tell me how it held.
+    hints: Choose Another Brew below to report.
+  - questRequired:
     - 40-end
-    text: You broke it. The water runs clean off the spring now, first time in a
-      long time. You came in a pool-brewer and you walk out something the marsh respects.
-      That is rarer than you know. Go on, then. The world is bigger than this mud.
-    hints: You have cleared the marsh and the mire, and finished the brewing trail.
-      When there is more work at the bench, choose Another Brew below.
+    questExcluded:
+    - 92-start
+    - 92-end
+    text: You broke it. The water runs clean off the spring now, first time in a long
+      time. Toke sent you down this road. He will want the news from you.
+    hints: Choose Report to Toke (Brewing) below to carry the news to Toke.
+  - questRequired:
+    - 92-start
+    questExcluded:
+    - 92-end
+    text: Toke is waiting on that news in Hub Square. Go on. The marsh will keep.
+    hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk
+      toke.
+  - questRequired:
+    - 40-end
+    text: You came in a pool-brewer and you walk out something the marsh respects.
+      That is rarer than you know. The world is bigger than this mud.
+    hints: You have finished the brewing trail. When there is more work at the bench,
+      choose Another Brew below.
 topics:
-- key: marsh_offer
-  kind: offer
-  quest: 39
-  label: Wade the Marsh
-  playerLine: Do you want help with the marsh?
-  text: 'Right. Leeches in the water, a serpent in the cattails. The marsh will
-    blood you if you let it. So you get a firebomb. Ceramic, packed tight. It bursts into flame where
-    it lands. You throw it in a fight: type throw firebomb while you are in combat.
-    But mind this: a thrown firebomb, a cast spell, and a special move all pull
-    from the same well. Use one and you wait a few breaths before the next. So make
-    it count. Then you wade in, in this order: put a marsh leech down in the Reed
-    Beds west of here to learn the water, then throw the firebomb at the next thing
-    that wants to bite you, then forage the herbs on the Sunken Path or at the Black
-    Pool. Type flee if a fight turns. If you fall, you wake at the Mending Hut, not
-    in the mud. Lose the firebomb before you throw it, and I will give you another.'
-  hints: Accept, and Falv hands you a firebomb. Then go west to the Reed Beds and
-    type attack leech.
+- key: marsh_arrive
+  kind: info
+  label: Herbalist Birna sent me to learn the marsh.
+  text: Right. Leeches in the water, a serpent in the cattails. The marsh will blood
+    you if you let it. That firebomb Birna gave you bursts into flame where it lands.
+    You throw it in a fight, with a creature in front of you. But mind this. A thrown
+    firebomb, a cast spell and a special move all pull from the same well. Use one
+    and you wait a few breaths before the next. So make it count. Then you wade in,
+    in this order. Put a marsh leech down in the Reed Beds west of here to learn the
+    water. Throw the firebomb at the next thing that wants to bite you. Forage the
+    herbs on the Sunken Path or at the Black Pool. Type flee if a fight turns. If you
+    fall, you wake at the Mending Hut, not in the mud. Lose the firebomb before you
+    throw it, and I will give you another.
+  hints: Go west to the Reed Beds and type attack leech.
   questRequired:
-  - 38-end
-  questExcluded:
   - 39-start
+  questExcluded:
+  - 39-met
   - 39-end
-  grantsQuest: 39-start
-  givesItem: 30058
 # The replacement and the reminder never show together: itemExcluded and
 # carriesItem on the same item are exact opposites.
 - key: firebomb_recovery
@@ -139,7 +170,7 @@ topics:
   text: You already have one. I can see it on you. Put a leech down first, then throw
     that one at the next thing that comes at you. I do not hand out a second while
     the first is still in your pack.
-  hints: You still carry the firebomb Falv gave you.
+  hints: You still carry the firebomb Birna gave you.
   questRequired:
   - 39-start
   questExcluded:
@@ -149,12 +180,13 @@ topics:
   kind: handin
   quest: 39
   label: Wade the Marsh
-  playerLine: The leech is down, the firebomb thrown, and the herbs found.
-  text: Leech down, firebomb thrown, herbs in your pack. That is the marsh, near enough.
-    Here, a bandolier. Your brews drop into it on their own and you drink the oldest
-    first, so nothing sits long enough to turn. You will want it for what is next.
-    Past the miasma edge the water goes poison, and something rules it. When your
-    nerve is up, I will tell you about the mire.
+  playerLine: The leech is down, the firebomb thrown, and the herbs searched.
+  text: Leech down, firebomb thrown, and you have worked the herbs. That is the marsh,
+    near enough. Here, a bandolier. Any potion or firebomb you get from now on drops
+    into it on its own, and the oldest potion goes first when you quaff, so nothing
+    sits long enough to turn. You will want it for what is next. Past the miasma edge
+    the water goes poison, and something rules it. When your nerve is up, I will tell
+    you about the mire.
   hints: Quest complete. Choose Heart of the Mire below when you are ready for the
     final task.
   questRequired:
@@ -169,7 +201,7 @@ topics:
     Put one down and the marsh will know you. Keep the firebomb until after.
   hints: Go west to the Reed Beds and type attack leech.
   questRequired:
-  - 39-start
+  - 39-met
   questExcluded:
   - 39-leech
   - 39-end
@@ -177,10 +209,10 @@ topics:
   kind: info
   label: The leech is down. What now?
   text: 'Now the firebomb. Find a foe: another leech at the Black Pool, or the lurker
-    out on the Mudflat south of here. Throw it and the fight starts in flame. Then
-    you wait a few breaths before your next trick. Spells and special moves share
-    that wait.'
-  hints: With a foe in the room, type throw firebomb.
+    out on the Mudflat south of here. Throw it so the blast reaches it, and the fight
+    starts in flame. A throw at empty ground is wasted. Then you wait a few breaths
+    before your next trick. Spells and special moves share that wait.'
+  hints: With a creature in the room, type throw firebomb.
   questRequired:
   - 39-leech
   questExcluded:
@@ -209,7 +241,7 @@ topics:
     an aberration, I do not have the word. It is the worst thing in this country.
     Brew your salves, fill the bandolier, carry firebombs. From the Black Pool go
     south past the Miasma Edge to the Sulphur Flats, take the sinkhole down, and put
-    it down. Do not go in light.
+    it down. Then come back and tell me. Do not go in light.
   hints: Go down the sinkhole at the Sulphur Flats, then south to the Heart of the
     Mire, and type attack spirit.
   breadcrumb: Learn the marsh first. There is something worse past the miasma, and
@@ -231,7 +263,25 @@ topics:
   questRequired:
   - 40-start
   questExcluded:
+  - 40-slain
   - 40-end
+- key: mire_in
+  kind: handin
+  quest: 40
+  label: Heart of the Mire
+  playerLine: The spirit of the swamp is gone.
+  text: Gone. I felt the water change before you came in sight. That thing sat at
+    the heart of my marsh longer than I have camped here, and you put it down. Take
+    a brewer's stock from my crates, and the mire's own renewal recipe. You will make
+    it better than I can.
+  hints: Quest complete. Crier Toke will want the news. Choose Report to Toke (Brewing)
+    below.
+  questRequired:
+  - 40-slain
+  questExcluded:
+  - 40-end
+  grantsQuest: 40-end
+  moodChange: friendly
 - key: cooldown_help
   kind: info
   label: How does throwing a firebomb work?
@@ -243,15 +293,30 @@ topics:
   hints: Type throw firebomb in combat. Throwing, casting, and special moves share
     one cooldown. You get one such action every few breaths.
   marked: true
+# The bridge comes before the repeatable, so the menu lists it first.
+- key: report_brewing_offer
+  kind: offer
+  quest: 92
+  label: Report to Toke (Brewing)
+  playerLine: Should I take the news of the mire to Toke?
+  text: Go on, then. Toke sent you to Birna, and Birna sent you to me. He keeps to
+    Hub Square, south of the Awakening Pool. Tell him the mire runs clean.
+  hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk toke.
+  questRequired:
+  - 40-end
+  questExcluded:
+  - 92-start
+  - 92-end
+  grantsQuest: 92-start
 - key: brew_loop_offer
   kind: offer
   quest: 55
   label: Another Brew
   playerLine: Do you have more bench work for me?
   text: The marsh does not care when you last brewed. Get back to the bench at Birna's
-    pool, make something, drink it. A healing salve will do. A craft can fail. If
-    yours does, buy the ingredients again and go at it once more. No need to come
-    tell me. I will know.
+    pool, make something, quaff it. A healing salve will do. A craft can fail. If
+    yours does, buy the ingredients again and go at it once more. Then come and tell
+    me how it held.
   hints: At the alchemy bench, type craft healing salve. A craft can fail. If it does,
     buy the ingredients again and retry.
   questRequired:
@@ -277,13 +342,26 @@ topics:
 - key: brew_loop_step_drink
   kind: info
   label: I've brewed. What now?
-  text: You brewed. Now drink it down. That is the whole job. You do not need to come
-    tell me.
+  text: You brewed. Now quaff it down, then come and tell me how it held.
   hints: Type quaff healing salve.
   questRequired:
   - 55-brew
   questExcluded:
+  - 55-quaffed
   - 55-end
+- key: brew_loop_in
+  kind: handin
+  quest: 55
+  label: Another Brew
+  playerLine: I brewed something and quaffed it down.
+  text: Fresh, and it held. Good. The marsh does not care how long ago you learned,
+    only whether your salve is fresh. Here, for the trouble.
+  hints: Quest complete. Falv will have more bench work after a while.
+  questRequired:
+  - 55-quaffed
+  questExcluded:
+  - 55-end
+  grantsQuest: 55-end
 - key: hands
   kind: info
   label: Why does water run off your hands?
@@ -292,5 +370,6 @@ topics:
 - key: bandolier
   kind: info
   label: What is a bandolier for?
-  text: A bandolier holds your brews ready to hand. They drop into it on their own,
-    and you drink the oldest first. Clear the marsh and one is yours.
+  text: A bandolier holds your potions and firebombs ready to hand. Once you wear it,
+    any you get drop into it on their own, and the oldest potion goes first when you
+    quaff. Clear the marsh and one is yours.

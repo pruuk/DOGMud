@@ -1,52 +1,47 @@
-# Quest 39 — Wade the Marsh (Pothole Coulee, Spoke C / Alchemy middle ring)
+# Quest 39, Wade the Marsh (Pothole Coulee, brewing line, quest 2).
 #
-# Token flow (one command per step, owner ruling 2026-10-17):
-#   39-start  — granted by Fenwalker Falv's marsh_offer dialogue node (requires
-#               38-end). The SAME node hands the player a firebomb (givesItem
-#               30058) and teaches the throw command + the shared special-move
-#               cooldown (throw / cast / special moves all share one timer).
-#   39-leech  — mob_death on a Marsh Leech (9130). The combat beat.
-#   39-throw:  command trigger on throw, once the leech is down. The
-#              grenade/cooldown beat.
-#   39-forage: command trigger on forage in the marsh (rooms 5270 / 5273),
-#              once the firebomb is thrown. A forage that finds nothing
-#              still counts: the player foraged.
-#   39-end:    granted by Falv's marsh_turnin dialogue node (needs 39-forage).
-#
-# The three objectives run IN ORDER, leech, throw, forage: the order Falv
-# gives them and the quest description lists them. They used to complete in
-# any order, which this engine cannot do: a character holds ONE current step
-# per quest, so a throw done first jumped the player past the leech step. A
-# player saved on any step resumes from it: the next trigger gates on that
-# step's token.
-#
-# Design: this is Spoke C's owner of the parent-spec "shared cooldown + grenade"
-# Tier-2 lesson. Falv gives one firebomb so the player can throw without first
-# being able to brew one (firebomb is a skill_minimum 25 recipe). The reward is
-# the potion bandolier (item 20059) + a usable mid recipe (ironhide-brew, skill
-# 8) and the firebomb formula to grow into. Falv has a firebomb recovery node
-# (only while the player carries none) in case the player loses or spends the
-# grenade before the throw step.
+# Herbalist Birna (9128) offers it (marsh_offer) once First Brew (38) is
+# handed in, and hands over one of Falv's firebombs (givesItem 30058).
+# Fenwalker Falv (9129) takes the hand-in (marsh_turnin) and then offers
+# Heart of the Mire (40). Falv replaces a lost firebomb (firebomb_recovery).
+#   start   go to the Cattail Stand and talk to Falv
+#   met     topic_heard on Falv's marsh_arrive topic
+#   leech   kill a marsh leech (9130)
+#   throw   a throw that reaches a creature (target: mob, #694)
+#   forage  forage the marsh (rooms 5270 or 5273); a forage that finds
+#           nothing still counts
+#   end     Falv's hand-in
+# A thrown firebomb, a cast spell and a special move share one cooldown.
 
 questid: 39
 name: Wade the Marsh
 description: >-
-  Fenwalker Falv keeps a camp on a hummock in the reeds. The marsh past
-  his fire is no sanctuary -- leeches in the water, a serpent lurking in
-  the cattails. He has handed you a firebomb and asked you to blood
-  yourself on the marsh: put a leech down, learn to throw the firebomb in
-  a fight, and forage the good herbs while you are at it.
+  Fenwalker Falv keeps a camp on a hummock in the reeds. The marsh past his
+  fire is no sanctuary, with leeches in the water and a serpent lurking in
+  the cattails. Herbalist Birna has sent you to him with a firebomb, to blood
+  yourself on the marsh: put a leech down, learn to throw the firebomb in a
+  fight, and forage the good herbs while you are at it.
 secret: false
 
 steps:
   - id: start
     destination:
+      mob: 9129
+      room: 5271
+    description: >-
+      Herbalist Birna hands you a firebomb when you take this on and sends
+      you to Fenwalker Falv at his camp in the marsh. From the Sheltered
+      Pool, go south twice to the Reed Beds, then east to the Cattail Stand.
+    hint: >-
+      From the Sheltered Pool, go south twice to the Reed Beds, then east to
+      the Cattail Stand. Type talk falv.
+  - id: met
+    destination:
       room: 5269
     description: >-
-      Falv hands you a firebomb when you take this on and sets you loose in
-      the marsh. First put down a marsh leech. Keep the firebomb for after the leech is
-      down. If a fight turns bad, type flee: if you fall, you wake at the
-      Mending Hut, not in the mud.
+      Falv has set you loose in the marsh. First put down a marsh leech.
+      Keep the firebomb for after the leech is down. If a fight turns bad,
+      type flee. If you fall, you wake at the Mending Hut, not in the mud.
     hint: >-
       Go west from Falv's camp to the Reed Beds and type attack leech. If
       it is dark, type cast glow first.
@@ -54,38 +49,38 @@ steps:
     destination:
       room: 5272
     description: >-
-      One marsh leech is down. Now the firebomb: throw it where a foe can
-      feel it, and the fight starts with a burst of flame. A thrown
-      firebomb, a cast spell and a special move all share one cooldown,
-      so you get one such trick every few breaths. Another leech waits at
-      the Black Pool, and the reed lurker hunts the Mudflat south of Falv's
-      camp.
+      One marsh leech is down. Now the firebomb. Throw it where the blast
+      reaches a creature, and the fight starts with a burst of flame. A
+      throw at empty ground does not count. A thrown firebomb, a cast spell
+      and a special move all share one cooldown, so you get one such trick
+      every few breaths. Another leech waits at the Black Pool, and the
+      reed lurker hunts the Mudflat south of Falv's camp.
     hint: >-
-      With a foe in the room, type throw firebomb.
+      With a creature in the room, type throw firebomb.
   - id: throw
     destination:
       room: 5270
     description: >-
       The firebomb burst where you wanted it. Now forage the marsh herbs
       Falv asked for. The Sunken Path and the Black Pool south of it grow
-      the best of them. Some days your hands come up empty, and the
-      search still counts.
+      the best of them. Some days your hands come up empty, and the search
+      still counts.
     hint: >-
       On the Sunken Path or at the Black Pool, type forage.
   - id: forage
     destination:
+      mob: 9129
       room: 5271
     description: >-
-      You have blooded yourself, thrown the firebomb, and worked the
-      marsh for herbs. Report back to Falv at his camp.
+      You have blooded yourself, thrown the firebomb, and worked the marsh
+      for herbs. Report back to Falv at his camp.
     hint: >-
-      Go back to Fenwalker Falv at the Cattail Stand and type talk
-      falv.
+      Go back to Fenwalker Falv at the Cattail Stand and type talk falv.
   - id: end
     description: >-
       Falv has named you marsh-worthy and given you a bandolier for your
-      brews. The poison swamp lies south past the miasma edge -- and
-      something old has gathered at its heart.
+      brews. The poison swamp lies south past the miasma edge, and something
+      old has gathered at its heart.
 
 rewards:
   skillinfo: "alchemy:1"
@@ -96,32 +91,46 @@ rewards:
     Falv works a leather bandolier off a peg by his fire and tosses it
     to you underhand, the loops already supple from years of use. The
     shed-proof skin of his hands pales over the knuckles as he grips.
-    "Wear it.
-    Potions you carry drop into it on their own, and when you drink, the
-    oldest one goes first -- so your brews never sit long enough to turn.
-    You threw clean. You did not blow your own hand off. That is more
-    than most." He nods south, where the reeds go grey. "Past the miasma
-    the water is poison and something rules it. The firebomb formula is
-    yours now, and a tougher brew besides. Make your own pots. You will
-    need them down there."
+    "Wear it. Any potion or firebomb you get from then on drops into it on
+    its own, and when you quaff, the oldest potion goes first, so your
+    brews never sit long enough to turn. You threw clean. You did not blow
+    your own hand off. That is more than most." He nods south, where the
+    reeds go grey. "Past the miasma the water is poison and something
+    rules it. The firebomb formula is yours now, and a tougher brew
+    besides. Make your own pots. You will need them down there."
 
 triggers:
-  # ── LEECH: defeat a marsh leech (mob 9130) ──────────────────────────
+  # met: hearing Falv's marsh_arrive topic.
+  - event: topic_heard
+    mob: 9129
+    topic: marsh_arrive
+    conditions:
+      has: ["39-start"]
+      missing: ["39-met"]
+    actions:
+      - grant: "39-met"
+      - actor: >-
+          Falv has told you what the marsh will try. The leech first. Go
+          west to the Reed Beds and type attack leech.
+
+  # leech: a marsh leech (9130).
   - event: mob_death
     mob: 9130
     conditions:
-      has: ["39-start"]
+      has: ["39-met"]
       missing: ["39-leech"]
     actions:
       - grant: "39-leech"
       - actor: >-
           The marsh leech goes limp in the water. First blood in the
-          marsh. Now the firebomb. With a foe in the room, type throw
+          marsh. Now the firebomb. With a creature in the room, type throw
           firebomb.
 
-  # ── THROW: hurl the firebomb, after the leech ────────────────────────
+  # throw: the blast must reach a creature (#694). A throw at nobody raises
+  # its event with no target, which target: mob does not match.
   - event: command
     command: throw
+    target: mob
     conditions:
       has: ["39-leech"]
       missing: ["39-throw"]
@@ -133,9 +142,8 @@ triggers:
           cooldown is shared by spells and special moves too. Next, on the
           Sunken Path or at the Black Pool, type forage.
 
-  # ── FORAGE: search the marsh (rooms 5270 / 5273), after the throw ────
-  # A forage that turns up nothing still counts, so these lines do not
-  # claim a find.
+  # forage: the marsh (rooms 5270 / 5273), after the throw. A forage that
+  # turns up nothing still counts, so these lines claim no find.
   - event: command
     command: forage
     room: 5270

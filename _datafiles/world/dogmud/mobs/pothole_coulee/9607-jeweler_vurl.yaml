@@ -94,7 +94,7 @@ character:
       quantity: 0
       quantitymax: 0
       price: 600
-    # Thornwall chrysalis (in-shop / Skell overlap)
+    # Thornwall chrysalis (in-shop, Daff overlap)
     - itemid: 40030    # chrysalis setting
       quantity: 0
       quantitymax: 0

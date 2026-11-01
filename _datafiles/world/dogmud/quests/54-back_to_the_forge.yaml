@@ -1,19 +1,16 @@
-# Quest 54 — Back to the Forge (Pothole Coulee, Spoke B repeatable)
+# Quest 54, Back to the Forge (Pothole Coulee, smithing line repeatable).
 #
-# Token flow:
-#   54-start: granted by Survivor Ovell's dialogue (forge_loop_offer node).
-#             Requires 37-end (Into the Vein). Repeatable with cooldown.
-#   54-end:   command trigger on craft at the forge (room 5245). It finishes
-#              the quest on the spot (reward + clears for repeat), so no text
-#              asks the player to come back. Any recipe crafted at the forge
-#              counts; the hint names the iron dagger because every player who
-#              reaches this quest has made one and Rusk sells its materials.
+# Survivor Ovell (9117) offers it (forge_loop_offer) once Into the Vein (37)
+# is handed in. Repeatable with a cooldown; completion clears progress.
+#   start    craft anything at the forge in the Coulee Smithy (5245)
+#   crafted  report to Ovell
+#   end      Ovell's hand-in forge_loop_in (#375 phase 7)
 
 questid: 54
 name: Back to the Forge
 description: >-
   Ovell wants to see you keep your hand in at the forge. Head back to the
-  smith's fire and turn out another piece of work.
+  smith's fire, turn out another piece of work, and tell him how it rang.
 secret: false
 repeatable: true
 cooldown_rounds: 300
@@ -23,14 +20,22 @@ steps:
     destination:
       room: 5245
     description: >-
-      Ovell has asked you to put your blacksmithing to work once more.
-      Any recipe made at the forge in the Coulee Smithy counts, and the
-      quest is done the moment the craft succeeds. An iron dagger needs an iron
-      ingot and a leather strip, and Smith Rusk sells both.
+      Ovell has asked you to put your blacksmithing to work once more. Any
+      recipe made at the forge in the Coulee Smithy counts. An iron dagger
+      needs an iron ingot and a leather strip, and Smith Rusk sells both.
     hint: >-
-      At the forge in the Coulee Smithy, type craft iron dagger.
-      A craft can fail. If it does, buy an iron ingot and a leather
-      strip again and retry.
+      At the forge in the Coulee Smithy, type craft iron dagger. A craft can
+      fail. If it does, buy an iron ingot and a leather strip again and
+      retry.
+  - id: crafted
+    destination:
+      mob: 9117
+      room: 5251
+    description: >-
+      You put good work through the forge again. Ovell waits in the
+      Collapsed Cut to hear how it went.
+    hint: >-
+      Go back to Survivor Ovell in the Collapsed Cut. Type talk ovell.
   - id: end
     description: >-
       You put good work through the forge again. Ovell will have another
@@ -40,10 +45,10 @@ rewards:
   gold: 6
   skillinfo: "blacksmithing:1"
   actor: >-
-    Ovell nods from his slope, that quartz eye catching the forge-light
-    through the distance. "Still sharp. The iron knows a practiced hand.
-    Come back when you want to keep it that way."
-  observer: "Ovell raises a hand from the talus -- a slow, approving gesture."
+    Ovell turns a coin over his knuckles before he hands it to you. "Still
+    sharp. The iron knows a practiced hand. Come back when you want to keep
+    it that way."
+  observer: "Ovell hands {actor} a few coins with a slow, approving nod."
 
 triggers:
   - event: command
@@ -51,9 +56,9 @@ triggers:
     room: 5245
     conditions:
       has: ["54-start"]
-      missing: ["54-end"]
+      missing: ["54-crafted"]
     actions:
-      - grant: "54-end"
+      - grant: "54-crafted"
       - actor: >-
-          The work rings clean off the anvil. That is what Ovell wanted
-          to know: the forge is still yours.
+          The work rings clean off the anvil. Go back to Ovell in the
+          Collapsed Cut and type talk ovell.

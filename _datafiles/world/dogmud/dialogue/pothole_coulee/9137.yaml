@@ -18,12 +18,19 @@ opener:
     questExcluded:
     - 42-start
     - 42-end
-    text: Tarn's eyes, then. Good enough. The fringe will teach you the rest, how
-      to take meat, rest rough, and cook a kill. When you are ready to work, I have
-      a hunt for you.
-    hints: Choose The Hunt below to learn to hunt.
+    text: Tarn's eyes, then. She sends me the ones who can read ground. If she has
+      not sent you down yet, ask her about the hunt.
+    hints: From Hunter's Hollow, go east to the Game Trail, then north four times to
+      the Steppe Edge. Type talk tarn.
   - questRequired:
     - 42-start
+    questExcluded:
+    - 42-met
+    - 42-end
+    text: Tarn sent you. Good. Come to the fire and I will tell you how a hunter eats.
+    hints: Choose Scout Tarn sent me to learn the hunt below.
+  - questRequired:
+    - 42-met
     questExcluded:
     - 42-track
     - 42-end
@@ -35,8 +42,8 @@ opener:
     questExcluded:
     - 42-hunt
     - 42-end
-    text: You have its line. Now bring it down. A pronghorn will not start the fight,
-      so you pick the moment.
+    text: You read the ground. Now bring one down. A pronghorn will not start the
+      fight, so you pick the moment.
     hints: Type attack pronghorn.
   - questRequired:
     - 42-hunt
@@ -59,12 +66,21 @@ opener:
     questExcluded:
     - 42-cook
     - 42-end
-    text: Rested. Now the fire, here in my camp. The meat and the salt become a meal.
-      Burn it and the meat is gone, so bring down another pronghorn and try again.
-      Lost the salt? Ask me for salt.
+    text: Rested. Now the fire, here in my camp. The meat and the salt become grilled
+      meat, and that is the only meal I want to see. Burn it, or cook them into
+      anything else, and both are gone. Bring down another pronghorn, ask me for
+      salt, and try again.
     hints: At Delk's camp fire in Hunter's Hollow, type craft grilled meat.
   - questRequired:
     - 42-cook
+    questExcluded:
+    - 42-eaten
+    - 42-end
+    text: You cooked it. A hot meal is for eating, not for carrying. Eat it. If it is
+      gone, any food will do. Trader Onna sells trail rations in Coulee Provisions.
+    hints: Type eat grilled meat.
+  - questRequired:
+    - 42-eaten
     questExcluded:
     - 42-end
     text: You have the look of someone who ate what they killed. Tell me how it went.
@@ -81,11 +97,18 @@ opener:
   - questRequired:
     - 43-start
     questExcluded:
+    - 43-slain
     - 43-end
     text: It is still out there. Carry food, fight through the hounds, and take the
       alpha in its den. Do not let them get behind you. From the Game Trail, go south
       through the Killing Ground and the Bone Field.
     hints: In the Den, south of the Bone Field, type attack alpha.
+  - questRequired:
+    - 43-slain
+    questExcluded:
+    - 43-end
+    text: You came back from the den. I can see it on you. Tell me.
+    hints: Choose Break the Pack below to report.
   - questRequired:
     - 56-start
     questExcluded:
@@ -97,44 +120,62 @@ opener:
   - questRequired:
     - 56-hunt
     questExcluded:
+    - 56-foraged
     - 56-end
-    text: One down. Now work the Open Steppe for what it gives. The forage finishes
-      the run. You need not come back to me.
+    text: One down. Now work the Open Steppe for what it gives. Then come back and
+      tell me.
     hints: On the Open Steppe, type forage.
   - questRequired:
+    - 56-foraged
+    questExcluded:
+    - 56-end
+    text: Back from the run. Tell me what the fringe gave you.
+    hints: Choose Running Game below to report.
+  - questRequired:
     - 43-end
+    questExcluded:
+    - 93-start
+    - 93-end
     text: You broke the pack. I have hunted this fringe for years and never managed
-      that. The country south is quieter now, and you walk it wearing the hide of
-      the thing that ruled it. Go on. You have the steppe in you.
-    hints: You have finished the wilderness trail. Well done.
+      that. Toke sent you to Tarn, and Tarn to me. He will want this news from you.
+    hints: Choose Report to Toke (Tracking) below to carry the news to Toke.
+  - questRequired:
+    - 93-start
+    questExcluded:
+    - 93-end
+    text: Toke is waiting on that news in Hub Square. The fringe will keep.
+    hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk
+      toke.
+  - questRequired:
+    - 43-end
+    text: The country south is quieter now, and you walk it wearing the hide of the
+      thing that ruled it. Go on. You have the steppe in you.
+    hints: You have finished the wilderness trail. When you want more hunting, choose
+      Running Game below.
 topics:
-- key: hunt_offer
-  kind: offer
-  quest: 42
-  label: The Hunt
-  playerLine: Will you teach me to hunt?
-  text: 'Right. Hunting is patience and one clean kill. You get a salt-pouch. You will want it for the fire. The loop is this.
-    First, take meat: track a pronghorn in the Thornbrake, just north of here, bring
-    it down, and take the meat off the carcass. Second, rest rough: sleep where it
-    is safe and the field mends you faster than walking does. Third, cook it: at my
-    fire here, the meat and the salt become grilled meat. Do all three and come back.'
-  hints: Accept, and Delk hands you a salt-pouch. Then, in the Thornbrake north of
-    his camp, type track pronghorn.
+- key: hunt_arrive
+  kind: info
+  label: Scout Tarn sent me to learn the hunt.
+  text: Right. Hunting is patience and one clean kill. Keep that salt Tarn gave you.
+    You will want it for the fire. The loop is this. First, take meat. Track a pronghorn
+    in the Thornbrake, just north of here, bring it down, and take the meat off the
+    carcass. Second, rest rough. Sleep where it is safe and the field mends you faster
+    than walking does. Third, cook it. At my fire here, the meat and the salt become
+    grilled meat. Last, eat what you cooked. Do all of it and come back.
+  hints: In the Thornbrake, north of Delk's camp, type track pronghorn.
   questRequired:
-  - 41-end
-  questExcluded:
   - 42-start
+  questExcluded:
+  - 42-met
   - 42-end
-  grantsQuest: 42-start
-  givesItem: 40017
 # The replacement and the reminder never show together: itemExcluded and
 # carriesItem on the same item are exact opposites.
 - key: salt_recovery
   kind: info
   label: I've lost my salt.
-  text: Lost your salt? Here. Last pinch I am sparing. You need it and raw meat to
-    cook grilled meat at the fire. Do not lose this one.
-  hints: You received a salt-pouch. With raw meat, type craft grilled meat at the
+  text: Lost your salt, or burned it? Here. Another pinch. You need it and raw meat
+    to cook grilled meat at the fire. Try not to waste this one.
+  hints: You received a salt pouch. With raw meat, type craft grilled meat at the
     camp fire.
   questRequired:
   - 42-start
@@ -157,7 +198,7 @@ topics:
   kind: handin
   quest: 42
   label: The Hunt
-  playerLine: I made a kill, rested, and cooked the meat.
+  playerLine: I made a kill, rested, cooked the meat and ate it.
   text: Killed clean, rested rough, ate what you took. That is the whole of being
     a hunter, and you did it without me holding your hand. Take these boots (broken
     in, good for long ground) and the stew recipe. A hot meal does more than fill
@@ -165,7 +206,7 @@ topics:
   hints: Quest complete. Choose Break the Pack below when you are ready for the final
     task.
   questRequired:
-  - 42-cook
+  - 42-eaten
   questExcluded:
   - 42-end
   grantsQuest: 42-end
@@ -179,8 +220,8 @@ topics:
     and it is how this one will try to kill you. Cook a meal and carry it. Fight through
     the hounds, keep your back clear, and do not stop until you reach the den. From
     the Game Trail, east of my camp, it is south all the way, through the Killing
-    Ground and the Bone Field. The alpha is in the den. Put it down and the pack comes
-    apart. Go.
+    Ground and the Bone Field. The alpha is in the den. Put it down, then come back
+    and tell me. Go.
   hints: In the Den, south of the Bone Field, type attack alpha.
   breadcrumb: Learn the hunt first. The pack to the south is the hard work, and it
     will wait for you.
@@ -190,6 +231,24 @@ topics:
   - 43-start
   - 43-end
   grantsQuest: 43-start
+- key: pack_in
+  kind: handin
+  quest: 43
+  label: Break the Pack
+  playerLine: The alpha is dead, and the pack has scattered.
+  text: Scattered. I heard the howling stop and did not dare believe it. You broke
+    them at the head, the way it had to be done. Here. A jerkin cut from their own
+    hides, a kit to keep you in the field, and the cut of the hide so you can sew more.
+    Stitcher Bex has a loom in the Patch-Tent in town, south of Coulee Provisions,
+    and it will take that hide.
+  hints: Quest complete. Crier Toke will want the news. Choose Report to Toke (Tracking)
+    below.
+  questRequired:
+  - 43-slain
+  questExcluded:
+  - 43-end
+  grantsQuest: 43-end
+  moodChange: friendly
 - key: hunt_progress_start
   kind: info
   label: How do I start the hunt?
@@ -197,14 +256,14 @@ topics:
     just north of my camp, is where they graze.'
   hints: In the Thornbrake, north of Delk's camp, type track pronghorn.
   questRequired:
-  - 42-start
+  - 42-met
   questExcluded:
   - 42-track
   - 42-end
 - key: hunt_progress_track
   kind: info
-  label: I have its line. What now?
-  text: Not yet. You have its line. Now bring it down.
+  label: I read the ground. What now?
+  text: Not yet. You read the ground. Now bring one down.
   hints: Type attack pronghorn.
   questRequired:
   - 42-track
@@ -235,13 +294,25 @@ topics:
 - key: hunt_progress_rest
   kind: info
   label: I've rested. What now?
-  text: 'Not yet. You rested. Now cook the kill at my fire. If it burns, the meat
-    is lost: bring down another pronghorn and cook that one.'
+  text: 'Not yet. You rested. Now cook the kill into grilled meat at my fire. If it
+    burns, or you cook it into anything else, the meat and the salt are both gone:
+    bring down another pronghorn, ask me for salt, and cook that one.'
   hints: At Delk's camp fire in Hunter's Hollow, type craft grilled meat.
   questRequired:
   - 42-rest
   questExcluded:
   - 42-cook
+  - 42-end
+- key: hunt_progress_cook
+  kind: info
+  label: I cooked the meat. What now?
+  text: Not yet. You cooked it. Now eat it. A hot meal does more than cold meat. If
+    it is gone, any food will do. Trader Onna sells trail rations in Coulee Provisions.
+  hints: Type eat grilled meat.
+  questRequired:
+  - 42-cook
+  questExcluded:
+  - 42-eaten
   - 42-end
 - key: hunt_prey
   kind: info
@@ -251,7 +322,7 @@ topics:
     name. Then bring it down. It will not start the fight, so you choose the moment.'
   hints: In the Thornbrake, north of Delk's camp, type track pronghorn.
   questRequired:
-  - 42-start
+  - 42-met
   questExcluded:
   - 42-end
 - key: hunt_meat
@@ -262,17 +333,18 @@ topics:
     meat.
   hints: Where the pronghorn fell, type loot corpse.
   questRequired:
-  - 42-start
+  - 42-met
   questExcluded:
   - 42-end
 - key: hunt_help
   kind: info
   label: How do I rest and cook in the field?
-  text: 'Two field skills. Rest: type sleep where nothing hostile is near and your
+  text: Three field skills. Rest. Type sleep where nothing hostile is near and your
     body mends fast. The next thing you do wakes you, and any harm wakes you the hard
-    way. Cooking: stand at my fire and type craft followed by the meal: craft grilled
-    meat with raw meat and salt. A rested, fed hunter outlasts a stronger one who
-    is neither.'
+    way. Cooking. Stand at my fire and type craft followed by the meal, so craft grilled
+    meat with raw meat and salt. Eating. A meal in your pack feeds nobody. Type eat
+    grilled meat when it is cooked. A rested, fed hunter outlasts a stronger one who
+    is neither.
   hints: With raw meat and salt in your pack, stand at a cooking fire and type craft
     grilled meat. For more, type help craft.
   marked: true
@@ -286,14 +358,30 @@ topics:
   questRequired:
   - 43-start
   questExcluded:
+  - 43-slain
   - 43-end
+# The bridge comes before the repeatable, so the menu lists it first.
+- key: report_tracking_offer
+  kind: offer
+  quest: 93
+  label: Report to Toke (Tracking)
+  playerLine: Should I take the news of the pack to Toke?
+  text: Do that. Toke sent you to Tarn, and Tarn sent you to me. He keeps to Hub
+    Square, south of the Awakening Pool. Tell him the pack is broken.
+  hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk toke.
+  questRequired:
+  - 43-end
+  questExcluded:
+  - 93-start
+  - 93-end
+  grantsQuest: 93-start
 - key: game_loop_offer
   kind: offer
   quest: 56
   label: Running Game
   playerLine: Do you have more hunting work for me?
   text: The fringe is always running game. Go out and bring one down, then forage
-    the Open Steppe. Keep your hand in. The forage finishes the run.
+    the Open Steppe. Keep your hand in. Then come back and tell me what it gave you.
   hints: In the Thornbrake, north of Delk's camp, type attack pronghorn.
   questRequired:
   - 43-end
@@ -316,13 +404,27 @@ topics:
 - key: game_progress_hunt
   kind: info
   label: One beast is down. What now?
-  text: One down. Now work the Open Steppe for what it gives. The forage finishes
-    the run. You need not come back to me.
+  text: One down. Now work the Open Steppe for what it gives. Then come back to me.
   hints: On the Open Steppe, type forage.
   questRequired:
   - 56-hunt
   questExcluded:
+  - 56-foraged
   - 56-end
+- key: game_loop_in
+  kind: handin
+  quest: 56
+  label: Running Game
+  playerLine: I took a pronghorn and worked the steppe.
+  text: Clean kill, eyes open, and the land worked after it. The fringe teaches you
+    different things each pass. Here, for the run.
+  hints: Quest complete. Delk will have another run waiting after a while.
+  questRequired:
+  - 56-foraged
+  questExcluded:
+  - 56-end
+  grantsQuest: 56-end
+  moodChange: friendly
 - key: hands
   kind: info
   label: What happened to your hands?

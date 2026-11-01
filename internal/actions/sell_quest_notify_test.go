@@ -12,7 +12,7 @@ import (
 
 // A completed player sale notifies the quest engine with the command "sell",
 // the item sold and the shop mob that bought it (R22, #375: selling Smith Rusk
-// the crafted dagger turns in First Heat). These tests register a probe quest
+// the crafted dagger draws her First Heat line). These tests register a probe quest
 // whose single trigger is a sell trigger and look for its grant on the seller.
 
 const (

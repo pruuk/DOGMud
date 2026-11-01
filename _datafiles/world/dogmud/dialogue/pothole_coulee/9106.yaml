@@ -73,6 +73,62 @@ opener:
       from all three before your boots cleared their doorways. Tell me what you saw
       and we will call it done.
     hints: Choose Find Your Footing below to finish the task.
+  # A held Report to Toke bridge comes before the hub: the [?] line is the next
+  # thing to do, and the hub's hint names only the [!] lines. One variant per
+  # bridge, gated on that bridge's own start token. Plans 3b and 4 add bridges
+  # 94 to 97: each adds a variant here in the same shape, and its hand-in joins
+  # report_*_in above send_drill.
+  - questRequired:
+    - 90-start
+    questExcluded:
+    - 90-end
+    text: Hoy! I hear the wash went quiet, and I hear Garve sent you up here. I know
+      it already, of course, but I want it from your own mouth. Tell me about the
+      tower.
+    hints: Choose Report to Toke (Fighting), the line marked [?] below, to tell Toke
+      the news.
+  - questRequired:
+    - 91-start
+    questExcluded:
+    - 91-end
+    text: Hoy! You have mine dust on you, and Ovell does not send folk up here for
+      small news. Tell me what happened down the deep vein.
+    hints: Choose Report to Toke (Smithing), the line marked [?] below, to tell Toke
+      the news.
+  - questRequired:
+    - 92-start
+    questExcluded:
+    - 92-end
+    text: Hoy! You smell of the marsh, and Falv does not send folk to me for nothing.
+      Tell me what became of the thing in the mire.
+    hints: Choose Report to Toke (Brewing), the line marked [?] below, to tell Toke
+      the news.
+  - questRequired:
+    - 93-start
+    questExcluded:
+    - 93-end
+    text: Hoy! Delk does not send folk up from the fringe for small news. Tell me how
+      it went with the pack.
+    hints: Choose Report to Toke (Tracking), the line marked [?] below, to tell Toke
+      the news.
+  # All seven trades taken: no [!] line is left, so the hub's hint would describe
+  # lines that are not there. The gate is the seven send_* offers' start tokens,
+  # which stay held after each quest ends (TestToke_NoTradesLeftOpener).
+  - questRequired:
+    - 31-end
+    - 32-start
+    - 35-start
+    - 38-start
+    - 41-start
+    - 44-start
+    - 47-start
+    - 50-start
+    text: You have taken up every trade I can start you on, all seven. The rest is
+      your own walking. Come back when you have news, and I will carry it across
+      the square.
+    hints: Toke has no more trades to start. When a teacher sends you back with
+      news, a line marked [?] shows below. Other lines tell you about the news and
+      the seven mouths of the coulee.
   # The hub (#375 phase 7): Toke is the only starter of the seven trades, and
   # a player new to MUDs is told so in plain words. Each trade's first quest
   # is one [!] line on his menu; take one, several or all seven.
@@ -204,6 +260,72 @@ topics:
   - 31-end
   grantsQuest: 31-end
   moodChange: friendly
+# #375 phase 7: each line's last giver sends the player back to Toke with a
+# Report to Toke bridge (quests 90 to 97). Toke takes every bridge hand-in.
+# They sit above the seven offers, as footing_turnin does, because the menu
+# follows file order and the [?] line is the next thing to do. Menu numbers
+# shift with what is open, which the owner has ruled is fine.
+- key: report_fighting_in
+  kind: handin
+  quest: 90
+  label: Report to Toke (Fighting)
+  playerLine: Garve sends word. The bandit tower has fallen.
+  text: Fallen? Hoy! The low mouth will have that across the square before you finish
+    your sentence. Garve's tower, taken by someone who could not hold a cudgel a few
+    days ago. That is the kind of news I like best. The fighting trail is yours, and
+    any mouth you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 90-start
+  questExcluded:
+  - 90-end
+  grantsQuest: 90-end
+  moodChange: friendly
+- key: report_smithing_in
+  kind: handin
+  quest: 91
+  label: Report to Toke (Smithing)
+  playerLine: Ovell sends word. The beast in the mine is dead.
+  text: The stone-blooded beast? Dead? Then the deep vein is open, and every smith in
+    Gaius will want to know who opened it. Leave that to me. The forge trail is yours,
+    and any mouth you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 91-start
+  questExcluded:
+  - 91-end
+  grantsQuest: 91-end
+  moodChange: friendly
+- key: report_brewing_in
+  kind: handin
+  quest: 92
+  label: Report to Toke (Brewing)
+  playerLine: Falv sends word. The spirit of the swamp is gone.
+  text: Gone? The thing at the heart of the mire? Hoy! Birna will brew a toast and
+    Falv will pretend he did not want one. The brewing trail is yours, and any mouth
+    you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 92-start
+  questExcluded:
+  - 92-end
+  grantsQuest: 92-end
+  moodChange: friendly
+- key: report_tracking_in
+  kind: handin
+  quest: 93
+  label: Report to Toke (Tracking)
+  playerLine: Delk sends word. The pack is broken.
+  text: Broken? The alpha too? Hoy! The steppe folk will sleep with their doors open
+    tonight, and I will tell them whose doing it was. The wilderness trail is yours,
+    and any mouth you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 93-start
+  questExcluded:
+  - 93-end
+  grantsQuest: 93-end
+  moodChange: friendly
 # R21: the seven trails, each its own offer after Find Your Footing. Each
 # starter item rides on the offer of the quest it belongs to. Toke is the
 # only starter of the seven (#375 phase 7); each first teacher takes the
@@ -215,11 +337,11 @@ topics:
   label: First Blood
   playerLine: Who can teach me to fight?
   text: Drillmaster Vorn, at the Drill Yard. He turns raw into ready, and you will
-    hear him before you see him. I have a cudgel for you, to hold in your hand on
-    the way. From this square go north to the pool, then east four times, past the
-    shore path, the Mending Hut and the dry coulee mouth, to the yard itself.
-  hints: Accept, and Toke hands you a cudgel. Then type wield cudgel, and from Hub
-    Square go north, then east four times to the Drill Yard.
+    hear him before you see him. Take this cudgel to him. He will tell you when to
+    pick it up. From this square go north to the pool, then east four times, past
+    the shore path, the Mending Hut and the dry coulee mouth, to the yard itself.
+  hints: Accept, and Toke hands you a cudgel. From Hub Square, go north, then east
+    four times to the Drill Yard. Type talk vorn.
   breadcrumb: Walk the town with me first. After that, I can send you down any of
     the seven mouths.
   questRequired:
@@ -236,9 +358,9 @@ topics:
   playerLine: Who can teach me to work iron?
   text: Smith Rusk, at the Coulee Smithy. Few words and good iron. She will show you
     how raw stock becomes a blade. From this square go north to the pool, then follow
-    the path west five times to the smithy. Start by looking over her stall.
-  hints: From Hub Square go north, then west five times to the Coulee Smithy. Next
-    to Rusk, type list.
+    the path west five times to the smithy. Talk to her before you touch her stall.
+  hints: From Hub Square, go north, then west five times to the Coulee Smithy. Type
+    talk rusk.
   questRequired:
   - 31-end
   questExcluded:
@@ -254,8 +376,8 @@ topics:
     patience, and she will teach you both. From this square go south to Market Row,
     east twice through Coulee Provisions to the Reedwash Mouth, then south twice down
     to her pool.
-  hints: From Hub Square go south, east, east, south, south to the Sheltered Pool.
-    At Birna's pool, type list.
+  hints: From Hub Square, go south, east, east, south, south to the Sheltered Pool.
+    Type talk birna.
   questRequired:
   - 31-end
   questExcluded:
@@ -269,10 +391,10 @@ topics:
   playerLine: Who can teach me to read the wild?
   text: Scout Tarn, out at the Steppe Edge. She reads ground the way Croup reads
     a ledger. From this square go west twice, along the stilt-house walk and into
-    the scrub draw, then south twice through the scrub mouth. A hare has crossed
-    the Open Steppe just past her. Find its trail.
-  hints: 'From Hub Square: west, west, south, south to the Steppe Edge, then south
-    once more. On the Open Steppe, type track hare.'
+    the scrub draw, then south twice through the scrub mouth. She will show you your
+    first sign.
+  hints: From Hub Square, go west twice, then south twice to the Steppe Edge. Type
+    talk tarn.
   questRequired:
   - 31-end
   questExcluded:
