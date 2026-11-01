@@ -6,8 +6,9 @@ greetings:
   moods:
   - friendly
   - neutral
-# The root text is for the Opened (30-end); the one variant covers everyone
-# else, so no opener line is unreachable.
+# The root text is for the Opened (30-end); the first variant covers everyone
+# else, so no opener line is unreachable. The second is for a holder of Esk's
+# Road: crossing no longer ends it, so the hint names the hand-in first.
 opener:
   text: Opened, and standing at my door. Then you know what to ask. The far side
     is Thornwall, all city stone and city noise, and every road in the Marches
@@ -23,18 +24,29 @@ opener:
       we will talk about the far side.
     hints: Cleric Hadwen keeps the Awakening Pool, north of Hub Square. Type
       talk hadwen there. Choose a line below to hear what he watches for.
+  - questRequired:
+    - 89-start
+    questExcluded:
+    - 89-end
+    text: Opened, and standing at my door, and sent here besides. Then you know
+      what to tell me. The far side is Thornwall, all city stone and city noise,
+      and it will wait for you to finish.
+    hints: Choose Esk's Road, the line marked [?], to finish that quest. When you
+      want to cross, choose "I'm ready. Open the arch for me." To come back, enter
+      the portal in the Thornwall temple.
 topics:
-# R17: the end of Esk's Road (quest 89), offered by Cleric Hadwen after the
-# rite. Crossing the arch (room 468) also closes it, through the quest's own
-# room_enter trigger, so a player who crosses first is never left holding it.
+# The end of Esk's Road (quest 89). Crier Toke offers it once all eight
+# bridges are in (#375 phase 7); an older save took it from Cleric Hadwen.
+# The hand-in is its only end. Crossing the arch does not close it.
 - key: road_esk_end
   kind: handin
   quest: 89
   label: Esk's Road
-  playerLine: Cleric Hadwen sent me. I'm ready to see the far side.
-  text: Hadwen sends me the ones who are ready. The far side is Thornwall, temple
-    stone and city noise, and every road in the Marches starts there. When you want
-    to cross, tell me you are ready, and the arch will do the rest.
+  playerLine: I was sent to you. I'm ready to see the far side.
+  text: Word of you reached me before you did. The far side is Thornwall,
+    temple stone and city noise, and every road in the Marches starts there.
+    When you want to cross, tell me you are ready, and the arch will do the
+    rest.
   hints: When you want to cross, choose "I'm ready. Open the arch for me."
   questRequired:
   - 89-start

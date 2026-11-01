@@ -382,7 +382,6 @@
 9100.rite_report
 9100.rite_wait
 9100.rite_waiting
-9100.road_esk
 9100.road_toke
 9101.food_drink
 9101.gills
@@ -1449,6 +1448,8 @@
 9161.shoot_offer
 # Across the Canyon (51) is offered by Marksman Iden now (9161.canyon_offer).
 9162.canyon_offer
+# Esk's Road (89) is offered by Crier Toke now (9106.road_esk).
+9100.road_esk
 # renamed
 9117.vein_offer -> 9116.vein_offer
 9112.wash_offer -> 9108.wash_offer

@@ -60,5 +60,6 @@ tree:
           do: move_player
           room_id: 468
           delay: 11.0
-        # Quest 89 (Esk's Road) closes on arrival through its own room_enter
-        # trigger on 468, which a move_player teleport raises (#619).
+        # Crossing does not close quest 89 (Esk's Road): his hand-in
+        # road_esk_end is its only end (#375 phase 7), and the portal in the
+        # temple leads back to him.

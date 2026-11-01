@@ -55,9 +55,10 @@ func TestOfferIndexDoor_NamesUnabandonableOffers(t *testing.T) {
 // On shipped data, quests 28 (Waking to Gaius) and 30 (The Awakening) are
 // abandonable since #375 phase 7: only Dewey's and Hadwen's offers start
 // them, so nothing would take a shelved one back up by itself. Quest 42 (The
-// Hunt) still is. The test logs every quest the rule still takes out of
-// abandonable (offered with a resuming offer, but auto-started), so the
-// owner sees the full effect.
+// Hunt) still is, and so is quest 89 (Esk's Road): moving its offer to Crier
+// Toke left it abandonable, because his offer excludes only 89's own tokens.
+// The test logs every quest the rule still takes out of abandonable (offered
+// with a resuming offer, but auto-started), so the owner sees the full effect.
 func TestSmoke_AutoStartedQuestsNotAbandonable(t *testing.T) {
 	loadShippedQuestWorld(t)
 	t.Cleanup(dialogue.SetOfferIndexForTest(nil))
@@ -65,8 +66,8 @@ func TestSmoke_AutoStartedQuestsNotAbandonable(t *testing.T) {
 	offerIndexDoor()
 
 	c := characters.New()
-	c.QuestProgress = map[int]string{28: "start", 30: "start", 42: "start"}
-	for _, id := range []int{28, 30, 42} {
+	c.QuestProgress = map[int]string{28: "start", 30: "start", 42: "start", 89: "start"}
+	for _, id := range []int{28, 30, 42, 89} {
 		if !usercommands.Abandonable(c, id) {
 			t.Errorf("quest %d is not abandonable; it has a clean offer and no automatic start", id)
 		}

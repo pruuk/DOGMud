@@ -131,6 +131,29 @@ func TestToke_AllBridgesInOpenerNamesEsksRoad(t *testing.T) {
 	require.NotContains(t, squash(hints), "choose esk's road", "a bridge is still out")
 }
 
+// The routes the leaving lines give, walked: Hub Square to the Threshold House,
+// and the Awakening Pool to the same room for Hadwen's another_way.
+func TestEsksRoad_RoutesWalk(t *testing.T) {
+	const pool, threshold = 5200, 5215
+	require.Equal(t, threshold, foldingWalk(t, foldingHubSquare, "south", "south"))
+	require.Equal(t, threshold, foldingWalk(t, pool, "south", "south", "south"))
+	require.Contains(t, squash(questHintFor(t, loadShippedQuest(t, "89-esks_road.yaml", 89), "start")),
+		"from hub square go south twice")
+	require.Contains(t, squash(loadCouleeTopics(t, "9106.yaml").FindTopic("road_esk").Hints),
+		"from hub square go south twice")
+	require.Contains(t, squash(loadCouleeTopics(t, "9100.yaml").FindTopic("another_way").Hints),
+		"go south three times")
+}
+
+// A holder of Esk's Road who crosses the arch keeps it: the hand-in at Esk is
+// its only end, and the temple portal leads back to him.
+func TestEsksRoad_CrossingTheArchDoesNotEndIt(t *testing.T) {
+	const thornwallTemple = 468
+	w := newQuestWalker(loadShippedQuest(t, "89-esks_road.yaml", 89)).at("start")
+	w.notify("room_enter", EventDetails{RoomId: thornwallTemple})
+	require.Equal(t, "start", w.p.current, "arriving through the arch moved quest 89")
+}
+
 // The hand-over for lost gear: a player with no lantern or picks is given more,
 // and one who carries them is told so. equip reads only the pack, and "lantern"
 // alone can match an oil lantern, so First Light names the hooded lantern.

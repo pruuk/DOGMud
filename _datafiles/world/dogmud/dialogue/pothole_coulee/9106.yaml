@@ -157,6 +157,43 @@ opener:
     text: Every teacher in the coulee has sent you back to me, all eight of them.
       I have one road left for you.
     hints: Choose Esk's Road, the line marked [!] below, to hear where it goes.
+  # All eight in and the road taken, not yet handed in: Esk is the next thing to
+  # do. The bridges stay in the gate because an older save may hold 89-start
+  # from Cleric Hadwen with trades still to start, and the hub reads true for it.
+  - questRequired:
+    - 90-end
+    - 91-end
+    - 92-end
+    - 93-end
+    - 94-end
+    - 95-end
+    - 96-end
+    - 97-end
+    - 89-start
+    questExcluded:
+    - 89-end
+    text: Still in my square? Warden Esk has the arch, and he knows you are coming.
+      Go and tell him you are ready.
+    hints: From Hub Square go south twice, through Market Row, to the Threshold
+      House. Type talk esk.
+  # All eight in and the road finished: no teacher is left to send news back,
+  # so the no-trades hint below would promise a [?] that never comes.
+  - questRequired:
+    - 90-end
+    - 91-end
+    - 92-end
+    - 93-end
+    - 94-end
+    - 95-end
+    - 96-end
+    - 97-end
+    - 89-end
+    text: Every teacher in the coulee has sent you back to me, and Warden Esk has
+      had his word with you. I have no road left to give. Stop by when you have
+      news of the far side.
+    hints: Choose a line below to hear about the news or the seven mouths of the
+      coulee. To cross the arch, type talk esk in the Threshold House, south twice
+      from Hub Square.
   # All eight trades taken: no [!] line is left, so the hub's hint would describe
   # lines that are not there. The gate is the eight send_* offers' start tokens,
   # which stay held after each quest ends (TestToke_NoTradesLeftOpener).
