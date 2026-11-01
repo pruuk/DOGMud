@@ -2,7 +2,7 @@
 
 Attempt to steal gold or items from an NPC, or take from
 a container without being noticed. You cannot choose what
-you steal -- you grab whatever you can get your hands on.
+you steal: you grab whatever you can get your hands on.
 
 <ansi fg="yellow">Usage:</ansi>
 
@@ -19,7 +19,8 @@ Being hidden improves your chances. On failure, your cover
 is blown and the target may attack. Cannot be used on
 other players, or on anyone's companion, your own included.
 
-Requires <ansi fg="skill">skullduggery</ansi> rank 2.
+Requires <ansi fg="skill">skullduggery</ansi> rank 1. Every character starts at
+rank 1, so anyone can try.
 
 <ansi fg="yellow">Picking a pocket:</ansi>
 

@@ -16,15 +16,15 @@ import (
 
 /*
 Skullduggery Skill
-Level 2 - Steal: attempt to steal from a mob or room container using
-an opposed Dex+skill vs Perception roll.
+Steal: attempt to steal from a mob or room container using an opposed
+Dex+skill vs Perception roll. The theft needs Balance.StealMinRank.
 */
 func Steal(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	skillLevel := user.Character.GetSkillLevel(skills.Skullduggery)
 
-	// Requires skullduggery rank 1 to even see the command. Rank 2
-	// is required for the actual steal — that gate lives inside
+	// Requires skullduggery rank 1 to even see the command.
+	// Balance.StealMinRank is required for the actual steal: that gate lives inside
 	// actions.Steal AFTER target validation, so immune-mob targets get
 	// the canonical rebuff regardless of the player's skill level
 	// (otherwise a rank-1 thief targeting a forager would see

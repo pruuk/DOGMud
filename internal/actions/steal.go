@@ -168,15 +168,23 @@ var skullduggeryCooldownKey = skills.Skullduggery.String(`steal`)
 //
 // It exists to put the skullduggery cooldown in one place. Steal and Plant
 // only check the cooldown; each path then runs its own refusals (target
-// gone, a companion, an immune mob, rank below 2, an empty container) and
+// gone, a companion, an immune mob, rank below StealMinRank, an empty container) and
 // only then asks for the score to roll with. score() is the only way to
 // read it, and it arms the cooldown as it hands it over, so no refusal can
 // spend the cooldown and no contest can run without spending it.
 type theftAttempt struct {
-	char   *characters.Character
-	rank   int
-	points float64
-	period string
+	char    *characters.Character
+	rank    int
+	minRank int
+	points  float64
+	period  string
+}
+
+// belowMinRank is every theft's rank gate: the thief's skullduggery rank
+// under Balance.StealMinRank (#375 phase 7; a hardcoded 2 until then).
+// Players and mobs share it.
+func (t theftAttempt) belowMinRank() bool {
+	return t.rank < t.minRank
 }
 
 // newTheftAttempt computes the attacker's score once, for every theft and
@@ -197,10 +205,11 @@ func newTheftAttempt(char *characters.Character, room *rooms.Room, cfg configs.B
 	}
 	points *= messaging.SightMult(char, room)
 	return theftAttempt{
-		char:   char,
-		rank:   rank,
-		points: points,
-		period: fmt.Sprintf(`%d real seconds`, int(cfg.StealCooldown)),
+		char:    char,
+		rank:    rank,
+		minRank: int(cfg.StealMinRank),
+		points:  points,
+		period:  fmt.Sprintf(`%d real seconds`, int(cfg.StealCooldown)),
 	}
 }
 
@@ -250,11 +259,11 @@ func stealFromMob(actor Actor, mobInstanceId int, t theftAttempt) StealResult {
 		}
 	}
 
-	// Skill rank 2 required for the actual steal mechanic. Checked
+	// The StealMinRank gate on the actual steal mechanic. Checked
 	// AFTER the immune gate so a low-rank thief targeting an immune mob
 	// gets the immune rebuff (which doesn't imply skill would help)
 	// rather than the skill rebuff (which does).
-	if t.rank < 2 {
+	if t.belowMinRank() {
 		actor.SendText(messaging.CategoryRefusal, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{
 			DefenderName: m.Character.Name,
@@ -422,8 +431,8 @@ func stealFromPlayer(actor Actor, targetUserId int, t theftAttempt) StealResult 
 		return StealResult{Reason: "target not found"}
 	}
 
-	// Skill rank 2 required.
-	if t.rank < 2 {
+	// The StealMinRank gate.
+	if t.belowMinRank() {
 		actor.SendText(messaging.CategoryRefusal, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{
 			DefenderName: targetUser.Character.Name,
@@ -526,10 +535,10 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 		return StealResult{Reason: "not found"}
 	}
 
-	// Skill rank 2 required for the actual steal mechanic. Mirrors the
+	// The StealMinRank gate on the actual steal mechanic. Mirrors the
 	// gate in stealFromMob; checked AFTER target validation so the rebuff
 	// order is consistent.
-	if t.rank < 2 {
+	if t.belowMinRank() {
 		actor.SendText(messaging.CategoryRefusal, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{Reason: "not advanced enough"}
 	}
@@ -822,7 +831,7 @@ func stealObserverPass(actor Actor, room *rooms.Room, attackerScore float64) (su
 // (`steal doll`): the steal checks throughout. The cooldown check, the
 // combat gates and the thief's score (Dexterity + skullduggery, plus the
 // hidden bonus when sneaking) are Steal's, and the cooldown is armed only
-// when the contest runs (theftAttempt.score); skullduggery rank 2 is required, as for
+// when the contest runs (theftAttempt.score); the StealMinRank gate holds, as for
 // every theft; and the contest is the container theft's observer pass.
 //
 // Caught by one of the household (a resident, isResident) is caught
@@ -839,7 +848,7 @@ func stealHouseholdBauble(actor Actor, itm items.Item, t theftAttempt) StealResu
 		refusal.NotHereThing(actor)
 		return StealResult{Reason: "not found"}
 	}
-	if t.rank < 2 {
+	if t.belowMinRank() {
 		actor.SendText(messaging.CategoryRefusal, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{Reason: "not advanced enough"}
 	}

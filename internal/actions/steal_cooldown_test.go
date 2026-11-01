@@ -15,9 +15,10 @@ import (
 
 // The skullduggery cooldown is spent by an attempt, never by a refusal. It
 // used to be armed in Steal and Plant before any target was resolved, so a
-// fresh character (Skullduggery rank 1 passes the command's visibility gate
-// but fails every theft's rank-2 gate) was refused on the first try and then
-// locked out of trying again for the whole cooldown.
+// character below the theft rank gate (Balance.StealMinRank, a hardcoded 2
+// then) was refused on the first try and then locked out of trying again
+// for the whole cooldown. The refusal tests pin the gate at 2 so a rank-1
+// thief is below it.
 
 const stealCooldownTestMobId = 9911
 
@@ -43,8 +44,9 @@ func requireNoStealCooldown(t *testing.T, char *characters.Character, why string
 		"%s: a refusal must leave the steal cooldown unarmed, got %d rounds", why, char.GetCooldown(stealKey()))
 }
 
-func TestStealCooldown_RankOneRefusalLeavesItUnarmed(t *testing.T) {
+func TestStealCooldown_BelowMinRankRefusalLeavesItUnarmed(t *testing.T) {
 	pinStealCooldown(t)
+	pinStealMinRank(t, 2)
 
 	t.Run("mob", func(t *testing.T) {
 		mobs.SetInstanceForTest(stealCooldownTestMobId, newStealTestMob(stealCooldownTestMobId, 50, 1))
@@ -76,6 +78,7 @@ func TestStealCooldown_RankOneRefusalLeavesItUnarmed(t *testing.T) {
 	t.Run("household", func(t *testing.T) {
 		h := setupHousehold(t, 99301, 1, nil, false)
 		pinStealCooldown(t)
+		pinStealMinRank(t, 2)
 		res := Steal(h.thief, StealOptions{HouseholdItem: h.itm})
 		require.Equal(t, "not advanced enough", res.Reason)
 		requireNoStealCooldown(t, h.thief.char, "rank 1 against a household bauble")

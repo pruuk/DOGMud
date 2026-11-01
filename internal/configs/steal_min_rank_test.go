@@ -1,9 +1,11 @@
 package configs
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v2"
@@ -57,5 +59,19 @@ func TestStealMinRank_ShippedAndDefaulted(t *testing.T) {
 	kept.validateCombatSteal()
 	if kept.StealMinRank != 4 {
 		t.Fatalf("a set value must be kept: %d", kept.StealMinRank)
+	}
+}
+
+// The steal help names the rank the game ships, so a retune that forgets
+// the help fails here.
+func TestStealHelpNamesTheShippedRank(t *testing.T) {
+	rank := shippedBalance(t).StealMinRank
+	help, err := os.ReadFile(repoFile(t, "_datafiles", "world", "dogmud", "templates", "help", "steal.template"))
+	if err != nil {
+		t.Fatalf("read steal help: %v", err)
+	}
+	want := fmt.Sprintf("</ansi> rank %d.", rank)
+	if !strings.Contains(string(help), want) {
+		t.Fatalf("steal.template must say %q (StealMinRank ships at %d)", want, rank)
 	}
 }

@@ -2,7 +2,7 @@
 
 Slip an item from your backpack into an NPC's possession
 or a container without being noticed. The last word is
-treated as the target -- everything before it is the item.
+the target, and everything before it is the item.
 
 <ansi fg="yellow">Usage:</ansi>
 
@@ -17,6 +17,7 @@ Uses the same skill check as <ansi fg="command">steal</ansi>.
 Being hidden improves your chances. Cannot be used on
 other players.
 
-Requires <ansi fg="skill">skullduggery</ansi> rank 2.
+Requires <ansi fg="skill">skullduggery</ansi> rank 1. Every character starts at
+rank 1, so anyone can try.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help steal</ansi>, <ansi fg="command">help skullduggery</ansi>
