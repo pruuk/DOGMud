@@ -27,15 +27,7 @@ opener:
   # N2: the road hint names only the roads this player is actually offered.
   # First match wins, so the no-road states come first. HasQuest(88-start)
   # stays true at 88-end, so a -start token covers "taken" either way.
-  # No road open: a 29-end holder (old signpost), or both roads taken.
-  - questRequired:
-    - 30-end
-    - 29-end
-    text: How does it sit, the new thing under your skin? Settling, I hope. The first
-      one always argues a little before it agrees. You have already set out from
-      here, so the pool has done its part for you.
-    hints: Choose a line below to hear about mutations, seeing in the dark, or
-      your name.
+  # Both roads taken.
   - questRequired:
     - 30-end
     - 88-start
@@ -90,12 +82,9 @@ opener:
     hints: Choose Toke's Road or Esk's Road below to set out. Other lines below
       tell you about mutations, seeing in the dark, or your name.
 topics:
-# R17: the two roads that replace quest 29 "Two Roads". Take either, both or
-# neither. Toke's road is hidden once footing has started (31-start), since
-# the player is already on it. Both are hidden from 29-end holders, who chose
-# a road under the old signpost (quest 29, retired). An old-save 29-start
-# holder still sees both; taking one grants 29-end through quest 29's
-# triggers, which hides the other, and both NPCs stay open to them anyway.
+# R17: the two roads from the pool. Take either, both or neither. Toke's
+# road is hidden once footing has started (31-start), since the player is
+# already on it. Quest 29 (Two Roads) is retired (#375 phase 7).
 - key: road_toke
   kind: offer
   quest: 88
@@ -112,7 +101,6 @@ topics:
   - 88-start
   - 88-end
   - 31-start
-  - 29-end
   grantsQuest: 88-start
 - key: road_esk
   kind: offer
@@ -130,7 +118,6 @@ topics:
   questExcluded:
   - 89-start
   - 89-end
-  - 29-end
   grantsQuest: 89-start
 - key: newcomer_mutations
   kind: info

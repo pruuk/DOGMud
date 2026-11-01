@@ -35,7 +35,7 @@ tree:
         - type: action
           do: move_player
           room_id: 468
-        # Quest 29 "Two Roads" closes on arrival through its own room_enter
+        # Quest 89 (Esk's Road) closes on arrival through its own room_enter
         # trigger on 468, which a move_player teleport raises (#619).
         - type: action
           do: intercept

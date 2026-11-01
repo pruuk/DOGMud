@@ -45,11 +45,6 @@ end 21 mob 9106 topic newcomer_players
 end 21 step end
 end 28 room 6467 tree grant_quest 28-end
 end 28 step end
-end 29 quest 29 trigger quest_granted quest_token=31-start grants=29-end
-end 29 quest 29 trigger quest_granted quest_token=88-start grants=29-end
-end 29 quest 29 trigger quest_granted quest_token=89-start grants=29-end
-end 29 quest 29 trigger room_enter room=468 grants=29-end
-end 29 step end
 end 30 mob 9100 tree grant_quest 30-end
 end 30 step end
 end 34 quest 34 trigger mob_death mob=9115 grants=34-end
@@ -243,7 +238,6 @@ start 1000000 step start
 start 21 step start
 start 28 quest 28 trigger room_enter room=6258 grants=28-start
 start 28 step start
-start 29 step start
 start 30 quest 30 trigger room_enter room=5200 grants=30-start
 start 30 room 6467 tree grant_quest 30-start
 start 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end

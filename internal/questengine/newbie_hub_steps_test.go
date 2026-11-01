@@ -100,17 +100,3 @@ func TestQuest31FindYourFooting_OneCommandPerStep(t *testing.T) {
 		require.True(t, holdsAll(w.p, turnIn))
 	})
 }
-
-// Two Roads (quest 29): the hint now names one road's command, but both roads
-// still close the signpost (the triggers are unchanged).
-func TestQuest29TwoRoads_BothRoadsStillClose(t *testing.T) {
-	q := loadShippedQuest(t, "29-two_roads.yaml", 29)
-
-	w := newQuestWalker(q).at("start")
-	w.notify("quest_granted", EventDetails{QuestToken: "31-start", RoomId: 5203})
-	require.Equal(t, "end", w.p.current, "Toke's road (31-start granted) closes the signpost")
-
-	w = newQuestWalker(q).at("start")
-	w.notify("room_enter", EventDetails{RoomId: 468})
-	require.Equal(t, "end", w.p.current, "Esk's road (walking into Thornwall) closes the signpost")
-}

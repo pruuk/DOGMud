@@ -39,7 +39,7 @@ func questGrantsFor(userId int) []string {
 
 // arrivalsAt reports whether a RoomChange for the user into roomId is queued.
 // That event is what raises the quest engine's room_enter
-// (hooks.QuestRoomEnter), which closes quest 29 on Esk's road (#619).
+// (hooks.QuestRoomEnter), which closes quest 89 on Esk's road (#619).
 func arrivalsAt(userId, roomId int) int {
 	n := 0
 	for _, e := range events.DrainQueuedByTypeForTest(events.RoomChange{}.Type()) {
@@ -68,7 +68,7 @@ func seedEskPassage(t *testing.T) {
 	t.Cleanup(seedTestUser(t, 1, "ossaly", "Ossaly", eskRoom))
 
 	u := requireUser(t, 1)
-	u.Character.QuestProgress = map[int]string{30: "end", 29: "start"}
+	u.Character.QuestProgress = map[int]string{30: "end", 89: "start"}
 
 	tree, err := LoadTreeFromFile("../../_datafiles/world/dogmud/behaviors/pothole_coulee/9107-warden_esk.yaml")
 	if err != nil {
@@ -112,7 +112,7 @@ func TestEskPassage_AskerLeft_NoMoveNoGrant(t *testing.T) {
 	}
 }
 
-// Quest 29 closes through its own room_enter trigger on 468, not a grant in
+// Quest 89 closes through its own room_enter trigger on 468, not a grant in
 // Esk's tree, so the tree grants nothing and the arrival is what counts.
 func TestEskPassage_AskerStayed_MovedAndArrives(t *testing.T) {
 	seedEskPassage(t)
@@ -124,7 +124,7 @@ func TestEskPassage_AskerStayed_MovedAndArrives(t *testing.T) {
 		t.Errorf("asker who stayed: in room %d, want %d", u.Character.RoomId, eskDestRoom)
 	}
 	if got := questGrantsFor(1); len(got) != 0 {
-		t.Errorf("asker who stayed: tree granted %v, want nothing (room_enter on %d closes quest 29)", got, eskDestRoom)
+		t.Errorf("asker who stayed: tree granted %v, want nothing (room_enter on %d closes quest 89)", got, eskDestRoom)
 	}
 	if n := arrivalsAt(1, eskDestRoom); n != 1 {
 		t.Errorf("asker who stayed arrived in %d %d times, want 1", eskDestRoom, n)

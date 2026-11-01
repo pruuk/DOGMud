@@ -479,7 +479,7 @@ func (c *Character) GetFocusQuestId() int {
 	// that sits at "end": completing a quest sets LastQuestId to it, so without
 	// this a just-finished quest would stay the focus (hint/panel/marker) even
 	// when the player has moved on to another active quest — e.g. after the
-	// Two Roads bridge completes into Find Your Footing.
+	// Toke's Road hand-in leads into Find Your Footing.
 	if c.LastQuestId != 0 {
 		if step, ok := prog[c.LastQuestId]; ok && step != "end" {
 			return c.LastQuestId
