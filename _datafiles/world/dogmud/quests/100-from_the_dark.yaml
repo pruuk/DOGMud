@@ -30,8 +30,9 @@ secret: false
 steps:
   - id: start
     description: >-
-      Go down into the old mine below the Mine Mouth, back over the talus.
-      Where nothing can see you, slip out of sight. The Timbered Drift, west
+      Go down into the old mine below the Mine Mouth, back over the talus,
+      and rest between fights on the slope. Where nothing can see you, slip
+      out of sight. The Timbered Drift, west
       of the Mine Head, is usually empty.
     hint: >-
       From the Reed Jetty go south, west four times, north, west five times,

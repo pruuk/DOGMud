@@ -56,7 +56,7 @@ opener:
     - 99-start
     text: You know what a light is for now. If you want to learn to go unseen,
       I know who teaches it.
-    hints: Choose Quiet Hands, the line marked [!] below, to hear who teaches it.
+    hints: Choose Quiet Hands, the line marked [!] below, to hear who it is.
 topics:
 - key: first_light_lantern
   kind: info

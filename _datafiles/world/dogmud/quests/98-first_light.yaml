@@ -41,7 +41,8 @@ steps:
       Crier Toke has sent you to Lamplighter Gethin at the Mine Head. The way
       runs past the Coulee Smithy and up over the talus, where scree
       scavengers and talus lurkers attack on sight. Type consider on a
-      creature to size it up, and flee if a fight turns.
+      creature to size it up, flee if a fight turns, and type rest between
+      fights. They are too many to fight in a row.
     hint: >-
       From Hub Square go north, west five times to the Coulee Smithy, north,
       west five times to the Mine Mouth, then down. Type talk gethin.
