@@ -250,9 +250,50 @@ topics:
 - key: shouts_help
   kind: info
   label: What are battle-shouts?
-  text: There is more to a fight than the swing. A battle-shout can turn one. Rally
-    steadies your nerve and your allies', and warcry hardens the whole line. They
-    lean on a silver tongue, not a strong arm, so they come to you later. For now,
-    know they exist.
-  hints: Battle-shouts, rally and warcry, come later. To read about them when you
-    are ready, type help warcry.
+  text: There is more to a fight than the swing. A battle-shout can turn one. You
+    already know warcry. You shouted it in the practice ring before you ever reached
+    the pool, and it makes your blows land harder, yours and your allies'. Rally is
+    the other one. It steadies your guard and the guard of anyone fighting beside you,
+    so dodges, parries and blocks come easier. Both lean on a silver tongue, not a
+    strong arm, and they share the wait with kicks and trips.
+  hints: Rally is a shout that steadies your defences and your allies'. Type rally.
+    For more, type help rally.
+- key: grapple_help
+  kind: info
+  label: How does grappling work?
+  text: Grab a foe and hold on, and they cannot flee. Each round you both struggle,
+    and the stronger, better trained wrestler gains ground, on top, behind, or pinned
+    underneath. From a strong hold your kick turns into a knee. A long weapon is clumsy
+    that close, so if you mean to wrestle, carry a short blade into the fight or go
+    in bare-handed.
+  hints: Grapple locks a foe in a hold so they cannot flee. Type grapple and the foe's
+    name in a fight. For more, type help grapple.
+  marked: true
+- key: bash_help
+  kind: info
+  label: How do I fight with a shield?
+  text: With a shield on your arm you can bash. You slam it into your foe. It hits
+    less hard than a swing, but it can knock them to the ground, and a foe on the ground
+    fights badly. It costs stamina and shares the wait with kick and trip. No shield,
+    no bash, so strap one on before the fight if you want it.
+  hints: Bash hits with your shield and may knock a foe down. Type bash in a fight.
+    For more, type help bash.
+- key: kick_help
+  kind: info
+  label: Why did my kick come out as a stomp?
+  text: Your kick reads the fight for you. Kick a foe who is standing and it is a
+    kick. Kick one already on the ground and it comes out as a stomp, which hits hard
+    and keeps them down. Kick from on top in a grapple and it is a knee. Trips work
+    the same way. Anyone born with a tail sweeps with it, and that is a tailsweep. You
+    type the same word, and your body picks the move.
+  hints: Kick changes with the fight, a stomp on a foe who is down and a knee in a
+    grapple. For more, type help kick.
+- key: defence_help
+  kind: info
+  label: How do I avoid getting hit?
+  text: You defend without thinking about it. Every blow aimed at you meets a dodge,
+    a parry with your weapon, or a block with your shield, whichever you are best at.
+    Bare hands can only dodge. A weapon lets you parry. A shield lets you block. Choose
+    your gear before the fight with that in mind. Some weapons reach further than others,
+    and that matters more the closer a fight gets.
+  hints: Dodge, parry and block happen on their own. For more, type help combat.

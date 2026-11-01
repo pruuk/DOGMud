@@ -433,10 +433,14 @@
 9107.passage_2
 9107.road_esk_end
 9107.watching
+9108.bash_help
 9108.combat_help
 9108.cudgel_have
 9108.cudgel_replace
+9108.defence_help
 9108.drill_arrive
+9108.grapple_help
+9108.kick_help
 9108.progress_sized_up
 9108.progress_special
 9108.progress_start
