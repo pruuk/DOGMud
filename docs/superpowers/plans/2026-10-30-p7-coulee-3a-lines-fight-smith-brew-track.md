@@ -250,6 +250,8 @@ Expected: both `ok`, and the smoke run lists `--- PASS` lines (`TestSmoke_Shippe
 
 Suggested executor: Sonnet.
 
+**Plan 1 moved this code (2026-11-01).** The food body is now `actions.ConsumeFood(actor Actor, verb, rest string)` in `internal/actions/food.go`, shared by players and mobs, and `eat.go` is a thin wrapper. The notify below goes in `food.go`, for player actors only (the shape `actions.Quaff` uses in `internal/actions/drink.go`), and the steps' file paths change to match. `eat` and `drink` are one command, so both verbs raise the `eat` event: `drink grilled meat` counts for quest 42's step. Add a subtest for that.
+
 **Files:**
 - Create: `internal/usercommands/eat_quest_event_test.go`
 - Modify: `internal/usercommands/eat.go`
@@ -5298,7 +5300,7 @@ Edit 11b. Replace from the variant gated `questRequired: [38-vial]` through `top
     - 38-end
     text: You made the salve. A brew is only worth what it does. Drink it down and
       feel it work.
-    hints: Type drink healing salve.
+    hints: Type quaff healing salve.
   - questRequired:
     - 38-drink
     questExcluded:
@@ -5476,7 +5478,7 @@ and:
 
 ```yaml
   text: The salve is made. Drink it. You will feel it mend you, slow and warm.
-  hints: Type drink healing salve.
+  hints: Type quaff healing salve.
 ```
 
 with:
