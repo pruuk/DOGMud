@@ -129,6 +129,8 @@ var behaviorEventHeld = map[string]bool{
 	`packmate_hurt`:          true,
 	`player_attack_rejected`: true, // a player just tried to hit this mob
 	`heard_callforhelp`:      true,
+	`caught_planting`:        true, // one planter was caught; the room reads it too
+	`ambush_foiled`:          true, // one striker's opener failed; the room reads it too
 	`mob_die`:                true,
 	`mob_flee`:               true,
 	`player_enter`:           true, // one entrant; the rest of the room reads it too

@@ -649,6 +649,13 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 	if atk.IsPlayer() && res.WasSurpriseAttack {
 		notifyAmbushQuest(atk, def)
 	}
+	// An opener that threw a swing and won none is a foiled ambush, for the
+	// target mob's tree to answer (#375 phase 7). Any attacker; only a mob has
+	// a tree. Partial damage that killed the mob is no foiling: its death is
+	// the answer.
+	if res.WasSurpriseAttack && res.DefenderWasAttacked && !res.CleanHit && !def.IsPlayer() && defChar.Health > 0 {
+		mobs.FireAmbushFoiled(asMob(def), atkUid)
+	}
 
 	// Cancel sleeping / cancel-on-damage conditions for any defender that took
 	// damage this round (chunk 3.3). Fires before concentration-break so

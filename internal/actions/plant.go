@@ -237,6 +237,11 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item, t theftAtt
 		}
 	}
 
+	// #375 phase 7: the mark's tree may answer a caught plant (the Coulee's
+	// Pocket Dummy mocks the try). Player and mob planters alike. The planter
+	// is already revealed above.
+	mobs.FireCaughtPlanting(m, actor.GetUserId())
+
 	m.Command(fmt.Sprintf(`attack @%d`, actor.GetUserId()))
 
 	return PlantResult{

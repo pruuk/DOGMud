@@ -171,6 +171,8 @@ tree:
 | `player_give` | Player gives an item to the mob that no talk topic wants (an ordinary give, after the transfer); or a hand-back: a topic wants the item but none is eligible, so it never left the player (`give_handback.go`) | `ItemId` = item given; `ItemUUID` = that exact instance; `HandBack` non-nil on a hand-back |
 | `mob_idle` | Mob's periodic idle tick fires | No player context |
 | `mob_hurt` | Mob takes damage in combat | `UserId` = attacker |
+| `caught_planting` | The mob caught someone planting an item on it (`actions.plantOnMob` through `mobs.FireCaughtPlanting`, #375 phase 7) | `UserId` = planter, 0 for a mob |
+| `ambush_foiled` | An opening strike from hiding at the mob threw a swing and won none, melee (`hooks.applyCombatProgression`) or a missed same-room shot (`actions.fireAmbushFoiled`), through `mobs.FireAmbushFoiled`. Not raised if the mob died of it | `UserId` = striker, 0 for a mob |
 | `mob_die` | Mob's health reaches zero | `UserId` = killing player |
 | `mob_flee` | Mob successfully flees combat | No player context |
 | `player_enter` | A player enters the mob's room | `UserId` = player |
