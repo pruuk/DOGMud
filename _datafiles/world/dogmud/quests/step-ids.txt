@@ -117,14 +117,17 @@
 35-end
 35-ingot
 35-list
+35-met
 35-start
 35-strip
 36-end
 36-lurker
+36-met
 36-ore
 36-scavenger
 36-start
 37-end
+37-slain
 37-start
 38-brew
 38-drink
@@ -194,6 +197,7 @@
 53-end
 53-firstkill
 53-start
+54-crafted
 54-end
 54-start
 55-brew
@@ -322,6 +326,8 @@
 9-start
 90-end
 90-start
+91-end
+91-start
 # retired
 # Quest 29 Two Roads (#375 phase 7): no road grants it; users.LoadUser drops
 # it from saves (quests.RetiredQuests).

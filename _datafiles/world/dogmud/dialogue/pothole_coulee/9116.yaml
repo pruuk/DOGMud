@@ -28,6 +28,14 @@ opener:
   - questRequired:
     - 35-start
     questExcluded:
+    - 35-met
+    - 35-end
+    text: Toke sent you. Good. I teach anyone who watches more than they talk. Ask
+      me why you came, and I will tell you how the forge works.
+    hints: Choose Crier Toke sent me to learn the forge below.
+  - questRequired:
+    - 35-met
+    questExcluded:
     - 35-list
     - 35-end
     text: First see what I stock. Type list here beside me and my goods come up with
@@ -61,19 +69,35 @@ opener:
     - 35-craft
     questExcluded:
     - 35-end
-    text: You made something at the forge. Show it to me, or sell it to me if you
-      would rather have the coin. Lost it? Then tell me how the work went.
+    text: You made something at the forge. Show it to me. If you would rather have
+      the coin, sell it to me first, then tell me how the work went. Lost it? Then
+      tell me anyway.
     hints: Choose First Heat below to report to Rusk. If you still carry the dagger,
-      she looks it over. If not, she takes your word. Selling her the dagger with
-      sell iron dagger also counts.
+      she looks it over. If you sold or lost it, she takes your word.
   - questRequired:
     - 35-end
-    text: You are through here. North through the Quench Shed, then west down to the
-      talus. Ovell is in the Collapsed Cut, south of the Lower Talus. The man pulled
-      himself out of a cave-in and has been sitting there since. He could use a hand.
-      If things go wrong out there and you die, you wake at the Mending Hut.
-    hints: Go north to the Quench Shed, west to the Lower Talus and south into the
-      Collapsed Cut, and type talk ovell to find out what the cave-in survivor needs.
+    questExcluded:
+    - 36-start
+    - 36-end
+    text: You understand the loop now. There is a man on the talus slope, Ovell, who
+      pulled himself out of a cave-in and has been sitting there since. He could use
+      a hand that knows iron. Say the word and I will send you.
+    hints: Choose Pick the Vein below to hear what Ovell needs.
+  - questRequired:
+    - 36-start
+    questExcluded:
+    - 36-met
+    - 36-end
+    text: Ovell is waiting. North through the Quench Shed, west twice to the Lower
+      Talus, then south into the Collapsed Cut.
+    hints: From the Coulee Smithy, go north, west twice, then south into the Collapsed
+      Cut. Type talk ovell.
+  - questRequired:
+    - 35-end
+    text: You are through here. The slope is Ovell's business now. If things go wrong
+      out there and you die, you wake at the Mending Hut.
+    hints: When you want more forge work, Survivor Ovell in the Collapsed Cut may
+      have some.
 topics:
 # Two exclusive hand-ins for First Heat. The old ask route needed no dagger
 # and the old give route did; both survive. craft_turnin (carriesItem 10009)
@@ -87,16 +111,12 @@ topics:
   quest: 35
   label: First Heat
   playerLine: I made a dagger at your forge. Here, see for yourself.
-  text: 'Let me see it. Straight seam. Weight is forward where it belongs. You did
+  text: Let me see it. Straight seam. Weight is forward where it belongs. You did
     not rush the quench. This is a working blade. Not fancy. Does not need to be.
-    Keep it. You made it. You understand the loop now: raw stock in, finished piece
-    out. Apply that to anything the forge can make. North through the Quench Shed,
-    then west, is the talus slope. There is a man out there named Ovell, in the Collapsed
-    Cut south of the Lower Talus. He survived a cave-in and has been waiting for someone
-    to notice. If you die out there, you wake at the Mending Hut.'
-  hints: Quest complete. Go north to the Quench Shed, west to the Lower Talus and
-    south into the Collapsed Cut, and type talk ovell to find out what the cave-in
-    survivor needs.
+    Keep it. You made it. You understand the loop now. Raw stock in, finished piece
+    out. Apply that to anything the forge can make. And when you want more than the
+    forge, I know a man on the talus slope who needs a hand.
+  hints: Quest complete. Choose Pick the Vein below to hear what Ovell needs.
   questRequired:
   - 35-craft
   questExcluded:
@@ -108,21 +128,51 @@ topics:
   quest: 35
   label: First Heat
   playerLine: I made a dagger at your forge, but I don't have it now.
-  text: 'Gone already? Then I take your word. The forge does not lie, and neither
-    do you, I think. You understand the loop now: raw stock in, finished piece out.
-    Apply that to anything the forge can make. North through the Quench Shed, then
-    west, is the talus slope. There is a man out there named Ovell, in the Collapsed
-    Cut south of the Lower Talus. He survived a cave-in and has been waiting for
-    someone to notice. If you die out there, you wake at the Mending Hut.'
-  hints: Quest complete. Go north to the Quench Shed, west to the Lower Talus and
-    south into the Collapsed Cut, and type talk ovell to find out what the cave-in
-    survivor needs.
+  text: Gone already? Then I take your word. The forge does not lie, and neither do
+    you, I think. You understand the loop now. Raw stock in, finished piece out. Apply
+    that to anything the forge can make. And when you want more than the forge, I
+    know a man on the talus slope who needs a hand.
+  hints: Quest complete. Choose Pick the Vein below to hear what Ovell needs.
   questRequired:
   - 35-craft
   questExcluded:
   - 35-end
   itemExcluded: 10009
   grantsQuest: 35-end
+- key: heat_arrive
+  kind: info
+  label: Crier Toke sent me to learn the forge.
+  text: Right. The forge teaches faster than I do, but here is the shape of it. Buy
+    an iron ingot and a leather strip off my stall. List shows you what I stock and
+    what it costs. Take them to the forge here in the smithy and type craft iron dagger.
+    The iron and the leather disappear and a blade appears. That is the whole trick
+    the first time. Once you have a feel for it, type craft list to see everything
+    you know how to make. Show me what you made when you are done. Start with the
+    list.
+  hints: Here beside Rusk, type list.
+  questRequired:
+  - 35-start
+  questExcluded:
+  - 35-met
+  - 35-end
+- key: vein_offer
+  kind: offer
+  quest: 36
+  label: Pick the Vein
+  playerLine: Do you want me to help Ovell on the slope?
+  text: Go and see him. Ovell was a prospector until the slope came down on him. He
+    dug himself out of a cave-in and has been sitting in the Collapsed Cut since,
+    watching scavengers walk over a good seam of basalt-iron. North through the Quench
+    Shed, west twice to the Lower Talus, then south into the cut. If you die out there,
+    you wake at the Mending Hut.
+  hints: From the Coulee Smithy, go north, west twice, then south into the Collapsed
+    Cut. Type talk ovell.
+  questRequired:
+  - 35-end
+  questExcluded:
+  - 36-start
+  - 36-end
+  grantsQuest: 36-start
 - key: heat_list_help
   kind: info
   label: What do I need to make a dagger?
@@ -130,7 +180,7 @@ topics:
     ingot and the strip are both on it, with what they cost.
   hints: Type list.
   questRequired:
-  - 35-start
+  - 35-met
   questExcluded:
   - 35-list
   - 35-end

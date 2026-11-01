@@ -236,9 +236,9 @@ topics:
   playerLine: Who can teach me to work iron?
   text: Smith Rusk, at the Coulee Smithy. Few words and good iron. She will show you
     how raw stock becomes a blade. From this square go north to the pool, then follow
-    the path west five times to the smithy. Start by looking over her stall.
-  hints: From Hub Square go north, then west five times to the Coulee Smithy. Next
-    to Rusk, type list.
+    the path west five times to the smithy. Talk to her before you touch her stall.
+  hints: From Hub Square, go north, then west five times to the Coulee Smithy. Type
+    talk rusk.
   questRequired:
   - 31-end
   questExcluded:
@@ -348,6 +348,21 @@ topics:
   questExcluded:
   - 90-end
   grantsQuest: 90-end
+  moodChange: friendly
+- key: report_smithing_in
+  kind: handin
+  quest: 91
+  label: Report to Toke (Smithing)
+  playerLine: Ovell sends word. The beast in the mine is dead.
+  text: The stone-blooded beast? Dead? Then the deep vein is open, and every smith in
+    Gaius will want to know who opened it. Leave that to me. The forge trail is yours,
+    and any mouth you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 91-start
+  questExcluded:
+  - 91-end
+  grantsQuest: 91-end
   moodChange: friendly
 - key: footing_step_school
   kind: info

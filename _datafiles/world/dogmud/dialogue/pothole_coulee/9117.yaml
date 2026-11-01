@@ -39,11 +39,20 @@ opener:
     questExcluded:
     - 36-start
     - 36-end
-    text: Forged something already. Good. The slope respects that. The vein is still
-      there. The company is not good. If you want the work, I can point you at it.
-    hints: Ovell has work on the slope. Choose Pick the Vein below.
+    text: Forged something already. Good. Rusk sends me the ones with steady hands.
+      If she has not sent you up yet, ask her about the slope.
+    hints: From the Collapsed Cut, go north, east twice, then south to the Coulee Smithy.
+      Type talk rusk.
   - questRequired:
     - 36-start
+    questExcluded:
+    - 36-met
+    - 36-end
+    text: Rusk sent you up? Good. Sit on the rock there and I will tell you what the
+      slope needs.
+    hints: Choose Smith Rusk sent me to clear the slope below.
+  - questRequired:
+    - 36-met
     questExcluded:
     - 36-scavenger
     - 36-end
@@ -91,6 +100,7 @@ opener:
   - questRequired:
     - 37-start
     questExcluded:
+    - 37-slain
     - 37-end
     text: The beast is still down there in the deep dark. The Mine Mouth is west of
       the Upper Talus. From there it is down, west, down, then west twice to the Den.
@@ -99,30 +109,54 @@ opener:
     hints: In the Den at the bottom of the mine, type attack beast. If it is dark,
       type cast glow first.
   - questRequired:
+    - 37-slain
+    questExcluded:
+    - 37-end
+    text: You came back up out of the dark. I felt the deep go quiet through the rock.
+      Tell me.
+    hints: Choose Into the Vein below to report.
+  - questRequired:
     - 54-start
     questExcluded:
+    - 54-crafted
     - 54-end
-    text: Go on, then. The forge is north, east, east, then south from here. Put something
+    text: Go on, then. The forge is north, east twice, then south from here. Put something
       through the fire. The iron dagger will do. Rusk sells the ingot and the strip.
       A craft can fail. If it does, buy the ingot and the strip again and retry.
     hints: At the forge in the Coulee Smithy, type craft iron dagger. A craft can
       fail. If it does, buy an iron ingot and a leather strip again and retry.
   - questRequired:
+    - 54-crafted
+    questExcluded:
+    - 54-end
+    text: I heard the anvil ring from here. Tell me how it went.
+    hints: Choose Back to the Forge below to report.
+  - questRequired:
     - 37-end
-    text: You took the mine. I felt the deep go quiet through the rock. This eye
-      reads more than dark. Whatever that beast was guarding is the coulee's now,
-      and you walked out of the dark with the deep vein at your back. You came
-      up here not knowing a hammer from your hand. Look at you.
-    hints: You have finished the forge trail. You earned a basalt-iron blade, the
-      work put lasting strength in your arms, and you know now how to forge the dark
-      ore into edges of your own. When there is more forge work, choose Back to
-      the Forge below.
+    questExcluded:
+    - 91-start
+    - 91-end
+    text: You took the mine. This eye reads more than dark, and the deep has gone
+      quiet. Crier Toke sent you to Rusk, and Rusk sent you to me. Toke will want
+      to hear the end of it from you.
+    hints: Choose Report to Toke (Smithing) below to carry the news to Toke.
+  - questRequired:
+    - 91-start
+    questExcluded:
+    - 91-end
+    text: Toke is waiting on that news in Hub Square. Go on. I will still be here.
+    hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk
+      toke.
+  - questRequired:
+    - 37-end
+    text: You walked out of the dark with the deep vein at your back. You came up
+      here not knowing a hammer from your hand. Look at you.
+    hints: You have finished the forge trail. When there is more forge work, choose
+      Back to the Forge below.
 topics:
-- key: vein_offer
-  kind: offer
-  quest: 36
-  label: Pick the Vein
-  playerLine: Do you want help clearing the slope?
+- key: vein_arrive
+  kind: info
+  label: Smith Rusk sent me to clear the slope.
   text: Right. Here is what I am asking. There is a scree scavenger working the Lower
     Talus, just north of me. You will hear it before you see it. More of them crawl
     the Scree Field and the Upper Talus beyond. West of me, in the Ore Pocket, a talus
@@ -136,11 +170,10 @@ topics:
     Armor is armor up here.
   hints: Go north to the Lower Talus and type attack scavenger.
   questRequired:
-  - 35-end
-  questExcluded:
   - 36-start
+  questExcluded:
+  - 36-met
   - 36-end
-  grantsQuest: 36-start
   moodChange: neutral
 - key: vein_turnin
   kind: handin
@@ -177,8 +210,8 @@ topics:
     light at all, so type cast glow before you go down and keep it up. The workings
     run deep and there are things in them that have never seen the sun, but the one
     that matters is at the bottom, in the Den. The stone-blooded beast. End it.
-    Bring back what you learn down there, and the blade off the floor of that den
-    if it is worth carrying. The deep vein is the reward, and it is a good one.
+    Then come back up and tell me. The deep vein is the reward, and it is a good
+    one.
   hints: In the Den at the bottom of the mine, type attack beast. If it is dark,
     type cast glow first.
   breadcrumb: Clear the slope first. There is worse work below it, and I will not
@@ -190,6 +223,40 @@ topics:
   - 37-end
   grantsQuest: 37-start
   moodChange: neutral
+- key: mine_in
+  kind: handin
+  quest: 37
+  label: Into the Vein
+  playerLine: The stone-blooded beast is dead.
+  text: Dead. I felt it go through the rock, the way you feel a storm break. The deep
+    vein has sat untouched since before my cave-in, and now it is open. You did that.
+    Take this blade. It came out of that seam before the slope fell. And here is how
+    to fold the dark ore into an edge of your own.
+  hints: Quest complete. Crier Toke will want the news. Choose Report to Toke (Smithing)
+    below.
+  questRequired:
+  - 37-slain
+  questExcluded:
+  - 37-end
+  grantsQuest: 37-end
+  moodChange: friendly
+# The bridge comes before the repeatable, so the menu lists it first.
+- key: report_smithing_offer
+  kind: offer
+  quest: 91
+  label: Report to Toke (Smithing)
+  playerLine: Should I take the news of the mine to Toke?
+  text: Do. Toke sent you to Rusk, and Rusk sent you to me, and the man likes his
+    news firsthand. He keeps to Hub Square, south of the Awakening Pool. Tell him
+    the deep vein is open.
+  hints: Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk toke.
+  questRequired:
+  - 37-end
+  questExcluded:
+  - 91-start
+  - 91-end
+  grantsQuest: 91-start
+  moodChange: friendly
 - key: forge_loop_offer
   kind: offer
   quest: 54
@@ -198,8 +265,8 @@ topics:
   text: The vein does not stop giving just because you stopped swinging. Go back to
     the forge and put something through the fire. I want to know the skill is still
     sharp in you. The iron dagger will do, and Rusk sells what it takes. A craft can
-    fail. If it does, buy the ingot and the strip again and retry. I will hear it
-    ring from here.
+    fail. If it does, buy the ingot and the strip again and retry. Then come and tell
+    me how it rang.
   hints: At the forge in the Coulee Smithy, type craft iron dagger. A craft can fail.
     If it does, buy an iron ingot and a leather strip again and retry.
   questRequired:
@@ -208,6 +275,20 @@ topics:
   - 54-start
   - 54-end
   grantsQuest: 54-start
+- key: forge_loop_in
+  kind: handin
+  quest: 54
+  label: Back to the Forge
+  playerLine: I put another piece through the forge.
+  text: I heard it ring. Still sharp, then. The iron knows a practiced hand. Here,
+    for your trouble. Come back when you want to keep it that way.
+  hints: Quest complete. Ovell will have more forge work after a while.
+  questRequired:
+  - 54-crafted
+  questExcluded:
+  - 54-end
+  grantsQuest: 54-end
+  moodChange: friendly
 - key: vein_scavenger_help
   kind: info
   label: Where is the scavenger?
@@ -215,7 +296,7 @@ topics:
     and the vein can wait until it is down.
   hints: Go north to the Lower Talus and type attack scavenger.
   questRequired:
-  - 36-start
+  - 36-met
   questExcluded:
   - 36-scavenger
   - 36-end
@@ -275,6 +356,7 @@ topics:
   questRequired:
   - 37-start
   questExcluded:
+  - 37-slain
   - 37-end
 # Gated on 36-end, when Ovell first names the mine (the 36-end opener above).
 - key: dark_help
@@ -295,13 +377,14 @@ topics:
 - key: forge_loop_help
   kind: info
   label: Which forge should I use?
-  text: The forge is north, east, east, then south from here. Put something through
+  text: The forge is north, east twice, then south from here. Put something through
     the fire there. The iron dagger will do, and Rusk sells the ingot and the strip.
-    A craft can fail. If it does, buy the ingot and the strip again and retry. I will
-    hear it ring from here. You do not need to come back to tell me.
+    A craft can fail. If it does, buy the ingot and the strip again and retry. Then
+    come back and tell me how it went.
   hints: At the forge in the Coulee Smithy, type craft iron dagger. A craft can fail.
     If it does, buy an iron ingot and a leather strip again and retry.
   questRequired:
   - 54-start
   questExcluded:
+  - 54-crafted
   - 54-end

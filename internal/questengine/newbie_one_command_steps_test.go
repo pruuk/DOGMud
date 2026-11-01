@@ -366,7 +366,6 @@ func TestNewbieQuestTriggersGateOnThePreviousStep(t *testing.T) {
 // is never held on a step whose lesson they already learned.
 var lenientGrants = map[string]bool{
 	"50-shoot": true, // fire needs the sling readied (the equip step)
-	"35-craft": true, // crafting the dagger needs the bought ingot and strip
 	"38-brew":  true, // brewing the salve needs the bought vial and roots
 }
 

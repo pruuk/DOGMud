@@ -415,6 +415,7 @@
 9106.newcomer_players
 9106.news
 9106.report_fighting_in
+9106.report_smithing_in
 9106.road_toke_end
 9106.send_brew
 9106.send_drill
@@ -471,19 +472,24 @@
 9116.craft_help
 9116.craft_turnin
 9116.craft_turnin_told
+9116.heat_arrive
 9116.heat_craft_help
 9116.heat_ingot_help
 9116.heat_list_help
 9116.heat_strip_help
+9116.vein_offer
 9117.bag_help
 9117.beast_help
 9117.dark_help
 9117.forge_loop_help
+9117.forge_loop_in
 9117.forge_loop_offer
+9117.mine_in
 9117.mine_offer
+9117.report_smithing_offer
+9117.vein_arrive
 9117.vein_forage_help
 9117.vein_lurker_help
-9117.vein_offer
 9117.vein_scavenger_help
 9117.vein_turnin
 9128.bottles
@@ -1360,4 +1366,5 @@
 9153.words_offer
 9161.shoot_offer
 # renamed
+9117.vein_offer -> 9116.vein_offer
 9112.wash_offer -> 9108.wash_offer

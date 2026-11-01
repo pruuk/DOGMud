@@ -1,39 +1,51 @@
-# Quest 37 — Into the Vein (Pothole Coulee, Spoke B / Forge outer ring,
-# capstone). Granted by Survivor Ovell (9117) after quest 36 (Pick the Vein).
-# The player descends the DARK basalt mine (they must cast chrysalis-glow to
-# see: taught in the hub and reinforced by Ovell's dark_help node) and defeats
-# the Stone-Blooded Beast (9123) in the Den at the bottom.
+# Quest 37, Into the Vein (Pothole Coulee, smithing line finale).
 #
-# Route (rooms.txt): Upper Talus 5253 west -> Mine Mouth 5254, down -> Mine
-# Head 5255, west -> Timbered Drift 5256, down -> Lower Drift 5258, west ->
-# Stone Gallery 5259, west -> The Den 5260.
-#
-# Token flow:
-#   37-start  — granted by Ovell's mine_offer dialogue node.
-#   37-end    — granted by the boss-kill trigger below (mob_death 9123). The
-#               rewards block fires on 37-end: the forged blade (10045), a
-#               blacksmithing rank, a permanent Strength gain (stat_info), and
-#               the advanced basalt-iron recipe (recipe_info: the recipe-grant
-#               engine feature added this chunk; the player can then forge their
-#               own basalt-iron blades).
+# Survivor Ovell (9117) offers it (mine_offer) after Pick the Vein (36). The
+# player descends the dark basalt mine (cast glow first) and kills the
+# Stone-Blooded Beast (9123) in the Den (5260).
+# Route: Upper Talus 5253 west to the Mine Mouth 5254, down to the Mine Head
+# 5255, west to the Timbered Drift 5256, down to the Lower Drift 5258, west to
+# the Stone Gallery 5259, west to the Den 5260.
+#   start  kill the beast
+#   slain  report to Ovell
+#   end    Ovell's hand-in mine_in, which pays the forged blade (10045), a
+#          blacksmithing rank, a Strength gain and the basalt-iron recipe
 
 questid: 37
 name: Into the Vein
 description: >-
   A stone-blooded beast has denned at the bottom of the basalt mine below the
   slope. The mine is pitch dark, so cast your glow before you descend, and the
-  beast is the worst thing in it. Take it, and the deep vein is yours.
+  beast is the worst thing in it. Take it, then tell Ovell, and the deep vein
+  is yours.
 secret: false
 
 steps:
   - id: start
     destination:
       room: 5260
-    description: "Survivor Ovell has set you on the mine. The Mine Mouth is west of the Upper Talus. From there the way to the Den is down, west, down, then west twice. The mine is pitch black, so type cast glow before you go down. Other things live in the workings: type consider on a foe to size it up, and flee if a fight turns."
-    hint: "In the Den at the bottom of the mine, type attack beast. If it is dark, type cast glow first."
+    description: >-
+      Survivor Ovell has set you on the mine. The Mine Mouth is west of the
+      Upper Talus. From there the way to the Den is down, west, down, then
+      west twice. The mine is pitch black, so type cast glow before you go
+      down. Other things live in the workings. Type consider on a foe to
+      size it up, and flee if a fight turns.
+    hint: >-
+      In the Den at the bottom of the mine, type attack beast. If it is
+      dark, type cast glow first.
+  - id: slain
+    destination:
+      mob: 9117
+      room: 5251
+    description: >-
+      The stone-blooded beast is dead and the deep vein is open. Climb out
+      of the mine and tell Ovell.
+    hint: >-
+      Go back up to Survivor Ovell in the Collapsed Cut. Type talk ovell.
   - id: end
-    description: "The beast is dead and the deep vein is open. You came in not knowing which end of a hammer to hold. You leave a smith."
-    hint: "You have taken the mine. Speak with Ovell on the slope if you want to hear what it means."
+    description: >-
+      The beast is dead and the deep vein is open. You came in not knowing
+      which end of a hammer to hold. You leave a smith.
 
 rewards:
   itemid: 10045
@@ -42,20 +54,23 @@ rewards:
   recipe_info: "basalt-iron-blade"
   gold: 50
   actor: >-
-    The Den goes still. The beast's fused-stone hide cools under your hand, and
-    the deep vein beyond it catches your light -- a seam of basalt-iron running
-    on into rock no one has worked. You feel the labor of the spoke settle into
-    your arms as a lasting strength, and the shape of a harder recipe settles
-    into your head: you know now how to fold this dark ore into an edge of your
-    own. The blade you carry out is the first of them.
+    Ovell listens with his quartz eye half closed, as if he can hear the
+    deep mine through the rock. When you finish he nods slowly. "Then the
+    vein is yours." He talks you through how the dark ore folds into an
+    edge until the shape of the recipe settles in your head, and he draws
+    a dark blade from under his coat. "Keep that. The first of many." The
+    long work of the slope has settled into your arms as a lasting strength.
 
 triggers:
-  # ── BOSS KILL: defeat the Stone-Blooded Beast -> complete + rewards ──
+  # slain: the Stone-Blooded Beast (9123) falls.
   - event: mob_death
     mob: 9123
     conditions:
       has: ["37-start"]
-      missing: ["37-end"]
+      missing: ["37-slain"]
     actions:
-      - grant: "37-end"
-      - actor: "The stone-blooded beast shudders, its fused hide cracking like cooling slag, and goes down for the last time. The deep mine is quiet."
+      - grant: "37-slain"
+      - actor: >-
+          The stone-blooded beast shudders, its fused hide cracking like
+          cooling slag, and goes down for the last time. The deep mine is
+          quiet. Climb back up to Ovell and type talk ovell.

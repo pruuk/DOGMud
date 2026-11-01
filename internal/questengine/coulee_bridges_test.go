@@ -18,6 +18,10 @@ func TestCouleeBridges_GiverTwoOffersTokeTakes(t *testing.T) {
 		checkBridge(t, toke, 90, "Fighting", "90-report_to_toke__fighting_.yaml",
 			"9112.yaml", "report_fighting_offer", "report_fighting_in", "34-end")
 	})
+	t.Run("Smithing", func(t *testing.T) {
+		checkBridge(t, toke, 91, "Smithing", "91-report_to_toke__smithing_.yaml",
+			"9117.yaml", "report_smithing_offer", "report_smithing_in", "37-end")
+	})
 }
 
 // checkBridge walks one bridge: the quest's shape, the giver's offer gated
@@ -56,6 +60,7 @@ func checkBridge(t *testing.T, toke *dialogue.DialogueFile, id int, line, file, 
 func TestTokeQuestOneOffers_SendToTheGiver(t *testing.T) {
 	toke := loadCouleeTopics(t, "9106.yaml")
 	t.Run("Fighting", func(t *testing.T) { checkTokeSends(t, toke, "send_drill", 32, "vorn") })
+	t.Run("Smithing", func(t *testing.T) { checkTokeSends(t, toke, "send_forge", 35, "rusk") })
 }
 
 func checkTokeSends(t *testing.T, toke *dialogue.DialogueFile, key string, quest int, npc string) {

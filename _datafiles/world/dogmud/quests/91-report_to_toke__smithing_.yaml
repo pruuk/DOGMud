@@ -1,0 +1,27 @@
+# Quest 91, Report to Toke (Smithing) (Pothole Coulee, smithing line bridge).
+#
+# Survivor Ovell (9117) offers it (report_smithing_offer) once Into the Vein
+# (37) is handed in. Crier Toke (9106) takes the hand-in
+# (report_smithing_in). Same shape as quest 90.
+
+questid: 91
+name: Report to Toke (Smithing)
+description: >-
+  Survivor Ovell has asked you to carry the news of the deep mine to Crier
+  Toke in Hub Square.
+secret: false
+
+steps:
+  - id: start
+    destination:
+      mob: 9106  # follow Crier Toke (schedule pothole_toke)
+      room: 5203  # fallback when Crier Toke is not spawned
+    description: >-
+      The stone-blooded beast is dead and the deep vein is open. Crier Toke,
+      who sent you to Smith Rusk, waits in Hub Square for the news.
+    hint: >-
+      Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk
+      toke.
+  - id: end
+    description: >-
+      Toke has your news, and every smith in Gaius will hear it.

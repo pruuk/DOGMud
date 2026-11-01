@@ -1,77 +1,71 @@
-# Quest 36 — Pick the Vein (Pothole Coulee, Forge spoke)
+# Quest 36, Pick the Vein (Pothole Coulee, smithing line, quest 2).
 #
-# Token flow (owner ruling 2026-10-17: one command per step, in order, each
-# trigger gated on the step before it; the order is the one Ovell gives in
-# vein_offer: the scavenger, then the lurker, then the forage):
-#   36-start:     granted by Survivor Ovell's dialogue (vein_offer node).
-#                 Requires 35-end (First Heat with Smith Rusk). Teaches:
-#                 real combat on the talus slope, gathering local ore via
-#                 forage, and the component bag mechanic.
-#   36-scavenger: mob_death trigger on Scree Scavenger (9118). Requires
-#                 36-start. Scavengers crawl the Lower Talus, the Scree
-#                 Field and the Upper Talus (rooms 5249/5250/5253).
-#   36-lurker:    mob_death trigger on Talus Lurker (9119). Requires
-#                 36-scavenger. Lurkers wait in the Ore Pocket and on the
-#                 Upper Talus, the high shoulder (rooms 5252/5253).
-#   36-ore:       command trigger on forage in rooms 5250 or 5252.
-#                 Requires 36-lurker. A forage that rolls and finds
-#                 nothing still counts, so its lines never claim ore.
-#   36-end:       granted by Ovell's dialogue (vein_turnin node, gated on
-#                 36-ore, the last step).
-#
-# Routes (rooms.txt): Collapsed Cut 5251 north -> Lower Talus 5249; Cut west
-# -> Ore Pocket 5252; Lower Talus west -> Scree Field 5250; Scree Field south
-# -> Ore Pocket, west -> Upper Talus 5253; Upper Talus west -> Mine Mouth.
-#
-# Design intent: the slope is more dangerous than the forge yard but less
-# than the wash. Scree Scavengers are fast; Talus Lurkers are durable.
-# Foraging the vein teaches the forage command and the component bag in
-# the same breath. Ovell's turn-in gifts the Component Pouch (item 30033)
-# so the lesson lands at the moment of reward.
+# Smith Rusk (9116) offers it (vein_offer) once First Heat (35) is handed
+# in. Survivor Ovell (9117) takes the hand-in (vein_turnin) and then offers
+# Into the Vein (37).
+#   start      go to the Collapsed Cut and talk to Ovell
+#   met        topic_heard on Ovell's vein_arrive topic
+#   scavenger  kill a scree scavenger (9118)
+#   lurker     kill a talus lurker (9119), after the scavenger
+#   ore        forage the vein (rooms 5250 or 5252), after the lurker; a
+#              forage that finds nothing still counts
+#   end        Ovell's hand-in, which gifts the Component Pouch (30033)
 
 questid: 36
 name: Pick the Vein
 description: >-
-  Survivor Ovell pulled himself out of a cave-in on the talus slope.
-  His leg keeps him off the high scree, but the basalt-iron vein is
-  still there and so are the scavengers and lurkers that claimed it.
-  He has asked you to clear them out and work the vein yourself.
+  Survivor Ovell pulled himself out of a cave-in on the talus slope. His leg
+  keeps him off the high scree, but the basalt-iron vein is still there and
+  so are the scavengers and lurkers that claimed it. Smith Rusk has sent you
+  to clear them out and work the vein yourself.
 secret: false
 
 steps:
   - id: start
     destination:
+      mob: 9117
+      room: 5251
+    description: >-
+      Smith Rusk has sent you to Survivor Ovell, who pulled himself out of a
+      cave-in on the talus slope. From the Coulee Smithy, go north to the
+      Quench Shed, west twice to the Lower Talus, then south into the
+      Collapsed Cut.
+    hint: >-
+      From the Coulee Smithy, go north, west twice, then south into the
+      Collapsed Cut. Type talk ovell.
+  - id: met
+    destination:
       room: 5249
     description: >-
-      Ovell needs the slope cleared, starting with a scree scavenger.
-      They crawl the Lower Talus just north of his cut, and the Scree
-      Field and Upper Talus beyond it. If a fight turns against you,
-      flee. If you die, you wake at the Mending Hut, not in the rock.
+      Ovell needs the slope cleared, starting with a scree scavenger. They
+      crawl the Lower Talus just north of his cut, and the Scree Field and
+      Upper Talus beyond it. If a fight turns against you, flee. If you
+      die, you wake at the Mending Hut, not in the rock.
     hint: >-
-      Go north from the Collapsed Cut to the Lower Talus and type
-      attack scavenger. If it is dark, type cast glow first.
+      Go north from the Collapsed Cut to the Lower Talus and type attack
+      scavenger. If it is dark, type cast glow first.
   - id: scavenger
     destination:
       room: 5252
     description: >-
-      One scree scavenger is down. Next is a talus lurker. One waits
-      in the Ore Pocket, west of Ovell's cut and south of the Scree
-      Field, and another on the Upper Talus. Lurkers are tough, so
-      flee if the fight turns.
+      One scree scavenger is down. Next is a talus lurker. One waits in the
+      Ore Pocket, west of Ovell's cut and south of the Scree Field, and
+      another on the Upper Talus. Lurkers are tough, so flee if the fight
+      turns.
     hint: >-
       In the Ore Pocket, west of the Collapsed Cut, type attack lurker.
   - id: lurker
     destination:
       room: 5250
     description: >-
-      The talus lurker is down. Now work the basalt-iron vein. It
-      shows in the bluff above the Scree Field and runs into the
-      rubble of the Ore Pocket below it.
+      The talus lurker is down. Now work the basalt-iron vein. It shows in
+      the bluff above the Scree Field and runs into the rubble of the Ore
+      Pocket below it.
     hint: >-
-      In the Ore Pocket or on the Scree Field just north of it, type
-      forage.
+      In the Ore Pocket or on the Scree Field just north of it, type forage.
   - id: ore
     destination:
+      mob: 9117
       room: 5251
     description: >-
       You have worked the basalt-iron vein, and the slope is cleared.
@@ -81,13 +75,10 @@ steps:
       Pocket, and type talk ovell.
   - id: end
     description: >-
-      The slope is clear and you have worked the vein. Ovell
-      pressed a component pouch into your hands. Once you wear
-      it, your crafting materials go into it on their own. The
-      mine below still holds something he would not name.
-    hint: >-
-      Ovell says the mine below the slope is pitch dark and
-      something waits in it. Before you go down, type cast glow.
+      The slope is clear and you have worked the vein. Ovell pressed a
+      component pouch into your hands. Once you wear it, your crafting
+      materials go into it on their own. The mine below still holds
+      something he would not name.
 
 rewards:
   skillinfo: "blacksmithing:1"
@@ -105,11 +96,24 @@ rewards:
     salvage it. The slope gives back what you put into it, mostly."
 
 triggers:
-  # ── SCAVENGER: defeat a scree scavenger (mob 9118) ─────────────────
+  # met: hearing Ovell's vein_arrive topic.
+  - event: topic_heard
+    mob: 9117
+    topic: vein_arrive
+    conditions:
+      has: ["36-start"]
+      missing: ["36-met"]
+    actions:
+      - grant: "36-met"
+      - actor: >-
+          Ovell has told you what the slope needs. The scavenger first. Go
+          north to the Lower Talus and type attack scavenger.
+
+  # scavenger: a scree scavenger (9118).
   - event: mob_death
     mob: 9118
     conditions:
-      has: ["36-start"]
+      has: ["36-met"]
       missing: ["36-scavenger"]
     actions:
       - grant: "36-scavenger"
@@ -117,7 +121,7 @@ triggers:
           The scree scavenger goes still on the rock. Next is the
           talus lurker. In the Ore Pocket, type attack lurker.
 
-  # ── LURKER: defeat a talus lurker (mob 9119) ────────────────────────
+  # lurker: a talus lurker (9119), after the scavenger.
   - event: mob_death
     mob: 9119
     conditions:
@@ -130,9 +134,8 @@ triggers:
           rise. Now work the vein. In the Ore Pocket or on the Scree
           Field, type forage.
 
-  # ── ORE: forage the basalt-iron vein (room 5250 — scree field) ──────
-  # A forage can roll and find nothing; it still counts, so this line
-  # does not claim ore was found.
+  # ore: forage the vein on the Scree Field (5250). A forage can find
+  # nothing; it still counts, so the line claims no ore.
   - event: command
     command: forage
     room: 5250
@@ -146,7 +149,7 @@ triggers:
           seam is open to anyone now. Go back to Ovell in the
           Collapsed Cut and type talk ovell.
 
-  # ── ORE: forage the basalt-iron vein (room 5252 — ore pocket) ───────
+  # ore: forage the vein in the Ore Pocket (5252).
   - event: command
     command: forage
     room: 5252
