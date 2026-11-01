@@ -69,7 +69,7 @@ Type <ansi fg="command">help <recipe-name></ansi> for details on any recipe.
 
   <ansi fg="command">craft list</ansi>          Show all recipes with status.
   <ansi fg="command">craft <recipe></ansi>      Begin enchanting an item.
-  <ansi fg="command">disenchant <item></ansi>   Remove an enchantment from an equipped item.
+  <ansi fg="command">disenchant <item></ansi>   Remove an enchantment from an item in your pack.
   <ansi fg="command">skills</ansi>              Check your current enchanting skill level.
 
 <ansi fg="yellow">See Also:</ansi>

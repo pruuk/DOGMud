@@ -22,3 +22,16 @@ topics:
     costs.
   hints: To see what Bex sells and what it costs, type list. For more, type help
     buy.
+- key: station_help
+  kind: info
+  label: What can I make at your loom?
+  text: The loom is where cloth and hide become something you can wear, and anyone
+    may use it. Everyone knows the linen tunic and the cloth pants. Each takes two
+    cloth strips and a thread spool. I sell the thread. Cloth strip I do not stock,
+    it comes up the road from the city drapers. Hunter Delk teaches the scab-hide jerkin
+    to whoever breaks the pack south of his camp, and it is made right here at this
+    loom, from two pack-hide pelts off the hounds, a thread spool and a bone needle.
+    The spool and the needle you can buy from me.
+  hints: The loom is a crafting station. Type craft list beside it to see what you
+    can make. For more, type help tailoring.
+  marked: true

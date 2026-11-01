@@ -61,3 +61,41 @@ topics:
     I will know your size, your salt, and your bad habits by the third visit. Cheaper
     than writing it down and politer than asking twice.'
   hints: Choose a line below to learn about her wares or the sling.
+- key: appraise_help
+  kind: info
+  label: Can you tell me what an item really is?
+  text: I can, for a small fee. Stand by me, or any shopkeeper, and type appraise
+    and the item's name, and I will tell you what it does and what it is worth. Small
+    trinkets you find on the road I look over for free. It is the least I can do for
+    the chance to buy them.
+  hints: A merchant reads an item for a small fee. Type appraise and the item's name.
+    For more, type help appraise.
+  marked: true
+- key: offer_help
+  kind: info
+  label: How do I know what you would pay?
+  text: Ask before you sell. Type offer and the item's name, and I will tell you what
+    I would give for it. You keep it until you say sell. A wise seller asks two shops
+    before he picks one.
+  hints: Offer asks a merchant's price without selling. Type offer and the item's name.
+    For more, type help offer.
+  marked: true
+- key: identify_help
+  kind: info
+  label: Can I learn what an item does myself?
+  text: You already can. Everyone who wakes at the pool knows the identify spell.
+    Cast it on something you carry or wear and it tells you what the thing does. It
+    costs you a little of your conviction and no coin at all. Save my fee for the
+    things you cannot read.
+  hints: Identify is a spell you already know. Type cast identify and the item's name.
+    For more, type help identify.
+  marked: true
+- key: barter_help
+  kind: info
+  label: Why do your prices change?
+  text: Because my shelves change. Plenty of a thing and I sell it cheap. The last
+    one in the coulee costs what it costs. The other half is you. A trader with a
+    good tongue pays less and is paid more, and the knack grows every time you buy,
+    sell or appraise. Charm counts for more than muscle at a counter.
+  hints: Bartering makes buying cheaper and selling dearer, and trading trains it.
+    For more, type help bartering.

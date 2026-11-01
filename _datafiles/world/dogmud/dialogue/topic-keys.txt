@@ -395,6 +395,10 @@
 9103.bank_lesson
 9103.knuckles
 9103.ledger
+9104.appraise_help
+9104.barter_help
+9104.identify_help
+9104.offer_help
 9104.remembers
 9104.selling
 9104.sling
@@ -1352,8 +1356,12 @@
 9604.stock_general
 9605.backpack
 9605.loom
+9605.station_help
+9606.station_help
 9606.ward
 9607.gem
+9607.station_help
+9608.station_help
 9608.stew
 9609.deposit
 9609.withdraw

@@ -14,3 +14,12 @@ topics:
     Nothing rushed leaves this stall. The light off the reed water shows a stone's
     true color better than any lamp indoors. That is half of why I set up out here
     instead of in a proper shop.
+- key: station_help
+  kind: info
+  label: What can I make at your bench?
+  text: This is a jeweler's bench, and you may work it yourself. Start with a copper
+    ring. One copper wire and one pinch of gem dust, and I sell both. Stand here and
+    twist the wire round. It will not be pretty the first time. Nothing is.
+  hints: The bench is a jewelcrafting station. Type craft copper ring beside it. For
+    more, type help jewelcrafting.
+  marked: true

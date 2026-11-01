@@ -1,6 +1,7 @@
 package questengine
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
@@ -45,4 +46,59 @@ func TestVorn9108_ShoutsAreNotForLater(t *testing.T) {
 	require.NotContains(t, text+" "+hints, "come later")
 	require.Contains(t, text, "warcry")
 	require.Contains(t, hints, "type rally")
+}
+
+func TestOnna9104_TeachesTrading(t *testing.T) {
+	cases := map[string]string{
+		"appraise_help": "type appraise",
+		"offer_help":    "type offer",
+		"identify_help": "type cast identify",
+		"barter_help":   "help bartering",
+	}
+	for key, want := range cases {
+		_, hints := openInfo(t, "9104.yaml", key)
+		require.Contains(t, hints, want, "Onna's %s hint names %q", key, want)
+	}
+	text, _ := openInfo(t, "9104.yaml", "identify_help")
+	require.Contains(t, text, "no coin", "the identify spell is free of gold")
+}
+
+func TestCrafters_NameAStationRecipe(t *testing.T) {
+	cases := []struct{ file, recipe string }{
+		{"9605.yaml", "linen tunic"},
+		{"9605.yaml", "scab-hide jerkin"},
+		{"9606.yaml", "honed-edge"},
+		{"9607.yaml", "copper ring"},
+		{"9608.yaml", "trail rations"},
+	}
+	for _, c := range cases {
+		text, hints := openInfo(t, c.file, "station_help")
+		require.Contains(t, text+" "+hints, c.recipe, "%s names %s", c.file, c.recipe)
+		require.Contains(t, hints, "type craft", "%s hint names the craft command", c.file)
+	}
+	text, _ := openInfo(t, "9606.yaml", "station_help")
+	require.Contains(t, text, "disenchant")
+	require.Contains(t, text, "in your pack", "disenchant reads the backpack (skill.disenchant.go)")
+
+	// The help page agrees with the code and with Daff: disenchant takes an
+	// item from the backpack, not an equipped one.
+	help := string(repoFile(t, "_datafiles", "world", "dogmud", "templates", "help", "enchanting.template"))
+	require.NotContains(t, help, "from an equipped item")
+	require.Contains(t, help, "Remove an enchantment from an item in your pack.")
+}
+
+// Enchanter Skell (9606) is renamed so Bowmaster Skell (9169), quest 52's
+// boss, keeps the name (spec "Skill coverage" ruling).
+func TestEnchanter9606_IsDaff(t *testing.T) {
+	mob := string(repoFile(t, "_datafiles", "world", "dogmud", "mobs", "pothole_coulee", "9606-enchanter_daff.yaml"))
+	// The working tree is CRLF on Windows, so compare without line endings.
+	mob = strings.ReplaceAll(mob, "\r\n", "\n")
+	require.Contains(t, mob, "  name: Enchanter Daff\n")
+	for _, rel := range [][]string{
+		{"_datafiles", "world", "dogmud", "dialogue", "pothole_coulee", "9606.yaml"},
+		{"_datafiles", "world", "dogmud", "schedules", "pothole_coulee", "pothole_coulee_enchanter.yaml"},
+		{"_datafiles", "world", "dogmud", "mobs", "pothole_coulee", "9607-jeweler_vurl.yaml"},
+	} {
+		require.NotContains(t, string(repoFile(t, rel...)), "Skell", "%v still names Skell", rel)
+	}
 }
