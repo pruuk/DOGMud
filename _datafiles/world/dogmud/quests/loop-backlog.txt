@@ -4,7 +4,6 @@
 # warning; any finding not listed refuses boot, CI and the quest editor's
 # save. A line with no matching finding fails CI: delete it when its finding
 # is fixed. Never add a line by hand to make new content pass.
-chain 47 mob 9157 topic stones_offer
 chain 48 mob 9160 topic shrine_offer
 chain 50 mob 9162 topic canyon_offer
 chain 52 mob 9162 topic range_loop_offer

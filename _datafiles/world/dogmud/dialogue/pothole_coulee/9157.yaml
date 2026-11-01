@@ -12,21 +12,26 @@ opener:
     text: You came up here before you sat with Wenna, I think. The story starts at
       the farmstead, not the stones. Go and learn the way of the folk from her first,
       and come back when she names you a friend. The deep telling is not for strangers.
-    hints: Return to Elder Wenna at the farmstead and finish her lesson before coming
-      to Loresinger Hale.
+    hints: Elder Wenna at the farmstead teaches the way of the folk first. Crier Toke
+      in Hub Square can send you to her.
   - questRequired:
     - 47-end
     questExcluded:
     - 48-start
     - 48-end
-    text: Wenna's charm is on you, so you are one of ours now. Good. Then I can use
-      you, and you can earn the deeper story in the doing. There is a quarrel souring
-      the green that wants settling. When you are ready to be of use, I will tell
-      you about the stones, or about the dispute.
-    hints: Choose The Standing Stones below to take on the loresinger's task, or
-      to hear about the quarrel on the green.
+    text: Wenna's charm is on you, so you are one of ours now. When she sends you to
+      me, I will have a use for you.
+    hints: Talk to Elder Wenna in the Commons Yard to take up the stones' task.
   - questRequired:
     - 48-start
+    questExcluded:
+    - 48-met
+    - 48-end
+    text: Wenna sent you. Good. Then I can use you, and you can earn the deeper story
+      in the doing.
+    hints: Choose a line below to hear the task Wenna sent you for.
+  - questRequired:
+    - 48-met
     questExcluded:
     - 48-taunt
     - 48-end
@@ -42,30 +47,43 @@ opener:
     hints: Choose The Standing Stones below to report.
   - questRequired:
     - 48-end
+    questExcluded:
+    - 49-start
+    - 49-end
     text: You quieted the green with a handful of words. Ferd has not stopped thanking
       the stones for it. You have the reckoning-bone now. Read it when you can,
-      though the oldest end will baffle you as it baffles me. The shrine is north,
-      past the Tall Stone. Sere keeps the thing the bone only points at. Go on.
-    hints: Head north past the Tall Stone to the old shrine and type talk sere to
-      find Hermit Sere.
+      though the oldest end will baffle you as it baffles me. There is a thing the
+      bone only points at. When you are ready, I will send you to it.
+    hints: Choose The Old Shrine below to go on to the shrine.
+  - questRequired:
+    - 49-start
+    questExcluded:
+    - 49-find
+    - 49-end
+    text: Sere is waiting at the old shrine. The way is not straight, so mind the
+      turn at the Tall Stone.
+    hints: From the Stone Circle, go north twice to the Tall Stone, then west, then
+      north twice to the Old Shrine. Type talk sere.
+  - questRequired:
+    - 48-end
+    text: You quieted the green with a handful of words. Ferd has not stopped thanking
+      the stones for it.
+    hints: Choose a line below to hear about the stones and the old story.
 topics:
-- key: stones_offer
-  kind: offer
-  quest: 48
-  label: The Standing Stones
-  playerLine: Do you want help settling the quarrel on the green?
+- key: stones_meet
+  kind: info
+  label: Wenna sent me to help with the stones.
   text: Then earn the telling. Just north of here, on the mustering green, young Garrow
     has squared up against old Ferd and dug in past all reason, a boundary quarrel
     swollen out of all sense. Gentle words have only fed it. So do not be gentle.
-    Go and taunt him. Land one hard, true word where his bluster is thinnest
-    and break his nerve. Settle the green, and the deep story is yours.
+    Go and taunt him. Land one hard, true word where his bluster is thinnest and
+    break his nerve. He will quit the green. Settle it, and the deep story is yours.
   hints: Go north to the Mustering Green and type taunt garrow.
   questRequired:
-  - 47-end
-  questExcluded:
   - 48-start
+  questExcluded:
+  - 48-met
   - 48-end
-  grantsQuest: 48-start
 - key: stones_turnin
   kind: handin
   quest: 48
@@ -75,15 +93,31 @@ topics:
     true word, and you have the beginnings of it. Take the reckoning-bone. It carries
     the whole story of us in the old script. And carry this with it: the oldest marks
     on it are not ours. The folk came from somewhere we no longer name. Sere keeps
-    the proof of it, north at the shrine. Go and look on the thing the bone only
-    points at.'
-  hints: Quest complete. You received the reckoning-bone. Head north past the Tall
-    Stone to the old shrine and type talk sere to find Hermit Sere.
+    the proof of it at the old shrine. When you are ready, I will send you to her.'
+  hints: Quest complete. You received the reckoning-bone. Choose The Old Shrine below
+    when you are ready for the shrine.
   questRequired:
   - 48-taunt
   questExcluded:
   - 48-end
   grantsQuest: 48-end
+- key: shrine_offer
+  kind: offer
+  quest: 49
+  label: The Old Shrine
+  playerLine: Will you send me to the old shrine?
+  text: Sere keeps it, past the Tall Stone. She has felt something under its floor
+    for thirty years, the same mark the bone carries at its oldest end. Go and see
+    her. She will tell you what she needs.
+  hints: From the Stone Circle, go north twice to the Tall Stone, then west, then
+    north twice to the Old Shrine. Type talk sere.
+  breadcrumb: Settle the green first. The shrine is not for the unready.
+  questRequired:
+  - 48-end
+  questExcluded:
+  - 49-start
+  - 49-end
+  grantsQuest: 49-start
 - key: stones_progress
   kind: info
   label: How do I break Garrow's nerve?
@@ -91,7 +125,7 @@ topics:
     on Garrow, where his bluster is thinnest. Words alone. No fists.
   hints: Go north to the Mustering Green and type taunt garrow.
   questRequired:
-  - 48-start
+  - 48-met
   questExcluded:
   - 48-taunt
   - 48-end
@@ -104,7 +138,7 @@ topics:
     up against old Ferd over a boundary stone, and neither will give. Soft words have
     only hardened them. It wants a harder word. If you have the nerve to be that word,
     that is the task I have for you.
-  hints: Hale's task for this is The Standing Stones.
+  hints: Garrow stands on the Mustering Green, just north of the Stone Circle.
   questExcluded:
   - 48-taunt
 - key: dispute_settled
@@ -114,6 +148,21 @@ topics:
     pride to nurse somewhere out of sight. That was your doing.
   questRequired:
   - 48-taunt
+- key: rally
+  kind: info
+  label: How do I steady my allies in a fight?
+  text: With a shout. A rally steadies you and everyone fighting beside you, so you
+    all dodge, parry and block the better for a while. It costs conviction, and the
+    better your rhetoric and charisma, the stronger it rings. You can sound it before
+    a fight begins.
+  hints: Type rally. For more, type help rally.
+- key: warcry
+  kind: info
+  label: What does a war cry do?
+  text: A war cry puts heart into the blows. You and everyone fighting beside you hit
+    harder for a while. It costs conviction, it grows with your rhetoric and charisma,
+    and you can sound it before a fight begins, the same as a rally.
+  hints: Type warcry. For more, type help warcry.
 - key: ring
   kind: info
   label: What story do these stones tell?

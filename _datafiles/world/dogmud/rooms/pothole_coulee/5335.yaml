@@ -27,6 +27,9 @@ exits:
     roomid: 5337
 spawninfo:
 - mobid: 9158
+  message: Sullen Garrow stamps back onto the green, still sour.
+  narraterespawn: true
+  respawnrate: 5 rounds
 - mobid: 9159
 nouns:
   green: The mustering green is not quite level, the southwest corner

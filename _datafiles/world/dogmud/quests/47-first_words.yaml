@@ -45,9 +45,8 @@ steps:
       Go back to Elder Wenna in the Commons Yard and type talk wenna.
   - id: end
     description: >-
-      Wenna has named you a friend of the folk. West and north the standing
-      stones ring the old ground; the loresinger Hale keeps them, and the
-      deeper story with them.
+      Wenna has named you a friend of the folk. When you are ready, she will
+      send you on to the standing stones.
 
 rewards:
   stat_info: "charisma:1"
@@ -60,9 +59,9 @@ rewards:
     charm of plaited grass and polished bone and presses it into your hand. "Wear
     it where it shows. The folk will know the sign and treat you the kindlier for
     it." A little of her unhurried certainty seems to stay with you as she turns
-    back to the yard. "The stones are west and north of here. Hale keeps them.
-    Talk to him about the standing stones. He has been waiting a long time to
-    tell their story to someone who will sit still for it."
+    back to the yard. "When you are ready, I will send you on to the stones.
+    Hale keeps them, and he has been waiting a long time to tell their story to
+    someone who will sit still for it."
   observer: "Wenna presses a small plaited charm into the newcomer's hand."
 
 triggers:

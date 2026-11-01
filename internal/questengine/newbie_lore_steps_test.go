@@ -127,3 +127,54 @@ func TestQuest47FirstWords_GiverToGiver(t *testing.T) {
 		require.NotContains(t, raw, "reckoning")
 	})
 }
+
+func TestQuest48StandingStones_GiverToGiver(t *testing.T) {
+	const green, circle, garrow, ferd = 5335, 5333, 9158, 9159
+	f := "48-the_standing_stones.yaml"
+	q := loadShippedQuest(t, f, 48)
+	require.Equal(t, []string{"start", "met", "taunt", "end"}, newLinearPlayer(q).steps,
+		"start and taunt keep their ids so a saved player resumes; met is the meeting with Hale")
+	turnIn := turnInRequires(t, "9157.yaml", "stones_turnin")
+	require.Equal(t, []string{"48-taunt"}, turnIn)
+	loreOnlyFinalStepReports(t, q, "hale")
+	loreOfferOn(t, 48, "9153.yaml")
+	require.Contains(t, squash(loreStepHint(t, q, "met")), "type taunt garrow")
+	require.Contains(t, squash(loreStepHint(t, q, "start")),
+		"north, west, north, north and north to the outer ring, then west into the stone circle")
+	require.Equal(t, circle, foldingWalk(t, 5324, "north", "west", "north", "north", "north", "west"))
+
+	t.Run("walk in order", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("command", EventDetails{Command: "taunt", RoomId: green, MobId: garrow})
+		require.Equal(t, "start", w.p.current, "a taunt before Hale's lesson does not count")
+		w.notify("topic_heard", EventDetails{MobId: 9157, Topic: "stones_meet"})
+		require.Equal(t, "met", w.p.current)
+		w.notify("command", EventDetails{Command: "taunt", RoomId: circle, MobId: garrow})
+		require.Equal(t, "met", w.p.current, "a taunt away from the green must not count")
+		w.notify("command", EventDetails{Command: "taunt", RoomId: green, MobId: ferd})
+		require.Equal(t, "met", w.p.current, "a taunt at Ferd, not Garrow, must not count")
+		w.notify("command", EventDetails{Command: "taunt", RoomId: green})
+		require.Equal(t, "met", w.p.current, "a taunt at no one must not count")
+		w.notify("command", EventDetails{Command: "taunt", RoomId: green, MobId: garrow})
+		require.Equal(t, "taunt", w.p.current)
+		require.True(t, holdsAll(w.p, turnIn))
+	})
+
+	t.Run("Hale's greeting and answers follow the step", func(t *testing.T) {
+		checkMeetStep(t, "hale", "9157.yaml", f, 48, "stones_meet", "type taunt garrow", "30-end", "47-end")
+		checkTopicSteps(t, "hale", "9157.yaml", []topicStep{
+			{f, 48, "met", "type taunt garrow", []string{"47-end"}, "stones_progress", false},
+			{f, 48, "taunt", "", []string{"47-end"}, "stones_turnin", true},
+		})
+	})
+
+	t.Run("Hale teaches rally and warcry", func(t *testing.T) {
+		hale := loadCouleeTopics(t, "9157.yaml")
+		for key, cmd := range map[string]string{"rally": "type rally", "warcry": "type warcry"} {
+			tp := hale.FindTopic(key)
+			require.NotNil(t, tp, "Hale has no %s topic", key)
+			require.Equal(t, dialogue.KindInfo, tp.Kind)
+			require.Contains(t, squash(tp.Hints), cmd)
+		}
+	})
+}

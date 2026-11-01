@@ -587,17 +587,21 @@
 9153.folk
 9153.help_node
 9153.stones
+9153.stones_offer
 9153.words_lesson
 9153.words_progress
 9153.words_turnin
 9157.dispute
 9157.dispute_settled
 9157.origins
+9157.rally
 9157.ring
-9157.stones_offer
+9157.shrine_offer
+9157.stones_meet
 9157.stones_progress
 9157.stones_turnin
 9157.voice
+9157.warcry
 9158.back
 9158.ferd
 9159.garrow
@@ -1400,6 +1404,7 @@
 9144.cast_offer
 9145.grove_offer
 9153.words_offer
+9157.stones_offer
 9161.shoot_offer
 # renamed
 9117.vein_offer -> 9116.vein_offer
