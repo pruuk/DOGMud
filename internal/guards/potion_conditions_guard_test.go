@@ -60,10 +60,15 @@ func TestPotionMagnitudeIsDeclared(t *testing.T) {
 func TestPurgeablePotionSetOnTheShippedWorld(t *testing.T) {
 	loadShippedConditionsAndItems(t)
 	set := items.PotionEffectConditionIds()
-	for _, id := range []int{7, 44, 47, 48, 49, 51, 82, 130} {
+	for _, id := range []int{7, 47, 48, 49, 51, 82, 130} {
 		if !set[id] {
 			t.Errorf("condition %d is granted only by a potion; it must be in the set", id)
 		}
+	}
+	// 44 is Herbal Tea's. The tea is a cooked drink since #375 phase 7, and
+	// the purge never strips a meal's condition.
+	if set[44] {
+		t.Error("condition 44 is Herbal Tea's, a cooked drink; it must not be in the set")
 	}
 	// 70 is the draught's own flavour condition. 75 is nausea, which the
 	// drink path applies on an overdrink (drink.go) and no item names in its

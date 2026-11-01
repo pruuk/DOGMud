@@ -255,12 +255,16 @@ func (i *Item) longDescriptionFrom(iSpec ItemSpec) string {
 	} else if iSpec.Subtype == Drinkable {
 
 		longDesc.WriteString("\n")
-		longDesc.WriteString(` - You could probably <ansi fg="command">drink</ansi> this.`)
+		longDesc.WriteString(` - You could probably <ansi fg="command">quaff</ansi> this.`)
 
 	} else if iSpec.Subtype == Edible {
 
 		longDesc.WriteString("\n")
-		longDesc.WriteString(` - You could probably <ansi fg="command">eat</ansi> this.`)
+		if iSpec.Type == Drink {
+			longDesc.WriteString(` - You could probably <ansi fg="command">drink</ansi> this.`)
+		} else {
+			longDesc.WriteString(` - You could probably <ansi fg="command">eat</ansi> this.`)
+		}
 
 	} else if iSpec.Type == Lockpicks {
 

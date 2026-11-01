@@ -54,13 +54,14 @@ func TestPurgeableConditionIdsOnTheShippedWorld(t *testing.T) {
 	}
 
 	set := purgeableConditionIds()
-	for _, id := range []int{7, 44, 47, 48, 49, 51, 82, 130} {
+	for _, id := range []int{7, 47, 48, 49, 51, 82, 130} {
 		if !set[id] {
 			t.Errorf("condition %d is a potion-only effect; the purge must strip it", id)
 		}
 	}
 	for id, why := range map[int]string{
 		5:  "also granted by food and bandages; stripping it would undo a meal",
+		44: "Herbal Tea's, a cooked drink since #375 phase 7; the purge never strips a meal's",
 		70: "the Purging Draught's own flavour condition",
 		76: "the weakness the purge applies afterwards",
 		93: "a detox item's own condition",
