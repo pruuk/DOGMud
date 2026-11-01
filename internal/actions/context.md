@@ -106,6 +106,11 @@ the success line says eat or drink by the item's type. A mob refuses silently
 (`SendText` is a no-op), and the room line goes out through
 `Room.SendTextVisualHidingNames` as `Quaff`'s do (`food_room_line_sight_test.go`).
 
+On success, for a player actor only, `ConsumeFood` raises the `eat` command
+event (`questengine.NotifyCommand`, naming the food with `TargetItem`) after
+the meal's conditions are applied; both verbs raise `eat`, a mob raises nothing
+(`internal/usercommands/eat_quest_event_test.go`).
+
 The lookup (`findFood`), in order: edible in the pack, edible in the bandolier
 (`Character.FindInPotionsWhere`, oldest first), a potion in either (refused with
 `refusal.QuaffPotion`), anything else carried (the "can't" line), nothing
