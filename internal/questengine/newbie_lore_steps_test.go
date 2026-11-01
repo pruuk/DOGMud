@@ -178,3 +178,128 @@ func TestQuest48StandingStones_GiverToGiver(t *testing.T) {
 		}
 	})
 }
+
+// searchIn is the search command in a room: since #375 phase 7 quests 49 and
+// 58 listen for the command itself, any search in the Reliquary.
+func searchIn(roomId int) EventDetails {
+	return EventDetails{Command: "search", RoomId: roomId}
+}
+
+func TestQuest49OldShrine_GiverToGiver(t *testing.T) {
+	const reliquary, nave, shrine, circle = 5343, 5342, 5341, 5333
+	f := "49-the_old_shrine.yaml"
+	q := loadShippedQuest(t, f, 49)
+	require.Equal(t, []string{"start", "met", "find", "end"}, newLinearPlayer(q).steps,
+		"start and find keep their ids so a saved player resumes; met is the meeting with Sere")
+	turnIn := turnInRequires(t, "9160.yaml", "shrine_turnin")
+	require.Equal(t, []string{"49-find"}, turnIn)
+	loreOnlyFinalStepReports(t, q, "sere")
+	loreOfferOn(t, 49, "9157.yaml")
+
+	// #689: the way from the Stone Circle is north twice, west, north twice.
+	require.Contains(t, squash(loreStepHint(t, q, "start")),
+		"north twice to the tall stone, then west, then north twice to the old shrine")
+	require.Equal(t, shrine, foldingWalk(t, circle, "north", "north", "west", "north", "north"))
+
+	met := strings.ToLower(loreStepHint(t, q, "met"))
+	require.True(t, strings.HasPrefix(met, "from the old shrine"),
+		"hint can be typed anywhere, so the directions start from where Sere gives the lesson")
+	require.Contains(t, met, "type search floor")
+	require.Contains(t, met, "type help search", "the lesson points at its help page")
+	require.NotContains(t, met, "just search", "plain search counts as fully, so the hint no longer ranks the two")
+	require.NotContains(t, met, "look at", "looking at the find is not a step")
+	require.NotContains(t, met, "go up", "the Reliquary is west then north of the shrine, not up")
+	require.Equal(t, reliquary, foldingWalk(t, shrine, "west", "north"))
+	require.Equal(t, shrine, foldingWalk(t, reliquary, "south", "east"), "the way back to Sere")
+
+	t.Run("the Reliquary hints at the floor, never instructs, and keeps no disc", func(t *testing.T) {
+		desc := strings.ToLower(roomDescription(t, "pothole_coulee", reliquary))
+		require.Contains(t, desc, "flagstone floor")
+		require.NotContains(t, desc, "search", "a room hints at its secret; the step hint teaches the command (ruling 7)")
+		require.NotContains(t, desc, "lying under", "no line promises a find the room no longer holds")
+		room := strings.ToLower(string(repoFile(t, "_datafiles", "world", "dogmud", "rooms", "pothole_coulee", "5343.yaml")))
+		require.NotContains(t, room, "disc", "the disc hidden noun moved out with quest 76 (#625)")
+		require.NotContains(t, room, "admit a finger", "no line promises a find the room no longer holds")
+	})
+
+	t.Run("walk in order", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("command", searchIn(reliquary))
+		require.Equal(t, "start", w.p.current, "a search before Sere's lesson does not count")
+		w.notify("topic_heard", EventDetails{MobId: 9160, Topic: "shrine_meet"})
+		require.Equal(t, "met", w.p.current)
+		w.notify("command", searchIn(nave))
+		require.Equal(t, "met", w.p.current, "a search outside the Reliquary must not count")
+		w.notify("room_interact", EventDetails{RoomId: reliquary, Verb: "look", Noun: "floor", RoomNoun: "floor"})
+		require.Equal(t, "met", w.p.current, "looking at the floor is not searching it")
+		w.notify("command", searchIn(reliquary))
+		require.Equal(t, "find", w.p.current)
+		require.True(t, holdsAll(w.p, turnIn))
+		require.Empty(t, w.ctx.discovered, "there is no hidden noun to discover any more")
+	})
+
+	t.Run("Sere's greeting and answers follow the step", func(t *testing.T) {
+		checkMeetStep(t, "sere", "9160.yaml", f, 49, "shrine_meet", "type search floor", "30-end", "47-end", "48-end")
+		checkTopicSteps(t, "sere", "9160.yaml", []topicStep{
+			{f, 49, "met", "type search floor", []string{"47-end", "48-end"}, "shrine_progress", false},
+			{f, 49, "find", "", []string{"47-end", "48-end"}, "shrine_turnin", true},
+		})
+	})
+
+	// A character saved before the meeting step may hold 49-start and 49-find
+	// with no 49-met. Sere must not greet it as a stranger or teach the lesson
+	// again, and Hale must not send it back to her.
+	t.Run("a player saved on find without the meeting is not sent back", func(t *testing.T) {
+		// Tokens are held outright: playerOn(q, ...) derives quest 49's own
+		// tokens from the step, so it would grant 49-met too. A player on the
+		// bridge's quest keeps quest 49's tokens as plain held tokens.
+		bridge := loadShippedQuest(t, "95-report_to_toke__lore_.yaml", 95)
+		old := func() *linearPlayer {
+			return playerOn(bridge, "", "47-end", "48-end", "49-start", "49-find")
+		}
+		require.False(t, old().HasQuest("49-met"), "the fixture holds no meeting token")
+		sere := newNpcTalker(loadCouleeTopics(t, "9160.yaml"), old())
+		_, hints := sere.opener()
+		require.Contains(t, squash(hints), "choose the old shrine", "Sere asks for the report")
+		require.Nil(t, sere.eligible("shrine_meet"), "the lesson is behind this player")
+		require.NotNil(t, sere.eligible("shrine_turnin"), "the hand-in is open")
+		hale := newNpcTalker(loadCouleeTopics(t, "9157.yaml"), old())
+		_, hints = hale.opener()
+		require.NotContains(t, squash(hints), "type talk sere", "Hale does not point at Sere again")
+	})
+
+	t.Run("Hale stops sending a player who has met Sere", func(t *testing.T) {
+		hale := newNpcTalker(loadCouleeTopics(t, "9157.yaml"), playerOn(q, "met", "47-end", "48-end"))
+		_, hints := hale.opener()
+		require.NotContains(t, squash(hints), "type talk sere", "the meeting is done; Hale no longer sends the player to Sere")
+		_, hints = newNpcTalker(loadCouleeTopics(t, "9157.yaml"), playerOn(q, "start", "47-end", "48-end")).opener()
+		require.Contains(t, squash(hints), "type talk sere", "before the meeting Hale still points at Sere")
+	})
+}
+
+func TestQuest58ReadingTheStones_ReportsToSere(t *testing.T) {
+	const reliquary = 5343
+	f := "58-reading_the_stones.yaml"
+	q := loadShippedQuest(t, f, 58)
+	require.True(t, q.Repeatable)
+	require.Equal(t, []string{"start", "read", "end"}, newLinearPlayer(q).steps)
+	turnIn := turnInRequires(t, "9160.yaml", "stones_loop_turnin")
+	require.Equal(t, []string{"58-read"}, turnIn)
+	require.Contains(t, squash(loreStepHint(t, q, "start")), "type search floor")
+	require.NotContains(t, strings.ToLower(loreStepHint(t, q, "start")), "just search")
+	require.Contains(t, squash(loreStepHint(t, q, "read")), "type talk sere")
+
+	w := newQuestWalker(q).at("start")
+	w.notify("command", searchIn(5342))
+	require.Equal(t, "start", w.p.current, "a search outside the Reliquary must not count")
+	w.notify("command", searchIn(reliquary))
+	require.Equal(t, "read", w.p.current)
+	require.True(t, holdsAll(w.p, turnIn))
+
+	// A real character on 49-end holds every earlier 48 and 49 token too.
+	pre := []string{"47-end", "48-start", "48-met", "48-taunt", "48-end", "49-start", "49-met", "49-find", "49-end"}
+	checkTopicSteps(t, "sere", "9160.yaml", []topicStep{
+		{f, 58, "start", "type search floor", pre, "stones_loop_progress", false},
+		{f, 58, "read", "", pre, "stones_loop_turnin", true},
+	})
+}

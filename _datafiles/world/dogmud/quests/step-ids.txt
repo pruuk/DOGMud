@@ -189,6 +189,7 @@
 48-taunt
 49-end
 49-find
+49-met
 49-start
 5-deliver
 5-end
@@ -224,6 +225,7 @@
 57-kill
 57-start
 58-end
+58-read
 58-start
 59-end
 59-shoot
@@ -349,6 +351,8 @@
 93-start
 94-end
 94-start
+95-end
+95-start
 # retired
 # Quest 29 Two Roads (#375 phase 7): no road grants it; users.LoadUser drops
 # it from saves (quests.RetiredQuests).

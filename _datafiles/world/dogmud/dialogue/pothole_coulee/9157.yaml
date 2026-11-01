@@ -58,6 +58,7 @@ opener:
   - questRequired:
     - 49-start
     questExcluded:
+    - 49-met
     - 49-find
     - 49-end
     text: Sere is waiting at the old shrine. The way is not straight, so mind the

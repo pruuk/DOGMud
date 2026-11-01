@@ -12,20 +12,29 @@ opener:
       to Hale, learn the folk's story and settle what needs settling, and come back
       when he has named you sound. What lies here is not for the unready, and I have
       waited this long. I can wait a little more.
-    hints: Return to Loresinger Hale at the standing stones and finish his task before
-      coming to Hermit Sere.
+    hints: Loresinger Hale at the Stone Circle has a task for you first.
   - questRequired:
     - 48-end
     questExcluded:
     - 49-start
     - 49-end
-    text: Hale sent you, and the reckoning-bone is on you, so you have seen the
-      mark it carries at its oldest end. I have felt that same mark under my floor
-      for thirty years. When you are ready to bring it to light, I will tell you
-      what lies beneath.
-    hints: Choose The Old Shrine below to take on the shrine's task.
+    text: Hale has named you sound, I hear. When he thinks you are ready, he will
+      send you up to me.
+    hints: Talk to Loresinger Hale at the Stone Circle to take up the shrine's task.
+  # A character saved on 49-find before the meeting step existed holds no
+  # 49-met: 49-find is excluded here so it is asked for the report below.
   - questRequired:
     - 49-start
+    questExcluded:
+    - 49-met
+    - 49-find
+    - 49-end
+    text: Hale sent you, and the reckoning-bone is on you, so you have seen the
+      mark it carries at its oldest end. I have felt that same mark under my floor
+      for thirty years.
+    hints: Choose a line below to hear what lies beneath the shrine.
+  - questRequired:
+    - 49-met
     questExcluded:
     - 49-find
     - 49-end
@@ -43,11 +52,27 @@ opener:
   - questRequired:
     - 58-start
     questExcluded:
+    - 58-read
     - 58-end
-    text: The stones are waiting for you in the Reliquary. Go and listen to them.
-      They will tell you themselves when they are done.
+    text: The stones are waiting for you in the Reliquary. Go and listen to them,
+      then come and tell me what they said.
     hints: Go west into the Collapsed Nave and north into the Reliquary, then type
       search floor.
+  - questRequired:
+    - 58-read
+    questExcluded:
+    - 58-end
+    text: You have been listening to them. I can see it on you. Tell me.
+    hints: Choose Reading the Stones below to report.
+  - questRequired:
+    - 49-end
+    questExcluded:
+    - 95-start
+    - 95-end
+    text: You looked on it, and you came back, and you carry the wondering the way
+      I have carried it lightly, because there is nothing else to do with it. You
+      are a friend of the folk now. Toke will want to hear of it, down in the town.
+    hints: Choose Report to Toke (Lore) below to carry the word back to Toke.
   - questRequired:
     - 49-end
     text: You looked on it, and you came back, and you carry the wondering the way
@@ -58,26 +83,22 @@ opener:
     hints: You have finished the lore trail. When the stones have more to tell,
       choose Reading the Stones below.
 topics:
-- key: shrine_offer
-  kind: offer
-  quest: 49
-  label: The Old Shrine
-  playerLine: Do you want me to look beneath the shrine?
-  text: 'Then I will send you where I cannot go on my own account. The Reliquary is
-    the deepest chamber of the shrine: west into the nave from here, then north. Its
+- key: shrine_meet
+  kind: info
+  label: Hale sent me to look beneath the shrine.
+  text: Then I will send you where I cannot go on my own account. The Reliquary is
+    the deepest chamber of the shrine, west into the nave from here, then north. Its
     flagstone floor has cracked and lifted over something that has wanted lifting
-    a long time. Search the floor where it has lifted, and bring out what is
-    under it. Hunting over the whole chamber is slower and less sure. Look on
-    it well. Then come and tell me what you saw.'
-  hints: Go west into the Collapsed Nave, then north into the Reliquary. To
-    search the cracked floor, type search floor. Typing just search covers
-    the whole room, slower and less sure.
+    a long time. Search the floor where it has lifted, and see what lies under it.
+    Then come and tell me what you saw.
+  hints: Go west into the Collapsed Nave, then north into the Reliquary, and type
+    search floor.
   questRequired:
-  - 48-end
-  questExcluded:
   - 49-start
+  questExcluded:
+  - 49-met
+  - 49-find
   - 49-end
-  grantsQuest: 49-start
 - key: shrine_turnin
   kind: handin
   quest: 49
@@ -89,7 +110,8 @@ topics:
     a stranger, and you leave the one soul living who has looked on the thing beneath
     the shrine and carried the wondering back out. Carry it well. The world may tell
     you what it was, one day, somewhere far from here.
-  hints: Quest complete. You have finished the lore trail.
+  hints: Quest complete. Choose Report to Toke (Lore) below to carry the word back
+    to Toke.
   questRequired:
   - 49-find
   questExcluded:
@@ -101,8 +123,8 @@ topics:
   label: Reading the Stones
   playerLine: Is there more for me to do at the shrine?
   text: The shrine speaks differently each time. If you have the patience, go back
-    to the Reliquary and search the floor again. The stones will tell you what
-    they have to say. You need not come back to tell me. I will hear it in the stones.
+    to the Reliquary and search the floor again. The stones will tell you what they
+    have to say. Then come and tell me what they said.
   hints: Go west into the Collapsed Nave and north into the Reliquary, then type
     search floor.
   questRequired:
@@ -111,6 +133,36 @@ topics:
   - 58-start
   - 58-end
   grantsQuest: 58-start
+- key: stones_loop_turnin
+  kind: handin
+  quest: 58
+  label: Reading the Stones
+  playerLine: I listened to the stones again.
+  text: And they said something new to you. No, keep it. The words are yours this
+    time. Come again when you have the patience for it.
+  hints: Quest complete. Sere will have more for you after a while.
+  questRequired:
+  - 58-read
+  questExcluded:
+  - 58-end
+  grantsQuest: 58-end
+- key: report_lore_offer
+  kind: offer
+  quest: 95
+  label: Report to Toke (Lore)
+  playerLine: Should I tell Toke what I found under the shrine?
+  text: Tell him you saw it, if you like. Toke will make a story of it either way,
+    but it may as well be a true one. He is in Hub Square, south of the Awakening
+    Pool.
+  hints: From the Old Shrine, go south twice, east, and south twice to the Stone
+    Circle. Then south, east, south twice, east, south six times, west, south. Type
+    talk toke.
+  questRequired:
+  - 49-end
+  questExcluded:
+  - 95-start
+  - 95-end
+  grantsQuest: 95-start
 - key: shrine_progress
   kind: info
   label: Where is the thing beneath the floor?
@@ -119,7 +171,7 @@ topics:
   hints: Go west into the Collapsed Nave and north into the Reliquary, then type
     search floor.
   questRequired:
-  - 49-start
+  - 49-met
   questExcluded:
   - 49-find
   - 49-end
@@ -127,12 +179,13 @@ topics:
   kind: info
   label: Where do I read the stones?
   text: The stones are waiting for you in the Reliquary, not here with me. Go and
-    search them.
+    search them, then come back and tell me.
   hints: Go west into the Collapsed Nave and north into the Reliquary, then type
     search floor.
   questRequired:
   - 58-start
   questExcluded:
+  - 58-read
   - 58-end
 # Restored from the old "beneath" pattern gated on 49-end (dropped by the
 # converter as covered).

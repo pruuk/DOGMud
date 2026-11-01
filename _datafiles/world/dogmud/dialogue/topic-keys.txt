@@ -421,6 +421,7 @@
 9106.report_brewing_in
 9106.report_casting_in
 9106.report_fighting_in
+9106.report_lore_in
 9106.report_smithing_in
 9106.report_tracking_in
 9106.road_toke_end
@@ -607,13 +608,15 @@
 9159.garrow
 9159.help
 9160.disc
+9160.report_lore_offer
 9160.shrine
-9160.shrine_offer
+9160.shrine_meet
 9160.shrine_progress
 9160.shrine_turnin
 9160.skull
 9160.stones_loop_offer
 9160.stones_loop_progress
+9160.stones_loop_turnin
 9161.coach_ambush
 9161.coach_equip
 9161.coach_shoot
@@ -1405,6 +1408,7 @@
 9145.grove_offer
 9153.words_offer
 9157.stones_offer
+9160.shrine_offer
 9161.shoot_offer
 # renamed
 9117.vein_offer -> 9116.vein_offer

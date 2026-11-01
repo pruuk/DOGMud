@@ -119,6 +119,14 @@ opener:
       me for small news. Tell me how the casting went.
     hints: Choose Report to Toke (Casting), the line marked [?] below, to tell Toke
       the news.
+  - questRequired:
+    - 95-start
+    questExcluded:
+    - 95-end
+    text: Hoy! You have the quiet of the old shrine on you, and Sere does not send
+      folk down to me lightly. Tell me what lies under her floor.
+    hints: Choose Report to Toke (Lore), the line marked [?] below, to tell Toke
+      the news.
   # All seven trades taken: no [!] line is left, so the hub's hint would describe
   # lines that are not there. The gate is the seven send_* offers' start tokens,
   # which stay held after each quest ends (TestToke_NoTradesLeftOpener).
@@ -348,6 +356,22 @@ topics:
   questExcluded:
   - 94-end
   grantsQuest: 94-end
+  moodChange: friendly
+- key: report_lore_in
+  kind: handin
+  quest: 95
+  label: Report to Toke (Lore)
+  playerLine: I looked on the thing beneath the old shrine.
+  text: Beneath the shrine? Sere let you see it? Then you know more than half the
+    coulee and all of the council. I will tell it carefully, mind. Some stories get
+    bigger every time they cross the square, and that one starts big. Any mouth
+    you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 95-start
+  questExcluded:
+  - 95-end
+  grantsQuest: 95-end
   moodChange: friendly
 # R21: the seven trails, each its own offer after Find Your Footing. Each
 # starter item rides on the offer of the quest it belongs to. Toke is the

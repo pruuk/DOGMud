@@ -41,7 +41,26 @@ func TestCouleeBridges_GiverTwoOffersTokeTakes(t *testing.T) {
 			"south", "south", "south", "east", "south", "down", "down", "south", "south", "south", "east"),
 			"the way back to Hub Square walks")
 	})
+	t.Run("Lore", func(t *testing.T) {
+		checkBridge(t, toke, 95, "Lore", "95-report_to_toke__lore_.yaml",
+			"9160.yaml", "report_lore_offer", "report_lore_in", "49-end")
+		q := loadShippedQuest(t, "95-report_to_toke__lore_.yaml", 95)
+		require.Contains(t, squash(questHintFor(t, q, "start")), loreBridgeWords)
+		require.Equal(t, foldingHubSquare, foldingWalk(t, 5341, loreBridgeWalk...),
+			"the way back to Hub Square walks")
+		offer := loadCouleeTopics(t, "9160.yaml").FindTopic("report_lore_offer")
+		require.Contains(t, squash(offer.Hints), loreBridgeWords, "Sere's offer gives the same way")
+	})
 }
+
+// The lore bridge's walk from the Old Shrine, where Sere gives it, to Hub
+// Square, and the words that say it.
+var loreBridgeWalk = []string{"south", "south", "east", "south", "south", // the Stone Circle
+	"south", "east", "south", "south", "east", "south", "south", "south", "south", "south", "south", // the shore
+	"west", "south"}
+
+const loreBridgeWords = "go south twice, east, and south twice to the stone circle. then south, east, " +
+	"south twice, east, south six times, west, south."
 
 // checkBridge walks one bridge: the quest's shape, the giver's offer gated
 // on the finale's end token, and Toke's hand-in completing it.
@@ -69,6 +88,8 @@ func checkBridge(t *testing.T, toke *dialogue.DialogueFile, id int, line, file, 
 	require.NotNil(t, handin, "Toke has no topic %q", handinKey)
 	require.Equal(t, dialogue.KindHandIn, handin.Kind)
 	require.Equal(t, []string{fmt.Sprintf("%d-start", id)}, handin.QuestRequired)
+	require.Contains(t, squash(handin.Text), "any mouth you have not walked yet is still open to you",
+		"the hand-in's ending stays true once every trade is taken")
 	newNpcTalker(toke, n.p).choose(t, handinKey)
 	require.True(t, n.p.HasQuest(fmt.Sprintf("%d-end", id)), "Toke's hand-in completes the bridge")
 }
@@ -90,6 +111,7 @@ func TestToke_BridgeOpenerNamesTheHandInAndItComesFirst(t *testing.T) {
 		{92, "Brewing", "92-report_to_toke__brewing_.yaml", "report_brewing_in"},
 		{93, "Tracking", "93-report_to_toke__tracking_.yaml", "report_tracking_in"},
 		{94, "Casting", "94-report_to_toke__casting_.yaml", "report_casting_in"},
+		{95, "Lore", "95-report_to_toke__lore_.yaml", "report_lore_in"},
 	} {
 		t.Run(b.line, func(t *testing.T) {
 			q := loadShippedQuest(t, b.file, b.id)
