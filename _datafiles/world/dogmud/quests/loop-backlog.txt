@@ -70,7 +70,7 @@ end 53 quest 53 trigger mob_death mob=9111 grants=53-end
 end 53 step end
 end 54 quest 54 trigger command room=5245 command=craft grants=54-end
 end 54 step end
-end 55 quest 55 trigger command command=drink grants=55-end
+end 55 quest 55 trigger command command=quaff grants=55-end
 end 55 step end
 end 56 quest 56 trigger command room=5284 command=forage grants=56-end
 end 56 step end

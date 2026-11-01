@@ -19,9 +19,11 @@ Check back soon for updates on available meals.
 
 <ansi fg="yellow">━━━ Using Meals ━━━</ansi>
 
-Crafted meals are used with the <ansi fg="command">eat</ansi> command:
+Crafted meals are used with the <ansi fg="command">eat</ansi> command, and cooked drinks
+such as tea with <ansi fg="command">drink</ansi>. Either word works for both:
 
   <ansi fg="command">eat meal</ansi>
+  <ansi fg="command">drink tea</ansi>
 
 They apply their effect immediately. Check <ansi fg="command">inventory</ansi> to see what you
 are carrying, and <ansi fg="command">conditions</ansi> to see active effects.
@@ -38,7 +40,7 @@ There is no trainer for cooking — practice is the only teacher.
 
   <ansi fg="command">craft list</ansi>          Show all recipes, including cooking ones, with status.
   <ansi fg="command">craft <recipe></ansi>      Begin cooking a recipe.
-  <ansi fg="command">eat <item></ansi>         Consume a cooked meal.
+  <ansi fg="command">eat <item></ansi>         Consume a cooked meal or drink.
   <ansi fg="command">skills</ansi>              Check your current cooking skill level.
 
 <ansi fg="yellow">See Also:</ansi>

@@ -19,7 +19,7 @@ goals:
     Pathfinder you have done it and ask what they received. They should have
     received nothing.
   - >-
-    SECOND: type `drink draught`. Then `look` again and report whether you can
+    SECOND: type `quaff draught`. Then `look` again and report whether you can
     now see a normal room description. Tell Veteran Pathfinder when you can. If
     you still cannot see, report that loudly.
   - >-

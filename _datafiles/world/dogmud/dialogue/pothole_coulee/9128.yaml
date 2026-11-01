@@ -64,7 +64,7 @@ opener:
     - 38-end
     text: You made the salve. A brew is only worth what it does. Drink it down and
       feel it work.
-    hints: Type drink healing salve.
+    hints: Type quaff healing salve.
   - questRequired:
     - 38-drink
     questExcluded:
@@ -170,7 +170,7 @@ topics:
   kind: info
   label: The salve is made. What now?
   text: The salve is made. Drink it. You will feel it mend you, slow and warm.
-  hints: Type drink healing salve.
+  hints: Type quaff healing salve.
   questRequired:
   - 38-brew
   questExcluded:

@@ -31,10 +31,10 @@ list with exact ingredients — trust it over any written table.
 
 <ansi fg="yellow">━━━ Using Consumables ━━━</ansi>
 
-Crafted potions and poultices are used with the <ansi fg="command">drink</ansi> command:
+Crafted potions and poultices are drunk with the <ansi fg="command">quaff</ansi> command:
 
-  <ansi fg="command">drink poultice</ansi>
-  <ansi fg="command">drink draught</ansi>
+  <ansi fg="command">quaff poultice</ansi>
+  <ansi fg="command">quaff draught</ansi>
 
 They apply their effect immediately. Check <ansi fg="command">inventory</ansi> to see what you are carrying,
 and <ansi fg="command">conditions</ansi> to see active effects.
@@ -51,7 +51,7 @@ There is no trainer for alchemy — practice is the only teacher.
 
   <ansi fg="command">craft list</ansi>          Show all recipes, including alchemy ones, with status.
   <ansi fg="command">craft <recipe></ansi>      Begin crafting an alchemy recipe.
-  <ansi fg="command">drink <item></ansi>        Consume a crafted potion or poultice.
+  <ansi fg="command">quaff <item></ansi>        Consume a crafted potion or poultice.
   <ansi fg="command">skills</ansi>              Check your current alchemy skill level.
 
 <ansi fg="yellow">━━━ Tolerance ━━━</ansi>
