@@ -13,6 +13,8 @@
             margin: 0;
             padding: 0;
             height: 100vh;
+            height: 100dvh; /* the visible height; 100vh is the fallback */
+            overflow-x: hidden; /* the game fits the width; never scroll sideways */
             font-family: var(--font-body);
             display: flex;
             flex-direction: column;
@@ -20,44 +22,8 @@
             position: relative; /* So absolutely positioned children can be placed relative to <body> */
         }
 
-        /* FLOATING CONNECT BUTTON IN THE CENTER */
-        #connect-button {
-            position: absolute;
-            /* Center in viewport */
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
-
-            padding: 18px 42px;
-            font-family: var(--font-body);
-            font-weight: bold;
-            font-size: 20px;
-            letter-spacing: 1px;
-
-            color: var(--vellum);
-            background-color: var(--copper);          /* oxidized copper */
-            border: 1px solid var(--gold-rule);
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 3px 8px color-mix(in srgb, var(--shadow) 60%, transparent);
-            text-shadow: 0 1px 2px color-mix(in srgb, var(--shadow) 55%, transparent);
-
-            /* Flash copper → madder red */
-            animation: pulse 1.2s infinite alternate;
-        }
-        #connect-button:disabled {
-            color: var(--text-secondary);
-            pointer-events: none;
-            animation: none;
-            background-color: var(--button-disabled);
-            border-color: var(--panel-border);
-            cursor: not-allowed;
-        }
-        @keyframes pulse {
-            0%   { background-color: var(--copper); }   /* oxidized copper */
-            100% { background-color: var(--madder); }   /* madder root red */
-        }
+        /* #connect-button is never shown: it only runs the connect code.
+           Enter Game in the session bar is the one visible button. */
 
         /* Sound icon — small brass button living inside the session strip */
         /* Was a <div onclick>, which no keyboard could reach (finding 18). Now a
@@ -191,15 +157,19 @@
             min-height: 48px;
             padding: 10px 12px;
             font-size: 16px;
-            border: 1px solid var(--panel-border);
+            border: 2px solid var(--cmd-border-rest);
             background-color: var(--input-bg);
             color: var(--text-primary);
             border-radius: 3px;
             font-family: var(--font-mono);
         }
+        /* Typing here: brighter green inside, dark green ring outside, so it
+           stands out against the dark box and the vellum strip alike. No
+           animation: motion would pull the eye off the game text. */
         #command-input:focus {
             outline: none;
-            border-color: var(--brass-mid);
+            border-color: var(--cmd-border-focus);
+            box-shadow: 0 0 0 2px var(--cmd-ring-focus);
         }
 
         /* Comms panel: stack tabs + send input as a column */
@@ -242,6 +212,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js"></script>
@@ -280,14 +251,14 @@
         <span class="sess-conn" id="sess-conn" style="color: var(--conn-lost)">○ Not connected</span>
         <span class="sess-mid">
           <button type="button" class="brass" id="btn-session">Enter Game</button>
-          <span id="sess-confirm" style="display:none">Leave the game?
+          <span id="sess-confirm" style="display:none"><span class="q-long">Leave the game?</span><span class="q-short">Leave?</span>
             <button type="button" class="brass" id="btn-leave-yes">Yes</button>
             <button type="button" class="brass" id="btn-leave-stay">Stay</button>
           </span>
         </span>
         <button type="button" id="menu-icon" onclick="toggleMenu()" title="Toggle sound" aria-label="Toggle sound">🔊</button>
         <button type="button" class="brass" id="btn-companion-key" style="display:none" title="Run your companion on your own model key">Companion key</button>
-        <button class="brass" id="btn-reset-layout" onclick="window.Dashboard && Dashboard.resetLayout && Dashboard.resetLayout()">Reset layout</button>
+        <button class="brass" id="btn-reset-layout" title="Reset layout" aria-label="Reset layout" onclick="window.Dashboard && Dashboard.resetLayout && Dashboard.resetLayout()"><span class="btn-icon" aria-hidden="true">↺</span><span class="btn-label">Reset layout</span></button>
       </div>
 
       <!-- LEFT column: Map · Vitals · Scene -->
@@ -445,6 +416,30 @@
         term.loadAddon(fitAddon);
         term.open(document.getElementById('terminal'));
 
+        // The scale resizeTerminal() applies to the game text (1 = none).
+        // xterm measures its letters with getBoundingClientRect, which includes
+        // that scale, so a scaled terminal measured its cells too small and
+        // shrank twice (tiny, garbled text with a raised minimum font). Undo
+        // the scale in the measurement. Private xterm 4.19 internals; if they
+        // change, this quietly does nothing.
+        var termScale = 1;
+        (function () {
+            var cs = term._core && term._core._charSizeService;
+            var strat = cs && cs._measureStrategy;
+            if (!strat || !strat._measureElement || !strat._result) return;
+            strat.measure = function () {
+                var el = this._measureElement, o = this._optionsService.rawOptions;
+                el.style.fontFamily = o.fontFamily;
+                el.style.fontSize = o.fontSize + 'px';
+                var r = el.getBoundingClientRect();
+                if (r.width && r.height) {
+                    this._result.width = r.width / termScale;
+                    this._result.height = Math.ceil(r.height / termScale - 0.01);
+                }
+                return this._result;
+            };
+        })();
+
         // Keep the feed's text from sliding out of view sideways (playtest
         // 2026-10-17). See static/js/feedscroll.js for the causes it covers.
         if (window.FeedScroll) {
@@ -458,28 +453,87 @@
             });
         }
 
-        // Auto-size the font so ~80 columns always fit the feed panel. All MUD
-        // content is fixed-80 (room text + the inline ASCII minimap), so if the
-        // terminal is < 80 cols it wraps and the minimap misaligns. Shrink the
-        // font until >= 80 cols fit; grow it (capped) when there's spare room.
+        // The smallest font size the browser really renders as page text. A
+        // raised "Minimum font size" setting makes xterm measure its cells at
+        // that size while its canvas still draws at the requested one, which
+        // spread rows and letters apart. A 1px span renders at the minimum.
+        var browserMinFont = (function () {
+            try {
+                var probe = document.createElement('span');
+                probe.style.cssText = 'position:absolute;visibility:hidden;' +
+                    'font-size:1px;line-height:1;font-family:monospace;';
+                probe.textContent = 'M';
+                document.body.appendChild(probe);
+                var px = probe.getBoundingClientRect().height;
+                document.body.removeChild(probe);
+                return Math.max(1, Math.round(px));
+            } catch (e) { return 1; }
+        })();
+
+        // Fit the game text to the panel. All MUD output is fixed-80 (room
+        // text, boxes, tables, the inline minimap), so the terminal always
+        // keeps at least 80 columns and never wraps them. Wide panels grow the
+        // font (capped); narrow ones (phones) shrink it to fit exactly 80. If
+        // that would go below the browser's minimum font size, draw at the
+        // minimum and scale the whole terminal down instead, so what xterm
+        // measures is what it draws. Only the game text scales; the command box
+        // keeps its own size.
         function resizeTerminal() {
             if (!term || !fitAddon) return;
-            var TARGET = 80, MIN_FS = 10, MAX_FS = 20, guard = 0;
+            var TARGET = 80, MAX_FS = 20, STEP = 0.25;
+            var host = document.getElementById('terminal');
+            var body = host && host.parentElement;
+            // While the page loads the frame can be a few pixels wide; fitting
+            // 80 columns into that made a terminal tens of thousands of rows
+            // tall and crashed the tab. Wait for a real size.
+            if (!body || body.clientWidth < 160 || body.clientHeight < 80) return;
             try {
+                // Start from the panel's own size, unscaled.
+                host.style.transform = '';
+                termScale = 1;
+                host.style.position = '';
+                host.style.width = '';
+                host.style.height = '';
+                var W = body.clientWidth, H = body.clientHeight;
+                var fs = MAX_FS;
+                term.setOption('fontSize', fs);
                 fitAddon.fit();
-                while (term.cols < TARGET && term.getOption('fontSize') > MIN_FS && guard++ < 24) {
-                    term.setOption('fontSize', term.getOption('fontSize') - 1);
+                if (term.cols < TARGET) {
+                    // Cell width grows with font size, so one measurement gives a
+                    // close estimate; then step down until 80 columns fit, but
+                    // never below the browser minimum.
+                    fs = Math.max(browserMinFont,
+                        Math.floor((MAX_FS * term.cols / TARGET) / STEP) * STEP);
+                    term.setOption('fontSize', fs);
                     fitAddon.fit();
-                }
-                while (term.cols > TARGET + 6 && term.getOption('fontSize') < MAX_FS && guard++ < 48) {
-                    term.setOption('fontSize', term.getOption('fontSize') + 1);
-                    fitAddon.fit();
-                    if (term.cols < TARGET) { // grew one step too far — back off
-                        term.setOption('fontSize', term.getOption('fontSize') - 1);
+                    var guard = 0;
+                    while (term.cols < TARGET && fs - STEP >= browserMinFont && guard++ < 40) {
+                        fs -= STEP;
+                        term.setOption('fontSize', fs);
                         fitAddon.fit();
-                        break;
                     }
                 }
+                if (term.cols >= TARGET) return;
+
+                // Still short of 80 at the browser minimum: lay the terminal out
+                // 80 columns wide at that size, then scale it down to the panel.
+                var dims = term._core._renderService.dimensions;
+                var cellW = dims.actualCellWidth, cellH = dims.actualCellHeight;
+                if (!cellW || !cellH) return;
+                var extra = W - term.cols * cellW; // scrollbar and padding fitAddon keeps
+                var naturalW = TARGET * cellW + Math.max(0, extra) + 1;
+                var s = W / naturalW;
+                // Out of the layout flow: the unscaled 80-column box is wider
+                // than the panel, and in flow it widened the phone page.
+                host.style.position = 'absolute';
+                host.style.left = '0';
+                host.style.top = '0';
+                host.style.width = naturalW + 'px';
+                host.style.height = (H / s) + 'px';
+                host.style.transformOrigin = 'top left';
+                host.style.transform = 'scale(' + s + ')';
+                termScale = s;
+                fitAddon.fit();
             } catch (e) {}
         }
         window.addEventListener('resize', resizeTerminal);
@@ -2503,7 +2557,8 @@
 
         // Session bar: one button that reads Leave Game while a character is
         // in the world and Enter Game at any other time (not connected, or
-        // connected but still at the login prompt). Leave asks first, then
+        // connected but still at the login prompt). It is the only Enter
+        // Game: the old floating button stays hidden. Leave asks first, then
         // sends quit, so the character logs out cleanly instead of lingering
         // in the world for ZombieSeconds after a dropped connection.
         const sessionButton = document.getElementById('btn-session');
@@ -2652,8 +2707,8 @@
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.close();
             }
-            // Show the connect button so user can click it, or reconnect immediately
-            connectButton.style.display = 'block';
+            // The connect button stays hidden (Enter Game in the session bar is
+            // the visible one); enable it so the click runs its handler.
             connectButton.disabled = false;
             connectButton.click();
         }
@@ -2821,7 +2876,8 @@
                 }
 
                 // Otherwise, just write to terminal
-                term.write(event.data);
+                // The MOTD shows without its box here (static/js/motdrestyle.js).
+                term.write(window.MotdRestyle ? window.MotdRestyle.restyle(event.data) : event.data);
                 // Tap text stream for trigger matching (read-only copy; does not affect terminal output)
                 try {
                     stripAnsi(event.data).split(/\r?\n/).forEach(function(line){ if (line) runTriggers(line, Date.now()); });
@@ -2866,7 +2922,6 @@
                     reconnectAttempts = 0;
                     term.writeln("");
                     term.writeln("Could not reconnect — the server may still be restarting. Click Enter Game to try again.");
-                    connectButton.style.display = 'block';
                     connectButton.disabled = false;
                     setSessionState('offline');
                     return;
@@ -2878,8 +2933,7 @@
                 } else {
                     term.writeln("Connection died");
                 }
-                // Show the button again when disconnected
-                connectButton.style.display = 'block';
+                // Ready for Enter Game in the session bar to reconnect.
                 connectButton.disabled = false;
 
                 // Update session strip
