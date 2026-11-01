@@ -36,6 +36,53 @@ func TestMigrateNewbieAwakening_RunsOnce(t *testing.T) {
 	}
 }
 
+// A new character has no run-once marker during its first session, because
+// CreateUser does not run LoadUser. Holding only what can be held before the
+// rite (quest 21's marker, quest 28 from Dewey) is not veteran progress, so a
+// log out at the pool must not Open them without the rite. The marker is still
+// set, as on every other path.
+func TestMigrateNewbieAwakening_PreRiteQuestsAreNotVeteranProgress(t *testing.T) {
+	for _, progress := range []map[int]string{
+		{21: "start"},
+		{28: "end"},
+		{21: "start", 28: "end"},
+	} {
+		c := &Character{QuestProgress: progress}
+		c.MigrateNewbieAwakening()
+		if step, ok := c.QuestProgress[30]; ok {
+			t.Errorf("%v: 30 must stay unset, got %q", progress, step)
+		}
+		if c.GetMiscData("migration-newbie-awakening-done") == nil {
+			t.Errorf("%v: the run-once marker must still be set", progress)
+		}
+	}
+}
+
+// Any other quest is real progress, whatever sits beside it.
+func TestMigrateNewbieAwakening_OtherQuestsStillCount(t *testing.T) {
+	c := &Character{QuestProgress: map[int]string{21: "end", 12: "start"}}
+	c.MigrateNewbieAwakening()
+	if c.QuestProgress[30] != "end" {
+		t.Errorf("want 30=end, got %q", c.QuestProgress[30])
+	}
+}
+
+// MarkOpened is the one write of the Opened state without the rite: it must
+// work on a character whose progress map was never made.
+func TestMarkOpened(t *testing.T) {
+	c := &Character{}
+	c.MarkOpened()
+	if c.QuestProgress[30] != "end" {
+		t.Errorf("want 30=end, got %q", c.QuestProgress[30])
+	}
+	if !c.HasQuest("30-end") {
+		t.Error("HasQuest(30-end) must hold, every gate reads it")
+	}
+	if c.LastQuestId != 0 {
+		t.Errorf("a finished rite must not take the focus, got %d", c.LastQuestId)
+	}
+}
+
 // A quest retired whole (#375 phase 7: quest 29 Two Roads) is dropped from
 // progress, the shelf and the focus, so hint and the quest panel never point
 // at a quest that no longer exists. Other quests are untouched, and a second

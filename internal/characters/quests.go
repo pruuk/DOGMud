@@ -135,6 +135,24 @@ func (c *Character) GiveQuestToken(questToken string) bool {
 	return false
 }
 
+// awakeningQuestId is The Awakening, whose end step is the "Opened" state every
+// gate in Pothole Coulee reads (30-end).
+const awakeningQuestId = 30
+
+// MarkOpened puts the character at The Awakening's end step without the rite,
+// for a character who is Opened by skipping it (the veteran start route, and
+// pre-Pothole characters through MigrateNewbieAwakening). It writes the step
+// directly because GiveQuestToken refuses `end` on empty progress for a quest of
+// several steps, and because the grant pipeline would pay the rite's banner and
+// reward line to someone who never stood at the pool. The quest focus stays
+// where it is: there is nothing left to do on this quest.
+func (c *Character) MarkOpened() {
+	if c.QuestProgress == nil {
+		c.QuestProgress = make(map[int]string)
+	}
+	c.QuestProgress[awakeningQuestId] = `end`
+}
+
 // QuestStepCount is the saved count: N progress of one count trigger on its
 // own step, keyed "<questId>-<stepId>-t<triggerIndex>" (quests.CountKey,
 // #375 phase 3b slice 4).

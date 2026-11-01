@@ -181,14 +181,17 @@ func condPlayerInRoomMissingQuest(params map[string]any, ctx *EvalContext) Resul
 // holds the given quest token. Mirror of condPlayerInRoomMissingQuest,
 // for the same ambient/idle branches (mob_idle has no triggering
 // player). ANDing the has/missing variants can match different players
-// in a shared room — only pair them where the room is effectively
-// single-player (e.g. the solo ephemeral newcomer antechamber).
-// params: quest (string token)
+// in a shared room, so only pair them where the room is effectively
+// single-player (e.g. the solo ephemeral newcomer antechamber). In a shared
+// room, use the optional `missing` param: the SAME player must hold `quest`
+// and lack `missing` (Cleric Hadwen's ambient lines at the pool).
+// params: quest (string token), missing (optional string token)
 func condPlayerInRoomHasQuest(params map[string]any, ctx *EvalContext) Result {
 	quest := getStringParam(params, "quest")
 	if quest == "" {
 		return Failure
 	}
+	missing := getStringParam(params, "missing")
 	room := rooms.LoadRoom(ctx.RoomId)
 	if room == nil {
 		return Failure
@@ -198,7 +201,7 @@ func condPlayerInRoomHasQuest(params map[string]any, ctx *EvalContext) Result {
 		if user == nil {
 			continue
 		}
-		if user.Character.HasQuest(quest) {
+		if user.Character.HasQuest(quest) && (missing == "" || !user.Character.HasQuest(missing)) {
 			return Success
 		}
 	}

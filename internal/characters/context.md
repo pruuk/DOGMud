@@ -437,6 +437,17 @@ with no change. Flags and step counts stay where they are for the resume.
   drops a deleted quest, and `ClearQuestToken` deletes the quest's shelf entry
   so a removed quest cannot come back on the next accept.
 
+### Opened without the rite (`quests.go`, `migrations.go`, #375 phase 7)
+
+Quest 30 at `end` is the "Opened" state every gate in Pothole Coulee reads.
+`MarkOpened()` writes it directly, without the banner or reward line the grant
+pipeline would pay, for a character who skips the rite: the veteran start route
+(`usercommands.autoAwaken`) and `MigrateNewbieAwakening`, which runs once from
+`LoadUser` for pre-Pothole characters. That migration does not count quests 21
+and 28 as veteran progress, because a new character can hold them at the pool
+before the rite, with no marker yet (`CreateUser` does not run `LoadUser`). The
+rule lives in the function as `preRiteQuests`.
+
 ### Repeatable quest counts (`quests.go`, #375 phase 2)
 
 `Character.QuestCompletions` (`questcompletions` in the save, omitted when

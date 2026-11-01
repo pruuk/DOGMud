@@ -278,9 +278,17 @@ func grantNewcomerMarker(user *users.UserRecord) {
 // movement block and Warden Esk's gate). No starter mutation is granted — the
 // Awakening opens the capacity, but every mutation is earned through use-based
 // drift (blank-slate Awakening; see the mutation-graph acquisition design).
+//
+// A veteran skips the rite, so the token is set directly rather than granted:
+// the quest pipeline refuses `end` on empty progress for a quest of several
+// steps, and past that refusal it would pay the rite's banner and reward line.
+// The queued event is MarkerOnly: it refreshes the talk markers and the quest
+// panel and stops there.
 func autoAwaken(user *users.UserRecord) {
+	user.Character.MarkOpened()
 	events.AddToQueue(events.Quest{
 		UserId:     user.UserId,
 		QuestToken: "30-end",
+		MarkerOnly: true,
 	})
 }

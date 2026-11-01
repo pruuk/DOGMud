@@ -14,7 +14,10 @@
 # Narrator text (send_user_text), not mob_say: the block must hold even in
 # the freak case Hadwen is absent, and the pool itself doing the holding is
 # true to the room. Characters from before the Pothole Coulee were given
-# 30-end by characters.MigrateNewbieAwakening.
+# 30-end by characters.MigrateNewbieAwakening, and the veteran start route
+# gives it by usercommands.autoAwaken. A rite cut short by a logout or a
+# restart leaves a player at 30-rite with nothing running (rite_running is not
+# saved), so that answer names the topic that starts it again.
 
 tree:
   type: selector
@@ -61,6 +64,9 @@ tree:
           text: >-
             The pool's stillness holds you where you stand. The rite is
             still under way. Stay by the water until Cleric Hadwen is done.
+            If nothing is happening, type
+            <ansi fg="command">talk hadwen</ansi> and choose Is the rite
+            still going?
         - type: action
           do: intercept
 

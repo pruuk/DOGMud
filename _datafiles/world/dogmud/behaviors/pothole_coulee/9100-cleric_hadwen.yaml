@@ -268,13 +268,16 @@ tree:
     #    mud-vet start fires player_enter here, internal/usercommands/start.go;
     #    a walk-in does too). Since #375 phase 7 nothing grants quest 30 by
     #    itself, so the line names the offer. Dewey's send-off names it for
-    #    the newcomer route, whose move_player fires no player_enter. ──
+    #    the newcomer route, whose move_player fires no player_enter.
+    #    Each state names a line on its own menu (dialogue 9100.yaml): The
+    #    Awakening is gone once 30-start is held. The hand-in at 30-woken has
+    #    the rite's closing line and the pool's gate to name it. ──
     - type: sequence
       event: player_enter
       children:
         - type: condition
           check: player_missing_quest
-          quest: "30-woken"
+          quest: "30-start"
         - type: action
           do: say
           text: >-
@@ -283,23 +286,92 @@ tree:
             <ansi fg="command">talk hadwen</ansi> and choose The
             Awakening, the line marked [!], when you are ready.
           delay: 2.0
+    - type: sequence
+      event: player_enter
+      children:
+        - type: condition
+          check: player_has_quest
+          quest: "30-start"
+        - type: condition
+          check: player_missing_quest
+          quest: "30-rite"
+        - type: action
+          do: say
+          to_actor: true
+          text: >-
+            You have asked, and the pool is ready when you are. Type
+            <ansi fg="command">talk hadwen</ansi> and choose I'm ready.
+            Let us begin the rite.
+          delay: 2.0
+    - type: sequence
+      event: player_enter
+      children:
+        - type: condition
+          check: player_has_quest
+          quest: "30-rite"
+        - type: condition
+          check: player_missing_quest
+          quest: "30-woken"
+        - type: action
+          do: say
+          to_actor: true
+          text: >-
+            The rite is under way, so stay by the water. If nothing is
+            happening, type <ansi fg="command">talk hadwen</ansi> and
+            choose Is the rite still going?
+          delay: 2.0
 
     # ── AMBIENT BACKSTOP: every so often, repeat the invitation aloud.
-    #    Gated on a player who has not finished the rite actually being
-    #    present (custom condition: mob_idle has no triggering player, so
-    #    plain player_missing_quest can't apply here). ──
+    #    Gated on a player in that state actually being present (custom
+    #    condition: mob_idle has no triggering player, so plain
+    #    player_missing_quest can't apply here). The pool is shared, so the
+    #    `missing` param reads one player at a time, and the whole room hears
+    #    the line, so each says who it is for. Each state rolls its own dice:
+    #    one player waiting here cannot silence the line another needs. ──
     - type: sequence
       event: mob_idle
       children:
         - type: condition
           check: player_in_room_missing_quest
-          quest: "30-woken"
+          quest: "30-start"
         - type: condition
           check: random_chance
           percent: 4
         - type: action
           do: say
           text: >-
-            If you are new to Gaius and not yet Opened, type
+            If you have not asked me for the rite yet, type
             <ansi fg="command">talk hadwen</ansi> and choose The
-            Awakening. The pool is patient.
+            Awakening, the line marked [!]. The pool is patient.
+    - type: sequence
+      event: mob_idle
+      children:
+        - type: condition
+          check: player_in_room_has_quest
+          quest: "30-start"
+          missing: "30-rite"
+        - type: condition
+          check: random_chance
+          percent: 4
+        - type: action
+          do: say
+          text: >-
+            If you have asked me for the rite, the pool is ready when
+            you are. Type <ansi fg="command">talk hadwen</ansi> and
+            choose I'm ready. Let us begin the rite.
+    - type: sequence
+      event: mob_idle
+      children:
+        - type: condition
+          check: player_in_room_has_quest
+          quest: "30-rite"
+          missing: "30-woken"
+        - type: condition
+          check: random_chance
+          percent: 4
+        - type: action
+          do: say
+          text: >-
+            If your rite has begun and nothing is happening, type
+            <ansi fg="command">talk hadwen</ansi> and choose Is the rite
+            still going? The pool is patient.
