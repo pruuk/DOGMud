@@ -241,9 +241,10 @@ func startInAntechamber(user *users.UserRecord) bool {
 	if r := rooms.LoadRoom(created[first]); r != nil {
 		Look("", user, r, events.CmdSecretly)
 	}
-	// Quest 28's 28-start and Dewey's opening line come from its room_enter
-	// trigger, raised by hooks.QuestRoomEnter for this move once this command
-	// returns, so his line lands beneath the arrival look.
+	// Dewey's greeting (ending on `talk dewey`) comes from quest 28's
+	// room_enter trigger, raised by hooks.QuestRoomEnter for this move once
+	// this command returns, so his lines land beneath the arrival look. The
+	// quest itself starts at Dewey's offer (#375 phase 7).
 	return true
 }
 
