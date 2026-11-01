@@ -467,7 +467,8 @@ It survives save, load and restart.
   `quests.StepRenames()` from `quests/step-ids.txt`) so saved progress follows a
   renamed step id. It follows rename chains and ignores a rename that changes
   the quest id. It renames `ShelvedQuests` the same way.
-- `DropRetiredQuests(retired) []int` runs at load (`users.LoadUser`, with
+- `DropRetiredQuests(retired) []int` runs whenever a character comes into play
+  (`users.LoadUser` and `UserRecord.SwapToAlt`, with
   `quests.RetiredQuests()`): a quest retired whole in `quests/step-ids.txt`
   is cleared from progress and the shelf through `ClearQuestToken`, which
   also moves the focus off it. Idempotent, no marker, so alts are safe

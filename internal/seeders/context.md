@@ -96,7 +96,7 @@ is **unchanged** — it is relationship/kin-scoped, not indiscriminate room-witn
 so it already targets the right mobs. (Filename `witness_of_theft_to_revenge.go` is
 now slightly broad — it also reports/alarms — but kept to avoid churn.)
 | 7 | `gift_to_opinion_boost` | `GiftAccepted` | Value-tiered opinion bump (+1/+3/+5/+8) with per-(giver, receiver) cooldown of 100 rounds | **LIVE** |
-| 8 | `quest_completion_to_opinion_boost` | `Quest` (`-end` token) | Would bump quest-giver opinion on completion | **STUB** — `quests.Quest` struct carries no `GiverMobTemplateId`; returns 0 and logs at debug |
+| 8 | `quest_completion_to_opinion_boost` | `Quest` (`-end` token, never `MarkerOnly`) | Would bump quest-giver opinion on completion | **STUB** — `quests.Quest` struct carries no `GiverMobTemplateId`; returns 0 and logs at debug |
 | 9 | `combat_assist_to_opinion_boost` | `PlayerAttackedMob` | If the attacked mob was already in combat with a different mob, bumps that mob's opinion of the assisting player (cooldown 150 rounds) | **LIVE** (shared listener with rule 6) |
 | 10 | `mastery_milestone_to_priority_bump` | `SkillUsed` | Would seed `mastery-skill` goal at each rank-10 milestone for the progressing mob | **DEFERRED** — `events.SkillUsed` is player-only and carries no `MobInstanceId` or `NewRank` field; `Register` call is commented out |
 

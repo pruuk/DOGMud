@@ -78,6 +78,15 @@ tree:
           key: rite_running
           per_player: true
           value: "1"
+        # The mob_idle line for a stalled rite cannot read the per-player flag
+        # (mob_idle has no player), so it reads this one. Two rites overlapping
+        # clear it at the first close, and that only lets the line speak a few
+        # seconds early. Not saved, and cleared by a delayed action, so it
+        # cannot stick.
+        - type: action
+          do: set_state
+          key: a_rite_is_running
+          value: "1"
         # The rite marks itself on the player at once (#375 phase 1
         # playtest): Hadwen's dialogue cannot read rite_running, so it gates
         # its mid-rite opener and the rite_wait topic on 30-rite, and hides
@@ -263,6 +272,11 @@ tree:
           per_player: true
           value: ""
           delay: 41.0
+        - type: action
+          do: set_state
+          key: a_rite_is_running
+          value: ""
+          delay: 41.0
 
     # ── GREETING: a player who has not finished the rite arrives (the
     #    mud-vet start fires player_enter here, internal/usercommands/start.go;
@@ -366,6 +380,10 @@ tree:
           check: player_in_room_has_quest
           quest: "30-rite"
           missing: "30-woken"
+        - type: condition
+          check: state_equals
+          key: a_rite_is_running
+          value: ""
         - type: condition
           check: random_chance
           percent: 4

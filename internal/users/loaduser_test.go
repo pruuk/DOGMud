@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 )
 
@@ -108,6 +109,48 @@ func TestLoadUserRenamesHeardTopicsFromTheManifest(t *testing.T) {
 	got := strings.Join(u.Character.HeardTopics, ",")
 	if got != "12.new,94.kept" {
 		t.Fatalf("heard topics after load = %q, want \"12.new,94.kept\" (the rename applied, the other key kept)", got)
+	}
+}
+
+// #375 phase 7: a quest retired whole is dropped when a character comes into
+// play, and an alt comes into play through SwapToAlt as well as LoadUser. The
+// drop runs on the alt that was promoted and leaves the others alone until
+// their own turn: each carries its own progress.
+func TestSwapToAltDropsRetiredQuests(t *testing.T) {
+	dir := withUserDataDir(t)
+	if err := os.MkdirAll(filepath.Join(dir, "quests"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := "# retired\n29-start\n29-end\n"
+	if err := os.WriteFile(filepath.Join(dir, "quests", "step-ids.txt"), []byte(manifest), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	u := NewTestUser(14, "swapper", "Swapper", 14)
+	alt := characters.Character{
+		Name:          "Altwalker",
+		QuestProgress: map[int]string{29: "start", 31: "start"},
+		ShelvedQuests: map[int]string{},
+		LastQuestId:   29,
+	}
+	if !characters.SaveAlts(u.UserId, []characters.Character{alt}) {
+		t.Fatal("could not write the alt")
+	}
+
+	if !u.SwapToAlt("Altwalker") {
+		t.Fatal("the swap failed")
+	}
+	if u.Character.Name != "Altwalker" {
+		t.Fatalf("the active character is %q", u.Character.Name)
+	}
+	if _, held := u.Character.QuestProgress[29]; held {
+		t.Fatalf("the retired quest came along: %v", u.Character.QuestProgress)
+	}
+	if u.Character.QuestProgress[31] != "start" {
+		t.Fatalf("a live quest was lost: %v", u.Character.QuestProgress)
+	}
+	if u.Character.LastQuestId == 29 {
+		t.Fatal("the focus still names the retired quest")
 	}
 }
 

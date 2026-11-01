@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state/presence"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -940,6 +941,13 @@ func (u *UserRecord) SwapToAlt(targetAltName string) bool {
 	newAlts = append(newAlts, *u.Character)
 	// Write them to disc
 	characters.SaveAlts(u.UserId, newAlts)
+
+	// A quest retired whole is dropped here too, as LoadUser does: an alt that
+	// comes into play this way would otherwise keep it until the next login.
+	// No marker: the drop is idempotent, and each alt carries its own progress.
+	for _, qid := range selectedChar.DropRetiredQuests(quests.RetiredQuests()) {
+		mudlog.Info("SwapToAlt", "user", u.Username, "dropped retired quest", qid)
+	}
 
 	// Run validation on the new character
 	selectedChar.Validate()

@@ -283,7 +283,8 @@ func grantNewcomerMarker(user *users.UserRecord) {
 // the quest pipeline refuses `end` on empty progress for a quest of several
 // steps, and past that refusal it would pay the rite's banner and reward line.
 // The queued event is MarkerOnly: it refreshes the talk markers and the quest
-// panel and stops there.
+// panel. HandleQuestUpdate stops there, and the quest completion seeder skips
+// it, so no giver is credited for a rite the veteran never did.
 func autoAwaken(user *users.UserRecord) {
 	user.Character.MarkOpened()
 	events.AddToQueue(events.Quest{

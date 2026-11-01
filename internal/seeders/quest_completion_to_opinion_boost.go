@@ -57,6 +57,12 @@ func questCompletionToOpinion(event events.Event) {
 		return
 	}
 
+	// A MarkerOnly event only refreshes markers. The token may read -end (the
+	// veteran start's 30-end) with nothing completed: no giver is owed credit.
+	if q.MarkerOnly {
+		return
+	}
+
 	// Only act on quest completions — the conventional terminal step.
 	if !strings.HasSuffix(q.QuestToken, "-end") {
 		return
@@ -65,7 +71,7 @@ func questCompletionToOpinion(event events.Event) {
 	// Resolve quest giver mob template id.
 	// Returns 0 while the quests package carries no GiverMobTemplateId
 	// field; see init() TODO-ADAPT comment for the upgrade path.
-	giverMobTemplateId := resolveQuestGiverMobId(q.QuestToken)
+	giverMobTemplateId := questGiverLookup(q.QuestToken)
 	if giverMobTemplateId == 0 {
 		// Stub path: log that we *would* have bumped opinion so the
 		// framework path is observable during development and future
@@ -83,6 +89,10 @@ func questCompletionToOpinion(event events.Event) {
 	// bump := resolveQuestOpinionBump(q.QuestToken, questCompletionDefaultBump)
 	// opinions.Bump(giverMobTemplateId, q.UserId, bump)
 }
+
+// questGiverLookup is resolveQuestGiverMobId, a seam so a test can see whether
+// an event reached the giver lookup while the lookup itself is a stub.
+var questGiverLookup = resolveQuestGiverMobId
 
 // resolveQuestGiverMobId returns the mob template id of the quest's
 // giver NPC (0 if unresolvable).

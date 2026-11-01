@@ -325,6 +325,39 @@ func TestHadwenAmbientReadsOnePlayerAtATime(t *testing.T) {
 	require.NotContains(t, (*said)[0], hadwenTopicLabel(t, "begin"))
 }
 
+// While a rite is running, the pool is not silent and nothing is stuck, so the
+// mid-rite ambient line ("if nothing is happening") stays quiet. mob_idle has no
+// player to read the per-player rite_running by, so the tree keeps a mob-wide
+// flag beside it. Once the rite is over the line can speak again.
+func TestHadwenAmbientIsQuietWhileARiteRuns(t *testing.T) {
+	room, said := hadwenSpeechScene(t)
+	u := users.NewTestUser(8147, "wren", "Wren", 98147)
+	u.Character.RoomId = room.RoomId
+	u.Character.QuestProgress = map[int]string{30: "start"}
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{8147: u}))
+	room.AddPlayer(8147)
+	state := NewBehaviorState()
+
+	idle := func() {
+		*said = (*said)[:0]
+		GetEngine().EvaluateEvent(9100, 91000, EventContext{EventType: "mob_idle", RoomId: room.RoomId}, state)
+	}
+	rite := hadwenTopicLabel(t, "rite_wait")
+
+	GetEngine().EvaluateEvent(9100, 91000, EventContext{
+		EventType: "player_topic", UserId: 8147, RoomId: room.RoomId, Text: "begin",
+	}, state)
+	require.Equal(t, "rite", u.Character.QuestProgress[30], "the rite has started")
+	idle()
+	require.Empty(t, *said, "no ambient line while the rite runs")
+
+	DrainAllDelayedActionsForTest(t)
+	u.Character.QuestProgress[30] = "rite" // a rite the close did not reach: the shelf, a logout
+	idle()
+	require.Len(t, *said, 1, "the rite is over, so a player still on the step hears the way out")
+	require.Contains(t, (*said)[0], rite)
+}
+
 // player_in_room_has_quest with `missing` asks about one player: holding the
 // token and lacking the other. Without it, the old any-player reading stands.
 func TestPlayerInRoomHasQuest_MissingIsTheSamePlayer(t *testing.T) {

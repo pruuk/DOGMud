@@ -24,8 +24,21 @@ opener:
       it. Come back after.
     hints: Find Cleric Hadwen at the reflecting pool and complete the Awakening before
       pushing out into the wash.
+  # No fighting trade yet: Crier Toke starts every trade (#375 phase 7), and
+  # Vorn sends a newcomer back to him, so Garve names Toke first.
   - questRequired:
     - 30-end
+    questExcluded:
+    - 32-start
+    - 32-end
+    text: Opened, good. But you are still carrying yourself like someone who has not
+      put that to work yet. The wash is not a forgiving place to find out for the
+      first time. Crier Toke, in Hub Square, can send you to a drillmaster who turns
+      raw into ready. Come back when you have worked with him.
+    hints: Crier Toke starts every trade in the coulee. In Hub Square, type talk
+      toke. Train before you fight in the wash.
+  - questRequired:
+    - 32-start
     questExcluded:
     - 32-end
     text: Opened, good. But you are still carrying yourself like someone who has not
