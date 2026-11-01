@@ -624,6 +624,7 @@
 9161.eye
 9161.perception
 9161.shoot_help
+9161.shoot_lesson
 9161.shoot_turnin
 9161.shot_have
 9161.shot_supply

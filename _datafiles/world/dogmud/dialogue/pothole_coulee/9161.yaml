@@ -28,19 +28,29 @@ opener:
   - questRequired:
     - 50-start
     questExcluded:
-    - 50-equip
-    - 50-shoot
+    - 50-met
     - 50-end
-    text: Still at it. A sling does nothing in your pack. Ready it first.
-    hints: Type equip sling.
+    text: Toke sent you up with a sling, I see. Good. Hold still and I will walk you
+      through it one thing at a time.
+    hints: Choose a line below to hear the first lesson.
+  - questRequired:
+    - 50-met
+    questExcluded:
+    - 50-equip
+    - 50-end
+    text: Still at it. A sling does nothing in your pack. Ready it first. If it is
+      already in your hand, put it away and take it up again so I can see you do it.
+    hints: Type equip sling. If it is already in your hand, that will not work, so
+      first use remove sling to put it back in your pack.
   - questRequired:
     - 50-equip
     questExcluded:
     - 50-shoot
     - 50-end
     text: The sling is in your hand. The butts are down-range, east on the Long Terrace.
-      Put a stone in the straw.
-    hints: Go east to the Long Terrace and type fire butt.
+      Send a stone at the straw.
+    hints: Go east to the Long Terrace and type fire butt. If no butt stands there,
+      wait a moment for a fresh butt.
   - questRequired:
     - 50-shoot
     questExcluded:
@@ -57,21 +67,38 @@ opener:
     - 50-end
     text: You know how to get out of sight. Now take the shot from there, before anything
       knows where you are.
-    hints: Go east to the Long Terrace and type fire butt.
+    hints: Go east to the Long Terrace and type fire butt. If no butt stands there,
+      wait a moment for a fresh butt.
   - questRequired:
     - 50-cover_shot
     questExcluded:
     - 50-end
-    text: I heard that one land. Tell me how it felt.
+    text: I heard that one leave your sling. Tell me how it felt.
     hints: Choose First Shot below to report.
   - questRequired:
     - 50-end
-    text: 'You have the eye. I knew it when your first stone found the straw and you
-      did not flinch at the noise. East along the terraces and north into the canyon.
-      Bryn holds the slot, and he will teach you the part I cannot from a safe
-      terrace: shooting a thing that shoots back.'
-    hints: Go east twice to the High Terrace, then north to the Canyon Mouth, where
-      Scout Bryn waits.
+    questExcluded:
+    - 51-start
+    - 51-end
+    text: 'You have the eye. I saw it when your first stone left the sling and you
+      did not flinch at the noise. Bryn holds the canyon slot, and he will teach you
+      the part I cannot from a safe terrace: shooting a thing that shoots back. When
+      you are ready, I will send you to him.'
+    hints: Choose Across the Canyon below to go on to the canyon.
+  - questRequired:
+    - 51-start
+    questExcluded:
+    - 51-shoot
+    - 51-end
+    text: Bryn is waiting at the Canyon Mouth. Keep your voice low when you get there.
+      Sound carries in that canyon.
+    hints: From the Firing Range, go east twice to the High Terrace, then north to the
+      Canyon Mouth. Type talk bryn.
+  - questRequired:
+    - 50-end
+    text: You have the eye. I saw it when your first stone left the sling and you did
+      not flinch at the noise.
+    hints: Choose a line below to hear about shooting.
 topics:
 # Each replacement and its reminder never show together: itemExcluded and
 # carriesItem on the same item are exact opposites.
@@ -142,16 +169,16 @@ topics:
   kind: handin
   quest: 50
   label: First Shot
-  playerLine: I hit the butt in the open, and again from cover.
-  text: Out in the open and again from cover, and the straw has your mark in it both
-    times. You felt the difference. That second one is the shot you save for when
+  playerLine: I shot at the butt in the open, and again from cover.
+  text: Out in the open and again from cover, and I watched both shots leave your
+    sling. You felt the difference. That second one is the shot you save for when
     it matters, because you only get it once. Sneaking is useful for staying alive
     in dangerous places. The other skullduggery abilities are for those unsavory
     types down the road. The sling and the shot are yours. The
-    eye is yours too, though it will want feeding. East along the terraces and north
-    to the canyon when you are ready. Bryn will teach you the rest.
-  hints: Quest complete. Go east twice to the High Terrace, then north to the Canyon
-    Mouth, where Scout Bryn waits.
+    eye is yours too, though it will want feeding. When you are ready for the canyon,
+    I will send you to Bryn. He will teach you the rest.
+  hints: Quest complete. Choose Across the Canyon below when you are ready for the
+    canyon.
   questRequired:
   - 50-cover_shot
   questExcluded:
@@ -160,19 +187,22 @@ topics:
 - key: coach_start
   kind: info
   label: What do I do with the sling?
-  text: Not yet. A sling does nothing in your pack. Ready it first.
-  hints: Type equip sling.
+  text: Not yet. A sling does nothing in your pack. Ready it first. If it is already
+    in your hand, take it off and ready it again, so I can see you do it.
+  hints: Type equip sling. If it is already in your hand, that will not work, so first
+    use remove sling to put it back in your pack.
   questRequired:
-  - 50-start
+  - 50-met
   questExcluded:
   - 50-equip
   - 50-end
 - key: coach_equip
   kind: info
   label: The sling is ready. Now what?
-  text: Not yet. The butts are down-range, east on the Long Terrace. Put a stone in
-    the straw.
-  hints: Go east to the Long Terrace and type fire butt.
+  text: Not yet. The butts are down-range, east on the Long Terrace. Send a stone
+    at the straw.
+  hints: Go east to the Long Terrace and type fire butt. If no butt stands there,
+    wait a moment for a fresh butt.
   questRequired:
   - 50-equip
   questExcluded:
@@ -180,7 +210,7 @@ topics:
   - 50-end
 - key: coach_shoot
   kind: info
-  label: I hit the butt. What next?
+  label: I shot at the butt. What next?
   text: One in the open. Now get out of sight before the next one, so you feel the
     difference. Sneaking is a skullduggery skill, and it grows each time you slip
     out of sight with something near enough to notice you.
@@ -195,7 +225,8 @@ topics:
   label: I'm out of sight. Now what?
   text: You know how to get out of sight. Now take the shot from there, before anything
     knows where you are.
-  hints: Go east to the Long Terrace and type fire butt.
+  hints: Go east to the Long Terrace and type fire butt. If no butt stands there,
+    wait a moment for a fresh butt.
   questRequired:
   - 50-ambush
   questExcluded:
@@ -213,3 +244,19 @@ topics:
   text: Shooting is the eye, not the arm. Reach out and touch a thing from across
     the open. That is the whole craft. Ranged work runs on Perception, the keen eye,
     the read of wind and distance. Shoot enough and it sharpens on its own.
+- key: shoot_lesson
+  kind: info
+  label: Toke sent me to learn to shoot.
+  text: Then you have the sling, plaited cord and a leather cradle, cheap and honest,
+    and a pouch of shot to feed it. Both are yours to keep. Ready the sling first.
+    The cradle fills itself while your eye is still on the mark, so there is no second
+    motion to learn. I will walk you through the rest one thing at a time. If the
+    sling is already in your hand, take it off and ready it again, so I can see you
+    do it.
+  hints: Type equip sling. If it is already in your hand, that will not work, so first
+    use remove sling to put it back in your pack.
+  questRequired:
+  - 50-start
+  questExcluded:
+  - 50-met
+  - 50-end

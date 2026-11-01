@@ -134,7 +134,6 @@ one-action 20 mob 347 topic ullahandoff:prev
 one-action 20 quest 20 trigger topic_heard mob=355 topic=vellahandoff grants=20-vella_journal:prev
 one-action 4 mob 83 topic evidence_handoff:prev
 one-action 5 mob 84 topic tolvahandoff:prev
-one-action 50 quest 50 trigger command room=5351 command=fire grants=50-shoot:prev
 one-action 60 mob 9208 topic guardhandoff:prev
 one-action 61 quest 61 trigger mob_death mob=9173 grants=61-bandit:cond
 one-action 61 quest 61 trigger mob_death mob=9173 grants=61-reach:cond
@@ -188,8 +187,6 @@ walk-dead-end 16 mob 259 topic quest_complete_herbs
 walk-dead-end 19 quest 19 trigger mob_death mob=331 grants=19-hunter
 walk-dead-end 4 mob 83 topic evidence_handoff
 walk-dead-end 5 mob 84 topic tolvahandoff
-walk-dead-end 50 quest 50 trigger command room=5351 command=fire grants=50-cover_shot
-walk-dead-end 50 quest 50 trigger command room=5351 command=fire grants=50-shoot
 walk-dead-end 61 quest 61 trigger mob_death mob=9173 grants=61-reach
 walk-dead-end 63 mob 9300 topic tallyhandoff
 walk-dead-end 63 mob 9316 topic tallyhandoff

@@ -198,6 +198,7 @@
 50-cover_shot
 50-end
 50-equip
+50-met
 50-shoot
 50-start
 51-end

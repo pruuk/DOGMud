@@ -382,12 +382,49 @@ func TestFalv9129_TopicsNameEachStep(t *testing.T) {
 
 func TestIden9161_TopicsNameEachStep(t *testing.T) {
 	f := "50-first_shot.yaml"
-	pre := []string{"30-end"}
+	pre := []string{"30-end", "31-end"}
+	checkMeetStep(t, "iden", "9161.yaml", f, 50, "shoot_lesson", "type equip sling", pre...)
 	checkTopicSteps(t, "iden", "9161.yaml", []topicStep{
-		{f, 50, "start", "type equip sling", pre, "coach_start", false},
+		{f, 50, "met", "type equip sling", pre, "coach_start", false},
 		{f, 50, "equip", "type fire butt", pre, "coach_equip", false},
 		{f, 50, "shoot", "type sneak", pre, "coach_shoot", false},
 		{f, 50, "ambush", "type fire butt", pre, "coach_ambush", false},
 		{f, 50, "cover_shot", "", pre, "shoot_turnin", true},
+	})
+
+	// The trigger cannot see an early equip (Toke hands over the sling and a
+	// newcomer may ready it at once), and equip reads only the pack, so every
+	// line at the sling step names the remove as well.
+	t.Run("a player already holding the sling is told to remove it first", func(t *testing.T) {
+		q := loadShippedQuest(t, f, 50)
+		iden := loadCouleeTopics(t, "9161.yaml")
+		_, openerHint := newNpcTalker(iden, playerOn(q, "met", pre...)).opener()
+		var heardLine string
+		for _, trig := range q.Triggers {
+			if trig.Topic == "shoot_lesson" {
+				for _, a := range trig.Actions {
+					heardLine += a.SendText
+				}
+			}
+		}
+		for name, line := range map[string]string{
+			"met hint":           questHintFor(t, q, "met"),
+			"met description":    q.Steps[1].Description,
+			"talk step line":     heardLine,
+			"Iden opener":        openerHint,
+			"shoot_lesson hints": iden.FindTopic("shoot_lesson").Hints,
+			"coach_start hints":  iden.FindTopic("coach_start").Hints,
+		} {
+			require.Contains(t, squash(line), "remove sling", name)
+			require.Contains(t, squash(line), "equip sling", name)
+		}
+	})
+
+	// A shot is aimed at the butt; the lines say what to do when it is down.
+	t.Run("the butt may be down", func(t *testing.T) {
+		q := loadShippedQuest(t, f, 50)
+		for _, step := range []string{"equip", "ambush"} {
+			require.Contains(t, squash(questHintFor(t, q, step)), "fresh butt", step)
+		}
 	})
 }
