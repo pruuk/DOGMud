@@ -2,6 +2,7 @@ package actions
 
 import (
 	"math"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -126,5 +127,36 @@ func TestFightReadCopy_FitsAndHasNoNumbers(t *testing.T) {
 		if l == "" {
 			t.Error("an empty line in the copy tables")
 		}
+	}
+}
+
+// #690: a read against a straw dummy said "them" for it and "an age" twice.
+// The copy names no pronoun for the target, and a pace never repeats in one
+// line: equal paces read as one sentence.
+func TestFightReadCopy_NoTargetPronounAndNoRepeat(t *testing.T) {
+	pronoun := regexp.MustCompile(`(?i)\b(them|they|they'd|their)\b`)
+	for v := VerdictUntouched; v <= VerdictStalemate; v++ {
+		if pronoun.MatchString(verdictText[v]) {
+			t.Errorf("verdict %v names the target by pronoun: %q", v, verdictText[v])
+		}
+	}
+	for yp := PaceMoments; yp <= PaceNever; yp++ {
+		for tp := PaceMoments; tp <= PaceNever; tp++ {
+			l := paceText(FightRead{YourPace: yp, TheirPace: tp})
+			if pronoun.MatchString(l) {
+				t.Errorf("pace %v/%v names the target by pronoun: %q", yp, tp, l)
+			}
+			for _, p := range []string{"an age", "moments", "a short fight", "a long fight"} {
+				if strings.Count(l, p) > 1 {
+					t.Errorf("pace %v/%v repeats %q: %q", yp, tp, p, l)
+				}
+			}
+		}
+	}
+	if got, want := paceText(FightRead{YourPace: PaceAge, TheirPace: PaceNever}), "Ending it would take you an age; you could never fall."; got != want {
+		t.Errorf("effigy pace: %q, want %q", got, want)
+	}
+	if got, want := paceText(FightRead{YourPace: PaceAge, TheirPace: PaceAge}), "Either of you would need an age to end it."; got != want {
+		t.Errorf("equal paces: %q, want %q", got, want)
 	}
 }

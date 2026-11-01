@@ -957,6 +957,13 @@ Balance:
   ShadowCooldown: 5      # Rounds before shadow may be used again
   SneakFailCooldown: 3   # Rounds to wait after a failed sneak attempt
   StealHiddenBonus: 25   # Score added to steal AND plant attempts made while hidden
+  # StealMinRank: the skullduggery rank every theft needs (a creature, a
+  #   player, a room container, a household's find), for players and mobs
+  #   alike. Every character starts at rank 1, so 1 lets anyone try; a mob
+  #   thief's rank comes from its own file. Below 1 reads as 1. A hardcoded 2
+  #   until #375 phase 7. templates/help/steal.template names this value and
+  #   internal/configs/steal_min_rank_test.go fails if the two disagree.
+  StealMinRank: 1
 
   # ── COMBAT: DARKNESS ───────────────────────────────────────────────────────
   # DarknessCombatPenalty: the dark-side cap of the sight ramp (plan 5b). At

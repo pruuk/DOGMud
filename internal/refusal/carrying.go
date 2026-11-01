@@ -27,3 +27,20 @@ func NotCarrying(to Recipient, typed string) { send(to, NotCarryingText(typed)) 
 const RecipientFullLine = `They can't carry any more.`
 
 func RecipientFull(to Recipient) { send(to, RecipientFullLine) }
+
+// QuaffPotionText answers drink or eat aimed at a potion: nothing is
+// consumed, and the line names quaff (#375 phase 7, owner ruling
+// 2026-10-30). It echoes typed, the player's own item.
+func QuaffPotionText(typed string) string {
+	return `That is a potion.` + hint(`quaff `+echo(typed))
+}
+
+func QuaffPotion(to Recipient, typed string) { send(to, QuaffPotionText(typed)) }
+
+// NotAPotionText answers quaff aimed at food or a cooked drink, naming the
+// verb that takes it ("eat" or "drink").
+func NotAPotionText(typed, verb string) string {
+	return `That is not a potion.` + hint(verb+` `+echo(typed))
+}
+
+func NotAPotion(to Recipient, typed, verb string) { send(to, NotAPotionText(typed, verb)) }

@@ -95,16 +95,39 @@ equivalent mob wrappers stay silent.
 
 ---
 
-## Drink (`drink.go`, drink path unification 2026-09-28)
+## Food (`food.go`, #375 phase 7)
 
-`Drink(actor DrinkActor, rest string) DrinkResult` is the ONE drink body for
-players, mobs and the AI companion. It was `usercommands.Drink`; the mob
-command was a separate copy with no toxicity, no aging or crafter scaling and
-no special potions. `usercommands.Drink` and `mobcommands.Drink` are now thin
+`ConsumeFood(actor Actor, verb string, rest string)` is the ONE food body for
+players, mobs and the AI companion: `eat` and `drink` are one command, both
+wrappers in `usercommands` and `mobcommands`, and
+`internal/guards/drink_wrapper_guard_test.go` (`TestFoodWrappersDoNotReFork`)
+fails if a wrapper grows a food rule. `verb` words the prompt and the refusals;
+the success line says eat or drink by the item's type. A mob refuses silently
+(`SendText` is a no-op), and the room line goes out through
+`Room.SendTextVisualHidingNames` as `Quaff`'s do (`food_room_line_sight_test.go`).
+
+The lookup (`findFood`), in order: edible in the pack, edible in the bandolier
+(`Character.FindInPotionsWhere`, oldest first), a potion in either (refused with
+`refusal.QuaffPotion`), anything else carried (the "can't" line), nothing
+(`refusal.NotCarrying`). An edible match always wins, so `drink tea` drinks the
+tea past a "Lake-tonic of Steady Hand".
+
+## Quaff (`drink.go`, drink path unification 2026-09-28; quaff since #375 phase 7)
+
+`Quaff(actor DrinkActor, rest string) DrinkResult` is the ONE potion body for
+players, mobs and the AI companion. It was `actions.Drink` until #375 phase 7
+(owner ruling 2026-10-30: potions are quaffed; `eat` and `drink` are one food
+command, `ConsumeFood` above). Before the unification the mob command was a
+separate copy with no toxicity, no aging or crafter scaling and no special
+potions. `usercommands.Quaff` and `mobcommands.Quaff` (`quaff.go`) are thin
 wrappers, and `internal/guards/drink_wrapper_guard_test.go`
-(`TestDrinkWrappersDoNotReFork`) fails if either grows drink rules again.
-A bare `drink` (nothing named) gets the prompt "Drink what? Try **drink
-&lt;item&gt;**." and `DrinkRefuseNotFound`, before any other check.
+(`TestQuaffWrappersDoNotReFork`) fails if either grows potion rules again.
+A bare `quaff` (nothing named) gets the prompt "Quaff what? Try **quaff
+&lt;item&gt;**." and `DrinkRefuseNotFound`, before any other check. Food or a
+cooked drink (subtype `edible`) is refused with `refusal.NotAPotion`, naming
+`eat` or `drink`. The narration still reads "You drink the ...". The types keep
+their names (`DrinkActor`, `DrinkResult`, `DrinkRefusal`), and so does the
+condition source `drink`.
 
 - **`DrinkActor`** is `Actor` plus `AddConditionScaled` and
   `AddConditionMagnitude`. It is its own interface, not two new `Actor`
@@ -125,7 +148,7 @@ shapes tier reads "a figure", one who sees nothing reads nothing, and a player
 drinker is excluded from their own line (`drink_room_line_sight_test.go`).
 `drink_parity_test.go` holds the player and mob parity table.
 
-`Drink` no longer snapshots a `tick_pool` condition's per-round amount (tick
+`Quaff` no longer snapshots a `tick_pool` condition's per-round amount (tick
 amount at apply, 2026-09-28): the old `ComputeTickAmount(...)` /
 `Conditions.SetTickAmount(...)` block after `AddConditionScaled` is gone.
 `AddConditionScaled` still queues `events.Condition` with no `TickScale`, so
@@ -135,6 +158,20 @@ no caster to scale by. `DrinkActor` does not need
 `AddConditionTickScaled`: a drink's tick amount was already scale-1.0 before
 this slice, so nothing about a potion's strength changed, only where the
 number is computed.
+
+## Theft rank gate (`steal.go`, #375 phase 7)
+
+Every theft (a creature, a player, a room container, a household's find)
+refuses "not advanced enough" when the thief's skullduggery rank is under
+`Balance.StealMinRank` (`theftAttempt.belowMinRank`). It was a hardcoded 2.
+Players and mob thieves (`mobcommands.Steal`, the btree `try_steal`) share it.
+`actions.Plant` has no rank gate.
+
+## Fight read copy (`fight_read.go`, #690)
+
+The verdict and pace lines name no pronoun for the target, which may be a
+straw dummy: "it" is the fight. When both paces fall in one band,
+`samePaceText` says it once ("Either of you would need an age to end it.").
 
 ---
 
@@ -969,7 +1006,7 @@ Pickpockets a target mob or player, or robs an item from a room container.
    - Refused for any companion (charmed, the thief's own included, or bonded to
      the AI companion: "X is someone's companion. You can't steal from them.",
      reason `companion`), then for non-combatant or player-attack-immune mobs
-     (`mobs.CheckPlayerHarm`), and below skullduggery rank 2.
+     (`mobs.CheckPlayerHarm`), and below `Balance.StealMinRank`.
    - One contest (`combat.RunContest`): the thief's Dexterity +
      skullduggery x SkillWeight (+ StealHiddenBonus when hidden) against
      `stealVictimScore` (the mob's Perception + skullduggery x
@@ -1045,7 +1082,10 @@ Pickpockets a target mob or player, or robs an item from a room container.
 
 3. **Container rob** (`opts.RoomContainerId` set):
    - No opposed roll. Opens the container and removes an item.
-   - Always succeeds if the container has items.
+   - A locked container is refused before its contents are looked at
+     (`stealFromContainer`: Reason `locked`, "The <container> is locked."), the
+     gate `get`, `put` and `look` apply. Nothing is spent or armed.
+   - Always succeeds if the container is unlocked and has items.
    - Returns item ID.
 
 **Progression:** Triggers `actor.OnStatUse("dexterity")` and
@@ -1062,8 +1102,8 @@ shroud's score while Empathic Shroud hides the thief, #444, owner
 each path reads the score
 through `theftAttempt.score()` immediately before its contest, which arms the
 cooldown as it hands the score over. So every refusal (no target, target
-gone, a companion, an immune mob, rank below 2, an empty container, too
-heavy to lift) leaves the cooldown unarmed, and no contest runs without
+gone, a companion, an immune mob, rank below `StealMinRank`, a locked or empty
+container, too heavy to lift) leaves the cooldown unarmed, and no contest runs without
 arming it. Before 2026-09-30 it was armed ahead of every refusal, so a fresh
 character (rank 1) was refused on the first try and then locked out.
 
@@ -1091,7 +1131,10 @@ container.
 2. **Plant in container** (`opts.RoomContainerId` set):
    - No opposed roll. Removes item from actor backpack, adds to container
      inventory.
-   - Always succeeds if the container exists.
+   - A locked container is refused (`plantInContainer`: Reason `locked`, "The
+     <container> is locked."), the gate `put` applies and `stealFromContainer`
+     shares.
+   - Always succeeds if the container exists and is unlocked.
 
 **Item lookup:** `opts.ItemTag` is a space-separated noun (e.g., "copper
 coin"). The function searches actor backpack for a matching item by display
@@ -1421,7 +1464,7 @@ member), awake, able to see, not `AutoAggro`, not anyone's companion.
 Taking one is `steal`, never `get` (`usercommands/get.go` refuses, and `get
 all` skips it, so a pickup can never start a crime by accident):
 `Steal(actor, StealOptions{HouseholdItem: itm})` runs the ordinary steal
-checks (skullduggery rank 2, the steal cooldown, the attacker score) and then
+checks (`Balance.StealMinRank`, the steal cooldown, the attacker score) and then
 `stealHouseholdBauble`:
 
 - Not this room's household's: refused.
@@ -1950,7 +1993,7 @@ taunt path's ordering).
 |--------|---------|---|---|---|---|
 | Consider | actions | self vs target | ConsiderResult | player only | shared (player) |
 | Defuse | actions | self vs trap | DefuseResult | varies | none |
-| Drink | actions | self | DrinkResult | both | none |
+| Quaff | actions | self | DrinkResult | both | none |
 | Forage | actions | self vs biome | ForageResult | varies | shared |
 | Plant | actions | self vs mob/container | PlantResult | varies | shared |
 | Salvage | actions | self vs corpse/item | SalvageResult | varies | none |
@@ -2221,7 +2264,7 @@ the rest are ordinary verbs.
 | Mutation grants | `mutation_earn.go` (`EarnMutation`: one earned mutation event for a player, deepen or acquire through `CanGain`; progress is spent and graph drift fades only on a grant, and a deepening that finds nothing falls to acquiring; the combat round tick and the `earnmutation` admin command both call it, #680; `emitMutationMilestone` tells the gossip system about a new acquisition. `drink.go`'s `emitSilentMutationGained` queues a `Gained` with `Silent` set for Bloom and Phial grants. Not an active despite the prefix) |
 | Room roster | `roster.go` (`RenderRoster`: the "Also here:" line from `descriptions/who`, wrapped to the reader's width because neither of its categories is pipeline-wrapped; `look` and a search's find both send it; `RenderGround` does the same for the "On the Ground:" list from `descriptions/ontheground`, and a guard test keeps every ground send on it) |
 | Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `search_bauble.go` (roll and delayed delivery), `search_feature.go` (`search <feature>`), `scan.go`, `track.go`, `steal.go`, `steal_pocket.go` (a player's pickpocket pause and bauble) |
-| Items & economy | `get.go` (`GetItemFromFloor` refuses a household's bauble (`BaubleBelongsTo`) with `ErrHouseholdBauble`, the item found and nothing moved, for every taker: a player's `get`, a mob's, a companion's, a scavenger's (owner ruling 2026-09-29); its gates sit in one early-return block), `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `sell_quote.go` (`QuoteSale`, `SaleMerchant`: the one quote sell, offer and appraise share), `sell_bauble.go`, `stolen_bauble.go` (heat, recognition, returns), `remove_equip.go`, `shop_sight.go`, `drink.go` |
+| Items & economy | `get.go` (`GetItemFromFloor` refuses a household's bauble (`BaubleBelongsTo`) with `ErrHouseholdBauble`, the item found and nothing moved, for every taker: a player's `get`, a mob's, a companion's, a scavenger's (owner ruling 2026-09-29); its gates sit in one early-return block), `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `sell_quote.go` (`QuoteSale`, `SaleMerchant`: the one quote sell, offer and appraise share), `sell_bauble.go`, `stolen_bauble.go` (heat, recognition, returns), `remove_equip.go`, `shop_sight.go`, `drink.go`, `food.go` |
 | Trades | `craft.go`, `salvage.go`, `forage.go`, `plant.go`, `defuse.go` |
 | Movement & state | `go.go`, `sleep.go`, `sit.go` (sit / rest and standing from a seat, #637), `consider.go`, `map_visit.go` (`MarkRoomMappedIfSeen`: puts a room on the fog-of-war map by its template id only when the character makes anything out there; a room walked in the dark stays off until seen, #252 ruling R5; returns true only when the room was newly mapped; `usercommands.Go` and gmcp's `SightBandChanged` handler call it) |
 | Social | `say.go`, `emote.go`, `emote_aliases.go` |

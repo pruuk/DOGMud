@@ -4033,9 +4033,9 @@ func TestDrinkWithItem(t *testing.T) {
 
 	user, room := getTestUserAndRoom(t)
 
-	t.Run("drink_healing_potion", func(t *testing.T) {
+	t.Run("quaff_healing_potion", func(t *testing.T) {
 		user.Character.StoreItem(items.Item{ItemId: 30001})
-		handled, err := Drink("healing potion", user, room, 0)
+		handled, err := Quaff("healing potion", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
 		user.Character.RemoveItem(items.Item{ItemId: 30001})

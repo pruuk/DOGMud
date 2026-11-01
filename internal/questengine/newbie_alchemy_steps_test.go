@@ -45,8 +45,8 @@ func TestQuest38FirstBrew_OneCommandPerStep(t *testing.T) {
 		w.notify("item_gain", EventDetails{ItemId: glassVial, RoomId: sheltered})
 		require.Equal(t, "vial", w.p.current)
 
-		w.notify("command", EventDetails{Command: "drink", RoomId: sheltered})
-		require.Equal(t, "vial", w.p.current, "a drink before the brew must not count")
+		w.notify("command", EventDetails{Command: "quaff", RoomId: sheltered})
+		require.Equal(t, "vial", w.p.current, "a quaff before the brew must not count")
 
 		w.notify("item_gain", EventDetails{ItemId: healersRoot, RoomId: sheltered})
 		require.Equal(t, "roots", w.p.current)
@@ -56,7 +56,7 @@ func TestQuest38FirstBrew_OneCommandPerStep(t *testing.T) {
 		require.Equal(t, "brew", w.p.current)
 		require.False(t, holdsAll(w.p, turnIn), "turn-in must wait for the drink")
 
-		w.notify("command", EventDetails{Command: "drink", RoomId: sheltered})
+		w.notify("command", EventDetails{Command: "quaff", RoomId: sheltered})
 		require.Equal(t, "drink", w.p.current)
 		require.True(t, holdsAll(w.p, turnIn), "turn-in opens after the last step")
 	})
@@ -78,7 +78,7 @@ func TestQuest38FirstBrew_OneCommandPerStep(t *testing.T) {
 
 	t.Run("player saved on brew resumes with the drink", func(t *testing.T) {
 		w := newQuestWalker(q).at("brew")
-		w.notify("command", EventDetails{Command: "drink", RoomId: 5269})
+		w.notify("command", EventDetails{Command: "quaff", RoomId: 5269})
 		require.Equal(t, "drink", w.p.current)
 		require.True(t, holdsAll(w.p, turnIn))
 	})
@@ -141,14 +141,14 @@ func TestQuest55AnotherBrew_OneCommandPerStep(t *testing.T) {
 	require.Equal(t, []string{"start", "brew", "end"}, newLinearPlayer(q).steps)
 
 	w := newQuestWalker(q).at("start")
-	w.notify("command", EventDetails{Command: "drink", RoomId: sheltered})
-	require.Equal(t, "start", w.p.current, "a drink before the brew must not finish the quest")
+	w.notify("command", EventDetails{Command: "quaff", RoomId: sheltered})
+	require.Equal(t, "start", w.p.current, "a quaff before the brew must not finish the quest")
 
 	// Both benches in the coulee are alchemy benches.
 	w.notify("command", EventDetails{Command: "craft", RoomId: dryingRacks})
 	require.Equal(t, "brew", w.p.current, "a craft at the Drying Racks bench counts")
 
-	w.notify("command", EventDetails{Command: "drink", RoomId: 5271})
+	w.notify("command", EventDetails{Command: "quaff", RoomId: 5271})
 	require.Equal(t, "end", w.p.current)
 }
 

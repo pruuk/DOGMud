@@ -139,7 +139,7 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if result.BadSyntax {
-		user.SendText(messaging.CategoryUsage, `Syntax: <ansi fg="command">shoot &lt;target&gt; [direction]</ansi>`)
+		user.SendText(messaging.CategoryUsage, `Syntax: <ansi fg="command">shoot <target> [direction]</ansi>`)
 		return true, nil
 	}
 	if result.ExitLocked {

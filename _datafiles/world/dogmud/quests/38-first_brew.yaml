@@ -8,7 +8,7 @@
 #   38-roots: item_gain of a Healer's Root (40004), once the vial is in hand.
 #             A foraged root counts too; the lesson is having the root.
 #   38-brew:  command trigger on craft in the bench rooms (5265 or 5267).
-#   38-drink: command trigger on drink (anywhere). Teaches the drink command.
+#   38-drink: command trigger on quaff (anywhere). Teaches the quaff command.
 #   38-end:   granted by Birna's brew_turnin dialogue node (needs 38-drink).
 #
 # The steps run IN ORDER. The old start step asked for list, two purchases and
@@ -76,7 +76,7 @@ steps:
       You brewed a healing salve. Now drink it. A brew is only worth what
       it does.
     hint: >-
-      Type drink healing salve.
+      Type quaff healing salve.
   - id: drink
     destination:
       room: 5265
@@ -158,7 +158,7 @@ triggers:
       - grant: "38-brew"
       - actor: >-
           The root ground to paste, the water drew it green, and the
-          healing salve is sealed in the vial. Type drink healing salve.
+          healing salve is sealed in the vial. Type quaff healing salve.
   - event: command
     command: craft
     room: 5267
@@ -169,11 +169,11 @@ triggers:
       - grant: "38-brew"
       - actor: >-
           The root ground to paste, the water drew it green, and the
-          healing salve is sealed in the vial. Type drink healing salve.
+          healing salve is sealed in the vial. Type quaff healing salve.
 
-  # ── DRINK: drink the salve (anywhere) ───────────────────────────────
+  # ── DRINK: quaff the salve (anywhere) ───────────────────────────────
   - event: command
-    command: drink
+    command: quaff
     conditions:
       has: ["38-brew"]
       missing: ["38-drink"]

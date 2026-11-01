@@ -87,8 +87,8 @@ func ItemSubtypes() []ItemTypeInfo {
 	return []ItemTypeInfo{
 		// Miscellaneous
 		{string(Wearable), `Can be targetted with the equip/wear/wield command.`, 0, 0, 0},
-		{string(Drinkable), `Can be targetted with the drink command.`, 0, 0, 0},
-		{string(Edible), `Can be targetted with the eat command.`, 0, 0, 0},
+		{string(Drinkable), `Can be targetted with the quaff command (potions).`, 0, 0, 0},
+		{string(Edible), `Can be targetted with the eat or drink command (food and cooked drinks).`, 0, 0, 0},
 		{string(Usable), `Can be targetted with the use command.`, 0, 0, 0},
 		{string(Throwable), `Can be targetted with the throw command.`, 0, 0, 0},
 		{string(Mundane), `No special behavior built in.`, 0, 0, 0},

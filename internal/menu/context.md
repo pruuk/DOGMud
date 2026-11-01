@@ -105,8 +105,9 @@ the action ("Yes, disband it" / "No, keep it"); otherwise pass "Yes" and "No".
 - `InterruptLine(reason, topic)` is the one line the player reads when an
   interrupt closes their menu ("You break off your talk with Kael as the fight
   begins."; for `ClosePartnerLeft`, "Your talk with Kael ends because they
-  left."), or `""` when the close is silent (their own choice, a command
-  whose output speaks for itself, death, a follow pull).
+  left."; for `CloseOtherCommand`, "You break off your talk with Kael.", owner
+  ruling 2026-10-30, #690), or `""` when the close is silent (their own
+  choice, death, a follow pull, a typed command over a menu with no topic).
 - `FollowLines(follower, leader, topic)` returns the three lines for a leader
   pulling a follower out of a menu: to the follower, to the leader, to the
   room left behind. Names arrive formatted; the caller hides them per reader.

@@ -1,12 +1,14 @@
 package usercommands
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/ansitags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,8 +20,10 @@ func assertHintPointsToTalk(t *testing.T, told string) {
 	t.Helper()
 	assert.Contains(t, told, "You don't have any current quests.")
 	assert.Contains(t, told, "[!]")
-	// The angle brackets travel escaped, as in every other usage line.
-	assert.Contains(t, told, "talk &lt;name&gt;")
+	// told has its tags stripped (aimTold), which also strips "<name>";
+	// TestHint_NoQuestLineShowsTalkNameOnTheWire checks the brackets.
+	assert.Contains(t, told, "Type talk")
+	assert.NotContains(t, told, "&lt;")
 	assert.NotContains(t, told, "active quests")
 }
 
@@ -101,4 +105,17 @@ func TestHint_NoActiveQuestPointsToMarkerAndTalk(t *testing.T) {
 		user.Character.LastQuestId = 900002
 		assertHintPointsToTalk(t, hintTold(t, user, room, ""))
 	})
+}
+
+// #690: the hint reaches a player through ansitags, which passes "<name>"
+// through and does not decode "&lt;", so the line holds raw brackets.
+func TestHint_NoQuestLineShowsTalkNameOnTheWire(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	user.Character.QuestProgress = nil
+	events.DrainQueuedMessagesForTest(1)
+	_, err := Hint("", user, room, events.EventFlag(0))
+	require.NoError(t, err)
+	wire := ansitags.Parse(strings.Join(events.DrainQueuedMessagesForTest(1), ""))
+	assert.Contains(t, wire, "talk <name>")
+	assert.NotContains(t, wire, "&lt;")
 }

@@ -97,7 +97,7 @@ func TestStealPaysTheThiefsEyes(t *testing.T) {
 
 		won := 0
 		for i := 0; i < sightRampTrials; i++ {
-			// Rank 2 is the steal floor; Dex tops the thief up to 150.
+			// Rank 2 keeps this thief's score fixed; Dex tops it up to 150.
 			actor := newStealPlayerActor(150-int(2*sw), 2)
 			actor.room.Lamp = rooms.LampPtr(lamp)
 			// A player's pickpocket is revealed after a pause, and only if

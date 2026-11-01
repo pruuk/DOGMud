@@ -1,5 +1,31 @@
 # DOGMud Patch Notes
 
+## 2026-11-01: Potions are quaffed, and thieves are about
+
+- Drink a potion with `quaff`, for example `quaff healing salve`. Typing
+  `drink` or `eat` at a potion now leaves it in your pack and tells you to
+  quaff it.
+- `eat` and `drink` now do the same thing, and both take food and cooked
+  drinks. Herbal Tea, Spiced Wine and Antidote Broth are drinks now, so
+  `drink tea` works, and so does `eat tea`. If you carry a potion with the
+  same name, `drink tea` still drinks the tea.
+- If a tick or macro of yours drinks potions, change `drink` to `quaff`
+  in it.
+- Herbal Tea no longer adds to your toxicity. No cooked dish does.
+- Stealing needs only the skullduggery every character starts with, so
+  anyone can try `steal`. The same goes for thieves in the world: watch
+  your purse in Hartcharn's market, on the New Plymouth docks and roads,
+  and outside Thornwall.
+- `steal` and `plant` do not work on a locked container. Unlock it first.
+- Typing a command while a conversation menu is open now tells you which
+  conversation it ended.
+- `hint`, when you have no quest, shows `talk <name>` correctly instead of
+  odd symbols. So do the usage lines for channels, guild chat, `set`
+  and `shoot`.
+- `consider` reads more naturally against things that are not people,
+  and no longer says the same length of fight twice.
+- The Straw Effigy now shows that even your best blows leave it no worse.
+
 ## 2026-10-31: Mastery levels off
 
 - Skill still pays off all the way up to grandmaster. Past grandmaster, each

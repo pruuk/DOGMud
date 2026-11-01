@@ -166,11 +166,12 @@ func TestStealHousehold_SpottedByAStranger(t *testing.T) {
 	}
 }
 
-// The steal checks: skullduggery rank 2, and the steal cooldown.
+// The steal checks: the StealMinRank gate, and the steal cooldown.
 func TestStealHousehold_UsesTheStealChecks(t *testing.T) {
 	h := setupHousehold(t, 9704, 1, nil, false)
+	pinStealMinRank(t, 2)
 	if res := h.steal(); res.Succeeded || res.Reason != "not advanced enough" || h.inPack() {
-		t.Fatalf("rank 1 cannot steal: %+v", res)
+		t.Fatalf("rank 1 cannot steal under a rank-2 gate: %+v", res)
 	}
 
 	h2 := setupHousehold(t, 9705, 2, nil, false)

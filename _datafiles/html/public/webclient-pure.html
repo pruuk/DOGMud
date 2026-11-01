@@ -3565,8 +3565,11 @@
 
             // Consumable item types → verb
             function consumeVerb(type, subtype) {
-                if (type === "potion" || type === "drink" || subtype === "potion" || subtype === "drink") return "drink";
-                if (type === "food"   || subtype === "food")   return "eat";
+                // Potions are quaffed; cooked drinks are drunk and food is
+                // eaten (eat and drink are one command, #375 phase 7).
+                if (type === "potion" || subtype === "drinkable") return "quaff";
+                if (type === "drink") return "drink";
+                if (type === "food"   || subtype === "edible") return "eat";
                 return null;   // "use" is for items with explicit use-ability — omit generic
             }
 
@@ -4067,7 +4070,7 @@
 
                 var cmdsInput = document.createElement("textarea");
                 cmdsInput.value = prefillCmds || "";
-                cmdsInput.placeholder = "e.g. drink health;drink mana";
+                cmdsInput.placeholder = "e.g. quaff health;quaff mana";
                 cmdsInput.rows = 3;
 
                 var secsInput = document.createElement("input");

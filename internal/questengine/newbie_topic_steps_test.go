@@ -270,7 +270,7 @@ func TestBirna9128_TopicsNameEachStep(t *testing.T) {
 		{f, 38, "list", "type buy glass vial", pre, "brew_step_vial", false},
 		{f, 38, "vial", "type buy 2 healers root", pre, "brew_step_roots", false},
 		{f, 38, "roots", "type craft healing salve", pre, "brew_step_craft", false},
-		{f, 38, "brew", "type drink healing salve", pre, "brew_step_drink", false},
+		{f, 38, "brew", "type quaff healing salve", pre, "brew_step_drink", false},
 		{f, 38, "drink", "", pre, "brew_turnin", true},
 	})
 }
@@ -284,7 +284,7 @@ func TestFalv9129_TopicsNameEachStep(t *testing.T) {
 		{f39, 39, "forage", "", []string{"38-end"}, "marsh_turnin", true},
 		{"40-heart_of_the_mire.yaml", 40, "start", "type attack spirit", []string{"38-end", "39-end"}, "mire_step_help", false},
 		{"55-another_brew.yaml", 55, "start", "type craft healing salve", []string{"38-end", "39-end", "40-end"}, "brew_loop_step_craft", false},
-		{"55-another_brew.yaml", 55, "brew", "type drink healing salve", []string{"38-end", "39-end", "40-end"}, "brew_loop_step_drink", false},
+		{"55-another_brew.yaml", 55, "brew", "type quaff healing salve", []string{"38-end", "39-end", "40-end"}, "brew_loop_step_drink", false},
 	})
 }
 

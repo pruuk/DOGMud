@@ -477,7 +477,7 @@ func guildChatSend(user *users.UserRecord, msg string) {
 	}
 	msg = strings.TrimSpace(msg)
 	if msg == "" {
-		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">guild chat &lt;message&gt;</ansi>  (or <ansi fg="command">gc &lt;message&gt;</ansi>)`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">guild chat <message></ansi>  (or <ansi fg="command">gc <message></ansi>)`)
 		return
 	}
 	// Neutralise <ansi> markup before interpolation.

@@ -293,6 +293,7 @@ type Balance struct {
 	SneakFailCooldown           ConfigInt   `yaml:"SneakFailCooldown"`           // Absent/zero means no failure cooldown; an invalid negative falls back to 3
 	StealHiddenBonus            ConfigInt   `yaml:"StealHiddenBonus"`            // Bonus to attacker score when hidden (default 25)
 	StealCooldown               ConfigInt   `yaml:"StealCooldown"`               // Steal/plant cooldown in real seconds (default 60)
+	StealMinRank                ConfigInt   `yaml:"StealMinRank"`                // Skullduggery rank every theft needs, players and mobs alike (default 1; below 1 reads as 1)
 	StealPocketSeconds          ConfigFloat `yaml:"StealPocketSeconds"`          // Real seconds a player's pickpocket takes at Dexterity 100; it scales with 100/Dexterity, so a quicker hand is faster (default 3)
 	StealPocketMinSeconds       ConfigFloat `yaml:"StealPocketMinSeconds"`       // Shortest pickpocket pause, however high Dexterity is (default 1.5)
 	StealPocketMaxSeconds       ConfigFloat `yaml:"StealPocketMaxSeconds"`       // Longest pickpocket pause, however low Dexterity is (default 6)

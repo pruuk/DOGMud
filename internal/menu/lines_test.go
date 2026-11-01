@@ -20,7 +20,15 @@ func TestInterruptLine(t *testing.T) {
 			t.Errorf("%v topic: %q, want %q", r, got, want[1])
 		}
 	}
-	for _, silent := range []CloseReason{CloseNone, CloseChosen, CloseLeft, CloseOtherCommand, CloseReplaced, CloseDead, CloseFollow} {
+	// A typed command that closes a talk menu names the conversation (owner
+	// ruling 2026-10-30, #690); a menu with no topic has none to name.
+	if got := InterruptLine(CloseOtherCommand, "talk with Kael"); got != "You break off your talk with Kael." {
+		t.Errorf("other command, topic: %q", got)
+	}
+	if got := InterruptLine(CloseOtherCommand, ""); got != "" {
+		t.Errorf("other command, no topic, should be silent: %q", got)
+	}
+	for _, silent := range []CloseReason{CloseNone, CloseChosen, CloseLeft, CloseReplaced, CloseDead, CloseFollow} {
 		if got := InterruptLine(silent, "talk with Kael"); got != "" {
 			t.Errorf("%v should be silent, got %q", silent, got)
 		}

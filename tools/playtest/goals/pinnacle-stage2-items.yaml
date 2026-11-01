@@ -85,6 +85,6 @@ goals:
     desc: >-
       REQUIRES mutations. First acquire 2-3 mutations (via the Chrysalis /
       admin mutation tooling / a scour+bloom cycle). Then spawn the Phial of
-      Second Birth (item spawn 40181), drink it. Confirm: all prior mutations
+      Second Birth (item spawn 40181), quaff it. Confirm: all prior mutations
       are cleared, and EXACTLY ONE new mutation is granted (check `mutations`
       before and after). The new mutation should be a rare one (floor 5).

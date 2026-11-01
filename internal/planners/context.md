@@ -69,7 +69,7 @@ switch, ensuring stale plan state never bleeds across goal types.
 
 | Goal type | File | Description |
 |-----------|------|-------------|
-| `survival` | `survival.go` | Flee combat, drink heal potion, or rest until HP meets safe threshold |
+| `survival` | `survival.go` | Flee combat, quaff a heal potion, or rest until HP meets safe threshold |
 | `wealth-gold` | `wealth_gold.go` | Sell loot at a vendor in zone until gold target met |
 | `wealth-item` | `wealth_item.go` | Buy or forage for a specific item (by tag or id) |
 | `craft-item` | `craft_item.go` | Navigate to crafting station and execute a known recipe |

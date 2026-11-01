@@ -46,7 +46,7 @@ A <ansi fg="itemname">belt</ansi> provides armor and stat bonuses as normal.
 
 A <ansi fg="itemname">bandolier</ansi> offers no armor but stores potions in
 easy-to-reach loops. Potions you pick up are automatically
-stored in the bandolier. When you <ansi fg="command">drink</ansi> a potion,
+stored in the bandolier. When you <ansi fg="command">quaff</ansi> a potion,
 the bandolier is checked first, serving the oldest potion
 of that type. This is ideal for characters who rely on
 potions in combat: quick access without digging through

@@ -75,7 +75,7 @@ func TestDrink_CatalystOfUnmakingScoursMutations(t *testing.T) {
 	require.True(t, user.Character.StoreItem(items.New(30067)),
 		"failed to seed Catalyst of Unmaking in player's backpack")
 
-	res := Drink(NewUserActorInRoom(user, room).(DrinkActor), "catalyst")
+	res := Quaff(NewUserActorInRoom(user, room).(DrinkActor), "catalyst")
 	assert.True(t, res.Drank, "the Catalyst must be drunk")
 
 	// Mutations scoured to species intrinsics only (none for Human 0).
@@ -131,7 +131,7 @@ func TestDrink_PhialOfSecondBirthScoursAndGrantsRareMutation(t *testing.T) {
 	require.True(t, user.Character.StoreItem(items.New(40181)),
 		"failed to seed Phial of Second Birth in player's backpack")
 
-	res := Drink(NewUserActorInRoom(user, room).(DrinkActor), "phial")
+	res := Quaff(NewUserActorInRoom(user, room).(DrinkActor), "phial")
 	assert.True(t, res.Drank, "the Phial must be drunk")
 
 	// Exactly one new mutation present, at or above the rarity floor.

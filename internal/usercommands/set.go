@@ -433,7 +433,7 @@ func cmdSetSubmission(user *users.UserRecord, args []string) (bool, error) {
 	if len(args) < 1 {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("Your submission policy: <ansi fg=\"command\">%s</ansi>",
 			user.Character.SubmissionPolicy))
-		user.SendText(messaging.CategorySystem, "Set with: <ansi fg=\"command\">set submission &lt;mercy|subdue|cripple|lethal&gt;</ansi>")
+		user.SendText(messaging.CategorySystem, "Set with: <ansi fg=\"command\">set submission <mercy|subdue|cripple|lethal></ansi>")
 		user.SendText(messaging.CategorySystem, "See <ansi fg=\"command\">help submission</ansi> for details.")
 		return true, nil
 	}
@@ -472,7 +472,7 @@ func cmdSetSurrender(user *users.UserRecord, args []string) (bool, error) {
 	if len(args) < 1 {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("Your surrender policy: <ansi fg=\"command\">%s</ansi>",
 			user.Character.SurrenderPolicy))
-		user.SendText(messaging.CategorySystem, "Set with: <ansi fg=\"command\">set surrender &lt;never|always|auto-tap-below &lt;N&gt;&gt;</ansi>")
+		user.SendText(messaging.CategorySystem, "Set with: <ansi fg=\"command\">set surrender <never|always|auto-tap-below <N>></ansi>")
 		user.SendText(messaging.CategorySystem, "See <ansi fg=\"command\">help surrender</ansi> for details.")
 		return true, nil
 	}
@@ -482,7 +482,7 @@ func cmdSetSurrender(user *users.UserRecord, args []string) (bool, error) {
 	newPolicy, ok := characters.ParseSurrenderPolicy(policyStr)
 	if !ok {
 		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("Unknown surrender policy: <ansi fg=\"red\">%s</ansi>", refusal.Echo(policyStr)))
-		user.SendText(messaging.CategoryRefusal, "Valid policies: never, always, auto-tap-below &lt;1-100&gt;.")
+		user.SendText(messaging.CategoryRefusal, "Valid policies: never, always, auto-tap-below <1-100>.")
 		return true, nil
 	}
 
@@ -498,7 +498,7 @@ func cmdSetArrest(user *users.UserRecord, args []string) (bool, error) {
 			cur = characters.ArrestSurrender
 		}
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("Your arrest policy: <ansi fg=\"command\">%s</ansi>", cur))
-		user.SendText(messaging.CategorySystem, "Set with: <ansi fg=\"command\">set arrest &lt;surrender|resist&gt;</ansi>")
+		user.SendText(messaging.CategorySystem, "Set with: <ansi fg=\"command\">set arrest <surrender|resist></ansi>")
 		user.SendText(messaging.CategorySystem, "See <ansi fg=\"command\">help arrest</ansi> for details.")
 		return true, nil
 	}

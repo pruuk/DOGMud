@@ -62,21 +62,17 @@ goals:
 
   - id: skill-up-skullduggery
     do: >
-      Run `skills` to check skullduggery rank. If still rank 1, move to a
-      room with 2-3 NPCs and spam `sneak` until rank ticks to 2. Allow
-      ~30-60 attempts — use-based progression is probabilistic but usually
-      fast at low rank.
+      Run `skills` to check skullduggery rank. Every character starts at
+      rank 1, which is enough to steal (Balance.StealMinRank ships at 1).
     verify: >
-      `skills` shows skullduggery at rank 2. If rank 2 is not reached
-      after 60+ attempts, note it in the report and mark goal 5 (theft)
-      BLOCKED.
+      `skills` shows skullduggery at rank 1 or higher.
 
   - id: failed-steal-records-crime
     do: >
       Find a live combatant citizen (NOT a non_combatant shopkeeper — use
       city_beggar/100, street_performer/101, records_clerk_pell/99,
       old_fen/gobb/wrex/114-116, barmaid_dal/117, or tavern_keeper_marek/96).
-      Run `steal <citizen>`. With skullduggery rank 2 this will fail most
+      Run `steal <citizen>`. At a low skullduggery rank this will fail most
       of the time ("X catches you in the act!"). If it succeeds silently,
       try a different target until you get a failure. Request admin to run:
         `crime list thornwall_citizens`

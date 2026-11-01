@@ -14,7 +14,7 @@ import (
 
 // The Straw Effigy has vast health and pillow hits (species 19, zero base
 // damage). It must never read as a quick kill either way: your pace is an
-// age, and the verdict is "won't lay a finger" or a stalemate, never "zero
+// age, and the verdict is "won't take a scratch" or a stalemate, never "zero
 // chance" and never a loss.
 func TestPinnedRead_StrawEffigy(t *testing.T) {
 	loadFightWorld(t)

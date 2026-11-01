@@ -467,7 +467,9 @@ skills, health) is never in the mind file; it lives on the owner's
 - The engine's combat AI does the fighting; the module never blocks it.
 - Plans come from the model in the background; reflexes run every round
   with `CombatReactionRounds` between moves, using only `attack #id`,
-  `fire #id`, `taunt`, `flee`, `drink` and `aid @id`.
+  `fire #id`, `taunt`, `flee`, `quaff` and `aid @id`.
+- The `drink` action verb issues `quaff` for a potion and `drink` for food or a
+  cooked drink (#375 phase 7).
 - The run reflex fires only when `actions.FleeGate` returns `FleeOK`, so a
   companion knocked down, grappled, rooted or frenzied does not speak its
   flee line or set `Fled` for a flee the engine would refuse. A flee

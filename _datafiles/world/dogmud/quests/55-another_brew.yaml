@@ -4,7 +4,7 @@
 #   55-start — granted by Falv's dialogue (brew_loop_offer node).
 #              Requires 40-end (Heart of the Mire). Repeatable with cooldown.
 #   55-brew: command trigger on craft at an alchemy bench (5265 or 5267).
-#   55-end:  command trigger on drink (anywhere, no room), once brewed.
+#   55-end:  command trigger on quaff (anywhere, no room), once brewed.
 #              Auto-grants the reward + clears for repeat. There is no
 #              report back to Falv, so no line tells the player to return.
 
@@ -34,7 +34,7 @@ steps:
     destination: anywhere
     description: >-
       You made the brew. Now drink it down. That finishes the run.
-    hint: "Type drink healing salve."
+    hint: "Type quaff healing salve."
   - id: end
     description: >-
       The brew held. Falv will send you back to the bench before long.
@@ -59,7 +59,7 @@ triggers:
       - grant: "55-brew"
       - actor: >-
           The brew came off the bench clean, steeped to the right color.
-          Type drink healing salve, or drink whatever you made.
+          Type quaff healing salve, or quaff whatever you made.
   - event: command
     command: craft
     room: 5267
@@ -70,10 +70,10 @@ triggers:
       - grant: "55-brew"
       - actor: >-
           The brew came off the bench clean, steeped to the right color.
-          Type drink healing salve, or drink whatever you made.
+          Type quaff healing salve, or quaff whatever you made.
 
   - event: command
-    command: drink
+    command: quaff
     conditions:
       has: ["55-brew"]
       missing: ["55-end"]

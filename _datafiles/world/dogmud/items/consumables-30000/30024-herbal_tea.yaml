@@ -8,13 +8,11 @@ description: |
   The liquid is warm and faintly bitter, with an aftertaste of something
   floral. Herbalists swear by it for settling the mind after hard work
   or long travel.
-type: potion
-subtype: drinkable
+type: drink
+subtype: edible
 uses: 1
 conditionids:
   - 44
 value: 4
 rarity_tier: 50
 weight: 0.3
-
-toxicity: 3

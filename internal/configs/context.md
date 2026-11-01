@@ -386,6 +386,14 @@ shipped curve. An absent key reads 0, so aim 0 is not expressible (0.0001 is
 the approach-only curve in practice). `config_mitigation_curve_test.go` pins
 the defaults, every fallback and the shipped file.
 
+### Theft rank knob (#375 phase 7)
+`StealMinRank` is the skullduggery rank every theft needs, players and mobs
+alike (`actions.theftAttempt.belowMinRank`). It ships at 1 (every character
+starts at rank 1); below 1, including an absent key, reads as 1
+(`validateCombatSteal`, `defaultStealMinRank`). `steal_min_rank_test.go` pins
+the shipped value and fails if `templates/help/steal.template` names another
+rank.
+
 ### Banned Name Validation
 ```go
 // Check if a name matches banned patterns

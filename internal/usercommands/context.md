@@ -35,11 +35,18 @@ The `internal/usercommands` package implements the complete command system for p
   first (RoomId still names the room), then the character name, keeping
   its `[AI]` tag (#449). The player table is not trimmed.
 - **Inventory**: `inventory`, `get`, `drop`, `give`, `put` - Item management
-- **Drink** (`drink.go`, drink path unification 2026-09-28): `Drink` is a
-  wrapper over `actions.Drink`, which holds every drink rule (toxicity, aging,
-  crafter scaling, the special potions) for players and mobs alike. Do not add
-  a rule here: `internal/guards/drink_wrapper_guard_test.go` fails if this file
-  or `internal/mobcommands/drink.go` applies drink rules itself.
+- **Quaff** (`quaff.go`, drink path unification 2026-09-28, renamed in #375
+  phase 7): `Quaff` is a wrapper over `actions.Quaff`, which holds every potion
+  rule (toxicity, aging, crafter scaling, the special potions) for players and
+  mobs alike. Do not add a rule here:
+  `internal/guards/drink_wrapper_guard_test.go` fails if this file or
+  `internal/mobcommands/quaff.go` applies potion rules itself.
+- **Eat and drink** (`eat.go`, `drink.go`, #375 phase 7): one food command, two
+  words. Both are wrappers over `actions.ConsumeFood`, which holds the lookup
+  order and every food rule for players and mobs alike; the same guard fails if
+  these files or their `internal/mobcommands` twins grow one.
+- **Usage lines** write raw angle brackets (`talk <name>`); ansitags decodes
+  no HTML entity (`internal/guards/html_entity_guard_test.go`, #690).
 - **Carried light (lighting plan 5a)**:
   - `hood` / `unhood` (`hood.go`: `Hood`, `Unhood`, helper `hoodedLight`)
     shut or open the hood of the `adjustable` light in the `Light` slot. A

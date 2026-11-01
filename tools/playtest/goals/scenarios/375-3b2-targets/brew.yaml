@@ -22,6 +22,6 @@ goals:
     the bench room next door if this room has no bench). Wait for it to
     finish. Check the quest log: the brew step must be done.
   - >-
-    Drink the salve or another potion you carry (`drink <name>`). Check the
-    quest log: the drink step must be done. Drink a second one if you have
+    Quaff the salve or another potion you carry (`quaff <name>`). Check the
+    quest log: the drink step must be done. Quaff a second one if you have
     one and confirm nothing else advances.

@@ -20,7 +20,7 @@ import (
 // the same helper the player's drink uses.
 //
 // Moved from mobcommands with drink path unification: the mob now drinks
-// through actions.Drink, so the test drives that body with a MobActor.
+// through actions.Quaff, so the test drives that body with a MobActor.
 func TestMobDrink_AppliesPotionMagnitude(t *testing.T) {
 	const heatId, plainId, tinctureId, brewId = 9811, 9812, 39811, 39812
 	restoreConditions := conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
@@ -48,8 +48,8 @@ func TestMobDrink_AppliesPotionMagnitude(t *testing.T) {
 	}
 
 	events.DrainQueuedMobConditionsForTest(mob.InstanceId)
-	require.True(t, Drink(actor, "tincture").Drank)
-	require.True(t, Drink(actor, "brew").Drank)
+	require.True(t, Quaff(actor, "tincture").Drank)
+	require.True(t, Quaff(actor, "brew").Drank)
 
 	byId := map[int]events.Condition{}
 	for _, c := range events.DrainQueuedMobConditionsForTest(mob.InstanceId) {

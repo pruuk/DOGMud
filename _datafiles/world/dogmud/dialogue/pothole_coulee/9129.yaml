@@ -86,7 +86,7 @@ opener:
     questExcluded:
     - 55-end
     text: You brewed. Now drink it. That is all I need to know.
-    hints: Type drink healing salve.
+    hints: Type quaff healing salve.
   - questRequired:
     - 40-end
     text: You broke it. The water runs clean off the spring now, first time in a
@@ -279,7 +279,7 @@ topics:
   label: I've brewed. What now?
   text: You brewed. Now drink it down. That is the whole job. You do not need to come
     tell me.
-  hints: Type drink healing salve.
+  hints: Type quaff healing salve.
   questRequired:
   - 55-brew
   questExcluded:

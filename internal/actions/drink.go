@@ -153,13 +153,15 @@ const phialOfSecondBirthItemId = 40181
 // for the phial's grant.
 const phialRarityFloor = 5
 
-// Drink is the one drink body for players and mobs, the AI companion included
-// (drink path unification). It was usercommands.Drink; the mob command was a
-// separate 49-line copy with no toxicity, no aging or crafter scaling and no
-// special potions. Every special potion applies fully to a mob (owner ruling,
-// 2026-09-28). SendText is a no-op for a mob, so a mob drinks silently apart
-// from the room line.
-func Drink(actor DrinkActor, rest string) DrinkResult {
+// Quaff is the one potion body for players and mobs, the AI companion
+// included (drink path unification). It was usercommands.Drink; the mob
+// command was a separate 49-line copy with no toxicity, no aging or crafter
+// scaling and no special potions. Every special potion applies fully to a mob
+// (owner ruling, 2026-09-28). SendText is a no-op for a mob, so a mob drinks
+// silently apart from the room line. The command is quaff since #375 phase 7
+// (owner ruling 2026-10-30); drink and eat are the food command
+// (usercommands/eat.go). The narration still reads "You drink the ...".
+func Quaff(actor DrinkActor, rest string) DrinkResult {
 	char := actor.GetCharacter()
 
 	room := actor.GetRoom()
@@ -182,12 +184,12 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 	// Nothing named: ask what, as get, drop and sell do (2026-10-17
 	// playtest: a bare `drink` read "You aren't carrying that.").
 	if strings.TrimSpace(rest) == `` {
-		refusal.Prompt(actor, `drink`, refusal.What, `drink <item>`)
+		refusal.Prompt(actor, `quaff`, refusal.What, `quaff <item>`)
 		return DrinkResult{Refusal: DrinkRefuseNotFound}
 	}
 
 	if char.IsActing() {
-		refusal.WhileBusy(actor, `drink`)
+		refusal.WhileBusy(actor, `quaff`)
 		return DrinkResult{Refusal: DrinkRefuseBusy}
 	}
 
@@ -222,9 +224,18 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 	itemSpec := matchItem.GetSpec()
 
 	if itemSpec.Subtype != items.Drinkable {
-		actor.SendText(messaging.CategoryRefusal,
-			fmt.Sprintf(`You can't drink <ansi fg="itemname">%s</ansi>.`, matchItem.DisplayName()),
-		)
+		if itemSpec.Subtype == items.Edible {
+			// Food or a cooked drink: name the verb that takes it.
+			verb := `eat`
+			if itemSpec.Type == items.Drink {
+				verb = `drink`
+			}
+			refusal.NotAPotion(actor, rest, verb)
+		} else {
+			actor.SendText(messaging.CategoryRefusal,
+				fmt.Sprintf(`You can't quaff <ansi fg="itemname">%s</ansi>.`, matchItem.DisplayName()),
+			)
+		}
 		return DrinkResult{Refusal: DrinkRefuseNotDrinkable, ItemId: matchItem.ItemId}
 	}
 
@@ -310,19 +321,20 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 		char.AddToxicity(float64(itemSpec.Toxicity))
 	}
 
-	// Quest engine: command notification. A successful drink advances
-	// "drink a potion" quest steps (e.g. the Spoke C alchemy cert). Only a
-	// player has quests.
-	if ua, ok := actor.(*UserActor); ok && room != nil {
-		questengine.NotifyCommand(ua.User, room.RoomId, "drink", questengine.TargetItem(matchItem.ItemId))
-	}
-
 	actor.SendText(messaging.CategorySystem, fmt.Sprintf(
 		`You drink the <ansi fg="itemname">%s</ansi>.`, matchItem.DisplayName()))
 	if room != nil {
 		room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(
 			`<ansi fg="%s">%s</ansi> drinks <ansi fg="itemname">%s</ansi>.`,
 			nameColor, char.Name, matchItem.DisplayName()), []string{char.Name}, roomExclude...)
+	}
+
+	// Quest engine: command notification, AFTER the drink line so a step's
+	// own line reads after the drink it reports (#697). A successful quaff
+	// advances "drink a potion" quest steps (the Spoke C alchemy cert). Only
+	// a player has quests.
+	if ua, ok := actor.(*UserActor); ok && room != nil {
+		questengine.NotifyCommand(ua.User, room.RoomId, "quaff", questengine.TargetItem(matchItem.ItemId))
 	}
 
 	// Aging quality message

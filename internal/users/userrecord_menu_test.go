@@ -1,8 +1,10 @@
 package users
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -73,12 +75,32 @@ func TestRouteMenuInput_QueuedLinesNeverAnswer(t *testing.T) {
 
 func TestRouteMenuInput_OtherCommandClosesAndPassesThrough(t *testing.T) {
 	u, r := menuUser(), &rec{}
-	u.OpenMenu(testMenu(), r.session())
+	s := r.session()
+	s.Topic = "talk with Kael"
+	u.OpenMenu(testMenu(), s)
+	events.DrainQueuedMessagesForTest(u.UserId)
 	if u.RouteMenuInput("north", true) {
 		t.Fatal("north was consumed")
 	}
 	if u.HasOpenMenu() || len(r.closed) != 1 || r.closed[0] != menu.CloseOtherCommand {
 		t.Fatalf("open %v closed %v", u.HasOpenMenu(), r.closed)
+	}
+	// Owner ruling 2026-10-30 (#690): the player is told which conversation
+	// the command ended, before the command's own output.
+	out := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), "")
+	if !strings.Contains(out, "You break off your talk with Kael.") {
+		t.Fatalf("no break-off line: %q", out)
+	}
+}
+
+// A menu with no topic (a confirm, a builder list) closes silently.
+func TestRouteMenuInput_OtherCommandClosesATopiclessMenuSilently(t *testing.T) {
+	u, r := menuUser(), &rec{}
+	u.OpenMenu(testMenu(), r.session())
+	events.DrainQueuedMessagesForTest(u.UserId)
+	u.RouteMenuInput("north", true)
+	if out := events.DrainQueuedMessagesForTest(u.UserId); len(out) != 0 {
+		t.Fatalf("a topic-less menu spoke on close: %q", out)
 	}
 }
 

@@ -45,10 +45,10 @@ func survivalPlanner(mob *mobs.Mob, goal *goals.Goal) PlanResult {
 		return PlanResult{Command: "flee " + exit, Status: StatusRunning}
 	}
 
-	// Low HP, not in combat → drink a healing potion if one is available.
+	// Low HP, not in combat → quaff a healing potion if one is available.
 	if hpPct < fleePct {
 		if potion := pickHealingPotion(mob); potion != "" {
-			return PlanResult{Command: "drink " + potion, Status: StatusRunning}
+			return PlanResult{Command: "quaff " + potion, Status: StatusRunning}
 		}
 	}
 

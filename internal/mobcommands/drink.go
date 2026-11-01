@@ -6,9 +6,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
-// Drink is the mob command; the rules live in actions.Drink, the same body a
-// player drinks through.
+// Drink is eat under its other name for a mob, as for a player
+// (usercommands.Drink): it takes food and cooked drinks through
+// actions.ConsumeFood. A mob drinks a potion with quaff (quaff.go).
 func Drink(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
-	actions.Drink(actions.NewMobActorInRoom(mob, room).(actions.DrinkActor), rest)
+	actions.ConsumeFood(actions.NewMobActorInRoom(mob, room), `drink`, rest)
 	return true, nil
 }

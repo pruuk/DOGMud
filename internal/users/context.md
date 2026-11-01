@@ -589,8 +589,10 @@ menu itself (rendering, resolving) is `internal/menu`; see its `context.md`.
 - `RouteMenuInput(line, typed)`: offers a line to the open menu and reports
   whether it consumed it. Only typed lines answer. A chosen entry re-checks
   `menuGate` and `Session.StillValid` first; a line that is not an answer
-  closes the menu (`CloseOtherCommand`) and returns false so the caller runs it
-  as a command.
+  closes the menu (`CloseOtherCommand`), announced, so a talk menu says
+  "You break off your talk with <name>." before the command's output (owner
+  ruling 2026-10-30, #690), and returns false so the caller runs it as a
+  command.
 - `CloseMenu(reason)`: closes and speaks the interrupt line.
 - `CheckMenuInterrupts()`: closes the menu when `menuGate` holds, and a
   non-modal prompt only on a NEW interrupt: `StartPrompt` records the rule

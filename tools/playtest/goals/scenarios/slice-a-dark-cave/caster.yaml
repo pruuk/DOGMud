@@ -24,6 +24,6 @@ goals:
   - >-
     Type `cast heal` with NO target. It should start and land on you. Quote it.
   - >-
-    Wait for Vessa to finish her shape casts. Then type `drink draught` and say
+    Wait for Vessa to finish her shape casts. Then type `quaff draught` and say
     when you can see. Type `cast heal Ordel`. It should land. Ask Ordel exactly
     what they read, and ask Vessa what she read.

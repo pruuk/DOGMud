@@ -32,9 +32,18 @@ var interruptTail = map[CloseReason]string{
 }
 
 // InterruptLine is the one line the player reads when an interrupt closes
-// their menu, or "" when the close is silent (their own choice, a command
-// whose output speaks for itself, death, a follow pull).
+// their menu, or "" when the close is silent (their own choice, death, a
+// follow pull, a typed command closing a menu with no topic).
 func InterruptLine(r CloseReason, topic string) string {
+	if r == CloseOtherCommand {
+		// A typed command closed the menu (owner ruling 2026-10-30, #690):
+		// talk menus number lines by position, so name the conversation the
+		// command ended. A menu with no topic has none to name.
+		if topic == "" {
+			return ""
+		}
+		return "You break off your " + topic + "."
+	}
 	if r == ClosePartnerLeft {
 		// The player broke nothing off: the other side went away.
 		if topic == "" {

@@ -17,7 +17,7 @@ import (
 type Verdict int
 
 const (
-	VerdictUntouched  Verdict = iota // they won't lay a finger on you
+	VerdictUntouched  Verdict = iota // you won't take a scratch
 	VerdictScratches                 // a few scratches at most
 	VerdictHurt                      // you'll win, but you'll feel it
 	VerdictBarely                    // you'd win, barely, if at all
@@ -161,7 +161,7 @@ func readQualityFor(res contest.Result, readScore float64, bal configs.Balance) 
 // Copy (player-copy rules: no numbers, 80 columns, plain words).
 
 var verdictText = map[Verdict]string{
-	VerdictUntouched:  `They won't lay a finger on you.`,
+	VerdictUntouched:  `You won't take a scratch.`,
 	VerdictScratches:  `A few scratches at most.`,
 	VerdictHurt:       `You'll win, but you'll feel it.`,
 	VerdictBarely:     `You'd win, barely, if at all.`,
@@ -177,20 +177,33 @@ var verdictColor = map[Verdict]string{
 	VerdictLikelyLose: `red-bold`, VerdictLoseBadly: `red-bold`, VerdictHopeless: `red-bold`,
 }
 
+// The pace copy names no pronoun for the target, which may be a person, a
+// beast or a straw dummy (#690): "it" is the fight, and the second clause is
+// how long the reader holds out.
 var yourPaceText = map[Pace]string{
-	PaceMoments: `you could beat them in moments`,
-	PaceShort:   `you could beat them in a short fight`,
-	PaceLong:    `beating them would be a long fight`,
-	PaceAge:     `beating them would take an age`,
-	PaceNever:   `you could never beat them`,
+	PaceMoments: `you could end it in moments`,
+	PaceShort:   `you could end it in a short fight`,
+	PaceLong:    `ending it would take you a long fight`,
+	PaceAge:     `ending it would take you an age`,
+	PaceNever:   `you could never end it`,
 }
 
 var theirPaceText = map[Pace]string{
-	PaceMoments: `they could beat you in moments`,
-	PaceShort:   `they could beat you in a short fight`,
-	PaceLong:    `they'd need a long fight to beat you`,
-	PaceAge:     `beating you would take them an age`,
-	PaceNever:   `they could never beat you`,
+	PaceMoments: `you could fall in moments`,
+	PaceShort:   `you could fall in a short fight`,
+	PaceLong:    `you could hold out through a long fight`,
+	PaceAge:     `you could hold out for an age`,
+	PaceNever:   `you could never fall`,
+}
+
+// samePaceText is the one sentence when both paces fall in the same band,
+// so a band is never said twice in one line (#690).
+var samePaceText = map[Pace]string{
+	PaceMoments: `Either of you could end it in moments.`,
+	PaceShort:   `Either of you could end it in a short fight.`,
+	PaceLong:    `Either of you would need a long fight to end it.`,
+	PaceAge:     `Either of you would need an age to end it.`,
+	PaceNever:   `Neither of you could ever end it.`,
 }
 
 // openerText is the read's first line; the muddy opener is the hedge.
@@ -204,8 +217,12 @@ func openerText(q ReadQuality, targetName string) string {
 	return fmt.Sprintf(`You take a fresh look at %s, weighing your chances.`, targetName)
 }
 
-// paceText joins the two paces into one sentence.
+// paceText joins the two paces into one sentence, or says the shared band
+// once when they match.
 func paceText(r FightRead) string {
+	if r.YourPace == r.TheirPace {
+		return samePaceText[r.YourPace]
+	}
 	s := yourPaceText[r.YourPace] + `; ` + theirPaceText[r.TheirPace] + `.`
 	return strings.ToUpper(s[:1]) + s[1:]
 }

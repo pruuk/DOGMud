@@ -342,8 +342,9 @@ func (u *UserRecord) choose(om *openMenu, e menu.Entry) bool {
 
 // RouteMenuInput offers a line to the open game menu. It returns true when
 // the menu consumed the line. A line the menu does not recognise closes it
-// (menu.CloseOtherCommand) and returns false so the caller runs it as a
-// command. Only typed lines may answer.
+// (menu.CloseOtherCommand), naming the conversation it ended when the menu
+// has a topic, and returns false so the caller runs it as a command. Only
+// typed lines may answer.
 func (u *UserRecord) RouteMenuInput(line string, typed bool) bool {
 	if !typed {
 		return false
@@ -380,7 +381,10 @@ func (u *UserRecord) RouteMenuInput(line string, typed bool) bool {
 		u.SendText(messaging.CategoryScreen, menu.Render(om.m))
 		return true
 	default:
-		u.closeMenuWith(om, menu.CloseOtherCommand, false)
+		// Announced (owner ruling 2026-10-30, #690): menu.InterruptLine names
+		// the conversation, or stays silent for a menu with no topic. The
+		// line is queued before the command runs, so it reads first.
+		u.closeMenuWith(om, menu.CloseOtherCommand, true)
 		return false
 	}
 }

@@ -931,7 +931,7 @@ func (m *Mob) AddConditionMagnitude(conditionId int, triggers int, magnitude flo
 // AddConditionScaled (drink path unification) is the mob twin of
 // UserRecord.AddConditionScaled: it queues events.Condition with
 // DurationMult and the mob's LifeEpoch. A non-positive multiplier means the
-// authored duration. actions.Drink reaches it through MobActor.
+// authored duration. actions.Quaff reaches it through MobActor.
 func (m *Mob) AddConditionScaled(conditionId int, durationMult float64, source string)
 
 // AddConditionTickScaled (tick amount at apply, 2026-09-28) is the mob twin

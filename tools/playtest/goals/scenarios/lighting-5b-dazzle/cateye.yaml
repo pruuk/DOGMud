@@ -12,7 +12,7 @@ ephemeral:
 
 goals:
   - >-
-    Type `look`, `time`, `help light`. Record the hour. Then `drink draught`
+    Type `look`, `time`, `help light`. Record the hour. Then `quaff draught`
     and quote every line, then `look` again and quote any dazzle notice.
   - >-
     Fight the Thornwall Thug here (`attack thug`) for as many rounds as it

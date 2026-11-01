@@ -432,10 +432,18 @@ func (m *AICompanionModule) performAction(c *controller, mob *mobs.Mob, owner *u
 		return m.issue(c, mob, `eat`, `eat `+target, t.Key, t.Name, ``, delay, round, t.Item.ItemId)
 
 	case `drink`:
-		if t.Kind != `carried` || t.Item.GetSpec().Subtype != items.Drinkable {
+		if t.Kind != `carried` {
 			return actionOutcome{Refused: `not something to drink`}
 		}
-		return m.issue(c, mob, `drink`, `drink `+target, t.Key, t.Name, ``, delay, round, t.Item.ItemId)
+		switch t.Item.GetSpec().Subtype {
+		case items.Drinkable:
+			// A potion is drunk with quaff (#375 phase 7).
+			return m.issue(c, mob, `drink`, `quaff `+target, t.Key, t.Name, ``, delay, round, t.Item.ItemId)
+		case items.Edible:
+			// Food or a cooked drink: drink is eat under its other name.
+			return m.issue(c, mob, `drink`, `drink `+target, t.Key, t.Name, ``, delay, round, t.Item.ItemId)
+		}
+		return actionOutcome{Refused: `not something to drink`}
 
 	case `put`:
 		if t.Kind != `carried` {
