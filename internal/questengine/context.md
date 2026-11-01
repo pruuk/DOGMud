@@ -362,7 +362,8 @@ records a find under and `look` checks. Afterwards `look <key>` and
 `search <key>` treat the hidden noun as found, and plain `search` no longer
 rolls for it. `ValidateQuestRefs` (`internal/quests`) checks the key against
 the trigger's room at every door; the bridge does not look the room up.
-Quest 49's floor search discovers `disc` in the Reliquary (5343).
+No shipped quest uses the action now: the disc under the Reliquary floor became
+story only in #375 phase 7, when quest 76's item moved to Maren's Cottage.
 
 **Resumed chains (#375 phase 5).** `SetResumed(bool)` / `Resumed()` mark a
 bridge whose chain takes a shelved quest back up. A bridge lives for one

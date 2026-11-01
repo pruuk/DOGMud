@@ -1,27 +1,28 @@
-# Quest 49 — The Old Shrine (Pothole Coulee, Spoke F / Lore outer ring, capstone)
+# Quest 49, The Old Shrine (Pothole Coulee, lore line, finale)
 #
-# Token flow:
-#   49-start — granted by Hermit Sere's shrine_offer node (requires 48-end).
-#   49-find: a `verb: search` room_interact on the Reliquary floor (5343),
-#              where the hidden `disc` (the Orbital Stone) is tucked (its
-#              `on: floor`). `search floor` (or `flagstones`, `flags`,
-#              `stones`) fires it with no roll; plain `search` can reach it
-#              too, at the room difficulty (#375 phase 3a). The beat's text
-#              delivers the core discovery, so the capstone reads even if
-#              the hidden-noun roll fails, and its `discover: disc` marks
-#              the disc found, so look and search treat it as known.
-#   49-end   — granted by Sere's shrine_turnin node (needs 49-find).
+# Token flow (#375 phase 7, one action per step, giver to giver):
+#   49-start: granted by Loresinger Hale's shrine_offer (9157), after 48-end.
+#   49-met:   topic_heard on Hermit Sere's shrine_meet topic (9160).
+#   49-find:  command trigger on `search` in the Reliquary (5343), any search
+#             there (search floor, or plain search). The search command
+#             raises the quest event after every search that runs
+#             (usercommands/skill.search.go), with no roll, so the find text
+#             is always true; while this trigger would fire, the search does
+#             not first say it found nothing (SearchOptions.QuestStep).
+#             Gated on 49-met.
+#   49-end:   granted by Sere's shrine_turnin hand-in (needs 49-find).
 #
-# Looking at the disc is not a step (2026-10-17): the search beat already
-# narrates the whole find, so `look disc` is offered in the step descriptions
-# as optional study, and the hints name one command each (search, then the
-# report).
+# The disc under the floor is story only since quest 76 moved its item to
+# Maren's Cottage (#625): no hidden noun, no discover action, and no line that
+# invites the player to look at it or take it. The find text delivers the
+# discovery, and the disc stays where it lies.
 #
-# Design: the quiet-discovery capstone -- NO boss, NO fight (the soft spoke).
-# Search out the half-buried disc under the Reliquary floor (the sci-fi tease,
-# deliberately NOT understood), study it, and bring word back. Reward: a Charisma
-# bump + the folk's recognition (a narrative faction nod). The disc stays in the
-# world.
+# A character saved on 49-find before the meeting step existed holds no
+# 49-met. Sere's and Hale's gates exclude 49-find as well as 49-met, so such a
+# player is asked for the report and is never sent back to the lesson.
+#
+# Design: the quiet discovery capstone, no boss and no fight. Reward: a
+# Charisma bump and the folk's recognition.
 
 questid: 49
 name: The Old Shrine
@@ -35,29 +36,31 @@ secret: false
 steps:
   - id: start
     destination:
+      mob: 9160
+    description: >-
+      Loresinger Hale has sent you to Hermit Sere, who keeps the old shrine
+      past the Tall Stone.
+    hint: >-
+      From the Stone Circle, go north twice to the Tall Stone, then west, then
+      north twice to the Old Shrine. Type talk sere.
+  - id: met
+    destination:
       room: 5343
     description: >-
-      Sere wants you to find what lies beneath the shrine. In the Reliquary, the
-      deepest back-chamber, the flagstone floor has cracked and heaved over
-      something. Search it out. Once it is uncovered, you can look at the disc
-      to study it.
-    # The search lesson (#375 phase 3a, owner ruling 9): search the one thing
-    # that looks disturbed, or the whole room at worse odds. One command is
-    # typed; the whole-room search is named but not asked for. It starts
-    # from the Old Shrine, where Sere gives the quest, so the directions
-    # hold wherever hint is typed. The loop caps a hint at 200 characters
-    # (HintMaxRunes).
+      Sere wants you to find what lies beneath the shrine. In the Reliquary,
+      the deepest back-chamber, the flagstone floor has cracked and heaved over
+      something. Search it out.
     hint: >-
-      From the Old Shrine, go west, then north into the Reliquary. Type
-      search floor. Typing just search covers the whole room, slower and
-      less sure. For more, type help search.
+      From the Old Shrine, go west, then north into the Reliquary. Type search
+      floor. For more, type help search.
   - id: find
     destination:
-      room: 5341
+      mob: 9160
     description: >-
-      You worked a disc of pale, impossible metal free of the floor: a thing
-      older than the folk, marked with a sign even the loresingers cannot read.
-      You can look at the disc to study it before you bring word to Sere.
+      You worked a disc of pale, impossible metal free of the floor, looked on
+      it, and set it back where the light can reach it: a thing older than the
+      folk, marked with a sign even the loresingers cannot read. Bring word to
+      Sere.
     hint: >-
       Go south and east back to Hermit Sere in the Old Shrine and type talk
       sere.
@@ -76,7 +79,7 @@ rewards:
     long time to hear it, the pale shape of her skull faintly lit from within.
     "So it is real," she says at last, very quietly. "I have felt it under the
     floor for thirty years and never had the hands or the right to lift it. You
-    did." She does not ask you to bring it to her; she seems to understand it is
+    did." She does not ask you to bring it to her. She seems to understand it is
     not a thing to be owned. "Leave it where the light can reach it. Some things
     are meant to be found more than once." Then, with a gravity that settles over
     you like a mantle: "You came to us a stranger. You leave a friend of the
@@ -86,19 +89,25 @@ rewards:
   observer: ""
 
 triggers:
-  # ── SEARCH: uncover the buried disc in the Reliquary (5343) ────────────
-  - event: room_interact
-    verb: search
-    noun: floor
-    room: 5343
+  # MET: hearing Sere's lesson.
+  - event: topic_heard
+    mob: 9160
+    topic: shrine_meet
     conditions:
       has: ["49-start"]
+      missing: ["49-met"]
+    actions:
+      - grant: "49-met"
+
+  # FIND: search the Reliquary (5343).
+  - event: command
+    command: search
+    room: 5343
+    conditions:
+      has: ["49-met"]
       missing: ["49-find"]
     actions:
       - grant: "49-find"
-      # The disc is now a known feature of the room, as if a search roll had
-      # found it, so look disc and search treat it as found.
-      - discover: disc
       - actor: >-
           Your fingers find the lifted edge of a flagstone, and under it
           something that is not stone: cool, smooth, regular. You work it free,
@@ -112,5 +121,6 @@ triggers:
           You do not understand it, and you are fairly certain no one in the
           coulee does. It feels less like something the folk made and lost than
           like something that was already here when they came, waiting under the
-          floor for a hand to lift it. Now yours has.
+          floor for a hand to lift it. You set it back in its bed of stone, where
+          the light can reach it.
       - actor: "Go back to Sere in the Old Shrine and type talk sere."

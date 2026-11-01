@@ -1,22 +1,24 @@
-# Quest 58 — Reading the Stones (Pothole Coulee, Spoke F repeatable)
+# Quest 58, Reading the Stones (Pothole Coulee, lore line repeatable)
 #
-# Token flow:
-#   58-start — granted by Hermit Sere's dialogue (stones_loop_offer node).
-#              Requires 49-end (The Old Shrine). Repeatable with cooldown.
-#   58-end: a `verb: search` room_interact on the Reliquary floor (5343),
-#              the feature quest 49's disc is tucked into (#375 phase 3a).
-#              Requires 58-start. Auto-grants reward + clears for repeat.
-#              There is no report back (2026-10-17): the hint, Sere's offer
-#              and the reward lines all say the search finishes it, and the
-#              reward plays in the Reliquary, where Sere is not.
+# Token flow (#375 phase 7: the repeatable ends at a hand-in):
+#   58-start: granted by Hermit Sere's stones_loop_offer (9160), after 49-end.
+#   58-read:  command trigger on `search` in the Reliquary (5343), any search
+#             there. The search command raises the event after every search
+#             that runs, with no roll, so the line below is always true.
+#             Gated on 58-start.
+#   58-end:   granted by Sere's stones_loop_turnin hand-in (needs 58-read).
+#             Completing clears the token; the offer returns after the
+#             cooldown.
+#
+# A character saved on 58-start before this change searches as before: the
+# step now listens for the command, and the report goes to Sere.
 
 questid: 58
 name: Reading the Stones
 description: >-
-  Sere believes the shrine still has things to teach anyone patient
-  enough to listen. She wants you to go back to the Reliquary and
-  read what the stones have to say. The reading is the whole of it:
-  the stones finish the lesson themselves.
+  Sere believes the shrine still has things to teach anyone patient enough to
+  listen. She wants you to go back to the Reliquary, read what the stones have
+  to say, and tell her.
 secret: false
 repeatable: true
 cooldown_rounds: 300
@@ -26,40 +28,46 @@ steps:
     destination:
       room: 5343
     description: >-
-      Sere has asked you to go back to the Reliquary and search the
-      old stones again. The search itself completes the reading.
+      Sere has asked you to go back to the Reliquary and search the old
+      stones again.
     hint: >-
-      From the Old Shrine, go west into the Collapsed Nave and north
-      into the Reliquary, then type search floor.
+      From the Old Shrine, go west into the Collapsed Nave and north into the
+      Reliquary, then type search floor.
+  - id: read
+    destination:
+      mob: 9160
+    description: >-
+      The stones gave up a little more than before. Tell Sere what they said.
+    hint: >-
+      Go south and east back to Hermit Sere in the Old Shrine and type talk
+      sere.
   - id: end
     description: >-
-      You read the stones again. Sere will have more for you when the
-      shrine is ready to give it.
+      You read the stones again. Sere will have more for you when the shrine
+      is ready to give it.
 
 rewards:
   gold: 6
   skillinfo: "rhetoric:1"
   actor: >-
-    You sit back on your heels in the quiet of the Reliquary and let
-    what the stones showed you settle. It is not quite what they said
-    last time. Sere was right: very old places keep speaking, and the
-    words shift with the listener. Come again when you have the
-    patience for it.
+    Sere listens with her eyes closed. "Not quite what they said last time.
+    Very old places keep speaking, and the words shift with the listener. Come
+    again when you have the patience for it."
   observer: >-
-    {actor} kneels by the cracked floor, quiet, as though listening to
-    something no one else can hear.
+    {actor} tells Hermit Sere what the stones said, and she listens with her
+    eyes closed.
 
 triggers:
-  - event: room_interact
-    verb: search
-    noun: floor
+  - event: command
+    command: search
     room: 5343
     conditions:
       has: ["58-start"]
-      missing: ["58-end"]
+      missing: ["58-read"]
     actions:
-      - grant: "58-end"
+      - grant: "58-read"
       - actor: >-
-          The stones give up a little more than they did before. It is
-          not much, but it is something. The mark at the center of the
-          disc catches your eye again, unchanged and patient.
+          The stones give up a little more than they did before. It is not
+          much, but it is something. The old mark, unchanged and patient,
+          catches your eye again. Go back to Hermit Sere in the Old Shrine and
+          type talk sere.

@@ -1,31 +1,39 @@
-# Sullen Garrow (9158) — the belligerent farmhand on the Mustering Green (5335).
+# Sullen Garrow (9158), the belligerent farmhand on the Mustering Green (5335).
 #
-# Owns the "yield" half of quest 48's taunt beat. Garrow is combat_passive
-# (he never attacks), and the instant he is actually confronted -- the sting
-# of a taunt, registering as mob_hurt -- the bluster collapses and he storms
-# off the green. This keeps the encounter strictly non-lethal: a newbie can
-# never end up killing a farmhand over a property quarrel. The quest's
-# command:taunt trigger (room 5335) fires the beat; this tree is the visible
-# defusal. Pattern follows behaviors/pothole_coulee/9100-cleric_hadwen.yaml.
+# Owns the yield half of quest 48's taunt beat. Garrow is combat_passive (he
+# never starts a fight). A taunt is a combat move, so it starts a real fight;
+# on its first round his bluster collapses and he quits the green. The
+# quest's command: taunt trigger (room 5335) narrates the beat; this tree
+# makes it true.
+#
+# #690: he used to flee, a roll that can fail, which left a real fight
+# running and the player unable to walk south. He now leaves with `suicide
+# vanish`: no corpse, no loot, no kill credit, and his spawn slot keeps its
+# cooldown. Plain `despawn` is the wrong command here, because it resets the
+# slot (a presence unload or an expired charm is no death), so he would be back
+# a round later with no line. The player's aggro on him is released on the next
+# combat round because the target is gone (hooks.ValidateAggro), and the
+# Mustering Green's spawn entry brings him back for the next student, with its
+# message, after its rate (rooms/pothole_coulee/5335.yaml).
+# Tests: internal/behaviortree/garrow_yield_test.go and
+# internal/mobcommands/garrow_yield_spawn_test.go.
 
 tree:
   type: selector
   children:
 
-    # ── YIELD: the moment a real confrontation starts, his nerve breaks.
-    #    Fires on mob_combat_round (not mob_hurt): a taunt deals conviction
-    #    damage, not HP, so it never registers as "hurt" -- but it does set
-    #    aggro and start combat, and this fires on the first round of it. ──
+    # YIELD: the first round of a real confrontation breaks his nerve.
     - type: sequence
       event: mob_combat_round
       children:
         - type: action
           do: say
-          text: All right! Enough -- have it your way.
+          text: All right! Enough. Have it your way.
         - type: action
           do: emote
           text: >-
             shoulders off the green without looking back, the fight gone out
             of him all at once.
         - type: action
-          do: flee
+          do: command
+          cmd: suicide vanish

@@ -1,0 +1,32 @@
+# Quest 96, Report to Toke (Archery) (Pothole Coulee, bridge, #375 phase 7)
+#
+# The file name is <id>-<ConvertForFilename(name)>.yaml, which the loader
+# enforces: the parentheses become underscores.
+#
+# Token flow:
+#   96-start: granted by Scout Bryn's report_archery_offer (9162), after
+#             52-end (he takes 52's hand-in, so ruleChain holds).
+#   96-end:   granted by Crier Toke's report_archery_in hand-in (9106).
+
+questid: 96
+name: Report to Toke (Archery)
+description: >-
+  Bowmaster Skell is off the overlook. Crier Toke in Hub Square will want to
+  hear it from you before he shouts it across the square.
+secret: false
+
+steps:
+  - id: start
+    destination:
+      mob: 9106  # Crier Toke follows his schedule (pothole_toke)
+      room: 5203  # fallback: Hub Square
+    description: >-
+      Go back to Crier Toke in Hub Square and tell him you finished the
+      archery trail.
+    hint: >-
+      From the Canyon Mouth, go south, west, west, down, south, south, down,
+      south, west, west and south to Hub Square. Type talk toke.
+  - id: end
+    description: >-
+      You told Toke the overlook is taken, and the whole square heard it a
+      breath later.

@@ -130,7 +130,7 @@ triggers:
       - grant: 31-lantern
       - actor: >-
           The keeper of the Drowned Lantern tips you a nod as you step in.
-          "First one is on the house -- the coulee's welcome. Rest while it
+          "First one is on the house. The coulee's welcome. Rest while it
           is still being gentle with you." Now go back to Crier Toke in Hub
           Square, east and then north, and type talk toke.
 

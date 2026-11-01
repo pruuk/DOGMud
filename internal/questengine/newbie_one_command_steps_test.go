@@ -364,9 +364,7 @@ func TestNewbieQuestTriggersGateOnThePreviousStep(t *testing.T) {
 // steps' result is already in hand (a shot needs a readied weapon), so a
 // player saved before a step was inserted is never held on a step whose
 // lesson they already learned.
-var lenientGrants = map[string]bool{
-	"50-shoot": true, // fire needs the sling readied (the equip step)
-}
+var lenientGrants = map[string]bool{}
 
 // retiredSteps are steps no trigger grants any more. Each stays in its
 // quest's step list only so a character saved on it resumes, so the step
@@ -415,61 +413,77 @@ func TestQuest41FirstSign_OneCommandPerStep(t *testing.T) {
 }
 
 func TestQuest50FirstShot_OneCommandPerStep(t *testing.T) {
-	const terrace = 5351
+	const terrace, rangeRoom = 5351, 5350
+	const butt, iden = 9163, 9161
 	q := loadShippedQuest(t, "50-first_shot.yaml", 50)
-	steps := newLinearPlayer(q).steps
-	// start, shoot and ambush are the ids a saved character may hold today.
-	for _, old := range []string{"start", "shoot", "ambush", "end"} {
-		require.Contains(t, steps, old, "step %q must survive so a player mid-quest resumes", old)
-	}
+	require.Equal(t, []string{"start", "met", "equip", "shoot", "ambush", "cover_shot", "end"}, newLinearPlayer(q).steps,
+		"the old ids survive so a player mid-quest resumes; met is the meeting with Iden (#375 phase 7)")
 	turnIn := turnInRequires(t, "9161.yaml", "shoot_turnin")
+
+	// A shot at the practice butt, from the Long Terrace. A miss counts too:
+	// the command event goes out when the shot resolves, hit or not.
+	atButt := EventDetails{Command: "fire", RoomId: terrace, TargetKind: "mob", MobId: butt}
 
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
+		w.notify("command", EventDetails{Command: "equip", RoomId: rangeRoom, ItemId: 10038})
+		require.Equal(t, "start", w.p.current, "the sling step waits for Iden's lesson")
+		w.notify("topic_heard", EventDetails{MobId: iden, Topic: "shoot_lesson"})
+		require.Equal(t, "met", w.p.current)
 
 		// The equip event names its item (2026-10-17 newbie-duo playtest:
 		// `wield cudgel` printed "The sling settles in your hand").
-		w.notify("command", EventDetails{Command: "equip", RoomId: 5350, ItemId: 10043})
-		require.Equal(t, "start", w.p.current, "wielding the cudgel must not finish the sling step")
-		w.notify("command", EventDetails{Command: "equip", RoomId: 5350, ItemId: 10038})
+		w.notify("command", EventDetails{Command: "equip", RoomId: rangeRoom, ItemId: 10043})
+		require.Equal(t, "met", w.p.current, "wielding the cudgel must not finish the sling step")
+		w.notify("command", atButt)
+		require.Equal(t, "met", w.p.current, "a shot before the sling step does not count")
+		w.notify("command", EventDetails{Command: "equip", RoomId: rangeRoom, ItemId: 10038})
 		require.Equal(t, "equip", w.p.current)
 
-		w.notify("command", EventDetails{Command: "fire", RoomId: terrace})
+		w.notify("command", atButt)
 		require.Equal(t, "shoot", w.p.current)
-
-		// A second shot in the open is not the shot from cover.
-		w.notify("command", EventDetails{Command: "fire", RoomId: terrace})
-		require.Equal(t, "shoot", w.p.current, "a shot without sneaking first must not count as the cover shot")
+		w.notify("command", atButt)
+		require.Equal(t, "shoot", w.p.current, "a second shot in the open is not the shot from cover")
 		require.False(t, holdsAll(w.p, turnIn))
-
 		w.notify("command", EventDetails{Command: "sneak", RoomId: terrace})
 		require.Equal(t, "ambush", w.p.current)
 		require.False(t, holdsAll(w.p, turnIn), "turn-in must wait for the shot from cover")
-
-		w.notify("command", EventDetails{Command: "fire", RoomId: terrace})
+		w.notify("command", atButt)
 		require.Equal(t, "cover_shot", w.p.current)
 		require.True(t, holdsAll(w.p, turnIn), "turn-in opens after the shot from cover")
 	})
 
-	// Getting shot is not a step of its own: the quest hands a pouch over when
-	// it starts, unless the player already carries one (Crier Toke's path in
-	// quest 31 gives the pouch alongside the grant).
+	// Both shot steps say "at the butt", so only a shot at the butt counts: not
+	// a shot at nothing, at Iden, at a player, or from another room.
+	t.Run("only a shot at the butt counts", func(t *testing.T) {
+		wrong := map[string]EventDetails{
+			"no target":          {Command: "fire", RoomId: terrace},
+			"Iden":               {Command: "fire", RoomId: terrace, TargetKind: "mob", MobId: iden},
+			"another player":     {Command: "fire", RoomId: terrace, TargetKind: "player"},
+			"the butt from away": {Command: "fire", RoomId: rangeRoom, TargetKind: "mob", MobId: butt},
+		}
+		for name, ev := range wrong {
+			w := newQuestWalker(q).at("equip")
+			w.notify("command", ev)
+			require.Equal(t, "equip", w.p.current, "first shot: %s must not count", name)
+			w = newQuestWalker(q).at("ambush")
+			w.notify("command", ev)
+			require.Equal(t, "ambush", w.p.current, "cover shot: %s must not count", name)
+		}
+	})
+
+	// Shot is not a step of its own: the quest hands a pouch over when it
+	// starts, unless the player already carries one.
 	t.Run("the grant hands over shot once", func(t *testing.T) {
 		const shotPouch = 30064
 		w := newQuestWalker(q).at("start")
-		w.notify("quest_granted", EventDetails{QuestToken: "50-start", RoomId: 5350})
+		w.notify("quest_granted", EventDetails{QuestToken: "50-start", RoomId: rangeRoom})
 		require.Equal(t, []int{shotPouch}, w.ctx.givenItems, "a player with no shot gets a pouch")
 
 		w = newQuestWalker(q).at("start")
 		w.p.items[shotPouch] = true
-		w.notify("quest_granted", EventDetails{QuestToken: "50-start", RoomId: 5350})
+		w.notify("quest_granted", EventDetails{QuestToken: "50-start", RoomId: rangeRoom})
 		require.Empty(t, w.ctx.givenItems, "a player who already carries shot gets no second pouch")
-	})
-
-	t.Run("player saved on start who already wields the sling can still fire", func(t *testing.T) {
-		w := newQuestWalker(q).at("start")
-		w.notify("command", EventDetails{Command: "fire", RoomId: terrace})
-		require.Equal(t, "shoot", w.p.current)
 	})
 
 	t.Run("player saved on shoot resumes with sneak", func(t *testing.T) {
@@ -481,8 +495,22 @@ func TestQuest50FirstShot_OneCommandPerStep(t *testing.T) {
 	t.Run("player saved on ambush resumes with the shot", func(t *testing.T) {
 		w := newQuestWalker(q).at("ambush")
 		require.False(t, holdsAll(w.p, turnIn))
-		w.notify("command", EventDetails{Command: "fire", RoomId: terrace})
+		w.notify("command", atButt)
 		require.Equal(t, "cover_shot", w.p.current)
 		require.True(t, holdsAll(w.p, turnIn))
+	})
+
+	t.Run("directions are true", func(t *testing.T) {
+		require.Contains(t, questHintFor(t, q, "start"), "north, east, east, north, up, north, north and up to the firing range")
+		require.Equal(t, rangeRoom, foldingWalk(t, foldingHubSquare, "north", "east", "east", "north", "up", "north", "north", "up"))
+		require.Equal(t, terrace, foldingWalk(t, rangeRoom, "east"))
+	})
+
+	// A shot can miss, so no line may say the stone landed.
+	t.Run("no line promises a hit", func(t *testing.T) {
+		raw := squash(string(repoFile(t, "_datafiles", "world", "dogmud", "quests", "50-first_shot.yaml")))
+		for _, claim := range []string{"strikes the straw", "dead center", "bury itself", "put a stone into", "finds the straw"} {
+			require.NotContains(t, raw, claim, "a shot can miss; the line must not promise a hit")
+		}
 	})
 }

@@ -1,0 +1,32 @@
+# Quest 95, Report to Toke (Lore) (Pothole Coulee, bridge, #375 phase 7)
+#
+# The file name is <id>-<ConvertForFilename(name)>.yaml, which the loader
+# enforces: the parentheses become underscores.
+#
+# Token flow:
+#   95-start: granted by Hermit Sere's report_lore_offer (9160), after 49-end
+#             (she takes 49's hand-in, so ruleChain holds).
+#   95-end:   granted by Crier Toke's report_lore_in hand-in (9106).
+
+questid: 95
+name: Report to Toke (Lore)
+description: >-
+  You have looked on the thing beneath the old shrine. Crier Toke in Hub
+  Square will want to hear how the lore trail ended.
+secret: false
+
+steps:
+  - id: start
+    destination:
+      mob: 9106  # Crier Toke follows his schedule (pothole_toke)
+      room: 5203  # fallback: Hub Square
+    description: >-
+      Go back to Crier Toke in Hub Square and tell him you finished the lore
+      trail.
+    hint: >-
+      From the Old Shrine, go south twice, east, and south twice to the Stone
+      Circle. Then south, east, south twice, east, south six times, west, south.
+      Type talk toke.
+  - id: end
+    description: >-
+      You told Toke how the lore trail ended, and he will make a story of it.

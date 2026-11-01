@@ -341,3 +341,31 @@ func TestSearch_FailedAndEmptySearchesReadTheSame(t *testing.T) {
 		t.Errorf("feature search: failed %q vs empty %q", failed, empty)
 	}
 }
+
+// #375 phase 7: a `command: search` quest step answers the search itself (the
+// caller raises the command event right after), so a search that finds
+// nothing does not first say so when such a step will fire. Without one, the
+// line stays.
+func TestSearch_QuestStepLeavesTheAnswerToTheQuest(t *testing.T) {
+	pinConfigForTest(t)
+	cases := []struct {
+		name string
+		room int
+		uid  int
+		step bool
+	}{
+		{"StepperYes", 9751, 7751, true},
+		{"StepperNo", 9752, 7752, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			actor := newSearchFakeActor(c.name, newSearchTestRoom(c.room), true, c.uid)
+			stubBaubleSearch(t, false, actor)
+			pinSearchRoll(t, false)
+			Search(actor, SearchOptions{QuestStep: c.step})
+			if said := searchSaid(actor, "You find nothing of interest."); said == c.step {
+				t.Fatalf("QuestStep=%v: nothing-found line said=%v, messages %q", c.step, said, actor.sent)
+			}
+		})
+	}
+}

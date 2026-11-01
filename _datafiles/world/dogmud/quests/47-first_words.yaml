@@ -1,46 +1,52 @@
-# Quest 47 — First Words (Pothole Coulee, Spoke F / Lore inner ring, cert)
+# Quest 47, First Words (Pothole Coulee, lore line, quest 1 of 3)
 #
-# Token flow:
-#   47-start: granted by Crier Toke's send_folk offer (9106.yaml, requires 31-end).
-#   47-help  — command trigger on `help` (the in-game help system; Tier-1
-#              reinforcement). The help-command Notify was added this chunk.
-#              Not room-gated on purpose (2026-10-17): the lesson is that help
-#              works anywhere, so typing it on the road counts too.
-#   47-end   — granted by Wenna's words_turnin node (needs 47-help).
+# Token flow (#375 phase 7, one action per step, giver to giver):
+#   47-start: granted by Crier Toke's send_folk offer (9106), after 31-end.
+#   47-met:   topic_heard on Elder Wenna's words_lesson topic (9153).
+#   47-help:  command trigger on `help`, anywhere: the lesson is that help
+#             works anywhere (owner 2026-10-17). Gated on 47-met.
+#   47-end:   granted by Wenna's words_turnin hand-in (needs 47-help).
 #
-# Design: teach ask-depth dialogue + the in-game `help` reference, then hand the
-# folk charm + a touch of charisma. No combat (the soft spoke).
+# Saved characters: a player saved on start before this pass (help still to
+# type) now hears Wenna first; one saved on help turns in as before.
 
 questid: 47
 name: First Words
 description: >-
   Elder Wenna runs the outlying farmstead north of the coulee town, and the
-  way of the folk waits with her -- mostly the way of asking, of listening,
-  and of knowing where to look a thing up.
+  way of the folk waits with her. It is mostly the way of asking, of
+  listening, and of knowing where to look a thing up.
 secret: false
 
 steps:
   - id: start
     destination:
-      room: 5324
+      mob: 9153
+    description: >-
+      Crier Toke has sent you to Elder Wenna at the farmstead up the north
+      shore. She teaches the way of the folk.
+    hint: >-
+      From Hub Square, go east, then north six times to the Commons Yard.
+      Type talk wenna.
+  - id: met
+    destination: anywhere
     description: >-
       The way of the folk is mostly the way of asking, and of knowing where
-      to look a thing up. Start with the in-game help.
+      to look a thing up. Start with the in-game help. It works anywhere.
     hint: >-
       Type help.
   - id: help
     destination:
-      room: 5324
+      mob: 9153
     description: >-
-      You opened the help reference -- your surest guide when memory fails.
+      You opened the help reference, your surest guide when memory fails.
       Return to Wenna.
     hint: >-
-      Go back to Elder Wenna and type talk wenna.
+      Go back to Elder Wenna in the Commons Yard and type talk wenna.
   - id: end
     description: >-
-      Wenna has named you a friend of the folk. West and north the standing
-      stones ring the old ground; the loresinger Hale keeps them, and the
-      deeper story with them.
+      Wenna has named you a friend of the folk. When you are ready, she will
+      send you on to the standing stones.
 
 rewards:
   stat_info: "charisma:1"
@@ -53,22 +59,33 @@ rewards:
     charm of plaited grass and polished bone and presses it into your hand. "Wear
     it where it shows. The folk will know the sign and treat you the kindlier for
     it." A little of her unhurried certainty seems to stay with you as she turns
-    back to the yard. "The stones are west and north of here. Hale keeps them.
-    Talk to him about the standing stones. He has been waiting a long time to
-    tell their story to someone who will sit still for it."
+    back to the yard. "When you are ready, I will send you on to the stones.
+    Hale keeps them, and he has been waiting a long time to tell their story to
+    someone who will sit still for it."
   observer: "Wenna presses a small plaited charm into the newcomer's hand."
 
 triggers:
-  # ── HELP: consult the in-game help reference ──────────────────────────
+  # MET: hearing Wenna's lesson.
+  - event: topic_heard
+    mob: 9153
+    topic: words_lesson
+    conditions:
+      has: ["47-start"]
+      missing: ["47-met"]
+    actions:
+      - grant: "47-met"
+
+  # HELP: consult the in-game help reference, anywhere. The command only
+  # raises this event once a help page has been shown.
   - event: command
     command: help
     conditions:
-      has: ["47-start"]
+      has: ["47-met"]
       missing: ["47-help"]
     actions:
       - grant: "47-help"
       - actor: >-
-          That is the in-game help -- your long-term reference, more patient
+          That is the in-game help, your long-term reference, more patient
           than any person and always to hand. The folk set their lore in stone
           for the same reason: so it outlasts the remembering. Go back to
           Elder Wenna and type talk wenna.

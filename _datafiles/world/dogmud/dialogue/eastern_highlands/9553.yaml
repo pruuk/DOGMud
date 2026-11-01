@@ -56,7 +56,6 @@ topics:
   label: Will you open the way for me?
   text: Not without the key. The woken disc, or nothing. Bring it, and we will talk
     of how deep.
-  hints: If you woke a disc before and lost it, a grey disc still lies in the
-    cracked floor of the old Reliquary at Pothole Coulee, and the hearth in Ashwick
-    where you woke the first will wake it.
+  hints: If you woke a disc before and lost it, search Maren's Cottage in Ashwick for
+    another grey disc, then cast glow there to wake it.
   itemExcluded: 40168

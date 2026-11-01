@@ -35,7 +35,9 @@ package main.
   `go_prose_dash_guard_test.go`, `copy_no_dash_test.go`,
   `prose_tag_spacing_guard_test.go`, `combat_idiom_guard_test.go`,
   `html_entity_guard_test.go` (no `&lt;`/`&gt;` in Go player text: ansitags
-  decodes no entity, #690).
+  decodes no entity, #690), and `coulee_dash_guard_test.go` (#375 phase 7:
+  the Coulee pass's quests and the Coulee and antechamber dialogue and
+  conversation files, read as parsed YAML so comments are never checked).
 - **CI guard.** `ci_run_patterns_guard_test.go` checks every `go test -run`
   pattern in the CI action, the workflows and the Makefile names a real test
   in the package it targets.

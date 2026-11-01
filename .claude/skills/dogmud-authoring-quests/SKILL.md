@@ -552,7 +552,7 @@ steps:                 # the room and mob ids here are illustrative
   map shows the spawn rooms or the fallback for every scout further off.
 - **Live examples of each kind** are held by
   `TestShippedContent_EveryDestinationKindHasALiveStep`
-  (`internal/quests/live_destination_kinds_test.go`): area, quest 45 `start`;
+  (`internal/quests/live_destination_kinds_test.go`): area, quest 45 `met`;
   zone, quest 61 `bandit`. Moving the last step of a kind fails it.
 - **No block:** the destination is inferred from the step's triggers. A
   trigger belongs to the latest step of its own quest that its `has` lists

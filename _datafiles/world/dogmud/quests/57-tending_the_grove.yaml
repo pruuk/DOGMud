@@ -1,19 +1,28 @@
-# Quest 57 — Tending the Grove (Pothole Coulee, Spoke E repeatable)
+# Quest 57, Tending the Grove (Pothole Coulee, casting line repeatable)
 #
-# Token flow:
-#   57-start — granted by Keeper Orrin's dialogue (grove_loop_offer node).
-#              Requires 46-end (The Unfolded). Repeatable with cooldown.
-#   57-end   — mob_death trigger on Drift-Wisp (9147). Player kills it by
-#              casting. Auto-grants reward + clears for repeat. Orrin is not
-#              there when it lands, so no text sends the player back to him.
-#              Nearest wisp: the Grove Edge (5308), south of Orrin (5309).
+# Token flow (#375 phase 7: the repeatable ends at a hand-in):
+#   57-start: granted by Keeper Orrin's grove_loop_offer (9145), after 46-end.
+#   57-kill:  mob_death of any Drift-Wisp (9147): the trigger names no room.
+#             Three rooms spawn one, the Grove Edge (5308, south of Orrin at
+#             5309), the Sunken Path (5310, west of the edge) and the Thinning
+#             Wood (5312, west and north of Orrin). Each returns 15 real minutes
+#             after it dies (those rooms name no rate, so the engine default
+#             holds), and the Grove Edge wisp attacks anyone walking up to
+#             Orrin, so a player may find it gone; the lines name all three
+#             rooms and say to wait, as quest 52 does for Skell.
+#   57-end:   granted by Orrin's grove_loop_turnin hand-in (needs 57-kill).
+#             Completing clears the token; the offer returns after the
+#             cooldown.
+#
+# Saved characters: a player saved on start kills the wisp and now reports to
+# Orrin, as the step says.
 
 questid: 57
 name: Tending the Grove
 description: >-
-  Orrin says the grove needs tending -- warped things drift back in
-  whenever the watch slips. Go clear one out; the practice is as
-  important as the clearing.
+  Orrin says the grove needs tending. Warped things drift back in whenever
+  the watch slips. Clear one out and tell him, and the practice counts as
+  much as the clearing.
 secret: false
 repeatable: true
 cooldown_rounds: 300
@@ -21,38 +30,47 @@ cooldown_rounds: 300
 steps:
   - id: start
     destination:
-      room: 5308  # the Grove Edge, where a drift-wisp spawns
+      mob: 9147  # any wisp counts; unseen, the map shows every room that spawns one
     description: >-
-      Orrin has asked you to go into the grove and put down one of
-      the veil-warped things that wanders back in. The task is done
-      the moment the drift-wisp falls.
+      Orrin has asked you to go into the grove and put down one of the
+      veil-warped things that wanders back in. Any drift-wisp will do. Look at
+      the Grove Edge, the Sunken Path or the Thinning Wood. If none is there,
+      someone beat you to them. Wait a while and they drift back.
     hint: >-
       If it is dark, type cast glow first. Go south to the Grove Edge and
-      type cast spike wisp until it falls.
+      type cast spike wisp until it falls. If no wisp is there, go west to the
+      Sunken Path.
+  - id: kill
+    destination:
+      mob: 9145
+    description: >-
+      The drift-wisp is gone. Tell Orrin the grove is quiet again.
+    hint: >-
+      Go back to Keeper Orrin in the Whispering Grove and type talk orrin.
   - id: end
     description: >-
-      The grove is quiet again for now. Orrin will have more work
-      when the watch slips.
+      The grove is quiet again for now. Orrin will have more work when the
+      watch slips.
 
 rewards:
   gold: 6
   skillinfo: "spellcasting:1"
   actor: >-
-    The grove goes still around you, and for a moment every edge
-    arrives on time. The fold held clean. Orrin will have more work
-    when the warped things drift back in. They always drift back in.
+    Orrin nods, and for a moment every edge of him arrives on time. "The fold
+    held clean. They always drift back in. Come back when the watch slips
+    again."
   observer: >-
-    The grove settles around the caster, as if it approves of the
-    stillness.
+    Keeper Orrin nods to {actor}, and the grove settles, as if it approves of
+    the stillness.
 
 triggers:
   - event: mob_death
     mob: 9147
     conditions:
       has: ["57-start"]
-      missing: ["57-end"]
+      missing: ["57-kill"]
     actions:
-      - grant: "57-end"
+      - grant: "57-kill"
       - actor: >-
-          The drift-wisp unravels and is gone. The grove is a little
-          quieter, and the task is done.
+          The drift-wisp unravels and is gone. Go back to Keeper Orrin in the
+          Whispering Grove and type talk orrin.

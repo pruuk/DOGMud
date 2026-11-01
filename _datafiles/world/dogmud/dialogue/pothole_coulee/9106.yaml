@@ -75,9 +75,9 @@ opener:
     hints: Choose Find Your Footing below to finish the task.
   # A held Report to Toke bridge comes before the hub: the [?] line is the next
   # thing to do, and the hub's hint names only the [!] lines. One variant per
-  # bridge, gated on that bridge's own start token. Plans 3b and 4 add bridges
-  # 94 to 97: each adds a variant here in the same shape, and its hand-in joins
-  # report_*_in above send_drill.
+  # bridge, gated on that bridge's own start token. Bridges 90 to 96 are here;
+  # plan 4 adds bridge 97: it adds a variant here in the same shape, and its
+  # hand-in joins report_*_in above send_drill.
   - questRequired:
     - 90-start
     questExcluded:
@@ -110,6 +110,30 @@ opener:
     text: Hoy! Delk does not send folk up from the fringe for small news. Tell me how
       it went with the pack.
     hints: Choose Report to Toke (Tracking), the line marked [?] below, to tell Toke
+      the news.
+  - questRequired:
+    - 94-start
+    questExcluded:
+    - 94-end
+    text: Hoy! You have grove-light on you, and Orrin does not send folk down to
+      me for small news. Tell me how the casting went.
+    hints: Choose Report to Toke (Casting), the line marked [?] below, to tell Toke
+      the news.
+  - questRequired:
+    - 95-start
+    questExcluded:
+    - 95-end
+    text: Hoy! You have the quiet of the old shrine on you, and Sere does not send
+      folk down to me lightly. Tell me what lies under her floor.
+    hints: Choose Report to Toke (Lore), the line marked [?] below, to tell Toke
+      the news.
+  - questRequired:
+    - 96-start
+    questExcluded:
+    - 96-end
+    text: Hoy! You have canyon dust on you, and Bryn does not send folk down to me
+      for small news. Tell me who holds the overlook now.
+    hints: Choose Report to Toke (Archery), the line marked [?] below, to tell Toke
       the news.
   # All seven trades taken: no [!] line is left, so the hub's hint would describe
   # lines that are not there. The gate is the seven send_* offers' start tokens,
@@ -326,6 +350,52 @@ topics:
   - 93-end
   grantsQuest: 93-end
   moodChange: friendly
+- key: report_casting_in
+  kind: handin
+  quest: 94
+  label: Report to Toke (Casting)
+  playerLine: Keeper Orrin has nothing left to teach me in the grove.
+  text: Nothing left? Then the grove made a caster out of you, and the whole hub will
+    know it by supper. I will see to that myself. Any mouth you have not walked yet
+    is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 94-start
+  questExcluded:
+  - 94-end
+  grantsQuest: 94-end
+  moodChange: friendly
+- key: report_lore_in
+  kind: handin
+  quest: 95
+  label: Report to Toke (Lore)
+  playerLine: I looked on the thing beneath the old shrine.
+  text: Beneath the shrine? Sere let you see it? Then you know more than half the
+    coulee and all of the council. I will tell it carefully, mind. Some stories get
+    bigger every time they cross the square, and that one starts big. Any mouth
+    you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 95-start
+  questExcluded:
+  - 95-end
+  grantsQuest: 95-end
+  moodChange: friendly
+- key: report_archery_in
+  kind: handin
+  quest: 96
+  label: Report to Toke (Archery)
+  playerLine: Skell is off the overlook, and the canyon is ours.
+  text: Off the overlook! The low mouth has been aching to shout that for years. Stand
+    back a pace, friend. This one carries. The archery trail is yours, and any mouth
+    you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 96-start
+  questExcluded:
+  - 96-end
+  grantsQuest: 96-end
+  moodChange: friendly
 # R21: the seven trails, each its own offer after Find Your Footing. Each
 # starter item rides on the offer of the quest it belongs to. Toke is the
 # only starter of the seven (#375 phase 7); each first teacher takes the
@@ -409,9 +479,9 @@ topics:
   text: Adept Grieve, in the old observatory past the reed jetty. Quiet, and stranger
     than he lets on, but he knows the folding art. From this square go west, then
     north three times up the shore to the Stargazer Cut, and climb up twice to the
-    Observatory Hall. The practice mark is in the Star Chamber beyond him.
+    Observatory Hall. Talk to him there.
   hints: From Hub Square go west, north, north, north, up, up to the Observatory Hall.
-    Then go north into the Star Chamber and type cast spike mote.
+    Type talk grieve.
   questRequired:
   - 31-end
   questExcluded:
@@ -423,12 +493,12 @@ topics:
   quest: 47
   label: First Words
   playerLine: Who can teach me the ways of the folk?
-  text: Elder Wenna, at the farmstead up the north shore. Her first lesson is one
-    you can start right here. When you do not know a thing, type help, and the game
-    tells you. Do that, then go and tell her. From this square go east, then north
-    six times, up the east shore and the cartway to the Commons Yard.
-  hints: Type help. Then from Hub Square go east, then north six times to the Commons
-    Yard.
+  text: Elder Wenna, at the farmstead up the north shore. She teaches the ways of the
+    folk, and her first lesson is a short one. From this square go east, then north
+    six times, up the east shore and the cartway to the Commons Yard. Talk to her
+    there.
+  hints: From Hub Square go east, then north six times to the Commons Yard. Type talk
+    wenna.
   questRequired:
   - 31-end
   questExcluded:
@@ -441,11 +511,11 @@ topics:
   label: First Shot
   playerLine: Who can teach me to shoot?
   text: Marksman Iden, on the terraces up the bluff. She teaches the long shot. I
-    have a sling for you, to ready before you climb. From this square go north to
-    the pool, east twice to the Mending Hut, then north to the Bluff Steps. Climb up,
-    go north twice, and up once more to the Firing Range.
-  hints: Accept, and Toke hands you a sling. Then type equip sling, and from Hub
-    Square go north, east, east, north, up, north, north, up to the Firing Range.
+    have a sling for you to take along. From this square go north to the pool, east
+    twice to the Mending Hut, then north to the Bluff Steps. Climb up, go north twice,
+    and up once more to the Firing Range. Talk to her there.
+  hints: Accept, and Toke hands you a sling. From Hub Square go north, east, east,
+    north, up, north, north, up to the Firing Range. Type talk iden.
   questRequired:
   - 31-end
   questExcluded:

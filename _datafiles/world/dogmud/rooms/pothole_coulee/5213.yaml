@@ -29,15 +29,15 @@ nouns:
     A broad notice board fills the wall beside the door, shingled deep
     with pinned notes, lesson-lists, and curling hand-bills. Pride of
     place goes to a single weathered card lettered in the schoolmaster's
-    careful hand. It says that no question is too small or too strange,
-    and that anyone wanting to know about a thing (a word, a place, a
-    beast, a craft, anything under the sky) has only to put the question
-    plainly to the world, and the world will answer what it knows. Below
-    it, smaller and kindlier, a line for tired eyes, should the written
-    word ever sit crooked on the page, spilling past its edges or crowding
-    itself too thin to read, you need only ask the world to fit its
-    letters to your own sight, and it will lay them out clean and square
-    again.
+    careful hand. It says that no question is too small or too strange.
+    To learn how a thing is done, type help and the name of it, and the
+    world will answer what it knows. To learn about a place or a story,
+    find someone who keeps it and type talk and their name. Elder Wenna
+    at the farmstead up the north shore, it adds, knows where the old
+    stones stand. Below it, smaller and kindlier, a line for tired eyes.
+    Should the written word ever sit crooked on the page, spilling past
+    its edges or crowding itself too thin to read, type set linewidth
+    and a number, and it will lay itself out clean and square again.
   desks:
     The desks are a mismatched flock, no two of a height, some squat
     benches for the small ones, some tall slope-lidded affairs scavenged

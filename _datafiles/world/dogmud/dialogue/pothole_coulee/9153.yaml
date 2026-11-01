@@ -30,26 +30,64 @@ opener:
   - questRequired:
     - 47-start
     questExcluded:
+    - 47-met
+    - 47-end
+    text: Toke sent you up the cartway? Sit, then. I have a lesson for you, and it
+      is a short one.
+    hints: Choose a line below to hear the first lesson.
+  - questRequired:
+    - 47-met
+    questExcluded:
     - 47-help
     - 47-end
     text: Still learning. Ask me about the folk, the ways, the stones, whatever you
-      like. That is half the lesson. The other half is the in-game reckoning, the
-      one that outlasts your memory. Open it.
+      like. That is half the lesson. The other half is the in-game help, the
+      reference that outlasts your memory. Open it.
     hints: Type help.
   - questRequired:
     - 47-help
     questExcluded:
     - 47-end
-    text: You found the reckoning. Good. Tell me so properly.
+    text: You opened the help. Good. Come and tell me about it.
     hints: Choose First Words below to report.
   - questRequired:
     - 47-end
-    text: A friend of the folk, now, and wearing the sign of it. Good. The stones
-      are west and north. Go and talk to Hale about them when you are ready. He keeps
-      the deep part of us, the part even I only half recall.
-    hints: Head to the standing stones (west and north) and type talk hale to find
-      Loresinger Hale.
+    questExcluded:
+    - 48-start
+    - 48-end
+    text: A friend of the folk, now, and wearing the sign of it. Good. When you want
+      the deeper story, I will send you to the stones and to Hale, who keeps it.
+    hints: Choose The Standing Stones below to go on to the stones.
+  - questRequired:
+    - 48-start
+    questExcluded:
+    - 48-met
+    - 48-end
+    text: Hale is waiting for you at the Stone Circle. There is a quarrel parked on
+      the green just north of him, and he will tell you about it.
+    hints: From the Commons Yard, go north, west, north, north and north to the Outer
+      Ring, then west into the Stone Circle. Type talk hale.
+  - questRequired:
+    - 47-end
+    text: A friend of the folk, now, and wearing the sign of it. Good.
+    hints: Choose a line below to hear about the folk and their ways.
 topics:
+# The lesson comes first: the menu keeps authored order, only hearing this
+# earns the step, and the marked help line below teaches the same command.
+- key: words_lesson
+  kind: info
+  label: Toke sent me to learn the ways of the folk.
+  text: Then here is the first of it, and the whole of it. Learn to ask, and learn
+    where to look. Ask me about the folk and our ways whenever you like, and listen
+    to the answers. The other half is the in-game help, for when your own memory
+    fails. It is more patient than I am and always to hand. Open it now, then come
+    back to me.
+  hints: Type help.
+  questRequired:
+  - 47-start
+  questExcluded:
+  - 47-met
+  - 47-end
 - key: words_turnin
   kind: handin
   quest: 47
@@ -57,10 +95,10 @@ topics:
   playerLine: I opened the help, just as you said.
   text: You asked, and you listened, and you found the help that outlasts the asking.
     That is the whole way of the folk, and the rest is only more of it. Take this charm.
-    Wear it where it shows, and ours will know you for a friend. Now the stones,
-    west and north. Hale keeps the deep story. Go and let him tell it.
-  hints: Quest complete. Head to the standing stones and type talk hale to find Loresinger
-    Hale.
+    Wear it where it shows, and ours will know you for a friend. When you are ready,
+    I will send you on to the stones, where Hale keeps the deep story.
+  hints: Quest complete. Choose The Standing Stones below when you are ready for the
+    stones.
   questRequired:
   - 47-help
   questExcluded:
@@ -69,11 +107,11 @@ topics:
 - key: words_progress
   kind: info
   label: What is the other half of the lesson?
-  text: Not yet. You have done the asking part. Now open the in-game reckoning, the
-    one that holds what memory drops. Then come back and tell me.
+  text: Not yet. You have done the asking part. Now open the in-game help, the one
+    that holds what memory drops. Then come back and tell me.
   hints: Type help.
   questRequired:
-  - 47-start
+  - 47-met
   questExcluded:
   - 47-help
   - 47-end
@@ -81,7 +119,7 @@ topics:
   kind: info
   label: Where can I look things up?
   text: When you cannot hold a thing in your head (a command, a custom, a name),
-    type help and the in-game reckoning will hold it for you. It is the surest reference
+    type help and the in-game help will hold it for you. It is the surest reference
     there is, and it never tires of being asked. We keep our own lore in carved stone
     for the same reason. Go on and try it.
   hints: Type help to open the in-game reference.
@@ -104,5 +142,24 @@ topics:
   label: What are the old stones west of here?
   text: West and north of here the old stones stand in their ring. Hale keeps them,
     and the whole story of us carved into them. When you have your feet under you,
-    go and talk to him about the old tale. He has been waiting on a good listener a
-    long while.
+    ask me to send you, and he will tell you the old tale. He has been waiting on a
+    good listener a long while.
+- key: stones_offer
+  kind: offer
+  quest: 48
+  label: The Standing Stones
+  playerLine: Will you send me to the standing stones?
+  text: Hale keeps them, west and north of here, in their ring. He sings the story
+    of us off the stones, and he has a use for someone with a steady tongue, a
+    quarrel on the mustering green that soft words have only made worse. Go and see
+    him. He will tell you the rest.
+  hints: From the Commons Yard, go north, west, north, north and north to the Outer
+    Ring, then west into the Stone Circle. Type talk hale.
+  breadcrumb: Learn the first lesson with me before the stones. The deep telling is
+    not for strangers.
+  questRequired:
+  - 47-end
+  questExcluded:
+  - 48-start
+  - 48-end
+  grantsQuest: 48-start

@@ -4,12 +4,6 @@
 # warning; any finding not listed refuses boot, CI and the quest editor's
 # save. A line with no matching finding fails CI: delete it when its finding
 # is fixed. Never add a line by hand to make new content pass.
-chain 44 mob 9145 topic grove_offer
-chain 46 mob 9145 topic grove_loop_offer
-chain 47 mob 9157 topic stones_offer
-chain 48 mob 9160 topic shrine_offer
-chain 50 mob 9162 topic canyon_offer
-chain 52 mob 9162 topic range_loop_offer
 chain 73 mob 9465 topic q74_grant
 chain 75 mob 9516 topic disc_quest
 chain 75 mob 9516 topic disc_tale
@@ -25,20 +19,8 @@ chain 78 mob 9584 topic teach_zephyr
 end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
-end 46 quest 46 trigger mob_death mob=9152 grants=46-end
-end 46 step end
-end 52 quest 52 trigger mob_death mob=9169 grants=52-end
-end 52 step end
-end 57 quest 57 trigger mob_death mob=9147 grants=57-end
-end 57 step end
-end 58 quest 58 trigger room_interact room=5343 noun=floor verb=search grants=58-end
-end 58 step end
-end 59 quest 59 trigger mob_death mob=9165 grants=59-end
-end 59 step end
 end 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony
 end 75 step end
-end 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end
-end 76 step end
 end 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
 end 77 step end
 end 78 quest 78 trigger quest_granted quest_token=78-start grants=78-end
@@ -121,8 +103,6 @@ hint-length 74 step reveal
 hint-length 74 step survey
 hint-length 75 step intro
 hint-length 75 step start
-hint-length 76 step journal
-hint-length 76 step start
 one-action 1000000 step end:none
 one-action 1000000 step givegold:none
 one-action 11 mob 241 topic totem_return:prev
@@ -144,7 +124,6 @@ one-action 20 mob 347 topic ullahandoff:prev
 one-action 20 quest 20 trigger topic_heard mob=355 topic=vellahandoff grants=20-vella_journal:prev
 one-action 4 mob 83 topic evidence_handoff:prev
 one-action 5 mob 84 topic tolvahandoff:prev
-one-action 50 quest 50 trigger command room=5351 command=fire grants=50-shoot:prev
 one-action 60 mob 9208 topic guardhandoff:prev
 one-action 61 quest 61 trigger mob_death mob=9173 grants=61-bandit:cond
 one-action 61 quest 61 trigger mob_death mob=9173 grants=61-reach:cond
@@ -175,9 +154,6 @@ one-action 74 mob 9454 topic marginhandoff:prev
 one-action 74 mob 9464 topic aldrichandoff:prev
 one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:double
 one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:prev
-one-action 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end:cond
-one-action 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end:double
-one-action 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end:prev
 one-action 78 quest 78 trigger quest_granted quest_token=78-start grants=78-end:prev
 one-action 9 mob 95 topic olenhandoff:prev
 one-action 9 quest 9 trigger quest_granted quest_token=9-start grants=9-deliver:cond
@@ -198,8 +174,6 @@ walk-dead-end 16 mob 259 topic quest_complete_herbs
 walk-dead-end 19 quest 19 trigger mob_death mob=331 grants=19-hunter
 walk-dead-end 4 mob 83 topic evidence_handoff
 walk-dead-end 5 mob 84 topic tolvahandoff
-walk-dead-end 50 quest 50 trigger command room=5351 command=fire grants=50-cover_shot
-walk-dead-end 50 quest 50 trigger command room=5351 command=fire grants=50-shoot
 walk-dead-end 61 quest 61 trigger mob_death mob=9173 grants=61-reach
 walk-dead-end 63 mob 9300 topic tallyhandoff
 walk-dead-end 63 mob 9316 topic tallyhandoff
@@ -225,5 +199,4 @@ walk-destination 66 step escort
 walk-destination 67 step report
 walk-destination 74 step reveal
 walk-destination 75 step testimony
-walk-destination 76 step attune
 walk-destination 78 step start

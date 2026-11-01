@@ -1,5 +1,40 @@
 # DOGMud Patch Notes
 
+## 2026-11-01: Pothole Coulee casting, lore and archery trails
+
+- Crier Toke starts the casting, lore and archery trails. Each one runs
+  from Toke to your first teacher, on to the next teacher, and back to
+  Toke with the news. The lore trail has one more teacher in the middle.
+- Each job on these trails starts by talking to the teacher who gives it,
+  and ends by going back and telling them. The repeat jobs, Tending the
+  Grove, Reading the Stones and Range Practice, end the same way.
+- Adept Grieve, Elder Wenna, Marksman Iden and the other teachers now
+  explain their lesson first, so you know why you are being asked to cast,
+  type help, or shoot.
+- A spell or a shot that misses still counts for its step. The step asks
+  you to try, and the fight or the target is a separate step.
+- Marksman Iden tells you to ready your sling, and Scout Bryn tells you to
+  ready the crossbow he gives you. If the sling is already in your hand,
+  take it off first with `remove sling`, and then `equip sling` it again.
+- Searching in the Reliquary or in Maren's Cottage no longer says you
+  found nothing just before the quest tells you what you found.
+- Sullen Garrow now steps back and leaves the green when you taunt him. He
+  stamps back a little later, ready for the next student.
+- If the practice mote in the Star Chamber is gone, a new one folds out of
+  the air soon after, so you only wait a moment.
+- Keeper Orrin names all the places to look for a wisp in Tending the Grove,
+  and any wisp counts. He also tells you to wait if a wisp or the Unfolded
+  is not there, because someone else may have just killed it.
+- In First Shot, your shot starts a fight, and you cannot sneak in a fight.
+  Iden now tells you to put the butt down first, then type `sneak`.
+- The notice board in the School Hall names commands you can type, and
+  points you to Elder Wenna for the old stones.
+- The grey disc is no longer in the Reliquary. Brennan's quest now sends
+  you to Maren's Cottage in Ashwick. Type `search` there, and then
+  `cast glow` to wake the disc, and report back to Brennan. If you lose
+  the woken disc, search the cottage again and cast glow again to get
+  another.
+
 ## 2026-11-01: Pothole Coulee trails run teacher to teacher
 
 - Crier Toke starts the fighting, smithing, brewing and tracking trails.

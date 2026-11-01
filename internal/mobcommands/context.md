@@ -131,6 +131,13 @@ The `internal/mobcommands` package implements the AI command system for non-play
 - **Pathfinding**: `pathto` - Goal-directed navigation
 - **Zone awareness**: Movement restricted by zone boundaries
 - **Home behavior**: Return-to-home mechanics for territorial mobs
+- **Leaving the world**: two commands remove a mob with no corpse, loot or kill
+  credit, and they differ in its spawn slot (`rooms.Room.CleanupMobSpawns`).
+  `despawn` resets the slot, so the mob returns at the next `Prepare` with no
+  line: for a mob that was not sent away in the story (presence unload, an
+  expired charm, a dismissed companion). `suicide vanish` keeps the cooldown, so
+  the slot waits out its `respawnrate` and a `narraterespawn` entry speaks on
+  return: for a mob the story says has gone (Sullen Garrow's yield, quest 48).
 
 #### **Item and Resource Management**
 - **Inventory control**: `get`, `drop`, `put`, `give` - Intelligent item

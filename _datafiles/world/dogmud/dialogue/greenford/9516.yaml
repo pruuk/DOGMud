@@ -26,11 +26,16 @@ opener:
   - questRequired:
     - 76-attune
     itemExcluded: 40168
-    text: You woke it, and now it is gone from your hand. The Reliquary floor gave
-      up one grey disc. It may give another, and the hearth knows the method.
-    hints: A grey disc still lies in the cracked floor of the old Reliquary at
-      Pothole Coulee, behind the old shrine north of the stone circle. The hearth in
-      the Ashwick cottage will wake it. At the Reliquary, type look disc.
+    text: You woke it, and now it is gone from your hand. The cottage gave up one grey
+      disc. It may give another, and the hearth knows the method.
+    hints: In Maren's Cottage in Ashwick, type search, then cast glow there to wake
+      the disc again.
+  - questRequired:
+    - 76-attune
+    questExcluded:
+    - 76-end
+    text: You have the look of someone who has watched a thing wake. Tell me.
+    hints: Choose The Disc below to report.
   - questRequired:
     - 76-attune
     text: You woke it. I can see the light it keeps along its lines. Then it is a
@@ -43,17 +48,14 @@ opener:
     questExcluded:
     - 76-attune
     text: You read it. Then you know the method, and the hearth is where he meant
-      it done. Take the disc there.
-    hints: If you do not carry the disc yet, it lies in the cracked floor of the old
-      Reliquary at Pothole Coulee, behind the old shrine north of the stone circle.
-      In the cottage, type look hearth marks.
+      it done.
+    hints: At the marked hearth in Maren's Cottage, type cast glow.
   - questRequired:
     - 76-start
     questExcluded:
     - 76-journal
     - 76-attune
-    text: The cottage in Ashwick. Read what he left behind. You will need the disc
-      there.
+    text: The cottage in Ashwick. Search it, and read what he left behind.
     hints: Ashwick is a long road from here. From Brennan's Office, go north, east
       and north to the University Gate, then down the University Stair and north
       through the town to the Market Square, down the Town Stair, and north to the
@@ -62,9 +64,7 @@ opener:
       go north through the quays to the River Gate. Then take the River Road north,
       through Amber Valley and up the South Road to the Ashwick Crossroads. From
       there go east five times to the East Edge of the village, then south into the
-      cottage. If you do not carry the disc yet, it lies in the cracked floor of the
-      old Reliquary at Pothole Coulee, behind the old shrine north of the stone
-      circle. Type look journal.
+      cottage. Type search.
   - questRequired:
     - 75-end
     questExcluded:
@@ -145,7 +145,8 @@ topics:
     be in the house he left. Will you go to Ashwick, find the
     abandoned cottage, and read what he left behind? Take the disc
     with you. You will need the thing itself.
-  hints: Accept, then take the disc to the abandoned cottage in Ashwick.
+  hints: Accept, then take the disc to the abandoned cottage in Ashwick and search
+    it.
   questRequired:
   - 75-end
   questExcluded:
@@ -161,19 +162,16 @@ topics:
   text: |
     The mark on my wall, the nested rings. One margin, older than
     the rest, draws it with a line struck through the ring, and a
-    note beside it: the same mark, cut in grey metal, set into the
-    floor of the old Reliquary at Pothole Coulee. If the note is
-    right, that disc is a key, and a dead one. It will stay dead
-    until someone wakes it, and I do not know how. A man did. He
-    kept a cottage in Ashwick and gave his whole life to that thing
-    in the east. He studied how to wake the key, then went east
-    himself and never came back. His work should still be in the
-    house he left. Will you find the disc, then go to Ashwick, find
-    the abandoned cottage, and read what he left behind? Bring the
-    disc. You will need the thing itself.
-  hints: Accept, then take the disc from the cracked floor of the old Reliquary at
-    Pothole Coulee, behind the old shrine north of the stone circle, and bring it
-    to the abandoned cottage in Ashwick. At the Reliquary, type look disc.
+    note beside it: the same mark, cut in grey metal, is a key. A
+    dead one, until someone wakes it, and I do not know how. A man
+    did. He kept a cottage in Ashwick and gave his whole life to
+    that thing in the east. They say he had a disc of his own, and
+    studied how to wake it, then went east himself and never came
+    back. His work should still be in the house he left, and the
+    disc with it, if no one has been there before you. Will you go
+    to Ashwick, search the abandoned cottage, and read what he left
+    behind?
+  hints: Accept, then go to the abandoned cottage in Ashwick and search it.
   questRequired:
   - 75-end
   questExcluded:
@@ -181,6 +179,25 @@ topics:
   - 76-end
   itemExcluded: 40167
   grantsQuest: 76-start
+- key: disc_in
+  kind: handin
+  quest: 76
+  label: The Disc
+  playerLine: I woke the disc at the cottage hearth.
+  text: |
+    Let me see it. Yes. The lines hold the light now, the way the
+    margins always said they would. A key, then, and somewhere
+    east there is a door that fits it. Reth's route will take you
+    there. Keep it close, and keep it quiet.
+  hints: Quest complete. Reth's route runs north from Hartcharn to Kingsbarrow, then
+    east over the Cascade Pass Road into the Eastern Highlands, to a door in a buried
+    face.
+  questRequired:
+  - 76-attune
+  questExcluded:
+  - 76-end
+  carriesItem: 40168
+  grantsQuest: 76-end
 - key: knower
   kind: info
   label: What do you see in me?

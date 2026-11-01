@@ -26,6 +26,7 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	result := actions.Search(actor, actions.SearchOptions{
 		Feature:       rest,
 		QuestFeatures: questSearchSpots(user, room),
+		QuestStep:     questSearchStep(user, room),
 	})
 	if result.OnCooldown {
 		return true, nil
@@ -45,10 +46,8 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	// Quest engine: command notification, so a quest can gate a step on the
-	// `search` command anywhere in a room. Mirrors forage/drink/throw/cast.
-	// No shipped quest uses it since quests 49 and 58 moved to a `verb:
-	// search` room_interact on the Reliquary floor (#375 phase 3a); a quest
-	// step tied to one feature belongs there.
+	// `search` command in a room (#375 phase 7: quests 49 and 58 in the
+	// Reliquary, 76 in Maren's Cottage). Mirrors forage/drink/throw/cast.
 	questengine.NotifyCommand(user, room.RoomId, "search")
 
 	return true, nil
@@ -76,4 +75,12 @@ func questSearchSpots(user *users.UserRecord, room *rooms.Room) []string {
 		}
 	}
 	return spots
+}
+
+// questSearchStep reports whether a `command: search` quest trigger in this
+// room would fire for this player now. Its own text says what the search
+// turned up, so actions.Search must not first say it found nothing.
+func questSearchStep(user *users.UserRecord, room *rooms.Room) bool {
+	d := questengine.CommandDetails(user.UserId, room.RoomId, "search", questengine.NoTarget())
+	return questengine.GetEngine().WouldFire("command", d, questengine.NewGameBridge(user, room.RoomId))
 }

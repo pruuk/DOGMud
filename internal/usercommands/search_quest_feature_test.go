@@ -98,3 +98,37 @@ func TestSearch_RefusedAfterASpecialMoveSendsNoQuestEvent(t *testing.T) {
 		})
 	}
 }
+
+// #375 phase 7: quests 49, 58 and 76 listen for the search command itself
+// (`event: command, command: search`). When such a step will fire, its text
+// says what the search turned up, so the search does not first print "You
+// find nothing of interest."
+func TestSearch_ACommandSearchStepLeavesTheAnswerToTheQuest(t *testing.T) {
+	alice, room := interactScene(t)
+	searchEyes(t, alice, 1)
+	fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
+		999490, "command", room.RoomId, questengine.TriggerDef{Command: "search"})
+	events.DrainQueuedMessagesForTest(alice.UserId)
+
+	_, err := TryCommand("search", "", alice.UserId, 0)
+	require.NoError(t, err)
+	require.True(t, fired(), "the search step fires")
+	require.NotContains(t, strings.Join(events.DrainQueuedMessagesForTest(alice.UserId), "\n"), "You find nothing of interest.")
+}
+
+// When no search step would fire for this player, the line stays.
+func TestSearch_NothingFoundStaysWhenNoSearchStepWouldFire(t *testing.T) {
+	alice, room := interactScene(t)
+	searchEyes(t, alice, 1)
+	fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
+		999491, "command", room.RoomId, questengine.TriggerDef{
+			Command:    "search",
+			Conditions: questengine.Conditions{Has: []string{"999491-never"}},
+		})
+	events.DrainQueuedMessagesForTest(alice.UserId)
+
+	_, err := TryCommand("search", "", alice.UserId, 0)
+	require.NoError(t, err)
+	require.False(t, fired())
+	require.Contains(t, strings.Join(events.DrainQueuedMessagesForTest(alice.UserId), "\n"), "You find nothing of interest.")
+}

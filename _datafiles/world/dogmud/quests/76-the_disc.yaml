@@ -1,3 +1,37 @@
+# Quest 76, The Disc (Greenford and Ashwick). Interim home, #375 phase 7,
+# owner option A (#625 stays open for the full endgame redesign).
+#
+# Token flow:
+#   76-start:   granted by Brennan the Surveyor's disc_quest or disc_tale
+#               offer (dialogue/greenford/9516.yaml), after 75-end.
+#   76-journal: command trigger on `search` in Maren's Cottage (4023, Ashwick).
+#               The search turns up the journal and, pressed in its pages, the
+#               Inert Disc (40167), given by the trigger just above it unless
+#               the player already carries one. The journal text is the reading.
+#   76-attune:  command trigger on `cast chrysalis-glow` (cast glow, aimed at
+#               the caster) in 4023: the method wakes the disc with light at
+#               the marked hearth. Consumes 40167, gives the Attuned Disc
+#               (40168), and only then grants, so a refused item moves no step.
+#   76-end:     granted by Brennan's disc_in hand-in (needs 76-attune and the
+#               woken disc in hand).
+#
+# Real actions only: no step listens for a typed noun. Room 5343 no longer
+# holds a disc; quest 49 keeps one under its floor as story only.
+#
+# Saves from before this home: a player on 76-journal may hold no disc, because
+# the old flow sent them elsewhere for it. Searching gives one, and the trigger
+# just above the attune trigger hands one over if they cast first. The one-action
+# rule keeps item conditions off the attune trigger itself.
+#
+# Recovery: a player who woke a disc and lost it (the Threshold Keeper 9553
+# opens the way only for 40168) searches the cottage for another grey disc
+# and casts glow there again. Those triggers grant nothing. Conditions take one
+# missing_item, so "no woken disc and no grey disc" cannot be one trigger: a
+# search with a grey disc in hand swaps it for the one in the journal, which
+# leaves one, and searching cannot pile them up.
+#
+# While any search trigger here would fire for the player, the search does
+# not first say it found nothing (actions.SearchOptions.QuestStep).
 questid: 76
 name: The Disc
 description: >-
@@ -9,72 +43,63 @@ steps:
   - id: start
     destination:
       room: 4023
-    description: "Brennan believes the disc is a key that must be woken, and
-      that the man who knew how left his work in an Ashwick cottage."
-    hint: "If you do not carry the disc yet, take it first from the
-      cracked floor of the old Reliquary at Pothole Coulee, behind the old
-      shrine north of the stone circle. The abandoned cottage stands in
-      Ashwick, a long road from Greenford. From Brennan's Office, go north,
-      east and north to the University Gate, then down the University Stair
-      and north through the town to the Market Square, down the Town Stair,
-      and north to the Greenford Gate. Then go north over the bridge and
-      west along the road to the Confluence. In
-      the city, cross the Brenn Bridge west to Tri-Cross Square and go
-      north through the quays to the River Gate. Then take the River Road
-      north, through Amber Valley and up the South Road to the Ashwick
-      Crossroads. From the crossroads, go east five times to the East Edge
-      of the village, then south into the cottage. Read the journal on its
-      table. Type look journal."
+    description: >-
+      Brennan believes the disc is a key that must be woken, and that the man
+      who knew how left his work, and perhaps a disc of his own, in an Ashwick
+      cottage. From Brennan's Office, go north, east and north to the
+      University Gate, then down the University Stair and north through the
+      town to the Market Square, down the Town Stair, and north to the
+      Greenford Gate. Then go north over the bridge and west along the road to
+      the Confluence. In the city, cross the Brenn Bridge west to Tri-Cross
+      Square and go north through the quays to the River Gate. Then take the
+      River Road north, through Amber Valley and up the South Road to the
+      Ashwick Crossroads. From the crossroads, go east five times to the East
+      Edge of the village, then south into the cottage.
+    hint: >-
+      Maren's Cottage is south of the East Edge of Ashwick, a long road north
+      of Greenford. The route is in the quest log. If it is dark, type cast
+      glow first. In the cottage, type search.
   - id: journal
-    # destination inferred from triggers (#375 p4); was: return-to-giver / in-place (start room 4023); Phase 2 split review
-    description: "You read the father's journal: a life spent chasing a
-      buried thing in the east, and the method he worked out for waking
-      the disc."
-    hint: "Follow his method at the marked hearth in the cottage, with the
-      disc in hand. If you do not carry it yet, the disc lies in the cracked
-      floor of the old Reliquary at Pothole Coulee, behind the old shrine
-      north of the stone circle. Type look hearth marks."
+    destination:
+      room: 4023
+    description: >-
+      You searched the cottage and read the father's journal: a life spent
+      chasing a buried thing in the east, and the method he worked out for
+      waking the disc with light at the marked hearth.
+    hint: >-
+      His method wakes the disc with light, at the marked hearth in the
+      cottage. Type cast glow there.
   - id: attune
-    # destination inferred from triggers (#375 p4); was: return-to-giver / in-place (start room 4023); Phase 2 split review
-    description: "You followed his method at the hearth, and the disc woke.
-      The lines hold warmth now, and the mark keeps the light."
-    hint: "The disc is a key now. It knows the shape of its lock, east."
+    destination:
+      mob: 9516
+    description: >-
+      You followed his method at the hearth, and the disc woke. The lines
+      hold warmth now, and the mark keeps the light. Brennan will want to
+      hear it. From the cottage, go north to the East Edge, then west five
+      times to the Ashwick Crossroads. Take the South Road south, through
+      Amber Valley and down the River Road to the River Gate of the Confluence.
+      Go south through the quays to Tri-Cross Square, cross the Brenn Bridge
+      east, and follow the road east, then south over the bridge to the
+      Greenford Gate. Go south through the town to the Town Stair, up to the
+      Market Square, south to the University Stair, up to the University Gate,
+      then south, west and south to Brennan's Office.
+    hint: >-
+      Go back to Brennan's Office in Greenford. The route is in the quest log.
+      He is asleep late at night. Type talk brennan.
   - id: end
-    description: "You carry the woken disc, a key for the door in the east,
-      and the last of a lost man's work, done at last. Reth's route ends at
-      that door, in a buried face in the Eastern Highlands."
+    description: >-
+      You carry the woken disc, a key for the door in the east, and the last
+      of a lost man's work, done at last. Reth's route ends at that door, in a
+      buried face in the Eastern Highlands.
 rewards:
   actor: >-
-    The disc is awake in your hand, warm along its lines, and it answers
-    a shape you have not yet reached. A father's work, finished by a
-    stranger, in the cottage he left to chase it. What it opens waits
-    east, in the broken country, behind a door in the buried face.
-  observer: ""
+    Brennan turns the woken disc to the light and watches the lines keep it.
+    "A father's work, finished by a stranger, in the cottage he left to chase
+    it." He gives it back. What it opens waits east, in the broken country,
+    behind a door in the buried face.
+  observer: "Brennan turns a grey disc to the light and hands it back."
   gold: 0
 triggers:
-  # First, so it is judged before the trigger below gives the disc; after
-  # it, both would fire in the command that lifts the disc (#495).
-  - event: room_interact
-    room: 5343
-    noun: disc
-    conditions:
-      has_item: 40167
-    actions:
-      - actor: "The crack in the floor is empty now. You already carry what lay beneath it."
-  - event: room_interact
-    room: 5343
-    noun: disc
-    conditions:
-      missing_item: 40167
-    actions:
-      - give_item: 40167
-      - actor: >-
-          You work your fingers into the crack and lift the disc free of
-          the floor: cool, too smooth, heavier than its size. Fine raised
-          lines thread across its face to a ring struck through with a
-          line. You do not understand it. You are fairly certain no one
-          here does. You put it away.
-      - observer: "{actor} works something free of the cracked floor and pockets it."
   # Maren's letter (item 40041), for any player, on or off this quest: the
   # loose stone by the hearth hides it. Moved here from the room's behaviour
   # tree, which answered push, move, pull, shift and press (#375 phase 3a,
@@ -82,7 +107,8 @@ triggers:
   # `verb: search` trigger, `search stone` runs the search (and its cooldown)
   # first, and a plain search can find it at the room difficulty. Carrying
   # the letter, the stone holds nothing more, and the search says so. Story
-  # first, so a full pack hears what is there before the refusal.
+  # first, so a full pack hears what is there before the refusal. It grants
+  # no step.
   - event: room_interact
     verb: search
     room: 4023
@@ -95,9 +121,54 @@ triggers:
           shows a small cavity in the wall behind it. Inside, a folded letter
           lies against the back of the hollow, hidden there on purpose.
       - give_item: 40041
-  - event: room_interact
+
+  # RECOVERY, search: a player who woke a disc and lost it finds another.
+  # Grants nothing. These two are before the journal trigger, so they are judged
+  # first. The first takes a grey disc already in hand, so the second leaves
+  # the player holding exactly one however often they search.
+  - event: command
+    command: search
     room: 4023
-    noun: journal
+    conditions:
+      has: ["76-attune"]
+      has_item: 40167
+      missing_item: 40168
+    actions:
+      - consume_item: 40167
+  - event: command
+    command: search
+    room: 4023
+    conditions:
+      has: ["76-attune"]
+      missing_item: 40168
+    actions:
+      - give_item: 40167
+      - actor: >-
+          Between the last pages of the journal lies a grey disc, cool and
+          dead in the hand, the twin of the one you woke. You carry it away.
+
+  # DISC: the search turns up the disc, unless the player carries one.
+  # Grants nothing; the trigger below grants the step.
+  - event: command
+    command: search
+    room: 4023
+    conditions:
+      has: ["76-start"]
+      missing: ["76-attune"]
+      missing_item: 40167
+    actions:
+      - give_item: 40167
+      - actor: >-
+          Pressed between the last pages of the journal on the table lies a
+          disc of pale grey metal: cool, too smooth, heavier than its size.
+          Fine raised lines thread across its face to a ring struck through
+          with a line. You take it.
+      - observer: "{actor} lifts something grey from between the pages of a journal and pockets it."
+
+  # JOURNAL: the search reads the man's journal.
+  - event: command
+    command: search
+    room: 4023
     conditions:
       has: ["76-start"]
       missing: ["76-journal"]
@@ -113,44 +184,74 @@ triggers:
           a line is inked in every margin, worried at like a sore tooth.
           Then, near the end, the part you came for without knowing it:
           a method, worked out slow and sure across many pages, for
-          waking the grey disc that is its key, and the marked hearth for
-          the place to do it. The last line is not about the thing at
+          waking the grey disc that is its key. Light, held over it at
+          the marked hearth. The last line is not about the thing at
           all. It is a name, set down once and gently, as if to keep one
           soft thing safe. Maren. He went east to finish this. He did not
-          come back to her.
+          come back to her. At the marked hearth, type cast glow.
       - observer: "{actor} reads a long while at the cottage table."
-  - event: room_interact
+
+  # RECOVERY, wake: a finished player with a grey disc and no woken one.
+  # Grants nothing. Before the attune trigger, so it is judged first.
+  - event: command
+    command: cast
+    noun: chrysalis-glow
+    target: self
     room: 4023
-    noun: journal
     conditions:
-      missing: ["76-start"]
-    actions:
-      - actor: >-
-          A field journal lies open on the table, its pages dense with a
-          careful obsessive hand and sketches of a mark you have half-seen
-          elsewhere. Without knowing what you are looking for, it is only
-          a lonely man's long notes.
-  - event: room_interact
-    room: 4023
-    noun: hearth-marks
-    conditions:
-      has: ["76-journal"]
+      has: ["76-attune"]
       has_item: 40167
-      missing: ["76-end"]
+      missing_item: 40168
     actions:
-      - grant: "76-attune"
-      - grant: "76-end"
       - consume_item: 40167
       - give_item: 40168
+      - actor: >-
+          You set the grey disc into the cut center of the hearthstone and
+          hold the glow over it, as his method says. The lines warm, and the
+          mark at the center wakes.
+
+  # NO DISC YET: a player on the journal step with no disc (an older save, a
+  # disc dropped or refused for weight). The attune line below sets a disc on
+  # the hearth, so one must exist first. Grants nothing.
+  - event: command
+    command: cast
+    noun: chrysalis-glow
+    target: self
+    room: 4023
+    conditions:
+      has: ["76-journal"]
+      missing: ["76-attune"]
+      missing_item: 40167
+    actions:
+      - give_item: 40167
+      - actor: >-
+          His method wants the disc itself. Between the last pages of the
+          journal lies one, pale grey, cool and dead in the hand. You carry it
+          to the hearth.
+
+  # ATTUNE: light at the marked hearth wakes the disc. The item moves before
+  # the grant: a pack too heavy for it holds the step, and the cast can be tried
+  # again.
+  - event: command
+    command: cast
+    noun: chrysalis-glow
+    target: self
+    room: 4023
+    conditions:
+      has: ["76-journal"]
+      missing: ["76-attune"]
+    actions:
+      - consume_item: 40167
+      - give_item: 40168
+      - grant: "76-attune"
       - actor: |
           You do as the journal says. You set the disc into the cut
           center of the hearthstone, where the marks draw inward to a
-          single point, and you follow his method through: the order of
-          it, the patience of it, the small exact things a driven man
-          learned alone and wrote down so a stranger might one day do
-          this right. For a long moment, nothing. Then the grey face
-          warms under your fingers, not with your warmth but its own.
-          The fine raised lines take the thin light from the shutter gap
+          single point, and you hold the soft glow over it, patient and
+          exact, the way a driven man learned alone and wrote down so a
+          stranger might one day do this right. For a long moment,
+          nothing. Then the grey face warms under your fingers, not with
+          your warmth but its own. The fine raised lines drink the light
           and keep it, holding a glow a half-breath past when it should
           fade, and the ring-struck mark at the center wakes and steadies,
           sure of itself now, sure of where it belongs. The disc is a key,
@@ -159,36 +260,6 @@ triggers:
           stranger's hand in the cottage he left to chase it. And a name
           comes to you off the last page, unbidden. Maren. He kept her,
           all the way to the end of himself. You hope, wherever she is,
-          she never learns how far he went.
-      - observer: "{actor} does something careful at the marked hearth, and the air goes briefly strange."
-  - event: room_interact
-    room: 4023
-    noun: hearth-marks
-    conditions:
-      has: ["76-journal"]
-      missing: ["76-end"]
-      missing_item: 40167
-    actions:
-      - actor: "The marks are cut for a thing you do not have in hand. Without the disc, they are only scratches in old stone. The disc lies in the cracked floor of the old Reliquary at Pothole Coulee. Type look disc there."
-  - event: room_interact
-    room: 4023
-    noun: hearth-marks
-    conditions:
-      missing: ["76-journal"]
-    actions:
-      - actor: "Marks are cut into the hearthstone in a deliberate pattern, a method for something, though you cannot read it yet."
-  # Recovery: a player who finished the quest and lost the woken disc takes
-  # a fresh grey disc from the Reliquary (5343 gives one while it is
-  # missing) and wakes it here again. Without this the keeper (9553) turns
-  # them away for good.
-  - event: room_interact
-    room: 4023
-    noun: hearth-marks
-    conditions:
-      has: ["76-end"]
-      has_item: 40167
-      missing_item: 40168
-    actions:
-      - consume_item: 40167
-      - give_item: 40168
-      - actor: "You set the grey disc into the cut center of the hearthstone and follow his method again. The lines warm, and the mark at the center wakes."
+          she never learns how far he went. Brennan will want to hear of
+          this. Go back to his office in Greenford and type talk brennan.
+      - observer: "{actor} holds a soft glow over the marked hearth, and the air goes briefly strange."

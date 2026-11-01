@@ -1334,6 +1334,12 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 
 }
 
+// CleanupMobSpawns clears the spawn slot of any instance that no longer exists.
+// noCooldown is for a mob that left without dying (mob command `despawn`: a
+// presence unload, an expired charm): the slot is ready at once and the mob's
+// return is not narrated. Otherwise the slot waits out its RespawnRate and a
+// marked entry narrates the return (a death, and `suicide vanish` for a mob
+// that walks off in the story and must stay gone).
 func (r *Room) CleanupMobSpawns(noCooldown bool) {
 
 	roundNow := util.GetRoundCount()
