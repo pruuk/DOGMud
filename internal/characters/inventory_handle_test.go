@@ -100,6 +100,31 @@ func TestFindItem_HandleWornAndBandolierAndComponents(t *testing.T) {
 	}
 }
 
+// The web client's Bandolier tab sends "quaff @<uuid>", so the bandolier
+// lookups resolve a handle to that exact instance. An older same-named potion
+// must not win, a bogus handle finds nothing, and the filter still applies.
+func TestFindInPotions_ResolvesAHandle(t *testing.T) {
+	registerHandleTestSpec(t)
+
+	older := items.New(testHandleItemId)
+	older.CraftedRound = 1
+	newer := items.New(testHandleItemId)
+	newer.CraftedRound = 2
+	c := &Character{PotionItems: []items.Item{older, newer}}
+
+	got, found := c.FindInPotions(ItemHandleSigil + newer.UUID.String())
+	if !found || got.UUID.String() != newer.UUID.String() {
+		t.Fatalf("handle: found=%v uuid=%s, want the newer instance %s", found, got.UUID.String(), newer.UUID.String())
+	}
+	if _, found := c.FindInPotions(ItemHandleSigil + "deadbeef"); found {
+		t.Fatalf("a bogus handle must find nothing")
+	}
+	refuse := func(items.Item) bool { return false }
+	if _, found := c.FindInPotionsWhere(ItemHandleSigil+newer.UUID.String(), refuse); found {
+		t.Fatalf("keep must still apply to a handle")
+	}
+}
+
 func TestFindItem_NonHandleStillResolvesByName(t *testing.T) {
 	registerHandleTestSpec(t)
 

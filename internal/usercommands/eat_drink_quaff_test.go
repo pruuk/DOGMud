@@ -3,6 +3,7 @@ package usercommands
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -124,6 +125,26 @@ func TestDrinkFindsACookedDrinkInTheBandolier(t *testing.T) {
 	user.Character.PotionItems = []items.Item{items.New(edqTeaId)}
 	events.DrainQueuedMessagesForTest(1)
 	_, err := Drink("test tea", user, room, 0)
+	require.NoError(t, err)
+	assert.Contains(t, aimTold(1), "You drink some of the")
+	assert.Empty(t, user.Character.PotionItems)
+}
+
+// The web client's Bandolier tab right-click sends the verb with an item
+// handle, so both verbs reach a bandolier item that way.
+func TestBandolierItemsAnswerAHandle(t *testing.T) {
+	user, room := edqScene(t)
+	tonic := items.New(edqTonicId)
+	tea := items.New(edqTeaId)
+	user.Character.PotionItems = []items.Item{tonic, tea}
+
+	events.DrainQueuedMessagesForTest(1)
+	_, err := Quaff(characters.ItemHandleSigil+tonic.UUID.String(), user, room, 0)
+	require.NoError(t, err)
+	assert.Contains(t, aimTold(1), "You drink the")
+
+	events.DrainQueuedMessagesForTest(1)
+	_, err = Drink(characters.ItemHandleSigil+tea.UUID.String(), user, room, 0)
 	require.NoError(t, err)
 	assert.Contains(t, aimTold(1), "You drink some of the")
 	assert.Empty(t, user.Character.PotionItems)

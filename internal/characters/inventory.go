@@ -329,6 +329,18 @@ func (c *Character) FindInPotionsWhere(itemName string, keep func(items.Item) bo
 		return items.Item{}, false
 	}
 
+	// Handle-first, as FindInBackpackWhere does: the web client's Bandolier
+	// tab sends "quaff @<uuid>", which names one exact instance and must
+	// never fall through to name matching.
+	if handle, ok := isItemHandle(itemName); ok {
+		for _, item := range c.PotionItems {
+			if itemMatchesHandle(item, handle) && (keep == nil || keep(item)) {
+				return item, true
+			}
+		}
+		return items.Item{}, false
+	}
+
 	// Sort by CraftedRound ascending (oldest first) for consumption priority
 	oldestIdx := -1
 	var oldestRound uint64 = ^uint64(0)
