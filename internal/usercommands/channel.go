@@ -28,7 +28,7 @@ func sendChannel(user *users.UserRecord, channelName, rest string) (bool, error)
 
 	rest = strings.TrimSpace(rest)
 	if rest == `` {
-		user.SendText(messaging.CategoryUsage, fmt.Sprintf(`Usage: <ansi fg="command">%s</ansi> &lt;message&gt;`, ch.Name))
+		user.SendText(messaging.CategoryUsage, fmt.Sprintf(`Usage: <ansi fg="command">%s</ansi> <message>`, ch.Name))
 		return true, nil
 	}
 
@@ -78,7 +78,7 @@ func Channels(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	args := strings.Fields(rest)
 
 	if len(args) == 0 {
-		user.SendText(messaging.CategoryScreen, `<ansi fg="yellow">Channels</ansi> <ansi fg="8">(channels &lt;name&gt; to toggle):</ansi>`)
+		user.SendText(messaging.CategoryScreen, `<ansi fg="yellow">Channels</ansi> <ansi fg="8">(channels <name> to toggle):</ansi>`)
 		for _, ch := range channels.All() {
 			state := `<ansi fg="red">off</ansi>`
 			if channels.Enabled(user.GetConfigOption(ch.ConfigKey)) {
