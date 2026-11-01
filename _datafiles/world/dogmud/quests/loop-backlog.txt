@@ -4,7 +4,6 @@
 # warning; any finding not listed refuses boot, CI and the quest editor's
 # save. A line with no matching finding fails CI: delete it when its finding
 # is fixed. Never add a line by hand to make new content pass.
-chain 30 mob 9106 topic footing_offer
 chain 30 mob 9108 topic train_offer
 chain 30 mob 9116 topic craft_offer
 chain 30 mob 9128 topic brew_offer
@@ -95,7 +94,6 @@ end 86 quest 86 trigger item_gain item=40189 grants=86-end
 end 86 step end
 end 87 quest 87 trigger item_gain item=40181 grants=87-end
 end 87 step end
-end 88 quest 88 trigger quest_granted quest_token=31-start grants=88-end
 end 89 quest 89 trigger room_enter room=468 grants=89-end
 hint 21 step start
 hint 78 step start

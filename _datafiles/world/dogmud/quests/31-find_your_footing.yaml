@@ -1,7 +1,7 @@
 # Quest 31 — Find Your Footing (Pothole Coulee hub, optional orientation)
 #
 # Token flow:
-#   31-start   — granted by Crier Toke's dialogue (requires 30-end)
+#   31-start: granted by Crier Toke's footing_offer (requires 88-end, his own hand-in of Toke's Road)
 #   31-school  — room_enter trigger, Chrysalis School Hall (5213)
 #   31-list:     command trigger, `list` at Coulee Provisions (5207), teaches
 #                the `list` command (step inserted 2026-10-17: one command

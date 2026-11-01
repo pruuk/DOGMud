@@ -71,17 +71,22 @@ opener:
       from all three before your boots cleared their doorways. Tell me what you saw
       and we will call it done.
     hints: Choose Find Your Footing below to finish the task.
+  # The hub (#375 phase 7): Toke is the only starter of the seven trades, and
+  # a player new to MUDs is told so in plain words. Each trade's first quest
+  # is one [!] line on his menu; take one, several or all seven.
   - questRequired:
     - 31-end
-    text: The town knows your face now. I made sure of it. When you want more than
-      the hub, pick a mouth and I will send you down it. The coulee has seven of them,
-      and every one leads somewhere that will teach you something.
-    hints: Choose a line below to hear about the seven mouths or the day's news,
-      or take one of the seven trails.
+    text: 'The town knows your face now. I made sure of it. Here is the rest of
+      it. I can start you on any trade the coulee teaches: fighting, the forge,
+      brewing, the wilds, casting, the lore of the folk and the long shot. Each
+      one has its own teacher, and I send you to the first. Take one, take
+      several, or take all seven.'
+    hints: Each line marked [!] below starts one trade. Type the number of one to
+      hear who teaches it and where. You can take as many as you like.
 topics:
 # R17: the end of Toke's Road (quest 88), offered by Cleric Hadwen after the
-# rite. Quest 88 also closes when footing starts (its 31-start trigger), so a
-# player who takes footing first is never left holding it.
+# rite. This hand-in is the quest's only end (#375 phase 7), and it unlocks
+# Find Your Footing below, which is pitched right after it.
 - key: road_toke_end
   kind: handin
   quest: 88
@@ -90,12 +95,12 @@ topics:
   text: Hadwen sent you? Then you came to the right mouth! Hoy, newly Opened. I can
     walk you round the whole hub in one go, the school, the shop and the inn, and
     by the end of it the town will know your face.
-  hints: Toke offers Find Your Footing, a walk around the town. Choose it below.
+  hints: Quest complete. Next, Toke offers Find Your Footing, a walk around the
+    town.
   questRequired:
   - 88-start
   questExcluded:
   - 88-end
-  - 31-start
   grantsQuest: 88-end
   moodChange: friendly
 # Quest 21 "Newcomer's Path" is secret (not in the quest log), so this is a
@@ -135,8 +140,12 @@ topics:
     you have taken on.
   hints: Go north past the Awakening Pool and keep north up the basalt stair to the
     Chrysalis School Hall. Walking in is enough.
+  # Gated on Toke's Road's end, which Toke's own hand-in grants (the chain
+  # rule, #375 phase 7).
+  breadcrumb: Cleric Hadwen at the pool sends new folk to me. Once he has, I will
+    walk you round the whole town.
   questRequired:
-  - 30-end
+  - 88-end
   questExcluded:
   - 31-start
   - 31-end
@@ -174,8 +183,9 @@ topics:
   grantsQuest: 31-end
   moodChange: friendly
 # R21: the seven trails, each its own offer after Find Your Footing. Each
-# starter item rides on the offer of the quest it belongs to. Every trail's
-# own trailhead offer stays on its teacher. Quest 50's pouch of shot comes
+# starter item rides on the offer of the quest it belongs to. Toke is the
+# only starter of the seven (#375 phase 7); each first teacher takes the
+# hand-in and points a newcomer back here. Quest 50's pouch of shot comes
 # from its own quest_granted 50-start trigger (missing_item 30064).
 - key: send_drill
   kind: offer
