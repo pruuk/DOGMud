@@ -1,0 +1,22 @@
+# Straw Effigy (9614), the practice target in the Newcomer Antechamber.
+#
+# #690: its vitality is set very high so a new player cannot drop it during
+# quest 28's lesson, so the fight prompt reads [healthy] however hard it is
+# hit, while a critical swing still reads DEVASTATING (combat words a crit by
+# the swing, not by the target's health). Now and then, when struck, it says
+# why: it settles back into shape, no worse for the blow. Per-mob first; the
+# combat_passive archetype has no mob_hurt branch, so nothing is lost when
+# this one fires or falls through.
+
+tree:
+  type: selector
+  children:
+    - type: sequence
+      event: mob_hurt
+      children:
+        - type: condition
+          check: random_chance
+          percent: 30
+        - type: action
+          do: emote
+          text: rustles and settles back into shape, no worse for the blow.
