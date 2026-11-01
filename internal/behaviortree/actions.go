@@ -52,6 +52,7 @@ func init() {
 	actionRegistry["add_condition"] = actAddCondition
 	actionRegistry["command_mob"] = actCommandMob
 	actionRegistry["give_item_multiple"] = actGiveItemMultiple
+	actionRegistry["stock_item"] = actStockItem
 	actionRegistry["set_misc_data"] = actSetMiscData
 	actionRegistry["increment_state"] = actIncrementState
 	actionRegistry["decrement_state"] = actDecrementState

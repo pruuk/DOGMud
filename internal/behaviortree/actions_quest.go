@@ -2,7 +2,8 @@ package behaviortree
 
 // actions_quest.go — quest, item, and gold actions:
 // actGrantQuest, actSetQuestFlag, actGrantMutation, actGiveGold, actTakeGold,
-// actGiveItem, actReturnItem, actTakeItem, actGiveItemMultiple, actSetMiscData
+// actGiveItem, actReturnItem, actTakeItem, actStockItem, actGiveItemMultiple,
+// actSetMiscData
 
 import (
 	"fmt"
@@ -247,6 +248,43 @@ func actTakeItem(params map[string]any, ctx *EvalContext) Result {
 		}
 	}
 	return Failure
+}
+
+// actStockItem keeps the acting mob carrying an item (#375 phase 7): when it
+// holds fewer than max copies of item_id (default 1) it gains one through
+// the acquire seam and succeeds; otherwise it fails and nothing changes, so
+// a line after it in a sequence is said only when a copy was added. The
+// count covers every carry list, since StoreItem may route the item into a
+// bag or bandolier. A dead mob gains nothing, nor does a charmed one, which
+// is someone's companion. The Pothole Coulee's Pocket Dummy (9127) refills
+// the practice purse with it.
+// params: item_id (int), max (int, default 1).
+func actStockItem(params map[string]any, ctx *EvalContext) Result {
+	itemId := getIntParam(params, "item_id")
+	if itemId <= 0 || ctx == nil {
+		return Failure
+	}
+	maxCount := getIntParam(params, "max")
+	if maxCount <= 0 {
+		maxCount = 1
+	}
+	m := mobs.GetInstance(ctx.InstanceId)
+	if m == nil || m.Character.IsDead() || m.Character.IsCharmed() {
+		return Failure
+	}
+	held := 0
+	for _, it := range m.Character.GetAllCarriedItems() {
+		if it.ItemId == itemId {
+			held++
+		}
+	}
+	if held >= maxCount {
+		return Failure
+	}
+	if !acquire.AcquireItemForChar(&m.Character, 0, m.InstanceId, items.New(itemId), acquire.AcquireTreeGive) {
+		return Failure
+	}
+	return Success
 }
 
 // actGiveItemMultiple gives one or more copies of an item to the triggering user.
