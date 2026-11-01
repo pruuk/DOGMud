@@ -467,7 +467,7 @@ func (m *AICompanionModule) reflex(c *controller, mob *mobs.Mob, u *users.UserRe
 	// 2. Tend itself with a potion when badly hurt.
 	if selfPct < 40 {
 		if name := drinkablePotion(mob); name != `` {
-			act(`drink ` + util.EscapeAnsiTags(strings.ToLower(name)))
+			act(`quaff ` + util.EscapeAnsiTags(strings.ToLower(name)))
 			return
 		}
 	}

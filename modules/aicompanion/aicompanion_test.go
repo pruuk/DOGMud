@@ -2735,3 +2735,27 @@ func TestReflexFlee_OnlyWhenAFleeCanBegin(t *testing.T) {
 		t.Fatalf("a companion already fleeing was given %v (fled=%v)", queued, c.fight.Fled)
 	}
 }
+
+// A badly hurt companion tends itself with a potion through quaff, the
+// potion command since #375 phase 7.
+func TestReflexPotion_Quaffs(t *testing.T) {
+	const tonicId = 39331
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		tonicId: {ItemId: tonicId, Name: "Test Tonic", Type: items.Potion, Subtype: items.Drinkable, Uses: 1},
+	}))
+	m := &AICompanionModule{}
+	mob := reflexFleeMob(t, 9104)
+	mob.Character.Items = []items.Item{items.New(tonicId)}
+	c := &controller{profile: &Profile{}, mind: &Mind{}, fight: &fightState{}}
+	m.reflex(c, mob, nil, nil, 100, 30, 100, false)
+	queued := events.DrainQueuedInputsForTest(mob.InstanceId)
+	found := false
+	for _, cmd := range queued {
+		if cmd == `quaff test tonic` {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("a hurt companion must quaff its potion; queued %v", queued)
+	}
+}

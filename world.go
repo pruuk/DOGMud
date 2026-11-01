@@ -483,12 +483,12 @@ func (w *World) GetAutoComplete(userId int, inputText string) []string {
 				}
 			}
 
-		} else if cmd == `eat` {
+		} else if cmd == `eat` || cmd == `drink` {
 
 			itemList = user.Character.GetAllBackpackItems()
 			itemSubtypeSearch = append(itemSubtypeSearch, items.Edible)
 
-		} else if cmd == `drink` {
+		} else if cmd == `quaff` {
 
 			itemList = user.Character.GetAllBackpackItems()
 			itemSubtypeSearch = append(itemSubtypeSearch, items.Drinkable)

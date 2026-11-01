@@ -17,7 +17,7 @@ commands:
   attack: attack <target>
   flee: flee
   say: say <message>
-  recover: ["cast <heal-spell> me", "drink <potion>"]   # DOGMud heals via spells/potions
+  recover: ["cast <heal-spell> me", "quaff <potion>"]   # DOGMud heals via spells/potions
   help: help
   map: map
   consider: consider <target>            # gauge relative strength before a fight
