@@ -5,7 +5,7 @@ id: pothole_toke
 # empty square (2026-06-29 newbie smoke: Toke was away/asleep after 18:00 and
 # nighttime newbies got no guidance). He stays at the square (5203) around the
 # clock, awake; only his idle flavor changes by time of day.
-description: "Crier Toke works Hub Square around the clock -- loud by day, quieter by lamplight, a low night-watch murmur before dawn -- always ready to set a newcomer on their footing."
+description: "Crier Toke works Hub Square around the clock: loud by day, quieter by lamplight, a low night-watch murmur before dawn, always ready to set a newcomer on their footing."
 segments:
   - start: 6
     end: 18
@@ -13,7 +13,7 @@ segments:
     activity: ""
     idlecommands:
       - emote plants himself in the middle of the square and clears his throat.
-      - say Fresh from the coulee -- mind the wash road after dark!
+      - say Fresh from the coulee. Mind the wash road after dark!
       - emote nods to a passerby and files the face away for later.
       - emote calls the hour and the news in one breath while the throat-mouth hums the next.
   - start: 18
