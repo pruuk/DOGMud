@@ -2042,7 +2042,9 @@ type ScanOptions struct {
 }
 
 type SearchOptions struct {
-	Feature string // `search <feature>`; empty searches the room (search_feature.go)
+	Feature       string   // `search <feature>`; empty searches the room (search_feature.go)
+	QuestFeatures []string // quest search spots a plain search may uncover
+	QuestStep     bool     // a `command: search` quest trigger will fire: skip "You find nothing of interest."
 }
 
 type ShadowOptions struct {

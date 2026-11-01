@@ -527,8 +527,11 @@ of `internal/actions/context.md`.
 `actions.SearchOptions.Feature`) searches one noun, discovered hidden noun or
 visible container in the room: one bauble roll against that feature's own
 window, never the room's, and no contested tier. The quest `command`
-notification fires for every form of `search`, as before (quests 49 and 58
-gate on it in room 5343). See "Targeted search" in
+notification fires for every form of `search` (#375 phase 7: quests 49 and 58
+in the Reliquary, 76 in Maren's Cottage). When such a `command: search`
+trigger would fire, `questSearchStep` sets `SearchOptions.QuestStep` and the
+search skips "You find nothing of interest." so the quest's own line is not
+contradicted. See "Targeted search" in
 `internal/actions/context.md`.
 
 ### Per-Discovery Rolls

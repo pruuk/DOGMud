@@ -102,6 +102,14 @@ type SearchOptions struct {
 	// plain search rolls each at SearchRoomHiddenDifficulty; a feature
 	// search ignores them (its trigger fires with no roll).
 	QuestFeatures []string
+
+	// QuestStep is set when a `command: search` quest trigger in this room
+	// will fire for this player now (the caller asks the quest engine). That
+	// trigger's own text says what the search turned up, so a search that
+	// finds nothing else does not first print "You find nothing of
+	// interest." (#375 phase 7: quests 49 and 58 in the Reliquary, 76 in
+	// Maren's Cottage).
+	QuestStep bool
 }
 
 // searchRoll is the static-difficulty roll every non-opposed search tier
@@ -313,7 +321,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 	// its text says what the player found, so "nothing" first would contradict
 	// it (the Reliquary floor, #375 phase 3a). It is no oracle: the quest's
 	// own text follows in the same command either way.
-	if actor.IsPlayer() && !result.FoundAnything() && !(hasFeature && isQuestSpot(feature.Name, opts.QuestFeatures)) {
+	if actor.IsPlayer() && !result.FoundAnything() && !opts.QuestStep && !(hasFeature && isQuestSpot(feature.Name, opts.QuestFeatures)) {
 		actor.SendText(messaging.CategorySystem, "You find nothing of interest.\n")
 	}
 
