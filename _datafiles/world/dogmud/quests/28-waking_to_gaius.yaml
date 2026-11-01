@@ -150,7 +150,7 @@ steps:
       type trip, even if the effigy is down already. For more, type help
       trip."
   - id: tripped
-    destination: anywhere
+    # destination inferred from the flee trigger: The Landing, north of the ring.
     description: "You put the effigy down: voice, belief, and body, all
       yours."
     hint: "This fight cannot be won. Flee breaks you out of a fight and
@@ -660,9 +660,17 @@ triggers:
   # Fires once the flee has worked and the player has arrived in 6467, where
   # Dewey is waiting (NewRound_DoCombat_helpers.go notifyFleeSucceeded). A
   # refused or blocked flee does not count, and Dewey's line no longer
-  # prints before "You flee to the north exit!".
+  # prints before "You flee to the north exit!". A flee into any other room
+  # does not count either.
+  #
+  # A player can flee at any lesson of the ring, and 6467 has no way back, so
+  # a flee before the trip counts too. That one is The Landing's tree
+  # (behaviors/rooms/newcomer_antechamber/6467.yaml), which says the same
+  # line: a trigger may not reach back past tripped (the one-action rule and
+  # the walk's skip probe).
   - event: command
     command: flee
+    room: 6467
     conditions:
       has: [28-tripped]
       missing: [28-fled]
@@ -680,4 +688,5 @@ triggers:
   #    farewell and moves the player to the Awakening Pool, where Cleric
   #    Hadwen offers quest 30. The room's tree
   #    (behaviors/rooms/newcomer_antechamber/6467.yaml) prompts, blocks a
-  #    walk and grants nothing (#375 phase 7).
+  #    walk, and grants 28-fled to a player who holds the quest here without
+  #    it, so no one is stranded (#375 phase 7).

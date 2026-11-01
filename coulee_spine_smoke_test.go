@@ -17,12 +17,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 const (
-	spineUserId = 9375
-
 	spineDewey  = 9491
 	spineHadwen = 9100
 	spineToke   = 9106
@@ -31,6 +30,8 @@ const (
 	spinePool    = 5200
 	spineSquare  = 5203
 )
+
+var spineNextUserId = 9375
 
 // spineWalk is one character walking the shipped opening through the game's
 // own doors: conversation.Talk and the menu's input routing for every talk,
@@ -74,18 +75,22 @@ func newSpineWalk(t *testing.T) *spineWalk {
 	events.RegisterListener(events.ItemOwnership{}, hooks.CheckItemQuests)
 	behaviortree.DrainAllDelayedActionsForTest(t)
 
-	w.user = users.NewTestUser(spineUserId, "spinewalker", "Spinewalker", 99375)
+	// A fresh id per walk: Dewey's per-player `leaving` state is held on his mob
+	// instance, and a reload of the world can hand a later walk the same one.
+	spineNextUserId++
+	id := spineNextUserId
+	w.user = users.NewTestUser(id, "spinewalker", "Spinewalker", uint64(id)+90000)
 	w.user.Muted = true
-	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{spineUserId: w.user}))
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{id: w.user}))
 	w.user.Character.RoomId = 6258
 	first := rooms.LoadRoom(6258)
 	if first == nil {
 		t.Fatal("room 6258 is not loaded")
 	}
-	first.AddPlayer(spineUserId)
+	first.AddPlayer(id)
 	t.Cleanup(func() {
 		if r := rooms.LoadRoom(w.user.Character.RoomId); r != nil {
-			r.RemovePlayer(spineUserId)
+			r.RemovePlayer(id)
 		}
 	})
 	return w
@@ -223,7 +228,7 @@ func (w *spineWalk) step(questId int, want, after string) {
 // walkTo moves the player as the game does. RoomChange reaches QuestRoomEnter.
 func (w *spineWalk) walkTo(roomId int) {
 	w.t.Helper()
-	if err := rooms.MoveToRoom(spineUserId, roomId); err != nil {
+	if err := rooms.MoveToRoom(w.user.UserId, roomId); err != nil {
 		w.t.Fatalf("move to %d: %v", roomId, err)
 	}
 	w.pump()
@@ -237,7 +242,7 @@ func (w *spineWalk) issued(command, noun string) {
 	matchRoom, _ := rooms.OriginalRoomId(roomId)
 	bridge := questengine.NewGameBridge(w.user, roomId)
 	questengine.GetEngine().Notify("command_issued", questengine.EventDetails{
-		UserId: spineUserId, RoomId: matchRoom, Command: command, Noun: noun,
+		UserId: w.user.UserId, RoomId: matchRoom, Command: command, Noun: noun,
 	}, bridge, bridge)
 	w.pump()
 }
@@ -249,29 +254,37 @@ func (w *spineWalk) succeeded(command string, targets ...questengine.Target) {
 	w.pump()
 }
 
-// TestSmoke_NewCharacterSpine walks a brand-new character through the Pothole
-// Coulee opening on shipped data (#375 phase 7, plan 2): every quest is offered
-// by the NPC who took the previous hand-in, nothing is granted by itself, and
-// Crier Toke ends up the only starter of the seven trades. No token is written
-// by the test: each one lands through the talk menu, a quest trigger or a
-// behavior tree, except 21-start, queued the way the new-to-MUDs route does.
-func TestSmoke_NewCharacterSpine(t *testing.T) {
-	w := newSpineWalk(t)
-	c := w.user.Character
-
-	// The new-to-MUDs route (usercommands.grantNewcomerMarker).
-	events.AddToQueue(events.Quest{UserId: spineUserId, QuestToken: "21-start"})
+// typed runs a line the player typed, through the command dispatcher: the room
+// tree's room_command, then the command itself.
+func (w *spineWalk) typed(command, rest string) {
+	w.t.Helper()
+	if _, err := usercommands.TryCommand(command, rest, w.user.UserId, 0); err != nil {
+		w.t.Fatalf("%s %s: %v", command, rest, err)
+	}
 	w.pump()
+}
 
-	// Waking to Gaius: Dewey offers it, each lesson's own event moves it one
-	// step, and Dewey takes it.
-	if len(c.QuestProgress) != 1 {
-		t.Fatalf("a new character holds only the newcomer marker, not %v", c.QuestProgress)
+// fleeToLanding is a flee that worked, in the order handlePlayerFlee runs it:
+// the move, the flee's command event from the room fled into, then the room
+// tree's room_enter. Dewey stands in The Landing, as its spawn list has him.
+func (w *spineWalk) fleeToLanding() {
+	w.t.Helper()
+	if err := rooms.MoveToRoom(w.user.UserId, spineLanding); err != nil {
+		w.t.Fatalf("flee to %d: %v", spineLanding, err)
 	}
 	w.npc(spineDewey)
-	w.marker(spineDewey, menu.MarkerQuest)
-	w.offer(spineDewey, "waking_offer", "28-start")
+	questengine.NotifyCommand(w.user, spineLanding, "flee")
+	behaviortree.TryRoomBehavior(spineLanding, behaviortree.EventContext{
+		EventType: "room_enter", UserId: w.user.UserId, RoomId: spineLanding,
+	})
+	w.pump()
+}
 
+// lessonsTo takes Waking to Gaius through its lessons, each by its own event,
+// and stops once the quest stands on the step named last. The quest must have
+// been taken.
+func (w *spineWalk) lessonsTo(last string) {
+	w.t.Helper()
 	lessons := []struct {
 		do   func()
 		want string
@@ -303,15 +316,144 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 	for _, l := range lessons {
 		l.do()
 		w.step(28, l.want, "lesson "+l.want)
+		if l.want == last {
+			return
+		}
 	}
+	w.t.Fatalf("no lesson ends on %q", last)
+}
 
-	// The flee moves the player to The Landing, then counts (notifyFleeSucceeded).
-	w.walkTo(spineLanding)
+// handInAtLanding types talk dewey, chooses the [?] line and follows Dewey's
+// send-off up to the pool.
+func (w *spineWalk) handInAtLanding() {
+	w.t.Helper()
+	w.typed("talk", "dewey")
+	w.choose("ready")
+	w.pump()
+	w.requireHeld("28-end")
+	if got := w.user.Character.RoomId; got != spinePool {
+		w.t.Fatalf("Dewey's send-off left the player in room %d, want the pool %d", got, spinePool)
+	}
+}
+
+// A newcomer can flee the effigy at any lesson of the practice ring, and the
+// only exit leads to The Landing, which has none. The flee must still open
+// Dewey's hand-in, or the player is stranded (#375 phase 7).
+func TestSmoke_FleeFromAnEarlyLessonOpensTheHandIn(t *testing.T) {
+	for _, at := range []string{
+		"proving_prompt", "warcried", "saw_conditions", "checked_cooldowns", "considered", "attacked", "cast_spike",
+	} {
+		t.Run(at, func(t *testing.T) {
+			w := newSpineWalk(t)
+			w.npc(spineDewey)
+			w.offer(spineDewey, "waking_offer", "28-start")
+			w.lessonsTo(at)
+
+			w.fleeToLanding()
+
+			w.step(28, "fled", "a flee from "+at)
+			w.marker(spineDewey, menu.MarkerHandIn)
+			w.handInAtLanding()
+		})
+	}
+}
+
+// Set the quest aside in the ring, flee, and take it back up from Dewey at The
+// Landing: the quest comes back on the lesson it was left on, where nothing can
+// finish it, so the first thing the player types there must count the flee.
+func TestSmoke_AbandonFleeResumeAtTheLandingReachesTheHandIn(t *testing.T) {
+	for _, first := range []struct{ command, rest string }{
+		{"talk", "dewey"}, {"say", "hello"}, {"north", ""},
+	} {
+		t.Run(first.command, func(t *testing.T) {
+			w := newSpineWalk(t)
+			w.npc(spineDewey)
+			w.offer(spineDewey, "waking_offer", "28-start")
+			w.lessonsTo("attacked")
+
+			if ok, line := usercommands.AbandonQuest(w.user, 28); !ok {
+				t.Fatalf("quest 28 cannot be set aside: %s", line)
+			}
+			w.fleeToLanding()
+			if _, held := w.user.Character.QuestProgress[28]; held {
+				t.Fatalf("a flee took a shelved quest back up: %v", w.user.Character.QuestProgress)
+			}
+			w.marker(spineDewey, menu.MarkerQuest)
+
+			w.typed("talk", "dewey")
+			w.acceptOffer("waking_offer", "28-start")
+			w.leave()
+			w.step(28, "attacked", "the resume")
+
+			w.typed(first.command, first.rest)
+			w.user.CloseMenu(menu.CloseLeft)
+			w.step(28, "fled", first.command+" after the resume")
+			w.handInAtLanding()
+		})
+	}
+}
+
+// The Landing is the only room a flee counts in: the trigger is room-limited,
+// and no room tree but The Landing's grants the step.
+func TestSmoke_FleeElsewhereCountsForNothing(t *testing.T) {
+	cases := []struct {
+		at   string
+		room int
+	}{
+		{"attacked", 6262},
+		{"attacked", 6261},
+		{"tripped", 6262},
+		{"tripped", spinePool},
+	}
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%s in %d", c.at, c.room), func(t *testing.T) {
+			w := newSpineWalk(t)
+			w.npc(spineDewey)
+			w.offer(spineDewey, "waking_offer", "28-start")
+			w.lessonsTo(c.at)
+
+			if w.user.Character.RoomId != c.room {
+				w.walkTo(c.room)
+			}
+			w.npc(spineDewey)
+			w.succeeded("flee")
+			w.step(28, c.at, fmt.Sprintf("a flee into room %d", c.room))
+			if w.onMenu(spineDewey, "ready") {
+				t.Fatal("Dewey's hand-in opened")
+			}
+		})
+	}
+}
+
+// TestSmoke_NewCharacterSpine walks a brand-new character through the Pothole
+// Coulee opening on shipped data (#375 phase 7, plan 2): every quest is offered
+// by the NPC who took the previous hand-in, nothing is granted by itself, and
+// Crier Toke ends up the only starter of the seven trades. No token is written
+// by the test: each one lands through the talk menu, a quest trigger or a
+// behavior tree, except 21-start, queued the way the new-to-MUDs route does.
+func TestSmoke_NewCharacterSpine(t *testing.T) {
+	w := newSpineWalk(t)
+	c := w.user.Character
+
+	// The new-to-MUDs route (usercommands.grantNewcomerMarker).
+	events.AddToQueue(events.Quest{UserId: w.user.UserId, QuestToken: "21-start"})
+	w.pump()
+
+	// Waking to Gaius: Dewey offers it, each lesson's own event moves it one
+	// step, and Dewey takes it.
+	if len(c.QuestProgress) != 1 {
+		t.Fatalf("a new character holds only the newcomer marker, not %v", c.QuestProgress)
+	}
 	w.npc(spineDewey)
+	w.marker(spineDewey, menu.MarkerQuest)
+	w.offer(spineDewey, "waking_offer", "28-start")
+
+	w.lessonsTo("tripped")
 	if w.onMenu(spineDewey, "ready") {
 		t.Fatal("Dewey's hand-in is open before the flee lesson")
 	}
-	w.succeeded("flee")
+
+	w.fleeToLanding()
 	w.step(28, "fled", "the flee")
 	w.marker(spineDewey, menu.MarkerHandIn)
 
