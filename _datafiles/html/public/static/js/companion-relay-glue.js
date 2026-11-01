@@ -236,7 +236,7 @@
     var overlay = doc.createElement('div');
     overlay.id = 'companion-relay-overlay';
     overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:10000;' +
-      'background:rgba(0,0,0,0.6);align-items:center;justify-content:center';
+      'background:color-mix(in srgb, var(--shadow) 60%, transparent);align-items:center;justify-content:center';
 
     var frame = doc.createElement('iframe');
     // allow-scripts: the relay is a script. allow-same-origin: it keeps its
@@ -252,8 +252,8 @@
     frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox');
     frame.setAttribute('referrerpolicy', 'no-referrer');
     frame.title = 'Companion key';
-    frame.style.cssText = 'width:min(440px,95vw);height:min(560px,90vh);border:1px solid #6b5a3a;' +
-      'border-radius:6px;background:#111';
+    frame.style.cssText = 'width:min(440px,95vw);height:min(560px,90vh);border:1px solid var(--relay-border);' +
+      'border-radius:6px;background:var(--relay-bg)';
 
     var glue = createGlue({
       relayOrigin: relayOrigin,

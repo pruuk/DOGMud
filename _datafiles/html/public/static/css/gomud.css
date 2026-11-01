@@ -5,39 +5,161 @@
   --panel-bg-alt: #211a14;
   --panel-border: #3a2a18;
   --panel-border-soft: #2e251c;
-  --bar-top: #241813;
+  --bar-top: #281602;
   --bar-bottom: #1a110b;
-  --gold-rule: #c9a86a;
+  --gold-rule: #b5a26c;
 
   /* ── Ink / accents ── */
-  --ink-gold: #c9a86a;
+  --ink-gold: #b5a26c;
   --title-gold: #e8d2a0;
   --text-primary: #d2c3a4;
-  --text-secondary: #9a8a6a;
+  --text-secondary: #96885f;
   --text-tagline: #b9a983;
-  --online-green: #7fae6a;
+  --online-green: #88aa71;
 
   /* ── Brass (shared with the mapper controls) ── */
-  --brass-grad: radial-gradient(circle at 34% 26%, #f4dd92, #cb9f42 46%, #8a6620);
-  --brass-border: #5e431a;
+  --brass-light: #f4dd92;
+  --brass-mid: #aa8636;
+  --brass-dark: #736133;
+  --brass-grad: radial-gradient(circle at 34% 26%, var(--brass-light), var(--brass-mid) 46%, var(--brass-dark));
+  --brass-border: #50371d;
   --brass-text: #3b2a10;
+  --brass-shade: #4a3410;       /* inner shadow on pressed brass */
+  --brass-glint: #efd897;       /* inner highlight on brass */
+  --brass-glint-text: #efd897;  /* text-shadow highlight on brass labels */
+  --gold-button-light: #efd897;
+  --gold-button-dark: #9c7b34;
 
   /* ── Accent palette (for pop / column identity) ── */
-  --vellum: #d9c39e;          /* weathered vellum — bright text/pop */
+  --vellum: #dfcc94;          /* weathered vellum — bright text/pop */
   --antique-gold: #b89047;    /* antique gold */
-  --copper: #4a6b5d;          /* oxidized copper — teal-green accent */
+  --copper: #2e6e60;          /* oxidized copper — teal-green accent */
   --ink-deep: #2b231d;        /* iron gall ink — deep surface */
-  --madder: #8c3b30;          /* madder root red — alerts/important */
+  --madder: #962a22;          /* madder root red — alerts/important */
+  --frame-red: #dc6b34;       /* tooled-red frame on the vellum cards */
+
+  /* ── Shadow and highlight bases (used through color-mix for alpha) ── */
+  --shadow: #19140c;
+  --white: #fef9ee;
+
+  /* ── Page and nav ── */
+  --page-glow: #251a12;       /* body gradient, centre */
+  --page-edge: #110b07;       /* body gradient, edge */
+  --bar-deep: #191009;        /* deepest end of the header and footer bars */
+  --nav-scrim: #140e09;       /* nav link fill, used at 60% */
+  --nav-selected: #2a2114;
+  --chip-bg: #1d1610;         /* small stat chips and pills */
+
+  /* ── Web client dashboard ── */
+  --desk: #0e0a06;            /* field behind the cards */
+  --ink-black: #19140c;       /* neutral black of the map, automation and game panels */
+  --status-muted: #6e5a38;    /* muted text on the vellum cards */
+  --status-online: #2f4f1c;   /* "connected" on the vellum session strip */
+  --conn-reconnecting: #704714;
+  --conn-lost: #8a2828;
+  --input-bg: #150f0a;
+  /* Command box border, from the brand green ramp. Rest passes 3:1 against
+     both the box (3.17) and the vellum strip (3.77); focus is bright inside
+     (7.27) with a dark outer ring for the vellum side (5.85). */
+  --cmd-border-rest: #4b6c37;
+  --cmd-border-focus: #88aa71;
+  --cmd-ring-focus: #2f4f1c;
+  --well: #150f08;            /* sunken fields: selects, inputs, tile shadow */
+  --well-empty: #140f08;      /* empty inventory slot */
+  --tile-top: #2a2016;        /* inventory tile gradient */
+  --tile-hover-top: #332818;
+  --tile-hover-bottom: #1c1209;
+  --button-disabled: #2a2018;
+  --menu-head: #241a10;
+  --chip-copper-bg: #16201c;
+  --chip-copper-text: #6dac9d;
+  --chip-alert-bg: #2a1d12;
+  --charge-low: #b84f3e;
+  --scrim: #0a0705;           /* modal backdrop, used at 55% */
+
+  /* ── Quest panel ── */
+  --quest-dim: #8b897a;
+  --quest-name: #b5a26c;
+  --quest-name-focus: #f0dcae;
+  --quest-bar-track: #160e08;
+  --quest-progress: #96885f;
+  --party-teal: #6dac9d;      /* also the map's party marker */
+
+  /* ── Vitals ── */
+  --vitals-name: #4a3a28;
+  --vitals-name-self: #1a1208;
+  --vitals-drain: #19140c;
+  --vitals-reserved: #19140c;
+  --vitals-cp-label: #252015;
+  --hp-low: #e35349;
+  --hp-mid: #e7a747;
+  --hp-high: #88aa71;
+  --sp-low: #983b1f;
+  --sp-mid: #db6f1d;
+  --sp-high: #e8892e;
+  --cp-low: #ea9c2b;
+  --cp-mid: #e6b058;
+  --cp-high: #efd897;
+
+  /* ── Name and chat colours outside the terminal ── */
+  --name-mob: #84c3eb;
+  --name-player: #e7b86c;
+  --chat-broadcast: #c890b0;
+  --chat-whisper: #8b897a;
+
+  /* ── Mutation toast and card ── */
+  --toast-top: #2b2118;
+  --toast-name: #cec6aa;
+  --toast-sub: #96885f;
+  --toast-kicker: #e7b86c;
+  --toast-desc: #9a977f;
+  --toast-hint: #8b897a;
+
+  /* ── Automation editor ── */
+  --auto-label: #dfcc94;
+  --auto-button-border: #5a3a18;
+
+  /* ── Legacy floating menu ── */
+  --menu-bg: #252015;
+  --menu-border: #5d5c4e;
+  --menu-button-border: #5d5c4e;
+  --menu-button-hover: #5d5c4e;
+  --menu-button-active: #252015;
+  --menu-text: #b4b4a3;
+
+  /* ── Companion relay window ── */
+  --relay-border: #6b5a3a;
+  --relay-bg: #111;
+
+  /* ── Game text window (xterm). Read by webclient-pure.html at start-up,
+     so these must stay plain colour values, never var() or color-mix(). ── */
+  --term-bg: #0c0c0d;
+  --term-fg: #e0d2b2;
+  --term-cursor: #e8d2a0;
+  --term-selection: rgba(201, 168, 106, 0.30);
+  --term-black: #3a2f25;   --term-bright-black: #e0d2b2;
+  --term-red: #d6694e;     --term-bright-red: #e8745a;
+  --term-green: #8a9a4e;   --term-bright-green: #b3c06a;
+  --term-yellow: #d9a441;  --term-bright-yellow: #f0cf72;
+  --term-blue: #88a9cf;    --term-bright-blue: #aecce8;
+  --term-magenta: #a8678f; --term-bright-magenta: #c890b0;
+  --term-cyan: #5f9a93;    --term-bright-cyan: #84c0b6;
+  --term-white: #d8c8a8;   --term-bright-white: #f2e6c8;
 
   /* ── Tables ── */
-  --table-row-alt: rgba(201, 168, 106, 0.05);
+  --table-row-alt: color-mix(in srgb, var(--ink-gold) 5%, transparent);
 
   /* ── Fonts ── */
-  --font-serif: Georgia, 'Times New Roman', serif;
-  --font-mono: 'DejaVu Sans Mono', monospace;
+  /* Sans serif everywhere: body and headings are both Source Sans 3.
+     Source Serif 4 stays loaded (browsers only fetch fonts in use); for
+     serif headings again, set --font-heading to
+     "Source Serif 4", Georgia, "Times New Roman", serif. */
+  --font-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-heading: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Source Code Pro", ui-monospace, Menlo, Consolas, monospace;
 
   /* Legacy table tokens kept so any stray references resolve */
-  --table-border-color: #000;
+  --table-border-color: #19140c;
   --table-cell-text-color: var(--text-primary);
   --table-header-text-color: var(--ink-gold);
 }
@@ -46,13 +168,14 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  min-height: 100dvh; /* the visible height on phones; 100vh is the fallback */
   display: flex;
   flex-direction: column;
   color: var(--text-primary);
-  font-family: var(--font-serif);
+  font-family: var(--font-body);
   background-color: var(--bg-base);
   /* --background-image is set in _header.html (CSS gradient); falls back here */
-  background: var(--background-image, radial-gradient(circle at 50% 22%, #251a12, #110b07)) fixed;
+  background: var(--background-image, radial-gradient(circle at 50% 22%, var(--page-glow), var(--page-edge))) fixed;
 }
 
 a { text-decoration: none; color: inherit; }
@@ -68,15 +191,15 @@ header {
   gap: 8px 14px;
   margin: 7px 8px;
   padding: 7px clamp(12px, 2vw, 18px);
-  background: linear-gradient(var(--ink-deep), #191009);
+  background: linear-gradient(var(--ink-deep), var(--bar-deep));
   border: 1px solid var(--antique-gold);
   border-radius: 8px;
-  box-shadow: inset 0 1px 0 rgba(201, 168, 106, 0.12), 0 2px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink-gold) 12%, transparent), 0 2px 6px color-mix(in srgb, var(--shadow) 40%, transparent);
 }
 /* Gold-gradient wordmark (solid title-gold fallback where background-clip
    isn't supported). */
 .gomud-btn {
-  font-family: var(--font-serif);
+  font-family: var(--font-heading);
   font-style: italic;
   font-weight: bold;
   font-size: clamp(1.05rem, 2vw, 1.35rem);
@@ -84,11 +207,11 @@ header {
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--title-gold);
-  background: linear-gradient(#f3e3b6, #c9a86a 55%, #9c7b34);
+  background: linear-gradient(var(--gold-button-light), var(--ink-gold) 55%, var(--gold-button-dark));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--shadow) 40%, transparent);
   padding: 2px;
   transition: filter 0.15s ease;
 }
@@ -97,25 +220,25 @@ header {
 /* ── Brass component (buttons, nav pills, CTAs) ── */
 .brass {
   display: inline-block;
-  font-family: var(--font-serif);
+  font-family: var(--font-body);
   font-weight: bold;
   color: var(--brass-text);
   background: var(--brass-grad);
   border: 1px solid var(--brass-border);
   border-radius: 6px;
-  text-shadow: 0 1px 0 rgba(255, 244, 206, 0.55);
-  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5),
-              inset 0 1px 1px rgba(255, 246, 212, 0.7),
-              inset 0 -2px 3px rgba(74, 52, 16, 0.55);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--brass-glint-text) 55%, transparent);
+  box-shadow: 0 2px 3px color-mix(in srgb, var(--shadow) 50%, transparent),
+              inset 0 1px 1px color-mix(in srgb, var(--brass-glint) 70%, transparent),
+              inset 0 -2px 3px color-mix(in srgb, var(--brass-shade) 55%, transparent);
   transition: filter 0.08s ease, transform 0.08s ease;
   cursor: pointer;
 }
 .brass:hover { filter: brightness(1.08); }
 .brass:active {
   transform: translateY(1px);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4),
-              inset 0 2px 4px rgba(74, 52, 16, 0.7),
-              inset 0 -1px 1px rgba(255, 246, 212, 0.4);
+  box-shadow: 0 1px 1px color-mix(in srgb, var(--shadow) 40%, transparent),
+              inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 70%, transparent),
+              inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
 }
 
 /* ── Nav (now inside the header bar, pushed right) ── */
@@ -137,11 +260,11 @@ nav {
 }
 /* Chip nav — same language as the dashboard status / automation chips. */
 .nav-container a {
-  font-family: var(--font-serif);
+  font-family: var(--font-body);
   font-size: clamp(0.72rem, 1vw, 0.86rem);
   white-space: nowrap;
   color: var(--ink-gold);
-  background: rgba(20, 14, 9, 0.6);
+  background: color-mix(in srgb, var(--nav-scrim) 60%, transparent);
   border: 1px solid var(--panel-border);
   border-radius: 13px;
   padding: 3px 13px;
@@ -150,13 +273,13 @@ nav {
 .nav-container a:hover {
   border-color: var(--gold-rule);
   color: var(--title-gold);
-  box-shadow: 0 0 0 1px rgba(201, 168, 106, 0.22);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink-gold) 22%, transparent);
 }
 .nav-container a.selected {
   border-color: var(--antique-gold);
   color: var(--title-gold);
-  background: #2a2114;
-  box-shadow: inset 0 0 0 1px rgba(184, 144, 71, 0.30);
+  background: var(--nav-selected);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--antique-gold) 30%, transparent);
 }
 
 /* ── Mobile nav toggle ── */
@@ -182,6 +305,8 @@ nav {
    scroll + clipped header). overflow:hidden is a belt-and-suspenders against
    sub-pixel rounding — the game view has its own internal scroll. */
 .content-container[data-path="/webclient"] { padding: 0; overflow: hidden; }
+/* The game fits the width, so its page never scrolls sideways. */
+body:has(.content-container[data-path="/webclient"]) { overflow-x: hidden; }
 #webclient-frame { display: block; border: 0; }
 
 .overlay, .underlay {
@@ -192,14 +317,13 @@ nav {
   border-radius: 8px;
   padding: 20px;
   text-align: center;
-  box-shadow: inset 0 1px 0 rgba(201, 168, 106, 0.10),
-              0 6px 16px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink-gold) 10%, transparent),
+              0 6px 16px color-mix(in srgb, var(--shadow) 50%, transparent);
 }
 .overlay { overflow-y: auto; }
 .underlay { height: auto; max-height: 200px; }
 .overlay h3, .underlay h3 {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-heading);
   color: var(--title-gold);
   margin: 0 0 12px;
 }
@@ -207,17 +331,15 @@ nav {
 /* ── Hero (landing) ── */
 .hero { text-align: center; padding: 30px 26px; }
 .hero-title {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-heading);
   font-weight: bold;
   color: var(--title-gold);
   font-size: 2.4rem;
   margin: 0;
-  text-shadow: 0 2px 4px #000;
+  text-shadow: 0 2px 4px var(--shadow);
 }
 .hero-tagline {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-body);
   color: var(--text-tagline);
   font-size: 1.05rem;
   margin: 8px 0 22px;
@@ -231,7 +353,7 @@ nav {
 .hero-sub {
   margin-top: 14px;
   color: var(--text-secondary);
-  font-family: var(--font-serif);
+  font-family: var(--font-body);
   font-size: 0.95rem;
 }
 .hero-sub b { color: var(--text-primary); }
@@ -241,9 +363,9 @@ nav {
   padding: 6px 14px;
   border: 1px solid var(--panel-border);
   border-radius: 20px;
-  background: #1d1610;
+  background: var(--chip-bg);
   color: var(--online-green);
-  font-family: var(--font-serif);
+  font-family: var(--font-body);
   font-size: 0.9rem;
 }
 
@@ -252,13 +374,13 @@ nav {
 footer {
   margin: 7px 8px;
   padding: 7px clamp(12px, 2vw, 18px);
-  background: linear-gradient(#191009, var(--ink-deep));
+  background: linear-gradient(var(--bar-deep), var(--ink-deep));
   border: 1px solid var(--antique-gold);
   border-radius: 8px;
-  box-shadow: inset 0 1px 0 rgba(201, 168, 106, 0.12), 0 2px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink-gold) 12%, transparent), 0 2px 6px color-mix(in srgb, var(--shadow) 40%, transparent);
   text-align: center;
   color: var(--text-secondary);
-  font-family: var(--font-serif);
+  font-family: var(--font-body);
   font-size: 0.8rem;
 }
 footer p { margin: 0; }
@@ -270,7 +392,7 @@ table { width: 100%; border-collapse: collapse; }
 table th {
   background: linear-gradient(var(--bar-top), var(--bar-bottom));
   color: var(--ink-gold);
-  font-family: var(--font-serif);
+  font-family: var(--font-body);
   text-transform: uppercase;
   letter-spacing: 1px;
   padding: 0.7em;
@@ -280,7 +402,7 @@ table th {
 table tr { background: var(--panel-bg-alt); }
 table tr:nth-child(even) { background: var(--table-row-alt); }
 table td {
-  font-family: var(--font-serif);
+  font-family: var(--font-body);
   font-size: 1.05rem;
   padding: 0.4em 0.7em;
   text-align: left;
@@ -319,5 +441,40 @@ pre, code { font-family: var(--font-mono); }
 @media (max-width: 480px) {
   .gomud-btn { font-size: 0.95rem; }
   .overlay, .underlay { padding: 8px; }
-  .hero-cta { padding: 12px 24px; font-size: 1rem; }
 }
+
+/* ── Fonts: the Source family, shipped with the site so every device shows
+   the same type. Variable files, so each covers every weight from 200 to 900.
+   Licences sit beside them in static/fonts/ (SIL Open Font License 1.1). ── */
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal; font-weight: 200 900; font-display: swap;
+  src: url("../fonts/SourceSans3-Upright.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: italic; font-weight: 200 900; font-display: swap;
+  src: url("../fonts/SourceSans3-Italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal; font-weight: 200 900; font-display: swap;
+  src: url("../fonts/SourceSerif4-Roman.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: italic; font-weight: 200 900; font-display: swap;
+  src: url("../fonts/SourceSerif4-Italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Code Pro";
+  font-style: normal; font-weight: 200 900; font-display: swap;
+  src: url("../fonts/SourceCodePro-Upright.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Code Pro";
+  font-style: italic; font-weight: 200 900; font-display: swap;
+  src: url("../fonts/SourceCodePro-Italic.woff2") format("woff2");
+}
+
+h1, h2, h3, h4 { font-family: var(--font-heading); }

@@ -1,5 +1,23 @@
 # DOGMud Patch Notes
 
+## 2026-11-01: New colours and a game screen that fits your phone
+
+- The site and the web client have a new set of colours drawn from warm
+  golds, olives and creams, chosen so every word is easy to read against
+  its background.
+- Grey hints and notes in the game text are now as bright as normal text.
+- The game text now fits the width of any screen, phones included, so
+  boxes, tables and maps no longer break apart. There is no sideways
+  scrolling, and the bottom row of panel buttons and the box where you
+  type stay on screen.
+- The bar above the game stays on one line on phones. Reset layout
+  becomes a small arrow button there.
+- The box where you type has a green border that brightens while you type.
+- In the web client, the Message of the Day appears without its box,
+  starting at the left edge.
+- The flashing Enter Game button in the middle of the screen is gone. Use
+  Enter Game in the bar above the game instead.
+
 ## 2026-11-01: Pothole Coulee casting, lore and archery trails
 
 - Crier Toke starts the casting, lore and archery trails. Each one runs
@@ -110,6 +128,22 @@
 - `consider` reads more naturally against things that are not people,
   and no longer says the same length of fight twice.
 - The Straw Effigy now shows that even your best blows leave it no worse.
+
+## 2026-10-31: A clearer web client
+
+- Play in Browser now takes you straight to the login prompt. There is no
+  second button to press.
+- A button in the bar above the game says Enter Game until you are in the
+  world, then Leave Game. Leave Game asks first, then your character
+  meditates and leaves the realm safely, the same as typing `quit`.
+  Typing any command while you meditate keeps you in the game.
+- The box where you type is bigger, easier to tap on a phone, and sits
+  right under the game text, so the question and your answer are side by
+  side.
+- On phones, the row of panel buttons at the bottom no longer covers the
+  box where you type.
+- New, plainer lettering across the site and the web client, with fewer
+  slanted words, so text is easier to read on every screen.
 
 ## 2026-10-31: Mastery levels off
 
