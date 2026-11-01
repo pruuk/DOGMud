@@ -85,7 +85,7 @@ quest|31|trigger3|action1|actor => You settle the shirt across your shoulders. T
 quest|31|trigger4|action1|actor => The keeper of the Drowned Lantern tips you a nod as you step in. "First one is on the house -- the coulee's welcome. Rest while it is still being gentle with you." Now go back to Crier Toke in Hub Square, east and then north, and type talk toke.
 quest|32|rewards|actor => Vorn turns your performance over in his head for a long moment, the way a smith eyes a finished blade for flaws. Then he nods once, short, like it costs him something. "Passable. You did not freeze, you did not panic, and you remembered to think between swings. That is more than most manage on the first day." He presses a few coins into your hand. "There is real work out in the wash. Ask me about it when you are ready."
 quest|32|rewards|observer => Vorn nods at <ansi fg="username">Aliceia</ansi> with a gruff, brief approval.
-quest|32|trigger0|action1|actor => Vorn has your measure now. Take up the cudgel: type wield cudgel.
+quest|32|trigger0|action1|actor => Vorn has your measure now. Take up the cudgel: type wield cudgel. If it is already in your hand, first use remove cudgel.
 quest|32|trigger1|action1|actor => The cudgel sits in your hand. Before you fight, size up the training dummy: type consider dummy.
 quest|32|trigger2|action1|actor => Now you know what you face. Fight it: type attack dummy.
 quest|32|trigger3|action1|actor => The training dummy shudders and goes still. Your arms remember the rhythm of it: weight, angle, follow through. A new dummy stands up soon. When it does, type kick dummy.
@@ -94,11 +94,11 @@ quest|32|trigger5|action1|actor => That is a special move. Now choose how much c
 quest|32|trigger6|action1|actor => Your combat detail is set. Report to Drillmaster Vorn: type talk vorn.
 quest|33|rewards|actor => Garve presses a purse into your hand and holds your gaze a moment longer than is strictly necessary, like someone revising his estimate upward. The leggings he slides from the pack beside him are well made, cut for movement, and they fit.
 quest|33|trigger0|action1|actor => Garve has told you what the wash needs. Start with the scout. Go north to the Lower Wash and type attack scout.
-quest|33|trigger1|action1|actor => The bandit scout goes down. His gear stays on the body until you take it: type loot corpse to strip it. Next is the squatter. From Squatter's Hollow, go east to the Cracked Cistern and type attack squatter.
-quest|33|trigger2|action1|actor => The bandit squatter drops, and he was wearing something worth having. Loot the corpse before you go. Then go back to Garve in Squatter's Hollow and type talk garve.
-quest|34|rewards|actor => Garve hears you out without a word. Then he takes the captain's blade from you, turns it once in his good hand, and gives it back. "You took it, you keep it. It has changed owners by violence before, and it found a better one this time." He counts coin into your palm. "Whatever she was guarding is the coulee's question now, not hers."
-quest|34|rewards|observer => Garve hands <ansi fg="username">Aliceia</ansi> back a well-kept blade and a purse of coin.
-quest|34|trigger0|action1|actor => The captain falls, and the watch room goes quiet. You take up her blade, the one well-kept thing in this ruin. Take the news down to Garve: type talk garve when you reach him.
+quest|33|trigger1|action1|actor => The bandit scout goes down. A bandit's gear does not always survive the fight: type loot corpse to see what is left. Next is the squatter. From Squatter's Hollow, go east to the Cracked Cistern and type attack squatter.
+quest|33|trigger2|action1|actor => The bandit squatter drops. Some of her gear may have survived the fight, so loot the corpse before you go. Then go back to Garve in Squatter's Hollow and type talk garve.
+quest|34|rewards|actor => Garve hears you out without a word. Then he reaches behind him for a well-kept blade, turns it once in his good hand, and holds it out to you. "I took this off one of hers in the ambush. It belonged to the watch captain they killed for that tower. You took the tower, you keep it. It has changed owners by violence before, and it found a better one this time." He counts coin into your palm. "Whatever she was guarding is the coulee's question now, not hers."
+quest|34|rewards|observer => Garve hands <ansi fg="username">Aliceia</ansi> a well-kept blade and a purse of coin.
+quest|34|trigger0|action1|actor => The captain falls, and the watch room goes quiet. Take the news down to Garve: type talk garve when you reach him.
 quest|34|trigger1|action1|actor => The fight leaves something behind in your arms and back: a settled, lasting strength, earned the hard way at the top of a tower.
 quest|34|trigger2|action1|actor => The fight leaves something behind in your hands and feet: a settled, lasting quickness, earned the hard way at the top of a tower.
 quest|35|rewards|actor => Rusk looks at you, not at the forge, with the measuring expression of a smith deciding whether a piece of iron is worth tempering. Then she nods once and presses a few coins into your hand with the finality of a door closing.

@@ -148,6 +148,7 @@ triggers:
   - event: command
     command: craft
     room: 5245
+    item: 10009
     conditions:
       has: ["35-strip"]
       missing: ["35-craft"]

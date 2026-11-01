@@ -66,9 +66,10 @@ opener:
     questExcluded:
     - 42-cook
     - 42-end
-    text: Rested. Now the fire, here in my camp. The meat and the salt become a meal.
-      Burn it and the meat is gone, so bring down another pronghorn and try again.
-      Lost the salt? Ask me for salt.
+    text: Rested. Now the fire, here in my camp. The meat and the salt become grilled
+      meat, and that is the only meal I want to see. Burn it, or cook them into
+      anything else, and both are gone. Bring down another pronghorn, ask me for
+      salt, and try again.
     hints: At Delk's camp fire in Hunter's Hollow, type craft grilled meat.
   - questRequired:
     - 42-cook
@@ -172,8 +173,8 @@ topics:
 - key: salt_recovery
   kind: info
   label: I've lost my salt.
-  text: Lost your salt? Here. Last pinch I am sparing. You need it and raw meat to
-    cook grilled meat at the fire. Do not lose this one.
+  text: Lost your salt, or burned it? Here. Another pinch. You need it and raw meat
+    to cook grilled meat at the fire. Try not to waste this one.
   hints: You received a salt pouch. With raw meat, type craft grilled meat at the
     camp fire.
   questRequired:
@@ -293,8 +294,9 @@ topics:
 - key: hunt_progress_rest
   kind: info
   label: I've rested. What now?
-  text: 'Not yet. You rested. Now cook the kill at my fire. If it burns, the meat
-    is lost: bring down another pronghorn and cook that one.'
+  text: 'Not yet. You rested. Now cook the kill into grilled meat at my fire. If it
+    burns, or you cook it into anything else, the meat and the salt are both gone:
+    bring down another pronghorn, ask me for salt, and cook that one.'
   hints: At Delk's camp fire in Hunter's Hollow, type craft grilled meat.
   questRequired:
   - 42-rest

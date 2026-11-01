@@ -16,6 +16,8 @@ import (
 const (
 	glassVial    = 40006
 	healersRoot  = 40004
+	healingSalve = 30036 // recipes/alchemy/healing-salve.yaml
+	staminaTonic = 30037 // recipes/alchemy/stamina-tonic.yaml, same bench and skill
 	firebombItem = 30058
 	marshLeech   = 9130
 	reedLurker   = 9131
@@ -78,7 +80,7 @@ func TestQuest38FirstBrew_OneCommandPerStep(t *testing.T) {
 
 		notifyCounting(w, ctx, "command", EventDetails{Command: "quaff", RoomId: sheltered})
 		require.Equal(t, "vial", w.p.current, "a quaff before the brew must not count")
-		notifyCounting(w, ctx, "command", EventDetails{Command: "craft", RoomId: sheltered})
+		notifyCounting(w, ctx, "command", EventDetails{Command: "craft", RoomId: sheltered, ItemId: healingSalve})
 		require.Equal(t, "vial", w.p.current, "a craft before the roots must not count (no lenient grant)")
 
 		notifyCounting(w, ctx, "item_gain", EventDetails{ItemId: healersRoot, RoomId: sheltered})
@@ -87,7 +89,11 @@ func TestQuest38FirstBrew_OneCommandPerStep(t *testing.T) {
 		require.Equal(t, "roots", w.p.current, "the second root finishes the step")
 		require.False(t, holdsAll(w.p, turnIn))
 
-		notifyCounting(w, ctx, "command", EventDetails{Command: "craft", RoomId: dryingRacks})
+		notifyCounting(w, ctx, "command", EventDetails{Command: "craft", RoomId: sheltered, ItemId: staminaTonic})
+		require.Equal(t, "roots", w.p.current, "a stamina tonic at Birna's bench is not the salve")
+		notifyCounting(w, ctx, "command", EventDetails{Command: "craft", RoomId: dryingRacks, ItemId: staminaTonic})
+		require.Equal(t, "roots", w.p.current, "a stamina tonic at the Drying Racks is not the salve")
+		notifyCounting(w, ctx, "command", EventDetails{Command: "craft", RoomId: dryingRacks, ItemId: healingSalve})
 		require.Equal(t, "brew", w.p.current, "the Drying Racks bench counts")
 		notifyCounting(w, ctx, "command", EventDetails{Command: "drink", RoomId: sheltered})
 		require.Equal(t, "brew", w.p.current, "drink is for food and drink now; a potion is taken with quaff")

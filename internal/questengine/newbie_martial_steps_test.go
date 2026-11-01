@@ -154,6 +154,34 @@ func TestQuest32FirstBlood_OneCommandPerStep(t *testing.T) {
 		})
 	})
 
+	// The trigger cannot see an early wield, and equip reads only the pack, so
+	// every line that tells a player to wield names the remove as well.
+	t.Run("a player already holding the cudgel is told to remove it first", func(t *testing.T) {
+		vorn := loadCouleeTopics(t, "9108.yaml")
+		_, openerHint := newNpcTalker(vorn, playerOn(q, "met", "30-end", "31-end")).opener()
+		var heardLine string
+		for _, trig := range q.Triggers {
+			if trig.Topic == "drill_arrive" {
+				for _, a := range trig.Actions {
+					heardLine += a.SendText
+				}
+			}
+		}
+		for name, line := range map[string]string{
+			"met hint":           questHintFor(t, q, "met"),
+			"met description":    q.Steps[1].Description,
+			"talk step line":     heardLine,
+			"Vorn opener":        openerHint,
+			"drill_arrive hints": vorn.FindTopic("drill_arrive").Hints,
+			"progress_start":     vorn.FindTopic("progress_start").Hints,
+		} {
+			require.Contains(t, squash(line), "remove cudgel", name)
+			require.Contains(t, squash(line), "wield cudgel", name)
+		}
+		require.Contains(t, squash(vorn.FindTopic("cudgel_have").Hints), "type inventory",
+			"the reminder shows with the cudgel in hand, where a wield hint would be refused")
+	})
+
 	t.Run("a lost cudgel is replaced once", func(t *testing.T) {
 		vorn := loadCouleeTopics(t, "9108.yaml")
 		found := 0
@@ -217,6 +245,29 @@ func TestQuest33HoldTheWash_OneCommandPerStep(t *testing.T) {
 		require.Contains(t, q.Steps[1].Hint, darkAside)
 	})
 
+	// A bandit's worn gear drops only sometimes, and the squatter is a woman
+	// (9111-bandit_squatter.yaml).
+	t.Run("the loot lines promise no gear, and the squatter is she", func(t *testing.T) {
+		var lines []string
+		lines = append(lines, q.Steps[2].Description)
+		for _, trig := range q.Triggers {
+			for _, a := range trig.Actions {
+				lines = append(lines, a.SendText)
+			}
+		}
+		all := squash(strings.Join(lines, " "))
+		for _, promise := range []string{"stays on the corpse", "stays on the body", "worth having"} {
+			require.NotContains(t, all, promise)
+		}
+		require.Contains(t, all, "type loot corpse")
+		require.Contains(t, all, "her gear")
+
+		garve := loadCouleeTopics(t, "9112.yaml")
+		require.Contains(t, garve.FindTopic("wash_progress_scout").Text, "She holds the old cistern")
+		text, _ := newNpcTalker(garve, playerOn(q, "scout", "30-end", "32-end")).opener()
+		require.Contains(t, text, "She has dug into the old cistern")
+	})
+
 	t.Run("Vorn offers it and Garve no longer does", func(t *testing.T) {
 		checkOfferMoved(t, "9108.yaml", "wash_offer", q, "32-end", "9112.yaml")
 	})
@@ -243,6 +294,22 @@ func TestQuest34TakeTheTower_KillThenReport(t *testing.T) {
 	require.Contains(t, strings.ToLower(q.Steps[0].Hint), "type attack captain")
 	turnIn := turnInRequires(t, "9112.yaml", "tower_in")
 	require.Equal(t, []string{"34-slain"}, turnIn)
+
+	// The Watch-Captain's Blade (10044) arrives only as the hand-in's reward, and
+	// the captain carries a different sword, so no line may put it in the
+	// player's hands before Garve gives it.
+	t.Run("the blade comes from Garve, not from the kill", func(t *testing.T) {
+		require.Equal(t, 10044, q.Rewards.ItemId)
+		for _, trig := range q.Triggers {
+			for _, a := range trig.Actions {
+				require.NotContains(t, a.SendText, "blade", "the kill line must not hand over a blade")
+			}
+		}
+		require.NotContains(t, q.Rewards.PlayerMessage, "from you", "the player never had the blade to hand back")
+		require.NotContains(t, q.Rewards.PlayerMessage, "gives it back")
+		require.NotContains(t, q.Rewards.RoomMessage, "back")
+		require.Contains(t, q.Rewards.PlayerMessage, "blade", "the reward line still names what it pays")
+	})
 
 	// The kill is one action with no flag condition; the boon the player
 	// chose still lands at the kill, through the quest_granted 34-slain

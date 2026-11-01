@@ -41,10 +41,11 @@ steps:
       room: 5227
     description: >-
       Vorn has told you how his yard works. First the cudgel goes in your
-      hand. If you already hold it, remove it and take it up again so he
-      sees you do it.
+      hand, and he wants to see you do it. If it is already in your hand,
+      use remove cudgel to put it back in your pack, then use wield cudgel.
     hint: >-
-      Type wield cudgel.
+      Type wield cudgel. If it is already in your hand, that will not work:
+      first use remove cudgel to put it back in your pack.
   - id: wield
     destination:
       room: 5227
@@ -120,9 +121,12 @@ triggers:
     actions:
       - grant: "32-met"
       - actor: "Vorn has your measure now. Take up the cudgel: type wield
-          cudgel."
+          cudgel. If it is already in your hand, first use remove cudgel."
 
-  # wield: the cudgel (10043); the equip event names its item.
+  # wield: the cudgel (10043); the equip event names its item. Nothing checks
+  # a cudgel wielded before 32-met (equip reads only the pack, and has_item
+  # reads only the pack too), so the hints above and Vorn's lines teach
+  # remove cudgel, then wield cudgel.
   - event: command
     command: equip
     item: 10043

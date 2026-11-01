@@ -2,6 +2,7 @@ package questengine
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
@@ -60,6 +61,83 @@ func checkBridge(t *testing.T, toke *dialogue.DialogueFile, id int, line, file, 
 	require.Equal(t, []string{fmt.Sprintf("%d-start", id)}, handin.QuestRequired)
 	newNpcTalker(toke, n.p).choose(t, handinKey)
 	require.True(t, n.p.HasQuest(fmt.Sprintf("%d-end", id)), "Toke's hand-in completes the bridge")
+}
+
+// A player holding a bridge is told, above the hub, which line on Toke's menu
+// reports it, and that line sits above every trade offer. The hub's own hint
+// names only the [!] lines. Plans 3b and 4 add bridges 94 to 97: add each here.
+func TestToke_BridgeOpenerNamesTheHandInAndItComesFirst(t *testing.T) {
+	toke := loadCouleeTopics(t, "9106.yaml")
+	pre := []string{"30-end", "31-end", "88-end"}
+	for _, b := range []struct {
+		id        int
+		line      string
+		file      string
+		handinKey string
+	}{
+		{90, "Fighting", "90-report_to_toke__fighting_.yaml", "report_fighting_in"},
+		{91, "Smithing", "91-report_to_toke__smithing_.yaml", "report_smithing_in"},
+		{92, "Brewing", "92-report_to_toke__brewing_.yaml", "report_brewing_in"},
+		{93, "Tracking", "93-report_to_toke__tracking_.yaml", "report_tracking_in"},
+	} {
+		t.Run(b.line, func(t *testing.T) {
+			q := loadShippedQuest(t, b.file, b.id)
+			n := newNpcTalker(toke, playerOn(q, "start", pre...))
+
+			_, hints := n.opener()
+			require.Contains(t, squash(hints), "choose report to toke ("+strings.ToLower(b.line)+")")
+			require.Contains(t, hints, "[?]")
+			require.NotContains(t, hints, "[!]", "the hub's hint must not stand in for the report")
+
+			entries := toke.Menu("Crier Toke", n.state()).Entries
+			require.NotEmpty(t, entries)
+			require.Equal(t, b.handinKey, entries[0].Id, "the report comes before every trade offer")
+
+			n.choose(t, b.handinKey)
+			_, hints = n.opener()
+			require.Contains(t, hints, "[!]", "handed in, the opener goes back to the hub")
+		})
+	}
+}
+
+// With all seven trades taken the hub's "[!] below" describes lines that are
+// not there. The trade list is read from Toke's own send_ offers, so a trade
+// added to the menu without joining the variant's gate fails here.
+func TestToke_NoTradesLeftOpener(t *testing.T) {
+	toke := loadCouleeTopics(t, "9106.yaml")
+	q := loadShippedQuest(t, "90-report_to_toke__fighting_.yaml", 90)
+	var trades, sendKeys []string
+	for i := range toke.Topics {
+		if tp := &toke.Topics[i]; strings.HasPrefix(tp.Key, "send_") {
+			trades = append(trades, tp.GrantsQuest)
+			sendKeys = append(sendKeys, tp.Key)
+		}
+	}
+	require.Len(t, trades, 7, "Toke starts seven trades")
+	pre := []string{"30-end", "31-end", "88-end"}
+
+	all := newNpcTalker(toke, playerOn(q, "", append(append([]string{}, pre...), trades...)...))
+	_, hints := all.opener()
+	require.NotContains(t, hints, "[!]", "no trade is left to start")
+	for _, key := range sendKeys {
+		require.Nil(t, all.eligible(key), "no offer stays open")
+	}
+
+	for skip := range trades {
+		held := append([]string{}, pre...)
+		for i, tp := range trades {
+			if i != skip {
+				held = append(held, tp)
+			}
+		}
+		_, hints := newNpcTalker(toke, playerOn(q, "", held...)).opener()
+		require.Contains(t, hints, "[!]", "%s is still open, so the hub stands", trades[skip])
+	}
+
+	// A held bridge outranks it: the report is the thing to do next.
+	bridged := newNpcTalker(toke, playerOn(q, "start", append(append([]string{}, pre...), trades...)...))
+	_, hints = bridged.opener()
+	require.Contains(t, squash(hints), "choose report to toke (fighting)")
 }
 
 // Toke's quest 1 offers send the player to the line's first giver (#375

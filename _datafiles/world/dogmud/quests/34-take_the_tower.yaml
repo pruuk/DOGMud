@@ -61,12 +61,14 @@ rewards:
   skillinfo: "weapon-combat:1,unarmed-combat:1"
   gold: 50
   actor: >-
-    Garve hears you out without a word. Then he takes the captain's blade
-    from you, turns it once in his good hand, and gives it back. "You took
-    it, you keep it. It has changed owners by violence before, and it found
-    a better one this time." He counts coin into your palm. "Whatever she
-    was guarding is the coulee's question now, not hers."
-  observer: "Garve hands {actor} back a well-kept blade and a purse of coin."
+    Garve hears you out without a word. Then he reaches behind him for a
+    well-kept blade, turns it once in his good hand, and holds it out to
+    you. "I took this off one of hers in the ambush. It belonged to the
+    watch captain they killed for that tower. You took the tower, you keep
+    it. It has changed owners by violence before, and it found a better one
+    this time." He counts coin into your palm. "Whatever she was guarding
+    is the coulee's question now, not hers."
+  observer: "Garve hands {actor} a well-kept blade and a purse of coin."
 
 triggers:
   # slain: the bandit captain (9115) falls. No flag condition: one action.
@@ -78,9 +80,8 @@ triggers:
     actions:
       - grant: "34-slain"
       - actor: >-
-          The captain falls, and the watch room goes quiet. You take up her
-          blade, the one well-kept thing in this ruin. Take the news down to
-          Garve: type talk garve when you reach him.
+          The captain falls, and the watch room goes quiet. Take the news
+          down to Garve: type talk garve when you reach him.
 
   # The might boon, at the kill: a permanent Strength gain. Grants nothing.
   - event: quest_granted

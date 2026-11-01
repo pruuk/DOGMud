@@ -6,12 +6,13 @@
   Each trail leads you to one teacher, then a second, and then back to
   Toke with the news. Each first job begins by talking to the teacher Toke
   names, and each teacher sends you on to the next one.
-- Every job on these trails now ends by talking to the person who gave
-  it, the big fights and the repeat jobs included.
+- Every job on these trails now ends by talking to the person it names,
+  the big fights and the repeat jobs included.
 - First Brew asks for two healer's roots, and every hint tells you to
   type `buy 2 healer's root`.
-- A potion bandolier you wear now takes any potion or firebomb you get
-  from then on, and `quaff` draws the oldest potion first.
+- Fenwalker Falv now explains the potion bandolier: once you wear it,
+  potions and firebombs you get go into it until it is full, and `quaff`
+  draws the oldest potion first.
 - In Wade the Marsh, the firebomb only counts when the blast reaches a
   creature.
 - The Hunt now asks you to eat the meal you cooked. Any food counts, and

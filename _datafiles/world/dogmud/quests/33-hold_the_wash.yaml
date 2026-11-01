@@ -50,8 +50,8 @@ steps:
     description: >-
       One bandit scout is down. The squatter camps in the Cracked
       Cistern, east of Squatter's Hollow. Type flee if the fight turns
-      against you. When a bandit falls, its gear stays on the corpse:
-      type loot corpse to take it.
+      against you. A bandit's gear does not always survive the fight. Type
+      loot corpse to see what is left.
     hint: >-
       From Squatter's Hollow, go east to the Cracked Cistern and type
       attack squatter.
@@ -102,9 +102,9 @@ triggers:
     actions:
       - grant: "33-scout"
       - actor: >-
-          The bandit scout goes down. His gear stays on the body until
-          you take it: type loot corpse to strip it. Next is the
-          squatter. From Squatter's Hollow, go east to the Cracked
+          The bandit scout goes down. A bandit's gear does not always
+          survive the fight: type loot corpse to see what is left. Next
+          is the squatter. From Squatter's Hollow, go east to the Cracked
           Cistern and type attack squatter.
 
   # squatter: a bandit squatter (9111), after the scout.
@@ -116,6 +116,6 @@ triggers:
     actions:
       - grant: "33-squatter"
       - actor: >-
-          The bandit squatter drops, and he was wearing something worth
-          having. Loot the corpse before you go. Then go back to Garve
-          in Squatter's Hollow and type talk garve.
+          The bandit squatter drops. Some of her gear may have survived
+          the fight, so loot the corpse before you go. Then go back to
+          Garve in Squatter's Hollow and type talk garve.

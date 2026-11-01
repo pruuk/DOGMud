@@ -8,7 +8,8 @@
 #   vial   item_gain of a Glass Vial (40006)
 #   roots  item_gain of a Healer's Root (40004), count 2 (#695); foraged
 #          roots count too
-#   brew   craft at an alchemy bench (5265 or 5267), after the roots
+#   brew   craft a healing salve at an alchemy bench (5265 or 5267), after the
+#          roots
 #   drink  quaff (potions are taken with quaff since plan 1); the step id
 #          stays "drink" because saved characters hold it
 #   end    Birna's hand-in
@@ -66,7 +67,8 @@ steps:
     description: >-
       You have the glass vial and the roots. The bench at Birna's pool is an
       alchemy bench, and so is the one on the Drying Racks just west of it.
-      Type craft list at a bench to see everything you can make.
+      Type craft list at a bench to see everything you can make. Only a
+      healing salve counts for Birna.
     hint: >-
       At the alchemy bench, type craft healing salve. A craft can fail. If
       it does, buy a glass vial and two healer's roots again and retry.
@@ -160,10 +162,13 @@ triggers:
           have a salve's worth. At the alchemy bench, type craft healing
           salve.
 
-  # brew: craft at an alchemy bench, after the roots.
+  # brew: a healing salve (30036) at an alchemy bench, after the roots. The
+  # event names what was made, so a stamina tonic from the same bench does not
+  # count.
   - event: command
     command: craft
     room: 5265
+    item: 30036
     conditions:
       has: ["38-roots"]
       missing: ["38-brew"]
@@ -175,6 +180,7 @@ triggers:
   - event: command
     command: craft
     room: 5267
+    item: 30036
     conditions:
       has: ["38-roots"]
       missing: ["38-brew"]

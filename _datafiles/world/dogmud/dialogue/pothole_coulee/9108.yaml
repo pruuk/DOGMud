@@ -40,7 +40,8 @@ opener:
     - 32-end
     text: You are not done. That cudgel goes in your hand, not your pack. If it is
       already in your hand, put it away and take it up again so I can see you do it.
-    hints: Type wield cudgel.
+    hints: Type wield cudgel. If it is already in your hand, that will not work,
+      so first use remove cudgel to put it back in your pack.
   - questRequired:
     - 32-wield
     questExcluded:
@@ -128,7 +129,8 @@ topics:
     hit it until it stops hitting back. After that, kick it or trip it once, to learn
     that you have options beyond the basic swing. Last, set combatverbosity to your
     taste. It controls how much combat detail you see. Then come back to me and report.
-  hints: Type wield cudgel.
+  hints: Type wield cudgel. If it is already in your hand, that will not work, so
+    first use remove cudgel to put it back in your pack.
   questRequired:
   - 32-start
   questExcluded:
@@ -171,7 +173,7 @@ topics:
   label: I can't find my cudgel.
   text: You already have a cudgel. Check your hands and your pack. If it is not in
     your hand, take it up.
-  hints: Type wield cudgel.
+  hints: Type inventory to see what you carry and what you hold.
   questRequired:
   - 32-start
   questExcluded:
@@ -181,7 +183,8 @@ topics:
   kind: info
   label: What do I do with the cudgel?
   text: Not yet. First the cudgel goes in your hand. Then we talk about the dummy.
-  hints: Type wield cudgel.
+  hints: Type wield cudgel. If it is already in your hand, that will not work, so
+    first use remove cudgel to put it back in your pack.
   questRequired:
   - 32-met
   questExcluded:

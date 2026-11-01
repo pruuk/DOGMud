@@ -15,11 +15,15 @@ import (
 // One command per step, every quest ends at a hand-in.
 
 const (
-	wildPronghorn  = 9139
-	wildAlpha      = 9143
-	wildRawMeat    = 40014
-	wildSaltPouch  = 40017
-	wildDelk       = 9137
+	wildPronghorn = 9139
+	wildAlpha     = 9143
+	wildRawMeat   = 40014
+	wildSaltPouch = 40017
+	wildDelk      = 9137
+
+	wildGrilledMeat  = 30022 // recipes/cooking/grilled-meat.yaml
+	wildTrailRations = 30021 // recipes/cooking/trail-rations.yaml, same fire and materials
+
 	wildTarn       = 9136
 	wildDelkCamp   = 5290 // Hunter's Hollow, the cooking_fire station
 	wildOpenSteppe = 5284
@@ -51,7 +55,7 @@ func TestQuest42TheHunt_OneCommandPerStep(t *testing.T) {
 		w.notify("mob_death", EventDetails{MobId: wildPronghorn, RoomId: wildThornbrake})
 		w.notify("item_gain", EventDetails{ItemId: wildRawMeat, RoomId: wildThornbrake})
 		w.notify("command", EventDetails{Command: "sleep", RoomId: wildDelkCamp})
-		w.notify("command", EventDetails{Command: "craft", RoomId: wildDelkCamp})
+		w.notify("command", EventDetails{Command: "craft", RoomId: wildDelkCamp, ItemId: wildGrilledMeat})
 		w.notify("command", EventDetails{Command: "eat", RoomId: wildDelkCamp})
 		require.Equal(t, "met", w.p.current, "only the track starts the hunt")
 
@@ -67,21 +71,23 @@ func TestQuest42TheHunt_OneCommandPerStep(t *testing.T) {
 		w.notify("item_gain", EventDetails{ItemId: wildRawMeat, RoomId: wildThornbrake})
 		require.Equal(t, "meat", w.p.current)
 
-		w.notify("command", EventDetails{Command: "craft", RoomId: wildDelkCamp})
+		w.notify("command", EventDetails{Command: "craft", RoomId: wildDelkCamp, ItemId: wildGrilledMeat})
 		require.Equal(t, "meat", w.p.current, "cooking before the rest must not skip it")
 		w.notify("command", EventDetails{Command: "sleep", RoomId: wildThornbrake})
 		require.Equal(t, "rest", w.p.current)
 
-		w.notify("command", EventDetails{Command: "eat", RoomId: wildThornbrake, ItemId: 30021})
+		w.notify("command", EventDetails{Command: "eat", RoomId: wildThornbrake, ItemId: wildTrailRations})
 		require.Equal(t, "rest", w.p.current, "eating before the cook must not skip it")
 
-		w.notify("command", EventDetails{Command: "craft", RoomId: wildThornbrake})
+		w.notify("command", EventDetails{Command: "craft", RoomId: wildThornbrake, ItemId: wildGrilledMeat})
 		require.Equal(t, "rest", w.p.current, "a craft away from Delk's fire is not the cook")
-		w.notify("command", EventDetails{Command: "craft", RoomId: wildDelkCamp})
+		w.notify("command", EventDetails{Command: "craft", RoomId: wildDelkCamp, ItemId: wildTrailRations})
+		require.Equal(t, "rest", w.p.current, "trail rations at Delk's fire are not the grilled meat")
+		w.notify("command", EventDetails{Command: "craft", RoomId: wildDelkCamp, ItemId: wildGrilledMeat})
 		require.Equal(t, "cook", w.p.current)
 		require.False(t, holdsAll(w.p, turnIn), "turn-in waits for the meal to be eaten")
 
-		w.notify("command", EventDetails{Command: "eat", RoomId: wildDelkCamp, ItemId: 30022})
+		w.notify("command", EventDetails{Command: "eat", RoomId: wildDelkCamp, ItemId: wildGrilledMeat})
 		require.Equal(t, "eaten", w.p.current)
 		require.True(t, holdsAll(w.p, turnIn), "turn-in opens after the last step")
 	})
@@ -105,6 +111,32 @@ func TestQuest42TheHunt_OneCommandPerStep(t *testing.T) {
 			require.Contains(t, strings.ToLower(s.Hint), want[s.Id], "step %s", s.Id)
 		}
 		require.Contains(t, q.Steps[1].Hint, darkAside, "the hunt is a kill quest in rooms that go dark")
+	})
+
+	// A failed cook and a batch of trail rations each use up the meat and the
+	// salt (recipes cooking/grilled-meat and trail-rations), and the step stays
+	// open. Both ways forward must be named: a new pronghorn, and Delk's salt.
+	t.Run("a burned meal or trail rations leave a way forward", func(t *testing.T) {
+		delk := loadCouleeTopics(t, "9137.yaml")
+		n := newNpcTalker(delk, playerOn(q, "rest", "30-end", "41-end"))
+		require.NotNil(t, n.eligible("salt_recovery"), "Delk replaces the salt the craft used up")
+
+		openerText, _ := n.opener()
+		for name, line := range map[string]string{
+			"rest hint":        questHintFor(t, q, "rest"),
+			"rest description": q.Steps[5].Description,
+			"Delk opener":      openerText,
+			"hunt_progress":    delk.FindTopic("hunt_progress_rest").Text,
+		} {
+			s := squash(line)
+			require.Contains(t, s, "pronghorn", name)
+			require.Contains(t, s, "salt", name)
+			require.Contains(t, s, "grilled meat", name)
+			require.NotContains(t, s, "the meat is gone", name)
+			require.NotContains(t, s, "the meat is lost", name)
+		}
+		require.NotContains(t, delk.FindTopic("salt_recovery").Text, "Last pinch",
+			"a second burn sends the player back for more")
 	})
 
 	t.Run("Tarn offers it with the salt and Delk no longer does", func(t *testing.T) {

@@ -80,7 +80,7 @@ opener:
     questExcluded:
     - 33-squatter
     - 33-end
-    text: 'The scout is down. Good. Now the squatter. He has dug into the old cistern,
+    text: 'The scout is down. Good. Now the squatter. She has dug into the old cistern,
       east of this hollow. Same rule as before: if it turns on you, flee.'
     hints: From Squatter's Hollow, go east to the Cracked Cistern and type attack
       squatter.
@@ -226,7 +226,7 @@ topics:
 - key: wash_progress_scout
   kind: info
   label: The scout is down. Where is the squatter?
-  text: The scout is down. Now the squatter. He holds the old cistern, east of this
+  text: The scout is down. Now the squatter. She holds the old cistern, east of this
     hollow. If the fight turns on you, flee.
   hints: From Squatter's Hollow, go east to the Cracked Cistern and type attack squatter.
   questRequired:

@@ -10,7 +10,7 @@
 #   hunt   kill a pronghorn (9139); the kill leaves raw meat on the corpse
 #   meat   item_gain of raw meat (40014): loot the corpse, where it fell
 #   rest   sleep
-#   cook   craft at Delk's cooking fire (5290): grilled meat (born-known)
+#   cook   craft grilled meat (born-known) at Delk's cooking fire (5290)
 #   eaten  eat (the eat command event, #375 phase 7 skill coverage)
 #   end    Delk's hand-in
 # Sleeping carries cancel-on-action, so the craft command itself wakes the
@@ -77,11 +77,14 @@ steps:
       room: 5290
     description: >-
       You slept rough. Now cook the kill at Delk's fire in Hunter's Hollow.
-      You need the raw meat and the salt pouch. No meat? Bring down a
-      pronghorn and loot it. No salt? Talk to Delk for more.
+      You need the raw meat and the salt pouch, and only grilled meat counts
+      for Delk. A meal that burns, or a batch of anything else, uses up both.
+      No meat? Bring down a pronghorn and loot it. No salt? Talk to Delk for
+      more.
     hint: >-
       At Delk's camp fire in Hunter's Hollow, type craft grilled meat. A
-      craft can fail. If it does, hunt another pronghorn for meat and retry.
+      craft can fail, and it uses up the meat and the salt. If it does, hunt
+      another pronghorn for meat, ask Delk for salt, and retry.
   - id: cook
     destination: anywhere
     description: >-
@@ -183,11 +186,15 @@ triggers:
           You bed down rough and the field does its slow work. Your next
           command wakes you. At Delk's camp fire, type craft grilled meat.
 
-  # cook: craft at the camp fire (room 5290). The event goes out only on a
-  # craft that succeeded, so a burned meal does not count.
+  # cook: grilled meat (30022) at the camp fire (room 5290). The event goes out
+  # only on a craft that succeeded, so a burned meal does not count, and it
+  # names what was made, so trail rations from the same fire do not count.
+  # Either one uses up the meat and the salt: the way back is a new pronghorn
+  # and Delk's salt_recovery, which stays open until 42-cook.
   - event: command
     command: craft
     room: 5290
+    item: 30022
     conditions:
       has: ["42-rest"]
       missing: ["42-cook"]
