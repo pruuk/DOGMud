@@ -9,7 +9,8 @@ description: >
   blue and copper, in no particular hurry to be anywhere. Nothing happens
   here fast; the jetty is a place for waiting on a line and letting the
   afternoon go by. The reeds whisper around you, hiding the path back
-  south.
+  south. A small iron <ansi fg="itemname">lockbox</ansi> is chained to the
+  post nearest the shore, its keyhole scratched bright by practice picks.
 biome: shore
 coord:
   x: 44
@@ -37,6 +38,22 @@ nouns:
     and thick enough to hide a wading body. They whisper and lean when the
     wind comes down the coulee. Dragonflies rest on the upper stalks
     between their darting runs over the open water.
+  lockbox: A small iron lockbox chained to the post nearest the shore. It
+    holds nothing worth taking. Its keyhole is scratched bright from years
+    of practice picks, and it locks itself again a little while after
+    someone opens it.
+spawninfo:
+- mobid: 9126
+- mobid: 9127
+  message: A fresh straw dummy in a patched coat is propped up at the root of
+    the jetty.
+  narraterespawn: true
+  respawnrate: 5 rounds
+containers:
+  lockbox:
+    lock:
+      difficulty: 3
+      relockinterval: 2 real minutes
 idlemessages:
 - A dragonfly lands on a reed-tip, holds dead still, then flicks away.
 - The tied coracle knocks once against its post and goes quiet.

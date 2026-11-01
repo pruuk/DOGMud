@@ -1,0 +1,43 @@
+mobid: 9126
+zone: Pothole Coulee
+behavior_archetype: noncombat_questgiver
+statpool: 40
+hostile: false
+non_combatant: true
+charm_immune: true
+maxwander: 0
+groups:
+  - humanoid
+  - coulee_folk
+activitylevel: 10
+idlecommands:
+  - 'emote walks a coin across her knuckles and back without looking at it'
+  - ''
+  - 'emote straightens the coat on the practice dummy and pats one of its
+    pockets'
+  - ''
+  - 'emote sits on the end of the jetty with her boots over the water, watching
+    everyone'
+  - ''
+character:
+  name: Cutpurse Dace
+  description: |
+    Dace sits at the end of the Reed Jetty as if she owns it, a small, sharp
+    woman in a patched coat with more pockets than any honest coat needs.
+    Her fingers are long, each with one joint more than it should have, and
+    they are never still: a coin walks across her knuckles, a knot ties and
+    unties itself, a button vanishes from your sleeve and comes back before
+    you notice it went. She was a cutpurse once, and some in the coulee say
+    she still is. The town lets her teach quiet hands, so long as the lessons
+    stay on her practice dummy and off the neighbors.
+  speciesid: 1
+  level: 1
+  gold: 0
+  equipment:
+    light:
+      itemid: 20134
+  stats:
+    dexterity:
+      base: 108
+    charisma:
+      base: 104

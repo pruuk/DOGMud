@@ -360,6 +360,8 @@ func ResetWindow(roomId int)
   (`TooBigFor`, `notPocketSized`: urn, vase, candlestick, lantern, jug,
   book...): its text would name that thing, so it falls back to the
   corpus's pocket pool instead of being a clamped strongbox.
+- None is made in the pocket of a companion, a former companion or a species
+  with `empty_pockets` (`pocketBaubleAllowed`, internal/actions/steal_pocket.go).
 - An unknown or missing tier is always treated as cheap, never as dearer.
 - One record per bauble, never shared, never reused. Ids are `B` plus seven
   digits and only ever go up; the ids of a shard that could not be read are

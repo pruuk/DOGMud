@@ -38,6 +38,10 @@ nouns:
     to the west, going on into ground no one has opened yet. The
     rusted tools still wedged in its cracks are the record of the
     last crew to work it; the work they left unfinished is plain.
+spawninfo:
+- mobid: 9120
+  message: A mine crawler skitters out along the seam.
+  respawnrate: 5 real minutes
 idlemessages:
 - The <ansi fg="itemname">vein</ansi> catches whatever faint light reaches it and throws back a slow glitter, color shifting as the shadows move.
 - Somewhere in the unbroken rock west of the working face the <ansi fg="itemname">seam</ansi> pops once, thermal stress, or pressure, or the mountain settling into itself.

@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
@@ -320,6 +321,32 @@ func TestNoBaubleFromACompanionsPocket(t *testing.T) {
 	startPocketAttempt(h.thief, h.mark, true)
 	if _, ok := h.baubleCarried(); ok || len(h.asked) != 0 {
 		t.Fatal("no bauble from a companion")
+	}
+}
+
+// Nothing is made in the pocket of a species that owns nothing, while the same
+// mark of another species still turns one up.
+func TestNoBaubleFromATrainingTargetsPocket(t *testing.T) {
+	const targetSpecies, personSpecies = 9687, 9688
+	species.SetSpeciesForTest(t, map[int]*species.Species{
+		targetSpecies: {SpeciesId: targetSpecies, Name: "target", EmptyPockets: true},
+		personSpecies: {SpeciesId: personSpecies, Name: "person"},
+	})
+	h := setupPocket(t, 9687, 7687)
+	h.name(t, 0)
+	pocketBaubleRoll = func(*rooms.Room) bool { return true }
+
+	h.mark.Character.SpeciesId = targetSpecies
+	startPocketAttempt(h.thief, h.mark, true)
+	if _, ok := h.baubleCarried(); ok || len(h.asked) != 0 {
+		t.Fatal("no bauble from a training target")
+	}
+
+	delete(h.thief.char.Cooldowns, skills.Skullduggery.String("steal"))
+	h.mark.Character.SpeciesId = personSpecies
+	startPocketAttempt(h.thief, h.mark, true)
+	if _, ok := h.baubleCarried(); !ok {
+		t.Fatal("the control mark must turn one up, or this test proves nothing")
 	}
 }
 

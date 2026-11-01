@@ -1,0 +1,44 @@
+mobid: 9127
+zone: Pothole Coulee
+behavior_archetype: combat_passive
+statpool: 3
+hostile: false
+charm_immune: true
+maxwander: 0
+carry_capacity: 5
+groups:
+  - construct
+activitylevel: 5
+idlecommands:
+  - 'emote turns a slow half circle on its peg, and a little bell at its cuff
+    rings once'
+  - ''
+  - ''
+  - ''
+character:
+  name: Pocket Dummy
+  description: |
+    A straw dummy on a peg at the root of the jetty, dressed in a coat so
+    patched it is more patch than coat. Tiny brass bells are sewn along the
+    cuffs and the edges of every pocket, so a clumsy hand rings them. One
+    pocket is cut deep to hold a purse. Dace's students practice on it: in,
+    out, and away before the bells give them up. It is built to be robbed
+    all day and stand for the next student.
+  speciesid: 19
+  level: 1
+  gold: 0
+  items:
+    - itemid: 60
+  stats:
+    # Species 19 (dummy) has base vitality 200 and base damage 0. Dropped
+    # far down like the training dummy (9109) and practice butt (9163), so a
+    # student who is caught and swung at can knock it down in a round or two
+    # and a fresh one is set out. Low perception makes it a fair first mark.
+    vitality:
+      base: 12
+    strength:
+      base: 7
+    dexterity:
+      base: 7
+    perception:
+      base: 5

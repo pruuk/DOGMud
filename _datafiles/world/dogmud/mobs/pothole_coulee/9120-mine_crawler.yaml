@@ -11,8 +11,8 @@ groups:
   - cave
 activitylevel: 25
 idlecommands:
-  - 'emote moves along the ceiling of the drift with deliberate, adhesive
-    steps, investigating a crack in the rock'
+  - 'emote moves along the rock overhead with deliberate, adhesive steps,
+    investigating a crack in the stone'
   - ''
   - 'emote spreads the middle pair of legs wide and hangs still in the
     dark, body pressed against the stone'

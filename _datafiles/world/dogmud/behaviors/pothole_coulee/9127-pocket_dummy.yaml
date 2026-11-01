@@ -1,0 +1,31 @@
+# Pocket Dummy (9127), Reed Jetty (5218): the Shadows line's practice mark
+# (#375 phase 7, Pothole Coulee pass; quests 99 Quiet Hands and 101 Quick
+# Fingers).
+#
+# The dummy carries one Sand Purse (item 60). A theft never gives it back and
+# a mob restocks only by dying, so on an idle tick the dummy refills its own
+# pocket: one chance in five a tick, and only while it holds no purse.
+# stock_item fails on a full pocket, so the line after it is said only on a
+# refill. A student who planted the purse back has already refilled it.
+#
+# Every other event falls through to its combat_passive archetype.
+
+tree:
+  type: selector
+  children:
+    - type: decorator
+      event: mob_idle
+      mod: random
+      percent: 20
+      child:
+        type: sequence
+        children:
+          - type: action
+            do: stock_item
+            item_id: 60
+            max: 1
+          - type: action
+            do: emote
+            text: >-
+              sways on its peg, and a fresh purse shows at the edge of its coat
+              pocket.

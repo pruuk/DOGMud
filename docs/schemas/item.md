@@ -39,7 +39,8 @@ _datafiles/world/dogmud/items/{type_folder}/{subtype_folder?}/{itemid}-{ConvertF
 | `description` | string | **yes** | Shown when player examines the item. |
 | `type` | ItemType | **yes** | See valid types below. |
 | `subtype` | ItemSubType | **yes** | Depends on type. See valid subtypes below. |
-| `value` | int | no | Base gold value. |
+| `value` | int | no | Base gold value. A value below 1 does not mean worth nothing: `Validate` prices such an item, from a base of 5 gold. |
+| `worthless` | bool | no | The item has no value: `Value` stays 0 and no merchant pays for it. Pair with `not_salable: true`, which vendor validation asks of an item with no `vendor_categories` but which does not itself stop a sale. |
 | `weight` | float | no | Weight in pounds. Affects encumbrance. |
 | `cursed` | bool | no | Cannot be removed once equipped. Default false. |
 | `questtoken` | string | no | Quest flag granted when item is picked up or given. |

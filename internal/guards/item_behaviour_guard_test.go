@@ -79,7 +79,7 @@ var itemSpecDataFields = []string{
 	"KeyLockId", "ComponentTag", "IsComponent", "WeightReduction",
 	"BagCapacity", "Aging", "BottleAgingMultiplier", "Toxicity", "Magnitude",
 	"IsBandolier", "BandolierCapacity", "SalvageReturns", "RarityTier",
-	"MaterialTier", "VendorCategories", "NotSalable", "NeverDrops",
+	"MaterialTier", "VendorCategories", "NotSalable", "Worthless", "NeverDrops",
 	"Restricted",
 }
 

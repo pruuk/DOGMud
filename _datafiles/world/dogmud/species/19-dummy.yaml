@@ -8,6 +8,8 @@ size: small
 # chip hits, contradicting the harmless-target design (and Dewey's
 # "straw cannot hurt you" line).
 mutation_immune: true
+# A training target owns nothing, so a pickpocket finds only what was put in it.
+empty_pockets: true
 unarmedname: sticks
 selectable: false
 knowsfirstaid: false

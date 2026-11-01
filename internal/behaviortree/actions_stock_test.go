@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -98,6 +99,48 @@ func TestActStockItem_CountsEveryCarryList(t *testing.T) {
 	require.Len(t, m.Character.PotionItems, 1, "the fixture must route to the bandolier")
 	require.Equal(t, Failure, actStockItem(params, ctx))
 	require.Len(t, m.Character.PotionItems, 1)
+}
+
+// The Pocket Dummy's shipped tree: an idle tick refills an empty pocket and
+// never piles a second purse on a full one, and no other event refills it.
+func TestPocketDummyTreeRefillsOneSandPurse(t *testing.T) {
+	const sandPurseId = 60
+	m := seedStockMob(t)
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		sandPurseId: {ItemId: sandPurseId, Name: "Sand Purse", Type: items.Object, Weight: 0.1},
+	}))
+	t.Cleanup(util.SetRandForTest(1))
+
+	tree, err := LoadTreeFromFile("../../_datafiles/world/dogmud/behaviors/pothole_coulee/9127-pocket_dummy.yaml")
+	require.NoError(t, err)
+
+	eval := func(event string) Result {
+		return tree.Evaluate(&EvalContext{
+			Event:      EventContext{EventType: event, RoomId: stockRoomId},
+			MobState:   EnsureBTreeState(m),
+			InstanceId: stockInstanceId,
+			RoomId:     stockRoomId,
+		})
+	}
+
+	for i := 0; i < 200; i++ {
+		eval("player_enter")
+	}
+	require.Equal(t, 0, carried(m, sandPurseId), "only an idle tick refills")
+
+	refilledAfter := 0
+	for i := 1; i <= 200 && refilledAfter == 0; i++ {
+		if eval("mob_idle") == Success {
+			refilledAfter = i
+		}
+	}
+	require.NotZero(t, refilledAfter, "two hundred idle ticks at one in five must refill")
+	require.Equal(t, 1, carried(m, sandPurseId))
+
+	for i := 0; i < 200; i++ {
+		require.NotEqual(t, Success, eval("mob_idle"), "a full pocket says nothing")
+	}
+	require.Equal(t, 1, carried(m, sandPurseId), "a full pocket gains nothing")
 }
 
 func TestActStockItem_ADeadMobGainsNothing(t *testing.T) {
