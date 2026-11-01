@@ -112,16 +112,22 @@ The lookup (`findFood`), in order: edible in the pack, edible in the bandolier
 (`refusal.NotCarrying`). An edible match always wins, so `drink tea` drinks the
 tea past a "Lake-tonic of Steady Hand".
 
-## Quaff (`drink.go`, drink path unification 2026-09-28)
+## Quaff (`drink.go`, drink path unification 2026-09-28; quaff since #375 phase 7)
 
 `Quaff(actor DrinkActor, rest string) DrinkResult` is the ONE potion body for
-players, mobs and the AI companion. It was `usercommands.Drink`; the mob
-command was a separate copy with no toxicity, no aging or crafter scaling and
-no special potions. `usercommands.Quaff` and `mobcommands.Quaff` are thin
+players, mobs and the AI companion. It was `actions.Drink` until #375 phase 7
+(owner ruling 2026-10-30: potions are quaffed; `eat` and `drink` are one food
+command, `ConsumeFood` above). Before the unification the mob command was a
+separate copy with no toxicity, no aging or crafter scaling and no special
+potions. `usercommands.Quaff` and `mobcommands.Quaff` (`quaff.go`) are thin
 wrappers, and `internal/guards/drink_wrapper_guard_test.go`
 (`TestQuaffWrappersDoNotReFork`) fails if either grows potion rules again.
 A bare `quaff` (nothing named) gets the prompt "Quaff what? Try **quaff
-&lt;item&gt;**." and `DrinkRefuseNotFound`, before any other check.
+&lt;item&gt;**." and `DrinkRefuseNotFound`, before any other check. Food or a
+cooked drink (subtype `edible`) is refused with `refusal.NotAPotion`, naming
+`eat` or `drink`. The narration still reads "You drink the ...". The types keep
+their names (`DrinkActor`, `DrinkResult`, `DrinkRefusal`), and so does the
+condition source `drink`.
 
 - **`DrinkActor`** is `Actor` plus `AddConditionScaled` and
   `AddConditionMagnitude`. It is its own interface, not two new `Actor`
@@ -152,6 +158,20 @@ no caster to scale by. `DrinkActor` does not need
 `AddConditionTickScaled`: a drink's tick amount was already scale-1.0 before
 this slice, so nothing about a potion's strength changed, only where the
 number is computed.
+
+## Theft rank gate (`steal.go`, #375 phase 7)
+
+Every theft (a creature, a player, a room container, a household's find)
+refuses "not advanced enough" when the thief's skullduggery rank is under
+`Balance.StealMinRank` (`theftAttempt.belowMinRank`). It was a hardcoded 2.
+Players and mob thieves (`mobcommands.Steal`, the btree `try_steal`) share it.
+`actions.Plant` has no rank gate.
+
+## Fight read copy (`fight_read.go`, #690)
+
+The verdict and pace lines name no pronoun for the target, which may be a
+straw dummy: "it" is the fight. When both paces fall in one band,
+`samePaceText` says it once ("Either of you would need an age to end it.").
 
 ---
 
@@ -1062,7 +1082,10 @@ Pickpockets a target mob or player, or robs an item from a room container.
 
 3. **Container rob** (`opts.RoomContainerId` set):
    - No opposed roll. Opens the container and removes an item.
-   - Always succeeds if the container has items.
+   - A locked container is refused before its contents are looked at
+     (`stealFromContainer`: Reason `locked`, "The <container> is locked."), the
+     gate `get`, `put` and `look` apply. Nothing is spent or armed.
+   - Always succeeds if the container is unlocked and has items.
    - Returns item ID.
 
 **Progression:** Triggers `actor.OnStatUse("dexterity")` and
@@ -1079,8 +1102,8 @@ shroud's score while Empathic Shroud hides the thief, #444, owner
 each path reads the score
 through `theftAttempt.score()` immediately before its contest, which arms the
 cooldown as it hands the score over. So every refusal (no target, target
-gone, a companion, an immune mob, rank below 2, an empty container, too
-heavy to lift) leaves the cooldown unarmed, and no contest runs without
+gone, a companion, an immune mob, rank below `StealMinRank`, a locked or empty
+container, too heavy to lift) leaves the cooldown unarmed, and no contest runs without
 arming it. Before 2026-09-30 it was armed ahead of every refusal, so a fresh
 character (rank 1) was refused on the first try and then locked out.
 
@@ -1108,7 +1131,10 @@ container.
 2. **Plant in container** (`opts.RoomContainerId` set):
    - No opposed roll. Removes item from actor backpack, adds to container
      inventory.
-   - Always succeeds if the container exists.
+   - A locked container is refused (`plantInContainer`: Reason `locked`, "The
+     <container> is locked."), the gate `put` applies and `stealFromContainer`
+     shares.
+   - Always succeeds if the container exists and is unlocked.
 
 **Item lookup:** `opts.ItemTag` is a space-separated noun (e.g., "copper
 coin"). The function searches actor backpack for a matching item by display
@@ -1967,7 +1993,7 @@ taunt path's ordering).
 |--------|---------|---|---|---|---|
 | Consider | actions | self vs target | ConsiderResult | player only | shared (player) |
 | Defuse | actions | self vs trap | DefuseResult | varies | none |
-| Drink | actions | self | DrinkResult | both | none |
+| Quaff | actions | self | DrinkResult | both | none |
 | Forage | actions | self vs biome | ForageResult | varies | shared |
 | Plant | actions | self vs mob/container | PlantResult | varies | shared |
 | Salvage | actions | self vs corpse/item | SalvageResult | varies | none |

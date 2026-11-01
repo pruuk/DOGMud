@@ -34,6 +34,15 @@ var noDashCopyFiles = []string{
 	// #287, the flee refusals and the AI rate-limit notice.
 	"internal/usercommands/flee.go",
 	"main.go",
+	// #375 phase 7 PR 1: quaff, the food command, the consider copy, the
+	// menu-close line and the hint line.
+	"internal/usercommands/quaff.go",
+	"internal/usercommands/drink.go",
+	"internal/actions/drink.go",
+	"internal/actions/fight_read.go",
+	"internal/menu/lines.go",
+	"internal/usercommands/hint.go",
+	"internal/refusal/carrying.go",
 }
 
 func TestCopyFilesHaveNoDashesInStringLiterals(t *testing.T) {

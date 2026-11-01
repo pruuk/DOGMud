@@ -19,7 +19,9 @@ package main.
   send on the wrong category. Examples: `pool_mutation_guard_test.go`,
   `contest_floor_guard_test.go`, `sight_penalty_guard_test.go`,
   `token_engine_guard_test.go`, `refusal_phrase_guard_test.go`,
-  `messaging_surface_guard_test.go`, the `*_wrapper_guard_test.go` files.
+  `messaging_surface_guard_test.go`, the `*_wrapper_guard_test.go` files
+  (`drink_wrapper_guard_test.go` holds `TestQuaffWrappersDoNotReFork` and
+  `TestFoodWrappersDoNotReFork`).
 - **Content guards.** Read the shipped YAML under `_datafiles/world/dogmud`,
   directly or through the real loaders, and fail on content that would load
   but misbehave. Examples: `condition_notice_guard_test.go`,
@@ -31,7 +33,9 @@ package main.
   files live in `testdata/` here.
 - **Copy guards.** House style for player text: `prose_dash_guard_test.go`,
   `go_prose_dash_guard_test.go`, `copy_no_dash_test.go`,
-  `prose_tag_spacing_guard_test.go`, `combat_idiom_guard_test.go`.
+  `prose_tag_spacing_guard_test.go`, `combat_idiom_guard_test.go`,
+  `html_entity_guard_test.go` (no `&lt;`/`&gt;` in Go player text: ansitags
+  decodes no entity, #690).
 - **CI guard.** `ci_run_patterns_guard_test.go` checks every `go test -run`
   pattern in the CI action, the workflows and the Makefile names a real test
   in the package it targets.

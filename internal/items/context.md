@@ -139,6 +139,11 @@ Claws       ItemSubType = "claws"
 Whipping    ItemSubType = "whipping"
 ```
 
+Potions are `potion`/`drinkable` and are quaffed. Food is `food`/`edible`; cooked
+drinks (Herbal Tea 30024, Spiced Wine 30025, Antidote Broth 30027) are
+`drink`/`edible` since #375 phase 7, so `eat` and `drink` take both and the
+bandolier does not. Look text names the verb: quaff, drink or eat (`items.go`).
+
 ### Equipment Slots (Worn)
 
 Equipment slots are a `internal/characters` concept (`characters.Worn`, worn
@@ -826,7 +831,7 @@ break every test binary that loads items without conditions), not by
 
 ### Potion Bandolier
 Belt-slot item (`is_bandolier: true`, `bandolier_capacity` int). Auto-routes
-potions into `Character.PotionItems` on pickup (`StoreItem`); `drink`
+potions into `Character.PotionItems` on pickup (`StoreItem`); `quaff`
 consumes the oldest match first (`FindInPotions`, sorted by `CraftedRound`
 ascending). Unequipping the belt spills its contents back to the backpack
 (`internal/characters/worn.go`). The bandolier's `weight_reduction` applies

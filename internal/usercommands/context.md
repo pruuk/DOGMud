@@ -45,6 +45,8 @@ The `internal/usercommands` package implements the complete command system for p
   words. Both are wrappers over `actions.ConsumeFood`, which holds the lookup
   order and every food rule for players and mobs alike; the same guard fails if
   these files or their `internal/mobcommands` twins grow one.
+- **Usage lines** write raw angle brackets (`talk <name>`); ansitags decodes
+  no HTML entity (`internal/guards/html_entity_guard_test.go`, #690).
 - **Carried light (lighting plan 5a)**:
   - `hood` / `unhood` (`hood.go`: `Hood`, `Unhood`, helper `hoodedLight`)
     shut or open the hood of the `adjustable` light in the `Light` slot. A

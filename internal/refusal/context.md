@@ -67,6 +67,8 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `NothingToAim` / `NothingToAimLine` | You can't see anything to aim at. |
 | `NotCarrying(u, "rope")` / `NotCarryingText` | You aren't carrying 'rope'. Try **inventory**. |
 | `NotCarrying(u, "")` | You aren't carrying that. Try **inventory**. |
+| `QuaffPotion(u, "salve")` / `QuaffPotionText` | That is a potion. Try **quaff salve**. |
+| `NotAPotion(u, "tea", "drink")` / `NotAPotionText` | That is not a potion. Try **drink tea**. |
 | `NoTarget(u, "kick")` / `NoTargetText` | You have no target. Try **kick &lt;name&gt;**. |
 | `Cooldown(u, "kick")` / `CooldownText` | You need a moment to recover before you can kick. |
 | `NoTargetAfterCost(u, "taunt", cost)` / `NoTargetSpentText` | Your target is gone before you can taunt, and the effort is spent. (NoTarget when nothing was charged) |
