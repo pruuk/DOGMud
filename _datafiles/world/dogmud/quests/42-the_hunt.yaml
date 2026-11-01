@@ -1,70 +1,63 @@
-# Quest 42 — The Hunt (Pothole Coulee, Spoke D / Wilderness middle ring)
+# Quest 42, The Hunt (Pothole Coulee, tracking line, quest 2).
 #
-# Token flow (one command per step, owner ruling 2026-10-17):
-#   42-start  — granted by Hunter Delk's hunt_offer node (requires 41-end). The
-#               SAME node hands the player a salt-pouch (givesItem 40017) so they
-#               can cook.
-#   42-track: command trigger on `track` (any room), once the quest is held.
-#   42-hunt:  mob_death on a Pronghorn (9139), after the track. The kill
-#             leaves raw meat (40014) on the corpse.
-#   42-meat:  item_gain of raw meat (40014), after the kill: loot the corpse.
-#   42-rest:  command trigger on `sleep`, after the meat.
-#   42-cook:  command trigger on `craft` at the camp cooking_fire (5290),
-#             after the rest: grilled meat (raw-meat + salt-pouch, born-known).
-#   42-end:   granted by Delk's hunt_turnin node (needs 42-cook).
-#
-# Design: the field loop, in the order Delk teaches it in hunt_offer: take meat
-# (track, kill, take it off the carcass), rest rough, cook it at his fire. The
-# steps run IN ORDER. They used to be three objectives in any order, which this
-# engine cannot do: a character holds ONE current step per quest, and holding a
-# later step counts as holding every earlier one, so a sleep done first marked
-# the kill done.
-#
-# Sleep comes before the cook on purpose: Sleeping (condition 15) carries
-# cancel-on-action, so the craft command itself wakes the player and runs. No
-# stand step is needed, and nothing a later step asks for is refused by sleep.
-#
-# Mid-quest saves. start, hunt, rest and cook keep their ids and places; track
-# and meat are inserted. A player saved on `start` tracks next. On `hunt` (the
-# kill) the meat is next: one who already took it brings down another pronghorn
-# and loots it (the step description says so). On `rest` the cook is next, and
-# craft cannot succeed without raw meat, so the meat is in hand by then. On
-# `cook` the turn-in is open.
-#
-# Reward: search rank + stamina boots + the hearty-stew recipe (skill 5).
+# Scout Tarn (9136) offers it (hunt_offer) once First Sign (41) is handed in,
+# and hands over a salt pouch (givesItem 40017) so the player can cook. Hunter
+# Delk (9137) takes the hand-in (hunt_turnin), replaces lost salt
+# (salt_recovery) and then offers Break the Pack (43).
+#   start  go to Hunter's Hollow and talk to Delk
+#   met    topic_heard on Delk's hunt_arrive topic
+#   track  track (any room)
+#   hunt   kill a pronghorn (9139); the kill leaves raw meat on the corpse
+#   meat   item_gain of raw meat (40014): loot the corpse, where it fell
+#   rest   sleep
+#   cook   craft at Delk's cooking fire (5290): grilled meat (born-known)
+#   eaten  eat (the eat command event, #375 phase 7 skill coverage)
+#   end    Delk's hand-in
+# Sleeping carries cancel-on-action, so the craft command itself wakes the
+# player and runs.
 
 questid: 42
 name: The Hunt
 description: >-
-  Hunter Delk works the predator fringe out of a rough camp. He has put
-  a salt-pouch in your hand and set you to the hunter's loop: bring down
-  a pronghorn for its meat, rest rough in the field to keep your strength,
-  and cook what you killed over his fire.
+  Hunter Delk works the predator fringe out of a rough camp. Scout Tarn has
+  sent you to him with a salt pouch to learn the hunter's loop: bring down a
+  pronghorn for its meat, rest rough in the field to keep your strength,
+  cook what you killed over his fire, and eat it.
 secret: false
 
 steps:
   - id: start
     destination:
+      mob: 9137
+      room: 5290
+    description: >-
+      Scout Tarn hands you a salt pouch when you take this on and sends you
+      to Hunter Delk, who hunts the fringe out of Hunter's Hollow. From the
+      Steppe Edge, go south four times to the Game Trail, then west.
+    hint: >-
+      From the Steppe Edge, go south four times to the Game Trail, then west
+      into Hunter's Hollow. Type talk delk.
+  - id: met
+    destination:
       room: 5289
     description: >-
-      Delk hands you salt when you take this on and sets you hunting.
-      Pronghorn graze the
-      Thornbrake, north of his camp, and the Carrion Flat, south of the Game
-      Trail. First read the ground for one.
+      Delk has set you hunting. Pronghorn graze the Thornbrake, north of his
+      camp, and the Carrion Flat, south of the Game Trail. First read the
+      ground for one.
     hint: >-
-      In the Thornbrake, north of Delk's camp, type track pronghorn. If it is
-      dark, type cast glow first.
+      In the Thornbrake, north of Delk's camp, type track pronghorn. If it
+      is dark, type cast glow first.
   - id: track
     destination:
       room: 5289
     description: >-
-      You have the pronghorn's line. Now bring one down. A pronghorn does not
-      start a fight, so you choose the moment. Type consider pronghorn first
-      if you want to size it up.
+      You read the ground for a pronghorn's line. Now bring one down. A
+      pronghorn does not start a fight, so you choose the moment. Consider it
+      first if you want to size it up.
     hint: >-
       Type attack pronghorn.
   - id: hunt
-    # destination inferred from triggers (#375 p4); was: the kill can fall in the Thornbrake or the Carrion Flat
+    destination: anywhere  # the loot happens where the pronghorn fell
     description: >-
       The pronghorn is down and its meat is on the carcass. If you already
       took the meat from an earlier kill, bring down another pronghorn and
@@ -75,7 +68,7 @@ steps:
     destination: anywhere
     description: >-
       You have the meat. Before you cook, rest rough the way a hunter does.
-      Sleep where nothing hostile is near: any harm wakes you, and so does
+      Sleep where nothing hostile is near. Any harm wakes you, and so does
       your next command.
     hint: >-
       Type sleep.
@@ -83,24 +76,33 @@ steps:
     destination:
       room: 5290
     description: >-
-      You slept rough and woke stronger. Now cook the kill at Delk's fire in
-      Hunter's Hollow. You need the raw meat and the salt-pouch. No meat?
-      Bring down a pronghorn and loot it. No salt? Talk to Delk for more.
+      You slept rough. Now cook the kill at Delk's fire in Hunter's Hollow.
+      You need the raw meat and the salt pouch. No meat? Bring down a
+      pronghorn and loot it. No salt? Talk to Delk for more.
     hint: >-
       At Delk's camp fire in Hunter's Hollow, type craft grilled meat. A
       craft can fail. If it does, hunt another pronghorn for meat and retry.
   - id: cook
+    destination: anywhere
+    description: >-
+      You cooked the kill over the fire. A hot meal is for eating, not for
+      carrying. Eat what you cooked. If it is gone, any food will do, and
+      Trader Onna in Coulee Provisions sells trail rations.
+    hint: >-
+      Type eat grilled meat.
+  - id: eaten
     destination:
+      mob: 9137
       room: 5290
     description: >-
-      You cooked the kill over the fire. Delk is at his camp in Hunter's
-      Hollow.
+      You ate in the field, the way a hunter does. Delk is at his camp in
+      Hunter's Hollow.
     hint: >-
       Go back to Hunter Delk in Hunter's Hollow and type talk delk.
   - id: end
     description: >-
-      Delk has named you a hunter, near enough. Deeper south the pack
-      rules its own country -- and an alpha rules the pack.
+      Delk has named you a hunter, near enough. Deeper south the pack rules
+      its own country, and an alpha rules the pack.
 
 rewards:
   skillinfo: "search:1"
@@ -108,26 +110,37 @@ rewards:
   recipe_info: "hearty-stew"
   gold: 25
   actor: >-
-    Delk turns the cooked meat once, judges it, and grunts -- which from
-    him is praise. The shed-proof skin of his hands shows pale as he
-    pulls the strips apart. "Killed clean, rested rough, ate what you
-    took. That is the whole of it." He pushes a pair of worn field boots
-    across the stone and a scrap of waxed paper after them. "Stew recipe
-    -- a hot meal does more than cold meat. Now the bad work. South, the
-    pack. They run that country in numbers and the alpha runs them. Come
-    back about the pack when your nerve is up."
-  observer: "Delk tastes the cooked meat, nods, and hands across a
-    pair of field boots."
+    Delk hears you out, then grunts, which from him is praise. The
+    shed-proof skin of his hands shows pale as he rubs the cold from them.
+    "Killed clean, rested rough, ate what you took. That is the whole of
+    it." He pushes a pair of worn field boots across the stone and a scrap
+    of waxed paper after them. "Stew recipe. A hot meal does more than cold
+    meat. Now the bad work. South, the pack. They run that country in
+    numbers and the alpha runs them. Come back about the pack when your
+    nerve is up."
+  observer: "Delk grunts at the newcomer and hands across a pair of field
+    boots."
 
 triggers:
-  # ── TRACK: read the ground for a pronghorn ──────────────────────────
-  # The track command sends no target noun to the quest engine, so any track
-  # that ran counts. No room gate: a player who tracks from the camp or the
-  # Game Trail has still learned the step.
+  # met: hearing Delk's hunt_arrive topic.
+  - event: topic_heard
+    mob: 9137
+    topic: hunt_arrive
+    conditions:
+      has: ["42-start"]
+      missing: ["42-met"]
+    actions:
+      - grant: "42-met"
+      - actor: >-
+          Delk has set you to it. In the Thornbrake, north of his camp, type
+          track pronghorn.
+
+  # track: read the ground for a pronghorn. The track command sends no
+  # target noun, so any track that ran counts, in any room.
   - event: command
     command: track
     conditions:
-      has: ["42-start"]
+      has: ["42-met"]
       missing: ["42-track"]
     actions:
       - grant: "42-track"
@@ -135,7 +148,7 @@ triggers:
           You read the ground for a pronghorn's line. Next, type attack
           pronghorn.
 
-  # ── HUNT: bring down a pronghorn (mob 9139), after the track ────────
+  # hunt: a pronghorn (9139), after the track.
   - event: mob_death
     mob: 9139
     conditions:
@@ -146,8 +159,8 @@ triggers:
       - actor: >-
           The pronghorn drops. Its meat is on the carcass. Type loot corpse.
 
-  # ── MEAT: take the raw meat (40014), after the kill ─────────────────
-  # item_gain fires from loot, get and buy alike.
+  # meat: raw meat (40014), after the kill. item_gain fires from loot, get
+  # and buy alike.
   - event: item_gain
     item: 40014
     conditions:
@@ -158,7 +171,7 @@ triggers:
       - actor: >-
           You have the meat. Now rest rough before you cook. Type sleep.
 
-  # ── REST: sleep in the field, after the meat ────────────────────────
+  # rest: sleep in the field, after the meat.
   - event: command
     command: sleep
     conditions:
@@ -170,7 +183,8 @@ triggers:
           You bed down rough and the field does its slow work. Your next
           command wakes you. At Delk's camp fire, type craft grilled meat.
 
-  # ── COOK: craft grilled meat at the camp fire (room 5290) ───────────
+  # cook: craft at the camp fire (room 5290). The event goes out only on a
+  # craft that succeeded, so a burned meal does not count.
   - event: command
     command: craft
     room: 5290
@@ -180,5 +194,19 @@ triggers:
     actions:
       - grant: "42-cook"
       - actor: >-
-          The meat sears over the fire, salt and smoke and fat. A hot
-          meal in the field is its own small victory. Type talk delk.
+          The meat sears over the fire, salt and smoke and fat. Now eat it
+          while it is hot. Type eat grilled meat.
+
+  # eaten: eat the meal, after the cook. Any eat counts, so a player whose
+  # meal is gone (a save from before this step) eats anything else; the hint
+  # names the grilled meat.
+  - event: command
+    command: eat
+    conditions:
+      has: ["42-cook"]
+      missing: ["42-eaten"]
+    actions:
+      - grant: "42-eaten"
+      - actor: >-
+          A hot meal in the field is its own small victory. Go back to Delk
+          in Hunter's Hollow and type talk delk.

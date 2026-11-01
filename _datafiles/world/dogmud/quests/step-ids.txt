@@ -152,16 +152,20 @@
 40-start
 41-end
 41-forage
+41-met
 41-start
 41-track
 42-cook
+42-eaten
 42-end
 42-hunt
 42-meat
+42-met
 42-rest
 42-start
 42-track
 43-end
+43-slain
 43-start
 44-cast
 44-end
@@ -208,6 +212,7 @@
 55-quaffed
 55-start
 56-end
+56-foraged
 56-hunt
 56-start
 57-end
@@ -334,6 +339,8 @@
 91-start
 92-end
 92-start
+93-end
+93-start
 # retired
 # Quest 29 Two Roads (#375 phase 7): no road grants it; users.LoadUser drops
 # it from saves (quests.RetiredQuests).

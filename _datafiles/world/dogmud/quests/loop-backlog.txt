@@ -4,8 +4,6 @@
 # warning; any finding not listed refuses boot, CI and the quest editor's
 # save. A line with no matching finding fails CI: delete it when its finding
 # is fixed. Never add a line by hand to make new content pass.
-chain 41 mob 9137 topic hunt_offer
-chain 43 mob 9137 topic game_loop_offer
 chain 44 mob 9145 topic grove_offer
 chain 46 mob 9145 topic grove_loop_offer
 chain 47 mob 9157 topic stones_offer
@@ -27,14 +25,10 @@ chain 78 mob 9584 topic teach_zephyr
 end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
-end 43 quest 43 trigger mob_death mob=9143 grants=43-end
-end 43 step end
 end 46 quest 46 trigger mob_death mob=9152 grants=46-end
 end 46 step end
 end 52 quest 52 trigger mob_death mob=9169 grants=52-end
 end 52 step end
-end 56 quest 56 trigger command room=5284 command=forage grants=56-end
-end 56 step end
 end 57 quest 57 trigger mob_death mob=9147 grants=57-end
 end 57 step end
 end 58 quest 58 trigger room_interact room=5343 noun=floor verb=search grants=58-end
@@ -224,7 +218,6 @@ walk-destination 11 step sided
 walk-destination 12 step ritual
 walk-destination 13 step extraction
 walk-destination 19 step signed
-walk-destination 42 step hunt
 walk-destination 63 step report
 walk-destination 65 step report
 walk-destination 66 step detox

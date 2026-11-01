@@ -417,6 +417,7 @@
 9106.report_brewing_in
 9106.report_fighting_in
 9106.report_smithing_in
+9106.report_tracking_in
 9106.road_toke_end
 9106.send_brew
 9106.send_drill
@@ -523,26 +524,32 @@
 9129.mire_step_help
 9129.report_brewing_offer
 9136.eyes
+9136.hunt_offer
+9136.sign_arrive
 9136.sign_help
 9136.sign_progress_start
 9136.sign_progress_track
 9136.sign_turnin
+9137.game_loop_in
 9137.game_loop_offer
 9137.game_progress_hunt
 9137.game_progress_start
 9137.hands
+9137.hunt_arrive
 9137.hunt_help
 9137.hunt_meat
-9137.hunt_offer
 9137.hunt_prey
+9137.hunt_progress_cook
 9137.hunt_progress_hunt
 9137.hunt_progress_meat
 9137.hunt_progress_rest
 9137.hunt_progress_start
 9137.hunt_progress_track
 9137.hunt_turnin
+9137.pack_in
 9137.pack_offer
 9137.pack_progress
+9137.report_tracking_offer
 9137.salt_have
 9137.salt_recovery
 9144.cast_help
@@ -1375,3 +1382,4 @@
 9117.vein_offer -> 9116.vein_offer
 9112.wash_offer -> 9108.wash_offer
 9129.marsh_offer -> 9128.marsh_offer
+9137.hunt_offer -> 9136.hunt_offer

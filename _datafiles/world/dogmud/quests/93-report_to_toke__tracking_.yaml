@@ -1,0 +1,27 @@
+# Quest 93, Report to Toke (Tracking) (Pothole Coulee, tracking line bridge).
+#
+# Hunter Delk (9137) offers it (report_tracking_offer) once Break the Pack
+# (43) is handed in. Crier Toke (9106) takes the hand-in
+# (report_tracking_in). Same shape as quest 90.
+
+questid: 93
+name: Report to Toke (Tracking)
+description: >-
+  Hunter Delk has asked you to carry the news of the pack to Crier Toke in
+  Hub Square.
+secret: false
+
+steps:
+  - id: start
+    destination:
+      mob: 9106  # follow Crier Toke (schedule pothole_toke)
+      room: 5203  # fallback when Crier Toke is not spawned
+    description: >-
+      The alpha is dead and the pack is broken. Crier Toke, who sent you to
+      Scout Tarn, waits in Hub Square for the news.
+    hint: >-
+      Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk
+      toke.
+  - id: end
+    description: >-
+      Toke has your news, and the steppe folk will sleep easier for it.

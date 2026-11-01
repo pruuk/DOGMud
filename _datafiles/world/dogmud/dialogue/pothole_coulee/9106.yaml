@@ -269,10 +269,10 @@ topics:
   playerLine: Who can teach me to read the wild?
   text: Scout Tarn, out at the Steppe Edge. She reads ground the way Croup reads
     a ledger. From this square go west twice, along the stilt-house walk and into
-    the scrub draw, then south twice through the scrub mouth. A hare has crossed
-    the Open Steppe just past her. Find its trail.
-  hints: 'From Hub Square: west, west, south, south to the Steppe Edge, then south
-    once more. On the Open Steppe, type track hare.'
+    the scrub draw, then south twice through the scrub mouth. She will show you your
+    first sign.
+  hints: From Hub Square, go west twice, then south twice to the Steppe Edge. Type
+    talk tarn.
   questRequired:
   - 31-end
   questExcluded:
@@ -378,6 +378,21 @@ topics:
   questExcluded:
   - 92-end
   grantsQuest: 92-end
+  moodChange: friendly
+- key: report_tracking_in
+  kind: handin
+  quest: 93
+  label: Report to Toke (Tracking)
+  playerLine: Delk sends word. The pack is broken.
+  text: Broken? The alpha too? Hoy! The steppe folk will sleep with their doors open
+    tonight, and I will tell them whose doing it was. The wilderness trail is yours,
+    and any mouth you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 93-start
+  questExcluded:
+  - 93-end
+  grantsQuest: 93-end
   moodChange: friendly
 - key: footing_step_school
   kind: info

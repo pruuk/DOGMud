@@ -27,6 +27,14 @@ opener:
   - questRequired:
     - 41-start
     questExcluded:
+    - 41-met
+    - 41-end
+    text: Toke sent you out to me? Good. Ask me why you came, and I will tell you
+      what the ground is saying.
+    hints: Choose Crier Toke sent me to learn the ground below.
+  - questRequired:
+    - 41-met
+    questExcluded:
     - 41-track
     - 41-end
     text: Still learning. First the tracks. A hare has crossed the Open Steppe, just
@@ -49,27 +57,75 @@ opener:
     hints: Choose First Sign below to report.
   - questRequired:
     - 41-end
+    questExcluded:
+    - 42-start
+    - 42-end
     text: You can read ground now. That will keep you alive longer than a sharp knife
-      will. South, then, to the fringe, where the predators range. Hunter Delk keeps
-      a camp out there. Tell him Tarn sent you.
-    hints: Head south into the predator fringe and type talk delk to find Hunter Delk.
+      will. South, in the fringe, Hunter Delk keeps a camp. He will teach you the rest
+      if I send you. Say the word.
+    hints: Choose The Hunt below to hear what Delk teaches.
+  - questRequired:
+    - 42-start
+    questExcluded:
+    - 42-met
+    - 42-end
+    text: Delk is waiting in Hunter's Hollow. South four times to the Game Trail, then
+      west.
+    hints: From the Steppe Edge, go south four times to the Game Trail, then west into
+      Hunter's Hollow. Type talk delk.
+  - questRequired:
+    - 41-end
+    text: You can read ground now. The fringe is Delk's country. Keep your eyes on
+      the line.
+    hints: When you want more of the wild, Hunter Delk in Hunter's Hollow may have
+      work.
 topics:
 - key: sign_turnin
   kind: handin
   quest: 41
   label: First Sign
   playerLine: I tracked the hare and worked the scrub.
-  text: You followed the line and you worked the scrub. That is the whole foundation,
+  text: You read the ground and you worked the scrub. That is the whole foundation,
     and everything else out here builds on reading ground. Take this cloak. The wind
-    has teeth after dark. South now, to the fringe. Delk hunts it, and he can use
-    a pair of eyes that know what they are looking at.
-  hints: Quest complete. Head south into the fringe and type talk delk to find Hunter
-    Delk.
+    has teeth after dark. When you want to learn the hunt, ask me, and I will send
+    you to Delk in the fringe.
+  hints: Quest complete. Choose The Hunt below to hear what Delk teaches.
   questRequired:
   - 41-forage
   questExcluded:
   - 41-end
   grantsQuest: 41-end
+- key: sign_arrive
+  kind: info
+  label: Crier Toke sent me to learn the ground.
+  text: Right. Here is the first of it. Out on the Open Steppe, just south of here,
+    a hare has left a trail. Read the ground for it. That is tracking. You read what
+    passed and where it went. When you have, I will show you what the scrub can feed
+    you.
+  hints: Go south to the Open Steppe and type track hare.
+  questRequired:
+  - 41-start
+  questExcluded:
+  - 41-met
+  - 41-end
+- key: hunt_offer
+  kind: offer
+  quest: 42
+  label: The Hunt
+  playerLine: Do you want me to learn the hunt from Delk?
+  text: Then go south to him. Delk hunts the fringe out of a rough camp in Hunter's
+    Hollow. Take this salt with you. He will want you cooking what you kill. From
+    here go south four times to the Game Trail, then west into the hollow. Tell him
+    Tarn says you can read ground.
+  hints: Accept, and Tarn hands you a salt pouch. From the Steppe Edge, go south four
+    times to the Game Trail, then west. Type talk delk.
+  questRequired:
+  - 41-end
+  questExcluded:
+  - 42-start
+  - 42-end
+  grantsQuest: 42-start
+  givesItem: 40017
 - key: sign_progress_start
   kind: info
   label: Where is the hare's trail?
@@ -77,13 +133,13 @@ topics:
     of here. Read the ground for it.
   hints: On the Open Steppe, type track hare.
   questRequired:
-  - 41-start
+  - 41-met
   questExcluded:
   - 41-track
   - 41-end
 - key: sign_progress_track
   kind: info
-  label: I found the trail. What next?
+  label: I read the ground. What next?
   text: Not yet. You read the ground. Now the scrub. See what your hands turn up.
   hints: Type forage.
   questRequired:

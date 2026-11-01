@@ -377,17 +377,21 @@ var retiredSteps = map[string]bool{}
 
 func TestQuest41FirstSign_OneCommandPerStep(t *testing.T) {
 	q := loadShippedQuest(t, "41-first_sign.yaml", 41)
-	require.Equal(t, []string{"start", "track", "forage", "end"}, newLinearPlayer(q).steps,
-		"the step ids are what a saved character stores; keep them so a player mid-quest resumes")
+	require.Equal(t, []string{"start", "met", "track", "forage", "end"}, newLinearPlayer(q).steps,
+		"start, track and forage are what a saved character stores; met is inserted after start")
 	turnIn := turnInRequires(t, "9136.yaml", "sign_turnin")
+	heard := EventDetails{Command: "", MobId: 9136, Topic: "sign_arrive", RoomId: 5283}
 
 	t.Run("walk in order", func(t *testing.T) {
 		w := newQuestWalker(q).at("start")
+		w.notify("command", EventDetails{Command: "track", RoomId: 5284})
+		require.Equal(t, "start", w.p.current, "tracking before Tarn has spoken must not skip the talk")
+		w.notify("topic_heard", heard)
+		require.Equal(t, "met", w.p.current)
 
-		// Foraging before tracking must not skip the track step.
 		w.notify("command", EventDetails{Command: "forage", RoomId: 5284})
-		require.Equal(t, "start", w.p.current, "forage out of order must not skip the track step")
-		require.False(t, holdsAll(w.p, turnIn), "turn-in must not open from start")
+		require.Equal(t, "met", w.p.current, "forage out of order must not skip the track step")
+		require.False(t, holdsAll(w.p, turnIn), "turn-in must not open early")
 
 		w.notify("command", EventDetails{Command: "track", RoomId: 5284})
 		require.Equal(t, "track", w.p.current)
