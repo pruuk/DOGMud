@@ -5,42 +5,42 @@
   --panel-bg-alt: #211a14;
   --panel-border: #3a2a18;
   --panel-border-soft: #2e251c;
-  --bar-top: #241813;
+  --bar-top: #281602;
   --bar-bottom: #1a110b;
-  --gold-rule: #c9a86a;
+  --gold-rule: #b5a26c;
 
   /* ── Ink / accents ── */
-  --ink-gold: #c9a86a;
+  --ink-gold: #b5a26c;
   --title-gold: #e8d2a0;
   --text-primary: #d2c3a4;
-  --text-secondary: #9a8a6a;
+  --text-secondary: #96885f;
   --text-tagline: #b9a983;
-  --online-green: #7fae6a;
+  --online-green: #88aa71;
 
   /* ── Brass (shared with the mapper controls) ── */
   --brass-light: #f4dd92;
-  --brass-mid: #cb9f42;
-  --brass-dark: #8a6620;
+  --brass-mid: #aa8636;
+  --brass-dark: #736133;
   --brass-grad: radial-gradient(circle at 34% 26%, var(--brass-light), var(--brass-mid) 46%, var(--brass-dark));
-  --brass-border: #5e431a;
+  --brass-border: #50371d;
   --brass-text: #3b2a10;
   --brass-shade: #4a3410;       /* inner shadow on pressed brass */
-  --brass-glint: #fff6d4;       /* inner highlight on brass */
-  --brass-glint-text: #fff4ce;  /* text-shadow highlight on brass labels */
-  --gold-button-light: #f3e3b6;
+  --brass-glint: #efd897;       /* inner highlight on brass */
+  --brass-glint-text: #efd897;  /* text-shadow highlight on brass labels */
+  --gold-button-light: #efd897;
   --gold-button-dark: #9c7b34;
 
   /* ── Accent palette (for pop / column identity) ── */
-  --vellum: #d9c39e;          /* weathered vellum — bright text/pop */
+  --vellum: #dfcc94;          /* weathered vellum — bright text/pop */
   --antique-gold: #b89047;    /* antique gold */
-  --copper: #4a6b5d;          /* oxidized copper — teal-green accent */
+  --copper: #2e6e60;          /* oxidized copper — teal-green accent */
   --ink-deep: #2b231d;        /* iron gall ink — deep surface */
-  --madder: #8c3b30;          /* madder root red — alerts/important */
-  --frame-red: #d6694e;       /* tooled-red frame on the vellum cards */
+  --madder: #962a22;          /* madder root red — alerts/important */
+  --frame-red: #dc6b34;       /* tooled-red frame on the vellum cards */
 
   /* ── Shadow and highlight bases (used through color-mix for alpha) ── */
-  --shadow: #000;
-  --white: #fff;
+  --shadow: #19140c;
+  --white: #fef9ee;
 
   /* ── Page and nav ── */
   --page-glow: #251a12;       /* body gradient, centre */
@@ -52,12 +52,18 @@
 
   /* ── Web client dashboard ── */
   --desk: #0e0a06;            /* field behind the cards */
-  --ink-black: #0c0c0d;       /* neutral black of the map, automation and game panels */
+  --ink-black: #19140c;       /* neutral black of the map, automation and game panels */
   --status-muted: #6e5a38;    /* muted text on the vellum cards */
-  --status-online: #356b3a;   /* "connected" on the vellum session strip */
-  --conn-reconnecting: #b0a060;
-  --conn-lost: #a06060;
+  --status-online: #2f4f1c;   /* "connected" on the vellum session strip */
+  --conn-reconnecting: #704714;
+  --conn-lost: #8a2828;
   --input-bg: #150f0a;
+  /* Command box border, from the brand green ramp. Rest passes 3:1 against
+     both the box (3.17) and the vellum strip (3.77); focus is bright inside
+     (7.27) with a dark outer ring for the vellum side (5.85). */
+  --cmd-border-rest: #4b6c37;
+  --cmd-border-focus: #88aa71;
+  --cmd-ring-focus: #2f4f1c;
   --well: #150f08;            /* sunken fields: selects, inputs, tile shadow */
   --well-empty: #140f08;      /* empty inventory slot */
   --tile-top: #2a2016;        /* inventory tile gradient */
@@ -66,60 +72,60 @@
   --button-disabled: #2a2018;
   --menu-head: #241a10;
   --chip-copper-bg: #16201c;
-  --chip-copper-text: #8fb3a6;
+  --chip-copper-text: #6dac9d;
   --chip-alert-bg: #2a1d12;
-  --charge-low: #b94040;
+  --charge-low: #b84f3e;
   --scrim: #0a0705;           /* modal backdrop, used at 55% */
 
   /* ── Quest panel ── */
-  --quest-dim: #5a4a32;
-  --quest-name: #c9b184;
+  --quest-dim: #8b897a;
+  --quest-name: #b5a26c;
   --quest-name-focus: #f0dcae;
   --quest-bar-track: #160e08;
-  --quest-progress: #8a7a58;
-  --party-teal: #6bb0a0;      /* also the map's party marker */
+  --quest-progress: #96885f;
+  --party-teal: #6dac9d;      /* also the map's party marker */
 
   /* ── Vitals ── */
   --vitals-name: #4a3a28;
   --vitals-name-self: #1a1208;
-  --vitals-drain: #222;
-  --vitals-reserved: #16181c;
-  --vitals-cp-label: #333;
-  --hp-low: #f44336;
-  --hp-mid: #ffeb3b;
-  --hp-high: #4caf50;
-  --sp-low: #8b4513;
-  --sp-mid: #d2691e;
-  --sp-high: #daa520;
-  --cp-low: #ffd700;
-  --cp-mid: #ffeb8a;
-  --cp-high: #ffffff;
+  --vitals-drain: #19140c;
+  --vitals-reserved: #19140c;
+  --vitals-cp-label: #252015;
+  --hp-low: #e35349;
+  --hp-mid: #e7a747;
+  --hp-high: #88aa71;
+  --sp-low: #983b1f;
+  --sp-mid: #db6f1d;
+  --sp-high: #e8892e;
+  --cp-low: #ea9c2b;
+  --cp-mid: #e6b058;
+  --cp-high: #efd897;
 
   /* ── Name and chat colours outside the terminal ── */
-  --name-mob: #00ffff;
-  --name-player: #fce94f;
-  --chat-broadcast: #d700d7;
-  --chat-whisper: #737670;
+  --name-mob: #84c3eb;
+  --name-player: #e7b86c;
+  --chat-broadcast: #c890b0;
+  --chat-whisper: #8b897a;
 
   /* ── Mutation toast and card ── */
   --toast-top: #2b2118;
-  --toast-name: #f0e2c8;
-  --toast-sub: #8d7c64;
-  --toast-kicker: #d9b36a;
-  --toast-desc: #a3937c;
-  --toast-hint: #6e5f4b;
+  --toast-name: #cec6aa;
+  --toast-sub: #96885f;
+  --toast-kicker: #e7b86c;
+  --toast-desc: #9a977f;
+  --toast-hint: #8b897a;
 
   /* ── Automation editor ── */
-  --auto-label: #c8b98a;
+  --auto-label: #dfcc94;
   --auto-button-border: #5a3a18;
 
   /* ── Legacy floating menu ── */
-  --menu-bg: #2e2e2e;
-  --menu-border: #444;
-  --menu-button-border: #666;
-  --menu-button-hover: #5a5a5a;
-  --menu-button-active: #3a3a3a;
-  --menu-text: #ccc;
+  --menu-bg: #252015;
+  --menu-border: #5d5c4e;
+  --menu-button-border: #5d5c4e;
+  --menu-button-hover: #5d5c4e;
+  --menu-button-active: #252015;
+  --menu-text: #b4b4a3;
 
   /* ── Companion relay window ── */
   --relay-border: #6b5a3a;
@@ -131,7 +137,7 @@
   --term-fg: #e0d2b2;
   --term-cursor: #e8d2a0;
   --term-selection: rgba(201, 168, 106, 0.30);
-  --term-black: #3a2f25;   --term-bright-black: #6b5a48;
+  --term-black: #3a2f25;   --term-bright-black: #e0d2b2;
   --term-red: #d6694e;     --term-bright-red: #e8745a;
   --term-green: #8a9a4e;   --term-bright-green: #b3c06a;
   --term-yellow: #d9a441;  --term-bright-yellow: #f0cf72;
@@ -153,7 +159,7 @@
   --font-mono: "Source Code Pro", ui-monospace, Menlo, Consolas, monospace;
 
   /* Legacy table tokens kept so any stray references resolve */
-  --table-border-color: #000;
+  --table-border-color: #19140c;
   --table-cell-text-color: var(--text-primary);
   --table-header-text-color: var(--ink-gold);
 }
@@ -162,6 +168,7 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  min-height: 100dvh; /* the visible height on phones; 100vh is the fallback */
   display: flex;
   flex-direction: column;
   color: var(--text-primary);
@@ -298,6 +305,8 @@ nav {
    scroll + clipped header). overflow:hidden is a belt-and-suspenders against
    sub-pixel rounding — the game view has its own internal scroll. */
 .content-container[data-path="/webclient"] { padding: 0; overflow: hidden; }
+/* The game fits the width, so its page never scrolls sideways. */
+body:has(.content-container[data-path="/webclient"]) { overflow-x: hidden; }
 #webclient-frame { display: block; border: 0; }
 
 .overlay, .underlay {

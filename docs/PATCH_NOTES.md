@@ -1,5 +1,23 @@
 # DOGMud Patch Notes
 
+## 2026-11-01: New colours and a game screen that fits your phone
+
+- The site and the web client have a new set of colours drawn from warm
+  golds, olives and creams, chosen so every word is easy to read against
+  its background.
+- Grey hints and notes in the game text are now as bright as normal text.
+- The game text now fits the width of any screen, phones included, so
+  boxes, tables and maps no longer break apart. There is no sideways
+  scrolling, and the bottom row of panel buttons and the box where you
+  type stay on screen.
+- The bar above the game stays on one line on phones. Reset layout
+  becomes a small arrow button there.
+- The box where you type has a green border that brightens while you type.
+- In the web client, the Message of the Day appears without its box,
+  starting at the left edge.
+- The flashing Enter Game button in the middle of the screen is gone. Use
+  Enter Game in the bar above the game instead.
+
 ## 2026-11-01: Pothole Coulee casting, lore and archery trails
 
 - Crier Toke starts the casting, lore and archery trails. Each one runs
