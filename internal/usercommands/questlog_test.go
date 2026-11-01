@@ -288,8 +288,8 @@ func TestAbandonable_RefusesAutoStartedQuest(t *testing.T) {
 	require.False(t, u.Character.IsShelved(42))
 }
 
-// On shipped data, quest 88's only offer (road_toke) excludes 31-start and
-// 29-end, so 88 is not abandonable; quest 42's offer excludes only its own
+// On shipped data, quest 88's only offer (road_toke) excludes 31-start,
+// so 88 is not abandonable; quest 42's offer excludes only its own
 // tokens.
 func TestShippedOfferIndex_Quest88NotAbandonable(t *testing.T) {
 	chdirRepoRootForTest(t)

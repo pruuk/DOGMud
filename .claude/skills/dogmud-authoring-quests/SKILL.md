@@ -585,8 +585,8 @@ follow for authors (#375 phase 5):
    quest needs that only an NPC hands out should be authored worth nothing
    (`value: 0`), or a player who loses it cannot get it back by resuming.
 3. **Abandon needs an NPC offer.** A quest is abandonable only when some topic
-   grants its `-start`. A quest started by a trigger (quest 28, started by
-   `room_enter`) cannot be abandoned.
+   grants its `-start`. A quest started only by a trigger cannot be
+   abandoned. (Quest 28 was one until #375 phase 7 gave it Dewey's offer.)
 4. **A pick made in the offer can change through abandon.** A player may abandon
    and take the other offer on resume (quest 34's `34-boon`). A pick that must
    stick belongs mid-quest, where the shelf keeps the flags and the step reached.
@@ -594,8 +594,8 @@ follow for authors (#375 phase 5):
    any quest trigger's `grant:` (a sequence's `on_complete` included) or any
    behaviour tree's `grant_quest` gives `N-start`, that grant would take the
    shelved quest back up without the player choosing to, so quest N stays
-   unabandonable (owner ruling 6). Quest 30 is the instance: `room_enter 5200`
-   and room 6467's antechamber tree grant `30-start`, though Hadwen offers it.
+   unabandonable (owner ruling 6). Quest 30 was the instance until #375 phase
+   7 removed its `room_enter 5200` and room 6467 grants, leaving Hadwen's offer.
    An offer, a `rewards.questid` and an item `questtoken` do not count. Boot
    logs every offered quest this rule (or a hidden offer) blocks, as `offered
    but not abandonable`. To make such a quest abandonable, start it only through

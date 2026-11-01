@@ -403,7 +403,7 @@ functions; do not reimplement them.
   offer hidden by another quest's token, like quest 88's, cannot), and its
   `-start` is not granted automatically (owner ruling 6: a quest trigger or
   behaviour tree that grants it would take it back up without the player
-  choosing to; quest 30, granted by `room_enter 5200` and room 6467's tree).
+  choosing to; quest 30 was the instance until #375 phase 7 removed its automatic starts).
   The GMCP `abandonable` field calls it.
 - `SetAutoStarted(questIds)` replaces that automatic set; the offer index
   door in `main_quests.go` sets it at boot (and on a reload) from
