@@ -1020,6 +1020,10 @@ Pickpockets a target mob or player, or robs an item from a room container.
      at the roll would give the outcome away, and a chance lost trains
      nothing. A player already in a pickpocket's pause starts no other
      (`pocketPending`: "Your hand is still in someone's pocket.").
+   - `takeFromMob` reads the acquire seam's answer for the stolen item. One
+     too heavy to carry falls in the thief's room, the line names it "too
+     much to carry: it falls at your feet", and the thief's `item_gain` (so
+     a `reason: steal` quest step) is not raised (`ec613d49c`, #375 phase 7).
    - A MOB thief's outcome is at once. A PLAYER's is held back for a pause
      (`steal_pocket.go`, `startPocketAttempt`): "You attempt to pick X's
      pocket...", then after `PocketDelay` (StealPocketSeconds at Dexterity 100,
