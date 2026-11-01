@@ -303,3 +303,23 @@ func TestQuest58ReadingTheStones_ReportsToSere(t *testing.T) {
 		{f, 58, "read", "", pre, "stones_loop_turnin", true},
 	})
 }
+
+// #689 and #690: the School Hall notice board names commands a player can
+// type (talk, help, set linewidth), and the Cleric's Study has the desk its
+// description names, and its rubbings point toward the shrine.
+func TestCouleeRooms_SignpostsAndNouns(t *testing.T) {
+	var room struct {
+		Nouns map[string]string `yaml:"nouns"`
+	}
+	require.NoError(t, yaml.Unmarshal(repoFile(t, "_datafiles", "world", "dogmud", "rooms", "pothole_coulee", "5213.yaml"), &room))
+	board := squash(room.Nouns["notice board"])
+	require.Contains(t, board, "type talk")
+	require.Contains(t, board, "type help")
+	require.Contains(t, board, "type set linewidth")
+	require.NotContains(t, board, "put the question plainly to the world")
+
+	room.Nouns = nil
+	require.NoError(t, yaml.Unmarshal(repoFile(t, "_datafiles", "world", "dogmud", "rooms", "pothole_coulee", "5214.yaml"), &room))
+	require.NotEmpty(t, room.Nouns["desk"], "the Cleric's Study names a desk, so look desk must find it")
+	require.Contains(t, squash(room.Nouns["rubbings"]), "the old shrine")
+}
