@@ -16,7 +16,7 @@ var velkStepOrder = map[string][]string{
 	"8":  {"start", "found", "end"},
 	"10": {"start", "report", "end"},
 	"14": {"start", "explore", "confront", "loot", "unlock", "evidence", "report", "end"},
-	"30": {"start", "rite", "end"},
+	"30": {"start", "rite", "woken", "end"},
 }
 
 // velkState is a player at the given quest steps ("8": "found"), carrying

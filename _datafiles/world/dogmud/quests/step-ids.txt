@@ -89,6 +89,7 @@
 30-end
 30-rite
 30-start
+30-woken
 31-end
 31-equip
 31-lantern

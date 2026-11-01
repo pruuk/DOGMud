@@ -11,9 +11,9 @@ import (
 )
 
 // Cleric Hadwen's Awakening Rite (mob 9100) is a paced sequence of delayed
-// actions about 37 seconds long, and 30-end is granted only at its close. The
+// actions about 41 seconds long, and 30-woken is granted only at its close. The
 // 2026-10-17 audit (S6) found that `ask hadwen begin` asked again mid-rite
-// passed every gate (the asker still lacks 30-end) and queued a second full
+// passed every gate (the asker still lacks 30-woken) and queued a second full
 // rite, so the asker heard it twice and was granted twice. The tree now holds
 // a per-player `rite_running` flag (BehaviorState key "rite_running:<user
 // id>", from `per_player: true`) for the length of the rite, the way The Landing
@@ -140,11 +140,11 @@ func TestHadwenRiteRunsForTwoPlayersAskingAtOnce(t *testing.T) {
 	require.LessOrEqual(t, askHadwenAs(state, 8143, "begin"), 1, "the second asker's re-ask replayed the rite")
 
 	DrainAllDelayedActionsForTest(t)
-	// 30-rite as the rite starts, then 30-end once: the two roads are offer
-	// topics in his dialogue now, so the rite no longer grants quest 29
-	// (#375 R17).
-	require.Equal(t, []string{"30-rite", "30-end"}, granted[8142], "the first asker must be Opened exactly once")
-	require.Equal(t, []string{"30-rite", "30-end"}, granted[8143], "the second asker must be Opened exactly once")
+	// 30-rite as the rite starts, then 30-woken once at its close. 30-end
+	// comes from his hand-in topic when the player tells him the rite is
+	// done (#375 phase 7).
+	require.Equal(t, []string{"30-rite", "30-woken"}, granted[8142], "the first asker's rite must close exactly once")
+	require.Equal(t, []string{"30-rite", "30-woken"}, granted[8143], "the second asker's rite must close exactly once")
 }
 
 func TestHadwenRiteDoesNotReplayMidRite(t *testing.T) {

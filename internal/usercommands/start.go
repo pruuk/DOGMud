@@ -199,8 +199,10 @@ func startInCoulee(user *users.UserRecord) {
 				RoomId:    destRoom.RoomId,
 			})
 		}
-		// The Awakening's 30-start comes from its room_enter trigger on 5200,
-		// raised by hooks.QuestRoomEnter for this move like any other.
+		// Nothing grants The Awakening by itself (#375 phase 7): Hadwen's
+		// greeting above names his offer, and the pool's movement gate
+		// (behaviors/rooms/pothole_coulee/5200.yaml) holds the player until
+		// the rite is done and handed in.
 	}
 }
 

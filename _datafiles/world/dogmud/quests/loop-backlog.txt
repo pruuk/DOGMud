@@ -4,8 +4,6 @@
 # warning; any finding not listed refuses boot, CI and the quest editor's
 # save. A line with no matching finding fails CI: delete it when its finding
 # is fixed. Never add a line by hand to make new content pass.
-chain 30 mob 9100 topic road_esk
-chain 30 mob 9100 topic road_toke
 chain 30 mob 9106 topic footing_offer
 chain 30 mob 9108 topic train_offer
 chain 30 mob 9116 topic craft_offer
@@ -43,8 +41,6 @@ chain 78 mob 9584 topic teach_zephyr
 end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
-end 30 mob 9100 tree grant_quest 30-end
-end 30 step end
 end 34 quest 34 trigger mob_death mob=9115 grants=34-end
 end 34 quest 34 trigger mob_death mob=9115 grants=34-end #2
 end 34 step end
@@ -232,7 +228,6 @@ refs 1000000 quest 1000000 refs: rewards conditionid: condition 4 does not exist
 refs 1000000 quest 1000000 refs: rewards skillinfo: skill "map" does not exist
 start 1000000 step start
 start 21 step start
-start 30 quest 30 trigger room_enter room=5200 grants=30-start
 start 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
 start 77 step end
 walk-dead-end 14 mob 94 topic velkhandoff

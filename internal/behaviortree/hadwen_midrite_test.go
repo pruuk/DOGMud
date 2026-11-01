@@ -1,10 +1,13 @@
 package behaviortree
 
 import (
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +17,7 @@ func seedQuest30(t *testing.T) {
 	t.Helper()
 	t.Cleanup(quests.SeedQuestsForTest(&quests.Quest{
 		QuestId: 30, Name: "The Awakening",
-		Steps: []quests.QuestStep{{Id: "start"}, {Id: "rite"}, {Id: "end"}},
+		Steps: []quests.QuestStep{{Id: "start"}, {Id: "rite"}, {Id: "woken"}, {Id: "end"}},
 	}))
 }
 
@@ -45,7 +48,7 @@ func TestHadwenRiteGrantsTheRiteStepAtOnce(t *testing.T) {
 	require.LessOrEqual(t, askHadwen(state, "rite_wait"), 1, "rite_wait replayed the rite while it was running")
 
 	DrainAllDelayedActionsForTest(t)
-	require.Equal(t, []string{"30-rite", "30-end"}, granted[8142])
+	require.Equal(t, []string{"30-rite", "30-woken"}, granted[8142])
 }
 
 // A rite cut short (the player logged out, or the server restarted: the tree
@@ -72,4 +75,55 @@ func TestHadwenRiteWaitRestartsACutShortRite(t *testing.T) {
 	DrainAllDelayedActionsForTest(t)
 	require.NotEmpty(t, said)
 	require.True(t, strings.Contains(said[0], "went quiet"), "the restart must say why it begins again: %q", said[0])
+}
+
+// The pool's movement gate (room 5200) holds every player who is not yet
+// Opened and names the next step for where they are (#375 phase 7): the
+// offer before the quest, the begin line once it is taken, patience while
+// the rite runs, and the hand-in once it is over. An Opened player walks.
+func TestPoolGateNamesTheNextStep(t *testing.T) {
+	seedQuest30(t)
+	said := []string{}
+	orig := actionRegistry["send_user_text"]
+	actionRegistry["send_user_text"] = func(params map[string]any, ctx *EvalContext) Result {
+		said = append(said, getStringParam(params, "text"))
+		return Success
+	}
+	t.Cleanup(func() { actionRegistry["send_user_text"] = orig })
+
+	_, room := sightScene(t, "city")
+	u := users.NewTestUser(8146, "brann", "Brann", 98146)
+	u.Character.RoomId = room.RoomId
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{8146: u}))
+	room.AddPlayer(8146)
+	_, here, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	tree := filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "behaviors", "rooms", "pothole_coulee", "5200.yaml")
+	require.NoError(t, GetEngine().LoadRoomTree(room.RoomId, tree))
+	t.Cleanup(func() { clearEngineRoomState(t, room.RoomId); clearRoomStates(t, room.RoomId) })
+
+	walk := func(progress map[int]string) (bool, string) {
+		said = said[:0]
+		u.Character.QuestProgress = progress
+		held := TryRoomBehavior(room.RoomId, EventContext{
+			EventType: "room_command", UserId: 8146, RoomId: room.RoomId, Command: "south",
+		})
+		return held, strings.Join(said, " ")
+	}
+	for _, c := range []struct {
+		name     string
+		progress map[int]string
+		want     string
+	}{
+		{"no quest", map[int]string{}, "[!]"},
+		{"taken", map[int]string{30: "start"}, "begin the rite"},
+		{"mid-rite", map[int]string{30: "rite"}, "under way"},
+		{"woken", map[int]string{30: "woken"}, "tell him the rite is done"},
+	} {
+		held, text := walk(c.progress)
+		require.True(t, held, "%s: the pool must hold the player", c.name)
+		require.Contains(t, text, c.want, "%s", c.name)
+	}
+	held, _ := walk(map[int]string{30: "end"})
+	require.False(t, held, "an Opened player walks on")
 }

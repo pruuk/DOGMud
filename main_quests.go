@@ -34,7 +34,7 @@ func questworldForOfferDoor() questloop.World {
 // by reason: no offer can show again while shelved (an offer hidden by
 // another quest's token or flag, like quest 88's), or a quest trigger or
 // behaviour tree grants the quest's start by itself, which would take it
-// back up without the player choosing to (owner ruling 6, quest 30). That is
+// back up without the player choosing to (owner ruling 6). That is
 // by design, not a fault. It returns the quest ids it logged for each
 // reason; a quest may appear in both.
 func offerIndexDoorFrom(w questloop.World) (hides, auto []int) {

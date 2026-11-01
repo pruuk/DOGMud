@@ -1,26 +1,93 @@
-# The Awakening Pool (5200) — movement gate for the un-Opened.
+# The Awakening Pool (5200): movement gate for the un-Opened.
 #
 # A player without quest token 30-end cannot leave this room: every
 # movement command is intercepted and answers with the exact next step.
-# This is the hard floor of the newbie funnel — no reading, no luck,
-# no timing required; the only way forward IS the taught command.
-# Opened players (30-end) pass through completely untouched.
+# This is the hard floor of the newbie funnel: the only way forward IS the
+# taught command. Opened players (30-end) pass through untouched.
 #
-# Narrator text (send_user_text), not mob_say: the block must hold even
-# in the freak case Hadwen is absent, and the pool itself doing the
-# holding is true to the room.
+# Since #375 phase 7 nothing grants quest 30 by itself: the player takes it
+# from Cleric Hadwen's offer (The Awakening, marked [!]), does the rite, and
+# then tells him it is done (his hand-in, marked [?]), which grants 30-end.
+# So the answer names the step for each state, first match wins: the rite
+# done, the rite under way, the quest taken, and no quest yet.
 #
-# NOTE for cutover (chunk 10): every pre-existing character lacks
-# 30-end, so veterans entering the coulee would be trapped here until
-# they do the rite once. Cutover must ship a migration granting 30-end
-# (lore: anyone with mutations is already Opened) — tracked in the
-# build plan.
+# Narrator text (send_user_text), not mob_say: the block must hold even in
+# the freak case Hadwen is absent, and the pool itself doing the holding is
+# true to the room. Characters from before the Pothole Coulee were given
+# 30-end by characters.MigrateNewbieAwakening.
 
 tree:
   type: selector
   children:
 
-    # ── BLOCK MOVEMENT: the un-Opened stay at the pool ──
+    # ── the rite is done, but Hadwen has not heard it ──
+    - type: sequence
+      event: room_command
+      children:
+        - type: condition
+          check: command_matches
+          commands: [north, south, east, west, n, s, e, w, up, down, u, d, go]
+        - type: condition
+          check: player_has_quest
+          quest: "30-woken"
+        - type: condition
+          check: player_missing_quest
+          quest: "30-end"
+        - type: action
+          do: send_user_text
+          text: >-
+            The pool's stillness holds you a moment longer, the way a hand
+            on a shoulder holds. Cleric Hadwen wants a word first. Type
+            <ansi fg="command">talk hadwen</ansi> and choose The Awakening
+            to tell him the rite is done.
+        - type: action
+          do: intercept
+
+    # ── the rite is under way ──
+    - type: sequence
+      event: room_command
+      children:
+        - type: condition
+          check: command_matches
+          commands: [north, south, east, west, n, s, e, w, up, down, u, d, go]
+        - type: condition
+          check: player_has_quest
+          quest: "30-rite"
+        - type: condition
+          check: player_missing_quest
+          quest: "30-woken"
+        - type: action
+          do: send_user_text
+          text: >-
+            The pool's stillness holds you where you stand. The rite is
+            still under way. Stay by the water until Cleric Hadwen is done.
+        - type: action
+          do: intercept
+
+    # ── the quest is taken, the rite not begun ──
+    - type: sequence
+      event: room_command
+      children:
+        - type: condition
+          check: command_matches
+          commands: [north, south, east, west, n, s, e, w, up, down, u, d, go]
+        - type: condition
+          check: player_has_quest
+          quest: "30-start"
+        - type: condition
+          check: player_missing_quest
+          quest: "30-rite"
+        - type: action
+          do: send_user_text
+          text: >-
+            The pool's stillness holds you where you stand, not unkindly.
+            The rite comes first. Type
+            <ansi fg="command">talk hadwen</ansi> and choose to begin the
+            rite when you are ready.
+        - type: action
+          do: intercept
+
+    # ── no quest yet: the un-Opened stay at the pool ──
     - type: sequence
       event: room_command
       children:
@@ -35,8 +102,8 @@ tree:
           text: >-
             The pool's stillness holds you where you stand, not
             unkindly, the way a hand on a shoulder holds. The rite
-            comes first. Type <ansi fg="command">talk hadwen</ansi>,
-            then choose to begin the rite when you are ready, and the
+            comes first. Type <ansi fg="command">talk hadwen</ansi>
+            and choose The Awakening, the line marked [!], and the
             whole coulee opens with you.
         - type: action
           do: intercept

@@ -1,17 +1,21 @@
-# Quest 30 — The Awakening (Pothole Coulee hub, mandatory beat)
+# Quest 30: The Awakening (Pothole Coulee hub, the mandatory beat)
 #
-# Token flow:
-#   30-start  — AUTO-GRANTED at the pool (room_enter trigger below).
-#               HandleJoin notifies the quest engine room_enter on every
-#               login/spawn, so a brand-new character gets the quest the
-#               moment they materialize at 5200 — zero input required.
-#               Cleric Hadwen's dialogue also offers it (his offer topic
-#               rite_offer) for veterans who walk in via the corridor.
-#   30-rite   — granted by Hadwen's behavior tree as the rite starts.
-#   30-end   — granted by Hadwen's behavior tree at the close of the
-#               rite sequence (behaviors/pothole_coulee/9100-*.yaml).
-#               Blank-slate Awakening: the rite grants NO starter mutation
-#               — mutations are earned afterward through use-based drift.
+# Token flow (#375 phase 7, Pothole Coulee pass):
+#   30-start: granted only by Cleric Hadwen's offer topic rite_offer
+#             (dialogue/pothole_coulee/9100.yaml). Nothing grants it by
+#             itself any more (the room_enter 5200 trigger and room 6467's
+#             grant are gone), so the quest can be set aside and taken up
+#             again from his offer (phase 5, owner ruling 6).
+#   30-rite:  granted by Hadwen's behavior tree as the rite starts
+#             (behaviors/pothole_coulee/9100-cleric_hadwen.yaml).
+#   30-woken: granted by the same tree at the close of the rite sequence.
+#   30-end:   granted by Hadwen's hand-in topic rite_report when the player
+#             tells him the rite is done. It keeps its meaning, "Opened":
+#             every gate in the coulee reads it, and the pool's movement gate
+#             (behaviors/rooms/pothole_coulee/5200.yaml) holds the player
+#             until it lands.
+# Blank-slate Awakening: the rite grants NO starter mutation; mutations are
+# earned afterward through use-based drift.
 
 questid: 30
 name: The Awakening
@@ -21,7 +25,7 @@ secret: false
 steps:
   - id: start
     destination:
-      mob: 9100  # follow Cleric Hadwen (schedule pothole_hadwen) — a fixed room is wrong for part of the day
+      mob: 9100  # follow Cleric Hadwen (schedule pothole_hadwen); a fixed room is wrong for part of the day
       room: 5200  # fallback when Cleric Hadwen is not spawned
     description: "Cleric Hadwen will open the pool for you when you are ready. Talk to him at the pool and choose to begin the rite."
     hint: "Stand at the Awakening Pool and type talk hadwen. When you are ready, choose to begin the rite."
@@ -35,12 +39,21 @@ steps:
       room: 5200
     description: "The rite has begun. Stay by the Awakening Pool until Cleric Hadwen is done."
     hint: "Stay by the Awakening Pool until the rite is done. If nothing is happening, type talk hadwen and choose Is the rite still going?"
+  # Granted by Hadwen's tree at the close of the rite (#375 phase 7). The
+  # player then tells him it is done, through his hand-in rite_report, which
+  # grants 30-end.
+  - id: woken
+    destination:
+      mob: 9100
+      room: 5200
+    description: "The rite is done, and something in you is newly awake. Cleric Hadwen wants a word before you go."
+    hint: "Cleric Hadwen waits at the Awakening Pool to hear how the rite went. Type talk hadwen, then choose The Awakening."
   - id: end
     description: "The pool has opened you. Two roads from here: learn the town with Crier Toke, or leave through Warden Esk's arch. Cleric Hadwen can point you down either one."
     # An end hint is never displayed (the quest is complete). What a new
-    # Opened needs to hear lives where it is shown: Hadwen's two road
-    # offers (quests 88 and 89, R17) and the rite's closing lines name the
-    # next road, and the reward line below names the light spell.
+    # Opened needs to hear lives where it is shown: Hadwen's road offers and
+    # the rite's closing lines name the next road, and the reward line below
+    # names the light spell.
     hint: "Talk to Cleric Hadwen to choose a road on from here."
 
 rewards:
@@ -49,14 +62,3 @@ rewards:
     in still water. You are not quite who you were when you arrived.
     A small light waits in you now too: in any dark place, type cast
     glow.
-
-triggers:
-  # ── THE POOL: arriving at 5200 starts the quest (incl. first spawn —
-  #    HandleJoin fires room_enter on login, so brand-new characters get
-  #    this with zero input). Conditions make it idempotent.
-  - event: room_enter
-    room: 5200
-    conditions:
-      missing: [30-start, 30-end]
-    actions:
-      - grant: 30-start

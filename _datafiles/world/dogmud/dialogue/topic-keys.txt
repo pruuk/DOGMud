@@ -369,6 +369,7 @@
 89.farm
 89.help_quest
 89.pest_problem
+9100.another_way
 9100.begin
 9100.chrysalis
 9100.glow
@@ -378,6 +379,7 @@
 9100.rename
 9100.rite_done
 9100.rite_offer
+9100.rite_report
 9100.rite_wait
 9100.rite_waiting
 9100.road_esk

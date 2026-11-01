@@ -5,17 +5,29 @@ opener:
   text: Welcome, and be easy. My name is Hadwen, and this is the Awakening Pool,
     which I keep. I have opened more people at this water than I can count, and
     I have never once been bored by it.
-  hints: Choose a line below to hear about the rite or the Chrysalis.
+  # The root is for a player who has not taken The Awakening (#375 phase 7:
+  # nothing grants it by itself), so the hint names the offer and its mark.
+  hints: Choose The Awakening, the line marked [!], to ask for the rite. Other
+    lines tell you about the Chrysalis.
   variants:
   # Mid-rite: the tree grants 30-rite as the rite starts (the dialogue cannot
-  # read its rite_running state).
+  # read its rite_running state). The rite's close grants 30-woken.
   - questRequired:
     - 30-rite
     questExcluded:
-    - 30-end
+    - 30-woken
     text: Quietly, now. The rite is under way, and the pool is still speaking to
       you. Stay close to the water and let it finish.
     hints: The rite takes a little while. Stay by the pool until it is done.
+  # The rite is over (30-woken) and the player has not told him yet: his
+  # hand-in rite_report grants 30-end (#375 phase 7).
+  - questRequired:
+    - 30-woken
+    questExcluded:
+    - 30-end
+    text: There you are, still standing, with something new under your skin. The
+      pool is finished with you. Come, tell me how it went.
+    hints: The line marked [?] finishes The Awakening. Type its number.
   - questRequired:
     - 30-start
     questExcluded:
@@ -82,9 +94,13 @@ opener:
     hints: Choose Toke's Road or Esk's Road below to set out. Other lines below
       tell you about mutations, seeing in the dark, or your name.
 topics:
-# R17: the two roads from the pool. Take either, both or neither. Toke's
-# road is hidden once footing has started (31-start), since the player is
-# already on it. Quest 29 (Two Roads) is retired (#375 phase 7).
+# R17: the two roads from the pool. Take either, both or neither. Both are
+# gated on 30-end, which Hadwen's own hand-in rite_report grants, so each
+# sits on the NPC who took the previous hand-in (the chain rule, #375 phase
+# 7). Toke's road is hidden once footing has started (31-start), since the
+# player is already on it. Quest 29 (Two Roads) is retired. Plan 4 of the
+# phase 7 pass moves Esk's Road (89) to Crier Toke and removes road_esk;
+# until then it stays, beside the another_way info topic.
 - key: road_toke
   kind: offer
   quest: 88
@@ -119,6 +135,19 @@ topics:
   - 89-start
   - 89-end
   grantsQuest: 89-start
+# The skip path (#375 phase 7; requirements page: "the Pothole Coulee portal
+# quest is an info topic"). Warden Esk's passage topic does the crossing.
+- key: another_way
+  kind: info
+  label: Is there another way out?
+  text: There is. Warden Esk keeps the old arch in the Threshold House, south
+    through the market. It opens on Thornwall and every road beyond it. If you
+    already know a world like this one, he will let you through. The coulee will
+    still be here if you ever want it.
+  hints: From the Awakening Pool, go south three times, through Hub Square and Market
+    Row, to the Threshold House. Type talk esk, then choose to open the arch.
+  questRequired:
+  - 30-end
 - key: newcomer_mutations
   kind: info
   label: How will I grow from here?
@@ -153,6 +182,25 @@ topics:
   - 30-end
   grantsQuest: 30-start
   moodChange: friendly
+# The end of The Awakening (#375 phase 7): the rite's close grants 30-woken,
+# and telling Hadwen it is done grants 30-end, the "Opened" token every gate
+# in the coulee reads. The quest's reward line plays here, and his road
+# offers open on 30-end.
+- key: rite_report
+  kind: handin
+  quest: 30
+  label: The Awakening
+  playerLine: The rite is done. I can feel something new in me.
+  text: Then the pool has done its part, and you are one of the Opened. Welcome.
+    It will go on settling for a while. That is normal. When you are ready, I can
+    point you down a road.
+  hints: Quest complete. Choose Toke's Road below to learn the town.
+  questRequired:
+  - 30-woken
+  questExcluded:
+  - 30-end
+  grantsQuest: 30-end
+  moodChange: friendly
 - key: rite_waiting
   kind: info
   label: What happens in the rite?
@@ -186,6 +234,7 @@ topics:
 # Mid-rite (30-rite held), in place of begin. The tree answers: the hush line
 # while the rite runs, or, when a logout or a restart cut the rite short, it
 # says so and starts the rite again. Text empty for the same reason as begin.
+# Hidden once the rite's close grants 30-woken.
 - key: rite_wait
   kind: info
   label: Is the rite still going?
@@ -195,7 +244,7 @@ topics:
   questRequired:
   - 30-rite
   questExcluded:
-  - 30-end
+  - 30-woken
 - key: rite_done
   kind: info
   label: What happens after the pool?
