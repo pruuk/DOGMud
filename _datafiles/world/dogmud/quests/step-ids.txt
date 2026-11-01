@@ -133,12 +133,14 @@
 38-drink
 38-end
 38-list
+38-met
 38-roots
 38-start
 38-vial
 39-end
 39-forage
 39-leech
+39-met
 39-start
 39-throw
 4-end
@@ -146,6 +148,7 @@
 4-investigate
 4-start
 40-end
+40-slain
 40-start
 41-end
 41-forage
@@ -202,6 +205,7 @@
 54-start
 55-brew
 55-end
+55-quaffed
 55-start
 56-end
 56-hunt
@@ -328,6 +332,8 @@
 90-start
 91-end
 91-start
+92-end
+92-start
 # retired
 # Quest 29 Two Roads (#375 phase 7): no road grants it; users.LoadUser drops
 # it from saves (quests.RetiredQuests).

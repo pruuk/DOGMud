@@ -1,0 +1,27 @@
+# Quest 92, Report to Toke (Brewing) (Pothole Coulee, brewing line bridge).
+#
+# Fenwalker Falv (9129) offers it (report_brewing_offer) once Heart of the
+# Mire (40) is handed in. Crier Toke (9106) takes the hand-in
+# (report_brewing_in). Same shape as quest 90.
+
+questid: 92
+name: Report to Toke (Brewing)
+description: >-
+  Fenwalker Falv has asked you to carry the news of the mire to Crier Toke
+  in Hub Square.
+secret: false
+
+steps:
+  - id: start
+    destination:
+      mob: 9106  # follow Crier Toke (schedule pothole_toke)
+      room: 5203  # fallback when Crier Toke is not spawned
+    description: >-
+      The spirit of the swamp is gone and the mire runs clear. Crier Toke,
+      who sent you to Herbalist Birna, waits in Hub Square for the news.
+    hint: >-
+      Crier Toke stands in Hub Square, south of the Awakening Pool. Type talk
+      toke.
+  - id: end
+    description: >-
+      Toke has your news, and the marsh folk will be drinking to it tonight.

@@ -254,8 +254,8 @@ topics:
     patience, and she will teach you both. From this square go south to Market Row,
     east twice through Coulee Provisions to the Reedwash Mouth, then south twice down
     to her pool.
-  hints: From Hub Square go south, east, east, south, south to the Sheltered Pool.
-    At Birna's pool, type list.
+  hints: From Hub Square, go south, east, east, south, south to the Sheltered Pool.
+    Type talk birna.
   questRequired:
   - 31-end
   questExcluded:
@@ -363,6 +363,21 @@ topics:
   questExcluded:
   - 91-end
   grantsQuest: 91-end
+  moodChange: friendly
+- key: report_brewing_in
+  kind: handin
+  quest: 92
+  label: Report to Toke (Brewing)
+  playerLine: Falv sends word. The spirit of the swamp is gone.
+  text: Gone? The thing at the heart of the mire? Hoy! Birna will brew a toast and
+    Falv will pretend he did not want one. The brewing trail is yours, and any mouth
+    you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 92-start
+  questExcluded:
+  - 92-end
+  grantsQuest: 92-end
   moodChange: friendly
 - key: footing_step_school
   kind: info

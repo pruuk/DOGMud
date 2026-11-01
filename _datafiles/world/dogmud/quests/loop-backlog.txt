@@ -4,8 +4,6 @@
 # warning; any finding not listed refuses boot, CI and the quest editor's
 # save. A line with no matching finding fails CI: delete it when its finding
 # is fixed. Never add a line by hand to make new content pass.
-chain 38 mob 9129 topic marsh_offer
-chain 40 mob 9129 topic brew_loop_offer
 chain 41 mob 9137 topic hunt_offer
 chain 43 mob 9137 topic game_loop_offer
 chain 44 mob 9145 topic grove_offer
@@ -29,16 +27,12 @@ chain 78 mob 9584 topic teach_zephyr
 end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
-end 40 quest 40 trigger mob_death mob=9135 grants=40-end
-end 40 step end
 end 43 quest 43 trigger mob_death mob=9143 grants=43-end
 end 43 step end
 end 46 quest 46 trigger mob_death mob=9152 grants=46-end
 end 46 step end
 end 52 quest 52 trigger mob_death mob=9169 grants=52-end
 end 52 step end
-end 55 quest 55 trigger command command=quaff grants=55-end
-end 55 step end
 end 56 quest 56 trigger command room=5284 command=forage grants=56-end
 end 56 step end
 end 57 quest 57 trigger mob_death mob=9147 grants=57-end
@@ -154,8 +148,6 @@ one-action 16 mob 259 topic quest_complete_herbs:prev
 one-action 19 quest 19 trigger mob_death mob=331 grants=19-hunter:prev
 one-action 20 mob 347 topic ullahandoff:prev
 one-action 20 quest 20 trigger topic_heard mob=355 topic=vellahandoff grants=20-vella_journal:prev
-one-action 38 quest 38 trigger command room=5265 command=craft grants=38-brew:prev
-one-action 38 quest 38 trigger command room=5267 command=craft grants=38-brew:prev
 one-action 4 mob 83 topic evidence_handoff:prev
 one-action 5 mob 84 topic tolvahandoff:prev
 one-action 50 quest 50 trigger command room=5351 command=fire grants=50-shoot:prev
@@ -210,8 +202,6 @@ walk-dead-end 14 step report
 walk-dead-end 15 mob 250 topic quest_complete_dialogue
 walk-dead-end 16 mob 259 topic quest_complete_herbs
 walk-dead-end 19 quest 19 trigger mob_death mob=331 grants=19-hunter
-walk-dead-end 38 quest 38 trigger command room=5265 command=craft grants=38-brew
-walk-dead-end 38 quest 38 trigger command room=5267 command=craft grants=38-brew
 walk-dead-end 4 mob 83 topic evidence_handoff
 walk-dead-end 5 mob 84 topic tolvahandoff
 walk-dead-end 50 quest 50 trigger command room=5351 command=fire grants=50-cover_shot

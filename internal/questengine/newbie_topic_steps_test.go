@@ -312,11 +312,11 @@ func TestRusk9116_HandInWithOrWithoutTheDagger(t *testing.T) {
 
 func TestBirna9128_TopicsNameEachStep(t *testing.T) {
 	f := "38-first_brew.yaml"
-	pre := []string{"30-end"}
+	pre := []string{"30-end", "31-end"}
 	checkTopicSteps(t, "birna", "9128.yaml", []topicStep{
-		{f, 38, "start", "type list", pre, "brew_step_list", false},
+		{f, 38, "met", "type list", pre, "brew_step_list", false},
 		{f, 38, "list", "type buy glass vial", pre, "brew_step_vial", false},
-		{f, 38, "vial", "type buy 2 healers root", pre, "brew_step_roots", false},
+		{f, 38, "vial", "type buy 2 healer's root", pre, "brew_step_roots", false},
 		{f, 38, "roots", "type craft healing salve", pre, "brew_step_craft", false},
 		{f, 38, "brew", "type quaff healing salve", pre, "brew_step_drink", false},
 		{f, 38, "drink", "", pre, "brew_turnin", true},
@@ -325,14 +325,19 @@ func TestBirna9128_TopicsNameEachStep(t *testing.T) {
 
 func TestFalv9129_TopicsNameEachStep(t *testing.T) {
 	f39 := "39-wade_the_marsh.yaml"
+	pre39 := []string{"30-end", "38-end"}
+	pre40 := []string{"30-end", "38-end", "39-end"}
+	pre55 := []string{"30-end", "38-end", "39-end", "40-end"}
 	checkTopicSteps(t, "falv", "9129.yaml", []topicStep{
-		{f39, 39, "start", "type attack leech", []string{"38-end"}, "marsh_step_leech", false},
-		{f39, 39, "leech", "type throw firebomb", []string{"38-end"}, "marsh_step_throw", false},
-		{f39, 39, "throw", "type forage", []string{"38-end"}, "marsh_step_forage", false},
-		{f39, 39, "forage", "", []string{"38-end"}, "marsh_turnin", true},
-		{"40-heart_of_the_mire.yaml", 40, "start", "type attack spirit", []string{"38-end", "39-end"}, "mire_step_help", false},
-		{"55-another_brew.yaml", 55, "start", "type craft healing salve", []string{"38-end", "39-end", "40-end"}, "brew_loop_step_craft", false},
-		{"55-another_brew.yaml", 55, "brew", "type quaff healing salve", []string{"38-end", "39-end", "40-end"}, "brew_loop_step_drink", false},
+		{f39, 39, "met", "type attack leech", pre39, "marsh_step_leech", false},
+		{f39, 39, "leech", "type throw firebomb", pre39, "marsh_step_throw", false},
+		{f39, 39, "throw", "type forage", pre39, "marsh_step_forage", false},
+		{f39, 39, "forage", "", pre39, "marsh_turnin", true},
+		{"40-heart_of_the_mire.yaml", 40, "start", "type attack spirit", pre40, "mire_step_help", false},
+		{"40-heart_of_the_mire.yaml", 40, "slain", "", pre40, "mire_in", true},
+		{"55-another_brew.yaml", 55, "start", "type craft healing salve", pre55, "brew_loop_step_craft", false},
+		{"55-another_brew.yaml", 55, "brew", "type quaff healing salve", pre55, "brew_loop_step_drink", false},
+		{"55-another_brew.yaml", 55, "quaffed", "", pre55, "brew_loop_in", true},
 	})
 }
 

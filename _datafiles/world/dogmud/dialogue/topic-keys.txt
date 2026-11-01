@@ -414,6 +414,7 @@
 9106.mouths
 9106.newcomer_players
 9106.news
+9106.report_brewing_in
 9106.report_fighting_in
 9106.report_smithing_in
 9106.road_toke_end
@@ -493,6 +494,7 @@
 9117.vein_scavenger_help
 9117.vein_turnin
 9128.bottles
+9128.brew_arrive
 9128.brew_help
 9128.brew_step_craft
 9128.brew_step_drink
@@ -500,8 +502,10 @@
 9128.brew_step_roots
 9128.brew_step_vial
 9128.brew_turnin
+9128.marsh_offer
 9128.veins
 9129.bandolier
+9129.brew_loop_in
 9129.brew_loop_offer
 9129.brew_loop_step_craft
 9129.brew_loop_step_drink
@@ -509,13 +513,15 @@
 9129.firebomb_already_have
 9129.firebomb_recovery
 9129.hands
-9129.marsh_offer
+9129.marsh_arrive
 9129.marsh_step_forage
 9129.marsh_step_leech
 9129.marsh_step_throw
 9129.marsh_turnin
+9129.mire_in
 9129.mire_offer
 9129.mire_step_help
+9129.report_brewing_offer
 9136.eyes
 9136.sign_help
 9136.sign_progress_start
@@ -1368,3 +1374,4 @@
 # renamed
 9117.vein_offer -> 9116.vein_offer
 9112.wash_offer -> 9108.wash_offer
+9129.marsh_offer -> 9128.marsh_offer

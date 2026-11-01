@@ -361,12 +361,11 @@ func TestNewbieQuestTriggersGateOnThePreviousStep(t *testing.T) {
 
 // lenientGrants are the grants that gate on an EARLIER step than the one
 // before them, on purpose: the command cannot succeed unless the skipped
-// steps' result is already in hand (a crafted item needs its materials, a
-// shot needs a readied weapon), so a player saved before a step was inserted
-// is never held on a step whose lesson they already learned.
+// steps' result is already in hand (a shot needs a readied weapon), so a
+// player saved before a step was inserted is never held on a step whose
+// lesson they already learned.
 var lenientGrants = map[string]bool{
 	"50-shoot": true, // fire needs the sling readied (the equip step)
-	"38-brew":  true, // brewing the salve needs the bought vial and roots
 }
 
 // retiredSteps are steps no trigger grants any more. Each stays in its

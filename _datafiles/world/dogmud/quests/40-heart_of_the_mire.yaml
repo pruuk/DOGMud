@@ -1,28 +1,20 @@
-# Quest 40 — Heart of the Mire (Pothole Coulee, Spoke C / Alchemy outer ring,
-# capstone). Granted by Fenwalker Falv (9129) after quest 39 (Wade the Marsh).
-# The player descends the poison swamp past the miasma edge, down into the
-# sunken mire (z-1), and defeats the Spirit of the Swamp (9135) at the Heart of
-# the Mire.
+# Quest 40, Heart of the Mire (Pothole Coulee, brewing line finale).
 #
-# Token flow:
-#   40-start  — granted by Falv's mire_offer dialogue node.
-#   40-end    — granted by the boss-kill trigger below (mob_death 9135). The
-#               rewards fire on 40-end: a permanent Vitality gain (stat_info), a
-#               granted potion stockpile (item_info -- the multi-item reward
-#               engine feature added this chunk), the advanced Mire Renewal
-#               Draught recipe (recipe_info), and gold.
-#
-# Design: the boss is a straight combat fight (alchemy is strong prep -- bring
-# brewed salves and firepots -- but not mechanically required). Turn-in is
-# automatic on the kill so the player is rewarded at the boss, no backtrack.
+# Fenwalker Falv (9129) offers it (mire_offer) after Wade the Marsh (39).
+# The player descends past the miasma edge into the sunken mire and kills
+# the Spirit of the Swamp (9135) at the Heart of the Mire (5280).
+#   start  kill the spirit
+#   slain  report to Falv
+#   end    Falv's hand-in mire_in, which pays a Vitality gain, a potion
+#          stockpile, the Mire Renewal Draught recipe and gold
 
 questid: 40
 name: Heart of the Mire
 description: >-
-  Past the miasma edge the marsh turns to poison swamp, and the ground
-  sinks into a sunken mire where the water itself seems to watch. Falv
-  says something old has gathered at the heart of it. Brew your kit, fill
-  your bandolier, and go put it down.
+  Past the miasma edge the marsh turns to poison swamp, and the ground sinks
+  into a sunken mire where the water itself seems to watch. Falv says
+  something old has gathered at the heart of it. Brew your kit, fill your
+  bandolier, put it down, and tell Falv.
 secret: false
 
 steps:
@@ -30,21 +22,31 @@ steps:
     destination:
       room: 5280
     description: >-
-      Falv has set you on the mire. The spirit of the swamp is a hard
-      fight: brew healing salves and carry firebombs before you go. From
-      the Black Pool, go south past the Miasma Edge and the Fenrot Approach
-      to the Sulphur Flats. The sinkhole there drops down into the Sunken
-      Hollow, and the Heart of the Mire lies two rooms south of it, past
-      the Black Mere. Consider a foe to size it up, and flee if a fight
-      turns against you.
+      Falv has set you on the mire. The spirit of the swamp is a hard fight,
+      so brew healing salves and carry firebombs before you go. From the
+      Black Pool, go south past the Miasma Edge and the Fenrot Approach to
+      the Sulphur Flats. The sinkhole there drops down into the Sunken
+      Hollow, and the Heart of the Mire lies two rooms south of it, past the
+      Black Mere. Consider a foe to size it up, and flee if a fight turns
+      against you.
     hint: >-
       Go down the sinkhole at the Sulphur Flats, then south to the Heart of
       the Mire, and type attack spirit. If it is dark, type cast glow first.
+  - id: slain
+    destination:
+      mob: 9129
+      room: 5271
+    description: >-
+      The spirit of the swamp is broken and the mire runs clear. Falv waits
+      at the Cattail Stand to hear it.
+    hint: >-
+      Climb back out of the mire to Fenwalker Falv at the Cattail Stand. Type
+      talk falv.
   - id: end
     description: >-
-      The spirit of the swamp is broken and the mire runs clear. You came
-      to the pool not knowing one herb from another. You leave a brewer,
-      with the marsh's own renewal recipe in your head.
+      The spirit of the swamp is broken and the mire runs clear. You came to
+      the pool not knowing one herb from another. You leave a brewer, with
+      the marsh's own renewal recipe in your head.
 
 rewards:
   stat_info: "vitality:3"
@@ -52,27 +54,25 @@ rewards:
   recipe_info: "mire-renewal-draught"
   gold: 50
   actor: >-
-    The spirit comes apart all at once -- not blood, but a slow collapse,
-    mud and black water and rot falling still and ordinary. Behind where
-    it stood, a spring breaks clear through the rock, and the poison
-    drains out of the air. You feel the long labor of the marsh settle
-    into your body as a lasting toughness, and the shape of its best brew
-    settles into your head: willow-bark and mint and root, the mire's own
-    renewal. Falv was right about the firepots -- and right that you would
-    need them. You carry a brewer's stock out with you, and the recipe to
-    make more.
+    Falv hears you out with his hands held over the fire, water running
+    off them in threads. "Gone, then. I felt the water change." He fills
+    your pack with a brewer's stock from his own crates and tells you the
+    mire's own renewal, willow-bark and mint and root, until the recipe
+    settles in your head. The long labor of the marsh has settled into
+    your body as a lasting toughness.
   observer: ""
 
 triggers:
-  # ── BOSS KILL: defeat the Spirit of the Swamp -> complete + rewards ──
+  # slain: the Spirit of the Swamp (9135) falls.
   - event: mob_death
     mob: 9135
     conditions:
       has: ["40-start"]
-      missing: ["40-end"]
+      missing: ["40-slain"]
     actions:
-      - grant: "40-end"
+      - grant: "40-slain"
       - actor: >-
-          The spirit of the swamp shudders, loses its shape, and sinks
-          back into the mire it came from. The water goes still and, for
-          the first time, clean.
+          The spirit comes apart all at once, mud and black water and rot
+          falling still and ordinary. A spring breaks clear through the
+          rock behind it, and the poison drains out of the air. Climb back
+          out to Falv at the Cattail Stand and type talk falv.
