@@ -50,9 +50,10 @@ func TestQuest28_RefusableStepsNeedTheCommandToSucceed(t *testing.T) {
 		{"trip", "28-cast_spike", "28-tripped",
 			EventDetails{Command: "trip"},
 			"command", EventDetails{Command: "trip"}},
+		// Raised from the room fled into, once the flee has worked.
 		{"flee", "28-tripped", "28-fled",
-			EventDetails{Command: "flee"},
-			"command", EventDetails{Command: "flee"}},
+			EventDetails{Command: "flee", RoomId: 6262},
+			"command", EventDetails{Command: "flee", RoomId: 6467}},
 	}
 
 	for _, tc := range cases {
@@ -77,6 +78,19 @@ func TestQuest28_RefusableStepsNeedTheCommandToSucceed(t *testing.T) {
 				"a successful %q must grant %s", tc.name, tc.grants)
 		})
 	}
+
+	// A flee counts only where it lands on The Landing.
+	t.Run("flee into another room", func(t *testing.T) {
+		e := NewEngine()
+		qq := q
+		e.RegisterQuest(&qq)
+		player := newFullMockPlayer(6261)
+		player.quests["28-start"] = true
+		player.quests["28-tripped"] = true
+		ctx := newFullMockActionContext(1, player)
+		e.Notify("command", EventDetails{UserId: 1, Command: "flee", RoomId: 6261}, player, ctx)
+		require.False(t, player.HasQuest("28-fled"))
+	})
 
 	// The cast step wants the spike, not just any spell.
 	t.Run("cast of another spell", func(t *testing.T) {

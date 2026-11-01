@@ -13,14 +13,18 @@ opener:
       Complete the rite and come back.
     hints: Find Cleric Hadwen at the Awakening Pool, north of Hub Square, and type
       talk hadwen. Complete the Awakening before returning to Smith Rusk.
+  # Crier Toke starts every trade (#375 phase 7): Rusk takes First Heat's
+  # hand-in but no longer offers it.
   - questRequired:
     - 30-end
     questExcluded:
     - 35-start
     - 35-end
-    text: You have been through the rite. Good. I teach the forge if you want it,
-      iron work, and how raw materials become things you can use.
-    hints: Choose First Heat below to learn the forge.
+    text: You have been through the rite. Good. I teach the forge, but Crier Toke
+      sends me my students. Ask him in Hub Square who can teach you to work iron,
+      then come back to my stall.
+    hints: Crier Toke starts every trade in the coulee. In Hub Square, type talk
+      toke.
   - questRequired:
     - 35-start
     questExcluded:
@@ -71,25 +75,6 @@ opener:
     hints: Go north to the Quench Shed, west to the Lower Talus and south into the
       Collapsed Cut, and type talk ovell to find out what the cave-in survivor needs.
 topics:
-- key: craft_offer
-  kind: offer
-  quest: 35
-  label: First Heat
-  playerLine: Will you teach me to work the forge?
-  text: Right. The forge teaches faster than I do, but here is the shape of it. Buy
-    an iron ingot and a leather strip off my stall. List shows you what I stock and
-    what it costs. Take them to the forge here in the smithy and type craft iron dagger.
-    The iron and the leather disappear and a blade appears. That is the whole trick
-    the first time. Once you have a feel for it, type craft list to see everything
-    you know how to make right now with what you are carrying. Come back to me when
-    you have made something. Start with the list.
-  hints: Here beside Rusk, type list.
-  questRequired:
-  - 30-end
-  questExcluded:
-  - 35-start
-  - 35-end
-  grantsQuest: 35-start
 # Two exclusive hand-ins for First Heat. The old ask route needed no dagger
 # and the old give route did; both survive. craft_turnin (carriesItem 10009)
 # is what `give dagger rusk` resolves to: the dagger is shown, never taken

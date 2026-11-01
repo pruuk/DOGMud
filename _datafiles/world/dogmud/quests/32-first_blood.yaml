@@ -19,7 +19,7 @@ steps:
   - id: start
     destination:
       room: 5227
-    description: "Crier Toke or Drillmaster Vorn hands you a cudgel when you
+    description: "Crier Toke hands you a cudgel when you
       take this on. Hold it in your hand before you fight. If you already
       hold it, type remove cudgel, then wield it again."
     hint: "Type wield cudgel."

@@ -199,8 +199,10 @@ func startInCoulee(user *users.UserRecord) {
 				RoomId:    destRoom.RoomId,
 			})
 		}
-		// The Awakening's 30-start comes from its room_enter trigger on 5200,
-		// raised by hooks.QuestRoomEnter for this move like any other.
+		// Nothing grants The Awakening by itself (#375 phase 7): Hadwen's
+		// greeting above names his offer, and the pool's movement gate
+		// (behaviors/rooms/pothole_coulee/5200.yaml) holds the player until
+		// the rite is done and handed in.
 	}
 }
 
@@ -241,9 +243,10 @@ func startInAntechamber(user *users.UserRecord) bool {
 	if r := rooms.LoadRoom(created[first]); r != nil {
 		Look("", user, r, events.CmdSecretly)
 	}
-	// Quest 28's 28-start and Dewey's opening line come from its room_enter
-	// trigger, raised by hooks.QuestRoomEnter for this move once this command
-	// returns, so his line lands beneath the arrival look.
+	// Dewey's greeting (ending on `talk dewey`) comes from quest 28's
+	// room_enter trigger, raised by hooks.QuestRoomEnter for this move once
+	// this command returns, so his lines land beneath the arrival look. The
+	// quest itself starts at Dewey's offer (#375 phase 7).
 	return true
 }
 
@@ -275,9 +278,18 @@ func grantNewcomerMarker(user *users.UserRecord) {
 // movement block and Warden Esk's gate). No starter mutation is granted — the
 // Awakening opens the capacity, but every mutation is earned through use-based
 // drift (blank-slate Awakening; see the mutation-graph acquisition design).
+//
+// A veteran skips the rite, so the token is set directly rather than granted:
+// the quest pipeline refuses `end` on empty progress for a quest of several
+// steps, and past that refusal it would pay the rite's banner and reward line.
+// The queued event is MarkerOnly: it refreshes the talk markers and the quest
+// panel. HandleQuestUpdate stops there, and the quest completion seeder skips
+// it, so no giver is credited for a rite the veteran never did.
 func autoAwaken(user *users.UserRecord) {
+	user.Character.MarkOpened()
 	events.AddToQueue(events.Quest{
 		UserId:     user.UserId,
 		QuestToken: "30-end",
+		MarkerOnly: true,
 	})
 }

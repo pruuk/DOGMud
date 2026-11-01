@@ -13,14 +13,18 @@ opener:
       rite. Then come back.
     hints: Find Cleric Hadwen at the reflecting pool north of the hub. Complete the
       Awakening before speaking with Vorn again.
+  # Crier Toke starts every trade (#375 phase 7): Vorn takes First Blood's
+  # hand-in but no longer offers it.
   - questRequired:
     - 30-end
     questExcluded:
     - 32-start
     - 32-end
-    text: You have been through the rite. Good. Now you learn to use what the Awakening
-      gave you. I run combat training in this yard. If you want it, say so.
-    hints: Choose First Blood below to begin combat training.
+    text: You have been through the rite. Good. I train fighters, but Crier Toke
+      sends new folk to me. Find him in Hub Square and ask him who can teach you to
+      fight. Then come back, and we begin.
+    hints: Crier Toke starts every trade in the coulee. In Hub Square, type talk
+      toke.
   - questRequired:
     - 32-start
     questExcluded:
@@ -76,25 +80,6 @@ opener:
     hints: Type sethome coulee first to make this your home, where you wake if you
       die.
 topics:
-- key: train_offer
-  kind: offer
-  quest: 32
-  label: First Blood
-  playerLine: Will you teach me to fight?
-  text: 'Then stand straight and listen. You get a cudgel. Nothing fancy, nothing
-    that will embarrass you in a real fight. First, take it in your hand. Then consider
-    the training dummy in this yard, to see what you are walking into. Then hit it
-    until it stops hitting back. After that, kick it or trip it once, to learn that
-    you have options beyond the basic swing. Last, set combatverbosity to your taste.
-    It controls how much combat detail you see. Then come back to me and report.'
-  hints: Accept, and Vorn hands you a cudgel. Then type wield cudgel.
-  questRequired:
-  - 30-end
-  questExcluded:
-  - 32-start
-  - 32-end
-  grantsQuest: 32-start
-  givesItem: 10043
 - key: train_turnin
   kind: handin
   quest: 32

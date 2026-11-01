@@ -1,7 +1,7 @@
 # Quest 44 — First Casting (Pothole Coulee, Spoke E / Folding inner ring, cert)
 #
 # Token flow:
-#   44-start — granted by Adept Grieve's cast_offer node (requires 30-end).
+#   44-start: granted by Crier Toke's send_folding offer (9106.yaml, requires 31-end).
 #   44-cast  — command trigger on `cast` in the Star Chamber (5305), where the
 #              Practice Mote (9146) hangs as a target.
 #   44-end   — granted by Grieve's cast_turnin node (needs 44-cast).

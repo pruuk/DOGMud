@@ -1,7 +1,7 @@
 # Quest 47 — First Words (Pothole Coulee, Spoke F / Lore inner ring, cert)
 #
 # Token flow:
-#   47-start — granted by Elder Wenna's words_offer node (requires 30-end).
+#   47-start: granted by Crier Toke's send_folk offer (9106.yaml, requires 31-end).
 #   47-help  — command trigger on `help` (the in-game help system; Tier-1
 #              reinforcement). The help-command Notify was added this chunk.
 #              Not room-gated on purpose (2026-10-17): the lesson is that help

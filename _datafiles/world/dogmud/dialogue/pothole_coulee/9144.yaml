@@ -14,15 +14,18 @@ opener:
       will teach you to cast.
     hints: Find Cleric Hadwen at the reflecting pool and complete the Awakening, then
       return to Adept Grieve.
+  # Crier Toke starts every trade (#375 phase 7): Grieve takes First
+  # Casting's hand-in but no longer offers it.
   - questRequired:
     - 30-end
     questExcluded:
     - 44-start
     - 44-end
-    text: 'The rite is on you. Good. Then there is something to teach. I show the
-      first turning of the mind: how to shape a spell you already carry and let it
-      go at a mark. Your first casting is waiting when you mean to begin.'
-    hints: Choose First Casting below to learn the first casting.
+    text: The rite is on you. Good. Then there is something to teach, but Crier
+      Toke sends me my students. Ask him in Hub Square who can teach you to cast
+      spells, and come back up the stair.
+    hints: Crier Toke starts every trade in the coulee. In Hub Square, type talk
+      toke.
   - questRequired:
     - 44-start
     questExcluded:
@@ -47,23 +50,6 @@ opener:
     hints: Head north through the observatory into the grove and type talk orrin to
       find Keeper Orrin.
 topics:
-- key: cast_offer
-  kind: offer
-  quest: 44
-  label: First Casting
-  playerLine: Will you teach me to cast?
-  text: Then here is the first turning. North of here is the Star Chamber, and at
-    its center a practice mark with a mote of folded light hanging over it. I conjure
-    them for students. You cannot harm it. Stand at the mark and cast a spell you
-    already know at the mote. The spike you woke with will do. Type cast spike mote.
-    Do not force it. Shape it, and let it go. Then come back to me.
-  hints: Go north into the Star Chamber and type cast spike mote.
-  questRequired:
-  - 30-end
-  questExcluded:
-  - 44-start
-  - 44-end
-  grantsQuest: 44-start
 - key: cast_turnin
   kind: handin
   quest: 44

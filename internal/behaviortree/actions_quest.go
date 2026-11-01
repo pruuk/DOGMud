@@ -34,7 +34,7 @@ func actGrantQuest(params map[string]any, ctx *EvalContext) Result {
 	// Set the token synchronously (for any in-tree follow-up), then fire the
 	// quest event so the player gets the progress/completion banner and any
 	// rewards — the same pipeline the dialogue and questengine grant paths use.
-	// Without this, behavior-tree grants (e.g. Hadwen granting 30-end at the
+	// Without this, behavior-tree grants (e.g. Hadwen granting 30-woken at the
 	// close of the Awakening Rite) advanced the quest silently, with no banner
 	// and no rewards.
 	user.Character.GiveQuestToken(quest)

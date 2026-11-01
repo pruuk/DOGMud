@@ -44,7 +44,7 @@ func gateQuestId(s string) int {
 // who shelved questId. Its own quest's tokens and flags are fine: a shelved
 // quest is not held. A questExcluded token or questFlagExcluded key of
 // another quest is not: once the player gains it (quest 88's road_toke
-// excludes 31-start and 29-end) the offer hides for good.
+// excludes 31-start) the offer hides for good.
 func resumes(t *Topic, questId int) bool {
 	for _, tok := range t.QuestExcluded {
 		if gateQuestId(tok) != questId {

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/dialogue"
+	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -280,7 +282,7 @@ func TestQuest28_LookLessonRewardsACloseLook(t *testing.T) {
 			require.Equal(t, 1, strings.Count(strings.ToLower(last), "type "), "one command per line: %q", last)
 		}
 	}
-	require.Equal(t, 2, guideLines, "both guide-lesson triggers carry the line")
+	require.Equal(t, 1, guideLines, "one guide-lesson trigger carries the line (#375 phase 7: one action per step)")
 
 	lookStone := EventDetails{UserId: 1, RoomId: 6258, Verb: "look", Noun: "stone", RoomNoun: "stone"}
 
@@ -326,4 +328,115 @@ func TestNpcCommand_WhisperAddressesThePlayer(t *testing.T) {
 	require.Equal(t, "whisper @7 hold steady", npcCommand(SayLineDef{Text: "hold steady", Whisper: true}, 7))
 	require.Equal(t, "say hold steady", npcCommand(SayLineDef{Text: "hold steady"}, 7))
 	require.Equal(t, "emote nods", npcCommand(SayLineDef{Text: "nods", Emote: true}, 7))
+}
+
+// TestQuest28_StartsAndEndsAtDewey (#375 phase 7): no trigger grants 28-start
+// or 28-end. Dewey's offer starts the quest, his [!] and the marks question
+// greet a brand-new character, and his hand-in, open only after the flee
+// lesson, ends it and fires his tree for the send-off.
+func TestQuest28_StartsAndEndsAtDewey(t *testing.T) {
+	q := loadQuest28(t)
+	for i, tr := range q.Triggers {
+		for _, a := range tr.Actions {
+			require.NotEqual(t, "28-start", a.Grant, "trigger %d grants 28-start: only Dewey's offer may", i)
+			require.NotEqual(t, "28-end", a.Grant, "trigger %d grants 28-end: only Dewey's hand-in may", i)
+		}
+	}
+
+	df := loadShippedDialogue(t, "newcomer_antechamber", "9491.yaml")
+	held := map[string]bool{}
+	ps := &dialogue.PlayerState{
+		QuestOpen: func(int) bool { return true },
+		HasQuest:  func(tok string) bool { return held[tok] },
+		GiveQuest: func(tok string) { held[tok] = true },
+		HasHeard:  func(string) bool { return false },
+		MarkHeard: func(string) {},
+	}
+
+	offer := df.FindTopic("waking_offer")
+	require.NotNil(t, offer, "Dewey's offer of quest 28")
+	require.Equal(t, dialogue.KindOffer, offer.Kind)
+	require.Equal(t, "28-start", offer.GrantsQuest)
+	require.True(t, df.Eligible(offer, ps), "a brand-new character is offered quest 28")
+	require.Equal(t, menu.MarkerQuest, df.Marker(ps), "Dewey shows [!] before the quest is taken")
+	require.True(t, df.Eligible(df.FindTopic("marks"), ps), "the marks question is in the first menu")
+	require.False(t, df.Eligible(df.FindTopic("quest"), ps), "'What should I be doing' waits until the quest is taken")
+	text, _ := df.OpenerFor(ps)
+	require.Contains(t, text, "[!]", "the first opener names the mark")
+
+	ready := df.FindTopic("ready")
+	require.NotNil(t, ready)
+	require.Equal(t, dialogue.KindHandIn, ready.Kind)
+	require.Equal(t, "28-end", ready.GrantsQuest)
+	require.True(t, ready.Behavior, "Dewey's tree plays the send-off")
+	require.NotContains(t, squash(ready.Text+" "+ready.Hints), "break away", "#690: no fight jargon in the farewell")
+	held["28-start"], held["28-tripped"] = true, true
+	require.False(t, df.Eligible(ready, ps), "no hand-in before the flee lesson")
+	held["28-fled"] = true
+	require.True(t, df.Eligible(ready, ps))
+	require.Equal(t, menu.MarkerHandIn, df.Marker(ps), "Dewey shows [?] once the quest can be finished")
+}
+
+// TestQuest28_WalksFromTheOfferToTheLanding drives the real quest 28 YAML
+// through every step (#375 phase 7): arriving greets a newcomer and grants
+// nothing, Dewey's offer starts the quest (here, the quest_granted event its
+// grant raises), and each lesson's own event moves it one step, to fled.
+// Dewey's hand-in ends it (TestQuest28_StartsAndEndsAtDewey).
+func TestQuest28_WalksFromTheOfferToTheLanding(t *testing.T) {
+	e, p, ctx := newQuest28Walk(t, "", 6258)
+	notify := func(event string, d EventDetails) {
+		t.Helper()
+		d.UserId = 1
+		p.roomId = d.RoomId
+		e.Notify(event, d, p, ctx)
+	}
+
+	notify("room_enter", EventDetails{RoomId: 6258})
+	require.Equal(t, "", p.step(), "arriving grants nothing: only Dewey's offer starts the quest")
+	require.Len(t, ctx.npcSays, 1, "Dewey greets the newcomer")
+	greet := ctx.npcSays[0].Lines
+	require.True(t, strings.HasSuffix(squash(greet[len(greet)-1].Text), "type talk dewey."), // squash lowercases
+		"the greeting ends on talk: %q", greet[len(greet)-1].Text)
+
+	p.current = "start" // Dewey's offer granted 28-start
+	notify("quest_granted", EventDetails{RoomId: 6258, QuestToken: "28-start"})
+	require.Equal(t, "start", p.step())
+	require.Len(t, ctx.npcSays, 2, "Dewey names the first command once the quest is taken")
+	first := ctx.npcSays[1].Lines
+	require.True(t, strings.HasSuffix(squash(first[len(first)-1].Text), "type hint."), "%q", first[len(first)-1].Text)
+
+	walk := []struct {
+		event string
+		d     EventDetails
+		want  string
+	}{
+		{"command_issued", EventDetails{RoomId: 6258, Command: "hint"}, "hinted"},
+		{"command_issued", EventDetails{RoomId: 6258, Command: "look"}, "looked"},
+		{"command_issued", EventDetails{RoomId: 6258, Command: "look", Noun: "guide"}, "examined"},
+		{"room_enter", EventDetails{RoomId: 6259}, "status_prompt"},
+		{"command_issued", EventDetails{RoomId: 6259, Command: "status"}, "statused"},
+		{"command_issued", EventDetails{RoomId: 6259, Command: "skills"}, "skilled"},
+		{"command_issued", EventDetails{RoomId: 6259, Command: "spells"}, "spelled"},
+		{"command", EventDetails{RoomId: 6259, Command: "cast", Noun: "chrysalis-glow"}, "glowed"},
+		{"room_enter", EventDetails{RoomId: 6260}, "carry_prompt"},
+		{"command_issued", EventDetails{RoomId: 6260, Command: "get", Noun: "token"}, "got"},
+		{"command_issued", EventDetails{RoomId: 6260, Command: "inventory"}, "invd"},
+		{"command_issued", EventDetails{RoomId: 6260, Command: "help"}, "helped"},
+		{"room_enter", EventDetails{RoomId: 6261}, "speaks_prompt"},
+		{"command", EventDetails{RoomId: 6261, Command: "say"}, "said"},
+		{"topic_heard", EventDetails{RoomId: 6261, MobId: 9491, Topic: "asked_28"}, "asked"},
+		{"room_enter", EventDetails{RoomId: 6262}, "proving_prompt"},
+		{"command", EventDetails{RoomId: 6262, Command: "warcry"}, "warcried"},
+		{"command_issued", EventDetails{RoomId: 6262, Command: "conditions"}, "saw_conditions"},
+		{"command_issued", EventDetails{RoomId: 6262, Command: "cooldowns"}, "checked_cooldowns"},
+		{"command_issued", EventDetails{RoomId: 6262, Command: "consider", Noun: "effigy"}, "considered"},
+		{"command_issued", EventDetails{RoomId: 6262, Command: "attack", Noun: "effigy"}, "attacked"},
+		{"command", EventDetails{RoomId: 6262, Command: "cast", Noun: "conviction-spike"}, "cast_spike"},
+		{"command", EventDetails{RoomId: 6262, Command: "trip"}, "tripped"},
+		{"command", EventDetails{RoomId: 6467, Command: "flee"}, "fled"},
+	}
+	for _, s := range walk {
+		notify(s.event, s.d)
+		require.Equal(t, s.want, p.step(), "after %s %s %s", s.event, s.d.Command, s.d.Noun)
+	}
 }

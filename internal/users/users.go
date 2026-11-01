@@ -567,6 +567,12 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 	// A renamed talk topic stays heard (#375): renames come from the
 	// topic-key manifest, dialogue/topic-keys.txt.
 	loadedUser.Character.RenameHeardTopics(dialogue.HeardRenames())
+	// A quest retired whole (every step id under "# retired" in
+	// quests/step-ids.txt) has nothing left to resume, so it is dropped
+	// before the step checks below (#375 phase 7: quest 29 Two Roads).
+	for _, qid := range loadedUser.Character.DropRetiredQuests(quests.RetiredQuests()) {
+		mudlog.Info("LoadUser", "user", loadedUser.Username, "dropped retired quest", qid)
+	}
 	// A renamed quest step keeps the player on it (#375 phase 2): renames
 	// come from the step-id manifest, quests/step-ids.txt.
 	loadedUser.Character.RenameQuestSteps(quests.StepRenames())

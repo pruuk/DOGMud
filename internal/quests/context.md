@@ -199,7 +199,7 @@ and the types `SkillGrant`, `StatGrant`, `ItemGrant`.
 `quests/step-ids.txt` renames; `users.LoadUser` hands them to
 `Character.RenameQuestSteps`). The guard `internal/guards/step_manifest_test.go` holds the
 file to content: a step id leaves a quest only through a `# retired` or
-`# renamed` line.
+`# renamed` line. `RetiredQuests()` reads the quests retired whole (every step id under `# retired`, none still a key); `users.LoadUser` hands them to `Character.DropRetiredQuests`, which clears them from progress and the shelf (#375 phase 7: quest 29 Two Roads).
 
 There is no experience/XP field. DOGMud removed character levels and XP
 entirely; skill and stat rewards (`SkillInfo`, `StatInfo`) are the
@@ -1167,7 +1167,7 @@ maintainers know the quests are coupled.
 | `validate_refs.go` | Cross-reference validation (flags, tokens, ids); the live existence checks come from `questworld.Validators()` and the loop validators (`internal/questloop`) run it at boot, CI and editor save |
 | `rewardparse.go` | `ParseSkillGrants`, `ParseStatGrants`, `ParseRecipeGrants`, `ParseItemGrants` and their grant types (moved from `internal/hooks`) |
 | `rewardsummary.go` | `RewardNames`, `RewardSummary`, `RewardPaidNames`: the offer card's reward line |
-| `manifest.go` | `ParseStepManifest`, `StepTokens`, `StepRenames`: the step-id manifest (`quests/step-ids.txt`) |
+| `manifest.go` | `ParseStepManifest`, `StepTokens`, `StepRenames`, `StepRetired`, `RetiredQuests`: the step-id manifest (`quests/step-ids.txt`) |
 | `test_helpers.go` | `SeedQuestsForTest(qs ...*Quest) func()`: adds quests to the registry for a test (test binaries load no quest data, and `Character.HasQuest` past a quest's start step reads its step order) and returns the restore |
 
 **This package owns the data; `internal/questengine` owns the evaluation.**

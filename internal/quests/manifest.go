@@ -68,3 +68,35 @@ func StepRetired() map[string]bool {
 	}
 	return out
 }
+
+// RetiredQuests reads the shipped manifest for quests retired whole: every
+// step id of the quest sits under "# retired" and none is still a key. A
+// save holding such a quest has nothing left to resume, so users.LoadUser
+// drops it (#375 phase 7: quest 29 Two Roads). A missing or unreadable
+// manifest retires nothing.
+func RetiredQuests() map[int]bool {
+	m, ok := shippedStepManifest("quests.RetiredQuests()")
+	if !ok {
+		return nil
+	}
+	return retiredQuests(m)
+}
+
+func retiredQuests(m manifest.Manifest) map[int]bool {
+	live := map[int]bool{}
+	for _, k := range m.Keys {
+		if id, _ := TokenToParts(k); id > 0 {
+			live[id] = true
+		}
+	}
+	out := map[int]bool{}
+	for _, k := range m.Retired {
+		if id, _ := TokenToParts(k); id > 0 && !live[id] {
+			out[id] = true
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}

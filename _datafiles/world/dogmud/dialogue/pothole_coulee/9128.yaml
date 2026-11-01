@@ -13,15 +13,18 @@ opener:
       here. Go be Opened, then come back and I will teach you the bench.
     hints: Find Cleric Hadwen at the reflecting pool and complete the Awakening before
       returning to Herbalist Birna.
+  # Crier Toke starts every trade (#375 phase 7): Birna takes First Brew's
+  # hand-in but no longer offers it.
   - questRequired:
     - 30-end
     questExcluded:
     - 38-start
     - 38-end
-    text: 'You have been through the rite. Good. Steady hands are wasted on the
-      unawakened. I teach the brew if you want it: buy a vial and a root, work the
-      bench, drink what you make. Say the word.'
-    hints: Choose First Brew below to learn the first brew.
+    text: You have been through the rite. Good. I teach the brew, but Crier Toke
+      sends me my students. Ask him in Hub Square who can teach you to brew, and I
+      will be here at the water.
+    hints: Crier Toke starts every trade in the coulee. In Hub Square, type talk
+      toke.
   - questRequired:
     - 38-start
     questExcluded:
@@ -80,25 +83,6 @@ opener:
       Fenwalker Falv camps on
       the Cattail Stand: south twice to the Reed Beds, then east.'
 topics:
-- key: brew_offer
-  kind: offer
-  quest: 38
-  label: First Brew
-  playerLine: Will you teach me to brew?
-  text: 'Right. Brewing is patience and clean hands, and the bench does the rest.
-    Here is the shape of it. A healing salve takes two healer''s roots
-    and one glass vial, and both are on my racks. First see what I stock and what
-    it costs. Then buy the vial, then the roots. Take them to the alchemy bench at
-    the water''s edge and craft a healing salve: the roots and the water become the
-    brew, sealed in the vial. Then drink it and feel what you made. A brew you have
-    not tasted is just a guess. Come back when you have brewed and drunk.'
-  hints: Type list.
-  questRequired:
-  - 30-end
-  questExcluded:
-  - 38-start
-  - 38-end
-  grantsQuest: 38-start
 - key: brew_turnin
   kind: handin
   quest: 38

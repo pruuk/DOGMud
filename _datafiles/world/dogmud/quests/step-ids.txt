@@ -86,11 +86,10 @@
 28-statused
 28-tripped
 28-warcried
-29-end
-29-start
 30-end
 30-rite
 30-start
+30-woken
 31-end
 31-equip
 31-lantern
@@ -318,3 +317,8 @@
 9-deliver
 9-end
 9-start
+# retired
+# Quest 29 Two Roads (#375 phase 7): no road grants it; users.LoadUser drops
+# it from saves (quests.RetiredQuests).
+29-end
+29-start

@@ -52,9 +52,10 @@ func TestOfferIndexDoor_NamesUnabandonableOffers(t *testing.T) {
 	}
 }
 
-// On shipped data, quest 30 (The Awakening) is not abandonable: room_enter
-// 5200 and the antechamber room tree grant 30-start by themselves. Quest 42
-// (The Hunt) still is. The test logs every quest the rule takes out of
+// On shipped data, quests 28 (Waking to Gaius) and 30 (The Awakening) are
+// abandonable since #375 phase 7: only Dewey's and Hadwen's offers start
+// them, so nothing would take a shelved one back up by itself. Quest 42 (The
+// Hunt) still is. The test logs every quest the rule still takes out of
 // abandonable (offered with a resuming offer, but auto-started), so the
 // owner sees the full effect.
 func TestSmoke_AutoStartedQuestsNotAbandonable(t *testing.T) {
@@ -64,16 +65,20 @@ func TestSmoke_AutoStartedQuestsNotAbandonable(t *testing.T) {
 	offerIndexDoor()
 
 	c := characters.New()
-	c.QuestProgress = map[int]string{30: "start", 42: "start"}
-	if usercommands.Abandonable(c, 30) {
-		t.Error("quest 30 is abandonable; its start is granted on entering room 5200")
-	}
-	if !usercommands.Abandonable(c, 42) {
-		t.Error("quest 42 is not abandonable; it has a clean offer and no automatic start")
+	c.QuestProgress = map[int]string{28: "start", 30: "start", 42: "start"}
+	for _, id := range []int{28, 30, 42} {
+		if !usercommands.Abandonable(c, id) {
+			t.Errorf("quest %d is not abandonable; it has a clean offer and no automatic start", id)
+		}
 	}
 
 	w := questworldForOfferDoor()
 	auto := questloop.AutoStarts(w)
+	for _, id := range []int{28, 30} {
+		if len(auto[id]) > 0 {
+			t.Errorf("quest %d still starts by itself: %v", id, auto[id])
+		}
+	}
 	ids := make([]int, 0, len(auto))
 	for id := range auto {
 		ids = append(ids, id)

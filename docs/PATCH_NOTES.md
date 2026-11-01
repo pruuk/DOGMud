@@ -1,5 +1,28 @@
 # DOGMud Patch Notes
 
+## 2026-11-01: A clearer start in Pothole Coulee
+
+- When you wake, Dewey offers your first quest, Waking to Gaius. Talk to
+  him and accept it. At the end of the tutorial, talk to him again and
+  choose it to finish, and he sends you up to the Awakening Pool.
+- Cleric Hadwen offers The Awakening. When the rite is over, talk to him
+  once more to finish it.
+- Crier Toke now starts every trade in the coulee. Once you have walked
+  the town with him, he can start you on fighting, smithing, brewing,
+  tracking, casting, the lore of the folk and archery. Take as many as
+  you like.
+- The trade teachers send new folk to Toke.
+- Ask Cleric Hadwen "Is there another way out?" to hear how to leave the
+  coulee through Warden Esk's arch.
+- Two Roads, the old signpost quest, is gone. If you still had it, it is
+  cleared from your quest log.
+- Waking to Gaius and The Awakening can now be set aside like any other
+  quest.
+- Logging out at the pool before the rite no longer counts as having
+  done it. When you come back, Hadwen still has the rite waiting.
+- Choosing the Veteran start, "already changed", now really opens you
+  up, so the way out of the coulee is not barred to you.
+
 ## 2026-11-01: Potions are quaffed, and thieves are about
 
 - Drink a potion with `quaff`, for example `quaff healing salve`. Typing

@@ -1,119 +1,113 @@
-# 6467 The Landing — the terminus. Four jobs (quest 28 drives everything else):
-#   1. Prompt on ARRIVAL. The player reaches this room by fleeing, so a
-#      room_enter fires here (NewRound_DoCombat_helpers.go fires entry hooks for
-#      a flee, not just a walk). Without this the room is silent and the player
-#      is stranded: nothing on screen says what to do.
-#   2. Re-prompt if they sit here a while. A newcomer arrives straight out of a
-#      wall of combat text, so the first prompt is easy to lose in scrollback.
-#   3. The `talk dewey` handoff. We INTERCEPT talk/say/ask so the command never
-#      reaches Dewey's dialogue tree (which would print a generic hint on top of
-#      the farewell). The tree plays the paced transition, teleports the player
-#      to the Awakening Pool (5200), grants quest 30, and completes 28-end.
-#   4. Block a plain walk and redirect the player to the talk-handoff.
+# 6467 The Landing: the end of the tutorial. Since #375 phase 7 quest 28 ends
+# at Dewey's hand-in topic (`ready`, dialogue/newcomer_antechamber/9491.yaml),
+# and Dewey's own tree (behaviors/newcomer_antechamber/9491-dewey.yaml) plays
+# the farewell and moves the player to the Awakening Pool. This tree no longer
+# intercepts talk. Its jobs:
+#   1. Count the flee. The way here is the flee out of The Proving, which a
+#      player can do at any lesson of the ring, and this room has no way back.
+#      Quest 28's flee trigger counts a flee from the trip lesson on. It may
+#      not reach back further (the one-action rule and the walk's skip probe),
+#      so an earlier flee is counted here, on arrival.
+#   2. Count it after a resume. A player who set the quest aside, fled and took
+#      it up again from Dewey here is back on the step they left, with no flee
+#      to raise. What they type next counts it. Talk is not intercepted, so its
+#      menu opens with the hand-in.
+#   3. Prompt on ARRIVAL. The player reaches this room by fleeing, so a
+#      room_enter fires here (NewRound_DoCombat_helpers.go fires entry hooks
+#      for a flee, not just a walk). Without it the room is silent.
+#   4. Re-prompt if they sit here a while: the first prompt is easy to lose
+#      in combat scrollback.
+#   5. Block a plain walk (the room has no exits) and point at the hand-in.
+#   6. Rescue: a player who holds 28-end but is still here (the send-off's
+#      move did not happen, a logout mid-way) is sent to the pool by any talk
+#      or walk.
 #
-# `talk` is the canonical verb, and quest 28 teaches it in room 6261 (R20, #375
-# phase 1: conversations happen through talk, and `ask` only redirects to it).
-# The prompts NAME it. `say` and `ask` are accepted as fallbacks so a player who
-# reaches for another verb is never dead-ended: before 2026-08-04 `ask dewey
-# quest` here fell through to the generic "I have no task for you right now",
-# which tells a stuck newcomer the exact opposite of the truth.
-#
-# The `leaving` flag guards against a second talk re-firing the sequence during
-# the ~4.5s transition (28-end is granted at the end, so gating on it alone would
-# leave a window). Every branch below checks it so nothing talks over the
-# farewell.
+# Every line names the mark on the player's screen. Holding the quest here means
+# the [?] hand-in; having set it aside means the [!] offer that takes it back up.
 tree:
   type: selector
   children:
 
-    # ── the handoff (talk/say/ask), intercepting so no dialogue hint fires ──
+    # ── rescue: finished, but still here ──
     - type: sequence
       event: room_command
       children:
-        # Only a talk, say or ask the command itself would carry out counts.
-        # A bare verb (`talk`, `say`, `ask dewey`) or a name that is not
-        # Dewey falls through to the command, which refuses it, the same
-        # rule quest 28 applies to its earlier steps by listening for
-        # success.
+        - type: condition
+          check: command_matches
+          commands: [talk, say, ask, north, n, go, south, s, east, e, west, w, up, u, down, d]
+        - type: condition
+          check: player_has_quest
+          quest: "28-end"
+        - type: action
+          do: send_user_text
+          text: >-
+            The grey thins around you, and the pale light rises to meet you.
+        - type: action
+          do: move_player
+          room_id: 5200
+          delay: 0.5
+        - type: action
+          do: intercept
+
+    # ── a resume: count the flee, and let the command run ──
+    # Hint and quests read the step, so they count it too and name the hand-in.
+    - type: sequence
+      event: room_command
+      children:
+        - type: condition
+          check: command_matches
+          commands: [talk, say, ask, hint, quests]
+        - type: condition
+          check: player_has_quest
+          quest: "28-start"
+        - type: condition
+          check: player_missing_quest
+          quest: "28-fled"
+        - type: action
+          do: grant_quest
+          quest: "28-fled"
+
+    # ── block a plain walk; point at the hand-in ──
+    - type: sequence
+      event: room_command
+      children:
+        - type: condition
+          check: command_matches
+          commands: [north, n, go, south, s, east, e, west, w, up, u, down, d]
+        - type: condition
+          check: player_has_quest
+          quest: "28-start"
+        # A resume counts the flee here too. Dewey has just spoken, so the
+        # re-prompt's timer restarts either way.
         - type: selector
           children:
             - type: sequence
               children:
                 - type: condition
-                  check: command_matches
-                  commands: [talk]
-                - type: condition
-                  check: command_names_mob
-                  mob_id: 9491
-            - type: sequence
-              children:
-                - type: condition
-                  check: command_matches
-                  commands: [ask]
-                - type: condition
-                  check: command_rest_words
-                  min: 2
-                - type: condition
-                  check: command_names_mob
-                  mob_id: 9491
-            - type: sequence
-              children:
-                - type: condition
-                  check: command_matches
-                  commands: [say]
-                - type: condition
-                  check: command_rest_words
-                  min: 1
-        - type: condition
-          check: player_missing_quest
-          quest: "28-end"
-        - type: condition
-          check: state_equals
-          key: leaving
-          value: ""
-        - type: action
-          do: set_state
-          key: leaving
-          value: "1"
+                  check: player_missing_quest
+                  quest: "28-fled"
+                - type: action
+                  do: grant_quest
+                  quest: "28-fled"
+                - type: action
+                  do: set_state
+                  key: nudge_rounds
+                  value: 0
+            - type: action
+              do: set_state
+              key: nudge_rounds
+              value: 0
         - type: action
           do: mob_say
           mob_id: 9491
           text: >-
-            That's the last of it. Steady, now. This part feels strange the
-            first time, but it's gentle. I've got you.
-        - type: action
-          do: send_user_text
-          delay: 1.5
-          text: >-
-            Dewey rests a hand on your shoulder, and the grey begins to thin
-            around you, unspooling like thread pulled loose, brightening from
-            the edges inward.
-        - type: action
-          do: send_user_text
-          delay: 3.0
-          text: >-
-            The pale blue-green light rises up to meet you. For a breath there is
-            only warmth and a weightless sense of falling upward into it. Then
-            the world takes shape around you, solid and real and loud with
-            life.
-        - type: action
-          do: move_player
-          room_id: 5200
-          delay: 4.0
-        # Grant 28-end (completes the tutorial quest) and 30-start (the Awakening)
-        # just after arrival so both banners land in the pool room.
-        - type: action
-          do: grant_quest
-          quest: "28-end"
-          delay: 4.5
-        - type: action
-          do: grant_quest
-          quest: "30-start"
-          delay: 4.5
+            One step left, and it is not a walk. Type
+            <ansi fg="command">talk dewey</ansi> and choose the line
+            marked [?].
         - type: action
           do: intercept
 
-    # ── block a plain walk; redirect to the handoff ──
+    # ── block a plain walk; the quest was set aside ──
     - type: sequence
       event: room_command
       children:
@@ -122,30 +116,79 @@ tree:
           commands: [north, n, go, south, s, east, e, west, w, up, u, down, d]
         - type: condition
           check: player_missing_quest
-          quest: "28-end"
+          quest: "28-start"
         - type: action
           do: mob_say
           mob_id: 9491
           text: >-
-            One step left, and it is not a walk. Type
-            <ansi fg="command">talk dewey</ansi> and I will carry you through.
+            The way on is not a walk. You set your quest aside, and I can
+            give it back. Type <ansi fg="command">talk dewey</ansi> and
+            choose Waking to Gaius, the line marked [!].
         - type: action
           do: intercept
 
     # ── arrival: name the command, because nothing else will ──
     # Fires on the flee that brings the player here. The delays let the room
-    # description and the arrival text land first.
+    # description and the arrival text land first. The flee's own event ran
+    # just before this, so missing 28-fled here means the trigger did not reach
+    # this player: they fled before the trip lesson.
+    - type: sequence
+      event: room_enter
+      children:
+        - type: condition
+          check: player_has_quest
+          quest: "28-start"
+        - type: condition
+          check: player_missing_quest
+          quest: "28-end"
+        # Reset the nudge timer so the re-prompt is measured from arrival.
+        - type: selector
+          children:
+            - type: sequence
+              children:
+                - type: condition
+                  check: player_missing_quest
+                  quest: "28-fled"
+                - type: action
+                  do: grant_quest
+                  quest: "28-fled"
+                - type: action
+                  do: mob_say
+                  mob_id: 9491
+                  text: >-
+                    Running isn't losing. It's how you live to win the next
+                    one.
+                - type: action
+                  do: set_state
+                  key: nudge_rounds
+                  value: 0
+            - type: action
+              do: set_state
+              key: nudge_rounds
+              value: 0
+        - type: action
+          do: mob_say
+          mob_id: 9491
+          delay: 1.5
+          text: >-
+            There you are, safe across. Running worked, and now you know it
+            for yourself.
+        - type: action
+          do: mob_say
+          mob_id: 9491
+          delay: 4.0
+          text: >-
+            One thing left. The [?] beside my name means you can finish your
+            quest with me. Type <ansi fg="command">talk dewey</ansi> and
+            choose it.
+
+    # ── arrival, the quest set aside mid-fight ──
     - type: sequence
       event: room_enter
       children:
         - type: condition
           check: player_missing_quest
-          quest: "28-end"
-        - type: condition
-          check: state_equals
-          key: leaving
-          value: ""
-        # Reset the nudge timer so the re-prompt is measured from arrival.
+          quest: "28-start"
         - type: action
           do: set_state
           key: nudge_rounds
@@ -162,24 +205,23 @@ tree:
           mob_id: 9491
           delay: 4.0
           text: >-
-            One thing left, and you already know the command. Type
-            <ansi fg="command">talk dewey</ansi> once more and I will carry
-            you through.
+            You set your quest aside, and I can give it back. The [!] beside
+            my name means I have a quest for you. Type
+            <ansi fg="command">talk dewey</ansi> and choose it, then choose
+            Accept.
 
     # ── re-prompt: the first line is easy to lose in the combat text ──
     # room_idle fires once per round (4s) while a player is present. The counter
     # increments every round and the say fires on the 7th, so roughly every 28
-    # seconds, measured from arrival.
+    # seconds, measured from arrival. room_idle has no player, so the conditions
+    # read the player in the room: the antechamber is a solo instance.
     - type: sequence
       event: room_idle
       children:
         - type: condition
-          check: player_in_room_missing_quest
-          quest: "28-end"
-        - type: condition
-          check: state_equals
-          key: leaving
-          value: ""
+          check: player_in_room_has_quest
+          quest: "28-start"
+          missing: "28-end"
         - type: action
           do: increment_state
           key: nudge_rounds
@@ -196,4 +238,29 @@ tree:
           mob_id: 9491
           text: >-
             Take your time. When you are ready, type
-            <ansi fg="command">talk dewey</ansi> and I will carry you through.
+            <ansi fg="command">talk dewey</ansi> and choose the line
+            marked [?].
+    - type: sequence
+      event: room_idle
+      children:
+        - type: condition
+          check: player_in_room_missing_quest
+          quest: "28-start"
+        - type: action
+          do: increment_state
+          key: nudge_rounds
+        - type: condition
+          check: state_greater_than
+          key: nudge_rounds
+          value: 6
+        - type: action
+          do: set_state
+          key: nudge_rounds
+          value: 0
+        - type: action
+          do: mob_say
+          mob_id: 9491
+          text: >-
+            Take your time. When you are ready, type
+            <ansi fg="command">talk dewey</ansi> and choose Waking to Gaius,
+            the line marked [!].

@@ -1,20 +1,21 @@
-# Quest 88 -- Toke's Road (Pothole Coulee, post-rite bridge)
+# Quest 88: Toke's Road (Pothole Coulee, post-rite bridge)
 #
-# One of the two roads that replace quest 29 "Two Roads" (owner ruling R17,
-# 2026-10-20, #375 phase 1). Cleric Hadwen offers both roads after the rite
-# (30-end); the player takes either, both, or neither. Esk's road is 89.
+# Cleric Hadwen offers it once the player has told him the rite is done
+# (30-end, his hand-in rite_report), and Crier Toke takes the hand-in, so the
+# chain runs Hadwen, then Toke (owner ruling R17; #375 phase 7). Toke's
+# hand-in unlocks Find Your Footing (31), which he offers next.
 #
 # Token flow:
-#   88-start -- granted on Accept of Hadwen's offer topic road_toke
-#               (dialogue/pothole_coulee/9100.yaml). Hidden once footing has
-#               started (31-start), since the player is already on this road.
-#   88-end   -- granted by Crier Toke's hand-in topic road_toke_end
-#               (dialogue/pothole_coulee/9106.yaml), or by the trigger below
-#               when the player accepts Toke's footing walk (31-start) without
-#               handing this in first, so the quest never lingers.
+#   88-start: granted on Accept of Hadwen's offer topic road_toke
+#             (dialogue/pothole_coulee/9100.yaml). Hidden once footing has
+#             started (31-start), for a save that took footing first.
+#   88-end:   granted only by Crier Toke's hand-in topic road_toke_end
+#             (dialogue/pothole_coulee/9106.yaml). The quest_granted 31-start
+#             trigger that also ended it is gone (#375 phase 7), so the
+#             hand-in is the quest's one end.
 #
-# destination room 5203 (Hub Square) is the fallback; Toke follows his schedule
-# (pothole_toke), so the marker follows him.
+# The destination follows Toke on his schedule (pothole_toke); room 5203
+# (Hub Square) is the fallback.
 
 questid: 88
 name: Toke's Road
@@ -36,13 +37,3 @@ steps:
   - id: end
     description: >-
       You found Crier Toke, and he will walk you through the town.
-
-triggers:
-  # ── FOOTING FIRST: accepting Toke's footing walk closes this road too. ──
-  - event: quest_granted
-    quest_token: 31-start
-    conditions:
-      has: [88-start]
-      missing: [88-end]
-    actions:
-      - grant: 88-end

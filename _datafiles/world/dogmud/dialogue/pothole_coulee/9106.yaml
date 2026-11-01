@@ -7,12 +7,14 @@ greetings:
   - friendly
   - neutral
 opener:
-  # The greeting pattern (hello) is folded in here.
+  # The greeting pattern (hello) is folded in here. The root is for an Opened
+  # player who has not taken Toke's Road: no task of his is on the menu yet.
   text: Hoy yourself! Stand close, the throat does the loud part. Toke, town crier,
     both mouths at your service. The top one is for talk, the low one for distance.
     Whatever happened in the coulee today, I knew it yesterday.
-  hints: Choose a line below if you would like to hear about the news, the seven
-    mouths of the coulee, or a task to find your footing.
+  hints: Choose a line below if you would like to hear about the news or the seven
+    mouths of the coulee. For work, type talk hadwen at the pool and choose Toke's
+    Road. Cleric Hadwen sends new folk here.
   variants:
   - questExcluded:
     - 30-end
@@ -71,17 +73,41 @@ opener:
       from all three before your boots cleared their doorways. Tell me what you saw
       and we will call it done.
     hints: Choose Find Your Footing below to finish the task.
+  # The hub (#375 phase 7): Toke is the only starter of the seven trades, and
+  # a player new to MUDs is told so in plain words. Each trade's first quest
+  # is one [!] line on his menu; take one, several or all seven.
   - questRequired:
     - 31-end
-    text: The town knows your face now. I made sure of it. When you want more than
-      the hub, pick a mouth and I will send you down it. The coulee has seven of them,
-      and every one leads somewhere that will teach you something.
-    hints: Choose a line below to hear about the seven mouths or the day's news,
-      or take one of the seven trails.
+    text: 'The town knows your face now. I made sure of it. Here is the rest of
+      it. I can start you on any trade the coulee teaches: fighting, the forge,
+      brewing, the wilds, casting, the lore of the folk and the long shot. Each
+      one has its own teacher, and I send you to the first. Take one, take
+      several, or take all seven.'
+    hints: Each line marked [!] below starts one trade. Type the number of one to
+      hear who teaches it and where. You can take as many as you like.
+  # Every state with 31-start matched above, so these two read only Toke's Road.
+  # Hadwen has sent the player, and the hand-in is the next thing to do.
+  - questRequired:
+    - 88-start
+    questExcluded:
+    - 88-end
+    text: Hoy yourself! Stand close, the throat does the loud part. Toke, town crier,
+      both mouths at your service. Someone has been talking about you at the pool,
+      and I knew it before your boots left the water.
+    hints: Choose Toke's Road, the line marked [?], to tell Toke that Cleric Hadwen
+      sent you.
+  # The road is handed in, and the walk around the town is on the menu.
+  - questRequired:
+    - 88-end
+    text: Hoy yourself! Stand close, the throat does the loud part. Toke, town crier,
+      both mouths at your service. The top one is for talk, the low one for distance.
+      Whatever happened in the coulee today, I knew it yesterday.
+    hints: Choose Find Your Footing, the line marked [!], for a walk around the town.
+      Other lines tell you about the news and the seven mouths of the coulee.
 topics:
 # R17: the end of Toke's Road (quest 88), offered by Cleric Hadwen after the
-# rite. Quest 88 also closes when footing starts (its 31-start trigger), so a
-# player who takes footing first is never left holding it.
+# rite. This hand-in is the quest's only end (#375 phase 7), and it unlocks
+# Find Your Footing below, which is pitched right after it.
 - key: road_toke_end
   kind: handin
   quest: 88
@@ -90,12 +116,12 @@ topics:
   text: Hadwen sent you? Then you came to the right mouth! Hoy, newly Opened. I can
     walk you round the whole hub in one go, the school, the shop and the inn, and
     by the end of it the town will know your face.
-  hints: Toke offers Find Your Footing, a walk around the town. Choose it below.
+  hints: Quest complete. Next, Toke offers Find Your Footing, a walk around the
+    town.
   questRequired:
   - 88-start
   questExcluded:
   - 88-end
-  - 31-start
   grantsQuest: 88-end
   moodChange: friendly
 # Quest 21 "Newcomer's Path" is secret (not in the quest log), so this is a
@@ -135,8 +161,13 @@ topics:
     you have taken on.
   hints: Go north past the Awakening Pool and keep north up the basalt stair to the
     Chrysalis School Hall. Walking in is enough.
+  # Gated on Toke's Road's end, which Toke's own hand-in grants (the chain
+  # rule, #375 phase 7). The breadcrumb reads true before and after Hadwen has
+  # sent the player, and tells a sent player what the [?] line is for.
+  breadcrumb: Cleric Hadwen at the pool sends new folk to me. When he has sent you,
+    tell me so, and I will walk you round the whole town.
   questRequired:
-  - 30-end
+  - 88-end
   questExcluded:
   - 31-start
   - 31-end
@@ -174,8 +205,9 @@ topics:
   grantsQuest: 31-end
   moodChange: friendly
 # R21: the seven trails, each its own offer after Find Your Footing. Each
-# starter item rides on the offer of the quest it belongs to. Every trail's
-# own trailhead offer stays on its teacher. Quest 50's pouch of shot comes
+# starter item rides on the offer of the quest it belongs to. Toke is the
+# only starter of the seven (#375 phase 7); each first teacher takes the
+# hand-in and points a newcomer back here. Quest 50's pouch of shot comes
 # from its own quest_granted 50-start trigger (missing_item 30064).
 - key: send_drill
   kind: offer
@@ -402,8 +434,7 @@ topics:
     fg="command">say</ansi> talks to the room you stand in, <ansi fg="command">whisper</ansi>
     reaches one ear anywhere in Gaius, and <ansi fg="command">emote</ansi> is for when
     words are too small. I use all three before breakfast.'
-  hints: Choose a line below if you want to hear about the seven mouths or a
-    task.
+  hints: Choose a line below if you want to hear about the seven mouths.
 - key: voices
   kind: info
   label: How do you speak with two mouths?

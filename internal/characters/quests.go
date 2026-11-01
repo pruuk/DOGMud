@@ -135,6 +135,24 @@ func (c *Character) GiveQuestToken(questToken string) bool {
 	return false
 }
 
+// awakeningQuestId is The Awakening, whose end step is the "Opened" state every
+// gate in Pothole Coulee reads (30-end).
+const awakeningQuestId = 30
+
+// MarkOpened puts the character at The Awakening's end step without the rite,
+// for a character who is Opened by skipping it (the veteran start route, and
+// pre-Pothole characters through MigrateNewbieAwakening). It writes the step
+// directly because GiveQuestToken refuses `end` on empty progress for a quest of
+// several steps, and because the grant pipeline would pay the rite's banner and
+// reward line to someone who never stood at the pool. The quest focus stays
+// where it is: there is nothing left to do on this quest.
+func (c *Character) MarkOpened() {
+	if c.QuestProgress == nil {
+		c.QuestProgress = make(map[int]string)
+	}
+	c.QuestProgress[awakeningQuestId] = `end`
+}
+
 // QuestStepCount is the saved count: N progress of one count trigger on its
 // own step, keyed "<questId>-<stepId>-t<triggerIndex>" (quests.CountKey,
 // #375 phase 3b slice 4).
@@ -406,6 +424,25 @@ func retiredQuestSteps(progress map[int]string, retired map[string]bool) []strin
 	return out
 }
 
+// DropRetiredQuests clears every quest in retired (quests.RetiredQuests:
+// retired whole in the step-id manifest) from progress and the shelf, through
+// ClearQuestToken, which also moves the focus off it. It returns the ids it
+// dropped, sorted. Idempotent, so it runs on every load with no marker.
+func (c *Character) DropRetiredQuests(retired map[int]bool) []int {
+	var out []int
+	for qid := range retired {
+		_, held := c.QuestProgress[qid]
+		_, shelved := c.ShelvedQuests[qid]
+		if !held && !shelved {
+			continue
+		}
+		c.ClearQuestToken(quests.PartsToToken(qid, `start`))
+		out = append(out, qid)
+	}
+	sort.Ints(out)
+	return out
+}
+
 // miscDataToUint64 coerces a MiscData value to uint64. MiscData stores any,
 // and an integer written as uint64 may return from YAML reload as int,
 // int64, or float64 — handle all of them; anything else yields 0.
@@ -460,7 +497,7 @@ func (c *Character) GetFocusQuestId() int {
 	// that sits at "end": completing a quest sets LastQuestId to it, so without
 	// this a just-finished quest would stay the focus (hint/panel/marker) even
 	// when the player has moved on to another active quest — e.g. after the
-	// Two Roads bridge completes into Find Your Footing.
+	// Toke's Road hand-in leads into Find Your Footing.
 	if c.LastQuestId != 0 {
 		if step, ok := prog[c.LastQuestId]; ok && step != "end" {
 			return c.LastQuestId

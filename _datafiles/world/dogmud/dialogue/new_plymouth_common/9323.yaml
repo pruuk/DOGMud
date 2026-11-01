@@ -184,7 +184,7 @@ topics:
     now for a short while. The slow way is quieter but it takes longer, and some
     people do not have longer. If you want the purge, drink it when you are ready.
     I won't ask how bad it is.
-  hints: Ysolde hands you a sealed clay cup. When to drink it is your choice.
+  hints: Ysolde hands you a sealed clay cup. When you are ready, type quaff purge.
   itemExcluded: 40109
   givesItem: 40109
   moodChange: cautious

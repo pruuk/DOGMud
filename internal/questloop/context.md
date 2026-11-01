@@ -113,8 +113,9 @@ it needs the trigger engine; this package only exports what it reads
   them. In `Validate` an external grant is a way in: a step only a tree
   grants is not `one-action ...:none` (Hadwen's `30-rite`). It is neither an
   offer nor a hand-in, so a grant of a start or end token is a `start` or
-  `end` finding (room 6467's tree grants `30-start` and `28-end`; Hadwen's
-  grants `30-end`). One-action's `:prev`, `:cond`, `:seq` and `:double` are
+  `end` finding (before #375 phase 7, room 6467's tree granted `30-start`
+  and `28-end`, and Hadwen's `30-end`; now his tree grants `30-rite` and
+  `30-woken`, mid steps). One-action's `:prev`, `:cond`, `:seq` and `:double` are
   not checked for it: it has no trigger conditions, and its gate (the topic
   that fires the tree, or getting the item) is the walk's to check. The
   rule-by-rule choice is commented on `way.external` in `grants.go`.

@@ -58,6 +58,25 @@ func TestQuestCompletionToOpinion_CompletionToken_NoPanic(t *testing.T) {
 	questCompletionToOpinion(events.Quest{UserId: 1, QuestToken: "5-end"})
 }
 
+// A MarkerOnly event only refreshes markers. The veteran start's 30-end is one:
+// the character was marked Opened without doing the rite, so no giver may be
+// credited for it. Only a real grant reaches the giver lookup.
+func TestQuestCompletionToOpinion_MarkerOnlyIsNotACompletion(t *testing.T) {
+	calls := 0
+	orig := questGiverLookup
+	questGiverLookup = func(string) int { calls++; return 0 }
+	t.Cleanup(func() { questGiverLookup = orig })
+
+	questCompletionToOpinion(events.Quest{UserId: 1, QuestToken: "30-end", MarkerOnly: true})
+	if calls != 0 {
+		t.Fatalf("a MarkerOnly 30-end reached the giver lookup %d time(s)", calls)
+	}
+	questCompletionToOpinion(events.Quest{UserId: 1, QuestToken: "30-end"})
+	if calls != 1 {
+		t.Fatalf("a real 30-end reached the giver lookup %d time(s), want 1", calls)
+	}
+}
+
 // TestResolveQuestGiverMobId_Stub confirms the stub always returns 0.
 // Remove / replace this test when GiverMobTemplateId is wired.
 func TestResolveQuestGiverMobId_Stub(t *testing.T) {

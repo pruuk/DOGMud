@@ -208,8 +208,8 @@ func SetOfferIndexForTest(byQuest map[int][]int) func()
   when it is resumable (and not started automatically, which
   `usercommands.Abandonable` checks; owner ruling 6). `Unresumable()` lists quests offered but not
   resumable; `offerIndexDoor` logs it as `mudlog.Info` at boot (by design,
-  not a fault). Shipped 2026-10-28: 13 (excludes `12-start`), 88 (excludes
-  `31-start`, `29-end`), 89 (excludes `29-end`).
+  not a fault). Shipped after #375 phase 7 plan 2: 13 (excludes `12-start`), 88 (excludes
+  `31-start`). Quest 29 is retired, so 89's offer now resumes.
   `SetOfferIndexForTest` swaps the index and returns a restore func; every
   offer it sets resumes.
 - `PlayerState.Shelved(questId)` reports a set-aside quest (nil: never). In

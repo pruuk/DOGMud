@@ -265,26 +265,45 @@ func (c *Character) MigrateRecipeDisciplineShuffle() {
 // characters so the hub movement gate (room 5200, gated on 30-end) never
 // traps them. Run-once via MiscData.
 //
-// Guard logic — grant only when ALL of these hold:
+// Guard logic: grant only when ALL of these hold:
 //   - no prior run (MiscData key absent)
-//   - QuestProgress is non-empty (veteran has done something)
+//   - QuestProgress holds a quest other than the pre-rite ones (a veteran
+//     has done something)
 //   - quest 30 has no entry at all (not mid-rite, not already done)
 //
-// A brand-new character has empty QuestProgress → skipped, so it still
-// does the Awakening rite. A character mid-rite (30:"start") has a q30
-// entry → skipped, so it is not short-circuited. Errs toward NOT
-// granting: a stray veteran is merely redirected by the gate NPC; a
-// skipped rite would be worse.
+// A brand-new character has no such progress, so it is skipped and still does
+// the Awakening rite. That has to cover a character's first session as well as
+// its first moment: CreateUser does not run LoadUser, so a new character has no
+// marker until it logs back in, and since #375 phase 7 nothing grants quest 30
+// by itself, so finishing Dewey and logging out at the pool saves
+// {21:start, 28:end} with no q30 entry. A marker set at creation would not
+// cover alts, which are created without CreateUser, so the rule reads the
+// progress itself. The marker is set either way.
+//
+// A character mid-rite (30:"start") has a q30 entry, so it is skipped and not
+// short-circuited. Errs toward NOT granting: a stray veteran is merely
+// redirected by the gate NPC; a skipped rite would be worse.
 func (c *Character) MigrateNewbieAwakening() {
 	const migrationKey = "migration-newbie-awakening-done"
 	if c.GetMiscData(migrationKey) != nil {
 		return
 	}
+	// The only quests a character can hold before the rite. Holding them says
+	// nothing about being a veteran.
+	preRiteQuests := map[int]struct{}{
+		21: {}, // The secret Newcomer's Path marker, granted as the "new to MUDs" route starts.
+		28: {}, // Waking to Gaius, Dewey's tutorial, which ends by moving the player to the pool.
+	}
 	if c.QuestProgress == nil {
 		c.QuestProgress = make(map[int]string)
 	}
-	if _, hasQ30 := c.QuestProgress[30]; !hasQ30 && len(c.QuestProgress) > 0 {
-		c.QuestProgress[30] = "end"
+	if _, hasQ30 := c.QuestProgress[awakeningQuestId]; !hasQ30 {
+		for questId := range c.QuestProgress {
+			if _, preRite := preRiteQuests[questId]; !preRite {
+				c.MarkOpened()
+				break
+			}
+		}
 	}
 	c.SetMiscData(migrationKey, "1")
 }

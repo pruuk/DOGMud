@@ -147,47 +147,70 @@ steps:
     destination: anywhere
     description: "You loosed a spike of conviction. Belief is a weapon here."
     hint: "A trip knocks your foe to the ground. Once your spike has rested,
-      type trip. For more, type help trip."
+      type trip, even if the effigy is down already. For more, type help
+      trip."
   - id: tripped
-    destination: anywhere
+    # destination inferred from the flee trigger: The Landing, north of the ring.
     description: "You put the effigy down: voice, belief, and body, all
       yours."
     hint: "This fight cannot be won. Flee breaks you out of a fight and
       runs you to safety. Type flee. For more, type help flee."
   - id: fled
-    # destination inferred from triggers (#375 p4); was: no single resolved destination; Phase 2 review
+    # Dewey takes the hand-in (#375 phase 7). He stands in every antechamber
+    # room, and the map follows the copy the player can see.
+    destination:
+      mob: 9491
     description: "You broke away. Running is how you live to win the next one."
-    hint: "Dewey is waiting at the Landing for one last word. Type talk
-      dewey."
+    hint: "Dewey is waiting at the Landing to send you on. Type talk dewey,
+      then choose Waking to Gaius."
   - id: end
     description: "Dewey sent you through to the world. Gaius is waiting."
 
 rewards:
   actor: >-
-    Dewey's voice stays with you a moment after the grey lets go: steady,
-    warm, already a little proud. You are awake now, and the world is real.
+    Dewey's hand is steady on your shoulder, and his voice is warm, already
+    a little proud. You are awake now, and the world is real.
 
 triggers:
   # ── 6258 The Threshold: greet, hint, look, look guide, north ──
+  # The greeting grants nothing (#375 phase 7): quest 28 starts at Dewey's
+  # offer topic waking_offer (dialogue/newcomer_antechamber/9491.yaml). A
+  # newcomer has never played a MUD (R24, owner 2026-10-21), so Dewey says
+  # what a command and a quest are, and teaches talk, before the first menu.
+  # HandleJoin raises room_enter on every login too; the missing gate keeps
+  # the greeting to a player who has not taken the quest.
   - event: room_enter
     room: 6258
     conditions:
       missing: [28-start, 28-end]
     actions:
-      - grant: 28-start
       - npc_say:
           mob: 9491
           lines:
-            # A newcomer has never played a MUD (R24, owner 2026-10-21): say
-            # what a quest and a command are before the first instruction.
             - {delay: 1, text: "There you are, waking up at last. Easy, now.
                 Nothing here can harm you. I am Dewey, your guide."}
-            - {delay: 2, text: "You have a quest now. A quest is a task, done
-                one step at a time. This one teaches you to live here."}
             - {delay: 2, text: "You act here by typing. The first word you type
                 is the command. Type it, press Enter, and the world answers."}
-            - {delay: 2, text: "Your first command is hint. It names your next
-                step, any time you are not sure. Type hint."}
+            - {delay: 2, text: "See the [!] in front of my name? It means I
+                have a quest for you. A quest is a task, done one step at a
+                time."}
+            - {delay: 2, text: "Talk starts a conversation with someone, and
+                you choose what to say from a list. Type talk dewey."}
+
+  # Accepting Dewey's offer grants 28-start, which raises quest_granted, and
+  # Dewey names the first command. It grants nothing; the missing gate keeps
+  # it to a fresh start, so a resume past the first step stays quiet.
+  - event: quest_granted
+    quest_token: 28-start
+    conditions:
+      missing: [28-hinted]
+    actions:
+      - npc_say:
+          mob: 9491
+          lines:
+            - {delay: 1, text: "Good. Your quest has begun. Your first command
+                is hint. It names your next step, any time you are not sure.
+                Type hint."}
 
   - event: command_issued
     command: hint
@@ -202,30 +225,13 @@ triggers:
             - {delay: 0, text: "Good. Now take stock of where you stand. Look
                 shows you the room around you. Type look."}
 
-  # A player who types look guide before a bare look has done both lessons.
-  # First, so the bare-look trigger below (which also matches look guide)
-  # does not say "Type look guide" in the same command (#495).
-  #
   # The room-noun lesson (owner ruling 2026-10-17): "guide" is a room noun
-  # of 6258 and its description names it, so it shows highlighted.
-  - event: command_issued
-    command: look
-    noun: guide
-    conditions:
-      has: [28-hinted]
-      missing: [28-looked]
-    actions:
-      - grant: 28-looked
-      - grant: 28-examined
-      - npc_say:
-          mob: 9491
-          lines:
-            - {delay: 0, text: "That's the whole trick of this world. The
-                ones who read what is in front of them live longest. Any
-                word shown in a different color is worth a look, and a close
-                look often shows you more than the room did. Try the stone
-                under your feet. Type look stone."}
-
+  # of 6258 and its description names it, so it shows highlighted. One
+  # action per step (#375 phase 7): a player who types look guide before a
+  # bare look is taught look first by the bare-look trigger below (which
+  # matches look guide too), then looks at the guide again. This trigger
+  # comes first, so the bare look's grant cannot fire it in the same
+  # command (#495).
   - event: command_issued
     command: look
     noun: guide
@@ -486,10 +492,10 @@ triggers:
       - npc_say:
           mob: 9491
           lines:
-            - {delay: 0, text: "Ha, and the world will answer, out there. Talk
-                starts a conversation with one person. A numbered list of
-                questions comes up, and you type a number to ask one. Type
-                talk dewey."}
+            - {delay: 0, text: "Ha, and the world will answer, out there. You
+                know talk already. This time, ask me a question. A numbered
+                list comes up, and you type a number to ask one. Type talk
+                dewey."}
 
   # asked: hearing Dewey's "asked_28" topic (moved from the topic's
   # grantsQuest, #375 phase 3b).
@@ -623,8 +629,9 @@ triggers:
                 gather. Watch it build."}
             - {delay: 8, whisper: true, text: "There. A spell is a big move
                 too, so it rests the way your shout did. Wait for it."}
-            - {delay: 9, whisper: true, text: "Rested. Now knock the effigy
-                down. A trip sweeps a foe off its feet. Type trip."}
+            - {delay: 9, whisper: true, text: "Rested. Now your body. A trip
+                sweeps a foe off its feet. If the effigy is down already, trip
+                it anyway, and it counts. Type trip."}
 
   # A trip that is carried out, landed or not, counts. So does the refusal
   # "already on the ground": an automatic SWEEP often drops the effigy first,
@@ -639,9 +646,9 @@ triggers:
       - npc_say:
           mob: 9491
           lines:
-            - {delay: 1, whisper: true, text: "That is the body's way. When a
-                trip lands, the foe goes down wearing a condition of its
-                own. Voice, belief, and body: all yours."}
+            - {delay: 1, whisper: true, text: "That is the body's way. A foe on
+                the ground wears a condition of its own until it stands.
+                Voice, belief, and body: all yours."}
             - {delay: 2, whisper: true, text: "Out here you grow by doing.
                 Belief deepens your Willpower, and blades sharpen your
                 Dexterity. You earn it. You never pick it."}
@@ -653,9 +660,17 @@ triggers:
   # Fires once the flee has worked and the player has arrived in 6467, where
   # Dewey is waiting (NewRound_DoCombat_helpers.go notifyFleeSucceeded). A
   # refused or blocked flee does not count, and Dewey's line no longer
-  # prints before "You flee to the north exit!".
+  # prints before "You flee to the north exit!". A flee into any other room
+  # does not count either.
+  #
+  # A player can flee at any lesson of the ring, and 6467 has no way back, so
+  # a flee before the trip counts too. That one is The Landing's tree
+  # (behaviors/rooms/newcomer_antechamber/6467.yaml), which says the same
+  # line: a trigger may not reach back past tripped (the one-action rule and
+  # the walk's skip probe).
   - event: command
     command: flee
+    room: 6467
     conditions:
       has: [28-tripped]
       missing: [28-fled]
@@ -667,8 +682,11 @@ triggers:
             - {delay: 0, text: "Running isn't losing. It's how you live to
                 win the next one."}
 
-  # ── 6467 The Landing: the `talk dewey` handoff (farewell + teleport to the
-  #    Awakening Pool + grant of quest 30 + completion of 28-end) is handled by
-  #    the room's behavior tree, which INTERCEPTS the talk command so Dewey's
-  #    generic dialogue hint does not also fire. See
-  #    behaviors/rooms/newcomer_antechamber/6467.yaml.
+  # ── 6467 The Landing: quest 28 ends at Dewey's hand-in topic `ready`
+  #    (dialogue/newcomer_antechamber/9491.yaml), which grants 28-end. His
+  #    tree (behaviors/newcomer_antechamber/9491-dewey.yaml) plays the
+  #    farewell and moves the player to the Awakening Pool, where Cleric
+  #    Hadwen offers quest 30. The room's tree
+  #    (behaviors/rooms/newcomer_antechamber/6467.yaml) prompts, blocks a
+  #    walk, and grants 28-fled to a player who holds the quest here without
+  #    it, so no one is stranded (#375 phase 7).

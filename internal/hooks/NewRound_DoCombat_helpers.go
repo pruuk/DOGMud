@@ -1038,6 +1038,11 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 		newRoom := rooms.LoadRoom(out.ExitRoomId)
 		usercommands.Look(``, user, newRoom, events.CmdSecretly)
 
+		// The flee's own event goes first, so a room_enter tree reads the
+		// quest step the flee just earned (The Landing grants 28-fled only to
+		// a player the flee trigger did not reach).
+		notifyFleeSucceeded(user, out.ExitRoomId)
+
 		// Fire the room behavior tree's room_enter event for the destination,
 		// exactly as walked movement (go.go) does. Without this, fleeing INTO a
 		// room silently skips its on-entry effects — e.g. the newcomer tutorial's
@@ -1050,8 +1055,6 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 			UserId:    user.UserId,
 			RoomId:    out.ExitRoomId,
 		})
-
-		notifyFleeSucceeded(user, out.ExitRoomId)
 	}
 
 	return true

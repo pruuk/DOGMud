@@ -1,26 +1,25 @@
-# Cleric Hadwen (9100) — rite-keeper at the Awakening Pool (room 5200).
+# Cleric Hadwen (9100), rite-keeper at the Awakening Pool (room 5200).
 #
-# Owns the Awakening Rite beat of quest 30:
-#   - dialogue (dialogue/pothole_coulee/9100.yaml) grants 30-start
+# Owns the Awakening Rite beat of quest 30 (#375 phase 7 token flow):
+#   - his dialogue (dialogue/pothole_coulee/9100.yaml) grants 30-start from
+#     the offer rite_offer, and 30-end from the hand-in rite_report;
 #   - this tree answers the player choosing to begin the rite (talk hadwen,
 #     topic `begin`, #375 R17; the topic's text is empty, so this tree
-#     speaks every line) while 30-start is held,
-#     plays the paced rite sequence, and fires 30-end (the "Opened" token).
-#     Blank-slate Awakening: the rite grants NO starter mutation — mutations
-#     are earned afterward through use-based drift.
-# Single-shot: 30-end is granted at the CLOSE of the rite (a delayed
-# action), so for the ~41 s the rite runs the asker still lacks 30-end
-# and token gating alone would let a second begin queue a
-# second rite (2026-10-17 audit S6). The `rite_running` state flag closes
-# that window, the way The Landing's tree holds `leaving`
-# (behaviors/rooms/newcomer_antechamber/6467.yaml): set instantly when the
-# rite starts, checked by the rite and by the mid-rite answer below. 6467
-# never clears its flag; Hadwen serves every newcomer, so his clear is a
+#     speaks every line) while 30-start is held, grants 30-rite as the rite
+#     starts, plays the paced rite sequence, and grants 30-woken at its
+#     close. Blank-slate Awakening: the rite grants NO starter mutation;
+#     mutations are earned afterward through use-based drift.
+# Single-shot: 30-woken is granted at the CLOSE of the rite (a delayed
+# action), so for the ~41 s the rite runs the asker still lacks 30-woken,
+# and token gating alone would let a second begin queue a second rite
+# (2026-10-17 audit S6). The `rite_running` state flag closes that window:
+# set instantly when the rite starts, checked by the rite and by the
+# mid-rite answer below. Hadwen serves every newcomer, so his clear is a
 # delayed action queued with the rite itself. Queued closures run whether
 # or not the asker is still online, and BehaviorState is not saved
 # (mobs.Mob.BTreeState is yaml:"-"), so a logout or a reboot mid-rite
 # cannot leave the flag stuck. After the rite, the begin topic is hidden by
-# its 30-end gate, so the player cannot choose it again.
+# its 30-rite gate and rite_wait by its 30-woken gate.
 # The flag is PER PLAYER (`per_player: true`, BehaviorState key
 # "rite_running:<user id>"): the 2026-10-17 newbie-duo playtest had two
 # newcomers ask at once, and a mob-wide flag hushed the second one and left
@@ -68,7 +67,7 @@ tree:
           quest: "30-start"
         - type: condition
           check: player_missing_quest
-          quest: "30-end"
+          quest: "30-woken"
         - type: condition
           check: state_equals
           key: rite_running
@@ -79,10 +78,19 @@ tree:
           key: rite_running
           per_player: true
           value: "1"
+        # The mob_idle line for a stalled rite cannot read the per-player flag
+        # (mob_idle has no player), so it reads this one. Two rites overlapping
+        # clear it at the first close, and that only lets the line speak a few
+        # seconds early. Not saved, and cleared by a delayed action, so it
+        # cannot stick.
+        - type: action
+          do: set_state
+          key: a_rite_is_running
+          value: "1"
         # The rite marks itself on the player at once (#375 phase 1
         # playtest): Hadwen's dialogue cannot read rite_running, so it gates
         # its mid-rite opener and the rite_wait topic on 30-rite, and hides
-        # begin. 30-end at the close supersedes it.
+        # begin. 30-woken at the close supersedes it.
         - type: action
           do: grant_quest
           quest: "30-rite"
@@ -126,7 +134,7 @@ tree:
           to_actor: true
           text: >-
             Most worlds let you stay what you arrived as. This one will
-            not. The body answers effort, conflict, fear, wanting -- it
+            not. The body answers effort, conflict, fear and wanting. It
             changes. We call the changes mutations, and none of them are
             a punishment, whatever they look like at first.
           delay: 9.5
@@ -237,72 +245,151 @@ tree:
           do: say
           to_actor: true
           text: >-
-            Talk to me again when you are ready, with
-            <ansi fg="command">talk hadwen</ansi>, and I will set you
-            on either road, or both. The coulee will still be here
-            either way.
+            When you are ready, type
+            <ansi fg="command">talk hadwen</ansi> and choose The
+            Awakening to tell me the rite is done. Then I will set you
+            on your road.
           delay: 40.0
         # Blank-slate Awakening: no starter mutation is granted during the rite.
         # The pool opens the capacity; every mutation is earned afterward through
-        # use-based drift (see the mutation-graph acquisition design). The quest
-        # completion is the FINAL beat, after the last send-off line at 40.0 --
-        # otherwise the "quest complete" banner fires at t=0 and spoils the rite.
-        # This action honors the static `delay` param (behaviortree/actions.go).
+        # use-based drift (see the mutation-graph acquisition design). The rite's
+        # close is the FINAL beat, after the last line at 40.0, so the step
+        # lands as the rite ends. 30-end, with its reward line, comes from his
+        # hand-in topic rite_report when the player tells him it is done (#375
+        # phase 7). This action honors the static `delay` param
+        # (behaviortree/actions.go).
         - type: action
           do: grant_quest
-          quest: "30-end"
+          quest: "30-woken"
           delay: 40.5
-        # No quest 29 grant here any more (#375 R17): the two roads are the
-        # road_toke and road_esk offer topics in his dialogue, which the
-        # closing line above sends the player back to with talk hadwen.
         # The rite is over: clear the flag so the next newcomer can begin.
-        # Queued after the 30-end grant (the queue runs in order), so by the
-        # time a second begin can pass the flag the asker already holds 30-end.
+        # Queued after the 30-woken grant (the queue runs in order), so by the
+        # time a second begin can pass the flag the asker already holds
+        # 30-woken.
         - type: action
           do: set_state
           key: rite_running
           per_player: true
           value: ""
           delay: 41.0
+        - type: action
+          do: set_state
+          key: a_rite_is_running
+          value: ""
+          delay: 41.0
 
-    # ── GREETING: an un-Opened player arrives (incl. FIRST SPAWN —
-    #    HandleJoin emits player_enter once per brand-new character).
-    #    Gated on missing 30-end, not 30-start: the quest engine's
-    #    room_enter auto-grant runs before this fires, so new arrivals
-    #    already hold 30-start. ──
+    # ── GREETING: a player who has not finished the rite arrives (the
+    #    mud-vet start fires player_enter here, internal/usercommands/start.go;
+    #    a walk-in does too). Since #375 phase 7 nothing grants quest 30 by
+    #    itself, so the line names the offer. Dewey's send-off names it for
+    #    the newcomer route, whose move_player fires no player_enter.
+    #    Each state names a line on its own menu (dialogue 9100.yaml): The
+    #    Awakening is gone once 30-start is held. The hand-in at 30-woken has
+    #    the rite's closing line and the pool's gate to name it. ──
     - type: sequence
       event: player_enter
       children:
         - type: condition
           check: player_missing_quest
-          quest: "30-end"
+          quest: "30-start"
         - type: action
           do: say
           text: >-
             New to Gaius? Welcome. This is Pothole Coulee, and I keep
             its pool, which is waiting for you. Type
-            <ansi fg="command">talk hadwen</ansi>, then choose what
-            happens in the rite if you want the why of it, or choose
-            to begin the rite when you are ready.
+            <ansi fg="command">talk hadwen</ansi> and choose The
+            Awakening, the line marked [!], when you are ready.
+          delay: 2.0
+    - type: sequence
+      event: player_enter
+      children:
+        - type: condition
+          check: player_has_quest
+          quest: "30-start"
+        - type: condition
+          check: player_missing_quest
+          quest: "30-rite"
+        - type: action
+          do: say
+          to_actor: true
+          text: >-
+            You have asked, and the pool is ready when you are. Type
+            <ansi fg="command">talk hadwen</ansi> and choose I'm ready.
+            Let us begin the rite.
+          delay: 2.0
+    - type: sequence
+      event: player_enter
+      children:
+        - type: condition
+          check: player_has_quest
+          quest: "30-rite"
+        - type: condition
+          check: player_missing_quest
+          quest: "30-woken"
+        - type: action
+          do: say
+          to_actor: true
+          text: >-
+            The rite is under way, so stay by the water. If nothing is
+            happening, type <ansi fg="command">talk hadwen</ansi> and
+            choose Is the rite still going?
           delay: 2.0
 
     # ── AMBIENT BACKSTOP: every so often, repeat the invitation aloud.
-    #    Gated on an un-Opened player actually being present (custom
-    #    condition — mob_idle has no triggering player, so plain
-    #    player_missing_quest can't apply here). Opened players never
-    #    hear this again. ──
+    #    Gated on a player in that state actually being present (custom
+    #    condition: mob_idle has no triggering player, so plain
+    #    player_missing_quest can't apply here). The pool is shared, so the
+    #    `missing` param reads one player at a time, and the whole room hears
+    #    the line, so each says who it is for. Each state rolls its own dice:
+    #    one player waiting here cannot silence the line another needs. ──
     - type: sequence
       event: mob_idle
       children:
         - type: condition
           check: player_in_room_missing_quest
-          quest: "30-end"
+          quest: "30-start"
         - type: condition
           check: random_chance
           percent: 4
         - type: action
           do: say
           text: >-
-            If you are new to Gaius and not yet Opened, type
-            <ansi fg="command">talk hadwen</ansi> and choose to begin
-            the rite when you are ready. The pool is patient.
+            If you have not asked me for the rite yet, type
+            <ansi fg="command">talk hadwen</ansi> and choose The
+            Awakening, the line marked [!]. The pool is patient.
+    - type: sequence
+      event: mob_idle
+      children:
+        - type: condition
+          check: player_in_room_has_quest
+          quest: "30-start"
+          missing: "30-rite"
+        - type: condition
+          check: random_chance
+          percent: 4
+        - type: action
+          do: say
+          text: >-
+            If you have asked me for the rite, the pool is ready when
+            you are. Type <ansi fg="command">talk hadwen</ansi> and
+            choose I'm ready. Let us begin the rite.
+    - type: sequence
+      event: mob_idle
+      children:
+        - type: condition
+          check: player_in_room_has_quest
+          quest: "30-rite"
+          missing: "30-woken"
+        - type: condition
+          check: state_equals
+          key: a_rite_is_running
+          value: ""
+        - type: condition
+          check: random_chance
+          percent: 4
+        - type: action
+          do: say
+          text: >-
+            If your rite has begun and nothing is happening, type
+            <ansi fg="command">talk hadwen</ansi> and choose Is the rite
+            still going? The pool is patient.
