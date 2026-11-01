@@ -1,5 +1,31 @@
 # DOGMud Patch Notes
 
+## 2026-11-01: Pothole Coulee trails run teacher to teacher
+
+- Crier Toke starts the fighting, smithing, brewing and tracking trails.
+  Each trail leads you to one teacher, then a second, and then back to
+  Toke with the news. Each first job begins by talking to the teacher Toke
+  names, and each teacher sends you on to the next one.
+- Every job on these trails now ends by talking to the person who gave
+  it, the big fights and the repeat jobs included.
+- First Brew asks for two healer's roots, and every hint tells you to
+  type `buy 2 healer's root`.
+- A potion bandolier you wear now takes any potion or firebomb you get
+  from then on, and `quaff` draws the oldest potion first.
+- In Wade the Marsh, the firebomb only counts when the blast reaches a
+  creature.
+- The Hunt now asks you to eat the meal you cooked. Any food counts, and
+  Trader Onna sells trail rations.
+- Selling your first dagger to Smith Rusk is still fine. Talk to her
+  afterwards to finish First Heat.
+- Drillmaster Vorn explains grappling, shield bashes, kicks and how you
+  defend. Trader Onna explains appraise, offer, the identify spell and
+  how prices move. The crafters in town each name something you can
+  make at their station.
+- The enchanter in the Warder's Dugout is now Enchanter Daff.
+- Hunter Delk's scab-hide jerkin recipe can be sewn by anyone who earns
+  it by breaking the pack. It is not found any other way.
+
 ## 2026-11-01: A clearer start in Pothole Coulee
 
 - When you wake, Dewey offers your first quest, Waking to Gaius. Talk to
