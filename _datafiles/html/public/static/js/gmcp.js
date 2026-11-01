@@ -98,13 +98,13 @@ function craquelure(g, W, H, step, jit, rnd) {
         w  = (0.3 + rnd() * 0.4).toFixed(2),
         pp = a[0].toFixed(1) + "," + a[1].toFixed(1) + " " + mx.toFixed(1) + "," + my.toFixed(1) + " " + b[0].toFixed(1) + "," + b[1].toFixed(1);
     // dark groove + faint light lip just below-right for realism
-    g.appendChild(lEl("polyline", { points: pp, fill: "none", stroke: "#120a04", "stroke-width": w, opacity: "0.34", "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    g.appendChild(lEl("polyline", { points: pp, fill: "none", stroke: RoomGridSVG.LEATHER.crack, "stroke-width": w, opacity: "0.34", "stroke-linejoin": "round", "stroke-linecap": "round" }));
     if (rnd() < 0.5)
       g.appendChild(lEl("polyline", {
         points: (a[0] + 0.5).toFixed(1) + "," + (a[1] + 0.5).toFixed(1) + " " +
                 (mx + 0.5).toFixed(1) + "," + (my + 0.5).toFixed(1) + " " +
                 (b[0] + 0.5).toFixed(1) + "," + (b[1] + 0.5).toFixed(1),
-        fill: "none", stroke: "#caa86a", "stroke-width": "0.3", opacity: "0.10"
+        fill: "none", stroke: RoomGridSVG.LEATHER.crackLip, "stroke-width": "0.3", opacity: "0.10"
       }));
   }
   for (var iy2 = 0; iy2 <= ny; iy2++)
@@ -144,7 +144,7 @@ function drawLockedDoor(g, a, b, emboss) {
   var m = mid(a, b, 0.5);
   var d = (emboss != null) ? emboss : 0.6; // emboss offset
   // near half (player side) normal; far half (beyond the locked door) rust-red
-  g.appendChild(lEl("line", { x1: x1, y1: y1, x2: m[0], y2: m[1], stroke: "#9c8048", "stroke-width": 1.4, "stroke-dasharray": "3 3", opacity: "0.8" }));
+  g.appendChild(lEl("line", { x1: x1, y1: y1, x2: m[0], y2: m[1], stroke: RoomGridSVG.LEATHER.ink2, "stroke-width": 1.4, "stroke-dasharray": "3 3", opacity: "0.8" }));
   g.appendChild(lEl("line", { x1: m[0], y1: m[1], x2: x2, y2: y2, stroke: LEATHER_LOCK, "stroke-width": 1.4, "stroke-dasharray": "3 3", opacity: "0.9" }));
   // door silhouette (shadow, face, highlight)
   function dp(ox, oy) {
@@ -152,7 +152,7 @@ function drawLockedDoor(g, a, b, emboss) {
     return "M" + L + "," + bot + " L" + L + "," + sh + " Q" + L + "," + top + " " + cxx + "," + top + " Q" + Rt + "," + top + " " + Rt + "," + sh + " L" + Rt + "," + bot + " Z";
   }
   g.appendChild(lEl("path", { d: dp(d, d), fill: LEATHER_SH, opacity: "0.5" }));
-  g.appendChild(lEl("path", { d: dp(0, 0), fill: "#2a1d12", stroke: LEATHER_INK, "stroke-width": 1.1 }));
+  g.appendChild(lEl("path", { d: dp(0, 0), fill: RoomGridSVG.LEATHER.roomFill, stroke: LEATHER_INK, "stroke-width": 1.1 }));
   g.appendChild(lEl("path", { d: dp(-d, -d), fill: "none", stroke: LEATHER_HI, "stroke-width": 0.8, opacity: "0.5" }));
   g.appendChild(lEl("line", { x1: m[0], y1: m[1] - 4.4, x2: m[0], y2: m[1] + 4.8, stroke: LEATHER_INK, "stroke-width": 0.5, opacity: "0.55" })); // plank seam
   g.appendChild(lEl("circle", { cx: m[0] + 1.7, cy: m[1] + 0.4, r: 0.95, fill: LEATHER_LOCK }));                                                   // keyhole circle
@@ -701,7 +701,7 @@ class RoomGridSVG {
           g.appendChild(lEl('rect', { x: top.x * sp - lw / 2, y: ly - 8.5, width: lw, height: 11, rx: 2,
               fill: L.legendBg, opacity: '0.85', 'data-wash-label': '1' }));
           g.appendChild(lTxt({ x: top.x * sp, y: ly, 'text-anchor': 'middle',
-              'font-family': 'Georgia,serif', 'font-size': '9', 'font-style': 'italic', fill: L.title }, qm.label));
+              'font-family': L.font, 'font-size': '9', 'font-style': 'italic', fill: L.title }, qm.label));
       }
   }
 
@@ -726,7 +726,7 @@ class RoomGridSVG {
       const w = Math.min(200, 12 + text.length * 3.9);
       ov.appendChild(lEl('rect', { x: 160 - w / 2, y: 49, width: w, height: 13, rx: 3, fill: L.legendBg,
           stroke: L.questGold, 'stroke-width': 0.8, opacity: '0.92', 'data-quest-banner': '1' }));
-      ov.appendChild(lTxt({ x: 160, y: 58.2, 'text-anchor': 'middle', 'font-family': 'Georgia,serif',
+      ov.appendChild(lTxt({ x: 160, y: 58.2, 'text-anchor': 'middle', 'font-family': L.font,
           'font-size': '7.5', 'font-style': 'italic', fill: L.title, 'data-quest-banner': '1' }, text));
   }
 
@@ -866,7 +866,7 @@ class RoomGridSVG {
       // Radial gradient (leather background)
       const bgId = "lgbg" + iid;
       const bg = lEl("radialGradient", { id: bgId, cx: "45%", cy: "36%", r: "82%" });
-      [["0%", "#43301d"], ["55%", "#2c1d11"], ["100%", "#170e07"]].forEach(function(s) {
+      [["0%", L.hide[0]], ["55%", L.hide[1]], ["100%", L.hide[2]]].forEach(function(s) {
           bg.appendChild(lEl("stop", { offset: s[0], "stop-color": s[1] }));
       });
       defs.appendChild(bg);
@@ -881,15 +881,15 @@ class RoomGridSVG {
       // Vignette gradient
       const vigId = "lgvig" + iid;
       const vg = lEl("radialGradient", { id: vigId, cx: "50%", cy: "48%", r: "60%" });
-      vg.appendChild(lEl("stop", { offset: "48%", "stop-color": "#000", "stop-opacity": "0" }));
-      vg.appendChild(lEl("stop", { offset: "100%", "stop-color": "#000", "stop-opacity": L.vig.toFixed(2) }));
+      vg.appendChild(lEl("stop", { offset: "48%", "stop-color": L.vignette, "stop-opacity": "0" }));
+      vg.appendChild(lEl("stop", { offset: "100%", "stop-color": L.vignette, "stop-opacity": L.vig.toFixed(2) }));
       defs.appendChild(vg);
 
       // Sheen gradient
       const sheenId = "lgsheen" + iid;
       const shg = lEl("radialGradient", { id: sheenId, cx: "28%", cy: "20%", r: "55%" });
-      shg.appendChild(lEl("stop", { offset: "0%", "stop-color": "#fff4d8", "stop-opacity": "0.09" }));
-      shg.appendChild(lEl("stop", { offset: "100%", "stop-color": "#fff4d8", "stop-opacity": "0" }));
+      shg.appendChild(lEl("stop", { offset: "0%", "stop-color": L.sheen, "stop-opacity": "0.09" }));
+      shg.appendChild(lEl("stop", { offset: "100%", "stop-color": L.sheen, "stop-opacity": "0" }));
       defs.appendChild(shg);
 
       // Hide clipPath
@@ -901,7 +901,7 @@ class RoomGridSVG {
 
       // Quest brass radial gradient (destination marker ring / pin fill).
       const qbrass = lEl("radialGradient", { id: questBrassId, cx: "34%", cy: "26%", r: "70%" });
-      [["0%", "#f4dd92"], ["46%", "#cb9f42"], ["100%", "#8a6620"]].forEach(function(s) {
+      [["0%", L.brass[0]], ["46%", L.brass[1]], ["100%", L.brass[2]]].forEach(function(s) {
           qbrass.appendChild(lEl("stop", { offset: s[0], "stop-color": s[1] }));
       });
       defs.appendChild(qbrass);
@@ -911,14 +911,14 @@ class RoomGridSVG {
           id: questHeadId, markerWidth: 7, markerHeight: 7, refX: 5.2, refY: 3,
           orient: "auto", markerUnits: "strokeWidth", viewBox: "0 0 6 6"
       });
-      qhead.appendChild(lEl("path", { d: "M0,0.4 L6,3 L0,5.6 L1.7,3 Z", fill: "#e8b84a" }));
+      qhead.appendChild(lEl("path", { d: "M0,0.4 L6,3 L0,5.6 L1.7,3 Z", fill: L.questGold }));
       defs.appendChild(qhead);
 
       g.appendChild(defs);
 
       // ── Hide background ──────────────────────────────────────────────
       g.appendChild(lEl("path", { d: hd, fill: "url(#" + bgId + ")" }));
-      g.appendChild(lEl("path", { d: hd, fill: "none", stroke: "#0e0703", "stroke-width": 2.4, "stroke-linejoin": "round", opacity: "0.9" }));
+      g.appendChild(lEl("path", { d: hd, fill: "none", stroke: L.rim, "stroke-width": 2.4, "stroke-linejoin": "round", opacity: "0.9" }));
 
       // ── Clipped texture group (grain + sheen + craquelure) ───────────
       const tex = lEl("g", { "clip-path": "url(#" + clipId + ")" });
@@ -948,12 +948,12 @@ class RoomGridSVG {
 
       // ── Title + subtitle ─────────────────────────────────────────────
       embText(g, W / 2, 36, {
-          "text-anchor": "middle", "font-family": "Georgia,serif",
+          "text-anchor": "middle", "font-family": L.font,
           "font-size": 13, "font-style": "italic", "font-weight": "bold"
       }, String(zone), L.title, d);
       g.appendChild(lTxt({
           x: W / 2, y: 46, "text-anchor": "middle",
-          "font-family": "Georgia,serif", "font-size": 8, fill: L.ink
+          "font-family": L.font, "font-size": 8, fill: L.ink
       }, "~ Level " + level + " ~"));
 
       // ── Embossed compass rose (top-right corner, floats atop rooms) ────
@@ -964,7 +964,7 @@ class RoomGridSVG {
           embLine(ov, ccx, ccy, ccx + dz[0] * Rr, ccy + dz[1] * Rr, L.ink, 1.4, 1, d * 0.6);
       });
       embText(ov, ccx, ccy - Rr - 2, {
-          "text-anchor": "middle", "font-family": "Georgia,serif",
+          "text-anchor": "middle", "font-family": L.font,
           "font-size": 6.5, "font-weight": "bold"
       }, "N", L.ink, d * 0.5);
 
@@ -974,7 +974,7 @@ class RoomGridSVG {
       ov.appendChild(lEl("rect", { x: lx, y: ly, width: lw, height: lh, rx: 3, fill: L.legendBg, stroke: L.ink, "stroke-width": 1, opacity: "0.92" }));
       ov.appendChild(lEl("rect", { x: lx + 2.5, y: ly + 2.5, width: lw - 5, height: lh - 5, rx: 2, fill: "none", stroke: L.ink, "stroke-width": 0.4 }));
       embText(ov, lx + lw / 2, ly + 11, {
-          "text-anchor": "middle", "font-family": "Georgia,serif",
+          "text-anchor": "middle", "font-family": L.font,
           "font-size": 8, "font-weight": "bold", "font-style": "italic"
       }, "Legend", L.label, d * 0.5);
 
@@ -1007,9 +1007,9 @@ class RoomGridSVG {
           } else {
               // Road sample line
               ov.appendChild(lEl("line", { x1: sxc - 5, y1: yy - 2, x2: sxc + 5, y2: yy - 2, stroke: L.road, "stroke-width": 2.6 }));
-              ov.appendChild(lEl("line", { x1: sxc - 5, y1: yy - 2, x2: sxc + 5, y2: yy - 2, stroke: "#241810", "stroke-width": 0.6, "stroke-dasharray": "1 3" }));
+              ov.appendChild(lEl("line", { x1: sxc - 5, y1: yy - 2, x2: sxc + 5, y2: yy - 2, stroke: L.legendBg, "stroke-width": 0.6, "stroke-dasharray": "1 3" }));
           }
-          ov.appendChild(lTxt({ x: lx + 22, y: yy + 1, "font-family": "Georgia,serif", "font-size": 6.6, fill: L.label }, rw[1]));
+          ov.appendChild(lTxt({ x: lx + 22, y: yy + 1, "font-family": L.font, "font-size": 6.6, fill: L.label }, rw[1]));
       });
 
       // ── Vignette (drawn last, on top, clipped to hide shape) ────────
@@ -1040,22 +1040,22 @@ class RoomGridSVG {
 
       if (isCurrent) {
           // Whisper warm glow
-          g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 13, fill: "#e8c98a", opacity: "0.07" }));
+          g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 13, fill: L.glow, opacity: "0.07" }));
           // Outer emphasis ring
           embCirc(g, cx, cy, 10, L.ink, "none", 0.7, d * 1.3);
           // Raised token (deep emboss, lighter face)
-          embCirc(g, cx, cy, 7.5, L.ink, "#3a2a18", 1.5, d * 2.4);
+          embCirc(g, cx, cy, 7.5, L.ink, L.roomEdge, 1.5, d * 2.4);
           // Italic name label beneath
           g.appendChild(lTxt({
               x: cx, y: cy + 20,
-              "text-anchor": "middle", "font-family": "Georgia,serif",
+              "text-anchor": "middle", "font-family": L.font,
               "font-size": 8, "font-style": "italic", fill: L.label
           }, room.name || ""));
       } else if (svc) {
           embCirc(g, cx, cy, 7, L.ink, L.roomFill, 1.3, d * 0.7);
           g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 9.5, fill: "none", stroke: L.ink, "stroke-width": 0.8 }));
           embText(g, cx, cy + 3.2, {
-              "text-anchor": "middle", "font-family": "Georgia,serif",
+              "text-anchor": "middle", "font-family": L.font,
               "font-size": 9, "font-weight": "bold"
           }, svc.glyph, L.ink, d * 0.6);
       } else {
@@ -1079,7 +1079,7 @@ class RoomGridSVG {
           // Emboss shadow
           g.appendChild(lEl("circle", { cx: mx + 0.5, cy: my + 0.5, r: 3.4, fill: LEATHER_SH, opacity: "0.5" }));
           // Figure silhouette
-          g.appendChild(lEl("circle", { cx: mx, cy: my, r: 3.4, fill: "#1c2e2a", stroke: L.partyDk, "stroke-width": 0.6 }));
+          g.appendChild(lEl("circle", { cx: mx, cy: my, r: 3.4, fill: L.partyFill, stroke: L.partyDk, "stroke-width": 0.6 }));
           g.appendChild(lEl("circle", { cx: mx, cy: my - 1.1, r: 1.25, fill: L.party }));
           g.appendChild(lEl("path", { d: "M" + (mx - 2) + "," + (my + 2.6) + " Q" + mx + "," + (my - 0.4) + " " + (mx + 2) + "," + (my + 2.6) + " Z", fill: L.party }));
       }
@@ -1091,12 +1091,12 @@ class RoomGridSVG {
           g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 12, fill: L.questGold, opacity: "0.30" }));
           g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 8.5, fill: L.roomFill, stroke: "url(#" + this._questBrassId + ")", "stroke-width": 2.2 }));
           g.appendChild(lEl("circle", { cx: cx, cy: cy, r: 3, fill: L.questGold }));
-          g.appendChild(lEl("path", { d: "M" + cx + "," + (cy - 14) + " L" + cx + "," + (cy - 24), stroke: "#cb9f42", "stroke-width": 1.6 }));
+          g.appendChild(lEl("path", { d: "M" + cx + "," + (cy - 14) + " L" + cx + "," + (cy - 24), stroke: L.pin, "stroke-width": 1.6 }));
           g.appendChild(lEl("path", { d: "M" + cx + "," + (cy - 24) + " L" + (cx + 8) + "," + (cy - 21) + " L" + cx + "," + (cy - 18) + " Z", fill: "url(#" + this._questBrassId + ")" }));
           if (qm.name) {
               g.appendChild(lTxt({
                   x: cx, y: cy + 21, "text-anchor": "middle",
-                  "font-family": "Georgia,serif", "font-size": "7.5",
+                  "font-family": L.font, "font-size": "7.5",
                   "font-style": "italic", fill: L.title
               }, qm.name));
           }
@@ -1180,7 +1180,7 @@ class RoomGridSVG {
               this.connectionsGroup.appendChild(lTxt({
                   x: ex + ux * 4, y: ey + uy * 4 + 3,
                   "text-anchor": ux > 0 ? "start" : (ux < 0 ? "end" : "middle"),
-                  "font-family": "Georgia,serif", "font-size": 7, "font-style": "italic", fill: L.ink
+                  "font-family": L.font, "font-size": 7, "font-style": "italic", fill: L.ink
               }, "→ " + e.tozone));
           }
           return;
@@ -1212,13 +1212,13 @@ class RoomGridSVG {
       if (e.secret) {
           this.connectionsGroup.appendChild(lEl("line", {
               x1: x1, y1: y1, x2: x2, y2: y2,
-              stroke: "#8a7a55", "stroke-width": 1.1, "stroke-dasharray": "1 4", opacity: (0.6 * fog).toFixed(2)
+              stroke: L.faint, "stroke-width": 1.1, "stroke-dasharray": "1 4", opacity: (0.6 * fog).toFixed(2)
           }));
           const m2 = mid(pt1, pt2, 0.5);
           this.connectionsGroup.appendChild(lTxt({
               x: m2[0], y: m2[1] - 3, "text-anchor": "middle",
-              "font-family": "Georgia,serif", "font-size": 10, "font-weight": "bold",
-              fill: "#8a7a55", opacity: (0.85 * fog).toFixed(2)
+              "font-family": L.font, "font-size": 10, "font-weight": "bold",
+              fill: L.faint, opacity: (0.85 * fog).toFixed(2)
           }, "?"));
           return;
       }
@@ -1240,7 +1240,7 @@ class RoomGridSVG {
           embLine(this.connectionsGroup, x1, y1, x2, y2, L.road, 3.0, 0.95 * fog, d);
           this.connectionsGroup.appendChild(lEl("line", {
               x1: x1, y1: y1, x2: x2, y2: y2,
-              stroke: "#241810", "stroke-width": 0.8, "stroke-dasharray": "1 3", opacity: (0.8 * fog).toFixed(2)
+              stroke: L.legendBg, "stroke-width": 0.8, "stroke-dasharray": "1 3", opacity: (0.8 * fog).toFixed(2)
           }));
           // Long road: two league tick marks
           if (e.kind === "long") {
@@ -1379,6 +1379,7 @@ class RoomGridSVG {
   // ── Private: HTML overlay controls ────────────────────────────────────────
 
   _createHTMLControls() {
+      const L = RoomGridSVG.LEATHER;
       // Brass map-instrument buttons — embossed engraved glyphs on a polished
       // brass face, to match the tooled-leather surface. Stylesheet injected
       // once per document; div positioning stays inline (per-instance margin).
@@ -1386,10 +1387,10 @@ class RoomGridSVG {
           const st = document.createElement('style');
           st.id = 'rgsvg-ctl-style';
           st.textContent =
-".rgsvg-brass{min-width:24px;height:24px;padding:0 6px;font-family:Georgia,serif;" +
-"font-weight:bold;font-size:12px;line-height:1;color:#3b2a10;cursor:pointer;" +
-"border:1px solid #5e431a;border-radius:5px;" +
-"background:radial-gradient(circle at 34% 26%,#f4dd92 0%,#cb9f42 46%,#8a6620 100%);" +
+".rgsvg-brass{min-width:24px;height:24px;padding:0 6px;font-family:" + L.font + ";" +
+"font-weight:bold;font-size:12px;line-height:1;color:" + L.brassText + ";cursor:pointer;" +
+"border:1px solid " + L.brassBorder + ";border-radius:5px;" +
+"background:radial-gradient(circle at 34% 26%," + L.brass[0] + " 0%," + L.brass[1] + " 46%," + L.brass[2] + " 100%);" +
 "text-shadow:0 1px 0 rgba(255,244,206,0.55);" +
 "box-shadow:0 2px 3px rgba(0,0,0,0.55),inset 0 1px 1px rgba(255,246,212,0.7)," +
 "inset 0 -2px 3px rgba(74,52,16,0.55);" +
@@ -1481,6 +1482,12 @@ RoomGridSVG.LEATHER = {
   road: "#c9a86a", ridge: "#a98a55", plain: "#9c8048",
   legendBg: "#241810", party: "#6bb0a0", partyDk: "#243f3a",
   questGold: "#e8b84a",
+  // Hide, texture and marker colours (every map colour lives in this palette)
+  hide: ["#43301d", "#2c1d11", "#170e07"], rim: "#0e0703", crack: "#120a04", crackLip: "#caa86a",
+  sheen: "#fff4d8", vignette: "#000", glow: "#e8c98a", roomEdge: "#3a2a18", partyFill: "#1c2e2a",
+  pin: "#cb9f42", faint: "#8a7a55",
+  brass: ["#f4dd92", "#cb9f42", "#8a6620"], brassText: "#3b2a10", brassBorder: "#5e431a",
+  font: "'Source Sans 3', system-ui, sans-serif",   // the map's lettering; system-ui where gomud.css is not loaded
   emboss: 0.6, fray: 3.4, nickP: 0.08, crackStep: 24, crackJit: 9, vig: 0.5
 };
 
