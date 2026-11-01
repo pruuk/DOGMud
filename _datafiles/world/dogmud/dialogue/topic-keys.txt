@@ -1225,6 +1225,7 @@
 9515.lane
 9515.town
 9515.work
+9516.disc_in
 9516.disc_quest
 9516.disc_tale
 9516.grant

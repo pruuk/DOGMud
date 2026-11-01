@@ -21,8 +21,6 @@ end 21 mob 9106 topic newcomer_players
 end 21 step end
 end 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony
 end 75 step end
-end 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end
-end 76 step end
 end 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
 end 77 step end
 end 78 quest 78 trigger quest_granted quest_token=78-start grants=78-end
@@ -105,8 +103,6 @@ hint-length 74 step reveal
 hint-length 74 step survey
 hint-length 75 step intro
 hint-length 75 step start
-hint-length 76 step journal
-hint-length 76 step start
 one-action 1000000 step end:none
 one-action 1000000 step givegold:none
 one-action 11 mob 241 topic totem_return:prev
@@ -158,9 +154,6 @@ one-action 74 mob 9454 topic marginhandoff:prev
 one-action 74 mob 9464 topic aldrichandoff:prev
 one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:double
 one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:prev
-one-action 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end:cond
-one-action 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end:double
-one-action 76 quest 76 trigger room_interact room=4023 noun=hearth-marks grants=76-attune,76-end:prev
 one-action 78 quest 78 trigger quest_granted quest_token=78-start grants=78-end:prev
 one-action 9 mob 95 topic olenhandoff:prev
 one-action 9 quest 9 trigger quest_granted quest_token=9-start grants=9-deliver:cond
@@ -206,5 +199,4 @@ walk-destination 66 step escort
 walk-destination 67 step report
 walk-destination 74 step reveal
 walk-destination 75 step testimony
-walk-destination 76 step attune
 walk-destination 78 step start

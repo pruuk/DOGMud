@@ -313,12 +313,13 @@ quest|75|trigger1|action0|actor => An old survey filed under the eastern country
 quest|75|trigger3|action4|actor => You take the marked map from the table — Reth's hand, annotated in the close careful script of a man who does not waste ink. A route east into the highland country, a circled waymark, elevation ticks that tell you what kind of ground you are going into. No name for what is at the end of it. Whatever Reth saw out there he would not write down, and he has not written it down now — but the route is exact, and the final mark is deliberate, and it is enough. The thread runs east.
 quest|75|trigger3|action5|observer => <ansi fg="username">Aliceia</ansi> takes the surveyor's marked map from the table.
 quest|75|trigger4|action0|actor => A retired surveyor's old papers spread across the table — terrain charts and route sketches in a close, careful hand. Without his leave they are not yours to take, and they say little to a stranger at the window.
-quest|76|rewards|actor => The disc is awake in your hand, warm along its lines, and it answers a shape you have not yet reached. A father's work, finished by a stranger, in the cottage he left to chase it. What it opens waits east, in the broken country, behind a door in the buried face.
-quest|76|trigger0|action0|actor => The crack in the floor is empty now. You already carry what lay beneath it.
-quest|76|trigger1|action1|actor => You work your fingers into the crack and lift the disc free of the floor: cool, too smooth, heavier than its size. Fine raised lines thread across its face to a ring struck through with a line. You do not understand it. You are fairly certain no one here does. You put it away.
-quest|76|trigger1|action2|observer => <ansi fg="username">Aliceia</ansi> works something free of the cracked floor and pockets it.
-quest|76|trigger2|action0|actor => You work the loose stone free of its neighbors. It grinds aside and shows a small cavity in the wall behind it. Inside, a folded letter lies against the back of the hollow, hidden there on purpose.
-quest|76|trigger3|action1|actor => You sit at the cold table and read the man's life backward.
+quest|76|rewards|actor => Brennan turns the woken disc to the light and watches the lines keep it. "A father's work, finished by a stranger, in the cottage he left to chase it." He gives it back. What it opens waits east, in the broken country, behind a door in the buried face.
+quest|76|rewards|observer => Brennan turns a grey disc to the light and hands it back.
+quest|76|trigger0|action0|actor => You work the loose stone free of its neighbors. It grinds aside and shows a small cavity in the wall behind it. Inside, a folded letter lies against the back of the hollow, hidden there on purpose.
+quest|76|trigger2|action1|actor => Between the last pages of the journal lies a grey disc, cool and dead in the hand, the twin of the one you woke. You carry it away.
+quest|76|trigger3|action1|actor => Pressed between the last pages of the journal on the table lies a disc of pale grey metal: cool, too smooth, heavier than its size. Fine raised lines thread across its face to a ring struck through with a line. You take it.
+quest|76|trigger3|action2|observer => <ansi fg="username">Aliceia</ansi> lifts something grey from between the pages of a journal and pockets it.
+quest|76|trigger4|action1|actor => You sit at the cold table and read the man's life backward.
 Years of it: a hand that starts careful and turns driven, the
 same questions put a hundred ways to one buried thing far to
 the east. Something made, he is certain, and old past any
@@ -327,22 +328,22 @@ words. He calls it only the thing. The ring struck through with
 a line is inked in every margin, worried at like a sore tooth.
 Then, near the end, the part you came for without knowing it:
 a method, worked out slow and sure across many pages, for
-waking the grey disc that is its key, and the marked hearth for
-the place to do it. The last line is not about the thing at
+waking the grey disc that is its key. Light, held over it at
+the marked hearth. The last line is not about the thing at
 all. It is a name, set down once and gently, as if to keep one
 soft thing safe. Maren. He went east to finish this. He did not
-come back to her.
+come back to her. At the marked hearth, type cast glow.
 
-quest|76|trigger3|action2|observer => <ansi fg="username">Aliceia</ansi> reads a long while at the cottage table.
-quest|76|trigger4|action0|actor => A field journal lies open on the table, its pages dense with a careful obsessive hand and sketches of a mark you have half-seen elsewhere. Without knowing what you are looking for, it is only a lonely man's long notes.
-quest|76|trigger5|action4|actor => You do as the journal says. You set the disc into the cut
+quest|76|trigger4|action2|observer => <ansi fg="username">Aliceia</ansi> reads a long while at the cottage table.
+quest|76|trigger5|action2|actor => You set the grey disc into the cut center of the hearthstone and hold the glow over it, as his method says. The lines warm, and the mark at the center wakes.
+quest|76|trigger6|action1|actor => His method wants the disc itself. Between the last pages of the journal lies one, pale grey, cool and dead in the hand. You carry it to the hearth.
+quest|76|trigger7|action3|actor => You do as the journal says. You set the disc into the cut
 center of the hearthstone, where the marks draw inward to a
-single point, and you follow his method through: the order of
-it, the patience of it, the small exact things a driven man
-learned alone and wrote down so a stranger might one day do
-this right. For a long moment, nothing. Then the grey face
-warms under your fingers, not with your warmth but its own.
-The fine raised lines take the thin light from the shutter gap
+single point, and you hold the soft glow over it, patient and
+exact, the way a driven man learned alone and wrote down so a
+stranger might one day do this right. For a long moment,
+nothing. Then the grey face warms under your fingers, not with
+your warmth but its own. The fine raised lines drink the light
 and keep it, holding a glow a half-breath past when it should
 fade, and the ring-struck mark at the center wakes and steadies,
 sure of itself now, sure of where it belongs. The disc is a key,
@@ -351,12 +352,10 @@ buried face he gave his years to. His work, done at last, by a
 stranger's hand in the cottage he left to chase it. And a name
 comes to you off the last page, unbidden. Maren. He kept her,
 all the way to the end of himself. You hope, wherever she is,
-she never learns how far he went.
+she never learns how far he went. Brennan will want to hear of
+this. Go back to his office in Greenford and type talk brennan.
 
-quest|76|trigger5|action5|observer => <ansi fg="username">Aliceia</ansi> does something careful at the marked hearth, and the air goes briefly strange.
-quest|76|trigger6|action0|actor => The marks are cut for a thing you do not have in hand. Without the disc, they are only scratches in old stone. The disc lies in the cracked floor of the old Reliquary at Pothole Coulee. Type look disc there.
-quest|76|trigger7|action0|actor => Marks are cut into the hearthstone in a deliberate pattern, a method for something, though you cannot read it yet.
-quest|76|trigger8|action2|actor => You set the grey disc into the cut center of the hearthstone and follow his method again. The lines warm, and the mark at the center wakes.
+quest|76|trigger7|action4|observer => <ansi fg="username">Aliceia</ansi> holds a soft glow over the marked hearth, and the air goes briefly strange.
 quest|77|rewards|actor => You know now. It sits in you like a swallowed stone. The sky will never look the same, and neither will the blessed, and neither will you. Be careful who you tell.
 quest|77|trigger0|action2|actor => You stand among the stones and let the light find them, and one
 by one they wake — a slow inner glow, a drift of moving marks —
