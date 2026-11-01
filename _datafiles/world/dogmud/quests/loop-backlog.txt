@@ -4,13 +4,6 @@
 # warning; any finding not listed refuses boot, CI and the quest editor's
 # save. A line with no matching finding fails CI: delete it when its finding
 # is fixed. Never add a line by hand to make new content pass.
-chain 30 mob 9108 topic train_offer
-chain 30 mob 9116 topic craft_offer
-chain 30 mob 9128 topic brew_offer
-chain 30 mob 9136 topic sign_offer
-chain 30 mob 9144 topic cast_offer
-chain 30 mob 9153 topic words_offer
-chain 30 mob 9161 topic shoot_offer
 chain 32 mob 9112 topic wash_offer
 chain 34 mob 9112 topic cull_offer
 chain 35 mob 9117 topic vein_offer

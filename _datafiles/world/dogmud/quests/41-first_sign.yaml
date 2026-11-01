@@ -1,7 +1,7 @@
 # Quest 41 — First Sign (Pothole Coulee, Spoke D / Wilderness inner ring, cert)
 #
 # Token flow (one command per step, owner ruling 2026-10-17):
-#   41-start  — granted by Scout Tarn's sign_offer dialogue node (requires 30-end).
+#   41-start: granted by Crier Toke's send_steppe offer (9106.yaml, requires 31-end).
 #   41-track  — command trigger on `track` in the Open Steppe (5284).
 #   41-forage — command trigger on `forage` in the steppe (5284 / 5285), once
 #               the track is done.

@@ -13,15 +13,18 @@ opener:
       The eye I teach needs a mind that has been woken. Come back when it has.
     hints: Return to the hub and complete the Awakening rite with Cleric Hadwen before
       training with Marksman Iden.
+  # Crier Toke starts every trade (#375 phase 7): Iden takes First Shot's
+  # hand-in but no longer offers it.
   - questRequired:
     - 30-end
     questExcluded:
     - 50-start
     - 50-end
     text: Opened, and steady enough. Good. The terraces are where the coulee learns
-      to reach past arm's length. When you are ready to put a stone in the straw,
-      I have a sling for you.
-    hints: Choose First Shot below to take up the sling and the lesson.
+      to reach past arm's length, but Crier Toke sends me my students. Ask him in
+      Hub Square who can teach you to shoot. He has a sling for you.
+    hints: Crier Toke starts every trade in the coulee. In Hub Square, type talk
+      toke.
   - questRequired:
     - 50-start
     questExcluded:
@@ -70,23 +73,6 @@ opener:
     hints: Go east twice to the High Terrace, then north to the Canyon Mouth, where
       Scout Bryn waits.
 topics:
-- key: shoot_offer
-  kind: offer
-  quest: 50
-  label: First Shot
-  playerLine: Will you teach me to shoot?
-  text: You get a sling, plaited cord and a leather cradle, cheap and honest, and
-    a pouch of shot to feed it. Both are yours to keep. Ready the sling first. The
-    cradle fills itself while your eye is still on the mark, so there is no second
-    motion to learn. I will walk you through the rest one thing at a time.
-  hints: Accept, and Iden hands you a sling and a pouch of shot. Then type equip sling.
-  questRequired:
-  - 30-end
-  questExcluded:
-  - 50-start
-  - 50-end
-  grantsQuest: 50-start
-  givesItem: 10038
 # Each replacement and its reminder never show together: itemExcluded and
 # carriesItem on the same item are exact opposites.
 - key: shot_supply

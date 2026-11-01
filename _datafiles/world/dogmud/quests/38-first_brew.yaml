@@ -1,8 +1,8 @@
 # Quest 38 — First Brew (Pothole Coulee, Spoke C / Alchemy inner ring, cert)
 #
 # Token flow (one command per step, owner ruling 2026-10-17):
-#   38-start: granted by Herbalist Birna's brew_offer dialogue node. Requires
-#             30-end (Awakening).
+#   38-start: granted by Crier Toke's send_brew offer (9106.yaml, requires
+#             31-end; #375 phase 7).
 #   38-list:  command trigger on `list` at Birna's pool (5265).
 #   38-vial:  item_gain of a Glass Vial (40006), once the stock is listed.
 #   38-roots: item_gain of a Healer's Root (40004), once the vial is in hand.

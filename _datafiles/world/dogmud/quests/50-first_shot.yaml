@@ -1,10 +1,9 @@
 # Quest 50 — First Shot (Pothole Coulee, Spoke G / Ranged inner ring, cert)
 #
 # Token flow (one command per step, owner ruling 2026-10-17):
-#   50-start      — granted by Marksman Iden's shoot_offer node (requires 30-end),
-#                   which also hands the player a sling (givesItem 10038), or by
-#                   Crier Toke's send_range offer after quest 31 (R21), which
-#                   gives the sling the same way. A quest_granted trigger
+#   50-start: granted by Crier Toke's send_range offer after quest 31 (R21;
+#                   the only starter since #375 phase 7), which hands the
+#                   player a sling (givesItem 10038). A quest_granted trigger
 #                   below hands over a pouch of shot (30064) unless the player
 #                   already carries one.
 #   50-equip      — command trigger on `equip` of the sling (item 10038).
@@ -54,7 +53,7 @@ steps:
     destination:
       room: 5350
     description: >-
-      Crier Toke or Marksman Iden hands you a sling when you take this on,
+      Crier Toke hands you a sling when you take this on,
       and a pouch of shot if you have none. First, ready the sling.
       Marksman Iden keeps the range.
     hint: >-
@@ -118,8 +117,8 @@ rewards:
 
 triggers:
   # ── SHOT: a pouch to feed the sling, unless the player already has one ──
-  # Fires on the grant from either road in (Iden's offer or Toke's send_range
-  # offer). missing_item keeps it to one pouch for a player who already
+  # Fires on the grant from Toke's send_range
+  # offer. missing_item keeps it to one pouch for a player who already
   # carries shot.
   - event: quest_granted
     quest_token: 50-start

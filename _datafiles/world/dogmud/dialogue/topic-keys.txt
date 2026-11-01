@@ -441,7 +441,6 @@
 9108.progress_strike
 9108.progress_wield
 9108.shouts_help
-9108.train_offer
 9108.train_turnin
 9112.ambush_lore
 9112.arm_wound
@@ -460,7 +459,6 @@
 9112.wash_turnin
 9116.arm
 9116.craft_help
-9116.craft_offer
 9116.craft_turnin
 9116.craft_turnin_told
 9116.heat_craft_help
@@ -480,7 +478,6 @@
 9117.vein_turnin
 9128.bottles
 9128.brew_help
-9128.brew_offer
 9128.brew_step_craft
 9128.brew_step_drink
 9128.brew_step_list
@@ -505,7 +502,6 @@
 9129.mire_step_help
 9136.eyes
 9136.sign_help
-9136.sign_offer
 9136.sign_progress_start
 9136.sign_progress_track
 9136.sign_turnin
@@ -528,7 +524,6 @@
 9137.salt_have
 9137.salt_recovery
 9144.cast_help
-9144.cast_offer
 9144.cast_turnin
 9144.eyes
 9144.folding
@@ -546,7 +541,6 @@
 9153.folk
 9153.help_node
 9153.stones
-9153.words_offer
 9153.words_progress
 9153.words_turnin
 9157.dispute
@@ -576,7 +570,6 @@
 9161.eye
 9161.perception
 9161.shoot_help
-9161.shoot_offer
 9161.shoot_turnin
 9161.shot_have
 9161.shot_supply
@@ -1346,3 +1339,13 @@
 99.bridge_report
 99.magistrate
 99.tithe_ledger
+# retired
+# The seven Giver 1 offers (#375 phase 7): Crier Toke is the only starter of
+# the trades.
+9108.train_offer
+9116.craft_offer
+9128.brew_offer
+9136.sign_offer
+9144.cast_offer
+9153.words_offer
+9161.shoot_offer

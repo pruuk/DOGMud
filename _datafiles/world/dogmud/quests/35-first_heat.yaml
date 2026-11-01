@@ -8,7 +8,7 @@ secret: false
 
 # Token flow (owner ruling 2026-10-17: one command per step, in order,
 # each trigger gated on the step before it):
-#   35-start  granted by Rusk's craft_offer node (9116.yaml).
+#   35-start  granted by Crier Toke's send_forge offer (9106.yaml, #375 phase 7).
 #   35-list   list beside Rusk in the smithy (5245); she is the merchant.
 #   35-ingot  item_gain of an iron ingot (40001), gated on 35-list.
 #   35-strip  item_gain of a leather strip (40002), gated on 35-ingot.

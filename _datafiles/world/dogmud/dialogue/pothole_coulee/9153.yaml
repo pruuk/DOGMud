@@ -15,15 +15,18 @@ opener:
       I will teach you the folk.
     hints: Find Cleric Hadwen at the reflecting pool and complete the Awakening, then
       return to Elder Wenna.
+  # Crier Toke starts every trade (#375 phase 7): Wenna takes First Words'
+  # hand-in but no longer offers it.
   - questRequired:
     - 30-end
     questExcluded:
     - 47-start
     - 47-end
-    text: 'The rite is on you. Good. Then there is something here worth your while:
-      the way of the folk, which is the way of asking and of knowing where to look
-      a thing up. If you mean to learn, I will give you your first words.'
-    hints: Choose First Words below to learn the way of the folk.
+    text: The rite is on you. Good. There is something here worth your while, the
+      way of the folk, but Crier Toke sends me the ones who want it. Ask him in Hub
+      Square who can teach you the ways of the folk, then come and sit with me.
+    hints: Crier Toke starts every trade in the coulee. In Hub Square, type talk
+      toke.
   - questRequired:
     - 47-start
     questExcluded:
@@ -47,23 +50,6 @@ opener:
     hints: Head to the standing stones (west and north) and type talk hale to find
       Loresinger Hale.
 topics:
-- key: words_offer
-  kind: offer
-  quest: 47
-  label: First Words
-  playerLine: Will you teach me the ways of the folk?
-  text: 'Then here is the first of it, and the whole of it: learn to ask, and learn
-    where to look. You asked, and that is half. Ask me about the folk and our ways
-    whenever you like, and listen to the answers. The other half is the in-game reckoning,
-    for when your own memory fails: it is more patient than I am and always to hand.
-    Open it now, then come back to me.'
-  hints: Type help.
-  questRequired:
-  - 30-end
-  questExcluded:
-  - 47-start
-  - 47-end
-  grantsQuest: 47-start
 - key: words_turnin
   kind: handin
   quest: 47
