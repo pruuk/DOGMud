@@ -406,6 +406,25 @@ func retiredQuestSteps(progress map[int]string, retired map[string]bool) []strin
 	return out
 }
 
+// DropRetiredQuests clears every quest in retired (quests.RetiredQuests:
+// retired whole in the step-id manifest) from progress and the shelf, through
+// ClearQuestToken, which also moves the focus off it. It returns the ids it
+// dropped, sorted. Idempotent, so it runs on every load with no marker.
+func (c *Character) DropRetiredQuests(retired map[int]bool) []int {
+	var out []int
+	for qid := range retired {
+		_, held := c.QuestProgress[qid]
+		_, shelved := c.ShelvedQuests[qid]
+		if !held && !shelved {
+			continue
+		}
+		c.ClearQuestToken(quests.PartsToToken(qid, `start`))
+		out = append(out, qid)
+	}
+	sort.Ints(out)
+	return out
+}
+
 // miscDataToUint64 coerces a MiscData value to uint64. MiscData stores any,
 // and an integer written as uint64 may return from YAML reload as int,
 // int64, or float64 — handle all of them; anything else yields 0.
