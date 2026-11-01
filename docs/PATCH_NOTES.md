@@ -111,6 +111,22 @@
   and no longer says the same length of fight twice.
 - The Straw Effigy now shows that even your best blows leave it no worse.
 
+## 2026-10-31: A clearer web client
+
+- Play in Browser now takes you straight to the login prompt. There is no
+  second button to press.
+- A button in the bar above the game says Enter Game until you are in the
+  world, then Leave Game. Leave Game asks first, then your character
+  meditates and leaves the realm safely, the same as typing `quit`.
+  Typing any command while you meditate keeps you in the game.
+- The box where you type is bigger, easier to tap on a phone, and sits
+  right under the game text, so the question and your answer are side by
+  side.
+- On phones, the row of panel buttons at the bottom no longer covers the
+  box where you type.
+- New, plainer lettering across the site and the web client, with fewer
+  slanted words, so text is easier to read on every screen.
+
 ## 2026-10-31: Mastery levels off
 
 - Skill still pays off all the way up to grandmaster. Past grandmaster, each
