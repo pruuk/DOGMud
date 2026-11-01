@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -70,6 +71,12 @@ func Hood(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// command's pre-check, "darkness closes in" arrives after whatever the
 	// player types next and reads backwards.
 	lightnotice.Check(user, lightnotice.TriggerCommand)
+	// #375 phase 7 (quest 98): a closed hood is a quest step. Sent after the
+	// hood line and the band notice, so the step's line reads last.
+	if room != nil {
+		questengine.NotifyCommand(user, room.RoomId, "hood",
+			questengine.TargetItem(user.Character.Equipment.Light.ItemId))
+	}
 	return true, nil
 }
 
