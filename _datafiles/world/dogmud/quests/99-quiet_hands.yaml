@@ -1,0 +1,167 @@
+# Quest 99: Quiet Hands. Pothole Coulee, the Shadows line, quest 2 of 3
+# (#375 phase 7, Pothole Coulee pass; #315).
+#
+# Token flow (one action per step, each trigger gated on the step before):
+#   99-start:   granted on Accept of Lamplighter Gethin's offer
+#               quiet_hands_offer (dialogue/pothole_coulee/9125.yaml), open
+#               after 98-end. The offer hands over Iron Lockpicks (item 33).
+#   99-lesson:  topic_heard on Cutpurse Dace (9126), topic quiet_hands_lesson.
+#   99-hidden:  command sneak, anywhere (sneak raises it only when the player
+#               ends up hidden). Dace and the dummy watch the jetty and may
+#               spot a student, so the step does not insist on the room.
+#   99-lifted:  item_gain of the Sand Purse (item 60) on the Reed Jetty. steal
+#               raises its own command event before the contest, so item_gain
+#               is what proves the theft landed.
+#   99-planted: command plant aimed at the Pocket Dummy (9127) with the purse.
+#               plant raises it on the attempt, before the contest, so a caught
+#               plant counts (owner ruling); the line says so.
+#   99-picked:  command picklock aimed at the lockbox container on the jetty
+#               (internal/usercommands/picklock.go raises it since this pass).
+#   99-end:     granted by Dace's hand-in quiet_hands_in.
+#
+# Dace's lockpicks_spare topic replaces picks while they are needed, and
+# lockpicks_have answers a player who still carries some. A set of iron picks
+# has three uses and a wrong pin spends one. A lock of three pins can cost all
+# three, so a set can run out on the lockbox. A wrong pin shows which way that
+# pin goes, so the replacement set does not.
+#
+# steal and plant share one cooldown, and a caught student is in a fight with
+# the dummy, where steal and plant refuse. The lines say both.
+
+questid: 99
+name: Quiet Hands
+description: >-
+  Cutpurse Dace teaches quiet hands on the Reed Jetty, on a straw dummy in an
+  old coat and a little lockbox chained to a post. Hide, lift the purse, put
+  it back, and pick the lock.
+secret: false
+
+steps:
+  - id: start
+    destination:
+      mob: 9126
+      room: 5218
+    description: >-
+      Lamplighter Gethin has sent you to Cutpurse Dace on the Reed Jetty, with
+      a set of lockpicks of your own.
+    hint: >-
+      From the Mine Head go up, east five times, south to the Smithy, east
+      four times, then north to the Reed Jetty. Type talk dace.
+  - id: lesson
+    destination: anywhere
+    description: >-
+      Dace wants you out of sight first. If someone spots you, step somewhere
+      quieter and try again.
+    hint: >-
+      Type sneak.
+  - id: hidden
+    description: >-
+      You slipped out of sight. The pocket dummy on the Reed Jetty has a purse
+      in its coat. Lift it. If you find nothing, its pocket is empty, so give
+      it a moment to fill. If the dummy catches you it swings back, harmlessly.
+      Knock it down and a fresh one is set out.
+    hint: >-
+      On the Reed Jetty, type steal dummy. Your hands need a moment to recover
+      between tries.
+  - id: lifted
+    description: >-
+      The purse is yours. Now put it back in the dummy's coat. You cannot do
+      that while it is swinging at you, so knock it down first and wait for a
+      fresh one. If you no longer have the purse, lift another.
+    hint: >-
+      Type plant purse on dummy. Your hands need a moment to recover first.
+  - id: planted
+    description: >-
+      Last, pick the lockbox chained to the jetty post. If it is already open,
+      wait a little. It locks itself again. A wrong pin costs you a pick but
+      shows you which way that pin goes. If the set runs out, Dace has another.
+    hint: >-
+      Type picklock lockbox. Then choose up or down for each pin.
+  - id: picked
+    destination:
+      mob: 9126
+      room: 5218
+    description: >-
+      The lock gave. Tell Dace you have done all four.
+    hint: >-
+      Type talk dace.
+  - id: end
+    description: >-
+      Dace has taught you quiet hands: how to hide, to lift, to plant, and to
+      pick a lock.
+
+rewards:
+  skillinfo: "skullduggery:1"
+  gold: 15
+  actor: >-
+    Dace flips a coin across her knuckles and catches it without looking.
+    "Your hands are quieter than they were this morning. Keep the picks. They
+    break, so ask me where to find more before you need them."
+  observer: ""
+
+triggers:
+  # ── THE LESSON: hear Dace out ──
+  - event: topic_heard
+    mob: 9126
+    topic: quiet_hands_lesson
+    conditions:
+      has: ["99-start"]
+      missing: ["99-lesson"]
+    actions:
+      - grant: "99-lesson"
+
+  # ── SNEAK: out of sight, anywhere ──
+  - event: command
+    command: sneak
+    conditions:
+      has: ["99-lesson"]
+      missing: ["99-hidden"]
+    actions:
+      - grant: "99-hidden"
+      - actor: >-
+          You are out of sight. Now lift the purse from the pocket dummy's
+          coat. On the Reed Jetty, type steal dummy.
+
+  # ── LIFT: the purse lands in your pack, on the jetty ──
+  - event: item_gain
+    item: 60
+    room: 5218
+    conditions:
+      has: ["99-hidden"]
+      missing: ["99-lifted"]
+    actions:
+      - grant: "99-lifted"
+      - actor: >-
+          The purse is in your hand. Now put it back where it came from. Type
+          plant purse on dummy.
+
+  # ── PLANT: slip it back into the dummy's coat ──
+  - event: command
+    command: plant
+    target: mob
+    mob: 9127
+    item: 60
+    conditions:
+      has: ["99-lifted"]
+      missing: ["99-planted"]
+    actions:
+      - grant: "99-planted"
+      - actor: >-
+          That is the plant. If the dummy felt it, the purse is still in your
+          pack, and you can try again for practice. Now the lockbox on the
+          post. Type picklock lockbox.
+
+  # ── PICK: open the lockbox on the jetty ──
+  - event: command
+    command: picklock
+    target: container
+    noun: lockbox
+    room: 5218
+    conditions:
+      has: ["99-planted"]
+      missing: ["99-picked"]
+    actions:
+      - grant: "99-picked"
+      - actor: >-
+          The last pin lifts and the lid comes free. Go and tell Dace. Type
+          talk dace.

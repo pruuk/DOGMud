@@ -1,0 +1,33 @@
+# Quest 97: Report to Toke (Shadows). Pothole Coulee, the Shadows line's
+# bridge back to the hub (#375 phase 7, Pothole Coulee pass; #315).
+#
+# Token flow:
+#   97-start: granted on Accept of Cutpurse Dace's offer report_shadows_offer
+#             (dialogue/pothole_coulee/9126.yaml), open once From the Dark
+#             (100) is handed in.
+#   97-end:   granted by Crier Toke's hand-in report_shadows_in
+#             (dialogue/pothole_coulee/9106.yaml).
+#
+# Toke offers Esk's Road (89) once all eight bridges, 90 to 97, are in.
+
+questid: 97
+name: Report to Toke (Shadows)
+description: >-
+  Cutpurse Dace has taught you what she can for now. Crier Toke likes to hear
+  how each line ends, from the one who walked it.
+secret: false
+
+steps:
+  - id: start
+    destination:
+      mob: 9106
+      room: 5203
+    description: >-
+      Go back to Crier Toke in Hub Square and tell him the Shadows line is
+      done.
+    hint: >-
+      From the Reed Jetty go south, east to the Awakening Pool, then south to
+      Hub Square. Type talk toke.
+  - id: end
+    description: >-
+      You told Toke how the Shadows line ended.

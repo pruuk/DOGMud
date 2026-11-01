@@ -1,0 +1,66 @@
+# Quest 101: Quick Fingers. Pothole Coulee, the Shadows line repeatable
+# (#375 phase 7, Pothole Coulee pass; #315).
+#
+# Token flow:
+#   101-start:  granted on Accept of Cutpurse Dace's offer quick_fingers_offer
+#               (dialogue/pothole_coulee/9126.yaml), open after 100-end.
+#               Repeatable with the cooldown the other Coulee repeatables use.
+#   101-lifted: item_gain of the Sand Purse (item 60) on the Reed Jetty,
+#               counted to 3. The Pocket Dummy refills its pocket on idle
+#               (behaviors/pothole_coulee/9127-pocket_dummy.yaml).
+#   101-end:    granted by Dace's hand-in quick_fingers_in.
+
+questid: 101
+name: Quick Fingers
+description: >-
+  Dace keeps the pocket dummy stocked for anyone who wants to keep their
+  fingers quick. Lift purses from its coat until she is satisfied, then tell
+  her.
+secret: false
+repeatable: true
+cooldown_rounds: 300
+
+steps:
+  - id: start
+    destination:
+      room: 5218
+    description: >-
+      Lift three purses from the pocket dummy on the Reed Jetty. It refills
+      its own coat if you give it a moment between tries, and your hands need
+      a moment to recover too.
+    hint: >-
+      On the Reed Jetty, type steal dummy.
+  - id: lifted
+    destination:
+      mob: 9126
+      room: 5218
+    description: >-
+      Three purses lifted. Tell Dace.
+    hint: >-
+      Type talk dace.
+  - id: end
+    description: >-
+      Your fingers are a little quicker. Dace will have the dummy stocked
+      again after a while.
+
+rewards:
+  gold: 6
+  skillinfo: "skullduggery:1"
+  actor: >-
+    Dace watches your hands, not the purses. "Quicker. Come back when your
+    fingers start to forget."
+  observer: ""
+
+triggers:
+  - event: item_gain
+    item: 60
+    room: 5218
+    count: 3
+    label: Purses lifted
+    conditions:
+      has: ["101-start"]
+      missing: ["101-lifted"]
+    actions:
+      - grant: "101-lifted"
+      - actor: >-
+          That is three. Go and tell Dace. Type talk dace.

@@ -61,6 +61,102 @@ func TestCouleeBridges_GiverTwoOffersTokeTakes(t *testing.T) {
 		offer := loadCouleeTopics(t, "9162.yaml").FindTopic("report_archery_offer")
 		require.Contains(t, squash(offer.Hints), archeryBridgeWords, "Bryn's offer gives the same way")
 	})
+	t.Run("Shadows", func(t *testing.T) {
+		checkBridge(t, toke, 97, "Shadows", "97-report_to_toke__shadows_.yaml",
+			"9126.yaml", "report_shadows_offer", "report_shadows_in", "100-end")
+		q := loadShippedQuest(t, "97-report_to_toke__shadows_.yaml", 97)
+		require.Contains(t, squash(questHintFor(t, q, "start")), shadowsBridgeWords)
+		require.Equal(t, foldingHubSquare, foldingWalk(t, reedJetty, "south", "east", "south"),
+			"the way back to Hub Square walks")
+		offer := loadCouleeTopics(t, "9126.yaml").FindTopic("report_shadows_offer")
+		require.Contains(t, squash(offer.Hints), shadowsBridgeWords, "Dace's offer gives the same way")
+	})
+}
+
+const (
+	reedJetty          = 5218
+	mineHead           = 5255
+	timberedDrift      = 5256
+	floodedSump        = 5257
+	shadowsBridgeWords = "from the reed jetty go south, east to the awakening pool, then south to hub square"
+)
+
+// The Shadows line's lines give these ways, so they are walked here: plan text
+// once named a route that did not exist.
+func TestShadowsLine_RoutesWalk(t *testing.T) {
+	toHead := []string{"north", "west", "west", "west", "west", "west", "north",
+		"west", "west", "west", "west", "west", "down"}
+	require.Equal(t, mineHead, foldingWalk(t, foldingHubSquare, toHead...), "Hub Square to the Mine Head")
+	require.Equal(t, timberedDrift, foldingWalk(t, mineHead, "west"))
+	require.Equal(t, floodedSump, foldingWalk(t, timberedDrift, "west"))
+	require.Equal(t, mineHead, foldingWalk(t, floodedSump, "east", "east"))
+
+	headToJetty := []string{"up", "east", "east", "east", "east", "east", "south",
+		"east", "east", "east", "east", "north"}
+	require.Equal(t, reedJetty, foldingWalk(t, mineHead, headToJetty...), "Mine Head to the Reed Jetty")
+	jettyToDrift := []string{"south", "west", "west", "west", "west", "north",
+		"west", "west", "west", "west", "west", "down", "west"}
+	require.Equal(t, timberedDrift, foldingWalk(t, reedJetty, jettyToDrift...), "Reed Jetty to the drift")
+
+	toke := loadCouleeTopics(t, "9106.yaml")
+	require.Contains(t, squash(toke.FindTopic("send_light").Hints),
+		"from hub square go north, west five times to the coulee smithy, north, west five times to the mine mouth, then down")
+
+	const headWords = "from the mine head go up, east five times, south to the smithy, east four times, then north to the reed jetty"
+	require.Contains(t, squash(loadCouleeTopics(t, "9125.yaml").FindTopic("quiet_hands_offer").Hints), headWords)
+	require.Contains(t, squash(questHintFor(t, loadShippedQuest(t, "99-quiet_hands.yaml", 99), "start")), headWords)
+	require.Contains(t, squash(questHintFor(t, loadShippedQuest(t, "100-from_the_dark.yaml", 100), "kill")), headWords)
+
+	const jettyWords = "from the reed jetty go south, west four times, north, west five times, down, then west into the timbered drift"
+	require.Contains(t, squash(loadCouleeTopics(t, "9126.yaml").FindTopic("from_the_dark_offer").Hints), jettyWords)
+	require.Contains(t, squash(questHintFor(t, loadShippedQuest(t, "100-from_the_dark.yaml", 100), "start")), jettyWords)
+}
+
+// Once all eight bridges are in, the last [!] on Toke's menu is Esk's Road, and
+// his opener names it.
+func TestToke_AllBridgesInOpenerNamesEsksRoad(t *testing.T) {
+	toke := loadCouleeTopics(t, "9106.yaml")
+	q := loadShippedQuest(t, "98-first_light.yaml", 98)
+	held := []string{"30-end", "31-end", "88-end", "32-start", "35-start", "38-start", "41-start",
+		"44-start", "47-start", "50-start"}
+	for id := 90; id <= 97; id++ {
+		held = append(held, fmt.Sprintf("%d-end", id))
+	}
+	n := newNpcTalker(toke, playerOn(q, "end", held...))
+	_, hints := n.opener()
+	require.Contains(t, squash(hints), "choose esk's road")
+	require.NotNil(t, n.eligible("road_esk"))
+
+	_, hints = newNpcTalker(toke, playerOn(q, "end", held[:len(held)-1]...)).opener()
+	require.NotContains(t, squash(hints), "choose esk's road", "a bridge is still out")
+}
+
+// The hand-over for lost gear: a player with no lantern or picks is given more,
+// and one who carries them is told so. equip reads only the pack, and "lantern"
+// alone can match an oil lantern, so First Light names the hooded lantern.
+func TestShadowsLine_LostGearAndHoodLines(t *testing.T) {
+	gethin := loadCouleeTopics(t, "9125.yaml")
+	spare, have := gethin.FindTopic("lantern_spare"), gethin.FindTopic("lantern_have")
+	require.Equal(t, 20097, spare.ItemExcluded)
+	require.Equal(t, 20097, spare.GivesItem)
+	require.Equal(t, 20097, have.CarriesItem)
+	require.Equal(t, spare.QuestRequired, have.QuestRequired)
+	require.Equal(t, spare.QuestExcluded, have.QuestExcluded)
+
+	dace := loadCouleeTopics(t, "9126.yaml")
+	spare, have = dace.FindTopic("lockpicks_spare"), dace.FindTopic("lockpicks_have")
+	require.Equal(t, 33, spare.ItemExcluded)
+	require.Equal(t, 33, spare.GivesItem)
+	require.Equal(t, 33, have.CarriesItem)
+	require.Equal(t, spare.QuestRequired, have.QuestRequired)
+	require.Equal(t, spare.QuestExcluded, have.QuestExcluded)
+
+	q98 := loadShippedQuest(t, "98-first_light.yaml", 98)
+	lantern := squash(questHintFor(t, q98, "lantern"))
+	require.Contains(t, lantern, "type equip hooded lantern")
+	require.Contains(t, lantern, "remove lantern")
+	require.Equal(t, 1, typedCount(questHintFor(t, q98, "lantern")))
+	require.Contains(t, squash(questHintFor(t, q98, "drift")), "unhood")
 }
 
 // The archery bridge's walk from the Canyon Mouth, where Bryn gives it, to
@@ -112,7 +208,7 @@ func checkBridge(t *testing.T, toke *dialogue.DialogueFile, id int, line, file, 
 
 // A player holding a bridge is told, above the hub, which line on Toke's menu
 // reports it, and that line sits above every trade offer. The hub's own hint
-// names only the [!] lines. Plan 4 adds bridge 97: add it here.
+// names only the [!] lines.
 func TestToke_BridgeOpenerNamesTheHandInAndItComesFirst(t *testing.T) {
 	toke := loadCouleeTopics(t, "9106.yaml")
 	pre := []string{"30-end", "31-end", "88-end"}
@@ -129,6 +225,7 @@ func TestToke_BridgeOpenerNamesTheHandInAndItComesFirst(t *testing.T) {
 		{94, "Casting", "94-report_to_toke__casting_.yaml", "report_casting_in"},
 		{95, "Lore", "95-report_to_toke__lore_.yaml", "report_lore_in"},
 		{96, "Archery", "96-report_to_toke__archery_.yaml", "report_archery_in"},
+		{97, "Shadows", "97-report_to_toke__shadows_.yaml", "report_shadows_in"},
 	} {
 		t.Run(b.line, func(t *testing.T) {
 			q := loadShippedQuest(t, b.file, b.id)
@@ -150,7 +247,7 @@ func TestToke_BridgeOpenerNamesTheHandInAndItComesFirst(t *testing.T) {
 	}
 }
 
-// With all seven trades taken the hub's "[!] below" describes lines that are
+// With all eight trades taken the hub's "[!] below" describes lines that are
 // not there. The trade list is read from Toke's own send_ offers, so a trade
 // added to the menu without joining the variant's gate fails here.
 func TestToke_NoTradesLeftOpener(t *testing.T) {
@@ -163,7 +260,7 @@ func TestToke_NoTradesLeftOpener(t *testing.T) {
 			sendKeys = append(sendKeys, tp.Key)
 		}
 	}
-	require.Len(t, trades, 7, "Toke starts seven trades")
+	require.Len(t, trades, 8, "Toke starts eight trades")
 	pre := []string{"30-end", "31-end", "88-end"}
 
 	all := newNpcTalker(toke, playerOn(q, "", append(append([]string{}, pre...), trades...)...))
@@ -199,6 +296,7 @@ func TestTokeQuestOneOffers_SendToTheGiver(t *testing.T) {
 	t.Run("Smithing", func(t *testing.T) { checkTokeSends(t, toke, "send_forge", 35, "rusk") })
 	t.Run("Brewing", func(t *testing.T) { checkTokeSends(t, toke, "send_brew", 38, "birna") })
 	t.Run("Tracking", func(t *testing.T) { checkTokeSends(t, toke, "send_steppe", 41, "tarn") })
+	t.Run("Shadows", func(t *testing.T) { checkTokeSends(t, toke, "send_light", 98, "gethin") })
 }
 
 func checkTokeSends(t *testing.T, toke *dialogue.DialogueFile, key string, quest int, npc string) {

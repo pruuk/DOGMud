@@ -51,8 +51,8 @@ steps:
     description: "You have seen the school, kitted out at the shop, and found the inn. Report back to Crier Toke in Hub Square."
     hint: "From the inn go east to Market Row, then north to Hub Square. Find Toke at the notice post, type talk toke, and choose Find Your Footing to finish."
   - id: end
-    description: "You know the hub now. Toke says the coulee mouths are next, whenever you are ready. He can send you down any of the seven."
-    hint: "Talk to Crier Toke when you want to push outward. He offers each of the seven trails."
+    description: "You know the hub now. Toke says the coulee mouths are next, whenever you are ready. He can send you down any of the eight trails."
+    hint: "Talk to Crier Toke when you want to push outward. He offers each of the eight trails."
 
 rewards:
   gold: 20

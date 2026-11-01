@@ -406,5 +406,20 @@ who has been handed a weight and told it is theirs now, forever.
 
 quest|77|trigger0|action3|observer => <ansi fg="username">Aliceia</ansi> stands motionless before the wall of moving light, and for a long moment does not seem to breathe.
 quest|77|trigger1|action0|actor => They are only stones again now, dark until the light finds them — but you know what they hold, and you know it holds you. The crossing, the fever, the luck, the waiting lights. You have read it. You will always have read it.
+quest|98|rewards|actor => Gethin nods slowly. "Now you know what your light is for, and what the hood is for. A light lets you see. A closed hood lets you stay unseen. Keep the lantern. It is yours."
+quest|98|trigger1|action1|actor => The lantern settles in your light slot and its glow trims itself to your eyes. Now go west from the Mine Head, into the drift.
+quest|98|trigger2|action1|actor => The drift has no light of its own, only what is carried into it. Type hood to close your lantern.
+quest|98|trigger3|action1|actor => The dark closes in. You can hear the timbers settle. Type unhood when you want your light back, then go east to Gethin.
+quest|99|rewards|actor => Dace flips a coin across her knuckles and catches it without looking. "Your hands are quieter than they were this morning. Keep the picks. They break, so ask me where to find more before you need them."
+quest|99|trigger1|action1|actor => You are out of sight. Now lift the purse from the pocket dummy's coat. On the Reed Jetty, type steal dummy.
+quest|99|trigger2|action1|actor => The purse is in your hand. Now put it back where it came from. Type plant purse on dummy.
+quest|99|trigger3|action1|actor => That is the plant. If the dummy felt it, the purse is still in your pack, and you can try again for practice. Now the lockbox on the post. Type picklock lockbox.
+quest|99|trigger4|action1|actor => The last pin lifts and the lid comes free. Go and tell Dace. Type talk dace.
+quest|100|rewards|actor => Dace looks you over for blood, finds less than she expected, and nods. "One blow from the dark is worth three in the open. Remember it opens the fight, and you still have to finish it."
+quest|100|trigger0|action1|actor => You are out of sight in the dark. West of the drift lies the Flooded Sump and the brute that guards it. Walk in quietly, open your hood beside it if you carry a lantern, and type attack brute.
+quest|100|trigger1|action1|actor => Your first blow comes out of the dark. It knows where you are now. Finish the fight.
+quest|100|trigger2|action1|actor => It falls. Climb back out of the mine and tell Dace on the Reed Jetty.
+quest|101|rewards|actor => Dace watches your hands, not the purses. "Quicker. Come back when your fingers start to forget."
+quest|101|trigger0|action1|actor => That is three. Go and tell Dace. Type talk dace.
 quest|1000000|rewards|actor => Congratulations, here's some stuff!
 quest|1000000|rewards|observer => A Generic Quest has been completed!

@@ -1,0 +1,284 @@
+mobid: 9126
+zone: Pothole Coulee
+defaultMood: neutral
+greetings:
+- text: Keep your hands where I can see them. Habit. Mine, not yours.
+  moods:
+  - friendly
+  - neutral
+opener:
+  text: Dace. I sit on this jetty and teach quiet hands to anyone Gethin sends
+    me. The coulee lets me, so long as the lessons stay on the dummy and off
+    the neighbors.
+  hints: Choose a line below to hear about getting caught, stolen goods, or
+    the tools of the trade.
+  variants:
+  - questExcluded:
+    - 99-start
+    text: I don't take students off the street. Gethin, the lamplighter at the
+      Mine Head, sends me the ones worth teaching. See him first.
+    hints: Lamplighter Gethin keeps the Mine Head. Crier Toke in Hub Square can
+      start you on that road. You can still choose a line below.
+  - questRequired:
+    - 99-start
+    questExcluded:
+    - 99-lesson
+    text: Gethin sent you? Then sit, and I will tell you how this goes.
+    hints: Choose the line about learning quiet hands, below.
+  - questRequired:
+    - 99-lesson
+    questExcluded:
+    - 99-hidden
+    text: First, out of sight. If I spot you, step away from me and try again.
+    hints: Type sneak.
+  - questRequired:
+    - 99-hidden
+    questExcluded:
+    - 99-lifted
+    text: Now the purse in the dummy's coat. Light fingers.
+    hints: Type steal dummy.
+  - questRequired:
+    - 99-lifted
+    questExcluded:
+    - 99-planted
+    text: Now put it back where you found it. That is the harder trick.
+    hints: Type plant purse on dummy.
+  - questRequired:
+    - 99-planted
+    questExcluded:
+    - 99-picked
+    text: Last, the lockbox on the post. Your picks, the lock, and patience.
+    hints: Type picklock lockbox.
+  - questRequired:
+    - 99-picked
+    questExcluded:
+    - 99-end
+    text: Done? Come and tell me, then.
+    hints: Choose Quiet Hands below to finish.
+  - questRequired:
+    - 99-end
+    questExcluded:
+    - 100-start
+    text: Your hands are quiet enough for the next lesson, and it is not on this
+      jetty.
+    hints: Choose From the Dark, the line marked [!] below, to hear it.
+  - questRequired:
+    - 100-start
+    questExcluded:
+    - 100-kill
+    text: The mine is where this lesson is. Not here.
+    hints: In the old mine below the Mine Mouth, where nothing can see you, type
+      sneak. Then attack from hiding.
+  - questRequired:
+    - 100-kill
+    questExcluded:
+    - 100-end
+    text: You came back up, so it went well enough. Tell me about it.
+    hints: Choose From the Dark below to finish.
+  - questRequired:
+    - 100-end
+    questExcluded:
+    - 97-start
+    text: That is what I can teach you for now. Toke will want to hear how it
+      ended.
+    hints: Choose Report to Toke (Shadows), the line marked [!] below.
+  - questRequired:
+    - 101-start
+    questExcluded:
+    - 101-lifted
+    text: Three purses. The dummy is right there, and it does not mind.
+    hints: On the Reed Jetty, type steal dummy.
+  - questRequired:
+    - 101-lifted
+    questExcluded:
+    - 101-end
+    text: Three, was it? Tell me, then.
+    hints: Choose Quick Fingers below to finish.
+topics:
+- key: quiet_hands_lesson
+  kind: info
+  label: Gethin sent me to learn quiet hands.
+  text: Four things, then. First you slip out of sight. Then you lift the purse
+    out of that dummy's coat. Then you put it back, which is harder than taking
+    it. Last, you pick the little lockbox on the post with the picks Gethin
+    gave you. If the dummy catches you it will swing at you. It hits like a
+    pillow. Knock it down and another is set out. Start by hiding, and if I
+    spot you, step away from me and try again.
+  hints: Type sneak.
+  questRequired:
+  - 99-start
+  questExcluded:
+  - 99-lesson
+  - 99-end
+# The replacement and the reminder never show together: itemExcluded and
+# carriesItem on the same item are exact opposites.
+- key: lockpicks_spare
+  kind: info
+  label: My lockpicks are gone.
+  text: They do that. A wrong pin costs you a pick, and a set has only so many.
+    Here, another set. A wrong pin shows you which way that pin goes, so this
+    set should last.
+  hints: Type picklock lockbox.
+  questRequired:
+  - 99-lesson
+  questExcluded:
+  - 99-picked
+  - 99-end
+  itemExcluded: 33
+  givesItem: 33
+- key: lockpicks_have
+  kind: info
+  label: Can I have more lockpicks?
+  text: You still have picks on you. Spend them first. When the last one is
+    gone, come and tell me, and I will give you another set.
+  hints: Type inventory to see what you carry.
+  questRequired:
+  - 99-lesson
+  questExcluded:
+  - 99-picked
+  - 99-end
+  carriesItem: 33
+- key: quiet_hands_in
+  kind: handin
+  quest: 99
+  label: Quiet Hands
+  playerLine: I hid, lifted the purse, tried to put it back, and picked the box.
+  text: All four. Not bad for a first sitting. Quiet hands are mostly patience
+    and nerve, and you have some of both.
+  hints: Quest complete. Dace has one more lesson for you.
+  questRequired:
+  - 99-picked
+  questExcluded:
+  - 99-end
+  grantsQuest: 99-end
+- key: from_the_dark_offer
+  kind: offer
+  quest: 100
+  label: From the Dark
+  playerLine: What comes after quiet hands?
+  text: A quiet strike. Go back over the talus, down into the old mine below the
+    Mine Mouth. Find something that lives there, get out of its sight, then hit
+    it before it knows you are there. The first blow from hiding lands like
+    nothing else. After that it is an ordinary fight, so be ready to finish it.
+  hints: From the Reed Jetty go south, west four times, north, west five times,
+    down, then west into the Timbered Drift. Type sneak.
+  questRequired:
+  - 99-end
+  questExcluded:
+  - 100-start
+  - 100-end
+  grantsQuest: 100-start
+- key: from_the_dark_in
+  kind: handin
+  quest: 100
+  label: From the Dark
+  playerLine: I struck from the dark and finished the fight.
+  text: And walked back up on your own feet. Good. Now you know why a thief
+    keeps her hood closed and her first blow ready.
+  hints: Quest complete. Toke will want to hear of it, and the dummy is here
+    whenever you want the practice.
+  questRequired:
+  - 100-kill
+  questExcluded:
+  - 100-end
+  grantsQuest: 100-end
+- key: quick_fingers_offer
+  kind: offer
+  quest: 101
+  label: Quick Fingers
+  playerLine: Can I practice on the dummy again?
+  text: Always. Lift three purses from its coat and come back. It refills its
+    own pocket if you give it a moment between tries.
+  hints: On the Reed Jetty, type steal dummy.
+  questRequired:
+  - 100-end
+  questExcluded:
+  - 101-start
+  - 101-end
+  grantsQuest: 101-start
+- key: quick_fingers_in
+  kind: handin
+  quest: 101
+  label: Quick Fingers
+  playerLine: I lifted three purses from the dummy.
+  text: Three, and the bells barely spoke. Your fingers are getting quick.
+  hints: Quest complete. Dace will have the dummy stocked again after a while.
+  questRequired:
+  - 101-lifted
+  questExcluded:
+  - 101-end
+  grantsQuest: 101-end
+- key: report_shadows_offer
+  kind: offer
+  quest: 97
+  label: Report to Toke (Shadows)
+  playerLine: Should I tell Toke the Shadows line is done?
+  text: Go and tell him. Toke likes to hear how each line ends, and he will
+    hear it from somebody, so it might as well be you.
+  hints: From the Reed Jetty go south, east to the Awakening Pool, then south
+    to Hub Square. Type talk toke.
+  questRequired:
+  - 100-end
+  questExcluded:
+  - 97-start
+  - 97-end
+  grantsQuest: 97-start
+- key: shadowing
+  kind: info
+  label: How do I follow someone without being seen?
+  text: That is shadowing, and it comes later, once your quiet hands have more
+    practice behind them. You hide first, then shadow your mark, and you follow
+    wherever they go. Every doorway is a chance for someone to spot you, and
+    the mark may feel eyes on their back.
+  hints: Type help shadow to read more.
+  marked: true
+- key: surprise_strike
+  kind: info
+  label: What is a strike from hiding?
+  text: You hide, then you attack or shoot, and your first blow becomes the
+    ambush. It is one blow, not a whole round, and it is spent even if it
+    misses. A melee ambush needs your special move ready, or you get no ambush
+    at all. A ready mark can still dodge it, parry it or block it. If it lands
+    clean it strikes like a critical hit, and the better your skullduggery the
+    deeper it bites. Either way it gives your place away, so plan the rest of
+    the fight as an open one.
+  hints: Type help ambush to read more.
+  marked: true
+- key: defuse_lesson
+  kind: info
+  label: What if a lock has a trap on it?
+  text: Then a wrong pick sets it off. Taking a trap apart with a disarm kit is
+    a skill for later, when your hands are steadier than they are today. The
+    kit is used up whether you win or lose. My lockbox has no trap. I am not
+    that cruel.
+  hints: Type help defuse to read more.
+  marked: true
+- key: getting_caught
+  kind: info
+  label: What happens if I get caught?
+  text: Your cover is gone at once, and the one you tried to rob may come at
+    you. Folk remember a thief, and so do the people who keep the peace. The
+    good folk of this coulee you cannot rob at all, and I would not let you
+    try. Practice on the dummy. It holds no grudge.
+  hints: Type help steal to read more.
+  marked: true
+- key: hot_goods
+  kind: info
+  label: What happens to the things I steal?
+  text: A stolen trinket stays hot for a few days in the town where you took
+    it. No honest merchant there will buy it, no storage will hold it, and its
+    owner may know it on sight if your paths cross. Give it back and it cools.
+    Or take it to a fence. A fence buys hot goods anywhere, and pays well for
+    them.
+  hints: Type help steal to read more.
+  marked: true
+- key: tools
+  kind: info
+  label: Where do lockpicks come from?
+  text: Fence Dealer Siv sells plain iron picks and basic disarm kits, in
+    Thornwall, on the far side of Warden Esk's arch. Jeweler Vurl, here in the
+    coulee, makes master lockpicks and precision disarm kits now and then. A
+    smith with enough skill can forge steel or master picks of their own. Picks
+    break, so carry a spare.
+  hints: Type help picklock to read more.
+  marked: true

@@ -29,6 +29,7 @@ func TestTokeGivesTheWay(t *testing.T) {
 		{"way_drill_yard", "From Hub Square: north, then east four times."},
 		{"way_long_terrace", "From Hub Square: north, east, east, north, up"},
 		{"way_scout_tarn", "From Hub Square: west, west, south, south to the Steppe Edge."},
+		{"way_mine_head", "From Hub Square: north, west five times, north, west five times, down."},
 	}
 	ps := &PlayerState{
 		QuestOpen:    func(int) bool { return true },
