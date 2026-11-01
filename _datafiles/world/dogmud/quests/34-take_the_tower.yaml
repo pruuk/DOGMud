@@ -78,9 +78,9 @@ triggers:
     actions:
       - grant: "34-slain"
       - actor: >-
-          The captain falls, and the watch room goes quiet. Her blade lies
-          where she dropped it, the one well-kept thing in this ruin. Take
-          the news down to Garve: type talk garve when you reach him.
+          The captain falls, and the watch room goes quiet. You take up her
+          blade, the one well-kept thing in this ruin. Take the news down to
+          Garve: type talk garve when you reach him.
 
   # The might boon, at the kill: a permanent Strength gain. Grants nothing.
   - event: quest_granted
