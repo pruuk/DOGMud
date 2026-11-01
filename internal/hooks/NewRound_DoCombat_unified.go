@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/progression"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -641,6 +642,14 @@ func applyCombatProgression(atk, def actions.Actor, res *combat.AttackResult) {
 	atkUid := atk.GetUserId()
 	defUid := def.GetUserId()
 
+	// #375 phase 7 (quest 100, From the Dark): a player's opening strike from
+	// hiding is the `ambush` quest event, landed or not (the opener is spent
+	// either way). WasSurpriseAttack is the only place the fact survives to
+	// this phase; see surpriseCandidate.
+	if atk.IsPlayer() && res.WasSurpriseAttack {
+		notifyAmbushQuest(atk, def)
+	}
+
 	// Cancel sleeping / cancel-on-damage conditions for any defender that took
 	// damage this round (chunk 3.3). Fires before concentration-break so
 	// that a waking defender's conditions are cleaned up in the same phase.
@@ -1104,6 +1113,18 @@ func asUser(a actions.Actor) *users.UserRecord {
 		return u.User
 	}
 	panic("asUser called on non-player Actor")
+}
+
+// notifyAmbushQuest raises the `command ambush` quest event for a player's
+// opening strike from hiding, aimed at the defender (#375 phase 7). Call it
+// only for a player attacker.
+func notifyAmbushQuest(atk, def actions.Actor) {
+	room := atk.GetRoom()
+	if room == nil {
+		return
+	}
+	questengine.NotifyCommand(asUser(atk), room.RoomId, "ambush",
+		questengine.TargetActor(atk.GetUserId(), def.GetUserId(), def.GetMobInstanceId()))
 }
 
 // asMob unwraps an Actor known to be a mob. Panics if misused — only
