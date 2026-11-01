@@ -32,7 +32,7 @@ func RecipientFull(to Recipient) { send(to, RecipientFullLine) }
 // consumed, and the line names quaff (#375 phase 7, owner ruling
 // 2026-10-30). It echoes typed, the player's own item.
 func QuaffPotionText(typed string) string {
-	return `That is a potion, and potions are drunk with quaff.` + hint(`quaff `+echo(typed))
+	return `That is a potion.` + hint(`quaff `+echo(typed))
 }
 
 func QuaffPotion(to Recipient, typed string) { send(to, QuaffPotionText(typed)) }

@@ -27,7 +27,7 @@ func TestSteal_MinRankComesFromConfig(t *testing.T) {
 		actor := newStealPlayerActor(100, 1)
 		actor.room.Containers = map[string]rooms.Container{"chest": {Gold: 100}}
 		res := Steal(actor, StealOptions{ContainerNoun: "chest"})
-		require.NotEqual(t, "not advanced enough", res.Reason, "rank 1 passes the shipped gate: %+v", res)
+		require.True(t, res.Succeeded, "rank 1 passes the shipped gate and nobody is watching: %+v", res)
 	})
 	t.Run("player below a raised gate", func(t *testing.T) {
 		pinStealMinRank(t, 2)

@@ -22,7 +22,7 @@
 | `picklock` raises no quest event. Two success paths: the keyring path (`sequenceMatches(keyring_sequence, sequence)`) and the pin game (`sequenceMatches(entered, sequence)`); a container lock id is `"%d-%s"` of room id and container name | `internal/usercommands/picklock.go:90,144-181,261-298` |
 | Full list of `NotifyCommand` call sites: no `hood`, no `picklock`, no ambush | grep `NotifyCommand(` over `internal` (35 hits, includes `skill.skullduggery.sneak.go:125`) |
 | `sneak` raises `command sneak` only when the player ends hidden (or already was) | `internal/usercommands/skill.skullduggery.sneak.go:53-58,99-126` |
-| `steal` on a mob raises `command steal` (target mob, no item) BEFORE the contest, after the rank-2 check | `internal/actions/steal.go:258,266-272` |
+| `steal` on a mob raises `command steal` (target mob, no item) BEFORE the contest, after the `StealMinRank` check | `internal/actions/steal.go:258,266-272` |
 | A successful theft from a mob moves one random non-`never_drops` carried item through `acquire.AcquireItemForChar(..., acquire.AcquireSteal)`, which raises `item_gain` only when it lands | `internal/actions/steal.go:330-332`; `internal/characters/inventory.go:165-176`; `internal/acquire/acquire.go` (`AcquireItemForChar`) |
 | `plant` on a mob raises `command plant` (target mob, `WithItem`) BEFORE the contest | `internal/actions/plant.go:129-135` |
 | No shipped quest listens for `command: steal`, `plant`, `picklock` or `hood` | grep `command: plant\|command: steal\|command: picklock\|command: hood` in `quests/` (0 hits) |

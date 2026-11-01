@@ -969,7 +969,7 @@ Pickpockets a target mob or player, or robs an item from a room container.
    - Refused for any companion (charmed, the thief's own included, or bonded to
      the AI companion: "X is someone's companion. You can't steal from them.",
      reason `companion`), then for non-combatant or player-attack-immune mobs
-     (`mobs.CheckPlayerHarm`), and below skullduggery rank 2.
+     (`mobs.CheckPlayerHarm`), and below `Balance.StealMinRank`.
    - One contest (`combat.RunContest`): the thief's Dexterity +
      skullduggery x SkillWeight (+ StealHiddenBonus when hidden) against
      `stealVictimScore` (the mob's Perception + skullduggery x
@@ -1421,7 +1421,7 @@ member), awake, able to see, not `AutoAggro`, not anyone's companion.
 Taking one is `steal`, never `get` (`usercommands/get.go` refuses, and `get
 all` skips it, so a pickup can never start a crime by accident):
 `Steal(actor, StealOptions{HouseholdItem: itm})` runs the ordinary steal
-checks (skullduggery rank 2, the steal cooldown, the attacker score) and then
+checks (`Balance.StealMinRank`, the steal cooldown, the attacker score) and then
 `stealHouseholdBauble`:
 
 - Not this room's household's: refused.

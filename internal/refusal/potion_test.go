@@ -12,8 +12,10 @@ import (
 func TestQuaffPotionAndNotAPotion(t *testing.T) {
 	f := &fakeRecipient{}
 	QuaffPotion(f, "healing salve")
-	assert.Equal(t, `That is a potion, and potions are drunk with quaff. Try <ansi fg="command">quaff healing salve</ansi>.`,
+	assert.Equal(t, `That is a potion. Try <ansi fg="command">quaff healing salve</ansi>.`,
 		one(t, f, messaging.CategoryRefusal))
+	fits80(t, QuaffPotionText("lake-tonic of steady hand"))
+	fits80(t, NotAPotionText("lake-tonic of steady hand", "drink"))
 
 	f = &fakeRecipient{}
 	NotAPotion(f, "tea", "drink")

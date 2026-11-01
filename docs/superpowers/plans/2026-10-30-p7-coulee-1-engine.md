@@ -1193,7 +1193,7 @@ func TestEatAndDrinkLeaveAPotion(t *testing.T) {
 		_, err := userCommands[verb].Func("test tonic", user, room, 0)
 		require.NoError(t, err)
 		told := aimTold(1)
-		assert.Contains(t, told, "potions are drunk with quaff", verb)
+		assert.Contains(t, told, "That is a potion.", verb)
 		assert.Contains(t, told, "quaff test tonic", verb)
 		assert.True(t, edqCarries(user, edqTonicId), "%s must not consume a potion", verb)
 	}
@@ -3267,7 +3267,7 @@ rank.
 In `internal/refusal/context.md`, add two rows to the `## Helpers` table after the `NotCarrying(u, "")` row:
 
 ```
-| `QuaffPotion(u, "salve")` / `QuaffPotionText` | That is a potion, and potions are drunk with quaff. Try **quaff salve**. |
+| `QuaffPotion(u, "salve")` / `QuaffPotionText` | That is a potion. Try **quaff salve**. |
 | `NotAPotion(u, "tea", "drink")` / `NotAPotionText` | That is not a potion. Try **drink tea**. |
 ```
 

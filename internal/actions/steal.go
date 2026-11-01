@@ -543,6 +543,14 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 		return StealResult{Reason: "not advanced enough"}
 	}
 
+	// A locked container surrenders nothing until it is unlocked or picked,
+	// the gate get, put and look all apply. Checked before the contents, so
+	// the refusal says nothing about what is inside.
+	if container.Lock.IsLocked() {
+		actor.SendText(messaging.CategoryRefusal, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
+		return StealResult{Reason: "locked"}
+	}
+
 	if len(container.Items) == 0 && container.Gold == 0 {
 		actor.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 			`You root around inside the <ansi fg="itemname">%s</ansi> `+

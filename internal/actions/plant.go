@@ -347,6 +347,13 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item, t
 		return PlantResult{Reason: "not found"}
 	}
 
+	// A locked container takes nothing until it is unlocked or picked, the
+	// gate put applies and the same one stealFromContainer applies.
+	if container.Lock.IsLocked() {
+		actor.SendText(messaging.CategoryRefusal, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
+		return PlantResult{Reason: "locked"}
+	}
+
 	// Quest engine notification — player actors only.
 	if actor.IsPlayer() {
 		if u := users.GetByUserId(actor.GetUserId()); u != nil {
