@@ -194,6 +194,45 @@ func checkTopicStepsWith(t *testing.T, npc, dfile string, setup func(*linearPlay
 	}
 }
 
+// checkMeetStep checks the first step of a giver-to-giver quest (#375 phase
+// 7): go and see the giver. The step's hint names the walk and teaches `talk
+// <npc>`; at that step the giver's opener names no command and points at the
+// menu; the giver's meeting topic is on the menu, quest-aware, and names the
+// next step's one command (want, which the next step's hint names too); and
+// hearing that topic (the topic_heard trigger) moves the player to the next
+// step. Another topic, or the same key on another NPC, does not.
+func checkMeetStep(t *testing.T, npc, dfile, qfile string, id int, key, want string, others ...string) {
+	t.Helper()
+	q := loadShippedQuest(t, qfile, id)
+	require.GreaterOrEqual(t, len(q.Steps), 3, "quest %d: a meeting step needs a step after it", id)
+	next := q.Steps[1].Id
+	require.Contains(t, questHintFor(t, q, "start"), "type talk "+npc,
+		"quest %d: the meeting step's hint must teach talk %s", id, npc)
+	require.Contains(t, questHintFor(t, q, next), want, "quest %d step %q hint changed; update this test", id, next)
+
+	df := loadCouleeTopics(t, dfile)
+	n := newNpcTalker(df, playerOn(q, "start", others...))
+	_, opener := n.opener()
+	require.Zero(t, typedCount(opener), "quest %d start: %s's opener names no command before the lesson: %q", id, npc, opener)
+	require.Contains(t, squash(opener), "choose a line below", "quest %d start: %s's opener points at the menu", id, npc)
+	tp := n.eligible(key)
+	require.NotNil(t, tp, "quest %d start: %s topic %q is not on the menu", id, npc, key)
+	require.Equal(t, dialogue.KindInfo, tp.Kind, "quest %d: %s is an info topic", id, key)
+	require.True(t, gatesOnQuest(tp, id), "quest %d: %s must be quest-aware", id, key)
+	require.Contains(t, squash(tp.Hints), want, "quest %d: %s names the next step's command", id, key)
+
+	w := newQuestWalker(q).at("start")
+	for _, tok := range others {
+		w.p.fullMockPlayer.quests[tok] = true
+	}
+	w.notify("topic_heard", EventDetails{MobId: df.MobId, Topic: "not_" + key})
+	require.Equal(t, "start", w.p.current, "quest %d: another topic must not count", id)
+	w.notify("topic_heard", EventDetails{MobId: df.MobId + 1, Topic: key})
+	require.Equal(t, "start", w.p.current, "quest %d: the same key on another NPC must not count", id)
+	w.notify("topic_heard", EventDetails{MobId: df.MobId, Topic: key})
+	require.Equal(t, next, w.p.current, "quest %d: hearing %s's %s moves the player on", id, npc, key)
+}
+
 // checkHandout: a replacement topic gives its item once. A player without one
 // sees the replacement, takes it, and from then on sees only the reminder,
 // which hands nothing out (S8).

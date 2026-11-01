@@ -557,9 +557,15 @@
 9137.salt_have
 9137.salt_recovery
 9144.cast_help
+9144.cast_lesson
+9144.cast_progress
 9144.cast_turnin
+9144.charm
+9144.conjure
 9144.eyes
 9144.folding
+9144.manifestation
+9144.new_spells
 9145.grove_help
 9145.grove_loop_mid
 9145.grove_loop_offer

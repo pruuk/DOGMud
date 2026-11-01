@@ -1,79 +1,104 @@
-# Quest 44 — First Casting (Pothole Coulee, Spoke E / Folding inner ring, cert)
+# Quest 44, First Casting (Pothole Coulee, casting line, quest 1 of 3)
 #
-# Token flow:
-#   44-start: granted by Crier Toke's send_folding offer (9106.yaml, requires 31-end).
-#   44-cast  — command trigger on `cast` in the Star Chamber (5305), where the
-#              Practice Mote (9146) hangs as a target.
-#   44-end   — granted by Grieve's cast_turnin node (needs 44-cast).
+# Token flow (#375 phase 7, one action per step, giver to giver):
+#   44-start: granted by Crier Toke's send_folding offer (9106), after 31-end.
+#   44-met:   topic_heard on Adept Grieve's cast_lesson topic (9144): the
+#             player went to Grieve and heard the lesson.
+#   44-cast:  command trigger on `cast` aimed at the Practice Mote (9146) in
+#             the Star Chamber (5305). Gated on 44-met. The command event
+#             fires when the cast begins, so the line claims no result.
+#   44-end:   granted by Grieve's cast_turnin hand-in (needs 44-cast).
 #
-# Design: teach the `cast` command. The player casts a spell they already carry
-# (conviction-spike) at the practice mote, then returns to Grieve for the Oak
-# Staff focus + a spellcasting rank. The `cast` command Notify (added to
-# skill.cast.go this chunk) fires 44-cast. New characters start with
-# spellcasting rank 1 + conviction-spike, so the beat is reachable cold.
+# The mote is combat_passive: it answers a cast feebly and a second casting
+# can scatter it, and room 5305 respawns it. No line promises it unharmed
+# (#697). New characters start with spellcasting rank 1 and Conviction Spike,
+# so the beat is reachable cold.
+#
+# Saved characters: a player saved on start before this pass (the cast still
+# to do) now talks to Grieve first; one saved on cast turns in as before.
 
 questid: 44
 name: First Casting
 description: >-
-  Adept Grieve keeps the ruined observatory where the Folding-adepts once
-  read the thin places, and the first turning of the mind waits in the Star
-  Chamber. Cast a spell you already carry at the practice mark there.
+  Adept Grieve keeps the ruined observatory where the Folding adepts once
+  read the thin places. He teaches the first turning of the mind: how to
+  cast a spell you already carry.
 secret: false
 
 steps:
   - id: start
     destination:
+      mob: 9144
+    description: >-
+      Crier Toke has sent you to Adept Grieve, the caretaker of the old
+      observatory. He teaches the first casting.
+    hint: >-
+      From Hub Square, go west, north, north, north, up and up to the
+      Observatory Hall. Type talk grieve.
+  - id: met
+    destination:
       room: 5305
     description: >-
-      The Star Chamber is where you first turn the mind. Stand there and
-      loose a spell you know at the practice mote. Conviction Spike, the
-      attack you woke with, will serve. Adept Grieve keeps the observatory.
+      Grieve has shown you the practice mote in the Star Chamber. Cast a
+      spell you already know at it. Conviction Spike, the attack you woke
+      with, will serve.
     hint: >-
       Go north into the Star Chamber and type cast spike mote.
   - id: cast
     destination:
-      room: 5303
+      mob: 9144
     description: >-
-      You shaped a spell and loosed it at the mark. Return to Grieve in the
+      You shaped a spell and let it go at the mote. Return to Grieve in the
       Observatory Hall.
     hint: >-
-      Go back to Adept Grieve in the Observatory Hall and type talk
+      Go back south to Adept Grieve in the Observatory Hall and type talk
       grieve.
   - id: end
     description: >-
-      Grieve has named you a caster of the first and smallest sort. North of
-      the ruin the grove waits, where a keeper named Orrin teaches the
-      holding of a thought under pressure.
+      Grieve has named you a caster of the first and smallest sort. When you
+      are ready, he will send you north to the grove.
 
 rewards:
   skillinfo: "spellcasting:1"
   itemid: 10018
   gold: 15
   actor: >-
-    Grieve watches the mote take your spell and reknit, and something in his
-    mismatched eyes settles. "There. You did not reach for it -- you let it
-    go. That is the whole of it." He takes a long staff of pale oak from the
-    wall and sets it in your hands; it is light, and the wood seems to lean
-    toward the work. "A focus. It will not cast for you, but it will not
-    fight you either. Remember the three channels -- the body's force, the
-    mind's will, the heart's conviction. You loosed conviction just now.
-    Willpower is the stat that shapes a spell, and the more of it you carry,
-    the cleaner the fold. North, to the grove. Orrin will teach you to hold
-    a casting while the world tries to knock it loose."
+    Grieve watches the mote take your spell, and something in his mismatched
+    eyes settles. "There. You did not reach for it. You let it go, and that is
+    the whole of it." He takes a long staff of pale oak from the wall and sets
+    it in your hands. It is light, and the wood seems to lean toward the work.
+    "A focus. It will not cast for you, but it will not fight you either.
+    Remember the three channels: the body's force, the mind's will and the
+    heart's conviction. You loosed conviction just now. Willpower is the stat
+    that shapes a spell, and the more of it you carry, the cleaner the fold.
+    When you are ready, I will send you north to the grove, where Orrin
+    teaches the holding of a casting while the world tries to knock it loose."
   observer: "Grieve presses a pale oak staff into the newcomer's hands."
 
 triggers:
-  # ── CAST: loose a spell at the practice mote (Star Chamber, 5305) ──────
+  # MET: hearing Grieve's lesson (the topic the giver's hint invites).
+  - event: topic_heard
+    mob: 9144
+    topic: cast_lesson
+    conditions:
+      has: ["44-start"]
+      missing: ["44-met"]
+    actions:
+      - grant: "44-met"
+
+  # CAST: loose a spell at the practice mote (Star Chamber, 5305).
   - event: command
     command: cast
     room: 5305
+    mob: 9146
     conditions:
-      has: ["44-start"]
+      has: ["44-met"]
       missing: ["44-cast"]
     actions:
       - grant: "44-cast"
       - actor: >-
-          Your spell leaves you and breaks against the mote in a flare of
-          folded light; the mote draws inward and reknits, unharmed. That is
-          casting -- will shaped to a purpose and let go. Go back south to
-          Adept Grieve in the Observatory Hall and type talk grieve.
+          You gather the spell and send it at the mote. That is casting: will
+          shaped to a purpose and let go. The mote may flicker back at you,
+          and a second casting can scatter it, but Grieve folds a new one out
+          of the air for the next student. Go back south to Adept Grieve in
+          the Observatory Hall and type talk grieve.

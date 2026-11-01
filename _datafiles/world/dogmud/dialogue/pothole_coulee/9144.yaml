@@ -29,11 +29,19 @@ opener:
   - questRequired:
     - 44-start
     questExcluded:
+    - 44-met
+    - 44-end
+    text: Toke sent you up the stair, did he? Good. Then there is something to
+      teach, and you have come to the right ruin for it.
+    hints: Choose a line below to hear the first lesson.
+  - questRequired:
+    - 44-met
+    questExcluded:
     - 44-cast
     - 44-end
     text: You have not loosed it yet. North, into the Star Chamber, where the practice
-      mote hangs at the mark. Type cast spike mote and let the spell go at it. Then
-      come back and tell me.
+      mote hangs at the mark. Cast at it and let the spell go. Then come back and
+      tell me.
     hints: Go north into the Star Chamber and type cast spike mote.
   - questRequired:
     - 44-cast
@@ -43,12 +51,29 @@ opener:
     hints: Choose First Casting below to report.
   - questRequired:
     - 44-end
+    questExcluded:
+    - 45-start
+    - 45-end
     text: You can cast now. It is the first and smallest sort, but the door is open and
-      it does not close again. North, through the ruin, the grove begins. Keeper Orrin
-      tends it. He will teach you to hold a casting while something is trying to kill
-      you, which is the part that matters.
-    hints: Head north through the observatory into the grove and type talk orrin to
-      find Keeper Orrin.
+      it does not close again. North of this ruin the grove begins, and Keeper Orrin
+      tends it. He teaches the part that matters, holding a casting while something
+      is trying to kill you. When you are ready, I will send you to him.
+    hints: Choose The Unquiet Grove below when you are ready for the grove.
+  - questRequired:
+    - 45-start
+    questExcluded:
+    - 45-cast
+    - 45-end
+    text: Orrin is waiting for you in the Whispering Grove. Go gently. The grove is
+      kind to slow feet.
+    hints: From the Observatory Hall, go north, west, north, north and north to the
+      Whispering Grove. Type talk orrin.
+  - questRequired:
+    - 44-end
+    text: You can cast now. It is the first and smallest sort, but the door is open and
+      it does not close again. Cast often. Every casting that holds is a chance to
+      learn another.
+    hints: Choose a line below to hear about spells, the Folding or manifestation.
 topics:
 - key: cast_turnin
   kind: handin
@@ -58,10 +83,10 @@ topics:
   text: You let it go instead of throwing it. I felt the fold from here. That is the
     whole foundation, and everything else is only larger folds and steadier nerves.
     Take this staff. Oak, a focus, it will steady your castings without ever casting
-    for you. North now, to the grove. Orrin will teach you to hold a working together
-    while the world tries to break it.
-  hints: Quest complete. Head north into the grove and type talk orrin to find Keeper
-    Orrin.
+    for you. When you are ready, I will send you north to the grove, where Orrin
+    teaches the holding of a working while the world tries to break it.
+  hints: Quest complete. Choose The Unquiet Grove below when you are ready for the
+    grove.
   questRequired:
   - 44-cast
   questExcluded:
@@ -94,3 +119,66 @@ topics:
     do that without losing yourself in the reaching. You already carry the spark
     of it. The Awakening leaves everyone a little open to the Folding, which is why
     you woke with a spell. I only teach the aiming.
+- key: cast_lesson
+  kind: info
+  label: Toke sent me to learn casting.
+  text: Then here is the first turning. North of here is the Star Chamber, and at
+    its center a practice mark with a mote of folded light hanging over it. I conjure
+    them for students. Stand at the mark and cast a spell you already know at the
+    mote. The spike you woke with will do. Do not force it. Shape it, and let it go.
+    The mote may flicker back at you, weakly, and a second casting can scatter it.
+    I will fold another. Then come back to me.
+  hints: Go north into the Star Chamber and type cast spike mote.
+  questRequired:
+  - 44-start
+  questExcluded:
+  - 44-met
+  - 44-end
+- key: cast_progress
+  kind: info
+  label: Where is the practice mote?
+  text: North, in the Star Chamber, over the scribed mark. Stand in the circle and
+    let the spike go at it. It may flicker back at you. Pay that no mind. If the
+    mote is gone, wait a little. A new one folds out of the air.
+  hints: Go north into the Star Chamber and type cast spike mote.
+  questRequired:
+  - 44-met
+  questExcluded:
+  - 44-cast
+  - 44-end
+- key: new_spells
+  kind: info
+  label: How do I learn new spells?
+  text: Not from a trainer. Nobody can hand you a spell. Each time you cast and the
+    working holds, there is a chance a new pattern settles in your mind, a spell you
+    did not know before. The more you cast, the more you learn. The small spells
+    come first. The great ones wait until your skill can hold them.
+  hints: To see the spells you know, type spells. For more, type help spells.
+  marked: true
+- key: manifestation
+  kind: info
+  label: What is manifestation?
+  text: The art of binding a creature to your will. You can call one out of nothing,
+    bend one that already lives, or raise one that has fallen. It draws on charisma
+    more than willpower, and every creature you hold keeps a share of your conviction
+    set aside for as long as it stays with you. Nobody starts with such a spell. If
+    one comes to you through casting, you will know it. Orrin can tell you about
+    raising the dead, if you have the stomach for it.
+  hints: For more, type help manifestation.
+  marked: true
+- key: conjure
+  kind: info
+  label: How does conjuring work?
+  text: A conjured creature is called out of nothing. An elemental of fire, air, earth
+    or water, the same wherever you stand, and nothing is used up to make it. Cast
+    its spell and it comes bound to you. A mightier one holds more of your will, so
+    a conjurer chooses with care.
+  hints: For more, type help conjure-fire.
+- key: charm
+  kind: info
+  label: Can I make a creature serve me?
+  text: For a time, with the charm spell. It bends a living creature's mind to yours,
+    and it fights at your side. But the hold ends without warning, and if you are
+    standing beside it when it does, it turns on you. A stubborn mind fights the charm
+    hardest. A sleeping one is easiest of all.
+  hints: For more, type help charm.
