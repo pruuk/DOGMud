@@ -7,11 +7,16 @@
 # makes it true.
 #
 # #690: he used to flee, a roll that can fail, which left a real fight
-# running and the player unable to walk south. He now despawns. The player's
-# aggro on him is released on the next combat round because the target is
-# gone (hooks.ValidateAggro), and the Mustering Green's spawn list brings him
-# back after a few rounds for the next student (rooms/pothole_coulee/5335.yaml).
-# Test: internal/behaviortree/garrow_yield_test.go.
+# running and the player unable to walk south. He now leaves with `suicide
+# vanish`: no corpse, no loot, no kill credit, and his spawn slot keeps its
+# cooldown. Plain `despawn` is the wrong command here, because it resets the
+# slot (a presence unload or an expired charm is no death), so he would be back
+# a round later with no line. The player's aggro on him is released on the next
+# combat round because the target is gone (hooks.ValidateAggro), and the
+# Mustering Green's spawn entry brings him back for the next student, with its
+# message, after its rate (rooms/pothole_coulee/5335.yaml).
+# Tests: internal/behaviortree/garrow_yield_test.go and
+# internal/mobcommands/garrow_yield_spawn_test.go.
 
 tree:
   type: selector
@@ -31,4 +36,4 @@ tree:
             of him all at once.
         - type: action
           do: command
-          cmd: despawn
+          cmd: suicide vanish

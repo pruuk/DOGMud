@@ -25,6 +25,9 @@
 # The butt falls to a stone or two and a fresh one is hauled out 5 rounds
 # later (room 5351 spawninfo), so the shot hints say to wait for it.
 #
+# A same-room shot starts a fight, and sneak is refused in a fight
+# (actions.Sneak) until the butt falls, so the lines that say sneak say so.
+#
 # A player who already holds the sling in hand at the equip step takes it
 # off (`remove sling`) and readies it again: Toke hands the sling over before
 # Iden is met, equip reads only the pack, and nothing checks an early equip.
@@ -82,7 +85,8 @@ steps:
       You loosed a stone at the butt, and the sling readied itself without
       being told. Iden wants you to try it once more from cover.
     hint: >-
-      Type sneak.
+      You cannot sneak in a fight, and your shot started one. If the butt
+      still stands, keep shooting until it falls. Then type sneak.
   - id: ambush
     destination:
       room: 5351
@@ -168,7 +172,9 @@ triggers:
       - actor: >-
           The stone leaves the sling and flies at the butt. Your hand has
           already found another. Iden calls down the range: "Now again, from
-          where it cannot see you coming. Type sneak."
+          where it cannot see you coming. You cannot sneak in a fight, and that
+          shot started one, so put the butt down first. Once it is down, type
+          sneak."
 
   # AMBUSH: take cover.
   - event: command

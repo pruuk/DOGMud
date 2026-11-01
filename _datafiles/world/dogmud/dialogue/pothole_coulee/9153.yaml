@@ -63,8 +63,8 @@ opener:
     questExcluded:
     - 48-met
     - 48-end
-    text: Hale is waiting for you at the Stone Circle. Mind the green on your way.
-      There is a quarrel parked on it.
+    text: Hale is waiting for you at the Stone Circle. There is a quarrel parked on
+      the green just north of him, and he will tell you about it.
     hints: From the Commons Yard, go north, west, north, north and north to the Outer
       Ring, then west into the Stone Circle. Type talk hale.
   - questRequired:
@@ -72,6 +72,22 @@ opener:
     text: A friend of the folk, now, and wearing the sign of it. Good.
     hints: Choose a line below to hear about the folk and their ways.
 topics:
+# The lesson comes first: the menu keeps authored order, only hearing this
+# earns the step, and the marked help line below teaches the same command.
+- key: words_lesson
+  kind: info
+  label: Toke sent me to learn the ways of the folk.
+  text: Then here is the first of it, and the whole of it. Learn to ask, and learn
+    where to look. Ask me about the folk and our ways whenever you like, and listen
+    to the answers. The other half is the in-game help, for when your own memory
+    fails. It is more patient than I am and always to hand. Open it now, then come
+    back to me.
+  hints: Type help.
+  questRequired:
+  - 47-start
+  questExcluded:
+  - 47-met
+  - 47-end
 - key: words_turnin
   kind: handin
   quest: 47
@@ -147,17 +163,3 @@ topics:
   - 48-start
   - 48-end
   grantsQuest: 48-start
-- key: words_lesson
-  kind: info
-  label: Toke sent me to learn the ways of the folk.
-  text: Then here is the first of it, and the whole of it. Learn to ask, and learn
-    where to look. Ask me about the folk and our ways whenever you like, and listen
-    to the answers. The other half is the in-game help, for when your own memory
-    fails. It is more patient than I am and always to hand. Open it now, then come
-    back to me.
-  hints: Type help.
-  questRequired:
-  - 47-start
-  questExcluded:
-  - 47-met
-  - 47-end

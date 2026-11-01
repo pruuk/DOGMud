@@ -7,8 +7,9 @@
 #             Mustering Green (5335). Gated on 48-met. Garrow's tree
 #             (behaviors/pothole_coulee/9158-sullen_garrow.yaml) makes him
 #             yield and leave on the first round of the fight the taunt
-#             starts, so the line below is true (#690); the green respawns
-#             him for the next student.
+#             starts, however the taunt landed (#690). The event fires after a
+#             resisted taunt too, so the line below claims no result. The green
+#             respawns him for the next student after its 5 round rate.
 #   48-end:   granted by Hale's stones_turnin hand-in (needs 48-taunt).
 #
 # Saved characters: a player saved on start before this pass (the taunt still
@@ -94,8 +95,6 @@ triggers:
     actions:
       - grant: "48-taunt"
       - actor: >-
-          Your words find the gap in his bluster and go straight through it. The
-          fight goes out of Garrow all at once. He throws up his heavy hands,
-          mutters a surrender and quits the green. Old Ferd lets out a breath he
-          has been holding for days. Go south to Hale at the Stone Circle and
-          type talk hale.
+          You put your hard word on Garrow in front of the whole green, and
+          there is no taking it back. Now see what he does. Once he is gone, go
+          south to Hale at the Stone Circle and type talk hale.

@@ -13,9 +13,11 @@ import (
 // #690: the quest 48 taunt line says Garrow quits the green. His tree's
 // yield branch must make that true. A `flee` is a roll that can fail and
 // leave a real fight running (the player could not walk south), so the
-// branch speaks, emotes and despawns him; the player's aggro is released on
-// the next round because the target is gone (hooks.ValidateAggro), and the
-// Mustering Green's spawn list brings him back for the next student.
+// branch speaks, emotes and removes him with `suicide vanish`; the player's
+// aggro is released on the next round because the target is gone
+// (hooks.ValidateAggro), and the Mustering Green's spawn list brings him back
+// for the next student. mobcommands.TestGarrowsYieldKeepsHimGoneForHisRate...
+// runs that command through the real spawn logic.
 func TestGarrowYieldLeavesTheGreen(t *testing.T) {
 	_, here, _, ok := runtime.Caller(0)
 	require.True(t, ok)
@@ -56,7 +58,7 @@ func TestGarrowYieldLeavesTheGreen(t *testing.T) {
 		}
 	}
 	require.True(t, found, "Garrow's tree has a mob_combat_round yield branch")
-	require.Equal(t, []string{"say", "emote", "command:despawn"}, steps, "he yields, leaves, and the green respawns him")
+	require.Equal(t, []string{"say", "emote", "command:suicide vanish"}, steps, "he yields, leaves, and the green respawns him")
 
 	var room struct {
 		SpawnInfo []struct {

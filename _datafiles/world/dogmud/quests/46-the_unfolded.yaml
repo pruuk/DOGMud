@@ -6,8 +6,12 @@
 #             north, north to the Grove Heart (5313), then west (Veil Tear
 #             5314), up, north (Folded Distance 5316), west, north (The
 #             Unraveling 5319), east to the Thinnest Place (5320).
-#   46-kill:  mob_death of The Unfolded (9152). Gated on 46-start.
-#   46-end:   granted by Orrin's scab_turnin hand-in (needs 46-kill). The
+#   46-kill:  mob_death of The Unfolded (9152). Gated on 46-start. It returns
+#             to the Thinnest Place 15 real minutes after it dies (room 5320
+#             spawninfo names no rate, so the engine default holds), so a
+#             player who finds it already killed waits; the description and
+#             Orrin's answers say so, as quest 52 does for Skell.
+#   46-end: granted by Orrin's scab_turnin hand-in (needs 46-kill). The
 #             rewards (willpower, the heal spell, gold) pay out there.
 #
 # Design: a solo spell duel against a long-dead caster's escaped folds
@@ -34,7 +38,8 @@ steps:
       Orrin has set you against the Unfolded. Climb out of the grove through
       the Veil Tear, cross the Folded Distance and the Unraveling, and defeat
       the Unfolded in the Thinnest Place. It casts at you from across the
-      room, so cast back and keep casting until it falls.
+      room, so cast back and keep casting until it falls. If it is not in the
+      Thinnest Place, someone beat you to it. Wait a while and it returns.
     hint: >-
       If it is dark, type cast glow first. From Keeper Orrin, go west, north
       and north to the Grove Heart, then west, up, north, west, north and

@@ -18,7 +18,15 @@
   take it off first with `remove sling`, and then `equip sling` it again.
 - Searching in the Reliquary or in Maren's Cottage no longer says you
   found nothing just before the quest tells you what you found.
-- Sullen Garrow now steps back and leaves the green when you taunt him.
+- Sullen Garrow now steps back and leaves the green when you taunt him. He
+  stamps back a little later, ready for the next student.
+- If the practice mote in the Star Chamber is gone, a new one folds out of
+  the air soon after, so you only wait a moment.
+- Keeper Orrin names all the places to look for a wisp in Tending the Grove,
+  and any wisp counts. He also tells you to wait if a wisp or the Unfolded
+  is not there, because someone else may have just killed it.
+- In First Shot, your shot starts a fight, and you cannot sneak in a fight.
+  Iden now tells you to put the butt down first, then type `sneak`.
 - The notice board in the School Hall names commands you can type, and
   points you to Elder Wenna for the old stones.
 - The grey disc is no longer in the Reliquary. Brennan's quest now sends

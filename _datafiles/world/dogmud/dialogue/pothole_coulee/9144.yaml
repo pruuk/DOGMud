@@ -76,6 +76,23 @@ opener:
       learn another.
     hints: Choose a line below to hear about spells, the Folding or manifestation.
 topics:
+# The lesson comes first: the menu keeps authored order, only hearing this
+# earns the step, and the marked help line below teaches the same command.
+- key: cast_lesson
+  kind: info
+  label: Toke sent me to learn casting.
+  text: Then here is the first turning. North of here is the Star Chamber, and at
+    its center a practice mark with a mote of folded light hanging over it. I conjure
+    them for students. Stand at the mark and cast a spell you already know at the
+    mote. The spike you woke with will do. Do not force it. Shape it, and let it go.
+    The mote may flicker back at you, weakly, and a second casting can scatter it.
+    I will fold another. Then come back to me.
+  hints: Go north into the Star Chamber and type cast spike mote.
+  questRequired:
+  - 44-start
+  questExcluded:
+  - 44-met
+  - 44-end
 - key: cast_turnin
   kind: handin
   quest: 44
@@ -139,21 +156,6 @@ topics:
   - 45-start
   - 45-end
   grantsQuest: 45-start
-- key: cast_lesson
-  kind: info
-  label: Toke sent me to learn casting.
-  text: Then here is the first turning. North of here is the Star Chamber, and at
-    its center a practice mark with a mote of folded light hanging over it. I conjure
-    them for students. Stand at the mark and cast a spell you already know at the
-    mote. The spike you woke with will do. Do not force it. Shape it, and let it go.
-    The mote may flicker back at you, weakly, and a second casting can scatter it.
-    I will fold another. Then come back to me.
-  hints: Go north into the Star Chamber and type cast spike mote.
-  questRequired:
-  - 44-start
-  questExcluded:
-  - 44-met
-  - 44-end
 - key: cast_progress
   kind: info
   label: Where is the practice mote?

@@ -59,7 +59,8 @@ opener:
     text: One in the open. Now get out of sight before the next one, so you feel the
       difference. Sneaking is a skullduggery skill, and it grows each time you slip
       out of sight with something near enough to notice you.
-    hints: On the Long Terrace, type sneak. For more, type help skullduggery.
+    hints: On the Long Terrace, type sneak. If you are still fighting the butt, it
+      must fall first. For more, type help skullduggery.
   - questRequired:
     - 50-ambush
     questExcluded:
@@ -104,6 +105,24 @@ opener:
       not flinch at the noise.
     hints: Choose a line below to hear about shooting.
 topics:
+# The lesson comes first: the menu keeps authored order, only hearing this
+# earns the step, and the marked help line below teaches the same commands.
+- key: shoot_lesson
+  kind: info
+  label: Toke sent me to learn to shoot.
+  text: Then you have the sling, plaited cord and a leather cradle, cheap and honest,
+    and a pouch of shot to feed it. Both are yours to keep. Ready the sling first.
+    The cradle fills itself while your eye is still on the mark, so there is no second
+    motion to learn. I will walk you through the rest one thing at a time. If the
+    sling is already in your hand, take it off and ready it again, so I can see you
+    do it.
+  hints: Type equip sling. If it is already in your hand, that will not work, so first
+    use remove sling to put it back in your pack.
+  questRequired:
+  - 50-start
+  questExcluded:
+  - 50-met
+  - 50-end
 # Each replacement and its reminder never show together: itemExcluded and
 # carriesItem on the same item are exact opposites.
 - key: shot_supply
@@ -218,7 +237,8 @@ topics:
   text: One in the open. Now get out of sight before the next one, so you feel the
     difference. Sneaking is a skullduggery skill, and it grows each time you slip
     out of sight with something near enough to notice you.
-  hints: On the Long Terrace, type sneak. For more, type help skullduggery.
+  hints: On the Long Terrace, type sneak. If you are still fighting the butt, it
+    must fall first. For more, type help skullduggery.
   questRequired:
   - 50-shoot
   questExcluded:
@@ -266,19 +286,3 @@ topics:
   - 51-start
   - 51-end
   grantsQuest: 51-start
-- key: shoot_lesson
-  kind: info
-  label: Toke sent me to learn to shoot.
-  text: Then you have the sling, plaited cord and a leather cradle, cheap and honest,
-    and a pouch of shot to feed it. Both are yours to keep. Ready the sling first.
-    The cradle fills itself while your eye is still on the mark, so there is no second
-    motion to learn. I will walk you through the rest one thing at a time. If the
-    sling is already in your hand, take it off and ready it again, so I can see you
-    do it.
-  hints: Type equip sling. If it is already in your hand, that will not work, so first
-    use remove sling to put it back in your pack.
-  questRequired:
-  - 50-start
-  questExcluded:
-  - 50-met
-  - 50-end

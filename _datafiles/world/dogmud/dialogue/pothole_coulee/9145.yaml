@@ -71,7 +71,8 @@ opener:
     text: It is still out there, in the thinnest place. Through the Grove Heart, up
       through the Veil Tear, across the folded ground and the unraveling. It casts
       at range, so cast back and keep casting. Do not let the strange ground turn
-      you around. Put it down.
+      you around. Put it down. If it is not there, someone else undid it first.
+      Wait a while and it will be back.
     hints: If it is dark, type cast glow first. Go west, north and north to the Grove
       Heart, then west, up, north, west, north and east to the Thinnest Place, and
       type cast spike unfolded.
@@ -86,10 +87,13 @@ opener:
     questExcluded:
     - 57-kill
     - 57-end
-    text: A wisp has drifted back in at the Grove Edge, just south of here. Put it
-      down, then come back and tell me.
+    text: A wisp has drifted back in. Look at the Grove Edge just south of here,
+      the Sunken Path west of the edge, or the Thinning Wood. Any wisp will do. If
+      none is there, wait a while and they drift back. Put one down, then come back
+      and tell me.
     hints: If it is dark, type cast glow first. Go south to the Grove Edge and type
-      cast spike wisp until it falls.
+      cast spike wisp until it falls. If no wisp is there, go west to the Sunken
+      Path.
   - questRequired:
     - 57-kill
     questExcluded:
@@ -134,7 +138,7 @@ topics:
   kind: handin
   quest: 45
   label: The Unquiet Grove
-  playerLine: I held the fold under fire, and the revenant fell.
+  playerLine: I held the fold under fire, and the creature fell.
   text: 'You were hit and the fold held. That is concentration, not calm, but holding-on.
     Here is a wider working for it: sparks. The weakest of the area spells, which
     is the same as saying the first you can trust yourself with. It touches everything
@@ -192,10 +196,13 @@ topics:
   label: Tending the Grove
   playerLine: Is there more work in the grove for me?
   text: The warped things drift back in. That is the nature of a thin place, and it
-    keeps leaking. There is a wisp at the Grove Edge, just south of here. Put it down,
-    then come back and tell me. The practice matters as much as the clearing.
+    keeps leaking. Look for a wisp at the Grove Edge just south of here, the Sunken
+    Path west of the edge, or the Thinning Wood. Any wisp will do. If none is there,
+    wait a while and they drift back. Put one down, then come back and tell me. The
+    practice matters as much as the clearing.
   hints: If it is dark, type cast glow first. Go south to the Grove Edge and type
-    cast spike wisp until it falls.
+    cast spike wisp until it falls. If no wisp is there, go west to the Sunken
+    Path.
   questRequired:
   - 46-end
   questExcluded:
@@ -206,7 +213,7 @@ topics:
   kind: handin
   quest: 57
   label: Tending the Grove
-  playerLine: The wisp at the Grove Edge is down.
+  playerLine: The wisp is down.
   text: Good. I felt the grove settle a little. The fold held clean, too. They always
     drift back in, so come back when the watch slips again.
   hints: Quest complete. Orrin will have more grove work after a while.
@@ -263,7 +270,8 @@ topics:
   text: Through the Grove Heart, then west to the Veil Tear and up. The Riven Ground,
     then the Folded Distance, where the far looks near. West from there, then north
     into the Unraveling, then east. That is the thinnest place, and it is waiting
-    in it. Cast at it and keep casting.
+    in it. Cast at it and keep casting. If it is not there, someone else undid it
+    first. Wait a while and it will be back.
   hints: If it is dark, type cast glow first. Go west, north and north to the Grove
     Heart, then west, up, north, west, north and east to the Thinnest Place, and
     type cast spike unfolded.
@@ -275,10 +283,13 @@ topics:
 - key: grove_loop_mid
   kind: info
   label: Where is the wisp?
-  text: The wisp is at the Grove Edge, just south of here. Put it down with a casting,
-    then come back and tell me.
+  text: Look at the Grove Edge just south of here, the Sunken Path west of the edge,
+    or the Thinning Wood, west and north of here. Any wisp will do. If none is there,
+    wait a while and they drift back. Put one down with a casting, then come back and
+    tell me.
   hints: If it is dark, type cast glow first. Go south to the Grove Edge and type
-    cast spike wisp until it falls.
+    cast spike wisp until it falls. If no wisp is there, go west to the Sunken
+    Path.
   questRequired:
   - 57-start
   questExcluded:
