@@ -75,9 +75,9 @@ opener:
     hints: Choose Find Your Footing below to finish the task.
   # A held Report to Toke bridge comes before the hub: the [?] line is the next
   # thing to do, and the hub's hint names only the [!] lines. One variant per
-  # bridge, gated on that bridge's own start token. Plans 3b and 4 add bridges
-  # 94 to 97: each adds a variant here in the same shape, and its hand-in joins
-  # report_*_in above send_drill.
+  # bridge, gated on that bridge's own start token. Bridges 90 to 96 are here;
+  # plan 4 adds bridge 97: it adds a variant here in the same shape, and its
+  # hand-in joins report_*_in above send_drill.
   - questRequired:
     - 90-start
     questExcluded:
@@ -126,6 +126,14 @@ opener:
     text: Hoy! You have the quiet of the old shrine on you, and Sere does not send
       folk down to me lightly. Tell me what lies under her floor.
     hints: Choose Report to Toke (Lore), the line marked [?] below, to tell Toke
+      the news.
+  - questRequired:
+    - 96-start
+    questExcluded:
+    - 96-end
+    text: Hoy! You have canyon dust on you, and Bryn does not send folk down to me
+      for small news. Tell me who holds the overlook now.
+    hints: Choose Report to Toke (Archery), the line marked [?] below, to tell Toke
       the news.
   # All seven trades taken: no [!] line is left, so the hub's hint would describe
   # lines that are not there. The gate is the seven send_* offers' start tokens,
@@ -372,6 +380,21 @@ topics:
   questExcluded:
   - 95-end
   grantsQuest: 95-end
+  moodChange: friendly
+- key: report_archery_in
+  kind: handin
+  quest: 96
+  label: Report to Toke (Archery)
+  playerLine: Skell is off the overlook, and the canyon is ours.
+  text: Off the overlook! The low mouth has been aching to shout that for years. Stand
+    back a pace, friend. This one carries. The archery trail is yours, and any mouth
+    you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 96-start
+  questExcluded:
+  - 96-end
+  grantsQuest: 96-end
   moodChange: friendly
 # R21: the seven trails, each its own offer after Find Your Footing. Each
 # starter item rides on the offer of the quest it belongs to. Toke is the

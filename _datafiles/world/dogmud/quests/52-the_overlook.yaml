@@ -1,30 +1,37 @@
-# Quest 52 — The Overlook (Pothole Coulee, Spoke G / Ranged outer ring, capstone)
+# Quest 52, The Overlook (Pothole Coulee, archery line, finale)
 #
-# Token flow:
-#   52-start — granted by Scout Bryn's overlook_offer node (after quest 51).
-#   52-end   — granted by the boss-kill trigger (mob_death 9169, Bowmaster
-#              Skell). Rewards fire on 52-end: a Perception bump (stat_info), a
-#              hunting bow (itemid), a generous ammo stockpile (item_info), and
-#              gold. Turn-in is automatic on the kill, like the other capstones.
+# Token flow (#375 phase 7, one action per step; the finale ends at a hand-in):
+#   52-start: granted by Scout Bryn's overlook_offer (9162), after 51-end.
+#             Route from Bryn at the Canyon Mouth (5353): north four times to
+#             the Canyon Head (5358), up to Overlook Rise (5360), then north
+#             through Raider Perch (5361) and The High Stand (5362) to The
+#             Overlook (5364), where Skell spawns.
+#   52-kill:  mob_death of Bowmaster Skell (9169). Gated on 52-start. Skell
+#             returns to the Overlook 15 real minutes after he dies (room
+#             5364 spawninfo names no rate, so the engine default holds), so
+#             a player who finds him already killed by someone else waits;
+#             the description and Bryn's answer say so.
+#   52-end:   granted by Bryn's overlook_turnin hand-in (needs 52-kill). The
+#             rewards (perception, a hunting bow, ammunition, gold) pay out
+#             there.
 #
-# One command per step (owner ruling 2026-10-17): the start hint names only
-# the shot. The route and the dark aside are not commands; the ammo and
-# kiting advice live in the description. Route, walked in the room dump:
-# Canyon Head (5358) up to Overlook Rise (5360), then north through Raider
-# Perch (5361) and The High Stand (5362) to The Overlook (5364), where Skell
-# spawns.
+# Ammunition: the player holds the hand crossbow and a case of bolts from
+# quest 51. Bryn's ammo_resupply topic gives another case to a player who
+# carries none, while 52 is open.
 #
-# Design: the ranged capstone, and the capstone of the whole newbie area. The
-# boss is a kiting archer (the `archer` archetype: shoots, gives ground, opens
-# the distance as you close). The lesson it embodies: out-shoot a kiter, or
-# close the gap faster than it can open it. Bring ammo.
+# Design: the archery capstone. Skell is a kiting archer (the `archer`
+# archetype): out-shoot him or close the gap faster than he opens it.
+#
+# Saved characters: start keeps its id. A player saved on start now reports
+# to Bryn after Skell's death instead of completing on the spot. A character
+# that already holds 52-end is untouched.
 
 questid: 52
 name: The Overlook
 description: >-
   Bowmaster Skell holds the raider overlook above the canyon, and through it
   the whole climb. Scout Bryn says there is no passing the bluffs while Skell
-  shoots from the high ground -- he is the reason the band can tax everything
+  shoots from the high ground. He is the reason the band can tax everything
   that moves below. He fights the way you have just learned to: at range, on
   the move. Bring him down.
 secret: false
@@ -36,19 +43,30 @@ steps:
     description: >-
       Bryn has set you against Bowmaster Skell. Climb from the Canyon Head to
       the raider overlook, fight up past the raider shooters, and bring down
-      the bowmaster on the Overlook itself. Carry more ammo than you think you
-      need before you climb: Skell gives ground and shoots, so the fight runs
-      long. Out-shoot him or close fast. If you run low, Scout Bryn will spare
-      bolts before you go up.
+      the bowmaster on the Overlook itself. Ready the hand crossbow Bryn gave
+      you with equip crossbow before you climb. Carry more ammo than you
+      think you need: Skell gives ground and shoots, so the fight runs long.
+      Out-shoot him or close fast. If you run low, Scout Bryn will spare
+      bolts before you go up. If Skell is not on the Overlook, someone beat
+      you to him. Wait a while and he returns.
     hint: >-
-      From the Canyon Head, go up, then keep north to the Overlook and type
-      fire skell. If it is dark, type cast glow first.
+      From the Canyon Mouth, go north four times, up, then north three times
+      to the Overlook. Type fire skell. If it is dark, type cast glow first.
+  - id: kill
+    destination:
+      mob: 9162
+    description: >-
+      Skell is down and the overlook is taken. Go back down to Scout Bryn and
+      tell him.
+    hint: >-
+      From the Overlook, go south three times, down, then south four times to
+      the Canyon Mouth. Type talk bryn.
   - id: end
     description: >-
       Skell is down and the overlook is taken. The bluff band has lost the
-      high ground that let it rule the canyon -- and you have learned the
-      last tool the coulee had to teach you. The country beyond the rim is
-      open now, and you are ready for it.
+      high ground that let it rule the canyon, and you have learned the last
+      tool the coulee had to teach you. The country beyond the rim is open
+      now, and you are ready for it.
 
 rewards:
   stat_info: "perception:3"
@@ -56,26 +74,26 @@ rewards:
   item_info: "30062:3,30063:2,30064:2"
   gold: 50
   actor: >-
-    Skell gives ground one step too many and your shot takes him at the lip
-    of the overlook; he goes off the high stand without a sound, and the
-    high ground is yours. You feel the long work of the terraces and the
-    canyon settle into you as a keenness of eye -- distances come quicker
-    now, and the right instant to loose is just there when you reach for it.
-    From the raider cache you take a full hunting bow and ammunition enough
-    to keep it fed. The overlook is quiet. Below, the whole coulee lies
-    open, every spoke of it walked and won -- and past the rim, the wider
-    scablands wait for whatever you have become.
-  observer: ""
+    Bryn hears you out, and his doubled outline settles. "Off the high stand.
+    Then the canyon is ours, and the band has lost the ground that let it rule
+    us." From the raider cache his scouts carried down, he hands you a full
+    hunting bow and ammunition enough to keep it fed. You feel the long work
+    of the terraces and the canyon settle into you as a keenness of eye.
+    Distances come quicker now, and the right instant to loose is just there
+    when you reach for it. The whole coulee lies open behind you, every spoke
+    of it walked and won, and past the rim the wider scablands wait.
+  observer: "Scout Bryn hands the newcomer a hunting bow from the raider cache."
 
 triggers:
-  # ── BOSS KILL: defeat Bowmaster Skell -> complete + rewards ────────────
+  # BOSS KILL: defeat Bowmaster Skell, then report to Bryn.
   - event: mob_death
     mob: 9169
     conditions:
       has: ["52-start"]
-      missing: ["52-end"]
+      missing: ["52-kill"]
     actions:
-      - grant: "52-end"
+      - grant: "52-kill"
       - actor: >-
           Bowmaster Skell goes off the overlook and does not rise. The high
-          ground is yours, and the canyon below falls quiet.
+          ground is yours, and the canyon below falls quiet. Go back down to
+          Scout Bryn at the Canyon Mouth and type talk bryn.

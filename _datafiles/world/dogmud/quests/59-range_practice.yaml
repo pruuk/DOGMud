@@ -1,24 +1,30 @@
-# Quest 59 — Range Practice (Pothole Coulee, Spoke G repeatable)
+# Quest 59, Range Practice (Pothole Coulee, archery line repeatable)
 #
-# Token flow (one command per step, in order, owner ruling 2026-10-17):
-#   59-start — granted by Scout Bryn's dialogue (range_loop_offer node).
-#              Requires 52-end (The Overlook). Repeatable with cooldown.
-#   59-shoot:  command trigger on fire in the Echoing Narrows (5354), the
-#              cross-room shot at the Canyon Scout on the Sounding Floor
-#              (5356). Requires 59-start.
-#   59-end:    mob_death trigger on Canyon Scout (9165). Requires 59-shoot.
-#              Completes the drill on the spot: reward + clears for repeat.
-#              There is no report to Bryn, so no line sends the player back.
+# Token flow (#375 phase 7: the repeatable ends at a hand-in):
+#   59-start: granted by Scout Bryn's range_loop_offer (9162), after 52-end.
+#   59-shoot: command trigger on `fire` in the Echoing Narrows (5354), the
+#             cross-room shot at the Canyon Scout (9165) on the Sounding Floor
+#             (5356). Names the scout (target: mob, mob: 9165), and a miss
+#             counts, as in quest 51. Gated on 59-start.
+#   59-kill:  mob_death of the Canyon Scout (9165). Gated on 59-shoot. The
+#             scout returns 2 real minutes after it dies (room 5356).
+#   59-end:   granted by Bryn's range_loop_turnin hand-in (needs 59-kill).
+#             Completing clears the token; the offer returns after the
+#             cooldown.
 #
-# Mid-quest saves: the step ids are unchanged; a player saved on `shoot`
-# finishes on the kill.
+# Ammunition: nothing in the line resupplies a repeat. Trader Onna sells shot
+# for a sling and no vendor in the coulee sells bolts or arrows, so Bryn's
+# coach line says only what is true: shot for a sling at Onna's.
+#
+# Saved characters: start and shoot keep their ids; a player saved on shoot
+# finishes on the kill and now reports to Bryn.
 
 questid: 59
 name: Range Practice
 description: >-
-  Bryn never stops drilling. He wants you to put a shot through the
-  canyon slot and then finish what charges you: the same lesson,
-  kept sharp.
+  Bryn never stops drilling. He wants you to put a shot through the canyon
+  slot, finish what comes for you, and come back to tell him: the same
+  lesson, kept sharp.
 secret: false
 repeatable: true
 cooldown_rounds: 300
@@ -28,54 +34,65 @@ steps:
     destination:
       room: 5354
     description: >-
-      Bryn has sent you to the Echoing Narrows to put a shot across the
-      exit at the canyon scout on the Sounding Floor, then bring it down
-      when it charges. The drill is done the moment the scout falls.
+      Bryn has sent you to the Echoing Narrows to put a shot across the exit
+      at the canyon scout on the Sounding Floor, then bring it down when it
+      comes for you. If the scout is not there, wait a moment for a fresh
+      one.
     hint: >-
-      Go north to the Echoing Narrows and type fire scout north.
-      If it is dark, type cast glow first.
+      Go north to the Echoing Narrows and type fire scout north. If it is
+      dark, type cast glow first.
   - id: shoot
     destination:
       room: 5354
     description: >-
-      The shot crossed the slot. Stand your ground in the Narrows and finish
-      the scout when it reaches you. The drill ends when it falls.
+      You loosed a shot across the slot. Stand your ground in the Narrows and
+      finish the scout when it reaches you. If it is gone, wait a moment for
+      a fresh one and shoot north again.
     hint: >-
       When the scout reaches you, type fire scout until it falls.
+  - id: kill
+    destination:
+      mob: 9162
+    description: >-
+      Shot placed, target finished. Tell Bryn the drill is done.
+    hint: >-
+      Go back south to Scout Bryn in the Canyon Mouth and type talk bryn.
   - id: end
     description: >-
-      Shot placed, target finished. Bryn will have another run in
-      the canyon ready when you are.
+      Shot placed, target finished. Bryn will have another run in the canyon
+      ready when you are.
 
 rewards:
   gold: 6
   skillinfo: "ranged-combat:1"
   actor: >-
-    Bryn's voice carries up the slot from the canyon mouth, low and level.
-    "Good reach. Stood when it came. Come and find me when the eye starts to
-    drift. It always drifts."
-  observer: "A low voice carries up the slot from the canyon mouth."
+    Bryn gives a single nod. "Good reach. Stood when it came. Come and find me
+    when the eye starts to drift. It always drifts."
+  observer: "Scout Bryn gives the newcomer a single nod."
 
 triggers:
   - event: command
     command: fire
     room: 5354
+    target: mob
+    mob: 9165
     conditions:
       has: ["59-start"]
       missing: ["59-shoot"]
     actions:
       - grant: "59-shoot"
       - actor: >-
-          The shot crosses the slot and bites. Now it will come at you.
-          When it reaches you, type fire scout until it falls.
+          Your shot goes out across the slot. Hold your ground in the
+          Narrows. When the scout reaches you, type fire scout until it
+          falls.
 
   - event: mob_death
     mob: 9165
     conditions:
       has: ["59-shoot"]
-      missing: ["59-end"]
+      missing: ["59-kill"]
     actions:
-      - grant: "59-end"
+      - grant: "59-kill"
       - actor: >-
-          The scout drops. Shot placed, fight finished: that is the
-          whole drill, and it is done.
+          The scout drops. Shot placed, fight finished. Go back south to
+          Scout Bryn in the Canyon Mouth and type talk bryn.

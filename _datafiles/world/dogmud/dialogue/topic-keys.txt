@@ -418,6 +418,7 @@
 9106.mouths
 9106.newcomer_players
 9106.news
+9106.report_archery_in
 9106.report_brewing_in
 9106.report_casting_in
 9106.report_fighting_in
@@ -617,6 +618,7 @@
 9160.stones_loop_offer
 9160.stones_loop_progress
 9160.stones_loop_turnin
+9161.canyon_offer
 9161.coach_ambush
 9161.coach_equip
 9161.coach_shoot
@@ -632,7 +634,7 @@
 9161.sling_recovery
 9162.ammo_have
 9162.ammo_resupply
-9162.canyon_offer
+9162.canyon_meet
 9162.canyon_shot_have
 9162.canyon_shot_supply
 9162.canyon_turnin
@@ -644,7 +646,10 @@
 9162.cross_help
 9162.outline
 9162.overlook_offer
+9162.overlook_turnin
 9162.range_loop_offer
+9162.range_loop_turnin
+9162.report_archery_offer
 9170.gossip
 9170.lost_report
 9170.quest_start
@@ -1411,6 +1416,8 @@
 9157.stones_offer
 9160.shrine_offer
 9161.shoot_offer
+# Across the Canyon (51) is offered by Marksman Iden now (9161.canyon_offer).
+9162.canyon_offer
 # renamed
 9117.vein_offer -> 9116.vein_offer
 9112.wash_offer -> 9108.wash_offer

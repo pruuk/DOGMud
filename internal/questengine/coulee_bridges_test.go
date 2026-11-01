@@ -51,7 +51,23 @@ func TestCouleeBridges_GiverTwoOffersTokeTakes(t *testing.T) {
 		offer := loadCouleeTopics(t, "9160.yaml").FindTopic("report_lore_offer")
 		require.Contains(t, squash(offer.Hints), loreBridgeWords, "Sere's offer gives the same way")
 	})
+	t.Run("Archery", func(t *testing.T) {
+		checkBridge(t, toke, 96, "Archery", "96-report_to_toke__archery_.yaml",
+			"9162.yaml", "report_archery_offer", "report_archery_in", "52-end")
+		q := loadShippedQuest(t, "96-report_to_toke__archery_.yaml", 96)
+		require.Contains(t, squash(questHintFor(t, q, "start")), archeryBridgeWords)
+		require.Equal(t, foldingHubSquare, foldingWalk(t, canyonMouth, archeryBridgeWalk...),
+			"the way back to Hub Square walks")
+		offer := loadCouleeTopics(t, "9162.yaml").FindTopic("report_archery_offer")
+		require.Contains(t, squash(offer.Hints), archeryBridgeWords, "Bryn's offer gives the same way")
+	})
 }
+
+// The archery bridge's walk from the Canyon Mouth, where Bryn gives it, to
+// Hub Square, and the words that say it.
+var archeryBridgeWalk = []string{"south", "west", "west", "down", "south", "south", "down", "south", "west", "west", "south"}
+
+const archeryBridgeWords = "from the canyon mouth, go south, west, west, down, south, south, down, south, west, west and south"
 
 // The lore bridge's walk from the Old Shrine, where Sere gives it, to Hub
 // Square, and the words that say it.
@@ -96,7 +112,7 @@ func checkBridge(t *testing.T, toke *dialogue.DialogueFile, id int, line, file, 
 
 // A player holding a bridge is told, above the hub, which line on Toke's menu
 // reports it, and that line sits above every trade offer. The hub's own hint
-// names only the [!] lines. Plans 3b and 4 add bridges 94 to 97: add each here.
+// names only the [!] lines. Plan 4 adds bridge 97: add it here.
 func TestToke_BridgeOpenerNamesTheHandInAndItComesFirst(t *testing.T) {
 	toke := loadCouleeTopics(t, "9106.yaml")
 	pre := []string{"30-end", "31-end", "88-end"}
@@ -112,6 +128,7 @@ func TestToke_BridgeOpenerNamesTheHandInAndItComesFirst(t *testing.T) {
 		{93, "Tracking", "93-report_to_toke__tracking_.yaml", "report_tracking_in"},
 		{94, "Casting", "94-report_to_toke__casting_.yaml", "report_casting_in"},
 		{95, "Lore", "95-report_to_toke__lore_.yaml", "report_lore_in"},
+		{96, "Archery", "96-report_to_toke__archery_.yaml", "report_archery_in"},
 	} {
 		t.Run(b.line, func(t *testing.T) {
 			q := loadShippedQuest(t, b.file, b.id)

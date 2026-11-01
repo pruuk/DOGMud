@@ -85,9 +85,13 @@ opener:
       the part I cannot from a safe terrace: shooting a thing that shoots back. When
       you are ready, I will send you to him.'
     hints: Choose Across the Canyon below to go on to the canyon.
+  # 51-met is Bryn's lesson heard. 51-shoot stays here for a character saved
+  # on 51-shoot before 51-met existed: it holds no 51-met and must not be sent
+  # back to Bryn.
   - questRequired:
     - 51-start
     questExcluded:
+    - 51-met
     - 51-shoot
     - 51-end
     text: Bryn is waiting at the Canyon Mouth. Keep your voice low when you get there.
@@ -244,6 +248,24 @@ topics:
   text: Shooting is the eye, not the arm. Reach out and touch a thing from across
     the open. That is the whole craft. Ranged work runs on Perception, the keen eye,
     the read of wind and distance. Shoot enough and it sharpens on its own.
+- key: canyon_offer
+  kind: offer
+  quest: 51
+  label: Across the Canyon
+  playerLine: Will you send me on to the canyon?
+  text: Bryn holds the slot below the raider bluffs, east along the terraces and
+    north. He teaches the trick the raiders use on us, the shot that crosses a whole
+    chamber before the target knows you are there. Go and see him.
+  hints: From the Firing Range, go east twice to the High Terrace, then north to the
+    Canyon Mouth. Type talk bryn.
+  breadcrumb: Finish the terraces with me first. The canyon is no place to learn the
+    basics.
+  questRequired:
+  - 50-end
+  questExcluded:
+  - 51-start
+  - 51-end
+  grantsQuest: 51-start
 - key: shoot_lesson
   kind: info
   label: Toke sent me to learn to shoot.
