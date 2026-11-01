@@ -503,7 +503,7 @@ func TestLootAndConsiderWords(t *testing.T) {
 		t.Fatal("ask-first wording")
 	}
 	// The companion speaks the engine's own fight read (#301): no private copy.
-	if got := actions.FightReadPlain(actions.FightRead{Verdict: actions.VerdictUntouched}); !strings.HasPrefix(got, `They won't lay a finger on you.`) {
+	if got := actions.FightReadPlain(actions.FightRead{Verdict: actions.VerdictUntouched}); !strings.HasPrefix(got, `You won't take a scratch.`) {
 		t.Fatalf("companion consider words: %q", got)
 	}
 	if plainText(`<ansi fg="red">Hot</ansi>   soup`) != `Hot soup` {
