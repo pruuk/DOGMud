@@ -13,10 +13,10 @@
             margin: 0;
             padding: 0;
             height: 100vh;
-            font-family: 'DejaVu Sans Mono', monospace;
+            font-family: var(--font-body);
             display: flex;
             flex-direction: column;
-            background-color: #191310;
+            background-color: var(--bg-base);
             position: relative; /* So absolutely positioned children can be placed relative to <body> */
         }
 
@@ -30,33 +30,33 @@
             z-index: 9999;
 
             padding: 18px 42px;
-            font-family: var(--font-serif, Georgia, serif);
+            font-family: var(--font-body);
             font-weight: bold;
             font-size: 20px;
             letter-spacing: 1px;
 
-            color: var(--vellum, #d9c39e);
-            background-color: #4a6b5d;          /* oxidized copper */
-            border: 1px solid var(--gold-rule, #c9a86a);
+            color: var(--vellum);
+            background-color: var(--copper);          /* oxidized copper */
+            border: 1px solid var(--gold-rule);
             border-radius: 6px;
             cursor: pointer;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.6);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.55);
+            box-shadow: 0 3px 8px color-mix(in srgb, var(--shadow) 60%, transparent);
+            text-shadow: 0 1px 2px color-mix(in srgb, var(--shadow) 55%, transparent);
 
             /* Flash copper → madder red */
             animation: pulse 1.2s infinite alternate;
         }
         #connect-button:disabled {
-            color: var(--text-secondary, #9a8a6a);
+            color: var(--text-secondary);
             pointer-events: none;
             animation: none;
-            background-color: #2a2018;
-            border-color: var(--panel-border, #3a2a18);
+            background-color: var(--button-disabled);
+            border-color: var(--panel-border);
             cursor: not-allowed;
         }
         @keyframes pulse {
-            0%   { background-color: #4a6b5d; }   /* oxidized copper */
-            100% { background-color: #8c3b30; }   /* madder root red */
+            0%   { background-color: var(--copper); }   /* oxidized copper */
+            100% { background-color: var(--madder); }   /* madder root red */
         }
 
         /* Sound icon — small brass button living inside the session strip */
@@ -77,13 +77,13 @@
             line-height: 24px;
             text-align: center;
             cursor: pointer;
-            color: #3b2a10;
-            border: 1px solid #5e431a;
+            color: var(--brass-text);
+            border: 1px solid var(--brass-border);
             border-radius: 50%;
-            background: radial-gradient(circle at 34% 26%, #f4dd92 0%, #cb9f42 46%, #8a6620 100%);
-            box-shadow: 0 2px 3px rgba(0,0,0,0.55),
-                        inset 0 1px 1px rgba(255,246,212,0.7),
-                        inset 0 -2px 3px rgba(74,52,16,0.55);
+            background: radial-gradient(circle at 34% 26%, var(--brass-light) 0%, var(--brass-mid) 46%, var(--brass-dark) 100%);
+            box-shadow: 0 2px 3px color-mix(in srgb, var(--shadow) 55%, transparent),
+                        inset 0 1px 1px color-mix(in srgb, var(--brass-glint) 70%, transparent),
+                        inset 0 -2px 3px color-mix(in srgb, var(--brass-shade) 55%, transparent);
             transition: filter .08s ease, transform .08s ease;
         }
         #menu-icon:hover { filter: brightness(1.08); }
@@ -92,14 +92,14 @@
            where they are. */
         #menu-icon:focus-visible,
         #mut-toast:focus-visible {
-            outline: 2px solid #f4dd92;
+            outline: 2px solid var(--brass-light);
             outline-offset: 2px;
         }
         #menu-icon:active {
             transform: translateY(1px);
-            box-shadow: 0 1px 1px rgba(0,0,0,0.4),
-                        inset 0 2px 4px rgba(74,52,16,0.7),
-                        inset 0 -1px 1px rgba(255,246,212,0.4);
+            box-shadow: 0 1px 1px color-mix(in srgb, var(--shadow) 40%, transparent),
+                        inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 70%, transparent),
+                        inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
         }
 
         /* The floating menu container */
@@ -113,8 +113,8 @@
             overflow-y: auto;
             box-sizing: border-box;
             padding: 10px;
-            background-color: #2e2e2e;
-            border: 1px solid #444;
+            background-color: var(--menu-bg);
+            border: 1px solid var(--menu-border);
             border-radius: 5px;
             display: none; /* hidden by default */
             z-index: 9999;
@@ -127,7 +127,7 @@
             gap: 10px;
         }
         #floating-menu h3 {
-            color: #fff;
+            color: var(--white);
             margin-bottom: 10px;
         }
         #menu-close {
@@ -138,13 +138,13 @@
             font-size: 20px;
             text-align: center;
             cursor: pointer;
-            color: #fff;
-            background: #444;
-            border: 1px solid #666;
+            color: var(--white);
+            background: var(--menu-border);
+            border: 1px solid var(--menu-button-border);
             border-radius: 4px;
         }
-        #menu-close:hover { background: #5a5a5a; }
-        #menu-close:active { background: #3a3a3a; }
+        #menu-close:hover { background: var(--menu-button-hover); }
+        #menu-close:active { background: var(--menu-button-active); }
 
         .slider-container {
             margin-bottom: 15px;
@@ -152,7 +152,7 @@
             align-items: center;
         }
         .slider-container label {
-            color: #ccc;
+            color: var(--menu-text);
             width: 150px;
         }
         .slider-container input[type="range"] {
@@ -163,13 +163,13 @@
             width: 32px;
             text-align: center;
             font-size: 20px;
-            color: #ccc;
+            color: var(--menu-text);
         }
 
         /* Mute Checkbox */
         #mute-container {
             margin-bottom: 15px;
-            color: #ccc;
+            color: var(--menu-text);
             display: flex;
             align-items: center;
         }
@@ -185,17 +185,21 @@
         /* Command input inside cmd panel */
         #command-input {
             flex: 1;
-            padding: 6px 10px;
-            font-size: 14px;
-            border: 1px solid #3a2a18;
-            background-color: #150f0a;
-            color: #d2c3a4;
+            /* 48px meets the Apple (44) and Google (48) touch target minimums;
+               16px text stops iOS Safari zooming the page on focus. */
+            box-sizing: border-box;
+            min-height: 48px;
+            padding: 10px 12px;
+            font-size: 16px;
+            border: 1px solid var(--panel-border);
+            background-color: var(--input-bg);
+            color: var(--text-primary);
             border-radius: 3px;
-            font-family: 'DejaVu Sans Mono', monospace;
+            font-family: var(--font-mono);
         }
         #command-input:focus {
             outline: none;
-            border-color: #cb9f42;
+            border-color: var(--brass-mid);
         }
 
         /* Comms panel: stack tabs + send input as a column */
@@ -212,18 +216,18 @@
             margin-top: 5px;
             padding: 6px 10px;
             font-size: 14px;
-            border: 1px solid #3a2a18;
-            background-color: #150f0a;
-            color: #d2c3a4;
+            border: 1px solid var(--panel-border);
+            background-color: var(--input-bg);
+            color: var(--text-primary);
             border-radius: 3px;
-            font-family: 'DejaVu Sans Mono', monospace;
+            font-family: var(--font-mono);
             width: 100%;
             box-sizing: border-box;
-            caret-color: #cb9f42;
+            caret-color: var(--brass-mid);
         }
         #chat-input:focus {
             outline: none;
-            border-color: #cb9f42;
+            border-color: var(--brass-mid);
         }
 
     </style>
@@ -265,15 +269,22 @@
         </div>
     </div>
 
-    <!-- CONNECT BUTTON FLOATED IN CENTER -->
-    <button id="connect-button">Connect to {{ .CONFIG.Server.MudName }}</button>
+    <!-- CONNECT BUTTON FLOATED IN CENTER. Starts hidden: the page connects by
+         itself on load, and onclose shows it when the player is not connected. -->
+    <button id="connect-button" style="display:none">Enter Game</button>
 
     <!-- DOCKED DASHBOARD GRID (arrangement C) -->
     <div id="dashboard">
       <div id="dash-session">
         <span class="sess-name" id="sess-name">—</span>
-        <span class="sess-conn" id="sess-conn">● Connected</span>
-        <span class="sess-spacer"></span>
+        <span class="sess-conn" id="sess-conn" style="color: var(--conn-lost)">○ Not connected</span>
+        <span class="sess-mid">
+          <button type="button" class="brass" id="btn-session">Enter Game</button>
+          <span id="sess-confirm" style="display:none">Leave the game?
+            <button type="button" class="brass" id="btn-leave-yes">Yes</button>
+            <button type="button" class="brass" id="btn-leave-stay">Stay</button>
+          </span>
+        </span>
         <button type="button" id="menu-icon" onclick="toggleMenu()" title="Toggle sound" aria-label="Toggle sound">🔊</button>
         <button type="button" class="brass" id="btn-companion-key" style="display:none" title="Run your companion on your own model key">Companion key</button>
         <button class="brass" id="btn-reset-layout" onclick="window.Dashboard && Dashboard.resetLayout && Dashboard.resetLayout()">Reset layout</button>
@@ -399,6 +410,11 @@
         // Terminal Setup
         //
         /////////////////////////////////////////////
+        // xterm needs plain colour strings, so the palette is read once from
+        // the --term-* tokens in gomud.css :root.
+        const rootStyle = getComputedStyle(document.documentElement);
+        const termColor = (name) => rootStyle.getPropertyValue('--term-' + name).trim();
+        const termFont = rootStyle.getPropertyValue('--font-mono').trim();
         const term = new window.Terminal({
             cols: 80,
             rows: 60,
@@ -407,24 +423,22 @@
             // Give rapid-fire feed text vertical breathing room so lines don't
             // blend into a wall (affects row height only — not the 80-col fit).
             lineHeight: 1.2,
-            fontFamily: '"IBM Plex Mono", "Courier New", Courier, monospace',
-            // Leather palette (harmonized "option B"). Cross-ref gomud.css :root
-            // tokens: --panel-bg #201913, warm-dark #191310, --ink-gold #c9a86a,
-            // title-gold #e8d2a0, --ink-deep #2b231d.
+            fontFamily: termFont,
+            // Leather palette (harmonized "option B"), from the --term-* tokens.
             theme: {
-                background:   '#0c0c0d',
-                foreground:   '#e0d2b2',
-                cursor:       '#e8d2a0',
-                cursorAccent: '#0c0c0d',
-                selection:    'rgba(201,168,106,0.30)',
-                black:   '#3a2f25', brightBlack:   '#6b5a48',
-                red:     '#d6694e', brightRed:     '#e8745a',
-                green:   '#8a9a4e', brightGreen:   '#b3c06a',
-                yellow:  '#d9a441', brightYellow:  '#f0cf72',
-                blue:    '#88a9cf', brightBlue:    '#aecce8',
-                magenta: '#a8678f', brightMagenta: '#c890b0',
-                cyan:    '#5f9a93', brightCyan:    '#84c0b6',
-                white:   '#d8c8a8', brightWhite:   '#f2e6c8'
+                background:   termColor('bg'),
+                foreground:   termColor('fg'),
+                cursor:       termColor('cursor'),
+                cursorAccent: termColor('bg'),
+                selection:    termColor('selection'),
+                black:   termColor('black'),   brightBlack:   termColor('bright-black'),
+                red:     termColor('red'),     brightRed:     termColor('bright-red'),
+                green:   termColor('green'),   brightGreen:   termColor('bright-green'),
+                yellow:  termColor('yellow'),  brightYellow:  termColor('bright-yellow'),
+                blue:    termColor('blue'),    brightBlue:    termColor('bright-blue'),
+                magenta: termColor('magenta'), brightMagenta: termColor('bright-magenta'),
+                cyan:    termColor('cyan'),    brightCyan:    termColor('bright-cyan'),
+                white:   termColor('white'),   brightWhite:   termColor('bright-white')
             }
         });
         const fitAddon = new window.FitAddon.FitAddon();
@@ -486,15 +500,15 @@
         resizeTerminal();
 
         // The 80-col grid is measured from glyph width, so it must be computed
-        // against the real font, not the Courier fallback. font-display:swap
-        // renders in Courier until IBM Plex Mono loads; once it does, re-assign
+        // against the real font, not a fallback. font-display:swap
+        // renders in a fallback until Source Code Pro loads; once it does, re-assign
         // fontFamily (forces xterm to rebuild its glyph atlas) and refit.
         if (document.fonts && document.fonts.load) {
             Promise.all([
-                document.fonts.load('400 16px "IBM Plex Mono"'),
-                document.fonts.load('700 16px "IBM Plex Mono"')
+                document.fonts.load('400 16px "Source Code Pro"'),
+                document.fonts.load('700 16px "Source Code Pro"')
             ]).then(function () {
-                term.setOption('fontFamily', '"IBM Plex Mono", "Courier New", Courier, monospace');
+                term.setOption('fontFamily', termFont);
                 resizeTerminal();
             }).catch(function () { resizeTerminal(); });
         }
@@ -711,6 +725,8 @@
                 if ( companionGlue && obj.Info && typeof obj.Info.account === 'string' ) {
                     companionGlue.hello(obj.Info.account);
                 }
+
+                markInGame();
 
                 // Populate session strip with character name when available
                 if ( charDisplayName(obj) ) {
@@ -936,7 +952,7 @@
             fill.className = "inv-charge-fill";
             fill.style.height = pct + "%";
             if (pct <= 25) {
-                fill.style.background = "#b94040"; // low-charge red
+                fill.style.background = "var(--charge-low)"; // low-charge red
             }
             track.title = "Charges: " + uses + " / " + usesMax;
             track.appendChild(fill);
@@ -2484,6 +2500,81 @@
         let isDragging = false;
 
         const connectButton = document.getElementById('connect-button');
+
+        // Session bar: one button that reads Leave Game while a character is
+        // in the world and Enter Game at any other time (not connected, or
+        // connected but still at the login prompt). Leave asks first, then
+        // sends quit, so the character logs out cleanly instead of lingering
+        // in the world for ZombieSeconds after a dropped connection.
+        const sessionButton = document.getElementById('btn-session');
+        const sessionConfirm = document.getElementById('sess-confirm');
+        let leavingGame = false;
+        let leaveFallback = null;
+        let inGame = false; // true once the server pushes Char, i.e. after login
+
+        // Called by the Char GMCP handler: the first Char push after connecting
+        // means a character is now in the world, so the bar offers Leave Game.
+        function markInGame() {
+            if (inGame) return;
+            inGame = true;
+            if (!leavingGame) setSessionState('connected');
+        }
+
+        // quit is not instant: it starts a five round meditation (condition 0)
+        // that any action or combat cancels, so Leaving lasts until the server
+        // closes the socket, a typed command cancels it, or the fallback runs.
+        function setSessionState(state) { // "connected" | "leaving" | "reconnecting" | "offline"
+            var sessConn = document.getElementById('sess-conn');
+            sessionConfirm.style.display = 'none';
+            sessionButton.style.display = '';
+            if (state !== 'leaving') { leavingGame = false; clearTimeout(leaveFallback); }
+            if (state === 'connected') {
+                sessConn.textContent = '● Connected'; sessConn.style.color = '';
+                sessionButton.textContent = inGame ? 'Leave Game' : 'Enter Game'; sessionButton.disabled = false;
+            } else if (state === 'leaving') {
+                sessConn.textContent = '● Leaving…'; sessConn.style.color = 'var(--conn-reconnecting)';
+                sessionButton.textContent = 'Leaving…'; sessionButton.disabled = true;
+            } else if (state === 'reconnecting') {
+                sessConn.textContent = '↻ Reconnecting…'; sessConn.style.color = 'var(--conn-reconnecting)';
+                sessionButton.textContent = 'Enter Game'; sessionButton.disabled = true;
+            } else {
+                sessConn.textContent = '○ Not connected'; sessConn.style.color = 'var(--conn-lost)';
+                sessionButton.textContent = 'Enter Game'; sessionButton.disabled = false;
+            }
+        }
+
+        sessionButton.addEventListener('click', function () {
+            const open = socket && socket.readyState === WebSocket.OPEN;
+            if (open && inGame) {
+                sessionButton.style.display = 'none';
+                sessionConfirm.style.display = '';
+                return;
+            }
+            // Connected but at the login prompt: the next step is typing a
+            // name, so say so, light up the command box and put the cursor there.
+            if (open) {
+                term.writeln("");
+                term.writeln("Type your character name in the box below and press Enter. New here? Type new.");
+                textInput.classList.add('cmd-nudge');
+                setTimeout(function () { textInput.classList.remove('cmd-nudge'); }, 1500);
+                textInput.focus();
+                return;
+            }
+            connectButton.click();
+        });
+        document.getElementById('btn-leave-yes').addEventListener('click', function () {
+            if (!SendData('quit')) { setSessionState('offline'); return; }
+            setSessionState('leaving');
+            leavingGame = true;
+            leaveFallback = setTimeout(function () {
+                if (socket && socket.readyState === WebSocket.OPEN) setSessionState('connected');
+            }, 40000);
+        });
+        document.getElementById('btn-leave-stay').addEventListener('click', function () {
+            sessionConfirm.style.display = 'none';
+            sessionButton.style.display = '';
+        });
+
         const textOutput = document.getElementById('terminal');
         const textInput = document.getElementById('command-input');
 
@@ -2587,9 +2678,9 @@
                 // We also disable it right away to prevent double-click confusion
                 connectButton.disabled = true;
 
+                inGame = false;
                 // Update session strip connection indicator
-                var sessConn = document.getElementById('sess-conn');
-                if (sessConn) { sessConn.textContent = '● Connected'; sessConn.style.color = ''; }
+                setSessionState('connected');
 
                 // Copyover: if we reconnected after a restart, send the token first
                 // so the server re-attaches our session (skips the login prompt).
@@ -2761,8 +2852,7 @@
                     } else {
                         term.write(".");
                     }
-                    var sessConn = document.getElementById('sess-conn');
-                    if (sessConn) { sessConn.textContent = '↻ Reconnecting…'; sessConn.style.color = '#b0a060'; }
+                    setSessionState('reconnecting');
                     if (reconnectAttempts <= 90) { // ~3 minutes at 2s per attempt
                         // Keep the button hidden (reconnection is automatic) but
                         // enabled, so the programmatic click fires the handler.
@@ -2775,13 +2865,15 @@
                     pendingReconnectToken = null;
                     reconnectAttempts = 0;
                     term.writeln("");
-                    term.writeln("Could not reconnect — the server may still be restarting. Click Connect to try again.");
+                    term.writeln("Could not reconnect — the server may still be restarting. Click Enter Game to try again.");
                     connectButton.style.display = 'block';
                     connectButton.disabled = false;
-                    if (sessConn) { sessConn.textContent = '○ Disconnected'; sessConn.style.color = '#a06060'; }
+                    setSessionState('offline');
                     return;
                 }
-                if (event.wasClean) {
+                if (leavingGame) {
+                    term.writeln("You have left the game.");
+                } else if (event.wasClean) {
                     term.writeln(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
                 } else {
                     term.writeln("Connection died");
@@ -2791,8 +2883,8 @@
                 connectButton.disabled = false;
 
                 // Update session strip
-                var sessConn = document.getElementById('sess-conn');
-                if (sessConn) { sessConn.textContent = '○ Disconnected'; sessConn.style.color = '#a06060'; }
+                inGame = false;
+                setSessionState('offline');
 
                 if (textInput.type === "password") {
                     textInput.value = '';
@@ -2850,7 +2942,7 @@
                 if ( SendData(event.target.value) ) {
                     event.target.value = '';
                 } else {
-                    term.writeln("Not connected to the server. Did you click the Connect button?");
+                    term.writeln("Not connected to the server. Click Enter Game to play.");
                 }
             }
         });
@@ -2859,6 +2951,8 @@
             if (!socket || socket.readyState !== WebSocket.OPEN) {
                 return false;
             }
+            // Any command cancels the quit meditation server side.
+            if (leavingGame && dataToSend !== 'quit') setSessionState('connected');
             payloadsSent++;
             totalBytesSent += dataToSend.length;
             socket.send(dataToSend);
@@ -3156,6 +3250,10 @@
 
             // 5) Fit the terminal to its new panel container
             resizeTerminal();
+
+            // 6) Play in Browser already said yes, so join straight away. Join
+            // Game stays for after a player leaves or the connection drops.
+            connectButton.click();
         }
     </script>
 
@@ -3187,12 +3285,12 @@
         .vitals-name {
             width: 70px;
             min-width: 70px;
-            font-family: monospace;
+            font-family: var(--font-mono);
             font-size: 0.75em;
             /* The vitals field background is vellum (light parchment), so names
                must be DARK ink to read. Companions get a slightly softer brown
                than self, but both stay high-contrast against the parchment. */
-            color: #4a3a28;
+            color: var(--vitals-name);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -3201,7 +3299,7 @@
         }
 
         .vitals-name.self {
-            color: #1a1208;
+            color: var(--vitals-name-self);
             font-weight: bold;
         }
 
@@ -3232,9 +3330,9 @@
             overflow: hidden;
             transition: width 0.4s ease-out;
         }
-        .vitals-segment.hp .vitals-usable { background: linear-gradient(to right, #f44336, #ffeb3b, #4caf50); }
-        .vitals-segment.sp .vitals-usable { background: linear-gradient(to right, #8b4513, #d2691e, #daa520); }
-        .vitals-segment.cp .vitals-usable { background: linear-gradient(to right, #ffd700, #ffeb8a, #ffffff); }
+        .vitals-segment.hp .vitals-usable { background: linear-gradient(to right, var(--hp-low), var(--hp-mid), var(--hp-high)); }
+        .vitals-segment.sp .vitals-usable { background: linear-gradient(to right, var(--sp-low), var(--sp-mid), var(--sp-high)); }
+        .vitals-segment.cp .vitals-usable { background: linear-gradient(to right, var(--cp-low), var(--cp-mid), var(--cp-high)); }
 
         /* Drained part of the usable pool — dark mask from the right. */
         .vitals-segment .vitals-drain {
@@ -3243,7 +3341,7 @@
             right: 0;
             height: 100%;
             width: 0%;
-            background: #222;
+            background: var(--vitals-drain);
             transition: width 0.4s ease-out;
         }
 
@@ -3253,10 +3351,10 @@
             height: 100%;
             transition: width 0.4s ease-out;
             background:
-                repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 1.5px, transparent 1.5px 5px),
-                repeating-linear-gradient(-45deg, rgba(255,255,255,.18) 0 1.5px, transparent 1.5px 5px),
-                #16181c;
-            border-left: 1px solid rgba(255,255,255,.30);
+                repeating-linear-gradient(45deg, color-mix(in srgb, var(--white) 18%, transparent) 0 1.5px, transparent 1.5px 5px),
+                repeating-linear-gradient(-45deg, color-mix(in srgb, var(--white) 18%, transparent) 0 1.5px, transparent 1.5px 5px),
+                var(--vitals-reserved);
+            border-left: 1px solid color-mix(in srgb, var(--white) 30%, transparent);
         }
 
         .vitals-segment .vitals-label {
@@ -3265,19 +3363,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: monospace;
+            font-family: var(--font-mono);
             font-size: 0.65em;
             color: white;
-            text-shadow: 0 1px 1px rgba(0,0,0,0.9);
+            text-shadow: 0 1px 1px color-mix(in srgb, var(--shadow) 90%, transparent);
             pointer-events: none;
             z-index: 1;
         }
 
         .vitals-segment.cp .vitals-label {
-            color: #333;
-            text-shadow: 0 1px 1px rgba(255,255,255,0.6);
+            color: var(--vitals-cp-label);
+            text-shadow: 0 1px 1px color-mix(in srgb, var(--white) 60%, transparent);
         }
-        .wb-body { background:#000; overflow:hidden; }
+        .wb-body { background:var(--shadow); overflow:hidden; }
         .wb-max { display:none; }
         .wb-full { display:none; }
 
@@ -3290,18 +3388,18 @@
 
         .tab-buttons {
             display: flex;
-            border-bottom: 1px solid var(--panel-border, #3a2a18);
+            border-bottom: 1px solid var(--panel-border);
         }
 
         .tab-button {
             flex: 1;
             padding: 0.4em 0.6em;
-            font-family: var(--font-serif, Georgia, serif);
+            font-family: var(--font-body);
             font-size: small;
-            color: var(--brass-text, #3b2a10);
-            background: var(--brass-grad, radial-gradient(circle at 34% 26%, #f4dd92, #cb9f42 46%, #8a6620));
+            color: var(--brass-text);
+            background: var(--brass-grad);
             border: none;
-            border-right: 1px solid var(--brass-border, #5e431a);
+            border-right: 1px solid var(--brass-border);
             cursor: pointer;
             transition: filter 0.1s;
         }
@@ -3312,14 +3410,14 @@
 
         .tab-button.active {
             filter: brightness(0.9);
-            box-shadow: inset 0 2px 4px rgba(74,52,16,0.6),
-                        inset 0 -1px 1px rgba(255,246,212,0.4);
+            box-shadow: inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 60%, transparent),
+                        inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
         }
 
         .tab-contents {
             flex: 1;
             padding: 0.25em;
-            background: var(--panel-bg, #201913);
+            background: var(--panel-bg);
             overflow: hidden;
             position: relative;
         }
@@ -3334,22 +3432,22 @@
         }
 
         .text-name.mob {
-            color: #00ffff;
+            color: var(--name-mob);
         }
         .text-name.player {
-            color: #fce94f;
+            color: var(--name-player);
         }
         .chat-window {
             overflow-y:auto;
             height:100%;
             background-color: transparent;
-            color: var(--text-primary, #d2c3a4);
+            color: var(--text-primary);
         }
         .chat-window.broadcast {
-            color: #d700d7;
+            color: var(--chat-broadcast);
         }
         .chat-window.whisper {
-            color: #737670;
+            color: var(--chat-whisper);
         }
 
         /* Status & Conditions panel */
@@ -3360,12 +3458,12 @@
             gap: 6px;
         }
         .status-line {
-            font-family: var(--font-serif, Georgia, serif);
+            font-family: var(--font-body);
             font-size: 0.85rem;
-            color: var(--vellum, #d9c39e);
+            color: var(--vellum);
         }
         .status-empty {
-            color: var(--text-secondary, #9a8a6a);
+            color: var(--text-secondary);
             font-style: italic;
             font-size: 0.8rem;
         }
@@ -3378,12 +3476,12 @@
             font-size: 0.72rem;
             padding: 2px 8px;
             border-radius: 12px;
-            border: 1px solid var(--panel-border, #3a2a18);
-            background: #1d1610;
-            color: var(--ink-gold, #c9a86a);
+            border: 1px solid var(--panel-border);
+            background: var(--chip-bg);
+            color: var(--ink-gold);
         }
         .cond-chip .cond-dur {
-            color: var(--text-secondary, #9a8a6a);
+            color: var(--text-secondary);
             margin-left: 4px;
             font-size: 0.66rem;
         }
@@ -3391,36 +3489,36 @@
         #mut-toast {
             position: fixed; top: 14px; right: 14px; z-index: 60;
             display: none; align-items: center; gap: 10px; max-width: 260px;
-            background: linear-gradient(160deg, #2b2118, var(--panel-bg, #201913));
-            border: 1px solid var(--panel-border, #3a2a18); border-radius: 8px;
+            background: linear-gradient(160deg, var(--toast-top), var(--panel-bg));
+            border: 1px solid var(--panel-border); border-radius: 8px;
             padding: 10px 14px; cursor: pointer;
-            box-shadow: 0 4px 18px rgba(0,0,0,.6);
+            box-shadow: 0 4px 18px color-mix(in srgb, var(--shadow) 60%, transparent);
         }
         #mut-toast.show { display: flex; }
         #mut-toast img, #mut-card img {
-            border-radius: 50%; border: 1px solid var(--ink-gold, #c9a86a);
-            background: var(--panel-bg, #201913); object-fit: cover;
+            border-radius: 50%; border: 1px solid var(--ink-gold);
+            background: var(--panel-bg); object-fit: cover;
         }
         #mut-toast img { width: 44px; height: 44px; }
-        #mut-toast .mt-name { color: #f0e2c8; font-family: Georgia, serif; font-size: 13px; }
-        #mut-toast .mt-sub  { color: #8d7c64; font-size: 10px; }
+        #mut-toast .mt-name { color: var(--toast-name); font-family: var(--font-heading); font-size: 13px; }
+        #mut-toast .mt-sub  { color: var(--toast-sub); font-size: 10px; }
         #mut-card-overlay {
             position: fixed; inset: 0; z-index: 70; display: none;
-            background: rgba(10,7,5,.55); align-items: center; justify-content: center;
+            background: color-mix(in srgb, var(--scrim) 55%, transparent); align-items: center; justify-content: center;
             cursor: pointer;
         }
         #mut-card-overlay.show { display: flex; }
         #mut-card {
-            background: linear-gradient(160deg, #2b2118, var(--panel-bg, #201913));
-            border: 2px solid var(--ink-gold, #c9a86a); border-radius: 10px;
+            background: linear-gradient(160deg, var(--toast-top), var(--panel-bg));
+            border: 2px solid var(--ink-gold); border-radius: 10px;
             padding: 22px 34px; text-align: center; max-width: 340px;
-            box-shadow: 0 8px 40px rgba(0,0,0,.7);
+            box-shadow: 0 8px 40px color-mix(in srgb, var(--shadow) 70%, transparent);
         }
         #mut-card img { width: 128px; height: 128px; margin: 0 auto 12px; display: block; }
-        #mut-card .mc-kicker { color: #d9b36a; font-size: 11px; letter-spacing: .25em; text-transform: uppercase; }
-        #mut-card .mc-name   { color: #f0e2c8; font-size: 20px; font-family: Georgia, serif; margin: 6px 0 8px; }
-        #mut-card .mc-desc   { color: #a3937c; font-size: 12px; }
-        #mut-card .mc-hint   { color: #6e5f4b; font-size: 10px; margin-top: 12px; }
+        #mut-card .mc-kicker { color: var(--toast-kicker); font-size: 11px; letter-spacing: .25em; text-transform: uppercase; }
+        #mut-card .mc-name   { color: var(--toast-name); font-size: 20px; font-family: var(--font-heading); margin: 6px 0 8px; }
+        #mut-card .mc-desc   { color: var(--toast-desc); font-size: 12px; }
+        #mut-card .mc-hint   { color: var(--toast-hint); font-size: 10px; margin-top: 12px; }
     </style>
 
     <!-- Automation modal overlay — hidden; JS drives visibility -->
@@ -4089,7 +4187,7 @@
                 });
                 var enableLabel = document.createElement("span");
                 enableLabel.textContent = "Enabled";
-                enableLabel.style.cssText = "font-family:Georgia,serif;font-size:0.85em;color:#c8b98a;";
+                enableLabel.style.cssText = "font-family:var(--font-body);font-size:0.85em;color:var(--auto-label);";
                 enableWrap.appendChild(enableTog);
                 enableWrap.appendChild(enableLabel);
 
@@ -4161,11 +4259,11 @@
 
                 // ── Do section ────────────────────────────────────────────────
                 var doSection = document.createElement("div");
-                doSection.style.cssText = "display:flex;flex-direction:column;gap:6px;border:1px solid #3a2a18;border-radius:4px;padding:8px;";
+                doSection.style.cssText = "display:flex;flex-direction:column;gap:6px;border:1px solid var(--panel-border);border-radius:4px;padding:8px;";
 
                 var doLabel = document.createElement("div");
                 doLabel.textContent = "Do";
-                doLabel.style.cssText = "font-family:Georgia,serif;font-size:0.82em;color:#c8b98a;font-weight:bold;margin-bottom:2px;";
+                doLabel.style.cssText = "font-family:var(--font-body);font-size:0.82em;color:var(--auto-label);font-weight:bold;margin-bottom:2px;";
                 doSection.appendChild(doLabel);
 
                 // Simple ThenCmds textarea (shown when no clause)
@@ -4178,14 +4276,14 @@
                 // If/else clause container (hidden by default until "+ Add ▾" clicked)
                 var clauseWrap = document.createElement("div");
                 clauseWrap.style.display = "none";
-                clauseWrap.style.cssText = "display:none;flex-direction:column;gap:6px;border-top:1px solid #3a2a18;padding-top:6px;margin-top:2px;";
+                clauseWrap.style.cssText = "display:none;flex-direction:column;gap:6px;border-top:1px solid var(--panel-border);padding-top:6px;margin-top:2px;";
 
                 // Source select
                 var sourceRow = document.createElement("div");
                 sourceRow.style.cssText = "display:flex;align-items:center;gap:6px;flex-wrap:wrap;";
                 var ifLabel = document.createElement("span");
                 ifLabel.textContent = "If";
-                ifLabel.style.cssText = "font-family:Georgia,serif;font-size:0.82em;color:#c8b98a;";
+                ifLabel.style.cssText = "font-family:var(--font-body);font-size:0.82em;color:var(--auto-label);";
                 sourceRow.appendChild(ifLabel);
 
                 var srcSelect = document.createElement("select");
@@ -4272,7 +4370,7 @@
                 var removeClauseBtn = document.createElement("button");
                 removeClauseBtn.type = "button";
                 removeClauseBtn.textContent = "✕ Remove condition";
-                removeClauseBtn.style.cssText = "align-self:flex-start;background:none;border:1px solid #5a3a18;color:#c8b98a;cursor:pointer;border-radius:3px;padding:2px 8px;font-size:0.8em;";
+                removeClauseBtn.style.cssText = "align-self:flex-start;background:none;border:1px solid var(--auto-button-border);color:var(--auto-label);cursor:pointer;border-radius:3px;padding:2px 8px;font-size:0.8em;";
                 removeClauseBtn.addEventListener("click", function() {
                     // Preserve any Then commands typed in the clause back into the simple area.
                     simpleThenArea.value = thenArea.value;
@@ -4288,7 +4386,7 @@
                 var addClauseBtn = document.createElement("button");
                 addClauseBtn.type = "button";
                 addClauseBtn.textContent = "+ Add condition (if/else)";
-                addClauseBtn.style.cssText = "align-self:flex-start;background:none;border:1px solid #5a3a18;color:#c8b98a;cursor:pointer;border-radius:3px;padding:2px 10px;font-size:0.8em;margin-top:2px;";
+                addClauseBtn.style.cssText = "align-self:flex-start;background:none;border:1px solid var(--auto-button-border);color:var(--auto-label);cursor:pointer;border-radius:3px;padding:2px 10px;font-size:0.8em;margin-top:2px;";
                 addClauseBtn.addEventListener("click", function() {
                     // Move then commands from simple area to the clause then area
                     if (!thenArea.value && simpleThenArea.value) {
@@ -4297,7 +4395,7 @@
                     simpleThenArea.style.display = "none";
                     addClauseBtn.style.display = "none";
                     clauseWrap.style.display = "";
-                    clauseWrap.style.cssText = "display:flex;flex-direction:column;gap:6px;border-top:1px solid #3a2a18;padding-top:6px;margin-top:2px;";
+                    clauseWrap.style.cssText = "display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--panel-border);padding-top:6px;margin-top:2px;";
                     rebuildOps("pool");
                 });
                 doSection.appendChild(addClauseBtn);
@@ -4316,7 +4414,7 @@
                 });
                 var enableLbl = document.createElement("span");
                 enableLbl.textContent = "Enabled";
-                enableLbl.style.cssText = "font-family:Georgia,serif;font-size:0.85em;color:#c8b98a;";
+                enableLbl.style.cssText = "font-family:var(--font-body);font-size:0.85em;color:var(--auto-label);";
                 enableWrap.appendChild(enableTog);
                 enableWrap.appendChild(enableLbl);
                 body.appendChild(enableWrap);
@@ -4326,9 +4424,9 @@
                 queueWrap.style.cssText = "display:flex;align-items:center;gap:8px;";
                 var queueLbl = document.createElement("span");
                 queueLbl.textContent = "Queue this action";
-                queueLbl.style.cssText = "font-family:Georgia,serif;font-size:0.85em;color:#c8b98a;";
+                queueLbl.style.cssText = "font-family:var(--font-body);font-size:0.85em;color:var(--auto-label);";
                 var queueSelect = document.createElement("select");
-                queueSelect.style.cssText = "background:#150f08;border:1px solid #5e431a;border-radius:3px;color:#d9c39e;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 6px;";
+                queueSelect.style.cssText = "background:var(--well);border:1px solid var(--brass-border);border-radius:3px;color:var(--vellum);font-family:var(--font-mono);font-size:11px;padding:2px 6px;";
                 var queueOptions = [
                     {v: "",      l: "Fire immediately"},
                     {v: "back",  l: "Queue at back"},
@@ -4368,7 +4466,7 @@
                     simpleThenArea.style.display = "none";
                     addClauseBtn.style.display = "none";
                     clauseWrap.style.display = "";
-                    clauseWrap.style.cssText = "display:flex;flex-direction:column;gap:6px;border-top:1px solid #3a2a18;padding-top:6px;margin-top:2px;";
+                    clauseWrap.style.cssText = "display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--panel-border);padding-top:6px;margin-top:2px;";
                 } else {
                     // No condition — simple mode
                     simpleThenArea.value = prefillThenCmds || "";
