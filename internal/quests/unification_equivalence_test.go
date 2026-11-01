@@ -127,6 +127,9 @@ type oldTriggerDef struct {
 	QuestToken string `yaml:"quest_token,omitempty"`
 	Noun       string `yaml:"noun,omitempty"`
 	Verb       string `yaml:"verb,omitempty"`
+	// A new key, not drift: #375 phase 3b's command target filter, first
+	// shipped by quest 39's throw step (#694). Order matches TriggerDef.
+	Target string `yaml:"target,omitempty"`
 	// New keys, not drift: #375 phase 3b slice 4 added area, zone, count,
 	// distinct, label and explored_line after the unification (quest 45's
 	// cast step uses area). In production field order, so the re-marshal of
