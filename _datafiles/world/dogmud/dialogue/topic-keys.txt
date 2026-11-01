@@ -587,6 +587,7 @@
 9153.folk
 9153.help_node
 9153.stones
+9153.words_lesson
 9153.words_progress
 9153.words_turnin
 9157.dispute

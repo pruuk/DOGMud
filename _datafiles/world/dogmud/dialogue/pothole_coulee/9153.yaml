@@ -30,17 +30,25 @@ opener:
   - questRequired:
     - 47-start
     questExcluded:
+    - 47-met
+    - 47-end
+    text: Toke sent you up the cartway? Sit, then. I have a lesson for you, and it
+      is a short one.
+    hints: Choose a line below to hear the first lesson.
+  - questRequired:
+    - 47-met
+    questExcluded:
     - 47-help
     - 47-end
     text: Still learning. Ask me about the folk, the ways, the stones, whatever you
-      like. That is half the lesson. The other half is the in-game reckoning, the
-      one that outlasts your memory. Open it.
+      like. That is half the lesson. The other half is the in-game help, the
+      reference that outlasts your memory. Open it.
     hints: Type help.
   - questRequired:
     - 47-help
     questExcluded:
     - 47-end
-    text: You found the reckoning. Good. Tell me so properly.
+    text: You opened the help. Good. Come and tell me about it.
     hints: Choose First Words below to report.
   - questRequired:
     - 47-end
@@ -69,11 +77,11 @@ topics:
 - key: words_progress
   kind: info
   label: What is the other half of the lesson?
-  text: Not yet. You have done the asking part. Now open the in-game reckoning, the
-    one that holds what memory drops. Then come back and tell me.
+  text: Not yet. You have done the asking part. Now open the in-game help, the one
+    that holds what memory drops. Then come back and tell me.
   hints: Type help.
   questRequired:
-  - 47-start
+  - 47-met
   questExcluded:
   - 47-help
   - 47-end
@@ -81,7 +89,7 @@ topics:
   kind: info
   label: Where can I look things up?
   text: When you cannot hold a thing in your head (a command, a custom, a name),
-    type help and the in-game reckoning will hold it for you. It is the surest reference
+    type help and the in-game help will hold it for you. It is the surest reference
     there is, and it never tires of being asked. We keep our own lore in carved stone
     for the same reason. Go on and try it.
   hints: Type help to open the in-game reference.
@@ -106,3 +114,17 @@ topics:
     and the whole story of us carved into them. When you have your feet under you,
     go and talk to him about the old tale. He has been waiting on a good listener a
     long while.
+- key: words_lesson
+  kind: info
+  label: Toke sent me to learn the ways of the folk.
+  text: Then here is the first of it, and the whole of it. Learn to ask, and learn
+    where to look. Ask me about the folk and our ways whenever you like, and listen
+    to the answers. The other half is the in-game help, for when your own memory
+    fails. It is more patient than I am and always to hand. Open it now, then come
+    back to me.
+  hints: Type help.
+  questRequired:
+  - 47-start
+  questExcluded:
+  - 47-met
+  - 47-end
