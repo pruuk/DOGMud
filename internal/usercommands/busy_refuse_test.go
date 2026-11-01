@@ -46,6 +46,7 @@ func TestBusyCommands_RefuseWhileCrafting(t *testing.T) {
 	}{
 		{"eat", "eat", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Eat("bread", u, r, 0) }},
 		{"drink", "drink", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Drink("water", u, r, 0) }},
+		{"quaff", "quaff", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Quaff("salve", u, r, 0) }},
 		{"sleep", "sleep", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Sleep("", u, r, 0) }},
 		{"use", "use that", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Use("lever", u, r, 0) }},
 		{"equip", "change equipment", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Equip("sword", u, r, 0) }},

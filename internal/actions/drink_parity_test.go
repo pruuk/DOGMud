@@ -16,7 +16,7 @@ import (
 )
 
 // The drink parity table (drink path unification). A player and a mob, built
-// alike and holding the same potion, drink it through actions.Drink; every
+// alike and holding the same potion, drink it through actions.Quaff; every
 // row asserts the two come out the same: the result, toxicity, the item
 // consumed, the queued condition events, and the row's own special effect.
 // Before unification the mob drank through a 49-line copy with no toxicity,
@@ -73,7 +73,7 @@ func parityQueuedOf(evs []events.Condition) []parityQueued {
 }
 
 // drinkBoth builds a player and a mob, runs setup on each character (the
-// item is stored by setup), drinks rest through actions.Drink, and returns
+// item is stored by setup), drinks rest through actions.Quaff, and returns
 // both sides.
 func drinkBoth(t *testing.T, rest string, setup func(c *characters.Character)) (paritySide, paritySide) {
 	t.Helper()
@@ -83,13 +83,13 @@ func drinkBoth(t *testing.T, rest string, setup func(c *characters.Character)) (
 	setup(uc)
 	u := &users.UserRecord{UserId: parityUserId, Character: uc}
 	events.DrainQueuedConditionsForTest(parityUserId)
-	ures := Drink(NewUserActorInRoom(u, room).(DrinkActor), rest)
+	ures := Quaff(NewUserActorInRoom(u, room).(DrinkActor), rest)
 	player := paritySide{ures, uc, parityQueuedOf(events.DrainQueuedConditionsForTest(parityUserId))}
 
 	m := &mobs.Mob{InstanceId: parityMobId, Character: *newParityChar()}
 	setup(&m.Character)
 	events.DrainQueuedMobConditionsForTest(parityMobId)
-	mres := Drink(NewMobActorInRoom(m, room).(DrinkActor), rest)
+	mres := Quaff(NewMobActorInRoom(m, room).(DrinkActor), rest)
 	mob := paritySide{mres, &m.Character, parityQueuedOf(events.DrainQueuedMobConditionsForTest(parityMobId))}
 
 	return player, mob

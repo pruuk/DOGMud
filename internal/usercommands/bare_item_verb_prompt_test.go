@@ -16,7 +16,7 @@ func TestBareItemVerbsAskWhat(t *testing.T) {
 	defer cleanup()
 	user, room := getTestUserAndRoom(t)
 
-	for _, verb := range []string{"drink", "eat", "read", "use", "remove", "stash"} {
+	for _, verb := range []string{"drink", "eat", "quaff", "read", "use", "remove", "stash"} {
 		events.DrainQueuedMessagesForTest(user.UserId)
 		handled, err := userCommands[verb].Func("", user, room, 0)
 		require.NoError(t, err, verb)

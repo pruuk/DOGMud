@@ -1029,6 +1029,7 @@ func TestTryCommandRouting(t *testing.T) {
 		{"break", ""},
 		{"drink", ""},
 		{"eat", ""},
+		{"quaff", ""},
 		{"wander", ""},
 		{"despawn", ""},
 	}

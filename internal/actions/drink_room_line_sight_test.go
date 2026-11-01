@@ -93,7 +93,7 @@ func TestDrinkRoomLine_PlayerDrinkerHiddenFromShapes(t *testing.T) {
 	drinker, room := drinkSightScene(t, "cave")
 	storeItem(t, drinker.Character, items.New(parityBrewId))
 
-	if res := Drink(NewUserActorInRoom(drinker, room).(DrinkActor), "test brew"); !res.Drank {
+	if res := Quaff(NewUserActorInRoom(drinker, room).(DrinkActor), "test brew"); !res.Drank {
 		t.Fatalf("drink did not happen: %+v", res)
 	}
 
@@ -114,7 +114,7 @@ func TestDrinkRoomLine_MobDrinkerHiddenFromShapes(t *testing.T) {
 	mob := drinkSightMob(room)
 	storeItem(t, mob.GetCharacter(), items.New(parityBrewId))
 
-	if res := Drink(mob, "test brew"); !res.Drank {
+	if res := Quaff(mob, "test brew"); !res.Drank {
 		t.Fatalf("drink did not happen: %+v", res)
 	}
 
@@ -132,7 +132,7 @@ func TestDrinkRoomLine_SpoiledDrinkerHiddenFromShapes(t *testing.T) {
 	it.CraftedRound = util.GetRoundCount() - 5000
 	storeItem(t, mob.GetCharacter(), it)
 
-	if res := Drink(mob, "aged brew"); !res.Spoiled {
+	if res := Quaff(mob, "aged brew"); !res.Spoiled {
 		t.Fatalf("want a spoiled drink: %+v", res)
 	}
 
@@ -150,7 +150,7 @@ func TestDrinkRoomLine_LitObserversReadTheName(t *testing.T) {
 	mob := drinkSightMob(room)
 	storeItem(t, mob.GetCharacter(), items.New(parityBrewId))
 
-	Drink(mob, "test brew")
+	Quaff(mob, "test brew")
 
 	for _, id := range []int{drinkSightInfraId, drinkSightBlindId} {
 		requireOneLine(t, "lit observer", drinkSightPlain(events.DrainQueuedMessagesForTest(id)),

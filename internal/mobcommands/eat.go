@@ -36,7 +36,11 @@ func Eat(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		mob.Character.UseItem(matchItem)
 
-		room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> eats some <ansi fg="itemname">%s</ansi>.`, mob.Character.Name, matchItem.DisplayName()))
+		verb := `eats`
+		if itemSpec.Type == items.Drink {
+			verb = `drinks`
+		}
+		room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> %s some <ansi fg="itemname">%s</ansi>.`, mob.Character.Name, verb, matchItem.DisplayName()))
 
 		for _, conditionId := range itemSpec.ConditionIds {
 			mob.AddCondition(conditionId, `food`)

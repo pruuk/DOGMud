@@ -184,6 +184,7 @@ var (
 		`printline`:       {PrintLine, true, true, false},
 		`put`:             {Put, false, false, false}, // Can't manipulate containers in combat
 		`pvp`:             {Pvp, true, true, false},
+		`quaff`:           {Quaff, true, true, false},
 		`quests`:          {Quests, true, true, false},
 		`quit`:            {Quit, true, true, false},
 		`questdebug`:      {QuestDebug, false, true, true}, // Admin only
