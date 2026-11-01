@@ -1,10 +1,17 @@
 package guards
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/quests"
 )
 
 // acquireSeamFile is the one file allowed to call Character.StoreItem for an
@@ -39,6 +46,52 @@ var storeItemAllowlist = map[string]string{
 	"internal/mobs/crafter.go":                    "mob inventory (ruling 2026-10-26: no quest listener acts on mobs)",
 	"modules/aicompanion/combat.go":               "mob inventory (companion; ruling 2026-10-26)",
 	"modules/aicompanion/cooking.go":              "mob inventory (companion; ruling 2026-10-26)",
+}
+
+// TestGainReasonsMatchTheAcquireSeam: an item_gain trigger's reason filter is
+// validated against quests.TriggerGainReasons, and the event carries an
+// acquire.AcquireReason. quests cannot import acquire, so the two lists are kept
+// equal here: a reason added to one and not the other is a filter value that
+// never matches, or a route no quest may name.
+func TestGainReasonsMatchTheAcquireSeam(t *testing.T) {
+	path := filepath.Join(repoRoot(t), filepath.FromSlash(acquireSeamFile))
+	file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+	if err != nil {
+		t.Fatalf("parse %s: %v", path, err)
+	}
+	var seam []string
+	for _, decl := range file.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.CONST {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			vs := spec.(*ast.ValueSpec)
+			if id, ok := vs.Type.(*ast.Ident); !ok || id.Name != "AcquireReason" {
+				continue
+			}
+			for _, v := range vs.Values {
+				lit, ok := v.(*ast.BasicLit)
+				if !ok {
+					t.Fatalf("%s: an AcquireReason is not a string literal", acquireSeamFile)
+				}
+				word, err := strconv.Unquote(lit.Value)
+				if err != nil {
+					t.Fatalf("%s: unquote %s: %v", acquireSeamFile, lit.Value, err)
+				}
+				seam = append(seam, word)
+			}
+		}
+	}
+	if len(seam) == 0 {
+		t.Fatalf("found no AcquireReason constants in %s: the guard cannot compare", acquireSeamFile)
+	}
+	loader := slices.Clone(quests.TriggerGainReasons)
+	sort.Strings(seam)
+	sort.Strings(loader)
+	if !slices.Equal(seam, loader) {
+		t.Fatalf("the acquire reasons and quests.TriggerGainReasons differ:\n  seam:   %v\n  loader: %v", seam, loader)
+	}
 }
 
 // TestStoreItemOnlyThroughTheAcquireSeam fails on any StoreItem call outside

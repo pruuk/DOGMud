@@ -99,6 +99,14 @@ mob-actor site raises a command event today.
 Every command event goes through `NotifyCommand`; a hand-built
 `Notify("command", ...)` fails `internal/guards/command_event_guard_test.go`.
 
+### Item gains and their reason (#375 phase 7)
+
+`EventDetails.Reason` says how an `item_gain` event's item arrived:
+`hooks.CheckItemQuests` copies `events.ItemOwnership.Reason`, which the acquire
+seam fills with an `acquire.AcquireReason`. A trigger's `reason:` filter compares
+against it, so `reason: steal` hears a theft and not a `get` of the same item.
+No filter accepts any reason. A filter never matches an event with no reason.
+
 ### Spell events (#375 phase 3b slice 3)
 
 `spell_landed` is raised when a player's spell lands on a target. Its
@@ -284,7 +292,7 @@ about 190 ns/op. The map search is benchmarked in `internal/mapper`.
 `Notify` → `evaluate` (recursive), per matching trigger:
 
 1. **Field match** (`matchTriggerFields`): mob, room, area, zone, item, skill, command,
-   topic, questToken, noun, verb, target. A trigger `noun:` matches in three tiers
+   topic, questToken, noun, verb, target, reason. A trigger `noun:` matches in three tiers
    (`nounTier`, picked by `pickNounTier`): the typed noun exactly; else its
    singular/plural variant (`util.NounNumberVariants`); else
    `EventDetails.RoomNoun`, the room's own noun key the typed words name

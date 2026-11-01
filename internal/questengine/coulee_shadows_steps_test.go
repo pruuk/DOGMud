@@ -76,9 +76,13 @@ func TestQuest99QuietHands_Steps(t *testing.T) {
 
 	w.notify("command", EventDetails{Command: "steal", RoomId: reedJetty, TargetKind: "mob", MobId: pocketDummy})
 	require.Equal(t, "hidden", w.p.current, "a steal attempt proves nothing: only the purse landing does")
-	w.notify("item_gain", EventDetails{ItemId: sandPurse, RoomId: 5201})
+	w.notify("item_gain", EventDetails{ItemId: sandPurse, RoomId: 5201, Reason: "steal"})
 	require.Equal(t, "hidden", w.p.current, "only on the jetty")
-	w.notify("item_gain", EventDetails{ItemId: sandPurse, RoomId: reedJetty})
+	for _, pickup := range []string{"get", "loot", "give", ""} {
+		w.notify("item_gain", EventDetails{ItemId: sandPurse, RoomId: reedJetty, Reason: pickup})
+		require.Equal(t, "hidden", w.p.current, "only a theft is a lift, not %q", pickup)
+	}
+	w.notify("item_gain", EventDetails{ItemId: sandPurse, RoomId: reedJetty, Reason: "steal"})
 	require.Equal(t, "lifted", w.p.current)
 
 	w.notify("command", EventDetails{Command: "plant", RoomId: reedJetty, TargetKind: "mob", MobId: pocketDummy, ItemId: hoodedLamp})

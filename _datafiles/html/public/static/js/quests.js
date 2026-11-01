@@ -296,9 +296,9 @@
   function kindInput(kind, val) {
     if (kind === "bool") return boolInput(val);
     if (kind === "text") return textInput(val);
-    if (kind === "target") {
+    if (kind === "target" || kind === "reason") {
       var sel = ce("select", {});
-      [""].concat(TARGET_KINDS).forEach(function (k) {
+      [""].concat(kind === "target" ? TARGET_KINDS : GAIN_REASONS).forEach(function (k) {
         var o = ce("option", { value: k, text: k || "(any)" }); if ((val || "") === k) o.selected = true; sel.appendChild(o);
       });
       sel.addEventListener("change", markDirty);
@@ -528,7 +528,7 @@
     mob_death: ["mob", "room", "area", "zone", "count", "label"],
     command: ["command", "noun", "room", "target", "mob", "item", "area", "zone", "count", "label"],
     command_issued: ["command", "room", "area", "zone", "count", "label"],
-    item_gain: ["item", "area", "zone", "count", "label"],
+    item_gain: ["item", "room", "reason", "area", "zone", "count", "label"],
     quest_granted: ["quest_token", "area", "zone", "count", "label"],
     room_interact: ["room", "noun", "verb", "area", "zone"],
     spell_landed: ["noun", "effect", "target", "mob", "item", "room", "area", "zone", "count", "label"],
@@ -536,7 +536,7 @@
   };
   var FILTER_KINDS = { room: "room", mob: "mob", item: "item", skill: "skill",
     command: "text", quest_token: "token", noun: "text", verb: "text",
-    effect: "text", topic: "text", target: "target",
+    effect: "text", topic: "text", target: "target", reason: "reason",
     area: "text", zone: "text", count: "num", label: "text",
     distinct: "text", explored_line: "text" };
   // Fields that shape the trigger rather than filter its event get their own
@@ -550,6 +550,11 @@
   // The values a trigger's target filter may take (quests.TriggerTargetKinds);
   // empty means any target.
   var TARGET_KINDS = ["self", "mob", "player", "item", "container"];
+  // The values an item_gain trigger's reason filter may take
+  // (quests.TriggerGainReasons); empty means any way of arriving.
+  var GAIN_REASONS = ["get", "give", "buy", "loot", "forage", "harvest", "steal",
+    "search_find", "storage", "vault", "auction", "topic_give", "craft", "salvage",
+    "reward", "quest_give", "tree_give", "mail", "shield_swap", "plant"];
 
   function triggerRow(box, t) {
     t = t || { event: "room_enter", actions: [] };

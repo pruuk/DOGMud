@@ -9,9 +9,12 @@
 #   99-hidden:  command sneak, anywhere (sneak raises it only when the player
 #               ends up hidden). Dace and the dummy watch the jetty and may
 #               spot a student, so the step does not insist on the room.
-#   99-lifted:  item_gain of the Sand Purse (item 60) on the Reed Jetty. steal
-#               raises its own command event before the contest, so item_gain
-#               is what proves the theft landed.
+#   99-lifted:  item_gain of the Sand Purse (item 60) on the Reed Jetty, reason
+#               steal. steal raises its own command event before the contest,
+#               so item_gain is what proves the theft landed, and the reason
+#               keeps a purse picked up off the floor or a corpse from counting.
+#               A purse so picked up does not get in the way: the student can
+#               still steal another, and may plant either once lifted.
 #   99-planted: command plant aimed at the Pocket Dummy (9127) with the purse.
 #               plant raises it on the attempt, before the contest, so a caught
 #               plant counts (owner ruling); the line says so.
@@ -57,9 +60,10 @@ steps:
   - id: hidden
     description: >-
       You slipped out of sight. The pocket dummy on the Reed Jetty has a purse
-      in its coat. Lift it. If you find nothing, its pocket is empty, so give
-      it a moment to fill. If the dummy catches you it swings back, harmlessly.
-      Knock it down and a fresh one is set out.
+      in its coat. Lift it. Picking a purse up does not count: it must come out
+      of the coat. If you find nothing, its pocket is empty, so give it a moment
+      to fill. If the dummy catches you it swings back, harmlessly. Knock it
+      down and a fresh one is set out.
     hint: >-
       On the Reed Jetty, type steal dummy. Your hands need a moment to recover
       between tries.
@@ -122,10 +126,11 @@ triggers:
           You are out of sight. Now lift the purse from the pocket dummy's
           coat. On the Reed Jetty, type steal dummy.
 
-  # ── LIFT: the purse lands in your pack, on the jetty ──
+  # ── LIFT: a theft lands the purse in your pack, on the jetty ──
   - event: item_gain
     item: 60
     room: 5218
+    reason: steal
     conditions:
       has: ["99-hidden"]
       missing: ["99-lifted"]

@@ -5,8 +5,10 @@
 #   101-start:  granted on Accept of Cutpurse Dace's offer quick_fingers_offer
 #               (dialogue/pothole_coulee/9126.yaml), open after 100-end.
 #               Repeatable with the cooldown the other Coulee repeatables use.
-#   101-lifted: item_gain of the Sand Purse (item 60) on the Reed Jetty,
-#               counted to 3. The Pocket Dummy refills its pocket on idle
+#   101-lifted: item_gain of the Sand Purse (item 60) on the Reed Jetty, reason
+#               steal, counted to 3. A pickup counts for nothing, so the same
+#               purse dropped and got again cannot earn the reward. The Pocket
+#               Dummy refills its pocket on idle
 #               (behaviors/pothole_coulee/9127-pocket_dummy.yaml).
 #   101-end:    granted by Dace's hand-in quick_fingers_in.
 
@@ -25,9 +27,10 @@ steps:
     destination:
       room: 5218
     description: >-
-      Lift three purses from the pocket dummy on the Reed Jetty. It refills
-      its own coat if you give it a moment between tries, and your hands need
-      a moment to recover too.
+      Lift three purses from the pocket dummy on the Reed Jetty. Picking a purse
+      up does not count: each must come out of the coat. It refills its own
+      coat if you give it a moment between tries, and your hands need a moment
+      to recover too.
     hint: >-
       On the Reed Jetty, type steal dummy.
   - id: lifted
@@ -55,6 +58,7 @@ triggers:
   - event: item_gain
     item: 60
     room: 5218
+    reason: steal
     count: 3
     label: Purses lifted
     conditions:

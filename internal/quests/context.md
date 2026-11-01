@@ -1040,6 +1040,18 @@ and a trigger that grants, at any sequence depth, the token that topic's own
 be queued twice, and for an `-end` token the second event pays the rewards
 again.
 
+### Trigger field: `reason` (#375 phase 7)
+
+`TriggerDef.Reason` filters an `item_gain` trigger on how the item arrived, so
+`reason: steal` means a theft and a purse picked up off the floor or a corpse
+does not count. Its values are `TriggerGainReasons`, the words of
+`acquire.AcquireReason` (`get`, `loot`, `buy`, `steal`, ...); omit it to accept
+any. `acquire` reaches this package by way of `users`, so the list cannot
+import its constants: `TestGainReasonsMatchTheAcquireSeam` in `internal/guards`
+keeps the two equal. The loader refuses `reason` on any event other than
+`item_gain`, and any value outside the list. `questloop` includes `reason` in a
+trigger's signature.
+
 ### Trigger fields: `area`, `zone`, `count`, `distinct`, `label`, `explored_line` (#375 phase 3b slice 4)
 
 - `area` (an `areas/` key) and `zone` (a zone display name such as `Pothole
