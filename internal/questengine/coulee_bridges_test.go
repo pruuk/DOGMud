@@ -31,6 +31,16 @@ func TestCouleeBridges_GiverTwoOffersTokeTakes(t *testing.T) {
 		checkBridge(t, toke, 93, "Tracking", "93-report_to_toke__tracking_.yaml",
 			"9137.yaml", "report_tracking_offer", "report_tracking_in", "43-end")
 	})
+	t.Run("Casting", func(t *testing.T) {
+		checkBridge(t, toke, 94, "Casting", "94-report_to_toke__casting_.yaml",
+			"9145.yaml", "report_casting_offer", "report_casting_in", "46-end")
+		q := loadShippedQuest(t, "94-report_to_toke__casting_.yaml", 94)
+		require.Contains(t, squash(questHintFor(t, q, "start")),
+			"go south three times, east, south, down, down, south three times and east to hub square")
+		require.Equal(t, foldingHubSquare, foldingWalk(t, foldingOrrinRoom,
+			"south", "south", "south", "east", "south", "down", "down", "south", "south", "south", "east"),
+			"the way back to Hub Square walks")
+	})
 }
 
 // checkBridge walks one bridge: the quest's shape, the giver's offer gated
@@ -79,6 +89,7 @@ func TestToke_BridgeOpenerNamesTheHandInAndItComesFirst(t *testing.T) {
 		{91, "Smithing", "91-report_to_toke__smithing_.yaml", "report_smithing_in"},
 		{92, "Brewing", "92-report_to_toke__brewing_.yaml", "report_brewing_in"},
 		{93, "Tracking", "93-report_to_toke__tracking_.yaml", "report_tracking_in"},
+		{94, "Casting", "94-report_to_toke__casting_.yaml", "report_casting_in"},
 	} {
 		t.Run(b.line, func(t *testing.T) {
 			q := loadShippedQuest(t, b.file, b.id)

@@ -1,0 +1,33 @@
+# Quest 94, Report to Toke (Casting) (Pothole Coulee, bridge, #375 phase 7)
+#
+# The file name is <id>-<ConvertForFilename(name)>.yaml, which the loader
+# enforces (internal/quests/quests.go Filename): the parentheses become
+# underscores.
+#
+# Token flow:
+#   94-start: granted by Keeper Orrin's report_casting_offer (9145), after
+#             46-end (he takes 46's hand-in, so ruleChain holds).
+#   94-end:   granted by Crier Toke's report_casting_in hand-in (9106).
+
+questid: 94
+name: Report to Toke (Casting)
+description: >-
+  Keeper Orrin has nothing left to teach you in the grove. Crier Toke in Hub
+  Square will want to hear how the casting trail went.
+secret: false
+
+steps:
+  - id: start
+    destination:
+      mob: 9106  # Crier Toke follows his schedule (pothole_toke)
+      room: 5203  # fallback: Hub Square
+    description: >-
+      Go back to Crier Toke in Hub Square and tell him you finished the
+      casting trail.
+    hint: >-
+      From the Whispering Grove, go south three times, east, south, down,
+      down, south three times and east to Hub Square. Type talk toke.
+  - id: end
+    description: >-
+      You told Toke how the casting trail went, and the hub will know it by
+      supper.

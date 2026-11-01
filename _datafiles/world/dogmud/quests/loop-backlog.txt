@@ -4,8 +4,6 @@
 # warning; any finding not listed refuses boot, CI and the quest editor's
 # save. A line with no matching finding fails CI: delete it when its finding
 # is fixed. Never add a line by hand to make new content pass.
-chain 44 mob 9145 topic grove_offer
-chain 46 mob 9145 topic grove_loop_offer
 chain 47 mob 9157 topic stones_offer
 chain 48 mob 9160 topic shrine_offer
 chain 50 mob 9162 topic canyon_offer
@@ -25,12 +23,8 @@ chain 78 mob 9584 topic teach_zephyr
 end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
-end 46 quest 46 trigger mob_death mob=9152 grants=46-end
-end 46 step end
 end 52 quest 52 trigger mob_death mob=9169 grants=52-end
 end 52 step end
-end 57 quest 57 trigger mob_death mob=9147 grants=57-end
-end 57 step end
 end 58 quest 58 trigger room_interact room=5343 noun=floor verb=search grants=58-end
 end 58 step end
 end 59 quest 59 trigger mob_death mob=9165 grants=59-end

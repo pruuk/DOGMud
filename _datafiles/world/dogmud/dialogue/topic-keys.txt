@@ -419,6 +419,7 @@
 9106.newcomer_players
 9106.news
 9106.report_brewing_in
+9106.report_casting_in
 9106.report_fighting_in
 9106.report_smithing_in
 9106.report_tracking_in
@@ -564,18 +565,24 @@
 9144.conjure
 9144.eyes
 9144.folding
+9144.grove_offer
 9144.manifestation
 9144.new_spells
+9145.assess
 9145.grove_help
 9145.grove_loop_mid
 9145.grove_loop_offer
+9145.grove_loop_turnin
+9145.grove_meet
 9145.grove_mid_cast
 9145.grove_mid_kill
-9145.grove_offer
 9145.grove_turnin
 9145.outline
+9145.raise
+9145.report_casting_offer
 9145.scab_mid
 9145.scab_offer
+9145.scab_turnin
 9153.eyes
 9153.folk
 9153.help_node
@@ -1390,6 +1397,7 @@
 9128.brew_offer
 9136.sign_offer
 9144.cast_offer
+9145.grove_offer
 9153.words_offer
 9161.shoot_offer
 # renamed

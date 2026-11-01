@@ -62,6 +62,7 @@ opener:
   - questRequired:
     - 45-start
     questExcluded:
+    - 45-met
     - 45-cast
     - 45-end
     text: Orrin is waiting for you in the Whispering Grove. Go gently. The grove is
@@ -119,6 +120,25 @@ topics:
     do that without losing yourself in the reaching. You already carry the spark
     of it. The Awakening leaves everyone a little open to the Folding, which is why
     you woke with a spell. I only teach the aiming.
+- key: grove_offer
+  kind: offer
+  quest: 45
+  label: The Unquiet Grove
+  playerLine: Will you teach me to cast while I'm under attack?
+  text: That lesson is not mine to give. It is Orrin's. He keeps the meditation grove
+    north of this ruin, where the veil has worn thin and the things on the far side
+    come through. Go to him. He will set you against them and teach you to hold a
+    casting while you are being hit.
+  hints: From the Observatory Hall, go north, west, north, north and north to the
+    Whispering Grove. Type talk orrin.
+  breadcrumb: Learn the first casting with me before the grove. The grove does not
+    forgive a fumbled fold.
+  questRequired:
+  - 44-end
+  questExcluded:
+  - 45-start
+  - 45-end
+  grantsQuest: 45-start
 - key: cast_lesson
   kind: info
   label: Toke sent me to learn casting.

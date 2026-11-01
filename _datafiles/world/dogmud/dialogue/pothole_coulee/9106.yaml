@@ -111,6 +111,14 @@ opener:
       it went with the pack.
     hints: Choose Report to Toke (Tracking), the line marked [?] below, to tell Toke
       the news.
+  - questRequired:
+    - 94-start
+    questExcluded:
+    - 94-end
+    text: Hoy! You have grove-light on you, and Orrin does not send folk down to
+      me for small news. Tell me how the casting went.
+    hints: Choose Report to Toke (Casting), the line marked [?] below, to tell Toke
+      the news.
   # All seven trades taken: no [!] line is left, so the hub's hint would describe
   # lines that are not there. The gate is the seven send_* offers' start tokens,
   # which stay held after each quest ends (TestToke_NoTradesLeftOpener).
@@ -325,6 +333,21 @@ topics:
   questExcluded:
   - 93-end
   grantsQuest: 93-end
+  moodChange: friendly
+- key: report_casting_in
+  kind: handin
+  quest: 94
+  label: Report to Toke (Casting)
+  playerLine: Keeper Orrin has nothing left to teach me in the grove.
+  text: Nothing left? Then the grove made a caster out of you, and the whole hub will
+    know it by supper. I will see to that myself. Any mouth you have not walked yet
+    is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 94-start
+  questExcluded:
+  - 94-end
+  grantsQuest: 94-end
   moodChange: friendly
 # R21: the seven trails, each its own offer after Find Your Footing. Each
 # starter item rides on the offer of the quest it belongs to. Toke is the

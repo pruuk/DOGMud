@@ -174,8 +174,10 @@
 45-cast
 45-end
 45-kill
+45-met
 45-start
 46-end
+46-kill
 46-start
 47-end
 47-help
@@ -217,6 +219,7 @@
 56-hunt
 56-start
 57-end
+57-kill
 57-start
 58-end
 58-start
@@ -342,6 +345,8 @@
 92-start
 93-end
 93-start
+94-end
+94-start
 # retired
 # Quest 29 Two Roads (#375 phase 7): no road grants it; users.LoadUser drops
 # it from saves (quests.RetiredQuests).

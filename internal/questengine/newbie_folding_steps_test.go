@@ -205,3 +205,171 @@ func TestGrieve9144_TopicsNameEachStep(t *testing.T) {
 	require.Contains(t, strings.ToLower(grieve.FindTopic("new_spells").Text), "not from a trainer",
 		"spells come from casting, not trainers (templates/help/spells.template)")
 }
+
+// The Unquiet Grove: Grieve sends the player to Orrin; Orrin's lesson opens
+// the grove fight; cast first, then finish the creature, then report.
+func TestQuest45UnquietGrove_GiverToGiver(t *testing.T) {
+	foldingInstallGrove(t)
+	q := loadShippedQuest(t, "45-the_unquiet_grove.yaml", 45)
+	require.Equal(t, []string{"start", "met", "cast", "kill", "end"}, newLinearPlayer(q).steps,
+		"cast comes before kill; the old ids survive so a saved player resumes")
+	turnIn := turnInRequires(t, "9145.yaml", "grove_turnin")
+	require.Equal(t, []string{"45-kill"}, turnIn, "the turn-in gates on the last step")
+
+	spike := func(room, mob int) EventDetails {
+		return EventDetails{Command: "cast", Noun: "conviction-spike", RoomId: room, MobId: mob}
+	}
+
+	t.Run("walk in order", func(t *testing.T) {
+		w := newQuestWalker(q).at("start")
+		w.notify("command", spike(foldingVeilHollow, foldingGroveRevenant))
+		require.Equal(t, "start", w.p.current, "a cast before Orrin's lesson must not count")
+		w.notify("topic_heard", EventDetails{MobId: foldingOrrin, Topic: "grove_meet"})
+		require.Equal(t, "met", w.p.current)
+
+		w.notify("mob_death", EventDetails{MobId: foldingGroveRevenant, RoomId: foldingVeilHollow})
+		require.Equal(t, "met", w.p.current, "a kill before the cast must not count")
+		w.notify("command", EventDetails{Command: "cast", Noun: "chrysalis-glow", RoomId: foldingVeilHollow})
+		require.Equal(t, "met", w.p.current, "lighting the grove is not the combat cast")
+		w.notify("command", spike(foldingOrrinRoom, foldingGroveRevenant))
+		require.Equal(t, "met", w.p.current, "the cast counts only in the grove's fight rooms")
+		w.notify("command", spike(foldingVeilHollow, 0))
+		require.Equal(t, "met", w.p.current, "a cast at nothing is no fight")
+		w.notify("command", spike(foldingVeilHollow, foldingOrrin))
+		require.Equal(t, "met", w.p.current, "a cast at another creature is no fight")
+		w.notify("command", spike(foldingVeilHollow, foldingGroveRevenant))
+		require.Equal(t, "cast", w.p.current)
+		require.False(t, holdsAll(w.p, turnIn), "turn-in must wait for the kill")
+		w.notify("mob_death", EventDetails{MobId: foldingGroveRevenant, RoomId: foldingVeilHollow})
+		require.Equal(t, "kill", w.p.current)
+		require.True(t, holdsAll(w.p, turnIn))
+	})
+
+	t.Run("a wisp in the Thinning Wood serves too", func(t *testing.T) {
+		w := newQuestWalker(q).at("met")
+		w.notify("command", spike(foldingThinningWood, foldingDriftWisp))
+		require.Equal(t, "cast", w.p.current)
+		w.notify("mob_death", EventDetails{MobId: foldingDriftWisp, RoomId: foldingThinningWood})
+		require.Equal(t, "kill", w.p.current)
+	})
+
+	t.Run("player saved on cast resumes with the kill", func(t *testing.T) {
+		w := newQuestWalker(q).at("cast")
+		w.notify("mob_death", EventDetails{MobId: foldingDriftWisp, RoomId: foldingGroveHeart})
+		require.Equal(t, "kill", w.p.current)
+	})
+
+	t.Run("directions are true", func(t *testing.T) {
+		require.Contains(t, squash(foldingHint(q, "start")), "north, west, north, north and north to the whispering grove")
+		require.Equal(t, foldingOrrinRoom, foldingWalk(t, foldingObservatory, "north", "west", "north", "north", "north"))
+		require.Contains(t, foldingHint(q, "met"), "Go west to the Veil Hollow")
+		require.Contains(t, foldingHint(q, "met"), darkAside)
+		require.Equal(t, foldingVeilHollow, foldingWalk(t, foldingOrrinRoom, "west"))
+		require.True(t, foldingSpawns(t, foldingVeilHollow, foldingGroveRevenant), "the met hint names the Veil Hollow's revenant")
+		require.True(t, foldingSpawns(t, foldingThinningWood, foldingDriftWisp), "the wisp the cast step names")
+	})
+}
+
+// The Unfolded: one boss kill on a route that walks, then the report to Orrin.
+func TestQuest46Unfolded_RouteKillAndReport(t *testing.T) {
+	q := loadShippedQuest(t, "46-the_unfolded.yaml", 46)
+	require.Equal(t, []string{"start", "kill", "end"}, newLinearPlayer(q).steps)
+	turnIn := turnInRequires(t, "9145.yaml", "scab_turnin")
+	require.Equal(t, []string{"46-kill"}, turnIn)
+
+	w := newQuestWalker(q).at("start")
+	w.notify("mob_death", EventDetails{MobId: foldingGroveRevenant, RoomId: foldingGroveHeart})
+	require.Equal(t, "start", w.p.current)
+	w.notify("mob_death", EventDetails{MobId: foldingTheUnfolded, RoomId: foldingThinnestPlace})
+	require.Equal(t, "kill", w.p.current, "the boss kill moves to the report; Orrin takes the hand-in")
+	require.False(t, w.p.HasQuest("46-end"))
+	require.True(t, holdsAll(w.p, turnIn))
+
+	hint := foldingHint(q, "start")
+	require.Contains(t, hint, darkAside)
+	require.Contains(t, hint, "west, north and north to the Grove Heart")
+	require.Equal(t, foldingGroveHeart, foldingWalk(t, foldingOrrinRoom, "west", "north", "north"))
+	require.Contains(t, hint, "west, up, north, west, north and east to the Thinnest Place")
+	require.Equal(t, foldingThinnestPlace, foldingWalk(t, foldingGroveHeart, "west", "up", "north", "west", "north", "east"))
+	require.True(t, foldingSpawns(t, foldingThinnestPlace, foldingTheUnfolded))
+
+	back := squash(foldingHint(q, "kill"))
+	require.Contains(t, back, "west, south, east, south, down, east, south, south and east to keeper orrin")
+	require.Contains(t, back, "type talk orrin")
+	require.Equal(t, foldingOrrinRoom, foldingWalk(t, foldingThinnestPlace, "west", "south", "east", "south", "down", "east", "south", "south", "east"))
+}
+
+// Tending the Grove: put a wisp down, then report it to Orrin.
+func TestQuest57TendingTheGrove_ReportsToOrrin(t *testing.T) {
+	q := loadShippedQuest(t, "57-tending_the_grove.yaml", 57)
+	require.True(t, q.Repeatable)
+	require.Equal(t, []string{"start", "kill", "end"}, newLinearPlayer(q).steps)
+	turnIn := turnInRequires(t, "9145.yaml", "grove_loop_turnin")
+	require.Equal(t, []string{"57-kill"}, turnIn)
+
+	w := newQuestWalker(q).at("start")
+	w.notify("mob_death", EventDetails{MobId: foldingGroveRevenant, RoomId: foldingVeilHollow})
+	require.Equal(t, "start", w.p.current)
+	w.notify("mob_death", EventDetails{MobId: foldingDriftWisp, RoomId: foldingGroveEdge})
+	require.Equal(t, "kill", w.p.current)
+	require.True(t, holdsAll(w.p, turnIn))
+
+	require.Contains(t, foldingHint(q, "start"), "Go south to the Grove Edge")
+	require.Equal(t, foldingGroveEdge, foldingWalk(t, foldingOrrinRoom, "south"))
+	require.True(t, foldingSpawns(t, foldingGroveEdge, foldingDriftWisp))
+	require.Contains(t, squash(foldingHint(q, "kill")), "type talk orrin")
+}
+
+// Orrin greets each step with its one command, a quest-aware topic answers
+// it, and every hand-in he takes completes its quest.
+func TestOrrinMidQuestAnswers(t *testing.T) {
+	f45, f46, f57 := "45-the_unquiet_grove.yaml", "46-the_unfolded.yaml", "57-tending_the_grove.yaml"
+	checkMeetStep(t, "orrin", "9145.yaml", f45, 45, "grove_meet", "type cast spike revenant", "30-end", "44-end")
+	checkTopicSteps(t, "orrin", "9145.yaml", []topicStep{
+		{f45, 45, "met", "type cast spike revenant", []string{"44-end"}, "grove_mid_cast", false},
+		{f45, 45, "cast", "type cast spike", []string{"44-end"}, "grove_mid_kill", false},
+		{f45, 45, "kill", "", []string{"44-end"}, "grove_turnin", true},
+		{f46, 46, "start", "west, up, north, west, north and east to the thinnest place",
+			[]string{"44-end", "45-end"}, "scab_mid", false},
+		{f46, 46, "kill", "", []string{"44-end", "45-end"}, "scab_turnin", true},
+		{f57, 57, "start", "type cast spike wisp", []string{"44-end", "45-end", "46-end"}, "grove_loop_mid", false},
+		{f57, 57, "kill", "", []string{"44-end", "45-end", "46-end"}, "grove_loop_turnin", true},
+	})
+}
+
+// A player saved on 45-cast before the meeting step existed holds no 45-met.
+// Orrin must answer the cast, not ask the player to sit through the lesson,
+// and the kill and the hand-in still work.
+func TestOrrin_OldSaveOnCastIsNotSentBackToTheLesson(t *testing.T) {
+	df := loadCouleeTopics(t, "9145.yaml")
+	held := map[string]bool{"30-end": true, "44-end": true, "45-start": true, "45-cast": true}
+	ps := newNpcTalker(df, newLinearPlayer(loadShippedQuest(t, "45-the_unquiet_grove.yaml", 45))).state()
+	ps.HasQuest = func(tok string) bool { return held[tok] }
+	require.False(t, held["45-met"], "the saved player never heard the meeting topic")
+
+	_, opener := df.OpenerFor(ps)
+	require.NotContains(t, squash(opener), "hear the grove's lesson", "the lesson variant must not catch a saved cast")
+	require.Contains(t, squash(opener), "type cast spike revenant")
+	require.False(t, df.Eligible(df.FindTopic("grove_meet"), ps), "the lesson is behind a player who has already cast")
+	require.True(t, df.Eligible(df.FindTopic("grove_mid_kill"), ps), "the kill is still answered")
+}
+
+// Every offer sits with the giver who took the previous hand-in (ruleChain):
+// Grieve offers the grove; Orrin offers the Unfolded, the repeatable and the
+// bridge, and no longer offers the grove. Orrin teaches raising and assess.
+func TestCastingLine_OffersAndOrrinTopics(t *testing.T) {
+	require.Equal(t, "grove_offer", foldingOffers(t, "9144.yaml")[45])
+	orrin := foldingOffers(t, "9145.yaml")
+	require.NotContains(t, orrin, 45, "Grieve offers The Unquiet Grove now")
+	require.Equal(t, "scab_offer", orrin[46])
+	require.Equal(t, "grove_loop_offer", orrin[57])
+	require.Equal(t, "report_casting_offer", orrin[94])
+
+	df := loadCouleeTopics(t, "9145.yaml")
+	for key, help := range map[string]string{"raise": "type help raise-skeleton", "assess": "type assess corpse"} {
+		tp := df.FindTopic(key)
+		require.NotNil(t, tp, "Orrin has no %s topic", key)
+		require.Equal(t, dialogue.KindInfo, tp.Kind)
+		require.Contains(t, squash(tp.Hints), help)
+	}
+}

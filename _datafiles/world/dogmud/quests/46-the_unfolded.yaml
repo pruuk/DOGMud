@@ -1,28 +1,29 @@
-# Quest 46 — The Unfolded (Pothole Coulee, Spoke E / Folding outer ring, capstone)
+# Quest 46, The Unfolded (Pothole Coulee, casting line, finale)
 #
-# Token flow:
-#   46-start — granted by Keeper Orrin's scab_offer node (after quest 45).
-#              Route from Orrin (5309), verified 2026-10-17 against the room
-#              exits: west, north, north to the Grove Heart (5313), then west
-#              (Veil Tear 5314), up, north (Folded Distance 5316), west, north
-#              (The Unraveling 5319), east to the Thinnest Place (5320).
-#   46-end   — granted by the boss-kill trigger (mob_death 9152, The Unfolded).
-#              Rewards fire on 46-end: a Willpower bump (stat_info), the heal
-#              spell (Mend Flesh, via spellid), and gold. Turn-in is automatic
-#              on the kill, like the other spoke capstones.
+# Token flow (#375 phase 7, one action per step; the finale ends at a hand-in):
+#   46-start: granted by Keeper Orrin's scab_offer (9145), after 45-end.
+#             Route from Orrin (5309), walked against the room exits: west,
+#             north, north to the Grove Heart (5313), then west (Veil Tear
+#             5314), up, north (Folded Distance 5316), west, north (The
+#             Unraveling 5319), east to the Thinnest Place (5320).
+#   46-kill:  mob_death of The Unfolded (9152). Gated on 46-start.
+#   46-end:   granted by Orrin's scab_turnin hand-in (needs 46-kill). The
+#             rewards (willpower, the heal spell, gold) pay out there.
 #
-# Design: a solo spell-duel against the Unfolded -- a long-dead caster's
-# escaped folds that casts harm at the player (mind-spike / nerve-disruption,
-# harm-only spellbook so it duels rather than self-heal-stalls). The takeaway
-# is the player's first heal, making a caster self-sufficient.
+# Design: a solo spell duel against a long-dead caster's escaped folds
+# (harm-only spellbook, so it duels rather than self-heal stalls). The
+# takeaway is the player's first heal.
+#
+# Saved characters: a player saved on start still kills the Unfolded and now
+# reports to Orrin; nobody holds 46-end without the old automatic turn-in.
 
 questid: 46
 name: The Unfolded
 description: >-
   Keeper Orrin says the grove's trouble has a source: out on the reality-thin
-  scabland, in the thinnest place of all, something that was once a Folding-
+  scabland, in the thinnest place of all, something that was once a Folding
   adept still casts. It is called the Unfolded. Orrin says it cannot be
-  reasoned with and cannot be left -- it has to be out-cast.
+  reasoned with and cannot be left alone. It has to be out-cast.
 secret: false
 
 steps:
@@ -38,37 +39,45 @@ steps:
       If it is dark, type cast glow first. From Keeper Orrin, go west, north
       and north to the Grove Heart, then west, up, north, west, north and
       east to the Thinnest Place, and type cast spike unfolded.
-  - id: end
+  - id: kill
+    destination:
+      mob: 9145
     description: >-
       The Unfolded is undone, and the thinnest place is quiet for the first
-      time in a long age. You crossed a scabland that did not want crossing,
-      out-cast a thing made of nothing but casting, and came back able to
-      mend your own wounds with a thought.
+      time in a long age. Go back to Keeper Orrin and tell him.
+    hint: >-
+      From the Thinnest Place, go west, south, east, south, down, east, south,
+      south and east to Keeper Orrin. Type talk orrin.
+  - id: end
+    description: >-
+      You crossed a scabland that did not want crossing, out-cast a thing
+      made of nothing but casting, and came back able to mend your own wounds
+      with a thought.
 
 rewards:
   stat_info: "willpower:3"
   spellid: heal
   gold: 50
   actor: >-
-    The Unfolded comes apart the way it has always been coming apart, except
-    that this time nothing rises to replace what is lost, and the standing
-    fold sighs out of the world. The thinnest place loosens, the fraying
-    slows, and the air settles to ordinary air. You feel the long strain of
-    holding castings together in the open settle into you as a deeper
-    steadiness of will. And in the quiet, the shape of a new working comes
-    clear -- how to fold not harm but mending, and turn it on your own
-    wounds. You leave the scabland knowing how to heal.
+    Orrin listens, and his late-arriving outline catches up to him as he goes
+    still. "Undone. I felt the thinnest place go quiet from here." You feel
+    the long strain of holding castings together in the open settle into you
+    as a deeper steadiness of will. "The scabland gave you something more,
+    whether you noticed it or not," he says, and he shows you how to turn a
+    fold toward mending and lay it on your own wounds. You know how to heal
+    now.
   observer: ""
 
 triggers:
-  # ── BOSS KILL: defeat the Unfolded -> complete + rewards ───────────────
+  # BOSS KILL: defeat the Unfolded, then report to Orrin.
   - event: mob_death
     mob: 9152
     conditions:
       has: ["46-start"]
-      missing: ["46-end"]
+      missing: ["46-kill"]
     actions:
-      - grant: "46-end"
+      - grant: "46-kill"
       - actor: >-
           The Unfolded unravels a final time and does not refold. The
-          thinnest place falls quiet around you.
+          thinnest place falls quiet around you. Go back to Keeper Orrin in
+          the Whispering Grove and type talk orrin.

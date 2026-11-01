@@ -11,18 +11,26 @@ opener:
     text: You have not learned to cast yet. There is no holding a fold under pressure
       before you can shape one at all. Go back down to Adept Grieve in the observatory
       and learn the first casting. Come to me when your hands know the shape of it.
-    hints: Return south to the observatory and finish Adept Grieve's casting lesson
-      before coming to Keeper Orrin.
+    hints: Adept Grieve in the Observatory Hall teaches the first casting. Crier Toke
+      in Hub Square can send you to him.
   - questRequired:
     - 44-end
     questExcluded:
     - 45-start
     - 45-end
-    text: 'Grieve''s mark on you, then. Good. Now the harder half: casting with a
-      fight on you. The grove is full of things the thinning has warped. Fight one,
-      and cast while you do. When you are ready to be hit, I will set you the
-      lesson.'
-    hints: Choose The Unquiet Grove below to take on the grove's lesson.
+    text: Grieve's mark is on you. Good. When he thinks you are ready for the harder
+      half, he will send you up to me.
+    hints: Talk to Adept Grieve in the Observatory Hall to take up the grove's lesson.
+  # A saved cast (no 45-met, from before the meeting step) skips the lesson.
+  - questRequired:
+    - 45-start
+    questExcluded:
+    - 45-met
+    - 45-cast
+    - 45-end
+    text: Grieve sent you up, then. Sit a moment, and I will tell you what the grove
+      asks of you.
+    hints: Choose a line below to hear the grove's lesson.
   - questRequired:
     - 45-start
     questExcluded:
@@ -58,6 +66,7 @@ opener:
   - questRequired:
     - 46-start
     questExcluded:
+    - 46-kill
     - 46-end
     text: It is still out there, in the thinnest place. Through the Grove Heart, up
       through the Veil Tear, across the folded ground and the unraveling. It casts
@@ -67,26 +76,47 @@ opener:
       Heart, then west, up, north, west, north and east to the Thinnest Place, and
       type cast spike unfolded.
   - questRequired:
+    - 46-kill
+    questExcluded:
+    - 46-end
+    text: I felt the thinnest place go quiet from here. Tell me it is done.
+    hints: Choose The Unfolded below to report.
+  - questRequired:
     - 57-start
     questExcluded:
+    - 57-kill
     - 57-end
     text: A wisp has drifted back in at the Grove Edge, just south of here. Put it
-      down. The grove will tell me when it is done.
+      down, then come back and tell me.
     hints: If it is dark, type cast glow first. Go south to the Grove Edge and type
       cast spike wisp until it falls.
+  - questRequired:
+    - 57-kill
+    questExcluded:
+    - 57-end
+    text: The grove told me already. Tell me yourself.
+    hints: Choose Tending the Grove below to report.
+  - questRequired:
+    - 46-end
+    questExcluded:
+    - 94-start
+    - 94-end
+    text: You undid the Unfolded. The grove has been quieter since. The thinning
+      is closing, slow, the way a wound closes. You came up here barely able to
+      cast. You leave able to mend yourself. Toke will want to hear it.
+    hints: Choose Report to Toke (Casting) below to carry the word back to Toke.
   - questRequired:
     - 46-end
     text: You undid the Unfolded. The grove has been quieter since. The thinning
       is closing, slow, the way a wound closes. I have kept this place a long time
       and never thought to see that. You came up here barely able to cast. You leave
       able to mend yourself. Go well.
-    hints: You have finished the folding trail. Well done.
+    hints: You have finished the casting trail. For more work in the grove, choose
+      Tending the Grove below.
 topics:
-- key: grove_offer
-  kind: offer
-  quest: 45
-  label: The Unquiet Grove
-  playerLine: Will you teach me to cast while I'm under attack?
+- key: grove_meet
+  kind: info
+  label: Grieve sent me to learn the grove.
   text: 'Right. Here is the work. West of here the veil-warped things gather: drift-wisps,
     and the revenants of those who came before and never left. They come at anyone
     who walks in. Go to the Veil Hollow, and when the revenant there is on you, loose
@@ -95,11 +125,11 @@ topics:
   hints: If it is dark, type cast glow first. Go west to the Veil Hollow and type
     cast spike revenant.
   questRequired:
-  - 44-end
-  questExcluded:
   - 45-start
+  questExcluded:
+  - 45-met
+  - 45-cast
   - 45-end
-  grantsQuest: 45-start
 - key: grove_turnin
   kind: handin
   quest: 45
@@ -128,7 +158,7 @@ topics:
     ever since. Go through the Grove Heart and up through the Veil Tear, then across
     the scabland to the thinnest place. It will throw foldings at you from across
     the room. Cast back, hold your concentration, and keep casting. Out-cast it. There
-    is no other way past it.
+    is no other way past it. Then come back and tell me.
   hints: If it is dark, type cast glow first. Go west, north and north to the Grove
     Heart, then west, up, north, west, north and east to the Thinnest Place, and
     type cast spike unfolded.
@@ -140,14 +170,30 @@ topics:
   - 46-start
   - 46-end
   grantsQuest: 46-start
+- key: scab_turnin
+  kind: handin
+  quest: 46
+  label: The Unfolded
+  playerLine: The Unfolded is undone. The thinnest place is quiet.
+  text: I felt it go. The whole grove let out a breath it has held for longer than
+    I have kept it. You came up here barely able to cast, and you out-cast a thing
+    made of nothing but casting. Toke will want to hear that, and the grove will
+    always have a little work for you.
+  hints: Quest complete. Choose Report to Toke (Casting) below to carry the word back
+    to Toke, or Tending the Grove for more work here.
+  questRequired:
+  - 46-kill
+  questExcluded:
+  - 46-end
+  grantsQuest: 46-end
 - key: grove_loop_offer
   kind: offer
   quest: 57
   label: Tending the Grove
   playerLine: Is there more work in the grove for me?
   text: The warped things drift back in. That is the nature of a thin place, and it
-    keeps leaking. There is a wisp at the Grove Edge, just south of here. Put it down.
-    The practice matters as much as the clearing.
+    keeps leaking. There is a wisp at the Grove Edge, just south of here. Put it down,
+    then come back and tell me. The practice matters as much as the clearing.
   hints: If it is dark, type cast glow first. Go south to the Grove Edge and type
     cast spike wisp until it falls.
   questRequired:
@@ -156,16 +202,46 @@ topics:
   - 57-start
   - 57-end
   grantsQuest: 57-start
+- key: grove_loop_turnin
+  kind: handin
+  quest: 57
+  label: Tending the Grove
+  playerLine: The wisp at the Grove Edge is down.
+  text: Good. I felt the grove settle a little. The fold held clean, too. They always
+    drift back in, so come back when the watch slips again.
+  hints: Quest complete. Orrin will have more grove work after a while.
+  questRequired:
+  - 57-kill
+  questExcluded:
+  - 57-end
+  grantsQuest: 57-end
+- key: report_casting_offer
+  kind: offer
+  quest: 94
+  label: Report to Toke (Casting)
+  playerLine: Should I tell Toke how the casting trail went?
+  text: Do. Toke hears everything eventually, but he likes to hear it first, and from
+    the one who did it. He is in Hub Square, south of the Awakening Pool, shouting
+    as usual.
+  hints: From the Whispering Grove, go south three times, east, south, down, down,
+    south three times and east to Hub Square. Type talk toke.
+  questRequired:
+  - 46-end
+  questExcluded:
+  - 94-start
+  - 94-end
+  grantsQuest: 94-start
 - key: grove_mid_cast
   kind: info
   label: Where do I find the revenant?
   text: West of here is the Veil Hollow, and a revenant walks it. It will come at
     you as soon as you step in. That is the point. With it on you, loose the spike
-    you woke with. A hit can shake the fold. Hold it anyway.
+    you woke with. A hit can shake the fold. Hold it anyway. If the revenant is gone,
+    a drift-wisp in the Thinning Wood north of the Veil Hollow will do.
   hints: If it is dark, type cast glow first. Go west to the Veil Hollow and type
     cast spike revenant.
   questRequired:
-  - 45-start
+  - 45-met
   questExcluded:
   - 45-cast
   - 45-end
@@ -194,17 +270,19 @@ topics:
   questRequired:
   - 46-start
   questExcluded:
+  - 46-kill
   - 46-end
 - key: grove_loop_mid
   kind: info
   label: Where is the wisp?
-  text: The wisp is at the Grove Edge, just south of here. Put it down with a casting.
-    The grove will tell me when it is done, so you need not come back to say so.
+  text: The wisp is at the Grove Edge, just south of here. Put it down with a casting,
+    then come back and tell me.
   hints: If it is dark, type cast glow first. Go south to the Grove Edge and type
     cast spike wisp until it falls.
   questRequired:
   - 57-start
   questExcluded:
+  - 57-kill
   - 57-end
 - key: grove_help
   kind: info
@@ -219,6 +297,22 @@ topics:
   hints: While fighting in the grove, type cast spike. Push the casting
     through the hits you take.
   marked: true
+- key: raise
+  kind: info
+  label: Can the dead be raised to serve me?
+  text: Some casters can. Raising is necromancy, a spell cast at a corpse that stands
+    the remains back up as a servant, from a rattling skeleton to far worse. Better
+    remains make a better servant. There is no raising without the spell, and nobody
+    starts with it. If it comes to you through casting, the grove leaves plenty of
+    remains to practice on.
+  hints: For more, type help raise-skeleton.
+- key: assess
+  kind: info
+  label: How do I judge a corpse before raising it?
+  text: Study it first. Assessing a corpse tells you what forms of undeath it can hold,
+    and how much of your conviction each would keep while it serves. You need not
+    assess before raising, but a caster who looks first wastes less.
+  hints: Next to a corpse, type assess corpse. For more, type help assess.
 - key: outline
   kind: info
   label: Why does your outline lag behind you?

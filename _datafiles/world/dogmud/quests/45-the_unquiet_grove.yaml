@@ -1,61 +1,69 @@
-# Quest 45 — The Unquiet Grove (Pothole Coulee, Spoke E / Folding middle ring)
+# Quest 45, The Unquiet Grove (Pothole Coulee, casting line, quest 2 of 3)
 #
-# Token flow (steps run in order, one command each; owner ruling 2026-10-17):
-#   45-start — granted by Keeper Orrin's grove_offer node (requires 44-end).
-#   45-cast  — command trigger on `cast conviction-spike` in the
-#              unquiet_grove area (areas/unquiet_grove.yaml: the grove combat
-#              rooms 5311/5312/5313), the creatures there being hostile:
-#              casting with a fight on you. Gates on 45-start. One trigger
-#              with `area:` since #375 phase 3b slice 4 (it was three
-#              copies, one per room).
-#   45-kill  — mob_death of a veil-warped grove foe (Drift-Wisp 9147 OR Grove
-#              Revenant 9148); two triggers, either grants it. Gates on 45-cast.
-#   45-end   — granted by Orrin's grove_turnin node (needs 45-kill).
+# Token flow (#375 phase 7, one action per step, giver to giver):
+#   45-start: granted by Adept Grieve's grove_offer (9144), after 44-end.
+#   45-met:   topic_heard on Keeper Orrin's grove_meet topic (9145): the
+#             player walked to the grove and heard the lesson.
+#   45-cast:  command trigger on `cast conviction-spike` aimed at a Drift-Wisp
+#             (9147) or a Grove Revenant (9148) in the unquiet_grove area
+#             (areas/unquiet_grove.yaml: rooms 5311, 5312, 5313), where they
+#             attack on sight: casting with a fight on you. Two triggers,
+#             either grants it. The command event fires when the cast begins,
+#             so the line claims no result.
+#   45-kill:  mob_death of a Drift-Wisp (9147) or a Grove Revenant (9148);
+#             two triggers, either grants it. Gated on 45-cast.
+#   45-end:   granted by Orrin's grove_turnin hand-in (needs 45-kill).
 #
-# Design: teach casting in a live fight + concentration (damage/movement can
-# break a cast; push through it). Cast first, then finish the creature: the
-# quest asks for a spell "in the thick of" the fight, and casting at the
-# creature then bringing it down is one fight. Reward grants the player's
-# first AoE spell, sparks (Conviction Sparks), via the spellid reward field.
+# The reward teaches sparks (Conviction Sparks), the first area spell. The
+# met step keeps the area destination that the live-destination test needs.
 #
-# Saved characters (2026-10-17 reorder; the old list was start, kill, cast
-# and either order was accepted): a player saved on `kill` is now on the last
-# step and can turn in. A player saved on `cast` now needs one kill, which the
-# next trigger accepts.
+# Saved characters: a player saved on start before this pass (the cast still
+# to do) now hears Orrin first; one saved on cast or kill holds no 45-met and
+# goes on as before (Orrin's lesson topic and opener hide behind 45-cast).
 
 questid: 45
 name: The Unquiet Grove
 description: >-
   Keeper Orrin tends the meditation grove, where the veil between the world
   and the Folding has worn thin and the things on the far side bleed through.
-  He will teach you to cast with a fight on you -- to hold a thought steady
-  while the world tries to knock it loose.
+  He teaches casting with a fight on you: holding a thought steady while the
+  world tries to knock it loose.
 secret: false
 
 steps:
   - id: start
     destination:
-      area: unquiet_grove  # the cast counts in any grove room (the cast trigger's area)
+      mob: 9145
+    description: >-
+      Adept Grieve has sent you north to Keeper Orrin, who tends the grove
+      beyond the observatory.
+    hint: >-
+      From the Observatory Hall, go north, west, north, north and north to
+      the Whispering Grove. Type talk orrin.
+  - id: met
+    destination:
+      area: unquiet_grove  # the cast counts in any grove fight room
     description: >-
       Orrin wants you to fight in the grove and cast while you do it. The
       creatures in the Veil Hollow, the Thinning Wood and the Grove Heart
       attack on sight. Loose a spell at one with the fight on you. A hit can
-      break the casting, so push through it.
+      break the casting, so push through it. If the revenant is gone, a
+      drift-wisp in the Thinning Wood will do.
     hint: >-
       If it is dark, type cast glow first. Go west to the Veil Hollow and
       type cast spike revenant.
   - id: cast
     destination:
-      mob: [9147, 9148]  # a drift-wisp or a grove revenant, either kill counts; else every room that spawns one
+      mob: [9147, 9148]  # a drift-wisp or a grove revenant, either kill counts
     description: >-
-      You held a casting together while the grove worked at you. Now bring
-      the creature down. A drift-wisp in the Thinning Wood serves as well as
-      the revenant.
+      You loosed a casting with the grove working at you. Now bring the
+      creature down. A drift-wisp in the Thinning Wood serves as well as the
+      revenant.
     hint: >-
       Keep casting until it falls. Type cast spike again.
   - id: kill
     destination:
-      room: 5309  # Whispering Grove, Orrin
+      mob: 9145
     description: >-
       You cast with a fight on you and put down a veil-warped creature.
       Report to Keeper Orrin in the Whispering Grove.
@@ -63,9 +71,8 @@ steps:
       Go back to Keeper Orrin in the Whispering Grove and type talk orrin.
   - id: end
     description: >-
-      Orrin has named your concentration sound. West of the Grove Heart and up
-      through the Veil Tear, the scabland waits, where the world comes apart
-      and the thing that unmade it still casts in the thinnest place.
+      Orrin has named your concentration sound. He has one more task, and it
+      is the hard one: the thing that still casts in the thinnest place.
 
 rewards:
   skillinfo: "spellcasting:1"
@@ -73,34 +80,59 @@ rewards:
   gold: 25
   actor: >-
     Orrin's late-arriving outline catches up to him as he goes still. "You
-    were hit, and the fold held anyway. That is concentration -- not the
-    absence of disturbance, but the holding-on through it." He turns a palm
-    up, and a scatter of weightless sparks gathers above it and disperses.
-    "Here is a wider working, then -- sparks. It is the weakest of the area
-    spells, which is to say it is the first one you can trust yourself with:
-    it touches everything in front of you at once. You loosed it from the
-    same conviction you woke with. When you are ready, go west from the
-    Grove Heart and climb through the Veil Tear. The scabland is where the
-    grove's trouble comes from, and where it ends."
+    were hit, and the fold held anyway. That is concentration: holding on
+    through the disturbance." He turns a palm up, and a scatter of weightless
+    sparks gathers above it and disperses. "Here is a wider working, then:
+    sparks. It is the weakest of the area spells, which is to say it is the
+    first one you can trust yourself with. It touches everything in front of
+    you at once. You loosed it from the same conviction you woke with. When
+    you are ready, I have one more task for you, and it is the hard one."
   observer: ""
 
 triggers:
-  # ── CAST: conviction-spike mid-fight anywhere in the unquiet_grove area ──
+  # MET: hearing Orrin's lesson.
+  - event: topic_heard
+    mob: 9145
+    topic: grove_meet
+    conditions:
+      has: ["45-start"]
+      missing: ["45-met"]
+    actions:
+      - grant: "45-met"
+
+  # CAST: conviction-spike at a grove creature, anywhere in the unquiet_grove
+  # area. Aimed at a Grove Revenant or a Drift-Wisp, so a cast at nothing
+  # does not count.
   - event: command
     command: cast
     noun: conviction-spike
     area: unquiet_grove
+    mob: 9148
     conditions:
-      has: ["45-start"]
+      has: ["45-met"]
       missing: ["45-cast"]
     actions:
       - grant: "45-cast"
       - actor: >-
-          You shape the fold with the fight pressing on you, and it holds.
-          That is concentration. Now bring the creature down: type cast
-          spike again until it falls.
+          You shape the fold with the grove pressing in on you and loose it
+          at the creature. Now bring it down: type cast spike again until
+          it falls.
+  - event: command
+    command: cast
+    noun: conviction-spike
+    area: unquiet_grove
+    mob: 9147
+    conditions:
+      has: ["45-met"]
+      missing: ["45-cast"]
+    actions:
+      - grant: "45-cast"
+      - actor: >-
+          You shape the fold with the grove pressing in on you and loose it
+          at the creature. Now bring it down: type cast spike again until
+          it falls.
 
-  # ── KILL: defeat a veil-warped grove foe after the cast ─────────────────
+  # KILL: defeat a veil-warped grove foe after the cast.
   - event: mob_death
     mob: 9147
     conditions:
