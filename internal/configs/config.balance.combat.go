@@ -37,11 +37,20 @@ func validateMitigationCurve(knee, ceiling, aim, bend *ConfigFloat) {
 // validateCombat sets defaults for combat rolls, defense, prone/grapple,
 // special moves, skullduggery, darkness, damage channels, mitigation curves,
 // and toxicity fields.
-// validateCombatSteal bounds the pickpocket pause. Zero is an absent key,
-// so it takes the default (a pause of nothing would give the roll away at
-// once). Written `!(x > 0)` so a NaN from YAML `.nan` is caught too (see the
-// warning on ContestGapSaturation below).
+// defaultStealMinRank is the skullduggery rank a theft needs (#375 phase 7,
+// a hardcoded 2 until then). Every character starts at rank 1.
+const defaultStealMinRank = 1
+
+// validateCombatSteal bounds the theft rank gate and the pickpocket pause.
+// StealMinRank below 1 (an absent key reads 0) takes the default: rank 0 is
+// no skill at all. For the pause, zero is an absent key, so it takes the
+// default (a pause of nothing would give the roll away at once). Written
+// `!(x > 0)` so a NaN from YAML `.nan` is caught too (see the warning on
+// ContestGapSaturation below).
 func (b *Balance) validateCombatSteal() {
+	if b.StealMinRank < 1 {
+		b.StealMinRank = defaultStealMinRank
+	}
 	if !(b.StealPocketSeconds > 0) {
 		b.StealPocketSeconds = defaultStealPocketSeconds
 	}
