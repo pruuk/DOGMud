@@ -1,51 +1,14 @@
 package mobcommands
 
 import (
-	"fmt"
-
-	"github.com/GoMudEngine/GoMud/internal/conditions"
-	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// Eat is the mob food command; the rules live in actions.ConsumeFood, the same
+// body a player eats through (#375 phase 7).
 func Eat(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
-
-	// Chunk 4e: can't eat while grappled — both hands committed.
-	if mob.Character.Position != nil && mob.Character.Position.IsGrappling() {
-		return true, nil
-	}
-
-	if matchItem, found := mob.Character.FindInBackpack(rest); found {
-
-		itemSpec := matchItem.GetSpec()
-
-		if itemSpec.Subtype != items.Edible {
-			return true, nil
-		}
-
-		// A mob leaves food that has gone bad, as a player is refused it.
-		// No message: nobody asked it why (#277).
-		if matchItem.IsSpoiledFood(util.GetRoundCount()) {
-			return true, nil
-		}
-
-		mob.Character.CancelConditionsWithFlag(conditions.Hidden)
-
-		mob.Character.UseItem(matchItem)
-
-		verb := `eats`
-		if itemSpec.Type == items.Drink {
-			verb = `drinks`
-		}
-		room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> %s some <ansi fg="itemname">%s</ansi>.`, mob.Character.Name, verb, matchItem.DisplayName()))
-
-		for _, conditionId := range itemSpec.ConditionIds {
-			mob.AddCondition(conditionId, `food`)
-		}
-	}
-
+	actions.ConsumeFood(actions.NewMobActorInRoom(mob, room), `eat`, rest)
 	return true, nil
 }

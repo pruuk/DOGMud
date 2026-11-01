@@ -317,6 +317,14 @@ func (c *Character) UseItem(i items.Item) int {
 
 // FindInPotions searches the bandolier for a matching potion, oldest first.
 func (c *Character) FindInPotions(itemName string) (items.Item, bool) {
+	return c.FindInPotionsWhere(itemName, nil)
+}
+
+// FindInPotionsWhere is FindInPotions over only the bandolier items that
+// keep() accepts (nil keep = no filter), the bandolier twin of
+// FindInBackpackWhere: the food body wants the oldest edible match, not the
+// oldest match.
+func (c *Character) FindInPotionsWhere(itemName string, keep func(items.Item) bool) (items.Item, bool) {
 	if itemName == `` || len(c.PotionItems) == 0 {
 		return items.Item{}, false
 	}
@@ -326,6 +334,9 @@ func (c *Character) FindInPotions(itemName string) (items.Item, bool) {
 	var oldestRound uint64 = ^uint64(0)
 
 	for idx := range c.PotionItems {
+		if keep != nil && !keep(c.PotionItems[idx]) {
+			continue
+		}
 		closeMatch, fullMatch := items.FindMatchIn(itemName, c.PotionItems[idx])
 		matched := fullMatch.ItemId != 0 || closeMatch.ItemId != 0
 		if matched && c.PotionItems[idx].CraftedRound < oldestRound {

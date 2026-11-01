@@ -15,6 +15,13 @@ const (
 	edqBreadId = 39321 // food
 	edqTeaId   = 39322 // a cooked drink
 	edqTonicId = 39323 // a potion
+
+	// The names that collide on "tea": "Steady" contains it too.
+	edqSteadyId  = 39324 // a potion
+	edqHerbalId  = 39325 // a cooked drink
+	edqMintId    = 39326 // a cooked drink
+	edqTeaLeafId = 39327 // not edible
+	edqTeaBombId = 39328 // a throwable, which a bandolier also holds
 )
 
 // edqScene is user 1 in a lit room, with the three test items registered and
@@ -26,6 +33,12 @@ func edqScene(t *testing.T) (*users.UserRecord, *rooms.Room) {
 		edqBreadId: {ItemId: edqBreadId, Name: "test bread", Type: items.Food, Subtype: items.Edible, Uses: 1},
 		edqTeaId:   {ItemId: edqTeaId, Name: "test tea", Type: items.Drink, Subtype: items.Edible, Uses: 1},
 		edqTonicId: {ItemId: edqTonicId, Name: "test tonic", Type: items.Potion, Subtype: items.Drinkable, Uses: 1},
+
+		edqSteadyId:  {ItemId: edqSteadyId, Name: "Lake-tonic of Steady Hand", Type: items.Potion, Subtype: items.Drinkable, Uses: 1},
+		edqHerbalId:  {ItemId: edqHerbalId, Name: "Herbal Tea", Type: items.Drink, Subtype: items.Edible, Uses: 1},
+		edqMintId:    {ItemId: edqMintId, Name: "Mint Tea", Type: items.Drink, Subtype: items.Edible, Uses: 1},
+		edqTeaLeafId: {ItemId: edqTeaLeafId, Name: "Tea Leaf", Type: items.Object, Subtype: items.Mundane},
+		edqTeaBombId: {ItemId: edqTeaBombId, Name: "Tea Bomb", Type: items.Object, Subtype: items.Throwable, Uses: 1},
 	}))
 	user.Character.Items = nil
 	user.Character.PotionItems = nil
@@ -114,4 +127,92 @@ func TestDrinkFindsACookedDrinkInTheBandolier(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, aimTold(1), "You drink some of the")
 	assert.Empty(t, user.Character.PotionItems)
+}
+
+// edqItem is a new item made at craftedRound, so a test can say which of two
+// bandolier items is the older one (FindInPotions takes the oldest match).
+func edqItem(itemId int, craftedRound uint64) items.Item {
+	it := items.New(itemId)
+	it.CraftedRound = craftedRound
+	return it
+}
+
+// edqFoodRun types `verb typed` with the given pack and bandolier, and
+// returns what the player read.
+func edqFoodRun(t *testing.T, user *users.UserRecord, room *rooms.Room, verb, typed string, pack, bandolier []items.Item) string {
+	t.Helper()
+	user.Character.Items = pack
+	user.Character.PotionItems = bandolier
+	events.DrainQueuedMessagesForTest(1)
+	_, err := userCommands[verb].Func(typed, user, room, 0)
+	require.NoError(t, err)
+	return aimTold(1)
+}
+
+// An older potion in the bandolier must not hide the tea beside it: `drink
+// tea` said "That is a potion. Try quaff tea." and following the hint drank
+// the tonic, because "Steady" contains "tea".
+func TestDrinkTakesBandolierTeaOverAnOlderTonic(t *testing.T) {
+	user, room := edqScene(t)
+	told := edqFoodRun(t, user, room, "drink", "tea", nil,
+		[]items.Item{edqItem(edqSteadyId, 1), edqItem(edqHerbalId, 5)})
+	assert.Contains(t, told, "You drink some of the Herbal Tea.")
+	assert.False(t, edqCarries(user, edqHerbalId), "the tea is drunk")
+	assert.True(t, edqCarries(user, edqSteadyId), "the tonic stays")
+}
+
+// A potion in the bandolier beats an inedible match in the pack: the player
+// read "You can't drink Tea Leaf." and never heard of quaff.
+func TestDrinkNamesQuaffOverAnInedibleInThePack(t *testing.T) {
+	user, room := edqScene(t)
+	told := edqFoodRun(t, user, room, "drink", "tea",
+		[]items.Item{items.New(edqTeaLeafId)}, []items.Item{items.New(edqSteadyId)})
+	assert.Contains(t, told, "That is a potion.")
+	assert.Contains(t, told, "quaff tea")
+	assert.NotContains(t, told, "can't drink")
+	assert.True(t, edqCarries(user, edqTeaLeafId))
+	assert.True(t, edqCarries(user, edqSteadyId))
+}
+
+func TestEatAndDrinkLeaveAPotionInTheBandolier(t *testing.T) {
+	user, room := edqScene(t)
+	for _, verb := range []string{"drink", "eat"} {
+		told := edqFoodRun(t, user, room, verb, "test tonic", nil, []items.Item{items.New(edqTonicId)})
+		assert.Contains(t, told, "That is a potion.", verb)
+		assert.Contains(t, told, "quaff test tonic", verb)
+		assert.True(t, edqCarries(user, edqTonicId), "%s must not consume a potion", verb)
+	}
+}
+
+// The lookup order: edible in the pack, then edible in the bandolier, then a
+// potion in either, then anything else carried, then nothing.
+func TestFoodLookupOrder(t *testing.T) {
+	user, room := edqScene(t)
+	leaf, herbal, mint := items.New(edqTeaLeafId), items.New(edqHerbalId), items.New(edqMintId)
+
+	told := edqFoodRun(t, user, room, "drink", "tea", []items.Item{mint}, []items.Item{herbal})
+	assert.Contains(t, told, "You drink some of the Mint Tea.", "edible in the pack comes first")
+	assert.True(t, edqCarries(user, edqHerbalId))
+
+	told = edqFoodRun(t, user, room, "drink", "tea", []items.Item{leaf}, []items.Item{herbal})
+	assert.Contains(t, told, "You drink some of the Herbal Tea.", "edible in the bandolier beats an inedible in the pack")
+	assert.True(t, edqCarries(user, edqTeaLeafId))
+
+	told = edqFoodRun(t, user, room, "drink", "tea", []items.Item{leaf, items.New(edqSteadyId)}, nil)
+	assert.Contains(t, told, "That is a potion.", "a potion in the pack beats an inedible in the pack")
+
+	told = edqFoodRun(t, user, room, "drink", "tea", []items.Item{leaf}, nil)
+	assert.Contains(t, told, "You can't drink Tea Leaf.")
+
+	told = edqFoodRun(t, user, room, "drink", "tea", nil, nil)
+	assert.Contains(t, told, "You aren't carrying")
+}
+
+// A bandolier also holds throwables, and "You aren't carrying" was untrue of
+// one: it is another item, so it gets the "can't" line.
+func TestEatRefusesAThrowableInTheBandolierByName(t *testing.T) {
+	user, room := edqScene(t)
+	told := edqFoodRun(t, user, room, "eat", "tea bomb", nil, []items.Item{items.New(edqTeaBombId)})
+	assert.Contains(t, told, "You can't eat Tea Bomb.")
+	assert.True(t, edqCarries(user, edqTeaBombId))
 }

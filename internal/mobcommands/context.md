@@ -154,12 +154,15 @@ The `internal/mobcommands` package implements the AI command system for non-play
   does the idle floor pickup, `hooks.EquipBestFloorItem`. The `equip`
   refusal line ("turns the ... over, then sets it aside") stays
   `Room.SendTextVisual`: nothing changed, so there is no before-state.
-- **Resource consumption**: `eat`, `drink` - Survival behaviors. `Drink`
-  (`drink.go`) is a wrapper over `actions.Drink`, the same body a player drinks
-  through (drink path unification 2026-09-28), so a mob pays toxicity, reads
-  potion freshness and crafter skill, and gets every special potion's effect.
-  The guard `internal/guards/drink_wrapper_guard_test.go` fails if the wrapper grows drink
-  rules again.
+- **Resource consumption**: `eat`, `drink`, `quaff` - Survival behaviors.
+  `Quaff` (`quaff.go`) is a wrapper over `actions.Quaff`, the same body a player
+  quaffs through (drink path unification 2026-09-28), so a mob pays toxicity,
+  reads potion freshness and crafter skill, and gets every special potion's
+  effect. `Eat` and `Drink` (`eat.go`, `drink.go`) are one food command, both
+  wrappers over `actions.ConsumeFood`, the body a player eats through (#375
+  phase 7): a mob's `drink tea` takes the tea past a same-named potion, and a
+  busy mob waits. The guards in `internal/guards/drink_wrapper_guard_test.go`
+  fail if a wrapper grows potion or food rules again.
 - **Alchemy and crafting**: `alchemy` - Automated production behaviors.
   `craft` (`craft.go`) is a thin wrapper over `actions.InitiateCraft`
   (sight gates parity, slice 5a): the dark refusal (`CraftResult.CannotSee`)

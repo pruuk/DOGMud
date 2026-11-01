@@ -16,7 +16,7 @@ import (
 // bring a dash back. Widen it file by file as the #383 sweep reaches more.
 var noDashCopyFiles = []string{
 	"internal/usercommands/stand.go",
-	"internal/usercommands/eat.go",
+	"internal/actions/food.go",
 	"internal/usercommands/jail.go",
 	"internal/usercommands/say.go",
 	"internal/usercommands/get.go",
