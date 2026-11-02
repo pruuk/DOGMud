@@ -31,6 +31,17 @@ Method: 32,400 pixels sampled per image, grouped in CIELAB, and every current co
 | Highlight | cream `#efd897` |
 | Secondary text (tuned to pass) | gold `#96885f` (4.95 on dark), olive grey `#8b897a` (4.92 on dark) |
 
+### Logo golds (Malia's logo)
+
+Added 2026-11-02 (Malia's decision): the two letter golds of her logo join the palette as their own role, so the logo keeps its artwork colours and the site has names for them. Sampled from `dogmainbrandIti0.png` (full logo) and `abbr.svg` (the D.O.G. mark); both files use the same two.
+
+| Role | Colour | Where in the logo | Dark panel | Page `#110b07` | Teal bar `#085044` | Nearest other step |
+|---|---|---|---|---|---|---|
+| Logo gold | `#d9ac46` | "DELUSIONS", "OF", the rules; "D" and "O" of D.O.G. | 8.22 | 9.25 | 4.43 | golden yellow `#e6b058`, ΔE 4.2 |
+| Logo deep gold | `#c3932d` | "GRANDEUR"; "G" of D.O.G. | 6.23 | 7.01 | 3.36 | gold and ochre `#aa8636`, ΔE 6.3 |
+
+The two are ΔE 7.2 apart, so the bottom word stays a step deeper than the top. Both fail on the vellum cards (1.23 and 1.63): the logo belongs on dark surfaces and the teal bar. The crown and moons keep their own illustrated golds and browns (`#ae7919`, `#b98722`, `#925d0b` and others); they are artwork detail, not palette roles.
+
 ### Warm meaning colours (Dalí)
 
 | Role | Ramp, dark to light | Use |
