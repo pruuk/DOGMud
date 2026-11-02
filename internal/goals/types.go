@@ -25,9 +25,6 @@ type Goal struct {
 	CreatedAt         time.Time      `yaml:"created_at"`
 	ExpiresAt         time.Time      `yaml:"expires_at,omitempty"`
 	DormantSinceRound uint64         `yaml:"dormant_since_round,omitempty"` // chunk 4.6 — round dormancy began; 0 = live
-	// Individual marks a goal one live mob holds for itself (individual.go),
-	// never written to a goal file.
-	Individual bool `yaml:"-"`
 }
 
 // MobGoals is the on-disk shape — one file per mob template.

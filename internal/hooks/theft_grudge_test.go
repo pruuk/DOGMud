@@ -123,10 +123,39 @@ func tickAndPlan(round uint64, m *mobs.Mob, everyone ...*mobs.Mob) bool {
 	return acted == round
 }
 
+// remembersFighting gives a mob the combat memory the revenge goal is gated on,
+// so a "does not hunt" below is about the grudge and not about that gate.
+func remembersFighting(everyone ...*mobs.Mob) {
+	for _, m := range everyone {
+		m.CombatMemory = mobs.SetCombatMemory(theftThief, 0, theftRoom, util.GetRoundCount())
+	}
+}
+
+// A clean theft stays clean: the robbed mob holds the grudge and nothing comes
+// after the thief until that mob has been fighting them (owner ruling 2026-11-01).
+func TestTheft_ACleanTheftStartsNoHuntUntilTheyFight(t *testing.T) {
+	w := setupTheftWorld(t)
+	robbed := spawnCopy(t, scavengerTemplate, w.here)
+
+	seeders.OnTheft(theftThief, robbed, items.Item{})
+
+	if got := goals.IndividualGoalsOf(robbed); len(got) != 1 {
+		t.Fatalf("own goals = %d, want the grudge held", len(got))
+	}
+	if tickAndPlan(1000, robbed, robbed) {
+		t.Fatalf("a clean theft from a mob it never fought started a hunt")
+	}
+	remembersFighting(robbed)
+	if !tickAndPlan(1001, robbed, robbed) {
+		t.Fatalf("the robbed mob has fought the thief and did not hunt")
+	}
+}
+
 func TestTheft_TheRobbedCopyHuntsAndAnotherCopyDoesNot(t *testing.T) {
 	w := setupTheftWorld(t)
 	robbed := spawnCopy(t, scavengerTemplate, w.here)
 	other := spawnCopy(t, scavengerTemplate, w.here)
+	remembersFighting(robbed, other)
 
 	seeders.OnTheft(theftThief, robbed, items.Item{})
 
@@ -165,6 +194,7 @@ func TestTheft_AWitnessOfAnotherTypeHuntsAloneAndGuardsAndCiviliansDoNot(t *test
 	civilian := spawnCopy(t, civilianTemplate, w.here)
 	elsewhere := &rooms.Room{RoomId: theftOtherRoom, Zone: theftZone}
 	sameTypeAway := spawnCopy(t, wolfTemplate, elsewhere)
+	remembersFighting(witness, guard, civilian, sameTypeAway)
 
 	seeders.OnTheft(theftThief, robbed, items.Item{})
 
@@ -202,6 +232,7 @@ func TestTheft_TheGrudgeDiesWithTheMobAndItsRespawnDoesNotCarryIt(t *testing.T) 
 	}
 
 	respawn := spawnCopy(t, scavengerTemplate, w.here)
+	remembersFighting(respawn)
 	if tickAndPlan(1001, respawn, respawn) {
 		t.Fatalf("the respawn hunted the thief")
 	}
@@ -221,6 +252,7 @@ func TestTheft_TheGrudgeDiesWithTheMobAndItsRespawnDoesNotCarryIt(t *testing.T) 
 func TestTheft_TheHuntIsTheRevengePlanner(t *testing.T) {
 	w := setupTheftWorld(t)
 	robbed := spawnCopy(t, scavengerTemplate, w.here)
+	remembersFighting(robbed)
 	seeders.OnTheft(theftThief, robbed, items.Item{})
 
 	goal := goals.CurrentGoalFor(robbed)
@@ -242,6 +274,7 @@ func TestTheft_TheHuntIsTheRevengePlanner(t *testing.T) {
 func TestTheft_TheGrudgeEndsWithTheThiefDeadOrOffline(t *testing.T) {
 	w := setupTheftWorld(t)
 	robbed := spawnCopy(t, scavengerTemplate, w.here)
+	remembersFighting(robbed)
 	seeders.OnTheft(theftThief, robbed, items.Item{})
 	if goals.CurrentGoalFor(robbed) == nil {
 		t.Fatalf("no grudge to end")
@@ -280,6 +313,7 @@ func TestTheft_ARepeatTheftIsTheSameGrudge(t *testing.T) {
 func TestTheft_ATypesStrongerGoalOutranksTheGrudge(t *testing.T) {
 	w := setupTheftWorld(t)
 	robbed := spawnCopy(t, scavengerTemplate, w.here)
+	remembersFighting(robbed)
 	if _, err := goals.Add(scavengerTemplate, "scree_scavenger",
 		&goals.Goal{Type: "theft-test-strong-goal", Priority: 500}); err != nil {
 		t.Fatalf("Add: %v", err)

@@ -69,10 +69,9 @@ func revengeMobPredicate(g *goals.Goal, mob *mobs.Mob) bool {
 //	0.5 — target elsewhere in the same zone
 //	0.1 — target out of zone (still nonzero to allow long-range revenge)
 //
-// The sighting gate is for a goal its whole type shares, where it asks whether
-// this copy has met the target at all. A goal a mob holds for itself
-// (goals.AddIndividual) needs no such check: it holds the goal because it met
-// the target.
+// The sighting gate holds for every revenge goal, a type's or one a mob holds
+// for itself (goals.AddIndividual): a clean theft from a mob that has not been
+// fighting the thief starts no hunt (owner ruling 2026-11-01).
 func revengeMobContextScore(g *goals.Goal, mob *mobs.Mob) float64 {
 	if mob == nil {
 		return 0
@@ -82,7 +81,7 @@ func revengeMobContextScore(g *goals.Goal, mob *mobs.Mob) float64 {
 	if kind == "" || id == 0 {
 		return 0
 	}
-	if !g.Individual && !targetRecentlySeen(mob, kind, id) {
+	if !targetRecentlySeen(mob, kind, id) {
 		return 0
 	}
 	return targetProximityScore(mob, kind, id)

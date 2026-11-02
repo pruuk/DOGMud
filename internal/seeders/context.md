@@ -100,7 +100,9 @@ assault via `respondToCrime` and differs only in the revenge branch:
 - A **generic mob** takes the grudge itself: `goals.AddIndividual` on that one
   instance. Its death ends it and its respawn does not carry it. Another copy of
   the victim's type in the room is not a witness. A witness of another type gets
-  the same treatment, alone.
+  the same treatment, alone. Holding the grudge does not start a hunt: the
+  `revenge-mob` sighting gate still needs that mob's combat memory of the thief,
+  so a clean theft stays clean (owner ruling 2026-11-01).
 - A **one-of-a-kind NPC** (`isOneOfAKind`: exactly one room in
   `rooms.SpawnRooms` and a dialogue file of its own) keeps `seedRevengeGoalIfAbsent`
   on the type, where type and individual are the same. A silent boss reads as

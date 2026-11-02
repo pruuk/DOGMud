@@ -46,7 +46,6 @@ func AddIndividual(mob *mobs.Mob, g *Goal) (*Goal, error) {
 
 	g.Id = "individual:" + g.Type + ":" + key
 	g.OwnerMobId = int(mob.MobId)
-	g.Individual = true
 	if g.CreatedAt.IsZero() {
 		g.CreatedAt = time.Now().UTC()
 	}

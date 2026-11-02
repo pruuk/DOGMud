@@ -190,10 +190,10 @@ goal in one instance's temp data:
 It ends with the instance: death, despawn, or a restart. Never saved, so it does
 not survive a restart, and needs not: a restart takes every player offline, and
 offline satisfies `revenge-mob`. The sole user is a generic mob's theft grudge
-(`seeders.OnTheft`). `revenge-mob`'s `ContextScore` skips its sighting gate for
-an `Individual` goal, which is why a robbed mob hunts where a type's goal would
-wait for that copy to have met the target. `goal list` and the other admin
-commands show the type's goals only.
+(`seeders.OnTheft`). `revenge-mob`'s `ContextScore` applies its sighting gate to
+these as to a type's goals, so the mob hunts only once it has combat memory of
+the target: a clean theft starts no hunt (owner ruling 2026-11-01). `goal list`
+and the other admin commands show the type's goals only.
 
 ### Stale goals on load (store.go, lookup.go)
 **`SetStaleGoalCheck(fn)`** registers a check run on each goal of a goal file as
