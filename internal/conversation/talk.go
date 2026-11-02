@@ -254,6 +254,19 @@ func choose(user *users.UserRecord, mobInstanceId int, key string) {
 // takes nothing until Accept; any other topic plays and the menu is
 // re-shown, except a behavior topic whose effects landed, which closes it.
 func resolve(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, df *dialogue.DialogueFile, t *dialogue.Topic, ps *dialogue.PlayerState, buf *lineBuffer) {
+	if t.Kind == dialogue.KindSale {
+		playerSay(user, room, t.PlayerLine)
+		if !dialogue.SaleReady(t, ps) {
+			// No card and no price: the NPC names the trades to practice.
+			npcSay(mob, room, t.NotReadyText)
+			openMenu(user, mob.InstanceId, "")
+			return
+		}
+		npcSay(mob, room, t.Text)
+		sendHints(user, t.Hints)
+		saleCard(user, mob, t)
+		return
+	}
 	if t.Kind == dialogue.KindOffer {
 		playerSay(user, room, t.PlayerLine)
 		npcSay(mob, room, t.Text)
@@ -351,6 +364,43 @@ func offerCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic, prefer 
 		}
 		openMenu(user, inst, granted)
 	}))
+}
+
+// saleCard is the private Accept / Leave after a sale's pitch, with its price.
+// Either way the talk menu comes back.
+func saleCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic) {
+	inst, key := mob.InstanceId, t.Key
+	card := menu.Confirm(t.Label, "Accept", "Leave")
+	card.Body = []string{fmt.Sprintf("Price: %s gold.", util.FormatNumber(t.ChargesGold))}
+	user.OpenMenu(card, session(user, mob, func(e menu.Entry) {
+		if e.Id == "yes" {
+			acceptSale(user, inst, key)
+		}
+		openMenu(user, inst, "")
+	}))
+}
+
+// acceptSale takes the price and teaches, after re-checking the sale: the
+// player may have dropped gold or lost skill since the pitch. A price the
+// player cannot pay prints its refusal and teaches nothing.
+func acceptSale(user *users.UserRecord, mobInstanceId int, key string) {
+	mob, room, ok := present(user, mobInstanceId)
+	if !ok {
+		return
+	}
+	df := dialogue.Load(int(mob.MobId), mob.Zone)
+	buf := &lineBuffer{user: user}
+	ps := talkState(user, buf)
+	t := df.FindTopic(key)
+	if t == nil || t.Kind != dialogue.KindSale || !df.Eligible(t, ps) || !dialogue.SaleReady(t, ps) {
+		user.SendText(messaging.CategoryRefusal, `That offer is no longer open.`)
+		return
+	}
+	if !applyWithHandover(user, room, mob, df, t, ps, buf) {
+		return
+	}
+	npcSay(mob, room, t.PaidText)
+	after(user, room, mob, df, t)
 }
 
 // accept grants an offer after re-checking it, and returns the token it
