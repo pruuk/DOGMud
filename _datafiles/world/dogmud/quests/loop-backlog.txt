@@ -6,15 +6,6 @@
 # is fixed. Never add a line by hand to make new content pass.
 chain 75 mob 9516 topic disc_quest
 chain 75 mob 9516 topic disc_tale
-chain 78 mob 9584 topic teach_aegis
-chain 78 mob 9584 topic teach_bandolier
-chain 78 mob 9584 topic teach_blackrazor
-chain 78 mob 9584 topic teach_choir
-chain 78 mob 9584 topic teach_phial
-chain 78 mob 9584 topic teach_prism
-chain 78 mob 9584 topic teach_thornwall
-chain 78 mob 9584 topic teach_wayfarer
-chain 78 mob 9584 topic teach_zephyr
 end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
@@ -22,37 +13,7 @@ end 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,7
 end 75 step end
 end 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
 end 77 step end
-end 78 quest 78 trigger quest_granted quest_token=78-start grants=78-end
-end 78 step end
-end 79 quest 79 trigger item_gain item=40182 grants=79-end
-end 79 step end
-end 80 quest 80 trigger item_gain item=40183 grants=80-end
-end 80 step end
-end 81 quest 81 trigger item_gain item=40184 grants=81-end
-end 81 step end
-end 82 quest 82 trigger item_gain item=40185 grants=82-end
-end 82 step end
-end 83 quest 83 trigger item_gain item=40186 grants=83-end
-end 83 step end
-end 84 quest 84 trigger item_gain item=40187 grants=84-end
-end 84 step end
-end 85 quest 85 trigger item_gain item=40188 grants=85-end
-end 85 step end
-end 86 quest 86 trigger item_gain item=40189 grants=86-end
-end 86 step end
-end 87 quest 87 trigger item_gain item=40181 grants=87-end
-end 87 step end
 hint 21 step start
-hint 78 step start
-hint 79 step start
-hint 80 step start
-hint 81 step start
-hint 82 step start
-hint 83 step start
-hint 84 step start
-hint 85 step start
-hint 86 step start
-hint 87 step start
 hint-length 65 step discover
 hint-length 65 step start
 hint-length 66 step start
@@ -97,7 +58,6 @@ one-action 70 quest 70 trigger room_interact room=6037 noun=symbol grants=70-wit
 one-action 71 mob 9347 topic ledgerhandoff:prev
 one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:double
 one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:prev
-one-action 78 quest 78 trigger quest_granted quest_token=78-start grants=78-end:prev
 refs 1000000 quest 1000000 refs: rewards conditionid: condition 4 does not exist
 refs 1000000 quest 1000000 refs: rewards skillinfo: skill "map" does not exist
 start 1000000 step start
@@ -121,4 +81,3 @@ walk-destination 66 step detox
 walk-destination 66 step escort
 walk-destination 67 step report
 walk-destination 75 step testimony
-walk-destination 78 step start

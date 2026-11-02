@@ -62,13 +62,20 @@ func TestDialogueGoldPurchasesAreAtomic(t *testing.T) {
 		t.Fatalf("found no dialogue files (err %v)", err)
 	}
 	paidGrants := 0
-	check := func(file, where, grants string, goldRequired, chargesGold int) {
+	// A sale (kind: sale) charges with no goldRequired by design: it stays on
+	// the menu so the player can read the price on its Accept card, and the
+	// charge is all-or-nothing in dialogue.Apply. It grants no quest, so it
+	// counts as a paid sale where an offer counts as a paid grant.
+	check := func(file, where, kind, grants string, goldRequired, chargesGold int) {
 		if chargesGold > 0 || goldRequired > 0 {
-			if chargesGold > 0 && goldRequired != chargesGold {
+			if kind != dialogue.KindSale && chargesGold > 0 && goldRequired != chargesGold {
 				t.Errorf("%s %s: chargesGold %d but goldRequired %d; they must match",
 					file, where, chargesGold, goldRequired)
 			}
-			if chargesGold > 0 && grants != "" {
+			if kind == dialogue.KindSale && goldRequired != 0 {
+				t.Errorf("%s %s: a sale takes no goldRequired, Accept is its gate", file, where)
+			}
+			if chargesGold > 0 && (grants != "" || kind == dialogue.KindSale) {
 				paidGrants++
 			}
 		}
@@ -89,15 +96,15 @@ func TestDialogueGoldPurchasesAreAtomic(t *testing.T) {
 		// #375: every entry is a topic; opener variants carry gates only,
 		// so they can neither charge nor grant.
 		for _, tp := range df.Topics {
-			check(f, "topic "+tp.Key, tp.GrantsQuest, tp.GoldRequired, tp.ChargesGold)
+			check(f, "topic "+tp.Key, tp.Kind, tp.GrantsQuest, tp.GoldRequired, tp.ChargesGold)
 		}
 		if df.Opener != nil {
 			for i, v := range df.Opener.Variants {
-				check(f, fmt.Sprintf("opener variant %d", i), "", v.GoldRequired, 0)
+				check(f, fmt.Sprintf("opener variant %d", i), "", "", v.GoldRequired, 0)
 			}
 		}
 	}
 	if paidGrants < 9 {
-		t.Fatalf("found %d paid quest grants; expected at least Veyra's nine teach_ topics", paidGrants)
+		t.Fatalf("found %d paid quest grants and sales; expected at least Veyra's nine teach_ sales", paidGrants)
 	}
 }

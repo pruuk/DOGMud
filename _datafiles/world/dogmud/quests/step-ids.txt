@@ -322,29 +322,9 @@
 76-journal
 76-start
 77-end
-78-end
-78-start
-79-end
-79-start
 8-end
 8-found
 8-start
-80-end
-80-start
-81-end
-81-start
-82-end
-82-start
-83-end
-83-start
-84-end
-84-start
-85-end
-85-start
-86-end
-86-start
-87-end
-87-start
 88-end
 88-start
 89-end
@@ -386,6 +366,27 @@
 # it from saves (quests.RetiredQuests).
 29-end
 29-start
+# Quests 78 to 87 (#375 phase 7 tier 3): Veyra sells recipes through talk, no quest.
+78-end
+78-start
+79-end
+79-start
+80-end
+80-start
+81-end
+81-start
+82-end
+82-start
+83-end
+83-start
+84-end
+84-start
+85-end
+85-start
+86-end
+86-start
+87-end
+87-start
 
 # renamed
 14-report -> 14-evidence

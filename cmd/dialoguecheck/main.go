@@ -48,6 +48,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -98,6 +99,7 @@ func loadRegistries() (err error) {
 		}
 	}()
 	items.LoadDataFiles()
+	crafting.LoadRecipeFiles() // a sale's teachesRecipes must name a shipped recipe
 	quests.LoadDataFiles()
 	if len(quests.GetAllQuests()) == 0 {
 		return errors.New("no quests loaded; check -data")
