@@ -2,7 +2,8 @@
 
 > Spec: [`../specs/2026-11-01-webclient-rework-design.md`](../specs/2026-11-01-webclient-rework-design.md)
 > ("Map strip"). Status: BAR done (findings below, fixed in the tasks);
-> waiting for Malia's review. Part 1 (the
+> Malia chose the simpler version; built 2026-11-02, waiting for her check
+> on localhost before commit. Part 1 (the
 > legend) was built on 2026-11-02 before this plan existed and is
 > uncommitted in the working tree; this plan covers both parts and replaces
 > part 1's `<details>` toggle.
@@ -18,10 +19,16 @@ reading size, in every place the Map panel appears (wide column, rail tab,
 phone drawer, pop-out window).
 
 ```
-[ Fit ] [ Center ] [ − ] [ + ]              Legend ▾
+[ Fit ] [ Center ] [ − ] [ + ]
+▾ Map legend
 Party member · Bank / Shop / Store · Stairs ▲▼ · Road / trail / water ·
-Quest destination · Next step                   (while Legend is open)
+Quest destination · Next step                   (while the legend is open)
 ```
+
+**Malia's choice (2026-11-02, after the BAR):** the simpler version. The
+buttons get their own row; the legend keeps the native `<details>` from
+part 1, which gives the fold, keyboard and state handling for free. Tasks 3,
+4 and 6 below are written for this version.
 
 ## What the code shows
 - `RoomGridSVG` (`gmcp.js`) draws into `#map-render`. The legend card was
@@ -72,33 +79,22 @@ Quest destination · Next step                   (while Legend is open)
    `controlsModeForSize` comment (~1465), and part 1's comments naming
    `.map-legend` / `<details>` (gmcp.js ~971, webclient-pure.html ~283,
    dashboard.css ~213).
-3. **Markup** (`webclient-pure.html`, Map panel body): replace
-   `details.map-legend` with
-   `div.map-strip` → `div#map-controls` (left) + `button.map-legend-toggle`
-   (`type="button"`, `aria-expanded="true"`, `aria-controls="map-legend-list"`,
-   text "Legend" plus a ▾/▸ marker in a `span aria-hidden="true"`), then,
-   **outside** `.map-strip`, `ul#map-legend-list.map-legend-list` (the six
-   items, unchanged), so the list never sits beside the buttons.
-4. **Toggle script** (inline, next to where the map is created): click flips
-   `aria-expanded` and the list's `hidden`; nothing saved.
+3. **Markup** (`webclient-pure.html`, Map panel body): add
+   `div#map-controls.map-controls` between `#map-render` and the existing
+   `details.map-legend` (kept as built in part 1).
+4. **No toggle script:** `<details>` handles fold, keyboard and state.
 5. **Pass the host:** `mapOptions.controlsHost = '#map-controls'`. The host
    exists before `new RoomGridSVG` runs (it is in the static markup).
-6. **CSS** (`dashboard.css`, replacing the `.map-legend` block): `.map-strip`
-   flex row, `justify-content: space-between`, wraps; top border
-   `var(--panel-border)`; toggle styled as plain gold text (`#dfcc94`,
-   11.51) with a focus ring; list as today (labels `#cec6aa`, 10.71) plus
-   `.map-legend-list[hidden] { display: none; }` (its `display:flex` would
-   otherwise beat the browser's `[hidden]` rule and the fold would not
-   work). Touch sizes use `#map-controls .rgsvg-brass` inside
-   `@media (pointer: coarse)` (the ID out-ranks the injected stylesheet,
-   which loads later): buttons and toggle at least 44px tall. Measure the
-   button label `#3b2a10` on the brass middle stop `#cb9f42` and write it in
-   the comment.
+6. **CSS** (`dashboard.css`, beside the `.map-legend` block):
+   `.map-controls` flex row, gap 5px, top border `var(--panel-border)`,
+   padding 6px 10px; the legend below keeps its own border. Touch sizes use
+   `#map-controls .rgsvg-brass` inside `@media (pointer: coarse)` (the ID
+   out-ranks the injected stylesheet, which loads later): at least 44px.
+   Measure the button label `#3b2a10` on the brass middle stop `#cb9f42`
+   and write it in the comment.
 7. **Keep the map usable when small:** `#panel-map` min-height 150px → 230px,
    and `#map-render` min-height 120px, so header + strip + an open legend
-   still leave a map. In the 360 x 300 pop-out the legend starts folded
-   (the toggle script folds it when the panel is under 260px tall at
-   start-up).
+   still leave a map, including in the 360 x 300 pop-out.
 8. **Pop-out and drawer:** no markup change; the strip moves with the one
    `#panel-map` node (WinBox `mount: panel`, rail and drawer `appendChild`).
    Check both, including sizes.
@@ -106,8 +102,8 @@ Quest destination · Next step                   (while Legend is open)
 ## Definition of done
 - No HTML control or legend over the rooms at any size.
 - Fit, Center, −, + work from the strip (the map visibly fits, centres,
-  zooms); keyboard reaches them in order, then the Legend toggle.
-- Legend toggles by click, Enter and Space; `aria-expanded` matches.
+  zooms); keyboard reaches them in order, then the legend summary.
+- The legend folds and unfolds by click, Enter and Space.
 - Text 4.5 or more, including the button labels, numbers in the CSS
   comment; 44px targets on touch.
 - The map keeps at least 120px of height at the panel's minimum and in the
@@ -130,8 +126,9 @@ layout was ambiguous and the ▾ glyph would be read aloud; stale comments;
 button label contrast unmeasured. All are fixed in the tasks above. It also
 confirmed the host exists before the map is built, nothing else depends on
 the controls being inside the map, and the panel node is moved, never
-cloned. Its simpler alternative (keep `<details>`, buttons on a row above)
-was not taken: Malia chose one row with the buttons and the toggle.
+cloned. Its simpler alternative (keep `<details>`, buttons on a row above) was
+taken (Malia, 2026-11-02), which also removes the `hidden` and toggle
+findings.
 
 ## Verification
 Fresh headless Chrome profile (the frame caches CSS); rooms fed with

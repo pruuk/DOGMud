@@ -91,6 +91,51 @@ screens.
   (US spelling), −, + on the left, "Legend ▾" on the right; 32px, 44px on
   touch.
 
+### Phone reading (2026-11-02, spec for Malia's review)
+Malia's phone screenshot (`~/Downloads/ssphone.jpg`, Android Chrome): the
+game text is cut off on both sides and the keyboard covers half the screen
+after a command.
+
+**Why it happens.** The server hard-wraps text at 80 characters (room text is
+authored that way, and `Display.ScreenWidth`, parsed from the client's
+screen-size report in `internal/inputhandlers/term_ansi.go` and
+`term_iac.go`, is read by only three admin and map commands). The web client
+keeps all 80 columns on a phone by shrinking the font, then scaling the
+terminal down (`resizeTerminal` in `webclient-pure.html`): about 7px text on a
+390px screen. Players pinch-zoom to read it, and the text runs off both
+edges.
+
+**Slice A, client only (Malia, 2026-11-02: "readable now, server later").**
+- **Readable text on phones** (phone mode, under 700px wide): the game text
+  window uses a readable font size (about 13 to 14px, the exact size chosen
+  in the plan by measuring) and as many columns as fit; the 80-column
+  shrink-and-scale applies only on wider screens. Lines longer than the
+  screen wrap onto the next row (xterm's own wrapping), so nothing runs off
+  the edge and no zooming is needed.
+- **Known cost, accepted:** an 80-character line becomes two rows, so some
+  lines end early, and wide layouts (tables, the DOGMud logo art in the
+  welcome screen) can break. Slice B fixes ordinary text properly.
+- **Keyboard hides after each send** on touch screens (Malia, 2026-11-02):
+  after Enter in the command box, the box loses focus so the phone keyboard
+  closes and the whole screen shows the result to read; tapping the box
+  opens it again. Desktop and physical keyboards keep focus as today. The
+  plan checks whether the Chat box should do the same, and how this meets
+  `static/js/hotinput.js`, which may move focus back on key presses.
+- **Done when:** on a 360 to 412px phone, game text needs no zooming, nothing
+  is cut off, and after sending a command the keyboard is down and the
+  latest output is in view; tablets and desktops unchanged.
+
+**Slice B, server wraps to the screen (later; Calabe's work).**
+- The web client reports its column count (the server already parses
+  screen-size reports into `Display.ScreenWidth`), and the server wraps
+  outgoing text to that width instead of a fixed 80, so phone lines end at
+  word boundaries.
+- Needs Calabe to scope it: where text is wrapped today, authored hard wraps
+  in room text, and the `term_ansi.go` branch that saves the width inside an
+  `if err != nil` (so ANSI screen-size reports are never stored; the telnet
+  NAWS path in `term_iac.go` is separate).
+- Its own spec and plan when Calabe takes it up.
+
 ## Rules that hold everywhere
 Text 4.5:1 or more, icons and focus 3:1, numbers written beside the colour in
 the CSS; light mode text darker than its surface, dark mode lighter; red only
@@ -111,3 +156,5 @@ for warnings; phone, tablet and desktop checked in both modes before review.
 | Round 2: Light mode game panels | `plans/2026-11-02-webclient-round-2-light-panels.md` |
 | Asset version tags | `plans/2026-11-02-web-asset-version-tags.md` |
 | Map strip | `plans/2026-11-02-webclient-map-strip.md` |
+| Phone reading, slice A (client) | plan to follow once this spec section is approved |
+| Phone reading, slice B (server wrap) | Calabe to scope; own spec and plan |
