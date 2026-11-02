@@ -31,6 +31,12 @@
     document.addEventListener("DOMContentLoaded", resizeClientIFrame);
     window.addEventListener("load", resizeClientIFrame);
     window.addEventListener('resize', resizeClientIFrame);
+    // Phones: the visible area changes when the address bar hides or the
+    // on-screen keyboard opens; refit so the command box and tab bar stay on
+    // screen (the page height follows 100dvh in gomud.css).
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', resizeClientIFrame);
+    }
     window.addEventListener('beforeunload', function(event) {
         event.preventDefault();
         event.returnValue = 'Leave/Disconnect from the MUD?';

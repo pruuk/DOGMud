@@ -1477,16 +1477,16 @@ RoomGridSVG.prototype.tintFor = function (biome) {
 
 // ── Leather style palette & render parameters ─────────────────────────────────
 RoomGridSVG.LEATHER = {
-  ink: "#c9a86a", ink2: "#9c8048", title: "#e8d2a0", roomFill: "#2a1d12",
-  label: "#e8d8b8", locked: "#d0633f", water: "#6f99c0", trail: "#a98a55",
-  road: "#c9a86a", ridge: "#a98a55", plain: "#9c8048",
-  legendBg: "#241810", party: "#6bb0a0", partyDk: "#243f3a",
-  questGold: "#e8b84a",
+  ink: "#b5a26c", ink2: "#9c8048", title: "#e8d2a0", roomFill: "#2a1d12",
+  label: "#cec6aa", locked: "#dc6b34", water: "#68a8cf", trail: "#a98a55",
+  road: "#b5a26c", ridge: "#a98a55", plain: "#9c8048",
+  legendBg: "#241810", party: "#6dac9d", partyDk: "#243f3a",
+  questGold: "#e6b058",
   // Hide, texture and marker colours (every map colour lives in this palette)
-  hide: ["#43301d", "#2c1d11", "#170e07"], rim: "#0e0703", crack: "#120a04", crackLip: "#caa86a",
-  sheen: "#fff4d8", vignette: "#000", glow: "#e8c98a", roomEdge: "#3a2a18", partyFill: "#1c2e2a",
-  pin: "#cb9f42", faint: "#8a7a55",
-  brass: ["#f4dd92", "#cb9f42", "#8a6620"], brassText: "#3b2a10", brassBorder: "#5e431a",
+  hide: ["#43301d", "#2c1d11", "#170e07"], rim: "#0e0703", crack: "#120a04", crackLip: "#b5a26c",
+  sheen: "#cec6aa", vignette: "#19140c", glow: "#e8c98a", roomEdge: "#3a2a18", partyFill: "#1c2e2a",
+  pin: "#aa8636", faint: "#8a7a55",
+  brass: ["#f4dd92", "#cb9f42", "#8a6620"], brassText: "#3b2a10", brassBorder: "#50371d",
   font: "'Source Sans 3', system-ui, sans-serif",   // the map's lettering; system-ui where gomud.css is not loaded
   emboss: 0.6, fray: 3.4, nickP: 0.08, crackStep: 24, crackJit: 9, vig: 0.5
 };

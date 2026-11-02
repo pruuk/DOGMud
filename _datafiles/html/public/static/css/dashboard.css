@@ -58,8 +58,25 @@
 #dash-session .sess-conn { color: var(--online-green); }
 #dash-session .sess-mid { margin: 0 auto; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 /* Enter Game at the login prompt points the player at the command box. */
-#command-input.cmd-nudge { outline: 3px solid var(--brass-mid); outline-offset: 2px; }
+#command-input.cmd-nudge { border-color: var(--cmd-border-focus); box-shadow: 0 0 0 2px var(--cmd-ring-focus); }
 #dash-session button { font-size: 0.75rem; }
+/* Everything in the session bar stays on one line; when space runs out the
+   character name shortens first. Phones get a 48px tap height on the Enter /
+   Leave Game and Yes / Stay buttons, an icon for Reset layout, and "Leave?" for
+   the confirmation question. */
+#dash-session { min-width: 0; }
+#dash-session > * { flex: 0 0 auto; white-space: nowrap; }
+#dash-session .sess-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#btn-reset-layout .btn-icon,
+#sess-confirm .q-short { display: none; }
+#dashboard[data-mode="phone"] #dash-session { gap: 8px; padding: 4px 8px; }
+#dashboard[data-mode="phone"] #btn-reset-layout .btn-label,
+#dashboard[data-mode="phone"] #sess-confirm .q-long { display: none; }
+#dashboard[data-mode="phone"] #btn-reset-layout .btn-icon,
+#dashboard[data-mode="phone"] #sess-confirm .q-short { display: inline; }
+#dashboard[data-mode="phone"] #btn-reset-layout { font-size: 1.1rem; min-width: 40px; min-height: 40px; }
+#dashboard[data-mode="phone"] #btn-session,
+#dashboard[data-mode="phone"] #sess-confirm button { min-height: 48px; padding: 0 14px; font-size: 0.95rem; }
 
 /* Panel shell */
 .dash-panel {
