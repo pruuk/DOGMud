@@ -61,7 +61,7 @@ steps:
     destination:
       room: 5270
     description: >-
-      The firebomb burst where you wanted it. Now forage the marsh herbs
+      You have thrown a firebomb and seen it burst. Now forage the marsh herbs
       Falv asked for. The Sunken Path and the Black Pool south of it grow
       the best of them. Some days your hands come up empty, and the search
       still counts.
@@ -93,8 +93,8 @@ rewards:
     shed-proof skin of his hands pales over the knuckles as he grips.
     "Wear it. Any potion or firebomb you get from then on drops into it on
     its own, and when you quaff, the oldest potion goes first, so your
-    brews never sit long enough to turn. You threw clean. You did not blow
-    your own hand off. That is more than most." He nods south, where the
+    brews never sit long enough to turn. You threw it, and you still have
+    your hand. That is more than most." He nods south, where the
     reeds go grey. "Past the miasma the water is poison and something
     rules it. The firebomb formula is yours now, and a tougher brew
     besides. Make your own pots. You will need them down there."
@@ -137,8 +137,9 @@ triggers:
     actions:
       - grant: "39-throw"
       - actor: >-
-          The firebomb bursts in a gout of flame right where you aimed it.
-          Now you feel the cost: no second trick for a few breaths. That
+          The firebomb bursts in a gout of flame. A good throw burns your foe
+          and a bad one burns you, and either one teaches you the weapon. Now
+          you feel the cost: no second trick for a few breaths. That
           cooldown is shared by spells and special moves too. Next, on the
           Sunken Path or at the Black Pool, type forage.
 

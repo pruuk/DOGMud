@@ -51,7 +51,7 @@ opener:
     questExcluded:
     - 39-forage
     - 39-end
-    text: You threw clean. Now the herbs. The Sunken Path and the Black Pool south
+    text: You threw it, and you still have your hand. Now the herbs. The Sunken Path and the Black Pool south
       of it grow the best of them. Some days your hands come up empty. That still
       counts.
     hints: On the Sunken Path or at the Black Pool, type forage.

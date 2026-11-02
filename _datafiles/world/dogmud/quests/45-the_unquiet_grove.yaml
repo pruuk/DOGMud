@@ -60,7 +60,8 @@ steps:
       creature down. A drift-wisp in the Thinning Wood serves as well as the
       revenant.
     hint: >-
-      Keep casting until it falls. Type cast spike again.
+      Now bring it down, with a spell or your weapon. To cast again, type cast
+      spike.
   - id: kill
     destination:
       mob: 9145
@@ -115,8 +116,8 @@ triggers:
       - grant: "45-cast"
       - actor: >-
           You shape the fold with the grove pressing in on you and loose it
-          at the creature. Now bring it down: type cast spike again until
-          it falls.
+          at the creature. Now bring it down, with a spell or your weapon. To
+          cast again, type cast spike.
   - event: command
     command: cast
     noun: conviction-spike
@@ -129,8 +130,8 @@ triggers:
       - grant: "45-cast"
       - actor: >-
           You shape the fold with the grove pressing in on you and loose it
-          at the creature. Now bring it down: type cast spike again until
-          it falls.
+          at the creature. Now bring it down, with a spell or your weapon. To
+          cast again, type cast spike.
 
   # KILL: defeat a veil-warped grove foe after the cast.
   - event: mob_death

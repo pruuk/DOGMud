@@ -45,9 +45,10 @@ opener:
     questExcluded:
     - 45-kill
     - 45-end
-    text: The fold held under fire. I felt it. Now finish what you started. Keep casting
-      at the thing until it falls.
-    hints: Go west to the Veil Hollow and type cast spike revenant until it falls.
+    text: The fold held under fire. I felt it. Now finish what you started. Bring the
+      thing down, with a spell or your weapon.
+    hints: Go west to the Veil Hollow and bring the revenant down, with a spell or
+      your weapon. To cast again, type cast spike revenant.
   - questRequired:
     - 45-kill
     questExcluded:
@@ -125,7 +126,7 @@ topics:
     and the revenants of those who came before and never left. They come at anyone
     who walks in. Go to the Veil Hollow, and when the revenant there is on you, loose
     a spell at it. You will be hit mid-fold. The fold will shudder. Hold it through,
-    and keep casting until it falls. Then come back to me.'
+    then bring the thing down, with a spell or your weapon. Then come back to me.'
   hints: If it is dark, type cast glow first. Go west to the Veil Hollow and type
     cast spike revenant.
   questRequired:
@@ -255,10 +256,11 @@ topics:
 - key: grove_mid_kill
   kind: info
   label: The fold held. What now?
-  text: You held the fold under fire. Now finish it. Keep casting at the thing until
-    it falls. A drift-wisp in the Thinning Wood, north of the Veil Hollow, serves
-    as well as the revenant.
-  hints: Go west to the Veil Hollow and type cast spike revenant until it falls.
+  text: You held the fold under fire. Now finish it. Bring the thing down, with a
+    spell or your weapon. A drift-wisp in the Thinning Wood, north of the Veil Hollow,
+    serves as well as the revenant.
+  hints: Go west to the Veil Hollow and bring the revenant down, with a spell or
+    your weapon. To cast again, type cast spike revenant.
   questRequired:
   - 45-cast
   questExcluded:
