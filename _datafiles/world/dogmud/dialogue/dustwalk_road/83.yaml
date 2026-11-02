@@ -18,9 +18,19 @@ opener:
     - 4-evidence
     questExcluded:
     - 4-end
+    carriesItem: 16
     text: "You have something from the camp. I can see it on your face. Let me see
       it."
     hints: "Choose The Warden's Report below to hand Tessara the bandit's purse."
+  # On 4-evidence without the purse: it was lost, and the hollow keeps another.
+  - questRequired:
+    - 4-evidence
+    questExcluded:
+    - 4-end
+    text: "You had their purse? Then where is it? I cannot put a story in my
+      report."
+    hints: "Go back to the Bandit Hollow, south three times from the Warden's Post,
+      and type get purse from goods."
   # The hand-in follows the last step (4-evidence). This line covers a save on
   # 4-start already holding the purse; its have_it topic leads on from there.
   - questRequired:

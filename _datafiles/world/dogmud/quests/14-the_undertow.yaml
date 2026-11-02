@@ -37,7 +37,7 @@ steps:
     destination:
       room: 498  # Operations Room, where Torvan falls
     description: "Torvan is down. His strongbox key is on his body."
-    hint: "Type loot torvan to take the key."
+    hint: "Type loot torvan. If someone beat you to it or he has risen again, he carries another key."
   - id: unlock
     destination:
       room: 498  # Operations Room, where the strongbox is

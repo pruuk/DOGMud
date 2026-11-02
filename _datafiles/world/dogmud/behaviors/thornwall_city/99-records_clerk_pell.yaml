@@ -65,12 +65,14 @@ tree:
           quest: "9-end"
         - type: action
           do: say
-          text: The tithe ledger? I filed the copy. This is the original.
+          text: >-
+            That is the temple's copy, and it is yours to carry.
+            It goes back to Priest Olen, not to me.
         - type: action
           do: say
           text: >-
             I am a clerk, not an auditor. Take it to Priest
-            Olen at the temple -- he is the one who requested
+            Olen at the temple, he is the one who requested
             the investigation.
         - type: action
           do: return_item

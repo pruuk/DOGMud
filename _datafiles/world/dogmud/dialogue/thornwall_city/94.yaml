@@ -163,7 +163,8 @@ topics:
   moodChange: friendly
 # Hand-in for quest 14. The tunnel_report node and the give trigger's npc_say
 # lines are folded in. It grants 14-end directly (settled ruling: the
-# 14-report step is gone, and nothing ever granted it).
+# 14-report step is gone: a grant for it once existed and was removed, so
+# step-ids.txt renames it to 14-evidence and a save resting there lands here).
 - key: velkhandoff
   kind: handin
   quest: 14

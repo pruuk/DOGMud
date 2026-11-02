@@ -325,7 +325,7 @@ the minimap.
 **Zone order.** Pothole Coulee first (new players land there). The rest follow the way a player
 walks out of it (owner, 2026-11-02). Finding counts are `loop-backlog.txt` lines on 2026-11-02.
 1. Ironwind Steppe, Thornwall City, Thornwall Outskirts, Watchers Crossing, Dustwalk Road,
-   Marches Spur Road (39). Done (tier 1, 2026-11-02).
+   Marches Spur Road (39). Built (tier 1, 2026-11-02), playtest pending.
 2. Ashwick, Labyrinth of Low Tunnels, North Road, North Road North, Stillwater (28).
 3. The Confluence, with the recipe sales in quests 79 to 87 (51).
 4. Greenford and Eastern Highlands (13), after the disc line's design (#667).
@@ -359,7 +359,7 @@ reached a finished trade on the screen text alone). Its own findings were fixed
 on the close branch; the rest are in #755, #746, #745 and #659. No
 `loop-backlog.txt` line names a Coulee quest
 (`internal/guards/coulee_backlog_guard_test.go`). Tier 1 (quests 4 to 15 around
-Thornwall, the steppe and the Crossing) is done, built from
+Thornwall, the steppe and the Crossing) is built, playtest pending, from
 `docs/superpowers/specs/2026-11-02-quest-arc-phase7-tier1-design.md` (PR to be
 filed): the three item-already-held hooks, the ledgers and purse sourced from
 their keepers, quest 14's real strongbox, and Esk's two lines about the far

@@ -20,7 +20,7 @@ steps:
       room: 421  # fallback when Toll Collector Harn is not spawned
     description: "Clerk Pell has filed Harn's maintenance report with the magistrate.
       Return to Harn at Watchers Crossing and tell him the report has been delivered."
-    hint: "Return to Toll Collector Harn. From the Records Office, go south, then west ten times to the Tollhouse. In the evening he drinks at the Crossing Inn. Type talk harn."
+    hint: "Return to Toll Collector Harn. From the Records Office, go south, then west ten times to the Tollhouse. In the evening he drinks at the Crossing Inn, and he sleeps late at night. Type talk harn."
   - id: end
     description: "The maintenance report has been delivered. Thornwall will review the
       bridge's condition and decide the toll's fate."

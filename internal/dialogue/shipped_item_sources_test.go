@@ -50,6 +50,41 @@ func TestTheLedgersComeFromTheirKeepers(t *testing.T) {
 	require.False(t, strings.Contains(copyTopic.Hints, "get ledger"))
 }
 
+// A player on the deliver step who lost the item is told where to get it
+// again, never that it is "under your arm".
+func TestALostItemIsReplacedAndNotPretendedCarried(t *testing.T) {
+	harn := loadShippedDialogue(t, "watchers_crossing/86.yaml")
+	require.Contains(t, menuKeys(harn, heldState("5-start", "5-deliver")), "lend_ledger",
+		"Harn lends the ledger again on 5-deliver")
+
+	pell := loadShippedDialogue(t, "thornwall_city/99.yaml")
+	require.Contains(t, menuKeys(pell, heldState("9-start", "9-deliver")), "tithe_ledger",
+		"Pell hands over the copy again on 9-deliver")
+
+	for _, c := range []struct {
+		file, deliver, start string
+		item                 int
+		lost                 string
+	}{
+		{"watchers_crossing/84.yaml", "5-deliver", "5-start", 21, "where is it"},
+		{"dustwalk_road/83.yaml", "4-evidence", "4-start", 16, "where is it"},
+	} {
+		df := loadShippedDialogue(t, c.file)
+		lost := heldState(c.start, c.deliver)
+		text, hints := df.OpenerFor(lost)
+		require.NotContains(t, text, "under your arm", c.file)
+		require.NotContains(t, text, "Let me see it", c.file)
+		require.Contains(t, text, c.lost, c.file)
+		require.NotContains(t, hints, "hand ", c.file)
+
+		holding := heldState(c.start, c.deliver)
+		holding.CarriesItem = func(id int) bool { return id == c.item }
+		holding.HasItem = holding.CarriesItem
+		text, _ = df.OpenerFor(holding)
+		require.Contains(t, text, "Let me see it", c.file)
+	}
+}
+
 func TestThePurseLiesInAContainer(t *testing.T) {
 	found := false
 	for _, s := range roomSpawns(t, "dustwalk_road/408.yaml") {

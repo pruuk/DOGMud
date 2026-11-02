@@ -16,9 +16,9 @@ steps:
       south three times, then west into the ruined barn. Type get
       freight crate from crates."
   # Granted when the crate is picked up, or on accepting while already
-  # holding it. It drives the step hint only: the hand-in topic gates on
-  # 15-start plus the crate, so a save at 15-start holding the crate still
-  # hands in (batch 2 review B1).
+  # holding it (the held-item check as the step starts). The hand-in topic
+  # gates on this step, and a save resting on 15-start with the crate gets the
+  # have_it topic, which grants it.
   - id: return
     destination:
       mob: 250  # follow Peddler Malk

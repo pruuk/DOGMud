@@ -257,8 +257,11 @@ Steps, with one action each. `start`, `explore` and `confront` are unchanged.
 | `opened` (new) | `command: unlock` or `command: picklock`, `target: container`, `noun: strongbox`, `room: 498`, needs `14-unlock` | Type get ledger from strongbox. |
 | `evidence` | `item_gain 40036`, needs `14-opened` | Unchanged: take it to Velk. |
 
-- `report` moves to `# retired` in `step-ids.txt`: nothing ever granted it, so no save holds it.
-  `velkhandoff` already needs `14-evidence`, now the step before `end`.
+- `report` moves to `# renamed` in `step-ids.txt` as `14-report -> 14-evidence`. A grant for it once
+  existed (commit `ab2e19dad`, removed by `90ddbd67b`), so a save may rest on it, and the rename
+  keeps that save moving. On `14-evidence` Velk's hand-in opens for a player holding the ledger,
+  and the strongbox replaces it for one who lost it. `velkhandoff` already needs `14-evidence`, now
+  the step before `end`.
 - `opened` goes in `step-ids.txt`. Its destination is room 498.
 - **Picking is allowed.** A skilled player can pick the lock at any time, as with any lockbox.
   One who took the key or the ledger early passes those steps through Hook 1. If Torvan was already
@@ -268,9 +271,10 @@ Steps, with one action each. `start`, `explore` and `confront` are unchanged.
   real minutes, so a player arriving just after waits rather than gets stuck. The tally stick
   already works this way.
 - **Lost ledger.** The old false-bottom recovery goes, because the respawn replaces it.
-- **Velk's `case_close`.** The topic served a save on `14-report`, a step nothing ever granted. It
-  went with the step, because the loop walk reports a topic that can never be reached. Its key is
-  under `# retired` in `topic-keys.txt`, and Marek's two `14-report` exclusions went too.
+- **Velk's `case_close`.** The topic served a save on `14-report`. That step is renamed to
+  `14-evidence`, so such a save is handled by `velkhandoff` and the topic went, because the loop
+  walk reports a topic that can never be reached. Its key is under `# retired` in
+  `topic-keys.txt`, and Marek's two `14-report` exclusions went too.
 - **Old saves.** A save on `14-confront`, `14-loot` or `14-unlock` continues: the key works once the
   item has its `keylockid`. A save on `14-evidence` holds the ledger, or can get another. A save on
   `14-evidence` whose key was consumed by the old trigger and whose ledger is lost kills Torvan

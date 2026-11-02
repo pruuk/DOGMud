@@ -11,7 +11,7 @@ steps:
       mob: 86  # Harn moves by schedule
       room: 421  # the Tollhouse, where Harn keeps the ledger
     description: "Innkeeper Tolva at the Crossing Inn has asked you to investigate the bridge toll. She believes it is unauthorized and wants proof. Ask Harn at the tollhouse for his ledger."
-    hint: "From the Crossing Inn, go south to the West Approach, then east into the Tollhouse. Type talk harn and ask to see his ledger."
+    hint: "Harn keeps the Tollhouse, south then east of the Crossing Inn, by day. In the evening he drinks at the inn, and he sleeps late at night. Type talk harn."
   - id: deliver
     destination:
       mob: 84  # follow Innkeeper Tolva (schedule watchers_tolva), a fixed room is wrong for part of the day

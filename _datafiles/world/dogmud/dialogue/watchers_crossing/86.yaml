@@ -110,7 +110,7 @@ topics:
     for crack sealing, four gold. There is no personal enrichment here. I live in the
     back room of this booth. I am not a thief. I am the only person who cares enough
     about this bridge to do something about it."
-  hints: "Harn taps the heavy ledger on the counter."
+  hints: "Harn taps the ledger under his arm."
 - key: lend_ledger
   kind: info
   label: May I see your ledger?

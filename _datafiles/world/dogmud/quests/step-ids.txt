@@ -386,9 +386,8 @@
 # it from saves (quests.RetiredQuests).
 29-end
 29-start
-# Quest 14's report step: nothing ever granted it (#375 phase 7 tier 1).
-14-report
 
 # renamed
+14-report -> 14-evidence
 32-consider -> 32-special
 4-investigate -> 4-start

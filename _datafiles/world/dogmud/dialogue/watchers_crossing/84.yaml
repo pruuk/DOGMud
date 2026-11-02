@@ -16,9 +16,19 @@ opener:
     - 5-deliver
     questExcluded:
     - 5-end
+    carriesItem: 21
     text: "Is that what I think it is under your arm? Let me see it."
     hints: "Choose The Innkeeper's Complaint below to hand Tolva the crossing
       ledger."
+  # On 5-deliver without the ledger: it was lost, and Harn lends it again.
+  - questRequired:
+    - 5-deliver
+    questExcluded:
+    - 5-end
+    text: "You had the ledger? Then where is it? Harn will have to lend it to you
+      again, and he will enjoy that."
+    hints: "Harn keeps the Tollhouse by day and drinks at the Crossing Inn in the
+      evening. Type talk harn."
   # The hand-in follows the last step (5-deliver). This line covers a save on
   # 5-start already holding the ledger; its have_it topic leads on from there.
   - questRequired:
@@ -36,8 +46,9 @@ opener:
     - 5-end
     text: "Any luck with that ledger? The sooner I have proof, the sooner I can write
       to the magistrate."
-    hints: "From the Crossing Inn, go south to the West Approach, then east into the
-      Tollhouse. Type talk harn."
+    hints: "Harn keeps the Tollhouse, south then east of the Crossing Inn, by day.
+      In the evening he drinks at the inn, and he sleeps late at night. Type talk
+      harn."
 topics:
 - key: help_quest
   kind: offer
