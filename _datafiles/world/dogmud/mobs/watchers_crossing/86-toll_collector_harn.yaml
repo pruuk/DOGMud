@@ -35,6 +35,8 @@ character:
   level: 1
   gold: 0
   equipment:
+    light:
+      itemid: 20134
     body:
       itemid: 20049
   stats:

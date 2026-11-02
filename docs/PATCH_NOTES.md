@@ -1,5 +1,12 @@
 # DOGMud Patch Notes
 
+## 2026-11-02: Quest givers you can always find
+
+- Seventeen quest givers who stood in dim places now carry a lantern while they
+  are awake, so you can make out their faces and talk to them by name at any
+  hour. Among them are Hermit Kael, Windwarden Sylara and Geomancer Rhett on the
+  Ironwind Steppe, and Constable Drunn in Stillwater.
+
 ## 2026-11-01: Clearer directions for new players in Pothole Coulee
 
 - From the Dark and Dace now warn that typing consider spends the same move an
