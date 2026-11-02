@@ -33,7 +33,6 @@
 241.her_cause
 241.late_stand_with_sylara
 241.offer_covenant
-241.reaffirm_sylara
 241.rhett
 241.ritual_begin
 241.ritual_complete
@@ -48,7 +47,6 @@
 242.his_cause
 242.late_stand_with_rhett
 242.offer_gambit
-242.reaffirm_rhett
 242.rhett_terms
 242.sample_return
 242.stand_with_rhett

@@ -61,16 +61,31 @@ func TestQuest11CanBeFinishedAfterTalkingToKaelFirst(t *testing.T) {
 			require.NotContains(t, menuKeys(loadShippedDialogue(t, s.otherFile), sided), s.otherStand,
 				"the other side's choice is closed")
 
-			// A save from before the sided step: the flag is set, 11-sided is not.
-			reaffirm := "reaffirm_" + s.value
+			// A save from before the sided step: the flag is set, 11-sided is not,
+			// and the terms may never have been heard.
+			other := loadShippedDialogue(t, s.otherFile)
+			otherTerms := map[string]string{"sylara": "rhett_terms", "rhett": "sylara_terms"}[s.value]
 			flagged := heldState("11-start")
 			flagged.GetQuestFlag = sided.GetQuestFlag
 			flagged.HasItem = sided.HasItem
 			flagged.CarriesItem = sided.CarriesItem
-			require.Contains(t, menuKeys(df, flagged), reaffirm)
-			require.NotContains(t, menuKeys(df, flagged), s.handin, "the hand-in follows sided")
-			require.NotContains(t, menuKeys(df, sided), reaffirm, "a new player never sees it")
-			require.NotContains(t, menuKeys(df, unsided), reaffirm)
+			keys = menuKeys(df, flagged)
+			require.Contains(t, keys, s.terms, "the flagged save can hear its side's terms")
+			require.NotContains(t, keys, s.stand, "the stand waits for the terms")
+			require.NotContains(t, keys, s.handin, "the hand-in follows 11-sided")
+			require.NotContains(t, menuKeys(other, flagged), otherTerms, "the other side's terms stay hidden")
+			require.NotContains(t, menuKeys(other, flagged), s.otherStand)
+			flagged.HasHeard = func(string) bool { return true }
+			keys = menuKeys(df, flagged)
+			require.Contains(t, keys, s.stand, "with the terms heard the flagged save can stand again")
+			require.NotContains(t, keys, s.handin, "the hand-in follows 11-sided")
+
+			// An old save that finished with no side: 11-end counts as holding
+			// 11-sided, and the flag is empty, so the terms stay open for it.
+			finished := heldState("11-start", "11-sided", "11-end")
+			require.Contains(t, menuKeys(df, finished), s.terms, "the unsided finished save still hears the terms")
+			finished.HasHeard = func(string) bool { return true }
+			require.Contains(t, menuKeys(df, finished), "late_stand_with_"+s.value)
 		})
 	}
 }

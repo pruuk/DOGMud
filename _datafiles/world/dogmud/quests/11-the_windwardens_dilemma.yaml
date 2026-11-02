@@ -20,8 +20,9 @@ steps:
   # sided: the choice is made in talk, after each side's warning (R28).
   # Hearing either side's stand topic grants it (the topic_heard triggers
   # below; the topic sets the 11-branch flag). Old saves that chose a side
-  # before this step existed hold the flag without it; the reaffirm topics
-  # grant it, and the hand-ins gate on this step.
+  # before this step existed hold the flag without it; their side's terms
+  # topic stays open to them, so they hear it and stand again, and the
+  # hand-ins gate on this step.
   - id: sided
     # destination: the side chosen decides the place (3082 totem or 3032 samples)
     destination: {zone: Ironwind Steppe}
@@ -52,25 +53,6 @@ triggers:
   - event: topic_heard
     mob: 242
     topic: stand_with_rhett
-    conditions:
-      has: ["11-start"]
-      missing: ["11-sided"]
-    actions:
-      - grant: "11-sided"
-
-  # A save holding the side flag without this step (spec, quest 11).
-  - event: topic_heard
-    mob: 241
-    topic: reaffirm_sylara
-    conditions:
-      has: ["11-start"]
-      missing: ["11-sided"]
-    actions:
-      - grant: "11-sided"
-
-  - event: topic_heard
-    mob: 242
-    topic: reaffirm_rhett
     conditions:
       has: ["11-start"]
       missing: ["11-sided"]

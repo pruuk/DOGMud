@@ -139,15 +139,19 @@ topics:
   hints: "Siding with Rhett cannot be undone. Sylara will never trust you
     afterward."
   marked: true
-  # Open to anyone holding 11-start (11-end counts) with no side yet, so the
-  # old saves that finished unsided hear it before late_stand_with_rhett.
+  # Open to anyone holding 11-start (11-end counts) who has not sided with
+  # Sylara: no side yet, or Rhett's side. So the old saves that finished
+  # unsided hear it before late_stand_with_rhett, and a save that chose his
+  # side before the sided step existed (flag set, no 11-sided, terms never
+  # heard) can hear it and then stand again. A save at 11-end holds 11-sided
+  # too (HasQuest counts later steps), so 11-sided cannot close this topic.
   questRequired:
   - 11-start
   questExcluded:
   - 12-start
   - 13-start
-  questFlagRequired:
-    11-branch: ""
+  questFlagExcluded:
+    11-branch: sylara
 - key: stand_with_rhett
   kind: info
   label: I will help you dig the windstone.
@@ -217,23 +221,6 @@ topics:
   requiresItem: 40032
   grantsQuest: 11-end
   moodChange: friendly
-# A save that chose a side before the sided step existed holds the flag without
-# 11-sided, and may never have heard the terms. A new player never sees this:
-# the stand topic grants 11-sided as it sets the flag.
-- key: reaffirm_rhett
-  kind: info
-  label: I stand by what I chose.
-  text: Good. Then bring me the samples.
-  hints: "Rhett wants windstone samples from the veins on the Rocky Shelf, just
-    south of his camp."
-  marked: true
-  questRequired:
-  - 11-start
-  questExcluded:
-  - 11-sided
-  - 11-end
-  questFlagRequired:
-    11-branch: rhett
 - key: dismiss_sylara_path
   kind: info
   label: Will you still hear me out?

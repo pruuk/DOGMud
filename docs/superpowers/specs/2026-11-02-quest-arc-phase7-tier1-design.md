@@ -45,7 +45,7 @@ Marches Spur Road. **Quests:** 4 to 15.
 | Quests 5 and 6 do not gate on each other: Tolva's file names no `6-` token and Harn's no `5-` token | grep of `dialogue/watchers_crossing/84.yaml`, `86.yaml` |
 | Prior art for a check at step start: an explore step fires when its step starts, from `evaluate` on `quest_granted`, through `fire`, with a default line or `explored_line` | `internal/questengine/explore.go:98-133`; `engine.go:177-179` |
 | Prior art for a second offer of one quest when an item is carried: Brennan's `disc_quest` (`carriesItem: 40167`) and `disc_tale` (`itemExcluded: 40167`) | `dialogue/greenford/9516.yaml:131-165` |
-| Shipped `item_gain` triggers: 21 of 24 have no filter beyond `item`; the other 3 have `reason`, `count` or `room` | parse of `quests/*.yaml` |
+| Shipped `item_gain` triggers: 20 of 24 have no filter beyond `item`; the other 4 have `reason`, `count` or `room` (quest 31's buy lesson now has `reason: buy`) | parse of `quests/*.yaml` |
 | The offer card's first line is always the quest's first step description | `internal/conversation/card.go:39-41` |
 | A granted token is queued, so the menu re-shown after Accept reads state before the quest's chain ran; `heldAlso` only adds the granted token | `internal/conversation/talk.go:169-182` |
 | A queued re-show already exists: `TalkNextOffer` at priority 45 runs after a hand-in's banner and reward lines (priority 0) and before a menu shown last (priority 50). Whether an accepted offer's chain has run by then is what Hook 3's test proves | `internal/events/eventtypes.go:105-118`; `internal/conversation/nextoffer.go:41-45` |
@@ -171,7 +171,8 @@ each `item_gain` trigger of that quest whose conditions pass and whose item the 
 once, through `fire`, so it is guarded and chained like any trigger.
 
 - It covers only a trigger with no `reason`, `count`, `room`, `area` or `zone`. Those ask how or
-  where the item arrived, which a held item cannot answer. That leaves the 21 plain triggers.
+  where the item arrived, which a held item cannot answer. That leaves the 20 plain triggers. Quest
+  31's buy lesson now has `reason: buy`, which took it out of the plain set.
 - It tells the player why: `held_line` on the trigger, else "You already have the <item name>."
 - It works on any step, so the key and the ledger in quest 14 need nothing extra.
 - It runs only when a step starts, so a save already resting on a step is handled under "Old saves".
@@ -267,6 +268,9 @@ Steps, with one action each. `start`, `explore` and `confront` are unchanged.
   real minutes, so a player arriving just after waits rather than gets stuck. The tally stick
   already works this way.
 - **Lost ledger.** The old false-bottom recovery goes, because the respawn replaces it.
+- **Velk's `case_close`.** The topic served a save on `14-report`, a step nothing ever granted. It
+  went with the step, because the loop walk reports a topic that can never be reached. Its key is
+  under `# retired` in `topic-keys.txt`, and Marek's two `14-report` exclusions went too.
 - **Old saves.** A save on `14-confront`, `14-loot` or `14-unlock` continues: the key works once the
   item has its `keylockid`. A save on `14-evidence` holds the ledger, or can get another. A save on
   `14-evidence` whose key was consumed by the old trigger and whose ledger is lost kills Torvan
@@ -276,12 +280,19 @@ Steps, with one action each. `start`, `explore` and `confront` are unchanged.
 
 `totem_return` and `sample_return` require `11-sided` in place of `11-start`.
 
-A save holding the side flag without `11-sided` would lose its hand-in, so each side gains a small
-recovery info topic, `reaffirm_sylara` and `reaffirm_rhett`: label "I stand by what I chose.",
-gated on `11-start`, the matching `11-branch` value, and excluding `11-sided` and `11-end`. A
-`topic_heard` trigger grants `11-sided` from it. A new player never sees it, because hearing the
-stand topic grants `11-sided` at once. The existing regression test
-`TestQuest11CanBeFinishedAfterTalkingToKaelFirst` is extended to cover the flagged save.
+A save holding the side flag without `11-sided` would lose its hand-in. It also sees neither the
+terms topic (which needed the flag empty) nor the stand topic (which needs the terms heard). So the
+terms topics open to it: `sylara_terms` and `rhett_terms` swap `questFlagRequired: {11-branch: ""}`
+for `questFlagExcluded` of the other side's value, so the topic is open when no side is chosen or
+the matching side is. The save hears the terms, then the stand topic, which grants `11-sided` as it
+did for a new player. No recovery topic is needed.
+
+`11-sided` cannot close the terms: `HasQuest` counts later steps, so a save at `11-end` holds it, and
+the old saves that finished unsided need the terms open to reach `late_stand_with_sylara` and
+`late_stand_with_rhett`. A player already on the matching side with `11-sided` therefore still
+sees the terms, grey once heard. The existing regression test
+`TestQuest11CanBeFinishedAfterTalkingToKaelFirst` covers the flagged save and the finished
+unsided save.
 
 ### Hints and map targets
 
