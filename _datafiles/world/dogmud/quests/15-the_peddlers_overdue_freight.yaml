@@ -8,7 +8,7 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 4007  # Ruined Barn — sole spawn of the freight crate (item 40039)
+      room: 4007  # Ruined Barn, sole spawn of the freight crate (item 40039)
     description: "Peddler Malk has been waiting on a freight
       shipment for days. He suspects bandits intercepted it. Find
       the missing freight crate."

@@ -37,6 +37,12 @@ package owns everything that needs a user, a room or a mob.
   card. Several next offers, or none, re-show the menu as before (the offers
   wait with their `[!]`). `HandleTalkNextOffer` says nothing while a menu gate
   holds or a prompt is open.
+- Accepting an offer for an item the player already holds queues
+  `events.TalkMenuAgain` at `TalkNextOfferPriority` (the offer card's callback
+  in `talk.go`), so the grant and the step start (Hook 1) run first.
+  `HandleTalkMenuAgain` (`nextoffer.go`) then re-shows the talk menu with the
+  hand-in on it, and opens nothing while a menu gate holds or a prompt is open.
+  `offerCardBody` builds the offer card's body with the topic's `objective`.
 - Observers see a conversation, never a menu: the player's line and the NPC's
   answer go to the room through `actions.Say`; menus, cards and hints go to the
   player only.

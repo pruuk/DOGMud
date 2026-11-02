@@ -343,6 +343,28 @@ Without it, a player drops the item and picks it up again to pass the step, and
 kills the mark to loot it. A `count` on an unfiltered `item_gain` counts that
 loop too, so a repeatable quest that gives a reward pays for it.
 
+### An item the player already holds
+
+A plain `item_gain` (no `reason`, `count`, `room`, `area` or `zone`) counts a
+held item when its step starts (`questengine.heldAtStepStart`, on
+`quest_granted`), saying its `held_line` or "You already have the <item>."
+"Held" is anywhere on the player (`Character.CarriesItem`: backpack, bags,
+bandolier, worn). Never ask a player to drop an item and pick it up again.
+
+- A quest whose first step is getting a findable item gets a second offer for
+  a player already carrying it: `carriesItem`, an `objective` (the card's first
+  line), and `itemExcluded` on the first offer, as Tessara's `help_quest` and
+  `help_quest_carrying`. Accepting grants the start token, Hook 1 moves the
+  step, and the talk menu returns with the hand-in.
+- A quest item whose keeper stands beside it comes from the keeper as a
+  `givesItem` topic, as Harn's `lend_ledger`, not from a loose spawn.
+- A behaviour tree's `grant_quest` sets its token before the step-start check,
+  so a step a tree starts gets no Hook 1. Start the step from a topic or
+  trigger if a held item must count.
+- A save already resting on the first step with the item in hand starts no step,
+  so give it a `have_it` info topic with `carriesItem` and a `topic_heard`
+  trigger that grants the next step.
+
 ## Spell triggers: `spell_landed` and `effect`
 
 `event: spell_landed` fires when a player's spell actually lands on a target

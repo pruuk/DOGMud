@@ -9,7 +9,7 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 444  # the Pest Fields — kill pests for a sample
+      room: 444  # the Pest Fields, kill pests for a sample
     description: "Farmer Dorn has asked you to clear the crop pests
       from the south fields and bring back a sample."
     hint: "From Dorn's farm, go east to the fallow field, then south to

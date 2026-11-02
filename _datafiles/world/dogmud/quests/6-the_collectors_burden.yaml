@@ -16,7 +16,7 @@ steps:
     hint: "Take the report to Clerk Pell in Thornwall. From the Tollhouse, go east ten times to the end of Main Street, then north to the Records Office. Type talk pell."
   - id: report
     destination:
-      mob: 86  # follow Toll Collector Harn (schedule watchers_harn) — a fixed room is wrong for part of the day
+      mob: 86  # follow Toll Collector Harn (schedule watchers_harn), a fixed room is wrong for part of the day
       room: 421  # fallback when Toll Collector Harn is not spawned
     description: "Clerk Pell has filed Harn's maintenance report with the magistrate.
       Return to Harn at Watchers Crossing and tell him the report has been delivered."

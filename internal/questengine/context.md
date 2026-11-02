@@ -34,7 +34,9 @@ what a trigger *does*, you edit this package.
   item name's own article). "Holds" is `ItemCarrier.CarriesItem` when the
   player state has it (`GameBridge` does: backpack, component bag, bandolier,
   worn, via `Character.CarriesItem`), else `HasItem`; `HasItem` itself stays
-  backpack only for `has_item` and `consume_item`.
+  backpack only for `has_item` and `consume_item`. A behaviour tree's
+  `grant_quest` sets its token before the step-start check, so a step a tree
+  starts gets no held-item check; start such a step from a topic or trigger.
 - **progress.go**: `Engine.StepProgress`, `ProgressLine`,
   `Engine.UserStepProgress` (the "Progress: 2 of 5" line).
 - **dryrun.go**: `WouldFire` (side-effect-free "would Notify fire?") and

@@ -1,5 +1,18 @@
 # DOGMud Patch Notes
 
+## 2026-11-02: Past the arch
+
+- Warden Esk has something to say about what waits on the far side of the arch.
+- If you already have what a quest asks for, the quest counts it, and the person
+  asking may well notice.
+- Harn now lends you his ledger himself, and Clerk Pell hands over the temple's
+  copy of the tithe ledger. Neither is lying around any more.
+- The purse in the Bandit Hollow is among the stolen goods.
+- Torvan's strongbox in The Undertow is a real lockbox: unlock it, or pick it if
+  you have the hands for it, then take what is inside.
+- Quests around Thornwall, the steppe and the Crossing now ask for one thing at a
+  time, and the map points the way on every step.
+
 ## 2026-11-02: Quest givers you can always find
 
 - Seventeen quest givers who stood in dim places now carry a lantern while they

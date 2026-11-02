@@ -39,7 +39,7 @@ rewards:
   itemid: 17
 
 # Migrated 2026-07-21 from the legacy inline step-trigger format (type:/roomid:/
-# grants: nested under steps), which the questengine does not process at runtime —
+# grants: nested under steps), which the questengine does not process at runtime:
 # the quest could be started but never advanced. Same chain, questengine format.
 triggers:
   # start -> evidence: pick up the bandit's purse (item 16).
