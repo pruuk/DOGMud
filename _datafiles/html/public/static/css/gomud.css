@@ -226,10 +226,6 @@
   --gold-rule: #b39a5e;
 
   --shadow: #a08a66;          /* softer: a near-black shadow looks dirty on parchment */
-
-  /* The text wordmark's gold gradient, darkened to read on parchment. */
-  --gold-button-light: #9c7424;
-  --gold-button-dark: #5e430f;
 }
 /* Two rules, not colours: the hero title's shadow muddies on parchment, and
    the Architecture card labels use the outline gold as text, which is 3.1 on a
@@ -253,7 +249,7 @@ body {
 
 a { text-decoration: none; color: inherit; }
 
-/* ── Site header (brand wordmark + nav in one bar) ──
+/* ── Site header (logo + nav in one bar) ──
    A borderless glass bar across the full width (design 2026-11-01, Apple's
    iOS 26 style in brand colours): it stays at the top while the page scrolls
    and blurs whatever passes under it. No outline, no rounded box. */
@@ -275,27 +271,6 @@ header {
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   header { background: var(--glass-bar-solid); }
 }
-/* Gold-gradient wordmark (solid title-gold fallback where background-clip
-   isn't supported). */
-.gomud-btn {
-  font-family: var(--font-heading);
-  font-style: italic;
-  font-weight: bold;
-  font-size: clamp(1.05rem, 2vw, 1.35rem);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--title-gold);
-  background: linear-gradient(var(--gold-button-light), var(--ink-gold) 55%, var(--gold-button-dark));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 1px 0 color-mix(in srgb, var(--shadow) 40%, transparent);
-  padding: 2px;
-  transition: filter 0.15s ease;
-}
-.gomud-btn:hover { filter: brightness(1.08); }
-
 /* ── Brass component (buttons, nav pills, CTAs) ── */
 .brass {
   display: inline-block;
@@ -409,17 +384,15 @@ nav {
   outline-offset: 2px;
 }
 
-/* Tablets: tighter links so the wordmark and all seven fit on one row. */
+/* Tablets: tighter links so the logo and all seven fit on one row. */
 @media (min-width: 769px) and (max-width: 1100px) {
   header { gap: 8px 12px; padding: 8px 16px; }
-  .gomud-btn { font-size: 1rem; letter-spacing: 1px; }
   .nav-container { gap: 4px; }
   .nav-container a { font-size: 0.82rem; padding: 0 10px; min-height: 32px; }
   .nav-group { gap: 0; padding: 3px; }
   .nav-text a { padding: 0 7px; }
 }
 @media (min-width: 769px) and (max-width: 900px) {
-  .gomud-btn { font-size: 0.92rem; letter-spacing: 0.5px; }
   .nav-container { gap: 3px; }
   .nav-container a { font-size: 0.78rem; padding: 0 8px; }
   .nav-text a { padding: 0 5px; }
@@ -563,7 +536,6 @@ pre, code { font-family: var(--font-mono); }
 /* ── Responsive ── */
 @media (max-width: 768px) {
   header { padding: 6px 12px; gap: 8px; }
-  .gomud-btn { font-size: 1.05rem; letter-spacing: 1.5px; }
   .hero-title { font-size: 1.7rem; }
   /* The ☰ button opens the menu as a full-width sheet under the bar. */
   nav { flex-basis: 100%; order: 3; }
@@ -587,7 +559,6 @@ pre, code { font-family: var(--font-mono); }
 }
 
 @media (max-width: 480px) {
-  .gomud-btn { font-size: 0.95rem; }
   .overlay, .underlay { padding: 8px; }
 }
 
@@ -626,3 +597,11 @@ pre, code { font-family: var(--font-mono); }
 }
 
 h1, h2, h3, h4 { font-family: var(--font-heading); }
+
+/* Malia's logo (2026-11-02): the D.O.G. mark in the top bar, the full logo in
+   the home page hero. Letters in the logo golds #d9ac46 / #c3932d (palette
+   spec, "Logo golds"); made for dark surfaces and the teal bar. */
+.brand-logo { display: flex; align-items: center; padding: 2px 0; }
+.brand-logo img { display: block; height: 56px; width: auto; }
+@media (max-width: 768px) { .brand-logo img { height: 48px; } }
+.hero-logo img { display: block; margin: 0 auto; width: min(560px, 86vw); height: auto; }
