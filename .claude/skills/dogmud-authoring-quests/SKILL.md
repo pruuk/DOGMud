@@ -226,6 +226,33 @@ Two more item rules for quests:
   lockpicking), or quest rewards (for special/unique items). Flavor nouns
   that aren't items are fine. [[feedback_loot_placement]]
 
+## Selling recipes
+
+A recipe sold for gold is a `kind: sale` topic, never a quest (#375 phase 7
+tier 3b; Veyra's nine secrets, `dialogue/the_confluence/9584.yaml`):
+
+```yaml
+- key: teach_blackrazor
+  kind: sale
+  label: Secret of the Blackrazor
+  playerLine: Will you teach me the Blackrazor?
+  text: The Blackrazor. Not a blade I'd show just anyone. 25,000 gold up front.
+  notReadyText: Come back when you've practiced at the jeweler's bench, the alchemy bench and the forge.
+  paidText: Paid. The recipes are in your hands.
+  chargesGold: 25000
+  teachesRecipes: [hungering-guard, obsidian-edge-resin, assemble-the-blackrazor]
+```
+
+- A sale grants no quest and takes no `quest`, `grantsQuest` or `goldRequired`.
+  Accept charges `chargesGold`, then teaches every recipe in `teachesRecipes`.
+- The line stays on the menu until the player knows every recipe in it.
+  Choosing it without the skill for EVERY recipe (each recipe's own skill at its
+  own minimum) plays `notReadyText` and shows no card. Name the trades in
+  words and never a number. With the skill, the pitch plays and the card shows
+  the price, so the pitch can state it too.
+- Every recipe id must exist (the validator checks it). `notReadyText` and
+  `paidText` follow the spoken-text rules: first person, no `;`, no dashes.
+
 ## Quest flags and branching
 
 ### Quest Flags System
