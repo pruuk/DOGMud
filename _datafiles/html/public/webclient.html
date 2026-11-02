@@ -25,6 +25,10 @@
         wcIframe.height = contentContainer.clientHeight;
         
     }
+    // Size the frame as soon as this page's layout exists; "load" alone waits
+    // for everything inside the frame, which showed it at the browser's default
+    // 300x150 until then.
+    document.addEventListener("DOMContentLoaded", resizeClientIFrame);
     window.addEventListener("load", resizeClientIFrame);
     window.addEventListener('resize', resizeClientIFrame);
     window.addEventListener('beforeunload', function(event) {
