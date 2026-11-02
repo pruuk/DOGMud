@@ -36,6 +36,9 @@ type World struct {
 	QuestOfToken func(token string) (QuestInfo, bool)
 	FlagDeclared func(key, value string) bool
 	ItemExists   func(id int) bool
+	// RecipeExists reports whether a recipe id is a shipped recipe. Nil skips the
+	// check, as the other callbacks do.
+	RecipeExists func(id string) bool
 	// BehaviorTopics maps a mob id to the topic_is keys in its behavior
 	// tree. Nil skips the behavior checks (no trees in this world). A mob id
 	// with no dialogue file is itself a problem.
@@ -178,8 +181,32 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 					add(where, "label must be the quest title %q", q.Title)
 				}
 			}
+		case KindSale:
+			if t.PlayerLine == "" || t.NotReadyText == "" || t.PaidText == "" {
+				add(where, "sale topics need playerLine, notReadyText and paidText")
+			}
+			if t.ChargesGold <= 0 {
+				add(where, "sale topics need chargesGold")
+			}
+			if len(t.TeachesRecipes) == 0 {
+				add(where, "sale topics need teachesRecipes")
+			}
+			if t.GrantsQuest != "" || t.Quest != 0 {
+				add(where, "a sale is not a quest: no grantsQuest and no quest")
+			}
+			if t.Marked || t.Breadcrumb != "" || t.Objective != "" {
+				add(where, "marked, breadcrumb and objective do not belong on a sale")
+			}
+			for _, id := range t.TeachesRecipes {
+				if w.RecipeExists != nil && !w.RecipeExists(id) {
+					add(where, "teachesRecipes %q is not a recipe", id)
+				}
+			}
 		default:
-			add(where, "kind must be info, offer or handin, not %q", t.Kind)
+			add(where, "kind must be info, offer, handin or sale, not %q", t.Kind)
+		}
+		if t.Kind != KindSale && (len(t.TeachesRecipes) > 0 || t.NotReadyText != "" || t.PaidText != "") {
+			add(where, "teachesRecipes, notReadyText and paidText belong on sale topics only")
 		}
 
 		lint := menu.Menu{Entries: []menu.Entry{{Id: t.Key, Label: t.Label, Detail: t.PlayerLine}}}
@@ -192,6 +219,14 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 		if strings.ContainsAny(t.Objective, dashRunes) {
 			add(where+" objective", "no em or en dash in new text")
 		}
+		if strings.ContainsAny(t.NotReadyText, dashRunes) {
+			add(where+" notReadyText", "no em or en dash in new text")
+		}
+		if strings.ContainsAny(t.PaidText, dashRunes) {
+			add(where+" paidText", "no em or en dash in new text")
+		}
+		semi(where+" notReadyText", t.NotReadyText)
+		semi(where+" paidText", t.PaidText)
 		semi(where+" label", t.Label)
 		semi(where+" playerLine", t.PlayerLine)
 		semi(where+" text", t.Text)
@@ -202,7 +237,9 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 				add(where, "heardRequired %q is not an info topic in this file", k)
 			}
 		}
-		if t.ChargesGold > 0 && t.GoldRequired < t.ChargesGold {
+		// A sale is exempt: its Accept card is the gate, and it is listed to a
+		// player who cannot yet afford it so they can read the price.
+		if t.Kind != KindSale && t.ChargesGold > 0 && t.GoldRequired < t.ChargesGold {
 			add(where, "chargesGold %d needs goldRequired of at least %d", t.ChargesGold, t.ChargesGold)
 		}
 		out = append(out, gateRefProblems(w, df.MobId, where, t.Gates, t.Effects)...)
