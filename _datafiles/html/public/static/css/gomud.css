@@ -426,6 +426,9 @@ header nav {
 .content-container[data-path="/webclient"] { padding: 0; overflow: hidden; }
 /* The game fits the width, so its page never scrolls sideways. */
 body:has(.content-container[data-path="/webclient"]) { overflow-x: hidden; }
+/* The game sits right on the teal footer: a gap there showed the page colour
+   as a stripe (a cream one in Light mode). */
+body:has(.content-container[data-path="/webclient"]) footer { margin-top: 0; }
 #webclient-frame { display: block; border: 0; }
 
 .overlay, .underlay {
@@ -629,3 +632,8 @@ h1, h2, h3, h4 { font-family: var(--font-heading); }
 .brand-logo img { display: block; height: 56px; width: auto; }
 @media (max-width: 768px) { .brand-logo img { height: 48px; } }
 .hero-logo img { display: block; margin: 0 auto; width: min(560px, 86vw); height: auto; }
+/* Light mode swaps in the light-page version (letters #6f5418 / #473019,
+   6.0 and 10.4 on the cream page); the gold letters wash out there (1.8). */
+.hero-logo .logo-light { display: none; }
+:root[data-theme="light"]:not([data-client]) .hero-logo .logo-dark { display: none; }
+:root[data-theme="light"]:not([data-client]) .hero-logo .logo-light { display: block; }
