@@ -326,7 +326,8 @@ the minimap.
 walks out of it (owner, 2026-11-02). Finding counts are `loop-backlog.txt` lines on 2026-11-02.
 1. Ironwind Steppe, Thornwall City, Thornwall Outskirts, Watchers Crossing, Dustwalk Road,
    Marches Spur Road (39). Done (tier 1, 2026-11-02).
-2. Ashwick, Labyrinth of Low Tunnels, North Road, North Road North, Stillwater (28).
+2. Ashwick, Labyrinth of Low Tunnels, North Road, North Road North, Stillwater (28). Built,
+   playtest pending.
 3. The Confluence, with the recipe sales in quests 79 to 87 (51).
 4. Greenford and Eastern Highlands (13), after the disc line's design (#667).
 5. New Plymouth: Common, Docks, Merchant, Crafting, Temple, Old Quarter (52).
@@ -366,10 +367,11 @@ leftovers in #761, #762, #763): the three item-already-held hooks, the ledgers a
 their keepers, quest 14's real strongbox, and Esk's two lines about the far
 side. No `loop-backlog.txt` line names quests 4 to 15
 (`internal/guards/tier1_backlog_guard_test.go`). Tier 2 (Ashwick, the Labyrinth
-of Low Tunnels, North Road, North Road North and Stillwater) is next; it reads
-the spec's rulings 2 (hand-holding ends at the Coulee, no bridge quests) and 5
-(a quest item with a keeper beside it comes from the keeper). The remaining
-zones are not started.
+of Low Tunnels, North Road, North Road North and Stillwater) is built, playtest
+pending: quests 20 and 18 are found by `search`, quest 61 has a fixed order, and no
+`loop-backlog.txt` line names quests 2, 16 to 20, 60 or 61
+(`internal/guards/tier2_backlog_guard_test.go`). Tier 3 (The Confluence) is next.
+The remaining zones are not started.
 
 ## Phase 6: Web builder (postponed)
 

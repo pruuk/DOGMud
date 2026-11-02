@@ -1,5 +1,16 @@
 # DOGMud Patch Notes
 
+## 2026-11-02: The road north and Stillwater
+
+- Ulla's Silence is now followed by searching: at each place the trail leads,
+  type search to find what Elgar left.
+- In the barn, a search shows you what Betta's guest left behind.
+- Goodwife Pemberton now wants the hedgerow bandit dealt with before the thing in
+  the Reach. If you meet the Reach-Touched first, it will still be there.
+- The lake-caves bounty counts a drowned hunter once the shrimp are cleared.
+- Quests around Ashwick, the north road and Stillwater have shorter hints, and the
+  map points the way.
+
 ## 2026-11-02: Past the arch
 
 - Warden Esk has something to say about what waits on the far side of the arch,
