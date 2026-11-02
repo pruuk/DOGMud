@@ -54,9 +54,6 @@ hint 84 step start
 hint 85 step start
 hint 86 step start
 hint 87 step start
-hint-length 11 step sided
-hint-length 11 step start
-hint-length 12 step start
 hint-length 16 step forager
 hint-length 16 step start
 hint-length 17 step start
@@ -70,8 +67,6 @@ hint-length 20 step brindle_confession
 hint-length 20 step garden_marker
 hint-length 20 step kingfisher_found
 hint-length 20 step wardstone_altar
-hint-length 6 step report
-hint-length 6 step start
 hint-length 60 step start
 hint-length 60 step waybill
 hint-length 61 step start
@@ -104,8 +99,6 @@ hint-length 75 step intro
 hint-length 75 step start
 one-action 1000000 step end:none
 one-action 1000000 step givegold:none
-one-action 11 mob 241 topic totem_return:prev
-one-action 11 mob 242 topic sample_return:prev
 one-action 16 mob 259 topic quest_complete_herbs:prev
 one-action 19 quest 19 trigger mob_death mob=331 grants=19-hunter:prev
 one-action 20 mob 347 topic ullahandoff:prev
@@ -158,9 +151,6 @@ walk-dead-end 67 mob 9316 topic casefilehandoff
 walk-dead-end 67 step report
 walk-destination 1000000 step givegold
 walk-destination 1000000 step start
-walk-destination 11 step sided
-walk-destination 12 step ritual
-walk-destination 13 step extraction
 walk-destination 19 step signed
 walk-destination 63 step report
 walk-destination 65 step report

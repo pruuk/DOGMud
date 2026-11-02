@@ -60,6 +60,17 @@ func TestQuest11CanBeFinishedAfterTalkingToKaelFirst(t *testing.T) {
 			require.Contains(t, menuKeys(df, sided), s.handin, "the chosen side takes the hand-in")
 			require.NotContains(t, menuKeys(loadShippedDialogue(t, s.otherFile), sided), s.otherStand,
 				"the other side's choice is closed")
+
+			// A save from before the sided step: the flag is set, 11-sided is not.
+			reaffirm := "reaffirm_" + s.value
+			flagged := heldState("11-start")
+			flagged.GetQuestFlag = sided.GetQuestFlag
+			flagged.HasItem = sided.HasItem
+			flagged.CarriesItem = sided.CarriesItem
+			require.Contains(t, menuKeys(df, flagged), reaffirm)
+			require.NotContains(t, menuKeys(df, flagged), s.handin, "the hand-in follows sided")
+			require.NotContains(t, menuKeys(df, sided), reaffirm, "a new player never sees it")
+			require.NotContains(t, menuKeys(df, unsided), reaffirm)
 		})
 	}
 }

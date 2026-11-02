@@ -209,7 +209,7 @@ topics:
   hints: "Rhett snatches the samples with eager hands, holds one up to the light,
     then tucks them carefully into his satchel."
   questRequired:
-  - 11-start
+  - 11-sided
   questExcluded:
   - 11-end
   questFlagRequired:
@@ -217,6 +217,23 @@ topics:
   requiresItem: 40032
   grantsQuest: 11-end
   moodChange: friendly
+# A save that chose a side before the sided step existed holds the flag without
+# 11-sided, and may never have heard the terms. A new player never sees this:
+# the stand topic grants 11-sided as it sets the flag.
+- key: reaffirm_rhett
+  kind: info
+  label: I stand by what I chose.
+  text: Good. Then bring me the samples.
+  hints: "Rhett wants windstone samples from the veins on the Rocky Shelf, just
+    south of his camp."
+  marked: true
+  questRequired:
+  - 11-start
+  questExcluded:
+  - 11-sided
+  - 11-end
+  questFlagRequired:
+    11-branch: rhett
 - key: dismiss_sylara_path
   kind: info
   label: Will you still hear me out?
