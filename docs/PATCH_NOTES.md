@@ -1,5 +1,25 @@
 # DOGMud Patch Notes
 
+## 2026-11-02: A new look for the website and the web client
+
+- The game has its own logo: three moons, the middle one crowned. You will see
+  it on the home page, as D.O.G. in the top bar, and as the moons on your
+  browser tab and phone home screen.
+- The website now has a teal bar at the top and bottom of every page, with the
+  menu repeated at the bottom.
+- Settings in the web client lets you choose Dark, Light or Match my device.
+  Light mode now reaches the game panels too, while the game text window stays
+  dark.
+- The side panels have friendlier names: Map, Quests, Health, Inventory, Chat,
+  Status and Automation.
+- On phones and tablets, the panels open from round brass buttons with simple
+  icons. The open one is pressed in, and its name shows above it.
+- The tabs inside Chat, Inventory and Automation are bigger, easier to tap and
+  easier to read. Every chat channel stays in view on a phone.
+- The full screen game now fits a phone's screen properly.
+- After an update, your browser loads the new look straight away instead of
+  an old saved copy.
+
 ## 2026-11-02: Quest givers you can always find
 
 - Seventeen quest givers who stood in dim places now carry a lantern while they
