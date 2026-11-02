@@ -1,5 +1,24 @@
 # DOGMud Patch Notes
 
+## 2026-11-01: Clearer directions for new players in Pothole Coulee
+
+- From the Dark and Dace now warn that typing consider spends the same move an
+  ambush needs, so sizing up your target just before you strike can leave you
+  with no ambush.
+- Hold the Wash now tells you when a bandit scout you killed on the way to Garve
+  does not count. Its hints also say that more scouts hold Gravel Bend, and they
+  give the way to the squatter from wherever you are standing.
+- Dewey now teaches that a foe may block your flee, and to type flee again if it
+  does.
+- Cleric Hadwen no longer says the rite is done until it is.
+- The Unquiet Grove now says any way of bringing the creature down counts, with
+  a spell or your weapon.
+- Hints about sethome now say it wakes you at the Mending Hut, wherever you type
+  it.
+- Smaller fixes: a free drink nobody offered, a tutor who was not in the School
+  Hall, a payment Vorn announced twice, and Garve promising more gear than the
+  bandits often leave.
+
 ## 2026-11-01: Robbing a creature angers that creature
 
 - Robbing a creature angers that creature, not every one of its kind. Others of
