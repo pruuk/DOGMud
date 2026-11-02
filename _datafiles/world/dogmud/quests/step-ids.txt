@@ -153,7 +153,6 @@
 39-throw
 4-end
 4-evidence
-4-investigate
 4-start
 40-end
 40-slain
@@ -390,3 +389,4 @@
 
 # renamed
 32-consider -> 32-special
+4-investigate -> 4-start

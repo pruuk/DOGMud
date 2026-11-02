@@ -10,17 +10,17 @@ opener:
     with, if you are the helping sort.
   hints: Choose a line below to hear where you are, or about the help he needs.
   variants:
-  # The hand-in gates on 9-start plus the ledger, not on 9-deliver: a ledger
-  # picked up before accepting grants no deliver step (batch 2 review B1).
-  # So the "you have it" line keys on carrying the ledger, and 9-deliver
-  # marks a player who had the ledger and no longer carries it.
+  # The hand-in gates on 9-deliver, which Pell's copy starts. The "you have it"
+  # line keys on carrying the ledger, and 9-deliver marks a player who had the
+  # ledger and no longer carries it. A save holding the ledger on 9-start is
+  # covered by the have_it topic.
   - questRequired:
     - 9-start
     questExcluded:
     - 9-end
     carriesItem: 29
     text: You have the ledger? Then let me see it.
-    hints: Choose The Temple's Tithe Audit below to hand over the tithe ledger.
+    hints: Choose a line below to hand over the tithe ledger.
   - questRequired:
     - 9-deliver
     questExcluded:
@@ -28,7 +28,7 @@ opener:
     text: You had the ledger? Then where is it? Clerk Pell keeps the temple's
       copies. He will have another.
     hints: From the Temple Interior, go south twice, then east, then north into the
-      Records Office. Type get ledger.
+      Records Office. Type talk pell.
   - questRequired:
     - 9-start
     questExcluded:
@@ -38,7 +38,7 @@ opener:
       Try the Records Office. Clerk Pell keeps copies of all temple filings. I need
       to see those numbers before I can act.
     hints: From the Temple Interior, go south twice, then east, then north into the
-      Records Office. Type get ledger.
+      Records Office. Type talk pell.
   - questRequired:
     - 9-end
     text: The audit is underway. Both sides are unhappy, which means we are probably
@@ -55,7 +55,7 @@ topics:
     outside the temple to look into it. Find the tithe ledger and compare the numbers.
     I want the truth, even if it is uncomfortable.
   hints: From the Temple Interior, go south twice, then east, then north into the
-    Records Office. Type get ledger.
+    Records Office. Type talk pell.
   questExcluded:
   - 9-start
   - 9-end

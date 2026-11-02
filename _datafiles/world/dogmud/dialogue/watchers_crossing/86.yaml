@@ -111,6 +111,19 @@ topics:
     back room of this booth. I am not a thief. I am the only person who cares enough
     about this bridge to do something about it."
   hints: "Harn taps the heavy ledger on the counter."
+- key: lend_ledger
+  kind: info
+  label: May I see your ledger?
+  text: "Tolva sent you, I expect. Take it. Read every page, and show it to whoever
+    you like. Every coin is in there."
+  hints: "Take the crossing ledger back to Innkeeper Tolva at the Crossing Inn."
+  marked: true
+  questRequired:
+  - 5-start
+  questExcluded:
+  - 5-end
+  itemExcluded: 21
+  givesItem: 21
 - key: no_charter
   kind: info
   label: Do you have a charter for this toll?

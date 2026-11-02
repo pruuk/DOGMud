@@ -56,7 +56,7 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 	cases := []deliveryCase{
 		{
 			name: "Q4 Warden's Report — purse to Tessara", file: "../../_datafiles/world/dogmud/dialogue/dustwalk_road/83.yaml",
-			mobId: 83, heldToken: "4-investigate", grantToken: "4-end", itemId: 16, topic: "evidence",
+			mobId: 83, heldToken: "4-evidence", grantToken: "4-end", itemId: 16, topic: "evidence",
 		},
 		{
 			name: "Q5 Innkeeper's Complaint — ledger to Tolva", file: "../../_datafiles/world/dogmud/dialogue/watchers_crossing/84.yaml",

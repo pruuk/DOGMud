@@ -33,19 +33,9 @@ opener:
       see it."
     hints: "Choose The Warden's Report below to hand Tessara the bandit's purse."
   - questRequired:
-    - 4-investigate
-    questExcluded:
-    - 4-evidence
-    - 4-end
-    text: "You found their camp? Then the proof is close. They keep what they steal
-      in the hollow past it. Documents, a purse with marks on it, anything with
-      names or schedules."
-    hints: "The Bandit Hollow is just south of the Abandoned Campsite. Look among
-      the stolen goods there. Type get purse."
-  - questRequired:
     - 4-start
     questExcluded:
-    - 4-investigate
+    - 4-evidence
     - 4-end
     text: "Any luck at the bandit camp? I need hard evidence. Documents, a purse with
       identifying marks, anything. Without proof, the Watchers will not move."

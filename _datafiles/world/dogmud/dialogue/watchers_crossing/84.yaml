@@ -28,8 +28,7 @@ opener:
     - 5-end
     carriesItem: 21
     text: "Is that what I think it is under your arm? Let me see it."
-    hints: "Choose The Innkeeper's Complaint below to hand Tolva the crossing
-      ledger."
+    hints: "Choose a line below to hand Tolva the crossing ledger."
   - questRequired:
     - 5-start
     questExcluded:
@@ -38,7 +37,7 @@ opener:
     text: "Any luck with that ledger? The sooner I have proof, the sooner I can write
       to the magistrate."
     hints: "From the Crossing Inn, go south to the West Approach, then east into the
-      Tollhouse. The ledger sits on the counter. Type get ledger."
+      Tollhouse. Type talk harn."
 topics:
 - key: help_quest
   kind: offer
