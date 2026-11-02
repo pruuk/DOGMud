@@ -178,9 +178,9 @@ tree:
           mob_id: 9491
           delay: 4.0
           text: >-
-            One thing left. The [?] beside my name means you can finish your
-            quest with me. Type <ansi fg="command">talk dewey</ansi> and
-            choose it.
+            One thing left: finish your quest with me. Type
+            <ansi fg="command">talk dewey</ansi> and choose the line
+            marked [?].
 
     # ── arrival, the quest set aside mid-fight ──
     - type: sequence

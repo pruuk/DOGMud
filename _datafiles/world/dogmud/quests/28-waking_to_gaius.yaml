@@ -154,7 +154,8 @@ steps:
     description: "You put the effigy down: voice, belief, and body, all
       yours."
     hint: "This fight cannot be won. Flee breaks you out of a fight and
-      runs you to safety. Type flee. For more, type help flee."
+      runs you to safety. Type flee. The effigy may block you. If it does,
+      type flee again. For more, type help flee."
   - id: fled
     # Dewey takes the hand-in (#375 phase 7). He stands in every antechamber
     # room, and the map follows the copy the player can see.
@@ -655,7 +656,7 @@ triggers:
             - {delay: 2, whisper: true, text: "Now the last lesson, the one
                 your instincts already gave you. This fight cannot be won.
                 Flee breaks you out of a fight. Type flee to break away and
-                live."}
+                live. It may block you. If it does, type flee again."}
 
   # Fires once the flee has worked and the player has arrived in 6467, where
   # Dewey is waiting (NewRound_DoCombat_helpers.go notifyFleeSucceeded). A
