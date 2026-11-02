@@ -29,7 +29,7 @@ opener:
     hints: The scholar is polite, and no more than polite. Choose a line below
       to hear about the mark or the Margin.
   - questRequired:
-    - 74-descent
+    - 74-reveal
     questExcluded:
     - 74-end
     carriesItem: 40142
@@ -60,7 +60,7 @@ topics:
 # Quest 74's Margin choice (spec R28): the warning (margin_terms) must be
 # heard first, and both hide once the choice is made (74-end). The Keepers
 # side is Aldric's (9464), built the same way. The hand-in gates on
-# 74-descent, the step before the rubbing is given, plus the rubbing.
+# 74-reveal, the step that gives the rubbing, plus the rubbing.
 - key: marginhandoff
   kind: handin
   quest: 74
@@ -75,7 +75,7 @@ topics:
   heardRequired:
   - margin_terms
   questRequired:
-  - 74-descent
+  - 74-reveal
   questExcluded:
   - 74-end
   requiresItem: 40142
@@ -103,7 +103,7 @@ topics:
     choose The Undercroft below.
   marked: true
   questRequired:
-  - 74-descent
+  - 74-reveal
   questExcluded:
   - 74-end
   carriesItem: 40142

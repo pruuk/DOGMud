@@ -30,7 +30,7 @@ opener:
     hints: If you lost the rubbing, Brother Cael can draw you a clean copy. Choose
       to tell him below.
   - questRequired:
-    - 74-descent
+    - 74-reveal
     questExcluded:
     - 74-end
     carriesItem: 40142
@@ -51,8 +51,7 @@ opener:
       east twice to the Prioress's Oratory, south into the Older East Corridor, then
       east to the Descent Stairhead. Go down, then west three times to the Seeping
       Passage. Go down again, then west twice to the Water Gallery. Go down once
-      more, then west three times to the Chamber of the Old Sky. Type look orbital
-      face.
+      more, then west three times to the Chamber of the Old Sky. Type search.
   - questRequired:
     - 74-survey
     questExcluded:
@@ -68,7 +67,7 @@ opener:
     text: One record left. The mason's survey, in the Older East Corridor.
     hints: From the Archive, go west to the North Walk, south to the Cloister Garth,
       east twice to the Prioress's Oratory, then south into the Older East Corridor.
-      Type look survey.
+      Type search.
   - questRequired:
     - 74-ledger
     questExcluded:
@@ -77,7 +76,7 @@ opener:
     text: You have read the ledger. Now the consecration record, in the Chapter
       House.
     hints: From the Archive, go west to the North Walk, then west into the Chapter
-      House. Type look record.
+      House. Type search.
   - questRequired:
     - 74-start
     questExcluded:
@@ -86,8 +85,7 @@ opener:
     text: Three records. Start with the building ledger, here on the stand. Then
       the consecration record in the Chapter House, then the mason's survey in the
       Older East Corridor. See all three, then come back to me.
-    hints: The building ledger lies open on the stand beside Brother Cael. Type look
-      ledger.
+    hints: The building ledger lies open on the stand beside Brother Cael. Type search.
   - questRequired:
     - 73-end
     questExcluded:
@@ -95,15 +93,13 @@ opener:
     text: I am Brother Cael, and I keep the Archive, within limits. Most days
       nobody asks to see any of it. Today is not most days, I think.
       You carry the Margin's question.
-    hints: Choose a line below to learn about the archive, about the building
-      ledger, about the Margin, or about Aldric. He would welcome help with the
-      records.
+    hints: Choose a line below to learn about the archive, the ledger, the Margin
+      or Aldric. Quist the Elder at the Margin Hall has the next step, if you
+      have not taken it from him.
 topics:
-- key: q74_grant
-  kind: offer
-  quest: 74
-  label: The Undercroft
-  playerLine: Can I help you read what the temple's records say?
+- key: q74_work
+  kind: info
+  label: What should I read?
   text: 'So the Margin''s question has reached the archive, and you with it. Good.
     I am tired of being the only one who reads these. Here is the work, and it is
     reading, not digging: three of the temple''s own records disagree with its
@@ -111,14 +107,13 @@ topics:
     record in the Chapter House. And a mason''s survey in the Older East Corridor,
     by the stair. See all three yourself. Aldric has allowed that much. Then come
     back to me.'
-  hints: Accept, then read the building ledger open on the stand beside Brother
-    Cael. Type look ledger.
+  hints: Read the building ledger open on the stand beside Brother Cael. Type search.
+  marked: true
   questRequired:
-  - 73-end
-  questExcluded:
   - 74-start
+  questExcluded:
+  - 74-ledger
   - 74-end
-  grantsQuest: 74-start
 - key: q74_turnin
   kind: info
   label: I have read all three records.
@@ -132,7 +127,7 @@ topics:
     east twice to the Prioress's Oratory, south into the Older East Corridor, then
     east to the Descent Stairhead. Go down, then west three times to the Seeping
     Passage. Go down again, then west twice to the Water Gallery. Go down once more,
-    then west three times to the Chamber of the Old Sky. Type look orbital face.
+    then west three times to the Chamber of the Old Sky. Type search.
   marked: true
   questRequired:
   - 74-survey

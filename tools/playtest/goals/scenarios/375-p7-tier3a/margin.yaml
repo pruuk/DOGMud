@@ -1,0 +1,31 @@
+# MARGIN seat: quests 73 and 74 from Quist to one ending. Every record is found with
+# `search`, and Quist now offers The Undercroft herself. Quote game lines VERBATIM and
+# in order. Report what the game said, not what you expected.
+ephemeral:
+  profile: mid
+  start_room: 6220
+  overlays:
+    grant_items: [20096]
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Type `talk quist` and take The Margin Notation. Type `hint`. At each step, follow
+    only the hint and the `quests` guide line. At each record, first `look` at the
+    thing the hint names and quote it, then type `search` and quote every line in
+    order. Say whether anything you read was false, and how many moves each step cost.
+  - >-
+    Hand in to Quist. Quote every line, in order. Does The Undercroft come up as an
+    offer with no extra command? Accept it, quote the card, and follow its hint to
+    Brother Cael. Quote his opener and menu, and say whether what he says fits what
+    Quist told you.
+  - >-
+    Follow The Undercroft through its records and back to Cael, then down to the
+    Chamber of the Old Sky. Equip your torch when a hint says the way is dark. Search
+    there and quote it. Type `inventory` and confirm the rubbing.
+  - >-
+    Drop the rubbing and leave it. Go to Cael and quote what he offers, and get another
+    if he offers one. Then talk to Aldric and to the Margin scholar. Quote what each
+    says before you choose, and whether the hint and map found them. Choose one ending
+    and quote the hand-in. Then type `talk quist` and quote what she says.
