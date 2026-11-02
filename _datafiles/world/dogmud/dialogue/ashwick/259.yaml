@@ -76,9 +76,8 @@ topics:
     whoever has been cutting my clearing, if you meet them, tell them I would rather
     work with them than against them."
   questRequired:
-  - 16-start
-  questExcluded:
   - 16-forager
+  questExcluded:
   - 16-end
   requiresItem: 40040
   grantsQuest: 16-end

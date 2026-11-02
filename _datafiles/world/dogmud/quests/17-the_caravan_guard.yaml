@@ -18,11 +18,9 @@ steps:
     description: "The caravan master has asked you to deal with
       the bandits on the north road and bring back their leader's
       iron pin as proof."
-    hint: "The bandits camp just west of the north road. From the
-      village square, go north once, then west into the Bandit Camp.
-      Kill their leader, Soren. He carries an iron pin; pick it up
-      when he falls and bring it back to the caravan master in the
-      village square. Type talk caravan."
+    hint: "The bandits camp west of the north road: from the village
+      square, go north, then west. Kill their leader, Soren, take his
+      iron pin, and bring it back. Type talk caravan."
   - id: end
     description: "The bandit situation has been resolved."
 

@@ -6,9 +6,8 @@ steps:
 - id: start
   description: The Tunnel Shaman has asked you to bring a healing salve as proof of
     good intent. Obtain one and bring it to the shaman in the Low Junction.
-  hint: Bring a healing salve to the Tunnel Shaman in the Low Junction, just below
-    the Narrow Descent at the warren's entrance. Apothecary Ilsa in Stillwater sells
-    healing salves, and alchemists can make them. Type talk shaman.
+  hint: Bring a healing salve to the Tunnel Shaman in the Low Junction, below the
+    Narrow Descent. Apothecary Ilsa in Stillwater sells them. Type talk shaman.
   destination:
     room: 301  # Low Junction — Tunnel Shaman (mob 74) delivery target
 - id: end

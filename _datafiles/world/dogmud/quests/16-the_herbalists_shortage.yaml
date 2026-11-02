@@ -14,11 +14,9 @@ steps:
       wild herbs from the forest before she can harvest
       them. Investigate the forest north of the hamlet's
       east edge."
-    hint: "From the East Edge of Ashwick, follow the forest
-      path north three times to a hidden camp. Whoever lives
-      there gathers in the herb clearing just west of it in
-      the mornings. They sleep at the camp late at night. Type talk
-      forager."
+    hint: "From the East Edge of Ashwick, follow the forest path
+      north three times to a hidden camp. Whoever lives there
+      gathers just west of it in the mornings. Type talk forager."
   - id: forager
     destination:
       mob: 259  # follow Delia (schedule ashwick_delia) — a fixed room is wrong for part of the day
@@ -27,12 +25,9 @@ steps:
       who has been harvesting Delia's herbs. They have
       agreed to work with Delia if you vouch for them.
       Return to Delia with the news."
-    hint: "Delia keeps her cottage north of Ashwick's Central
-      Green. From the forager's camp, go south three times to
-      the East Edge, west twice to the green, then north. In
-      the afternoon she works in the garden behind the cottage,
-      and at dusk she sits on the green. She sleeps at the cottage at
-      night. Type talk delia."
+    hint: "Delia keeps her cottage north of Ashwick's Central Green.
+      In the afternoon she is in the garden behind it, and at dusk
+      on the green. Type talk delia."
   - id: end
     description: "You resolved Delia's herb shortage. She
       is grateful, and her worktable is open to you."

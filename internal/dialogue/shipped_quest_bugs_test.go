@@ -161,3 +161,26 @@ func TestGiversHandleAHeldItem(t *testing.T) {
 		require.NotContains(t, menuKeys(df, onStart), c.handin, c.file)
 	}
 }
+
+// Tier 2: a hand-in follows the quest's last step.
+func TestTier2HandInsFollowTheLastStep(t *testing.T) {
+	for _, c := range []struct {
+		file, topic, onPrev, onLast string
+		item                        int
+	}{
+		{"ashwick/259.yaml", "quest_complete_herbs", "16-start", "16-forager", 40040},
+		{"new_plymouth_outskirts/9208.yaml", "guardhandoff", "60-waybill", "60-manifest", 40073},
+		{"stillwater/347.yaml", "ullahandoff", "20-kingfisher_found", "20-vella_journal", 40061},
+		{"stillwater/355.yaml", "vellahandoff", "20-brindle_confession", "20-kingfisher_found", 40060},
+	} {
+		df := loadShippedDialogue(t, c.file)
+		state := func(tok string) *PlayerState {
+			ps := heldState(tok)
+			ps.HasItem = func(id int) bool { return id == c.item }
+			ps.CarriesItem = ps.HasItem
+			return ps
+		}
+		require.NotContains(t, menuKeys(df, state(c.onPrev)), c.topic, c.file)
+		require.Contains(t, menuKeys(df, state(c.onLast)), c.topic, c.file)
+	}
+}

@@ -41,7 +41,7 @@ topics:
     whole road, did it? And you with it. Here, a courier's token. The post-houses
     will know it. The capital remembers who carries its word.
   questRequired:
-  - 60-start
+  - 60-manifest
   questExcluded:
   - 60-end
   requiresItem: 40073

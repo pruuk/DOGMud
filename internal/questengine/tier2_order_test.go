@@ -40,3 +40,11 @@ func TestQuest61ReachFirstGrantsNothingAndSaysSo(t *testing.T) {
 	e.Notify("mob_death", EventDetails{UserId: 1, MobId: 9178, RoomId: 100}, p, ctx)
 	assert.True(t, p.HasQuest("61-reach"))
 }
+
+// Quest 19: a hunter killed before a swarm grants nothing.
+func TestQuest19HunterAfterShrimp(t *testing.T) {
+	p, _ := runKills(t, "19", "19-start", 331)
+	assert.False(t, p.HasQuest("19-hunter"))
+	p, _ = runKills(t, "19", "19-start", 330, 331)
+	assert.True(t, p.HasQuest("19-hunter"))
+}
