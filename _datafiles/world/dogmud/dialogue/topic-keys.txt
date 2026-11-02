@@ -453,10 +453,12 @@
 9106.way_scout_tarn
 9107.door_lore
 9107.eyes
+9107.out_there
 9107.passage
 9107.passage_2
 9107.road_esk_end
 9107.watching
+9107.what_it_does
 9108.bash_help
 9108.combat_help
 9108.cudgel_have
