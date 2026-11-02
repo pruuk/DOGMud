@@ -37,6 +37,9 @@ character:
     into the matter and would pay well to see it resolved.
   speciesid: 1
   gold: 80
+  equipment:
+    light:
+      itemid: 20134
   stats:
     strength:
       base: 108

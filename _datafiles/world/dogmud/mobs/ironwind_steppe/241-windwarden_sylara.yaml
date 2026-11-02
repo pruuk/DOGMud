@@ -41,6 +41,9 @@ character:
   speciesid: 1
   level: 1
   gold: 0
+  equipment:
+    light:
+      itemid: 20134
   spellbook:
     empathic-shroud: 6
     vital-surge: 8

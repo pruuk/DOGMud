@@ -44,7 +44,7 @@ func TestShippedLightItemsMatchTheLadder(t *testing.T) {
 	}{
 		{40077, 38, false}, // Tallow Candle
 		{40038, 52, false}, // Oil Lantern
-		{20134, 52, false}, // Keeper's Lantern (coulee NPCs, owner 2026-10-17)
+		{20134, 52, false}, // Keeper's Lantern (coulee NPCs and dim quest givers, owner 2026-10-17)
 		{20096, 56, false}, // Torch
 		{20097, 54, true},  // Hooded Lantern
 		{20099, 46, false}, // Sunstone (lighting 5e)

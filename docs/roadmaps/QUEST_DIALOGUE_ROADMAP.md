@@ -332,9 +332,11 @@ spec.
   (quest 80) goes with them.
 - Quest 76 redesign: the disc leaves the newbie zone (#625).
 - Quests 15, 16, 28, 30, 31 move to NPC starts; quest 21 becomes a flag.
-- Bugs: #613 (quest 11 soft-lock, live on prod), #616 (Kael), #290 (Marek's duplicate
-  notice), the #611 grant-first ordering findings, Soren's unreachable `give_crate`, the six
-  17-letter gates in Ashwick 259/260.
+- Bugs, all resolved (checked 2026-11-02). Already fixed by the phase 1 conversion and phase 3b:
+  #613 (quest 11 soft-lock), #290 (Marek's duplicate notice), the #611 validator findings, the
+  six 17-letter gates in Ashwick 259/260. Soren's unreachable `give_crate` went with the crate
+  ending the owner removed on 2026-10-23. #616 (Kael) closed by giving every dim quest giver a
+  lantern (`internal/guards/quest_giver_light_guard_test.go`).
 
 **Closing step.** Validators become hard boot failures; `room_interact` is deleted; the dash
 guards stop exempting dialogue, quests and conversations.
