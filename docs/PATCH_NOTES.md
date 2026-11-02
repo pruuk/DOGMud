@@ -4,7 +4,9 @@
 
 - From the Dark and Dace now warn that typing consider spends the same move an
   ambush needs, so sizing up your target just before you strike can leave you
-  with no ambush.
+  with no ambush. `help ambush` says so too.
+- Dewey and Drillmaster Vorn now explain that consider, spells and special moves
+  share one recovery.
 - Hold the Wash now tells you when a bandit scout you killed on the way to Garve
   does not count. Its hints also say that more scouts hold Gravel Bend, and they
   give the way to the squatter from wherever you are standing.
