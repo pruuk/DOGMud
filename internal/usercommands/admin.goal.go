@@ -30,6 +30,7 @@ import (
 //	goal add <mob-ident> <type> <priority> [key=value ...]
 //	goal remove <mob-ident> <goal-id>
 //	goal clear <mob-ident>
+//	goal here <name of a mob in this room>
 //
 // mob-ident is either a numeric template id (e.g. 371) or a namesimple
 // (e.g. tova).

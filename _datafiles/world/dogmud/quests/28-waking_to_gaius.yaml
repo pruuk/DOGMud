@@ -656,7 +656,7 @@ triggers:
             - {delay: 2, whisper: true, text: "Now the last lesson, the one
                 your instincts already gave you. This fight cannot be won.
                 Flee breaks you out of a fight. Type flee to break away and
-                live. It may block you. If it does, type flee again."}
+                live. The effigy may block you. If it does, type flee again."}
 
   # Fires once the flee has worked and the player has arrived in 6467, where
   # Dewey is waiting (NewRound_DoCombat_helpers.go notifyFleeSucceeded). A

@@ -350,6 +350,31 @@ func TestQuest33_ScoutKilledBeforeGarveIsExplainedAndMovesNothing(t *testing.T) 
 		_, said := kill()
 		require.NotContains(t, said, tooSoon, "a player not on the quest hears nothing")
 	})
+
+	killSquatter := func(tokens ...string) (*fullMockPlayer, string) {
+		e := NewEngine()
+		qq := q
+		e.RegisterQuest(&qq)
+		player := newFullMockPlayer(lowerWash)
+		for _, tok := range tokens {
+			player.quests[tok] = true
+		}
+		ctx := newFullMockActionContext(1, player)
+		e.Notify("mob_death", EventDetails{UserId: 1, MobId: 9111, RoomId: lowerWash}, player, ctx)
+		return player, strings.Join(ctx.sentTexts, "\n")
+	}
+
+	t.Run("a squatter before the scout", func(t *testing.T) {
+		player, said := killSquatter("33-start", "33-met")
+		require.Contains(t, said, tooSoon, "the player must read why the kill did not count")
+		require.False(t, player.HasQuest("33-squatter"), "the scout comes first")
+	})
+
+	t.Run("a squatter after the scout", func(t *testing.T) {
+		player, said := killSquatter("33-start", "33-met", "33-scout")
+		require.NotContains(t, said, tooSoon, "this kill did count")
+		require.True(t, player.HasQuest("33-squatter"), "this kill is the step")
+	})
 }
 
 func requireNoMarkedInfoBefore(t *testing.T, df *dialogue.DialogueFile, key string) {

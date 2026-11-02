@@ -69,6 +69,17 @@ func TestGoalHereReport_ShowsAMobsOwnGoalAndWhatItActsOn(t *testing.T) {
 	}
 }
 
+func TestGoalCmd_HereWithNoNameOrNoSuchMobRunsWithoutError(t *testing.T) {
+	defer goalTestSetup(t)()
+	admin, room := getTestUserAndRoom(t)
+	for _, rest := range []string{"here", "here nobody-by-this-name"} {
+		handled, err := Goal(rest, admin, room, 0)
+		if err != nil || !handled {
+			t.Errorf("Goal(%q) = %v, %v", rest, handled, err)
+		}
+	}
+}
+
 func TestGoalCmd_NoArgsRunsWithoutError(t *testing.T) {
 	defer goalTestSetup(t)()
 	admin, room := getTestUserAndRoom(t)

@@ -72,8 +72,8 @@ triggers:
       - actor: >-
           Slates and crooked desks fill the quiet hall, and a card on the
           notice board says no question is too small or too strange. When the
-          changes start and you want to know what is happening to you, this
-          hall is where you come. Next, go to Coulee Provisions, south past
+          changes start and you want to know what is happening to you, type
+          help mutations. Next, go to Coulee Provisions, south past
           Hub Square to Market Row and then east, and type list.
 
   # ── PROVISIONS: list Onna's wares (room 5207), teaches `list` ──

@@ -4,8 +4,8 @@
 name: 375-p7-clean-theft
 mode: party
 summary: >-
-  A skilled thief robs a peaceful generic mob, waits to see whether anything
-  comes after it, then fights and flees the same mob.
+  A skilled thief robs a generic mob it has never fought and waits to see
+  whether anything comes after it.
 on_actor_stop: continue
 budgets:
   wall_clock: 25m

@@ -124,6 +124,17 @@ triggers:
           Squatter's Hollow, and the hollow is south of the Lower Wash. In the
           cistern, type attack squatter.
 
+  # A squatter killed before the scout moves nothing, and says why.
+  - event: mob_death
+    mob: 9111
+    conditions:
+      has: ["33-start"]
+      missing: ["33-scout"]
+    actions:
+      - actor: >-
+          That squatter does not count yet. Garve's job takes a scout first,
+          then a squatter. Type hint to see what comes next.
+
   # squatter: a bandit squatter (9111), after the scout.
   - event: mob_death
     mob: 9111
