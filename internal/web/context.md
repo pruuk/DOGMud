@@ -119,10 +119,12 @@ The web system is built around Go's standard `net/http` package with several key
 {{.STATS}}    <!-- Server statistics -->
 {{.NAV}}      <!-- Navigation menu items -->
 {{.ASSETV}}   <!-- assetVersion: the server start time in base 36. Put it on every
-     static CSS, JS and icon link as ?v={{ .ASSETV }} so browsers fetch fresh
-     copies after each restart (deploy). TestStaticLinksCarryAssetVersion in
-     assetversion_test.go fails on an untagged link in _header.html,
-     webclient-pure.html or build.html. -->
+     /static link in a page (CSS, JS, images, icons, manifest) as
+     ?v={{ .ASSETV }} so browsers fetch fresh copies after each restart
+     (deploy). assetversion_test.go fails on an untagged /static href or src
+     in any top-level public page, and if templateData stops setting ASSETV.
+     Not covered: the icon list inside static/manifest.json (plain JSON) and
+     the /favicon.ico route, which serves favicon.png untagged. -->
 {{.COMPANION_RELAY_ORIGIN_JSON}}  <!-- relayOriginJSON(): the companion key relay origin
      as a JSON string literal ("" when none). Templates are text/template and escape
      nothing, so it is JSON-encoded in Go and used UNQUOTED inside a script. -->

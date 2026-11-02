@@ -67,6 +67,9 @@
 
     function place(btn, preview) {
       if (!btn) { pill.classList.remove("shown"); return; }
+      // Phone bar with no panel open: there is no strip above the bar for the
+      // name, so a hover preview would sit over the command box. Skip it.
+      if (preview && !openName && extraClass === "gtabs-phone") { pill.classList.remove("shown"); return; }
       pill.textContent = PANEL_TABS[btn.dataset.panel].label;
       pill.classList.toggle("preview", !!preview);
       pill.classList.add("shown");
@@ -138,9 +141,10 @@
     init: function () {
       // Record each side panel's home column so we can restore later.
       // Order within each col is preserved by the original DOM order.
-      SIDE_PANELS.forEach(function (name) {
-        var panel = document.getElementById("panel-" + name);
-        if (!panel) return;
+      // Every panel, not only the side ones: redock() needs the Game
+      // panel's home too, or a docked Game window lands under the command
+      // box (BAR finding, 2026-11-02).
+      document.querySelectorAll("#dashboard .dash-panel").forEach(function (panel) {
         var col = panel.closest(".dash-col");
         if (col) panel.dataset.homeCol = col.id;
       });
@@ -276,12 +280,16 @@
       this._poppedWhileNarrow = (this._poppedWhileNarrow || []).concat(names);
       // The saved layout keeps these as popped: they come back in wide.
       this._suspendSave = true;
-      names.forEach(function (name) {
-        var wb = self._popped[name];
-        if (wb && typeof wb.close === "function") wb.close();
-        else self.redock(name);
-      });
-      this._suspendSave = false;
+      try {
+        names.forEach(function (name) {
+          var wb = self._popped[name];
+          if (wb && typeof wb.close === "function") wb.close();
+          else self.redock(name);
+        });
+      } finally {
+        // Always resume saving, even if a window throws while closing.
+        this._suspendSave = false;
+      }
     },
 
     _repopAfterNarrow: function () {
