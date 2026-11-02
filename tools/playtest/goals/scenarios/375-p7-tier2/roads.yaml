@@ -1,12 +1,12 @@
-# ROADS seat: the shorter quests, on the hints alone, plus two old saves. This
-# character is seeded mid-way through quest 20 (at garden_marker) and on quest 61
-# holding a flag an older version of that quest set. Quote game lines VERBATIM.
+# ROADS seat: the shorter quests, on the hints alone, plus old saves. This
+# character is seeded mid-way through quest 20 (at garden_marker) and on quest 61.
+# The harness cannot seed the retired 61-reach-first flag: it refuses a flag no
+# quest declares, and nothing in the data reads it now. Quote game lines VERBATIM.
 ephemeral:
   profile: mid
   start_room: 4049
   overlays:
     set_quest_tokens: ["20-start", "20-workshop_carving", "20-temple_pillars", "20-garden_marker", "61-start"]
-    set_quest_flags: {"61-reach-first": "yes"}
   budgets:
     wall_clock: 50m
 
