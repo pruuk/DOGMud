@@ -16,6 +16,8 @@
   onto the dummy, and Dace or the dummy's bells make fun of you. Strike from
   hiding at a creature of the mine and miss, and it makes fun of you too.
   The step still counts, because the lesson is in trying.
+- Kill something in the mine without striking from hiding first, and you are
+  told why it did not count and how to try again.
 - Only a real theft counts for a theft step. Picking up a purse from the
   floor does not, and neither does getting the same purse a second time.
 - A thing you steal that is too heavy to carry now falls at your feet and

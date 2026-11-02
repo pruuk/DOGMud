@@ -29,8 +29,8 @@ steps:
     description: >-
       Lift three purses from the pocket dummy on the Reed Jetty. Picking a purse
       up does not count: each must come out of the coat. It refills its own
-      coat if you give it a moment between tries, and your hands need a moment
-      to recover too.
+      coat if you give it a moment between tries, and your hands need about a
+      minute to recover.
     hint: >-
       On the Reed Jetty, type steal dummy.
   - id: lifted

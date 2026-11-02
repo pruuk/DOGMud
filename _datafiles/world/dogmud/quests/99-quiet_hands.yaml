@@ -63,24 +63,29 @@ steps:
       in its coat. Lift it. Picking a purse up does not count: it must come out
       of the coat. If you find nothing, its pocket is empty, so give it a moment
       to fill. If the dummy catches you it swings back, harmlessly. Knock it
-      down and a fresh one is set out.
+      down and a fresh one is set out. Steal names who you rob, not the thing
+      you want, so it is steal dummy, and never steal purse.
     hint: >-
-      On the Reed Jetty, type steal dummy. Your hands need a moment to recover
-      between tries.
+      On the Reed Jetty, type steal dummy. Your hands need about a minute to
+      recover between tries.
   - id: lifted
     description: >-
       The purse is yours. Now put it back in the dummy's coat. You cannot do
       that while it is swinging at you, so knock it down first and wait for a
       fresh one. If you no longer have the purse, lift another.
     hint: >-
-      Type plant purse on dummy. Your hands need a moment to recover first.
+      Type plant purse on dummy. Your hands need about a minute to recover
+      from the last try first.
   - id: planted
     description: >-
       Last, pick the lockbox chained to the jetty post. If it is already open,
-      wait a little. It locks itself again. A wrong pin costs you a pick but
-      shows you which way that pin goes. If the set runs out, Dace has another.
+      wait a little. It locks itself again. A wrong pin breaks one pick and
+      starts the lock over, so type picklock lockbox again, and send that pin
+      the other way. A set holds three picks. If the set runs out, Dace has
+      another.
     hint: >-
-      Type picklock lockbox. Then choose up or down for each pin.
+      Type picklock lockbox, then choose up or down for each pin. A wrong pin
+      breaks a pick. If the set runs out, Dace has another.
   - id: picked
     destination:
       mob: 9126

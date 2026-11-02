@@ -610,9 +610,9 @@ topics:
     and he knows more about light and dark than anyone in the coulee. Fair warning,
     it is a long walk and not a safe one. Past the Coulee Smithy the path climbs the
     talus, and the scavengers and lurkers on that slope attack on sight. One at a
-    time you can beat them, but not all of them in a row, so rest between fights and
-    flee if one turns against you. If you have never been in a fight, see Drillmaster
-    Vorn first.
+    time you can beat them, but not all of them in a row, so rest between fights. If
+    one turns against you, flee, and keep trying, because the quick ones often block
+    you. If you have never been in a fight, see Drillmaster Vorn first.
   hints: From Hub Square go north, west five times to the Coulee Smithy, north,
     west five times to the Mine Mouth, then down. Type talk gethin.
   questRequired:

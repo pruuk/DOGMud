@@ -18,7 +18,17 @@
 # room west, is the target the text names.
 #
 # A student spotted on the way in, or whose special move has not come back,
-# gets no ambush. The hidden step says what to do in each case.
+# gets no ambush. The hidden step says what to do in each case, and a kill made
+# before the ambush has its own line, which advances nothing.
+#
+# Why the hood and the order of the hint. The only roll on a hider is at the
+# door (actions.EntryDetection): a rank-1 student at Dexterity 100 gets past the
+# brute about 73 times in 100 hooded and 54 with the lantern open
+# (internal/actions/quest100_sneak_odds_test.go). Nothing rolls again while the
+# student stands there. A hooded student sees nothing and cannot pick a target
+# in this sealed room, so the hood must open first, which reveals nothing
+# (internal/usercommands/quest100_hood_strike_test.go). The Flooded Sump
+# respawns its brute in 5 real minutes.
 
 questid: 100
 name: From the Dark
@@ -40,21 +50,26 @@ steps:
   - id: hidden
     description: >-
       You slipped out of sight. West of the drift, in the Flooded Sump, a
-      tunnel brute guards the water. If you carry a lantern, close its hood
-      before you walk in, so your light does not give you away. Beside the
-      brute, open the hood and strike at once. Type consider on it first if
-      you want to size it up. An ambush needs your special move ready, so
-      check cooldowns first. If it spots you there is no surprise: flee, hide
-      again in the drift, and come back.
+      tunnel brute guards the water. Close your lantern's hood and walk in
+      hidden, so your light does not give you away. With the hood shut you
+      see nothing, not even the brute, and you cannot strike what you cannot
+      see. So open the hood beside it and attack at once. Opening it does not
+      give you away. An ambush needs your special move ready, so check
+      cooldowns first. If you read that something notices you, there is no
+      surprise, and a kill will not count: open your hood, flee (it may block
+      you, so keep trying), hide again in the drift, and come back. If the sump
+      is empty the brute is dead, and a new one comes in about five minutes.
     hint: >-
-      Go west into the Flooded Sump and type attack brute.
+      In the Timbered Drift, type hood, then west, then unhood, then attack
+      brute.
   - id: ambush
     description: >-
       Your strike came out of the dark. Now it is an ordinary fight. Finish
       it, or flee if it turns against you and come back to it. Killing any
       creature in the old mine will do.
     hint: >-
-      Keep fighting until it falls. Type flee if the fight turns.
+      Keep fighting until it falls. If the fight turns, type flee, and again if
+      it blocks you.
   - id: kill
     destination:
       mob: 9126
@@ -87,9 +102,25 @@ triggers:
     actions:
       - grant: "100-hidden"
       - actor: >-
-          You are out of sight in the dark. West of the drift lies the Flooded
-          Sump and the brute that guards it. Walk in quietly, open your hood
-          beside it if you carry a lantern, and type attack brute.
+          You are out of sight in the dark. West of the Timbered Drift lies the
+          Flooded Sump and the brute that guards it. From the drift, type hood,
+          then west, then unhood, then attack brute. You will see nothing until
+          the hood opens.
+
+  # ── TOO SOON: a kill before the strike from hiding counts for nothing, and
+  #    says so. It grants nothing, so it fires on each such kill. ──
+  - event: mob_death
+    area: coulee_mine
+    conditions:
+      has: ["100-hidden"]
+      missing: ["100-ambush"]
+    actions:
+      - actor: >-
+          That kill does not count, because your first blow did not come from
+          hiding. If you were noticed, or walked up in the open, hide first. A
+          new brute comes to the sump in about five minutes. Then, from the
+          Timbered Drift, type sneak, then hood, then west, then unhood, then
+          attack brute.
 
   # ── STRIKE: the opening blow from hiding ──
   - event: command

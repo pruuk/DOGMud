@@ -67,8 +67,8 @@ opener:
     questExcluded:
     - 100-kill
     text: The mine is where this lesson is. Not here.
-    hints: In the old mine below the Mine Mouth, where nothing can see you, type
-      sneak. Then attack from hiding.
+    hints: In the Timbered Drift, in the old mine below the Mine Mouth, type
+      sneak, then hood, then west, then unhood, then attack brute.
   - questRequired:
     - 100-kill
     questExcluded:
