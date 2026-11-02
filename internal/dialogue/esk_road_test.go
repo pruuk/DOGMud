@@ -253,4 +253,6 @@ func TestEskSpeaksOfWhatWaitsOutThere(t *testing.T) {
 
 	require.True(t, esk.FindTopic("out_there").Marked)
 	require.Contains(t, esk.FindTopic("passage").Text, "The rest is out there")
+	// #760: every player crossing is told how to wake on the far side.
+	require.Contains(t, esk.FindTopic("passage").Hints, "sethome thornwall")
 }

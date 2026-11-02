@@ -60,7 +60,9 @@ topics:
   label: I'm ready. Open the arch for me.
   text: So. The coulee has taught you what it can, for now. The rest is out there,
     for whoever goes looking.
-  hints: The arch takes a few moments to open. Stay close to Esk.
+  hints: The arch takes a few moments to open. Stay close to Esk. If you fall out
+    there, you will wake at the Mending Hut. To wake in Thornwall instead, type
+    sethome thornwall.
   behavior: true
   questRequired:
   - 30-end
