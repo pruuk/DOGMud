@@ -953,7 +953,6 @@
 9399.craft
 9399.davan
 9399.valley
-94.case_close
 94.case_report_notfound
 94.case_report_truth
 94.case_report_where
@@ -1459,6 +1458,9 @@
 9162.canyon_offer
 # Esk's Road (89) is offered by Crier Toke now (9106.road_esk).
 9100.road_esk
+# Quest 14's report step is gone and nothing ever granted it (#375 phase 7
+# tier 1), so Velk's case_close topic for a save at it can never be chosen.
+94.case_close
 # renamed
 9117.vein_offer -> 9116.vein_offer
 9112.wash_offer -> 9108.wash_offer

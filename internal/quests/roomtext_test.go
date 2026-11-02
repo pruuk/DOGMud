@@ -123,6 +123,8 @@ func TestShippedQuestRoomTextFollowsConvention(t *testing.T) {
 	// choice (spec R28, the choice moved to talk), so their observer lines went.
 	// Batch 5 added 2: the lost-item triggers of quests 69 (the rubbing) and
 	// 71 (the ledger page).
-	assert.Equal(t, 30, checked,
-		"30 quest observer lines ship; a different count means the inventory moved, so re-read this test")
+	// Phase 7 tier 1 took 1 away: quest 14's strongbox is a real container, so
+	// the room_interact trigger with its observer line is gone.
+	assert.Equal(t, 29, checked,
+		"29 quest observer lines ship; a different count means the inventory moved, so re-read this test")
 }

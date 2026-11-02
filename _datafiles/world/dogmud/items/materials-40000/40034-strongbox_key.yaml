@@ -2,8 +2,9 @@ itemid: 40034
 name: Strongbox Key
 not_salable: true
 namesimple: key
+keylockid: 498-strongbox
 description: A heavy brass key with a square-toothed bit, worn smooth from
-  use. The bow is stamped with a crude shipping mark -- a circle bisected
+  use. The bow is stamped with a crude shipping mark, a circle bisected
   by a wavy line.
 type: key
 subtype: mundane

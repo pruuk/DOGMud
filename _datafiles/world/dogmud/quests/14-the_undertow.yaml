@@ -9,7 +9,7 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 492  # Stash Room — sole spawn of the tally stick (item 40035)
+      room: 492  # Stash Room, sole spawn of the tally stick (item 40035)
     description: "Marek at the Drowning Post has been hearing noises from his
       cellar: scraping, voices, the sound of things being moved. The old
       drainage tunnels run beneath the tavern. He hands you a lantern when you
@@ -42,24 +42,21 @@ steps:
     destination:
       room: 498  # Operations Room, where the strongbox is
     description: "You have the key to Torvan's strongbox."
-    hint: "With the key in hand, look at the strongbox to open it. Type
-      look strongbox."
+    hint: "With the key in hand, type unlock strongbox."
+  - id: opened
+    destination:
+      room: 498  # Operations Room, where the strongbox is
+    description: "Torvan's strongbox is open. Whatever proof he kept is inside."
+    hint: "Type get ledger from strongbox."
   - id: evidence
     destination:
-      mob: 94  # follow Guard Captain Velk (schedule thornwall_guard_captain) — a fixed room is wrong for part of the day
+      mob: 94  # follow Guard Captain Velk (schedule thornwall_guard_captain), a fixed room is wrong for part of the day
       room: 473  # fallback when Guard Captain Velk is not spawned
     description: "You have obtained a bribe ledger from the strongbox. It
       names corrupt city officials taking payments to look the other way.
       Guard Captain Velk needs to see this."
     hint: "Take the bribe ledger to Guard Captain Velk at the barracks and
       type talk velk."
-  - id: report
-    destination:
-      mob: 94  # Guard Captain Velk (the hint: talk velk); the strongbox room's trigger is not where to go
-      room: 473  # fallback when Velk is not spawned
-    description: "Guard Captain Velk has the bribe ledger and is reviewing the
-      names. He is ready to act."
-    hint: "Type talk velk to close the case."
   - id: end
     description: "The smuggling tunnels have been exposed and the bribe ledger
       is in the hands of the city watch. Thornwall's underground corruption
@@ -121,122 +118,52 @@ triggers:
           sits beneath his table, locked tight. Whatever proof you need is
           probably in there."
 
-  # ── STRONGBOX: already opened, ledger in hand ─────────
-  # First, so it is judged before the open trigger grants 14-evidence and
-  # gives the ledger; after it, both would fire in the command that opens
-  # the box (#495). A player who lost the ledger is re-issued one by the
-  # "lost ledger" trigger at the end of this file; one who handed it in
-  # gets the "handed in" trigger there. The three are disjoint.
-  - event: room_interact
-    room: 498
-    noun: strongbox
-    conditions:
-      has: ["14-evidence"]
-      has_item: 40036
-    actions:
-      - actor: "The strongbox is open and empty. You have already taken
-          the ledger."
-
-  # ── STRONGBOX: open with key ──────────────────────────
-  - event: room_interact
-    room: 498
-    noun: strongbox
-    conditions:
-      has: ["14-confront"]
-      missing: ["14-evidence"]
-      has_item: 40034
-    actions:
-      - consume_item: 40034
-      - give_item: 40036
-      - grant: "14-evidence"
-      - actor: "You fit the brass key into the padlock and turn. The lock
-          clicks open. Inside the strongbox you find a slim leather journal,
-          a bribe ledger, filled with names, dates, and amounts paid to
-          corrupt city officials. This is the evidence you need."
-      - observer: "{actor} unlocks the strongbox and pulls out a leather journal."
-
-  # ── STRONGBOX: locked (no key) ────────────────────────
-  - event: room_interact
-    room: 498
-    noun: strongbox
-    conditions:
-      has: ["14-confront"]
-      missing: ["14-evidence"]
-      missing_item: 40034
-    actions:
-      - actor: "The strongbox is locked with a heavy brass padlock. You
-          need a key."
-
-  # ── LOOT: Torvan falls ────────────────────────────────
-  # Corpses hold the loot (CorpsesEnabled), so the key is taken by hand.
-  # mob_death reaches every player with kill credit (hooks/
-  # MobDeath_QuestNotify.go). `loot torvan` matches his corpse by name
-  # (rooms.FindCorpseIndex, a close match on "torvan cresk corpse") and is
-  # never taken by a player's own corpse, which `loot corpse` would pick
-  # first; the Operations Room is lamp-lit, so the name is visible.
   - event: mob_death
     mob: 249
     conditions:
       has: ["14-confront"]
       missing: ["14-loot"]
-      missing_item: 40034
     actions:
       - grant: "14-loot"
       - actor: "Torvan Cresk falls. The strongbox key is still on his belt."
 
-  # ── UNLOCK: the key in hand ───────────────────────────
-  # Gated on 14-confront, not 14-loot, so a player who looted a party
-  # member's kill still moves on.
   - event: item_gain
     item: 40034
     conditions:
-      has: ["14-confront"]
+      has: ["14-loot"]
       missing: ["14-unlock"]
     actions:
       - grant: "14-unlock"
 
-  # Catch-up for a player who took the key before reaching the confront
-  # step, and for saves already at 14-confront holding it. It gates on
-  # 14-explore, not 14-confront: anyone holding 14-explore who walks in here
-  # holds 14-confront by the time this runs (the CONFRONT trigger above
-  # grants it on this same room_enter, and triggers run in file order), and
-  # gating on the token that trigger grants is the pattern the loader's
-  # same-command check refuses (quests/samecommand.go, #495).
-  - event: room_enter
-    room: 498
-    conditions:
-      has: ["14-explore"]
-      missing: ["14-unlock"]
-      has_item: 40034
-    actions:
-      - grant: "14-unlock"
-
-  # ── STRONGBOX: lost ledger ────────────────────────────
-  # The ledger comes only from this box, so a player who lost it before
-  # handing it in gets Torvan's second copy. It is not salable and worth
-  # nothing (items 40036: not_salable, value 0), and only one can be held
-  # at a time, so the re-issue cannot be farmed.
-  - event: room_interact
-    room: 498
+  - event: command
+    command: unlock
+    target: container
     noun: strongbox
-    conditions:
-      has: ["14-evidence"]
-      missing: ["14-report"]
-      missing_item: 40036
-    actions:
-      - give_item: 40036
-      - actor: "The strongbox is open and empty. Then your fingers find a
-          false bottom, and under it Torvan's second copy of the bribe
-          ledger."
-
-  # ── STRONGBOX: ledger handed in ───────────────────────
-  # 14-report also holds for 14-end (HasQuest reads later steps as held).
-  - event: room_interact
     room: 498
-    noun: strongbox
     conditions:
-      has: ["14-report"]
-      missing_item: 40036
+      has: ["14-unlock"]
+      missing: ["14-opened"]
     actions:
-      - actor: "The strongbox is open and empty. Guard Captain Velk has the
-          ledger now."
+      - grant: "14-opened"
+
+  # A skilled hand can pick it instead of using the key.
+  - event: command
+    command: picklock
+    target: container
+    noun: strongbox
+    room: 498
+    conditions:
+      has: ["14-unlock"]
+      missing: ["14-opened"]
+    actions:
+      - grant: "14-opened"
+
+  - event: item_gain
+    item: 40036
+    conditions:
+      has: ["14-opened"]
+      missing: ["14-evidence"]
+    actions:
+      - grant: "14-evidence"
+      - actor: "A slim leather journal, a bribe ledger, filled with names, dates, and
+          amounts paid to corrupt city officials. This is the evidence you need."

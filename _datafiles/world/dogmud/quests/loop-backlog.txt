@@ -106,14 +106,6 @@ one-action 1000000 step end:none
 one-action 1000000 step givegold:none
 one-action 11 mob 241 topic totem_return:prev
 one-action 11 mob 242 topic sample_return:prev
-one-action 14 mob 94 topic velkhandoff:prev
-one-action 14 quest 14 trigger item_gain item=40034 grants=14-unlock:prev
-one-action 14 quest 14 trigger mob_death mob=249 grants=14-loot:cond
-one-action 14 quest 14 trigger room_enter room=498 grants=14-unlock:cond
-one-action 14 quest 14 trigger room_enter room=498 grants=14-unlock:prev
-one-action 14 quest 14 trigger room_interact room=498 noun=strongbox grants=14-evidence:cond
-one-action 14 quest 14 trigger room_interact room=498 noun=strongbox grants=14-evidence:prev
-one-action 14 step report:none
 one-action 16 mob 259 topic quest_complete_herbs:prev
 one-action 19 quest 19 trigger mob_death mob=331 grants=19-hunter:prev
 one-action 20 mob 347 topic ullahandoff:prev
@@ -152,11 +144,6 @@ start 1000000 step start
 start 21 step start
 start 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
 start 77 step end
-walk-dead-end 14 mob 94 topic velkhandoff
-walk-dead-end 14 quest 14 trigger item_gain item=40034 grants=14-unlock
-walk-dead-end 14 quest 14 trigger room_enter room=498 grants=14-unlock
-walk-dead-end 14 quest 14 trigger room_interact room=498 noun=strongbox grants=14-evidence
-walk-dead-end 14 step report
 walk-dead-end 16 mob 259 topic quest_complete_herbs
 walk-dead-end 19 quest 19 trigger mob_death mob=331 grants=19-hunter
 walk-dead-end 61 quest 61 trigger mob_death mob=9173 grants=61-reach

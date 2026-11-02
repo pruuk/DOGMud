@@ -24,6 +24,14 @@ exits:
     roomid: 499
 spawninfo:
   - mobid: 249
+  - itemid: 40036
+    container: strongbox
+    respawnrate: 5 real minutes
+containers:
+  strongbox:
+    lock:
+      difficulty: 20
+      relockinterval: 5 real minutes
 nouns:
   maps: City maps annotated in a careful hand. Tunnel routes are traced in
     red ink, gate patrol schedules noted in the margins. Every approach to

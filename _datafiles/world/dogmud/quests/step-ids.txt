@@ -34,7 +34,7 @@
 14-evidence
 14-explore
 14-loot
-14-report
+14-opened
 14-start
 14-unlock
 15-end
@@ -386,6 +386,8 @@
 # it from saves (quests.RetiredQuests).
 29-end
 29-start
+# Quest 14's report step: nothing ever granted it (#375 phase 7 tier 1).
+14-report
 
 # renamed
 32-consider -> 32-special
