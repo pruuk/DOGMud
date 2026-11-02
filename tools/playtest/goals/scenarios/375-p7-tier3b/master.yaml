@@ -1,0 +1,36 @@
+# MASTER CRAFTER seat: has every trade and plenty of gold, in Veyra's Workshop. Quote
+# game lines VERBATIM and in order. Report what the game said, not what you expected.
+ephemeral:
+  profile: mid
+  start_room: 6438
+  overlays:
+    grant_skills:
+      alchemy: 80
+      blacksmithing: 80
+      enchanting: 80
+      jewelcrafting: 80
+      tailoring: 80
+    set_gold: 100000
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `look`, then `talk veyra`. Quote her opener and every line of the menu. How
+    many secrets are listed, and which have a marker? Type `gold` or `score` and note
+    your gold.
+  - >-
+    Choose the Secret of the Blackrazor. Quote every line in order, including the card
+    and its price. Choose Leave. Quote what happens. Has your gold moved? Is the line
+    still on the menu?
+  - >-
+    Choose it again and choose Accept. Quote every line in order. Note your gold: did
+    it fall by exactly the price on the card? Is the line gone from the menu? Type
+    `craft list` and say which recipes you now know.
+  - >-
+    Buy the Wayfarer's Bottomless Pack the same way, checking your gold before and
+    after. Then buy secrets until you cannot afford one. Quote the refusal, and confirm
+    your gold did not move, nothing was learned, and the line stayed on the menu.
+  - >-
+    Open the card for a secret you can no longer afford, then walk out of the room with
+    the card open and answer it from there if the game lets you. Quote what happens.
