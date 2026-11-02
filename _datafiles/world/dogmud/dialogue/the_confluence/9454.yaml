@@ -29,7 +29,7 @@ opener:
     hints: The scholar is polite, and no more than polite. Choose a line below
       to hear about the mark or the Margin.
   - questRequired:
-    - 74-descent
+    - 74-reveal
     questExcluded:
     - 74-end
     carriesItem: 40142
@@ -103,7 +103,7 @@ topics:
     choose The Undercroft below.
   marked: true
   questRequired:
-  - 74-descent
+  - 74-reveal
   questExcluded:
   - 74-end
   carriesItem: 40142

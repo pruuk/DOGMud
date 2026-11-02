@@ -13,7 +13,7 @@
 
 - The Margin Notation and The Undercroft are now followed by searching: at each
   record, type search to find what it shows.
-- Quist the Elder sends you on to Brother Cael herself when you bring her the three
+- Quist the Elder sends you on to Brother Cael as soon as you bring him the three
   records.
 
 ## 2026-11-02: The road north and Stillwater

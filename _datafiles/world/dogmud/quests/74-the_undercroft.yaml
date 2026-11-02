@@ -13,8 +13,9 @@ steps:
     destination:
       mob: 9465  # follow Brother Cael (schedule cf_cael), a fixed room is wrong for part of the day
       room: 6189  # fallback when Brother Cael is not spawned
-    description: "Brother Cael has set you to examine three of the temple's
-      construction records that disagree with its founding story."
+    description: "Quist the Elder has sent you to Brother Cael, to examine three
+      of the temple's construction records that disagree with its founding
+      story."
     hint: "First, the building ledger open on the stand in the Archive, beside
       Brother Cael. Type search."
   - id: ledger
@@ -66,8 +67,8 @@ steps:
       inside the order; the Margin scholar at the Temple Portico would carry it
       out. The choice is yours, and it cannot be undone."
     hint: "Talk to Aldric and to the Margin scholar before you choose who gets
-      the rubbing. Aldric keeps the Chapter House by day. The scholar is at the
-      Temple Portico. Type talk aldric."
+      the rubbing. Aldric keeps the Chapter House by day and sleeps at night.
+      The scholar is at the Temple Portico. Type talk aldric."
   - id: end
     description: "You made your choice with the rubbing of the old sky. The
       Confluence's deepest secret is either carried out into the light, or kept

@@ -30,7 +30,7 @@ opener:
     hints: If you lost the rubbing, Brother Cael can draw you a clean copy. Choose
       to tell him below.
   - questRequired:
-    - 74-descent
+    - 74-reveal
     questExcluded:
     - 74-end
     carriesItem: 40142
@@ -95,7 +95,7 @@ opener:
       You carry the Margin's question.
     hints: Choose a line below to learn about the archive, the ledger, the Margin
       or Aldric. Quist the Elder at the Margin Hall has the next step, if you
-      have not taken it from her.
+      have not taken it from him.
 topics:
 - key: q74_work
   kind: info

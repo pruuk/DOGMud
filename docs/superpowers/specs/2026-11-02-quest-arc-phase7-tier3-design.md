@@ -24,7 +24,7 @@ New:
    component recipe. These are overpowered pinnacle items, and the bar stays high.
 5. **When you lack the skill, she says so and names the trades,** with no numbers.
 6. **She cannot be attacked or baited into attacking,** so nobody can grief by keeping her dead.
-7. **Quist offers The Undercroft** at her hand-in, through the existing chain. No new quest.
+7. **Quist offers The Undercroft** at his hand-in, through the existing chain. No new quest.
 
 ## Facts verified against source (master `e8d4c29e1`, 2026-11-02)
 
@@ -225,10 +225,17 @@ Hint: "Accept, then go to Brother Cael in the Archive on the temple island."
 | 74 `record` | Last, the mason's survey. From the Chapter House, go east, south to the Cloister Garth, east twice to the Prioress's Oratory, then south. Type search. |
 | 74 `survey` | Return to Brother Cael in the Archive, east of the North Walk. He sleeps in the archive chair late at night. Type talk cael. |
 | 74 `descent` | The Descent Stairhead is east of the Older East Corridor. Go down, west three times, down, west twice, down, then west three times to the Chamber of the Old Sky. Type search. |
-| 74 `reveal` | Talk to Aldric and to the Margin scholar before you choose who gets the rubbing. Aldric keeps the Chapter House by day. The scholar is at the Temple Portico. Type talk aldric. |
+| 74 `reveal` | Talk to Aldric and to the Margin scholar before you choose who gets the rubbing. Aldric keeps the Chapter House by day and sleeps at night. The scholar is at the Temple Portico. Type talk aldric. |
 
 Tier 2's playtest showed a hint short of a route costs real moves, so each keeps enough to find the place. The
 plan checks every direction against the room files.
+
+The NPC hints on the bookseller (9444), the scrivener (9431) and the hall-clerk (9435) have no quest gate, so
+they show to anyone. They carry no "Type search", which would send a player with no quest to a search that finds
+nothing. The quest step hints and the gated NPC hints keep it. The `reveal` hint says Aldric sleeps at night
+(he is in his study from hour 19 to 6). The Officiant's `q74_admit`, the Warden's lines and the Historian's hint
+point a player at `73-end` with no 74 to Quist, who now holds the offer, instead of on to Cael. The terms topics
+and the carrying-the-rubbing opener variants gate on `74-reveal`, the step that gives the rubbing.
 
 ## Item audit
 

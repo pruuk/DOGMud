@@ -30,7 +30,7 @@ opener:
     hints: Aldric is courteous, and no more than courteous. Choose a line below
       to hear about the order or about Prioress Crane.
   - questRequired:
-    - 74-descent
+    - 74-reveal
     questExcluded:
     - 74-end
     carriesItem: 40142
@@ -112,7 +112,7 @@ topics:
     The Undercroft below.
   marked: true
   questRequired:
-  - 74-descent
+  - 74-reveal
   questExcluded:
   - 74-end
   carriesItem: 40142
