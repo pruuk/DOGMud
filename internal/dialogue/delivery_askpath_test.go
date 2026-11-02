@@ -60,15 +60,15 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 		},
 		{
 			name: "Q5 Innkeeper's Complaint — ledger to Tolva", file: "../../_datafiles/world/dogmud/dialogue/watchers_crossing/84.yaml",
-			mobId: 84, heldToken: "5-start", grantToken: "5-end", itemId: 21, topic: "ledger",
+			mobId: 84, heldToken: "5-deliver", grantToken: "5-end", itemId: 21, topic: "ledger",
 		},
 		{
 			name: "Q7 Fallow Field — sample to Dorn", file: "../../_datafiles/world/dogmud/dialogue/thornwall_outskirts/89.yaml",
-			mobId: 89, heldToken: "7-start", grantToken: "7-end", itemId: 24, topic: "sample",
+			mobId: 89, heldToken: "7-deliver", grantToken: "7-end", itemId: 24, topic: "sample",
 		},
 		{
 			name: "Q9 Tithe Audit — ledger to Olen", file: "../../_datafiles/world/dogmud/dialogue/thornwall_city/95.yaml",
-			mobId: 95, heldToken: "9-start", grantToken: "9-end", itemId: 29, topic: "ledger",
+			mobId: 95, heldToken: "9-deliver", grantToken: "9-end", itemId: 29, topic: "ledger",
 		},
 		{
 			name: "Q14 Undertow — bribe ledger to Velk (chain->end)", file: "../../_datafiles/world/dogmud/dialogue/thornwall_city/94.yaml",

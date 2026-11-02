@@ -49,12 +49,12 @@ triggers:
     actions:
       - grant: 15-return
 
-  # R15: a player who found the crate first accepts the offer holding it.
-  # Dialogue grants reach quest_granted (hooks/Quest_HandleQuestUpdate.go).
-  - event: quest_granted
-    quest_token: "15-start"
+  # A save on the first step already holding the item (spec, "Old saves").
+  - event: topic_heard
+    mob: 250
+    topic: have_it
     conditions:
+      has: [15-start]
       missing: [15-return]
-      has_item: 40039
     actions:
       - grant: 15-return

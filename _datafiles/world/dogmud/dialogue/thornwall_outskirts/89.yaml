@@ -9,17 +9,16 @@ opener:
   hints: Choose a line below if you want to hear about the pests, his neighbour
     Gareth, or the city.
   variants:
-  # The hand-in gates on 7-start plus the sample, not on 7-deliver: a sample
-  # picked up before accepting grants no deliver step (batch 2 review B1).
-  # So the "you have it" line keys on carrying the sample, and 7-deliver
-  # marks a player who had a sample and no longer carries it.
+  # The hand-in follows the last step (7-deliver). The "you have it" line keys
+  # on carrying the sample, and 7-deliver marks a player who had a sample and
+  # no longer carries it.
   - questRequired:
     - 7-start
     questExcluded:
     - 7-end
     carriesItem: 24
     text: You have one of them? Let me see it.
-    hints: Choose The Fallow Field below to hand over the pest sample.
+    hints: Choose a line below to hand over the pest sample.
   - questRequired:
     - 7-deliver
     questExcluded:
@@ -58,11 +57,26 @@ topics:
   questExcluded:
   - 7-start
   - 7-end
+  itemExcluded: 24
+  grantsQuest: 7-start
+  moodChange: friendly
+- key: help_quest_carrying
+  kind: offer
+  quest: 7
+  label: The Fallow Field
+  playerLine: I killed something in your fields and kept a piece.
+  text: That is a pest from the south fields, and a big one. I have been meaning to
+    ask someone to bring me a sample, so I can see what the fallow field is feeding.
+    Let me look at it.
+  objective: Give the pest sample to Farmer Dorn.
+  questExcluded:
+  - 7-start
+  - 7-end
+  carriesItem: 24
   grantsQuest: 7-start
   moodChange: friendly
 # Hand-in: the sample_return node and the quest 7 give trigger (its npc_say
-# lines) are folded in here. Gated on 7-start plus the sample (B1), so a
-# player who picked up a sample before accepting can hand it in.
+# lines) are folded in here. Gated on 7-deliver, the last step.
 - key: dornhandoff
   kind: handin
   quest: 7
@@ -73,12 +87,27 @@ topics:
     will keep happening. You have done what you can. The rest is politics, and politics
     means getting inside those walls.
   questRequired:
-  - 7-start
+  - 7-deliver
   questExcluded:
   - 7-end
   requiresItem: 24
   grantsQuest: 7-end
   moodChange: grateful
+# For a save already on the first step with the item in hand: nothing starts a
+# step for it, so nothing counts the item (spec, "Old saves"). A new player
+# never sees this; the step start moves them past it.
+- key: have_it
+  kind: info
+  label: I have it here.
+  text: Then let me see it.
+  hints: Choose The Fallow Field below to hand it over.
+  marked: true
+  questRequired:
+  - 7-start
+  questExcluded:
+  - 7-deliver
+  - 7-end
+  carriesItem: 24
 - key: pest_problem
   kind: info
   label: What is wrong with your fields?

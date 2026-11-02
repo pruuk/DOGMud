@@ -60,11 +60,13 @@
 250.buy
 250.crossroads_talk
 250.gossip
+250.have_it
 250.new_plymouth
 250.quest_active
 250.quest_complete_dialogue
 250.quest_done
 250.quest_start
+250.quest_start_carrying
 250.road_talk
 251.buy
 251.crossroads
@@ -340,12 +342,15 @@
 83.about_tessara
 83.bandits
 83.evidence_handoff
+83.have_it
 83.help_quest
+83.help_quest_carrying
 83.road_info
 83.trade
 83.watchers_info
 84.about_brecca
 84.about_harn
+84.have_it
 84.help_quest
 84.inn_services
 84.road
@@ -368,7 +373,9 @@
 89.about_thornwall
 89.dornhandoff
 89.farm
+89.have_it
 89.help_quest
+89.help_quest_carrying
 89.pest_problem
 9100.another_way
 9100.begin
@@ -1210,6 +1217,7 @@
 9497.dry
 9497.hamlet
 9497.well
+95.have_it
 95.merchant_side
 95.olenhandoff
 95.temple

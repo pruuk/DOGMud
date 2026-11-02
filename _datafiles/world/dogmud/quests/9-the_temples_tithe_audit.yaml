@@ -50,13 +50,12 @@ triggers:
     actions:
       - grant: "9-deliver"
 
-  # A player who found the ledger first accepts the offer holding it, so the
-  # step hint moves on to the hand-in. Dialogue grants reach quest_granted
-  # (hooks/Quest_HandleQuestUpdate.go).
-  - event: quest_granted
-    quest_token: "9-start"
+  # A save on the first step already holding the item (spec, "Old saves").
+  - event: topic_heard
+    mob: 95
+    topic: have_it
     conditions:
+      has: ["9-start"]
       missing: ["9-deliver"]
-      has_item: 29
     actions:
       - grant: "9-deliver"

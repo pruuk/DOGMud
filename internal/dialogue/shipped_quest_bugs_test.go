@@ -76,3 +76,62 @@ func TestMarekOnlyReplacesALostNotice(t *testing.T) {
 	carrying.CarriesItem = func(id int) bool { return id == notice }
 	require.NotContains(t, menuKeys(marek, carrying), "lost_notice")
 }
+
+// A held item on the first step: new players go through the carrying offer and
+// Hook 1, and a save from before this shipped gets have_it (spec, "Old saves").
+func TestGiversHandleAHeldItem(t *testing.T) {
+	for _, c := range []struct {
+		file, offer, carrying, handin string
+		item                          int
+		start, deliver, end           string
+	}{
+		{"dustwalk_road/83.yaml", "help_quest", "help_quest_carrying", "evidence_handoff", 16, "4-start", "4-evidence", "4-end"},
+		{"thornwall_outskirts/89.yaml", "help_quest", "help_quest_carrying", "dornhandoff", 24, "7-start", "7-deliver", "7-end"},
+		{"marches_spur_road/250.yaml", "quest_start", "quest_start_carrying", "quest_complete_dialogue", 40039, "15-start", "15-return", "15-end"},
+	} {
+		df := loadShippedDialogue(t, c.file)
+		holding := heldState()
+		holding.CarriesItem = func(id int) bool { return id == c.item }
+		holding.HasItem = func(id int) bool { return id == c.item }
+
+		keys := menuKeys(df, holding)
+		require.Contains(t, keys, c.carrying, c.file)
+		require.NotContains(t, keys, c.offer, c.file)
+		keys = menuKeys(df, heldState())
+		require.Contains(t, keys, c.offer, c.file)
+		require.NotContains(t, keys, c.carrying, c.file)
+		require.NotEmpty(t, df.FindTopic(c.carrying).Objective, c.file)
+
+		// have_it shows only on the start step with the item.
+		onStart := heldState(c.start)
+		onStart.CarriesItem = holding.CarriesItem
+		onStart.HasItem = holding.HasItem
+		require.Contains(t, menuKeys(df, onStart), "have_it", c.file)
+		require.NotContains(t, menuKeys(df, onStart), c.handin, "the hand-in follows the last step: "+c.file)
+		require.NotContains(t, menuKeys(df, heldState(c.start)), "have_it", c.file)
+
+		delivered := heldState(c.start, c.deliver)
+		delivered.CarriesItem = holding.CarriesItem
+		delivered.HasItem = holding.HasItem
+		require.Contains(t, menuKeys(df, delivered), c.handin, c.file)
+		require.NotContains(t, menuKeys(df, delivered), "have_it", c.file)
+	}
+
+	// The ledgers cannot be held before their quests, so they have no second
+	// offer, only have_it for an old save.
+	for _, c := range []struct {
+		file, handin   string
+		item           int
+		start, deliver string
+	}{
+		{"watchers_crossing/84.yaml", "tolvahandoff", 21, "5-start", "5-deliver"},
+		{"thornwall_city/95.yaml", "olenhandoff", 29, "9-start", "9-deliver"},
+	} {
+		df := loadShippedDialogue(t, c.file)
+		onStart := heldState(c.start)
+		onStart.CarriesItem = func(id int) bool { return id == c.item }
+		onStart.HasItem = onStart.CarriesItem
+		require.Contains(t, menuKeys(df, onStart), "have_it", c.file)
+		require.NotContains(t, menuKeys(df, onStart), c.handin, c.file)
+	}
+}

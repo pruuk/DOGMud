@@ -23,9 +23,9 @@ opener:
     questExcluded:
     - 15-end
     text: That crate. Iron straps, my stencil. That is my freight!
-    hints: Choose The Peddler's Overdue Freight below to hand over the crate.
-  # 15-return is granted when the crate is picked up; it drives hints only.
-  # The hand-in gates on 15-start plus the crate (batch 2 review B1).
+    hints: Choose a line below to hand over the crate.
+  # 15-return is granted when the crate is picked up. The hand-in follows the
+  # last step, 15-return.
   - questRequired:
     - 15-return
     questExcluded:
@@ -64,6 +64,21 @@ topics:
   questExcluded:
   - 15-start
   - 15-end
+  itemExcluded: 40039
+  grantsQuest: 15-start
+  moodChange: friendly
+- key: quest_start_carrying
+  kind: offer
+  quest: 15
+  label: The Peddler's Overdue Freight
+  playerLine: I found a freight crate in a ruined barn.
+  text: That is my freight. I know that forced lock. I have waited on it for days and
+    feared the bandits had it for good. Set it down here and let me count what is left.
+  objective: Give the freight crate to Peddler Malk.
+  questExcluded:
+  - 15-start
+  - 15-end
+  carriesItem: 40039
   grantsQuest: 15-start
   moodChange: friendly
 # Hand-in. The quest 15 give trigger's npc_say lines are folded in; the
@@ -77,12 +92,27 @@ topics:
     Let me check the contents... rope, oil, provisions, all accounted for, near enough.
     Some of it has been opened, but nothing critical is missing. I owe you for this.
   questRequired:
-  - 15-start
+  - 15-return
   questExcluded:
   - 15-end
   requiresItem: 40039
   grantsQuest: 15-end
   moodChange: friendly
+# For a save already on the first step with the item in hand: nothing starts a
+# step for it, so nothing counts the item (spec, "Old saves"). A new player
+# never sees this; the step start moves them past it.
+- key: have_it
+  kind: info
+  label: I have it here.
+  text: Then let me see it.
+  hints: Choose The Peddler's Overdue Freight below to hand it over.
+  marked: true
+  questRequired:
+  - 15-start
+  questExcluded:
+  - 15-return
+  - 15-end
+  carriesItem: 40039
 # The lost_item node (the same gates, the same barn) is folded in here.
 - key: quest_active
   kind: info

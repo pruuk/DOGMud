@@ -50,3 +50,13 @@ triggers:
       missing: ["4-evidence"]
     actions:
       - grant: "4-evidence"
+
+  # A save on the first step already holding the item (spec, "Old saves").
+  - event: topic_heard
+    mob: 83
+    topic: have_it
+    conditions:
+      has: ["4-start"]
+      missing: ["4-evidence"]
+    actions:
+      - grant: "4-evidence"

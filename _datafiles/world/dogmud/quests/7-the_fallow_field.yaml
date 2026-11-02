@@ -66,13 +66,12 @@ triggers:
       - actor: "The pest goes still. To search it for a sample, type loot
           corpse."
 
-  # A player who found the sample first accepts the offer holding it, so the
-  # step hint moves on to the hand-in. Dialogue grants reach quest_granted
-  # (hooks/Quest_HandleQuestUpdate.go).
-  - event: quest_granted
-    quest_token: "7-start"
+  # A save on the first step already holding the item (spec, "Old saves").
+  - event: topic_heard
+    mob: 89
+    topic: have_it
     conditions:
+      has: [7-start]
       missing: [7-deliver]
-      has_item: 24
     actions:
       - grant: 7-deliver

@@ -62,8 +62,7 @@ topics:
   grantsQuest: 9-start
   moodChange: friendly
 # Hand-in: the ledger_return node and the quest 9 give trigger (its npc_say
-# lines) are folded in here. Gated on 9-start plus the ledger (B1), so a
-# player who picked up the ledger before accepting can hand it in.
+# lines) are folded in here. Gated on 9-deliver, the last step.
 - key: olenhandoff
   kind: handin
   quest: 9
@@ -74,12 +73,27 @@ topics:
     I asked for. Thank you for your honesty. This will not be pleasant, but it needed
     to come to light.
   questRequired:
-  - 9-start
+  - 9-deliver
   questExcluded:
   - 9-end
   requiresItem: 29
   grantsQuest: 9-end
   moodChange: grateful
+# For a save already on the first step with the item in hand: nothing starts a
+# step for it, so nothing counts the item (spec, "Old saves"). A new player
+# never sees this; the step start moves them past it.
+- key: have_it
+  kind: info
+  label: I have it here.
+  text: Then let me see it.
+  hints: Choose The Temple's Tithe Audit below to hand it over.
+  marked: true
+  questRequired:
+  - 9-start
+  questExcluded:
+  - 9-deliver
+  - 9-end
+  carriesItem: 29
 - key: merchant_side
   kind: info
   label: What do the merchants say about it?
