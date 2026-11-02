@@ -16,7 +16,7 @@ steps:
     description: "Brother Cael has set you to examine three of the temple's
       construction records that disagree with its founding story."
     hint: "First, the building ledger open on the stand in the Archive, beside
-      Brother Cael. Type look ledger."
+      Brother Cael. Type search."
   - id: ledger
     destination:
       room: 6188
@@ -25,17 +25,15 @@ steps:
       as if the foundation were received, not built."
     hint: "Next, the consecration record in the Chapter House. From the
       Archive, go west to the North Walk, then west into the Chapter House.
-      Type look record."
+      Type search."
   - id: record
     destination:
       room: 6198
     description: "The consecration record's own wording gives it away: the
       Founders consecrated the site, language that assumes something was
       already standing there to consecrate."
-    hint: "Last, the mason's survey in the Older East Corridor. From the
-      Chapter House, go east to the North Walk, south to the Cloister Garth,
-      east twice to the Prioress's Oratory, then south into the Older East
-      Corridor. Type look survey."
+    hint: "Last, the mason's survey in the Older East Corridor, south of the
+      Prioress's Oratory, east of the Cloister Garth. Type search."
   - id: survey
     destination:
       mob: 9465  # follow Brother Cael (schedule cf_cael) — a fixed room is wrong for part of the day
@@ -43,9 +41,7 @@ steps:
     description: "The mason's survey is plainest of all: the lower courses are
       older work, cut by hands the temple's records do not name. Three records,
       one conclusion: the temple was raised on something older."
-    hint: "Return to Brother Cael with what you found. From the Older East
-      Corridor, go north into the Prioress's Oratory, west twice to the
-      Cloister Garth, north to the North Walk, then east into the Archive. He
+    hint: "Return to Brother Cael in the Archive, east of the North Walk. He
       sleeps in the archive chair late at night. Type talk cael."
   - id: descent
     destination:
@@ -53,12 +49,9 @@ steps:
     description: "Cael has heard you out, and Aldric, reluctantly, has granted
       a supervised descent. The stair down lies past the Older East Corridor.
       Go down when you are ready."
-    hint: "From the Archive, go west to the North Walk, south to the Cloister
-      Garth, east twice to the Prioress's Oratory, south into the Older East
-      Corridor, then east to the Descent Stairhead. Go down, then west three
-      times to the Seeping Passage. Go down again, then west twice to the
-      Water Gallery. Go down once more, then west three times to the Chamber
-      of the Old Sky. Type look orbital face."
+    hint: "The Descent Stairhead is east of the Older East Corridor. Go down,
+      west three times, down, west twice, down, then west three times to the
+      Chamber of the Old Sky. Type search."
   # The choice is made in talk (spec R28, owner 2026-10-21): Aldric 9464
   # keeps the rubbing for the Keepers, the Margin scholar 9454 carries it
   # out. Each first explains what the player is signing up for, and
@@ -71,12 +64,8 @@ steps:
       inside the order; the Margin scholar at the Temple Portico would carry it
       out. The choice is yours, and it cannot be undone."
     hint: "Talk to Aldric and to the Margin scholar before you choose who gets
-      the rubbing. From the Chamber of the Old Sky, go east three times, up,
-      east twice, up, east three times, up, then west into the Older East
-      Corridor. Go north into the Prioress's Oratory, west twice to the
-      Cloister Garth, north to the North Walk, then west into the Chapter
-      House. Aldric keeps it by day and sleeps in his study, east of the
-      Archive, from evening until dawn. Type talk aldric."
+      the rubbing. Aldric keeps the Chapter House by day. The scholar is at the
+      Temple Portico. Type talk aldric."
   - id: end
     description: "You made your choice with the rubbing of the old sky. The
       Confluence's deepest secret is either carried out into the light, or kept
@@ -105,9 +94,9 @@ rewards:
 
 triggers:
   # ── RECORD 1: the building-ledger (6189, the Archive) ──
-  - event: room_interact
+  - event: command
+    command: search
     room: 6189
-    noun: building-ledger
     conditions:
       has: ["74-start"]
       missing: ["74-ledger"]
@@ -119,19 +108,10 @@ triggers:
           which it simply assumes, as though the foundation were a thing
           received rather than built. The first of the three records.
       - observer: "{actor} reads the open building-ledger with sudden attention."
-  - event: room_interact
-    room: 6189
-    noun: building-ledger
-    conditions:
-      missing: ["74-start"]
-    actions:
-      - actor: >-
-          An old construction ledger open on a reading-stand, meticulous and
-          dry. Without a reason to read it closely, it is only an account book.
   # ── RECORD 2: the consecration-record (6188, the Chapter House) ──
-  - event: room_interact
+  - event: command
+    command: search
     room: 6188
-    noun: consecration-record
     conditions:
       has: ["74-ledger"]
       missing: ["74-record"]
@@ -143,20 +123,10 @@ triggers:
           a word that assumes something already stood here to be made holy. The
           second record agrees with the first.
       - observer: "{actor} reads the open consecration-record closely."
-  - event: room_interact
-    room: 6188
-    noun: consecration-record
-    conditions:
-      missing: ["74-ledger"]
-    actions:
-      - actor: >-
-          The temple's consecration-record, open on its stand in the Chapter
-          House. A formal dedication in old script, nothing you have reason to
-          parse word by word.
   # ── RECORD 3: the mason's survey (6198, the Older East Corridor) ──
-  - event: room_interact
+  - event: command
+    command: search
     room: 6198
-    noun: masons-survey
     conditions:
       has: ["74-record"]
       missing: ["74-survey"]
@@ -168,16 +138,6 @@ triggers:
           temple's own records do not name. Three records, three different
           rooms, one conclusion. Time to report to Cael.
       - observer: "{actor} examines the old mason's survey framed in the corridor."
-  - event: room_interact
-    room: 6198
-    noun: masons-survey
-    conditions:
-      missing: ["74-record"]
-    actions:
-      - actor: >-
-          A mason's survey-note framed on the corridor wall, marking the
-          stonework's courses. Technical, and old. You have no particular
-          reason to study it.
 
   # ── DESCENT: hearing Brother Cael's "q74_turnin" topic (moved from the
   #    topic's grantsQuest, #375 phase 3b) ──
@@ -191,9 +151,9 @@ triggers:
       - grant: "74-descent"
 
   # ── THE REVEAL: the orbital-face (6215, z-3 sealed chamber) ──
-  - event: room_interact
+  - event: command
+    command: search
     room: 6215
-    noun: orbital-face
     conditions:
       has: ["74-descent"]
       missing: ["74-reveal"]
@@ -211,13 +171,3 @@ triggers:
           rest of its counsel. Whatever unmade the fourth, the stone does not
           say. That answer is somewhere else.
       - observer: "{actor} takes a careful rubbing from the great carving on the chamber wall."
-  - event: room_interact
-    room: 6215
-    noun: orbital-face
-    conditions:
-      missing: ["74-descent"]
-    actions:
-      - actor: >-
-          A vast carving of the night sky in nested rings, cut into the
-          chamber's far wall by a very old hand. Without a reason to count
-          them closely, it is only a beautiful, weathered thing in the dark.

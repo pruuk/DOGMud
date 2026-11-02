@@ -202,7 +202,7 @@ Hint: "Accept, then go to Brother Cael in the Archive on the temple island."
 |---|---|
 | 73 `start` | First, the damaged chart in the bookseller's shop. From the Margin Hall, go east twice to the Scholars' Gate, then south into the Bookseller's. Type search. |
 | 73 `chart` | Next, Tallis's old charts at the Scriveners' Stall, west of the Weighhouse Yard, which is north of the North Cross. Type search. |
-| 73 `scrivener` | Last, the marginal note on the great map in the Municipal Hall, south of the Hall Steps, just west of the North Cross. Type search. |
+| 73 `scrivener` | Last, the marginal note on the great map in the Municipal Hall, south of the Hall Steps, which are just west of the North Cross. Type search. |
 | 74 `start` | First, the building ledger open on the stand in the Archive, beside Brother Cael. Type search. |
 | 74 `ledger` | Next, the consecration record in the Chapter House. From the Archive, go west to the North Walk, then west into the Chapter House. Type search. |
 | 74 `record` | Last, the mason's survey in the Older East Corridor, south of the Prioress's Oratory, east of the Cloister Garth. Type search. |

@@ -51,8 +51,7 @@ opener:
       east twice to the Prioress's Oratory, south into the Older East Corridor, then
       east to the Descent Stairhead. Go down, then west three times to the Seeping
       Passage. Go down again, then west twice to the Water Gallery. Go down once
-      more, then west three times to the Chamber of the Old Sky. Type look orbital
-      face.
+      more, then west three times to the Chamber of the Old Sky. Type search.
   - questRequired:
     - 74-survey
     questExcluded:
@@ -68,7 +67,7 @@ opener:
     text: One record left. The mason's survey, in the Older East Corridor.
     hints: From the Archive, go west to the North Walk, south to the Cloister Garth,
       east twice to the Prioress's Oratory, then south into the Older East Corridor.
-      Type look survey.
+      Type search.
   - questRequired:
     - 74-ledger
     questExcluded:
@@ -77,7 +76,7 @@ opener:
     text: You have read the ledger. Now the consecration record, in the Chapter
       House.
     hints: From the Archive, go west to the North Walk, then west into the Chapter
-      House. Type look record.
+      House. Type search.
   - questRequired:
     - 74-start
     questExcluded:
@@ -86,8 +85,7 @@ opener:
     text: Three records. Start with the building ledger, here on the stand. Then
       the consecration record in the Chapter House, then the mason's survey in the
       Older East Corridor. See all three, then come back to me.
-    hints: The building ledger lies open on the stand beside Brother Cael. Type look
-      ledger.
+    hints: The building ledger lies open on the stand beside Brother Cael. Type search.
   - questRequired:
     - 73-end
     questExcluded:
@@ -112,7 +110,7 @@ topics:
     by the stair. See all three yourself. Aldric has allowed that much. Then come
     back to me.'
   hints: Accept, then read the building ledger open on the stand beside Brother
-    Cael. Type look ledger.
+    Cael. Type search.
   questRequired:
   - 73-end
   questExcluded:
@@ -132,7 +130,7 @@ topics:
     east twice to the Prioress's Oratory, south into the Older East Corridor, then
     east to the Descent Stairhead. Go down, then west three times to the Seeping
     Passage. Go down again, then west twice to the Water Gallery. Go down once more,
-    then west three times to the Chamber of the Old Sky. Type look orbital face.
+    then west three times to the Chamber of the Old Sky. Type search.
   marked: true
   questRequired:
   - 74-survey

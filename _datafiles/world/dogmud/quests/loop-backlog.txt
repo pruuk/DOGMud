@@ -73,12 +73,6 @@ hint-length 71 step horst
 hint-length 71 step ledger
 hint-length 71 step start
 hint-length 71 step vell
-hint-length 73 step chart
-hint-length 73 step scrivener
-hint-length 74 step descent
-hint-length 74 step record
-hint-length 74 step reveal
-hint-length 74 step survey
 hint-length 75 step intro
 hint-length 75 step start
 one-action 1000000 step end:none
