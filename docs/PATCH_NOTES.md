@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-11-01: Robbing a creature angers that creature
+
+- Robbing a creature angers that creature, not every one of its kind. Others of
+  its kind leave you alone, even in the same room.
+- A creature you robbed hunts you only if it has fought you lately, and the same
+  goes for creatures of other kinds who saw it happen. Rob one you have not been
+  fighting and get away clean, and nothing comes after you.
+- Its anger ends when it dies. The next one to take its place does not know you.
+- It also ends if you die or leave the game.
+- Named people you can talk to remember as they did before. Guards still report
+  the crime, and people who cannot fight still run away.
+
 ## 2026-11-01: Pothole Coulee, the Shadows line and the way out
 
 - New: the Shadows line, the last of the eight trails from Crier Toke. He

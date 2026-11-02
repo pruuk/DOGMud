@@ -6,7 +6,8 @@ package behaviortree
 // (internal/planners/) for the mob's current strategic goal (selected
 // every tick by chunk 4.2's Recompute). It:
 //   1. Resolves the live mob instance via ctx.InstanceId.
-//   2. Looks up CurrentGoalOf from the goals package.
+//   2. Looks up CurrentGoalFor from the goals package: the type's current
+//      goal, or a goal this one mob holds for itself if that outscores it.
 //   3. Looks up the registered PlanFn for the goal's Type.
 //   4. Invokes the planner under panic recovery (mirrors invokeContextScore).
 //   5. Executes the returned Command (if non-empty) via mob.Command().
@@ -55,9 +56,7 @@ func RunGoalPlanner(mob *mobs.Mob, nowRound uint64) Result {
 	if mob == nil {
 		return Failure
 	}
-	templateId := int(mob.MobId)
-	name := util.ConvertForFilename(mob.Character.Name)
-	currentGoal := goals.CurrentGoalOf(templateId, name)
+	currentGoal := goals.CurrentGoalFor(mob)
 	if currentGoal == nil {
 		return Failure
 	}

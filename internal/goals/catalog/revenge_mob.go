@@ -68,6 +68,10 @@ func revengeMobPredicate(g *goals.Goal, mob *mobs.Mob) bool {
 //	1.5 — target in an adjacent room (one exit hop)
 //	0.5 — target elsewhere in the same zone
 //	0.1 — target out of zone (still nonzero to allow long-range revenge)
+//
+// The sighting gate holds for every revenge goal, a type's or one a mob holds
+// for itself (goals.AddIndividual): a clean theft from a mob that has not been
+// fighting the thief starts no hunt (owner ruling 2026-11-01).
 func revengeMobContextScore(g *goals.Goal, mob *mobs.Mob) float64 {
 	if mob == nil {
 		return 0

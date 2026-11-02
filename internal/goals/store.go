@@ -55,6 +55,8 @@ func loadOrLazyInit(mobId int, namesimple string) *MobGoals {
 		// for idempotency and flips the sentinel when done.
 		seedFromArchetype(mobId, namesimple, mg)
 	} else {
+		dropStaleGoals(mobId, namesimple, mg)
+
 		// 5.3 fixup A: merge-seed — runs on EVERY load of an existing
 		// file (sentinel already set or not). Additively adds any archetype
 		// default type not already present on the mob. Existing goals are
@@ -66,6 +68,40 @@ func loadOrLazyInit(mobId int, namesimple string) *MobGoals {
 		mergeSeedFromArchetype(mobId, namesimple, mg, nil)
 	}
 	return mg
+}
+
+// dropStaleGoals removes what the registered staleGoalCheck rules out of a
+// goal file just read from disk, and saves the file if it changed. Unmarked and
+// idempotent: a file with nothing stale is left alone, on every load. Must be
+// called outside any cache lock.
+func dropStaleGoals(mobId int, namesimple string, mg *MobGoals) {
+	stale := map[string]bool{}
+	for _, g := range mg.Goals {
+		if invokeStaleGoalCheck(mobId, g) {
+			stale[g.Id] = true
+		}
+	}
+	if len(stale) == 0 {
+		return
+	}
+	cacheMu.Lock()
+	kept := mg.Goals[:0:0]
+	for _, g := range mg.Goals {
+		if !stale[g.Id] {
+			kept = append(kept, g)
+		}
+	}
+	mg.Goals = kept
+	if stale[mg.CurrentGoalId] {
+		mg.CurrentGoalId = ""
+		mg.CurrentSinceRound = 0
+		mg.LastSwitchRound = 0
+	}
+	cacheMu.Unlock()
+	mudlog.Info("goals.dropStaleGoals", "mob_id", mobId, "removed", len(stale))
+	if err := saveToDisk(mobId, namesimple); err != nil {
+		mudlog.Warn("goals.dropStaleGoals: save failed", "mob_id", mobId, "error", err)
+	}
 }
 
 // MergeArchetypeDefaults merges the mob's CURRENT archetype's default
