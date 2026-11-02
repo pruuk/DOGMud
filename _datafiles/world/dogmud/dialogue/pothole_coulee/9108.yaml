@@ -101,7 +101,7 @@ opener:
     - 32-end
     text: You are through here. The wash is Garve's business now. Set your home first
       if you have not. You will want a fallback point.
-    hints: Type sethome coulee to make this your home, where you wake if you die.
+    hints: Type sethome coulee to wake at the Mending Hut if you die.
 topics:
 - key: train_turnin
   kind: handin
@@ -110,7 +110,7 @@ topics:
   playerLine: I've worked through your whole checklist.
   text: Good. You hit the dummy, used your feet, read your opponent, and tuned your
     output. That is the checklist. You are not a soldier yet, but you are not dead
-    weight either. Take the coin. And if you want work that matters, there is a caravan
+    weight either. And if you want work that matters, there is a caravan
     guard out in the wash who could use someone who knows which end of a cudgel to
     hold. Ask me about it.
   hints: Quest complete. Choose Hold the Wash below to hear what Caravan Guard Garve

@@ -71,7 +71,8 @@ steps:
       a short wait. Now try a special move on it. A kick hits hard, and a
       trip puts it on the ground. Either one counts.
     hint: >-
-      Type kick dummy.
+      Type kick dummy. If the dummy is still down, wait for a new one to
+      stand up.
   - id: special
     destination:
       room: 5227

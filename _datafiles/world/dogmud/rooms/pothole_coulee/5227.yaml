@@ -46,8 +46,9 @@ spawninfo:
   respawnrate: 1 real minute
 # The tutorial's Straw Effigy, ADDED alongside the fragile Training Dummy
 # rather than replacing it. 9109 has ~15 vitality on purpose so quest 32's
-# "first blood" is a quick kill, and quest 32 also gates its kick and trip
-# steps on THIS room, so it has to stay. The effigy has 100200 vitality and is
+# "first blood" is a quick kill, so it has to stay. Quest 32's consider, kick
+# and trip steps have no room gate: they count anywhere, deliberately, so the
+# spare dummy in 5228 serves too. The effigy has 100200 vitality and is
 # effectively unkillable, which is what a sparring partner needs to be.
 #
 # Why the yard needs one: every combat playtest here ends in a single round,

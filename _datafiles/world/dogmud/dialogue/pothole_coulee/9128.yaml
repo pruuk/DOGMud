@@ -102,8 +102,9 @@ opener:
       Cattail Stand. Type talk falv.
   - questRequired:
     - 38-end
-    text: Set your home here first if you have not. The marsh is Falv's country now.
-    hints: Type sethome coulee to make this your home, where you wake if you die.
+    text: Set your home in the coulee first if you have not. The marsh is Falv's
+      country now.
+    hints: Type sethome coulee to wake at the Mending Hut if you die.
 topics:
 - key: brew_turnin
   kind: handin
@@ -114,9 +115,9 @@ topics:
     work. You understand the loop now. Gather or buy, work the bench, take the result.
     Apply it to anything you learn to make. Here, the antidote formula, and a couple
     of empty vials to keep you brewing. When you want to learn the marsh, ask me
-    about it. Set your home here first. You will want somewhere to wake.
-  hints: Quest complete. Type sethome coulee to make this your home, where you wake
-    if you die. Choose Wade the Marsh below when you are ready.
+    about it. Set your home in the coulee first. You will want somewhere to wake.
+  hints: Quest complete. Type sethome coulee to wake at the Mending Hut if you die.
+    Choose Wade the Marsh below when you are ready.
   questRequired:
   - 38-drink
   questExcluded:
