@@ -214,6 +214,12 @@ The `internal/mobcommands` package implements the AI command system for non-play
 - **Selective recruitment**: Target-specific ally summoning
 - **Communication integration**: Emotive calls for help with custom messages
 - **Strategic positioning**: Intelligent movement for optimal combat support
+- **Warnings and fights**: with `Room.IsCalm()` true in the caller's room the
+  call is an early warning (the `lookout` and `scout` idle scans repeat it every
+  idle round). A mob with `MaxWander == 0` ignores a warning on both paths, the
+  `heard_callforhelp` event and the `go <roomId>` pair, and answers only a fight;
+  otherwise its home recovery and the next warning move it back and forth. Mobs
+  free to wander still muster to a warning.
 
 #### **Intelligent Navigation** (`wander.go`)
 - **Goal-oriented wandering**: Seeking loot, players, or specific objectives

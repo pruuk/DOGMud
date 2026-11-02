@@ -18,11 +18,21 @@ opener:
     - 4-evidence
     questExcluded:
     - 4-end
+    carriesItem: 16
     text: "You have something from the camp. I can see it on your face. Let me see
       it."
     hints: "Choose The Warden's Report below to hand Tessara the bandit's purse."
-  # The purse picked up before accepting grants no step; the hand-in still
-  # takes it (4-start + item 16).
+  # On 4-evidence without the purse: it was lost, and the hollow keeps another.
+  - questRequired:
+    - 4-evidence
+    questExcluded:
+    - 4-end
+    text: "You had their purse? Then where is it? I cannot put a story in my
+      report."
+    hints: "Go back to the Bandit Hollow, south three times from the Warden's Post,
+      and type get purse from goods."
+  # The hand-in follows the last step (4-evidence). This line covers a save on
+  # 4-start already holding the purse; its have_it topic leads on from there.
   - questRequired:
     - 4-start
     questExcluded:
@@ -31,21 +41,11 @@ opener:
     carriesItem: 16
     text: "Is that a purse with marks on it? You found their stash already. Let me
       see it."
-    hints: "Choose The Warden's Report below to hand Tessara the bandit's purse."
-  - questRequired:
-    - 4-investigate
-    questExcluded:
-    - 4-evidence
-    - 4-end
-    text: "You found their camp? Then the proof is close. They keep what they steal
-      in the hollow past it. Documents, a purse with marks on it, anything with
-      names or schedules."
-    hints: "The Bandit Hollow is just south of the Abandoned Campsite. Look among
-      the stolen goods there. Type get purse."
+    hints: "Choose a line below to hand over the bandit's purse."
   - questRequired:
     - 4-start
     questExcluded:
-    - 4-investigate
+    - 4-evidence
     - 4-end
     text: "Any luck at the bandit camp? I need hard evidence. Documents, a purse with
       identifying marks, anything. Without proof, the Watchers will not move."
@@ -67,6 +67,22 @@ topics:
   questExcluded:
   - 4-start
   - 4-end
+  itemExcluded: 16
+  grantsQuest: 4-start
+  moodChange: friendly
+- key: help_quest_carrying
+  kind: offer
+  quest: 4
+  label: The Warden's Report
+  playerLine: I took this purse off some bandits.
+  text: "A purse with marks on it. You found their stash already, then. That is the
+    very proof I was about to ask someone to go and get. Hand it over and it goes in
+    my next report."
+  objective: Give the bandit's purse to Road Warden Tessara.
+  questExcluded:
+  - 4-start
+  - 4-end
+  carriesItem: 16
   grantsQuest: 4-start
   moodChange: friendly
 - key: evidence_handoff
@@ -79,11 +95,26 @@ topics:
     Watchers need to move. You have done good work."
   hints: "Tessara tips the purse's contents into her palm, and her jaw sets."
   questRequired:
-  - 4-start
+  - 4-evidence
   questExcluded:
   - 4-end
   requiresItem: 16
   grantsQuest: 4-end
+# For a save already on the first step with the item in hand: nothing starts a
+# step for it, so nothing counts the item (spec, "Old saves"). A new player
+# never sees this; the step start moves them past it.
+- key: have_it
+  kind: info
+  label: I have it here.
+  text: Then let me see it.
+  hints: Choose The Warden's Report below to hand it over.
+  marked: true
+  questRequired:
+  - 4-start
+  questExcluded:
+  - 4-evidence
+  - 4-end
+  carriesItem: 16
 # threat (pattern) folded into bandits; tower (pattern) into watchers_info;
 # road (pattern) into road_info; wardens (pattern) into about_tessara; work
 # (pattern) is covered by the help_quest pitch.

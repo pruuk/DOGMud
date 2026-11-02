@@ -7,10 +7,7 @@ tree:
       quest: "4-start"
     - type: condition
       check: player_missing_quest
-      quest: "4-investigate"
-    - type: action
-      do: grant_quest
-      quest: "4-investigate"
+      quest: "4-evidence"
     - type: action
       do: send_user_text
       text: "The scattered debris and fresh boot prints confirm it: this is\

@@ -90,6 +90,13 @@ func (b *GameBridge) HasItem(itemId int) bool {
 	return false
 }
 
+// CarriesItem returns true if the player has the item anywhere on them
+// (ItemCarrier): backpack, component bag, bandolier or worn. HasItem stays
+// backpack only, which has_item and consume_item rely on.
+func (b *GameBridge) CarriesItem(itemId int) bool {
+	return b.user.Character.CarriesItem(itemId)
+}
+
 // GetRoomId returns the room ID this bridge was constructed with.
 func (b *GameBridge) GetRoomId() int {
 	return b.roomId

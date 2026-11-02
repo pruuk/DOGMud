@@ -528,7 +528,7 @@
     mob_death: ["mob", "room", "area", "zone", "count", "label"],
     command: ["command", "noun", "room", "target", "mob", "item", "area", "zone", "count", "label"],
     command_issued: ["command", "room", "area", "zone", "count", "label"],
-    item_gain: ["item", "room", "reason", "area", "zone", "count", "label"],
+    item_gain: ["item", "room", "reason", "area", "zone", "count", "label", "held_line"],
     quest_granted: ["quest_token", "area", "zone", "count", "label"],
     room_interact: ["room", "noun", "verb", "area", "zone"],
     spell_landed: ["noun", "effect", "target", "mob", "item", "room", "area", "zone", "count", "label"],
@@ -538,14 +538,15 @@
     command: "text", quest_token: "token", noun: "text", verb: "text",
     effect: "text", topic: "text", target: "target", reason: "reason",
     area: "text", zone: "text", count: "num", label: "text",
-    distinct: "text", explored_line: "text" };
+    distinct: "text", explored_line: "text", held_line: "text" };
   // Fields that shape the trigger rather than filter its event get their own
   // label in the form.
   var FIELD_LABELS = {
     count: "Count: fire on the Nth match (empty = first)",
     label: "Progress label (with count or distinct)",
     distinct: "Distinct: rooms of the area to map (all or a number)",
-    explored_line: "Explored line (said when the area is already mapped)"
+    explored_line: "Explored line (said when the area is already mapped)",
+    held_line: "Held line (said when the step starts with the item already held)"
   };
   // The values a trigger's target filter may take (quests.TriggerTargetKinds);
   // empty means any target.

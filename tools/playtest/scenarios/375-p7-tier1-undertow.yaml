@@ -1,0 +1,25 @@
+# #375 phase 7 tier 1: quest 14 alone, two seats on one strongbox. The full
+# scenario's seats used the veteran profile, which has already finished quest
+# 14, so a seeded token cannot put it back on the quest. These use mid.
+name: 375-p7-tier1-undertow
+mode: party
+summary: >-
+  Quest 14 from the tavern to the hand-in with the key, and again by picking the
+  lock, with both players on the same strongbox.
+on_actor_stop: continue
+budgets:
+  wall_clock: 35m
+requires:
+  max_connections: 20
+roster:
+  - id: undertow
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier1/undertow.yaml
+  - id: rival
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier1/rival.yaml
+
+group_goals:
+  - id: no-dead-ends
+    do: Each seat follows the game's own hints from its first step to the hand-in.
+    verify: Every step's hint names something the player can do where they stand, and no seat gets stuck.

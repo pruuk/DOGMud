@@ -1,0 +1,24 @@
+# CROSSING seat: deliberately minimal. A player who has been through the Coulee
+# stands at Warden Esk's door. The owner's design is that nobody walks them from
+# here: does what Esk says make them want to look around, and can they find
+# something to do alone? Do not add route hints or command lists. Being bored or
+# lost is a valid finding. Quote game lines verbatim when reporting.
+ephemeral:
+  profile: early
+  start_room: 5215
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end"]
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    You are a new player who has just finished the first town's lessons, and you
+    have not played a MUD before. Talk to the warden here and hear what he has to
+    say. Say in your own words how his lines made you feel, and what you now
+    want to do.
+  - >-
+    Then go through the arch when you feel ready, and carry on playing for as
+    long as you are interested, relying only on what the game tells you. Say
+    what you tried, what caught your interest, and whether you found something
+    to do on your own. If you stop, say why. Being lost is itself a finding.

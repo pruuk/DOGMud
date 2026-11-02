@@ -34,8 +34,17 @@ type TriggerDef struct {
 	Distinct     string      `yaml:"distinct,omitempty" json:"distinct,omitempty"`           // room_enter + area: "all" or N rooms of the area on the player's map
 	Label        string      `yaml:"label,omitempty" json:"label,omitempty"`                 // progress line label for count/distinct
 	ExploredLine string      `yaml:"explored_line,omitempty" json:"explored_line,omitempty"` // distinct: said when the area is already explored at step start
+	HeldLine     string      `yaml:"held_line,omitempty" json:"held_line,omitempty"`         // plain item_gain: said when the step starts with the item already held
 	Conditions   Conditions  `yaml:"conditions,omitempty" json:"conditions,omitempty"`
 	Actions      []ActionDef `yaml:"actions" json:"actions"`
+}
+
+// PlainItemGain reports whether t is an item_gain trigger that asks only which
+// item arrived. A held item can stand in for one of these at step start; a
+// reason, room, area, zone or count asks how or where it arrived, or how many.
+func (t TriggerDef) PlainItemGain() bool {
+	return t.Event == "item_gain" && t.Reason == "" && t.Room == 0 &&
+		t.Area == "" && t.Zone == "" && t.Count == 0
 }
 
 // CountStep is the step a count trigger counts on: the latest step of its

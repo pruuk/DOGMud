@@ -40,23 +40,23 @@ topics:
     due course. Now if you will excuse me, I have a backlog that predates you.
   questRequired:
   - 6-report
-# The ledger itself lies in this room (rooms/thornwall_city/476.yaml spawns
-# item 29); picking it up grants 9-deliver. Shown to anyone on quest 9 who
-# is not carrying the ledger, so a player who lost it is told where it is.
+# Pell keeps the temple's copies and hands one over (spec ruling 5). Shown to
+# anyone on quest 9 who is not carrying the ledger, so a lost one can be replaced.
 - key: tithe_ledger
   kind: info
   label: I'm looking for the temple's tithe ledger.
   text: The tithe ledger? That is a temple document, not a municipal one. But yes,
     I have a copy. The temple files duplicates here as a matter of public record.
-    Section twelve, subsection three, shelf nine. Help yourself. And whatever you
-    find in there, remember that I only file the documents. I do not judge the contents.
-  hints: Type get ledger.
+    Here. Whatever you find in there, remember that I only file the documents. I do
+    not judge the contents.
+  hints: Take the tithe ledger back to Temple Priest Olen and type talk olen.
   marked: true
   questRequired:
   - 9-start
   questExcluded:
   - 9-end
   itemExcluded: 29
+  givesItem: 29
   moodChange: friendly
 - key: about_records
   kind: info

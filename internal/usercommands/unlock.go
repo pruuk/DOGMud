@@ -38,6 +38,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		if !container.Lock.IsLocked() {
 			user.SendText(messaging.CategoryRefusal, "That's not locked.")
+			notifyLockQuest(user, room, "unlock", containerName, ``)
 			return true, nil
 		}
 
@@ -58,6 +59,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You use a key to unlock the <ansi fg="container">%s</ansi>.`, containerName))
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="container">%s</ansi>.`, user.Character.Name, containerName), user.UserId)
+			notifyLockQuest(user, room, "unlock", containerName, ``)
 		} else if hasBackpackKey {
 
 			itmSpec := backpackKeyItm.GetSpec()
@@ -82,6 +84,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			room.SendTextVisual(messaging.CategoryMobEmote,
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="container">%s</ansi>.`, user.Character.Name, containerName),
 				user.UserId)
+			notifyLockQuest(user, room, "unlock", containerName, ``)
 		} else {
 			user.SendText(messaging.CategoryRefusal, `You do not have the key for that. Maybe you could <ansi fg="command">picklock</ansi> the lock.`)
 		}
@@ -114,6 +117,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You use a key to unlock the <ansi fg="exit">%s</ansi> lock.`, exitName))
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName), user.UserId)
+			notifyLockQuest(user, room, "unlock", ``, exitName)
 		} else if hasBackpackKey {
 
 			itmSpec := backpackKeyItm.GetSpec()
@@ -138,6 +142,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			room.SendTextVisual(messaging.CategoryMobEmote,
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName),
 				user.UserId)
+			notifyLockQuest(user, room, "unlock", ``, exitName)
 		} else {
 			user.SendText(messaging.CategoryRefusal, `You do not have the key for that. Maybe you could <ansi fg="command">picklock</ansi> the lock.`)
 		}

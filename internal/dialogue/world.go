@@ -139,6 +139,9 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 			if t.Breadcrumb != "" {
 				add(where, "breadcrumb belongs on offer topics only")
 			}
+			if t.Objective != "" {
+				add(where, "objective belongs on offer topics only")
+			}
 			lower := norm(t.Label)
 			if prev, dup := infoLabels[lower]; dup {
 				add(where, "label repeats topic %q", prev)
@@ -157,6 +160,9 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 			}
 			if t.Kind == KindHandIn && t.Breadcrumb != "" {
 				add(where, "breadcrumb belongs on offer topics only")
+			}
+			if t.Kind == KindHandIn && t.Objective != "" {
+				add(where, "objective belongs on offer topics only")
 			}
 			if q, ok := lookupQuest(w, t.Quest); !ok {
 				add(where, "quest %d does not exist", t.Quest)
@@ -183,10 +189,14 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 		if strings.ContainsAny(t.Breadcrumb, dashRunes) {
 			add(where+" breadcrumb", "no em or en dash in new text")
 		}
+		if strings.ContainsAny(t.Objective, dashRunes) {
+			add(where+" objective", "no em or en dash in new text")
+		}
 		semi(where+" label", t.Label)
 		semi(where+" playerLine", t.PlayerLine)
 		semi(where+" text", t.Text)
 		semi(where+" breadcrumb", t.Breadcrumb)
+		semi(where+" objective", t.Objective)
 		for _, k := range t.HeardRequired {
 			if !infoKeys[k] {
 				add(where, "heardRequired %q is not an info topic in this file", k)

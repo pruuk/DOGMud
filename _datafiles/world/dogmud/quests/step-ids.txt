@@ -34,7 +34,7 @@
 14-evidence
 14-explore
 14-loot
-14-report
+14-opened
 14-start
 14-unlock
 15-end
@@ -153,7 +153,6 @@
 39-throw
 4-end
 4-evidence
-4-investigate
 4-start
 40-end
 40-slain
@@ -389,4 +388,6 @@
 29-start
 
 # renamed
+14-report -> 14-evidence
 32-consider -> 32-special
+4-investigate -> 4-start

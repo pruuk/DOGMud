@@ -1,0 +1,32 @@
+# UNDERTOW seat: quest 14 from the tavern to the hand-in, using the key.
+# The RIVAL seat is working the same strongbox, so the box may be open, or the
+# ledger gone, when you arrive. That is part of the test. Quote game lines
+# VERBATIM. Report what the game actually said, not what you expected.
+ephemeral:
+  profile: mid
+  start_room: 472
+  overlays:
+    set_quest_tokens: ["10-start", "10-report", "10-end", "14-start"]
+    grant_items: [40038]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and `hint`, and quote them. Follow only the quest's own hint
+    through the steps: the kitchen, the tunnels, the tally stick, then the
+    Operations Room. After each step, type `hint` and quote it. Say whether it
+    named something you could do where you stood.
+  - >-
+    In the Operations Room, quote the room text. Before fighting, type
+    `look strongbox`, `unlock strongbox` and `get ledger from strongbox`, and
+    quote each result. Then kill Torvan Cresk.
+  - >-
+    Follow each hint from here: loot the key, unlock the box, take the ledger.
+    Quote every line, in order, and every hint. If the box was already open or
+    the ledger was gone, say exactly what you saw, what the hint told you to do,
+    and how long it took to come back.
+  - >-
+    Follow the hint to Guard Captain Velk and hand in the ledger. Quote the
+    hand-in and the rewards. Type `quests` and confirm the quest is finished.
+    Then type `keyring` and quote it.

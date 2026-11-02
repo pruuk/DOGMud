@@ -96,6 +96,7 @@ triggers:
   #    starts with no gear, so the first cotton shirt they gain is this purchase.
   - event: item_gain
     item: 20008
+    reason: buy
     conditions:
       has: [31-list]
       missing: [31-shop]

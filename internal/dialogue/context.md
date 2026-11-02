@@ -103,6 +103,13 @@ them, and `carriesItem` with no item callback fails closed. `ValidateWorld`
 checks every item id they name. `itemExcluded` keeps a quest giver's handout
 to one item while the quest is open (2026-10-17).
 
+`Topic.Objective` (`objective:`, offers only, tier 1) replaces the first line
+of the offer card, which is the quest's first step description. An offer for a
+quest whose first step is getting a findable item has a second copy for a
+player already carrying it: `carriesItem`, an `objective` such as "Give the
+bandit's purse to Road Warden Tessara.", and `itemExcluded` on the first offer
+(Tessara's `help_quest` and `help_quest_carrying`).
+
 A topic's `Effects` are `grantsQuest`, `givesItem`, `setsQuestFlag`,
 `bumpsRep`, `givesGold`, `chargesGold` and `moodChange`. Opener variants carry
 gates only.

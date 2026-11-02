@@ -54,9 +54,6 @@ hint 84 step start
 hint 85 step start
 hint 86 step start
 hint 87 step start
-hint-length 11 step sided
-hint-length 11 step start
-hint-length 12 step start
 hint-length 16 step forager
 hint-length 16 step start
 hint-length 17 step start
@@ -70,8 +67,6 @@ hint-length 20 step brindle_confession
 hint-length 20 step garden_marker
 hint-length 20 step kingfisher_found
 hint-length 20 step wardstone_altar
-hint-length 6 step report
-hint-length 6 step start
 hint-length 60 step start
 hint-length 60 step waybill
 hint-length 61 step start
@@ -104,25 +99,10 @@ hint-length 75 step intro
 hint-length 75 step start
 one-action 1000000 step end:none
 one-action 1000000 step givegold:none
-one-action 11 mob 241 topic totem_return:prev
-one-action 11 mob 242 topic sample_return:prev
-one-action 14 mob 94 topic velkhandoff:prev
-one-action 14 quest 14 trigger item_gain item=40034 grants=14-unlock:prev
-one-action 14 quest 14 trigger mob_death mob=249 grants=14-loot:cond
-one-action 14 quest 14 trigger room_enter room=498 grants=14-unlock:cond
-one-action 14 quest 14 trigger room_enter room=498 grants=14-unlock:prev
-one-action 14 quest 14 trigger room_interact room=498 noun=strongbox grants=14-evidence:cond
-one-action 14 quest 14 trigger room_interact room=498 noun=strongbox grants=14-evidence:prev
-one-action 14 step report:none
-one-action 15 mob 250 topic quest_complete_dialogue:prev
-one-action 15 quest 15 trigger quest_granted quest_token=15-start grants=15-return:cond
-one-action 15 quest 15 trigger quest_granted quest_token=15-start grants=15-return:prev
 one-action 16 mob 259 topic quest_complete_herbs:prev
 one-action 19 quest 19 trigger mob_death mob=331 grants=19-hunter:prev
 one-action 20 mob 347 topic ullahandoff:prev
 one-action 20 quest 20 trigger topic_heard mob=355 topic=vellahandoff grants=20-vella_journal:prev
-one-action 4 mob 83 topic evidence_handoff:prev
-one-action 5 mob 84 topic tolvahandoff:prev
 one-action 60 mob 9208 topic guardhandoff:prev
 one-action 61 quest 61 trigger mob_death mob=9173 grants=61-bandit:cond
 one-action 61 quest 61 trigger mob_death mob=9173 grants=61-reach:cond
@@ -143,9 +123,6 @@ one-action 68 quest 68 trigger room_interact room=5720 noun=floorboard grants=68
 one-action 68 quest 68 trigger room_interact room=5720 noun=loose floorboard grants=68-survey #2:cond
 one-action 68 quest 68 trigger room_interact room=5720 noun=loose floorboard grants=68-survey:cond
 one-action 69 mob 9360 topic give_40116:prev
-one-action 7 mob 89 topic dornhandoff:prev
-one-action 7 quest 7 trigger quest_granted quest_token=7-start grants=7-deliver:cond
-one-action 7 quest 7 trigger quest_granted quest_token=7-start grants=7-deliver:prev
 one-action 70 mob 9332 topic orinhandoff:prev
 one-action 70 quest 70 trigger room_interact room=6037 noun=symbol grants=70-witness:cond
 one-action 71 mob 9347 topic ledgerhandoff:prev
@@ -154,25 +131,14 @@ one-action 74 mob 9464 topic aldrichandoff:prev
 one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:double
 one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:prev
 one-action 78 quest 78 trigger quest_granted quest_token=78-start grants=78-end:prev
-one-action 9 mob 95 topic olenhandoff:prev
-one-action 9 quest 9 trigger quest_granted quest_token=9-start grants=9-deliver:cond
-one-action 9 quest 9 trigger quest_granted quest_token=9-start grants=9-deliver:prev
 refs 1000000 quest 1000000 refs: rewards conditionid: condition 4 does not exist
 refs 1000000 quest 1000000 refs: rewards skillinfo: skill "map" does not exist
 start 1000000 step start
 start 21 step start
 start 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
 start 77 step end
-walk-dead-end 14 mob 94 topic velkhandoff
-walk-dead-end 14 quest 14 trigger item_gain item=40034 grants=14-unlock
-walk-dead-end 14 quest 14 trigger room_enter room=498 grants=14-unlock
-walk-dead-end 14 quest 14 trigger room_interact room=498 noun=strongbox grants=14-evidence
-walk-dead-end 14 step report
-walk-dead-end 15 mob 250 topic quest_complete_dialogue
 walk-dead-end 16 mob 259 topic quest_complete_herbs
 walk-dead-end 19 quest 19 trigger mob_death mob=331 grants=19-hunter
-walk-dead-end 4 mob 83 topic evidence_handoff
-walk-dead-end 5 mob 84 topic tolvahandoff
 walk-dead-end 61 quest 61 trigger mob_death mob=9173 grants=61-reach
 walk-dead-end 63 mob 9300 topic tallyhandoff
 walk-dead-end 63 mob 9316 topic tallyhandoff
@@ -183,13 +149,8 @@ walk-dead-end 66 mob 9323 topic wrapperhandoff
 walk-dead-end 66 step escort
 walk-dead-end 67 mob 9316 topic casefilehandoff
 walk-dead-end 67 step report
-walk-dead-end 7 mob 89 topic dornhandoff
-walk-dead-end 9 mob 95 topic olenhandoff
 walk-destination 1000000 step givegold
 walk-destination 1000000 step start
-walk-destination 11 step sided
-walk-destination 12 step ritual
-walk-destination 13 step extraction
 walk-destination 19 step signed
 walk-destination 63 step report
 walk-destination 65 step report

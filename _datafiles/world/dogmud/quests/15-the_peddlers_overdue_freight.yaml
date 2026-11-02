@@ -8,7 +8,7 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 4007  # Ruined Barn — sole spawn of the freight crate (item 40039)
+      room: 4007  # Ruined Barn, sole spawn of the freight crate (item 40039)
     description: "Peddler Malk has been waiting on a freight
       shipment for days. He suspects bandits intercepted it. Find
       the missing freight crate."
@@ -16,9 +16,9 @@ steps:
       south three times, then west into the ruined barn. Type get
       freight crate from crates."
   # Granted when the crate is picked up, or on accepting while already
-  # holding it. It drives the step hint only: the hand-in topic gates on
-  # 15-start plus the crate, so a save at 15-start holding the crate still
-  # hands in (batch 2 review B1).
+  # holding it (the held-item check as the step starts). The hand-in topic
+  # gates on this step, and a save resting on 15-start with the crate gets the
+  # have_it topic, which grants it.
   - id: return
     destination:
       mob: 250  # follow Peddler Malk
@@ -49,12 +49,12 @@ triggers:
     actions:
       - grant: 15-return
 
-  # R15: a player who found the crate first accepts the offer holding it.
-  # Dialogue grants reach quest_granted (hooks/Quest_HandleQuestUpdate.go).
-  - event: quest_granted
-    quest_token: "15-start"
+  # A save on the first step already holding the item (spec, "Old saves").
+  - event: topic_heard
+    mob: 250
+    topic: have_it
     conditions:
+      has: [15-start]
       missing: [15-return]
-      has_item: 40039
     actions:
       - grant: 15-return

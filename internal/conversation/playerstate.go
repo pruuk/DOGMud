@@ -40,19 +40,7 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 		},
 		// Backs itemExcluded: anywhere on the player counts, so a wielded
 		// sling or a pouch in the bandolier still means "already has one".
-		CarriesItem: func(itemId int) bool {
-			for _, itm := range user.Character.GetAllCarriedItems() {
-				if itm.ItemId == itemId {
-					return true
-				}
-			}
-			for _, itm := range user.Character.GetAllWornItems() {
-				if itm.ItemId == itemId {
-					return true
-				}
-			}
-			return false
-		},
+		CarriesItem: user.Character.CarriesItem,
 		RemoveItem: func(itemId int) bool {
 			_, ok := removeBackpackItem(user, itemId, uuid.UUID{})
 			return ok

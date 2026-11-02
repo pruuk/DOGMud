@@ -8,12 +8,13 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 421  # the Tollhouse — find the crossing ledger
-    description: "Innkeeper Tolva at the Crossing Inn has asked you to investigate the bridge toll. She believes it is unauthorized and wants proof. Find the crossing ledger at the tollhouse."
-    hint: "From the Crossing Inn, go south to the West Approach, then east into the Tollhouse. The crossing ledger sits on the counter. Type get ledger."
+      mob: 86  # Harn moves by schedule
+      room: 421  # the Tollhouse, where Harn keeps the ledger
+    description: "Innkeeper Tolva at the Crossing Inn has asked you to investigate the bridge toll. She believes it is unauthorized and wants proof. Ask Harn at the tollhouse for his ledger."
+    hint: "Harn keeps the Tollhouse, south then east of the Crossing Inn, by day. In the evening he drinks at the inn, and he sleeps late at night. Type talk harn."
   - id: deliver
     destination:
-      mob: 84  # follow Innkeeper Tolva (schedule watchers_tolva) — a fixed room is wrong for part of the day
+      mob: 84  # follow Innkeeper Tolva (schedule watchers_tolva), a fixed room is wrong for part of the day
       room: 423  # fallback when Innkeeper Tolva is not spawned
     description: "You have the crossing ledger. Bring it back to Innkeeper Tolva at the Crossing Inn."
     hint: "Innkeeper Tolva keeps the Crossing Inn. From the Tollhouse, go west to the West Approach, then north. She sleeps in the back room late at night. Type talk tolva."
@@ -24,6 +25,16 @@ triggers:
   # Pick up the ledger at the Tollhouse -> advance to the deliver step.
   - event: item_gain
     item: 21
+    conditions:
+      has: [5-start]
+      missing: [5-deliver]
+    actions:
+      - grant: 5-deliver
+
+  # A save on the first step already holding the item (spec, "Old saves").
+  - event: topic_heard
+    mob: 84
+    topic: have_it
     conditions:
       has: [5-start]
       missing: [5-deliver]

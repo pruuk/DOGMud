@@ -237,3 +237,22 @@ func TestHadwenOpenerNamesOnlyTheLinesOnHisMenu(t *testing.T) {
 		})
 	}
 }
+
+func TestEskSpeaksOfWhatWaitsOutThere(t *testing.T) {
+	esk := loadCouleeDialogue(t, "9107.yaml")
+
+	require.NotContains(t, menuKeys(esk, heldState()), "out_there", "for the Opened only")
+
+	opened := menuKeys(esk, heldState("30-end"))
+	require.Contains(t, opened, "out_there")
+	require.NotContains(t, opened, "what_it_does", "it opens once the first is heard")
+
+	heard := heldState("30-end")
+	heard.HasHeard = func(key string) bool { return key == HeardKey(9107, "out_there") }
+	require.Contains(t, menuKeys(esk, heard), "what_it_does")
+
+	require.True(t, esk.FindTopic("out_there").Marked)
+	require.Contains(t, esk.FindTopic("passage").Text, "The rest is out there")
+	// #760: every player crossing is told how to wake on the far side.
+	require.Contains(t, esk.FindTopic("passage").Hints, "sethome thornwall")
+}

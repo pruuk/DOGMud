@@ -29,6 +29,7 @@ func TestCallForHelp_FiresHeardCallforhelpOnRoutineMatch(t *testing.T) {
 	matcher := &mobs.Mob{
 		InstanceId: 2000,
 		Routine:    "bandit_camp_guard",
+		MaxWander:  1, // this room is calm: a maxwander 0 mob holds its post
 		Character: characters.Character{
 			RoomId: 2,
 			Health: 50,
@@ -37,6 +38,7 @@ func TestCallForHelp_FiresHeardCallforhelpOnRoutineMatch(t *testing.T) {
 	nonMatcher := &mobs.Mob{
 		InstanceId: 2001,
 		Routine:    "temple_service",
+		MaxWander:  1, // only the routine may keep this one from hearing
 		Character: characters.Character{
 			RoomId: 2,
 			Health: 50,
@@ -94,6 +96,7 @@ func TestCallForHelp_FiresHeardCallforhelpOnRoutineLinksMatch(t *testing.T) {
 		InstanceId:   2000,
 		Routine:      "bandit_lookout_north",
 		RoutineLinks: []string{"bandit_camp_guard"},
+		MaxWander:    1, // this room is calm: a maxwander 0 mob holds its post
 		Character: characters.Character{
 			RoomId: 2,
 			Health: 50,

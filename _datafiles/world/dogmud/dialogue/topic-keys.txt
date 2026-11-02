@@ -60,11 +60,13 @@
 250.buy
 250.crossroads_talk
 250.gossip
+250.have_it
 250.new_plymouth
 250.quest_active
 250.quest_complete_dialogue
 250.quest_done
 250.quest_start
+250.quest_start_carrying
 250.road_talk
 251.buy
 251.crossroads
@@ -340,12 +342,15 @@
 83.about_tessara
 83.bandits
 83.evidence_handoff
+83.have_it
 83.help_quest
+83.help_quest_carrying
 83.road_info
 83.trade
 83.watchers_info
 84.about_brecca
 84.about_harn
+84.have_it
 84.help_quest
 84.inn_services
 84.road
@@ -359,6 +364,7 @@
 86.about_tolva
 86.bridge_damage
 86.help_quest
+86.lend_ledger
 86.lost_report
 86.no_charter
 86.report_delivered
@@ -367,7 +373,9 @@
 89.about_thornwall
 89.dornhandoff
 89.farm
+89.have_it
 89.help_quest
+89.help_quest_carrying
 89.pest_problem
 9100.another_way
 9100.begin
@@ -443,10 +451,12 @@
 9106.way_scout_tarn
 9107.door_lore
 9107.eyes
+9107.out_there
 9107.passage
 9107.passage_2
 9107.road_esk_end
 9107.watching
+9107.what_it_does
 9108.bash_help
 9108.combat_help
 9108.cudgel_have
@@ -945,7 +955,6 @@
 9399.craft
 9399.davan
 9399.valley
-94.case_close
 94.case_report_notfound
 94.case_report_truth
 94.case_report_where
@@ -1209,6 +1218,7 @@
 9497.dry
 9497.hamlet
 9497.well
+95.have_it
 95.merchant_side
 95.olenhandoff
 95.temple
@@ -1450,6 +1460,9 @@
 9162.canyon_offer
 # Esk's Road (89) is offered by Crier Toke now (9106.road_esk).
 9100.road_esk
+# Quest 14's report step is renamed to 14-evidence (#375 phase 7 tier 1), so
+# Velk's case_close topic for a save at it can never be chosen.
+94.case_close
 # renamed
 9117.vein_offer -> 9116.vein_offer
 9112.wash_offer -> 9108.wash_offer

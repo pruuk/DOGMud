@@ -16,22 +16,19 @@ steps:
       Windwarden Sylara at the stone circle or Geomancer Rhett at the
       ridge approach, hear what siding with each would mean, and choose
       a side."
-    hint: "Rhett camps at the Ridge Approach: from the Old Citadel
-      Plaza at Thornwall's eastern edge, go east seven times. Sylara
-      keeps the Stone Circle: from the Ridge Approach, go south twice
-      to the Ridge Trail Junction, then east. Type talk rhett."
+    hint: "Rhett camps at the Ridge Approach, seven rooms east of Thornwall's Old Citadel Plaza. Sylara keeps the Stone Circle, south twice from there, then east. Type talk rhett."
   # sided: the choice is made in talk, after each side's warning (R28).
   # Hearing either side's stand topic grants it (the topic_heard triggers
-  # below; the topic sets the 11-branch flag). Old saves that chose a side before this step existed hold the flag
-  # without it; the hand-ins gate on 11-start and the flag, not on this.
+  # below; the topic sets the 11-branch flag). Old saves that chose a side
+  # before this step existed hold the flag without it; their side's terms
+  # topic stays open to them, so they hear it and stand again, and the
+  # hand-ins gate on this step.
   - id: sided
-    # destination inferred from triggers (#375 p4); was: the side chosen decides the place (3082 totem or 3032 samples)
+    # destination: the side chosen decides the place (3082 totem or 3032 samples)
+    destination: {zone: Ironwind Steppe}
     description: "You have chosen a side in the dispute over the stone
       circle. Do what they asked of you to prove it."
-    hint: "If you sided with Sylara, bring her the carved wolf totem
-      from the Kill Ground, deep in the wolf runs to the south. If you
-      sided with Rhett, bring him windstone samples from the veins on
-      the Rocky Shelf, just south of his camp."
+    hint: "Sylara wants her carved wolf totem from the Kill Ground, deep in the wolf runs to the south. Rhett wants windstone samples from the Rocky Shelf, south of his camp."
   - id: end
     description: "You have made your choice and completed the task.
       The consequences remain to be seen."
