@@ -2,6 +2,7 @@ package conversation
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/questworld"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -27,6 +28,20 @@ const (
 	cardRepeatLine = "You can take this on again after a while."
 	cardLastLine   = "This is the last time this work will be offered to you."
 )
+
+// offerCardBody is cardBody for one offer: the offer's objective, when it has
+// one, replaces the first step's description.
+func offerCardBody(t *dialogue.Topic, q *quests.Quest, names quests.RewardNames, lastRun bool) []string {
+	body := cardBody(q, names, lastRun)
+	if t.Objective == "" {
+		return body
+	}
+	if q != nil && len(q.Steps) > 0 && q.Steps[0].Description != "" && len(body) > 0 {
+		body[0] = t.Objective
+		return body
+	}
+	return append([]string{t.Objective}, body...)
+}
 
 // cardBody is the offer card's body (spec 3, 4.3): the quest's first-step
 // description as the objective, the reward line, and for a repeatable the

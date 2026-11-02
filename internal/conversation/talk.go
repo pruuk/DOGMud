@@ -334,7 +334,7 @@ func offerCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic, prefer 
 	inst, key := mob.InstanceId, t.Key
 	card := menu.Confirm(t.Label, "Accept", "Leave")
 	if q := quests.GetQuestById(t.Quest); q != nil {
-		card.Body = cardBody(q, cardNames(user.Character), user.Character.LastRepeat(q))
+		card.Body = offerCardBody(t, q, cardNames(user.Character), user.Character.LastRepeat(q))
 	}
 	user.OpenMenu(card, session(user, mob, func(e menu.Entry) {
 		granted, closes := "", false

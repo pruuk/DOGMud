@@ -72,6 +72,10 @@ type Topic struct {
 	Marked        bool     `yaml:"marked,omitempty" json:"marked,omitempty"`
 	HeardRequired []string `yaml:"heardRequired,omitempty" json:"heardRequired,omitempty"`
 	Breadcrumb    string   `yaml:"breadcrumb,omitempty" json:"breadcrumb,omitempty"`
+	// Objective replaces the first line of the offer card (the quest's first
+	// step description) when that line would be wrong for this offer, such as
+	// one shown to a player already holding the item. Offers only.
+	Objective string `yaml:"objective,omitempty" json:"objective,omitempty"`
 	// Behavior fires the mob's behavior tree with event player_topic and
 	// this topic's key once the topic has played (R12).
 	Behavior bool `yaml:"behavior,omitempty" json:"behavior,omitempty"`

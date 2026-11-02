@@ -139,6 +139,9 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 			if t.Breadcrumb != "" {
 				add(where, "breadcrumb belongs on offer topics only")
 			}
+			if t.Objective != "" {
+				add(where, "objective belongs on offer topics only")
+			}
 			lower := norm(t.Label)
 			if prev, dup := infoLabels[lower]; dup {
 				add(where, "label repeats topic %q", prev)
@@ -157,6 +160,9 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 			}
 			if t.Kind == KindHandIn && t.Breadcrumb != "" {
 				add(where, "breadcrumb belongs on offer topics only")
+			}
+			if t.Kind == KindHandIn && t.Objective != "" {
+				add(where, "objective belongs on offer topics only")
 			}
 			if q, ok := lookupQuest(w, t.Quest); !ok {
 				add(where, "quest %d does not exist", t.Quest)

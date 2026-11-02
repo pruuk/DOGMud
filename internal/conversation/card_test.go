@@ -3,6 +3,7 @@ package conversation
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
@@ -17,6 +18,27 @@ func cullQuest() *quests.Quest {
 		},
 		Rewards: quests.QuestReward{Gold: 6, SkillInfo: "weapon-combat:1"},
 	}
+}
+
+// An offer shown to a player already holding the item says what to do with it:
+// its objective replaces the first step's description on the card.
+func TestOfferCardBody_ObjectiveReplacesTheFirstLine(t *testing.T) {
+	q := cullQuest()
+	body := offerCardBody(&dialogue.Topic{Objective: "Give it back."}, q, quests.RewardNames{}, false)
+	require.Equal(t, "Give it back.", body[0])
+	require.Equal(t, cardBody(q, quests.RewardNames{}, false)[1:], body[1:], "the rest of the card is unchanged")
+}
+
+func TestOfferCardBody_NoObjectiveKeepsTheCard(t *testing.T) {
+	q := cullQuest()
+	require.Equal(t, cardBody(q, quests.RewardNames{}, false),
+		offerCardBody(&dialogue.Topic{}, q, quests.RewardNames{}, false))
+}
+
+func TestOfferCardBody_ObjectiveOnAQuestWithNoDescription(t *testing.T) {
+	q := &quests.Quest{QuestId: 1, Steps: []quests.QuestStep{{Id: "start"}, {Id: "end"}}}
+	require.Equal(t, []string{"Give it back."},
+		offerCardBody(&dialogue.Topic{Objective: "Give it back."}, q, quests.RewardNames{}, false))
 }
 
 func TestCardBody_ObjectiveRewardAndRepeat(t *testing.T) {
