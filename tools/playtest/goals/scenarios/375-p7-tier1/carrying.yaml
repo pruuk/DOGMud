@@ -1,0 +1,32 @@
+# CARRYING seat: holds Malk's freight crate before ever speaking to him. The
+# NPC should notice it, the card should say to give it to him, and the hand-in
+# should be on the menu straight after accepting. Quote game lines VERBATIM and
+# IN ORDER: the order of the lines is the thing under test.
+ephemeral:
+  profile: mid
+  start_room: 4003
+  overlays:
+    grant_items: [40039]
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `inventory` and confirm you hold a freight crate. Type `talk malk`.
+    Quote his whole opener, his hint and the menu, with any marker beside each
+    line.
+  - >-
+    Choose the quest line. Quote the line you speak, his reply, and the whole
+    card. Without answering the card, type `drop crate`. Quote what happens. If
+    the card is still open, accept it and quote the result: the offer should be
+    refused or the step should not move. Then pick up the crate and type
+    `quests` and `hint`, and quote them.
+  - >-
+    If the quest is not yet taken, type `talk malk` again and accept it with the
+    crate in your pack. Quote EVERY line after you accept, in order, up to and
+    including the menu that comes back. Does the menu show the quest with a [?]
+    without you typing anything else? Is the order of the lines sensible?
+  - >-
+    Hand in the crate. Quote the hand-in and the rewards. Type `talk malk` and
+    quote the opener and menu. Say whether anything he says now contradicts
+    what happened.

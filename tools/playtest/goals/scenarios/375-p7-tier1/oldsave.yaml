@@ -1,0 +1,32 @@
+# OLD SAVE seat: a character saved before this pass. Holds the tithe ledger on
+# the first step of quest 9, and sided with Sylara on quest 11 without the sided
+# step and without hearing her terms. Both must still finish. Also checks a
+# quest giver is addressable by name wherever you go. Quote game lines VERBATIM.
+ephemeral:
+  profile: mid
+  start_room: 468
+  overlays:
+    set_quest_tokens: ["9-start", "11-start"]
+    set_quest_flags: {"11-branch": "sylara"}
+    grant_items: [29, 40033]
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Type `quests` and quote it. Type `talk olen`, and quote the opener and menu.
+    Is there a way forward with the ledger in your pack? Take it, and hand the
+    ledger in. Quote every line. Say if anything he says is untrue for you.
+  - >-
+    Follow quest 11's hint to Windwarden Sylara at the Stone Circle. On the way,
+    if you meet Geomancer Rhett, talk to him and quote what he offers. Type
+    `time` when you arrive. Type `talk sylara`, quote the opener and menu with
+    markers. Does she offer the hand-in for the totem you hold? If not, what can
+    you choose? Follow what is offered until you can hand in the totem. Quote
+    every line, and say how it reads to someone who had already chosen her side.
+  - >-
+    After the hand-in, is a next quest offered? Quote it, then decline it.
+  - >-
+    Walk to Hermit Kael's alcove, then type `time`, `look`, and `talk kael`.
+    Quote them. Say whether you could make out his face and speak to him by name,
+    and whether you can see him carrying a light.
