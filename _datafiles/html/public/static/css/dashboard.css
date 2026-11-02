@@ -59,22 +59,33 @@
 #dash-session .sess-mid { margin: 0 auto; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 /* Enter Game at the login prompt points the player at the command box. */
 #command-input.cmd-nudge { border-color: var(--cmd-border-focus); box-shadow: 0 0 0 2px var(--cmd-ring-focus); }
-#dash-session button { font-size: 0.75rem; }
+/* The same size as the tab buttons inside the panels (.subtab, Malia 2026-11-01). */
+#dash-session button { font-size: 0.95rem; }
 /* Everything in the session bar stays on one line; when space runs out the
    character name shortens first. Phones get a 48px tap height on the Enter /
-   Leave Game and Yes / Stay buttons, an icon for Reset layout, and "Leave?" for
+   Leave Game and Yes / Stay buttons, icons for Settings and Reset layout (words
+   on wider screens, to match Enter Game), and "Leave?" for
    the confirmation question. */
 #dash-session { min-width: 0; }
 #dash-session > * { flex: 0 0 auto; white-space: nowrap; }
 #dash-session .sess-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 #btn-reset-layout .btn-icon,
+#btn-settings .btn-icon,
 #sess-confirm .q-short { display: none; }
+/* The Settings drop-down lives inside the strip (so Tab reaches it next) but
+   is not part of its one-line row. */
+#dash-session > #settings-menu { white-space: normal; font-size: 0.95rem; }
+#dash-session #settings-close { font-size: 20px; }
 #dashboard[data-mode="phone"] #dash-session { gap: 8px; padding: 4px 8px; }
 #dashboard[data-mode="phone"] #btn-reset-layout .btn-label,
+#dashboard[data-mode="phone"] #btn-settings .btn-label,
 #dashboard[data-mode="phone"] #sess-confirm .q-long { display: none; }
 #dashboard[data-mode="phone"] #btn-reset-layout .btn-icon,
+#dashboard[data-mode="phone"] #btn-settings .btn-icon,
 #dashboard[data-mode="phone"] #sess-confirm .q-short { display: inline; }
-#dashboard[data-mode="phone"] #btn-reset-layout { font-size: 1.1rem; min-width: 40px; min-height: 40px; }
+#dashboard[data-mode="phone"] #btn-reset-layout,
+#dashboard[data-mode="phone"] #btn-settings { font-size: 1.1rem; min-width: 40px; min-height: 40px; }
+#dashboard[data-mode="phone"] #btn-settings .btn-icon { margin-right: 0; }
 #dashboard[data-mode="phone"] #btn-session,
 #dashboard[data-mode="phone"] #sess-confirm button { min-height: 48px; padding: 0 14px; font-size: 0.95rem; }
 
@@ -91,7 +102,7 @@
   display: flex; align-items: center; gap: 6px;
   padding: 4px 8px;
   background: linear-gradient(var(--ink-deep), var(--bar-bottom));
-  border-bottom: 2px solid var(--panel-border);   /* colored per column below */
+  border-bottom: 2px solid var(--copper);   /* one teal line under every panel title (Malia 2026-11-01) */
   cursor: grab;            /* header is the drag handle for swap */
   user-select: none;
 }
@@ -100,12 +111,7 @@
   font-size: 0.82rem; color: var(--vellum);
 }
 
-/* Column identity / pop — copper (left), antique gold (center), madder (right) */
-#dash-col-left   .dash-panel-head { border-bottom-color: var(--copper); }
-#dash-col-center .dash-panel-head { border-bottom-color: var(--antique-gold); }
-#dash-col-right  .dash-panel-head { border-bottom-color: var(--madder); }
-
-/* Parchment cards: vellum fill + brown leather outline + dark text, for
+/* Parchment cards: vellum fill + gold outline + dark text, for
    contrast against the dark leather cards. (session strip / command input /
    each column's middle card.) The two panels keep their dark labeled headers. */
 #dash-session,
@@ -113,10 +119,10 @@
 #panel-vitals,
 #panel-status {
   background: var(--vellum);
-  /* Tooled-red leather frame (palette red). The old dark #3a2a18 was tuned for
-     the light vellum fill but vanished against the dark page outside the card,
-     so these read as frameless. The warm red reads clearly against both. */
-  border-color: var(--frame-red);
+  /* The same gold outline as every other card (Malia 2026-11-01; was a red
+     frame, which read as a warning). Gold reads clearly against the dark page,
+     which the old dark #3a2a18 did not. */
+  border-color: var(--antique-gold);
   color: var(--ink-deep);
 }
 
@@ -272,7 +278,7 @@
 #dash-drawer { display: none; }
 
 #dashboard[data-mode="rail"] {
-  grid-template-columns: minmax(0, 2.3fr) minmax(240px, 1fr);
+  grid-template-columns: minmax(0, 2.3fr) minmax(280px, 1fr);
   grid-template-areas:
     "sess sess"
     "center rail";
@@ -293,28 +299,106 @@
   overflow: hidden;
 }
 
-.rail-tabs {
+/* Game tabs (design 2026-11-01, Version B): round icon buttons on a dark
+   umber bar with a teal rim, and ONE name pill per bar that rests on the open
+   tab and slides to a hovered or keyboard-focused circle. Built by
+   makeTabBar() in dashboard.js; the same component in the rail and on the
+   phone. The teal rim ties the bar to the teal site bar above it (Malia picked
+   the rim over a teal gradient). The circles follow the sub-tab rule (Malia
+   2026-11-01): closed = shiny brass with a dark icon, open = pressed into
+   dark brass with a cream icon.
+   Measured: dark icon on the brass 10.23 on the light spot, 4.05 mid (the
+   icon sits between the two); cream icon on the open dark brass 4.28 to 9.45;
+   brass circle against the bar 5.38; umber name on the cream pill 13.03, gold
+   name on the preview 11.51; focus ring on the bar 10.00; teal rim against the
+   page 3.27. */
+.gtabs {
+  --gtab-bar: #19140c;        /* darkest umber, the game */
+  --gtab-icon: #dfcc94;       /* gold, the preview pill's text */
+  --gtab-pill: #efd897;
+  --gtab-pill-text: #19140c;
+  --gtab-teal-rim: #2e6e60;   /* brand teal L42 */
+  --gtab-size: 36px;
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
   gap: 3px;
-  padding: 3px;
-  background: linear-gradient(var(--ink-deep), var(--bar-bottom));
-  border-bottom: 1px solid var(--panel-border);
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--gtab-bar);
+  box-shadow: inset 0 0 0 2px var(--gtab-teal-rim), 0 4px 14px var(--glass-shadow);
 }
 
-.rail-tab {
-  font-size: 0.72rem;
-  padding: 3px 8px;
-  opacity: 0.7;
+.gtab {
+  flex: 0 1 var(--gtab-size);
+  min-width: 28px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--brass-border);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--brass-text);
+  background: radial-gradient(circle at 34% 26%, var(--brass-light), var(--brass-mid) 46%, var(--brass-dark));
+  box-shadow: inset 0 1px 1px color-mix(in srgb, var(--brass-glint) 70%, transparent),
+              0 2px 3px color-mix(in srgb, var(--shadow) 50%, transparent);
+  transition: filter 0.12s ease, transform 0.12s ease;
 }
-
-.rail-tab.rail-active {
-  opacity: 1;
+.gtab svg {
+  width: 55%;
+  height: 55%;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.gtab:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gtab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+.gtab.open {
+  color: var(--gold-button-light);
+  background: radial-gradient(circle at 34% 26%, #7a5f27, #56441f 46%, #3a2e15);
   box-shadow: inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 60%, transparent),
               inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
 }
 
-/* Rail body: panels inside, only .rail-active is shown */
+/* The one name pill. Below the bar in the rail, above it on the phone. */
+.gtab-pill {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--gtab-pill);
+  white-space: nowrap;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.3;
+  pointer-events: none;
+  color: var(--gtab-pill-text);
+  background: var(--gtab-pill);
+  box-shadow: 0 3px 10px var(--glass-shadow);
+  visibility: hidden;
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.gtab-pill.shown { visibility: visible; }
+.gtab-pill.preview { color: var(--gtab-icon); background: var(--gtab-bar); }
+.gtabs-phone .gtab-pill { top: auto; bottom: calc(100% + 6px); }
+@media (prefers-reduced-motion: reduce) {
+  .gtab, .gtab-pill { transition: none; }
+  .gtab:hover { transform: none; }
+}
+@media (forced-colors: active) {
+  .gtab.open { outline: 2px solid Highlight; }
+}
+
+/* In the rail: across the top, with room below it for the name. */
+.gtabs-rail { margin: 6px 6px 34px; }
+
+/* Rail body: panels inside, only the open tab's panel is shown */
 .rail-body {
   flex: 1 1 0;
   min-height: 0;
@@ -330,10 +414,19 @@
 /* Responsive reflow — Phone mode (< 700px)                           */
 /* ------------------------------------------------------------------ */
 
+/* Phone bar sizes: a 40px circle row (52px bar) floating 8px above the screen
+   edge, and a 30px strip above it for the open tab's name. */
+#dashboard[data-mode="phone"],
+#dash-tabbar,
+#dash-drawer {
+  --tabbar-h: 60px;   /* bar + its bottom gap */
+  --tabname-h: 30px;  /* the name strip, shown while a panel is open */
+}
+
 #dashboard[data-mode="phone"] {
-  /* Leave room for the fixed 48px #dash-tabbar, which otherwise sits over
-     the command box at the bottom of the Game window (#730). */
-  padding-bottom: calc(6px + 48px);
+  /* Leave room for the fixed #dash-tabbar, which otherwise sits over the
+     command box at the bottom of the Game window (#730). */
+  padding-bottom: calc(6px + var(--tabbar-h));
   grid-template-columns: 1fr;
   grid-template-areas:
     "sess"
@@ -351,37 +444,29 @@
   right: 0;
   bottom: 0;
   z-index: 50;
-  display: flex;
-  justify-content: space-around;
-  background: linear-gradient(var(--bar-top), var(--bar-bottom));
-  border-top: 2px solid var(--gold-rule);
-  height: 48px;
+  display: block;   /* overrides the hidden default above; JS hides it outside phone mode */
+  padding: 0 8px 8px;
 }
-
-.tabbar-btn {
-  flex: 1;
-  text-align: center;
-  padding: 8px 0;
-  font-size: 18px;
-  color: var(--ink-gold);
-  cursor: pointer;
-  transition: background 0.1s;
+/* A panel is open: the name strip sits between the drawer and the bar. */
+#dash-tabbar.named {
+  padding-top: var(--tabname-h);
+  background: var(--bg-base);
 }
-
-.tabbar-btn.active {
-  background: color-mix(in srgb, var(--ink-gold) 15%, transparent);
-}
+.gtabs-phone { --gtab-size: 40px; gap: 2px; }
 
 /* Slide-up drawer — also appended outside #dashboard */
 #dash-drawer {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 48px;   /* leave room for the tab-bar */
+  bottom: calc(var(--tabbar-h) + var(--tabname-h));   /* above the tab-bar and its name strip */
   z-index: 49;
   height: 62vh;
-  transform: translateY(100%);
-  transition: transform 0.2s ease;
+  /* Closed: slide fully below the screen (past the bar and name strip) and
+     hide, so its top never peeks out over the command box. */
+  transform: translateY(calc(100% + var(--tabbar-h) + var(--tabname-h)));
+  visibility: hidden;
+  transition: transform 0.2s ease, visibility 0s linear 0.2s;
   background: var(--panel-bg);
   border-top: 2px solid var(--gold-rule);
   display: flex;
@@ -390,6 +475,8 @@
 
 #dash-drawer.open {
   transform: translateY(0);
+  visibility: visible;
+  transition: transform 0.2s ease, visibility 0s;
 }
 
 .drawer-head {
@@ -398,6 +485,15 @@
   padding: 4px;
   background: linear-gradient(var(--ink-deep), var(--bar-bottom));
   border-bottom: 1px solid var(--panel-border);
+}
+/* Square ✕, matching the phone's Settings and Reset layout squares. */
+.drawer-close {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 3px 12px;
+  font-size: 1.1rem;
+  font-weight: 400;
+  line-height: 1;
 }
 
 .drawer-body {
@@ -434,47 +530,94 @@
 .winbox.dash-winbox .wb-body {
   background: var(--panel-bg);
 }
+/* The window's title bar already names the panel and its close button docks
+   it, so the panel's own header would only repeat it ("Game" twice). */
+.winbox.dash-winbox .dash-panel-head { display: none; }
+
+/* Pop-out windows are for wide screens; dashboard.js docks them when narrow. */
+#dashboard[data-mode="rail"] .ph-popout,
+#dashboard[data-mode="phone"] .ph-popout,
+#dash-drawer .ph-popout { display: none; }
+
+/* ------------------------------------------------------------------ */
+/* Sub-tabs: Chat channels, Inventory, Automation (Malia 2026-11-01)   */
+/* ------------------------------------------------------------------ */
+/* One look for every tab strip inside a panel: brass buttons that look
+   tappable, Chat's reading size, nothing dimmed. The open tab is pressed in.
+   Buttons fill the row and wrap to a second row rather than scroll, so every
+   Chat channel stays in sight on a phone.
+   Measured on the shiny brass: label 10.23 on the light spot, 4.05 mid,
+   2.29 at the dark edge; the bigger text carries it. */
+.subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 4px;
+  padding: 6px 6px 8px;
+  background: linear-gradient(var(--ink-deep), var(--bar-bottom));
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+.subtab {
+  flex: 1 0 auto;
+  min-height: 34px;
+  padding: 4px 10px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-align: center;
+  color: var(--brass-text);
+  /* The shiny brass with its light spot (Malia 2026-11-01: fine at this size). */
+  background: radial-gradient(circle at 34% 26%, var(--brass-light), var(--brass-mid) 46%, var(--brass-dark));
+  border: 1px solid var(--brass-border);
+  border-radius: 6px;
+  box-shadow: 0 2px 3px color-mix(in srgb, var(--shadow) 50%, transparent),
+              inset 0 1px 1px color-mix(in srgb, var(--brass-glint) 70%, transparent);
+  cursor: pointer;
+  user-select: none;
+  transition: filter 0.08s ease;
+}
+.subtab:hover { filter: brightness(1.05); }
+.subtab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.subtab.active {
+  /* The open tab is pressed into darker brass (Malia 2026-11-01). Dark text
+     on darkened brass fails (1.56 to 2.74), so its label turns cream: 4.28 on
+     the spot, 6.66 mid, 9.45 at the edge. */
+  color: var(--gold-button-light);
+  background: radial-gradient(circle at 34% 26%, #7a5f27, #56441f 46%, #3a2e15);
+  box-shadow: inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 60%, transparent),
+              inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
+}
+/* Fingers need a bigger target than a mouse. */
+@media (pointer: coarse) {
+  .subtab { min-height: 44px; }
+}
+@media (forced-colors: active) {
+  .subtab.active { outline: 3px solid Highlight; }
+}
 
 /* ------------------------------------------------------------------ */
 /* Inventory Panel (#panel-art)                                        */
 /* ------------------------------------------------------------------ */
 
-/* Tab strip */
-.inv-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  padding: 4px 4px 0;
-  background: linear-gradient(var(--ink-deep), var(--bar-bottom));
-  border-bottom: 1px solid var(--panel-border);
-}
+/* Regular weight in the session bar buttons (Malia 2026-11-01). Dark brass
+   text stays: light text on brass fails (1.18). */
+#btn-session,
+#btn-settings,
+#btn-reset-layout { font-weight: 400; }
 
-/* Individual tab buttons — brass pill style */
-.inv-tab.brass {
-  flex: 1;
-  text-align: center;
-  font-size: 10px;
-  padding: 4px 2px;
-  border-radius: 4px 4px 0 0;
-  cursor: pointer;
-  border: 1px solid var(--brass-border);
-  color: var(--brass-text);
-  background: var(--brass-grad);
-  font-family: var(--font-body);
-  filter: brightness(0.72);
-  opacity: 0.88;
-  transition: filter 0.08s, opacity 0.08s;
-}
-.inv-tab.brass:hover {
-  filter: brightness(0.85);
-  opacity: 1;
-}
-.inv-tab.brass.active {
-  filter: brightness(1);
-  opacity: 1;
-  box-shadow: inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 60%, transparent),
-              inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
-}
+/* No light glow under brass labels in the game (Malia 2026-11-01): it
+   softens small letters. */
+.brass { text-shadow: none; }
+
+/* An even brass with no bright shine spot (Malia 2026-11-01), so the dark
+   label reads the same across the button.
+   Light brass to a 60/40 light/mid mix: label 9.43 at the top, 6.09 at the
+   bottom (was 10.23 on the shine, 4.05 mid, 2.29 at the edge). Game only. */
+:root[data-client] { --brass-grad: linear-gradient(#edd489, #c8a95b); }
+/* Side room so a label never touches the button's edge. */
+#dash-session button { padding: 3px 12px; }
 
 /* 5-column grid of item tiles */
 .inv-grid {
@@ -654,37 +797,7 @@
 /* Automation Panel (#panel-trig)                                      */
 /* ------------------------------------------------------------------ */
 
-/* Tab strip — flat flex row, madder underline on active (right-col accent) */
-.auto-tabs {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 0;
-  padding: 4px 4px 0;
-  background: linear-gradient(var(--ink-deep), var(--bar-bottom));
-  border-bottom: 1px solid var(--panel-border);
-  flex-shrink: 0;
-}
-
-.auto-tab {
-  flex: 1;
-  text-align: center;
-  font-size: 10px;
-  padding: 4px 2px;
-  font-family: var(--font-body);
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 0.08s, border-color 0.08s;
-  white-space: nowrap;
-  user-select: none;
-}
-.auto-tab:hover {
-  color: var(--vellum);
-}
-.auto-tab.active {
-  color: var(--vellum);
-  border-bottom-color: var(--madder);
-}
+/* Tab strip: the shared .subtab style (see Sub-tabs above). */
 
 /* Add-bar — thin strip with a brass "+ New" button */
 .auto-addbar {
@@ -931,7 +1044,7 @@
   align-items: center;
   padding: 6px 10px;
   background: linear-gradient(var(--ink-deep), var(--bar-bottom));
-  border-bottom: 2px solid var(--madder);
+  border-bottom: 2px solid var(--copper);
 }
 
 .auto-modal-title {
@@ -1029,7 +1142,7 @@
 #terminal .composition-view { background: var(--ink-deep); color: var(--term-cursor); }
 
 /* Automation macro/alias "sticker" chips — compact oval pills (mirrors the
-   Status & Conditions cond-chips). Shows only the shortcut/F-key; full
+   Status panel cond-chips). Shows only the shortcut/F-key; full
    expansion is the hover title. Wraps to fit many in the panel. */
 .auto-chips { display: flex; flex-wrap: wrap; gap: 5px; padding: 2px; align-content: flex-start; }
 .auto-chip {
@@ -1040,7 +1153,7 @@
   cursor: pointer; white-space: nowrap; user-select: none;
   transition: border-color 0.1s, box-shadow 0.1s, color 0.1s;
 }
-/* Type accents — mirror the Status & Conditions panel's two-tone chips so the
+/* Type accents — mirror the Status panel's two-tone chips so the
    automation tabs read with the same polish. Macros = warm brass (F-key action
    keys); aliases = teal/copper, tying them to the status-panel condition chips. */
 .auto-chip[data-auto-type="macro"] {

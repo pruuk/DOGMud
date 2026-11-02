@@ -162,7 +162,80 @@
   --table-border-color: #19140c;
   --table-cell-text-color: var(--text-primary);
   --table-header-text-color: var(--ink-gold);
+
+  /* Glass: menus in the style of Apple's iOS 26 "Liquid Glass", in brand
+     colours only (design 2026-11-01). The bar is the darkest sky blue step,
+     the complement of the site's browns and the same family as the DOGMud
+     ASCII art; 92% so the page shows through only faintly. A capsule is
+     whatever is under it darkened with umber. Cream highlight instead of
+     white, umber shadow instead of black. Measured worst case (near-white
+     scrolled under the bar): nav text 4.71, current page 5.3; in a Group
+     capsule text 7.76, gold pill 4.91 against it, umber text on the pill
+     7.28; focus ring 9.8. Do not put --ink-gold text on glass. */
+  --glass-bar: color-mix(in srgb, #085044 92%, transparent);
+  --glass-bar-solid: #085044;
+  --glass-capsule: color-mix(in srgb, #19140c 35%, transparent);
+  --glass-capsule-hover: color-mix(in srgb, #19140c 55%, transparent);
+  /* The capsule mixed solid, for reduced transparency (teal + 35%/55% umber). */
+  --glass-group-solid: #0e3b30;
+  --glass-group-hover-solid: #112f25;
+  --glass-text: #dfcc94;
+  --glass-text-strong: #efd897;
+  --glass-edge: color-mix(in srgb, #fef9ee 18%, transparent);
+  --glass-shadow: color-mix(in srgb, #19140c 45%, transparent);
+  --glass-prominent: #b5a26c;
+  --glass-prominent-text: #19140c;
+  --focus-ring: #e7b86c;
 }
+
+/* ── Light theme (website pages only, 2026-11-01) ──
+   Chosen in the web client's Settings > Appearance; static/js/theme.js sets
+   <html data-theme="light">. Covers the pages that use the site header: Home,
+   Who's Online, Architecture, Config, 404 and the frame around the web
+   client. The web client itself marks its <html> with data-client and stays
+   dark for now; the builder pages keep their own palette.
+   Warm parchment from the Cuyp cream, dark umber text. Every text colour is at
+   least 4.5:1 on every background it sits on (lowest: online green on a table
+   heading, 4.7). Brass buttons keep their dark theme colours: dark text on
+   gold already reads on a light page. */
+:root[data-theme="light"]:not([data-client]) {
+  --background-image: radial-gradient(circle at 50% 22%, #fbf5e6, #efe3c8);
+  --page-glow: #fbf5e6;
+  --page-edge: #efe3c8;
+  --bg-base: #f6eedb;
+
+  --text-primary: #2b2116;    /* 13.6 on the page */
+  --text-secondary: #5b4a33;  /* 7.4 */
+  --text-tagline: #5e4a2c;    /* 7.3 */
+  --title-gold: #6e4b0e;      /* 6.8: headings, hovered and current nav */
+  --ink-gold: #6f5418;        /* 6.1: nav, links, table headings */
+  --online-green: #3b6526;    /* 5.9 */
+
+  --panel-bg: #fffaf0;        /* cards */
+  --panel-bg-alt: #f7efdc;    /* table rows */
+  --panel-border: #cdb98e;
+  --chip-bg: #fffaf0;
+  --nav-scrim: #fbf5e8;       /* nav pill fill */
+  --nav-selected: #eedcb4;    /* current page's pill */
+
+  --ink-deep: #f6ebd2;        /* header and footer bar, top */
+  --bar-deep: #efe2c4;        /*                       bottom */
+  --bar-top: #eadbb8;         /* table heading row */
+  --bar-bottom: #e6d5ae;
+  --antique-gold: #a8823c;    /* bar and card outlines, 3.1 on the page */
+  --gold-rule: #b39a5e;
+
+  --shadow: #a08a66;          /* softer: a near-black shadow looks dirty on parchment */
+
+  /* The text wordmark's gold gradient, darkened to read on parchment. */
+  --gold-button-light: #9c7424;
+  --gold-button-dark: #5e430f;
+}
+/* Two rules, not colours: the hero title's shadow muddies on parchment, and
+   the Architecture card labels use the outline gold as text, which is 3.1 on a
+   light card; the link gold is 6.8. */
+:root[data-theme="light"]:not([data-client]) .hero-title { text-shadow: none; }
+:root[data-theme="light"]:not([data-client]) .diagram-kind { color: var(--ink-gold); }
 
 body {
   margin: 0;
@@ -180,21 +253,27 @@ body {
 
 a { text-decoration: none; color: inherit; }
 
-/* ── Unified console header (brand wordmark + chip nav in one bar) ──
-   Merged the old separate <nav> bar in here: matches the dashboard cards
-   (rounded, antique-gold outline, inset highlight) and reclaims a full row of
-   vertical height for the web-client dashboard below. */
+/* ── Site header (brand wordmark + nav in one bar) ──
+   A borderless glass bar across the full width (design 2026-11-01, Apple's
+   iOS 26 style in brand colours): it stays at the top while the page scrolls
+   and blurs whatever passes under it. No outline, no rounded box. */
 header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 14px;
-  margin: 7px 8px;
-  padding: 7px clamp(12px, 2vw, 18px);
-  background: linear-gradient(var(--ink-deep), var(--bar-deep));
-  border: 1px solid var(--antique-gold);
-  border-radius: 8px;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink-gold) 12%, transparent), 0 2px 6px color-mix(in srgb, var(--shadow) 40%, transparent);
+  gap: 8px 16px;
+  margin: 0;
+  padding: 10px clamp(16px, 3vw, 32px);
+  background: var(--glass-bar);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+}
+/* No blur available: a solid umber bar, so text never sits on raw page. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  header { background: var(--glass-bar-solid); }
 }
 /* Gold-gradient wordmark (solid title-gold fallback where background-clip
    isn't supported). */
@@ -258,35 +337,102 @@ nav {
   gap: 6px;
   padding: 0;
 }
-/* Chip nav — same language as the dashboard status / automation chips. */
+/* Menu links, shared by the three looks below. Written against
+   .nav-container, not header, so the same menu can sit above the footer
+   later. The current page carries aria-current="page" (and the older
+   .selected). */
 .nav-container a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
   font-family: var(--font-body);
-  font-size: clamp(0.72rem, 1vw, 0.86rem);
+  font-size: 0.9rem;
   white-space: nowrap;
-  color: var(--ink-gold);
-  background: color-mix(in srgb, var(--nav-scrim) 60%, transparent);
-  border: 1px solid var(--panel-border);
-  border-radius: 13px;
-  padding: 3px 13px;
-  transition: border-color 0.1s ease, color 0.1s ease, box-shadow 0.1s ease;
+  color: var(--glass-text);
+  border: 0;
+  border-radius: 999px;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
-.nav-container a:hover {
-  border-color: var(--gold-rule);
-  color: var(--title-gold);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink-gold) 22%, transparent);
+.nav-container a:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
-.nav-container a.selected {
-  border-color: var(--antique-gold);
-  color: var(--title-gold);
-  background: var(--nav-selected);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--antique-gold) 30%, transparent);
+.nav-container a[aria-current="page"] { font-weight: 600; }
+
+/* Group: one glass capsule holds every link (Apple's tab bar); the
+   current page is a gold fill inside it. */
+.nav-group {
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--glass-capsule);
+  box-shadow: inset 0 1px 0 var(--glass-edge), 0 2px 8px var(--glass-shadow);
+}
+.nav-group a:hover { background: var(--glass-capsule-hover); color: var(--glass-text-strong); }
+.nav-group a[aria-current="page"] {
+  background: var(--glass-prominent);
+  color: var(--glass-prominent-text);
 }
 
-/* ── Mobile nav toggle ── */
-.nav-toggle { display: none; flex-direction: column; cursor: pointer; }
-.nav-toggle div {
-  width: 30px; height: 4px; border-radius: 2px;
-  background: var(--ink-gold); margin: 5px;
+/* Text (the site menu): plain links; the current page is cream with a gold line. */
+.nav-text { gap: 4px; }
+.nav-text a { padding: 0 10px; border-radius: 6px; }
+.nav-text a:hover { color: var(--glass-text-strong); }
+.nav-text a[aria-current="page"] {
+  color: var(--glass-text-strong);
+  text-decoration: underline 2px var(--glass-prominent);
+  text-underline-offset: 7px;
+}
+
+/* ── Phone menu button (☰): a real button, so a keyboard reaches it ── */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.nav-toggle span {
+  width: 24px; height: 3px; border-radius: 2px;
+  background: var(--glass-text);
+}
+.nav-toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Tablets: tighter links so the wordmark and all seven fit on one row. */
+@media (min-width: 769px) and (max-width: 1100px) {
+  header { gap: 8px 12px; padding: 8px 16px; }
+  .gomud-btn { font-size: 1rem; letter-spacing: 1px; }
+  .nav-container { gap: 4px; }
+  .nav-container a { font-size: 0.82rem; padding: 0 10px; min-height: 32px; }
+  .nav-group { gap: 0; padding: 3px; }
+  .nav-text a { padding: 0 7px; }
+}
+@media (min-width: 769px) and (max-width: 900px) {
+  .gomud-btn { font-size: 0.92rem; letter-spacing: 0.5px; }
+  .nav-container { gap: 3px; }
+  .nav-container a { font-size: 0.78rem; padding: 0 8px; }
+  .nav-text a { padding: 0 5px; }
+}
+
+/* Reduced transparency or more contrast asked for: solid glass, no blur. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root {
+    --glass-bar: var(--glass-bar-solid);
+    --glass-capsule: var(--glass-group-solid);
+    --glass-capsule-hover: var(--glass-group-hover-solid);
+  }
+  header { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
 /* ── Content + panels ── */
@@ -312,13 +458,14 @@ body:has(.content-container[data-path="/webclient"]) { overflow-x: hidden; }
 .overlay, .underlay {
   width: 90%;
   max-width: 1100px;
+  /* No outline (design 2026-11-01): the fill and a soft umber shadow set the
+     card off the page. */
   background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
+  border: 0;
+  border-radius: 14px;
   padding: 20px;
   text-align: center;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink-gold) 10%, transparent),
-              0 6px 16px color-mix(in srgb, var(--shadow) 50%, transparent);
+  box-shadow: 0 8px 24px var(--glass-shadow);
 }
 .overlay { overflow-y: auto; }
 .underlay { height: auto; max-height: 200px; }
@@ -415,22 +562,23 @@ pre, code { font-family: var(--font-mono); }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  header { padding: 8px 12px; gap: 8px; }
+  header { padding: 6px 12px; gap: 8px; }
   .gomud-btn { font-size: 1.05rem; letter-spacing: 1.5px; }
   .hero-title { font-size: 1.7rem; }
-  /* Drop the nav to a full-width second row below the brand + hamburger. */
+  /* The ☰ button opens the menu as a full-width sheet under the bar. */
   nav { flex-basis: 100%; order: 3; }
   .nav-toggle { display: flex; margin-left: auto; }
   .nav-container {
     display: none;
     flex-direction: column;
     align-items: stretch;
-    text-align: center;
     width: 100%;
-    gap: 0.4rem;
-    padding: 6px 0 2px;
+    gap: 6px;
+    padding: 6px 0 4px;
   }
-  .nav-container a { display: block; padding: 9px; border-radius: 8px; }
+  .nav-container.open { display: flex; }
+  .nav-container a { justify-content: center; min-height: 44px; }
+  .nav-group { border-radius: 22px; padding: 6px; }
   .content-container { padding: 12px; }
   .overlay, .underlay { width: 95%; padding: 12px; }
   footer { font-size: 0.8rem; padding: 9px 12px; }

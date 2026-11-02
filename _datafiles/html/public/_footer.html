@@ -10,10 +10,22 @@
     </footer>
 
     <script>
-      function toggleMenu() {
-        const navContainer = document.querySelector('.nav-container');
-        navContainer.style.display = navContainer.style.display === 'flex' ? 'none' : 'flex';
+      // Phone menu: the ☰ button opens and closes it and says which it is
+      // (aria-expanded); Esc closes it and puts focus back on the button.
+      function toggleMenu(open) {
+        const nav = document.getElementById('site-nav');
+        const btn = document.querySelector('.nav-toggle');
+        if (!nav || !btn) return;
+        if (typeof open !== 'boolean') open = !nav.classList.contains('open');
+        nav.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
       }
+      document.addEventListener('keydown', function (e) {
+        const nav = document.getElementById('site-nav');
+        if (e.key !== 'Escape' || !nav || !nav.classList.contains('open')) return;
+        toggleMenu(false);
+        document.querySelector('.nav-toggle').focus();
+      });
     </script>
   </body>
 </html>

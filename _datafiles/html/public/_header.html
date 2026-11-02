@@ -12,10 +12,13 @@
     }
   </style>
   <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.png">
+  <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js"></script>
   <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css">
   <script type="text/javascript">
     window.addEventListener("load", function(){
       const link = document.getElementById('hide-header-footer');
+      // Only the Web Client page has the full screen link.
+      if (!link) return;
 
       // Add a click event listener
       link.addEventListener('click', function(event) {
@@ -33,23 +36,23 @@
   </script>
 </head>
 <body>
-  <!-- Unified console header: gold-gradient wordmark + chip nav in one bar. -->
+  <!-- Site header: wordmark + menu in one borderless glass bar. -->
   <header>
     <a class="gomud-btn" href="/">{{ .CONFIG.Server.MudName }}</a>
-    <nav>
-      <div class="nav-container">
-        {{ $reqPath := .REQUEST.RequestURI }}
+    <button type="button" class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="site-nav" onclick="toggleMenu()">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </button>
+    <nav aria-label="Site">
+      <div class="nav-container nav-text" id="site-nav">
+        {{ $reqPath := .REQUEST.URL.Path }}
         {{ range $idx, $navDetails := .NAV }}
-          <a href="{{ $navDetails.Target }}" {{ if eq $reqPath $navDetails.Target }}class="selected"{{end}}>{{ $navDetails.Name }}</a>
+          <a href="{{ $navDetails.Target }}" {{ if eq $reqPath $navDetails.Target }}class="selected" aria-current="page"{{end}}>{{ $navDetails.Name }}</a>
         {{ end }}
-        {{ if eq .REQUEST.RequestURI "/webclient" }}<a id="hide-header-footer" href="/webclient-pure">⛶</a>{{ end }}
+        {{ if eq .REQUEST.RequestURI "/webclient" }}<a id="hide-header-footer" href="/webclient-pure" title="Full screen game" aria-label="Full screen game">⛶</a>{{ end }}
       </div>
     </nav>
-    <div class="nav-toggle" onclick="toggleMenu()">
-      <div></div>
-      <div></div>
-      <div></div>
-    </div>
   </header>
 
   <div id="content-container" class="content-container" data-path="{{ .PATH }}">

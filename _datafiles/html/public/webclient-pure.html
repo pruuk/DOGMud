@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html data-client>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ .CONFIG.Server.MudName }} Web Terminal</title>
     <style>
         * {
@@ -25,95 +26,89 @@
         /* #connect-button is never shown: it only runs the connect code.
            Enter Game in the session bar is the one visible button. */
 
-        /* Sound icon — small brass button living inside the session strip */
-        /* Was a <div onclick>, which no keyboard could reach (finding 18). Now a
-           real button, so it needs the UA button defaults neutralised to keep
-           the same look. */
-        #menu-icon {
-            padding: 0;
-            margin: 0;
-            font-family: inherit;
-            -webkit-appearance: none;
-            appearance: none;
-            flex: 0 0 auto;
-            width: 26px;
-            height: 26px;
-            box-sizing: border-box;
-            font-size: 14px;
-            line-height: 24px;
-            text-align: center;
-            cursor: pointer;
-            color: var(--brass-text);
-            border: 1px solid var(--brass-border);
-            border-radius: 50%;
-            background: radial-gradient(circle at 34% 26%, var(--brass-light) 0%, var(--brass-mid) 46%, var(--brass-dark) 100%);
-            box-shadow: 0 2px 3px color-mix(in srgb, var(--shadow) 55%, transparent),
-                        inset 0 1px 1px color-mix(in srgb, var(--brass-glint) 70%, transparent),
-                        inset 0 -2px 3px color-mix(in srgb, var(--brass-shade) 55%, transparent);
-            transition: filter .08s ease, transform .08s ease;
-        }
-        #menu-icon:hover { filter: brightness(1.08); }
+        /* Settings: one button in the session bar opens a drop-down panel with
+           Sound and Appearance (design 2026-11-01). It replaced the 🔊 button
+           and its Volume Controls menu. The button is a .brass like Reset
+           layout; on phones it shows only its gear. */
+        #btn-settings .btn-icon { margin-right: 4px; }
+        #btn-settings[aria-expanded="true"] { filter: brightness(1.1); }
         /* A focus ring is the whole point of making these reachable: without a
            visible one, a keyboard user can tab to a control and have no idea
            where they are. */
-        #menu-icon:focus-visible,
+        #btn-settings:focus-visible,
+        #settings-menu :focus-visible,
         #mut-toast:focus-visible {
             outline: 2px solid var(--brass-light);
             outline-offset: 2px;
         }
-        #menu-icon:active {
-            transform: translateY(1px);
-            box-shadow: 0 1px 1px color-mix(in srgb, var(--shadow) 40%, transparent),
-                        inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 70%, transparent),
-                        inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
-        }
 
-        /* The floating menu container */
-        #floating-menu {
+        /* The drop-down, just below the session strip at the right. */
+        #settings-menu {
             position: absolute;
-            top: 40px; /* just below the session strip */
-            right: 10px;
-            width: 450px;
-            max-width: 90vw;   /* don't run off small laptop screens */
-            max-height: 80vh;  /* stay on-screen; scroll if taller */
+            top: 40px;
+            right: 8px;
+            width: 420px;
+            max-width: calc(100vw - 16px); /* phones: the screen less 8px a side */
+            max-height: 80vh;              /* stay on-screen; scroll if taller */
             overflow-y: auto;
             box-sizing: border-box;
-            padding: 10px;
+            padding: 12px 14px;
             background-color: var(--menu-bg);
             border: 1px solid var(--menu-border);
             border-radius: 5px;
-            display: none; /* hidden by default */
+            color: var(--menu-text);
             z-index: 9999;
         }
-        /* Header row: title + close button */
-        #menu-header {
+        #settings-menu[hidden] { display: none; }
+        #settings-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
+            margin-bottom: 8px;
         }
-        #floating-menu h3 {
+        #settings-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
             color: var(--white);
-            margin-bottom: 10px;
         }
-        #menu-close {
+        #settings-close {
             flex: 0 0 auto;
-            width: 28px;
-            height: 28px;
-            line-height: 24px;
+            width: 32px;
+            height: 32px;
             font-size: 20px;
-            text-align: center;
+            line-height: 1;
             cursor: pointer;
             color: var(--white);
             background: var(--menu-border);
             border: 1px solid var(--menu-button-border);
             border-radius: 4px;
         }
-        #menu-close:hover { background: var(--menu-button-hover); }
-        #menu-close:active { background: var(--menu-button-active); }
+        #settings-close:hover { background: var(--menu-button-hover); }
+        #settings-close:active { background: var(--menu-button-active); }
+
+        /* Sound and Appearance are fieldsets, so a screen reader names the
+           group ("Sound, group") before each control in it. */
+        #settings-menu fieldset {
+            border: 0;
+            border-top: 1px solid var(--menu-border);
+            padding: 10px 0 4px;
+            margin: 0;
+        }
+        .settings-note {
+            margin: 2px 0 8px;
+            font-size: 0.85rem;
+            color: var(--menu-text);
+        }
+        #settings-menu legend {
+            padding: 0 6px 0 0;
+            font-family: var(--font-heading);
+            font-size: 0.95rem;
+            color: var(--white);
+        }
 
         .slider-container {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
         }
@@ -123,6 +118,8 @@
         }
         .slider-container input[type="range"] {
             flex: 1;
+            accent-color: var(--brass-mid);
+            min-width: 0;
             margin: 0 10px;
         }
         .slider-icon {
@@ -132,19 +129,21 @@
             color: var(--menu-text);
         }
 
-        /* Mute Checkbox */
-        #mute-container {
-            margin-bottom: 15px;
-            color: var(--menu-text);
+        /* Mute and the theme choices: the whole row is the tap target. */
+        #mute-container,
+        .theme-choice {
             display: flex;
             align-items: center;
-        }
-        #mute-container label {
+            gap: 8px;
+            min-height: 40px;
+            margin-bottom: 6px;
+            color: var(--menu-text);
             cursor: pointer;
         }
-        #mute-container input[type="checkbox"] {
-            margin-right: 8px;
+        #mute-container input,
+        .theme-choice input {
             transform: scale(1.2);
+            accent-color: var(--brass-mid);
             cursor: pointer;
         }
 
@@ -202,6 +201,7 @@
 
     </style>
 
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js"></script>
     <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/xterm.css" />
     <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css" />
     <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/dashboard.css" />
@@ -223,23 +223,6 @@
 </head>
 <body onLoad="init(); return false;">
 
-    <!-- FLOATING MENU - MULTIPLE SLIDERS -->
-    <div id="floating-menu">
-        <div id="menu-header">
-            <h3>Volume Controls</h3>
-            <button id="menu-close" onclick="toggleMenu()" title="Close" aria-label="Close">&times;</button>
-        </div>
-
-        <div id="mute-container">
-            <input type="checkbox" id="mute-checkbox" onchange="toggleMuteAll()">
-            <label for="mute-checkbox"><span id="mute-icon">🔊</span> Mute All Sound</label>
-        </div>
-
-        <div id="sliders-container">
-            <!-- Multiple sliders get built here -->
-        </div>
-    </div>
-
     <!-- CONNECT BUTTON FLOATED IN CENTER. Starts hidden: the page connects by
          itself on load, and onclose shows it when the player is not connected. -->
     <button id="connect-button" style="display:none">Enter Game</button>
@@ -256,12 +239,37 @@
             <button type="button" class="brass" id="btn-leave-stay">Stay</button>
           </span>
         </span>
-        <button type="button" id="menu-icon" onclick="toggleMenu()" title="Toggle sound" aria-label="Toggle sound">🔊</button>
+        <button type="button" class="brass" id="btn-settings" aria-expanded="false" aria-controls="settings-menu" title="Settings" aria-label="Settings"><span class="btn-icon" aria-hidden="true">⚙&#xFE0E;</span><span class="btn-label">Settings</span></button>
+        <!-- Settings drop-down. It sits right after its button so Tab moves
+             from the button straight into it. -->
+        <div id="settings-menu" role="dialog" aria-labelledby="settings-title" hidden>
+          <div id="settings-head">
+            <h2 id="settings-title">Settings</h2>
+            <button type="button" id="settings-close" aria-label="Close settings">&times;</button>
+          </div>
+          <fieldset id="settings-sound">
+            <legend>Sound</legend>
+            <label id="mute-container" for="mute-checkbox">
+              <input type="checkbox" id="mute-checkbox" onchange="toggleMuteAll()">
+              <span id="mute-icon" aria-hidden="true">🔊</span> Mute all sound
+            </label>
+            <div id="sliders-container">
+              <!-- One slider per sound type gets built here -->
+            </div>
+          </fieldset>
+          <fieldset id="settings-appearance" aria-describedby="theme-note">
+            <legend>Appearance</legend>
+            <p class="settings-note" id="theme-note">Light changes the website pages. The game screen stays dark for now.</p>
+            <label class="theme-choice"><input type="radio" name="site-theme" value="dark"> Dark</label>
+            <label class="theme-choice"><input type="radio" name="site-theme" value="light"> Light</label>
+            <label class="theme-choice"><input type="radio" name="site-theme" value="device"> Match my device</label>
+          </fieldset>
+        </div>
         <button type="button" class="brass" id="btn-companion-key" style="display:none" title="Run your companion on your own model key">Companion key</button>
         <button class="brass" id="btn-reset-layout" title="Reset layout" aria-label="Reset layout" onclick="window.Dashboard && Dashboard.resetLayout && Dashboard.resetLayout()"><span class="btn-icon" aria-hidden="true">↺</span><span class="btn-label">Reset layout</span></button>
       </div>
 
-      <!-- LEFT column: Map · Vitals · Scene -->
+      <!-- LEFT column: Map · Quests · Health · Inventory -->
       <div class="dash-col" id="dash-col-left">
         <section class="dash-panel" id="panel-map" data-panel="map">
           <div class="dash-panel-head"><span class="ph-title">Map</span>
@@ -276,7 +284,7 @@
         </section>
 
         <section class="dash-panel" id="panel-vitals" data-panel="vitals">
-          <div class="dash-panel-head"><span class="ph-title">Vitals</span>
+          <div class="dash-panel-head"><span class="ph-title">Health</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body"><div id="vitals-bars"></div></div>
         </section>
@@ -285,11 +293,11 @@
           <div class="dash-panel-head"><span class="ph-title">Inventory</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body">
-            <div id="inv-tabs" class="inv-tabs">
-              <button class="inv-tab brass active" data-tab="worn">Equipped</button>
-              <button class="inv-tab brass" data-tab="bandolier">Bandolier</button>
-              <button class="inv-tab brass" data-tab="components">Components</button>
-              <button class="inv-tab brass" data-tab="backpack">Backpack</button>
+            <div id="inv-tabs" class="inv-tabs subtabs" role="group" aria-label="Inventory">
+              <button type="button" class="inv-tab subtab active" aria-pressed="true" data-tab="worn">Equipped</button>
+              <button type="button" class="inv-tab subtab" aria-pressed="false" data-tab="bandolier">Bandolier</button>
+              <button type="button" class="inv-tab subtab" aria-pressed="false" data-tab="components">Components</button>
+              <button type="button" class="inv-tab subtab" aria-pressed="false" data-tab="backpack">Backpack</button>
             </div>
             <div id="inv-grid" class="inv-grid"></div>
           </div>
@@ -311,22 +319,22 @@
         </section>
       </div>
 
-      <!-- RIGHT column: Comms · Status · Triggers -->
+      <!-- RIGHT column: Chat · Status · Automation -->
       <div class="dash-col" id="dash-col-right">
         <section class="dash-panel" id="panel-chat" data-panel="chat">
-          <div class="dash-panel-head"><span class="ph-title">Comms</span>
+          <div class="dash-panel-head"><span class="ph-title">Chat</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body">
             <!-- COMM window (tabs) — moved from hidden div into chat panel -->
             <div id="comm-output" class="tabs">
-              <div class="tab-buttons">
-                <button id="comm-tab-say" class="tab-button active" data-tab="comm-say" data-label="Say" data-unread="0">Say</button>
-                <button id="comm-tab-whisper" class="tab-button" data-tab="comm-whisper" data-label="Whisper" data-unread="0">Whisper</button>
-                <button id="comm-tab-party" class="tab-button" data-tab="comm-party" data-label="Party" data-unread="0">Party</button>
-                <button id="comm-tab-broadcast" class="tab-button" data-tab="comm-broadcast" data-label="Broadcasts" data-unread="0">Broadcasts</button>
-                <button id="comm-tab-chat" class="tab-button" data-tab="comm-chat" data-label="Chat" data-unread="0">Chat</button>
-                <button id="comm-tab-newbie" class="tab-button" data-tab="comm-newbie" data-label="Newbie" data-unread="0">Newbie</button>
-                <button id="comm-tab-trade" class="tab-button" data-tab="comm-trade" data-label="Trade" data-unread="0">Trade</button>
+              <div class="tab-buttons subtabs" role="group" aria-label="Chat channels">
+                <button type="button" id="comm-tab-say" class="tab-button subtab active" aria-pressed="true" data-tab="comm-say" data-label="Say" data-unread="0">Say</button>
+                <button type="button" id="comm-tab-whisper" class="tab-button subtab" aria-pressed="false" data-tab="comm-whisper" data-label="Whisper" data-unread="0">Whisper</button>
+                <button type="button" id="comm-tab-party" class="tab-button subtab" aria-pressed="false" data-tab="comm-party" data-label="Party" data-unread="0">Party</button>
+                <button type="button" id="comm-tab-broadcast" class="tab-button subtab" aria-pressed="false" data-tab="comm-broadcast" data-label="Broadcasts" data-unread="0">Broadcasts</button>
+                <button type="button" id="comm-tab-chat" class="tab-button subtab" aria-pressed="false" data-tab="comm-chat" data-label="Chat" data-unread="0">Chat</button>
+                <button type="button" id="comm-tab-newbie" class="tab-button subtab" aria-pressed="false" data-tab="comm-newbie" data-label="Newbie" data-unread="0">Newbie</button>
+                <button type="button" id="comm-tab-trade" class="tab-button subtab" aria-pressed="false" data-tab="comm-trade" data-label="Trade" data-unread="0">Trade</button>
               </div>
               <div class="tab-contents">
                 <div id="comm-say" class="chat-window say tab-content active"></div>
@@ -343,7 +351,7 @@
         </section>
 
         <section class="dash-panel" id="panel-status" data-panel="status">
-          <div class="dash-panel-head"><span class="ph-title">Status &amp; Conditions</span>
+          <div class="dash-panel-head"><span class="ph-title">Status</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body"><div id="status-conditions"></div></div>
         </section>
@@ -352,11 +360,11 @@
           <div class="dash-panel-head"><span class="ph-title">Automation</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body" style="display:flex;flex-direction:column;padding:0;">
-            <div class="auto-tabs">
-              <span class="auto-tab" data-tab="ticks">Ticks</span>
-              <span class="auto-tab" data-tab="triggers">Triggers</span>
-              <span class="auto-tab active" data-tab="macros">Macros</span>
-              <span class="auto-tab" data-tab="aliases">Aliases</span>
+            <div class="auto-tabs subtabs" role="group" aria-label="Automation">
+              <button type="button" class="auto-tab subtab" aria-pressed="false" data-tab="ticks">Ticks</button>
+              <button type="button" class="auto-tab subtab" aria-pressed="false" data-tab="triggers">Triggers</button>
+              <button type="button" class="auto-tab subtab active" aria-pressed="true" data-tab="macros">Macros</button>
+              <button type="button" class="auto-tab subtab" aria-pressed="false" data-tab="aliases">Aliases</button>
             </div>
             <div class="auto-addbar"><span class="auto-add" title="Add">+ New</span></div>
             <div id="auto-list" class="auto-list"></div>
@@ -631,7 +639,7 @@
                     tab.innerText = tab.dataset.label;
                 } else {
                     tab.dataset.unread = parseInt(tab.dataset.unread) + 1;
-                    tab.innerText = tab.dataset.label + "(" + String(tab.dataset.unread) + ")";
+                    tab.innerText = tab.dataset.label + " (" + String(tab.dataset.unread) + ")";
                 }
 
                 // Build via DOM + textContent (never innerHTML) — fromName/
@@ -1349,6 +1357,7 @@
                 var allTabs = tabBar.querySelectorAll(".inv-tab");
                 for (var i = 0; i < allTabs.length; i++) {
                     allTabs[i].classList.toggle("active", allTabs[i] === btn);
+                    allTabs[i].setAttribute("aria-pressed", allTabs[i] === btn ? "true" : "false");
                 }
                 renderInventory();
             });
@@ -1382,7 +1391,7 @@
                 list.appendChild(el);
             }
 
-            // A compact oval "sticker" chip (like the Status & Conditions panel).
+            // A compact oval "sticker" chip (like the Status panel).
             // Shows only the shortcut/F-key; the full expansion is the hover tooltip.
             // dataset carries the data for left-click fire + right-click menu.
             function makeAutoChip(type, key, cmd, label) {
@@ -2073,6 +2082,7 @@
                 var allTabs = autoTabBar.querySelectorAll(".auto-tab");
                 for (var i = 0; i < allTabs.length; i++) {
                     allTabs[i].classList.toggle("active", allTabs[i] === btn);
+                    allTabs[i].setAttribute("aria-pressed", allTabs[i] === btn ? "true" : "false");
                 }
                 renderAutomation();
             });
@@ -3093,6 +3103,12 @@
             }
         }
 
+        // What a screen reader says for a volume: "off" or "75 percent".
+        function volumeText(value) {
+            value = Number(value);
+            return value === 0 ? "off" : value + " percent";
+        }
+
         // Build the sliders from sliderValues
         function buildSliders() {
             const container = document.getElementById('sliders-container');
@@ -3102,19 +3118,27 @@
                 const wrapper = document.createElement('div');
                 wrapper.className = "slider-container";
 
+                // The label names the slider for screen readers ("Music,
+                // slider, 75 percent"); the speaker emoji beside it is
+                // decoration only.
+                const sliderId = "volume-" + key.replace(/\s+/g, "-");
                 const label = document.createElement('label');
+                label.htmlFor = sliderId;
                 label.textContent = key.toLowerCase().split(' ').map(function(word) {
                     return word.charAt(0).toUpperCase() + word.slice(1);
                 }).join(' ');
 
                 const slider = document.createElement('input');
                 slider.type = "range";
+                slider.id = sliderId;
                 slider.min = 0;
                 slider.max = 100;
                 slider.value = sliderValues[key];
+                slider.setAttribute('aria-valuetext', volumeText(sliderValues[key]));
 
                 const iconSpan = document.createElement('span');
                 iconSpan.className = "slider-icon";
+                iconSpan.setAttribute('aria-hidden', 'true');
                 iconSpan.textContent = getSpeakerIcon(sliderValues[key]);
 
                 // On slider change
@@ -3122,6 +3146,7 @@
                     const val = e.target.value;
                     sliderValues[key] = Number(val);
                     iconSpan.textContent = getSpeakerIcon(val);
+                    slider.setAttribute('aria-valuetext', volumeText(val));
 
                     // Update local storage
                     localStorage.setItem('sliderValues', JSON.stringify(sliderValues));
@@ -3187,27 +3212,89 @@
             }
         }
 
-        // Show/hide the floating menu
-        function toggleMenu() {
-            const menu = document.getElementById('floating-menu');
-            if (menu.style.display === "none" || menu.style.display === "") {
-                menu.style.display = "block";
-            } else {
-                menu.style.display = "none";
-            }
+        /////////////////////////////////////////////
+        //
+        // Settings drop-down (Sound + Appearance)
+        //
+        /////////////////////////////////////////////
+
+        // Opening moves focus to the first control in the panel; Esc, the ×
+        // button, the Settings button or a click outside closes it. Closing by
+        // keyboard puts focus back on the Settings button, so a keyboard
+        // player is never left with focus on nothing.
+        function settingsOpen() {
+            return !document.getElementById('settings-menu').hidden;
         }
 
-        // Click anywhere outside the open volume menu (and not on the sound
-        // icon) to dismiss it, so it never blocks the screen with no way out.
-        // Icon clicks are handled by toggleMenu above; this listener runs after
-        // and ignores them (the icon's onclick has already set the state).
-        document.addEventListener('click', function (e) {
-            const menu = document.getElementById('floating-menu');
-            if (!menu || menu.style.display !== "block") return;
-            const icon = document.getElementById('menu-icon');
-            if (menu.contains(e.target) || (icon && icon.contains(e.target))) return;
-            menu.style.display = "none";
+        function openSettings() {
+            const menu = document.getElementById('settings-menu');
+            // Just below the session strip, which is taller on phones (48px
+            // buttons) than the 40px the stylesheet assumes.
+            const strip = document.getElementById('dash-session');
+            menu.style.top = (strip.offsetTop + strip.offsetHeight + 4) + 'px';
+            menu.hidden = false;
+            document.getElementById('btn-settings').setAttribute('aria-expanded', 'true');
+            document.getElementById('mute-checkbox').focus();
+        }
+
+        function closeSettings(returnFocus) {
+            const menu = document.getElementById('settings-menu');
+            if (menu.hidden) return;
+            menu.hidden = true;
+            const btn = document.getElementById('btn-settings');
+            btn.setAttribute('aria-expanded', 'false');
+            if (returnFocus) btn.focus();
+        }
+
+        document.getElementById('btn-settings').addEventListener('click', function () {
+            if (settingsOpen()) closeSettings(true); else openSettings();
         });
+        document.getElementById('settings-close').addEventListener('click', function () {
+            closeSettings(true);
+        });
+        document.getElementById('settings-menu').addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeSettings(true);
+            }
+        });
+        // Tabbing out past the last choice closes it too, so it does not stay
+        // open over the game behind the player's back.
+        document.getElementById('settings-menu').addEventListener('focusout', function (e) {
+            const to = e.relatedTarget;
+            if (!to) return; // focus went nowhere, e.g. a click on empty space
+            if (this.contains(to) || document.getElementById('btn-settings').contains(to)) return;
+            closeSettings(false);
+        });
+        // A click outside the open panel dismisses it, so it never blocks the
+        // screen with no way out. The click already moved focus where the
+        // player wanted it, so focus is left alone.
+        document.addEventListener('click', function (e) {
+            if (!settingsOpen()) return;
+            const menu = document.getElementById('settings-menu');
+            const btn = document.getElementById('btn-settings');
+            if (menu.contains(e.target) || btn.contains(e.target)) return;
+            closeSettings(false);
+        });
+
+        // Appearance: Dark / Light / Match my device, saved by theme.js for the
+        // whole site.
+        function showThemeChoice() {
+            const choice = window.SiteTheme ? SiteTheme.get() : 'dark';
+            document.querySelectorAll('input[name="site-theme"]').forEach(function (r) {
+                r.checked = (r.value === choice);
+            });
+        }
+        document.querySelectorAll('input[name="site-theme"]').forEach(function (r) {
+            r.addEventListener('change', function () {
+                if (r.checked && window.SiteTheme) SiteTheme.set(r.value);
+            });
+        });
+        // Another tab or the page around the client changed it.
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'siteTheme') showThemeChoice();
+        });
+        showThemeChoice();
 
         /////////////////////////////////////////////
         //
@@ -3440,33 +3527,7 @@
             height: 100%; /* full-height comm panels */
         }
 
-        .tab-buttons {
-            display: flex;
-            border-bottom: 1px solid var(--panel-border);
-        }
-
-        .tab-button {
-            flex: 1;
-            padding: 0.4em 0.6em;
-            font-family: var(--font-body);
-            font-size: small;
-            color: var(--brass-text);
-            background: var(--brass-grad);
-            border: none;
-            border-right: 1px solid var(--brass-border);
-            cursor: pointer;
-            transition: filter 0.1s;
-        }
-
-        .tab-button:not(.active):hover {
-            filter: brightness(1.08);
-        }
-
-        .tab-button.active {
-            filter: brightness(0.9);
-            box-shadow: inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 60%, transparent),
-                        inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
-        }
+        /* Chat channel tabs: the shared .subtab style in dashboard.css. */
 
         .tab-contents {
             flex: 1;
@@ -3504,7 +3565,7 @@
             color: var(--chat-whisper);
         }
 
-        /* Status & Conditions panel */
+        /* Status panel */
         #status-conditions {
             padding: 6px;
             display: flex;
@@ -3648,11 +3709,12 @@
                 const target = btn.dataset.tab;
 
                 // deactivate all
-                buttons.forEach(b => b.classList.remove('active'));
+                buttons.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
                 panels.forEach(p => p.classList.remove('active'));
 
                 // activate the clicked one and its panel
                 btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
                 btn.dataset.unread = 0;
                 btn.innerText = btn.dataset.label;
                 document.getElementById(target).classList.add('active');
