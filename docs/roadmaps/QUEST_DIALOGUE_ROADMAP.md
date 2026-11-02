@@ -341,7 +341,7 @@ guards stop exempting dialogue, quests and conversations.
 
 **Status:** in progress. Pothole Coulee (with the Newcomer Antechamber) is
 done: built across PRs 1 to 4 of
-`docs/superpowers/specs/2026-10-30-quest-arc-phase7-pothole-coulee-design.md`
+`docs/superpowers/specs/completed/2026-10-30-quest-arc-phase7-pothole-coulee-design.md`
 (engine and config, spine, the seven lines, the Shadows line and leaving) and
 playtested 2026-11-01 (six seats, run `d3f80644f0f63cac`, both newcomer seats
 reached a finished trade on the screen text alone). Its own findings were fixed
