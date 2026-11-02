@@ -7,7 +7,8 @@
 - Mobs follow the same rule, so a bandit with a sword and a free hand now
   hits more often too.
 - Two real weapons still cost you accuracy, and more weapon-combat skill
-  still makes that cost smaller. Fists, claws and shields are unchanged.
+  still makes that cost smaller. Fists, claws and shields are unchanged, but
+  a fighter with extra arms no longer pays anything for arms left empty.
 
 ## 2026-11-01: Pothole Coulee casting, lore and archery trails
 
