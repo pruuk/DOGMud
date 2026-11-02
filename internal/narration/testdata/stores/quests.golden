@@ -30,13 +30,8 @@ quest|14|rewards|observer => Velk hands over a sealed document with a look of gr
 quest|14|trigger0|action0|actor => The opening past the grate leads only into the old drainage tunnels. You have no reason to go down there.
 quest|14|trigger1|action1|actor => A tally stick, notched to record regular shipments. Someone is running goods through these tunnels on a schedule. The chalk arrows on the walls point south, deeper into the system.
 quest|14|trigger2|action1|actor => You step into a well-lit chamber that serves as the nerve center of the smuggling operation. A man at the table looks up sharply. This must be the one in charge. A heavy iron strongbox sits beneath his table, locked tight. Whatever proof you need is probably in there.
-quest|14|trigger3|action0|actor => The strongbox is open and empty. You have already taken the ledger.
-quest|14|trigger4|action3|actor => You fit the brass key into the padlock and turn. The lock clicks open. Inside the strongbox you find a slim leather journal, a bribe ledger, filled with names, dates, and amounts paid to corrupt city officials. This is the evidence you need.
-quest|14|trigger4|action4|observer => <ansi fg="username">Aliceia</ansi> unlocks the strongbox and pulls out a leather journal.
-quest|14|trigger5|action0|actor => The strongbox is locked with a heavy brass padlock. You need a key.
-quest|14|trigger6|action1|actor => Torvan Cresk falls. The strongbox key is still on his belt.
-quest|14|trigger9|action1|actor => The strongbox is open and empty. Then your fingers find a false bottom, and under it Torvan's second copy of the bribe ledger.
-quest|14|trigger10|action0|actor => The strongbox is open and empty. Guard Captain Velk has the ledger now.
+quest|14|trigger3|action1|actor => Torvan Cresk falls. The strongbox key is still on his belt.
+quest|14|trigger7|action1|actor => A slim leather journal, a bribe ledger, filled with names, dates, and amounts paid to corrupt city officials. This is the evidence you need.
 quest|15|rewards|actor => Malk examines the crate, running his elongated fingers over the forced lock. 'This is the one. Everything accounted for, near enough.' He reaches into the cart and produces a small purse and presses it into your hand.
 quest|15|rewards|observer => Malk examines the recovered freight crate with evident relief, already tallying his inventory.
 quest|16|rewards|actor => Delia nods slowly, the practical assessment of someone who has weighed a solution and found it sound. 'You have a good eye for problems and their fixes. My worktable is yours whenever you need it. Come back any time.'
