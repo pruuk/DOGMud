@@ -32,8 +32,9 @@ steps:
     description: "The consecration record's own wording gives it away: the
       Founders consecrated the site, language that assumes something was
       already standing there to consecrate."
-    hint: "Last, the mason's survey in the Older East Corridor, south of the
-      Prioress's Oratory, east of the Cloister Garth. Type search."
+    hint: "Last, the mason's survey. From the Chapter House, go east, south to
+      the Cloister Garth, east twice to the Prioress's Oratory, then south. Type
+      search."
   - id: survey
     destination:
       mob: 9465  # follow Brother Cael (schedule cf_cael), a fixed room is wrong for part of the day

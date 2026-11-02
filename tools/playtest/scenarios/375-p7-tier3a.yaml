@@ -1,0 +1,19 @@
+# #375 phase 7 tier 3a: the Margin mystery, quests 73 and 74, by search. One seat.
+name: 375-p7-tier3a
+mode: party
+summary: >-
+  The Margin Notation and The Undercroft from Quist to an ending, by search, on
+  hints and the map, with the next quest offered at the hand-in.
+on_actor_stop: continue
+budgets:
+  wall_clock: 45m
+requires:
+  max_connections: 20
+roster:
+  - id: margin
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier3a/margin.yaml
+group_goals:
+  - id: no-dead-ends
+    do: The seat follows the game's own hints and map, with no route help.
+    verify: Every step's hint names something the player can do where they stand, and the seat never gets stuck.

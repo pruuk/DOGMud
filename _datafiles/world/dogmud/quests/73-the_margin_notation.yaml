@@ -22,8 +22,8 @@ steps:
       room: 6131
     description: "The bookseller's damaged chart shows a fourth channel at the
       junction, drawn as a distinct waterway."
-    hint: "Next, Tallis's old charts at the Scriveners' Stall, west of the
-      Weighhouse Yard, which is north of the North Cross. Type search."
+    hint: "Next, Tallis's old charts at the Scriveners' Stall. From the North
+      Cross, go north four times to the Weighhouse Yard, then west. Type search."
   - id: scrivener
     destination:
       room: 6143
