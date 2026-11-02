@@ -89,7 +89,7 @@ hidden_nouns:
       a different hand reading "He was your brother. V."
     hidden_description: |
       The turf at the foot of Elgar's marker is slightly raised, as if
-      disturbed and patted back not long ago. Try <ansi fg="command">look disturbance</ansi>.
+      disturbed and patted back not long ago. Try <ansi fg="command">search</ansi>.
 idlemessages:
 - The lake-wind moves through the cemetery with a low constant rush.
 - A piece of old lichen frays loose from a marker and is carried briefly across the gravel.

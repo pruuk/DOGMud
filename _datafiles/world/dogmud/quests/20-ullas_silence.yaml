@@ -22,7 +22,7 @@ steps:
       months before he disappeared."
     hint: "From Ulla's Parlor, go up the stair to the workshop.
       Something is carved into the handle of the vise on Elgar's
-      bench. Type look carving."
+      bench. Type search."
   - id: workshop_carving
     destination:
       room: 4122
@@ -33,7 +33,7 @@ steps:
       pillars on the Temple Approach in town carry a spiral too."
     hint: "From the workshop, go down, then east to North Square. Go
       south twice to Lakefront Square, then east three times to the
-      Temple Approach. Type look pillars."
+      Temple Approach. Type search."
   - id: temple_pillars
     destination:
       room: 4124
@@ -42,8 +42,8 @@ steps:
       present temple was built. The temple garden, south of the
       temple, may hold more of the same."
     hint: "From the Temple Approach, go east into the temple, then
-      south into the Temple Garden. A marker is buried at the foot of
-      the crab-apple tree. Type look marker."
+      south into the Temple Garden. Something is buried at the foot of
+      the crab-apple tree. Type search."
   - id: garden_marker
     destination:
       room: 4144
@@ -51,11 +51,8 @@ steps:
       same spiral, older than the temple. Northwest of the town, on a
       low rise, stand a circle of wardstones and the ruin of an old
       chapel just west of it. The symbol may appear there too."
-    hint: "From the garden, go north into the temple, then west four
-      times to Lakefront Square. Go north twice to North Square, then
-      north, northwest, west and north to the Wardstone Circle. The
-      Old Chapel Ruin is west of the circle. Go west, and type look
-      altar."
+    hint: "The Wardstone Circle is northwest of town, and the Old
+      Chapel Ruin is just west of it. In the ruin, type search."
   - id: chapel_altar
     destination:
       room: 4145
@@ -64,7 +61,7 @@ steps:
       built in town. The Wardstone Circle, just east, has a carved
       altar slab at its centre."
     hint: "Go back east into the Wardstone Circle. A carved altar slab
-      lies at its centre. Type look slab."
+      lies at its centre. Type search."
   - id: wardstone_altar
     destination:
       room: 4130
@@ -75,14 +72,9 @@ steps:
       on out under the lake, where only the lake caves can reach. The
       pillars and the garden marker lie south of it, like signposts.
       Elgar followed it."
-    hint: "Bring a light: the caves are dark. A drowned hunter hides
-      in the Bone Shoals and strikes first. From the Wardstone
-      Circle, go south three times to the Healer's Cottage, then east
-      twice to North Square. Go south twice to Lakefront Square, east
-      twice to the Lake-View Promenade, and north twice to the Net
-      Yard. Go east, north and east to the Cave Mouth, then down, then
-      west into the Bone Shoals. A cache is hidden under the cairn
-      there. Type look cache."
+    hint: "Bring a light: the caves are dark. A drowned hunter hides in
+      the Bone Shoals, west of the Dripping Antechamber, below the Cave
+      Mouth. A cairn stands there. Type search."
   - id: bone_shoals_cache
     destination:
       mob: 337  # follow Smith Brindle (schedule brindle) — a fixed room is wrong for part of the day
@@ -96,13 +88,9 @@ steps:
       Elgar wrote that he was going down alone because he could not
       wait for Brindle to finish the work he was doing. The note is
       dated the day he disappeared."
-    hint: "Smith Brindle should know what you found. From the Bone
-      Shoals, go east, then up to the Cave Mouth. Go west, south and
-      west to the Net Yard, south twice to the Lake-View Promenade,
-      then west twice to Lakefront Square. By day, go north, then
-      west into Brindle's Smithy. In the evening he drinks at the
-      Pike & Lantern instead, just west of Lakefront Square. He
-      sleeps at night. Type talk brindle."
+    hint: "Smith Brindle should know what you found. By day he is in
+      his smithy, and in the evening at the Pike & Lantern, west of
+      Lakefront Square. He sleeps at night. Type talk brindle."
   - id: brindle_confession
     destination:
       room: 4140
@@ -112,11 +100,9 @@ steps:
       said it aloud, he means to finish it at last and take it to Ulla.
       He says Vella the healer, Elgar's sister, buried something at
       Elgar's empty grave for whoever came looking."
-    hint: "From the Pike & Lantern, go north into Brindle's Smithy
-      first. From the smithy, go east, then north to North Square.
-      Go west three times, through Ulla's Parlor and the Healer's
-      Cottage, into Stillwater Cemetery. The turf at the foot of
-      Elgar's grave has been disturbed. Type look disturbance."
+    hint: "Go to Stillwater Cemetery, three rooms west of North Square,
+      through Ulla's Parlor and the Healer's Cottage. At the foot of
+      Elgar's grave, type search."
   - id: kingfisher_found
     destination:
       mob: 355  # follow Vella Thorne (schedule vella) — a fixed room is wrong for part of the day
@@ -125,11 +111,9 @@ steps:
       wooden box with a single carved kingfisher and a note in her
       own hand reading 'He was your brother.' The kingfisher is
       unmistakably Elgar's work."
-    hint: "Take the carved kingfisher to Vella Thorne. She keeps the
-      Healer's Cottage, just east of the cemetery. In the morning she
-      visits the Healer's Alcove in the temple, and in the evening she
-      sits with Ulla in Ulla's Parlor. She sleeps at night. Type talk
-      vella."
+    hint: "Take the carved kingfisher to Vella Thorne at the Healer's
+      Cottage. In the morning she is at the temple's Healer's Alcove,
+      and in the evening in Ulla's Parlor. Type talk vella."
   - id: vella_journal
     destination:
       room: 4137
@@ -168,28 +152,14 @@ rewards:
 
 triggers:
   # ============================================================
-  # ROOM_INTERACT: spiral-motif breadcrumb trail
+  # SEARCH: spiral-motif breadcrumb trail. Each site is found with a
+  # real search in its room (tier 2 ruling), never a typed noun.
   # ============================================================
 
-  # ── Step 2: workshop carving (4138) — covers `look carving`,
-  #    `examine carving`, and the legacy verbose `bench-vise carving` ──
-  - event: room_interact
+  # ── Step 2: workshop carving (4138) ──
+  - event: command
+    command: search
     room: 4138
-    noun: carving
-    conditions:
-      has: ["20-start"]
-      missing: ["20-workshop_carving"]
-    actions:
-      - grant: "20-workshop_carving"
-      - actor: "A long tight spiral inside an outer ring, scratched
-          into the iron with a patient hand. The cuts are dark with
-          age: old work, set where it would not be noticed by anyone
-          who did not know to look. Not a Chrysalis sigil and not a
-          Stillwater fish-mark. The same spiral is cut into the two
-          stone pillars on the Temple Approach in town."
-  - event: room_interact
-    room: 4138
-    noun: bench-vise carving
     conditions:
       has: ["20-start"]
       missing: ["20-workshop_carving"]
@@ -202,13 +172,11 @@ triggers:
           Stillwater fish-mark. The same spiral is cut into the two
           stone pillars on the Temple Approach in town."
 
-  # ── Step 3a: temple pillars (4122, the Temple Approach, whose room
-  #    noun `pillars` describes the carved spiral; the temple sanctuary
-  #    4123 has no pillars). `pillar` also matches `pillars`: the
-  #    engine treats singular and plural spellings as one noun ──
-  - event: room_interact
+  # ── Step 3a: temple pillars (4122, the Temple Approach; the temple
+  #    sanctuary 4123 has no pillars) ──
+  - event: command
+    command: search
     room: 4122
-    noun: pillar
     conditions:
       has: ["20-workshop_carving"]
       missing: ["20-temple_pillars"]
@@ -232,37 +200,10 @@ triggers:
     actions:
       - grant: "20-temple_pillars"
 
-  # ── Step 4: buried marker in the temple garden (4124) — covers
-  #    `marker` and the verbose `buried marker` ──
-  - event: room_interact
+  # ── Step 4: buried marker in the temple garden (4124) ──
+  - event: command
+    command: search
     room: 4124
-    noun: marker
-    conditions:
-      has: ["20-temple_pillars"]
-      missing: ["20-garden_marker"]
-    actions:
-      - grant: "20-garden_marker"
-      - actor: "The buried marker beneath the crab-apple carries
-          the same spiral. Older than the garden it sits in. Northwest
-          of town, on a low rise, there is a circle of standing stones
-          with an old chapel ruin just west of it. The symbol may
-          appear there again."
-  - event: room_interact
-    room: 4124
-    noun: buried marker
-    conditions:
-      has: ["20-temple_pillars"]
-      missing: ["20-garden_marker"]
-    actions:
-      - grant: "20-garden_marker"
-      - actor: "The buried marker beneath the crab-apple carries
-          the same spiral. Older than the garden it sits in. Northwest
-          of town, on a low rise, there is a circle of standing stones
-          with an old chapel ruin just west of it. The symbol may
-          appear there again."
-  - event: room_interact
-    room: 4124
-    noun: stone
     conditions:
       has: ["20-temple_pillars"]
       missing: ["20-garden_marker"]
@@ -274,35 +215,10 @@ triggers:
           with an old chapel ruin just west of it. The symbol may
           appear there again."
 
-  # ── Step 5: chapel altar stone (4144) — covers `altar stone`,
-  #    `altar`, and `stone` ──
-  - event: room_interact
+  # ── Step 5: chapel altar stone (4144) ──
+  - event: command
+    command: search
     room: 4144
-    noun: altar stone
-    conditions:
-      has: ["20-garden_marker"]
-      missing: ["20-chapel_altar"]
-    actions:
-      - grant: "20-chapel_altar"
-      - actor: "The chapel altar carries the same spiral, the third
-          site you have found. Back to the east, the Wardstone Circle
-          has a carved altar slab at its centre. It may be the
-          fourth."
-  - event: room_interact
-    room: 4144
-    noun: altar
-    conditions:
-      has: ["20-garden_marker"]
-      missing: ["20-chapel_altar"]
-    actions:
-      - grant: "20-chapel_altar"
-      - actor: "The chapel altar carries the same spiral, the third
-          site you have found. Back to the east, the Wardstone Circle
-          has a carved altar slab at its centre. It may be the
-          fourth."
-  - event: room_interact
-    room: 4144
-    noun: stone
     conditions:
       has: ["20-garden_marker"]
       missing: ["20-chapel_altar"]
@@ -313,47 +229,10 @@ triggers:
           has a carved altar slab at its centre. It may be the
           fourth."
 
-  # ── Step 6: wardstone altar slab (4145) — covers `altar slab`,
-  #    `altar`, and `slab` ──
-  - event: room_interact
+  # ── Step 6: wardstone altar slab (4145) ──
+  - event: command
+    command: search
     room: 4145
-    noun: altar slab
-    conditions:
-      has: ["20-chapel_altar"]
-      missing: ["20-wardstone_altar"]
-    actions:
-      - grant: "20-wardstone_altar"
-      - actor: "The wardstone slab carries the spiral worn deep
-          enough to set a finger into: the fourth site you have
-          found. A worn channel runs from it straight toward the
-          east. Stand at the circle's centre with the chapel ruin at
-          your back, follow the channel with your eye, and the
-          alignment is plain: the chapel, this slab, and on east past
-          the north edge of the town, out under the lake, and down,
-          somewhere only the lake caves can reach. The pillars and
-          the garden marker lie south of the line, like signposts
-          pointing to it."
-  - event: room_interact
-    room: 4145
-    noun: altar
-    conditions:
-      has: ["20-chapel_altar"]
-      missing: ["20-wardstone_altar"]
-    actions:
-      - grant: "20-wardstone_altar"
-      - actor: "The wardstone slab carries the spiral worn deep
-          enough to set a finger into: the fourth site you have
-          found. A worn channel runs from it straight toward the
-          east. Stand at the circle's centre with the chapel ruin at
-          your back, follow the channel with your eye, and the
-          alignment is plain: the chapel, this slab, and on east past
-          the north edge of the town, out under the lake, and down,
-          somewhere only the lake caves can reach. The pillars and
-          the garden marker lie south of the line, like signposts
-          pointing to it."
-  - event: room_interact
-    room: 4145
-    noun: slab
     conditions:
       has: ["20-chapel_altar"]
       missing: ["20-wardstone_altar"]
@@ -371,9 +250,9 @@ triggers:
           pointing to it."
 
   # ── Step 7: Bone Shoals cache (4130) ──
-  - event: room_interact
+  - event: command
+    command: search
     room: 4130
-    noun: cache
     conditions:
       has: ["20-wardstone_altar"]
       missing: ["20-bone_shoals_cache"]
@@ -401,27 +280,11 @@ triggers:
     actions:
       - grant: "20-brindle_confession"
 
-  # ── Step 9: cemetery disturbance (4140) — covers `disturbance` and
-  #    the room noun `elgar's grave` (trigger nouns are compared
-  #    lowercased, so the old `beneath Elgar's marker` never matched).
-  #    Gives kingfisher. ──
-  - event: room_interact
+  # ── Step 9: the disturbed turf at Elgar's grave (4140). Gives the
+  #    kingfisher. ──
+  - event: command
+    command: search
     room: 4140
-    noun: disturbance
-    conditions:
-      has: ["20-brindle_confession"]
-      missing: ["20-kingfisher_found"]
-    actions:
-      - grant: "20-kingfisher_found"
-      - give_item: 40060
-      - actor: "Inside the buried wooden box: a single small
-          carved kingfisher in dark wood, unmistakably Elgar's work,
-          and a folded note in a different hand reading 'He was your
-          brother. V.' The kingfisher is yours now. Bring it to Vella
-          at the Healer's Cottage."
-  - event: room_interact
-    room: 4140
-    noun: elgar's grave
     conditions:
       has: ["20-brindle_confession"]
       missing: ["20-kingfisher_found"]
@@ -435,9 +298,9 @@ triggers:
           at the Healer's Cottage."
 
   # ── Step 9 RECOVERY: replacement kingfisher if player lost it ──
-  - event: room_interact
+  - event: command
+    command: search
     room: 4140
-    noun: disturbance
     conditions:
       has: ["20-kingfisher_found"]
       missing: ["20-vella_journal"]
@@ -448,25 +311,6 @@ triggers:
           the first. You can take this one to Vella in place of
           the one you lost."
 
-  # ── Step 9, appended: `look grave` in the cemetery (4140). The room
-  #    noun `Elgar's grave` answers `grave` through FindNoun, but the
-  #    trigger compares the typed noun, so `grave` needs its own entry.
-  #    Same conditions and actions as the `disturbance` trigger. ──
-  - event: room_interact
-    room: 4140
-    noun: grave
-    conditions:
-      has: ["20-brindle_confession"]
-      missing: ["20-kingfisher_found"]
-    actions:
-      - grant: "20-kingfisher_found"
-      - give_item: 40060
-      - actor: "Inside the buried wooden box: a single small
-          carved kingfisher in dark wood, unmistakably Elgar's work,
-          and a folded note in a different hand reading 'He was your
-          brother. V.' The kingfisher is yours now. Bring it to Vella
-          at the Healer's Cottage."
-
   # ── Step 10: hearing Mistress Vella Thorne's "vellahandoff" topic,
   #    which takes the kingfisher and gives the journal page (moved from
   #    the topic's grantsQuest, #375 phase 3b) ──
@@ -474,7 +318,7 @@ triggers:
     mob: 355
     topic: vellahandoff
     conditions:
-      has: ["20-brindle_confession"]
+      has: ["20-kingfisher_found"]
       missing: ["20-vella_journal"]
     actions:
       - grant: "20-vella_journal"

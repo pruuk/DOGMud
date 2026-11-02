@@ -62,11 +62,6 @@ hint-length 19 step hunter
 hint-length 19 step signed
 hint-length 19 step start
 hint-length 2 step start
-hint-length 20 step bone_shoals_cache
-hint-length 20 step brindle_confession
-hint-length 20 step garden_marker
-hint-length 20 step kingfisher_found
-hint-length 20 step wardstone_altar
 hint-length 60 step start
 hint-length 60 step waybill
 hint-length 61 step start
@@ -101,8 +96,6 @@ one-action 1000000 step end:none
 one-action 1000000 step givegold:none
 one-action 16 mob 259 topic quest_complete_herbs:prev
 one-action 19 quest 19 trigger mob_death mob=331 grants=19-hunter:prev
-one-action 20 mob 347 topic ullahandoff:prev
-one-action 20 quest 20 trigger topic_heard mob=355 topic=vellahandoff grants=20-vella_journal:prev
 one-action 60 mob 9208 topic guardhandoff:prev
 one-action 61 quest 61 trigger mob_death mob=9173 grants=61-bandit:cond
 one-action 61 quest 61 trigger mob_death mob=9173 grants=61-reach:cond

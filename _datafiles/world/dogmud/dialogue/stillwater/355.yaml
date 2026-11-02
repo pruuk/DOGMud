@@ -36,7 +36,7 @@ opener:
     - 20-vella_journal
     text: You found the box at his grave? Then where is the carving?
     hints: If you lost the kingfisher, there is another in the box. At the foot of
-      Elgar's grave in the cemetery, type look disturbance.
+      Elgar's grave in the cemetery, type search.
   - questRequired:
     - 20-brindle_confession
     questExcluded:
@@ -45,7 +45,7 @@ opener:
       is not in this cottage. It is in the cemetery, just west of here. Go to my
       brother's grave and look at the foot of it.
     hints: The cemetery is west of the Healer's Cottage. At the foot of Elgar's grave,
-      type look disturbance.
+      type search.
   - questRequired:
     - 20-start
     questExcluded:
@@ -66,7 +66,7 @@ topics:
     Cottage. Type talk ulla.
   marked: true
   questRequired:
-  - 20-brindle_confession
+  - 20-kingfisher_found
   questExcluded:
   - 20-vella_journal
   - 20-end

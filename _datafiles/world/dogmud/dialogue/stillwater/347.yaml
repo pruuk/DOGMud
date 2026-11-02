@@ -71,7 +71,7 @@ opener:
       went down. He will not be the same again, maybe, but it is something to be
       heard.
     hints: The cemetery is west of the Healer's Cottage, which is just west of here.
-      At the foot of Elgar's grave, type look disturbance.
+      At the foot of Elgar's grave, type search.
   - questRequired:
     - 20-start
     questExcluded:
@@ -88,7 +88,7 @@ topics:
   text: The journal. I have not seen Elgar's hand in twelve years. Thank you for bringing
     it home.
   questRequired:
-  - 20-kingfisher_found
+  - 20-vella_journal
   questExcluded:
   - 20-end
   requiresItem: 40061
@@ -110,7 +110,7 @@ topics:
     I cannot pay you much. I will give you what I can, and tell you what I know about
     him, if you ask.
   hints: Accept, then go up the stair to the workshop. Something is carved into the
-    handle of the vise on Elgar's bench. Type look carving.
+    handle of the vise on Elgar's bench. Type search.
   questExcluded:
   - 20-start
   - 20-end
