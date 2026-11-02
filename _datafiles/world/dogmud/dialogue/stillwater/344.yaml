@@ -23,7 +23,7 @@ opener:
     - 20-garden_marker
     text: Have you found the marker in the garden yet? It lies beneath the crab-apple
       tree.
-    hints: The Temple Garden is south of this room. Type look marker.
+    hints: The Temple Garden is south of this room. Type search there.
   - questRequired:
     - 20-end
     text: The matter of Elgar Voss. So that is laid open at last. Vella was his sister.
@@ -41,7 +41,7 @@ topics:
     believed the line meant something. The Chrysalis order does not officially endorse what I have just
     told you. But the stones are what they are.
   hints: The Temple Garden is south of this room. A marker is buried at the foot of
-    the crab-apple tree there. Type look marker.
+    the crab-apple tree there. Type search.
   marked: true
   questRequired:
   - 20-workshop_carving

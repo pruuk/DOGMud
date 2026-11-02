@@ -97,21 +97,23 @@ func TestTriggerNoun_Quest20PillarsOneTrigger(t *testing.T) {
 	if err := yaml.Unmarshal(raw, &q); err != nil {
 		t.Fatalf("parse quest 20: %v", err)
 	}
-	count := func(roomId int, typed string) int {
-		d := EventDetails{UserId: 1, RoomId: roomId, Verb: "look", Noun: typed}
+	// Tier 2: the pillars are found by `search`, not a typed noun, so the
+	// Temple Approach carries exactly one search trigger and no
+	// room_interact trigger remains.
+	count := func(roomId int) int {
+		d := EventDetails{UserId: 1, RoomId: roomId, Command: "search"}
 		matches := 0
 		for i := range q.Triggers {
 			tr := &q.Triggers[i]
-			if tr.Event == "room_interact" && matchTriggerFields(tr, d, nounNumber) {
+			assert.NotEqual(t, "room_interact", tr.Event, "quest 20 has no typed-noun trigger")
+			if tr.Event == "command" && matchTriggerFields(tr, d, nounNumber) {
 				matches++
 			}
 		}
 		return matches
 	}
-	for _, typed := range []string{"pillar", "pillars"} {
-		assert.Equal(t, 1, count(4122, typed), "look %s in room 4122 should match exactly one quest 20 trigger", typed)
-		assert.Equal(t, 0, count(4123, typed), "look %s in room 4123 (no pillars there) should match no quest 20 trigger", typed)
-	}
+	assert.Equal(t, 1, count(4122), "search in room 4122 should match exactly one quest 20 trigger")
+	assert.Equal(t, 0, count(4123), "search in room 4123 (no pillars there) should match no quest 20 trigger")
 }
 
 func TestTriggerNoun_VariantWorksWhenNoExactTriggerExists(t *testing.T) {

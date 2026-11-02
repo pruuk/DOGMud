@@ -15,20 +15,17 @@ flags:
 steps:
   - id: start
     destination:
-      room: 4121  # Cave Mouth — sole entrance to the cave system (down -> 4127)
+      room: 4121  # Cave Mouth, sole entrance to the cave system (down -> 4127)
     description: "Constable Drunn has posted a bounty on the lake-cave creatures.
       Clear the shallows of shrimp swarms, deal with at least one drowned
       hunter, then come back to the constabulary for further instructions.
       The cave mouth is past the boat pier, north of the Fishing Docks."
-    hint: "Bring a light: the caves are dark. From the Constabulary, go
-      west to North Square, south twice to Lakefront Square, east twice
-      to the Lake-View Promenade, and north twice to the Net Yard. Go
-      east, north and east to the Cave Mouth, then down into the
-      Dripping Antechamber. Skitter-shrimp swarms gather there. Type
-      attack swarm."
+    hint: "Bring a light: the caves are dark. The Cave Mouth is past
+      the boat pier, north of the Fishing Docks. Go down into the
+      Dripping Antechamber. Type attack swarm."
   - id: shrimp
     destination:
-      room: 4128  # Pool Chamber — first room a Drowned Hunter (mob 331) can hold
+      room: 4128  # Pool Chamber, first room a Drowned Hunter (mob 331) can hold
     description: "You have cleared a swarm of skitter-shrimp from the cave
       shallows. The fishing nets will hold longer."
     hint: "Drowned hunters hide deeper in the caves and strike first.
@@ -36,25 +33,23 @@ steps:
       When a hunter attacks, type attack hunter."
   - id: hunter
     destination:
-      mob: 335  # follow Constable Drunn (maxwander 2) — a fixed room is wrong for part of the day
+      mob: 335  # follow Constable Drunn (maxwander 2): a fixed room is wrong for part of the day
       room: 4110  # fallback when Constable Drunn is not spawned
     description: "You have killed a drowned hunter. The shallows are
       meaningfully safer."
-    hint: "Report to Constable Drunn. Go back to the Dripping
-      Antechamber and up to the Cave Mouth. Go west, south and west to
-      the Net Yard, south twice to the Lake-View Promenade, and west
-      twice to Lakefront Square. Go north twice to North Square, then
-      east into the Constabulary. Type talk drunn."
+    hint: "Report to Constable Drunn at the Constabulary, east of
+      North Square. Type talk drunn."
   - id: signed
-    # destination inferred from triggers (#375 p4); was: bundled objectives, rooms [4110, 4116]; Phase 2 split review
+    destination:
+      mob: 335  # follow Constable Drunn (maxwander 2)
+      room: 4110  # fallback when Constable Drunn is not spawned
     description: "Drunn has signed the upgraded bounty. The constabulary will
       pay handsomely for proof that the deepest threat in the sump has been
       put down, but the warrant is now yours to pursue or to walk away
       from. Either way you have earned the smaller payment."
-    hint: "For the full reward, kill the sump dweller in the Hollow Sump,
-      north of the Pool Chamber, and bring back its tooth. Dock Master
-      Arn at the Fishing Docks pays for the tooth too. To report, with
-      the tooth or without it, type talk drunn."
+    hint: "For the full reward, kill the sump dweller in the Hollow
+      Sump, north of the Pool Chamber, and bring back its tooth. To
+      report, with or without it, type talk drunn."
   - id: end
     description: "The lake-caves bounty is closed. The shallows are safer.
       The lake-folk owe you a quiet round at the inn."
@@ -78,11 +73,21 @@ triggers:
       - actor: "The skitter-shrimp swarm has been broken. The lake-folk's
           nets will hold longer for it."
 
-  # ── HUNTER: kill a drowned hunter (mob 331) ──
+  # ── HUNTER killed before any shrimp swarm: counts for nothing ──
   - event: mob_death
     mob: 331
     conditions:
       has: ["19-start"]
+      missing: ["19-shrimp"]
+    actions:
+      - actor: "The drowned hunter is dead, but the constable's bounty
+          starts with the shrimp swarms in the Dripping Antechamber."
+
+  # ── HUNTER: kill a drowned hunter (mob 331) ──
+  - event: mob_death
+    mob: 331
+    conditions:
+      has: ["19-shrimp"]
       missing: ["19-hunter"]
     actions:
       - grant: "19-hunter"
@@ -95,7 +100,7 @@ triggers:
     mob: 335
     topic: sign_bounty
     conditions:
-      has: ["19-shrimp", "19-hunter"]
+      has: ["19-hunter"]
       missing: ["19-signed"]
     actions:
       - grant: "19-signed"

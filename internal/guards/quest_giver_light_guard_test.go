@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutators"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -27,7 +28,8 @@ import (
 // TestEveryQuestGiverIsSeenByFace holds the owner ruling on #616 (2026-10-17):
 // a quest giver must be addressable by name, so its room is lit to the faces
 // band at every hour and/or it carries a light. A quest giver is any mob whose
-// dialogue file has an offer or hand-in topic.
+// dialogue file has an offer or hand-in topic, or that a quest's topic_heard
+// trigger names.
 //
 // Talk refuses below full sight (conversation.Talk, seesByName), so a giver
 // below the faces band cannot be spoken to at all, even by a player who holds
@@ -35,7 +37,9 @@ import (
 // through the live path, and is tried alone in every room it can be awake in
 // (wanderReach, or its schedule's segment target) at every hour of midwinter,
 // the equinox and midsummer. A sleeping segment is skipped: a sleeper cannot be
-// asked anything and its lantern is dark. A giver on patrol has no one room to
+// asked anything and its lantern is dark. The scope also takes any mob a
+// shipped quest names in a topic_heard trigger, since a quest sends the player
+// to talk to it mid-way. A giver on patrol has no one room to
 // check, so a patrol fails loudly until the guard learns the route.
 //
 // The fix for a failure is a never_drops light in the `light` slot, the Keeper's
@@ -116,10 +120,31 @@ func TestEveryQuestGiverIsSeenByFace(t *testing.T) {
 
 	// Today's count is 60; this floor stops a loader that finds nothing from
 	// passing by checking nothing.
+	//
+	// A mob a quest sends the player back to mid-way counts too: the mob named
+	// by a shipped quest's topic_heard trigger is spoken to for that step, and
+	// talk refuses below full sight just the same (quest 16's forager at dusk).
+	quests.LoadDataFiles()
+	talkStepMobs := map[int]bool{}
+	for _, q := range quests.GetAllQuests() {
+		for _, tr := range q.Triggers {
+			if tr.Event == "topic_heard" && tr.Mob > 0 {
+				talkStepMobs[tr.Mob] = true
+			}
+		}
+	}
+	if len(talkStepMobs) < 10 {
+		t.Fatalf("found only %d topic_heard mobs: the quest loader is not seeing them", len(talkStepMobs))
+	}
+
 	var giverIds []int
 	for id, tmpl := range templates {
 		df := dialogue.Load(id, tmpl.Zone)
 		if df == nil {
+			continue
+		}
+		if talkStepMobs[id] {
+			giverIds = append(giverIds, id)
 			continue
 		}
 		for i := range df.Topics {

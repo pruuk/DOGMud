@@ -54,22 +54,6 @@ hint 84 step start
 hint 85 step start
 hint 86 step start
 hint 87 step start
-hint-length 16 step forager
-hint-length 16 step start
-hint-length 17 step start
-hint-length 18 step start
-hint-length 19 step hunter
-hint-length 19 step signed
-hint-length 19 step start
-hint-length 2 step start
-hint-length 20 step bone_shoals_cache
-hint-length 20 step brindle_confession
-hint-length 20 step garden_marker
-hint-length 20 step kingfisher_found
-hint-length 20 step wardstone_altar
-hint-length 60 step start
-hint-length 60 step waybill
-hint-length 61 step start
 hint-length 65 step discover
 hint-length 65 step start
 hint-length 66 step start
@@ -99,14 +83,6 @@ hint-length 75 step intro
 hint-length 75 step start
 one-action 1000000 step end:none
 one-action 1000000 step givegold:none
-one-action 16 mob 259 topic quest_complete_herbs:prev
-one-action 19 quest 19 trigger mob_death mob=331 grants=19-hunter:prev
-one-action 20 mob 347 topic ullahandoff:prev
-one-action 20 quest 20 trigger topic_heard mob=355 topic=vellahandoff grants=20-vella_journal:prev
-one-action 60 mob 9208 topic guardhandoff:prev
-one-action 61 quest 61 trigger mob_death mob=9173 grants=61-bandit:cond
-one-action 61 quest 61 trigger mob_death mob=9173 grants=61-reach:cond
-one-action 61 quest 61 trigger mob_death mob=9173 grants=61-reach:prev
 one-action 63 mob 9300 topic tallyhandoff:prev
 one-action 63 mob 9316 topic tallyhandoff:prev
 one-action 63 step report:none
@@ -137,9 +113,6 @@ start 1000000 step start
 start 21 step start
 start 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
 start 77 step end
-walk-dead-end 16 mob 259 topic quest_complete_herbs
-walk-dead-end 19 quest 19 trigger mob_death mob=331 grants=19-hunter
-walk-dead-end 61 quest 61 trigger mob_death mob=9173 grants=61-reach
 walk-dead-end 63 mob 9300 topic tallyhandoff
 walk-dead-end 63 mob 9316 topic tallyhandoff
 walk-dead-end 63 step report
@@ -151,7 +124,6 @@ walk-dead-end 67 mob 9316 topic casefilehandoff
 walk-dead-end 67 step report
 walk-destination 1000000 step givegold
 walk-destination 1000000 step start
-walk-destination 19 step signed
 walk-destination 63 step report
 walk-destination 65 step report
 walk-destination 66 step detox

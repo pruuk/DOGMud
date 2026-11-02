@@ -84,7 +84,6 @@
 259.buy
 259.gossip
 259.quest_complete_forager
-259.quest_complete_herbs
 259.quest_start
 259.worktable_access
 260.family_deep
@@ -1463,6 +1462,9 @@
 # Quest 14's report step is renamed to 14-evidence (#375 phase 7 tier 1), so
 # Velk's case_close topic for a save at it can never be chosen.
 94.case_close
+# Quest 16's herbs hand-in is removed (owner decision, 2026-11-02): it let a
+# player finish without meeting the forager.
+259.quest_complete_herbs
 # renamed
 9117.vein_offer -> 9116.vein_offer
 9112.wash_offer -> 9108.wash_offer

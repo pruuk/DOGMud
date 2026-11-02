@@ -1,0 +1,34 @@
+# ROADS seat: the shorter quests, on the hints alone, plus old saves. This
+# character is seeded mid-way through quest 20 (at garden_marker) and on quest 61.
+# The harness cannot seed the retired 61-reach-first flag: it refuses a flag no
+# quest declares, and nothing in the data reads it now. Quote game lines VERBATIM.
+ephemeral:
+  profile: mid
+  start_room: 4049
+  overlays:
+    set_quest_tokens: ["20-start", "20-workshop_carving", "20-temple_pillars", "20-garden_marker", "61-start"]
+  budgets:
+    wall_clock: 50m
+
+goals:
+  - >-
+    At Betta's Yard, type `talk betta` and quote the menu. Go to her barn, just south.
+    Quote the room and `look bedroll`. Do what the text says, and quote it. Go back to
+    Betta and quote the menu now. Take Betta's Silence and follow it to the end, choosing
+    whatever you like with the agent. Quote the choice and the hand-in.
+  - >-
+    Go to the Crossroads Village Square. Type `talk caravan` and take The Caravan Guard.
+    Note who is in the room, and whether anyone keeps leaving and returning. Go to the
+    Bandit Camp and fight, fleeing if it goes badly. Say honestly whether this character
+    can win, and whether the camp was there when you arrived. If you get the iron pin,
+    hand it in.
+  - >-
+    Go to Ashwick. Type `talk delia`, take The Herbalist's Shortage, and follow it. Go to
+    the Hidden Grove and pick herbs if you can. Go back to Delia with herbs in hand, before
+    meeting the forager: what does the menu offer? Type `give herbs delia` and quote what
+    happens. Find the forager and finish it. Quote the hand-in.
+  - >-
+    Old saves: type `quests` and quote it. Follow Ulla's Silence's hint to the Old Chapel
+    Ruin and `search`. Say whether it carries on from there. You need only reach the next
+    step. Then go to Goodwife Pemberton at the Lake & Ladle and quote her opener. Kill the
+    hedgerow bandit, then the Reach-Touched, if this character can. Quote it.

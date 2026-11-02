@@ -49,7 +49,7 @@ topics:
     healer's cottage west of Ulla's. There is something she buried at his grave for
     whoever came looking.
   hints: The cemetery is just west of the Healer's Cottage. At the foot of Elgar's
-    grave, type look disturbance.
+    grave, type search.
   marked: true
   questRequired:
   - 20-bone_shoals_cache
