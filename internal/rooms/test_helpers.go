@@ -33,6 +33,18 @@ func UnloadRoomForTest(roomId int) {
 	delete(roomManager.rooms, roomId)
 }
 
+// SeedTemplateSpawnsForTest makes roomId's spawninfo place mobIds in the spawn
+// index, as loading that template room does. The returned cleanup removes it.
+// Intended for cross-package tests of SpawnRooms.
+func SeedTemplateSpawnsForTest(roomId int, mobIds ...int) func() {
+	spawns := make([]SpawnInfo, 0, len(mobIds))
+	for _, id := range mobIds {
+		spawns = append(spawns, SpawnInfo{MobId: id})
+	}
+	setTemplateSpawns(roomId, spawns)
+	return func() { deleteTemplateSpawns(roomId) }
+}
+
 // SetOriginalRoomIdForTest records roomId as an instance copy of templateId,
 // as CreateEphemeralRoomIds does, so OriginalRoomId(roomId) returns
 // templateId. The returned cleanup restores the previous entry.

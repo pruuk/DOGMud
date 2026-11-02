@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-11-01: Robbing a creature angers that creature
+
+- Robbing a creature angers that creature, not every one of its kind. The one
+  you robbed hunts you, and so do creatures of other kinds who saw it happen.
+  Others of its kind leave you alone, even in the same room.
+- Its anger ends when it dies. The next one to take its place does not know you.
+- It also ends if you die or leave the game.
+- Named people you can talk to remember as they did before. Guards still report
+  the crime, and people who cannot fight still run away.
+
 ## 2026-11-01: A free hand no longer costs you accuracy
 
 - Fighting with a weapon and a free hand no longer costs you accuracy. An

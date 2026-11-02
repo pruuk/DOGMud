@@ -42,9 +42,18 @@ func classifyWitnessResponse(m *mobs.Mob) WitnessResponse {
 // or attack a non_combatant mob), so the victim only ever hits the guard or
 // revenge branch.
 func seedWitnessResponse(m *mobs.Mob, playerId, priority int) {
+	respondToCrime(m, func() {
+		seedRevengeGoalIfAbsent(m, "player", playerId, priority)
+	})
+}
+
+// respondToCrime classifies the mob and performs the matching effect; revenge
+// is the caller's, since a theft's and an assault's grudge differ in who holds
+// them (seedTheftResponse).
+func respondToCrime(m *mobs.Mob, revenge func()) {
 	switch classifyWitnessResponse(m) {
 	case ResponseRevenge:
-		seedRevengeGoalIfAbsent(m, "player", playerId, priority)
+		revenge()
 	case ResponseAlarm:
 		alarmReaction(m)
 	case ResponseReportOnly:

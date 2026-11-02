@@ -175,6 +175,31 @@ avoid an import cycle; bridged at boot via `SetArchetypeDefaultsLookup`.
   Registers `func(mob) []GoalDefault`. Nil = no seeding. Called once
   at boot. Bridges goals → behaviortree without an import cycle.
 
+### A goal one mob holds for itself (individual.go)
+Goals above belong to a mob TYPE: every copy reads the same file. The interim
+exception (owner ruling 2026-11-01, the better model is #752 under #374) is a
+goal in one instance's temp data:
+- **`AddIndividual(mob, g)`** validates and dedups as `Add` does, and sets
+  `Goal.Individual`. Touches no file and no other copy.
+- **`IndividualGoalsOf(mob)`** returns them, dropping any whose predicate says
+  the goal is over.
+- **`CurrentGoalFor(mob)`** is what `behaviortree.RunGoalPlanner` acts on: the
+  type's current goal unless one of the mob's own outscores it on
+  `effectiveScore`. No hysteresis.
+
+It ends with the instance: death, despawn, or a restart. Never saved, so it does
+not survive a restart, and needs not: a restart takes every player offline, and
+offline satisfies `revenge-mob`. The sole user is a generic mob's theft grudge
+(`seeders.OnTheft`). `revenge-mob`'s `ContextScore` skips its sighting gate for
+an `Individual` goal, which is why a robbed mob hunts where a type's goal would
+wait for that copy to have met the target. `goal list` and the other admin
+commands show the type's goals only.
+
+### Stale goals on load (store.go, lookup.go)
+**`SetStaleGoalCheck(fn)`** registers a check run on each goal of a goal file as
+it loads from disk (`dropStaleGoals`): what it rules out is removed and the file
+saved. Any panic keeps the goal. `seeders` registers `isStaleTheftGoal`.
+
 ## Persistence
 
 Files live at `_datafiles/world/dogmud/goals/{mobId}-{namesimple}.yaml`.
@@ -284,6 +309,7 @@ command (mob-aliveness chunk 6.4). Two rows are reported: `cache`
 | `lookup.go` | Lookup by type/owner |
 | `select.go` | Scoring and selection of the active goal |
 | `store.go` / `persistence.go` | Per-mob goal state and its runtime files |
+| `individual.go` | A goal one live mob holds for itself |
 | `prune.go` | Dropping goals that no longer apply |
 | `validation.go` | Goal validation |
 | `memory.go` | Memory reporting |

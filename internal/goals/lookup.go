@@ -111,3 +111,39 @@ func invokePlanStateClear(mob *mobs.Mob) {
 	}()
 	fn(mob)
 }
+
+// StaleGoalFn reports whether a goal read from a type's file should no longer
+// be there. Registered by a layer that knows what its goals mean: this one
+// cannot tell who seeded a goal.
+type StaleGoalFn func(mobId int, g *Goal) bool
+
+var staleGoalCheck StaleGoalFn // guarded by lookupMu
+
+// SetStaleGoalCheck registers the check run on every goal of every goal file
+// as it loads. Pass nil to unregister.
+func SetStaleGoalCheck(fn StaleGoalFn) {
+	lookupMu.Lock()
+	staleGoalCheck = fn
+	lookupMu.Unlock()
+}
+
+// invokeStaleGoalCheck runs the registered check under panic recovery. Any
+// doubt keeps the goal: a panic or no check means not stale.
+func invokeStaleGoalCheck(mobId int, g *Goal) (stale bool) {
+	lookupMu.RLock()
+	fn := staleGoalCheck
+	lookupMu.RUnlock()
+	if fn == nil {
+		return false
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			mudlog.Warn("goals.staleGoalCheck panic",
+				"mob_id", mobId,
+				"goal_id", g.Id,
+				"panic", fmt.Sprintf("%v", r))
+			stale = false
+		}
+	}()
+	return fn(mobId, g)
+}

@@ -73,7 +73,7 @@ why the listener alone is insufficient.
 | 2 | `faction_rep_counter` | `Communication` | Would bump `faction_rep_built_with:<fid>` on receiver for player→mob positive interaction | **STUB** — `Communication` carries no positive-interaction subtype; early-returns on every event |
 | 3 | `craft_materials_to_wealth_item` | Planner direct-invoke | Seeds `wealth-item` (priority 60) for each missing recipe ingredient when craft-item planner hits a missing-materials Failure | **LIVE** (architectural exception — `SeedMaterialsForRecipe`) |
 | 4 | `friend_killed_to_revenge` | `MobDeath` | Walks victim's chunk-1.6 relationship edges; seeds `revenge-mob` (priority 85) on each friend/family/lover targeting the killer | **LIVE** |
-| 5 | `witness_of_theft_to_revenge` | Steal-action direct-invoke | Victim (pri 90) + room witnesses (pri 60) on successful steal, **routed through the witness-response classifier** (see below) | **LIVE** (architectural exception — `OnTheft`) |
+| 5 | `witness_of_theft_to_revenge` | Steal-action direct-invoke | Victim (pri 90) + room witnesses of another type (pri 60) on a player's successful steal, **routed through the witness-response classifier**; a generic mob's grudge is its own (see below) | **LIVE** (architectural exception — `OnTheft`) |
 | 6 | `aggressive_action_to_revenge` | `PlayerAttackedMob` | Attacked mob (pri 75) + non-`AutoAggro` room witnesses (pri 50), **routed through the witness-response classifier** | **LIVE** |
 
 ### Witness-response classifier (`witness_response.go`, 2026-06-05)
@@ -89,6 +89,27 @@ calls the pure `classifyWitnessResponse(mob) WitnessResponse`:
   survival-goal-pruned-at-full-HP behavior). The 5.1 crime record is the report.
 - **combat-capable non-guard** → `ResponseRevenge` — `seedRevengeGoalIfAbsent`
   (unchanged).
+
+**Theft is the exception to "revenge goal on the type"** (owner ruling
+2026-11-01; interim, the better model is #752 under the behaviour arc #374).
+`OnTheft` routes through `seedTheftResponse`, which shares the classifier with
+assault via `respondToCrime` and differs only in the revenge branch:
+- A **generic mob** takes the grudge itself: `goals.AddIndividual` on that one
+  instance. Its death ends it and its respawn does not carry it. Another copy of
+  the victim's type in the room is not a witness. A witness of another type gets
+  the same treatment, alone.
+- A **one-of-a-kind NPC** (`isOneOfAKind`: exactly one room in
+  `rooms.SpawnRooms` and a dialogue file of its own) keeps `seedRevengeGoalIfAbsent`
+  on the type, where type and individual are the same. A silent boss reads as
+  generic: there is one of it, so the only difference is its grudge ends at its
+  death.
+- `isStaleTheftGoal`, registered with `goals.SetStaleGoalCheck`, removes from a
+  generic type's goal file as it loads any theft grudge from before the ruling:
+  `revenge-mob`, `target_kind: player`, priority 90 or 60, the only seeder that
+  writes those. Assault (75, 50) and a friend's death (85, against a mob) are
+  untouched, as is any template it cannot find.
+
+Assault (rule 6) and a friend's death (rule 4) still write to the type's file.
 
 The victim is never a noncombatant (you cannot steal from / attack a
 `non_combatant`), so it only hits guard or revenge. Rule 4 (`friend_killed_to_revenge`)
