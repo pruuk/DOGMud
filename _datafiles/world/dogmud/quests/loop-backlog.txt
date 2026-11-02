@@ -4,7 +4,6 @@
 # warning; any finding not listed refuses boot, CI and the quest editor's
 # save. A line with no matching finding fails CI: delete it when its finding
 # is fixed. Never add a line by hand to make new content pass.
-chain 73 mob 9465 topic q74_grant
 chain 75 mob 9516 topic disc_quest
 chain 75 mob 9516 topic disc_tale
 chain 78 mob 9584 topic teach_aegis

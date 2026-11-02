@@ -209,3 +209,16 @@ func TestTier2HandInsFollowTheLastStep(t *testing.T) {
 		require.Contains(t, menuKeys(df, state(c.onLast)), c.topic, c.file)
 	}
 }
+
+// Tier 3: Quist offers The Undercroft at her hand-in, through the chain.
+func TestQuistOffersTheUndercroft(t *testing.T) {
+	quist := loadShippedDialogue(t, "the_confluence/9441.yaml")
+	require.Contains(t, menuKeys(quist, heldState("73-end")), "undercroft_offer")
+	require.NotContains(t, menuKeys(quist, heldState("73-map")), "undercroft_offer")
+	require.NotContains(t, menuKeys(quist, heldState("73-end", "74-start")), "undercroft_offer")
+
+	cael := loadShippedDialogue(t, "the_confluence/9465.yaml")
+	require.Nil(t, cael.FindTopic("q74_grant"), "the offer moved to Quist")
+	require.Contains(t, menuKeys(cael, heldState("74-start")), "q74_work")
+	require.NotContains(t, menuKeys(cael, heldState("74-start", "74-ledger")), "q74_work")
+}

@@ -1070,6 +1070,7 @@
 9441.life
 9441.margin
 9441.report
+9441.undercroft_offer
 9442.archive
 9442.margin
 9442.source_surveys
@@ -1138,9 +1139,9 @@
 9464.the_order
 9465.aldric_note
 9465.archive
-9465.q74_grant
 9465.q74_recovery
 9465.q74_turnin
+9465.q74_work
 9465.the_margin
 9465.what_the_ledger_says
 9466.crane_believer_aside
@@ -1466,6 +1467,7 @@
 # player finish without meeting the forager.
 259.quest_complete_herbs
 # renamed
+9465.q74_grant -> 9441.undercroft_offer
 9117.vein_offer -> 9116.vein_offer
 9112.wash_offer -> 9108.wash_offer
 9129.marsh_offer -> 9128.marsh_offer

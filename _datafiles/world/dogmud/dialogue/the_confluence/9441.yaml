@@ -47,13 +47,9 @@ opener:
     text: There was a fourth. You have seen it with your own eyes now, and no one
       can tell you that you imagined it. The rest of the answer is not in any archive
       of ours. It is under the temple.
-    hints: The temple stands on its island south of Tri-Cross Square, and the
-      Officiant keeps its public rite at the Crossing in the great hall. From the
-      Margin Hall, go east five times to Tri-Cross Square, south twice to the
-      Processional Gate, south four times to the Temple Forecourt, east four times
-      across the Causeway to the Temple Steps, then south four times through the
-      Portico, the Narthex and the Public Nave to the Crossing. The Officiant
-      sleeps at the Crossing late at night. Type talk officiant.
+    hints: The temple stands on its island south of Tri-Cross Square. Choose The
+      Undercroft below to follow the question. Brother Cael keeps the archive
+      there.
   - questRequired:
     - 73-map
     questExcluded:
@@ -117,18 +113,29 @@ topics:
   text: You have seen all three, then? The bookseller's damaged chart, Tallis's old
     copies, the hall's own map in its margin? Then you have seen what I have seen,
     and what a dozen scholars before me saw and could not make the world look at.
-  hints: Quist's answer points under the temple on its island, where the Officiant
-    keeps the public rite at the Crossing. From the Margin Hall, go east five times
-    to Tri-Cross Square, south twice to the Processional Gate, south four times to
-    the Temple Forecourt, east four times across the Causeway to the Temple Steps,
-    then south four times through the Portico, the Narthex and the Public Nave to
-    the Crossing. The Officiant sleeps at the Crossing late at night. Type talk
-    officiant.
+  hints: Quist's answer points under the temple. Choose The Undercroft below to
+    follow it. Brother Cael keeps the archive on the temple island.
   questRequired:
   - 73-map
   questExcluded:
   - 73-end
   grantsQuest: 73-end
+- key: undercroft_offer
+  kind: offer
+  quest: 74
+  label: The Undercroft
+  playerLine: Where does this lead?
+  text: Under the temple, if you have the stomach for it. Brother Cael keeps the
+    archive on the island, and he has been reading the same records alone for years.
+    Tell him the Margin sent you. There are three of the temple's own that disagree
+    with its founding story, and he will show you where.
+  hints: Accept, then go to Brother Cael in the Archive on the temple island.
+  questRequired:
+  - 73-end
+  questExcluded:
+  - 74-start
+  - 74-end
+  grantsQuest: 74-start
 # margin_2 (the Margin's name, from the "margin scholars who" pattern) is
 # folded into margin: one topic about who they are.
 - key: margin

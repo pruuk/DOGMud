@@ -93,15 +93,13 @@ opener:
     text: I am Brother Cael, and I keep the Archive, within limits. Most days
       nobody asks to see any of it. Today is not most days, I think.
       You carry the Margin's question.
-    hints: Choose a line below to learn about the archive, about the building
-      ledger, about the Margin, or about Aldric. He would welcome help with the
-      records.
+    hints: Choose a line below to learn about the archive, the ledger, the Margin
+      or Aldric. Quist the Elder at the Margin Hall has the next step, if you
+      have not taken it from her.
 topics:
-- key: q74_grant
-  kind: offer
-  quest: 74
-  label: The Undercroft
-  playerLine: Can I help you read what the temple's records say?
+- key: q74_work
+  kind: info
+  label: What should I read?
   text: 'So the Margin''s question has reached the archive, and you with it. Good.
     I am tired of being the only one who reads these. Here is the work, and it is
     reading, not digging: three of the temple''s own records disagree with its
@@ -109,14 +107,13 @@ topics:
     record in the Chapter House. And a mason''s survey in the Older East Corridor,
     by the stair. See all three yourself. Aldric has allowed that much. Then come
     back to me.'
-  hints: Accept, then read the building ledger open on the stand beside Brother
-    Cael. Type search.
+  hints: Read the building ledger open on the stand beside Brother Cael. Type search.
+  marked: true
   questRequired:
-  - 73-end
-  questExcluded:
   - 74-start
+  questExcluded:
+  - 74-ledger
   - 74-end
-  grantsQuest: 74-start
 - key: q74_turnin
   kind: info
   label: I have read all three records.
