@@ -45,6 +45,10 @@ Once deployed they are also web-served, e.g.
 `https://www.dogmud.org/static/images/branding/banner_468x60.png` for sites
 that want a hosted image URL.
 
+**2026-11-02:** these predate Malia's logo (`logo_full.png`, `logo_dog.png`).
+Refreshing them is an open decision; keep the names, since listing sites
+hotlink them. Brand rules: [`BRAND_STANDARDS.md`](BRAND_STANDARDS.md).
+
 ## Short blurb (~45 words — Grapevine, MudStats)
 
 > On the colony world of Gaius, conviction reshapes flesh. No levels, no

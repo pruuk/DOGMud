@@ -35,6 +35,7 @@ setting, or [`schemas/`](schemas/) if you want to author content.
 | [`guides/github_guide.md`](guides/github_guide.md) | Branch strategy and Git workflow |
 | [`guides/DEPLOYMENT_GUIDE.md`](guides/DEPLOYMENT_GUIDE.md) | Deploying to the production droplet |
 | [`guides/ADVERTISING_LISTINGS.md`](guides/ADVERTISING_LISTINGS.md) | Copy used for MUD-listing sites |
+| [`guides/BRAND_STANDARDS.md`](guides/BRAND_STANDARDS.md) | Malia's brand rules (2026-11-02): which logo goes where and at what size, the brand colour roles (teal means website, umber and gold mean game, logo golds), type, the brass control rule, the favicon set, legacy listing assets, and how a brand change ships |
 | [`guides/TESTING_GUIDE.md`](guides/TESTING_GUIDE.md) | Reproducible race-enabled test baseline, local and CI |
 | [`../.claude/skills/dogmud-end-of-day/SKILL.md`](../.claude/skills/dogmud-end-of-day/SKILL.md) | The end-of-day SOP: archive shipped specs and plans under `completed/` with every reference repointed, tidy the repo root, sweep `C:\tmp` and `C:\gotmp` (clean merged worktrees, cargo targets idle a day, scratch idle two days; other repos' checkouts and anything unmerged left alone), write the session handoff |
 
