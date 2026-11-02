@@ -29,7 +29,8 @@ steps:
       smuggling tunnels. A man named Torvan Cresk runs the whole operation from
       here. A locked strongbox beneath his table likely holds the real
       evidence, but Torvan has the key."
-    hint: "Torvan Cresk carries the strongbox key. Type attack torvan."
+    hint: "Torvan Cresk carries the strongbox key. Type attack torvan. If he
+      is gone, someone beat you to him, and he will be back at his table."
   # loot and unlock split the old confront hint into one command each
   # (owner ruling: one command per hint). Inserted steps are save-safe:
   # progress is one step id, read in this order (quests.IsTokenAfter).
@@ -113,10 +114,9 @@ triggers:
     actions:
       - grant: "14-confront"
       - actor: "You step into a well-lit chamber that serves as the nerve
-          center of the smuggling operation. A man at the table looks up
-          sharply. This must be the one in charge. A heavy iron strongbox
-          sits beneath his table, locked tight. Whatever proof you need is
-          probably in there."
+          center of the smuggling operation. Whoever runs all this works from
+          that table. A heavy iron strongbox sits beneath it, locked tight.
+          Whatever proof you need is probably in there."
 
   - event: mob_death
     mob: 249

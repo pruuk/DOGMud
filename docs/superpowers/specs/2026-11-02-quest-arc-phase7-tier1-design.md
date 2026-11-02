@@ -1,6 +1,9 @@
 # #375 phase 7, tier 1: past the arch
 
-**Status:** design approved in brainstorm 2026-11-02; awaiting owner review of this file.
+**Status:** owner approved 2026-11-02; built and playtested (runs `a9b49d575efc40d4`,
+`649034b0c7cf972d`). The playtest changed three things recorded here: the strongbox's `difficulty`
+is 10, not 20; Torvan Cresk moved from `noncombat_questgiver` to `generic_fighter`, because he left
+the room before a fight could start; and his hint says what to do if someone beat you to him.
 **Arc:** #375 quest and dialogue rework, phase 7. Roadmap:
 `docs/roadmaps/QUEST_DIALOGUE_ROADMAP.md`; target page:
 `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`.
