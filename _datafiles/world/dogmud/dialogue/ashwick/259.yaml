@@ -64,25 +64,6 @@ topics:
   - 16-end
   grantsQuest: 16-end
   moodChange: friendly
-- key: quest_complete_herbs
-  kind: handin
-  quest: 16
-  label: The Herbalist's Shortage
-  playerLine: I found these herbs in a grove deep in the woods.
-  text: "Where did you find these? This is feverfew and bitter-thistle of a quality I
-    have not seen in months. Fresh and potent. The grove, you say? I should have
-    looked there myself. Whatever soil grew these is touched by something deeper
-    than rainfall. My stock will be full again within the week. Thank you. And
-    whoever has been cutting my clearing, if you meet them, tell them I would rather
-    work with them than against them."
-  questRequired:
-  - 16-start
-  questExcluded:
-  - 16-forager
-  - 16-end
-  requiresItem: 40040
-  grantsQuest: 16-end
-  moodChange: friendly
 - key: worktable_access
   kind: info
   label: May I use your worktable?

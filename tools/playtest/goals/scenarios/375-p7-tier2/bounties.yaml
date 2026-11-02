@@ -1,0 +1,31 @@
+# BOUNTIES seat: quest 19 and quest 61, each tried in the wrong order on purpose.
+# A kill out of order must grant nothing and must say so. Quote game lines VERBATIM.
+ephemeral:
+  profile: mid
+  start_room: 4110
+  overlays:
+    grant_items: [20096]
+  budgets:
+    wall_clock: 50m
+
+goals:
+  - >-
+    Type `talk drunn`, take The Lake-Caves Bounty, and quote `hint`. Equip your light.
+    Go to the caves. Go straight past the shrimp to the Pool Chamber and kill a drowned
+    hunter FIRST, before any swarm. Quote every line, and `hint` afterwards. Did the
+    game say the kill did not count?
+  - >-
+    Now follow the hints in order: kill a swarm, kill a hunter, report to Drunn, take
+    what he offers. Quote each. Try the sump dweller only if you are strong enough; if
+    not, report without the tooth and quote it. Say where the map's guide line took you
+    on the `signed` step.
+  - >-
+    Walk to the Lake & Ladle on the north road. Type `talk pemberton`, take Hedgerow
+    Toll, and quote her offer text, `hint` and `quests`. Say where the map points on
+    this step.
+  - >-
+    Go north to the Abandoned Camp in the Empty Reach FIRST and kill the Reach-Touched,
+    against what she asked. Hidden creatures may need `search`. Quote every line, and
+    `hint` and `quests` afterwards. Then do it in order: the bandit at the Mire Cutoff,
+    then the Reach-Touched, then hand in. Quote each. If the Reach-Touched is not back
+    yet, say how long you waited.

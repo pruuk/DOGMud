@@ -42,6 +42,8 @@ character:
       itemid: 10006
     body:
       itemid: 20010
+    light:
+      itemid: 20134
   stats:
     strength:
       base: 125
