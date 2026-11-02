@@ -34,8 +34,8 @@ steps:
       One bandit scout is down. Now the bandit squatter, in the Cracked
       Cistern east of Squatter's Hollow.
     hint: >-
-      From Squatter's Hollow, go east to the Cracked Cistern and type
-      attack squatter.
+      The Cracked Cistern is just east of Squatter's Hollow, and the hollow
+      is south of the Lower Wash. In the cistern, type attack squatter.
   - id: culled
     destination:
       mob: 9112
@@ -65,8 +65,9 @@ triggers:
     actions:
       - grant: "53-firstkill"
       - actor: >-
-          One scout down. Now the squatter: from Squatter's Hollow, go
-          east to the Cracked Cistern and type attack squatter.
+          One scout down. Now the squatter, in the Cracked Cistern. It is just
+          east of Squatter's Hollow, and the hollow is south of the Lower Wash.
+          In the cistern, type attack squatter.
 
   - event: mob_death
     mob: 9111

@@ -307,6 +307,51 @@ func TestLessonsComeBeforeMarkedHelpOnEachTeachersMenu(t *testing.T) {
 	require.GreaterOrEqual(t, checked, 3, "the walk must reach the three teachers above")
 }
 
+// Hold the Wash walks the player through the Lower Wash, where a scout waits,
+// on the way to Garve. A scout killed before he gives the job says why it did
+// not count and moves nothing. Once he has given it, the same kill is the step,
+// with no such line.
+func TestQuest33_ScoutKilledBeforeGarveIsExplainedAndMovesNothing(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(couleeWorld(t), "quests", "33-hold_the_wash.yaml"))
+	require.NoError(t, err)
+	var q QuestDef
+	require.NoError(t, yaml.Unmarshal(data, &q))
+	require.Equal(t, 33, q.QuestId)
+
+	const lowerWash, tooSoon = 5232, "does not count"
+
+	kill := func(tokens ...string) (*fullMockPlayer, string) {
+		e := NewEngine()
+		qq := q
+		e.RegisterQuest(&qq)
+		player := newFullMockPlayer(lowerWash)
+		for _, tok := range tokens {
+			player.quests[tok] = true
+		}
+		ctx := newFullMockActionContext(1, player)
+		e.Notify("mob_death", EventDetails{UserId: 1, MobId: 9110, RoomId: lowerWash}, player, ctx)
+		return player, strings.Join(ctx.sentTexts, "\n")
+	}
+
+	t.Run("on the way to Garve", func(t *testing.T) {
+		player, said := kill("33-start")
+		require.Contains(t, said, tooSoon, "the player must read why the kill did not count")
+		require.False(t, player.HasQuest("33-met"), "a kill is not hearing Garve")
+		require.False(t, player.HasQuest("33-scout"), "a kill before Garve must not count")
+	})
+
+	t.Run("after Garve", func(t *testing.T) {
+		player, said := kill("33-start", "33-met")
+		require.NotContains(t, said, tooSoon, "this kill did count")
+		require.True(t, player.HasQuest("33-scout"), "this kill is the step")
+	})
+
+	t.Run("without the quest", func(t *testing.T) {
+		_, said := kill()
+		require.NotContains(t, said, tooSoon, "a player not on the quest hears nothing")
+	})
+}
+
 func requireNoMarkedInfoBefore(t *testing.T, df *dialogue.DialogueFile, key string) {
 	t.Helper()
 	for i := range df.Topics {

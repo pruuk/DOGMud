@@ -43,7 +43,8 @@ steps:
       walk back and try again.
     hint: >-
       Go north from Squatter's Hollow to the Lower Wash and type attack
-      scout. If it is dark, type cast glow first.
+      scout. If the wash is empty, more scouts hold Gravel Bend, one room
+      east. If it is dark, type cast glow first.
   - id: scout
     destination:
       room: 5235  # Cracked Cistern: Bandit Squatter (mob 9111)
@@ -53,8 +54,8 @@ steps:
       against you. A bandit's gear does not always survive the fight. Type
       loot corpse to see what is left.
     hint: >-
-      From Squatter's Hollow, go east to the Cracked Cistern and type
-      attack squatter.
+      The Cracked Cistern is just east of Squatter's Hollow, and the hollow
+      is south of the Lower Wash. In the cistern, type attack squatter.
   - id: squatter
     destination:
       mob: 9112
@@ -93,6 +94,21 @@ triggers:
           Garve has told you what the wash needs. Start with the scout. Go
           north to the Lower Wash and type attack scout.
 
+  # TOO SOON: the way to Garve runs through the Lower Wash, and its scout can
+  # fall before he gives the job. That kill counts for nothing, and says so. It
+  # grants nothing, so it fires on each such kill.
+  - event: mob_death
+    mob: 9110
+    conditions:
+      has: ["33-start"]
+      missing: ["33-met"]
+    actions:
+      - actor: >-
+          That scout does not count yet, because Garve has not given you the
+          job. Find him first: Squatter's Hollow is south of the Lower Wash.
+          Type talk garve there. New scouts come back to the wash after a
+          while.
+
   # scout: a bandit scout (9110).
   - event: mob_death
     mob: 9110
@@ -104,8 +120,9 @@ triggers:
       - actor: >-
           The bandit scout goes down. A bandit's gear does not always
           survive the fight: type loot corpse to see what is left. Next
-          is the squatter. From Squatter's Hollow, go east to the Cracked
-          Cistern and type attack squatter.
+          is the squatter, in the Cracked Cistern. It is just east of
+          Squatter's Hollow, and the hollow is south of the Lower Wash. In the
+          cistern, type attack squatter.
 
   # squatter: a bandit squatter (9111), after the scout.
   - event: mob_death

@@ -94,8 +94,9 @@ quest|32|trigger5|action1|actor => That is a special move. Now choose how much c
 quest|32|trigger6|action1|actor => Your combat detail is set. Report to Drillmaster Vorn: type talk vorn.
 quest|33|rewards|actor => Garve presses a purse into your hand and holds your gaze a moment longer than is strictly necessary, like someone revising his estimate upward. The leggings he slides from the pack beside him are well made, cut for movement, and they fit.
 quest|33|trigger0|action1|actor => Garve has told you what the wash needs. Start with the scout. Go north to the Lower Wash and type attack scout.
-quest|33|trigger1|action1|actor => The bandit scout goes down. A bandit's gear does not always survive the fight: type loot corpse to see what is left. Next is the squatter. From Squatter's Hollow, go east to the Cracked Cistern and type attack squatter.
-quest|33|trigger2|action1|actor => The bandit squatter drops. Some of her gear may have survived the fight, so loot the corpse before you go. Then go back to Garve in Squatter's Hollow and type talk garve.
+quest|33|trigger1|action0|actor => That scout does not count yet, because Garve has not given you the job. Find him first: Squatter's Hollow is south of the Lower Wash. Type talk garve there. New scouts come back to the wash after a while.
+quest|33|trigger2|action1|actor => The bandit scout goes down. A bandit's gear does not always survive the fight: type loot corpse to see what is left. Next is the squatter, in the Cracked Cistern. It is just east of Squatter's Hollow, and the hollow is south of the Lower Wash. In the cistern, type attack squatter.
+quest|33|trigger3|action1|actor => The bandit squatter drops. Some of her gear may have survived the fight, so loot the corpse before you go. Then go back to Garve in Squatter's Hollow and type talk garve.
 quest|34|rewards|actor => Garve hears you out without a word. Then he reaches behind him for a well-kept blade, turns it once in his good hand, and holds it out to you. "I took this off one of hers in the ambush. It belonged to the watch captain they killed for that tower. You took the tower, you keep it. It has changed owners by violence before, and it found a better one this time." He counts coin into your palm. "Whatever she was guarding is the coulee's question now, not hers."
 quest|34|rewards|observer => Garve hands <ansi fg="username">Aliceia</ansi> a well-kept blade and a purse of coin.
 quest|34|trigger0|action1|actor => The captain falls, and the watch room goes quiet. Take the news down to Garve: type talk garve when you reach him.
@@ -183,7 +184,7 @@ quest|52|rewards|actor => Bryn hears you out, and his doubled outline settles. "
 quest|52|rewards|observer => Scout Bryn hands the newcomer a hunting bow from the raider cache.
 quest|52|trigger0|action1|actor => Bowmaster Skell goes off the overlook and does not rise. The high ground is yours, and the canyon below falls quiet. Go back down to Scout Bryn at the Canyon Mouth and type talk bryn.
 quest|53|rewards|actor => Garve counts a few coins into your palm with his good hand. "The wash is quiet again. Come back when it is not. It never stays quiet long."
-quest|53|trigger0|action1|actor => One scout down. Now the squatter: from Squatter's Hollow, go east to the Cracked Cistern and type attack squatter.
+quest|53|trigger0|action1|actor => One scout down. Now the squatter, in the Cracked Cistern. It is just east of Squatter's Hollow, and the hollow is south of the Lower Wash. In the cistern, type attack squatter.
 quest|53|trigger1|action1|actor => The squatter drops. Go back to Garve in Squatter's Hollow and type talk garve for your pay.
 quest|54|rewards|actor => Ovell turns a coin over his knuckles before he hands it to you. "Still sharp. The iron knows a practiced hand. Come back when you want to keep it that way."
 quest|54|rewards|observer => Ovell hands <ansi fg="username">Aliceia</ansi> a few coins with a slow, approving nod.
