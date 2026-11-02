@@ -21,7 +21,7 @@ import (
 )
 
 // veyraSecret is one row of the owner-approved table in the tier 3 spec
-// (docs/superpowers/specs/2026-11-02-quest-arc-phase7-tier3-design.md, "The
+// (docs/superpowers/specs/completed/2026-11-02-quest-arc-phase7-tier3-design.md, "The
 // trades and lines"). The test holds the table itself, so a content edit that
 // drifts from it fails here.
 type veyraSecret struct {
