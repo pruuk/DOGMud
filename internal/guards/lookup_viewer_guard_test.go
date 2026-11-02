@@ -60,6 +60,7 @@ var lookupRegistry = map[string]lookupEntry{
 	"internal/parser/adapters.go|playerAdapter":                        {viewer: 1},
 	"internal/rooms/rooms.go|Room.FindByName":                          {plain: 1, why: whyUnfilter},
 	"internal/usercommands/admin.ai.go|AiFlag":                         {plain: 1, why: whyStaff},
+	"internal/usercommands/admin.goal.go|goalHere":                     {plain: 1, why: whyStaff},
 	"internal/usercommands/admin.setcondition.go|SetCondition":         {plain: 1, why: whyStaff},
 	"internal/usercommands/admin.command.go|Command":                   {plain: 1, why: whyStaff},
 	"internal/usercommands/admin.paz.go|Paz":                           {plain: 1, why: whyStaff},
