@@ -295,8 +295,8 @@ header {
               inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
 }
 
-/* ── Nav (now inside the header bar, pushed right) ── */
-nav {
+/* ── Nav in the header bar, pushed right (the footer menu is .footer-nav) ── */
+header nav {
   flex: 1;
   display: flex;
   justify-content: flex-end;
@@ -489,23 +489,47 @@ body:has(.content-container[data-path="/webclient"]) { overflow-x: hidden; }
   font-size: 0.9rem;
 }
 
-/* ── Footer (matching console card — bookends the header; gradient flipped so
-   both plates face their lighter edge toward the content) ── */
+/* ── Footer: the teal bar again, bookending the top bar (Malia 2026-11-01) ──
+   Full width, no outline, solid teal. Website pages repeat the menu here as
+   plain links (current page cream with a gold line, as at the top); the credit
+   line is nav gold, as the olive grey fails on teal (4.46). Measured on teal:
+   links and credit 5.89, current page and GoMud link 6.67, focus ring 5.12. */
 footer {
-  margin: 7px 8px;
-  padding: 7px clamp(12px, 2vw, 18px);
-  background: linear-gradient(var(--bar-deep), var(--ink-deep));
-  border: 1px solid var(--antique-gold);
-  border-radius: 8px;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink-gold) 12%, transparent), 0 2px 6px color-mix(in srgb, var(--shadow) 40%, transparent);
+  margin-top: 7px;
+  padding: 12px clamp(12px, 2vw, 18px) 10px;
+  background: var(--glass-bar-solid);
   text-align: center;
-  color: var(--text-secondary);
+  color: var(--glass-text);
   font-family: var(--font-body);
   font-size: 0.8rem;
 }
 footer p { margin: 0; }
-footer a { color: var(--ink-gold); }
+footer a { color: var(--glass-text-strong); }
 footer a:hover { text-decoration: underline; }
+footer a:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 14px;
+  margin-bottom: 8px;
+}
+.footer-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 4px;
+  font-size: 0.9rem;
+  color: var(--glass-text);
+  white-space: nowrap;
+}
+.footer-nav a:hover { color: var(--glass-text-strong); text-decoration: none; }
+.footer-nav a[aria-current="page"] {
+  color: var(--glass-text-strong);
+  text-decoration: underline 2px var(--glass-prominent);
+  text-underline-offset: 6px;
+}
+@media (pointer: coarse) { .footer-nav a { min-height: 44px; } }
 
 /* ── Tables ── */
 table { width: 100%; border-collapse: collapse; }
@@ -538,7 +562,7 @@ pre, code { font-family: var(--font-mono); }
   header { padding: 6px 12px; gap: 8px; }
   .hero-title { font-size: 1.7rem; }
   /* The ☰ button opens the menu as a full-width sheet under the bar. */
-  nav { flex-basis: 100%; order: 3; }
+  header nav { flex-basis: 100%; order: 3; }
   .nav-toggle { display: flex; margin-left: auto; }
   .nav-container {
     display: none;
