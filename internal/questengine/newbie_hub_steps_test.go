@@ -125,7 +125,12 @@ func TestQuest31FindYourFooting_OneCommandPerStep(t *testing.T) {
 		w.notify("command", EventDetails{Command: "equip", RoomId: provisions})
 		require.Equal(t, "list", w.p.current, "equip before the purchase must not skip the buy step")
 
-		w.notify("item_gain", EventDetails{ItemId: cottonShirt, RoomId: provisions})
+		// The step teaches buying: a shirt that arrived any other way is not
+		// this lesson (and a held shirt must not fire it at step start).
+		w.notify("item_gain", EventDetails{ItemId: cottonShirt, RoomId: provisions, Reason: "loot"})
+		require.Equal(t, "list", w.p.current, "a shirt that was not bought must not count")
+
+		w.notify("item_gain", EventDetails{ItemId: cottonShirt, RoomId: provisions, Reason: "buy"})
 		require.Equal(t, "shop", w.p.current)
 
 		// Walking into the inn before equipping must not skip the equip step.
@@ -157,7 +162,7 @@ func TestQuest31FindYourFooting_OneCommandPerStep(t *testing.T) {
 		require.False(t, holdsAll(w.p, turnIn))
 		w.notify("command", EventDetails{Command: "list", RoomId: provisions})
 		require.Equal(t, "list", w.p.current)
-		w.notify("item_gain", EventDetails{ItemId: cottonShirt, RoomId: provisions})
+		w.notify("item_gain", EventDetails{ItemId: cottonShirt, RoomId: provisions, Reason: "buy"})
 		require.Equal(t, "shop", w.p.current)
 	})
 

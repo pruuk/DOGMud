@@ -119,13 +119,17 @@ func TestSmoke_WalkSourcesIndexShippedWorld(t *testing.T) {
 	if got := src.ItemSources(999999999); len(got) != 0 {
 		t.Errorf("item 999999999 should have no source: %v", got)
 	}
-	// Ledger 21 lies in room 421 (rooms/watchers_crossing/421.yaml), so a
-	// player can hold it outside quest 5. Tally 40100 comes only from quest
-	// 63's own give_item actions (quests/63-dock_rat.yaml): it is 63's own,
-	// and outside for any other quest.
+	// Ledger 21 comes only from Harn's lend_ledger topic
+	// (dialogue/watchers_crossing/86.yaml), which opens on 5-start: it is
+	// quest 5's own, open once 5-start is held. Tally 40100 comes only from
+	// quest 63's own give_item actions (quests/63-dock_rat.yaml): it is 63's
+	// own, and outside for any other quest.
 	none := func(string) bool { return false }
-	if !src.ItemAvailable(21, 5, none) {
-		t.Error("item 21 should have a source outside quest 5")
+	if src.ItemAvailable(21, 5, none) {
+		t.Errorf("item 21 should be quest 5's own: %v", src.ItemSources(21))
+	}
+	if !src.ItemAvailable(21, 5, func(tok string) bool { return tok == "5-start" }) {
+		t.Errorf("item 21 should be open on 5-start: %v", src.ItemSources(21))
 	}
 	if src.ItemAvailable(40100, 63, none) {
 		t.Errorf("item 40100 should be quest 63's own: %v", src.ItemSources(40100))
@@ -149,10 +153,9 @@ func TestSmoke_WalkSourcesIndexShippedWorld(t *testing.T) {
 	}
 
 	// External grants: Hadwen's rite tree grants 30-rite on topic begin or
-	// rite_wait (behaviors/pothole_coulee/9100-cleric_hadwen.yaml), room
-	// 407's tree grants 4-investigate on entry
-	// (behaviors/rooms/dustwalk_road/407.yaml), and the tally stick grants
-	// 14-explore (items/materials-40000/40035-tally_stick.yaml).
+	// rite_wait (behaviors/pothole_coulee/9100-cleric_hadwen.yaml), and the
+	// tally stick grants 14-explore
+	// (items/materials-40000/40035-tally_stick.yaml).
 	// They live on the loop world (questworld.Registry), which boot, CI and
 	// the quest editor all build.
 	ext := map[string]questloop.ExternalGrant{}
@@ -164,8 +167,8 @@ func TestSmoke_WalkSourcesIndexShippedWorld(t *testing.T) {
 		!slices.Equal(g.Topics, []string{"begin", "rite_wait"}) {
 		t.Errorf("Hadwen's 30-rite tree grant: %+v", g)
 	}
-	if g := ext["room 407 tree grant_quest 4-investigate"]; g.Token != "4-investigate" || len(g.Topics) != 0 {
-		t.Errorf("room 407's 4-investigate tree grant: %+v", g)
+	if g, ok := ext["room 407 tree grant_quest 4-investigate"]; ok {
+		t.Errorf("room 407's tree no longer grants a step: %+v", g)
 	}
 	if g := ext["item 40035 questtoken"]; g.Token != "14-explore" || g.ItemId != 40035 {
 		t.Errorf("item 40035 questtoken: %+v", g)

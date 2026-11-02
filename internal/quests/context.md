@@ -1076,6 +1076,13 @@ trigger's signature.
 - `label` names the progress line ("<label>: 2 of 5"), needs `count` or
   `distinct`, and is at most `MaxLabelLength` (40) characters; with no label
   the line reads "Progress: N of M". `explored_line` needs `distinct`.
+- `held_line` (tier 1) needs a plain `item_gain` (no reason, room, area, zone
+  or count): it is said when the step starts with the item already held.
+  `TriggerDef.PlainItemGain()` is that test; `questengine.heldAtStepStart` uses
+  it to pick the triggers it fires on `quest_granted`, and the validator uses it
+  to refuse a `held_line` anywhere else. A behaviour tree's `grant_quest` sets
+  its token before the step-start check, so a step a tree starts gets no
+  Hook 1: start the step from a topic or trigger when a held item must count.
 - `QuestValidators` gained `AreaExists`, `ZoneExists`, `AreaSize` and
   `AreaGatedRoom`; `questworld.Validators` fills them. `questloop`'s trigger
   signature includes area, zone, count and distinct.

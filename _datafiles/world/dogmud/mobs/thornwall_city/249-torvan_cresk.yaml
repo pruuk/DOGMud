@@ -1,7 +1,7 @@
 mobid: 249
 zone: Thornwall City
 archetype: fighting
-behavior_archetype: noncombat_questgiver
+behavior_archetype: generic_fighter
 statpool: 80
 itemdropchance: 100
 hostile: false

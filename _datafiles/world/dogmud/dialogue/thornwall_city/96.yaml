@@ -42,7 +42,6 @@ opener:
   - questRequired:
     - 14-evidence
     questExcluded:
-    - 14-report
     - 14-end
     text: You found what? A bribe ledger? Names of corrupt officials? Take that to
       Guard Captain Velk. He will know what to do with it.
@@ -166,7 +165,6 @@ topics:
   questRequired:
   - 14-evidence
   questExcluded:
-  - 14-report
   - 14-end
 - key: lost_lantern
   kind: info

@@ -58,8 +58,11 @@ topics:
 - key: passage
   kind: info
   label: I'm ready. Open the arch for me.
-  text: So. The coulee has taught you what it can, for now.
-  hints: The arch takes a few moments to open. Stay close to Esk.
+  text: So. The coulee has taught you what it can, for now. The rest is out there,
+    for whoever goes looking.
+  hints: The arch takes a few moments to open. Stay close to Esk. If you fall out
+    there, you will wake at the Mending Hut. To wake in Thornwall instead, type
+    sethome thornwall.
   behavior: true
   questRequired:
   - 30-end
@@ -99,3 +102,29 @@ topics:
     and an honest warden. People learn to read them faster than they learn my words.
     Saves everyone time.
   hints: Choose a line below to learn about the door, or what he watches for.
+# Owner 2026-11-02: past the arch nobody walks the player, and Esk says so.
+# These lines stay subtle and generic. No place, directions or NPC names, and
+# nothing about the crash, the ships or what the Chrysalis actually is.
+- key: out_there
+  kind: info
+  label: What is waiting out there?
+  text: Nobody can tell you that. The Chrysalis has had a long time to work on the
+    people out there, and no two of them have come out the same. You will see things
+    you have no name for. Ask about them. Most folk will tell you more than they
+    meant to.
+  hints: Past the arch, nobody sends you to your next quest. Talk to people and look
+    closely at what is around you.
+  marked: true
+  questRequired:
+  - 30-end
+- key: what_it_does
+  kind: info
+  label: What will it do to me?
+  text: These eyes came the winter I decided to keep this door. I never asked for
+    them. I meant it, and I kept on meaning it, and that is as much as I understand.
+    Whatever you hold to hardest, the Chrysalis seems to hear. Be careful what you are
+    certain of.
+  heardRequired:
+  - out_there
+  questRequired:
+  - 30-end

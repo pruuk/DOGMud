@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -334,7 +335,7 @@ func offerCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic, prefer 
 	inst, key := mob.InstanceId, t.Key
 	card := menu.Confirm(t.Label, "Accept", "Leave")
 	if q := quests.GetQuestById(t.Quest); q != nil {
-		card.Body = cardBody(q, cardNames(user.Character), user.Character.LastRepeat(q))
+		card.Body = offerCardBody(t, q, cardNames(user.Character), user.Character.LastRepeat(q))
 	}
 	user.OpenMenu(card, session(user, mob, func(e menu.Entry) {
 		granted, closes := "", false
@@ -342,6 +343,10 @@ func offerCard(user *users.UserRecord, mob *mobs.Mob, t *dialogue.Topic, prefer 
 			granted, closes = accept(user, inst, key, prefer)
 		}
 		if closes {
+			return
+		}
+		if granted != "" && t.CarriesItem > 0 {
+			events.AddToQueue(events.TalkMenuAgain{UserId: user.UserId, MobInstanceId: inst}, events.TalkNextOfferPriority)
 			return
 		}
 		openMenu(user, inst, granted)

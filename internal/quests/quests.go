@@ -146,6 +146,9 @@ func validateAreaCount(t TriggerDef) error {
 	if t.ExploredLine != "" && t.Distinct == "" {
 		return fmt.Errorf("explored_line needs distinct (it is said when the area is already explored)")
 	}
+	if t.HeldLine != "" && !t.PlainItemGain() {
+		return fmt.Errorf("held_line needs a plain item_gain (it is said when the step starts with the item already held; a reason, room, area, zone or count cannot be answered by a held item)")
+	}
 	return nil
 }
 

@@ -124,6 +124,23 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 	// The token has landed: the talk markers on NPCs may have changed.
 	conversation.RefreshMarkers(questUser.UserId)
 
+	// The new-quest banner prints before the quest_granted chain below, so a
+	// step that finishes at once (an explore area already mapped, an item
+	// already held) shows its progress banner after the quest's own start.
+	if stepName == `start` && !questInfo.Secret {
+		if resumed {
+			questUser.EventLog.Add(`quest`, fmt.Sprintf(`Took up a quest again: <ansi fg="questname">%s</ansi>`, questInfo.Name))
+
+			questUpTxt, _ := templates.Process("character/questup", fmt.Sprintf(`You take up <ansi fg="questname">%s</ansi> again.`, questInfo.Name), questUser.UserId)
+			questUser.SendText(messaging.CategorySystem, questUpTxt)
+		} else {
+			questUser.EventLog.Add(`quest`, fmt.Sprintf(`Given a new quest: <ansi fg="questname">%s</ansi>`, questInfo.Name))
+
+			questUpTxt, _ := templates.Process("character/questup", fmt.Sprintf(`You have been given a new quest: <ansi fg="questname">%s</ansi>!`, questInfo.Name), questUser.UserId)
+			questUser.SendText(messaging.CategorySystem, questUpTxt)
+		}
+	}
+
 	// Bridge legacy/dialogue token grants into the questengine's quest_granted
 	// triggers. The questengine fires quest_granted only from its own internal
 	// grant chain, so a token granted by DIALOGUE (grantsQuest) or any other
@@ -141,23 +158,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		questengine.GetEngine().Notify("quest_granted", d, qbridge, qbridge)
 	}
 
-	if stepName == `start` && resumed {
-		if !questInfo.Secret {
-
-			questUser.EventLog.Add(`quest`, fmt.Sprintf(`Took up a quest again: <ansi fg="questname">%s</ansi>`, questInfo.Name))
-
-			questUpTxt, _ := templates.Process("character/questup", fmt.Sprintf(`You take up <ansi fg="questname">%s</ansi> again.`, questInfo.Name), questUser.UserId)
-			questUser.SendText(messaging.CategorySystem, questUpTxt)
-		}
-	} else if stepName == `start` {
-		if !questInfo.Secret {
-
-			questUser.EventLog.Add(`quest`, fmt.Sprintf(`Given a new quest: <ansi fg="questname">%s</ansi>`, questInfo.Name))
-
-			questUpTxt, _ := templates.Process("character/questup", fmt.Sprintf(`You have been given a new quest: <ansi fg="questname">%s</ansi>!`, questInfo.Name), questUser.UserId)
-			questUser.SendText(messaging.CategorySystem, questUpTxt)
-		}
-	} else if stepName == `end` {
+	if stepName == `end` {
 
 		if !questInfo.Secret {
 
@@ -346,7 +347,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			questUser.Character.ClearQuestToken(evt.QuestToken)
 			questUser.Character.RecordCompletion(questInfo)
 		}
-	} else {
+	} else if stepName != `start` {
 		if !questInfo.Secret {
 
 			questUser.EventLog.Add(`quest`, fmt.Sprintf(`Made progress on a quest: <ansi fg="questname">%s</ansi>`, questInfo.Name))

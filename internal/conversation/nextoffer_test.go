@@ -57,3 +57,14 @@ func TestTalkNextOffer_DrainsAfterALaterPriorityZeroLine(t *testing.T) {
 	events.AddToQueue(events.Message{UserId: 1, Text: "done"})
 	require.Equal(t, []string{"Message", "TalkNextOffer"}, events.QueuedTypesInOrderForTest())
 }
+
+// After accepting an offer for an item already held, the menu must wait for the
+// quest's chain: the grant is a priority 0 Quest event, and the hand-in is not
+// eligible until it and the step start have run.
+func TestTalkMenuAgain_DrainsAfterTheQuestGrant(t *testing.T) {
+	events.DrainAllQueuedEventsForTest()
+	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
+	events.AddToQueue(events.TalkMenuAgain{UserId: 1, MobInstanceId: 2}, events.TalkNextOfferPriority)
+	events.AddToQueue(events.Quest{UserId: 1, QuestToken: "9-start"})
+	require.Equal(t, []string{"Quest", "TalkMenuAgain"}, events.QueuedTypesInOrderForTest())
+}

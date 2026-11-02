@@ -1,0 +1,31 @@
+# RIVAL seat: starts beside the strongbox on quest 14, kills Torvan, and opens
+# the box by picking the lock while another player (UNDERTOW) is on the same
+# quest. Quote game lines VERBATIM. This seat's lockpicks are granted.
+ephemeral:
+  profile: mid
+  start_room: 498
+  overlays:
+    set_quest_tokens: ["14-start", "14-explore", "14-confront"]
+    grant_items: [33, 33, 40038]
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `quests` and `hint` and quote them. Kill Torvan Cresk. Quote the line
+    when he falls, and type `hint`.
+  - >-
+    Follow the hint to loot the key. Type `hint` and quote it. Do NOT use the
+    key. Type `inventory` and confirm you hold lockpicks; if you do not, say
+    so and use `unlock strongbox` instead.
+  - >-
+    Type `picklock strongbox` and work the lock until it opens or your picks
+    break. Quote what the game tells you, and type `hint` afterwards. Say
+    whether the quest moved on when the lock opened by picking.
+  - >-
+    Take the ledger as the hint says and quote every line. Then wait in the
+    room for six minutes of real time, typing `look strongbox` and
+    `look in strongbox` every minute. Report what you see, when the box locks
+    again, and whether a new ledger appears, and how many.
+  - >-
+    Hand the ledger to Guard Captain Velk, following the hint. Quote it.

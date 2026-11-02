@@ -41,15 +41,6 @@ opener:
     text: What did you learn about Elara? Let me hear it.
     hints: "Three entries below share the title The City Watch's Missing Person.
       Each gives Velk a different report."
-  # A save at 14-report (Velk already holds the ledger; the old give route's
-  # chain to 14-end is gone) closes the case through case_close.
-  - questRequired:
-    - 14-report
-    questExcluded:
-    - 14-end
-    text: I have your ledger, and I have read every name in it. There is one thing
-      left to do before I close the case.
-    hints: Choose The Undertow below to close the case.
   - questRequired:
     - 14-evidence
     questExcluded:
@@ -57,7 +48,7 @@ opener:
     text: You had a ledger full of names? Then where is it? Without it, I cannot
       arrest anyone.
     hints: If you lost the bribe ledger, go back to the strongbox in Torvan's
-      Operations Room and type look strongbox.
+      Operations Room. Type unlock strongbox, then get ledger from strongbox.
   - questRequired:
     - 14-end
     text: The tunnel operation is shut down and the arrests are underway. That ledger
@@ -172,8 +163,8 @@ topics:
   moodChange: friendly
 # Hand-in for quest 14. The tunnel_report node and the give trigger's npc_say
 # lines are folded in. It grants 14-end directly (settled ruling: the
-# 14-report chain is gone). It does not exclude 14-report: case_close
-# below serves saves at that step, which already gave Velk the ledger.
+# 14-report step is gone: a grant for it once existed and was removed, so
+# step-ids.txt renames it to 14-evidence and a save resting there lands here).
 - key: velkhandoff
   kind: handin
   quest: 14
@@ -187,21 +178,6 @@ topics:
   questExcluded:
   - 14-end
   requiresItem: 40036
-  grantsQuest: 14-end
-  moodChange: friendly
-# A save at 14-report gave Velk the ledger through the old give route, whose
-# chain to 14-end Task 16 deletes. No item: Velk already has it.
-- key: case_close
-  kind: handin
-  quest: 14
-  label: The Undertow
-  playerLine: You have the ledger. Is the case closed?
-  text: It is. The names check out. Gate captains, customs clerks, a warehouse
-    inspector, all on the take. I am ordering arrests tonight.
-  questRequired:
-  - 14-report
-  questExcluded:
-  - 14-end
   grantsQuest: 14-end
   moodChange: friendly
 - key: tunnel_complete

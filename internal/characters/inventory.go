@@ -622,6 +622,22 @@ func (c *Character) GetAllCarriedItems() []items.Item {
 	return all
 }
 
+// CarriesItem reports whether the character has an item with this id anywhere
+// on them: backpack, component bag, bandolier or worn.
+func (c *Character) CarriesItem(itemId int) bool {
+	for _, itm := range c.GetAllCarriedItems() {
+		if itm.ItemId == itemId {
+			return true
+		}
+	}
+	for _, itm := range c.GetAllWornItems() {
+		if itm.ItemId == itemId {
+			return true
+		}
+	}
+	return false
+}
+
 // SortComponentItems moves is_component items from backpack into ComponentItems
 // up to the equipped bag's capacity. Returns the count of items moved.
 func (c *Character) SortComponentItems() int {

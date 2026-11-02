@@ -1,0 +1,36 @@
+# LEDGERS seat: quest 5 from Innkeeper Tolva and Harn, then quest 9 from Priest
+# Olen and Clerk Pell. Neither ledger should be lying around any more: they come
+# from their keepers. Harn moves by schedule, so note the game hour. Quote game
+# lines VERBATIM.
+ephemeral:
+  profile: mid
+  start_room: 423
+  budgets:
+    wall_clock: 45m
+
+goals:
+  - >-
+    Type `time`. Type `talk tolva`, quote the menu, take The Innkeeper's
+    Complaint. Quote the hint and type `hint`.
+  - >-
+    Go to the Tollhouse (west approach, then east) and quote the room text.
+    Type `look counter` and `get ledger`, and quote both. Does anything read as
+    if a ledger is there to take? Now find Harn by following the hint and the
+    map. If he is not in the Tollhouse or is asleep, say so with the game time
+    and quote what the hint said about it.
+  - >-
+    Type `talk harn`, quote the menu, and ask for his ledger. Quote his reply,
+    the hint and `quests`. Then type `drop ledger`, walk one room away and back,
+    and see whether it is still there. Leave it. Type `talk harn` again and get
+    another: does he give one? Then go to Tolva, quote her opener, and hand it in.
+  - >-
+    After the hand-in, type `talk harn` and quote the opener and menu. Take The
+    Collector's Burden if it is offered, and say whether doing quest 5 and quest
+    6 together makes sense from what the two NPCs say.
+  - >-
+    Now walk to the Thornwall temple, the Temple Interior: from the Crossing go
+    east over the Old Bridge into the city, then to the Temple. Type `talk olen`,
+    take The Temple's Tithe Audit, and follow the hint to Clerk Pell. Quote the
+    Records Office's text. Type `get ledger`, then `talk pell`, and ask for it.
+    Quote his reply. Type `give ledger pell` and quote the result. Take it back
+    to Olen and hand it in. Quote it.

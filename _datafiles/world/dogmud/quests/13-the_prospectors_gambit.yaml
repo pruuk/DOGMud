@@ -14,7 +14,7 @@ steps:
       Ridge Approach: from the Old Citadel Plaza at Thornwall's eastern
       edge, go east seven times. Type talk rhett."
   - id: extraction
-    # destination inferred from triggers (#375 p4); was: return-to-giver / in-place (start room 3030); Phase 2 split review
+    destination: {room: 3030}  # the Ridge Approach, where Rhett holds the brace
     description: "Assist Rhett with the delicate extraction process.
       The crystal must be removed without shattering."
     hint: "Hold the brace for Rhett at the Ridge Approach, then tell

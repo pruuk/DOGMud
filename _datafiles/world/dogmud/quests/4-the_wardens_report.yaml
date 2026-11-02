@@ -7,21 +7,12 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 408  # the Bandit Hollow (search the camp)
+      room: 408  # the Bandit Hollow, where the purse is
     description: "Road Warden Tessara at the Warden's Post on Dustwalk Road has asked\
       \ you to investigate a bandit camp in the gullies to the south. Search the\
-      \ abandoned campsite and the hollow beyond for evidence of their operations."
-    hint: "From the Warden's Post, go south twice along the Dustwalk Road to the\
-      \ Abandoned Campsite, where the bandits have been working."
-
-  - id: investigate
-    destination:
-      room: 408  # the Bandit Hollow — find the purse here
-    description: "You have reached the bandit camp. Search the Bandit Hollow for\
-      \ evidence. A purse containing incriminating documents should prove the\
-      \ scope of their operation."
-    hint: "The Bandit Hollow is just south of the Abandoned Campsite. Look among\
-      \ the stolen goods for a purse. Type get purse."
+      \ Bandit Hollow for evidence of their operations."
+    hint: "From the Warden's Post, go south three times to the Bandit Hollow. Look\
+      \ among the stolen goods. Type get purse from goods."
 
   - id: evidence
     destination:
@@ -48,23 +39,24 @@ rewards:
   itemid: 17
 
 # Migrated 2026-07-21 from the legacy inline step-trigger format (type:/roomid:/
-# grants: nested under steps), which the questengine does not process at runtime —
+# grants: nested under steps), which the questengine does not process at runtime:
 # the quest could be started but never advanced. Same chain, questengine format.
 triggers:
-  # start -> investigate: reach the bandit camp (Bandit Hollow, 408).
-  - event: room_enter
-    room: 408
-    conditions:
-      has: ["4-start"]
-      missing: ["4-investigate"]
-    actions:
-      - grant: "4-investigate"
-
-  # investigate -> evidence: pick up the bandit's purse (item 16).
+  # start -> evidence: pick up the bandit's purse (item 16).
   - event: item_gain
     item: 16
     conditions:
-      has: ["4-investigate"]
+      has: ["4-start"]
+      missing: ["4-evidence"]
+    actions:
+      - grant: "4-evidence"
+
+  # A save on the first step already holding the item (spec, "Old saves").
+  - event: topic_heard
+    mob: 83
+    topic: have_it
+    conditions:
+      has: ["4-start"]
       missing: ["4-evidence"]
     actions:
       - grant: "4-evidence"

@@ -1,0 +1,43 @@
+# #375 phase 7 tier 1, past the arch: quests 4 to 15 and Esk's lines. Seeded
+# seats check the strongbox (with a second player in the room), an NPC noticing
+# an item already held, the ledgers coming from their keepers, and old saves. A
+# coaching-free newcomer reads Esk and crosses the arch.
+name: 375-p7-tier1
+mode: party
+summary: >-
+  Quest 14's strongbox opens with unlock or picklock and survives a second
+  player; an NPC notices a held item and the hand-in follows at once; Harn and
+  Pell hand over the ledgers; old saves can finish; Esk's lines make a newcomer
+  want to look around.
+on_actor_stop: continue
+budgets:
+  wall_clock: 50m
+requires:
+  max_connections: 20
+roster:
+  - id: undertow
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier1/undertow.yaml
+  - id: rival
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier1/rival.yaml
+  - id: carrying
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier1/carrying.yaml
+  - id: ledgers
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier1/ledgers.yaml
+  - id: oldsave
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier1/oldsave.yaml
+  - id: crossing
+    personality: feel-tester
+    goals: goals/scenarios/375-p7-tier1/crossing.yaml
+
+group_goals:
+  - id: no-dead-ends
+    do: Each seeded seat follows the game's own hints from its first step to the hand-in.
+    verify: Every step's hint names something the player can do where they stand, and no seat gets stuck.
+  - id: makes-sense
+    do: Every seat reads NPC lines and hints as a player would.
+    verify: No line promises an item, place or command that is not there.
