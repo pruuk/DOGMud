@@ -322,8 +322,17 @@ the minimap.
    lines in `loop-backlog.txt`. A zone pass is not done while one is left.
 6. Adversarial playtest; file findings.
 
-**Zone order.** Pothole Coulee first (new players land there). The rest is set in the phase 7
-spec.
+**Zone order.** Pothole Coulee first (new players land there). The rest follow the way a player
+walks out of it (owner, 2026-11-02). Finding counts are `loop-backlog.txt` lines on 2026-11-02.
+1. Ironwind Steppe, Thornwall City, Thornwall Outskirts, Watchers Crossing, Dustwalk Road,
+   Marches Spur Road (39).
+2. Ashwick, Labyrinth of Low Tunnels, North Road, North Road North, Stillwater (28).
+3. The Confluence, with the recipe sales in quests 79 to 87 (51).
+4. Greenford and Eastern Highlands (13), after the disc line's design (#667).
+5. New Plymouth: Common, Docks, Merchant, Crafting, Temple, Old Quarter (52).
+
+Quest 21 (4) and the sample quest 1000000 (8) are cleared along the way. The 15 dialogue folders
+with no backlog line get a check that they meet the requirements page, not a full pass.
 
 **Named items.**
 - Pothole Coulee: one quest at a time, chained, heavy hand-holding; the light and
