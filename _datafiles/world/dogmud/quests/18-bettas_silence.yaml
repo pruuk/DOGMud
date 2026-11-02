@@ -9,7 +9,7 @@ flags:
   - key: resolution
     values: [quiet, told, killed]
     description: "How the player handled the bloodline agent"
-  # Added 2026-10-23 (#375 batch 7): set by looking at the bedroll in
+  # Added 2026-10-23 (#375 batch 7): set by searching for the bedroll in
   # Betta's barn before the quest (trigger 0). Betta only speaks of the
   # girl to someone who has seen where she slept (277 barn_trace).
   - key: barn
@@ -24,12 +24,8 @@ steps:
     description: "Betta has asked you to keep quiet about the
       girl who slept in her barn."
     hint: "A bloodline agent in a dark coat walks the road around
-      the Road Fork, asking about a young woman traveling north.
-      From Betta's Yard, go east twice and south twice to the
-      village square, then south twice and east twice to the Road
-      Fork. When you meet the agent, you will have to
-      choose what to say, and it cannot be taken back. Type talk
-      agent."
+      the Road Fork. When you meet the agent, you must choose what
+      to say, and it cannot be taken back. Type talk agent."
   # Inserted 2026-10-23 (#375 batch 7, spec R28): hearing one of the
   # agent's answers grants this step (the topic_heard triggers below), so
   # the first answer is final and the others close.
@@ -53,9 +49,9 @@ rewards:
 triggers:
   # The bedroll in Betta's barn (4050), before the quest: finding it is
   # what lets Betta speak of the girl (flag 18-barn).
-  - event: room_interact
+  - event: command
+    command: search
     room: 4050
-    noun: bedroll
     conditions:
       missing: ["18-start"]
     actions:

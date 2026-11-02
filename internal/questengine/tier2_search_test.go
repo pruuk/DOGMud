@@ -67,3 +67,16 @@ func TestQuest20LostKingfisherComesBackBySearch(t *testing.T) {
 	}
 	t.Fatal("no replacement trigger for a lost kingfisher")
 }
+
+func TestQuest18BedrollIsFoundBySearch(t *testing.T) {
+	q := loadTier2Quest(t, "18")
+	found := false
+	for _, tr := range q.Triggers {
+		require.NotEqual(t, "room_interact", tr.Event, "rule 14: no typed noun")
+		if tr.Event == "command" && tr.Command == "search" && tr.Room == 4050 {
+			found = true
+			require.Contains(t, tr.Conditions.Missing, "18-start")
+		}
+	}
+	require.True(t, found)
+}

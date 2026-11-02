@@ -57,7 +57,6 @@ hint 87 step start
 hint-length 16 step forager
 hint-length 16 step start
 hint-length 17 step start
-hint-length 18 step start
 hint-length 19 step hunter
 hint-length 19 step signed
 hint-length 19 step start
