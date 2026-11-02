@@ -1,0 +1,24 @@
+# THIEF seat: a skilled character among Chrysalis Skulkers, which do not attack
+# on sight. Never attack anything until goal 3. Quote game lines VERBATIM.
+ephemeral:
+  profile: veteran
+  start_room: 504
+  budgets:
+    wall_clock: 20m
+
+goals:
+  - >-
+    Type `look` and quote who is here. If no Chrysalis Skulker is here, try the
+    neighbouring rooms until you find one. Type `steal skulker` until a theft
+    lands, waiting out any recovery the game names. Quote every attempt. If one
+    catches you in the act or a fight starts, say so, leave, and find another
+    Skulker you have not touched.
+  - >-
+    After a theft lands cleanly, stay in the room for about a minute, typing
+    `look` every 15 seconds or so. Then walk to the next room and back, and wait
+    another minute the same way. Say whether the Skulker you robbed, or any
+    other Skulker, attacks you or follows you. Quote any line about it.
+  - >-
+    Now type `attack skulker` on the one you robbed, fight for two rounds, then
+    `flee`. Wait a minute in the room you fled to and say whether it comes after
+    you. Quote the lines.
