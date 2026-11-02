@@ -10,6 +10,8 @@
 - The lake-caves bounty counts a drowned hunter once the shrimp are cleared.
 - Quests around Ashwick, the north road and Stillwater have shorter hints, and the
   map points the way.
+- Several more people a quest sends you to now carry a lantern, so you can find
+  them after dark.
 
 ## 2026-11-02: Past the arch
 

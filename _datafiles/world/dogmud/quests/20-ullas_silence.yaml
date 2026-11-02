@@ -51,8 +51,9 @@ steps:
       same spiral, older than the temple. Northwest of the town, on a
       low rise, stand a circle of wardstones and the ruin of an old
       chapel just west of it. The symbol may appear there too."
-    hint: "The Wardstone Circle is northwest of town, and the Old
-      Chapel Ruin is just west of it. In the ruin, type search."
+    hint: "From North Square, go north, northwest, west and north to
+      the Wardstone Circle. The Old Chapel Ruin is just west of it. In
+      the ruin, type search."
   - id: chapel_altar
     destination:
       room: 4145
@@ -72,9 +73,9 @@ steps:
       on out under the lake, where only the lake caves can reach. The
       pillars and the garden marker lie south of it, like signposts.
       Elgar followed it."
-    hint: "Bring a light: the caves are dark. A drowned hunter hides in
-      the Bone Shoals, west of the Dripping Antechamber, below the Cave
-      Mouth. A cairn stands there. Type search."
+    hint: "Bring a light: the caves are dark. From the Fishing Docks, go
+      north twice, then east twice to the Cave Mouth. Go down, then west
+      into the Bone Shoals. A cairn stands there. Type search."
   - id: bone_shoals_cache
     destination:
       mob: 337  # follow Smith Brindle (schedule brindle): a fixed room is wrong for part of the day
@@ -89,8 +90,8 @@ steps:
       wait for Brindle to finish the work he was doing. The note is
       dated the day he disappeared."
     hint: "Smith Brindle should know what you found. By day he is in
-      his smithy, and in the evening at the Pike & Lantern, west of
-      Lakefront Square. He sleeps at night. Type talk brindle."
+      his smithy, west of Tinder & Tackle. In the evening he is at the
+      Pike & Lantern, west of Lakefront Square. Type talk brindle."
   - id: brindle_confession
     destination:
       room: 4140
@@ -112,8 +113,8 @@ steps:
       own hand reading 'He was your brother.' The kingfisher is
       unmistakably Elgar's work."
     hint: "Take the carved kingfisher to Vella Thorne at the Healer's
-      Cottage. In the morning she is at the temple's Healer's Alcove,
-      and in the evening in Ulla's Parlor. Type talk vella."
+      Cottage. In the morning she may be at the temple's Healer's
+      Alcove, and in the evening in Ulla's Parlor. Type talk vella."
   - id: vella_journal
     destination:
       room: 4137

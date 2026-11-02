@@ -59,7 +59,7 @@ nouns:
     ELGAR VOSS, FISHERMAN, LOST TO THE LAKE. No
     body was ever recovered; the grave is empty. The
     dates suggest he went into the water perhaps
-    fifteen years ago. A small carved fish-sigil at
+    twelve years ago. A small carved fish-sigil at
     the foot of the marker is identical to the
     sigil on the Stillwater-built skiffs and on
     the railing of Mill Creek Footbridge. The turf
@@ -83,10 +83,10 @@ hidden_nouns:
       a small wooden box has been buried, perhaps a hand's
       breadth down, placed there by someone who knew the
       grave was empty and wanted to give Elgar something to lie
-      with anyway. Inside, a folded oilskin holds a single
-      small carved kingfisher in dark wood, the carving
-      unmistakably Ulla's husband's hand, and a short note in
-      a different hand reading "He was your brother. V."
+      with anyway. Inside, a folded oilskin holds a short note in
+      a different hand reading "He was your brother. V." The
+      oilskin is folded to wrap something small, such as a
+      carving.
     hidden_description: |
       The turf at the foot of Elgar's marker is slightly raised, as if
       disturbed and patted back not long ago. Try <ansi fg="command">look disturbance</ansi>.

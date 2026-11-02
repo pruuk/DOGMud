@@ -1,7 +1,10 @@
 # #375 phase 7, tier 2: the road north and Stillwater
 
-**Status:** design approved in brainstorm 2026-11-02; awaiting owner review of this file. No plan
-is written until the owner approves it.
+**Status:** owner approved 2026-11-02, built and playtested (run `422f356c3d76e359`). The playtest
+forced three changes: four quest 20 hints gained routes (`garden_marker`, `wardstone_altar`,
+`bone_shoals_cache`, `kingfisher_found`), quest 20's room lore was made to agree with itself, and the
+quest giver light guard now also covers mobs named by a `topic_heard` trigger, which gave eleven more
+mobs a Keeper's Lantern.
 **Arc:** #375 quest and dialogue rework, phase 7. Roadmap:
 `docs/roadmaps/QUEST_DIALOGUE_ROADMAP.md`; target page:
 `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`. Tier 1:
@@ -152,12 +155,16 @@ Replaced exactly, all at most 200 characters.
 | 20 `start` | From Ulla's Parlor, go up the stair to the workshop. Something is carved into the handle of the vise on Elgar's bench. Type search. |
 | 20 `workshop_carving` | From the workshop, go down, then east to North Square. Go south twice to Lakefront Square, then east three times to the Temple Approach. Type search. |
 | 20 `temple_pillars` | From the Temple Approach, go east into the temple, then south into the Temple Garden. Something is buried at the foot of the crab-apple tree. Type search. |
-| 20 `garden_marker` | The Wardstone Circle is northwest of town, and the Old Chapel Ruin is just west of it. In the ruin, type search. |
+| 20 `garden_marker` | From North Square, go north, northwest, west and north to the Wardstone Circle. The Old Chapel Ruin is just west of it. In the ruin, type search. |
 | 20 `chapel_altar` | Go back east into the Wardstone Circle. A carved altar slab lies at its centre. Type search. |
-| 20 `wardstone_altar` | Bring a light: the caves are dark. A drowned hunter hides in the Bone Shoals, west of the Dripping Antechamber, below the Cave Mouth. A cairn stands there. Type search. |
-| 20 `bone_shoals_cache` | Smith Brindle should know what you found. By day he is in his smithy, and in the evening at the Pike & Lantern, west of Lakefront Square. He sleeps at night. Type talk brindle. |
+| 20 `wardstone_altar` | Bring a light: the caves are dark. From the Fishing Docks, go north twice, then east twice to the Cave Mouth. Go down, then west into the Bone Shoals. A cairn stands there. Type search. |
+| 20 `bone_shoals_cache` | Smith Brindle should know what you found. By day he is in his smithy, west of Tinder & Tackle. In the evening he is at the Pike & Lantern, west of Lakefront Square. Type talk brindle. |
 | 20 `brindle_confession` | Go to Stillwater Cemetery, three rooms west of North Square, through Ulla's Parlor and the Healer's Cottage. At the foot of Elgar's grave, type search. |
-| 20 `kingfisher_found` | Take the carved kingfisher to Vella Thorne at the Healer's Cottage. In the morning she is at the temple's Healer's Alcove, and in the evening in Ulla's Parlor. Type talk vella. |
+| 20 `kingfisher_found` | Take the carved kingfisher to Vella Thorne at the Healer's Cottage. In the morning she may be at the temple's Healer's Alcove, and in the evening in Ulla's Parlor. Type talk vella. |
+
+The playtest (run `422f356c3d76e359`) changed the four quest 20 rows above `garden_marker`,
+`wardstone_altar`, `bone_shoals_cache` and `kingfisher_found`: seats lost 11, 12 and 35 moves on the
+shorter wording. Each route was checked against the room files.
 | 60 `start` | Follow the road north from the Tollgate through the Empty Reach to Hartcharn's South Gate, then north twice and west to the Ferry and Coach Agent. Type talk pell. |
 | 60 `waybill` | From the Market Square, follow the road north over the Greywater ford to Kingsbarrow Vale. At the Tithe Road, go west into the Great Tithe Barn. Type talk verrold. |
 | 61 `start` | Start with the hedgerow bandit, hidden in the reeds at the Mire Cutoff: from the Lake & Ladle's yard, go southwest. Then Pemberton wants the Reach-Touched dead too. |
