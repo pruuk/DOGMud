@@ -22,8 +22,9 @@ steps:
       room: 468  # fallback when Temple Priest Olen is not spawned
     description: "You have the tithe ledger. Take it to Temple Priest Olen. Its
       contents damn both the merchants and the temple."
-    hint: "Take the tithe ledger to Temple Priest Olen in the Temple Interior
-      and type talk olen."
+    hint: "Take the tithe ledger to Temple Priest Olen. By day he is in the
+      Temple Interior or his chamber upstairs, and in the evening at the
+      Drowning Post. Type talk olen."
   - id: end
     description: "The tithe dispute is in other hands now. Neither side is
       entirely clean."

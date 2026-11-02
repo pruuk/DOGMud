@@ -30,7 +30,7 @@ spawninfo:
 containers:
   strongbox:
     lock:
-      difficulty: 20
+      difficulty: 10
       relockinterval: 5 real minutes
 nouns:
   maps: City maps annotated in a careful hand. Tunnel routes are traced in

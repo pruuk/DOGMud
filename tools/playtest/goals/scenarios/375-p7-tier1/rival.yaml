@@ -2,13 +2,13 @@
 # the box by picking the lock while another player (UNDERTOW) is on the same
 # quest. Quote game lines VERBATIM. This seat's lockpicks are granted.
 ephemeral:
-  profile: veteran
+  profile: mid
   start_room: 498
   overlays:
     set_quest_tokens: ["14-start", "14-explore", "14-confront"]
-    grant_items: [33]
+    grant_items: [33, 33, 40038]
   budgets:
-    wall_clock: 40m
+    wall_clock: 30m
 
 goals:
   - >-
