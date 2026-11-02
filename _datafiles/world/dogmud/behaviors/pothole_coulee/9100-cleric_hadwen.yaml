@@ -171,7 +171,9 @@ tree:
         - type: action
           do: say
           to_actor: true
-          text: It is done. You will feel it settle for a while. That is normal.
+          text: >-
+            You will feel it settle for a while. That is normal. Stay by the
+            water, for I have a little more to tell you.
           delay: 23.0
         # What a mutation is, said to each player as it is true for them
         # (owner ruling 2026-10-17: a mutation can fire mid-tutorial, in
@@ -244,10 +246,10 @@ tree:
           do: say
           to_actor: true
           text: >-
-            When you are ready, type
+            It is done. When you are ready, type
             <ansi fg="command">talk hadwen</ansi> and choose The
-            Awakening to tell me the rite is done. Then I will set you
-            on your road.
+            Awakening to tell me how it went. Then I will set you on your
+            road.
           delay: 40.0
         # Blank-slate Awakening: no starter mutation is granted during the rite.
         # The pool opens the capacity; every mutation is earned afterward through

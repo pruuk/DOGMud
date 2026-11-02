@@ -160,11 +160,11 @@ topics:
 - key: rite_waiting
   kind: info
   label: What happens in the rite?
-  text: Everyone who stays in Gaius is Opened, sooner or later. That is our word
-    for it, once the Chrysalis takes hold in you. The world insists. The rite only
-    makes the first change a kindness instead of a surprise. You stand at the edge,
-    I do the small part I do, and the pool does the rest. It does not hurt. It has
-    never once hurt. Tell me when you are ready and we will begin.
+  text: We wade to the edge together, and I tell you a little of what this world
+    asks of you. Then I rest a hand on your shoulder and the pool's light rises to
+    meet you. For a moment you are somewhere else. Then it lets you go, and I have
+    a few last things to tell you. Stay by the water until I am done. Tell me when
+    you are ready and we will begin.
   hints: When you are ready, choose to begin the rite. There is no hurry.
   questRequired:
   - 30-start
