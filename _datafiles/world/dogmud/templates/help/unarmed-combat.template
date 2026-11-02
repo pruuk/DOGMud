@@ -10,9 +10,9 @@ fists, claws, and bare hands.
   - <ansi fg="stat">Fist/Claws Weapons:</ansi> These train unarmed-combat,
     not weapon-combat. Empty offhand still punches.
   - <ansi fg="stat">Mixed Setup:</ansi> Sword in one hand, empty offhand?
-    The free hand punches too.
+    The free hand punches too, at no penalty to you or your sword.
   - <ansi fg="stat">No Dual-Wield Penalty:</ansi> Fists, claws, and bare
-    hands fight naturally with no accuracy loss.
+    hands fight naturally with no accuracy loss. Only two real weapons pay.
   - <ansi fg="stat">Grapple-Friendly:</ansi> Fists and claws have very
     short reach. They stay fully effective in clinches and ground
     grapples where long weapons become awkward.

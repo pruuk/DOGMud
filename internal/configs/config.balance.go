@@ -246,6 +246,16 @@ type Balance struct {
 	GrappleControlledCostMultiplier ConfigFloat `yaml:"GrappleControlledCostMultiplier"` // Controlled's per-round cost multiplier (default 2.0)
 	PositionConsistencyCheckRounds  ConfigInt   `yaml:"PositionConsistencyCheckRounds"`  // How often the periodic invariant checker runs (default 10)
 
+	// ── COMBAT: DUAL WIELDING ────────────────────────────────────────────────
+	// Paid only when two or more real weapons are held; an empty hand is not a
+	// wielded weapon (owner 2026-11-01). penalty = base - rank/divisor * reduction,
+	// floored, plus a step per arm past the off hand. Below 1 reads as the default.
+	DualWieldPenaltyBase        ConfigInt `yaml:"DualWieldPenaltyBase"`        // Attack score lost at weapon-combat rank 0 (default 50)
+	DualWieldPenaltyReduction   ConfigInt `yaml:"DualWieldPenaltyReduction"`   // Penalty removed by reaching DualWieldPenaltyRankDivisor (default 40)
+	DualWieldPenaltyRankDivisor ConfigInt `yaml:"DualWieldPenaltyRankDivisor"` // Weapon-combat rank that earns the whole reduction (default 50)
+	DualWieldPenaltyFloor       ConfigInt `yaml:"DualWieldPenaltyFloor"`       // The least a dual wielder ever pays (default 10; capped at the base)
+	DualWieldPenaltyPerExtraArm ConfigInt `yaml:"DualWieldPenaltyPerExtraArm"` // Added per swing slot past the off hand (default 20)
+
 	// ── COMBAT: SPECIAL MOVES ────────────────────────────────────────────────
 	SpecialMoveBaseStaminaCost       ConfigFloat `yaml:"SpecialMoveBaseStaminaCost"`       // Base stamina cost for special moves, including grapple initiation, before shared multipliers (default 4)
 	SpecialMoveCooldown              ConfigInt   `yaml:"SpecialMoveCooldown"`              // Shared cooldown rounds for bash/trip/kick (default 5)
