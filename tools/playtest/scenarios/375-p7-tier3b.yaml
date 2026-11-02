@@ -1,0 +1,34 @@
+# #375 phase 7 tier 3b: Veyra sells her secrets from the talk menu, she cannot be
+# harmed or baited, and a search in total darkness counts for no quest.
+name: 375-p7-tier3b
+mode: party
+summary: >-
+  A master crafter buys Veyra's secrets, a half skilled crafter is told what to
+  practice and cannot be charged, a griefer tries everything against her, and a
+  seat in the dark finds that a search needs a light.
+on_actor_stop: continue
+budgets:
+  wall_clock: 35m
+requires:
+  max_connections: 20
+roster:
+  - id: master
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier3b/master.yaml
+  - id: half
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier3b/half.yaml
+  - id: griefer
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier3b/griefer.yaml
+  - id: dark
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier3b/dark.yaml
+
+group_goals:
+  - id: charged-once
+    do: Every seat that buys notes its gold before and after.
+    verify: A sale charges its stated price once and teaches every recipe, and a refused sale charges nothing and teaches nothing.
+  - id: veyra-unharmed
+    do: The griefer tries every way to hurt her.
+    verify: Veyra never enters combat, never loses health, and is still there to sell at the end.

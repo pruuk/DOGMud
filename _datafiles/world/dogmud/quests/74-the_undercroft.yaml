@@ -51,8 +51,9 @@ steps:
     description: "Cael has heard you out, and Aldric, reluctantly, has granted
       a supervised descent. The stair down lies past the Older East Corridor.
       Go down when you are ready."
-    hint: "The Descent Stairhead is east of the Older East Corridor. Go down,
-      west three times, down, west twice, down, then west three times to the
+    hint: "Bring a light: the way is dark. The Descent Stairhead is east of the
+      Older East Corridor. Down,
+      west three times, down, west twice, down, west three times to the
       Chamber of the Old Sky. Type search."
   # The choice is made in talk (spec R28, owner 2026-10-21): Aldric 9464
   # keeps the rubbing for the Keepers, the Margin scholar 9454 carries it

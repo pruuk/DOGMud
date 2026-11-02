@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/acquire"
+	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/factions"
@@ -12,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
@@ -120,7 +122,19 @@ func playerState(user *users.UserRecord, send func(messaging.Category, string)) 
 		QuestOpen: func(questId int) bool {
 			return user.Character.QuestOpen(quests.GetQuestById(questId))
 		},
-		Shelved: user.Character.IsShelved,
+		Shelved:     user.Character.IsShelved,
+		KnowsRecipe: user.Character.HasRecipe,
+		// The same test the craft command makes (actions/craft.go).
+		RecipeSkillMet: func(id string) bool {
+			r := crafting.GetRecipe(id)
+			if r == nil {
+				return false
+			}
+			return user.Character.GetSkillLevel(skills.SkillTag(r.Skill)) >= r.SkillMinimum
+		},
+		LearnRecipe: func(id string) {
+			questengine.LearnRecipeWithNotice(user.Character, id, send)
+		},
 	}
 	// Objective lights a topic a topic_heard trigger of the player's quests
 	// would act on right now (a dry run; nothing fires). Its quest checks go

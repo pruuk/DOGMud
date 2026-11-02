@@ -71,7 +71,8 @@ to the next.
 - [ ] All quests are rewritten to atomic, hinted, action-triggered steps.
 - [ ] Zero em or en dashes in dialogue, quests and conversations, and the dash guards no
       longer exempt those paths.
-- [ ] Pinnacle recipes 79 to 87 are sold; the Pothole Coulee portal quest is an info topic.
+- [x] Pinnacle recipes are sold through `sale` topics on Veyra and quests 78 to 87 are retired
+      (#375 phase 7 tier 3b); the Pothole Coulee portal quest is an info topic.
 - [ ] The web builder cross-links quests, rooms, zones, items and mobs, and teaches the topic
       fields with mouseover hints.
 - [ ] Every zone pass has passed its adversarial playtest.

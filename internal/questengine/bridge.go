@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/acquire"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -460,15 +461,23 @@ func (b *GameBridge) IncreaseStat(stat string, amount int) {
 // The line names the recipe by its display name, as `craft list` does,
 // falling back to the slug for a recipe the registry does not know.
 func (b *GameBridge) LearnRecipe(recipe string) {
-	if b.user.Character.LearnRecipe(recipe) {
-		name := recipe
-		if spec := crafting.GetRecipe(recipe); spec != nil && spec.Name != "" {
-			name = spec.Name
-		}
-		b.user.SendText(messaging.CategorySkillProgress, fmt.Sprintf(
-			"<ansi fg=\"cyan\">You have learned the recipe for </ansi><ansi fg=\"itemname\">%s</ansi><ansi fg=\"cyan\">.</ansi>",
-			name))
+	LearnRecipeWithNotice(b.user.Character, recipe, b.user.SendText)
+}
+
+// LearnRecipeWithNotice teaches c a recipe and, when it was new, tells the
+// player through send. A quest's learn_recipe and a talk sale's teachesRecipes
+// both come through here, so both print the same line.
+func LearnRecipeWithNotice(c *characters.Character, recipe string, send func(messaging.Category, string)) {
+	if !c.LearnRecipe(recipe) {
+		return
 	}
+	name := recipe
+	if spec := crafting.GetRecipe(recipe); spec != nil && spec.Name != "" {
+		name = spec.Name
+	}
+	send(messaging.CategorySkillProgress, fmt.Sprintf(
+		"<ansi fg=\"cyan\">You have learned the recipe for </ansi><ansi fg=\"itemname\">%s</ansi><ansi fg=\"cyan\">.</ansi>",
+		name))
 }
 
 // ApplyStatusCondition adds the given condition to the player.

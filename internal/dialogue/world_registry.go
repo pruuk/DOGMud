@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"gopkg.in/yaml.v2"
@@ -147,6 +148,7 @@ func RegistryWorld(behaviorTopics map[int][]string) (World, []Problem) {
 		},
 		FlagDeclared:   func(k, v string) bool { return quests.ValidateFlag(k, v) == nil },
 		ItemExists:     func(id int) bool { return items.GetItemSpec(id) != nil },
+		RecipeExists:   func(id string) bool { return crafting.GetRecipe(id) != nil },
 		BehaviorTopics: behaviorTopics,
 		ItemGiveGrants: giveGrants,
 	}, probs

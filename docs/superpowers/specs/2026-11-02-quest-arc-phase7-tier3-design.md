@@ -50,7 +50,7 @@ New:
 | Hand-ins off the last step: `aldrichandoff`, `marginhandoff` need `74-descent`; the step before `end` is `reveal` | `9464.yaml:74-91`; `9454.yaml:64-82` |
 | A lost rubbing is already recoverable (`q74_recovery`) | `9465.yaml:142-159` |
 | NPC lines saying `look <noun>` for these quests: `9431.yaml:40`, `9435.yaml:39`, `9441.yaml:71,81,91,107`, `9444.yaml:40`, `9465.yaml:54,71,80,115,135` | grep of `dialogue/the_confluence/` |
-| The harness can seed skills (`grant_skills`) and gold (`set_gold`). The veteran profile holds 74, 78, 81, 82 | `internal/playtestenv/types.go:112-121`; `tools/playtest/profiles/veteran.yaml:1218-1221` |
+| The harness can seed skills (`grant_skills`) and gold (`set_gold`). Nothing in the veteran profile bears on Veyra: its `74`, `78`, `81` and `82` at `veteran.yaml:1216-1221` are mob kill counts (`kd.kills`), not quests | `internal/playtestenv/types.go:112-121`; `tools/playtest/profiles/veteran.yaml:1216-1221` |
 
 ## 3b: Veyra
 
@@ -111,8 +111,10 @@ A new topic kind, `sale`, going through the offer's existing path.
 - **`PlayerState`** gains `KnowsRecipe(id) bool` and `RecipeSkillMet(id) bool`, the second the same test as
   `craft.go:191`. Nil fails closed.
 - **`Eligible`:** a `sale` topic is hidden when `KnowsRecipe` is true for all its recipes. Skill and gold do
-  not hide it. A player who knows some recipes, but not all, still sees it and pays the full price; no
-  shipped path can reach that state.
+  not hide it. A player who knows some recipes, but not all, still sees it, pays the full price and learns
+  the rest, as the old quests charged. Saved characters can reach that state: the sub-recipes shipped on
+  2026-07-05 (`3992fbf40`) and became `learn_only` only on 2026-10-05 (`d6a165594`), so a player may have
+  found one at the bench in between.
 - **`resolve`:** a `sale` with every `RecipeSkillMet` plays pitch and card, as an offer does, with the card's
   body "Price: 25,000 gold." On a missing skill it plays `playerLine`, then `notReadyText`, and re-shows the
   menu.
@@ -152,6 +154,23 @@ Nothing in her file needs to change. A guard locks it in: `TestVeyraCannotBeHarm
 asserts `non_combatant`, `charm_immune`, `hostile: false`, `HarmBlockedNonCombatant` from the harm check, and
 no `combatcommands`. A playtest seat tries melee, a spell, a thrown item, a shot, an area attack, a failed
 theft, and `taunt`, and reports whether she ever retaliates or takes damage.
+
+### A search in total darkness counts for nothing (owner ruling, 2026-11-02)
+
+In a room where the player sees nothing, a `search` that would otherwise move a quest step says "It is too dark
+to make anything out." and the step does not move. With a light, or sight that works there, it counts as normal.
+This closes reading a carving blind in the Chamber of the Old Sky (6215) and the Bone Shoals (4130).
+
+- `usercommands.Search` uses the game's own sight decision, `messaging.ParticipantSight(character, room)` at
+  `SightNone`, so night vision and infravision count through the existing rules. At no sight it raises neither the
+  `search` command event nor the `verb: search` room_interact, and rolls no quest search spot. The existing search
+  rolls are untouched.
+- The line prints only when the engine's dry run (`WouldFire`) says a step would have moved, so a player on no
+  quest reads the ordinary search output. `actions.Search` is told a step is live, which holds back its "You find
+  nothing of interest." so the two lines never sit together.
+- `TestEveryQuestSearchRoomIsSeenByATorch` (guards) holds that every shipped quest search room is seen by a
+  character carrying only a torch (item 20096) at every sampled hour. Hints for steps that send the player to a
+  room a bare character cannot see in at some hour say to bring a light.
 
 ## 3a: The Margin
 

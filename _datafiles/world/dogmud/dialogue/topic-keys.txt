@@ -1362,7 +1362,6 @@
 9584.convergence_intro
 9584.gold
 9584.scar
-9584.secrets_list
 9584.teach_aegis
 9584.teach_bandolier
 9584.teach_blackrazor
@@ -1466,6 +1465,9 @@
 # Quest 16's herbs hand-in is removed (owner decision, 2026-11-02): it let a
 # player finish without meeting the forager.
 259.quest_complete_herbs
+# Veyra's price list is the menu now: each secret is its own sale line
+# (#375 phase 7 tier 3b).
+9584.secrets_list
 # renamed
 9465.q74_grant -> 9441.undercroft_offer
 9117.vein_offer -> 9116.vein_offer

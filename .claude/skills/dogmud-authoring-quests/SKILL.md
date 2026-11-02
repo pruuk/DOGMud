@@ -226,6 +226,33 @@ Two more item rules for quests:
   lockpicking), or quest rewards (for special/unique items). Flavor nouns
   that aren't items are fine. [[feedback_loot_placement]]
 
+## Selling recipes
+
+A recipe sold for gold is a `kind: sale` topic, never a quest (#375 phase 7
+tier 3b; Veyra's nine secrets, `dialogue/the_confluence/9584.yaml`):
+
+```yaml
+- key: teach_blackrazor
+  kind: sale
+  label: Secret of the Blackrazor
+  playerLine: Will you teach me the Blackrazor?
+  text: The Blackrazor. Not a blade I'd show just anyone. 25,000 gold up front.
+  notReadyText: Come back when you've practiced at the jeweler's bench, the alchemy bench and the forge.
+  paidText: Paid. The recipes are in your hands.
+  chargesGold: 25000
+  teachesRecipes: [hungering-guard, obsidian-edge-resin, assemble-the-blackrazor]
+```
+
+- A sale grants no quest and takes no `quest`, `grantsQuest` or `goldRequired`.
+  Accept charges `chargesGold`, then teaches every recipe in `teachesRecipes`.
+- The line stays on the menu until the player knows every recipe in it.
+  Choosing it without the skill for EVERY recipe (each recipe's own skill at its
+  own minimum) plays `notReadyText` and shows no card. Name the trades in
+  words and never a number. With the skill, the pitch plays and the card shows
+  the price, so the pitch can state it too.
+- Every recipe id must exist (the validator checks it). `notReadyText` and
+  `paidText` follow the spoken-text rules: first person, no `;`, no dashes.
+
 ## Quest flags and branching
 
 ### Quest Flags System
@@ -291,6 +318,18 @@ are `actor` (the completing player's line) and `observer` (the room's), both
 explicitly tagged. M4b-1 renamed them from `playermessage` and `roommessage`,
 and renamed the two narrating trigger actions from `send_text` and `room_text`
 to the same two words, so one vocabulary covers both blocks.
+
+## Search steps need sight
+
+A `command: search` step (and a `verb: search` spot) does not move when the
+player sees nothing at all in the room (owner ruling 2026-11-02): they read "It
+is too dark to make anything out." and the step stays. The test is the game's own
+sight decision, so a carried light, night vision or infravision counts. When a
+site is dark for a bare character at some hour, the hint for the step that
+sends the player there says to bring a light ("Bring a light after dark.").
+`guards/quest_search_light_guard_test.go` requires every shipped search room to
+be seen by a character carrying only a torch (item 20096) at every sampled
+hour, so a new search room that fails needs room light, not a longer hint.
 
 ## Command trigger filters: `target`, `mob`, `item`
 

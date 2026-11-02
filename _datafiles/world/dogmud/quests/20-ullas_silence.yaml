@@ -43,7 +43,7 @@ steps:
       temple, may hold more of the same."
     hint: "From the Temple Approach, go east into the temple, then
       south into the Temple Garden. Something is buried at the foot of
-      the crab-apple tree. Type search."
+      the crab-apple tree. Bring a light after dark. Type search."
   - id: garden_marker
     destination:
       room: 4144
@@ -53,7 +53,7 @@ steps:
       chapel just west of it. The symbol may appear there too."
     hint: "From North Square, go north, northwest, west and north to
       the Wardstone Circle. The Old Chapel Ruin is just west of it. In
-      the ruin, type search."
+      the ruin, type search. Bring a light after dark."
   - id: chapel_altar
     destination:
       room: 4145
@@ -62,7 +62,7 @@ steps:
       built in town. The Wardstone Circle, just east, has a carved
       altar slab at its centre."
     hint: "Go back east into the Wardstone Circle. A carved altar slab
-      lies at its centre. Type search."
+      lies at its centre. Bring a light after dark. Type search."
   - id: wardstone_altar
     destination:
       room: 4130
@@ -103,7 +103,7 @@ steps:
       Elgar's empty grave for whoever came looking."
     hint: "Go to Stillwater Cemetery, three rooms west of North Square,
       through Ulla's Parlor and the Healer's Cottage. At the foot of
-      Elgar's grave, type search."
+      Elgar's grave, type search. Bring a light after dark."
   - id: kingfisher_found
     destination:
       mob: 355  # follow Vella Thorne (schedule vella): a fixed room is wrong for part of the day

@@ -1,0 +1,27 @@
+# DARK seat: on The Undercroft's last search, in a chamber with no light of its own.
+# Quote game lines VERBATIM and in order. Report what the game said, not what you
+# expected.
+ephemeral:
+  profile: mid
+  start_room: 6215
+  overlays:
+    grant_items: [20096]
+    set_quest_tokens: ["74-start", "74-ledger", "74-record", "74-survey", "74-descent"]
+  budgets:
+    wall_clock: 15m
+
+goals:
+  - >-
+    Type `look` and quote it. Type `hint` and quote it: does it tell you that you need
+    a light? Type `quests` and quote the line for The Undercroft.
+  - >-
+    Without equipping anything, type `search`. Quote every line. Then type `quests`
+    again: did the step move? Type `inventory`: do you have a rubbing?
+  - >-
+    Equip your torch (find it with `inventory`). Type `look`, then `search`. Quote every
+    line in order. Type `quests` and `inventory`: did the step move and did you get the
+    rubbing?
+  - >-
+    Type `search` once more, still lit, and quote it. Then walk up and out as far as the
+    first lit room you can reach, unequip the torch there, and type `search`. Quote it.
+    Does a search with nothing to find in the dark say anything about being too dark?

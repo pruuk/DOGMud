@@ -20,6 +20,21 @@ package owns everything that needs a user, a room or a mob.
 | `nextoffer.go` | After a hand-in that granted a quest's final token, `queueNextOffer` queues `events.TalkNextOffer` when exactly one offer on this NPC is gated on that token (phase 2 spec 4.1); `HandleTalkNextOffer` (registered in `internal/hooks/hooks.go`) pitches it after the completion lines as if chosen, and says nothing while a menu gate holds or a prompt is open, so the offer waits in the talk menu with its `[!]` |
 | `talk.go` | `Talk(user, room, mob)`: the approach line, opener and breadcrumbs, then the private talk menu (refused first with `TalkSightLine` when the player cannot see the NPC by name, `seesByName`); info and hand-in choices (player line, handover line, NPC reply, then the menu re-shown), the offer pitch and its Accept / Leave card, and `player_topic` for `behavior` topics (a behavior topic whose effects landed closes the menu instead of re-showing it, R18) |
 
+## Sales
+
+A `sale` topic (`dialogue.KindSale`) goes through `resolve` before the offer
+branch. The player's line plays first. Without the skill for every recipe
+(`dialogue.SaleReady`) the NPC says `notReadyText`, no card opens and the talk
+menu returns. With it the NPC says the pitch and `saleCard` opens Accept / Leave
+with the body `Price: N gold.`. Accept runs `acceptSale`, which re-checks
+eligibility and readiness, applies the topic through `applyWithHandover` (an
+unaffordable price prints "You don't have enough gold for that." and teaches
+nothing), says `paidText`, and the menu reopens without the line once every
+recipe is known. `PlayerState` wires `KnowsRecipe` to `Character.HasRecipe`,
+`RecipeSkillMet` to the craft command's test (the recipe's skill at its
+`SkillMinimum`) and `LearnRecipe` to `questengine.LearnRecipeWithNotice`, the
+same learned line `GameBridge.LearnRecipe` prints.
+
 ## Rules
 
 - `PlayerState` wires `Shelved` to `Character.IsShelved` (#375 phase 5), so

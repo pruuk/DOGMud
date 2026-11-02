@@ -1,5 +1,14 @@
 # DOGMud Patch Notes
 
+## 2026-11-02: Veyra's secrets
+
+- Veyra Coil-Tongue now teaches each of her nine secrets herself. Talk to her and
+  choose the one you want. If you have the skill in every trade it takes, she names
+  her price. If you do not, she tells you where to go and practice.
+- She teaches every recipe a secret needs in one sitting, and what you have already
+  bought stays yours.
+- A search in total darkness no longer counts for a quest. Bring a light.
+
 ## 2026-11-02: The Margin's question
 
 - The Margin Notation and The Undercroft are now followed by searching: at each

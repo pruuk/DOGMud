@@ -32,7 +32,7 @@ steps:
       stones again.
     hint: >-
       From the Old Shrine, go west into the Collapsed Nave and north into the
-      Reliquary, then type search floor.
+      Reliquary, then type search floor. Bring a light, it is dark in there.
   - id: read
     destination:
       mob: 9160

@@ -15,7 +15,7 @@ import (
 // docs/superpowers/specs/2026-11-02-quest-arc-phase7-tier3-design.md) cleared
 // every loop finding on these quests. A finding on one is fixed in content,
 // never listed. 3b adds the quests it retires.
-var tier3Quests = map[int]bool{73: true, 74: true}
+var tier3Quests = map[int]bool{73: true, 74: true, 78: true, 79: true, 80: true, 81: true, 82: true, 83: true, 84: true, 85: true, 86: true, 87: true}
 
 func tier3BacklogLines(t *testing.T, data []byte) []string {
 	t.Helper()

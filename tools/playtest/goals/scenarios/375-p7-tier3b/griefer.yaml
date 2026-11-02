@@ -1,0 +1,27 @@
+# GRIEFER seat: a strong character in Veyra's Workshop trying to hurt her, bait her,
+# or bait anything into hurting her. Quote game lines VERBATIM. Report what the game
+# said, not what you expected. Your only target is Veyra.
+ephemeral:
+  profile: veteran
+  start_room: 6438
+  overlays:
+    grant_items: [10038, 30064, 30064]
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Try each of these on Veyra and quote what the game says each time: `kill veyra`,
+    `attack veyra`, `backstab veyra`. Then cast a harmful spell at her: `cast sparks
+    veyra`, then `cast mind-spike veyra`, then `cast neural-stun veyra`, then `cast
+    hemorrhagic-wave` with no target in the room.
+  - >-
+    Throw something at her: `throw <an item you carry> veyra`. Then wield the sling and
+    shoot at her, using `help shoot` to find the command. Quote the results.
+  - >-
+    Try to steal from her with `steal` (read `help steal`), repeatedly until you fail
+    at least once. Then try `taunt veyra`, and `shove veyra` or any other hostile
+    command `help` shows you. Quote what she does in response, if anything.
+  - >-
+    After all of it, type `look veyra` and `talk veyra`. Is she still there, unhurt and
+    selling, and does the menu still open? Did she ever attack you or flee?

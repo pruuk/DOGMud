@@ -1,0 +1,32 @@
+# HALF SKILLED seat: forge and alchemy but no jeweler's trade, so two of the
+# Blackrazor's three. Enough skill for the Wayfarer's Pack, too little gold for it.
+# Quote game lines VERBATIM and in order. Report what the game said, not what you
+# expected.
+ephemeral:
+  profile: mid
+  start_room: 6438
+  overlays:
+    grant_skills:
+      alchemy: 80
+      blacksmithing: 80
+      enchanting: 80
+      tailoring: 80
+    set_gold: 5000
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `talk veyra`. Quote her opener and every line of the menu, with any marker. Say
+    from the menu alone which secrets you believe you can buy and why. Note your gold.
+  - >-
+    Choose the Secret of the Blackrazor. Quote every line in order. Was any card or
+    price shown? Does what she says tell you what to go and practice? Does it give you
+    any number? Did your gold move? Is the line still on the menu?
+  - >-
+    Choose the Secret of the Wayfarer's Bottomless Pack. Quote every line in order.
+    Choose Accept even though you cannot pay. Quote the refusal. Did your gold move?
+    Type `craft list`: did you learn anything?
+  - >-
+    Choose every other secret once and quote what she says for each. Does any line
+    promise something false or name a trade you already have?
