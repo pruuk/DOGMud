@@ -3,11 +3,16 @@ package usercommands
 import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
+
+// searchTooDarkLine answers a search that would have moved a quest step in a
+// room where the player sees nothing at all.
+const searchTooDarkLine = `It is too dark to make anything out.`
 
 // Search is a thin wrapper over actions.Search. The action handles
 // all tier rolls, template rendering, cooldown gating, and skill
@@ -21,14 +26,35 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 	actor := &actions.UserActor{User: user, Room: room}
+	spots := questSearchSpots(user, room)
+	step := questSearchStep(user, room)
+	// Owner ruling 2026-11-02: a search where the player sees nothing at all
+	// counts for no quest. The game's own sight decision settles it (night
+	// vision and infravision count through it), the same test `look` refuses
+	// on. Quest spots are not rolled then, and the step is answered below.
+	dark := messaging.ParticipantSight(user.Character, room) == messaging.SightNone
+	questSpots := spots
+	if dark {
+		questSpots = nil
+	}
 	// A search refused for cooldown never ran, so it sends no quest event: a
 	// quest step advances only when the action succeeds (owner, 2026-10-17).
+	// QuestStep also holds back "You find nothing of interest." when the dark
+	// refusal below answers in its place.
 	result := actions.Search(actor, actions.SearchOptions{
 		Feature:       rest,
-		QuestFeatures: questSearchSpots(user, room),
-		QuestStep:     questSearchStep(user, room),
+		QuestFeatures: questSpots,
+		QuestStep:     step || (dark && len(spots) > 0),
 	})
 	if result.OnCooldown {
+		return true, nil
+	}
+	if dark {
+		// Say so only when a step would have moved, so a player who is not on
+		// a quest reads the ordinary search output and nothing extra.
+		if step || len(spots) > 0 {
+			user.SendText(messaging.CategoryRefusal, searchTooDarkLine)
+		}
 		return true, nil
 	}
 

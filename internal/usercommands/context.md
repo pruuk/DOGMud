@@ -354,7 +354,16 @@ nothing carried matches. `skill.search.go` raises `Verb: quests.VerbSearch`
 after the search ran: once for a resolved `search <feature>`, and once per
 quest search spot a plain search turned up (`questSearchSpots`, which asks the
 engine's `SearchFeatures` and `WouldFire`, so a spot of a quest the player is
-not on is never rolled). Any other word typed at a feature
+not on is never rolled). A search needs sight (owner ruling 2026-11-02):
+when `messaging.ParticipantSight(user.Character, room)` is `SightNone` (the
+decision `look` refuses on, so night vision and infravision count) `Search`
+rolls no quest spot, raises neither `room_interact` nor the `search` command
+event, and, only when `questSearchStep` or a spot would have fired (the engine's
+dry run), prints `searchTooDarkLine` ("It is too dark to make anything out.")
+with no "You find nothing of interest." beside it. A player on no live step
+reads the ordinary search output. The existing search rolls are untouched.
+`guards/quest_search_light_guard_test.go` holds that every shipped quest search
+room is seen by a bare torch bearer at every sampled hour. Any other word typed at a feature
 ("pry floorboard") falls through the registry, emote, spell and go attempts
 to `featureNamedBy`, which sends `InteractNudgeText(noun)` ("Try look X or
 search X.") on `CategoryUsage` instead of "not recognized". Say, whisper,

@@ -153,6 +153,23 @@ asserts `non_combatant`, `charm_immune`, `hostile: false`, `HarmBlockedNonCombat
 no `combatcommands`. A playtest seat tries melee, a spell, a thrown item, a shot, an area attack, a failed
 theft, and `taunt`, and reports whether she ever retaliates or takes damage.
 
+### A search in total darkness counts for nothing (owner ruling, 2026-11-02)
+
+In a room where the player sees nothing, a `search` that would otherwise move a quest step says "It is too dark
+to make anything out." and the step does not move. With a light, or sight that works there, it counts as normal.
+This closes reading a carving blind in the Chamber of the Old Sky (6215) and the Bone Shoals (4130).
+
+- `usercommands.Search` uses the game's own sight decision, `messaging.ParticipantSight(character, room)` at
+  `SightNone`, so night vision and infravision count through the existing rules. At no sight it raises neither the
+  `search` command event nor the `verb: search` room_interact, and rolls no quest search spot. The existing search
+  rolls are untouched.
+- The line prints only when the engine's dry run (`WouldFire`) says a step would have moved, so a player on no
+  quest reads the ordinary search output. `actions.Search` is told a step is live, which holds back its "You find
+  nothing of interest." so the two lines never sit together.
+- `TestEveryQuestSearchRoomIsSeenByATorch` (guards) holds that every shipped quest search room is seen by a
+  character carrying only a torch (item 20096) at every sampled hour. Hints for steps that send the player to a
+  room a bare character cannot see in at some hour say to bring a light.
+
 ## 3a: The Margin
 
 ### Quests 73 and 74 by `search`

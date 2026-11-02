@@ -319,6 +319,18 @@ explicitly tagged. M4b-1 renamed them from `playermessage` and `roommessage`,
 and renamed the two narrating trigger actions from `send_text` and `room_text`
 to the same two words, so one vocabulary covers both blocks.
 
+## Search steps need sight
+
+A `command: search` step (and a `verb: search` spot) does not move when the
+player sees nothing at all in the room (owner ruling 2026-11-02): they read "It
+is too dark to make anything out." and the step stays. The test is the game's own
+sight decision, so a carried light, night vision or infravision counts. When a
+site is dark for a bare character at some hour, the hint for the step that
+sends the player there says to bring a light ("Bring a light after dark.").
+`guards/quest_search_light_guard_test.go` requires every shipped search room to
+be seen by a character carrying only a torch (item 20096) at every sampled
+hour, so a new search room that fails needs room light, not a longer hint.
+
 ## Command trigger filters: `target`, `mob`, `item`
 
 A `command` trigger can say what the command was aimed at (#375 phase 3b
