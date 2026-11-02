@@ -361,7 +361,7 @@ on the close branch; the rest are in #755, #746, #745 and #659. No
 `loop-backlog.txt` line names a Coulee quest
 (`internal/guards/coulee_backlog_guard_test.go`). Tier 1 (quests 4 to 15 around
 Thornwall, the steppe and the Crossing) is done, from
-`docs/superpowers/specs/2026-11-02-quest-arc-phase7-tier1-design.md`, playtested
+`docs/superpowers/specs/completed/2026-11-02-quest-arc-phase7-tier1-design.md`, playtested
 2026-11-02 (runs `a9b49d575efc40d4`, `649034b0c7cf972d`, `30cce62386f71100`;
 leftovers in #761, #762, #763): the three item-already-held hooks, the ledgers and purse sourced from
 their keepers, quest 14's real strongbox, and Esk's two lines about the far

@@ -12,7 +12,7 @@ import (
 )
 
 // The #375 phase 7 tier 1 pass (spec
-// docs/superpowers/specs/2026-11-02-quest-arc-phase7-tier1-design.md) cleared
+// docs/superpowers/specs/completed/2026-11-02-quest-arc-phase7-tier1-design.md) cleared
 // every loop finding on quests 4 to 15. A finding on one of them is fixed in
 // content, never listed.
 func tier1BacklogLines(t *testing.T, data []byte) []string {
