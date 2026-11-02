@@ -340,12 +340,15 @@ spec.
 guards stop exempting dialogue, quests and conversations.
 
 **Status:** in progress. Pothole Coulee (with the Newcomer Antechamber) is
-built across PRs 1 to 4 of
+done: built across PRs 1 to 4 of
 `docs/superpowers/specs/2026-10-30-quest-arc-phase7-pothole-coulee-design.md`
-(engine and config, spine, the seven lines, the Shadows line and leaving)
-and is done pending its adversarial playtest (plan 5). No `loop-backlog.txt`
-line names a Coulee quest (`internal/guards/coulee_backlog_guard_test.go`).
-The other zones are not started.
+(engine and config, spine, the seven lines, the Shadows line and leaving) and
+playtested 2026-11-01 (six seats, run `d3f80644f0f63cac`, both newcomer seats
+reached a finished trade on the screen text alone). Its own findings were fixed
+on the close branch; the rest are in #755, #746, #745 and #659. No
+`loop-backlog.txt` line names a Coulee quest
+(`internal/guards/coulee_backlog_guard_test.go`). The other zones are not
+started.
 
 ## Phase 6: Web builder (postponed)
 
