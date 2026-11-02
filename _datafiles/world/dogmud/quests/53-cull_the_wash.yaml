@@ -26,7 +26,8 @@ steps:
       the Lower Wash, just north of Squatter's Hollow.
     hint: >-
       Go north from Squatter's Hollow to the Lower Wash and type attack
-      scout. If it is dark, type cast glow first.
+      scout. If the wash is empty, more scouts hold Gravel Bend, one room
+      east. If it is dark, type cast glow first.
   - id: firstkill
     destination:
       room: 5235  # Cracked Cistern: Bandit Squatter (mob 9111)
@@ -34,8 +35,8 @@ steps:
       One bandit scout is down. Now the bandit squatter, in the Cracked
       Cistern east of Squatter's Hollow.
     hint: >-
-      From Squatter's Hollow, go east to the Cracked Cistern and type
-      attack squatter.
+      The Cracked Cistern is just east of Squatter's Hollow, and the hollow
+      is south of the Lower Wash. In the cistern, type attack squatter.
   - id: culled
     destination:
       mob: 9112
@@ -65,8 +66,9 @@ triggers:
     actions:
       - grant: "53-firstkill"
       - actor: >-
-          One scout down. Now the squatter: from Squatter's Hollow, go
-          east to the Cracked Cistern and type attack squatter.
+          One scout down. Now the squatter, in the Cracked Cistern. It is just
+          east of Squatter's Hollow, and the hollow is south of the Lower Wash.
+          In the cistern, type attack squatter.
 
   - event: mob_death
     mob: 9111

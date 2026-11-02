@@ -1,0 +1,43 @@
+# #375 phase 7, Pothole Coulee pass: the whole newcomer flow. Two newcomers
+# play with no coaching from landing on. Four seeded seats check the hub, the
+# end of the Coulee (Esk's Road and the repeatable flavour lines), the new
+# Shadows line, and quaff / eat / drink.
+name: 375-p7-coulee
+mode: party
+summary: >-
+  A newcomer is walked from Dewey to the rite, Toke and a first trade without
+  coaching; Toke starts any line; each line ends with Report to Toke; all eight
+  done sends the player to Esk; the Shadows line teaches light, sneak, steal,
+  plant and lockpicking.
+on_actor_stop: continue
+budgets:
+  wall_clock: 60m
+requires:
+  max_connections: 20
+roster:
+  - id: naive-a
+    personality: feel-tester
+    goals: goals/scenarios/375-p7-coulee/naive-a.yaml
+  - id: naive-b
+    personality: feel-tester
+    goals: goals/scenarios/375-p7-coulee/naive-b.yaml
+  - id: hub
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-coulee/hub.yaml
+  - id: finisher
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-coulee/finisher.yaml
+  - id: shadows
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-coulee/shadows.yaml
+  - id: consume
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-coulee/consume.yaml
+
+group_goals:
+  - id: walked-not-lost
+    do: The newcomer seats play from character creation with no route hints.
+    verify: Each reaches Toke and finishes at least one line's first quest, or reports exactly where it got lost and what the screen said.
+  - id: loop-closes
+    do: Seeded seats take, finish and hand in quests across the hub, a Shadows line run and the Esk ending.
+    verify: Every quest starts and ends at an NPC menu; every line ends with Report to Toke; Toke offers Esk's Road only after all eight.

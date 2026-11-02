@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/goals"
@@ -29,6 +30,54 @@ func goalTestSetup(t *testing.T) func() {
 	t.Setenv("DOGMUD_GOALS_DIR_OVERRIDE", t.TempDir())
 	goals.ClearCache()
 	return cleanup
+}
+
+// A goal one mob holds for itself lives in instance temp data, so `goal list`
+// cannot see it. `goal here` is the admin's view, and a context of 0 is how a
+// held, silent grudge reads.
+func TestGoalHereReport_ShowsAMobsOwnGoalAndWhatItActsOn(t *testing.T) {
+	defer goalTestSetup(t)()
+	const silent, live = "goal-here-test-silent", "goal-here-test-live"
+	goals.RegisterGoalType(silent, goals.GoalTypeMeta{
+		ContextScore: func(*goals.Goal, *mobs.Mob) float64 { return 0 },
+	})
+	goals.RegisterGoalType(live, goals.GoalTypeMeta{
+		ContextScore: func(*goals.Goal, *mobs.Mob) float64 { return 2 },
+	})
+	m := &mobs.Mob{MobId: 1, InstanceId: 77}
+	m.Character.Name = "Skeleton"
+
+	got := goalHereReport(m)
+	if !strings.Contains(got, "goals of its own: 0") || !strings.Contains(got, "Acting on: nothing") {
+		t.Fatalf("empty mob report:\n%s", got)
+	}
+
+	if _, err := goals.AddIndividual(m, &goals.Goal{Type: silent, Priority: 90}); err != nil {
+		t.Fatalf("AddIndividual: %v", err)
+	}
+	got = goalHereReport(m)
+	if !strings.Contains(got, silent+" priority=90 context=0.00") || !strings.Contains(got, "Acting on: nothing") {
+		t.Fatalf("held, silent goal report:\n%s", got)
+	}
+
+	if _, err := goals.AddIndividual(m, &goals.Goal{Type: live, Priority: 60}); err != nil {
+		t.Fatalf("AddIndividual: %v", err)
+	}
+	got = goalHereReport(m)
+	if !strings.Contains(got, "goals of its own: 2") || !strings.Contains(got, "Acting on: "+live) {
+		t.Fatalf("live goal report:\n%s", got)
+	}
+}
+
+func TestGoalCmd_HereWithNoNameOrNoSuchMobRunsWithoutError(t *testing.T) {
+	defer goalTestSetup(t)()
+	admin, room := getTestUserAndRoom(t)
+	for _, rest := range []string{"here", "here nobody-by-this-name"} {
+		handled, err := Goal(rest, admin, room, 0)
+		if err != nil || !handled {
+			t.Errorf("Goal(%q) = %v, %v", rest, handled, err)
+		}
+	}
 }
 
 func TestGoalCmd_NoArgsRunsWithoutError(t *testing.T) {

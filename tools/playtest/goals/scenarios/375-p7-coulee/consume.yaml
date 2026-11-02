@@ -1,0 +1,19 @@
+# CONSUME seat: you carry a healing salve, Herbal Tea, Spiced Wine and trail
+# rations. Quote every game line VERBATIM.
+ephemeral:
+  profile: early
+  start_room: 5203
+  overlays:
+    grant_items: [30036, 30024, 30025, 30021]
+  budgets:
+    wall_clock: 20m
+
+goals:
+  - >-
+    Type `drink salve` and quote the reply. Then `quaff salve` and quote it.
+  - >-
+    Type `drink tea` and quote it. Type `eat ration` and quote it. Type
+    `drink wine` and quote it.
+  - >-
+    Type `help quaff`, `help drink` and `help eat` and quote the first lines
+    of each.

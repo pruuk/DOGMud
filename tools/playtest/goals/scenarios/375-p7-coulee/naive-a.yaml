@@ -1,0 +1,17 @@
+# NEWCOMER seat A. Deliberately minimal: the test is whether the game itself
+# carries a brand-new player from landing to a first trade. Do not add route
+# hints or command lists. Quote game lines verbatim when you report a problem.
+goals:
+  - >-
+    You have never played a MUD before. Create a brand-new character and play
+    whatever the game puts in front of you, relying only on what the game
+    itself tells you. If you feel finished, or you cannot tell what to do
+    next, say so and stop: being lost is itself a finding.
+
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    Brand-new character required: this seat grades whether the rebuilt
+    antechamber and Coulee opening teach a first-time player unaided.
+  budgets:
+    wall_clock: 50m

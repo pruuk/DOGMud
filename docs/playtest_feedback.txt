@@ -10,6 +10,8 @@ on master; each is verified against master before being worked.
 
 Ammo seems hard to come by for ranged weapons outside the pothole coulee
 We don’t seem to have tutorials in the pothole coulee for skullduggery stuff
+  [DONE 2026-11-01] The Shadows line, quests 97 to 101 (#315). The note below is
+  the record from before it.
   [DEFERRED 2026-09-16, owner] Blocked on the QUEST ARC REWORK. Authoring a new
   teaching spoke now just creates quest content to clean up afterwards.
   Scoped and ready when the arc lands: no quest in the game grants

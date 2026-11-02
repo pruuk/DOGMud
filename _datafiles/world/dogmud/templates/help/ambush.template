@@ -48,6 +48,10 @@ A melee ambush uses the shared special move cooldown, so it competes with
 recovered you get no ambush, and your attack goes in as an ordinary one.
 The game tells you when that happens.
 
+<ansi fg="command">consider</ansi> and <ansi fg="command">search</ansi> spend the same cooldown, so sizing up your target
+just before you strike can cost you the ambush. See <ansi fg="command">help consider</ansi>,
+<ansi fg="command">help search</ansi> and <ansi fg="command">help special</ansi>.
+
 Take care, because this is the expensive mistake. Closing in from hiding
 gives your position away whether the ambush was ready or not. A denied
 opener costs you your cover and returns nothing for it.

@@ -1,0 +1,22 @@
+# Owner ruling 2026-11-01: a clean theft from a mob the thief has not been
+# fighting starts no chase, and a generic mob's grudge is its own. The six-seat
+# Coulee run landed no theft on a creature, so this seat checks it live.
+name: 375-p7-clean-theft
+mode: party
+summary: >-
+  A skilled thief robs a generic mob it has never fought and waits to see
+  whether anything comes after it.
+on_actor_stop: continue
+budgets:
+  wall_clock: 25m
+requires:
+  max_connections: 20
+roster:
+  - id: thief
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-clean-theft/thief.yaml
+
+group_goals:
+  - id: clean-theft-stays-clean
+    do: The seat lands a theft on a mob it has never fought and watches for a chase.
+    verify: Nothing hunts the thief after a clean theft; other copies of the mob ignore the thief.

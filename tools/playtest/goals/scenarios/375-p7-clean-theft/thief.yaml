@@ -1,0 +1,24 @@
+# THIEF seat: a skilled character among Thornwall Highwaymen, generic thieves
+# with two spawn rooms. Never attack anything. Quote game lines VERBATIM.
+ephemeral:
+  profile: veteran
+  start_room: 441
+  budgets:
+    wall_clock: 20m
+
+goals:
+  - >-
+    First type `pets` or `look` to see whether a pet follows you. If one does,
+    send it away, so it cannot start a fight for you. If the room is too dark to
+    see, type `cast glow`.
+  - >-
+    Type `look` and quote who is here. If no Thornwall Highwayman is here, try
+    the neighbouring rooms until you find one. Type `steal highwayman` until a
+    theft lands, waiting out any recovery the game names. Quote every attempt. If
+    one catches you in the act or a fight starts, say so, leave, and find another
+    Highwayman you have not touched. Do not attack anything.
+  - >-
+    After a theft lands cleanly, stay in the room for about a minute, typing
+    `look` every 15 seconds or so. Then walk to the next room and back, and wait
+    another minute the same way. Say whether the Highwayman you robbed, or any
+    other Highwayman, attacks you or follows you. Quote any line about it.

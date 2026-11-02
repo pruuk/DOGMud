@@ -179,8 +179,8 @@ avoid an import cycle; bridged at boot via `SetArchetypeDefaultsLookup`.
 Goals above belong to a mob TYPE: every copy reads the same file. The interim
 exception (owner ruling 2026-11-01, the better model is #752 under #374) is a
 goal in one instance's temp data:
-- **`AddIndividual(mob, g)`** validates and dedups as `Add` does, and sets
-  `Goal.Individual`. Touches no file and no other copy.
+- **`AddIndividual(mob, g)`** validates and dedups as `Add` does. Touches no file
+  and no other copy.
 - **`IndividualGoalsOf(mob)`** returns them, dropping any whose predicate says
   the goal is over.
 - **`CurrentGoalFor(mob)`** is what `behaviortree.RunGoalPlanner` acts on: the
@@ -192,8 +192,10 @@ not survive a restart, and needs not: a restart takes every player offline, and
 offline satisfies `revenge-mob`. The sole user is a generic mob's theft grudge
 (`seeders.OnTheft`). `revenge-mob`'s `ContextScore` applies its sighting gate to
 these as to a type's goals, so the mob hunts only once it has combat memory of
-the target: a clean theft starts no hunt (owner ruling 2026-11-01). `goal list`
-and the other admin commands show the type's goals only.
+the target: a clean theft starts no hunt (owner ruling 2026-11-01). The admin
+command `goal here <mob in the room>` shows them; `goal list` and the other
+subcommands show the type's goals only. `seeders` logs each new theft grudge at
+Info as `Theft grudge`.
 
 ### Stale goals on load (store.go, lookup.go)
 **`SetStaleGoalCheck(fn)`** registers a check run on each goal of a goal file as

@@ -12,6 +12,12 @@ for inspection, smoke-testing, and one-off seeding.
   Show one goal's full record (type, priority, params,
   timestamps).
 
+<ansi fg="command">goal here <name of a mob in this room></ansi>
+  Show the goals this one live mob holds for itself, such as a
+  theft grudge, which goal list cannot see, and what it is acting
+  on. context=0.00 means held and silent: a grudge with no combat
+  memory of its target is not hunting.
+
 <ansi fg="command">goal add <mob-ident> <type> <priority> [key=value ...]</ansi>
   Append a new goal. Conflicting existing goals with strictly
   lower priority are displaced; equal-or-higher priority blocks
