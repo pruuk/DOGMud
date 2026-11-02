@@ -28,6 +28,9 @@ what a trigger *does*, you edit this package.
 - **counts.go**: `StepCounter` and `countMatch` (`count: N`).
 - **explore.go**: `MapReader`, `ProgressWatcher`, `Engine.CheckExplore`,
   `exploreAtStepStart`, `exploredLine` (`distinct` explore steps).
+- **held.go**: `heldAtStepStart`, `heldLine`: on `quest_granted`, a plain
+  `item_gain` trigger (`TriggerDef.PlainItemGain`) whose item the player
+  already holds fires at once, saying its `held_line`.
 - **progress.go**: `Engine.StepProgress`, `ProgressLine`,
   `Engine.UserStepProgress` (the "Progress: 2 of 5" line).
 - **dryrun.go**: `WouldFire` (side-effect-free "would Notify fire?") and

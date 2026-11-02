@@ -37,6 +37,10 @@ type Engine struct {
 	// second. They are in triggerIndex too, where they never match.
 	exploreByArea  map[string][]*indexedTrigger
 	exploreByQuest map[int][]*indexedTrigger
+	// Plain item_gain triggers by quest id, read as a step starts
+	// (heldAtStepStart). They are in triggerIndex too, where a real gain
+	// still matches them.
+	heldByQuest map[int][]*indexedTrigger
 }
 
 // NewEngine creates an empty quest engine.
@@ -46,6 +50,7 @@ func NewEngine() *Engine {
 		triggerIndex:   make(map[string][]*indexedTrigger),
 		exploreByArea:  make(map[string][]*indexedTrigger),
 		exploreByQuest: make(map[int][]*indexedTrigger),
+		heldByQuest:    make(map[int][]*indexedTrigger),
 	}
 }
 
@@ -67,6 +72,9 @@ func (e *Engine) RegisterQuest(q *QuestDef) {
 		if t.Distinct != "" && t.Area != "" {
 			e.exploreByArea[t.Area] = append(e.exploreByArea[t.Area], it)
 			e.exploreByQuest[q.QuestId] = append(e.exploreByQuest[q.QuestId], it)
+		}
+		if t.PlainItemGain() {
+			e.heldByQuest[q.QuestId] = append(e.heldByQuest[q.QuestId], it)
 		}
 	}
 }
@@ -176,6 +184,7 @@ func (e *Engine) evaluate(eventType string, details EventDetails, player PlayerS
 
 	if eventType == "quest_granted" && details.QuestToken != "" {
 		result.merge(e.exploreAtStepStart(details, player, ctx, guard))
+		result.merge(e.heldAtStepStart(details, player, ctx, guard))
 	}
 
 	return result
