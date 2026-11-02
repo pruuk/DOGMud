@@ -189,10 +189,14 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 		if strings.ContainsAny(t.Breadcrumb, dashRunes) {
 			add(where+" breadcrumb", "no em or en dash in new text")
 		}
+		if strings.ContainsAny(t.Objective, dashRunes) {
+			add(where+" objective", "no em or en dash in new text")
+		}
 		semi(where+" label", t.Label)
 		semi(where+" playerLine", t.PlayerLine)
 		semi(where+" text", t.Text)
 		semi(where+" breadcrumb", t.Breadcrumb)
+		semi(where+" objective", t.Objective)
 		for _, k := range t.HeardRequired {
 			if !infoKeys[k] {
 				add(where, "heardRequired %q is not an info topic in this file", k)
