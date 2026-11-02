@@ -59,6 +59,11 @@ func CallForHelp(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	m := mapper.GetMapper(room.RoomId)
 	roomList := m.FindRoomsInDistance(room.RoomId, maxRange, 0)
 
+	// With no fight in the caller's room this call is an early warning (a
+	// lookout's or scout's idle scan), and it repeats every idle round for as
+	// long as someone stands within sight.
+	warningOnly := room.IsCalm()
+
 	for _, roomId := range roomList {
 		testRoom := rooms.LoadRoom(roomId)
 		if testRoom == nil {
@@ -68,6 +73,16 @@ func CallForHelp(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		for _, nearbyMobInstanceId := range testRoom.GetMobs(rooms.FindNeutral, rooms.FindHostile) {
 
 			if mobInfo := mobs.GetInstance(nearbyMobInstanceId); mobInfo != nil {
+
+				// A mob with maxwander 0 holds its post against a warning and
+				// answers only a fight. Moved off its post it counts as
+				// displaced, walks home (shouldRecoverDisplacedHome), and walks
+				// into the next warning: Torvan Cresk left his table several
+				// times a minute with a player standing beside him. This goes
+				// before both paths below, since each one moves the mob.
+				if warningOnly && mobInfo.MaxWander == 0 {
+					continue
+				}
 
 				// Pack-tactics: fire heard_callforhelp on routine-matched
 				// mobs in this adjacent room. Handled by archetypes'

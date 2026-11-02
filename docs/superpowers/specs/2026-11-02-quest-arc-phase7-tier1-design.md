@@ -2,8 +2,10 @@
 
 **Status:** owner approved 2026-11-02; built and playtested (runs `a9b49d575efc40d4`,
 `649034b0c7cf972d`). The playtest changed three things recorded here: the strongbox's `difficulty`
-is 10, not 20; Torvan Cresk moved from `noncombat_questgiver` to `generic_fighter`, because he left
-the room before a fight could start; and his hint says what to do if someone beat you to him.
+is 10, not 20; Torvan Cresk moved from `noncombat_questgiver` to `generic_fighter`, because a boss
+his quest says to kill fights back like his crew; and his hint says what to do if someone beat you to
+him. He left the room before a fight could start for another reason, which the archetype did not
+touch: the Tunnel Lookout's idle `callforhelp` moved him, fixed in `mobcommands/callforhelp.go`.
 **Arc:** #375 quest and dialogue rework, phase 7. Roadmap:
 `docs/roadmaps/QUEST_DIALOGUE_ROADMAP.md`; target page:
 `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`.
