@@ -12,7 +12,7 @@ import (
 )
 
 // The #375 phase 7 Pothole Coulee pass (spec
-// docs/superpowers/specs/2026-10-30-quest-arc-phase7-pothole-coulee-design.md,
+// docs/superpowers/specs/completed/2026-10-30-quest-arc-phase7-pothole-coulee-design.md,
 // "Done when") cleared every loop finding on its quests. This guard keeps it
 // that way: no loop-backlog.txt line may name quest 28 to 59, 76, 88, 89 or
 // 90 to 101. A finding on one of them is fixed in content, never listed.
