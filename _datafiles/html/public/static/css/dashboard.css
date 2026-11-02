@@ -1259,3 +1259,51 @@
   transition: opacity .28s ease, transform .28s ease;
 }
 .dash-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ------------------------------------------------------------------ */
+/* Light mode: game panels (round 2, Malia 2026-11-02)                 */
+/* ------------------------------------------------------------------ */
+/* Malia's sample (mapGtabFull.jpg): olive grey title bars #b4b4a3, light
+   bodies #cec6aa, umber text; brass, round tabs and sub-tabs unchanged. The
+   Game text window and its command box stay dark (their colours are made
+   for dark), and so does the Map body until its own round. The colours are
+   swapped as tokens on the panel, so everything inside follows; the
+   inventory tiles stay dark slots.
+   Measured on the body #cec6aa (text needs 4.5): text 9.22, secondary 4.97,
+   headings 5.83, links and quest names 5.15, quest focus 7.20, dim 5.31,
+   labels 8.06, mob names 5.36, player names 5.83, broadcast 4.60, party and
+   copper chips 5.48, online 5.44, focus ring 7.20. Title on the bar 7.71. */
+:root[data-theme="light"][data-client] .dash-panel:not(#panel-feed):not(#panel-cmd):not(#panel-map) {
+  --panel-bg: #cec6aa;
+  --panel-bg-alt: #d6cfb5;
+  --ink-black: #cec6aa;           /* the Automation body */
+  --panel-border: #8c7f52;        /* separators (palette gold and ochre) */
+  --text-primary: #2b2116;
+  --text-secondary: #5b4a33;
+  --title-gold: #5a3d0a;
+  --ink-gold: #5e4712;
+  --quest-name: #5e4712;
+  --quest-name-focus: #473019;
+  --quest-dim: #4a493e;
+  --quest-progress: #5b4a33;
+  --quest-bar-track: #b4b4a3;
+  --auto-label: #3b2a10;
+  --name-mob: #004d6f;            /* sky blue L30 */
+  --name-player: #5a3d0a;
+  --chat-whisper: #4a493e;
+  --chat-broadcast: #7a3d62;
+  --party-teal: #085044;
+  --online-green: #2f4f1c;
+  --input-bg: #e3dcc4;            /* chat box: lighter than the panel */
+  --chip-bg: #ddd6bf;
+  --chip-copper-bg: #d3dccf;
+  --chip-copper-text: #085044;
+  --chip-alert-bg: #e6cdb3;
+  --focus-ring: #473019;          /* the gold ring vanishes on light (1.07) */
+}
+/* Title bars on every panel, the Game's included. */
+:root[data-theme="light"][data-client] .dash-panel-head { background: #b4b4a3; }
+:root[data-theme="light"][data-client] .dash-panel-head .ph-title { color: #252015; }
+/* The tab strips inside Chat, Inventory and Automation sit on the panel's own
+   light body (Malia: no grey behind the buttons). */
+:root[data-theme="light"][data-client] .subtabs { background: var(--panel-bg); }
