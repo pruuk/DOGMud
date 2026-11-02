@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/acquire"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
@@ -108,4 +109,56 @@ func TestUnlock_AlreadyOpenContainerRaisesTheEvent(t *testing.T) {
 	require.NoError(t, err)
 
 	require.True(t, user.Character.HasQuest(unlockProbeToken))
+}
+
+// An exit lock is aimed at nothing and carries the exit's name as its noun, as
+// picklock's does; both key paths raise it, a refused unlock does not.
+func TestUnlock_ExitLockCarriesTheExitNameAsItsNoun(t *testing.T) {
+	const gate = "testgate"
+	for name, withKey := range map[string]func(user *users.UserRecord, lockId string){
+		"key ring": func(user *users.UserRecord, lockId string) {
+			user.Character.SetKey("key-"+lockId, fmt.Sprintf("%d", unlockTestKey))
+		},
+		"backpack key": func(user *users.UserRecord, lockId string) {
+			require.True(t, acquire.AcquireItem(user, items.New(unlockTestKey), acquire.AcquireGive))
+		},
+		"no key": nil,
+	} {
+		t.Run(name, func(t *testing.T) {
+			user, room := unlockQuestFixture(t)
+			room.Exits[gate] = exit.RoomExit{RoomId: 1, Lock: gamelock.Lock{Difficulty: 3}}
+			t.Cleanup(func() { delete(room.Exits, gate) })
+			lockId := fmt.Sprintf("%d-%s", room.RoomId, gate)
+			t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+				unlockTestKey: {ItemId: unlockTestKey, Name: "test key", Type: items.Key,
+					KeyLockId: lockId, Weight: 0.1},
+			}))
+			if withKey != nil {
+				withKey(user, lockId)
+			}
+
+			t.Cleanup(questengine.ResetEngineForTest())
+			questengine.GetEngine().RegisterQuest(&questengine.QuestDef{
+				QuestId: unlockProbeQuest,
+				Name:    "Unlock Exit Probe",
+				Triggers: []quests.TriggerDef{{
+					Event:   "command",
+					Command: "unlock",
+					Target:  quests.TargetNone,
+					Noun:    gate,
+					Actions: []quests.ActionDef{{Grant: unlockProbeToken}},
+				}},
+			})
+
+			_, err := Unlock(gate, user, room, 0)
+			require.NoError(t, err)
+
+			if withKey == nil {
+				require.False(t, user.Character.HasQuest(unlockProbeToken), "a refused unlock raises nothing")
+				return
+			}
+			require.True(t, user.Character.HasQuest(unlockProbeToken),
+				"an unlocked exit must raise command unlock with the exit's name")
+		})
+	}
 }
