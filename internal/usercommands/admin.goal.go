@@ -58,6 +58,8 @@ func Goal(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return goalCurrent(args[1:], user)
 	case "scores":
 		return goalScores(args[1:], user)
+	case "here":
+		return goalHere(args[1:], user, room)
 	default:
 		goalShowUsage(user)
 		return true, nil
@@ -76,6 +78,7 @@ func goalShowUsage(user *users.UserRecord) {
 			"  goal add <mob-ident> <type> <priority> [key=value ...]\r\n"+
 			"  goal remove <mob-ident> <goal-id>\r\n"+
 			"  goal clear <mob-ident>\r\n"+
+			"  goal here <name of a mob in this room>\r\n"+
 			"\r\n"+
 			"mob-ident: numeric template id (e.g. 371) or namesimple (e.g. tova).\r\n")
 }
@@ -263,6 +266,45 @@ func goalClear(args []string, user *users.UserRecord) (bool, error) {
 	user.SendText(messaging.CategoryAdmin,
 		fmt.Sprintf("Cleared all goals from %s (%d).\r\n", name, mobId))
 	return true, nil
+}
+
+// goalHere shows the goals one live mob in the admin's room holds for itself
+// (goals.AddIndividual, today a generic mob's theft grudge), which the
+// template-keyed subcommands cannot see, and the goal that mob is acting on.
+func goalHere(args []string, user *users.UserRecord, room *rooms.Room) (bool, error) {
+	if len(args) == 0 {
+		goalShowUsage(user)
+		return true, nil
+	}
+	name := strings.Join(args, " ")
+	_, instanceId := room.FindByName(name)
+	mob := mobs.GetInstance(instanceId)
+	if mob == nil {
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("No mob here called: %s\r\n", name))
+		return true, nil
+	}
+	user.SendText(messaging.CategoryAdmin, goalHereReport(mob))
+	return true, nil
+}
+
+// goalHereReport renders one live mob's own goals. A context of 0 means the
+// goal is held and silent: for revenge-mob, the mob has no combat memory of its
+// target, so it is not hunting.
+func goalHereReport(mob *mobs.Mob) string {
+	var b strings.Builder
+	own := goals.IndividualGoalsOf(mob)
+	fmt.Fprintf(&b, "%s, instance %d (mob %d), goals of its own: %d\r\n",
+		mob.Character.Name, mob.InstanceId, int(mob.MobId), len(own))
+	for _, g := range own {
+		fmt.Fprintf(&b, "  %s priority=%d context=%.2f params=%v\r\n",
+			g.Type, g.Priority, goals.ContextScoreFor(g, mob), g.Params)
+	}
+	if current := goals.CurrentGoalFor(mob); current != nil {
+		fmt.Fprintf(&b, "Acting on: %s priority=%d\r\n", current.Type, current.Priority)
+	} else {
+		b.WriteString("Acting on: nothing\r\n")
+	}
+	return b.String()
 }
 
 // goalCurrent renders the cached selection state for a mob template.

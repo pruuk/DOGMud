@@ -75,7 +75,7 @@ func seedTheftResponse(m *mobs.Mob, thiefUserId, priority int) {
 // seedIndividualRevengeGoal gives this one mob the revenge-mob goal the
 // revenge-mob planner already reads, without touching its type's goal file.
 func seedIndividualRevengeGoal(m *mobs.Mob, targetUserId, priority int) {
-	_, err := goals.AddIndividual(m, &goals.Goal{
+	added, err := goals.AddIndividual(m, &goals.Goal{
 		Type:     "revenge-mob",
 		Priority: priority,
 		Params: map[string]any{
@@ -86,6 +86,11 @@ func seedIndividualRevengeGoal(m *mobs.Mob, targetUserId, priority int) {
 	if err != nil {
 		mudlog.Warn("seeders.seedIndividualRevengeGoal: AddIndividual failed",
 			"mob_id", int(m.MobId), "target_id", targetUserId, "error", err)
+		return
+	}
+	if added != nil {
+		mudlog.Info("Theft grudge", "mob_id", int(m.MobId), "instance_id", m.InstanceId,
+			"target_id", targetUserId, "priority", priority)
 	}
 }
 
