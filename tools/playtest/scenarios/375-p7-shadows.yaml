@@ -1,0 +1,28 @@
+# #375 phase 7 plan 4: the Shadows line and the way out of the Coulee. One seat
+# plays the five quests from Toke on the hints alone. One takes Esk's Road with
+# all eight bridges in. One is merely Opened and must still be able to leave.
+name: 375-p7-shadows
+mode: party
+summary: >-
+  Toke's new trail runs Gethin, Dace, back to Toke on the hints alone; Esk's
+  Road opens only behind all eight bridges; leaving asks only for the rite.
+on_actor_stop: continue
+budgets:
+  wall_clock: 45m
+requires:
+  max_connections: 20
+roster:
+  - id: shadow
+    personality: feel-tester
+    goals: goals/scenarios/375-p7-shadows/shadow.yaml
+  - id: leaver
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-shadows/leaver.yaml
+  - id: opened
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-shadows/opened.yaml
+
+group_goals:
+  - id: shadows-and-leaving
+    do: Each seat plays its goals and quotes the game verbatim.
+    verify: The Shadows trail can be finished from what the game prints; the way out never closes on someone who has been through the rite.

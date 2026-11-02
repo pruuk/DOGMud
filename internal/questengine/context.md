@@ -99,6 +99,14 @@ mob-actor site raises a command event today.
 Every command event goes through `NotifyCommand`; a hand-built
 `Notify("command", ...)` fails `internal/guards/command_event_guard_test.go`.
 
+### Item gains and their reason (#375 phase 7)
+
+`EventDetails.Reason` says how an `item_gain` event's item arrived:
+`hooks.CheckItemQuests` copies `events.ItemOwnership.Reason`, which the acquire
+seam fills with an `acquire.AcquireReason`. A trigger's `reason:` filter compares
+against it, so `reason: steal` hears a theft and not a `get` of the same item.
+No filter accepts any reason. A filter never matches an event with no reason.
+
 ### Spell events (#375 phase 3b slice 3)
 
 `spell_landed` is raised when a player's spell lands on a target. Its
@@ -284,7 +292,7 @@ about 190 ns/op. The map search is benchmarked in `internal/mapper`.
 `Notify` → `evaluate` (recursive), per matching trigger:
 
 1. **Field match** (`matchTriggerFields`): mob, room, area, zone, item, skill, command,
-   topic, questToken, noun, verb, target. A trigger `noun:` matches in three tiers
+   topic, questToken, noun, verb, target, reason. A trigger `noun:` matches in three tiers
    (`nounTier`, picked by `pickNounTier`): the typed noun exactly; else its
    singular/plural variant (`util.NounNumberVariants`); else
    `EventDetails.RoomNoun`, the room's own noun key the typed words name
@@ -441,7 +449,19 @@ own, unrelated action param.)
   arrived, from the room fled into. `forage` is sent only when the forage
   rolled (not on a wrong-ground or cooldown refusal; finding nothing still
   counts), `track` not for `track stop` or a cooldown refusal, and `sneak`
-  only when the player ends up hidden (already hidden counts).
+  only when the player ends up hidden (already hidden counts). `hood`
+  names the lantern as `ItemId` and is sent only when the hood closed
+  (`usercommands.Hood`); `picklock` is sent when a lock opens
+  (`usercommands.notifyPicklockQuest`), aimed at the room container by name
+  (`target: container`, `noun:`) or, for an exit, at nothing with the exit's
+  name as `Noun`; `ambush` is sent once for a player's opening strike from
+  hiding, melee (`notifyAmbushQuest` in `NewRound_DoCombat_unified.go`, on
+  `AttackResult.WasSurpriseAttack`) or a same-room shot from cover
+  (`ambushQuestTargets` in `usercommands/shoot.go`, on `FireResult.Revealed`),
+  aimed at the target, landed or not (#375 phase 7). `steal` and `plant` are
+  sent on the attempt, before the contest: a step that needs the theft to
+  land listens on `item_gain` of the item with `reason: steal` (quests 99 and
+  101; see "Item gains and their reason").
 - **An `npc_say` line with `whisper: true` reaches the triggering player
   alone.** `npcCommand` turns it into the mob command `whisper @<userId>`,
   framed in asterisks so it stands out from combat text; the room hears

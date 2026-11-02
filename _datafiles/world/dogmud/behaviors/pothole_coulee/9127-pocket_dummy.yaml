@@ -1,0 +1,90 @@
+# Pocket Dummy (9127), Reed Jetty (5218): the Shadows line's practice mark
+# (#375 phase 7, Pothole Coulee pass; quests 99 Quiet Hands and 101 Quick
+# Fingers).
+#
+# The dummy carries one Sand Purse (item 60). A theft never gives it back and
+# a mob restocks only by dying, so on an idle tick the dummy refills its own
+# pocket: one chance in five a tick, and only while it holds no purse.
+# stock_item fails on a full pocket, so the line after it is said only on a
+# refill. A student who planted the purse back has already refilled it.
+#
+# A caught plant earns a short mocking line (branch at the end). Every other
+# event falls through to its combat_passive archetype.
+
+tree:
+  type: selector
+  children:
+    - type: decorator
+      event: mob_idle
+      mod: random
+      percent: 20
+      child:
+        type: sequence
+        children:
+          - type: action
+            do: stock_item
+            item_id: 60
+            max: 1
+          - type: action
+            do: emote
+            text: >-
+              sways on its peg, and a fresh purse shows at the edge of its coat
+              pocket.
+
+    # ── CAUGHT: a plant on the dummy was caught (caught_planting, fired by
+    #    actions.plantOnMob through mobs.FireCaughtPlanting). Owner ruling
+    #    2026-10-30: quest 99 still counts the try, and one short line mocks
+    #    it. Dace says it when she is on the jetty, so the student and the
+    #    room hear her; otherwise the room carries it, in lines heard rather
+    #    than seen, since she carries the jetty's light. The planter is already
+    #    revealed by then, and no line names them, so a mob planter reads the
+    #    same. One of three, picked evenly (33, 50, last). ──
+    - type: selector
+      event: caught_planting
+      children:
+        - type: sequence
+          children:
+            - type: condition
+              check: mob_in_room
+              mob_id: 9126
+            - type: selector
+              children:
+                - type: decorator
+                  mod: random
+                  percent: 33
+                  child:
+                    type: action
+                    do: mob_say
+                    mob_id: 9126
+                    text: Caught by a straw dummy. I will tell no one. Much.
+                - type: decorator
+                  mod: random
+                  percent: 50
+                  child:
+                    type: action
+                    do: mob_say
+                    mob_id: 9126
+                    text: The bells sang that time. Not quiet hands yet, friend.
+                - type: action
+                  do: mob_say
+                  mob_id: 9126
+                  text: Even the dummy saw that one coming.
+        - type: selector
+          children:
+            - type: decorator
+              mod: random
+              percent: 33
+              child:
+                type: action
+                do: send_room_text
+                text: The pocket dummy's bells jingle, and it sounds a lot like laughing.
+            - type: decorator
+              mod: random
+              percent: 50
+              child:
+                type: action
+                do: send_room_text
+                text: Out in the reeds, someone snorts at a clumsy try.
+            - type: action
+              do: send_room_text
+              text: A last bell rings on the dummy's coat, as smug as straw can be.

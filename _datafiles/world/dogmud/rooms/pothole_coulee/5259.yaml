@@ -36,6 +36,15 @@ nouns:
     light you carry, flat walls swallowed, ceiling gone, the
     source of the breathing ahead unlocatable by sight. It is not
     emptiness. Something in the dark knows exactly where you are.
+spawninfo:
+- mobid: 9120
+  message: A pale mine crawler pours out of a crack in the gallery wall, too
+    many legs finding purchase.
+  respawnrate: 5 real minutes
+- mobid: 9121
+  message: A tunnel brute hauls itself upright in the gallery, stone-knuckled
+    and slow.
+  respawnrate: 5 real minutes
 idlemessages:
 - The <ansi fg="itemname">gallery</ansi> catches a sound from the west, slow and deep and patient, and sends it back to you changed into something larger.
 - In the <ansi fg="itemname">dark</ansi> ahead something shifts its weight and the fractured floor transmits it as a low grinding vibration under your feet.

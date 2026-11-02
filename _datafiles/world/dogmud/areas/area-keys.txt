@@ -6,3 +6,4 @@
 # section as "old -> new". A new area key must be added to the list.
 # internal/guards/area_manifest_test.go enforces both.
 unquiet_grove
+coulee_mine

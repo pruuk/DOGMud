@@ -1,0 +1,35 @@
+# FINISH seat: Quiet Hands is done, From the Dark just taken from Dace. The first
+# run of this scenario stuck there before its hint named the whole action, so
+# this seat picks up where that one stopped. No routes or commands are given on
+# purpose: the game's own lines must carry you.
+
+ephemeral:
+  profile: early
+  start_room: 5218
+  overlays:
+    set_quest_tokens: ["30-start", "30-end", "31-start", "31-end", "98-start", "98-end", "99-start", "99-end"]
+    grant_items: [20097]
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Type `talk dace`, then take From the Dark. Play it, then the next two quests
+    Dace or the game offers, to the end of the trail, reporting back to Crier
+    Toke. Use only what the game tells you: the hints, `quests`, `hint`, `help`,
+    and what NPCs say. Quote each hint and every NPC line about what to do next,
+    VERBATIM. Have your hooded lantern ready and use what the game tells you.
+  - >-
+    Do the step that teaches an opening strike from hiding as told. Quote the
+    lines around it. If something notices you, say what you read and whether it
+    told you what to try next. If your first blow misses or is turned aside,
+    quote the line and say whether it feels friendly. If you kill the target
+    without the opening strike counting, quote what you read.
+  - >-
+    At the repeatable purse job, try picking up a purse rather than stealing it:
+    kill the dummy if you must, `get` what falls, and quote what the quest does.
+    Then steal for real and quote what it does.
+  - >-
+    Report any step whose hint did not get you through it, any refusal the hint
+    did not prepare you for, any line claiming something untrue, and any moment
+    you did not know what to do next. Being lost is a finding.

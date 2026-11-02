@@ -39,6 +39,7 @@ func CheckItemQuests(e events.Event) events.ListenerReturn {
 			bridge := questengine.NewGameBridge(u, u.Character.RoomId)
 			d := questengine.EventAt(evt.UserId, u.Character.RoomId) // template room
 			d.ItemId = evt.Item.ItemId
+			d.Reason = evt.Reason
 			questengine.GetEngine().Notify("item_gain", d, bridge, bridge)
 		}
 

@@ -17,8 +17,9 @@ import (
 // standing in for one. The global prose guard (prose_dash_guard_test.go)
 // still exempts quests, dialogue and conversations until phase 7 closes, so
 // this guard holds the files the Coulee pass cleared: the pass's quests,
-// every dialogue file of the Coulee and the Newcomer Antechamber, and every
-// conversation pair with a Coulee NPC in it.
+// every dialogue file of the Coulee and the Newcomer Antechamber, every
+// conversation pair with a Coulee NPC in it, and the two zones' mobs, rooms,
+// behaviour trees and schedules (couleeDashWorldDirs).
 //
 // It reads the parsed YAML, not lines: every scalar value is checked and no
 // comment is, whole-line or trailing (a comment after a value on the same
@@ -46,6 +47,40 @@ func couleeDashNPC(id int) bool {
 
 // couleeDashDialogueDirs are the dialogue folders checked whole.
 var couleeDashDialogueDirs = []string{"pothole_coulee", "newcomer_antechamber"}
+
+// couleeDashWorldDirs are the other folders of the two zones read whole: the
+// lines their mobs, rooms and behaviour trees send, and the schedules' idle
+// lines. Every one holds at least one file today, and the floors below count
+// them, so a renamed folder fails rather than passes empty.
+var couleeDashWorldDirs = []string{
+	"behaviors/pothole_coulee",
+	"behaviors/newcomer_antechamber",
+	"behaviors/rooms/pothole_coulee",
+	"behaviors/rooms/newcomer_antechamber",
+	"rooms/pothole_coulee",
+	"rooms/newcomer_antechamber",
+	"mobs/pothole_coulee",
+	"mobs/newcomer_antechamber",
+	"schedules/pothole_coulee",
+}
+
+// couleeDashWorldFiles lists the YAML files of couleeDashWorldDirs, failing on
+// a folder that holds none.
+func couleeDashWorldFiles(t *testing.T, world string) []string {
+	t.Helper()
+	var out []string
+	for _, d := range couleeDashWorldDirs {
+		fs, err := filepath.Glob(filepath.Join(world, filepath.FromSlash(d), "*.yaml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(fs) == 0 {
+			t.Fatalf("%s holds no YAML; the guard would check nothing there", d)
+		}
+		out = append(out, fs...)
+	}
+	return out
+}
 
 // couleeDashFiles lists the files the guard reads, by kind.
 func couleeDashFiles(t *testing.T, world string) (quests, dialogue, pairs []string) {
@@ -128,8 +163,13 @@ func TestCouleeTextHasNoDashes(t *testing.T) {
 		t.Fatalf("found %d quest, %d dialogue and %d conversation files; the guard would check too little",
 			len(quests), len(dialogue), len(pairs))
 	}
+	// 176 Coulee rooms alone today; well under that means the walk broke.
+	worldFiles := couleeDashWorldFiles(t, world)
+	if len(worldFiles) < 200 {
+		t.Fatalf("found %d mob, room, behaviour and schedule files; the guard would check too little", len(worldFiles))
+	}
 	scalars := 0
-	files := append(append(append([]string{}, quests...), dialogue...), pairs...)
+	files := append(append(append(append([]string{}, quests...), dialogue...), pairs...), worldFiles...)
 	for _, p := range files {
 		data, err := os.ReadFile(p)
 		if err != nil {

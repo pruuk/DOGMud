@@ -75,9 +75,8 @@ opener:
     hints: Choose Find Your Footing below to finish the task.
   # A held Report to Toke bridge comes before the hub: the [?] line is the next
   # thing to do, and the hub's hint names only the [!] lines. One variant per
-  # bridge, gated on that bridge's own start token. Bridges 90 to 96 are here;
-  # plan 4 adds bridge 97: it adds a variant here in the same shape, and its
-  # hand-in joins report_*_in above send_drill.
+  # bridge, gated on that bridge's own start token. Bridges 90 to 97 are here,
+  # and each bridge's hand-in is a report_*_in above send_drill.
   - questRequired:
     - 90-start
     questExcluded:
@@ -135,8 +134,68 @@ opener:
       for small news. Tell me who holds the overlook now.
     hints: Choose Report to Toke (Archery), the line marked [?] below, to tell Toke
       the news.
-  # All seven trades taken: no [!] line is left, so the hub's hint would describe
-  # lines that are not there. The gate is the seven send_* offers' start tokens,
+  - questRequired:
+    - 97-start
+    questExcluded:
+    - 97-end
+    text: Hoy! You walk quieter than you did, and Dace does not send folk down to
+      me for small news. Tell me how it went in the dark.
+    hints: Choose Report to Toke (Shadows), the line marked [?] below, to tell Toke
+      the news.
+  # All eight bridges in: the last [!] on the menu is Esk's Road.
+  - questRequired:
+    - 90-end
+    - 91-end
+    - 92-end
+    - 93-end
+    - 94-end
+    - 95-end
+    - 96-end
+    - 97-end
+    questExcluded:
+    - 89-start
+    text: Every teacher in the coulee has sent you back to me, all eight of them.
+      I have one road left for you.
+    hints: Choose Esk's Road, the line marked [!] below, to hear where it goes.
+  # All eight in and the road taken, not yet handed in: Esk is the next thing to
+  # do. The bridges stay in the gate because an older save may hold 89-start
+  # from Cleric Hadwen with trades still to start, and the hub reads true for it.
+  - questRequired:
+    - 90-end
+    - 91-end
+    - 92-end
+    - 93-end
+    - 94-end
+    - 95-end
+    - 96-end
+    - 97-end
+    - 89-start
+    questExcluded:
+    - 89-end
+    text: Still in my square? Warden Esk has the arch, and he knows you are coming.
+      Go and tell him you are ready.
+    hints: From Hub Square go south twice, through Market Row, to the Threshold
+      House. Type talk esk.
+  # All eight in and the road finished: no teacher is left to send news back,
+  # so the no-trades hint below would promise a [?] that never comes.
+  - questRequired:
+    - 90-end
+    - 91-end
+    - 92-end
+    - 93-end
+    - 94-end
+    - 95-end
+    - 96-end
+    - 97-end
+    - 89-end
+    text: Every teacher in the coulee has sent you back to me, and Warden Esk has
+      had his word with you. I have no road left to give. Stop by when you have
+      news of the far side.
+    hints: Choose a line below to hear about the news or the seven mouths of the
+      coulee. To cross the arch, type talk esk in the Threshold House, south twice
+      from Hub Square.
+  # All eight trades taken: no [!] line is left, so the hub's hint would describe
+  # lines that are not there. The gate is the eight send_* offers' start tokens,
   # which stay held after each quest ends (TestToke_NoTradesLeftOpener).
   - questRequired:
     - 31-end
@@ -147,22 +206,23 @@ opener:
     - 44-start
     - 47-start
     - 50-start
-    text: You have taken up every trade I can start you on, all seven. The rest is
+    - 98-start
+    text: You have taken up every trade I can start you on, all eight. The rest is
       your own walking. Come back when you have news, and I will carry it across
       the square.
     hints: Toke has no more trades to start. When a teacher sends you back with
       news, a line marked [?] shows below. Other lines tell you about the news and
       the seven mouths of the coulee.
-  # The hub (#375 phase 7): Toke is the only starter of the seven trades, and
+  # The hub (#375 phase 7): Toke is the only starter of the eight trades, and
   # a player new to MUDs is told so in plain words. Each trade's first quest
-  # is one [!] line on his menu; take one, several or all seven.
+  # is one [!] line on his menu; take one, several or all eight.
   - questRequired:
     - 31-end
     text: 'The town knows your face now. I made sure of it. Here is the rest of
       it. I can start you on any trade the coulee teaches: fighting, the forge,
-      brewing, the wilds, casting, the lore of the folk and the long shot. Each
-      one has its own teacher, and I send you to the first. Take one, take
-      several, or take all seven.'
+      brewing, the wilds, casting, the lore of the folk, the long shot and the
+      dark. Each one has its own teacher, and I send you to the first. Take one,
+      take several, or take all eight.'
     hints: Each line marked [!] below starts one trade. Type the number of one to
       hear who teaches it and where. You can take as many as you like.
   # Every state with 31-start matched above, so these two read only Toke's Road.
@@ -274,9 +334,10 @@ topics:
     mouths, seven breaks in the rim, and past every one somebody or something that
     will teach you what the town cannot. Fighting, forge-smoke, the green reek of
     potions, wild country, the quiet folding art, old stones that talk if you read
-    them, and a far hill where they put things down at distance. Pick any of them
+    them, and a far hill where they put things down at distance. And under the
+    talus the old mine, which is no mouth, but it teaches the dark. Pick any of them
     and I will point you at its teacher, one at a time, in any order your boots hold.'
-  hints: Quest complete. Toke can now send you down any of the seven trails. Choose
+  hints: Quest complete. Toke can now send you down any of the eight trails. Choose
     one below. The map command shows what you have found.
   questRequired:
   - 31-lantern
@@ -286,7 +347,7 @@ topics:
   moodChange: friendly
 # #375 phase 7: each line's last giver sends the player back to Toke with a
 # Report to Toke bridge (quests 90 to 97). Toke takes every bridge hand-in.
-# They sit above the seven offers, as footing_turnin does, because the menu
+# They sit above the eight offers, as footing_turnin does, because the menu
 # follows file order and the [?] line is the next thing to do. Menu numbers
 # shift with what is open, which the owner has ruled is fine.
 - key: report_fighting_in
@@ -396,9 +457,24 @@ topics:
   - 96-end
   grantsQuest: 96-end
   moodChange: friendly
-# R21: the seven trails, each its own offer after Find Your Footing. Each
+- key: report_shadows_in
+  kind: handin
+  quest: 97
+  label: Report to Toke (Shadows)
+  playerLine: Dace says the Shadows line is done.
+  text: Done, is it? Gethin's lantern and Dace's quiet hands. I hear you went down
+    into the mine and came back out of it, which is the part most folk skip. Any
+    mouth you have not walked yet is still open to you.
+  hints: Quest complete. Toke can still send you down any trail you have not walked.
+  questRequired:
+  - 97-start
+  questExcluded:
+  - 97-end
+  grantsQuest: 97-end
+  moodChange: friendly
+# R21: the eight trails, each its own offer after Find Your Footing. Each
 # starter item rides on the offer of the quest it belongs to. Toke is the
-# only starter of the seven (#375 phase 7); each first teacher takes the
+# only starter of the eight (#375 phase 7); each first teacher takes the
 # hand-in and points a newcomer back here. Quest 50's pouch of shot comes
 # from its own quest_granted 50-start trigger (missing_item 30064).
 - key: send_drill
@@ -413,7 +489,7 @@ topics:
   hints: Accept, and Toke hands you a cudgel. From Hub Square, go north, then east
     four times to the Drill Yard. Type talk vorn.
   breadcrumb: Walk the town with me first. After that, I can send you down any of
-    the seven mouths.
+    the eight trails.
   questRequired:
   - 31-end
   questExcluded:
@@ -523,6 +599,66 @@ topics:
   - 50-end
   grantsQuest: 50-start
   givesItem: 10038
+# #375 phase 7: the Shadows line starts here like every line. The road to the
+# Mine Head crosses three rooms of hostile creatures, so the offer says so.
+- key: send_light
+  kind: offer
+  quest: 98
+  label: First Light
+  playerLine: Who can teach me about the dark?
+  text: Lamplighter Gethin, at the Mine Head. He keeps the lamps for the old mine,
+    and he knows more about light and dark than anyone in the coulee. Fair warning,
+    it is a long walk and not a safe one. Past the Coulee Smithy the path climbs the
+    talus, and the scavengers and lurkers on that slope attack on sight. One at a
+    time you can beat them, but not all of them in a row, so rest between fights. If
+    one turns against you, flee, and keep trying, because the quick ones often block
+    you. If you have never been in a fight, see Drillmaster Vorn first.
+  hints: From Hub Square go north, west five times to the Coulee Smithy, north,
+    west five times to the Mine Mouth, then down. Type talk gethin.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 98-start
+  - 98-end
+  grantsQuest: 98-start
+# #375 phase 7: once all eight bridges are in, Toke offers Esk's Road (89),
+# which Cleric Hadwen offered before this pass.
+- key: road_esk
+  kind: offer
+  quest: 89
+  label: Esk's Road
+  playerLine: Is there anything left for me to learn here?
+  text: Not from me, and not from anyone I know. Every teacher in the coulee
+    has sent you back to me, all eight of them. The rest of Gaius is waiting.
+    Warden Esk keeps the arch in the Threshold House. Go and tell him you are
+    ready.
+  hints: From Hub Square go south twice, through Market Row, to the Threshold
+    House. Type talk esk.
+  questRequired:
+  - 90-end
+  - 91-end
+  - 92-end
+  - 93-end
+  - 94-end
+  - 95-end
+  - 96-end
+  - 97-end
+  questExcluded:
+  - 89-start
+  - 89-end
+  grantsQuest: 89-start
+- key: esk_road_when
+  kind: info
+  label: When will you send me out into the world?
+  text: When every teacher in the coulee has sent you back to me, all eight of
+    them, I have one last road for you. But nobody is kept here. Warden Esk will
+    open the arch for you whenever you ask.
+  hints: Warden Esk keeps the arch in the Threshold House. From Hub Square go
+    south twice.
+  questRequired:
+  - 31-end
+  questExcluded:
+  - 89-start
 - key: footing_step_school
   kind: info
   label: Where do I go first?
@@ -589,7 +725,9 @@ topics:
     mouths because the town eats what they bring back. Fighting in one, smithing in
     another, brewing, the wilds, folding (the quiet art, mind you), old lore, and
     the far hill where they teach the long shot. The paths are marked off the shore
-    and the square. Walk any of them. Walk all of them if your boots hold.
+    and the square. Walk any of them. Walk all of them if your boots hold. The old
+    mine under the talus is no mouth, but it makes an eighth trail, if you want to
+    learn the dark.
   hints: The mouths open off the edges of town. The map command shows what you
     have found so far. Choose a line below to learn the way to the drill yard,
     the terrace or the steppe.
@@ -617,6 +755,15 @@ topics:
     go west twice, along the stilt-house walk and into the scrub draw, then south
     twice through the scrub mouth. The Open Steppe is one more step south of her.
   hints: 'From Hub Square: west, west, south, south to the Steppe Edge.'
+- key: way_mine_head
+  kind: info
+  label: How do I get to the Mine Head?
+  text: The long way round, I am afraid. North to the pool, then west along the
+    shore and the forge path to the Coulee Smithy. North into the quench shed,
+    then west up the talus to the Mine Mouth, and down. Mind the scavengers and
+    lurkers on the slope. They attack on sight. Lamplighter Gethin keeps the lamps
+    down there.
+  hints: 'From Hub Square: north, west five times, north, west five times, down.'
 - key: news
   kind: info
   label: What is the news today?

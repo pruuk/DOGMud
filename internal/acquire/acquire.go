@@ -11,8 +11,10 @@ import (
 )
 
 // AcquireReason names how an item reached a player (#375 phase 3a). It rides
-// on events.ItemOwnership so a later trigger filter can tell "crafted it" from
-// "bought it" without another refactor.
+// on events.ItemOwnership, and an item_gain trigger's reason filter reads it
+// (#375 phase 7), so "stole it" and "picked it up" are different events to a
+// quest. quests.TriggerGainReasons lists the same words for the loader; a guard
+// fails if the two differ, so a new reason goes in both.
 type AcquireReason string
 
 const (

@@ -1,0 +1,151 @@
+# Quest 100: From the Dark. Pothole Coulee, the Shadows line, quest 3 of 3
+# (#375 phase 7, Pothole Coulee pass; #315).
+#
+# Token flow (one action per step, each trigger gated on the step before):
+#   100-start:  granted on Accept of Cutpurse Dace's offer from_the_dark_offer
+#               (dialogue/pothole_coulee/9126.yaml), open after 99-end.
+#   100-hidden: command sneak in the coulee_mine area.
+#   100-ambush: command ambush aimed at a mob in the mine. A player's opening
+#               strike from hiding raises it, melee or a shot from cover,
+#               landed or not (hooks.applyCombatProgression, usercommands
+#               shoot.go, since this pass; owner ruling on the attempt).
+#   100-kill:   mob_death of any creature in the mine the player has kill
+#               credit on.
+#   100-end:    granted by Dace's hand-in from_the_dark_in.
+#
+# The Timbered Drift (5256) has no spawns since this pass, so a student can
+# hide there unseen; the Tunnel Brute (9121) in the Flooded Sump (5257), one
+# room west, is the target the text names.
+#
+# A student spotted on the way in, or whose special move has not come back,
+# gets no ambush. The hidden step says what to do in each case, and a kill made
+# before the ambush has its own line, which advances nothing.
+#
+# Why the hood and the order of the hint. The only roll on a hider is at the
+# door (actions.EntryDetection): a rank-1 student at Dexterity 100 gets past the
+# brute about 73 times in 100 hooded and 54 with the lantern open
+# (internal/actions/quest100_sneak_odds_test.go). Nothing rolls again while the
+# student stands there. A hooded student sees nothing and cannot pick a target
+# in this sealed room, so the hood must open first, which reveals nothing
+# (internal/usercommands/quest100_hood_strike_test.go). The Flooded Sump
+# respawns its brute in 5 real minutes.
+
+questid: 100
+name: From the Dark
+description: >-
+  Cutpurse Dace wants you to learn the quiet strike. Go down into the old
+  mine, get out of sight, and hit something before it knows you are there.
+secret: false
+
+steps:
+  - id: start
+    description: >-
+      Go down into the old mine below the Mine Mouth, back over the talus,
+      and rest between fights on the slope. Where nothing can see you, slip
+      out of sight. The Timbered Drift, west
+      of the Mine Head, is usually empty.
+    hint: >-
+      From the Reed Jetty go south, west four times, north, west five times,
+      down, then west into the Timbered Drift. Type sneak.
+  - id: hidden
+    description: >-
+      You slipped out of sight. West of the drift, in the Flooded Sump, a
+      tunnel brute guards the water. Close your lantern's hood and walk in
+      hidden, so your light does not give you away. With the hood shut you
+      see nothing, not even the brute, and you cannot strike what you cannot
+      see. So open the hood beside it and attack at once. Opening it does not
+      give you away. An ambush needs your special move ready, so check
+      cooldowns first. If you read that something notices you, there is no
+      surprise, and a kill will not count: open your hood, flee (it may block
+      you, so keep trying), hide again in the drift, and come back. If the sump
+      is empty the brute is dead, and a new one comes in about five minutes.
+      If your lantern is gone, Trader Onna at Coulee Provisions sells hooded
+      ones.
+    hint: >-
+      In the Timbered Drift, type hood, then west, then unhood, then attack
+      brute.
+  - id: ambush
+    description: >-
+      Your strike came out of the dark. Now it is an ordinary fight. Finish
+      it, or flee if it turns against you and come back to it. Killing any
+      creature in the old mine will do.
+    hint: >-
+      Keep fighting until it falls. If the fight turns, type flee, and again if
+      it blocks you.
+  - id: kill
+    destination:
+      mob: 9126
+      room: 5218
+    description: >-
+      It is dead. Climb back out of the mine and tell Dace on the Reed Jetty.
+    hint: >-
+      From the Mine Head go up, east five times, south to the Smithy, east
+      four times, then north to the Reed Jetty. Type talk dace.
+  - id: end
+    description: >-
+      You struck from the dark and finished the fight.
+
+rewards:
+  gold: 15
+  actor: >-
+    Dace looks you over for blood, finds less than she expected, and nods.
+    "One blow from the dark is worth three in the open. Remember it opens the
+    fight, and you still have to finish it."
+  observer: ""
+
+triggers:
+  # ── HIDE: out of sight somewhere in the mine ──
+  - event: command
+    command: sneak
+    area: coulee_mine
+    conditions:
+      has: ["100-start"]
+      missing: ["100-hidden"]
+    actions:
+      - grant: "100-hidden"
+      - actor: >-
+          You are out of sight in the dark. West of the Timbered Drift lies the
+          Flooded Sump and the brute that guards it. From the drift, type hood,
+          then west, then unhood, then attack brute. You will see nothing until
+          the hood opens.
+
+  # ── TOO SOON: a kill before the strike from hiding counts for nothing, and
+  #    says so. It grants nothing, so it fires on each such kill. ──
+  - event: mob_death
+    area: coulee_mine
+    conditions:
+      has: ["100-hidden"]
+      missing: ["100-ambush"]
+    actions:
+      - actor: >-
+          That kill does not count, because your first blow did not come from
+          hiding. If you were noticed, or walked up in the open, hide first. A
+          new brute comes to the sump in about five minutes. Then, from the
+          Timbered Drift, type sneak, then hood, then west, then unhood, then
+          attack brute.
+
+  # ── STRIKE: the opening blow from hiding ──
+  - event: command
+    command: ambush
+    target: mob
+    area: coulee_mine
+    conditions:
+      has: ["100-hidden"]
+      missing: ["100-ambush"]
+    actions:
+      - grant: "100-ambush"
+      - actor: >-
+          Your first blow comes out of the dark. It knows where you are now.
+          Finish the fight.
+
+  # ── FINISH: it falls ──
+  - event: mob_death
+    area: coulee_mine
+    conditions:
+      has: ["100-ambush"]
+      missing: ["100-kill"]
+    actions:
+      - grant: "100-kill"
+      - actor: >-
+          It falls. Climb back out of the mine and tell Dace on the Reed
+          Jetty.

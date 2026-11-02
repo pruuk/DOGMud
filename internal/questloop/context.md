@@ -58,7 +58,7 @@ defects never share a key and a listed one cannot hide a new one.
 | Where | Names |
 |---|---|
 | `step firstkill` | a step, by id |
-| `quest 53 trigger mob_death mob=9110 grants=53-firstkill` | a trigger, by signature: the event, its non-zero filters (room, mob, item, skill, command, quest_token, noun, verb in that order) and the tokens it grants, sorted, sequences included; triggers of one quest that share a signature take ` #2`, ` #3` in file order |
+| `quest 53 trigger mob_death mob=9110 grants=53-firstkill` | a trigger, by signature: the event, its non-zero filters (room, mob, item, skill, command, quest_token, noun, verb, target, effect, topic, reason, area, zone, count, distinct in that order) and the tokens it grants, sorted, sequences included; triggers of one quest that share a signature take ` #2`, ` #3` in file order |
 | `quest 53 rewards questid` | the completion reward's grant |
 | `quest 53 rewards summary` | the reward override (`reward` rule) |
 | `mob 9112 topic cull_in` | a dialogue topic |

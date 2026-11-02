@@ -50,6 +50,7 @@ type EventDetails struct {
 	TargetKind string // command events: what the command was aimed at, a quests.Target* kind (#375 3b)
 	Effect     string // spell_landed: the spell's effect_type (#375 3b)
 	Topic      string // topic_heard: the topic key (#375 3b)
+	Reason     string // item_gain: how the item arrived, events.ItemOwnership.Reason (#375 p7)
 }
 
 // NotifyResult is returned by Notify to inform the caller how the event was handled.

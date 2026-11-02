@@ -6,7 +6,7 @@ id: pothole_esk
 # slept teleported the player out with no send-off and no arrival text.) So he
 # now holds the arch around the clock, awake; only his idle flavor shifts with
 # the hours. The arch keeps no hours; neither does its warden.
-description: "Warden Esk holds the Threshold House arch at every hour -- watchful by day, still by lamplight, an unsleeping vigil through the night. The way out is never closed."
+description: "Warden Esk holds the Threshold House arch at every hour: watchful by day, still by lamplight, an unsleeping vigil through the night. The way out is never closed."
 segments:
   - start: 6
     end: 18

@@ -29,6 +29,8 @@ contains:
   (e.g., "wolves get +10 Perception")
 - `body_parts` — canonical anatomy tags (chunk 2.5)
 - `intrinsic_mutations` — natural traits (chunk 2.5)
+- `empty_pockets` — the species owns nothing, such as a training target: a
+  pickpocket finds only what was put there (`pocketBaubleAllowed`)
 - `natural_attack` — `ItemSubType` used for BASIC unarmed attack
   combat messages (`bite`, `claws`, `slam`, `gore`, `sting`, `siphon`,
   `trample`, `lash`, `blast`, `maul`, `pounce`). Empty

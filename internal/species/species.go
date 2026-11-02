@@ -78,6 +78,9 @@ type Species struct {
 	// intrinsic kits nor in-combat acquisition. Machines/constructs (the
 	// Chrysalis is a biological phenomenon; it does not touch the mechanical).
 	MutationImmune bool `yaml:"mutation_immune,omitempty"`
+	// EmptyPockets marks a species with nothing of its own to carry, such as a
+	// training target: a pickpocket finds only what was put there.
+	EmptyPockets bool `yaml:"empty_pockets,omitempty"`
 }
 
 // CanSpeak reports whether this species has a voice. A species file with no

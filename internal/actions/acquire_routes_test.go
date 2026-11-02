@@ -100,4 +100,8 @@ func TestSteal_RefusedStoreRaisesNoGain(t *testing.T) {
 	takeFromMob(thief, m, nil)
 
 	assert.Empty(t, routeGains(0), "a theft that did not land raises no gain")
+	assert.Empty(t, m.Character.Items, "the item left the mark's pocket")
+	floor := thief.GetRoom().Items
+	require.Len(t, floor, 1, "too heavy to carry, it falls at the thief's feet instead of vanishing")
+	assert.Equal(t, routeAcqHeavy, floor[0].ItemId)
 }

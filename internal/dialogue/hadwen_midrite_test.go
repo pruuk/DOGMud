@@ -72,7 +72,7 @@ func TestHadwenMidRite(t *testing.T) {
 		require.NotContains(t, ids, "rite_wait")
 		require.NotContains(t, ids, "rite_report")
 		require.Contains(t, ids, "road_toke")
-		require.Contains(t, ids, "road_esk")
+		require.NotContains(t, ids, "road_esk", "Esk's Road moved to Crier Toke (#375 phase 7)")
 		require.Contains(t, ids, "another_way", "the skip path is an info topic")
 	})
 }

@@ -1,0 +1,187 @@
+mobid: 9125
+zone: Pothole Coulee
+defaultMood: friendly
+greetings:
+- text: Mind your feet. The floor in here has opinions.
+  moods:
+  - friendly
+  - neutral
+opener:
+  text: Gethin. I keep the lamps at the Mine Head, so whoever goes down into
+    the old workings can find the way back up. Most folk fear the dark. I
+    measure it.
+  hints: Choose a line below to hear about the night, the dark, or lights.
+  variants:
+  - questExcluded:
+    - 98-start
+    text: Toke sends new folk my way, when they are ready for the dark. Go and
+      find him in Hub Square first. Ask him who can teach you about the dark,
+      and he will send you back down here.
+    hints: Crier Toke is in Hub Square. Type talk toke there. You can still
+      choose a line below to hear about the night, the dark, or lights.
+  - questRequired:
+    - 98-start
+    questExcluded:
+    - 98-lantern
+    text: Toke sent you? Good. Then the first thing you need is a light of your
+      own.
+    hints: Choose the line about learning the dark, below.
+  - questRequired:
+    - 98-lantern
+    questExcluded:
+    - 98-equip
+    text: A lantern in your pack lights nothing. Put it on.
+    hints: Type equip hooded lantern.
+  - questRequired:
+    - 98-equip
+    questExcluded:
+    - 98-drift
+    text: West of here the drift has no light of its own. Walk in.
+    hints: Go west into the Timbered Drift. Walking in is enough.
+  - questRequired:
+    - 98-drift
+    questExcluded:
+    - 98-hooded
+    text: You have stood in the dark. Now close the hood, in there.
+    hints: Go west into the Timbered Drift and type hood.
+  - questRequired:
+    - 98-hooded
+    questExcluded:
+    - 98-end
+    text: You came back. Tell me what the dark was like.
+    hints: Choose First Light below to finish.
+  - questRequired:
+    - 98-end
+    questExcluded:
+    - 99-start
+    text: You know what a light is for now. If you want to learn to go unseen,
+      I know who teaches it.
+    hints: Choose Quiet Hands, the line marked [!] below, to hear who it is.
+topics:
+- key: first_light_lantern
+  kind: info
+  label: Toke sent me to learn about the dark.
+  text: Then we start with a light. Here, a hooded lantern. It trims itself to
+    your eyes each time you walk somewhere new, so it never dazzles you. And it
+    has a hood, which is the part that matters down here. Put it on, walk west
+    into the drift, and close the hood. Then come and tell me what you saw.
+  hints: Type equip hooded lantern.
+  questRequired:
+  - 98-start
+  questExcluded:
+  - 98-lantern
+  - 98-end
+  givesItem: 20097
+# The replacement and the reminder never show together: itemExcluded and
+# carriesItem on the same item are exact opposites. The worn lantern counts.
+- key: lantern_spare
+  kind: info
+  label: I've lost my lantern.
+  text: Lost it already? Here is another. Keep this one closer.
+  hints: Type equip hooded lantern.
+  questRequired:
+  - 98-lantern
+  questExcluded:
+  - 98-hooded
+  - 98-end
+  itemExcluded: 20097
+  givesItem: 20097
+- key: lantern_have
+  kind: info
+  label: I can't find my lantern.
+  text: You have a hooded lantern on you already. Look in your pack and in your
+    light slot.
+  hints: Type inventory to see what you carry and what you hold.
+  questRequired:
+  - 98-lantern
+  questExcluded:
+  - 98-hooded
+  - 98-end
+  carriesItem: 20097
+- key: first_light_in
+  kind: handin
+  quest: 98
+  label: First Light
+  playerLine: I walked into the drift and closed the hood.
+  text: And the dark came down all at once, did it not? That is the whole
+    lesson. Your light lets you see. Your light also lets everything else see
+    you. Close the hood and you are only another piece of the dark. Remember
+    that when you go hunting.
+  hints: Quest complete. Gethin knows who teaches the next part.
+  questRequired:
+  - 98-hooded
+  questExcluded:
+  - 98-end
+  grantsQuest: 98-end
+- key: quiet_hands_offer
+  kind: offer
+  quest: 99
+  label: Quiet Hands
+  playerLine: Who can teach me to move without being seen?
+  text: Dace, on the Reed Jetty. She was a cutpurse once, and some say she
+    still is. She teaches quiet hands, so long as the lessons stay on her
+    practice dummy. Take these lockpicks to her. She will want you carrying
+    your own.
+  hints: From the Mine Head go up, east five times, south to the Smithy, east
+    four times, then north to the Reed Jetty. Type talk dace.
+  questRequired:
+  - 98-end
+  questExcluded:
+  - 99-start
+  - 99-end
+  grantsQuest: 99-start
+  givesItem: 33
+- key: night
+  kind: info
+  label: What changes when night falls?
+  text: The sun goes down and its light goes with it. Most nights a moon is up,
+    so outside you can still make out shapes. Under trees, roofs or rock the
+    night is darker still. In the mine it makes no difference at all, because
+    no sky reaches down here. Day or night, the only light in the mine is the
+    light you bring. If you go out after dark, carry one.
+  hints: Choose a line below to hear about seeing in the dark, or about lights.
+  marked: true
+- key: infravision
+  kind: info
+  label: Can anyone see in the dark?
+  text: Some can, after a fashion. Night vision lets your eyes use fainter
+    light than mine can, but the same eyes are dazzled sooner by a bright one.
+    Infravision is different. It sees the warmth of living things, not light,
+    so it shows you a shape in any darkness it can reach. A shape, mind, never
+    a face. The Night Vision and Heat Sight spells give them, and so do the
+    Cat's Eye Draught and the Pitsense Tincture.
+  hints: Choose a line below to hear about made darkness, or about lights.
+  marked: true
+- key: made_dark
+  kind: info
+  label: Can darkness be made?
+  text: It can, and it is worse than this mine. The Chrysalis Pall spell
+    gathers spores that drink the light around their target, and the rare
+    Umbral Lantern does the same from a light slot. A made darkness darkens a
+    place for everyone in it, whoever brought it. Night vision helps only a
+    little. Infravision is the answer, because warmth is not light. And a
+    darkness never gives you away when you sneak.
+  hints: Choose a line below to hear about seeing in the dark, or about lights.
+  marked: true
+- key: dazzle
+  kind: info
+  label: Can a light be too bright?
+  text: Yes, and it costs you when it is. Too much light dazzles you. Your aim,
+    your guard and your eye for detail all suffer, and the brighter it is the
+    worse it gets. A plain lantern or a torch always burns at full strength,
+    which is too much under open sky near a summer noon. A hooded lantern or
+    the Chrysalis Glow trims itself to your eyes each time you walk somewhere
+    new. And a strong light can dazzle the things that live in the dark, which
+    is worth knowing.
+  hints: Type help light to read more.
+  marked: true
+- key: buy_light
+  kind: info
+  label: Where can I buy a light?
+  text: Trader Onna, at Coulee Provisions off Market Row. She sells torches,
+    oil lanterns, and hooded lanterns with a hood you can close. A torch is
+    cheap and bright. A hooded lantern costs more, but you can put it out
+    without taking it off.
+  hints: From Hub Square go south to Market Row, then east into Coulee
+    Provisions. Type list there.
+  marked: true

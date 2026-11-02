@@ -83,7 +83,10 @@ room witness. Both route victim + witnesses through `seedWitnessResponse`, which
 calls the pure `classifyWitnessResponse(mob) WitnessResponse`:
 - **guard** (`mobs.IsGuardMob(groups)`) → `ResponseReportOnly` — seed nothing; the
   5.1 crime record + `RunGuardEnforcement` handle it (a personal revenge goal would
-  derail proper enforcement).
+  derail proper enforcement). It is also the data switch for a mob that must not
+  react to theft at all: the Coulee's Pocket Dummy and Cutpurse Dace carry it and
+  belong to no faction, so `RunGuardEnforcement` does nothing for them
+  (`coulee_props_test.go`).
 - **noncombatant** (`mob.IsNonCombatant()`) → `ResponseAlarm` — `alarmReaction`: a
   fright emote + one step toward a random exit. No persistent goal (avoids the
   survival-goal-pruned-at-full-HP behavior). The 5.1 crime record is the report.

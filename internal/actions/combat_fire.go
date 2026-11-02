@@ -502,6 +502,7 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	RecordAndWait(char, "shoot", sourceType, defChar, targetType, result.MoveResult.Hit, dmg, util.GetRoundCount())
 
 	awardFireProgression(actor, surpriseShot, result.MoveResult.Hit)
+	fireAmbushFoiled(actor, targetMobInstanceId, surpriseShot, result.MoveResult.Hit)
 
 	// Chamber the next round as part of the same action. A failure here is NOT a
 	// failed shot -- the shot has already resolved above. The weapon is simply
@@ -510,6 +511,22 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	result.Chambered = chamberNextRound(actor)
 
 	return result
+}
+
+// fireAmbushFoiled fires ambush_foiled on the target mob when a same-room shot
+// from hiding missed (#375 phase 7), for its tree to answer. Player and mob
+// shooters alike; a player target has no tree, and a mob the shot killed has
+// its death to answer with. A tree's speech (respond, mob_say) waits out the
+// mob's reaction delay, so it lands after the fire command's own lines.
+func fireAmbushFoiled(actor Actor, targetMobInstanceId int, surpriseShot bool, hit bool) {
+	if !surpriseShot || hit || targetMobInstanceId == 0 {
+		return
+	}
+	m := mobs.GetInstance(targetMobInstanceId)
+	if m == nil || m.Character.Health <= 0 {
+		return
+	}
+	mobs.FireAmbushFoiled(m, actor.GetUserId())
 }
 
 // shooterIsUnengaged reports whether nothing in the room currently has the

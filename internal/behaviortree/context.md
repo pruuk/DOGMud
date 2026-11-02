@@ -171,6 +171,8 @@ tree:
 | `player_give` | Player gives an item to the mob that no talk topic wants (an ordinary give, after the transfer); or a hand-back: a topic wants the item but none is eligible, so it never left the player (`give_handback.go`) | `ItemId` = item given; `ItemUUID` = that exact instance; `HandBack` non-nil on a hand-back |
 | `mob_idle` | Mob's periodic idle tick fires | No player context |
 | `mob_hurt` | Mob takes damage in combat | `UserId` = attacker |
+| `caught_planting` | The mob caught someone planting an item on it (`actions.plantOnMob` through `mobs.FireCaughtPlanting`, #375 phase 7) | `UserId` = planter, 0 for a mob |
+| `ambush_foiled` | An opening strike from hiding at the mob threw a swing and won none, melee (`hooks.applyCombatProgression`) or a missed same-room shot (`actions.fireAmbushFoiled`), through `mobs.FireAmbushFoiled`. Not raised if the mob died of it | `UserId` = striker, 0 for a mob |
 | `mob_die` | Mob's health reaches zero | `UserId` = killing player |
 | `mob_flee` | Mob successfully flees combat | No player context |
 | `player_enter` | A player enters the mob's room | `UserId` = player |
@@ -401,6 +403,7 @@ are subject to perception-scaled reaction delays (see below).
 |--------|--------|-------------|
 | `give_item` | `item_id` (int) | Gives one item copy to player. |
 | `give_item_multiple` | `item_id` (int), `count` (int, default 1) | Gives N copies to player. |
+| `stock_item` | `item_id` (int), `max` (int, default 1) | The acting mob gains one copy through the acquire seam while it carries fewer than `max`, counting every carry list. Fails with no change on a full pocket, or for a dead or charmed mob, so a line after it in a sequence is said only on a refill. |
 | `return_item` | none | Returns the event's item to the player (for `player_give` rejection). Hands back the **real** item off the mob's inventory (found via `ctx.Event.ItemUUID`, else the newest `ctx.Event.ItemId` match), never a fresh copy. Fails if the mob isn't holding it. The "hands back" line hides the NPC's name at the player's sight (#454). On a give hand-back the item is still the player's: nothing moves, the line is said, and `GiveHandBack.Returned` is set. |
 | `take_item` | `item_id` (int) | Removes first matching item from player. |
 | `give_gold` | `amount` (int) | Adds N gold to player. |
@@ -578,6 +581,7 @@ A mob with Perception 50 has:
 | `set_quest_flag` | No |
 | `give_item` | No |
 | `give_item_multiple` | No |
+| `stock_item` | No |
 | `return_item` | No |
 | `take_item` | No |
 | `give_gold` | No |

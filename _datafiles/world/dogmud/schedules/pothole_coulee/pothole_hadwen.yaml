@@ -1,5 +1,5 @@
 id: pothole_hadwen
-description: "Cleric Hadwen keeps the Awakening Pool around the clock -- dawn devotions, day tending, evening hush, night vigil. Never leaves; the rite is always available."
+description: "Cleric Hadwen keeps the Awakening Pool around the clock: dawn devotions, day tending, evening hush, night vigil. Never leaves; the rite is always available."
 segments:
   - start: 5
     end: 9

@@ -20,6 +20,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -182,8 +183,13 @@ func startPocketAttempt(actor Actor, m *mobs.Mob, success bool) StealResult {
 // pocketBaubleAllowed: a bauble is never made in the pocket of anyone's
 // companion (charmed, or an AI companion), nor of a mob that ever was one
 // (a dismissed companion, or one whose charm ran out, keeps the name a
-// player may have given it), since that name must not reach the model.
+// player may have given it), since that name must not reach the model. Nor
+// is one made in the pocket of a species that owns nothing (a training
+// target, species.EmptyPockets).
 func pocketBaubleAllowed(m *mobs.Mob) bool {
+	if sp := species.GetSpecies(m.Character.SpeciesId); sp != nil && sp.EmptyPockets {
+		return false
+	}
 	return !m.Character.IsCharmed() && !m.Character.EverCharmed && !companionai.IsBondedCompanion(m.InstanceId)
 }
 

@@ -1562,6 +1562,10 @@ sweep (`internal/baubles/sweep.go`) reads every live item through them.
   GMCP room contents leave it out, and its tree's output lights the room
   through `internal/itemlight`. Ship a fixture `not_salable`: it is never
   loot.
+- **`worthless`** (`ItemSpec.Worthless`) holds `Value` at 0. Without it
+  `Validate` calls `AutoCalculateValue` for any `value` below 1, from a base of
+  5 gold, so an authored `value: 0` still sells. `not_salable` is read only by
+  vendor validation and does not stop a sale.
 - **The holder index** (`item_behavior.go`) holds HOLDERS, not items: mob
   instances (`IndexMobHolder`, `DropMobHolder`, `MobHolders`) and rooms
   (`IndexRoomHolder`, `DropRoomHolder`, `RoomHolders`) that may hold a treed

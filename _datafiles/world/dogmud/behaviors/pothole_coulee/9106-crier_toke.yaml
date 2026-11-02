@@ -1,0 +1,89 @@
+# Crier Toke (9106), Hub Square (5203).
+#
+# #375 phase 7 (Pothole Coulee pass, owner ruling 2026-10-30): once a player
+# has handed in all eight "Report to Toke" bridges (quests 90 to 97), Toke
+# now and then greets them on arrival with a line about one teacher's
+# standing work. One arrival in four. The line goes to that player alone:
+# respond with user_text only, and an empty room_text sends nothing to the
+# room (actRespond, internal/behaviortree/actions_dialogue.go). One line is
+# picked by the random-decorator cascade Barmaid Dal's tree uses (25, then
+# 33, then 50, then the last), which gives each line an even share. Esk's
+# tree names the other four teachers.
+#
+# A per-mob tree that fails hands the event on, so every other arrival and
+# every other event still reaches his noncombat_questgiver archetype. A
+# sneaking player raises no player_enter (usercommands/go.go), so Toke never
+# greets someone hidden from him.
+
+tree:
+  type: selector
+  children:
+
+    # ── FLAVOUR: a teacher's standing work, for a player with every bridge ──
+    - type: sequence
+      event: player_enter
+      children:
+        - type: condition
+          check: player_has_quest
+          quest: "90-end"
+        - type: condition
+          check: player_has_quest
+          quest: "91-end"
+        - type: condition
+          check: player_has_quest
+          quest: "92-end"
+        - type: condition
+          check: player_has_quest
+          quest: "93-end"
+        - type: condition
+          check: player_has_quest
+          quest: "94-end"
+        - type: condition
+          check: player_has_quest
+          quest: "95-end"
+        - type: condition
+          check: player_has_quest
+          quest: "96-end"
+        - type: condition
+          check: player_has_quest
+          quest: "97-end"
+        - type: condition
+          check: random_chance
+          percent: 25
+        - type: selector
+          children:
+            - type: decorator
+              mod: random
+              percent: 25
+              child:
+                type: action
+                do: respond
+                user_text: >-
+                  {actor} catches your eye as you come in. "Garve was asking
+                  after you. The wash has filled up with bandits again, and he
+                  pays whoever thins them out."
+            - type: decorator
+              mod: random
+              percent: 33
+              child:
+                type: action
+                do: respond
+                user_text: >-
+                  {actor} calls to you with the low mouth. "Falv says a kit
+                  goes stale fast in the fen. He wants to see you brew another."
+            - type: decorator
+              mod: random
+              percent: 50
+              child:
+                type: action
+                do: respond
+                user_text: >-
+                  {actor} leans in. "Keeper Orrin says the grove has drifted
+                  again. Warped things creep back whenever nobody keeps
+                  watch."
+            - type: action
+              do: respond
+              user_text: >-
+                {actor} grins at you with both mouths. "Dace has a fresh purse
+                in that dummy's coat, she tells me. Your fingers could use the
+                practice."

@@ -49,7 +49,7 @@ steps:
     description: "The rite is done, and something in you is newly awake. Cleric Hadwen wants a word before you go."
     hint: "Cleric Hadwen waits at the Awakening Pool to hear how the rite went. Type talk hadwen, then choose The Awakening."
   - id: end
-    description: "The pool has opened you. Two roads from here: learn the town with Crier Toke, or leave through Warden Esk's arch. Cleric Hadwen can point you down either one."
+    description: "The pool has opened you. Crier Toke can teach you the town, or Warden Esk's arch can take you out of it. Cleric Hadwen can point you to either one."
     # An end hint is never displayed (the quest is complete). What a new
     # Opened needs to hear lives where it is shown: Hadwen's road offers and
     # the rite's closing lines name the next road, and the reward line below

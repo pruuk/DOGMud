@@ -1,24 +1,28 @@
-# Quest 89 -- Esk's Road (Pothole Coulee, post-rite bridge)
+# Quest 89: Esk's Road. Pothole Coulee, the way out of the coulee
+# (#375 phase 7, Pothole Coulee pass).
 #
-# One of the two roads that replace quest 29 "Two Roads" (owner ruling R17,
-# 2026-10-20, #375 phase 1). Cleric Hadwen offers both roads after the rite
-# (30-end); the player takes either, both, or neither. Toke's road is 88.
+# Crier Toke offers it once all eight "Report to Toke" bridges are handed in
+# (90-end to 97-end), so it closes the coulee's teaching. Before this pass
+# Cleric Hadwen offered it after the rite (owner ruling R17). A save that took
+# it from him still holds 89-start and finishes at Esk the same way, so nothing
+# the player reads here may say the eight bridges are in.
 #
 # Token flow:
-#   89-start -- granted on Accept of Hadwen's offer topic road_esk
-#               (dialogue/pothole_coulee/9100.yaml).
-#   89-end   -- granted by Warden Esk's hand-in topic road_esk_end
-#               (dialogue/pothole_coulee/9107.yaml), or by the trigger below
-#               when the player arrives through the arch in Thornwall (468)
-#               without handing this in first. The arch transit is a
-#               move_player teleport, which raises room_enter like a walk
-#               (#619).
+#   89-start: granted on Accept of Crier Toke's offer road_esk
+#             (dialogue/pothole_coulee/9106.yaml).
+#   89-end:   granted by Warden Esk's hand-in road_esk_end
+#             (dialogue/pothole_coulee/9107.yaml). Crossing the arch no longer
+#             ends it: the hand-in is the only end.
+#
+# Leaving early needs no quest. Cleric Hadwen's info topic and Toke's
+# esk_road_when topic point to Esk, and Esk's passage topic opens the arch for
+# any Opened player.
 
 questid: 89
 name: Esk's Road
 description: >-
-  Cleric Hadwen has pointed you to Warden Esk, who keeps the arch out of
-  Pothole Coulee to Thornwall and the wider world.
+  You have been sent to Warden Esk, who keeps the arch out of Pothole Coulee
+  to Thornwall and the wider world.
 secret: false
 
 steps:
@@ -30,18 +34,9 @@ steps:
       Warden Esk keeps the arch in the Threshold House, south of Hub Square
       through Market Row. The arch opens on Thornwall.
     hint: >-
-      From the Awakening Pool, go south three times to the Threshold House.
-      Type talk esk.
+      From Hub Square go south twice, through Market Row, to the Threshold
+      House. Type talk esk. If you have already crossed the arch, the portal
+      in the Thornwall temple leads back.
   - id: end
     description: >-
       You reached Warden Esk and the arch out of the coulee.
-
-triggers:
-  # ── THROUGH THE ARCH: arriving in Thornwall closes this road too. ──
-  - event: room_enter
-    room: 468
-    conditions:
-      has: [89-start]
-      missing: [89-end]
-    actions:
-      - grant: 89-end

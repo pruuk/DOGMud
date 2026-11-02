@@ -1,0 +1,13 @@
+itemid: 60
+name: Sand Purse
+namesimple: purse
+description: >-
+  A small leather purse sewn shut around a fistful of sand. It hangs and
+  swings like a full purse and is worth nothing at all. Cutpurse Dace keeps
+  the pocket dummy on the Reed Jetty stocked with them for her students.
+type: object
+subtype: holdable
+uses: 0
+weight: 0.1
+worthless: true
+not_salable: true

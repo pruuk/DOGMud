@@ -1,0 +1,44 @@
+mobid: 9125
+zone: Pothole Coulee
+behavior_archetype: noncombat_questgiver
+statpool: 40
+hostile: false
+non_combatant: true
+charm_immune: true
+maxwander: 0
+groups:
+  - humanoid
+  - coulee_folk
+activitylevel: 10
+idlecommands:
+  - 'emote trims the wick of a lamp on the shored timber and watches the flame
+    settle'
+  - ''
+  - 'emote holds a lamp out toward the dark of the drift and counts under his
+    breath'
+  - ''
+  - 'emote wipes soot from a lamp glass with the cuff of his sleeve'
+  - ''
+character:
+  name: Lamplighter Gethin
+  description: |
+    Gethin keeps the lamps at the head of the old mine, a row of soot-black
+    lanterns hung from the shoring so that whoever goes down into the
+    workings can find the way back up. He is a lean, quiet man with ash on
+    his fingers and pupils that open wide as a cat's in the gloom and pinch
+    to slits when he lifts a lamp, so that the light itself seems to tell
+    you where he is looking. He talks about the dark the way a farmer talks
+    about weather: plainly, without fear, as a thing to be measured and
+    prepared for. Newcomers sent down to him learn what a light can do, and
+    what the dark can do back.
+  speciesid: 1
+  level: 1
+  gold: 0
+  equipment:
+    light:
+      itemid: 20134
+  stats:
+    perception:
+      base: 106
+    willpower:
+      base: 104

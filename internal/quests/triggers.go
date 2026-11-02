@@ -26,6 +26,7 @@ type TriggerDef struct {
 	Target     string `yaml:"target,omitempty" json:"target,omitempty"`           // command target kind filter: self, mob, player, item, container (#375 3b)
 	Effect     string `yaml:"effect,omitempty" json:"effect,omitempty"`           // spell_landed: the spell's effect_type (heal, damage, ...) (#375 3b)
 	Topic      string `yaml:"topic,omitempty" json:"topic,omitempty"`             // topic_heard: the NPC's topic key (#375 3b)
+	Reason     string `yaml:"reason,omitempty" json:"reason,omitempty"`           // item_gain: how the item arrived, one of TriggerGainReasons (#375 p7)
 	// #375 phase 3b slice 4: where, how many, how much of an area.
 	Area         string      `yaml:"area,omitempty" json:"area,omitempty"`                   // the event's room is in this area (#375 3b)
 	Zone         string      `yaml:"zone,omitempty" json:"zone,omitempty"`                   // the event's room is in this zone
@@ -106,6 +107,17 @@ const (
 
 // TriggerTargetKinds are the values a trigger's target filter may take.
 var TriggerTargetKinds = []string{TargetSelf, TargetMob, TargetPlayer, TargetItem, TargetContainer}
+
+// TriggerGainReasons are the values an item_gain trigger's reason filter may
+// take: every acquire.AcquireReason, the words events.ItemOwnership.Reason
+// carries. acquire imports this package by way of users, so this package cannot
+// import those constants; internal/guards/acquire_seam_guard_test.go fails if
+// the two lists differ.
+var TriggerGainReasons = []string{
+	"get", "give", "buy", "loot", "forage", "harvest", "steal", "search_find",
+	"storage", "vault", "auction", "topic_give", "craft", "salvage", "reward",
+	"quest_give", "tree_give", "mail", "shield_swap", "plant",
+}
 
 // Conditions for trigger evaluation.
 type Conditions struct {

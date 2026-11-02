@@ -36,71 +36,42 @@ opener:
     text: The pool is ready when you are. There is no hurry in it, but there is
       also nothing left to wait for.
     hints: When you are ready, choose to begin the rite.
-  # N2: the road hint names only the roads this player is actually offered.
+  # N2: the road hint names only the road this player is actually offered.
   # First match wins, so the no-road states come first. HasQuest(88-start)
   # stays true at 88-end, so a -start token covers "taken" either way.
-  # Both roads taken.
+  # Toke's Road taken.
   - questRequired:
     - 30-end
     - 88-start
-    - 89-start
     text: How does it sit, the new thing under your skin? Settling, I hope. The first
-      one always argues a little before it agrees. You have walked both roads from
-      here, so the pool has done its part for you.
-    hints: Choose a line below to hear about mutations, seeing in the dark, or
-      your name.
-  # Toke's road is hidden (footing started) and Esk's is taken.
+      one always argues a little before it agrees. You have your road from here,
+      so the pool has done its part for you.
+    hints: Choose a line below to hear about another way out, mutations, seeing in
+      the dark, or your name.
+  # Toke's Road is hidden because footing has started.
   - questRequired:
     - 30-end
     - 31-start
-    - 89-start
     text: How does it sit, the new thing under your skin? Settling, I hope. The first
-      one always argues a little before it agrees. You have walked both roads from
-      here, so the pool has done its part for you.
-    hints: Choose a line below to hear about mutations, seeing in the dark, or
-      your name.
-  # One road left: Toke's (Esk's taken).
+      one always argues a little before it agrees. You have your road from here,
+      so the pool has done its part for you.
+    hints: Choose a line below to hear about another way out, mutations, seeing in
+      the dark, or your name.
+  # Toke's Road open.
   - questRequired:
     - 30-end
-    - 89-start
     text: How does it sit, the new thing under your skin? Settling, I hope. The first
-      one always argues a little before it agrees. One road from here is still open
-      to you, if you want it.
+      one always argues a little before it agrees. One road leads on from here, and
+      I can point you down it.
     hints: Choose Toke's Road below to learn the town. Other lines below tell you
-      about mutations, seeing in the dark, or your name.
-  # One road left: Esk's (Toke's taken, or footing already started).
-  - questRequired:
-    - 30-end
-    - 88-start
-    text: How does it sit, the new thing under your skin? Settling, I hope. The first
-      one always argues a little before it agrees. One road from here is still open
-      to you, if you want it.
-    hints: Choose Esk's Road below to leave the coulee. Other lines below tell you
-      about mutations, seeing in the dark, or your name.
-  - questRequired:
-    - 30-end
-    - 31-start
-    text: How does it sit, the new thing under your skin? Settling, I hope. The first
-      one always argues a little before it agrees. One road from here is still open
-      to you, if you want it.
-    hints: Choose Esk's Road below to leave the coulee. Other lines below tell you
-      about mutations, seeing in the dark, or your name.
-  # Both roads open.
-  - questRequired:
-    - 30-end
-    text: How does it sit, the new thing under your skin? Settling, I hope. The first
-      one always argues a little before it agrees. Two roads lead on from here, and
-      I can point you down either one.
-    hints: Choose Toke's Road or Esk's Road below to set out. Other lines below
-      tell you about mutations, seeing in the dark, or your name.
+      about another way out, mutations, seeing in the dark, or your name.
 topics:
-# R17: the two roads from the pool. Take either, both or neither. Both are
-# gated on 30-end, which Hadwen's own hand-in rite_report grants, so each
-# sits on the NPC who took the previous hand-in (the chain rule, #375 phase
-# 7). Toke's road is hidden once footing has started (31-start), since the
-# player is already on it. Quest 29 (Two Roads) is retired. Plan 4 of the
-# phase 7 pass moves Esk's Road (89) to Crier Toke and removes road_esk;
-# until then it stays, beside the another_way info topic.
+# R17 (phase 7 update): Toke's Road is Hadwen's only road. Crier Toke offers the
+# way out as a quest once all eight bridges are in; leaving early is the
+# another_way info topic below, which points to Warden Esk. Toke's Road is gated
+# on 30-end, which Hadwen's own hand-in rite_report grants (the chain rule,
+# #375 phase 7), and hidden once footing has started (31-start), since the
+# player is already on it. Quest 29 (Two Roads) is retired.
 - key: road_toke
   kind: offer
   quest: 88
@@ -118,23 +89,6 @@ topics:
   - 88-end
   - 31-start
   grantsQuest: 88-start
-- key: road_esk
-  kind: offer
-  quest: 89
-  label: Esk's Road
-  playerLine: How do I leave the coulee for the wider world?
-  text: Warden Esk keeps the arch in the Threshold House, south through the market.
-    The arch opens on Thornwall, and from Thornwall every road in the Marches. If
-    you already know this world and only needed the pool, go to him. The coulee will
-    still be here either way.
-  hints: From the Awakening Pool, go south three times, through Hub Square and Market
-    Row, to the Threshold House. Then type talk esk.
-  questRequired:
-  - 30-end
-  questExcluded:
-  - 89-start
-  - 89-end
-  grantsQuest: 89-start
 # The skip path (#375 phase 7; requirements page: "the Pothole Coulee portal
 # quest is an info topic"). Warden Esk's passage topic does the crossing.
 - key: another_way
@@ -184,8 +138,9 @@ topics:
   moodChange: friendly
 # The end of The Awakening (#375 phase 7): the rite's close grants 30-woken,
 # and telling Hadwen it is done grants 30-end, the "Opened" token every gate
-# in the coulee reads. The quest's reward line plays here, and his road
-# offers open on 30-end.
+# in the coulee reads. The quest's reward line plays here. Toke's Road opens on
+# 30-end and is the only offer that does, so the game pitches it at once; Leave
+# on its card brings the menu back with the other lines.
 - key: rite_report
   kind: handin
   quest: 30
@@ -194,7 +149,8 @@ topics:
   text: Then the pool has done its part, and you are one of the Opened. Welcome.
     It will go on settling for a while. That is normal. When you are ready, I can
     point you down a road.
-  hints: Quest complete. Choose Toke's Road below to learn the town.
+  hints: Quest complete. Next, Hadwen offers Toke's Road, the way to learn the town.
+    Choose Leave, and his other lines come back.
   questRequired:
   - 30-woken
   questExcluded:

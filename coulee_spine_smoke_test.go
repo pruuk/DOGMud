@@ -490,16 +490,26 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 	}
 	w.marker(spineHadwen, menu.MarkerHandIn)
 	w.handIn(spineHadwen, "rite_report", "30-end")
-	for _, key := range []string{"road_toke", "road_esk", "another_way"} {
+	for _, key := range []string{"road_toke", "another_way"} {
 		if !w.onMenu(spineHadwen, key) {
 			t.Fatalf("Hadwen's %s is not open after the hand-in", key)
 		}
 	}
+	if w.onMenu(spineHadwen, "road_esk") {
+		t.Fatal("Hadwen still offers Esk's Road")
+	}
 	if crumbs := strings.Join(w.df(spineToke).Breadcrumbs(w.ps()), " "); !strings.Contains(crumbs, "Hadwen") {
 		t.Fatalf("Toke's breadcrumbs do not point at Hadwen: %q", crumbs)
 	}
-	// Hadwen's hand-in opens two roads, so no offer is pitched by itself: the
-	// menu comes back, and the road is chosen from it.
+	// Hadwen's hand-in opens one offer, so the game pitches it at once. Leave on
+	// its card brings back the menu, which still holds the other way out.
+	w.choose("no")
+	w.pump()
+	if w.user.Character.HasQuest("88-start") {
+		t.Fatal("leaving the card granted Toke's Road")
+	}
+	w.choose("another_way")
+	w.pump()
 	w.acceptOffer("road_toke", "88-start")
 	w.leave()
 

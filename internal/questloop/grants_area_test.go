@@ -18,3 +18,12 @@ func TestTriggerSignatureAreaFields(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
+
+// #375 phase 7: two item_gain triggers that differ only by reason are different
+// ways in.
+func TestTriggerSignatureReason(t *testing.T) {
+	td := &quests.TriggerDef{Event: "item_gain", Item: 60, Reason: "steal", Actions: []quests.ActionDef{{Grant: "5-end"}}}
+	if got, want := triggerSignature(td), "item_gain item=60 reason=steal grants=5-end"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}

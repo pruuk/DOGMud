@@ -1,6 +1,6 @@
-# The Threshold House (5215) — the arch answers direct interaction.
+# The Threshold House (5215): the arch answers direct interaction.
 #
-# Esk says "Walk through" — so walking through must work. A naive
+# Esk says "Walk through", so walking through must work. A naive
 # playtest (2026-06-12) showed players try `enter arch`; the only
 # transit path was the NPC-ask. This makes the arch itself a door:
 # enter/go/walk/touch + "arch" teleports the Opened (same destination
@@ -28,15 +28,16 @@ tree:
           do: send_user_text
           text: >-
             You step into the arch. The air goes taut around you, then
-            silvers -- a held breath, a long blink -- and the coulee is
+            silvers. A held breath, a long blink, and the coulee is
             gone: temple stone underfoot, candle-warmth, city sounds
             beyond thick walls. A portal of dark basalt beside the
             temple door leads back to the coulee.
         - type: action
           do: move_player
           room_id: 468
-        # Quest 89 (Esk's Road) closes on arrival through its own room_enter
-        # trigger on 468, which a move_player teleport raises (#619).
+        # Crossing does not close quest 89 (Esk's Road): Esk's hand-in
+        # road_esk_end is its only end (#375 phase 7), and the portal in the
+        # temple leads back to him.
         - type: action
           do: intercept
 
@@ -57,7 +58,7 @@ tree:
           do: send_user_text
           text: >-
             The air inside the arch stays only air. The arch answers
-            the Opened -- the pool comes first. Cleric Hadwen keeps it,
+            the Opened, and the pool comes first. Cleric Hadwen keeps it,
             at the heart of town.
         - type: action
           do: intercept
