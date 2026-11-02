@@ -8,27 +8,17 @@ description: >-
   in the Empty Reach to the north.
 secret: false
 
-flags:
-  # Added 2026-10-23 (#375 batch 7): a quest has one current step, and
-  # reaching "reach" counts "bandit" as done. Killing the Reach-Touched
-  # first used to skip the bandit; now it only sets this flag, and the
-  # bandit's death finishes both (trigger 3).
-  - key: reach-first
-    values: ["yes"]
-    description: "The Reach-Touched died before the hedgerow bandit"
-
 steps:
   - id: start
     # destination inferred from triggers (#375 p4); was: bundled objectives, rooms [5376, 5395]; Phase 2 split review
     description: >-
       Goodwife Pemberton asked you to clear the two preying on the road:
       a hedgerow bandit hidden in the reeds at the Mire Cutoff, and a
-      Reach-Touched out in the Empty Reach to the north.
-    hint: >-
-      The hedgerow bandit lies hidden in the reeds at the Mire Cutoff:
-      from the Lake & Ladle's yard, go southwest. The Reach-Touched haunts
-      the Abandoned Camp, far up the road north through the Empty Reach.
-      Kill both, in either order, then come back and tell Pemberton.
+      Reach-Touched out in the Empty Reach to the north. Clear them in
+      that order.
+    hint: "Start with the hedgerow bandit, hidden in the reeds at the
+      Mire Cutoff: from the Lake & Ladle's yard, go southwest. Then
+      Pemberton wants the Reach-Touched dead too."
   - id: bandit
     destination:
       mob: 9178  # the Reach-Touched, a hidden ambusher: tracked only by a player who sees hidden
@@ -77,7 +67,6 @@ triggers:
     conditions:
       has: ["61-start"]
       missing: ["61-bandit"]
-      missing_flag: {"61-reach-first": "yes"}
     actions:
       - grant: "61-bandit"
       - actor: >-
@@ -86,7 +75,7 @@ triggers:
           Reach-Touched still haunts the Empty Reach to the north.
 
   # ── REACH-TOUCHED defeated second (mob 9178, The Empty Reach) ────────
-  # Needs 61-bandit since 2026-10-23; the first-kill case is trigger 2.
+  # Needs 61-bandit: the order is fixed (tier 2). Killing it earlier is trigger 2.
   - event: mob_death
     mob: 9178
     conditions:
@@ -99,30 +88,14 @@ triggers:
           the stones. The road north is clear of both now. Carry the
           word back to Pemberton at the Lake & Ladle.
 
-  # ── REACH-TOUCHED defeated first (appended 2026-10-23) ───────────────
+  # ── REACH-TOUCHED defeated before the bandit: counts for nothing ─────
   - event: mob_death
     mob: 9178
     conditions:
       has: ["61-start"]
       missing: ["61-bandit"]
     actions:
-      - set_flag: {key: "61-reach-first", value: "yes"}
       - actor: >-
           The Reach-Touched shudders, goes still, and is just a body on
-          the stones. One of the road's two is done. The hedgerow bandit
-          still lies hidden in the reeds at the Mire Cutoff, southwest of
-          the Lake & Ladle.
-
-  # ── HEDGEROW BANDIT defeated second (appended 2026-10-23) ────────────
-  - event: mob_death
-    mob: 9173
-    conditions:
-      has: ["61-start"]
-      missing: ["61-bandit"]
-      has_flag: {"61-reach-first": "yes"}
-    actions:
-      - grant: "61-reach"
-      - actor: >-
-          The hedgerow bandit folds into the ditch he ambushed from and
-          does not get up. The road is clear of both now. Carry the word
-          back to Pemberton at the Lake & Ladle.
+          the stones. It will not stay down long. Pemberton wanted the
+          bandit in the reeds dealt with first.

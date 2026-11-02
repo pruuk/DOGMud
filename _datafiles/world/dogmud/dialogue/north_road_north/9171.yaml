@@ -22,8 +22,7 @@ opener:
     - 61-end
     text: You have the look of someone who has been out on that road and come back.
       Well? Tell me.
-  # One of the two down, in either order (61-bandit, or the 61-reach-first
-  # flag), before the general 61-start variant.
+  # The bandit down, the Reach-Touched still out there.
   - questRequired:
     - 61-bandit
     questExcluded:
@@ -33,17 +32,6 @@ opener:
       Reach-Touched is still out there.
     hints: The Reach-Touched haunts the Abandoned Camp, far up the road north
       through the Empty Reach.
-  - questRequired:
-    - 61-start
-    questExcluded:
-    - 61-bandit
-    - 61-end
-    questFlagRequired:
-      61-reach-first: "yes"
-    text: They say the thing in the Reach is dead. Then only the brute in the reeds
-      is left.
-    hints: The hedgerow bandit lies hidden in the reeds at the Mire Cutoff. From
-      the common room, go west, then southwest.
   - questRequired:
     - 61-start
     questExcluded:
@@ -63,10 +51,11 @@ topics:
     my trade. One is a hedgerow bandit, a brute who lies up in the reeds at the Mire
     Cutoff, just southwest of my yard, and takes travellers as they pass. The other
     is worse. A Reach-Touched thing, out in the Empty Reach to the north, that the
-    Chrysalis has hollowed into something that hunts. Put them both down and the road
-    is walkable again, and you will have my thanks and a fair purse for it.
-  hints: Pemberton wants the hedgerow bandit at the Mire Cutoff and the Reach-Touched
-    in the Empty Reach both dead.
+    Chrysalis has hollowed into something that hunts. Put the brute down first, then
+    the thing in the Reach, and the road is walkable again. You will have my thanks
+    and a fair purse for it.
+  hints: Pemberton wants the hedgerow bandit at the Mire Cutoff dead first, and then
+    the Reach-Touched in the Empty Reach.
   questExcluded:
   - 61-start
   - 61-end
