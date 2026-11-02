@@ -68,11 +68,49 @@ func (b *Balance) validateCombatSteal() {
 	}
 }
 
+// The dual-wield penalty's defaults are the shipped values, so a test binary
+// (which never loads config.yaml) runs the shipped penalty.
+const (
+	defaultDualWieldPenaltyBase        = 50
+	defaultDualWieldPenaltyReduction   = 40
+	defaultDualWieldPenaltyRankDivisor = 50
+	defaultDualWieldPenaltyFloor       = 10
+	defaultDualWieldPenaltyPerExtraArm = 20
+)
+
+// validateCombatDualWield bounds the dual-wield penalty knobs. An absent key
+// reads 0 and takes the default, the bleed-stack shape: none of the five has a
+// legal zero (the divisor would divide by zero; a base of 1 and a floor of 1 is
+// the way to all but switch the penalty off). A floor above the base would make
+// the skill term meaningless, so it is capped at the base.
+func (b *Balance) validateCombatDualWield() {
+	if b.DualWieldPenaltyBase < 1 {
+		b.DualWieldPenaltyBase = defaultDualWieldPenaltyBase
+	}
+	if b.DualWieldPenaltyReduction < 1 {
+		b.DualWieldPenaltyReduction = defaultDualWieldPenaltyReduction
+	}
+	if b.DualWieldPenaltyRankDivisor < 1 {
+		b.DualWieldPenaltyRankDivisor = defaultDualWieldPenaltyRankDivisor
+	}
+	if b.DualWieldPenaltyFloor < 1 {
+		b.DualWieldPenaltyFloor = defaultDualWieldPenaltyFloor
+	}
+	if b.DualWieldPenaltyFloor > b.DualWieldPenaltyBase {
+		b.DualWieldPenaltyFloor = b.DualWieldPenaltyBase
+	}
+	if b.DualWieldPenaltyPerExtraArm < 1 {
+		b.DualWieldPenaltyPerExtraArm = defaultDualWieldPenaltyPerExtraArm
+	}
+}
+
 func (b *Balance) validateCombat() {
 	// ── ROLL SPREAD ──────────────────────────────────────────────────────────
 	if b.RollSpread < 0.05 || b.RollSpread > 0.50 {
 		b.RollSpread = 0.15
 	}
+
+	b.validateCombatDualWield()
 
 	// ── COMBAT: ATTACK COSTS ─────────────────────────────────────────────────
 	// U7 Task 7: one swing, priced by costs.Calc. Seeded at parity with

@@ -158,10 +158,23 @@ formulas go through `configs.WeightedSkill`, never `SkillWeight` directly.
 - Skill level 2: 50% chance to use both weapons
 - Skill level 3+: Always dual wield
 - Claws (natural weapons): Always dual wield
-- Hit penalty: continuous scale from 50 (skill 0) to 10 (skill 50)
-  - Formula: `penalty = 50 - (dualWieldLevel / 50.0) * 40`
-  - Floor: minimum 10% penalty
-- Extra arms (mutation): `+20` penalty for 3rd weapon, `+40` for 4th
+- An empty hand is not a wielded weapon (owner ruling 2026-11-01). The penalty
+  is due only when `wieldedWeaponCount` finds two or more real weapons in the
+  round's plan, players and mobs alike. Fist and claw items count with empty
+  hands, as they do in `Character.ParryCapableArmCount`. A shield, a disabled
+  slot and a hand blocked by a two-hander are not in the plan and never count.
+  `empty_hand_not_dual_wielding_test.go` holds the ruling and its guards.
+- A weapon beside an empty hand still swings the free-hand fist (`a0c23c7ef`), at
+  no penalty. That fist keeps the off-hand swing-count modifier in
+  `calcSwingCount`, which is a separate rule keyed on `isOffhand`.
+- Hit penalty, subtracted from the attack score: continuous scale in
+  `Balance.DualWieldPenalty*`, shipped 50 at skill 0 down to 10 at skill 50
+  - Formula: `penalty = Base - (weapon-combat rank / RankDivisor) * Reduction`
+  - Floor: `DualWieldPenaltyFloor`, shipped 10
+- Past the off hand: `DualWieldPenaltyPerExtraArm`, shipped `+20` for the third
+  planned swing and `+40` for the fourth. Real weapons plan first, so an empty
+  hand never moves a weapon's slot. With two real weapons held, every swing in
+  the round pays, a fist from an empty extra arm included.
 
 ## Stage 7.5: Tactical Combat Enhancements
 
