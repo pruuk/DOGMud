@@ -452,7 +452,8 @@ own, unrelated action param.)
   only when the player ends up hidden (already hidden counts). `hood`
   names the lantern as `ItemId` and is sent only when the hood closed
   (`usercommands.Hood`); `picklock` is sent when a lock opens
-  (`usercommands.notifyPicklockQuest`), aimed at the room container by name
+  and `unlock` when a key opens one or finds it already open
+  (`usercommands.notifyLockQuest`), aimed at the room container by name
   (`target: container`, `noun:`) or, for an exit, at nothing with the exit's
   name as `Noun`; `ambush` is sent once for a player's opening strike from
   hiding, melee (`notifyAmbushQuest` in `NewRound_DoCombat_unified.go`, on
