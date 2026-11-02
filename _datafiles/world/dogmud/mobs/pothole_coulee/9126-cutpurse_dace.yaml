@@ -9,6 +9,12 @@ maxwander: 0
 groups:
   - humanoid
   - coulee_folk
+  # "guard" here is the witness marker (seeders.classifyWitnessResponse). A
+  # noncombatant without it recoils from a theft and steps through a random
+  # exit, whatever its maxwander says, and every lift on the jetty is a theft
+  # she teaches. Her hand-ins need her here. She belongs to no faction, so the
+  # marker enforces no law (TestCouleePropsEnforceNoLaw).
+  - guard
 activitylevel: 10
 idlecommands:
   - 'emote walks a coin across her knuckles and back without looking at it'

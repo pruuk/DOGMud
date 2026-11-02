@@ -83,7 +83,7 @@ func TestTokeOffersEsksRoadOnlyAfterEveryBridge(t *testing.T) {
 func TestLeavingTheCouleeAsksOnlyToBeOpened(t *testing.T) {
 	passage := loadCouleeDialogue(t, "9107.yaml").FindTopic("passage")
 	require.NotNil(t, passage)
-	require.Equal(t, []string{"30-end"}, []string(passage.QuestRequired))
+	require.Equal(t, []string{"30-end"}, passage.QuestRequired)
 	require.Empty(t, passage.QuestExcluded)
 	require.Empty(t, passage.HeardRequired)
 

@@ -8,6 +8,13 @@ maxwander: 0
 carry_capacity: 5
 groups:
   - construct
+  # "guard" here is the witness marker (seeders.classifyWitnessResponse): a
+  # robbed mob with it seeds no revenge goal. Without it a theft seeds one, and
+  # goals are saved by template, so every fresh dummy hunted the student and
+  # broke off their talk menus. A dummy holds no grudge. It belongs to no
+  # faction, so the marker enforces no law (TestCouleePropsEnforceNoLaw). A
+  # caught student is still swung at, and that fight ends with the dummy.
+  - guard
 activitylevel: 5
 idlecommands:
   - 'emote turns a slow half circle on its peg, and a little bell at its cuff
