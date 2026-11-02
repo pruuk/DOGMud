@@ -67,3 +67,22 @@ func HandleTalkNextOffer(e events.Event) events.ListenerReturn {
 	choose(user, evt.MobInstanceId, evt.TopicKey)
 	return events.Continue
 }
+
+// HandleTalkMenuAgain re-shows the talk menu queued by an accepted offer for a
+// held item. While a menu gate holds or a prompt is open nothing opens, and the
+// hand-in waits in the talk menu with its [?].
+func HandleTalkMenuAgain(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.TalkMenuAgain)
+	if !ok {
+		return events.Continue
+	}
+	user := users.GetByUserId(evt.UserId)
+	if user == nil {
+		return events.Continue
+	}
+	if reason, promptOpen := user.MenuBlockedReason(); reason != menu.CloseNone || promptOpen {
+		return events.Continue
+	}
+	openMenu(user, evt.MobInstanceId, "")
+	return events.Continue
+}

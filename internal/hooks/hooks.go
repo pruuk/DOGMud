@@ -107,6 +107,8 @@ func RegisterListeners() {
 	events.RegisterListener(events.Quest{}, HandleQuestUpdate)
 	// A hand-in pitches the one next offer it unlocked (#375 P1)
 	events.RegisterListener(events.TalkNextOffer{}, conversation.HandleTalkNextOffer)
+	// An accepted offer for a held item brings the menu back with the hand-in (#375 phase 7 tier 1)
+	events.RegisterListener(events.TalkMenuAgain{}, conversation.HandleTalkMenuAgain)
 	// Spawn events
 	events.RegisterListener(events.PlayerSpawn{}, HandleJoin)
 	events.RegisterListener(events.PlayerSpawn{}, LightNoticeOnSpawn)

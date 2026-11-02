@@ -117,6 +117,17 @@ func (t TalkNextOffer) Type() string { return `TalkNextOffer` }
 // TalkNextOfferPriority is the queue priority of TalkNextOffer.
 const TalkNextOfferPriority = 45
 
+// TalkMenuAgain re-shows an NPC's talk menu after an offer for an item the
+// player already holds is accepted (#375 phase 7 tier 1). It is queued at
+// TalkNextOfferPriority so the grant and the step start have run first, and the
+// hand-in they opened is on the menu.
+type TalkMenuAgain struct {
+	UserId        int
+	MobInstanceId int
+}
+
+func (t TalkMenuAgain) Type() string { return `TalkMenuAgain` }
+
 // For special room-targetting actions
 type RoomAction struct {
 	RoomId       int

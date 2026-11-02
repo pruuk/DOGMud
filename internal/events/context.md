@@ -272,6 +272,10 @@ and reward lines (priority 0) and before a menu shown last (priority 50).
 `conversation.HandleTalkNextOffer` (registered in `internal/hooks/hooks.go`)
 handles it.
 
+`TalkMenuAgain{UserId, MobInstanceId}` (tier 1) is queued at the same priority
+by an accepted offer for a held item (`CarriesItem`), so the grant and step
+start run first; `conversation.HandleTalkMenuAgain` reopens the talk menu.
+
 `DrainAllQueuedEventsForTest` and `DrainQueuedByTypeForTest` free each drained
 unique event's slot, as `ProcessEvents` does, so a later unique event (a
 player's `NpcMarkersChanged`, say) queues again instead of being dropped as a
