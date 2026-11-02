@@ -8,6 +8,8 @@ const (
 	KindInfo   = "info"
 	KindOffer  = "offer"
 	KindHandIn = "handin"
+	// KindSale teaches recipes for a price. It is not a quest: it grants no token.
+	KindSale = "sale"
 )
 
 // Gates is the gating family every topic and opener variant shares. The YAML
@@ -58,6 +60,8 @@ type Effects struct {
 	GivesGold     int           `yaml:"givesGold,omitempty" json:"givesGold,omitempty"`
 	ChargesGold   int           `yaml:"chargesGold,omitempty" json:"chargesGold,omitempty"`
 	MoodChange    string        `yaml:"moodChange,omitempty" json:"moodChange,omitempty"`
+	// TeachesRecipes is what a sale teaches once its price is paid.
+	TeachesRecipes []string `yaml:"teachesRecipes,omitempty" json:"teachesRecipes,omitempty"`
 }
 
 // Topic is one menu entry on an NPC. See the spec, section 3.2.
@@ -76,6 +80,11 @@ type Topic struct {
 	// step description) when that line would be wrong for this offer, such as
 	// one shown to a player already holding the item. Offers only.
 	Objective string `yaml:"objective,omitempty" json:"objective,omitempty"`
+	// NotReadyText is what the NPC says when the player chooses a sale without
+	// the skill for every recipe. PaidText is what the NPC says once it is paid.
+	// Sales only.
+	NotReadyText string `yaml:"notReadyText,omitempty" json:"notReadyText,omitempty"`
+	PaidText     string `yaml:"paidText,omitempty" json:"paidText,omitempty"`
 	// Behavior fires the mob's behavior tree with event player_topic and
 	// this topic's key once the topic has played (R12).
 	Behavior bool `yaml:"behavior,omitempty" json:"behavior,omitempty"`

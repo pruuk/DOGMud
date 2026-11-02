@@ -55,6 +55,14 @@ type PlayerState struct {
 	// no charge and gives only a worthless item the player lacks (owner
 	// ruling 2). Nil means never shelved.
 	Shelved func(questId int) bool
+	// KnowsRecipe reports whether the player knows a recipe. It hides a sale whose
+	// recipes are all known. Nil counts as not known.
+	KnowsRecipe func(id string) bool
+	// RecipeSkillMet reports whether the player has the skill the recipe needs, the
+	// same test the craft command uses. Nil fails closed.
+	RecipeSkillMet func(id string) bool
+	// LearnRecipe teaches a recipe. It backs a sale's teachesRecipes.
+	LearnRecipe func(id string)
 }
 
 // QuestFlagSet describes a single key/value flag to write on the player's character.

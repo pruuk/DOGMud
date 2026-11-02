@@ -16,26 +16,22 @@ steps:
       three disagreeing records of the Confluence's waters."
     hint: "First, the damaged chart in the bookseller's shop. From the Margin
       Hall, go east twice to the Scholars' Gate, then south into the
-      Bookseller's. Type look damaged chart."
+      Bookseller's. Type search."
   - id: chart
     destination:
       room: 6131
     description: "The bookseller's damaged chart shows a fourth channel at the
       junction, drawn as a distinct waterway."
-    hint: "Next, Tallis's old charts at the Scriveners' Stall. From the
-      Bookseller's, go north to the Scholars' Gate, east twice to the Municipal
-      Hall, north to the Hall Steps, east to the North Cross, north four times
-      to the Weighhouse Yard, then west into the Scriveners' Stall. Type look
-      old charts."
+    hint: "Next, Tallis's old charts at the Scriveners' Stall. From the North
+      Cross, go north four times to the Weighhouse Yard, then west. Bring a
+      light after dark. Type search."
   - id: scrivener
     destination:
       room: 6143
     description: "Tallis's oldest charts agree: a fourth channel, struck and
       re-marked across sixty years of surveys."
-    hint: "Last, the marginal note on the great map in the Municipal Hall. From
-      the Scriveners' Stall, go east into the Weighhouse Yard, south four times
-      to the North Cross, west to the Hall Steps, then south into the Municipal
-      Hall. Type look marginal note."
+    hint: "Last, the marginal note on the great map in the Municipal Hall, south
+      of the Hall Steps, which are just west of the North Cross. Type search."
   - id: map
     destination:
       room: 6220
@@ -69,9 +65,9 @@ rewards:
 
 triggers:
   # ── SOURCE 1: the bookseller's damaged chart (6226, Scholars' Quarter) ──
-  - event: room_interact
+  - event: command
+    command: search
     room: 6226
-    noun: damaged-chart
     conditions:
       has: ["73-start"]
       missing: ["73-chart"]
@@ -83,20 +79,10 @@ triggers:
           distinct, running off to the southwest, no mere smear of current.
           One of the three records Quist sent you to find.
       - observer: "{actor} studies the bookseller's water-damaged old chart with new attention."
-  - event: room_interact
-    room: 6226
-    noun: damaged-chart
-    conditions:
-      missing: ["73-start"]
-    actions:
-      - actor: >-
-          A water-damaged old harbor chart on the bookseller's wall, half its
-          detail lost to a stain. Old, and odd at the junction, but you have no
-          particular reason to study it closely.
   # ── SOURCE 2: Tallis's old charts (6131, the Scriveners' Stall) ──
-  - event: room_interact
+  - event: command
+    command: search
     room: 6131
-    noun: old-charts
     conditions:
       has: ["73-chart"]
       missing: ["73-scrivener"]
@@ -108,20 +94,10 @@ triggers:
           could not agree whether it belonged. The disagreement is consistent.
           Two records now, and they were never copied from each other.
       - observer: "{actor} pores over the oldest charts in Tallis's stall."
-  - event: room_interact
-    room: 6131
-    noun: old-charts
-    conditions:
-      missing: ["73-chart"]
-    actions:
-      - actor: >-
-          The oldest charts in the stall, a few showing the river-junction with
-          more channels than the current maps carry. A curiosity of the copying
-          trade, and nothing you have a reason to pursue.
   # ── SOURCE 3: the Municipal Hall marginal note (6143, Tri-Cross Square) ──
-  - event: room_interact
+  - event: command
+    command: search
     room: 6143
-    noun: marginal-note
     conditions:
       has: ["73-scrivener"]
       missing: ["73-map"]
@@ -134,13 +110,3 @@ triggers:
           hung in public, says the count was once in dispute. Three independent
           records. Time to report back to Quist.
       - observer: "{actor} examines the marginal note on the great hall map closely."
-  - event: room_interact
-    room: 6143
-    noun: marginal-note
-    conditions:
-      missing: ["73-scrivener"]
-    actions:
-      - actor: >-
-          An old marginal annotation on the civic map: a fourth channel,
-          struck through, with a note that the surveyors could not agree. The
-          staff have stopped seeing it.

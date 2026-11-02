@@ -5,20 +5,18 @@ defaultMood: neutral
 # Veyra Coil-Tongue, the convergence-crafter. Transactional, exacting, few
 # words.
 #
-# Gating notes:
-#   - The Convergence (78) needs masterworkRequired: 50, an item the player
-#     made at craft skill 50 or more, carried. Quest 78's own trigger grants
-#     78-end the moment 78-start is accepted. Until then the offer is hidden
-#     and its breadcrumb tells the player what Veyra wants to see.
-#   - Once known (78-end), Veyra sells nine secret recipes, quests 79 to 87,
-#     each once. secrets_list names all nine with their prices. Each secret
-#     is one offer whose pitch says what it is and what it costs;
-#     goldRequired hides the offer until the player carries the price, and
-#     Accept charges it (chargesGold) before the quest start is granted. The
-#     quest's quest_granted trigger then teaches the recipes. A bought
-#     secret hides its offer by its own start token.
-#   - No breadcrumbs on the nine offers: secrets_list carries every price,
-#     and nine "come back later" lines would bury the opener.
+# Sales (#375 phase 7 tier 3b):
+#   - She sells nine secret recipes, each as a kind: sale topic. A sale is not
+#     a quest. It carries chargesGold, teachesRecipes, notReadyText and
+#     paidText, and nothing gates it but knowledge: the line leaves the menu
+#     once the player knows every recipe in it.
+#   - Choosing a secret without the skill for every recipe in it plays
+#     notReadyText, which names the trades and no numbers. No card opens and
+#     no price is shown. With the skill, her pitch plays and a card shows the
+#     price. Accept charges it and teaches every recipe, then paidText plays.
+#   - Quests 78 to 87 are retired. The price list is the menu itself.
+#   - She cannot be harmed (mob 9584: non_combatant, charm_immune, not
+#     hostile), pinned by internal/guards/veyra_cannot_be_harmed_test.go.
 
 opener:
   text: I don't look up from the bench for strangers. You'll have to earn that.
@@ -27,53 +25,18 @@ opener:
     have made themselves.
   variants:
   - questRequired:
-    - 78-end
     - 77-end
     text: You've seen what's under the Crash Site, and you're still standing here.
       Good. I know nine secrets worth the name. None of them comes cheap.
-    hints: To hear Veyra's secrets and their prices, choose her line below. A
-      secret you can pay for now shows as an offer of its own.
-  - questRequired:
-    - 78-end
-    text: You're known to me now. I know nine secrets worth the name. None of them
-      comes cheap.
-    hints: To hear Veyra's secrets and their prices, choose her line below. A
-      secret you can pay for now shows as an offer of its own.
-  - questExcluded:
-    - 78-start
-    - 78-end
-    masterworkRequired: 50
+    hints: Choose one of her secrets below. If you have the skill for it, Veyra
+      names her price.
+  - masterworkRequired: 50
     text: That's your hand on that work. I can tell. I don't usually make time for
       strangers, but I'll make an exception.
-    hints: Choose The Convergence below to hear what Veyra means.
+    hints: Choose a line below to hear what she teaches.
 topics:
-- key: convergence_intro
-  kind: offer
-  quest: 78
-  label: The Convergence
-  playerLine: What does my work mean to you?
-  text: Turn that over again. Yes, your hand, not a shop's. That's the only
-    credential I recognize. Six trades, made to agree with each other in one piece.
-    That's the convergence. I don't teach it to just anyone. I keep the recipes
-    secret, and I share them only with people who've already proven they can hold a
-    tool steady. You qualify. Say the word, and you're known to me. Then we can talk
-    about what my secrets cost.
-  hints: Accept to become known to Veyra. After that she will sell you her secret
-    recipes, one at a time.
-  breadcrumb: I don't take on hands I haven't seen work. Show me fine work you made
-    with your own hands, the kind only a practiced crafter turns out, and we'll
-    talk about what comes after.
-  questExcluded:
-  - 78-start
-  - 78-end
-  masterworkRequired: 50
-  grantsQuest: 78-start
-# The nine secrets. Each was four topics (owned_, teach_, refuse_, price_):
-# the pitch now carries the price_ text, secrets_list carries every price
-# (refuse_), and a bought secret simply leaves the menu (owned_).
 - key: teach_bandolier
-  kind: offer
-  quest: 79
+  kind: sale
   label: Secret of the Vitalis Bandolier
   playerLine: Will you teach me the Vitalis Bandolier?
   text: The Vitalis Bandolier. A belt that keeps its own contents fresh and feeds
@@ -83,17 +46,17 @@ topics:
   hints: Accept to pay Veyra's price and learn the recipes. Then gather the
     materials and make each part with your own hands. To see the recipes you know,
     type craft list.
-  questRequired:
-  - 78-end
-  questExcluded:
-  - 79-start
-  - 79-end
-  goldRequired: 17500
-  grantsQuest: 79-start
+  notReadyText: Come back when you've practiced at the loom, the enchanting circle
+    and the alchemy bench.
+  paidText: Paid. The recipes are yours. Bind the straps true. This one has to
+    breathe on its own before I will call it finished.
   chargesGold: 17500
+  teachesRecipes:
+  - reinforced-harness
+  - preservation-runes
+  - assemble-vitalis-bandolier
 - key: teach_blackrazor
-  kind: offer
-  quest: 80
+  kind: sale
   label: Secret of the Blackrazor
   playerLine: Will you teach me the Blackrazor?
   text: The Blackrazor. Not a blade I'd show just anyone. It doesn't stay quiet,
@@ -103,17 +66,17 @@ topics:
   hints: Accept to pay Veyra's price and learn the recipes. Then gather the
     materials and make each part with your own hands. To see the recipes you know,
     type craft list.
-  questRequired:
-  - 78-end
-  questExcluded:
-  - 80-start
-  - 80-end
-  goldRequired: 25000
-  grantsQuest: 80-start
+  notReadyText: Come back when you've practiced at the jeweler's bench, the alchemy
+    bench and the forge.
+  paidText: Paid. The recipes are in your hands. Forge it at my stations when you
+    are ready.
   chargesGold: 25000
+  teachesRecipes:
+  - hungering-guard
+  - obsidian-edge-resin
+  - assemble-the-blackrazor
 - key: teach_wayfarer
-  kind: offer
-  quest: 81
+  kind: sale
   label: Secret of the Wayfarer's Bottomless Pack
   playerLine: Will you teach me the Wayfarer's Bottomless Pack?
   text: The Wayfarer's Bottomless Pack. Tailoring, mostly seams and spatial
@@ -124,17 +87,17 @@ topics:
   hints: Accept to pay Veyra's price and learn the recipes. Then gather the
     materials and make each part with your own hands. To see the recipes you know,
     type craft list.
-  questRequired:
-  - 78-end
-  questExcluded:
-  - 81-start
-  - 81-end
-  goldRequired: 12500
-  grantsQuest: 81-start
+  notReadyText: Come back when you've practiced at the forge, the enchanting circle
+    and the loom.
+  paidText: Paid. The recipes are yours. Cut the frame square. A pack that fails
+    you three roads from home is worse than none at all.
   chargesGold: 12500
+  teachesRecipes:
+  - reinforced-frame
+  - spatial-stitching
+  - assemble-wayfarers-pack
 - key: teach_aegis
-  kind: offer
-  quest: 82
+  kind: sale
   label: Secret of the Aegis of Mockery
   playerLine: Will you teach me the Aegis of Mockery?
   text: The Aegis of Mockery. A shield that answers a blocked blow by putting
@@ -144,17 +107,17 @@ topics:
   hints: Accept to pay Veyra's price and learn the recipes. Then gather the
     materials and make each part with your own hands. To see the recipes you know,
     type craft list.
-  questRequired:
-  - 78-end
-  questExcluded:
-  - 82-start
-  - 82-end
-  goldRequired: 20000
-  grantsQuest: 82-start
+  notReadyText: Come back when you've practiced at the jeweler's bench, the alchemy
+    bench and the forge.
+  paidText: Paid. The recipes are yours. Set the housing clean. A voice that cannot
+    carry an insult is just noise, and I will not put my name on noise.
   chargesGold: 20000
+  teachesRecipes:
+  - voice-amber-housing
+  - resonance-lacquer
+  - assemble-aegis-of-mockery
 - key: teach_thornwall
-  kind: offer
-  quest: 83
+  kind: sale
   label: Secret of the Thornwall Harness
   playerLine: Will you teach me the Thornwall Harness?
   text: The Thornwall Harness. Tailoring built around barbed plate. Anything that
@@ -163,17 +126,17 @@ topics:
   hints: Accept to pay Veyra's price and learn the recipes. Then gather the
     materials and make each part with your own hands. To see the recipes you know,
     type craft list.
-  questRequired:
-  - 78-end
-  questExcluded:
-  - 83-start
-  - 83-end
-  goldRequired: 15000
-  grantsQuest: 83-start
+  notReadyText: Come back when you've practiced at the forge, the alchemy bench and
+    the loom.
+  paidText: Paid. The recipes are yours. Set the spikes even and quench them slow.
+    A wall that cannot hold its edge is just a fence.
   chargesGold: 15000
+  teachesRecipes:
+  - barbed-spike-plates
+  - anti-corrosion-quench
+  - assemble-thornwall-harness
 - key: teach_prism
-  kind: offer
-  quest: 84
+  kind: sale
   label: Secret of the Seething Prism
   playerLine: Will you teach me the Seething Prism?
   text: The Seething Prism. Jewelcrafting around a containment lattice that doesn't
@@ -183,36 +146,36 @@ topics:
   hints: Accept to pay Veyra's price and learn the recipes. Then gather the
     materials and make each part with your own hands. To see the recipes you know,
     type craft list.
-  questRequired:
-  - 78-end
-  questExcluded:
-  - 84-start
-  - 84-end
-  goldRequired: 20000
-  grantsQuest: 84-start
+  notReadyText: Come back when you've practiced at the enchanting circle, the
+    alchemy bench and the jeweler's bench.
+  paidText: Paid. The recipes are yours. Contain it properly, or it will grow past
+    whatever you built to hold it.
   chargesGold: 20000
+  teachesRecipes:
+  - containment-lattice
+  - nutrient-suspension
+  - assemble-seething-prism
 - key: teach_zephyr
-  kind: offer
-  quest: 85
+  kind: sale
   label: Secret of the Zephyr Treads
   playerLine: Will you teach me the Zephyr Treads?
   text: The Zephyr Treads. Tailoring and windlace bindings, soled with quicksilver.
     You'll forget what it cost to run before you wore them. 12,500 gold, all of it up
-    front. Pay, and I teach you. Listen closely. I will say it once.
+    front. Pay, and I teach you. Listen closely. I say it once.
   hints: Accept to pay Veyra's price and learn the recipes. Then gather the
     materials and make each part with your own hands. To see the recipes you know,
     type craft list.
-  questRequired:
-  - 78-end
-  questExcluded:
-  - 85-start
-  - 85-end
-  goldRequired: 12500
-  grantsQuest: 85-start
+  notReadyText: Come back when you've practiced at the alchemy bench, the enchanting
+    circle and the loom.
+  paidText: Paid. The recipes are yours. Work quickly. The soles won't wait around
+    for slow hands.
   chargesGold: 12500
+  teachesRecipes:
+  - quicksilver-soles
+  - windlace-bindings
+  - assemble-zephyr-treads
 - key: teach_choir
-  kind: offer
-  quest: 86
+  kind: sale
   label: Secret of the Staff of the Hollow Choir
   playerLine: Will you teach me the Staff of the Hollow Choir?
   text: The Staff of the Hollow Choir. Enchanting around a conductor core. It sings
@@ -222,17 +185,17 @@ topics:
   hints: Accept to pay Veyra's price and learn the recipes. Then gather the
     materials and make each part with your own hands. To see the recipes you know,
     type craft list.
-  questRequired:
-  - 78-end
-  questExcluded:
-  - 86-start
-  - 86-end
-  goldRequired: 22500
-  grantsQuest: 86-start
+  notReadyText: Come back when you've practiced at the forge, the jeweler's bench
+    and the enchanting circle.
+  paidText: Paid. The recipes are yours. Tune each gem true, or the whole choir
+    sings out of key.
   chargesGold: 22500
+  teachesRecipes:
+  - conductor-core
+  - choir-focus-gems
+  - assemble-hollow-choir-staff
 - key: teach_phial
-  kind: offer
-  quest: 87
+  kind: sale
   label: Secret of the Phial of Second Birth
   playerLine: Will you teach me the Phial of Second Birth?
   text: 'The Phial of Second Birth. Alchemy, at the bottom of it: a reduction that
@@ -242,38 +205,28 @@ topics:
   hints: Accept to pay Veyra's price and learn the recipes. Then gather the
     materials and make each part with your own hands. To see the recipes you know,
     type craft list.
-  questRequired:
-  - 78-end
-  questExcluded:
-  - 87-start
-  - 87-end
-  goldRequired: 15000
-  grantsQuest: 87-start
+  notReadyText: Come back when you've practiced at the cooking fire and the alchemy
+    bench.
+  paidText: Paid. The recipes are yours. Reduce it slow. Rush the base and there is
+    no second birth in it, only ash.
   chargesGold: 15000
-- key: secrets_list
+  teachesRecipes:
+  - reduction-base
+  - assemble-phial-of-second-birth
+- key: convergence_intro
   kind: info
-  label: What secrets do you know, and what do they cost?
-  text: Nine worth the name, and I don't haggle. All of it up front. The Wayfarer's
-    Bottomless Pack and the Zephyr Treads, 12,500 gold each. The Thornwall Harness
-    and the Phial of Second Birth, 15,000 each. The Vitalis Bandolier, 17,500. The
-    Aegis of Mockery and the Seething Prism, 20,000 each. The Staff of the Hollow
-    Choir, 22,500. The Blackrazor, 25,000. Come with the coin for one, and I'll tell
-    you what it is.
-  hints: Each secret Veyra will sell you shows below as an offer once you carry its
-    price in gold. Choose one to hear what it is before you pay.
-  marked: true
-  questRequired:
-  - 78-end
-# confluence is the "confluence convergence commission" pattern (gated
-# questExcluded [78-end]). Its first line is now the Convergence offer's
-# breadcrumb; this is its second, for a player not yet known.
+  label: What is the convergence?
+  text: Six trades, made to agree with each other in one piece. That's the
+    convergence. I don't teach it to just anyone. I keep the recipes secret, and I
+    share them only with people who've already proven they can hold a tool steady.
+    Practice every trade a secret needs, and then we can talk about what it costs.
+  hints: Veyra teaches nine secret recipes. Choose one of them above to hear what
+    it takes.
 - key: confluence
   kind: info
   label: What is it you make here?
   text: Six trades, made to agree with each other. That's the whole of what I do
     here. I don't explain it to people who haven't held a tool.
-  questExcluded:
-  - 78-end
 - key: scar
   kind: info
   label: What happened to your hand?
@@ -282,7 +235,5 @@ topics:
 - key: gold
   kind: info
   label: Do you sell what you make?
-  text: Nothing I know comes cheap, and I don't haggle. And I don't sell to hands I
-    haven't seen work.
-  questExcluded:
-  - 78-end
+  text: Nothing I know comes cheap, and I don't haggle. I teach hands that have
+    earned it.

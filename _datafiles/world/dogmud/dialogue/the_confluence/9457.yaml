@@ -28,14 +28,14 @@ topics:
   kind: info
   label: Will you send word to the senior Keepers?
   text: You have followed this further than most, and the senior Keepers know it.
-    I have sent word already. They will not turn you back at the door now. Go
-    through to the cloisters, beyond the warded door past the Chapel of the Brenn,
-    and ask for Brother Cael in the Archive. He keeps the building records. If
-    anyone will show you what the temple was raised on, it is him.
-  hints: From the Crossing, go east three times through the warded door to the
-    Cloister Gate, east to the Cloister Garth, north to the North Walk, then east
-    into the Archive. He sleeps in the archive chair late at night. Type talk
-    cael.
+    I have sent word already. They will not turn you back at the door now. But the
+    thread you carry is the Margin's, and Quist the Elder holds the next step of
+    it. Hear him first. Then go through to the cloisters, beyond the warded door
+    past the Chapel of the Brenn, and ask for Brother Cael in the Archive. He keeps
+    the building records. If anyone will show you what the temple was raised on, it
+    is him.
+  hints: Quist the Elder at the Margin Hall has the next step. Choose The
+    Undercroft from him.
   marked: true
   questRequired:
   - 73-end

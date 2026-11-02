@@ -46,7 +46,12 @@ what a trigger *does*, you edit this package.
 - **conditions.go** — `PlayerState` interface and `EvalConditions`.
 - **actions.go** — `ActionContext` interface and `ExecuteAction`.
 - **bridge.go** — `GameBridge`, the concrete implementation of `ActionContext`
-  against real users/rooms/mobs. The biggest file in the package.
+  against real users/rooms/mobs. The biggest file in the package. It also
+  holds `LearnRecipeWithNotice(c, recipe, send)`: teaches a recipe and, when it
+  was new, sends the "You have learned the recipe for X" line through `send`
+  (a known recipe is skipped silently). `GameBridge.LearnRecipe` (a quest's
+  `learn_recipe`) and `conversation.PlayerState`'s `LearnRecipe` (a dialogue
+  `sale`'s `teachesRecipes`) both call it, so both print the same line.
 - **guards.go** — `EvalGuard`: depth limit, visit tracking, grant dedupe, trace.
 - **loader.go** — `GetEngine` singleton, `LoadDataFiles`, `ValidateAllFlags`.
 - **destination.go**: `Engine.ResolveDestination`, `Destination`, `DestKind`,

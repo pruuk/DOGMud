@@ -479,14 +479,16 @@ loadedCount=126` (100 base + 17 component + 9 assembly),
 zero `ValidateRecipeIngredientTags` faults, `ValidateZoneConsistency
 errors=0 mode=panic`, 0 panics.
 
-**The two tiers.** A player first crafts the **component** (an
-everyday, discoverable recipe, `skill_minimum: 50`, no gating) at an
-ordinary station, then hands those self-made components — plus the
-rare Stage-3 reagents and bulk stock — to a **quest-taught assembly
+**The two tiers.** A player first crafts the **component** (a recipe
+at `skill_minimum: 50`; as authored it was a plain discoverable recipe,
+and since 2026-10-05 it is `learn_only`, taught with its secret) at its
+own station, then hands those self-made components, plus the
+rare Stage-3 reagents and bulk stock, to a **sale-taught assembly
 recipe** (`skill_minimum: 65`, `learn_only: true`,
 `require_own_components: true`) to produce the legendary-BIS item.
-Stage 4b's secret-recipe quests are what teach the assembly slugs via
-`learn_recipe`.
+Both tiers are learned together by buying the secret from Veyra, who
+teaches only a player with the skill for every recipe in it.
+Veyra's sale topics (Stage 4b) are what teach the assembly slugs.
 
 ### The 9 assembly recipes (Stage 4b teaches these slugs)
 
@@ -509,7 +511,7 @@ Each `learn_only: true` + `require_own_components: true`,
 ### The 17 components → recipe(skill) → assembly
 
 Each component is a self-crafted subcomponent (ids **40208-40224**,
-`is_component: true`, `rarity_tier: 78`), made by a discoverable
+`is_component: true`, `rarity_tier: 78`), made by a `learn_only`
 `skill_minimum: 50` recipe of the same slug. `require_own_components`
 checks each component's `MakerName` — the player must craft these
 themselves before the assembly will accept them. The bulk materials
@@ -567,7 +569,7 @@ the_confluence/veyra.yaml`) keeps her at the alchemy bench crafting
 - **`learn_only` (assembly recipes).** The nine assembly recipes are
   excluded from craft-discovery (`GetEligibleRecipes` skips
   `LearnOnly`), so a player can never stumble onto them at the bench.
-  They are taught only by quest `learn_recipe` (bought from Veyra)
+  They are taught only by a sale topic on Veyra (`teachesRecipes`)
   or admin `learn`. Help templates exist for every recipe (`help
   <slug>`) as reference — the help file is documentation, not the
   gate.
@@ -589,85 +591,57 @@ Veyra sells the nine `learn_only` assembly recipes from Stage 4a, and
 buying a secret also teaches the sub-recipes it needs. Without the
 purchase those slugs are unreachable by any player.
 
-### Quests
+### Sales (no quests)
 
-Quest **78 "The Convergence"** is the masterwork-gated introduction: it
-fires the instant `78-start` is granted and grants `78-end` in the same
-beat. There is no separate player step; the quest only gives Veyra's
-dialogue a `questRequired` token ("known to Veyra") to key on. Quests
-**79-87** are the nine secrets, one per pinnacle item, named "Secret of
-the ..." after the item. They charge nothing themselves: the gold is
-taken by the dialogue node that grants `{id}-start`, and the quest's
-`quest_granted` trigger then teaches the recipes.
+Since #375 phase 7 tier 3 (2026-11-02) quests 78 to 87 are retired.
+Each secret is a `kind: sale` topic on Veyra (`teach_<slug>`), not a
+quest. A sale carries `chargesGold`, `teachesRecipes`, `notReadyText`
+and `paidText`; the engine charges the price on Accept, then teaches
+every recipe in the list. See `internal/dialogue/context.md`.
 
-| Quest | Slug | Item (id) | Skill | Price |
-|-------|------|-----------|-------|-------|
-| 79 | bandolier | Vitalis Bandolier (40182) | alchemy | 17,500 |
-| 80 | blackrazor | The Blackrazor (40183) | blacksmithing | 25,000 |
-| 81 | wayfarer | Wayfarer's Bottomless Pack (40184) | tailoring | 12,500 |
-| 82 | aegis | Aegis of Mockery (40185) | blacksmithing | 20,000 |
-| 83 | thornwall | Thornwall Harness (40186) | tailoring | 15,000 |
-| 84 | prism | Seething Prism (40187) | jewelcrafting | 20,000 |
-| 85 | zephyr | Zephyr Treads (40188) | tailoring | 12,500 |
-| 86 | choir | Staff of the Hollow Choir (40189) | enchanting | 22,500 |
-| 87 | phial | Phial of Second Birth (40181) | alchemy | 15,000 |
+| Topic | Item (id) | Skill | Price |
+|-------|-----------|-------|-------|
+| `teach_bandolier` | Vitalis Bandolier (40182) | alchemy | 17,500 |
+| `teach_blackrazor` | The Blackrazor (40183) | blacksmithing | 25,000 |
+| `teach_wayfarer` | Wayfarer's Bottomless Pack (40184) | tailoring | 12,500 |
+| `teach_aegis` | Aegis of Mockery (40185) | blacksmithing | 20,000 |
+| `teach_thornwall` | Thornwall Harness (40186) | tailoring | 15,000 |
+| `teach_prism` | Seething Prism (40187) | jewelcrafting | 20,000 |
+| `teach_zephyr` | Zephyr Treads (40188) | tailoring | 12,500 |
+| `teach_choir` | Staff of the Hollow Choir (40189) | enchanting | 22,500 |
+| `teach_phial` | Phial of Second Birth (40181) | alchemy | 15,000 |
 
-Each secret has one price, paid in full when Veyra shares it. A player
-may buy any number of the nine, each once. All nine assembly recipes
-and the 17 sub-recipes are `learn_only`, so the purchase is the only
-way to learn the chain.
+Each secret has one price, paid in full. A player may buy any number of
+the nine. The line leaves the menu once the player knows every recipe
+in it. All nine assembly recipes and the 17 sub-recipes are
+`learn_only`, so a sale is the only way to learn the chain.
 
 ### Buying a secret
 
-1. Player carries a self-crafted skill-50+ item (the masterwork gate,
-   `HasOwnMasterwork`) and asks Veyra about the convergence. Her
-   `convergence_intro` dialogue node grants `78-start`.
-2. Quest 78's `quest_granted` trigger grants `78-end` in the same beat;
-   the player is now "known" to Veyra.
-3. Each secret has four dialogue nodes, in this order:
-   - `owned_`: the player already holds `{id}-start`; she says she does
-     not sell a secret twice. It keys on the quest token, never on
-     recipe knowledge, so a player who found sub-recipes at the bench
-     can still buy the secret.
-   - `teach_`: the purchase, on "teach <name>". It carries
-     `goldRequired` and `chargesGold` at the price, so the engine
-     checks and takes the gold in one step, before it grants
-     `{id}-start`. It is excluded once `{id}-start` or `{id}-end` is
-     held.
-   - `refuse_`: the same teach phrases when the player lacks the gold.
-     It names the price and grants nothing.
-   - `price_`: the bare name. It states the price and the command to
-     buy, and never buys.
-4. The granted quest's `quest_granted` trigger teaches the two component
-   recipes plus the one assembly recipe (`learn_recipe` x3, x1 for the
-   phial which only needs `reduction-base`), and has Veyra narrate the
-   hand-off. It charges nothing.
-5. Player gathers the Stage-3 reagents, crafts the components
+1. The player talks to Veyra. Each secret they do not fully know is a
+   menu line labelled "Secret of the ...". Nothing gates the line but
+   knowledge: it stays until every recipe in it is known.
+2. Choosing it with the skill for every recipe in the secret (each
+   recipe's own skill at its own minimum, the craft command's test)
+   plays her pitch and a card with the price. Without that skill she
+   says `notReadyText`, which names the trades, and no card opens.
+3. Accept charges the price (all or nothing) and teaches every recipe
+   in `teachesRecipes`, then she says `paidText`. A recipe the player
+   already knows is skipped without a second notice.
+4. Player gathers the Stage-3 reagents, crafts the components
    themselves (so `require_own_components` accepts them), and
    assembles the pinnacle item at one of Veyra's stations.
-6. The crafted item's `item_gain` trigger (gated on `has: {id}-start`,
-   `missing: {id}-end`) grants `{id}-end` and has Veyra comment on the
-   finished piece.
 
-`GameBridge.ChargeGold` refuses, taking nothing and failing the action,
-when the player holds less than the amount. The Phial (87) is sold once
-like the other eight; there is no repeat purchase.
+### Veyra's dialogue (`dialogue/the_confluence/9584.yaml`)
 
-### Veyra's dialogue gating (`dialogue/the_confluence/9584.yaml`)
-
-Root variants partition every player into one state: unknown without a
-masterwork (flavor-only), unknown with a masterwork (the intro-grant
-variant), and known (the greeting that names all nine secrets, with a
-truth-knower variant for players who've finished `77-end`). Asking
-about a secret by name never buys it. The known greeting, the
-`secrets_list` node and a known-player fallback pattern name all nine
-secrets without prices, so the item names stay discoverable. The
-name triggers on the `owned_`, `teach_`, `refuse_` and `price_` nodes
-are distinctive words only (`bandolier`, `blackrazor`, `zephyr`, etc.),
-and the generic `quest`/`task` triggers appear only on the intro and
-`secrets_list` nodes, which grant nothing beyond `78-start`.
-`internal/guards/quest_charge_gold_gate_guard_test.go` and
-`internal/guards/veyra_secrets_dialogue_test.go` pin the purchase.
+She is known to nobody and gated on nothing: the old Convergence
+introduction (quest 78) is gone, and `convergence_intro` is plain lore.
+The opener has a base line, a `77-end` variant and a masterwork
+flavour variant (`masterworkRequired: 50`). The nine sales are
+listed in the order of the table above. `internal/guards/
+veyra_secrets_dialogue_test.go` pins the prices, recipes and trade
+lines, and `internal/guards/veyra_cannot_be_harmed_test.go` pins that
+she cannot be harmed.
 
 ### Engine additions (Stage 4b)
 
@@ -697,7 +671,8 @@ and the generic `quest`/`task` triggers appear only on the intro and
 
 ### Note
 
-The Phial of Second Birth (87) is sold once, same as the other eight
-secrets; the questengine quest format has no `repeatable` field. Making
-it repeatable (so a player could re-roll a mutation more than once) is a
-deferred enhancement.
+The Phial of Second Birth (`teach_phial`) is sold once, same as the
+other eight secrets: its line leaves Veyra's menu once the player knows
+both of its recipes, so it cannot be bought again. Making it repeatable
+(so a player could re-roll a mutation more than once) would need a new
+mechanism and is a deferred enhancement.

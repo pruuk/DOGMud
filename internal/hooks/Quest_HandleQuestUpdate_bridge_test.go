@@ -17,10 +17,10 @@ import (
 // legacy quests.Quest loader (questid/name/steps/flags — parsed by
 // quests.LoadDataFiles) and the questengine.QuestDef loader
 // (questid/name/steps/flags/triggers — parsed by questengine.LoadDataFiles).
-// Real quests in this repo (e.g. 79-secret_of_the_vitalis_bandolier.yaml) are
-// exactly this shape: a quest_granted trigger on "<id>-start" that only a
-// dialogue grantsQuest can ever satisfy, which is the exact bug this test
-// guards against.
+// Real quests in this repo (e.g. 28-waking_to_gaius.yaml) are exactly this
+// shape: a quest_granted trigger on "<id>-start" that only a dialogue
+// grantsQuest can ever satisfy, which is the exact bug this test guards
+// against.
 const bridgeTestQuestYAML = `
 questid: 999001
 name: Test Bridge Quest
@@ -84,12 +84,12 @@ func setupBridgeTestQuest(t *testing.T) func() {
 }
 
 // TestHandleQuestUpdate_BridgesFreshDialogueGrantToQuestGrantedTrigger proves
-// the fix for the bug that blocked the whole pinnacle commission system: a
+// the fix for the bug that once blocked the pinnacle commission system: a
 // quest token granted via dialogue's grantsQuest (or any other legacy path
 // that funnels through events.Quest -> HandleQuestUpdate) previously never
-// notified the questengine, so a quest_granted trigger on that token (e.g.
-// quest 79's charge_gold/learn_recipe actions on "79-start") silently never
-// fired.
+// notified the questengine, so a quest_granted trigger on that token (the
+// retired quest 79's learn_recipe actions on "79-start" were the case)
+// silently never fired.
 //
 // This simulates the FRESH dialogue-grant path directly: HandleQuestUpdate
 // is invoked with a QuestToken the character has never seen before (exactly

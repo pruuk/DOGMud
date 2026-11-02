@@ -40,6 +40,33 @@ func resumeGivesItem(itemId int, ps *PlayerState) bool {
 // markerRank orders name markers: [?] over [!] over [*] (requirements rule 9).
 var markerRank = map[string]int{menu.MarkerInfo: 1, menu.MarkerQuest: 2, menu.MarkerHandIn: 3}
 
+// SaleReady reports whether the player has the skill for every recipe a sale
+// teaches, components included. These are pinnacle items, and the bar is all of them.
+func SaleReady(t *Topic, ps *PlayerState) bool {
+	if t == nil || ps == nil || ps.RecipeSkillMet == nil || len(t.TeachesRecipes) == 0 {
+		return false
+	}
+	for _, id := range t.TeachesRecipes {
+		if !ps.RecipeSkillMet(id) {
+			return false
+		}
+	}
+	return true
+}
+
+// saleKnown reports whether the player already knows every recipe a sale teaches.
+func saleKnown(t *Topic, ps *PlayerState) bool {
+	if ps == nil || ps.KnowsRecipe == nil || len(t.TeachesRecipes) == 0 {
+		return false
+	}
+	for _, id := range t.TeachesRecipes {
+		if !ps.KnowsRecipe(id) {
+			return false
+		}
+	}
+	return true
+}
+
 // FindTopic returns the topic with key, or nil.
 func (df *DialogueFile) FindTopic(key string) *Topic {
 	if df == nil {
@@ -68,6 +95,9 @@ func (df *DialogueFile) Eligible(t *Topic, ps *PlayerState) bool {
 	if ps == nil {
 		return true
 	}
+	if t.Kind == KindSale && saleKnown(t, ps) {
+		return false
+	}
 	if t.Kind == KindOffer && t.Quest > 0 && (ps.QuestOpen == nil || !ps.QuestOpen(t.Quest)) {
 		return false
 	}
@@ -89,6 +119,11 @@ func (df *DialogueFile) TopicMarker(t *Topic, ps *PlayerState) string {
 		return menu.MarkerHandIn
 	case KindOffer:
 		return menu.MarkerQuest
+	case KindSale:
+		if SaleReady(t, ps) {
+			return menu.MarkerInfo
+		}
+		return ""
 	}
 	if t.Kind == KindInfo && ps != nil && ps.Objective != nil && ps.Objective(df.MobId, t.Key) {
 		return menu.MarkerInfo
@@ -225,6 +260,11 @@ func (df *DialogueFile) Apply(t *Topic, ps *PlayerState) bool {
 	if !applyPaidEffects(charge, t.GrantsQuest, t.RequiresItem, give,
 		t.SetsQuestFlag, t.BumpsRep, gold, ps) {
 		return false
+	}
+	if ps != nil && ps.LearnRecipe != nil {
+		for _, id := range t.TeachesRecipes {
+			ps.LearnRecipe(id)
+		}
 	}
 	if t.Kind == KindInfo && ps != nil && ps.MarkHeard != nil {
 		ps.MarkHeard(HeardKey(df.MobId, t.Key))

@@ -209,3 +209,40 @@ func TestTier2HandInsFollowTheLastStep(t *testing.T) {
 		require.Contains(t, menuKeys(df, state(c.onLast)), c.topic, c.file)
 	}
 }
+
+// Tier 3: Quist offers The Undercroft at his hand-in, through the chain.
+func TestQuistOffersTheUndercroft(t *testing.T) {
+	quist := loadShippedDialogue(t, "the_confluence/9441.yaml")
+	require.Contains(t, menuKeys(quist, heldState("73-end")), "undercroft_offer")
+	require.NotContains(t, menuKeys(quist, heldState("73-map")), "undercroft_offer")
+	require.NotContains(t, menuKeys(quist, heldState("73-end", "74-start")), "undercroft_offer")
+
+	cael := loadShippedDialogue(t, "the_confluence/9465.yaml")
+	require.Nil(t, cael.FindTopic("q74_grant"), "the offer moved to Quist")
+	require.Contains(t, menuKeys(cael, heldState("74-start")), "q74_work")
+	require.NotContains(t, menuKeys(cael, heldState("74-start", "74-ledger")), "q74_work")
+}
+
+// Tier 3: the choice of who gets the rubbing opens at the reveal, the step
+// that gives the rubbing, not the step before it.
+func TestTheUndercroftsEndingsFollowTheReveal(t *testing.T) {
+	for _, c := range []struct{ file, topic, terms string }{
+		{"the_confluence/9464.yaml", "aldrichandoff", "aldric_terms"},
+		{"the_confluence/9454.yaml", "marginhandoff", "margin_terms"},
+	} {
+		df := loadShippedDialogue(t, c.file)
+		state := func(tok string) *PlayerState {
+			ps := heldState(tok)
+			ps.HasItem = func(id int) bool { return id == 40142 }
+			ps.CarriesItem = ps.HasItem
+			// The terms topic was heard, so only the quest gate is under test.
+			ps.HasHeard = func(string) bool { return true }
+			return ps
+		}
+		require.NotContains(t, menuKeys(df, state("74-descent")), c.topic, c.file)
+		require.Contains(t, menuKeys(df, state("74-reveal")), c.topic, c.file)
+		// The terms topic that explains the choice opens with it, not before.
+		require.NotContains(t, menuKeys(df, state("74-descent")), c.terms, c.file)
+		require.Contains(t, menuKeys(df, state("74-reveal")), c.terms, c.file)
+	}
+}

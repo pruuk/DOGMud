@@ -36,7 +36,7 @@ type RecipeSpec struct {
 	Skill                string             `yaml:"skill"`
 	SkillMinimum         int                `yaml:"skill_minimum"`
 	RequireOwnComponents bool               `yaml:"require_own_components,omitempty"` // crafted-component ingredients must carry the crafter's MakerName
-	LearnOnly            bool               `yaml:"learn_only,omitempty"`             // excluded from craft-discovery; taught only via quest learn_recipe (or admin learn)
+	LearnOnly            bool               `yaml:"learn_only,omitempty"`             // excluded from craft-discovery; taught only by a talk sale's teachesRecipes, a quest learn_recipe, or admin learn
 	Station              string             `yaml:"station"`                          // "" = no station required
 	TimeRounds           int                `yaml:"time_rounds"`
 	Ingredients          []RecipeIngredient `yaml:"ingredients"`
@@ -611,8 +611,8 @@ func GetEligibleRecipes(knownRecipes map[string]int, skillLevels map[string]int,
 			continue
 		}
 		if r.LearnOnly {
-			// learn_only recipes are never a discovery candidate — quest-taught
-			// (learn_recipe) or admin-learned only.
+			// learn_only recipes are never a discovery candidate: taught by a
+			// talk sale (teachesRecipes), a quest learn_recipe, or admin learn.
 			continue
 		}
 		if _, known := knownRecipes[id]; known {

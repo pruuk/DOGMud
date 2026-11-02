@@ -17,8 +17,29 @@
 - The tabs inside Chat, Inventory and Automation are bigger, easier to tap and
   easier to read. Every chat channel stays in view on a phone.
 - The full screen game now fits a phone's screen properly.
+- The map's legend and its Fit, Center and zoom buttons now sit under the map
+  instead of covering it. The legend folds away when you want more map.
+- On a phone, the keyboard closes after each command so you can read what
+  happened. Tap the command box to type again. Tapping the game text no longer
+  opens the keyboard.
 - After an update, your browser loads the new look straight away instead of
   an old saved copy.
+
+## 2026-11-02: Veyra's secrets
+
+- Veyra Coil-Tongue now teaches each of her nine secrets herself. Talk to her and
+  choose the one you want. If you have the skill in every trade it takes, she names
+  her price. If you do not, she tells you where to go and practice.
+- She teaches every recipe a secret needs in one sitting, and what you have already
+  bought stays yours.
+- A search in total darkness no longer counts for a quest. Bring a light.
+
+## 2026-11-02: The Margin's question
+
+- The Margin Notation and The Undercroft are now followed by searching: at each
+  record, type search to find what it shows.
+- Quist the Elder sends you on to Brother Cael as soon as you bring him the three
+  records.
 
 ## 2026-11-02: The road north and Stillwater
 

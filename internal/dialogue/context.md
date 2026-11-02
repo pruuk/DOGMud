@@ -37,7 +37,21 @@ longer decodes under the strict loader.
   check; `Marker` (the NPC's roster mark) follows because it ranks eligible
   topics' markers. Offer and hand-in topics keep `[!]` and `[?]`. Nil: false.
 - **topic.go**: `Gates`, `Effects`, `Topic`, `Opener`, `OpenerVariant`, the
-  kind constants `KindInfo` / `KindOffer` / `KindHandIn`, and `HeardKey`.
+  kind constants `KindInfo` / `KindOffer` / `KindHandIn` / `KindSale`, and
+  `HeardKey`. A `sale` (#375 phase 7 tier 3b) teaches recipes for a price and is
+  never a quest. It uses `Effects.TeachesRecipes` plus `Topic.NotReadyText` and
+  `Topic.PaidText`, with `chargesGold` as the price and no `goldRequired`
+  (Accept is the gate, so the line shows to a player who cannot pay yet).
+  `SaleReady(t, ps)` is true when `PlayerState.RecipeSkillMet` holds for every
+  recipe (nil fails closed). `Eligible` hides a sale only when
+  `PlayerState.KnowsRecipe` is true for all its recipes. `TopicMarker` gives a
+  sale `[*]` when `SaleReady`, else none. `Menu` lists a sale with the offers and
+  hand-ins, label with the `playerLine` under it, and never dimmed. `Apply`
+  runs `PlayerState.LearnRecipe` for each recipe after the charge and the other
+  paid effects succeed, so a refused charge teaches nothing. `World.RecipeExists`
+  (wired to `crafting.GetRecipe`) backs the validator, which also refuses
+  `teachesRecipes`, `notReadyText` and `paidText` on any other kind and
+  `grantsQuest` or `quest` on a sale.
 - **topics.go**: the `DialogueFile` methods `FindTopic`, `Eligible`,
   `TopicMarker`, `Marker`, `OpenerFor`, `Breadcrumbs`, `Menu`, `ItemTopic`,
   `Apply`.

@@ -51,8 +51,8 @@ steps:
       the deepest back-chamber, the flagstone floor has cracked and heaved over
       something. Search it out.
     hint: >-
-      From the Old Shrine, go west, then north into the Reliquary. Type search
-      floor. For more, type help search.
+      From the Old Shrine, go west, then north into the Reliquary. Bring a
+      light, it is dark in there. Type search floor. For more, type help search.
   - id: find
     destination:
       mob: 9160

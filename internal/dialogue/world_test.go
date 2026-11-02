@@ -72,7 +72,7 @@ func TestValidateWorld_Rules(t *testing.T) {
 	cases := []struct{ name, src, want string }{
 		{"bad key", breakFixture("key: weather", "key: Weather Talk"), `key must match`},
 		{"duplicate key", breakFixture("key: rumor", "key: weather"), `duplicate key`},
-		{"bad kind", breakFixture("kind: info\n    label: \"How is", "kind: chat\n    label: \"How is"), `kind must be info, offer or handin`},
+		{"bad kind", breakFixture("kind: info\n    label: \"How is", "kind: chat\n    label: \"How is"), `kind must be info, offer, handin or sale`},
 		{"offer without playerLine", breakFixture(`    playerLine: "Do you want the wolves dealt with?"`+"\n", ""), `offer topics need quest and playerLine`},
 		{"marked offer", breakFixture("    breadcrumb: \"Come back", "    marked: true\n    breadcrumb: \"Come back"), `marked belongs on info topics only`},
 		{"objective on info", breakFixture("    text: \"Wet.\"", "    text: \"Wet.\"\n    objective: \"Later.\""), `objective belongs on offer topics only`},

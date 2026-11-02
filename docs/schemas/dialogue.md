@@ -78,7 +78,7 @@ effects. Put more specific variants (quest finished) before less specific ones
 ```yaml
 topics:
   - key: toll_problem               # ^[a-z0-9_]+$, unique in the file
-    kind: info                      # info | offer | handin
+    kind: info                      # info | offer | handin | sale
     label: What is wrong with the toll?
     text: "Harn set up that toll two years ago."
     hints: "You could ask about Harn."   # narrator line after the reply
@@ -88,7 +88,7 @@ topics:
 | Field | Kinds | Notes |
 |-------|-------|-------|
 | `key` | all | Saved on characters as heard (`<mobid>.<key>`), so treat it as permanent. |
-| `kind` | all | `info` (a question), `offer` (a quest offer), `handin` (a quest hand-in). |
+| `kind` | all | `info` (a question), `offer` (a quest offer), `handin` (a quest hand-in), `sale` (recipes taught for a price; never a quest). |
 | `quest` | offer, handin | The quest id. |
 | `label` | all | The menu line, at most 50 characters, no em or en dash. An offer or hand-in's label is the quest's title. Info labels are unique in the file and never equal a quest title. |
 | `playerLine` | offer, handin | What the player says on choosing it, at most 70 characters. |
@@ -98,6 +98,9 @@ topics:
 | `heardRequired` | all | Info topic keys in this file the player must have heard first. No cycles. |
 | `breadcrumb` | offer | What the NPC says after the opener while this offer's gates hide it, until the quest is taken. |
 | `behavior` | all | Fires the mob's behavior tree with `player_topic` and this key once the topic has played; the tree needs a matching `topic_is`. |
+| `playerLine` | sale | Also required on a sale: what the player says on choosing it. |
+| `notReadyText` | sale | What the NPC says when the player lacks the skill for any recipe in the sale. Names the trades, no numbers. No card opens. |
+| `paidText` | sale | What the NPC says once the price is paid and the recipes taught. |
 
 **Gates** (topics and opener variants):
 
@@ -118,7 +121,8 @@ topics:
 
 | Field | Type | Effect |
 |-------|------|--------|
-| `chargesGold` | int | Taken first; all or nothing. Needs a `goldRequired` of at least the same price. |
+| `chargesGold` | int | Taken first; all or nothing. Needs a `goldRequired` of at least the same price, except on a `sale`, where it is the price shown on the Accept card and `goldRequired` is refused (the line stays listed to a player who cannot pay yet). |
+| `teachesRecipes` | `[]string` | Sale only. Recipe ids taught after the price is paid, all or nothing with the charge. The line leaves the menu once every one is known. Every id must be a shipped recipe. |
 | `givesItem` | int | Delivered before anything else; if the player cannot carry it, nothing applies and any charge is refunded. |
 | `grantsQuest` | string | Quest token granted. An offer grants its quest's start token, a hand-in its end token. |
 | `setsQuestFlag` | `{key, value}` | Flag written. |
