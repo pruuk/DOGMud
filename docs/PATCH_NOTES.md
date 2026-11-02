@@ -32,6 +32,16 @@
   waited there has gone deeper, and Gethin now keeps the lamps there. The
   deeper galleries hold more of the mine's creatures than before.
 
+## 2026-11-01: A free hand no longer costs you accuracy
+
+- Fighting with a weapon and a free hand no longer costs you accuracy. An
+  empty hand is not a second weapon. It still throws a free punch.
+- Mobs follow the same rule, so a bandit with a sword and a free hand now
+  hits more often too.
+- Two real weapons still cost you accuracy, and more weapon-combat skill
+  still makes that cost smaller. Fists, claws and shields are unchanged, but
+  a fighter with extra arms no longer pays anything for arms left empty.
+
 ## 2026-11-01: Pothole Coulee casting, lore and archery trails
 
 - Crier Toke starts the casting, lore and archery trails. Each one runs

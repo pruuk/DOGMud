@@ -394,6 +394,16 @@ starts at rank 1); below 1, including an absent key, reads as 1
 the shipped value and fails if `templates/help/steal.template` names another
 rank.
 
+### Dual-wield penalty knobs (owner ruling 2026-11-01)
+`DualWieldPenaltyBase` (50), `DualWieldPenaltyReduction` (40),
+`DualWieldPenaltyRankDivisor` (50), `DualWieldPenaltyFloor` (10) and
+`DualWieldPenaltyPerExtraArm` (20) price the attack score lost for holding two
+or more real weapons (`combat.calcDualWieldPenalty`); an empty hand is not one.
+The defaults are the shipped values. Below 1, including an absent key, reads as
+the default, so 0 is not expressible; a floor above the base is capped at the
+base (`validateCombatDualWield`). `config_dual_wield_test.go` pins the shipped
+values against the defaults.
+
 ### Banned Name Validation
 ```go
 // Check if a name matches banned patterns

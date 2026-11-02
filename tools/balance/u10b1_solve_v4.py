@@ -232,9 +232,13 @@ def_award = weight(P_DEF_WIN)    #    did not cleanly land
 # bound that already argues the right way.
 #
 # APPROXIMATION, stated rather than hidden: the hands are not perfectly iid.
-# calcAttackScore subtracts a per-hand dual-wield penalty (ws.penalty) that
-# DOES differ between main and offhand, so the fist's draws are centred a
-# little lower and 4/6 slightly overstates its share even at equal skill.
+# Until 2026-11-01 calcAttackScore subtracted a per-hand dual-wield penalty
+# (ws.penalty) here too. It no longer does: an empty hand is not a wielded
+# weapon, so this build pays none, and the main hand and the fist each roll on
+# their own skill term alone. What separates them at equal skill is the swing
+# count. CLEAN_HIT was measured while the penalty applied, so it understates
+# this one build; the solved multipliers do not move, because this build is not
+# the concentrating build of any track (bare hands, 1H+shield).
 #
 # ✅ The share is built from the POST-FIX swing counts as of 2026-08-27:
 # SWINGS_FIST is 3, not 4, because the companion calcSwingCount fix landed in

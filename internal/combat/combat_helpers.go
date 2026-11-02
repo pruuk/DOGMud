@@ -315,11 +315,12 @@ func calcSwingCount(sourceChar *characters.Character, weapon items.Item, weaponS
 // must consume this plan rather than recalculate from the depleted pool.
 func buildAttackPlan(sourceChar *characters.Character, targetChar *characters.Character) attackPlan {
 	attackWeapons := collectAttackWeapons(sourceChar)
+	wieldedWeapons := wieldedWeaponCount(attackWeapons)
 	extraAttacks := sourceChar.StatMod(`attacks`)
 	plan := attackPlan{weapons: make([]weaponSetup, 0, len(attackWeapons))}
 
 	for weaponIdx, weapon := range attackWeapons {
-		ws := buildWeaponSetup(sourceChar, targetChar, weapon, weaponIdx, len(attackWeapons))
+		ws := buildWeaponSetup(sourceChar, targetChar, weapon, weaponIdx, wieldedWeapons)
 		ws.swingCount = calcSwingCount(sourceChar, ws.weapon, ws.weaponSpeed, extraAttacks, ws.isOffhand)
 		plan.totalSwings += ws.swingCount
 		plan.weapons = append(plan.weapons, ws)
@@ -400,32 +401,48 @@ func collectAttackWeapons(sourceChar *characters.Character) []items.Item {
 	return attackWeapons
 }
 
-// calcDualWieldPenalty computes the hit penalty for dual wielding.
-func calcDualWieldPenalty(sourceChar *characters.Character, weapIdx, totalWeaps int) int {
-	if totalWeaps <= 1 {
+// wieldedWeaponCount counts the real weapons in a round's attack set: the
+// entries collectAttackWeapons planned from an item, less the natural ones. An
+// empty hand (a zero Item) is not a wielded weapon (owner ruling 2026-11-01),
+// and a fist or claw item counts with it, the same line ParryCapableArmCount
+// draws. It reads the plan, not the arm slots, so a shield, a disabled slot and
+// a hand blocked by a two-hander can never count.
+func wieldedWeaponCount(attackWeapons []items.Item) int {
+	wielded := 0
+	for _, weapon := range attackWeapons {
+		if weapon.ItemId <= 0 {
+			continue
+		}
+		if sub := weapon.GetSpec().Subtype; sub == items.Fist || sub == items.Claws {
+			continue
+		}
+		wielded++
+	}
+	return wielded
+}
+
+// calcDualWieldPenalty computes one planned swing's hit penalty. It is due only
+// when the fighter holds two or more real weapons, players and mobs alike, and
+// then every swing in the round pays it. That includes a fist from an empty extra
+// arm beside two weapons: the free punch costs nothing by itself, but it is still
+// thrown by someone working two blades. collectAttackWeapons plans real weapons
+// first, so an empty hand never moves a weapon's own weapIdx.
+func calcDualWieldPenalty(sourceChar *characters.Character, weapIdx, wieldedWeapons int) int {
+	if wieldedWeapons < 2 {
 		return 0
 	}
 
+	bal := configs.GetBalanceConfig()
 	dualWieldLevel := sourceChar.GetSkillLevel(skills.WeaponCombat)
 
-	penalty := 0
-	// Natural weapons (claws, fists, bare hands) ignore dual-wield penalty
-	mainSub := sourceChar.Equipment.Weapon.GetSpec().Subtype
-	offSub := sourceChar.Equipment.Offhand.GetSpec().Subtype
-	mainIsNatural := mainSub == items.Claws || mainSub == items.Fist || sourceChar.Equipment.Weapon.ItemId == 0
-	offIsNatural := offSub == items.Claws || offSub == items.Fist || sourceChar.Equipment.Offhand.ItemId == 0
-	if mainIsNatural && offIsNatural {
-		penalty = 0
-	} else {
-		penaltyReduction := float64(dualWieldLevel) / 50.0
-		penalty = int(50.0 - (penaltyReduction * 40.0))
-		if penalty < 10 {
-			penalty = 10
-		}
+	penaltyReduction := float64(dualWieldLevel) / float64(bal.DualWieldPenaltyRankDivisor)
+	penalty := int(float64(bal.DualWieldPenaltyBase) - (penaltyReduction * float64(bal.DualWieldPenaltyReduction)))
+	if penalty < int(bal.DualWieldPenaltyFloor) {
+		penalty = int(bal.DualWieldPenaltyFloor)
 	}
-	// Extra arm weapons get escalating penalties: +20 per arm beyond offhand
+	// Escalating penalty per swing slot beyond the offhand.
 	if weapIdx >= 2 {
-		penalty += (weapIdx - 1) * 20
+		penalty += (weapIdx - 1) * int(bal.DualWieldPenaltyPerExtraArm)
 	}
 	return penalty
 }
@@ -454,7 +471,7 @@ func attackSubtypeWith(char *characters.Character, weapon items.Item) items.Item
 
 // buildWeaponSetup pre-computes weapon info for a single weapon in the attack sequence.
 // Note: swing count is now computed separately by calcSwingCount, not here.
-func buildWeaponSetup(sourceChar *characters.Character, targetChar *characters.Character, weapon items.Item, idx, total int) weaponSetup {
+func buildWeaponSetup(sourceChar *characters.Character, targetChar *characters.Character, weapon items.Item, idx, wieldedWeapons int) weaponSetup {
 	bal := configs.GetBalanceConfig()
 	// GetSpecies is a bare map lookup and returns nil for an unknown
 	// SpeciesId, so the name must be defaulted before any dereference.
@@ -470,7 +487,7 @@ func buildWeaponSetup(sourceChar *characters.Character, targetChar *characters.C
 		weaponSubType: attackSubtypeWith(sourceChar, weapon),
 		weaponSpeed:   float64(bal.UnarmedSpeedMultiplier),
 		isOffhand:     idx > 0,
-		penalty:       calcDualWieldPenalty(sourceChar, idx, total),
+		penalty:       calcDualWieldPenalty(sourceChar, idx, wieldedWeapons),
 	}
 
 	ws.attacks, ws.baseDmg, ws.dmgVariance, ws.critConditions = sourceChar.GetDefaultDistributionDamage()
