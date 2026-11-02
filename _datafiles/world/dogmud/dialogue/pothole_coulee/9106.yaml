@@ -651,8 +651,8 @@ topics:
   kind: info
   label: When will you send me out into the world?
   text: When every teacher in the coulee has sent you back to me, all eight of
-    them, I have one last road for you. But nobody is kept here. If you want to
-    go sooner, Warden Esk will open the arch for you now.
+    them, I have one last road for you. But nobody is kept here. Warden Esk will
+    open the arch for you whenever you ask.
   hints: Warden Esk keeps the arch in the Threshold House. From Hub Square go
     south twice.
   questRequired:

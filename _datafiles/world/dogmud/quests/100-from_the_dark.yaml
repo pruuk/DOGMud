@@ -59,6 +59,8 @@ steps:
       surprise, and a kill will not count: open your hood, flee (it may block
       you, so keep trying), hide again in the drift, and come back. If the sump
       is empty the brute is dead, and a new one comes in about five minutes.
+      If your lantern is gone, Trader Onna at Coulee Provisions sells hooded
+      ones.
     hint: >-
       In the Timbered Drift, type hood, then west, then unhood, then attack
       brute.
