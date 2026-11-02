@@ -70,7 +70,7 @@ topics:
 # Quest 74's Keepers choice (spec R28): the warning (aldric_terms) must be
 # heard first, and both hide once the choice is made (74-end). The Margin
 # side is the Margin scholar's (9454), built the same way. The hand-in gates
-# on 74-descent, the step before the rubbing is given, plus the rubbing.
+# on 74-reveal, the step that gives the rubbing, plus the rubbing.
 - key: aldrichandoff
   kind: handin
   quest: 74
@@ -84,7 +84,7 @@ topics:
   heardRequired:
   - aldric_terms
   questRequired:
-  - 74-descent
+  - 74-reveal
   questExcluded:
   - 74-end
   requiresItem: 40142

@@ -370,7 +370,10 @@ side. No `loop-backlog.txt` line names quests 4 to 15
 of Low Tunnels, North Road, North Road North and Stillwater) is done, playtested
 2026-11-02 (run `422f356c3d76e359`): quests 20 and 18 are found by `search`, quest 61 has a fixed order, and no
 `loop-backlog.txt` line names quests 2, 16 to 20, 60 or 61
-(`internal/guards/tier2_backlog_guard_test.go`). Tier 3 (The Confluence) is next.
+(`internal/guards/tier2_backlog_guard_test.go`). Tier 3 (The Confluence) is
+in progress: the Margin is built (quests 73 and 74 by `search`, Quist offering
+The Undercroft, no `loop-backlog.txt` line naming either,
+`internal/guards/tier3_backlog_guard_test.go`) and Veyra's recipe sales are next.
 The remaining zones are not started.
 
 ## Phase 6: Web builder (postponed)

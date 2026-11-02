@@ -222,3 +222,24 @@ func TestQuistOffersTheUndercroft(t *testing.T) {
 	require.Contains(t, menuKeys(cael, heldState("74-start")), "q74_work")
 	require.NotContains(t, menuKeys(cael, heldState("74-start", "74-ledger")), "q74_work")
 }
+
+// Tier 3: the choice of who gets the rubbing opens at the reveal, the step
+// that gives the rubbing, not the step before it.
+func TestTheUndercroftsEndingsFollowTheReveal(t *testing.T) {
+	for _, c := range []struct{ file, topic string }{
+		{"the_confluence/9464.yaml", "aldrichandoff"},
+		{"the_confluence/9454.yaml", "marginhandoff"},
+	} {
+		df := loadShippedDialogue(t, c.file)
+		state := func(tok string) *PlayerState {
+			ps := heldState(tok)
+			ps.HasItem = func(id int) bool { return id == 40142 }
+			ps.CarriesItem = ps.HasItem
+			// The terms topic was heard, so only the quest gate is under test.
+			ps.HasHeard = func(string) bool { return true }
+			return ps
+		}
+		require.NotContains(t, menuKeys(df, state("74-descent")), c.topic, c.file)
+		require.Contains(t, menuKeys(df, state("74-reveal")), c.topic, c.file)
+	}
+}

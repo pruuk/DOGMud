@@ -95,8 +95,6 @@ one-action 69 mob 9360 topic give_40116:prev
 one-action 70 mob 9332 topic orinhandoff:prev
 one-action 70 quest 70 trigger room_interact room=6037 noun=symbol grants=70-witness:cond
 one-action 71 mob 9347 topic ledgerhandoff:prev
-one-action 74 mob 9454 topic marginhandoff:prev
-one-action 74 mob 9464 topic aldrichandoff:prev
 one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:double
 one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:prev
 one-action 78 quest 78 trigger quest_granted quest_token=78-start grants=78-end:prev
@@ -122,6 +120,5 @@ walk-destination 65 step report
 walk-destination 66 step detox
 walk-destination 66 step escort
 walk-destination 67 step report
-walk-destination 74 step reveal
 walk-destination 75 step testimony
 walk-destination 78 step start
