@@ -22,8 +22,8 @@ topics:
     Whether the first mark is doctrine, or something the doctrine was laid over, is
     not a question the Hall is for. If you mean to press it, it is the senior
     Keepers you want, in the cloisters beyond the public temple. Not me.
-  hints: The cloisters lie past the Chapel of the Brenn, inside the temple. The
-    Officiant at the Crossing decides who goes further.
+  hints: The cloisters lie past the Chapel of the Brenn, inside the temple.
+    Brother Cael keeps the Archive there.
   marked: true
   questRequired:
   - 73-end

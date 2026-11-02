@@ -22,11 +22,11 @@ opener:
       archive chair late at night. Type talk cael.
   - questRequired:
     - 73-end
-    text: Word came from the Officiant about you. The Keepers will see you. Go
-      through, and keep your voice down in the cloisters.
-    hints: Brother Cael keeps the Archive. Go east twice to the Cloister Garth,
-      north to the North Walk, then east into the Archive. He sleeps in the
-      archive chair late at night. Type talk cael.
+    text: Word came from the Officiant about you. The Keepers will not stop you
+      here. But Quist the Elder holds the next step of your question, and Brother
+      Cael will want you to have it before you go through.
+    hints: Quist the Elder at the Margin Hall has the next step. Choose The
+      Undercroft from him.
 topics:
 - key: margin_aside
   kind: info
@@ -34,9 +34,8 @@ topics:
   text: You have been to the Scholars' Quarter. I can see it in how you look at
     the door. The Officiant has sent word, and the door is open to you. Keep your
     voice down beyond it. The work there needs quiet.
-  hints: Brother Cael keeps the Archive. Go east twice to the Cloister Garth,
-    north to the North Walk, then east into the Archive. He sleeps in the
-    archive chair late at night. Type talk cael.
+  hints: Quist the Elder at the Margin Hall has the next step. Choose The
+    Undercroft from him, then go through to Brother Cael.
   questRequired:
   - 73-end
   questExcluded:

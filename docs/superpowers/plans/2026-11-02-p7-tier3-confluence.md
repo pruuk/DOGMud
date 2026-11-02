@@ -166,7 +166,7 @@ Test: `internal/dialogue/shipped_quest_bugs_test.go`.
 - [ ] **Step 1: Failing test,** appended:
 
 ```go
-// Tier 3: Quist offers The Undercroft at her hand-in, through the chain.
+// Tier 3: Quist offers The Undercroft at his hand-in, through the chain.
 func TestQuistOffersTheUndercroft(t *testing.T) {
 	quist := loadShippedDialogue(t, "the_confluence/9441.yaml")
 	require.Contains(t, menuKeys(quist, heldState("73-end")), "undercroft_offer")
@@ -224,14 +224,14 @@ func TestQuistOffersTheUndercroft(t *testing.T) {
 ```
 
 Cael's `73-end`, excluding `74-start`, opener variant (lines 92-100) hints that he would welcome help: reword the hint
-to "Quist the Elder at the Margin Hall has the next step, if you have not taken it from her." Read the other
+to "Quist the Elder at the Margin Hall has the next step, if you have not taken it from him." Read the other
 variants for anything that assumes he offers it.
 
 - [ ] **Step 4:** Delete `chain 73 mob 9465 topic q74_grant`. Run the Task 1 command and the sweep. The hand-in
-`report` must queue the offer: `queueNextOffer` needs exactly one next offer on her file, and the `73-end` gated
+`report` must queue the offer: `queueNextOffer` needs exactly one next offer on his file, and the `73-end` gated
 topics that are `info` do not count.
 
-- [ ] **Step 5: Commit** with named paths, message `fix(quests): Quist offers The Undercroft at her hand-in`.
+- [ ] **Step 5: Commit** with named paths, message `fix(quests): Quist offers The Undercroft at his hand-in`.
 
 ### Task 3: Hand-ins, guard, docs, gates
 
@@ -275,7 +275,7 @@ Its `_GuardCanFail` fixture uses `hint-length 74 step record`, `chain 73 mob 946
 
 - The Margin Notation and The Undercroft are now followed by searching: at each
   record, type search to find what it shows.
-- Quist the Elder sends you on to Brother Cael herself when you bring her the three
+- Quist the Elder sends you on to Brother Cael as soon as you bring him the three
   records.
 ```
 

@@ -65,8 +65,8 @@ steps:
       inside the order; the Margin scholar at the Temple Portico would carry it
       out. The choice is yours, and it cannot be undone."
     hint: "Talk to Aldric and to the Margin scholar before you choose who gets
-      the rubbing. Aldric keeps the Chapter House by day. The scholar is at the
-      Temple Portico. Type talk aldric."
+      the rubbing. Aldric keeps the Chapter House by day and sleeps at night.
+      The scholar is at the Temple Portico. Type talk aldric."
   - id: end
     description: "You made your choice with the rubbing of the old sky. The
       Confluence's deepest secret is either carried out into the light, or kept
