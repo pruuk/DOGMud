@@ -1,0 +1,31 @@
+# #375 phase 7 tier 2: the road north and Stillwater. Quest 20's mystery by
+# search, the bounties in their new order, and the shorter quests, with old saves.
+name: 375-p7-tier2
+mode: party
+summary: >-
+  Ulla's Silence is followed by search from Ulla to the hook-spear; the lake-caves
+  bounty and Hedgerow Toll run in order and say so when a kill does not count; the
+  shorter quests finish on their hints; old saves carry on.
+on_actor_stop: continue
+budgets:
+  wall_clock: 55m
+requires:
+  max_connections: 20
+roster:
+  - id: mystery
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier2/mystery.yaml
+  - id: bounties
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier2/bounties.yaml
+  - id: roads
+    personality: bug-finder
+    goals: goals/scenarios/375-p7-tier2/roads.yaml
+
+group_goals:
+  - id: no-dead-ends
+    do: Each seat follows the game's own hints and map, with no route help.
+    verify: Every step's hint names something the player can do where they stand, and no seat gets stuck.
+  - id: makes-sense
+    do: Every seat reads NPC lines and hints as a player would.
+    verify: No line promises an item, place or command that is not there.

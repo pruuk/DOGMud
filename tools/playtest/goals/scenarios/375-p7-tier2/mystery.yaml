@@ -1,0 +1,32 @@
+# MYSTERY seat: quest 20, Ulla's Silence, from Ulla to the hook-spear. Every site
+# is now found with `search`, and many hints lost their walking directions, so
+# say where the hint and the map were not enough. Quote game lines VERBATIM and
+# in order. Report what the game said, not what you expected.
+ephemeral:
+  profile: mid
+  start_room: 4137
+  overlays:
+    grant_items: [20096]
+  budgets:
+    wall_clock: 50m
+
+goals:
+  - >-
+    Type `talk ulla` and take Ulla's Silence. Type `hint`. At each step, follow only
+    the hint and the `quests` guide line. Equip a light when a hint says you need one.
+  - >-
+    At each site, before searching, type `look` and then `look` at the thing the hint
+    describes, and quote it. Then type `search` and quote every line, in order. If a
+    search says you must wait, say so and try again. Then `look` at the thing again
+    and quote it. Say whether anything you read was false, and whether the room's text
+    told you anything misleading afterwards.
+  - >-
+    After each step, quote `hint` and `quests`. Say whether you could work out where to
+    go from them, or where you got lost and how many moves it cost.
+  - >-
+    At the grave, once you have the carved kingfisher, type `drop kingfisher` in another
+    room and leave it there. Go back and `search` at the grave. Quote what happens. Say
+    what Vella tells you if you try her without it, and finish with her.
+  - >-
+    Finish with Ulla. Quote the hand-in and the reward. Type `talk brindle` afterwards
+    and say whether what he says fits what you learned.
