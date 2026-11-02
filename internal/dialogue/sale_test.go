@@ -133,6 +133,7 @@ func TestValidateWorld_SaleRules(t *testing.T) {
 		{"no paidText", saleBreak(`    paidText: "Paid. It is yours."`+"\n", ""), `sale topics need playerLine, notReadyText and paidText`},
 		{"no playerLine", saleBreak(`    playerLine: "Will you teach me X?"`+"\n", ""), `sale topics need playerLine, notReadyText and paidText`},
 		{"grantsQuest", saleBreak("    chargesGold: 100\n", "    chargesGold: 100\n    grantsQuest: 7-start\n    questExcluded: [7-start, 7-end]\n"), `a sale is not a quest`},
+		{"goldRequired", saleBreak("    chargesGold: 100\n", "    chargesGold: 100\n    goldRequired: 100\n"), `a sale takes no goldRequired`},
 		{"quest", saleBreak("    chargesGold: 100\n", "    chargesGold: 100\n    quest: 7\n"), `a sale is not a quest`},
 		{"dash in notReadyText", saleBreak("practiced.", "practiced "+emDash+" now."), `em or en dash`},
 		{"semicolon in notReadyText", saleBreak("practiced.", "practiced; now."), `notReadyText: semicolons`},

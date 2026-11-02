@@ -152,6 +152,7 @@ topics:
   kind: info
   label: Have you seen anyone pass on the road?
   text: People pass through. I do not keep track.
-  hints: Betta does not seem forthcoming. Her barn is just south of the yard.
+  hints: Betta does not seem forthcoming. Her barn is just south of the yard. Bring
+    a light after dark, then type search there.
   questExcluded:
   - 18-start

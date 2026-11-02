@@ -147,14 +147,28 @@ func TestVeyraSecretsDialogue(t *testing.T) {
 		// Buying: the exact price once, every recipe taught. A short purse
 		// teaches nothing.
 		learned := map[string]bool{}
+		purse := s.price
+		var charges []int
+		recordCharge := func(n int) bool {
+			if purse < n {
+				return false
+			}
+			purse -= n
+			charges = append(charges, n)
+			return true
+		}
 		ps := player(s.price, true)
+		ps.ChargeGold = recordCharge
 		ps.LearnRecipe = func(id string) { learned[id] = true }
 		require.True(t, df.Apply(tp, ps), s.key)
+		require.Equal(t, []int{s.price}, charges, "%s: the exact price, once", s.key)
 		require.Len(t, learned, len(s.recipes), s.key)
-		learned = map[string]bool{}
+		learned, charges, purse = map[string]bool{}, nil, s.price-1
 		ps = player(s.price-1, true)
+		ps.ChargeGold = recordCharge
 		ps.LearnRecipe = func(id string) { learned[id] = true }
 		require.False(t, df.Apply(tp, ps), s.key)
+		require.Empty(t, charges, "%s: a short purse is charged nothing", s.key)
 		require.Empty(t, learned, "%s: a short purse teaches nothing", s.key)
 	}
 

@@ -32,7 +32,15 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// counts for no quest. The game's own sight decision settles it (night
 	// vision and infravision count through it), the same test `look` refuses
 	// on. Quest spots are not rolled then, and the step is answered below.
-	dark := messaging.ParticipantSight(user.Character, room) == messaging.SightNone
+	//
+	// The cause is told apart as `look` tells it (actions.ResolveLook and
+	// noSightRefusal, #364): light helps a searcher in the dark and does
+	// nothing for a blinded one, so the blinded one is not told to find light.
+	lookKind := actions.ResolveLook(actor, ``).Kind
+	sightLine, dark := noSightRefusal(lookKind)
+	if lookKind == actions.LookTooDark {
+		sightLine = searchTooDarkLine
+	}
 	questSpots := spots
 	if dark {
 		questSpots = nil
@@ -50,10 +58,12 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 	if dark {
-		// Say so only when a step would have moved, so a player who is not on
-		// a quest reads the ordinary search output and nothing extra.
-		if step || len(spots) > 0 {
-			user.SendText(messaging.CategoryRefusal, searchTooDarkLine)
+		// Say so when a search here would have moved a step or found a spot,
+		// which includes a quest that a search itself starts, and only if the
+		// search turned up nothing else (a bauble, say). Otherwise the player
+		// reads the ordinary search output and nothing extra.
+		if (step || len(spots) > 0) && !result.FoundAnything() {
+			user.SendText(messaging.CategoryRefusal, sightLine)
 		}
 		return true, nil
 	}

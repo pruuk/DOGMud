@@ -132,3 +132,36 @@ func TestSearch_InTheDarkAQuestSearchSpotIsNotUncovered(t *testing.T) {
 	require.True(t, fired(), "with a light the same search uncovers it")
 	require.NotContains(t, out, searchTooDarkLine)
 }
+
+// A blinded searcher in a lit room is told what `look` tells them: a light
+// would not help, so the line must not suggest one (#364). The step still
+// does not move.
+func TestSearch_BlindedInALitRoomReadsTheBlindLineAndTheStepDoesNotMove(t *testing.T) {
+	user, room := interactScene(t)
+	require.Equal(t, messaging.SightFull, messaging.ParticipantSight(user.Character, room), "fixture: lit")
+	fired := listenForCommand(t, user, 999605, "search")
+	blindForSpeechTest(t, user)
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(user.Character, room), "fixture: blind")
+
+	out := searchOutput(t, user, room)
+	require.False(t, fired(), "a blinded search moves no step")
+	require.Contains(t, out, "You can't see anything!")
+	require.NotContains(t, out, searchTooDarkLine)
+	require.NotContains(t, out, "You find nothing of interest.")
+}
+
+// A search in the dark that turns something up says so and stops there: the
+// too-dark line would contradict a find.
+func TestSearch_InTheDarkWhatTheSearchFoundIsNotFollowedByTheTooDarkLine(t *testing.T) {
+	user, room := darkSearchScene(t)
+	oldHidden := room.HiddenNouns
+	room.HiddenNouns = map[string]rooms.HiddenNoun{"loose stone": {Description: "A stone."}}
+	t.Cleanup(func() { room.HiddenNouns = oldHidden })
+	searchEyes(t, user, 100000)
+	fired := listenForCommand(t, user, 999606, "search")
+
+	out := searchOutput(t, user, room)
+	require.False(t, fired(), "the step still does not move in the dark")
+	require.Contains(t, out, "loose stone", "fixture: the search found the hidden noun")
+	require.NotContains(t, out, searchTooDarkLine)
+}

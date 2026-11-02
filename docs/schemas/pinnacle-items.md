@@ -479,12 +479,15 @@ loadedCount=126` (100 base + 17 component + 9 assembly),
 zero `ValidateRecipeIngredientTags` faults, `ValidateZoneConsistency
 errors=0 mode=panic`, 0 panics.
 
-**The two tiers.** A player first crafts the **component** (an
-everyday, discoverable recipe, `skill_minimum: 50`, no gating) at an
-ordinary station, then hands those self-made components — plus the
-rare Stage-3 reagents and bulk stock — to a **quest-taught assembly
+**The two tiers.** A player first crafts the **component** (a recipe
+at `skill_minimum: 50`; as authored it was a plain discoverable recipe,
+and since 2026-10-05 it is `learn_only`, taught with its secret) at its
+own station, then hands those self-made components, plus the
+rare Stage-3 reagents and bulk stock, to a **sale-taught assembly
 recipe** (`skill_minimum: 65`, `learn_only: true`,
 `require_own_components: true`) to produce the legendary-BIS item.
+Both tiers are learned together by buying the secret from Veyra, who
+teaches only a player with the skill for every recipe in it.
 Veyra's sale topics (Stage 4b) are what teach the assembly slugs.
 
 ### The 9 assembly recipes (Stage 4b teaches these slugs)
@@ -508,7 +511,7 @@ Each `learn_only: true` + `require_own_components: true`,
 ### The 17 components → recipe(skill) → assembly
 
 Each component is a self-crafted subcomponent (ids **40208-40224**,
-`is_component: true`, `rarity_tier: 78`), made by a discoverable
+`is_component: true`, `rarity_tier: 78`), made by a `learn_only`
 `skill_minimum: 50` recipe of the same slug. `require_own_components`
 checks each component's `MakerName` — the player must craft these
 themselves before the assembly will accept them. The bulk materials
@@ -668,7 +671,8 @@ she cannot be harmed.
 
 ### Note
 
-The Phial of Second Birth (87) is sold once, same as the other eight
-secrets; the questengine quest format has no `repeatable` field. Making
-it repeatable (so a player could re-roll a mutation more than once) is a
-deferred enhancement.
+The Phial of Second Birth (`teach_phial`) is sold once, same as the
+other eight secrets: its line leaves Veyra's menu once the player knows
+both of its recipes, so it cannot be bought again. Making it repeatable
+(so a player could re-roll a mutation more than once) would need a new
+mechanism and is a deferred enhancement.

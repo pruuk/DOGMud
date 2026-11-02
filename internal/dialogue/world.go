@@ -194,6 +194,9 @@ func validateTopicFile(w World, df *DialogueFile) []Problem {
 			if t.GrantsQuest != "" || t.Quest != 0 {
 				add(where, "a sale is not a quest: no grantsQuest and no quest")
 			}
+			if t.GoldRequired != 0 {
+				add(where, "a sale takes no goldRequired: Accept is its gate, and the line shows to a player who cannot pay yet")
+			}
 			if t.Marked || t.Breadcrumb != "" || t.Objective != "" {
 				add(where, "marked, breadcrumb and objective do not belong on a sale")
 			}

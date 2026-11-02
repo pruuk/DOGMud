@@ -5,6 +5,8 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/conversation"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
 
@@ -132,4 +134,68 @@ func TestSale_TooLittleGoldTeachesNothingAndTheLineStays(t *testing.T) {
 	require.Equal(t, 1499, user.Character.Gold)
 	require.False(t, user.Character.HasRecipe("zz-sale-a"))
 	require.Contains(t, mine, "Secret of X")
+}
+
+// openSaleCard talks to the fixture NPC, chooses the sale and leaves its
+// Accept / Leave card open, for the tests that change the world before Accept.
+func openSaleCard(t *testing.T) (user *users.UserRecord, mob *mobs.Mob, done func()) {
+	t.Helper()
+	seedSaleRecipes(t)
+	user, mob, done = fixtureWith(t, saleTalkYAML)
+	user.Character.Gold = 5000
+	user.Character.Skills = map[string]int{"zzcraft": 10, "zzcraft2": 20}
+	conversation.Talk(user, mustRoom(t, user), mob)
+	require.True(t, user.RouteMenuInput("1", true), "the sale is topic 1")
+	require.Contains(t, drained(1), "Price: 1,500 gold.", "fixture: the card is open")
+	drained(2)
+	return user, mob, done
+}
+
+func requireSaleRefused(t *testing.T, user *users.UserRecord, mine string) {
+	t.Helper()
+	require.Contains(t, mine, "That offer is no longer open.")
+	require.Equal(t, 5000, user.Character.Gold, "nothing charged")
+	require.False(t, user.Character.HasRecipe("zz-sale-a"))
+	require.False(t, user.Character.HasRecipe("zz-sale-b"))
+}
+
+// acceptSale re-checks the sale: the skill may be lost between the card and
+// Accept.
+func TestSale_SkillLostBetweenTheCardAndAcceptTeachesNothing(t *testing.T) {
+	user, _, done := openSaleCard(t)
+	defer done()
+	user.Character.Skills = map[string]int{"zzcraft": 10, "zzcraft2": 19}
+
+	require.True(t, user.RouteMenuInput("1", true), "Accept")
+	mine, theirs := drained(1), drained(2)
+	requireSaleRefused(t, user, mine)
+	require.NotContains(t, theirs, "Paid. It is yours.")
+}
+
+// Knowing every recipe by Accept (learned another way meanwhile) hides the sale.
+func TestSale_AlreadyKnowingEveryRecipeByAcceptChargesNothing(t *testing.T) {
+	user, _, done := openSaleCard(t)
+	defer done()
+	user.Character.LearnRecipe("zz-sale-a")
+	user.Character.LearnRecipe("zz-sale-b")
+
+	require.True(t, user.RouteMenuInput("1", true), "Accept")
+	mine, theirs := drained(1), drained(2)
+	require.Contains(t, mine, "That offer is no longer open.")
+	require.Equal(t, 5000, user.Character.Gold, "nothing charged")
+	require.NotContains(t, theirs, "Paid. It is yours.")
+}
+
+// Accept after the NPC walked off: nothing happens and nothing is taken.
+func TestSale_AcceptAfterTheNpcLeftTheRoomTakesNothing(t *testing.T) {
+	user, mob, done := openSaleCard(t)
+	defer done()
+	mob.Character.RoomId = 2
+
+	require.True(t, user.RouteMenuInput("1", true), "Accept")
+	drained(1)
+	drained(2)
+	require.Equal(t, 5000, user.Character.Gold, "nothing charged")
+	require.False(t, user.Character.HasRecipe("zz-sale-a"))
+	require.False(t, user.Character.HasRecipe("zz-sale-b"))
 }

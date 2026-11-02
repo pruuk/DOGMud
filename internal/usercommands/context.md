@@ -359,9 +359,16 @@ when `messaging.ParticipantSight(user.Character, room)` is `SightNone` (the
 decision `look` refuses on, so night vision and infravision count) `Search`
 rolls no quest spot, raises neither `room_interact` nor the `search` command
 event, and, only when `questSearchStep` or a spot would have fired (the engine's
-dry run), prints `searchTooDarkLine` ("It is too dark to make anything out.")
-with no "You find nothing of interest." beside it. A player on no live step
-reads the ordinary search output. The existing search rolls are untouched.
+dry run) and the search turned up nothing else, prints `searchTooDarkLine`
+("It is too dark to make anything out.") with no "You find nothing of
+interest." beside it. The dry run is true whenever a search here would have
+moved a step or found a spot, which includes a quest that a search itself starts
+(quest 18 at room 4050 has `missing` and no `has`; quest 76's `stone` spot needs
+only `missing_item`), so such a player is told too. A blinded searcher in a lit
+room reads look's "You can't see anything!" instead, since a light would not
+help (`actions.ResolveLook` and `noSightRefusal`, #364). A player for whom
+nothing would have fired reads the ordinary search output. The existing search
+rolls are untouched.
 `guards/quest_search_light_guard_test.go` holds that every shipped quest search
 room is seen by a bare torch bearer at every sampled hour. Any other word typed at a feature
 ("pry floorboard") falls through the registry, emote, spell and go attempts
