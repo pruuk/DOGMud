@@ -2,10 +2,10 @@
 <html data-client>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.ico?v=2026-11-02" sizes="16x16 32x32 48x48">
-    <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.png?v=2026-11-02">
-    <link rel="apple-touch-icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/apple-touch-icon.png?v=2026-11-02">
-    <link rel="manifest" href="/static/manifest.json?v=2026-11-02">
+    <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.ico?v={{ .ASSETV }}" sizes="16x16 32x32 48x48">
+    <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.png?v={{ .ASSETV }}">
+    <link rel="apple-touch-icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/apple-touch-icon.png?v={{ .ASSETV }}">
+    <link rel="manifest" href="/static/manifest.json?v={{ .ASSETV }}">
     <title>{{ .CONFIG.Server.MudName }} Web Terminal</title>
     <style>
         * {
@@ -205,22 +205,22 @@
 
     </style>
 
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js"></script>
-    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/xterm.css" />
-    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css" />
-    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/dashboard.css" />
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm.4.19.0.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm-addon-fit.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icon-map.js"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js?v={{ .ASSETV }}"></script>
+    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/xterm.css?v={{ .ASSETV }}" />
+    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css?v={{ .ASSETV }}" />
+    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/dashboard.css?v={{ .ASSETV }}" />
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm.4.19.0.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm-addon-fit.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icon-map.js?v={{ .ASSETV }}"></script>
     <script>window.ITEM_ICON_BASE = "{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/items";</script>
     <!-- A JSON string literal encoded by the server (web.go relayOriginJSON), so no quotes here. -->
     <script>window.COMPANION_RELAY_ORIGIN = {{ .COMPANION_RELAY_ORIGIN_JSON }};</script>
@@ -4744,7 +4744,7 @@
 
     </script>
 
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/dashboard.js"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/dashboard.js?v={{ .ASSETV }}"></script>
 
 </body>
 </html>

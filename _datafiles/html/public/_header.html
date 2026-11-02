@@ -11,14 +11,16 @@
       --background-image: radial-gradient(circle at 50% 22%, #251a12, #110b07);
     }
   </style>
-  <!-- Favicons: Malia's Moons of Gaius on the panel brown #201913 (2026-11-02). Bump
-       ?v= when the icons change: browsers cache favicons past a hard reload. -->
-  <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.ico?v=2026-11-02" sizes="16x16 32x32 48x48">
-  <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.png?v=2026-11-02">
-  <link rel="apple-touch-icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/apple-touch-icon.png?v=2026-11-02">
-  <link rel="manifest" href="/static/manifest.json?v=2026-11-02">
-  <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js"></script>
-  <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css">
+  <!-- Favicons: Malia's Moons of Gaius on the panel brown #201913 (2026-11-02).
+       ?v={{ .ASSETV }} on every static link changes on each server restart, so
+       browsers fetch fresh icons, CSS and JS after a deploy (assetVersion in
+       internal/web/web.go). -->
+  <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.ico?v={{ .ASSETV }}" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.png?v={{ .ASSETV }}">
+  <link rel="apple-touch-icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/apple-touch-icon.png?v={{ .ASSETV }}">
+  <link rel="manifest" href="/static/manifest.json?v={{ .ASSETV }}">
+  <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js?v={{ .ASSETV }}"></script>
+  <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css?v={{ .ASSETV }}">
   <script type="text/javascript">
     window.addEventListener("load", function(){
       const link = document.getElementById('hide-header-footer');
