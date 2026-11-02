@@ -3,6 +3,7 @@ package questengine
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,6 +61,31 @@ func TestHeld_NotHeldDoesNotFire(t *testing.T) {
 	assert.True(t, p.HasQuest("341-fetch"))
 	assert.False(t, p.HasQuest("341-end"))
 	assert.Empty(t, ctx.sentTexts)
+}
+
+// A name that carries its own article must not read "the The Blackrazor".
+func TestHeld_DefaultLineDropsTheItemsOwnArticle(t *testing.T) {
+	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
+		77: {ItemId: 77, Name: "The Blackrazor", Type: items.Object},
+	})()
+	_, ctx := runHeld(heldQuest(nil), true)
+	assert.Equal(t, []string{"You already have the Blackrazor."}, ctx.sentTexts)
+
+	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
+		77: {ItemId: 77, Name: "Cotton Shirt", Type: items.Object},
+	})()
+	_, ctx = runHeld(heldQuest(nil), true)
+	assert.Equal(t, []string{"You already have the Cotton Shirt."}, ctx.sentTexts)
+}
+
+// The mock has no ItemCarrier, so Hook 1 falls back to HasItem for it.
+func TestHeld_AStateWithoutItemCarrierFallsBackToHasItem(t *testing.T) {
+	p := newFullMockPlayer(100)
+	_, isCarrier := PlayerState(p).(ItemCarrier)
+	assert.False(t, isCarrier)
+	p.items[77] = true
+	assert.True(t, holdsItem(p, 77))
+	assert.False(t, holdsItem(p, 78))
 }
 
 // A filter asks how or where the item arrived, which a held item cannot answer.

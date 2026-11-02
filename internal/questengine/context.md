@@ -30,7 +30,11 @@ what a trigger *does*, you edit this package.
   `exploreAtStepStart`, `exploredLine` (`distinct` explore steps).
 - **held.go**: `heldAtStepStart`, `heldLine`: on `quest_granted`, a plain
   `item_gain` trigger (`TriggerDef.PlainItemGain`) whose item the player
-  already holds fires at once, saying its `held_line`.
+  already holds fires at once, saying its `held_line` (default line drops the
+  item name's own article). "Holds" is `ItemCarrier.CarriesItem` when the
+  player state has it (`GameBridge` does: backpack, component bag, bandolier,
+  worn, via `Character.CarriesItem`), else `HasItem`; `HasItem` itself stays
+  backpack only for `has_item` and `consume_item`.
 - **progress.go**: `Engine.StepProgress`, `ProgressLine`,
   `Engine.UserStepProgress` (the "Progress: 2 of 5" line).
 - **dryrun.go**: `WouldFire` (side-effect-free "would Notify fire?") and
