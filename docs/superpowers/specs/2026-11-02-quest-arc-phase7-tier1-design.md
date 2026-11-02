@@ -20,6 +20,9 @@ Marches Spur Road. **Quests:** 4 to 15.
 4. **A quest handles an item the player already has, as a general case.** The NPC notices it and
    says what to do with it, and the engine does the rest. Asking a player to drop an item and pick
    it up again is out.
+5. **A quest has to make sense as a story, not only pass the checks.** A zone pass reads where each
+   quest's items come from and fixes the quest when the answer is odd. A quest item with an owner
+   standing beside it comes from that owner. One the giver would not have can be found first.
 
 ## Facts verified against source (master `45ebaf305`, 2026-11-02)
 
@@ -47,6 +50,12 @@ Marches Spur Road. **Quests:** 4 to 15.
 | A granted token is queued, so the menu re-shown after Accept reads state before the quest's chain ran; `heldAlso` only adds the granted token | `internal/conversation/talk.go:169-182` |
 | A queued re-show already exists: `TalkNextOffer` at priority 45 runs after a hand-in's banner and reward lines (priority 0) and before a menu shown last (priority 50). Whether an accepted offer's chain has run by then is what Hook 3's test proves | `internal/events/eventtypes.go:105-118`; `internal/conversation/nextoffer.go:41-45` |
 | Quest 4's `investigate` is granted by room 407's tree and by `room_enter 408`; Tessara's opener already has a `carriesItem: 16` variant | `behaviors/rooms/dustwalk_road/407.yaml`; `quests/4-*.yaml`; `dialogue/dustwalk_road/83.yaml:30-48` |
+| Items 21 (crossing ledger) and 29 (tithe ledger) spawn loose in rooms where their keeper stands (421 with Harn, 476 with Pell); item 16 (purse) spawns loose in 408. All three are `not_salable` with no value | `rooms/watchers_crossing/421.yaml:32-34`; `rooms/thornwall_city/476.yaml:29-31`; `rooms/dustwalk_road/408.yaml:26-28`; `items/other-0/` |
+| Loot must not lie on the ground; containers are the way | `dogmud-authoring-quests` skill, "Items" |
+| Pell's `tithe_ledger` topic already gates on `9-start`, no `9-end`, `itemExcluded: 29`, and says "Help yourself" | `dialogue/thornwall_city/99.yaml:46-60` |
+| Harn's `show_ledger` says every coin is accounted for | `dialogue/watchers_crossing/86.yaml:105-112` |
+| A topic's `givesItem` goes through `acquire.AcquireItem`, which raises `item_gain`, so a plain trigger advances on it | `internal/conversation/playerstate.go:66-82`; `internal/acquire/acquire.go:45-48` |
+| "Type get ledger" and similar lines to rewrite: quest 9 hint, Olen 95 lines 31, 41, 58, Pell 99 line 53, quest 5 hint, Tolva 84 line 41. "Type get purse": quest 4 hint, Tessara 83 line 44 | grep |
 | `picklock` raises a `command` quest event aimed at the container; `unlock` raises none | `internal/usercommands/picklock.go:405-416`; a grep of `unlock.go` for `questengine` finds nothing |
 | Item 40036 (Bribe Ledger) has no room or mob source today; quest 14's triggers give it | grep of `rooms/` and `mobs/` |
 | Old saves may hold `11-start` and the side flag without `11-sided`, which is why the hand-ins gate on `11-start` | comment in `quests/11-*.yaml`, `sided` step |
@@ -64,9 +73,10 @@ Marches Spur Road. **Quests:** 4 to 15.
 1. Esk says the game stops walking them, and says it in the world's own terms.
 2. Quest steps in these zones each ask for one thing, and the map points somewhere on all of them.
 3. Quest 14's strongbox opens with the same commands as any lockbox.
+4. The two ledgers come from the people who keep them, and an NPC who wants something the player
+   already has says so.
 
-Nothing else changes: no new quests, NPCs or rewards, and no change to which quests exist or who
-gives them.
+No new quests, NPCs or rewards, and no change to which quests exist or who gives them.
 
 ## Esk's lines
 
@@ -101,17 +111,59 @@ actually is, and no place, directions or NPC names.
 
 ## Quest fixes
 
+### Where the items come from (ruling 5)
+
+Audit of every item in quests 4 to 15. Only these change:
+
+| Quest | Today | Change |
+|---|---|---|
+| 5 | Crossing ledger loose in the Tollhouse, with Harn at the counter | Harn lends it |
+| 9 | Tithe ledger loose in the Records Office, and Pell says "help yourself" | Pell hands over the temple's copy |
+| 4 | Purse loose in the Bandit Hollow | Moves into a `goods` container in the same room |
+
+The freight crate (15), pest sample (7), totem and windstone (11), and everything in quest 14 already
+make sense. Quest 6's report and quest 10's notice are already handed over by their NPCs.
+
+**Quest 5.** Room 421 loses its item 21 spawn. Harn (86) gains an info topic, `lend_ledger`, marked,
+gated `questRequired: [5-start]`, `questExcluded: [5-end]`, `itemExcluded: 21`, with `givesItem: 21`.
+The gate also means a lost ledger can be asked for again. Label: "May I see your ledger?"
+
+> Tolva sent you, I expect. Take it. Read every page, and show it to whoever you like. Every coin is
+> in there.
+
+Hint: "Take the crossing ledger back to Innkeeper Tolva at the Crossing Inn."
+
+Harn gives it because he is sure it clears him. Tolva's hand-in then finds no charter in it, so his
+pride is what sinks him. The existing `item_gain 21` trigger moves the step. Quest 5's hint, and
+Tolva's opener line that the ledger "sits on the counter", now send the player to talk to Harn.
+
+**Quest 9.** Room 476 loses its item 29 spawn. Pell's `tithe_ledger` topic gains `givesItem: 29`, and
+its text becomes:
+
+> The tithe ledger? That is a temple document, not a municipal one. But yes, I have a copy. The temple
+> files duplicates here as a matter of public record. Here. Whatever you find in there, remember that
+> I only file the documents. I do not judge the contents.
+
+Hint: "Take the tithe ledger back to Temple Priest Olen and type talk olen." Quest 9's hint and Olen's
+three lines say to talk to Clerk Pell in place of "Type get ledger". The existing `item_gain 29`
+trigger moves the step. Olen does not hand it out himself, because he is the one who wants to read it.
+
+**Quest 4.** Room 408 gains `containers: goods: {}`, the purse spawns in it, its spawn `message` goes,
+and the room's description marks `goods` as a container the way the barn marks `crates`. Hints become
+"Type get purse from goods."
+
 ### Hand-ins follow the last step (4, 5, 7, 9, 15)
 
 Each hand-in's `questRequired` becomes the step before `end` (`4-evidence`, `5-deliver`,
 `7-deliver`, `9-deliver`, `15-return`) in place of `N-start`. Each step is then reached only by its
 existing `item_gain`.
 
-### An item already carried (4, 5, 7, 9, 15)
+### An item already carried
 
 `item_gain` cannot fire for an item the player picked up before the step began. Today quests 7, 9
 and 15 work around this with a hidden grant, and 4 and 5 by letting the hand-in skip the step. Both
-go, for three general hooks that any quest in the game can use.
+go, for three general hooks that any quest in the game can use. After the ledger fixes, only the
+purse, the pest sample and the freight crate can be held before their quests in this tier.
 
 **Hook 1: the engine counts an item already held (general, no quest YAML).** A new check,
 `heldAtStepStart`, sits beside `exploreAtStepStart` and runs at the same moment. When a step starts,
@@ -127,42 +179,42 @@ once, through `fire`, so it is guarded and chained like any trigger.
 **Hook 2: the NPC notices.** A quest whose first step is getting an item can carry a second offer,
 the same pattern as Brennan's two disc offers: one with `itemExcluded: <item>`, one with
 `carriesItem: <item>`. A new optional topic field, `objective:`, replaces the first line of the offer
-card, because the first step's description ("Find the tithe ledger") is wrong for someone holding it.
+card, because the first step's description ("Find the missing freight crate") is wrong for someone
+holding it.
 The loader refuses `objective` on anything but an offer.
 
 **Hook 3: the menu comes back with the hand-in on it.** After Accept on an offer with `carriesItem`,
 the menu re-shows through a queued event at `TalkNextOfferPriority`, after the quest's chain has run,
 so the hand-in shows `[?]` at once. Other offers re-show as they do today.
 
-The player's view, with Temple Priest Olen:
+The player's view, with Peddler Malk:
 
 ```
-> talk olen
-  1. [!] The Temple's Tithe Audit
-You say, "I found the tithe ledger in the Records Office."
-Temple Priest Olen says, "The tithe ledger. I was about to ask someone to fetch that for me..."
-  The Temple's Tithe Audit: Give the tithe ledger to Temple Priest Olen.
+> talk malk
+  1. [!] The Peddler's Overdue Freight
+You say, "I found a freight crate in a ruined barn."
+Peddler Malk says, "That is my freight. I know that forced lock..."
+  The Peddler's Overdue Freight: Give the freight crate to Peddler Malk.
   Reward: ...
   1. Accept  2. Leave
-You already have the tithe ledger.
-  1. [?] The Temple's Tithe Audit
+You already have the freight crate.
+  1. [?] The Peddler's Overdue Freight
 ```
 
-The five offers in this tier, each with key `<offer key>_carrying` in `topic-keys.txt`:
+The three offers in this tier, each with key `<offer key>_carrying` in `topic-keys.txt`:
 
 | NPC, quest | The player says | The NPC says | `objective` |
 |---|---|---|---|
 | Tessara, 4 | I took this purse off some bandits. | A purse with marks on it. You found their stash already, then. That is the very proof I was about to ask someone to go and get. Hand it over and it goes in my next report. | Give the bandit's purse to Road Warden Tessara. |
-| Tolva, 5 | I have the crossing ledger from the tollhouse. | You have Harn's ledger? Then you have saved me the asking. I have been trying to prove that toll was never authorized, and his own records are the only proof that counts. Let me have it. | Give the crossing ledger to Innkeeper Tolva. |
 | Dorn, 7 | I killed something in your fields and kept a piece. | That is a pest from the south fields, and a big one. I have been meaning to ask someone to bring me a sample, so I can see what the fallow field is feeding. Let me look at it. | Give the pest sample to Farmer Dorn. |
-| Olen, 9 | I found the tithe ledger in the Records Office. | The tithe ledger. I was about to ask someone to fetch that for me. I suspect the market merchants of under-reporting, and those pages will tell. Let me see it. | Give the tithe ledger to Temple Priest Olen. |
 | Malk, 15 | I found a freight crate in a ruined barn. | That is my freight. I know that forced lock. I have waited on it for days and feared the bandits had it for good. Set it down here and let me count what is left. | Give the freight crate to Peddler Malk. |
 
 **Quest 4 loses its `investigate` step**, because a place step before the item would send a player
 holding the purse down to the gully for nothing. `start` now reaches `evidence` directly on
 `item_gain 16`, which is "go here, then do one action". `4-investigate` moves to `# renamed` as
 `4-investigate -> 4-start`. Room 407's tree keeps its text and no longer grants, and it now gates on
-`4-start` and missing `4-evidence`. Tessara's `4-investigate` opener variant goes.
+`4-start` and missing `4-evidence`. Tessara's `4-investigate` opener variant goes. Her existing
+`carriesItem: 16` opener variant stays.
 
 **Old saves.** A save resting on a first step with the item in hand has no step start coming. It
 keeps working through the existing `carriesItem` route: quests 4, 5, 7, 9 and 15 each get a recovery
@@ -266,6 +318,8 @@ outside Esk's first new topic.
 - **Hook 2:** the loader refuses `objective` off an offer; the card shows `objective` in place of
   the first step description; each pair of offers shows exactly one at a time.
 - **Hook 3:** accept on a `carriesItem` offer shows the hand-in with `[?]` in the re-shown menu.
+- **Items:** no room spawns items 21 or 29, and item 16 spawns in a container, on shipped content.
+  Harn's and Pell's topics give the item and move the step, and can be chosen again after it is lost.
 - **Old saves:** the recovery topic shows only in its state, and grants the deliver step.
 - **Esk:** `what_it_does` is hidden until `out_there` is heard, and both are hidden before `30-end`.
   A copy guard is not added; the limits above live in this spec and in a comment beside the topics.
@@ -279,7 +333,8 @@ One adversarial run after the plan's last task, on a fresh instance:
 | Seat | Tries |
 |---|---|
 | Quest 14 | The whole line, then again with a picked lock, and with a second seat taking the ledger first |
-| Carrying | Picks up Olen's ledger before talking to Olen: the NPC's line, the card, Accept, the `[?]`, the hand-in. Then drops the item while the card is open, and accepts |
+| Carrying | Takes Malk's crate before talking to Malk: the NPC's line, the card, Accept, the `[?]`, the hand-in. Then with Dorn's sample, drops the item while the card is open, and accepts |
+| Ledgers | Quest 5 from Harn and quest 9 from Pell, in the evening when Harn is at the inn; loses a ledger and asks again; does quests 5 and 6 on one character |
 | Steppe | Kael first, then a side, then the hand-in; 12 or 13 offered at hand-in |
 | Old save | Quest 11 with the flag set and no `11-sided` (admin fixture) |
 | Crossing | A newcomer reads Esk and crosses: does the line make them want to look? |
