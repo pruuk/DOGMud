@@ -92,11 +92,25 @@
         return true;
     }
 
+    // Should the phone keyboard close after a command is sent? (Malia,
+    // 2026-11-02: so the whole screen shows the result to read.) Only on a
+    // touch-only phone-width screen, in the game, with no game menu or prompt
+    // waiting for an answer, not for masked (password) input, and only when the
+    // command was actually sent. Tablets keep the keyboard, since a blur there
+    // would also stop arrow history and macros working. Plan:
+    // docs/superpowers/plans/2026-11-02-webclient-phone-keyboard.md.
+    function shouldHideKeyboardAfterSend(s) {
+        s = s || {};
+        return !!(s.touchOnly && s.phoneWidth && s.inGame &&
+                  !s.menuOpen && !s.password && s.sent);
+    }
+
     return {
         FOCUSABLE_CONTROL_SELECTOR: FOCUSABLE_CONTROL_SELECTOR,
         isTypingKey: isTypingKey,
         isEditableField: isEditableField,
         isKeyboardControl: isKeyboardControl,
-        shouldFocusCommandBar: shouldFocusCommandBar
+        shouldFocusCommandBar: shouldFocusCommandBar,
+        shouldHideKeyboardAfterSend: shouldHideKeyboardAfterSend
     };
 }));

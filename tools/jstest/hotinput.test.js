@@ -154,6 +154,47 @@ check('typing in the chat textarea is left alone', focuses(key('n'), CHAT_TEXTAR
 // Modals own focus while open.
 check('typing is left alone while a modal is open', focuses(key('n'), PLAIN_DIV, true), false);
 
+// --- phone keyboard hides after a send (2026-11-02) ------------------------
+//
+// docs/superpowers/plans/2026-11-02-webclient-phone-keyboard.md. True only
+// for the full set; flipping any single input must turn it off.
+
+var HIDE = { touchOnly: true, phoneWidth: true, inGame: true, menuOpen: false, password: false, sent: true };
+function hide(overrides) {
+    var s = {};
+    Object.keys(HIDE).forEach(function (k) { s[k] = HIDE[k]; });
+    Object.keys(overrides || {}).forEach(function (k) { s[k] = overrides[k]; });
+    return HotInput.shouldHideKeyboardAfterSend(s);
+}
+check('phone, in game, sent: keyboard hides', hide(), true);
+check('not touch-only (desktop, touch laptop): keeps the keyboard', hide({ touchOnly: false }), false);
+check('tablet width: keeps the keyboard (arrow history, macros)', hide({ phoneWidth: false }), false);
+check('at login (not in game yet): keeps the keyboard', hide({ inGame: false }), false);
+check('a game menu or prompt is open: keeps the keyboard', hide({ menuOpen: true }), false);
+check('masked (password) input: keeps the keyboard', hide({ password: true }), false);
+check('nothing was sent: keeps the keyboard', hide({ sent: false }), false);
+check('no state at all: keeps the keyboard', HotInput.shouldHideKeyboardAfterSend(), false);
+
+// The page has to call it, after SendData and from its result, and the phone
+// tap and xterm textarea guards must be in place.
+var fs = require('fs');
+var page = fs.readFileSync(path.join(
+    __dirname, '..', '..', '_datafiles', 'html', 'public', 'webclient-pure.html'
+), 'utf8');
+var sendAt = page.indexOf('var sent = SendData(event.target.value);');
+var decideAt = page.indexOf('window.HotInput.shouldHideKeyboardAfterSend({');
+check('the command box asks HotInput after sending', sendAt >= 0 && decideAt > sendAt, true);
+check('the decision is fed the send result', /password: wasPassword, sent: sent/.test(page), true);
+check('the password state is read before the box is cleared',
+    page.indexOf("var wasPassword = textInput.type === 'password';") >= 0 &&
+    page.indexOf("var wasPassword = textInput.type === 'password';") < sendAt, true);
+check('a phone tap on the game text does not refocus the command box',
+    /!isDragging && !selectedText && !\(phoneTouchOnly\(\) && phoneWidth\(\)\)/.test(page), true);
+check("xterm's textarea cannot raise the phone keyboard",
+    /ta\.setAttribute\('inputmode', 'none'\)/.test(page) && /window\.addEventListener\('resize', syncTermKeyboard\)/.test(page), true);
+check('the Chat box keeps its keyboard (Malia 2026-11-02)',
+    page.slice(page.indexOf("chatInput.addEventListener('keydown'")).slice(0, 600).indexOf('blur') === -1, true);
+
 // --- result ----------------------------------------------------------------
 
 console.log('\n' + (checks - failures) + '/' + checks + ' checks passed');

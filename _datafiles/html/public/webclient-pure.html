@@ -3027,10 +3027,21 @@
                     return;
                 }
 
-                if ( SendData(event.target.value) ) {
+                var wasPassword = textInput.type === 'password';
+                var sent = SendData(event.target.value);
+                if ( sent ) {
                     event.target.value = '';
                 } else {
                     term.writeln("Not connected to the server. Click Enter Game to play.");
+                }
+                // Phones: close the keyboard after a game command so the whole
+                // screen shows the result (Malia 2026-11-02; HotInput decides).
+                if (window.HotInput && window.HotInput.shouldHideKeyboardAfterSend({
+                    touchOnly: phoneTouchOnly(), phoneWidth: phoneWidth(),
+                    inGame: inGame, menuOpen: menuOpen,
+                    password: wasPassword, sent: sent
+                })) {
+                    textInput.blur();
                 }
             }
         });
@@ -3086,11 +3097,32 @@
         textOutput.addEventListener('mousemove', () => { isDragging = true; });
         textOutput.addEventListener('mouseup', () => {
             const selectedText = window.getSelection().toString();
-            if (!isDragging && !selectedText) {
+            // Phones: a tap on the game text is for reading, so it must not
+            // open the keyboard (plan 2026-11-02-webclient-phone-keyboard).
+            if (!isDragging && !selectedText && !(phoneTouchOnly() && phoneWidth())) {
                 textInput.focus();
             }
             isDragging = false;
         });
+
+        // xterm focuses its own hidden textarea on every press, which raises a
+        // phone keyboard and swallows the typing. On a touch-only phone-width
+        // screen, inputmode="none" keeps that focus from opening the keyboard;
+        // checked again on resize so rotating to tablet width restores it.
+        function phoneTouchOnly() {
+            return !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+        }
+        function phoneWidth() {
+            return !!(window.matchMedia && window.matchMedia('(max-width: 699px)').matches);
+        }
+        function syncTermKeyboard() {
+            var ta = term && term.textarea;
+            if (!ta) return;
+            if (phoneTouchOnly() && phoneWidth()) ta.setAttribute('inputmode', 'none');
+            else ta.removeAttribute('inputmode');
+        }
+        syncTermKeyboard();
+        window.addEventListener('resize', syncTermKeyboard);
 
         /////////////////////////////////////////////
         //
