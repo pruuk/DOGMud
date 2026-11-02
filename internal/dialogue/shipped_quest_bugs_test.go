@@ -2,6 +2,7 @@ package dialogue
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -162,13 +163,37 @@ func TestGiversHandleAHeldItem(t *testing.T) {
 	}
 }
 
+// Tier 2 (owner, 2026-11-02): Delia's herbs hand-in is gone, so quest 16 can
+// only be finished by meeting the forager. Holding the herbs adds no hand-in.
+func TestTier2DeliaHerbsAreNoHandIn(t *testing.T) {
+	df := loadShippedDialogue(t, "ashwick/259.yaml")
+	withHerbs := func(tok string) *PlayerState {
+		ps := heldState(tok)
+		ps.HasItem = func(id int) bool { return id == 40040 }
+		ps.CarriesItem = ps.HasItem
+		return ps
+	}
+	require.NotContains(t, menuKeys(df, withHerbs("16-start")), "quest_complete_herbs")
+	require.NotContains(t, menuKeys(df, withHerbs("16-start")), "quest_complete_forager")
+	at := menuKeys(df, withHerbs("16-forager"))
+	require.NotContains(t, at, "quest_complete_herbs")
+	handIns := 0
+	for _, e := range df.Menu("npc", withHerbs("16-forager")).Entries {
+		if strings.HasPrefix(e.Id, "quest_complete") {
+			handIns++
+		}
+	}
+	require.Equal(t, 1, handIns)
+	require.Contains(t, at, "quest_complete_forager")
+}
+
 // Tier 2: a hand-in follows the quest's last step.
 func TestTier2HandInsFollowTheLastStep(t *testing.T) {
 	for _, c := range []struct {
 		file, topic, onPrev, onLast string
 		item                        int
 	}{
-		{"ashwick/259.yaml", "quest_complete_herbs", "16-start", "16-forager", 40040},
+		{"ashwick/259.yaml", "quest_complete_forager", "16-start", "16-forager", 0},
 		{"new_plymouth_outskirts/9208.yaml", "guardhandoff", "60-waybill", "60-manifest", 40073},
 		{"stillwater/347.yaml", "ullahandoff", "20-kingfisher_found", "20-vella_journal", 40061},
 		{"stillwater/355.yaml", "vellahandoff", "20-brindle_confession", "20-kingfisher_found", 40060},

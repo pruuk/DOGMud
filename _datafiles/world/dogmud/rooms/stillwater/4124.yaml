@@ -74,7 +74,7 @@ hidden_nouns:
       directly over the marker.
     hidden_description: |
       A flat slab of weathered stone, a buried marker, lies at the foot
-      of the crab-apple tree. Try <ansi fg="command">search</ansi>.
+      of the crab-apple tree. Try <ansi fg="command">look marker</ansi>.
 idlemessages:
 - A bee moves slowly between the elderberry flowers along the eastern fence.
 - A breeze lifts the smell of crushed marsh-sage briefly across the garden.

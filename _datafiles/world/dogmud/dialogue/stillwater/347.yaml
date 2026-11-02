@@ -42,7 +42,7 @@ opener:
       Sigrid kept the old seat for me.
     hints: If you want to tell Ulla what Vella knew, choose it below.
   - questRequired:
-    - 20-kingfisher_found
+    - 20-vella_journal
     questExcluded:
     - 20-end
     carriesItem: 40061

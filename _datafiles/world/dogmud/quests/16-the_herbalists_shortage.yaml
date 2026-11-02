@@ -8,7 +8,7 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 4031  # Forager's Camp — The Forager (mob 262)
+      room: 4031  # Forager's Camp, The Forager (mob 262)
     description: "Delia, the herbalist in Ashwick, cannot
       restock her supplies. Someone has been taking the
       wild herbs from the forest before she can harvest
@@ -19,7 +19,7 @@ steps:
       gathers just west of it in the mornings. Type talk forager."
   - id: forager
     destination:
-      mob: 259  # follow Delia (schedule ashwick_delia) — a fixed room is wrong for part of the day
+      mob: 259  # follow Delia (schedule ashwick_delia): a fixed room is wrong for part of the day
       room: 4027  # fallback when Delia is not spawned
     description: "You found a forager living in the woods
       who has been harvesting Delia's herbs. They have

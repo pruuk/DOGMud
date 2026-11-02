@@ -16,7 +16,7 @@ opener:
     hints: Choose a line below if you want to hear about her herbs, the temple,
       or the lake.
   - questRequired:
-    - 20-brindle_confession
+    - 20-kingfisher_found
     questExcluded:
     - 20-vella_journal
     - 20-end
@@ -43,7 +43,7 @@ opener:
     - 20-kingfisher_found
     text: You have spoken to Brindle. I can see that on you. What you came here for
       is not in this cottage. It is in the cemetery, just west of here. Go to my
-      brother's grave and look at the foot of it.
+      brother's grave and search at the foot of it.
     hints: The cemetery is west of the Healer's Cottage. At the foot of Elgar's grave,
       type search.
   - questRequired:

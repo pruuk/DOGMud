@@ -10,7 +10,9 @@ secret: false
 
 steps:
   - id: start
-    # destination inferred from triggers (#375 p4); was: bundled objectives, rooms [5376, 5395]; Phase 2 split review
+    destination:
+      mob: 9173  # the hedgerow bandit, first of the two
+      room: 5376  # Mire Cutoff, where it lairs
     description: >-
       Goodwife Pemberton asked you to clear the two preying on the road:
       a hedgerow bandit hidden in the reeds at the Mire Cutoff, and a

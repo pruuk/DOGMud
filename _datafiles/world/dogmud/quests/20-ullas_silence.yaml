@@ -77,7 +77,7 @@ steps:
       Mouth. A cairn stands there. Type search."
   - id: bone_shoals_cache
     destination:
-      mob: 337  # follow Smith Brindle (schedule brindle) — a fixed room is wrong for part of the day
+      mob: 337  # follow Smith Brindle (schedule brindle): a fixed room is wrong for part of the day
       room: 4106  # fallback when Smith Brindle is not spawned
     description: "Elgar's cache lay where he hid it before going
       deeper: an oilskin pouch with a folded note to Brindle the
@@ -105,7 +105,7 @@ steps:
       Elgar's grave, type search."
   - id: kingfisher_found
     destination:
-      mob: 355  # follow Vella Thorne (schedule vella) — a fixed room is wrong for part of the day
+      mob: 355  # follow Vella Thorne (schedule vella): a fixed room is wrong for part of the day
       room: 4136  # fallback when Vella Thorne is not spawned
     description: "Beneath Elgar's empty grave, Vella buried a small
       wooden box with a single carved kingfisher and a note in her
@@ -209,6 +209,7 @@ triggers:
       missing: ["20-garden_marker"]
     actions:
       - grant: "20-garden_marker"
+      - discover: "buried marker"
       - actor: "The buried marker beneath the crab-apple carries
           the same spiral. Older than the garden it sits in. Northwest
           of town, on a low rise, there is a circle of standing stones
@@ -258,6 +259,7 @@ triggers:
       missing: ["20-bone_shoals_cache"]
     actions:
       - grant: "20-bone_shoals_cache"
+      - discover: "cache"
       - actor: "The oilskin pouch holds a folded note in Elgar's
           hand, addressed to Brindle the smith. The note explains the
           spiral: the chapel, the wardstone circle and the deep sump
@@ -290,6 +292,7 @@ triggers:
       missing: ["20-kingfisher_found"]
     actions:
       - grant: "20-kingfisher_found"
+      - discover: "disturbance"
       - give_item: 40060
       - actor: "Inside the buried wooden box: a single small
           carved kingfisher in dark wood, unmistakably Elgar's work,

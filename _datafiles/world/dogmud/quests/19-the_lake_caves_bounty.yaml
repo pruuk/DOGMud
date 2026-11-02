@@ -15,7 +15,7 @@ flags:
 steps:
   - id: start
     destination:
-      room: 4121  # Cave Mouth — sole entrance to the cave system (down -> 4127)
+      room: 4121  # Cave Mouth, sole entrance to the cave system (down -> 4127)
     description: "Constable Drunn has posted a bounty on the lake-cave creatures.
       Clear the shallows of shrimp swarms, deal with at least one drowned
       hunter, then come back to the constabulary for further instructions.
@@ -25,7 +25,7 @@ steps:
       Dripping Antechamber. Type attack swarm."
   - id: shrimp
     destination:
-      room: 4128  # Pool Chamber — first room a Drowned Hunter (mob 331) can hold
+      room: 4128  # Pool Chamber, first room a Drowned Hunter (mob 331) can hold
     description: "You have cleared a swarm of skitter-shrimp from the cave
       shallows. The fishing nets will hold longer."
     hint: "Drowned hunters hide deeper in the caves and strike first.
@@ -33,7 +33,7 @@ steps:
       When a hunter attacks, type attack hunter."
   - id: hunter
     destination:
-      mob: 335  # follow Constable Drunn (maxwander 2) — a fixed room is wrong for part of the day
+      mob: 335  # follow Constable Drunn (maxwander 2): a fixed room is wrong for part of the day
       room: 4110  # fallback when Constable Drunn is not spawned
     description: "You have killed a drowned hunter. The shallows are
       meaningfully safer."
@@ -72,6 +72,16 @@ triggers:
       - grant: "19-shrimp"
       - actor: "The skitter-shrimp swarm has been broken. The lake-folk's
           nets will hold longer for it."
+
+  # ── HUNTER killed before any shrimp swarm: counts for nothing ──
+  - event: mob_death
+    mob: 331
+    conditions:
+      has: ["19-start"]
+      missing: ["19-shrimp"]
+    actions:
+      - actor: "The drowned hunter is dead, but the constable's bounty
+          starts with the shrimp swarms in the Dripping Antechamber."
 
   # ── HUNTER: kill a drowned hunter (mob 331) ──
   - event: mob_death

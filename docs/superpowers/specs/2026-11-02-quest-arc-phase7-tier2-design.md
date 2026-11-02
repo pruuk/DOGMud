@@ -33,7 +33,7 @@ New for this tier (2026-11-02):
 | Quest 20's "Try look" lines: room 4138 line 34, 4124 line 77, 4130 line 71, 4140 line 92 | `rooms/stillwater/` |
 | NPC lines saying `look <noun>` for quest 20: `dialogue/stillwater/337.yaml:52`, `344.yaml:26,44`, `347.yaml:74,113`, `355.yaml:39,48` | grep |
 | Rooms 4124, 4130, 4140 hide their noun behind `hidden_nouns`; the others are plain nouns | `rooms/stillwater/` |
-| Hand-ins off the last step: `quest_complete_herbs` needs `16-start`; `guardhandoff` needs `60-start`; `ullahandoff` needs `20-kingfisher_found`; `vellahandoff` needs nothing past `20-brindle_confession` in its trigger | `dialogue/ashwick/259.yaml:78`; `dialogue/new_plymouth_outskirts/9208.yaml:43`; `dialogue/stillwater/347.yaml:90`; `quests/20-*.yaml` |
+| Hand-ins off the last step: `guardhandoff` needs `60-start`; `ullahandoff` needs `20-kingfisher_found`; `vellahandoff` needs nothing past `20-brindle_confession` in its trigger | `dialogue/new_plymouth_outskirts/9208.yaml:43`; `dialogue/stillwater/347.yaml:90`; `quests/20-*.yaml` |
 | Quest 19's hunter kill needs `19-start`; the signing needs both `19-shrimp` and `19-hunter`; step `signed` has no destination | `quests/19-*.yaml`; backlog |
 | Quest 61's either-order logic: three `mob_death` triggers and the `61-reach-first` flag, read by Pemberton's opener | `quests/61-*.yaml`; `dialogue/north_road_north/9171.yaml:25-46` |
 | `HasQuest` counts later steps, so a save at `61-reach` holds `61-bandit` | `internal/characters/quests.go:67-89` |
@@ -52,9 +52,10 @@ New for this tier (2026-11-02):
 
 ## Item audit (ruling 3)
 
-Clean. Nothing lies loose with a keeper standing beside it. The salve is bought, the pin and tooth
-drop from what the player kills, and every other item is handed over by an NPC. No quest here has a
-findable item that an NPC should notice, so none gets a second offer.
+Nothing lies loose with a keeper standing beside it. The salve is bought, and the pin and tooth drop
+from what the player kills. Delia's herbs lie in the Hidden Grove, and they are no longer part of
+quest 16: the owner removed that hand-in because it let a player finish without meeting the forager.
+No quest here has a findable item that an NPC should notice, so none gets a second offer.
 
 ## Quest fixes
 
@@ -91,8 +92,12 @@ grave stays.
   `20-kingfisher_found`, `missing` `20-vella_journal`, `missing_item` 40060, with its text. It grants
   nothing, so it is not a finding.
 - **Hints and NPC lines:** every "Type look carving" and similar becomes "Type search". This covers
-  the step hints, the rooms' "Try look" lines, and the NPC lines in the facts table. Room nouns stay,
-  so `look` still describes each thing.
+  the step hints, the plain noun text in room 4138, and the NPC lines in the facts table. Room nouns
+  stay, so `look` still describes each thing.
+- **Hidden descriptions keep "Try look".** A `hidden_description` (rooms 4124, 4130, 4140) shows only
+  after a search has found the noun, and then on every look at the room, so "Try search" would be false
+  there and "Try look <noun>" is true. Each of those search triggers also carries `discover:` for its
+  hidden noun, so `look` works on what the quest just found.
 - `vellahandoff`'s trigger `has` becomes `20-kingfisher_found`, and the topic's `questRequired`
   follows. `ullahandoff`'s `questRequired` becomes `20-vella_journal`.
 
@@ -121,7 +126,10 @@ Fixed order: `start`, then `bandit` on `mob_death 9173`, then `reach` on `mob_de
 
 ### Quests 16, 19, 60: hand-ins and order
 
-- `quest_complete_herbs`: `questRequired` becomes `16-forager`.
+- **Owner decision, 2026-11-02:** Delia's `quest_complete_herbs` hand-in is deleted, because it let a
+  player finish quest 16 without meeting the forager. Its key moves to the retired section of
+  `dialogue/topic-keys.txt`. `quest_complete_forager` is the only hand-in. A player who gives her the
+  herbs gets them handed back by her archetype's `player_give` branch.
 - Quest 19: the `mob_death 331` trigger's `has` becomes `19-shrimp`. `sign_bounty`'s trigger needs
   only `19-hunter`, which holds `19-shrimp` by `HasQuest`. Step `signed` gains `destination: {mob: 335,
   room: 4110}`. A player who kills a hunter before a shrimp swarm kills another; both respawn.
