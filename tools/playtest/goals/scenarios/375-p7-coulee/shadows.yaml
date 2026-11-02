@@ -1,0 +1,27 @@
+# SHADOWS seat: Find Your Footing is done. Take the Shadows trade from Toke and
+# play it to the end. The mine is dark. Quote every game line VERBATIM.
+ephemeral:
+  profile: early
+  start_room: 5203
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end", "88-start", "88-end", "31-start", "31-lantern", "31-end"]
+  budgets:
+    wall_clock: 50m
+
+goals:
+  - >-
+    Type `talk toke` and take the trade about light and shadows. Follow each
+    hint the game gives you, one step at a time, through every quest that
+    trade gives you, to its last hand-in. Quote every progress line, hint and
+    hand-in.
+  - >-
+    Along the way, open every menu line marked [*] on the two teachers and say
+    in one line what each taught you.
+  - >-
+    Report anything that did not happen the way the hint said, and any time
+    you could not see.
+  - >-
+    When the trade is done, steal from a creature you have not fought, one with
+    others of its kind nearby if you can find one. Quote what happens if the
+    theft lands, then keep moving nearby for a minute and say whether anything
+    comes after you.

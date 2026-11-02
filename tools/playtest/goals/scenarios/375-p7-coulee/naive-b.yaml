@@ -1,0 +1,18 @@
+# NEWCOMER seat B. Same rule as seat A: no routes, no commands. This seat is
+# told only that it likes to learn many things, so it should try more than
+# one of the trades the game offers. Quote game lines verbatim.
+goals:
+  - >-
+    You have never played a MUD before, and you like to learn a little of
+    everything. Create a brand-new character and play whatever the game puts
+    in front of you, relying only on what the game itself tells you. When the
+    game offers you a choice of things to learn, try more than one. If you
+    cannot tell what to do next, say so and stop.
+
+ephemeral:
+  creation_flow: true
+  creation_rationale: >
+    Brand-new character required: grades the hub choice for a player new to
+    MUDs.
+  budgets:
+    wall_clock: 50m

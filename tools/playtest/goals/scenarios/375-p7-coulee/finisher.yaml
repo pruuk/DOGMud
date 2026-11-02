@@ -1,0 +1,24 @@
+# FINISHER seat: seven trades are finished and reported to Toke; the Shadows
+# trade's finale is handed in, so Cutpurse Dace should offer Report to Toke.
+# Quote every game line VERBATIM.
+ephemeral:
+  profile: early
+  start_room: 5218
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end", "88-start", "88-end", "31-start", "31-lantern", "31-end", "90-start", "90-end", "91-start", "91-end", "92-start", "92-end", "93-start", "93-end", "94-start", "94-end", "95-start", "95-end", "96-start", "96-end", "98-start", "98-end", "99-start", "99-end", "100-start", "100-end"]
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Type `talk dace` and quote the menu. Take Report to Toke.
+  - >-
+    Go to Crier Toke (follow the quest's hint) and hand it in. Quote the
+    hand-in. Type `talk toke` and say whether Esk's Road is offered; take it.
+  - >-
+    Leave Toke's room and come back in eight times, waiting a few seconds each
+    time. Quote every line Toke says to you on arrival.
+  - >-
+    Follow Esk's Road's hint to Warden Esk and hand it in. Quote it. Then type
+    `talk esk` and quote the menu. Leave and re-enter Esk's room eight times
+    and quote anything he says on arrival. Do NOT walk through the arch.

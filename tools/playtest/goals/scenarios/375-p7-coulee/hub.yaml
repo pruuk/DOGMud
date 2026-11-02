@@ -1,0 +1,26 @@
+# HUB seat: Find Your Footing is done, so Crier Toke should offer the start of
+# every trade. You start in Toke's room. Quote every game line VERBATIM.
+ephemeral:
+  profile: early
+  start_room: 5203
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end", "88-start", "88-end", "31-start", "31-lantern", "31-end"]
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Type `look` and quote how Crier Toke's name is shown, including any mark
+    before it. Type `talk toke` and quote the whole menu.
+  - >-
+    Take the fighting trade's first quest from Toke's menu. Type `quests` and
+    quote the entry. Type `talk toke` again and say whether that quest is
+    still offered.
+  - >-
+    Take a second trade from Toke. Type `quests` and say whether both are
+    listed. Type `hint` and quote it.
+  - >-
+    Follow the fighting quest's hint to the trainer it names and finish that
+    quest. Quote every progress line and the hand-in. Then type `talk` to the
+    trainer and quote the menu: say whether it offers you the next quest and
+    where it sends you.
