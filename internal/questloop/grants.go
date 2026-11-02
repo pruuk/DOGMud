@@ -119,6 +119,7 @@ func triggerSignature(t *quests.TriggerDef) string {
 	addStr("target", t.Target)
 	addStr("effect", t.Effect)
 	addStr("topic", t.Topic)
+	addStr("reason", t.Reason)
 	addStr("area", t.Area)
 	addStr("zone", t.Zone)
 	addInt("count", t.Count)

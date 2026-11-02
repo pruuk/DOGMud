@@ -271,6 +271,17 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 // - Chained quest activation
 ```
 
+### The ambush quest event (`NewRound_DoCombat_unified.go`, #375 phase 7)
+
+`applyCombatProgression` raises `command ambush` (`notifyAmbushQuest`) when
+a player's round carries `AttackResult.WasSurpriseAttack`, aimed at the
+defender, landed or not. It is the only place the fact survives to the
+progression phase (see `surpriseCandidate`). A shot from cover raises the
+same event from `usercommands/shoot.go` (`ambushQuestTargets`). Quest 100
+(From the Dark) listens for it. The same phase raises the mob event
+`ambush_foiled` when the opener threw a swing and won none (see
+`internal/behaviortree/context.md`).
+
 ### Resumed quests (`Quest_HandleQuestUpdate.go`, #375 phase 5)
 
 `HandleQuestUpdate` asks `Character.TakeResumed(questId)` for a `start` token,

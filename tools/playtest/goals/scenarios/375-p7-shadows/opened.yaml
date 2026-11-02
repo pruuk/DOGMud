@@ -1,0 +1,24 @@
+# OPENED seat: through the rite and nothing more. Leaving must still work, and
+# Toke must not offer Esk's Road yet. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5200
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end"]
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `talk hadwen`. Quote his opening line, hint and full menu. Ask about any
+    other way out and quote the answer.
+  - >-
+    Walk to Hub Square and type `talk toke`. Quote his opening line, hint and full
+    menu. Say plainly whether Esk's Road is on it. It should not be.
+  - >-
+    Go to Warden Esk following what Hadwen or Toke said. Type `talk esk`, quote
+    his opening line, hint and full menu.
+  - >-
+    Cross through the arch the way Esk's menu offers. Quote the crossing and the
+    room you land in. It should work.

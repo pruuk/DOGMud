@@ -44,6 +44,16 @@ import (
 // ranged_quest_contract_test.go fails if the two ever disagree.
 const questNotifyCommand = "fire"
 
+// ambushQuestTargets is the `command ambush` quest event a shot raises (#375
+// phase 7, quest 100): a same-room shot from hiding (FireResult.Revealed) is
+// an ambush aimed at what it was fired at. Any other shot raises none.
+func ambushQuestTargets(userId int, result actions.FireResult) ([]questengine.Target, bool) {
+	if !result.Revealed {
+		return nil, false
+	}
+	return []questengine.Target{questengine.TargetActor(userId, result.TargetUserId, result.TargetMobInstanceId)}, true
+}
+
 func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	// --- Pre-fire target resolution & guards ---
@@ -251,6 +261,9 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// player shoots FROM, not the target's room.
 	questengine.NotifyCommand(user, room.RoomId, questNotifyCommand,
 		questengine.TargetActor(user.UserId, result.TargetUserId, result.TargetMobInstanceId))
+	if targets, ok := ambushQuestTargets(user.UserId, result); ok {
+		questengine.NotifyCommand(user, room.RoomId, "ambush", targets...)
+	}
 
 	// The chambering that followed the shot. This is the ONLY place a player
 	// learns they are dry: firing readies the next round silently when it can,

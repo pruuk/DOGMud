@@ -230,6 +230,15 @@ func (r *Quest) Validate() error {
 				return fmt.Errorf("quest %d (%s): trigger %d has invalid target %q (use one of %s)", r.QuestId, r.Name, i, t.Target, strings.Join(TriggerTargetKinds, ", "))
 			}
 		}
+		// Only an item gain has a reason (#375 phase 7): how the item arrived.
+		if t.Reason != "" {
+			if t.Event != "item_gain" {
+				return fmt.Errorf("quest %d (%s): trigger %d sets reason %q on a %s trigger; only item_gain has a reason", r.QuestId, r.Name, i, t.Reason, t.Event)
+			}
+			if !slices.Contains(TriggerGainReasons, t.Reason) {
+				return fmt.Errorf("quest %d (%s): trigger %d has invalid reason %q (use one of %s)", r.QuestId, r.Name, i, t.Reason, strings.Join(TriggerGainReasons, ", "))
+			}
+		}
 		// Only a landed spell has an effect; the name is checked against the
 		// loaded spells by ValidateQuestRefs.
 		if t.Effect != "" && t.Event != "spell_landed" {

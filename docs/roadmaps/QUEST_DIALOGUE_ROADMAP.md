@@ -339,7 +339,13 @@ spec.
 **Closing step.** Validators become hard boot failures; `room_interact` is deleted; the dash
 guards stop exempting dialogue, quests and conversations.
 
-**Status:** not started.
+**Status:** in progress. Pothole Coulee (with the Newcomer Antechamber) is
+built across PRs 1 to 4 of
+`docs/superpowers/specs/2026-10-30-quest-arc-phase7-pothole-coulee-design.md`
+(engine and config, spine, the seven lines, the Shadows line and leaving)
+and is done pending its adversarial playtest (plan 5). No `loop-backlog.txt`
+line names a Coulee quest (`internal/guards/coulee_backlog_guard_test.go`).
+The other zones are not started.
 
 ## Phase 6: Web builder (postponed)
 

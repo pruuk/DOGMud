@@ -160,7 +160,7 @@ var questEventVocab = []vocabEntry{
 	{"mob_death", "a mob dies with the player involved (filters: mob, room, area, zone; count, label)"},
 	{"command", "a command SUCCEEDED (~27 instrumented commands; filters: command, noun, room, target (self, mob, player, item or container), mob, item, area, zone; count, label)"},
 	{"command_issued", "player TYPED a command, success or not: fires from TryCommand for any command (filters: command, room, area, zone; count, label)"},
-	{"item_gain", "an item enters the player's inventory (filters: item, area, zone; count, label)"},
+	{"item_gain", "an item enters the player's inventory (filters: item, room, reason as how it arrived, such as get, loot, buy or steal; area, zone; count, label)"},
 	{"quest_granted", "a quest token was just granted: the chaining event (filters: quest_token, area, zone; count, label)"},
 	{"room_interact", "player looked at or searched a room feature (filters: room, noun, verb: look or search; empty means look; area, zone; no count)"},
 	{"spell_landed", "a player's spell landed on a target, once per cast (filters: noun as the spell id, effect as its effect_type such as heal, target (self, mob, player, item or container), mob, item, room, area, zone; count, label)"},

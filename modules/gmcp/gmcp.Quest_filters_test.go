@@ -36,6 +36,32 @@ func builderEventFilters(t *testing.T) map[string][]string {
 	return out
 }
 
+// The editor offers the reason filter on item_gain with the loader's own values,
+// and keeps the room filter shipped quests set there (#375 phase 7).
+func TestQuestBuilderGainReasonsMatchTheLoader(t *testing.T) {
+	fs := builderEventFilters(t)["item_gain"]
+	for _, want := range []string{"reason", "room"} {
+		if !slices.Contains(fs, want) {
+			t.Errorf("item_gain: EVENT_FILTERS lacks %s, so a save drops it", want)
+		}
+	}
+	src, err := os.ReadFile(questBuilderJS)
+	if err != nil {
+		t.Fatalf("read %s: %v", questBuilderJS, err)
+	}
+	block := regexp.MustCompile(`(?s)var GAIN_REASONS = \[(.*?)\];`).FindSubmatch(src)
+	if block == nil {
+		t.Fatalf("GAIN_REASONS not found in %s", questBuilderJS)
+	}
+	var got []string
+	for _, m := range regexp.MustCompile(`"(\w+)"`).FindAllSubmatch(block[1], -1) {
+		got = append(got, string(m[1]))
+	}
+	if !slices.Equal(got, quests.TriggerGainReasons) {
+		t.Errorf("GAIN_REASONS %v, the loader's %v", got, quests.TriggerGainReasons)
+	}
+}
+
 // The editor keeps every slice 4 field it may write (#375): area and zone on
 // every event, count and label wherever count is allowed, distinct and
 // explored_line on room_enter, and noun on command. Each field has a kind,

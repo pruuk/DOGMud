@@ -9,9 +9,17 @@
 10-end
 10-report
 10-start
+100-ambush
+100-end
+100-hidden
+100-kill
+100-start
 1000000-end
 1000000-givegold
 1000000-start
+101-end
+101-lifted
+101-start
 11-end
 11-sided
 11-start
@@ -359,6 +367,21 @@
 95-start
 96-end
 96-start
+97-end
+97-start
+98-drift
+98-end
+98-equip
+98-hooded
+98-lantern
+98-start
+99-end
+99-hidden
+99-lesson
+99-lifted
+99-picked
+99-planted
+99-start
 # retired
 # Quest 29 Two Roads (#375 phase 7): no road grants it; users.LoadUser drops
 # it from saves (quests.RetiredQuests).

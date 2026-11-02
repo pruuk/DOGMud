@@ -1,0 +1,41 @@
+# SHADOW seat: a player new to MUDs who has done the Coulee's opening and stands
+# in Hub Square with Crier Toke. The goals below carry no routes or commands on
+# purpose: what is being tested is whether the game's own lines get you through.
+
+ephemeral:
+  profile: early
+  start_room: 5203
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end", "31-start", "31-lantern", "31-end"]
+  budgets:
+    wall_clock: 40m
+
+goals:
+  - >-
+    Talk to Crier Toke and take the trail that teaches the shadows (lights,
+    sneaking, quiet hands). Play it to its end using only what the game tells
+    you: the hints, the quest log (`quests`, `hint`), `help`, and what NPCs say.
+    Quote every hint and every NPC line about what to do next, VERBATIM. There
+    are five quests in the trail, ending with reporting back to Toke.
+  - >-
+    The walk to the mine crosses dangerous rooms. Say how it went: did the game
+    warn you, were you ready, what did it cost you, did you die? If you die,
+    say what happened and carry on.
+  - >-
+    While you are on a step that teaches planting something, try it enough
+    times to get caught once, with Cutpurse Dace on the jetty. Quote the line
+    you read and say whether it feels friendly or mean.
+  - >-
+    On the step that teaches an opening strike from hiding, quote what you read
+    if your first blow misses or is turned aside, and say whether it feels
+    friendly or mean. If the dice never allow it, say so.
+  - >-
+    Try these on purpose and quote each refusal: a command the hint names, typed
+    before the step that wants it; a lockpick with a wrong pin; a lockbox someone
+    has just opened if you can arrange it; and picking up a purse rather than
+    stealing it.
+  - >-
+    Report any step whose hint did not get you through it, any refusal the hint
+    did not prepare you for, any line claiming something that was not so, and any
+    moment you did not know what to do next. Being lost is a finding. Do not use
+    outside knowledge of the game to get unstuck, and say so if you are stuck.

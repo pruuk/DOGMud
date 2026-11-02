@@ -1,0 +1,40 @@
+# Mine Crawler (9120), the old mine (coulee_mine).
+#
+# #375 phase 7 (owner ruling 2026-10-30): an opening strike from hiding that
+# misses or is turned aside (ambush_foiled, fired from the combat round and
+# the shot from cover through mobs.FireAmbushFoiled) earns the striker one
+# short good-natured line, to them alone (respond, user_text only). Quest 100
+# counts the try anyway. One of three, picked evenly (33, 50, last).
+#
+# The lines say "it", never {actor}: respond names the mob whatever the
+# striker's sight, and the mine is dark. They also hold for a swing that was
+# turned aside with some damage done, and for a shot. The striker gave
+# themselves away by striking (melee and a same-room shot both reveal), and
+# only they read the line. A mob striker has no client: respond fails, and the
+# event falls through.
+#
+# Every other event falls through to its generic_fighter archetype.
+
+tree:
+  type: selector
+  children:
+    - type: selector
+      event: ambush_foiled
+      children:
+        - type: decorator
+          mod: random
+          percent: 33
+          child:
+            type: action
+            do: respond
+            user_text: It skitters aside at the last moment. Somewhere, someone is surely laughing.
+        - type: decorator
+          mod: random
+          percent: 50
+          child:
+            type: action
+            do: respond
+            user_text: It felt you coming through the rock. So much for the quiet strike.
+        - type: action
+          do: respond
+          user_text: Your opening strike falls short. Mandibles click, more insulted than hurt.

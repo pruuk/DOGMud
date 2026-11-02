@@ -367,6 +367,7 @@ type ItemSpec struct {
 	MaterialTier     int      `yaml:"material_tier,omitempty"`
 	VendorCategories []string `yaml:"vendor_categories,omitempty"` // Disciplines that buy/sell this item; mirrors shops.ValidCraftSupports minus "general"
 	NotSalable       bool     `yaml:"not_salable,omitempty"`       // True for lore / flavor / legacy items excluded from vendor economy validation
+	Worthless        bool     `yaml:"worthless,omitempty"`         // The item has no value: Validate holds Value at 0 instead of pricing it, so no merchant pays for it
 	NeverDrops       bool     `yaml:"never_drops,omitempty"`       // Mob-only gear: this item is skipped entirely by mob death-loot drops, worn or carried (a disarm puts a weapon in the pack), so it never reaches players. Other carried Character.Items still drop; use loot_pool / character.items for guaranteed loot on the same mob.
 	Restricted       bool     `yaml:"restricted,omitempty"`        // Contraband: bid on by the auction Official (The Crown Assessor, econ #2.5). Interest tag only — no other mechanics.
 
@@ -765,7 +766,9 @@ func (i *ItemSpec) Validate() error {
 		i.Damage.FormatDiceRoll()
 	}
 
-	if i.Value < 1 {
+	if i.Worthless {
+		i.Value = 0
+	} else if i.Value < 1 {
 		i.AutoCalculateValue()
 	}
 

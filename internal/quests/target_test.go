@@ -5,6 +5,27 @@ import (
 	"testing"
 )
 
+func TestValidateGainReasons(t *testing.T) {
+	gain := func(reason string) *Quest {
+		q := validQuest(ActionDef{Grant: "9001-start"})
+		q.Triggers[0].Event, q.Triggers[0].Reason = "item_gain", reason
+		return q
+	}
+	for _, reason := range TriggerGainReasons {
+		if err := gain(reason).Validate(); err != nil {
+			t.Fatalf("reason %q refused: %v", reason, err)
+		}
+	}
+	if err := gain("stolen").Validate(); err == nil || !strings.Contains(err.Error(), `invalid reason "stolen"`) {
+		t.Fatalf("a reason no gain carries must be refused, got %v", err)
+	}
+	q := gain("steal")
+	q.Triggers[0].Event = "command"
+	if err := q.Validate(); err == nil || !strings.Contains(err.Error(), "only item_gain has a reason") {
+		t.Fatalf("a reason on a command trigger must be refused, got %v", err)
+	}
+}
+
 func TestValidateCommandTargets(t *testing.T) {
 	for _, kind := range TriggerTargetKinds {
 		q := validQuest(ActionDef{Grant: "9001-start"})

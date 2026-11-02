@@ -2,13 +2,47 @@
 
 ## 2026-11-01: Robbing a creature angers that creature
 
-- Robbing a creature angers that creature, not every one of its kind. The one
-  you robbed hunts you, and so do creatures of other kinds who saw it happen.
-  Others of its kind leave you alone, even in the same room.
+- Robbing a creature angers that creature, not every one of its kind. Others of
+  its kind leave you alone, even in the same room.
+- A creature you robbed hunts you only if it has fought you lately, and the same
+  goes for creatures of other kinds who saw it happen. Rob one you have not been
+  fighting and get away clean, and nothing comes after you.
 - Its anger ends when it dies. The next one to take its place does not know you.
 - It also ends if you die or leave the game.
 - Named people you can talk to remember as they did before. Guards still report
   the crime, and people who cannot fight still run away.
+
+## 2026-11-01: Pothole Coulee, the Shadows line and the way out
+
+- New: the Shadows line, the last of the eight trails from Crier Toke. He
+  sends you to Lamplighter Gethin at the Mine Head, and Gethin sends you on
+  to Cutpurse Dace at the Reed Jetty. Between them you learn to carry a
+  hooded lantern and close its hood in the dark, to hide and move quietly,
+  to lift a purse and slip it back, to pick a lock, and to strike a foe
+  from hiding before it knows you are there.
+- Dace keeps a straw dummy and a small locked box on the jetty for practice.
+  The dummy grows a fresh purse in its pocket after a short while, so you
+  can try again as often as you like. Dace will also set you the purse job
+  again whenever you want to keep your fingers quick.
+- A failed try earns a good-natured jeer. Get caught slipping a purse back
+  onto the dummy, and Dace or the dummy's bells make fun of you. Strike from
+  hiding at a mine crawler or tunnel brute and miss, and it makes fun of you
+  too. The step still counts, because the lesson is in trying.
+- On the trail's ambush lesson, kill the brute without striking from hiding
+  first, and you are told why it did not count and how to try again.
+- Only a real theft counts for a theft step. Picking up a purse from the
+  floor does not, and neither does getting the same purse a second time.
+- A thing you steal that is too heavy to carry now falls at your feet and
+  tells you so. Before, it could vanish from the victim's pocket and never
+  reach you.
+- Warden Esk still opens the arch to Thornwall for anyone who has been
+  through the rite at the pool, whenever you like. Crier Toke now offers
+  Esk's Road, a short errand to Esk, once you have reported back from all
+  eight trails. Crossing the arch no longer finishes it. Tell Esk you were
+  sent to him, and he closes it.
+- The old mine changed. The Mine Head is safer, since the crawler that
+  waited there has gone deeper, and Gethin now keeps the lamps there. The
+  deeper galleries hold more of the mine's creatures than before.
 
 ## 2026-11-01: A free hand no longer costs you accuracy
 

@@ -319,6 +319,30 @@ one event per target under one guard, so a trigger fires at most once per
 command however many targets it matches. A trigger with no `target:` filter
 fires once for the whole command, not once per target.
 
+## Item gains: `reason`
+
+`item_gain` fires on every way an item reaches the pack, so a step that means
+one way says so. `reason:` is how it arrived: `steal`, `get`, `loot`, `buy`,
+`give`, `craft` and the rest of `quests.TriggerGainReasons` (the words of
+`acquire.AcquireReason`). Omit it to accept any. The loader refuses it on any
+other event and any other value.
+
+```yaml
+  - event: item_gain
+    item: 60
+    room: 5218
+    reason: steal
+    conditions:
+      has: ["99-hidden"]
+      missing: ["99-lifted"]
+    actions:
+      - grant: "99-lifted"
+```
+
+Without it, a player drops the item and picks it up again to pass the step, and
+kills the mark to loot it. A `count` on an unfiltered `item_gain` counts that
+loop too, so a repeatable quest that gives a reward pays for it.
+
 ## Spell triggers: `spell_landed` and `effect`
 
 `event: spell_landed` fires when a player's spell actually lands on a target

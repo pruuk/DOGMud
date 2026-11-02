@@ -1,0 +1,143 @@
+# Quest 98: First Light. Pothole Coulee, the Shadows line, quest 1 of 3
+# (#375 phase 7, Pothole Coulee pass; #315).
+#
+# Token flow (one action per step, each trigger gated on the step before):
+#   98-start:   granted on Accept of Crier Toke's offer send_light
+#               (dialogue/pothole_coulee/9106.yaml), open after 31-end.
+#   98-lantern: topic_heard on Lamplighter Gethin (9125), topic
+#               first_light_lantern, which hands over a hooded lantern
+#               (item 20097) through givesItem.
+#   98-equip:   command equip of the hooded lantern (item 20097). hood refuses
+#               a lantern that is not in the light slot, so this step exists.
+#   98-drift:   room_enter of the Timbered Drift (5256), cave biome with no
+#               skylight, the first room of the mine with no light of its own.
+#   98-hooded:  command hood of the hooded lantern in the Timbered Drift
+#               (internal/usercommands/hood.go raises it since this pass).
+#   98-end:     granted by Gethin's hand-in first_light_in.
+#
+# Gethin's lantern_spare topic replaces a lost lantern while it is needed, and
+# lantern_have answers a player who still carries one.
+#
+# Three states the lines have to answer. equip reads only the pack, so a player
+# already holding a lantern in the slot takes it off first. "lantern" alone can
+# match an oil lantern in the pack, so the hints name the hooded lantern. hood
+# refuses a hood already closed, so a player who closed it before walking in
+# opens it and closes it again in the drift.
+
+questid: 98
+name: First Light
+description: >-
+  Lamplighter Gethin keeps the lamps at the Mine Head, where the coulee's old
+  mine goes down into the dark. He teaches newcomers what a light can do, and
+  what the dark can do back.
+secret: false
+
+steps:
+  - id: start
+    destination:
+      mob: 9125
+      room: 5255
+    description: >-
+      Crier Toke has sent you to Lamplighter Gethin at the Mine Head. The way
+      runs past the Coulee Smithy and up over the talus, where scree
+      scavengers and talus lurkers attack on sight. Type consider on a
+      creature to size it up, and type rest between fights. They are too many
+      to fight in a row. If a fight turns, flee, and keep trying, because a
+      scavenger is quick and often blocks you.
+    hint: >-
+      From Hub Square go north, west five times to the Coulee Smithy, north,
+      west five times to the Mine Mouth, then down. Type talk gethin.
+  - id: lantern
+    destination: anywhere
+    description: >-
+      Gethin has given you a hooded lantern. A light does nothing in your
+      pack. Put it in your light slot. If a lantern is already there, use
+      remove lantern to put it back in your pack first. If you have lost the
+      hooded lantern, Gethin has another.
+    hint: >-
+      Type equip hooded lantern. If a lantern is already in your light slot,
+      that will not work: first use remove lantern to put it in your pack.
+  - id: equip
+    description: >-
+      Your lantern is lit. West of the Mine Head the old drift has no light
+      of its own. Walk in.
+    hint: >-
+      From the Mine Head, go west into the Timbered Drift. Walking in is
+      enough.
+  - id: drift
+    description: >-
+      You stand in the drift. Now close the lantern's hood and find out what
+      the dark is like. The hooded lantern has to be in your light slot. If
+      its hood is already closed, use unhood to open it first.
+    hint: >-
+      Type hood. If the hood is already closed, first use unhood.
+  - id: hooded
+    destination:
+      mob: 9125
+      room: 5255
+    description: >-
+      The dark closed in when the hood came down. Go back to Gethin at the
+      Mine Head and tell him. Type unhood whenever you want your light back.
+    hint: >-
+      Go east to the Mine Head. Type talk gethin.
+  - id: end
+    description: >-
+      Gethin has shown you how to carry a light, and how to put it out.
+
+rewards:
+  gold: 15
+  actor: >-
+    Gethin nods slowly. "Now you know what your light is for, and what the
+    hood is for. A light lets you see. A closed hood lets you stay unseen.
+    Keep the lantern. It is yours."
+  observer: ""
+
+triggers:
+  # ── THE LANTERN: hear Gethin's first lesson, which hands it over ──
+  - event: topic_heard
+    mob: 9125
+    topic: first_light_lantern
+    conditions:
+      has: ["98-start"]
+      missing: ["98-lantern"]
+    actions:
+      - grant: "98-lantern"
+
+  # ── EQUIP: the hooded lantern into the light slot ──
+  - event: command
+    command: equip
+    item: 20097
+    conditions:
+      has: ["98-lantern"]
+      missing: ["98-equip"]
+    actions:
+      - grant: "98-equip"
+      - actor: >-
+          The lantern settles in your light slot and its glow trims itself to
+          your eyes. Now go west from the Mine Head, into the drift.
+
+  # ── THE DRIFT: walk into the dark ──
+  - event: room_enter
+    room: 5256
+    conditions:
+      has: ["98-equip"]
+      missing: ["98-drift"]
+    actions:
+      - grant: "98-drift"
+      - actor: >-
+          The drift has no light of its own, only what is carried into it.
+          Type hood to close your lantern.
+
+  # ── HOOD: close it, in the drift ──
+  - event: command
+    command: hood
+    item: 20097
+    room: 5256
+    conditions:
+      has: ["98-drift"]
+      missing: ["98-hooded"]
+    actions:
+      - grant: "98-hooded"
+      - actor: >-
+          The dark closes in. You can hear the timbers settle. Type unhood
+          when you want your light back, then go east to Gethin.

@@ -43,7 +43,6 @@ end 86 quest 86 trigger item_gain item=40189 grants=86-end
 end 86 step end
 end 87 quest 87 trigger item_gain item=40181 grants=87-end
 end 87 step end
-end 89 quest 89 trigger room_enter room=468 grants=89-end
 hint 21 step start
 hint 78 step start
 hint 79 step start

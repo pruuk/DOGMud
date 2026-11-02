@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -177,6 +178,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			room.SetExitLock(exitName, false)
 
 		}
+		notifyPicklockQuest(user, room, containerName, exitName)
 		return true, nil
 	}
 
@@ -292,6 +294,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> picks the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName), user.UserId)
 			room.SetExitLock(exitName, false)
 		}
+		notifyPicklockQuest(user, room, containerName, exitName)
 
 		user.ClearPrompt()
 
@@ -397,4 +400,17 @@ func sequenceMatches(input string, correctSequence string) bool {
 	}
 
 	return true
+}
+
+// notifyPicklockQuest raises the `command` quest event for a lock just
+// opened (#375 phase 7, quest 99): a container lock is aimed at the
+// container by name (`target: container`, `noun:` on a trigger); an exit
+// lock is aimed at nothing, with the exit's name as its noun. Called from
+// both success paths, the keyring and the pin game, after the lock opened.
+func notifyPicklockQuest(user *users.UserRecord, room *rooms.Room, containerName string, exitName string) {
+	target := questengine.TargetContainer(containerName)
+	if containerName == `` {
+		target = questengine.NoTarget().WithNoun(exitName)
+	}
+	questengine.NotifyCommand(user, room.RoomId, "picklock", target)
 }

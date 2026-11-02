@@ -28,7 +28,12 @@ rather than part of `internal/actions` because `actions` imports
   (`topic_give`), `AcquireCraft` (`craft`), `AcquireSalvage` (`salvage`),
   `AcquireReward` (`reward`), `AcquireQuestGive` (`quest_give`),
   `AcquireTreeGive` (`tree_give`), `AcquireMail` (`mail`),
-  `AcquireShieldSwap` (`shield_swap`), `AcquirePlant` (`plant`).
+  `AcquireShieldSwap` (`shield_swap`), `AcquirePlant` (`plant`). An
+  `item_gain` trigger's `reason:` filter names these words (#375 phase 7).
+  The loader's list is `quests.TriggerGainReasons`, since `quests` cannot
+  import this package; `TestGainReasonsMatchTheAcquireSeam` in
+  `internal/guards` fails if the two differ, so a new reason goes in both, and
+  in `GAIN_REASONS` in the quest editor (`quests.js`).
 - `AcquireItem(user *users.UserRecord, itm items.Item, reason AcquireReason)
   bool`: for a player. Nil user returns false.
 - `AcquireItemForChar(char *characters.Character, userId int, mobInstanceId

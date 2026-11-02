@@ -217,7 +217,7 @@ tree:
             truer one. And <ansi fg="command">help</ansi> answers most
             questions with more patience than I have.
           delay: 29.5
-        # The light spell, for both roads (2026-10-17 audit B3: a player
+        # The light spell, for every road (2026-10-17 audit B3: a player
         # who leaves through Esk never hears Toke's hub lessons).
         - type: action
           do: say
@@ -233,13 +233,12 @@ tree:
           do: say
           to_actor: true
           text: >-
-            Now, two roads lead on from here, and both are good ones.
-            Check what you carry first with
-            <ansi fg="command">inv</ansi>. Little enough, I'd wager,
-            and that is the point: the folk down each road will arm you
-            and teach you their trade. Crier Toke's road teaches you
-            the town. Warden Esk's road takes you out to the wider
-            world.
+            Now, one good road leads on from here. Check what you carry
+            first with <ansi fg="command">inv</ansi>. Little enough, I'd
+            wager, and that is the point: the folk down that road will
+            arm you and teach you their trade. Crier Toke's road teaches
+            you the town. If you already know a world like this one,
+            ask me, and I will tell you another way out.
           delay: 36.5
         - type: action
           do: say

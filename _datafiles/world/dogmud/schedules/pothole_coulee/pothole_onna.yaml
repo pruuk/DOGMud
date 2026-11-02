@@ -1,5 +1,5 @@
 id: pothole_onna
-description: "Trader Onna keeps Coulee Provisions around the clock -- opening checks, brisk day trade, quieter evening sales, late-night frontier stall. Never closes; goods are always moving."
+description: "Trader Onna keeps Coulee Provisions around the clock: opening checks, brisk day trade, quieter evening sales, late-night frontier stall. Never closes; goods are always moving."
 segments:
   - start: 5
     end: 9

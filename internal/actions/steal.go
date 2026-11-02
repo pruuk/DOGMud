@@ -336,8 +336,16 @@ func takeFromMob(actor Actor, m *mobs.Mob, extra []items.Item) StealResult {
 
 		if itemStolen, found := m.Character.GetRandomStealableItem(); found {
 			m.Character.RemoveItem(itemStolen)
-			// The seam raises the thief's gain only when the item lands.
-			acquire.AcquireItemForChar(actor.GetCharacter(), actor.GetUserId(), actor.GetMobInstanceId(), itemStolen, acquire.AcquireSteal)
+			// The seam raises the thief's gain only when the item lands. Too
+			// heavy to carry after all, it falls at the thief's feet, as a
+			// pickpocketed bauble does below.
+			landed := acquire.AcquireItemForChar(actor.GetCharacter(), actor.GetUserId(), actor.GetMobInstanceId(), itemStolen, acquire.AcquireSteal)
+			if !landed {
+				if itemStolen.IsBauble() {
+					itemStolen.LeaveBaubleAt(``, 0, baubleNow())
+				}
+				actor.GetRoom().AddItem(itemStolen, false)
+			}
 			if itemStolen.IsBauble() && actor.IsPlayer() {
 				markPocketStolen(itemStolen, actor.GetUserId(), actor.GetRoom(), m)
 			}
@@ -350,8 +358,11 @@ func takeFromMob(actor Actor, m *mobs.Mob, extra []items.Item) StealResult {
 				Gained:        false,
 			})
 
-			stolenStuff = append(stolenStuff,
-				fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, itemStolen.DisplayNameFor(actor.GetUserId())))
+			stolenLine := fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, itemStolen.DisplayNameFor(actor.GetUserId()))
+			if !landed {
+				stolenLine += ` (too much to carry: it falls at your feet)`
+			}
+			stolenStuff = append(stolenStuff, stolenLine)
 		}
 
 		// A pickpocketed bauble, already out of the mark's pocket (or made

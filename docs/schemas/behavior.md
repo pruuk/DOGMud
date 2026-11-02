@@ -156,6 +156,7 @@ to perform. Parameters are sibling fields on the same node.
 |--------|--------|-------------|
 | `give_item` | `item_id` (int) | Gives one item copy to the triggering player. |
 | `give_item_multiple` | `item_id` (int), `count` (int, default 1) | Gives N copies of an item. |
+| `stock_item` | `item_id` (int), `max` (int, default 1) | The acting mob gains one copy while it carries fewer than `max`. Fails with no change on a full pocket, or for a dead or charmed mob, so a line after it in a sequence is said only on a refill. |
 | `return_item` | none | Returns the event's item to the player. For `player_give` rejection — no params needed. Hands back the **real** item from the mob's inventory (located via `ctx.Event.ItemUUID`, falling back to the newest `ctx.Event.ItemId` match), preserving enchant tier and remaining uses. Fails if the mob is not holding it; never mints a copy. |
 | `take_item` | `item_id` (int) | Removes first matching item from the player. |
 | `give_gold` | `amount` (int) | Gives gold to the player. |
@@ -512,6 +513,7 @@ zones:
 | `set_quest_flag` | No |
 | `give_item` | No |
 | `give_item_multiple` | No |
+| `stock_item` | No |
 | `return_item` | No |
 | `take_item` | No |
 | `give_gold` | No |

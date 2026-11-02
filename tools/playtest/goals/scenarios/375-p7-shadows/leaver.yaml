@@ -1,0 +1,27 @@
+# LEAVER seat: every Coulee trail reported to Crier Toke. Records the flavour
+# lines, takes Esk's Road and crosses. Quote every game line VERBATIM.
+
+ephemeral:
+  profile: early
+  start_room: 5203
+  overlays:
+    set_quest_tokens: ["30-start", "30-rite", "30-woken", "30-end", "31-start", "31-lantern", "31-end", "90-start", "90-end", "91-start", "91-end", "92-start", "92-end", "93-start", "93-end", "94-start", "94-end", "95-start", "95-end", "96-start", "96-end", "97-start", "97-end"]
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    Walk out of Hub Square and back in at least twelve times, then walk out of
+    the Threshold House and back in at least twelve times. Record every line
+    Crier Toke or Warden Esk says or emotes as you arrive, how often each comes,
+    and whether any reads oddly.
+  - >-
+    Type `talk toke` and quote his opening line, its hint and his full menu. Take
+    Esk's Road. Quote the offer.
+  - >-
+    Go to Warden Esk using what the game says. Type `talk esk`, quote his opening
+    line, hint and menu. Hand in Esk's Road and quote it. Type `quests` and quote
+    what it shows.
+  - >-
+    Cross through the arch the way Esk's menu offers. Quote the crossing and the
+    room you land in. Say whether you could tell how to come back.

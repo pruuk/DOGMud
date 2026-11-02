@@ -51,6 +51,16 @@ func init() {
 	// registered here because mobs cannot import behaviortree.
 	mobs.OnMobFileRename = MoveMobBehaviorFile
 
+	// Mob events raised below behaviortree (mobs.FireCaughtPlanting,
+	// mobs.FireAmbushFoiled; #375 phase 7) dispatch here.
+	mobs.MobEventTryMobBehavior = func(mobInstanceId int, ctx mobs.EventContext) bool {
+		return TryMobBehavior(mobInstanceId, EventContext{
+			EventType: ctx.EventType,
+			UserId:    ctx.UserId,
+			MobId:     ctx.MobId,
+		})
+	}
+
 	// Register the attack rejection callback so FireAttackRejected can fire btree events
 	mobs.AttackRejectedTryMobBehavior = func(mobInstanceId int, ctx mobs.EventContext) bool {
 		return TryMobBehavior(mobInstanceId, EventContext{

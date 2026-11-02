@@ -1,0 +1,21 @@
+# #375 phase 7 plan 4: the second half of the Shadows trail, from From the Dark
+# to the report back to Toke, after the first run stuck at its strike step.
+name: 375-p7-shadows-finish
+mode: party
+summary: >-
+  From the Dark, Quick Fingers and the report to Toke can be finished from what
+  the game prints.
+on_actor_stop: continue
+budgets:
+  wall_clock: 45m
+requires:
+  max_connections: 20
+roster:
+  - id: finish
+    personality: feel-tester
+    goals: goals/scenarios/375-p7-shadows/finish.yaml
+
+group_goals:
+  - id: shadows-finish
+    do: The seat plays its goals and quotes the game verbatim.
+    verify: The trail reaches Toke from what the game prints alone.

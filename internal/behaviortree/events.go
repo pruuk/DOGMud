@@ -14,6 +14,8 @@ package behaviortree
 import "sort"
 
 var KnownBehaviorEvents = map[string]bool{
+	"ambush_foiled":          true, // an opening strike from hiding missed or was turned aside (mobs.FireAmbushFoiled; UserId = striker, 0 for a mob)
+	"caught_planting":        true, // the mob caught someone planting an item on it (mobs.FireCaughtPlanting; UserId = planter, 0 for a mob)
 	"heard_callforhelp":      true, // a routine-matched packmate in an adjacent room called for help
 	"item_idle":              true, // item trees: once a round, from the item tick (lighting 5e)
 	"mob_combat_round":       true, // fires each combat round for a fighting mob
