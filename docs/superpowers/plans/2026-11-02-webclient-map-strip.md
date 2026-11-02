@@ -2,11 +2,10 @@
 
 > Spec: [`../specs/2026-11-01-webclient-rework-design.md`](../specs/2026-11-01-webclient-rework-design.md)
 > ("Map strip"). Status: BAR done (findings below, fixed in the tasks);
-> Malia chose the simpler version; built 2026-11-02, waiting for her check
-> on localhost before commit. Part 1 (the
-> legend) was built on 2026-11-02 before this plan existed and is
-> uncommitted in the working tree; this plan covers both parts and replaces
-> part 1's `<details>` toggle.
+> Malia chose the simpler version; built 2026-11-02 and checked by her
+> (localhost and phone). Part 1 (the
+> legend) was built on 2026-11-02 before this plan existed; this plan covers
+> both parts (the simpler version kept part 1's `<details>`).
 
 **Branch:** `feat/game-settings` (PR #768). Files: `static/js/gmcp.js`,
 `webclient-pure.html`, `static/css/dashboard.css` (all under
