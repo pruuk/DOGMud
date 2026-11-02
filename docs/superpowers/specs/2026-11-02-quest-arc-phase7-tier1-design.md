@@ -17,6 +17,9 @@ Marches Spur Road. **Quests:** 4 to 15.
    from here on: the Coulee is the new area that does it.
 3. **Esk's encouragement is subtle and generic.** He leans on the Chrysalis and what it does to
    people. He names no place, no mystery and no NPC.
+4. **A quest handles an item the player already has, as a general case.** The NPC notices it and
+   says what to do with it, and the engine does the rest. Asking a player to drop an item and pick
+   it up again is out.
 
 ## Facts verified against source (master `45ebaf305`, 2026-11-02)
 
@@ -37,6 +40,13 @@ Marches Spur Road. **Quests:** 4 to 15.
 | Prior art for an item in a container with a respawn: the tally stick (`container: crates`, `respawnrate: 5 real minutes`) | `rooms/thornwall_city/492.yaml:20-25` |
 | Prior art for an item respawning in a locked container: room 503's chest (`difficulty: 20`, `relockinterval: 30 real minutes`, item 20061) | `rooms/thornwall_city/503.yaml` |
 | Quests 5 and 6 do not gate on each other: Tolva's file names no `6-` token and Harn's no `5-` token | grep of `dialogue/watchers_crossing/84.yaml`, `86.yaml` |
+| Prior art for a check at step start: an explore step fires when its step starts, from `evaluate` on `quest_granted`, through `fire`, with a default line or `explored_line` | `internal/questengine/explore.go:98-133`; `engine.go:177-179` |
+| Prior art for a second offer of one quest when an item is carried: Brennan's `disc_quest` (`carriesItem: 40167`) and `disc_tale` (`itemExcluded: 40167`) | `dialogue/greenford/9516.yaml:131-165` |
+| Shipped `item_gain` triggers: 21 of 24 have no filter beyond `item`; the other 3 have `reason`, `count` or `room` | parse of `quests/*.yaml` |
+| The offer card's first line is always the quest's first step description | `internal/conversation/card.go:39-41` |
+| A granted token is queued, so the menu re-shown after Accept reads state before the quest's chain ran; `heldAlso` only adds the granted token | `internal/conversation/talk.go:169-182` |
+| A queued re-show already exists: `TalkNextOffer` at priority 45 runs after a hand-in's banner and reward lines (priority 0) and before a menu shown last (priority 50). Whether an accepted offer's chain has run by then is what Hook 3's test proves | `internal/events/eventtypes.go:105-118`; `internal/conversation/nextoffer.go:41-45` |
+| Quest 4's `investigate` is granted by room 407's tree and by `room_enter 408`; Tessara's opener already has a `carriesItem: 16` variant | `behaviors/rooms/dustwalk_road/407.yaml`; `quests/4-*.yaml`; `dialogue/dustwalk_road/83.yaml:30-48` |
 | `picklock` raises a `command` quest event aimed at the container; `unlock` raises none | `internal/usercommands/picklock.go:405-416`; a grep of `unlock.go` for `questengine` finds nothing |
 | Item 40036 (Bribe Ledger) has no room or mob source today; quest 14's triggers give it | grep of `rooms/` and `mobs/` |
 | Old saves may hold `11-start` and the side flag without `11-sided`, which is why the hand-ins gate on `11-start` | comment in `quests/11-*.yaml`, `sided` step |
@@ -99,17 +109,66 @@ existing `item_gain`.
 
 ### An item already carried (4, 5, 7, 9, 15)
 
-`item_gain` cannot fire for an item the player picked up before accepting. Today quests 7, 9 and 15
-work around this with a hidden grant, and 4 and 5 by letting the hand-in skip the step. Both go. In
-their place, a `quest_granted` trigger with `has_item` and no grant prints one line to the actor:
+`item_gain` cannot fire for an item the player picked up before the step began. Today quests 7, 9
+and 15 work around this with a hidden grant, and 4 and 5 by letting the hand-in skip the step. Both
+go, for three general hooks that any quest in the game can use.
 
-> You already carry the tithe ledger. Set it down and pick it up again to begin.
+**Hook 1: the engine counts an item already held (general, no quest YAML).** A new check,
+`heldAtStepStart`, sits beside `exploreAtStepStart` and runs at the same moment. When a step starts,
+each `item_gain` trigger of that quest whose conditions pass and whose item the player holds fires at
+once, through `fire`, so it is guarded and chained like any trigger.
 
-Quest 4 has a place step first, so its line reads "Set it down and pick it up again once you reach
-the Bandit Hollow." A pickup after dropping raises `item_gain` like any other. The item is named in
-each quest's own line. A save already on the start step while holding the item sees no line, because
-it accepted before this shipped. Dropping and getting the item still works, and the patch note says
-so.
+- It covers only a trigger with no `reason`, `count`, `room`, `area` or `zone`. Those ask how or
+  where the item arrived, which a held item cannot answer. That leaves the 21 plain triggers.
+- It tells the player why: `held_line` on the trigger, else "You already have the <item name>."
+- It works on any step, so the key and the ledger in quest 14 need nothing extra.
+- It runs only when a step starts, so a save already resting on a step is handled under "Old saves".
+
+**Hook 2: the NPC notices.** A quest whose first step is getting an item can carry a second offer,
+the same pattern as Brennan's two disc offers: one with `itemExcluded: <item>`, one with
+`carriesItem: <item>`. A new optional topic field, `objective:`, replaces the first line of the offer
+card, because the first step's description ("Find the tithe ledger") is wrong for someone holding it.
+The loader refuses `objective` on anything but an offer.
+
+**Hook 3: the menu comes back with the hand-in on it.** After Accept on an offer with `carriesItem`,
+the menu re-shows through a queued event at `TalkNextOfferPriority`, after the quest's chain has run,
+so the hand-in shows `[?]` at once. Other offers re-show as they do today.
+
+The player's view, with Temple Priest Olen:
+
+```
+> talk olen
+  1. [!] The Temple's Tithe Audit
+You say, "I found the tithe ledger in the Records Office."
+Temple Priest Olen says, "The tithe ledger. I was about to ask someone to fetch that for me..."
+  The Temple's Tithe Audit: Give the tithe ledger to Temple Priest Olen.
+  Reward: ...
+  1. Accept  2. Leave
+You already have the tithe ledger.
+  1. [?] The Temple's Tithe Audit
+```
+
+The five offers in this tier, each with key `<offer key>_carrying` in `topic-keys.txt`:
+
+| NPC, quest | The player says | The NPC says | `objective` |
+|---|---|---|---|
+| Tessara, 4 | I took this purse off some bandits. | A purse with marks on it. You found their stash already, then. That is the very proof I was about to ask someone to go and get. Hand it over and it goes in my next report. | Give the bandit's purse to Road Warden Tessara. |
+| Tolva, 5 | I have the crossing ledger from the tollhouse. | You have Harn's ledger? Then you have saved me the asking. I have been trying to prove that toll was never authorized, and his own records are the only proof that counts. Let me have it. | Give the crossing ledger to Innkeeper Tolva. |
+| Dorn, 7 | I killed something in your fields and kept a piece. | That is a pest from the south fields, and a big one. I have been meaning to ask someone to bring me a sample, so I can see what the fallow field is feeding. Let me look at it. | Give the pest sample to Farmer Dorn. |
+| Olen, 9 | I found the tithe ledger in the Records Office. | The tithe ledger. I was about to ask someone to fetch that for me. I suspect the market merchants of under-reporting, and those pages will tell. Let me see it. | Give the tithe ledger to Temple Priest Olen. |
+| Malk, 15 | I found a freight crate in a ruined barn. | That is my freight. I know that forced lock. I have waited on it for days and feared the bandits had it for good. Set it down here and let me count what is left. | Give the freight crate to Peddler Malk. |
+
+**Quest 4 loses its `investigate` step**, because a place step before the item would send a player
+holding the purse down to the gully for nothing. `start` now reaches `evidence` directly on
+`item_gain 16`, which is "go here, then do one action". `4-investigate` moves to `# renamed` as
+`4-investigate -> 4-start`. Room 407's tree keeps its text and no longer grants, and it now gates on
+`4-start` and missing `4-evidence`. Tessara's `4-investigate` opener variant goes.
+
+**Old saves.** A save resting on a first step with the item in hand has no step start coming. It
+keeps working through the existing `carriesItem` route: quests 4, 5, 7, 9 and 15 each get a recovery
+info topic on the giver, shown only to a player holding the start token and the item but not the
+deliver token. A `topic_heard` trigger grants the deliver step. Its label is "I have it here." A new
+player never sees it, because Hook 1 moves them past that state first.
 
 ### Quest 14: a real strongbox
 
@@ -131,13 +190,16 @@ spawninfo:
 - Item 40034 gains `keylockid: 498-strongbox`, and its description loses its `--`.
 - The `strongbox` noun stays, as on Halix's lockbox, and its text keeps matching the room.
 - `unlock` gains a `command` quest event on a successful open of a container or exit, mirroring
-  `notifyPicklockQuest`. Both success paths raise it. A refused unlock raises nothing.
+  `notifyPicklockQuest`. Both success paths raise it. "You do not have the key" raises nothing.
+- `unlock` on a container that is already open also raises it. The player typed the step's command
+  and the box is open, and without this a box another player just opened would hold the step for up
+  to five minutes.
 
 Steps, with one action each. `start`, `explore` and `confront` are unchanged.
 
 | Step | Reached by | Hint says |
 |---|---|---|
-| `loot` | `mob_death 249`, needs `14-confront` (the `missing_item` condition goes) | Type loot torvan. If you already carry the key, drop it and get it again. |
+| `loot` | `mob_death 249`, needs `14-confront` (the `missing_item` condition goes) | Type loot torvan. |
 | `unlock` | `item_gain 40034`, needs `14-loot` | Type unlock strongbox. |
 | `opened` (new) | `command: unlock` or `command: picklock`, `target: container`, `noun: strongbox`, `room: 498`, needs `14-unlock` | Type get ledger from strongbox. |
 | `evidence` | `item_gain 40036`, needs `14-opened` | Unchanged: take it to Velk. |
@@ -146,7 +208,9 @@ Steps, with one action each. `start`, `explore` and `confront` are unchanged.
   `velkhandoff` already needs `14-evidence`, now the step before `end`.
 - `opened` goes in `step-ids.txt`. Its destination is room 498.
 - **Picking is allowed.** A skilled player can pick the lock at any time, as with any lockbox.
-  One who takes the ledger early uses the same drop-and-get as anyone holding an item too soon.
+  One who took the key or the ledger early passes those steps through Hook 1. If Torvan was already
+  dead when `confront` began, `loot` waits on his respawn, and a player holding the key meets him
+  again with it in hand.
 - **Shared container.** Another player can take the ledger from an open box. It respawns in five
   real minutes, so a player arriving just after waits rather than gets stuck. The tally stick
   already works this way.
@@ -195,8 +259,14 @@ outside Esk's first new topic.
   once, on both success paths, and a refusal raises nothing, each proven able to fail.
 - **Quest 14 on shipped content:** the container exists and is locked, the key's `keylockid` matches,
   and no `room_interact` remains in quest 14.
-- **Carrying line:** one test that accept with the item prints the line and grants nothing, and that
-  a drop and pickup then advances.
+- **Hook 1:** a held item fires a plain trigger at step start with its line; a trigger with `reason`,
+  `count`, `room`, `area` or `zone` does not fire; an item not held does not fire; the visit guard
+  stops a repeat. Each is proven able to fail. A repeatable quest with a plain `item_gain` is checked
+  for a loop the hook could open.
+- **Hook 2:** the loader refuses `objective` off an offer; the card shows `objective` in place of
+  the first step description; each pair of offers shows exactly one at a time.
+- **Hook 3:** accept on a `carriesItem` offer shows the hand-in with `[?]` in the re-shown menu.
+- **Old saves:** the recovery topic shows only in its state, and grants the deliver step.
 - **Esk:** `what_it_does` is hidden until `out_there` is heard, and both are hidden before `30-end`.
   A copy guard is not added; the limits above live in this spec and in a comment beside the topics.
 - **Gates before push:** `gofmt`, `go build`, full `go test ./...`, `DOGMUD_BOOT_SMOKE=1` sweep,
@@ -209,7 +279,7 @@ One adversarial run after the plan's last task, on a fresh instance:
 | Seat | Tries |
 |---|---|
 | Quest 14 | The whole line, then again with a picked lock, and with a second seat taking the ledger first |
-| Carrying | Picks up Olen's ledger before talking to Olen, then accepts |
+| Carrying | Picks up Olen's ledger before talking to Olen: the NPC's line, the card, Accept, the `[?]`, the hand-in. Then drops the item while the card is open, and accepts |
 | Steppe | Kael first, then a side, then the hand-in; 12 or 13 offered at hand-in |
 | Old save | Quest 11 with the flag set and no `11-sided` (admin fixture) |
 | Crossing | A newcomer reads Esk and crosses: does the line make them want to look? |
@@ -229,5 +299,6 @@ Findings fixed in the PR when they belong to this pass; the rest are filed.
 
 All 39 lines gone, quest 14 has no `room_interact`, Esk's lines ship as approved, the playtest ran,
 and the roadmap's phase 7 status names tier 1 as done. One PR. `docs/PATCH_NOTES.md` carries a dated
-entry, including the note for a player already holding a quest's item on its first step. The
-`internal/questengine` `context.md` lists `unlock` beside `picklock`.
+entry. `internal/questengine/context.md` lists `unlock` beside `picklock` and describes Hook 1,
+`internal/dialogue/context.md` describes `objective`, and the `dogmud-authoring-quests` skill gains
+the pattern for an item already held, so later tiers write it the same way.
