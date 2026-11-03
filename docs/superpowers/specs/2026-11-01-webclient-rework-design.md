@@ -106,6 +106,10 @@ terminal down (`resizeTerminal` in `webclient-pure.html`): about 7px text on a
 edges.
 
 **Slice A, client only (Malia, 2026-11-02: "readable now, server later").**
+*Later the same day Malia dropped the readable-text part: "it can be fixed
+later server side". Only the keyboard part below was built
+(`plans/2026-11-02-webclient-phone-keyboard.md`); readable phone text waits
+for slice B.*
 - **Readable text on phones** (phone mode, under 700px wide): the game text
   window uses a readable font size (about 13 to 14px, the exact size chosen
   in the plan by measuring) and as many columns as fit; the 80-column
@@ -146,6 +150,10 @@ for warnings; phone, tablet and desktop checked in both modes before review.
 - Listing-site images still show the old emblem (keep their names).
 - The session bar's "Connected" text is smaller than its 15px buttons.
 - Hide the Light option until round 3? (asked, unanswered)
+- Readable game text on phones: left to slice B (server wraps to the
+  screen's width; Calabe's work), Malia 2026-11-02.
+- Small map issues Malia noticed after the map strip: dropped from the open
+  list (Malia, 2026-11-02); raise again if they come back.
 
 ## Slices and plans
 | Slice | Plan |
@@ -156,5 +164,5 @@ for warnings; phone, tablet and desktop checked in both modes before review.
 | Round 2: Light mode game panels | `plans/2026-11-02-webclient-round-2-light-panels.md` |
 | Asset version tags | `plans/2026-11-02-web-asset-version-tags.md` |
 | Map strip | `plans/2026-11-02-webclient-map-strip.md` |
-| Phone reading, slice A (client) | plan to follow once this spec section is approved |
+| Phone reading, slice A (client): keyboard | `plans/2026-11-02-webclient-phone-keyboard.md` (readable text dropped, left to slice B) |
 | Phone reading, slice B (server wrap) | Calabe to scope; own spec and plan |
