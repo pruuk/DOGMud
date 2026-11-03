@@ -55,7 +55,6 @@
   color: var(--text-primary);
 }
 #dash-session .sess-name { color: var(--title-gold); font-weight: bold; }
-#dash-session .sess-conn { color: var(--online-green); }
 #dash-session .sess-mid { margin: 0 auto; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 /* Enter Game at the login prompt points the player at the command box. */
 #command-input.cmd-nudge { border-color: var(--cmd-border-focus); box-shadow: 0 0 0 2px var(--cmd-ring-focus); }
@@ -72,6 +71,11 @@
 #btn-reset-layout .btn-icon,
 #btn-settings .btn-icon,
 #sess-confirm .q-short { display: none; }
+/* "Leave the game?" with Yes and Stay: the same gaps as the rest of the bar
+   (12px, 8px on phones; Malia 2026-11-02). Shown by clearing its inline
+   display:none, so this display takes over. */
+#sess-confirm { display: inline-flex; align-items: center; gap: 12px; }
+#dashboard[data-mode="phone"] #sess-confirm { gap: 8px; }
 /* The Settings drop-down lives inside the strip (so Tab reaches it next) but
    is not part of its one-line row. */
 #dash-session > #settings-menu { white-space: normal; font-size: 0.95rem; }
@@ -139,7 +143,6 @@
 #panel-status .status-line { color: var(--ink-deep); }
 #panel-status .status-empty { color: var(--status-muted); }
 #dash-session .sess-name { color: var(--ink-deep); }
-#dash-session .sess-conn { color: var(--status-online); }
 
 .dash-panel-head .ph-btns { margin-left: auto; display: flex; gap: 4px; }
 .dash-panel-head .ph-btn {
@@ -1377,3 +1380,35 @@
 /* Automation switch, off: a light knob on the darker track (4.39). */
 :root[data-theme="light"][data-client] .auto-tog::after { background: #e3dcc4; }
 :root[data-theme="light"][data-client] .auto-tog.on::after { background: var(--vellum); }
+
+/* Session button status circle (Malia 2026-11-02): it replaces the status
+   text beside the button. Colour per state is set inline by setSessionState;
+   on the even brass: connected 6.37 to 4.11, not connected 5.95 to 3.84,
+   reconnecting / leaving 5.53 to 3.57 (graphics need 3:1). */
+#btn-session .sess-dot { display: inline-block; min-width: 1em; text-align: center; }
+/* Text for screen readers only (no other such utility existed). */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+/* Connected: a small lit lamp in the Pachinko reference's bright green
+   #70e010 (Malia 2026-11-02) with a dark umber rim, since the green alone is
+   1.2 on the brass; the rim is 6.09 on the brass and 8.11 on the green. */
+#btn-session .sess-dot.sess-lamp {
+  min-width: 0;
+  width: 0.62em;
+  height: 0.62em;
+  margin: 0 0.19em;
+  border-radius: 50%;
+  border: 1.5px solid #3b2a10;
+  vertical-align: -0.02em;
+  box-sizing: border-box;
+}
+@media (forced-colors: active) {
+  #btn-session .sess-dot.sess-lamp { forced-color-adjust: none; }
+}

@@ -235,9 +235,10 @@
     <div id="dashboard">
       <div id="dash-session">
         <span class="sess-name" id="sess-name">—</span>
-        <span class="sess-conn" id="sess-conn" style="color: var(--conn-lost)">○ Not connected</span>
         <span class="sess-mid">
-          <button type="button" class="brass" id="btn-session">Enter Game</button>
+          <!-- The connection status rides in the button (Malia 2026-11-02): the
+               circle's colour and shape show it, the hidden words say it. -->
+          <button type="button" class="brass" id="btn-session" title="Enter Game, not connected"><span class="sess-dot" aria-hidden="true" style="color: var(--conn-lost)">○</span> <span class="sess-label">Enter Game</span><span class="sess-status visually-hidden">, not connected</span></button>
           <span id="sess-confirm" style="display:none"><span class="q-long">Leave the game?</span><span class="q-short">Leave?</span>
             <button type="button" class="brass" id="btn-leave-yes">Yes</button>
             <button type="button" class="brass" id="btn-leave-stay">Stay</button>
@@ -2612,24 +2613,36 @@
         // quit is not instant: it starts a five round meditation (condition 0)
         // that any action or combat cancels, so Leaving lasts until the server
         // closes the socket, a typed command cancels it, or the fallback runs.
+        // The status circle lives inside the session button (Malia 2026-11-02;
+        // plan 2026-11-02-webclient-session-status). Each state sets the
+        // circle, its colour, the label, and hidden words so the button's
+        // name is always "<label>, <status>" for screen readers and voice
+        // control; the tooltip says the same.
+        var SESSION_STATES = {
+            offline:      { dot: '○', color: 'var(--conn-lost)',          status: 'not connected',    disabled: false },
+            // Connected: a lit lamp, the Pachinko reference's bright green
+            // (Malia 2026-11-02) inside a dark rim; on its own the green is
+            // 1.2 on the brass, the rim 6.09.
+            connected:    { dot: '', lamp: '#70e010', color: '',           status: 'connected',        disabled: false },
+            reconnecting: { dot: '↻', color: 'var(--conn-reconnecting)',  status: 'reconnecting',     disabled: true  },
+            leaving:      { dot: '●', color: 'var(--conn-reconnecting)',  status: 'leaving the game', disabled: true  }
+        };
         function setSessionState(state) { // "connected" | "leaving" | "reconnecting" | "offline"
-            var sessConn = document.getElementById('sess-conn');
+            var s = SESSION_STATES[state] || SESSION_STATES.offline;
+            var label = state === 'leaving' ? 'Leaving…'
+                      : (state === 'connected' && inGame) ? 'Leave Game' : 'Enter Game';
             sessionConfirm.style.display = 'none';
             sessionButton.style.display = '';
             if (state !== 'leaving') { leavingGame = false; clearTimeout(leaveFallback); }
-            if (state === 'connected') {
-                sessConn.textContent = '● Connected'; sessConn.style.color = '';
-                sessionButton.textContent = inGame ? 'Leave Game' : 'Enter Game'; sessionButton.disabled = false;
-            } else if (state === 'leaving') {
-                sessConn.textContent = '● Leaving…'; sessConn.style.color = 'var(--conn-reconnecting)';
-                sessionButton.textContent = 'Leaving…'; sessionButton.disabled = true;
-            } else if (state === 'reconnecting') {
-                sessConn.textContent = '↻ Reconnecting…'; sessConn.style.color = 'var(--conn-reconnecting)';
-                sessionButton.textContent = 'Enter Game'; sessionButton.disabled = true;
-            } else {
-                sessConn.textContent = '○ Not connected'; sessConn.style.color = 'var(--conn-lost)';
-                sessionButton.textContent = 'Enter Game'; sessionButton.disabled = false;
-            }
+            var dot = sessionButton.querySelector('.sess-dot');
+            dot.textContent = s.dot;
+            dot.style.color = s.color;
+            dot.classList.toggle('sess-lamp', !!s.lamp);
+            dot.style.background = s.lamp || '';
+            sessionButton.querySelector('.sess-label').textContent = label;
+            sessionButton.querySelector('.sess-status').textContent = ', ' + s.status;
+            sessionButton.title = label + ', ' + s.status;
+            sessionButton.disabled = s.disabled;
         }
 
         sessionButton.addEventListener('click', function () {

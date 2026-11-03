@@ -140,6 +140,14 @@ for slice B.*
   NAWS path in `term_iac.go` is separate).
 - Its own spec and plan when Calabe takes it up.
 
+### Session bar status (2026-11-02)
+- The status text ("○ Not connected", "● Connected", "↻ Reconnecting…") read
+  smaller than the 15px buttons beside it. Malia's fix: the status circle
+  moves **into** the Enter Game / Leave Game button, circle only (○ red when
+  not connected, ● green when connected, ↻ amber reconnecting, ● amber
+  "Leaving…"); its colour and shape show the status; screen readers and the
+  tooltip say the words. Plan: `plans/2026-11-02-webclient-session-status.md`.
+
 ## Rules that hold everywhere
 Text 4.5:1 or more, icons and focus 3:1, numbers written beside the colour in
 the CSS; light mode text darker than its surface, dark mode lighter; red only
