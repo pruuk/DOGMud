@@ -48,3 +48,11 @@ topics:
     direct you more exactly. I am at the gate end, so I see everyone who comes
     through. Researchers, students, and the occasional traveler who has come to see
     what the fuss about the rivers is.
+- key: torn_pages
+  kind: info
+  label: Who asks about the eastern country?
+  text: Not many. There is a bookseller in Greenford, Aldith, who hears those
+    questions more than I do. Scholars from up the hill. If it is that sort of
+    thing you are after, I would start there.
+  hints: Aldith keeps the bookshop off the Market Square in Greenford, east of
+    the Confluence over the Brenn Bridge.
