@@ -60,3 +60,6 @@ character:
       quantitymax: 0
       price: 30
     - itemid: 20096    # torch
+    - itemid: 40525
+    - itemid: 40517
+    - itemid: 40527

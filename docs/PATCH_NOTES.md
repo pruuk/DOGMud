@@ -11,6 +11,12 @@
 - New achievements for waking the disc, for bringing down the Core Guardian and for
   reading the stones.
 
+## 2026-11-03: Torn pages
+
+- Torn pages of an old account have turned up at booksellers, and some have been
+  left lying in places people read. Each is a piece of something larger. An
+  achievement waits for anyone who reads them all.
+
 ## 2026-11-03: Playing on phones
 
 - On a phone, the web client now opens full screen. The ⛶ button in the session

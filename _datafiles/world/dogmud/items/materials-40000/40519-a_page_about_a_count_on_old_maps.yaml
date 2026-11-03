@@ -1,0 +1,27 @@
+itemid: 40519
+name: A Page About a Count on Old Maps
+namesimple: torn page
+description: |
+  The old cartography, as Brennan described it, showed Gaius from an
+  angle conventional Gaian cartography did not use. The angle from
+  ... than any hill or tower could account for. ... In several
+  versions, in the borders and margins, a notation recurring across
+  multiple maps and multiple hands.
+
+  The inner orbit. ... the thing that wasn't quite a spiral.
+
+  Beside it, in each map, a number. Always one of three: three, four,
+  or one.
+
+  Brennan's interpretation was that the notation was a count. Of
+  something in a fixed ...
+
+  (In the margin, cramped and small:)
+  In the oldest of them, a ring struck through with a line.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

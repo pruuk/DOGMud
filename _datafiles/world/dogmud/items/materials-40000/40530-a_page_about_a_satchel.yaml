@@ -1,0 +1,19 @@
+itemid: 40530
+name: A Page About a Satchel
+namesimple: torn page
+description: |
+  Inside the satchel ... were three things she could make out ... A
+  small bound book wrapped in what had been oiled cloth; ... the book
+  had been kept dry for a long time. A fire-tin with a flint. A
+  stone.
+
+  The stone was the size of an egg. Round. River-smoothed. The kind
+  of stone a man picked up because the shape of the stone felt
+  correct under the thumb and the thumb wanted to keep it.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

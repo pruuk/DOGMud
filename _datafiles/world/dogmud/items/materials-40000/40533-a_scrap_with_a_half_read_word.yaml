@@ -1,0 +1,15 @@
+itemid: 40533
+name: A Scrap with a Half-Read Word
+namesimple: torn page
+description: |
+  ...The ones who had not changed had been the unchanged. The office
+  had a word for them. ... n...-resistant b... He did not know the
+  alphabet but he knew the grammar and he knew the shape of a
+  technical phrase.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

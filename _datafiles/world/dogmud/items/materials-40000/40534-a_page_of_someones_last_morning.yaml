@@ -1,0 +1,14 @@
+itemid: 40534
+name: A Page of Someone's Last Morning
+namesimple: torn page
+description: |
+  This is the last of the l... I am going to record. There is a
+  morning outside and I am going to go sit in it. I am told there is
+  a hillside to the east that moves in the light. It is our own h...
+  Imagine. I am going to go look at it.
+type: readable
+subtype: blobcontent
+not_salable: true
+weight: 0.1
+value: 15
+rarity_tier: 40

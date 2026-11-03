@@ -1,0 +1,22 @@
+itemid: 40521
+name: A Page Quoting a Dull Survey
+namesimple: torn page
+description: |
+  "He described a ridge formation east of the highland plateau as 'an
+  exposed mineral deposit of uncertain composition, ... partially
+  obscured by vegetation and sediment accumulation,'" Brennan said.
+  He was quoting from memory, the exact language clear in his voice.
+  "There is nothing wrong with this description. Every word is
+  accurate. And it tells you absolutely nothing about what he
+  actually found."
+
+  (In the margin, in another hand:)
+  The surveyor. He marked a cairn the lightning split. He will not say
+  what lay past it.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

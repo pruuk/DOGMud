@@ -290,7 +290,7 @@ func (b *GameBridge) GiveItem(itemId int) error {
 			"userId", b.user.UserId, "itemId", itemId)
 		return fmt.Errorf("give_item: player %d cannot carry item %d", b.user.UserId, itemId)
 	}
-	b.user.SendText(messaging.CategoryLoot, fmt.Sprintf("You receive a <ansi fg=\"item\">%s</ansi>.", newItem.DisplayName()))
+	b.user.SendText(messaging.CategoryLoot, fmt.Sprintf("You receive %s<ansi fg=\"item\">%s</ansi>.", items.ArticlePrefix(newItem.DisplayName()), newItem.DisplayName()))
 	return nil
 }
 

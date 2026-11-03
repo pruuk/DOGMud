@@ -1,0 +1,15 @@
+itemid: 40513
+name: A Folded Page About a Hill
+namesimple: torn page
+description: |
+  ...obliquely, in a different context she hadn't fully understood,
+  something about the eastern highlands, a place the dockside
+  old-timers called the hill that moves in the light, spoken in the
+  particular tone that meant the name was a warning rather than a
+  description.
+type: readable
+subtype: blobcontent
+not_salable: true
+weight: 0.1
+value: 15
+rarity_tier: 40

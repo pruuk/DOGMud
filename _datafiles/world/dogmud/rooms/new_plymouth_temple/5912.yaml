@@ -17,7 +17,9 @@ description: >
   the light falls, or in the silence between
   words, or in the fact that the
   <ansi fg="itemname">canon-volumes</ansi> on the
-  shelf are shelved spine-inward. The temple's
+  shelf are shelved spine-inward. One torn
+  <ansi fg="itemname">page</ansi> stands proud of those page-edges, the
+  only thing on the shelf that seems to want to be noticed. The temple's
   faith holds that certain bloodlines carry a
   proximity to the divine that is inherited rather
   than earned. In this room, that belief is not
@@ -37,6 +39,9 @@ exits:
   up:
     roomid: 5913
 nouns:
+  page: A single torn page, scorched along one side, standing proud of
+    the row of page-edges on the shelf. Someone has slid it between the
+    volumes and left it there. It would draw out easily.
   canon ledger: An open book on the canon's desk. It is
     the formal record of this office's two primary
     functions. The left-side columns record

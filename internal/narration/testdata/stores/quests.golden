@@ -296,7 +296,15 @@ quest|75|trigger3|action4|observer => Reth hands <ansi fg="username">Aliceia</an
 quest|76|rewards|actor => The Keeper looks at the disc, then at the road behind you, as if counting someone who is not there. "He sat here once, you know. One night, on his way up. He would not say his name, and I did not ask him for it." She turns back to her fire. The door waits.
 quest|76|rewards|observer => The Keeper looks long at the grey disc in <ansi fg="username">Aliceia</ansi>'s hand.
 quest|76|trigger0|action0|actor => You work the loose stone free of its neighbors. It grinds aside and shows a small cavity in the wall behind it. Inside, a folded letter lies against the back of the hollow, hidden there on purpose.
-quest|76|trigger1|action1|actor => You sit at the cold table and read the man's life backward.
+quest|76|trigger1|action1|actor => You ease the folded page out from under the table leg, and the table rocks.
+quest|76|trigger2|action1|actor => You lift the newer sheets and unpin the torn page from beneath them.
+quest|76|trigger3|action1|actor => You work the folded page out from under the bar. The salt has made it stiff.
+quest|76|trigger4|action1|actor => You peel the page off the bench. The ink has run, but it holds together.
+quest|76|trigger5|action1|actor => You draw the torn page from between the volumes. One side of it is burned.
+quest|76|trigger6|action1|actor => You slide the torn page out of the gap in the registers. No one has written it down.
+quest|76|trigger7|action1|actor => You reach under the last desk and bring out a torn leaf, older than anything being copied here.
+quest|76|trigger8|action1|actor => In the last pew a hymnal falls open at a torn page that is no part of it. You take it.
+quest|76|trigger9|action1|actor => You sit at the cold table and read the man's life backward.
 Years of it: a hand that starts careful and turns driven, the
 same questions put a hundred ways to one buried thing far to
 the east. Something made, he is certain, and old past any
@@ -313,14 +321,14 @@ the thing at all. It is a name, set down once and gently, as if
 to keep one soft thing safe. Maren. He went east to finish this.
 He did not come back to her.
 
-quest|76|trigger1|action2|observer => <ansi fg="username">Aliceia</ansi> reads a long while at the cottage table.
-quest|76|trigger3|action1|actor => Among the stones the lightning threw down, one has been turned to face the road. Cut into it, fresh once and weathered since, is a ring struck through with a line, and beside it a short, hard arrow: east, toward the old camp Reth spoke of. Not Reth's hand. His cuts are neater than this.
-quest|76|trigger3|action2|observer => <ansi fg="username">Aliceia</ansi> turns over the fallen stones of the cairn.
-quest|76|trigger4|action1|actor => Under the bleached poles someone has slept more recently than the surveyors. A flint tin, empty. A boot-print of old ash at the fire ring. On the pole nearest the fire the same mark is cut, and under it, smaller, a tally of days that stops at nine. Whoever he was, he left his bedding and took his tools, east, past where the green stops. There are tracks over his now, large ones, and they do not care who has walked here.
-quest|76|trigger4|action2|observer => <ansi fg="username">Aliceia</ansi> searches the ruins of the old camp.
-quest|76|trigger5|action1|actor => The alpha is down, and the ground it held lies open to the east, bare and wrong and very quiet.
-quest|76|trigger7|action1|actor => In the lining of the satchel your fingers find a second grey disc, cool and dead in the hand, the twin of the one you woke. He had brought a spare. Of course he had.
-quest|76|trigger9|action1|actor => Under the fallen lean-to, where a man would lie who meant to get up in
+quest|76|trigger9|action2|observer => <ansi fg="username">Aliceia</ansi> reads a long while at the cottage table.
+quest|76|trigger11|action1|actor => Among the stones the lightning threw down, one has been turned to face the road. Cut into it, fresh once and weathered since, is a ring struck through with a line, and beside it a short, hard arrow: east, toward the old camp Reth spoke of. Not Reth's hand. His cuts are neater than this.
+quest|76|trigger11|action2|observer => <ansi fg="username">Aliceia</ansi> turns over the fallen stones of the cairn.
+quest|76|trigger12|action1|actor => Under the bleached poles someone has slept more recently than the surveyors. A flint tin, empty. A boot-print of old ash at the fire ring. On the pole nearest the fire the same mark is cut, and under it, smaller, a tally of days that stops at nine. Whoever he was, he left his bedding and took his tools, east, past where the green stops. There are tracks over his now, large ones, and they do not care who has walked here.
+quest|76|trigger12|action2|observer => <ansi fg="username">Aliceia</ansi> searches the ruins of the old camp.
+quest|76|trigger13|action1|actor => The alpha is down, and the ground it held lies open to the east, bare and wrong and very quiet.
+quest|76|trigger15|action1|actor => In the lining of the satchel your fingers find a second grey disc, cool and dead in the hand, the twin of the one you woke. He had brought a spare. Of course he had.
+quest|76|trigger17|action1|actor => Under the fallen lean-to, where a man would lie who meant to get up in
 the morning, there is a strap, a coat gone to threads and not many bones.
 He is lying on his side, facing the grey. Against his ribs is a satchel,
 and in the satchel a flint tin, a book you do not open, and a disc of pale
@@ -330,10 +338,10 @@ again. The chisel is still beside it. He was almost done. It wants only
 what he did not have left to give it: light, held over it, patiently. Type
 cast glow.
 
-quest|76|trigger9|action2|observer => <ansi fg="username">Aliceia</ansi> kneels a long time under the fallen lean-to.
-quest|76|trigger10|action2|actor => You set the grey disc into the cut of his hearthstone and hold the glow over it, as his method says. The lines warm, and the mark at the center wakes.
-quest|76|trigger11|action1|actor => The disc is still in his satchel. You take it.
-quest|76|trigger12|action3|actor => You set the disc into the cut of his hearthstone, where the marks draw
+quest|76|trigger17|action2|observer => <ansi fg="username">Aliceia</ansi> kneels a long time under the fallen lean-to.
+quest|76|trigger18|action2|actor => You set the grey disc into the cut of his hearthstone and hold the glow over it, as his method says. The lines warm, and the mark at the center wakes.
+quest|76|trigger19|action1|actor => The disc is still in his satchel. You take it.
+quest|76|trigger20|action3|actor => You set the disc into the cut of his hearthstone, where the marks draw
 inward to a single point, and you hold the soft glow over it, patient
 and exact, the way a driven man worked out alone and wrote down so a
 stranger might one day do this right. For a long moment, nothing. Then
@@ -344,8 +352,8 @@ center wakes and steadies, sure of where it belongs. His work, done at
 last, a few paces from where he lay down. And along the buried face, not
 far off, something very large and very patient turns to look at you.
 
-quest|76|trigger12|action4|observer => <ansi fg="username">Aliceia</ansi> holds a soft glow over a cut stone, and the air goes briefly strange.
-quest|76|trigger13|action1|actor => The Sentinel stops, all at once, the way a thing stops when it has only ever been waiting. The disc warms against your side. The door is close.
+quest|76|trigger20|action4|observer => <ansi fg="username">Aliceia</ansi> holds a soft glow over a cut stone, and the air goes briefly strange.
+quest|76|trigger21|action1|actor => The Sentinel stops, all at once, the way a thing stops when it has only ever been waiting. The disc warms against your side. The door is close.
 quest|77|rewards|actor => You know now. It sits in you like a swallowed stone. The sky will never look the same, and neither will the blessed, and neither will you. Be careful who you tell.
 quest|77|trigger0|action2|actor => You stand among the stones and let the light find them, and one
 by one they wake — a slow inner glow, a drift of moving marks —

@@ -167,6 +167,97 @@ triggers:
           lies against the back of the hollow, hidden there on purpose.
       - give_item: 40041
 
+  # Torn pages left lying about (#667), for any player, on or off this quest.
+  # One per room; each gives its page once, and a second search with the page
+  # in hand finds nothing.
+  # 472 The Drowning Post Tavern
+  - event: command
+    command: search
+    room: 472
+    conditions:
+      missing_item: 40513
+    actions:
+      - give_item: 40513
+      - actor: >-
+          You ease the folded page out from under the table leg, and the table
+          rocks.
+  # 5378 The Lake & Ladle, Common Room
+  - event: command
+    command: search
+    room: 5378
+    conditions:
+      missing_item: 40523
+    actions:
+      - give_item: 40523
+      - actor: >-
+          You lift the newer sheets and unpin the torn page from beneath them.
+  # 5512 The Salt Cellar Taproom
+  - event: command
+    command: search
+    room: 5512
+    conditions:
+      missing_item: 40509
+    actions:
+      - give_item: 40509
+      - actor: >-
+          You work the folded page out from under the bar. The salt has made it
+          stiff.
+  # 5609 The Bathhouse
+  - event: command
+    command: search
+    room: 5609
+    conditions:
+      missing_item: 40520
+    actions:
+      - give_item: 40520
+      - actor: >-
+          You peel the page off the bench. The ink has run, but it holds
+          together.
+  # 5912 The Canon's Cell
+  - event: command
+    command: search
+    room: 5912
+    conditions:
+      missing_item: 40532
+    actions:
+      - give_item: 40532
+      - actor: >-
+          You draw the torn page from between the volumes. One side of it is
+          burned.
+  # 5907 The Keeper's House, Desk
+  - event: command
+    command: search
+    room: 5907
+    conditions:
+      missing_item: 40537
+    actions:
+      - give_item: 40537
+      - actor: >-
+          You slide the torn page out of the gap in the registers. No one has
+          written it down.
+  # 6190 The Scriptorium
+  - event: command
+    command: search
+    room: 6190
+    conditions:
+      missing_item: 40518
+    actions:
+      - give_item: 40518
+      - actor: >-
+          You reach under the last desk and bring out a torn leaf, older than
+          anything being copied here.
+  # 4022 Deacon's Chapel
+  - event: command
+    command: search
+    room: 4022
+    conditions:
+      missing_item: 40534
+    actions:
+      - give_item: 40534
+      - actor: >-
+          In the last pew a hymnal falls open at a torn page that is no part of
+          it. You take it.
+
   # JOURNAL: the search reads the man's journal. No disc here.
   - event: command
     command: search

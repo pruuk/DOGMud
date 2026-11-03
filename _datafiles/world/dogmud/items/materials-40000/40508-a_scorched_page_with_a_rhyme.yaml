@@ -1,0 +1,25 @@
+itemid: 40508
+name: A Scorched Page with a Rhyme
+namesimple: torn page
+description: |
+  Four fires in the sky,
+  one came down to die,
+  three stayed up to cry,
+  now you're born and so am I.
+
+  Skin like bark and eyes like glass,
+  roots go deep and years go fast,
+  but the ones who didn't change
+  walk the old halls, strange and strange.
+
+  Don't touch the dark, don't touch the door,
+  don't go asking what it's for,
+  some things hum and some things burn
+  and the rest of it you'll nev...
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

@@ -1,0 +1,22 @@
+itemid: 40510
+name: A Page About a Man's Hands
+namesimple: torn page
+description: |
+  What she had of him was small. Lamp oil, and under it something
+  metallic, sharper. His hands by firelight, turning a small bright
+  thing, a gear, a catch-pin, something that wanted coaxing, that
+  would work or it wouldn't and asked you to believe in the trying.
+  She couldn't remember what it was. She remembered the turning.
+
+  He'd been hollow too, she'd always known that and never followed
+  it anywhere. He'd never shown the change. He'd sat the Rite a
+  certain way, held his arm a certain way.
+
+  He left on a windy night. He left without waking her.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

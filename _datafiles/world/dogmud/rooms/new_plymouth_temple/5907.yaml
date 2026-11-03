@@ -19,7 +19,9 @@ description: >
   the page without glare. The room has a single
   function: the formal entry of arriving keepers
   into the record. Its arrangement reflects
-  this without apology. Everything here is in its
+  this without apology. A single torn <ansi fg="itemname">page</ansi>
+  stands in a gap between two of the older volumes, the one thing in
+  this room that has not been entered. Everything here is in its
   proper place. Nothing is pending.
 biome: interior
 coord:
@@ -30,6 +32,9 @@ exits:
   east:
     roomid: 5906
 nouns:
+  page: A single torn page, standing in the unlabeled gap between two of
+    the older registers. It is in no column and has no entry. Nobody has
+    written it down. It would slide out of the gap easily.
   intake register: The current intake register is
     an open book of ruled columns on heavy paper,
     bound in dark leather. The columns record

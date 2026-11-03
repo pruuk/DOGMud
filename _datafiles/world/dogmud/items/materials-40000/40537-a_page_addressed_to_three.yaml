@@ -1,0 +1,15 @@
+itemid: 40537
+name: A Page Addressed to Three
+namesimple: torn page
+description: |
+  To the three still ...: we did what we could. You are not coming for
+  us. I am sorry. Hold your post as long as the post will hold you.
+  When it does not hold you any longer, go home. We are home already,
+  in a way. The children will be a new people. I think they will be a
+  people worth the coming.
+type: readable
+subtype: blobcontent
+not_salable: true
+weight: 0.1
+value: 15
+rarity_tier: 40

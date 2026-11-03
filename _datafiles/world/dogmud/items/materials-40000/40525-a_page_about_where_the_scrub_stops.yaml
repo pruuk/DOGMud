@@ -1,0 +1,20 @@
+itemid: 40525
+name: A Page About Where the Scrub Stops
+namesimple: torn page
+description: |
+  "The vegetation will be heavier now," Reth said. "... But the
+  surface is there. Whatever it's made of, it doesn't corrode and it
+  doesn't break down. The plants grow over it but they don't grow
+  into it. You'll see the edge where the scrub stops, a line, too
+  clean, where nothing has taken root. That's where the surface
+  starts."
+
+  (In the margin, small:)
+  Where the green stops.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

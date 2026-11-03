@@ -11,7 +11,9 @@ description: >
   means does not quite apply. Dock-poor and shop-
   comfortable share the same bench and the same hot water,
   which produces an occasional awkwardness and a more
-  occasional conversation. The
+  occasional conversation. A damp <ansi fg="itemname">page</ansi> has
+  been left on the bench by someone who read in the steam and went
+  home without it. The
   <ansi fg="itemname">steam-room door</ansi> is a thick
   plank banded in iron to hold the heat in, its face dark
   with condensation. Beside the entrance, a
@@ -34,6 +36,10 @@ exits:
   east:
     roomid: 5610
 nouns:
+  page: A page gone soft with steam, lying on the bench where someone
+    left it. The ink has run in long grey tracks, but the sheet holds
+    together, and the foot of it has come away. It would peel free of
+    the wood whole.
   steam room door: A thick plank door banded in iron at
     the top, middle, and bottom, with the banding to hold the
     swelling wood flat and the heat in. Its face is dark
