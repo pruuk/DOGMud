@@ -218,7 +218,7 @@ triggers:
           Among the stones the lightning threw down, one has been turned to face
           the road. Cut into it, fresh once and weathered since, is a ring struck
           through with a line, and beside it a short, hard arrow: east, toward
-          the old camp Reth spoke of. Not Reth's work. Reth did not know the mark.
+          the old camp Reth spoke of. Not Reth's hand. His cuts are neater than this.
       - observer: "{actor} turns over the fallen stones of the cairn."
   - event: command
     command: search

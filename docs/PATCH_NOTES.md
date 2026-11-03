@@ -5,7 +5,7 @@
 - The road to the Disc-Door is now a trail to follow. Brennan and Reth in Greenford
   start you on it, and it runs north to an abandoned cottage, then east over the
   Cascade Pass. Bring friends for the last of it.
-- If you already carry a woken disc, it still opens the door.
+- If you have already finished The Disc, your woken disc still opens the door.
 - The Threshold Keeper now wants at least four hundred gold to open the way.
 - The oracle-stones are found by searching, and the Keeper offers that road too.
 - New achievements for waking the disc, for bringing down the Core Guardian and for

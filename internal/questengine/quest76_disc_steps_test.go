@@ -29,6 +29,13 @@ func TestQuest76TheDisc_Trail(t *testing.T) {
 	require.Equal(t, "76-end", in.GrantsQuest)
 	require.Equal(t, woken, in.CarriesItem)
 
+	// The Sentinel is the readiness test only if the door waits for it.
+	open := keeper.FindTopic("open_crash")
+	require.NotNil(t, open)
+	require.Equal(t, woken, open.CarriesItem)
+	require.Equal(t, []string{"76-sentinel"}, open.QuestRequired,
+		"the Keeper opens nothing while the Sentinel stands")
+
 	search := func(room int) EventDetails { return EventDetails{Command: "search", RoomId: room} }
 	// `cast glow` with no target aims at the caster (InitiateCast, TargetSelf).
 	glow := func(room int) EventDetails {

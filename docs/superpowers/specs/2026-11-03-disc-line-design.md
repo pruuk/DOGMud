@@ -96,7 +96,7 @@ Steps: `start`, `journal`, `shelter`, `cairn`, `camp`, `alpha`, `remains`, `attu
 | `76-attune`, no `76-end` | Carries on to the `sentinel` step, then the Keeper. |
 | `76-journal`, no `76-attune`, with or without 40167 | Goes to `shelter` and walks the trail. A held 40167 stays in the pack and the `remains` search gives no second one. |
 | `76-start` only | Searches the cottage as normal. |
-| 40167 or 40168 in hand, no quest | Keeps them (#625). A 40168 still opens the door. |
+| 40167 or 40168 in hand, no quest | Keeps them (#625). The door waits for the Sentinel, so a 40168 opens it from `76-sentinel` on. A prod survey on 2026-11-03 found only one holder, already at `76-end`. |
 
 The plan must confirm how the quest log treats a saved later token against steps inserted before it, and test this table.
 
