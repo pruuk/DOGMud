@@ -12,7 +12,7 @@ import (
 )
 
 // The #375 phase 7 tier 2 pass (spec
-// docs/superpowers/specs/2026-11-02-quest-arc-phase7-tier2-design.md) cleared
+// docs/superpowers/specs/completed/2026-11-02-quest-arc-phase7-tier2-design.md) cleared
 // every loop finding on these quests. A finding on one is fixed in content,
 // never listed.
 var tier2Quests = map[int]bool{2: true, 16: true, 17: true, 18: true, 19: true, 20: true, 60: true, 61: true}

@@ -2,7 +2,7 @@
 
 **Owner:** Malia (look and feel). **Written:** 2026-11-02, from the decisions
 of the 2026-11-01 and 2026-11-02 sessions. **Colour source of truth:**
-[`../superpowers/specs/2026-11-01-brand-palette-design.md`](../superpowers/specs/2026-11-01-brand-palette-design.md).
+[`../superpowers/specs/completed/2026-11-01-brand-palette-design.md`](../superpowers/specs/completed/2026-11-01-brand-palette-design.md).
 Change a rule here only with Malia's agreement, and update the palette spec
 in the same change when a colour moves.
 

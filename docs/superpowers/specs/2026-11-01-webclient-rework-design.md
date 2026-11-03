@@ -8,7 +8,7 @@ server change (asset version tags).
 **Arc:** the touch web client rework
 (`docs/superpowers/specs/2026-10-31-touch-web-client-requirements.md`, on
 branch `docs/touch-web-client-requirements`). **Colours:**
-[`2026-11-01-brand-palette-design.md`](2026-11-01-brand-palette-design.md).
+[`completed/2026-11-01-brand-palette-design.md`](completed/2026-11-01-brand-palette-design.md).
 **Brand rules:** [`../../guides/BRAND_STANDARDS.md`](../../guides/BRAND_STANDARDS.md).
 
 ## Goal
