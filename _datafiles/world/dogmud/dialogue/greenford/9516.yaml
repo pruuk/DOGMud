@@ -80,6 +80,12 @@ opener:
     text: So you have Reth's route. Then there is one more thing I would ask of
       you, if you will hear it.
   - questRequired:
+    - 75-notes
+    questExcluded:
+    - 75-end
+    text: You have been to see Reth. It is in how you came through the door. Well?
+    hints: Choose below to tell Brennan what Reth told you.
+  - questRequired:
     - 75-intro
     questExcluded:
     - 75-end
@@ -128,6 +134,22 @@ topics:
   - 75-start
   - 75-end
   grantsQuest: 75-start
+- key: notes_in
+  kind: handin
+  quest: 75
+  label: The Surveyor's Report
+  playerLine: Reth told me what he saw, and gave me this map.
+  text: |
+    A surface. Metal, and no seam. He told you that, and in thirty
+    years he never once told me. Then it is real, and there is more
+    to this than one man's three lines. Sit a moment. There is
+    someone else you should know about.
+  hints: Quest complete. Choose The Disc below if you want to hear about him.
+  questRequired:
+  - 75-notes
+  questExcluded:
+  - 75-end
+  grantsQuest: 75-end
 - key: disc_quest
   kind: offer
   quest: 76

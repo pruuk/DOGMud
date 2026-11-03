@@ -4,13 +4,9 @@
 # warning; any finding not listed refuses boot, CI and the quest editor's
 # save. A line with no matching finding fails CI: delete it when its finding
 # is fixed. Never add a line by hand to make new content pass.
-chain 75 mob 9516 topic disc_quest
-chain 75 mob 9516 topic disc_tale
 end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
-end 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony
-end 75 step end
 end 77 quest 77 trigger room_interact room=6397 noun=records grants=77-end
 end 77 step end
 hint 21 step start
@@ -33,8 +29,6 @@ hint-length 71 step horst
 hint-length 71 step ledger
 hint-length 71 step start
 hint-length 71 step vell
-hint-length 75 step intro
-hint-length 75 step start
 one-action 1000000 step end:none
 one-action 1000000 step givegold:none
 one-action 63 mob 9300 topic tallyhandoff:prev
@@ -56,8 +50,6 @@ one-action 69 mob 9360 topic give_40116:prev
 one-action 70 mob 9332 topic orinhandoff:prev
 one-action 70 quest 70 trigger room_interact room=6037 noun=symbol grants=70-witness:cond
 one-action 71 mob 9347 topic ledgerhandoff:prev
-one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:double
-one-action 75 quest 75 trigger room_interact room=6315 noun=field-notes grants=75-end,75-testimony:prev
 refs 1000000 quest 1000000 refs: rewards conditionid: condition 4 does not exist
 refs 1000000 quest 1000000 refs: rewards skillinfo: skill "map" does not exist
 start 1000000 step start
@@ -80,4 +72,3 @@ walk-destination 65 step report
 walk-destination 66 step detox
 walk-destination 66 step escort
 walk-destination 67 step report
-walk-destination 75 step testimony
