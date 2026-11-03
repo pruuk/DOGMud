@@ -46,5 +46,16 @@ check('the header link uses the same full screen code',
     header.indexOf('WebclientFrame.setFullScreen(true)') !== -1, true);
 check('the header script checks the link exists', /if \(!link\) return;/.test(header), true);
 
+var game = fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8');
+check('the game page has a viewport tag',
+    game.indexOf('<meta name="viewport" content="width=device-width, initial-scale=1.0"') !== -1, true);
+check('the game page loads the module',
+    game.indexOf('/static/js/viewportfit.js?v={{ .ASSET_VERSION }}"') !== -1, true);
+check('the phone class is set before the terminal reads its colours',
+    game.indexOf("classList.add('phone')") !== -1 &&
+    game.indexOf("classList.add('phone')") < game.indexOf('const rootStyle ='), true);
+check('the session bar has the full screen toggle', game.indexOf('id="btn-fullscreen"') !== -1, true);
+check('the toggle talks to the outer page', game.indexOf('window.parent.WebclientFrame') !== -1, true);
+
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);
