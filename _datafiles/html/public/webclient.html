@@ -87,16 +87,15 @@
     // box; the frame already fits, so hold the page at the top. Only the height
     // changes here: resetting the frame to nothing while the command box has
     // focus could close the keyboard. A zoomed-in player is left to pan freely.
+    function holdPageAtTop() {
+        if (window.visualViewport.scale <= 1.01) window.scrollTo(0, 0);
+    }
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', function () {
-            if (ViewportFit.visibleHeight(window.visualViewport) === undefined) return;
-            window.scrollTo(0, 0);
+            holdPageAtTop();
             fitFrameHeight();
         });
-        window.visualViewport.addEventListener('scroll', function () {
-            if (ViewportFit.visibleHeight(window.visualViewport) === undefined) return;
-            window.scrollTo(0, 0);
-        });
+        window.visualViewport.addEventListener('scroll', holdPageAtTop);
     }
     window.addEventListener('beforeunload', function(event) {
         event.preventDefault();

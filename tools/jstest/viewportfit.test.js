@@ -60,7 +60,8 @@ check('the toggle talks to the outer page', game.indexOf('window.parent.Webclien
 // Zooming in also shrinks the visual viewport, and is not the keyboard.
 check('no visual viewport has no visible height', VF.visibleHeight(null), undefined);
 check('at normal zoom the visible height counts', VF.visibleHeight({ height: 400, scale: 1 }), 400);
-check('zoomed in, the visible height does not count', VF.visibleHeight({ height: 200, scale: 2 }), undefined);
+check('zoomed in with no keyboard, the page is still all visible', VF.visibleHeight({ height: 370, scale: 2 }), 740);
+check('zoomed in with the keyboard, the keyboard still counts', VF.visibleHeight({ height: 220, scale: 2 }), 440);
 
 check('no visual viewport: no keyboard', VF.keyboardOpen(740, undefined), false);
 check('an address bar hiding is not a keyboard', VF.keyboardOpen(740, 680), false);
@@ -79,7 +80,14 @@ check('the full screen button is shaped like the sound button',
     /#menu-icon,\s*#btn-fullscreen \{/.test(game) && game.indexOf('class="brass" id="btn-fullscreen"') === -1, true);
 
 check('the keyboard path never resets the frame to nothing',
-    /addEventListener\('resize', function \(\) \{\s*if \(ViewportFit\.visibleHeight\(window\.visualViewport\) === undefined\) return;\s*window\.scrollTo\(0, 0\);\s*fitFrameHeight\(\);/.test(outer), true);
+    /addEventListener\('resize', function \(\) \{\s*holdPageAtTop\(\);\s*fitFrameHeight\(\);/.test(outer), true);
+check('a zoomed-in player can pan freely',
+    /function holdPageAtTop\(\) \{\s*if \(window\.visualViewport\.scale <= 1\.01\)/.test(outer), true);
+check('the bare page lets go of its minimum height', /document\.body\.style\.minHeight = '0'/.test(game), true);
+check('phones leave the layout reset out of the session bar',
+    /#dashboard\[data-mode="phone"\] #btn-reset-layout\s*\{\s*display:\s*none;/.test(dashCss), true);
+check('a very short screen gives the game the session bar and panel title',
+    /@media \(max-height: 320px\) \{\s*html\.keyboard-open #dash-session,\s*html\.keyboard-open #panel-feed \.dash-panel-head\s*\{\s*display:\s*none;/.test(dashCss), true);
 check('the frame height ignores zoom',
     outer.indexOf('ViewportFit.visibleHeight(window.visualViewport)') !== -1 &&
     outer.indexOf('vv.height') === -1, true);

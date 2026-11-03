@@ -49,16 +49,23 @@
             // While the page loads the frame can be a few pixels wide; fitting
             // 80 columns into that made a terminal tens of thousands of rows
             // tall and crashed the tab. Wait for a real size.
-            if (!body || body.clientWidth < 160 || body.clientHeight < 80) return;
+            // A panel we have already fitted at this width may go much shorter:
+            // a phone on its side with the keyboard up.
+            if (!body || body.clientWidth < 160 ||
+                (body.clientHeight < 80 && body.clientWidth !== lastW) || body.clientHeight < 1) return;
             // The display scale changes the letter widths at the same panel size.
             if (!forcePending && body.clientWidth === lastW && body.clientHeight === lastH &&
                 window.devicePixelRatio === lastDpr) return;
             try {
-                // Only the height changed (the on-screen keyboard): the font
-                // depends on the width, so it stays and only the rows change.
+                // Only the height changed (the on-screen keyboard): the font and
+                // columns depend on the width, so they stay and only the rows change.
                 if (!forcePending && body.clientWidth === lastW && window.devicePixelRatio === lastDpr) {
                     if (lastScale !== 1) host.style.height = (body.clientHeight / lastScale) + 'px';
-                    fitAddon.fit();
+                    var proposed = fitAddon.proposeDimensions();
+                    if (proposed && !isNaN(proposed.rows) && proposed.rows !== term.rows) {
+                        term._core._renderService.clear();
+                        term.resize(term.cols, proposed.rows);
+                    }
                     remember(lastW, body.clientHeight, lastScale);
                     return;
                 }

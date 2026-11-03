@@ -58,5 +58,14 @@ check('an inactive tab is not see-through', !/opacity:\s*0\./.test(tab), tab);
 check('the Temple marker has a dark colour on its pale block', /^\s*map-temple:\s*0\b/m.test(aliases), 'map-temple');
 check('the Temple block stays pale', /^\s*mapbg-temple:\s*15\b/m.test(aliases), 'mapbg-temple');
 
+// A marker colour is only readable on its own block, so every place that draws
+// a map marker from its slug passes the block too, as the minimap does.
+var title = read('world', 'dogmud', 'templates', 'descriptions', 'room-title.template');
+check('the room title draws a marker on its block',
+    title.indexOf('<ansi fg="map-%s" bg="mapbg-%s">%s</ansi>') !== -1, 'room-title.template');
+var roominfo = read('world', 'dogmud', 'templates', 'admincommands', 'ingame', 'roominfo.template');
+check('the admin room info draws a marker on its block',
+    /fg="map-[^"]*" bg="mapbg-/.test(roominfo) && !/fg="map-\{\{[^"]*"\s*>/.test(roominfo), 'roominfo.template');
+
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

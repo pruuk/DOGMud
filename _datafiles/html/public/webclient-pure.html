@@ -2538,8 +2538,9 @@
             if (!vv) return;
             vv.addEventListener('resize', function () {
                 var visible = window.ViewportFit.visibleHeight(vv);
-                if (visible === undefined) return;
-                window.scrollTo(0, 0);
+                if (vv.scale <= 1.01) window.scrollTo(0, 0);
+                // gomud.css holds the body at 100dvh, which ignores the keyboard.
+                document.body.style.minHeight = '0';
                 document.body.style.height = Math.floor(visible) + 'px';
                 document.documentElement.classList.toggle('keyboard-open',
                     window.ViewportFit.keyboardOpen(window.innerHeight, visible));

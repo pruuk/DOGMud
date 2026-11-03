@@ -33,12 +33,13 @@
         return Math.max(0, Math.min(layoutH, Math.floor(visibleH) - top));
     }
 
-    // The visual viewport's height, or undefined when it says nothing about the
-    // keyboard: the browser has none, or the player has zoomed in, which shrinks
-    // it too. Phone players zoom to read, and that must not squash the game.
+    // The height left by the keyboard, in page pixels; undefined where the browser
+    // has no visual viewport. Zooming in shrinks the visual viewport by its scale,
+    // so that is multiplied back out: phone players zoom to read, and that must
+    // not squash the game. A keyboard still counts while zoomed.
     function visibleHeight(vv) {
-        if (!vv || vv.scale > 1.01) return undefined;
-        return vv.height;
+        if (!vv) return undefined;
+        return vv.height * (vv.scale || 1);
     }
 
     // True when the visible area is well short of the page: more than an address

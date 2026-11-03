@@ -378,6 +378,14 @@
 html.keyboard-open #dash-tabbar { display: none !important; }
 html.keyboard-open #dashboard[data-mode="phone"] { padding-bottom: 6px; }
 html.keyboard-open #dash-drawer { bottom: 0; }
+/* A phone on its side with the keyboard up has barely any height left. */
+@media (max-height: 320px) {
+  html.keyboard-open #dash-session,
+  html.keyboard-open #panel-feed .dash-panel-head { display: none; }
+}
+/* No room on a phone's session bar once the full screen button is there, and the
+   phone layout has no columns or splitters to reset. */
+#dashboard[data-mode="phone"] #btn-reset-layout { display: none; }
 
 #dash-drawer {
   position: fixed;

@@ -696,7 +696,12 @@ Give the owner this list for Malia: on her phone and on her tablet, open the web
 ## Corrections made while building
 
 - **The dashboard does have a phone layout.** `dashboard.css` has no media queries, but `dashboard.js` sets `data-mode="phone"` under 700 px, with a bottom tab bar. The tab bar sat between the command box and the keyboard, so it now steps aside while the keyboard is open (`html.keyboard-open`).
-- **Zoom:** pinch zoom also shrinks the visual viewport, so `ViewportFit.visibleHeight` ignores it. Otherwise zooming to read would squash the game.
+- **Zoom:** pinch zoom also shrinks the visual viewport, so `ViewportFit.visibleHeight` multiplies it back out by the scale. Otherwise zooming to read would squash the game.
+- **Temple in the room title:** the title and admin room info drew map markers with no background, so colour 0 was invisible there. They now pass `bg="mapbg-<slug>"`, as the minimap does.
+- **Session bar on phones:** ↺ is hidden in phone mode, which has no columns or splitters to reset; with ⛶ added it ran off screen.
+- **Very short screens:** at 320 px tall or less with the keyboard open, the session bar and Game panel title step aside, and the terminal still refits when the panel is very short.
+- **Bare page:** clears the body's `min-height`, which otherwise held it at `100dvh` under the keyboard.
+- **Height-only refits** change rows only, so a scaled terminal's columns hold.
 - **Keyboard path:** it changes only the frame's height. The old reset to 0 could close the keyboard on iOS by taking the focused box out of view.
 - **Framing:** the toggle code tolerates another site framing the page, where reading the parent throws.
 - **Font:** a height-only refit keeps the font, which also moved by half a pixel when the keyboard opened.

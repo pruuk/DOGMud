@@ -47,9 +47,17 @@ function makePage(W, H, minFont) {
         get cols() { return real.cols; },
         get rows() { return real.rows; },
         setOption: function (k, v) { if (k === 'fontSize') page.fontSize = v; },
-        _core: { _renderService: { get dimensions() {
-            return { actualCellWidth: cellW(), actualCellHeight: cellH() };
-        } } }
+        resize: function (c, r) {
+            page.resizes++;
+            page.narrowest = Math.min(page.narrowest, c);
+            real.resize(c, r);
+        },
+        _core: { _renderService: {
+            clear: function () {},
+            get dimensions() {
+                return { actualCellWidth: cellW(), actualCellHeight: cellH() };
+            }
+        } }
     };
     var fitAddon = {
         proposeDimensions: function () {
@@ -158,6 +166,25 @@ function run() {
         check('a scaled terminal fits the new height',
             scaled.host.style.height === (400 / s) + 'px' && scaled.real.rows < scaledRows,
             'height ' + scaled.host.style.height + ' rows ' + scaled.real.rows);
+
+        // A height-only refit leaves the columns alone, even if the letters
+        // measure differently by now (the scaled path sizes the host before
+        // the final measurement).
+        var held = makePage(360, 700, 10);
+        held.fitter.fit();
+        var heldCols = held.real.cols;
+        held.fontSize = held.fontSize - 2;
+        held.panel.clientHeight = 500;
+        held.fitter.fit();
+        check('a height-only refit keeps the columns', held.real.cols === heldCols, 'cols ' + held.real.cols + ' was ' + heldCols);
+
+        // Landscape with the keyboard up leaves a very short panel; the
+        // terminal must still shrink or the newest lines hang off the bottom.
+        var flat = makePage(740, 300, 1);
+        flat.fitter.fit();
+        flat.panel.clientHeight = 40;
+        flat.fitter.fit();
+        check('a very short panel still fits its rows', flat.real.rows <= 3, 'rows ' + flat.real.rows);
 
         // A forced refit asked for while the panel is hidden still happens.
         var hidden = makePage(1600, 900, 1);
