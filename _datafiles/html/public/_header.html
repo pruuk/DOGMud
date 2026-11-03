@@ -16,18 +16,12 @@
   <script type="text/javascript">
     window.addEventListener("load", function(){
       const link = document.getElementById('hide-header-footer');
+      if (!link) return;
 
-      // Add a click event listener
       link.addEventListener('click', function(event) {
-        // Prevent the default link behavior (e.g., navigating to a new page)
+        // Stay on the page: following the link would drop the game connection.
         event.preventDefault();
-
-        document.getElementsByTagName('header')[0].style.display = "none";
-        document.getElementsByTagName('nav')[0].style.display = "none";
-        document.getElementsByTagName('footer')[0].style.display = "none";
-        if ( resizeClientIFrame ) {
-          resizeClientIFrame();
-        }
+        window.WebclientFrame.setFullScreen(true);
       });
     });
   </script>

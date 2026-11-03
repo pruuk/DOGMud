@@ -33,5 +33,18 @@ check('a fractional height rounds down, never under the keyboard', VF.frameHeigh
 check('no visual viewport: the frame fills its space', VF.frameHeight(700, undefined, 0), 700);
 check('never negative', VF.frameHeight(700, 50, 100), 0);
 
+var outer = fs.readFileSync(path.join(PUBLIC, 'webclient.html'), 'utf8');
+var header = fs.readFileSync(path.join(PUBLIC, '_header.html'), 'utf8');
+check('the outer page loads the module',
+    outer.indexOf('/static/js/viewportfit.js?v={{ .ASSET_VERSION }}"') !== -1, true);
+check('the full screen code exists before the game frame starts loading',
+    outer.indexOf('window.WebclientFrame') !== -1 &&
+    outer.indexOf('window.WebclientFrame') < outer.indexOf('<iframe'), true);
+check('the frame height follows the visual viewport',
+    outer.indexOf('ViewportFit.frameHeight(') !== -1, true);
+check('the header link uses the same full screen code',
+    header.indexOf('WebclientFrame.setFullScreen(true)') !== -1, true);
+check('the header script checks the link exists', /if \(!link\) return;/.test(header), true);
+
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);
