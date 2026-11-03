@@ -20,7 +20,9 @@ description: >
   through the evening's orders with the efficiency of long
   habit. A broad <ansi fg="itemname">notice board</ansi> hangs
   beside the outer door, dense with traveler notices and a
-  week-old market sheet from Thornwall.
+  week-old market sheet from Thornwall. Under the newest sheets the
+  corner of a torn <ansi fg="itemname">page</ansi> still shows, pinned
+  there by someone with no more use for it.
 biome: farmland
 skylight: 0.15
 lamp: 50
@@ -32,6 +34,12 @@ exits:
   west:
     roomid: 5377
 nouns:
+  page: The corner of a torn page shows beneath the newer sheets on the
+    notice board, its pin rusted into the cedar. The ink is faded and
+    the edge ragged, as though it was torn from something bigger. It
+    has been pinned there longer than anything above it, and nobody
+    has had a use for it since. The pin would come free if you lifted
+    the newer sheets.
   notice board: A wide cedar plank nailed to two uprights
     beside the outer door, its surface buried under a season's
     worth of pinned papers. There is a wanted notice with a

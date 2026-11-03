@@ -1,0 +1,16 @@
+itemid: 40531
+name: A Page About Kept Things
+namesimple: torn page
+description: |
+  This was, he understood slowly and without saying it, not a weapon
+  room. It was not a treasure room. It was not the room any song
+  about this hill had taught anyone to imagine.
+
+  It was a room full of kept things.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

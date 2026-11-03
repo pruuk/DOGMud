@@ -1,0 +1,15 @@
+itemid: 40518
+name: A Page About Unchanged Hands
+namesimple: torn page
+description: |
+  The qualification attached to all three categories: the annotation
+  "for unchanged hands" appears in the margin of the relevant catalog
+  page, in a hand that is not the archivist's. It is the kind of note
+  written when someone is recording not just what a thing is, but
+  what it requires.
+type: readable
+subtype: blobcontent
+not_salable: true
+weight: 0.1
+value: 15
+rarity_tier: 40

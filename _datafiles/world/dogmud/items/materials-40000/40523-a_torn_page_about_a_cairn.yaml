@@ -1,0 +1,17 @@
+itemid: 40523
+name: A Torn Page About a Cairn
+namesimple: torn page
+description: |
+  ...with the precision of a man who had walked the terrain and
+  retained every station marker and bearing in his head ...
+
+  ... The climb through the tree line. The bearing from the
+  lightning-split cairn that marked the old commission station. ...
+  across two gully systems and through the heavy scrub, to the
+  exposed section of the formation.
+type: readable
+subtype: blobcontent
+not_salable: true
+weight: 0.1
+value: 15
+rarity_tier: 40

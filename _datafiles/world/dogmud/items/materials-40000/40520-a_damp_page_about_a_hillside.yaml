@@ -1,0 +1,18 @@
+itemid: 40520
+name: A Damp Page About a Hillside
+namesimple: torn page
+description: |
+  (The ink has run from the steam, and the foot of the page has come
+  away.)
+
+  She turned it over. The disc will open it. She'd been reading the
+  sentence like the instruction to a lock, the lock a door in a
+  hillside, the seal on a stone, a way in. But her father had been
+  gone ... years and nobody had found him, and a man who walked into
+  a hill and didn't walk out was a man who was s...
+type: readable
+subtype: blobcontent
+not_salable: true
+weight: 0.1
+value: 15
+rarity_tier: 40

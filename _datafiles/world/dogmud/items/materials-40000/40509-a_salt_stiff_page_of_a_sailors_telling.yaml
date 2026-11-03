@@ -1,0 +1,22 @@
+itemid: 40509
+name: A Salt-Stiff Page of a Sailor's Telling
+namesimple: torn page
+description: |
+  (Salt has stiffened this page, and the ink has lifted in patches.)
+
+  Four s... One of them ... down. Not a good l... A bad one. The
+  kind where you give up the ... to save the people, and even then
+  you don't save all the people.
+
+  The other three ... they didn't leave. Think about that. Every
+  sailor knows what a ship does when she loses one of her own at
+  sea. You don't leave. You stay. You circle. You call their name
+  into the water until the water answers or it doesn't.
+
+  That's what they did. They circled. They called.
+type: readable
+subtype: blobcontent
+not_salable: true
+weight: 0.1
+value: 15
+rarity_tier: 40

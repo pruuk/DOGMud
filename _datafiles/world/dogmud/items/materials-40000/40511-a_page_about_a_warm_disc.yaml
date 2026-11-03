@@ -1,0 +1,19 @@
+itemid: 40511
+name: A Page About a Warm Disc
+namesimple: torn page
+description: |
+  She'd carried the disc in her coat since her great-aunt pressed it
+  into her hand ... don't lose this, don't show anyone, and nothing
+  else. She touched it now. Her thumb found the small notch on the
+  edge it always caught on, and the shallow dent on the face she'd
+  always taken for damage. Warm. Warmer than body-warm, with the
+  faintest vibration under her thumb, so slight she might have
+  imagined it. She wasn't sure she was imagining it. She put it in
+  her coat and kept moving.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

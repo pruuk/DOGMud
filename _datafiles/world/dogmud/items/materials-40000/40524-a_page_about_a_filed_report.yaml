@@ -1,0 +1,20 @@
+itemid: 40524
+name: A Page About a Filed Report
+namesimple: torn page
+description: |
+  "I went back to my camp," Reth said. "I wrote my report. I used the
+  language I used. I filed the report with the commission and I
+  waited, and nobody said anything, and nobody came to ask ..."
+
+  "Because I was a surveyor," Reth said. "I measured land. I filed
+  reports. That was the scope of what I was. And what I found ..." He
+  spread his hands slightly, the first gesture he'd made. "What I
+  found was not land. It was not in the scope. I did my duty. I filed
+  my report. ... Nobody came."
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

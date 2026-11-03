@@ -6,7 +6,8 @@ description: A low-ceilinged tavern tucked into the south end of the Craftsmen's
   reference to the flooding that plagued this district before the drainage channels
   were built. The interior is dim, smoky, and comfortable in the way of places that
   have soaked up decades of conversation and spilled ale. Mismatched tables fill the
-  room, and the <ansi fg="itemname">bar</ansi> is a single slab of scarred oak on trestle legs. A doorway
+  room, and the <ansi fg="itemname">bar</ansi> is a single slab of scarred oak on trestle legs.
+  A folded <ansi fg="itemname">page</ansi> has been wedged under the short leg of the nearest table, and the table has been steady ever since. A doorway
   to the west opens on the kitchen, where a trapdoor leads down to the cellar.
   Past the far
   end of the bar, a moth-eaten curtain half-hides a back corner where the old
@@ -27,6 +28,11 @@ exits:
   up:
     roomid: 5102
 nouns:
+  page: A page of old paper, folded small and pressed flat by the weight
+    of the table it props. The creases have gone soft and brown. Whoever
+    wedged it there chose it for the job and did not much care what it
+    said. It would come out whole, if you were willing to let the table
+    rock.
   sign: A painted wooden sign showing a fence post in brown water, the waterline
     rising to the crossbar. The paint is fresh, and someone keeps the sign maintained
     even if the rest of the building could use work. Below the image, in block

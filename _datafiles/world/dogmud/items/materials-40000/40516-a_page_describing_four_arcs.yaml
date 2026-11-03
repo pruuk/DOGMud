@@ -1,0 +1,21 @@
+itemid: 40516
+name: A Page Describing Four Arcs
+namesimple: torn page
+description: |
+  ...not a spiral. A set of nested arcs, four of them, struck from a
+  single center, the innermost tight, the next two stepping outward
+  at even intervals, the fourth riding wider and slightly off-true,
+  as though whatever had drawn them had let the last one drift. Along
+  each arc, a small raised point. A geometry, not a picture.
+  Something that could be copied, carved, quoted. ... It was made to
+  receive something. A key, maybe. A finger. Something specific.
+
+  (In the margin, in another hand:)
+  Not how the old margins draw it. A ring, struck through with a line.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

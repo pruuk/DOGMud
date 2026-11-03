@@ -1,0 +1,21 @@
+itemid: 40535
+name: A Copied Scratching from a Shrine
+namesimple: torn page
+description: |
+  Undated, unsigned, found scratched into the back of a waypoint
+  shrine east of New Plymouth.
+
+  The moons are n...
+
+  Ask your blood what it remembers.
+
+  Then go east.
+
+  There is a hill shaped wrong.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

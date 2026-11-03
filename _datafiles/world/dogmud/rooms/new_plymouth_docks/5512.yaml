@@ -16,7 +16,9 @@ description: >
   <ansi fg="itemname">hearth</ansi> holds a driftwood fire
   that burns with an odd green-blue flicker where the salt
   in the wood catches. It is warm, and strange, and nobody
-  in the room seems to notice the colors anymore. Stairs
+  in the room seems to notice the colors anymore. A salt-stiff
+  <ansi fg="itemname">page</ansi> has been folded and jammed under the
+  end of the bar, and nobody seems to notice that either. Stairs
   lead back up to the street door.
 biome: interior
 coord:
@@ -27,6 +29,12 @@ exits:
   up:
     roomid: 5511
 nouns:
+  page: A page folded in four and jammed under the end of the bar,
+    stiff with salt the way everything in this room goes stiff. The
+    ink has lifted from the paper in pale patches. Someone put it
+    there to steady a wobble, or to hide it, and the regulars have
+    long since stopped seeing it. It would work free with a little
+    patience.
   bar: A plank of timber four inches thick, set on barrels,
     sanded and oiled so many times it would take a chisel
     to confirm what wood it started as. The rings of

@@ -1,0 +1,21 @@
+itemid: 40517
+name: A Page Naming Stillwater
+namesimple: torn page
+description: |
+  "My father came through Stillwater ... years ago," Maren said.
+  "Heading east, traveling fast, didn't stop more than a day." She
+  paused. "He said he was going to the hill. That there was something
+  there he had to see before they caught him."
+
+  Vane was still.
+
+  "He told my uncle the disc would open it. Whatever it was." Maren
+  folded the letter again, with some care. "He said it once and then
+  he left, and my uncle never saw him again."
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

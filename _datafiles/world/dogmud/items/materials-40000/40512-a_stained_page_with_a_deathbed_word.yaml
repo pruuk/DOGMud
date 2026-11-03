@@ -1,0 +1,26 @@
+itemid: 40512
+name: A Stained Page with a Deathbed Word
+namesimple: torn page
+description: |
+  (Water has been spilled across this page, and a word or two has
+  gone with it.)
+
+  She had been quiet a long time when she took his wrist.
+
+  The grip was strong. He had not expected that. The translucent
+  hand on his wrist, the silver eyes steady on him, and she said,
+  with a clarity that did not belong to someone who had been
+  unconscious an hour before:
+
+  "The moons are n..."
+
+  He had held very still.
+
+  "They are b...," she said. "B... with the dead still inside."
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

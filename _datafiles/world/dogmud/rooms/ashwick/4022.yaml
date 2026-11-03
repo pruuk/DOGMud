@@ -9,7 +9,8 @@ description: >
   geometry, partially obscured by the later carving. Inside,
   six wooden pews face a simple altar. Candles burn in iron
   sconces, their light steady. The smell of incense hangs in
-  the still air. It is a place that has been many things and
+  the still air. A hymnal in the last pew has a torn page slipped
+  between its leaves that has nothing to do with singing. It is a place that has been many things and
   is trying very hard to be only one.
 biome: farmland
 coord:
@@ -20,6 +21,10 @@ exits:
   north:
     roomid: 4018
 nouns:
+  page: A torn page slipped between the leaves of a hymnal in the last
+    pew. It is no part of the hymnal. The writing on it is a plain hand
+    and has nothing to do with singing. It would come out of the book
+    without a sound.
   symbol: The Chrysalis spiral carved in stone above the door,
     the standard icon of the faith, a spiral representing
     transformation and growth. But the carving sits atop older
