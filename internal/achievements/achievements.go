@@ -22,6 +22,8 @@ type Trigger struct {
 	Stat      string `yaml:"stat,omitempty"`      // stat_reached (a primary stat name or "any")
 	Skill     string `yaml:"skill,omitempty"`     // skill_reached (a skill name or "any")
 	Token     string `yaml:"token,omitempty"`     // quest_completed (a quest token)
+	Items     []int  `yaml:"items,omitempty"`     // items_read: every item that must be read
+	Mob       int    `yaml:"mob,omitempty"`       // mob_killed: the mob template id
 }
 
 // Definition is one authored achievement.

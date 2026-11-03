@@ -42,6 +42,11 @@ func Read(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			desc = iSpec.Description
 		}
 		if len(desc) > 0 {
+			// What items_read achievements count. Only true readables: a
+			// notice authored as an object is read too, but is not a page.
+			if iSpec.Type == items.Readable {
+				user.Character.RecordItemRead(readItem.ItemId)
+			}
 			foundItemName = readItem.DisplayName()
 			foundItemLongName = readItem.DisplayName()
 			foundItemDescription = desc

@@ -35,6 +35,8 @@ type Trigger struct {
     Stat      string // stat_reached — a primary stat name, or "any"
     Skill     string // skill_reached — a skill name, or "any"
     Token     string // quest_completed — a quest token
+    Items     []int  // items_read — every item id that must be read
+    Mob       int    // mob_killed — the mob template id
 }
 ```
 

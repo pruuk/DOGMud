@@ -18,6 +18,8 @@ func TestValidateDefinition(t *testing.T) {
 		{"stat missing param", Definition{Id: "x", Name: "n", Category: "progression", Trigger: Trigger{Type: "stat_reached", Threshold: 1}}, "x"},
 		{"bad stat name", Definition{Id: "x", Name: "n", Category: "progression", Trigger: Trigger{Type: "stat_reached", Stat: "wisdom", Threshold: 1}}, "x"},
 		{"quest missing token", Definition{Id: "x", Name: "n", Category: "quests", Trigger: Trigger{Type: "quest_completed"}}, "x"},
+		{"items_read missing items", Definition{Id: "x", Name: "n", Category: "quests", Trigger: Trigger{Type: "items_read"}}, "x"},
+		{"mob_killed missing mob", Definition{Id: "x", Name: "n", Category: "combat", Trigger: Trigger{Type: "mob_killed", Mob: 0}}, "x"},
 		{"bad skill name", Definition{Id: "x", Name: "n", Category: "progression", Trigger: Trigger{Type: "skill_reached", Skill: "not-a-real-skill", Threshold: 25}}, "x"},
 		{"filename mismatch", Definition{Id: "x", Name: "n", Category: "combat", Trigger: Trigger{Type: "mob_kills", Threshold: 1}}, "y"},
 		{"negative points", Definition{Id: "x", Name: "n", Category: "combat", Points: -1, Trigger: Trigger{Type: "mob_kills", Threshold: 1}}, "x"},
@@ -33,6 +35,14 @@ func TestValidateDefinition(t *testing.T) {
 	anyStat := Definition{Id: "x", Name: "n", Category: "progression", Trigger: Trigger{Type: "stat_reached", Stat: "any", Threshold: 130}}
 	if err := validateDefinition(anyStat, "x"); err != nil {
 		t.Errorf("stat 'any' should validate: %v", err)
+	}
+	itemsRead := Definition{Id: "x", Name: "n", Category: "quests", Trigger: Trigger{Type: "items_read", Items: []int{40501}}}
+	if err := validateDefinition(itemsRead, "x"); err != nil {
+		t.Errorf("items_read with items should validate: %v", err)
+	}
+	mobKilled := Definition{Id: "x", Name: "n", Category: "combat", Trigger: Trigger{Type: "mob_killed", Mob: 9562}}
+	if err := validateDefinition(mobKilled, "x"); err != nil {
+		t.Errorf("mob_killed with a mob should validate: %v", err)
 	}
 	anySkill := Definition{Id: "y", Name: "n", Category: "progression", Trigger: Trigger{Type: "skill_reached", Skill: "any", Threshold: 25}}
 	if err := validateDefinition(anySkill, "y"); err != nil {
