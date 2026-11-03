@@ -1,0 +1,37 @@
+// viewportfit.js: phone detection, the full screen default, and the height of
+// the game frame with the on-screen keyboard open.
+
+(function (root, factory) {
+    var api = factory();
+    if (typeof module === 'object' && module.exports) {
+        module.exports = api;      // node, for the tests
+    } else {
+        root.ViewportFit = api;    // browser
+    }
+}(typeof self !== 'undefined' ? self : this, function () {
+    'use strict';
+
+    // Judged from the screen, so rotating, the keyboard and the iframe cannot
+    // change the answer. A phone's shorter side is under 600 CSS px; a tablet's
+    // is not.
+    function isPhone(screenW, screenH) {
+        return Math.min(screenW, screenH) < 600;
+    }
+
+    // pref is the remembered choice: '1', '0', or null for none yet.
+    function wantFullScreen(pref, phone) {
+        if (pref === '1') return true;
+        if (pref === '0') return false;
+        return phone;
+    }
+
+    // layoutH: the height the page gives the frame. visibleH: the visual
+    // viewport's height, which excludes the keyboard; undefined where the
+    // browser has none. top: the frame's top edge within the visible area.
+    function frameHeight(layoutH, visibleH, top) {
+        if (typeof visibleH !== 'number') return layoutH;
+        return Math.max(0, Math.min(layoutH, Math.floor(visibleH) - top));
+    }
+
+    return { isPhone: isPhone, wantFullScreen: wantFullScreen, frameHeight: frameHeight };
+}));
