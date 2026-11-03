@@ -59,6 +59,36 @@ func crushPlayer(u *users.UserRecord) {
 
 func joined(msgs []string) string { return strings.Join(msgs, "\n") }
 
+// A name that already starts with an article takes no second one. A torn page
+// once arrived as "You receive an A Damp Page About a Hillside."
+func TestGameBridge_GiveItem_ArticleFollowsTheName(t *testing.T) {
+	u, cleanup := seedGiveItemFixture(t)
+	defer cleanup()
+
+	const withArticle = gitItemId + 1
+	cleanMore := items.SeedItemsForTest(map[int]*items.ItemSpec{
+		gitItemId:   {ItemId: gitItemId, Name: "quest ledger", Type: items.Object, Subtype: items.Mundane, Weight: 0.1},
+		withArticle: {ItemId: withArticle, Name: "A Damp Page", Type: items.Object, Subtype: items.Mundane, Weight: 0.1},
+	})
+	defer cleanMore()
+
+	bridge := NewGameBridge(u, 1)
+
+	if err := bridge.GiveItem(withArticle); err != nil {
+		t.Fatal(err)
+	}
+	if msgs := joined(events.DrainQueuedMessagesForTest(gitUserId)); !strings.Contains(msgs, `You receive <ansi fg="item">A Damp Page</ansi>.`) {
+		t.Errorf("wrong article for a name with its own:\n%s", msgs)
+	}
+
+	if err := bridge.GiveItem(gitItemId); err != nil {
+		t.Fatal(err)
+	}
+	if msgs := joined(events.DrainQueuedMessagesForTest(gitUserId)); !strings.Contains(msgs, `You receive a <ansi fg="item">Quest Ledger</ansi>.`) {
+		t.Errorf("a plain name should still take its article:\n%s", msgs)
+	}
+}
+
 func TestGameBridge_GiveItem_OverloadedPlayer_NoPhantomDelivery(t *testing.T) {
 	u, cleanup := seedGiveItemFixture(t)
 	defer cleanup()
