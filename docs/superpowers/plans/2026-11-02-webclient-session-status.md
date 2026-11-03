@@ -92,3 +92,11 @@ umber rim `#3b2a10` (6.09 on the brass, 8.11 on the green). Not connected
 The "Leave the game?" question and its Yes / Stay buttons get the bar's own
 gaps (12px, 8px on phones) instead of a text space: `#sess-confirm` is an
 inline flex row.
+
+## After the merge with master's phone fit (2026-11-03)
+Master added a `connecting` state (#773): it joins `SESSION_STATES` as an
+amber dotted circle `◌` ("Enter Game, connecting", disabled). Master's ⛶
+full screen button sits in the bar as a brass button like Settings (label on
+wide screens, icon on phones). Master hides Reset layout on phones.
+`tools/jstest/webclient-connect.test.js` reads the status words from the
+button's hidden `.sess-status` span.

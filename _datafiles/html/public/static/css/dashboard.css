@@ -62,13 +62,14 @@
 #dash-session button { font-size: 0.95rem; }
 /* Everything in the session bar stays on one line; when space runs out the
    character name shortens first. Phones get a 48px tap height on the Enter /
-   Leave Game and Yes / Stay buttons, icons for Settings and Reset layout (words
-   on wider screens, to match Enter Game), and "Leave?" for
+   Leave Game and Yes / Stay buttons, icons for Settings and Full screen (words
+   on wider screens, to match Enter Game; Reset layout is hidden on phones), and "Leave?" for
    the confirmation question. */
 #dash-session { min-width: 0; }
 #dash-session > * { flex: 0 0 auto; white-space: nowrap; }
 #dash-session .sess-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 #btn-reset-layout .btn-icon,
+#btn-fullscreen .btn-icon,
 #btn-settings .btn-icon,
 #sess-confirm .q-short { display: none; }
 /* "Leave the game?" with Yes and Stay: the same gaps as the rest of the bar
@@ -81,13 +82,13 @@
 #dash-session > #settings-menu { white-space: normal; font-size: 0.95rem; }
 #dash-session #settings-close { font-size: 20px; }
 #dashboard[data-mode="phone"] #dash-session { gap: 8px; padding: 4px 8px; }
-#dashboard[data-mode="phone"] #btn-reset-layout .btn-label,
+#dashboard[data-mode="phone"] #btn-fullscreen .btn-label,
 #dashboard[data-mode="phone"] #btn-settings .btn-label,
 #dashboard[data-mode="phone"] #sess-confirm .q-long { display: none; }
-#dashboard[data-mode="phone"] #btn-reset-layout .btn-icon,
+#dashboard[data-mode="phone"] #btn-fullscreen .btn-icon,
 #dashboard[data-mode="phone"] #btn-settings .btn-icon,
 #dashboard[data-mode="phone"] #sess-confirm .q-short { display: inline; }
-#dashboard[data-mode="phone"] #btn-reset-layout,
+#dashboard[data-mode="phone"] #btn-fullscreen,
 #dashboard[data-mode="phone"] #btn-settings { font-size: 1.1rem; min-width: 40px; min-height: 40px; }
 #dashboard[data-mode="phone"] #btn-settings .btn-icon { margin-right: 0; }
 #dashboard[data-mode="phone"] #btn-session,
@@ -220,9 +221,9 @@
 #panel-map .map-body { display: flex; flex-direction: column; }
 #panel-map #map-render { flex: 1 1 auto; min-height: 120px; width: 100%; }
 /* Map buttons (Fit, Center, −, +): a row under the map, not over its rooms
-   (Malia 2026-11-02). Label #3b2a10 on the brass: 5.63 at the middle stop,
-   10.23 on the highlight. The ID beats the map's own injected stylesheet,
-   which loads after this file. */
+   (Malia 2026-11-02). Label #1a1206 (master's darker brass text, #774) on the
+   brass: 5.45 at the middle stop, 13.77 on the highlight. The ID beats the
+   map's own injected stylesheet, which loads after this file. */
 .map-controls {
   flex: 0 0 auto;
   display: flex;
@@ -513,6 +514,20 @@
 }
 .gtabs-phone { --gtab-size: 40px; gap: 2px; }
 
+/* The on-screen keyboard is open (viewportfit.js): the command box sits right on
+   top of it, so the tab bar steps aside and gives its room back to the game. */
+html.keyboard-open #dash-tabbar { display: none !important; }
+html.keyboard-open #dashboard[data-mode="phone"] { padding-bottom: 6px; }
+html.keyboard-open #dash-drawer { bottom: 0; }
+/* A phone on its side with the keyboard up has barely any height left. */
+@media (max-height: 320px) {
+  html.keyboard-open #dash-session,
+  html.keyboard-open #panel-feed .dash-panel-head { display: none; }
+}
+/* No room on a phone's session bar once the full screen button is there, and the
+   phone layout has no columns or splitters to reset. */
+#dashboard[data-mode="phone"] #btn-reset-layout { display: none; }
+
 /* Slide-up drawer — also appended outside #dashboard */
 #dash-drawer {
   position: fixed;
@@ -605,8 +620,8 @@
    tappable, Chat's reading size, nothing dimmed. The open tab is pressed in.
    Buttons fill the row and wrap to a second row rather than scroll, so every
    Chat channel stays in sight on a phone.
-   Measured on the shiny brass: label 10.23 on the light spot, 4.05 mid,
-   2.29 at the dark edge; the bigger text carries it. */
+   Measured on the shiny brass with the darker text #1a1206 (#774): label 13.77
+   on the light spot, 5.45 mid, 3.08 at the dark edge; the bigger text carries it. */
 .subtabs {
   display: flex;
   flex-wrap: wrap;
@@ -664,7 +679,8 @@
    text stays: light text on brass fails (1.18). */
 #btn-session,
 #btn-settings,
-#btn-reset-layout { font-weight: 400; }
+#btn-reset-layout,
+#btn-fullscreen { font-weight: 400; }
 
 /* No light glow under brass labels in the game (Malia 2026-11-01): it
    softens small letters. */
@@ -672,8 +688,8 @@
 
 /* An even brass with no bright shine spot (Malia 2026-11-01), so the dark
    label reads the same across the button.
-   Light brass to a 60/40 light/mid mix: label 9.43 at the top, 6.09 at the
-   bottom (was 10.23 on the shine, 4.05 mid, 2.29 at the edge). Game only. */
+   Light brass to a 60/40 light/mid mix: label #1a1206 12.69 at the top, 8.19 at
+   the bottom (was 10.23 on the shine, 4.05 mid, 2.29 at the edge). Game only. */
 :root[data-client] { --brass-grad: linear-gradient(#edd489, #c8a95b); }
 /* Side room so a label never touches the button's edge. */
 #dash-session button { padding: 3px 12px; }

@@ -417,7 +417,7 @@ function fakeDom() {
     check('the page takes the relay origin as an unquoted JSON literal',
         page.indexOf('window.COMPANION_RELAY_ORIGIN = {{ .COMPANION_RELAY_ORIGIN_JSON }};') !== -1, true);
     check('the page includes the glue script',
-        /\/static\/js\/companion-relay-glue\.js(\?v=\{\{ \.ASSETV \}\})?"><\/script>/.test(page), true);
+        page.indexOf('/static/js/companion-relay-glue.js?v={{ .ASSET_VERSION }}"></script>') !== -1, true);
     check('the page handles Companion.Relay.Request',
         /"Companion\.Relay\.Request"\s*:\s*function/.test(page), true);
     // An attribute glued to the closing quote of the one before it

@@ -25,6 +25,27 @@
 - After an update, your browser loads the new look straight away instead of
   an old saved copy.
 
+## 2026-11-03: Playing on phones
+
+- On a phone, the web client now opens full screen. The ⛶ button in the session
+  bar brings the site header and menu back, and it remembers your choice.
+- When the on-screen keyboard opens, the game text and command box shrink to fit
+  above it, with the command box right on top of the keyboard.
+- On tablets and larger screens, dim text is dim again, so hints and dividers sit
+  back behind the game text. Phones keep it bright.
+- The Temple marker on the map is visible again.
+- Brass buttons and inventory tabs are easier to read.
+
+## 2026-11-03: Web client fixes
+
+- Rotating your phone, opening the keyboard or moving a window no longer wipes most
+  of your scrollback.
+- Enter Game now waits while the client is connecting, so a second press cannot
+  leave you reading Not connected while you are still in the game.
+- After an update, your browser now picks up the new look straight away, with no
+  mismatched colours or bars.
+- The web client now removes stray control characters from what you type.
+
 ## 2026-11-02: Veyra's secrets
 
 - Veyra Coil-Tongue now teaches each of her nine secrets herself. Talk to her and

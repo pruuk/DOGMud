@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"text/template"
@@ -46,11 +45,6 @@ var (
 
 	// Used to interface with plugins and request web stuff
 	webPlugins WebPlugin = nil
-
-	// assetVersion goes on the site's CSS, JS and icon links as ?v=, so a
-	// browser fetches fresh copies after every restart (every deploy) instead
-	// of reusing a cached stylesheet that no longer matches the page.
-	assetVersion = strconv.FormatInt(time.Now().Unix(), 36)
 )
 
 type WebNav struct {
@@ -170,8 +164,8 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		"PATH":    reqPath,
 		"CONFIG":  configs.GetConfig(),
 		"STATS":   GetStats(),
-		// ASSETV: the cache-busting tag for static links, see assetVersion.
-		"ASSETV": assetVersion,
+		// ASSET_VERSION goes on stylesheet and script links, see staticAssetVersion.
+		"ASSET_VERSION": staticAssetVersion(httpRoot),
 		// COMPANION_RELAY_ORIGIN_JSON is a JS string literal, see relayOriginJSON.
 		"COMPANION_RELAY_ORIGIN_JSON": relayOriginJSON(),
 		"NAV": []WebNav{

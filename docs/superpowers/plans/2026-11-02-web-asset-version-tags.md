@@ -57,3 +57,10 @@ untagged, and it would pass if the `ASSETV` key left `templateData`
 Cannot carry a tag: the icon list inside `static/manifest.json` and the
 `/favicon.ico` route. Documented in `internal/web/context.md` and the brand
 standards: give such files new names if they change.
+
+## Superseded (2026-11-03)
+Master's PR #773 added `ASSET_VERSION` (a hash of `static/css` and
+`static/js`, `internal/web/asset_version.go`) for the same job. In the merge
+(plan `2026-11-03-webclient-merge-phone-fit.md`, Malia: master's wins on
+overlap) `ASSETV`, `assetVersion` in `web.go` and `assetversion_test.go` were
+removed; images carry no tag and get new names when they change.

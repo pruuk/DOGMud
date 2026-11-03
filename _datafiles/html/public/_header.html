@@ -12,32 +12,24 @@
     }
   </style>
   <!-- Favicons: Malia's Moons of Gaius on the panel brown #201913 (2026-11-02).
-       ?v={{ .ASSETV }} on every static link changes on each server restart, so
-       browsers fetch fresh icons, CSS and JS after a deploy (assetVersion in
-       internal/web/web.go). -->
-  <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.ico?v={{ .ASSETV }}" sizes="16x16 32x32 48x48">
-  <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.png?v={{ .ASSETV }}">
-  <link rel="apple-touch-icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/apple-touch-icon.png?v={{ .ASSETV }}">
-  <link rel="manifest" href="/static/manifest.json?v={{ .ASSETV }}">
-  <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js?v={{ .ASSETV }}"></script>
-  <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css?v={{ .ASSETV }}">
+       Images carry no ?v= tag: ASSET_VERSION hashes only CSS and JS, so a
+       changed image gets a new file name instead (brand standards §7). -->
+  <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.png">
+  <link rel="apple-touch-icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/apple-touch-icon.png">
+  <link rel="manifest" href="/static/manifest.json">
+  <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js?v={{ .ASSET_VERSION }}"></script>
+  <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css?v={{ .ASSET_VERSION }}">
   <script type="text/javascript">
     window.addEventListener("load", function(){
       const link = document.getElementById('hide-header-footer');
       // Only the Web Client page has the full screen link.
       if (!link) return;
 
-      // Add a click event listener
       link.addEventListener('click', function(event) {
-        // Prevent the default link behavior (e.g., navigating to a new page)
+        // Stay on the page: following the link would drop the game connection.
         event.preventDefault();
-
-        document.getElementsByTagName('header')[0].style.display = "none";
-        document.getElementsByTagName('nav')[0].style.display = "none";
-        document.getElementsByTagName('footer')[0].style.display = "none";
-        if ( resizeClientIFrame ) {
-          resizeClientIFrame();
-        }
+        window.WebclientFrame.setFullScreen(true);
       });
     });
   </script>
@@ -46,7 +38,7 @@
   <!-- Site header: wordmark + menu in one borderless glass bar. -->
   <header>
     <!-- Malia's D.O.G. mark (2026-11-02). The alt text stands in if the image fails. -->
-    <a class="brand-logo" href="/"><img src="/static/images/branding/logo_dog.png?v={{ .ASSETV }}" width="677" height="229" alt="{{ .CONFIG.Server.MudName }}, home"></a>
+    <a class="brand-logo" href="/"><img src="/static/images/branding/logo_dog.png" width="677" height="229" alt="{{ .CONFIG.Server.MudName }}, home"></a>
     <button type="button" class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="site-nav" onclick="toggleMenu()">
       <span aria-hidden="true"></span>
       <span aria-hidden="true"></span>

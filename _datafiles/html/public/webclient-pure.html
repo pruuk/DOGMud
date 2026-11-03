@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html data-client>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.ico?v={{ .ASSETV }}" sizes="16x16 32x32 48x48">
-    <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.png?v={{ .ASSETV }}">
-    <link rel="apple-touch-icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/apple-touch-icon.png?v={{ .ASSETV }}">
-    <link rel="manifest" href="/static/manifest.json?v={{ .ASSETV }}">
+    <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.ico" sizes="16x16 32x32 48x48">
+    <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.png">
+    <link rel="apple-touch-icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/apple-touch-icon.png">
+    <link rel="manifest" href="/static/manifest.json">
     <title>{{ .CONFIG.Server.MudName }} Web Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         * {
             box-sizing: border-box;
@@ -40,6 +40,7 @@
            visible one, a keyboard user can tab to a control and have no idea
            where they are. */
         #btn-settings:focus-visible,
+        #btn-fullscreen:focus-visible,
         #settings-menu :focus-visible,
         #mut-toast:focus-visible {
             outline: 2px solid var(--brass-light);
@@ -205,22 +206,24 @@
 
     </style>
 
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js?v={{ .ASSETV }}"></script>
-    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/xterm.css?v={{ .ASSETV }}" />
-    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css?v={{ .ASSETV }}" />
-    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/dashboard.css?v={{ .ASSETV }}" />
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm.4.19.0.js?v={{ .ASSETV }}"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm-addon-fit.js?v={{ .ASSETV }}"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js?v={{ .ASSETV }}"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js?v={{ .ASSETV }}"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js?v={{ .ASSETV }}"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js?v={{ .ASSETV }}"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js?v={{ .ASSETV }}"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSETV }}"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js?v={{ .ASSETV }}"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js?v={{ .ASSETV }}"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js?v={{ .ASSETV }}"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icon-map.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js?v={{ .ASSET_VERSION }}"></script>
+    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/xterm.css?v={{ .ASSET_VERSION }}" />
+    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css?v={{ .ASSET_VERSION }}" />
+    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/dashboard.css?v={{ .ASSET_VERSION }}" />
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm.4.19.0.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm-addon-fit.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/viewportfit.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/termfit.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icon-map.js?v={{ .ASSET_VERSION }}"></script>
     <script>window.ITEM_ICON_BASE = "{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/items";</script>
     <!-- A JSON string literal encoded by the server (web.go relayOriginJSON), so no quotes here. -->
     <script>window.COMPANION_RELAY_ORIGIN = {{ .COMPANION_RELAY_ORIGIN_JSON }};</script>
@@ -271,6 +274,9 @@
           </fieldset>
         </div>
         <button type="button" class="brass" id="btn-companion-key" style="display:none" title="Run your companion on your own model key">Companion key</button>
+        <!-- Full screen (Calabe 2026-11-03, #774): hidden until the outer page offers it.
+             A brass button like Settings: words on wide screens, the ⛶ icon on phones. -->
+        <button type="button" class="brass" id="btn-fullscreen" style="display:none" title="Full screen" aria-label="Full screen"><span class="btn-icon" aria-hidden="true">⛶</span><span class="btn-label">Full screen</span></button>
         <button class="brass" id="btn-reset-layout" title="Reset layout" aria-label="Reset layout" onclick="window.Dashboard && Dashboard.resetLayout && Dashboard.resetLayout()"><span class="btn-icon" aria-hidden="true">↺</span><span class="btn-label">Reset layout</span></button>
       </div>
 
@@ -412,6 +418,10 @@
         // Terminal Setup
         //
         /////////////////////////////////////////////
+        // Phones keep the bright dim grey (gomud.css :root.phone).
+        if (window.ViewportFit.isPhone(window.screen.width, window.screen.height)) {
+            document.documentElement.classList.add('phone');
+        }
         // xterm needs plain colour strings, so the palette is read once from
         // the --term-* tokens in gomud.css :root.
         const rootStyle = getComputedStyle(document.documentElement);
@@ -501,71 +511,18 @@
             } catch (e) { return 1; }
         })();
 
-        // Fit the game text to the panel. All MUD output is fixed-80 (room
-        // text, boxes, tables, the inline minimap), so the terminal always
-        // keeps at least 80 columns and never wraps them. Wide panels grow the
-        // font (capped); narrow ones (phones) shrink it to fit exactly 80. If
-        // that would go below the browser's minimum font size, draw at the
-        // minimum and scale the whole terminal down instead, so what xterm
-        // measures is what it draws. Only the game text scales; the command box
-        // keeps its own size.
-        function resizeTerminal() {
-            if (!term || !fitAddon) return;
-            var TARGET = 80, MAX_FS = 20, STEP = 0.25;
-            var host = document.getElementById('terminal');
-            var body = host && host.parentElement;
-            // While the page loads the frame can be a few pixels wide; fitting
-            // 80 columns into that made a terminal tens of thousands of rows
-            // tall and crashed the tab. Wait for a real size.
-            if (!body || body.clientWidth < 160 || body.clientHeight < 80) return;
-            try {
-                // Start from the panel's own size, unscaled.
-                host.style.transform = '';
-                termScale = 1;
-                host.style.position = '';
-                host.style.width = '';
-                host.style.height = '';
-                var W = body.clientWidth, H = body.clientHeight;
-                var fs = MAX_FS;
-                term.setOption('fontSize', fs);
-                fitAddon.fit();
-                if (term.cols < TARGET) {
-                    // Cell width grows with font size, so one measurement gives a
-                    // close estimate; then step down until 80 columns fit, but
-                    // never below the browser minimum.
-                    fs = Math.max(browserMinFont,
-                        Math.floor((MAX_FS * term.cols / TARGET) / STEP) * STEP);
-                    term.setOption('fontSize', fs);
-                    fitAddon.fit();
-                    var guard = 0;
-                    while (term.cols < TARGET && fs - STEP >= browserMinFont && guard++ < 40) {
-                        fs -= STEP;
-                        term.setOption('fontSize', fs);
-                        fitAddon.fit();
-                    }
-                }
-                if (term.cols >= TARGET) return;
-
-                // Still short of 80 at the browser minimum: lay the terminal out
-                // 80 columns wide at that size, then scale it down to the panel.
-                var dims = term._core._renderService.dimensions;
-                var cellW = dims.actualCellWidth, cellH = dims.actualCellHeight;
-                if (!cellW || !cellH) return;
-                var extra = W - term.cols * cellW; // scrollbar and padding fitAddon keeps
-                var naturalW = TARGET * cellW + Math.max(0, extra) + 1;
-                var s = W / naturalW;
-                // Out of the layout flow: the unscaled 80-column box is wider
-                // than the panel, and in flow it widened the phone page.
-                host.style.position = 'absolute';
-                host.style.left = '0';
-                host.style.top = '0';
-                host.style.width = naturalW + 'px';
-                host.style.height = (H / s) + 'px';
-                host.style.transformOrigin = 'top left';
-                host.style.transform = 'scale(' + s + ')';
-                termScale = s;
-                fitAddon.fit();
-            } catch (e) {}
+        // Fit the game text to the panel (static/js/termfit.js).
+        var termFitter = window.TermFit.create({
+            term: term,
+            fitAddon: fitAddon,
+            host: document.getElementById('terminal'),
+            minFont: browserMinFont,
+            setScale: function (s) { termScale = s; }
+        });
+        // force: true measures again at the same panel size. Event and frame
+        // callbacks pass their own argument, so only a literal true counts.
+        function resizeTerminal(force) {
+            termFitter.fit(force === true);
         }
         window.addEventListener('resize', resizeTerminal);
         // Re-fit whenever the feed panel itself changes size (grid reflow,
@@ -594,8 +551,8 @@
                 document.fonts.load('700 16px "Source Code Pro"')
             ]).then(function () {
                 term.setOption('fontFamily', termFont);
-                resizeTerminal();
-            }).catch(function () { resizeTerminal(); });
+                resizeTerminal(true);
+            }).catch(function () { resizeTerminal(true); });
         }
 
         /////////////////////////////////////////////
@@ -2590,6 +2547,43 @@
 
         const connectButton = document.getElementById('connect-button');
 
+        // Full screen lives on the outer page (webclient.html). Opened on its
+        // own, this page has no site around it, so the button stays hidden.
+        (function () {
+            // Reading another site's page throws, if one frames this one.
+            var outer = null;
+            try { outer = window.parent !== window ? window.parent.WebclientFrame : null; } catch (e) { return; }
+            var button = document.getElementById('btn-fullscreen');
+            if (outer) {
+                button.style.display = '';
+                outer.onChange(function (on) {
+                    // The visible words and the spoken name start the same, so
+                    // voice control can say what it sees (WCAG 2.5.3).
+                    var shown = on ? 'Exit full screen' : 'Full screen';
+                    var label = on ? 'Exit full screen, show the site header and menu' : 'Full screen';
+                    button.querySelector('.btn-label').textContent = shown;
+                    button.title = label;
+                    button.setAttribute('aria-label', label);
+                });
+                button.addEventListener('click', function () {
+                    outer.setFullScreen(!outer.isFullScreen());
+                });
+                return;
+            }
+            // On its own, this page fits itself above the on-screen keyboard.
+            var vv = window.visualViewport;
+            if (!vv) return;
+            vv.addEventListener('resize', function () {
+                var visible = window.ViewportFit.visibleHeight(vv);
+                if (vv.scale <= 1.01) window.scrollTo(0, 0);
+                // gomud.css holds the body at 100dvh, which ignores the keyboard.
+                document.body.style.minHeight = '0';
+                document.body.style.height = Math.floor(visible) + 'px';
+                document.documentElement.classList.toggle('keyboard-open',
+                    window.ViewportFit.keyboardOpen(window.innerHeight, visible));
+            });
+        })();
+
         // Session bar: one button that reads Leave Game while a character is
         // in the world and Enter Game at any other time (not connected, or
         // connected but still at the login prompt). It is the only Enter
@@ -2620,6 +2614,9 @@
         // control; the tooltip says the same.
         var SESSION_STATES = {
             offline:      { dot: '○', color: 'var(--conn-lost)',          status: 'not connected',    disabled: false },
+            // Calabe's state while the socket opens (#773); its own dotted
+            // circle so it differs from leaving.
+            connecting:   { dot: '◌', color: 'var(--conn-reconnecting)',  status: 'connecting',       disabled: true  },
             // Connected: a lit lamp, the Pachinko reference's bright green
             // (Malia 2026-11-02) inside a dark rim; on its own the green is
             // 1.2 on the brass, the rim 6.09.
@@ -2627,7 +2624,7 @@
             reconnecting: { dot: '↻', color: 'var(--conn-reconnecting)',  status: 'reconnecting',     disabled: true  },
             leaving:      { dot: '●', color: 'var(--conn-reconnecting)',  status: 'leaving the game', disabled: true  }
         };
-        function setSessionState(state) { // "connected" | "leaving" | "reconnecting" | "offline"
+        function setSessionState(state) { // "connecting" | "connected" | "leaving" | "reconnecting" | "offline"
             var s = SESSION_STATES[state] || SESSION_STATES.offline;
             var label = state === 'leaving' ? 'Leaving…'
                       : (state === 'connected' && inGame) ? 'Leave Game' : 'Enter Game';
@@ -2749,22 +2746,20 @@
         let pendingReconnectToken = null;
         let reconnectAttempts = 0;
 
-        function reconnect() {
-            // Close current socket if open, then trigger a fresh connect
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.close();
-            }
-            // The connect button stays hidden (Enter Game in the session bar is
-            // the visible one); enable it so the click runs its handler.
-            connectButton.disabled = false;
-            connectButton.click();
-        }
-
         connectButton.addEventListener('click', () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.close();
                 return;
             }
+            // One socket at a time. A second one would answer to the same
+            // handlers, and its close would tell a player still in the game
+            // "Not connected". onclose makes the button usable again.
+            if (socket && socket.readyState !== WebSocket.CLOSED) {
+                return;
+            }
+
+            // An automatic retry keeps saying Reconnecting.
+            if (!pendingReconnectToken) { setSessionState('connecting'); }
 
             var wsProto = location.protocol === 'https:' ? 'wss://' : 'ws://';
             debugLog("Connecting to: " + wsProto+location.host +'/ws');
@@ -3117,14 +3112,17 @@
         });
 
         // xterm focuses its own hidden textarea on every press, which raises a
-        // phone keyboard and swallows the typing. On a touch-only phone-width
-        // screen, inputmode="none" keeps that focus from opening the keyboard;
-        // checked again on resize so rotating to tablet width restores it.
+        // phone keyboard and swallows the typing. On a touch-only phone (the
+        // screen's shorter side under 600px), inputmode="none" keeps that focus
+        // from opening the keyboard; rechecked on resize (cheap, and harmless).
         function phoneTouchOnly() {
             return !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
         }
+        // One meaning of "phone" for the keyboard rules: Calabe's
+        // ViewportFit.isPhone (the screen's shorter side under 600px, #774), so
+        // a phone held sideways counts and a narrow desktop window does not.
         function phoneWidth() {
-            return !!(window.matchMedia && window.matchMedia('(max-width: 699px)').matches);
+            return !!(window.ViewportFit && window.ViewportFit.isPhone(window.screen.width, window.screen.height));
         }
         function syncTermKeyboard() {
             var ta = term && term.textarea;
@@ -4807,7 +4805,7 @@
 
     </script>
 
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/dashboard.js?v={{ .ASSETV }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/dashboard.js?v={{ .ASSET_VERSION }}"></script>
 
 </body>
 </html>

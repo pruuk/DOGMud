@@ -38,7 +38,7 @@ colors:
   map-bank: 10
   map-you: 14
   map-secret: 8 # Bright black
-  map-temple: 8 # Bright black BG
+  map-temple: 0 # Dark marker on its pale block (mapbg-temple)
   mapbg-temple: 15 # Bright black
   map-water: 12 # Bright blue
   map-deep-water: 12 # Bright blue; legend "Deep Water" (mapper.LegendSlug)

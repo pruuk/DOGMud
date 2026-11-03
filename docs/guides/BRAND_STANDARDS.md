@@ -109,13 +109,13 @@ Malia; see [`ADVERTISING_LISTINGS.md`](ADVERTISING_LISTINGS.md).
 
 ## 7. Shipping a brand change
 
-- Every `/static` link in a page (CSS, JS, logos, icons, manifest) carries
-  `?v={{ .ASSETV }}`, which changes on each server restart, so players'
-  browsers fetch the new files after a deploy.
-  `internal/web/assetversion_test.go` fails on an untagged link in any public
-  page. Two places cannot carry the tag: the icon list inside
-  `static/manifest.json` and the `/favicon.ico` route. If those icons change,
-  give the files new names.
+- Every stylesheet and script link carries `?v={{ .ASSET_VERSION }}`, a hash
+  of the CSS and JS files (`internal/web/asset_version.go`), so a deploy that
+  changes them reaches players' browsers. `internal/web/asset_version_test.go`
+  fails on an untagged one.
+- **Images are not hashed and carry no tag.** A changed logo, icon or favicon
+  gets a **new file name** (and its links change), or browsers keep showing
+  the old picture.
 - New image files: state the full path and add them to `docs/README.md`.
 - Check Dark and Light mode, and phone (390), tablet (820) and desktop
   (1366) widths, before review.

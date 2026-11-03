@@ -126,3 +126,10 @@ Still phone only (touch-only and under 700px), still not the Chat box.
   `phoneWidth` and `sent`; the page stops passing the others.
 - Tests: the dropped gates are replaced by checks that login, a menu and
   masked input now hide the keyboard too.
+
+## After the merge with master's phone fit (2026-11-03)
+"Phone" now uses master's `ViewportFit.isPhone` (the screen's shorter side
+under 600px) instead of "under 700px wide": phones held sideways close the
+keyboard too; touch tablets in a narrow split view no longer do. Master's
+fit-above-the-keyboard (`viewportfit.js`) handles the keyboard while it is
+open; this rule closes it after a send.
