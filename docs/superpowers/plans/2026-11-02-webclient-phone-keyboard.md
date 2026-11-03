@@ -113,3 +113,16 @@ send time); the planned extra scroll rested on a false premise about the
 layout resizing (dropped); the tests could not catch the main regressions
 (decision widened, static checks added); the Chat box is a separate decision
 for Malia; screen readers lose their place (noted as a known gap).
+
+## Change after the phone check (Malia, 2026-11-02)
+On her phone at login, the keyboard stayed open after she sent her username.
+Her rule, restated: **after every send on a phone the keyboard closes, so the
+player can read the next step**, at login, in game menus and prompts and for
+masked input too. Tapping the box opens it again. This overrides the BAR's
+`inGame`, `menuOpen` and `password` gates (owner decision; the cost is one
+extra tap between username and password and between answers to a menu).
+Still phone only (touch-only and under 700px), still not the Chat box.
+- `HotInput.shouldHideKeyboardAfterSend` keeps only `touchOnly`,
+  `phoneWidth` and `sent`; the page stops passing the others.
+- Tests: the dropped gates are replaced by checks that login, a menu and
+  masked input now hide the keyboard too.

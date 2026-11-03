@@ -157,7 +157,9 @@ check('typing is left alone while a modal is open', focuses(key('n'), PLAIN_DIV,
 // --- phone keyboard hides after a send (2026-11-02) ------------------------
 //
 // docs/superpowers/plans/2026-11-02-webclient-phone-keyboard.md. True only
-// for the full set; flipping any single input must turn it off.
+// on a touch-only phone-width screen whenever something was sent, at login
+// and in menus too (Malia, 2026-11-02); off on tablets, desktops, or when
+// nothing was sent.
 
 var HIDE = { touchOnly: true, phoneWidth: true, inGame: true, menuOpen: false, password: false, sent: true };
 function hide(overrides) {
@@ -169,9 +171,9 @@ function hide(overrides) {
 check('phone, in game, sent: keyboard hides', hide(), true);
 check('not touch-only (desktop, touch laptop): keeps the keyboard', hide({ touchOnly: false }), false);
 check('tablet width: keeps the keyboard (arrow history, macros)', hide({ phoneWidth: false }), false);
-check('at login (not in game yet): keeps the keyboard', hide({ inGame: false }), false);
-check('a game menu or prompt is open: keeps the keyboard', hide({ menuOpen: true }), false);
-check('masked (password) input: keeps the keyboard', hide({ password: true }), false);
+check('at login (Malia: after every send): hides', hide({ inGame: false }), true);
+check('a game menu or prompt is open (Malia: after every send): hides', hide({ menuOpen: true }), true);
+check('masked (password) input (Malia: after every send): hides', hide({ password: true }), true);
 check('nothing was sent: keeps the keyboard', hide({ sent: false }), false);
 check('no state at all: keeps the keyboard', HotInput.shouldHideKeyboardAfterSend(), false);
 
@@ -184,10 +186,7 @@ var page = fs.readFileSync(path.join(
 var sendAt = page.indexOf('var sent = SendData(event.target.value);');
 var decideAt = page.indexOf('window.HotInput.shouldHideKeyboardAfterSend({');
 check('the command box asks HotInput after sending', sendAt >= 0 && decideAt > sendAt, true);
-check('the decision is fed the send result', /password: wasPassword, sent: sent/.test(page), true);
-check('the password state is read before the box is cleared',
-    page.indexOf("var wasPassword = textInput.type === 'password';") >= 0 &&
-    page.indexOf("var wasPassword = textInput.type === 'password';") < sendAt, true);
+check('the decision is fed the send result', /phoneWidth: phoneWidth\(\), sent: sent/.test(page), true);
 check('a phone tap on the game text does not refocus the command box',
     /!isDragging && !selectedText && !\(phoneTouchOnly\(\) && phoneWidth\(\)\)/.test(page), true);
 check("xterm's textarea cannot raise the phone keyboard",

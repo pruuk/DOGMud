@@ -3027,19 +3027,17 @@
                     return;
                 }
 
-                var wasPassword = textInput.type === 'password';
                 var sent = SendData(event.target.value);
                 if ( sent ) {
                     event.target.value = '';
                 } else {
                     term.writeln("Not connected to the server. Click Enter Game to play.");
                 }
-                // Phones: close the keyboard after a game command so the whole
-                // screen shows the result (Malia 2026-11-02; HotInput decides).
+                // Phones: close the keyboard after every send, login and menus
+                // included, so the player reads the next step first (Malia
+                // 2026-11-02; HotInput decides).
                 if (window.HotInput && window.HotInput.shouldHideKeyboardAfterSend({
-                    touchOnly: phoneTouchOnly(), phoneWidth: phoneWidth(),
-                    inGame: inGame, menuOpen: menuOpen,
-                    password: wasPassword, sent: sent
+                    touchOnly: phoneTouchOnly(), phoneWidth: phoneWidth(), sent: sent
                 })) {
                     textInput.blur();
                 }
