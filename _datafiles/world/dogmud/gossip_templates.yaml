@@ -154,3 +154,10 @@ fact-default:
   - "I heard {description}"
   - "Word is, {description}"
   - "They say {description}"
+
+# The disc line (#667): vague hints toward the eastern country. The tag lookup
+# runs after fact-{factId}, so every fact tagged disc-line reads in this voice.
+fact-disc-line:
+  - "I heard {description}"
+  - "My cousin swears {description}"
+  - "They say {description} I would not go and look."
