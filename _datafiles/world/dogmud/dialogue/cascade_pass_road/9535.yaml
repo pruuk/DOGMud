@@ -82,3 +82,16 @@ topics:
     this, and then go or stay as you please. A road with that many people gone from
     it, and no graves along it. Where do you suppose they all went? Then do not ask
     me anything more."
+- key: grey_man
+  kind: info
+  label: Did a thin man with a grey disc come this way?
+  text: "Years back. Thin. Mattock on his back and his fist shut on something he
+    kept looking at, like a man checking a watch. He asked me the way to the split
+    stone and I told him not to. He thanked me for it, very polite, and went. He is
+    the only one who ever thanked me. I did not watch him out of sight."
+  hints: Reth's route names a cairn split by lightning. Search there.
+  marked: true
+  questRequired:
+  - 76-journal
+  questExcluded:
+  - 76-shelter

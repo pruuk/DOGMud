@@ -258,11 +258,24 @@ func TestQuest76TheDisc_Trail(t *testing.T) {
 		require.Contains(t, squash(q.Steps[0].Hint), squash(darkAside))
 	})
 
-	t.Run("nothing still sends the player to the Reliquary for the disc", func(t *testing.T) {
+	// The cairn, the survey camp and his last camp go fully dark for a bare
+	// character at midwinter midnight, and a search in total darkness moves no
+	// step (owner ruling 2026-11-02), so the step sending the player there says so.
+	t.Run("the steps that send a player to a dark search say to bring a light", func(t *testing.T) {
+		for _, s := range q.Steps {
+			if s.Id == "shelter" || s.Id == "cairn" || s.Id == "alpha" {
+				require.Contains(t, squash(s.Hint), squash("Bring a light after dark."), "step %s", s.Id)
+			}
+		}
+	})
+
+	t.Run("nothing still sends the player to the Reliquary or the cottage for the disc", func(t *testing.T) {
 		for _, f := range [][]string{{"greenford", "9516.yaml"}, {"eastern_highlands", "9553.yaml"}} {
 			raw := strings.ToLower(string(repoFile(t, "_datafiles", "world", "dogmud", "dialogue", f[0], f[1])))
 			require.NotContains(t, raw, "reliquary", "%s/%s", f[0], f[1])
 			require.NotContains(t, raw, "look disc", "%s/%s", f[0], f[1])
+			require.NotContains(t, raw, "marked hearth", "%s/%s", f[0], f[1])
+			require.NotContains(t, raw, "maren's cottage in ashwick for", "%s/%s", f[0], f[1])
 		}
 		require.NotContains(t, strings.ToLower(readQuestFile(t, "76-the_disc.yaml")), "reliquary")
 	})

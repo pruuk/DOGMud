@@ -1264,8 +1264,6 @@
 9515.lane
 9515.town
 9515.work
-9516.disc_in
-9516.disc_quest
 9516.disc_tale
 9516.grant
 9516.knower
@@ -1337,6 +1335,7 @@
 9534.edge
 9534.travelers
 9535.east
+9535.grey_man
 9535.hand
 9535.others
 9535.stays
@@ -1470,6 +1469,10 @@
 # Veyra's price list is the menu now: each secret is its own sale line
 # (#375 phase 7 tier 3b).
 9584.secrets_list
+# Quest 76 no longer starts on a carried disc and no longer ends at Brennan: the
+# trail runs east and the Threshold-Keeper takes the hand-in (#667).
+9516.disc_in
+9516.disc_quest
 # renamed
 9465.q74_grant -> 9441.undercroft_offer
 9117.vein_offer -> 9116.vein_offer

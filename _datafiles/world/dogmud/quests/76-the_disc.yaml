@@ -76,7 +76,7 @@ steps:
       something grey he kept in his fist, walking toward the split stone.
     hint: >-
       Reth's route names a cairn split by lightning. Search there for any sign
-      of him.
+      of him. Bring a light after dark.
   - id: cairn
     destination:
       room: 6351
@@ -84,7 +84,8 @@ steps:
       On a fallen stone of the cairn, cut fresh once and weathered since: a ring
       struck through with a line, and an arrow east, to the old survey camp.
     hint: >-
-      He went on to the old survey camp Reth spoke of. Search it.
+      He went on to the old survey camp Reth spoke of. Search it. Bring a light
+      after dark.
   - id: camp
     destination:
       room: 6353
@@ -102,7 +103,7 @@ steps:
       earth off the buried face by hand, not far from here.
     hint: >-
       Follow the buried face to where it was cleared by hand. Search the camp
-      you find there.
+      you find there. Bring a light after dark.
   - id: remains
     destination:
       room: 6365
