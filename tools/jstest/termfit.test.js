@@ -138,6 +138,27 @@ function run() {
         tiny.fitter.fit();
         check('a tiny frame is left alone', tiny.resizes === 0, 'resizes ' + tiny.resizes);
 
+        // Only the height changing (the on-screen keyboard) keeps the font.
+        var tall = makePage(360, 700, 1);
+        tall.fitter.fit();
+        var tallFont = tall.fontSize, tallRows = tall.real.rows;
+        tall.fontSize = tallFont - 0.5;      // marks a re-measure if one happens
+        tall.panel.clientHeight = 400;
+        tall.fitter.fit();
+        check('a height change keeps the font', tall.fontSize === tallFont - 0.5, 'font ' + tall.fontSize);
+        check('a height change still fits the rows', tall.real.rows < tallRows, 'rows ' + tall.real.rows);
+
+        // A scaled terminal stretches its host to the new height.
+        var scaled = makePage(360, 700, 10);
+        scaled.fitter.fit();
+        var scaledRows = scaled.real.rows, s = scaled.scale;
+        scaled.panel.clientHeight = 400;
+        scaled.fitter.fit();
+        check('a scaled terminal keeps its scale', scaled.scale === s, 'scale ' + scaled.scale);
+        check('a scaled terminal fits the new height',
+            scaled.host.style.height === (400 / s) + 'px' && scaled.real.rows < scaledRows,
+            'height ' + scaled.host.style.height + ' rows ' + scaled.real.rows);
+
         // A forced refit asked for while the panel is hidden still happens.
         var hidden = makePage(1600, 900, 1);
         hidden.fitter.fit();

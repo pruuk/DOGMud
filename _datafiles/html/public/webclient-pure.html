@@ -30,7 +30,8 @@
         /* Was a <div onclick>, which no keyboard could reach (finding 18). Now a
            real button, so it needs the UA button defaults neutralised to keep
            the same look. */
-        #menu-icon {
+        #menu-icon,
+        #btn-fullscreen {
             padding: 0;
             margin: 0;
             font-family: inherit;
@@ -53,16 +54,19 @@
                         inset 0 -2px 3px color-mix(in srgb, var(--brass-shade) 55%, transparent);
             transition: filter .08s ease, transform .08s ease;
         }
-        #menu-icon:hover { filter: brightness(1.08); }
+        #menu-icon:hover,
+        #btn-fullscreen:hover { filter: brightness(1.08); }
         /* A focus ring is the whole point of making these reachable: without a
            visible one, a keyboard user can tab to a control and have no idea
            where they are. */
         #menu-icon:focus-visible,
+        #btn-fullscreen:focus-visible,
         #mut-toast:focus-visible {
             outline: 2px solid var(--brass-light);
             outline-offset: 2px;
         }
-        #menu-icon:active {
+        #menu-icon:active,
+        #btn-fullscreen:active {
             transform: translateY(1px);
             box-shadow: 0 1px 1px color-mix(in srgb, var(--shadow) 40%, transparent),
                         inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 70%, transparent),
@@ -260,7 +264,7 @@
           </span>
         </span>
         <button type="button" id="menu-icon" onclick="toggleMenu()" title="Toggle sound" aria-label="Toggle sound">🔊</button>
-        <button type="button" class="brass" id="btn-fullscreen" style="display:none">⛶</button>
+        <button type="button" id="btn-fullscreen" style="display:none">⛶</button>
         <button type="button" class="brass" id="btn-companion-key" style="display:none" title="Run your companion on your own model key">Companion key</button>
         <button class="brass" id="btn-reset-layout" title="Reset layout" aria-label="Reset layout" onclick="window.Dashboard && Dashboard.resetLayout && Dashboard.resetLayout()"><span class="btn-icon" aria-hidden="true">↺</span><span class="btn-label">Reset layout</span></button>
       </div>
@@ -2513,7 +2517,9 @@
         // Full screen lives on the outer page (webclient.html). Opened on its
         // own, this page has no site around it, so the button stays hidden.
         (function () {
-            var outer = window.parent !== window ? window.parent.WebclientFrame : null;
+            // Reading another site's page throws, if one frames this one.
+            var outer = null;
+            try { outer = window.parent !== window ? window.parent.WebclientFrame : null; } catch (e) { return; }
             var button = document.getElementById('btn-fullscreen');
             if (outer) {
                 button.style.display = '';
@@ -2531,8 +2537,12 @@
             var vv = window.visualViewport;
             if (!vv) return;
             vv.addEventListener('resize', function () {
+                var visible = window.ViewportFit.visibleHeight(vv);
+                if (visible === undefined) return;
                 window.scrollTo(0, 0);
-                document.body.style.height = Math.floor(vv.height) + 'px';
+                document.body.style.height = Math.floor(visible) + 'px';
+                document.documentElement.classList.toggle('keyboard-open',
+                    window.ViewportFit.keyboardOpen(window.innerHeight, visible));
             });
         })();
 

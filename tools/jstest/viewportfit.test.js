@@ -57,5 +57,35 @@ check('the phone class is set before the terminal reads its colours',
 check('the session bar has the full screen toggle', game.indexOf('id="btn-fullscreen"') !== -1, true);
 check('the toggle talks to the outer page', game.indexOf('window.parent.WebclientFrame') !== -1, true);
 
+// Zooming in also shrinks the visual viewport, and is not the keyboard.
+check('no visual viewport has no visible height', VF.visibleHeight(null), undefined);
+check('at normal zoom the visible height counts', VF.visibleHeight({ height: 400, scale: 1 }), 400);
+check('zoomed in, the visible height does not count', VF.visibleHeight({ height: 200, scale: 2 }), undefined);
+
+check('no visual viewport: no keyboard', VF.keyboardOpen(740, undefined), false);
+check('an address bar hiding is not a keyboard', VF.keyboardOpen(740, 680), false);
+check('a keyboard is a keyboard', VF.keyboardOpen(740, 440), true);
+
+var dashCss = fs.readFileSync(path.join(PUBLIC, 'static', 'css', 'dashboard.css'), 'utf8');
+check('the phone tab bar steps aside for the keyboard',
+    /html\.keyboard-open #dash-tabbar\s*\{\s*display:\s*none !important;/.test(dashCss), true);
+check('the game gives its room back when the tab bar goes',
+    /html\.keyboard-open #dashboard\[data-mode="phone"\]\s*\{\s*padding-bottom:\s*6px;/.test(dashCss), true);
+check('the outer page marks the game when the keyboard is open',
+    /classList\.toggle\('keyboard-open'/.test(outer), true);
+check('the bare page marks itself when the keyboard is open',
+    /classList\.toggle\('keyboard-open'/.test(game), true);
+check('the full screen button is shaped like the sound button',
+    /#menu-icon,\s*#btn-fullscreen \{/.test(game) && game.indexOf('class="brass" id="btn-fullscreen"') === -1, true);
+
+check('the keyboard path never resets the frame to nothing',
+    /addEventListener\('resize', function \(\) \{\s*if \(ViewportFit\.visibleHeight\(window\.visualViewport\) === undefined\) return;\s*window\.scrollTo\(0, 0\);\s*fitFrameHeight\(\);/.test(outer), true);
+check('the frame height ignores zoom',
+    outer.indexOf('ViewportFit.visibleHeight(window.visualViewport)') !== -1 &&
+    outer.indexOf('vv.height') === -1, true);
+check('the bare page ignores zoom', /ViewportFit\.visibleHeight\(vv\)/.test(game), true);
+check('a page framed by another site cannot break the toggle code',
+    /try \{[^}]*window\.parent\.WebclientFrame[^}]*\} catch/.test(game), true);
+
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

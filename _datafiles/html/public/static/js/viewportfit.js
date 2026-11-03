@@ -33,5 +33,25 @@
         return Math.max(0, Math.min(layoutH, Math.floor(visibleH) - top));
     }
 
-    return { isPhone: isPhone, wantFullScreen: wantFullScreen, frameHeight: frameHeight };
+    // The visual viewport's height, or undefined when it says nothing about the
+    // keyboard: the browser has none, or the player has zoomed in, which shrinks
+    // it too. Phone players zoom to read, and that must not squash the game.
+    function visibleHeight(vv) {
+        if (!vv || vv.scale > 1.01) return undefined;
+        return vv.height;
+    }
+
+    // True when the visible area is well short of the page: more than an address
+    // bar hiding can account for.
+    function keyboardOpen(layoutH, visibleH) {
+        return typeof visibleH === 'number' && layoutH - visibleH > 120;
+    }
+
+    return {
+        keyboardOpen: keyboardOpen,
+        isPhone: isPhone,
+        wantFullScreen: wantFullScreen,
+        frameHeight: frameHeight,
+        visibleHeight: visibleHeight
+    };
 }));

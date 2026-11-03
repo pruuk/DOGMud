@@ -22,14 +22,23 @@
 
         // Set proper height/width - subtract scrollbar width to prevent cropping
         wcIframe.width = contentContainer.clientWidth - scrollbarWidth;
-        // The on-screen keyboard shrinks only the visual viewport on iOS Safari
-        // and current Chrome on Android, so 100dvh does not follow it. Fit the
-        // frame above the keyboard, which puts the command box right on top of it.
-        const vv = window.visualViewport;
-        wcIframe.height = ViewportFit.frameHeight(
-            contentContainer.clientHeight,
-            vv ? vv.height : undefined,
-            contentContainer.getBoundingClientRect().top);
+        fitFrameHeight();
+    }
+
+    // The on-screen keyboard shrinks only the visual viewport on iOS Safari and
+    // current Chrome on Android, so 100dvh does not follow it. Fit the frame
+    // above the keyboard, which puts the command box right on top of it.
+    function fitFrameHeight() {
+        const contentContainer = document.getElementById('content-container');
+        const frame = document.getElementById('webclient-frame');
+        const visible = ViewportFit.visibleHeight(window.visualViewport);
+        frame.height = ViewportFit.frameHeight(
+            contentContainer.clientHeight, visible, contentContainer.getBoundingClientRect().top);
+        // The game takes its phone tab bar out of the keyboard's way (dashboard.css).
+        if (frame.contentDocument) {
+            frame.contentDocument.documentElement.classList.toggle('keyboard-open',
+                ViewportFit.keyboardOpen(window.innerHeight, visible));
+        }
     }
 
     // Full screen hides the site around the frame and leaves the frame alone,
@@ -75,13 +84,19 @@
     window.addEventListener('resize', resizeClientIFrame);
     // Phones: the visible area changes when the address bar hides or the
     // on-screen keyboard opens. iOS also scrolls the page to show the focused
-    // box; the frame already fits, so hold the page at the top.
+    // box; the frame already fits, so hold the page at the top. Only the height
+    // changes here: resetting the frame to nothing while the command box has
+    // focus could close the keyboard. A zoomed-in player is left to pan freely.
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', function () {
+            if (ViewportFit.visibleHeight(window.visualViewport) === undefined) return;
             window.scrollTo(0, 0);
-            resizeClientIFrame();
+            fitFrameHeight();
         });
-        window.visualViewport.addEventListener('scroll', function () { window.scrollTo(0, 0); });
+        window.visualViewport.addEventListener('scroll', function () {
+            if (ViewportFit.visibleHeight(window.visualViewport) === undefined) return;
+            window.scrollTo(0, 0);
+        });
     }
     window.addEventListener('beforeunload', function(event) {
         event.preventDefault();

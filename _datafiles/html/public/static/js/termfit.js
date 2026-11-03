@@ -25,7 +25,7 @@
         var term = opts.term, fitAddon = opts.fitAddon, host = opts.host;
         var minFont = opts.minFont, setScale = opts.setScale;
 
-        var lastW = 0, lastH = 0, lastDpr = 0, forcePending = false;
+        var lastW = 0, lastH = 0, lastDpr = 0, lastScale = 1, forcePending = false;
 
         // Columns at the current font size, without touching the terminal.
         // Null when it cannot measure yet (no cell size).
@@ -34,8 +34,8 @@
             return d && !isNaN(d.cols) ? d.cols : null;
         }
 
-        function remember(W, H) {
-            lastW = W; lastH = H; lastDpr = window.devicePixelRatio;
+        function remember(W, H, scale) {
+            lastW = W; lastH = H; lastDpr = window.devicePixelRatio; lastScale = scale;
             forcePending = false;
         }
 
@@ -54,6 +54,15 @@
             if (!forcePending && body.clientWidth === lastW && body.clientHeight === lastH &&
                 window.devicePixelRatio === lastDpr) return;
             try {
+                // Only the height changed (the on-screen keyboard): the font
+                // depends on the width, so it stays and only the rows change.
+                if (!forcePending && body.clientWidth === lastW && window.devicePixelRatio === lastDpr) {
+                    if (lastScale !== 1) host.style.height = (body.clientHeight / lastScale) + 'px';
+                    fitAddon.fit();
+                    remember(lastW, body.clientHeight, lastScale);
+                    return;
+                }
+
                 // Start from the panel's own size, unscaled.
                 host.style.transform = '';
                 setScale(1);
@@ -82,7 +91,7 @@
                 }
                 if (cols >= TARGET) {
                     fitAddon.fit();
-                    remember(W, H);
+                    remember(W, H, 1);
                     return;
                 }
 
@@ -105,7 +114,7 @@
                 host.style.transform = 'scale(' + s + ')';
                 setScale(s);
                 fitAddon.fit();
-                remember(W, H);
+                remember(W, H, s);
             } catch (e) {}
         }
 

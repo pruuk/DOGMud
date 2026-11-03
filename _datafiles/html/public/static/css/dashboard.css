@@ -373,6 +373,12 @@
 }
 
 /* Slide-up drawer — also appended outside #dashboard */
+/* The on-screen keyboard is open (viewportfit.js): the command box sits right on
+   top of it, so the tab bar steps aside and gives its room back to the game. */
+html.keyboard-open #dash-tabbar { display: none !important; }
+html.keyboard-open #dashboard[data-mode="phone"] { padding-bottom: 6px; }
+html.keyboard-open #dash-drawer { bottom: 0; }
+
 #dash-drawer {
   position: fixed;
   left: 0;
