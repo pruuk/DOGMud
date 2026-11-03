@@ -154,9 +154,12 @@ the CSS; light mode text darker than its surface, dark mode lighter; red only
 for warnings; phone, tablet and desktop checked in both modes before review.
 
 ## Open items
-- Round 3: light Map (room ink and biome tints), on hold.
+- Round 3: light Map (room ink and biome tints): not planned until Malia has
+  opinions from other human testers (Malia, 2026-11-02).
 - Listing-site images still show the old emblem (keep their names).
-- The session bar's "Connected" text is smaller than its 15px buttons.
+- The session bar's "Connected" text was smaller than its 15px buttons:
+  Done: the status is a circle in the button ("Session bar status"). Yes and
+  Stay keep their bold labels (Malia, 2026-11-02).
 - Hide the Light option until round 3? (asked, unanswered)
 - Readable game text on phones: left to slice B (server wraps to the
   screen's width; Calabe's work), Malia 2026-11-02.
