@@ -16,12 +16,11 @@ description: >
   <ansi fg="itemname">tools</ansi>
   are still where the hands left them, a mattock leaned just so, a
   worn spade, the small orderly habits of a person who meant to come
-  back to the work tomorrow and the day after that. There is no one
-  here. There has been no one here for a long time. Whoever cleared
+  back to the work tomorrow and the day after that. Whoever cleared
   this earth, alone, out at the far end of the world with only the
-  made thing for company, is gone, and the ground and the tools and
-  the patient bare grey of the face they uncovered are all that stayed
-  to say they ever came at all.
+  made thing for company, did not go anywhere. The <ansi fg="itemname">lean-to</ansi>
+  has come down over something long and low, and it has not been moved
+  in a very long time.
 biome: cliffs
 coord: {x: 12, y: 54, z: 3}
 exits:
@@ -30,6 +29,14 @@ exits:
   east:
     roomid: 6366
 nouns:
+  lean-to: >
+    The poles have come down across the bedding, and the rotted cloth has
+    settled over what lies under it like a second coat. It would take only
+    a careful search to see.
+  hearthstone: >
+    A flat stone carried a very long way to this place, by the look of it,
+    and cut with a ring and a line, then cut again, and cut again. The chisel
+    lies beside it. The work is nearly done.
   cleared face: >
     Where the earth was carried away the grey stands bare, a broad
     span of it, smooth and jointless and unbothered as all the rest.
@@ -61,12 +68,12 @@ idlemessages:
 - Wind moves the slack grey cloth of the lean-to a little and lets it
   fall. Nothing else here moves at all.
 - The tools stand ready at the angle a working hand left them, waiting
-  for a hand that has not come back and will not.
+  for a hand that will not take them up again.
 - One person cleared all this earth, alone, and lived in this small
-  worn round of ground, and is gone, and only the ground remembers.
+  worn round of ground, and never left it, and only the ground remembers.
 - The cold ring of the dead fire holds no ash anymore. The wind took
   it a long time ago, the way it takes everything given time.
-- The bare grey of the cleared face keeps its silence over the empty
+- The bare grey of the cleared face keeps its silence over the fallen
   camp, patient as it has always been, and gives nothing back.
 x: 22
 y: -49

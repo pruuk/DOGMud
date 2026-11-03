@@ -26,45 +26,28 @@ opener:
   - questRequired:
     - 76-attune
     itemExcluded: 40168
-    text: You woke it, and now it is gone from your hand. The cottage gave up one grey
-      disc. It may give another, and the hearth knows the method.
-    hints: In Maren's Cottage in Ashwick, type search, then cast glow there to wake
-      the disc again.
-  - questRequired:
-    - 76-attune
-    questExcluded:
-    - 76-end
-    text: You have the look of someone who has watched a thing wake. Tell me.
-    hints: Choose The Disc below to report.
+    text: You woke it, and now it is gone from your hand. If he carried one, he may
+      have carried two. He was that kind of man.
+    hints: Search his camp at the Cleared Section again, then cast glow there.
   - questRequired:
     - 76-attune
     text: You woke it. I can see the light it keeps along its lines. Then it is a
-      key, and somewhere east there is a door that fits it. Reth's route will take
-      you there.
-    hints: Reth's route runs north from Hartcharn to Kingsbarrow, then east over the
-      Cascade Pass Road into the Eastern Highlands, to a door in a buried face.
+      key, and he got closer than any of us knew.
+    hints: Choose a line below to hear about his survey work.
   - questRequired:
     - 76-journal
     questExcluded:
     - 76-attune
-    text: You read it. Then you know the method, and the hearth is where he meant
-      it done.
-    hints: At the marked hearth in Maren's Cottage, type cast glow.
+    text: You read it. Then he went east with it, and he is still out there, one way
+      or another. Reth's map is your best guide.
+    hints: Reth's map runs over the Cascade Pass. Ask whoever lives up there.
   - questRequired:
     - 76-start
     questExcluded:
     - 76-journal
     - 76-attune
     text: The cottage in Ashwick. Search it, and read what he left behind.
-    hints: Ashwick is a long road from here. From Brennan's Office, go north, east
-      and north to the University Gate, then down the University Stair and north
-      through the town to the Market Square, down the Town Stair, and north to the
-      Greenford Gate. Then go north over the bridge and west along the road to the
-      Confluence. In the city, cross the Brenn Bridge west to Tri-Cross Square and
-      go north through the quays to the River Gate. Then take the River Road north,
-      through Amber Valley and up the South Road to the Ashwick Crossroads. From
-      there go east five times to the East Edge of the village, then south into the
-      cottage. Type search.
+    hints: Maren's Cottage is south of the East Edge of Ashwick, a long road from here.
   - questRequired:
     - 75-end
     questExcluded:
@@ -79,6 +62,12 @@ opener:
     - 76-start
     text: So you have Reth's route. Then there is one more thing I would ask of
       you, if you will hear it.
+  - questRequired:
+    - 75-notes
+    questExcluded:
+    - 75-end
+    text: You have been to see Reth. It is in how you came through the door. Well?
+    hints: Choose below to tell Brennan what Reth told you.
   - questRequired:
     - 75-intro
     questExcluded:
@@ -128,32 +117,22 @@ topics:
   - 75-start
   - 75-end
   grantsQuest: 75-start
-- key: disc_quest
-  kind: offer
-  quest: 76
-  label: The Disc
-  playerLine: Do you know what this disc is?
+- key: notes_in
+  kind: handin
+  quest: 75
+  label: The Surveyor's Report
+  playerLine: Reth told me what he saw, and gave me this map.
   text: |
-    Let me look. A ring struck through with a line, raised in the
-    metal itself. I have chased that mark across a hundred and
-    fifty years of margins, and here it is, made solid. This is a
-    key. I am sure of it. But it is dead in the hand, and it will
-    stay dead until someone wakes it, and I do not know how. A man
-    did. He kept a cottage in Ashwick and gave his whole life to
-    that thing in the east. He studied how to wake the key, then
-    went east himself and never came back. His work should still
-    be in the house he left. Will you go to Ashwick, find the
-    abandoned cottage, and read what he left behind? Take the disc
-    with you. You will need the thing itself.
-  hints: Accept, then take the disc to the abandoned cottage in Ashwick and search
-    it.
+    A surface. Metal, and no seam. He told you that, and in thirty
+    years he never once told me. Then it is real, and there is more
+    to this than one man's three lines. Sit a moment. There is
+    someone else you should know about.
+  hints: Quest complete. Choose The Disc below if you want to hear about him.
   questRequired:
-  - 75-end
+  - 75-notes
   questExcluded:
-  - 76-start
-  - 76-end
-  carriesItem: 40167
-  grantsQuest: 76-start
+  - 75-end
+  grantsQuest: 75-end
 - key: disc_tale
   kind: offer
   quest: 76
@@ -167,8 +146,7 @@ topics:
     did. He kept a cottage in Ashwick and gave his whole life to
     that thing in the east. They say he had a disc of his own, and
     studied how to wake it, then went east himself and never came
-    back. His work should still be in the house he left, and the
-    disc with it, if no one has been there before you. Will you go
+    back. His work should still be in the house he left. Will you go
     to Ashwick, search the abandoned cottage, and read what he left
     behind?
   hints: Accept, then go to the abandoned cottage in Ashwick and search it.
@@ -177,27 +155,7 @@ topics:
   questExcluded:
   - 76-start
   - 76-end
-  itemExcluded: 40167
   grantsQuest: 76-start
-- key: disc_in
-  kind: handin
-  quest: 76
-  label: The Disc
-  playerLine: I woke the disc at the cottage hearth.
-  text: |
-    Let me see it. Yes. The lines hold the light now, the way the
-    margins always said they would. A key, then, and somewhere
-    east there is a door that fits it. Reth's route will take you
-    there. Keep it close, and keep it quiet.
-  hints: Quest complete. Reth's route runs north from Hartcharn to Kingsbarrow, then
-    east over the Cascade Pass Road into the Eastern Highlands, to a door in a buried
-    face.
-  questRequired:
-  - 76-attune
-  questExcluded:
-  - 76-end
-  carriesItem: 40168
-  grantsQuest: 76-end
 - key: knower
   kind: info
   label: What do you see in me?
@@ -228,7 +186,7 @@ topics:
     residential streets, past the back gate of the college, in the
     third house down the west lane, the one with the overgrown yew.
     Tell him I sent you, and that I am not asking him to explain
-    anything. I am asking him to let you read the original notes.
+    anything to me. I am asking him to tell you what he saw.
   hints: From Brennan's Office, go east to the Cloister Walk, south three times to
     College Row, west to the Blue Door, then south twice to Reth's Cottage. Reth
     is asleep late at night. Type talk reth.
