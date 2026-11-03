@@ -461,17 +461,14 @@
   color: var(--brass-text);
   background: var(--brass-grad);
   font-family: var(--font-body);
-  filter: brightness(0.72);
-  opacity: 0.88;
-  transition: filter 0.08s, opacity 0.08s;
+  filter: brightness(0.9);
+  transition: filter 0.08s;
 }
 .inv-tab.brass:hover {
-  filter: brightness(0.85);
-  opacity: 1;
+  filter: brightness(0.96);
 }
 .inv-tab.brass.active {
   filter: brightness(1);
-  opacity: 1;
   box-shadow: inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 60%, transparent),
               inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
 }

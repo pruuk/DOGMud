@@ -23,7 +23,7 @@
   --brass-dark: #736133;
   --brass-grad: radial-gradient(circle at 34% 26%, var(--brass-light), var(--brass-mid) 46%, var(--brass-dark));
   --brass-border: #50371d;
-  --brass-text: #3b2a10;
+  --brass-text: #1a1206;
   --brass-shade: #4a3410;       /* inner shadow on pressed brass */
   --brass-glint: #efd897;       /* inner highlight on brass */
   --brass-glint-text: #efd897;  /* text-shadow highlight on brass labels */
@@ -137,7 +137,7 @@
   --term-fg: #e0d2b2;
   --term-cursor: #e8d2a0;
   --term-selection: rgba(201, 168, 106, 0.30);
-  --term-black: #3a2f25;   --term-bright-black: #e0d2b2;
+  --term-black: #3a2f25;   --term-bright-black: #9a8a74;
   --term-red: #d6694e;     --term-bright-red: #e8745a;
   --term-green: #8a9a4e;   --term-bright-green: #b3c06a;
   --term-yellow: #d9a441;  --term-bright-yellow: #f0cf72;
@@ -163,6 +163,11 @@
   --table-cell-text-color: var(--text-primary);
   --table-header-text-color: var(--ink-gold);
 }
+
+/* Dim grey on phones is the normal text colour: at phone text sizes a mid grey
+   is too hard to read (Malia, 2026-11-01; owner, 2026-11-03). The class is set
+   before the terminal reads its colours (webclient-pure.html). */
+:root.phone { --term-bright-black: #e0d2b2; }
 
 body {
   margin: 0;
