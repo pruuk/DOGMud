@@ -81,7 +81,7 @@ check('install tolerates missing elements', (function () {
 // --- wiring ----------------------------------------------------------------
 var page = fs.readFileSync(path.join(PUBLIC, 'webclient-pure.html'), 'utf8');
 var css = fs.readFileSync(path.join(PUBLIC, 'static', 'css', 'dashboard.css'), 'utf8');
-check('the page loads feedscroll.js', page.indexOf('/static/js/feedscroll.js"') >= 0);
+check('the page loads feedscroll.js', page.indexOf('/static/js/feedscroll.js?v={{ .ASSET_VERSION }}"') >= 0);
 var openAt = page.indexOf("term.open(document.getElementById('terminal'));");
 var installAt = page.indexOf('FeedScroll.install(');
 check('the page installs the guard after term.open', openAt >= 0 && installAt > openAt,

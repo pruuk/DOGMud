@@ -164,6 +164,8 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 		"PATH":    reqPath,
 		"CONFIG":  configs.GetConfig(),
 		"STATS":   GetStats(),
+		// ASSET_VERSION goes on stylesheet and script links, see staticAssetVersion.
+		"ASSET_VERSION": staticAssetVersion(httpRoot),
 		// COMPANION_RELAY_ORIGIN_JSON is a JS string literal, see relayOriginJSON.
 		"COMPANION_RELAY_ORIGIN_JSON": relayOriginJSON(),
 		"NAV": []WebNav{
