@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>{{ .CONFIG.Server.MudName }} Web Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         * {
             box-sizing: border-box;
@@ -29,7 +30,8 @@
         /* Was a <div onclick>, which no keyboard could reach (finding 18). Now a
            real button, so it needs the UA button defaults neutralised to keep
            the same look. */
-        #menu-icon {
+        #menu-icon,
+        #btn-fullscreen {
             padding: 0;
             margin: 0;
             font-family: inherit;
@@ -52,16 +54,19 @@
                         inset 0 -2px 3px color-mix(in srgb, var(--brass-shade) 55%, transparent);
             transition: filter .08s ease, transform .08s ease;
         }
-        #menu-icon:hover { filter: brightness(1.08); }
+        #menu-icon:hover,
+        #btn-fullscreen:hover { filter: brightness(1.08); }
         /* A focus ring is the whole point of making these reachable: without a
            visible one, a keyboard user can tab to a control and have no idea
            where they are. */
         #menu-icon:focus-visible,
+        #btn-fullscreen:focus-visible,
         #mut-toast:focus-visible {
             outline: 2px solid var(--brass-light);
             outline-offset: 2px;
         }
-        #menu-icon:active {
+        #menu-icon:active,
+        #btn-fullscreen:active {
             transform: translateY(1px);
             box-shadow: 0 1px 1px color-mix(in srgb, var(--shadow) 40%, transparent),
                         inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 70%, transparent),
@@ -213,6 +218,7 @@
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/viewportfit.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/termfit.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js?v={{ .ASSET_VERSION }}"></script>
     <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js?v={{ .ASSET_VERSION }}"></script>
@@ -258,6 +264,7 @@
           </span>
         </span>
         <button type="button" id="menu-icon" onclick="toggleMenu()" title="Toggle sound" aria-label="Toggle sound">🔊</button>
+        <button type="button" id="btn-fullscreen" style="display:none">⛶</button>
         <button type="button" class="brass" id="btn-companion-key" style="display:none" title="Run your companion on your own model key">Companion key</button>
         <button class="brass" id="btn-reset-layout" title="Reset layout" aria-label="Reset layout" onclick="window.Dashboard && Dashboard.resetLayout && Dashboard.resetLayout()"><span class="btn-icon" aria-hidden="true">↺</span><span class="btn-label">Reset layout</span></button>
       </div>
@@ -382,6 +389,10 @@
         // Terminal Setup
         //
         /////////////////////////////////////////////
+        // Phones keep the bright dim grey (gomud.css :root.phone).
+        if (window.ViewportFit.isPhone(window.screen.width, window.screen.height)) {
+            document.documentElement.classList.add('phone');
+        }
         // xterm needs plain colour strings, so the palette is read once from
         // the --term-* tokens in gomud.css :root.
         const rootStyle = getComputedStyle(document.documentElement);
@@ -2502,6 +2513,39 @@
         let isDragging = false;
 
         const connectButton = document.getElementById('connect-button');
+
+        // Full screen lives on the outer page (webclient.html). Opened on its
+        // own, this page has no site around it, so the button stays hidden.
+        (function () {
+            // Reading another site's page throws, if one frames this one.
+            var outer = null;
+            try { outer = window.parent !== window ? window.parent.WebclientFrame : null; } catch (e) { return; }
+            var button = document.getElementById('btn-fullscreen');
+            if (outer) {
+                button.style.display = '';
+                outer.onChange(function (on) {
+                    var label = on ? 'Show the site header and menu' : 'Full screen';
+                    button.title = label;
+                    button.setAttribute('aria-label', label);
+                });
+                button.addEventListener('click', function () {
+                    outer.setFullScreen(!outer.isFullScreen());
+                });
+                return;
+            }
+            // On its own, this page fits itself above the on-screen keyboard.
+            var vv = window.visualViewport;
+            if (!vv) return;
+            vv.addEventListener('resize', function () {
+                var visible = window.ViewportFit.visibleHeight(vv);
+                if (vv.scale <= 1.01) window.scrollTo(0, 0);
+                // gomud.css holds the body at 100dvh, which ignores the keyboard.
+                document.body.style.minHeight = '0';
+                document.body.style.height = Math.floor(visible) + 'px';
+                document.documentElement.classList.toggle('keyboard-open',
+                    window.ViewportFit.keyboardOpen(window.innerHeight, visible));
+            });
+        })();
 
         // Session bar: one button that reads Leave Game while a character is
         // in the world and Enter Game at any other time (not connected, or

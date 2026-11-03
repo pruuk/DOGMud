@@ -373,6 +373,20 @@
 }
 
 /* Slide-up drawer — also appended outside #dashboard */
+/* The on-screen keyboard is open (viewportfit.js): the command box sits right on
+   top of it, so the tab bar steps aside and gives its room back to the game. */
+html.keyboard-open #dash-tabbar { display: none !important; }
+html.keyboard-open #dashboard[data-mode="phone"] { padding-bottom: 6px; }
+html.keyboard-open #dash-drawer { bottom: 0; }
+/* A phone on its side with the keyboard up has barely any height left. */
+@media (max-height: 320px) {
+  html.keyboard-open #dash-session,
+  html.keyboard-open #panel-feed .dash-panel-head { display: none; }
+}
+/* No room on a phone's session bar once the full screen button is there, and the
+   phone layout has no columns or splitters to reset. */
+#dashboard[data-mode="phone"] #btn-reset-layout { display: none; }
+
 #dash-drawer {
   position: fixed;
   left: 0;
@@ -461,17 +475,14 @@
   color: var(--brass-text);
   background: var(--brass-grad);
   font-family: var(--font-body);
-  filter: brightness(0.72);
-  opacity: 0.88;
-  transition: filter 0.08s, opacity 0.08s;
+  filter: brightness(0.9);
+  transition: filter 0.08s;
 }
 .inv-tab.brass:hover {
-  filter: brightness(0.85);
-  opacity: 1;
+  filter: brightness(0.96);
 }
 .inv-tab.brass.active {
   filter: brightness(1);
-  opacity: 1;
   box-shadow: inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 60%, transparent),
               inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
 }

@@ -1486,7 +1486,7 @@ RoomGridSVG.LEATHER = {
   hide: ["#43301d", "#2c1d11", "#170e07"], rim: "#0e0703", crack: "#120a04", crackLip: "#b5a26c",
   sheen: "#cec6aa", vignette: "#19140c", glow: "#e8c98a", roomEdge: "#3a2a18", partyFill: "#1c2e2a",
   pin: "#aa8636", faint: "#8a7a55",
-  brass: ["#f4dd92", "#cb9f42", "#8a6620"], brassText: "#3b2a10", brassBorder: "#50371d",
+  brass: ["#f4dd92", "#aa8636", "#736133"], brassText: "#1a1206", brassBorder: "#50371d",
   font: "'Source Sans 3', system-ui, sans-serif",   // the map's lettering; system-ui where gomud.css is not loaded
   emboss: 0.6, fray: 3.4, nickP: 0.08, crackStep: 24, crackJit: 9, vig: 0.5
 };

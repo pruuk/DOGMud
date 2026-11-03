@@ -1,5 +1,16 @@
 # DOGMud Patch Notes
 
+## 2026-11-03: Playing on phones
+
+- On a phone, the web client now opens full screen. The ⛶ button in the session
+  bar brings the site header and menu back, and it remembers your choice.
+- When the on-screen keyboard opens, the game text and command box shrink to fit
+  above it, with the command box right on top of the keyboard.
+- On tablets and larger screens, dim text is dim again, so hints and dividers sit
+  back behind the game text. Phones keep it bright.
+- The Temple marker on the map is visible again.
+- Brass buttons and inventory tabs are easier to read.
+
 ## 2026-11-03: Web client fixes
 
 - Rotating your phone, opening the keyboard or moving a window no longer wipes most

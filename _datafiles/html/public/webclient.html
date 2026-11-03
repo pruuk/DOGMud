@@ -1,6 +1,6 @@
 {{template "header" .}}
 
-<iframe id="webclient-frame" border="0" src="/webclient-pure.html"></iframe>
+<script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/viewportfit.js?v={{ .ASSET_VERSION }}"></script>
 <script type="text/javascript">
 
     function resizeClientIFrame() {
@@ -9,9 +9,9 @@
 
         wcIframe = document.getElementById('webclient-frame');
         // For some reason safari acts weird if we don't reset this first.
-        wcIframe.width = "0px"; 
+        wcIframe.width = "0px";
         wcIframe.height = "0px";
-        
+
         // Calculate scrollbar width
         const outer = document.createElement('div');
         outer.style.cssText = 'visibility:hidden;overflow:scroll';
@@ -19,27 +19,88 @@
         outer.appendChild(document.createElement('div'));
         const scrollbarWidth = outer.offsetWidth - outer.firstChild.offsetWidth;
         document.body.removeChild(outer);
-        
+
         // Set proper height/width - subtract scrollbar width to prevent cropping
         wcIframe.width = contentContainer.clientWidth - scrollbarWidth;
-        wcIframe.height = contentContainer.clientHeight;
-        
+        fitFrameHeight();
     }
+
+    // The on-screen keyboard shrinks only the visual viewport on iOS Safari and
+    // current Chrome on Android, so 100dvh does not follow it. Fit the frame
+    // above the keyboard, which puts the command box right on top of it.
+    function fitFrameHeight() {
+        const contentContainer = document.getElementById('content-container');
+        const frame = document.getElementById('webclient-frame');
+        const visible = ViewportFit.visibleHeight(window.visualViewport);
+        frame.height = ViewportFit.frameHeight(
+            contentContainer.clientHeight, visible, contentContainer.getBoundingClientRect().top);
+        // The game takes its phone tab bar out of the keyboard's way (dashboard.css).
+        if (frame.contentDocument) {
+            frame.contentDocument.documentElement.classList.toggle('keyboard-open',
+                ViewportFit.keyboardOpen(window.innerHeight, visible));
+        }
+    }
+
+    // Full screen hides the site around the frame and leaves the frame alone,
+    // so the game stays connected. The session bar's button and the header's
+    // link both come through here.
+    window.WebclientFrame = (function () {
+        const KEY = 'dogmud.fullscreen';
+        let on = false;
+        let listener = null;
+
+        function readPref() {
+            try { return window.localStorage.getItem(KEY); } catch (e) { return null; }
+        }
+        function writePref(value) {
+            try { window.localStorage.setItem(KEY, value); } catch (e) {}
+        }
+        function apply(next) {
+            on = next;
+            const display = on ? 'none' : '';
+            ['header', 'footer'].forEach(function (tag) {
+                const el = document.getElementsByTagName(tag)[0];
+                if (el) el.style.display = display;
+            });
+            resizeClientIFrame();
+            if (listener) listener(on);
+        }
+        return {
+            start: function () {
+                apply(ViewportFit.wantFullScreen(readPref(),
+                    ViewportFit.isPhone(window.screen.width, window.screen.height)));
+            },
+            setFullScreen: function (next) { writePref(next ? '1' : '0'); apply(next); },
+            isFullScreen: function () { return on; },
+            onChange: function (fn) { listener = fn; fn(on); }
+        };
+    })();
+
     // Size the frame as soon as this page's layout exists; "load" alone waits
     // for everything inside the frame, which showed it at the browser's default
     // 300x150 until then.
-    document.addEventListener("DOMContentLoaded", resizeClientIFrame);
+    document.addEventListener("DOMContentLoaded", function () { WebclientFrame.start(); });
     window.addEventListener("load", resizeClientIFrame);
     window.addEventListener('resize', resizeClientIFrame);
     // Phones: the visible area changes when the address bar hides or the
-    // on-screen keyboard opens; refit so the command box and tab bar stay on
-    // screen (the page height follows 100dvh in gomud.css).
+    // on-screen keyboard opens. iOS also scrolls the page to show the focused
+    // box; the frame already fits, so hold the page at the top. Only the height
+    // changes here: resetting the frame to nothing while the command box has
+    // focus could close the keyboard. A zoomed-in player is left to pan freely.
+    function holdPageAtTop() {
+        if (window.visualViewport.scale <= 1.01) window.scrollTo(0, 0);
+    }
     if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', resizeClientIFrame);
+        window.visualViewport.addEventListener('resize', function () {
+            holdPageAtTop();
+            fitFrameHeight();
+        });
+        window.visualViewport.addEventListener('scroll', holdPageAtTop);
     }
     window.addEventListener('beforeunload', function(event) {
         event.preventDefault();
         event.returnValue = 'Leave/Disconnect from the MUD?';
     });
 </script>
+<iframe id="webclient-frame" border="0" src="/webclient-pure.html"></iframe>
 {{template "footer" .}}
