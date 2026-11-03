@@ -36,6 +36,18 @@
     var TITLE_COLOR = '\x1b[1;36m';        // bright cyan, as the server sends
     var RESET = '\x1b[0m';                 // back to the default text colour
 
+    // The text of one box row: "  ║ text   ║  " gives "text". Null for any other
+    // shape. Reads each line once: this runs on everything the server sends, so
+    // a long line must cost a straight read.
+    function rowText(plain) {
+        var row = plain.trim();
+        if (row.length < 2 || row[0] !== '║' || row[row.length - 1] !== '║') return null;
+        if (row.indexOf('\r') !== -1 || row.indexOf('\n') !== -1) return null;
+        var inner = row.slice(1, -1);
+        if (/^\s/.test(inner)) inner = inner.slice(1); // one space of padding
+        return inner.trimEnd();
+    }
+
     // Restyle the MOTD box inside one websocket message, if there is one.
     function restyle(data) {
         if (typeof data !== 'string' || data.indexOf(TITLE) === -1) return data;
@@ -63,9 +75,8 @@
 
             if (BORDER.test(plain)) { carry += ctrl; continue; }
 
-            var m = /^\s*║\s?(.*?)\s*║\s*$/.exec(plain);
-            if (!m) return data; // not the shape we know; leave it alone
-            var text = m[1];
+            var text = rowText(plain);
+            if (text === null) return data; // not the shape we know; leave it alone
             if (text.indexOf(TITLE) !== -1) {
                 out.push(carry + ctrl + TITLE_COLOR + text.trim() + RESET);
             } else {
@@ -81,5 +92,5 @@
         return lines.slice(0, start).concat(out, lines.slice(end + 1)).join('\r\n');
     }
 
-    return { restyle: restyle };
+    return { restyle: restyle, rowText: rowText };
 }));

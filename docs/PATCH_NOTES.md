@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-11-03: Web client fixes
+
+- Rotating your phone, opening the keyboard or moving a window no longer wipes most
+  of your scrollback.
+- Enter Game now waits while the client is connecting, so a second press cannot
+  leave you reading Not connected while you are still in the game.
+- After an update, your browser now picks up the new look straight away, with no
+  mismatched colours or bars.
+- The web client now removes stray control characters from what you type.
+
 ## 2026-11-02: Veyra's secrets
 
 - Veyra Coil-Tongue now teaches each of her nine secrets herself. Talk to her and

@@ -71,6 +71,33 @@ func CleanserInputHandler(clientInput *connections.ClientInput, sharedState map[
 	return true
 }
 
+// WebsocketCleanserHandler removes control characters from websocket input, so
+// a line cannot drive another player's terminal. A websocket message is a whole
+// line, so there are no keystrokes to handle. It runs after TelnetIACHandler,
+// which takes the binary GMCP frames this would otherwise corrupt.
+//
+// It is narrower than the telnet rule on purpose. Web passwords were always
+// hashed as typed, including non-breaking spaces and joined emoji, so dropping
+// those would lock their owners out; they also keep words apart in chat.
+func WebsocketCleanserHandler(clientInput *connections.ClientInput, sharedState map[string]any) (nextHandler bool) {
+	clientInput.DataIn = withoutControlChars(clientInput.DataIn)
+	clientInput.Buffer = withoutControlChars(clientInput.Buffer)
+	return true
+}
+
+// withoutControlChars drops control characters and turns a tab into a space.
+func withoutControlChars(b []byte) []byte {
+	return []byte(strings.Map(func(r rune) rune {
+		if r == '\t' {
+			return ' '
+		}
+		if unicode.IsControl(r) {
+			return -1
+		}
+		return r
+	}, string(b)))
+}
+
 // Trims non printing bytes and SPACE from front/back of a byte slice
 func trimNonPrintingBytes(b []byte) []byte {
 	start := 0

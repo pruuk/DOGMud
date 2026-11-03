@@ -78,6 +78,37 @@ check('a row of another shape leaves the box unchanged', MotdRestyle.restyle(oth
 var mention = 'Type motd to read the M E S S A G E   O F   T H E   D A Y again.\r\n';
 check('the title words outside a box unchanged', MotdRestyle.restyle(mention), mention);
 
+// Rows the old pattern accepted or refused, read the same way.
+var WIDE = ' ║ wide text' + new Array(60).join(' ') + '║  ';
+var rowShapes = [
+    [WIDE, 'wide text'],
+    [' ║ two ║ bars inside ║', 'two ║ bars inside'],
+    ['║no space║', 'no space'],
+    ['║   three spaces  ║', '  three spaces'],
+    [' ║ ║', ''],
+    ['║║', ''],
+    ['║', null],
+    ['no bars', null],
+    ['║ one bar then text', null],
+    ['text ║ then a bar ║', null]
+];
+rowShapes.forEach(function (s) {
+    check('row text of ' + JSON.stringify(s[0]), MotdRestyle.rowText(s[0]), s[1]);
+});
+
+// A box row of any length costs a straight read, however it is padded.
+var longRow = ' ║' + new Array(64000).join(' ') + 'x';
+var longBox = box.replace(' ║ LIGHT', longRow + '\r\n ║ LIGHT');
+var longStart = Date.now();
+var longOut = MotdRestyle.restyle(longBox);
+var longMs = Date.now() - longStart;
+check('a very long row comes back unchanged', longOut, longBox);
+check('a very long row is read quickly', longMs < 500, true);
+var longClosed = box.replace(' ║ LIGHT', ' ║ x' + new Array(64000).join(' ') + 'y ║\r\n ║ LIGHT');
+longStart = Date.now();
+MotdRestyle.restyle(longClosed);
+check('a very long closed row is read quickly', Date.now() - longStart < 500, true);
+
 // The page loads the script and passes incoming text through it.
 var page = fs.readFileSync(path.join(
     __dirname, '..', '..', '_datafiles', 'html', 'public', 'webclient-pure.html'), 'utf8');

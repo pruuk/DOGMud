@@ -13,7 +13,7 @@ The `internal/inputhandlers` package provides comprehensive input processing and
 - **signals.go**: Signal handling and terminal control
 - **term_ansi.go**: ANSI escape sequence processing
 - **term_iac.go**: Telnet IAC (Interpret As Command) protocol handling
-- **cleanser.go**: Input sanitization and cleaning
+- **cleanser.go**: Input sanitization and cleaning; `CleanserInputHandler` for telnet keystrokes (printable only), `WebsocketCleanserHandler` for whole websocket lines (drops control characters only, so web passwords keep hashing as typed)
 - **echo.go**: Terminal echo control
 - **inputhistory.go**: Command history management
 

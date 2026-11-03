@@ -202,21 +202,22 @@
 
     </style>
 
-    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/xterm.css" />
-    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css" />
-    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/dashboard.css" />
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm.4.19.0.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm-addon-fit.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js"></script>
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icon-map.js"></script>
+    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/xterm.css?v={{ .ASSET_VERSION }}" />
+    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css?v={{ .ASSET_VERSION }}" />
+    <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/dashboard.css?v={{ .ASSET_VERSION }}" />
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm.4.19.0.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/xterm-addon-fit.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/mp3.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/winbox.bundle.min.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/hotinput.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/feedscroll.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/renderguard.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/motdrestyle.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/termfit.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/gmcp.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/companion-relay-glue.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icons.js?v={{ .ASSET_VERSION }}"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/item-icon-map.js?v={{ .ASSET_VERSION }}"></script>
     <script>window.ITEM_ICON_BASE = "{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/items";</script>
     <!-- A JSON string literal encoded by the server (web.go relayOriginJSON), so no quotes here. -->
     <script>window.COMPANION_RELAY_ORIGIN = {{ .COMPANION_RELAY_ORIGIN_JSON }};</script>
@@ -470,71 +471,18 @@
             } catch (e) { return 1; }
         })();
 
-        // Fit the game text to the panel. All MUD output is fixed-80 (room
-        // text, boxes, tables, the inline minimap), so the terminal always
-        // keeps at least 80 columns and never wraps them. Wide panels grow the
-        // font (capped); narrow ones (phones) shrink it to fit exactly 80. If
-        // that would go below the browser's minimum font size, draw at the
-        // minimum and scale the whole terminal down instead, so what xterm
-        // measures is what it draws. Only the game text scales; the command box
-        // keeps its own size.
-        function resizeTerminal() {
-            if (!term || !fitAddon) return;
-            var TARGET = 80, MAX_FS = 20, STEP = 0.25;
-            var host = document.getElementById('terminal');
-            var body = host && host.parentElement;
-            // While the page loads the frame can be a few pixels wide; fitting
-            // 80 columns into that made a terminal tens of thousands of rows
-            // tall and crashed the tab. Wait for a real size.
-            if (!body || body.clientWidth < 160 || body.clientHeight < 80) return;
-            try {
-                // Start from the panel's own size, unscaled.
-                host.style.transform = '';
-                termScale = 1;
-                host.style.position = '';
-                host.style.width = '';
-                host.style.height = '';
-                var W = body.clientWidth, H = body.clientHeight;
-                var fs = MAX_FS;
-                term.setOption('fontSize', fs);
-                fitAddon.fit();
-                if (term.cols < TARGET) {
-                    // Cell width grows with font size, so one measurement gives a
-                    // close estimate; then step down until 80 columns fit, but
-                    // never below the browser minimum.
-                    fs = Math.max(browserMinFont,
-                        Math.floor((MAX_FS * term.cols / TARGET) / STEP) * STEP);
-                    term.setOption('fontSize', fs);
-                    fitAddon.fit();
-                    var guard = 0;
-                    while (term.cols < TARGET && fs - STEP >= browserMinFont && guard++ < 40) {
-                        fs -= STEP;
-                        term.setOption('fontSize', fs);
-                        fitAddon.fit();
-                    }
-                }
-                if (term.cols >= TARGET) return;
-
-                // Still short of 80 at the browser minimum: lay the terminal out
-                // 80 columns wide at that size, then scale it down to the panel.
-                var dims = term._core._renderService.dimensions;
-                var cellW = dims.actualCellWidth, cellH = dims.actualCellHeight;
-                if (!cellW || !cellH) return;
-                var extra = W - term.cols * cellW; // scrollbar and padding fitAddon keeps
-                var naturalW = TARGET * cellW + Math.max(0, extra) + 1;
-                var s = W / naturalW;
-                // Out of the layout flow: the unscaled 80-column box is wider
-                // than the panel, and in flow it widened the phone page.
-                host.style.position = 'absolute';
-                host.style.left = '0';
-                host.style.top = '0';
-                host.style.width = naturalW + 'px';
-                host.style.height = (H / s) + 'px';
-                host.style.transformOrigin = 'top left';
-                host.style.transform = 'scale(' + s + ')';
-                termScale = s;
-                fitAddon.fit();
-            } catch (e) {}
+        // Fit the game text to the panel (static/js/termfit.js).
+        var termFitter = window.TermFit.create({
+            term: term,
+            fitAddon: fitAddon,
+            host: document.getElementById('terminal'),
+            minFont: browserMinFont,
+            setScale: function (s) { termScale = s; }
+        });
+        // force: true measures again at the same panel size. Event and frame
+        // callbacks pass their own argument, so only a literal true counts.
+        function resizeTerminal(force) {
+            termFitter.fit(force === true);
         }
         window.addEventListener('resize', resizeTerminal);
         // Re-fit whenever the feed panel itself changes size (grid reflow,
@@ -563,8 +511,8 @@
                 document.fonts.load('700 16px "Source Code Pro"')
             ]).then(function () {
                 term.setOption('fontFamily', termFont);
-                resizeTerminal();
-            }).catch(function () { resizeTerminal(); });
+                resizeTerminal(true);
+            }).catch(function () { resizeTerminal(true); });
         }
 
         /////////////////////////////////////////////
@@ -2578,12 +2526,15 @@
         // quit is not instant: it starts a five round meditation (condition 0)
         // that any action or combat cancels, so Leaving lasts until the server
         // closes the socket, a typed command cancels it, or the fallback runs.
-        function setSessionState(state) { // "connected" | "leaving" | "reconnecting" | "offline"
+        function setSessionState(state) { // "connecting" | "connected" | "leaving" | "reconnecting" | "offline"
             var sessConn = document.getElementById('sess-conn');
             sessionConfirm.style.display = 'none';
             sessionButton.style.display = '';
             if (state !== 'leaving') { leavingGame = false; clearTimeout(leaveFallback); }
-            if (state === 'connected') {
+            if (state === 'connecting') {
+                sessConn.textContent = '● Connecting…'; sessConn.style.color = 'var(--conn-reconnecting)';
+                sessionButton.textContent = 'Enter Game'; sessionButton.disabled = true;
+            } else if (state === 'connected') {
                 sessConn.textContent = '● Connected'; sessConn.style.color = '';
                 sessionButton.textContent = inGame ? 'Leave Game' : 'Enter Game'; sessionButton.disabled = false;
             } else if (state === 'leaving') {
@@ -2702,22 +2653,20 @@
         let pendingReconnectToken = null;
         let reconnectAttempts = 0;
 
-        function reconnect() {
-            // Close current socket if open, then trigger a fresh connect
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.close();
-            }
-            // The connect button stays hidden (Enter Game in the session bar is
-            // the visible one); enable it so the click runs its handler.
-            connectButton.disabled = false;
-            connectButton.click();
-        }
-
         connectButton.addEventListener('click', () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.close();
                 return;
             }
+            // One socket at a time. A second one would answer to the same
+            // handlers, and its close would tell a player still in the game
+            // "Not connected". onclose makes the button usable again.
+            if (socket && socket.readyState !== WebSocket.CLOSED) {
+                return;
+            }
+
+            // An automatic retry keeps saying Reconnecting.
+            if (!pendingReconnectToken) { setSessionState('connecting'); }
 
             var wsProto = location.protocol === 'https:' ? 'wss://' : 'ws://';
             debugLog("Connecting to: " + wsProto+location.host +'/ws');
@@ -4678,7 +4627,7 @@
 
     </script>
 
-    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/dashboard.js"></script>
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/dashboard.js?v={{ .ASSET_VERSION }}"></script>
 
 </body>
 </html>

@@ -1335,6 +1335,7 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string) {
 	// passes non-IAC input through untouched, so normal commands are unaffected.
 	// (The telnet connection path registers this handler too.)
 	connDetails.AddInputHandler("TelnetIACHandler", inputhandlers.TelnetIACHandler)
+	connDetails.AddInputHandler("WebsocketCleanserHandler", inputhandlers.WebsocketCleanserHandler)
 
 	loginHandler := inputhandlers.GetLoginPromptHandler()           // Get the configured handler func
 	connDetails.AddInputHandler("LoginPromptHandler", loginHandler) // Add it with a unique name
@@ -1536,7 +1537,7 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string) {
 
 		wi := WorldInput{
 			FromId:    userObject.UserId,
-			InputText: string(message),
+			InputText: string(clientInput.Buffer),
 		}
 
 		// Buffer should be processed as an in-game command
