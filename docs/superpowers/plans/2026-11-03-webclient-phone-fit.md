@@ -691,4 +691,13 @@ Give the owner this list for Malia: on her phone and on her tablet, open the web
 - Some keyboards change height as suggestions appear. The `resize` handler follows them, but a jump is possible.
 - iOS may still nudge the page on focus. `scrollTo(0, 0)` should hold it; if it fights the browser, that handler is the first thing to change.
 - Resetting the frame to 0 on each resize is old behaviour for Safari. During a keyboard animation it runs many times; if it flickers, skip the reset when the size is unchanged.
-- The dashboard has no phone layout (`dashboard.css` has no media queries). This plan fits it above the keyboard as it stands. Rearranging it belongs to the touch arc.
+- The dashboard's phone layout is what this plan fits above the keyboard, as it stands. Rearranging it belongs to the touch arc.
+
+## Corrections made while building
+
+- **The dashboard does have a phone layout.** `dashboard.css` has no media queries, but `dashboard.js` sets `data-mode="phone"` under 700 px, with a bottom tab bar. The tab bar sat between the command box and the keyboard, so it now steps aside while the keyboard is open (`html.keyboard-open`).
+- **Zoom:** pinch zoom also shrinks the visual viewport, so `ViewportFit.visibleHeight` ignores it. Otherwise zooming to read would squash the game.
+- **Keyboard path:** it changes only the frame's height. The old reset to 0 could close the keyboard on iOS by taking the focused box out of view.
+- **Framing:** the toggle code tolerates another site framing the page, where reading the parent throws.
+- **Font:** a height-only refit keeps the font, which also moved by half a pixel when the keyboard opened.
+- **⛶ button:** it uses the sound button's round shape. The `brass` class squashed it to a sliver in the session bar.
