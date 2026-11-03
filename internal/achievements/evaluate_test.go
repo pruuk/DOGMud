@@ -86,6 +86,41 @@ func TestProgress(t *testing.T) {
 	}
 }
 
+func TestEvaluateItemsRead(t *testing.T) {
+	c := &characters.Character{}
+	tr := Trigger{Type: "items_read", Items: []int{1, 2}}
+	if Evaluate(tr, c, 0) {
+		t.Fatal("nothing read yet")
+	}
+	c.RecordItemRead(1)
+	if Evaluate(tr, c, 0) {
+		t.Fatal("one of two is not enough")
+	}
+	if cur, tgt, numeric := Progress(tr, c); cur != 1 || tgt != 2 || !numeric {
+		t.Fatalf("Progress = %d/%d numeric %v", cur, tgt, numeric)
+	}
+	c.RecordItemRead(2)
+	if !Evaluate(tr, c, 0) {
+		t.Fatal("all read")
+	}
+}
+
+func TestEvaluateMobKilled(t *testing.T) {
+	c := &characters.Character{}
+	tr := Trigger{Type: "mob_killed", Mob: 9562}
+	if Evaluate(tr, c, 0) {
+		t.Fatal("not killed yet")
+	}
+	c.KD.AddMobKill(100)
+	if Evaluate(tr, c, 0) {
+		t.Fatal("another mob does not count")
+	}
+	c.KD.AddMobKill(9562)
+	if !Evaluate(tr, c, 0) {
+		t.Fatal("killed")
+	}
+}
+
 func TestEvaluate_UnknownType(t *testing.T) {
 	if Evaluate(Trigger{Type: "nonsense", Threshold: 1}, &characters.Character{}, 0) {
 		t.Error("unknown trigger type should never satisfy")

@@ -40,7 +40,7 @@ var thresholdTypes = map[string]bool{
 
 // allTriggerTypes is the full fixed vocabulary.
 var allTriggerTypes = func() map[string]bool {
-	m := map[string]bool{"stat_reached": true, "skill_reached": true, "quest_completed": true}
+	m := map[string]bool{"stat_reached": true, "skill_reached": true, "quest_completed": true, "items_read": true, "mob_killed": true}
 	for k := range thresholdTypes {
 		m[k] = true
 	}
@@ -88,6 +88,14 @@ func validateDefinition(d Definition, fileBase string) error {
 	case "quest_completed":
 		if d.Trigger.Token == "" {
 			return fmt.Errorf("achievement %q: quest_completed needs a token", d.Id)
+		}
+	case "items_read":
+		if len(d.Trigger.Items) == 0 {
+			return fmt.Errorf("achievement %q: items_read needs items", d.Id)
+		}
+	case "mob_killed":
+		if d.Trigger.Mob <= 0 {
+			return fmt.Errorf("achievement %q: mob_killed needs a mob", d.Id)
 		}
 	default: // threshold types
 		if d.Trigger.Threshold <= 0 {

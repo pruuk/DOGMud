@@ -45,6 +45,10 @@ func Evaluate(t Trigger, c *characters.Character, earnedPoints int) bool {
 		return ownsPinnacleItem(c, t.Threshold)
 	case "achievement_points":
 		return earnedPoints >= t.Threshold
+	case "items_read":
+		return c.CountItemsRead(t.Items) >= len(t.Items)
+	case "mob_killed":
+		return c.KD.GetMobKills(t.Mob) > 0
 	}
 	return false
 }
@@ -73,6 +77,8 @@ func Progress(t Trigger, c *characters.Character) (current, target int, numeric 
 		return statValue(c, t.Stat), t.Threshold, true
 	case "skill_reached":
 		return skillValue(c, t.Skill), t.Threshold, true
+	case "items_read":
+		return c.CountItemsRead(t.Items), len(t.Items), true
 	}
 	return 0, 0, false
 }
