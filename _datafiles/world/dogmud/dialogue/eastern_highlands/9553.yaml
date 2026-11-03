@@ -33,6 +33,22 @@ opener:
     hints: Choose below to have the keeper open the way. For more on staking gold
       for a dangerous place, type help instances.
 topics:
+- key: disc_in
+  kind: handin
+  quest: 76
+  label: The Disc
+  playerLine: I found him, and I woke his disc.
+  text: |
+    Yes. I felt it wake. I have felt that twice now, and the first time
+    it stopped. The way is open to you, as deep as your coin buys. It
+    costs what it costs.
+  hints: Quest complete. Choose below to have the keeper open the way. For more on staking gold for a dangerous place, type help instances.
+  questRequired:
+  - 76-sentinel
+  questExcluded:
+  - 76-end
+  carriesItem: 40168
+  grantsQuest: 76-end
 - key: way
   kind: info
   label: How do I get through the door?

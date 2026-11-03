@@ -317,9 +317,15 @@
 75-notes
 75-start
 75-survey
+76-alpha
 76-attune
+76-cairn
+76-camp
 76-end
 76-journal
+76-remains
+76-sentinel
+76-shelter
 76-start
 77-end
 8-end
