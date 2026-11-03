@@ -49,6 +49,37 @@ topics:
   - 76-end
   carriesItem: 40168
   grantsQuest: 76-end
+- key: truth_offer
+  kind: offer
+  quest: 77
+  label: The Truth
+  playerLine: What is in there, past the wards?
+  text: |
+    A record, they say, that the place kept of itself, deep in, among
+    stones that wake to light. I have never read it. I have seen the
+    faces of those who did. You may want to think about that first.
+  hints: Accept, then find the Records Archive inside. Type search among the stones.
+  questRequired:
+  - 76-end
+  questExcluded:
+  - 77-start
+  - 77-end
+  carriesItem: 40168
+  grantsQuest: 77-start
+- key: truth_in
+  kind: handin
+  quest: 77
+  label: The Truth
+  playerLine: I read the stones.
+  text: |
+    I can see that. No. Do not tell me. I have kept this door a long
+    time by not knowing what it is the door of.
+  hints: Quest complete.
+  questRequired:
+  - 77-read
+  questExcluded:
+  - 77-end
+  grantsQuest: 77-end
 - key: way
   kind: info
   label: How do I get through the door?

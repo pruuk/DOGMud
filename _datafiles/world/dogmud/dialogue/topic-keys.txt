@@ -1346,6 +1346,8 @@
 9553.crash
 9553.disc_in
 9553.open_crash
+9553.truth_in
+9553.truth_offer
 9553.way
 9566.deep
 9566.finds

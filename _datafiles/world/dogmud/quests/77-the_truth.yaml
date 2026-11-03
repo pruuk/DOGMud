@@ -7,12 +7,25 @@ description: >-
   truer and far more terrible.
 secret: false
 steps:
+  - id: start
+    destination:
+      room: 6397
+    description: "The Keeper says the buried thing kept a record of itself, deep
+      in, among stones that wake to light. She has never read it. She has seen
+      the faces of those who did."
+    hint: "The stones are in the Records Archive, deep in the buried thing, east of
+      the command deck. Bring friends. Type search there."
+  - id: read
+    destination:
+      mob: 9553
+      room: 6372
+    description: "You stood among the oracle-stones and let the buried place tell
+      you what it is. You carry it now. The Keeper is waiting at the door."
+    hint: "Go back out to the Keeper. She will not ask, but she will know. Type talk keeper."
   - id: end
-    description: "You stood among the oracle-stones and let the buried place
-      tell you what it is. You carry the truth now: of where the people
-      came from, of what the blessing really was, of the immunity that was
-      only luck, and of the three lights still waiting overhead. You cannot
-      give it back."
+    description: "You carry the truth now: of where the people came from, of what
+      the blessing really was, of the immunity that was only luck, and of the three
+      lights still waiting overhead. You cannot give it back."
 rewards:
   actor: >-
     You know now. It sits in you like a swallowed stone. The sky will
@@ -21,14 +34,17 @@ rewards:
   observer: ""
   gold: 0
 triggers:
-  - event: room_interact
+  # READ: the search among the stones. The item moves before the grant, so a pack
+  # too heavy for the Fragment holds the step, and the search can be tried again.
+  - event: command
+    command: search
     room: 6397
-    noun: records
     conditions:
-      missing: ["77-end"]
+      has: ["77-start"]
+      missing: ["77-read"]
     actions:
-      - grant: "77-end"
       - give_item: 40176
+      - grant: "77-read"
       - actor: |
           You stand among the stones and let the light find them, and one
           by one they wake — a slow inner glow, a drift of moving marks —
@@ -77,15 +93,24 @@ triggers:
           told you everything. You do not feel wiser. You feel like someone
           who has been handed a weight and told it is theirs now, forever.
       - observer: "{actor} stands motionless before the wall of moving light, and for a long moment does not seem to breathe."
-  # Re-read is on the `oracle-stones` noun only. A second `records` trigger
-  # gated has:["77-end"] would double-fire on the FIRST examine (the grant
-  # above sets the token mid-event, so a same-event has-trigger also matches
-  # — the Q76 same-event lesson). Keeping re-reads on a distinct noun avoids it.
+  # A player inside who never took the quest. Its `missing` is what the trigger
+  # above `has`, so the two can never fire on one search.
+  - event: command
+    command: search
+    room: 6397
+    conditions:
+      missing: ["77-start"]
+    actions:
+      - actor: >-
+          The stones stir at your light and then settle. They wait to be asked,
+          and you do not yet know what to ask. The one at the door might.
+  # Re-read, on looking at the stones. The read above is a search, a different
+  # event, so this has-trigger cannot fire in the command that grants its token.
   - event: room_interact
     room: 6397
     noun: oracle-stones
     conditions:
-      has: ["77-end"]
+      has: ["77-read"]
     actions:
       - actor: >-
           They are only stones again now, dark until the light finds them —
