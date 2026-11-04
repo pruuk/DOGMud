@@ -20,7 +20,7 @@ const (
 	LookCreature                       // a creature the looker perceives, at clear sight
 	LookExit                           // an exit the looker can see through
 	LookExitTooDark                    // an exit, but too dark to see through it
-	LookExitLocked                     // an exit that is locked
+	LookExitLocked                     // an exit that is locked, or a room_gate refuses this player (LookResolution.ExitGated)
 	LookExitShapes                     // an exit too dark to see through, whose occupants heat shows as shapes (lighting plan 6)
 	LookOther                          // anything else: each wrapper's own objects, in its own order
 	LookOwnGearByTouch                 // sees nothing, but names an item it wears or carries: known by touch (#218)
@@ -40,7 +40,10 @@ type LookResolution struct {
 	TargetSight messaging.SightDecision
 	LookAt      string // the target, after a direction alias resolved to an exit
 	ExitName    string // the LookExit kinds
-	ExitRoomId  int    // LookExit, LookExitShapes
+	ExitRoomId  int    // LookExit, LookExitShapes, LookExitLocked
+	// ExitGated: a LookExitLocked whose stop is a room_gate on this player, not
+	// a lock. The player wrapper reads the gate's own line for it.
+	ExitGated bool
 	// PetUserId is the owner of a pet the looker may name here (clear sight
 	// only), 0 otherwise. It is not a kind because the player resolves the
 	// pet AFTER carried items and room nouns; each wrapper reads it at its
@@ -155,6 +158,8 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 		if next := rooms.LoadRoom(exitRoomId); next != nil && messaging.SensesHeatThroughExit(char, room, next) {
 			if info, _ := room.GetExitInfo(exitName); info.Lock.IsLocked() {
 				res.Kind = LookExitLocked
+			} else if exitQuestGated(actor, room, exitRoomId) {
+				res.Kind, res.ExitGated = LookExitLocked, true
 			} else {
 				res.Kind = LookExitShapes
 			}
@@ -165,8 +170,21 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 		res.Kind = LookExitLocked
 		return res
 	}
+	if exitQuestGated(actor, room, exitRoomId) {
+		res.Kind, res.ExitGated = LookExitLocked, true
+		return res
+	}
 	res.Kind = LookExit
 	return res
+}
+
+// exitQuestGated reports whether a room_gate would refuse this player the step
+// through an exit, so a look or a scan stops there as at a locked door. It runs
+// no action. A mob walks through a gate, so it sees through one (fleeExit reads
+// gates for a player only, for the same reason).
+func exitQuestGated(actor Actor, room *rooms.Room, destRoomId int) bool {
+	ua, ok := actor.(*UserActor)
+	return ok && ua.User != nil && questGateBlocksRoomId(ua.User, room.RoomId, destRoomId)
 }
 
 // lookNamesAnObject reports a sealed crate or a room container the looker

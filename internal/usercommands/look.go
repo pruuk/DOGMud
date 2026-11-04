@@ -190,6 +190,12 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 
 	case actions.LookExitLocked:
+		// A room_gate says why in its own words, the line the step would read.
+		if res.ExitGated {
+			if dest := rooms.LoadRoom(res.ExitRoomId); dest != nil && actions.QuestGateRefuses(user, room, dest) {
+				return true, nil
+			}
+		}
 		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("The %s exit is locked.", res.ExitName))
 		return true, nil
 

@@ -81,6 +81,7 @@ func (e *Engine) Notify(eventType string, details EventDetails, player PlayerSta
 func (e *Engine) NotifyAll(eventType string, details []EventDetails, player PlayerState, ctx ActionContext) NotifyResult
 func (e *Engine) WouldFire(eventType string, d EventDetails, player PlayerState) bool
 func (e *Engine) SearchFeatures(roomId int) []string
+func (e *Engine) GuardsRoom(roomId int) bool
 ```
 
 `WouldFire` runs the same match step as `Notify` (`fieldMatches`, then
@@ -89,7 +90,10 @@ action runs, no token is granted, no text is sent, no `quest_granted` chain is
 followed, no `EvalGuard` is touched. It is for gates that must ask before the
 event happens (a quest gate on an exit). `SearchFeatures` returns the sorted,
 distinct nouns of `room_interact` triggers with `verb: search` and `room:`
-equal to the given id, regardless of conditions.
+equal to the given id, regardless of conditions. `GuardsRoom` reports whether
+any `room_gate` guards a template room (room, area or zone), regardless of
+conditions: it is how a mob's planner keeps out of a gated room, because a mob's
+`pathto` ignores gates.
 
 `NotifyAll` raises several `EventDetails` of one event type under ONE
 `EvalGuard`, so each trigger fires at most once however many details it

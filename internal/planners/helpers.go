@@ -8,12 +8,32 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/goals"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // ─── Shop helpers ─────────────────────────────────────────────────────────────
+
+// roomBehindGate reports whether a room_gate trigger guards roomId. A mob's
+// pathto ignores gates, so a planner never picks such a room as a destination.
+func roomBehindGate(roomId int) bool {
+	templateRoom, _ := rooms.OriginalRoomId(roomId)
+	return questengine.GetEngine().GuardsRoom(templateRoom)
+}
+
+// walkableShopsIn is every shop in zone a planner may send a mob to: all of them
+// but those behind a room_gate.
+func walkableShopsIn(zone string) []*shops.ShopInventory {
+	var out []*shops.ShopInventory
+	for _, shop := range shops.AllShops() {
+		if shop.Zone == zone && !roomBehindGate(shop.RoomId) {
+			out = append(out, shop)
+		}
+	}
+	return out
+}
 
 // findShopInZoneSelling returns the room id of the first shop in mob's zone
 // that stocks an item matching itemId (when >0) or component tag (when non-"").
@@ -31,10 +51,7 @@ func findShopInZoneSelling(mob *mobs.Mob, tag string, itemId int) (roomId int, o
 		}
 	}
 
-	for _, shop := range shops.AllShops() {
-		if shop.Zone != mob.Character.Zone {
-			continue
-		}
+	for _, shop := range walkableShopsIn(mob.Character.Zone) {
 		for _, entry := range shop.Stock {
 			if itemId > 0 && entry.ItemId == itemId {
 				return shop.RoomId, true
@@ -53,10 +70,7 @@ func findShopInZoneBuying(mob *mobs.Mob) (roomId int, ok bool) {
 	if mob == nil {
 		return 0, false
 	}
-	for _, shop := range shops.AllShops() {
-		if shop.Zone != mob.Character.Zone {
-			continue
-		}
+	for _, shop := range walkableShopsIn(mob.Character.Zone) {
 		if shop.Gold > 0 {
 			return shop.RoomId, true
 		}
@@ -132,7 +146,7 @@ func findCraftingStationInZone(mob *mobs.Mob, stationName string) (roomId int, o
 		if room == nil {
 			continue
 		}
-		if room.Station == stationName {
+		if room.Station == stationName && !roomBehindGate(rid) {
 			return rid, true
 		}
 	}

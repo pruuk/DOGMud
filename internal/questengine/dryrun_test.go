@@ -61,6 +61,14 @@ func TestWouldFire_FalseWhenConditionsFail(t *testing.T) {
 	assert.False(t, e.WouldFire("room_gate", EventDetails{UserId: 1, RoomId: 500}, player))
 }
 
+// A gate guards its room whatever the player's tokens: a mob has none to read.
+func TestGuardsRoom_ReadsTheFieldsAndNotTheConditions(t *testing.T) {
+	e := seedDryRunQuest()
+	assert.True(t, e.GuardsRoom(500))
+	assert.False(t, e.GuardsRoom(501))
+	assert.False(t, NewEngine().GuardsRoom(500))
+}
+
 func TestWouldFire_FalseWhenFieldsDoNotMatch(t *testing.T) {
 	e := seedDryRunQuest()
 	player := newFullMockPlayer(501)

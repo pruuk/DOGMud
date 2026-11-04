@@ -607,7 +607,11 @@ missing name as `refusal.NotHereThingLine`, at every light, #609). `LookExitShap
 ruling O6) is an exit the light here is too poor to see through
 (`messaging.SeesThroughExit` false) whose next room heat still reaches
 (`messaging.SensesHeatThroughExit`); a locked exit under heat is still
-`LookExitLocked`. The player wrapper prints one `messaging.UnseenFigure`
+`LookExitLocked`. A `room_gate` that would refuse this player the step also
+stops a look or a scan as a lock does (`exitQuestGated`, `look.go`): the look is
+`LookExitLocked` with `ExitGated` set, and the player wrapper reads the gate's own
+line through `QuestGateRefuses`; a scan reads "the exit is locked". A mob walks
+through a gate, so it sees through one. The player wrapper prints one `messaging.UnseenFigure`
 per occupant from `FiguresSensedIn(viewer, room, selfUserId)` (`scan.go`),
 never a name, the room's title or its description; the mob wrapper is
 silent on it, as on every refusal. `Scan` takes the same heat path per
