@@ -6,10 +6,12 @@ written until the owner approves it, and no build starts until the owner has see
 target page: `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`. Earlier tiers:
 `docs/superpowers/specs/completed/2026-11-02-quest-arc-phase7-tier1-design.md`, `...-tier2-design.md`,
 `...-tier3-design.md`. Tier 4 was done by the disc line, `docs/superpowers/specs/2026-11-03-disc-line-design.md`.
-**Quests:** 63, 65, 66, 67, 68, 69, 70, 71; plus quest 21 and the sample quest 1000000.
+**Quests:** 63, 65, 66, 67, 68, 69, 70, 71; plus quest 21 and the sample quest 1000000; plus two new
+quests that give Bloom a source in the world (section 7).
 
-Three PRs from one plan: **5a** docks and Common (63, 65, 66, 67), **5b** Crafting, Temple, Merchant and
-Old Quarter (68, 69, 70, 71), **5c** quest 21, the sample quest and the backlog guard.
+Four PRs from one plan: **5a** docks and Common (63, 65, 66, 67), **5b** Crafting, Temple, Merchant and
+Old Quarter (68, 69, 70, 71), **5c** the Bloom chain (section 7), **5d** quest 21, the sample quest and
+the backlog guard.
 
 ## Facts verified against source (master `8e4ab0e27`, 2026-11-04)
 
@@ -30,6 +32,16 @@ Old Quarter (68, 69, 70, 71), **5c** quest 21, the sample quest and the backlog 
 | Quest 1000000 is the reserved template: id allocation stays below it and the editor hides it | `internal/quests/save.go:75-77`, `modules/gmcp/gmcp.Quest.go:25` |
 | Factions on file: no Merchant Quarter faction exists. New Plymouth has `np_commonfolk`, `np_dockfolk`, `temple_np`, `cooperage_circle`, `bloom_trade` | `factions/` |
 | Quest 71 pays `rep_faction: np_dockfolk`, and adds `cooperage_circle` +5 by trigger only with `69-end` | `quests/71-*.yaml:73-74,145-151` |
+| Bloom Wafer (40108) has no source: outside its own file the id appears only in `internal/actions/drink.go`, in no mob, shop, recipe, quest or dialogue. The grep could succeed: it found `drink.go` | `grep -rE "\b40108\b" _datafiles internal modules` |
+| The Bloom mechanic is built: communion, addiction tiers, withdrawal, mutation advance and seeding | `internal/actions/drink.go:411`, `internal/characters/bloom.go`, `bloom_mutation.go` |
+| Bloom's knobs are not in `config.yaml` (0 lines), so they run on Go defaults: for example advance chance 0.50, addiction decay 300 rounds | `internal/configs/config.balance.combat.go:582-594` |
+| Wafer: `not_salable: true`, `value: 25`, `toxicity: 20`. Ysolde's Purge (40109) exists, and she already gives it through her `detox` topic | `items/materials-40000/40108-*`, `40109-*`; `dialogue/new_plymouth_common/9323.yaml:188-189` |
+| Marn's `bloom_undercover` line takes the player for a customer and nods at a wax-wrapped square; it sets `67-entry`, which nothing reads | `dialogue/new_plymouth_docks/9305.yaml:29-48` |
+| Marn stands in Marn's Fabric-Remnants Shop, 5523, exits south, north, down | `rooms/new_plymouth_docks/5523.yaml` |
+| `room_gate` refuses a move on conditions and says why: the pattern for a door only the knock opens | `quests/14-the_undertow.yaml:84-93` |
+| A branching quest pattern: flag `resolution`, values per ending | `quests/18-bettas_silence.yaml:8-11` |
+| Quest id 64 is free in the New Plymouth band | `tools/id_inventory.py` |
+| Novel: Cade's supply house sells fabric remnants in front, with a cupboard door and a knock he changes; Vane overhears "three months at minimum before the new one's producing at volume, if she survives the first month"; Horst of the bloodline's domestic office runs contractors and hires her to deliver a girl | `novel/what_the_moons_keep.md:746-764,1986`; outline line 145 |
 
 Reported by the 2026-11-04 survey and to be re-checked in the plan's own facts table, because the
 plan relies on line numbers: NPC schedules and light in section 3, hand-in gates (`:prev` lines), and
@@ -48,6 +60,10 @@ New (2026-11-04):
 2. **Quest 66 is deliver, return, heal.** The player carries Ysolde's purge dose back to Teels.
 3. **Quest 70 stands alone.** Orin remembers the 68 ending, and Gritta and Orin nod quietly toward 68
    and 69. Stay subtle.
+4. **Bloom gets a source, modelled on the novel.** A first quest has the player track down a "fugitive"
+   for a Bloom sample and some gold. It chains into a buy-your-way-in quest that unlocks a dealer who
+   cannot otherwise be reached.
+5. **The player can let the fugitive go,** and it costs them: no pay, and the chain closes.
 
 ## 2. Quest by quest
 
@@ -63,16 +79,17 @@ Coll's account is the true one: he finds the bits in the gutters and does not kn
 lines change to say fragments wash down into the gutters, not that she sends them to him.
 
 **66 The Addict's Plight.** New steps: `start` (Teels gives wrapper 40110), `dose` (Ysolde takes the
-wrapper and gives the dose), `end` (Teels takes the dose). `escort` and `detox` are retired. The dose is
-a new item with `value: 0`, `not_salable`, not a component; Ysolde gives another if it is lost. Quest 67
-stays gated on `66-end` at Ysolde. `escort_close`, its variants and the `66-addict-fate` flag go once a
+wrapper and gives her purge), `end` (Teels takes the purge). `escort` and `detox` are retired. The purge
+is the existing Ysolde's Purge (40109); Ysolde gives another if it is lost, through the `detox` topic she
+already has. Quest 67 stays gated on `66-end` at Ysolde. `escort_close`, its variants and the `66-addict-fate` flag go once a
 save check confirms no prod save holds `66-escort` or `66-detox`; if any does, the plan adds a migration
 that moves that save to `dose`. The info topic `detox` on Ysolde is unrelated and stays.
 
 **67 The Bloom Trail.** The steps stay, and `report` goes. Item 40111 becomes Quill's own observations,
 with no wrapper and no delivery note, and his lines agree with it. Deren's lines stop treating the
 operation as already finished while the quest runs. Hints stop carrying schedules and full routes. The
-hint for the Old Quarter says to bring a light. The unread `67-entry` flag goes if nothing reads it.
+hint for the Old Quarter says to bring a light. The `67-entry` flag stays, because the Bloom chain reads
+it (section 7).
 
 **68 The Cooperage Circle.** `search` in 5720 finds the survey (item 40113). The search has to be fair
 while Toby sleeps there, which the plan's playtest checks. Orin's lines read Toby's rubbing (40112), so
@@ -130,5 +147,52 @@ editor needs the file, the plan says so and fixes the file's references instead.
 - Quest step tests in the style of `quest76_disc_steps_test.go` for 66's new shape and for 70's two
   Orin hand-ins.
 - `dialoguecheck` on the New Plymouth folders: the `escort_close` UNREACHABLE TOPIC is gone.
+- Quest step tests for both endings of the skip, and for the door: refused without the knock, open with
+  it, and the runaway's hiding place closed once her quest is over.
 - An adversarial in-game playtest closes the tier, covering 66's return walk, a search in Old Quarter
-  darkness with and without a light, the floor search while Toby sleeps, and both 68 endings before 70.
+  darkness with and without a light, the floor search while Toby sleeps, both 68 endings before 70, and
+  the Bloom chain from Marn's nod through a first dose, withdrawal and Ysolde's cure.
+
+## 7. The Bloom chain
+
+Follows the novel's Vane: a bounty hunter, a contractor from the bloodline's domestic office, and a fabric
+remnants shop with a cupboard door. Marn the draper is the game's Cade; the name Cade is taken by
+Greenford's enchanter, so it stays out. The fugitive gets a new name, not used elsewhere and not Junie.
+
+**The breadcrumb.** Marn's `bloom_undercover` line, on the undercover route only (`67-entry`), lets slip
+that the supply end pays well for people who can find things. It stays subtle, and its hint names Horst.
+A player who took the honest route with Marn never sees this chain.
+
+**Quest 64, the skip.** Offered by Horst (9344) at the gate of the watched house, gated on `67-entry`
+being undercover. He hires the player to find a runaway "thief" from a noble household.
+- `start`: Horst's offer. His opener does not say what she really is.
+- `found`: `topic_heard` on the runaway, who hides in a room a `room_gate` opens only while this quest is
+  running, with an `area` or `zone` destination that does not give the room away. Because the room closes
+  afterwards, nobody meets her again after her story is over, which keeps depth A true.
+- Two endings, by flag `64-outcome`, following quest 18's pattern:
+  - `reported`: the player tells Horst where she is, at his hand-in. He pays gold and one Bloom Wafer.
+  - `ran`: the player tells her to run, at her own topic, which ends the quest. No pay, and quest 72 never
+    opens. It cannot be retried, so the choice stands. Nothing thanks the player later.
+
+**Quest 72, the knock.** Offered by Marn, requiring `64-outcome: reported`, with a large stake through
+`chargesGold` on the offer. He teaches the knock.
+- `start`: paying Marn.
+- `behind`: going through the cupboard door out of 5523 into a new back room. A `room_gate` refuses anyone
+  without the knock. Going in the first time plays the overheard line from the novel: "three months at
+  minimum before the new one's producing at volume, if she survives the first month." The player has
+  already been paid when they work out what they did.
+- `end`: talking to the dealer, a new NPC in the back room, who also runs the shop that sells wafers.
+
+**Holding it open.** The Bloom Trade's description says its people never meet by design, so this cell
+survives quest 67's bust, and the dealer stays open afterwards. A line covers it, in Marn's or the
+dealer's voice. Quest 67's `bloom_undercover` hint, not Marn's stock, is the only route in.
+
+**Numbers, for the plan to propose with evidence and the owner to set:** Horst's gold, the stake and the
+wafer's price. The wafer stays `not_salable`, so buying from the dealer cannot be resold into a gold loop.
+Bloom's knobs move into `config.yaml` at their current values, per `dogmud-balance-config`, with no
+behaviour change. Nobody on prod has played the mutation boost, so the playtest reports how fast a player
+can advance on it, and the owner reviews that before deploy.
+
+**The hard lines.** The player can reach Bloom only through a deliberate choice at each of three points:
+the shady line with Marn, reporting the runaway, and paying the stake. The cure stays open to everyone, and
+the addiction text assumes no MUD experience, because this system has never met a real player.
