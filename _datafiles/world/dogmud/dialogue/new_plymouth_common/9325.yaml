@@ -18,6 +18,22 @@ opener:
   hints: Choose a line below if you would like to hear about her tenants, about
     the condemned upper floors, or about the bloodline's tax collector.
 topics:
+- key: q64_brisk
+  kind: info
+  label: Have you taken in a runaway?
+  text: I have fourteen tenants and I will not name two of them. No visitor goes past
+    the first landing after last bell, and nobody goes up to the condemned floors at
+    all. There is a chair across that stair. If you are who I think you are I cannot
+    stop you moving it, and I will remember that you did.
+  hints: She looked up at the stair past the first landing a moment too long. The
+    condemned floor is up from her block. Type up.
+  marked: true
+  questRequired:
+  - 64-start
+  questExcluded:
+  - 64-found
+  - 64-end
+  moodChange: cautious
 - key: tenants
   kind: info
   label: How many tenants do you keep?

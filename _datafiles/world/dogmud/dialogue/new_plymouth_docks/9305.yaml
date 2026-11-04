@@ -33,10 +33,11 @@ topics:
     you understand what it is, and then we can talk about where the arrangement
     runs. It doesn't come from this shop. The supply end is an address in the Old
     Quarter, on Lintel Street. That's where it starts. Who holds that house, I
-    couldn't tell you.
-  hints: Marn nods at a wax-wrapped square under the remnants, like Teels's wrapper.
-    He takes you for a customer. The auctioneer Falk in the Merchant Quarter knows
-    who holds that house. Type talk falk.
+    couldn't tell you. The people at that end pay well for anyone who can find
+    things, if that is a trade you have.
+  hints: Marn nods at a wax-wrapped square under the remnants, and takes you for a
+    customer. Horst, who keeps the Watched House Gate, hires people who find
+    things. For the address, ask Falk. Type talk falk.
   marked: true
   questRequired:
   - 67-start

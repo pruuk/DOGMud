@@ -1,0 +1,74 @@
+questid: 64
+name: The Skip
+description: >-
+  Horst, at the gate of the watched house, pays people who can find things. A
+  thief has run from a noble household and gone to ground in the Common Quarter.
+  He wants to know where she sleeps.
+secret: false
+
+flags:
+  - key: outcome
+    values: [reported, ran]
+    description: "Whether the player told Horst where the runaway hides, or told her to run"
+
+steps:
+  - id: start
+    destination:
+      zone: New Plymouth Common
+    description: >-
+      Horst wants a runaway found: a young woman named Odile, a thief from a
+      noble household, he says. She went to ground in the Common Quarter, among
+      people who do not ask for papers.
+    hint: >-
+      She is somewhere in the Common Quarter. Mother Brisk keeps tenants she will
+      not name, at her block off Tenement Row. Type talk brisk.
+  - id: found
+    destination:
+      mob: 9344  # follow Horst (schedule np_merchant_horst)
+      room: 5820  # fallback when Horst is not spawned
+    description: >-
+      You found Odile on the condemned floor above Mother Brisk's block. She is
+      not what Horst said she was. You can tell her to run, or you can tell Horst
+      where she is.
+    hint: >-
+      Tell her to run, and you are paid nothing. Tell Horst, and he pays. Neither
+      can be undone. Type talk odile or talk horst.
+  - id: end
+    description: >-
+      The matter of the runaway is settled, one way or the other.
+
+rewards:
+  actor: ""
+  observer: ""
+
+triggers:
+  # The stair above Mother Brisk's block opens only while this quest runs. Sight
+  # neutral, and it names no one, so it reads the same to anyone who tries it.
+  - event: room_gate
+    room: 5625
+    conditions:
+      missing: ["64-start"]
+    actions:
+      - actor: >-
+          A grey-haired woman on the first landing looks at you and does not move
+          out of the way. The floors above are condemned, she says, and the chair
+          across the stair stays where it is.
+  - event: room_gate
+    room: 5625
+    conditions:
+      has: ["64-end"]
+    actions:
+      - actor: >-
+          A grey-haired woman on the first landing looks at you and does not move
+          out of the way. The floors above are condemned, she says, and the chair
+          across the stair stays where it is.
+
+  # found: hearing Odile's "q64_found" topic.
+  - event: topic_heard
+    mob: 9801
+    topic: q64_found
+    conditions:
+      has: ["64-start"]
+      missing: ["64-found"]
+    actions:
+      - grant: "64-found"

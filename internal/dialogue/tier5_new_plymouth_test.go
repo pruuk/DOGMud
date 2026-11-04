@@ -96,6 +96,27 @@ func TestTier5OpenersPromiseOnlyTheHandInOnTheMenu(t *testing.T) {
 			agree("handed the item short of the step", state(c.before, true, true), false)
 		}
 	}
+
+	// A hand-in that takes no item: the promise follows its step and what must be
+	// heard first. Hearing Odile's story is what grants the step her opener reads.
+	// Horst's terms have no step of their own, so his opener names the terms.
+	for _, c := range []struct {
+		file, topic, promise string
+		onStep               []string
+		openerPromises       bool
+	}{
+		{"new_plymouth_common/9801.yaml", "q64_run", "choose The Skip below", []string{"64-start", "64-found"}, true},
+		{"new_plymouth_merchant/9344.yaml", "q64_report", "choose The Skip below", []string{"64-start", "64-found"}, false},
+	} {
+		df := loadShippedDialogue(t, c.file)
+		_, hints := df.OpenerFor(heldState(c.onStep...))
+		require.Equal(t, c.openerPromises, strings.Contains(hints, c.promise), "%s opener: %q", c.file, hints)
+		heard := heldState(c.onStep...)
+		heard.HasHeard = func(string) bool { return true }
+		require.Contains(t, menuKeys(df, heard), c.topic, c.file)
+		require.NotContains(t, menuKeys(df, heldState(c.onStep...)), c.topic, "%s: gated on hearing first", c.file)
+		require.NotContains(t, menuKeys(df, heldState(c.onStep[:1]...)), c.topic, "%s: gated on the step", c.file)
+	}
 }
 
 // Ysolde does not name who sells it (she says she does not know). The draper
@@ -112,7 +133,7 @@ func TestTier5YsoldeTakesTheDraperFromThePlayer(t *testing.T) {
 // Every hint on the tier 5 quests' NPCs fits the cap, with no schedule in it.
 func TestTier5HintsAreShort(t *testing.T) {
 	for _, file := range []string{
-		"new_plymouth_common/9320.yaml", "new_plymouth_common/9323.yaml",
+		"new_plymouth_common/9320.yaml", "new_plymouth_common/9323.yaml", "new_plymouth_common/9325.yaml", "new_plymouth_common/9801.yaml",
 		"new_plymouth_crafting/9332.yaml", "new_plymouth_crafting/9338.yaml",
 		"new_plymouth_docks/9300.yaml", "new_plymouth_docks/9305.yaml", "new_plymouth_docks/9316.yaml", "new_plymouth_docks/9392.yaml",
 		"new_plymouth_merchant/9344.yaml", "new_plymouth_merchant/9347.yaml", "new_plymouth_merchant/9349.yaml",
