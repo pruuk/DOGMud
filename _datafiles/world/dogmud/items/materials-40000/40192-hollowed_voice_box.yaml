@@ -14,7 +14,7 @@ type: object
 subtype: mundane
 component_tag: hollowed-voice-box
 weight: 0.3
-value: 1300
+value: 650
 rarity_tier: 82
 is_component: true
 material_tier: 5

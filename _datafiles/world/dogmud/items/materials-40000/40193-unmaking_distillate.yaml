@@ -15,7 +15,7 @@ type: object
 subtype: mundane
 component_tag: unmaking-distillate
 weight: 0.2
-value: 1350
+value: 675
 rarity_tier: 82
 is_component: true
 material_tier: 5

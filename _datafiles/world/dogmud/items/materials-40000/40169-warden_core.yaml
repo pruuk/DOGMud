@@ -15,7 +15,7 @@ type: object
 subtype: mundane
 component_tag: warden-core
 weight: 0.6
-value: 1400
+value: 700
 rarity_tier: 84
 is_component: true
 restricted: true

@@ -16,7 +16,7 @@ type: object
 subtype: mundane
 component_tag: grey-relic
 weight: 1.0
-value: 2500
+value: 1250
 rarity_tier: 90
 is_component: true
 material_tier: 5
