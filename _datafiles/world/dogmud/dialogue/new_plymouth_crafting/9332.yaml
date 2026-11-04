@@ -13,10 +13,9 @@ opener:
   text: Maps, mostly, and a few curios from estates I have bought up. Old pages,
     keepsakes, the odd printed rhyme. The best maps were made by the man who kept
     the shop across the Inkwalk, and those stay off the counter.
-  hints: Choose a line below to learn about his maps and curios, about Edvar the
-    mapmaker whose shop across the lane stands shuttered, or about the old
-    questions this quarter raises. He keeps glancing up the lane toward the
-    shuttered cooperage as he talks. To see what he sells, type list.
+  hints: Choose a line below on his maps, Edvar the mapmaker or this quarter's old
+    questions. He keeps glancing up the lane toward the shuttered cooperage. To
+    see what he sells, type list.
   variants:
   - questRequired:
     - 70-start
@@ -37,8 +36,9 @@ opener:
       open to you.
   - questRequired:
     - 68-end
-    text: Toby has re-cut the mark beside the cooperage door, and it reads as a
-      working shop again. The circle remembers who stood with it. Thank you.
+    text: Toby has re-cut the mark on the inner door, where an inspector looks and
+      the street does not, and it reads as a working shop again. The circle
+      remembers who stood with it. Thank you.
     hints: Choose a line below if you want to hear about his maps and curios,
       about Edvar the mapmaker, or about the old questions this quarter raises.
   # 68-choice without the survey: old saves made the choice step before the
@@ -51,8 +51,7 @@ opener:
     text: The inspection is days away. But where is Edvar's survey? Whichever way
       you choose, the survey goes with the choice.
     hints: Edvar's survey is still under the loose floorboard on the Cooperage
-      Floor. From Orin's Bookstall, go west to the Inkwalk, north twice to the
-      cooperage front, then north onto the Cooperage Floor. Type look floorboard.
+      Floor, north of the cooperage front. Type search there.
   - questRequired:
     - 68-choice
     questExcluded:
@@ -61,6 +60,26 @@ opener:
     hints: To hear what standing with the circle means, choose his line below.
       Clerk Vell, in the Permit Office in the Merchant Quarter, takes the survey
       for the bloodline. Neither choice can be undone.
+  # A survey lost on the way here: the board gives another.
+  - questRequired:
+    - 68-survey
+    questExcluded:
+    - 68-choice
+    - 68-end
+    itemExcluded: 40113
+    text: Your hands are empty. Where is Edvar's survey?
+    hints: Edvar's survey is under the loose floorboard on the Cooperage Floor,
+      north of the cooperage front. Type search there.
+  # Toby's rubbing is read here, and nothing takes it from the player.
+  - questRequired:
+    - 68-survey
+    questExcluded:
+    - 68-choice
+    - 68-end
+    carriesItem: 40112
+    text: You have Edvar's hand, and Toby's rubbing with it. Asha's name, and the line
+      she never finished. He keeps that bench as if she were coming back.
+    hints: Choose to tell Orin you found Edvar's survey.
   - questRequired:
     - 68-survey
     questExcluded:
@@ -74,17 +93,16 @@ opener:
     - 68-survey
     - 68-end
     text: Toby gave you the rubbing, then. Did he tell you about the survey?
-    hints: Edvar's survey is under a loose floorboard on the Cooperage Floor. From
-      Orin's Bookstall, go west to the Inkwalk, north twice to the cooperage
-      front, then north onto the Cooperage Floor. Type look floorboard.
+    hints: Edvar's survey is under a loose floorboard on the Cooperage Floor, north
+      of the cooperage front. Type search there.
   - questRequired:
     - 68-start
     questExcluded:
     - 68-evidence
     - 68-end
     text: Have you been to the cooperage yet? Find Toby.
-    hints: From Orin's Bookstall, go west to the Inkwalk, then north twice to the
-      Abandoned Cooperage. Toby keeps it by day. Type talk toby.
+    hints: The Abandoned Cooperage is north of Craftwell Square, up the lane from
+      the Inkwalk. Find Toby. Type talk toby.
 topics:
 - key: orinhandoff
   kind: handin
@@ -123,14 +141,16 @@ topics:
 - key: q68_choice
   kind: info
   label: I found Edvar's survey under the floor.
-  text: So it is true. The tools are kept, the mark is clean, the circle did not
-    all leave, and Edvar's last survey survived them. Then you know what we are. We
-    keep what the founding story leaves out, and we pay for it quietly. Clerk Vell
-    has filed to take the cooperage as derelict. The inspection is days away. You
-    can help us hold it. Leave the survey in the circle's keeping, and Toby
-    re-cuts the guild mark beside the door so it reads as a working shop. Or you
-    can take the survey to Vell, and be paid for it. That is a real choice, and
-    it is yours. Ask me what standing with us would cost you before you make it.
+  text: 'So it is true. The tools are kept, the circle did not all leave, and
+    Edvar''s last survey survived them. Toby''s rubbing says the same, if you still
+    have it: Asha''s name, and the line she never finished. Then you know what we
+    are. We keep what the founding story leaves out, and we pay for it quietly.
+    Clerk Vell has filed to take the cooperage as derelict. The inspection is days
+    away. You can help us hold it. Leave the survey in the circle''s keeping, and
+    Toby re-cuts the guild mark on the inner door so it reads as a working shop to
+    whoever inspects it. Or you can take the survey to Vell, and be paid for it.
+    That is a real choice, and it is yours. Ask me what standing with us would cost
+    you before you make it.'
   hints: To hear what standing with the circle means, choose his line below.
     Clerk Vell, in the Permit Office in the Merchant Quarter, takes the survey
     for the bloodline. Neither choice can be undone.
@@ -140,6 +160,7 @@ topics:
   questExcluded:
   - 68-choice
   - 68-end
+  carriesItem: 40113
   moodChange: cautious
 # Quest 68's circle choice (spec R28): the warning must be heard first
 # (heardRequired), and both topics hide once the choice is made (68-end).
@@ -153,22 +174,23 @@ topics:
     will ask who helped. Your name will come up. The bloodline's domestic office
     does not forget a name, and it does not forgive one. I can pay you a little,
     and give you a copy of the map. Once it is done, it cannot be undone.
-  hints: Standing with the circle gives Edvar's survey to the circle for good and
-    sets the bloodline's office against you. It cannot be undone. If you are sure,
-    choose The Cooperage Circle below.
+  hints: Standing with the circle gives it the survey for good and sets the
+    bloodline's office against you. It cannot be undone. If you are sure, with the
+    survey in your pack, choose The Cooperage Circle.
   marked: true
   questRequired:
   - 68-choice
   questExcluded:
   - 68-end
+  carriesItem: 40113
 - key: circle_choice
   kind: handin
   quest: 68
   label: The Cooperage Circle
   playerLine: I stand with the circle, for good. Keep the survey.
   text: Then it is done, and it stays done. The survey stays with the circle, and
-    Toby re-cuts the mark tonight so it reads as a working shop. Here, a copy of
-    Edvar's map in my own hand. The original is below, where the canal meets the
+    Toby re-cuts the mark on the inner door tonight, where an inspector looks and
+    the street does not. Here, a copy of Edvar's map in my own hand. The original is below, where the canal meets the
     old quarter. Someone outside the circle should know it is real. And from today
     the bloodline's office knows your name. Walk carefully.
   hints: You gave Edvar's survey to the circle. The choice is made and cannot be

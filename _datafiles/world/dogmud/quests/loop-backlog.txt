@@ -8,7 +8,6 @@ end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
 hint 21 step start
-hint-length 68 step choice
 hint-length 69 step gallery
 hint-length 69 step reading
 hint-length 69 step rubbing
@@ -20,10 +19,6 @@ hint-length 71 step start
 hint-length 71 step vell
 one-action 1000000 step end:none
 one-action 1000000 step givegold:none
-one-action 68 quest 68 trigger room_interact room=5720 noun=floorboard grants=68-survey #2:cond
-one-action 68 quest 68 trigger room_interact room=5720 noun=floorboard grants=68-survey:cond
-one-action 68 quest 68 trigger room_interact room=5720 noun=loose floorboard grants=68-survey #2:cond
-one-action 68 quest 68 trigger room_interact room=5720 noun=loose floorboard grants=68-survey:cond
 one-action 69 mob 9360 topic give_40116:prev
 one-action 70 mob 9332 topic orinhandoff:prev
 one-action 70 quest 70 trigger room_interact room=6037 noun=symbol grants=70-witness:cond

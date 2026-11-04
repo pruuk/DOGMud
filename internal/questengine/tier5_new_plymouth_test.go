@@ -17,6 +17,7 @@ func TestTier5QuestsHaveNoTypedNouns(t *testing.T) {
 		"65-the_street_sweepers_secret.yaml": 65,
 		"66-the_addicts_plight.yaml":         66,
 		"67-the_bloom_trail.yaml":            67,
+		"68-the_cooperage_circle.yaml":       68,
 	} {
 		for _, tr := range loadShippedQuest(t, file, id).Triggers {
 			require.NotEqual(t, "room_interact", tr.Event, "quest %d", id)
@@ -132,4 +133,54 @@ func TestQuest65TheSeamIsFoundBySearch(t *testing.T) {
 	lost := newQuestWalker(q).at("discover")
 	lost.notify("command", tier5Search(foundation))
 	require.Equal(t, []int{lump}, lost.ctx.givenItems)
+}
+
+// A search on the Cooperage Floor finds the survey at any hour: Toby may be
+// asleep on the cot beside it. Old saves need no catch-up: a save holding the
+// survey at 68-evidence takes a harmless spare, and one at 68-choice without it
+// takes the recovery.
+func TestQuest68TheSurveyIsFoundBySearch(t *testing.T) {
+	const floor, survey = 5720, 40113
+	q := loadShippedQuest(t, "68-the_cooperage_circle.yaml", 68)
+	require.NoError(t, q.Validate())
+	w := newQuestWalker(q).at("start")
+	w.notify("command", tier5Search(floor))
+	require.Equal(t, "start", w.p.current, "Toby's word comes first")
+	require.Empty(t, w.ctx.givenItems)
+	w = newQuestWalker(q).at("evidence")
+	w.notify("command", tier5Search(floor))
+	require.Equal(t, "survey", w.p.current)
+	require.Equal(t, []int{survey}, w.ctx.givenItems)
+	old := newQuestWalker(q).at("choice")
+	old.notify("command", tier5Search(floor))
+	require.Equal(t, "choice", old.p.current)
+	require.Equal(t, []int{survey}, old.ctx.givenItems)
+	done := newQuestWalker(q).at("end")
+	done.notify("command", tier5Search(floor))
+	require.Empty(t, done.ctx.givenItems, "no survey after the choice")
+
+	// The save the removed catch-up triggers were for: it took the survey before
+	// the survey step existed, and one search still moves it on.
+	early := newQuestWalker(q).at("evidence")
+	early.p.items[survey] = true
+	early.notify("command", tier5Search(floor))
+	require.Equal(t, "survey", early.p.current)
+
+	held := newQuestWalker(q).at("choice")
+	held.p.items[survey] = true
+	held.notify("command", tier5Search(floor))
+	require.Empty(t, held.ctx.givenItems, "no spare once the step is past and one is held")
+}
+
+// Hints are at most 200 characters and name no route: the quest log's guide line
+// gives the way.
+func TestQuest68StepHintsAreShortAndGiveNoRoute(t *testing.T) {
+	q := loadShippedQuest(t, "68-the_cooperage_circle.yaml", 68)
+	for _, s := range q.Steps {
+		require.LessOrEqual(t, len(s.Hint), 200, s.Id)
+		require.NotContains(t, s.Hint, "twice", s.Id)
+		require.NotContains(t, s.Hint, "three times", s.Id)
+		require.NotContains(t, s.Hint, "by day", s.Id)
+		require.NotContains(t, s.Hint, "look floorboard", s.Id)
+	}
 }

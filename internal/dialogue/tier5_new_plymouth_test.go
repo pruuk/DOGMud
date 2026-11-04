@@ -106,6 +106,7 @@ func TestTier5YsoldeTakesTheDraperFromThePlayer(t *testing.T) {
 func TestTier5HintsAreShort(t *testing.T) {
 	for _, file := range []string{
 		"new_plymouth_common/9320.yaml", "new_plymouth_common/9323.yaml",
+		"new_plymouth_crafting/9332.yaml", "new_plymouth_crafting/9338.yaml",
 		"new_plymouth_docks/9300.yaml", "new_plymouth_docks/9305.yaml", "new_plymouth_docks/9316.yaml", "new_plymouth_docks/9392.yaml",
 		"new_plymouth_noble/9369.yaml", "new_plymouth_old_quarter/9379.yaml", "new_plymouth_old_quarter/9381.yaml",
 	} {
@@ -165,4 +166,80 @@ func TestTier5GrittaDoesNotSendColl(t *testing.T) {
 	coll := loadShippedDialogue(t, "new_plymouth_common/9320.yaml")
 	require.NotContains(t, menuKeys(coll, carrying(heldState("65-start"), 40101)), "sweeperhandoff")
 	require.Contains(t, menuKeys(coll, carrying(heldState("65-start", "65-discover"), 40101)), "sweeperhandoff")
+}
+
+func TestTier5TheMarkIsReCutWhereNobodyLooks(t *testing.T) {
+	orin := loadShippedDialogue(t, "new_plymouth_crafting/9332.yaml")
+	require.Contains(t, orin.FindTopic("circle_choice").Text, "inner door")
+	require.Contains(t, orin.FindTopic("q68_choice").Text, "rubbing")
+	text, _ := orin.OpenerFor(withFlags(heldState("68-start", "68-evidence", "68-survey", "68-choice", "68-end"), map[string]string{"68-allegiance": "circle"}))
+	require.Contains(t, text, "inner door")
+	text, _ = orin.OpenerFor(carrying(heldState("68-start", "68-evidence", "68-survey"), 40112, 40113))
+	require.Contains(t, text, "Asha")
+	toby := loadShippedDialogue(t, "new_plymouth_crafting/9338.yaml")
+	text, _ = toby.OpenerFor(withFlags(heldState("68-start", "68-evidence", "68-survey", "68-choice", "68-end"), map[string]string{"68-allegiance": "circle"}))
+	require.Contains(t, text, "inner door")
+}
+
+// Orin's lines about the choice follow the survey, as Vell's do: "You have it"
+// and "choose his line below" are said only to a player holding it, and the hint
+// naming the hand-in names its real label and says where the survey must be.
+func TestTier5OrinsChoiceFollowsTheSurvey(t *testing.T) {
+	const survey = 40113
+	orin := loadShippedDialogue(t, "new_plymouth_crafting/9332.yaml")
+	onSurvey := []string{"68-start", "68-evidence", "68-survey"}
+	onChoice := append(append([]string{}, onSurvey...), "68-choice")
+
+	// At the survey step.
+	require.Contains(t, menuKeys(orin, carrying(heldState(onSurvey...), survey)), "q68_choice")
+	text, hints := orin.OpenerFor(carrying(heldState(onSurvey...), survey))
+	require.Contains(t, text, "You have it")
+	require.Contains(t, hints, "Choose to tell Orin")
+	require.NotContains(t, menuKeys(orin, heldState(onSurvey...)), "q68_choice")
+	text, hints = orin.OpenerFor(heldState(onSurvey...))
+	require.NotContains(t, text, "You have")
+	require.Contains(t, hints, "Type search there")
+
+	// At the choice.
+	require.Contains(t, menuKeys(orin, carrying(heldState(onChoice...), survey)), "circle_terms")
+	_, hints = orin.OpenerFor(carrying(heldState(onChoice...), survey))
+	require.Contains(t, hints, "choose his line below")
+	require.NotContains(t, menuKeys(orin, heldState(onChoice...)), "circle_terms")
+	_, hints = orin.OpenerFor(heldState(onChoice...))
+	require.NotContains(t, hints, "choose his line below")
+	require.Contains(t, hints, "Type search there")
+
+	// The hand-in opens after the terms, and only for a survey a topic can take.
+	heard := func(ps *PlayerState) *PlayerState {
+		ps.HasHeard = func(k string) bool { return k == HeardKey(orin.MobId, "circle_terms") }
+		return ps
+	}
+	require.Contains(t, menuKeys(orin, heard(carrying(heldState(onChoice...), survey))), "circle_choice")
+	inABag := heard(heldState(onChoice...))
+	inABag.CarriesItem = func(id int) bool { return id == survey }
+	require.Contains(t, menuKeys(orin, inABag), "circle_terms")
+	require.NotContains(t, menuKeys(orin, inABag), "circle_choice")
+	terms := orin.FindTopic("circle_terms").Hints
+	require.Contains(t, terms, orin.FindTopic("circle_choice").Label, "the hint names the real line")
+	require.Contains(t, terms, "in your pack", "the hint says what opens the line")
+}
+
+// A step's hint says what to do where the player stands. The quest log's guide
+// line gives the way, and a sleeping Toby is read from the talk refusal.
+func TestTier5CooperageHintsGiveNoRouteAndAskForASearch(t *testing.T) {
+	for _, file := range []string{"new_plymouth_crafting/9332.yaml", "new_plymouth_crafting/9338.yaml"} {
+		df := loadShippedDialogue(t, file)
+		hints := []string{df.Opener.Hints}
+		for _, v := range df.Opener.Variants {
+			hints = append(hints, v.Hints)
+		}
+		for _, tp := range df.Topics {
+			hints = append(hints, tp.Hints)
+		}
+		for _, h := range hints {
+			for _, banned := range []string{"twice", "three times", "by day", "look floorboard"} {
+				require.NotContains(t, h, banned, file)
+			}
+		}
+	}
 }
