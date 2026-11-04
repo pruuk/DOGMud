@@ -78,3 +78,70 @@ func TestApply_ResumePaysNoGold(t *testing.T) {
 	require.True(t, df.Apply(purse, p.state(false)))
 	require.Equal(t, 7, p.paid, "a first accept pays")
 }
+
+// C6: a resume charges nothing, so it asks for no gold. A player who paid, set
+// the quest aside and spent their gold can still take it back up. A first
+// accept still needs the price in hand.
+func TestEligible_ResumeAsksForNoGold(t *testing.T) {
+	df := &DialogueFile{MobId: 1}
+	paid := &Topic{Key: "o", Kind: KindOffer, Quest: 10, Effects: Effects{GrantsQuest: "10-start", ChargesGold: 5},
+		Gates: Gates{GoldRequired: 5}}
+	state := func(shelved bool) *PlayerState {
+		return &PlayerState{
+			QuestOpen: func(int) bool { return true },
+			HasQuest:  func(string) bool { return false },
+			HasGold:   func(int) bool { return false },
+			Shelved:   func(int) bool { return shelved },
+		}
+	}
+	require.False(t, df.Eligible(paid, state(false)), "a first accept needs the price")
+	require.True(t, df.Eligible(paid, state(true)), "a resume does not")
+}
+
+// The whole round of a stake, against a real purse: too little hides the offer
+// and takes nothing, paying takes it once, abandoning gives nothing back, and
+// the resume is open to an empty purse and neither charges nor pays.
+func TestStakedOffer_AbandonAndResume(t *testing.T) {
+	df := &DialogueFile{MobId: 1}
+	stake := &Topic{Key: "o", Kind: KindOffer, Quest: 10, Effects: Effects{GrantsQuest: "10-start", ChargesGold: 500},
+		Gates: Gates{GoldRequired: 500}}
+
+	gold, granted, shelved := 499, 0, false
+	ps := &PlayerState{
+		QuestOpen: func(int) bool { return true },
+		HasQuest:  func(string) bool { return false },
+		HasGold:   func(n int) bool { return gold >= n },
+		ChargeGold: func(n int) bool {
+			if gold < n {
+				return false
+			}
+			gold -= n
+			return true
+		},
+		GiveGold:  func(n int) { gold += n },
+		GiveQuest: func(string) { granted++ },
+		Shelved:   func(int) bool { return shelved },
+	}
+
+	require.False(t, df.Eligible(stake, ps), "short of the price, the offer stays hidden")
+	require.False(t, df.Apply(stake, ps), "and nothing is free even if the offer were played")
+	require.Equal(t, 499, gold)
+	require.Equal(t, 0, granted)
+
+	gold = 500
+	require.True(t, df.Eligible(stake, ps))
+	require.True(t, df.Apply(stake, ps))
+	require.Equal(t, 0, gold, "the first accept takes the stake")
+	require.Equal(t, 1, granted)
+
+	shelved = true
+	require.Equal(t, 0, gold, "setting it aside gives nothing back")
+	require.True(t, df.Eligible(stake, ps), "an empty purse can take it back up")
+	require.True(t, df.Apply(stake, ps))
+	require.Equal(t, 0, gold, "no refund")
+	require.Equal(t, 2, granted)
+
+	gold = 800
+	require.True(t, df.Apply(stake, ps))
+	require.Equal(t, 800, gold, "no second charge")
+}
