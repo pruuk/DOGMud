@@ -37,6 +37,10 @@ func TestBloomWaferShelfIsCapped(t *testing.T) {
 	if got := shops.EffectiveMaxStock(bloomWaferId, mob.StockMultiplier); got != 5 {
 		t.Errorf("the wafer's shelf cap is %d, want 5", got)
 	}
+	// The owner's figure, and every price the plan worked out comes from it.
+	if spec := items.GetItemSpec(bloomWaferId); spec == nil || spec.Value != 120 {
+		t.Errorf("the wafer's value: %+v, want 120", spec)
+	}
 
 	tier10 := regexp.MustCompile(`(?m)^rarity_tier:\s*10\s*$`)
 	found := map[string]bool{}

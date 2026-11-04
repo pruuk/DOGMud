@@ -1209,7 +1209,7 @@ Tier semantics for materials (item IDs 40000+):
 | 40   | Standard        | 40                  | steel ingot, leather strip, healer's root |
 | 30   | Regional        | 30                  | lake-iron nodule, blood-moss, wild hare meat |
 | 20   | Uncommon        | 20                  | gold wire, mutation catalyst, Stillwater pearl |
-| 10   | Rare (reserved) | 10                  | future: legendary materials |
+| 10   | Rare            | 10                  | Bloom Wafer only, so `RestockCadenceTier10Days` is its own clock (`guards/tier5_bloom_shop_test.go`) |
 
 Untiered items (no `rarity_tier`) are quest tokens, lore items, or
 anything that should not flow through the caravan/forager pipeline.

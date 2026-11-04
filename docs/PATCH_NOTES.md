@@ -1,5 +1,14 @@
 # DOGMud Patch Notes
 
+## 2026-11-04: Hard to put down
+
+- The Bloom Wafer is now out there in the world, for those who go looking for it and
+  will pay what it costs. It is not like a potion. It changes you, it is hard to put
+  down, and when you stop, the need comes for you. The healer Ysolde in the Common
+  Quarter has a harsh cure.
+- A wafer can no longer change you past the most your body can hold.
+- Looking or scanning through a way that would turn you back now stops there too.
+
 ## 2026-11-04: Older than the city
 
 - The Cooperage Circle, The Gallery Cipher, The Pre-Founding Web and The Tribute are

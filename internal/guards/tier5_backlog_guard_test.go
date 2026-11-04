@@ -13,7 +13,7 @@ import (
 
 // The #375 phase 7 tier 5 pass (New Plymouth). A loop finding on one of its
 // quests is fixed in content, never listed.
-var tier5Quests = map[int]bool{63: true, 65: true, 66: true, 67: true, 68: true, 69: true, 70: true, 71: true}
+var tier5Quests = map[int]bool{63: true, 64: true, 65: true, 66: true, 67: true, 68: true, 69: true, 70: true, 71: true, 102: true}
 
 func tier5BacklogLines(t *testing.T, data []byte) []string {
 	t.Helper()
