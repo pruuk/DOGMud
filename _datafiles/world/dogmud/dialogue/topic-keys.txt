@@ -778,9 +778,7 @@
 9322.gossip
 9323.bloom
 9323.detox
-9323.escort_close
 9323.healing
-9323.q67_grant
 9323.teels_q66
 9323.temple
 9323.wrapperhandoff
@@ -931,6 +929,8 @@
 9391.temple
 9392.lost_wrapper
 9392.plea
+9392.purge_handoff
+9392.q67_grant
 9394.flock
 9394.valley
 9394.water
@@ -1479,7 +1479,11 @@
 # trail runs east and the Threshold-Keeper takes the hand-in (#667).
 9516.disc_in
 9516.disc_quest
+# Quest 66 ends at Teels (#375 phase 7 tier 5): a save at 66-escort is renamed to
+# 66-dose, so Ysolde's hand-in for it can never be chosen.
+9323.escort_close
 # renamed
+9323.q67_grant -> 9392.q67_grant
 9465.q74_grant -> 9441.undercroft_offer
 9117.vein_offer -> 9116.vein_offer
 9112.wash_offer -> 9108.wash_offer

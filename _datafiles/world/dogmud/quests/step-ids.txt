@@ -261,9 +261,8 @@
 65-discover
 65-end
 65-start
-66-detox
+66-dose
 66-end
-66-escort
 66-start
 67-delivery
 67-end
@@ -403,3 +402,5 @@
 4-investigate -> 4-start
 63-report -> 63-evidence
 65-report -> 65-discover
+66-escort -> 66-dose
+66-detox -> 66-dose

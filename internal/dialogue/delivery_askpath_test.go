@@ -125,9 +125,14 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 		},
 		{
 			name: "Q66 Addict's Plight — wrapper to Ysolde", file: "../../_datafiles/world/dogmud/dialogue/new_plymouth_common/9323.yaml",
-			// The wrapper hand-in completes the quest: the old ask route
-			// granted 66-escort, which nothing ever completed (9323.yaml).
-			mobId: 9323, heldToken: "66-start", grantToken: "66-end", itemId: 40110, topic: "wrapper",
+			// Ysolde takes the wrapper and hands over her purge; a mid step, so
+			// the topic_heard trigger grants it.
+			mobId: 9323, heldToken: "66-start", grantToken: "66-dose", itemId: 40110, topic: "wrapper",
+			viaTopicHeard: true, givesItem: 40109,
+		},
+		{
+			name: "Q66 Addict's Plight — purge to Teels (chain->end)", file: "../../_datafiles/world/dogmud/dialogue/new_plymouth_docks/9392.yaml",
+			mobId: 9392, heldToken: "66-dose", grantToken: "66-end", itemId: 40109, topic: "purge",
 		},
 		{
 			name: "Q67 Bloom Trail — case-file to Constable (chain->end, rep)", file: "../../_datafiles/world/dogmud/dialogue/new_plymouth_docks/9316.yaml",

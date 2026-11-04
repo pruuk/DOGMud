@@ -50,6 +50,40 @@ func TestTier5RemovedStepsAreRenamed(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "63-evidence", m.Renamed["63-report"])
 	require.Equal(t, "65-discover", m.Renamed["65-report"])
+	require.Equal(t, "66-dose", m.Renamed["66-escort"])
+	require.Equal(t, "66-dose", m.Renamed["66-detox"])
+}
+
+// Quest 66 is deliver, return, heal (owner ruling 2): Ysolde takes the wrapper
+// and gives her purge, and Teels takes the purge.
+func TestQuest66DeliverReturnHeal(t *testing.T) {
+	const ysolde = 9323
+	q := loadShippedQuest(t, "66-the_addicts_plight.yaml", 66)
+	require.Equal(t, []string{"start", "dose", "end"}, newLinearPlayer(q).steps)
+	require.NoError(t, q.Validate())
+	require.Empty(t, q.Flags, "66-addict-fate went with escort_close")
+
+	w := newQuestWalker(q).at("start")
+	w.notify("topic_heard", EventDetails{MobId: ysolde, Topic: "bloom"})
+	require.Equal(t, "start", w.p.current)
+	w.notify("topic_heard", EventDetails{MobId: ysolde, Topic: "wrapperhandoff"})
+	require.Equal(t, "dose", w.p.current)
+
+	y := loadShippedDialogue(t, "new_plymouth_common", "9323.yaml")
+	in := y.FindTopic("wrapperhandoff")
+	require.Equal(t, 40110, in.RequiresItem)
+	require.Equal(t, 40109, in.GivesItem)
+	require.Empty(t, in.GrantsQuest, "a mid step is a topic_heard trigger")
+	require.Nil(t, y.FindTopic("escort_close"))
+	require.NotNil(t, y.FindTopic("detox"), "her info topic stays, and replaces a lost purge")
+
+	teels := loadShippedDialogue(t, "new_plymouth_docks", "9392.yaml")
+	out := teels.FindTopic("purge_handoff")
+	require.Equal(t, 40109, out.RequiresItem)
+	require.Equal(t, []string{"66-dose"}, out.QuestRequired)
+	require.Equal(t, "66-end", out.GrantsQuest)
+	require.Equal(t, []string{"66-end"}, teels.FindTopic("q67_grant").QuestRequired)
+	require.Nil(t, y.FindTopic("q67_grant"), "C1: the offer moved to Teels")
 }
 
 func TestQuest65TheSeamIsFoundBySearch(t *testing.T) {

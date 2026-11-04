@@ -25,36 +25,46 @@ opener:
       pointed somewhere that makes sense. The Bloom trail is closed.
   - questRequired:
     - 66-end
-    text: I know. She came down to the wharf and saw to me. The purge holds, for
-      now. The source is still running, and I know it is. I'm not going back. I
-      just know it is still there.
-    hints: Teels seems steadier, but clear about what the purge cannot fix while
-      the Bloom still flows from somewhere on the docks.
-  # A save at 66-escort: Ysolde already has the wrapper (escort_close on 9323).
+    questExcluded:
+    - 67-start
+    text: You came back. Most don't. The purge holds, for now. The source is still
+      running, and I know it is. I'm not going back. I just know it is still there.
+    hints: If you want to follow the Bloom to whoever sells it, choose The Bloom Trail
+      below.
   - questRequired:
-    - 66-escort
+    - 66-end
+    text: You came back. Most don't. The purge holds, for now. The source is still
+      running, and I know it is. I'm not going back. I just know it is still there.
+    hints: Teels seems steadier, but clear about what the purge cannot fix while the
+      Bloom still flows from somewhere on the docks.
+  - questRequired:
+    - 66-dose
     questExcluded:
     - 66-end
-    text: You found her? Then tell her where I am. Please. I'll... I'll wait here.
-    hints: Ysolde already has the wrapper. Tell her where Teels is. From the Lower
-      Wharf, go north three times to Dock Street, then east twice to Dockgate
-      Street. Go north four times to the Back Court, east to Tannery Street, north
-      to Sweeper's Corner, east into the Back-Alley, then north into Ysolde's Room.
-      Type talk ysolde.
+    carriesItem: 40109
+    text: Is that from her? Give it here. Please.
+    hints: Choose The Addict's Plight below to give Teels the purge.
+  - questRequired:
+    - 66-dose
+    questExcluded:
+    - 66-end
+    text: She gave you something for me? Where is it?
+    hints: If you lost the purge, Ysolde has more, in her room off the Back-Alley in
+      the Common Quarter. Type talk ysolde.
   - questRequired:
     - 66-start
     questExcluded:
+    - 66-dose
     - 66-end
     carriesItem: 40110
     text: I'm... managing. Go. The alley, Common Quarter. Ysolde. She'll know the
       smell.
-    hints: From the Lower Wharf, go north three times to Dock Street, then east
-      twice to Dockgate Street. Go north four times to the Back Court, east to
-      Tannery Street, north to Sweeper's Corner, east into the Back-Alley, then
-      north into Ysolde's Room. Type talk ysolde.
+    hints: Ysolde's Room is off the Back-Alley in the Common Quarter, east of
+      Sweeper's Corner. Type talk ysolde.
   - questRequired:
     - 66-start
     questExcluded:
+    - 66-dose
     - 66-end
     text: Where's the wrapper? You need it. She has to smell it.
     hints: If you lost the wax wrapper, choose to tell Teels below.
@@ -78,6 +88,37 @@ topics:
   - 66-end
   grantsQuest: 66-start
   givesItem: 40110
+- key: purge_handoff
+  kind: handin
+  quest: 66
+  label: The Addict's Plight
+  playerLine: Ysolde sent this back for you. Drink it.
+  text: From her. I know what this does. I know. Give it here. Stay a minute, would
+    you. I don't want to do this one alone.
+  questRequired:
+  - 66-dose
+  questExcluded:
+  - 66-end
+  requiresItem: 40109
+  grantsQuest: 66-end
+- key: q67_grant
+  kind: offer
+  quest: 67
+  label: The Bloom Trail
+  playerLine: Do you want help finding where the Bloom comes from?
+  text: She did what she could. So did you. But the craving comes back, every time,
+    while the source keeps running. I can tell you where my wrappers came from.
+    There is a draper named Marn on the docks, at the north end of the Outer Dock
+    Lane. A clean shop, respectable-looking. I never saw what he moves or how it
+    moves. I only know what I paid him for. He is where the trail starts.
+  hints: Accept, then go to Marn's fabric shop on the docks, at the north end of the
+    Outer Dock Lane.
+  questRequired:
+  - 66-end
+  questExcluded:
+  - 67-start
+  - 67-end
+  grantsQuest: 67-start
 - key: lost_wrapper
   kind: info
   label: I've lost the wrapper you gave me.
@@ -86,7 +127,7 @@ topics:
   questRequired:
   - 66-start
   questExcluded:
-  - 66-escort
+  - 66-dose
   - 66-end
   itemExcluded: 40110
   givesItem: 40110
