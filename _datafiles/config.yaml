@@ -2334,6 +2334,18 @@ Balance:
   ToxicityDecayPerTick: 1.0     # points shed per regen tick
   ToxicitySicknessDamagePct: 0.02  # max-HP fraction of acute harm at the top band
   ToxicityHighDecaySlowMult: 0.5   # decay multiplier at/above 75% (clears slower)
+  # Bloom Wafer (item 40108): the drug the Bloom Trade sells. A dose gives Communion
+  # (a high), then a crash, adds addiction and may change a mutation. Moved here
+  # from Go defaults at their same values (#375 tier 5). Rounds are 4 seconds.
+  # Every knob here treats 0 as absent and restores its default, so to slow the
+  # mutation roll use a small number (0.001), never 0.
+  BloomAddictionPerDose: 1          # addiction gained per dose
+  BloomAddictionDecayRounds: 300    # rounds of abstinence per point of addiction lost
+  BloomWithdrawalOnsetRounds: 60    # rounds after the last dose before withdrawal
+  BloomMutationAdvanceChance: 0.50  # chance a dose deepens the strongest mutation
+  BloomNewMutationChance: 0.10      # chance, rolled first, of a whole new mutation
+  BloomCommunionRounds: 30        # how long the high lasts
+  BloomCrashRoundsMult: 2.5         # crash length as a multiple of condition 91's baseline
   # ── INSTANCE GOLD (owner ruling 2026-10-17) ─────────────────────────────────
   # Opt-in per zone: only a paid instance of a zone whose zone-config sets
   # instance_gold: true (Instance Arena and Instance Planar Oasis today) uses
