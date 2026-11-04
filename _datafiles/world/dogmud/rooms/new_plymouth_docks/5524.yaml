@@ -1,8 +1,8 @@
 roomid: 5524
 zone: New Plymouth Docks
-title: Marn's Back Room
+title: Marn's Stock Room
 description: >
-  The cupboard door swings inward on a space that is smaller than
+  The stair from the shop comes down into a space that is smaller than
   expected: a narrow room running the depth of the building, low
   ceiling, no windows, and a smell that is different from the shop
   outside: sawdust and old cloth in the background, and under
@@ -45,8 +45,8 @@ idlemessages:
   surfaces and drops back into the building noise.
 - The crates sit in their arrangement with the patience of things
   that have waited here in exactly this way before.
-- A creak from the shop floor beyond the door, the proprietor
-  moving, or a new customer entering from the lane.
+- A creak from the shop floor above, the proprietor moving, or
+  a new customer entering from the lane.
 - The smell of old wax intensifies for a moment on a shift
   of air, then returns to its background level.
 - Somewhere in the stack, a crate settles with a faint tick

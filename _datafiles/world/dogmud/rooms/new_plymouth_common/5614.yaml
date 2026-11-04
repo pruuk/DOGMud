@@ -17,7 +17,10 @@ description: >
   <ansi fg="itemname">watchful window</ansi> looks down
   onto the street. Someone is always there, at all
   hours, watching who comes and goes. Tenants feel
-  looked-after. Visitors feel assessed.
+  looked-after. Visitors feel assessed. Inside the door a
+  <ansi fg="itemname">stair</ansi> climbs past the first
+  landing toward the condemned floors, a chair stood
+  across its foot.
 biome: city_backstreet
 coord:
   x: -15
@@ -28,7 +31,12 @@ exits:
     roomid: 5613
   north:
     roomid: 5616
+  up:
+    roomid: 5625
 nouns:
+  stair: A narrow stair running up past the first landing, its treads worn at the
+    edges and clean at the middle, which is the wrong way round for a stair nobody
+    uses. A kitchen chair stands across the foot of it. The chair is not heavy.
   rent board: A slate board in a glass-fronted case
     beside the front door, the entries kept in careful
     chalk, with tenant name, room number, sum owed, sum

@@ -3673,6 +3673,11 @@ room 5529 biome=city_backstreet
   nightvision  sight=full   clear=true shapes=true
   infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
+room 5530 biome=interior
+  plain        sight=full   clear=true shapes=true
+  nightvision  sight=full   clear=true shapes=true
+  infrared     sight=full   clear=true shapes=true
+  blinded      sight=none   clear=false shapes=false
 room 5600 biome=city_thoroughfare
   plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
@@ -3794,6 +3799,11 @@ room 5623 biome=interior
   infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5624 biome=interior
+  plain        sight=full   clear=true shapes=true
+  nightvision  sight=full   clear=true shapes=true
+  infrared     sight=full   clear=true shapes=true
+  blinded      sight=none   clear=false shapes=false
+room 5625 biome=interior
   plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
   infrared     sight=full   clear=true shapes=true
