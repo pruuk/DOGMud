@@ -20,28 +20,27 @@ opener:
     - 68-end
     questFlagRequired:
       68-allegiance: bloodline
-    text: Vell's men are coming for the place. You know why. I don't have anything
-      to say to you.
+    text: Vell's men are coming for the place. You know why. I have nothing to say
+      to you that you would want to hear. Ask, if you must.
     hints: Toby does not look at you.
   - questRequired:
     - 68-end
-    text: The mark beside the door is re-cut and reads true again. Let the clerk
-      call that derelict. Thank you.
+    text: The mark on the inner door is re-cut and reads true again. The old paint
+      outside can fade. Let the clerk call that derelict. Thank you.
     hints: Choose a line below if you would like to hear about the cooperage,
       about the people who are no longer here, or about what is downstairs.
-  # 68-choice before 68-survey: variants are first-match and has 68-survey is
-  # also true at 68-choice.
-  # 68-choice without the survey first: old saves made the choice step before
-  # the survey step existed and never lifted the board (Orin's 9332 variant
-  # sends them back here). Either choice needs the survey.
+  # The survey lost, on either step: has 68-survey is also true at 68-choice, and
+  # variants are first-match, so this comes before both. Old saves made the choice
+  # step before the survey step existed and never lifted the board (Orin's 9332
+  # variant sends them back here). Either choice needs the survey.
   - questRequired:
-    - 68-choice
+    - 68-survey
     questExcluded:
     - 68-end
     itemExcluded: 40113
     text: You've not got the survey? It's still under the loose floorboard by the
       cot. North, through there.
-    hints: Go north onto the Cooperage Floor. Type look floorboard.
+    hints: Go north onto the Cooperage Floor. Type search there.
   - questRequired:
     - 68-choice
     questExcluded:
@@ -49,22 +48,21 @@ opener:
     text: Orin told you, then. Whatever you choose, choose it soon. The inspection
       is days away.
     hints: Orin will tell you what standing with the circle means. Clerk Vell, in
-      the Permit Office in the Merchant Quarter, takes the survey for the
-      bloodline. Neither choice can be undone. From the cooperage front, go south
-      twice to the Inkwalk, then east into Orin's Bookstall. Type talk orin.
+      the Permit Office, takes the survey for the bloodline. Neither can be undone.
+      Type talk orin.
   - questRequired:
     - 68-survey
     questExcluded:
     - 68-end
     text: You have it? Then take it to Orin. There is not much time.
-    hints: From the cooperage front, go south twice to the Inkwalk, then east into
-      Orin's Bookstall. Type talk orin.
+    hints: Orin's Bookstall is off the Inkwalk, south of Craftwell Square. Type talk
+      orin.
   - questRequired:
     - 68-evidence
     questExcluded:
     - 68-end
     text: The survey's under the loose floorboard by the cot. North, through there.
-    hints: Go north onto the Cooperage Floor. Type look floorboard.
+    hints: Go north onto the Cooperage Floor. Type search there.
   - questRequired:
     - 68-start
     questExcluded:
@@ -86,7 +84,7 @@ topics:
     much time.'
   hints: Toby gives you a charcoal rubbing of the master's bench-mark. Edvar's
     survey is under a loose floorboard by the cot, on the Cooperage Floor just
-    north. Type look floorboard.
+    north. Type search there.
   marked: true
   questRequired:
   - 68-start

@@ -153,7 +153,6 @@ func TestDeliveryAskPathCompletes(t *testing.T) {
 		{
 			name: "Q71 Tribute — ledger page to Ostry", file: "../../_datafiles/world/dogmud/dialogue/new_plymouth_merchant/9347.yaml",
 			mobId: 9347, heldToken: "71-ledger", grantToken: "71-end", itemId: 40119, topic: "ledger",
-			rep: map[string]int{"cooperage_circle": 5},
 		},
 		{
 			name: "Q74 Undercroft — rubbing to Aldric (keepers)", file: "../../_datafiles/world/dogmud/dialogue/the_confluence/9464.yaml",

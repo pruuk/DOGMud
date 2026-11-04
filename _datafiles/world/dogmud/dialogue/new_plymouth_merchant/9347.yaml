@@ -13,10 +13,8 @@ opener:
     would rather work their own. You may ask about the blades, or how my supply
     reaches me. You will also ask about the third arm, so you may as well get it
     over with.
-  hints: Choose a line below to learn about her blades, about where her steel
-    comes from, or about the third arm. Under the shop talk there is a tightness
-    about a tribute and an audit she plainly wants to be rid of. To see what she
-    sells, type list.
+  hints: Choose a line below on her blades, her steel or the third arm. She
+    seems worried about a tribute and an audit. To see what she sells, type list.
   # Quest 71 states (first match wins; HasQuest is also true at every later step).
   variants:
   - questRequired:
@@ -26,22 +24,23 @@ opener:
     hints: Choose a line below if you want to hear about her blades, about where
       her steel comes from, or about the third arm. To see what she sells, type
       list.
-  - questRequired:
-    - 71-horst
-    questExcluded:
-    - 71-end
-    carriesItem: 40119
-    text: Is that what I think it is? Put it on the counter.
-    hints: Choose The Tribute below to give Dame Ostry the ledger page.
+  # The hand-in reads the step and requiresItem, so the openers do too.
   - questRequired:
     - 71-ledger
     questExcluded:
     - 71-end
+    requiresItem: 40119
+    text: Is that what I think it is? Put it on the counter.
+    hints: Choose The Tribute below to give Dame Ostry the ledger page.
+  # A lost page: the parlor gives another.
+  - questRequired:
+    - 71-ledger
+    questExcluded:
+    - 71-end
+    itemExcluded: 40119
     text: You found a page? Then where is it? I cannot appeal on your word.
-    hints: If you lost the ledger page, another is still on the table in the private
-      parlor of the Gilt Threshold. From Dame Ostry's Armoury, go north to Coin
-      Alley, west to the Square Fountain, west to the Gilded Walk, north into the
-      Gilt Threshold, then east into the parlor. Type look paper scrap.
+    hints: If you lost the ledger page, another is still in the private parlor of
+      the Gilt Threshold. Type search there.
   - questRequired:
     - 71-horst
     questExcluded:
@@ -49,21 +48,16 @@ opener:
     - 71-end
     text: Horst talked to you? Then he told you where to look, whether he meant to or
       not.
-    hints: The papers are in the private parlor of the Gilt Threshold. From Dame
-      Ostry's Armoury, go north to Coin Alley, west to the Square Fountain, west to
-      the Gilded Walk, north into the Gilt Threshold, then east into the parlor.
-      Type look paper scrap.
+    hints: The papers are in the private parlor of the Gilt Threshold, through the
+      curtain to the east of its taproom. Type search there.
   - questRequired:
     - 71-vell
     questExcluded:
     - 71-horst
     - 71-end
     text: Vell sent you upward? Then go up. I want to know who is at the top.
-    hints: Horst keeps the gate of the watched house. From Dame Ostry's Armoury, go
-      north to Coin Alley, then east to the Porters' Dock. Go north to the Watched
-      Lane, then north again to the Watched House Gate. In the evening he sits in
-      the private parlor of the Gilt Threshold instead, and he sleeps at the gate
-      in the small hours. Type talk horst.
+    hints: Horst keeps the Watched House Gate, north of the Watched Lane. Type talk
+      horst.
   - questRequired:
     - 71-start
     questExcluded:
@@ -71,9 +65,7 @@ opener:
     - 71-end
     text: Have you been to Vell yet? He is right up the alley. He will not like being
       asked.
-    hints: From Dame Ostry's Armoury, go north to Coin Alley, then north into the
-      Permit Office. Clerk Vell keeps the desk there by day, and eats in the Central
-      Square at midday. Type talk vell.
+    hints: Clerk Vell keeps the Permit Office, north of Coin Alley. Type talk vell.
 topics:
 - key: q71_start
   kind: offer
@@ -87,7 +79,7 @@ topics:
     to rage at it. What I want is to understand it. If you will do it, go and ask
     Clerk Vell what the tribute actually pays for, and whether there is any floor
     under it at all. Start there. See how far it goes.
-  hints: Accept, then go north to Coin Alley and north again into the Permit Office.
+  hints: Accept, then find Clerk Vell in the Permit Office, north of Coin Alley.
     Type talk vell.
   questExcluded:
   - 71-start
@@ -103,14 +95,11 @@ topics:
     Horst's mark beside every one of them. This is what an appeal actually needs.
     I will not forget this.
   questRequired:
-  - 71-horst
+  - 71-ledger
   questExcluded:
   - 71-end
   requiresItem: 40119
   grantsQuest: 71-end
-  bumpsRep:
-  - faction: cooperage_circle
-    delta: 5
 - key: blades
   kind: info
   label: What blades do you carry?

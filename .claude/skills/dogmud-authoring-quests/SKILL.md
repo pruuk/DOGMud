@@ -167,12 +167,15 @@ actions). Cross-reference room nouns against trigger nouns before shipping.
 There is no space/hyphen normalization on either side, which is the form
 this bites in most often. `usercommands.go` notifies the engine with
 `Noun: strings.ToLower(rest)` and `questengine/engine.go` compares
-`t.Noun != d.Noun` as an exact string, and the shipped `noun:` spellings are
-mixed: hyphenated (`old-guild-mark`, `hearth-marks`, `paper-scrap`) and
-spaced (`gray material`, `buried marker`). Quest 68's trigger noun is
+`t.Noun != d.Noun` as an exact string, and the `noun:` spellings once
+shipped mixed: hyphenated (`old-guild-mark`, `hearth-marks`, `paper-scrap`) and
+spaced (`gray material`, `buried marker`). Quest 68's trigger noun was
 `loose-floorboard` while room 5720 lists the noun `loose floorboard`, so
-`look loose floorboard` prints the room text and only `look loose-floorboard`
-fires the trigger, which no player can guess. When a quest interaction "does
+`look loose floorboard` printed the room text and only `look loose-floorboard`
+fired the trigger, which no player could guess (#375 phase 7 tier 5 moved
+quests 63, 65 and 68 to 71 to `search`, so none of these spellings is live).
+Check the current quests with `grep -n "noun:" _datafiles/world/dogmud/quests/*.yaml`
+before citing an example. When a quest interaction "does
 nothing," diff the room noun spelling against the trigger noun before
 suspecting the step gate. Normalizing both sides in the engine is filed as an
 owner call on the quest mechanisms arc, not a fix to make in passing.
@@ -184,7 +187,8 @@ owner call on the quest mechanisms arc, not a fix to make in passing.
 Since #375 (R7, R8) an item hand-in is a dialogue topic, never a quest
 trigger: an `item_give` trigger may not carry a `grant` (the boot validators
 refuse it). `give <item> <npc>` asks the NPC's topics first, BEFORE any
-transfer:
+transfer. It asks before it even picks the item, so `give rubbing dross` reaches
+the rubbing a topic wants wherever another rubbing lies in the pack:
 - A topic wanting the item (`requiresItem`, taken; or `carriesItem`, shown
   and kept) that is eligible plays exactly as if chosen from the talk menu,
   and takes the instance the player named (`give 2.purse`).

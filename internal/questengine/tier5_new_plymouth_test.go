@@ -1,6 +1,10 @@
 package questengine
 
 import (
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -17,6 +21,10 @@ func TestTier5QuestsHaveNoTypedNouns(t *testing.T) {
 		"65-the_street_sweepers_secret.yaml": 65,
 		"66-the_addicts_plight.yaml":         66,
 		"67-the_bloom_trail.yaml":            67,
+		"68-the_cooperage_circle.yaml":       68,
+		"69-the_gallery_cipher.yaml":         69,
+		"70-the_pre_founding_web.yaml":       70,
+		"71-the_tribute.yaml":                71,
 	} {
 		for _, tr := range loadShippedQuest(t, file, id).Triggers {
 			require.NotEqual(t, "room_interact", tr.Event, "quest %d", id)
@@ -132,4 +140,232 @@ func TestQuest65TheSeamIsFoundBySearch(t *testing.T) {
 	lost := newQuestWalker(q).at("discover")
 	lost.notify("command", tier5Search(foundation))
 	require.Equal(t, []int{lump}, lost.ctx.givenItems)
+}
+
+// A search on the Cooperage Floor finds the survey at any hour: Toby may be
+// asleep on the cot beside it. Old saves need no catch-up: a save holding the
+// survey at 68-evidence moves on with the one it holds and takes no spare, and
+// one at 68-choice without it takes the recovery.
+func TestQuest68TheSurveyIsFoundBySearch(t *testing.T) {
+	const floor, survey = 5720, 40113
+	q := loadShippedQuest(t, "68-the_cooperage_circle.yaml", 68)
+	require.NoError(t, q.Validate())
+	w := newQuestWalker(q).at("start")
+	w.notify("command", tier5Search(floor))
+	require.Equal(t, "start", w.p.current, "Toby's word comes first")
+	require.Empty(t, w.ctx.givenItems)
+	w = newQuestWalker(q).at("evidence")
+	w.notify("command", tier5Search(floor))
+	require.Equal(t, "survey", w.p.current)
+	require.Equal(t, []int{survey}, w.ctx.givenItems)
+	old := newQuestWalker(q).at("choice")
+	old.notify("command", tier5Search(floor))
+	require.Equal(t, "choice", old.p.current)
+	require.Equal(t, []int{survey}, old.ctx.givenItems)
+	done := newQuestWalker(q).at("end")
+	done.notify("command", tier5Search(floor))
+	require.Empty(t, done.ctx.givenItems, "no survey after the choice")
+
+	// The save the removed catch-up triggers were for: it took the survey before
+	// the survey step existed, and one search still moves it on.
+	early := newQuestWalker(q).at("evidence")
+	early.p.items[survey] = true
+	early.notify("command", tier5Search(floor))
+	require.Equal(t, "survey", early.p.current)
+	require.Empty(t, early.ctx.givenItems, "no spare: a copy kept past the choice would outlive it")
+
+	held := newQuestWalker(q).at("choice")
+	held.p.items[survey] = true
+	held.notify("command", tier5Search(floor))
+	require.Empty(t, held.ctx.givenItems, "no spare once the step is past and one is held")
+}
+
+// Hints are at most 200 characters and name no route: the quest log's guide line
+// gives the way.
+func TestQuest68StepHintsAreShortAndGiveNoRoute(t *testing.T) {
+	q := loadShippedQuest(t, "68-the_cooperage_circle.yaml", 68)
+	for _, s := range q.Steps {
+		require.LessOrEqual(t, len(s.Hint), 200, s.Id)
+		require.NotContains(t, s.Hint, "twice", s.Id)
+		require.NotContains(t, s.Hint, "three times", s.Id)
+		require.NotContains(t, s.Hint, "by day", s.Id)
+		require.NotContains(t, s.Hint, "look floorboard", s.Id)
+	}
+}
+
+// A search of the Sanctuary finds the rubbing; a player who lost it takes another
+// while the hand-in is open; Dross keeps the rubbing when he takes the reading.
+func TestQuest69DrossKeepsTheRubbing(t *testing.T) {
+	const sanctuary, rubbing = 5901, 40115
+	q := loadShippedQuest(t, "69-the_gallery_cipher.yaml", 69)
+	require.NoError(t, q.Validate())
+	w := newQuestWalker(q).at("start")
+	w.notify("command", tier5Search(sanctuary))
+	require.Equal(t, "rubbing", w.p.current)
+	require.Equal(t, []int{rubbing}, w.ctx.givenItems, "one search, one rubbing")
+	lost := newQuestWalker(q).at("gallery")
+	lost.notify("command", tier5Search(sanctuary))
+	require.Equal(t, []int{rubbing}, lost.ctx.givenItems)
+	lostLate := newQuestWalker(q).at("reading")
+	lostLate.notify("command", tier5Search(sanctuary))
+	require.Equal(t, []int{rubbing}, lostLate.ctx.givenItems, "lost between Lysha and Dross")
+
+	// Holding the rubbing, a search gives no second one.
+	held := newQuestWalker(q).at("reading")
+	held.p.items[rubbing] = true
+	held.notify("command", tier5Search(sanctuary))
+	require.Empty(t, held.ctx.givenItems)
+
+	// After the end, a search gives nothing.
+	done := newQuestWalker(q).at("end")
+	done.notify("command", tier5Search(sanctuary))
+	require.Empty(t, done.ctx.givenItems, "no rubbing after the end")
+
+	end := newQuestWalker(q).at("end")
+	end.p.items[rubbing] = true
+	end.notify("quest_granted", EventDetails{QuestToken: "69-end"})
+	require.Equal(t, []int{rubbing}, end.ctx.consumedItems, "the rubbing leaves exactly once")
+
+	// A player without the rubbing has nothing consumed, and another token's
+	// grant never takes it.
+	none := newQuestWalker(q).at("end")
+	none.notify("quest_granted", EventDetails{QuestToken: "69-end"})
+	require.Empty(t, none.ctx.consumedItems)
+	other := newQuestWalker(q).at("reading")
+	other.p.items[rubbing] = true
+	other.notify("quest_granted", EventDetails{QuestToken: "69-reading"})
+	require.Empty(t, other.ctx.consumedItems)
+}
+
+// Hints are at most 200 characters and name no route.
+func TestQuest69StepHintsAreShortAndGiveNoRoute(t *testing.T) {
+	q := loadShippedQuest(t, "69-the_gallery_cipher.yaml", 69)
+	for _, s := range q.Steps {
+		require.LessOrEqual(t, len(s.Hint), 200, s.Id)
+		for _, banned := range []string{"west six times", "four times", "look reliefs", "morning", "evening"} {
+			require.NotContains(t, s.Hint, banned, s.Id)
+		}
+	}
+}
+
+// The lintel is dark, so the step says to bring a light. One search gives one
+// rubbing and moves the step; a player who lost it searches again; a player
+// still holding it gets no spare; after the end the lintel gives nothing.
+func TestQuest70TheLintelIsFoundBySearch(t *testing.T) {
+	const lintel, rubbing = 6037, 40118
+	q := loadShippedQuest(t, "70-the_pre_founding_web.yaml", 70)
+	require.NoError(t, q.Validate())
+	require.Contains(t, q.Steps[0].Hint, "bring a light")
+	w := newQuestWalker(q).at("start")
+	w.notify("command", tier5Search(lintel+1))
+	require.Equal(t, "start", w.p.current)
+	w.notify("command", tier5Search(lintel))
+	require.Equal(t, "witness", w.p.current)
+	require.Equal(t, []int{rubbing}, w.ctx.givenItems, "one search, one rubbing")
+	lost := newQuestWalker(q).at("witness")
+	lost.notify("command", tier5Search(lintel))
+	require.Equal(t, []int{rubbing}, lost.ctx.givenItems)
+	held := newQuestWalker(q).at("witness")
+	held.p.items[rubbing] = true
+	held.notify("command", tier5Search(lintel))
+	require.Empty(t, held.ctx.givenItems)
+	done := newQuestWalker(q).at("end")
+	done.notify("command", tier5Search(lintel))
+	require.Empty(t, done.ctx.givenItems, "no rubbing after the end")
+}
+
+// The quest stands alone (owner ruling): nothing a first timer reads leans on 68
+// or 69, the hints fit and give no route, and the reward no longer admits the
+// player to anything, since Orin may have just shown them the door.
+func TestQuest70ReadsForAFirstTimerAndForTheColdEnding(t *testing.T) {
+	q := loadShippedQuest(t, "70-the_pre_founding_web.yaml", 70)
+	for _, s := range q.Steps {
+		require.LessOrEqual(t, len(s.Hint), 200, s.Id)
+		for _, banned := range []string{"Type look", "afternoon", "north eight", "up the stair"} {
+			require.NotContains(t, s.Hint, banned, s.Id)
+		}
+		for _, banned := range []string{"painting", "cipher", "panel"} {
+			require.NotContains(t, s.Description, banned, s.Id)
+		}
+	}
+	require.Contains(t, q.Steps[0].Hint, "north of the stonework", "6038 is north of 6036, not of the lintel")
+	for _, reward := range []string{q.Rewards.PlayerMessage, q.Rewards.RoomMessage} {
+		for _, banned := range []string{"part of the quiet", "nod", "painting", "cipher"} {
+			require.NotContains(t, reward, banned)
+		}
+	}
+}
+
+// A search of the private parlor finds the ledger page once Horst has spoken; a
+// player who lost it searches again; one still holding it gets no spare; after
+// the end nothing. A search before Horst finds nothing, and the reward pays the
+// common folk.
+func TestQuest71ThePageIsFoundBySearch(t *testing.T) {
+	const parlor, page = 5815, 40119
+	q := loadShippedQuest(t, "71-the_tribute.yaml", 71)
+	require.NoError(t, q.Validate())
+	require.Equal(t, "np_commonfolk", q.Rewards.RepFaction)
+	w := newQuestWalker(q).at("horst")
+	w.notify("command", tier5Search(parlor+1))
+	require.Equal(t, "horst", w.p.current, "another room finds nothing")
+	w.notify("command", tier5Search(parlor))
+	require.Equal(t, "ledger", w.p.current)
+	require.Equal(t, []int{page}, w.ctx.givenItems, "one search, one page")
+	lost := newQuestWalker(q).at("ledger")
+	lost.notify("command", tier5Search(parlor))
+	require.Equal(t, []int{page}, lost.ctx.givenItems)
+	held := newQuestWalker(q).at("ledger")
+	held.p.items[page] = true
+	held.notify("command", tier5Search(parlor))
+	require.Empty(t, held.ctx.givenItems, "no spare while one is held")
+	early := newQuestWalker(q).at("vell")
+	early.notify("command", tier5Search(parlor))
+	require.Equal(t, "vell", early.p.current, "Horst comes first")
+	require.Empty(t, early.ctx.givenItems)
+	done := newQuestWalker(q).at("end")
+	done.notify("command", tier5Search(parlor))
+	require.Empty(t, done.ctx.givenItems, "no page after the end")
+}
+
+// Quest 71 pays the cooperage circle five more only to a player who proved the
+// false founding (69-end); the hand-in itself pays no circle reputation.
+func TestQuest71BonusFollowsTheFalseFounding(t *testing.T) {
+	q := loadShippedQuest(t, "71-the_tribute.yaml", 71)
+	with := newQuestWalker(q).at("end")
+	with.p.quests["69-end"] = true
+	with.notify("quest_granted", EventDetails{QuestToken: "71-end"})
+	require.Equal(t, []BumpRepCall{{Faction: "cooperage_circle", Delta: 5}}, with.ctx.bumpedRep)
+	without := newQuestWalker(q).at("end")
+	without.notify("quest_granted", EventDetails{QuestToken: "71-end"})
+	require.Empty(t, without.ctx.bumpedRep)
+}
+
+// Hints are at most 200 characters and name no route or hour.
+func TestQuest71StepHintsAreShortAndGiveNoRoute(t *testing.T) {
+	q := loadShippedQuest(t, "71-the_tribute.yaml", 71)
+	for _, s := range q.Steps {
+		require.LessOrEqual(t, len(s.Hint), 200, s.Id)
+		for _, banned := range []string{"Type look", "twice", "three times", "go north", "go south", "go east", "go west", "small hours", "by day", "evening"} {
+			require.NotContains(t, s.Hint, banned, s.Id)
+		}
+	}
+}
+
+// No dash stands in for punctuation in the New Plymouth tier 5 quest files,
+// comments included. The control proves the pattern can find one.
+func TestTier5QuestFilesCarryNoDashes(t *testing.T) {
+	dash := regexp.MustCompile("—|–| -- ")
+	require.True(t, dash.MatchString("a — b"), "control: em dash")
+	require.True(t, dash.MatchString("a – b"), "control: en dash")
+	require.True(t, dash.MatchString("a -- b"), "control: double hyphen")
+	for _, file := range []string{
+		"68-the_cooperage_circle.yaml", "69-the_gallery_cipher.yaml",
+		"70-the_pre_founding_web.yaml", "71-the_tribute.yaml",
+	} {
+		data, err := os.ReadFile(filepath.Join("..", "..", "_datafiles", "world", "dogmud", "quests", file))
+		require.NoError(t, err)
+		for i, line := range strings.Split(string(data), "\n") {
+			require.False(t, dash.MatchString(line), "%s:%d: %q", file, i+1, line)
+		}
+	}
 }
