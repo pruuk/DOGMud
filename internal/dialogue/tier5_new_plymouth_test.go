@@ -69,6 +69,18 @@ func TestTier5TeelsTakesThePurge(t *testing.T) {
 	require.NotContains(t, menuKeys(teels, heldState("66-start", "66-dose", "66-end", "67-start")), "q67_grant")
 }
 
+func TestTier5CaseFileHandInFollowsTheWitness(t *testing.T) {
+	c := loadShippedDialogue(t, "new_plymouth_docks/9316.yaml")
+	require.NotContains(t, menuKeys(c, carrying(heldState("67-start"), 40111)), "casefilehandoff")
+	require.Contains(t, menuKeys(c, carrying(heldState("67-start", "67-witness"), 40111)), "casefilehandoff")
+	require.NotContains(t, c.FindTopic("casefilehandoff").Text, "wrapper")
+	d := loadShippedDialogue(t, "new_plymouth_old_quarter/9379.yaml")
+	require.NotContains(t, d.FindTopic("operation").Text, "no longer runs")
+	for _, g := range d.Greetings {
+		require.NotContains(t, g.Text, "already closed")
+	}
+}
+
 func TestTier5GrittaDoesNotSendColl(t *testing.T) {
 	gritta := loadShippedDialogue(t, "new_plymouth_old_quarter/9381.yaml")
 	require.NotContains(t, gritta.FindTopic("founding").Text, "Coll")

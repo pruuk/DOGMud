@@ -1,12 +1,11 @@
 itemid: 40111
 name: Case File
 namesimple: case file
-description: A bundle of documents gathered over the course of a single
-  inquiry. The wax-wrapper trace is in there, stained with the
-  copper-flower note of what it carried. The Lintel Street address, a
-  copied delivery note in an unfamiliar hand, and a lamplighter's
-  account of what passes the iron door at odd hours -- laid out
-  together, it is a case the watch cannot wave off.
+description: >-
+  A folded bundle in a steady, plain hand: eleven years of a lamplighter's dates
+  and times, what he saw pass the iron door on Lintel Street and at what hour,
+  signed at the foot. It is one honest man's account, and it is the kind the
+  watch cannot wave off.
 type: object
 subtype: mundane
 not_salable: true

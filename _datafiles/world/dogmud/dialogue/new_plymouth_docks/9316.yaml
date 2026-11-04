@@ -67,13 +67,14 @@ topics:
   quest: 67
   label: The Bloom Trail
   playerLine: Here is the case against the Bloom trade.
-  text: Let me read this properly. The wrapper. The address. A delivery account
-    and the lamplighter's word. This is enough to move on the trade. The supply
+  text: Let me read this properly. Eleven years of dates and times, in the
+    lamplighter's own hand, and the address they all point at. This is enough to
+    move on the trade. The supply
     stops. Deren is another matter. The bloodline office holds a hand over him I
     cannot reach around. I can break up what he runs. The man himself stays out of
     my reach. You understand what I'm telling you.
   questRequired:
-  - 67-start
+  - 67-witness
   questExcluded:
   - 67-end
   requiresItem: 40111

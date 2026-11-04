@@ -14,6 +14,8 @@ func TestTier5QuestsHaveNoTypedNouns(t *testing.T) {
 	for file, id := range map[string]int{
 		"63-dock_rat.yaml":                   63,
 		"65-the_street_sweepers_secret.yaml": 65,
+		"66-the_addicts_plight.yaml":         66,
+		"67-the_bloom_trail.yaml":            67,
 	} {
 		for _, tr := range loadShippedQuest(t, file, id).Triggers {
 			require.NotEqual(t, "room_interact", tr.Event, "quest %d", id)
@@ -52,6 +54,7 @@ func TestTier5RemovedStepsAreRenamed(t *testing.T) {
 	require.Equal(t, "65-discover", m.Renamed["65-report"])
 	require.Equal(t, "66-dose", m.Renamed["66-escort"])
 	require.Equal(t, "66-dose", m.Renamed["66-detox"])
+	require.Equal(t, "67-witness", m.Renamed["67-report"])
 }
 
 // Quest 66 is deliver, return, heal (owner ruling 2): Ysolde takes the wrapper
@@ -84,6 +87,13 @@ func TestQuest66DeliverReturnHeal(t *testing.T) {
 	require.Equal(t, "66-end", out.GrantsQuest)
 	require.Equal(t, []string{"66-end"}, teels.FindTopic("q67_grant").QuestRequired)
 	require.Nil(t, y.FindTopic("q67_grant"), "C1: the offer moved to Teels")
+}
+
+func TestQuest67HasNoReportStep(t *testing.T) {
+	q := loadShippedQuest(t, "67-the_bloom_trail.yaml", 67)
+	require.Equal(t, []string{"start", "front", "lintel", "delivery", "source", "witness", "end"}, newLinearPlayer(q).steps)
+	require.NoError(t, q.Validate())
+	require.Contains(t, q.Steps[3].Hint, "bring a light", "the Old Quarter is dark")
 }
 
 func TestQuest65TheSeamIsFoundBySearch(t *testing.T) {

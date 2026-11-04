@@ -10,8 +10,7 @@ secret: false
 flags:
   - key: entry
     values: [undercover, evidence]
-    description: "How the player got past Marn's back room -- by posing
-      as a user, or by evidence and leverage"
+    description: "How the player got past Marn: by posing as a user, or by evidence and leverage"
 
 steps:
   - id: start
@@ -22,11 +21,8 @@ steps:
       Trace the Bloom to its source. It starts with a clean little
       draper's shop on the docks.
     hint: >-
-      From Ysolde's Room, go south to the Back-Alley, west to Sweeper's
-      Corner, south to Tannery Street, west to the Back Court, then south
-      four times to Dockgate Street. Go west twice to Dock Street, north
-      three times to the Outer Dock Lane, then north into Marn's shop. Type
-      talk marn.
+      Marn's fabric shop is at the north end of the Outer Dock Lane, on the
+      docks. Type talk marn.
   - id: front
     destination:
       mob: 9345  # follow Falk the Auctioneer (schedule np_merchant_falk) — a fixed room is wrong for part of the day
@@ -36,11 +32,8 @@ steps:
       the Old Quarter, 215 Lintel Street, routed through people who
       never ask questions.
     hint: >-
-      The auctioneer Falk knows who holds the Lintel Street property. From
-      Marn's shop, go north twice to the Long Market Crossing, east three
-      times to the Merchant Gate, north, then east twice. Go north into the
-      Market Stalls, east, south, east, then south into Falk's Auction
-      House. Type talk falk.
+      The auctioneer Falk, at his Auction House in the Merchant Quarter, knows
+      who holds the Lintel Street property. Type talk falk.
   - id: lintel
     destination:
       mob: 9369  # follow Wenna the Servant (schedule np_noble_wenna) — a fixed room is wrong for part of the day
@@ -50,13 +43,7 @@ steps:
       through nominal owners.
     hint: >-
       The servant Wenna, in the Noble Quarter, has seen the unmarked crates.
-      From Falk's Auction House, go north to the Square Fountain, west to
-      the Gilded Walk, north into the Gilt Threshold, then west twice to the
-      Processional, North End. Go north three times to the Noble Way, where
-      Wenna runs errands from midday. In the morning she works in the
-      Service Court: from the Noble Way go north, then east twice. In the
-      evening she is in her garret, north twice from the Service Court, and
-      she sleeps at night. Type talk wenna.
+      She frightens easily. Type talk wenna.
   - id: delivery
     destination:
       mob: 9379  # follow Deren (schedule np_oldquarter_deren) — a fixed room is wrong for part of the day
@@ -65,18 +52,8 @@ steps:
       Wenna confirmed the delivery house: unmarked goods at odd hours,
       under the bloodline office's eye.
     hint: >-
-      Deren keeps the house at 215 Lintel Street, down in the Old Quarter.
-      From the Noble Way, go south three times to the Processional, North
-      End. If you are in Wenna's garret, go south twice to the Service
-      Court; from the Service Court, go west twice, then south to the Noble
-      Way. From the Processional, North End, go south
-      to the Central Square, west, then south to the Merchant Gate. Go west
-      three times to the Crossing, then south eight times to the Long Quay.
-      Go west twice to the Underdock Stair, down into the Underdocks, then
-      west five times to Upper Lintel Street. Go south to the iron door,
-      then west into Deren's Ledger Room. He keeps to it by day, stands on
-      Lower Lintel Street in the late evening, and sleeps at night. Type
-      talk deren.
+      Deren keeps the house at 215 Lintel Street, down in the Old Quarter, past
+      the Underdocks. It is dark down there, so bring a light. Type talk deren.
   - id: source
     destination:
       mob: 9380  # follow Quill the Lamplighter (schedule np_oldquarter_quill) — a fixed room is wrong for part of the day
@@ -86,32 +63,17 @@ steps:
       and Deren, exposed but untouchable, the bloodline office at his
       back.
     hint: >-
-      Find a witness. The lamplighter Quill walks these canals and has seen
-      what passes the iron door. From Deren's Ledger Room, go east to the
-      iron door, north to Upper Lintel Street, then east three times to
-      Lower Lintel Street. Quill's Lamp-Walk is north, and his hovel north
-      of that. He sleeps through the day and is up from late afternoon
-      until dawn, in his hovel or out on the Lamp-Walk. Type talk quill.
+      Find a witness. The lamplighter Quill walks the canal off Lower Lintel
+      Street, and he has seen what passes the iron door. Type talk quill.
   - id: witness
     destination:
       room: 5525
     description: >-
-      Quill gave his account. With the wrapper, the address, the
-      delivery note, and the testimony, you have a case the watch
-      cannot ignore.
+      Quill gave you his account, eleven years of dates and times in his own
+      hand. That is a case the watch cannot ignore.
     hint: >-
-      Take the case file to the Dock Constable. From Quill's Lamp-Walk, just
-      south of his hovel, go south to Lower Lintel Street, then east twice
-      into the Underdocks. Go up the stair, north to the Chandlery, and east
-      twice to the Caravan Depot. Go north four times to the Outer Dock Lane,
-      then east into the Dock Constable's Post. Type talk constable.
-  - id: report
-    # destination inferred from triggers (#375 p4); was: return-to-giver / in-place (start room 5525); Phase 2 split review
-    description: >-
-      The Dock Constable has the case file. The trade will be broken up,
-      but Deren himself stays beyond his reach.
-    hint: >-
-      The watch will act on what it can.
+      Take the case file to the Dock Constable, in his post off the Outer Dock
+      Lane. Type talk constable.
   - id: end
     description: >-
       The Bloom trade is disrupted and the truth is known. Some powers
