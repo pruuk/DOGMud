@@ -6,6 +6,46 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
+// FindInPotionsWhere honours N.item over the bandolier's list, oldest first, so
+// 1. and 2. never name one potion twice, and counts within keep() as
+// FindInBackpackWhere does.
+func TestFindInPotionsWhere_Ordinal(t *testing.T) {
+	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
+		999971: {ItemId: 999971, Name: "healing salve", Type: items.Potion},
+		999972: {ItemId: 999972, Name: "greater healing salve", Type: items.Potion},
+	})()
+
+	c := New()
+	young, plain, old := items.New(999971), items.New(999972), items.New(999971)
+	young.CraftedRound, plain.CraftedRound, old.CraftedRound = 9, 1, 5
+	c.PotionItems = []items.Item{young, plain, old}
+
+	named := func(name string, keep func(items.Item) bool) items.Item {
+		t.Helper()
+		got, ok := c.FindInPotionsWhere(name, keep)
+		if !ok {
+			t.Fatalf("%q found nothing", name)
+		}
+		return got
+	}
+	if got := named("healing salve", nil); got.UUID != plain.UUID {
+		t.Errorf("no ordinal: want the oldest match, got %s", got.Name())
+	}
+	onlySalve := func(i items.Item) bool { return i.ItemId == 999971 }
+	if got := named("1.healing salve", onlySalve); got.UUID != old.UUID {
+		t.Errorf("1. within keep: want the older salve")
+	}
+	if got := named("2.healing salve", onlySalve); got.UUID != young.UUID {
+		t.Errorf("2. within keep: want the younger salve")
+	}
+	if got := named("healing salve#2", onlySalve); got.UUID != young.UUID {
+		t.Errorf("#2 within keep: want the younger salve")
+	}
+	if _, ok := c.FindInPotionsWhere("3.healing salve", onlySalve); ok {
+		t.Error("3. within keep: only two salves pass keep")
+	}
+}
+
 // TestStoreItem_AmbientBandolier_OnePerType proves an ambient bandolier (Vitalis)
 // accepts one of each potion type but routes a duplicate type to the backpack —
 // the anti-immortality cap. A distinct potion type still slots normally.

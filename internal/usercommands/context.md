@@ -322,7 +322,10 @@ already known, so no presence leaks.
   nothing). Only an item no topic wants takes the ordinary give path
   (quest engine notify, transfer, `player_give`). The item is looked up in the
   backpack, and in the bandolier only when a topic on the named NPC wants it
-  (`bandolierItemForTopic`), so an ordinary give stays backpack only.
+  (`bandolierItemForTopic`, the oldest wanted match) or when the target refuses
+  first, by sight or by not being there, so a held potion reads the refusal a
+  backpack item reads (`bandolierItemForGive`). An ordinary give to a player, a
+  pet or an NPC wanting nothing stays backpack only.
 - **PlayerState**: `conversation.PlayerState(user)` builds the
   `dialogue.PlayerState` callbacks (`HasQuest`, `HasItem`, `RemoveItem`,
   `GiveQuest`, `GiveItem`, ...). `GiveItem` returns whether the item

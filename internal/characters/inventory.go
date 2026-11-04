@@ -1,6 +1,7 @@
 package characters
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -323,7 +324,7 @@ func (c *Character) FindInPotions(itemName string) (items.Item, bool) {
 // FindInPotionsWhere is FindInPotions over only the bandolier items that
 // keep() accepts (nil keep = no filter), the bandolier twin of
 // FindInBackpackWhere: the food body wants the oldest edible match, not the
-// oldest match.
+// oldest match. N.item and item#N count within keep(), oldest first.
 func (c *Character) FindInPotionsWhere(itemName string, keep func(items.Item) bool) (items.Item, bool) {
 	if itemName == `` || len(c.PotionItems) == 0 {
 		return items.Item{}, false
@@ -339,6 +340,23 @@ func (c *Character) FindInPotionsWhere(itemName string, keep func(items.Item) bo
 			}
 		}
 		return items.Item{}, false
+	}
+
+	// An explicit N. counts over the list: the match below sees one item at a
+	// time, so it would only ever find a first.
+	if _, n := util.GetMatchNumber(itemName); n > 1 {
+		pool := make([]items.Item, 0, len(c.PotionItems))
+		for _, item := range c.PotionItems {
+			if keep == nil || keep(item) {
+				pool = append(pool, item)
+			}
+		}
+		sort.SliceStable(pool, func(a, b int) bool { return pool[a].CraftedRound < pool[b].CraftedRound })
+		closeMatch, fullMatch := items.FindMatchIn(itemName, pool...)
+		if fullMatch.ItemId != 0 {
+			return fullMatch, true
+		}
+		return closeMatch, closeMatch.ItemId != 0
 	}
 
 	// Sort by CraftedRound ascending (oldest first) for consumption priority

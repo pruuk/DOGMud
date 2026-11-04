@@ -3,6 +3,7 @@ package questengine
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/stretchr/testify/require"
 )
@@ -55,6 +56,29 @@ func TestTier5RemovedStepsAreRenamed(t *testing.T) {
 	require.Equal(t, "66-dose", m.Renamed["66-escort"])
 	require.Equal(t, "66-dose", m.Renamed["66-detox"])
 	require.Equal(t, "67-witness", m.Renamed["67-report"])
+
+	// The migration a character load runs (users.LoadUser), on a save resting on
+	// each old step, active and shelved. It lands on a step the quest still has.
+	for _, c := range []struct {
+		file          string
+		qid           int
+		oldStep, step string
+	}{
+		{"63-dock_rat.yaml", 63, "report", "evidence"},
+		{"65-the_street_sweepers_secret.yaml", 65, "report", "discover"},
+		{"66-the_addicts_plight.yaml", 66, "escort", "dose"},
+		{"66-the_addicts_plight.yaml", 66, "detox", "dose"},
+		{"67-the_bloom_trail.yaml", 67, "report", "witness"},
+	} {
+		save := &characters.Character{
+			QuestProgress: map[int]string{c.qid: c.oldStep},
+			ShelvedQuests: map[int]string{c.qid: c.oldStep},
+		}
+		save.RenameQuestSteps(m.Renamed)
+		require.Equal(t, c.step, save.QuestProgress[c.qid], "%d-%s", c.qid, c.oldStep)
+		require.Equal(t, c.step, save.ShelvedQuests[c.qid], "%d-%s on the shelf", c.qid, c.oldStep)
+		require.Contains(t, newLinearPlayer(loadShippedQuest(t, c.file, c.qid)).steps, c.step)
+	}
 }
 
 // Quest 66 is deliver, return, heal (owner ruling 2): Ysolde takes the wrapper

@@ -11,6 +11,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/pets"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -198,6 +201,204 @@ func TestGive_OrdinaryGiveStaysBackpackOnly(t *testing.T) {
 			require.Equal(t, 1, countItemsById(user.Character.PotionItems, 30001), "it stays in the bandolier")
 			require.False(t, mobHolds(mob, 30001))
 			require.Empty(t, drained(2), "nothing happened in the room")
+		})
+	}
+}
+
+// A potion in the bandolier reads the same target refusal as one in the
+// backpack: the sight gate at shapes and in the dark, and "not here" for a target
+// that is away. Whether the NPC wants it does not show, and the potion stays put.
+func TestBandolierGive_TargetRefusalsReadAsFromTheBackpack(t *testing.T) {
+	away := func(room *rooms.Room) { room.RemoveMob(100) }
+	for _, c := range []struct {
+		name, yaml, who string
+		band            aimBand
+		setup           func(*rooms.Room)
+		want            string
+	}{
+		{"shapes, wanted", potionHandInYAML, "skeleton", aimShapes, nil, "You can only make out shapes here."},
+		{"shapes, unwanted", talkFixtureYAML, "skeleton", aimShapes, nil, "You can only make out shapes here."},
+		{"dark, wanted", potionHandInYAML, "skeleton", aimDark, nil, refusal.NotHereCreatureLine},
+		{"dark, unwanted", talkFixtureYAML, "skeleton", aimDark, nil, refusal.NotHereCreatureLine},
+		{"dark, a two word name", potionHandInYAML, "smith rusk", aimDark, nil, refusal.NotHereCreatureLine},
+		{"lit, target away", potionHandInYAML, "skeleton", aimFull, away, refusal.NotHereCreatureLine},
+		{"lit, nobody by that name", potionHandInYAML, "ghost", aimFull, nil, refusal.NotHereCreatureLine},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			told := map[string]string{}
+			for _, where := range []string{"backpack", "bandolier"} {
+				_, mob, done := fixtureWith(t, c.yaml)
+				user, room := aimSceneSeeded(t, c.band)
+				wearBandolier(t, user)
+				if where == "backpack" {
+					user.Character.Items = append(user.Character.Items, items.New(30001))
+				} else {
+					bandolierPotion(t, user, 30001)
+				}
+				if c.setup != nil {
+					c.setup(room)
+				}
+
+				_, err := Give("healing potion "+c.who, user, room, 0)
+				require.NoError(t, err)
+
+				told[where] = aimTold(1)
+				require.Equal(t, 1, countBackpack(user, 30001)+countItemsById(user.Character.PotionItems, 30001), where)
+				require.False(t, mobHolds(mob, 30001), where)
+				require.Empty(t, questTokensFor(1), where)
+				done()
+			}
+			require.Contains(t, told["bandolier"], c.want)
+			require.NotContains(t, told["bandolier"], "aren't carrying")
+			require.Equal(t, told["backpack"], told["bandolier"])
+		})
+	}
+}
+
+// At shapes a figure resolves, so the wanted hand-in plays and a figure that
+// is a player keeps today's refusal.
+func TestBandolierGive_AtShapesAFigureResolves(t *testing.T) {
+	_, _, done := fixtureWith(t, potionHandInYAML)
+	defer done()
+	user, room := aimSceneSeeded(t, aimShapes)
+	wearBandolier(t, user)
+	bandolierPotion(t, user, 30001)
+
+	_, err := Give("healing potion 1.shape", user, room, 0)
+	require.NoError(t, err)
+	require.Contains(t, aimTold(1), "aren't carrying", "shape 1 is Bobrick")
+	require.Equal(t, 1, countItemsById(user.Character.PotionItems, 30001))
+
+	_, err = Give("healing potion 2.shape", user, room, 0)
+	require.NoError(t, err)
+	require.Equal(t, 0, countItemsById(user.Character.PotionItems, 30001), "shape 2 is the Skeleton, who wants it")
+	require.Equal(t, []string{"9-end"}, questTokensFor(1))
+}
+
+// `2.healing potion` counts over the bandolier's potions, oldest first, as it
+// would over a backpack.
+func TestBandolierGive_HonoursTheOrdinal(t *testing.T) {
+	user, _, done := fixtureWith(t, potionHandInYAML)
+	defer done()
+	wearBandolier(t, user)
+	bandolierPotion(t, user, 30001)
+	user.Character.PotionItems = append(user.Character.PotionItems, items.New(30001))
+	pots := user.Character.PotionItems
+	require.Len(t, pots, 2)
+	pots[0].CraftedRound, pots[1].CraftedRound = 5, 9
+	first, second := pots[0].UUID, pots[1].UUID
+
+	_, err := Give("3.healing potion skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+	require.Contains(t, drained(1), "aren't carrying", "there is no third")
+	require.Len(t, user.Character.PotionItems, 2)
+
+	_, err = Give("2.healing potion skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+	require.Len(t, user.Character.PotionItems, 1)
+	require.Equal(t, first, user.Character.PotionItems[0].UUID, "the second went, the first stayed")
+	require.NotEqual(t, second, user.Character.PotionItems[0].UUID)
+	require.Equal(t, []string{"9-end"}, questTokensFor(1))
+}
+
+// The NPC is asked before the potion is chosen: an older potion matching the
+// name that nobody asked for does not stand in front of the one wanted.
+func TestBandolierGive_ChoosesAmongWantedPotions(t *testing.T) {
+	user, mob, done := fixtureWith(t, potionHandInYAML)
+	defer done()
+	const greater = 30002
+	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
+		30001: items.GetItemSpec(30001),
+		40182: items.GetItemSpec(40182),
+		greater: {ItemId: greater, Name: "Greater Healing Potion", Description: "A vial of dark red liquid.",
+			Type: items.Potion, Subtype: items.Usable, Uses: 3, Value: 50},
+	})()
+	wearBandolier(t, user)
+	bandolierPotion(t, user, greater)
+	bandolierPotion(t, user, 30001)
+	user.Character.PotionItems = append(user.Character.PotionItems, items.New(30001))
+	pots := user.Character.PotionItems
+	pots[0].CraftedRound, pots[1].CraftedRound, pots[2].CraftedRound = 1, 8, 3
+	youngest := pots[1].UUID
+
+	_, err := Give("healing potion skeleton", user, mustRoom(t, user), 0)
+	require.NoError(t, err)
+
+	require.Contains(t, drained(1), "My thanks.")
+	require.Equal(t, 1, countItemsById(user.Character.PotionItems, greater), "the unwanted one stays")
+	require.False(t, mobHolds(mob, greater))
+	require.Equal(t, 1, countItemsById(user.Character.PotionItems, 30001))
+	remaining := -1
+	for i, p := range user.Character.PotionItems {
+		if p.ItemId == 30001 {
+			remaining = i
+		}
+	}
+	require.Equal(t, youngest, user.Character.PotionItems[remaining].UUID, "the oldest wanted one went")
+	require.Equal(t, []string{"9-end"}, questTokensFor(1))
+}
+
+// A pet never takes a potion from the bandolier, the giver's own (by the word
+// and by its name) or another player's: the refusal is the line of a player
+// carrying no such potion.
+func TestBandolierGive_APetTakesNothing(t *testing.T) {
+	for _, who := range []string{"pet", "fang", "rex"} {
+		t.Run(who, func(t *testing.T) {
+			user, _, done := fixtureWith(t, potionHandInYAML)
+			defer done()
+			wearBandolier(t, user)
+			other := users.GetByUserId(2)
+			mine, theirs := user.Character.Pet, other.Character.Pet
+			t.Cleanup(func() { user.Character.Pet, other.Character.Pet = mine, theirs })
+			user.Character.Pet = pets.Pet{Name: "Fang", Type: "dog", Capacity: 5}
+			other.Character.Pet = pets.Pet{Name: "Rex", Type: "dog", Capacity: 5}
+
+			_, err := Give("healing potion "+who, user, mustRoom(t, user), 0)
+			require.NoError(t, err)
+			refused := drained(1)
+			require.Contains(t, refused, "aren't carrying")
+
+			bandolierPotion(t, user, 30001)
+			_, err = Give("healing potion "+who, user, mustRoom(t, user), 0)
+			require.NoError(t, err)
+
+			require.Equal(t, refused, drained(1))
+			require.Equal(t, 1, countItemsById(user.Character.PotionItems, 30001))
+			require.Empty(t, user.Character.Pet.Items)
+			require.Empty(t, other.Character.Pet.Items)
+			require.Empty(t, questTokensFor(1))
+		})
+	}
+}
+
+// A hidden mob is not there to the giver: it takes nothing, wanted or not, and
+// the refusal is the one an empty room gives, so nothing tells it apart.
+func TestBandolierGive_AHiddenMobIsNotThere(t *testing.T) {
+	for name, src := range map[string]string{"wanted": potionHandInYAML, "unwanted": talkFixtureYAML} {
+		t.Run(name, func(t *testing.T) {
+			told := map[bool]string{}
+			for _, hidden := range []bool{true, false} {
+				user, mob, done := fixtureWith(t, src)
+				room := mustRoom(t, user)
+				wearBandolier(t, user)
+				bandolierPotion(t, user, 30001)
+				if hidden {
+					hideForAmbushTest(t, &mob.Character)
+				} else {
+					room.RemoveMob(100)
+				}
+
+				_, err := Give("healing potion skeleton", user, room, 0)
+				require.NoError(t, err)
+
+				told[hidden] = drained(1)
+				require.Equal(t, 1, countItemsById(user.Character.PotionItems, 30001))
+				require.False(t, mobHolds(mob, 30001))
+				require.Empty(t, questTokensFor(1))
+				done()
+			}
+			require.Contains(t, told[true], refusal.NotHereCreatureLine)
+			require.Equal(t, told[false], told[true])
 		})
 	}
 }
