@@ -15,7 +15,7 @@ flags:
 steps:
   - id: start
     destination:
-      mob: 9305  # follow Marn the Draper (schedule np_docks_marn) — a fixed room is wrong for part of the day
+      mob: 9305  # follow Marn the Draper (schedule np_docks_marn), because a fixed room is wrong for part of the day
       room: 5523  # fallback when Marn the Draper is not spawned
     description: >-
       Trace the Bloom to its source. It starts with a clean little
@@ -25,7 +25,7 @@ steps:
       docks. Type talk marn.
   - id: front
     destination:
-      mob: 9345  # follow Falk the Auctioneer (schedule np_merchant_falk) — a fixed room is wrong for part of the day
+      mob: 9345  # follow Falk the Auctioneer (schedule np_merchant_falk), because a fixed room is wrong for part of the day
       room: 5808  # fallback when Falk the Auctioneer is not spawned
     description: >-
       You got past Marn's front. The supply comes up from an address in
@@ -36,7 +36,7 @@ steps:
       who holds the Lintel Street property. Type talk falk.
   - id: lintel
     destination:
-      mob: 9369  # follow Wenna the Servant (schedule np_noble_wenna) — a fixed room is wrong for part of the day
+      mob: 9369  # follow Wenna the Servant (schedule np_noble_wenna), because a fixed room is wrong for part of the day
       room: 6013  # fallback when Wenna the Servant is not spawned
     description: >-
       Falk knows the Lintel Street address as a quiet property held
@@ -46,7 +46,7 @@ steps:
       She frightens easily. Type talk wenna.
   - id: delivery
     destination:
-      mob: 9379  # follow Deren (schedule np_oldquarter_deren) — a fixed room is wrong for part of the day
+      mob: 9379  # follow Deren (schedule np_oldquarter_deren), because a fixed room is wrong for part of the day
       room: 6029  # fallback when Deren is not spawned
     description: >-
       Wenna confirmed the delivery house: unmarked goods at odd hours,
@@ -56,7 +56,7 @@ steps:
       the Underdocks. It is dark down there, so bring a light. Type talk deren.
   - id: source
     destination:
-      mob: 9380  # follow Quill the Lamplighter (schedule np_oldquarter_quill) — a fixed room is wrong for part of the day
+      mob: 9380  # follow Quill the Lamplighter (schedule np_oldquarter_quill), because a fixed room is wrong for part of the day
       room: 6031  # fallback when Quill the Lamplighter is not spawned
     description: >-
       You found 215 Lintel Street: the production room, the apparatus,
