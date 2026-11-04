@@ -29,9 +29,6 @@ hint-length 71 step start
 hint-length 71 step vell
 one-action 1000000 step end:none
 one-action 1000000 step givegold:none
-one-action 63 mob 9300 topic tallyhandoff:prev
-one-action 63 mob 9316 topic tallyhandoff:prev
-one-action 63 step report:none
 one-action 65 mob 9320 topic sweeperhandoff:prev
 one-action 65 step report:none
 one-action 66 mob 9323 topic escort_close:prev
@@ -52,9 +49,6 @@ refs 1000000 quest 1000000 refs: rewards conditionid: condition 4 does not exist
 refs 1000000 quest 1000000 refs: rewards skillinfo: skill "map" does not exist
 start 1000000 step start
 start 21 step start
-walk-dead-end 63 mob 9300 topic tallyhandoff
-walk-dead-end 63 mob 9316 topic tallyhandoff
-walk-dead-end 63 step report
 walk-dead-end 65 mob 9320 topic sweeperhandoff
 walk-dead-end 65 step report
 walk-dead-end 66 mob 9323 topic wrapperhandoff
@@ -63,7 +57,6 @@ walk-dead-end 67 mob 9316 topic casefilehandoff
 walk-dead-end 67 step report
 walk-destination 1000000 step givegold
 walk-destination 1000000 step start
-walk-destination 63 step report
 walk-destination 65 step report
 walk-destination 66 step detox
 walk-destination 66 step escort

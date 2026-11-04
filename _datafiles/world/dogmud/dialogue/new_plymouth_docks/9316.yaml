@@ -41,8 +41,9 @@ opener:
       dawn, in his hovel just north or out on the Lamp-Walk. Type talk quill.
   - questRequired:
     - 63-end
-    text: Hewd is answering for his two columns now, and Teo's name is off the
-      board. That's the docks put a little straighter.
+    text: The warrant for Hewd is with the magistrate's clerk, and he is sitting up
+      there pretending not to know it. Teo's name is off the board. That's the
+      docks put a little straighter.
     hints: Choose a line below to hear what happens to Hewd now, or about the
       trouble on the docks.
 topics:
@@ -52,10 +53,11 @@ topics:
   label: Dock Rat
   playerLine: Hewd's tally-book shows two sets of numbers.
   text: Let me see that. Two columns. Manifest on the left, the true count on the
-    right. That is the foreman's hand. The shortage was never Teo's. I'll have
-    Hewd in by the next bell, and the boy's name off the board.
+    right. That is the foreman's hand. The shortage was never Teo's. A foreman
+    takes a warrant, and warrants take days. Until it comes back he sits at his
+    desk where I can see him. The boy's name comes off the board today.
   questRequired:
-  - 63-start
+  - 63-evidence
   questExcluded:
   - 63-end
   requiresItem: 40100
@@ -92,9 +94,11 @@ topics:
 - key: hewd
   kind: info
   label: What happens to Hewd now?
-  text: He answers for the difference between his two columns. Teo is back on the
-    manifest, and I'm reading this season's other short counts again with the
-    foreman's hand in mind. I expect I'll find it on more than one page.
+  text: When the warrant comes back he answers for the difference between his two
+    columns. Until then he stays at his desk, where he cannot run without my
+    seeing it. Teo is back on the manifest, and I'm reading this season's other
+    short counts with the foreman's hand in mind. I expect I'll find it on more
+    than one page.
   questRequired:
   - 63-end
 - key: docks

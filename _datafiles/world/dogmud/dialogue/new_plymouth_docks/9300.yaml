@@ -17,8 +17,8 @@ opener:
   variants:
   - questRequired:
     - 63-end
-    text: Teo's back on the board, and Hewd answers to the constable now. That is
-      how it should have gone the first time.
+    text: Teo's back on the board, and the constable has a warrant coming for Hewd.
+      That is how it should have gone the first time.
     hints: Choose a line below to learn about work on the docks, the harbor
       fees, or the people who passed through before you.
   - questRequired:
@@ -36,7 +36,7 @@ opener:
       keeps two sets of numbers keeps a spare.
     hints: From the Long Quay, where Jesset keeps his board, go north five times
       to the Outer Dock Lane, then east into the Dock Constable's Post and up into
-      the Foreman's Office. Type look floorboard.
+      the Foreman's Office. Type search.
   - questRequired:
     - 63-start
     questExcluded:
@@ -46,7 +46,7 @@ opener:
       conscience. Proof goes to the constable or to me, not to the wharf gossip.
     hints: From the Long Quay, where Jesset keeps his board, go north five times
       to the Outer Dock Lane, then east into the Dock Constable's Post and up into
-      the Foreman's Office. Type look floorboard.
+      the Foreman's Office. Type search.
 topics:
 - key: tallyhandoff
   kind: handin
@@ -58,7 +58,7 @@ topics:
     lands harder from me. Teo's back on the board in the morning. You did right by
     him.
   questRequired:
-  - 63-start
+  - 63-evidence
   questExcluded:
   - 63-end
   requiresItem: 40100
@@ -77,7 +77,7 @@ topics:
     that office. Bring proof to the constable, or back to me.
   hints: Accept, then go north five times from the Long Quay, where Jesset keeps
     his board, to the Outer Dock Lane, east into the Dock Constable's Post, and up
-    into the Foreman's Office. There, type look floorboard.
+    into the Foreman's Office. There, type search.
   questExcluded:
   - 63-start
   - 63-end

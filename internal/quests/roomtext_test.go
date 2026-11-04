@@ -127,6 +127,9 @@ func TestShippedQuestRoomTextFollowsConvention(t *testing.T) {
 	// the room_interact trigger with its observer line is gone.
 	// The disc line (#667) added 2: quest 76 lost the line for lifting the disc
 	// from the journal and gained the cairn, the old camp and the remains.
-	assert.Equal(t, 31, checked,
-		"31 quest observer lines ship; a different count means the inventory moved, so re-read this test")
+	// Phase 7 tier 5 took 2 away: quest 63's four typed-noun triggers (two
+	// observer lines for the evidence, two for the lost book) became two
+	// search triggers.
+	assert.Equal(t, 29, checked,
+		"29 quest observer lines ship; a different count means the inventory moved, so re-read this test")
 }
