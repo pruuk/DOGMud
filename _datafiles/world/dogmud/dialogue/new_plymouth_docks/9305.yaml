@@ -34,10 +34,9 @@ topics:
     runs. It doesn't come from this shop. The supply end is an address in the Old
     Quarter, on Lintel Street. That's where it starts. Who holds that house, I
     couldn't tell you.
-  hints: Marn holds your eye for a long moment, then nods at a wax-wrapped square
-    under the remnants, the same kind as the wrapper Teels gave you. He takes you
-    for a customer. The auctioneer Falk in the Merchant Quarter knows who holds
-    the Lintel Street property. Type talk falk.
+  hints: Marn nods at a wax-wrapped square under the remnants, like Teels's wrapper.
+    He takes you for a customer. The auctioneer Falk in the Merchant Quarter knows
+    who holds that house. Type talk falk.
   marked: true
   questRequired:
   - 67-start
@@ -56,10 +55,9 @@ topics:
     supply itself. The supply end is in the Old Quarter. Lintel Street. There is
     an address there. Who holds that house, I couldn't tell you. That is all I
     am going to say.
-  hints: Marn does not look at the door. He looks at you, very still, and gives it
-    up rather than risk you taking what you know elsewhere. The auctioneer Falk in
-    the Merchant Quarter knows who holds the Lintel Street property. Type talk
-    falk.
+  hints: Marn gives it up rather than risk you taking what you know elsewhere. The
+    auctioneer Falk in the Merchant Quarter knows who holds the Lintel Street
+    property. Type talk falk.
   marked: true
   questRequired:
   - 67-start

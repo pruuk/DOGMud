@@ -41,7 +41,7 @@ opener:
     - 66-dose
     questExcluded:
     - 66-end
-    carriesItem: 40109
+    requiresItem: 40109
     text: Is that from her? Give it here. Please.
     hints: Choose The Addict's Plight below to give Teels the purge.
   - questRequired:

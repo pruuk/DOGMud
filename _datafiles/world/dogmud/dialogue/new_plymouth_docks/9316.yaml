@@ -14,17 +14,17 @@ opener:
     the trouble on the docks, or what evidence would change the case.
   variants:
   - questRequired:
-    - 63-start
+    - 63-evidence
     questExcluded:
     - 63-end
-    carriesItem: 40100
+    requiresItem: 40100
     text: That book under your arm. Is that from the foreman's office?
     hints: Choose Dock Rat below to give the constable the tally-book.
   - questRequired:
-    - 67-start
+    - 67-witness
     questExcluded:
     - 67-end
-    carriesItem: 40111
+    requiresItem: 40111
     text: That's a case file you're holding. Who put it together?
     hints: Choose The Bloom Trail below to give the constable the case file.
   - questRequired:
@@ -33,12 +33,9 @@ opener:
     - 67-end
     text: Word is you've a case against the Bloom trade. Then where is it? I
       can't move on talk. I need it on paper.
-    hints: If you lost the case file, Quill can write it again. From the Dock
-      Constable's Post, go west to the Outer Dock Lane, south five times to the
-      Long Quay, then west twice to the Underdock Stair. Go down into the
-      Underdocks, west twice to Lower Lintel Street, then north to Quill's
-      Lamp-Walk. He sleeps through the day and is up from late afternoon until
-      dawn, in his hovel just north or out on the Lamp-Walk. Type talk quill.
+    hints: If you lost the case file, Quill can write it again. He walks the
+      Lamp-Walk off Lower Lintel Street, in the Old Quarter, and is up at night.
+      Bring a light. Type talk quill.
   - questRequired:
     - 63-end
     text: The warrant for Hewd is with the magistrate's clerk, and he is sitting up

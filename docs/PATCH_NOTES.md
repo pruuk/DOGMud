@@ -1,6 +1,6 @@
 # DOGMud Patch Notes
 
-## 2026-11-05: Down on the docks
+## 2026-11-04: Down on the docks
 
 - Dock Rat and The Street Sweeper's Secret are now followed by searching: where the
   trail leads you, type search.

@@ -1,7 +1,7 @@
 # #375 phase 7, tier 5: New Plymouth
 
-**Status:** design approved in brainstorm 2026-11-04; awaiting owner review of this file. No plan is
-written until the owner approves it, and no build starts until the owner has seen the plan.
+**Status:** approved 2026-11-04. Plan: `docs/superpowers/plans/2026-11-04-p7-tier5-new-plymouth.md`, in
+build.
 **Arc:** #375 quest and dialogue rework, phase 7. Roadmap: `docs/roadmaps/QUEST_DIALOGUE_ROADMAP.md`;
 target page: `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`. Earlier tiers:
 `docs/superpowers/specs/completed/2026-11-02-quest-arc-phase7-tier1-design.md`, `...-tier2-design.md`,

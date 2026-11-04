@@ -17,8 +17,8 @@ opener:
     don't discuss my patients with anyone. That's the whole of the policy and it
     doesn't change. What is it?
   hints: Choose a line below to hear how she runs things, about the temple
-    healers, or about the sickness she sees most in the quarter. She also keeps
-    a few tools for sale under the counter. To see what she sells, type list.
+    healers, or about the sickness she sees most. She also keeps a few tools for
+    sale. To see what she sells, type list.
   variants:
   - questRequired:
     - 67-end
@@ -28,14 +28,19 @@ opener:
       healers, or about the sickness she sees most in the quarter. To see what
       she sells, type list.
   - questRequired:
+    - 67-front
+    questExcluded:
+    - 67-end
+    text: You're still after it, then. I don't know who is behind it, and I won't
+      guess. Mind yourself.
+    hints: Your quest log shows where the trail goes next.
+  - questRequired:
     - 67-start
     questExcluded:
     - 67-end
-    text: Marn's shop is on the docks. A clean little front. Start there.
-    hints: From Ysolde's Room, go south to the Back-Alley, west to Sweeper's
-      Corner, south to Tannery Street, west to the Back Court, then south four
-      times to Dockgate Street. Go west twice to Dock Street, north three times to
-      the Outer Dock Lane, then north into Marn's shop. Type talk marn.
+    text: Teels gave you the draper, then. Start there.
+    hints: Marn's fabric shop is at the north end of the Outer Dock Lane, on the
+      docks. Type talk marn.
   - questRequired:
     - 66-end
     text: Teels is resting. The purge holds, for now. But while someone keeps
@@ -63,9 +68,9 @@ opener:
     questExcluded:
     - 66-dose
     - 66-end
-    carriesItem: 40110
+    requiresItem: 40110
     text: That smell. Copper-flower. What is that in your hand?
-    hints: Choose The Addict's Plight below to give Ysolde the wax wrapper.
+    hints: Choose the line about the wrapper below.
   - questRequired:
     - 66-start
     questExcluded:
@@ -73,11 +78,8 @@ opener:
     - 66-end
     text: Someone sent you to me. I can see it. But you came without whatever they
       sent you with.
-    hints: If you lost the wax wrapper, Teels has more. From Ysolde's Room, go
-      south to the Back-Alley, west to Sweeper's Corner, south to Tannery Street,
-      west to the Back Court, then south four times to Dockgate Street. Go west
-      twice to Dock Street, then south three times to the Lower Wharf. Type talk
-      teels.
+    hints: If you lost the wax wrapper, Teels has more, on the Lower Wharf at the
+      docks. Type talk teels.
 topics:
 - key: wrapperhandoff
   kind: info
@@ -155,8 +157,8 @@ topics:
     now for a short while. The slow way is quieter but it takes longer, and some
     people do not have longer. If you want the purge, drink it when you are ready.
     I won't ask how bad it is.
-  hints: If Teels is waiting on it, take it to her. To use it yourself, type quaff
-    purge.
+  hints: If this cup is for someone else, take it to them. To drink it yourself,
+    type quaff purge.
   itemExcluded: 40109
   givesItem: 40109
   moodChange: cautious

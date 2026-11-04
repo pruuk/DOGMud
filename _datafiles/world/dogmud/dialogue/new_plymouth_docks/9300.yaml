@@ -22,10 +22,10 @@ opener:
     hints: Choose a line below to learn about work on the docks, the harbor
       fees, or the people who passed through before you.
   - questRequired:
-    - 63-start
+    - 63-evidence
     questExcluded:
     - 63-end
-    carriesItem: 40100
+    requiresItem: 40100
     text: That's Hewd's book in your hand, isn't it? Let me see it.
     hints: Choose Dock Rat below to give Jesset the tally-book.
   - questRequired:

@@ -24,14 +24,13 @@ topics:
   label: I know the Bloom trade runs through this house.
   text: You have got this far. I will grant that much. What you cannot do from here
     is close it. The bloodline's domestic office has known about this address for
-    some time. They also know the value of what ran through it, and they hold an
+    some time. They also know the value of what runs through it, and they hold an
     opinion about interruptions. You have a case that goes nowhere without a witness
     who has seen what moved through that door and will say so where it matters. I am
     not that witness. Good luck finding one.
-  hints: Deren is exposed but out of reach. The bloodline's office stands between him
-    and anything you could bring. He named what you need, a witness who saw what
-    moved through the iron door. The lamplighter Quill walks this canal by night.
-    Type talk quill.
+  hints: The bloodline's office protects Deren. He named what you need, a witness
+    who saw what moved through the iron door. The lamplighter Quill walks this
+    canal. Type talk quill.
   marked: true
   questRequired:
   - 67-delivery
@@ -50,7 +49,7 @@ topics:
   hints: He told you something and nothing in the same breath.
 - key: marn
   kind: info
-  label: Who was your contact on the docks?
+  label: Who is your contact on the docks?
   text: The docks end is a man named Marn. He keeps a cloth shop on the docks. Clean
     front, well kept, nothing that draws attention. He and I never met in person. You
     will understand why. Whether he carries on when this end goes quiet, I

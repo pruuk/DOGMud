@@ -6,10 +6,10 @@ description: >
   ceiling, no window, the air carrying old tallow and
   something papery that has had time to settle into the
   stone. A <ansi fg="itemname">desk</ansi> against the
-  wall bears the wear of regular use stopped not long
-  since: a surface scored by pen and ink-ring stains,
-  a dry inkwell, a pen still in its holder as though
-  set down mid-thought. On the desk, an open <ansi
+  wall bears the wear of long, regular use: a surface
+  scored by pen and ink-ring stains, a stoppered
+  inkwell, a pen in its holder as though set down
+  mid-thought. On the desk, an open <ansi
   fg="itemname">ledger</ansi> in a close, careful hand;
   the last entry runs off mid-column without a closing
   line, the figures unfinished. In the desk's corner,
@@ -33,11 +33,10 @@ nouns:
     that accumulates the marks of its use without
     ceremony. The surface carries pen-scoring, old ink
     rings, a depression from the heel of a hand used
-    many times in the same place. The inkwell is dry
-    and has been dry long enough that the residue has
-    crusted at the lip. The pen in its holder is good
-    quality. Someone who worked here paid for good
-    tools and used them steadily over a long period.
+    many times in the same place. The inkwell is
+    stoppered, old residue crusted at the lip. The pen
+    in its holder is good quality. Whoever works here
+    pays for good tools and uses them steadily.
   ledger: A bound ledger of columns and entries in a
     precise, compressed hand. Dates run down the left
     margin; figures and brief notations fill the
@@ -62,7 +61,7 @@ idlemessages:
 - The cord on the desk corner catches the eye;
   the absence it marks is harder to define.
 - The air in the room is closed and used, with the
-  smell of a workspace that has been sealed awhile.
+  smell of a workspace kept sealed.
 - The fourth step below produces a faint sound
   on its own when the temperature of the stairwell
   shifts in the cold.
