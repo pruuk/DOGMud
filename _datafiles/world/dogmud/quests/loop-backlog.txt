@@ -8,13 +8,8 @@ end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
 hint 21 step start
-hint-length 71 step horst
-hint-length 71 step ledger
-hint-length 71 step start
-hint-length 71 step vell
 one-action 1000000 step end:none
 one-action 1000000 step givegold:none
-one-action 71 mob 9347 topic ledgerhandoff:prev
 refs 1000000 quest 1000000 refs: rewards conditionid: condition 4 does not exist
 refs 1000000 quest 1000000 refs: rewards skillinfo: skill "map" does not exist
 start 1000000 step start

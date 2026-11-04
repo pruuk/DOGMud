@@ -69,6 +69,7 @@ func TestTier5OpenersPromiseOnlyTheHandInOnTheMenu(t *testing.T) {
 		{"new_plymouth_docks/9392.yaml", "purge_handoff", "Choose The Addict's Plight below", []string{"66-start"}, []string{"66-start", "66-dose"}, 40109, nil},
 		{"new_plymouth_crafting/9332.yaml", "orinhandoff", "Choose The Pre-Founding Web below", []string{"70-start"}, []string{"70-start", "70-witness"}, 40118, nil},
 		{"new_plymouth_crafting/9332.yaml", "orinhandoff", "Choose The Pre-Founding Web below", []string{"70-start"}, []string{"70-start", "70-witness", "69-end"}, 40118, nil},
+		{"new_plymouth_merchant/9347.yaml", "ledgerhandoff", "Choose The Tribute below", []string{"71-horst"}, []string{"71-horst", "71-ledger"}, 40119, nil},
 		{"new_plymouth_crafting/9332.yaml", "orinhandoff_cold", "Choose The Pre-Founding Web below", []string{"70-start", "68-end"}, []string{"70-start", "70-witness", "68-end"}, 40118, map[string]string{"68-allegiance": "bloodline"}},
 	} {
 		df := loadShippedDialogue(t, c.file)
@@ -113,6 +114,7 @@ func TestTier5HintsAreShort(t *testing.T) {
 		"new_plymouth_common/9320.yaml", "new_plymouth_common/9323.yaml",
 		"new_plymouth_crafting/9332.yaml", "new_plymouth_crafting/9338.yaml",
 		"new_plymouth_docks/9300.yaml", "new_plymouth_docks/9305.yaml", "new_plymouth_docks/9316.yaml", "new_plymouth_docks/9392.yaml",
+		"new_plymouth_merchant/9344.yaml", "new_plymouth_merchant/9347.yaml", "new_plymouth_merchant/9349.yaml",
 		"new_plymouth_noble/9369.yaml", "new_plymouth_noble/9371.yaml", "new_plymouth_temple/9360.yaml", "new_plymouth_old_quarter/9379.yaml", "new_plymouth_old_quarter/9381.yaml",
 	} {
 		df := loadShippedDialogue(t, file)
@@ -477,6 +479,50 @@ func TestTier5GrittasScheduleSendsNothingToColl(t *testing.T) {
 	require.Contains(t, string(data), "bookseller", "the file is the one that names her finds")
 	require.NotContains(t, string(data), "Coll")
 	require.NotContains(t, string(data), "sweeper")
+}
+
+// Ostry's hand-in pays no circle reputation: the quest's reward pays the common
+// folk, and the 69-end trigger keeps its own bonus.
+func TestTier5OstryPaysNoCircleRep(t *testing.T) {
+	o := loadShippedDialogue(t, "new_plymouth_merchant/9347.yaml")
+	in := o.FindTopic("ledgerhandoff")
+	require.Empty(t, in.BumpsRep, "the 69-end trigger keeps its bonus, the hand-in pays none")
+	require.Equal(t, []string{"71-ledger"}, in.QuestRequired)
+	require.Equal(t, 40119, in.RequiresItem)
+	require.Equal(t, "The Tribute", in.Label, "the openers say Choose The Tribute below")
+}
+
+// Each Ostry opener says only what is true for the step: the hand-in when the
+// page can be taken, a move from the pack when it cannot, a search for a lost
+// one, and a search at the parlor before the page is found. Every hint names a
+// search, never a typed noun.
+func TestTier5OstryOpenersFollowTheLedger(t *testing.T) {
+	o := loadShippedDialogue(t, "new_plymouth_merchant/9347.yaml")
+	steps := []string{"71-start", "71-vell", "71-horst", "71-ledger"}
+	_, hints := o.OpenerFor(carrying(heldState(steps...), 40119))
+	require.Contains(t, hints, "Choose The Tribute below")
+	_, hints = o.OpenerFor(heldState(steps...))
+	require.Contains(t, hints, "Type search there", "a lost page is searched for again")
+	require.NotContains(t, hints, "Choose The Tribute below")
+	_, hints = o.OpenerFor(heldState(steps[:3]...))
+	require.Contains(t, hints, "Type search there")
+	for _, tok := range [][]string{steps[:1], steps[:2], steps[:3]} {
+		_, hints = o.OpenerFor(carrying(heldState(tok...), 40119))
+		require.NotContains(t, hints, "Choose The Tribute below", "%v", tok)
+	}
+	all := []string{o.Opener.Hints}
+	for _, v := range o.Opener.Variants {
+		all = append(all, v.Hints)
+	}
+	for _, tp := range o.Topics {
+		all = append(all, tp.Hints)
+	}
+	for _, h := range all {
+		require.NotContains(t, h, "look paper scrap")
+	}
+	h := loadShippedDialogue(t, "new_plymouth_merchant/9344.yaml").FindTopic("q71_horst")
+	require.Contains(t, h.Hints, "Type search there")
+	require.NotContains(t, h.Hints, "look paper scrap")
 }
 
 // No Dross line sends the player to look at the reliefs.

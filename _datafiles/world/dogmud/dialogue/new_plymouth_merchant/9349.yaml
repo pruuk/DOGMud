@@ -57,9 +57,9 @@ topics:
     without standing, and the lad who keeps it put out. The office pays for
     discretion, and pays well. But a document filed is filed. I do not hand them
     back, and the people in that cooperage will know whose hand it came from.
-  hints: Siding with the bloodline hands Edvar's survey to the office for good,
-    gets the cooperage seized, and sets the circle against you. It cannot be
-    undone. If you are sure, choose The Cooperage Circle below.
+  hints: Siding with the bloodline hands Edvar's survey to the office, gets the
+    cooperage seized, and sets the circle against you. It cannot be undone. If you
+    are sure, choose The Cooperage Circle below.
   marked: true
   questRequired:
   - 68-choice
@@ -93,10 +93,9 @@ topics:
     to know where the obligation leads above this desk, that is not a door I open.
     The watched house at the end of the Watched Lane keeps its own gate, and a man
     named Horst keeps that.
-  hints: Vell will say only that the rate is set by charter, and the charter rests
-    on the founding. The tribute runs upward past him, to Horst at the watched house
-    gate. From the Permit Office, go east to the Watched Lane, then north to the
-    gate. He sleeps at the gate in the small hours. Type talk horst.
+  hints: Vell will say only that the charter sets the rate. The tribute runs upward
+    past him, to Horst at the Watched House Gate, north of the Watched Lane. Type
+    talk horst.
   marked: true
   questRequired:
   - 71-start

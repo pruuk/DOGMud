@@ -1,6 +1,10 @@
 package questengine
 
 import (
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -20,6 +24,7 @@ func TestTier5QuestsHaveNoTypedNouns(t *testing.T) {
 		"68-the_cooperage_circle.yaml":       68,
 		"69-the_gallery_cipher.yaml":         69,
 		"70-the_pre_founding_web.yaml":       70,
+		"71-the_tribute.yaml":                71,
 	} {
 		for _, tr := range loadShippedQuest(t, file, id).Triggers {
 			require.NotEqual(t, "room_interact", tr.Event, "quest %d", id)
@@ -286,6 +291,80 @@ func TestQuest70ReadsForAFirstTimerAndForTheColdEnding(t *testing.T) {
 	for _, reward := range []string{q.Rewards.PlayerMessage, q.Rewards.RoomMessage} {
 		for _, banned := range []string{"part of the quiet", "nod", "painting", "cipher"} {
 			require.NotContains(t, reward, banned)
+		}
+	}
+}
+
+// A search of the private parlor finds the ledger page once Horst has spoken; a
+// player who lost it searches again; one still holding it gets no spare; after
+// the end nothing. A search before Horst finds nothing, and the reward pays the
+// common folk.
+func TestQuest71ThePageIsFoundBySearch(t *testing.T) {
+	const parlor, page = 5815, 40119
+	q := loadShippedQuest(t, "71-the_tribute.yaml", 71)
+	require.NoError(t, q.Validate())
+	require.Equal(t, "np_commonfolk", q.Rewards.RepFaction)
+	w := newQuestWalker(q).at("horst")
+	w.notify("command", tier5Search(parlor+1))
+	require.Equal(t, "horst", w.p.current, "another room finds nothing")
+	w.notify("command", tier5Search(parlor))
+	require.Equal(t, "ledger", w.p.current)
+	require.Equal(t, []int{page}, w.ctx.givenItems, "one search, one page")
+	lost := newQuestWalker(q).at("ledger")
+	lost.notify("command", tier5Search(parlor))
+	require.Equal(t, []int{page}, lost.ctx.givenItems)
+	held := newQuestWalker(q).at("ledger")
+	held.p.items[page] = true
+	held.notify("command", tier5Search(parlor))
+	require.Empty(t, held.ctx.givenItems, "no spare while one is held")
+	early := newQuestWalker(q).at("vell")
+	early.notify("command", tier5Search(parlor))
+	require.Equal(t, "vell", early.p.current, "Horst comes first")
+	require.Empty(t, early.ctx.givenItems)
+	done := newQuestWalker(q).at("end")
+	done.notify("command", tier5Search(parlor))
+	require.Empty(t, done.ctx.givenItems, "no page after the end")
+}
+
+// Quest 71 pays the cooperage circle five more only to a player who proved the
+// false founding (69-end); the hand-in itself pays no circle reputation.
+func TestQuest71BonusFollowsTheFalseFounding(t *testing.T) {
+	q := loadShippedQuest(t, "71-the_tribute.yaml", 71)
+	with := newQuestWalker(q).at("end")
+	with.p.quests["69-end"] = true
+	with.notify("quest_granted", EventDetails{QuestToken: "71-end"})
+	require.Equal(t, []BumpRepCall{{Faction: "cooperage_circle", Delta: 5}}, with.ctx.bumpedRep)
+	without := newQuestWalker(q).at("end")
+	without.notify("quest_granted", EventDetails{QuestToken: "71-end"})
+	require.Empty(t, without.ctx.bumpedRep)
+}
+
+// Hints are at most 200 characters and name no route or hour.
+func TestQuest71StepHintsAreShortAndGiveNoRoute(t *testing.T) {
+	q := loadShippedQuest(t, "71-the_tribute.yaml", 71)
+	for _, s := range q.Steps {
+		require.LessOrEqual(t, len(s.Hint), 200, s.Id)
+		for _, banned := range []string{"Type look", "twice", "three times", "go north", "go south", "go east", "go west", "small hours", "by day", "evening"} {
+			require.NotContains(t, s.Hint, banned, s.Id)
+		}
+	}
+}
+
+// No dash stands in for punctuation in the New Plymouth tier 5 quest files,
+// comments included. The control proves the pattern can find one.
+func TestTier5QuestFilesCarryNoDashes(t *testing.T) {
+	dash := regexp.MustCompile("—|–| -- ")
+	require.True(t, dash.MatchString("a — b"), "control: em dash")
+	require.True(t, dash.MatchString("a – b"), "control: en dash")
+	require.True(t, dash.MatchString("a -- b"), "control: double hyphen")
+	for _, file := range []string{
+		"68-the_cooperage_circle.yaml", "69-the_gallery_cipher.yaml",
+		"70-the_pre_founding_web.yaml", "71-the_tribute.yaml",
+	} {
+		data, err := os.ReadFile(filepath.Join("..", "..", "_datafiles", "world", "dogmud", "quests", file))
+		require.NoError(t, err)
+		for i, line := range strings.Split(string(data), "\n") {
+			require.False(t, dash.MatchString(line), "%s:%d: %q", file, i+1, line)
 		}
 	}
 }
