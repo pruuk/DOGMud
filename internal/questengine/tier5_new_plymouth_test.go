@@ -12,7 +12,8 @@ func tier5Search(room int) EventDetails { return EventDetails{Command: "search",
 // Rule 14: a step completes on something the player does, never a typed noun.
 func TestTier5QuestsHaveNoTypedNouns(t *testing.T) {
 	for file, id := range map[string]int{
-		"63-dock_rat.yaml": 63,
+		"63-dock_rat.yaml":                   63,
+		"65-the_street_sweepers_secret.yaml": 65,
 	} {
 		for _, tr := range loadShippedQuest(t, file, id).Triggers {
 			require.NotEqual(t, "room_interact", tr.Event, "quest %d", id)
@@ -48,4 +49,19 @@ func TestTier5RemovedStepsAreRenamed(t *testing.T) {
 	m, err := quests.ParseStepManifest(repoFile(t, "_datafiles", "world", "dogmud", "quests", "step-ids.txt"))
 	require.NoError(t, err)
 	require.Equal(t, "63-evidence", m.Renamed["63-report"])
+	require.Equal(t, "65-discover", m.Renamed["65-report"])
+}
+
+func TestQuest65TheSeamIsFoundBySearch(t *testing.T) {
+	const foundation, lump = 5624, 40101
+	q := loadShippedQuest(t, "65-the_street_sweepers_secret.yaml", 65)
+	require.Equal(t, []string{"start", "discover", "end"}, newLinearPlayer(q).steps)
+	require.NoError(t, q.Validate())
+	w := newQuestWalker(q).at("start")
+	w.notify("command", tier5Search(foundation))
+	require.Equal(t, "discover", w.p.current)
+	require.Equal(t, []int{lump}, w.ctx.givenItems)
+	lost := newQuestWalker(q).at("discover")
+	lost.notify("command", tier5Search(foundation))
+	require.Equal(t, []int{lump}, lost.ctx.givenItems)
 }

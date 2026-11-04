@@ -129,7 +129,8 @@ func TestShippedQuestRoomTextFollowsConvention(t *testing.T) {
 	// from the journal and gained the cairn, the old camp and the remains.
 	// Phase 7 tier 5 took 2 away: quest 63's four typed-noun triggers (two
 	// observer lines for the evidence, two for the lost book) became two
-	// search triggers.
-	assert.Equal(t, 29, checked,
-		"29 quest observer lines ship; a different count means the inventory moved, so re-read this test")
+	// search triggers. Quest 65 took 2 more the same way (the seam and the
+	// lost lump).
+	assert.Equal(t, 27, checked,
+		"27 quest observer lines ship; a different count means the inventory moved, so re-read this test")
 }

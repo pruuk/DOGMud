@@ -99,16 +99,16 @@ topics:
     founding story has us arriving to empty ground. But the stone below is worked
     stone. Someone built a passage and set a lintel and carved into it, and then
     stopped, or was stopped, long before the colony came. I have sent the best
-    fragments to Coll and to Orin. They can read what I cannot.
-  hints: She named Coll and Orin, contacts up in the city who receive her finds.
+    fragments up to Orin. He can read what I cannot.
+  hints: She named Orin, up in the Crafting Quarter, who receives her finds.
 - key: finds
   kind: info
   label: Who receives the things you find?
-  text: Coll is a street sweeper in the Common Quarter. He has been collecting
-    fragments longer than I have been sending them, and he knows how to pass what he
-    receives to the right people. Orin keeps a bookstall in the Crafting Quarter. He
-    has old survey records and maps from before the colony that the Archive does not
-    officially hold. Between the two of them, the fragments reach where they need to
-    go. My part is the finding. The reading is theirs.
-  hints: She named both contacts plainly, Coll in the Common Quarter and Orin in the
-    Crafting Quarter.
+  text: Orin keeps a bookstall in the Crafting Quarter. He has old survey records
+    and maps from before the colony that the Archive does not officially hold. What
+    I can carry, I send to him. My part is the finding. The reading is his. The
+    small pieces I cannot keep. The flood takes them and the rain carries them up
+    the old drains into the gutters of the Common. There is a sweeper up there,
+    Coll, who picks them out without knowing what they are. I have never met him.
+  hints: She named Orin in the Crafting Quarter, and a sweeper named Coll who has
+    never met her.
