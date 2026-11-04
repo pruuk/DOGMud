@@ -7,9 +7,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
-// itemNameAfterWord matches "the", "your" or "their" directly before an item's
-// open tag, and the name text the tag opens, up to the next tag.
-var itemNameAfterWord = regexp.MustCompile(`\b([Tt]he|[Yy]our|[Tt]heir) (<ansi fg="item(?:name)?(?:-[A-Za-z0-9_-]+)?">)([^<]+)`)
+// itemNameAfterWord matches "the", "this", "your" or "their" directly before an
+// item's open tag, and the name text the tag opens, up to the next tag.
+var itemNameAfterWord = regexp.MustCompile(`\b([Tt]he|[Tt]his|[Yy]our|[Tt]heir) (<ansi fg="item(?:name)?(?:-[A-Za-z0-9_-]+)?">)([^<]+)`)
 
 // DropDoubledItemArticles fixes a line that puts its own word before an item's
 // name when the name cannot take it: "You show the A Folded Page" reads "You

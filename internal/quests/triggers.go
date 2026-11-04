@@ -135,7 +135,7 @@ type Conditions struct {
 	InRoom        int               `yaml:"in_room,omitempty" json:"in_room,omitempty"`               // player must be in this room
 	HasItem       int               `yaml:"has_item,omitempty" json:"has_item,omitempty"`             // player must have this item
 	MissingItems  []int             `yaml:"missing_items,omitempty" json:"missing_items,omitempty"`   // player must hold NONE of these items
-	MissingItem   int               `yaml:"missing_item,omitempty" json:"missing_item,omitempty"`    // player must NOT have this item
+	MissingItem   int               `yaml:"missing_item,omitempty" json:"missing_item,omitempty"`     // player must NOT have this item
 	HasFlag       map[string]string `yaml:"has_flag,omitempty" json:"has_flag,omitempty"`             // player must have ALL these flag key=value pairs
 	MissingFlag   map[string]string `yaml:"missing_flag,omitempty" json:"missing_flag,omitempty"`     // player must NOT have ANY of these flag key=value pairs
 	HasGold       int               `yaml:"has_gold,omitempty" json:"has_gold,omitempty"`             // player must have at least this much gold
