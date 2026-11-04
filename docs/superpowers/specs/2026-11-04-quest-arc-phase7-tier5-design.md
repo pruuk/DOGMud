@@ -40,7 +40,7 @@ the backlog guard.
 | Marn stands in Marn's Fabric-Remnants Shop, 5523, exits south, north, down | `rooms/new_plymouth_docks/5523.yaml` |
 | `room_gate` refuses a move on conditions and says why: the pattern for a door only the knock opens | `quests/14-the_undertow.yaml:84-93` |
 | A branching quest pattern: flag `resolution`, values per ending | `quests/18-bettas_silence.yaml:8-11` |
-| Quest id 64 is free in the New Plymouth band | `tools/id_inventory.py` |
+| Quest ids 64 and 102 are free: no quest file, and no line in the step manifest. 72 is taken by The Water Dispute; 78 to 87 and 29 are retired | `quests/`, `quests/step-ids.txt` |
 | Novel: Cade's supply house sells fabric remnants in front, with a cupboard door and a knock he changes; Vane overhears "three months at minimum before the new one's producing at volume, if she survives the first month"; Horst of the bloodline's domestic office runs contractors and hires her to deliver a girl | `novel/what_the_moons_keep.md:746-764,1986`; outline line 145 |
 
 Reported by the 2026-11-04 survey and to be re-checked in the plan's own facts table, because the
@@ -171,10 +171,10 @@ being undercover. He hires the player to find a runaway "thief" from a noble hou
   afterwards, nobody meets her again after her story is over, which keeps depth A true.
 - Two endings, by flag `64-outcome`, following quest 18's pattern:
   - `reported`: the player tells Horst where she is, at his hand-in. He pays gold and one Bloom Wafer.
-  - `ran`: the player tells her to run, at her own topic, which ends the quest. No pay, and quest 72 never
+  - `ran`: the player tells her to run, at her own topic, which ends the quest. No pay, and quest 102 never
     opens. It cannot be retried, so the choice stands. Nothing thanks the player later.
 
-**Quest 72, the knock.** Offered by Marn, requiring `64-outcome: reported`, with a large stake through
+**Quest 102, the knock.** Offered by Marn, requiring `64-outcome: reported`, with a large stake through
 `chargesGold` on the offer. He teaches the knock.
 - `start`: paying Marn.
 - `behind`: going through the cupboard door out of 5523 into a new back room. A `room_gate` refuses anyone
