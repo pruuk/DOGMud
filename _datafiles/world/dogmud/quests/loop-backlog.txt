@@ -8,16 +8,12 @@ end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
 hint 21 step start
-hint-length 70 step start
-hint-length 70 step witness
 hint-length 71 step horst
 hint-length 71 step ledger
 hint-length 71 step start
 hint-length 71 step vell
 one-action 1000000 step end:none
 one-action 1000000 step givegold:none
-one-action 70 mob 9332 topic orinhandoff:prev
-one-action 70 quest 70 trigger room_interact room=6037 noun=symbol grants=70-witness:cond
 one-action 71 mob 9347 topic ledgerhandoff:prev
 refs 1000000 quest 1000000 refs: rewards conditionid: condition 4 does not exist
 refs 1000000 quest 1000000 refs: rewards skillinfo: skill "map" does not exist

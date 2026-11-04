@@ -11,38 +11,29 @@ secret: false
 steps:
   - id: start
     destination:
-      room: 6037  # the Buried Lintel — take a rubbing
+      room: 6037  # the Buried Lintel
     description: >-
       Gritta asked you to go deeper, to see the Buried Lintel and the
       sealed Deep Canal with your own eyes, take a rubbing of the lintel
       symbol, and carry it up to Orin in the Crafting Quarter.
     hint: >-
-      The Buried Lintel lies west twice from Gritta's Flooded Cellar, past
-      the Pre-Founding Stonework. From the Flooded Stair, go down into the
-      cellar first. From the Silted Gallery, where Gritta works in the
-      afternoon, the Buried Lintel is just south. Mind the canal north of
-      the stonework: it is not empty. Type look symbol.
+      The Buried Lintel lies west twice from Gritta's Flooded Cellar, past the
+      old stonework. It is black dark down there, so bring a light. Mind the
+      canal north of the stonework. Type search there.
   - id: witness
     destination:
-      mob: 9332  # follow Orin the Bookseller (schedule np_crafting_orin) — a fixed room is wrong for part of the day
+      mob: 9332  # follow Orin the Bookseller (schedule np_crafting_orin)
       room: 5706  # fallback when Orin the Bookseller is not spawned
     description: >-
       You stood beneath the Buried Lintel and took a rubbing of the
-      eight-pointed symbol, the original the gallery's oldest painting
-      only copied, carved before the colony arrived.
+      eight-pointed symbol, carved before the colony arrived.
     hint: >-
-      Carry the lintel rubbing up to Orin the bookseller in the Crafting
-      Quarter. From the Buried Lintel, go east twice to Gritta's Flooded
-      Cellar, up the Flooded Stair, then east twice to Quill's Lamp-Walk. Go
-      south to Lower Lintel Street, east twice into the Underdocks, then up
-      the stair. Go north to the Chandlery, east twice to the Caravan Depot,
-      then north eight times, through Marn's shop and over the canal bridge,
-      to the Inkwalk. Orin's Bookstall is east. Type talk orin.
+      Carry the lintel rubbing up to Orin the bookseller, in his stall off the
+      Inkwalk in the Crafting Quarter. Type talk orin.
   - id: end
     description: >-
-      The web is closed: the discovery below, the cipher at the Temple,
-      the panel in the gallery: all of it agrees. The colony arrived,
-      found this, and wrote itself into the record as first. The stone
+      Gritta's lintel is on record now, carved before the colony arrived. The
+      colony found this and wrote itself into the record as first. The stone
       simply goes on being older.
 
 rewards:
@@ -50,29 +41,39 @@ rewards:
   rep_faction: np_commonfolk
   rep_amount: 10
   actor: >-
-    Orin turns the rubbing toward the lamp and is quiet for a long moment.
-    "So it is really down there," he says. "The painting copied this, and
-    the cipher counts toward it, and now there is a rubbing of the thing
-    itself. Gritta found it, you stood under it, and I will see it reaches
-    the people who can hold it." He files it away with a care that is its
-    own kind of reverence. You are, without anything being said, part of
-    the quiet now.
+    The rubbing is out of your hands now. Whatever the city teaches about its
+    founding, someone up here has seen what is carved beneath it, and the stone
+    simply goes on being older.
   observer: >-
-    The old bookseller gives the traveller a slow nod, the kind that
-    settles something unspoken between them.
+    The old bookseller files a sheet of charcoal rubbing away and says nothing
+    more about it.
 
 triggers:
-  # WITNESS: take a rubbing of the lintel symbol (6037)
-  - event: room_interact
+  # Lost rubbing: the lintel has not gone anywhere. First, so one search gives one.
+  - event: command
+    command: search
     room: 6037
-    noun: symbol
     conditions:
-      has: ["70-start"]
+      has: ["70-witness"]
       missing: ["70-end"]
       missing_item: 40118
     actions:
-      - grant: "70-witness"
       - give_item: 40118
+      - actor: >-
+          You press a fresh sheet to the underside of the lintel and bring the
+          rings and the eight points up in charcoal again.
+      - observer: "{actor} takes a careful rubbing of the symbol carved beneath the buried lintel."
+
+  # WITNESS: a search beneath the lintel, with enough light to see it.
+  - event: command
+    command: search
+    room: 6037
+    conditions:
+      has: ["70-start"]
+      missing: ["70-witness"]
+    actions:
+      - give_item: 40118
+      - grant: "70-witness"
       - actor: >-
           You press paper to the underside of the lintel and bring the
           symbol up in charcoal: four concentric rings, eight points at
@@ -81,29 +82,3 @@ triggers:
           the founding record as first. The rubbing in your hands says
           otherwise, quietly, the way the stone does.
       - observer: "{actor} takes a careful rubbing of the symbol carved beneath the buried lintel."
-
-  # lintel symbol, no quest
-  - event: room_interact
-    room: 6037
-    noun: symbol
-    conditions:
-      missing: ["70-start"]
-    actions:
-      - actor: >-
-          The symbol on the lintel's underside is clean and deliberate:
-          rings and eight points, cut to be read by someone passing
-          beneath. Without a reason to record it, you only look.
-
-  # flavor: the sealed Deep Canal seam (6038)
-  - event: room_interact
-    room: 6038
-    noun: gray material
-    conditions:
-      has: ["70-start"]
-    actions:
-      - actor: >-
-          The seam of gray material runs along the flood line, wider here
-          than in the galleries, smooth where the black water works it,
-          taking no mark, no wear. It does not belong to any stone the
-          colony has a name for. It was here before the canal, before the
-          quarter, before the founding the city teaches.

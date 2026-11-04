@@ -17,13 +17,51 @@ opener:
     questions. He keeps glancing up the lane toward the shuttered cooperage. To
     see what he sells, type list.
   variants:
+  # Quest 70. These read what the hand-in reads: the step, and requiresItem. The
+  # bloodline's cold line comes first, and a quiet nod for 69 next.
   - questRequired:
-    - 70-start
+    - 70-witness
+    questExcluded:
+    - 70-end
+    requiresItem: 40118
+    questFlagRequired:
+      68-allegiance: bloodline
+    text: Whatever that is on your fingers, put it on the counter and go.
+    hints: Choose The Pre-Founding Web below to give Orin the lintel rubbing.
+  - questRequired:
+    - 70-witness
+    - 69-end
+    questExcluded:
+    - 70-end
+    requiresItem: 40118
+    text: That is charcoal on your fingers. You have been counting the temple's hands
+      as well, I hear. What have you brought me up from below?
+    hints: Choose The Pre-Founding Web below to give Orin the lintel rubbing.
+  - questRequired:
+    - 70-witness
+    questExcluded:
+    - 70-end
+    requiresItem: 40118
+    text: That is charcoal on your fingers. What have you brought me up from below?
+    hints: Choose The Pre-Founding Web below to give Orin the lintel rubbing.
+  # The rubbing is on the player, where no topic can take it.
+  - questRequired:
+    - 70-witness
     questExcluded:
     - 70-end
     carriesItem: 40118
-    text: That is charcoal on your fingers. What have you brought me up from below?
-    hints: Choose The Pre-Founding Web below to give Orin the lintel rubbing.
+    text: That is charcoal on your fingers, and whatever made it is still stowed away.
+    hints: Orin can take the lintel rubbing only from your pack. Move it there, then
+      type talk orin.
+  # A lost rubbing: the lintel gives another.
+  - questRequired:
+    - 70-witness
+    questExcluded:
+    - 70-end
+    itemExcluded: 40118
+    text: You smell of the deep stone, and you have brought nothing up from it.
+    hints: If you lost the lintel rubbing, the Buried Lintel gives another. Bring a
+      light. Type search there.
   # 68-end: Orin reacts to the choice the player made (68-allegiance), as
   # Toby does in 9338.
   - questRequired:
@@ -111,16 +149,35 @@ topics:
   playerLine: Gritta sent me up with a rubbing of the Buried Lintel.
   text: 'A rubbing from the lintel. I am glad of it. This confirms what Edvar''s
     oldest surveys imply: the mark is older than the city''s own account of
-    itself. The web is wider than I let myself believe.'
+    itself. There are hands on the temple''s wall that count toward it too, for
+    anyone who reads them. The web is wider than I let myself believe.'
   questRequired:
-  - 70-start
+  - 70-witness
   questExcluded:
   - 70-end
+  questFlagExcluded:
+    68-allegiance: bloodline
   requiresItem: 40118
   grantsQuest: 70-end
   bumpsRep:
   - faction: cooperage_circle
     delta: 5
+# After the bloodline ending Orin takes the rubbing and pays no circle reputation.
+- key: orinhandoff_cold
+  kind: handin
+  quest: 70
+  label: The Pre-Founding Web
+  playerLine: Gritta sent me up with a rubbing of the Buried Lintel.
+  text: Leave it on the counter. I will see it reaches people who can read it, and
+    you will not be one of them. That is all we have to say to each other.
+  questRequired:
+  - 70-witness
+  questExcluded:
+  - 70-end
+  questFlagRequired:
+    68-allegiance: bloodline
+  requiresItem: 40118
+  grantsQuest: 70-end
 - key: q68_start
   kind: offer
   quest: 68

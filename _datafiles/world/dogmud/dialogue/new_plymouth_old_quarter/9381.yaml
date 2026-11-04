@@ -22,7 +22,8 @@ opener:
   - questRequired:
     - 70-end
     text: Orin has it, then. Good. Someone outside my little chain has seen it with
-      their own eyes. That was the point.
+      their own eyes. That was the point. The stone is not the only thing keeping
+      this. A temple wall does, and a shuttered shop.
     hints: Choose a line below to learn about the gray material in the deep
       stone, about the old symbol on the buried lintels, or about who receives
       her finds.
@@ -32,8 +33,8 @@ opener:
     - 70-end
     itemExcluded: 40118
     text: You lost the rubbing? The lintel has not gone anywhere. Take another.
-    hints: The Buried Lintel is west twice from Gritta's Flooded Cellar. Type look
-      symbol there.
+    hints: The Buried Lintel is west twice from Gritta's Flooded Cellar. Bring a
+      light. Type search there.
   - questRequired:
     - 70-witness
     questExcluded:
@@ -49,8 +50,31 @@ opener:
     text: Have you stood under the lintel yet? West, through the old stonework. Look
       up when you get there.
     hints: The Buried Lintel is west twice from Gritta's Flooded Cellar, at the foot
-      of the Flooded Stair. From the Silted Gallery, it is just south. Type look
-      symbol there.
+      of the Flooded Stair. From the Silted Gallery, it is just south. Bring a light.
+      Type search there.
+  # A quiet nod, for a player who has come at this from another side. The hints
+  # are the root's, so the trail to her offer stays.
+  - questRequired:
+    - 69-end
+    questExcluded:
+    - 70-start
+    text: You have the look of someone who has counted hands on a temple wall. Then
+      you know the mark I mean. I work the flooded chambers below, and I have found
+      where it comes from.
+    hints: Choose a line below to hear about the gray stone, the old symbol on the
+      buried lintels, or who receives her finds. She looks as if she might ask a
+      stranger to witness something.
+  - questRequired:
+    - 68-end
+    questExcluded:
+    - 70-start
+    questFlagRequired:
+      68-allegiance: circle
+    text: Orin says a stranger stood by the cooperage when it counted. I do not ask
+      who. I work the flooded chambers below, and what the silt has covered, I find.
+    hints: Choose a line below to hear about the gray stone, the old symbol on the
+      buried lintels, or who receives her finds. She looks as if she might ask a
+      stranger to witness something.
 topics:
 - key: q70_start
   kind: offer
@@ -68,7 +92,7 @@ topics:
     carry the proof to where it can be read.
   hints: Accept, then go west twice from Gritta's Flooded Cellar to the Buried
     Lintel. From the Silted Gallery, it is just south. Mind the canal north of the
-    old stonework. Type look symbol there.
+    old stonework. Type search there. Bring a light.
   questExcluded:
   - 70-start
   - 70-end

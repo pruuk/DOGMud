@@ -19,6 +19,7 @@ func TestTier5QuestsHaveNoTypedNouns(t *testing.T) {
 		"67-the_bloom_trail.yaml":            67,
 		"68-the_cooperage_circle.yaml":       68,
 		"69-the_gallery_cipher.yaml":         69,
+		"70-the_pre_founding_web.yaml":       70,
 	} {
 		for _, tr := range loadShippedQuest(t, file, id).Triggers {
 			require.NotEqual(t, "room_interact", tr.Event, "quest %d", id)
@@ -237,6 +238,54 @@ func TestQuest69StepHintsAreShortAndGiveNoRoute(t *testing.T) {
 		require.LessOrEqual(t, len(s.Hint), 200, s.Id)
 		for _, banned := range []string{"west six times", "four times", "look reliefs", "morning", "evening"} {
 			require.NotContains(t, s.Hint, banned, s.Id)
+		}
+	}
+}
+
+// The lintel is dark, so the step says to bring a light. One search gives one
+// rubbing and moves the step; a player who lost it searches again; a player
+// still holding it gets no spare; after the end the lintel gives nothing.
+func TestQuest70TheLintelIsFoundBySearch(t *testing.T) {
+	const lintel, rubbing = 6037, 40118
+	q := loadShippedQuest(t, "70-the_pre_founding_web.yaml", 70)
+	require.NoError(t, q.Validate())
+	require.Contains(t, q.Steps[0].Hint, "bring a light")
+	w := newQuestWalker(q).at("start")
+	w.notify("command", tier5Search(lintel+1))
+	require.Equal(t, "start", w.p.current)
+	w.notify("command", tier5Search(lintel))
+	require.Equal(t, "witness", w.p.current)
+	require.Equal(t, []int{rubbing}, w.ctx.givenItems, "one search, one rubbing")
+	lost := newQuestWalker(q).at("witness")
+	lost.notify("command", tier5Search(lintel))
+	require.Equal(t, []int{rubbing}, lost.ctx.givenItems)
+	held := newQuestWalker(q).at("witness")
+	held.p.items[rubbing] = true
+	held.notify("command", tier5Search(lintel))
+	require.Empty(t, held.ctx.givenItems)
+	done := newQuestWalker(q).at("end")
+	done.notify("command", tier5Search(lintel))
+	require.Empty(t, done.ctx.givenItems, "no rubbing after the end")
+}
+
+// The quest stands alone (owner ruling): nothing a first timer reads leans on 68
+// or 69, the hints fit and give no route, and the reward no longer admits the
+// player to anything, since Orin may have just shown them the door.
+func TestQuest70ReadsForAFirstTimerAndForTheColdEnding(t *testing.T) {
+	q := loadShippedQuest(t, "70-the_pre_founding_web.yaml", 70)
+	for _, s := range q.Steps {
+		require.LessOrEqual(t, len(s.Hint), 200, s.Id)
+		for _, banned := range []string{"Type look", "afternoon", "north eight", "up the stair"} {
+			require.NotContains(t, s.Hint, banned, s.Id)
+		}
+		for _, banned := range []string{"painting", "cipher", "panel"} {
+			require.NotContains(t, s.Description, banned, s.Id)
+		}
+	}
+	require.Contains(t, q.Steps[0].Hint, "north of the stonework", "6038 is north of 6036, not of the lintel")
+	for _, reward := range []string{q.Rewards.PlayerMessage, q.Rewards.RoomMessage} {
+		for _, banned := range []string{"part of the quiet", "nod", "painting", "cipher"} {
+			require.NotContains(t, reward, banned)
 		}
 	}
 }

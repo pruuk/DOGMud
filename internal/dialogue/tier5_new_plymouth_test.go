@@ -1,6 +1,7 @@
 package dialogue
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -58,17 +59,21 @@ func TestTier5OpenersPromiseOnlyTheHandInOnTheMenu(t *testing.T) {
 		before               []string // holding the item short of the step, when that can happen
 		onStep               []string
 		item                 int
+		flags                map[string]string
 	}{
-		{"new_plymouth_docks/9316.yaml", "tallyhandoff", "Choose Dock Rat below", []string{"63-start"}, []string{"63-start", "63-evidence"}, 40100},
-		{"new_plymouth_docks/9300.yaml", "tallyhandoff", "Choose Dock Rat below", []string{"63-start"}, []string{"63-start", "63-evidence"}, 40100},
-		{"new_plymouth_docks/9316.yaml", "casefilehandoff", "Choose The Bloom Trail below", []string{"67-start"}, []string{"67-start", "67-witness"}, 40111},
-		{"new_plymouth_common/9320.yaml", "sweeperhandoff", "Choose The Street Sweeper's Secret below", []string{"65-start"}, []string{"65-start", "65-discover"}, 40101},
-		{"new_plymouth_common/9323.yaml", "wrapperhandoff", "Choose the line about the wrapper below", nil, []string{"66-start"}, 40110},
-		{"new_plymouth_docks/9392.yaml", "purge_handoff", "Choose The Addict's Plight below", []string{"66-start"}, []string{"66-start", "66-dose"}, 40109},
+		{"new_plymouth_docks/9316.yaml", "tallyhandoff", "Choose Dock Rat below", []string{"63-start"}, []string{"63-start", "63-evidence"}, 40100, nil},
+		{"new_plymouth_docks/9300.yaml", "tallyhandoff", "Choose Dock Rat below", []string{"63-start"}, []string{"63-start", "63-evidence"}, 40100, nil},
+		{"new_plymouth_docks/9316.yaml", "casefilehandoff", "Choose The Bloom Trail below", []string{"67-start"}, []string{"67-start", "67-witness"}, 40111, nil},
+		{"new_plymouth_common/9320.yaml", "sweeperhandoff", "Choose The Street Sweeper's Secret below", []string{"65-start"}, []string{"65-start", "65-discover"}, 40101, nil},
+		{"new_plymouth_common/9323.yaml", "wrapperhandoff", "Choose the line about the wrapper below", nil, []string{"66-start"}, 40110, nil},
+		{"new_plymouth_docks/9392.yaml", "purge_handoff", "Choose The Addict's Plight below", []string{"66-start"}, []string{"66-start", "66-dose"}, 40109, nil},
+		{"new_plymouth_crafting/9332.yaml", "orinhandoff", "Choose The Pre-Founding Web below", []string{"70-start"}, []string{"70-start", "70-witness"}, 40118, nil},
+		{"new_plymouth_crafting/9332.yaml", "orinhandoff", "Choose The Pre-Founding Web below", []string{"70-start"}, []string{"70-start", "70-witness", "69-end"}, 40118, nil},
+		{"new_plymouth_crafting/9332.yaml", "orinhandoff_cold", "Choose The Pre-Founding Web below", []string{"70-start", "68-end"}, []string{"70-start", "70-witness", "68-end"}, 40118, map[string]string{"68-allegiance": "bloodline"}},
 	} {
 		df := loadShippedDialogue(t, c.file)
 		state := func(held []string, has, carries bool) *PlayerState {
-			ps := heldState(held...)
+			ps := withFlags(heldState(held...), c.flags)
 			ps.HasItem = func(id int) bool { return has && id == c.item }
 			ps.CarriesItem = func(id int) bool { return carries && id == c.item }
 			return ps
@@ -316,6 +321,162 @@ func TestTier5LyshaAsksForASearch(t *testing.T) {
 	_, hints := l.OpenerFor(heldState("69-start", "69-rubbing", "69-gallery"))
 	require.Contains(t, hints, "Type search there")
 	require.NotContains(t, hints, "look reliefs")
+}
+
+// Orin remembers the 68 ending and nothing else changes the hand-in: every other
+// player gets the warm line, and the bloodline's gets the cold one and no circle
+// reputation. Exactly one is open for each, by the menu and by give alike.
+func TestTier5OrinRemembersTheCooperage(t *testing.T) {
+	const rubbing = 40118
+	orin := loadShippedDialogue(t, "new_plymouth_crafting/9332.yaml")
+	const (
+		warm = "orinhandoff"
+		cold = "orinhandoff_cold"
+	)
+	cooperage := []string{"68-start", "68-evidence", "68-survey", "68-choice", "68-end"}
+	for _, c := range []struct {
+		name    string
+		held    []string
+		flags   map[string]string
+		topic   string
+		other   string
+		circle  int
+		opening string
+	}{
+		{"no quest 68 at all", nil, nil, warm, cold, 5, "What have you brought me up from below?"},
+		{"68 just started", []string{"68-start"}, nil, warm, cold, 5, "What have you brought me up from below?"},
+		{"68 at the choice", cooperage[:4], nil, warm, cold, 5, "What have you brought me up from below?"},
+		{"the circle ending", cooperage, map[string]string{"68-allegiance": "circle"}, warm, cold, 5, "What have you brought me up from below?"},
+		{"68 ended on an old save with no flag", cooperage, nil, warm, cold, 5, "What have you brought me up from below?"},
+		{"the bloodline ending", cooperage, map[string]string{"68-allegiance": "bloodline"}, cold, warm, 0, "put it on the counter and go"},
+	} {
+		held := append([]string{"70-start", "70-witness"}, c.held...)
+		ps := withFlags(carrying(heldState(held...), rubbing), c.flags)
+
+		keys := menuKeys(orin, ps)
+		require.Contains(t, keys, c.topic, c.name)
+		require.NotContains(t, keys, c.other, c.name)
+		text, hints := orin.OpenerFor(ps)
+		require.Contains(t, text, c.opening, c.name)
+		require.Contains(t, hints, "Choose The Pre-Founding Web below", c.name)
+
+		// give rubbing orin plays the same topic.
+		tp, wanted := orin.ItemTopic(rubbing, ps)
+		require.True(t, wanted, c.name)
+		require.NotNil(t, tp, c.name)
+		require.Equal(t, c.topic, tp.Key, c.name)
+
+		rep := map[string]int{}
+		var removed []int
+		var granted []string
+		ps.BumpRep = func(f string, d int) { rep[f] += d }
+		ps.RemoveItem = func(id int) bool { removed = append(removed, id); return true }
+		ps.GiveQuest = func(tok string) { granted = append(granted, tok) }
+		require.True(t, orin.Apply(tp, ps), c.name)
+		require.Equal(t, c.circle, rep["cooperage_circle"], c.name)
+		require.Equal(t, []int{rubbing}, removed, c.name)
+		require.Equal(t, []string{"70-end"}, granted, c.name)
+
+		// No rubbing, or the quest over: neither hand-in is open.
+		none := withFlags(heldState(held...), c.flags)
+		require.NotContains(t, menuKeys(orin, none), warm, c.name)
+		require.NotContains(t, menuKeys(orin, none), cold, c.name)
+		over := withFlags(carrying(heldState(append(held, "70-end")...), rubbing), c.flags)
+		require.NotContains(t, menuKeys(orin, over), warm, c.name)
+		require.NotContains(t, menuKeys(orin, over), cold, c.name)
+	}
+	require.NotContains(t, orin.FindTopic(cold).Text, "glad")
+}
+
+// A rubbing a topic cannot take is told so, and a lost one is told where the next
+// comes from: neither is told to choose a hand-in that is not on the menu. These
+// two come before Orin's lines about 68, for a player at any point in it.
+func TestTier5OrinOnARubbingHeCannotTake(t *testing.T) {
+	const rubbing = 40118
+	orin := loadShippedDialogue(t, "new_plymouth_crafting/9332.yaml")
+	cooperage := []string{"68-start", "68-evidence", "68-survey", "68-choice", "68-end"}
+	for _, flags := range []map[string]string{nil, {"68-allegiance": "circle"}, {"68-allegiance": "bloodline"}} {
+		held := []string{"70-start", "70-witness"}
+		if flags != nil {
+			held = append(held, cooperage...)
+		}
+		inABag := withFlags(heldState(held...), flags)
+		inABag.CarriesItem = func(id int) bool { return id == rubbing }
+		text, hints := orin.OpenerFor(inABag)
+		require.Contains(t, text, "stowed away")
+		require.Contains(t, hints, "from your pack")
+		require.NotContains(t, hints, "Choose The Pre-Founding Web below")
+
+		lost := withFlags(heldState(held...), flags)
+		text, hints = orin.OpenerFor(lost)
+		require.Contains(t, text, "brought nothing up")
+		require.Contains(t, hints, "Type search there")
+		require.Contains(t, hints, "Bring a light")
+	}
+}
+
+// Gritta and Orin nod toward 68 and 69 (owner ruling): for a player who did them,
+// a line of their own, and for one who did not, a mention they can pass over. No
+// nod names a quest, gives a direction or tells the player to do anything.
+func TestTier5QuietNods(t *testing.T) {
+	gritta := loadShippedDialogue(t, "new_plymouth_old_quarter/9381.yaml")
+	orin := loadShippedDialogue(t, "new_plymouth_crafting/9332.yaml")
+	circle := map[string]string{"68-allegiance": "circle"}
+	bloodline := map[string]string{"68-allegiance": "bloodline"}
+
+	templeNod, hints := gritta.OpenerFor(heldState("69-end"))
+	require.Contains(t, templeNod, "temple wall")
+	require.Equal(t, gritta.Opener.Hints, hints, "the nod keeps her offer's trail")
+	cooperageNod, hints := gritta.OpenerFor(withFlags(heldState("68-end"), circle))
+	require.Contains(t, cooperageNod, "cooperage")
+	require.Equal(t, gritta.Opener.Hints, hints)
+
+	root, _ := gritta.OpenerFor(heldState())
+	bloody, _ := gritta.OpenerFor(withFlags(heldState("68-end"), bloodline))
+	require.Equal(t, root, bloody, "no nod to the one who sold them out")
+	both, _ := gritta.OpenerFor(withFlags(heldState("69-end", "68-end"), bloodline))
+	require.Equal(t, templeNod, both, "the temple is still theirs")
+
+	// Once the quest is under way the quest's own lines lead.
+	for _, step := range [][]string{{"70-start"}, {"70-start", "70-witness"}, {"70-start", "70-witness", "70-end"}} {
+		text, _ := gritta.OpenerFor(heldState(append(step, "69-end")...))
+		require.NotEqual(t, templeNod, text)
+	}
+
+	onHandIn := func(held ...string) *PlayerState {
+		return carrying(heldState(append([]string{"70-start", "70-witness"}, held...)...), 40118)
+	}
+	orinNod, _ := orin.OpenerFor(onHandIn("69-end"))
+	require.Contains(t, orinNod, "temple")
+	coldNod, _ := orin.OpenerFor(withFlags(onHandIn("69-end", "68-end"), bloodline))
+	require.NotContains(t, coldNod, "temple", "the cold opener wins over the temple")
+
+	// The mention for a player who did neither, heard by every warm hand-in and
+	// after the quest at Gritta's. The cold hand-in has no such mention.
+	warmHandIn := orin.FindTopic("orinhandoff").Text
+	require.Contains(t, warmHandIn, "temple")
+	require.Contains(t, warmHandIn, "Edvar")
+	after, _ := gritta.OpenerFor(heldState("70-start", "70-witness", "70-end"))
+	require.Contains(t, after, "temple wall")
+	require.Contains(t, after, "shuttered shop")
+	require.NotContains(t, orin.FindTopic("orinhandoff_cold").Text, "temple")
+
+	for _, line := range []string{templeNod, cooperageNod, orinNod, warmHandIn, after} {
+		lower := strings.ToLower(line)
+		for _, banned := range []string{"gallery cipher", "cooperage circle", "pre-founding web", "type ", "north", "south", " east", "west", "go to", "go and", "you should"} {
+			require.NotContains(t, lower, banned, line)
+		}
+	}
+}
+
+// Gritta sends her finds to Orin. Coll picks small pieces out of the gutters and
+// has never met her (TestTier5GrittaDoesNotSendColl), so her schedule agrees.
+func TestTier5GrittasScheduleSendsNothingToColl(t *testing.T) {
+	data, err := os.ReadFile("../../_datafiles/world/dogmud/schedules/new_plymouth_old_quarter/np_oldquarter_gritta.yaml")
+	require.NoError(t, err)
+	require.Contains(t, string(data), "bookseller", "the file is the one that names her finds")
+	require.NotContains(t, string(data), "Coll")
+	require.NotContains(t, string(data), "sweeper")
 }
 
 // No Dross line sends the player to look at the reliefs.

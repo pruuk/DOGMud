@@ -130,7 +130,7 @@ func TestShippedQuestRoomTextFollowsConvention(t *testing.T) {
 	// Phase 7 tier 5 took 2 away: quest 63's four typed-noun triggers (two
 	// observer lines for the evidence, two for the lost book) became two
 	// search triggers. Quest 65 took 2 more the same way (the seam and the
-	// lost lump).
-	assert.Equal(t, 27, checked,
-		"27 quest observer lines ship; a different count means the inventory moved, so re-read this test")
+	// lost lump). Quest 70 added 1: the lost rubbing's search trigger.
+	assert.Equal(t, 28, checked,
+		"28 quest observer lines ship; a different count means the inventory moved, so re-read this test")
 }
