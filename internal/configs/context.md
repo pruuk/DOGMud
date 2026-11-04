@@ -789,7 +789,7 @@ auto-stand guard off, `config_proneautostand_test.go` covers the load path),
 and the #317 ambient knobs `MobIdleChatterScale`, `MobIdleMovementScale`,
 `RoomIdleChancePct`, `TipIntervalRounds`, `ConversationBaseChancePct`,
 `ConversationPlayerArrivalBoostPct`, `ConversationCooldownRounds`,
-`GossipIntervalRounds`, `AmbientListenerBudgetRounds`, `AmbientTelemetry`
+`GossipIntervalRounds`, `GossipHintIntervalRounds`, `AmbientListenerBudgetRounds`, `AmbientTelemetry`
 and `AmbientTelemetryReportMinutes` (declared in `config.balance.go`,
 load path in `config_ambient_test.go`). Their Go defaults are today's
 behaviour (budget and telemetry off); the retune ships in `config.yaml`.

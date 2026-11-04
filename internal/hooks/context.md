@@ -2794,7 +2794,9 @@ death and sets `DeathQueued`, so no tick reaches them.
 - `MobIdle_idle_roll.go`: `idleRollInput` (global scales, the room's zone
   multipliers, the mob's `wandermultiplier`) and `issueIdleChatter`.
   Gossip goes out as `ambient gossip say <line>`; `GossipIntervalRounds` 0
-  turns it off.
+  turns it off. A fact tagged `hint` (`facts.HintTag`) has its own timer,
+  `GossipHintIntervalRounds` (`dueGossipHint`): spoken only with a player in the
+  room, in place of that tick's gossip, and still through the ambient gate.
 - `NewRound_RoomIdle.go`: `roomIdleChancePer10k` (`RoomIdleChancePct`,
   room -1 four times, zone `ambientmultiplier`) and `sendRoomIdleLine`
   (budget, and a one-line room shows its line once per visit).

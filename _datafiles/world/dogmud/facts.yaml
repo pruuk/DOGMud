@@ -168,6 +168,7 @@ facts:
       declared_round: 0
       tags:
         - disc-line
+        - hint
       status: active
     - id: disc-surveyor-quit
       description: a university surveyor came back from the east, filed three lines and never took another commission.
@@ -175,6 +176,7 @@ facts:
       declared_round: 0
       tags:
         - disc-line
+        - hint
       status: active
     - id: disc-ashwick-man
       description: a man from Ashwick walked east years back with a mattock on his back, and his cottage is still shut.
@@ -182,6 +184,7 @@ facts:
       declared_round: 0
       tags:
         - disc-line
+        - hint
       status: active
     - id: disc-ring-mark
       description: there is a mark that keeps turning up in old records, a ring struck through with a line, and scholars pay for it.
@@ -189,6 +192,7 @@ facts:
       declared_round: 0
       tags:
         - disc-line
+        - hint
       status: active
     - id: disc-bookseller-pages
       description: booksellers have been getting torn pages of some old account, and nobody can say who wrote it.
@@ -196,6 +200,7 @@ facts:
       declared_round: 0
       tags:
         - disc-line
+        - hint
       status: active
     - id: disc-green-stops
       description: up past the Cascade Pass the grass stops dead in a line, as if someone had drawn it.
@@ -203,4 +208,5 @@ facts:
       declared_round: 0
       tags:
         - disc-line
+        - hint
       status: active

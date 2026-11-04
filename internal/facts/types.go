@@ -21,6 +21,10 @@ const (
 	SourceUnknown   Source = "unknown"
 )
 
+// HintTag marks a fact as a breadcrumb: a gossiper who knows it speaks it on
+// its own timer, Balance.GossipHintIntervalRounds.
+const HintTag = "hint"
+
 type Fact struct {
 	Id                  string                   `yaml:"id"`
 	Description         string                   `yaml:"description"`

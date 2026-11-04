@@ -513,6 +513,7 @@ func newUnloadedConfig() Config {
 	c.Balance.ConversationPlayerArrivalBoostPct = -1
 	c.Balance.ConversationCooldownRounds = -1
 	c.Balance.GossipIntervalRounds = -1
+	c.Balance.GossipHintIntervalRounds = -1
 	return c
 }
 

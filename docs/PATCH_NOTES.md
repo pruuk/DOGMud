@@ -10,6 +10,8 @@
 - NPC speech no longer breaks in the middle of a sentence.
 - Item names read properly in lines such as "You show the Folded Page".
 - Peddler Malk can now tell you who asks about the pages he sells.
+- The talkative folk of the Marches and Thornwall have more to say about strange
+  things in the east, if you stop and listen.
 - Searching a dead surveyor's camp twice no longer finds the same spare disc twice.
 
 ## 2026-11-03: The buried thing
