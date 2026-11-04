@@ -8,15 +8,6 @@ end 1000000 step end
 end 21 mob 9106 topic newcomer_players
 end 21 step end
 hint 21 step start
-hint-length 65 step discover
-hint-length 65 step start
-hint-length 66 step start
-hint-length 67 step delivery
-hint-length 67 step front
-hint-length 67 step lintel
-hint-length 67 step source
-hint-length 67 step start
-hint-length 67 step witness
 hint-length 68 step choice
 hint-length 69 step gallery
 hint-length 69 step reading
@@ -29,17 +20,6 @@ hint-length 71 step start
 hint-length 71 step vell
 one-action 1000000 step end:none
 one-action 1000000 step givegold:none
-one-action 63 mob 9300 topic tallyhandoff:prev
-one-action 63 mob 9316 topic tallyhandoff:prev
-one-action 63 step report:none
-one-action 65 mob 9320 topic sweeperhandoff:prev
-one-action 65 step report:none
-one-action 66 mob 9323 topic escort_close:prev
-one-action 66 mob 9323 topic wrapperhandoff:prev
-one-action 66 step detox:none
-one-action 66 step escort:none
-one-action 67 mob 9316 topic casefilehandoff:prev
-one-action 67 step report:none
 one-action 68 quest 68 trigger room_interact room=5720 noun=floorboard grants=68-survey #2:cond
 one-action 68 quest 68 trigger room_interact room=5720 noun=floorboard grants=68-survey:cond
 one-action 68 quest 68 trigger room_interact room=5720 noun=loose floorboard grants=68-survey #2:cond
@@ -52,19 +32,5 @@ refs 1000000 quest 1000000 refs: rewards conditionid: condition 4 does not exist
 refs 1000000 quest 1000000 refs: rewards skillinfo: skill "map" does not exist
 start 1000000 step start
 start 21 step start
-walk-dead-end 63 mob 9300 topic tallyhandoff
-walk-dead-end 63 mob 9316 topic tallyhandoff
-walk-dead-end 63 step report
-walk-dead-end 65 mob 9320 topic sweeperhandoff
-walk-dead-end 65 step report
-walk-dead-end 66 mob 9323 topic wrapperhandoff
-walk-dead-end 66 step escort
-walk-dead-end 67 mob 9316 topic casefilehandoff
-walk-dead-end 67 step report
 walk-destination 1000000 step givegold
 walk-destination 1000000 step start
-walk-destination 63 step report
-walk-destination 65 step report
-walk-destination 66 step detox
-walk-destination 66 step escort
-walk-destination 67 step report

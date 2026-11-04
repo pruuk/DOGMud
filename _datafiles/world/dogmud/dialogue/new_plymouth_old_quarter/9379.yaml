@@ -2,8 +2,7 @@ mobid: 9379
 zone: New Plymouth Old Quarter
 defaultMood: cautious
 greetings:
-- text: You found the address. Whatever you came to close is already closed. But ask
-    what you came to ask.
+- text: You found the address. Ask what you came to ask.
   moods:
   - cautious
   - neutral
@@ -17,7 +16,7 @@ opener:
     for a confession, I have nothing to say to you that is not already known to
     people with the authority to hear it. But ask what you came to ask.
   hints: Choose a line below if you would like to hear about the arrangement
-    that ran from this address, about Marn, his contact on the docks, or about
+    that runs through this address, about Marn, his contact on the docks, or about
     the captive and the key.
 topics:
 - key: bloom_source
@@ -25,14 +24,13 @@ topics:
   label: I know the Bloom trade runs through this house.
   text: You have got this far. I will grant that much. What you cannot do from here
     is close it. The bloodline's domestic office has known about this address for
-    some time. They also know the value of what ran through it, and they hold an
+    some time. They also know the value of what runs through it, and they hold an
     opinion about interruptions. You have a case that goes nowhere without a witness
     who has seen what moved through that door and will say so where it matters. I am
     not that witness. Good luck finding one.
-  hints: Deren is exposed but out of reach. The bloodline's office stands between him
-    and anything you could bring. He named what you need, a witness who saw what
-    moved through the iron door. The lamplighter Quill walks this canal by night.
-    Type talk quill.
+  hints: The bloodline's office protects Deren. He named what you need, a witness
+    who saw what moved through the iron door. The lamplighter Quill walks this
+    canal. Type talk quill.
   marked: true
   questRequired:
   - 67-delivery
@@ -42,19 +40,19 @@ topics:
   moodChange: neutral
 - key: operation
   kind: info
-  label: What arrangement ran from this address?
-  text: There was a supply arrangement that moved through this address. I managed
-    the handing out. The quantities, the timing, the contacts. I did not need to know
-    more than my part, and I did not know more than my part. That arrangement no
-    longer runs from here. Whatever questions remain are for people with the
-    authority to press them, and none of those people are you.
+  label: What runs through this address?
+  text: A supply arrangement, or it was the last time I was asked. I manage the
+    handing out. The quantities, the timing, the contacts. I do not need to know
+    more than my part, and I do not know more than my part. Whatever questions
+    remain are for people with the authority to press them, and none of those
+    people are you.
   hints: He told you something and nothing in the same breath.
 - key: marn
   kind: info
-  label: Who was your contact on the docks?
+  label: Who is your contact on the docks?
   text: The docks end is a man named Marn. He keeps a cloth shop on the docks. Clean
     front, well kept, nothing that draws attention. He and I never met in person. You
-    will understand why. Whether he carries on now that this end has gone quiet, I
+    will understand why. Whether he carries on when this end goes quiet, I
     would not know. That is his calculation to make, not mine.
   hints: He named the contact and said plainly what he knows of him.
 - key: captive

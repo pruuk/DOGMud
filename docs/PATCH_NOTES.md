@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-11-04: Down on the docks
+
+- Dock Rat and The Street Sweeper's Secret are now followed by searching: where the
+  trail leads you, type search.
+- The Addict's Plight is a longer walk. Ysolde sends you back to Teels with what they
+  need, and Teels points you at the next thread.
+- The Bloom Trail's case file is now the lamplighter's own record. The hints on that
+  trail tell you who to find and let you find your own way.
+- Foreman Hewd keeps his desk for a good reason now: the constable is waiting on a
+  warrant.
+- A potion carried in your bandolier now counts when an NPC asks you for it.
+
 ## 2026-11-04: Website links
 
 - The website handles unusual links more carefully.

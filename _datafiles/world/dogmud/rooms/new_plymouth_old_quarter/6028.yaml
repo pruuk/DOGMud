@@ -20,8 +20,8 @@ description: >
   Everything is cold. The apparatus is cold. The pallet
   is empty. Whoever belonged on it is not here. The
   drain is dry and clean in the particular way drains
-  are clean when they have been used consistently and
-  are now, suddenly, not being used at all.
+  are clean when they are used consistently and
+  scrubbed afterward.
 biome: dungeon
 coord:
   x: -27
@@ -60,9 +60,9 @@ nouns:
     pots sealed with wax are stacked in two even columns,
     the wax applied carefully around the full rim of
     each. The apparatus is cold and still and has the
-    arrangement of something that was in regular use
-    and simply stopped. The room does not smell of
-    anything now.
+    arrangement of something in regular use, kept
+    closed up between times. The room does not smell
+    of anything.
 idlemessages:
 - The apparatus holds its arrangement in the
   lamp-light, glass and copper and wax, still in their

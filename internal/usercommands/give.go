@@ -77,6 +77,10 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		giveItem, found = user.Character.FindInBackpack(giveWhat)
 
 		if !found {
+			giveItem, found = bandolierItemForGive(giveWhat, giveWho, user, room)
+		}
+
+		if !found {
 			refusal.NotCarrying(user, giveWhat)
 			return true, nil
 		}
@@ -413,10 +417,17 @@ func splitGiveArgs(args []string, user *users.UserRecord, room *rooms.Room) (giv
 			return what, who
 		}
 	}
+	for k := 1; k < len(args); k++ {
+		who := strings.Join(args[len(args)-k:], " ")
+		what := strings.Join(args[:len(args)-k], " ")
+		if _, ok := bandolierItemForTopic(what, who, user, room); ok {
+			return what, who
+		}
+	}
 	if messaging.ParticipantSight(user.Character, room) != messaging.SightFull {
 		for k := 1; k < len(args); k++ {
 			what := strings.Join(args[:len(args)-k], " ")
-			if giveObjectResolves(what, user) {
+			if giveObjectResolves(what, user) || bandolierHolds(what, user) {
 				return what, strings.Join(args[len(args)-k:], " ")
 			}
 		}
@@ -457,6 +468,61 @@ func giveObjectResolves(what string, user *users.UserRecord) bool {
 	}
 	_, found := user.Character.FindInBackpack(what)
 	return found
+}
+
+// bandolierHolds reports whether a potion in the bandolier matches the phrase.
+func bandolierHolds(what string, user *users.UserRecord) bool {
+	_, found := user.Character.FindInPotions(what)
+	return found
+}
+
+// bandolierItemForGive is what give reads when the backpack has no match. A
+// potion lands in the bandolier by itself, so a hand-in reaches it without the
+// player moving it first (bandolierItemForTopic), and a target the giver cannot
+// aim at reads the refusal a backpack item reads, which comes before anything
+// moves. Any other give stays backpack only: a player, a pet or an NPC that did
+// not ask for it gets the refusal of a player carrying no such potion.
+func bandolierItemForGive(what, who string, user *users.UserRecord, room *rooms.Room) (items.Item, bool) {
+	if itm, ok := bandolierItemForTopic(what, who, user, room); ok {
+		return itm, true
+	}
+	held, found := user.Character.FindInPotions(what)
+	if !found || ownPetNamed(who, user) {
+		return items.Item{}, false
+	}
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
+	if aimRefusal != `` {
+		return held, true
+	}
+	if _, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character}); err != nil && petOwnerInSight(name, user, room) == 0 {
+		return held, true
+	}
+	return items.Item{}, false
+}
+
+// bandolierItemForTopic finds a potion in the bandolier when a topic on the
+// named NPC wants it, asking before it chooses: the oldest wanted match, so an
+// unwanted potion sharing the name does not stand in front of it, and N.item
+// counts the wanted ones, as FindInBackpackWhere counts within its filter.
+func bandolierItemForTopic(what, who string, user *users.UserRecord, room *rooms.Room) (items.Item, bool) {
+	if !bandolierHolds(what, user) || ownPetNamed(who, user) {
+		return items.Item{}, false
+	}
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
+	if aimRefusal != `` {
+		return items.Item{}, false
+	}
+	target, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character})
+	if err != nil || target.IsPlayer() {
+		return items.Item{}, false
+	}
+	mobActor, isMob := target.(*actions.MobActor)
+	if !isMob {
+		return items.Item{}, false
+	}
+	return user.Character.FindInPotionsWhere(what, func(itm items.Item) bool {
+		return conversation.WantsItem(user, mobActor.Mob, itm.ItemId)
+	})
 }
 
 // giveTargetResolves reports whether the recipient phrase names the player's

@@ -14,10 +14,9 @@ opener:
   text: I work the flooded chambers below. What the water has not taken, the silt
     has covered, and what the silt has covered, I find. If you are down here with a
     question, the stone can probably answer it better than I can. But ask.
-  hints: Choose a line below to hear about the gray material she senses in the
-    deep stone, about the old symbol on the buried lintels, or about who
-    receives her finds. She studies you the way someone does when deciding
-    whether to ask a stranger to witness something for themselves.
+  hints: Choose a line below to hear about the gray stone, the old symbol on the
+    buried lintels, or who receives her finds. She looks as if she might ask a
+    stranger to witness something.
   # Quest 70 states (first match wins; HasQuest is also true at every later step).
   variants:
   - questRequired:
@@ -40,11 +39,8 @@ opener:
     questExcluded:
     - 70-end
     text: You have the rubbing? Then do not show it to me. Take it up to Orin.
-    hints: From Gritta's Flooded Cellar, go up the Flooded Stair, then east twice to
-      Quill's Lamp-Walk. Go south to Lower Lintel Street, east twice into the
-      Underdocks, then up the stair. Go north to the Chandlery, east twice to the
-      Caravan Depot, then north eight times, through Marn's shop and over the canal
-      bridge, to the Inkwalk. Orin's Bookstall is east. Type talk orin.
+    hints: Orin's Bookstall is on the Inkwalk, in the Crafting Quarter. The quest
+      log points the way. Type talk orin.
   - questRequired:
     - 70-start
     questExcluded:
@@ -52,9 +48,9 @@ opener:
     - 70-end
     text: Have you stood under the lintel yet? West, through the old stonework. Look
       up when you get there.
-    hints: The Buried Lintel is west twice from Gritta's Flooded Cellar. From the
-      Flooded Stair, go down into the cellar first. If you are in the Silted
-      Gallery, the Buried Lintel is just south. Type look symbol there.
+    hints: The Buried Lintel is west twice from Gritta's Flooded Cellar, at the foot
+      of the Flooded Stair. From the Silted Gallery, it is just south. Type look
+      symbol there.
 topics:
 - key: q70_start
   kind: offer
@@ -71,9 +67,8 @@ topics:
     in the Crafting Quarter. Someone outside my little chain should witness it and
     carry the proof to where it can be read.
   hints: Accept, then go west twice from Gritta's Flooded Cellar to the Buried
-    Lintel. If you are in the Silted Gallery, the Buried Lintel is just south.
-    Mind the canal north of the old stonework. It is not empty. Type look symbol
-    there.
+    Lintel. From the Silted Gallery, it is just south. Mind the canal north of the
+    old stonework. Type look symbol there.
   questExcluded:
   - 70-start
   - 70-end
@@ -99,16 +94,16 @@ topics:
     founding story has us arriving to empty ground. But the stone below is worked
     stone. Someone built a passage and set a lintel and carved into it, and then
     stopped, or was stopped, long before the colony came. I have sent the best
-    fragments to Coll and to Orin. They can read what I cannot.
-  hints: She named Coll and Orin, contacts up in the city who receive her finds.
+    fragments up to Orin. He can read what I cannot.
+  hints: She named Orin, up in the Crafting Quarter, who receives her finds.
 - key: finds
   kind: info
   label: Who receives the things you find?
-  text: Coll is a street sweeper in the Common Quarter. He has been collecting
-    fragments longer than I have been sending them, and he knows how to pass what he
-    receives to the right people. Orin keeps a bookstall in the Crafting Quarter. He
-    has old survey records and maps from before the colony that the Archive does not
-    officially hold. Between the two of them, the fragments reach where they need to
-    go. My part is the finding. The reading is theirs.
-  hints: She named both contacts plainly, Coll in the Common Quarter and Orin in the
-    Crafting Quarter.
+  text: Orin keeps a bookstall in the Crafting Quarter. He has old survey records
+    and maps from before the colony that the Archive does not officially hold. What
+    I can carry, I send to him. My part is the finding. The reading is his. The
+    small pieces I cannot keep. The flood takes them, backs up the old drains and
+    leaves them in the gutters of the Common. There is a sweeper up there,
+    Coll, who picks them out without knowing what they are. I have never met him.
+  hints: She named Orin in the Crafting Quarter, and a sweeper named Coll who has
+    never met her.

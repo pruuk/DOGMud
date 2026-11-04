@@ -17,8 +17,8 @@ opener:
     don't discuss my patients with anyone. That's the whole of the policy and it
     doesn't change. What is it?
   hints: Choose a line below to hear how she runs things, about the temple
-    healers, or about the sickness she sees most in the quarter. She also keeps
-    a few tools for sale under the counter. To see what she sells, type list.
+    healers, or about the sickness she sees most. She also keeps a few tools for
+    sale. To see what she sells, type list.
   variants:
   - questRequired:
     - 67-end
@@ -28,110 +28,83 @@ opener:
       healers, or about the sickness she sees most in the quarter. To see what
       she sells, type list.
   - questRequired:
+    - 67-front
+    questExcluded:
+    - 67-end
+    text: You're still after it, then. I don't know who is behind it, and I won't
+      guess. Mind yourself.
+    hints: Your quest log shows where the trail goes next.
+  - questRequired:
     - 67-start
     questExcluded:
     - 67-end
-    text: Marn's shop is on the docks. A clean little front. Start there.
-    hints: From Ysolde's Room, go south to the Back-Alley, west to Sweeper's
-      Corner, south to Tannery Street, west to the Back Court, then south four
-      times to Dockgate Street. Go west twice to Dock Street, north three times to
-      the Outer Dock Lane, then north into Marn's shop. Type talk marn.
+    text: Teels gave you the draper, then. Start there.
+    hints: Marn's fabric shop is at the north end of the Outer Dock Lane, on the
+      docks. Type talk marn.
   - questRequired:
     - 66-end
     text: Teels is resting. The purge holds, for now. But while someone keeps
       selling this, the craving comes back.
-    hints: If you want to follow the Bloom to whoever sells it, choose The Bloom
-      Trail below.
+    hints: If you want to follow the Bloom to whoever sells it, Teels on the Lower
+      Wharf knows where it starts. Type talk teels.
   - questRequired:
-    - 66-escort
+    - 66-dose
     questExcluded:
     - 66-end
-    text: I still have the wrapper you brought me. I have not forgotten whoever
-      gave it to you.
-    hints: Choose The Addict's Plight below to tell Ysolde where Teels is.
+    carriesItem: 40109
+    text: You have the cup. Why are you still here? Teels needs it more than you
+      need to watch me work.
+    hints: Take the purge back to Teels on the Lower Wharf. Do not drink it. Type
+      talk teels.
+  - questRequired:
+    - 66-dose
+    questExcluded:
+    - 66-end
+    text: Where is the cup? Lost, or did you drink it yourself? Ask, and I will give
+      you another.
+    hints: Choose the line about a cure below, and Ysolde gives you another purge.
   - questRequired:
     - 66-start
     questExcluded:
+    - 66-dose
     - 66-end
-    carriesItem: 40110
+    requiresItem: 40110
     text: That smell. Copper-flower. What is that in your hand?
-    hints: Choose The Addict's Plight below to give Ysolde the wax wrapper.
+    hints: Choose the line about the wrapper below.
   - questRequired:
     - 66-start
     questExcluded:
+    - 66-dose
     - 66-end
     text: Someone sent you to me. I can see it. But you came without whatever they
       sent you with.
-    hints: If you lost the wax wrapper, Teels has more. From Ysolde's Room, go
-      south to the Back-Alley, west to Sweeper's Corner, south to Tannery Street,
-      west to the Back Court, then south four times to Dockgate Street. Go west
-      twice to Dock Street, then south three times to the Lower Wharf. Type talk
-      teels.
+    hints: If you lost the wax wrapper, Teels has more, on the Lower Wharf at the
+      docks. Type talk teels.
 topics:
 - key: wrapperhandoff
-  kind: handin
-  quest: 66
-  label: The Addict's Plight
-  playerLine: Teels on the Lower Wharf sent me with this wrapper.
+  kind: info
+  label: Teels sent me to you with this wrapper.
   text: This wrapper. I know this smell. Copper-flower, under the wax. I've been
     taking it off people's skin for the better part of two seasons. Teels sent
-    you? Then they need the purge, not just sympathy. I'll go down to the wharf
-    myself tonight. I can get Teels through the withdrawal. But hear me on this.
-    The purge holds until the craving comes back, and the craving comes back every
-    time while the source is still running. Someone is putting this on the docks.
-    That is the problem I cannot fix.
+    you? Then they need the purge, not just sympathy. Here, a sealed cup. Take it
+    back to the wharf and see that they drink it, because they will not reach me on
+    their own feet. But hear me on this. The purge holds until the craving comes
+    back, and the craving comes back every time while the source is still running.
+    Someone is putting this on the docks. That is the problem I cannot fix.
+  hints: Ysolde takes the wrapper and hands you her purge in a sealed clay cup. Take
+    it back to Teels on the Lower Wharf. Do not drink it. Type talk teels.
+  marked: true
   questRequired:
   - 66-start
   questExcluded:
-  - 66-escort
+  - 66-dose
   - 66-end
   requiresItem: 40110
-  grantsQuest: 66-end
-  setsQuestFlag:
-    key: 66-addict-fate
-    value: saved
-# A character saved at 66-escort (the old ask route took the wrapper and
-# granted 66-escort, which nothing ever completed) finishes here, with no item.
-- key: escort_close
-  kind: handin
-  quest: 66
-  label: The Addict's Plight
-  playerLine: Teels is on the Lower Wharf. Can you help them now?
-  text: The Lower Wharf. I'll go down myself tonight. I can get Teels through the
-    withdrawal. But hear me on this. The purge holds until the craving comes back,
-    and the craving comes back every time while the source is still running.
-    Someone is putting this on the docks. That is the problem I cannot fix.
-  questRequired:
-  - 66-escort
-  questExcluded:
-  - 66-end
-  grantsQuest: 66-end
-  setsQuestFlag:
-    key: 66-addict-fate
-    value: saved
-- key: q67_grant
-  kind: offer
-  quest: 67
-  label: The Bloom Trail
-  playerLine: Do you want help finding where the Bloom comes from?
-  text: I can only fix what walks through my door. Teels is stable, for now. But
-    the craving comes back, every time, while the source keeps running. I can tell
-    you what I have seen. There is a draper named Marn on the docks. He keeps a
-    clean shop, respectable-looking. I cannot tell you what he moves or how it
-    moves. But the copper-flower note I have been pulling off people's skin for
-    two seasons is in what he handles. He is where the trail starts.
-  hints: Accept, then go to Marn's fabric shop on the docks, at the north end of
-    the Outer Dock Lane.
-  questRequired:
-  - 66-end
-  questExcluded:
-  - 67-start
-  - 67-end
-  grantsQuest: 67-start
+  givesItem: 40109
 - key: teels_q66
   kind: info
   label: How is Teels doing?
-  text: I've seen to Teels. The purge is a rough crossing. Your body knows what it
+  text: So you saw Teels through it. The purge is a rough crossing. Your body knows what it
     is losing and it argues about every step. But they came through. What I cannot
     do is stop the craving for good while someone is still putting the Bloom on
     the docks. Every person I treat will be back in front of me as long as that
@@ -184,7 +157,8 @@ topics:
     now for a short while. The slow way is quieter but it takes longer, and some
     people do not have longer. If you want the purge, drink it when you are ready.
     I won't ask how bad it is.
-  hints: Ysolde hands you a sealed clay cup. When you are ready, type quaff purge.
+  hints: If this cup is for someone else, take it to them. To drink it yourself,
+    type quaff purge.
   itemExcluded: 40109
   givesItem: 40109
   moodChange: cautious

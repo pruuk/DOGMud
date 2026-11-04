@@ -29,10 +29,10 @@ opener:
     hints: Choose a line below if you want to hear about the gossip at the well,
       the gray bits in the gutters, or the troubles of the Common Quarter.
   - questRequired:
-    - 65-start
+    - 65-discover
     questExcluded:
     - 65-end
-    carriesItem: 40101
+    requiresItem: 40101
     text: You went down. I can see it on you, and you've got a piece of it in your
       hand. Don't tell me about it. Let me feel the weight of the thing for myself.
     hints: Choose The Street Sweeper's Secret below to give Coll the lump.
@@ -43,20 +43,16 @@ opener:
     text: You went down? Then where's the piece of it? I need to feel the weight of
       it.
     hints: If you lost the lump, more of the gray material is in the seam below.
-      From Carter's Rise, where Coll sweeps by day, go west twice to Dockgate
-      Street, then north three times to Tenement Row. Go east, then north to Tannery Street. Go east twice to the
-      Flophouse Steps, north to the Fighting-Pit Gate, east to the Undercroft
-      Stair, then down into the Old Foundation. Type look seam.
+      The Old Foundation is under the Undercroft Stair, east of the Fighting-Pit
+      Gate. Type search there.
   - questRequired:
     - 65-start
     questExcluded:
     - 65-discover
     text: Been down yet? The stair's past the fighting-pit gate. Look at what runs
       through those walls.
-    hints: From Carter's Rise, where Coll sweeps by day, go west twice to Dockgate
-      Street, then north three times to Tenement Row. Go east, then north to Tannery Street. Go east twice
-      to the Flophouse Steps, north to the Fighting-Pit Gate, east to the
-      Undercroft Stair, then down into the Old Foundation. Type look seam.
+    hints: The Old Foundation is under the Undercroft Stair, east of the
+      Fighting-Pit Gate. Type search there.
 topics:
 - key: sweeperhandoff
   kind: handin
@@ -66,7 +62,7 @@ topics:
   text: Let me see that. Cold as a well bottom and heavier than it has any right
     to be. This is it, the same stuff, but whole.
   questRequired:
-  - 65-start
+  - 65-discover
   questExcluded:
   - 65-end
   requiresItem: 40101
@@ -85,7 +81,7 @@ topics:
     there. Go and look at what runs through those walls. Then come back and tell
     me I'm not mad.
   hints: Accept, then find the Undercroft Stair, east of the Fighting-Pit Gate, and
-    go down into the Old Foundation. There, type look seam.
+    go down into the Old Foundation. There, type search.
   questExcluded:
   - 65-start
   - 65-end

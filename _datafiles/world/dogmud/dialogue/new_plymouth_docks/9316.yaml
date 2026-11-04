@@ -14,17 +14,17 @@ opener:
     the trouble on the docks, or what evidence would change the case.
   variants:
   - questRequired:
-    - 63-start
+    - 63-evidence
     questExcluded:
     - 63-end
-    carriesItem: 40100
+    requiresItem: 40100
     text: That book under your arm. Is that from the foreman's office?
     hints: Choose Dock Rat below to give the constable the tally-book.
   - questRequired:
-    - 67-start
+    - 67-witness
     questExcluded:
     - 67-end
-    carriesItem: 40111
+    requiresItem: 40111
     text: That's a case file you're holding. Who put it together?
     hints: Choose The Bloom Trail below to give the constable the case file.
   - questRequired:
@@ -33,16 +33,14 @@ opener:
     - 67-end
     text: Word is you've a case against the Bloom trade. Then where is it? I
       can't move on talk. I need it on paper.
-    hints: If you lost the case file, Quill can write it again. From the Dock
-      Constable's Post, go west to the Outer Dock Lane, south five times to the
-      Long Quay, then west twice to the Underdock Stair. Go down into the
-      Underdocks, west twice to Lower Lintel Street, then north to Quill's
-      Lamp-Walk. He sleeps through the day and is up from late afternoon until
-      dawn, in his hovel just north or out on the Lamp-Walk. Type talk quill.
+    hints: If you lost the case file, Quill can write it again. He walks the
+      Lamp-Walk off Lower Lintel Street, in the Old Quarter, and is up at night.
+      Bring a light. Type talk quill.
   - questRequired:
     - 63-end
-    text: Hewd is answering for his two columns now, and Teo's name is off the
-      board. That's the docks put a little straighter.
+    text: The warrant for Hewd is with the magistrate's clerk, and he is sitting up
+      there pretending not to know it. Teo's name is off the board. That's the
+      docks put a little straighter.
     hints: Choose a line below to hear what happens to Hewd now, or about the
       trouble on the docks.
 topics:
@@ -52,10 +50,11 @@ topics:
   label: Dock Rat
   playerLine: Hewd's tally-book shows two sets of numbers.
   text: Let me see that. Two columns. Manifest on the left, the true count on the
-    right. That is the foreman's hand. The shortage was never Teo's. I'll have
-    Hewd in by the next bell, and the boy's name off the board.
+    right. That is the foreman's hand. The shortage was never Teo's. A foreman
+    takes a warrant, and warrants take days. Until it comes back he sits at his
+    desk where I can see him. The boy's name comes off the board today.
   questRequired:
-  - 63-start
+  - 63-evidence
   questExcluded:
   - 63-end
   requiresItem: 40100
@@ -65,13 +64,14 @@ topics:
   quest: 67
   label: The Bloom Trail
   playerLine: Here is the case against the Bloom trade.
-  text: Let me read this properly. The wrapper. The address. A delivery account
-    and the lamplighter's word. This is enough to move on the trade. The supply
+  text: Let me read this properly. Eleven years of dates and times, in the
+    lamplighter's own hand, and the address they all point at. This is enough to
+    move on the trade. The supply
     stops. Deren is another matter. The bloodline office holds a hand over him I
     cannot reach around. I can break up what he runs. The man himself stays out of
     my reach. You understand what I'm telling you.
   questRequired:
-  - 67-start
+  - 67-witness
   questExcluded:
   - 67-end
   requiresItem: 40111
@@ -92,9 +92,11 @@ topics:
 - key: hewd
   kind: info
   label: What happens to Hewd now?
-  text: He answers for the difference between his two columns. Teo is back on the
-    manifest, and I'm reading this season's other short counts again with the
-    foreman's hand in mind. I expect I'll find it on more than one page.
+  text: When the warrant comes back he answers for the difference between his two
+    columns. Until then he stays at his desk, where he cannot run without my
+    seeing it. Teo is back on the manifest, and I'm reading this season's other
+    short counts with the foreman's hand in mind. I expect I'll find it on more
+    than one page.
   questRequired:
   - 63-end
 - key: docks
