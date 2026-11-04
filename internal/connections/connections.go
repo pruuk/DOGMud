@@ -13,6 +13,11 @@ import (
 
 const ReadBufferSize = 1024
 
+// MaxInputLineBytes caps one line of keyboard input held before Enter. It is
+// the same size as the largest websocket frame the web server accepts, and far
+// past anything a person types or pastes as one command.
+const MaxInputLineBytes = 64 * 1024
+
 type ConnectionId = uint64
 
 var (

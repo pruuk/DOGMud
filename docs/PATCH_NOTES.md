@@ -15,6 +15,7 @@
 ## 2026-11-04: Website links
 
 - The website handles unusual links more carefully.
+- A single line of typing now stops at a generous length. No one should ever reach it.
 
 ## 2026-11-04: Fresh from the wilds
 
