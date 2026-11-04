@@ -1,5 +1,9 @@
 # DOGMud Patch Notes
 
+## 2026-11-04: Website links
+
+- The website handles unusual links more carefully.
+
 ## 2026-11-04: Fresh from the wilds
 
 - Many of the largest creatures used to appear already hurt, and healed up slowly

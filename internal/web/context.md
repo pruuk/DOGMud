@@ -121,6 +121,9 @@ The web system is built around Go's standard `net/http` package with several key
 {{.COMPANION_RELAY_ORIGIN_JSON}}  <!-- relayOriginJSON(): the companion key relay origin
      as a JSON string literal ("" when none). Templates are text/template and escape
      nothing, so it is JSON-encoded in Go and used UNQUOTED inside a script. -->
+<!-- A value that came from the request prints as {{ html .X }}, for that same
+     reason (.PATH in _header.html, .topic and .error in help-details.html).
+     page_values_test.go renders the real templates. -->
 
 <!-- Plugin-provided variables -->
 {{.PLUGIN_DATA}}  <!-- Custom data from plugins -->

@@ -67,11 +67,11 @@
 
 <div class="overlay">
 
-    <h3 class="topic"><a href="/help">Help Topics</a> :: {{ .topic }}</h3>
+    <h3 class="topic"><a href="/help">Help Topics</a> :: {{ html .topic }}</h3>
     <div class="webhelp-content">
 
         {{ if ne .error "" }}
-            <div class="error">{{ .error }}</div>
+            <div class="error">{{ html .error }}</div>
         {{ else }}
             <pre class="terminal-output">{{ .contents }}</pre>
         {{ end }}
