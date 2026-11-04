@@ -5,7 +5,9 @@ package dialogue
 // When nil is passed the engine skips all quest/item checks (backward compat).
 type PlayerState struct {
 	HasQuest func(token string) bool
-	HasItem  func(itemId int) bool
+	// HasItem reports whether a topic could take the item: it backs
+	// requiresItem. The backpack and the bandolier count.
+	HasItem func(itemId int) bool
 	// CarriesItem reports whether the player holds the item anywhere: the
 	// backpack, worn or wielded, the component pouch or the bandolier. It
 	// backs itemExcluded. Nil falls back to HasItem.

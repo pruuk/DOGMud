@@ -77,6 +77,10 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		giveItem, found = user.Character.FindInBackpack(giveWhat)
 
 		if !found {
+			giveItem, found = bandolierItemForTopic(giveWhat, giveWho, user, room)
+		}
+
+		if !found {
 			refusal.NotCarrying(user, giveWhat)
 			return true, nil
 		}
@@ -413,6 +417,13 @@ func splitGiveArgs(args []string, user *users.UserRecord, room *rooms.Room) (giv
 			return what, who
 		}
 	}
+	for k := 1; k < len(args); k++ {
+		who := strings.Join(args[len(args)-k:], " ")
+		what := strings.Join(args[:len(args)-k], " ")
+		if _, ok := bandolierItemForTopic(what, who, user, room); ok {
+			return what, who
+		}
+	}
 	if messaging.ParticipantSight(user.Character, room) != messaging.SightFull {
 		for k := 1; k < len(args); k++ {
 			what := strings.Join(args[:len(args)-k], " ")
@@ -457,6 +468,31 @@ func giveObjectResolves(what string, user *users.UserRecord) bool {
 	}
 	_, found := user.Character.FindInBackpack(what)
 	return found
+}
+
+// bandolierItemForTopic finds a potion in the bandolier when a topic on the
+// named NPC wants it. A potion lands there by itself, so a hand-in reaches it
+// without the player moving it first; any other give stays backpack only, so a
+// potion in the bandolier cannot go to a player, a pet or an NPC that did not
+// ask for it.
+func bandolierItemForTopic(what, who string, user *users.UserRecord, room *rooms.Room) (items.Item, bool) {
+	itm, found := user.Character.FindInPotions(what)
+	if !found || ownPetNamed(who, user) {
+		return items.Item{}, false
+	}
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
+	if aimRefusal != `` {
+		return items.Item{}, false
+	}
+	target, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character})
+	if err != nil || target.IsPlayer() {
+		return items.Item{}, false
+	}
+	mobActor, isMob := target.(*actions.MobActor)
+	if !isMob || !conversation.WantsItem(user, mobActor.Mob, itm.ItemId) {
+		return items.Item{}, false
+	}
+	return itm, true
 }
 
 // giveTargetResolves reports whether the recipient phrase names the player's

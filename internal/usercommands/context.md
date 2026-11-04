@@ -320,7 +320,9 @@ already known, so no presence leaks.
   chosen from the menu and takes the named instance; a wanted item with no
   eligible topic is handed back (the mob's tree may say why, crediting
   nothing). Only an item no topic wants takes the ordinary give path
-  (quest engine notify, transfer, `player_give`).
+  (quest engine notify, transfer, `player_give`). The item is looked up in the
+  backpack, and in the bandolier only when a topic on the named NPC wants it
+  (`bandolierItemForTopic`), so an ordinary give stays backpack only.
 - **PlayerState**: `conversation.PlayerState(user)` builds the
   `dialogue.PlayerState` callbacks (`HasQuest`, `HasItem`, `RemoveItem`,
   `GiveQuest`, `GiveItem`, ...). `GiveItem` returns whether the item

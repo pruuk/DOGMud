@@ -78,7 +78,7 @@ func checkQuestGate(questRequired, questExcluded []string, requiresItem int, fla
 // itemExcludedBlocks reports whether an itemExcluded gate hides an entry: the
 // player already carries the item, so a handout topic does not give a second
 // one while the quest is open. CarriesItem (anywhere on the player) is
-// preferred; a PlayerState without it falls back to HasItem (the backpack).
+// preferred; a PlayerState without it falls back to HasItem.
 // A nil PlayerState skips the check, as every other gate does.
 func itemExcludedBlocks(itemId int, ps *PlayerState) bool {
 	if itemId <= 0 || ps == nil {

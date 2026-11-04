@@ -219,8 +219,13 @@ Two more item rules for quests:
   or checked by an `item_give` trigger) must never have `is_component: true`.
   That flag auto-routes the item to the component pouch on pickup, and both
   the `give` command and dialogue `requiresItem` check only search the
-  backpack, not the pouch, breaking the delivery.
+  backpack and the bandolier, not the pouch, breaking the delivery.
   [[feedback_quest_items_not_components]]
+- A potion is fine as a delivery item. It lands in a worn bandolier by itself,
+  and a topic's `requiresItem` and `carriesItem` read it there, the topic takes
+  it from there, and `give <item> <npc>` reaches it when a topic on that NPC
+  wants it. Never tell a player to move it first. An ordinary give, with no
+  topic wanting the item, stays backpack only.
 - Loot must never be placed directly on the ground via `spawninfo`. Use mob
   drops (primary), locked chests or containers (secondary, gated by keys or
   lockpicking), or quest rewards (for special/unique items). Flavor nouns

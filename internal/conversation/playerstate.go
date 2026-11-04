@@ -32,8 +32,10 @@ func PlayerState(user *users.UserRecord) *dialogue.PlayerState {
 func playerState(user *users.UserRecord, send func(messaging.Category, string)) *dialogue.PlayerState {
 	ps := &dialogue.PlayerState{
 		HasQuest: user.Character.HasQuest,
+		// Backs requiresItem: what a topic can take, the backpack and the
+		// bandolier, where a potion lands by itself (see removeBackpackItem).
 		HasItem: func(itemId int) bool {
-			for _, itm := range user.Character.GetAllBackpackItems() {
+			for _, itm := range takeableItems(user) {
 				if itm.ItemId == itemId {
 					return true
 				}
@@ -159,13 +161,21 @@ type heldQuests struct {
 
 func (h heldQuests) HasQuest(token string) bool { return h.has(token) }
 
-// removeBackpackItem takes one itemId item from the player's backpack and
-// returns it: the instance prefer names when it is there with that id (the
-// one a give named, `give 2.purse`), else the first match. It queues the
-// same loss event give.go queues when a hand-in is consumed, so item-loss
-// listeners see a talk hand-in too.
+// takeableItems is what a topic can take from the player, backpack first. A
+// potion goes to a worn bandolier by itself (Character.StoreItem), so a hand-in
+// reads it there and the player never has to move it. The component pouch stays
+// out: a quest item is never is_component.
+func takeableItems(user *users.UserRecord) []items.Item {
+	return append(user.Character.GetAllBackpackItems(), user.Character.PotionItems...)
+}
+
+// removeBackpackItem takes one itemId item from the player's backpack, or from
+// the bandolier when the backpack has none, and returns it: the instance prefer
+// names when it is there with that id (the one a give named, `give 2.purse`),
+// else the first match. It queues the same loss event give.go queues when a
+// hand-in is consumed, so item-loss listeners see a talk hand-in too.
 func removeBackpackItem(user *users.UserRecord, itemId int, prefer uuid.UUID) (items.Item, bool) {
-	pack := user.Character.GetAllBackpackItems()
+	pack := takeableItems(user)
 	pick := -1
 	for i, itm := range pack {
 		if itm.ItemId != itemId {
