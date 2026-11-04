@@ -12,10 +12,12 @@ func ApplyMobOverrides(c *Character, healthMax, staminaMax int, carryCapacity fl
 		return
 	}
 	if healthMax > 0 {
+		c.healthMaxOverride = healthMax
 		c.HealthMax.Value = healthMax
 		c.Health = healthMax
 	}
 	if staminaMax > 0 {
+		c.staminaMaxOverride = staminaMax
 		c.StaminaMax.Value = staminaMax
 		c.Stamina = staminaMax
 	}

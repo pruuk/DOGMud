@@ -126,6 +126,14 @@ func (c *Character) RecalculateStats() {
 		}
 	}
 
+	// An authored maximum replaces the derived one, mutations included.
+	if c.healthMaxOverride > 0 {
+		c.HealthMax.Value = c.healthMaxOverride
+	}
+	if c.staminaMaxOverride > 0 {
+		c.StaminaMax.Value = c.staminaMaxOverride
+	}
+
 	// Mutation graph: deep Body-pole commitment shrinks the Conviction pool
 	// (chokes spells, taunt, and summons — all Conviction-fuelled). Mirror of
 	// the Belief pole's gear-effectiveness decay. Applied before the floor.
