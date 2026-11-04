@@ -165,6 +165,14 @@ for warnings; phone, tablet and desktop checked in both modes before review.
   screen's width; Calabe's work), Malia 2026-11-02.
 - Small map issues Malia noticed after the map strip: dropped from the open
   list (Malia, 2026-11-02); raise again if they come back.
+- **The map's level line is hard to read** (Malia, 2026-11-03). On the map,
+  under the place name (for example "Newcomer Antechamber"), the small line
+  that says which floor you are on ("~ Level 0 ~") is too small to read
+  comfortably on laptops, tablets and phones. It should be bigger and
+  clearer on every screen, while staying smaller than the place name above
+  it. Her screenshot: `~/Desktop/dogmudRedo/levelSZIncrease.jpg`. Ours to
+  fix in the web client (no server work); it goes through the usual spec
+  note, plan, review and Malia's approval when picked up.
 
 ## Slices and plans
 | Slice | Plan |
