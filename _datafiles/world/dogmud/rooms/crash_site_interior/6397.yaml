@@ -13,10 +13,8 @@ description: >
   you almost could, the whole memory of the buried thing laid down here to
   be found. This is where the place kept what it knew of itself: where it
   came from, and what befell it, and what became of the ones it carried.
-  The stones do not hide it. They only wait to be asked. Stand among them,
-  and examine the records, and let the buried place tell you at last what
-  it is: the pieces are all here, set out plainly for anyone with the
-  will to gather them. West lies the command deck and the way back.
+  The stones do not hide it. They only wait to be asked. West lies the
+  command deck and the way back.
 exits:
   west:
     roomid: 6396
@@ -24,9 +22,7 @@ nouns:
   records: >
     The whole kept memory of the buried thing, laid down in the waking
     oracle-stones: where it came from, what befell it, what became of the
-    ones it bore. It is not hidden and it is not sealed; it waits only to
-    be read. Examine the records and the place will tell you, plainly and
-    without mercy, exactly what it is and what it means for the world above.
+    ones it bore. It is not hidden and it is not sealed. It waits.
   oracle stones: >
     Smooth tiers and ranks of the pale grey, dark until the cold light
     finds them and then waking with a slow inner glow, their faces

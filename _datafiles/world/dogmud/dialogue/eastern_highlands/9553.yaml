@@ -25,14 +25,67 @@ opener:
       But mind the road home, and mind your mouth on it. The door I keep is not the
       only threshold you cross now.
     hints: Choose a line below to hear about the way through the door. If you
-      carry the woken disc, choose below to have her open it.
+      carry the woken disc, choose below to have the way opened.
+  - carriesItem: 40168
+    questExcluded:
+    - 76-sentinel
+    text: You carry it, and I felt it wake. So did the Sentinel. I open nothing for
+      anyone it is still looking for. Deal with it, and come back.
+    hints: The Sentinel stands near the door and will not be walked past. Bring friends.
   - carriesItem: 40168
     text: You carry it. The woken disc. I can feel it from here, warm along its
       lines. Then the door will answer, and I can open the way as deep as your coin
       buys.
-    hints: Choose below to have the keeper open the way. For more on staking gold
+    hints: Choose below to have the way opened. For more on staking gold
       for a dangerous place, type help instances.
 topics:
+- key: disc_in
+  kind: handin
+  quest: 76
+  label: The Disc
+  playerLine: I found him, and I woke his disc.
+  text: |
+    Yes. I felt it wake. I have felt that twice now, and the first time
+    it stopped. The way is open to you, as deep as your coin buys. It
+    costs what it costs.
+  hints: Quest complete. Choose below to have the way opened. For more on staking gold for a dangerous place, type help instances.
+  questRequired:
+  - 76-sentinel
+  questExcluded:
+  - 76-end
+  carriesItem: 40168
+  grantsQuest: 76-end
+- key: truth_offer
+  kind: offer
+  quest: 77
+  label: The Truth
+  playerLine: What is in there, past the wards?
+  text: |
+    A record, they say, that the place kept of itself, deep in, among
+    stones that wake to light. I have never read it. I have seen the
+    faces of those who did. You may want to think about that first.
+  hints: Accept, then find the Records Archive inside. Type search among the stones.
+  questRequired:
+  - 76-end
+  questExcluded:
+  - 77-start
+  - 77-end
+  carriesItem: 40168
+  grantsQuest: 77-start
+- key: truth_in
+  kind: handin
+  quest: 77
+  label: The Truth
+  playerLine: I read the stones.
+  text: |
+    I can see that. No. Do not tell me. I have kept this door a long
+    time by not knowing what it is the door of.
+  hints: Quest complete.
+  questRequired:
+  - 77-read
+  questExcluded:
+  - 77-end
+  grantsQuest: 77-end
 - key: way
   kind: info
   label: How do I get through the door?
@@ -51,11 +104,13 @@ topics:
   text: Into the buried thing, then.
   behavior: true
   carriesItem: 40168
+  questRequired:
+  - 76-sentinel
 - key: crash
   kind: info
   label: Will you open the way for me?
   text: Not without the key. The woken disc, or nothing. Bring it, and we will talk
     of how deep.
-  hints: If you woke a disc before and lost it, search Maren's Cottage in Ashwick for
-    another grey disc, then cast glow there to wake it.
+  hints: If you woke a disc before and lost it, search his camp at the Cleared Section
+    for another grey disc, then cast glow there to wake it.
   itemExcluded: 40168

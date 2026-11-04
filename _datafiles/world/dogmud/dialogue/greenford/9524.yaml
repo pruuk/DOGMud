@@ -11,7 +11,7 @@ opener:
     yew, or about Greenford.
   variants:
   - questRequired:
-    - 75-testimony
+    - 75-notes
     text: You found what you went to find. I hope Brennan makes something of it.
       I've said what I had to say.
     hints: Choose a line below to learn about the yew, or about Greenford.
@@ -49,14 +49,14 @@ topics:
     have thought about that more than I find comfortable. It is not
     natural. I came home and filed three lines and stopped talking
     about it. I still believe that was the right thing to do. The
-    field notes are on the table, and the route is marked. Take
-    them. I am not going back, and I would rather they were
-    somewhere useful than sat here.
-  hints: Reth's notes lie on the table. Type look field notes.
+    route is marked on this. Take it. I am not going back, and I
+    would rather it were somewhere useful than sat here.
+  hints: Take what you heard back to Brennan at the university. Type talk brennan.
   marked: true
   questRequired:
   - 75-intro
   questExcluded:
+  - 75-notes
   - 75-end
 - key: closed
   kind: info

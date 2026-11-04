@@ -1,103 +1,148 @@
-# Quest 76, The Disc (Greenford and Ashwick). Interim home, #375 phase 7,
-# owner option A (#625 stays open for the full endgame redesign).
+# Quest 76, The Disc (Greenford, Ashwick, the Cascade Pass and the Eastern
+# Highlands). A hard, fair mystery (#667, #625).
 #
 # Token flow:
-#   76-start:   granted by Brennan the Surveyor's disc_quest or disc_tale
-#               offer (dialogue/greenford/9516.yaml), after 75-end.
-#   76-journal: command trigger on `search` in Maren's Cottage (4023, Ashwick).
-#               The search turns up the journal and, pressed in its pages, the
-#               Inert Disc (40167), given by the trigger just above it unless
-#               the player already carries one. The journal text is the reading.
-#   76-attune:  command trigger on `cast chrysalis-glow` (cast glow, aimed at
-#               the caster) in 4023: the method wakes the disc with light at
-#               the marked hearth. Consumes 40167, gives the Attuned Disc
-#               (40168), and only then grants, so a refused item moves no step.
-#   76-end:     granted by Brennan's disc_in hand-in (needs 76-attune and the
-#               woken disc in hand).
+#   76-start:    granted by Brennan the Surveyor's disc_tale offer
+#                (dialogue/greenford/9516.yaml), after 75-end.
+#   76-journal:  command trigger on `search` in Maren's Cottage (4023, Ashwick).
+#                The search reads the journal. No disc here: he took it east.
+#   76-shelter:  topic_heard on The One Who Came Back's grey_man (9535, 6339).
+#   76-cairn:    `search` at the Lightning-Split Cairn (6349).
+#   76-camp:     `search` at the Abandoned Survey Camp (6351).
+#   76-alpha:    mob_death of the Reach-Alpha (9547, 6353). Party credit.
+#   76-remains:  `search` at his last camp (6365). Gives the Inert Disc (40167)
+#                unless the player already carries one, from the trigger just
+#                above the grant, which grants nothing.
+#   76-attune:   command trigger on `cast chrysalis-glow` (cast glow, aimed at
+#                the caster) in 6365: his method, at his own hearthstone.
+#                Consumes 40167, gives the Attuned Disc (40168), and only then
+#                grants, so a refused item moves no step. Key in the Dark
+#                (achievements/key-in-the-dark.yaml) reads this token.
+#   76-sentinel: mob_death of the Sentinel (9552, 6371). Party credit.
+#   76-end:      granted by the Threshold-Keeper's disc_in hand-in
+#                (dialogue/eastern_highlands/9553.yaml; needs 76-sentinel and
+#                the woken disc in hand).
 #
-# Real actions only: no step listens for a typed noun. Room 5343 no longer
-# holds a disc; quest 49 keeps one under its floor as story only.
+# Real actions only: no step listens for a typed noun. Room 5343 holds no disc;
+# quest 49 keeps one under its floor as story only.
 #
-# Saves from before this home: a player on 76-journal may hold no disc, because
-# the old flow sent them elsewhere for it. Searching gives one, and the trigger
-# just above the attune trigger hands one over if they cast first. The one-action
-# rule keeps item conditions off the attune trigger itself.
+# Saves from before the trail: progress is one current step, and HasQuest counts
+# every step before it, so a save at attune or end is past the new steps. A save
+# at journal goes on to the shelter. A held 40167 stays in the pack, and the
+# remains search gives no second one.
 #
-# Recovery: a player who woke a disc and lost it (the Threshold Keeper 9553
-# opens the way only for 40168) searches the cottage for another grey disc
-# and casts glow there again. Those triggers grant nothing. Conditions take one
-# missing_item, so "no woken disc and no grey disc" cannot be one trigger: a
-# search with a grey disc in hand swaps it for the one in the journal, which
-# leaves one, and searching cannot pile them up.
+# Recovery: a player who woke a disc and lost it (the Keeper opens the way only
+# for 40168) searches his camp for another grey disc and casts glow there again.
+# Those triggers grant nothing. Conditions take one missing_item, so "no woken
+# disc and no grey disc" cannot be one trigger: a search with a grey disc in hand
+# swaps it for the one in the satchel lining, which leaves one, and searching
+# cannot pile them up.
 #
 # While any search trigger here would fire for the player, the search does
 # not first say it found nothing (actions.SearchOptions.QuestStep).
 questid: 76
 name: The Disc
 description: >-
-  The inert disc is a key that has never been woken. Brennan knows of the
-  man who studied how, one who went east from Ashwick years ago and did
-  not come back. His research waits in the cottage he left behind.
+  A man from Ashwick spent his life on the mark in Brennan's margins, worked
+  out how to wake the grey key that bears it, and went east with it. He did
+  not come back. Find out how far he got.
 secret: false
 steps:
   - id: start
     destination:
       room: 4023
     description: >-
-      Brennan believes the disc is a key that must be woken, and that the man
-      who knew how left his work, and perhaps a disc of his own, in an Ashwick
-      cottage. From Brennan's Office, go north, east and north to the
-      University Gate, then down the University Stair and north through the
-      town to the Market Square, down the Town Stair, and north to the
-      Greenford Gate. Then go north over the bridge and west along the road to
-      the Confluence. In the city, cross the Brenn Bridge west to Tri-Cross
-      Square and go north through the quays to the River Gate. Then take the
-      River Road north, through Amber Valley and up the South Road to the
-      Ashwick Crossroads. From the crossroads, go east five times to the East
-      Edge of the village, then south into the cottage.
+      Brennan knows of a man who kept a cottage in Ashwick, studied how to wake
+      the key, then went east and never came back. His work should still be in
+      the house he left.
     hint: >-
-      Maren's Cottage is south of the East Edge of Ashwick, a long road north
-      of Greenford. The route is in the quest log. If it is dark, type cast
-      glow first. In the cottage, type search.
+      Maren's Cottage is south of the East Edge of Ashwick, a long road north of
+      Greenford. If it is dark, type cast glow first. In the cottage, type search.
   - id: journal
     destination:
-      room: 4023
+      room: 6339
     description: >-
-      You searched the cottage and read the father's journal: a life spent
-      chasing a buried thing in the east, and the method he worked out for
-      waking the disc with light at the marked hearth.
+      His journal gives the method for waking the disc with light at a hearth
+      cut to the mark. It never answered here. He took the disc and followed a
+      surveyor's marks east, to cut another hearth where the thing could be seen.
     hint: >-
-      His method wakes the disc with light, at the marked hearth in the
-      cottage. Type cast glow there.
+      Reth's map runs over the Cascade Pass. Someone on that road may remember
+      him. Ask the one who came back, at the shelter past the Wind-Gap.
+  - id: shelter
+    destination:
+      room: 6349
+    description: >-
+      The one who came back saw him: a thin man with a mattock on his back and
+      something grey he kept in his fist, walking toward the split stone.
+    hint: >-
+      Reth's route names a cairn split by lightning. Search there for any sign
+      of him. Bring a light after dark.
+  - id: cairn
+    destination:
+      room: 6351
+    description: >-
+      On a fallen stone of the cairn, cut fresh once and weathered since: a ring
+      struck through with a line, and an arrow east, to the old survey camp.
+    hint: >-
+      He went on to the old survey camp Reth spoke of. Search it. Bring a light
+      after dark.
+  - id: camp
+    destination:
+      room: 6353
+    description: >-
+      He slept at the survey camp and went on with his tools, east, past where
+      the green stops. Something up there has claimed that ground since.
+    hint: >-
+      The Reach-Alpha holds the line where the green fails. It will not let you
+      by. Bring friends, and kill it.
+  - id: alpha
+    destination:
+      room: 6365
+    description: >-
+      The alpha is dead, and the way past the green is open. Someone cleared
+      earth off the buried face by hand, not far from here.
+    hint: >-
+      Follow the buried face to where it was cleared by hand. Search the camp
+      you find there. Bring a light after dark.
+  - id: remains
+    destination:
+      room: 6365
+    description: >-
+      You found him under the fallen lean-to, and in his satchel the grey disc.
+      Beside him lies a hearthstone cut to the mark, the last thing he made. He
+      never finished.
+    hint: >-
+      His method wakes the disc with light at a hearth cut to the mark. His own
+      is here. Type cast glow.
   - id: attune
     destination:
-      mob: 9516
+      room: 6371
     description: >-
-      You followed his method at the hearth, and the disc woke. The lines
-      hold warmth now, and the mark keeps the light. Brennan will want to
-      hear it. From the cottage, go north to the East Edge, then west five
-      times to the Ashwick Crossroads. Take the South Road south, through
-      Amber Valley and down the River Road to the River Gate of the Confluence.
-      Go south through the quays to Tri-Cross Square, cross the Brenn Bridge
-      east, and follow the road east, then south over the bridge to the
-      Greenford Gate. Go south through the town to the Town Stair, up to the
-      Market Square, south to the University Stair, up to the University Gate,
-      then south, west and south to Brennan's Office.
+      The disc woke at his hearthstone, and it keeps the light now. It has also
+      roused something. The Sentinel at the buried face turns toward it.
     hint: >-
-      Go back to Brennan's Office in Greenford. The route is in the quest log.
-      He is asleep late at night. Type talk brennan.
+      The Sentinel stands near the door and will not let the woken disc pass.
+      Nothing you can do alone will move it. Bring friends.
+  - id: sentinel
+    destination:
+      mob: 9553
+      room: 6372
+    description: >-
+      The Sentinel is down, and the door is close. The one who keeps its
+      threshold has watched this road for a long time.
+    hint: >-
+      The Keeper sits at the Disc-Door. Bring her the woken disc. Type talk keeper.
   - id: end
     description: >-
-      You carry the woken disc, a key for the door in the east, and the last
-      of a lost man's work, done at last. Reth's route ends at that door, in a
-      buried face in the Eastern Highlands.
+      You carry the woken disc, the last of a lost man's work, done at last by a
+      stranger's hand. The door answers it.
 rewards:
   actor: >-
-    Brennan turns the woken disc to the light and watches the lines keep it.
-    "A father's work, finished by a stranger, in the cottage he left to chase
-    it." He gives it back. What it opens waits east, in the broken country,
-    behind a door in the buried face.
-  observer: "Brennan turns a grey disc to the light and hands it back."
+    The Keeper looks at the disc, then at the road behind you, as if counting
+    someone who is not there. "He sat here once, you know. One night, on his way
+    up. He would not say his name, and I did not ask him for it." She turns back
+    to her fire. The door waits.
+  observer: "The Keeper looks long at the grey disc in {actor}'s hand."
   gold: 0
 triggers:
   # Maren's letter (item 40041), for any player, on or off this quest: the
@@ -122,50 +167,98 @@ triggers:
           lies against the back of the hollow, hidden there on purpose.
       - give_item: 40041
 
-  # RECOVERY, search: a player who woke a disc and lost it finds another.
-  # Grants nothing. These two are before the journal trigger, so they are judged
-  # first. The first takes a grey disc already in hand, so the second leaves
-  # the player holding exactly one however often they search.
+  # Torn pages left lying about (#667), for any player, on or off this quest.
+  # One per room; each gives its page once, and a second search with the page
+  # in hand finds nothing.
+  # 472 The Drowning Post Tavern
   - event: command
     command: search
-    room: 4023
+    room: 472
     conditions:
-      has: ["76-attune"]
-      has_item: 40167
-      missing_item: 40168
+      missing_item: 40513
     actions:
-      - consume_item: 40167
-  - event: command
-    command: search
-    room: 4023
-    conditions:
-      has: ["76-attune"]
-      missing_item: 40168
-    actions:
-      - give_item: 40167
+      - give_item: 40513
       - actor: >-
-          Between the last pages of the journal lies a grey disc, cool and
-          dead in the hand, the twin of the one you woke. You carry it away.
-
-  # DISC: the search turns up the disc, unless the player carries one.
-  # Grants nothing; the trigger below grants the step.
+          You ease the folded page out from under the table leg, and the table
+          rocks.
+  # 5378 The Lake & Ladle, Common Room
   - event: command
     command: search
-    room: 4023
+    room: 5378
     conditions:
-      has: ["76-start"]
-      missing: ["76-attune"]
-      missing_item: 40167
+      missing_item: 40523
     actions:
-      - give_item: 40167
+      - give_item: 40523
       - actor: >-
-          Pressed between the last pages of the journal on the table lies a
-          disc of pale grey metal: cool, too smooth, heavier than its size.
-          Fine raised lines thread across its face to a ring struck through
-          with a line. You take it.
-      - observer: "{actor} lifts something grey from between the pages of a journal and pockets it."
+          You lift the newer sheets and unpin the torn page from beneath them.
+  # 5512 The Salt Cellar Taproom
+  - event: command
+    command: search
+    room: 5512
+    conditions:
+      missing_item: 40509
+    actions:
+      - give_item: 40509
+      - actor: >-
+          You work the folded page out from under the bar. The salt has made it
+          stiff.
+  # 5609 The Bathhouse
+  - event: command
+    command: search
+    room: 5609
+    conditions:
+      missing_item: 40520
+    actions:
+      - give_item: 40520
+      - actor: >-
+          You peel the page off the bench. The ink has run, but it holds
+          together.
+  # 5912 The Canon's Cell
+  - event: command
+    command: search
+    room: 5912
+    conditions:
+      missing_item: 40532
+    actions:
+      - give_item: 40532
+      - actor: >-
+          You draw the torn page from between the volumes. One side of it is
+          burned.
+  # 5907 The Keeper's House, Desk
+  - event: command
+    command: search
+    room: 5907
+    conditions:
+      missing_item: 40537
+    actions:
+      - give_item: 40537
+      - actor: >-
+          You slide the torn page out of the gap in the registers. No one has
+          written it down.
+  # 6190 The Scriptorium
+  - event: command
+    command: search
+    room: 6190
+    conditions:
+      missing_item: 40518
+    actions:
+      - give_item: 40518
+      - actor: >-
+          You reach under the last desk and bring out a torn leaf, older than
+          anything being copied here.
+  # 4022 Deacon's Chapel
+  - event: command
+    command: search
+    room: 4022
+    conditions:
+      missing_item: 40534
+    actions:
+      - give_item: 40534
+      - actor: >-
+          In the last pew a hymnal falls open at a torn page that is no part of
+          it. You take it.
 
-  # JOURNAL: the search reads the man's journal.
+  # JOURNAL: the search reads the man's journal. No disc here.
   - event: command
     command: search
     room: 4023
@@ -182,22 +275,137 @@ triggers:
           reckoning, and wrong in a way he never quite sets down in
           words. He calls it only the thing. The ring struck through with
           a line is inked in every margin, worried at like a sore tooth.
-          Then, near the end, the part you came for without knowing it:
-          a method, worked out slow and sure across many pages, for
-          waking the grey disc that is its key. Light, held over it at
-          the marked hearth. The last line is not about the thing at
-          all. It is a name, set down once and gently, as if to keep one
-          soft thing safe. Maren. He went east to finish this. He did not
-          come back to her. At the marked hearth, type cast glow.
+          Then the method, worked out slow across many pages, for waking
+          the grey disc that is its key: light, held over it at a hearth
+          cut to the mark. He cut this one himself. It never answered, and
+          near the end he stops asking why. The thing is too far off, he
+          writes. He will take the disc east, along the surveyor's marks,
+          and cut another where it can be seen. The last line is not about
+          the thing at all. It is a name, set down once and gently, as if
+          to keep one soft thing safe. Maren. He went east to finish this.
+          He did not come back to her.
       - observer: "{actor} reads a long while at the cottage table."
 
-  # RECOVERY, wake: a finished player with a grey disc and no woken one.
-  # Grants nothing. Before the attune trigger, so it is judged first.
+  # SHELTER: the one who came back remembers him.
+  - event: topic_heard
+    mob: 9535
+    topic: grey_man
+    conditions:
+      has: ["76-journal"]
+      missing: ["76-shelter"]
+    actions:
+      - grant: "76-shelter"
+
+  # CAIRN and CAMP: his traces.
+  - event: command
+    command: search
+    room: 6349
+    conditions:
+      has: ["76-shelter"]
+      missing: ["76-cairn"]
+    actions:
+      - grant: "76-cairn"
+      - actor: >-
+          Among the stones the lightning threw down, one has been turned to face
+          the road. Cut into it, fresh once and weathered since, is a ring struck
+          through with a line, and beside it a short, hard arrow: east, toward
+          the old camp Reth spoke of. Not Reth's hand. His cuts are neater than this.
+      - observer: "{actor} turns over the fallen stones of the cairn."
+  - event: command
+    command: search
+    room: 6351
+    conditions:
+      has: ["76-cairn"]
+      missing: ["76-camp"]
+    actions:
+      - grant: "76-camp"
+      - actor: >-
+          Under the bleached poles someone has slept more recently than the
+          surveyors. A flint tin, empty. A boot-print of old ash at the fire ring.
+          On the pole nearest the fire the same mark is cut, and under it, smaller,
+          a tally of days that stops at nine. Whoever he was, he left his bedding
+          and took his tools, east, past where the green stops. There are tracks
+          over his now, large ones, and they do not care who has walked here.
+      - observer: "{actor} searches the ruins of the old camp."
+
+  # ALPHA: the first fight. Party members in the room get the credit.
+  - event: mob_death
+    mob: 9547
+    conditions:
+      has: ["76-camp"]
+      missing: ["76-alpha"]
+    actions:
+      - grant: "76-alpha"
+      - actor: >-
+          The alpha is down, and the ground it held lies open to the east, bare
+          and wrong and very quiet.
+
+  # REMAINS: recovery triggers come first, so they are judged first. The first
+  # takes a grey disc already in hand, so the second leaves the player holding
+  # exactly one however often they search.
+  - event: command
+    command: search
+    room: 6365
+    conditions:
+      has: ["76-attune"]
+      has_item: 40167
+      missing_item: 40168
+    actions:
+      - consume_item: 40167
+  - event: command
+    command: search
+    room: 6365
+    conditions:
+      has: ["76-attune"]
+      missing_item: 40168
+    actions:
+      - give_item: 40167
+      - actor: >-
+          In the lining of the satchel your fingers find a second grey disc, cool
+          and dead in the hand, the twin of the one you woke. He had brought a
+          spare. Of course he had.
+
+  # A player on an old save may already carry a disc. Grants nothing; the trigger
+  # below grants the step, so a pack too heavy for the disc still reads the
+  # remains, and the glow below hands it over. 76-attune in `missing` says what
+  # 76-remains already implies, in the terms the same-command rule reads: the
+  # recovery swap above consumes this trigger's missing_item, and it must see
+  # that the two can never fire on one search.
+  - event: command
+    command: search
+    room: 6365
+    conditions:
+      has: ["76-alpha"]
+      missing: ["76-remains", "76-attune"]
+      missing_item: 40167
+    actions:
+      - give_item: 40167
+  - event: command
+    command: search
+    room: 6365
+    conditions:
+      has: ["76-alpha"]
+      missing: ["76-remains"]
+    actions:
+      - grant: "76-remains"
+      - actor: |
+          Under the fallen lean-to, where a man would lie who meant to get up in
+          the morning, there is a strap, a coat gone to threads and not many bones.
+          He is lying on his side, facing the grey. Against his ribs is a satchel,
+          and in the satchel a flint tin, a book you do not open, and a disc of pale
+          grey metal, cool and heavier than its size. By his hand lies a hearthstone
+          carried a very long way, cut with the same mark, and cut again, and cut
+          again. The chisel is still beside it. He was almost done. It wants only
+          what he did not have left to give it: light, held over it, patiently. Type
+          cast glow.
+      - observer: "{actor} kneels a long time under the fallen lean-to."
+
+  # RECOVERY, wake. Before the attune trigger, so it is judged first.
   - event: command
     command: cast
     noun: chrysalis-glow
     target: self
-    room: 4023
+    room: 6365
     conditions:
       has: ["76-attune"]
       has_item: 40167
@@ -206,60 +414,60 @@ triggers:
       - consume_item: 40167
       - give_item: 40168
       - actor: >-
-          You set the grey disc into the cut center of the hearthstone and
-          hold the glow over it, as his method says. The lines warm, and the
-          mark at the center wakes.
+          You set the grey disc into the cut of his hearthstone and hold the glow
+          over it, as his method says. The lines warm, and the mark at the center
+          wakes.
 
-  # NO DISC YET: a player on the journal step with no disc (an older save, a
-  # disc dropped or refused for weight). The attune line below sets a disc on
-  # the hearth, so one must exist first. Grants nothing.
+  # NO DISC YET: a player on the remains step whose pack refused the disc, or who
+  # dropped it. The attune line below sets a disc on the stone, so one must exist
+  # first. Grants nothing.
   - event: command
     command: cast
     noun: chrysalis-glow
     target: self
-    room: 4023
+    room: 6365
     conditions:
-      has: ["76-journal"]
+      has: ["76-remains"]
       missing: ["76-attune"]
       missing_item: 40167
     actions:
       - give_item: 40167
-      - actor: >-
-          His method wants the disc itself. Between the last pages of the
-          journal lies one, pale grey, cool and dead in the hand. You carry it
-          to the hearth.
+      - actor: The disc is still in his satchel. You take it.
 
-  # ATTUNE: light at the marked hearth wakes the disc. The item moves before
-  # the grant: a pack too heavy for it holds the step, and the cast can be tried
-  # again.
+  # ATTUNE. The item moves before the grant: a refused item moves no step.
   - event: command
     command: cast
     noun: chrysalis-glow
     target: self
-    room: 4023
+    room: 6365
     conditions:
-      has: ["76-journal"]
+      has: ["76-remains"]
       missing: ["76-attune"]
     actions:
       - consume_item: 40167
       - give_item: 40168
       - grant: "76-attune"
       - actor: |
-          You do as the journal says. You set the disc into the cut
-          center of the hearthstone, where the marks draw inward to a
-          single point, and you hold the soft glow over it, patient and
-          exact, the way a driven man learned alone and wrote down so a
-          stranger might one day do this right. For a long moment,
-          nothing. Then the grey face warms under your fingers, not with
-          your warmth but its own. The fine raised lines drink the light
-          and keep it, holding a glow a half-breath past when it should
-          fade, and the ring-struck mark at the center wakes and steadies,
-          sure of itself now, sure of where it belongs. The disc is a key,
-          and it knows its door: east, in the broken country, in the
-          buried face he gave his years to. His work, done at last, by a
-          stranger's hand in the cottage he left to chase it. And a name
-          comes to you off the last page, unbidden. Maren. He kept her,
-          all the way to the end of himself. You hope, wherever she is,
-          she never learns how far he went. Brennan will want to hear of
-          this. Go back to his office in Greenford and type talk brennan.
-      - observer: "{actor} holds a soft glow over the marked hearth, and the air goes briefly strange."
+          You set the disc into the cut of his hearthstone, where the marks draw
+          inward to a single point, and you hold the soft glow over it, patient
+          and exact, the way a driven man worked out alone and wrote down so a
+          stranger might one day do this right. For a long moment, nothing. Then
+          the grey face warms under your fingers, not with your warmth but its own.
+          The fine raised lines drink the light and keep it, holding a glow a
+          half-breath past when it should fade, and the ring-struck mark at the
+          center wakes and steadies, sure of where it belongs. His work, done at
+          last, a few paces from where he lay down. And along the buried face, not
+          far off, something very large and very patient turns to look at you.
+      - observer: "{actor} holds a soft glow over a cut stone, and the air goes briefly strange."
+
+  # SENTINEL: the readiness test.
+  - event: mob_death
+    mob: 9552
+    conditions:
+      has: ["76-attune"]
+      missing: ["76-sentinel"]
+    actions:
+      - grant: "76-sentinel"
+      - actor: >-
+          The Sentinel stops, all at once, the way a thing stops when it has only
+          ever been waiting. The disc warms against your side. The door is close.

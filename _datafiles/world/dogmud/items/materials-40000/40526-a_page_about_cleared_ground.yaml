@@ -1,0 +1,22 @@
+itemid: 40526
+name: A Page About Cleared Ground
+namesimple: torn page
+description: |
+  ...there is a section where the sediment has been cl
+  by weather. By hands. Someone went there, not recen
+  within the last generation. They cleared the sedime
+  a section of the curved surface and they left it cl
+  and when I found it there were marks in the exposed
+  Not scratches. Depressions. Recesses, shaped with a
+  that suggested they were part of the original con
+  Small. About the size of a
+
+  He held up his hand. Thumb and forefinger, a circ
+  The size of a coin. The size of a d
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

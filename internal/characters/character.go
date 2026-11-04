@@ -330,6 +330,7 @@ type Character struct {
 	Discoveries             map[int][]string               `yaml:"discoveries,omitempty"`         // Per-room hidden object discoveries
 	VisitedRooms            map[string][]int               `yaml:"visitedrooms,omitempty"`        // zone name -> visited roomIds (fog-of-war for the web map)
 	Achievements            map[string]uint64              `yaml:"achievements,omitempty"`        // achievement id -> round unlocked
+	ItemsRead               map[int]bool                   `yaml:"itemsread,omitempty"`           // readable item ids this character has read; what items_read achievements count
 	MobMastery              MobMasteries                   `yaml:"mobmastery,omitempty"`          // Tracks particular masteries around a given mob
 	SkillUseCount           map[string]int                 `yaml:"skillusecount,omitempty"`       // Tracks how many times each skill has been used
 	StatUseCount            map[string]int                 `yaml:"statusecount,omitempty"`        // Tracks how many times each stat has been checked

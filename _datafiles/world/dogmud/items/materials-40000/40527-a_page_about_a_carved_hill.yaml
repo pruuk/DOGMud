@@ -1,0 +1,19 @@
+itemid: 40527
+name: A Page About a Carved Hill
+namesimple: torn page
+description: |
+  Not a shape he had carved before. ... This was a different thing. A
+  low slow rise. A shoulder of earth. The top of a thing you would not
+  know was a thing unless you had walked on it. A hill that the
+  woodgrain said was hollow under it. ...
+
+  He looked at it in his palm.
+
+  He had carved a buried thing.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

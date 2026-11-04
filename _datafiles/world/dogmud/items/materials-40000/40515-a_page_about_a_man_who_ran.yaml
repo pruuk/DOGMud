@@ -1,0 +1,24 @@
+itemid: 40515
+name: A Page About a Man Who Ran
+namesimple: torn page
+description: |
+  Not the man who left but the man who ran. Same act, different
+  story. He had been what she was: the thing without the gift. He
+  had managed it the way she'd managed it: the careful arm, the
+  performance, the watching of a deacon's eyes for the wrong kind of
+  attention. ... He had known what it meant when the attention came,
+  and he had gone in the night without waking her.
+
+  She thought: he left me.
+
+  She thought: he ran so they'd follow him and not stay to look for
+  me.
+
+  Both true. She sat with both.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

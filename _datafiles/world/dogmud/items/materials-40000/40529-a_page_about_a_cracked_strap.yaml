@@ -1,0 +1,20 @@
+itemid: 40529
+name: A Page About a Cracked Strap
+namesimple: torn page
+description: |
+  ...her foot at the fifth pace came down on something that was not
+  the springy compressed growth of the hillside. It was harder than
+  that. She looked down.
+
+  A leather strap. Flat under her boot. Cracked from years of
+  weather, the oil long gone out of it. She lifted her foot. The
+  strap lay against the ground curving slightly, the curve of a thing
+  that had once gone around another thing. A pack-strap. The kind a
+  man took east on a long journey.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

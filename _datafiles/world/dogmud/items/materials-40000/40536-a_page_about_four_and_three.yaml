@@ -1,0 +1,19 @@
+itemid: 40536
+name: A Page About Four and Three
+namesimple: torn page
+description: |
+  "I told myself it could be an error in the recording," Edvar said.
+  "A flaw in the material. An artifact of age. I had ... plausible
+  explanations for why the record showed four when the sky showed
+  three, and I tested each of them ... and none of them held." He
+  paused. "The fourth shape is consistent across every source I've
+  found ... After that period, every source shows three. The
+  transition is clean. Whatever happened, happened within a single
+  generation."
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

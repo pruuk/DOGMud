@@ -766,9 +766,11 @@ func executePurchaseItem(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRec
 				u.EventLog.Add(`shop`, fmt.Sprintf(`Purchased %s<ansi fg="itemname">%s</ansi> from <ansi fg="mobname">%s</ansi> for %s`, items.ArticlePrefix(newItm.DisplayName()), items.MidSentenceName(newItm.DisplayName()), shopMob.Character.Name, tradeInString))
 			}
 		}
-		buyer.SendText(messaging.CategoryLoot, fmt.Sprintf(`You purchase the <ansi fg="itemname">%s</ansi> from <ansi fg="mobname">%s</ansi> for %s.`, newItm.DisplayName(), shopMob.Character.Name, tradeInString))
+		// "the" stands in for a name's own article: not "the A Torn Page".
+		theName := items.NameWithoutArticle(newItm.DisplayName())
+		buyer.SendText(messaging.CategoryLoot, fmt.Sprintf(`You purchase the <ansi fg="itemname">%s</ansi> from <ansi fg="mobname">%s</ansi> for %s.`, theName, shopMob.Character.Name, tradeInString))
 		if room := buyer.GetRoom(); room != nil {
-			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> purchases the <ansi fg="itemname">%s</ansi> from <ansi fg="mobname">%s</ansi>.`, buyerName, newItm.DisplayName(), shopMob.Character.Name), buyer.GetUserId())
+			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> purchases the <ansi fg="itemname">%s</ansi> from <ansi fg="mobname">%s</ansi>.`, buyerName, theName, shopMob.Character.Name), buyer.GetUserId())
 		}
 	} else if shopUser != nil {
 		if buyer.IsPlayer() {
@@ -776,10 +778,11 @@ func executePurchaseItem(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRec
 				u.EventLog.Add(`shop`, fmt.Sprintf(`Purchased %s<ansi fg="itemname">%s</ansi> from <ansi fg="username">%s</ansi> for %s.`, items.ArticlePrefix(newItm.DisplayName()), items.MidSentenceName(newItm.DisplayName()), shopUser.Character.Name, tradeInString))
 			}
 		}
-		buyer.SendText(messaging.CategoryLoot, fmt.Sprintf(`You purchase the <ansi fg="itemname">%s</ansi> from <ansi fg="username">%s</ansi> for %s.`, newItm.DisplayName(), shopUser.Character.Name, tradeInString))
-		shopUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> purchased the <ansi fg="itemname">%s</ansi> you were selling for %s.`, buyerName, newItm.DisplayName(), tradeInString))
+		theName := items.NameWithoutArticle(newItm.DisplayName())
+		buyer.SendText(messaging.CategoryLoot, fmt.Sprintf(`You purchase the <ansi fg="itemname">%s</ansi> from <ansi fg="username">%s</ansi> for %s.`, theName, shopUser.Character.Name, tradeInString))
+		shopUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> purchased the <ansi fg="itemname">%s</ansi> you were selling for %s.`, buyerName, theName, tradeInString))
 		if room := buyer.GetRoom(); room != nil {
-			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> purchases the <ansi fg="itemname">%s</ansi> from <ansi fg="username">%s</ansi>.`, buyerName, newItm.DisplayName(), shopUser.Character.Name), buyer.GetUserId())
+			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> purchases the <ansi fg="itemname">%s</ansi> from <ansi fg="username">%s</ansi>.`, buyerName, theName, shopUser.Character.Name), buyer.GetUserId())
 		}
 	}
 

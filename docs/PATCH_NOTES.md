@@ -25,6 +25,23 @@
 - After an update, your browser loads the new look straight away instead of
   an old saved copy.
 
+## 2026-11-03: The buried thing
+
+- The road to the Disc-Door is now a trail to follow. Brennan and Reth in Greenford
+  start you on it, and it runs north to an abandoned cottage, then east over the
+  Cascade Pass. Bring friends for the last of it.
+- If you have already finished The Disc, your woken disc still opens the door.
+- The Threshold Keeper now wants at least four hundred gold to open the way.
+- The oracle-stones are found by searching, and the Keeper offers that road too.
+- New achievements for waking the disc, for bringing down the Core Guardian and for
+  reading the stones.
+
+## 2026-11-03: Torn pages
+
+- Torn pages of an old account have turned up at booksellers, and some have been
+  left lying in places people read. Each is a piece of something larger. An
+  achievement waits for anyone who reads them all.
+
 ## 2026-11-03: Playing on phones
 
 - On a phone, the web client now opens full screen. The ⛶ button in the session

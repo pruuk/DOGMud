@@ -125,6 +125,8 @@ func TestShippedQuestRoomTextFollowsConvention(t *testing.T) {
 	// 71 (the ledger page).
 	// Phase 7 tier 1 took 1 away: quest 14's strongbox is a real container, so
 	// the room_interact trigger with its observer line is gone.
-	assert.Equal(t, 29, checked,
-		"29 quest observer lines ship; a different count means the inventory moved, so re-read this test")
+	// The disc line (#667) added 2: quest 76 lost the line for lifting the disc
+	// from the journal and gained the cairn, the old camp and the remains.
+	assert.Equal(t, 31, checked,
+		"31 quest observer lines ship; a different count means the inventory moved, so re-read this test")
 }

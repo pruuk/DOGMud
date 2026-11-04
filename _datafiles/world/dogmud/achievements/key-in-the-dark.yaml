@@ -1,0 +1,8 @@
+id: key-in-the-dark
+name: Key in the Dark
+description: Finish a lost man's work.
+category: quests
+points: 20
+trigger:
+  type: quest_completed
+  token: 76-attune

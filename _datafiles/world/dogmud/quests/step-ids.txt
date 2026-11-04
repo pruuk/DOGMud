@@ -314,14 +314,22 @@
 74-survey
 75-end
 75-intro
+75-notes
 75-start
 75-survey
-75-testimony
+76-alpha
 76-attune
+76-cairn
+76-camp
 76-end
 76-journal
+76-remains
+76-sentinel
+76-shelter
 76-start
 77-end
+77-read
+77-start
 8-end
 8-found
 8-start
@@ -366,6 +374,9 @@
 # it from saves (quests.RetiredQuests).
 29-end
 29-start
+# Quest 75 ends at Brennan now (#667): 75-notes replaces 75-testimony, which was
+# granted with 75-end in one action, so no save rests on it.
+75-testimony
 # Quests 78 to 87 (#375 phase 7 tier 3): Veyra sells recipes through talk, no quest.
 78-end
 78-start

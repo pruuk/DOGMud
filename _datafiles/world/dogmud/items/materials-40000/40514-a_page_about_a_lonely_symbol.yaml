@@ -1,0 +1,17 @@
+itemid: 40514
+name: A Page About a Lonely Symbol
+namesimple: torn page
+description: |
+  He looked at it now and something in him answered, not his eyes,
+  not his mind, but the part that had flinched from the eel-seller's
+  anger. The symbol felt like something. Not sacred, not decorative.
+  Lonely. The loneliness of a thing going round and round, held in
+  place by something it couldn't leave and couldn't reach. Not a
+  descent. A vigil.
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

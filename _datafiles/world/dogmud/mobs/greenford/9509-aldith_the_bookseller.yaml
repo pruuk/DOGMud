@@ -47,3 +47,9 @@ character:
       base: 104
   shop:
     - itemid: 40137
+    - itemid: 40529
+    - itemid: 40526
+    - itemid: 40511
+    - itemid: 40533
+    - itemid: 40514
+    - itemid: 40521

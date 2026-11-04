@@ -1,0 +1,38 @@
+id: the-torn-record
+name: The Torn Record
+description: Read every torn page of the old account.
+category: exploration
+points: 25
+trigger:
+  type: items_read
+  items:
+    - 40508
+    - 40509
+    - 40510
+    - 40511
+    - 40512
+    - 40513
+    - 40514
+    - 40515
+    - 40516
+    - 40517
+    - 40518
+    - 40519
+    - 40520
+    - 40521
+    - 40522
+    - 40523
+    - 40524
+    - 40525
+    - 40526
+    - 40527
+    - 40528
+    - 40529
+    - 40530
+    - 40531
+    - 40532
+    - 40533
+    - 40534
+    - 40535
+    - 40536
+    - 40537

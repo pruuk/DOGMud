@@ -1,0 +1,21 @@
+itemid: 40528
+name: A Page About a Wrong Hill
+namesimple: torn page
+description: |
+  It was the wrong shape for a hill.
+
+  That was the sentence she arrived at on the second look. Not too
+  large. Not too small. Wrong. A hill was a thing that had been
+  shaped by water and weather and the slow compression of the weight
+  of the country above it. This thing had been shaped by s... The
+  proportions were too long for the height. The back was too even.
+  The flanks curved at a rate a hillside did not curve, curved at an
+  even rate, the rate of a thing that had been m... at a scale and
+  then b...
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

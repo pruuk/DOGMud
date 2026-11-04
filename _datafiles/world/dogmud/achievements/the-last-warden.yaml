@@ -1,0 +1,8 @@
+id: the-last-warden
+name: The Last Warden
+description: Bring down the Core Guardian.
+category: combat
+points: 30
+trigger:
+  type: mob_killed
+  mob: 9562

@@ -1,0 +1,18 @@
+itemid: 40522
+name: A Page About Light at Dusk
+namesimple: torn page
+description: |
+  "It caught the light," he said. "Not the way rock catches light.
+  The way m... catches it. A dull reflectance, uniform across the
+  entire exposed section, the color of storm-cloud with something
+  underneath it. And at certain angles, I moved along the formation,
+  watching, at certain angles the light seemed to go into the surface
+  rather than bouncing off it. As if ... As if there were depth to
+  it."
+type: readable
+subtype: blobcontent
+weight: 0.1
+value: 15
+rarity_tier: 40
+vendor_categories:
+- tailoring

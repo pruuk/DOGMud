@@ -1,0 +1,20 @@
+itemid: 40532
+name: A Burned Page About the Chrysalis
+namesimple: torn page
+description: |
+  (Written across the top in a neat temple hand:)
+  Examined, condemned, destruction ordered.
+
+  (Below this, in different ink:)
+  Why is this so hard to burn?
+
+  The Chrysalis ... came down through the sky it had no business being
+  in, and the Chrysalis had entered the s... through soil and air and
+  water. The Chrysalis had not chosen ... The Chrysalis had done what
+  the Chrysalis did. Those who had not d... of it had changed.
+type: readable
+subtype: blobcontent
+not_salable: true
+weight: 0.1
+value: 15
+rarity_tier: 40

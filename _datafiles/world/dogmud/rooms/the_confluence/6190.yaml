@@ -9,7 +9,9 @@ description: >
   here amid the soft sounds of quill and turned page,
   producing the copies and fair records the Keepers
   require: liturgical texts, river-accounts, the slow
-  business of institutional memory. The North Walk is
+  business of institutional memory. Under the last desk in the row lies
+  a torn leaf, dropped or hidden, that no scribe has come back for. The
+  North Walk is
   back to the south.
 biome: interior
 coord:
@@ -19,6 +21,11 @@ coord:
 exits:
   south:
     roomid: 6186
+nouns:
+  torn leaf: A leaf of old paper under the last desk in the row, torn at
+    one edge and older than anything being copied here. It was dropped
+    or hidden, and no scribe has come back for it. It would come out
+    from under the desk whole.
 spawninfo:
   - mobid: 9467
     respawnrate: "20 real minutes"

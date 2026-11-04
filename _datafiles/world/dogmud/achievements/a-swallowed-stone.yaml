@@ -1,0 +1,8 @@
+id: a-swallowed-stone
+name: A Swallowed Stone
+description: Learn what the buried thing knows.
+category: quests
+points: 30
+trigger:
+  type: quest_completed
+  token: 77-end

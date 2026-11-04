@@ -122,7 +122,7 @@ func actGiveItem(params map[string]any, ctx *EvalContext) Result {
 	if !acquire.AcquireItem(user, item, acquire.AcquireTreeGive) {
 		return Failure
 	}
-	user.SendText(messaging.CategoryLoot, fmt.Sprintf("You receive a %s.\n", item.Name()))
+	user.SendText(messaging.CategoryLoot, fmt.Sprintf("You receive %s%s.\n", items.ArticlePrefix(item.Name()), item.Name()))
 	return Success
 }
 

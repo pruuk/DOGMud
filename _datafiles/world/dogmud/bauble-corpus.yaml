@@ -351,7 +351,7 @@ entries:
         with a faint, worn design. It has broken free from whatever it
         once sealed.
     - name: Faded Ribbon Scrap
-      name_simple: scrap
+      name_simple: ribbon
       material: silk
       weight_lbs: 0.1
       value: 3
@@ -1218,7 +1218,7 @@ entries:
         dry inside. Its neck is chipped, and the clay has faded to a pale
         orange.
     - name: Faded Tapestry Scrap
-      name_simple: scrap
+      name_simple: tapestry
       material: wool
       weight_lbs: 0.1
       value: 11
