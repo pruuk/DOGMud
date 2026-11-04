@@ -742,6 +742,8 @@
 9305.bloom_undercover
 9305.competition
 9305.fabric
+9305.q102_offer
+9305.q102_resume
 9306.found
 9306.rumors
 9306.trade
@@ -1452,6 +1454,9 @@
 9801.q64_found
 9801.q64_run
 9801.who
+9802.q102_in
+9802.what_it_does
+9802.where_from
 99.about_records
 99.already_filed
 99.bridge_report

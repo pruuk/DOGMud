@@ -1,0 +1,58 @@
+mobid: 9802
+zone: New Plymouth Docks
+defaultMood: neutral
+greetings:
+- text: Close the door.
+  moods:
+  - neutral
+opener:
+  text: You have the knock, so you have the price. I sell one thing. Do not ask me for
+    credit.
+  hints: To see what he sells, type list. Ask him what it does first.
+  variants:
+  - questRequired:
+    - 102-behind
+    questExcluded:
+    - 102-end
+    text: Marn said someone was coming. You heard something on your way in. You will
+      keep it to yourself.
+    hints: Choose The Knock below to finish your business with him.
+  - questRequired:
+    - 67-end
+    text: The watch broke up a house on Lintel Street, I hear. A house and a ledger. This
+      room was never on that paper, and I have never met the people who were. I keep a
+      small stock. Buy, or close the door behind you.
+    hints: To see what he sells, type list. Ask him what it does first.
+topics:
+- key: q102_in
+  kind: handin
+  quest: 102
+  label: The Knock
+  playerLine: Marn sent me. I paid.
+  text: Then you are a customer. I am Sefton. I sell one thing, and I keep a small
+    stock, because a large stock is how people get noticed. Whatever the watch breaks
+    up on Lintel Street is a house and a ledger. This room was never on that paper. I
+    have never met the people at that end, and they have never met me. That is what the
+    arrangement is for.
+  hints: To see what he sells, type list. To buy one, type buy wafer. To take one, type
+    quaff wafer. Ask him what it does to you first.
+  questRequired:
+  - 102-behind
+  questExcluded:
+  - 102-end
+  grantsQuest: 102-end
+- key: what_it_does
+  kind: info
+  label: What does a wafer do to me?
+  text: For a little while you feel like the best day you ever had. Then you pay for
+    it, and you feel worse than you ever have, for a good deal longer. Something in you
+    changes, sometimes a lot, and you do not get to choose what. Take a few and you will
+    need them. Stop, and the need comes for you. That is the business.
+  hints: Each wafer poisons you a little, so your body will refuse one too many. The
+    craving fades slowly on its own. Ysolde the healer has a harsh cure. Type talk ysolde.
+  marked: true
+- key: where_from
+  kind: info
+  label: Where does this come from?
+  text: You heard where it comes from, on your way in. That is as much as you will hear
+    from me.

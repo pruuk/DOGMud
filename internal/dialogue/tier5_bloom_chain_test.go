@@ -1,6 +1,8 @@
 package dialogue
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -84,4 +86,157 @@ func TestTier5TheSkipPromisesOnlyWhatIsOnTheMenu(t *testing.T) {
 	require.Contains(t, terms.Hints, "choose The Skip below")
 	require.Contains(t, menuKeys(h, heardAll(heldState("64-start", "64-found"))), "q64_report", "hearing the terms opens it")
 	require.Equal(t, "The Skip", h.FindTopic("q64_report").Label)
+}
+
+// The stake is named while the offer is hidden, and it survives the bust.
+func TestTier5TheKnockCosts(t *testing.T) {
+	m := loadShippedDialogue(t, "new_plymouth_docks/9305.yaml")
+	offer := m.FindTopic("q102_offer")
+	require.Equal(t, 500, offer.ChargesGold)
+	require.Equal(t, 500, offer.GoldRequired)
+	require.Contains(t, offer.Text, "Five hundred gold")
+	require.Contains(t, offer.Objective, "five hundred gold")
+	require.Contains(t, offer.Hints, "takes the gold now")
+	require.NotContains(t, offer.Text, "Three short", "the knock is taught on Accept, after the gold")
+
+	state := func(flag string, gold bool, held ...string) *PlayerState {
+		ps := withFlags(heldState(held...), map[string]string{"64-outcome": flag})
+		ps.HasGold = func(int) bool { return gold }
+		return ps
+	}
+	require.NotContains(t, menuKeys(m, state("", true)), "q102_offer", "no skip, no knock")
+	require.NotContains(t, menuKeys(m, state("ran", true)), "q102_offer", "she ran, the chain closes")
+	require.NotContains(t, menuKeys(m, state("reported", false)), "q102_offer", "the price in hand")
+	require.Contains(t, menuKeys(m, state("reported", true)), "q102_offer")
+	require.Contains(t, menuKeys(m, state("reported", true, "67-start", "67-end")), "q102_offer", "survives the bust")
+	require.NotContains(t, menuKeys(m, state("reported", true, "102-start")), "q102_offer")
+
+	text, _ := m.OpenerFor(state("reported", false))
+	require.Contains(t, text, "Five hundred gold", "the price is named while the offer is hidden")
+	plain, _ := m.OpenerFor(state("", true))
+	require.NotContains(t, plain, "Five hundred")
+	ran, _ := m.OpenerFor(state("ran", true))
+	require.NotContains(t, ran, "Five hundred")
+	bust, _ := m.OpenerFor(state("reported", false, "67-start", "67-end"))
+	require.Contains(t, bust, "Five hundred gold", "the price is named after the bust too")
+	require.Contains(t, bust, "Lintel Street")
+
+	s := loadShippedDialogue(t, "new_plymouth_docks/9802.yaml")
+	in := s.FindTopic("q102_in")
+	require.Equal(t, []string{"102-behind"}, in.QuestRequired)
+	require.Contains(t, in.Text, "never on that paper", "this cell survives quest 67")
+	require.Contains(t, s.FindTopic("what_it_does").Hints, "Ysolde")
+}
+
+// A payer who shelved the quest reads what is true for them, gold or none: no
+// price, no "accepting takes the gold", and a free line that really is listed.
+func TestTier5TheKnockShelvedPayerReadsTrue(t *testing.T) {
+	m := loadShippedDialogue(t, "new_plymouth_docks/9305.yaml")
+	for _, gold := range []bool{true, false} {
+		ps := withFlags(heldState(), map[string]string{"64-outcome": "reported", "102-stake": "paid"})
+		ps.HasGold = func(int) bool { return gold }
+		keys := menuKeys(m, ps)
+		require.Contains(t, keys, "q102_resume")
+		require.NotContains(t, keys, "q102_offer", "the gold is taken once")
+		text, hints := m.OpenerFor(ps)
+		require.NotContains(t, text, "Five hundred")
+		require.NotContains(t, hints, "five hundred")
+		require.Contains(t, hints, "Choose "+m.FindTopic("q102_resume").Label+" below")
+	}
+
+	resume := m.FindTopic("q102_resume")
+	require.Equal(t, "The Knock", resume.Label)
+	require.Zero(t, resume.ChargesGold)
+	require.Zero(t, resume.GoldRequired)
+	require.NotContains(t, resume.Hints, "takes the gold")
+	require.Equal(t, "102-start", resume.GrantsQuest)
+	require.NotContains(t, menuKeys(m, withFlags(heldState(), map[string]string{"64-outcome": "reported"})), "q102_resume", "no stake paid, no free line")
+
+	// The one offer setting the flag is the one taking the gold.
+	offer := m.FindTopic("q102_offer")
+	require.Equal(t, "102-stake", offer.SetsQuestFlag.Key)
+	require.Equal(t, "paid", offer.SetsQuestFlag.Value)
+
+	// Whatever a holder reads, no hint promises a line that is not there.
+	for _, held := range [][]string{{"102-start"}, {"102-start", "102-behind"}, {"102-start", "102-behind", "102-end"}} {
+		ps := withFlags(heldState(held...), map[string]string{"64-outcome": "reported", "102-stake": "paid"})
+		_, hints := m.OpenerFor(ps)
+		require.NotContains(t, hints, "The Knock", "%v", held)
+		require.NotContains(t, menuKeys(m, ps), "q102_resume", "%v", held)
+		require.NotContains(t, menuKeys(m, ps), "q102_offer", "%v", held)
+	}
+
+	// The price's hint names the real line, and it is there once the gold is.
+	rich := withFlags(heldState(), map[string]string{"64-outcome": "reported"})
+	rich.HasGold = func(int) bool { return true }
+	_, hints := m.OpenerFor(rich)
+	require.Contains(t, hints, "choose "+m.FindTopic("q102_offer").Label+" below")
+	require.Contains(t, hints, "five hundred gold")
+	require.Contains(t, menuKeys(m, rich), "q102_offer")
+}
+
+// "Storage" is Marn's lie to a stranger. He does not tell it to someone he is
+// selling the knock to.
+func TestTier5MarnStopsLyingToACustomer(t *testing.T) {
+	m := loadShippedDialogue(t, "new_plymouth_docks/9305.yaml")
+	require.Contains(t, menuKeys(m, withFlags(heldState(), map[string]string{})), "backroom")
+	require.Contains(t, menuKeys(m, withFlags(heldState(), map[string]string{"64-outcome": "ran"})), "backroom")
+	require.NotContains(t, menuKeys(m, withFlags(heldState(), map[string]string{"64-outcome": "reported"})), "backroom")
+}
+
+// A holder of the knock meets the holding line after the bust, in Sefton's voice,
+// and this room is the separate thing. It waits for the bust, and it never gets
+// in front of the hand-in. It names no quest and no number.
+func TestTier5SeftonOutlastsTheBust(t *testing.T) {
+	s := loadShippedDialogue(t, "new_plymouth_docks/9802.yaml")
+	holder := []string{"102-start", "102-behind", "102-end"}
+
+	before, _ := s.OpenerFor(heldState(holder...))
+	require.NotContains(t, before, "Lintel Street")
+
+	after, _ := s.OpenerFor(heldState(append(holder, "67-start", "67-end")...))
+	require.Contains(t, after, "Lintel Street")
+	require.Contains(t, after, "never on that paper")
+	require.NotContains(t, strings.ToLower(after), "bloom trail")
+
+	_, hints := s.OpenerFor(heldState("102-start", "102-behind", "67-start", "67-end"))
+	require.Contains(t, hints, "Choose The Knock below", "the hand-in comes first")
+	require.Contains(t, menuKeys(s, heldState("102-start", "102-behind", "67-start", "67-end")), "q102_in")
+	_, hints = s.OpenerFor(heldState(holder...))
+	require.NotContains(t, hints, "The Knock")
+	require.NotContains(t, menuKeys(s, heldState(holder...)), "q102_in")
+}
+
+// A player reaches the Bloom only by deliberate choice, and the cure stays open
+// to everyone. So Sefton says plainly what it does, with no numbers, and the hint
+// points at the cure with no route. Ysolde's cup asks for no quest.
+func TestTier5SeftonWarnsPlainly(t *testing.T) {
+	s := loadShippedDialogue(t, "new_plymouth_docks/9802.yaml")
+	warn := s.FindTopic("what_it_does")
+	require.True(t, warn.Marked)
+	require.Empty(t, warn.QuestRequired, "the warning is there for anyone who can reach him")
+	require.Empty(t, warn.QuestFlagRequired)
+	require.Contains(t, warn.Text, "you will need them")
+	require.Regexp(t, `^[^0-9]*$`, warn.Text+warn.Hints)
+	require.Contains(t, warn.Hints, "Type talk ysolde")
+	lower := strings.ToLower(warn.Hints)
+	for _, banned := range []string{"north", "south", " east", " west", "quarter", "temple", "up ", "down "} {
+		require.NotContains(t, lower, banned)
+	}
+	require.Contains(t, menuKeys(s, heldState()), "what_it_does")
+
+	require.Contains(t, s.FindTopic("q102_in").Hints, "type buy wafer")
+	require.Contains(t, s.FindTopic("q102_in").Hints, "Ask him what it does")
+	require.Contains(t, s.Opener.Hints, "type list")
+
+	y := loadShippedDialogue(t, "new_plymouth_common/9323.yaml")
+	detox := y.FindTopic("detox")
+	require.Empty(t, detox.QuestRequired)
+	require.Empty(t, detox.QuestFlagRequired)
+	require.Contains(t, menuKeys(y, heldState()), "detox", "the cure is open to everyone")
+
+	// Sefton does say what it costs later, so the wafer cannot say no seller will.
+	data, err := os.ReadFile("../../_datafiles/world/dogmud/items/materials-40000/40108-bloom_wafer.yaml")
+	require.NoError(t, err)
+	require.NotContains(t, string(data), "Nobody who sells it")
 }

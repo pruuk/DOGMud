@@ -117,6 +117,21 @@ func TestTier5OpenersPromiseOnlyTheHandInOnTheMenu(t *testing.T) {
 		require.NotContains(t, menuKeys(df, heldState(c.onStep...)), c.topic, "%s: gated on hearing first", c.file)
 		require.NotContains(t, menuKeys(df, heldState(c.onStep[:1]...)), c.topic, "%s: gated on the step", c.file)
 	}
+
+	// Sefton's hand-in takes no item and asks to hear nothing: going through the
+	// door is the step, and it follows that step alone.
+	sefton := loadShippedDialogue(t, "new_plymouth_docks/9802.yaml")
+	behind := heldState("102-start", "102-behind")
+	_, hints := sefton.OpenerFor(behind)
+	require.Contains(t, hints, "Choose The Knock below")
+	require.Contains(t, menuKeys(sefton, behind), "q102_in")
+	require.Equal(t, "The Knock", sefton.FindTopic("q102_in").Label)
+	for _, held := range [][]string{{"102-start"}, {"102-start", "102-behind", "102-end"}, nil} {
+		ps := heldState(held...)
+		_, hints = sefton.OpenerFor(ps)
+		require.NotContains(t, hints, "Choose The Knock below", "%v", held)
+		require.NotContains(t, menuKeys(sefton, ps), "q102_in", "%v", held)
+	}
 }
 
 // Ysolde does not name who sells it (she says she does not know). The draper
@@ -135,7 +150,7 @@ func TestTier5HintsAreShort(t *testing.T) {
 	for _, file := range []string{
 		"new_plymouth_common/9320.yaml", "new_plymouth_common/9323.yaml", "new_plymouth_common/9325.yaml", "new_plymouth_common/9801.yaml",
 		"new_plymouth_crafting/9332.yaml", "new_plymouth_crafting/9338.yaml",
-		"new_plymouth_docks/9300.yaml", "new_plymouth_docks/9305.yaml", "new_plymouth_docks/9316.yaml", "new_plymouth_docks/9392.yaml",
+		"new_plymouth_docks/9300.yaml", "new_plymouth_docks/9305.yaml", "new_plymouth_docks/9316.yaml", "new_plymouth_docks/9392.yaml", "new_plymouth_docks/9802.yaml",
 		"new_plymouth_merchant/9344.yaml", "new_plymouth_merchant/9347.yaml", "new_plymouth_merchant/9349.yaml",
 		"new_plymouth_noble/9369.yaml", "new_plymouth_noble/9371.yaml", "new_plymouth_temple/9360.yaml", "new_plymouth_old_quarter/9379.yaml", "new_plymouth_old_quarter/9381.yaml",
 	} {
