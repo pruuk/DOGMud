@@ -1,5 +1,16 @@
 # DOGMud Patch Notes
 
+## 2026-11-04: Older than the city
+
+- The Cooperage Circle, The Gallery Cipher, The Pre-Founding Web and The Tribute are
+  now followed by searching: where the trail leads you, type search. The Buried
+  Lintel is black dark, so bring a light.
+- Scholar Dross keeps your rubbing as well as Lysha's reading when you bring them
+  back.
+- Orin remembers how the cooperage ended, and says so when you bring him the lintel
+  rubbing.
+- The Tribute now earns standing with the common folk.
+
 ## 2026-11-04: Down on the docks
 
 - Dock Rat and The Street Sweeper's Secret are now followed by searching: where the
