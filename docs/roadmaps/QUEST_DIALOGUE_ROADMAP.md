@@ -328,8 +328,9 @@ walks out of it (owner, 2026-11-02). Finding counts are `loop-backlog.txt` lines
    Marches Spur Road (39). Done (tier 1, 2026-11-02).
 2. Ashwick, Labyrinth of Low Tunnels, North Road, North Road North, Stillwater (28). Done (tier 2,
    2026-11-02, playtest run `422f356c3d76e359`).
-3. The Confluence, with the recipe sales in quests 79 to 87 (51).
-4. Greenford and Eastern Highlands (13), after the disc line's design (#667).
+3. The Confluence, with the recipe sales in quests 79 to 87 (51). Done (tier 3, 2026-11-02).
+4. Greenford and Eastern Highlands (13), after the disc line's design (#667). Done by the disc line
+   (2026-11-03 and 2026-11-04, PRs #784 to #786 and #789).
 5. New Plymouth: Common, Docks, Merchant, Crafting, Temple, Old Quarter (52).
 
 Quest 21 (4) and the sample quest 1000000 (8) are cleared along the way. The 15 dialogue folders
@@ -376,7 +377,11 @@ Margin runs by `search` (quests 73 and 74, Quist offering The Undercroft), Veyra
 sells her secrets from the talk menu (`kind: sale`, quests 78 to 87 retired,
 #397), a search in total darkness counts for no quest, and no `loop-backlog.txt`
 line names quests 73, 74 or 78 to 87 (`internal/guards/tier3_backlog_guard_test.go`).
-Leftovers are in #770. The remaining zones are not started.
+Leftovers are in #770. Tier 4 (Greenford, Cascade Pass Road, Eastern Highlands) was done by the
+disc line redesign, #667: no `loop-backlog.txt` line names quests 75, 76 or 77
+(`internal/guards/tier4_backlog_guard_test.go`), and their dialogue carries no dashes. #667 stays open
+for a naive playtest and for a Core Guardian kill in play, which nobody has run yet. Tier 5 (New
+Plymouth, quests 63 and 65 to 71) is not started.
 
 ## Phase 6: Web builder (postponed)
 
