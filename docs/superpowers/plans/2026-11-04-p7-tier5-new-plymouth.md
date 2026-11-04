@@ -169,6 +169,10 @@ the constable claiming a wrapper and delivery note (`40111`; `9316.yaml:68-69`; 
 
 ### Task 0: Owner save check (owner, read-only, does not block 5a)
 
+**Done 2026-11-04, on the deployed droplet:** control 25, check printed nothing. No save holds `66-escort`,
+`66-detox`, `63-report`, `65-report` or `67-report`. The five stay under `# renamed` anyway, for a save restored
+from a backup. Skip the steps below.
+
 - [ ] Ask the owner to run this on the droplet. It prints counts only, reads no secrets, changes nothing.
 
 ```bash
