@@ -85,7 +85,7 @@ upper bound for the whole server: **1.01 wafers an hour, 0.56 ranks an hour.**
 wafer is **not faster than fighting**. What it bypasses is the point:
 - It skips the affinity depth gate: `BloomSeedNewMutation` asks only `mutations.CanGain` and weights by rarity, so a
   rare apex can seed on a character who never drifted there.
-- It ignores `MutationMaxCount: 8`, which only the combat path reads (`CanGain`, `eligibility.go:18-38`, does not).
+- It ignored `MutationMaxCount: 8` until Task 11b, which the owner chose on 2026-11-04; only the combat path read it (`CanGain`, `eligibility.go:18-38`, does not).
 - `BloomLastDoseRound` is `yaml:"-"` (`character.go:122`), so a relog clears the withdrawal clock until the next dose.
   Known, shipped behaviour, reported here because nobody has played it.
 
@@ -1862,6 +1862,31 @@ The Bloom block is inside `validateCombat` (`config.balance.combat.go:107`, bloc
 ```
 
 - [ ] **Step 3:** `go test ./internal/configs/ . ./internal/guards/ -count=1`. **Commit:** `chore(config): Bloom's knobs ship in config.yaml at their current values`.
+
+### Task 11b: A wafer cannot grant a mutation past `MutationMaxCount` (owner, 2026-11-04)
+
+**Files:** `internal/characters/bloom_mutation.go`. Test: `internal/characters/bloom_mutation_cap_test.go`.
+
+A wafer can still deepen a mutation the player already has, as ranks stay limited by each mutation's own cap. It
+cannot add a new one once the character holds `Balance.MutationMaxCount`, the same count the combat path reads
+(`internal/actions/mutation_earn.go:29`, `len(c.Mutations) < MutationMaxCount`). Read the file's existing tests
+for how it seeds mutations and config, and follow them.
+
+- [ ] **Step 1: Failing test.** Seed at least one gainable mutation the character does not own. Set
+  `MutationMaxCount` to 2 with `configs.SetConfigForTest`. A character holding 2 other mutations must get `("", 0)`
+  from `BloomSeedNewMutation`. A character holding 1 must get a mutation. Run it and confirm the first case fails.
+- [ ] **Step 2: Implement,** as the first lines of `BloomSeedNewMutation`:
+
+```go
+	// The count every other way of gaining a mutation obeys (owner, 2026-11-04).
+	if len(c.Mutations) >= int(configs.GetBalanceConfig().MutationMaxCount) {
+		return "", 0
+	}
+```
+
+- [ ] **Step 3:** Run `go test ./internal/characters/ ./internal/actions/ -count=1`. Expected: ok.
+- [ ] **Step 4: Commit** `internal/characters/bloom_mutation.go` and the test, message
+  `fix(bloom): a wafer stops at the mutation count`.
 
 ### Task 12: The rooms, the NPCs, the wafer
 
