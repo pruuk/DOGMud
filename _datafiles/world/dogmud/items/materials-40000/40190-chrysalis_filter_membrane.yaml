@@ -15,7 +15,7 @@ type: object
 subtype: mundane
 component_tag: chrysalis-filter-membrane
 weight: 0.1
-value: 1250
+value: 625
 rarity_tier: 82
 is_component: true
 material_tier: 5

@@ -154,6 +154,10 @@ func (b *Balance) validateMobs() {
 	if b.GossipIntervalRounds < 0 || (b.GossipIntervalRounds > 0 && b.GossipIntervalRounds < 20) {
 		b.GossipIntervalRounds = 75
 	}
+	// 0 turns hints off; an absent key reaches 150 (10 minutes) through the -1 sentinel.
+	if b.GossipHintIntervalRounds < 0 {
+		b.GossipHintIntervalRounds = 150
+	}
 
 	// ── AMBIENT (#317) ───────────────────────────────────────────────────────
 	// Defaults are today's behaviour. 0 is legal and means off for every

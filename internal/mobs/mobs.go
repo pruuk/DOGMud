@@ -661,23 +661,6 @@ func newMobByIdInternal(mobId MobId, homeRoomId int, skipInstanceLoad bool, forc
 			distributeStatPoolFromConfig(&mob, statPool)
 		}
 		mob.Character.Validate()
-		// Stage 3.4: apply override fields from mob YAML if set.
-		// Must run after Validate() (which computes stat-derived
-		// defaults) and before the Health/Conviction assignments
-		// below so the override propagates to current pool values.
-		characters.ApplyMobOverrides(
-			&mob.Character,
-			mob.HealthMaxOverride,
-			mob.StaminaMaxOverride,
-			mob.CarryCapacityOverride,
-		)
-		mob.Character.SetPoolFraction(characters.PoolHealth, 1.0)
-		mob.Character.SetPoolFraction(characters.PoolStamina, 1.0)
-		mob.Character.SetPoolFraction(characters.PoolConviction, 1.0)
-		// Movement parity 4b: a spawn starts with full action points, settled
-		// at the current turn. Nothing else ever set a mob's points, so every
-		// live mob held 0.
-		mob.Character.SettleActionPoints(util.GetTurnCount())
 
 		mob.Character.SetPermanentConditions(mob.ConditionIds)
 
@@ -773,8 +756,26 @@ func newMobByIdInternal(mobId MobId, homeRoomId int, skipInstanceLoad bool, forc
 		// slots (Shoulders, Back, Wrist1/2, Ring2, ExtraArm1-4, ExtraWrist1-4,
 		// Tail, ComponentBag) were being skipped and left with nil UUIDs. They
 		// never were. Don't reintroduce a partial list here.
+		// Stage 3.4: apply override fields from mob YAML if set.
+		characters.ApplyMobOverrides(
+			&mob.Character,
+			mob.HealthMaxOverride,
+			mob.StaminaMaxOverride,
+			mob.CarryCapacityOverride,
+		)
 		mob.Validate()
 		mob.Character.Validate(true)
+
+		// Fill the pools only now. Spawn mutations, the random roll and species
+		// intrinsics above all change the maximums, so a fill before them leaves
+		// the mob already wounded when a player first sees it (#598).
+		mob.Character.SetPoolFraction(characters.PoolHealth, 1.0)
+		mob.Character.SetPoolFraction(characters.PoolStamina, 1.0)
+		mob.Character.SetPoolFraction(characters.PoolConviction, 1.0)
+		// Movement parity 4b: a spawn starts with full action points, settled
+		// at the current turn. Nothing else ever set a mob's points, so every
+		// live mob held 0.
+		mob.Character.SettleActionPoints(util.GetTurnCount())
 
 		// Stage 3.0d: pre-stamp fold-recall anchor if the YAML template set one.
 		stampFoldAnchor(&mob.Character, m.FoldAnchorRoom)

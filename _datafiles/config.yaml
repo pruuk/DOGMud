@@ -2128,6 +2128,7 @@ Balance:
 
   # ── GOSSIP SYSTEM ───────────────────────────────────────────────────────────
   GossipIntervalRounds: 75  # Rounds between gossip broadcasts for "gossiper" mobs; 0 turns gossip off, 1 to 19 read as 75
+  GossipHintIntervalRounds: 150  # Rounds (150 is 10 minutes) a gossiper waits between facts tagged hint; it says one only when a player is there; 0 turns it off
 
   # ── AMBIENT (#317) ──────────────────────────────────────────────────────────
   # Unprompted lines, one knob per source. 0 turns a source off. A round is

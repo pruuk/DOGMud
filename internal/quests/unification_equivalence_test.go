@@ -153,6 +153,7 @@ type oldConditions struct {
 	InRoom        int               `yaml:"in_room,omitempty"`
 	HasItem       int               `yaml:"has_item,omitempty"`
 	MissingItem   int               `yaml:"missing_item,omitempty"`
+	MissingItems  []int             `yaml:"missing_items,omitempty"`
 	HasFlag       map[string]string `yaml:"has_flag,omitempty"`
 	MissingFlag   map[string]string `yaml:"missing_flag,omitempty"`
 	HasGold       int               `yaml:"has_gold,omitempty"`

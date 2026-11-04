@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -250,7 +251,12 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 			lastGossip, _ = v.(uint64)
 		}
 
-		if roundNow >= lastGossip+gossipIntervalRounds+stagger || lastGossip == 0 {
+		if line := dueGossipHint(mob, roundNow); line != "" {
+			// A hint stands in for this tick's gossip, so one mob says one thing.
+			mob.CommandNoSplit("ambient " + string(ambient.SourceGossip) + " say " + line)
+			mob.SetTempData("lastGossipHintRound", roundNow)
+			mob.SetTempData("lastGossipRound", roundNow)
+		} else if roundNow >= lastGossip+gossipIntervalRounds+stagger || lastGossip == 0 {
 			line := buildGossipLine(mob)
 			if line != "" {
 				// Gossip is ambient (#317): the listener budget applies.
@@ -446,6 +452,36 @@ func mobHasGroup(mob *mobs.Mob, groupName string) bool {
 		}
 	}
 	return false
+}
+
+// dueGossipHint returns a line for one of the mob's hint facts when its
+// GossipHintIntervalRounds have passed and a player is there to hear it, else
+// "". Ordinary gossip reaches a hint about once an hour, drawn against events
+// and other facts on a timer that also runs in empty rooms, so a breadcrumb
+// gets its own timer, and waits for a listener (#667). The ambient budget and
+// the repeat limit still apply: the line goes out the same way.
+func dueGossipHint(mob *mobs.Mob, roundNow uint64) string {
+	interval := uint64(configs.GetBalanceConfig().GossipHintIntervalRounds)
+	if interval == 0 {
+		return ""
+	}
+	if v, ok := mob.GetTempData("lastGossipHintRound").(uint64); ok && roundNow < v+interval {
+		return ""
+	}
+	room := rooms.LoadRoom(mob.Character.RoomId)
+	if room == nil || len(room.GetPlayers()) == 0 {
+		return ""
+	}
+	var hints []facts.KnownFact
+	for _, kf := range facts.KnownFactsOf(int(mob.MobId)) {
+		if slices.Contains(kf.Fact.Tags, facts.HintTag) {
+			hints = append(hints, kf)
+		}
+	}
+	if len(hints) == 0 {
+		return ""
+	}
+	return renderFactGossip(hints[util.Rand(len(hints))])
 }
 
 func buildGossipLine(mob *mobs.Mob) string {

@@ -247,3 +247,12 @@ topics:
   hints: Orin confirms the mark is real and older than the official founding, and
     warns of the danger in saying so.
   moodChange: cautious
+- key: torn_pages
+  kind: info
+  label: Who asks about the eastern country?
+  text: Few do, and fewer know what they are asking. There is a bookseller in Greenford,
+    Aldith, who hears those questions far more often than I do, and from the
+    university's own people. If it is old pages you are chasing, I would go and
+    see her before you waste a day on my shelves.
+  hints: Aldith keeps the bookshop off the Market Square in Greenford, a long way
+    east.

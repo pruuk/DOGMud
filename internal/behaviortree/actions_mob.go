@@ -435,6 +435,8 @@ func actCreateInstance(params map[string]any, ctx *EvalContext) Result {
 //	min_gold     (int, default 100)
 //	exit_expires (string, default "30 real minutes")
 //	guidance     (string, optional: shown above the amount question)
+//	open_line    (string, optional: the room's line as the way opens; a stone
+//	             archway and a shimmering portal when unset)
 //
 // A tree whose zone is missing or is not a key of zones does not load
 // (checkOpenInstancePortalParams).
@@ -484,6 +486,7 @@ type portalRequest struct {
 	TemplateZone string // the zone cloned ("Instance Arena")
 	MinGold      int
 	Expires      string
+	OpenLine     string // the room's line as the way opens
 }
 
 // portalRequestFor resolves a zones key against the action's params,
@@ -517,7 +520,11 @@ func portalRequestFor(params map[string]any, zoneName string) (portalRequest, bo
 	if expires == "" {
 		expires = "30 real minutes"
 	}
-	return portalRequest{Zone: zoneName, TemplateZone: templateZone, MinGold: minGold, Expires: expires}, true
+	openLine := getStringParam(params, "open_line")
+	if openLine == "" {
+		openLine = "The stone archway flares with energy. A shimmering portal appears."
+	}
+	return portalRequest{Zone: zoneName, TemplateZone: templateZone, MinGold: minGold, Expires: expires, OpenLine: openLine}, true
 }
 
 // openInstancePortal opens the portal once the amount prompt has a stake:
@@ -578,5 +585,5 @@ func openInstancePortal(user *users.UserRecord, mob *mobs.Mob, roomId int, req p
 	mob.Command("say The rift is open. Type " + exitKey + " to enter.")
 	mob.Command("say It will hold for a time. Do not tarry.")
 	room.SendTextToExits("You hear someone talking.", true)
-	room.SendText(messaging.CategoryMobEmote, "The stone archway flares with energy. A shimmering portal appears.")
+	room.SendText(messaging.CategoryMobEmote, req.OpenLine)
 }

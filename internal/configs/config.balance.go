@@ -878,6 +878,9 @@ type Balance struct {
 	// ── GOSSIP SYSTEM ────────────────────────────────────────────────────────
 	GossipIntervalRounds ConfigInt `yaml:"GossipIntervalRounds"` // Rounds between gossip broadcasts for "gossiper" group mobs; 0 turns gossip off, 1 to 19 read as 75 (default 75)
 
+	// Rounds a "gossiper" waits between facts tagged hint, spoken only to a listener; 0 turns it off.
+	GossipHintIntervalRounds ConfigInt `yaml:"GossipHintIntervalRounds"`
+
 	// ── AMBIENT (#317) ───────────────────────────────────────────────────────
 	// One knob per unprompted-line source. 0 turns a source off; an absent
 	// key keeps today's behaviour through the -1 sentinel seeded in

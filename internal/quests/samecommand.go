@@ -89,7 +89,7 @@ func sameCommandBlocks(a *TriggerDef, later Conditions) bool {
 		if act.Grant != "" && slices.Contains(later.Missing, act.Grant) {
 			return true
 		}
-		if act.GiveItem > 0 && act.GiveItem == later.MissingItem {
+		if act.GiveItem > 0 && (act.GiveItem == later.MissingItem || slices.Contains(later.MissingItems, act.GiveItem)) {
 			return true
 		}
 		if act.ConsumeItem > 0 && act.ConsumeItem == later.HasItem {
@@ -128,7 +128,7 @@ func sameCommandEnables(actions []ActionDef, later Conditions) []string {
 		if act.GiveItem > 0 && act.GiveItem == later.HasItem {
 			out = append(out, fmt.Sprintf("gives item %d", act.GiveItem))
 		}
-		if act.ConsumeItem > 0 && act.ConsumeItem == later.MissingItem {
+		if act.ConsumeItem > 0 && (act.ConsumeItem == later.MissingItem || slices.Contains(later.MissingItems, act.ConsumeItem)) {
 			out = append(out, fmt.Sprintf("consumes item %d", act.ConsumeItem))
 		}
 		if act.SetFlag != nil {

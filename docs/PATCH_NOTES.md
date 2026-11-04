@@ -1,5 +1,19 @@
 # DOGMud Patch Notes
 
+## 2026-11-04: Fresh from the wilds
+
+- Many of the largest creatures used to appear already hurt, and healed up slowly
+  over the next few minutes. They now arrive at full strength, so a fresh one is
+  a much harder fight than it was. Arena champions and the guardians of the
+  Highlands feel this most.
+- Caravan wagons are as sturdy as they were always meant to be.
+- NPC speech no longer breaks in the middle of a sentence.
+- Item names read properly in lines such as "You show the Folded Page".
+- Peddler Malk can now tell you who asks about the pages he sells.
+- The talkative folk of the Marches and Thornwall have more to say about strange
+  things in the east, if you stop and listen.
+- Searching a dead surveyor's camp twice no longer finds the same spare disc twice.
+
 ## 2026-11-03: The buried thing
 
 - The road to the Disc-Door is now a trail to follow. Brennan and Reth in Greenford

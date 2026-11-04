@@ -31,7 +31,7 @@ opener:
     - 76-sentinel
     text: You carry it, and I felt it wake. So did the Sentinel. I open nothing for
       anyone it is still looking for. Deal with it, and come back.
-    hints: The Sentinel stands near the door and will not be walked past. Bring friends.
+    hints: Kill the Sentinel in its vault, then come back. Bring friends.
   - carriesItem: 40168
     text: You carry it. The woken disc. I can feel it from here, warm along its
       lines. Then the door will answer, and I can open the way as deep as your coin

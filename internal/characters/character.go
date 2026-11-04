@@ -360,6 +360,11 @@ type Character struct {
 	// ApplyMobOverrides for special mobs (wagons). Zero falls through
 	// to the default Strength-derived calc.
 	carryCapacityOverride float64 `yaml:"-"`
+	// Authored health_max and stamina_max (Stage 3.4). Held here because every
+	// Validate re-derives the pool maximums from stats and would otherwise
+	// erase them. Zero means use the stat-derived maximum.
+	healthMaxOverride  int `yaml:"-"`
+	staminaMaxOverride int `yaml:"-"`
 }
 
 // DriftRollSnapshot captures the chunk-4b grapple-tick drift roll

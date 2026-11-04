@@ -48,6 +48,7 @@ func TestSameCommandChains_OtherPairs(t *testing.T) {
 	}{
 		{"give then has_item", []ActionDef{{GiveItem: 7}}, Conditions{HasItem: 7}, "gives item 7"},
 		{"consume then missing_item", []ActionDef{{ConsumeItem: 7}}, Conditions{MissingItem: 7}, "consumes item 7"},
+		{"consume then missing_items", []ActionDef{{ConsumeItem: 7}}, Conditions{MissingItems: []int{6, 7}}, "consumes item 7"},
 		{"flag then has_flag", []ActionDef{{SetFlag: &QuestFlagAction{Key: "1-k", Value: "v"}}},
 			Conditions{HasFlag: map[string]string{"1-k": "v"}}, "sets flag 1-k=v"},
 		{"grant then missing is fine", []ActionDef{{Grant: "1-a"}}, Conditions{Missing: []string{"1-a"}}, ""},

@@ -166,6 +166,13 @@ topics:
   hints: The Broken Yoke Inn is south along the spur road.
 # Malk's shop (mobs/marches_spur_road/250-peddler_malk.yaml) sells iron
 # lockpicks, a basic disarm kit and torches.
+- key: torn_pages
+  kind: info
+  label: Who asks about the eastern country?
+  text: Scholars, when anyone does. I only carry those pages because they fetch a
+    coin. There is a bookseller in Greenford, Aldith, who hears those questions more
+    than I do. If it is that sort of thing you are after, I would start there.
+  hints: Aldith keeps the bookshop off the Market Square in Greenford.
 - key: buy
   kind: info
   label: What do you have for sale?

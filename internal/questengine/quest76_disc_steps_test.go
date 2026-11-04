@@ -130,8 +130,8 @@ func TestQuest76TheDisc_Trail(t *testing.T) {
 		w.p.items[inert] = true
 		w.ctx.givenItems = nil
 		w.notify("command", search(lastCamp))
-		require.Contains(t, w.ctx.consumedItems, inert, "a second search swaps, it does not pile up")
-		w.p.items[inert] = true
+		require.Empty(t, w.ctx.givenItems, "a second search finds no second disc")
+		require.Empty(t, w.ctx.consumedItems, "and takes nothing from the one in hand")
 		w.notify("command", glow(lastCamp))
 		require.Equal(t, "end", w.p.current)
 		require.Contains(t, w.ctx.givenItems, woken)

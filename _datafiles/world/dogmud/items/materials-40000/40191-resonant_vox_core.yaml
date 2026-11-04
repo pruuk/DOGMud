@@ -15,7 +15,7 @@ type: object
 subtype: mundane
 component_tag: resonant-vox-core
 weight: 0.5
-value: 1300
+value: 650
 rarity_tier: 82
 is_component: true
 restricted: true

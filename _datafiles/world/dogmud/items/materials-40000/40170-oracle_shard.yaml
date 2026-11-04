@@ -15,7 +15,7 @@ type: object
 subtype: mundane
 component_tag: oracle-shard
 weight: 0.3
-value: 1150
+value: 575
 rarity_tier: 82
 is_component: true
 material_tier: 5

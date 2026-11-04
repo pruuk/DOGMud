@@ -24,6 +24,7 @@ knows_facts:
   - stillwater-cave-creatures
   - stillwater-voss-death
   - stillwater-pearl-divers-gone
+  - disc-lights-east
 idlecommands:
   - 'emote works a needle through a torn mesh with the slow patience of
     someone in no hurry to finish'

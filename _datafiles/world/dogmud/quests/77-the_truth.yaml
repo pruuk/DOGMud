@@ -47,15 +47,15 @@ triggers:
       - grant: "77-read"
       - actor: |
           You stand among the stones and let the light find them, and one
-          by one they wake — a slow inner glow, a drift of moving marks —
+          by one they wake, a slow inner glow and a drift of moving marks,
           and though you cannot read the tongue, the stones do not need you
           to. They show. They lay it out plainly, the whole of it, in
           light and in shape, and you understand it the way you understand
           a face, all at once and without wanting to.
 
           They show a dark with no floor and no walls, and points of cold
-          fire strewn across it past all counting, and — falling through
-          that dark on a long spear of fire — this. This place, whole once,
+          fire strewn across it past all counting, and, falling through
+          that dark on a long spear of fire, this. This place, whole once,
           a vessel. Not built by any hand of the world. Built to cross the
           impossible black, and full of people. People who chose to come.
           Who left somewhere behind and set out across a distance the mind
@@ -65,7 +65,7 @@ triggers:
 
           The stones show the landing, and the sickness after. A fine thing
           in the soil and the water and the air of this world, waiting,
-          native to it — and the strangers had no armour against it. It
+          native to it, and the strangers had no armour against it. It
           took them. It changed them, root and blood, into something the
           world would learn to call blessed. But there was nothing chosen
           in it, and nothing holy. The Chrysalis was here before them. The
@@ -75,7 +75,7 @@ triggers:
           The stones show the few it could not touch. Not favoured. Not
           spared by any will above. Only made, by the blind luck of how
           they were built inside, so that the fever found no purchase in
-          them — and their children after, and theirs, carrying that dumb
+          them, and their children after, and theirs, carrying that dumb
           accident down the long years until it wore the shape of divine
           right. The bloodline. Their immunity was never grace. It was the
           cruelest kind of chance, and a whole world knelt to it.
@@ -113,7 +113,7 @@ triggers:
       has: ["77-read"]
     actions:
       - actor: >-
-          They are only stones again now, dark until the light finds them —
+          They are only stones again now, dark until the light finds them,
           but you know what they hold, and you know it holds you. The
           crossing, the fever, the luck, the waiting lights. You have read
           it. You will always have read it.

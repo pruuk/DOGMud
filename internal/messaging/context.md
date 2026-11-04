@@ -548,6 +548,10 @@ Functions:
   stage (#572), described under Pipeline Stages. `HideNames` and
   `HideSpeakerNames` also hide a name's mid-sentence spelling ("a Culvert
   Slime") when handed the data spelling, since a corpse line uses it.
+- `DropDoubledItemArticles(text string) string`: Normalize's second stage, never
+  skipped (#667, `item_article.go`). "the" or "their" before an item tag loses the
+  name's own article ("the Folded Page"), and "the" before a possessive name goes
+  ("Soren's Iron Pin"). Only a name inside an `item` or `itemname` tag changes.
 - `CapitalizeStart(text string) string`: the normalizer's capitalize stage,
   uppercasing the first character after any leading `<ansi>` tags. A sender
   on a category that skips that stage (`CategoryNPCDialogue`) calls it on a

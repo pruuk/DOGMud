@@ -68,6 +68,7 @@
 250.quest_start
 250.quest_start_carrying
 250.road_talk
+250.torn_pages
 251.buy
 251.crossroads
 251.gossip
@@ -801,6 +802,7 @@
 9332.q68_start
 9332.scholars
 9332.symbol
+9332.torn_pages
 9333.quarter
 9333.sister
 9333.work
@@ -1069,6 +1071,7 @@
 9441.commission
 9441.life
 9441.margin
+9441.margin_elsewhere
 9441.report
 9441.undercroft_offer
 9442.archive
@@ -1080,6 +1083,7 @@
 9444.books
 9444.old_chart
 9444.quarter
+9444.torn_pages
 9445.fourth_water
 9445.quarter_life
 9445.temple
