@@ -65,10 +65,31 @@ func CleanserInputHandler(clientInput *connections.ClientInput, sharedState map[
 		return -1
 	}, string(clientInput.DataIn)))
 
+	clientInput.DataIn = trimToLineRoom(clientInput.DataIn, len(clientInput.Buffer))
+
 	// Add all input to the currentBuffer
 	clientInput.Buffer = append(clientInput.Buffer, clientInput.DataIn...)
 
 	return true
+}
+
+// trimToLineRoom cuts data to what still fits in a line already holding
+// bufferLen bytes, on a character boundary. Enter and backspace are read before
+// this, so a full line can still be sent or shortened. It trims DataIn itself
+// because the echo handler prints DataIn, and the player should see what the
+// line really holds.
+func trimToLineRoom(data []byte, bufferLen int) []byte {
+	room := connections.MaxInputLineBytes - bufferLen
+	if room < 0 {
+		room = 0
+	}
+	if len(data) <= room {
+		return data
+	}
+	for room > 0 && !utf8.RuneStart(data[room]) {
+		room--
+	}
+	return data[:room]
 }
 
 // WebsocketCleanserHandler removes control characters from websocket input, so
