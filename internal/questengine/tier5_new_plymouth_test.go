@@ -18,6 +18,7 @@ func TestTier5QuestsHaveNoTypedNouns(t *testing.T) {
 		"66-the_addicts_plight.yaml":         66,
 		"67-the_bloom_trail.yaml":            67,
 		"68-the_cooperage_circle.yaml":       68,
+		"69-the_gallery_cipher.yaml":         69,
 	} {
 		for _, tr := range loadShippedQuest(t, file, id).Triggers {
 			require.NotEqual(t, "room_interact", tr.Event, "quest %d", id)
@@ -182,5 +183,60 @@ func TestQuest68StepHintsAreShortAndGiveNoRoute(t *testing.T) {
 		require.NotContains(t, s.Hint, "three times", s.Id)
 		require.NotContains(t, s.Hint, "by day", s.Id)
 		require.NotContains(t, s.Hint, "look floorboard", s.Id)
+	}
+}
+
+// A search of the Sanctuary finds the rubbing; a player who lost it takes another
+// while the hand-in is open; Dross keeps the rubbing when he takes the reading.
+func TestQuest69DrossKeepsTheRubbing(t *testing.T) {
+	const sanctuary, rubbing = 5901, 40115
+	q := loadShippedQuest(t, "69-the_gallery_cipher.yaml", 69)
+	require.NoError(t, q.Validate())
+	w := newQuestWalker(q).at("start")
+	w.notify("command", tier5Search(sanctuary))
+	require.Equal(t, "rubbing", w.p.current)
+	require.Equal(t, []int{rubbing}, w.ctx.givenItems, "one search, one rubbing")
+	lost := newQuestWalker(q).at("gallery")
+	lost.notify("command", tier5Search(sanctuary))
+	require.Equal(t, []int{rubbing}, lost.ctx.givenItems)
+	lostLate := newQuestWalker(q).at("reading")
+	lostLate.notify("command", tier5Search(sanctuary))
+	require.Equal(t, []int{rubbing}, lostLate.ctx.givenItems, "lost between Lysha and Dross")
+
+	// Holding the rubbing, a search gives no second one.
+	held := newQuestWalker(q).at("reading")
+	held.p.items[rubbing] = true
+	held.notify("command", tier5Search(sanctuary))
+	require.Empty(t, held.ctx.givenItems)
+
+	// After the end, a search gives nothing.
+	done := newQuestWalker(q).at("end")
+	done.notify("command", tier5Search(sanctuary))
+	require.Empty(t, done.ctx.givenItems, "no rubbing after the end")
+
+	end := newQuestWalker(q).at("end")
+	end.p.items[rubbing] = true
+	end.notify("quest_granted", EventDetails{QuestToken: "69-end"})
+	require.Equal(t, []int{rubbing}, end.ctx.consumedItems, "the rubbing leaves exactly once")
+
+	// A rubbing the player does not hold in a backpack is not consumed, and
+	// another token's grant never takes it.
+	none := newQuestWalker(q).at("end")
+	none.notify("quest_granted", EventDetails{QuestToken: "69-end"})
+	require.Empty(t, none.ctx.consumedItems)
+	other := newQuestWalker(q).at("reading")
+	other.p.items[rubbing] = true
+	other.notify("quest_granted", EventDetails{QuestToken: "69-reading"})
+	require.Empty(t, other.ctx.consumedItems)
+}
+
+// Hints are at most 200 characters and name no route.
+func TestQuest69StepHintsAreShortAndGiveNoRoute(t *testing.T) {
+	q := loadShippedQuest(t, "69-the_gallery_cipher.yaml", 69)
+	for _, s := range q.Steps {
+		require.LessOrEqual(t, len(s.Hint), 200, s.Id)
+		for _, banned := range []string{"west six times", "four times", "look reliefs", "morning", "evening"} {
+			require.NotContains(t, s.Hint, banned, s.Id)
+		}
 	}
 }

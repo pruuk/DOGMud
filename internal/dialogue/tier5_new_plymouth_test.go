@@ -108,7 +108,7 @@ func TestTier5HintsAreShort(t *testing.T) {
 		"new_plymouth_common/9320.yaml", "new_plymouth_common/9323.yaml",
 		"new_plymouth_crafting/9332.yaml", "new_plymouth_crafting/9338.yaml",
 		"new_plymouth_docks/9300.yaml", "new_plymouth_docks/9305.yaml", "new_plymouth_docks/9316.yaml", "new_plymouth_docks/9392.yaml",
-		"new_plymouth_noble/9369.yaml", "new_plymouth_old_quarter/9379.yaml", "new_plymouth_old_quarter/9381.yaml",
+		"new_plymouth_noble/9369.yaml", "new_plymouth_noble/9371.yaml", "new_plymouth_temple/9360.yaml", "new_plymouth_old_quarter/9379.yaml", "new_plymouth_old_quarter/9381.yaml",
 	} {
 		df := loadShippedDialogue(t, file)
 		hints := []string{df.Opener.Hints}
@@ -241,5 +241,94 @@ func TestTier5CooperageHintsGiveNoRouteAndAskForASearch(t *testing.T) {
 				require.NotContains(t, h, banned, file)
 			}
 		}
+	}
+}
+
+// Dross takes Lysha's reading and keeps the rubbing with it, so he asks for both
+// papers: the reading is handed over, the rubbing only has to be carried.
+func TestTier5DrossNeedsBothPapers(t *testing.T) {
+	d := loadShippedDialogue(t, "new_plymouth_temple/9360.yaml")
+	held := []string{"69-start", "69-rubbing", "69-gallery", "69-reading"}
+	require.Contains(t, menuKeys(d, carrying(heldState(held...), 40115, 40116)), "give_40116")
+	require.NotContains(t, menuKeys(d, carrying(heldState(held...), 40116)), "give_40116", "no rubbing")
+	require.NotContains(t, menuKeys(d, carrying(heldState("69-start", "69-rubbing", "69-gallery"), 40115, 40116)), "give_40116", "the step before")
+	text, _ := d.OpenerFor(carrying(heldState(held...), 40116))
+	require.Contains(t, text, "where is the rubbing")
+	require.NotContains(t, d.FindTopic("q69_gallery").Text, "Get past him")
+}
+
+// The give command and the menu agree. A rubbing alone, or a reading alone, is
+// handed back; both open the hand-in; the opener promises the hand-in only then,
+// and says how to get another rubbing when it is the rubbing that is missing.
+func TestTier5DrossGiveAndMenuAgree(t *testing.T) {
+	d := loadShippedDialogue(t, "new_plymouth_temple/9360.yaml")
+	held := []string{"69-start", "69-rubbing", "69-gallery", "69-reading"}
+	const promise = "Choose The Gallery Cipher below"
+
+	both := carrying(heldState(held...), 40115, 40116)
+	tp, wanted := d.ItemTopic(40116, both)
+	require.True(t, wanted)
+	require.NotNil(t, tp)
+	require.Equal(t, "give_40116", tp.Key)
+	_, hints := d.OpenerFor(both)
+	require.Contains(t, hints, promise)
+
+	reading := carrying(heldState(held...), 40116)
+	tp, wanted = d.ItemTopic(40116, reading)
+	require.True(t, wanted, "give is refused, not ignored")
+	require.Nil(t, tp)
+	_, hints = d.OpenerFor(reading)
+	require.NotContains(t, hints, promise)
+	require.Contains(t, hints, "Type search there")
+
+	rubbing := carrying(heldState(held...), 40115)
+	tp, _ = d.ItemTopic(40115, rubbing)
+	require.Nil(t, tp, "the rubbing alone opens nothing at this step")
+	_, hints = d.OpenerFor(rubbing)
+	require.NotContains(t, hints, promise)
+
+	// A reading where a topic cannot take it (carried, not in reach): no
+	// promise, no topic.
+	pouch := heldState(held...)
+	pouch.HasItem = func(id int) bool { return id == 40115 }
+	pouch.CarriesItem = func(id int) bool { return id == 40115 || id == 40116 }
+	require.NotContains(t, menuKeys(d, pouch), "give_40116")
+	_, hints = d.OpenerFor(pouch)
+	require.NotContains(t, hints, promise)
+
+	// Applying the hand-in takes the reading, leaves the rubbing to the quest's
+	// own trigger, and grants the end once.
+	var removed []int
+	var granted []string
+	both.RemoveItem = func(id int) bool { removed = append(removed, id); return true }
+	both.GiveQuest = func(tok string) { granted = append(granted, tok) }
+	require.True(t, d.Apply(d.FindTopic("give_40116"), both))
+	require.Equal(t, []int{40116}, removed, "the dialogue takes the reading only")
+	require.Equal(t, []string{"69-end"}, granted)
+
+	// After the end the hand-in is gone, with or without the papers.
+	require.NotContains(t, menuKeys(d, carrying(heldState(append(held, "69-end")...), 40115, 40116)), "give_40116")
+}
+
+// Lysha's hint for a lost rubbing sends the player to a search.
+func TestTier5LyshaAsksForASearch(t *testing.T) {
+	l := loadShippedDialogue(t, "new_plymouth_noble/9371.yaml")
+	_, hints := l.OpenerFor(heldState("69-start", "69-rubbing", "69-gallery"))
+	require.Contains(t, hints, "Type search there")
+	require.NotContains(t, hints, "look reliefs")
+}
+
+// No Dross line sends the player to look at the reliefs.
+func TestTier5DrossNeverSaysLookReliefs(t *testing.T) {
+	d := loadShippedDialogue(t, "new_plymouth_temple/9360.yaml")
+	all := []string{d.Opener.Hints}
+	for _, v := range d.Opener.Variants {
+		all = append(all, v.Hints)
+	}
+	for _, tp := range d.Topics {
+		all = append(all, tp.Hints)
+	}
+	for _, h := range all {
+		require.NotContains(t, h, "look reliefs")
 	}
 }
