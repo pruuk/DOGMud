@@ -25,7 +25,7 @@ func GuideLine(d Destination) string {
 		return "You are where you need to be."
 	}
 	if d.NextDir == "" {
-		return "You can't find a way there from here."
+		return "The way there is not on your map yet."
 	}
 	if mapper.IsCompassDirection(d.NextDir) {
 		return "Head " + d.NextDir + "."

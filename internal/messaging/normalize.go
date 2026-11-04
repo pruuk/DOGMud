@@ -95,6 +95,9 @@ func Normalize(cat Category, text string) string {
 	// Never skipped: see LowerMidSentenceNameArticles.
 	text = LowerMidSentenceNameArticles(text)
 
+	// An item name cannot take a second article (#667). Never skipped either.
+	text = DropDoubledItemArticles(text)
+
 	// 1. Sentence-start capitalization.
 	if skip&stageCapitalize == 0 {
 		text = CapitalizeStart(text)

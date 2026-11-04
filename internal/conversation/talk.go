@@ -2,6 +2,7 @@ package conversation
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
@@ -441,9 +442,35 @@ func playerSay(user *users.UserRecord, room *rooms.Room, text string) {
 }
 
 func npcSay(mob *mobs.Mob, room *rooms.Room, text string) {
-	if text != "" {
+	if text = unbreakLines(text); text != "" {
 		actions.Say(&actions.MobActor{Mob: mob, Room: room}, text)
 	}
+}
+
+// unbreakLines joins the authored lines of a dialogue line, so the wrapper is
+// the only thing that breaks it for the screen. A `|` block keeps its line
+// breaks and its last newline; the wrapper wrapped around them, breaking a
+// sentence mid-way and stranding the closing quote on its own line. A blank
+// line stays a paragraph break.
+func unbreakLines(text string) string {
+	lines := strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")
+	var out []string
+	var para []string
+	flush := func() {
+		if len(para) > 0 {
+			out = append(out, strings.Join(para, " "))
+			para = nil
+		}
+	}
+	for _, line := range lines {
+		if line = strings.TrimSpace(line); line == "" {
+			flush()
+			continue
+		}
+		para = append(para, line)
+	}
+	flush()
+	return strings.Join(out, "\n\n")
 }
 
 func sendHints(user *users.UserRecord, hints string) {

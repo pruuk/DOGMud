@@ -68,6 +68,7 @@
 250.quest_start
 250.quest_start_carrying
 250.road_talk
+250.torn_pages
 251.buy
 251.crossroads
 251.gossip

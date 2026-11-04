@@ -7,6 +7,10 @@
   a much harder fight than it was. Arena champions and the guardians of the
   Highlands feel this most.
 - Caravan wagons are as sturdy as they were always meant to be.
+- NPC speech no longer breaks in the middle of a sentence.
+- Item names read properly in lines such as "You show the Folded Page".
+- Peddler Malk can now tell you who asks about the pages he sells.
+- Searching a dead surveyor's camp twice no longer finds the same spare disc twice.
 
 ## 2026-11-03: The buried thing
 

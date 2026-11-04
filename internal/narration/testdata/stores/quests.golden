@@ -287,8 +287,8 @@ quest|74|trigger2|action1|actor => The mason's survey is the plainest of the thr
 quest|74|trigger2|action2|observer => <ansi fg="username">Aliceia</ansi> examines the old mason's survey framed in the corridor.
 quest|74|trigger4|action2|actor => You read the carving the way the mason's survey taught you to read stone. Four rings, cut with an instrument's care, where the temple's teaching keeps to three. The temple did not miscount. It chose a count, and built three hundred years on the choice, and set its floor over the wall that remembers otherwise. There was a fourth. The sky the Founders found was not the sky we are taught. You take a rubbing of it, proof in soft black line, and the dark keeps the rest of its counsel. Whatever unmade the fourth, the stone does not say. That answer is somewhere else.
 quest|74|trigger4|action3|observer => <ansi fg="username">Aliceia</ansi> takes a careful rubbing from the great carving on the chamber wall.
-quest|75|rewards|actor => You carry a retired surveyor's directions to a place he would not name. The road runs east into the highland country, older and stranger than the university's quiet maps. Whatever Reth saw out there and chose not to write down is still out there, waiting in the broken hills. That climb is for another day.
-quest|75|trigger0|action1|actor => You read the survey the way someone looking for what is not said would read it. The site is classified as a mineral deposit in three lines. A survey of that site -- elevations, material samples, seasonal access -- would ordinarily run to a page or more. This one does not. The entry is formal and correct and stops exactly where the detail should get louder. Reth saw something out there, and he filed a paper that buries it. Time to take this back to Brennan.
+quest|75|rewards|actor => You carry a retired surveyor's directions to a place he would not name. The road runs east into the highland country, older and stranger than the university's quiet maps. Whatever Reth saw out there and chose not to write down is still out there, waiting in the broken hills.
+quest|75|trigger0|action1|actor => You read the survey the way someone looking for what is not said would read it. The site is classified as a mineral deposit in three lines. A survey of that site, with elevations, material samples and seasonal access, would ordinarily run to a page or more. This one does not. The entry is formal and correct and stops exactly where the detail should get louder. Reth saw something out there, and he filed a paper that buries it. Time to take this back to Brennan.
 quest|75|trigger0|action2|observer => <ansi fg="username">Aliceia</ansi> reads the thin filed survey with sudden, careful attention.
 quest|75|trigger1|action0|actor => An old survey filed under the eastern country, dry and technical. Without a reason to read it closely, it is only a brief, dull entry.
 quest|75|trigger3|action3|actor => Reth takes a folded map from the table and holds it out without looking at it: his own hand, a route inked in red, a circled waymark, elevation ticks. No name for what is at the end of it.
@@ -327,6 +327,7 @@ quest|76|trigger11|action2|observer => <ansi fg="username">Aliceia</ansi> turns 
 quest|76|trigger12|action1|actor => Under the bleached poles someone has slept more recently than the surveyors. A flint tin, empty. A boot-print of old ash at the fire ring. On the pole nearest the fire the same mark is cut, and under it, smaller, a tally of days that stops at nine. Whoever he was, he left his bedding and took his tools, east, past where the green stops. There are tracks over his now, large ones, and they do not care who has walked here.
 quest|76|trigger12|action2|observer => <ansi fg="username">Aliceia</ansi> searches the ruins of the old camp.
 quest|76|trigger13|action1|actor => The alpha is down, and the ground it held lies open to the east, bare and wrong and very quiet.
+quest|76|trigger14|action0|actor => The lining of the satchel is empty now. You already hold his spare. Type cast glow to wake it.
 quest|76|trigger15|action1|actor => In the lining of the satchel your fingers find a second grey disc, cool and dead in the hand, the twin of the one you woke. He had brought a spare. Of course he had.
 quest|76|trigger17|action1|actor => Under the fallen lean-to, where a man would lie who meant to get up in
 the morning, there is a strap, a coat gone to threads and not many bones.
@@ -356,15 +357,15 @@ quest|76|trigger20|action4|observer => <ansi fg="username">Aliceia</ansi> holds 
 quest|76|trigger21|action1|actor => The Sentinel stops, all at once, the way a thing stops when it has only ever been waiting. The disc warms against your side. The door is close.
 quest|77|rewards|actor => You know now. It sits in you like a swallowed stone. The sky will never look the same, and neither will the blessed, and neither will you. Be careful who you tell.
 quest|77|trigger0|action2|actor => You stand among the stones and let the light find them, and one
-by one they wake — a slow inner glow, a drift of moving marks —
+by one they wake, a slow inner glow and a drift of moving marks,
 and though you cannot read the tongue, the stones do not need you
 to. They show. They lay it out plainly, the whole of it, in
 light and in shape, and you understand it the way you understand
 a face, all at once and without wanting to.
 
 They show a dark with no floor and no walls, and points of cold
-fire strewn across it past all counting, and — falling through
-that dark on a long spear of fire — this. This place, whole once,
+fire strewn across it past all counting, and, falling through
+that dark on a long spear of fire, this. This place, whole once,
 a vessel. Not built by any hand of the world. Built to cross the
 impossible black, and full of people. People who chose to come.
 Who left somewhere behind and set out across a distance the mind
@@ -374,7 +375,7 @@ purpose. From somewhere else.
 
 The stones show the landing, and the sickness after. A fine thing
 in the soil and the water and the air of this world, waiting,
-native to it — and the strangers had no armour against it. It
+native to it, and the strangers had no armour against it. It
 took them. It changed them, root and blood, into something the
 world would learn to call blessed. But there was nothing chosen
 in it, and nothing holy. The Chrysalis was here before them. The
@@ -384,7 +385,7 @@ they were only the first to burn with it.
 The stones show the few it could not touch. Not favoured. Not
 spared by any will above. Only made, by the blind luck of how
 they were built inside, so that the fever found no purchase in
-them — and their children after, and theirs, carrying that dumb
+them, and their children after, and theirs, carrying that dumb
 accident down the long years until it wore the shape of divine
 right. The bloodline. Their immunity was never grace. It was the
 cruelest kind of chance, and a whole world knelt to it.
@@ -404,7 +405,7 @@ who has been handed a weight and told it is theirs now, forever.
 
 quest|77|trigger0|action3|observer => <ansi fg="username">Aliceia</ansi> stands motionless before the wall of moving light, and for a long moment does not seem to breathe.
 quest|77|trigger1|action0|actor => The stones stir at your light and then settle. They wait to be asked, and you do not yet know what to ask. The one at the door might.
-quest|77|trigger2|action0|actor => They are only stones again now, dark until the light finds them — but you know what they hold, and you know it holds you. The crossing, the fever, the luck, the waiting lights. You have read it. You will always have read it.
+quest|77|trigger2|action0|actor => They are only stones again now, dark until the light finds them, but you know what they hold, and you know it holds you. The crossing, the fever, the luck, the waiting lights. You have read it. You will always have read it.
 quest|98|rewards|actor => Gethin nods slowly. "Now you know what your light is for, and what the hood is for. A light lets you see. A closed hood lets you stay unseen. Keep the lantern. It is yours."
 quest|98|trigger1|action1|actor => The lantern settles in your light slot and its glow trims itself to your eyes. Now go west from the Mine Head, into the drift.
 quest|98|trigger2|action1|actor => The drift has no light of its own, only what is carried into it. Type hood to close your lantern.

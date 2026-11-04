@@ -22,7 +22,7 @@ func TestGuideLine_EveryCase(t *testing.T) {
 			"Usually found around here: Dock Constable or Jesset."},
 		{Destination{Kind: DestMob, Npc: "Velk", Inside: true}, "You are where you need to be."},
 		{Destination{Kind: DestRoom, Inside: true}, "You are where you need to be."},
-		{Destination{Kind: DestRoom}, "You can't find a way there from here."},
+		{Destination{Kind: DestRoom}, "The way there is not on your map yet."},
 	}
 	for _, c := range cases {
 		if got := GuideLine(c.d); got != c.want {

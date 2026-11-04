@@ -92,6 +92,9 @@ func FormatConditions(c Conditions) string {
 	if c.MissingItem > 0 {
 		parts = append(parts, fmt.Sprintf("missing_item:%d", c.MissingItem))
 	}
+	if len(c.MissingItems) > 0 {
+		parts = append(parts, fmt.Sprintf("missing_items:%v", c.MissingItems))
+	}
 	if len(parts) == 0 {
 		return "(none)"
 	}

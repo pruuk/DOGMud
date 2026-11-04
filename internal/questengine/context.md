@@ -575,7 +575,8 @@ on the caller's order. It reads the Ways into each step from
   The topic's `requiresItem`/`carriesItem` and its NPC count as the Way's
   needs (`wayItemNeeds`, `checkWay`), so `walk-no-source` and `walk-unspawned`
   cover them.
-- **Negative gates** (`missing`, `missing_item`, `missing_flag`,
+- **Negative gates** (`missing`, `missing_item`, `missing_items` (holds none of
+  the list), `missing_flag`,
   `questExcluded`, `itemExcluded`, `questFlagExcluded`) read the walk's real
   state.
 - **Branches.** The walk carries every distinct successful state forward

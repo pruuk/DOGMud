@@ -63,6 +63,14 @@ func TestEvalConditions_HasItem(t *testing.T) {
 	assert.False(t, EvalConditions(Conditions{HasItem: 15}, p))
 }
 
+func TestEvalConditions_MissingItems(t *testing.T) {
+	p := newMockPlayer(100)
+	p.items[14] = true
+
+	assert.False(t, EvalConditions(Conditions{MissingItems: []int{13, 14}}, p), "holding any one of them fails")
+	assert.True(t, EvalConditions(Conditions{MissingItems: []int{13, 15}}, p))
+}
+
 func TestEvalConditions_MissingItem(t *testing.T) {
 	p := newMockPlayer(100)
 	p.items[14] = true
