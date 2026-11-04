@@ -19,11 +19,21 @@ opener:
     stranger to witness something.
   # Quest 70 states (first match wins; HasQuest is also true at every later step).
   variants:
+  # A player who sold the cooperage out hears no praise of the shop they sold.
+  - questRequired:
+    - 70-end
+    questFlagRequired:
+      68-allegiance: bloodline
+    text: Orin has it, then. Good. Someone outside my little chain has seen it with
+      their own eyes. That was the point.
+    hints: Choose a line below to learn about the gray material in the deep
+      stone, about the old symbol on the buried lintels, or about who receives
+      her finds.
   - questRequired:
     - 70-end
     text: Orin has it, then. Good. Someone outside my little chain has seen it with
       their own eyes. That was the point. The stone is not the only thing keeping
-      this. A temple wall does, and a shuttered shop.
+      this. A temple wall keeps it too, and a shuttered shop.
     hints: Choose a line below to learn about the gray material in the deep
       stone, about the old symbol on the buried lintels, or about who receives
       her finds.
@@ -91,8 +101,8 @@ topics:
     in the Crafting Quarter. Someone outside my little chain should witness it and
     carry the proof to where it can be read.
   hints: Accept, then go west twice from Gritta's Flooded Cellar to the Buried
-    Lintel. From the Silted Gallery, it is just south. Mind the canal north of the
-    old stonework. Type search there. Bring a light.
+    Lintel. Something waits in the water of the canal north of the old stonework.
+    Type search there. Bring a light.
   questExcluded:
   - 70-start
   - 70-end

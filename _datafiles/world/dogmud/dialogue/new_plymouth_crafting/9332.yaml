@@ -30,6 +30,16 @@ opener:
     hints: Choose The Pre-Founding Web below to give Orin the lintel rubbing.
   - questRequired:
     - 70-witness
+    questExcluded:
+    - 70-end
+    requiresItem: 40118
+    questFlagRequired:
+      68-allegiance: circle
+    text: That is charcoal on your fingers. Toby's mark holds, and now this. What have
+      you brought me up from below?
+    hints: Choose The Pre-Founding Web below to give Orin the lintel rubbing.
+  - questRequired:
+    - 70-witness
     - 69-end
     questExcluded:
     - 70-end
@@ -44,15 +54,6 @@ opener:
     requiresItem: 40118
     text: That is charcoal on your fingers. What have you brought me up from below?
     hints: Choose The Pre-Founding Web below to give Orin the lintel rubbing.
-  # The rubbing is on the player, where no topic can take it.
-  - questRequired:
-    - 70-witness
-    questExcluded:
-    - 70-end
-    carriesItem: 40118
-    text: That is charcoal on your fingers, and whatever made it is still stowed away.
-    hints: Orin can take the lintel rubbing only from your pack. Move it there, then
-      type talk orin.
   # A lost rubbing: the lintel gives another.
   - questRequired:
     - 70-witness
@@ -221,25 +222,9 @@ topics:
   moodChange: cautious
 # Quest 68's circle choice (spec R28): the warning must be heard first
 # (heardRequired), and both topics hide once the choice is made (68-end).
-# The bloodline side is Clerk Vell's (9349), built the same way.
-- key: circle_terms
-  kind: info
-  label: What would standing with the circle cost me?
-  text: Plainly, then. If you stand with us, Edvar's survey stays with the circle
-    and you do not get it back, so you cannot sell it to Vell afterwards. Toby
-    re-cuts the mark, and when the inspection finds a working shop, the office
-    will ask who helped. Your name will come up. The bloodline's domestic office
-    does not forget a name, and it does not forgive one. I can pay you a little,
-    and give you a copy of the map. Once it is done, it cannot be undone.
-  hints: Standing with the circle gives it the survey for good and sets the
-    bloodline's office against you. It cannot be undone. If you are sure, with the
-    survey in your pack, choose The Cooperage Circle.
-  marked: true
-  questRequired:
-  - 68-choice
-  questExcluded:
-  - 68-end
-  carriesItem: 40113
+# The bloodline side is Clerk Vell's (9349), built the same way. The hand-in comes
+# first, as Vell's does, because give plays the first eligible topic wanting the
+# survey: the first give warns, and the next commits.
 - key: circle_choice
   kind: handin
   quest: 68
@@ -247,9 +232,10 @@ topics:
   playerLine: I stand with the circle, for good. Keep the survey.
   text: Then it is done, and it stays done. The survey stays with the circle, and
     Toby re-cuts the mark on the inner door tonight, where an inspector looks and
-    the street does not. Here, a copy of Edvar's map in my own hand. The original is below, where the canal meets the
-    old quarter. Someone outside the circle should know it is real. And from today
-    the bloodline's office knows your name. Walk carefully.
+    the street does not. Here, a copy of Edvar's map in my own hand. What it charts
+    is below, where the canal meets the old quarter. Someone outside the circle
+    should know it is real. And from today the bloodline's office knows your name.
+    Walk carefully.
   hints: You gave Edvar's survey to the circle. The choice is made and cannot be
     undone, and the bloodline's office now counts you against it.
   heardRequired:
@@ -270,6 +256,24 @@ topics:
     delta: -15
   givesGold: 60
   givesItem: 40114
+- key: circle_terms
+  kind: info
+  label: What would standing with the circle cost me?
+  text: Plainly, then. If you stand with us, Edvar's survey stays with the circle
+    and you do not get it back, so you cannot sell it to Vell afterwards. Toby
+    re-cuts the mark, and when the inspection finds a working shop, the office
+    will ask who helped. Your name will come up. The bloodline's domestic office
+    does not forget a name, and it does not forgive one. I can pay you a little,
+    and give you a copy of the map. Once it is done, it cannot be undone.
+  hints: Standing with the circle gives it the survey for good and sets the
+    bloodline's office against you. It cannot be undone. If you are sure, choose
+    The Cooperage Circle.
+  marked: true
+  questRequired:
+  - 68-choice
+  questExcluded:
+  - 68-end
+  carriesItem: 40113
 - key: books
   kind: info
   label: What maps and curios do you sell?

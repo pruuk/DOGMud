@@ -14,6 +14,18 @@ opener:
     business.
   hints: Choose a line below if you want to hear about how a permit application
     works, about the quarterly tribute, or about who the office answers to.
+  variants:
+  # At the choice without the survey (old saves, or a lost one): the line that
+  # explains the choice needs it, so the opener says why the line is not there.
+  - questRequired:
+    - 68-choice
+    questExcluded:
+    - 68-end
+    itemExcluded: 40113
+    text: The cooperage filing is still open, and you have brought me no document
+      for it. If you have other business with the office, state it.
+    hints: Clerk Vell takes Edvar's survey, and you are not carrying it. It is under
+      the loose floorboard on the Cooperage Floor. Type search there.
 topics:
 # Quest 68's bloodline choice (spec R28, batch 4 review): the warning
 # (q68_vell_report) must be heard first, and both hide once the choice is

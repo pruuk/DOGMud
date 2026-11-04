@@ -14,7 +14,7 @@ opener:
     reaches me. You will also ask about the third arm, so you may as well get it
     over with.
   hints: Choose a line below on her blades, her steel or the third arm. She
-    seems tight about a tribute and an audit. To see what she sells, type list.
+    seems worried about a tribute and an audit. To see what she sells, type list.
   # Quest 71 states (first match wins; HasQuest is also true at every later step).
   variants:
   - questRequired:
@@ -32,15 +32,6 @@ opener:
     requiresItem: 40119
     text: Is that what I think it is? Put it on the counter.
     hints: Choose The Tribute below to give Dame Ostry the ledger page.
-  # The page is on the player, where no topic can take it.
-  - questRequired:
-    - 71-ledger
-    questExcluded:
-    - 71-end
-    carriesItem: 40119
-    text: Is that what I think it is? It is stowed away. Put it on the counter.
-    hints: Dame Ostry can take the ledger page only from your pack. Move it there,
-      then type talk ostry.
   # A lost page: the parlor gives another.
   - questRequired:
     - 71-ledger

@@ -187,7 +187,8 @@ owner call on the quest mechanisms arc, not a fix to make in passing.
 Since #375 (R7, R8) an item hand-in is a dialogue topic, never a quest
 trigger: an `item_give` trigger may not carry a `grant` (the boot validators
 refuse it). `give <item> <npc>` asks the NPC's topics first, BEFORE any
-transfer:
+transfer. It asks before it even picks the item, so `give rubbing dross` reaches
+the rubbing a topic wants wherever another rubbing lies in the pack:
 - A topic wanting the item (`requiresItem`, taken; or `carriesItem`, shown
   and kept) that is eligible plays exactly as if chosen from the talk menu,
   and takes the instance the player named (`give 2.purse`).

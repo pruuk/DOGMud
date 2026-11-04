@@ -10,6 +10,9 @@
 - Orin remembers how the cooperage ended, and says so when you bring him the lintel
   rubbing.
 - The Tribute now earns standing with the common folk.
+- When you give something to a person waiting for it, a shared word like rubbing
+  now finds the one they want, wherever it lies in your pack. Edvar's survey now
+  answers to the word survey.
 
 ## 2026-11-04: Down on the docks
 

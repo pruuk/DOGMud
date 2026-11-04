@@ -71,7 +71,7 @@ var lookupRegistry = map[string]lookupEntry{
 	"internal/usercommands/consider.go|Consider":                       {viewer: 1},
 	"internal/usercommands/give.go|Give":                               {viewer: 1},
 	"internal/usercommands/give.go|giveTargetResolves":                 {viewer: 1},
-	"internal/usercommands/give.go|bandolierItemForTopic":              {viewer: 1},
+	"internal/usercommands/give.go|giveMobNamed":                       {viewer: 1},
 	"internal/usercommands/give.go|bandolierItemForGive":               {viewer: 1},
 	"internal/usercommands/moderation_target.go|resolveModTarget":      {plain: 1, why: whyStaff},
 	"internal/usercommands/party.go|cmdPartyInvite":                    {viewer: 1},

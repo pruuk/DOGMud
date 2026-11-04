@@ -128,8 +128,7 @@ triggers:
       - grant: "69-reading"
 
   # Dross keeps the rubbing with the reading, as the reward line says. A topic
-  # takes one item, so this takes the other. A rubbing in a bag stays with the
-  # player, which harms nothing.
+  # takes one item, so this takes the other.
   - event: quest_granted
     quest_token: "69-end"
     conditions:

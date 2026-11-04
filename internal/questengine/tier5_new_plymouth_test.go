@@ -144,8 +144,8 @@ func TestQuest65TheSeamIsFoundBySearch(t *testing.T) {
 
 // A search on the Cooperage Floor finds the survey at any hour: Toby may be
 // asleep on the cot beside it. Old saves need no catch-up: a save holding the
-// survey at 68-evidence takes a harmless spare, and one at 68-choice without it
-// takes the recovery.
+// survey at 68-evidence moves on with the one it holds and takes no spare, and
+// one at 68-choice without it takes the recovery.
 func TestQuest68TheSurveyIsFoundBySearch(t *testing.T) {
 	const floor, survey = 5720, 40113
 	q := loadShippedQuest(t, "68-the_cooperage_circle.yaml", 68)
@@ -172,6 +172,7 @@ func TestQuest68TheSurveyIsFoundBySearch(t *testing.T) {
 	early.p.items[survey] = true
 	early.notify("command", tier5Search(floor))
 	require.Equal(t, "survey", early.p.current)
+	require.Empty(t, early.ctx.givenItems, "no spare: a copy kept past the choice would outlive it")
 
 	held := newQuestWalker(q).at("choice")
 	held.p.items[survey] = true
@@ -225,8 +226,8 @@ func TestQuest69DrossKeepsTheRubbing(t *testing.T) {
 	end.notify("quest_granted", EventDetails{QuestToken: "69-end"})
 	require.Equal(t, []int{rubbing}, end.ctx.consumedItems, "the rubbing leaves exactly once")
 
-	// A rubbing the player does not hold in a backpack is not consumed, and
-	// another token's grant never takes it.
+	// A player without the rubbing has nothing consumed, and another token's
+	// grant never takes it.
 	none := newQuestWalker(q).at("end")
 	none.notify("quest_granted", EventDetails{QuestToken: "69-end"})
 	require.Empty(t, none.ctx.consumedItems)

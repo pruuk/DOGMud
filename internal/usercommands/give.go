@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -74,7 +75,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		var found bool = false
 
 		// Check whether the user has an item in their inventory that matches
-		giveItem, found = user.Character.FindInBackpack(giveWhat)
+		giveItem, found = backpackItemForGive(giveWhat, giveWho, user, room)
 
 		if !found {
 			giveItem, found = bandolierItemForGive(giveWhat, giveWho, user, room)
@@ -505,24 +506,53 @@ func bandolierItemForGive(what, who string, user *users.UserRecord, room *rooms.
 // unwanted potion sharing the name does not stand in front of it, and N.item
 // counts the wanted ones, as FindInBackpackWhere counts within its filter.
 func bandolierItemForTopic(what, who string, user *users.UserRecord, room *rooms.Room) (items.Item, bool) {
-	if !bandolierHolds(what, user) || ownPetNamed(who, user) {
+	if !bandolierHolds(what, user) {
 		return items.Item{}, false
 	}
-	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
-	if aimRefusal != `` {
-		return items.Item{}, false
-	}
-	target, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character})
-	if err != nil || target.IsPlayer() {
-		return items.Item{}, false
-	}
-	mobActor, isMob := target.(*actions.MobActor)
-	if !isMob {
+	mob := giveMobNamed(who, user, room)
+	if mob == nil {
 		return items.Item{}, false
 	}
 	return user.Character.FindInPotionsWhere(what, func(itm items.Item) bool {
-		return conversation.WantsItem(user, mobActor.Mob, itm.ItemId)
+		return conversation.WantsItem(user, mob, itm.ItemId)
 	})
+}
+
+// backpackItemForGive picks what a give means from the backpack, by the rule
+// bandolierItemForTopic uses: an NPC is asked before the choice is made, so a
+// `give rubbing dross` reaches the rubbing Dross wants wherever another rubbing
+// lies in the pack, and N.item counts the wanted ones. A name that fits nothing
+// the NPC wants is the backpack's own first match, for the ordinary give.
+func backpackItemForGive(what, who string, user *users.UserRecord, room *rooms.Room) (items.Item, bool) {
+	if mob := giveMobNamed(who, user, room); mob != nil {
+		if itm, ok := user.Character.FindInBackpackWhere(what, func(itm items.Item) bool {
+			return conversation.WantsItem(user, mob, itm.ItemId)
+		}); ok {
+			return itm, true
+		}
+	}
+	return user.Character.FindInBackpack(what)
+}
+
+// giveMobNamed is the NPC a give's recipient phrase resolves to at the giver's
+// sight, or nil for the giver's own pet, a player, or anything else.
+func giveMobNamed(who string, user *users.UserRecord, room *rooms.Room) *mobs.Mob {
+	if ownPetNamed(who, user) {
+		return nil
+	}
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
+	if aimRefusal != `` {
+		return nil
+	}
+	target, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character})
+	if err != nil || target.IsPlayer() {
+		return nil
+	}
+	mobActor, isMob := target.(*actions.MobActor)
+	if !isMob {
+		return nil
+	}
+	return mobActor.Mob
 }
 
 // giveTargetResolves reports whether the recipient phrase names the player's
