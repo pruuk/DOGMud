@@ -331,7 +331,8 @@ walks out of it (owner, 2026-11-02). Finding counts are `loop-backlog.txt` lines
 3. The Confluence, with the recipe sales in quests 79 to 87 (51). Done (tier 3, 2026-11-02).
 4. Greenford and Eastern Highlands (13), after the disc line's design (#667). Done by the disc line
    (2026-11-03 and 2026-11-04, PRs #784 to #786 and #789).
-5. New Plymouth: Common, Docks, Merchant, Crafting, Temple, Old Quarter (52).
+5. New Plymouth: Common, Docks, Merchant, Crafting, Temple, Old Quarter (52). Done (tier 5,
+   2026-11-04).
 
 Quest 21 (4) and the sample quest 1000000 (8) are cleared along the way. The 15 dialogue folders
 with no backlog line get a check that they meet the requirements page, not a full pass.
@@ -380,8 +381,14 @@ line names quests 73, 74 or 78 to 87 (`internal/guards/tier3_backlog_guard_test.
 Leftovers are in #770. Tier 4 (Greenford, Cascade Pass Road, Eastern Highlands) was done by the
 disc line redesign, #667: no `loop-backlog.txt` line names quests 75, 76 or 77
 (`internal/guards/tier4_backlog_guard_test.go`), and their dialogue carries no dashes. #667 stays open
-for a naive playtest and for a Core Guardian kill in play, which nobody has run yet. Tier 5 (New
-Plymouth, quests 63 and 65 to 71) is not started.
+for a naive playtest and for a Core Guardian kill in play, which nobody has run yet.
+
+Tier 5 (New Plymouth, quests 63 and 65 to 71) is built, and the guard bans its
+ids from `loop-backlog.txt` (`internal/guards/tier5_backlog_guard_test.go`).
+Separately, `loop-backlog.txt` is now empty. Quest 21 is a flag on
+quest 30, the sample quest is deleted, and quests 64 and 102 give the Bloom a source
+behind Marn's cupboard door. The closing step comes next, in its own plan:
+validators as hard boot failures, deleting `room_interact`, and the dash guards.
 
 ## Phase 6: Web builder (postponed)
 

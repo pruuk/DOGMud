@@ -170,6 +170,9 @@ func newWalker(in Input) *walker {
 		given: map[int]bool{}, flags: map[string]bool{}, heard: map[string]bool{},
 		mobFolder: map[int]string{}, refs: map[string]map[int]bool{},
 	}
+	for _, f := range quests.EngineSetFlags() {
+		w.flags[f] = true
+	}
 	for _, q := range in.Quests {
 		m := &qmodel{q: q, idx: map[string]int{}, end: -1, zones: map[string]bool{}}
 		for i, s := range q.Steps {

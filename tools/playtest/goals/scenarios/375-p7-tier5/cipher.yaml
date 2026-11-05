@@ -1,0 +1,14 @@
+ephemeral:
+  profile: ranged-range
+  start_room: 5916
+  budgets:
+    wall_clock: 45m
+goals:
+  - >-
+    Type `talk dross` and take The Gallery Cipher. Follow `hint`. `search` at the reliefs. At the
+    gallery, read what Dross told you about the guide against what the guide does, and say whether
+    anything sounds like a door or a fight you have to win. Quote game lines VERBATIM and in order.
+  - >-
+    Back at Dross with the reading, drop the rubbing first, and quote what he says. Take another with
+    `search`, then hand in. Quote the reward. Type `inventory` and say whether the rubbing is gone and
+    whether the reward line was true. Quote game lines VERBATIM and in order.

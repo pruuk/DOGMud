@@ -1183,6 +1183,7 @@ maintainers know the quests are coupled.
 | `quests.go` | Every quest definition type: the single owner of the quest file parse |
 | `triggers.go` | Trigger and action definition shapes |
 | `save.go` | Quest file persistence |
+| `engine_flags.go` | `EngineSetFlags`: quest flag values only Go code sets, which the dialogue walker counts as set; `NewcomerFlagKey`, `NewcomerFlagValue` |
 | `roomtext.go` | `RoomTextProblems` and the observer-line rule `Validate` enforces (every quest room line names `{actor}`, walking nested sequences) |
 | `narration.go` | `ActionDef.Narration`/`Narrate`, `QuestReward.Narration`/`Narrate`, `validateNarration` |
 | `samecommand.go` | `validateSameCommandChains`, which `Validate` runs: the engine fires every matching trigger in file order against live state, so a trigger may not grant, give, consume or set what a later trigger on the same event requires when one command can match both (#495); put the "already done" trigger first |

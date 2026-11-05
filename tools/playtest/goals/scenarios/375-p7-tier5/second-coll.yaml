@@ -1,0 +1,16 @@
+ephemeral:
+  profile: mid
+  start_room: 5602
+  overlays:
+    grant_items: [20096]
+  budgets:
+    wall_clock: 30m
+goals:
+  - >-
+    Type `look` and `talk coll`, and take The Street Sweeper's Secret. Follow only `hint` and `quests`. Say
+    whether you could find the Old Foundation from the hint, and how many moves it cost. `search` there and
+    quote it. Finish with Coll and quote the reward. Quote game lines VERBATIM and in order.
+  - >-
+    Now find Gritta in the Old Quarter. Say which line told you where the Old Quarter is, if any. Ask who
+    receives her finds, and say whether her account fits what Coll told you. Quote game lines VERBATIM and
+    in order.

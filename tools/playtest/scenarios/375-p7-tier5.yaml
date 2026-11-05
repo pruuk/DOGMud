@@ -1,0 +1,36 @@
+# #375 phase 7 tier 5: New Plymouth. Each quest by search, 66's return walk, both
+# 68 endings before 70, both endings of The Skip, the Bloom chain through a first
+# dose, the buy limit, withdrawal across a relog and Ysolde's cure, and a character
+# already at the mutation count.
+name: 375-p7-tier5
+mode: party
+summary: >-
+  The New Plymouth quests are followed by search and their hints, the stories agree
+  with themselves, Orin remembers the cooperage, and the Bloom can be reached only by
+  three deliberate choices, then survived.
+on_actor_stop: continue
+budgets:
+  wall_clock: 90m
+requires:
+  max_connections: 20
+roster:
+  - {id: docks, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/docks.yaml}
+  - {id: teels, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/teels.yaml}
+  - {id: bloomtrail, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/bloomtrail.yaml}
+  - {id: circle, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/circle.yaml}
+  - {id: bloodline, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/bloodline.yaml}
+  - {id: cipher, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/cipher.yaml}
+  - {id: tribute, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/tribute.yaml}
+  - {id: skip-ran, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/skip-ran.yaml}
+  - {id: bloom, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/bloom.yaml}
+  - {id: bloom-relog, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/bloom-relog.yaml}
+  - {id: bloom-load, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/bloom-load.yaml}
+  - {id: newcomer, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/newcomer.yaml}
+
+group_goals:
+  - id: no-dead-ends
+    do: Each seat follows the game's own hints and map, with no route help.
+    verify: Every hint names something the player can do where they stand, and no seat gets stuck.
+  - id: makes-sense
+    do: Every seat reads NPC lines and hints as a player new to MUDs would.
+    verify: No line promises an item, place or command that is not there, and no line contradicts another.

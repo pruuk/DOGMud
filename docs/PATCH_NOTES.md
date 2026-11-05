@@ -1,5 +1,10 @@
 # DOGMud Patch Notes
 
+## 2026-11-04: Tidying up
+
+- Cleric Hadwen and Crier Toke still offer their two talks to every new arrival.
+  A character already part way through those lessons may miss them.
+
 ## 2026-11-04: Hard to put down
 
 - The Bloom Wafer is now out there in the world, for those who go looking for it and

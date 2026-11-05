@@ -10,8 +10,8 @@ import (
 // onboardingAllowedQuests are the only quest ids a character may have progress
 // in and still use the `tutorial` back-door. Keeps an established character
 // from yanking themselves back to the newcomers' pool. (30 = Awakening,
-// 31 = Find Your Footing, 21 = Newcomer's Path marker.)
-var onboardingAllowedQuests = map[int]struct{}{30: {}, 31: {}, 21: {}}
+// 31 = Find Your Footing.)
+var onboardingAllowedQuests = map[int]struct{}{30: {}, 31: {}}
 
 // Tutorial teleports a low-progress character to the newcomers' pool (the
 // Awakening Pool, StartRoom 5200). Advertised in the veteran welcome as the

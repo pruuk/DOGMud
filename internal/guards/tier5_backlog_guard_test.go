@@ -13,7 +13,7 @@ import (
 
 // The #375 phase 7 tier 5 pass (New Plymouth). A loop finding on one of its
 // quests is fixed in content, never listed.
-var tier5Quests = map[int]bool{63: true, 64: true, 65: true, 66: true, 67: true, 68: true, 69: true, 70: true, 71: true, 102: true}
+var tier5Quests = map[int]bool{63: true, 64: true, 65: true, 66: true, 67: true, 68: true, 69: true, 70: true, 71: true, 102: true, 21: true, 1000000: true}
 
 func tier5BacklogLines(t *testing.T, data []byte) []string {
 	t.Helper()
@@ -47,8 +47,8 @@ func TestTier5QuestsHaveNoBacklogLines(t *testing.T) {
 }
 
 func TestTier5QuestsHaveNoBacklogLines_GuardCanFail(t *testing.T) {
-	fixture := []byte("# header\nhint-length 66 step start\none-action 63 step report:none\nchain 76 mob 9553 topic x\n")
-	if got := tier5BacklogLines(t, fixture); len(got) != 2 {
-		t.Fatalf("guard saw %d tier 5 lines, want 2: %v", len(got), got)
+	fixture := []byte("# header\nhint-length 66 step start\none-action 63 step report:none\nchain 76 mob 9553 topic x\nstart 21 step start\nend 1000000 step end\n")
+	if got := tier5BacklogLines(t, fixture); len(got) != 4 {
+		t.Fatalf("guard saw %d tier 5 lines, want 4: %v", len(got), got)
 	}
 }

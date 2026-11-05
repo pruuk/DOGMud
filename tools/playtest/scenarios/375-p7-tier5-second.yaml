@@ -1,0 +1,24 @@
+# #375 phase 7 tier 5, second pass: what the first run could not reach. Quest 65 from
+# beside Coll, and quest 70 from Gritta's cellar after each ending of 68. The knock seat
+# is the Bloom chain: it starts on the Condemned Floor with The Skip running (quest 64),
+# then The Knock, a wafer, and the cure.
+name: 375-p7-tier5-second
+mode: party
+summary: >-
+  The Street Sweeper's Secret is followed by its hints, and The Pre-Founding Web reads
+  true after either ending of The Cooperage Circle and in the dark.
+on_actor_stop: continue
+budgets:
+  wall_clock: 50m
+requires:
+  max_connections: 20
+roster:
+  - {id: coll, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/second-coll.yaml}
+  - {id: web-circle, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/second-web-circle.yaml}
+  - {id: web-bloodline, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/second-web-bloodline.yaml}
+  - {id: knock, personality: bug-finder, goals: goals/scenarios/375-p7-tier5/second-knock.yaml}
+
+group_goals:
+  - id: makes-sense
+    do: Every seat reads NPC lines and hints as a player new to MUDs would.
+    verify: No line promises an item, place or command that is not there, and no line contradicts another.

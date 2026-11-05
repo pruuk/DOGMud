@@ -2930,6 +2930,8 @@ Isolated boot, as Task 5 Step 4's second block, with `GamePlay.MapConsistencyEnf
 
 ### Task 17: Quest 21 retires
 
+**Amendment (2026-11-04, playtest):** the `told` value was dropped. Hearing Toke closed Hadwen's lesson for a player who had walked past him. The flag only ever holds `new`; both lines stay on the menu, dim once heard. The steps below are kept as first written.
+
 **Files:** `git rm quests/21-newcomers_path.yaml`. Edit `quests/30-the_awakening.yaml`, `step-ids.txt`, `loop-backlog.txt`, `internal/usercommands/start.go`, `dialogue/pothole_coulee/9100.yaml`, `9106.yaml`, `coulee_spine_smoke_test.go`. Test: create `internal/usercommands/start_newcomer_test.go`.
 
 - [ ] **Step 1: Failing tests.**
@@ -3116,7 +3118,7 @@ In `QUEST_DIALOGUE_REQUIREMENTS.md` change nothing: its boxes wait for the closi
 
 ### Task 20: The closing playtest (controller)
 
-Fixture lessons this run uses: distinct profiles, or seats read each other as themselves (tier 2-3). Tally claims from raw `events.jsonl`, since a seat's own grep hides lines (667). The sit-and-meditate line is a quit, not a death. Search has a cooldown, so a repeat search waits. A flag must be declared by a quest, or the env dies at boot: `64-outcome` exists from 5c. `set_quest_tokens` with a chain plus `start_room` starts a seat late. A seat is not naive: it holds commit subjects, so weigh early interest. `playtestrun stop` needs `--run-id`, the container needs `docker rm -f`, and the network needs removing. Withdrawal does not survive a relog (`yaml:"-"`), so the Bloom seat must not log out. The Old Quarter needs a real light in the goal grant.
+Fixture lessons this run uses: distinct profiles, or seats read each other as themselves (tier 2-3). Tally claims from raw `events.jsonl`, since a seat's own grep hides lines (667). The sit-and-meditate line is a quit, not a death. Search has a cooldown, so a repeat search waits. A flag must be declared by a quest, or the env dies at boot: `64-outcome` exists from 5c. `set_quest_tokens` with a chain plus `start_room` starts a seat late. A seat is not naive: it holds commit subjects, so weigh early interest. `playtestrun stop` needs `--run-id`, the container needs `docker rm -f`, and the network needs removing. Only time online counts for withdrawal, and the buy limit stops at 3 (both owner, 2026-11-04), so the shipped goals add two seats, `bloom-relog` and `bloom-load`, and `bloom.yaml` buys until refused; the files under `tools/playtest/goals/scenarios/375-p7-tier5/` are the source of truth for the goals below. The Old Quarter needs a real light in the goal grant.
 
 **Files:** create `tools/playtest/scenarios/375-p7-tier5.yaml` and `tools/playtest/goals/scenarios/375-p7-tier5/{docks,teels,bloomtrail,circle,bloodline,cipher,tribute,skip-ran,bloom,newcomer}.yaml`. Rows in `docs/README.md`.
 

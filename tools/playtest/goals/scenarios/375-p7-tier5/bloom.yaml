@@ -1,0 +1,36 @@
+# The whole chain from the report to Sefton, the buy limit, withdrawal, the cure.
+ephemeral:
+  profile: counters
+  start_room: 5523
+  overlays:
+    set_quest_tokens: [66-start, 66-dose, 66-end, 67-start]
+    set_gold: 2000
+  budgets:
+    wall_clock: 70m
+goals:
+  - >-
+    Type `east` at the cupboard door and quote it. `down` and look at the stock room. Back up. Type
+    `talk marn`, choose to pose as a buyer, and quote his line and hint. Follow the hint to Horst and
+    take The Skip. Find Odile. Tell Horst, after hearing him. Quote what he pays you. `inventory`.
+    Quote game lines VERBATIM and in order.
+  - >-
+    Go to Marn. Read his opener. Accept The Knock and quote the card. Type `score` or the nearest and
+    say what it cost. Type `east` and quote the whole arrival. Say what you understood at that moment.
+    Finish with Sefton. Type `list` and quote prices. Try to `sell wafer` to him and to one shop
+    outside. Quote both. Quote game lines VERBATIM and in order.
+  - >-
+    Hear what a wafer does. Buy one, type `quaff wafer` and quote every line, in order. Note the time.
+    Type `status` every few rounds. Report the `list` price before each purchase. Keep buying and
+    quaffing until the seller or your body refuses you, quote each refusal, and say which came first,
+    how many wafers you got, how long between doses, and any change that arrived. Type `mutations`
+    after each dose. Quote game lines VERBATIM and in order.
+  - >-
+    Stop. Wait for the crash and the craving and quote each. Say whether a new player would know what
+    is happening and where to go. Follow only what the game has told you, to Ysolde. Ask for the cure,
+    `quaff purge`, and quote it. Type `status` afterwards. Say whether the craving came back. Quote
+    game lines VERBATIM and in order.
+  - >-
+    Finish The Bloom Trail if budget remains, and quote the constable's hand-in. Say whether it reads
+    sensibly from someone who has just bought from the trade. Go back through the cupboard door after
+    it and say whether Sefton's shop is still open and what he says about the watch. Quote game lines
+    VERBATIM and in order.

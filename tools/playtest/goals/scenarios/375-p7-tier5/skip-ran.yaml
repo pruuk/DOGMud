@@ -1,0 +1,21 @@
+ephemeral:
+  profile: early
+  start_room: 5820
+  overlays:
+    set_quest_tokens: [66-start, 66-dose, 66-end, 67-start, 67-front]
+    set_quest_flags: {67-entry: undercover}
+    set_gold: 2000
+  budgets:
+    wall_clock: 40m
+goals:
+  - >-
+    Type `talk horst` and take The Skip. Follow `hint`. Try `up` from Mother Brisk's block before you
+    talk to her, and quote it. Say whether the quest log gave her floor away. Quote game lines VERBATIM
+    and in order.
+  - >-
+    Find Odile. Hear why Horst wants her. Tell her to run. Quote it. Go down, then try `up` again and
+    quote it. Type `talk horst` and quote him. Quote game lines VERBATIM and in order.
+  - >-
+    Go to Marn with your 2000 gold and `talk marn`. Say whether anything offers you the knock. Type
+    `east` at the cupboard door and quote it. Abandon nothing. Report whether this ending felt final.
+    Quote game lines VERBATIM and in order.

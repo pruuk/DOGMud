@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -261,14 +262,11 @@ func startVeteranInThornwall(user *users.UserRecord) {
 	user.SendText(messaging.CategorySystem, `New to Gaius after all? Type <ansi fg="command">tutorial</ansi> to be taken to the newcomers' pool.`)
 }
 
-// grantNewcomerMarker flags a total-newbie character with the hidden
-// Newcomer's Path token, which gates the newbie-only teaching beats (Cleric
-// Hadwen's mutations/progression talk; Crier Toke's player-interaction talk).
+// grantNewcomerMarker flags a total-newbie character with The Awakening's
+// newcomer flag, which gates the newbie-only teaching beats (Cleric Hadwen's
+// mutations/progression talk; Crier Toke's player-interaction talk).
 func grantNewcomerMarker(user *users.UserRecord) {
-	events.AddToQueue(events.Quest{
-		UserId:     user.UserId,
-		QuestToken: "21-start",
-	})
+	user.Character.SetQuestFlag(quests.NewcomerFlagKey, quests.NewcomerFlagValue)
 }
 
 // ─── Veteran auto-awaken ─────────────────────────────────────────────────────
