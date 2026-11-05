@@ -1,7 +1,7 @@
 # #375 phase 7, tier 5: New Plymouth
 
-**Status:** approved 2026-11-04. Plan: `docs/superpowers/plans/2026-11-04-p7-tier5-new-plymouth.md`, in
-build.
+**Status:** shipped 2026-11-04 (#795, #796, #797, #801). Plan:
+`docs/superpowers/plans/completed/2026-11-04-p7-tier5-new-plymouth.md`.
 **Arc:** #375 quest and dialogue rework, phase 7. Roadmap: `docs/roadmaps/QUEST_DIALOGUE_ROADMAP.md`;
 target page: `docs/roadmaps/QUEST_DIALOGUE_REQUIREMENTS.md`. Earlier tiers:
 `docs/superpowers/specs/completed/2026-11-02-quest-arc-phase7-tier1-design.md`, `...-tier2-design.md`,
