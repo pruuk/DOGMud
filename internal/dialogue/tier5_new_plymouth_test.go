@@ -675,3 +675,20 @@ func TestTier5DrossNeverSaysLookReliefs(t *testing.T) {
 		require.NotContains(t, h, "look reliefs")
 	}
 }
+
+func TestTier5NewcomerTopicsReadTheFlag(t *testing.T) {
+	newFlag := map[string]string{"30-newcomer": "new"}
+	told := map[string]string{"30-newcomer": "told"}
+
+	toke := loadShippedDialogue(t, "pothole_coulee/9106.yaml")
+	require.Contains(t, menuKeys(toke, withFlags(heldState(), newFlag)), "newcomer_players")
+	require.NotContains(t, menuKeys(toke, withFlags(heldState(), told)), "newcomer_players")
+	require.NotContains(t, menuKeys(toke, heldState()), "newcomer_players")
+	require.Equal(t, "told", toke.FindTopic("newcomer_players").SetsQuestFlag.Value)
+	require.Empty(t, toke.FindTopic("newcomer_players").GrantsQuest)
+
+	hadwen := loadShippedDialogue(t, "pothole_coulee/9100.yaml")
+	require.Contains(t, menuKeys(hadwen, withFlags(heldState("30-end"), newFlag)), "newcomer_mutations")
+	require.NotContains(t, menuKeys(hadwen, withFlags(heldState("30-end"), told)), "newcomer_mutations")
+	require.NotContains(t, menuKeys(hadwen, withFlags(heldState(), newFlag)), "newcomer_mutations")
+}

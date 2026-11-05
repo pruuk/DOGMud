@@ -69,8 +69,6 @@
 20-vella_journal
 20-wardstone_altar
 20-workshop_carving
-21-end
-21-start
 28-asked
 28-attacked
 28-carry_prompt
@@ -372,6 +370,10 @@
 99-planted
 99-start
 # retired
+# Quest 21 Newcomer's Path (#375 phase 7 tier 5): a flag on quest 30 now, so
+# users.LoadUser drops it from saves (quests.RetiredQuests).
+21-end
+21-start
 # Quest 29 Two Roads (#375 phase 7): no road grants it; users.LoadUser drops
 # it from saves (quests.RetiredQuests).
 29-end

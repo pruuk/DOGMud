@@ -22,6 +22,13 @@ name: The Awakening
 description: Undergo the Awakening Rite at the pool in Pothole Coulee.
 secret: false
 
+flags:
+  # Set when a total newbie starts (usercommands.grantNewcomerMarker). Hadwen and
+  # Toke teach the basics to a holder of "new"; Toke's talk sets "told".
+  - key: newcomer
+    values: [new, told]
+    description: "Whether a new-to-MUDs character has had the guides' teaching"
+
 steps:
   - id: start
     destination:

@@ -480,8 +480,8 @@ func miscDataToUint64(v any) uint64 {
 // fallback would make the focus jitter between quests. Pure — never mutates.
 //
 // Secret quests are never the focus, on any path: they are hidden markers
-// (quest 21, Newcomer's Path, is one) that `quests` does not list, so naming
-// one in hint or the panel would show the player a quest they do not have.
+// that `quests` does not list, so naming one in hint or the panel would show
+// the player a quest they do not have.
 // When every quest in progress is secret the result is 0.
 func (c *Character) GetFocusQuestId() int {
 	prog := c.GetQuestProgress()

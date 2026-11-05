@@ -116,9 +116,8 @@ topics:
     changes arrive. For more, type help mutations.
   questRequired:
   - 30-end
-  - 21-start
-  questExcluded:
-  - 21-end
+  questFlagRequired:
+    30-newcomer: new
   moodChange: friendly
 - key: rite_offer
   kind: offer

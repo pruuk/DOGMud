@@ -264,10 +264,10 @@ topics:
   - 88-end
   grantsQuest: 88-end
   moodChange: friendly
-# Quest 21 "Newcomer's Path" is secret (not in the quest log), so this is a
-# marked info topic carrying the end grant, not a hand-in: a hand-in would
-# put [?] on Toke for a quest the player cannot see, and [?] outranks the
-# [!] of Find Your Footing on his name (requirements rule 9).
+# The newcomer teaching is a flag on The Awakening (30-newcomer), not a quest,
+# so this is a marked info topic that sets the flag to "told", not a hand-in: a
+# hand-in would put [?] on Toke for a quest the player cannot see, and [?]
+# outranks the [!] of Find Your Footing on his name (requirements rule 9).
 - key: newcomer_players
   kind: info
   label: I'm new here. How do I talk to other people?
@@ -280,11 +280,11 @@ topics:
   hints: To speak to everyone in the room, type say and your words. For more, type
     help say.
   marked: true
-  questRequired:
-  - 21-start
-  questExcluded:
-  - 21-end
-  grantsQuest: 21-end
+  questFlagRequired:
+    30-newcomer: new
+  setsQuestFlag:
+    key: 30-newcomer
+    value: told
   moodChange: friendly
 - key: footing_offer
   kind: offer
