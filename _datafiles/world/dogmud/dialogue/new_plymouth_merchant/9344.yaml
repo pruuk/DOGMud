@@ -20,8 +20,13 @@ opener:
     - 64-end
     questFlagRequired:
       64-outcome: ran
-    text: The girl was gone when my people reached the floor. You were slow, or you
-      were something else. I have no more work for you.
+    text: The girl has gone from the Quarter, and no one saw her leave. You were slow,
+      or you were something else. I have no more work for you.
+    hints: Horst has nothing more for you. He is polite about it.
+  - questRequired:
+    - 64-end
+    - 102-start
+    text: She was where you said. The office is satisfied, and so am I.
     hints: Horst has nothing more for you. He is polite about it.
   - questRequired:
     - 64-end
@@ -38,6 +43,13 @@ opener:
     text: She will not find herself. The Common Quarter, where no one asks for papers.
     hints: Mother Brisk keeps tenants she will not name, at her block off Tenement Row.
       Type talk brisk.
+  - questRequired:
+    - 67-end
+    text: The watch broke up a house on Lintel Street, I hear, and took a ledger. The
+      office has read the report and is not troubled by it. Is there something you need?
+    hints: Choose a line below if you want to hear about the watched house and who
+      lives there, about the work he does at the gate, or about the visitors he
+      receives.
 topics:
 - key: q64_offer
   kind: offer
@@ -52,6 +64,25 @@ topics:
   hints: Accept, then go to the Common Quarter and ask who is not on the books.
   questFlagRequired:
     67-entry: undercover
+  questFlagExcluded:
+    64-seen: found
+  questExcluded:
+  - 64-start
+  - 64-end
+  grantsQuest: 64-start
+  moodChange: cautious
+- key: q64_resume
+  kind: offer
+  quest: 64
+  label: The Skip
+  playerLine: I put your work down. I want to take it up again.
+  text: The offer stands. I still want to know where she sleeps, and I still pay for it.
+  hints: You know where she is already. You can tell her to run, or tell Horst. Neither
+    can be undone.
+  objective: You know where she sleeps. Tell Horst, or tell her to run.
+  questFlagRequired:
+    67-entry: undercover
+    64-seen: found
   questExcluded:
   - 64-start
   - 64-end

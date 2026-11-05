@@ -88,6 +88,53 @@ func TestTier5TheSkipPromisesOnlyWhatIsOnTheMenu(t *testing.T) {
 	require.Equal(t, "The Skip", h.FindTopic("q64_report").Label)
 }
 
+// A player who found her, then shelved the quest, is not told to go and find her.
+// The flag that tells them apart is set by her own story.
+func TestTier5HorstResumeReadsTrueToAPlayerWhoFoundHer(t *testing.T) {
+	h := loadShippedDialogue(t, "new_plymouth_merchant/9344.yaml")
+	o := loadShippedDialogue(t, "new_plymouth_common/9801.yaml")
+	require.Equal(t, "64-seen", o.FindTopic("q64_found").SetsQuestFlag.Key)
+
+	flags := map[string]string{"67-entry": "undercover"}
+	fresh := menuKeys(h, withFlags(heldState(), flags))
+	require.Contains(t, fresh, "q64_offer")
+	require.NotContains(t, fresh, "q64_resume")
+
+	flags["64-seen"] = "found"
+	found := menuKeys(h, withFlags(heldState(), flags))
+	require.NotContains(t, found, "q64_offer")
+	require.Contains(t, found, "q64_resume")
+
+	resume := h.FindTopic("q64_resume")
+	for _, line := range []string{resume.Text, resume.Hints, resume.Objective} {
+		require.NotContains(t, line, "Find her")
+		require.NotContains(t, line, "Common Quarter")
+	}
+	require.Contains(t, h.FindTopic("q64_offer").Text, "Find her", "the first offer still says it")
+}
+
+// Horst's openers: he never names a floor the player did not name, stops sending a
+// customer to Marn, and the office is unbothered by the bust.
+func TestTier5HorstOpenersReadTrue(t *testing.T) {
+	h := loadShippedDialogue(t, "new_plymouth_merchant/9344.yaml")
+	reported := map[string]string{"64-outcome": "reported"}
+
+	ran, _ := h.OpenerFor(withFlags(heldState("64-start", "64-found", "64-end"), map[string]string{"64-outcome": "ran"}))
+	require.NotContains(t, ran, "floor", "the player never told him which floor")
+	require.Contains(t, ran, "You were slow, or you were something else.")
+
+	_, hints := h.OpenerFor(withFlags(heldState("64-start", "64-found", "64-end"), reported))
+	require.Contains(t, hints, "Marn", "not yet a customer")
+
+	_, hints = h.OpenerFor(withFlags(heldState("64-start", "64-found", "64-end", "102-start"), reported))
+	require.NotContains(t, hints, "Marn", "already paid him")
+
+	bust, _ := h.OpenerFor(heldState("67-start", "67-end"))
+	require.Contains(t, bust, "not troubled")
+	plain, _ := h.OpenerFor(heldState())
+	require.NotContains(t, plain, "not troubled", "no bust, nothing to mention")
+}
+
 // The stake is named while the offer is hidden, and it survives the bust.
 func TestTier5TheKnockCosts(t *testing.T) {
 	m := loadShippedDialogue(t, "new_plymouth_docks/9305.yaml")

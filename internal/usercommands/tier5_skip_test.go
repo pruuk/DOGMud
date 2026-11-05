@@ -151,7 +151,13 @@ func TestTheSkip_AbandonAndResumeFarmNothing(t *testing.T) {
 		require.Zero(t, user.Character.Gold)
 		require.Zero(t, countBackpack(user, wafer))
 
-		choose("q64_offer")
+		// Once she has told her story the offer reads true for someone who found
+		// her, so it is a different line on the menu.
+		offer := "q64_offer"
+		if user.Character.GetQuestFlag("64-seen") == "found" {
+			offer = "q64_resume"
+		}
+		choose(offer)
 		require.Equal(t, wantStep, user.Character.QuestProgress[skipQuest])
 		require.True(t, skipGateOpen(user), "the stair opens again")
 		require.Zero(t, user.Character.Gold, "a resume pays nothing")

@@ -49,6 +49,9 @@ topics:
   - 64-start
   questExcluded:
   - 64-end
+  setsQuestFlag:
+    key: 64-seen
+    value: found
   moodChange: cautious
 - key: q64_run
   kind: handin

@@ -41,8 +41,8 @@ rewards:
 
 triggers:
   # The cupboard door opens only to the knock, and stays open once learned. A
-  # look through the exit reads this line too (Task 14), and so does a payer who
-  # shelved the quest, so it says nothing of trying the door or of who knows what.
+  # look through the exit reads this line too, and so does a payer who shelved the
+  # quest, so it says nothing of trying the door or of who knows what.
   - event: room_gate
     room: 5530
     conditions:

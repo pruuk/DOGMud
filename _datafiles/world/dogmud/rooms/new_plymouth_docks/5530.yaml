@@ -25,7 +25,7 @@ idlemessages:
 - The shaded lamp does not flicker. Someone trims it on a schedule.
 - The copper-flower smell comes and goes, sweet and slightly wrong at the back of
   the throat.
-- A voice comes through the wall from the stock room side, low, and stops.
+- A voice comes up through the floor from the stock room, low, and stops.
 spawninfo:
   - mobid: 9802
     respawnrate: "10 real minutes"

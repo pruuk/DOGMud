@@ -10,6 +10,9 @@ flags:
   - key: outcome
     values: [reported, ran]
     description: "Whether the player told Horst where the runaway hides, or told her to run"
+  - key: seen
+    values: [found]
+    description: "Set when she tells her story. A shelf keeps it, so a player who resumes having found her is not told to find her"
 
 steps:
   - id: start
@@ -50,18 +53,18 @@ triggers:
       missing: ["64-start"]
     actions:
       - actor: >-
-          A grey-haired woman on the first landing looks at you and does not move
-          out of the way. The floors above are condemned, she says, and the chair
-          across the stair stays where it is.
+          A woman on the first landing looks at you and does not move out of the
+          way. The floors above are condemned, she says, and the chair across the
+          stair stays where it is.
   - event: room_gate
     room: 5625
     conditions:
       has: ["64-end"]
     actions:
       - actor: >-
-          A grey-haired woman on the first landing looks at you and does not move
-          out of the way. The floors above are condemned, she says, and the chair
-          across the stair stays where it is.
+          A woman on the first landing looks at you and does not move out of the
+          way. The floors above are condemned, she says, and the chair across the
+          stair stays where it is.
 
   # found: hearing Odile's "q64_found" topic.
   - event: topic_heard
