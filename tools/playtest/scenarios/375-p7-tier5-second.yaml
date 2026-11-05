@@ -1,5 +1,7 @@
 # #375 phase 7 tier 5, second pass: what the first run could not reach. Quest 65 from
-# beside Coll, and quest 70 from Gritta's cellar after each ending of 68.
+# beside Coll, and quest 70 from Gritta's cellar after each ending of 68. The knock seat
+# is the Bloom chain: it starts on the Condemned Floor with The Skip running (quest 64),
+# then The Knock, a wafer, and the cure.
 name: 375-p7-tier5-second
 mode: party
 summary: >-

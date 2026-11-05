@@ -13,5 +13,4 @@ func TestGrantNewcomerMarkerSetsTheFlag(t *testing.T) {
 	u := users.NewTestUser(9731, "newcomer", "Newcomer", 0)
 	grantNewcomerMarker(u)
 	require.Equal(t, "new", u.Character.GetQuestFlag("30-newcomer"))
-	require.Empty(t, u.Character.QuestProgress, "no quest token any more")
 }

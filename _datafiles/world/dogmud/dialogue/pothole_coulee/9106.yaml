@@ -264,10 +264,12 @@ topics:
   - 88-end
   grantsQuest: 88-end
   moodChange: friendly
-# The newcomer teaching is a flag on The Awakening (30-newcomer), not a quest,
-# so this is a marked info topic that sets the flag to "told", not a hand-in: a
-# hand-in would put [?] on Toke for a quest the player cannot see, and [?]
-# outranks the [!] of Find Your Footing on his name (requirements rule 9).
+# The newcomer teaching is a flag on The Awakening (30-newcomer), not a quest.
+# This topic is gated on that flag, which character creation sets in code
+# (quests.NewcomerFlagKey). It is a marked info topic that sets nothing, and
+# neither lesson closes the other. It is not a hand-in: a hand-in would put [?]
+# on Toke for a quest the player cannot see, and [?] outranks the [!] of Find
+# Your Footing on his name (requirements rule 9).
 - key: newcomer_players
   kind: info
   label: I'm new here. How do I talk to other people?

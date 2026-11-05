@@ -29,7 +29,7 @@ Then read 2 existing quest YAMLs as structural examples. Glob:
 ```
 _datafiles/world/dogmud/quests/*.yaml
 ```
-Read 2 results (not the generic quest).
+Read any 2 results.
 
 Then read 2 existing dialogue YAMLs that contain quest topics. Glob:
 ```
@@ -61,8 +61,8 @@ before proceeding.** Specifically ask about:
 
 ### Step 3 — Determine next questid
 
-Glob `_datafiles/world/dogmud/quests/*.yaml`, find the highest questid
-(ignoring the 1000000 generic quest), and suggest the next integer.
+Glob `_datafiles/world/dogmud/quests/*.yaml`, find the highest questid,
+and suggest the next integer.
 
 ### Step 4 — Generate the quest sketch
 

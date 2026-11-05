@@ -57,8 +57,9 @@ func TestHelp_HandInCopyMatchesTheTopics(t *testing.T) {
 			continue
 		}
 		for _, tp := range df.Topics {
-			// A [*] step moves its quest by a token or by a quest flag the
-			// quest's trigger reads (quest 72's q72_side). The newcomer teaching
+			// A [*] step moves its quest by a token, by a quest flag the
+			// quest's trigger reads (quest 72's q72_side), or by topic_heard
+			// (Velk's protection_report, quest 10). The newcomer teaching
 			// that once pinned this rule is a flag on quest 30 now, not a step.
 			if tp.Kind == KindInfo && tp.Marked && (tp.GrantsQuest != "" || tp.SetsQuestFlag != nil) && markedStep == "" {
 				markedStep = f + " " + tp.Key

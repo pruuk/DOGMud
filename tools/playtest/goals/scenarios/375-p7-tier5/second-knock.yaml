@@ -12,9 +12,9 @@ ephemeral:
     wall_clock: 50m
 goals:
   - >-
-    Go `up` to the Condemned Floor. `talk odile`, hear her, then leave without telling her anything. Go to Horst at The
-    Watched House Gate: from the Common Quarter go west through Aldric's Public House to Dock Street and follow the
-    `quests` line. Hear him and tell him where she sleeps. Quote what he says and pays. Say whether what you heard from
+    You start on the Condemned Floor, at the top of the stair in Mother Brisk's Block. `talk odile`, hear her, then leave
+    without telling her anything: the only way out is `down`. Go to Horst at The Watched House Gate: from the Common
+    Quarter go west through Aldric's Public House to Dock Street and follow the `quests` line. Hear him and tell him where she sleeps. Quote what he says and pays. Say whether what you heard from
     her made this a real choice. Quote game lines VERBATIM and in order.
   - >-
     Go to Marn's Fabric-Remnants Shop at the north end of the Outer Dock Lane on the docks. Read his opener. Type `talk marn`.

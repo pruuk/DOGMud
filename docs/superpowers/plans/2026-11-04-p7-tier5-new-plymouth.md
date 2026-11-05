@@ -2930,6 +2930,8 @@ Isolated boot, as Task 5 Step 4's second block, with `GamePlay.MapConsistencyEnf
 
 ### Task 17: Quest 21 retires
 
+**Amendment (2026-11-04, playtest):** the `told` value was dropped. Hearing Toke closed Hadwen's lesson for a player who had walked past him. The flag only ever holds `new`; both lines stay on the menu, dim once heard. The steps below are kept as first written.
+
 **Files:** `git rm quests/21-newcomers_path.yaml`. Edit `quests/30-the_awakening.yaml`, `step-ids.txt`, `loop-backlog.txt`, `internal/usercommands/start.go`, `dialogue/pothole_coulee/9100.yaml`, `9106.yaml`, `coulee_spine_smoke_test.go`. Test: create `internal/usercommands/start_newcomer_test.go`.
 
 - [ ] **Step 1: Failing tests.**

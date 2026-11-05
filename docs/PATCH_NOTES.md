@@ -1,9 +1,9 @@
 # DOGMud Patch Notes
 
-## 2026-11-05: Tidying up
+## 2026-11-04: Tidying up
 
-- Cleric Hadwen and Crier Toke still teach new arrivals the basics. Anyone caught
-  part way through those lessons today may miss the two talks.
+- Cleric Hadwen and Crier Toke still offer their two talks to every new arrival.
+  A character already part way through those lessons may miss them.
 
 ## 2026-11-04: Hard to put down
 

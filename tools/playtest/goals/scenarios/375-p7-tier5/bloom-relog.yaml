@@ -1,5 +1,6 @@
 # Owner ruling 2026-11-04: only time online counts, so a logout waits off nothing.
-# The driver restarts this seat after `quit`; see the session's run notes. Shipped
+# After `quit` the driver restarts the seat's mudagent with its output appended, and
+# follows commands.txt with `tail -n 0 -f`, so old commands do not replay. Shipped
 # pace: withdrawal 4 online minutes after a dose.
 ephemeral:
   profile: mid

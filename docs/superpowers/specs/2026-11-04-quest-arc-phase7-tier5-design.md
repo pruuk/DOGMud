@@ -125,6 +125,9 @@ topics read `questFlagRequired`, and Toke's sets `told`, replacing the `21-end` 
 token drops at login through the existing retired-quest path, so a player mid-tutorial on deploy day
 loses those two teaching lines. That cost is accepted.
 
+**Amendment (2026-11-04, playtest):** the `told` value was dropped. Hearing Toke closed Hadwen's lesson for a
+player who had walked past him. The flag only ever holds `new`; both lines stay on the menu, dim once heard.
+
 **Quest 1000000 is deleted.** It refers to a condition and a skill that do not exist, and no player can
 reach it. `ReservedTemplateIdFloor` stays, because it keeps editor-made ids in range. If a test or the
 editor needs the file, the plan says so and fixes the file's references instead.

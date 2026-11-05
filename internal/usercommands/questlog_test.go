@@ -247,14 +247,13 @@ func TestSendQuestLogLine_WrapsToTheReader(t *testing.T) {
 	}
 }
 
-// On shipped data, quest 21 has no offer, and Dewey offers quest 28 (#375
-// phase 7: its only start, so it can be set aside and taken back).
+// On shipped data, Dewey offers quest 28 (#375 phase 7: its only start, so it
+// can be set aside and taken back).
 func TestShippedOfferIndex_NamesWhoOffersAQuest(t *testing.T) {
 	chdirRepoRootForTest(t)
 	files, _ := dialogue.LoadAllFiles()
 	t.Cleanup(dialogue.SetOfferIndexForTest(nil))
 	dialogue.BuildOfferIndex(files)
-	require.Empty(t, dialogue.Offerers(21))
 	require.Equal(t, []int{9491}, dialogue.Offerers(28))
 	require.NotEmpty(t, dialogue.Offerers(42))
 }

@@ -276,7 +276,7 @@ func (c *Character) MigrateRecipeDisciplineShuffle() {
 // its first moment: CreateUser does not run LoadUser, so a new character has no
 // marker until it logs back in, and since #375 phase 7 nothing grants quest 30
 // by itself, so finishing Dewey and logging out at the pool saves
-// {21:start, 28:end} with no q30 entry. A marker set at creation would not
+// {28:end} with no q30 entry. A marker set at creation would not
 // cover alts, which are created without CreateUser, so the rule reads the
 // progress itself. The marker is set either way.
 //
@@ -291,7 +291,6 @@ func (c *Character) MigrateNewbieAwakening() {
 	// The only quests a character can hold before the rite. Holding them says
 	// nothing about being a veteran.
 	preRiteQuests := map[int]struct{}{
-		21: {}, // The secret Newcomer's Path marker, granted as the "new to MUDs" route starts.
 		28: {}, // Waking to Gaius, Dewey's tutorial, which ends by moving the player to the pool.
 	}
 	if c.QuestProgress == nil {

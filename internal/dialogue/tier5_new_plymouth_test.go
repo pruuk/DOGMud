@@ -337,11 +337,11 @@ func TestTier5TobyAnswersAfterTheBloodlineEnding(t *testing.T) {
 func TestTier5OrinKeepsTheOriginalInHand(t *testing.T) {
 	orin := loadShippedDialogue(t, "new_plymouth_crafting/9332.yaml")
 	require.NotContains(t, orin.FindTopic("circle_choice").Text, "The original is below")
-	require.Contains(t, orin.FindTopic("circle_choice").Text, "What it charts is under the docks")
+	require.Contains(t, orin.FindTopic("circle_choice").Text, "What it charts is under the old quarter")
 	copyItem, err := os.ReadFile("../../_datafiles/world/dogmud/items/materials-40000/40114-copy_of_edvars_map.yaml")
 	require.NoError(t, err)
 	require.NotContains(t, string(copyItem), "original is below")
-	require.Contains(t, string(copyItem), "What it charts is under the docks")
+	require.Contains(t, string(copyItem), "What it charts is under the old quarter")
 }
 
 // "Mind the canal" says why, in the words a new reader needs.
