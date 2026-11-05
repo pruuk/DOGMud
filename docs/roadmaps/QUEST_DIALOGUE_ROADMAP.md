@@ -380,8 +380,13 @@ line names quests 73, 74 or 78 to 87 (`internal/guards/tier3_backlog_guard_test.
 Leftovers are in #770. Tier 4 (Greenford, Cascade Pass Road, Eastern Highlands) was done by the
 disc line redesign, #667: no `loop-backlog.txt` line names quests 75, 76 or 77
 (`internal/guards/tier4_backlog_guard_test.go`), and their dialogue carries no dashes. #667 stays open
-for a naive playtest and for a Core Guardian kill in play, which nobody has run yet. Tier 5 (New
-Plymouth, quests 63 and 65 to 71) is not started.
+for a naive playtest and for a Core Guardian kill in play, which nobody has run yet.
+
+Tier 5 (New Plymouth, quests 63 and 65 to 71) is built, and `loop-backlog.txt`
+is empty (`internal/guards/tier5_backlog_guard_test.go`). Quest 21 is a flag on
+quest 30, the sample quest is deleted, and quests 64 and 102 give the Bloom a source
+behind Marn's cupboard door. The closing step comes next, in its own plan:
+validators as hard boot failures, deleting `room_interact`, and the dash guards.
 
 ## Phase 6: Web builder (postponed)
 
