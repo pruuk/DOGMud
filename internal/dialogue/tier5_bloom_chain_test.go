@@ -256,7 +256,9 @@ func TestTier5SeftonOutlastsTheBust(t *testing.T) {
 
 // A player reaches the Bloom only by deliberate choice, and the cure stays open
 // to everyone. So Sefton says plainly what it does, with no numbers, and the hint
-// points at the cure with no route. Ysolde's cup asks for no quest.
+// says where the cure is, as quest 66's does, without walking the player there: a
+// playtest seat with a craving searched about twenty rooms for her. Ysolde's cup
+// asks for no quest.
 func TestTier5SeftonWarnsPlainly(t *testing.T) {
 	s := loadShippedDialogue(t, "new_plymouth_docks/9802.yaml")
 	warn := s.FindTopic("what_it_does")
@@ -267,7 +269,8 @@ func TestTier5SeftonWarnsPlainly(t *testing.T) {
 	require.Regexp(t, `^[^0-9]*$`, warn.Text+warn.Hints)
 	require.Contains(t, warn.Hints, "Type talk ysolde")
 	lower := strings.ToLower(warn.Hints)
-	for _, banned := range []string{"north", "south", " east", " west", "quarter", "temple", "up ", "down "} {
+	require.Contains(t, lower, "common quarter")
+	for _, banned := range []string{"north", "south", " east", " west", "temple", "up ", "down "} {
 		require.NotContains(t, lower, banned)
 	}
 	require.Contains(t, menuKeys(s, heldState()), "what_it_does")
