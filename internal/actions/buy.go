@@ -61,6 +61,7 @@ const (
 	BuyReasonOverburdened     = "overburdened"
 	BuyReasonSelfTarget       = "self_target"
 	BuyReasonNoSight          = "no_sight"
+	BuyReasonLimit            = "limit" // the character has bought all they may of this item for now (buy_limit.go)
 )
 
 // legacyShopCatalog enumerates the in-stock items + conditions offered by a
@@ -417,7 +418,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 			}
 			return r
 		})
-		if sold {
+		if sold || result.Reason == BuyReasonLimit {
 			return result
 		}
 	}
@@ -440,7 +441,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 				}
 				return r
 			})
-			if sold {
+			if sold || result.Reason == BuyReasonLimit {
 				return result
 			}
 		} else {
@@ -452,7 +453,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 				}
 				return r
 			})
-			if sold {
+			if sold || result.Reason == BuyReasonLimit {
 				return result
 			}
 		}
@@ -492,6 +493,10 @@ func tryPurchaseLegacy(buyer Actor, request string, shopMob *mobs.Mob, shopUser 
 			shopMob.Command(`say Sorry, I can't offer that right now.`+extraSay, 1)
 		}
 		return BuyResult{Reason: BuyReasonNoMatch}
+	}
+
+	if refuseIfBuyLimited(buyer, shopMob, shopUser, cat.nameToShopItem[match].ItemId) {
+		return BuyResult{Reason: BuyReasonLimit}
 	}
 
 	ctx, reason, ok := validatePurchase(buyer, shopMob, shopUser, cat.nameToShopItem[match], cat.itemPrices, cat.conditionPrices)
@@ -632,6 +637,10 @@ func tryPurchaseFromInventory(buyer Actor, request string, shopMob *mobs.Mob, sh
 	}
 
 	matched := &available[pick]
+
+	if refuseIfBuyLimited(buyer, shopMob, nil, matched.item.ItemId) {
+		return BuyResult{Reason: BuyReasonLimit}
+	}
 
 	// Encumbrance gate — same pre-side-effect check as the legacy
 	// path, since ShopInventory bypasses validatePurchase.
@@ -841,6 +850,8 @@ func executePurchaseCondition(buyer Actor, shopMob *mobs.Mob, shopUser *users.Us
 // items, so collapsing them would break "buy N of X" objectives.
 func postSuccessBookkeeping(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRecord,
 	itemId int, awardProgression bool) {
+	recordLimitedBuy(buyer.GetCharacter(), itemId)
+
 	// U10b-1 Task 18c: won is unconditionally true. This runs inside
 	// postSuccessBookkeeping -- every refusal path (no stock, cannot afford,
 	// carry capacity) returns before it -- so a completed trade is a success by

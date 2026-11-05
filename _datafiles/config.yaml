@@ -2346,6 +2346,10 @@ Balance:
   BloomNewMutationChance: 0.10      # chance, rolled first, of a whole new mutation
   BloomCommunionRounds: 30        # how long the high lasts
   BloomCrashRoundsMult: 2.5         # crash length as a multiple of condition 91's baseline
+  # How much one character may buy from any seller of the wafer (owner 2026-11-04).
+  # Gifts and auctions are not counted: a market is accepted, this limits the source.
+  BloomDealerWafersPerDay: 3        # wafers one character may buy within the window
+  BloomDealerWindowHours: 24        # the rolling window, in real hours
   # ── INSTANCE GOLD (owner ruling 2026-10-17) ─────────────────────────────────
   # Opt-in per zone: only a paid instance of a zone whose zone-config sets
   # instance_gold: true (Instance Arena and Instance Planar Oasis today) uses

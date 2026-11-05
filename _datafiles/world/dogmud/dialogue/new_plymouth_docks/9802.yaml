@@ -6,8 +6,9 @@ greetings:
   moods:
   - neutral
 opener:
-  text: You have the knock, so you have the price. I sell one thing. Do not ask me for
-    credit.
+  text: You have the knock, so you have the price. The wafers are what you came for. I
+    will not sell many to any one person, because a customer who buys a lot draws
+    notice. Do not ask me for credit.
   hints: To see what he sells, type list. Ask him what it does first.
   variants:
   - questRequired:
@@ -21,7 +22,8 @@ opener:
     - 67-end
     text: The watch broke up a house on Lintel Street, I hear. A house and a ledger. This
       room was never on that paper, and I have never met the people who were. I keep a
-      small stock. Buy, or close the door behind you.
+      small stock, and I do not sell much of it to any one person. Buy, or close the
+      door behind you.
     hints: To see what he sells, type list. Ask him what it does first.
 topics:
 - key: q102_in
@@ -29,11 +31,13 @@ topics:
   quest: 102
   label: The Knock
   playerLine: Marn sent me. I paid.
-  text: Then you are a customer. I am Sefton. I sell one thing, and I keep a small
-    stock, because a large stock is how people get noticed. Whatever the watch breaks
-    up on Lintel Street is a house and a ledger. This room was never on that paper. I
-    have never met the people at that end, and they have never met me. That is what the
-    arrangement is for.
+  text: Then you are a customer. I am Sefton. The wafers are what you came for, and I
+    keep a small stock, because a large stock is how people get noticed. For the same
+    reason I will not sell many to any one person. A customer who buys a lot draws
+    notice, and I do not want that customer. Whatever the watch breaks up on Lintel
+    Street is a house and a ledger. This room was never on that paper. I have never met
+    the people at that end, and they have never met me. That is what the arrangement
+    is for.
   hints: To see what he sells, type list. To buy one, type buy wafer. To take one, type
     quaff wafer. Ask him what it does to you first.
   questRequired:

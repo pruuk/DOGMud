@@ -7,10 +7,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/shops"
-	"gopkg.in/yaml.v2"
 )
 
 const bloomWaferId = 40108
@@ -19,23 +17,17 @@ const bloomWaferId = 40108
 // 19 to 80 in an hour through EffectiveMaxStock, so the wafer's cap is set here,
 // and it is the only tier 10 item, so RestockCadenceTier10Days is its own clock.
 func TestBloomWaferShelfIsCapped(t *testing.T) {
-	setupSearchLightWorld(t)
-	cfg := configs.GetConfig()
-	cfg.Balance.ShopMaxStockMultiplier = 2.0 // config.yaml:1600
-	configs.SetConfigForTest(t, cfg)
+	seftonWorld(t) // the real Sefton through RegisterMobShop, on the shipped multiplier
 
-	data, err := os.ReadFile(filepath.Join(repoRoot(t), "_datafiles", "world", "dogmud", "mobs", "new_plymouth_docks", "9802-sefton.yaml"))
-	if err != nil {
-		t.Fatal(err)
+	entry := waferEntry(t)
+	if entry.MaxStock != 5 {
+		t.Errorf("the wafer's shelf cap is %d, want 5", entry.MaxStock)
 	}
-	var mob struct {
-		StockMultiplier float64 `yaml:"stock_multiplier"`
+	if entry.RestockQty != 5 {
+		t.Errorf("the wafer restocks %d at a time, want 5", entry.RestockQty)
 	}
-	if err := yaml.Unmarshal(data, &mob); err != nil {
-		t.Fatal(err)
-	}
-	if got := shops.EffectiveMaxStock(bloomWaferId, mob.StockMultiplier); got != 5 {
-		t.Errorf("the wafer's shelf cap is %d, want 5", got)
+	if entry.Current != 5 {
+		t.Errorf("the shelf seeds at %d, want 5", entry.Current)
 	}
 	// The owner's figure, and every price the plan worked out comes from it.
 	if spec := items.GetItemSpec(bloomWaferId); spec == nil || spec.Value != 120 {

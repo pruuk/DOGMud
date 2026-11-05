@@ -600,4 +600,10 @@ func (b *Balance) validateCombat() {
 	if b.BloomCrashRoundsMult <= 0 {
 		b.BloomCrashRoundsMult = 2.5
 	}
+	if b.BloomDealerWafersPerDay <= 0 {
+		b.BloomDealerWafersPerDay = 3
+	}
+	if b.BloomDealerWindowHours <= 0 {
+		b.BloomDealerWindowHours = 24
+	}
 }

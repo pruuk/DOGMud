@@ -39,6 +39,8 @@ func TestBloomKnobsShipAtTheirDefaults(t *testing.T) {
 		{"BloomNewMutationChance", float64(shipped.BloomNewMutationChance), float64(def.BloomNewMutationChance)},
 		{"BloomCommunionRounds", float64(shipped.BloomCommunionRounds), float64(def.BloomCommunionRounds)},
 		{"BloomCrashRoundsMult", float64(shipped.BloomCrashRoundsMult), float64(def.BloomCrashRoundsMult)},
+		{"BloomDealerWafersPerDay", float64(shipped.BloomDealerWafersPerDay), float64(def.BloomDealerWafersPerDay)},
+		{"BloomDealerWindowHours", float64(shipped.BloomDealerWindowHours), float64(def.BloomDealerWindowHours)},
 	} {
 		if c.got != c.want {
 			t.Errorf("shipped %s = %v, default %v", c.name, c.got, c.want)

@@ -916,6 +916,8 @@ type Balance struct {
 	BloomNewMutationChance     ConfigFloat `yaml:"BloomNewMutationChance"`     // chance/dose to instead grant a new mutation (default 0.10)
 	BloomCommunionRounds       ConfigInt   `yaml:"BloomCommunionRounds"`       // communion high duration in rounds (default 30)
 	BloomCrashRoundsMult       ConfigFloat `yaml:"BloomCrashRoundsMult"`       // crash duration = communion * this (default 2.5)
+	BloomDealerWafersPerDay    ConfigInt   `yaml:"BloomDealerWafersPerDay"`    // wafers one character may buy within the window (default 3)
+	BloomDealerWindowHours     ConfigInt   `yaml:"BloomDealerWindowHours"`     // the rolling window, in real hours (default 24)
 
 	// ── MANIFESTATION / COMPANION SCALING ───────────────────────────────────
 	ManifestStatScaleChaFactor   ConfigInt   `yaml:"ManifestStatScaleChaFactor"`   // Charisma divisor for companion stat scaling (default 150)

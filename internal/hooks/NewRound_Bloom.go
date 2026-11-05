@@ -4,17 +4,21 @@ package hooks
 //
 // Three duties per tick:
 //  1. Crash onset:    Communion (condition 90) just expired → apply Crash (condition 91).
-//  2. Withdrawal:     addict has abstained past BloomWithdrawalOnsetRounds →
-//                     ensure Withdrawal (condition 92) is active; message on first apply.
-//  3. Addiction decay: one addiction point removed per BloomAddictionDecayRounds
+//  2. Addiction decay: one addiction point removed per BloomAddictionDecayRounds
 //                     of abstinence; fully clean players have condition 92 cleared.
+//  3. Withdrawal:     addict has abstained past BloomWithdrawalOnsetRounds →
+//                     ensure Withdrawal (condition 92) is active; message on first apply.
 //
-// The Communion→Crash transition uses the transient Character.BloomHadCommunion
-// bool (yaml:"-") so the detection survives logout-proof condition-expiry timing:
-// the flag is true while condition 90 is on, and cleared the round it goes away.
+// The Communion→Crash transition uses Character.BloomHadCommunion: true while
+// condition 90 is on, and cleared the round it goes away. It is saved, so a
+// Communion that ends on the first round after a login still crashes.
 //
-// BloomLastDoseRound is yaml:"-" (not persisted), so withdrawal and decay timers
-// restart fresh after each login.  Addiction level (BloomAddiction) IS persisted.
+// BloomLastDoseRound is saved too (owner 2026-11-04): a relog must not stop
+// withdrawal. util.SaveRoundCount keeps the round count across a restart, so a
+// saved round stays meaningful, and rounds run while a player is away, so time
+// away counts as abstinence. A save from before the round was stored, or a stamp
+// ahead of the clock (a lost round file), starts its clock at the first round
+// online: no false withdrawal, and never stuck with no clock at all.
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -60,39 +64,43 @@ func BloomTick(e events.Event) events.ListenerReturn {
 		// Always mirror the current state for the next tick's detection.
 		c.BloomHadCommunion = hasCommunion
 
-		// ── 2. Withdrawal ─────────────────────────────────────────────────────
-		// Gate: must be addicted AND have a reference dose round (non-zero).
-		// BloomLastDoseRound is zero until the player's first Bloom dose this
-		// session, so this block is a no-op for freshly logged-in addicts until
-		// they take another dose (known limitation of yaml:"-" field).
-		if c.BloomAddiction > 0 && c.BloomLastDoseRound > 0 && withdrawOnset > 0 {
-			sinceLastDose := currentRound - c.BloomLastDoseRound
-			if sinceLastDose >= withdrawOnset {
-				// Re-apply only when the condition has expired to avoid constant
-				// timer resets that would make withdrawal permanent.
-				// Through the user record, for the same reason as the crash
-				// above: condition 92's authored start line is the one door, and the
-				// duplicate warning that used to follow this call is gone.
-				if !c.HasCondition(92) {
-					user.AddConditionScaled(92, 1.0, "bloom") // baseline 200 rounds
-				}
+		if c.BloomAddiction == 0 {
+			continue
+		}
+
+		// An addict with no usable clock: a save from before the round was stored,
+		// or a stamp ahead of the count, which the subtractions below would wrap
+		// into a huge abstinence. The clock starts now.
+		if c.BloomLastDoseRound == 0 || c.BloomLastDoseRound > currentRound {
+			c.BloomLastDoseRound = currentRound
+		}
+
+		// ── 2. Addiction decay ────────────────────────────────────────────────
+		// One addiction point per BloomAddictionDecayRounds of abstinence.
+		// After each decrement, advance BloomLastDoseRound by one period so
+		// the next decrement fires exactly BloomAddictionDecayRounds later. A
+		// player back from a long absence settles it all in one tick, before the
+		// withdrawal check, so someone clean by now is not sent into withdrawal
+		// for one round first.
+		for decayRounds > 0 && c.BloomAddiction > 0 && currentRound-c.BloomLastDoseRound >= decayRounds {
+			c.AddBloomAddiction(-1)
+			// Slide the reference point forward one period.
+			c.BloomLastDoseRound += decayRounds
+			if c.BloomAddiction == 0 {
+				// Fully clean: remove any lingering Withdrawal condition.
+				actions.LandBloomClean(actions.NewUserActor(user))
 			}
 		}
 
-		// ── 3. Addiction decay ────────────────────────────────────────────────
-		// One addiction point per BloomAddictionDecayRounds of abstinence.
-		// After each decrement, advance BloomLastDoseRound by one period so
-		// the next decrement fires exactly BloomAddictionDecayRounds later.
-		if c.BloomAddiction > 0 && c.BloomLastDoseRound > 0 && decayRounds > 0 {
-			sinceLastDose := currentRound - c.BloomLastDoseRound
-			if sinceLastDose >= decayRounds {
-				c.AddBloomAddiction(-1)
-				// Slide the reference point forward one period.
-				c.BloomLastDoseRound += decayRounds
-				if c.BloomAddiction == 0 {
-					// Fully clean: remove any lingering Withdrawal condition.
-					actions.LandBloomClean(actions.NewUserActor(user))
-				}
+		// ── 3. Withdrawal ─────────────────────────────────────────────────────
+		if c.BloomAddiction > 0 && withdrawOnset > 0 && currentRound-c.BloomLastDoseRound >= withdrawOnset {
+			// Re-apply only when the condition has expired to avoid constant
+			// timer resets that would make withdrawal permanent.
+			// Through the user record, for the same reason as the crash
+			// above: condition 92's authored start line is the one door, and the
+			// duplicate warning that used to follow this call is gone.
+			if !c.HasCondition(92) {
+				user.AddConditionScaled(92, 1.0, "bloom") // baseline 200 rounds
 			}
 		}
 	}

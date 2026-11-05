@@ -1423,6 +1423,14 @@ exit a quest has closed; with no ungated exit the flee fails like an
 all-locked room. A fleeing mob holds no tokens, so `RoomGateGuards` closes any
 room a gate guards to its flee, whatever the gate's conditions.
 
+**Buying limit (`buy_limit.go`, owner ruling 2026-11-04).** One character may buy at
+most `Balance.BloomDealerWafersPerDay` Bloom Wafers within a rolling
+`Balance.BloomDealerWindowHours` real hours, from any seller. Both purchase paths ask
+`refuseIfBuyLimited` before anything moves; `postSuccessBookkeeping` records each unit
+as one saved `Character.Timers` entry (`recordLimitedBuy`). The rule reads the item, so
+a second dealer would not double it, and the seller says the refusal. `BuyLimitNote` is
+the line `list` adds for a viewer at the limit, because the list keeps showing stock.
+
 **Stolen baubles after the theft (`stolen_bauble.go`, docs/baubles Phase 6c).**
 Selling is `sell_bauble.go`'s (above); storage (`usercommands/storage.go`,
 `storageRefusesStolen`) and the auction house (`modules/auctions`,

@@ -195,6 +195,11 @@ than reading an old result:
 | [`../internal/actions/look_scan_gate_test.go`](../internal/actions/look_scan_gate_test.go) | What `ResolveLook` and `Scan` report for an exit a `room_gate` guards, for a player and for a mob |
 | [`../internal/planners/shop_gate_test.go`](../internal/planners/shop_gate_test.go) | A mob's shop and station planners skip a room a `room_gate` guards |
 | [`../internal/actions/drink_bloom_cap_test.go`](../internal/actions/drink_bloom_cap_test.go) | A wafer stops at `MutationMaxCount` through the real drink path |
+| [`../internal/actions/buy_limit.go`](../internal/actions/buy_limit.go) | The per-character limit on buying Bloom Wafers, saved on `Character.Timers` |
+| [`../internal/actions/buy_limit_test.go`](../internal/actions/buy_limit_test.go) | The buying limit unit by unit: refusal moves nothing, per character, rolling window, knobs, save, both purchase paths, the list note |
+| [`../internal/guards/tier5_bloom_buy_test.go`](../internal/guards/tier5_bloom_buy_test.go) | A wafer bought from the shipped Sefton end to end, the limit at the real seller and on the shipped config |
+| [`../internal/hooks/NewRound_Bloom_test.go`](../internal/hooks/NewRound_Bloom_test.go) | Withdrawal, decay and the crash survive a relog; an older save starts its clock at login; time away is abstinence |
+| [`../internal/hooks/tier5_knock_hook_test.go`](../internal/hooks/tier5_knock_hook_test.go) | A real Accept of The Knock teaches the knock through `HandleQuestUpdate` |
 | [`../internal/actions/drink_bloom_clean_test.go`](../internal/actions/drink_bloom_clean_test.go) | A purge that reaches addiction zero ends the withdrawal and says so; a wafer is taken, not drunk |
 | [`../internal/usercommands/shoot_quest_gate_test.go`](../internal/usercommands/shoot_quest_gate_test.go) | A shot through a `room_gate` reads as a shot through a locked door and answers for no name behind it |
 | [`../internal/quests/room_gate_text_only_test.go`](../internal/quests/room_gate_text_only_test.go) | The loader refuses a `room_gate` action beyond text, because a look runs a gate's actions |
