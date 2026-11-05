@@ -53,7 +53,8 @@ topics:
     changes, sometimes a lot, and you do not get to choose what. Take a few and you will
     need them. Stop, and the need comes for you. That is the business.
   hints: Each wafer poisons you a little, so your body will refuse one too many. The
-    craving fades slowly on its own. Ysolde the healer has a harsh cure. Type talk ysolde.
+    craving fades slowly. Ysolde, off the Back-Alley in the Common Quarter, has a harsh
+    cure. Type talk ysolde.
   marked: true
 - key: where_from
   kind: info

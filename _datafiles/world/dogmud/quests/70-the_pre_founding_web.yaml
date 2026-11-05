@@ -18,8 +18,8 @@ steps:
       symbol, and carry it up to Orin in the Crafting Quarter.
     hint: >-
       The Buried Lintel lies west twice from Gritta's Flooded Cellar. It is
-      black dark, so bring a light. Something waits in the water of the canal
-      north of the stonework. Type search there.
+      black dark, so bring a light, and type search at the lintel. Something waits
+      in the water of the canal north of the stonework.
   - id: witness
     destination:
       mob: 9332  # follow Orin the Bookseller (schedule np_crafting_orin)
