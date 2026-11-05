@@ -15,7 +15,114 @@ opener:
   hints: Choose a line below if you want to hear about the watched house and who
     lives there, about the work he does at the gate, or about the visitors he
     receives.
+  variants:
+  - questRequired:
+    - 64-end
+    questFlagRequired:
+      64-outcome: ran
+    text: The girl has gone from the Quarter, and no one saw her leave. You were slow,
+      or you were something else. I have no more work for you.
+    hints: Horst has nothing more for you. He is polite about it.
+  - questRequired:
+    - 64-end
+    - 102-start
+    text: She was where you said. The office is satisfied, and so am I.
+    hints: Horst has nothing more for you. He is polite about it.
+  - questRequired:
+    - 64-end
+    text: She was where you said. The office is satisfied, and so am I.
+    hints: Marn the draper, on the docks, has something to sell to someone who has done
+      this kind of work. Type talk marn.
+  - questRequired:
+    - 64-found
+    text: Well? Is she found?
+    hints: Choose What happens to her if I tell you? below. When he has answered, The
+      Skip on the menu tells him where she is. It cannot be undone.
+  - questRequired:
+    - 64-start
+    text: She will not find herself. The Common Quarter, where no one asks for papers.
+    hints: Mother Brisk keeps tenants she will not name, at her block off Tenement Row.
+      Type talk brisk.
+  - questRequired:
+    - 67-end
+    text: The watch broke up a house on Lintel Street, I hear, and took a ledger. The
+      office has read the report and is not troubled by it. Is there something you need?
+    hints: Choose a line below if you want to hear about the watched house and who
+      lives there, about the work he does at the gate, or about the visitors he
+      receives.
 topics:
+- key: q64_offer
+  kind: offer
+  quest: 64
+  label: The Skip
+  playerLine: Marn says the supply end pays for finding things.
+  text: Marn talks more than he should. Yes. A household I serve has lost a girl,
+    Odile by name, and some things of theirs with her. A thief, then. She has gone to
+    ground in the Common Quarter, among people who do not ask for papers. I do not
+    need her brought in. I need to know where she sleeps. Find her, tell me, and I pay
+    in gold and in kind.
+  hints: Accept, then go to the Common Quarter and ask who is not on the books.
+  questFlagRequired:
+    67-entry: undercover
+  questFlagExcluded:
+    64-seen: found
+  questExcluded:
+  - 64-start
+  - 64-end
+  grantsQuest: 64-start
+  moodChange: cautious
+- key: q64_resume
+  kind: offer
+  quest: 64
+  label: The Skip
+  playerLine: I put your work down. I want to take it up again.
+  text: The offer stands. I still want to know where she sleeps, and I still pay for it.
+  hints: You know where she is already. You can tell her to run, or tell Horst. Neither
+    can be undone.
+  objective: You know where she sleeps. Tell Horst, or tell her to run.
+  questFlagRequired:
+    67-entry: undercover
+    64-seen: found
+  questExcluded:
+  - 64-start
+  - 64-end
+  grantsQuest: 64-start
+  moodChange: cautious
+- key: q64_terms
+  kind: info
+  label: What happens to her if I tell you?
+  text: She goes back to the household that lost her. I do not decide what happens past
+    the gate, and I would not be good at my work if I asked. You will be paid whatever
+    happens there.
+  hints: He did not answer the question. Telling him pays you, and it cannot be undone.
+    If you are sure, choose The Skip below.
+  marked: true
+  questRequired:
+  - 64-found
+  questExcluded:
+  - 64-end
+- key: q64_report
+  kind: handin
+  quest: 64
+  label: The Skip
+  playerLine: She is on the condemned floor above Brisk's block.
+  text: The condemned floor. Yes, that would do it. Here. Gold, and one of these, which
+    some people would tell you is worth more than the gold. You have done well, and you
+    will not hear from me about it again.
+  hints: Horst pays you in gold and a Bloom Wafer. Once you start taking wafers, it is
+    hard to stop. Marn the draper has more to sell. Type talk marn.
+  heardRequired:
+  - q64_terms
+  questRequired:
+  - 64-found
+  questExcluded:
+  - 64-end
+  grantsQuest: 64-end
+  setsQuestFlag:
+    key: 64-outcome
+    value: reported
+  givesGold: 150
+  givesItem: 40108
 - key: q71_horst
   kind: info
   label: Where does the tribute go after Vell's desk?

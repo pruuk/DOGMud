@@ -1,0 +1,79 @@
+mobid: 9801
+zone: New Plymouth Common
+defaultMood: cautious
+greetings:
+- text: Quietly, if you have to say anything at all.
+  moods:
+  - cautious
+opener:
+  text: You came up past the chair, so she let you, or you moved it. Say what you
+    came to say, and say it quietly.
+  hints: A young woman sits against the wall with her boots on and her bag tied.
+  variants:
+  - questRequired:
+    - 64-end
+    questFlagRequired:
+      64-outcome: ran
+    text: Go on, then. I will be gone before the bell.
+    hints: She does not look at you again.
+  - questRequired:
+    - 64-end
+    text: Someone was on the stair this morning, asking which floor. That was you,
+      wasn't it?
+    hints: She does not move. There is nowhere for her to move to.
+  - questRequired:
+    - 64-found
+    text: You know what I am now. Tell me to run, or go and tell him. I cannot stop
+      you doing either.
+    hints: To tell her to run, choose The Skip below. You are paid nothing, and Horst
+      has no more work for you. Telling Horst pays. Neither can be undone.
+  - questRequired:
+    - 64-start
+    text: Did Horst send you? He sends people who are good at finding things. Are you
+      going to listen, or only look?
+    hints: Choose a line below.
+topics:
+- key: q64_found
+  kind: info
+  label: Why does Horst want you?
+  text: I took nothing. Ask him what I took, and watch him not say. Look at me. No
+    change on me anywhere, not a mark, in a house where every servant has something.
+    That is what they want. There was a woman called Hartley before me, in the
+    rooms under that house. Then one morning there was not, and they started looking
+    at me the way they looked at her. Nobody comes back from those rooms, and
+    somebody up here buys what comes out of them. So I ran.
+  hints: To tell her to run, choose The Skip below. You are paid nothing, and Horst
+    has no more work for you. Telling Horst pays. Neither can be undone.
+  marked: true
+  questRequired:
+  - 64-start
+  questExcluded:
+  - 64-end
+  setsQuestFlag:
+    key: 64-seen
+    value: found
+  moodChange: cautious
+- key: q64_run
+  kind: handin
+  quest: 64
+  label: The Skip
+  playerLine: Run. Tonight. I never found you.
+  text: You know you get nothing for this. Then I was never here, and neither were
+    you.
+  hints: You told her to run. Horst pays you nothing, and he has no more work for you.
+    It cannot be undone.
+  heardRequired:
+  - q64_found
+  questRequired:
+  - 64-found
+  questExcluded:
+  - 64-end
+  grantsQuest: 64-end
+  setsQuestFlag:
+    key: 64-outcome
+    value: ran
+- key: who
+  kind: info
+  label: Who keeps you up here?
+  text: Mother Brisk does not ask, and I do not tell her. She has a rule about the
+    upper floors. I am the reason for the rule this season.

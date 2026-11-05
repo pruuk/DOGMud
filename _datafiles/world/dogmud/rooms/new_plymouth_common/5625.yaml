@@ -1,0 +1,29 @@
+roomid: 5625
+zone: New Plymouth Common
+title: The Condemned Floor
+description: >
+  The upper floor has been condemned for eleven years, and the writ is still
+  pinned to the first door you pass. The joists are sound. The rooms have been
+  stripped of anything worth carrying, and the plaster has come down in sheets
+  along one wall. At the far end someone has made a <ansi fg="itemname">bed</ansi>
+  of sacking behind a door taken off its hinges and leaned across the corner. It
+  is a place to sleep with your back to a wall and your boots on. The stair goes
+  back down.
+biome: interior
+exits:
+  down:
+    roomid: 5614
+nouns:
+  bed: Sacking over old floorboards, folded with care, and a canvas bag beside it
+    packed and tied. Whoever sleeps here can leave in the time it takes to stand
+    up.
+idlemessages:
+- The building settles, which is what old buildings do.
+- A voice on the first landing says something short, and nobody answers it.
+- Dust comes down from the ceiling in a thin line, and stops.
+spawninfo:
+  - mobid: 9801
+    respawnrate: "10 real minutes"
+x: -5
+y: -80
+z: 1

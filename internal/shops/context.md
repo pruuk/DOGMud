@@ -43,7 +43,8 @@ change (forager deliveries, NPC sells, player purchases) lives in
   allocator; used by both the forager chest backfill and the enchanter
   reserve draw (chunk 5.4).
 - **effective_max_stock.go**: `EffectiveMaxStock` — caps MaxStock when the
-  shop is below the gold reserve threshold.
+  shop is below the gold reserve threshold. The Bloom Wafer's shelf cap at
+  Sefton is pinned by `guards/tier5_bloom_shop_test.go`.
 - **craftdecision.go**: `ShouldCraftNow` — evaluates whether the shopkeeper's
   crafter NPC should fire this tick.
 - **validation.go**: `ValidateShopMobTags` — startup panic if any shop-bearing

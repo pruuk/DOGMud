@@ -80,7 +80,7 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			return true, nil
 		}
 	}
-	tUserId, _, tRoom, _ := resolveShootTarget(room, rest, user.Character)
+	tUserId, _, tRoom, _ := resolveShootTarget(room, rest, user.Character, &actions.UserActor{User: user, Room: room})
 
 	// Issue 3 (self-target): room.FindByName can resolve the shooter.
 	if tUserId > 0 && tUserId == user.UserId {
@@ -712,8 +712,9 @@ func shouldSpeakEngagedCue(aimedWhileEngaged, alreadySpoken bool) (speak bool, n
 // opening-shot aggro preset. Returns the resolved player id, mob instance id,
 // the room the target stands in, and whether the shot is cross-room. Any id may
 // be 0 when unresolved; targetRoom is the shooter's room for same-room / absent
-// targets.
-func resolveShootTarget(room *rooms.Room, rest string, viewer *characters.Character) (userId, mobInstanceId int, targetRoom *rooms.Room, crossRoom bool) {
+// targets. An exit closed to the shooter resolves no one, so the guards answer
+// nothing about who is behind it and ExecuteFire gives its refusal.
+func resolveShootTarget(room *rooms.Room, rest string, viewer *characters.Character, shooter actions.Actor) (userId, mobInstanceId int, targetRoom *rooms.Room, crossRoom bool) {
 	if room == nil {
 		return 0, 0, nil, false
 	}
@@ -725,6 +726,9 @@ func resolveShootTarget(room *rooms.Room, rest string, viewer *characters.Charac
 	targetWords := args
 	if len(args) >= 2 {
 		if name, roomId := room.FindExitByName(args[len(args)-1]); name != "" {
+			if actions.ShotExitClosed(shooter, room, name, roomId) {
+				return 0, 0, room, false
+			}
 			if adj := rooms.LoadRoom(roomId); adj != nil {
 				crossRoom = true
 				targetRoom = adj

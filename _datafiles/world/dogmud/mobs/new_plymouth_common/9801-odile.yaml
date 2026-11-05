@@ -1,0 +1,31 @@
+mobid: 9801
+zone: New Plymouth Common
+behavior_archetype: noncombat_questgiver
+non_combatant: true
+charm_immune: true
+hostile: false
+statpool: 30
+maxwander: 0
+groups:
+  - humanoid
+idlecommands:
+  - 'emote listens to the stair for a moment, and goes back to sitting very still.'
+  - ''
+  - 'emote checks the knot on her canvas bag, which is already tied.'
+activitylevel: 10
+character:
+  name: Odile
+  description: |
+    A young woman in a servant's plain dress with the household mark cut off the
+    collar. She sits with her back to the wall and her boots on. In a city where
+    the Bloom touches nearly everyone who stays long enough, there is no change
+    on her at all: skin plain, hands unmarked, and nothing about her you would
+    look at twice. She looks like she has noticed you noticing.
+  speciesid: 1
+  level: 1
+  gold: 0
+  stats:
+    perception:
+      base: 112
+    dexterity:
+      base: 110

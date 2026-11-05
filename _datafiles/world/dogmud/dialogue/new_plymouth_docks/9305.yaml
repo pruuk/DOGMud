@@ -16,6 +16,36 @@ opener:
     of the shop, or other cloth sellers. To see what he sells, type list.
   variants:
   - questRequired:
+    - 102-end
+    text: The door is the door. What you do behind it is between you and him.
+    hints: The cupboard door is east past the shelving. Type east.
+  - questRequired:
+    - 102-start
+    text: You know the knock. Go on, then.
+    hints: The cupboard door is east past the shelving. Type east.
+  - questFlagRequired:
+      102-stake: paid
+    text: You paid, and I keep what I am paid. Whether you use what you bought is your
+      own affair.
+    hints: You already paid him. Choose The Knock below to take it up again. It costs
+      you nothing more.
+  - questRequired:
+    - 67-end
+    questFlagRequired:
+      64-outcome: reported
+    text: The watch broke up a house on Lintel Street, and here I am, selling cloth.
+      Horst says you can find things. Five hundred gold and I teach you the knock. I do
+      not haggle and I do not give credit.
+    hints: With five hundred gold in hand, you can choose The Knock below. What is sold
+      back there is hard to put down, and nobody makes you.
+  - questFlagRequired:
+      64-outcome: reported
+    text: Horst says you can find things. Then you have some idea what is behind a door
+      like mine. Five hundred gold and I teach you the knock. I do not haggle and I do
+      not give credit.
+    hints: With five hundred gold in hand, you can choose The Knock below. What is sold
+      back there is hard to put down, and nobody makes you.
+  - questRequired:
     - 67-start
     questExcluded:
     - 67-front
@@ -26,6 +56,47 @@ opener:
       pose as a buyer of the Bloom, or press him with what you already know about
       the wax wrapper.
 topics:
+- key: q102_offer
+  kind: offer
+  quest: 102
+  label: The Knock
+  playerLine: What would the knock cost me?
+  text: Five hundred gold. When the knock changes, my customers hear first. You were
+    already paid for what you did, so do not tell me about your conscience. What you do
+    behind that door, you do on your own feet.
+  hints: Accepting takes the gold now. It is a choice, and what is sold back there is
+    hard to put down.
+  objective: Pay Marn five hundred gold for the knock, then go through the cupboard door.
+  questFlagRequired:
+    64-outcome: reported
+  questFlagExcluded:
+    102-stake: paid
+  goldRequired: 500
+  chargesGold: 500
+  questExcluded:
+  - 102-start
+  - 102-end
+  grantsQuest: 102-start
+  setsQuestFlag:
+    key: 102-stake
+    value: paid
+  moodChange: cautious
+- key: q102_resume
+  kind: offer
+  quest: 102
+  label: The Knock
+  playerLine: I paid you for the knock. I want to take it up again.
+  text: You paid, so the knock is yours. It has not changed, and neither has the door.
+  hints: This costs you nothing more.
+  objective: Go through the cupboard door. You have paid Marn already.
+  questFlagRequired:
+    64-outcome: reported
+    102-stake: paid
+  questExcluded:
+  - 102-start
+  - 102-end
+  grantsQuest: 102-start
+  moodChange: cautious
 - key: bloom_undercover
   kind: info
   label: I'm after the stock you don't keep out front.
@@ -33,10 +104,11 @@ topics:
     you understand what it is, and then we can talk about where the arrangement
     runs. It doesn't come from this shop. The supply end is an address in the Old
     Quarter, on Lintel Street. That's where it starts. Who holds that house, I
-    couldn't tell you.
-  hints: Marn nods at a wax-wrapped square under the remnants, like Teels's wrapper.
-    He takes you for a customer. The auctioneer Falk in the Merchant Quarter knows
-    who holds that house. Type talk falk.
+    couldn't tell you. The people at that end pay well for anyone who can find
+    things, if that is a trade you have.
+  hints: Marn nods at a wax-wrapped square under the remnants, and takes you for a
+    customer. Horst, who keeps the Watched House Gate, hires people who find
+    things. For the address, ask Falk. Type talk falk.
   marked: true
   questRequired:
   - 67-start
@@ -83,6 +155,8 @@ topics:
     rid of. It isn't set up for customers, and there is nothing back there worth
     your time.
   hints: Marn has said what he will about the back of the shop.
+  questFlagExcluded:
+    64-outcome: reported
   moodChange: cautious
 - key: competition
   kind: info

@@ -86,6 +86,12 @@ func (m *AICompanionModule) startExplore(c *controller, mob *mobs.Mob, exitName 
 	if rec == nil {
 		return `you have not taken stock of this place yet`
 	}
+	// `go` takes a mob through a room_gate, so an errand stops at one here.
+	if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+		if info, ok := room.GetExitInfo(exitName); ok && actions.RoomGateGuards(info.RoomId) {
+			return `the way ` + exitName + ` is closed to you`
+		}
+	}
 	for _, name := range unexploredExits(rec) {
 		if name == exitName {
 			c.travel = &travelPlan{

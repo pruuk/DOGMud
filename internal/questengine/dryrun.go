@@ -20,6 +20,14 @@ func (e *Engine) WouldFire(eventType string, d EventDetails, player PlayerState)
 	return false
 }
 
+// GuardsRoom reports whether a room_gate trigger guards roomId, a template room,
+// whatever its conditions. It matches as a real step does (room, area or zone).
+// For a mob's route, which ignores gates: a mob holds no tokens to read the
+// conditions against, so a room some gate guards is out of bounds for it.
+func (e *Engine) GuardsRoom(roomId int) bool {
+	return len(e.fieldMatches("room_gate", EventDetails{RoomId: roomId})) > 0
+}
+
 // SearchFeatures returns the sorted, distinct nouns of room_interact triggers
 // with `verb: search` whose Room is roomId. These are the things a player can
 // search in that room for a quest, whatever the triggers' conditions.

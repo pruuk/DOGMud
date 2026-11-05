@@ -211,6 +211,8 @@ quest|63|trigger0|action1|actor => You lift the board again. Hewd kept a fair co
 quest|63|trigger0|action2|observer => <ansi fg="username">Aliceia</ansi> lifts a loose floorboard and takes something wrapped in oilcloth.
 quest|63|trigger1|action2|actor => One floorboard sits proud of its neighbors, and it lifts with a little persuasion. In the gap beneath, wrapped in oilcloth, lies a small tally-book, and a glance inside is enough. Two columns of numbers for every shipment: the manifest count on the left, the real one on the right. Foreman Hewd has been skimming the difference for a long time, and the shortage he reported was Teo's only by his choosing.
 quest|63|trigger1|action3|observer => <ansi fg="username">Aliceia</ansi> works a loose floorboard free and pockets something wrapped in oilcloth.
+quest|64|trigger0|action0|actor => A woman on the first landing looks at you and does not move out of the way. The floors above are condemned, she says, and the chair across the stair stays where it is.
+quest|64|trigger1|action0|actor => A woman on the first landing looks at you and does not move out of the way. The floors above are condemned, she says, and the chair across the stair stays where it is.
 quest|65|rewards|actor => Coll turns the cold gray lump over in his sweeper's hands, and for once he has nothing to say for a long moment. "Older than the city. Under the city. And it washes up in my gutters when the rain's hard enough to loosen it." He pockets it carefully. "The bookseller wasn't wrong to go quiet. Keep this between us. The sort who'd want to know about a buried city aren't the sort I'd want knowing I found it. But you did right by an old sweeper, and the quarter remembers that."
 quest|65|rewards|observer => Coll the sweeper closes his hand around a cold gray lump and, for once, says nothing at all.
 quest|65|trigger0|action1|actor => You work another lump of the gray material loose from the seam. It is just as cold, and just as heavy.
@@ -400,5 +402,8 @@ quest|100|trigger2|action1|actor => Your first blow comes out of the dark. It kn
 quest|100|trigger3|action1|actor => It falls. Climb back out of the mine and tell Dace on the Reed Jetty.
 quest|101|rewards|actor => Dace watches your hands, not the purses. "Quicker. Come back when your fingers start to forget."
 quest|101|trigger0|action1|actor => That is three. Go and tell Dace. Type talk dace.
+quest|102|trigger0|action0|actor => The cupboard door is barred from the other side and does not give. It opens only to the right knock.
+quest|102|trigger1|action0|actor => Marn raps one clean knuckle on the shelf beside him, too low for the shop to hear: three short, then one. "Low on the frame," he says.
+quest|102|trigger2|action1|actor => The bar lifted at your knock, and the talk in here has not quite stopped. "...three months at minimum before the new one's producing at volume, if she survives the first month." A man you had not noticed by the shelves looks at you and goes out past you without a word. The one at the table squares his ledger and waits. You think about a condemned floor, and a woman with no change on her, and the gold you were paid.
 quest|1000000|rewards|actor => Congratulations, here's some stuff!
 quest|1000000|rewards|observer => A Generic Quest has been completed!

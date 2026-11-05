@@ -35,10 +35,7 @@ func scanZoneUpgrades(mob *mobs.Mob, profile itemvalue.WeightProfile, budget int
 	var best upgradeCandidate
 	found := false
 
-	for _, shop := range shops.AllShops() {
-		if shop.Zone != mob.Character.Zone {
-			continue
-		}
+	for _, shop := range walkableShopsIn(mob.Character.Zone) {
 		for _, e := range shop.Stock {
 			if e.Current <= 0 {
 				continue

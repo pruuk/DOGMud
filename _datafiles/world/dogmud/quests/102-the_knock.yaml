@@ -1,0 +1,82 @@
+questid: 102
+name: The Knock
+description: >-
+  Marn the draper sells more than cloth ends, to the right people, for a price.
+  Pay him and he teaches you the knock for the cupboard door at the back of his
+  shop.
+secret: false
+
+flags:
+  - key: stake
+    values: [paid]
+    description: "Set by the offer that takes the gold. A shelf keeps it, so a shelved payer is never asked again"
+
+steps:
+  - id: start
+    destination:
+      room: 5530
+    description: >-
+      Marn took your gold and taught you the knock. The cupboard door is at the
+      back of his shop, east past the shelving.
+    hint: >-
+      The cupboard door is in Marn's shop, east past the shelving. You know the
+      knock now. Type east.
+  - id: behind
+    destination:
+      mob: 9802  # Sefton stays at his table
+    description: >-
+      Behind the cupboard door you heard two men talking, and you know now what
+      they meant. The man who sells is still at his table.
+    hint: >-
+      Sefton sits at the table in the room behind the cupboard door. Type talk
+      sefton.
+  - id: end
+    description: >-
+      You have met the man who sells the Bloom. The door stays open to you, and
+      so does his shelf.
+
+rewards:
+  actor: ""
+  observer: ""
+
+triggers:
+  # The cupboard door opens only to the knock, and stays open once learned. A
+  # look through the exit reads this line too, and so does a payer who shelved the
+  # quest, so it says nothing of trying the door or of who knows what.
+  - event: room_gate
+    room: 5530
+    conditions:
+      missing: ["102-start"]
+    actions:
+      - actor: >-
+          The cupboard door is barred from the other side and does not give. It
+          opens only to the right knock.
+
+  # The knock is taught once the gold has gone, so never in the offer's pitch. A
+  # resume short of the room hears it again, which is also true.
+  - event: quest_granted
+    quest_token: 102-start
+    conditions:
+      missing: ["102-behind"]
+    actions:
+      - actor: >-
+          Marn raps one clean knuckle on the shelf beside him, too low for the shop
+          to hear: three short, then one. "Low on the frame," he says.
+
+  # behind: going through for the first time. The arrival look is already on
+  # screen when this plays. A shelved quest holds neither token, so an abandon
+  # between paying and entering keeps the line for the next time through.
+  - event: room_enter
+    room: 5530
+    conditions:
+      has: ["102-start"]
+      missing: ["102-behind"]
+    actions:
+      - grant: "102-behind"
+      - actor: >-
+          The bar lifted at your knock, and the talk in here has not quite stopped.
+          "...three months at minimum before the new one's producing at volume, if
+          she survives the first month." A man you had not noticed by the shelves
+          looks at you and goes out past you without a word. The one at the table
+          squares his ledger and waits. You think about a condemned floor, and a
+          woman with no change on her, and the gold you were paid.

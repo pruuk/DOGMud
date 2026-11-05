@@ -52,7 +52,7 @@ type DrinkResult struct {
 // bloomWaferItemId is the item ID for the Bloom Wafer (40108).
 // The wafer's effect (Communion condition, addiction tick, mutation roll) is
 // handled as a special case in Drink rather than through the generic conditionids
-// path, because it also needs to stamp BloomLastDoseRound and call
+// path, because it also needs to reset BloomAbstinentRounds and call
 // BloomAdvanceMutation.
 const bloomWaferItemId = 40108
 
@@ -63,6 +63,22 @@ const bloomWaferItemId = 40108
 // for detox are expected to already have elevated toxicity, and the flood is
 // the mechanism, not a mistake.
 const ysoldesPurgeItemId = 40109
+
+// bloomWithdrawalConditionId is Bloom Withdrawal (condition 92), which runs while
+// an addict abstains and ends when the addiction reaches zero.
+const bloomWithdrawalConditionId = 92
+
+// LandBloomClean is what reaching addiction zero does, by slow decay
+// (hooks.BloomTick) or by Ysolde's Purge: the withdrawal ends, the dose clock
+// clears, and the player is told.
+func LandBloomClean(actor Actor) {
+	char := actor.GetCharacter()
+	char.RemoveCondition(bloomWithdrawalConditionId)
+	char.BloomAbstinentRounds = 0
+	// Warning is not a category the pipeline wraps (messaging.shouldWrap).
+	actor.SendText(messaging.CategoryWarning, util.SplitStringNL(
+		`The craving has finally loosened its grip. You feel clean, or as close to it as you're likely to get.`, 80))
+}
 
 // purgingDraughtItemId is the item ID for the Purging Draught (30052), the
 // other detox besides Ysolde's Purge.
@@ -321,12 +337,23 @@ func Quaff(actor DrinkActor, rest string) DrinkResult {
 		char.AddToxicity(float64(itemSpec.Toxicity))
 	}
 
-	actor.SendText(messaging.CategorySystem, fmt.Sprintf(
-		`You drink the <ansi fg="itemname">%s</ansi>.`, matchItem.DisplayName()))
-	if room != nil {
-		room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(
-			`<ansi fg="%s">%s</ansi> drinks <ansi fg="itemname">%s</ansi>.`,
-			nameColor, char.Name, matchItem.DisplayName()), []string{char.Name}, roomExclude...)
+	if itemSpec.ItemId == bloomWaferItemId {
+		// A wafer is not a drink: it dissolves on the tongue below.
+		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+			`You take the <ansi fg="itemname">%s</ansi>.`, matchItem.DisplayName()))
+		if room != nil {
+			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(
+				`<ansi fg="%s">%s</ansi> takes <ansi fg="itemname">%s</ansi>.`,
+				nameColor, char.Name, matchItem.DisplayName()), []string{char.Name}, roomExclude...)
+		}
+	} else {
+		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+			`You drink the <ansi fg="itemname">%s</ansi>.`, matchItem.DisplayName()))
+		if room != nil {
+			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(
+				`<ansi fg="%s">%s</ansi> drinks <ansi fg="itemname">%s</ansi>.`,
+				nameColor, char.Name, matchItem.DisplayName()), []string{char.Name}, roomExclude...)
+		}
 	}
 
 	// Quest engine: command notification, AFTER the drink line so a step's
@@ -382,10 +409,14 @@ func Quaff(actor DrinkActor, rest string) DrinkResult {
 	// drink path above. Here we drive the addiction step-down -- the brutal-
 	// fast path to clean.
 	if itemSpec.ItemId == ysoldesPurgeItemId {
+		wasAddicted := char.BloomAddiction > 0
 		char.AddBloomAddiction(-5)
 		actor.SendText(messaging.CategoryWarning,
 			`The purge takes hold. Your body convulses as it expels the `+
 				`Bloom. It is violent, and it is fast.`)
+		if wasAddicted && char.BloomAddiction == 0 {
+			LandBloomClean(actor)
+		}
 	}
 
 	// ── Purging Draught special-case ─────────────────────────────────────────
@@ -422,8 +453,8 @@ func Quaff(actor DrinkActor, rest string) DrinkResult {
 		// Tick addiction counter.
 		char.AddBloomAddiction(int(bal.BloomAddictionPerDose))
 
-		// Stamp the dose round for withdrawal / decay timing.
-		char.BloomLastDoseRound = util.GetRoundCount()
+		// A dose restarts the count of online rounds that withdrawal and decay read.
+		char.BloomAbstinentRounds = 0
 
 		// Mutation acceleration. First roll the (small) BloomNewMutationChance to
 		// push a brand-new change even if the drinker already has mutations (Bloom's
@@ -442,7 +473,7 @@ func Quaff(actor DrinkActor, rest string) DrinkResult {
 			emitSilentMutationGained(actor, char, mutId)
 		}
 
-		// Euphoric onset message. It follows the generic "you drink" that was
+		// Euphoric onset message. It follows the "you take" that was
 		// already sent above, and is sent last so it reads as the climax of the
 		// consume sequence.
 		actor.SendText(messaging.CategoryWarning,

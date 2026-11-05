@@ -62,6 +62,15 @@ The source shows these statements in the design cannot be built as written. Each
 If the owner changes the stake, change all five places and the test in Task 15. Prices come from
 `shops.CalcSellPrice`: `ceil(value x multiplier)`, floor 0.75, ceiling 1.5, threshold 3.0 (`config.yaml`).
 
+**The buy limit (owner, 2026-11-04).** A real drug market is accepted, so a wafer may be given and auctioned, and
+there is no new trade block. What is limited is how often one character can buy: at most
+`BloomDealerWafersPerDay: 3` from any seller of item 40108 within a rolling `BloomDealerWindowHours: 24` real hours,
+counted per character and saved across relog and restart, with a companion's purchase counted against its owner. It is enforced at the purchase, because a limit on the door
+fails: a player could stand inside and buy each refill. Past it the seller refuses in his own voice, nothing is charged
+and nothing moves. **With 3 a day, one player gets at most about 1.65 ranks a day from purchase** (`3 x 0.55`), before
+the auction market. The shelf refills about 24 wafers a day (`5 per 4 h 56 m`), so eight players at their limit are
+what empties it. `internal/actions/buy_limit.go`; guarded by `TestBloomDealerLimitIsOnTheShippedConfig`.
+
 ### How fast a player can advance on wafers (shipped config, Go defaults for Bloom)
 
 **Per dose:** new mutation 0.10, else advance `0.90 x 0.50 = 0.45`. **0.55 ranks per wafer, 1.82 wafers per rank**
@@ -81,13 +90,27 @@ percent), about 20 minutes for one player, and yields an expected **2.75 ranks**
 upper bound for the whole server: **1.01 wafers an hour, 0.56 ranks an hour.**
 
 **For comparison:** natural progress runs in combat only, threshold `30 x 1.5^load`, gain `2 x eye` a round
-(`hooks/NewRound_UserRoundTick.go:417-440`). At load 4 that is 76 rounds of combat, 5 minutes, at an Eye multiplier of 1.0 (it runs 0.5 to 1.5). So the
-wafer is **not faster than fighting**. What it bypasses is the point:
+(`hooks/NewRound_UserRoundTick.go:417-440`). At an Eye multiplier of 1.0 (it runs 0.5 to 1.5) that is a cost per
+mutation of `30 x 1.5^load`, so it grows steeply: load 4 is 76 rounds of combat, 5 minutes; load 8, 26 minutes; load
+10, 58 minutes; load 12, 130 minutes. **"Not faster than fighting" is true only at low load.** The shelf's sustained
+pace, 107 minutes a rank, crosses that cost near **load 12**, and past it the wafer is the faster road.
+
+**The owner chose this on 2026-11-04: wafers remain the way past the mutation wall.** They are not slowed or limited
+on load, and `RestockCadenceTier10Days` stays as it is. The buy limit above caps one character's purchases and does
+not read load: one player buying alone gets a rank about every 14.5 hours, and the auction market is on top of that.
+
+What the wafer bypasses is the point:
 - It skips the affinity depth gate: `BloomSeedNewMutation` asks only `mutations.CanGain` and weights by rarity, so a
   rare apex can seed on a character who never drifted there.
 - It ignored `MutationMaxCount: 8` until Task 11b, which the owner chose on 2026-11-04; only the combat path read it (`CanGain`, `eligibility.go:18-38`, does not).
-- `BloomLastDoseRound` is `yaml:"-"` (`character.go:122`), so a relog clears the withdrawal clock until the next dose.
-  Known, shipped behaviour, reported here because nobody has played it.
+- `BloomLastDoseRound` was `yaml:"-"`, so a relog cleared the withdrawal clock until the next dose. The owner ruled on
+  2026-11-04 that a relog must not stop withdrawal, and that **only time online counts**: a player must not be able to
+  log out and wait off a craving or a withdrawal. So the field is gone. `BloomAbstinentRounds` counts the rounds spent
+  online since the last dose, ticked only by `BloomTick`, reset by a dose, less one period per point decayed, and saved,
+  as is `BloomHadCommunion`. So onset at 60 rounds is 4 online minutes, and a point of decay at 300 rounds is 20 online
+  minutes. A save with addiction and no count reads 0 and starts at the first round online: no false withdrawal, never
+  stuck. Ysolde's Purge works at any time. The buy limit's real-hours window is a rate limit on the shop, not on the
+  craving, so it runs by real time whether the player is online or not.
 
 ### Config-only ways to slow or stop it
 

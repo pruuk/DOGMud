@@ -328,6 +328,15 @@ explicitly tagged. M4b-1 renamed them from `playermessage` and `roommessage`,
 and renamed the two narrating trigger actions from `send_text` and `room_text`
 to the same two words, so one vocabulary covers both blocks.
 
+## A room gate speaks and does nothing else
+
+A `room_gate` takes only `actor` and `observer` text, and the loader refuses
+anything more (`quests.validateGateActions`): a look through the exit fires the
+gate that would refuse the step, so a grant there would pay for looking at a door.
+A gate also closes a scan and a shot to the player it would refuse. A mob has no
+tokens to read, so its flee, its planner's route and a companion's errand stay out
+of any room a gate guards (`Engine.GuardsRoom`), whatever the gate's conditions.
+
 ## Search steps need sight
 
 A `command: search` step (and a `verb: search` spot) does not move when the

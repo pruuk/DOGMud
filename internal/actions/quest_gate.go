@@ -6,9 +6,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// Quest gates apply to every move that walks through an exit (go, flee) and
-// to nothing else: teleports, system moves and the ferry are exempt (owner
-// ruling 2026-10-26, #588). A room_gate trigger guards a destination room;
+// Quest gates apply to a player's every move through an exit (go, flee) and to
+// nothing else that moves: teleports, system moves and the ferry are exempt
+// (owner ruling 2026-10-26, #588). They also close what crosses an exit without
+// moving: a look, a scan and a shot. A room_gate trigger guards a destination room;
 // its conditions are read with the player still in the room they are leaving,
 // so in_room names the side the gate stands on. The destination matches by
 // its template id, as room_enter does, so a gate holds inside instances too.
@@ -35,6 +36,15 @@ func QuestGateBlocks(user *users.UserRecord, room *rooms.Room, destRoom *rooms.R
 func questGateBlocksRoomId(user *users.UserRecord, roomId, destRoomId int) bool {
 	d, bridge := questGateEvent(user, roomId, destRoomId)
 	return questengine.GetEngine().WouldFire("room_gate", d, bridge)
+}
+
+// RoomGateGuards reports whether any room_gate guards destRoomId, whatever its
+// conditions. It answers for a mob, which holds no tokens to read them against:
+// a fleeing mob or a companion's errand stays out of such a room, as a planner's
+// route does. An instance room reads as its template.
+func RoomGateGuards(destRoomId int) bool {
+	templateRoom, _ := rooms.OriginalRoomId(destRoomId)
+	return questengine.GetEngine().GuardsRoom(templateRoom)
 }
 
 func questGateEvent(user *users.UserRecord, roomId, destRoomId int) (questengine.EventDetails, *questengine.GameBridge) {

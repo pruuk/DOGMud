@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"sort"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/species"
 )
@@ -66,8 +67,17 @@ func (c *Character) BloomAdvanceMutation(rng *rand.Rand) (string, int) {
 // conflicts, and species body-part requirements. Used both as BloomAdvanceMutation's
 // fall-through (no owned / all-capped) AND directly by the dose hook's separate
 // BloomNewMutationChance roll (the "Bloom occasionally pushes a whole new change"
-// path). Returns (id, 1) or ("", 0) if no candidate exists. rng nil → global rand.
+// path). Returns (id, 1) or ("", 0) if no candidate exists, or if the character
+// already holds Balance.MutationMaxCount mutations. rng nil → global rand.
 func (c *Character) BloomSeedNewMutation(rng *rand.Rand) (string, int) {
+	// The combat path (actions.EarnMutation) and the round ticks
+	// (NewRound_UserRoundTick, NewRound_MobRoundTick) read this count, and a wafer
+	// stops at it too (owner, 2026-11-04). Rite and Phial of Second Birth grants do
+	// not read it.
+	if len(c.Mutations) >= int(configs.GetBalanceConfig().MutationMaxCount) {
+		return "", 0
+	}
+
 	allSpecs := mutations.GetAll()
 	if len(allSpecs) == 0 {
 		return "", 0

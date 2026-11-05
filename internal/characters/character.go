@@ -117,10 +117,10 @@ type Character struct {
 	Health                  int              // The health of the character
 	Stamina                 int              // The stamina of the character (physical energy)
 	Conviction              int              // The conviction of the character (mental/spiritual energy)
-	Toxicity                float64          `yaml:"toxicity,omitempty"`        // Current toxicity from potions
-	BloomAddiction          int              `yaml:"bloom_addiction,omitempty"` // Bloom-drug addiction level (0 = clean)
-	BloomLastDoseRound      uint64           `yaml:"-"`                         // runtime: round of last Bloom dose (abstinence clock)
-	BloomHadCommunion       bool             `yaml:"-"`                         // runtime: true while condition 90 was active last tick (Crash transition gate)
+	Toxicity                float64          `yaml:"toxicity,omitempty"`               // Current toxicity from potions
+	BloomAddiction          int              `yaml:"bloom_addiction,omitempty"`        // Bloom-drug addiction level (0 = clean)
+	BloomAbstinentRounds    uint64           `yaml:"bloom_abstinent_rounds,omitempty"` // Rounds spent online since the last Bloom dose, less a period per point decayed. Only time online counts (owner 2026-11-04), so logging out waits off nothing; saved, so a relog stops nothing either
+	BloomHadCommunion       bool             `yaml:"bloom_had_communion,omitempty"`    // True while condition 90 was active last tick (Crash transition gate). Saved so a Communion ending on the first round back still crashes
 	ActionPoints            int              // The resevoir of action points the character has to spend on movement etc.
 	ActionPointsSettled     bool             `yaml:"-"` // runtime: SettleActionPoints has run at least once (mobs only; movement parity 4b)
 	ActionPointsSettledTurn uint64           `yaml:"-"` // runtime: the turn ActionPoints was last settled to

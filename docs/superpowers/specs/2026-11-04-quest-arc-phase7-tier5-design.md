@@ -196,3 +196,27 @@ can advance on it, and the owner reviews that before deploy.
 **The hard lines.** The player can reach Bloom only through a deliberate choice at each of three points:
 the shady line with Marn, reporting the runaway, and paying the stake. The cure stays open to everyone, and
 the addiction text assumes no MUD experience, because this system has never met a real player.
+
+**What was built differs from the above in these ways, and the owner has seen each.**
+- **The knock is taught by a trigger.** Marn's offer takes the gold; a `quest_granted 102-start` trigger then speaks
+  the knock, so it is never in the pitch, and a resume short of the room hears it again.
+- **`102-stake`.** A flag set by the offer that charges. A shelf keeps it, so a shelved payer gets `q102_resume` and is
+  never charged twice. A resume asks for no gold.
+- **Odile tells; the overheard line confirms** (owner ruling, memory `feedback-bloom-chain-moral-choice`). She tells the
+  player what she is running from before they choose, because the Skip is an informed choice of power against doing
+  right. The line in Marn's back room confirms what the player already knows. It is no longer the first reveal, and the
+  sentence above saying the player works it out after being paid no longer holds.
+
+**Owner rulings of 2026-11-04.**
+- **A. Wafers remain the way past the mutation wall.** They are not slowed or limited on load, and
+  `RestockCadenceTier10Days` stays. A natural mutation costs `30 x 1.5^load`, which crosses the wafer near load 12, so
+  "not faster than fighting" holds only at low load. The plan's numbers section carries the figures.
+- **B. A relog must not stop withdrawal, and only time online counts.** A player must not be able to log out and wait
+  off a craving or a withdrawal. `BloomAbstinentRounds` counts online rounds since the last dose and is saved, as is
+  `BloomHadCommunion`. A save from before this starts at 0 at the first round online. Ysolde's Purge works at any time.
+- **C. A real drug market is accepted, with a limit on buying.** A wafer may be given and auctioned, with no new trade
+  block. One character may buy at most `BloomDealerWafersPerDay` (3) from any seller of item 40108 within a rolling
+  `BloomDealerWindowHours` (24 real hours), enforced at the purchase, since a player could stand inside and buy each
+  refill. The refusal is the seller's own, with no numbers. Sefton warns of it. This replaces "the wafer stays
+  `not_salable`, so buying from the dealer cannot be resold" as the only check on supply: the wafer still cannot be sold
+  to a shop, and at 3 a day one player gets at most about 1.65 ranks a day from purchase, before the auction market.

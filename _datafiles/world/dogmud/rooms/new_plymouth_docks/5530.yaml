@@ -1,0 +1,33 @@
+roomid: 5530
+zone: New Plymouth Docks
+title: Behind the Cupboard
+description: >
+  Behind the cupboard door the building is a different building. The room is
+  narrow and warm and smells of wax and copper-flower, and there is no window in
+  it. A plain <ansi fg="itemname">table</ansi> stands against the far wall under
+  a shaded lamp, squared to the wall, with a chair on each side. Along the wall
+  are <ansi fg="itemname">shallow shelves</ansi>, kept nearly empty. Nothing here
+  is for show. The only way out is west, back through the cupboard door to the
+  shop.
+biome: interior
+exits:
+  west:
+    roomid: 5523
+nouns:
+  table: A plain deal table, clean, with a small ledger closed on it and a
+    square of waxed cloth folded to one side. The chair facing the door has worn
+    its feet into the floor.
+  shallow shelves: Shelves one hand deep, built to hold very little. A few
+    wax-wrapped squares sit on the lowest, spaced apart so that a glance tells
+    how many are left.
+idlemessages:
+- Someone in the shop beyond the door moves a bolt of cloth and sets it down.
+- The shaded lamp does not flicker. Someone trims it on a schedule.
+- The copper-flower smell comes and goes, sweet and slightly wrong at the back of
+  the throat.
+- A voice comes up through the floor from the stock room, low, and stops.
+spawninfo:
+  - mobid: 9802
+    respawnrate: "10 real minutes"
+x: -7
+y: -81

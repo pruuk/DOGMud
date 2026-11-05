@@ -89,7 +89,15 @@ func (df *DialogueFile) heard(t *Topic, ps *PlayerState) bool {
 // nil PlayerState skips the checks; a nil HasHeard fails heardRequired
 // closed, the way every interrogative callback in this package does.
 func (df *DialogueFile) Eligible(t *Topic, ps *PlayerState) bool {
-	if df == nil || t == nil || !t.Gates.pass(ps) {
+	if df == nil || t == nil {
+		return false
+	}
+	gates := t.Gates
+	if resuming(t, ps) {
+		// A resume charges nothing (Apply), so it asks for no gold either.
+		gates.GoldRequired = 0
+	}
+	if !gates.pass(ps) {
 		return false
 	}
 	if ps == nil {
