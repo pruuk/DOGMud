@@ -1,0 +1,20 @@
+ephemeral:
+  profile: charmer
+  start_room: 5523
+  overlays:
+    set_quest_tokens: [66-start, 66-dose, 66-end, 67-start]
+    grant_items: [20096]
+  budgets:
+    wall_clock: 55m
+goals:
+  - >-
+    Type `talk marn` and choose to press him about the wax wrapper. Follow only `hint` and `quests`
+    from there to the end of The Bloom Trail. Say at each step whether the hint told you who to find,
+    and how many moves it took without a route. Quote game lines VERBATIM and in order.
+  - >-
+    Talk to Deren and read every line he offers. Say whether anything he says treats the case as
+    already over. Read the case file with `look` when Quill gives it to you, and say whether the
+    constable's hand-in matches what the file holds. Quote game lines VERBATIM and in order.
+  - >-
+    After the hand-in, type `talk horst`. You took the honest route, so say whether anything there or
+    at Marn's hints at a job or a door. Quote game lines VERBATIM and in order.

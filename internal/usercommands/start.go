@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/menu"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -265,7 +266,7 @@ func startVeteranInThornwall(user *users.UserRecord) {
 // newcomer flag, which gates the newbie-only teaching beats (Cleric Hadwen's
 // mutations/progression talk; Crier Toke's player-interaction talk).
 func grantNewcomerMarker(user *users.UserRecord) {
-	user.Character.SetQuestFlag("30-newcomer", "new")
+	user.Character.SetQuestFlag(quests.NewcomerFlagKey, quests.NewcomerFlagValue)
 }
 
 // ─── Veteran auto-awaken ─────────────────────────────────────────────────────

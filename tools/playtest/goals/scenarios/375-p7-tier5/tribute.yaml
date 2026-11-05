@@ -1,0 +1,10 @@
+ephemeral:
+  profile: m2-witness
+  start_room: 5810
+  budgets:
+    wall_clock: 35m
+goals:
+  - >-
+    Type `talk ostry` and take The Tribute. Follow `hint` to the end. In the parlor, `search`, and quote
+    it. Say whether Horst being there or not changes anything. Finish with Ostry. Type `reputation` or
+    the nearest command and quote which standing moved. Quote game lines VERBATIM and in order.

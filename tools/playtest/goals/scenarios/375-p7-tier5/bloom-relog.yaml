@@ -1,0 +1,27 @@
+# Owner ruling 2026-11-04: only time online counts, so a logout waits off nothing.
+# The driver restarts this seat after `quit`; see the session's run notes. Shipped
+# pace: withdrawal 4 online minutes after a dose.
+ephemeral:
+  profile: mid
+  start_room: 5530
+  overlays:
+    set_quest_tokens: [64-start, 64-found, 64-end, 102-start, 102-behind, 102-end]
+    set_quest_flags: {64-outcome: reported}
+    set_gold: 2000
+  budgets:
+    wall_clock: 45m
+goals:
+  - >-
+    Type `list`, buy one wafer from Sefton, `quaff wafer`, and quote every line. Note the wall clock
+    time. Wait 2 real minutes, typing `status` now and then, and say whether you feel any craving. Then
+    type `quit`. Quote game lines VERBATIM and in order. Stop there and report: the driver logs you back
+    in about 10 minutes later.
+  - >-
+    You are back. Note the wall clock time and quote your first lines. Say whether any craving showed at
+    once. Type `status` every few rounds and quote the first line of withdrawal, with the wall clock time.
+    Say how many minutes online it took in total, counting only time logged in. Quote game lines VERBATIM
+    and in order.
+  - >-
+    Type `quit` again while in withdrawal, and report. The driver logs you back in. Say whether the
+    withdrawal is still with you. Then buy from Sefton again and say whether he counts your earlier wafer.
+    Quote game lines VERBATIM and in order.

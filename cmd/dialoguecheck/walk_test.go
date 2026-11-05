@@ -139,6 +139,17 @@ func TestWalk_EmptyFlagValueMeansUnsetAndIsReachable(t *testing.T) {
 	require.Contains(t, strings.Join(ofClass(fs, ClassUnreachable), "\n"), "questFlagRequired 1-k=yes is never set")
 }
 
+// A flag only Go code sets has no setter in the world data, so the walker takes
+// it from quests.EngineSetFlags. Character creation's newcomer flag is the case.
+func TestWalk_AFlagSetInCodeCountsAsSet(t *testing.T) {
+	in := loadFixture(t, "clean")
+	done := &in.Files[0].File.Topics[1]
+	require.Equal(t, "errand_done", done.Key)
+	done.QuestFlagRequired = map[string]string{quests.NewcomerFlagKey: quests.NewcomerFlagValue}
+	fs := Walk(in)
+	require.Empty(t, ofClass(fs, ClassUnreachable), "%v", fs)
+}
+
 // The quest 29 shape: a converter ruling drops the only start grant while
 // the quest's other parts still expect it to run.
 func TestWalk_QuestNothingStartsIsUnstartable(t *testing.T) {

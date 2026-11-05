@@ -1,0 +1,18 @@
+ephemeral:
+  profile: crafter
+  start_room: 5501
+  budgets:
+    wall_clock: 40m
+goals:
+  - >-
+    Type `talk teels` and take The Addict's Plight. Follow `hint`. Say whether you ever had to
+    guess what the wrapper was for. Give it to Ysolde and quote her lines. Quote game lines
+    VERBATIM and in order.
+  - >-
+    Before going back, type `quaff purge` and quote every line, then `status`. Go on to Teels and
+    say what they tell you. Go back to Ysolde, ask for another purge, and quote it. Quote game
+    lines VERBATIM and in order.
+  - >-
+    Walk back to Teels and hand it over. Quote the reward line. Say whether The Bloom Trail is
+    pitched to you there, and whether it makes sense coming from Teels. Then `talk ysolde` and say
+    whether what she says fits. Quote game lines VERBATIM and in order.

@@ -1,0 +1,13 @@
+ephemeral:
+  profile: fresh
+  start_room: 5203
+  overlays:
+    set_quest_tokens: [30-start, 30-rite, 30-woken, 30-end]
+    set_quest_flags: {30-newcomer: new}
+  budgets:
+    wall_clock: 20m
+goals:
+  - >-
+    Type `talk toke` and find the line about getting on with people. Quote it. Type `talk toke` again and
+    say whether it is still marked. Go to Hadwen and say whether his line about mutations is still open.
+    Quote game lines VERBATIM and in order.

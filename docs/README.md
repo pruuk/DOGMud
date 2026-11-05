@@ -203,6 +203,9 @@ than reading an old result:
 | [`../internal/hooks/tier5_knock_hook_test.go`](../internal/hooks/tier5_knock_hook_test.go) | A real Accept of The Knock teaches the knock through `HandleQuestUpdate` |
 | [`../internal/actions/drink_bloom_clean_test.go`](../internal/actions/drink_bloom_clean_test.go) | A purge that reaches addiction zero ends the withdrawal and says so; a wafer is taken, not drunk |
 | [`../internal/usercommands/shoot_quest_gate_test.go`](../internal/usercommands/shoot_quest_gate_test.go) | A shot through a `room_gate` reads as a shot through a locked door and answers for no name behind it |
+| [`../internal/quests/engine_flags.go`](../internal/quests/engine_flags.go) | Quest flag values only Go code sets, which the dialogue walker counts as set |
+| [`../internal/usercommands/start_newcomer_test.go`](../internal/usercommands/start_newcomer_test.go) | The newcomer marker is a flag on quest 30 |
+| [`../tools/playtest/scenarios/375-p7-tier5.yaml`](../tools/playtest/scenarios/375-p7-tier5.yaml) | Closing playtest for #375 phase 7 tier 5: twelve seats, goals under `tools/playtest/goals/scenarios/375-p7-tier5/` (docks, teels, bloomtrail, circle, bloodline, cipher, tribute, skip-ran, bloom, bloom-relog, bloom-load, newcomer) |
 | [`../internal/quests/room_gate_text_only_test.go`](../internal/quests/room_gate_text_only_test.go) | The loader refuses a `room_gate` action beyond text, because a look runs a gate's actions |
 | [`../modules/aicompanion/travel_gate_test.go`](../modules/aicompanion/travel_gate_test.go) | A companion's routes and explores stay out of a room a `room_gate` guards |
 | [`../internal/characters/bloom_mutation_cap_test.go`](../internal/characters/bloom_mutation_cap_test.go) | Bloom's mutation seeding reads `MutationMaxCount` |

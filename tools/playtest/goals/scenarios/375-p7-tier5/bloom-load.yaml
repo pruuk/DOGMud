@@ -1,0 +1,30 @@
+# A character already at MutationMaxCount 8, load 24 (eight rarity 3 mutations at
+# rank 1), the case the wafer is for: past the wall, and no ninth mutation.
+ephemeral:
+  profile: mid
+  start_room: 5530
+  overlays:
+    set_quest_tokens: [64-start, 64-found, 64-end, 102-start, 102-behind, 102-end]
+    set_quest_flags: {64-outcome: reported}
+    set_gold: 2000
+    set_mutations:
+      keen-senses: 1
+      dense-muscles: 1
+      padded-soles: 1
+      prehensile-tail: 1
+      provident-hands: 1
+      rapid-healing: 1
+      rending-claws: 1
+      thick-coat: 1
+  budgets:
+    wall_clock: 40m
+goals:
+  - >-
+    Type `mutations` and quote the whole list. Type `list`, then buy a wafer from Sefton and `quaff wafer`.
+    Quote every line in order, then `mutations` again. Repeat until the seller or your body refuses you, and
+    quote the refusal. After each dose say whether anything deepened or changed, and whether a ninth
+    mutation appeared. Report the `list` price before each purchase, the wall clock time of each dose, and
+    gold spent. Quote game lines VERBATIM and in order.
+  - >-
+    Type `talk sefton` and say whether he explains the refusal in a way a new player would understand. Say
+    whether you can tell when he will sell to you again. Quote game lines VERBATIM and in order.
