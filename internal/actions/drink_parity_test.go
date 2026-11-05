@@ -330,7 +330,10 @@ func TestDrinkParity(t *testing.T) {
 	})
 
 	t.Run("bloom wafer", func(t *testing.T) {
-		p, m := drinkBoth(t, "bloom wafer", func(c *characters.Character) { storeItem(t, c, items.New(bloomWaferItemId)) })
+		p, m := drinkBoth(t, "bloom wafer", func(c *characters.Character) {
+			storeItem(t, c, items.New(bloomWaferItemId))
+			c.BloomAbstinentRounds = 50
+		})
 		// The mutation roll is random; the rest is not.
 		requireParity(t, bloomWaferItemId, p, m)
 		bal := configs.GetBalanceConfig()
@@ -342,8 +345,8 @@ func TestDrinkParity(t *testing.T) {
 			if side.char.BloomAddiction != int(bal.BloomAddictionPerDose) {
 				t.Errorf("%s addiction %d after the wafer, want %d", name, side.char.BloomAddiction, int(bal.BloomAddictionPerDose))
 			}
-			if side.char.BloomLastDoseRound != util.GetRoundCount() {
-				t.Errorf("%s dose round %d, want %d", name, side.char.BloomLastDoseRound, util.GetRoundCount())
+			if side.char.BloomAbstinentRounds != 0 {
+				t.Errorf("%s abstinent rounds %d after a dose, want 0", name, side.char.BloomAbstinentRounds)
 			}
 			if q, ok := queuedHas(side.queued, 90); !ok || q.DurationMult != wantMult {
 				t.Errorf("%s communion 90 queued %+v %v, want DurationMult %v", name, q, ok, wantMult)

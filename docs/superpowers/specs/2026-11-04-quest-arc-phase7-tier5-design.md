@@ -211,9 +211,9 @@ the addiction text assumes no MUD experience, because this system has never met 
 - **A. Wafers remain the way past the mutation wall.** They are not slowed or limited on load, and
   `RestockCadenceTier10Days` stays. A natural mutation costs `30 x 1.5^load`, which crosses the wafer near load 12, so
   "not faster than fighting" holds only at low load. The plan's numbers section carries the figures.
-- **B. A relog must not stop withdrawal.** `BloomLastDoseRound` and `BloomHadCommunion` are saved. Time away counts as
-  abstinence, because rounds run while a player is offline. A save from before this has its clock started at the first
-  round online.
+- **B. A relog must not stop withdrawal, and only time online counts.** A player must not be able to log out and wait
+  off a craving or a withdrawal. `BloomAbstinentRounds` counts online rounds since the last dose and is saved, as is
+  `BloomHadCommunion`. A save from before this starts at 0 at the first round online. Ysolde's Purge works at any time.
 - **C. A real drug market is accepted, with a limit on buying.** A wafer may be given and auctioned, with no new trade
   block. One character may buy at most `BloomDealerWafersPerDay` (3) from any seller of item 40108 within a rolling
   `BloomDealerWindowHours` (24 real hours), enforced at the purchase, since a player could stand inside and buy each

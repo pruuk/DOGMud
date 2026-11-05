@@ -104,9 +104,13 @@ What the wafer bypasses is the point:
   rare apex can seed on a character who never drifted there.
 - It ignored `MutationMaxCount: 8` until Task 11b, which the owner chose on 2026-11-04; only the combat path read it (`CanGain`, `eligibility.go:18-38`, does not).
 - `BloomLastDoseRound` was `yaml:"-"`, so a relog cleared the withdrawal clock until the next dose. The owner ruled on
-  2026-11-04 that a relog must not stop withdrawal, so it is saved, as is `BloomHadCommunion`. The round count persists
-  across a restart (`util.SaveRoundCount`), and rounds run while a player is away, so time away counts as abstinence. An
-  older save with addiction and no round starts its clock at the first round online: no false withdrawal, never stuck.
+  2026-11-04 that a relog must not stop withdrawal, and that **only time online counts**: a player must not be able to
+  log out and wait off a craving or a withdrawal. So the field is gone. `BloomAbstinentRounds` counts the rounds spent
+  online since the last dose, ticked only by `BloomTick`, reset by a dose, less one period per point decayed, and saved,
+  as is `BloomHadCommunion`. So onset at 60 rounds is 4 online minutes, and a point of decay at 300 rounds is 20 online
+  minutes. A save with addiction and no count reads 0 and starts at the first round online: no false withdrawal, never
+  stuck. Ysolde's Purge works at any time. The buy limit's real-hours window is a rate limit on the shop, not on the
+  craving, so it runs by real time whether the player is online or not.
 
 ### Config-only ways to slow or stop it
 

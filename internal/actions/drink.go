@@ -52,7 +52,7 @@ type DrinkResult struct {
 // bloomWaferItemId is the item ID for the Bloom Wafer (40108).
 // The wafer's effect (Communion condition, addiction tick, mutation roll) is
 // handled as a special case in Drink rather than through the generic conditionids
-// path, because it also needs to stamp BloomLastDoseRound and call
+// path, because it also needs to reset BloomAbstinentRounds and call
 // BloomAdvanceMutation.
 const bloomWaferItemId = 40108
 
@@ -74,7 +74,7 @@ const bloomWithdrawalConditionId = 92
 func LandBloomClean(actor Actor) {
 	char := actor.GetCharacter()
 	char.RemoveCondition(bloomWithdrawalConditionId)
-	char.BloomLastDoseRound = 0
+	char.BloomAbstinentRounds = 0
 	// Warning is not a category the pipeline wraps (messaging.shouldWrap).
 	actor.SendText(messaging.CategoryWarning, util.SplitStringNL(
 		`The craving has finally loosened its grip. You feel clean, or as close to it as you're likely to get.`, 80))
@@ -453,8 +453,8 @@ func Quaff(actor DrinkActor, rest string) DrinkResult {
 		// Tick addiction counter.
 		char.AddBloomAddiction(int(bal.BloomAddictionPerDose))
 
-		// Stamp the dose round for withdrawal / decay timing.
-		char.BloomLastDoseRound = util.GetRoundCount()
+		// A dose restarts the count of online rounds that withdrawal and decay read.
+		char.BloomAbstinentRounds = 0
 
 		// Mutation acceleration. First roll the (small) BloomNewMutationChance to
 		// push a brand-new change even if the drinker already has mutations (Bloom's

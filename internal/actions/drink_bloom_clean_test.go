@@ -36,7 +36,7 @@ func bloomDrinker(t *testing.T, itemId int, rest string, setup func(c *character
 func withdrawing(addiction int) func(c *characters.Character) {
 	return func(c *characters.Character) {
 		c.BloomAddiction = addiction
-		c.BloomLastDoseRound = 1234
+		c.BloomAbstinentRounds = 123
 		if err := c.AddConditionScaled(bloomWithdrawalConditionId, 1.0); err != nil {
 			panic(err)
 		}
@@ -50,7 +50,7 @@ func TestYsoldesPurge_ReachingCleanEndsTheWithdrawal(t *testing.T) {
 	c.Conditions.Prune()
 	assert.False(t, c.HasCondition(bloomWithdrawalConditionId), "no withdrawal runs on with nothing left to crave")
 	assert.Contains(t, out, "The craving has finally loosened its grip")
-	assert.Zero(t, c.BloomLastDoseRound, "a clean character has no dose clock to save")
+	assert.Zero(t, c.BloomAbstinentRounds, "a clean character has no count to save")
 }
 
 // Short of zero the craving is still there, and so is the withdrawal.

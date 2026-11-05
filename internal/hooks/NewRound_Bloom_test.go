@@ -18,9 +18,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// A relog must not stop withdrawal (owner, 2026-11-04). The dose round and the
-// Communion flag are saved, the round count persists across a restart, so a saved
-// round still means something on the next login.
+// For Bloom only time online counts (owner, 2026-11-04): a player must not be able
+// to log out and wait off a craving or a withdrawal. BloomAbstinentRounds is
+// ticked by BloomTick, whose loop covers online users only, and is saved, so a
+// relog neither stops the count nor moves it.
 
 const (
 	bloomTestUser      = 7401
@@ -58,7 +59,8 @@ func seedBloomTick(t *testing.T) {
 	}))
 }
 
-func bloomUser(t *testing.T, c *characters.Character) *users.UserRecord {
+// logIn makes the character the one online user.
+func logIn(t *testing.T, c *characters.Character) *users.UserRecord {
 	t.Helper()
 	u := users.NewTestUser(bloomTestUser, "bloomuser", "BloomUser", 7401)
 	u.Character = c
@@ -68,22 +70,33 @@ func bloomUser(t *testing.T, c *characters.Character) *users.UserRecord {
 	return u
 }
 
-// relog is a save and a load: the character through its own YAML.
-func relog(t *testing.T, c *characters.Character) *characters.Character {
+// logOut leaves nobody online, which is what a user record gone from the manager
+// means to users.GetOnlineUserIds. The world clock goes on.
+func logOut(t *testing.T) {
+	t.Helper()
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{}))
+}
+
+// saveAndLoad is the character through its own YAML, then Validate, as
+// users.LoadUser does.
+func saveAndLoad(t *testing.T, c *characters.Character) *characters.Character {
 	t.Helper()
 	out, err := yaml.Marshal(c)
 	require.NoError(t, err)
 	loaded := characters.New()
 	require.NoError(t, yaml.Unmarshal(out, loaded))
-	require.NoError(t, loaded.Validate(), "as users.LoadUser does")
+	require.NoError(t, loaded.Validate())
 	return loaded
 }
 
-// tickAt runs one Bloom tick at a round and returns the conditions it queued and
-// what the player read.
-func tickAt(round uint64) (map[int]bool, string) {
-	util.SetRoundCountForTest(round)
-	BloomTick(events.NewRound{RoundNumber: round})
+// tick runs n rounds, moving the world clock too, and returns the conditions they
+// queued and what the player read.
+func tick(n int) (map[int]bool, string) {
+	for i := 0; i < n; i++ {
+		round := util.GetRoundCount() + 1
+		util.SetRoundCountForTest(round)
+		BloomTick(events.NewRound{RoundNumber: round})
+	}
 	queued := map[int]bool{}
 	for _, q := range events.DrainQueuedConditionsForTest(bloomTestUser) {
 		queued[q.ConditionId] = true
@@ -91,120 +104,148 @@ func tickAt(round uint64) (map[int]bool, string) {
 	return queued, strings.Join(events.DrainQueuedMessagesForTest(bloomTestUser), " ")
 }
 
-// A dose taken through the real drink path, then a save and a load.
-func doseThenRelog(t *testing.T) *users.UserRecord {
+// dosed takes a wafer through the real drink path and leaves the player online.
+func dosed(t *testing.T) *users.UserRecord {
 	t.Helper()
 	seedBloomTick(t)
 	c := characters.New()
 	c.Name = "BloomUser"
 	c.Stats.Vitality.Base = 300
 	c.Stats.Vitality.Recalculate()
+	c.BloomAbstinentRounds = 40 // what a dose resets
 	require.True(t, c.StoreItem(items.New(bloomWaferItemId)))
-	u := bloomUser(t, c)
+	u := logIn(t, c)
 	res := actions.Quaff(actions.NewUserActorInRoom(u, &rooms.Room{RoomId: 99999}).(actions.DrinkActor), "bloom wafer")
 	require.True(t, res.Drank)
-	require.Equal(t, bloomTestStart, u.Character.BloomLastDoseRound, "the dose stamps the round")
-	return bloomUser(t, relog(t, u.Character))
+	require.Zero(t, u.Character.BloomAbstinentRounds, "a dose restarts the count")
+	events.DrainQueuedConditionsForTest(bloomTestUser)
+	events.DrainQueuedMessagesForTest(bloomTestUser)
+	return u
 }
 
-func TestBloomDose_WithdrawalSurvivesARelog(t *testing.T) {
-	u := doseThenRelog(t)
-	require.Equal(t, bloomTestStart, u.Character.BloomLastDoseRound, "the stamp is saved")
+// Nothing happens while logged out, however long, and coming back is no shortcut.
+func TestBloom_RoundsOfflineChangeNothing(t *testing.T) {
+	u := dosed(t)
+	c := u.Character
+	c.BloomAddiction = 3
+	logOut(t)
 
-	queued, _ := tickAt(bloomTestStart + bloomTestOnset - 1)
+	queued, _ := tick(10 * bloomTestDecay)
+	assert.Empty(t, queued)
+	assert.Zero(t, c.BloomAbstinentRounds, "no count while away")
+	assert.Equal(t, 3, c.BloomAddiction, "no decay while away")
+
+	// The world clock has run a long way, and the first round back is still round one.
+	logIn(t, c)
+	queued, out := tick(1)
+	assert.False(t, queued[bloomWithdrawalId], "no withdrawal for time spent away")
+	assert.Equal(t, 3, c.BloomAddiction)
+	assert.EqualValues(t, 1, c.BloomAbstinentRounds)
+	assert.NotContains(t, out, bloomCleanFragment)
+}
+
+func TestBloom_RoundsOnlineReachOnset(t *testing.T) {
+	dosed(t)
+	queued, _ := tick(bloomTestOnset - 1)
 	assert.False(t, queued[bloomWithdrawalId], "not before the onset")
+	queued, _ = tick(1)
+	assert.True(t, queued[bloomWithdrawalId], "at the onset")
+}
 
-	queued, _ = tickAt(bloomTestStart + bloomTestOnset)
+// A logout partway keeps the count, through a save and a load: it neither restarts
+// the wait nor counts the time away.
+func TestBloom_ALogoutPartwayKeepsTheCount(t *testing.T) {
+	u := dosed(t)
+	const before = bloomTestOnset - 10
+	tick(before)
+	require.EqualValues(t, before, u.Character.BloomAbstinentRounds)
+
+	loaded := saveAndLoad(t, u.Character)
+	require.EqualValues(t, before, loaded.BloomAbstinentRounds, "the count is saved")
+
+	logOut(t)
+	tick(5000)
+	require.EqualValues(t, before, loaded.BloomAbstinentRounds, "time away adds nothing")
+
+	logIn(t, loaded)
+	queued, _ := tick(9)
+	assert.False(t, queued[bloomWithdrawalId], "one short of the onset")
+	queued, _ = tick(1)
 	assert.True(t, queued[bloomWithdrawalId], "the relog did not stop the withdrawal")
 }
 
-func TestBloomDose_DecaySurvivesARelog(t *testing.T) {
-	u := doseThenRelog(t)
-	require.Equal(t, 1, u.Character.BloomAddiction)
-	u.Character.BloomAddiction = 3
+// Decay counts online rounds and slides one period per point, so the next point
+// is one whole period away.
+func TestBloom_DecayCountsOnlineRoundsOnly(t *testing.T) {
+	u := dosed(t)
+	c := u.Character
+	c.BloomAddiction = 3
 
-	tickAt(bloomTestStart + bloomTestDecay - 1)
-	assert.Equal(t, 3, u.Character.BloomAddiction)
+	tick(bloomTestDecay - 1)
+	assert.Equal(t, 3, c.BloomAddiction)
+	tick(1)
+	assert.Equal(t, 2, c.BloomAddiction)
+	assert.Zero(t, c.BloomAbstinentRounds, "one period comes off the count")
 
-	tickAt(bloomTestStart + bloomTestDecay)
-	assert.Equal(t, 2, u.Character.BloomAddiction, "the craving still fades")
-	assert.Equal(t, bloomTestStart+bloomTestDecay, u.Character.BloomLastDoseRound, "the clock slides one period")
+	logOut(t)
+	tick(10 * bloomTestDecay)
+	assert.Equal(t, 2, c.BloomAddiction, "a period away is no point lost")
+
+	logIn(t, c)
+	tick(bloomTestDecay - 1)
+	assert.Equal(t, 2, c.BloomAddiction)
+	tick(1)
+	assert.Equal(t, 1, c.BloomAddiction)
+
+	tick(bloomTestDecay - 1)
+	_, out := tick(1)
+	assert.Equal(t, 0, c.BloomAddiction)
+	assert.Contains(t, out, bloomCleanFragment, "the slow way still ends clean")
+	assert.Zero(t, c.BloomAbstinentRounds)
 }
 
-// A save from before the round was stored, addicted with no round. It must not
-// read as a dose at round zero (a false withdrawal on login), and must not sit
-// outside the clock for ever. The clock starts at the first round online.
-func TestBloomOldSave_StartsTheClockAtLogin(t *testing.T) {
+// A save from before the count existed has addiction and reads 0. It takes no
+// false withdrawal on login, and cannot sit outside the clock for ever.
+func TestBloom_AnOldSaveStartsAtZero(t *testing.T) {
 	seedBloomTick(t)
-	c := characters.New()
-	c.BloomAddiction = 3
-	u := bloomUser(t, c)
+	var c characters.Character
+	require.NoError(t, yaml.Unmarshal([]byte("name: Old\nbloom_addiction: 3\n"), &c))
+	require.NoError(t, c.Validate())
+	require.Zero(t, c.BloomAbstinentRounds)
+	logIn(t, &c)
 
-	queued, out := tickAt(bloomTestStart)
+	queued, out := tick(1)
 	assert.False(t, queued[bloomWithdrawalId], "no false withdrawal on login")
-	assert.Equal(t, 3, u.Character.BloomAddiction, "no decay yet")
+	assert.Equal(t, 3, c.BloomAddiction, "no decay yet")
 	assert.NotContains(t, out, bloomCleanFragment)
-	assert.Equal(t, bloomTestStart, u.Character.BloomLastDoseRound)
 
-	queued, _ = tickAt(bloomTestStart + bloomTestOnset)
+	queued, _ = tick(bloomTestOnset - 1)
 	assert.True(t, queued[bloomWithdrawalId], "not stuck: the withdrawal arrives")
 
-	tickAt(bloomTestStart + bloomTestDecay)
-	assert.Equal(t, 2, u.Character.BloomAddiction, "not stuck: the craving fades")
+	tick(bloomTestDecay - bloomTestOnset)
+	assert.Equal(t, 2, c.BloomAddiction, "not stuck: the craving fades")
 }
 
-// A round ahead of the clock (a lost round file) must not wrap around into a huge
-// abstinence and empty the addiction in a few ticks.
-func TestBloomStamp_AheadOfTheClockRestarts(t *testing.T) {
+// A clean character keeps no count, so the first dose starts from nothing.
+func TestBloom_ACleanCharacterCountsNothing(t *testing.T) {
 	seedBloomTick(t)
 	c := characters.New()
-	c.BloomAddiction = 3
-	c.BloomLastDoseRound = bloomTestStart + 5000
-	u := bloomUser(t, c)
-
-	queued, _ := tickAt(bloomTestStart)
-	assert.False(t, queued[bloomWithdrawalId])
-	assert.Equal(t, 3, u.Character.BloomAddiction)
-	assert.Equal(t, bloomTestStart, u.Character.BloomLastDoseRound)
+	logIn(t, c)
+	tick(bloomTestDecay)
+	assert.Zero(t, c.BloomAbstinentRounds)
 }
 
-// Rounds run while a player is away, so time away is abstinence. A long absence
-// lands in one tick: clean with no withdrawal if it was long enough, and the
-// addict who is still addicted comes back to the craving.
-func TestBloomAbsence_IsAbstinence(t *testing.T) {
-	seedBloomTick(t)
-	c := characters.New()
-	c.BloomAddiction = 3
-	c.BloomLastDoseRound = bloomTestStart
-	u := bloomUser(t, c)
-
-	queued, out := tickAt(bloomTestStart + 5*bloomTestDecay)
-	assert.Equal(t, 0, u.Character.BloomAddiction)
-	assert.False(t, queued[bloomWithdrawalId], "away long enough to be clean, so no withdrawal")
-	assert.Contains(t, out, bloomCleanFragment)
-	assert.Zero(t, u.Character.BloomLastDoseRound)
-
-	c = characters.New()
-	c.BloomAddiction = 9
-	c.BloomLastDoseRound = bloomTestStart
-	u = bloomUser(t, c)
-	queued, out = tickAt(bloomTestStart + 2*bloomTestDecay + bloomTestOnset)
-	assert.Equal(t, 7, u.Character.BloomAddiction, "two periods away, two points")
-	assert.True(t, queued[bloomWithdrawalId], "still addicted, past the onset")
-	assert.NotContains(t, out, bloomCleanFragment)
-}
-
-// The crash has the same hole in a narrower window: the flag was runtime only, so
-// a Communion whose last round fell on the first round back never crashed.
+// The flag was runtime only, so a Communion whose last round fell on the first
+// round back never crashed.
 func TestBloomCrash_SurvivesARelog(t *testing.T) {
 	seedBloomTick(t)
 	c := characters.New()
 	require.NoError(t, c.AddConditionScaled(bloomCommunionId, 1.0))
-	u := bloomUser(t, c)
-	tickAt(bloomTestStart)
+	u := logIn(t, c)
+	tick(1)
 	require.True(t, u.Character.BloomHadCommunion)
 
-	u = bloomUser(t, relog(t, u.Character))
+	u = logIn(t, saveAndLoad(t, u.Character))
 	require.True(t, u.Character.BloomHadCommunion, "the flag is saved")
 	require.True(t, u.Character.HasCondition(bloomCommunionId), "the high is saved too")
 	// The round tick ran before this listener and took the last of the high.
@@ -212,6 +253,6 @@ func TestBloomCrash_SurvivesARelog(t *testing.T) {
 	u.Character.Conditions.Prune()
 	require.False(t, u.Character.HasCondition(bloomCommunionId))
 
-	queued, _ := tickAt(bloomTestStart + 1)
+	queued, _ := tick(1)
 	assert.True(t, queued[bloomCrashId], "the high ended, so the crash comes")
 }

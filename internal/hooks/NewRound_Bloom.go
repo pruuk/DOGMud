@@ -13,12 +13,12 @@ package hooks
 // condition 90 is on, and cleared the round it goes away. It is saved, so a
 // Communion that ends on the first round after a login still crashes.
 //
-// BloomLastDoseRound is saved too (owner 2026-11-04): a relog must not stop
-// withdrawal. util.SaveRoundCount keeps the round count across a restart, so a
-// saved round stays meaningful, and rounds run while a player is away, so time
-// away counts as abstinence. A save from before the round was stored, or a stamp
-// ahead of the clock (a lost round file), starts its clock at the first round
-// online: no false withdrawal, and never stuck with no clock at all.
+// Only time online counts (owner 2026-11-04): a player must not be able to log
+// out and wait off a craving or a withdrawal. BloomAbstinentRounds counts the
+// rounds spent online since the last dose. This hook is the only thing that ticks
+// it, a dose resets it, and it is saved, so a relog neither stops it nor moves it.
+// A save with addiction and no count reads as 0: the count starts at the first
+// round online, with no false withdrawal, and cannot get stuck.
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -30,9 +30,6 @@ import (
 // BloomTick is the NewRound listener that drives the Bloom drug lifecycle.
 // Registered in hooks.go after AutoHeal.
 func BloomTick(e events.Event) events.ListenerReturn {
-	evt := e.(events.NewRound)
-	currentRound := evt.RoundNumber
-
 	bal := configs.GetBalanceConfig()
 	withdrawOnset := uint64(bal.BloomWithdrawalOnsetRounds)
 	decayRounds := uint64(bal.BloomAddictionDecayRounds)
@@ -68,24 +65,17 @@ func BloomTick(e events.Event) events.ListenerReturn {
 			continue
 		}
 
-		// An addict with no usable clock: a save from before the round was stored,
-		// or a stamp ahead of the count, which the subtractions below would wrap
-		// into a huge abstinence. The clock starts now.
-		if c.BloomLastDoseRound == 0 || c.BloomLastDoseRound > currentRound {
-			c.BloomLastDoseRound = currentRound
-		}
+		// This loop covers online users only, so this is the one place the count
+		// moves: a round spent logged out is not a round of abstinence.
+		c.BloomAbstinentRounds++
 
 		// ── 2. Addiction decay ────────────────────────────────────────────────
 		// One addiction point per BloomAddictionDecayRounds of abstinence.
-		// After each decrement, advance BloomLastDoseRound by one period so
-		// the next decrement fires exactly BloomAddictionDecayRounds later. A
-		// player back from a long absence settles it all in one tick, before the
-		// withdrawal check, so someone clean by now is not sent into withdrawal
-		// for one round first.
-		for decayRounds > 0 && c.BloomAddiction > 0 && currentRound-c.BloomLastDoseRound >= decayRounds {
+		// After each decrement, take one period off the count so the next
+		// decrement fires exactly BloomAddictionDecayRounds later.
+		if decayRounds > 0 && c.BloomAbstinentRounds >= decayRounds {
 			c.AddBloomAddiction(-1)
-			// Slide the reference point forward one period.
-			c.BloomLastDoseRound += decayRounds
+			c.BloomAbstinentRounds -= decayRounds
 			if c.BloomAddiction == 0 {
 				// Fully clean: remove any lingering Withdrawal condition.
 				actions.LandBloomClean(actions.NewUserActor(user))
@@ -93,7 +83,7 @@ func BloomTick(e events.Event) events.ListenerReturn {
 		}
 
 		// ── 3. Withdrawal ─────────────────────────────────────────────────────
-		if c.BloomAddiction > 0 && withdrawOnset > 0 && currentRound-c.BloomLastDoseRound >= withdrawOnset {
+		if c.BloomAddiction > 0 && withdrawOnset > 0 && c.BloomAbstinentRounds >= withdrawOnset {
 			// Re-apply only when the condition has expired to avoid constant
 			// timer resets that would make withdrawal permanent.
 			// Through the user record, for the same reason as the crash
