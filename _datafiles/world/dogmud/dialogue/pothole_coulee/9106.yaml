@@ -282,9 +282,6 @@ topics:
   marked: true
   questFlagRequired:
     30-newcomer: new
-  setsQuestFlag:
-    key: 30-newcomer
-    value: told
   moodChange: friendly
 - key: footing_offer
   kind: offer

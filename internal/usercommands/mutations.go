@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -32,7 +33,16 @@ func Mutations(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		return indent + util.SplitStringNL(text, width-len(indent), indent)
 	}
 
-	for mutId, level := range user.Character.Mutations {
+	// By id, so the list reads the same every time and does not shuffle with
+	// Go's map order.
+	ids := make([]string, 0, len(user.Character.Mutations))
+	for mutId := range user.Character.Mutations {
+		ids = append(ids, mutId)
+	}
+	sort.Strings(ids)
+
+	for _, mutId := range ids {
+		level := user.Character.Mutations[mutId]
 		depth := mutations.LevelDescription(level)
 		spec := mutations.GetMutation(mutId)
 		if spec == nil {

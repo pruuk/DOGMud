@@ -23,8 +23,8 @@ steps:
       noble household, he says. She went to ground in the Common Quarter, among
       people who do not ask for papers.
     hint: >-
-      She is somewhere in the Common Quarter. Mother Brisk keeps tenants she will
-      not name, at her block off Tenement Row. Type talk brisk.
+      She is in the Common Quarter, through Aldric's Public House off Dock Street.
+      Mother Brisk keeps tenants she will not name, off Tenement Row. Type talk brisk.
   - id: found
     destination:
       mob: 9344  # follow Horst (schedule np_merchant_horst)

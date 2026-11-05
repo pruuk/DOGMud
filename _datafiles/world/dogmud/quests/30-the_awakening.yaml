@@ -24,10 +24,11 @@ secret: false
 
 flags:
   # Set when a total newbie starts (usercommands.grantNewcomerMarker). Hadwen and
-  # Toke teach the basics to a holder of "new"; Toke's talk sets "told".
+  # Toke teach the basics to a holder of "new". Neither lesson closes the other,
+  # so a player who walks past Hadwen and hears Toke can still come back.
   - key: newcomer
-    values: [new, told]
-    description: "Whether a new-to-MUDs character has had the guides' teaching"
+    values: [new]
+    description: "Whether this character started as new to MUDs"
 
 steps:
   - id: start

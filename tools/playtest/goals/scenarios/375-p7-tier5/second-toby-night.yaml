@@ -1,0 +1,14 @@
+# Admin only to set the hour; run alone with playtestrun run. The floor search while Toby sleeps.
+ephemeral:
+  profile: admin
+  start_room: 5706
+  budgets:
+    wall_clock: 20m
+goals:
+  - >-
+    Type `talk orin` and take The Cooperage Circle. Type `server set night`. Type `time` and quote it. Go to the
+    Cooperage Floor: west, north, north, then the way in. `look` until Toby is there asleep, for up to 10 minutes,
+    and quote what shows him. If he never comes, say so, and go on anyway. Quote game lines VERBATIM and in order.
+  - >-
+    `search` beside him and quote every line. Say whether it feels fair that you could do this with him asleep, and
+    whether anything woke. Quote game lines VERBATIM and in order.

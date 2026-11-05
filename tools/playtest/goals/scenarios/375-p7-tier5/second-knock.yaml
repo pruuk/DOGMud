@@ -1,0 +1,34 @@
+# The first run's Bloom seat lost its gold to a cutpurse and never reached The Knock. This
+# one starts at Odile with The Skip running. Routes are given: finding them is not under test.
+ephemeral:
+  profile: counters
+  start_room: 5625
+  overlays:
+    set_quest_tokens: [66-start, 66-dose, 66-end, 67-start, 67-front, 64-start]
+    set_quest_flags: {67-entry: undercover}
+    set_gold: 2000
+    grant_items: [20096]
+  budgets:
+    wall_clock: 50m
+goals:
+  - >-
+    Go `up` to the Condemned Floor. `talk odile`, hear her, then leave without telling her anything. Go to Horst at The
+    Watched House Gate: from the Common Quarter go west through Aldric's Public House to Dock Street and follow the
+    `quests` line. Hear him and tell him where she sleeps. Quote what he says and pays. Say whether what you heard from
+    her made this a real choice. Quote game lines VERBATIM and in order.
+  - >-
+    Go to Marn's Fabric-Remnants Shop at the north end of the Outer Dock Lane on the docks. Read his opener. Type `talk marn`.
+    Accept The Knock and quote the card. Check your gold with `status`, and say what it cost. Type `east` and quote the whole
+    arrival. Say what you understood at that moment. Finish with Sefton. Type `list` and quote prices. Try `sell wafer` to him.
+    Quote game lines VERBATIM and in order.
+  - >-
+    Hear what a wafer does. Buy one, `quaff wafer`, and quote every line in order. Note the clock. Type `status` every few rounds.
+    Then stop, and wait for the crash and the craving, and quote each with its clock time. Say whether a new player would know what
+    is happening and where to go. Quote game lines VERBATIM and in order.
+  - >-
+    Follow only what the game has told you, to Ysolde in the Common Quarter. Ask for the cure, `quaff purge`, and quote it. Type
+    `status` afterwards. Wait 5 minutes and say whether the craving came back. Quote game lines VERBATIM and in order.
+  - >-
+    Finish The Bloom Trail if budget remains: `quests` shows the next step. Quote the constable's hand-in. Say whether it reads
+    sensibly from someone who has just bought from the trade. Then go back through the cupboard door and say whether Sefton's shop
+    is still open and what he says about the watch. Quote game lines VERBATIM and in order.

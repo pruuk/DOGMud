@@ -337,11 +337,11 @@ func TestTier5TobyAnswersAfterTheBloodlineEnding(t *testing.T) {
 func TestTier5OrinKeepsTheOriginalInHand(t *testing.T) {
 	orin := loadShippedDialogue(t, "new_plymouth_crafting/9332.yaml")
 	require.NotContains(t, orin.FindTopic("circle_choice").Text, "The original is below")
-	require.Contains(t, orin.FindTopic("circle_choice").Text, "What it charts is below")
+	require.Contains(t, orin.FindTopic("circle_choice").Text, "What it charts is under the docks")
 	copyItem, err := os.ReadFile("../../_datafiles/world/dogmud/items/materials-40000/40114-copy_of_edvars_map.yaml")
 	require.NoError(t, err)
 	require.NotContains(t, string(copyItem), "original is below")
-	require.Contains(t, string(copyItem), "What it charts is below")
+	require.Contains(t, string(copyItem), "What it charts is under the docks")
 }
 
 // "Mind the canal" says why, in the words a new reader needs.
@@ -678,17 +678,15 @@ func TestTier5DrossNeverSaysLookReliefs(t *testing.T) {
 
 func TestTier5NewcomerTopicsReadTheFlag(t *testing.T) {
 	newFlag := map[string]string{"30-newcomer": "new"}
-	told := map[string]string{"30-newcomer": "told"}
 
 	toke := loadShippedDialogue(t, "pothole_coulee/9106.yaml")
 	require.Contains(t, menuKeys(toke, withFlags(heldState(), newFlag)), "newcomer_players")
-	require.NotContains(t, menuKeys(toke, withFlags(heldState(), told)), "newcomer_players")
 	require.NotContains(t, menuKeys(toke, heldState()), "newcomer_players")
-	require.Equal(t, "told", toke.FindTopic("newcomer_players").SetsQuestFlag.Value)
+	require.Nil(t, toke.FindTopic("newcomer_players").SetsQuestFlag, "hearing Toke must not close Hadwen's lesson")
 	require.Empty(t, toke.FindTopic("newcomer_players").GrantsQuest)
 
 	hadwen := loadShippedDialogue(t, "pothole_coulee/9100.yaml")
 	require.Contains(t, menuKeys(hadwen, withFlags(heldState("30-end"), newFlag)), "newcomer_mutations")
-	require.NotContains(t, menuKeys(hadwen, withFlags(heldState("30-end"), told)), "newcomer_mutations")
 	require.NotContains(t, menuKeys(hadwen, withFlags(heldState(), newFlag)), "newcomer_mutations")
+	require.NotContains(t, menuKeys(hadwen, heldState("30-end")), "newcomer_mutations")
 }
