@@ -1068,6 +1068,9 @@ trigger's signature.
 - `count` is refused on `room_gate`, `room_interact` and `item_give`
   (`CountAllowed`, the `countSwallowsCommand` set): a partial match is a handled
   event, and on those events handled means the quest took the command.
+- A `room_gate` takes only `actor` and `observer` text (`validateGateActions`): a
+  look through the exit runs the gate's actions too, so anything else would pay
+  for looking at a door.
 - `distinct: all|N` is `room_enter` + `area` only, never with `count`
   (`DistinctAll`, `DistinctNeed(distinct, areaSize)`). `ValidateQuestRefs` also
   refuses N larger than the area, refuses `all` on an area with a gated room

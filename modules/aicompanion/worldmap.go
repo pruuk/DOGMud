@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
@@ -241,7 +242,9 @@ func edgeCost(to *RoomRecord, er *ExitRecord) float64 {
 
 // findPath returns the cheapest known route (F11.5): distance, weighted
 // against remembered danger, doors and guessed exits. Exits that failed
-// three times are not used. maxSteps bounds the route length.
+// three times are not used, nor is an exit into a room a room_gate guards: `go`
+// takes a mob straight through one, and she must not read a room her owner cannot
+// enter. maxSteps bounds the route length.
 func findPath(mp map[int]*RoomRecord, from int, to int, maxSteps int) ([]step, bool) {
 	if from == to {
 		return nil, true
@@ -275,7 +278,7 @@ func findPath(mp map[int]*RoomRecord, from int, to int, maxSteps int) ([]step, b
 		sort.Strings(names) // deterministic ties
 		for _, name := range names {
 			er := rec.Exits[name]
-			if er.To == 0 || er.Fails >= 3 {
+			if er.To == 0 || er.Fails >= 3 || actions.RoomGateGuards(er.To) {
 				continue
 			}
 			nc := cur.cost + edgeCost(mp[er.To], er)

@@ -69,6 +69,33 @@ func TestGuardsRoom_ReadsTheFieldsAndNotTheConditions(t *testing.T) {
 	assert.False(t, NewEngine().GuardsRoom(500))
 }
 
+// "It matches as a real step does": a gate on an area or a zone guards each of
+// its rooms and no other room.
+func TestGuardsRoom_MatchesAnAreaAndAZone(t *testing.T) {
+	installGrove(t)
+	gate := func(area, zone string) *Engine {
+		e := NewEngine()
+		e.RegisterQuest(&QuestDef{
+			QuestId: 91, Name: "Area Gate",
+			Steps: []QuestStep{{Id: "start"}},
+			Triggers: []TriggerDef{{
+				Event: "room_gate", Area: area, Zone: zone,
+				Conditions: Conditions{Missing: []string{"91-start"}},
+				Actions:    []ActionDef{{SendText: "x"}},
+			}},
+		})
+		return e
+	}
+
+	byArea := gate("grove", "")
+	assert.True(t, byArea.GuardsRoom(5312))
+	assert.False(t, byArea.GuardsRoom(100))
+
+	byZone := gate("", "Pothole Coulee")
+	assert.True(t, byZone.GuardsRoom(5311))
+	assert.False(t, byZone.GuardsRoom(100))
+}
+
 func TestWouldFire_FalseWhenFieldsDoNotMatch(t *testing.T) {
 	e := seedDryRunQuest()
 	player := newFullMockPlayer(501)

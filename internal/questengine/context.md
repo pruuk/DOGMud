@@ -92,8 +92,9 @@ event happens (a quest gate on an exit). `SearchFeatures` returns the sorted,
 distinct nouns of `room_interact` triggers with `verb: search` and `room:`
 equal to the given id, regardless of conditions. `GuardsRoom` reports whether
 any `room_gate` guards a template room (room, area or zone), regardless of
-conditions: it is how a mob's planner keeps out of a gated room, because a mob's
-`pathto` ignores gates.
+conditions: it is how a mob's planner, a fleeing mob (`actions.RoomGateGuards`) and
+a companion's errand keep out of a gated room, because a mob's `pathto` and `go`
+ignore gates.
 
 `NotifyAll` raises several `EventDetails` of one event type under ONE
 `EvalGuard`, so each trigger fires at most once however many details it

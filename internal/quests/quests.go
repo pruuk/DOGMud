@@ -104,6 +104,23 @@ func CountAllowed(event string) bool { return !countSwallowsCommand[event] }
 // quest log's indent stays inside 80 columns.
 const MaxLabelLength = 40
 
+// validateGateActions keeps a room_gate to text. A look through an exit fires
+// the gate that would refuse the step, so that its own line explains the door,
+// and a look must change nothing: a gate that granted or paid would do so for
+// looking at it.
+func validateGateActions(t TriggerDef) error {
+	if t.Event != "room_gate" {
+		return nil
+	}
+	for i, a := range t.Actions {
+		a.SendText, a.RoomText = "", ""
+		if a != (ActionDef{}) {
+			return fmt.Errorf("room_gate action %d does more than speak: a look through the exit runs a gate's actions too, so a gate takes only actor and observer text", i)
+		}
+	}
+	return nil
+}
+
 // validateAreaCount checks the #375 phase 3b slice 4 fields: area or zone
 // (any event, not both), count (2 or more), distinct (room_enter with an
 // area, all or a whole number, never with count), label (with count or
@@ -260,6 +277,9 @@ func (r *Quest) Validate() error {
 			return fmt.Errorf("quest %d (%s): trigger %d sets topic %q on a %s trigger; only topic_heard has a topic", r.QuestId, r.Name, i, t.Topic, t.Event)
 		}
 		if err := validateAreaCount(t); err != nil {
+			return fmt.Errorf("quest %d (%s): trigger %d: %w", r.QuestId, r.Name, i, err)
+		}
+		if err := validateGateActions(t); err != nil {
 			return fmt.Errorf("quest %d (%s): trigger %d: %w", r.QuestId, r.Name, i, err)
 		}
 		if err := r.validateCountStep(t); err != nil {

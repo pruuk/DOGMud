@@ -610,8 +610,10 @@ ruling O6) is an exit the light here is too poor to see through
 `LookExitLocked`. A `room_gate` that would refuse this player the step also
 stops a look or a scan as a lock does (`exitQuestGated`, `look.go`): the look is
 `LookExitLocked` with `ExitGated` set, and the player wrapper reads the gate's own
-line through `QuestGateRefuses`; a scan reads "the exit is locked". A mob walks
-through a gate, so it sees through one. The player wrapper prints one `messaging.UnseenFigure`
+line through `QuestGateRefuses`; a scan reads "the exit is locked", and a shot
+through it gets the locked exit's refusal (`ShotExitClosed`, which `resolveShootTarget`
+asks too, so no pre-fire guard answers for who is there). A mob's `go` passes a
+gate, so it sees and shoots through one. The player wrapper prints one `messaging.UnseenFigure`
 per occupant from `FiguresSensedIn(viewer, room, selfUserId)` (`scan.go`),
 never a name, the room's title or its description; the mob wrapper is
 silent on it, as on every refusal. `Scan` takes the same heat path per
@@ -1418,7 +1420,8 @@ is for a real step. `QuestGateBlocks` asks the same question without running
 anything (the engine's `WouldFire` dry run). Flee uses `QuestGateBlocks` as
 the `keep` of `Room.GetRandomExitWhere`, so a fleeing player never picks an
 exit a quest has closed; with no ungated exit the flee fails like an
-all-locked room.
+all-locked room. A fleeing mob holds no tokens, so `RoomGateGuards` closes any
+room a gate guards to its flee, whatever the gate's conditions.
 
 **Stolen baubles after the theft (`stolen_bauble.go`, docs/baubles Phase 6c).**
 Selling is `sell_bauble.go`'s (above); storage (`usercommands/storage.go`,

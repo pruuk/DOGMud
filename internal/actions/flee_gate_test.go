@@ -91,8 +91,36 @@ func TestResolveFlee_AllGatedFailsLikeAllLocked(t *testing.T) {
 	}
 }
 
-// A player who holds the token is not gated, and mobs never are: the gate is
-// a player's quest state.
+// A mob holds no tokens to read a gate's conditions against, so a room any gate
+// guards is out of bounds for its flee, as it is for a planner's route: it must
+// not run into the room a gate keeps players out of. Its conditions are not read,
+// so a gate this mob would pass still stops it.
+func TestResolveFlee_AMobNeverFleesIntoAGatedRoom(t *testing.T) {
+	seedFleeConditions(t)
+	registerFleeGate(t)
+	two := map[string]exit.RoomExit{"north": {RoomId: fleeParityNorthId}, "east": {RoomId: fleeParityEastId}}
+	// With two exits a random pick lands on the gated one about half the time,
+	// so 40 runs leave a 1 in 2^40 chance of a false pass.
+	for i := 0; i < 40; i++ {
+		_, m := fleeBoth(t, fleeRow{name: "mob", engage: true, resolve: true, exits: two})
+		if !m.outcome.Escaped() || m.outcome.ExitName != "east" {
+			t.Fatalf("run %d: mob outcome %+v, want an escape through east (north is gated)", i, m.outcome)
+		}
+	}
+
+	_, m := fleeBoth(t, fleeRow{name: "mob", engage: true, resolve: true, preferred: "north", exits: two})
+	if !m.outcome.Escaped() || m.outcome.ExitName != "east" {
+		t.Fatalf("mob outcome %+v, want the gated preferred exit skipped for east", m.outcome)
+	}
+
+	_, m = fleeBoth(t, fleeRow{name: "mob", engage: true, resolve: true,
+		exits: map[string]exit.RoomExit{"north": {RoomId: fleeParityNorthId}}})
+	if !m.outcome.NoExit {
+		t.Fatalf("mob outcome %+v, want no exit when the only one is gated", m.outcome)
+	}
+}
+
+// A player who holds the token is not gated: the gate is a player's quest state.
 func TestResolveFlee_GateOnlyStopsThoseItGates(t *testing.T) {
 	seedFleeConditions(t)
 	registerFleeGate(t)
@@ -107,13 +135,6 @@ func TestResolveFlee_GateOnlyStopsThoseItGates(t *testing.T) {
 		BeginFlee(actor, ``)
 		if o := ResolveFlee(actor, room); !o.Escaped() || o.ExitName != "north" {
 			t.Fatalf("outcome %+v, want an escape north", o)
-		}
-	})
-
-	t.Run("mob", func(t *testing.T) {
-		_, m := fleeBoth(t, fleeRow{name: "mob", engage: true, resolve: true, exits: north})
-		if !m.outcome.Escaped() || m.outcome.ExitName != "north" {
-			t.Fatalf("mob outcome %+v, want an escape north", m.outcome)
 		}
 	})
 }

@@ -214,13 +214,17 @@ func settleFlee(c *characters.Character, success bool) {
 
 // fleeExit is the preferred exit when it is still there, unlocked and not
 // quest-gated, else a random passable one (secret, locked and quest-gated
-// exits excluded). Quest gates are asked only for a fleeing player (user
-// non-nil); a mob's flee ignores them, as its walking does (#588). With every
-// exit excluded it returns no exit, so a fully gated room fails a flee
+// exits excluded). A fleeing player (user non-nil) is asked each gate's
+// conditions (#588). A fleeing mob has no tokens to read them against, so a room
+// any gate guards is closed to its flee, as it is to a planner's route. With
+// every exit excluded it returns no exit, so a fully gated room fails a flee
 // exactly as a fully locked one does.
 func fleeExit(room *rooms.Room, preferred string, user *users.UserRecord) (string, int) {
 	walkable := func(_ string, destRoomId int) bool {
-		return user == nil || !questGateBlocksRoomId(user, room.RoomId, destRoomId)
+		if user == nil {
+			return !RoomGateGuards(destRoomId)
+		}
+		return !questGateBlocksRoomId(user, room.RoomId, destRoomId)
 	}
 	if preferred != `` {
 		if info, ok := room.GetExitInfo(preferred); ok && !info.Lock.IsLocked() && walkable(preferred, info.RoomId) {

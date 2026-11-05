@@ -179,12 +179,21 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 }
 
 // exitQuestGated reports whether a room_gate would refuse this player the step
-// through an exit, so a look or a scan stops there as at a locked door. It runs
-// no action. A mob walks through a gate, so it sees through one (fleeExit reads
-// gates for a player only, for the same reason).
+// through an exit, so a look, a scan or a shot stops there as at a locked door.
+// It runs no action. A mob's `go` passes a gate, so it sees and shoots through
+// one.
 func exitQuestGated(actor Actor, room *rooms.Room, destRoomId int) bool {
 	ua, ok := actor.(*UserActor)
 	return ok && ua.User != nil && questGateBlocksRoomId(ua.User, room.RoomId, destRoomId)
+}
+
+// ShotExitClosed reports whether a shot through this exit stops at it: a locked
+// exit, or one a room_gate closes to this shooter. ExecuteFire refuses such a
+// shot, and the fire command's pre-fire guards resolve no one behind it, so
+// neither answers for who stands there.
+func ShotExitClosed(actor Actor, room *rooms.Room, exitName string, destRoomId int) bool {
+	info, _ := room.GetExitInfo(exitName)
+	return info.Lock.IsLocked() || exitQuestGated(actor, room, destRoomId)
 }
 
 // lookNamesAnObject reports a sealed crate or a room container the looker

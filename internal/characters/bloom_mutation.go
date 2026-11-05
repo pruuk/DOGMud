@@ -70,7 +70,10 @@ func (c *Character) BloomAdvanceMutation(rng *rand.Rand) (string, int) {
 // path). Returns (id, 1) or ("", 0) if no candidate exists, or if the character
 // already holds Balance.MutationMaxCount mutations. rng nil → global rand.
 func (c *Character) BloomSeedNewMutation(rng *rand.Rand) (string, int) {
-	// The count every other way of gaining a mutation obeys (owner, 2026-11-04).
+	// The combat path (actions.EarnMutation) and the round ticks
+	// (NewRound_UserRoundTick, NewRound_MobRoundTick) read this count, and a wafer
+	// stops at it too (owner, 2026-11-04). Rite and Phial of Second Birth grants do
+	// not read it.
 	if len(c.Mutations) >= int(configs.GetBalanceConfig().MutationMaxCount) {
 		return "", 0
 	}

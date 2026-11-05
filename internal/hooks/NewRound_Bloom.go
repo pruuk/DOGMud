@@ -17,9 +17,9 @@ package hooks
 // restart fresh after each login.  Addiction level (BloomAddiction) IS persisted.
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
-	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -91,10 +91,7 @@ func BloomTick(e events.Event) events.ListenerReturn {
 				c.BloomLastDoseRound += decayRounds
 				if c.BloomAddiction == 0 {
 					// Fully clean: remove any lingering Withdrawal condition.
-					c.RemoveCondition(92)
-					user.SendText(messaging.CategoryWarning,
-						`The craving has finally loosened its grip. You feel `+
-							`clean, or as close to it as you're likely to get.`)
+					actions.LandBloomClean(actions.NewUserActor(user))
 				}
 			}
 		}
