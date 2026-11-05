@@ -4,11 +4,3 @@
 # warning; any finding not listed refuses boot, CI and the quest editor's
 # save. A line with no matching finding fails CI: delete it when its finding
 # is fixed. Never add a line by hand to make new content pass.
-end 1000000 step end
-one-action 1000000 step end:none
-one-action 1000000 step givegold:none
-refs 1000000 quest 1000000 refs: rewards conditionid: condition 4 does not exist
-refs 1000000 quest 1000000 refs: rewards skillinfo: skill "map" does not exist
-start 1000000 step start
-walk-destination 1000000 step givegold
-walk-destination 1000000 step start

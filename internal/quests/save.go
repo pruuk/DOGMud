@@ -71,9 +71,9 @@ func SaveQuest(q Quest) error {
 	return nil
 }
 
-// ReservedTemplateIdFloor marks the template-quest id range
-// (1000000-generic_quest.yaml). Id allocation stays below it and the editor
-// list hides it.
+// ReservedTemplateIdFloor marks the top of the id range. Id allocation stays
+// below it and the editor list hides anything at or above it. The sample quest
+// that once sat there is gone (#375 tier 5).
 const ReservedTemplateIdFloor = 1000000
 
 // CreateNewQuestFile allocates the next free id past the cache max —

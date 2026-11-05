@@ -14,9 +14,6 @@
 100-hidden
 100-kill
 100-start
-1000000-end
-1000000-givegold
-1000000-start
 101-end
 101-lifted
 101-start
@@ -370,6 +367,11 @@
 99-planted
 99-start
 # retired
+# Quest 1000000, the sample quest (#375 phase 7 tier 5): deleted. It named a
+# condition and a skill that do not exist, and no player could reach it.
+1000000-end
+1000000-givegold
+1000000-start
 # Quest 21 Newcomer's Path (#375 phase 7 tier 5): a flag on quest 30 now, so
 # users.LoadUser drops it from saves (quests.RetiredQuests).
 21-end

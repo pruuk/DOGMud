@@ -114,9 +114,9 @@ func TestCreateNewQuestFile_SkeletonIsBootSafe(t *testing.T) {
 	dir := t.TempDir()
 	pointQuestDataFilesAt(t, dir)
 	seed := seedQuest(t, 99904, "Ceiling Marker")
-	// The generic template (1000000-generic_quest.yaml) lives in the same
-	// cache; id allocation must IGNORE the reserved template range or every
-	// created quest lands above it — invisible to the editor list.
+	// A quest in the reserved range sits in the same cache; id allocation
+	// must IGNORE that range or every created quest lands above it, invisible
+	// to the editor list.
 	seedQuest(t, 1000000, "Generic Template")
 
 	id, err := CreateNewQuestFile("Fresh Errand")
