@@ -65,7 +65,7 @@ If the owner changes the stake, change all five places and the test in Task 15. 
 **The buy limit (owner, 2026-11-04).** A real drug market is accepted, so a wafer may be given and auctioned, and
 there is no new trade block. What is limited is how often one character can buy: at most
 `BloomDealerWafersPerDay: 3` from any seller of item 40108 within a rolling `BloomDealerWindowHours: 24` real hours,
-counted per character and saved across relog and restart. It is enforced at the purchase, because a limit on the door
+counted per character and saved across relog and restart, with a companion's purchase counted against its owner. It is enforced at the purchase, because a limit on the door
 fails: a player could stand inside and buy each refill. Past it the seller refuses in his own voice, nothing is charged
 and nothing moves. **With 3 a day, one player gets at most about 1.65 ranks a day from purchase** (`3 x 0.55`), before
 the auction market. The shelf refills about 24 wafers a day (`5 per 4 h 56 m`), so eight players at their limit are

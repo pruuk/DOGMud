@@ -32,6 +32,20 @@ const bloomDealerTimerPrefix = `bloom-dealer-`
 // bloomDealerSayEnough is the seller's refusal, in his own voice, with no numbers.
 const bloomDealerSayEnough = `say That is enough from me for one day. Come back tomorrow, if you still want to.`
 
+// buyLimitCharacter is the character whose window a purchase counts against: the
+// buyer, or for a companion its owner, since the limit is any player's and a
+// companion's companion-buy must not be three more a day. A mob with no owner, or
+// whose owner is not loaded, counts for itself.
+func buyLimitCharacter(buyer Actor) *characters.Character {
+	c := buyer.GetCharacter()
+	if ownerId := c.GetCharmedUserId(); ownerId > 0 {
+		if owner := users.GetByUserId(ownerId); owner != nil && owner.Character != nil {
+			return owner.Character
+		}
+	}
+	return c
+}
+
 // buyLimited reports whether a per-character buying limit applies to this item.
 func buyLimited(itemId int) bool {
 	return itemId == bloomWaferItemId
@@ -73,7 +87,7 @@ func recordLimitedBuy(c *characters.Character, itemId int) {
 // refuseIfBuyLimited has the seller refuse a purchase past the limit, before
 // anything moves or is charged, and reports whether it did.
 func refuseIfBuyLimited(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRecord, itemId int) bool {
-	if !BuyLimitReached(buyer.GetCharacter(), itemId) {
+	if !BuyLimitReached(buyLimitCharacter(buyer), itemId) {
 		return false
 	}
 	sellerName := ``

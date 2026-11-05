@@ -850,7 +850,7 @@ func executePurchaseCondition(buyer Actor, shopMob *mobs.Mob, shopUser *users.Us
 // items, so collapsing them would break "buy N of X" objectives.
 func postSuccessBookkeeping(buyer Actor, shopMob *mobs.Mob, shopUser *users.UserRecord,
 	itemId int, awardProgression bool) {
-	recordLimitedBuy(buyer.GetCharacter(), itemId)
+	recordLimitedBuy(buyLimitCharacter(buyer), itemId)
 
 	// U10b-1 Task 18c: won is unconditionally true. This runs inside
 	// postSuccessBookkeeping -- every refusal path (no stock, cannot afford,

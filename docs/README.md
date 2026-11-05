@@ -197,6 +197,7 @@ than reading an old result:
 | [`../internal/actions/drink_bloom_cap_test.go`](../internal/actions/drink_bloom_cap_test.go) | A wafer stops at `MutationMaxCount` through the real drink path |
 | [`../internal/actions/buy_limit.go`](../internal/actions/buy_limit.go) | The per-character limit on buying Bloom Wafers, saved on `Character.Timers` |
 | [`../internal/actions/buy_limit_test.go`](../internal/actions/buy_limit_test.go) | The buying limit unit by unit: refusal moves nothing, per character, rolling window, knobs, save, both purchase paths, the list note |
+| [`../modules/aicompanion/buy_limit_test.go`](../modules/aicompanion/buy_limit_test.go) | A companion's `companion-buy` of a wafer counts against its owner's limit, and an ownerless mob's against its own |
 | [`../internal/guards/tier5_bloom_buy_test.go`](../internal/guards/tier5_bloom_buy_test.go) | A wafer bought from the shipped Sefton end to end, the limit at the real seller and on the shipped config |
 | [`../internal/hooks/NewRound_Bloom_test.go`](../internal/hooks/NewRound_Bloom_test.go) | Withdrawal, decay and the crash survive a relog; an older save starts its clock at login; time away is abstinence |
 | [`../internal/hooks/tier5_knock_hook_test.go`](../internal/hooks/tier5_knock_hook_test.go) | A real Accept of The Knock teaches the knock through `HandleQuestUpdate` |
