@@ -13,7 +13,7 @@ rooms, two NPCs, quests 64 and 102, one small `Eligible` fix. **5d** quest 21 re
 closing playtest.
 
 **Tech stack:** Go, YAML world data, testify. Design (owner approved, its rulings are final):
-`docs/superpowers/specs/2026-11-04-quest-arc-phase7-tier5-design.md`.
+`docs/superpowers/specs/completed/2026-11-04-quest-arc-phase7-tier5-design.md`.
 
 **Worktrees:** 5a: `C:/tmp/dogmud-375-p7-tier5a`, branch `feat/375-p7-tier5a`, cut from `feat/375-tier5`. 5b, 5c, 5d:
 `C:/tmp/dogmud-375-p7-tier5b`, `...5c`, `...5d`, branches `feat/375-p7-tier5b`, `...5c`, `...5d`, each cut from master once
