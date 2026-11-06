@@ -353,18 +353,18 @@ already known, so no presence leaks.
 
 #### **Interaction verbs: look and search (`usercommands.go`, `skill.search.go`; #375 phase 3a)**
 Look and search are the only two verbs that work on a room feature (owner
-ruling). `interactionFamily` maps a dispatched command to its family: look,
-with its aliases l, examine and exam expanded to it, raises `room_interact`
-with `Verb: quests.VerbLook` through `notifyRoomInteract` (matched on the
-template room, so an instance room fires); `read` raises it itself when
-nothing carried matches. `skill.search.go` raises `Verb: quests.VerbSearch`
-after the search ran: once for a resolved `search <feature>`, and once per
+ruling). Each has its own quest event since the #375 closing step. The
+dispatcher raises `quests.EventLookAt` (`look_at`) for look, with its aliases
+l, examine and exam expanded to it, through `notifyRoomFeature` (matched on
+the template room, so an instance room fires); `read` raises it itself when
+nothing carried matches. `skill.search.go` raises `quests.EventSearchAt`
+(`search_at`) after the search ran: once for a resolved `search <feature>`, and once per
 quest search spot a plain search turned up (`questSearchSpots`, which asks the
 engine's `SearchFeatures` and `WouldFire`, so a spot of a quest the player is
 not on is never rolled). A search needs sight (owner ruling 2026-11-02):
 when `messaging.ParticipantSight(user.Character, room)` is `SightNone` (the
 decision `look` refuses on, so night vision and infravision count) `Search`
-rolls no quest spot, raises neither `room_interact` nor the `search` command
+rolls no quest spot, raises neither `search_at` nor the `search` command
 event, and, only when `questSearchStep` or a spot would have fired (the engine's
 dry run) and the search turned up nothing else, prints `searchTooDarkLine`
 ("It is too dark to make anything out.") with no "You find nothing of
