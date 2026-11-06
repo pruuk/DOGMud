@@ -47,7 +47,7 @@ func loopFixtureDialogue() []*dialogue.DialogueFile {
 
 // loopFixture is the fake quest store and its loop world; edit q10 or q11
 // before calling it to start from a broken world.
-func loopFixture(t *testing.T, q10, q11 *quests.Quest, backlog questloop.Backlog) (*fakeQuestWorld, questDeps) {
+func loopFixture(t *testing.T, q10, q11 *quests.Quest) (*fakeQuestWorld, questDeps) {
 	t.Helper()
 	w := newFakeQuestWorld()
 	w.specs[q10.QuestId] = q10
@@ -61,7 +61,6 @@ func loopFixture(t *testing.T, q10, q11 *quests.Quest, backlog questloop.Backlog
 		}
 		return questloop.World{Quests: qs, Dialogue: loopFixtureDialogue(), Refs: &v}
 	})
-	d.backlog = func() (questloop.Backlog, error) { return backlog, nil }
 	return w, d
 }
 
@@ -82,7 +81,7 @@ func editedQ10(mod func(q *quests.Quest)) quests.Quest {
 
 func TestBuildQuestUpdate_RealRules_RefusesWhatTheEditBreaks(t *testing.T) {
 	q10, q11 := loopFixtureQuests()
-	w, d := loopFixture(t, q10, q11, questloop.Backlog{})
+	w, d := loopFixture(t, q10, q11)
 	res := buildQuestUpdate(d, editedQ10(func(q *quests.Quest) { q.Steps[1].Hint = "" }))
 	if res.Ok {
 		t.Fatal("removing a hint must refuse the save")
@@ -95,24 +94,12 @@ func TestBuildQuestUpdate_RealRules_RefusesWhatTheEditBreaks(t *testing.T) {
 	}
 }
 
-func TestBuildQuestUpdate_RealRules_BacklogFindingSavesWithAWarning(t *testing.T) {
-	q10, q11 := loopFixtureQuests()
-	_, d := loopFixture(t, q10, q11, questloop.Backlog{"hint 90010 step firstkill": true})
-	res := buildQuestUpdate(d, editedQ10(func(q *quests.Quest) { q.Steps[1].Hint = "" }))
-	if !res.Ok {
-		t.Fatalf("a backlog finding must not refuse the save, got %+v", res)
-	}
-	if !anyContains(res.Warnings, "hint 90010 step firstkill") {
-		t.Fatalf("the backlog finding must be listed in Warnings, got %v", res.Warnings)
-	}
-}
-
 // A finding the world already had on ANOTHER quest neither refuses this
 // save nor shows up in its warnings.
 func TestBuildQuestUpdate_RealRules_OtherQuestsFindingsAreNotThisSaves(t *testing.T) {
 	q10, q11 := loopFixtureQuests()
 	q11.Steps[1].Hint = ""
-	_, d := loopFixture(t, q10, q11, questloop.Backlog{})
+	_, d := loopFixture(t, q10, q11)
 	res := buildQuestUpdate(d, editedQ10(func(q *quests.Quest) { q.Name = "Cull the Wash" }))
 	if !res.Ok {
 		t.Fatalf("a finding on another quest must not refuse this save, got %+v", res)
@@ -126,7 +113,7 @@ func TestBuildQuestUpdate_RealRules_OtherQuestsFindingsAreNotThisSaves(t *testin
 func TestBuildQuestUpdate_RealRules_OwnStandingFindingWarns(t *testing.T) {
 	q10, q11 := loopFixtureQuests()
 	q10.Steps[0].Hint = ""
-	_, d := loopFixture(t, q10, q11, questloop.Backlog{})
+	_, d := loopFixture(t, q10, q11)
 	res := buildQuestUpdate(d, editedQ10(func(q *quests.Quest) { q.Steps[0].Hint = ""; q.Name = "Cull the Wash" }))
 	if !res.Ok {
 		t.Fatalf("a finding the edit did not add must not refuse, got %+v", res)
@@ -140,7 +127,7 @@ func TestBuildQuestUpdate_RealRules_OwnStandingFindingWarns(t *testing.T) {
 // refs finding (the registry still knows the old step).
 func TestBuildQuestUpdate_RealRules_StepRenameThatBreaksAnotherQuest(t *testing.T) {
 	q10, q11 := loopFixtureQuests()
-	_, d := loopFixture(t, q10, q11, questloop.Backlog{})
+	_, d := loopFixture(t, q10, q11)
 	res := buildQuestUpdate(d, editedQ10(func(q *quests.Quest) {
 		q.Steps[1].Id = "scout"
 		q.Triggers[0].Actions[0].Grant = "90010-scout"
@@ -156,7 +143,7 @@ func TestBuildQuestUpdate_RealRules_StepRenameThatBreaksAnotherQuest(t *testing.
 // The door hands loopWorld the deps' own validators, so they are built once.
 func TestBuildQuestUpdate_LoopWorldGetsTheDepsValidators(t *testing.T) {
 	q10, q11 := loopFixtureQuests()
-	_, d := loopFixture(t, q10, q11, questloop.Backlog{})
+	_, d := loopFixture(t, q10, q11)
 	inner := d.loopWorld
 	calls := 0
 	d.loopWorld = func(v quests.QuestValidators) questloop.World {

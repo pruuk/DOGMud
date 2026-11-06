@@ -58,11 +58,11 @@ func offerIndexDoorFrom(w questloop.World) (hides, auto []int) {
 	return hides, auto
 }
 
-// destinationDoor logs every quest step whose minimap destination is unknown
-// or mistagged (#375 phase 4) as a warning, and the inferred count. It never
-// refuses: the CI sweep ratchets these findings against the backlog.
-func destinationDoor() int {
-	return destinationDoorFrom(func() ([]questloop.Finding, []string) {
+// destinationDoor refuses on any quest step whose minimap destination is
+// unknown or mistagged (#375 phase 4; a refusal since the closing step): a
+// panic at boot, an error on a reload. It logs the inferred count.
+func destinationDoor(isReload bool) error {
+	return destinationDoorFrom(isReload, func() ([]questloop.Finding, []string) {
 		all := quests.GetAllQuests()
 		qs := make([]*quests.Quest, 0, len(all))
 		for i := range all {
@@ -72,63 +72,42 @@ func destinationDoor() int {
 	})
 }
 
-// destinationDoorFrom is destinationDoor over any source, for tests. It
-// returns how many findings it logged.
-func destinationDoorFrom(src func() ([]questloop.Finding, []string)) int {
+// destinationDoorFrom is destinationDoor over any source, for tests.
+func destinationDoorFrom(isReload bool, src func() ([]questloop.Finding, []string)) error {
 	fs, inferred := src()
-	for _, f := range fs {
-		mudlog.Warn("quests", "destination", f.String())
-	}
 	mudlog.Info("quests", "inferred destinations", len(inferred))
-	return len(fs)
+	return refuseFindings(isReload, "quest destination", fs)
 }
 
-// validateShippedQuests is the boot door of the quest loop validators
-// (#375 phase 2): every rule over the loaded quests and dialogue, split by
-// the shipped backlog. Load quests, dialogue, mobs, items, spells, recipes
-// and factions first.
+// questDoor is the boot door of the quest loop validators (#375 phase 2):
+// every rule over the loaded quests and dialogue. Any finding refuses (the
+// backlog that once parked known findings is retired). Load quests,
+// dialogue, mobs, items, spells, recipes and factions first.
 //
-// Boot runs Validate only, never the walkthrough (questengine.Walk). The
-// backlog also holds the walk's lines, which no boot finding matches; boot
-// ignores stale lines, so they cannot refuse it. The CI sweep
-// (quest_loop_smoke_test.go) ratchets Validate plus Walk.
-func validateShippedQuests() (fresh, known []questloop.Finding, stale []string, err error) {
-	b, err := questworld.LoadBacklog()
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	fresh, known, stale = questloop.Ratchet(questloop.Validate(questworld.Registry()), b)
-	return fresh, known, stale, nil
-}
-
-// questDoor logs the backlog's known findings as warnings and refuses on a
-// fresh one: a panic at boot, an error on a reload (the dialogueDoor rule).
-// Stale backlog lines are CI's job (quest_loop_smoke_test.go), not boot's.
+// Boot runs Validate only, never the walkthrough (questengine.Walk), which
+// is the CI sweep's job (quest_loop_smoke_test.go).
 func questDoor(isReload bool) error {
-	return questDoorFrom(isReload, validateShippedQuests)
+	return questDoorFrom(isReload, func() []questloop.Finding {
+		return questloop.Validate(questworld.Registry())
+	})
 }
 
 // questDoorFrom is questDoor over any finding source, so its refusals are
 // testable without the shipped world.
-func questDoorFrom(isReload bool, src func() (fresh, known []questloop.Finding, stale []string, err error)) error {
-	fresh, known, _, err := src()
-	if err != nil {
-		mudlog.Error("quests", "backlog", err.Error())
-		if !isReload {
-			panic(err.Error())
-		}
-		return err
-	}
-	if len(known) > 0 {
-		mudlog.Warn("quests", "loop backlog findings", len(known), "file", questworld.BacklogPath())
-	}
-	if len(fresh) == 0 {
+func questDoorFrom(isReload bool, src func() []questloop.Finding) error {
+	return refuseFindings(isReload, "quest loop", src())
+}
+
+// refuseFindings logs each finding and refuses: a panic at boot, an error
+// on a reload (the dialogueDoor rule). No findings, no refusal.
+func refuseFindings(isReload bool, what string, fs []questloop.Finding) error {
+	if len(fs) == 0 {
 		return nil
 	}
-	for _, f := range fresh {
-		mudlog.Error("quests", "loop", f.String())
+	for _, f := range fs {
+		mudlog.Error("quests", what, f.String())
 	}
-	msg := fmt.Sprintf("%d quest loop problems not in the backlog; see the log above", len(fresh))
+	msg := fmt.Sprintf("%d %s problems; see the log above", len(fs), what)
 	if !isReload {
 		panic(msg)
 	}

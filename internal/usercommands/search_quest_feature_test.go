@@ -13,7 +13,7 @@ import (
 )
 
 // #375 phase 3a, search rework: plain `search` can uncover a quest's search
-// spot (a `verb: search` room_interact trigger) at the room difficulty, and a
+// spot (a search_at trigger) at the room difficulty, and a
 // search refused by the shared special-move cooldown sends no quest event.
 
 // leadsToFloorboard is the thorough line a plain search prints for the
@@ -34,7 +34,7 @@ func TestSearch_PlainSearchUncoversAQuestSearchSpot(t *testing.T) {
 	alice, room := interactScene(t)
 	searchEyes(t, alice, 100000)
 	fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
-		999460, "room_interact", room.RoomId, questengine.TriggerDef{Noun: "floorboard", Verb: "search"})
+		999460, "search_at", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
 	events.DrainQueuedMessagesForTest(alice.UserId)
 
 	_, err := TryCommand("search", "", alice.UserId, 0)
@@ -47,7 +47,7 @@ func TestSearch_PlainSearchCanMissAQuestSearchSpot(t *testing.T) {
 	alice, room := interactScene(t)
 	searchEyes(t, alice, 1)
 	fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
-		999461, "room_interact", room.RoomId, questengine.TriggerDef{Noun: "floorboard", Verb: "search"})
+		999461, "search_at", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
 	events.DrainQueuedMessagesForTest(alice.UserId)
 
 	_, err := TryCommand("search", "", alice.UserId, 0)
@@ -65,8 +65,8 @@ func TestSearch_PlainSearchSkipsASpotWhoseTriggerWouldNotFire(t *testing.T) {
 	alice, room := interactScene(t)
 	searchEyes(t, alice, 100000)
 	fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
-		999462, "room_interact", room.RoomId, questengine.TriggerDef{
-			Noun: "floorboard", Verb: "search",
+		999462, "search_at", room.RoomId, questengine.TriggerDef{
+			Noun:       "floorboard",
 			Conditions: questengine.Conditions{Has: []string{"999462-never"}},
 		})
 	events.DrainQueuedMessagesForTest(alice.UserId)
@@ -86,13 +86,13 @@ func TestSearch_RefusedAfterASpecialMoveSendsNoQuestEvent(t *testing.T) {
 			alice, room := interactScene(t)
 			searchEyes(t, alice, 100000)
 			interact := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
-				999470+i, "room_interact", room.RoomId, questengine.TriggerDef{Noun: "floorboard", Verb: "search"})
+				999470+i, "search_at", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
 			require.True(t, actions.ClaimSpecialMove(alice.Character), "fixture: a special move was just used")
 			events.DrainQueuedMessagesForTest(alice.UserId)
 
 			_, err := TryCommand("search", rest, alice.UserId, 0)
 			require.NoError(t, err)
-			require.False(t, interact(), "a refused search fires no room_interact")
+			require.False(t, interact(), "a refused search fires no search_at")
 			got := strings.Join(events.DrainQueuedMessagesForTest(alice.UserId), "\n")
 			require.Contains(t, got, "You need a moment to recover before you can search.")
 		})

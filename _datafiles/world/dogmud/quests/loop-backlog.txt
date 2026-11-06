@@ -1,6 +1,0 @@
-# Quest loop backlog (#375 phase 2, spec 5.3). One finding key per line,
-# "rule questId where", for a loop-rule failure in shipped content that the
-# phase 7 zone passes have not fixed yet. A finding listed here is a boot
-# warning; any finding not listed refuses boot, CI and the quest editor's
-# save. A line with no matching finding fails CI: delete it when its finding
-# is fixed. Never add a line by hand to make new content pass.

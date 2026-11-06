@@ -1410,8 +1410,7 @@ the harder, less sure road), and `searchFeatureSecrets` rolls only the
 secrets tucked into the named feature (`HiddenNoun.On`) at the easier
 `Balance.SearchFeatureHiddenDifficulty`. `SearchResult.QuestFeaturesFound`
 lists the quest search spots a whole-room search turned up. After the roll,
-`usercommands/skill.search.go` raises `room_interact` with `Verb: search`
-for the feature typed.
+`usercommands/skill.search.go` raises `search_at` for the feature typed.
 
 **Quest gates on movement (`quest_gate.go`, #588).** `QuestGateRefuses(user,
 room, destRoom)` notifies the engine's `room_gate` trigger and reports

@@ -376,13 +376,6 @@ func matchTriggerFields(t *TriggerDef, d EventDetails, tier nounTier) bool {
 	if t.Noun != "" && !nounMatches(t.Noun, d, tier) {
 		return false
 	}
-	// Only room_interact carries a verb: an empty trigger verb means look
-	// (#375 phase 3a), so a look trigger never fires on search.
-	if t.Verb != "" || d.Verb != "" {
-		if quests.InteractVerb(t.Verb) != d.Verb {
-			return false
-		}
-	}
 	return true
 }
 

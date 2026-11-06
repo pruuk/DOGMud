@@ -21,8 +21,8 @@ Every phase spec re-verifies the facts it builds on; this table is the starting 
 | Quest progress is saved per character as `QuestProgress map[int]string` | `internal/characters/character.go:319` |
 | A quest step has `id`, `description`, `hint` (optional), `map_target`, `map_target_mob` | `internal/quests/quests.go:72` |
 | 12 quest files carry no `hint:` at all | grep of `quests/` |
-| Valid trigger events: room_enter, room_gate, item_give, skill_use, mob_death, command, item_gain, dialogue, quest_granted, room_interact, command_issued | `internal/quests/quests.go:109` |
-| Shipped trigger counts: room_interact 64, command 49, item_give 32, mob_death 27, quest_granted 21, item_gain 20, command_issued 14, room_enter 11, room_gate 1, dialogue 1 | grep of `quests/` |
+| Valid trigger events: room_enter, room_gate, item_give, skill_use, mob_death, command, item_gain, dialogue, quest_granted, look_at, search_at, command_issued | `internal/quests/quests.go:109` |
+| Shipped trigger counts: room_interact 64, command 49, item_give 32, mob_death 27, quest_granted 21, item_gain 20, command_issued 14, room_enter 11, room_gate 1, dialogue 1 (2026-10-17 counts; room_interact split into look_at and search_at at the closing step) | grep of `quests/` |
 | Mid-quest rewards exist: trigger actions `give_item` 27, `learn_recipe` 26, `give_gold` 6 | grep of `quests/` |
 | Minimap target today: one room, or a unique NPC's current room; no zone or area target. Since phase 4 slice 1 (2026-10-28): a step's `destination:` block (room, mob, area, zone, or `anywhere`), else inferred from its triggers, resolved to the nearest room of the set | `internal/questengine/destination.go` (`map_target.go` retired) |
 | Repeatable quests exist: `repeatable` plus `cooldown_rounds`, cooldown saved in MiscData; 7 shipped (53 to 59). No limit on repeat count | `quests.go:69`, `internal/characters/quests.go:192`, `internal/hooks/Quest_HandleQuestUpdate.go:207,442` |
@@ -243,7 +243,7 @@ alternative ways into a step (P4).
   already fire (`skill_use`, `item_gain`, `room_enter`, `command_issued`) before adding new
   ones.
 - Every movement path notifies the engine, including flee (#588).
-- Keep `room_interact` loading until phase 7 removes its last use, then delete it.
+- `room_interact` was split into `look_at` and `search_at` at the closing step (2026-11-06).
 
 **Exit.** Each new event has a test proving it fires on the real action and not on a
 look-alike; #588 closed.
@@ -268,7 +268,8 @@ returns only if a phase 7 zone pass needs it, from the design kept in that spec.
   rooms). Areas are defined once and reused across quests.
 - Zone and area targets: the arrow paths to the nearest room of the set; the map highlights
   the set or labels "somewhere in this zone".
-- "Destination unknown": explicit, logged as a warning at boot, listed by the validator.
+- "Destination unknown": explicit, listed by the validator. Logged as a warning at boot until
+  the closing step (2026-11-06), which made it refuse boot like every other finding.
 - GMCP and the web client minimap carry the new target shapes.
 - Areas now exist for the map targets (phase 3b slice 4): `internal/areas` and
   `_datafiles/world/dogmud/areas/`, with `areas.Rooms(key)` for the nearest-room arrow.
@@ -319,7 +320,8 @@ the minimap.
 3. Move any trigger-started quest to an NPC start.
 4. Clear dashes from the zone's dialogue and quest text.
 5. Clear the zone from every validator warning list, including its `walk-destination`
-   lines in `loop-backlog.txt`. A zone pass is not done while one is left.
+   lines in `loop-backlog.txt` (retired at the closing step, 2026-11-06: every finding now
+   refuses boot). A zone pass is not done while one is left.
 6. Adversarial playtest; file findings.
 
 **Zone order.** Pothole Coulee first (new players land there). The rest follow the way a player
@@ -352,6 +354,8 @@ with no backlog line get a check that they meet the requirements page, not a ful
 
 **Closing step.** Validators become hard boot failures; `room_interact` is deleted; the dash
 guards stop exempting dialogue, quests and conversations.
+
+**Done 2026-11-06** (spec and plan 2026-11-06-quest-arc-closing-step): every loop and destination finding refuses boot and the backlog is gone; room_interact is look_at and search_at; the dash guard reads quests, dialogue and conversations. The admin commands that change a spawn list on a running server (`room set spawninfo clear`, `room copy spawninfo`) refuse a change that would add a destination finding (owner, option B).
 
 **Status:** in progress. Pothole Coulee (with the Newcomer Antechamber) is
 done: built across PRs 1 to 4 of
@@ -387,8 +391,7 @@ Tier 5 (New Plymouth, quests 63 and 65 to 71) is built, and the guard bans its
 ids from `loop-backlog.txt` (`internal/guards/tier5_backlog_guard_test.go`).
 Separately, `loop-backlog.txt` is now empty. Quest 21 is a flag on
 quest 30, the sample quest is deleted, and quests 64 and 102 give the Bloom a source
-behind Marn's cupboard door. The closing step comes next, in its own plan:
-validators as hard boot failures, deleting `room_interact`, and the dash guards.
+behind Marn's cupboard door. The closing step followed on 2026-11-06.
 
 ## Phase 6: Web builder (postponed)
 
@@ -399,6 +402,16 @@ would be redone after every one. Until then the whole admin web builder is off:
 dispatch, rooms, zones, mobs, items and behaviours as well as quests and dialogue. Content is
 edited in the repo. When an arc changes a data shape the builder writes, note the form that will
 need it here.
+
+**Noted for this phase.**
+- Room spawns (closing step, 2026-11-06). Boot refuses a quest step with no destination, and a
+  step can rely on the rooms that spawn its NPC. The builder's room save (`buildRoomUpdate`,
+  which replaces `SpawnInfo`) and room delete (`buildRoomDelete`) must refuse a change that adds
+  a destination finding, as the admin spawn commands do with
+  `questengine.SpawnChangeFindings`. Room delete drops the room's spawns, so it is the same
+  check with an empty list.
+- The quest editor's save door (`loopVerdict` in `gmcp.Quest.go`) runs `Validate` only; it
+  needs `Destinations` too.
 
 **Goal.** An admin can author to these rules without reading this page, and the builder
 cannot save a malformed quest or dialogue.

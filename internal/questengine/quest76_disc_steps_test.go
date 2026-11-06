@@ -238,7 +238,7 @@ func TestQuest76TheDisc_Trail(t *testing.T) {
 
 	t.Run("no step listens for a typed noun", func(t *testing.T) {
 		for _, tr := range q.Triggers {
-			if tr.Event != "room_interact" {
+			if tr.Event != "look_at" && tr.Event != "search_at" {
 				continue
 			}
 			require.Equal(t, "stone", tr.Noun, "only Maren's letter, which is no step, still listens for a noun")

@@ -1,6 +1,10 @@
 package questengine
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/GoMudEngine/GoMud/internal/quests"
+)
 
 // WouldFire reports whether Notify(eventType, d, player, ...) would fire at
 // least one trigger, without running anything: no action executes, no token
@@ -28,14 +32,14 @@ func (e *Engine) GuardsRoom(roomId int) bool {
 	return len(e.fieldMatches("room_gate", EventDetails{RoomId: roomId})) > 0
 }
 
-// SearchFeatures returns the sorted, distinct nouns of room_interact triggers
-// with `verb: search` whose Room is roomId. These are the things a player can
-// search in that room for a quest, whatever the triggers' conditions.
+// SearchFeatures returns the sorted, distinct nouns of search_at triggers
+// whose Room is roomId. These are the things a player can search in that
+// room for a quest, whatever the triggers' conditions.
 func (e *Engine) SearchFeatures(roomId int) []string {
 	seen := map[string]bool{}
 	var out []string
-	for _, t := range e.triggerIndex["room_interact"] {
-		if t.def.Verb != "search" || t.def.Room != roomId || t.def.Noun == "" {
+	for _, t := range e.triggerIndex[quests.EventSearchAt] {
+		if t.def.Room != roomId || t.def.Noun == "" {
 			continue
 		}
 		if seen[t.def.Noun] {

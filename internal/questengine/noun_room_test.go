@@ -13,8 +13,8 @@ import (
 
 func notifyLookRoomNoun(e *Engine, player *fullMockPlayer, typed, roomNoun string) NotifyResult {
 	ctx := newFullMockActionContext(1, player)
-	return e.Notify("room_interact", EventDetails{
-		UserId: 1, RoomId: 100, Verb: "look", Noun: typed, RoomNoun: roomNoun,
+	return e.Notify("look_at", EventDetails{
+		UserId: 1, RoomId: 100, Noun: typed, RoomNoun: roomNoun,
 	}, player, ctx)
 }
 
@@ -87,15 +87,15 @@ func TestTriggerNoun_RoomNounMatchingBothWaysFiresOnce(t *testing.T) {
 		Name:    "once",
 		Steps:   []QuestStep{{Id: "1-a", Description: "a"}},
 		Triggers: []TriggerDef{{
-			Event: "room_interact", Room: 100, Noun: "floorboard",
+			Event: "look_at", Room: 100, Noun: "floorboard",
 			Actions: []ActionDef{{SendText: "fired"}},
 		}},
 	})
 	for _, typed := range []string{"floorboard", "floor board"} {
 		p := newFullMockPlayer(100)
 		ctx := newFullMockActionContext(1, p)
-		assert.True(t, e.Notify("room_interact", EventDetails{
-			UserId: 1, RoomId: 100, Verb: "look", Noun: typed, RoomNoun: "floorboard",
+		assert.True(t, e.Notify("look_at", EventDetails{
+			UserId: 1, RoomId: 100, Noun: typed, RoomNoun: "floorboard",
 		}, p, ctx).Handled)
 		assert.Len(t, ctx.sentTexts, 1, "look %s must fire the trigger exactly once", typed)
 	}
@@ -105,12 +105,13 @@ func TestTriggerNoun_RoomNounDoesNotWidenOtherFilters(t *testing.T) {
 	e := nounEngine(map[int]string{1: "floorboard"})
 	p := newFullMockPlayer(100)
 	ctx := newFullMockActionContext(1, p)
-	// Wrong verb: the trigger is `verb: look`.
-	assert.False(t, e.Notify("room_interact", EventDetails{
-		UserId: 1, RoomId: 100, Verb: "get", Noun: "board", RoomNoun: "floorboard",
+	// Wrong event: the trigger is look_at, so a search of the same feature
+	// does not fire it.
+	assert.False(t, e.Notify("search_at", EventDetails{
+		UserId: 1, RoomId: 100, Noun: "board", RoomNoun: "floorboard",
 	}, p, ctx).Handled)
 	// Wrong room.
-	assert.False(t, e.Notify("room_interact", EventDetails{
-		UserId: 1, RoomId: 101, Verb: "look", Noun: "board", RoomNoun: "floorboard",
+	assert.False(t, e.Notify("look_at", EventDetails{
+		UserId: 1, RoomId: 101, Noun: "board", RoomNoun: "floorboard",
 	}, p, ctx).Handled)
 }

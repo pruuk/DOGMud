@@ -8,7 +8,7 @@ import (
 
 // seedDryRunQuest registers one quest with a room_gate trigger in room 500
 // (conditions: missing 90-start) that grants 90-start and sends text, a
-// quest_granted follow-on that would grant 90-end, and room_interact
+// quest_granted follow-on that would grant 90-end, and search_at and look_at
 // triggers in rooms 500 and 501 used by the SearchFeatures tests.
 func seedDryRunQuest() *Engine {
 	q := &QuestDef{
@@ -33,12 +33,12 @@ func seedDryRunQuest() *Engine {
 				QuestToken: "90-start",
 				Actions:    []ActionDef{{Grant: "90-end"}},
 			},
-			{Event: "room_interact", Room: 500, Verb: "search", Noun: "statue", Actions: []ActionDef{{SendText: "x"}}},
-			{Event: "room_interact", Room: 500, Verb: "search", Noun: "altar", Actions: []ActionDef{{SendText: "x"}}},
-			{Event: "room_interact", Room: 500, Verb: "search", Noun: "statue", Conditions: Conditions{Has: []string{"90-start"}}, Actions: []ActionDef{{SendText: "y"}}},
-			{Event: "room_interact", Room: 500, Verb: "look", Noun: "mural", Actions: []ActionDef{{SendText: "x"}}},
-			{Event: "room_interact", Room: 501, Verb: "search", Noun: "well", Actions: []ActionDef{{SendText: "x"}}},
-			{Event: "room_gate", Room: 500, Verb: "search", Noun: "gate", Actions: []ActionDef{{SendText: "x"}}},
+			{Event: "search_at", Room: 500, Noun: "statue", Actions: []ActionDef{{SendText: "x"}}},
+			{Event: "search_at", Room: 500, Noun: "altar", Actions: []ActionDef{{SendText: "x"}}},
+			{Event: "search_at", Room: 500, Noun: "statue", Conditions: Conditions{Has: []string{"90-start"}}, Actions: []ActionDef{{SendText: "y"}}},
+			{Event: "look_at", Room: 500, Noun: "mural", Actions: []ActionDef{{SendText: "x"}}},
+			{Event: "search_at", Room: 501, Noun: "well", Actions: []ActionDef{{SendText: "x"}}},
+			{Event: "room_gate", Room: 500, Noun: "gate", Actions: []ActionDef{{SendText: "x"}}},
 		},
 	}
 	e := NewEngine()
@@ -109,10 +109,10 @@ func TestWouldFire_UsesTheSameNounTierAsNotify(t *testing.T) {
 	player := newFullMockPlayer(500)
 
 	// "statues" reaches `noun: statue` through the singular/plural tier.
-	assert.True(t, e.WouldFire("room_interact", EventDetails{UserId: 1, RoomId: 500, Verb: "search", Noun: "statues"}, player))
+	assert.True(t, e.WouldFire("search_at", EventDetails{UserId: 1, RoomId: 500, Noun: "statues"}, player))
 	// The room-noun tier: typed words name the room noun "altar".
-	assert.True(t, e.WouldFire("room_interact", EventDetails{UserId: 1, RoomId: 500, Verb: "search", Noun: "stone table", RoomNoun: "altar"}, player))
-	assert.False(t, e.WouldFire("room_interact", EventDetails{UserId: 1, RoomId: 500, Verb: "search", Noun: "ceiling"}, player))
+	assert.True(t, e.WouldFire("search_at", EventDetails{UserId: 1, RoomId: 500, Noun: "stone table", RoomNoun: "altar"}, player))
+	assert.False(t, e.WouldFire("search_at", EventDetails{UserId: 1, RoomId: 500, Noun: "ceiling"}, player))
 }
 
 func TestWouldFire_HasNoSideEffects(t *testing.T) {

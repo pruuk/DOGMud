@@ -1,7 +1,7 @@
 id: employee
 description: |
   Generic banter from the perspective of someone who works for
-  another — deference, gentle complaint, shared routine.
+  another: deference, gentle complaint, shared routine.
 exchanges:
   - lines:
       - speaker: A

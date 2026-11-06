@@ -65,12 +65,12 @@ func TestQuest77TheTruth(t *testing.T) {
 	})
 
 	t.Run("the oracle-stones answer a reader, and only a reader", func(t *testing.T) {
-		look := EventDetails{RoomId: stones, Verb: "look", Noun: "oracle-stones", RoomNoun: "oracle stones"}
+		look := EventDetails{RoomId: stones, Noun: "oracle-stones", RoomNoun: "oracle stones"}
 		w := newQuestWalker(q).at("start")
-		w.notify("room_interact", look)
+		w.notify("look_at", look)
 		require.Empty(t, w.ctx.sentTexts)
 		w = newQuestWalker(q).at("read")
-		w.notify("room_interact", look)
+		w.notify("look_at", look)
 		require.Len(t, w.ctx.sentTexts, 1)
 	})
 }

@@ -148,13 +148,12 @@ triggers:
   # loose stone by the hearth hides it. Moved here from the room's behaviour
   # tree, which answered push, move, pull, shift and press (#375 phase 3a,
   # owner ruling 5: look and search are the only interaction verbs). Being a
-  # `verb: search` trigger, `search stone` runs the search (and its cooldown)
+  # search_at trigger, `search stone` runs the search (and its cooldown)
   # first, and a plain search can find it at the room difficulty. Carrying
   # the letter, the stone holds nothing more, and the search says so. Story
   # first, so a full pack hears what is there before the refusal. It grants
   # no step.
-  - event: room_interact
-    verb: search
+  - event: search_at
     room: 4023
     noun: stone
     conditions:

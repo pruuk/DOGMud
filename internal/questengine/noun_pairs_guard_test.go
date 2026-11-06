@@ -58,12 +58,12 @@ func TestNoQuestTriggersDifferOnlyByNounNumber(t *testing.T) {
 
 func TestNounPairsGuardFindsAPair(t *testing.T) {
 	trigs := []questengine.TriggerDef{
-		{Event: "room_interact", Room: 7, Noun: "pillars"},
-		{Event: "room_interact", Room: 7, Noun: "pillar"},
-		{Event: "room_interact", Room: 8, Noun: "pillar"},                // other room: fine
-		{Event: "command_issued", Room: 7, Noun: "pillar"},               // other event: fine
-		{Event: "room_interact", Room: 7, Noun: "column"},                // other noun: fine
-		{Event: "room_interact", Room: 7, Verb: "touch", Noun: "pillar"}, // other verb: fine
+		{Event: "look_at", Room: 7, Noun: "pillars"},
+		{Event: "look_at", Room: 7, Noun: "pillar"},
+		{Event: "look_at", Room: 8, Noun: "pillar"},        // other room: fine
+		{Event: "command_issued", Room: 7, Noun: "pillar"}, // other event: fine
+		{Event: "look_at", Room: 7, Noun: "column"},        // other noun: fine
+		{Event: "search_at", Room: 7, Noun: "pillar"},      // search, not look: fine
 	}
 	got := nounNumberPairs(trigs)
 	if len(got) != 1 || got[0] != [2]int{0, 1} {
@@ -80,7 +80,7 @@ func nounNumberPairs(trigs []questengine.TriggerDef) [][2]int {
 			a, b := &trigs[i], &trigs[j]
 			if a.Event != b.Event || a.Room != b.Room || a.Mob != b.Mob || a.Item != b.Item ||
 				a.Skill != b.Skill || a.Command != b.Command ||
-				a.QuestToken != b.QuestToken || a.Verb != b.Verb {
+				a.QuestToken != b.QuestToken {
 				continue
 			}
 			if util.NounsDifferOnlyByNumber(a.Noun, b.Noun) {

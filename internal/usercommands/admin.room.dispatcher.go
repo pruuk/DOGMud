@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutators"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -93,6 +94,29 @@ func adminRoom_Noun(args []string, user *users.UserRecord, room *rooms.Room) (bo
 	return true, nil
 }
 
+// refusesSpawnChange reports whether giving room the spawn list spawns would
+// leave a quest step with nowhere to send the player, and tells the admin
+// why. Boot refuses any such step (destinationDoor in main_quests.go), so the
+// saved change would stop the next restart. A step that was already broken
+// before the change does not block it.
+func refusesSpawnChange(user *users.UserRecord, room *rooms.Room, spawns []rooms.SpawnInfo) bool {
+	mobIds := make([]int, 0, len(spawns))
+	for _, si := range spawns {
+		if si.MobId > 0 {
+			mobIds = append(mobIds, si.MobId)
+		}
+	}
+	added := questengine.SpawnChangeFindings(room.RoomId, mobIds)
+	if len(added) == 0 {
+		return false
+	}
+	user.SendText(messaging.CategoryAdmin, `Refused: this spawn change would leave a quest step with nowhere to send the player, and the server would not start again:`)
+	for _, f := range added {
+		user.SendText(messaging.CategoryAdmin, `  `+f.String())
+	}
+	return true
+}
+
 // adminRoom_Copy handles `room copy <property> <source-room-id>`.
 func adminRoom_Copy(args []string, user *users.UserRecord, room *rooms.Room) (bool, error) {
 	if !user.HasRolePermission(`room.copy`) {
@@ -105,6 +129,9 @@ func adminRoom_Copy(args []string, user *users.UserRecord, room *rooms.Room) (bo
 	if property == "spawninfo" {
 		sourceRoom, _ := strconv.Atoi(args[2])
 		if sourceRoom := rooms.LoadRoom(sourceRoom); sourceRoom != nil {
+			if refusesSpawnChange(user, room, sourceRoom.SpawnInfo) {
+				return true, nil
+			}
 			room.SpawnInfo = sourceRoom.SpawnInfo
 			rooms.SaveRoomTemplate(*room)
 			user.SendText(messaging.CategoryAdmin, "Spawn info copied/overwritten.")
@@ -283,6 +310,9 @@ func adminRoom_Set(args []string, user *users.UserRecord, room *rooms.Room) (boo
 
 	if propertyName == "spawninfo" {
 		if propertyValue == `clear` {
+			if refusesSpawnChange(user, room, nil) {
+				return true, nil
+			}
 			room.SpawnInfo = room.SpawnInfo[:0]
 			rooms.SaveRoomTemplate(*room)
 		}

@@ -1001,11 +1001,15 @@ steps:
 - `set_flag: {key: "11-branch", value: "rhett"}`: programmatically set a
   flag (used in JS scripts when dialogue-layer flag setting isn't sufficient)
 
-### Trigger field: `verb` (#375 phase 3a)
+### Events `look_at` and `search_at` (#375 phase 3a, split at the closing step)
 
-A `room_interact` trigger's `verb` is `look`, `search` or empty (`VerbLook`,
-`VerbSearch`; empty means look, via `InteractVerb`). The loader refuses any
-other value. Two triggers differing only in verb are different triggers
+`EventLookAt` (`look_at`) fires when look, l, examine, exam or read names a
+room feature. `EventSearchAt` (`search_at`) fires when search names one (after
+the search runs, no roll) or a plain search uncovers it. They replaced the one
+`room_interact` event and its `verb` filter at the #375 closing step
+(2026-11-06). The loader refuses `event: room_interact` (`retiredInteractEvent`)
+and any `verb:` key (`TriggerDef.RetiredVerb`, read only so the loader can name
+it). Two triggers differing only in event are different triggers
 (`samecommand.go`).
 
 ### Trigger field: `target` (#375 phase 3b slice 2)
@@ -1065,7 +1069,7 @@ trigger's signature.
   grant. Progress is per trigger, saved under `CountKey(questId, step,
   triggerIndex)` = `<questId>-<step>-t<triggerIndex>`, and bumps only while the
   player is on that step.
-- `count` is refused on `room_gate`, `room_interact` and `item_give`
+- `count` is refused on `room_gate`, `look_at`, `search_at` and `item_give`
   (`CountAllowed`, the `countSwallowsCommand` set): a partial match is a handled
   event, and on those events handled means the quest took the command.
 - A `room_gate` takes only `actor` and `observer` text (`validateGateActions`): a
@@ -1098,7 +1102,7 @@ hidden noun of the player's room as found, as a successful search would, so
 noun of the trigger's room: its `room` filter, else its `in_room` condition.
 `ValidateQuestRefs` refuses a key that room does not have
 (`QuestValidators.HiddenNounExists`) and a trigger that names no room. Quest
-49's `verb: search` floor trigger uses `discover: disc`.
+49's `search_at` floor trigger uses `discover: disc`.
 
 ### Admin and Scripting Interface
 

@@ -103,7 +103,7 @@ func TestSearch_InTheDarkAStepAlreadyDoneSaysNothingExtra(t *testing.T) {
 	require.NotContains(t, out, searchTooDarkLine, "the step is done, so nothing would have moved")
 }
 
-// A `verb: search` room_interact spot (quest 76) follows the same rule: it is
+// A search_at spot (quest 76) follows the same rule: it is
 // not rolled in the dark, so it cannot fire, and the line says why.
 func TestSearch_InTheDarkAQuestSearchSpotIsNotUncovered(t *testing.T) {
 	// The lit scene the other search-spot tests use, put out: no sky, no lamp.
@@ -116,7 +116,7 @@ func TestSearch_InTheDarkAQuestSearchSpotIsNotUncovered(t *testing.T) {
 	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(user.Character, room), "fixture: dark")
 	searchEyes(t, user, 100000)
 	fired := listenForRoomNoun(t, user.Character.HasQuest, user.Character.ClearQuestToken,
-		999604, "room_interact", room.RoomId, questengine.TriggerDef{Noun: "floorboard", Verb: "search"})
+		999604, "search_at", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
 
 	out := searchOutput(t, user, room)
 	require.False(t, fired(), "a spot is not uncovered in the dark")

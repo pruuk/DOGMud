@@ -11,12 +11,12 @@ import (
 // grants the ledger, then one that says the ledger was already taken.
 func strongboxQuest(alreadyFirst bool) *Quest {
 	open := TriggerDef{
-		Event: "room_interact", Room: 498, Noun: "strongbox",
+		Event: "look_at", Room: 498, Noun: "strongbox",
 		Conditions: Conditions{Missing: []string{"14-evidence"}},
 		Actions:    []ActionDef{{GiveItem: 40036}, {Grant: "14-evidence"}, {SendText: "You take the ledger."}},
 	}
 	already := TriggerDef{
-		Event: "room_interact", Room: 498, Noun: "strongbox",
+		Event: "look_at", Room: 498, Noun: "strongbox",
 		Conditions: Conditions{Has: []string{"14-evidence"}},
 		Actions:    []ActionDef{{SendText: "You have already taken the ledger."}},
 	}
@@ -71,8 +71,8 @@ func TestTriggersCanShareAnEvent(t *testing.T) {
 	look := &TriggerDef{Event: "command_issued", Command: "look"}
 	lookGuide := &TriggerDef{Event: "command_issued", Command: "look", Noun: "guide"}
 	lookDoor := &TriggerDef{Event: "command_issued", Command: "look", Noun: "door"}
-	room1 := &TriggerDef{Event: "room_interact", Room: 1, Noun: "box"}
-	room2 := &TriggerDef{Event: "room_interact", Room: 2, Noun: "box"}
+	room1 := &TriggerDef{Event: "look_at", Room: 1, Noun: "box"}
+	room2 := &TriggerDef{Event: "look_at", Room: 2, Noun: "box"}
 
 	assert.True(t, triggersCanShareAnEvent(look, lookGuide), "an open noun matches any noun")
 	assert.False(t, triggersCanShareAnEvent(lookGuide, lookDoor))

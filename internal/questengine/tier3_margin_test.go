@@ -31,7 +31,7 @@ func TestTheMarginsRecordsAreFoundBySearch(t *testing.T) {
 		q := loadTier3Quest(t, id)
 		found := map[int]bool{}
 		for _, tr := range q.Triggers {
-			require.NotEqual(t, "room_interact", tr.Event, "rule 14: no typed noun in quest %s", id)
+			require.NotContains(t, []string{"look_at", "search_at"}, tr.Event, "rule 14: no typed noun in quest %s", id)
 			if tr.Event != "command" || tr.Command != "search" {
 				continue
 			}

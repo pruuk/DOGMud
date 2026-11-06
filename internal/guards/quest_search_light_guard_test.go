@@ -34,7 +34,7 @@ const searchTorchItemId = 20096
 // fails is a step the player cannot finish with the cheapest light in the game.
 //
 // The scope is every shipped `event: command, command: search` trigger with a
-// room, plus every `verb: search` room_interact trigger with a room (quest 76's
+// room, plus every search_at trigger with a room (quest 76's
 // spots, which the same rule covers). The observer is a real user in the room
 // wearing the torch's condition, so the room's light composes exactly as live.
 // The fix for a failure is room light (`lamp`, `skylight`) or a hint that
@@ -54,7 +54,7 @@ func TestEveryQuestSearchRoomIsSeenByATorch(t *testing.T) {
 				continue
 			}
 			isCmd := tr.Event == "command" && strings.EqualFold(tr.Command, "search")
-			isSpot := tr.Event == "room_interact" && strings.EqualFold(tr.Verb, "search")
+			isSpot := tr.Event == quests.EventSearchAt
 			if isCmd || isSpot {
 				searchRooms[tr.Room] = append(searchRooms[tr.Room], fmt.Sprintf("quest %d", q.QuestId))
 			}

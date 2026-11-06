@@ -516,7 +516,8 @@
   // The trigger fields each event offers. Only listed fields are read back
   // on save, so a field missing here is dropped from the quest file. Every
   // event takes area and zone; count and label are refused on room_gate,
-  // room_interact and item_give (a partial count would swallow the command);
+  // look_at, search_at and item_give (a partial count would swallow the
+  // command);
   // distinct and explored_line are room_enter's (an explore step). Kept in
   // step with questEventVocab in modules/gmcp/gmcp.Quest.go by
   // TestQuestBuilderFiltersMatchTheVocab.
@@ -530,12 +531,13 @@
     command_issued: ["command", "room", "area", "zone", "count", "label"],
     item_gain: ["item", "room", "reason", "area", "zone", "count", "label", "held_line"],
     quest_granted: ["quest_token", "area", "zone", "count", "label"],
-    room_interact: ["room", "noun", "verb", "area", "zone"],
+    look_at: ["room", "noun", "area", "zone"],
+    search_at: ["room", "noun", "area", "zone"],
     spell_landed: ["noun", "effect", "target", "mob", "item", "room", "area", "zone", "count", "label"],
     topic_heard: ["mob", "topic", "area", "zone", "count", "label"]
   };
   var FILTER_KINDS = { room: "room", mob: "mob", item: "item", skill: "skill",
-    command: "text", quest_token: "token", noun: "text", verb: "text",
+    command: "text", quest_token: "token", noun: "text",
     effect: "text", topic: "text", target: "target", reason: "reason",
     area: "text", zone: "text", count: "num", label: "text",
     distinct: "text", explored_line: "text", held_line: "text" };

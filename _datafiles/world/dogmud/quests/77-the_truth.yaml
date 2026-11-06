@@ -106,7 +106,7 @@ triggers:
           and you do not yet know what to ask. The one at the door might.
   # Re-read, on looking at the stones. The read above is a search, a different
   # event, so this has-trigger cannot fire in the command that grants its token.
-  - event: room_interact
+  - event: look_at
     room: 6397
     noun: oracle-stones
     conditions:
