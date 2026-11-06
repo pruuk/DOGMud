@@ -616,6 +616,12 @@ html.keyboard-open #dash-drawer { bottom: var(--cmdbox-h); }
 #dash-drawer #panel-chat {
   height: calc(var(--drawer-cap) - var(--drawer-head-h));
 }
+/* Folded with the ▾ button: only the tab's title bar shows, so the card
+   shrinks and the game gets the room back. */
+#dash-drawer #panel-map.collapsed,
+#dash-drawer #panel-chat.collapsed {
+  height: auto;
+}
 
 /* ------------------------------------------------------------------ */
 /* WinBox pop-out — leather theme overlay                              */
