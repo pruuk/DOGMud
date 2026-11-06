@@ -115,14 +115,14 @@ to the top of this list and only drop down for genuine reasons.
 | ★★★★ | `give <item-just-received> <npc-just-talked-to>` | Players naturally hand off items they were just given |
 | ★★★★ | `attack <obvious hostile mob>` / mob_death of named target | Players fight what's in the room |
 | ★★★ | `<cardinal direction>` to a clearly described room | Players walk through visible exits |
-| ★★★ | `search` (verb only, no noun) in a room with hidden_nouns | Players try `search` in suspicious rooms; trigger on `room_interact` with `verb: search` (any noun) gated by room and quest tokens |
+| ★★★ | `search` (verb only, no noun) in a room with hidden_nouns | Players try `search` in suspicious rooms; trigger on `search_at` (any noun) gated by room and quest tokens |
 | ★★★ | `look <noun in room description>` (regular noun, ANSI-tagged in description) | Players look at things highlighted in room text |
 | ★★ | `look <noun discovered via search>` IF hidden_description includes a literal `look <key>` hint AND the key is a single intuitive word | Players follow explicit hints |
 | ★ | `look <noun>` where the noun key is multi-word, OR is a verbose phrase | Players have to type the exact magic phrase; brittle. Mitigate with multiple trigger entries (one per plausible phrasing) |
 | ☆ | Anything requiring the player to derive a keyword from out-of-band knowledge | DON'T USE — this is the unguessable-magic-word trap |
 
 **Concrete preferences for hidden_noun discovery:**
-- The cleanest pattern is `verb: search` + `room: <id>` + `missing: <token>`
+- The cleanest pattern is a `search_at` trigger + `room: <id>` + `missing: <token>`
   conditions on the trigger — fires when the player searches the room
   successfully (no specific noun required). The action's `actor` line can
   describe what they find in narrative prose.
@@ -132,7 +132,7 @@ to the top of this list and only drop down for genuine reasons.
   NOT `bench-vise carving` or `beneath Elgar's marker`) AND embed
   ``Try `look <key>`.`` in the hidden_description so the player knows
   exactly what to type after `search` succeeds.
-- For ANY `room_interact` trigger keyed on a multi-word noun, write
+- For ANY `look_at` trigger keyed on a multi-word noun, write
   multiple trigger entries — one per plausible noun phrasing the player
   might type (`altar stone`, `altar`, `stone`). All entries share the
   same conditions and actions; the `missing: <token>` condition prevents
@@ -341,9 +341,9 @@ complete:
       "the player would intuit it" hand-waves.
 - [ ] **Trigger mechanic at the right tier:** every step uses the
       highest-discoverability mechanic that fits, per the ranking table
-      in Step 4a. Quest-engine `room_interact` triggers prefer
-      `verb: search` (any noun) over noun-specific keys. Noun-specific
-      `room_interact` triggers ONLY use single-word hidden_noun keys
+      in Step 4a. Quest-engine triggers prefer
+      `search_at` (any noun) over noun-specific `look_at` keys. Noun-specific
+      `look_at` triggers ONLY use single-word hidden_noun keys
       with `look <key>` hints in the hidden_description, OR provide
       multiple trigger entries covering plausible phrasings.
 - [ ] **Thousand-mudder test:** would 700+ out of 1000 random mudders

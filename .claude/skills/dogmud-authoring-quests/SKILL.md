@@ -153,12 +153,12 @@ problem the rule above forbids; hints now use a separate `SendText` path.
 [[feedback_hint_voice]]
 
 Discoverability extends past dialogue into room content: quest engine
-`room_interact` triggers do an exact string match on the player's typed
+`look_at` triggers do an exact string match on the player's typed
 noun, with no fuzzy matching or alias resolution (that forgiveness happens
 in the room's `FindNoun`/`FindHiddenNoun`, which runs after the trigger has
 already fired on the raw noun). Author hidden_noun keys as single intuitive
 words (`carving`, not `bench-vise carving`), put a `` Try `look <key>`. ``
-hint at the end of the hidden_description, and write one `room_interact`
+hint at the end of the hidden_description, and write one `look_at`
 trigger per plausible noun variant a player might type (`altar stone`,
 `altar`, and `stone` as three separate triggers with the same conditions and
 actions). Cross-reference room nouns against trigger nouns before shipping.
@@ -339,7 +339,7 @@ of any room a gate guards (`Engine.GuardsRoom`), whatever the gate's conditions.
 
 ## Search steps need sight
 
-A `command: search` step (and a `verb: search` spot) does not move when the
+A `command: search` step (and a `search_at` spot) does not move when the
 player sees nothing at all in the room (owner ruling 2026-11-02): they read "It
 is too dark to make anything out." and the step stays. The test is the game's own
 sight decision, so a carried light, night vision or infravision counts. When a
@@ -547,7 +547,7 @@ the `the_steppe` area below are illustrative; no shipped quest counts yet.
 - Progress is per trigger and saved as `<questId>-<step>-t<triggerIndex>`. It
   counts only while the player is on that step, and clears when the quest's
   progress moves.
-- `count` is refused on `room_gate`, `room_interact` and `item_give`: a match
+- `count` is refused on `room_gate`, `look_at`, `search_at` and `item_give`: a match
   short of the count would swallow the player's move, look or give.
 - `label` (at most 40 characters) names the tracker and quest log line
   ("Roots gathered: 2 of 5"); with none it reads "Progress: 2 of 5". Label
@@ -669,10 +669,10 @@ steps:                 # the room and mob ids here are illustrative
 - **`anywhere`** is for steps that truly can happen anywhere. If a trigger on
   that step names a place, `walk-destination-anywhere` says so: drop
   `anywhere` and let it infer.
-- **Findings:** boot logs `walk-destination` and `walk-destination-anywhere`
-  as warnings and never refuses. The CI sweep ratchets them against
-  `_datafiles/world/dogmud/quests/loop-backlog.txt`; a new quest must add
-  none.
+- **Findings:** boot refuses on `walk-destination` and
+  `walk-destination-anywhere` (a panic at boot, an error on a reload), and the
+  CI sweep fails on them. There is no backlog to park one on (it was retired
+  at the #375 closing step); a new quest must add none.
 
 ## Abandon and resume
 
@@ -716,9 +716,10 @@ vocabulary or from what sounds plausible: `mob_killed` and `mob_die` both
 sound right for a mob-death trigger, and the actual quest engine event is
 `mob_death`. The events are: `room_enter`, `room_gate`, `item_give`,
 `skill_use`, `mob_death`, `command`, `command_issued`, `item_gain`,
-`quest_granted`, `room_interact`, `spell_landed`, `topic_heard`. Before writing a trigger, grep `validEvents` in
+`quest_granted`, `look_at`, `search_at`, `spell_landed`, `topic_heard`. Before writing a trigger, grep `validEvents` in
 `internal/questengine/loader.go` for the current canonical list, or copy the
 spelling from an existing quest YAML that uses the event you want.
+`look_at` and `search_at` replaced `room_interact` at the #375 closing step; the loader refuses the old name and any `verb:` key.
 [[feedback_quest_engine_event_names]]
 
 ## Sources

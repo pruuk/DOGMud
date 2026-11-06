@@ -13,7 +13,8 @@ condition, mob and room registries to fill them.
 | File | What it holds |
 |---|---|
 | `names.go` | `Names() quests.RewardNames`: item, recipe, spell and faction display names, "" for an unknown id |
-| `sources.go` | `Sources() questloop.Sources`: the walkthrough's item-source and spawn index, and its external grants || `questworld.go` | `Validators()`, `Registry()`, `RegistryWith(v)`, `WithQuest(w, q)` with its step and flag overlays, `BacklogPath()`, `LoadBacklog()` |
+| `sources.go` | `Sources() questloop.Sources`: the walkthrough's item-source and spawn index, and its external grants |
+| `questworld.go` | `Validators()`, `Registry()`, `RegistryWith(v)`, `WithQuest(w, q)` with its step and flag overlays |
 
 ## API
 
@@ -72,15 +73,15 @@ condition, mob and room registries to fill them.
   indexed. The external grants are on the loop world (`Registry`), not here.
   Call it after the registries are loaded; `quest_loop_smoke_test.go`
   (`TestSmoke_WalkSourcesIndexShippedWorld`) checks it against shipped data.
-- `BacklogPath()` and `LoadBacklog()`: the shipped `quests/loop-backlog.txt`; a
-  missing file is an empty backlog.
+- There is no backlog loader: `BacklogPath()` and `LoadBacklog()` were retired
+  at the #375 closing step (2026-11-06) with `loop-backlog.txt`.
 
 ## Callers
 
 - `internal/conversation` (`offerCard` in `talk.go`, for the card body): `Names()`.
-- `main_quests.go`: `Registry()`, `LoadBacklog()`, `BacklogPath()`.
-- `modules/gmcp/gmcp.Quest.go`: `Validators()`, `RegistryWith`, `WithQuest`,
-  `LoadBacklog`. Its save refuses only the findings the edit adds (see
+- `main_quests.go`: `Registry()`.
+- `modules/gmcp/gmcp.Quest.go`: `Validators()`, `RegistryWith`, `WithQuest`.
+  Its save refuses only the findings the edit adds (see
   `internal/questloop/context.md`, Doors).
 - `quest_loop_smoke_test.go`: the CI sweep.
 
