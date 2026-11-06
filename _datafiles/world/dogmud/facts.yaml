@@ -210,3 +210,27 @@ facts:
         - disc-line
         - hint
       status: active
+    - id: veyra-sells-secrets
+      description: a crafter at the Confluence named Veyra sells the secrets of things no smith in Thornwall can make.
+      significance: 1
+      declared_round: 0
+      tags:
+        - veyra-line
+        - common
+      status: active
+    - id: veyra-blackrazor
+      description: the Blackrazor can still be learned, from a sharp-tongued woman with a workshop down at the Confluence.
+      significance: 1
+      declared_round: 0
+      tags:
+        - veyra-line
+        - common
+      status: active
+    - id: veyra-skilled-only
+      description: Veyra at the Confluence will not teach a beginner, but she will sell to anyone who already knows their trade, and she is not cheap.
+      significance: 1
+      declared_round: 0
+      tags:
+        - veyra-line
+        - common
+      status: active

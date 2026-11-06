@@ -13,7 +13,7 @@ import (
 // M6 slice 3 (ledger row 25): a fact description is spliced after a lead-in
 // ("Word is, ..."), so it must start lowercase. A, An and The are lowered at
 // render by LowerLeadingArticle; proper nouns are allowed by name.
-var factProperNouns = map[string]bool{"Thornwall": true, "Elgar": true, "Delia": true}
+var factProperNouns = map[string]bool{"Thornwall": true, "Elgar": true, "Delia": true, "Veyra": true}
 
 func capitalStarts(descs map[string]string) []string {
 	var bad []string

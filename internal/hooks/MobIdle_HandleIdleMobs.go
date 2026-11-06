@@ -503,8 +503,8 @@ func buildGossipLine(mob *mobs.Mob) string {
 	if len(evts) == 0 {
 		// No recent world events — try the mob's known facts before the generic
 		// fallback, so seeded facts still gossip in quiet zones (6.3 E.1).
-		if fc := facts.KnownFactsOf(int(mob.MobId)); len(fc) > 0 {
-			if line := renderFactGossip(fc[util.Rand(len(fc))]); line != "" {
+		if kf, ok := gossipFactPick(mob); ok {
+			if line := renderFactGossip(kf); line != "" {
 				return line
 			}
 		}
@@ -528,26 +528,16 @@ func buildGossipLine(mob *mobs.Mob) string {
 		candidates = evts
 	}
 
-	// Gather known facts as an additional candidate pool.
-	factCandidates := facts.KnownFactsOf(int(mob.MobId))
-
-	// Candidate-pool merging: prefer events 70%, facts 30%.
-	// If only one pool is non-empty, use it exclusively.
-	// If both are empty, fall through to event pick (candidates == evts at this point).
-	useFactPool := false
-	if len(factCandidates) > 0 && len(candidates) > 0 {
-		useFactPool = util.Rand(100) < 30
-	} else if len(factCandidates) > 0 {
-		useFactPool = true
-	}
-
-	if useFactPool {
-		kf := factCandidates[util.Rand(len(factCandidates))]
-		line := renderFactGossip(kf)
-		if line != "" {
-			return line
+	// Candidate-pool merging: prefer events 70%, facts (known and common) 30%.
+	// candidates is never empty here (evts was not), so with no fact to tell
+	// the event pick below runs.
+	if util.Rand(100) < 30 {
+		if kf, ok := gossipFactPick(mob); ok {
+			if line := renderFactGossip(kf); line != "" {
+				return line
+			}
 		}
-		// renderFactGossip returned empty (no templates); fall through to event path
+		// No fact, or no template for it: fall through to the event path.
 	}
 
 	// Pick a random event from deduplicated candidates
@@ -593,6 +583,27 @@ func buildGossipLine(mob *mobs.Mob) string {
 	}
 
 	return gossip.Render(templates, "{desc}", evt.Description)
+}
+
+// gossipFactPick draws the fact a gossiper tells this time: one of its own
+// known facts, or common talk (facts tagged facts.CommonTag, which every
+// gossiper may pass on). Common talk is one slot among the mob's known facts,
+// so a mob that knows k facts tells it 1/(k+1) of the time it tells a fact,
+// whatever the number of common facts. ok is false when there is nothing.
+func gossipFactPick(mob *mobs.Mob) (facts.KnownFact, bool) {
+	known := facts.KnownFactsOf(int(mob.MobId))
+	common := facts.AllFactsByTag(facts.CommonTag)
+	slots := len(known)
+	if len(common) > 0 {
+		slots++
+	}
+	if slots == 0 {
+		return facts.KnownFact{}, false
+	}
+	if i := util.Rand(slots); i < len(known) {
+		return known[i], true
+	}
+	return facts.KnownFact{Fact: common[util.Rand(len(common))], Source: facts.SourceTold}, true
 }
 
 // renderFactGossip picks a template for a known fact and returns the rendered
