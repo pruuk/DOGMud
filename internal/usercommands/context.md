@@ -77,6 +77,10 @@ The `internal/usercommands` package implements the complete command system for p
   - `look` (`look.go`) tries `Character.FindItemNoun` (exact noun on a worn or
     carried item) BEFORE item matching, so `look hood` reaches the lantern's
     hood; looking at an item highlights its `ItemSpec.Nouns` before wrapping.
+    `trimLookFiller` drops a leading `at`, `in` or `inside` and then `the`
+    from what a look names, so `look in strongbox` reads as `look strongbox`
+    (a room container is tried before a room noun) and the dispatcher raises
+    `look_at` on the same trimmed words (#761).
 
 #### **Combat Commands**
 - **Direct combat**: `attack`, `fire`, `throw` - Offensive actions

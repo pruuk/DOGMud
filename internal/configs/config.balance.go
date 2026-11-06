@@ -1022,7 +1022,7 @@ type Balance struct {
 	GoldPerAffixPoint ConfigFloat `yaml:"GoldPerAffixPoint"` // Gold value per affix cost-point on instance/affixed loot (default 3.0)
 
 	// ── INSTANCES ────────────────────────────────────────────────────────────
-	InstanceStatPoolCap ConfigInt `yaml:"InstanceStatPoolCap"` // Max stat pool per mob in instances (default 50000, 0=uncapped)
+	InstanceStatPoolCap ConfigInt `yaml:"InstanceStatPoolCap"` // Max stat pool per mob in instances (default 50000; values below 1 read as 50000, so it is always capped)
 	// Gold a paid-instance mob carries, per 100 gold of entry, by tier (the
 	// spawn's stat-pool multiplier: 1 or less regular, 2-3 tough, 4+ boss).
 	// The entry is clamped to what InstanceStatPoolCap lets the mob grow by.

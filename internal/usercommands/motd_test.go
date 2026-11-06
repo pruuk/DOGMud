@@ -10,8 +10,11 @@ import (
 // box borders are 81 chars": the border rows ran one column wider than the
 // content rows, past an 80-column client.
 func TestMotdBoxIsExactlyTheLineWidth(t *testing.T) {
+	// The curly quotes and the accent are #592: padding by bytes left any
+	// line holding a non-ASCII character short of the right border.
 	text := "Welcome to Delusions of Grandeur. Read the rules, mind the " +
-		"newbie zone hazards, and ask a mod if anything looks broken."
+		"newbie zone hazards, and ask a mod if anything looks broken.\n" +
+		"“The café is open,” says the crier."
 	for _, lw := range []int{80, 55} {
 		box := motdBox(text, lw)
 		lines := strings.Split(strings.TrimRight(box, "\n"), "\n")

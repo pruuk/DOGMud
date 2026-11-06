@@ -14,9 +14,9 @@ import (
 // delivery) and may carry escape codes and the wrap helper's \r.
 var setScreenEscRE = regexp.MustCompile("\x1b\\[[0-9;]*m|</?ansi[^>]*>|\r")
 
-// shippedFightPrompt is config.yaml's FightPrompt (2026-10-19), 150 columns
-// raw. A test binary holds the Go default, so the screen test sets it.
-const shippedFightPrompt = `{8}[{t} {255}HP:{hpbar} SP:{stbar} CP:{cvbar}{pos}{8}] {255}» {target}{8}[{targetpos}{8}|{targethealth}{8}] {255}{tank}{tankpos}{tankbar}{239}{h}{8}:`
+// shippedFightPrompt is config.yaml's FightPrompt (2026-11-06, #591), 144
+// columns raw. A test binary holds the Go default, so the screen test sets it.
+const shippedFightPrompt = `{8}[{t} {255}HP:{hpbar} SP:{stbar} CP:{cvbar}{pos}{8}] {255}» {target}{8}[{targetpos}{8}|{targethealth}{8}]{tank}{tankpos}{tankbar}{239}{h}{8}:`
 
 // renderedSetLines runs show, then returns what the player receives as lines,
 // colour codes stripped.

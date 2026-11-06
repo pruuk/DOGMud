@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -22,12 +23,20 @@ const (
 	exitOK    = 0
 	exitFail  = 1
 	exitUsage = 2
+
+	// stopTimeout bounds the whole `stop` teardown (graceful stop, compose
+	// down, sweep); playtestenv's own cleanup bound is 45s.
+	stopTimeout = 3 * time.Minute
+	// stopLockRetries covers the supervising process holding the run lock
+	// while it tears down the same run.
+	stopLockRetries = 4
 )
 
 type envSupervisor interface {
 	Start(context.Context, playtestenv.StartOptions) (playtestenv.Result, error)
 	Stop(context.Context, playtestenv.RunOptions) (playtestenv.Result, error)
 	Status(context.Context, playtestenv.RunOptions) (playtestenv.Result, error)
+	SweepRun(context.Context, playtestenv.RunOptions) ([]playtestenv.ResourceRef, error)
 }
 
 func main() {
@@ -49,7 +58,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer, env envSu
 	case "status":
 		return cmdStatus(args[1:], stdout, stderr)
 	case "stop":
-		return cmdStop(args[1:], stderr)
+		return cmdStop(ctx, args[1:], stdout, stderr, env)
 	default:
 		fmt.Fprintf(stderr, "unknown subcommand %q\n", args[0])
 		return exitUsage
@@ -160,7 +169,11 @@ func cmdStatus(args []string, stdout, stderr io.Writer) int {
 	return exitOK
 }
 
-func cmdStop(args []string, stderr io.Writer) int {
+// cmdStop signals the supervising `run`/`scenario` process, then tears the
+// run down itself, so it does not depend on that process still being alive.
+// It exits 0 only after confirming no container labelled for the run remains;
+// otherwise it names what is still up and exits non-zero.
+func cmdStop(ctx context.Context, args []string, stdout, stderr io.Writer, env envSupervisor) int {
 	fs := flag.NewFlagSet("stop", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	checkout := fs.String("checkout", "", "absolute git checkout path (required)")
@@ -176,5 +189,50 @@ func cmdStop(args []string, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err.Error())
 		return exitFail
 	}
+
+	// Teardown must finish even if the operator interrupts mid-way.
+	ctx = context.WithoutCancel(ctx)
+	ctx, cancel := context.WithTimeout(ctx, stopTimeout)
+	defer cancel()
+
+	opts := playtestenv.RunOptions{Checkout: *checkout, RunID: *runID}
+	failed := false
+
+	var stopErr error
+	for attempt := 0; attempt < stopLockRetries; attempt++ {
+		_, stopErr = env.Stop(ctx, opts)
+		// The supervising process may be stopping the same run right now.
+		if !errors.Is(stopErr, playtestenv.ErrLockBusy) {
+			break
+		}
+	}
+	if stopErr != nil {
+		_, _ = fmt.Fprintf(stderr, "playtestrun stop: teardown reported an error: %v\n", stopErr)
+		failed = true
+	}
+
+	left, sweepErr := env.SweepRun(ctx, opts)
+	if sweepErr != nil {
+		_, _ = fmt.Fprintf(stderr, "playtestrun stop: could not confirm run %s is gone: %v\n", *runID, sweepErr)
+		failed = true
+	}
+	if len(left) > 0 {
+		ids := make([]string, 0, len(left))
+		for _, r := range left {
+			ids = append(ids, r.Kind+" "+r.ID)
+		}
+		_, _ = fmt.Fprintf(stderr, "playtestrun stop: still up for run %s: %s\n", *runID, strings.Join(ids, ", "))
+		failed = true
+	}
+	if failed {
+		return exitFail
+	}
+
+	// Best effort: a dead supervisor never recorded the stop.
+	if sc, err := playtestrun.ReadSidecar(*checkout, *runID); err == nil &&
+		(sc.Status == playtestrun.StatusReady || sc.Status == playtestrun.StatusStarting) {
+		_ = playtestrun.UpdateSidecarStatus(*checkout, *runID, playtestrun.StatusStopped)
+	}
+	_, _ = fmt.Fprintf(stdout, "run %s stopped; no containers remain\n", *runID)
 	return exitOK
 }

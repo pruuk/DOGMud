@@ -1,5 +1,19 @@
 # DOGMud Patch Notes
 
+## 2026-11-06: Word gets around
+
+- Gossips around the world have started talking about a crafter at the Confluence
+  who sells secrets nobody else will teach.
+- The message of the day is new. Read it for how to talk to people, follow a quest
+  and find what is hidden.
+- In a fight, your prompt shows who your foe is attacking when it is not you, how
+  hurt they are, and whether they are down.
+- `look in` a chest or box now shows what is inside, the same as looking at it.
+- The Vitalis Bandolier no longer poisons, blinds or purges its wearer from the
+  flasks and cures it only carries.
+- Trader Onna no longer claims to remember what a stranger bought last time, and
+  the Courier's Road-Token no longer promises a free bed.
+
 ## 2026-11-04: Tidying up
 
 - Cleric Hadwen and Crier Toke still offer their two talks to every new arrival.

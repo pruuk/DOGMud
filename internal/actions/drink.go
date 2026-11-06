@@ -108,6 +108,16 @@ const (
 // costs more than a fresh character's entire tolerance, gating it makes the
 // item unusable outright rather than merely awkward.
 func bypassesToxicityGate(itemId int) bool {
+	return IsDetoxItem(itemId)
+}
+
+// IsDetoxItem reports whether an item is one of the two detoxes, Ysolde's
+// Purge and the Purging Draught. A detox's own condition is the price of a
+// cure that only the act of drinking pays out (the purge's addiction
+// step-down, the draught's strip of potion effects), so an ambient
+// bandolier never holds it on a wearer who is only carrying the cup
+// (hooks.desiredAmbientConditions, #794).
+func IsDetoxItem(itemId int) bool {
 	return itemId == ysoldesPurgeItemId || itemId == purgingDraughtItemId
 }
 

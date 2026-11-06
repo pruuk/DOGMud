@@ -153,6 +153,11 @@ shapes tier reads "a figure", one who sees nothing reads nothing, and a player
 drinker is excluded from their own line (`drink_room_line_sight_test.go`).
 `drink_parity_test.go` holds the player and mob parity table.
 
+`IsDetoxItem(itemId)` names the two detoxes (Ysolde's Purge, the Purging
+Draught). `bypassesToxicityGate` reads it, and so does the ambient bandolier
+(`hooks.desiredAmbientConditions`), which never holds a detox's condition on
+a wearer only carrying it (#794).
+
 `Quaff` no longer snapshots a `tick_pool` condition's per-round amount (tick
 amount at apply, 2026-09-28): the old `ComputeTickAmount(...)` /
 `Conditions.SetTickAmount(...)` block after `AddConditionScaled` is gone.

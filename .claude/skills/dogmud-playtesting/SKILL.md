@@ -166,9 +166,11 @@ are recorded here rather than adjudicated. Either way, pace batched sends
 at roughly one command per append, a couple of seconds apart.
 [[reference-multiline-input-concatenated]]
 
-`playtestrun stop` exits 0 but does not actually tear down the container.
-Confirm the container is gone and, if not, remove it directly with
-`docker rm -f`. [[project-u7b-recheck-findings]]
+`playtestrun stop` tears the run down itself (Supervisor.Stop, then a sweep
+of containers labelled for that run id) and exits 0 only after confirming no
+container remains; if one survives it exits non-zero and names it. It no
+longer depends on the `run` process still being alive (#288). If it exits
+non-zero, remove what it names with `docker rm -f <id>`.
 
 LAN access to the local server needs only a Windows Firewall inbound rule;
 the game config itself needs no changes for this (it already binds all
