@@ -21,7 +21,7 @@
 | Quest editor's event lists (editor off since 2026-10-28) | `modules/gmcp/gmcp.Quest.go:150,164`; `_datafiles/html/public/static/js/quests.js:519,533` |
 | Shipped triggers: 8 | quest 28 (`:281`, `:297`), 72 (`:81`, `:104`), 75 (`:62`, `:81`), 76 (`:156`, `verb: search`), 77 (`:109`) |
 | Test files naming it: 25 | `grep -rln "room_interact\|RoomInteract" --include=*_test.go .` |
-| Saves hold step ids (`"<quest id>-<step id>"`), not event names | `_datafiles/world/dogmud/quests/step-ids.txt` header; to be re-checked in the plan against `questprogress` |
+| Saves hold no event names: `questprogress` (quest id to step id), `questcompletions`, `questflags`, `shelvedquests`, and `queststepcounts` keyed `"<questId>-<stepId>-t<triggerIndex>"` (count is refused on these events anyway). No migration | `internal/characters/character.go:300-305` |
 | The prose dash guard leaves out quests, dialogue and conversations, and skips whole comment lines only | `internal/guards/prose_dash_guard_test.go:14-28,64` |
 | Dashes left: dialogue 0; quests 11 lines, all comments (3 are trailing comments on a data line, `31-find_your_footing.yaml:28,49`, `75-the_surveyors_report.yaml:23`); conversations 6 (`pairs/116_117.yaml:12`, `pairs/259_262.yaml:28`, four `types/*.yaml` descriptions) | `grep -rn "[—–]"` over the three folders; spaced hyphens outside comments: 0 |
 | The Coulee dash guard exists | `internal/guards/coulee_dash_guard_test.go` |
@@ -40,8 +40,10 @@ Nothing changes in play, except two conversation lines that lose their dashes.
   The inferred-destinations count stays an info line.
 - The walkthrough (`questengine.Walk`) stays CI-only, for boot time. `quest_loop_smoke_test.go`
   fails on any finding from `Validate` plus the walk; `DOGMUD_LOOP_BACKLOG_WRITE` goes.
-- The quest editor's save door (`gmcp.Quest.go`) refuses any finding; it loses its `backlog`
-  field. `gmcp.Delete_refs.go` and `keys_test.go` follow.
+- The quest editor's save door (`gmcp.Quest.go`) loses its `backlog` field and keeps its
+  before-and-after comparison: it refuses any finding the edit adds. Boot now refuses every
+  finding, so the world it compares against has none. `gmcp.Delete_refs.go` and
+  `keys_test.go` follow.
 - The six backlog guards are deleted. One guard replaces them: no `loop-backlog.txt` exists,
   and no Go file defines or calls `Ratchet`, `ParseBacklog` or `LoadBacklog`. It ships with a
   fixture proving it can fail.
@@ -51,8 +53,10 @@ Nothing changes in play, except two conversation lines that lose their dashes.
 - `look_at` fires for the look family (look, l, examine, exam, read). `search_at` fires on
   `search <noun>` naming the feature, after the search runs and with no roll, and on a plain
   search that uncovers the feature at `SearchRoomHiddenDifficulty`. Behaviour is unchanged.
-- `Trigger.Verb`, `VerbLook`, `VerbSearch` and `InteractVerb` are deleted; the event name
-  carries the family.
+- `VerbLook`, `VerbSearch`, `InteractVerb` and `EventDetails.Verb` are deleted; the event name
+  carries the family. Quest YAML loads non-strict (`fileloader.LoadFlatFile`), so a stale
+  `verb:` key would be ignored silently: `TriggerDef.Verb` becomes `RetiredVerb`
+  (`yaml:"verb"`, `json:"-"`), read only so the loader can refuse it.
 - Both events keep `room_interact`'s rules: `count` is refused, a handled event swallows the
   command (`countSwallowsCommand`), and `samecommand.go` compares event names.
 - The loader refuses `event: room_interact` and any `verb:` key with a message that names
@@ -70,7 +74,10 @@ Nothing changes in play, except two conversation lines that lose their dashes.
 
 - Fix all 17 lines, comments included, so the folders hold no em or en dash at all.
 - Add `quests`, `dialogue` and `conversations` to `proseDashDirs`; drop the exemption comment.
-- Delete `coulee_dash_guard_test.go`, now covered.
+- Keep `coulee_dash_guard_test.go` and reword its header. It is not covered: it also reads the
+  Coulee's behaviour trees and schedules, which the prose guard does not (the world's schedules
+  still hold 113 dash lines outside the Coulee; out of scope here). Corrected 2026-11-06 while
+  planning; the brainstorm said delete.
 
 ## Docs
 
