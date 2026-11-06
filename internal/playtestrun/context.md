@@ -66,6 +66,14 @@ playtestrun stop --checkout PATH --run ID
 
 `--force` only bypasses the MaxAIConnections roster-size check.
 
+`stop` writes the stop signal, then tears the run down itself
+(`Supervisor.Stop`, retried while the supervising process holds the run lock)
+and runs `Supervisor.SweepRun` to confirm no container labelled for the run id
+remains. It works when the `run`/`scenario` process is already dead. Exit 0
+means confirmed gone; non-zero prints the teardown error and/or the containers
+still up. Stop is idempotent. A dead supervisor's `ready` sidecar is marked
+`stopped`.
+
 ### Single-agent example
 
 ```powershell
@@ -172,6 +180,7 @@ Creds fields are **paths** (or null); never embed passwords in markdown.
 | Env/materialize fail | sidecar `environment_failed`; non-zero |
 | Wall-clock exceeded | `incomplete_wallclock`; Stop; non-zero |
 | Soft token stop (Claude) | report incomplete; still `playtestrun stop` |
+| `stop` cannot confirm teardown | non-zero; names what is still up |
 
 ## Gotchas
 

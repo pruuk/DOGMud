@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -19,6 +21,18 @@ type fakeEnv struct {
 	startRes    playtestenv.Result
 	startErr    error
 	stopCalled  bool
+	stopOpts    playtestenv.RunOptions
+	stopErrs    []error // consumed one per Stop call; nil entries succeed
+	stopCalls   int
+	sweepCalled bool
+	sweepLeft   []playtestenv.ResourceRef
+	sweepErr    error
+}
+
+func (f *fakeEnv) SweepRun(_ context.Context, opts playtestenv.RunOptions) ([]playtestenv.ResourceRef, error) {
+	f.sweepCalled = true
+	f.stopOpts = opts
+	return f.sweepLeft, f.sweepErr
 }
 
 func (f *fakeEnv) Start(_ context.Context, opts playtestenv.StartOptions) (playtestenv.Result, error) {
@@ -27,9 +41,15 @@ func (f *fakeEnv) Start(_ context.Context, opts playtestenv.StartOptions) (playt
 	return f.startRes, f.startErr
 }
 
-func (f *fakeEnv) Stop(context.Context, playtestenv.RunOptions) (playtestenv.Result, error) {
+func (f *fakeEnv) Stop(_ context.Context, opts playtestenv.RunOptions) (playtestenv.Result, error) {
 	f.stopCalled = true
-	return playtestenv.Result{Operation: "stop"}, nil
+	f.stopOpts = opts
+	var err error
+	if f.stopCalls < len(f.stopErrs) {
+		err = f.stopErrs[f.stopCalls]
+	}
+	f.stopCalls++
+	return playtestenv.Result{Operation: "stop"}, err
 }
 
 func (f *fakeEnv) Status(context.Context, playtestenv.RunOptions) (playtestenv.Result, error) {
@@ -45,6 +65,77 @@ func TestCLI_StopWritesSignalIdempotent(t *testing.T) {
 	require.FileExists(t, stopPath)
 	code = run(context.Background(), []string{"stop", "--checkout", checkout, "--run", "r1"}, ioDiscard(), &stderr, &fakeEnv{})
 	require.Equal(t, exitOK, code)
+}
+
+func stopArgs(checkout, runID string) []string {
+	return []string{"stop", "--checkout", checkout, "--run", runID}
+}
+
+// The supervising process may be dead: stop must tear the run down itself.
+func TestCLI_StopTearsDownAndConfirms(t *testing.T) {
+	checkout := t.TempDir()
+	env := &fakeEnv{}
+	var stdout, stderr bytes.Buffer
+	code := run(context.Background(), stopArgs(checkout, "r1"), &stdout, &stderr, env)
+	require.Equal(t, exitOK, code, stderr.String())
+	require.True(t, env.stopCalled, "stop must call Supervisor.Stop itself")
+	require.Equal(t, "r1", env.stopOpts.RunID)
+	require.Equal(t, checkout, env.stopOpts.Checkout)
+	require.True(t, env.sweepCalled, "stop must confirm no container remains")
+	require.Contains(t, stdout.String(), "no containers remain")
+}
+
+func TestCLI_StopFailsLoudlyWhenContainerSurvives(t *testing.T) {
+	checkout := t.TempDir()
+	env := &fakeEnv{sweepLeft: []playtestenv.ResourceRef{{Kind: "container", ID: "abc123"}}}
+	var stdout, stderr bytes.Buffer
+	code := run(context.Background(), stopArgs(checkout, "r1"), &stdout, &stderr, env)
+	require.Equal(t, exitFail, code)
+	require.Contains(t, stderr.String(), "still up")
+	require.Contains(t, stderr.String(), "abc123")
+	require.NotContains(t, stdout.String(), "no containers remain")
+}
+
+func TestCLI_StopFailsWhenTeardownErrors(t *testing.T) {
+	checkout := t.TempDir()
+	env := &fakeEnv{stopErrs: []error{errors.New("cleanup incomplete: boom")}}
+	var stderr bytes.Buffer
+	code := run(context.Background(), stopArgs(checkout, "r1"), ioDiscard(), &stderr, env)
+	require.Equal(t, exitFail, code)
+	require.Contains(t, stderr.String(), "boom")
+	require.True(t, env.sweepCalled, "sweep still runs so the report names what is up")
+}
+
+func TestCLI_StopFailsWhenConfirmationImpossible(t *testing.T) {
+	checkout := t.TempDir()
+	env := &fakeEnv{sweepErr: errors.New("docker unreachable")}
+	var stderr bytes.Buffer
+	code := run(context.Background(), stopArgs(checkout, "r1"), ioDiscard(), &stderr, env)
+	require.Equal(t, exitFail, code)
+	require.Contains(t, stderr.String(), "could not confirm")
+}
+
+func TestCLI_StopRetriesWhenSupervisorHoldsTheLock(t *testing.T) {
+	checkout := t.TempDir()
+	busy := fmt.Errorf("wrapped: %w", playtestenv.ErrLockBusy)
+	env := &fakeEnv{stopErrs: []error{busy, busy, nil}}
+	var stderr bytes.Buffer
+	code := run(context.Background(), stopArgs(checkout, "r1"), ioDiscard(), &stderr, env)
+	require.Equal(t, exitOK, code, stderr.String())
+	require.Equal(t, 3, env.stopCalls)
+}
+
+func TestCLI_StopMarksDeadSupervisorsSidecarStopped(t *testing.T) {
+	checkout := t.TempDir()
+	_, err := playtestrun.WriteSidecar(checkout, playtestrun.SessionSidecar{
+		RunID: "r1", Checkout: checkout, Status: playtestrun.StatusReady,
+	})
+	require.NoError(t, err)
+	code := run(context.Background(), stopArgs(checkout, "r1"), ioDiscard(), ioDiscard(), &fakeEnv{})
+	require.Equal(t, exitOK, code)
+	sc, err := playtestrun.ReadSidecar(checkout, "r1")
+	require.NoError(t, err)
+	require.Equal(t, playtestrun.StatusStopped, sc.Status)
 }
 
 func TestCLI_StatusPrintsSidecar(t *testing.T) {
