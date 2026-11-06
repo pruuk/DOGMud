@@ -344,6 +344,16 @@ func (i *Item) Validate() {
 }
 ```
 
+### Death-drop roll (`ShouldDrop`, #585)
+
+`Item.ShouldDrop(defaultChance)` rolls the item's own `DropChance`
+(yaml `dropchance`, 1 to 100) when it is set, else `defaultChance`. A
+`defaultChance` of 0 or less means never: the caller has already resolved
+an absent mob `itemdropchance` to its default (`mobs.Mob.EquippedDropChance`),
+so a 0 reaching here is an authored never. The item's own `DropChance` of 0
+still means unset, because the field is `omitempty` (a saved 0 cannot be
+told from an absent key) and no item data authors `dropchance: 0`.
+
 ### Item Identification and Matching
 ```go
 // Multiple identification methods

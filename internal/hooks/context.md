@@ -1479,7 +1479,7 @@ Cross-machine cleanup that fires on two Life transitions:
 | `Death_PlayerAnnouncement.go` | Room broadcast, global broadcast, `events.PlayerDeath` queue, worldevents PvE emit, weakened/darkness text, instance ejection |
 | `Death_PlayerCorpse.go` | Player corpse creation in the death room |
 | `Death_InboundAggroCleanup.go` | Clears mobs and companions that were targeting the dying actor; fires for both player and mob deaths |
-| `Death_MobLoot.go` | Carried and equipped item drop, gold drop, dark-room sound cue, mob corpse creation |
+| `Death_MobLoot.go` | Carried and equipped item drop, gold drop, dark-room sound cue, mob corpse creation. Worn items roll against `mob.EquippedDropChance()`: absent `itemdropchance` drops all, an authored 0 drops none (#585) except on a mob that is or was a companion; carried items always roll at 100; `never_drops` skips both |
 | `Death_AlivenessSubstrate.go` | Fires `events.MobDeath`; downstream subscribers handle faction rep, opinion update, crime recording, knowledge propagation, bounty resolution |
 | `Death_MobInstanceCleanup.go` | `creditMobKill`, then `DeleteMobInstance`, `DestroyInstance`, `CleanupMobSpawns`, `RemoveMob` |
 | `Death_MobBroadcast.go` | Room "X has died" broadcast, Guide tempdata, worldevents `MobKilledByPlayer` |
