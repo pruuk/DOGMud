@@ -17,6 +17,8 @@ groups:
   - shopkeepers
 knows_facts:
   - thornwall-steel-heritage
+  - veyra-sells-secrets
+  - veyra-skilled-only
 idlecommands:
   - 'emote hammers a glowing piece of metal on the anvil with measured strokes'
   - 'emote holds a blade up to the light, examining the edge critically'

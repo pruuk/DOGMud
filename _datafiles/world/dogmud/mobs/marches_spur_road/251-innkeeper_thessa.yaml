@@ -12,6 +12,7 @@ groups:
   - gossiper
 knows_facts:
   - roads-caravans-guarded
+  - veyra-blackrazor
 relationships:
   - to: 250
     type: friend
