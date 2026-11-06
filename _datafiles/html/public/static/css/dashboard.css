@@ -307,12 +307,16 @@
    under its quest, indented like the hint, in the hint's muted colour. */
 .qprogress { margin:0 0 5px 20px; padding:0 0 0 9px; font:11px var(--font-body); line-height:1.4; color:var(--quest-progress); }
 .qprogress + .qrow { margin-top:1px; }
-/* Repeatable tag and the finished-repeatable group (#375 P6). Dimming is by
-   opacity only; the status is carried by words, never by colour. */
-.qrepeat { margin-left: 0.4em; opacity: 0.75; font-size: 0.9em; }
-.qgroup { margin-top: 0.6em; opacity: 0.75; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; }
-.qrepeatrow { opacity: 0.6; padding: 2px 0; cursor: default; }
-.qrepeatrow .qname { font-family:var(--font-body); font-size:13px; font-weight:600; color:var(--quest-name); }
+/* The "(repeatable)" tag, the "Repeatable work" heading and the finished
+   repeatable quests under it. They are quieter than active quests because
+   they use the muted quest hint colour, not because they are see-through:
+   see-through text faded to about 2:1 against the panel (unreadable in
+   Light and Dark mode). The hint colour reads at about 5:1 in both modes.
+   Words still say the status ("Not offered again yet."), never colour alone. */
+.qrepeat { margin-left: 0.4em; font-size: 0.9em; color: var(--quest-progress); }
+.qgroup { margin-top: 0.6em; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; color: var(--quest-progress); }
+.qrepeatrow { padding: 2px 0; cursor: default; }
+.qrepeatrow .qname { font-family:var(--font-body); font-size:13px; font-weight:600; color:var(--quest-progress); }
 .qonmap { color:var(--party-teal); font-style:normal; white-space:nowrap; }
 #panel-vitals { flex: 0 0 auto; }                    /* content-compact; grows with party rows */
 #panel-art    { flex: 0 1 auto; min-height: 120px; } /* inventory: content-sized, grows w/ eq list */

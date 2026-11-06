@@ -223,6 +223,13 @@ check('the close button shows on phones only',
     /\.drawer-close \{\s*display: none;/.test(css) && /#dash-drawer \.drawer-close \{ display: inline-block; \}/.test(css), true);
 check('a wide gap keeps the fold and close buttons apart',
     /#dash-drawer \.ph-btns \{ gap: 16px;/.test(css), true);
+// Repeatable quests are quieted by colour, never see-through: see-through
+// faded them to about 2:1 in Light and Dark mode (#768 review item 3).
+var repeatRules = (css.match(/\.(qrepeat|qgroup|qrepeatrow) \{[^}]*\}/g) || []).join('\n');
+check('the repeatable quest styles are found', repeatRules.split('\n').length, 3);
+check('repeatable quests are not see-through', /opacity/.test(repeatRules), false);
+check('the repeatable heading and tag use the quest hint colour',
+    /\.qrepeat \{[^}]*color: var\(--quest-progress\)/.test(css) && /\.qgroup \{[^}]*color: var\(--quest-progress\)/.test(css), true);
 check('a folded tab drops its own height',
     /min-height: 0 !important;\s*height: auto !important;/.test(css), true);
 

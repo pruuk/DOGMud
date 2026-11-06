@@ -170,6 +170,11 @@ for slice B.*
   tab's own title bar, ✕ at the far right with a 16px gap against mis-taps;
   the strip that held only the ✕ is gone, giving the game that room. Every
   tab's ▾ folds it on every screen (Map, Chat and Automation had not).
+- Repeatable quests (review item 3): the "(repeatable)" tag, the
+  "Repeatable work" heading and the finished rows are quieted with the quest
+  hint colour (`--quest-progress`, 4.95 Dark, 4.97 Light), not with opacity.
+  Opacity had faded them to about 2 in Dark and 1.9 in Light, and the review
+  found 1.01 in Light because they had no colour at all (Malia approved).
 - Code is written so a person can maintain it: edit what exists first, and
   give every change a plain-English comment (Malia).
 - Still to decide: a description of each Chat button (hover on a laptop; a
