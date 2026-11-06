@@ -10,14 +10,17 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // motdAnsiTagRE strips <ansi …> / </ansi> tags for visible-width math
 // when padding MOTD lines. Mirrors the pattern in messaging/wrap.go.
 var motdAnsiTagRE = regexp.MustCompile(`<ansi[^>]*>|</ansi>`)
 
+// motdVisibleWidth is a line's display width in columns, not bytes, so a
+// curly quote or an accent pads like any other character (#592).
 func motdVisibleWidth(s string) int {
-	return len(motdAnsiTagRE.ReplaceAllString(s, ""))
+	return util.VisibleWidth(s)
 }
 
 func Motd(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
