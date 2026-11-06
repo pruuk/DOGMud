@@ -38,6 +38,36 @@ func PotionMagnitudeApplication(itemSpec *ItemSpec, spec *conditions.ConditionSp
 	return magnitude, triggers, true
 }
 
+// The two detoxes: Ysolde's Purge and the Purging Draught.
+const (
+	YsoldesPurgeItemId   = 40109
+	PurgingDraughtItemId = 30052
+)
+
+// IsDetox reports whether an item is one of the two detoxes. A detox's own
+// condition is the price of a cure that only the act of drinking pays out
+// (the purge's addiction step-down, the draught's strip of potion effects),
+// so holding it alone is pure harm. The drink path lets a detox past the
+// toxicity gate on the same test.
+func IsDetox(itemId int) bool {
+	return itemId == YsoldesPurgeItemId || itemId == PurgingDraughtItemId
+}
+
+// AmbientBeneficial reports whether an ambient bandolier (the Vitalis
+// Bandolier) takes a potion of this spec into its slots (#794, owner ruling
+// 2026-11-06): a potion, drunk rather than thrown, that carries a condition
+// to hold, and not a detox. A throwable's conditions land on its target; a
+// detox's condition is pure harm without the cure; a potion with no condition
+// (the Bloom Wafer, the Phial of Second Birth) does its work only when drunk,
+// so the bandolier would hold nothing for it. Whether this one potion has
+// spoiled is a separate test (Character.AmbientBandolierRefuses).
+func (is *ItemSpec) AmbientBeneficial() bool {
+	return is.Type == Potion &&
+		is.Subtype != Throwable &&
+		!IsDetox(is.ItemId) &&
+		len(is.ConditionIds) > 0
+}
+
 // PotionEffectConditionIds returns every condition id that only potions
 // grant: named by a potion's ConditionIds and by no non-potion item's
 // ConditionIds or WornConditionIds. The Purging Draught strips this set

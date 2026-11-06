@@ -236,17 +236,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	// Determine spoilage without consuming the item. Every mutation waits until
 	// full cost admission and a consuming cooldown both succeed.
-	spoiled := false
-	if spec.Aging.HasAging() && matchItem.CraftedRound > 0 {
-		currentRound := util.GetRoundCount()
-		var elapsed uint64
-		if currentRound >= matchItem.CraftedRound {
-			elapsed = currentRound - matchItem.CraftedRound
-		}
-		effSpeed := items.CalcEffectiveAgingSpeed(matchItem.BottleMultiplier, matchItem.CraftSkill)
-		phase, _ := items.GetAgingPhase(elapsed, spec.Aging, effSpeed)
-		spoiled = phase == items.PhaseSpoiled
-	}
+	spoiled := user.Character.PotionAging(matchItem, util.GetRoundCount()).Spoiled()
 
 	stagedTargets := stageThrowTargets(room)
 	if !actions.SpecialMoveReady(user.Character) {

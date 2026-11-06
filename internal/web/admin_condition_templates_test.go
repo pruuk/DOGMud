@@ -187,7 +187,8 @@ func TestAdminMobTemplateExecutesWithConditionIds(t *testing.T) {
 	tplData[`allZoneNames`] = []string{}
 	tplData[`allSpecies`] = []species.Species{}
 	tplData[`activityLevels`] = []int{}
-	tplData[`dropChances`] = []int{}
+	tplData[`dropChances`] = []int{0, 50, 100}
+	tplData[`mobDropChance`] = -1
 	tplData[`allMobGroups`] = []string{}
 	tplData[`conditionSpecs`] = buildConditionSpecsForTest()
 

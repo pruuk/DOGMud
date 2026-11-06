@@ -49,7 +49,7 @@ SOP including the `behavior_archetype` priority order.
 | `maxwander` | int | no | Max rooms the mob will wander from its home room. 0 = stationary. |
 | `activitylevel` | int | no | 1–100. How often the mob executes idle commands. Higher = more active. Chatter and movement each roll at this level times their share of the pool. |
 | `wandermultiplier` | float | no | Scales this mob's idle movement roll (wander, sneak, portal). Unset is 1.0; 0 is never. Chatter and movement roll apart, each weighted by its share of `idlecommands` (blank entries count in the size). #317 |
-| `itemdropchance` | int | no | Percent chance (0–100) to drop carried items on death. |
+| `itemdropchance` | int | no | Percent chance (0 to 100) that each item the mob wears drops on death. Absent: every worn item drops. 0: worn items never drop, companions included (gear lent to a companion that dies is lost by design). Carried items always drop; an item's own `dropchance` and `never_drops` override this. #585 |
 | `statpool` | int | no | Stat points distributed across stats on spawn (weighted by archetype). |
 | `archetype` | string | no | Stat distribution archetype: `"fighting"` (80% physical), `"casting"` (80% mental), or `""` (even). |
 | `groups` | list | no | Group membership (e.g. `[rats, animal]`). Used for teamwork and hates logic, and drives corpse salvage returns (see `internal/crafting/corpse_salvage.go`). |
@@ -118,7 +118,7 @@ SOP including the `behavior_archetype` priority order.
 # _datafiles/world/dogmud/mobs/startland/1-rat.yaml
 mobid: 1                     # Must match filename (1-rat.yaml)
 zone: Startland              # Display name; folder = startland/
-itemdropchance: 10           # 10% chance to drop carried items on death
+itemdropchance: 10           # each worn item has a 10% chance to drop on death
 hostile: false               # Does not attack on sight
 maxwander: 8                 # Will wander up to 8 rooms from home
 groups:

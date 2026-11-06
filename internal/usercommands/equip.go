@@ -116,6 +116,11 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// set more of them aside.
 		beforeReservation := user.Character.ReservationTotals()
 
+		// Swapping out a preserving bandolier (the Vitalis) rots what it held
+		// (#794); name those potions before they leave.
+		oldBeltName := user.Character.Equipment.Belt.DisplayName()
+		rotting := user.Character.BeltChangeRots()
+
 		// Every room line below is judged against the room as it was before
 		// the equip (owner rule, 2026-10-05; #447): a light or darkness put
 		// on, or a light displaced, changes what the room can see, and the
@@ -190,6 +195,17 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			}
 
 			sendReservationDisclosure(user, beforeReservation)
+
+			if result.Item.GetSpec().Type == items.Belt {
+				for _, p := range rotting {
+					user.SendText(messaging.CategoryWarning, bandolierRotLine(oldBeltName, p))
+				}
+				// What the new belt would not hold went to the backpack,
+				// still sound (#794).
+				for _, rel := range user.Character.TakeBandolierReleases() {
+					user.SendText(messaging.CategoryWarning, characters.BandolierReleaseLine(result.Item.DisplayName(), rel.Name, rel.Why))
+				}
+			}
 
 			// A light just put on changes the band at once; the notice rides
 			// the "You wear" line rather than waiting for the next command.

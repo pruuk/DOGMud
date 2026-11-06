@@ -9,8 +9,13 @@
 - In a fight, your prompt shows who your foe is attacking when it is not you, how
   hurt they are, and whether they are down.
 - `look in` a chest or box now shows what is inside, the same as looking at it.
-- The Vitalis Bandolier no longer poisons, blinds or purges its wearer from the
-  flasks and cures it only carries.
+- The Vitalis Bandolier now works as it was always meant to. It takes only potions
+  that strengthen you, holds each one at its very best for as long as it stays
+  there, and its effects stay put instead of wearing down. The price: a potion
+  taken out sours at once, and you cannot drink or sell what it holds.
+- Coulee raider archers and the marsh hunter sometimes drop what they carry.
+- Gear you lend a companion may be lost if it falls. Lend what you can spare.
+- An effect in its final moments no longer claims to be sustained.
 - Trader Onna no longer claims to remember what a stranger bought last time, and
   the Courier's Road-Token no longer promises a free bed.
 

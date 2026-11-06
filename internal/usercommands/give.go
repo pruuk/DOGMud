@@ -41,6 +41,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	giveWhat, giveWho := splitGiveArgs(args, user, room)
 
 	var giveItem items.Item = items.Item{}
+	questConsumed := false // the quest engine took the item (it tells any rot itself)
 	var giveGoldAmount int = 0
 
 	if amount, isGold, ok := parseGoldPhrase(giveWhat); isGold {
@@ -84,6 +85,21 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if !found {
 			refusal.NotCarrying(user, giveWhat)
 			return true, nil
+		}
+
+		// A potion the Vitalis holds sours as it leaves (#794). Every give
+		// path (a topic hand-in, a quest engine take, a transfer) is covered
+		// by asking afterwards whether it left; one handed back stays held.
+		if user.Character.RotsOnRemoval(giveItem) {
+			beltName := user.Character.Equipment.Belt.DisplayName()
+			given := giveItem
+			defer func() {
+				// The quest engine's consume tells it itself
+				// (GameBridge.ConsumeItem).
+				if !questConsumed && !user.Character.RotsOnRemoval(given) {
+					user.SendText(messaging.CategoryWarning, bandolierRotLine(beltName, given))
+				}
+			}()
 		}
 
 	}
@@ -216,6 +232,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				if qResult.Handled && qResult.ConsumeItem {
 					// Quest engine consumed the item — remove from player only,
 					// do NOT transfer to mob and do NOT fire onGive script.
+					questConsumed = true
 					user.Character.RemoveItem(giveItem)
 
 					user.SendText(messaging.CategorySystem, messaging.HideNames(

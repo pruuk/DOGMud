@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"fmt"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -21,6 +23,14 @@ const (
 	sellSayCantAfford  = "I can't afford that right now."
 	sellSayNotInterest = "I'm not interested in that."
 )
+
+// sellTellHeldInBandolier is the seller's own line when the potion they name
+// sits in their Vitalis Bandolier (#794): it is held at its best there, and
+// taking it out to sell would sour it, so nothing moves.
+func sellTellHeldInBandolier(beltName, potionName string) string {
+	return fmt.Sprintf(`Your <ansi fg="itemname">%s</ansi> is held at its best in your <ansi fg="itemname">%s</ansi>, and it would sour the moment you took it out, so you keep it there.`,
+		potionName, beltName)
+}
 
 // SaleQuote is what one merchant would pay one seller for one item, right
 // now. Price is 0 when the merchant will not buy it; then Say is the line the
@@ -55,6 +65,13 @@ func QuoteSale(char *characters.Character, room *rooms.Room, mob *mobs.Mob,
 	}
 	if spec.QuestToken != "" {
 		return SaleQuote{Tell: sellSayQuestItem}
+	}
+	// A potion the Vitalis Bandolier holds is at peak there and would sour
+	// the moment it left, so it is not for sale and nothing moves (#794).
+	// Checked before the buy rules, which read a held potion where it would
+	// land (items.Item.AgingAt) and would call it spoiled.
+	if char != nil && char.HeldInPreservingBandolier(item) {
+		return SaleQuote{Tell: sellTellHeldInBandolier(char.Equipment.Belt.DisplayName(), item.DisplayName())}
 	}
 
 	// Baubles (docs/baubles) are priced from their catalog record; see

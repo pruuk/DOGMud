@@ -17,7 +17,7 @@ import (
 const (
 	harmfulVitalisId    = 999954
 	harmfulVigorId      = 999955
-	harmfulPurgeId      = 40109 // Ysolde's Purge, a detox (actions.IsDetoxItem)
+	harmfulPurgeId      = 40109 // Ysolde's Purge, a detox (items.IsDetox)
 	harmfulDraughtId    = 30052 // the Purging Draught, the other detox
 	harmfulToxicFlaskId = 999957
 )

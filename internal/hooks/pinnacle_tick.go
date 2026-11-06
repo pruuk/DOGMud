@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -48,7 +48,7 @@ func pinnacleUserTick(user *users.UserRecord, room *rooms.Room) {
 	now := util.GetRoundCount()
 	worn := c.GetAllWornItems() // one pass, for the mutation sub-tick
 
-	tickPreserveContents(c)
+	tickPreserveContents(user, now)
 	tickAmbientPotions(user, now)
 	tickHunger(c, user, now)
 	tickMutationItems(user, worn, now)
@@ -75,50 +75,22 @@ func readMiscIntSlice(v any) []int {
 	return nil
 }
 
-// tickPreserveContents freezes aging for potions inside a preserves_contents
-// bandolier by advancing CraftedRound 1:1 with the round counter (aging elapsed
-// is `now - CraftedRound` at every call site, so keeping the gap constant means
-// the potions never age while stored). An empty belt yields a zero spec whose
-// PreservesContents is false, so this is a no-op for normal players.
-func tickPreserveContents(c *characters.Character) {
-	if !c.Equipment.Belt.GetSpec().PreservesContents {
+// tickPreserveContents keeps the worn bandolier's rules on its contents
+// (Character.PreserveBandolier, #794): a preserves_contents belt holds every
+// potion at peak strength by marking it Preserved, so it reads at peak while
+// slotted (Character.PotionAging) and rots the moment it leaves. Nothing here
+// touches CraftedRound: the hold is a reading, not a clock, so it needs no
+// catching up after a logout. An ambient belt lets go of any potion it would
+// not take, and the wearer is told. Runs every round and once at login
+// (HandleJoin).
+func tickPreserveContents(user *users.UserRecord, now uint64) {
+	released := user.Character.PreserveBandolier(now)
+	if len(released) == 0 {
 		return
 	}
-	for i := range c.PotionItems {
-		if c.PotionItems[i].ItemId <= 0 {
-			continue
-		}
-		// A potion with CraftedRound == 0 (purchased/vendor/spawned — never
-		// crafted) is treated as "never ages" by the aging system (drink.go and
-		// NewRound_AutoHeal both gate aging on CraftedRound > 0). Incrementing it
-		// would flip it INTO the aging range (elapsed = now - 1 ≈ millions of
-		// rounds → instantly spoiled + ejected). Such potions are already at full
-		// strength forever, so preservation must skip them entirely.
-		if c.PotionItems[i].CraftedRound == 0 {
-			continue
-		}
-		c.PotionItems[i].CraftedRound++
-	}
-}
-
-// reconcilePreservedPotionRounds re-stamps crafted potions' CraftedRound to `now`
-// when they sit in a preserves_contents bandolier. tickPreserveContents only runs
-// while a character is ONLINE, so across a logout the global round counter keeps
-// climbing while CraftedRound is frozen — the potion's elapsed (now-CraftedRound)
-// balloons by the entire offline duration and it spoils + ejects the moment the
-// player logs back in (the "rots at login" bug). Called from HandleJoin to keep
-// the pinnacle bandolier's promise that preserved potions never rot: bringing them
-// back fresh on login. Purchased potions (CraftedRound==0) already never age, so
-// they are left untouched. Pure (takes `now`) so it is unit-testable.
-func reconcilePreservedPotionRounds(potions []items.Item, preserves bool, now uint64) {
-	if !preserves {
-		return
-	}
-	for i := range potions {
-		if potions[i].ItemId <= 0 || potions[i].CraftedRound == 0 {
-			continue
-		}
-		potions[i].CraftedRound = now
+	beltName := user.Character.Equipment.Belt.DisplayName()
+	for _, rel := range released {
+		user.SendText(messaging.CategoryWarning, characters.BandolierReleaseLine(beltName, rel.Item.DisplayName(), rel.Why))
 	}
 }
 
@@ -296,7 +268,7 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 	for _, id := range applied {
 		appliedSet[id] = true
 	}
-	desired := desiredAmbientConditions(c.PotionItems)
+	desired := desiredAmbientConditions(c, now)
 
 	// Content-change detection (see mechanism note above).
 	fp := bandolierFingerprint(belt, c.PotionItems)
@@ -305,13 +277,15 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 		c.SetMiscData("pinnacle_bandolier_fingerprint", fp)
 
 		// Revoke ONLY the conditions whose potion just left; keep already-attuned
-		// conditions active so adding/removing one potion never drops the others.
+		// conditions active (and held, so none shows a countdown for a round)
+		// so adding/removing one potion never drops the others.
 		kept := make([]int, 0, len(applied))
 		for _, id := range applied {
-			if desired[id] {
+			if mag, ok := desired[id]; ok {
 				kept = append(kept, id)
+				holdAmbient(c, id, mag)
 			} else {
-				c.RemoveCondition(id)
+				releaseAmbient(c, id)
 			}
 		}
 
@@ -339,8 +313,8 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 	// already-active conditions refreshed but hold the pending one back.
 	if attune, ok := characters.MiscRound(c.GetMiscData("pinnacle_bandolier_attune_round")); ok && now < attune {
 		for _, id := range applied {
-			if desired[id] {
-				holdAmbient(c, id)
+			if mag, ok := desired[id]; ok {
+				holdAmbient(c, id, mag)
 			}
 		}
 		return
@@ -349,11 +323,11 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 	// Attuned (or nothing pending): hold every slotted potion's condition.
 	// Announce completion once when a new effect just landed.
 	newlyApplied := false
-	for id := range desired {
+	for id, mag := range desired {
 		if !appliedSet[id] {
 			newlyApplied = true
 		}
-		holdAmbient(c, id)
+		holdAmbient(c, id, mag)
 	}
 	if _, ok := characters.MiscRound(c.GetMiscData("pinnacle_bandolier_attune_round")); ok {
 		if newlyApplied {
@@ -371,47 +345,73 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 	c.SetMiscData(characters.AmbientBandolierMiscKey, ids)
 }
 
-// holdAmbient makes sure the character holds conditionId as a permanent record.
-// A record already permanent is left alone, so the per-round cost is a lookup;
-// a timed record (one applied before 2026-10-19, or the potion drunk by hand)
-// is turned permanent in place.
-func holdAmbient(c *characters.Character, conditionId int) {
+// holdAmbient makes sure the character holds conditionId as a permanent record,
+// at magnitude when the potion's condition reads one (a Pitsense Tincture's
+// infravision reach). A record already permanent at that magnitude is left
+// alone, so the per-round cost is a lookup; a timed record (one applied
+// before 2026-10-19, or the same condition drunk by hand) is turned permanent
+// in place, and the bandolier's display reads "sustained" again.
+func holdAmbient(c *characters.Character, conditionId int, magnitude float64) {
 	for _, held := range c.Conditions.GetConditions(conditionId) {
-		if held.Permanent {
+		if held.Permanent && held.Magnitude == magnitude {
 			return
 		}
 	}
 	_ = c.AddCondition(conditionId, true)
+	if magnitude > 0 {
+		for _, held := range c.Conditions.GetConditions(conditionId) {
+			held.Magnitude = magnitude
+		}
+	}
 }
 
-// desiredAmbientConditions is the set of condition ids the bandolier holds on
-// its wearer: those of every slotted potion that is drunk for its own effect.
-// The bandolier also stores two kinds of item whose conditions are not that
-// (#794), and it holds neither. A throwable's conditions land on whoever it
-// is thrown at (a flashbang's blindness, a toxic flask's poison). A detox's
-// condition is the price of a cure that only drinking it pays out
-// (actions.IsDetoxItem), so holding it alone is pure harm: Ysolde's Purge
-// would keep its carrier in Bloom Detox for as long as the cup stayed slotted.
-// Both still sit in the bandolier, ready to throw or drink.
-func desiredAmbientConditions(potions []items.Item) map[int]bool {
-	out := map[int]bool{}
-	for _, p := range potions {
+// desiredAmbientConditions maps each condition id the bandolier holds on its
+// wearer to the magnitude it holds it at (0 for a condition that reads none).
+// Only a potion of a helpful kind counts (items.ItemSpec.AmbientBeneficial,
+// #794): the bandolier refuses the rest, and this is the backstop for one a
+// save carried in. Each potion counts at peak strength (owner ruling
+// 2026-11-06), as a drink of it at peak would apply it: the potency of
+// Character.PotionAging, raised by its maker's skill. Two potions sharing a
+// condition hold it at the stronger magnitude.
+func desiredAmbientConditions(c *characters.Character, now uint64) map[int]float64 {
+	out := map[int]float64{}
+	for _, p := range c.PotionItems {
 		spec := p.GetSpec()
-		if spec.Subtype == items.Throwable || actions.IsDetoxItem(spec.ItemId) {
+		if !spec.AmbientBeneficial() {
 			continue
 		}
+		mult := items.PotionDurationMult(c.PotionAging(p, now).Potency, p.CraftSkill)
 		for _, conditionId := range spec.ConditionIds {
-			out[conditionId] = true
+			mag := 0.0
+			if m, _, ok := items.PotionMagnitudeApplication(&spec, conditions.GetConditionSpec(conditionId), mult); ok {
+				mag = m
+			}
+			if prev, held := out[conditionId]; !held || mag > prev {
+				out[conditionId] = mag
+			}
 		}
 	}
 	return out
 }
 
-// revokeAmbient removes every previously-applied ambient condition and clears the
-// tracking key.
+// releaseAmbient ends the bandolier's hold on conditionId: its permanent
+// record goes. A timed record of the same condition is left to run, since it
+// is not the bandolier's: the potion was drunk, and the drink's own effect
+// must outlast the potion leaving the bandolier.
+func releaseAmbient(c *characters.Character, conditionId int) {
+	for _, held := range c.Conditions.GetConditions(conditionId) {
+		if held.Permanent {
+			c.RemoveCondition(conditionId)
+			return
+		}
+	}
+}
+
+// revokeAmbient releases every previously-applied ambient condition and clears
+// the tracking key.
 func revokeAmbient(c *characters.Character, applied []int) {
 	for _, id := range applied {
-		c.RemoveCondition(id)
+		releaseAmbient(c, id)
 	}
 	if len(applied) > 0 {
 		c.SetMiscData(characters.AmbientBandolierMiscKey, []int{})

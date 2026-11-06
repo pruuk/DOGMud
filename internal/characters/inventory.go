@@ -213,26 +213,16 @@ func (c *Character) StoreItem(i items.Item) bool {
 	// Auto-route potions and throwables to the bandolier
 	if (iSpec.Type == items.Potion || (iSpec.Subtype == items.Drinkable && len(iSpec.ConditionIds) > 0) || iSpec.Subtype == items.Throwable) && c.Equipment.Belt.ItemId > 0 {
 		beltSpec := c.Equipment.Belt.GetSpec()
-		if beltSpec.IsBandolier && beltSpec.BandolierCapacity > 0 && len(c.PotionItems) < beltSpec.BandolierCapacity {
-			// Ambient bandoliers (e.g. the Vitalis Bandolier) passively tick
-			// every slotted potion's effect each round. Same-type conditions dedupe,
-			// so a duplicate potion type is a wasted slot that only exists to
-			// stack near-immortal regen — cap ambient bandoliers to one of each
-			// potion type. Duplicates fall through to the backpack. Ordinary
-			// (non-ambient) storage bandoliers still allow duplicates.
-			dup := false
-			if beltSpec.AmbientPotions {
-				for _, existing := range c.PotionItems {
-					if existing.ItemId == i.ItemId {
-						dup = true
-						break
-					}
-				}
-			}
-			if !dup {
-				c.PotionItems = append(c.PotionItems, i)
-				return true
-			}
+		// An ambient bandolier (the Vitalis) refuses a potion whose held
+		// effect would not help, a spoiled one, or one whose effect a slotted
+		// potion already gives (it holds one record per condition, so a second
+		// would be a wasted slot that only stacks regen). It goes to the
+		// backpack (#794); only one belt is worn, so there is no other
+		// bandolier. Ordinary storage bandoliers still take duplicates.
+		refused := c.AmbientBandolierRefuses(i, util.GetRoundCount())
+		if !refused && beltSpec.IsBandolier && beltSpec.BandolierCapacity > 0 && len(c.PotionItems) < beltSpec.BandolierCapacity {
+			c.slotPotion(i)
+			return true
 		}
 	}
 
@@ -683,31 +673,40 @@ func (c *Character) SortComponentItems() int {
 }
 
 // SortPotionItems moves drinkable items from backpack into PotionItems
-// up to the equipped bandolier's capacity. Returns the count of items moved.
-func (c *Character) SortPotionItems() int {
+// up to the equipped bandolier's capacity. Returns the count of items moved
+// and the items an ambient bandolier refused, with why
+// (AmbientBandolierRefusal: a kind that would not help, a spoiled potion, or
+// one whose effect a slotted potion already gives), which stay in the
+// backpack; the sort command names them to the player.
+func (c *Character) SortPotionItems() (moved int, refused []BandolierRelease) {
 	if c.Equipment.Belt.ItemId < 1 {
-		return 0
+		return 0, nil
 	}
 	beltSpec := c.Equipment.Belt.GetSpec()
 	if !beltSpec.IsBandolier {
-		return 0
+		return 0, nil
 	}
 	capacity := beltSpec.BandolierCapacity
 	if capacity <= 0 {
-		return 0
+		return 0, nil
 	}
 
-	moved := 0
+	now := util.GetRoundCount()
 	remaining := make([]items.Item, 0, len(c.Items))
 	for _, item := range c.Items {
 		sub := item.GetSpec().Subtype
 		if (sub == items.Drinkable || sub == items.Throwable) && len(c.PotionItems) < capacity {
-			c.PotionItems = append(c.PotionItems, item)
+			if why := c.AmbientBandolierRefusal(item, now); why != BandolierTakes {
+				refused = append(refused, BandolierRelease{Item: item, Why: why})
+				remaining = append(remaining, item)
+				continue
+			}
+			c.slotPotion(item)
 			moved++
 		} else {
 			remaining = append(remaining, item)
 		}
 	}
 	c.Items = remaining
-	return moved
+	return moved, refused
 }

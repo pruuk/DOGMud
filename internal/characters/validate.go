@@ -436,6 +436,19 @@ func (c *Character) validateDisabledSlotsForSpecies() {
 		case items.Belt:
 			if c.Equipment.Belt.ItemId > 0 {
 				itemFoundInDisabledSlot = c.Equipment.Belt
+				// A bandolier spills its potions as taking it off does
+				// (RemoveFromBody), rather than orphaning them; a potion a
+				// preserving bandolier held sours as it leaves (#794).
+				if c.Equipment.Belt.GetSpec().IsBandolier && len(c.PotionItems) > 0 {
+					if c.userId > 0 {
+						beltName := c.Equipment.Belt.DisplayName()
+						for _, p := range c.BeltChangeRots() {
+							c.displacedGear = append(c.displacedGear, DisplacedGear{
+								ItemName: p.DisplayName(), Reason: DisplacedPotionSoured, From: beltName})
+						}
+					}
+					c.spillBandolier()
+				}
 			}
 			c.Equipment.Belt = items.ItemDisabledSlot
 		case items.Gloves:
@@ -515,6 +528,10 @@ const (
 	// needs both hands again (Titan Growth or Colossus Form is gone, #680),
 	// so the partner hand let go of its item.
 	DisplacedByTwoHandedGrip = "two-handed-grip"
+	// DisplacedPotionSoured: a potion a preserving bandolier held spilled
+	// with the bandolier (its slot closed) and soured as it left (#794).
+	// ItemName is the potion; From is the bandolier.
+	DisplacedPotionSoured = "potion-soured"
 )
 
 // DisplacedGear is one worn item pushed out of its slot into the pack (#481),
@@ -525,6 +542,7 @@ const (
 type DisplacedGear struct {
 	ItemName string
 	Reason   string
+	From     string // the bandolier a soured potion left (DisplacedPotionSoured)
 }
 
 // TakeDisplacedGear returns the gear pushed off this character's body since

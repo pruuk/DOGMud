@@ -44,6 +44,7 @@ var transientItemHolders = map[string]string{
 	`internal/actions.RemoveAllResult`:           `an action's result, alive for one call`,
 	`internal/actions.RemoveEquipResult`:         `an action's result, alive for one call`,
 	`internal/actions.StealOptions`:              `a steal's arguments, alive for one call`,
+	`internal/characters.BandolierRelease`:       `a bandolier pass's result, alive for one call; the item it names is already in the pack (#794)`,
 	`internal/characters.HandSlot`:               `a view: a pointer into Worn, which Character.WalkItems walks`,
 	`internal/characters.SlotChoice`:             `a view: pointers into Worn plus the items one equip displaces, alive for one call`,
 	`internal/characters.WornSlot`:               `a view: a pointer into Worn (AllSlots), which Worn.WalkItems walks`,

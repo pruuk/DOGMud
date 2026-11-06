@@ -44,12 +44,13 @@ type Item struct {
 	Blob             string         `yaml:"blob,omitempty"`              // Does this item have a blob? Should be base64 encoded.
 	Uses             int            `yaml:"uses,omitempty"`              // How many uses it has left
 	Loaded           bool           `yaml:"loaded,omitempty"`            // Ranged weapons: projectile chambered/nocked
-	DropChance       int            `yaml:"dropchance,omitempty"`        // Per-instance drop chance 1-100 used by ShouldDrop. 0 = use caller's defaultChance.
+	DropChance       int            `yaml:"dropchance,omitempty"`        // Per-instance drop chance 1-100 used by ShouldDrop. 0 = unset, use caller's defaultChance.
 	LastUsedRound    uint64         `yaml:"lastusedround,omitempty"`     // Last round this item was used
 	CraftedRound     uint64         `yaml:"crafted_round,omitempty"`     // Round when this item was crafted
 	CraftSkill       int            `yaml:"craft_skill,omitempty"`       // Crafter's skill level at craft time
 	BottleMultiplier float64        `yaml:"bottle_multiplier,omitempty"` // Aging speed from the bottle used during crafting
 	MakerName        string         `yaml:"maker_name,omitempty"`        // Cosmetic crafter attribution (skill 30+)
+	Preserved        bool           `yaml:"preserved,omitempty"`         // Held by a preserving bandolier; anywhere else it has rotted (Item.AgingAt)
 	Spec             *ItemSpec      `yaml:"overrides,omitempty"`
 	Affixed          bool           `yaml:"affixed,omitempty"`         // Instance-loot affix-scaled item (sellable + value-scaled; distinct from enchanted)
 	Uncursed         bool           `yaml:"uncursed,omitempty"`        // Is this item uncursed?
@@ -100,20 +101,25 @@ func New(itemId int) Item {
 }
 
 // ShouldDrop rolls 1-100 against this item's per-instance DropChance and
-// returns true if the item should drop. If DropChance is unset (<= 0),
-// uses defaultChance instead. If neither is set, defaults to 100% (always
-// drops). Used by mob death-loot logic for both carried and equipped items
-// — the only difference is what defaultChance the call site passes:
-// carried items typically pass 100 (current behavior — always drop unless
-// per-item chance lowers it); equipped items typically pass mob.ItemDropChance
-// (current behavior — gated by the mob-wide chance unless per-item overrides).
+// returns true if the item should drop. If DropChance is unset (<= 0), it
+// uses defaultChance instead, and a defaultChance of 0 or less means the item
+// never drops (#585: the caller has already resolved "absent" to its own
+// default, so a 0 here is an authored never). Used by mob death-loot logic
+// for both carried and equipped items; the only difference is what
+// defaultChance the call site passes: carried items pass 100 (always drop
+// unless a per-item chance lowers it), equipped items pass
+// mob.EquippedDropChance() (gated by the mob-wide chance unless a per-item
+// chance overrides it).
+//
+// A per-item DropChance of 0 still means unset: the field is omitempty, so a
+// saved 0 cannot be told from an absent key, and no item data authors one.
 func (i Item) ShouldDrop(defaultChance int) bool {
 	chance := i.DropChance
 	if chance <= 0 {
 		chance = defaultChance
 	}
 	if chance <= 0 {
-		chance = 100
+		return false
 	}
 	if chance >= 100 {
 		return true

@@ -541,6 +541,10 @@ own, unrelated action param.)
   event silently does nothing. Note also that `give.go` transfers the item to
   the mob *before* any handler runs, so consumption is a post-hoc correction —
   see the give.go gotcha in `CLAUDE.md`.
+- **`GameBridge.ConsumeItem` reads the backpack, then the bandolier** (#794),
+  where `StoreItem` routes a potion by itself. Taking a potion the Vitalis
+  Bandolier holds tells the player it soured (`characters.BandolierRotLine`);
+  `give.go` then skips its own rot line for that give.
 
 ## Walkthrough
 

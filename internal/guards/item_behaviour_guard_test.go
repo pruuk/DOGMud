@@ -51,7 +51,7 @@ var itemSpecBehaviourFields = map[string]string{
 	"ReserveHealthPct":     "Pinnacle reserve held while worn",
 	"ReserveStaminaPct":    "Pinnacle reserve held while worn",
 	"ReserveConvictionPct": "Pinnacle reserve held while worn",
-	"PreservesContents":    "bandolier: contents never age",
+	"PreservesContents":    "bandolier: contents held at peak, rotted on removal",
 	"AmbientPotions":       "bandolier: slotted potions tick while worn",
 	"MutationTickInterval": "Pinnacle mutation drip",
 	"MutationTickChance":   "Pinnacle mutation drip",
@@ -95,14 +95,12 @@ var itemSpecBehaviourMethods = map[string]string{}
 // nothing reads any more fails, so the list only shrinks. A new site
 // fails: put the behaviour in a tree.
 var itemSpecBehaviourReadSites = map[string]bool{
-	"PlayerSpawn_HandleJoin.go|PreservesContents": true,
-	"pinnacle_tick.go|AmbientPotions":             true,
-	"pinnacle_tick.go|HungerDrainPct":             true,
-	"pinnacle_tick.go|HungerRounds":               true,
-	"pinnacle_tick.go|MutationRarityFloor":        true,
-	"pinnacle_tick.go|MutationTickChance":         true,
-	"pinnacle_tick.go|MutationTickInterval":       true,
-	"pinnacle_tick.go|PreservesContents":          true,
+	"pinnacle_tick.go|AmbientPotions":       true,
+	"pinnacle_tick.go|HungerDrainPct":       true,
+	"pinnacle_tick.go|HungerRounds":         true,
+	"pinnacle_tick.go|MutationRarityFloor":  true,
+	"pinnacle_tick.go|MutationTickChance":   true,
+	"pinnacle_tick.go|MutationTickInterval": true,
 }
 
 // (a) Rule 15, part one: every exported ItemSpec field is classified

@@ -54,6 +54,8 @@ func displacedGearText(g characters.DisplacedGear) string {
 		return `Your body has no place for ` + item + `, so you take it off.`
 	case characters.DisplacedByTwoHandedGrip:
 		return `Your weapon needs both hands again, so you let go of ` + item + `.`
+	case characters.DisplacedPotionSoured:
+		return characters.BandolierRotLine(g.From, g.ItemName)
 	}
 	return `Your body no longer has room for ` + item + `, so you take it off.`
 }
