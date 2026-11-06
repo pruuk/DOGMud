@@ -6,8 +6,9 @@ package gmcp
 // missing room or item, so a builder delete that leaves one naming the
 // deleted id would stop the next boot. These run the doors' own rules over
 // the world with the id gone, and report only what the delete adds: a
-// finding the world already has is not the delete's doing. No separate walker: ValidateQuestRefs already visits every
-// room and item field a quest carries.
+// finding the world already has is not the delete's doing. No separate
+// walker: ValidateQuestRefs already visits every room and item field a
+// quest carries.
 
 import (
 	"sort"

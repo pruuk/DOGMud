@@ -516,7 +516,7 @@ Run: `go build ./... && go vet ./ ./internal/questloop/ ./internal/questworld/ .
 Expected: no output.
 Run: `go test ./ ./internal/questloop/ ./internal/questworld/ ./internal/questengine/ ./modules/gmcp/ ./internal/guards/ -count=1`
 Expected: PASS, including `TestLoopBacklogStaysRetired`.
-Run: `DOGMUD_BOOT_SMOKE=1 go test ./ -run 'TestSmoke_ShippedQuestsPassTheLoop|TestSmoke_Boot' -count=1 -v 2>&1 | tail -20`
+Run: `DOGMUD_BOOT_SMOKE=1 go test ./ -run 'TestSmoke_ShippedQuestsPassTheLoop|TestSmoke_ServerBootsCleanWithRealData' -count=1 -v 2>&1 | tail -20`
 Expected: PASS and `quest loop: 0 findings`.
 Then: `grep -rn "Backlog\|backlog" --include=*.go . | grep -v _archive` and read every hit; a hit outside a comment is a leftover to fix, a comment that describes the old backlog as current is reworded.
 
@@ -759,7 +759,7 @@ func notifyRoomFeature(user *users.UserRecord, room *rooms.Room, event, typed, r
 
   Run: `go test ./internal/quests/ ./internal/questloop/ ./internal/questengine/ ./internal/usercommands/ ./internal/guards/ ./modules/gmcp/ ./ -count=1`
   Expected: PASS, including `TestRoomInteractStaysRetired`.
-  Run: `DOGMUD_BOOT_SMOKE=1 go test ./ -run 'TestSmoke_ShippedQuestsPassTheLoop|TestSmoke_Boot' -count=1 -v 2>&1 | tail -20`
+  Run: `DOGMUD_BOOT_SMOKE=1 go test ./ -run 'TestSmoke_ShippedQuestsPassTheLoop|TestSmoke_ServerBootsCleanWithRealData' -count=1 -v 2>&1 | tail -20`
   Expected: PASS, `quest loop: 0 findings`.
   Narration goldens: if `internal/narration` has a snapshot that prints trigger signatures, run `go test ./internal/narration/ -count=1`; a diff may show only `room_interact` becoming `look_at`/`search_at` and `verb=search` disappearing. Anything else stops the task.
 
