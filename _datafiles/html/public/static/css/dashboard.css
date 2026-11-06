@@ -229,7 +229,19 @@
    give a small screen the room. On the Map's dark field: labels #cec6aa
    10.71, the "Map legend" summary #dfcc94 11.51, focus ring 10.00. */
 #panel-map .map-body { display: flex; flex-direction: column; }
-#panel-map #map-render { flex: 1 1 auto; min-height: 120px; width: 100%; }
+/* The leather map: a small, even dark gap above and below it, like the
+   space at its sides (Malia 2026-11-06). The box takes the leather's own
+   shape (320 wide by 300 tall) so no extra empty space sits around it, and
+   the Fit / Center row stays right under the map. When the card is short,
+   the box shrinks and the leather shrinks with it. */
+#panel-map #map-render {
+  flex: 0 1 auto;
+  box-sizing: content-box;
+  aspect-ratio: 320 / 300;
+  padding: 10px 0;
+  min-height: 120px;
+  width: 100%;
+}
 /* Map buttons (Fit, Center, −, +): a row under the map, not over its rooms
    (Malia 2026-11-02). Label #1a1206 (master's darker brass text, #774) on the
    brass: 5.45 at the middle stop, 13.77 on the highlight. The ID beats the
