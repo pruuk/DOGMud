@@ -59,7 +59,7 @@ rewards:
 
 triggers:
   # ── The filed survey (6303, the Archive) -- gated: has 75-start, missing 75-survey ──
-  - event: room_interact
+  - event: look_at
     room: 6303
     noun: filed-survey
     conditions:
@@ -78,7 +78,7 @@ triggers:
           Time to take this back to Brennan.
       - observer: "{actor} reads the thin filed survey with sudden, careful attention."
   # ── Ungated fallback: no 75-start ──
-  - event: room_interact
+  - event: look_at
     room: 6303
     noun: filed-survey
     conditions:

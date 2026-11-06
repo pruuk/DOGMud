@@ -115,7 +115,6 @@ func triggerSignature(t *quests.TriggerDef) string {
 	addStr("command", t.Command)
 	addStr("quest_token", t.QuestToken)
 	addStr("noun", t.Noun)
-	addStr("verb", t.Verb)
 	addStr("target", t.Target)
 	addStr("effect", t.Effect)
 	addStr("topic", t.Topic)

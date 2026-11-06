@@ -23,7 +23,7 @@ func checkSearchTriggerNouns(qs []quests.Quest, roomLookup func(int) *rooms.Room
 	var bad []string
 	for _, q := range qs {
 		for i, tr := range q.Triggers {
-			if tr.Event != "room_interact" || quests.InteractVerb(tr.Verb) != quests.VerbSearch || tr.Noun == "" {
+			if tr.Event != quests.EventSearchAt || tr.Noun == "" {
 				continue
 			}
 			where := fmt.Sprintf("quest %d (%s) trigger %d: search %q in room %d", q.QuestId, q.Name, i, tr.Noun, tr.Room)
@@ -48,7 +48,7 @@ func countSearchTriggers(qs []quests.Quest) int {
 	n := 0
 	for _, q := range qs {
 		for _, tr := range q.Triggers {
-			if tr.Event == "room_interact" && quests.InteractVerb(tr.Verb) == quests.VerbSearch {
+			if tr.Event == quests.EventSearchAt {
 				n++
 			}
 		}
@@ -56,7 +56,7 @@ func countSearchTriggers(qs []quests.Quest) int {
 	return n
 }
 
-// TestSearchTriggerNounsNameARoomNoun: every shipped `verb: search` trigger
+// TestSearchTriggerNounsNameARoomNoun: every shipped search_at trigger
 // with a noun names a room noun or a hidden noun of its room.
 func TestSearchTriggerNounsNameARoomNoun(t *testing.T) {
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
@@ -88,7 +88,7 @@ func TestSearchTriggerNounsNameARoomNoun(t *testing.T) {
 	// and 58 to search triggers, so a count of zero means the scan, not the
 	// content, is broken.
 	if n := countSearchTriggers(qs); n == 0 {
-		t.Fatalf("found no shipped verb: search trigger in %d quest files: the guard checked nothing (Task 9 adds the first)", len(qs))
+		t.Fatalf("found no shipped search_at trigger in %d quest files: the guard checked nothing (Task 9 adds the first)", len(qs))
 	}
 
 	for _, msg := range checkSearchTriggerNouns(qs, rooms.LoadRoom) {
@@ -112,7 +112,7 @@ func TestSearchTriggerNounGuard_CanFail(t *testing.T) {
 	}
 	mk := func(room int, noun string) quests.Quest {
 		return quests.Quest{QuestId: 9, Name: "planted", Triggers: []quests.TriggerDef{
-			{Event: "room_interact", Verb: "search", Room: room, Noun: noun}}}
+			{Event: quests.EventSearchAt, Room: room, Noun: noun}}}
 	}
 
 	if got := checkSearchTriggerNouns([]quests.Quest{mk(1, "chandelier")}, lookup); len(got) != 1 {
@@ -127,7 +127,7 @@ func TestSearchTriggerNounGuard_CanFail(t *testing.T) {
 		}
 	}
 	// A look trigger is not this guard's business.
-	look := quests.Quest{Triggers: []quests.TriggerDef{{Event: "room_interact", Room: 1, Noun: "chandelier"}}}
+	look := quests.Quest{Triggers: []quests.TriggerDef{{Event: quests.EventLookAt, Room: 1, Noun: "chandelier"}}}
 	if got := checkSearchTriggerNouns([]quests.Quest{look}, lookup); len(got) != 0 {
 		t.Errorf("look trigger reported: %v", got)
 	}

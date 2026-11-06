@@ -11,7 +11,7 @@ import (
 )
 
 // nounEngine registers one quest per (id, noun) pair, each with a single
-// room_interact trigger on room 100 that grants "<id>-done".
+// look_at trigger on room 100 that grants "<id>-done".
 func nounEngine(nouns map[int]string) *Engine {
 	e := NewEngine()
 	for id, noun := range nouns {
@@ -21,9 +21,8 @@ func nounEngine(nouns map[int]string) *Engine {
 			Name:    "noun number test",
 			Steps:   []QuestStep{{Id: tok, Description: "done"}},
 			Triggers: []TriggerDef{{
-				Event:   "room_interact",
+				Event:   "look_at",
 				Room:    100,
-				Verb:    "look",
 				Noun:    noun,
 				Actions: []ActionDef{{Grant: tok}},
 			}},
@@ -38,8 +37,8 @@ func questTokenFor(id int) string {
 
 func notifyLook(e *Engine, player *fullMockPlayer, typed string) NotifyResult {
 	ctx := newFullMockActionContext(1, player)
-	return e.Notify("room_interact", EventDetails{
-		UserId: 1, RoomId: 100, Verb: "look", Noun: typed,
+	return e.Notify("look_at", EventDetails{
+		UserId: 1, RoomId: 100, Noun: typed,
 	}, player, ctx)
 }
 
@@ -99,13 +98,13 @@ func TestTriggerNoun_Quest20PillarsOneTrigger(t *testing.T) {
 	}
 	// Tier 2: the pillars are found by `search`, not a typed noun, so the
 	// Temple Approach carries exactly one search trigger and no
-	// room_interact trigger remains.
+	// look_at or search_at trigger remains.
 	count := func(roomId int) int {
 		d := EventDetails{UserId: 1, RoomId: roomId, Command: "search"}
 		matches := 0
 		for i := range q.Triggers {
 			tr := &q.Triggers[i]
-			assert.NotEqual(t, "room_interact", tr.Event, "quest 20 has no typed-noun trigger")
+			assert.NotContains(t, []string{"look_at", "search_at"}, tr.Event, "quest 20 has no typed-noun trigger")
 			if tr.Event == "command" && matchTriggerFields(tr, d, nounNumber) {
 				matches++
 			}

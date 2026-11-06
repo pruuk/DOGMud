@@ -144,8 +144,9 @@ type questDetail struct {
 // ---- vocabulary tables (source of truth for the client's pickers) ----
 
 // Every event also takes area or zone (the event's room lies in it), and
-// every event but room_gate, room_interact and item_give takes count (fire on
-// the Nth match) with a label for its progress line (quests.CountAllowed).
+// every event but room_gate, look_at, search_at and item_give takes count
+// (fire on the Nth match) with a label for its progress line
+// (quests.CountAllowed).
 // The editor's EVENT_FILTERS in quests.js offers the same fields
 // (TestQuestBuilderFiltersMatchTheVocab).
 var questEventVocab = []vocabEntry{
@@ -158,7 +159,8 @@ var questEventVocab = []vocabEntry{
 	{"command_issued", "player TYPED a command, success or not: fires from TryCommand for any command (filters: command, room, area, zone; count, label)"},
 	{"item_gain", "an item enters the player's inventory (filters: item, room, reason as how it arrived, such as get, loot, buy or steal; area, zone; count, label; held_line said when the item is already held)"},
 	{"quest_granted", "a quest token was just granted: the chaining event (filters: quest_token, area, zone; count, label)"},
-	{"room_interact", "player looked at or searched a room feature (filters: room, noun, verb: look or search; empty means look; area, zone; no count)"},
+	{"look_at", "player looked at a room feature: look, l, examine, exam or read naming it (filters: room, noun, area, zone; no count)"},
+	{"search_at", "player searched a room feature: search naming it, after the search runs and with no roll, or a plain search that uncovered it (filters: room, noun, area, zone; no count)"},
 	{"spell_landed", "a player's spell landed on a target, once per cast (filters: noun as the spell id, effect as its effect_type such as heal, target (self, mob, player, item or container), mob, item, room, area, zone; count, label)"},
 	{"topic_heard", "player played an NPC's talk topic, after its effects landed: a menu choice or an accepted offer (filters: mob as the NPC's template id, topic as the topic key, area, zone; count, label)"},
 }

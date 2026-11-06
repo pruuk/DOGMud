@@ -56,11 +56,6 @@ func triggersCanShareAnEvent(a, b *TriggerDef) bool {
 		{a.Skill, b.Skill}, {a.Command, b.Command},
 		{a.QuestToken, b.QuestToken}, {a.Noun, b.Noun},
 	}
-	// An empty room_interact verb means look (#375 phase 3a), so a look
-	// trigger and a search trigger never share an event.
-	if a.Event == "room_interact" && InteractVerb(a.Verb) != InteractVerb(b.Verb) {
-		return false
-	}
 	for _, p := range strs {
 		if p[0] != "" && p[1] != "" && p[0] != p[1] {
 			return false

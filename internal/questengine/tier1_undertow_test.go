@@ -22,7 +22,7 @@ func TestUndertowHasARealStrongbox(t *testing.T) {
 	}
 	require.Equal(t, []string{"start", "explore", "confront", "loot", "unlock", "opened", "evidence", "end"}, steps)
 	for _, tr := range q.Triggers {
-		require.NotEqual(t, "room_interact", tr.Event, "rule 14: no typed noun")
+		require.NotContains(t, []string{"look_at", "search_at"}, tr.Event, "rule 14: no typed noun")
 	}
 	data, err = os.ReadFile("../../_datafiles/world/dogmud/rooms/thornwall_city/498.yaml")
 	require.NoError(t, err)

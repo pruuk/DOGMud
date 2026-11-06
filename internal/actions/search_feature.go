@@ -20,8 +20,8 @@ import (
 // `search <feature>` searches ONLY that feature: the hidden nouns tucked
 // into it (HiddenNoun.On names it) roll at SearchFeatureHiddenDifficulty,
 // plus the feature's own bauble roll. It finds no secret exits, containers,
-// stashes or hiders elsewhere in the room. A `verb: search` quest trigger
-// on the feature fires with no roll (usercommands/skill.search.go).
+// stashes or hiders elsewhere in the room. A search_at quest trigger on
+// the feature fires with no roll (usercommands/skill.search.go).
 //
 // Plain `search` works through the whole room: every tier, with hidden
 // nouns (and quest search spots) at the worse SearchRoomHiddenDifficulty,

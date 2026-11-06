@@ -375,21 +375,21 @@ func TestWalk_OwnFlagNothingSetsIsADeadEnd(t *testing.T) {
 }
 
 // A flag of the walked quest set by a trigger or topic that grants nothing
-// (quest 72's room_interact set_flag, quest 18's bedroll before the offer)
+// (quest 72's look_at set_flag, quest 18's bedroll before the offer)
 // is set by firing that setter, so the gate on it opens. A setter that
 // cannot fire leaves the gate shut.
 func TestWalk_OwnFlagSetByAGrantlessSetterOpensTheGate(t *testing.T) {
 	w := walkWorld()
 	q := w.Quests[0]
 	q.Triggers = append(q.Triggers, quests.TriggerDef{
-		Event: "room_interact", Room: 6078, Noun: "channel",
+		Event: "look_at", Room: 6078, Noun: "channel",
 		Conditions: quests.Conditions{Has: []string{"53-start"}},
 		Actions:    []quests.ActionDef{{SetFlag: &quests.QuestFlagAction{Key: "53-channel", Value: "found"}}},
 	})
 	// Before the offer: a bedroll sets 53-barn, which an info topic needs,
 	// which the offer needs heard.
 	q.Triggers = append(q.Triggers, quests.TriggerDef{
-		Event: "room_interact", Room: 4050, Noun: "bedroll",
+		Event: "look_at", Room: 4050, Noun: "bedroll",
 		Conditions: quests.Conditions{Missing: []string{"53-start"}},
 		Actions:    []quests.ActionDef{{SetFlag: &quests.QuestFlagAction{Key: "53-barn", Value: "seen"}}},
 	})

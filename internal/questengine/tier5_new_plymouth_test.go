@@ -27,7 +27,7 @@ func TestTier5QuestsHaveNoTypedNouns(t *testing.T) {
 		"71-the_tribute.yaml":                71,
 	} {
 		for _, tr := range loadShippedQuest(t, file, id).Triggers {
-			require.NotEqual(t, "room_interact", tr.Event, "quest %d", id)
+			require.NotContains(t, []string{"look_at", "search_at"}, tr.Event, "quest %d", id)
 		}
 	}
 }

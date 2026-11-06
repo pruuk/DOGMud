@@ -12,7 +12,7 @@ import (
 // re-verify N1). Room 5526 aliases `board` and `floor board` to its
 // `floorboard` noun, and quest 63 listens on `noun: floorboard`; before this,
 // `look floor board` showed the plank but the quest did not advance. These
-// tests drive TryCommand so both quest events (room_interact before dispatch,
+// tests drive TryCommand so both quest events (look_at before dispatch,
 // command_issued after it) carry the room's noun key.
 
 // listenForRoomNoun registers a one-trigger quest that grants questId-start on
@@ -44,12 +44,12 @@ func TestQuestTriggerNoun_RoomAliasesReachTheRoomNoun(t *testing.T) {
 		typed string
 		want  bool
 	}{
-		{"room_interact via two-word alias", "room_interact", questengine.TriggerDef{Noun: "floorboard"}, "floor board", true},
-		{"room_interact via one-word alias", "room_interact", questengine.TriggerDef{Noun: "floorboard"}, "board", true},
-		{"room_interact by the key itself", "room_interact", questengine.TriggerDef{Noun: "floorboard"}, "floorboard", true},
+		{"look_at via two-word alias", "look_at", questengine.TriggerDef{Noun: "floorboard"}, "floor board", true},
+		{"look_at via one-word alias", "look_at", questengine.TriggerDef{Noun: "floorboard"}, "board", true},
+		{"look_at by the key itself", "look_at", questengine.TriggerDef{Noun: "floorboard"}, "floorboard", true},
 		{"command_issued via two-word alias", "command_issued", questengine.TriggerDef{Command: "look", Noun: "floorboard"}, "floor board", true},
-		{"a sentence that mentions the noun", "room_interact", questengine.TriggerDef{Noun: "floorboard"}, "at the board over there", false},
-		{"typed text that is no room noun still matches", "room_interact", questengine.TriggerDef{Noun: "guild mark"}, "guild mark", true},
+		{"a sentence that mentions the noun", "look_at", questengine.TriggerDef{Noun: "floorboard"}, "at the board over there", false},
+		{"typed text that is no room noun still matches", "look_at", questengine.TriggerDef{Noun: "guild mark"}, "guild mark", true},
 	}
 	for i, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

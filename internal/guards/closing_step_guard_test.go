@@ -81,3 +81,57 @@ func TestLoopBacklogStaysRetired_GuardCanFail(t *testing.T) {
 		t.Fatalf("guard saw %d lines, want 2: %v", len(got), got)
 	}
 }
+
+// room_interact was split into look_at and search_at at the #375 closing
+// step. The name may appear only in the loader's refusal (the
+// retiredInteractEvent constant and the lines that use it).
+var roomInteractRevivers = regexp.MustCompile(`room_interact|RoomInteract`)
+
+func roomInteractLines(src string) []string {
+	var out []string
+	for _, m := range matchingLines(roomInteractRevivers, src) {
+		if !strings.Contains(m, "retiredInteractEvent") {
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
+func TestRoomInteractStaysRetired(t *testing.T) {
+	root := repoRoot(t)
+	files := repoGoFiles(t)
+	for _, d := range []string{
+		filepath.Join(root, "_datafiles", "world"),
+		filepath.Join(root, "_datafiles", "html"),
+	} {
+		err := filepath.WalkDir(d, func(path string, de os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if ext := filepath.Ext(path); !de.IsDir() && (ext == ".yaml" || ext == ".js") {
+				files = append(files, path)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, path := range files {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, m := range roomInteractLines(string(data)) {
+			rel, _ := filepath.Rel(root, path)
+			t.Errorf("%s %s: use look_at or search_at (#375 closing step)", rel, m)
+		}
+	}
+}
+
+func TestRoomInteractStaysRetired_GuardCanFail(t *testing.T) {
+	src := "  - event: room_interact\n    noun: stone\nnotifyRoomInteract(u)\nif t.Event == retiredInteractEvent {\n"
+	if got := roomInteractLines(src); len(got) != 2 {
+		t.Fatalf("guard saw %d lines, want 2: %v", len(got), got)
+	}
+}
