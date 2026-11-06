@@ -133,7 +133,7 @@
     _tabbar: null,
     _drawer: null,
     _drawerBody: null,
-    _drawerHead: null,
+    _drawerClose: null, // the phone card's ✕ button
 
     // ---------------------------------------------------------------
     // Public entry point
@@ -480,20 +480,21 @@
       var drawer = document.createElement("div");
       drawer.id = "dash-drawer";
 
-      var drawerHead = document.createElement("div");
-      drawerHead.className = "drawer-head";
+      // The ✕ that closes the open tab: a square button, the same as the
+      // phone's Settings square. It sits in the open tab's own title bar, to
+      // the right of its ▾ button (see _openDrawer), so the card needs no
+      // extra strip just for it and the game keeps that room.
       var closeBtn = document.createElement("button");
-      // A square icon button, the same as the phone's Settings square.
       closeBtn.type = "button";
       closeBtn.className = "brass drawer-close";
       closeBtn.textContent = "✕︎";
       closeBtn.title = "Close";
       closeBtn.setAttribute("aria-label", "Close");
-      closeBtn.addEventListener("click", function () {
+      closeBtn.setAttribute("draggable", "false");
+      closeBtn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
         self._closeDrawer();
       });
-      drawerHead.appendChild(closeBtn);
-      drawer.appendChild(drawerHead);
 
       var drawerBody = document.createElement("div");
       drawerBody.className = "drawer-body";
@@ -501,7 +502,7 @@
 
       parent.appendChild(drawer);
       this._drawer     = drawer;
-      this._drawerHead = drawerHead;
+      this._drawerClose = closeBtn;
       this._drawerBody = drawerBody;
       this._drawerActive = null;
     },
@@ -570,6 +571,16 @@
       // Move panel into drawer body
       this._drawerBody.appendChild(panel);
       panel.style.display = "";
+
+      // Put the ✕ in this tab's title bar, after its ▾ button, and name it
+      // for screen readers ("Close Chat", "Close Map" and so on).
+      var btns = panel.querySelector(".ph-btns");
+      if (btns && this._drawerClose) {
+        btns.appendChild(this._drawerClose);
+        var label = "Close " + (PANEL_TABS[name] ? PANEL_TABS[name].label : name);
+        this._drawerClose.title = label;
+        this._drawerClose.setAttribute("aria-label", label);
+      }
 
       this._drawerActive = name;
       this._drawer.style.display = "";

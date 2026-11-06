@@ -165,6 +165,11 @@ for slice B.*
   Chat scrolls to its newest message).
 - On a laptop the command box stays at the bottom of the middle column even
   when the Game window is popped out (it had jumped to the top of the page).
+- Title bar buttons: laptops and tablets keep ▾ (fold) and ⧉ (pop out).
+  Phones show ▾ and ✕ (close, the size of the Settings square) in the open
+  tab's own title bar, ✕ at the far right with a 16px gap against mis-taps;
+  the strip that held only the ✕ is gone, giving the game that room. Every
+  tab's ▾ folds it on every screen (Map, Chat and Automation had not).
 - Code is written so a person can maintain it: edit what exists first, and
   give every change a plain-English comment (Malia).
 - Still to decide: a description of each Chat button (hover on a laptop; a

@@ -213,6 +213,16 @@ check('a folded tab hides its insides on every tab',
 // nothing now that phone tabs fit their content.
 check('phone tabs keep their Automation rows and Inventory items',
     /#dash-drawer \.inv-grid,\s*#dash-drawer \.auto-list \{\s*flex: 0 1 auto;/.test(css), true);
+// The phone ✕ lives in the tab's title bar (no strip of its own), shows on
+// phones only, and keeps a wide gap from ▾ against mis-taps (Malia 2026-11-06).
+var dash = fs.readFileSync(path.join(
+    __dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'js', 'dashboard.js'
+), 'utf8');
+check('the phone card has no strip just for its close button', /drawer-head/.test(css + dash), false);
+check('the close button shows on phones only',
+    /\.drawer-close \{\s*display: none;/.test(css) && /#dash-drawer \.drawer-close \{ display: inline-block; \}/.test(css), true);
+check('a wide gap keeps the fold and close buttons apart',
+    /#dash-drawer \.ph-btns \{ gap: 16px;/.test(css), true);
 check('a folded tab drops its own height',
     /min-height: 0 !important;\s*height: auto !important;/.test(css), true);
 

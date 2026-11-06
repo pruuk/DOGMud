@@ -507,8 +507,6 @@
      above the command box always stays in view. */
   --drawer-cap: 50vh;
   --drawer-cap: 50dvh; /* newer phones: half of what is actually visible */
-  /* The strip at the top of an open tab that holds its ✕ close button. */
-  --drawer-head-h: 52px;
 }
 
 #dashboard[data-mode="phone"] {
@@ -592,15 +590,11 @@ html.keyboard-open #dash-drawer { bottom: var(--cmdbox-h); }
   transition: transform 0.2s ease, visibility 0s;
 }
 
-.drawer-head {
-  display: flex;
-  justify-content: flex-end;
-  padding: 4px;
-  background: linear-gradient(var(--ink-deep), var(--bar-bottom));
-  border-bottom: 1px solid var(--panel-border);
-}
-/* Square ✕, matching the phone's Settings and Reset layout squares. */
+/* The ✕ that closes an open tab on a phone: a square the size of the
+   Settings button, at the far right of the tab's title bar. Phones only:
+   laptop and tablet tabs cannot be closed, so they keep ▾ and ⧉. */
 .drawer-close {
+  display: none;
   min-width: 40px;
   min-height: 40px;
   padding: 3px 12px;
@@ -608,6 +602,11 @@ html.keyboard-open #dash-drawer { bottom: var(--cmdbox-h); }
   font-weight: 400;
   line-height: 1;
 }
+#dash-drawer .drawer-close { display: inline-block; }
+/* A wide gap between ▾ (fold) and ✕ (close), so a thumb aimed at one does
+   not land on the other. A slip costs little either way: tap ▾ again to
+   unfold, or tap the tab's round button to open it again. */
+#dash-drawer .ph-btns { gap: 16px; align-items: center; }
 
 /* The inside of the card: as tall as the tab's content. If the content is
    taller than the card allows, it scrolls. */
@@ -637,7 +636,7 @@ html.keyboard-open #dash-drawer { bottom: var(--cmdbox-h); }
    message, which only works when the card has a set height. */
 #dash-drawer #panel-map,
 #dash-drawer #panel-chat {
-  height: calc(var(--drawer-cap) - var(--drawer-head-h));
+  height: var(--drawer-cap);
 }
 /* ------------------------------------------------------------------ */
 /* WinBox pop-out — leather theme overlay                              */
