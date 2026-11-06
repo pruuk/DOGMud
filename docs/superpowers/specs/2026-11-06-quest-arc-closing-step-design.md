@@ -38,6 +38,11 @@ Nothing changes in play, except two conversation lines that lose their dashes.
   reload, the same refusal an unlisted finding gets today. The "known findings" warning goes.
 - `destinationDoor` refuses the same way on any destination finding, instead of logging it.
   The inferred-destinations count stays an info line.
+- A spawn list changed on a running server can create a destination finding, so the two admin
+  commands that change one (`room set spawninfo clear`, `room copy spawninfo`) refuse a change
+  that adds a finding (`questengine.SpawnChangeFindings`, a before-and-after comparison). Owner
+  ruling 2026-11-06 (option B, over keeping destination findings a warning at boot). The web
+  builder's room save and room delete are off; roadmap phase 6 notes they need the same check.
 - The walkthrough (`questengine.Walk`) stays CI-only, for boot time. `quest_loop_smoke_test.go`
   fails on any finding from `Validate` plus the walk; `DOGMUD_LOOP_BACKLOG_WRITE` goes.
 - The quest editor's save door (`gmcp.Quest.go`) loses its `backlog` field and keeps its

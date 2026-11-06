@@ -19,6 +19,51 @@ import (
 //	walk-destination           the step resolves to unknown
 //	walk-destination-anywhere  an anywhere step whose triggers name a place
 func Destinations(qs []*quests.Quest) (findings []questloop.Finding, inferred []string) {
+	return destinationsWith(qs, spawnRoomsOf)
+}
+
+// SpawnChangeFindings is the before-and-after check for a spawn list changed
+// on a running server (admin `room set spawninfo clear`, `room copy
+// spawninfo`). It returns the Destinations findings over the loaded quests
+// that giving template room roomId a spawn list placing mobIds would add.
+// Boot refuses any Destinations finding, so a change that adds one would stop
+// the next restart; its caller refuses the change instead. A finding the
+// world already had is not the change's doing and is not returned.
+func SpawnChangeFindings(roomId int, mobIds []int) []questloop.Finding {
+	all := quests.GetAllQuests()
+	qs := make([]*quests.Quest, 0, len(all))
+	for i := range all {
+		qs = append(qs, &all[i])
+	}
+	return spawnChangeFindings(qs, roomId, mobIds)
+}
+
+// spawnChangeFindings is SpawnChangeFindings over any quests, for tests.
+func spawnChangeFindings(qs []*quests.Quest, roomId int, mobIds []int) []questloop.Finding {
+	before, _ := destinationsWith(qs, spawnRoomsOf)
+	after, _ := destinationsWith(qs, func(mobId int) []int {
+		ids := slices.DeleteFunc(slices.Clone(spawnRoomsOf(mobId)), func(id int) bool { return id == roomId })
+		if slices.Contains(mobIds, mobId) {
+			ids = append(ids, roomId)
+		}
+		return ids
+	})
+	had := make(map[string]bool, len(before))
+	for _, f := range before {
+		had[f.Key()] = true
+	}
+	var added []questloop.Finding
+	for _, f := range after {
+		if !had[f.Key()] {
+			added = append(added, f)
+		}
+	}
+	return added
+}
+
+// destinationsWith is Destinations with spawnsOf answering which template
+// rooms place a mob, so a proposed spawn change can be judged unsaved.
+func destinationsWith(qs []*quests.Quest, spawnsOf func(int) []int) (findings []questloop.Finding, inferred []string) {
 	sorted := slices.Clone(qs)
 	slices.SortFunc(sorted, func(a, b *quests.Quest) int { return cmp.Compare(a.QuestId, b.QuestId) })
 	for _, q := range sorted {
@@ -42,12 +87,12 @@ func Destinations(qs []*quests.Quest) (findings []questloop.Finding, inferred []
 				// A mob list with no declared fallback needs only one of
 				// its mobs to have spawn rooms (owner ruling 16).
 				if len(d.Mobs) > 0 && d.Room == 0 && d.Area == "" && d.Zone == "" &&
-					!slices.ContainsFunc(d.Mobs, func(m int) bool { return len(spawnRoomsOf(m)) > 0 }) {
+					!slices.ContainsFunc(d.Mobs, func(m int) bool { return len(spawnsOf(m)) > 0 }) {
 					findings = append(findings, questloop.Finding{Rule: "walk-destination", QuestId: q.QuestId, Where: where,
 						Msg: fmt.Sprintf("%s has no fallback and no room spawns it; add room, area or zone", mobIdsText(d.Mobs))})
 				}
 			default:
-				if staticInferable(p) {
+				if staticInferable(p, spawnsOf) {
 					inferred = append(inferred, fmt.Sprintf("quest %d step %s", q.QuestId, s.Id))
 				} else {
 					findings = append(findings, questloop.Finding{Rule: "walk-destination", QuestId: q.QuestId, Where: where,
@@ -76,12 +121,12 @@ func mobIdsText(ids []int) string {
 
 // staticInferable reports whether a step's trigger places resolve without a
 // live world: any room, area or zone, or a mob some room spawns.
-func staticInferable(p stepPlaces) bool {
+func staticInferable(p stepPlaces, spawnsOf func(int) []int) bool {
 	if len(p.rooms)+len(p.areas)+len(p.zones) > 0 {
 		return true
 	}
 	for _, m := range p.mobs {
-		if len(spawnRoomsOf(m)) > 0 {
+		if len(spawnsOf(m)) > 0 {
 			return true
 		}
 	}

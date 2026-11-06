@@ -222,7 +222,11 @@ already known, so no presence leaks.
 #### **World Management**
 - **Room editing**: Comprehensive room modification capabilities
 - **Zone management**: Creating and managing game world zones (note: `zone set autoscale` was removed in Phase 21; mob difficulty is now per-mob via `statpool`)
-- **Spawn control**: Managing mob and item spawning
+- **Spawn control**: Managing mob and item spawning. `room set spawninfo
+  clear` and `room copy spawninfo` (`admin.room.dispatcher.go`) first ask
+  `refusesSpawnChange`, which refuses a change that would leave a quest step
+  with no destination (`questengine.SpawnChangeFindings`); boot refuses such
+  a step, so the saved change would stop the next restart.
 
 #### **Player Administration**
 - **Character modification**: Changing player stats, levels, and properties

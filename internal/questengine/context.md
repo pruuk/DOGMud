@@ -58,7 +58,8 @@ what a trigger *does*, you edit this package.
   the step destination resolver that feeds the minimap and the quest log
   (see Destinations below).
 - **guide.go**: `GuideLine`, the one destination line.
-- **destinations_rule.go**: `Destinations`, the static destination rule.
+- **destinations_rule.go**: `Destinations`, the static destination rule, and
+  `SpawnChangeFindings`, its before-and-after check for a live spawn change.
 - **logging.go** — level-gated logging with per-player debug opt-in.
 - **test_helpers.go** — `ResetEngineForTest() func()`.
 - **walkthrough.go**: `Walk`, the completability walkthrough (see Walkthrough).
@@ -300,6 +301,15 @@ resolves to unknown (no block and no trigger place, or a bare mob, or mob
 list, that no room spawns: a list passes when any one of its mobs has spawn
 rooms); `walk-destination-anywhere` is an `anywhere` step whose triggers name
 a place. `inferred` lists each step whose destination is inferred.
+
+**`SpawnChangeFindings(roomId, mobIds)`** is the before-and-after check for a
+spawn list changed on a running server: the `Destinations` findings over the
+loaded quests that giving template room `roomId` a list placing `mobIds` would
+add, judged without saving (the spawn index is not touched). A finding the
+world already had is not returned. The admin `room set spawninfo clear` and
+`room copy spawninfo` refuse on any (`refusesSpawnChange` in
+`usercommands/admin.room.dispatcher.go`), since boot would refuse the saved
+change.
 
 **Cost** (Ryzen 9 5900X, 2026-10-28, `nearestOf` stubbed to answer at once):
 `BenchmarkResolveDestinationMob30` (30 copies, half hidden, the real sight

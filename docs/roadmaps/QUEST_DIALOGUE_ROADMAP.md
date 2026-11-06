@@ -268,7 +268,8 @@ returns only if a phase 7 zone pass needs it, from the design kept in that spec.
   rooms). Areas are defined once and reused across quests.
 - Zone and area targets: the arrow paths to the nearest room of the set; the map highlights
   the set or labels "somewhere in this zone".
-- "Destination unknown": explicit, logged as a warning at boot, listed by the validator.
+- "Destination unknown": explicit, listed by the validator. Logged as a warning at boot until
+  the closing step (2026-11-06), which made it refuse boot like every other finding.
 - GMCP and the web client minimap carry the new target shapes.
 - Areas now exist for the map targets (phase 3b slice 4): `internal/areas` and
   `_datafiles/world/dogmud/areas/`, with `areas.Rooms(key)` for the nearest-room arrow.
@@ -354,7 +355,7 @@ with no backlog line get a check that they meet the requirements page, not a ful
 **Closing step.** Validators become hard boot failures; `room_interact` is deleted; the dash
 guards stop exempting dialogue, quests and conversations.
 
-**Done 2026-11-06** (spec and plan 2026-11-06-quest-arc-closing-step): every loop and destination finding refuses boot and the backlog is gone; room_interact is look_at and search_at; the dash guard reads quests, dialogue and conversations.
+**Done 2026-11-06** (spec and plan 2026-11-06-quest-arc-closing-step): every loop and destination finding refuses boot and the backlog is gone; room_interact is look_at and search_at; the dash guard reads quests, dialogue and conversations. The admin commands that change a spawn list on a running server (`room set spawninfo clear`, `room copy spawninfo`) refuse a change that would add a destination finding (owner, option B).
 
 **Status:** in progress. Pothole Coulee (with the Newcomer Antechamber) is
 done: built across PRs 1 to 4 of
@@ -401,6 +402,16 @@ would be redone after every one. Until then the whole admin web builder is off:
 dispatch, rooms, zones, mobs, items and behaviours as well as quests and dialogue. Content is
 edited in the repo. When an arc changes a data shape the builder writes, note the form that will
 need it here.
+
+**Noted for this phase.**
+- Room spawns (closing step, 2026-11-06). Boot refuses a quest step with no destination, and a
+  step can rely on the rooms that spawn its NPC. The builder's room save (`buildRoomUpdate`,
+  which replaces `SpawnInfo`) and room delete (`buildRoomDelete`) must refuse a change that adds
+  a destination finding, as the admin spawn commands do with
+  `questengine.SpawnChangeFindings`. Room delete drops the room's spawns, so it is the same
+  check with an empty list.
+- The quest editor's save door (`loopVerdict` in `gmcp.Quest.go`) runs `Validate` only; it
+  needs `Destinations` too.
 
 **Goal.** An admin can author to these rules without reading this page, and the builder
 cannot save a malformed quest or dialogue.
