@@ -176,7 +176,9 @@
             box-shadow: 0 0 0 2px var(--cmd-ring-focus);
         }
 
-        /* Comms panel: stack tabs + send input as a column */
+        /* Chat tab: the channel buttons on top, the messages below them
+           filling the rest of the card. There is no typing box here: players
+           chat from the command box (for example "say hello"). */
         #panel-chat .dash-panel-body {
             display: flex;
             flex-direction: column;
@@ -184,24 +186,6 @@
         #comm-output {
             flex: 1 1 auto;
             min-height: 0;
-        }
-        #chat-input {
-            flex: 0 0 auto;
-            margin-top: 5px;
-            padding: 6px 10px;
-            font-size: 14px;
-            border: 1px solid var(--panel-border);
-            background-color: var(--input-bg);
-            color: var(--text-primary);
-            border-radius: 3px;
-            font-family: var(--font-mono);
-            width: 100%;
-            box-sizing: border-box;
-            caret-color: var(--brass-mid);
-        }
-        #chat-input:focus {
-            outline: none;
-            border-color: var(--brass-mid);
         }
 
     </style>
@@ -375,7 +359,6 @@
                 <div id="comm-trade" class="chat-window trade tab-content"></div>
               </div>
             </div>
-            <input type="text" id="chat-input" placeholder="Say to the room…">
           </div>
         </section>
 
@@ -3740,34 +3723,12 @@
     </div>
 
     <script>
-        // on DOM ready — wire comm tab buttons + chat send input
+        // Chat tab buttons (Say, Whisper, Party and the rest): pressing one
+        // shows that channel's messages and clears its unread count. Players
+        // send messages from the command box, not from here.
         document.addEventListener('DOMContentLoaded', () => {
             const buttons   = document.querySelectorAll('.tab-button');
             const panels    = document.querySelectorAll('.tab-content');
-            const chatInput = document.getElementById('chat-input');
-
-            const channelPlaceholders = {
-                'say':       'Say to the room…',
-                'whisper':   'Whisper: <name> <message>…',
-                'party':     'Party chat…',
-                'broadcast': 'Broadcast…',
-                'chat':      'Chat (global)…',
-                'newbie':    'Newbie help…',
-                'trade':     'Trade: buying/selling…'
-            };
-
-            // Return the active comm channel name (e.g. "say", "whisper", …)
-            function activeCommChannel() {
-                var active = document.querySelector('#comm-output .tab-button.active');
-                if (!active) return 'say';
-                // data-tab is "comm-say", "comm-whisper", etc.
-                return active.dataset.tab.replace(/^comm-/, '');
-            }
-
-            function updateChatPlaceholder() {
-                var ch = activeCommChannel();
-                chatInput.placeholder = channelPlaceholders[ch] || (ch + '…');
-            }
 
             buttons.forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -3783,25 +3744,8 @@
                 btn.dataset.unread = 0;
                 btn.innerText = btn.dataset.label;
                 document.getElementById(target).classList.add('active');
-
-                // update send-input placeholder for the newly active channel
-                updateChatPlaceholder();
                 });
             });
-
-            // Send on Enter — read active channel at send time (not captured at setup)
-            chatInput.addEventListener('keydown', function(event) {
-                if (event.key !== 'Enter') return;
-                var text = chatInput.value.trim();
-                if (!text) return;
-                var ch = activeCommChannel();
-                if (SendData(ch + ' ' + text)) {
-                    chatInput.value = '';
-                }
-            });
-
-            // Set initial placeholder (say tab is active by default)
-            updateChatPlaceholder();
         });
 
         // ── Inventory right-click context menu ──────────────────────────────

@@ -156,6 +156,22 @@ for slice B.*
   boxes are not toggles and are unchanged.
   Plan: `plans/2026-11-05-webclient-768-review-fixes.md`.
 
+### Chat and the phone tabs (#768 item 1, Malia 2026-11-06)
+- The Chat tab keeps its text channel buttons and loses its own typing box.
+  Players chat from the command box (`say hello`).
+- On a phone every open tab fits its content, up to half the screen, and
+  stops above the command box, so the game text and the command box stay in
+  view. The Map and Chat tabs keep the full half (the map needs a set space;
+  Chat scrolls to its newest message).
+- On a laptop the command box stays at the bottom of the middle column even
+  when the Game window is popped out (it had jumped to the top of the page).
+- Code is written so a person can maintain it: edit what exists first, and
+  give every change a plain-English comment (Malia).
+- Still to decide: a description of each Chat button (hover on a laptop; a
+  phone needs another way), and whether picking a channel fills the command
+  box with its command. The laptop right column (Chat, Status, Automation in
+  equal thirds) is unchanged.
+
 ## Rules that hold everywhere
 Text 4.5:1 or more, icons and focus 3:1, numbers written beside the colour in
 the CSS; light mode text darker than its surface, dark mode lighter; red only

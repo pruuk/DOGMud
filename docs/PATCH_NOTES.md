@@ -1,5 +1,16 @@
 # DOGMud Patch Notes
 
+## 2026-11-06: Chat and the command box
+
+- Chat no longer has its own typing box. Talk from the command box instead:
+  type `say hello`, or `whisper` and a name and your message. The Chat tab
+  shows what everyone says.
+- On a phone, an open tab is only as tall as what it holds, and never more
+  than half the screen. The command box and some of the game text stay in
+  view, so you can read Chat and reply at the same time.
+- On a laptop, the command box stays at the bottom of the screen, even when
+  you pop the Game window out into its own box.
+
 ## 2026-11-02: A new look for the website and the web client
 
 - The game has its own logo: three moons, the middle one crowned. You will see

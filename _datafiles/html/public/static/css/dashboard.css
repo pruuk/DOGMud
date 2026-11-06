@@ -189,7 +189,10 @@
    feed sideways; static/js/feedscroll.js covers the rest (playtest
    2026-10-17). */
 #panel-feed #terminal .xterm-viewport { overflow-x: hidden; }
-#panel-cmd { flex: 0 0 auto; }
+/* Keeps the command box at the bottom of the middle column, even when the
+   Game window is popped out into its own box or dragged somewhere else.
+   Without this, the command box jumps to the top of the page. */
+#panel-cmd { flex: 0 0 auto; margin-top: auto; }
 #panel-cmd .dash-panel-body { display: flex; padding: 4px; }
 
 /* The command box is the Game window's bottom strip: one frame, no gap, so
@@ -481,6 +484,16 @@
 #dash-drawer {
   --tabbar-h: 60px;   /* bar + its bottom gap */
   --tabname-h: 30px;  /* the name strip, shown while a panel is open */
+  /* The command box's height on a phone (its 48px box and its frame, 58px)
+     plus the 6px gap under it. An open tab stops this far up, so it never
+     covers the command box. */
+  --cmdbox-h: 64px;
+  /* The tallest an open tab may get: half the screen, so the game text
+     above the command box always stays in view. */
+  --drawer-cap: 50vh;
+  --drawer-cap: 50dvh; /* newer phones: half of what is actually visible */
+  /* The strip at the top of an open tab that holds its ✕ close button. */
+  --drawer-head-h: 52px;
 }
 
 #dashboard[data-mode="phone"] {
@@ -512,13 +525,20 @@
   padding-top: var(--tabname-h);
   background: var(--bg-base);
 }
+/* That name strip makes the tab bar taller, so the game moves up by the
+   same amount. Otherwise the strip would sit over the command box. (Not
+   while the keyboard is up: the tab bar is hidden then.) */
+html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"] {
+  padding-bottom: calc(6px + var(--tabbar-h) + var(--tabname-h));
+}
 .gtabs-phone { --gtab-size: 40px; gap: 2px; }
 
 /* The on-screen keyboard is open (viewportfit.js): the command box sits right on
    top of it, so the tab bar steps aside and gives its room back to the game. */
 html.keyboard-open #dash-tabbar { display: none !important; }
 html.keyboard-open #dashboard[data-mode="phone"] { padding-bottom: 6px; }
-html.keyboard-open #dash-drawer { bottom: 0; }
+/* With the keyboard up, an open tab sits just above the command box. */
+html.keyboard-open #dash-drawer { bottom: var(--cmdbox-h); }
 /* A phone on its side with the keyboard up has barely any height left. */
 @media (max-height: 320px) {
   html.keyboard-open #dash-session,
@@ -528,17 +548,21 @@ html.keyboard-open #dash-drawer { bottom: 0; }
    phone layout has no columns or splitters to reset. */
 #dashboard[data-mode="phone"] #btn-reset-layout { display: none; }
 
-/* Slide-up drawer — also appended outside #dashboard */
+/* On a phone, a tab (Map, Chat, Health and the rest) opens as a card that
+   slides up from the bottom of the screen. */
 #dash-drawer {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(var(--tabbar-h) + var(--tabname-h));   /* above the tab-bar and its name strip */
+  /* It sits above the command box, the round tab buttons and the tab's name
+     strip, so the player can still see and use the command box. */
+  bottom: calc(var(--cmdbox-h) + var(--tabbar-h) + var(--tabname-h));
   z-index: 49;
-  height: 62vh;
-  /* Closed: slide fully below the screen (past the bar and name strip) and
-     hide, so its top never peeks out over the command box. */
-  transform: translateY(calc(100% + var(--tabbar-h) + var(--tabname-h)));
+  /* The card is only as tall as what the tab holds, up to half the screen. */
+  max-height: var(--drawer-cap);
+  /* Closed: slide fully below the screen (past the command box, the bar and
+     the name strip) and hide, so its top never peeks out. */
+  transform: translateY(calc(100% + var(--cmdbox-h) + var(--tabbar-h) + var(--tabname-h)));
   visibility: hidden;
   transition: transform 0.2s ease, visibility 0s linear 0.2s;
   background: var(--panel-bg);
@@ -570,18 +594,27 @@ html.keyboard-open #dash-drawer { bottom: 0; }
   line-height: 1;
 }
 
+/* The inside of the card: as tall as the tab's content. If the content is
+   taller than the card allows, it scrolls. */
 .drawer-body {
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
   overflow: auto;
   display: flex;
   flex-direction: column;
 }
 
-/* Panel moved into drawer fills the body */
-.drawer-body .dash-panel {
-  flex: 1 1 0;
+/* Short tabs (Health, Status, Quests and the rest) stay short. */
+#dash-drawer .dash-panel {
+  flex: 0 0 auto;
   min-height: 0;
+}
+/* The Map and Chat tabs always use the card's full height. The map needs
+   a set space to draw in, and Chat scrolls itself to show the newest
+   message, which only works when the card has a set height. */
+#dash-drawer #panel-map,
+#dash-drawer #panel-chat {
+  height: calc(var(--drawer-cap) - var(--drawer-head-h));
 }
 
 /* ------------------------------------------------------------------ */
@@ -1390,8 +1423,6 @@ html.keyboard-open #dash-drawer { bottom: 0; }
 /* Focused quest: the brass marker was 1.99 on the body; umber gold 5.15. */
 :root[data-theme="light"][data-client] .qrow.focus { box-shadow: inset 2px 0 0 #5e4712; }
 :root[data-theme="light"][data-client] .qrow.focus .qdot { color: #5e4712; }
-/* Chat box focus: the brass edge was 2.48 on the box; the umber ring 8.98. */
-:root[data-theme="light"][data-client] #chat-input:focus { border-color: var(--focus-ring); }
 /* Charge meters live on the dark inventory tiles, so they keep a light gold
    (6.34 on the tile); the Light link gold would sink to about 2. */
 :root[data-theme="light"][data-client] .inv-charge-fill { background: #b5a26c; }

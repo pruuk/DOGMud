@@ -191,8 +191,20 @@ check('a phone tap on the game text does not refocus the command box',
     /!isDragging && !selectedText && !\(phoneTouchOnly\(\) && phoneWidth\(\)\)/.test(page), true);
 check("xterm's textarea cannot raise the phone keyboard",
     /ta\.setAttribute\('inputmode', 'none'\)/.test(page) && /window\.addEventListener\('resize', syncTermKeyboard\)/.test(page), true);
-check('the Chat box keeps its keyboard (Malia 2026-11-02)',
-    page.slice(page.indexOf("chatInput.addEventListener('keydown'")).slice(0, 600).indexOf('blur') === -1, true);
+// The Chat tab has no typing box of its own: players chat from the command
+// box (Malia 2026-11-06).
+check('the Chat tab has no typing box', page.indexOf('chat-input') === -1, true);
+
+// On a phone, an open tab must not cover the command box, and on a laptop
+// the command box stays at the bottom even when the Game window is popped out.
+var css = fs.readFileSync(path.join(
+    __dirname, '..', '..', '_datafiles', 'html', 'public', 'static', 'css', 'dashboard.css'
+), 'utf8');
+check('an open phone tab is not a fixed 62% of the screen', /height:\s*62vh/.test(css), false);
+check('an open phone tab stops above the command box',
+    /bottom: calc\(var\(--cmdbox-h\) \+ var\(--tabbar-h\) \+ var\(--tabname-h\)\)/.test(css), true);
+check('the command box stays at the bottom of its column',
+    /#panel-cmd \{ flex: 0 0 auto; margin-top: auto; \}/.test(css), true);
 
 // --- result ----------------------------------------------------------------
 

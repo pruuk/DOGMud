@@ -77,6 +77,8 @@ logging in, or while a game menu or prompt is waiting for an answer.
 ## Decision for Malia
 **Chat box:** decided (Malia, 2026-11-02): it keeps the keyboard open, as
 today. Chat is a back-and-forth; only game commands hide it.
+Later (Malia, 2026-11-06): the Chat box was removed; players chat from the
+command box. See the rework spec, "Chat and the phone tabs".
 
 ## Definition of done
 - Phone, in the game, no menu open: Enter in the command box sends and the
