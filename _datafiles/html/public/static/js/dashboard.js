@@ -577,6 +577,12 @@
       this._drawer.getBoundingClientRect();
       this._drawer.classList.add("open");
 
+      // Moving a tab into the card scrolls it back to the top. For Chat that
+      // would show the oldest messages, so once the card is open, jump back
+      // to the newest one.
+      var chatMessages = panel.querySelector(".chat-window.active");
+      if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+
       this._updateTabbarActive(name);
     },
 
