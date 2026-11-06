@@ -7,30 +7,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// A backlog line for one refs error must not hide a second, different refs
-// error on the same quest: each refs error has its own key.
+// Two different refs errors on one quest have two keys, so fixing one can
+// never be mistaken for fixing the other.
 func TestKeys_RefsErrorsDoNotCollide(t *testing.T) {
 	v := quests.QuestValidators{MobExists: func(id int) bool { return id < 424242 }}
 	fillValidators(&v)
-
-	known := goodWorld()
-	known.Refs = &v
-	known.Quests[0].Triggers[0].Mob = 424242
-	b := Backlog{}
-	for _, f := range Validate(known) {
-		b[f.Key()] = true
-	}
-	require.Len(t, b, 1, "one known refs finding")
 
 	w := goodWorld()
 	w.Refs = &v
 	w.Quests[0].Triggers[0].Mob = 424242
 	w.Quests[0].Rewards.ItemId = 0
 	w.Quests[0].Steps[0].Destination = quests.StepDestination{Mobs: []int{424243}, Room: 5}
-	fresh, known2, _ := Ratchet(Validate(w), b)
-	require.Len(t, known2, 1)
-	require.Len(t, fresh, 1, "the second refs error is fresh, got %v", fresh)
-	require.Equal(t, "refs", fresh[0].Rule)
+	keys := map[string]bool{}
+	n := 0
+	for _, f := range Validate(w) {
+		if f.Rule == "refs" {
+			keys[f.Key()] = true
+			n++
+		}
+	}
+	require.Equal(t, 2, n, "two refs findings")
+	require.Len(t, keys, 2, "each refs error has its own key")
 }
 
 // One trigger that breaks one-action two ways gives two findings.

@@ -1,15 +1,12 @@
 package questworld
 
 import (
-	"errors"
-	"os"
 	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/areas"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/factions"
@@ -20,7 +17,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Validators is quests.QuestValidators over the live registries: the
@@ -316,21 +312,4 @@ func overlayFlagDeclared(q *quests.Quest, next func(key, value string) bool) fun
 		}
 		return false
 	}
-}
-
-// BacklogPath is the shipped backlog's path.
-func BacklogPath() string {
-	return util.FilePath(string(configs.GetFilePathsConfig().DataFiles) + `/quests/loop-backlog.txt`)
-}
-
-// LoadBacklog reads the shipped backlog; a missing file is an empty backlog.
-func LoadBacklog() (questloop.Backlog, error) {
-	data, err := os.ReadFile(BacklogPath())
-	if errors.Is(err, os.ErrNotExist) {
-		return questloop.Backlog{}, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return questloop.ParseBacklog(data)
 }

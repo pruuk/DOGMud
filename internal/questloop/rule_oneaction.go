@@ -7,7 +7,7 @@ import (
 )
 
 // ruleOneAction is spec 5.2's one-action rule (P4). One finding per broken
-// way and reason, so the backlog names each defect: the way's Where takes a
+// way and reason, so each defect has its own key: the way's Where takes a
 // suffix, :none (nothing moves a player onto the step), :reward (a
 // completion reward grants it), :prev (the previous step is not required),
 // :cond (an item, flag or gold condition), :seq (granted inside a sequence)

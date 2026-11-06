@@ -10,11 +10,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/quests"
 )
 
-// Destinations is the static destination rule (#375 phase 4, spec section 5),
-// a walk rule: boot logs its findings as warnings and never refuses; the CI
-// sweep ratchets them against loop-backlog.txt. Secret quests and each
-// quest's final step are skipped. It returns the findings sorted by key, and
-// "quest <id> step <step>" for each step whose destination is inferred.
+// Destinations is the static destination rule (#375 phase 4, spec section 5).
+// Boot and the CI sweep refuse on any of its findings (since the #375
+// closing step). Secret quests and each quest's final step are skipped. It
+// returns the findings sorted by key, and "quest <id> step <step>" for each
+// step whose destination is inferred.
 //
 //	walk-destination           the step resolves to unknown
 //	walk-destination-anywhere  an anywhere step whose triggers name a place
@@ -61,7 +61,7 @@ func Destinations(qs []*quests.Quest) (findings []questloop.Finding, inferred []
 }
 
 // mobIdsText names a destination's mobs for a finding: "mob 94", or
-// "mobs 9316, 9300" for a list. A single id keeps the message the backlog
+// "mobs 9316, 9300" for a list. A single id keeps the message the old backlog
 // already records.
 func mobIdsText(ids []int) string {
 	if len(ids) == 1 {

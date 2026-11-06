@@ -39,10 +39,8 @@ type questDeps struct {
 
 	// loopWorld builds the loop rules' world over the loaded registries with
 	// the given reference checks (buildQuestUpdate passes validators, so they
-	// are built once per save), and backlog returns the shipped loop backlog
-	// (#375 phase 2 editor door). Either nil skips the loop rules.
+	// are built once per save) (#375 phase 2 editor door). Nil skips the loop rules.
 	loopWorld func(v quests.QuestValidators) questloop.World
-	backlog   func() (questloop.Backlog, error)
 }
 
 func realQuestDeps() questDeps {
@@ -58,16 +56,17 @@ func realQuestDeps() questDeps {
 		reindex:    questengine.LoadDataFiles,
 		validators: questworld.Validators(),
 		loopWorld:  questworld.RegistryWith,
-		backlog:    questworld.LoadBacklog,
 	}
 }
 
 // loopVerdict runs the loop rules over the world before and after the edit.
 // It refuses only what the edit adds: a finding in the proposed world that
-// the current world does not have and the backlog does not list. It warns
-// about this quest's other findings (listed, or already there). Findings on
-// other quests that the edit did not cause are not this save's business.
-func loopVerdict(world questloop.World, q quests.Quest, b questloop.Backlog) (refuse, warn []string) {
+// the current world does not have. It warns about this quest's findings
+// that were already there. Boot refuses every finding, so in play the
+// current world has none; the comparison keeps a save from being blamed for
+// another quest's problem. Findings on other quests that the edit did not
+// cause are not this save's business.
+func loopVerdict(world questloop.World, q quests.Quest) (refuse, warn []string) {
 	before := map[string]bool{}
 	for _, f := range questloop.Validate(world) {
 		before[f.Key()] = true
@@ -75,11 +74,9 @@ func loopVerdict(world questloop.World, q quests.Quest, b questloop.Backlog) (re
 	for _, f := range questloop.Validate(questworld.WithQuest(world, q)) {
 		k := f.Key()
 		switch {
-		case b[k] && f.QuestId == q.QuestId:
-			warn = append(warn, "known (loop backlog): "+f.String())
 		case before[k] && f.QuestId == q.QuestId:
-			warn = append(warn, "known (already in the world, not in the loop backlog): "+f.String())
-		case !b[k] && !before[k]:
+			warn = append(warn, "known (already in the world): "+f.String())
+		case !before[k]:
 			refuse = append(refuse, f.String())
 		}
 	}
@@ -245,12 +242,8 @@ func buildQuestUpdate(d questDeps, q quests.Quest) BuildResult {
 	if len(errs) > 0 {
 		return buildErr("quest %d refused:\n%s", q.QuestId, strings.Join(errs, "\n"))
 	}
-	if d.loopWorld != nil && d.backlog != nil {
-		b, err := d.backlog()
-		if err != nil {
-			return buildErr("quest %d refused: cannot read the loop backlog: %s", q.QuestId, err.Error())
-		}
-		refuse, known := loopVerdict(d.loopWorld(d.validators), q, b)
+	if d.loopWorld != nil {
+		refuse, known := loopVerdict(d.loopWorld(d.validators), q)
 		if len(refuse) > 0 {
 			return buildErr("quest %d refused:\n%s", q.QuestId, strings.Join(refuse, "\n"))
 		}

@@ -27,8 +27,8 @@ type World struct {
 	External []ExternalGrant
 }
 
-// Finding is one rule failure. Key (rule, quest, where) is its backlog
-// line; Msg explains it and may be reworded without touching the backlog
+// Finding is one rule failure. Key (rule, quest, where) is its stable
+// identity; Msg explains it and may be reworded without changing the key
 // (except for refs, whose Where carries the refusal text).
 //
 // Where names the thing that fails without positions, so inserting a step
@@ -52,7 +52,7 @@ type Finding struct {
 	Msg     string
 }
 
-// Key is the finding's backlog line: "rule questId where".
+// Key is the finding's stable identity: "rule questId where".
 func (f Finding) Key() string { return fmt.Sprintf("%s %d %s", f.Rule, f.QuestId, f.Where) }
 
 func (f Finding) String() string { return f.Key() + ": " + f.Msg }

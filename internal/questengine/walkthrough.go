@@ -20,7 +20,7 @@ import (
 // dialogue topics, from its offer to its hand-in (spec 7), and reports what
 // cannot be completed: walk-dead-end, walk-no-source, walk-unspawned,
 // walk-no-spell (a spell_landed Way no state on the path holds a spell for).
-// Findings share questloop's shape and backlog. A quest with no offer is skipped: the
+// Findings share questloop's shape and keys. A quest with no offer is skipped: the
 // start rule reports it.
 func Walk(w questloop.World, src questloop.Sources) []questloop.Finding {
 	// Sorted by id, so the engine's trigger order (and so every firing) does

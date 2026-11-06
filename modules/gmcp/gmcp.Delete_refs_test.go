@@ -31,7 +31,7 @@ func TestQuestRefsWithoutRoom_NamesEveryReferencingField(t *testing.T) {
 		q.Steps[1].Destination.Room = 9001
 		q.Rewards.RoomId = 9001
 	})
-	got := questRefsWithoutRoom(w, questloop.Backlog{}, 9001)
+	got := questRefsWithoutRoom(w, 9001)
 	joined := strings.Join(got, "\n")
 	for _, want := range []string{"in_room", "destination room", "rewards roomid"} {
 		if !strings.Contains(joined, want) {
@@ -43,7 +43,7 @@ func TestQuestRefsWithoutRoom_NamesEveryReferencingField(t *testing.T) {
 			t.Errorf("each line must name the quest and the room, got %q", line)
 		}
 	}
-	if other := questRefsWithoutRoom(w, questloop.Backlog{}, 9002); len(other) != 0 {
+	if other := questRefsWithoutRoom(w, 9002); len(other) != 0 {
 		t.Errorf("an unreferenced room must not refuse, got %v", other)
 	}
 }
@@ -54,7 +54,7 @@ func TestQuestRefsWithoutRoom_IgnoresWhatTheWorldAlreadyHas(t *testing.T) {
 	base := *w.Refs
 	base.RoomExists = func(id int) bool { return id != 9001 }
 	w.Refs = &base
-	if got := questRefsWithoutRoom(w, questloop.Backlog{}, 9001); len(got) != 0 {
+	if got := questRefsWithoutRoom(w, 9001); len(got) != 0 {
 		t.Errorf("a room already missing adds nothing, got %v", got)
 	}
 }
@@ -65,7 +65,7 @@ func TestQuestRefsWithoutItem_TriggersActionsAndRewards(t *testing.T) {
 		q.Triggers[0].Actions = append(q.Triggers[0].Actions, quests.ActionDef{GiveItem: 40163})
 		q.Rewards.ItemInfo = "40163:2"
 	})
-	joined := strings.Join(questRefsWithoutItem(w, questloop.Backlog{}, 40163), "\n")
+	joined := strings.Join(questRefsWithoutItem(w, 40163), "\n")
 	for _, want := range []string{"has_item", "give_item", "item_info"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("refusal must name %s, got %q", want, joined)
@@ -89,13 +89,13 @@ func TestQuestRefsWithoutMob_NamesEveryReferencingField(t *testing.T) {
 			quests.ActionDef{SpawnMob: &quests.SpawnDef{Id: 9300}},
 			quests.ActionDef{DeclareBounty: bounty})
 	})
-	joined := strings.Join(questRefsWithoutMob(w, questloop.Backlog{}, 9300), "\n")
+	joined := strings.Join(questRefsWithoutMob(w, 9300), "\n")
 	for _, want := range []string{"destination mob", "mob filter", "npc_say", "speaker", "spawn_mob", "declare_bounty"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("refusal must name %s, got %q", want, joined)
 		}
 	}
-	if other := questRefsWithoutMob(w, questloop.Backlog{}, 9301); len(other) != 0 {
+	if other := questRefsWithoutMob(w, 9301); len(other) != 0 {
 		t.Errorf("an unreferenced mob must not refuse, got %v", other)
 	}
 }
@@ -107,7 +107,7 @@ func TestBuildMobDelete_RefusedWhileAStepDestinationNamesIt(t *testing.T) {
 	fw.specs[9300] = m
 	d := fw.deps()
 	d.references = func(id int) []mobRefEntry {
-		return mobQuestRefEntries(questRefsWithoutMob(w, questloop.Backlog{}, id))
+		return mobQuestRefEntries(questRefsWithoutMob(w, id))
 	}
 	res := buildMobDelete(d, 9300)
 	if res.Ok || len(fw.deleted) != 0 {
