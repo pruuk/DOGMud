@@ -20,7 +20,7 @@ steps:
       Archive, south of the Reading Room. Type look filed survey."
   - id: survey
     destination:
-      mob: 9516  # follow Brennan the Surveyor (schedule gf_brennan) — a fixed room is wrong for part of the day
+      mob: 9516  # follow Brennan the Surveyor (schedule gf_brennan); a fixed room is wrong for part of the day
       room: 6305  # fallback when Brennan the Surveyor is not spawned
     description: "You found Reth's filed survey: a mineral deposit entry,
       strangely empty, from a man who saw something out there and chose

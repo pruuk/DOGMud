@@ -25,7 +25,7 @@ exchanges:
         text: "There's sense in that. Eat something between the quiet, though."
   - lines:
       - speaker: A
-        text: "Back to the wall, corner seat — same spot every time."
+        text: "Back to the wall, corner seat, same spot every time."
       - speaker: B
         text: "Best view of the door."
       - speaker: A

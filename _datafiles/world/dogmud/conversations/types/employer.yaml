@@ -1,7 +1,7 @@
 id: employer
 description: |
   Generic banter between someone and the person who works for or
-  under them — work talk, small instructions, dry approval.
+  under them: work talk, small instructions, dry approval.
 exchanges:
   - lines:
       - speaker: A

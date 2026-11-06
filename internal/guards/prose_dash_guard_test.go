@@ -11,11 +11,8 @@ import (
 
 // House style (dogmud-player-copy): no em dash, no en dash, and no spaced
 // hyphen or spaced double hyphen (" - ", " -- ") standing in for one, in
-// prose a player reads. M6 slice 2 (ledger row 55). Quests, dialogue and
-// conversations are exempt until the quest and dialogue rework arc (#375).
-//
-// Quests, dialogue and conversations are not listed: their dashes wait for
-// the quest and dialogue rework arc (#375).
+// prose a player reads. M6 slice 2 (ledger row 55); quests, dialogue and
+// conversations joined at the #375 closing step.
 var proseDashDirs = []string{
 	"combat-messages",
 	"defense-messages",
@@ -25,6 +22,9 @@ var proseDashDirs = []string{
 	"mobs",
 	"taunt-messages",
 	"spells",
+	"quests",
+	"dialogue",
+	"conversations",
 }
 
 // proseDashFiles are bare player-text files at the world root.
