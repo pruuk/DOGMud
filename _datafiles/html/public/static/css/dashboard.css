@@ -611,6 +611,26 @@ html.keyboard-open #dash-drawer { bottom: var(--cmdbox-h); }
    not land on the other. A slip costs little either way: tap ▾ again to
    unfold, or tap the tab's round button to open it again. */
 #dash-drawer .ph-btns { gap: 16px; align-items: center; }
+/* Next to the ✕, the ▾ is the same 40px square, also when a laptop window
+   is made narrow enough to use the phone layout with a mouse or trackpad. */
+/* It also matches the ✕'s look: the same rounded corners and brass shading
+   (the Settings button style), with its arrow centred. The ▾ character is
+   drawn smaller than ✕, so it gets a bigger font to look the same size. */
+#dash-drawer .dash-panel-head .ph-collapse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  line-height: 1;
+  font-size: 26px;
+  padding-bottom: 5px; /* the ▾ character sits low; this lifts it to the middle */
+  border-radius: 6px;
+  box-shadow: 0 2px 3px color-mix(in srgb, var(--shadow) 50%, transparent),
+              inset 0 1px 1px color-mix(in srgb, var(--brass-glint) 70%, transparent),
+              inset 0 -2px 3px color-mix(in srgb, var(--brass-shade) 55%, transparent);
+}
 
 /* The inside of the card: as tall as the tab's content. If the content is
    taller than the card allows, it scrolls. */
