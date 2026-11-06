@@ -175,3 +175,8 @@ Malia chose the Pachinko reference's bright yellow green, sampled `#70e010`,
 for the "connected" lamp in the session button: a deliberate exception to the
 toned cool ramps, used only as a lamp fill inside a dark umber rim `#3b2a10`
 (the green alone is 1.2 on the brass; the rim 6.09). Not for text.
+
+**2026-11-05:** a second role, the track of a toggle that is on (Malia: red
+must not mean on), with an umber `#3b2a10` knob (8.11 on the green). Toggles
+sit on dark tiles in both modes, where the green is 8.48 to 11.2. Both uses
+read the tokens `--lamp-green` and `--lamp-rim` (`gomud.css`).

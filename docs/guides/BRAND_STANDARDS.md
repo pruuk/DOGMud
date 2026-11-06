@@ -77,8 +77,11 @@ All colours come from the palette spec. The roles that define the brand:
 
 - **Brass** marks anything pressable. Closed or idle: shiny brass with dark
   text. **Open or selected: pressed into dark brass with cream text.** This
-  one rule covers the round tabs, the Chat, Inventory and Automation tabs,
-  and future toggles.
+  one rule covers the round tabs and the Chat, Inventory and Automation tabs.
+- **Toggles** (sliding on/off switches, such as the Automation ones): on is
+  the lit lamp, green `#70e010` with an umber `#3b2a10` rim and knob; off is
+  the dark track with a lighter knob. Red never means on. New entries start
+  on. Check boxes are a different control and keep the brass accent.
 - **Round tabs** (Map, Quests, Health, Inventory, Chat, Status, Automation):
   brass circles on a dark umber bar with a teal rim, one sliding name pill.
 - **Panels:** gold outline on every card, one teal line under every panel

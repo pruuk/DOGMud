@@ -57,6 +57,12 @@
   --status-online: #2f4f1c;   /* "connected" on the vellum session strip */
   --conn-reconnecting: #704714;
   --conn-lost: #8a2828;
+  /* The lit lamp (Malia 2026-11-02, her Pachinko reference): the session
+     button's "connected" circle and every toggle that is on. The green is
+     8.48 to 11.2 on the dark row tile and the editor box; the umber rim is
+     6.09 on the brass and 8.11 on the green. */
+  --lamp-green: #70e010;
+  --lamp-rim: #3b2a10;
   --input-bg: #150f0a;
   /* Command box border, from the brand green ramp. Rest passes 3:1 against
      both the box (3.17) and the vellum strip (3.77); focus is bright inside

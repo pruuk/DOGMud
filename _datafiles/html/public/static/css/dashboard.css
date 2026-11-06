@@ -981,12 +981,14 @@ html.keyboard-open #dash-drawer { bottom: 0; }
   transition: left 0.12s, background 0.12s;
 }
 .auto-tog.on {
-  background: var(--madder);
-  border-color: var(--madder);
+  /* On is the lit lamp, never red (Malia 2026-11-05): green 8.48 to 11.2 on
+     the dark row tile and editor box, umber knob 8.11 on the green. */
+  background: var(--lamp-green);
+  border-color: var(--lamp-rim);
 }
 .auto-tog.on::after {
   left: 16px;
-  background: var(--vellum);
+  background: var(--lamp-rim);
 }
 
 /* Empty / coming-soon message in the list */
@@ -1395,7 +1397,25 @@ html.keyboard-open #dash-drawer { bottom: 0; }
 :root[data-theme="light"][data-client] .inv-charge-fill { background: #b5a26c; }
 /* Automation switch, off: a light knob on the darker track (4.39). */
 :root[data-theme="light"][data-client] .auto-tog::after { background: #e3dcc4; }
-:root[data-theme="light"][data-client] .auto-tog.on::after { background: var(--vellum); }
+/* The toggle tiles stay dark in Light, so on keeps the lamp's umber knob
+   (8.11 on the green); the light knob above would be 1.24 on it. */
+:root[data-theme="light"][data-client] .auto-tog.on::after { background: var(--lamp-rim); }
+/* High contrast mode replaces the fills; keep the knob drawn so its place
+   still tells on from off. */
+@media (forced-colors: active) {
+  .auto-tog::after { forced-color-adjust: none; background: CanvasText; }
+}
+/* Automation rows and the queue bar stay dark tiles, so their text keeps the
+   Dark mode light golds (Malia 2026-11-05); the umber golds were 1.81 to 2.24
+   on them. Name 6.34 to 7.56 on the tile (5.73 hovered), summary 4.54 to
+   5.42 (4.11 hovered, as in Dark mode); queue count 11.51, state 4.86. A
+   queued row turns cream (--chip-alert-bg) and keeps the umber text. */
+:root[data-theme="light"][data-client] .auto-row:not(.pending),
+:root[data-theme="light"][data-client] .auto-qbar {
+  --ink-gold: #b5a26c;
+  --text-secondary: #96885f;
+  --title-gold: #e8d2a0;
+}
 
 /* Session button status circle (Malia 2026-11-02): it replaces the status
    text beside the button. Colour per state is set inline by setSessionState;
@@ -1421,7 +1441,7 @@ html.keyboard-open #dash-drawer { bottom: 0; }
   height: 0.62em;
   margin: 0 0.19em;
   border-radius: 50%;
-  border: 1.5px solid #3b2a10;
+  border: 1.5px solid var(--lamp-rim);
   vertical-align: -0.02em;
   box-sizing: border-box;
 }

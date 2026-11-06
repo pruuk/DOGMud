@@ -148,6 +148,14 @@ for slice B.*
   "Leaving…"); its colour and shape show the status; screen readers and the
   tooltip say the words. Plan: `plans/2026-11-02-webclient-session-status.md`.
 
+### Automation after the #768 review (2026-11-05)
+- Text on the dark Ticks and Triggers rows and the queue bar keeps the Dark
+  mode light golds in Light mode too (Malia; review item 2).
+- On/off toggles: on is the lamp green `#70e010` with an umber rim and knob,
+  off keeps its dark track; new entries start on; red never means on (Malia). Check
+  boxes are not toggles and are unchanged.
+  Plan: `plans/2026-11-05-webclient-768-review-fixes.md`.
+
 ## Rules that hold everywhere
 Text 4.5:1 or more, icons and focus 3:1, numbers written beside the colour in
 the CSS; light mode text darker than its surface, dark mode lighter; red only
