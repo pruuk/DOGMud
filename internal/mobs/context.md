@@ -176,11 +176,9 @@ type Mob struct {
   item drops). A template save (`SaveMobSpec`) keeps the difference
   because the tag is `omitempty` on a pointer.
 - Read it only through `EquippedDropChance()`. It resolves nil to
-  `DefaultItemDropChance`, and a set 0 on a mob that is or was a companion
-  (`IsCharmed()` or `EverCharmed`) also to `DefaultItemDropChance`: a
-  companion may wear its owner's gear, and
-  `hooks.captureBondedCompanionOnDeath` clears the record's gear expecting
-  the corpse to take it.
+  `DefaultItemDropChance`. Companions get no exception (owner ruling
+  2026-11-06): gear lent to a companion that dies is lost by design, and
+  `help companion` says so.
 - `ValidateMobSpec` range-checks the resolved value (0 to 100).
 - Carried items and gold are not gated by it; an item's own `dropchance`
   and `never_drops` still win (`items.Item.ShouldDrop`,

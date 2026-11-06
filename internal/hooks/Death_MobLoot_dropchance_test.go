@@ -83,15 +83,14 @@ func TestDropMobLoot_ItemDropChanceZeroNeverDrops(t *testing.T) {
 	assert.True(t, half > kills*35/100 && half < kills*65/100,
 		"itemdropchance 50 must drop about half the time, got %d of %d", half, kills)
 
-	// A mob that is or was a companion may wear its owner's gear, and the
-	// companion death path clears the record expecting the corpse to take it,
-	// so its authored 0 keeps the old reading: everything worn drops.
+	// No companion exception (owner ruling 2026-11-06): gear lent to a
+	// companion that dies is lost by design, so its authored 0 drops nothing.
 	companion := &mobs.Mob{ItemDropChance: dropChancePtr(0)}
 	companion.Character = characters.Character{EverCharmed: true}
 	companion.Character.Equipment.Head = items.Item{ItemId: 2}
 	room := &rooms.Room{RoomId: 12346, Biome: "default"}
 	dropMobLootAndSetCorpse(companion, room)
-	assert.Len(t, room.Items, 1, "a companion's worn gear must still drop at itemdropchance 0, or its owner's gear is destroyed")
+	assert.Empty(t, room.Items, "a companion at itemdropchance 0 drops nothing it wears: lent gear is lost by design")
 
 	for name, sum := range totals {
 		assert.Equal(t, kills, sum[1], "%s: an item's own dropchance overrides the mob-wide chance", name)

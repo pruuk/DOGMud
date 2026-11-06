@@ -3,7 +3,7 @@ zone: Pothole Coulee
 behavior_archetype: archer
 archetype: fighting
 statpool: 25
-itemdropchance: 0
+itemdropchance: 50
 hostile: true
 maxwander: 1
 groups:

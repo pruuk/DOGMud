@@ -3,7 +3,7 @@ zone: Stillwater Marsh
 behavior_archetype: archer
 archetype: fighting
 statpool: 130
-itemdropchance: 0
+itemdropchance: 35
 hostile: true
 charm_immune: false
 maxwander: 3

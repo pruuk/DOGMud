@@ -212,17 +212,12 @@ const DefaultItemDropChance = 100
 // never, or DefaultItemDropChance when the key is absent (#585). An item's
 // own per-instance dropchance still overrides it (items.Item.ShouldDrop).
 //
-// A mob that is or was a companion keeps the pre-#585 reading of 0 (every
-// worn item drops): what it wears may be gear its owner handed it, and the
-// companion death path (hooks.captureBondedCompanionOnDeath) clears the
-// record's gear on the understanding that the corpse takes it. Without this a
-// bonded companion authored with itemdropchance 0 (Mara Venn, 9800) would
-// destroy its owner's gear on every death.
+// Companions get no exception (owner ruling 2026-11-06): gear handed to a
+// companion that dies is lost by design, a risk of lending it, and the
+// companion help says so. A bonded companion authored with itemdropchance 0
+// (Mara Venn, 9800) keeps none of it.
 func (m *Mob) EquippedDropChance() int {
 	if m.ItemDropChance == nil {
-		return DefaultItemDropChance
-	}
-	if *m.ItemDropChance == 0 && (m.Character.IsCharmed() || m.Character.EverCharmed) {
 		return DefaultItemDropChance
 	}
 	return *m.ItemDropChance
