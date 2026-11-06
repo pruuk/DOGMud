@@ -153,6 +153,13 @@
   background: var(--brass-grad);
   border: 1px solid var(--brass-border);
 }
+/* While a tab is folded, its ▾ arrow turns to point sideways (▸), so the
+   player can see it is folded and tap it again to open it. */
+.dash-panel.collapsed .ph-collapse { transform: rotate(-90deg); }
+/* On touch screens the ▾ and ⧉ buttons grow to a size a finger can hit. */
+@media (pointer: coarse) {
+  .dash-panel-head .ph-btn { width: 40px; height: 40px; line-height: 38px; font-size: 18px; }
+}
 .dash-panel-body { flex: 1 1 auto; min-height: 0; overflow: auto; position: relative; }
 
 /* Feed + command (center stack) */

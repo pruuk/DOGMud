@@ -187,6 +187,12 @@
             flex: 1 1 auto;
             min-height: 0;
         }
+        /* Folded with the ▾ button: hide everything under the Chat title,
+           the channel buttons as well as the messages. (The rule above
+           would otherwise keep the buttons showing.) */
+        #panel-chat.collapsed .dash-panel-body {
+            display: none;
+        }
 
     </style>
 
