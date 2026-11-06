@@ -389,7 +389,8 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 		// sends nothing.
 		if !skipScript && alias == `look` {
 			if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
-				if notifyRoomFeature(user, room, quests.EventLookAt, rest, room.NounNamedBy(rest)) {
+				lookedAt := trimLookFiller(strings.TrimSpace(rest))
+				if notifyRoomFeature(user, room, quests.EventLookAt, lookedAt, room.NounNamedBy(lookedAt)) {
 					return true, nil
 				}
 			}

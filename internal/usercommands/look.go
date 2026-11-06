@@ -24,6 +24,26 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// trimLookFiller drops the filler words that lead what a look names: a
+// preposition ("at", "in", "inside") and then "the". "look in strongbox" must
+// name the strongbox, not the three words "in strongbox", which the noun
+// matcher would otherwise settle for one word of and so read the room noun
+// out from under a container of the same name (#761). The look_at quest
+// event is raised on the same trimmed words (TryCommand), so "look in x" and
+// "look x" fire the same triggers.
+func trimLookFiller(rest string) string {
+	for _, prep := range []string{`at `, `inside `, `in `} {
+		if strings.HasPrefix(strings.ToLower(rest), prep) && len(rest) > len(prep) {
+			rest = rest[len(prep):]
+			break
+		}
+	}
+	if strings.HasPrefix(strings.ToLower(rest), `the `) && len(rest) > len(`the `) {
+		rest = rest[len(`the `):]
+	}
+	return rest
+}
+
 func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	secretLook := flags.Has(events.CmdSecretly)
@@ -31,16 +51,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	isSneaking := user.Character.IsHidden()
 
 	// trim off some fluff
-	if len(rest) > 2 {
-		if rest[0:3] == `at ` {
-			rest = rest[3:]
-		}
-	}
-	if len(rest) > 3 {
-		if rest[0:4] == `the ` {
-			rest = rest[4:]
-		}
-	}
+	rest = trimLookFiller(rest)
 
 	lookAt := rest
 
