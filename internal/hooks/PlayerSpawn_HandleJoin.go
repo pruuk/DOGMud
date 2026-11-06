@@ -269,11 +269,11 @@ func HandleJoin(e events.Event) events.ListenerReturn {
 
 	user.EventLog.Add(`conn`, fmt.Sprintf(`<ansi fg="username">%s</ansi> entered the world`, user.Character.Name))
 
-	// Preserved-bandolier potions are frozen only while online (tickPreserveContents
-	// runs on UserRoundTick), so an offline gap balloons their aging elapsed and they
-	// spoil+eject at login. Re-baseline them to fresh here so the pinnacle bandolier
-	// keeps its no-rot promise.
-	reconcilePreservedPotionRounds(user.Character.PotionItems, user.Character.Equipment.Belt.GetSpec().PreservesContents, util.GetRoundCount())
+	// A preserving bandolier holds its potions at peak by a mark, not a clock
+	// (#794), so an offline gap changes nothing; this applies its rules before
+	// the first round tick (a save from before #794 can hold a throwable or
+	// a detox in a Vitalis Bandolier, which it lets go of now).
+	tickPreserveContents(user, util.GetRoundCount())
 
 	users.RemoveZombieUser(evt.UserId)
 

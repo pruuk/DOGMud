@@ -1,5 +1,7 @@
 package items
 
+import "math"
+
 // AgingPhase represents a potion's lifecycle phase.
 type AgingPhase int
 
@@ -22,6 +24,91 @@ type AgingThresholds struct {
 // HasAging returns true if aging thresholds are configured.
 func (a AgingThresholds) HasAging() bool {
 	return a.SpoilRounds > 0
+}
+
+// PeakPotency is the potency multiplier of the peak phase, a potion's
+// strongest (GetAgingPhase).
+const PeakPotency = 1.30
+
+// Aging is one reading of a carried item's age: its phase, the potency that
+// phase gives, and the elapsed rounds and effective speed
+// GetPhaseDescription reads. Ages is false for an item that does not age (no
+// aging thresholds, or never crafted): it reads fresh at full potency.
+type Aging struct {
+	Phase   AgingPhase
+	Potency float64
+	Elapsed uint64
+	Speed   float64
+	Ages    bool
+}
+
+// Spoiled reports a reading in the spoiled phase.
+func (a Aging) Spoiled() bool {
+	return a.Ages && a.Phase == PhaseSpoiled
+}
+
+// AgingSpeed is this item's effective aging speed: its own bottle, else its
+// spec's, slowed by its maker's skill (CalcEffectiveAgingSpeed).
+func (i *Item) AgingSpeed() float64 {
+	bottle := i.BottleMultiplier
+	if bottle <= 0 {
+		bottle = i.GetSpec().BottleAgingMultiplier
+	}
+	return CalcEffectiveAgingSpeed(bottle, i.CraftSkill)
+}
+
+// AgingAt reads this item's age at round now, wherever it lies. Every reader
+// of a potion's or a food's age asks this (or Character.PotionAging, which
+// answers for the bandolier that holds it), so the rules live in one place.
+//
+// A Preserved item is spoiled. Preserved marks a potion while a preserving
+// bandolier holds it (the Vitalis Bandolier, #794), and the bandolier's
+// owner reads it at peak through Character.PotionAging instead. Anywhere
+// else the potion has left the bandolier, and leaving it rots the potion at
+// once (owner ruling 2026-11-06), whether or not its kind otherwise ages.
+func (i *Item) AgingAt(now uint64) Aging {
+	if i.Preserved {
+		return Aging{Phase: PhaseSpoiled, Potency: 0, Speed: 1.0, Ages: true}
+	}
+	spec := i.GetSpec()
+	if !spec.Aging.HasAging() || i.CraftedRound == 0 {
+		return Aging{Phase: PhaseFresh, Potency: 1.0, Speed: 1.0}
+	}
+	var elapsed uint64
+	if now >= i.CraftedRound {
+		elapsed = now - i.CraftedRound
+	}
+	speed := i.AgingSpeed()
+	phase, potency := GetAgingPhase(elapsed, spec.Aging, speed)
+	return Aging{Phase: phase, Potency: potency, Elapsed: elapsed, Speed: speed, Ages: true}
+}
+
+// PeakAging is the reading a preserving bandolier holds a slotted potion at:
+// peak potency, whether or not the potion's kind ages (a shop-bought potion
+// that never ages counts as peak while it is held, owner ruling 2026-11-06).
+// Elapsed is the first round of the peak window, so a description reads
+// "plenty of time left".
+func (i *Item) PeakAging() Aging {
+	speed := i.AgingSpeed()
+	if speed <= 0 {
+		speed = 1.0
+	}
+	var elapsed uint64
+	if th := i.GetSpec().Aging; th.HasAging() {
+		elapsed = uint64(math.Ceil(float64(th.PeakRounds) / speed))
+	}
+	return Aging{Phase: PhasePeak, Potency: PeakPotency, Elapsed: elapsed, Speed: speed, Ages: true}
+}
+
+// PotionDurationMult is the multiplier a potion applies its conditions at:
+// its aging potency, raised by its maker's skill. The drink path and the
+// ambient bandolier both read it, so a held potion and a drunk one agree.
+func PotionDurationMult(potency float64, craftSkill int) float64 {
+	mult := potency
+	if craftSkill > 0 {
+		mult *= 1.0 + float64(craftSkill)/100.0
+	}
+	return mult
 }
 
 // GetAgingPhase returns the current phase and potency multiplier
@@ -51,11 +138,11 @@ func GetAgingPhase(elapsedRounds uint64, thresholds AgingThresholds, effectiveSp
 	case elapsed < peak:
 		return PhaseFermented, 1.15
 	case elapsed < decay:
-		return PhasePeak, 1.30
+		return PhasePeak, PeakPotency
 	case elapsed < spoil:
 		// Linear decline from 1.30 to 0.5
 		progress := (elapsed - decay) / (spoil - decay)
-		return PhaseDeclining, 1.30 - (0.80 * progress)
+		return PhaseDeclining, PeakPotency - (0.80 * progress)
 	default:
 		return PhaseSpoiled, 0.0
 	}

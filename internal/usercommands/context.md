@@ -41,6 +41,14 @@ The `internal/usercommands` package implements the complete command system for p
   mobs alike. Do not add a rule here:
   `internal/guards/drink_wrapper_guard_test.go` fails if this file or
   `internal/mobcommands/quaff.go` applies potion rules itself.
+- **Potion age readers** (#794): `inventory`, `look`, `throw` read a carried
+  potion's age through `Character.PotionAging` (a preserving bandolier's
+  potion reads at peak); `salvage` and `shops.isPotionDeclining` read
+  `items.Item.AgingAt`, since the potion leaves the bandolier (a preserved
+  one has rotted). `sort` names each potion the Vitalis Bandolier refuses
+  (`bandolierRefusalLine`); `get ... from bandolier`, `remove` and `equip`
+  name each potion that sours as it leaves one (`bandolierRotLine`, both in
+  `sort.go`).
 - **Eat and drink** (`eat.go`, `drink.go`, #375 phase 7): one food command, two
   words. Both are wrappers over `actions.ConsumeFood`, which holds the lookup
   order and every food rule for players and mobs alike; the same guard fails if

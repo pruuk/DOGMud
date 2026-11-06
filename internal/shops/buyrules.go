@@ -143,20 +143,10 @@ func pickReason(spec *items.ItemSpec) string {
 // isPotionDeclining reports whether a potion's aging phase is Declining
 // or Spoiled — those should never be bought (potions whose magic has
 // faded or gone toxic).
+//
+// AgingAt reads the item where it lies: a potion sold out of a preserving
+// bandolier has left it, and has rotted (#794).
 func isPotionDeclining(item items.Item, spec *items.ItemSpec) bool {
-	if !spec.Aging.HasAging() || item.CraftedRound == 0 {
-		return false
-	}
-	currentRound := util.GetRoundCount()
-	var elapsed uint64
-	if currentRound >= item.CraftedRound {
-		elapsed = currentRound - item.CraftedRound
-	}
-	bottleMult := item.BottleMultiplier
-	if bottleMult <= 0 {
-		bottleMult = spec.BottleAgingMultiplier
-	}
-	effectiveSpeed := items.CalcEffectiveAgingSpeed(bottleMult, item.CraftSkill)
-	phase, _ := items.GetAgingPhase(elapsed, spec.Aging, effectiveSpeed)
-	return phase == items.PhaseDeclining || phase == items.PhaseSpoiled
+	aging := item.AgingAt(util.GetRoundCount())
+	return aging.Ages && (aging.Phase == items.PhaseDeclining || aging.Phase == items.PhaseSpoiled)
 }

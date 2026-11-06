@@ -319,6 +319,30 @@ sent; `progression_notifier_guard_test.go` asserts the boot registration and
   subtracted a displaced item a second time and could strip a condition the new
   item still granted.
 
+### The Vitalis Bandolier (`bandolier.go`, #794)
+
+Owner ruling 2026-11-06. A `preserves_contents` belt holds each potion at
+peak; one taken out rots at once. An `ambient_potions` belt takes only
+helpful potions.
+
+- `slotPotion` (from `StoreItem` and `SortPotionItems`) marks a potion
+  `items.Item.Preserved` when the belt preserves. `PotionAging(i, now)` reads
+  a held one at peak (`Item.PeakAging`), else `Item.AgingAt`, which reads a
+  Preserved potion as spoiled. So every removal path rots the potion with no
+  hook of its own.
+- `AmbientBandolierRefuses(i, now)`: an ambient belt refuses a kind
+  `ItemSpec.AmbientBeneficial` rejects, or a spoiled potion. `StoreItem` routes
+  a refused item to the backpack; `SortPotionItems` returns `(moved, refused)`.
+- `PreserveBandolier(now)` (pinnacle tick and login): lets go of anything an
+  ambient belt would refuse that is not Preserved, to the backpack, and marks
+  the rest. Returns what it let go.
+- `spillPreservedOnBeltSwap(old, new)` (from `wear`, after its reverts,
+  like `SortComponentItems`, because it writes outside `c.Equipment`): a belt
+  swap away from a preserving belt spills its potions to the backpack, as
+  `RemoveFromBody` does; a swap onto one spills any Preserved potion so it
+  cannot read as held. `BeltChangeRots()` and `RotsOnRemoval(i)` let the
+  remove, equip and get commands name the potions that sour.
+
 ### Slot choice (`wear_slot.go`, sight and gates parity 5a)
 
 `Wear` is now `wear(i, place)` in `worn.go`: the shared gates (type, unrecognised item; `MinStrength`; `HandsRequired > 2`; the U7b reservation snapshot/revert; the curse pass on whatever `place` displaced) wrapped around a `place` function. `Wear(i)` passes `wearChosen(i, 0)` (hands) or `wearArmorSlot(i, spec)` (everything else); `WearInArm(i, arm)` passes `wearChosen(i, arm)` for a named arm 1 to 6 (`equip X armN`), so both share every gate and cannot drift. `wearChosen` calls `ChooseWornSlot(i, arm)` and applies the returned choice.

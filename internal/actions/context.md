@@ -153,10 +153,15 @@ shapes tier reads "a figure", one who sees nothing reads nothing, and a player
 drinker is excluded from their own line (`drink_room_line_sight_test.go`).
 `drink_parity_test.go` holds the player and mob parity table.
 
-`IsDetoxItem(itemId)` names the two detoxes (Ysolde's Purge, the Purging
-Draught). `bypassesToxicityGate` reads it, and so does the ambient bandolier
-(`hooks.desiredAmbientConditions`), which never holds a detox's condition on
-a wearer only carrying it (#794).
+`items.IsDetox(itemId)` names the two detoxes (Ysolde's Purge, the Purging
+Draught; `ysoldesPurgeItemId` and `purgingDraughtItemId` alias the items
+constants). `bypassesToxicityGate` reads it, and so does the Vitalis
+Bandolier's refusal (`items.ItemSpec.AmbientBeneficial`, #794).
+
+`Quaff` reads a potion's age through `Character.PotionAging` (#794): a
+preserving bandolier's potion drinks at peak, and a potion that left one has
+rotted and drinks as spoiled, whatever its kind. The duration multiplier is
+`items.PotionDurationMult`.
 
 `Quaff` no longer snapshots a `tick_pool` condition's per-round amount (tick
 amount at apply, 2026-09-28): the old `ComputeTickAmount(...)` /

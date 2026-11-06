@@ -50,6 +50,7 @@ type Item struct {
 	CraftSkill       int            `yaml:"craft_skill,omitempty"`       // Crafter's skill level at craft time
 	BottleMultiplier float64        `yaml:"bottle_multiplier,omitempty"` // Aging speed from the bottle used during crafting
 	MakerName        string         `yaml:"maker_name,omitempty"`        // Cosmetic crafter attribution (skill 30+)
+	Preserved        bool           `yaml:"preserved,omitempty"`         // Held by a preserving bandolier; anywhere else it has rotted (Item.AgingAt)
 	Spec             *ItemSpec      `yaml:"overrides,omitempty"`
 	Affixed          bool           `yaml:"affixed,omitempty"`         // Instance-loot affix-scaled item (sellable + value-scaled; distinct from enchanted)
 	Uncursed         bool           `yaml:"uncursed,omitempty"`        // Is this item uncursed?

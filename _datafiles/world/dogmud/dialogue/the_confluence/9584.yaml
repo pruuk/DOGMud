@@ -39,8 +39,10 @@ topics:
   kind: sale
   label: Secret of the Vitalis Bandolier
   playerLine: Will you teach me the Vitalis Bandolier?
-  text: The Vitalis Bandolier. A belt that keeps its own contents fresh and feeds
-    them to you without your hand ever leaving the fight. Alchemy work, mostly, with
+  text: The Vitalis Bandolier. A belt that holds its potions at their very best and
+    feeds them to you without your hand ever leaving the fight. It takes only what
+    strengthens you, and a potion you pull back out of it sours on the spot, so
+    choose what you slot. Alchemy work, mostly, with
     a housing under it that has to hold. 17,500 gold, all of it up front. Pay, and I
     teach you. Listen closely. I say it once.
   hints: Accept to pay Veyra's price and learn the recipes. Then gather the

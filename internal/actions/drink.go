@@ -62,7 +62,7 @@ const bloomWaferItemId = 40108
 // step-down. It also bypasses the toxicity pre-check: addicts presenting
 // for detox are expected to already have elevated toxicity, and the flood is
 // the mechanism, not a mistake.
-const ysoldesPurgeItemId = 40109
+const ysoldesPurgeItemId = items.YsoldesPurgeItemId
 
 // bloomWithdrawalConditionId is Bloom Withdrawal (condition 92), which runs while
 // an addict abstains and ends when the addiction reaches zero.
@@ -82,7 +82,7 @@ func LandBloomClean(actor Actor) {
 
 // purgingDraughtItemId is the item ID for the Purging Draught (30052), the
 // other detox besides Ysolde's Purge.
-const purgingDraughtItemId = 30052
+const purgingDraughtItemId = items.PurgingDraughtItemId
 
 // The original potion-effect conditions occupy a contiguous id block. It
 // stays as the floor of what a purge strips (so a test binary with no items
@@ -108,17 +108,7 @@ const (
 // costs more than a fresh character's entire tolerance, gating it makes the
 // item unusable outright rather than merely awkward.
 func bypassesToxicityGate(itemId int) bool {
-	return IsDetoxItem(itemId)
-}
-
-// IsDetoxItem reports whether an item is one of the two detoxes, Ysolde's
-// Purge and the Purging Draught. A detox's own condition is the price of a
-// cure that only the act of drinking pays out (the purge's addiction
-// step-down, the draught's strip of potion effects), so an ambient
-// bandolier never holds it on a wearer who is only carrying the cup
-// (hooks.desiredAmbientConditions, #794).
-func IsDetoxItem(itemId int) bool {
-	return itemId == ysoldesPurgeItemId || itemId == purgingDraughtItemId
+	return items.IsDetox(itemId)
 }
 
 // purgeableConditionIds is what a purge strips: the original block plus every
@@ -265,20 +255,10 @@ func Quaff(actor DrinkActor, rest string) DrinkResult {
 		return DrinkResult{Refusal: DrinkRefuseNotDrinkable, ItemId: matchItem.ItemId}
 	}
 
-	// Compute aging phase if the potion has aging data
-	var phase items.AgingPhase
-	var potencyMult float64 = 1.0
-	hasAging := itemSpec.Aging.HasAging() && matchItem.CraftedRound > 0
-
-	if hasAging {
-		elapsed := util.GetRoundCount() - matchItem.CraftedRound
-		bottleMult := matchItem.BottleMultiplier
-		if bottleMult <= 0 {
-			bottleMult = itemSpec.BottleAgingMultiplier
-		}
-		effSpeed := items.CalcEffectiveAgingSpeed(bottleMult, matchItem.CraftSkill)
-		phase, potencyMult = items.GetAgingPhase(elapsed, itemSpec.Aging, effSpeed)
-	}
+	// The potion's age: a preserving bandolier holds its potions at peak, and
+	// one taken out of it has rotted (Character.PotionAging, #794).
+	aging := char.PotionAging(matchItem, util.GetRoundCount())
+	phase, potencyMult, hasAging := aging.Phase, aging.Potency, aging.Ages
 
 	// Handle spoiled potions
 	if hasAging && phase == items.PhaseSpoiled {
@@ -390,10 +370,7 @@ func Quaff(actor DrinkActor, rest string) DrinkResult {
 
 	// Calculate final duration multiplier:
 	// potencyMult (from aging phase) * craftSkill scaling
-	durationMult := potencyMult
-	if matchItem.CraftSkill > 0 {
-		durationMult *= 1.0 + float64(matchItem.CraftSkill)/100.0
-	}
+	durationMult := items.PotionDurationMult(potencyMult, matchItem.CraftSkill)
 
 	// Apply conditions with scaled duration. Scaled and unscaled both go through the
 	// actor, so Condition_ApplyConditions runs and the drinker reads the condition's start line;

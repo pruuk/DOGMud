@@ -30,19 +30,7 @@ func checkSpoiledGrenades(user *users.UserRecord, room *rooms.Room) {
 
 	for _, item := range user.Character.Items {
 		spec := item.GetSpec()
-		if spec.Subtype != items.Throwable || !spec.Aging.HasAging() || item.CraftedRound == 0 {
-			remaining = append(remaining, item)
-			continue
-		}
-
-		var elapsed uint64
-		if currentRound >= item.CraftedRound {
-			elapsed = currentRound - item.CraftedRound
-		}
-		effSpeed := items.CalcEffectiveAgingSpeed(item.BottleMultiplier, item.CraftSkill)
-		phase, _ := items.GetAgingPhase(elapsed, spec.Aging, effSpeed)
-
-		if phase != items.PhaseSpoiled {
+		if spec.Subtype != items.Throwable || !item.AgingAt(currentRound).Spoiled() {
 			remaining = append(remaining, item)
 			continue
 		}
@@ -224,18 +212,12 @@ func Inventory(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	alchSkill := user.Character.GetSkillLevel(skills.Alchemy)
 
 	isSpoiledItem := func(itm items.Item) bool {
-		iSpec := itm.GetSpec()
-		if alchSkill < 6 || !iSpec.Aging.HasAging() || itm.CraftedRound == 0 {
+		if alchSkill < 6 {
 			return false
 		}
-		elapsed := util.GetRoundCount() - itm.CraftedRound
-		bMult := itm.BottleMultiplier
-		if bMult <= 0 {
-			bMult = iSpec.BottleAgingMultiplier
-		}
-		effSpeed := items.CalcEffectiveAgingSpeed(bMult, itm.CraftSkill)
-		phase, _ := items.GetAgingPhase(elapsed, iSpec.Aging, effSpeed)
-		return phase == items.PhaseSpoiled
+		// PotionAging: a preserving bandolier's potion reads at peak, one
+		// that has left it reads spoiled (#794).
+		return user.Character.PotionAging(itm, util.GetRoundCount()).Spoiled()
 	}
 
 	for _, item := range itemList {

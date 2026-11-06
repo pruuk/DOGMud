@@ -569,6 +569,16 @@ func (c *Character) wear(i items.Item, place func(items.Item, items.ItemSpec) ([
 	if spec.Type == items.ComponentBag {
 		c.SortComponentItems()
 	}
+	if spec.Type == items.Belt {
+		// After the reverts, as SortComponentItems: the spill writes outside
+		// c.Equipment, which the revert does not restore (#794).
+		for _, old := range returnItems {
+			if old.GetSpec().Type == items.Belt || old.ItemId == 0 {
+				c.spillPreservedOnBeltSwap(old, i)
+				break
+			}
+		}
+	}
 	if spec.Type != items.Weapon && spec.Type != items.Offhand {
 		// Preserved from the pre-U7b shape: permanent conditions are reapplied on the
 		// armour path only (wearChosen does its own), and only on success.

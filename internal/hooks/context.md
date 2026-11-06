@@ -2741,14 +2741,31 @@ key `pinnacle_proc_cd_*` is inert in old saves.
 items, five events, hits, misses, cooldown windows and a probe draw each
 round); `TestItemProcParity` holds the tree path to it.
 
-**Ambient bandolier (`tickAmbientPotions`, `pinnacle_tick.go`).** An
-`ambient_potions` belt (the Vitalis Bandolier) holds the conditions in
-`desiredAmbientConditions` on its wearer as permanent records. That set skips
-two kinds of slotted item (#794): a throwable (its conditions land on the
-target) and a detox (`actions.IsDetoxItem`: Ysolde's Purge, the Purging
-Draught), whose condition is the price of a cure only drinking pays out.
-Both still slot, ready to throw or drink. `pinnacle_ambient_harmful_test.go`
-holds it.
+**Vitalis Bandolier (`pinnacle_tick.go`, #794, owner ruling 2026-11-06).**
+The rules live in `internal/characters/bandolier.go` and
+`docs/schemas/pinnacle-items.md` section 3. Here:
+
+- `tickPreserveContents(user, now)` runs `Character.PreserveBandolier` every
+  round and once at login (`HandleJoin`, replacing the old
+  `reconcilePreservedPotionRounds`, which reset a held potion to fresh). It
+  tells the wearer about anything the belt lets go of. Nothing touches
+  `CraftedRound`; the old 1:1 advance is gone.
+- `desiredAmbientConditions(c, now)` maps each held condition to the
+  magnitude it is held at: peak (`Character.PotionAging` potency through
+  `items.PotionDurationMult` and `items.PotionMagnitudeApplication`), so a
+  Pitsense Tincture gives its peak infravision reach. It skips any kind
+  `ItemSpec.AmbientBeneficial` rejects (a throwable, a detox), as a backstop
+  to the refusal at `StoreItem`.
+- `holdAmbient(c, id, magnitude)` keeps a permanent record at that
+  magnitude; the contents-change branch now holds kept conditions too, so a
+  timed record a drink of the same condition left does not show a
+  countdown for that round. `releaseAmbient` removes only the bandolier's
+  permanent record: a drink's own timed record runs its course.
+- `NewRound_AutoHeal` asks `Character.PotionAging`, so a preserving
+  bandolier never ejects its potions as spoiled.
+
+Tests: `pinnacle_ambient_harmful_test.go`, `pinnacle_ambient_peak_test.go`,
+and `TestPreservedPotionReadsPeakAfterAnOfflineGap`.
 
 ## Casters, start lines and DoT credit (messaging M6 slice 1)
 
