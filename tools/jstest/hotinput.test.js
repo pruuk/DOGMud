@@ -205,6 +205,12 @@ check('an open phone tab stops above the command box',
     /bottom: calc\(var\(--cmdbox-h\) \+ var\(--tabbar-h\) \+ var\(--tabname-h\)\)/.test(css), true);
 check('the command box stays at the bottom of its column',
     /#panel-cmd \{ flex: 0 0 auto; margin-top: auto; \}/.test(css), true);
+// The ▾ button folds every tab: the fold must beat each tab's own rules
+// (Map, Chat and Automation each had one that kept them open).
+check('a folded tab hides its insides on every tab',
+    /\.dash-panel\.collapsed \.dash-panel-body \{ display: none !important; \}/.test(css), true);
+check('a folded tab drops its own height',
+    /min-height: 0 !important;\s*height: auto !important;/.test(css), true);
 
 // --- result ----------------------------------------------------------------
 
