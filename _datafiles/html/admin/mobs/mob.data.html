@@ -31,7 +31,8 @@
         <div class="form-group col-sm">
             <label for="dropchance">Drop Chance</label>
             <select class="form-control form-control-sm" name="dropchance" id="dropchance" aria-describedby="dropchance-help"  rows="10">
-                {{$mobDropChance := .mobInfo.ItemDropChance}}
+                {{$mobDropChance := .mobDropChance}}
+                <option value="" {{if lt $mobDropChance 0}}SELECTED{{end}}>default (every worn item drops)</option>
                 {{range $index, $percent := .dropChances}}
                     <option value="{{ $percent }}" {{if eq $percent $mobDropChance}}SELECTED{{end}}>{{ $percent }}%</option>
                 {{end}}

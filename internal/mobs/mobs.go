@@ -79,14 +79,19 @@ type RelationshipYAMLEntry struct {
 }
 
 type Mob struct {
-	MobId          MobId
-	Zone           string `yaml:"zone,omitempty"`
-	StatPool       int    `yaml:"statpool,omitempty"` // Stat points randomly distributed across stats on spawn
-	ItemDropChance int    // chance in 100
-	LootPool       []int  `yaml:"loot_pool,omitempty"`     // Item IDs for instance loot generation
-	ActivityLevel  int    `yaml:"activitylevel,omitempty"` // 1-100%
-	InstanceId     int    `yaml:"-"`
-	HomeRoomId     int    `yaml:"-"`
+	MobId    MobId
+	Zone     string `yaml:"zone,omitempty"`
+	StatPool int    `yaml:"statpool,omitempty"` // Stat points randomly distributed across stats on spawn
+	// ItemDropChance is the percent chance (0-100) that each equipped item
+	// drops on death (#585). nil (key absent) is DefaultItemDropChance and an
+	// explicit 0 is never; a pointer so the two differ. Read it through
+	// EquippedDropChance. Spawned instances share the template's pointer
+	// (mob := *m), which is safe only because nothing writes through it.
+	ItemDropChance *int  `yaml:"itemdropchance,omitempty"`
+	LootPool       []int `yaml:"loot_pool,omitempty"`     // Item IDs for instance loot generation
+	ActivityLevel  int   `yaml:"activitylevel,omitempty"` // 1-100%
+	InstanceId     int   `yaml:"-"`
+	HomeRoomId     int   `yaml:"-"`
 	// LegacyHostile is the backward-compat YAML field. Loaders read `hostile:`
 	// and copy to AutoAggro in Validate(). New YAML should use `auto_aggro: true`.
 	// MUST stay exported: yaml unmarshal silently skips unexported fields — the
@@ -196,6 +201,31 @@ func MobInstanceExists(instanceId int) bool {
 // without calling Validate() continue to work correctly.
 func (m *Mob) IsNonCombatant() bool {
 	return m.Character.NonCombatant || m.NonCombatant
+}
+
+// DefaultItemDropChance is the equipped-item drop chance of a mob whose
+// itemdropchance key is absent: every worn item drops (#585).
+const DefaultItemDropChance = 100
+
+// EquippedDropChance is the percent chance (0-100) that each equipped item
+// drops when this mob dies: the authored itemdropchance, where 0 means
+// never, or DefaultItemDropChance when the key is absent (#585). An item's
+// own per-instance dropchance still overrides it (items.Item.ShouldDrop).
+//
+// A mob that is or was a companion keeps the pre-#585 reading of 0 (every
+// worn item drops): what it wears may be gear its owner handed it, and the
+// companion death path (hooks.captureBondedCompanionOnDeath) clears the
+// record's gear on the understanding that the corpse takes it. Without this a
+// bonded companion authored with itemdropchance 0 (Mara Venn, 9800) would
+// destroy its owner's gear on every death.
+func (m *Mob) EquippedDropChance() int {
+	if m.ItemDropChance == nil {
+		return DefaultItemDropChance
+	}
+	if *m.ItemDropChance == 0 && (m.Character.IsCharmed() || m.Character.EverCharmed) {
+		return DefaultItemDropChance
+	}
+	return *m.ItemDropChance
 }
 
 // IsGuardMob reports whether a mob's groups include the law-enforcement

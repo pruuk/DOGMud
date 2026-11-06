@@ -42,7 +42,7 @@ func TestDropMobLoot_GoesIntoCorpse(t *testing.T) {
 	m.Character = characters.Character{}
 	m.Character.Items = []items.Item{{ItemId: 3}}
 	m.Character.Gold = 42
-	m.ItemDropChance = 100
+	m.ItemDropChance = dropChancePtr(100)
 
 	room := &rooms.Room{RoomId: 12345, Biome: "default"}
 
@@ -85,7 +85,7 @@ func TestDropMobLootAndSetCorpse_NeverDropsSkipsEquippedItem(t *testing.T) {
 	m.Character.Equipment.Body = items.Item{ItemId: 1}
 	m.Character.Equipment.Head = items.Item{ItemId: 2}
 	m.Character.Items = []items.Item{{ItemId: 3}}
-	m.ItemDropChance = 100
+	m.ItemDropChance = dropChancePtr(100)
 
 	room := &rooms.Room{RoomId: 12345, Biome: "default"}
 
@@ -120,7 +120,7 @@ func TestDropMobLootAndSetCorpse_NeverDropsSkipsCarriedItem(t *testing.T) {
 	m := &mobs.Mob{}
 	m.Character = characters.Character{}
 	m.Character.Items = []items.Item{{ItemId: 1}, {ItemId: 3}}
-	m.ItemDropChance = 100
+	m.ItemDropChance = dropChancePtr(100)
 
 	room := &rooms.Room{RoomId: 12345, Biome: "default"}
 
