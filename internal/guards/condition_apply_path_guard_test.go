@@ -142,7 +142,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/hooks/manifester_companions.go|40":     "the holder is a MOB (a summoned companion), not a player",
 
 	// ── secret conditions: silence is the authored intent ───────────────────
-	"internal/hooks/Life_Cascades.go|135": "condition 81 Respawn Grace is secret:true, so StartUserNotice is empty by design and the event would narrate nothing anyway",
+	"internal/hooks/Life_Cascades.go|138": "condition 81 Respawn Grace is secret:true, so StartUserNotice is empty by design and the event would narrate nothing anyway; the character door, for an exact RespawnGraceRounds trigger count (#589)",
 
 	// ── the event path cannot express what the call needs ───────────────────
 	// (Awareness_Cascades re-keyed messaging M6 slice 4, when the combat
