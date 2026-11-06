@@ -13,7 +13,6 @@ groups:
   - gossiper
 knows_facts:
   - roads-caravans-guarded
-  - veyra-sells-secrets
 relationships:
   - to: 357
     type: employer

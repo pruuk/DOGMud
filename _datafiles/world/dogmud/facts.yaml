@@ -216,7 +216,7 @@ facts:
       declared_round: 0
       tags:
         - veyra-line
-        - hint
+        - common
       status: active
     - id: veyra-blackrazor
       description: the Blackrazor can still be learned, from a sharp-tongued woman with a workshop down at the Confluence.
@@ -224,7 +224,7 @@ facts:
       declared_round: 0
       tags:
         - veyra-line
-        - hint
+        - common
       status: active
     - id: veyra-skilled-only
       description: Veyra at the Confluence will not teach a beginner, but she will sell to anyone who already knows their trade, and she is not cheap.
@@ -232,5 +232,5 @@ facts:
       declared_round: 0
       tags:
         - veyra-line
-        - hint
+        - common
       status: active

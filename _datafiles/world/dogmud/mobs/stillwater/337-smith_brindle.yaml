@@ -15,14 +15,11 @@ groups:
   - blacksmith
   - stillwater_citizens
   - shopkeepers
-  - gossiper
 relationships:
   - to: 343
     type: friend
 knows_facts:
   - stillwater-voss-death
-  - veyra-blackrazor
-  - veyra-skilled-only
 idlecommands:
   - 'emote works the bellows with steady, metronomic pulls, building the
     forge heat'

@@ -2797,6 +2797,11 @@ death and sets `DeathQueued`, so no tick reaches them.
   turns it off. A fact tagged `hint` (`facts.HintTag`) has its own timer,
   `GossipHintIntervalRounds` (`dueGossipHint`): spoken only with a player in the
   room, in place of that tick's gossip, and still through the ambient gate.
+  A fact tagged `common` (`facts.CommonTag`) is common talk: `gossipFactPick`
+  offers it to every gossiper's ordinary gossip as one slot among the mob's
+  own known facts (so a mob that knows k facts tells it 1/(k+1) of its fact
+  gossip), with no `knows_facts` entry, and never on the hint timer.
+  `gossip_common_test.go` pins it.
 - `NewRound_RoomIdle.go`: `roomIdleChancePer10k` (`RoomIdleChancePct`,
   room -1 four times, zone `ambientmultiplier`) and `sendRoomIdleLine`
   (budget, and a one-line room shows its line once per visit).
