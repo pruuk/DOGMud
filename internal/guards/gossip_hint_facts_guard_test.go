@@ -23,6 +23,9 @@ import (
 //  3. No NPC knows hints from two lines (tags ending "-line"): the timer picks
 //     one of the NPC's hints at random, so a second line halves the first.
 //  4. A hint's description has no dash (it is player copy).
+//  5. An NPC that knows a hint is in the `gossiper` group: the idle hook
+//     speaks hints only for gossipers (MobIdle_HandleIdleMobs.go), so a
+//     hint on anyone else is silent. A playtest caught two smiths missing it.
 type gossipFact struct {
 	Id          string   `yaml:"id"`
 	Description string   `yaml:"description"`
@@ -31,6 +34,7 @@ type gossipFact struct {
 
 type gossipMob struct {
 	file       string
+	Groups     []string `yaml:"groups"`
 	KnowsFacts []string `yaml:"knows_facts"`
 }
 
@@ -84,8 +88,8 @@ func gossipHintProblems(facts map[string]gossipFact, mobs []gossipMob) []string 
 	known := map[string]bool{}
 	for _, m := range mobs {
 		lines := map[string]bool{}
+		silent := false
 		for _, id := range m.KnowsFacts {
-			known[id] = true
 			f, ok := facts[id]
 			if !ok {
 				out = append(out, fmt.Sprintf("%s knows %q, which is not in facts.yaml", m.file, id))
@@ -94,11 +98,19 @@ func gossipHintProblems(facts map[string]gossipFact, mobs []gossipMob) []string 
 			if !slices.Contains(f.Tags, "hint") {
 				continue
 			}
+			if !slices.Contains(m.Groups, "gossiper") {
+				silent = true
+				continue
+			}
+			known[id] = true
 			for _, tag := range f.Tags {
 				if strings.HasSuffix(tag, "-line") {
 					lines[tag] = true
 				}
 			}
+		}
+		if silent {
+			out = append(out, fmt.Sprintf("%s knows a hint but is not in the gossiper group, so it never says it", m.file))
 		}
 		if len(lines) > 1 {
 			names := make([]string, 0, len(lines))
@@ -161,8 +173,9 @@ func TestGossipHintFactsGuard_CanFail(t *testing.T) {
 		"dashy": {Id: "dashy", Description: "a dash — here.", Tags: []string{"x-line", "hint"}},
 	}
 	mobs := []gossipMob{
-		{file: "/mobs/one.yaml", KnowsFacts: []string{"a", "b", "dashy"}},
-		{file: "/mobs/two.yaml", KnowsFacts: []string{"missing"}},
+		{file: "/mobs/one.yaml", Groups: []string{"gossiper"}, KnowsFacts: []string{"a", "b", "dashy"}},
+		{file: "/mobs/two.yaml", Groups: []string{"gossiper"}, KnowsFacts: []string{"missing"}},
+		{file: "/mobs/mute.yaml", Groups: []string{"merchant"}, KnowsFacts: []string{"a"}},
 	}
 	got := strings.Join(gossipHintProblems(facts, mobs), "\n")
 	for _, want := range []string{
@@ -170,6 +183,7 @@ func TestGossipHintFactsGuard_CanFail(t *testing.T) {
 		"/mobs/one.yaml knows hints from x-line and y-line",
 		`hint fact "lone": no NPC knows it`,
 		`hint fact "dashy" uses a dash`,
+		"/mobs/mute.yaml knows a hint but is not in the gossiper group",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("fixture did not report %q; got:\n%s", want, got)

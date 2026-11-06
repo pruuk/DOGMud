@@ -15,6 +15,7 @@ groups:
   - blacksmith
   - stillwater_citizens
   - shopkeepers
+  - gossiper
 relationships:
   - to: 343
     type: friend
