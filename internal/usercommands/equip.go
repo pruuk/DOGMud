@@ -200,6 +200,11 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				for _, p := range rotting {
 					user.SendText(messaging.CategoryWarning, bandolierRotLine(oldBeltName, p))
 				}
+				// What the new belt would not hold went to the backpack,
+				// still sound (#794).
+				for _, rel := range user.Character.TakeBandolierReleases() {
+					user.SendText(messaging.CategoryWarning, characters.BandolierReleaseLine(result.Item.DisplayName(), rel.Name, rel.Why))
+				}
 			}
 
 			// A light just put on changes the band at once; the notice rides

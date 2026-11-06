@@ -118,6 +118,12 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		return true, nil
 	}
 
+	// Salvaging a potion the Vitalis holds takes it out, so it sours (#794);
+	// the salvage above already reads it as spoiled.
+	if user.Character.RotsOnRemoval(itm) {
+		user.SendText(messaging.CategoryWarning, bandolierRotLine(user.Character.Equipment.Belt.DisplayName(), itm))
+	}
+
 	user.SendText(messaging.CategoryCraft, fmt.Sprintf(
 		`<ansi fg="yellow">You begin carefully disassembling the <ansi fg="itemname">%s</ansi>...</ansi>`,
 		itm.DisplayName()))

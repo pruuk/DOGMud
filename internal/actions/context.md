@@ -161,7 +161,15 @@ Bandolier's refusal (`items.ItemSpec.AmbientBeneficial`, #794).
 `Quaff` reads a potion's age through `Character.PotionAging` (#794): a
 preserving bandolier's potion drinks at peak, and a potion that left one has
 rotted and drinks as spoiled, whatever its kind. The duration multiplier is
-`items.PotionDurationMult`.
+`items.PotionDurationMult`. A potion whose condition an ambient bandolier
+already sustains (`Character.BandolierSustainsAny`) is refused with
+`DrinkRefuseSustained` and kept: the hold holds one record per condition and
+would absorb the drink.
+
+`QuoteSale` refuses a potion the Vitalis Bandolier holds under its mark
+(`Character.HeldInPreservingBandolier`) with a `Tell` saying it is held and
+would sour if taken out, before the buy rules (which would read it as
+spoiled). So sell and offer move nothing and never call it spoiled.
 
 `Quaff` no longer snapshots a `tick_pool` condition's per-round amount (tick
 amount at apply, 2026-09-28): the old `ComputeTickAmount(...)` /

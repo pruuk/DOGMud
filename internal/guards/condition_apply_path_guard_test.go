@@ -150,7 +150,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/hooks/Awareness_Cascades.go|76": "condition 9 must be applied PERMANENT so the awareness state machine owns its lifecycle; the event path has no permanent form, and the transition callback holds only a Character",
 
 	// ── routing would narrate the wrong thing, or narrate it repeatedly ─────
-	"internal/hooks/pinnacle_tick.go|362": "holdAmbient holds a slotted potion's condition as a permanent record while the bandolier is worn, as worn items' conditions are; the pinnacle announces attunement once itself, so the potion's own start line is not wanted",
+	"internal/hooks/pinnacle_tick.go|360": "holdAmbient holds a slotted potion's condition as a permanent record while the bandolier is worn, as worn items' conditions are; the pinnacle announces attunement once itself, so the potion's own start line is not wanted",
 	"internal/justice/arrest.go|645":      "RestoreJailOnLogin re-applies an already-running sentence after the RemoveCondition above, so the hook would read it as a fresh application and clang the cell door shut on every login",
 
 	// ── the condition must be in place before the function returns ─────────
@@ -233,7 +233,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// through it. Re-keyed when the room lines moved to
 	// SendTextVisualHidingNames and their comment grew, and again when the
 	// bare-drink prompt went in above the busy check (2026-10-17) ─────────────
-	"internal/actions/drink.go|385": "potion at its item magnitude scaled by potency, player or mob: the EVENT door (DrinkActor.AddConditionMagnitude reaches users.UserRecord / mobs.Mob AddConditionMagnitude, both queue events.Condition); listed only because arity cannot tell it from the silent character door",
+	"internal/actions/drink.go|400": "potion at its item magnitude scaled by potency, player or mob: the EVENT door (DrinkActor.AddConditionMagnitude reaches users.UserRecord / mobs.Mob AddConditionMagnitude, both queue events.Condition); listed only because arity cannot tell it from the silent character door",
 
 	// ── the DrinkActor doors (drink path unification): a.User is a
 	// *users.UserRecord and a.Mob is a *mobs.Mob, whose AddConditionMagnitude

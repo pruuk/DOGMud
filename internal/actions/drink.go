@@ -38,6 +38,11 @@ const (
 	DrinkRefuseNotFound
 	DrinkRefuseNotDrinkable
 	DrinkRefuseToxicity
+	// DrinkRefuseSustained: an ambient bandolier already sustains the
+	// potion's effect (#794). The bandolier holds one record per condition,
+	// so a drink would be absorbed into its hold and lost when the slotted
+	// potion leaves; the potion is kept.
+	DrinkRefuseSustained
 )
 
 // DrinkResult reports one drink. Drank is true when the item was consumed,
@@ -253,6 +258,16 @@ func Quaff(actor DrinkActor, rest string) DrinkResult {
 			)
 		}
 		return DrinkResult{Refusal: DrinkRefuseNotDrinkable, ItemId: matchItem.ItemId}
+	}
+
+	// An ambient bandolier that already sustains this effect would absorb the
+	// drink into its hold, and the drink would be lost with the slotted
+	// potion later (#794). Refuse, and keep the potion.
+	if char.BandolierSustainsAny(itemSpec.ConditionIds) {
+		actor.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+			`Your <ansi fg="itemname">%s</ansi> already sustains that effect, so you leave the <ansi fg="itemname">%s</ansi> be.`,
+			char.Equipment.Belt.DisplayName(), matchItem.DisplayName()))
+		return DrinkResult{Refusal: DrinkRefuseSustained, ItemId: matchItem.ItemId}
 	}
 
 	// The potion's age: a preserving bandolier holds its potions at peak, and

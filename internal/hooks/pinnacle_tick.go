@@ -89,10 +89,8 @@ func tickPreserveContents(user *users.UserRecord, now uint64) {
 		return
 	}
 	beltName := user.Character.Equipment.Belt.DisplayName()
-	for _, itm := range released {
-		user.SendText(messaging.CategoryWarning, fmt.Sprintf(
-			`Your <ansi fg="itemname">%s</ansi> lets go of the <ansi fg="itemname">%s</ansi>, and you stow it in your backpack. It holds only potions that strengthen the one who wears it.`,
-			beltName, itm.DisplayName()))
+	for _, rel := range released {
+		user.SendText(messaging.CategoryWarning, characters.BandolierReleaseLine(beltName, rel.Item.DisplayName(), rel.Why))
 	}
 }
 

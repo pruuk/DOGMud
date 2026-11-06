@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -20,6 +21,13 @@ const (
 	vtFlaskId     = 999984 // a throwable
 	vtWaferId     = 999985 // a potion with no condition to hold
 	vtNow         = uint64(5_000_000)
+
+	vtReinforcedId = 999986 // an ordinary bandolier, far roomier than the Vitalis
+	vtRenewAId     = 999987 // condition 60
+	vtRenewBId     = 999988 // a different potion, also condition 60
+	vtTonicAId     = 999989
+	vtTonicBId     = 999990
+	vtTonicCId     = 999991
 )
 
 var vtAging = items.AgingThresholds{FermentRounds: 1000, PeakRounds: 5000, DecayRounds: 15000, SpoilRounds: 25000}
@@ -40,6 +48,15 @@ func vtSeed(t *testing.T) {
 		vtFlaskId: {ItemId: vtFlaskId, Name: "toxic flask", Type: items.Object, Subtype: items.Throwable,
 			ConditionIds: []int{78}, Weight: 0.1},
 		vtWaferId: {ItemId: vtWaferId, Name: "bloom wafer", Type: items.Potion, Subtype: items.Drinkable, Weight: 0.1},
+		vtReinforcedId: {ItemId: vtReinforcedId, Name: "reinforced bandolier", Type: items.Belt, Subtype: items.Wearable,
+			IsBandolier: true, BandolierCapacity: 24},
+		vtRenewAId: {ItemId: vtRenewAId, Name: "elixir of renewal", Type: items.Potion, Subtype: items.Drinkable,
+			ConditionIds: []int{60}, Weight: 0.1},
+		vtRenewBId: {ItemId: vtRenewBId, Name: "mire renewal draught", Type: items.Potion, Subtype: items.Drinkable,
+			ConditionIds: []int{60}, Weight: 0.1},
+		vtTonicAId: {ItemId: vtTonicAId, Name: "tonic a", Type: items.Potion, Subtype: items.Drinkable, ConditionIds: []int{61}, Weight: 0.1},
+		vtTonicBId: {ItemId: vtTonicBId, Name: "tonic b", Type: items.Potion, Subtype: items.Drinkable, ConditionIds: []int{62}, Weight: 0.1},
+		vtTonicCId: {ItemId: vtTonicCId, Name: "tonic c", Type: items.Potion, Subtype: items.Drinkable, ConditionIds: []int{63}, Weight: 0.1},
 	}))
 	prev := util.GetRoundCount()
 	util.SetRoundCountForTest(vtNow)
@@ -94,8 +111,126 @@ func TestVitalisRefusesWhatWouldNotHelp(t *testing.T) {
 	s := vtWearer(t, vtVitalisId)
 	s.Items = []items.Item{items.New(vtFlaskId), items.New(vtSalveId)}
 	moved, refused := s.SortPotionItems()
-	if moved != 1 || len(refused) != 1 || refused[0].ItemId != vtFlaskId {
+	if moved != 1 || len(refused) != 1 || refused[0].Item.ItemId != vtFlaskId || refused[0].Why != BandolierWrongKind {
 		t.Fatalf("sort should move the salve and refuse the flask, moved %d refused %v", moved, refused)
+	}
+}
+
+// One per held effect means one per condition, not one per item: two
+// different potions that give the same condition do not both slot.
+func TestVitalisTakesOnePotionPerHeldEffect(t *testing.T) {
+	vtSeed(t)
+	c := vtWearer(t, vtVitalisId)
+	c.StoreItem(items.New(vtRenewAId))
+	c.StoreItem(items.New(vtRenewBId))
+	if len(c.PotionItems) != 1 || !vtIn(c.Items, vtRenewBId) {
+		t.Fatalf("a second potion with the same effect must go to the backpack, slotted %d", len(c.PotionItems))
+	}
+
+	s := vtWearer(t, vtVitalisId)
+	s.Items = []items.Item{items.New(vtRenewAId), items.New(vtRenewBId)}
+	moved, refused := s.SortPotionItems()
+	if moved != 1 || len(refused) != 1 || refused[0].Why != BandolierDuplicate {
+		t.Fatalf("sort must take one and refuse the duplicate effect, moved %d refused %v", moved, refused)
+	}
+}
+
+// A belt swap onto the Vitalis applies its rules at once: its capacity, one
+// per effect, and its refusals. What it lets go of was never in its hold, so
+// it goes to the backpack sound, not rotted.
+func TestPuttingOnTheVitalisAppliesItsLimitsAtOnce(t *testing.T) {
+	vtSeed(t)
+	c := vtWearer(t, vtReinforcedId)
+	spoiled := items.New(vtSalveId)
+	spoiled.CraftedRound = vtNow - 30000
+	for _, id := range []int{vtRenewAId, vtRenewBId, vtTonicAId, vtTonicBId, vtTonicCId, vtRedId} {
+		c.StoreItem(items.New(id))
+	}
+	c.PotionItems = append(c.PotionItems, spoiled)
+	if len(c.PotionItems) != 7 {
+		t.Fatalf("fixture: the reinforced bandolier should hold all seven, got %d", len(c.PotionItems))
+	}
+
+	if _, worn, why := c.Wear(items.New(vtVitalisId)); !worn {
+		t.Fatalf("wearing the Vitalis failed: %s", why)
+	}
+	if len(c.PotionItems) != 4 {
+		t.Fatalf("the Vitalis must hold no more than its capacity, holds %d", len(c.PotionItems))
+	}
+	seen := map[int]bool{}
+	for _, p := range c.PotionItems {
+		if !p.Preserved {
+			t.Errorf("%s slotted by the swap must be marked at once", p.Name())
+		}
+		for _, id := range p.GetSpec().ConditionIds {
+			if seen[id] {
+				t.Errorf("condition %d held twice", id)
+			}
+			seen[id] = true
+		}
+		if p.ItemId == spoiled.ItemId {
+			t.Error("a spoiled potion carried in must not be slotted at peak")
+		}
+	}
+	rels := c.TakeBandolierReleases()
+	if len(rels) != 3 {
+		t.Fatalf("three potions should be let go of (duplicate, spoiled, overflow), got %v", rels)
+	}
+	whys := map[BandolierRefusal]bool{}
+	for _, rel := range rels {
+		whys[rel.Why] = true
+	}
+	for _, p := range c.Items {
+		if p.Preserved {
+			t.Errorf("%s let go of must not rot", p.Name())
+		}
+	}
+	if !whys[BandolierDuplicate] || !whys[BandolierSpoiled] || !whys[BandolierFull] {
+		t.Errorf("want a duplicate, a spoiled and a full release, got %v", whys)
+	}
+}
+
+// A potion in the Vitalis that it has not marked yet reads its own age and
+// does not rot on removal.
+func TestAnUnmarkedPotionIsNotHeldAtPeak(t *testing.T) {
+	vtSeed(t)
+	c := vtWearer(t, vtVitalisId)
+	spoiled := items.New(vtSalveId)
+	spoiled.CraftedRound = vtNow - 30000
+	c.PotionItems = []items.Item{spoiled}
+	if c.PotionAging(spoiled, vtNow).Phase == items.PhasePeak {
+		t.Error("an unmarked potion must not read at peak")
+	}
+	if c.RotsOnRemoval(spoiled) {
+		t.Error("an unmarked potion does not rot on removal")
+	}
+}
+
+// A species that loses its belt slot spills the bandolier's potions to the
+// backpack, rotted, with a soured line each, instead of orphaning them.
+func TestASpeciesClosedBeltSlotSpillsTheVitalis(t *testing.T) {
+	vtSeed(t)
+	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
+		94811: {SpeciesId: 94811, Name: "Beltless", DisabledSlots: []string{"belt"}},
+	}))
+	c := vtWearer(t, vtVitalisId)
+	c.SetUserId(4812)
+	c.SpeciesId = 94811
+	c.StoreItem(items.New(vtSalveId))
+
+	c.validateDisabledSlotsForSpecies()
+
+	if len(c.PotionItems) != 0 || !vtIn(c.Items, vtSalveId) {
+		t.Fatalf("the potion must spill to the backpack, slotted %d", len(c.PotionItems))
+	}
+	soured := 0
+	for _, g := range c.TakeDisplacedGear() {
+		if g.Reason == DisplacedPotionSoured {
+			soured++
+		}
+	}
+	if soured != 1 {
+		t.Fatalf("one soured line should be recorded, got %d", soured)
 	}
 }
 

@@ -251,11 +251,24 @@ func (b *GameBridge) GrantQuest(token string) {
 	})
 }
 
-// ConsumeItem removes the first matching item from the player's inventory.
+// ConsumeItem removes the first matching item from the player's inventory:
+// the backpack first, then the bandolier, where StoreItem routes a potion by
+// itself. A potion the Vitalis Bandolier holds sours as it leaves, and the
+// player is told (#794).
 func (b *GameBridge) ConsumeItem(itemId int) {
-	for _, itm := range b.user.Character.Items {
+	c := b.user.Character
+	for _, itm := range c.Items {
 		if itm.ItemId == itemId {
-			b.user.Character.RemoveItem(itm)
+			c.RemoveItem(itm)
+			return
+		}
+	}
+	for _, itm := range c.PotionItems {
+		if itm.ItemId == itemId {
+			if c.RotsOnRemoval(itm) {
+				b.user.SendText(messaging.CategoryWarning, characters.BandolierRotLine(c.Equipment.Belt.DisplayName(), itm.DisplayName()))
+			}
+			c.RemoveItem(itm)
 			return
 		}
 	}

@@ -46,9 +46,11 @@ The `internal/usercommands` package implements the complete command system for p
   potion reads at peak); `salvage` and `shops.isPotionDeclining` read
   `items.Item.AgingAt`, since the potion leaves the bandolier (a preserved
   one has rotted). `sort` names each potion the Vitalis Bandolier refuses
-  (`bandolierRefusalLine`); `get ... from bandolier`, `remove` and `equip`
-  name each potion that sours as it leaves one (`bandolierRotLine`, both in
-  `sort.go`).
+  and why (`characters.BandolierRefusalLine`); `equip` names what a belt
+  swap made it let go of (`characters.BandolierReleaseLine`, still sound);
+  `get ... from bandolier`, `remove`, `equip`, `salvage` and `give` (every
+  hand-in path, checked after the give) name each potion that sours as it
+  leaves one (`bandolierRotLine` in `sort.go`).
 - **Eat and drink** (`eat.go`, `drink.go`, #375 phase 7): one food command, two
   words. Both are wrappers over `actions.ConsumeFood`, which holds the lookup
   order and every food rule for players and mobs alike; the same guard fails if

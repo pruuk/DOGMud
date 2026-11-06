@@ -3,6 +3,7 @@ package characters
 import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 type Worn struct {
@@ -578,6 +579,11 @@ func (c *Character) wear(i items.Item, place func(items.Item, items.ItemSpec) ([
 				break
 			}
 		}
+		// The new belt's rules apply at once, not at the next tick: what it
+		// would not take (wrong kind, spoiled, a second potion of one
+		// effect, past its capacity) goes to the backpack, and the rest is
+		// marked, so nothing carried in reads at peak unmarked.
+		c.noteBandolierReleases(c.PreserveBandolier(util.GetRoundCount()))
 	}
 	if spec.Type != items.Weapon && spec.Type != items.Offhand {
 		// Preserved from the pre-U7b shape: permanent conditions are reapplied on the
@@ -618,11 +624,7 @@ func (c *Character) RemoveFromBody(i items.Item) bool {
 		// If removing a bandolier, spill potions to backpack
 		beltSpec := c.Equipment.Belt.GetSpec()
 		if beltSpec.IsBandolier && len(c.PotionItems) > 0 {
-			for _, pi := range c.PotionItems {
-				c.Items = append(c.Items, pi)
-				c.IndexTreedItem(pi)
-			}
-			c.PotionItems = nil
+			c.spillBandolier()
 		}
 		c.Equipment.Belt = items.Item{}
 	} else if i.Equals(c.Equipment.Gloves) {

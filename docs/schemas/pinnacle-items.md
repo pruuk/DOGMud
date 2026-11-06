@@ -166,12 +166,31 @@ Owner ruling 2026-11-06 (#794) set the rules below; the code lives in
   decides.
 - **`ambient_potions`** takes only potions whose held effect helps
   (`ItemSpec.AmbientBeneficial`: a potion, not thrown, not a detox, with
-  a condition to hold) and not spoiled (`Character.AmbientBandolierRefuses`).
-  `StoreItem` routes a refused item to the backpack (only one belt is
-  worn, so there is no other bandolier); `sort` names it to the player.
-  A spoiled potion is refused so a rotted one cannot be slotted back to
-  peak. An item a save already holds that the belt would refuse is let
-  go to the backpack with a line to the wearer.
+  a condition to hold), not spoiled, and one per held effect: a potion
+  that gives a condition a slotted potion already gives is refused (one
+  per condition id, not per item; the Elixir of Renewal and the Mire
+  Renewal Draught share one). `Character.AmbientBandolierRefusal` says
+  which. `StoreItem` routes a refused item to the backpack (only one belt
+  is worn, so there is no other bandolier); `sort` names it and why. A
+  spoiled potion is refused so a rotted one cannot be slotted back to
+  peak.
+- **Putting the belt on applies its rules at once.** The wear path runs
+  `Character.PreserveBandolier` right after a belt swap: the belt keeps
+  what it marked, takes the rest under the rules above and its capacity,
+  and lets go of the others to the backpack, unmarked and so still sound;
+  `equip` names each one and why. The tick and login run the same pass
+  (a save from before #794). A potion reads at peak, and rots on leaving,
+  only once it carries the mark.
+- **Selling and drinking.** A potion the bandolier holds is not for sale:
+  sell and offer say it is held and would sour, and nothing moves
+  (`QuoteSale`). A potion whose effect the bandolier already sustains is
+  not drunk (`DrinkRefuseSustained`), and is kept: the hold holds one
+  record per condition and would absorb the drink.
+- **Every exit tells the player.** Get, remove, equip, salvage, give
+  (any hand-in), a scripted quest take (`GameBridge.ConsumeItem`, which
+  now reaches the bandolier) and a species that closes the belt slot
+  (which spills the bandolier rather than orphaning its potions) print
+  "The X sours the moment it leaves your Y."
 - The ambient hold keeps every slotted potion's `ConditionIds` held as
   **permanent** records while the bandolier is worn and **attuned**, so
   the conditions panel and the `conditions` command read "sustained". A

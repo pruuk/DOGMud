@@ -1,9 +1,11 @@
 package hooks
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -110,6 +112,28 @@ func TestAmbientBandolier_HeldEffectStaysSustainedThroughADrinkAndAContentsChang
 
 	if h := heldRecord(u, 54); h == nil || !h.Permanent {
 		t.Fatal("the bandolier's held effect must read sustained (permanent) after the tick, not count down")
+	}
+}
+
+// The tick's release line gives the real reason: a spoiled potion is told
+// it is spoiled, not that it does not strengthen, and that it is still
+// sound (it never sat in the hold).
+func TestAmbientBandolier_TickReleaseLineNamesTheReason(t *testing.T) {
+	drainEventQueueOnCleanup(t)
+	defer seedPeakAmbient()()
+
+	u := users.NewTestUser(753, "peak", "Peak", 7753)
+	u.Character.Equipment.Belt = items.New(peakVitalisId)
+	sour := items.New(peakPitId)
+	sour.CraftedRound = 1 // far past its spoil point at the round below
+	u.Character.PotionItems = []items.Item{sour}
+	events.DrainQueuedMessagesForTest(u.UserId)
+
+	tickPreserveContents(u, 5_000_000)
+
+	told := strings.Join(events.DrainQueuedMessagesForTest(u.UserId), " ")
+	if !strings.Contains(told, "will not take a spoiled potion") || !strings.Contains(told, "still sound") {
+		t.Fatalf("release line should name the spoiling and say it is still sound, got %q", told)
 	}
 }
 

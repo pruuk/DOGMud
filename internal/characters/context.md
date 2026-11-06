@@ -327,15 +327,30 @@ helpful potions.
 
 - `slotPotion` (from `StoreItem` and `SortPotionItems`) marks a potion
   `items.Item.Preserved` when the belt preserves. `PotionAging(i, now)` reads
-  a held one at peak (`Item.PeakAging`), else `Item.AgingAt`, which reads a
-  Preserved potion as spoiled. So every removal path rots the potion with no
-  hook of its own.
-- `AmbientBandolierRefuses(i, now)`: an ambient belt refuses a kind
-  `ItemSpec.AmbientBeneficial` rejects, or a spoiled potion. `StoreItem` routes
-  a refused item to the backpack; `SortPotionItems` returns `(moved, refused)`.
-- `PreserveBandolier(now)` (pinnacle tick and login): lets go of anything an
-  ambient belt would refuse that is not Preserved, to the backpack, and marks
-  the rest. Returns what it let go.
+  a held one at peak (`Item.PeakAging`) only when it carries the mark, else
+  `Item.AgingAt`, which reads a Preserved potion as spoiled. So every removal
+  path rots the potion with no hook of its own. `RotsOnRemoval` and
+  `HeldInPreservingBandolier` also need the mark.
+- `AmbientBandolierRefusal(i, now)` returns a `BandolierRefusal`
+  (`BandolierWrongKind`, `BandolierSpoiled`, `BandolierDuplicate`: a slotted
+  potion already gives one of its conditions, so one per held condition id,
+  not per item; `BandolierFull` is the capacity check's). `StoreItem` routes a
+  refused item to the backpack; `SortPotionItems` returns `(moved, refused
+  []BandolierRelease)`.
+- `PreserveBandolier(now)` (the wear path right after a belt swap, the
+  pinnacle tick, login) keeps what the belt marked, takes the rest in order
+  under the same rules plus its capacity, lets go of the others to the
+  backpack unmarked (sound, never in the hold), and marks what it keeps.
+  Returns `[]BandolierRelease`; the wear path stores it for
+  `TakeBandolierReleases` (the equip command).
+- Lines (no numbers): `BandolierRefusalLine`, `BandolierReleaseLine` ("still
+  sound"), `BandolierRotLine`, and `BandolierRefusal.Why`.
+- `BandolierSustainsAny(conditionIds)`: the attuned set holds one as a
+  permanent record. `actions.Quaff` refuses such a drink.
+- A species that closes the belt slot spills the bandolier to the backpack
+  (`spillBandolier`, as `RemoveFromBody`) and records a
+  `DisplacedPotionSoured` `DisplacedGear` (with `From`, the belt) per potion
+  that soured.
 - `spillPreservedOnBeltSwap(old, new)` (from `wear`, after its reverts,
   like `SortComponentItems`, because it writes outside `c.Equipment`): a belt
   swap away from a preserving belt spills its potions to the backpack, as

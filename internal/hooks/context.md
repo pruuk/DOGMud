@@ -2748,7 +2748,9 @@ The rules live in `internal/characters/bandolier.go` and
 - `tickPreserveContents(user, now)` runs `Character.PreserveBandolier` every
   round and once at login (`HandleJoin`, replacing the old
   `reconcilePreservedPotionRounds`, which reset a held potion to fresh). It
-  tells the wearer about anything the belt lets go of. Nothing touches
+  tells the wearer about anything the belt lets go of, with its reason
+  (`characters.BandolierReleaseLine`, the same wording `sort` uses, and
+  "still sound": it never sat in the hold). Nothing touches
   `CraftedRound`; the old 1:1 advance is gone.
 - `desiredAmbientConditions(c, now)` maps each held condition to the
   magnitude it is held at: peak (`Character.PotionAging` potency through
@@ -2763,6 +2765,8 @@ The rules live in `internal/characters/bandolier.go` and
   permanent record: a drink's own timed record runs its course.
 - `NewRound_AutoHeal` asks `Character.PotionAging`, so a preserving
   bandolier never ejects its potions as spoiled.
+- `displacedGearText` reads `characters.DisplacedPotionSoured` (a species
+  that closed the belt slot spilled the bandolier) as the soured line.
 
 Tests: `pinnacle_ambient_harmful_test.go`, `pinnacle_ambient_peak_test.go`,
 and `TestPreservedPotionReadsPeakAfterAnOfflineGap`.

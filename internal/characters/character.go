@@ -150,6 +150,10 @@ type Character struct {
 	StaminaMax      stats.StatInfo        `yaml:"-"`                        // The maximum stamina of the character. Don't write to yaml since is dynamically calculated.
 	ConvictionMax   stats.StatInfo        `yaml:"-"`                        // The maximum conviction of the character. Don't write to yaml since is dynamically calculated.
 	ActionPointsMax stats.StatInfo        `yaml:"-"`                        // The maximum actions of character. Don't write to yaml since is dynamically calculated.
+	// bandolierReleases (transient, not serialized) is what the last wear's
+	// PreserveBandolier let go of, held for the equip command to tell the
+	// player (TakeBandolierReleases, #794).
+	bandolierReleases []BandolierReleaseNote `yaml:"-"`
 	// Taunt-hold lock (transient, not serialized): a successful taunt pins
 	// this character's aggro onto the taunter until tauntHoldUntilRound, so
 	// reactive basic-attack re-aggro can't flip the target back. Set via

@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func Sort(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -28,7 +28,7 @@ func Sort(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	materialsMoved := 0
 	potionsMoved := 0
-	var refused []items.Item
+	var refused []characters.BandolierRelease
 
 	if hasBag {
 		materialsMoved = user.Character.SortComponentItems()
@@ -39,14 +39,13 @@ func Sort(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// An ambient bandolier (the Vitalis) names what it will not take (#794).
 	told := map[string]bool{}
-	now := util.GetRoundCount()
-	for _, itm := range refused {
-		name := itm.DisplayName()
+	for _, rel := range refused {
+		name := rel.Item.DisplayName()
 		if told[name] {
 			continue
 		}
 		told[name] = true
-		user.SendText(messaging.CategoryRefusal, bandolierRefusalLine(user.Character.Equipment.Belt.DisplayName(), itm, now))
+		user.SendText(messaging.CategoryRefusal, characters.BandolierRefusalLine(user.Character.Equipment.Belt.DisplayName(), rel.Item, rel.Why))
 	}
 
 	if materialsMoved == 0 && potionsMoved == 0 {
@@ -76,20 +75,8 @@ func Sort(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	return true, nil
 }
 
-// bandolierRefusalLine tells the player why an ambient bandolier will not
-// take a potion (#794): it has spoiled, or its effect would not help them.
-func bandolierRefusalLine(beltName string, itm items.Item, now uint64) string {
-	why := `it holds only potions that strengthen the one who wears it`
-	if itm.AgingAt(now).Spoiled() {
-		why = `it will not take a spoiled potion`
-	}
-	return fmt.Sprintf(`Your <ansi fg="itemname">%s</ansi> will not take the <ansi fg="itemname">%s</ansi>: %s.`,
-		beltName, itm.DisplayName(), why)
-}
-
 // bandolierRotLine tells the player that a potion rotted as it left a
-// preserving bandolier (#794).
+// preserving bandolier (#794; characters.BandolierRotLine).
 func bandolierRotLine(beltName string, itm items.Item) string {
-	return fmt.Sprintf(`The <ansi fg="itemname">%s</ansi> sours the moment it leaves your <ansi fg="itemname">%s</ansi>.`,
-		itm.DisplayName(), beltName)
+	return characters.BandolierRotLine(beltName, itm.DisplayName())
 }
