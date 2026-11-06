@@ -3285,6 +3285,11 @@
             document.getElementById('mute-checkbox').focus();
         }
 
+        // returnFocus is true only when the player closed Settings from the
+        // keyboard. Closed with a mouse, trackpad or finger, nothing keeps
+        // focus, so the next letters typed go straight into the command box
+        // (a focused button would swallow them, and Enter would reopen
+        // Settings).
         function closeSettings(returnFocus) {
             const menu = document.getElementById('settings-menu');
             if (menu.hidden) return;
@@ -3292,13 +3297,18 @@
             const btn = document.getElementById('btn-settings');
             btn.setAttribute('aria-expanded', 'false');
             if (returnFocus) btn.focus();
+            else if (document.activeElement === btn) btn.blur();
         }
 
-        document.getElementById('btn-settings').addEventListener('click', function () {
-            if (settingsOpen()) closeSettings(true); else openSettings();
+        // A click made with the keyboard (Enter or Space on the button) has
+        // e.detail 0; a real mouse, trackpad or finger click has 1 or more.
+        function fromKeyboard(e) { return e.detail === 0; }
+
+        document.getElementById('btn-settings').addEventListener('click', function (e) {
+            if (settingsOpen()) closeSettings(fromKeyboard(e)); else openSettings();
         });
-        document.getElementById('settings-close').addEventListener('click', function () {
-            closeSettings(true);
+        document.getElementById('settings-close').addEventListener('click', function (e) {
+            closeSettings(fromKeyboard(e));
         });
         document.getElementById('settings-menu').addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {

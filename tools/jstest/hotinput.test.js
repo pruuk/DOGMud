@@ -191,6 +191,14 @@ check('a phone tap on the game text does not refocus the command box',
     /!isDragging && !selectedText && !\(phoneTouchOnly\(\) && phoneWidth\(\)\)/.test(page), true);
 check("xterm's textarea cannot raise the phone keyboard",
     /ta\.setAttribute\('inputmode', 'none'\)/.test(page) && /window\.addEventListener\('resize', syncTermKeyboard\)/.test(page), true);
+// Closing Settings with a mouse, trackpad or finger leaves no button focused,
+// so typing goes to the command box; only a keyboard close returns focus to
+// the Settings button (#768 review item 6, reproduced by Malia 2026-11-06).
+check('Settings closes back to its button only from the keyboard',
+    /function fromKeyboard\(e\) \{ return e\.detail === 0; \}/.test(page)
+    && /closeSettings\(fromKeyboard\(e\)\)/.test(page)
+    && !/getElementById\('settings-close'\)\.addEventListener\('click', function \(\) \{\s*closeSettings\(true\)/.test(page), true);
+
 // The Chat tab has no typing box of its own: players chat from the command
 // box (Malia 2026-11-06).
 check('the Chat tab has no typing box', page.indexOf('chat-input') === -1, true);

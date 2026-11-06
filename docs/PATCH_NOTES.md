@@ -12,6 +12,9 @@
   you pop the Game window out into its own box.
 - In the Quests tab, repeatable quests and the "Repeatable work" list are
   easy to read again. They had faded almost out of sight.
+- After you close Settings with a mouse, trackpad or finger, you can type
+  your next command right away. Your letters used to vanish, and Enter
+  opened Settings again.
 
 ## 2026-11-02: A new look for the website and the web client
 

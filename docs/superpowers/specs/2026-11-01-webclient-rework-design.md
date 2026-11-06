@@ -175,6 +175,11 @@ for slice B.*
   hint colour (`--quest-progress`, 4.95 Dark, 4.97 Light), not with opacity.
   Opacity had faded them to about 2 in Dark and 1.9 in Light, and the review
   found 1.01 in Light because they had no colour at all (Malia approved).
+- Settings and typing (review item 6): closing Settings with a mouse,
+  trackpad or finger leaves nothing focused, so typing reaches the command
+  box; a keyboard close (Esc, or Enter/Space on ✕ or Settings) still returns
+  focus to the Settings button. Malia reproduced the bug on her laptop; the
+  Automation tabs did not lose typing in her test, so they are unchanged.
 - Code is written so a person can maintain it: edit what exists first, and
   give every change a plain-English comment (Malia).
 - Still to decide: a description of each Chat button (hover on a laptop; a
