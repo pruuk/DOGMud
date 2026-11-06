@@ -209,6 +209,10 @@ check('the command box stays at the bottom of its column',
 // (Map, Chat and Automation each had one that kept them open).
 check('a folded tab hides its insides on every tab',
     /\.dash-panel\.collapsed \.dash-panel-body \{ display: none !important; \}/.test(css), true);
+// On a phone the Automation rows and Inventory items must not squeeze to
+// nothing now that phone tabs fit their content.
+check('phone tabs keep their Automation rows and Inventory items',
+    /#dash-drawer \.inv-grid,\s*#dash-drawer \.auto-list \{\s*flex: 0 1 auto;/.test(css), true);
 check('a folded tab drops its own height',
     /min-height: 0 !important;\s*height: auto !important;/.test(css), true);
 

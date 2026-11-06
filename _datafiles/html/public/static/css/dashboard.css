@@ -624,6 +624,14 @@ html.keyboard-open #dash-drawer { bottom: var(--cmdbox-h); }
   flex: 0 0 auto;
   min-height: 0;
 }
+/* The Inventory items and the Automation rows (Ticks, Triggers, Macros,
+   Aliases) are as tall as what they list. On a laptop they fill the space
+   their tab is given, but a phone tab has no set space to fill, and without
+   this they would squeeze down to nothing and the rows would vanish. */
+#dash-drawer .inv-grid,
+#dash-drawer .auto-list {
+  flex: 0 1 auto;
+}
 /* The Map and Chat tabs always use the card's full height. The map needs
    a set space to draw in, and Chat scrolls itself to show the newest
    message, which only works when the card has a set height. */
