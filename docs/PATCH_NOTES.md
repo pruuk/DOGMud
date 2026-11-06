@@ -1,7 +1,26 @@
 # DOGMud Patch Notes
 
-## 2026-11-06: Chat and the command box
+## 2026-11-06: A new look for the website and the web client
 
+- The game has its own logo: three moons, the middle one crowned. You will see
+  it on the home page, as D.O.G. in the top bar, and as the moons on your
+  browser tab and phone home screen.
+- The website now has a teal bar at the top and bottom of every page, with the
+  menu repeated at the bottom.
+- The web client has a new Settings menu. Choose Dark, Light or Match my
+  device for the website and the game panels; the game text window always
+  stays dark. Sound on and off has moved into Settings too.
+- The side panels have friendlier names: Map, Quests, Health, Inventory, Chat,
+  Status and Automation.
+- On phones and tablets, the panels open from round brass buttons with simple
+  icons. The open one is pressed in, and its name shows above it.
+- The tabs inside Chat, Inventory and Automation are bigger, easier to tap and
+  easier to read. Every chat channel stays in view on a phone.
+- The map's legend and its Fit, Center and zoom buttons now sit under the map
+  instead of covering it. The legend folds away when you want more map.
+- On a phone, the keyboard closes after each command so you can read what
+  happened. Tap the command box to type again. Tapping the game text no longer
+  opens the keyboard.
 - Chat no longer has its own typing box. Talk from the command box instead:
   type `say hello`, or `whisper` and a name and your message. The Chat tab
   shows what everyone says.
@@ -12,34 +31,6 @@
   you pop the Game window out into its own box.
 - In the Quests tab, repeatable quests and the "Repeatable work" list are
   easy to read again. They had faded almost out of sight.
-- After you close Settings with a mouse, trackpad or finger, you can type
-  your next command right away. Your letters used to vanish, and Enter
-  opened Settings again.
-
-## 2026-11-02: A new look for the website and the web client
-
-- The game has its own logo: three moons, the middle one crowned. You will see
-  it on the home page, as D.O.G. in the top bar, and as the moons on your
-  browser tab and phone home screen.
-- The website now has a teal bar at the top and bottom of every page, with the
-  menu repeated at the bottom.
-- Settings in the web client lets you choose Dark, Light or Match my device.
-  Light mode now reaches the game panels too, while the game text window stays
-  dark.
-- The side panels have friendlier names: Map, Quests, Health, Inventory, Chat,
-  Status and Automation.
-- On phones and tablets, the panels open from round brass buttons with simple
-  icons. The open one is pressed in, and its name shows above it.
-- The tabs inside Chat, Inventory and Automation are bigger, easier to tap and
-  easier to read. Every chat channel stays in view on a phone.
-- The full screen game now fits a phone's screen properly.
-- The map's legend and its Fit, Center and zoom buttons now sit under the map
-  instead of covering it. The legend folds away when you want more map.
-- On a phone, the keyboard closes after each command so you can read what
-  happened. Tap the command box to type again. Tapping the game text no longer
-  opens the keyboard.
-- After an update, your browser loads the new look straight away instead of
-  an old saved copy.
 
 ## 2026-11-03: The buried thing
 

@@ -1,5 +1,10 @@
 # Asset version tags on static links (retroactive record)
 
+> **Replaced (2026-11-03):** the start-time `ASSETV` tag described here was
+> dropped for master's `ASSET_VERSION` hash in the phone-fit merge
+> ([`2026-11-03-webclient-merge-phone-fit.md`](2026-11-03-webclient-merge-phone-fit.md)).
+> Kept as history only; nothing below is live.
+
 > **Written after the work** (2026-11-02), to put the skipped plan step back
 > into the repo. No BAR was run before execution; a BAR of the shipped diff
 > follows. Spec:

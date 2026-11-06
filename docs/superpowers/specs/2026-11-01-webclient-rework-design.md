@@ -80,9 +80,11 @@ screens.
   a soft shadow so they still separate from the page card.
 
 ### Shipping
-- Static CSS, JS and icon links carry `?v={{ .ASSETV }}` (server start time),
-  so each deploy reaches browsers (2026-11-02; Malia chose automatic over a
-  manual date tag knowing it is a small server change).
+- Static CSS and JS links carry master's `?v={{ .ASSET_VERSION }}`, a hash of
+  `static/css` and `static/js` worked out once per boot, so each deploy
+  reaches browsers. Malia chose automatic tags on 2026-11-02; this PR's own
+  start-time tag was dropped for master's in the 2026-11-03 merge. Images
+  are not hashed, so a changed image gets a new file name.
 
 ### Map strip (2026-11-02, in progress)
 - The legend card leaves the map: a "Map legend" strip under the map at
