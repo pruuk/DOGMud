@@ -151,7 +151,10 @@ ambient_potions: true        # slotted potions' conditions stay always-on
   aging-elapsed calculation (`now - CraftedRound`) never grows.
 - **`ambient_potions`** keeps every slotted potion's `ConditionIds`
   continuously applied at **Peak potency (1.30x)**, `AddConditionScaled`,
-  while the bandolier is worn and **attuned**. Drink-blocking of
+  while the bandolier is worn and **attuned**. Two kinds of slotted
+  item are skipped (#794): a throwable, whose conditions are for its
+  target, and a detox (`actions.IsDetoxItem`), whose condition is the
+  cost of a cure only drinking it delivers. Drink-blocking of
   slotted potions is deferred to Stage 2 — Stage 1 does not stop you
   from drinking a slotted potion directly.
 - **Attunement / content-fingerprint mechanism**: each tick builds a

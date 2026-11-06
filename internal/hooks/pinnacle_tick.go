@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -383,12 +384,23 @@ func holdAmbient(c *characters.Character, conditionId int) {
 	_ = c.AddCondition(conditionId, true)
 }
 
-// desiredAmbientConditions is the set of condition ids emitted by the potions currently
-// slotted in the bandolier.
+// desiredAmbientConditions is the set of condition ids the bandolier holds on
+// its wearer: those of every slotted potion that is drunk for its own effect.
+// The bandolier also stores two kinds of item whose conditions are not that
+// (#794), and it holds neither. A throwable's conditions land on whoever it
+// is thrown at (a flashbang's blindness, a toxic flask's poison). A detox's
+// condition is the price of a cure that only drinking it pays out
+// (actions.IsDetoxItem), so holding it alone is pure harm: Ysolde's Purge
+// would keep its carrier in Bloom Detox for as long as the cup stayed slotted.
+// Both still sit in the bandolier, ready to throw or drink.
 func desiredAmbientConditions(potions []items.Item) map[int]bool {
 	out := map[int]bool{}
 	for _, p := range potions {
-		for _, conditionId := range p.GetSpec().ConditionIds {
+		spec := p.GetSpec()
+		if spec.Subtype == items.Throwable || actions.IsDetoxItem(spec.ItemId) {
+			continue
+		}
+		for _, conditionId := range spec.ConditionIds {
 			out[conditionId] = true
 		}
 	}

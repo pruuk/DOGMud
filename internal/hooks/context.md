@@ -2741,6 +2741,15 @@ key `pinnacle_proc_cd_*` is inert in old saves.
 items, five events, hits, misses, cooldown windows and a probe draw each
 round); `TestItemProcParity` holds the tree path to it.
 
+**Ambient bandolier (`tickAmbientPotions`, `pinnacle_tick.go`).** An
+`ambient_potions` belt (the Vitalis Bandolier) holds the conditions in
+`desiredAmbientConditions` on its wearer as permanent records. That set skips
+two kinds of slotted item (#794): a throwable (its conditions land on the
+target) and a detox (`actions.IsDetoxItem`: Ysolde's Purge, the Purging
+Draught), whose condition is the price of a cure only drinking pays out.
+Both still slot, ready to throw or drink. `pinnacle_ambient_harmful_test.go`
+holds it.
+
 ## Casters, start lines and DoT credit (messaging M6 slice 1)
 
 `ApplyConditions` stamps every landed record with the event's `Source` and
