@@ -289,7 +289,7 @@ func cmdSetFprompt(user *users.UserRecord, rest string, setTarget string, args [
 			{"target", "Target name"},
 			{"targethealth", "Target health description"},
 			{"targetpos", "Target position"},
-			{"tank", "Party tank info"},
+			{"tank", "Who your target is fighting"},
 		}
 		for _, t := range toggleList {
 			val := user.GetConfigOption(`fprompt-tog-` + t.name)
@@ -314,7 +314,7 @@ func cmdSetFprompt(user *users.UserRecord, rest string, setTarget string, args [
 		"target":       "Target name",
 		"targethealth": "Target health description",
 		"targetpos":    "Target position",
-		"tank":         "Party tank info",
+		"tank":         "Who your target is fighting",
 	}
 	var element string
 	if strings.HasPrefix(promptStr, `tog `) {

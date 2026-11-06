@@ -518,7 +518,32 @@ func (u *UserRecord) ClientSettings() connections.ClientSettings {
 // - "tinymap": bool          // compact map display (defaults true if unset)
 // - "shortadjectives": bool
 // - "auction": bool          // opt out of auction house broadcast messages
+// - "fprompt-tog-<name>": bool // fight prompt toggles (bars, pos, target,
+//                              // targethealth, targetpos, tank)
+// - "fprompt-default-compiled": string // written by `set fprompt tog`; only
+//                              // its presence is read (#591, see below)
 ```
+
+### Fight prompt tokens (`userrecord.prompt.go`)
+
+`ProcessPromptString` renders `{token}`s through one switch. Every token in a
+shipped prompt (config.yaml `TextFormats`, the Go defaults in
+`configs.TextFormats.Validate`, and `BuildFightPromptTemplate`) must have a
+case there; `TestShippedPromptTokensAllRender` reads the switch from source
+and fails on a token with none.
+
+The tank block `{tank}{tankpos}{tankbar}` (#591) shows who the player's
+target mob is attacking, when that is someone other than the player
+(`promptTank`: a player, or a mob such as a companion). `{tank}` renders
+` T:Name`, `{tankpos}` the tank's position (empty when standing, same
+colours and abbreviations as `{pos}`), `{tankbar}` ` Thp:` and a health bar.
+Each carries its own leading space and label because each renders nothing
+when nobody else is tanking or the player can't see the fight.
+
+A player with any toggle set has `fprompt-default-compiled` saved, but the
+prompt renders from `BuildFightPromptTemplate()` (memoized compile) rather
+than the saved string, so a save compiled by an older template cannot pin
+stale tokens.
 
 ## Online User Information
 
