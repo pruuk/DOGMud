@@ -143,7 +143,7 @@
     // Only on a touch-only phone-width screen and only when something was sent.
     // Tablets keep the keyboard, since a blur there would also stop arrow
     // history and macros working. Plan:
-    // docs/superpowers/plans/2026-11-02-webclient-phone-keyboard.md.
+    // docs/superpowers/plans/completed/2026-11-02-webclient-phone-keyboard.md.
     //
     // s: { touchOnly, phoneWidth, sent, inGame, menuOpen, password }
     function shouldHideKeyboardAfterSend(s) {

@@ -7,8 +7,8 @@ decisions below are Malia's, made while reviewing on localhost, dated.
 server change (asset version tags).
 **Arc:** the touch web client rework, epic #783 (its requirements doc was
 never merged; the epic is the pointer). **Colours:**
-[`completed/2026-11-01-brand-palette-design.md`](completed/2026-11-01-brand-palette-design.md).
-**Brand rules:** [`../../guides/BRAND_STANDARDS.md`](../../guides/BRAND_STANDARDS.md).
+[`2026-11-01-brand-palette-design.md`](2026-11-01-brand-palette-design.md).
+**Brand rules:** [`../../../guides/BRAND_STANDARDS.md`](../../../guides/BRAND_STANDARDS.md).
 
 ## Goal
 Younger players on any device: keep the reading, cut the repetitive typing,

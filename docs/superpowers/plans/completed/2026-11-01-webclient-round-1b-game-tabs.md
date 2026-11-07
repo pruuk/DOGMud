@@ -3,7 +3,7 @@
 > **Written after the work** (2026-11-02), to put the skipped plan step back
 > into the repo. No BAR was run before execution; a BAR of the shipped diff
 > follows (see "Review" at the end). Spec:
-> [`../specs/2026-11-01-webclient-rework-design.md`](../specs/2026-11-01-webclient-rework-design.md).
+> [`../../specs/completed/2026-11-01-webclient-rework-design.md`](../../specs/completed/2026-11-01-webclient-rework-design.md).
 
 **Commit:** `67981533b` on `feat/game-settings` (PR #768). It also carries the
 2026-11-01 Settings menu, website light theme and glass menus

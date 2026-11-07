@@ -1,6 +1,6 @@
 # Merge master's phone fit (#773, #774) into the web rework (#768)
 
-> Spec: [`../specs/2026-11-01-webclient-rework-design.md`](../specs/2026-11-01-webclient-rework-design.md).
+> Spec: [`../../specs/completed/2026-11-01-webclient-rework-design.md`](../../specs/completed/2026-11-01-webclient-rework-design.md).
 > Master's plan: [`2026-11-03-webclient-phone-fit.md`](2026-11-03-webclient-phone-fit.md) (Calabe).
 > Status: BAR done (findings at the end, folded in); approved by Malia and
 > merged 2026-11-03. **Rule (Malia, 2026-11-03):

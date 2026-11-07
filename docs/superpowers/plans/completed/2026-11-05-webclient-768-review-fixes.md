@@ -1,6 +1,6 @@
 # PR #768 review fixes, and the green on/off switch
 
-Spec: [`../specs/2026-11-01-webclient-rework-design.md`](../specs/2026-11-01-webclient-rework-design.md).
+Spec: [`../../specs/completed/2026-11-01-webclient-rework-design.md`](../../specs/completed/2026-11-01-webclient-rework-design.md).
 Review: Calabe's Claude on #768, 2026-11-04
 (`issuecomment-6637366904`). This plan grows one section per item as Malia
 rules on it; the keyboard items stay with Calabe's side (his ruling).

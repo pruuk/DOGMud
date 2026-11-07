@@ -1,6 +1,6 @@
 # Map strip: legend and zoom buttons under the map
 
-> Spec: [`../specs/2026-11-01-webclient-rework-design.md`](../specs/2026-11-01-webclient-rework-design.md)
+> Spec: [`../../specs/completed/2026-11-01-webclient-rework-design.md`](../../specs/completed/2026-11-01-webclient-rework-design.md)
 > ("Map strip"). Status: BAR done (findings below, fixed in the tasks);
 > Malia chose the simpler version; built 2026-11-02 and checked by her
 > (localhost and phone). Part 1 (the
