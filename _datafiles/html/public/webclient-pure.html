@@ -629,8 +629,10 @@
                 var fromSource  = obj.Channel.source;
                 var message     = obj.Channel.text;
 
-                var tab   = document.getElementById("comm-tab-" + channelName);
-                var panel = document.getElementById("comm-" + channelName);
+                // Shouts go into the Chat window (Calabe 2026-11-07).
+                var windowName = channelName === 'shout' ? 'chat' : channelName;
+                var tab   = document.getElementById("comm-tab-" + windowName);
+                var panel = document.getElementById("comm-" + windowName);
 
                 if (!tab || !panel) return;
 
@@ -648,7 +650,7 @@
                 var p = document.createElement('p');
                 var nameSpan = document.createElement('span');
                 nameSpan.className = 'text-name ' + srcClass;
-                nameSpan.textContent = (fromName != null ? fromName : '');
+                nameSpan.textContent = (fromName != null ? fromName : '') + (channelName === 'shout' ? ' shouts' : '');
                 var bodySpan = document.createElement('span');
                 bodySpan.className = 'text-body ' + srcClass;
                 bodySpan.textContent = (message != null ? message : '');

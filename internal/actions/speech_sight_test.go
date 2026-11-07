@@ -327,6 +327,24 @@ func TestShout_NextDoorHearsTheWordsAndNoName(t *testing.T) {
 	require.False(t, msgs[0].IsCommunication, "an NPC's shout is never deafen-filtered")
 }
 
+// A shout fires one Communication event so the web client's Chat window can
+// show it (owner 2026-11-07), from a player and from a mob.
+func TestShout_FiresAShoutCommunication(t *testing.T) {
+	sc := newSpeechScene(t)
+	events.DrainQueuedCommunicationsForTest()
+
+	Shout(sc.speaker(true, sc.lit), "HELP")
+	comms := events.DrainQueuedCommunicationsForTest()
+	require.Len(t, comms, 1)
+	require.Equal(t, events.Communication{SourceUserId: speechSpeakerId, CommType: `shout`, Name: `Kesh`, Message: `HELP`}, comms[0])
+
+	Shout(sc.speaker(false, sc.lit), "HELP")
+	comms = events.DrainQueuedCommunicationsForTest()
+	require.Len(t, comms, 1)
+	require.Equal(t, events.Communication{SourceMobInstanceId: speechMobInst, CommType: `shout`, Name: `Grel`, Message: `HELP`}, comms[0])
+	sc.drain()
+}
+
 // Rider 5: a hidden mob that shouts is revealed, as a player is.
 func TestShout_RevealsAHiddenMob(t *testing.T) {
 	sc := newSpeechScene(t)

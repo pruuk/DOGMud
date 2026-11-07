@@ -730,7 +730,9 @@ itself, so both the player and the mob path share the one formatter
 
 **`shout.go`**: `Shout(actor Actor, text string) ShoutResult` reveals a
 hidden shouter, sends the room line through `sendSpoken` on
-`messaging.CategoryShout`, then walks every adjacent room
+`messaging.CategoryShout`, fires `events.Communication{CommType: "shout"}`
+(the web client's Chat window, built by `modules/gmcp` `shoutDeliveries`),
+then walks every adjacent room
 (`Room.ForEachAdjacentRoom`) with an anonymous line carrying the words: a
 player's copy goes out through `otherRoom.SendTextCommunication` (still
 deafen-filtered, byte-identical to before), a mob's through plain

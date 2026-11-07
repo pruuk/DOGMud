@@ -468,8 +468,15 @@ matching the text lane (`actions.sendSpoken`): `sender` is the name at clear sig
 at shapes, `Someone` at none or when `events.Communication.SpeakerHidden`; a player speaker's
 words skip deafened listeners, an NPC's do not (ruling 6); a say with `TargetUserId` reaches
 only that player; a listener in `events.Communication.ExcludeUserIds` (an ambient say they
-were over budget for, #317) gets no payload, as they got no room line. Other channels are
-unchanged.
+were over budget for, #317) gets no payload, as they got no room line. Both find the
+speaker's room through `commSpeakerRoom`.
+
+`Comm.Channel` shout goes through `shoutDeliveries` (owner 2026-11-07): the speaker's room
+exactly as say, then every room from `Room.ForEachAdjacentRoom` with `sender`
+`Someone (<exit>)`, the listener's exit back toward the shouter, as the game text's "from the
+<exit> direction". A player's shout skips deafened listeners next door; an NPC's reaches them.
+The web client files `shout` into the Chat window as "<sender> shouts: <words>". Other
+channels are unchanged.
 
 ## Module index
 

@@ -63,7 +63,7 @@ func (g *GMCPCommModule) onComm(e events.Event) events.ListenerReturn {
 	}
 
 	// Sent to everyone.
-	// say, party, broadcast, whisper
+	// say, shout, party, broadcast, whisper
 
 	sendToUserIds := []int{}
 
@@ -72,6 +72,19 @@ func (g *GMCPCommModule) onComm(e events.Event) events.ListenerReturn {
 		// Say is room speech and follows each listener, as the text lane does
 		// (actions.sendSpoken): its own payload per listener.
 		for _, d := range sayDeliveries(evt, payload) {
+			events.AddToQueue(GMCPOut{
+				UserId:  d.UserId,
+				Module:  `Comm.Channel`,
+				Payload: d.Payload,
+			})
+		}
+		return events.Continue
+
+	} else if evt.CommType == `shout` {
+
+		// A shout is louder than say: the speaker's room and the rooms next
+		// door, each listener with its own payload (owner 2026-11-07).
+		for _, d := range shoutDeliveries(evt, payload) {
 			events.AddToQueue(GMCPOut{
 				UserId:  d.UserId,
 				Module:  `Comm.Channel`,
@@ -165,17 +178,7 @@ type commDelivery struct {
 //     always reads their own name.
 func sayDeliveries(evt events.Communication, base GMCPCommModule_Payload) []commDelivery {
 
-	var room *rooms.Room
-	if evt.SourceUserId > 0 {
-		if user := users.GetByUserId(evt.SourceUserId); user != nil {
-			room = rooms.LoadRoom(user.Character.RoomId)
-		}
-	}
-	if evt.SourceMobInstanceId > 0 {
-		if mob := mobs.GetInstance(evt.SourceMobInstanceId); mob != nil {
-			room = rooms.LoadRoom(mob.Character.RoomId)
-		}
-	}
+	room := commSpeakerRoom(evt)
 	if room == nil {
 		return nil
 	}
@@ -211,6 +214,48 @@ func sayDeliveries(evt events.Communication, base GMCPCommModule_Payload) []comm
 		}
 		deliveries = append(deliveries, commDelivery{UserId: uid, Payload: p})
 	}
+	return deliveries
+}
+
+// commSpeakerRoom is the room a say or shout was spoken in, or nil. A mob
+// speaker is checked first, which keeps the precedence sayDeliveries had when
+// it did this lookup inline.
+func commSpeakerRoom(evt events.Communication) *rooms.Room {
+	if evt.SourceMobInstanceId > 0 {
+		if mob := mobs.GetInstance(evt.SourceMobInstanceId); mob != nil {
+			return rooms.LoadRoom(mob.Character.RoomId)
+		}
+	}
+	if evt.SourceUserId > 0 {
+		if user := users.GetByUserId(evt.SourceUserId); user != nil {
+			return rooms.LoadRoom(user.Character.RoomId)
+		}
+	}
+	return nil
+}
+
+// shoutDeliveries is who receives a shout over GMCP (spec 2026-11-07): the
+// speaker's room as for say (by sight), and every adjacent room as
+// "Someone (<exit>)", the words the game text uses for a shout heard next
+// door. A player's shout skips deafened listeners next door, as the text
+// lane does; an NPC's reaches them.
+func shoutDeliveries(evt events.Communication, base GMCPCommModule_Payload) []commDelivery {
+	room := commSpeakerRoom(evt)
+	if room == nil {
+		return nil
+	}
+	deliveries := sayDeliveries(evt, base)
+	room.ForEachAdjacentRoom(func(other *rooms.Room, sourceExit string) {
+		for _, uid := range other.GetPlayers() {
+			u := users.GetByUserId(uid)
+			if u == nil || (evt.SourceUserId > 0 && u.Deafened) {
+				continue
+			}
+			p := base
+			p.Sender = `Someone (` + sourceExit + `)`
+			deliveries = append(deliveries, commDelivery{UserId: uid, Payload: p})
+		}
+	})
 	return deliveries
 }
 

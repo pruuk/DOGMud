@@ -31,5 +31,9 @@ var handler = page.slice(handlerAt, page.indexOf('"Room": function()', handlerAt
 check('the handler removes a window\'s hint before the first line',
     /var hint = panel\.querySelector\('\.chat-hint'\);\s*if \(hint\) panel\.removeChild\(hint\);/.test(handler) &&
     handler.indexOf("querySelector('.chat-hint')") < handler.indexOf('panel.appendChild(p)'), true);
+check('shouts go into the Chat window',
+    /var windowName = channelName === 'shout' \? 'chat' : channelName;/.test(handler), true);
+check('a shout reads "<name> shouts: <words>"',
+    /\(channelName === 'shout' \? ' shouts' : ''\)/.test(handler), true);
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);
