@@ -3,8 +3,11 @@ package hooks
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -130,6 +133,46 @@ func TestScheduleTick_WantsSleep_AtTargetDuringSleepSegment(t *testing.T) {
 	}
 	if !plan.WantsSleep {
 		t.Errorf("expected WantsSleep=true at target during sleep segment, got %+v", plan)
+	}
+}
+
+// Owner 2026-11-07: a shopkeeper does not doze off with a customer (a player
+// who is not hidden) in the shop; an empty shop, or a mob with no shop, still
+// sleeps on schedule.
+func TestScheduleTick_ShopkeeperStaysUpForACustomer(t *testing.T) {
+	registerSleepyScheduleForTest(t)
+	shop := &rooms.Room{RoomId: 1234, Zone: "SleepyZone"}
+	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{1234: shop},
+		map[string]*rooms.ZoneConfig{"SleepyZone": {Name: "SleepyZone", RoomId: 1234}}))
+
+	keeper := &mobs.Mob{ScheduleId: "sleepy_test", HomeRoomId: 1234}
+	keeper.Character.RoomId = 1234
+	keeper.Character.Shop = characters.Shop{{ItemId: 1, Quantity: 1}}
+	plain := &mobs.Mob{ScheduleId: "sleepy_test"}
+	plain.Character.RoomId = 1234
+	// A keeper whose shop is elsewhere (Kerra in her bedroom) is no
+	// shopkeeper here (review 2026-11-07).
+	away := &mobs.Mob{ScheduleId: "sleepy_test", HomeRoomId: 999}
+	away.Character.RoomId = 1234
+	away.Character.Shop = characters.Shop{{ItemId: 1, Quantity: 1}}
+
+	if !scheduleTickPlan(keeper, 23).WantsSleep {
+		t.Fatal("an empty shop: the keeper should sleep on schedule")
+	}
+
+	customer := users.NewTestUser(9861, "customer", "Customer", 99861)
+	customer.Character.RoomId = 1234
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{9861: customer}))
+	shop.AddPlayer(9861)
+
+	if scheduleTickPlan(keeper, 23).WantsSleep {
+		t.Error("a customer in the shop: the keeper should stay up")
+	}
+	if !scheduleTickPlan(plain, 23).WantsSleep {
+		t.Error("a mob with no shop sleeps on schedule even with a player present")
+	}
+	if !scheduleTickPlan(away, 23).WantsSleep {
+		t.Error("a keeper asleep away from their shop sleeps on schedule even with a player present")
 	}
 }
 

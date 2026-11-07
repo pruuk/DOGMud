@@ -703,6 +703,13 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
   swaps `mob.IdleCommands` on segment transition, queues a `pathto`
   toward the segment `target_room`, falls back to `pathto home` after
   `ScheduleMaxPathRetries` consecutive failed path attempts.
+- `shopHasCustomer(mob)` (owner 2026-11-07): a shopkeeper in their own shop
+  (`mob.HasShop()` and in `HomeRoomId`) does not doze off while a player who
+  is not hidden is in the room; once the room has none and the wake grace has
+  run, the schedule puts them back to sleep. `ScheduleWakeGraceRounds` (50)
+  is now shipped in `_datafiles/config.yaml`.
+- `BroadcastTips` (`NewRound_BroadcastTips.go`) reaches deafened players too
+  (owner 2026-11-07); only `set tips off` skips a player.
 - `MobIdle_HandleIdleMobs`: `TickMobCraft` now respects the schedule
   `activity:` gate — it returns nil immediately when the mob's current
   segment `activity` is not `"craft"`.

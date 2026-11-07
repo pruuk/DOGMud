@@ -20,8 +20,9 @@ func Buy(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	// NPC to sleep IN their own workplace, so without this a player could trade
 	// at 3am with the keeper snoring in the corner.
 	// An off-shift keeper does not trade either (owner ruling 2026-10-17);
-	// actions.RefuseIfShopClosed is the one gate for both.
-	if actions.RefuseIfShopClosed(room, user) {
+	// actions.RefuseIfShopClosed is the one gate for both. A sleeping keeper
+	// wakes for the customer first (shopOpenFor, owner ruling 2026-11-07).
+	if !shopOpenFor(room, user) {
 		return true, nil
 	}
 

@@ -124,6 +124,11 @@
   font-family: var(--font-heading);
   font-size: 0.82rem; color: var(--vellum);
 }
+/* With a mouse, the tab names grow a little so they sit well next to
+   the 24px ▾ and ⧉ buttons below (#730). Touch screens keep 0.82rem. */
+@media (pointer: fine) {
+  .dash-panel-head .ph-title { font-size: 0.95rem; }
+}
 
 /* Parchment cards: vellum fill + gold outline + dark text, for
    contrast against the dark leather cards. (session strip / command input /
@@ -171,6 +176,11 @@
    40px buttons, and title bars without buttons do not change. */
 @media (pointer: coarse) {
   .dash-panel-head .ph-btn { width: 44px; height: 44px; line-height: 42px; font-size: 18px; margin: -2px 0; }
+}
+/* With a mouse, the ▾ and ⧉ buttons are 24px, the smallest size the
+   accessibility rules allow for something you click (#730). */
+@media (pointer: fine) {
+  .dash-panel-head .ph-btn { width: 24px; height: 24px; line-height: 22px; font-size: 14px; }
 }
 .dash-panel-body { flex: 1 1 auto; min-height: 0; overflow: auto; position: relative; }
 
@@ -862,6 +872,16 @@ html.keyboard-open #dash-drawer {
 @media (pointer: coarse) {
   .subtab { min-height: 44px; }
 }
+/* Chat channel hints (#808, Calabe 2026-11-07): shown until the channel's
+   first line. The quest hint colour: 4.95 on the dark panel, 4.97 in Light. */
+.chat-hint {
+  margin: 6px 8px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--quest-progress);
+}
+.chat-hint code { font-family: var(--font-mono); }
 /* Phones (Calabe and Malia 2026-11-07, on her phone): the 44px sub-tabs took
    two or three rows and, with the 50px title bar, most of an open Chat tab,
    upright and sideways. On a touch screen under 600px wide or under 500px
@@ -1147,6 +1167,11 @@ html.keyboard-open #dash-drawer {
   filter: brightness(0.85);
   transition: filter 0.08s;
   user-select: none;
+}
+/* With a mouse, "+ New" is at least 24px tall with easier-to-read text,
+   the smallest size the accessibility rules allow (#730). */
+@media (pointer: fine) {
+  .auto-add { font-size: 13px; min-height: 24px; display: inline-flex; align-items: center; }
 }
 .auto-add:hover {
   filter: brightness(1);

@@ -500,6 +500,14 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 			}
 
+			// A sleeping shopkeeper wakes for a customer who is not hidden
+			// (owner ruling 2026-11-07), light or no light. isSneaking, as left
+			// by EntryDetection, also counts the sneak command's misc-data flag
+			// before the Hidden condition lands.
+			if !isSneaking {
+				wakeKeepersOnEntry(destRoom, user)
+			}
+
 			// Chunk 3.3: a player arriving with a light source wakes any
 			// sleepers in the destination room. False positives possible if
 			// the room was already lit; acceptable for chunk 3.3 scope (most
@@ -518,6 +526,13 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				for _, mobInstId := range destRoom.GetMobs() {
 					if m := mobs.GetInstance(mobInstId); m != nil &&
 						m.Character.HasConditionFlag(conditions.Sleeping) {
+						// A keeper in their own shop wakes as for a customer
+						// (lantern relit, the room told); no customer line,
+						// since the light woke them, not a customer.
+						if keeperInOwnShop(m) {
+							wakeKeeper(m, destRoom, nil, false)
+							continue
+						}
 						m.Character.CancelConditionsWithFlag(conditions.Sleeping)
 						mobs.OnSleeperWoken(&m.Character)
 					}

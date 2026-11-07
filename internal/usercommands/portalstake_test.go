@@ -101,7 +101,7 @@ func TestPortalStake_EveryCommandKindRunsOnce(t *testing.T) {
 		t.Run(line, func(t *testing.T) {
 			u := seedPortalStakeScene(t)
 			if line == "`hello" {
-				t.Cleanup(keywords.SeedKeywordsForTest(keywords.Aliases{CommandAliases: map[string][]string{"broadcast": {"`"}}}))
+				t.Cleanup(keywords.SeedKeywordsForTest(keywords.Aliases{CommandAliases: map[string][]string{"chat": {"`"}}}))
 			}
 			typeAtPrompt(t, u, line)
 			require.Nil(t, u.GetPrompt(), "a non-number closes the prompt")

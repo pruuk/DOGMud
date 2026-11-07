@@ -59,7 +59,7 @@ var refusalPhrases = []struct {
 	{"busy", regexp.MustCompile(`while focused on your work`), "You can't bash while focused on your work. Finish or be interrupted first."},
 	{"busy, working", regexp.MustCompile(`already (busy )?working on something|busy with something else|too busy to cast`), "You're already busy working on something."},
 	{"cost", regexp.MustCompile(`too spent to manage|cannot muster the resolve`), "You are too spent to manage that right now."},
-	{"asleep", regexp.MustCompile(`is fast asleep\. You could make some noise`), "%s is fast asleep. You could make some noise."},
+	{"asleep", regexp.MustCompile(`is fast asleep\.`), "%s is fast asleep."},
 	{"under attack", regexp.MustCompile(`while you are under attack`), "You can't do that while you are under attack!"},
 	{"not here, vanished", regexp.MustCompile(`seem to have vanished`), "They seem to have vanished."},
 	{"cooldown, rounds", regexp.MustCompile(`more rounds (before|to)`), "You need to wait %d more rounds before you can try that again."},

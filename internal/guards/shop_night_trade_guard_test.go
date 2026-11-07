@@ -54,8 +54,11 @@ var nightTradeSampleDays = []struct {
 //   - A keeper with a schedule is, at each hour, in that hour's segment's
 //     target room, unless the segment is sleeping or patrol. The loader
 //     rejects a target of 0 outside patrol, so every awake segment names a
-//     real room. A sleeping keeper is exempt, since ShopClosedForSleep
-//     refuses before the sight gate ever runs. So is a keeper whose segment
+//     real room. A keeper asleep in their own shop wakes for a customer
+//     and trades at once (owner ruling 2026-11-07), so at every sleeping
+//     hour whose target is the shop they are also checked woken: Sleeping
+//     off, lantern tree run, in the shop. A keeper asleep anywhere else is
+//     exempt. So is a keeper whose segment
 //     sends them away from their spawn room, the home room their shop
 //     belongs to: off shift (mobs.OffShift), they do not trade at all, so
 //     the light there is not a shop's light. A patrolling keeper is on the
@@ -171,6 +174,7 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 	observer := &characters.Character{}
 	totalSamples, totalNight := 0, 0
 	treedSamples, asleepSamples := 0, 0
+	wokenSamples := 0      // keepers asleep in their own shop, checked woken
 	var litAsleep []string // keepers asleep with their lantern still lit
 	nightByKeeper := map[int]int{}
 	keeperNames := map[int]string{}
@@ -243,6 +247,39 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 					}
 				}
 
+				// Spec 2026-11-07: a keeper asleep in their own shop wakes for
+				// a customer and must be able to trade at once. Wake them as
+				// usercommands.wakeKeeper does (Sleeping off, lantern tree run)
+				// and ask the sight gate in the shop.
+				if asleep && sched != nil {
+					if seg := sched.CurrentSegment(hour); seg != nil && seg.TargetRoom == p.room.RoomId {
+						inst.Character.Conditions.RemoveCondition(15)
+						inst.Character.RoomId = p.room.RoomId
+						if lamp := inst.Character.Equipment.Light; lamp.ItemId > 0 && lamp.HasBehavior() {
+							behaviortree.TryItemBehavior(behaviortree.EventContext{EventType: "item_idle"}, behaviortree.ItemSubject{
+								UUID: lamp.UUID, ItemId: lamp.ItemId, MobInstanceId: inst.InstanceId,
+								RoomId: p.room.RoomId, Slot: "light"})
+						}
+						p.room.AddMob(inst.InstanceId)
+						wokenSamples++
+						if actions.ShopSightRefusal(observer, p.room) {
+							if _, ok := dark[p.room.RoomId]; !ok {
+								darkOrder = append(darkOrder, p.room.RoomId)
+							}
+							dark[p.room.RoomId] = append(dark[p.room.RoomId], fmt.Sprintf("%s %02d:00 woken, light %d", d.Name, hour, p.room.LightLevel()))
+						}
+						p.room.RemoveMob(inst.InstanceId)
+						inst.Character.Conditions.AddCondition(15, false)
+						// Back asleep: run the tree again so the lantern goes
+						// dark and the hour ends in the state it started in.
+						if lamp := inst.Character.Equipment.Light; lamp.ItemId > 0 && lamp.HasBehavior() {
+							behaviortree.TryItemBehavior(behaviortree.EventContext{EventType: "item_idle"}, behaviortree.ItemSubject{
+								UUID: lamp.UUID, ItemId: lamp.ItemId, MobInstanceId: inst.InstanceId,
+								RoomId: p.room.RoomId, Slot: "light"})
+						}
+					}
+				}
+
 				here := roamRooms
 				if sched != nil {
 					here = scheduledRoom(t, sched, hour, mobId, p.room.RoomId)
@@ -285,8 +322,11 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 	if treedSamples == 0 || asleepSamples == 0 {
 		t.Fatalf("the keepers' lantern tree ran at %d samples, %d of them asleep: the 5e check saw nothing", treedSamples, asleepSamples)
 	}
-	t.Logf("checked %d shop placements across %d awake samples, %d of them at night; the lantern tree ran at %d samples, %d asleep",
-		len(placements), totalSamples, totalNight, treedSamples, asleepSamples)
+	if wokenSamples == 0 {
+		t.Fatal("no keeper asleep in their own shop was checked woken: the 2026-11-07 check saw nothing")
+	}
+	t.Logf("checked %d shop placements across %d awake samples, %d of them at night; the lantern tree ran at %d samples, %d asleep; %d woken in their shop",
+		len(placements), totalSamples, totalNight, treedSamples, asleepSamples, wokenSamples)
 	if len(litAsleep) > 0 {
 		t.Errorf("%d samples found a keeper asleep with its lantern still lit. The Oil Lantern's tree\n"+
 			"(behaviors/items/keeper_lantern.yaml) must put it out while its holder sleeps (owner\n"+

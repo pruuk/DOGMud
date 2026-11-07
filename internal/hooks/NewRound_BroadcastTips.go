@@ -9,7 +9,8 @@ import (
 )
 
 // BroadcastTips sends the next gameplay tip (internal/tips) to every active
-// player who is not deafened and has not turned tips off with `set tips`,
+// player, deafened ones included (owner 2026-11-07), who has not turned tips
+// off with `set tips`,
 // every Balance.TipIntervalRounds rounds (75 is about 5 minutes at 4-second
 // rounds; 0 turns tips off, #317).
 
@@ -31,9 +32,6 @@ func BroadcastTips(e events.Event) events.ListenerReturn {
 	fullText := `<ansi fg="cyan-bold">[Tip]</ansi> ` + tip
 
 	for _, u := range users.GetAllActiveUsers() {
-		if u.Deafened {
-			continue
-		}
 		// Tips default to ON (nil = on).
 		if on, ok := u.GetConfigOption(tipsConfigKey).(bool); ok && !on {
 			continue

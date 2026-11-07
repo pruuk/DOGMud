@@ -8,6 +8,30 @@
   prompt as if you had typed it. If you were in the middle of an edit, your
   words stay in the window so you can log in and save them.
 
+## 2026-11-07: Bigger buttons with a mouse
+
+- On a laptop or desktop, the fold and pop-out buttons on each panel's title
+  bar are bigger and easier to click, and the panel names are a little
+  larger to match.
+- The "+ New" button in Automation is bigger too, with easier-to-read text.
+- Phones and tablets are unchanged.
+
+## 2026-11-07: The status light waits for you to log in
+
+- The light on the Enter Game button stays amber while you are at the login
+  prompt, and turns green only once your character is in the game.
+
+## 2026-11-07: Waking up
+
+- Each Chat channel says what it is for until its first message arrives.
+  Rest the mouse on a channel's button to read it again.
+- Whispers you send now show in your own Whisper tab.
+- Shouts show in the Chat tab, from your room and from next door.
+- The Broadcasts tab is for game tips and announcements from the staff.
+  To talk to everyone, use `chat`, or its shortcut `` ` ``.
+- Shopkeepers wake up when you walk in, and stay up while you shop.
+- Type `wake` and a name to wake someone who is asleep.
+
 ## 2026-11-07: Loose ends
 
 - A mutation without a picture of its own now shows the cocoon picture, as
