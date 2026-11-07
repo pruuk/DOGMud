@@ -1,6 +1,6 @@
 ---
 name: dogmud-end-of-day
-description: Use at the end of a working day or session, when the owner signs off, says EOD, or asks to wrap up. Covers the daily archive sweep of docs/superpowers/specs and plans (shipped work to completed/, dropped work to abandoned/, every reference repointed), the repo-root tidy that archives old screenshots without touching binaries, the daily disk check (C: free space with a 60 GB warning, the Go build cache with a go clean -cache trigger, DOGMud's own session scratchpads) and the scratch sweep of C:\tmp and C:\gotmp (merged worktrees, stale cargo targets and scratch dirs), and the session handoff memory.
+description: Use at the end of a working day or session, when the owner signs off, says EOD, or asks to wrap up. Covers the archive sweep of specs and plans (shipped to completed/, dropped to abandoned/, references repointed), the repo-root tidy, the daily disk check (60 GB warning, Go build cache, session scratchpads), the C:\tmp and C:\gotmp sweep, and the handoff memory with the index kept to area pointers.
 ---
 
 This skill is the owner's end-of-day SOP (ruled 2026-09-25). It keeps
