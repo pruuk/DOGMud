@@ -188,9 +188,10 @@ check('D2 queued tick shows when no triggers are configured', rows2.length === 1
 // in (automationReady), the helper stays out of the way.
 var termLines = [];
 global.term = { write: function (s) { termLines.push(s); }, writeln: function (s) { termLines.push(s + '\r\n'); } };
-(0, eval)(extract('const AUTOMATION_LOGIN_MESSAGE', 'function automationNeedsLogin()')
-    .replace('const AUTOMATION_LOGIN_MESSAGE', 'var AUTOMATION_LOGIN_MESSAGE')
-    + extract('function automationNeedsLogin()', '\n        }\n') + '\n        }\n');
+// Ends at the next comment, not at a newline marker: a Windows checkout has
+// \r\n line endings, which a '\n        }\n' marker never matches.
+(0, eval)(extract('const AUTOMATION_LOGIN_MESSAGE', '// quit is not instant')
+    .replace('const AUTOMATION_LOGIN_MESSAGE', 'var AUTOMATION_LOGIN_MESSAGE'));
 (0, eval)('stopAutomation();');
 check('E1 logged out: the helper stops the action', automationNeedsLogin() === true, 'returned false');
 check('E1 logged out: the player is told why, on a line of its own',
