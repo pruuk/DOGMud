@@ -94,9 +94,14 @@ func (g *GMCPCommModule) onComm(e events.Event) events.ListenerReturn {
 
 	} else if evt.CommType == `whisper` {
 
-		if evt.TargetUserId > 0 {
-			sendToUserIds = append(sendToUserIds, evt.TargetUserId)
+		for _, d := range whisperDeliveries(evt, payload) {
+			events.AddToQueue(GMCPOut{
+				UserId:  d.UserId,
+				Module:  `Comm.Channel`,
+				Payload: d.Payload,
+			})
 		}
+		return events.Continue
 
 	} else if ch, ok := channels.Get(evt.CommType); ok {
 
@@ -205,6 +210,27 @@ func sayDeliveries(evt events.Communication, base GMCPCommModule_Payload) []comm
 			}
 		}
 		deliveries = append(deliveries, commDelivery{UserId: uid, Payload: p})
+	}
+	return deliveries
+}
+
+// whisperDeliveries is who receives a whisper over GMCP. The target reads the
+// sender's name. A player who sends one also gets a copy, so their Whisper tab
+// shows both sides of the talk the way Party and the chat channels echo the
+// sender; that copy reads "You (to <target>)" so it says who it went to. A
+// mob's whisper has no player sender and reaches only its target.
+func whisperDeliveries(evt events.Communication, base GMCPCommModule_Payload) []commDelivery {
+	if evt.TargetUserId <= 0 {
+		return nil
+	}
+	deliveries := []commDelivery{{UserId: evt.TargetUserId, Payload: base}}
+	if evt.SourceUserId > 0 && evt.SourceUserId != evt.TargetUserId {
+		echo := base
+		echo.Sender = `You`
+		if target := users.GetByUserId(evt.TargetUserId); target != nil {
+			echo.Sender = `You (to ` + target.Character.Name + `)`
+		}
+		deliveries = append(deliveries, commDelivery{UserId: evt.SourceUserId, Payload: echo})
 	}
 	return deliveries
 }
