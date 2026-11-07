@@ -188,6 +188,11 @@ for slice B.*
   at its right end and opens the key below; the key starts folded on windows
   under 800px tall. In a very narrow column the row wraps rather than cut
   off a button.
+- Laptop page scroll (review item 5): the Map's minimum height is back to
+  master's 150px (this PR had 230). Measured with five quests, logged out:
+  no whole-page scroll from 1440x900 down to 1100x540. A logged-in
+  character with a party or a long gear list adds height; check that by
+  hand.
 - Code is written so a person can maintain it: edit what exists first, and
   give every change a plain-English comment (Malia).
 - Still to decide: a description of each Chat button (hover on a laptop; a

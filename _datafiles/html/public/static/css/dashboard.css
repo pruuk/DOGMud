@@ -223,7 +223,13 @@
    inventory is short) but keeps a min; the Inventory panel sizes to its content
    (grows with a long eq list — e.g. extra-arms — and scrolls only once the Map
    reaches its min). Vitals stays content-compact. */
-#panel-map    { flex: 1 1 0; min-height: 230px; }    /* fills / yields slack; room for the button row and legend under the map */
+/* The Map takes whatever height is left in the left column, and gives it up
+   when Quests, Health or Inventory need more. It never shrinks below 150px
+   (master's value; this PR had raised it to 230). At 230, a short laptop
+   window with a few quests made the whole page scroll and pushed the top bar
+   out of view (#768 review item 5). The legend now starts folded on short
+   windows, so 150 still leaves the map room to draw. */
+#panel-map    { flex: 1 1 0; min-height: 150px; }
 /* Map legend: under the map, not drawn over the rooms (Malia 2026-11-02).
    The map fills the space above; the key folds away (details/summary) to
    give a small screen the room. On the Map's dark field: labels #cec6aa
