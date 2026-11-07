@@ -352,6 +352,7 @@
           <div class="dash-panel-head"><span class="ph-title">Chat</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body">
+            <p class="chat-fs-hint">Turn on Full screen for more room to read Chat.</p>
             <!-- COMM window (tabs) — moved from hidden div into chat panel -->
             <div id="comm-output" class="tabs">
               <div class="tab-buttons subtabs" role="group" aria-label="Chat channels">
@@ -2592,6 +2593,8 @@
             if (outer) {
                 button.style.display = '';
                 outer.onChange(function (on) {
+                    // The sideways Chat line about Full screen hides while it is on.
+                    document.documentElement.classList.toggle('fullscreen-on', on);
                     // The visible words and the spoken name start the same, so
                     // voice control can say what it sees (WCAG 2.5.3).
                     var shown = on ? 'Exit full screen' : 'Full screen';

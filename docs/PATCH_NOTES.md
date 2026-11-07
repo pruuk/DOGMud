@@ -37,8 +37,9 @@
   bar; adding the game to your home screen is the way around it there.)
 - Add the game to your phone's home screen and it opens straight into the
   game, with no address bar.
-- On a phone held sideways, the tabs in Chat, Inventory and Automation are
-  smaller, so Chat has room for its messages.
+- On a phone, the tabs in Chat, Inventory and Automation are smaller, so
+  Chat has more room for its messages. Held sideways, Chat needs Full screen
+  to have room, and says so.
 
 ## 2026-11-06: Word gets around
 

@@ -862,25 +862,45 @@ html.keyboard-open #dash-drawer {
 @media (pointer: coarse) {
   .subtab { min-height: 44px; }
 }
-/* A phone held sideways (Calabe and Malia 2026-11-07, on her phone): the
-   44px sub-tabs took three rows of a short screen and left Chat no room for
-   messages. Sideways on a touch screen under 500px tall they are 30px, still
-   above the 24px minimum target, with smaller words and padding so more fit
-   on a row. The panel title buttons shrink to match, and the tab name pill
-   under the game tabs goes (the pressed circle already shows which is open).
-   A deliberate exception to the 44px rule, recorded in BRAND_STANDARDS.md. */
-@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+/* Phones (Calabe and Malia 2026-11-07, on her phone): the 44px sub-tabs took
+   two or three rows and, with the 50px title bar, most of an open Chat tab,
+   upright and sideways. On a touch screen under 600px wide or under 500px
+   tall (a phone either way up, never a tablet) they are 30px, still above
+   the 24px minimum target, with smaller words and padding so more fit on a
+   row, and the panel title buttons shrink to match. A deliberate exception
+   to the 44px rule, recorded in BRAND_STANDARDS.md. */
+@media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .subtabs { gap: 4px; padding: 4px 4px 5px; }
   .subtab { min-height: 30px; padding: 2px 8px; font-size: 0.82rem; }
   .dash-panel-head .ph-btn { width: 32px; height: 30px; line-height: 28px; font-size: 15px; margin: 0; }
   .drawer-close { min-width: 32px; min-height: 30px; margin: 0; padding: 2px 8px; }
   #dash-drawer .dash-panel-head .ph-collapse { width: 32px; height: 30px; }
   #dash-drawer .dash-panel-head .ph-collapse::before { font-size: 20px; padding-bottom: 3px; }
+}
+/* Sideways only: the tab name pill under the game tabs goes too (the
+   pressed circle already shows which is open), and Chat says that Full
+   screen gives it room (Calabe 2026-11-07): with the browser's bars showing
+   a sideways phone has too little height left to read Chat. The line hides
+   once full screen is on (the frame's .fullscreen-on, set from the outer
+   page) and in the home screen app, which has no bars. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
   .gtabs-rail { margin-bottom: 6px; }
   .gtab-pill { display: none; }
   #dashboard[data-mode="phone"],
   #dash-tabbar,
   #dash-drawer { --tabname-h: 0px; }
+  html:not(.fullscreen-on) .chat-fs-hint { display: block; }
+}
+@media (display-mode: standalone) {
+  html:not(.fullscreen-on) .chat-fs-hint { display: none; }
+}
+.chat-fs-hint {
+  display: none;
+  margin: 0;
+  padding: 3px 8px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--quest-progress);   /* 4.95 on the dark panel, 4.97 on Light */
 }
 @media (forced-colors: active) {
   .subtab.active { outline: 3px solid Highlight; }

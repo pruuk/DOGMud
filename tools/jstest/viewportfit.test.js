@@ -127,10 +127,20 @@ var sessionHandler = game.slice(sessionAt, game.indexOf('connectButton.click();'
 check('every Enter Game tap on a phone can go full screen, before the connected check returns',
     /wantsFullScreenOnConnect\(\)\) \{\s*requestGameFullScreen\(\);/.test(sessionHandler) &&
     sessionHandler.indexOf('wantsFullScreenOnConnect') < sessionHandler.indexOf('if (open) {'), true);
-var sidewaysAt = dashCss.indexOf('@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {');
-var sideways = sidewaysAt === -1 ? '' : dashCss.slice(sidewaysAt, dashCss.indexOf('\n}', sidewaysAt));
-check('a phone held sideways gets 30px sub-tabs', /\.subtab \{ min-height: 30px;/.test(sideways), true);
+function mediaBlock(head) {
+    var at = dashCss.indexOf(head + ' {');
+    return at === -1 ? '' : dashCss.slice(at, dashCss.indexOf('\n}', at));
+}
+var phones = mediaBlock('@media (pointer: coarse) and (max-width: 599px), (pointer: coarse) and (max-height: 500px)');
+var sideways = mediaBlock('@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px)');
+check('a phone either way up gets 30px sub-tabs', /\.subtab \{ min-height: 30px;/.test(phones), true);
+check('a phone either way up gets 30px title buttons', /\.dash-panel-head \.ph-btn \{ width: 32px; height: 30px;/.test(phones), true);
 check('a phone held sideways hides the tab name pill', /\.gtab-pill \{ display: none; \}/.test(sideways), true);
+check('a phone held sideways out of full screen says Full screen gives Chat room',
+    /html:not\(\.fullscreen-on\) \.chat-fs-hint \{ display: block; \}/.test(sideways) &&
+    game.indexOf('<p class="chat-fs-hint">Turn on Full screen for more room to read Chat.</p>') !== -1, true);
+check('the frame knows when full screen is on',
+    /classList\.toggle\('fullscreen-on', on\)/.test(game), true);
 
 var manifest = JSON.parse(fs.readFileSync(path.join(PUBLIC, 'static', 'manifest.json'), 'utf8'));
 check('home screen icon opens without the address bar', manifest.display, 'standalone');

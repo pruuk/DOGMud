@@ -92,11 +92,11 @@ All colours come from the palette spec. The roles that define the brand:
 - **Panels:** gold outline on every card, one teal line under every panel
   title. Pop-out windows are a wide-screen feature only.
 - **Touch:** at least 44px tall targets on touch screens. One exception
-  (Calabe and Malia, 2026-11-07, tested on her phone): a phone held sideways
-  (touch, landscape, under 500px tall) has too little height for 44px
-  sub-tabs, so there the sub-tabs and the panel title buttons are 30px,
-  still above the 24px minimum target (WCAG 2.5.8), and the tab name pill is
-  hidden.
+  (Calabe and Malia, 2026-11-07, tested on her phone): on a phone (touch,
+  under 600px wide or under 500px tall, either way up) 44px sub-tabs took
+  most of an open Chat tab, so there the sub-tabs and the panel title
+  buttons are 30px, still above the 24px minimum target (WCAG 2.5.8). Held
+  sideways, the tab name pill is also hidden.
 
 ## 5. Icons
 
