@@ -23,6 +23,7 @@
         module.exports = api;      // node, for the tests
     } else {
         root.HotInput = api;       // browser
+        if (root.document) api.watch(root.document);
     }
 }(typeof self !== 'undefined' ? self : this, function () {
 
@@ -74,20 +75,46 @@
         return el.matches(FOCUSABLE_CONTROL_SELECTOR);
     }
 
-    // isKeyboardFocused reports whether the element got its focus from the
-    // keyboard. A mouse click or tap also focuses a button (the Automation and
-    // Inventory tabs, the Chat channels, the map Legend), and a player who
-    // clicks one and then types expects the letters in the command box, not
-    // lost on the button (#768 review item 6). Browsers mark keyboard focus
-    // with :focus-visible. A browser too old to know that selector throws; it
-    // then keeps the older, safer rule that any focused control owns its keys.
-    function isKeyboardFocused(el) {
-        if (!el || typeof el.matches !== 'function') return false;
-        try {
-            return el.matches(':focus-visible');
-        } catch (err) {
-            return true;
-        }
+    // Where the current focus came from. A mouse click or tap also focuses a
+    // button (the Automation and Inventory tabs, the Chat channels, the map
+    // Legend), and a player who clicks one and then types expects the letters
+    // in the command box, not lost on the button (#768 review item 6).
+    //
+    // :focus-visible cannot tell us: Chrome and Edge turn it on for a clicked
+    // button as soon as any key is pressed, before the page's keydown listener
+    // runs, so the first typed letter always looked like keyboard focus. So
+    // watch() records the origin itself. The last input before a focus change
+    // decides it: a pointer press (mouse, pen, finger) or a key (Tab, arrows,
+    // a script answering a key). Typing onto a clicked button does not move
+    // focus, so it does not change the origin.
+    var lastInput = null;       // 'pointer' | 'keyboard' | null
+    var focused = null;         // { el: Element, pointer: bool }
+
+    function onPointer() { lastInput = 'pointer'; }
+    function onKey() { lastInput = 'keyboard'; }
+    function onFocusIn(e) {
+        focused = { el: e && e.target, pointer: lastInput === 'pointer' };
+    }
+
+    // watch installs the focus-origin listeners on a document, in the capture
+    // phase so they run before any page handler. The browser build calls it
+    // on load; the tests call it on a fake document.
+    function watch(doc) {
+        lastInput = null;
+        focused = null;
+        if (!doc || typeof doc.addEventListener !== 'function') return;
+        doc.addEventListener('pointerdown', onPointer, true);
+        doc.addEventListener('mousedown', onPointer, true);   // no pointer events
+        doc.addEventListener('keydown', onKey, true);
+        doc.addEventListener('focusin', onFocusIn, true);
+    }
+
+    // isPointerFocused reports whether the element got its focus from a click
+    // or tap. Focus with no recorded origin (watch() not running, a script
+    // focusing on load) counts as keyboard focus: the older, safer rule that a
+    // focused control owns its keys.
+    function isPointerFocused(el) {
+        return !!(el && focused && focused.el === el && focused.pointer);
     }
 
     // shouldFocusCommandBar is the whole decision.
@@ -103,7 +130,7 @@
 
         var el = opts.activeElement;
         if (isEditableField(el)) return false;
-        if (isKeyboardControl(el, opts.document) && isKeyboardFocused(el)) return false;
+        if (isKeyboardControl(el, opts.document) && !isPointerFocused(el)) return false;
 
         return true;
     }
@@ -131,7 +158,8 @@
         isTypingKey: isTypingKey,
         isEditableField: isEditableField,
         isKeyboardControl: isKeyboardControl,
-        isKeyboardFocused: isKeyboardFocused,
+        isPointerFocused: isPointerFocused,
+        watch: watch,
         shouldFocusCommandBar: shouldFocusCommandBar,
         shouldHideKeyboardAfterSend: shouldHideKeyboardAfterSend
     };

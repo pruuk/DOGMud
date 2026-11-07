@@ -577,7 +577,9 @@
      the top: the session bar (64px with its gap), the Game title bar (28px)
      and about two lines of game text. */
   --drawer-keep: 136px;
-  --drawer-cap: min(50vh, calc(100vh - var(--cmdbox-h) - var(--tabbar-h) - var(--tabname-h) - var(--drawer-keep)));
+  /* Never under 80px, so on a very short screen an open tab still shows
+     more than its title bar (it then covers some game text). */
+  --drawer-cap: max(80px, min(50vh, calc(100vh - var(--cmdbox-h) - var(--tabbar-h) - var(--tabname-h) - var(--drawer-keep))));
 }
 /* Newer phones: of what is actually visible. In @supports, because a
    custom property keeps any value, so a second declaration would also
@@ -586,7 +588,7 @@
   #dashboard[data-mode="phone"],
   #dash-tabbar,
   #dash-drawer {
-    --drawer-cap: min(50dvh, calc(100dvh - var(--cmdbox-h) - var(--tabbar-h) - var(--tabname-h) - var(--drawer-keep)));
+    --drawer-cap: max(80px, min(50dvh, calc(100dvh - var(--cmdbox-h) - var(--tabbar-h) - var(--tabname-h) - var(--drawer-keep))));
   }
 }
 
@@ -639,8 +641,20 @@ html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"] {
    top of it, so the tab bar steps aside and gives its room back to the game. */
 html.keyboard-open #dash-tabbar { display: none !important; }
 html.keyboard-open #dashboard[data-mode="phone"] { padding-bottom: 6px; }
-/* With the keyboard up, an open tab sits just above the command box. */
-html.keyboard-open #dash-drawer { bottom: var(--cmdbox-h); }
+/* With the keyboard up, an open tab sits just above the command box. The
+   tab bar and name strip are hidden then, so the cap must not subtract
+   them: half of what is visible, leaving about two lines of game text
+   (40px) above it, and never under 60px so a Chat being typed into keeps
+   its newest lines. vh first; the dvh twin is below. */
+html.keyboard-open #dash-drawer {
+  bottom: var(--cmdbox-h);
+  --drawer-cap: max(60px, min(50vh, calc(100vh - var(--cmdbox-h) - 40px)));
+}
+@supports (height: 1dvh) {
+  html.keyboard-open #dash-drawer {
+    --drawer-cap: max(60px, min(50dvh, calc(100dvh - var(--cmdbox-h) - 40px)));
+  }
+}
 /* A phone on its side with the keyboard up has barely any height left. */
 @media (max-height: 320px) {
   html.keyboard-open #dash-session,

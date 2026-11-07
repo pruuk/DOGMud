@@ -145,6 +145,51 @@ shared.fire('storage', { key: 'siteTheme' });
 check('another page saving dark replaces this page\'s light', shared.theme(), 'dark');
 check('get follows the other page\'s choice', SiteTheme.get(), 'dark');
 
+// Another page cleared all storage (localStorage.clear() sends key null):
+// forget the remembered choice and read storage again, which now says nothing.
+SiteTheme.set('light');
+delete shared.store.siteTheme;
+shared.fire('storage', { key: null });
+check('storage cleared elsewhere: back to the default', shared.theme(), 'dark');
+
+// The web client iframe tells the /webclient page around it, which has its
+// own SiteTheme, so the site header and footer change too even with site
+// data blocked (no storage event reaches the parent then).
+var parentCalls = [];
+var framed = fakeWindow({ storageThrows: true });
+framed.parent = { SiteTheme: { set: function (c) { parentCalls.push(c); } } };
+SiteTheme.start(framed);
+SiteTheme.set('light');
+check('in a frame: set tells the parent page', parentCalls.join(','), 'light');
+check('in a frame: the frame draws light too', framed.theme(), 'light');
+SiteTheme.set('sepia');
+check('in a frame: the parent is told the normalized choice', parentCalls.join(','), 'light,dark');
+
+// A parent that answers by setting the frame again does not loop.
+parentCalls = [];
+framed.parent.SiteTheme.set = function (c) { parentCalls.push(c); SiteTheme.set(c); };
+var looped = false;
+try { SiteTheme.set('device'); } catch (e) { looped = true; }
+check('a parent that sets the frame back does not loop', looped === false && parentCalls.length, 1);
+
+// A top-level page is its own parent: nothing to tell.
+var top = fakeWindow();
+top.parent = top;
+top.SiteTheme = { set: function () { throw new Error('told itself'); } };
+SiteTheme.start(top);
+threw = false;
+try { SiteTheme.set('light'); } catch (e) { threw = true; }
+check('a top-level page does not tell itself', threw, false);
+
+// A cross-origin parent throws on any access: set still works.
+var cross = fakeWindow();
+Object.defineProperty(cross, 'parent', { get: function () { return { get SiteTheme() { throw new Error('SecurityError'); } }; } });
+SiteTheme.start(cross);
+threw = false;
+try { SiteTheme.set('light'); } catch (e) { threw = true; }
+check('a cross-origin parent: set does not throw', threw, false);
+check('a cross-origin parent: the frame still draws light', cross.theme(), 'light');
+
 // Both pages load theme.js before their first stylesheet.
 function loadsBeforeCss(file, cssName) {
     var page = fs.readFileSync(path.join(

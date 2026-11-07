@@ -84,7 +84,29 @@
             // Not saved, but still shown for this page.
         }
         apply();
+        tellParent(choice);
         return choice;
+    }
+
+    // The web client runs in an iframe inside the /webclient page, which has
+    // its own copy of this file for the site header and footer. With site
+    // data blocked no storage event reaches it, so tell it directly (#768
+    // review). A cross-origin parent throws on access and is left alone.
+    // telling stops a parent that answers by setting this frame from looping.
+    var telling = false;
+    function tellParent(choice) {
+        if (telling) return;
+        telling = true;
+        try {
+            var p = win.parent;
+            if (p && p !== win && p.SiteTheme && typeof p.SiteTheme.set === 'function') {
+                p.SiteTheme.set(choice);
+            }
+        } catch (e) {
+            // Cross-origin or gone: the parent keeps its own choice.
+        } finally {
+            telling = false;
+        }
     }
 
     function start(w) {
@@ -92,9 +114,10 @@
         remembered = null;
         apply();
         // Another page saved a choice (the web client iframe, another tab):
-        // it replaces the one remembered here, so read storage again.
+        // it replaces the one remembered here, so read storage again. A null
+        // key means another page cleared all storage (localStorage.clear()).
         w.addEventListener('storage', function (e) {
-            if (e.key !== KEY) return;
+            if (e.key !== KEY && e.key !== null) return;
             remembered = null;
             apply();
         });

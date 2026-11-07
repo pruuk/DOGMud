@@ -39,40 +39,34 @@ function check(name, got, want) {
 function el(tagName, opts) {
     opts = opts || {};
     var descriptors = opts.descriptors || [];
-    return {
+    var node = {
         tagName: tagName,
         isContentEditable: !!opts.isContentEditable,
+        focusVisible: false,
         classList: {
             contains: function (c) {
                 return (opts.classes || []).indexOf(c) !== -1;
             }
         },
         matches: function (selector) {
-            // :focus-visible is how a browser marks focus that came from the
-            // keyboard; a mouse click or tap focuses without it.
-            if (selector === ':focus-visible') return !!opts.focusVisible;
+            // Modelled on Chrome and Edge (checked in both, 2026-11-07): a
+            // clicked button is not :focus-visible, but becomes it as soon
+            // as any key is pressed, before the page's keydown listener runs.
+            if (selector === ':focus-visible') return node.focusVisible;
             for (var i = 0; i < descriptors.length; i++) {
                 if (selector.indexOf(descriptors[i]) !== -1) return true;
             }
             return false;
         }
     };
+    return node;
 }
 
-// The controls below were reached with Tab, so they carry :focus-visible.
-var BUTTON = el('BUTTON', { descriptors: ['button'], focusVisible: true });
-var LINK = el('A', { descriptors: ['a[href]'], focusVisible: true });
-var TABBABLE = el('DIV', { descriptors: ['[tabindex]:not([tabindex="-1"])'], focusVisible: true });
-var ROLE_BUTTON = el('DIV', { descriptors: ['[role="button"]'], focusVisible: true });
-// The same button after a mouse click: focused, but not :focus-visible.
-var CLICKED_BUTTON = el('BUTTON', { descriptors: ['button'] });
-var CLICKED_ROLE_TAB = el('DIV', { descriptors: ['[role="tab"]'] });
-// A browser that does not know :focus-visible throws a SyntaxError.
-var OLD_BROWSER_BUTTON = el('BUTTON', { descriptors: ['button'] });
-OLD_BROWSER_BUTTON.matches = function (selector) {
-    if (selector === ':focus-visible') throw new SyntaxError('unknown pseudo-class');
-    return selector.indexOf('button') !== -1;
-};
+var BUTTON = el('BUTTON', { descriptors: ['button'] });
+var LINK = el('A', { descriptors: ['a[href]'] });
+var TABBABLE = el('DIV', { descriptors: ['[tabindex]:not([tabindex="-1"])'] });
+var ROLE_BUTTON = el('DIV', { descriptors: ['[role="button"]'] });
+var ROLE_TAB = el('DIV', { descriptors: ['[role="tab"]'] });
 var PLAIN_DIV = el('DIV', {});
 var TEXT_INPUT = el('INPUT', {});
 var SELECT = el('SELECT', {});
@@ -160,18 +154,103 @@ check('Escape is left alone on a button', focuses(key('Escape'), BUTTON), false)
 // Even a printable character is left alone on a control the user tabbed to.
 check('typing on a focused button is left alone', focuses(key('n'), BUTTON), false);
 
+// --- where focus came from: real event sequences ---------------------------
+//
 // A button focused by a mouse click or tap (an Automation or Inventory tab, a
 // Chat channel, the map Legend) does not own the keys: typing goes to the
-// command box instead of vanishing (#768 review item 6).
-check('typing after clicking a button reaches the command bar', focuses(key('n'), CLICKED_BUTTON), true);
-check('typing after clicking a role=tab reaches the command bar', focuses(key('n'), CLICKED_ROLE_TAB), true);
-check('Tab is still left alone on a clicked button', focuses(key('Tab'), CLICKED_BUTTON), false);
-check('Enter is still left alone on a clicked button', focuses(key('Enter'), CLICKED_BUTTON), false);
-check('a clicked button is not keyboard-focused', HotInput.isKeyboardFocused(CLICKED_BUTTON), false);
-check('a tabbed-to button is keyboard-focused', HotInput.isKeyboardFocused(BUTTON), true);
-check('an element with no matches() is not keyboard-focused', HotInput.isKeyboardFocused({ tagName: 'BUTTON' }), false);
-// Without :focus-visible support the old rule stands: the control keeps its keys.
-check('an old browser keeps typing on a focused button', focuses(key('n'), OLD_BROWSER_BUTTON), false);
+// command box instead of vanishing (#768 review item 6). A button reached
+// with the keyboard keeps them. HotInput.watch() listens on the document in
+// the capture phase; this fake document replays what a browser sends, in the
+// browser's order, and the decision is asked the way the page's own keydown
+// listener asks it, after the capture listeners have run.
+
+var listeners = {};
+var page = {
+    body: PLAIN_DIV,
+    activeElement: PLAIN_DIV,
+    addEventListener: function (type, fn, capture) {
+        if (capture !== true) throw new Error('watch() must listen in the capture phase: ' + type);
+        (listeners[type] = listeners[type] || []).push(fn);
+    }
+};
+function dispatch(type, target, extra) {
+    var e = { type: type, target: target };
+    Object.keys(extra || {}).forEach(function (k) { e[k] = extra[k]; });
+    (listeners[type] || []).forEach(function (fn) { fn(e); });
+    return e;
+}
+function focusOn(target, fromKeyboard) {
+    page.activeElement = target;
+    target.focusVisible = !!fromKeyboard;
+    dispatch('focusin', target);
+}
+function click(target) {
+    dispatch('pointerdown', target);
+    dispatch('mousedown', target);
+    focusOn(target, false);
+    dispatch('click', target);
+}
+function tabTo(target) {
+    dispatch('keydown', page.activeElement, key('Tab'));
+    focusOn(target, true);
+}
+// press returns whether the page's keydown listener would move the key to
+// the command bar.
+function press(k) {
+    var target = page.activeElement;
+    var e = dispatch('keydown', target, key(k));
+    // Chrome and Edge: any key makes the focused element :focus-visible
+    // before the page listener runs.
+    target.focusVisible = true;
+    return HotInput.shouldFocusCommandBar(e, {
+        activeElement: page.activeElement,
+        modalOpen: false,
+        document: page
+    });
+}
+HotInput.watch(page);
+
+click(BUTTON);
+check('click a button, type n: n reaches the command bar', press('n'), true);
+click(ROLE_TAB);
+check('click a role=tab, type n: n reaches the command bar', press('n'), true);
+click(BUTTON);
+press('n');
+check('click a button, type two letters: the second also reaches the command bar', press('o'), true);
+click(BUTTON);
+check('click a button, press Tab: Tab is left alone', press('Tab'), false);
+click(BUTTON);
+check('click a button, press Enter: Enter is left alone', press('Enter'), false);
+
+tabTo(BUTTON);
+check('Tab to a button, press Space: the button keeps it', press(' '), false);
+tabTo(BUTTON);
+check('Tab to a button, press Enter: the button keeps it', press('Enter'), false);
+tabTo(BUTTON);
+check('Tab to a button, type n: the button keeps it', press('n'), false);
+
+// Click one control, then Tab on to the next: the new one came from the keyboard.
+click(BUTTON);
+tabTo(LINK);
+check('click, then Tab to a link, press Space: the link keeps it', press(' '), false);
+// Tab to a control, then click a different one: the click wins.
+tabTo(LINK);
+click(ROLE_BUTTON);
+check('Tab to a link, then click a role=button, type n: n reaches the command bar', press('n'), true);
+
+// A control focused with no recorded input (a script on load): the older,
+// safer rule, the control keeps its keys.
+page.activeElement = TABBABLE;
+check('a control focused with no input owns its keys', press('n'), false);
+
+// Clicking a plain area still lets typing through, as before.
+click(PLAIN_DIV);
+check('click the map area, type n: n reaches the command bar', press('n'), true);
+
+// The origin belongs to the element it was recorded for.
+click(BUTTON);
+page.activeElement = LINK;   // focus moved by something with no focusin seen
+check('a recorded click on one control does not free another', press('n'), false);
 
 // Real fields keep their input.
 check('typing in a text input is left alone', focuses(key('n'), TEXT_INPUT), false);
