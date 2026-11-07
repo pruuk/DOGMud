@@ -55,13 +55,14 @@ var (
 	// keepsSleep names the registered commands that do NOT run the
 	// dispatcher's cancel-on-action wake (CancelConditionsWithFlag(
 	// CancelOnAction) in TryCommand), keyed by the command after alias
-	// expansion, so `rest` (an alias of sit) is covered by `sit`. Owner ruling
-	// 2026-10-19: a sleeping player who types sit or rest stays asleep and is
-	// told to type 'wake' (actions.SitRefuseAsleep); without this exemption
-	// the wake would run first and that refusal could never be reached. Keep
-	// it to sit: every other command still wakes a sleeper.
+	// expansion. Owner ruling 2026-10-19: a sleeping player who types sit or
+	// rest stays asleep and is told to type 'wake' (actions.SitRefuseAsleep);
+	// without this exemption the wake would run first and that refusal could
+	// never be reached. Keep it to sit and rest (one command under two names,
+	// as for mobs, owner 2026-11-07): every other command still wakes a sleeper.
 	keepsSleep = map[string]bool{
-		`sit`: true,
+		`sit`:  true,
+		`rest`: true,
 	}
 
 	userCommands map[string]CommandAccess = map[string]CommandAccess{
@@ -231,7 +232,8 @@ var (
 		`sort`:            {Sort, false, false, false},  // Can't sort items in combat
 		`stash`:           {Stash, false, false, false}, // Can't manipulate stash in combat
 		`status`:          {Status, true, true, false},
-		`sit`:             {Sit, false, false, false},   // `rest` aliases it (keywords.yaml); can't sit in combat (#637)
+		`sit`:             {Sit, false, false, false},   // can't sit in combat (#637)
+		`rest`:            {Sit, false, false, false},   // the same command as sit, for players and mobs alike (owner 2026-11-07)
 		`sleep`:           {Sleep, false, false, false}, // Can't sleep in combat (actions.Sleep enforces)
 		`stand`:           {Stand, true, true, false},   // Can stand when downed
 		`suggest`:         {Suggest, true, true, false},

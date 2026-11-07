@@ -99,6 +99,17 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   Nobody arrives seated: `MoveToRoom` (every player move) and `AddMob` (every
   mob room entry) call `Character.StandForMove`, which stands a sitter
   silently, so every move path, present or future, is covered there.
+  Entering the world (`MoveToRoom` with `isSpawn` true) into a room that no
+  longer exists lands the player at the start room, with a WARN, instead of
+  nowhere: the login path does not check `MoveToRoom`'s error (2026-11-07,
+  when the Shadow Realm's unreachable room 75 was deleted and The Void, -1,
+  became that zone's root).
+  The boot's "No Entrance" check (`loadAllRoomZones`) warns about any room
+  no exit leads into, except those in `noEntranceByDesign`, each listed with
+  how players reach it (the tutorial room, an instance template, the
+  ferries). `RoomsWithoutEntrance()` returns what the last load warned
+  about; `internal/guards/no_entrance_guard_test.go` holds the shipped world
+  to none.
   `RemoveMob` (every way a mob leaves a room: a move, a despawn, a death)
   calls `users.(*UserRecord).CloseMenuWithMob` for each player in the room,
   so a talk menu with that NPC closes at once (#375 phase 1 playtest).

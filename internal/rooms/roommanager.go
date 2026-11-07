@@ -421,6 +421,15 @@ func MoveToRoom(userId int, toRoomId int, isSpawn ...bool) error {
 	// zero collisions and a panic-mode boot passed: the duplicate was
 	// manufactured at runtime, once per death.
 
+	// Entering the world into a room that no longer exists (its file was
+	// deleted, as the Shadow Realm's unreachable room 75 was on 2026-11-07)
+	// lands the player at the start room instead of nowhere: the login path
+	// (world.enterWorld) does not look at this function's error.
+	if len(isSpawn) > 0 && isSpawn[0] && toRoomId != StartRoomIdAlias && LoadRoom(toRoomId) == nil {
+		mudlog.Warn("MoveToRoom", "msg", "saved room no longer exists; entering at the start room", "userId", userId, "roomId", toRoomId)
+		toRoomId = StartRoomIdAlias
+	}
+
 	if toRoomId == StartRoomIdAlias {
 
 		// If "StartRoom" is set for MiscData on the char, use that.

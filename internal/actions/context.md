@@ -2312,7 +2312,7 @@ the rest are ordinary verbs.
 | Trades | `craft.go`, `salvage.go`, `forage.go`, `plant.go`, `defuse.go` |
 | Movement & state | `go.go`, `sleep.go`, `sit.go` (sit / rest and standing from a seat, #637), `consider.go`, `map_visit.go` (`MarkRoomMappedIfSeen`: puts a room on the fog-of-war map by its template id only when the character makes anything out there; a room walked in the dark stays off until seen, #252 ruling R5; returns true only when the room was newly mapped; `usercommands.Go` and gmcp's `SightBandChanged` handler call it) |
 | Social | `say.go`, `emote.go`, `emote_aliases.go` |
-| Divergences | `divergences.go` — deliberate departures from upstream behaviour |
+| Divergences | `divergences.go`: deliberate departures from upstream behaviour, and the command parity allowlists: `AuditCommandParity` logs every command only players or only mobs have that is not allowlisted with its reason, and returns those gaps; `internal/guards/command_parity_guard_test.go` holds the real registries (modules included) to exactly one, `throw`, kept as the reminder that a mob throw is owed (owner 2026-11-07) |
 
 **The actor seam is the point of this package.** `actions.Actor` lets one
 implementation serve both players and mobs, which is what keeps user and mob

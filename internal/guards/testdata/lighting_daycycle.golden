@@ -1,5 +1,4 @@
 == midwinter-midnight (round 319500)
-room 75 biome=ether light=60
 room 139 biome=land light=34
 room 140 biome=land light=34
 room 141 biome=land light=34
@@ -1307,7 +1306,6 @@ room 6467 biome=ether light=60
 room 6468 biome=cave light=0
 room 6469 biome=cave light=0
 == midwinter-dawn (round 319725)
-room 75 biome=ether light=60
 room 139 biome=land light=34
 room 140 biome=land light=34
 room 141 biome=land light=34
@@ -2615,7 +2613,6 @@ room 6467 biome=ether light=60
 room 6468 biome=cave light=0
 room 6469 biome=cave light=0
 == midwinter-noon (round 319950)
-room 75 biome=ether light=60
 room 139 biome=land light=63
 room 140 biome=land light=63
 room 141 biome=land light=63
@@ -3923,7 +3920,6 @@ room 6467 biome=ether light=60
 room 6468 biome=cave light=0
 room 6469 biome=cave light=0
 == midwinter-dusk (round 320175)
-room 75 biome=ether light=60
 room 139 biome=land light=31
 room 140 biome=land light=31
 room 141 biome=land light=31
@@ -5231,7 +5227,6 @@ room 6467 biome=ether light=60
 room 6468 biome=cave light=0
 room 6469 biome=cave light=0
 == equinox-midnight (round 72000)
-room 75 biome=ether light=60
 room 139 biome=land light=21
 room 140 biome=land light=21
 room 141 biome=land light=21
@@ -6539,7 +6534,6 @@ room 6467 biome=ether light=60
 room 6468 biome=cave light=0
 room 6469 biome=cave light=0
 == equinox-dawn (round 72225)
-room 75 biome=ether light=60
 room 139 biome=land light=22
 room 140 biome=land light=22
 room 141 biome=land light=22
@@ -7847,7 +7841,6 @@ room 6467 biome=ether light=60
 room 6468 biome=cave light=0
 room 6469 biome=cave light=0
 == equinox-noon (round 72450)
-room 75 biome=ether light=60
 room 139 biome=land light=70
 room 140 biome=land light=70
 room 141 biome=land light=70
@@ -9155,7 +9148,6 @@ room 6467 biome=ether light=60
 room 6468 biome=cave light=0
 room 6469 biome=cave light=0
 == equinox-dusk (round 72675)
-room 75 biome=ether light=60
 room 139 biome=land light=26
 room 140 biome=land light=26
 room 141 biome=land light=26
@@ -10463,7 +10455,6 @@ room 6467 biome=ether light=60
 room 6468 biome=cave light=0
 room 6469 biome=cave light=0
 == midsummer-midnight (round 153900)
-room 75 biome=ether light=60
 room 139 biome=land light=31
 room 140 biome=land light=31
 room 141 biome=land light=31
@@ -11771,7 +11762,6 @@ room 6467 biome=ether light=60
 room 6468 biome=cave light=0
 room 6469 biome=cave light=0
 == midsummer-dawn (round 154125)
-room 75 biome=ether light=60
 room 139 biome=land light=61
 room 140 biome=land light=61
 room 141 biome=land light=61
@@ -13079,7 +13069,6 @@ room 6467 biome=ether light=60
 room 6468 biome=cave light=0
 room 6469 biome=cave light=0
 == midsummer-noon (round 154350)
-room 75 biome=ether light=60
 room 139 biome=land light=74
 room 140 biome=land light=74
 room 141 biome=land light=74
@@ -14387,7 +14376,6 @@ room 6467 biome=ether light=60
 room 6468 biome=cave light=0
 room 6469 biome=cave light=0
 == midsummer-dusk (round 154575)
-room 75 biome=ether light=60
 room 139 biome=land light=61
 room 140 biome=land light=61
 room 141 biome=land light=61
