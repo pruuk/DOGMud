@@ -1,8 +1,3 @@
-room 75 biome=ether
-  plain        sight=full   clear=true shapes=true
-  nightvision  sight=full   clear=true shapes=true
-  infrared     sight=full   clear=true shapes=true
-  blinded      sight=none   clear=false shapes=false
 room 139 biome=land
   plain        sight=shapes clear=false shapes=true
   nightvision  sight=full   clear=true shapes=true
