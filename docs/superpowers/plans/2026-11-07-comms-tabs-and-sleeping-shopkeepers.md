@@ -26,7 +26,7 @@
 | `events.Communication` fields: `SourceUserId, SourceMobInstanceId, TargetUserId, CommType, Name, Message, SpeakerHidden, ExcludeUserIds`; its comment already lists `shout` | `internal/events/eventtypes.go:205-218` |
 | Only `say` makes the AI companion react; other CommTypes are ignored there | `modules/aicompanion/listeners.go:57` |
 | Player `broadcast` = `sendChannel(user, "chat", rest)`; registry row `{Broadcast, true, true, false}` (AllowedWhenDowned, AllowedInCombat, AdminOnly) | `internal/usercommands/broadcast.go`, `internal/usercommands/usercommands.go:87` |
-| Mobs also have `broadcast` (sends `events.Broadcast` text to everyone); no shipped content uses it | `internal/mobcommands/mobcommands.go:32`, `internal/mobcommands/broadcast.go` |
+| Mobs also have `broadcast` (sends `events.Broadcast` text to everyone); no shipped content, script or Go caller uses it; it appears in the smoke list `mobcommands_test.go:1027`; `portalstake_test.go:104` seeds `` ` `` as a `broadcast` alias | `internal/mobcommands/mobcommands.go:32`, `internal/mobcommands/broadcast.go` |
 | `events.Broadcast{Text, TextScreenReader, IsCommunication, SourceIsMod, SkipLineRefresh}`; `Broadcast_SendToAll` skips a deafened player only when `IsCommunication && !SourceIsMod` | `internal/events/eventtypes.go:164`, `internal/hooks/hooks.go:146` |
 | `` ` `` aliases `broadcast`; `broadcast` is listed under the player help topic `communication` | `_datafiles/world/dogmud/keywords.yaml:324`, `:46` |
 | Admin help templates live at `templates/admincommands/help/command.<name>.template` | `_datafiles/world/dogmud/templates/admincommands/help/` |
@@ -379,7 +379,14 @@ shows in the game text and in the web client's Broadcasts tab as:
 Players talk to everyone with <ansi fg="command">chat</ansi> (shortcut <ansi fg="command">`</ansi>).
 ```
 
-- [ ] **Step 6: Run.** `go test ./internal/usercommands/ ./internal/hooks/ -count=1` and `go test ./internal/guards/ -run CommandParity -count=1`. Expected: PASS. (Mobs still have `broadcast`, so parity is unchanged.) Prove the test can fail: set the row back to `false` AdminOnly, run, see FAIL, restore.
+- [ ] **Step 5b: Remove the NPC `broadcast` (Calabe 2026-11-07: it is an admin command now, so parity does not need an NPC one; no content uses it).**
+  - `internal/mobcommands/mobcommands.go:32`: delete the `"broadcast":      {Broadcast, false},` row.
+  - `git rm internal/mobcommands/broadcast.go`.
+  - `internal/mobcommands/mobcommands_test.go:1027`: delete `{"broadcast", "test"},` from the smoke list. (`usercommands_test.go:7328` keeps its `broadcast` line: the player command still exists.)
+  - `internal/usercommands/portalstake_test.go:104`: the seeded alias becomes `map[string][]string{"chat": {"`"}}`, matching the new keywords.
+  - `internal/actions/divergences.go`, admin section of the user-only list: add `"broadcast":    "admin: an announcement to everyone (owner 2026-11-07)",`.
+
+- [ ] **Step 6: Run.** `go test ./internal/usercommands/ ./internal/mobcommands/ ./internal/hooks/ -count=1` and `go test ./internal/guards/ -run CommandParity -count=1`. Expected: PASS (parity still finds only `throw`). Prove the test can fail: set the row back to `false` AdminOnly, run, see FAIL, restore.
 
 - [ ] **Step 7: Commit** by name and `feat: broadcast is an admin announcement everyone gets; tips reach deafened players`.
 
@@ -1032,5 +1039,5 @@ this for other sleepers. <ansi fg="command">shout</ansi> wakes everyone in the r
 ## Self-review
 
 - Spec coverage: hints and tooltips (Task 1), whisper echo (done, `3eed75cd1`; docs Task 7), announcement and tips (Task 3), shout in Chat (Task 4), shopkeepers wake on entry, on a shop command, stay up with a customer, can trade woken (Task 5), `wake <name>` and the hint (Task 6), the answered questions (admin name in the label: Task 3; no dozing with a customer: Task 5 Step 6). Light visible and the icon shipped in #813.
-- Not in the spec and left alone: the NPC `broadcast` command (unused by content) keeps posting to the text lane only.
+- The NPC `broadcast` command (unused by content) is removed (Calabe 2026-11-07, Task 3 Step 5b).
 - Names used across tasks: `wakeKeeper`, `sleepingKeepers`, `wakeKeepersOnEntry`, `shopOpenFor`, `shopHasCustomer`, `commSpeakerRoom`, `shoutDeliveries`, `DrainQueuedCommunicationsForTest`, `DrainQueuedBroadcastsForTest`, `Wake`.
