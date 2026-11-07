@@ -1,5 +1,8 @@
 # Quest and Dialogue Arc: Roadmap
 
+> Epic #375 closed 2026-11-06: phases 0 to 5 and 7 are done; phase 6 (web builder) is postponed
+> and tracked on #377.
+>
 > Living document for epic #375. The target is `QUEST_DIALOGUE_REQUIREMENTS.md`; this page is
 > the route: steps, ordering and approach. Update each phase's **Status** as work lands.
 > Each phase gets its own spec and plan in `docs/superpowers/specs/` and
@@ -357,7 +360,9 @@ guards stop exempting dialogue, quests and conversations.
 
 **Done 2026-11-06** (spec and plan 2026-11-06-quest-arc-closing-step): every loop and destination finding refuses boot and the backlog is gone; room_interact is look_at and search_at; the dash guard reads quests, dialogue and conversations. The admin commands that change a spawn list on a running server (`room set spawninfo clear`, `room copy spawninfo`) refuse a change that would add a destination finding (owner, option B).
 
-**Status:** in progress. Pothole Coulee (with the Newcomer Antechamber) is
+**Status: done (2026-11-06).** Every tier and the closing step shipped, and epic #375 closed
+on 2026-11-06 with ten of its eleven boxes ticked; the eleventh (web editor cross-references)
+moved to #377 with phase 6. The tier history follows. Pothole Coulee (with the Newcomer Antechamber) is
 done: built across PRs 1 to 4 of
 `docs/superpowers/specs/completed/2026-10-30-quest-arc-phase7-pothole-coulee-design.md`
 (engine and config, spine, the seven lines, the Shadows line and leaving) and
