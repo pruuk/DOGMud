@@ -146,5 +146,17 @@ var manifest = JSON.parse(fs.readFileSync(path.join(PUBLIC, 'static', 'manifest.
 check('home screen icon opens without the address bar', manifest.display, 'standalone');
 check('home screen icon opens the game', manifest.start_url, '/webclient');
 
+// 2026-11-07 hotfix: the terminal came out three rows taller than the Game
+// panel (exits and prompt hidden). It refits once the font's real size is in,
+// and when the panel body (what termfit measures) changes size.
+check('the terminal refits after the font swap, on the next frame',
+    /term\.setOption\('fontFamily', termFont\);\s*resizeTerminal\(true\);[\s\S]{0,600}requestAnimationFrame\(function \(\) \{ resizeTerminal\(true\); \}\);/.test(game), true);
+check('the terminal refits once every font has loaded',
+    /document\.fonts\.ready\.then\(function \(\) \{ resizeTerminal\(true\); \}\);/.test(game), true);
+check('the Game panel body is observed, not only the panel',
+    /_feedBody = _feedPanel\.querySelector\('\.dash-panel-body'\);\s*if \(_feedBody\) _feedObserver\.observe\(_feedBody\);/.test(game), true);
+check('a tab that wraps alone keeps its own size',
+    /\.subtabs::after \{\s*content: "";\s*flex: 999 1 auto;/.test(dashCss), true);
+
 console.log(failures ? failures + ' checks FAILED' : 'all checks passed');
 process.exit(failures ? 1 : 0);

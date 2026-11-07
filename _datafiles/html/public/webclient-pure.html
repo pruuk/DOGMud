@@ -529,14 +529,23 @@
         // Re-fit whenever the feed panel itself changes size (grid reflow,
         // splitters, pop-out) so xterm tracks the bounded box and keeps its
         // row count sane. Without this the terminal can over-size and lag.
+        // Watch the panel's BODY too: termfit measures the body, and a title
+        // bar that grows after the first fit (a late web font, a bigger
+        // button) shrinks the body while the panel stays the same size. That
+        // left the terminal three rows taller than its box, so the exits and
+        // the prompt sat hidden below it and could not be scrolled to
+        // (2026-11-07, found right after a deploy).
         if (window.ResizeObserver) {
             var _feedPanel = document.getElementById('panel-feed');
             if (_feedPanel) {
                 var _rafFit = null;
-                new ResizeObserver(function () {
+                var _feedObserver = new ResizeObserver(function () {
                     if (_rafFit) cancelAnimationFrame(_rafFit);
                     _rafFit = requestAnimationFrame(resizeTerminal);
-                }).observe(_feedPanel);
+                });
+                _feedObserver.observe(_feedPanel);
+                var _feedBody = _feedPanel.querySelector('.dash-panel-body');
+                if (_feedBody) _feedObserver.observe(_feedBody);
             }
         }
         requestAnimationFrame(resizeTerminal); // fit once after first grid paint
@@ -553,7 +562,19 @@
             ]).then(function () {
                 term.setOption('fontFamily', termFont);
                 resizeTerminal(true);
+                // xterm measures the new font's letters after this tick, so a
+                // refit in the same tick still used the fallback's shorter rows:
+                // the terminal came out about three rows taller than its panel,
+                // hiding the exits and the prompt (2026-11-07). Fit again once
+                // the new size is in.
+                requestAnimationFrame(function () { resizeTerminal(true); });
+                setTimeout(function () { resizeTerminal(true); }, 300);
             }).catch(function () { resizeTerminal(true); });
+            // Any later web font (the panels' type) can still change the
+            // layout: refit once every font has loaded.
+            if (document.fonts.ready) {
+                document.fonts.ready.then(function () { resizeTerminal(true); });
+            }
         }
 
         /////////////////////////////////////////////
