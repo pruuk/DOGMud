@@ -1,6 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html data-client>
 <head>
+    <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon-moons.ico" sizes="16x16 32x32 48x48">
+    <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon-moons.png">
+    <link rel="apple-touch-icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/apple-touch-icon.png">
+    <link rel="manifest" href="/static/manifest.json">
     <title>{{ .CONFIG.Server.MudName }} Web Terminal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
@@ -26,108 +30,111 @@
         /* #connect-button is never shown: it only runs the connect code.
            Enter Game in the session bar is the one visible button. */
 
-        /* Sound icon — small brass button living inside the session strip */
-        /* Was a <div onclick>, which no keyboard could reach (finding 18). Now a
-           real button, so it needs the UA button defaults neutralised to keep
-           the same look. */
-        #menu-icon,
-        #btn-fullscreen {
-            padding: 0;
-            margin: 0;
-            font-family: inherit;
-            -webkit-appearance: none;
-            appearance: none;
-            flex: 0 0 auto;
-            width: 26px;
-            height: 26px;
-            box-sizing: border-box;
-            font-size: 14px;
-            line-height: 24px;
-            text-align: center;
-            cursor: pointer;
-            color: var(--brass-text);
-            border: 1px solid var(--brass-border);
-            border-radius: 50%;
-            background: radial-gradient(circle at 34% 26%, var(--brass-light) 0%, var(--brass-mid) 46%, var(--brass-dark) 100%);
-            box-shadow: 0 2px 3px color-mix(in srgb, var(--shadow) 55%, transparent),
-                        inset 0 1px 1px color-mix(in srgb, var(--brass-glint) 70%, transparent),
-                        inset 0 -2px 3px color-mix(in srgb, var(--brass-shade) 55%, transparent);
-            transition: filter .08s ease, transform .08s ease;
-        }
-        #menu-icon:hover,
-        #btn-fullscreen:hover { filter: brightness(1.08); }
+        /* Settings: one button in the session bar opens a drop-down panel with
+           Sound and Appearance (design 2026-11-01). It replaced the 🔊 button
+           and its Volume Controls menu. The button is a .brass like Reset
+           layout; on phones it shows only its gear. */
+        #btn-settings .btn-icon { margin-right: 4px; }
+        #btn-settings[aria-expanded="true"] { filter: brightness(1.1); }
         /* A focus ring is the whole point of making these reachable: without a
            visible one, a keyboard user can tab to a control and have no idea
            where they are. */
-        #menu-icon:focus-visible,
+        #btn-settings:focus-visible,
         #btn-fullscreen:focus-visible,
+        #settings-menu :focus-visible,
         #mut-toast:focus-visible {
             outline: 2px solid var(--brass-light);
             outline-offset: 2px;
         }
-        #menu-icon:active,
-        #btn-fullscreen:active {
-            transform: translateY(1px);
-            box-shadow: 0 1px 1px color-mix(in srgb, var(--shadow) 40%, transparent),
-                        inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 70%, transparent),
-                        inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
-        }
 
-        /* The floating menu container */
-        #floating-menu {
+        /* The drop-down, just below the session strip at the right. */
+        #settings-menu {
             position: absolute;
-            top: 40px; /* just below the session strip */
-            right: 10px;
-            width: 450px;
-            max-width: 90vw;   /* don't run off small laptop screens */
-            max-height: 80vh;  /* stay on-screen; scroll if taller */
+            top: 40px;
+            right: 8px;
+            width: 420px;
+            max-width: calc(100vw - 16px); /* phones: the screen less 8px a side */
+            max-height: 80vh;              /* stay on-screen; scroll if taller */
             overflow-y: auto;
             box-sizing: border-box;
-            padding: 10px;
+            padding: 12px 14px;
             background-color: var(--menu-bg);
             border: 1px solid var(--menu-border);
             border-radius: 5px;
-            display: none; /* hidden by default */
+            color: var(--menu-text);
             z-index: 9999;
         }
-        /* Header row: title + close button */
-        #menu-header {
+        #settings-menu[hidden] { display: none; }
+        #settings-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
+            margin-bottom: 8px;
         }
-        #floating-menu h3 {
+        #settings-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
             color: var(--white);
-            margin-bottom: 10px;
         }
-        #menu-close {
+        #settings-close {
             flex: 0 0 auto;
-            width: 28px;
-            height: 28px;
-            line-height: 24px;
+            width: 32px;
+            height: 32px;
             font-size: 20px;
-            text-align: center;
+            line-height: 1;
             cursor: pointer;
             color: var(--white);
             background: var(--menu-border);
             border: 1px solid var(--menu-button-border);
             border-radius: 4px;
         }
-        #menu-close:hover { background: var(--menu-button-hover); }
-        #menu-close:active { background: var(--menu-button-active); }
+        #settings-close:hover { background: var(--menu-button-hover); }
+        #settings-close:active { background: var(--menu-button-active); }
+        /* A finger-sized close button on touch screens. */
+        @media (pointer: coarse) {
+            #settings-close { width: 44px; height: 44px; }
+        }
+
+        /* Sound and Appearance are fieldsets, so a screen reader names the
+           group ("Sound, group") before each control in it. */
+        /* min-width 0: a fieldset is otherwise at least as wide as its
+           content, which pushed the sliders 35px past a 320px phone. */
+        #settings-menu fieldset {
+            border: 0;
+            border-top: 1px solid var(--menu-border);
+            padding: 10px 0 4px;
+            margin: 0;
+            min-width: 0;
+        }
+        .settings-note {
+            margin: 2px 0 8px;
+            font-size: 0.85rem;
+            color: var(--menu-text);
+        }
+        #settings-menu legend {
+            padding: 0 6px 0 0;
+            font-family: var(--font-heading);
+            font-size: 0.95rem;
+            color: var(--white);
+        }
 
         .slider-container {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
         }
+        /* Up to 150px for the sound's name, less on a narrow phone. */
         .slider-container label {
             color: var(--menu-text);
-            width: 150px;
+            flex: 0 1 150px;
+            min-width: 0;
+            overflow-wrap: anywhere;
         }
         .slider-container input[type="range"] {
             flex: 1;
+            accent-color: var(--brass-mid);
+            min-width: 0;
             margin: 0 10px;
         }
         .slider-icon {
@@ -137,19 +144,21 @@
             color: var(--menu-text);
         }
 
-        /* Mute Checkbox */
-        #mute-container {
-            margin-bottom: 15px;
-            color: var(--menu-text);
+        /* Mute and the theme choices: the whole row is the tap target. */
+        #mute-container,
+        .theme-choice {
             display: flex;
             align-items: center;
-        }
-        #mute-container label {
+            gap: 8px;
+            min-height: 40px;
+            margin-bottom: 6px;
+            color: var(--menu-text);
             cursor: pointer;
         }
-        #mute-container input[type="checkbox"] {
-            margin-right: 8px;
+        #mute-container input,
+        .theme-choice input {
             transform: scale(1.2);
+            accent-color: var(--brass-mid);
             cursor: pointer;
         }
 
@@ -177,7 +186,9 @@
             box-shadow: 0 0 0 2px var(--cmd-ring-focus);
         }
 
-        /* Comms panel: stack tabs + send input as a column */
+        /* Chat tab: the channel buttons on top, the messages below them
+           filling the rest of the card. There is no typing box here: players
+           chat from the command box (for example "say hello"). */
         #panel-chat .dash-panel-body {
             display: flex;
             flex-direction: column;
@@ -186,27 +197,10 @@
             flex: 1 1 auto;
             min-height: 0;
         }
-        #chat-input {
-            flex: 0 0 auto;
-            margin-top: 5px;
-            padding: 6px 10px;
-            font-size: 14px;
-            border: 1px solid var(--panel-border);
-            background-color: var(--input-bg);
-            color: var(--text-primary);
-            border-radius: 3px;
-            font-family: var(--font-mono);
-            width: 100%;
-            box-sizing: border-box;
-            caret-color: var(--brass-mid);
-        }
-        #chat-input:focus {
-            outline: none;
-            border-color: var(--brass-mid);
-        }
 
     </style>
 
+    <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js?v={{ .ASSET_VERSION }}"></script>
     <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/xterm.css?v={{ .ASSET_VERSION }}" />
     <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/gomud.css?v={{ .ASSET_VERSION }}" />
     <link rel="stylesheet" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/css/dashboard.css?v={{ .ASSET_VERSION }}" />
@@ -230,23 +224,6 @@
 </head>
 <body onLoad="init(); return false;">
 
-    <!-- FLOATING MENU - MULTIPLE SLIDERS -->
-    <div id="floating-menu">
-        <div id="menu-header">
-            <h3>Volume Controls</h3>
-            <button id="menu-close" onclick="toggleMenu()" title="Close" aria-label="Close">&times;</button>
-        </div>
-
-        <div id="mute-container">
-            <input type="checkbox" id="mute-checkbox" onchange="toggleMuteAll()">
-            <label for="mute-checkbox"><span id="mute-icon">🔊</span> Mute All Sound</label>
-        </div>
-
-        <div id="sliders-container">
-            <!-- Multiple sliders get built here -->
-        </div>
-    </div>
-
     <!-- CONNECT BUTTON FLOATED IN CENTER. Starts hidden: the page connects by
          itself on load, and onclose shows it when the player is not connected. -->
     <button id="connect-button" style="display:none">Enter Game</button>
@@ -255,26 +232,76 @@
     <div id="dashboard">
       <div id="dash-session">
         <span class="sess-name" id="sess-name">—</span>
-        <span class="sess-conn" id="sess-conn" style="color: var(--conn-lost)">○ Not connected</span>
         <span class="sess-mid">
-          <button type="button" class="brass" id="btn-session">Enter Game</button>
+          <!-- The connection status rides in the button (Malia 2026-11-02): the
+               circle's colour and shape show it, the hidden words say it. -->
+          <button type="button" class="brass" id="btn-session" title="Enter Game, not connected"><span class="sess-dot" aria-hidden="true" style="color: var(--conn-lost)">○</span> <span class="sess-label">Enter Game</span><span class="sess-status visually-hidden">, not connected</span></button>
           <span id="sess-confirm" style="display:none"><span class="q-long">Leave the game?</span><span class="q-short">Leave?</span>
             <button type="button" class="brass" id="btn-leave-yes">Yes</button>
             <button type="button" class="brass" id="btn-leave-stay">Stay</button>
           </span>
         </span>
-        <button type="button" id="menu-icon" onclick="toggleMenu()" title="Toggle sound" aria-label="Toggle sound">🔊</button>
-        <button type="button" id="btn-fullscreen" style="display:none">⛶</button>
+        <button type="button" class="brass" id="btn-settings" aria-expanded="false" aria-controls="settings-menu" title="Settings" aria-label="Settings"><span class="btn-icon" aria-hidden="true">⚙&#xFE0E;</span><span class="btn-label">Settings</span></button>
+        <!-- Settings drop-down. It sits right after its button so Tab moves
+             from the button straight into it. -->
+        <div id="settings-menu" role="dialog" aria-labelledby="settings-title" hidden>
+          <div id="settings-head">
+            <h2 id="settings-title">Settings</h2>
+            <button type="button" id="settings-close" aria-label="Close settings">&times;</button>
+          </div>
+          <fieldset id="settings-sound">
+            <legend>Sound</legend>
+            <label id="mute-container" for="mute-checkbox">
+              <input type="checkbox" id="mute-checkbox" onchange="toggleMuteAll()">
+              <span id="mute-icon" aria-hidden="true">🔊</span> Mute all sound
+            </label>
+            <div id="sliders-container">
+              <!-- One slider per sound type gets built here -->
+            </div>
+          </fieldset>
+          <fieldset id="settings-appearance" aria-describedby="theme-note">
+            <legend>Appearance</legend>
+            <p class="settings-note" id="theme-note">Light changes the website and the game panels. The game text and the map stay dark.</p>
+            <label class="theme-choice"><input type="radio" name="site-theme" value="dark"> Dark</label>
+            <label class="theme-choice"><input type="radio" name="site-theme" value="light"> Light</label>
+            <label class="theme-choice"><input type="radio" name="site-theme" value="device"> Match my device</label>
+          </fieldset>
+        </div>
         <button type="button" class="brass" id="btn-companion-key" style="display:none" title="Run your companion on your own model key">Companion key</button>
+        <!-- Full screen (Calabe 2026-11-03, #774): hidden until the outer page offers it.
+             A brass button like Settings: words on wide screens, the ⛶ icon on phones. -->
+        <button type="button" class="brass" id="btn-fullscreen" style="display:none" title="Full screen" aria-label="Full screen"><span class="btn-icon" aria-hidden="true">⛶</span><span class="btn-label">Full screen</span></button>
         <button class="brass" id="btn-reset-layout" title="Reset layout" aria-label="Reset layout" onclick="window.Dashboard && Dashboard.resetLayout && Dashboard.resetLayout()"><span class="btn-icon" aria-hidden="true">↺</span><span class="btn-label">Reset layout</span></button>
       </div>
 
-      <!-- LEFT column: Map · Vitals · Scene -->
+      <!-- LEFT column: Map · Quests · Health · Inventory -->
       <div class="dash-col" id="dash-col-left">
         <section class="dash-panel" id="panel-map" data-panel="map">
           <div class="dash-panel-head"><span class="ph-title">Map</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
-          <div class="dash-panel-body"><div id="map-render" style="width:100%;height:100%"></div></div>
+          <div class="dash-panel-body map-body">
+            <div id="map-render"></div>
+            <!-- The map's Fit / Center / zoom buttons, under the map rather than over
+                 its rooms (2026-11-02): RoomGridSVG puts them here (controlsHost). -->
+            <!-- The "Legend ▾" button shares this row, at its right end
+                 (Malia 2026-11-06); it opens and folds the key below. -->
+            <div id="map-controls" class="map-controls">
+              <button type="button" id="map-legend-toggle" class="map-legend-toggle"
+                      aria-expanded="true" aria-controls="map-legend">Legend <span class="map-legend-arrow" aria-hidden="true">▾</span></button>
+            </div>
+            <!-- The map's key, under the map rather than drawn over the rooms
+                 (2026-11-02). The Legend button above opens and folds it. -->
+            <div id="map-legend" class="map-legend">
+              <ul>
+                <li><svg viewBox="0 0 16 12" aria-hidden="true"><circle cx="8" cy="3.5" r="2" fill="#6dac9d"/><path d="M4.5 10.5 Q8 5 11.5 10.5 Z" fill="#6dac9d"/></svg>Party member</li>
+                <li><svg viewBox="0 0 16 12" aria-hidden="true"><circle cx="8" cy="6" r="5" fill="#2a1d12" stroke="#b5a26c" stroke-width="1.2"/><text x="8" y="8.4" text-anchor="middle" font-size="7" font-weight="bold" fill="#b5a26c">$</text></svg>Bank / Shop / Store</li>
+                <li><svg viewBox="0 0 16 12" aria-hidden="true"><path d="M8 1.5 L12.5 10 L3.5 10 Z" fill="#b5a26c"/></svg>Stairs ▲▼</li>
+                <li><svg viewBox="0 0 16 12" aria-hidden="true"><line x1="1" y1="6" x2="15" y2="6" stroke="#b5a26c" stroke-width="3.4"/><line x1="1" y1="6" x2="15" y2="6" stroke="#241810" stroke-width="0.8" stroke-dasharray="1 3"/></svg>Road / trail / water</li>
+                <li><svg viewBox="0 0 16 12" aria-hidden="true"><circle cx="8" cy="6" r="4.6" fill="#2a1d12" stroke="#cb9f42" stroke-width="1.8"/><circle cx="8" cy="6" r="1.7" fill="#e6b058"/></svg>Quest destination</li>
+                <li><svg viewBox="0 0 16 12" aria-hidden="true"><line x1="1.5" y1="6" x2="11" y2="6" stroke="#e6b058" stroke-width="1.8"/><path d="M10 2.5 L14.5 6 L10 9.5 Z" fill="#e6b058"/></svg>Next step</li>
+              </ul>
+            </div>
+          </div>
         </section>
 
         <section class="dash-panel" id="panel-quests" data-panel="quests">
@@ -284,7 +311,7 @@
         </section>
 
         <section class="dash-panel" id="panel-vitals" data-panel="vitals">
-          <div class="dash-panel-head"><span class="ph-title">Vitals</span>
+          <div class="dash-panel-head"><span class="ph-title">Health</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body"><div id="vitals-bars"></div></div>
         </section>
@@ -293,11 +320,11 @@
           <div class="dash-panel-head"><span class="ph-title">Inventory</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body">
-            <div id="inv-tabs" class="inv-tabs">
-              <button class="inv-tab brass active" data-tab="worn">Equipped</button>
-              <button class="inv-tab brass" data-tab="bandolier">Bandolier</button>
-              <button class="inv-tab brass" data-tab="components">Components</button>
-              <button class="inv-tab brass" data-tab="backpack">Backpack</button>
+            <div id="inv-tabs" class="inv-tabs subtabs" role="group" aria-label="Inventory">
+              <button type="button" class="inv-tab subtab active" aria-pressed="true" data-tab="worn">Equipped</button>
+              <button type="button" class="inv-tab subtab" aria-pressed="false" data-tab="bandolier">Bandolier</button>
+              <button type="button" class="inv-tab subtab" aria-pressed="false" data-tab="components">Components</button>
+              <button type="button" class="inv-tab subtab" aria-pressed="false" data-tab="backpack">Backpack</button>
             </div>
             <div id="inv-grid" class="inv-grid"></div>
           </div>
@@ -319,22 +346,22 @@
         </section>
       </div>
 
-      <!-- RIGHT column: Comms · Status · Triggers -->
+      <!-- RIGHT column: Chat · Status · Automation -->
       <div class="dash-col" id="dash-col-right">
         <section class="dash-panel" id="panel-chat" data-panel="chat">
-          <div class="dash-panel-head"><span class="ph-title">Comms</span>
+          <div class="dash-panel-head"><span class="ph-title">Chat</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body">
             <!-- COMM window (tabs) — moved from hidden div into chat panel -->
             <div id="comm-output" class="tabs">
-              <div class="tab-buttons">
-                <button id="comm-tab-say" class="tab-button active" data-tab="comm-say" data-label="Say" data-unread="0">Say</button>
-                <button id="comm-tab-whisper" class="tab-button" data-tab="comm-whisper" data-label="Whisper" data-unread="0">Whisper</button>
-                <button id="comm-tab-party" class="tab-button" data-tab="comm-party" data-label="Party" data-unread="0">Party</button>
-                <button id="comm-tab-broadcast" class="tab-button" data-tab="comm-broadcast" data-label="Broadcasts" data-unread="0">Broadcasts</button>
-                <button id="comm-tab-chat" class="tab-button" data-tab="comm-chat" data-label="Chat" data-unread="0">Chat</button>
-                <button id="comm-tab-newbie" class="tab-button" data-tab="comm-newbie" data-label="Newbie" data-unread="0">Newbie</button>
-                <button id="comm-tab-trade" class="tab-button" data-tab="comm-trade" data-label="Trade" data-unread="0">Trade</button>
+              <div class="tab-buttons subtabs" role="group" aria-label="Chat channels">
+                <button type="button" id="comm-tab-say" class="tab-button subtab active" aria-pressed="true" data-tab="comm-say" data-label="Say" data-unread="0">Say</button>
+                <button type="button" id="comm-tab-whisper" class="tab-button subtab" aria-pressed="false" data-tab="comm-whisper" data-label="Whisper" data-unread="0">Whisper</button>
+                <button type="button" id="comm-tab-party" class="tab-button subtab" aria-pressed="false" data-tab="comm-party" data-label="Party" data-unread="0">Party</button>
+                <button type="button" id="comm-tab-broadcast" class="tab-button subtab" aria-pressed="false" data-tab="comm-broadcast" data-label="Broadcasts" data-unread="0">Broadcasts</button>
+                <button type="button" id="comm-tab-chat" class="tab-button subtab" aria-pressed="false" data-tab="comm-chat" data-label="Chat" data-unread="0">Chat</button>
+                <button type="button" id="comm-tab-newbie" class="tab-button subtab" aria-pressed="false" data-tab="comm-newbie" data-label="Newbie" data-unread="0">Newbie</button>
+                <button type="button" id="comm-tab-trade" class="tab-button subtab" aria-pressed="false" data-tab="comm-trade" data-label="Trade" data-unread="0">Trade</button>
               </div>
               <div class="tab-contents">
                 <div id="comm-say" class="chat-window say tab-content active"></div>
@@ -346,12 +373,11 @@
                 <div id="comm-trade" class="chat-window trade tab-content"></div>
               </div>
             </div>
-            <input type="text" id="chat-input" placeholder="Say to the room…">
           </div>
         </section>
 
         <section class="dash-panel" id="panel-status" data-panel="status">
-          <div class="dash-panel-head"><span class="ph-title">Status &amp; Conditions</span>
+          <div class="dash-panel-head"><span class="ph-title">Status</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body"><div id="status-conditions"></div></div>
         </section>
@@ -360,11 +386,11 @@
           <div class="dash-panel-head"><span class="ph-title">Automation</span>
             <span class="ph-btns"><span class="ph-btn ph-collapse">▾</span><span class="ph-btn ph-popout">⧉</span></span></div>
           <div class="dash-panel-body" style="display:flex;flex-direction:column;padding:0;">
-            <div class="auto-tabs">
-              <span class="auto-tab" data-tab="ticks">Ticks</span>
-              <span class="auto-tab" data-tab="triggers">Triggers</span>
-              <span class="auto-tab active" data-tab="macros">Macros</span>
-              <span class="auto-tab" data-tab="aliases">Aliases</span>
+            <div class="auto-tabs subtabs" role="group" aria-label="Automation">
+              <button type="button" class="auto-tab subtab" aria-pressed="false" data-tab="ticks">Ticks</button>
+              <button type="button" class="auto-tab subtab" aria-pressed="false" data-tab="triggers">Triggers</button>
+              <button type="button" class="auto-tab subtab active" aria-pressed="true" data-tab="macros">Macros</button>
+              <button type="button" class="auto-tab subtab" aria-pressed="false" data-tab="aliases">Aliases</button>
             </div>
             <div class="auto-addbar"><span class="auto-add" title="Add">+ New</span></div>
             <div id="auto-list" class="auto-list"></div>
@@ -547,10 +573,32 @@
         var gr = null;
         (function initMap() {
             var mapOptions = { cellSize: 80, cellMargin: 80, initialZoom: 0.5,
+                // The buttons go under the map, not over its rooms.
+                controlsHost: '#map-controls',
                 // The map was wiped by something other than a full Zone.Map:
                 // ask the server for a whole one (#650, RoomGridSVG.requestResync).
                 onResync: function () { SendGMCP("Zone.Map.Resync", {}); } };
             gr = new RoomGridSVG('#map-render', mapOptions);
+        })();
+
+        // The "Legend ▾" button in the map's button row opens and folds the
+        // map's key underneath it. On a short window (under 800px tall) the
+        // key starts folded, so the map keeps more of its card.
+        (function initMapLegend() {
+            var btn = document.getElementById('map-legend-toggle');
+            var legend = document.getElementById('map-legend');
+            if (!btn || !legend) return;
+            // RoomGridSVG (above) appended Fit / Center / zoom after this
+            // button; move it to the end of the row so Tab order matches
+            // what the player sees (Legend at the right end).
+            btn.parentNode.appendChild(btn);
+            function show(open) {
+                legend.hidden = !open;
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                btn.querySelector('.map-legend-arrow').textContent = open ? '▾' : '▸';
+            }
+            show(window.innerHeight >= 800);
+            btn.addEventListener('click', function () { show(legend.hidden); });
         })();
 
         /////////////////////////////////////////////
@@ -590,7 +638,7 @@
                     tab.innerText = tab.dataset.label;
                 } else {
                     tab.dataset.unread = parseInt(tab.dataset.unread) + 1;
-                    tab.innerText = tab.dataset.label + "(" + String(tab.dataset.unread) + ")";
+                    tab.innerText = tab.dataset.label + " (" + String(tab.dataset.unread) + ")";
                 }
 
                 // Build via DOM + textContent (never innerHTML) — fromName/
@@ -1308,6 +1356,7 @@
                 var allTabs = tabBar.querySelectorAll(".inv-tab");
                 for (var i = 0; i < allTabs.length; i++) {
                     allTabs[i].classList.toggle("active", allTabs[i] === btn);
+                    allTabs[i].setAttribute("aria-pressed", allTabs[i] === btn ? "true" : "false");
                 }
                 renderInventory();
             });
@@ -1341,7 +1390,7 @@
                 list.appendChild(el);
             }
 
-            // A compact oval "sticker" chip (like the Status & Conditions panel).
+            // A compact oval "sticker" chip (like the Status panel).
             // Shows only the shortcut/F-key; the full expansion is the hover tooltip.
             // dataset carries the data for left-click fire + right-click menu.
             function makeAutoChip(type, key, cmd, label) {
@@ -2032,6 +2081,7 @@
                 var allTabs = autoTabBar.querySelectorAll(".auto-tab");
                 for (var i = 0; i < allTabs.length; i++) {
                     allTabs[i].classList.toggle("active", allTabs[i] === btn);
+                    allTabs[i].setAttribute("aria-pressed", allTabs[i] === btn ? "true" : "false");
                 }
                 renderAutomation();
             });
@@ -2524,7 +2574,11 @@
             if (outer) {
                 button.style.display = '';
                 outer.onChange(function (on) {
-                    var label = on ? 'Show the site header and menu' : 'Full screen';
+                    // The visible words and the spoken name start the same, so
+                    // voice control can say what it sees (WCAG 2.5.3).
+                    var shown = on ? 'Exit full screen' : 'Full screen';
+                    var label = on ? 'Exit full screen, show the site header and menu' : 'Full screen';
+                    button.querySelector('.btn-label').textContent = shown;
                     button.title = label;
                     button.setAttribute('aria-label', label);
                 });
@@ -2570,27 +2624,39 @@
         // quit is not instant: it starts a five round meditation (condition 0)
         // that any action or combat cancels, so Leaving lasts until the server
         // closes the socket, a typed command cancels it, or the fallback runs.
+        // The status circle lives inside the session button (Malia 2026-11-02;
+        // plan 2026-11-02-webclient-session-status). Each state sets the
+        // circle, its colour, the label, and hidden words so the button's
+        // name is always "<label>, <status>" for screen readers and voice
+        // control; the tooltip says the same.
+        var SESSION_STATES = {
+            offline:      { dot: '○', color: 'var(--conn-lost)',          status: 'not connected',    disabled: false },
+            // Calabe's state while the socket opens (#773); its own dotted
+            // circle so it differs from leaving.
+            connecting:   { dot: '◌', color: 'var(--conn-reconnecting)',  status: 'connecting',       disabled: true  },
+            // Connected: a lit lamp, the Pachinko reference's bright green
+            // (Malia 2026-11-02) inside a dark rim; on its own the green is
+            // 1.2 on the brass, the rim 6.09.
+            connected:    { dot: '', lamp: 'var(--lamp-green)', color: '',           status: 'connected',        disabled: false },
+            reconnecting: { dot: '↻', color: 'var(--conn-reconnecting)',  status: 'reconnecting',     disabled: true  },
+            leaving:      { dot: '●', color: 'var(--conn-reconnecting)',  status: 'leaving the game', disabled: true  }
+        };
         function setSessionState(state) { // "connecting" | "connected" | "leaving" | "reconnecting" | "offline"
-            var sessConn = document.getElementById('sess-conn');
+            var s = SESSION_STATES[state] || SESSION_STATES.offline;
+            var label = state === 'leaving' ? 'Leaving…'
+                      : (state === 'connected' && inGame) ? 'Leave Game' : 'Enter Game';
             sessionConfirm.style.display = 'none';
             sessionButton.style.display = '';
             if (state !== 'leaving') { leavingGame = false; clearTimeout(leaveFallback); }
-            if (state === 'connecting') {
-                sessConn.textContent = '● Connecting…'; sessConn.style.color = 'var(--conn-reconnecting)';
-                sessionButton.textContent = 'Enter Game'; sessionButton.disabled = true;
-            } else if (state === 'connected') {
-                sessConn.textContent = '● Connected'; sessConn.style.color = '';
-                sessionButton.textContent = inGame ? 'Leave Game' : 'Enter Game'; sessionButton.disabled = false;
-            } else if (state === 'leaving') {
-                sessConn.textContent = '● Leaving…'; sessConn.style.color = 'var(--conn-reconnecting)';
-                sessionButton.textContent = 'Leaving…'; sessionButton.disabled = true;
-            } else if (state === 'reconnecting') {
-                sessConn.textContent = '↻ Reconnecting…'; sessConn.style.color = 'var(--conn-reconnecting)';
-                sessionButton.textContent = 'Enter Game'; sessionButton.disabled = true;
-            } else {
-                sessConn.textContent = '○ Not connected'; sessConn.style.color = 'var(--conn-lost)';
-                sessionButton.textContent = 'Enter Game'; sessionButton.disabled = false;
-            }
+            var dot = sessionButton.querySelector('.sess-dot');
+            dot.textContent = s.dot;
+            dot.style.color = s.color;
+            dot.classList.toggle('sess-lamp', !!s.lamp);
+            dot.style.background = s.lamp || '';
+            sessionButton.querySelector('.sess-label').textContent = label;
+            sessionButton.querySelector('.sess-status').textContent = ', ' + s.status;
+            sessionButton.title = label + ', ' + s.status;
+            sessionButton.disabled = s.disabled;
         }
 
         sessionButton.addEventListener('click', function () {
@@ -2986,10 +3052,21 @@
                     return;
                 }
 
-                if ( SendData(event.target.value) ) {
+                var sent = SendData(event.target.value);
+                if ( sent ) {
                     event.target.value = '';
                 } else {
                     term.writeln("Not connected to the server. Click Enter Game to play.");
+                }
+                // Phones: close the keyboard after an in-game command, so the
+                // player reads what happened first (Malia 2026-11-02). Login,
+                // password and numbered menu answers keep it open (Calabe's
+                // ruling, #768 review). HotInput decides.
+                if (window.HotInput && window.HotInput.shouldHideKeyboardAfterSend({
+                    touchOnly: phoneTouchOnly(), phoneWidth: phoneWidth(), sent: sent,
+                    inGame: inGame, menuOpen: menuOpen, password: textInput.type === "password"
+                })) {
+                    textInput.blur();
                 }
             }
         });
@@ -3045,11 +3122,35 @@
         textOutput.addEventListener('mousemove', () => { isDragging = true; });
         textOutput.addEventListener('mouseup', () => {
             const selectedText = window.getSelection().toString();
-            if (!isDragging && !selectedText) {
+            // Phones: a tap on the game text is for reading, so it must not
+            // open the keyboard (plan 2026-11-02-webclient-phone-keyboard).
+            if (!isDragging && !selectedText && !(phoneTouchOnly() && phoneWidth())) {
                 textInput.focus();
             }
             isDragging = false;
         });
+
+        // xterm focuses its own hidden textarea on every press, which raises a
+        // phone keyboard and swallows the typing. On a touch-only phone (the
+        // screen's shorter side under 600px), inputmode="none" keeps that focus
+        // from opening the keyboard; rechecked on resize (cheap, and harmless).
+        function phoneTouchOnly() {
+            return !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+        }
+        // One meaning of "phone" for the keyboard rules: Calabe's
+        // ViewportFit.isPhone (the screen's shorter side under 600px, #774), so
+        // a phone held sideways counts and a narrow desktop window does not.
+        function phoneWidth() {
+            return !!(window.ViewportFit && window.ViewportFit.isPhone(window.screen.width, window.screen.height));
+        }
+        function syncTermKeyboard() {
+            var ta = term && term.textarea;
+            if (!ta) return;
+            if (phoneTouchOnly() && phoneWidth()) ta.setAttribute('inputmode', 'none');
+            else ta.removeAttribute('inputmode');
+        }
+        syncTermKeyboard();
+        window.addEventListener('resize', syncTermKeyboard);
 
         /////////////////////////////////////////////
         //
@@ -3086,6 +3187,12 @@
             }
         }
 
+        // What a screen reader says for a volume: "off" or "75 percent".
+        function volumeText(value) {
+            value = Number(value);
+            return value === 0 ? "off" : value + " percent";
+        }
+
         // Build the sliders from sliderValues
         function buildSliders() {
             const container = document.getElementById('sliders-container');
@@ -3095,19 +3202,27 @@
                 const wrapper = document.createElement('div');
                 wrapper.className = "slider-container";
 
+                // The label names the slider for screen readers ("Music,
+                // slider, 75 percent"); the speaker emoji beside it is
+                // decoration only.
+                const sliderId = "volume-" + key.replace(/\s+/g, "-");
                 const label = document.createElement('label');
+                label.htmlFor = sliderId;
                 label.textContent = key.toLowerCase().split(' ').map(function(word) {
                     return word.charAt(0).toUpperCase() + word.slice(1);
                 }).join(' ');
 
                 const slider = document.createElement('input');
                 slider.type = "range";
+                slider.id = sliderId;
                 slider.min = 0;
                 slider.max = 100;
                 slider.value = sliderValues[key];
+                slider.setAttribute('aria-valuetext', volumeText(sliderValues[key]));
 
                 const iconSpan = document.createElement('span');
                 iconSpan.className = "slider-icon";
+                iconSpan.setAttribute('aria-hidden', 'true');
                 iconSpan.textContent = getSpeakerIcon(sliderValues[key]);
 
                 // On slider change
@@ -3115,6 +3230,7 @@
                     const val = e.target.value;
                     sliderValues[key] = Number(val);
                     iconSpan.textContent = getSpeakerIcon(val);
+                    slider.setAttribute('aria-valuetext', volumeText(val));
 
                     // Update local storage
                     localStorage.setItem('sliderValues', JSON.stringify(sliderValues));
@@ -3180,27 +3296,107 @@
             }
         }
 
-        // Show/hide the floating menu
-        function toggleMenu() {
-            const menu = document.getElementById('floating-menu');
-            if (menu.style.display === "none" || menu.style.display === "") {
-                menu.style.display = "block";
-            } else {
-                menu.style.display = "none";
-            }
+        /////////////////////////////////////////////
+        //
+        // Settings drop-down (Sound + Appearance)
+        //
+        /////////////////////////////////////////////
+
+        // Opening moves focus to the first control in the panel; Esc, the ×
+        // button, the Settings button or a click outside closes it. Closing by
+        // keyboard puts focus back on the Settings button, so a keyboard
+        // player is never left with focus on nothing.
+        function settingsOpen() {
+            return !document.getElementById('settings-menu').hidden;
         }
 
-        // Click anywhere outside the open volume menu (and not on the sound
-        // icon) to dismiss it, so it never blocks the screen with no way out.
-        // Icon clicks are handled by toggleMenu above; this listener runs after
-        // and ignores them (the icon's onclick has already set the state).
-        document.addEventListener('click', function (e) {
-            const menu = document.getElementById('floating-menu');
-            if (!menu || menu.style.display !== "block") return;
-            const icon = document.getElementById('menu-icon');
-            if (menu.contains(e.target) || (icon && icon.contains(e.target))) return;
-            menu.style.display = "none";
+        function openSettings() {
+            const menu = document.getElementById('settings-menu');
+            // Just below the session strip, which is taller on phones (48px
+            // buttons) than the 40px the stylesheet assumes.
+            const strip = document.getElementById('dash-session');
+            menu.style.top = (strip.offsetTop + strip.offsetHeight + 4) + 'px';
+            menu.hidden = false;
+            document.getElementById('btn-settings').setAttribute('aria-expanded', 'true');
+            document.getElementById('mute-checkbox').focus();
+        }
+
+        // returnFocus is true only when the player closed Settings from the
+        // keyboard. Closed with a mouse, trackpad or finger, nothing keeps
+        // focus, so the next letters typed go straight into the command box
+        // (a focused button would swallow them, and Enter would reopen
+        // Settings).
+        function closeSettings(returnFocus) {
+            const menu = document.getElementById('settings-menu');
+            if (menu.hidden) return;
+            const btn = document.getElementById('btn-settings');
+            // Read before hiding: some browsers leave focus on a control
+            // inside a hidden panel, where the next keys would go nowhere.
+            const active = document.activeElement;
+            const focusHere = !!active && (active === btn || menu.contains(active));
+            menu.hidden = true;
+            btn.setAttribute('aria-expanded', 'false');
+            if (returnFocus) btn.focus();
+            else if (focusHere && active.blur) active.blur();
+        }
+
+        // A click made with the keyboard (Enter or Space on the button) has
+        // e.detail 0; a real mouse, trackpad or finger click has 1 or more.
+        function fromKeyboard(e) { return e.detail === 0; }
+
+        document.getElementById('btn-settings').addEventListener('click', function (e) {
+            if (settingsOpen()) closeSettings(fromKeyboard(e)); else openSettings();
         });
+        document.getElementById('settings-close').addEventListener('click', function (e) {
+            closeSettings(fromKeyboard(e));
+        });
+        // Esc closes it from anywhere, not only from inside the panel (after
+        // a click on empty space, focus is on nothing). Focus goes back to
+        // the Settings button only if it was in the panel or on the button;
+        // otherwise it stays where the player left it.
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape' || !settingsOpen()) return;
+            e.preventDefault();
+            const a = document.activeElement;
+            closeSettings(!!a && (a.id === 'btn-settings' || document.getElementById('settings-menu').contains(a)));
+        });
+        // Tabbing out past the last choice closes it too, so it does not stay
+        // open over the game behind the player's back.
+        document.getElementById('settings-menu').addEventListener('focusout', function (e) {
+            const to = e.relatedTarget;
+            if (!to) return; // focus went nowhere, e.g. a click on empty space
+            if (this.contains(to) || document.getElementById('btn-settings').contains(to)) return;
+            closeSettings(false);
+        });
+        // A click outside the open panel dismisses it, so it never blocks the
+        // screen with no way out. The click already moved focus where the
+        // player wanted it, so focus is left alone.
+        document.addEventListener('click', function (e) {
+            if (!settingsOpen()) return;
+            const menu = document.getElementById('settings-menu');
+            const btn = document.getElementById('btn-settings');
+            if (menu.contains(e.target) || btn.contains(e.target)) return;
+            closeSettings(false);
+        });
+
+        // Appearance: Dark / Light / Match my device, saved by theme.js for the
+        // whole site.
+        function showThemeChoice() {
+            const choice = window.SiteTheme ? SiteTheme.get() : 'dark';
+            document.querySelectorAll('input[name="site-theme"]').forEach(function (r) {
+                r.checked = (r.value === choice);
+            });
+        }
+        document.querySelectorAll('input[name="site-theme"]').forEach(function (r) {
+            r.addEventListener('change', function () {
+                if (r.checked && window.SiteTheme) SiteTheme.set(r.value);
+            });
+        });
+        // Another tab or the page around the client changed it.
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'siteTheme') showThemeChoice();
+        });
+        showThemeChoice();
 
         /////////////////////////////////////////////
         //
@@ -3433,33 +3629,7 @@
             height: 100%; /* full-height comm panels */
         }
 
-        .tab-buttons {
-            display: flex;
-            border-bottom: 1px solid var(--panel-border);
-        }
-
-        .tab-button {
-            flex: 1;
-            padding: 0.4em 0.6em;
-            font-family: var(--font-body);
-            font-size: small;
-            color: var(--brass-text);
-            background: var(--brass-grad);
-            border: none;
-            border-right: 1px solid var(--brass-border);
-            cursor: pointer;
-            transition: filter 0.1s;
-        }
-
-        .tab-button:not(.active):hover {
-            filter: brightness(1.08);
-        }
-
-        .tab-button.active {
-            filter: brightness(0.9);
-            box-shadow: inset 0 2px 4px color-mix(in srgb, var(--brass-shade) 60%, transparent),
-                        inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
-        }
+        /* Chat channel tabs: the shared .subtab style in dashboard.css. */
 
         .tab-contents {
             flex: 1;
@@ -3497,7 +3667,7 @@
             color: var(--chat-whisper);
         }
 
-        /* Status & Conditions panel */
+        /* Status panel */
         #status-conditions {
             padding: 6px;
             display: flex;
@@ -3607,67 +3777,29 @@
     </div>
 
     <script>
-        // on DOM ready — wire comm tab buttons + chat send input
+        // Chat tab buttons (Say, Whisper, Party and the rest): pressing one
+        // shows that channel's messages and clears its unread count. Players
+        // send messages from the command box, not from here.
         document.addEventListener('DOMContentLoaded', () => {
             const buttons   = document.querySelectorAll('.tab-button');
             const panels    = document.querySelectorAll('.tab-content');
-            const chatInput = document.getElementById('chat-input');
-
-            const channelPlaceholders = {
-                'say':       'Say to the room…',
-                'whisper':   'Whisper: <name> <message>…',
-                'party':     'Party chat…',
-                'broadcast': 'Broadcast…',
-                'chat':      'Chat (global)…',
-                'newbie':    'Newbie help…',
-                'trade':     'Trade: buying/selling…'
-            };
-
-            // Return the active comm channel name (e.g. "say", "whisper", …)
-            function activeCommChannel() {
-                var active = document.querySelector('#comm-output .tab-button.active');
-                if (!active) return 'say';
-                // data-tab is "comm-say", "comm-whisper", etc.
-                return active.dataset.tab.replace(/^comm-/, '');
-            }
-
-            function updateChatPlaceholder() {
-                var ch = activeCommChannel();
-                chatInput.placeholder = channelPlaceholders[ch] || (ch + '…');
-            }
 
             buttons.forEach(btn => {
                 btn.addEventListener('click', () => {
                 const target = btn.dataset.tab;
 
                 // deactivate all
-                buttons.forEach(b => b.classList.remove('active'));
+                buttons.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
                 panels.forEach(p => p.classList.remove('active'));
 
                 // activate the clicked one and its panel
                 btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
                 btn.dataset.unread = 0;
                 btn.innerText = btn.dataset.label;
                 document.getElementById(target).classList.add('active');
-
-                // update send-input placeholder for the newly active channel
-                updateChatPlaceholder();
                 });
             });
-
-            // Send on Enter — read active channel at send time (not captured at setup)
-            chatInput.addEventListener('keydown', function(event) {
-                if (event.key !== 'Enter') return;
-                var text = chatInput.value.trim();
-                if (!text) return;
-                var ch = activeCommChannel();
-                if (SendData(ch + ' ' + text)) {
-                    chatInput.value = '';
-                }
-            });
-
-            // Set initial placeholder (say tab is active by default)
-            updateChatPlaceholder();
         });
 
         // ── Inventory right-click context menu ──────────────────────────────

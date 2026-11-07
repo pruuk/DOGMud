@@ -31,6 +31,17 @@ Method: 32,400 pixels sampled per image, grouped in CIELAB, and every current co
 | Highlight | cream `#efd897` |
 | Secondary text (tuned to pass) | gold `#96885f` (4.95 on dark), olive grey `#8b897a` (4.92 on dark) |
 
+### Logo golds (Malia's logo)
+
+Added 2026-11-02 (Malia's decision): the two letter golds of her logo join the palette as their own role, so the logo keeps its artwork colours and the site has names for them. Sampled from `dogmainbrandIti0.png` (full logo) and `abbr.svg` (the D.O.G. mark); both files use the same two.
+
+| Role | Colour | Where in the logo | Dark panel | Page `#110b07` | Teal bar `#085044` | Nearest other step |
+|---|---|---|---|---|---|---|
+| Logo gold | `#d9ac46` | "DELUSIONS", "OF", the rules; "D" and "O" of D.O.G. | 8.22 | 9.25 | 4.43 | golden yellow `#e6b058`, ΔE 4.2 |
+| Logo deep gold | `#c3932d` | "GRANDEUR"; "G" of D.O.G. | 6.23 | 7.01 | 3.36 | gold and ochre `#aa8636`, ΔE 6.3 |
+
+The two are ΔE 7.2 apart, so the bottom word stays a step deeper than the top. Both fail on the vellum cards (1.23 and 1.63): the logo belongs on dark surfaces and the teal bar. The crown and moons keep their own illustrated golds and browns (`#ae7919`, `#b98722`, `#925d0b` and others); they are artwork detail, not palette roles.
+
 ### Warm meaning colours (Dalí)
 
 | Role | Ramp, dark to light | Use |
@@ -158,3 +169,14 @@ Difference under 5: barely noticeable, but the value moves to the brand palette.
 Already within a just-noticeable difference of the painting, so they keep their value:
 
 `--antique-gold` `#b89047`, `--auto-button-border` `#5a3a18`, `--bar-bottom` `#1a110b`, `--bar-deep` `#191009`, `--bg-base` `#191310`, `--brass-light` `#f4dd92`, `--brass-shade` `#4a3410`, `--brass-text` `#3b2a10`, `--button-disabled` `#2a2018`, `--chip-alert-bg` `#2a1d12`, `--chip-bg` `#1d1610`, `--chip-copper-bg` `#16201c`, `--desk` `#0e0a06`, `--gold-button-dark` `#9c7b34`, `--ink-deep` `#2b231d`, `--input-bg` `#150f0a`, `--menu-head` `#241a10`, `--nav-scrim` `#140e09`, `--nav-selected` `#2a2114`, `--page-edge` `#110b07`, `--page-glow` `#251a12`, `--panel-bg` `#201913`, `--panel-bg-alt` `#211a14`, `--panel-border` `#3a2a18`, `--panel-border-soft` `#2e251c`, `--quest-bar-track` `#160e08`, `--quest-name-focus` `#f0dcae`, `--relay-bg` `#111111`, `--relay-border` `#6b5a3a`, `--scrim` `#0a0705`, `--status-muted` `#6e5a38`, `--text-primary` `#d2c3a4`, `--text-tagline` `#b9a983`, `--tile-hover-bottom` `#1c1209`, `--tile-hover-top` `#332818`, `--tile-top` `#2a2016`, `--title-gold` `#e8d2a0`, `--toast-top` `#2b2118`, `--vitals-name` `#4a3a28`, `--vitals-name-self` `#1a1208`, `--well` `#150f08`, `--well-empty` `#140f08`, `map.brassText` `#3b2a10`, `map.crack` `#120a04`, `map.faint` `#8a7a55`, `map.glow` `#e8c98a`, `map.ink2` `#9c8048`, `map.legendBg` `#241810`, `map.partyDk` `#243f3a`, `map.partyFill` `#1c2e2a`, `map.plain` `#9c8048`, `map.ridge` `#a98a55`, `map.rim` `#0e0703`, `map.roomEdge` `#3a2a18`, `map.roomFill` `#2a1d12`, `map.title` `#e8d2a0`, `map.trail` `#a98a55`
+
+## Addendum 2026-11-02: status lamp green
+Malia chose the Pachinko reference's bright yellow green, sampled `#70e010`,
+for the "connected" lamp in the session button: a deliberate exception to the
+toned cool ramps, used only as a lamp fill inside a dark umber rim `#3b2a10`
+(the green alone is 1.2 on the brass; the rim 6.09). Not for text.
+
+**2026-11-05:** a second role, the track of a toggle that is on (Malia: red
+must not mean on), with an umber `#3b2a10` knob (8.11 on the green). Toggles
+sit on dark tiles in both modes, where the green is 8.48 to 11.2. Both uses
+read the tokens `--lamp-green` and `--lamp-rim` (`gomud.css`).

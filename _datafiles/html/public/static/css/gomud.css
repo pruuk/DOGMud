@@ -57,6 +57,12 @@
   --status-online: #2f4f1c;   /* "connected" on the vellum session strip */
   --conn-reconnecting: #704714;
   --conn-lost: #8a2828;
+  /* The lit lamp (Malia 2026-11-02, her Pachinko reference): the session
+     button's "connected" circle and every toggle that is on. The green is
+     8.48 to 11.2 on the dark row tile and the editor box; the umber rim is
+     6.09 on the brass and 8.11 on the green. */
+  --lamp-green: #70e010;
+  --lamp-rim: #3b2a10;
   --input-bg: #150f0a;
   /* Command box border, from the brand green ramp. Rest passes 3:1 against
      both the box (3.17) and the vellum strip (3.77); focus is bright inside
@@ -162,8 +168,71 @@
   --table-border-color: #19140c;
   --table-cell-text-color: var(--text-primary);
   --table-header-text-color: var(--ink-gold);
+
+  /* Glass: the site bar in the style of Apple's iOS 26 "Liquid Glass", in
+     brand colours only (design 2026-11-01). The bar is the website teal
+     #085044 (brand teal L30, "this is the website"; Malia 2026-11-01),
+     92% so the page shows through only faintly. Cream text instead of
+     white, umber shadow instead of black. The gold of --glass-prominent
+     underlines the current page. Worst case, the cream page #fef9ee under
+     the bar (#1c5e52): nav text 4.76, current page 5.39, focus ring 4.14
+     (5.89, 6.67 and 5.12 on solid teal). Do not put --ink-gold text on
+     glass. */
+  --glass-bar: color-mix(in srgb, #085044 92%, transparent);
+  --glass-bar-solid: #085044;
+  --glass-text: #dfcc94;
+  --glass-text-strong: #efd897;
+  --glass-shadow: color-mix(in srgb, #19140c 45%, transparent);
+  --glass-prominent: #b5a26c;
+  --focus-ring: #e7b86c;
 }
 
+/* ── Light theme (website pages only, 2026-11-01) ──
+   Chosen in the web client's Settings > Appearance; static/js/theme.js sets
+   <html data-theme="light">. Covers the pages that use the site header: Home,
+   Who's Online, Architecture, Config, 404 and the frame around the web
+   client. The web client marks its <html> with data-client, so this block
+   skips it: its game panels get their own Light colours in dashboard.css,
+   and the game text and the map stay dark. The builder pages keep their
+   own palette.
+   Warm parchment from the Cuyp cream, dark umber text. Every text colour is at
+   least 4.5:1 on every background it sits on (lowest: online green on a table
+   heading, 4.7). Brass buttons keep their dark theme colours: dark text on
+   gold already reads on a light page. */
+:root[data-theme="light"]:not([data-client]) {
+  --background-image: radial-gradient(circle at 50% 22%, #fbf5e6, #efe3c8);
+  --page-glow: #fbf5e6;
+  --page-edge: #efe3c8;
+  --bg-base: #f6eedb;
+
+  --text-primary: #2b2116;    /* 13.6 on the page */
+  --text-secondary: #5b4a33;  /* 7.4 */
+  --text-tagline: #5e4a2c;    /* 7.3 */
+  --title-gold: #6e4b0e;      /* 6.8: headings, hovered and current nav */
+  --ink-gold: #6f5418;        /* 6.1: nav, links, table headings */
+  --online-green: #3b6526;    /* 5.9 */
+
+  --panel-bg: #fffaf0;        /* cards */
+  --panel-bg-alt: #f7efdc;    /* table rows */
+  --panel-border: #cdb98e;
+  --chip-bg: #fffaf0;
+  --nav-scrim: #fbf5e8;       /* nav pill fill */
+  --nav-selected: #eedcb4;    /* current page's pill */
+
+  --ink-deep: #f6ebd2;        /* header and footer bar, top */
+  --bar-deep: #efe2c4;        /*                       bottom */
+  --bar-top: #eadbb8;         /* table heading row */
+  --bar-bottom: #e6d5ae;
+  --antique-gold: #a8823c;    /* bar and card outlines, 3.1 on the page */
+  --gold-rule: #b39a5e;
+
+  --shadow: #a08a66;          /* softer: a near-black shadow looks dirty on parchment */
+}
+/* Two rules, not colours: the hero title's shadow muddies on parchment, and
+   the Architecture card labels use the outline gold as text, which is 3.1 on a
+   light card; the link gold is 6.8. */
+:root[data-theme="light"]:not([data-client]) .hero-title { text-shadow: none; }
+:root[data-theme="light"]:not([data-client]) .diagram-kind { color: var(--ink-gold); }
 /* Dim grey on phones is the normal text colour: at phone text sizes a mid grey
    is too hard to read (Malia, 2026-11-01; owner, 2026-11-03). The class is set
    before the terminal reads its colours (webclient-pure.html). */
@@ -185,43 +254,28 @@ body {
 
 a { text-decoration: none; color: inherit; }
 
-/* ── Unified console header (brand wordmark + chip nav in one bar) ──
-   Merged the old separate <nav> bar in here: matches the dashboard cards
-   (rounded, antique-gold outline, inset highlight) and reclaims a full row of
-   vertical height for the web-client dashboard below. */
+/* ── Site header (logo + nav in one bar) ──
+   A borderless glass bar across the full width (design 2026-11-01, Apple's
+   iOS 26 style in brand colours): it stays at the top while the page scrolls
+   and blurs whatever passes under it. No outline, no rounded box. */
 header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 14px;
-  margin: 7px 8px;
-  padding: 7px clamp(12px, 2vw, 18px);
-  background: linear-gradient(var(--ink-deep), var(--bar-deep));
-  border: 1px solid var(--antique-gold);
-  border-radius: 8px;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink-gold) 12%, transparent), 0 2px 6px color-mix(in srgb, var(--shadow) 40%, transparent);
+  gap: 8px 16px;
+  margin: 0;
+  padding: 10px clamp(16px, 3vw, 32px);
+  background: var(--glass-bar);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
 }
-/* Gold-gradient wordmark (solid title-gold fallback where background-clip
-   isn't supported). */
-.gomud-btn {
-  font-family: var(--font-heading);
-  font-style: italic;
-  font-weight: bold;
-  font-size: clamp(1.05rem, 2vw, 1.35rem);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--title-gold);
-  background: linear-gradient(var(--gold-button-light), var(--ink-gold) 55%, var(--gold-button-dark));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 1px 0 color-mix(in srgb, var(--shadow) 40%, transparent);
-  padding: 2px;
-  transition: filter 0.15s ease;
+/* No blur available: a solid teal bar, so text never sits on raw page. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  header { background: var(--glass-bar-solid); }
 }
-.gomud-btn:hover { filter: brightness(1.08); }
-
 /* ── Brass component (buttons, nav pills, CTAs) ── */
 .brass {
   display: inline-block;
@@ -246,8 +300,8 @@ header {
               inset 0 -1px 1px color-mix(in srgb, var(--brass-glint) 40%, transparent);
 }
 
-/* ── Nav (now inside the header bar, pushed right) ── */
-nav {
+/* ── Nav in the header bar, pushed right (the footer menu is .footer-nav) ── */
+header nav {
   flex: 1;
   display: flex;
   justify-content: flex-end;
@@ -263,35 +317,82 @@ nav {
   gap: 6px;
   padding: 0;
 }
-/* Chip nav — same language as the dashboard status / automation chips. */
+/* Menu links, shared by the three looks below. Written against
+   .nav-container, not header, so the same menu can sit above the footer
+   later. The current page carries aria-current="page" (and the older
+   .selected). */
 .nav-container a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
   font-family: var(--font-body);
-  font-size: clamp(0.72rem, 1vw, 0.86rem);
+  font-size: 0.9rem;
   white-space: nowrap;
-  color: var(--ink-gold);
-  background: color-mix(in srgb, var(--nav-scrim) 60%, transparent);
-  border: 1px solid var(--panel-border);
-  border-radius: 13px;
-  padding: 3px 13px;
-  transition: border-color 0.1s ease, color 0.1s ease, box-shadow 0.1s ease;
+  color: var(--glass-text);
+  border: 0;
+  border-radius: 999px;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
-.nav-container a:hover {
-  border-color: var(--gold-rule);
-  color: var(--title-gold);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink-gold) 22%, transparent);
+.nav-container a:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
-.nav-container a.selected {
-  border-color: var(--antique-gold);
-  color: var(--title-gold);
-  background: var(--nav-selected);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--antique-gold) 30%, transparent);
+.nav-container a[aria-current="page"] { font-weight: 600; }
+
+/* Text (the site menu): plain links; the current page is cream with a gold line. */
+.nav-text { gap: 4px; }
+.nav-text a { padding: 0 10px; border-radius: 6px; }
+.nav-text a:hover { color: var(--glass-text-strong); }
+.nav-text a[aria-current="page"] {
+  color: var(--glass-text-strong);
+  text-decoration: underline 2px var(--glass-prominent);
+  text-underline-offset: 7px;
 }
 
-/* ── Mobile nav toggle ── */
-.nav-toggle { display: none; flex-direction: column; cursor: pointer; }
-.nav-toggle div {
-  width: 30px; height: 4px; border-radius: 2px;
-  background: var(--ink-gold); margin: 5px;
+/* ── Phone menu button (☰): a real button, so a keyboard reaches it ── */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.nav-toggle span {
+  width: 24px; height: 3px; border-radius: 2px;
+  background: var(--glass-text);
+}
+.nav-toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Tablets: tighter links so the logo and all seven fit on one row. */
+@media (min-width: 769px) and (max-width: 1100px) {
+  header { gap: 8px 12px; padding: 8px 16px; }
+  .nav-container { gap: 4px; }
+  .nav-container a { font-size: 0.82rem; padding: 0 10px; min-height: 32px; }
+  .nav-text a { padding: 0 7px; }
+}
+@media (min-width: 769px) and (max-width: 900px) {
+  .nav-container { gap: 3px; }
+  .nav-container a { font-size: 0.78rem; padding: 0 8px; }
+  .nav-text a { padding: 0 5px; }
+}
+
+/* Reduced transparency or more contrast asked for: solid glass, no blur. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root {
+    --glass-bar: var(--glass-bar-solid);
+  }
+  header { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
 /* ── Content + panels ── */
@@ -312,18 +413,22 @@ nav {
 .content-container[data-path="/webclient"] { padding: 0; overflow: hidden; }
 /* The game fits the width, so its page never scrolls sideways. */
 body:has(.content-container[data-path="/webclient"]) { overflow-x: hidden; }
+/* The game sits right on the teal footer: a gap there showed the page colour
+   as a stripe (a cream one in Light mode). */
+body:has(.content-container[data-path="/webclient"]) footer { margin-top: 0; }
 #webclient-frame { display: block; border: 0; }
 
 .overlay, .underlay {
   width: 90%;
   max-width: 1100px;
+  /* No outline (design 2026-11-01): the fill and a soft umber shadow set the
+     card off the page. */
   background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
+  border: 0;
+  border-radius: 14px;
   padding: 20px;
   text-align: center;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink-gold) 10%, transparent),
-              0 6px 16px color-mix(in srgb, var(--shadow) 50%, transparent);
+  box-shadow: 0 8px 24px var(--glass-shadow);
 }
 .overlay { overflow-y: auto; }
 .underlay { height: auto; max-height: 200px; }
@@ -334,7 +439,9 @@ body:has(.content-container[data-path="/webclient"]) { overflow-x: hidden; }
 }
 
 /* ── Hero (landing) ── */
-.hero { text-align: center; padding: 30px 26px; }
+/* Never wider than the page: on a 320 to 360 phone the logo and padding
+   pushed the page sideways by up to 4px. */
+.hero { text-align: center; padding: 30px 26px; box-sizing: border-box; max-width: 100%; }
 .hero-title {
   font-family: var(--font-heading);
   font-weight: bold;
@@ -374,23 +481,47 @@ body:has(.content-container[data-path="/webclient"]) { overflow-x: hidden; }
   font-size: 0.9rem;
 }
 
-/* ── Footer (matching console card — bookends the header; gradient flipped so
-   both plates face their lighter edge toward the content) ── */
+/* ── Footer: the teal bar again, bookending the top bar (Malia 2026-11-01) ──
+   Full width, no outline, solid teal. Website pages repeat the menu here as
+   plain links (current page cream with a gold line, as at the top); the credit
+   line is nav gold, as the olive grey fails on teal (4.46). Measured on teal:
+   links and credit 5.89, current page and GoMud link 6.67, focus ring 5.12. */
 footer {
-  margin: 7px 8px;
-  padding: 7px clamp(12px, 2vw, 18px);
-  background: linear-gradient(var(--bar-deep), var(--ink-deep));
-  border: 1px solid var(--antique-gold);
-  border-radius: 8px;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink-gold) 12%, transparent), 0 2px 6px color-mix(in srgb, var(--shadow) 40%, transparent);
+  margin-top: 7px;
+  padding: 12px clamp(12px, 2vw, 18px) 10px;
+  background: var(--glass-bar-solid);
   text-align: center;
-  color: var(--text-secondary);
+  color: var(--glass-text);
   font-family: var(--font-body);
   font-size: 0.8rem;
 }
 footer p { margin: 0; }
-footer a { color: var(--ink-gold); }
+footer a { color: var(--glass-text-strong); }
 footer a:hover { text-decoration: underline; }
+footer a:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 14px;
+  margin-bottom: 8px;
+}
+.footer-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 4px;
+  font-size: 0.9rem;
+  color: var(--glass-text);
+  white-space: nowrap;
+}
+.footer-nav a:hover { color: var(--glass-text-strong); text-decoration: none; }
+.footer-nav a[aria-current="page"] {
+  color: var(--glass-text-strong);
+  text-decoration: underline 2px var(--glass-prominent);
+  text-underline-offset: 6px;
+}
+@media (pointer: coarse) { .footer-nav a { min-height: 44px; } }
 
 /* ── Tables ── */
 table { width: 100%; border-collapse: collapse; }
@@ -420,22 +551,21 @@ pre, code { font-family: var(--font-mono); }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  header { padding: 8px 12px; gap: 8px; }
-  .gomud-btn { font-size: 1.05rem; letter-spacing: 1.5px; }
+  header { padding: 6px 12px; gap: 8px; }
   .hero-title { font-size: 1.7rem; }
-  /* Drop the nav to a full-width second row below the brand + hamburger. */
-  nav { flex-basis: 100%; order: 3; }
+  /* The ☰ button opens the menu as a full-width sheet under the bar. */
+  header nav { flex-basis: 100%; order: 3; }
   .nav-toggle { display: flex; margin-left: auto; }
   .nav-container {
     display: none;
     flex-direction: column;
     align-items: stretch;
-    text-align: center;
     width: 100%;
-    gap: 0.4rem;
-    padding: 6px 0 2px;
+    gap: 6px;
+    padding: 6px 0 4px;
   }
-  .nav-container a { display: block; padding: 9px; border-radius: 8px; }
+  .nav-container.open { display: flex; }
+  .nav-container a { justify-content: center; min-height: 44px; }
   .content-container { padding: 12px; }
   .overlay, .underlay { width: 95%; padding: 12px; }
   footer { font-size: 0.8rem; padding: 9px 12px; }
@@ -444,8 +574,8 @@ pre, code { font-family: var(--font-mono); }
 }
 
 @media (max-width: 480px) {
-  .gomud-btn { font-size: 0.95rem; }
   .overlay, .underlay { padding: 8px; }
+  .hero { padding: 24px 8px; }
 }
 
 /* ── Fonts: the Source family, shipped with the site so every device shows
@@ -483,3 +613,16 @@ pre, code { font-family: var(--font-mono); }
 }
 
 h1, h2, h3, h4 { font-family: var(--font-heading); }
+
+/* Malia's logo (2026-11-02): the D.O.G. mark in the top bar, the full logo in
+   the home page hero. Letters in the logo golds #d9ac46 / #c3932d (palette
+   spec, "Logo golds"); made for dark surfaces and the teal bar. */
+.brand-logo { display: flex; align-items: center; padding: 2px 0; }
+.brand-logo img { display: block; height: 56px; width: auto; }
+@media (max-width: 768px) { .brand-logo img { height: 48px; } }
+.hero-logo img { display: block; margin: 0 auto; width: min(560px, 86vw); max-width: 100%; height: auto; }
+/* Light mode swaps in the light-page version (letters #6f5418 / #473019,
+   6.0 and 10.4 on the cream page); the gold letters wash out there (1.8). */
+.hero-logo .logo-light { display: none; }
+:root[data-theme="light"]:not([data-client]) .hero-logo .logo-dark { display: none; }
+:root[data-theme="light"]:not([data-client]) .hero-logo .logo-light { display: block; }

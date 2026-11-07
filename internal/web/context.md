@@ -118,6 +118,12 @@ The web system is built around Go's standard `net/http` package with several key
 {{.CONFIG}}   <!-- Game configuration -->
 {{.STATS}}    <!-- Server statistics -->
 {{.NAV}}      <!-- Navigation menu items -->
+{{.ASSET_VERSION}}  <!-- staticAssetVersion() (asset_version.go): a hash of every
+     file under static/css and static/js, worked out once per boot. Put it on
+     every stylesheet and script link as ?v={{ .ASSET_VERSION }};
+     asset_version_test.go fails on an untagged one. Images are not hashed, so
+     they carry no tag: a changed image gets a new file name. PR #768's
+     start-time tag was folded into this on 2026-11-03. -->
 {{.COMPANION_RELAY_ORIGIN_JSON}}  <!-- relayOriginJSON(): the companion key relay origin
      as a JSON string literal ("" when none). Templates are text/template and escape
      nothing, so it is JSON-encoded in Go and used UNQUOTED inside a script. -->

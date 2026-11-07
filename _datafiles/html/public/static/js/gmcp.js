@@ -218,6 +218,10 @@ class RoomGridSVG {
       this._resyncTimer = null;
       this.zoomButtonSize = options.zoomButtonSize || 25;
       this.controlsMargin = options.controlsMargin || 10;
+      // controlsHost: an element or selector to hold the Fit / Center / zoom
+      // buttons, outside the map (the web client puts them under it). Unset:
+      // they float over the map's bottom-left corner as before.
+      this.controlsHost = options.controlsHost || null;
       this.biomeTints = options.biomeTints || RoomGridSVG.DEFAULT_BIOME_TINTS;
 
       // ── Instance id for unique defs (two map windows must not clash) ──
@@ -282,7 +286,7 @@ class RoomGridSVG {
       this.roomsGroup = document.createElementNS(LEATHER_NS, 'g');
       this.worldSvg.appendChild(this.roomsGroup);
 
-      // overlayGroup — legend + compass, drawn in 320×300 design coords on
+      // overlayGroup — compass and quest banner, drawn in 320×300 design coords on
       // TOP of worldSvg so the pannable room world never covers them.
       this.overlayGroup = document.createElementNS(LEATHER_NS, 'g');
       this.svg.appendChild(this.overlayGroup);
@@ -708,9 +712,10 @@ class RoomGridSVG {
   /**
    * "Somewhere in <name>" while the player stands inside an area or zone destination (#375 phase 4,
    * spec ruling 9). Drawn in the design-coordinate overlay so zoom and pan never move it. Placed
-   * centred just under the zone title (y 49 to 62, at most 200 wide, so x 60 to 260): the bottom
-   * strip is taken by the HTML zoom buttons (left) and the legend card (x 188 to 292), and the
-   * compass reaches x 266 at the top right. Seen in the demo page's screenshot, 2026-10-28.
+   * centred just under the zone title (y 49 to 62, at most 200 wide, so x 60 to 260): the compass
+   * reaches x 266 at the top right, and the zoom buttons float bottom left when a page does not
+   * give them a controlsHost (the web client does: they sit under the map). Seen in the demo
+   * page's screenshot, 2026-10-28.
    * The elements carry data-quest-banner so a redraw removes only them.
    */
   _drawQuestBanner() {
@@ -848,7 +853,7 @@ class RoomGridSVG {
   _renderSurface(zone, level) {
       const W = 320, H = 300;
       const g = this.surfaceGroup;
-      const ov = this.overlayGroup;   // legend + compass float here, atop rooms
+      const ov = this.overlayGroup;   // the compass floats here, atop rooms
       const L = RoomGridSVG.LEATHER;
       const iid = this._iid;
       const questBrassId = this._questBrassId, questHeadId = this._questHeadId;
@@ -968,49 +973,8 @@ class RoomGridSVG {
           "font-size": 6.5, "font-weight": "bold"
       }, "N", L.ink, d * 0.5);
 
-      // ── Legend card (bottom-right corner, floats atop rooms) ──────────
-      // Rows: Party member | Bank/Shop/Store | Stairs | Road/trail/water
-      const lw = 104, lh = 68, lx = 188, ly = 221;
-      ov.appendChild(lEl("rect", { x: lx, y: ly, width: lw, height: lh, rx: 3, fill: L.legendBg, stroke: L.ink, "stroke-width": 1, opacity: "0.92" }));
-      ov.appendChild(lEl("rect", { x: lx + 2.5, y: ly + 2.5, width: lw - 5, height: lh - 5, rx: 2, fill: "none", stroke: L.ink, "stroke-width": 0.4 }));
-      embText(ov, lx + lw / 2, ly + 11, {
-          "text-anchor": "middle", "font-family": L.font,
-          "font-size": 8, "font-weight": "bold", "font-style": "italic"
-      }, "Legend", L.label, d * 0.5);
-
-      const legendRows = [
-          ["party",  "Party member"],
-          ["svc",    "Bank / Shop / Store"],
-          ["stairs", "Stairs ▲▼"],
-          ["road",   "Road / trail / water"],
-          ["quest",  "Quest destination"],
-          ["qstep",  "Next step"]
-      ];
-      legendRows.forEach(function(rw, i) {
-          var yy = ly + 20 + i * 8.5, sxc = lx + 11;
-          if (rw[0] === "party") {
-              // Tiny figure (verdigris)
-              ov.appendChild(lEl("circle", { cx: sxc, cy: yy - 3, r: 1.2, fill: L.party }));
-              ov.appendChild(lEl("path", { d: "M" + (sxc - 2) + "," + yy + " Q" + sxc + "," + (yy - 2.6) + " " + (sxc + 2) + "," + yy + " Z", fill: L.party }));
-          } else if (rw[0] === "svc") {
-              ov.appendChild(lEl("circle", { cx: sxc, cy: yy - 2, r: 3.4, fill: L.roomFill, stroke: L.ink, "stroke-width": 0.9 }));
-              ov.appendChild(lTxt({ x: sxc, y: yy + 0.2, "text-anchor": "middle", "font-size": 4.4, "font-weight": "bold", fill: L.ink }, "$"));
-          } else if (rw[0] === "stairs") {
-              ov.appendChild(lTxt({ x: sxc, y: yy + 1, "text-anchor": "middle", "font-size": 7, "font-weight": "bold", fill: L.ink }, "▲"));
-          } else if (rw[0] === "quest") {
-              // Brass destination ring + brass core
-              ov.appendChild(lEl("circle", { cx: sxc, cy: yy - 2, r: 3.2, fill: L.roomFill, stroke: "url(#" + questBrassId + ")", "stroke-width": 1.4 }));
-              ov.appendChild(lEl("circle", { cx: sxc, cy: yy - 2, r: 1.2, fill: L.questGold }));
-          } else if (rw[0] === "qstep") {
-              // Short gold next-step line with arrowhead
-              ov.appendChild(lEl("line", { x1: sxc - 5, y1: yy - 2, x2: sxc + 3, y2: yy - 2, stroke: L.questGold, "stroke-width": 1.4, "marker-end": "url(#" + questHeadId + ")" }));
-          } else {
-              // Road sample line
-              ov.appendChild(lEl("line", { x1: sxc - 5, y1: yy - 2, x2: sxc + 5, y2: yy - 2, stroke: L.road, "stroke-width": 2.6 }));
-              ov.appendChild(lEl("line", { x1: sxc - 5, y1: yy - 2, x2: sxc + 5, y2: yy - 2, stroke: L.legendBg, "stroke-width": 0.6, "stroke-dasharray": "1 3" }));
-          }
-          ov.appendChild(lTxt({ x: lx + 22, y: yy + 1, "font-family": L.font, "font-size": 6.6, fill: L.label }, rw[1]));
-      });
+      // The legend lives under the map in the Map panel (.map-legend in
+      // webclient-pure.html), at reading size and off the rooms (2026-11-02).
 
       // ── Vignette (drawn last, on top, clipped to hide shape) ────────
       g.appendChild(lEl("rect", { x: 0, y: 0, width: W, height: H, fill: "url(#" + vigId + ")", "clip-path": "url(#" + clipId + ")", "pointer-events": "none" }));
@@ -1411,8 +1375,8 @@ class RoomGridSVG {
       div.style.cssText =
           `position:absolute;bottom:${this.controlsMargin}px;left:${this.controlsMargin}px;` +
           `display:flex;gap:5px;z-index:5;`;
-      // The visible glyphs are deliberately tiny ("+", "ctr") because the
-      // overlay sits on top of the map, so each control also carries a real
+      // The visible labels are short ("Fit", "Center", "−", "+"), and as an
+      // overlay they sit on the map, so each control also carries a real
       // name. Without it a screen reader announces "minus button" and a
       // pointer user gets no tooltip (review finding 18: controls must be
       // focusable AND named -- these were already focusable, being real
@@ -1428,8 +1392,8 @@ class RoomGridSVG {
           return b;
       };
       div.append(
-          mk('fit', 'Fit map to view',        () => this.fit()),
-          mk('ctr', 'Centre on your room',    () => this.centerOnRoom(this.currentCenterId)),
+          mk('Fit',    'Fit map to view',     () => this.fit()),
+          mk('Center', 'Center on your room', () => this.centerOnRoom(this.currentCenterId)),
           mk('−',   'Zoom out',               () => this.zoomOut()),
           mk('+',   'Zoom in',                () => this.zoomIn())
       );
@@ -1438,6 +1402,21 @@ class RoomGridSVG {
       // four loose buttons floating in the page.
       div.setAttribute('role', 'group');
       div.setAttribute('aria-label', 'Map controls');
+
+      // Hosted outside the map: ordinary buttons in the given box, no overlay
+      // positioning and no compact mode (that mode exists to keep an overlay
+      // off a small map). A host that is named but missing falls back to the
+      // overlay, with a warning so broken markup is noticed.
+      let host = this.controlsHost;
+      if (typeof host === 'string') { host = document.querySelector(host); }
+      if (host) {
+          div.style.cssText = 'display:flex;gap:5px;';
+          div.className = 'rgsvg-controls hosted';
+          this._controlsHosted = true;
+          host.appendChild(div);
+          return;
+      }
+      if (this.controlsHost) { console.warn('RoomGridSVG: controlsHost not found, using the overlay:', this.controlsHost); }
       this.container.appendChild(div);
 
       // Keep the overlay from covering the map when the panel is small:
@@ -1451,7 +1430,7 @@ class RoomGridSVG {
 
   // Apply the size-driven controls mode (see RoomGridSVG.controlsModeForSize).
   _applyControlsMode() {
-      if (!this.controlsEl) return;
+      if (!this.controlsEl || this._controlsHosted) return;   // hosted: keep the hosted class
       const mode = RoomGridSVG.controlsModeForSize(
           this.container.clientWidth, this.container.clientHeight);
       this.controlsEl.className = 'rgsvg-controls ' + mode;
@@ -1504,7 +1483,8 @@ RoomGridSVG.prototype._serviceFor = function (tags) {
 };
 
 // ── Responsive controls mode ──────────────────────────────────────────────────
-// The fit/zoom controls are a fixed-pixel overlay while the map SVG scales to
+// When not hosted (no controlsHost), the fit/zoom controls are a fixed-pixel
+// overlay while the map SVG scales to
 // fit its container. On a small map panel the full-size buttons cover too much
 // of the map, so below these thresholds the overlay switches to a compact,
 // translucent-at-rest treatment (full opacity on hover/focus). Pure function so

@@ -76,8 +76,10 @@ check('the outer page marks the game when the keyboard is open',
     /classList\.toggle\('keyboard-open'/.test(outer), true);
 check('the bare page marks itself when the keyboard is open',
     /classList\.toggle\('keyboard-open'/.test(game), true);
-check('the full screen button is shaped like the sound button',
-    /#menu-icon,\s*#btn-fullscreen \{/.test(game) && game.indexOf('class="brass" id="btn-fullscreen"') === -1, true);
+// PR #768 replaced the round sound button with the Settings menu, so the full
+// screen button matches the session bar's other brass buttons instead.
+check('the full screen button matches the session bar buttons',
+    game.indexOf('class="brass" id="btn-fullscreen"') !== -1 && !/#menu-icon,\s*#btn-fullscreen \{/.test(game), true);
 
 check('the keyboard path never resets the frame to nothing',
     /addEventListener\('resize', function \(\) \{\s*holdPageAtTop\(\);\s*fitFrameHeight\(\);/.test(outer), true);

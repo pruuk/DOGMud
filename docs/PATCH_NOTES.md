@@ -1,5 +1,38 @@
 # DOGMud Patch Notes
 
+## 2026-11-07: A new look for the website and the web client
+
+- The game has its own logo: three moons, the middle one crowned. You will see
+  it on the home page, as D.O.G. in the top bar, and as the moons on your
+  browser tab and phone home screen.
+- The website now has a teal bar at the top and bottom of every page, with the
+  menu repeated at the bottom.
+- The web client has a new Settings menu. Choose Dark, Light or Match my
+  device for the website and the game panels; the game text window always
+  stays dark. Sound on and off has moved into Settings too.
+- The side panels have friendlier names: Map, Quests, Health, Inventory, Chat,
+  Status and Automation.
+- On phones and tablets, the panels open from round brass buttons with simple
+  icons. The open one is pressed in, and its name shows above it.
+- The tabs inside Chat, Inventory and Automation are bigger, easier to tap and
+  easier to read. Every chat channel stays in view on a phone.
+- The map's legend and its Fit, Center and zoom buttons now sit under the map
+  instead of covering it. The legend folds away when you want more map.
+- On a phone, the keyboard closes after each game command so you can read
+  what happened. Tap the command box to type again. While you log in or pick
+  from a numbered menu, it stays open. Tapping the game text no longer
+  opens the keyboard.
+- Chat no longer has its own typing box. Talk from the command box instead:
+  type `say hello`, or `whisper` and a name and your message. The Chat tab
+  shows what everyone says.
+- On a phone, an open tab is only as tall as what it holds, and never more
+  than half the screen. The command box and some of the game text stay in
+  view, so you can read Chat and reply at the same time.
+- On a laptop, the command box stays at the bottom of the screen, even when
+  you pop the Game window out into its own box.
+- In the Quests tab, repeatable quests and the "Repeatable work" list are
+  easy to read again. They had faded almost out of sight.
+
 ## 2026-11-06: Word gets around
 
 - Gossips around the world have started talking about a crafter at the Confluence

@@ -1,8 +1,21 @@
 {{define "footer"}}
     </div>
 
+    <!-- Teal footer (Malia 2026-11-01): it bookends the teal top bar. Website
+         pages repeat the site menu above the credit line; the game page does
+         not, so the game keeps the room. -->
     <footer>
-      <p>Powered by <b>GoMud</b> - Available free at 
+      {{ $reqPath := .REQUEST.URL.Path }}
+      {{ if ne $reqPath "/webclient" }}
+      <nav aria-label="Site, bottom">
+        <div class="footer-nav">
+          {{ range $idx, $navDetails := .NAV }}
+            <a href="{{ $navDetails.Target }}" {{ if eq $reqPath $navDetails.Target }}aria-current="page"{{end}}>{{ $navDetails.Name }}</a>
+          {{ end }}
+        </div>
+      </nav>
+      {{ end }}
+      <p>Powered by <b>GoMud</b> - Available free at
         <a target="_blank" href="http://github.com/GoMudEngine/GoMud">
           github.com/GoMudEngine/GoMud
         </a>
@@ -10,10 +23,22 @@
     </footer>
 
     <script>
-      function toggleMenu() {
-        const navContainer = document.querySelector('.nav-container');
-        navContainer.style.display = navContainer.style.display === 'flex' ? 'none' : 'flex';
+      // Phone menu: the ☰ button opens and closes it and says which it is
+      // (aria-expanded); Esc closes it and puts focus back on the button.
+      function toggleMenu(open) {
+        const nav = document.getElementById('site-nav');
+        const btn = document.querySelector('.nav-toggle');
+        if (!nav || !btn) return;
+        if (typeof open !== 'boolean') open = !nav.classList.contains('open');
+        nav.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
       }
+      document.addEventListener('keydown', function (e) {
+        const nav = document.getElementById('site-nav');
+        if (e.key !== 'Escape' || !nav || !nav.classList.contains('open')) return;
+        toggleMenu(false);
+        document.querySelector('.nav-toggle').focus();
+      });
     </script>
   </body>
 </html>

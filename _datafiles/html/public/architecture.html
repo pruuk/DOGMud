@@ -29,17 +29,29 @@
     flex-direction: column;
     gap: 0.45rem;
     padding: 1.1rem 1.15rem 1rem;
-    background: var(--panel-bg-alt);
-    border: 1px solid var(--panel-border);
-    border-radius: 4px;
+    /* No outline (Malia 2026-11-01), like the page cards. The page card behind
+       is #201913, the old fill's twin (1.01), so the card steps up to the umber
+       #252015 and takes a soft shadow. On it: title 10.92, text 9.32, label
+       5.49, link 6.44, italic line 4.62. A lighter fill fails the italic line. */
+    background: #252015;
+    border: 0;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px var(--glass-shadow);
     text-decoration: none;
     color: var(--text-primary);
-    transition: border-color 0.18s ease, transform 0.18s ease;
+    transition: box-shadow 0.18s ease, transform 0.18s ease;
   }
   .diagram-card:hover,
   .diagram-card:focus-visible {
-    border-color: var(--gold-rule);
+    box-shadow: 0 8px 22px var(--glass-shadow);
     transform: translateY(-2px);
+  }
+  .diagram-card:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+  }
+  :root[data-theme="light"]:not([data-client]) .diagram-card {
+    background: var(--panel-bg-alt);
   }
   .diagram-kind {
     font-family: var(--font-mono);

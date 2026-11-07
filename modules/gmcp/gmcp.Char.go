@@ -62,7 +62,7 @@ func finishedRepeatQuests(c *characters.Character, lookup func(int) *quests.Ques
 // pendingCharSpawnRefresh tracks userIds that spawned but may not have received
 // their initial full Char push yet (e.g. a web client whose websocket GMCP frame
 // raced the login burst, so isGMCPEnabled was still false at PlayerSpawn time).
-// Without this, the Status & Conditions header + conditions only recover when a
+// Without this, the Status panel header + conditions only recover when a
 // later CharacterChanged fires (e.g. a condition add/refresh). The next NewRound
 // re-pushes "Char" once for these users and clears them, guaranteeing delivery
 // after the connection is GMCP-ready. Mirrors the pattern in gmcp.Automation.go.

@@ -18,10 +18,26 @@ function extract(a, b) {
     return html.slice(s, e);
 }
 
-function element() {
+// The Enter Game button's child spans, read from its real markup, so a
+// selector the page asks for that the button does not have finds nothing.
+var sessionMarkup = /<button[^>]*id="btn-session"[^>]*>([\s\S]*?)<\/button>/.exec(html);
+if (!sessionMarkup) throw new Error('btn-session markup not found');
+var SESSION_SPANS = [];
+sessionMarkup[1].replace(/<span class="([^"]+)"/g, function (m, cls) {
+    SESSION_SPANS.push('.' + cls.split(/\s+/)[0]);
+});
+
+function element(childSelectors) {
     var el = {
         style: {}, disabled: false, textContent: '', type: 'text', value: '',
-        handlers: {},
+        handlers: {}, children: {}, classList: { toggle: function () {} },
+        // Only the child spans this element really has; anything else is
+        // null, as in a browser, so a renamed span fails the test.
+        querySelector: function (sel) {
+            if ((childSelectors || []).indexOf(sel) < 0) return null;
+            return el.children[sel] || (el.children[sel] = element());
+        },
+        setAttribute: function () {},
         addEventListener: function (ev, fn) { el.handlers[ev] = fn; },
         click: function () { if (!el.disabled && el.handlers.click) el.handlers.click(); },
         focus: function () {}
@@ -41,7 +57,9 @@ FakeSocket.prototype.closed = function () {
 };
 
 var els = {};
-global.document = { getElementById: function (id) { return els[id] || (els[id] = element()); } };
+global.document = { getElementById: function (id) {
+    return els[id] || (els[id] = element(id === 'btn-session' ? SESSION_SPANS : []));
+} };
 global.location = { protocol: 'http:', host: 'test' };
 global.WebSocket = FakeSocket;
 global.term = { writeln: function () {}, write: function () {}, clear: function () {} };
@@ -57,7 +75,7 @@ var code = 'var socket = null, leavingGame = false, leaveFallback = null, inGame
     + 'var connectButton = document.getElementById("connect-button");\n'
     + 'var sessionButton = document.getElementById("btn-session");\n'
     + 'var sessionConfirm = document.getElementById("sess-confirm");\n'
-    + extract('function setSessionState(state)', "sessionButton.addEventListener('click'")
+    + extract('var SESSION_STATES = {', "sessionButton.addEventListener('click'")
     + extract("connectButton.addEventListener('click'", "textInput.addEventListener('keydown'");
 (0, eval)(code);
 
@@ -69,12 +87,21 @@ function check(name, ok, detail) {
 }
 
 var connect = els['connect-button'], session = els['btn-session'];
-var label = document.getElementById('sess-conn');
+// The status words ride inside the session button (PR #768): its hidden
+// .sess-status span reads ", connecting", ", connected", ", not connected".
+var label = session.querySelector('.sess-status');
+check('the Enter Game button has the dot, label and status spans the page writes',
+    ['.sess-dot', '.sess-label', '.sess-status'].every(function (s) { return SESSION_SPANS.indexOf(s) >= 0; }),
+    'spans in the markup: ' + SESSION_SPANS.join(' '));
+if (!label) {
+    console.log('FAIL the Enter Game button has no .sess-status span');
+    process.exit(1);
+}
 
 // The page connects on load.
 connect.click();
 check('the first click opens a socket', sockets.length === 1, 'sockets ' + sockets.length);
-check('the bar says it is connecting', /Connecting/.test(label.textContent), 'label ' + label.textContent);
+check('the bar says it is connecting', label.textContent === ', connecting', 'label ' + label.textContent);
 check('Enter Game is disabled while connecting', session.disabled === true, 'disabled ' + session.disabled);
 
 // A programmatic click still reaches the handler; it must not open another.
@@ -82,7 +109,7 @@ connect.click();
 check('a click while connecting opens no second socket', sockets.length === 1, 'sockets ' + sockets.length);
 
 sockets[0].open();
-check('the bar says connected once open', /Connected/.test(label.textContent), 'label ' + label.textContent);
+check('the bar says connected once open', label.textContent === ', connected', 'label ' + label.textContent);
 check('Enter Game comes back once open', session.disabled === false, 'disabled ' + session.disabled);
 
 // The socket fails to connect, or closes: the player can try again.
@@ -91,7 +118,7 @@ sockets[0].close();
 connect.click();
 check('a click while closing opens no second socket', sockets.length === 1, 'sockets ' + sockets.length);
 sockets[0].closed();
-check('the bar says not connected after close', /Not connected/.test(label.textContent), 'label ' + label.textContent);
+check('the bar says not connected after close', label.textContent === ', not connected', 'label ' + label.textContent);
 check('Enter Game is enabled after close', session.disabled === false, 'disabled ' + session.disabled);
 connect.click();
 check('a click after close opens a new socket', sockets.length === 2, 'sockets ' + sockets.length);

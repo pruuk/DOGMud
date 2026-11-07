@@ -10,16 +10,116 @@
 
   var SIDE_PANELS = ["map", "quests", "vitals", "art", "chat", "status", "trig"];
 
-  // Icons for the phone tab-bar (order matches SIDE_PANELS)
-  var PANEL_ICONS = {
-    map:    "🗺",
-    quests: "❖",
-    vitals: "❤",
-    art:    "🖼",
-    chat:   "💬",
-    status: "⚔",
-    trig:   "⏱",
+  // Game tab names and line icons, shared by the rail and the phone bar.
+  // Names are client-only labels (2026-11-01); the panel ids stay as they
+  // are. Icons are 24x24 stroke paths so they look the same on every device,
+  // unlike emoji.
+  var PANEL_TABS = {
+    map:    { label: "Map",        icon: ["M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z", "M9 4v14M15 6v14"] },
+    quests: { label: "Quests",     icon: ["M7 3h10a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2V5a2 2 0 0 1 2-2z", "M9 8h6M9 12h4"] },
+    vitals: { label: "Health",     icon: ["M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z", "M7 12h3l1.5-2 2 4 1.5-2H17"] },
+    art:    { label: "Inventory",  icon: ["M6 8h12l-1 12H7z", "M9 8V6a3 3 0 0 1 6 0v2", "M9 13h6"] },
+    chat:   { label: "Chat",       icon: ["M4 5h16v10H9l-5 4z", "M8 9h8M8 12h5"] },
+    status: { label: "Status",     icon: ["M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z", "M9 12l2 2 4-4"] },
+    trig:   { label: "Automation", icon: ["M12 6a7 7 0 1 0 0 14a7 7 0 1 0 0-14z", "M12 9v4l3 2M9 3h6"] },
   };
+
+  var SVG_NS = "http://www.w3.org/2000/svg";
+
+  // One round-icon tab bar with a single name pill (design 2026-11-01).
+  // The pill rests on the open tab and slides to a hovered or keyboard-focused
+  // circle as a preview, then slides back. Touch has no hover, so on touch the
+  // pill moves only when a tap opens a tab. onPick(name) runs on click.
+  function makeTabBar(extraClass, onPick) {
+    var bar = document.createElement("div");
+    bar.className = "gtabs " + extraClass;
+    bar.setAttribute("role", "group");
+    bar.setAttribute("aria-label", "Game panels");
+
+    var pill = document.createElement("span");
+    pill.className = "gtab-pill";
+    pill.setAttribute("aria-hidden", "true");
+    bar.appendChild(pill);
+
+    SIDE_PANELS.forEach(function (name) {
+      var tab = PANEL_TABS[name];
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "gtab";
+      btn.dataset.panel = name;
+      btn.setAttribute("aria-label", tab.label);
+      btn.setAttribute("aria-pressed", "false");
+      var svg = document.createElementNS(SVG_NS, "svg");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("focusable", "false");
+      tab.icon.forEach(function (d) {
+        var path = document.createElementNS(SVG_NS, "path");
+        path.setAttribute("d", d);
+        svg.appendChild(path);
+      });
+      btn.appendChild(svg);
+      btn.addEventListener("click", function () { onPick(name); });
+      bar.appendChild(btn);
+    });
+
+    var openName = null;
+
+    function place(btn, preview) {
+      if (!btn) { pill.classList.remove("shown"); return; }
+      // Phone bar with no panel open: there is no strip above the bar for the
+      // name, so a hover preview would sit over the command box. Skip it.
+      if (preview && !openName && extraClass === "gtabs-phone") { pill.classList.remove("shown"); return; }
+      pill.textContent = PANEL_TABS[btn.dataset.panel].label;
+      pill.classList.toggle("preview", !!preview);
+      pill.classList.add("shown");
+      var centre = btn.offsetLeft + btn.offsetWidth / 2;
+      var w = pill.offsetWidth;
+      // Clamp so an end name never leaves the bar (or the screen).
+      var x = Math.max(0, Math.min(centre - w / 2, bar.clientWidth - w));
+      pill.style.transform = "translateX(" + Math.round(x) + "px)";
+    }
+    function openBtn() {
+      return openName ? bar.querySelector('.gtab[data-panel="' + openName + '"]') : null;
+    }
+    function rest() { place(openBtn(), false); }
+
+    bar.addEventListener("pointerover", function (e) {
+      if (e.pointerType === "touch") return;
+      var t = e.target.closest(".gtab");
+      if (t) place(t, t.dataset.panel !== openName);
+    });
+    bar.addEventListener("pointerleave", function () {
+      // A keyboard user's focused circle keeps its preview; otherwise go home.
+      var f = document.activeElement;
+      if (f && bar.contains(f) && f.matches(":focus-visible")) place(f, f.dataset.panel !== openName);
+      else rest();
+    });
+    bar.addEventListener("focusin", function (e) {
+      var t = e.target.closest(".gtab");
+      if (t && t.matches(":focus-visible")) place(t, t.dataset.panel !== openName);
+    });
+    bar.addEventListener("focusout", function (e) {
+      if (!bar.contains(e.relatedTarget)) rest();
+    });
+
+    return {
+      el: bar,
+      // Mark a tab open (or none with null) and rest the pill on it.
+      setOpen: function (name) {
+        openName = name;
+        bar.querySelectorAll(".gtab").forEach(function (btn) {
+          var on = btn.dataset.panel === name;
+          btn.classList.toggle("open", on);
+          // Screen readers hear which tab is open (#731).
+          btn.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        rest();
+      },
+      // Re-measure after the bar is shown or resized (offsets are 0 while hidden).
+      relayout: rest,
+    };
+  }
 
   var Dashboard = {
     mode: null,         // current mode: "wide" | "rail" | "phone"
@@ -27,12 +127,13 @@
 
     // DOM refs created once
     _rail: null,
-    _railTabs: null,
+    _railTabs: null,    // makeTabBar() handle
+    _phoneTabs: null,   // makeTabBar() handle
     _railBody: null,
     _tabbar: null,
     _drawer: null,
     _drawerBody: null,
-    _drawerHead: null,
+    _drawerClose: null, // the phone card's ✕ button
 
     // ---------------------------------------------------------------
     // Public entry point
@@ -40,9 +141,10 @@
     init: function () {
       // Record each side panel's home column so we can restore later.
       // Order within each col is preserved by the original DOM order.
-      SIDE_PANELS.forEach(function (name) {
-        var panel = document.getElementById("panel-" + name);
-        if (!panel) return;
+      // Every panel, not only the side ones: redock() needs the Game
+      // panel's home too, or a docked Game window lands under the command
+      // box (BAR finding, 2026-11-02).
+      document.querySelectorAll("#dashboard .dash-panel").forEach(function (panel) {
         var col = panel.closest(".dash-col");
         if (col) panel.dataset.homeCol = col.id;
       });
@@ -61,7 +163,12 @@
       var self = this;
       window.addEventListener("resize", function () {
         self._apply();
+        self._relayoutTabs();
       });
+      // The name pill is measured in pixels: measure again once the web font lands.
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(function () { self._relayoutTabs(); });
+      }
 
       // Optional hooks for later tasks (splitters, rearrange, popout, layout restore)
       this.initSplitters  && this.initSplitters();
@@ -94,6 +201,8 @@
         // 3. Re-home panels in default order (clear the saved arrangement first
         //    so _enterWide uses the default SIDE_PANELS order, not the custom one).
         this._savedArrange = null;
+        this._poppedWhileNarrow = null;
+        this._boxGeom = null;
         document.querySelectorAll(".dash-panel").forEach(function (p) { p.style.display = ""; });
         if (this.mode === "rail" && this._enterRail) this._enterRail();
         else if (this.mode === "phone" && this._enterPhone) this._enterPhone();
@@ -107,6 +216,11 @@
         try { localStorage.removeItem("dogmud.dashboard.layout.v1"); } catch (e2) {}
         location.reload();
       }
+    },
+
+    _relayoutTabs: function () {
+      if (this.mode === "rail" && this._railTabs) this._railTabs.relayout();
+      if (this.mode === "phone" && this._phoneTabs) this._phoneTabs.relayout();
     },
 
     // Brief, self-dismissing notification (bottom-center, leather-styled).
@@ -143,11 +257,49 @@
       if (prev === "rail")  this._exitRail();
       if (prev === "phone") this._exitPhone();
 
+      // Pop-out windows are a wide-screen feature: dock them when the screen
+      // narrows (a floating Game window covered a phone) and pop them out
+      // again on the way back to wide.
+      if (newMode !== "wide") this._dockPoppedForNarrow();
+
       document.getElementById("dashboard").dataset.mode = newMode;
 
       if (newMode === "wide")  this._enterWide();
       if (newMode === "rail")  this._enterRail();
       if (newMode === "phone") this._enterPhone();
+
+      if (newMode === "wide") this._repopAfterNarrow();
+    },
+
+    // Panels docked only because the screen is narrow; popped out again in wide.
+    _poppedWhileNarrow: null,
+
+    _dockPoppedForNarrow: function () {
+      var self = this;
+      var names = Object.keys(this._popped || {});
+      if (!names.length) return;
+      this._poppedWhileNarrow = (this._poppedWhileNarrow || []).concat(names);
+      // The saved layout keeps these as popped: they come back in wide.
+      this._suspendSave = true;
+      try {
+        names.forEach(function (name) {
+          var wb = self._popped[name];
+          if (wb && typeof wb.close === "function") wb.close();
+          else self.redock(name);
+        });
+      } finally {
+        // Always resume saving, even if a window throws while closing.
+        this._suspendSave = false;
+      }
+    },
+
+    _repopAfterNarrow: function () {
+      var self = this;
+      var names = this._poppedWhileNarrow || [];
+      this._poppedWhileNarrow = null;
+      names.forEach(function (name) {
+        if (!(self._popped && self._popped[name])) self.popout(name);
+      });
     },
 
     // ---------------------------------------------------------------
@@ -221,9 +373,9 @@
       rail.id = "dash-rail";
       rail.style.display = "none";
 
-      var tabs = document.createElement("div");
-      tabs.className = "rail-tabs";
-      rail.appendChild(tabs);
+      var self = this;
+      var tabs = makeTabBar("gtabs-rail", function (name) { self._setRailActive(name); });
+      rail.appendChild(tabs.el);
 
       var body = document.createElement("div");
       body.className = "rail-body";
@@ -260,20 +412,6 @@
         panel.style.display = "none"; // will show only the active tab's panel
       });
 
-      // Build tab strip
-      this._railTabs.innerHTML = "";
-      SIDE_PANELS.forEach(function (name) {
-        var btn = document.createElement("button");
-        btn.className = "brass rail-tab";
-        btn.dataset.panel = name;
-        // Label: capitalize first letter of panel name
-        btn.textContent = name.charAt(0).toUpperCase() + name.slice(1);
-        btn.addEventListener("click", function () {
-          self._setRailActive(name);
-        });
-        self._railTabs.appendChild(btn);
-      });
-
       // Restore last-active or default to "map"
       this._setRailActive(this.activeSide);
     },
@@ -281,11 +419,7 @@
     _setRailActive: function (name) {
       this.activeSide = name;
 
-      // Update tab buttons
-      var buttons = this._railTabs.querySelectorAll(".rail-tab");
-      buttons.forEach(function (btn) {
-        btn.classList.toggle("rail-active", btn.dataset.panel === name);
-      });
+      this._railTabs.setOpen(name);
 
       // Show only the active panel
       SIDE_PANELS.forEach(function (pName) {
@@ -314,7 +448,6 @@
         panel.style.display = "";
       });
 
-      this._railTabs.innerHTML = "";
       this._rail.style.display = "none";
     },
 
@@ -326,45 +459,43 @@
       var parent = document.getElementById("dashboard").parentNode;
 
       // Tab-bar
+      var tabs = makeTabBar("gtabs-phone", function (name) {
+        // Toggle: if drawer is open for same panel, close it
+        if (self._drawer.classList.contains("open") &&
+            self._drawerActive === name) {
+          self._closeDrawer();
+        } else {
+          self._openDrawer(name);
+        }
+      });
       var tabbar = document.createElement("div");
       tabbar.id = "dash-tabbar";
       tabbar.style.display = "none";
-
-      SIDE_PANELS.forEach(function (name) {
-        var btn = document.createElement("div");
-        btn.className = "tabbar-btn";
-        btn.dataset.panel = name;
-        btn.title = name.charAt(0).toUpperCase() + name.slice(1);
-        btn.textContent = PANEL_ICONS[name] || name.charAt(0).toUpperCase();
-        btn.addEventListener("click", function () {
-          // Toggle: if drawer is open for same panel, close it
-          if (self._drawer.classList.contains("open") &&
-              self._drawerActive === name) {
-            self._closeDrawer();
-          } else {
-            self._openDrawer(name);
-          }
-        });
-        tabbar.appendChild(btn);
-      });
+      tabbar.appendChild(tabs.el);
 
       parent.appendChild(tabbar);
       this._tabbar = tabbar;
+      this._phoneTabs = tabs;
 
       // Drawer
       var drawer = document.createElement("div");
       drawer.id = "dash-drawer";
 
-      var drawerHead = document.createElement("div");
-      drawerHead.className = "drawer-head";
+      // The ✕ that closes the open tab: a square button, the same as the
+      // phone's Settings square. It sits in the open tab's own title bar, to
+      // the right of its ▾ button (see _openDrawer), so the card needs no
+      // extra strip just for it and the game keeps that room.
       var closeBtn = document.createElement("button");
-      closeBtn.className = "brass";
-      closeBtn.textContent = "✕ Close";
-      closeBtn.addEventListener("click", function () {
+      closeBtn.type = "button";
+      closeBtn.className = "brass drawer-close";
+      closeBtn.textContent = "✕︎";
+      closeBtn.title = "Close";
+      closeBtn.setAttribute("aria-label", "Close");
+      closeBtn.setAttribute("draggable", "false");
+      closeBtn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
         self._closeDrawer();
       });
-      drawerHead.appendChild(closeBtn);
-      drawer.appendChild(drawerHead);
 
       var drawerBody = document.createElement("div");
       drawerBody.className = "drawer-body";
@@ -372,7 +503,7 @@
 
       parent.appendChild(drawer);
       this._drawer     = drawer;
-      this._drawerHead = drawerHead;
+      this._drawerClose = closeBtn;
       this._drawerBody = drawerBody;
       this._drawerActive = null;
     },
@@ -442,13 +573,36 @@
       this._drawerBody.appendChild(panel);
       panel.style.display = "";
 
+      // Put the ✕ in this tab's title bar, after its ▾ button, and name it
+      // for screen readers ("Close Chat", "Close Map" and so on).
+      var btns = panel.querySelector(".ph-btns");
+      if (btns && this._drawerClose) {
+        btns.appendChild(this._drawerClose);
+        var label = "Close " + (PANEL_TABS[name] ? PANEL_TABS[name].label : name);
+        this._drawerClose.title = label;
+        this._drawerClose.setAttribute("aria-label", label);
+      }
+
       this._drawerActive = name;
       this._drawer.style.display = "";
       // Force reflow so CSS transition fires
       this._drawer.getBoundingClientRect();
       this._drawer.classList.add("open");
 
+      // Moving a tab into the card scrolls it back to the top. For Chat that
+      // would show the oldest messages, so once the card is open, jump back
+      // to the newest one.
+      this._scrollChatToNewest(panel);
+
       this._updateTabbarActive(name);
+    },
+
+    // Show the newest Chat messages. Hiding a panel's body (a fold, a move
+    // into the phone card) loses its scroll place and it comes back at the
+    // oldest message. Panels without a chat window are left alone.
+    _scrollChatToNewest: function (panel) {
+      var chatMessages = panel ? panel.querySelector(".chat-window.active") : null;
+      if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
     },
 
     _closeDrawer: function () {
@@ -473,11 +627,9 @@
     },
 
     _updateTabbarActive: function (activeName) {
-      if (!this._tabbar) return;
-      var buttons = this._tabbar.querySelectorAll(".tabbar-btn");
-      buttons.forEach(function (btn) {
-        btn.classList.toggle("active", btn.dataset.panel === activeName);
-      });
+      // Open a strip for the name pill only while a panel is open.
+      if (this._tabbar) this._tabbar.classList.toggle("named", !!activeName);
+      if (this._phoneTabs) this._phoneTabs.setOpen(activeName);
     },
 
     // ---------------------------------------------------------------
@@ -489,6 +641,7 @@
     _savedArrange: null,
 
     saveLayout: function () {
+      if (this._suspendSave) return;
       try {
         var el = document.getElementById("dashboard");
 
@@ -505,7 +658,8 @@
         });
 
         // Popped panels (always safe)
-        var popped = Object.keys(this._popped || {});
+        // Include panels docked only for a narrow screen, so they pop out again.
+        var popped = Object.keys(this._popped || {}).concat(this._poppedWhileNarrow || []);
 
         // Arrange: only valid in wide mode. In rail/phone the panels are
         // relocated away from their columns, so DOM order is not the real
@@ -522,6 +676,7 @@
               if (p.dataset.panel) arrange[colId].push(p.dataset.panel);
             });
           });
+          this._addPoppedToArrange(arrange);
           this._savedArrange = arrange;
         } else {
           // Read whatever was already persisted so we can write it back unchanged
@@ -535,11 +690,73 @@
 
         var payload = { cols: cols, collapsed: collapsed, popped: popped };
         if (arrange) payload.arrange = arrange;
+        if (this._boxGeom && Object.keys(this._boxGeom).length) payload.boxes = this._boxGeom;
 
         localStorage.setItem("dogmud.dashboard.layout.v1", JSON.stringify(payload));
       } catch (e) {
         // localStorage may be unavailable (private browsing, quota, etc.) — ignore
       }
+    },
+
+    // A popped panel is out of its column while its window is open, but it
+    // still owns a place there: it docks back just before its anchor. Save it
+    // at that place, so a narrow screen or a reload brings it back to the
+    // same spot instead of the bottom of its column (#768 review item 14).
+    _addPoppedToArrange: function (arrange) {
+      var self = this;
+      var pending = Object.keys(this._popped || {});
+      function listFor(name) {
+        var panel = document.getElementById("panel-" + name);
+        var list = panel ? arrange[panel.dataset.homeCol] : null;
+        return Array.isArray(list) ? list : null;
+      }
+      // Several panels can be popped at once, and one's anchor can be another
+      // popped panel, so place whatever can be placed until nothing moves.
+      var progress = true;
+      while (pending.length && progress) {
+        progress = false;
+        pending = pending.filter(function (name) {
+          var list = listFor(name);
+          if (!list || list.indexOf(name) >= 0) return false;
+          var anchor = self._dockAnchor ? self._dockAnchor[name] : null;
+          var anchorName = anchor && anchor.dataset ? anchor.dataset.panel : null;
+          if (!anchorName) { list.push(name); progress = true; return false; }
+          var at = list.indexOf(anchorName);
+          if (at < 0) return true;
+          list.splice(at, 0, name);
+          progress = true;
+          return false;
+        });
+      }
+      // An anchor that left the column (dragged away): the end of the column,
+      // where redock would put it too.
+      pending.forEach(function (name) {
+        var list = listFor(name);
+        if (list && list.indexOf(name) < 0) list.push(name);
+      });
+    },
+
+    // Pop-out window size and place per panel, kept while the window is
+    // moved or resized and when it closes or docks, and used again on the
+    // next pop-out so a window comes back where the player left it.
+    _boxGeom: null,
+
+    _rememberBox: function (name, wb) {
+      if (!wb) return;
+      var g = { x: wb.x, y: wb.y, width: wb.width, height: wb.height };
+      if (!isFinite(g.x) || !isFinite(g.y) || !(g.width > 0) || !(g.height > 0)) return;
+      this._boxGeom = this._boxGeom || {};
+      this._boxGeom[name] = g;
+    },
+
+    // Moving a window fires many times a second: save once it settles.
+    _saveSoon: function () {
+      var self = this;
+      if (this._saveTimer) clearTimeout(this._saveTimer);
+      this._saveTimer = setTimeout(function () {
+        self._saveTimer = null;
+        self.saveLayout && self.saveLayout();
+      }, 300);
     },
 
     restoreLayout: function () {
@@ -586,6 +803,15 @@
         }
       } catch (e) {}
 
+      // Pop-out window sizes and places, before any panel pops out below.
+      try {
+        if (data.boxes && typeof data.boxes === "object") {
+          Object.keys(data.boxes).forEach(function (name) {
+            self._rememberBox(name, data.boxes[name]);
+          });
+        }
+      } catch (e) {}
+
       // 3. Collapsed panels
       try {
         if (Array.isArray(data.collapsed)) {
@@ -600,7 +826,12 @@
       try {
         if (Array.isArray(data.popped)) {
           data.popped.forEach(function (name) {
-            self.popout && self.popout(name);
+            // Not wide: keep it docked until the screen is wide again.
+            if (self.mode !== "wide") {
+              self._poppedWhileNarrow = (self._poppedWhileNarrow || []).concat(name);
+            } else {
+              self.popout && self.popout(name);
+            }
           });
         }
       } catch (e) {}
@@ -629,6 +860,7 @@
       var self = this;
       // Toggle: the ⧉ now lives in the floating window, so a second press re-docks.
       if (this._popped[name]) { this._popped[name].close(); return; }
+      if (this.mode !== "wide") return; // wide-screen feature; the ⧉ is hidden elsewhere
 
       var panel = document.getElementById("panel-" + name);
       if (!panel) return;
@@ -642,17 +874,33 @@
       var titleEl = panel.querySelector(".ph-title");
       var title = titleEl ? titleEl.textContent.trim() : name;
 
-      var wb = new WinBox({
+      var opts = {
         title: title,
         mount: panel,
         class: "dash-winbox",
         width: 360,
         height: 300,
+        onmove: function () { self._rememberBox(name, this); self._saveSoon(); },
+        onresize: function () { self._rememberBox(name, this); self._saveSoon(); },
         onclose: function () {
+          // Keep the size and place for the next pop-out, whether the player
+          // closed it or a narrow screen docked it.
+          self._rememberBox(name, this);
           self.redock(name);
           // return undefined → WinBox proceeds with close normally
         }
-      });
+      };
+      // Come back at the size and place it had last time, kept on screen.
+      var geom = this._boxGeom && this._boxGeom[name];
+      if (geom) {
+        var vw = window.innerWidth || geom.x + geom.width;
+        var vh = window.innerHeight || geom.y + geom.height;
+        opts.width = Math.min(geom.width, vw);
+        opts.height = Math.min(geom.height, vh);
+        opts.x = Math.max(0, Math.min(geom.x, vw - opts.width));
+        opts.y = Math.max(0, Math.min(geom.y, vh - opts.height));
+      }
+      var wb = new WinBox(opts);
 
       this._popped[name] = wb;
       this.saveLayout && this.saveLayout();
@@ -667,6 +915,12 @@
         var col = homeId ? document.getElementById(homeId) : null;
         if (col) {
           var anchor = this._dockAnchor ? this._dockAnchor[name] : null;
+          // The anchor may itself be popped out: dock before its anchor.
+          var hops = 0;
+          while (anchor && anchor.parentNode !== col && anchor.dataset &&
+                 anchor.dataset.popped === "1" && hops++ < 20) {
+            anchor = this._dockAnchor[anchor.dataset.panel] || null;
+          }
           if (anchor && anchor.parentNode === col) col.insertBefore(panel, anchor);
           else col.appendChild(panel);
         }
@@ -823,6 +1077,8 @@
           collapseBtn.addEventListener("click", function (ev) {
             ev.stopPropagation();
             panel.classList.toggle("collapsed");
+            // Unfolded: back to the newest Chat message, not the oldest.
+            if (!panel.classList.contains("collapsed")) self._scrollChatToNewest(panel);
             self.saveLayout && self.saveLayout();
           });
         }
