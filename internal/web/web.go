@@ -308,8 +308,11 @@ func Listen(wg *sync.WaitGroup, webSocketHandler func(*websocket.Conn, string)) 
 	// relay's host never reaches any of them.
 	// Basic homepage
 
+	// Browsers ask for /favicon.ico on their own, so the URL stays; it serves
+	// the current icon file. A changed icon gets a new file name (brand
+	// standards section 7), and this line moves with it.
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Path = `/static/images/favicon.png`
+		r.URL.Path = `/static/images/favicon-moons.ico`
 		serveTemplate(w, r)
 	})
 

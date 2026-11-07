@@ -5,9 +5,8 @@ to put the skipped spec step back into the repo (Calabe, 2026-11-02). The
 decisions below are Malia's, made while reviewing on localhost, dated.
 **Owner:** Malia (look and feel). **Calabe's share:** review; one small
 server change (asset version tags).
-**Arc:** the touch web client rework
-(`docs/superpowers/specs/2026-10-31-touch-web-client-requirements.md`, on
-branch `docs/touch-web-client-requirements`). **Colours:**
+**Arc:** the touch web client rework, epic #783 (its requirements doc was
+never merged; the epic is the pointer). **Colours:**
 [`completed/2026-11-01-brand-palette-design.md`](completed/2026-11-01-brand-palette-design.md).
 **Brand rules:** [`../../guides/BRAND_STANDARDS.md`](../../guides/BRAND_STANDARDS.md).
 
@@ -207,14 +206,14 @@ for warnings; phone, tablet and desktop checked in both modes before review.
 
 ## Open items
 - Round 3: light Map (room ink and biome tints): not planned until Malia has
-  opinions from other human testers (Malia, 2026-11-02).
+  opinions from other human testers (Malia, 2026-11-02). Issue #812.
 - Listing-site images still show the old emblem (keep their names).
 - The session bar's "Connected" text was smaller than its 15px buttons:
   Done: the status is a circle in the button ("Session bar status"). Yes and
   Stay keep their bold labels (Malia, 2026-11-02).
 - Hide the Light option until round 3? (asked, unanswered)
 - Readable game text on phones: left to slice B (server wraps to the
-  screen's width; Calabe's work), Malia 2026-11-02.
+  screen's width; Calabe's work), Malia 2026-11-02. Issue #776.
 - Small map issues Malia noticed after the map strip: dropped from the open
   list (Malia, 2026-11-02); raise again if they come back.
 - **The map's level line is hard to read** (Malia, 2026-11-03). On the map,
@@ -224,7 +223,7 @@ for warnings; phone, tablet and desktop checked in both modes before review.
   clearer on every screen, while staying smaller than the place name above
   it. Her screenshot: `~/Desktop/dogmudRedo/levelSZIncrease.jpg`. Ours to
   fix in the web client (no server work); it goes through the usual spec
-  note, plan, review and Malia's approval when picked up.
+  note, plan, review and Malia's approval when picked up. Issue #811.
 
 ## Slices and plans
 | Slice | Plan |

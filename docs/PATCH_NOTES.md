@@ -18,8 +18,9 @@
   easier to read. Every chat channel stays in view on a phone.
 - The map's legend and its Fit, Center and zoom buttons now sit under the map
   instead of covering it. The legend folds away when you want more map.
-- On a phone, the keyboard closes after each command so you can read what
-  happened. Tap the command box to type again. Tapping the game text no longer
+- On a phone, the keyboard closes after each game command so you can read
+  what happened. Tap the command box to type again. While you log in or pick
+  from a numbered menu, it stays open. Tapping the game text no longer
   opens the keyboard.
 - Chat no longer has its own typing box. Talk from the command box instead:
   type `say hello`, or `whisper` and a name and your message. The Chat tab

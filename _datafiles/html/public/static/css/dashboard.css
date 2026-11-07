@@ -31,6 +31,11 @@
 #dash-col-left   { grid-area: left; }
 #dash-col-center { grid-area: center; }
 #dash-col-right  { grid-area: right; }
+/* A side column whose panels are all at their smallest (a very short
+   window, such as 1100x540) scrolls by itself, so the whole page never
+   scrolls and the session bar stays in view. */
+#dash-col-left,
+#dash-col-right  { overflow-y: auto; }
 
 /* Column-width splitters (wide mode only) */
 .dash-splitter { z-index: 5; align-self: stretch; }
@@ -62,7 +67,7 @@
 #dash-session button { font-size: 0.95rem; }
 /* Everything in the session bar stays on one line; when space runs out the
    character name shortens first. Phones get a 48px tap height on the Enter /
-   Leave Game and Yes / Stay buttons, icons for Settings and Full screen (words
+   Leave Game and Yes / Stay buttons, 44px icons for Settings and Full screen (words
    on wider screens, to match Enter Game; Reset layout is hidden on phones), and "Leave?" for
    the confirmation question. */
 #dash-session { min-width: 0; }
@@ -89,7 +94,11 @@
 #dashboard[data-mode="phone"] #btn-settings .btn-icon,
 #dashboard[data-mode="phone"] #sess-confirm .q-short { display: inline; }
 #dashboard[data-mode="phone"] #btn-fullscreen,
-#dashboard[data-mode="phone"] #btn-settings { font-size: 1.1rem; min-width: 40px; min-height: 40px; }
+#dashboard[data-mode="phone"] #btn-settings { font-size: 1.1rem; min-width: 44px; min-height: 44px; }
+/* "Companion key" has no icon, so on a narrow phone it is the one to give
+   way after the name: its words shorten with "..." (the full name stays in
+   its title) rather than pushing the page sideways. */
+#dashboard[data-mode="phone"] #btn-companion-key { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; min-height: 44px; }
 #dashboard[data-mode="phone"] #btn-settings .btn-icon { margin-right: 0; }
 #dashboard[data-mode="phone"] #btn-session,
 #dashboard[data-mode="phone"] #sess-confirm button { min-height: 48px; padding: 0 14px; font-size: 0.95rem; }
@@ -156,9 +165,12 @@
 /* While a tab is folded, its ▾ arrow turns to point sideways (▸), so the
    player can see it is folded and tap it again to open it. */
 .dash-panel.collapsed .ph-collapse { transform: rotate(-90deg); }
-/* On touch screens the ▾ and ⧉ buttons grow to a size a finger can hit. */
+/* On touch screens the ▾ and ⧉ buttons grow to a size a finger can hit
+   (44px, the touch minimum in the brand standards). They reach 2px into
+   the title bar's padding, so the bar stays 50px tall, as it was with
+   40px buttons, and title bars without buttons do not change. */
 @media (pointer: coarse) {
-  .dash-panel-head .ph-btn { width: 40px; height: 40px; line-height: 38px; font-size: 18px; }
+  .dash-panel-head .ph-btn { width: 44px; height: 44px; line-height: 42px; font-size: 18px; margin: -2px 0; }
 }
 .dash-panel-body { flex: 1 1 auto; min-height: 0; overflow: auto; position: relative; }
 
@@ -228,7 +240,8 @@
    (master's value; this PR had raised it to 230). At 230, a short laptop
    window with a few quests made the whole page scroll and pushed the top bar
    out of view (#768 review item 5). The legend now starts folded on short
-   windows, so 150 still leaves the map room to draw. */
+   windows. At 150 the title bar and the button row always fit, and the
+   map itself gives up the height first (#map-render below). */
 #panel-map    { flex: 1 1 0; min-height: 150px; }
 /* Map legend: under the map, not drawn over the rooms (Malia 2026-11-02).
    The map fills the space above; the key folds away (details/summary) to
@@ -239,13 +252,15 @@
    space at its sides (Malia 2026-11-06). The box takes the leather's own
    shape (320 wide by 300 tall) so no extra empty space sits around it, and
    the Fit / Center row stays right under the map. When the card is short,
-   the box shrinks and the leather shrinks with it. */
+   the box shrinks and the leather shrinks with it, all the way down, so
+   the Fit / Center / zoom / Legend row never scrolls out of the card at
+   the Map's 150px floor (it did with a 120px minimum here). */
 #panel-map #map-render {
   flex: 0 1 auto;
   box-sizing: content-box;
   aspect-ratio: 320 / 300;
   padding: 10px 0;
-  min-height: 120px;
+  min-height: 0;
   width: 100%;
 }
 /* Map buttons (Fit, Center, −, +): a row under the map, not over its rooms
@@ -256,12 +271,20 @@
   flex: 0 0 auto;
   display: flex;
   gap: 5px;
-  padding: 6px 10px;
+  /* 6px at the sides (was 10) keeps Fit, Center, -, + and Legend on one
+     row in a default-width column at 1280 to 1366 wide, so the map keeps
+     more of a short card. */
+  padding: 6px 6px;
   border-top: 1px solid var(--panel-border);
 }
 #map-controls .rgsvg-brass { min-width: 32px; height: 32px; padding: 0 10px; font-size: 14px; }
 @media (pointer: coarse) {
   #map-controls .rgsvg-brass { min-width: 44px; height: 44px; }
+  /* 44px buttons: tighter padding above and below the map and its button
+     row, and no gap when the row wraps, so the title bar, two rows of
+     buttons and a sliver of map still fit the Map's 150px floor. */
+  #panel-map #map-render { padding: 2px 0; }
+  .map-controls { padding: 2px 6px; row-gap: 0; }
 }
 /* The "Legend ▾" button: plain gold words at the right end of the map's
    button row (Malia 2026-11-06), not a brass button, so it reads as "show
@@ -271,8 +294,10 @@
 /* In a very narrow column the four map buttons wrap too, instead of the
    + button being cut off at the edge. */
 #map-controls .rgsvg-controls { flex-wrap: wrap; }
+/* It comes after Fit, Center, -, + in the markup too (initMapLegend in
+   webclient-pure.html moves it there), so Tab reaches it last, where it is
+   seen. */
 .map-legend-toggle {
-  order: 2;            /* after Fit, Center, −, + */
   margin-left: auto;   /* pushed to the right end of the row */
   min-height: 32px;
   padding: 0 4px;
@@ -310,7 +335,10 @@
 }
 .map-legend li { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .map-legend svg { width: 20px; height: 15px; flex: none; }
-#panel-quests { flex: 0 0 auto; }
+/* Quests is as tall as its list, up to 220px, and gives height back (down
+   to 80px, then its list scrolls) when the left column runs out, so a
+   short laptop window never scrolls the whole page (#768 review item 5). */
+#panel-quests { flex: 0 1 auto; min-height: 80px; }
 #panel-quests .dash-panel-body { max-height: 220px; overflow: auto; }
 .quests-empty { color: var(--quest-dim); font: italic 12px var(--font-body); padding: 4px 2px; }
 .qrow { display:flex; align-items:baseline; gap:7px; padding:5px 5px 4px; border-radius:4px; cursor:pointer; }
@@ -350,7 +378,12 @@
 .qonmap { color:var(--party-teal); font-style:normal; white-space:nowrap; }
 #panel-vitals { flex: 0 0 auto; }                    /* content-compact; grows with party rows */
 #panel-art    { flex: 0 1 auto; min-height: 120px; } /* inventory: content-sized, grows w/ eq list */
-#panel-chat   { flex: var(--f-chat, 1) 1 0; }
+/* Chat gets twice the share of Status and Automation, and at least 240px
+   in the right column: its channel tabs wrap to two or three rows on a
+   laptop, which left the messages 11 to 27px tall at 1280x720 and
+   1366x650 (#768 review item 1). */
+#panel-chat   { flex: var(--f-chat, 2) 1 0; }
+#dash-col-right > #panel-chat { min-height: 240px; }
 #panel-status { flex: var(--f-status, 1) 1 0; }
 #panel-trig   { flex: var(--f-trig, 1) 1 0; }
 
@@ -538,9 +571,23 @@
      covers the command box. */
   --cmdbox-h: 64px;
   /* The tallest an open tab may get: half the screen, so the game text
-     above the command box always stays in view. */
-  --drawer-cap: 50vh;
-  --drawer-cap: 50dvh; /* newer phones: half of what is actually visible */
+     above the command box always stays in view. On a short screen (a phone
+     on its side) half was too much: the tab covered every line of game
+     text and the Enter Game button. So it also stops --drawer-keep below
+     the top: the session bar (64px with its gap), the Game title bar (28px)
+     and about two lines of game text. */
+  --drawer-keep: 136px;
+  --drawer-cap: min(50vh, calc(100vh - var(--cmdbox-h) - var(--tabbar-h) - var(--tabname-h) - var(--drawer-keep)));
+}
+/* Newer phones: of what is actually visible. In @supports, because a
+   custom property keeps any value, so a second declaration would also
+   replace the vh one on a browser without dvh. */
+@supports (height: 1dvh) {
+  #dashboard[data-mode="phone"],
+  #dash-tabbar,
+  #dash-drawer {
+    --drawer-cap: min(50dvh, calc(100dvh - var(--cmdbox-h) - var(--tabbar-h) - var(--tabname-h) - var(--drawer-keep)));
+  }
 }
 
 #dashboard[data-mode="phone"] {
@@ -579,6 +626,14 @@ html:not(.keyboard-open):has(#dash-tabbar.named) #dashboard[data-mode="phone"] {
   padding-bottom: calc(6px + var(--tabbar-h) + var(--tabname-h));
 }
 .gtabs-phone { --gtab-size: 40px; gap: 2px; }
+/* Touch screens: 44px circles (a 56px bar). Seven of them fit from 348px
+   wide; on a 320px phone they shrink to 40px to fit, as .gtab may. */
+@media (pointer: coarse) {
+  #dashboard[data-mode="phone"],
+  #dash-tabbar,
+  #dash-drawer { --tabbar-h: 64px; }
+  .gtabs-phone { --gtab-size: 44px; }
+}
 
 /* The on-screen keyboard is open (viewportfit.js): the command box sits right on
    top of it, so the tab bar steps aside and gives its room back to the game. */
@@ -654,12 +709,28 @@ html.keyboard-open #dash-drawer { bottom: var(--cmdbox-h); }
   width: 40px;
   height: 40px;
   line-height: 1;
-  font-size: 26px;
-  padding-bottom: 5px; /* the ▾ character sits low; this lifts it to the middle */
+  font-size: 0;        /* the ▾ is drawn by ::before, so only it turns */
   border-radius: 6px;
   box-shadow: 0 2px 3px color-mix(in srgb, var(--shadow) 50%, transparent),
               inset 0 1px 1px color-mix(in srgb, var(--brass-glint) 70%, transparent),
               inset 0 -2px 3px color-mix(in srgb, var(--brass-shade) 55%, transparent);
+}
+#dash-drawer .dash-panel-head .ph-collapse::before {
+  content: "\25BE";    /* ▾ */
+  display: inline-block;
+  font-size: 26px;
+  line-height: 1;
+  padding-bottom: 5px; /* the ▾ character sits low; this lifts it to the middle */
+}
+/* Folded: the arrow turns to ▸ but the button keeps its light from above
+   and its shadow below (turning the whole button turned those sideways,
+   and its lift with them, so the arrow sat off centre). */
+#dash-drawer .dash-panel.collapsed .ph-collapse { transform: none; }
+#dash-drawer .dash-panel.collapsed .ph-collapse::before { transform: rotate(-90deg); }
+/* Touch screens: the ▾ and ✕ in an open tab's title bar are 44px. */
+@media (pointer: coarse) {
+  .drawer-close { min-width: 44px; min-height: 44px; margin: -2px 0; }
+  #dash-drawer .dash-panel-head .ph-collapse { width: 44px; height: 44px; }
 }
 
 /* The inside of the card: as tall as the tab's content. If the content is
@@ -690,7 +761,9 @@ html.keyboard-open #dash-drawer { bottom: var(--cmdbox-h); }
    message, which only works when the card has a set height. */
 #dash-drawer #panel-map,
 #dash-drawer #panel-chat {
-  height: var(--drawer-cap);
+  /* Less the card's 2px gold top line, which the cap includes; at the full
+     cap the card scrolled by those 2px. */
+  height: calc(var(--drawer-cap) - 2px);
 }
 /* ------------------------------------------------------------------ */
 /* WinBox pop-out — leather theme overlay                              */
@@ -1097,6 +1170,15 @@ html.keyboard-open #dash-drawer { bottom: var(--cmdbox-h); }
 .auto-tog.on::after {
   left: 16px;
   background: var(--lamp-rim);
+}
+/* Touch screens: "+ New" is 44px tall, and the small switch answers a
+   finger anywhere in a 44px square around it (an invisible ::before; the
+   switch looks the same). Rows are 46px, so inside their 1px borders
+   (which clip) that square is whole. */
+@media (pointer: coarse) {
+  .auto-add { min-height: 44px; display: inline-flex; align-items: center; }
+  .auto-row { min-height: 46px; align-items: center; }
+  .auto-tog::before { content: ''; position: absolute; inset: -17px -9px; }
 }
 
 /* Empty / coming-soon message in the list */

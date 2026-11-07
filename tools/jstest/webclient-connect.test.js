@@ -18,13 +18,25 @@ function extract(a, b) {
     return html.slice(s, e);
 }
 
-function element() {
+// The Enter Game button's child spans, read from its real markup, so a
+// selector the page asks for that the button does not have finds nothing.
+var sessionMarkup = /<button[^>]*id="btn-session"[^>]*>([\s\S]*?)<\/button>/.exec(html);
+if (!sessionMarkup) throw new Error('btn-session markup not found');
+var SESSION_SPANS = [];
+sessionMarkup[1].replace(/<span class="([^"]+)"/g, function (m, cls) {
+    SESSION_SPANS.push('.' + cls.split(/\s+/)[0]);
+});
+
+function element(childSelectors) {
     var el = {
         style: {}, disabled: false, textContent: '', type: 'text', value: '',
         handlers: {}, children: {}, classList: { toggle: function () {} },
-        // The session button holds its status circle, label and hidden status
-        // words as child spans (PR #768); hand back one fake per selector.
-        querySelector: function (sel) { return el.children[sel] || (el.children[sel] = element()); },
+        // Only the child spans this element really has; anything else is
+        // null, as in a browser, so a renamed span fails the test.
+        querySelector: function (sel) {
+            if ((childSelectors || []).indexOf(sel) < 0) return null;
+            return el.children[sel] || (el.children[sel] = element());
+        },
         setAttribute: function () {},
         addEventListener: function (ev, fn) { el.handlers[ev] = fn; },
         click: function () { if (!el.disabled && el.handlers.click) el.handlers.click(); },
@@ -45,7 +57,9 @@ FakeSocket.prototype.closed = function () {
 };
 
 var els = {};
-global.document = { getElementById: function (id) { return els[id] || (els[id] = element()); } };
+global.document = { getElementById: function (id) {
+    return els[id] || (els[id] = element(id === 'btn-session' ? SESSION_SPANS : []));
+} };
 global.location = { protocol: 'http:', host: 'test' };
 global.WebSocket = FakeSocket;
 global.term = { writeln: function () {}, write: function () {}, clear: function () {} };
@@ -76,6 +90,13 @@ var connect = els['connect-button'], session = els['btn-session'];
 // The status words ride inside the session button (PR #768): its hidden
 // .sess-status span reads ", connecting", ", connected", ", not connected".
 var label = session.querySelector('.sess-status');
+check('the Enter Game button has the dot, label and status spans the page writes',
+    ['.sess-dot', '.sess-label', '.sess-status'].every(function (s) { return SESSION_SPANS.indexOf(s) >= 0; }),
+    'spans in the markup: ' + SESSION_SPANS.join(' '));
+if (!label) {
+    console.log('FAIL the Enter Game button has no .sess-status span');
+    process.exit(1);
+}
 
 // The page connects on load.
 connect.click();

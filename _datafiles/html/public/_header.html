@@ -14,8 +14,8 @@
   <!-- Favicons: Malia's Moons of Gaius on the panel brown #201913 (2026-11-02).
        Images carry no ?v= tag: ASSET_VERSION hashes only CSS and JS, so a
        changed image gets a new file name instead (brand standards §7). -->
-  <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.ico" sizes="16x16 32x32 48x48">
-  <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.png">
+  <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon-moons.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon-moons.png">
   <link rel="apple-touch-icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/apple-touch-icon.png">
   <link rel="manifest" href="/static/manifest.json">
   <script src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/js/theme.js?v={{ .ASSET_VERSION }}"></script>
@@ -38,7 +38,7 @@
   <!-- Site header: wordmark + menu in one borderless glass bar. -->
   <header>
     <!-- Malia's D.O.G. mark (2026-11-02). The alt text stands in if the image fails. -->
-    <a class="brand-logo" href="/"><img src="/static/images/branding/logo_dog.png" width="677" height="229" alt="{{ .CONFIG.Server.MudName }}, home"></a>
+    <a class="brand-logo" href="/"><img src="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/branding/logo_dog.png" width="677" height="229" alt="{{ .CONFIG.Server.MudName }}, home"></a>
     <button type="button" class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="site-nav" onclick="toggleMenu()">
       <span aria-hidden="true"></span>
       <span aria-hidden="true"></span>

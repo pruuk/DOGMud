@@ -202,6 +202,7 @@
         //    so _enterWide uses the default SIDE_PANELS order, not the custom one).
         this._savedArrange = null;
         this._poppedWhileNarrow = null;
+        this._boxGeom = null;
         document.querySelectorAll(".dash-panel").forEach(function (p) { p.style.display = ""; });
         if (this.mode === "rail" && this._enterRail) this._enterRail();
         else if (this.mode === "phone" && this._enterPhone) this._enterPhone();
@@ -591,10 +592,17 @@
       // Moving a tab into the card scrolls it back to the top. For Chat that
       // would show the oldest messages, so once the card is open, jump back
       // to the newest one.
-      var chatMessages = panel.querySelector(".chat-window.active");
-      if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+      this._scrollChatToNewest(panel);
 
       this._updateTabbarActive(name);
+    },
+
+    // Show the newest Chat messages. Hiding a panel's body (a fold, a move
+    // into the phone card) loses its scroll place and it comes back at the
+    // oldest message. Panels without a chat window are left alone.
+    _scrollChatToNewest: function (panel) {
+      var chatMessages = panel ? panel.querySelector(".chat-window.active") : null;
+      if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
     },
 
     _closeDrawer: function () {
@@ -668,6 +676,7 @@
               if (p.dataset.panel) arrange[colId].push(p.dataset.panel);
             });
           });
+          this._addPoppedToArrange(arrange);
           this._savedArrange = arrange;
         } else {
           // Read whatever was already persisted so we can write it back unchanged
@@ -681,11 +690,73 @@
 
         var payload = { cols: cols, collapsed: collapsed, popped: popped };
         if (arrange) payload.arrange = arrange;
+        if (this._boxGeom && Object.keys(this._boxGeom).length) payload.boxes = this._boxGeom;
 
         localStorage.setItem("dogmud.dashboard.layout.v1", JSON.stringify(payload));
       } catch (e) {
         // localStorage may be unavailable (private browsing, quota, etc.) — ignore
       }
+    },
+
+    // A popped panel is out of its column while its window is open, but it
+    // still owns a place there: it docks back just before its anchor. Save it
+    // at that place, so a narrow screen or a reload brings it back to the
+    // same spot instead of the bottom of its column (#768 review item 14).
+    _addPoppedToArrange: function (arrange) {
+      var self = this;
+      var pending = Object.keys(this._popped || {});
+      function listFor(name) {
+        var panel = document.getElementById("panel-" + name);
+        var list = panel ? arrange[panel.dataset.homeCol] : null;
+        return Array.isArray(list) ? list : null;
+      }
+      // Several panels can be popped at once, and one's anchor can be another
+      // popped panel, so place whatever can be placed until nothing moves.
+      var progress = true;
+      while (pending.length && progress) {
+        progress = false;
+        pending = pending.filter(function (name) {
+          var list = listFor(name);
+          if (!list || list.indexOf(name) >= 0) return false;
+          var anchor = self._dockAnchor ? self._dockAnchor[name] : null;
+          var anchorName = anchor && anchor.dataset ? anchor.dataset.panel : null;
+          if (!anchorName) { list.push(name); progress = true; return false; }
+          var at = list.indexOf(anchorName);
+          if (at < 0) return true;
+          list.splice(at, 0, name);
+          progress = true;
+          return false;
+        });
+      }
+      // An anchor that left the column (dragged away): the end of the column,
+      // where redock would put it too.
+      pending.forEach(function (name) {
+        var list = listFor(name);
+        if (list && list.indexOf(name) < 0) list.push(name);
+      });
+    },
+
+    // Pop-out window size and place per panel, kept while the window is
+    // moved or resized and when it closes or docks, and used again on the
+    // next pop-out so a window comes back where the player left it.
+    _boxGeom: null,
+
+    _rememberBox: function (name, wb) {
+      if (!wb) return;
+      var g = { x: wb.x, y: wb.y, width: wb.width, height: wb.height };
+      if (!isFinite(g.x) || !isFinite(g.y) || !(g.width > 0) || !(g.height > 0)) return;
+      this._boxGeom = this._boxGeom || {};
+      this._boxGeom[name] = g;
+    },
+
+    // Moving a window fires many times a second: save once it settles.
+    _saveSoon: function () {
+      var self = this;
+      if (this._saveTimer) clearTimeout(this._saveTimer);
+      this._saveTimer = setTimeout(function () {
+        self._saveTimer = null;
+        self.saveLayout && self.saveLayout();
+      }, 300);
     },
 
     restoreLayout: function () {
@@ -729,6 +800,15 @@
         } else if (data.arrange) {
           // Cache it so _enterWide can use it later even if we're in rail/phone now
           this._savedArrange = data.arrange;
+        }
+      } catch (e) {}
+
+      // Pop-out window sizes and places, before any panel pops out below.
+      try {
+        if (data.boxes && typeof data.boxes === "object") {
+          Object.keys(data.boxes).forEach(function (name) {
+            self._rememberBox(name, data.boxes[name]);
+          });
         }
       } catch (e) {}
 
@@ -794,17 +874,33 @@
       var titleEl = panel.querySelector(".ph-title");
       var title = titleEl ? titleEl.textContent.trim() : name;
 
-      var wb = new WinBox({
+      var opts = {
         title: title,
         mount: panel,
         class: "dash-winbox",
         width: 360,
         height: 300,
+        onmove: function () { self._rememberBox(name, this); self._saveSoon(); },
+        onresize: function () { self._rememberBox(name, this); self._saveSoon(); },
         onclose: function () {
+          // Keep the size and place for the next pop-out, whether the player
+          // closed it or a narrow screen docked it.
+          self._rememberBox(name, this);
           self.redock(name);
           // return undefined → WinBox proceeds with close normally
         }
-      });
+      };
+      // Come back at the size and place it had last time, kept on screen.
+      var geom = this._boxGeom && this._boxGeom[name];
+      if (geom) {
+        var vw = window.innerWidth || geom.x + geom.width;
+        var vh = window.innerHeight || geom.y + geom.height;
+        opts.width = Math.min(geom.width, vw);
+        opts.height = Math.min(geom.height, vh);
+        opts.x = Math.max(0, Math.min(geom.x, vw - opts.width));
+        opts.y = Math.max(0, Math.min(geom.y, vh - opts.height));
+      }
+      var wb = new WinBox(opts);
 
       this._popped[name] = wb;
       this.saveLayout && this.saveLayout();
@@ -819,6 +915,12 @@
         var col = homeId ? document.getElementById(homeId) : null;
         if (col) {
           var anchor = this._dockAnchor ? this._dockAnchor[name] : null;
+          // The anchor may itself be popped out: dock before its anchor.
+          var hops = 0;
+          while (anchor && anchor.parentNode !== col && anchor.dataset &&
+                 anchor.dataset.popped === "1" && hops++ < 20) {
+            anchor = this._dockAnchor[anchor.dataset.panel] || null;
+          }
           if (anchor && anchor.parentNode === col) col.insertBefore(panel, anchor);
           else col.appendChild(panel);
         }
@@ -975,6 +1077,8 @@
           collapseBtn.addEventListener("click", function (ev) {
             ev.stopPropagation();
             panel.classList.toggle("collapsed");
+            // Unfolded: back to the newest Chat message, not the oldest.
+            if (!panel.classList.contains("collapsed")) self._scrollChatToNewest(panel);
             self.saveLayout && self.saveLayout();
           });
         }

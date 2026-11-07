@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html data-client>
 <head>
-    <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.ico" sizes="16x16 32x32 48x48">
-    <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon.png">
+    <link rel="icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon-moons.ico" sizes="16x16 32x32 48x48">
+    <link rel="icon" type="image/png" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/favicon-moons.png">
     <link rel="apple-touch-icon" href="{{ .CONFIG.FilePaths.WebCDNLocation }}/static/images/apple-touch-icon.png">
     <link rel="manifest" href="/static/manifest.json">
     <title>{{ .CONFIG.Server.MudName }} Web Terminal</title>
@@ -91,14 +91,21 @@
         }
         #settings-close:hover { background: var(--menu-button-hover); }
         #settings-close:active { background: var(--menu-button-active); }
+        /* A finger-sized close button on touch screens. */
+        @media (pointer: coarse) {
+            #settings-close { width: 44px; height: 44px; }
+        }
 
         /* Sound and Appearance are fieldsets, so a screen reader names the
            group ("Sound, group") before each control in it. */
+        /* min-width 0: a fieldset is otherwise at least as wide as its
+           content, which pushed the sliders 35px past a 320px phone. */
         #settings-menu fieldset {
             border: 0;
             border-top: 1px solid var(--menu-border);
             padding: 10px 0 4px;
             margin: 0;
+            min-width: 0;
         }
         .settings-note {
             margin: 2px 0 8px;
@@ -117,9 +124,12 @@
             display: flex;
             align-items: center;
         }
+        /* Up to 150px for the sound's name, less on a narrow phone. */
         .slider-container label {
             color: var(--menu-text);
-            width: 150px;
+            flex: 0 1 150px;
+            min-width: 0;
+            overflow-wrap: anywhere;
         }
         .slider-container input[type="range"] {
             flex: 1;
@@ -578,6 +588,10 @@
             var btn = document.getElementById('map-legend-toggle');
             var legend = document.getElementById('map-legend');
             if (!btn || !legend) return;
+            // RoomGridSVG (above) appended Fit / Center / zoom after this
+            // button; move it to the end of the row so Tab order matches
+            // what the player sees (Legend at the right end).
+            btn.parentNode.appendChild(btn);
             function show(open) {
                 legend.hidden = !open;
                 btn.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -3044,11 +3058,13 @@
                 } else {
                     term.writeln("Not connected to the server. Click Enter Game to play.");
                 }
-                // Phones: close the keyboard after every send, login and menus
-                // included, so the player reads the next step first (Malia
-                // 2026-11-02; HotInput decides).
+                // Phones: close the keyboard after an in-game command, so the
+                // player reads what happened first (Malia 2026-11-02). Login,
+                // password and numbered menu answers keep it open (Calabe's
+                // ruling, #768 review). HotInput decides.
                 if (window.HotInput && window.HotInput.shouldHideKeyboardAfterSend({
-                    touchOnly: phoneTouchOnly(), phoneWidth: phoneWidth(), sent: sent
+                    touchOnly: phoneTouchOnly(), phoneWidth: phoneWidth(), sent: sent,
+                    inGame: inGame, menuOpen: menuOpen, password: textInput.type === "password"
                 })) {
                     textInput.blur();
                 }
@@ -3313,11 +3329,15 @@
         function closeSettings(returnFocus) {
             const menu = document.getElementById('settings-menu');
             if (menu.hidden) return;
-            menu.hidden = true;
             const btn = document.getElementById('btn-settings');
+            // Read before hiding: some browsers leave focus on a control
+            // inside a hidden panel, where the next keys would go nowhere.
+            const active = document.activeElement;
+            const focusHere = !!active && (active === btn || menu.contains(active));
+            menu.hidden = true;
             btn.setAttribute('aria-expanded', 'false');
             if (returnFocus) btn.focus();
-            else if (document.activeElement === btn) btn.blur();
+            else if (focusHere && active.blur) active.blur();
         }
 
         // A click made with the keyboard (Enter or Space on the button) has
@@ -3330,11 +3350,15 @@
         document.getElementById('settings-close').addEventListener('click', function (e) {
             closeSettings(fromKeyboard(e));
         });
-        document.getElementById('settings-menu').addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                closeSettings(true);
-            }
+        // Esc closes it from anywhere, not only from inside the panel (after
+        // a click on empty space, focus is on nothing). Focus goes back to
+        // the Settings button only if it was in the panel or on the button;
+        // otherwise it stays where the player left it.
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape' || !settingsOpen()) return;
+            e.preventDefault();
+            const a = document.activeElement;
+            closeSettings(!!a && (a.id === 'btn-settings' || document.getElementById('settings-menu').contains(a)));
         });
         // Tabbing out past the last choice closes it too, so it does not stay
         // open over the game behind the player's back.

@@ -1,4 +1,4 @@
-// hotinput.js — decides whether a keystroke should be pulled into the command
+// hotinput.js: decides whether a keystroke should be pulled into the command
 // bar, for the web client's "keep the command bar hot" behaviour.
 //
 // Review finding 18. The client used to redirect focus to the command input on
@@ -74,6 +74,22 @@
         return el.matches(FOCUSABLE_CONTROL_SELECTOR);
     }
 
+    // isKeyboardFocused reports whether the element got its focus from the
+    // keyboard. A mouse click or tap also focuses a button (the Automation and
+    // Inventory tabs, the Chat channels, the map Legend), and a player who
+    // clicks one and then types expects the letters in the command box, not
+    // lost on the button (#768 review item 6). Browsers mark keyboard focus
+    // with :focus-visible. A browser too old to know that selector throws; it
+    // then keeps the older, safer rule that any focused control owns its keys.
+    function isKeyboardFocused(el) {
+        if (!el || typeof el.matches !== 'function') return false;
+        try {
+            return el.matches(':focus-visible');
+        } catch (err) {
+            return true;
+        }
+    }
+
     // shouldFocusCommandBar is the whole decision.
     //
     // opts: { modalOpen: bool, activeElement: Element|null, document: Document }
@@ -87,20 +103,27 @@
 
         var el = opts.activeElement;
         if (isEditableField(el)) return false;
-        if (isKeyboardControl(el, opts.document)) return false;
+        if (isKeyboardControl(el, opts.document) && isKeyboardFocused(el)) return false;
 
         return true;
     }
 
-    // Should the phone keyboard close after a send? (Malia, 2026-11-02: after
-    // every send, login and menus included, so the player can read the next
-    // step; tapping the box opens it again.) Only on a touch-only phone-width
-    // screen and only when something was sent. Tablets keep the keyboard, since
-    // a blur there would also stop arrow history and macros working. Plan:
+    // Should the phone keyboard close after a send? Only for an in-game
+    // command, so the player can read what happened; tapping the box opens it
+    // again. Login prompts, password prompts and numbered menu answers keep it
+    // open, because the next thing the player does there is type again (owner
+    // ruling on #768, 2026-11-07, replacing "after every send" of 2026-11-02).
+    // Only on a touch-only phone-width screen and only when something was sent.
+    // Tablets keep the keyboard, since a blur there would also stop arrow
+    // history and macros working. Plan:
     // docs/superpowers/plans/2026-11-02-webclient-phone-keyboard.md.
+    //
+    // s: { touchOnly, phoneWidth, sent, inGame, menuOpen, password }
     function shouldHideKeyboardAfterSend(s) {
         s = s || {};
-        return !!(s.touchOnly && s.phoneWidth && s.sent);
+        if (!(s.touchOnly && s.phoneWidth && s.sent)) return false;
+        if (!s.inGame || s.menuOpen || s.password) return false;
+        return true;
     }
 
     return {
@@ -108,6 +131,7 @@
         isTypingKey: isTypingKey,
         isEditableField: isEditableField,
         isKeyboardControl: isKeyboardControl,
+        isKeyboardFocused: isKeyboardFocused,
         shouldFocusCommandBar: shouldFocusCommandBar,
         shouldHideKeyboardAfterSend: shouldHideKeyboardAfterSend
     };

@@ -169,28 +169,21 @@
   --table-cell-text-color: var(--text-primary);
   --table-header-text-color: var(--ink-gold);
 
-  /* Glass: menus in the style of Apple's iOS 26 "Liquid Glass", in brand
-     colours only (design 2026-11-01). The bar is the darkest sky blue step,
-     the complement of the site's browns and the same family as the DOGMud
-     ASCII art; 92% so the page shows through only faintly. A capsule is
-     whatever is under it darkened with umber. Cream highlight instead of
-     white, umber shadow instead of black. Measured worst case (near-white
-     scrolled under the bar): nav text 4.71, current page 5.3; in a Group
-     capsule text 7.76, gold pill 4.91 against it, umber text on the pill
-     7.28; focus ring 9.8. Do not put --ink-gold text on glass. */
+  /* Glass: the site bar in the style of Apple's iOS 26 "Liquid Glass", in
+     brand colours only (design 2026-11-01). The bar is the website teal
+     #085044 (brand teal L30, "this is the website"; Malia 2026-11-01),
+     92% so the page shows through only faintly. Cream text instead of
+     white, umber shadow instead of black. The gold of --glass-prominent
+     underlines the current page. Worst case, the cream page #fef9ee under
+     the bar (#1c5e52): nav text 4.76, current page 5.39, focus ring 4.14
+     (5.89, 6.67 and 5.12 on solid teal). Do not put --ink-gold text on
+     glass. */
   --glass-bar: color-mix(in srgb, #085044 92%, transparent);
   --glass-bar-solid: #085044;
-  --glass-capsule: color-mix(in srgb, #19140c 35%, transparent);
-  --glass-capsule-hover: color-mix(in srgb, #19140c 55%, transparent);
-  /* The capsule mixed solid, for reduced transparency (teal + 35%/55% umber). */
-  --glass-group-solid: #0e3b30;
-  --glass-group-hover-solid: #112f25;
   --glass-text: #dfcc94;
   --glass-text-strong: #efd897;
-  --glass-edge: color-mix(in srgb, #fef9ee 18%, transparent);
   --glass-shadow: color-mix(in srgb, #19140c 45%, transparent);
   --glass-prominent: #b5a26c;
-  --glass-prominent-text: #19140c;
   --focus-ring: #e7b86c;
 }
 
@@ -198,8 +191,10 @@
    Chosen in the web client's Settings > Appearance; static/js/theme.js sets
    <html data-theme="light">. Covers the pages that use the site header: Home,
    Who's Online, Architecture, Config, 404 and the frame around the web
-   client. The web client itself marks its <html> with data-client and stays
-   dark for now; the builder pages keep their own palette.
+   client. The web client marks its <html> with data-client, so this block
+   skips it: its game panels get their own Light colours in dashboard.css,
+   and the game text and the map stay dark. The builder pages keep their
+   own palette.
    Warm parchment from the Cuyp cream, dark umber text. Every text colour is at
    least 4.5:1 on every background it sits on (lowest: online green on a table
    heading, 4.7). Brass buttons keep their dark theme colours: dark text on
@@ -277,7 +272,7 @@ header {
   -webkit-backdrop-filter: blur(16px) saturate(140%);
   backdrop-filter: blur(16px) saturate(140%);
 }
-/* No blur available: a solid umber bar, so text never sits on raw page. */
+/* No blur available: a solid teal bar, so text never sits on raw page. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   header { background: var(--glass-bar-solid); }
 }
@@ -345,21 +340,6 @@ header nav {
 }
 .nav-container a[aria-current="page"] { font-weight: 600; }
 
-/* Group: one glass capsule holds every link (Apple's tab bar); the
-   current page is a gold fill inside it. */
-.nav-group {
-  gap: 2px;
-  padding: 4px;
-  border-radius: 999px;
-  background: var(--glass-capsule);
-  box-shadow: inset 0 1px 0 var(--glass-edge), 0 2px 8px var(--glass-shadow);
-}
-.nav-group a:hover { background: var(--glass-capsule-hover); color: var(--glass-text-strong); }
-.nav-group a[aria-current="page"] {
-  background: var(--glass-prominent);
-  color: var(--glass-prominent-text);
-}
-
 /* Text (the site menu): plain links; the current page is cream with a gold line. */
 .nav-text { gap: 4px; }
 .nav-text a { padding: 0 10px; border-radius: 6px; }
@@ -399,7 +379,6 @@ header nav {
   header { gap: 8px 12px; padding: 8px 16px; }
   .nav-container { gap: 4px; }
   .nav-container a { font-size: 0.82rem; padding: 0 10px; min-height: 32px; }
-  .nav-group { gap: 0; padding: 3px; }
   .nav-text a { padding: 0 7px; }
 }
 @media (min-width: 769px) and (max-width: 900px) {
@@ -412,8 +391,6 @@ header nav {
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   :root {
     --glass-bar: var(--glass-bar-solid);
-    --glass-capsule: var(--glass-group-solid);
-    --glass-capsule-hover: var(--glass-group-hover-solid);
   }
   header { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
@@ -462,7 +439,9 @@ body:has(.content-container[data-path="/webclient"]) footer { margin-top: 0; }
 }
 
 /* ── Hero (landing) ── */
-.hero { text-align: center; padding: 30px 26px; }
+/* Never wider than the page: on a 320 to 360 phone the logo and padding
+   pushed the page sideways by up to 4px. */
+.hero { text-align: center; padding: 30px 26px; box-sizing: border-box; max-width: 100%; }
 .hero-title {
   font-family: var(--font-heading);
   font-weight: bold;
@@ -587,7 +566,6 @@ pre, code { font-family: var(--font-mono); }
   }
   .nav-container.open { display: flex; }
   .nav-container a { justify-content: center; min-height: 44px; }
-  .nav-group { border-radius: 22px; padding: 6px; }
   .content-container { padding: 12px; }
   .overlay, .underlay { width: 95%; padding: 12px; }
   footer { font-size: 0.8rem; padding: 9px 12px; }
@@ -597,6 +575,7 @@ pre, code { font-family: var(--font-mono); }
 
 @media (max-width: 480px) {
   .overlay, .underlay { padding: 8px; }
+  .hero { padding: 24px 8px; }
 }
 
 /* ── Fonts: the Source family, shipped with the site so every device shows
@@ -641,7 +620,7 @@ h1, h2, h3, h4 { font-family: var(--font-heading); }
 .brand-logo { display: flex; align-items: center; padding: 2px 0; }
 .brand-logo img { display: block; height: 56px; width: auto; }
 @media (max-width: 768px) { .brand-logo img { height: 48px; } }
-.hero-logo img { display: block; margin: 0 auto; width: min(560px, 86vw); height: auto; }
+.hero-logo img { display: block; margin: 0 auto; width: min(560px, 86vw); max-width: 100%; height: auto; }
 /* Light mode swaps in the light-page version (letters #6f5418 / #473019,
    6.0 and 10.4 on the cream page); the gold letters wash out there (1.8). */
 .hero-logo .logo-light { display: none; }

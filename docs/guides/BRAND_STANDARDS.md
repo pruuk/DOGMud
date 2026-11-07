@@ -58,6 +58,11 @@ All colours come from the palette spec. The roles that define the brand:
 - **Text contrast at least 4.5:1** against what it sits on; icons and focus
   rings at least 3:1. Measure, do not eyeball, and write the number in the
   CSS comment beside the colour.
+  **One known shortfall:** the dark `#1a1206` label on the shiny brass of the
+  Chat, Inventory and Automation tabs (`.subtab`) is 13.77 on the light spot
+  and 5.45 mid, but falls to 3.08 where a long label reaches the brass's
+  dark edge `#736133`. Fixing it means changing that brass, which is
+  Malia's call.
 - **Red is for warnings only** (low health, alerts, queued actions). Do not
   use it for decoration, frames or selection.
 - **No pure white or black.** The lightest is cream `#fef9ee` / `#efd897`, the
@@ -92,8 +97,8 @@ All colours come from the palette spec. The roles that define the brand:
 
 | File (in `static/images/`) | Size | Use |
 |---|---|---|
-| `favicon.ico` | 16, 32, 48 | browser tabs |
-| `favicon.png` | 32 | browser tabs; also served at `/favicon.ico` |
+| `favicon-moons.ico` | 16, 32, 48 | browser tabs; also served at `/favicon.ico` (`internal/web/web.go`) |
+| `favicon-moons.png` | 32 | browser tabs |
 | `apple-touch-icon.png` | 180 | phone home screen |
 | `icon-192.png`, `icon-512.png` | 192, 512 | Android, listed in `static/manifest.json` |
 

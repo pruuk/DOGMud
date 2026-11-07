@@ -1,4 +1,4 @@
-// theme.test.js — the site's Dark / Light / Match device choice (design
+// theme.test.js: the site's Dark / Light / Match device choice (design
 // 2026-11-01).
 //
 // Run:  node tools/jstest/theme.test.js
@@ -127,6 +127,23 @@ check('blocked storage: page draws dark', blocked.theme(), 'dark');
 var threw = false;
 try { SiteTheme.set('light'); } catch (e) { threw = true; }
 check('blocked storage: set does not throw', threw, false);
+// The choice holds for this page even though it could not be saved (#768
+// review item 13: set() used to re-read the failed save and stay dark).
+check('blocked storage: set light draws light', blocked.theme(), 'light');
+check('blocked storage: get returns the choice made', SiteTheme.get(), 'light');
+SiteTheme.set('device');
+check('blocked storage: device on a light device draws light', blocked.theme(), 'light');
+blocked.deviceChanged(false);
+check('blocked storage: device follows the device', blocked.theme(), 'dark');
+
+// A choice made here is replaced by one another page saves later.
+var shared = fakeWindow();
+SiteTheme.start(shared);
+SiteTheme.set('light');
+shared.store.siteTheme = 'dark';
+shared.fire('storage', { key: 'siteTheme' });
+check('another page saving dark replaces this page\'s light', shared.theme(), 'dark');
+check('get follows the other page\'s choice', SiteTheme.get(), 'dark');
 
 // Both pages load theme.js before their first stylesheet.
 function loadsBeforeCss(file, cssName) {

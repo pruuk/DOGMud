@@ -1,4 +1,4 @@
-// hotinput.test.js — regression tests for the web client's "keep the command
+// hotinput.test.js: regression tests for the web client's "keep the command
 // bar hot" focus rule (review finding 18, keyboard accessibility).
 //
 // Run:  node tools/jstest/hotinput.test.js
@@ -48,6 +48,9 @@ function el(tagName, opts) {
             }
         },
         matches: function (selector) {
+            // :focus-visible is how a browser marks focus that came from the
+            // keyboard; a mouse click or tap focuses without it.
+            if (selector === ':focus-visible') return !!opts.focusVisible;
             for (var i = 0; i < descriptors.length; i++) {
                 if (selector.indexOf(descriptors[i]) !== -1) return true;
             }
@@ -56,10 +59,20 @@ function el(tagName, opts) {
     };
 }
 
-var BUTTON = el('BUTTON', { descriptors: ['button'] });
-var LINK = el('A', { descriptors: ['a[href]'] });
-var TABBABLE = el('DIV', { descriptors: ['[tabindex]:not([tabindex="-1"])'] });
-var ROLE_BUTTON = el('DIV', { descriptors: ['[role="button"]'] });
+// The controls below were reached with Tab, so they carry :focus-visible.
+var BUTTON = el('BUTTON', { descriptors: ['button'], focusVisible: true });
+var LINK = el('A', { descriptors: ['a[href]'], focusVisible: true });
+var TABBABLE = el('DIV', { descriptors: ['[tabindex]:not([tabindex="-1"])'], focusVisible: true });
+var ROLE_BUTTON = el('DIV', { descriptors: ['[role="button"]'], focusVisible: true });
+// The same button after a mouse click: focused, but not :focus-visible.
+var CLICKED_BUTTON = el('BUTTON', { descriptors: ['button'] });
+var CLICKED_ROLE_TAB = el('DIV', { descriptors: ['[role="tab"]'] });
+// A browser that does not know :focus-visible throws a SyntaxError.
+var OLD_BROWSER_BUTTON = el('BUTTON', { descriptors: ['button'] });
+OLD_BROWSER_BUTTON.matches = function (selector) {
+    if (selector === ':focus-visible') throw new SyntaxError('unknown pseudo-class');
+    return selector.indexOf('button') !== -1;
+};
 var PLAIN_DIV = el('DIV', {});
 var TEXT_INPUT = el('INPUT', {});
 var SELECT = el('SELECT', {});
@@ -147,6 +160,19 @@ check('Escape is left alone on a button', focuses(key('Escape'), BUTTON), false)
 // Even a printable character is left alone on a control the user tabbed to.
 check('typing on a focused button is left alone', focuses(key('n'), BUTTON), false);
 
+// A button focused by a mouse click or tap (an Automation or Inventory tab, a
+// Chat channel, the map Legend) does not own the keys: typing goes to the
+// command box instead of vanishing (#768 review item 6).
+check('typing after clicking a button reaches the command bar', focuses(key('n'), CLICKED_BUTTON), true);
+check('typing after clicking a role=tab reaches the command bar', focuses(key('n'), CLICKED_ROLE_TAB), true);
+check('Tab is still left alone on a clicked button', focuses(key('Tab'), CLICKED_BUTTON), false);
+check('Enter is still left alone on a clicked button', focuses(key('Enter'), CLICKED_BUTTON), false);
+check('a clicked button is not keyboard-focused', HotInput.isKeyboardFocused(CLICKED_BUTTON), false);
+check('a tabbed-to button is keyboard-focused', HotInput.isKeyboardFocused(BUTTON), true);
+check('an element with no matches() is not keyboard-focused', HotInput.isKeyboardFocused({ tagName: 'BUTTON' }), false);
+// Without :focus-visible support the old rule stands: the control keeps its keys.
+check('an old browser keeps typing on a focused button', focuses(key('n'), OLD_BROWSER_BUTTON), false);
+
 // Real fields keep their input.
 check('typing in a text input is left alone', focuses(key('n'), TEXT_INPUT), false);
 check('typing in the chat textarea is left alone', focuses(key('n'), CHAT_TEXTAREA), false);
@@ -154,12 +180,13 @@ check('typing in the chat textarea is left alone', focuses(key('n'), CHAT_TEXTAR
 // Modals own focus while open.
 check('typing is left alone while a modal is open', focuses(key('n'), PLAIN_DIV, true), false);
 
-// --- phone keyboard hides after a send (2026-11-02) ------------------------
+// --- phone keyboard hides after an in-game send ----------------------------
 //
 // docs/superpowers/plans/2026-11-02-webclient-phone-keyboard.md. True only
-// on a touch-only phone-width screen whenever something was sent, at login
-// and in menus too (Malia, 2026-11-02); off on tablets, desktops, or when
-// nothing was sent.
+// on a touch-only phone-width screen when an in-game command was sent (owner
+// ruling on #768, 2026-11-07). Login prompts, password prompts and numbered
+// menu answers keep the keyboard, as do tablets, desktops, and a send that
+// did not go out.
 
 var HIDE = { touchOnly: true, phoneWidth: true, inGame: true, menuOpen: false, password: false, sent: true };
 function hide(overrides) {
@@ -171,9 +198,12 @@ function hide(overrides) {
 check('phone, in game, sent: keyboard hides', hide(), true);
 check('not touch-only (desktop, touch laptop): keeps the keyboard', hide({ touchOnly: false }), false);
 check('tablet width: keeps the keyboard (arrow history, macros)', hide({ phoneWidth: false }), false);
-check('at login (Malia: after every send): hides', hide({ inGame: false }), true);
-check('a game menu or prompt is open (Malia: after every send): hides', hide({ menuOpen: true }), true);
-check('masked (password) input (Malia: after every send): hides', hide({ password: true }), true);
+check('at a login prompt: keeps the keyboard', hide({ inGame: false }), false);
+check('answering a numbered game menu: keeps the keyboard', hide({ menuOpen: true }), false);
+check('at a password prompt: keeps the keyboard', hide({ password: true }), false);
+check('a password prompt at login: keeps the keyboard', hide({ inGame: false, password: true }), false);
+check('an old call site with no in-game state: keeps the keyboard',
+    HotInput.shouldHideKeyboardAfterSend({ touchOnly: true, phoneWidth: true, sent: true }), false);
 check('nothing was sent: keeps the keyboard', hide({ sent: false }), false);
 check('no state at all: keeps the keyboard', HotInput.shouldHideKeyboardAfterSend(), false);
 
@@ -187,6 +217,8 @@ var sendAt = page.indexOf('var sent = SendData(event.target.value);');
 var decideAt = page.indexOf('window.HotInput.shouldHideKeyboardAfterSend({');
 check('the command box asks HotInput after sending', sendAt >= 0 && decideAt > sendAt, true);
 check('the decision is fed the send result', /phoneWidth: phoneWidth\(\), sent: sent/.test(page), true);
+check('the decision is told about login, menus and password prompts',
+    /inGame: inGame, menuOpen: menuOpen, password: textInput\.type === "password"/.test(page), true);
 check('a phone tap on the game text does not refocus the command box',
     /!isDragging && !selectedText && !\(phoneTouchOnly\(\) && phoneWidth\(\)\)/.test(page), true);
 check("xterm's textarea cannot raise the phone keyboard",

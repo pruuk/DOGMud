@@ -12,17 +12,13 @@
         wcIframe.width = "0px";
         wcIframe.height = "0px";
 
-        // Calculate scrollbar width
-        const outer = document.createElement('div');
-        outer.style.cssText = 'visibility:hidden;overflow:scroll';
-        document.body.appendChild(outer);
-        outer.appendChild(document.createElement('div'));
-        const scrollbarWidth = outer.offsetWidth - outer.firstChild.offsetWidth;
-        document.body.removeChild(outer);
-
-        // Set proper height/width - subtract scrollbar width to prevent cropping
-        wcIframe.width = contentContainer.clientWidth - scrollbarWidth;
+        // The frame fills the page's width. The width is read again once the
+        // height is set: only if the page then scrolls does a scroll bar take
+        // its share. (Always taking a scroll bar's width off left a 15px
+        // stripe of page colour beside the game, cream in Light mode.)
+        wcIframe.width = contentContainer.clientWidth;
         fitFrameHeight();
+        wcIframe.width = contentContainer.clientWidth;
     }
 
     // The on-screen keyboard shrinks only the visual viewport on iOS Safari and

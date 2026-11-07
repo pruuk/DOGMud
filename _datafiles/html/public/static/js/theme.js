@@ -1,4 +1,4 @@
-// theme.js — the site's Dark / Light / Match device choice.
+// theme.js: the site's Dark / Light / Match device choice.
 //
 // One choice covers the whole site: the pages around the web client and the
 // web client itself (design 2026-11-01). The game text window always stays
@@ -47,9 +47,15 @@
 
     var win = null;
 
+    // The choice made on this page, kept in memory so it holds even when it
+    // could not be saved (private windows, blocked site data). null until
+    // set() runs; a change saved by another page replaces it.
+    var remembered = null;
+
     // Storage can throw (private windows, blocked site data); the default
     // theme is always safe to fall back to.
     function get() {
+        if (remembered !== null) return remembered;
         try {
             return normalize(win.localStorage.getItem(KEY));
         } catch (e) {
@@ -71,6 +77,7 @@
 
     function set(choice) {
         choice = normalize(choice);
+        remembered = choice;
         try {
             win.localStorage.setItem(KEY, choice);
         } catch (e) {
@@ -82,9 +89,14 @@
 
     function start(w) {
         win = w;
+        remembered = null;
         apply();
+        // Another page saved a choice (the web client iframe, another tab):
+        // it replaces the one remembered here, so read storage again.
         w.addEventListener('storage', function (e) {
-            if (e.key === KEY) apply();
+            if (e.key !== KEY) return;
+            remembered = null;
+            apply();
         });
         try {
             w.matchMedia('(prefers-color-scheme: light)').addEventListener('change', apply);
