@@ -846,7 +846,10 @@ word on its own line (#430).
   asleep line (`ShopClosedForSleep`); a keeper here only off shift
   (`OffShiftMerchant`, `mobs.Mob.OffShift`) says their segment's
   `offshift_line` or `OffShiftFallbackLine`, name hidden at the player's
-  sight. The dim-light check runs after it.
+  sight. The dim-light check runs after it. The shop verbs reach it through
+  `usercommands.shopOpenFor`, which wakes a keeper asleep in their own shop
+  first, so the asleep branch is reached only for a keeper outside their own
+  shop, and through `RefuseIfAsleep`.
 - **`ShotSight(viewer, room, rest) messaging.SightDecision`**
   (`combat_fire.go`): what a shooter makes out of the room a shot is aimed
   into, parsing `rest` as `ExecuteFire` does: their own room, or `scanReach`

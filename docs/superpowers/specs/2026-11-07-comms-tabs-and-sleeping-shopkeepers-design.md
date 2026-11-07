@@ -1,6 +1,6 @@
 # Comms tabs and sleeping shopkeepers: design
 
-**Status:** approved by Calabe, 2026-11-07. **Owner:** Calabe.
+**Status:** built 2026-11-07 (branch feat/comms-tabs-and-sleeping-shopkeepers). **Owner:** Calabe.
 **Source:** Calabe's rulings in session 2026-11-07; Malia's #808 (channel
 descriptions). **Plan:** `plans/2026-11-07-comms-tabs-and-sleeping-shopkeepers.md`
 (waits for this spec).
@@ -93,7 +93,8 @@ match rulings 3 and 4.
 - `wake marn` wakes a sleeping NPC or player in your room:
   `You wake Marn.` / the room sees `Kesh wakes Marn.`
 - Talking to or giving to a sleeping NPC now says
-  `Marn is fast asleep. Type wake marn to wake them.`
+  `Marn is fast asleep. Try wake marn.` at clear sight, `wake figure`
+  at shapes, and `Try shout wake up.` in the dark.
 - `shout` still wakes everyone in the room.
 - Bare `wake` does what it does today (nothing; it is an alias of a no-op
   command, kept for a sleeping player typing it).

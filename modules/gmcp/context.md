@@ -478,6 +478,13 @@ exactly as say, then every room from `Room.ForEachAdjacentRoom` with `sender`
 The web client files `shout` into the Chat window as "<sender> shouts: <words>". Other
 channels are unchanged.
 
+`Comm.Channel` whisper goes through `whisperDeliveries`: the target reads the sender's name,
+and a player sender also gets a copy with `sender` "You (to <target>)" so their Whisper tab
+shows both sides. A mob's whisper reaches only its target.
+
+An admin `broadcast` announcement rides the broadcast lane as one targeted `Communication`
+per online player (`TargetUserId` set), deafened players included, as the tips do.
+
 ## Module index
 
 Every `gmcp.<Name>.go` file follows the same shape: register in `init()`, emit
