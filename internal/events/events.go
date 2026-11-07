@@ -285,6 +285,47 @@ func DrainQueuedCharacterDiedForTest() []CharacterDied {
 	return found
 }
 
+// DrainQueuedCommunicationsForTest removes every queued Communication event and
+// returns them in queue order. FOR TEST USE ONLY.
+func DrainQueuedCommunicationsForTest() []Communication {
+	qLock.Lock()
+	defer qLock.Unlock()
+
+	var found []Communication
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		if c, ok := pe.event.(Communication); ok {
+			found = append(found, c)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
+// DrainQueuedBroadcastEventsForTest removes every queued Broadcast event and
+// returns the whole events in queue order (DrainQueuedBroadcastsForTest returns
+// only their Text). FOR TEST USE ONLY.
+func DrainQueuedBroadcastEventsForTest() []Broadcast {
+	qLock.Lock()
+	defer qLock.Unlock()
+
+	var found []Broadcast
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		if b, ok := pe.event.(Broadcast); ok {
+			found = append(found, b)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
 // DrainQueuedMenuChangedForTest removes the MenuChanged events for userId from
 // the global queue and returns them in the order they were queued.
 //
