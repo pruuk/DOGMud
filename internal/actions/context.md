@@ -834,7 +834,12 @@ word on its own line (#430).
   never learned the name; otherwise it is a plain `*UserActor`.
 - **`RefuseIfAsleep` / `RefuseMobIfAsleep`** (`sleeping_target.go`) hide the
   sleeper's name at the player's sight in their own room ("A figure is fast
-  asleep."), since an `ask` or `give` aimed at a shape never learned it.
+  asleep."), since an `ask` or `give` aimed at a shape never learned it. The
+  hint is aimed at the same sight by `wakeAim`, because `HideNames` hides a
+  name only as spelled and a lowered `wake marn` would slip past it: clear
+  sight hints `wake <name>` in lower case, shapes hints the figure the
+  sleeper is (`wake figure`, `wake 2.figure`), and no sight hints
+  `shout wake up` with no name, since `wake` reaches no one in the dark.
 - **`RefuseIfShopClosed(room, user) bool`** (`sleeping_target.go`) is the one
   closed-shop gate of list, buy, sell, offer and appraise: no merchant at all
   answers false (the caller says no merchant); every keeper asleep gives the
