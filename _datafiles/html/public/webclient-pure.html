@@ -2444,7 +2444,7 @@
             mutRevealCurrent = mutRevealQueue.shift() || null;
             var toast = document.getElementById('mut-toast');
             if (!mutRevealCurrent) { toast.classList.remove('show'); return; }
-            document.getElementById('mut-toast-art').src = mutRevealCurrent.art || '/static/images/mutations/_generic.png';
+            document.getElementById('mut-toast-art').src = mutRevealCurrent.art || '/static/images/mutations/generic.png';
             document.getElementById('mut-toast-name').textContent = mutRevealCurrent.name || '';
             document.getElementById('mut-toast-sub').textContent = mutRevealCurrent.isNew
                 ? 'A mutation emerges — click to view'
@@ -2459,7 +2459,7 @@
             if (!mutRevealCurrent) { return; }
             if (mutRevealFadeTimer) { clearTimeout(mutRevealFadeTimer); mutRevealFadeTimer = null; }
             document.getElementById('mut-toast').classList.remove('show');
-            document.getElementById('mut-card-art').src = mutRevealCurrent.art || '/static/images/mutations/_generic.png';
+            document.getElementById('mut-card-art').src = mutRevealCurrent.art || '/static/images/mutations/generic.png';
             document.getElementById('mut-card-name').textContent = mutRevealCurrent.name || '';
             document.getElementById('mut-card-desc').textContent = mutRevealCurrent.description || '';
             document.getElementById('mut-card-overlay').classList.add('show');
@@ -3794,7 +3794,7 @@
     <!-- Mutation reveal: FIFO toast + ceremonial card overlay — hidden; JS drives visibility -->
     <div id="mut-toast" onclick="mutationRevealExpand()" role="button" tabindex="0"
          aria-label="Show mutation details" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();mutationRevealExpand();}">
-        <img id="mut-toast-art" src="" alt="" onerror="this.onerror=null;this.src='/static/images/mutations/_generic.png'">
+        <img id="mut-toast-art" src="" alt="" onerror="this.onerror=null;this.src='/static/images/mutations/generic.png'">
         <div>
             <div class="mt-name" id="mut-toast-name"></div>
             <div class="mt-sub" id="mut-toast-sub"></div>
@@ -3804,7 +3804,7 @@
          aria-label="Mutation revealed" tabindex="-1"
          onkeydown="if(event.key==='Escape'||event.key==='Enter'||event.key===' '){event.preventDefault();mutationRevealDismiss();}">
         <div id="mut-card">
-            <img id="mut-card-art" src="" alt="" onerror="this.onerror=null;this.src='/static/images/mutations/_generic.png'">
+            <img id="mut-card-art" src="" alt="" onerror="this.onerror=null;this.src='/static/images/mutations/generic.png'">
             <div class="mc-kicker">The Chrysalis acts</div>
             <div class="mc-name" id="mut-card-name"></div>
             <div class="mc-desc" id="mut-card-desc"></div>

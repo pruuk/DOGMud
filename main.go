@@ -1412,7 +1412,13 @@ func HandleWebSocketConnection(conn *websocket.Conn, clientIP string) {
 
 			}
 
-			mudlog.Warn("WS Read", "error", err)
+			// The server closing the connection itself (a refused login, a
+			// kick) makes the pending read fail at once; that is not a fault.
+			if connDetails.ClosedByServer() {
+				mudlog.Info("WS Read", "msg", "connection closed by the server", "connectionId", connDetails.ConnectionId())
+			} else {
+				mudlog.Warn("WS Read", "error", err)
+			}
 			break
 		}
 

@@ -512,6 +512,15 @@ func (cd *ConnectionDetails) unblockReader() {
 	_ = cd.conn.SetReadDeadline(time.Now())
 }
 
+// ClosedByServer reports whether the server closed this connection itself
+// (Close, for example after a refused login), so a read that then fails is
+// the server's own doing rather than a network fault.
+func (cd *ConnectionDetails) ClosedByServer() bool {
+	cd.closeMu.Lock()
+	defer cd.closeMu.Unlock()
+	return cd.readClosed
+}
+
 // extendReadDeadline is the heartbeat pong handler's deadline push. It is a
 // no-op once Close has run, so a late pong cannot re-block a closed reader.
 func (cd *ConnectionDetails) extendReadDeadline(t time.Time) {

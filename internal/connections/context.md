@@ -84,6 +84,12 @@ type ConnectionDetails struct {
 }
 ```
 
+`ClosedByServer()` reports `readClosed`. The websocket read loop in
+`main.go` logs a failed read as INFO ("connection closed by the server")
+when it is true, since a refused login or a kick closes the connection and
+the pending read then fails with an i/o timeout that is no fault; any other
+failed read is still a WARN (owner 2026-11-07).
+
 ### Client Input Structure
 ```go
 type ClientInput struct {

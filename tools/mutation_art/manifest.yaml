@@ -70,4 +70,7 @@ emblems:
   walking-chrysalis: "a forearm lined with unfolding tool-like ridges and small retractable manipulators"
   winged-flight: "a pair of vast membranous wings unfurling from bared shoulders, catching the wind"
   zealous-conviction: "a single unblinking eye wreathed in a small steady flame, unwavering"
-  _generic: "a split chrysalis cocoon with light escaping the seam, three small crescent moons above"
+  # The fallback picture. Not "_generic": the web server refuses any file
+  # whose name starts with "_" (it hides the template parts), so that name
+  # always came back Not found (renamed 2026-11-07).
+  generic: "a split chrysalis cocoon with light escaping the seam, three small crescent moons above"

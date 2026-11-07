@@ -104,6 +104,9 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 	fInfo, err := os.Stat(fullPath)
 	if err != nil {
 		pageFound = false
+	} else {
+		// The request log's size; it read 0.00k for every file before.
+		fSize = fInfo.Size()
 	}
 
 	// Allow plugin to override request
@@ -124,6 +127,15 @@ func serveTemplate(w http.ResponseWriter, r *http.Request) {
 
 	if !pageFound || len(fileBase) > 0 && fileBase[0] == '_' {
 		mudlog.Info("Web", "ip", r.RemoteAddr, "ref", r.Header.Get("Referer"), "file path", fullPath, "file extension", fileExt, "error", "Not found")
+
+		// A file that is not a page (a refused "_" image or sound) gets a
+		// plain 404. Sending the 404 page through http.ServeFile below wrote
+		// a second status after this one, which Go logged as "superfluous
+		// response.WriteHeader" on every such request.
+		if fileExt != ".html" {
+			http.NotFound(w, r)
+			return
+		}
 
 		fullPath = filepath.Join(httpRoot, `404.html`)
 		fInfo, err = os.Stat(fullPath)
