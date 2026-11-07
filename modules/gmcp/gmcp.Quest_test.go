@@ -151,10 +151,12 @@ func TestBuildQuestListAndGet(t *testing.T) {
 	if !ok || detail.Quest.QuestId != 90003 {
 		t.Fatalf("get failed: %+v", detail)
 	}
-	// 12 events (room_gate added 2026-10-17, dialogue retired with ask in
-	// #375, spell_landed and topic_heard added in #375 phase 3b), 9 condition kinds, 24
-	// action types (discover added in #375 phase 3a) — one vocab entry per
-	// TriggerDef/Conditions/ActionDef field (count them, don't estimate).
+	// 13 events (room_gate added 2026-10-17, dialogue retired with ask in
+	// #375, spell_landed and topic_heard added in #375 phase 3b, the room
+	// feature event split into look_at and search_at at the #375 closing
+	// step), 9 condition kinds, 24 action types (discover added in #375
+	// phase 3a): one vocab entry per TriggerDef/Conditions/ActionDef field
+	// (count them, don't estimate).
 	offersSpellLanded := false
 	for _, e := range detail.Enums.Events {
 		offersSpellLanded = offersSpellLanded || e.Key == "spell_landed"
@@ -162,7 +164,7 @@ func TestBuildQuestListAndGet(t *testing.T) {
 	if !offersSpellLanded {
 		t.Fatalf("the builder's event picker must offer spell_landed: %+v", detail.Enums.Events)
 	}
-	if len(detail.Enums.Events) != 12 || len(detail.Enums.Actions) != 24 || len(detail.Enums.Conditions) != 9 {
+	if len(detail.Enums.Events) != 13 || len(detail.Enums.Actions) != 24 || len(detail.Enums.Conditions) != 9 {
 		t.Fatalf("vocabulary sizes wrong: events=%d conditions=%d actions=%d",
 			len(detail.Enums.Events), len(detail.Enums.Conditions), len(detail.Enums.Actions))
 	}

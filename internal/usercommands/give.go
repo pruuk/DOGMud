@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -40,6 +41,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	giveWhat, giveWho := splitGiveArgs(args, user, room)
 
 	var giveItem items.Item = items.Item{}
+	questConsumed := false // the quest engine took the item (it tells any rot itself)
 	var giveGoldAmount int = 0
 
 	if amount, isGold, ok := parseGoldPhrase(giveWhat); isGold {
@@ -74,11 +76,30 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		var found bool = false
 
 		// Check whether the user has an item in their inventory that matches
-		giveItem, found = user.Character.FindInBackpack(giveWhat)
+		giveItem, found = backpackItemForGive(giveWhat, giveWho, user, room)
+
+		if !found {
+			giveItem, found = bandolierItemForGive(giveWhat, giveWho, user, room)
+		}
 
 		if !found {
 			refusal.NotCarrying(user, giveWhat)
 			return true, nil
+		}
+
+		// A potion the Vitalis holds sours as it leaves (#794). Every give
+		// path (a topic hand-in, a quest engine take, a transfer) is covered
+		// by asking afterwards whether it left; one handed back stays held.
+		if user.Character.RotsOnRemoval(giveItem) {
+			beltName := user.Character.Equipment.Belt.DisplayName()
+			given := giveItem
+			defer func() {
+				// The quest engine's consume tells it itself
+				// (GameBridge.ConsumeItem).
+				if !questConsumed && !user.Character.RotsOnRemoval(given) {
+					user.SendText(messaging.CategoryWarning, bandolierRotLine(beltName, given))
+				}
+			}()
 		}
 
 	}
@@ -211,6 +232,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				if qResult.Handled && qResult.ConsumeItem {
 					// Quest engine consumed the item — remove from player only,
 					// do NOT transfer to mob and do NOT fire onGive script.
+					questConsumed = true
 					user.Character.RemoveItem(giveItem)
 
 					user.SendText(messaging.CategorySystem, messaging.HideNames(
@@ -413,10 +435,17 @@ func splitGiveArgs(args []string, user *users.UserRecord, room *rooms.Room) (giv
 			return what, who
 		}
 	}
+	for k := 1; k < len(args); k++ {
+		who := strings.Join(args[len(args)-k:], " ")
+		what := strings.Join(args[:len(args)-k], " ")
+		if _, ok := bandolierItemForTopic(what, who, user, room); ok {
+			return what, who
+		}
+	}
 	if messaging.ParticipantSight(user.Character, room) != messaging.SightFull {
 		for k := 1; k < len(args); k++ {
 			what := strings.Join(args[:len(args)-k], " ")
-			if giveObjectResolves(what, user) {
+			if giveObjectResolves(what, user) || bandolierHolds(what, user) {
 				return what, strings.Join(args[len(args)-k:], " ")
 			}
 		}
@@ -457,6 +486,90 @@ func giveObjectResolves(what string, user *users.UserRecord) bool {
 	}
 	_, found := user.Character.FindInBackpack(what)
 	return found
+}
+
+// bandolierHolds reports whether a potion in the bandolier matches the phrase.
+func bandolierHolds(what string, user *users.UserRecord) bool {
+	_, found := user.Character.FindInPotions(what)
+	return found
+}
+
+// bandolierItemForGive is what give reads when the backpack has no match. A
+// potion lands in the bandolier by itself, so a hand-in reaches it without the
+// player moving it first (bandolierItemForTopic), and a target the giver cannot
+// aim at reads the refusal a backpack item reads, which comes before anything
+// moves. Any other give stays backpack only: a player, a pet or an NPC that did
+// not ask for it gets the refusal of a player carrying no such potion.
+func bandolierItemForGive(what, who string, user *users.UserRecord, room *rooms.Room) (items.Item, bool) {
+	if itm, ok := bandolierItemForTopic(what, who, user, room); ok {
+		return itm, true
+	}
+	held, found := user.Character.FindInPotions(what)
+	if !found || ownPetNamed(who, user) {
+		return items.Item{}, false
+	}
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
+	if aimRefusal != `` {
+		return held, true
+	}
+	if _, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character}); err != nil && petOwnerInSight(name, user, room) == 0 {
+		return held, true
+	}
+	return items.Item{}, false
+}
+
+// bandolierItemForTopic finds a potion in the bandolier when a topic on the
+// named NPC wants it, asking before it chooses: the oldest wanted match, so an
+// unwanted potion sharing the name does not stand in front of it, and N.item
+// counts the wanted ones, as FindInBackpackWhere counts within its filter.
+func bandolierItemForTopic(what, who string, user *users.UserRecord, room *rooms.Room) (items.Item, bool) {
+	if !bandolierHolds(what, user) {
+		return items.Item{}, false
+	}
+	mob := giveMobNamed(who, user, room)
+	if mob == nil {
+		return items.Item{}, false
+	}
+	return user.Character.FindInPotionsWhere(what, func(itm items.Item) bool {
+		return conversation.WantsItem(user, mob, itm.ItemId)
+	})
+}
+
+// backpackItemForGive picks what a give means from the backpack, by the rule
+// bandolierItemForTopic uses: an NPC is asked before the choice is made, so a
+// `give rubbing dross` reaches the rubbing Dross wants wherever another rubbing
+// lies in the pack, and N.item counts the wanted ones. A name that fits nothing
+// the NPC wants is the backpack's own first match, for the ordinary give.
+func backpackItemForGive(what, who string, user *users.UserRecord, room *rooms.Room) (items.Item, bool) {
+	if mob := giveMobNamed(who, user, room); mob != nil {
+		if itm, ok := user.Character.FindInBackpackWhere(what, func(itm items.Item) bool {
+			return conversation.WantsItem(user, mob, itm.ItemId)
+		}); ok {
+			return itm, true
+		}
+	}
+	return user.Character.FindInBackpack(what)
+}
+
+// giveMobNamed is the NPC a give's recipient phrase resolves to at the giver's
+// sight, or nil for the giver's own pet, a player, or anything else.
+func giveMobNamed(who string, user *users.UserRecord, room *rooms.Room) *mobs.Mob {
+	if ownPetNamed(who, user) {
+		return nil
+	}
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
+	if aimRefusal != `` {
+		return nil
+	}
+	target, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character})
+	if err != nil || target.IsPlayer() {
+		return nil
+	}
+	mobActor, isMob := target.(*actions.MobActor)
+	if !isMob {
+		return nil
+	}
+	return mobActor.Mob
 }
 
 // giveTargetResolves reports whether the recipient phrase names the player's

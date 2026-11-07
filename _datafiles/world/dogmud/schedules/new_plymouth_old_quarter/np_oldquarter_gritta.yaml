@@ -31,6 +31,6 @@ segments:
     target_room: 6034
     activity: ""
     idlecommands:
-      - emote sorts the day's finds on the flooded stair where the light from above reaches a little, setting aside the best fragments for Coll and for Orin.
-      - say These two go up the city. One to a sweeper who knows where to send them, one to a bookseller who can read what I cannot.
+      - emote sorts the day's finds on the flooded stair where the light from above reaches a little, setting aside the best fragments for Orin.
+      - say These go up the city, to a bookseller who can read what I cannot.
       - emote wipes silt from a carved shard with her thumb until a fragment of an old eight-pointed mark shows through, and nods to herself.

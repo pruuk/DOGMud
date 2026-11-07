@@ -84,7 +84,7 @@ func TestWalkSpell_OneBranchHoldingTheSpellIsEnough(t *testing.T) {
 	// Both branches end in room 5, so only the spell tells the states apart.
 	for i, a := range [][]quests.ActionDef{{{Grant: "60-taught"}}, {{Grant: "60-taught"}, {TeachSpell: "heal"}}} {
 		q.Triggers = append(q.Triggers, quests.TriggerDef{
-			Event: []string{"room_enter", "room_interact"}[i], Room: 5,
+			Event: []string{"room_enter", "look_at"}[i], Room: 5,
 			Conditions: quests.Conditions{Has: []string{"60-start"}, Missing: []string{"60-taught"}},
 			Actions:    a,
 		})

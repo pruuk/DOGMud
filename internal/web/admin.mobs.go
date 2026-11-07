@@ -141,6 +141,13 @@ func mobData(w http.ResponseWriter, r *http.Request) {
 	tplData[`allSpecies`] = allSpecies
 	tplData[`activityLevels`] = activityLevels
 	tplData[`dropChances`] = dropChances
+	// -1 marks an absent itemdropchance (the default) so the page can tell it
+	// from an authored 0, which means worn items never drop (#585).
+	mobDropChance := -1
+	if mobInfo.ItemDropChance != nil {
+		mobDropChance = *mobInfo.ItemDropChance
+	}
+	tplData[`mobDropChance`] = mobDropChance
 	tplData[`allMobGroups`] = allMobGroups
 	tplData[`conditionSpecs`] = conditionSpecs
 

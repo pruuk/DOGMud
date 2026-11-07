@@ -49,6 +49,17 @@ func Give(user *users.UserRecord, room *rooms.Room, mob *mobs.Mob, itm items.Ite
 	return true
 }
 
+// WantsItem reports whether a topic on mob wants itemId, open or not, by the
+// test Give applies. give.go asks it before reaching into the bandolier: a
+// potion there can be handed to a topic and to nothing else.
+func WantsItem(user *users.UserRecord, mob *mobs.Mob, itemId int) bool {
+	if mob == nil || mob.Character.IsCharmed() {
+		return false
+	}
+	_, wanted := dialogue.Load(int(mob.MobId), mob.Zone).ItemTopic(itemId, PlayerState(user))
+	return wanted
+}
+
 // handBack returns a wanted item no topic can take now. The mob's tree hears
 // the give first as a player_give hand-back (behaviortree.GiveHandBack), so
 // a refusal written for that item plays ("See Drunn first, then come

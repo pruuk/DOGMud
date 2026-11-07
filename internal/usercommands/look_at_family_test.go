@@ -13,9 +13,9 @@ import (
 
 // #375 phase 3a, spec section 4 (owner ruling 5): look and search are the
 // only interaction verbs. The look family (look, l, examine, exam, read)
-// raises room_interact with Verb "look"; `search <noun>` raises it with Verb
-// "search"; every other verb typed at a room feature triggers nothing, and
-// one no command handles gets the look-or-search nudge.
+// raises look_at; `search <noun>` raises search_at (one event each since the
+// closing step); every other verb typed at a room feature triggers nothing,
+// and one no command handles gets the look-or-search nudge.
 
 // interactScene is the lit fixture room holding a `floorboard` noun, with the
 // shipped command aliases loaded, so `l` and `exam` resolve the way a player
@@ -34,54 +34,52 @@ func interactScene(t *testing.T) (*users.UserRecord, *rooms.Room) {
 	return alice, room
 }
 
-func TestRoomInteract_LookFamilyFiresALookTrigger(t *testing.T) {
+func TestLookAt_LookFamilyFiresALookTrigger(t *testing.T) {
 	for i, cmd := range []string{"look", "l", "examine", "exam", "read"} {
-		for j, verb := range []string{"", "look"} {
-			t.Run(cmd+"/verb="+verb, func(t *testing.T) {
-				alice, room := interactScene(t)
-				fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
-					999400+i*2+j, "room_interact", room.RoomId, questengine.TriggerDef{Noun: "floorboard", Verb: verb})
-				_, err := TryCommand(cmd, "floorboard", alice.UserId, 0)
-				require.NoError(t, err)
-				require.True(t, fired(), "%s floorboard must fire a verb=%q trigger", cmd, verb)
-			})
-		}
-	}
-}
-
-func TestRoomInteract_OtherVerbsFireNothing(t *testing.T) {
-	for i, cmd := range []string{"say", "whisper", "help", "get"} {
 		t.Run(cmd, func(t *testing.T) {
 			alice, room := interactScene(t)
 			fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
-				999420+i, "room_interact", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
-			_, _ = TryCommand(cmd, "floorboard", alice.UserId, 0)
-			require.False(t, fired(), "%s floorboard must not fire a room_interact trigger", cmd)
+				999400+i, "look_at", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
+			_, err := TryCommand(cmd, "floorboard", alice.UserId, 0)
+			require.NoError(t, err)
+			require.True(t, fired(), "%s floorboard must fire a look_at trigger", cmd)
 		})
 	}
 }
 
-func TestRoomInteract_SearchFiresOnlyASearchTrigger(t *testing.T) {
-	t.Run("search fires verb search", func(t *testing.T) {
+func TestLookAt_OtherVerbsFireNothing(t *testing.T) {
+	for i, cmd := range []string{"say", "whisper", "help", "get"} {
+		t.Run(cmd, func(t *testing.T) {
+			alice, room := interactScene(t)
+			fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
+				999420+i, "look_at", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
+			_, _ = TryCommand(cmd, "floorboard", alice.UserId, 0)
+			require.False(t, fired(), "%s floorboard must not fire a look_at trigger", cmd)
+		})
+	}
+}
+
+func TestSearchAt_SearchFiresOnlyASearchTrigger(t *testing.T) {
+	t.Run("search fires search_at", func(t *testing.T) {
 		alice, room := interactScene(t)
 		fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
-			999430, "room_interact", room.RoomId, questengine.TriggerDef{Noun: "floorboard", Verb: "search"})
+			999430, "search_at", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
 		_, err := TryCommand("search", "floorboard", alice.UserId, 0)
 		require.NoError(t, err)
 		require.True(t, fired())
 	})
-	t.Run("search does not fire an empty (look) verb", func(t *testing.T) {
+	t.Run("search does not fire look_at", func(t *testing.T) {
 		alice, room := interactScene(t)
 		fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
-			999431, "room_interact", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
+			999431, "look_at", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
 		_, err := TryCommand("search", "floorboard", alice.UserId, 0)
 		require.NoError(t, err)
 		require.False(t, fired())
 	})
-	t.Run("look does not fire verb search", func(t *testing.T) {
+	t.Run("look does not fire search_at", func(t *testing.T) {
 		alice, room := interactScene(t)
 		fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
-			999432, "room_interact", room.RoomId, questengine.TriggerDef{Noun: "floorboard", Verb: "search"})
+			999432, "search_at", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
 		_, err := TryCommand("look", "floorboard", alice.UserId, 0)
 		require.NoError(t, err)
 		require.False(t, fired())
@@ -91,12 +89,12 @@ func TestRoomInteract_SearchFiresOnlyASearchTrigger(t *testing.T) {
 // A trigger names the template room; inside an instance of it the player
 // stands in an ephemeral copy, and the trigger still fires (as command_issued
 // always has, through rooms.OriginalRoomId).
-func TestRoomInteract_FiresInAnInstanceOfTheRoom(t *testing.T) {
+func TestLookAt_FiresInAnInstanceOfTheRoom(t *testing.T) {
 	alice, room := interactScene(t)
 	const templateId = 4_242
 	t.Cleanup(rooms.SetOriginalRoomIdForTest(room.RoomId, templateId))
 	fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
-		999440, "room_interact", templateId, questengine.TriggerDef{Noun: "floorboard"})
+		999440, "look_at", templateId, questengine.TriggerDef{Noun: "floorboard"})
 	_, err := TryCommand("look", "floorboard", alice.UserId, 0)
 	require.NoError(t, err)
 	require.True(t, fired())
@@ -112,10 +110,10 @@ func TestInteractNudgeText(t *testing.T) {
 		InteractNudgeText("floorboard"))
 }
 
-func TestRoomInteract_UnknownVerbAtAFeatureIsNudged(t *testing.T) {
+func TestLookAt_UnknownVerbAtAFeatureIsNudged(t *testing.T) {
 	alice, room := interactScene(t)
 	fired := listenForRoomNoun(t, alice.Character.HasQuest, alice.Character.ClearQuestToken,
-		999450, "room_interact", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
+		999450, "look_at", room.RoomId, questengine.TriggerDef{Noun: "floorboard"})
 	events.DrainQueuedMessagesForTest(alice.UserId)
 	handled, err := TryCommand("pry", "floorboard", alice.UserId, 0)
 	require.NoError(t, err)
@@ -126,7 +124,7 @@ func TestRoomInteract_UnknownVerbAtAFeatureIsNudged(t *testing.T) {
 		events.DrainQueuedMessagesForTest(alice.UserId))
 }
 
-func TestRoomInteract_NudgeNamesADiscoveredHiddenNounOnly(t *testing.T) {
+func TestLookAt_NudgeNamesADiscoveredHiddenNounOnly(t *testing.T) {
 	alice, room := interactScene(t)
 	oldHidden := room.HiddenNouns
 	room.HiddenNouns = map[string]rooms.HiddenNoun{"loose stone": {Description: "A stone."}}
@@ -146,7 +144,7 @@ func TestRoomInteract_NudgeNamesADiscoveredHiddenNounOnly(t *testing.T) {
 		events.DrainQueuedMessagesForTest(alice.UserId))
 }
 
-func TestRoomInteract_UnknownVerbAtNothingIsStillUnrecognized(t *testing.T) {
+func TestLookAt_UnknownVerbAtNothingIsStillUnrecognized(t *testing.T) {
 	alice, _ := interactScene(t)
 	handled, err := TryCommand("pry", "teapot", alice.UserId, 0)
 	require.NoError(t, err)

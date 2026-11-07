@@ -152,7 +152,7 @@ type Mob struct {
     Hates           []string                 // Groups/races this mob hates
     
     // Economy
-    ItemDropChance  int                      // Chance to drop items on death
+    ItemDropChance  *int                     // Worn-item drop chance; nil = default, 0 = never (#585)
     ConditionIds         []int                    // Permanent conditions on spawn
     
     // Scripting
@@ -166,6 +166,28 @@ type Mob struct {
     playersAttacked map[int]struct{}         // Players this mob has attacked
 }
 ```
+
+### Equipped-item drop chance (`itemdropchance`, #585)
+
+- `Mob.ItemDropChance` (yaml `itemdropchance`) is a `*int`, like
+  `WanderMultiplier`: an absent key is nil and an authored 0 is a set 0.
+  Owner ruling 2026-11-06: 0 means the mob's worn items never drop; an
+  absent key keeps the default, `DefaultItemDropChance` (100, every worn
+  item drops). A template save (`SaveMobSpec`) keeps the difference
+  because the tag is `omitempty` on a pointer.
+- Read it only through `EquippedDropChance()`. It resolves nil to
+  `DefaultItemDropChance`. Companions get no exception (owner ruling
+  2026-11-06): gear lent to a companion that dies is lost by design, and
+  `help companion` says so.
+- `ValidateMobSpec` range-checks the resolved value (0 to 100).
+- Carried items and gold are not gated by it; an item's own `dropchance`
+  and `never_drops` still win (`items.Item.ShouldDrop`,
+  `hooks.dropMobLootAndSetCorpse`).
+- Instance saves (`MobInstanceData`) never carried this field, so there is
+  nothing to migrate. The web builder (`modules/gmcp` `mobUpdateReq`) sends
+  it as `null` when absent; `mobs.js` posts a blank field back as `null`.
+- Guards: `item_drop_chance_test.go` (literal YAML, save round trip, and
+  every shipped `itemdropchance: 0` file loading as a set 0).
 
 ### Mob Creation and Spawning
 ```go

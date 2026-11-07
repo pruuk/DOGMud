@@ -33,6 +33,7 @@ tree:
           zone: crash
           min_gold: 400
           exit_expires: "30 real minutes"
+          open_line: "The disc warms, and in the seamless grey of the door a way stands open that was not there."
           zones:
             crash: "Crash Site Interior"
           guidance: |-

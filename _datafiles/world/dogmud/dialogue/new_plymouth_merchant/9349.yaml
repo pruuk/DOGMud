@@ -14,6 +14,18 @@ opener:
     business.
   hints: Choose a line below if you want to hear about how a permit application
     works, about the quarterly tribute, or about who the office answers to.
+  variants:
+  # At the choice without the survey (old saves, or a lost one): the line that
+  # explains the choice needs it, so the opener says why the line is not there.
+  - questRequired:
+    - 68-choice
+    questExcluded:
+    - 68-end
+    itemExcluded: 40113
+    text: The cooperage filing is still open, and you have brought me no document
+      for it. If you have other business with the office, state it.
+    hints: Clerk Vell takes Edvar's survey, and you are not carrying it. It is under
+      the loose floorboard on the Cooperage Floor. Type search there.
 topics:
 # Quest 68's bloodline choice (spec R28, batch 4 review): the warning
 # (q68_vell_report) must be heard first, and both hide once the choice is
@@ -57,9 +69,9 @@ topics:
     without standing, and the lad who keeps it put out. The office pays for
     discretion, and pays well. But a document filed is filed. I do not hand them
     back, and the people in that cooperage will know whose hand it came from.
-  hints: Siding with the bloodline hands Edvar's survey to the office for good,
-    gets the cooperage seized, and sets the circle against you. It cannot be
-    undone. If you are sure, choose The Cooperage Circle below.
+  hints: Siding with the bloodline hands Edvar's survey to the office, gets the
+    cooperage seized, and sets the circle against you. It cannot be undone. If you
+    are sure, choose The Cooperage Circle below.
   marked: true
   questRequired:
   - 68-choice
@@ -93,10 +105,9 @@ topics:
     to know where the obligation leads above this desk, that is not a door I open.
     The watched house at the end of the Watched Lane keeps its own gate, and a man
     named Horst keeps that.
-  hints: Vell will say only that the rate is set by charter, and the charter rests
-    on the founding. The tribute runs upward past him, to Horst at the watched house
-    gate. From the Permit Office, go east to the Watched Lane, then north to the
-    gate. He sleeps at the gate in the small hours. Type talk horst.
+  hints: Vell will say only that the charter sets the rate. The tribute runs upward
+    past him, to Horst at the Watched House Gate, north of the Watched Lane. Type
+    talk horst.
   marked: true
   questRequired:
   - 71-start

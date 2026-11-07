@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -26,15 +28,30 @@ func Sort(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	materialsMoved := 0
 	potionsMoved := 0
+	var refused []characters.BandolierRelease
 
 	if hasBag {
 		materialsMoved = user.Character.SortComponentItems()
 	}
 	if hasBandolier {
-		potionsMoved = user.Character.SortPotionItems()
+		potionsMoved, refused = user.Character.SortPotionItems()
+	}
+
+	// An ambient bandolier (the Vitalis) names what it will not take (#794).
+	told := map[string]bool{}
+	for _, rel := range refused {
+		name := rel.Item.DisplayName()
+		if told[name] {
+			continue
+		}
+		told[name] = true
+		user.SendText(messaging.CategoryRefusal, characters.BandolierRefusalLine(user.Character.Equipment.Belt.DisplayName(), rel.Item, rel.Why))
 	}
 
 	if materialsMoved == 0 && potionsMoved == 0 {
+		if len(refused) > 0 {
+			return true, nil
+		}
 		user.SendText(messaging.CategoryRefusal, `No items found to sort.`)
 		return true, nil
 	}
@@ -56,4 +73,10 @@ func Sort(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		strings.Join(parts, " and ")))
 
 	return true, nil
+}
+
+// bandolierRotLine tells the player that a potion rotted as it left a
+// preserving bandolier (#794; characters.BandolierRotLine).
+func bandolierRotLine(beltName string, itm items.Item) string {
+	return characters.BandolierRotLine(beltName, itm.DisplayName())
 }

@@ -230,7 +230,7 @@ func TestQuest49OldShrine_GiverToGiver(t *testing.T) {
 		require.Equal(t, "met", w.p.current)
 		w.notify("command", searchIn(nave))
 		require.Equal(t, "met", w.p.current, "a search outside the Reliquary must not count")
-		w.notify("room_interact", EventDetails{RoomId: reliquary, Verb: "look", Noun: "floor", RoomNoun: "floor"})
+		w.notify("look_at", EventDetails{RoomId: reliquary, Noun: "floor", RoomNoun: "floor"})
 		require.Equal(t, "met", w.p.current, "looking at the floor is not searching it")
 		w.notify("command", searchIn(reliquary))
 		require.Equal(t, "find", w.p.current)

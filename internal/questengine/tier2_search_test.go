@@ -37,7 +37,7 @@ func TestQuest20SitesAreFoundBySearch(t *testing.T) {
 	}
 	found := map[int]bool{}
 	for _, tr := range q.Triggers {
-		require.NotEqual(t, "room_interact", tr.Event, "rule 14: no typed noun")
+		require.NotContains(t, []string{"look_at", "search_at"}, tr.Event, "rule 14: no typed noun")
 		if tr.Event != "command" || tr.Command != "search" {
 			continue
 		}
@@ -72,7 +72,7 @@ func TestQuest18BedrollIsFoundBySearch(t *testing.T) {
 	q := loadTier2Quest(t, "18")
 	found := false
 	for _, tr := range q.Triggers {
-		require.NotEqual(t, "room_interact", tr.Event, "rule 14: no typed noun")
+		require.NotContains(t, []string{"look_at", "search_at"}, tr.Event, "rule 14: no typed noun")
 		if tr.Event == "command" && tr.Command == "search" && tr.Room == 4050 {
 			found = true
 			require.Contains(t, tr.Conditions.Missing, "18-start")

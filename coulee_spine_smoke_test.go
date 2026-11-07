@@ -430,19 +430,19 @@ func TestSmoke_FleeElsewhereCountsForNothing(t *testing.T) {
 // by the NPC who took the previous hand-in, nothing is granted by itself, and
 // Crier Toke ends up the only starter of the seven trades. No token is written
 // by the test: each one lands through the talk menu, a quest trigger or a
-// behavior tree, except 21-start, queued the way the new-to-MUDs route does.
+// behavior tree, and the newcomer flag is set the way the new-to-MUDs route sets it.
 func TestSmoke_NewCharacterSpine(t *testing.T) {
 	w := newSpineWalk(t)
 	c := w.user.Character
 
 	// The new-to-MUDs route (usercommands.grantNewcomerMarker).
-	events.AddToQueue(events.Quest{UserId: w.user.UserId, QuestToken: "21-start"})
+	c.SetQuestFlag("30-newcomer", "new")
 	w.pump()
 
 	// Waking to Gaius: Dewey offers it, each lesson's own event moves it one
 	// step, and Dewey takes it.
-	if len(c.QuestProgress) != 1 {
-		t.Fatalf("a new character holds only the newcomer marker, not %v", c.QuestProgress)
+	if len(c.QuestProgress) != 0 {
+		t.Fatalf("a new character holds no quest, not %v", c.QuestProgress)
 	}
 	w.npc(spineDewey)
 	w.marker(spineDewey, menu.MarkerQuest)
@@ -464,7 +464,7 @@ func TestSmoke_NewCharacterSpine(t *testing.T) {
 	}
 
 	// A logout here, before Hadwen is taken up, must not Open the character.
-	want := map[int]string{21: "start", 28: "end"}
+	want := map[int]string{28: "end"}
 	if !maps.Equal(c.QuestProgress, want) {
 		t.Fatalf("at the pool after Dewey: %v, want %v", c.QuestProgress, want)
 	}

@@ -250,7 +250,7 @@ func TestQuest28_LookLessonIsAHighlightedNoun(t *testing.T) {
 
 // TestQuest28_LookLessonRewardsACloseLook (#375 phase 3a, owner ruling 9):
 // after the guide lesson Dewey shows one new command, look stone, and a
-// look-family room_interact on the threshold stone rewards it with the names
+// look_at trigger on the threshold stone rewards it with the names
 // cut into it. The stone is named in the description (so it shows
 // highlighted) and its noun text hints at the find (ruling 7). Before the
 // guide lesson a look at the stone stays an ordinary look, so the bare-look
@@ -284,18 +284,18 @@ func TestQuest28_LookLessonRewardsACloseLook(t *testing.T) {
 	}
 	require.Equal(t, 1, guideLines, "one guide-lesson trigger carries the line (#375 phase 7: one action per step)")
 
-	lookStone := EventDetails{UserId: 1, RoomId: 6258, Verb: "look", Noun: "stone", RoomNoun: "stone"}
+	lookStone := EventDetails{UserId: 1, RoomId: 6258, Noun: "stone", RoomNoun: "stone"}
 
 	t.Run("before the guide lesson it is an ordinary look", func(t *testing.T) {
 		e, p, ctx := newQuest28Walk(t, "hinted", 6258)
-		require.False(t, e.Notify("room_interact", lookStone, p, ctx).Handled)
+		require.False(t, e.Notify("look_at", lookStone, p, ctx).Handled)
 		e.Notify("command_issued", EventDetails{UserId: 1, RoomId: 6258, Command: "look", Noun: "stone", RoomNoun: "stone"}, p, ctx)
 		require.Equal(t, "looked", p.step(), "the bare-look lesson still counts a look at the stone")
 	})
 
 	t.Run("after it the stone shows the names and Dewey sends the player on", func(t *testing.T) {
 		e, p, ctx := newQuest28Walk(t, "examined", 6258)
-		require.True(t, e.Notify("room_interact", lookStone, p, ctx).Handled)
+		require.True(t, e.Notify("look_at", lookStone, p, ctx).Handled)
 		require.Equal(t, "examined", p.step(), "the reward is not a step")
 		require.Len(t, ctx.sentTexts, 1)
 		require.Contains(t, ctx.sentTexts[0], "names")
@@ -305,12 +305,10 @@ func TestQuest28_LookLessonRewardsACloseLook(t *testing.T) {
 		require.True(t, strings.HasSuffix(strings.ToLower(lines[len(lines)-1].Text), "type north."),
 			"the walk north is still the step, so it comes last")
 
-		search := lookStone
-		search.Verb = "search"
-		require.False(t, e.Notify("room_interact", search, p, ctx).Handled, "a look, not a search, finds the names")
+		require.False(t, e.Notify("search_at", lookStone, p, ctx).Handled, "a look, not a search, finds the names")
 
 		// A second look shows the names again; Dewey does not repeat himself.
-		require.True(t, e.Notify("room_interact", lookStone, p, ctx).Handled)
+		require.True(t, e.Notify("look_at", lookStone, p, ctx).Handled)
 		require.Len(t, ctx.sentTexts, 2)
 		require.Equal(t, ctx.sentTexts[0], ctx.sentTexts[1])
 		require.Len(t, ctx.npcSays, 1, "Dewey speaks on the first look only")
@@ -318,7 +316,7 @@ func TestQuest28_LookLessonRewardsACloseLook(t *testing.T) {
 
 	t.Run("once the player walked on it fires no more", func(t *testing.T) {
 		e, p, ctx := newQuest28Walk(t, "status_prompt", 6259)
-		require.False(t, e.Notify("room_interact", lookStone, p, ctx).Handled)
+		require.False(t, e.Notify("look_at", lookStone, p, ctx).Handled)
 	})
 }
 

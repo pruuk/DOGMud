@@ -150,9 +150,18 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 					user.SendText(messaging.CategoryRefusal, `Your bandolier is empty.`)
 				} else {
 					ct := len(user.Character.PotionItems)
+					var rotted []items.Item
+					for _, p := range user.Character.PotionItems {
+						if user.Character.RotsOnRemoval(p) {
+							rotted = append(rotted, p)
+						}
+					}
 					user.Character.Items = append(user.Character.Items, user.Character.PotionItems...)
 					user.Character.PotionItems = nil
 					user.SendText(messaging.CategorySystem, fmt.Sprintf(`You move %d potion(s) from your bandolier to your backpack.`, ct))
+					for _, p := range rotted {
+						user.SendText(messaging.CategoryWarning, bandolierRotLine(user.Character.Equipment.Belt.DisplayName(), p))
+					}
 				}
 				return true, nil
 			}
@@ -358,6 +367,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				return true, nil
 			}
 
+			// A preserving bandolier's potion rots as it leaves (#794).
+			rots := isBandolierGet && user.Character.RotsOnRemoval(foundItem)
+
 			// Remove from source and add to backpack
 			for j := len(*sourceItems) - 1; j >= 0; j-- {
 				if (*sourceItems)[j].Equals(foundItem) {
@@ -367,6 +379,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 			user.Character.Items = append(user.Character.Items, foundItem)
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You move the <ansi fg="itemname">%s</ansi> from your %s to your backpack.`, foundItem.DisplayName(), label))
+			if rots {
+				user.SendText(messaging.CategoryWarning, bandolierRotLine(user.Character.Equipment.Belt.DisplayName(), foundItem))
+			}
 			return true, nil
 		}
 

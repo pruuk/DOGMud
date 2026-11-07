@@ -171,12 +171,14 @@ func ValidateMobSpec(m *Mob) error {
 	if m.StatPool < 0 {
 		return fmt.Errorf("statpool must be >= 0")
 	}
+	// An absent itemdropchance (nil) is the default and needs no range check;
+	// EquippedDropChance returns DefaultItemDropChance for it.
 	for _, check := range []struct {
 		name string
 		val  int
 	}{
 		{"activitylevel", m.ActivityLevel},
-		{"itemdropchance", m.ItemDropChance},
+		{"itemdropchance", m.EquippedDropChance()},
 		{"mutationchance", m.MutationChance},
 		{"specialmovechance", m.SpecialMoveChance},
 	} {

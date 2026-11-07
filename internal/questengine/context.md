@@ -58,7 +58,8 @@ what a trigger *does*, you edit this package.
   the step destination resolver that feeds the minimap and the quest log
   (see Destinations below).
 - **guide.go**: `GuideLine`, the one destination line.
-- **destinations_rule.go**: `Destinations`, the static destination rule.
+- **destinations_rule.go**: `Destinations`, the static destination rule, and
+  `SpawnChangeFindings`, its before-and-after check for a live spawn change.
 - **logging.go** — level-gated logging with per-player debug opt-in.
 - **test_helpers.go** — `ResetEngineForTest() func()`.
 - **walkthrough.go**: `Walk`, the completability walkthrough (see Walkthrough).
@@ -81,6 +82,7 @@ func (e *Engine) Notify(eventType string, details EventDetails, player PlayerSta
 func (e *Engine) NotifyAll(eventType string, details []EventDetails, player PlayerState, ctx ActionContext) NotifyResult
 func (e *Engine) WouldFire(eventType string, d EventDetails, player PlayerState) bool
 func (e *Engine) SearchFeatures(roomId int) []string
+func (e *Engine) GuardsRoom(roomId int) bool
 ```
 
 `WouldFire` runs the same match step as `Notify` (`fieldMatches`, then
@@ -88,8 +90,12 @@ func (e *Engine) SearchFeatures(roomId int) []string
 action runs, no token is granted, no text is sent, no `quest_granted` chain is
 followed, no `EvalGuard` is touched. It is for gates that must ask before the
 event happens (a quest gate on an exit). `SearchFeatures` returns the sorted,
-distinct nouns of `room_interact` triggers with `verb: search` and `room:`
-equal to the given id, regardless of conditions.
+distinct nouns of `search_at` triggers with `room:`
+equal to the given id, regardless of conditions. `GuardsRoom` reports whether
+any `room_gate` guards a template room (room, area or zone), regardless of
+conditions: it is how a mob's planner, a fleeing mob (`actions.RoomGateGuards`) and
+a companion's errand keep out of a gated room, because a mob's `pathto` and `go`
+ignore gates.
 
 `NotifyAll` raises several `EventDetails` of one event type under ONE
 `EvalGuard`, so each trigger fires at most once however many details it
@@ -196,7 +202,7 @@ counted and handles nothing (`countSkipped`). A counted match short of N is a
 handled event (`countCounted`) whose actions wait for the Nth. A context
 without `StepCounter` treats every match as the Nth. `GameBridge` implements it
 over `Character.BumpQuestStepCount` and calls `QuestProgressChanged`. The loader
-refuses `count` on `room_gate`, `room_interact` and `item_give`
+refuses `count` on `room_gate`, `look_at`, `search_at` and `item_give`
 (`quests.CountAllowed`), where a partial match would swallow the command.
 
 **`distinct`** (an explore step: `room_enter` with an `area`). It is skipped in
@@ -287,14 +293,23 @@ anywhere.", "Destination unknown.", and so on. The `quest` command
 it when the pin is not on the drawn map.
 
 **`Destinations(qs) (findings, inferred)`** is the static rule, a walk rule
-like the walkthrough: boot (`destinationDoor` in `main_quests.go`) logs its
-findings as warnings and never refuses, and the CI sweep
-(`quest_loop_smoke_test.go`) ratchets them against `loop-backlog.txt`. It
+like the walkthrough: boot (`destinationDoor` in `main_quests.go`) refuses on
+any finding (a panic at boot, an error on a reload), and the CI sweep
+(`quest_loop_smoke_test.go`) fails on any. There is no backlog. It
 skips secret quests and each final step. `walk-destination` is a step that
 resolves to unknown (no block and no trigger place, or a bare mob, or mob
 list, that no room spawns: a list passes when any one of its mobs has spawn
 rooms); `walk-destination-anywhere` is an `anywhere` step whose triggers name
 a place. `inferred` lists each step whose destination is inferred.
+
+**`SpawnChangeFindings(roomId, mobIds)`** is the before-and-after check for a
+spawn list changed on a running server: the `Destinations` findings over the
+loaded quests that giving template room `roomId` a list placing `mobIds` would
+add, judged without saving (the spawn index is not touched). A finding the
+world already had is not returned. The admin `room set spawninfo clear` and
+`room copy spawninfo` refuse on any (`refusesSpawnChange` in
+`usercommands/admin.room.dispatcher.go`), since boot would refuse the saved
+change.
 
 **Cost** (Ryzen 9 5900X, 2026-10-28, `nearestOf` stubbed to answer at once):
 `BenchmarkResolveDestinationMob30` (30 copies, half hidden, the real sight
@@ -306,7 +321,7 @@ about 190 ns/op. The map search is benchmarked in `internal/mapper`.
 `Notify` → `evaluate` (recursive), per matching trigger:
 
 1. **Field match** (`matchTriggerFields`): mob, room, area, zone, item, skill, command,
-   topic, questToken, noun, verb, target, reason. A trigger `noun:` matches in three tiers
+   topic, questToken, noun, target, reason. A trigger `noun:` matches in three tiers
    (`nounTier`, picked by `pickNounTier`): the typed noun exactly; else its
    singular/plural variant (`util.NounNumberVariants`); else
    `EventDetails.RoomNoun`, the room's own noun key the typed words name
@@ -319,19 +334,19 @@ about 190 ns/op. The map search is benchmarked in `internal/mapper`.
    is not a room noun still matches the typed text. `NounNamedBy` refuses a
    phrase with a word that is no name of the noun, so `say i found the
    board` names nothing. The command handlers in `usercommands` fill
-   `RoomNoun` on `room_interact` and `command_issued`. Author one spelling
+   `RoomNoun` on `look_at`, `search_at` and `command_issued`. Author one spelling
    per noun (a guard test fails on a pair that differs only by number).
    A hyphen matches a space (`util.NounHyphenFold`) in `nounMatches` on the
    trigger noun, the typed noun and `RoomNoun`, so `look
    processional-reliefs` fires `noun: processional reliefs`.
-   A trigger `verb:` names a `room_interact` verb family (#375 phase 3a):
-   empty means `look` (`quests.InteractVerb`), so a look trigger never
-   fires on search and a `verb: search` trigger never fires on look. The
-   dispatcher raises `room_interact` with `Verb: look` for look (and its
-   aliases l, examine, exam) and `read` raises it when nothing carried
-   matches; `search <feature>` raises `Verb: search` after the search runs.
-   Every raise matches the template room (`rooms.OriginalRoomId`). The
-   walkthrough sends `quests.InteractVerb(t.Verb)`.
+   The room feature events are `look_at` and `search_at` (#375 phase 3a,
+   split from `room_interact` at the closing step; there is no `verb`
+   filter, the event is the verb). The dispatcher raises `look_at` for look
+   (and its aliases l, examine, exam) and `read` raises it when nothing
+   carried matches; `search <feature>` raises `search_at` after the search
+   runs, and so does a plain search that uncovers a feature. All go through
+   `notifyRoomFeature` in `usercommands`, which matches the template room
+   (`rooms.OriginalRoomId`). The walkthrough sends the trigger's own event.
 2. **Conditions**: `EvalConditions(t.Conditions, player)`.
 3. **Visit guard**: `MarkVisited(trigId)`, after the conditions pass; a
    trigger fires at most once per chain (and per `NotifyAll`).
@@ -526,6 +541,10 @@ own, unrelated action param.)
   event silently does nothing. Note also that `give.go` transfers the item to
   the mob *before* any handler runs, so consumption is a post-hoc correction —
   see the give.go gotcha in `CLAUDE.md`.
+- **`GameBridge.ConsumeItem` reads the backpack, then the bandolier** (#794),
+  where `StoreItem` routes a potion by itself. Taking a potion the Vitalis
+  Bandolier holds tells the player it soured (`characters.BandolierRotLine`);
+  `give.go` then skips its own rot line for that give.
 
 ## Walkthrough
 
@@ -560,7 +579,7 @@ on the caller's order. It reads the Ways into each step from
 - **Own flags are never faked.** `walkEnv.meetFlag` gives a flag of the walked
   quest only when the walk sets it: a Way that sets it, or a "setter" (a
   trigger or topic that sets it and grants no step of the quest, such as quest
-  72's `room_interact` `set_flag`) fired from the current state without moving
+  72's `look_at` `set_flag`) fired from the current state without moving
   the quest. Setters nest at most `maxSetterDepth` deep.
 - **Heard topics.** `walkEnv.hear` marks as heard every info topic a
   `heardRequired` names that is open in the current state; applying an info
@@ -575,7 +594,8 @@ on the caller's order. It reads the Ways into each step from
   The topic's `requiresItem`/`carriesItem` and its NPC count as the Way's
   needs (`wayItemNeeds`, `checkWay`), so `walk-no-source` and `walk-unspawned`
   cover them.
-- **Negative gates** (`missing`, `missing_item`, `missing_flag`,
+- **Negative gates** (`missing`, `missing_item`, `missing_items` (holds none of
+  the list), `missing_flag`,
   `questExcluded`, `itemExcluded`, `questFlagExcluded`) read the walk's real
   state.
 - **Branches.** The walk carries every distinct successful state forward
@@ -640,13 +660,11 @@ quest's earlier steps when a later step is held (holding `N-end` credits a
 without checking its trigger conditions. Both can only make the check pass
 when a player might not have the spell, never fail wrongly.
 
-Findings share `questloop`'s shape and its one backlog. The walk is CI only:
-the sweep `TestSmoke_ShippedQuestsPassTheLoop` (`quest_loop_smoke_test.go`)
-combines `questloop.Validate` and `Walk`; boot (`main_quests.go`) runs
-`Validate` only and ignores the walk lines. Today's backlog holds 29 walk
-lines, all `walk-dead-end`: 6 steps with no way in and 23 skips. Six of the
-skips are hand-ins gated only on `start` plus an item an earlier step hands
-over (quests 14, 63 twice, 65, 66, 67).
+Findings share `questloop`'s shape. The walk is CI only: the sweep
+`TestSmoke_ShippedQuestsPassTheLoop` (`quest_loop_smoke_test.go`) combines
+`questloop.Validate`, `Walk` and `Destinations` and fails on any finding; boot
+(`main_quests.go`) runs `Validate` and `Destinations` only and ignores the walk
+lines. There is no backlog to park a walk finding on.
 
 Deviation from spec 7.1: `walkPlayer` and `walkCtx` are package code, not the
 `_test.go` doubles (`fullMockPlayer`, `mockActionContext`, `linearPlayer`),

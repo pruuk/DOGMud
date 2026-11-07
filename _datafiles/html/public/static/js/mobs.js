@@ -304,6 +304,18 @@
       F[key] = function () { var n = parseFloat(i.value) || 0; return isInt ? Math.round(n) : n; };
       return field(label, i);
     }
+    // optIntField is an integer field whose blank means "key absent" (sent as
+    // null), distinct from an entered 0. itemdropchance needs it (#585): an
+    // absent key drops every worn item, an explicit 0 drops none.
+    function optIntField(label, key, val, hint) {
+      var i = ce("input", { type: "number", step: "1" }); i.value = (val == null ? "" : String(val));
+      i.addEventListener("input", markDirty);
+      i.addEventListener("blur", function () {
+        if (i.value !== "") i.value = String(Math.round(parseFloat(i.value) || 0));
+      });
+      F[key] = function () { return i.value === "" ? null : Math.round(parseFloat(i.value) || 0); };
+      return field(label, i, hint);
+    }
     function checkField(label, key, val) {
       var cb = ce("input", { type: "checkbox" }); cb.checked = !!val; cb.addEventListener("change", markDirty);
       F[key] = function () { return cb.checked; };
@@ -608,7 +620,8 @@
 
     // ---- Loot ----
     insp.appendChild(sectionTitle("Loot"));
-    insp.appendChild(numField("Item drop chance %", "itemDropChance", detail.itemDropChance));
+    insp.appendChild(optIntField("Item drop chance %", "itemDropChance", detail.itemDropChance,
+      "blank: every worn item drops. 0: worn items never drop"));
     insp.appendChild(idRowsField("Loot pool", "lootPool", detail.lootPool, "", "dl-mob-items"));
     insp.appendChild(numField("Gold", "gold", detail.gold));
 
@@ -744,7 +757,7 @@
       hates: g("hates", []), groups: g("groups", []), submissionPolicy: g("submissionPolicy", ""),
       surrenderPolicy: g("surrenderPolicy", ""), packFleeImmune: g("packFleeImmune", false),
       idleCommands: g("idleCommands", []), combatCommands: g("combatCommands", []), angryCommands: g("angryCommands", []),
-      itemDropChance: g("itemDropChance", 0), lootPool: g("lootPool", []),
+      itemDropChance: g("itemDropChance", null), lootPool: g("lootPool", []),
       buysGeneral: g("buysGeneral", false), stockMultiplier: g("stockMultiplier", 0),
       craftSupport: g("craftSupport", ""), crafter: g("crafter", false), crafterSkill: g("crafterSkill", ""),
       crafterRecipeIds: g("crafterRecipeIds", []), crafterRestockMaterials: g("crafterRestockMaterials", []),

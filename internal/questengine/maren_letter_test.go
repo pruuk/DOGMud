@@ -14,23 +14,23 @@ import (
 // Maren's Cottage (room 4023). It used to come from a room behaviour tree
 // that answered push, move, pull, shift and press; since #375 phase 3a (owner
 // ruling 5: look and search are the only interaction verbs) quest 76 carries
-// a `verb: search` room_interact on the stone, for any player, on or off the
-// quest. `search stone` runs the search and its cooldown first; a plain
-// search can find it at the room difficulty.
+// a search_at trigger on the stone, for any player, on or off the quest.
+// `search stone` runs the search and its cooldown first; a plain search can
+// find it at the room difficulty.
 func TestMarenLetter_SearchTheStone(t *testing.T) {
 	const cottage, letter = 4023, 40041
 	q := loadShippedQuest(t, "76-the_disc.yaml", 76)
-	searchStone := EventDetails{UserId: 1, RoomId: cottage, Verb: "search", Noun: "stone", RoomNoun: "stone"}
+	stone := EventDetails{UserId: 1, RoomId: cottage, Noun: "stone", RoomNoun: "stone"}
 
-	run := func(p *fullMockPlayer, d EventDetails) (bool, *mockActionContext) {
+	run := func(p *fullMockPlayer, event string, d EventDetails) (bool, *mockActionContext) {
 		e := NewEngine()
 		e.RegisterQuest(q)
 		ctx := newMockActionContext(1)
-		return e.Notify("room_interact", d, p, ctx).Handled, ctx
+		return e.Notify(event, d, p, ctx).Handled, ctx
 	}
 
 	t.Run("a player without the letter finds it, quest or not", func(t *testing.T) {
-		handled, ctx := run(newFullMockPlayer(cottage), searchStone)
+		handled, ctx := run(newFullMockPlayer(cottage), "search_at", stone)
 		require.True(t, handled)
 		require.Equal(t, []int{letter}, ctx.givenItems)
 		require.Len(t, ctx.sentTexts, 1)
@@ -41,15 +41,13 @@ func TestMarenLetter_SearchTheStone(t *testing.T) {
 	t.Run("a player who carries it finds nothing more", func(t *testing.T) {
 		p := newFullMockPlayer(cottage)
 		p.items[letter] = true
-		handled, ctx := run(p, searchStone)
+		handled, ctx := run(p, "search_at", stone)
 		require.False(t, handled, "the search's own reply stands")
 		require.Empty(t, ctx.givenItems)
 	})
 
 	t.Run("looking at the stone does not move it", func(t *testing.T) {
-		look := searchStone
-		look.Verb = "look"
-		handled, ctx := run(newFullMockPlayer(cottage), look)
+		handled, ctx := run(newFullMockPlayer(cottage), "look_at", stone)
 		require.False(t, handled)
 		require.Empty(t, ctx.givenItems)
 	})

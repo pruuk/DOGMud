@@ -238,7 +238,8 @@ func SetOfferIndexForTest(byQuest map[int][]int) func()
   `chargesGold` is not taken, `givesGold` is not paid, and `givesItem` is given only when the item's
   `Value` is 0 and the player carries none (`resumeGivesItem`); otherwise it is
   skipped and counts as delivered. `setsQuestFlag`, `bumpsRep` and the rest
-  apply as usual. A first accept is unchanged.
+  apply as usual. A first accept is unchanged. A resume skips `goldRequired`,
+  as `Apply` skips the charge.
 
 ## Per-instance memory
 

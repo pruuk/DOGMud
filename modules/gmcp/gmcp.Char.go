@@ -837,11 +837,15 @@ type GMCPCondition struct {
 	Mods         map[string]int `json:"affects"`
 }
 
-// conditionDurationLabel converts rounds remaining to a qualitative label.
-// 0 = permanent/sustained; 1–3 = briefly; 4–10 = for a while; 11+ = extended.
-func conditionDurationLabel(rounds int) string {
+// conditionDurationLabel converts a record's time left to a qualitative label:
+// a permanent record (a worn item's, or a potion the Vitalis Bandolier holds)
+// is "sustained"; a timed one is "briefly" at 3 rounds or fewer, its last
+// round included, "for a while" at 4 to 10, and "extended" beyond. Permanence
+// is the record's own flag, never 0 rounds left: a timed record in its last
+// round has 0 left and used to read "sustained" just before it ended.
+func conditionDurationLabel(permanent bool, rounds int) string {
 	switch {
-	case rounds == 0:
+	case permanent:
 		return "sustained"
 	case rounds <= 3:
 		return "briefly"
@@ -894,10 +898,9 @@ func buildConditionsPayload(ch *characters.Character) map[string]GMCPCondition {
 			Description:  conditionSpec.Description,
 			DurationMax:  timeMax,
 			DurationLeft: timeLeft,
-			// A permanent condition reports roundsLeft 0, which the label reads as
-			// "sustained", the same word the old condition list used for a
-			// permanent entry.
-			Duration: conditionDurationLabel(roundsLeft),
+			// "sustained" for a permanent record, the same word the old
+			// condition list used for a permanent entry.
+			Duration: conditionDurationLabel(condition.Permanent, roundsLeft),
 			Type:     conditionSource,
 		}
 

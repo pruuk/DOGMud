@@ -381,14 +381,16 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 			}
 		}
 
-		// Quest engine: room_interact for the look family only (#375 phase
-		// 3a, owner ruling 5: look and search are the only interaction
-		// verbs). read raises it itself when nothing carried matches, and
-		// search after the search runs (skill.search.go), so a cooldown
-		// refusal sends nothing.
-		if !skipScript && interactionFamily(alias) == quests.VerbLook {
+		// Quest engine: look_at for the look family (#375 phase 3a, owner
+		// ruling 5: look and search are the only interaction verbs; l,
+		// examine and exam expand to look before this runs). read raises it
+		// itself when nothing carried matches, and search raises search_at
+		// after the search runs (skill.search.go), so a cooldown refusal
+		// sends nothing.
+		if !skipScript && alias == `look` {
 			if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
-				if notifyRoomInteract(user, room, quests.VerbLook, rest, room.NounNamedBy(rest)) {
+				lookedAt := trimLookFiller(strings.TrimSpace(rest))
+				if notifyRoomFeature(user, room, quests.EventLookAt, lookedAt, room.NounNamedBy(lookedAt)) {
 					return true, nil
 				}
 			}
@@ -583,28 +585,17 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 	return false, nil
 }
 
-// interactionFamily is the room_interact verb family a dispatched command
-// belongs to: look for look (its aliases l, examine and exam expand to it
-// before this runs), "" for everything else. read and search raise their
-// own events in their handlers.
-func interactionFamily(cmd string) string {
-	if cmd == `look` {
-		return quests.VerbLook
-	}
-	return ``
-}
-
-// notifyRoomInteract raises room_interact for a verb family, matched on the
-// template room (rooms.OriginalRoomId, as command_issued is) so a trigger
-// fires inside an instance; the bridge keeps the real room. It reports
-// whether a trigger handled the event.
-func notifyRoomInteract(user *users.UserRecord, room *rooms.Room, verb, typed, roomNoun string) bool {
+// notifyRoomFeature raises a room feature event (quests.EventLookAt or
+// quests.EventSearchAt), matched on the template room
+// (rooms.OriginalRoomId, as command_issued is) so a trigger fires inside an
+// instance; the bridge keeps the real room. It reports whether a trigger
+// handled the event.
+func notifyRoomFeature(user *users.UserRecord, room *rooms.Room, event, typed, roomNoun string) bool {
 	matchRoom, _ := rooms.OriginalRoomId(room.RoomId)
 	bridge := questengine.NewGameBridge(user, room.RoomId)
-	return questengine.GetEngine().Notify("room_interact", questengine.EventDetails{
+	return questengine.GetEngine().Notify(event, questengine.EventDetails{
 		UserId:   user.UserId,
 		RoomId:   matchRoom,
-		Verb:     verb,
 		Noun:     strings.ToLower(strings.TrimSpace(typed)),
 		RoomNoun: roomNoun,
 	}, bridge, bridge).Handled

@@ -115,33 +115,26 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			remaining := make([]items.Item, 0, len(user.Character.PotionItems))
 			for _, pot := range user.Character.PotionItems {
 				potSpec := pot.GetSpec()
-				if potSpec.Aging.HasAging() && pot.CraftedRound > 0 {
-					elapsed := currentRound - pot.CraftedRound
-					bottleMult := pot.BottleMultiplier
-					if bottleMult <= 0 {
-						bottleMult = potSpec.BottleAgingMultiplier
-					}
-					effSpeed := items.CalcEffectiveAgingSpeed(bottleMult, pot.CraftSkill)
-					phase, _ := items.GetAgingPhase(elapsed, potSpec.Aging, effSpeed)
-					if phase == items.PhaseSpoiled {
-						if potSpec.Subtype == items.Throwable {
-							// Spoiled grenades fall safely to the ground
-							if userRoom := rooms.LoadRoom(user.Character.RoomId); userRoom != nil {
-								userRoom.AddItem(pot, false)
-							}
-							user.SendText(messaging.CategoryWarning, fmt.Sprintf(
-								`<ansi fg="yellow">Your <ansi fg="itemname">%s</ansi> has destabilized and falls out of your bandolier onto the ground.</ansi>`,
-								pot.DisplayName()))
-						} else {
-							// Spoiled potions go to backpack
-							user.Character.Items = append(user.Character.Items, pot)
-							user.SendText(messaging.CategoryWarning, fmt.Sprintf(
-								`<ansi fg="yellow">Your <ansi fg="itemname">%s</ansi> has spoiled and falls out of your bandolier.</ansi>`,
-								pot.DisplayName()))
+				// A preserving bandolier reads its potions at peak, so it
+				// never ejects one (Character.PotionAging, #794).
+				if user.Character.PotionAging(pot, currentRound).Spoiled() {
+					if potSpec.Subtype == items.Throwable {
+						// Spoiled grenades fall safely to the ground
+						if userRoom := rooms.LoadRoom(user.Character.RoomId); userRoom != nil {
+							userRoom.AddItem(pot, false)
 						}
-						ejected++
-						continue
+						user.SendText(messaging.CategoryWarning, fmt.Sprintf(
+							`<ansi fg="yellow">Your <ansi fg="itemname">%s</ansi> has destabilized and falls out of your bandolier onto the ground.</ansi>`,
+							pot.DisplayName()))
+					} else {
+						// Spoiled potions go to backpack
+						user.Character.Items = append(user.Character.Items, pot)
+						user.SendText(messaging.CategoryWarning, fmt.Sprintf(
+							`<ansi fg="yellow">Your <ansi fg="itemname">%s</ansi> has spoiled and falls out of your bandolier.</ansi>`,
+							pot.DisplayName()))
 					}
+					ejected++
+					continue
 				}
 				remaining = append(remaining, pot)
 			}

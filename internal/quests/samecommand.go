@@ -56,11 +56,6 @@ func triggersCanShareAnEvent(a, b *TriggerDef) bool {
 		{a.Skill, b.Skill}, {a.Command, b.Command},
 		{a.QuestToken, b.QuestToken}, {a.Noun, b.Noun},
 	}
-	// An empty room_interact verb means look (#375 phase 3a), so a look
-	// trigger and a search trigger never share an event.
-	if a.Event == "room_interact" && InteractVerb(a.Verb) != InteractVerb(b.Verb) {
-		return false
-	}
 	for _, p := range strs {
 		if p[0] != "" && p[1] != "" && p[0] != p[1] {
 			return false
@@ -89,7 +84,7 @@ func sameCommandBlocks(a *TriggerDef, later Conditions) bool {
 		if act.Grant != "" && slices.Contains(later.Missing, act.Grant) {
 			return true
 		}
-		if act.GiveItem > 0 && act.GiveItem == later.MissingItem {
+		if act.GiveItem > 0 && (act.GiveItem == later.MissingItem || slices.Contains(later.MissingItems, act.GiveItem)) {
 			return true
 		}
 		if act.ConsumeItem > 0 && act.ConsumeItem == later.HasItem {
@@ -128,7 +123,7 @@ func sameCommandEnables(actions []ActionDef, later Conditions) []string {
 		if act.GiveItem > 0 && act.GiveItem == later.HasItem {
 			out = append(out, fmt.Sprintf("gives item %d", act.GiveItem))
 		}
-		if act.ConsumeItem > 0 && act.ConsumeItem == later.MissingItem {
+		if act.ConsumeItem > 0 && (act.ConsumeItem == later.MissingItem || slices.Contains(later.MissingItems, act.ConsumeItem)) {
 			out = append(out, fmt.Sprintf("consumes item %d", act.ConsumeItem))
 		}
 		if act.SetFlag != nil {

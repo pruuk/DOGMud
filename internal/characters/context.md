@@ -319,6 +319,45 @@ sent; `progression_notifier_guard_test.go` asserts the boot registration and
   subtracted a displaced item a second time and could strip a condition the new
   item still granted.
 
+### The Vitalis Bandolier (`bandolier.go`, #794)
+
+Owner ruling 2026-11-06. A `preserves_contents` belt holds each potion at
+peak; one taken out rots at once. An `ambient_potions` belt takes only
+helpful potions.
+
+- `slotPotion` (from `StoreItem` and `SortPotionItems`) marks a potion
+  `items.Item.Preserved` when the belt preserves. `PotionAging(i, now)` reads
+  a held one at peak (`Item.PeakAging`) only when it carries the mark, else
+  `Item.AgingAt`, which reads a Preserved potion as spoiled. So every removal
+  path rots the potion with no hook of its own. `RotsOnRemoval` and
+  `HeldInPreservingBandolier` also need the mark.
+- `AmbientBandolierRefusal(i, now)` returns a `BandolierRefusal`
+  (`BandolierWrongKind`, `BandolierSpoiled`, `BandolierDuplicate`: a slotted
+  potion already gives one of its conditions, so one per held condition id,
+  not per item; `BandolierFull` is the capacity check's). `StoreItem` routes a
+  refused item to the backpack; `SortPotionItems` returns `(moved, refused
+  []BandolierRelease)`.
+- `PreserveBandolier(now)` (the wear path right after a belt swap, the
+  pinnacle tick, login) keeps what the belt marked, takes the rest in order
+  under the same rules plus its capacity, lets go of the others to the
+  backpack unmarked (sound, never in the hold), and marks what it keeps.
+  Returns `[]BandolierRelease`; the wear path stores it for
+  `TakeBandolierReleases` (the equip command).
+- Lines (no numbers): `BandolierRefusalLine`, `BandolierReleaseLine` ("still
+  sound"), `BandolierRotLine`, and `BandolierRefusal.Why`.
+- `BandolierSustainsAny(conditionIds)`: the attuned set holds one as a
+  permanent record. `actions.Quaff` refuses such a drink.
+- A species that closes the belt slot spills the bandolier to the backpack
+  (`spillBandolier`, as `RemoveFromBody`) and records a
+  `DisplacedPotionSoured` `DisplacedGear` (with `From`, the belt) per potion
+  that soured.
+- `spillPreservedOnBeltSwap(old, new)` (from `wear`, after its reverts,
+  like `SortComponentItems`, because it writes outside `c.Equipment`): a belt
+  swap away from a preserving belt spills its potions to the backpack, as
+  `RemoveFromBody` does; a swap onto one spills any Preserved potion so it
+  cannot read as held. `BeltChangeRots()` and `RotsOnRemoval(i)` let the
+  remove, equip and get commands name the potions that sour.
+
 ### Slot choice (`wear_slot.go`, sight and gates parity 5a)
 
 `Wear` is now `wear(i, place)` in `worn.go`: the shared gates (type, unrecognised item; `MinStrength`; `HandsRequired > 2`; the U7b reservation snapshot/revert; the curse pass on whatever `place` displaced) wrapped around a `place` function. `Wear(i)` passes `wearChosen(i, 0)` (hands) or `wearArmorSlot(i, spec)` (everything else); `WearInArm(i, arm)` passes `wearChosen(i, arm)` for a named arm 1 to 6 (`equip X armN`), so both share every gate and cannot drift. `wearChosen` calls `ChooseWornSlot(i, arm)` and applies the returned choice.

@@ -1,0 +1,22 @@
+ephemeral:
+  profile: specialist-caster
+  start_room: 5706
+  overlays:
+    grant_items: [20096]
+  budgets:
+    wall_clock: 60m
+goals:
+  - >-
+    Type `talk orin` and take The Cooperage Circle. Find Toby and take his rubbing. Wait until Toby
+    sleeps on the Cooperage Floor at night: `look` until he is there. Equip your torch and type
+    `search` beside him. Quote every line. Say whether it feels fair that you could do this with him
+    asleep, and whether anything woke. Quote game lines VERBATIM and in order.
+  - >-
+    Show Orin the survey with the rubbing in hand and quote him. Hear what standing with the circle
+    costs, choose it, and quote it. Then `look old guild mark` at the cooperage front and `talk toby`,
+    and say whether what they tell you fits what you see. Quote game lines VERBATIM and in order.
+  - >-
+    Go to Gritta's Flooded Cellar. Quote her opener. Take The Pre-Founding Web. First, unequip your
+    light, go to the Buried Lintel, and type `search`. Quote it. Then equip it and search again after
+    the cooldown. Quote it. Finish with Orin and quote the reward. Quote game lines VERBATIM and in
+    order.

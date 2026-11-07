@@ -2,14 +2,17 @@ itemid: 40108
 name: Bloom Wafer
 namesimple: wafer
 description: A thin disc of pressed botanical matter, iridescent at the edges
-  and nearly odorless -- the kind of thing you could mistake for a breath mint
-  if you didn't know better. It sits light in the palm. The sort of thing that
-  changes hands quickly in dim-lit corners and is never sold from a proper
-  stall.
+  and nearly odorless, the kind of thing you could mistake for a breath mint
+  if you didn't know better. It sits light in the palm. It changes hands quickly
+  in dim corners and is never sold from a proper stall. To take it, type quaff
+  wafer. Few who sell it will tell you what that costs later. It gives you a short
+  high, then a long crash and a craving, and it changes your body in ways you do
+  not choose.
 type: potion
 subtype: drinkable
 uses: 1
 not_salable: true
 toxicity: 20
 weight: 0.1
-value: 25
+value: 120
+rarity_tier: 10

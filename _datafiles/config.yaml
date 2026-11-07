@@ -83,7 +83,7 @@ Server:
   - checkclient
   # - Motd -
   #   Message of the day. This is displayed when the motd command is run.
-  Motd: '{{ t "LIGHT AND DARK. Rooms are now bright, dim or pitch black, and what you can see decides what you can do, so carry a lantern after sundown.\nCREATURES FIGHT LIKE THEMSELVES. Slimes lash and engulf, horses kick and trample, and elementals strike with fire, water, sand and storm.\nTHE ARENA PAYS WHAT YOU STAKE. Arena and Oasis foes now carry gold in step with your entry, and bosses carry the most.\nPLAINER WORDS. Combat, refusals and help were rewritten to say what happened and what to try next.\nThe novel: https://github.com/pruuk/DOGMud/blob/master/novel/what_the_moons_keep.md\nFull patch notes: https://github.com/pruuk/DOGMud/blob/master/docs/PATCH_NOTES.md" }}'
+  Motd: '{{ t "TALK TO PEOPLE. Type talk <name> for a numbered menu of what someone knows and what they need. A [!] before a name means they have work for you.\nEVERY STEP HAS A HINT. Your quest log says what to do next, and the map points the way.\nLOOK AND SEARCH. Type look <thing> to study anything you see, and type search to find what is hidden. Many secrets give way to one or the other, so bring a light.\nLISTEN TO THE GOSSIPS. Some of what they repeat is worth chasing.\nThe novel: https://github.com/pruuk/DOGMud/blob/master/novel/what_the_moons_keep.md\nFull patch notes: https://github.com/pruuk/DOGMud/blob/master/docs/PATCH_NOTES.md" }}'
   # - NextRoomID -
   # This number is auto-updated to the highest number of rooms in the game.
   #   If creating your own rooms but don't want to risk an update conflicting,
@@ -304,6 +304,7 @@ GamePlay:
     StatDecayFloor: 100        # Never degrade a stat's PERMANENT part (racial roll + training) below this. Equipment and condition mods are excluded on purpose, so a permanent loss cannot hinge on what you were wearing.
     SkillRustFloor: 1          # Never rust a skill below this rank
     RespawnPoolFraction: 0.05  # Fraction of max Health, Stamina and Conviction a player respawns with (read by hooks/Life_Cascades.go)
+    RespawnGraceRounds: 3      # Rounds after respawn when nothing picks you as a target (condition 81); 0 turns the grace off (read by hooks/Life_Cascades.go)
     # - ProtectionSkillRanks -
     #   Players with total skill ranks at or below this value are protected
     #   from death penalties. Gives new players a grace period.
@@ -2128,6 +2129,7 @@ Balance:
 
   # ── GOSSIP SYSTEM ───────────────────────────────────────────────────────────
   GossipIntervalRounds: 75  # Rounds between gossip broadcasts for "gossiper" mobs; 0 turns gossip off, 1 to 19 read as 75
+  GossipHintIntervalRounds: 150  # Rounds (150 is 10 minutes) a gossiper waits between facts tagged hint; it says one only when a player is there; 0 turns it off
 
   # ── AMBIENT (#317) ──────────────────────────────────────────────────────────
   # Unprompted lines, one knob per source. 0 turns a source off. A round is
@@ -2333,6 +2335,22 @@ Balance:
   ToxicityDecayPerTick: 1.0     # points shed per regen tick
   ToxicitySicknessDamagePct: 0.02  # max-HP fraction of acute harm at the top band
   ToxicityHighDecaySlowMult: 0.5   # decay multiplier at/above 75% (clears slower)
+  # Bloom Wafer (item 40108): the drug the Bloom Trade sells. A dose gives Communion
+  # (a high), then a crash, adds addiction and may change a mutation. Moved here
+  # from Go defaults at their same values (#375 tier 5). Rounds are 4 seconds.
+  # Every knob here treats 0 as absent and restores its default, so to slow the
+  # mutation roll use a small number (0.001), never 0.
+  BloomAddictionPerDose: 1          # addiction gained per dose
+  BloomAddictionDecayRounds: 300    # rounds of abstinence per point of addiction lost
+  BloomWithdrawalOnsetRounds: 60    # rounds after the last dose before withdrawal
+  BloomMutationAdvanceChance: 0.50  # chance a dose deepens the strongest mutation
+  BloomNewMutationChance: 0.10      # chance, rolled first, of a whole new mutation
+  BloomCommunionRounds: 30        # how long the high lasts
+  BloomCrashRoundsMult: 2.5         # crash length as a multiple of condition 91's baseline
+  # How much one character may buy from any seller of the wafer (owner 2026-11-04).
+  # Gifts and auctions are not counted: a market is accepted, this limits the source.
+  BloomDealerWafersPerDay: 3        # wafers one character may buy within the window
+  BloomDealerWindowHours: 24        # the rolling window, in real hours
   # ── INSTANCE GOLD (owner ruling 2026-10-17) ─────────────────────────────────
   # Opt-in per zone: only a paid instance of a zone whose zone-config sets
   # instance_gold: true (Instance Arena and Instance Planar Oasis today) uses
@@ -2467,7 +2485,7 @@ TextFormats:
   #   Default fight prompt (shown during combat). Players can toggle individual
   #   elements with "set fprompt tog <name>" or set a fully custom string with
   #   "set fprompt <string>". See "help set-prompt" in game for all options.
-  FightPrompt: '{8}[{t} {255}HP:{hpbar} SP:{stbar} CP:{cvbar}{pos}{8}] {255}» {target}{8}[{targetpos}{8}|{targethealth}{8}] {255}{tank}{tankpos}{tankbar}{239}{h}{8}:'
+  FightPrompt: '{8}[{t} {255}HP:{hpbar} SP:{stbar} CP:{cvbar}{pos}{8}] {255}» {target}{8}[{targetpos}{8}|{targethealth}{8}]{tank}{tankpos}{tankbar}{239}{h}{8}:'
   # - TimeFormat -
   #   When real world time is shown, what format should be used?
   #   This uses a Go time format string, which is kinda weird.

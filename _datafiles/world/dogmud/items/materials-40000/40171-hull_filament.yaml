@@ -14,7 +14,7 @@ type: object
 subtype: mundane
 component_tag: hull-filament
 weight: 0.1
-value: 950
+value: 475
 rarity_tier: 80
 is_component: true
 restricted: true

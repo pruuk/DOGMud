@@ -369,6 +369,9 @@ func ValidateQuestRefs(q Quest, v QuestValidators) (errs []string, warns []strin
 		c.checkRoom(tw+" in_room", t.Conditions.InRoom)
 		c.checkItem(tw+" has_item", t.Conditions.HasItem)
 		c.checkItem(tw+" missing_item", t.Conditions.MissingItem)
+		for _, id := range t.Conditions.MissingItems {
+			c.checkItem(tw+" missing_items", id)
+		}
 		for k, val := range t.Conditions.HasFlag {
 			c.checkFlag(tw+" has_flag", k, val)
 		}

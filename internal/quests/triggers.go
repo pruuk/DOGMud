@@ -14,19 +14,19 @@ import (
 
 // TriggerDef defines when and how a quest step fires.
 type TriggerDef struct {
-	Event      string `yaml:"event" json:"event"`                                 // room_enter, room_gate, item_give, skill_use, mob_death, command, command_issued, item_gain, quest_granted, room_interact, spell_landed, topic_heard
-	Room       int    `yaml:"room,omitempty" json:"room,omitempty"`               // room ID filter
-	Mob        int    `yaml:"mob,omitempty" json:"mob,omitempty"`                 // mob ID filter
-	Item       int    `yaml:"item,omitempty" json:"item,omitempty"`               // item ID filter
-	Skill      string `yaml:"skill,omitempty" json:"skill,omitempty"`             // skill name filter
-	Command    string `yaml:"command,omitempty" json:"command,omitempty"`         // command name filter
-	QuestToken string `yaml:"quest_token,omitempty" json:"quest_token,omitempty"` // for quest_granted event
-	Noun       string `yaml:"noun,omitempty" json:"noun,omitempty"`               // room noun filter
-	Verb       string `yaml:"verb,omitempty" json:"verb,omitempty"`               // room interaction verb filter
-	Target     string `yaml:"target,omitempty" json:"target,omitempty"`           // command target kind filter: self, mob, player, item, container (#375 3b)
-	Effect     string `yaml:"effect,omitempty" json:"effect,omitempty"`           // spell_landed: the spell's effect_type (heal, damage, ...) (#375 3b)
-	Topic      string `yaml:"topic,omitempty" json:"topic,omitempty"`             // topic_heard: the NPC's topic key (#375 3b)
-	Reason     string `yaml:"reason,omitempty" json:"reason,omitempty"`           // item_gain: how the item arrived, one of TriggerGainReasons (#375 p7)
+	Event       string `yaml:"event" json:"event"`                                 // room_enter, room_gate, item_give, skill_use, mob_death, command, command_issued, item_gain, quest_granted, look_at, search_at, spell_landed, topic_heard
+	Room        int    `yaml:"room,omitempty" json:"room,omitempty"`               // room ID filter
+	Mob         int    `yaml:"mob,omitempty" json:"mob,omitempty"`                 // mob ID filter
+	Item        int    `yaml:"item,omitempty" json:"item,omitempty"`               // item ID filter
+	Skill       string `yaml:"skill,omitempty" json:"skill,omitempty"`             // skill name filter
+	Command     string `yaml:"command,omitempty" json:"command,omitempty"`         // command name filter
+	QuestToken  string `yaml:"quest_token,omitempty" json:"quest_token,omitempty"` // for quest_granted event
+	Noun        string `yaml:"noun,omitempty" json:"noun,omitempty"`               // room noun filter
+	RetiredVerb string `yaml:"verb,omitempty" json:"-"`                            // retired at the #375 closing step (the event names look or search); read only so the loader can refuse it
+	Target      string `yaml:"target,omitempty" json:"target,omitempty"`           // command target kind filter: self, mob, player, item, container (#375 3b)
+	Effect      string `yaml:"effect,omitempty" json:"effect,omitempty"`           // spell_landed: the spell's effect_type (heal, damage, ...) (#375 3b)
+	Topic       string `yaml:"topic,omitempty" json:"topic,omitempty"`             // topic_heard: the NPC's topic key (#375 3b)
+	Reason      string `yaml:"reason,omitempty" json:"reason,omitempty"`           // item_gain: how the item arrived, one of TriggerGainReasons (#375 p7)
 	// #375 phase 3b slice 4: where, how many, how much of an area.
 	Area         string      `yaml:"area,omitempty" json:"area,omitempty"`                   // the event's room is in this area (#375 3b)
 	Zone         string      `yaml:"zone,omitempty" json:"zone,omitempty"`                   // the event's room is in this zone
@@ -84,23 +84,15 @@ func DistinctNeed(distinct string, areaSize int) (need int, ok bool) {
 	return n, true
 }
 
-// The two room_interact verb families (#375 phase 3a, owner ruling 5: look
-// and search are the only interaction verbs). look, l, examine, exam and read
-// raise VerbLook; search raises VerbSearch. A trigger's empty verb means
-// VerbLook; the loader refuses any other value.
+// The room feature events (#375 phase 3a, owner ruling 5: look and search
+// are the only interaction verbs; one event each since the closing step).
+// look_at: look, l, examine, exam or read names a room feature. search_at:
+// search names it (after the search runs, no roll), or a plain search
+// uncovers it at the room difficulty.
 const (
-	VerbLook   = "look"
-	VerbSearch = "search"
+	EventLookAt   = "look_at"
+	EventSearchAt = "search_at"
 )
-
-// InteractVerb is the verb family a room_interact trigger listens for: its
-// own verb, or VerbLook when it names none.
-func InteractVerb(verb string) string {
-	if verb == "" {
-		return VerbLook
-	}
-	return verb
-}
 
 // The kinds of thing a command event names as its target (#375 phase 3b
 // slice 2). Every command event carries one; TargetNone is an event value
@@ -134,6 +126,7 @@ type Conditions struct {
 	Missing       []string          `yaml:"missing,omitempty" json:"missing,omitempty"`               // player must NOT have ANY of these tokens
 	InRoom        int               `yaml:"in_room,omitempty" json:"in_room,omitempty"`               // player must be in this room
 	HasItem       int               `yaml:"has_item,omitempty" json:"has_item,omitempty"`             // player must have this item
+	MissingItems  []int             `yaml:"missing_items,omitempty" json:"missing_items,omitempty"`   // player must hold NONE of these items
 	MissingItem   int               `yaml:"missing_item,omitempty" json:"missing_item,omitempty"`     // player must NOT have this item
 	HasFlag       map[string]string `yaml:"has_flag,omitempty" json:"has_flag,omitempty"`             // player must have ALL these flag key=value pairs
 	MissingFlag   map[string]string `yaml:"missing_flag,omitempty" json:"missing_flag,omitempty"`     // player must NOT have ANY of these flag key=value pairs

@@ -13,6 +13,7 @@ groups:
   - fence
 knows_facts:
   - roads-caravans-guarded
+  - disc-bookseller-pages
 idlecommands:
   - 'emote wraps a small trinket in a spare cloth and tucks it deep in his pack, no questions asked'
   - ''

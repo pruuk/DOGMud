@@ -86,7 +86,8 @@ They are bound creatures, not servants.
 
 If a companion falls in battle it is gone. Summon or charm
 a new one to replace it. Guard your companions carefully
-in dangerous areas.
+in dangerous areas. Gear you lent a companion may be lost
+with it, so lend only what you can afford to lose.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help progression</ansi>, <ansi fg="command">help manifestation</ansi>, <ansi fg="command">help dismiss</ansi>,
   <ansi fg="command">help reservation</ansi>, <ansi fg="command">help conviction</ansi>

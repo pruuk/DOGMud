@@ -38,14 +38,13 @@ func TestMigrateNewbieAwakening_RunsOnce(t *testing.T) {
 
 // A new character has no run-once marker during its first session, because
 // CreateUser does not run LoadUser. Holding only what can be held before the
-// rite (quest 21's marker, quest 28 from Dewey) is not veteran progress, so a
-// log out at the pool must not Open them without the rite. The marker is still
-// set, as on every other path.
+// rite (quest 28 from Dewey) is not veteran progress, so a log out at the pool
+// must not Open them without the rite. The marker is still set, as on every
+// other path.
 func TestMigrateNewbieAwakening_PreRiteQuestsAreNotVeteranProgress(t *testing.T) {
 	for _, progress := range []map[int]string{
-		{21: "start"},
 		{28: "end"},
-		{21: "start", 28: "end"},
+		{28: "start"},
 	} {
 		c := &Character{QuestProgress: progress}
 		c.MigrateNewbieAwakening()
@@ -60,7 +59,7 @@ func TestMigrateNewbieAwakening_PreRiteQuestsAreNotVeteranProgress(t *testing.T)
 
 // Any other quest is real progress, whatever sits beside it.
 func TestMigrateNewbieAwakening_OtherQuestsStillCount(t *testing.T) {
-	c := &Character{QuestProgress: map[int]string{21: "end", 12: "start"}}
+	c := &Character{QuestProgress: map[int]string{28: "end", 12: "start"}}
 	c.MigrateNewbieAwakening()
 	if c.QuestProgress[30] != "end" {
 		t.Errorf("want 30=end, got %q", c.QuestProgress[30])

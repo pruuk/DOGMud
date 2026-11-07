@@ -59,3 +59,45 @@ func TestDestinations_Findings(t *testing.T) {
 		t.Errorf("inferred %v", inferred)
 	}
 }
+
+// A spawn change on a running server is judged before and after: only the
+// findings it adds come back (the admin spawninfo commands refuse on them).
+func TestSpawnChangeFindings(t *testing.T) {
+	installDestWorld(t, destWorld{spawns: map[int][]int{60: {9}, 61: {9, 10}}})
+	q := &quests.Quest{QuestId: 704, Name: "Spawns", Steps: []quests.QuestStep{
+		{Id: "wolf", Destination: quests.StepDestination{Mobs: []int{60}}}, // only room 9 spawns 60
+		{Id: "hunt"}, // inferred from mob 60's trigger
+		{Id: "fox", Destination: quests.StepDestination{Mobs: []int{61}}}, // rooms 9 and 10 spawn 61
+		{Id: "lost"}, // already a finding
+		{Id: "end"},
+	}, Triggers: []quests.TriggerDef{
+		{Event: "mob_death", Mob: 60, Conditions: quests.Conditions{Has: []string{"704-hunt"}}},
+	}}
+	qs := []*quests.Quest{q}
+	keys := func(room int, mobs ...int) []string {
+		var ks []string
+		for _, f := range spawnChangeFindings(qs, room, mobs) {
+			ks = append(ks, f.Key())
+		}
+		return ks
+	}
+
+	// Clearing room 9 strands 60 (both steps); 61 still spawns in room 10;
+	// step lost was a finding before the change, so it is not returned.
+	want := []string{"walk-destination 704 step hunt", "walk-destination 704 step wolf"}
+	if got := keys(9); !reflect.DeepEqual(got, want) {
+		t.Errorf("clear room 9: %v, want %v", got, want)
+	}
+	// Copying a list that keeps 60 in room 9 adds nothing.
+	if got := keys(9, 60, 62); got != nil {
+		t.Errorf("keep 60 in room 9: %v, want none", got)
+	}
+	// Clearing room 10 leaves 61 in room 9.
+	if got := keys(10); got != nil {
+		t.Errorf("clear room 10: %v, want none", got)
+	}
+	// The check leaves the spawn index alone.
+	if len(spawnRoomsOf(60)) != 1 {
+		t.Errorf("spawn index changed: %v", spawnRoomsOf(60))
+	}
+}

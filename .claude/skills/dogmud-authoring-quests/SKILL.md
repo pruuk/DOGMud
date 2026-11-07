@@ -153,12 +153,12 @@ problem the rule above forbids; hints now use a separate `SendText` path.
 [[feedback_hint_voice]]
 
 Discoverability extends past dialogue into room content: quest engine
-`room_interact` triggers do an exact string match on the player's typed
+`look_at` triggers do an exact string match on the player's typed
 noun, with no fuzzy matching or alias resolution (that forgiveness happens
 in the room's `FindNoun`/`FindHiddenNoun`, which runs after the trigger has
 already fired on the raw noun). Author hidden_noun keys as single intuitive
 words (`carving`, not `bench-vise carving`), put a `` Try `look <key>`. ``
-hint at the end of the hidden_description, and write one `room_interact`
+hint at the end of the hidden_description, and write one `look_at`
 trigger per plausible noun variant a player might type (`altar stone`,
 `altar`, and `stone` as three separate triggers with the same conditions and
 actions). Cross-reference room nouns against trigger nouns before shipping.
@@ -167,12 +167,15 @@ actions). Cross-reference room nouns against trigger nouns before shipping.
 There is no space/hyphen normalization on either side, which is the form
 this bites in most often. `usercommands.go` notifies the engine with
 `Noun: strings.ToLower(rest)` and `questengine/engine.go` compares
-`t.Noun != d.Noun` as an exact string, and the shipped `noun:` spellings are
-mixed: hyphenated (`old-guild-mark`, `hearth-marks`, `paper-scrap`) and
-spaced (`gray material`, `buried marker`). Quest 68's trigger noun is
+`t.Noun != d.Noun` as an exact string, and the `noun:` spellings once
+shipped mixed: hyphenated (`old-guild-mark`, `hearth-marks`, `paper-scrap`) and
+spaced (`gray material`, `buried marker`). Quest 68's trigger noun was
 `loose-floorboard` while room 5720 lists the noun `loose floorboard`, so
-`look loose floorboard` prints the room text and only `look loose-floorboard`
-fires the trigger, which no player can guess. When a quest interaction "does
+`look loose floorboard` printed the room text and only `look loose-floorboard`
+fired the trigger, which no player could guess (#375 phase 7 tier 5 moved
+quests 63, 65 and 68 to 71 to `search`, so none of these spellings is live).
+Check the current quests with `grep -n "noun:" _datafiles/world/dogmud/quests/*.yaml`
+before citing an example. When a quest interaction "does
 nothing," diff the room noun spelling against the trigger noun before
 suspecting the step gate. Normalizing both sides in the engine is filed as an
 owner call on the quest mechanisms arc, not a fix to make in passing.
@@ -184,7 +187,8 @@ owner call on the quest mechanisms arc, not a fix to make in passing.
 Since #375 (R7, R8) an item hand-in is a dialogue topic, never a quest
 trigger: an `item_give` trigger may not carry a `grant` (the boot validators
 refuse it). `give <item> <npc>` asks the NPC's topics first, BEFORE any
-transfer:
+transfer. It asks before it even picks the item, so `give rubbing dross` reaches
+the rubbing a topic wants wherever another rubbing lies in the pack:
 - A topic wanting the item (`requiresItem`, taken; or `carriesItem`, shown
   and kept) that is eligible plays exactly as if chosen from the talk menu,
   and takes the instance the player named (`give 2.purse`).
@@ -219,8 +223,13 @@ Two more item rules for quests:
   or checked by an `item_give` trigger) must never have `is_component: true`.
   That flag auto-routes the item to the component pouch on pickup, and both
   the `give` command and dialogue `requiresItem` check only search the
-  backpack, not the pouch, breaking the delivery.
+  backpack and the bandolier, not the pouch, breaking the delivery.
   [[feedback_quest_items_not_components]]
+- A potion is fine as a delivery item. It lands in a worn bandolier by itself,
+  and a topic's `requiresItem` and `carriesItem` read it there, the topic takes
+  it from there, and `give <item> <npc>` reaches it when a topic on that NPC
+  wants it. Never tell a player to move it first. An ordinary give, with no
+  topic wanting the item, stays backpack only.
 - Loot must never be placed directly on the ground via `spawninfo`. Use mob
   drops (primary), locked chests or containers (secondary, gated by keys or
   lockpicking), or quest rewards (for special/unique items). Flavor nouns
@@ -319,9 +328,18 @@ explicitly tagged. M4b-1 renamed them from `playermessage` and `roommessage`,
 and renamed the two narrating trigger actions from `send_text` and `room_text`
 to the same two words, so one vocabulary covers both blocks.
 
+## A room gate speaks and does nothing else
+
+A `room_gate` takes only `actor` and `observer` text, and the loader refuses
+anything more (`quests.validateGateActions`): a look through the exit fires the
+gate that would refuse the step, so a grant there would pay for looking at a door.
+A gate also closes a scan and a shot to the player it would refuse. A mob has no
+tokens to read, so its flee, its planner's route and a companion's errand stay out
+of any room a gate guards (`Engine.GuardsRoom`), whatever the gate's conditions.
+
 ## Search steps need sight
 
-A `command: search` step (and a `verb: search` spot) does not move when the
+A `command: search` step (and a `search_at` spot) does not move when the
 player sees nothing at all in the room (owner ruling 2026-11-02): they read "It
 is too dark to make anything out." and the step stays. The test is the game's own
 sight decision, so a carried light, night vision or infravision counts. When a
@@ -529,7 +547,7 @@ the `the_steppe` area below are illustrative; no shipped quest counts yet.
 - Progress is per trigger and saved as `<questId>-<step>-t<triggerIndex>`. It
   counts only while the player is on that step, and clears when the quest's
   progress moves.
-- `count` is refused on `room_gate`, `room_interact` and `item_give`: a match
+- `count` is refused on `room_gate`, `look_at`, `search_at` and `item_give`: a match
   short of the count would swallow the player's move, look or give.
 - `label` (at most 40 characters) names the tracker and quest log line
   ("Roots gathered: 2 of 5"); with none it reads "Progress: 2 of 5". Label
@@ -651,10 +669,10 @@ steps:                 # the room and mob ids here are illustrative
 - **`anywhere`** is for steps that truly can happen anywhere. If a trigger on
   that step names a place, `walk-destination-anywhere` says so: drop
   `anywhere` and let it infer.
-- **Findings:** boot logs `walk-destination` and `walk-destination-anywhere`
-  as warnings and never refuses. The CI sweep ratchets them against
-  `_datafiles/world/dogmud/quests/loop-backlog.txt`; a new quest must add
-  none.
+- **Findings:** boot refuses on `walk-destination` and
+  `walk-destination-anywhere` (a panic at boot, an error on a reload), and the
+  CI sweep fails on them. There is no backlog to park one on (it was retired
+  at the #375 closing step); a new quest must add none.
 
 ## Abandon and resume
 
@@ -698,9 +716,10 @@ vocabulary or from what sounds plausible: `mob_killed` and `mob_die` both
 sound right for a mob-death trigger, and the actual quest engine event is
 `mob_death`. The events are: `room_enter`, `room_gate`, `item_give`,
 `skill_use`, `mob_death`, `command`, `command_issued`, `item_gain`,
-`quest_granted`, `room_interact`, `spell_landed`, `topic_heard`. Before writing a trigger, grep `validEvents` in
+`quest_granted`, `look_at`, `search_at`, `spell_landed`, `topic_heard`. Before writing a trigger, grep `validEvents` in
 `internal/questengine/loader.go` for the current canonical list, or copy the
 spelling from an existing quest YAML that uses the event you want.
+`look_at` and `search_at` replaced `room_interact` at the #375 closing step; the loader refuses the old name and any `verb:` key.
 [[feedback_quest_engine_event_names]]
 
 ## Sources

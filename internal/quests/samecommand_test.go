@@ -11,12 +11,12 @@ import (
 // grants the ledger, then one that says the ledger was already taken.
 func strongboxQuest(alreadyFirst bool) *Quest {
 	open := TriggerDef{
-		Event: "room_interact", Room: 498, Noun: "strongbox",
+		Event: "look_at", Room: 498, Noun: "strongbox",
 		Conditions: Conditions{Missing: []string{"14-evidence"}},
 		Actions:    []ActionDef{{GiveItem: 40036}, {Grant: "14-evidence"}, {SendText: "You take the ledger."}},
 	}
 	already := TriggerDef{
-		Event: "room_interact", Room: 498, Noun: "strongbox",
+		Event: "look_at", Room: 498, Noun: "strongbox",
 		Conditions: Conditions{Has: []string{"14-evidence"}},
 		Actions:    []ActionDef{{SendText: "You have already taken the ledger."}},
 	}
@@ -48,6 +48,7 @@ func TestSameCommandChains_OtherPairs(t *testing.T) {
 	}{
 		{"give then has_item", []ActionDef{{GiveItem: 7}}, Conditions{HasItem: 7}, "gives item 7"},
 		{"consume then missing_item", []ActionDef{{ConsumeItem: 7}}, Conditions{MissingItem: 7}, "consumes item 7"},
+		{"consume then missing_items", []ActionDef{{ConsumeItem: 7}}, Conditions{MissingItems: []int{6, 7}}, "consumes item 7"},
 		{"flag then has_flag", []ActionDef{{SetFlag: &QuestFlagAction{Key: "1-k", Value: "v"}}},
 			Conditions{HasFlag: map[string]string{"1-k": "v"}}, "sets flag 1-k=v"},
 		{"grant then missing is fine", []ActionDef{{Grant: "1-a"}}, Conditions{Missing: []string{"1-a"}}, ""},
@@ -70,8 +71,8 @@ func TestTriggersCanShareAnEvent(t *testing.T) {
 	look := &TriggerDef{Event: "command_issued", Command: "look"}
 	lookGuide := &TriggerDef{Event: "command_issued", Command: "look", Noun: "guide"}
 	lookDoor := &TriggerDef{Event: "command_issued", Command: "look", Noun: "door"}
-	room1 := &TriggerDef{Event: "room_interact", Room: 1, Noun: "box"}
-	room2 := &TriggerDef{Event: "room_interact", Room: 2, Noun: "box"}
+	room1 := &TriggerDef{Event: "look_at", Room: 1, Noun: "box"}
+	room2 := &TriggerDef{Event: "look_at", Room: 2, Noun: "box"}
 
 	assert.True(t, triggersCanShareAnEvent(look, lookGuide), "an open noun matches any noun")
 	assert.False(t, triggersCanShareAnEvent(lookGuide, lookDoor))

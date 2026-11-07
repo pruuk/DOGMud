@@ -20,6 +20,7 @@ The `internal/facts` package maintains a central registry of world facts and per
 ### Type Helpers
 - **Status enum**: `StatusActive` (writable, visible), `StatusWithdrawn` (manually retired), `StatusExpired` (time-expired)
 - **Source enum**: `SourceWitnessed` (directly observed), `SourceTold` (learned via gossip), `SourceDeduced` (inferred), `SourceUnknown` (unspecified)
+- **Tag constants**: `HintTag` (`hint`, a breadcrumb a gossiper that knows it speaks on its own timer) and `CommonTag` (`common`, common talk every gossiper may pass on in ordinary gossip with no `knows_facts` entry). The gossip hook reads both (`internal/hooks`); `internal/guards/gossip_hint_facts_guard_test.go` keeps the wiring honest.
 
 ### Registry Write API
 - **Declare(factId string, opts DeclareOpts) error**: Creates a new active fact. Returns error if factId already exists. Stamps `DeclaredRound` to current game round. Persists immediately.

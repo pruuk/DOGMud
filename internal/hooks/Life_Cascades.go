@@ -132,7 +132,11 @@ func wireLifeCrossMachineCascades(c *characters.Character) {
 				c.SetPoolFraction(characters.PoolHealth, frac)
 				c.SetPoolFraction(characters.PoolStamina, frac)
 				c.SetPoolFraction(characters.PoolConviction, frac)
-				_ = c.AddCondition(81, false) // NoAggroTarget grace
+				// NoAggroTarget grace for GamePlay.Death.RespawnGraceRounds
+				// rounds (condition 81 ticks once a round); 0 skips it (#589).
+				if grace := int(configs.GetGamePlayConfig().Death.RespawnGraceRounds); grace > 0 {
+					_ = c.AddConditionMagnitude(81, grace, 0, "respawn grace")
+				}
 
 				// Clear damage ledger and notify vitals subscribers.
 				clear(c.PlayerDamage)

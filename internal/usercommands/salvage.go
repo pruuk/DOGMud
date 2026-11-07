@@ -70,19 +70,11 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	// Spoiled/declining potions can be salvaged for binding paste
 	isSpoiledPotion := false
-	if spec.Type == items.Potion && spec.Aging.HasAging() && itm.CraftedRound > 0 {
-		currentRound := util.GetRoundCount()
-		var elapsed uint64
-		if currentRound >= itm.CraftedRound {
-			elapsed = currentRound - itm.CraftedRound
-		}
-		bottleMult := itm.BottleMultiplier
-		if bottleMult <= 0 {
-			bottleMult = spec.BottleAgingMultiplier
-		}
-		effSpeed := items.CalcEffectiveAgingSpeed(bottleMult, itm.CraftSkill)
-		phase, _ := items.GetAgingPhase(elapsed, spec.Aging, effSpeed)
-		if phase == items.PhaseSpoiled || phase == items.PhaseDeclining {
+	// AgingAt, not PotionAging: salvaging takes the potion out of any
+	// bandolier, and a preserved one rots as it leaves (#794).
+	if spec.Type == items.Potion {
+		aging := itm.AgingAt(util.GetRoundCount())
+		if aging.Ages && (aging.Phase == items.PhaseSpoiled || aging.Phase == items.PhaseDeclining) {
 			isSpoiledPotion = true
 		}
 	}
@@ -124,6 +116,12 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	); err != nil {
 		refusal.WhileBusy(user, "salvage")
 		return true, nil
+	}
+
+	// Salvaging a potion the Vitalis holds takes it out, so it sours (#794);
+	// the salvage above already reads it as spoiled.
+	if user.Character.RotsOnRemoval(itm) {
+		user.SendText(messaging.CategoryWarning, bandolierRotLine(user.Character.Equipment.Belt.DisplayName(), itm))
 	}
 
 	user.SendText(messaging.CategoryCraft, fmt.Sprintf(

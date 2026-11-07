@@ -26,6 +26,19 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// Taken up here so the `all` branch is covered by the same snapshot.
 	beforeReservation := user.Character.ReservationTotals()
 
+	// Taking off a preserving bandolier (the Vitalis) rots what it held
+	// (#794); name those potions before they leave.
+	beltName := user.Character.Equipment.Belt.DisplayName()
+	rotting := user.Character.BeltChangeRots()
+	tellRot := func(removed items.Item) {
+		if removed.GetSpec().Type != items.Belt {
+			return
+		}
+		for _, p := range rotting {
+			user.SendText(messaging.CategoryWarning, bandolierRotLine(beltName, p))
+		}
+	}
+
 	if rest == "all" {
 		// The busy, curse and per-item rules live in actions.RemoveAllEquipment
 		// (slice 5a), which fires one EquipmentChange per item.
@@ -38,6 +51,9 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			user.SendText(messaging.CategoryRefusal, user.Character.CursedRefusal(it))
 		}
 		sendReservationReturnDisclosure(user, beforeReservation)
+		for _, item := range res.Removed {
+			tellRot(item)
+		}
 		for _, item := range res.Removed {
 			if item.GetSpec().Type == items.Light {
 				lightnotice.Check(user, lightnotice.TriggerCommand)
@@ -74,6 +90,7 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				nil, user.UserId,
 			)
 			sendReservationReturnDisclosure(user, beforeReservation)
+			tellRot(result.Item)
 			// Taking off a light changes the band at once; the notice rides
 			// this command rather than waiting for the next one.
 			if result.Item.GetSpec().Type == items.Light {

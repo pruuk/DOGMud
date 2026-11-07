@@ -108,7 +108,10 @@ type mobUpdateReq struct {
 	CombatCommands []string `json:"combatCommands"`
 	AngryCommands  []string `json:"angryCommands"`
 	// loot
-	ItemDropChance int   `json:"itemDropChance"`
+	// ItemDropChance is null when the mob's itemdropchance key is absent (the
+	// default, every worn item drops) and a number when authored; 0 means
+	// worn items never drop (#585).
+	ItemDropChance *int  `json:"itemDropChance"`
 	LootPool       []int `json:"lootPool"`
 	// commerce
 	BuysGeneral             bool     `json:"buysGeneral"`

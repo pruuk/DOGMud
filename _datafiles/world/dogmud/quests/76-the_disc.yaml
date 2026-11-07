@@ -33,10 +33,8 @@
 #
 # Recovery: a player who woke a disc and lost it (the Keeper opens the way only
 # for 40168) searches his camp for another grey disc and casts glow there again.
-# Those triggers grant nothing. Conditions take one missing_item, so "no woken
-# disc and no grey disc" cannot be one trigger: a search with a grey disc in hand
-# swaps it for the one in the satchel lining, which leaves one, and searching
-# cannot pile them up.
+# Those triggers grant nothing. Searching with a grey disc in hand finds nothing
+# more, so searching cannot pile them up.
 #
 # While any search trigger here would fire for the player, the search does
 # not first say it found nothing (actions.SearchOptions.QuestStep).
@@ -66,8 +64,9 @@ steps:
       cut to the mark. It never answered here. He took the disc and followed a
       surveyor's marks east, to cut another hearth where the thing could be seen.
     hint: >-
-      Reth's map runs over the Cascade Pass. Someone on that road may remember
-      him. Ask the one who came back, at the shelter past the Wind-Gap.
+      Reth's trail leaves the North Vale Road in Kingsbarrow, east through a
+      hedge-gap it takes a search to find. Ask the one who came back, at the
+      shelter past the Wind-Gap.
   - id: shelter
     destination:
       room: 6349
@@ -93,8 +92,8 @@ steps:
       He slept at the survey camp and went on with his tools, east, past where
       the green stops. Something up there has claimed that ground since.
     hint: >-
-      The Reach-Alpha holds the line where the green fails. It will not let you
-      by. Bring friends, and kill it.
+      The Reach-Alpha holds the line where the green fails. His trail goes on
+      past it. Bring friends, and kill it.
   - id: alpha
     destination:
       room: 6365
@@ -121,8 +120,8 @@ steps:
       The disc woke at his hearthstone, and it keeps the light now. It has also
       roused something. The Sentinel at the buried face turns toward it.
     hint: >-
-      The Sentinel stands near the door and will not let the woken disc pass.
-      Nothing you can do alone will move it. Bring friends.
+      The Sentinel stands near the door, and the Keeper will open nothing while
+      it does. Nothing you can do alone will move it. Bring friends.
   - id: sentinel
     destination:
       mob: 9553
@@ -149,13 +148,12 @@ triggers:
   # loose stone by the hearth hides it. Moved here from the room's behaviour
   # tree, which answered push, move, pull, shift and press (#375 phase 3a,
   # owner ruling 5: look and search are the only interaction verbs). Being a
-  # `verb: search` trigger, `search stone` runs the search (and its cooldown)
+  # search_at trigger, `search stone` runs the search (and its cooldown)
   # first, and a plain search can find it at the room difficulty. Carrying
   # the letter, the stone holds nothing more, and the search says so. Story
   # first, so a full pack hears what is there before the refusal. It grants
   # no step.
-  - event: room_interact
-    verb: search
+  - event: search_at
     room: 4023
     noun: stone
     conditions:
@@ -340,9 +338,8 @@ triggers:
           The alpha is down, and the ground it held lies open to the east, bare
           and wrong and very quiet.
 
-  # REMAINS: recovery triggers come first, so they are judged first. The first
-  # takes a grey disc already in hand, so the second leaves the player holding
-  # exactly one however often they search.
+  # REMAINS: recovery triggers come first, so they are judged first. A grey disc
+  # in hand means the lining has already given its spare.
   - event: command
     command: search
     room: 6365
@@ -351,13 +348,15 @@ triggers:
       has_item: 40167
       missing_item: 40168
     actions:
-      - consume_item: 40167
+      - actor: >-
+          The lining of the satchel is empty now. You already hold his spare. Type
+          cast glow to wake it.
   - event: command
     command: search
     room: 6365
     conditions:
       has: ["76-attune"]
-      missing_item: 40168
+      missing_items: [40167, 40168]
     actions:
       - give_item: 40167
       - actor: >-
@@ -367,10 +366,7 @@ triggers:
 
   # A player on an old save may already carry a disc. Grants nothing; the trigger
   # below grants the step, so a pack too heavy for the disc still reads the
-  # remains, and the glow below hands it over. 76-attune in `missing` says what
-  # 76-remains already implies, in the terms the same-command rule reads: the
-  # recovery swap above consumes this trigger's missing_item, and it must see
-  # that the two can never fire on one search.
+  # remains, and the glow below hands it over.
   - event: command
     command: search
     room: 6365

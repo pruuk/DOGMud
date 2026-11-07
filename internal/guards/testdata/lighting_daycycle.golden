@@ -734,6 +734,7 @@ room 5526 biome=interior light=50
 room 5527 biome=city_backstreet light=42
 room 5528 biome=interior light=50
 room 5529 biome=city_backstreet light=42
+room 5530 biome=interior light=50
 room 5600 biome=city_thoroughfare light=54
 room 5601 biome=city_thoroughfare light=54
 room 5602 biome=city_thoroughfare light=54
@@ -759,6 +760,7 @@ room 5621 biome=city_backstreet light=42
 room 5622 biome=city_backstreet light=42
 room 5623 biome=interior light=50
 room 5624 biome=interior light=50
+room 5625 biome=interior light=50
 room 5700 biome=city_thoroughfare light=54
 room 5701 biome=city_thoroughfare light=54
 room 5702 biome=city_thoroughfare light=54
@@ -2040,6 +2042,7 @@ room 5526 biome=interior light=50
 room 5527 biome=city_backstreet light=42
 room 5528 biome=interior light=50
 room 5529 biome=city_backstreet light=42
+room 5530 biome=interior light=50
 room 5600 biome=city_thoroughfare light=54
 room 5601 biome=city_thoroughfare light=54
 room 5602 biome=city_thoroughfare light=54
@@ -2065,6 +2068,7 @@ room 5621 biome=city_backstreet light=42
 room 5622 biome=city_backstreet light=42
 room 5623 biome=interior light=50
 room 5624 biome=interior light=50
+room 5625 biome=interior light=50
 room 5700 biome=city_thoroughfare light=54
 room 5701 biome=city_thoroughfare light=54
 room 5702 biome=city_thoroughfare light=54
@@ -3346,6 +3350,7 @@ room 5526 biome=interior light=54
 room 5527 biome=city_backstreet light=62
 room 5528 biome=interior light=54
 room 5529 biome=city_backstreet light=62
+room 5530 biome=interior light=54
 room 5600 biome=city_thoroughfare light=62
 room 5601 biome=city_thoroughfare light=62
 room 5602 biome=city_thoroughfare light=62
@@ -3371,6 +3376,7 @@ room 5621 biome=city_backstreet light=62
 room 5622 biome=city_backstreet light=62
 room 5623 biome=interior light=54
 room 5624 biome=interior light=54
+room 5625 biome=interior light=54
 room 5700 biome=city_thoroughfare light=62
 room 5701 biome=city_thoroughfare light=62
 room 5702 biome=city_thoroughfare light=62
@@ -4652,6 +4658,7 @@ room 5526 biome=interior light=50
 room 5527 biome=city_backstreet light=41
 room 5528 biome=interior light=50
 room 5529 biome=city_backstreet light=41
+room 5530 biome=interior light=50
 room 5600 biome=city_thoroughfare light=54
 room 5601 biome=city_thoroughfare light=54
 room 5602 biome=city_thoroughfare light=54
@@ -4677,6 +4684,7 @@ room 5621 biome=city_backstreet light=41
 room 5622 biome=city_backstreet light=41
 room 5623 biome=interior light=50
 room 5624 biome=interior light=50
+room 5625 biome=interior light=50
 room 5700 biome=city_thoroughfare light=54
 room 5701 biome=city_thoroughfare light=54
 room 5702 biome=city_thoroughfare light=54
@@ -5958,6 +5966,7 @@ room 5526 biome=interior light=50
 room 5527 biome=city_backstreet light=37
 room 5528 biome=interior light=50
 room 5529 biome=city_backstreet light=37
+room 5530 biome=interior light=50
 room 5600 biome=city_thoroughfare light=53
 room 5601 biome=city_thoroughfare light=53
 room 5602 biome=city_thoroughfare light=53
@@ -5983,6 +5992,7 @@ room 5621 biome=city_backstreet light=37
 room 5622 biome=city_backstreet light=37
 room 5623 biome=interior light=50
 room 5624 biome=interior light=50
+room 5625 biome=interior light=50
 room 5700 biome=city_thoroughfare light=53
 room 5701 biome=city_thoroughfare light=53
 room 5702 biome=city_thoroughfare light=53
@@ -7264,6 +7274,7 @@ room 5526 biome=interior light=50
 room 5527 biome=city_backstreet light=38
 room 5528 biome=interior light=50
 room 5529 biome=city_backstreet light=38
+room 5530 biome=interior light=50
 room 5600 biome=city_thoroughfare light=53
 room 5601 biome=city_thoroughfare light=53
 room 5602 biome=city_thoroughfare light=53
@@ -7289,6 +7300,7 @@ room 5621 biome=city_backstreet light=38
 room 5622 biome=city_backstreet light=38
 room 5623 biome=interior light=50
 room 5624 biome=interior light=50
+room 5625 biome=interior light=50
 room 5700 biome=city_thoroughfare light=53
 room 5701 biome=city_thoroughfare light=53
 room 5702 biome=city_thoroughfare light=53
@@ -8570,6 +8582,7 @@ room 5526 biome=interior light=57
 room 5527 biome=city_backstreet light=70
 room 5528 biome=interior light=57
 room 5529 biome=city_backstreet light=70
+room 5530 biome=interior light=57
 room 5600 biome=city_thoroughfare light=70
 room 5601 biome=city_thoroughfare light=70
 room 5602 biome=city_thoroughfare light=70
@@ -8595,6 +8608,7 @@ room 5621 biome=city_backstreet light=70
 room 5622 biome=city_backstreet light=70
 room 5623 biome=interior light=57
 room 5624 biome=interior light=57
+room 5625 biome=interior light=57
 room 5700 biome=city_thoroughfare light=70
 room 5701 biome=city_thoroughfare light=70
 room 5702 biome=city_thoroughfare light=70
@@ -9876,6 +9890,7 @@ room 5526 biome=interior light=50
 room 5527 biome=city_backstreet light=39
 room 5528 biome=interior light=50
 room 5529 biome=city_backstreet light=39
+room 5530 biome=interior light=50
 room 5600 biome=city_thoroughfare light=53
 room 5601 biome=city_thoroughfare light=53
 room 5602 biome=city_thoroughfare light=53
@@ -9901,6 +9916,7 @@ room 5621 biome=city_backstreet light=39
 room 5622 biome=city_backstreet light=39
 room 5623 biome=interior light=50
 room 5624 biome=interior light=50
+room 5625 biome=interior light=50
 room 5700 biome=city_thoroughfare light=53
 room 5701 biome=city_thoroughfare light=53
 room 5702 biome=city_thoroughfare light=53
@@ -11182,6 +11198,7 @@ room 5526 biome=interior light=50
 room 5527 biome=city_backstreet light=41
 room 5528 biome=interior light=50
 room 5529 biome=city_backstreet light=41
+room 5530 biome=interior light=50
 room 5600 biome=city_thoroughfare light=54
 room 5601 biome=city_thoroughfare light=54
 room 5602 biome=city_thoroughfare light=54
@@ -11207,6 +11224,7 @@ room 5621 biome=city_backstreet light=41
 room 5622 biome=city_backstreet light=41
 room 5623 biome=interior light=50
 room 5624 biome=interior light=50
+room 5625 biome=interior light=50
 room 5700 biome=city_thoroughfare light=54
 room 5701 biome=city_thoroughfare light=54
 room 5702 biome=city_thoroughfare light=54
@@ -12488,6 +12506,7 @@ room 5526 biome=interior light=54
 room 5527 biome=city_backstreet light=60
 room 5528 biome=interior light=54
 room 5529 biome=city_backstreet light=60
+room 5530 biome=interior light=54
 room 5600 biome=city_thoroughfare light=60
 room 5601 biome=city_thoroughfare light=60
 room 5602 biome=city_thoroughfare light=60
@@ -12513,6 +12532,7 @@ room 5621 biome=city_backstreet light=60
 room 5622 biome=city_backstreet light=60
 room 5623 biome=interior light=54
 room 5624 biome=interior light=54
+room 5625 biome=interior light=54
 room 5700 biome=city_thoroughfare light=60
 room 5701 biome=city_thoroughfare light=60
 room 5702 biome=city_thoroughfare light=60
@@ -13794,6 +13814,7 @@ room 5526 biome=interior light=59
 room 5527 biome=city_backstreet light=73
 room 5528 biome=interior light=59
 room 5529 biome=city_backstreet light=73
+room 5530 biome=interior light=59
 room 5600 biome=city_thoroughfare light=73
 room 5601 biome=city_thoroughfare light=73
 room 5602 biome=city_thoroughfare light=73
@@ -13819,6 +13840,7 @@ room 5621 biome=city_backstreet light=73
 room 5622 biome=city_backstreet light=73
 room 5623 biome=interior light=59
 room 5624 biome=interior light=59
+room 5625 biome=interior light=59
 room 5700 biome=city_thoroughfare light=73
 room 5701 biome=city_thoroughfare light=73
 room 5702 biome=city_thoroughfare light=73
@@ -15100,6 +15122,7 @@ room 5526 biome=interior light=54
 room 5527 biome=city_backstreet light=60
 room 5528 biome=interior light=54
 room 5529 biome=city_backstreet light=60
+room 5530 biome=interior light=54
 room 5600 biome=city_thoroughfare light=60
 room 5601 biome=city_thoroughfare light=60
 room 5602 biome=city_thoroughfare light=60
@@ -15125,6 +15148,7 @@ room 5621 biome=city_backstreet light=60
 room 5622 biome=city_backstreet light=60
 room 5623 biome=interior light=54
 room 5624 biome=interior light=54
+room 5625 biome=interior light=54
 room 5700 biome=city_thoroughfare light=60
 room 5701 biome=city_thoroughfare light=60
 room 5702 biome=city_thoroughfare light=60

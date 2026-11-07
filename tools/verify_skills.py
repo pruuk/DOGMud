@@ -21,6 +21,7 @@ EXPECTED = [
     "dogmud-authoring-quests", "dogmud-player-copy", "dogmud-writing-tests",
     "dogmud-playtesting", "dogmud-persistence", "dogmud-refactoring",
     "dogmud-combat", "dogmud-progression-model", "dogmud-balance-config",
+    "dogmud-end-of-day",
 ]
 
 
@@ -83,7 +84,7 @@ def main():
 
     unexpected = [n for n in found if n not in EXPECTED]
     for name in unexpected:
-        errors.append(f"{name}: unexpected directory, not one of the twelve")
+        errors.append(f"{name}: unexpected directory, not one of the expected skills")
 
     for e in errors:
         print("FAIL:", e)

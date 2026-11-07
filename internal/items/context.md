@@ -344,6 +344,16 @@ func (i *Item) Validate() {
 }
 ```
 
+### Death-drop roll (`ShouldDrop`, #585)
+
+`Item.ShouldDrop(defaultChance)` rolls the item's own `DropChance`
+(yaml `dropchance`, 1 to 100) when it is set, else `defaultChance`. A
+`defaultChance` of 0 or less means never: the caller has already resolved
+an absent mob `itemdropchance` to its default (`mobs.Mob.EquippedDropChance`),
+so a 0 reaching here is an authored never. The item's own `DropChance` of 0
+still means unset, because the field is `omitempty` (a saved 0 cannot be
+told from an absent key) and no item data authors `dropchance: 0`.
+
 ### Item Identification and Matching
 ```go
 // Multiple identification methods
@@ -757,7 +767,24 @@ per-potion (`AgingThresholds`: `ferment_rounds` / `peak_rounds` /
 func GetAgingPhase(elapsedRounds uint64, thresholds AgingThresholds, effectiveSpeed float64) (AgingPhase, float64)
 func CalcEffectiveAgingSpeed(bottleMultiplier float64, craftSkill int) float64
 func (i *Item) IsSpoiledFood(now uint64) bool
+func (i *Item) AgingSpeed() float64
+func (i *Item) AgingAt(now uint64) Aging
+func (i *Item) PeakAging() Aging
+func PotionDurationMult(potency float64, craftSkill int) float64
+const PeakPotency = 1.30
 ```
+
+`AgingAt` is the one reading of a carried potion's age (#794): `Aging`
+holds `Phase`, `Potency`, `Elapsed`, `Speed` and `Ages` (false for a potion
+that does not age: no thresholds, or never crafted), and `Spoiled()`. Every
+reader asks it, or `Character.PotionAging` for a potion the character
+carries, which answers peak (`PeakAging`) for one a preserving bandolier
+holds. `AgingSpeed` takes the item's own bottle, else its spec's. An item
+marked `Preserved` reads spoiled here: the mark means a preserving bandolier
+held it, and anywhere else it has left that bandolier and rotted (owner
+ruling 2026-11-06). `SameStack` keeps a Preserved item apart.
+`PotionDurationMult` is `potency x (1 + craftSkill/100)`, shared by the drink
+path and the ambient bandolier.
 
 `CalcEffectiveAgingSpeed` = `bottleMultiplier × max(0.5, 1.0 - craftSkill/200)`,
 so a higher effective speed ages faster (shorter phases); craft skill floors
@@ -836,6 +863,13 @@ consumes the oldest match first (`FindInPotions`, sorted by `CraftedRound`
 ascending). Unequipping the belt spills its contents back to the backpack
 (`internal/characters/worn.go`). The bandolier's `weight_reduction` applies
 to its contents, the same mechanic the Component Bag uses.
+
+The Vitalis Bandolier's rules (#794) are in `internal/characters/bandolier.go`
+and `docs/schemas/pinnacle-items.md` section 3. Here: `IsDetox(itemId)` and
+`YsoldesPurgeItemId` / `PurgingDraughtItemId` name the two detoxes, and
+`ItemSpec.AmbientBeneficial()` is the kind of potion an ambient bandolier
+takes (a potion, not thrown, not a detox, with a condition to hold), both in
+`potion_conditions.go`.
 
 ### Condition IDs
 54-60 pool-regen potions (healing salve through elixir of renewal), 61-70
@@ -1209,7 +1243,7 @@ Tier semantics for materials (item IDs 40000+):
 | 40   | Standard        | 40                  | steel ingot, leather strip, healer's root |
 | 30   | Regional        | 30                  | lake-iron nodule, blood-moss, wild hare meat |
 | 20   | Uncommon        | 20                  | gold wire, mutation catalyst, Stillwater pearl |
-| 10   | Rare (reserved) | 10                  | future: legendary materials |
+| 10   | Rare            | 10                  | Bloom Wafer only, so `RestockCadenceTier10Days` is its own clock (`guards/tier5_bloom_shop_test.go`) |
 
 Untiered items (no `rarity_tier`) are quest tokens, lore items, or
 anything that should not flow through the caravan/forager pipeline.

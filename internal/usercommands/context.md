@@ -41,6 +41,16 @@ The `internal/usercommands` package implements the complete command system for p
   mobs alike. Do not add a rule here:
   `internal/guards/drink_wrapper_guard_test.go` fails if this file or
   `internal/mobcommands/quaff.go` applies potion rules itself.
+- **Potion age readers** (#794): `inventory`, `look`, `throw` read a carried
+  potion's age through `Character.PotionAging` (a preserving bandolier's
+  potion reads at peak); `salvage` and `shops.isPotionDeclining` read
+  `items.Item.AgingAt`, since the potion leaves the bandolier (a preserved
+  one has rotted). `sort` names each potion the Vitalis Bandolier refuses
+  and why (`characters.BandolierRefusalLine`); `equip` names what a belt
+  swap made it let go of (`characters.BandolierReleaseLine`, still sound);
+  `get ... from bandolier`, `remove`, `equip`, `salvage` and `give` (every
+  hand-in path, checked after the give) name each potion that sours as it
+  leaves one (`bandolierRotLine` in `sort.go`).
 - **Eat and drink** (`eat.go`, `drink.go`, #375 phase 7): one food command, two
   words. Both are wrappers over `actions.ConsumeFood`, which holds the lookup
   order and every food rule for players and mobs alike; the same guard fails if
@@ -77,6 +87,10 @@ The `internal/usercommands` package implements the complete command system for p
   - `look` (`look.go`) tries `Character.FindItemNoun` (exact noun on a worn or
     carried item) BEFORE item matching, so `look hood` reaches the lantern's
     hood; looking at an item highlights its `ItemSpec.Nouns` before wrapping.
+    `trimLookFiller` drops a leading `at`, `in` or `inside` and then `the`
+    from what a look names, so `look in strongbox` reads as `look strongbox`
+    (a room container is tried before a room noun) and the dispatcher raises
+    `look_at` on the same trimmed words (#761).
 
 #### **Combat Commands**
 - **Direct combat**: `attack`, `fire`, `throw` - Offensive actions
@@ -222,7 +236,11 @@ already known, so no presence leaks.
 #### **World Management**
 - **Room editing**: Comprehensive room modification capabilities
 - **Zone management**: Creating and managing game world zones (note: `zone set autoscale` was removed in Phase 21; mob difficulty is now per-mob via `statpool`)
-- **Spawn control**: Managing mob and item spawning
+- **Spawn control**: Managing mob and item spawning. `room set spawninfo
+  clear` and `room copy spawninfo` (`admin.room.dispatcher.go`) first ask
+  `refusesSpawnChange`, which refuses a change that would leave a quest step
+  with no destination (`questengine.SpawnChangeFindings`); boot refuses such
+  a step, so the saved change would stop the next restart.
 
 #### **Player Administration**
 - **Character modification**: Changing player stats, levels, and properties
@@ -320,7 +338,14 @@ already known, so no presence leaks.
   chosen from the menu and takes the named instance; a wanted item with no
   eligible topic is handed back (the mob's tree may say why, crediting
   nothing). Only an item no topic wants takes the ordinary give path
-  (quest engine notify, transfer, `player_give`).
+  (quest engine notify, transfer, `player_give`). The item is looked up in the
+  backpack, an NPC being asked first so a shared word reaches the item it wants
+  wherever another lies in the pack (`backpackItemForGive`, the name alone when
+  it fits nothing wanted), and in the bandolier only when a topic on the named NPC wants it
+  (`bandolierItemForTopic`, the oldest wanted match) or when the target refuses
+  first, by sight or by not being there, so a held potion reads the refusal a
+  backpack item reads (`bandolierItemForGive`). An ordinary give to a player, a
+  pet or an NPC wanting nothing stays backpack only.
 - **PlayerState**: `conversation.PlayerState(user)` builds the
   `dialogue.PlayerState` callbacks (`HasQuest`, `HasItem`, `RemoveItem`,
   `GiveQuest`, `GiveItem`, ...). `GiveItem` returns whether the item
@@ -346,18 +371,18 @@ already known, so no presence leaks.
 
 #### **Interaction verbs: look and search (`usercommands.go`, `skill.search.go`; #375 phase 3a)**
 Look and search are the only two verbs that work on a room feature (owner
-ruling). `interactionFamily` maps a dispatched command to its family: look,
-with its aliases l, examine and exam expanded to it, raises `room_interact`
-with `Verb: quests.VerbLook` through `notifyRoomInteract` (matched on the
-template room, so an instance room fires); `read` raises it itself when
-nothing carried matches. `skill.search.go` raises `Verb: quests.VerbSearch`
-after the search ran: once for a resolved `search <feature>`, and once per
+ruling). Each has its own quest event since the #375 closing step. The
+dispatcher raises `quests.EventLookAt` (`look_at`) for look, with its aliases
+l, examine and exam expanded to it, through `notifyRoomFeature` (matched on
+the template room, so an instance room fires); `read` raises it itself when
+nothing carried matches. `skill.search.go` raises `quests.EventSearchAt`
+(`search_at`) after the search ran: once for a resolved `search <feature>`, and once per
 quest search spot a plain search turned up (`questSearchSpots`, which asks the
 engine's `SearchFeatures` and `WouldFire`, so a spot of a quest the player is
 not on is never rolled). A search needs sight (owner ruling 2026-11-02):
 when `messaging.ParticipantSight(user.Character, room)` is `SightNone` (the
 decision `look` refuses on, so night vision and infravision count) `Search`
-rolls no quest spot, raises neither `room_interact` nor the `search` command
+rolls no quest spot, raises neither `search_at` nor the `search` command
 event, and, only when `questSearchStep` or a spot would have fired (the engine's
 dry run) and the search turned up nothing else, prints `searchTooDarkLine`
 ("It is too dark to make anything out.") with no "You find nothing of

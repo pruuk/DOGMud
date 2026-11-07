@@ -1,0 +1,21 @@
+ephemeral:
+  profile: specialist-caster
+  start_room: 6035
+  overlays:
+    set_quest_tokens: [68-start, 68-evidence, 68-survey, 68-choice, 68-end]
+    set_quest_flags: {68-allegiance: circle}
+    grant_items: [20096]
+  budgets:
+    wall_clock: 30m
+goals:
+  - >-
+    You stand in Gritta's Flooded Cellar. If she is not here, wait or look nearby. Type `talk gritta` and quote her
+    opener. Say whether it treats you as a friend of the circle, and whether a player who has never heard of the
+    circle could follow it. Take The Pre-Founding Web. Quote game lines VERBATIM and in order.
+  - >-
+    Make sure no light is equipped: `inventory`, and `remove torch` if you wear it. Follow `hint` to the Buried Lintel
+    and type `search`. Quote it. Then `equip torch`, and `search` again after the cooldown. Quote it. Say whether
+    anything in the water is a danger, and quote it if so. Quote game lines VERBATIM and in order.
+  - >-
+    Follow `hint` to Orin and hand in. Quote the hand-in and the reward. Say whether he remembers you and the
+    cooperage. Quote game lines VERBATIM and in order.

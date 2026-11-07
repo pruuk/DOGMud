@@ -153,6 +153,24 @@ shapes tier reads "a figure", one who sees nothing reads nothing, and a player
 drinker is excluded from their own line (`drink_room_line_sight_test.go`).
 `drink_parity_test.go` holds the player and mob parity table.
 
+`items.IsDetox(itemId)` names the two detoxes (Ysolde's Purge, the Purging
+Draught; `ysoldesPurgeItemId` and `purgingDraughtItemId` alias the items
+constants). `bypassesToxicityGate` reads it, and so does the Vitalis
+Bandolier's refusal (`items.ItemSpec.AmbientBeneficial`, #794).
+
+`Quaff` reads a potion's age through `Character.PotionAging` (#794): a
+preserving bandolier's potion drinks at peak, and a potion that left one has
+rotted and drinks as spoiled, whatever its kind. The duration multiplier is
+`items.PotionDurationMult`. A potion whose condition an ambient bandolier
+already sustains (`Character.BandolierSustainsAny`) is refused with
+`DrinkRefuseSustained` and kept: the hold holds one record per condition and
+would absorb the drink.
+
+`QuoteSale` refuses a potion the Vitalis Bandolier holds under its mark
+(`Character.HeldInPreservingBandolier`) with a `Tell` saying it is held and
+would sour if taken out, before the buy rules (which would read it as
+spoiled). So sell and offer move nothing and never call it spoiled.
+
 `Quaff` no longer snapshots a `tick_pool` condition's per-round amount (tick
 amount at apply, 2026-09-28): the old `ComputeTickAmount(...)` /
 `Conditions.SetTickAmount(...)` block after `AddConditionScaled` is gone.
@@ -607,7 +625,13 @@ missing name as `refusal.NotHereThingLine`, at every light, #609). `LookExitShap
 ruling O6) is an exit the light here is too poor to see through
 (`messaging.SeesThroughExit` false) whose next room heat still reaches
 (`messaging.SensesHeatThroughExit`); a locked exit under heat is still
-`LookExitLocked`. The player wrapper prints one `messaging.UnseenFigure`
+`LookExitLocked`. A `room_gate` that would refuse this player the step also
+stops a look or a scan as a lock does (`exitQuestGated`, `look.go`): the look is
+`LookExitLocked` with `ExitGated` set, and the player wrapper reads the gate's own
+line through `QuestGateRefuses`; a scan reads "the exit is locked", and a shot
+through it gets the locked exit's refusal (`ShotExitClosed`, which `resolveShootTarget`
+asks too, so no pre-fire guard answers for who is there). A mob's `go` passes a
+gate, so it sees and shoots through one. The player wrapper prints one `messaging.UnseenFigure`
 per occupant from `FiguresSensedIn(viewer, room, selfUserId)` (`scan.go`),
 never a name, the room's title or its description; the mob wrapper is
 silent on it, as on every refusal. `Scan` takes the same heat path per
@@ -1404,8 +1428,7 @@ the harder, less sure road), and `searchFeatureSecrets` rolls only the
 secrets tucked into the named feature (`HiddenNoun.On`) at the easier
 `Balance.SearchFeatureHiddenDifficulty`. `SearchResult.QuestFeaturesFound`
 lists the quest search spots a whole-room search turned up. After the roll,
-`usercommands/skill.search.go` raises `room_interact` with `Verb: search`
-for the feature typed.
+`usercommands/skill.search.go` raises `search_at` for the feature typed.
 
 **Quest gates on movement (`quest_gate.go`, #588).** `QuestGateRefuses(user,
 room, destRoom)` notifies the engine's `room_gate` trigger and reports
@@ -1414,7 +1437,17 @@ is for a real step. `QuestGateBlocks` asks the same question without running
 anything (the engine's `WouldFire` dry run). Flee uses `QuestGateBlocks` as
 the `keep` of `Room.GetRandomExitWhere`, so a fleeing player never picks an
 exit a quest has closed; with no ungated exit the flee fails like an
-all-locked room.
+all-locked room. A fleeing mob holds no tokens, so `RoomGateGuards` closes any
+room a gate guards to its flee, whatever the gate's conditions.
+
+**Buying limit (`buy_limit.go`, owner ruling 2026-11-04).** One character may buy at
+most `Balance.BloomDealerWafersPerDay` Bloom Wafers within a rolling
+`Balance.BloomDealerWindowHours` real hours, from any seller. Both purchase paths ask
+`refuseIfBuyLimited` before anything moves; `postSuccessBookkeeping` records each unit
+as one saved `Character.Timers` entry (`recordLimitedBuy`). The rule reads the item, so
+a second dealer would not double it, and the seller says the refusal. A companion's
+purchase counts against its owner's window (`buyLimitCharacter`). `BuyLimitNote` is
+the line `list` adds for a viewer at the limit, because the list keeps showing stock.
 
 **Stolen baubles after the theft (`stolen_bauble.go`, docs/baubles Phase 6c).**
 Selling is `sell_bauble.go`'s (above); storage (`usercommands/storage.go`,

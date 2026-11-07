@@ -7,7 +7,7 @@ import (
 
 // Way is one thing in the world that grants a quest token, as the rules see
 // it: a trigger, a topic, a completion reward or an external grant. Where
-// is its stable backlog name. The walkthrough (questengine.Walk) drives each
+// is its stable name. The walkthrough (questengine.Walk) drives each
 // Way.
 type Way struct {
 	Where    string
@@ -27,7 +27,7 @@ type Way struct {
 // as a way in (see way.external for how each rule treats it); the
 // walkthrough drives it.
 type ExternalGrant struct {
-	// Where is the stable backlog name: "mob 9100 tree grant_quest 30-rite",
+	// Where is the stable name: "mob 9100 tree grant_quest 30-rite",
 	// "room 407 tree grant_quest 4-investigate", "item 40035 questtoken".
 	Where string
 	Token string

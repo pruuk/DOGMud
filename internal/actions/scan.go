@@ -31,8 +31,9 @@ type ScanSighting struct {
 	ExitName  string
 	RoomId    int
 	RoomTitle string
-	// Locked: the exit is locked (#427). A locked door blocks scan as it
-	// blocks look, so Mobs and Players stay empty for it.
+	// Locked: the exit is locked (#427), or a room_gate would refuse this
+	// player the step. A locked door blocks scan as it blocks look, so Mobs and
+	// Players stay empty for it.
 	Locked  bool
 	Mobs    []ScanEntity
 	Players []ScanEntity
@@ -75,8 +76,9 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 		}
 
 		// A locked door blocks scan as it blocks look (#427, owner ruling
-		// 2026-10-07): the direction stays, marked locked, with nobody.
-		if info, _ := room.GetExitInfo(exitName); info.Lock.IsLocked() {
+		// 2026-10-07): the direction stays, marked locked, with nobody. A
+		// room_gate that would refuse this player reads the same way.
+		if info, _ := room.GetExitInfo(exitName); info.Lock.IsLocked() || exitQuestGated(actor, room, exitInfo.RoomId) {
 			sighting.Locked = true
 			result.Sightings = append(result.Sightings, sighting)
 			continue

@@ -151,6 +151,15 @@ topics:
   hints: The Margin are quiet scholars who keep the records the temple's story
     leaves out.
   marked: true
+- key: margin_elsewhere
+  kind: info
+  label: Has anyone else chased this mark?
+  text: One man I know of. There is a surveyor at the Greenford university who has
+    followed that same ring across more margins than I care to count. He writes
+    to us. We do not always write back.
+  hints: Greenford is east of the Confluence, over the Brenn Bridge.
+  questRequired:
+  - 73-end
 - key: life
   kind: info
   label: What happened to your eyes?

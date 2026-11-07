@@ -78,7 +78,7 @@ triggers:
   # "restored" choice. Under spec R28 the look only discovers it: it sets
   # 72-channel, and Hesper (9397) explains the cost and makes the choice.
   # Kept at this index.
-  - event: room_interact
+  - event: look_at
     room: 6078
     noun: the collapsed channel
     conditions:
@@ -101,7 +101,7 @@ triggers:
   # "fenn" choice. Under spec R28 the look only discovers it: it sets
   # 72-record, and Hesper (9397) explains the cost and makes the choice.
   # Kept at this index.
-  - event: room_interact
+  - event: look_at
     room: 6060
     noun: the records
     conditions:

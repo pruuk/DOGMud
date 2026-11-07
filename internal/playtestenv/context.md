@@ -33,6 +33,9 @@ disposable volume that is discarded with the run.
 - **readiness.go** — logs/process/port/TCP compound readiness.
 - **report.go** — non-secret failed-environment Markdown reports.
 - **operations.go** — `Status`, `Logs`, `Renew`, and `Stop`.
+- **sweep.go** — `SweepRun`: force-removes containers labelled managed plus
+  this run id, re-lists, returns survivors. Backs `playtestrun stop`'s
+  confirmation; never touches a container whose labels do not name the run.
 - **reaper.go** — conservative expired-run discovery and deletion diagnostics.
 - **\*_test.go** — unit and opt-in Docker integration coverage.
 
@@ -170,6 +173,7 @@ func (s *Supervisor) Status(ctx context.Context, opts RunOptions) (Result, error
 func (s *Supervisor) Logs(ctx context.Context, opts LogsOptions) (Result, error)
 func (s *Supervisor) Renew(ctx context.Context, opts RenewOptions) (Result, error)
 func (s *Supervisor) Stop(ctx context.Context, opts RunOptions) (Result, error)
+func (s *Supervisor) SweepRun(ctx context.Context, opts RunOptions) ([]ResourceRef, error)
 func (s *Supervisor) Reap(ctx context.Context, checkoutPath string) ([]Result, error)
 ```
 

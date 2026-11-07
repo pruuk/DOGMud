@@ -1,6 +1,6 @@
 ---
 name: dogmud-end-of-day
-description: Use at the end of a working day or session, when the owner signs off, says EOD, or asks to wrap up. Covers the daily archive sweep of docs/superpowers/specs and plans (shipped work to completed/, dropped work to abandoned/, every reference repointed), the repo-root tidy that archives old screenshots without touching binaries, the daily disk check (C: free space with a 60 GB warning, the Go build cache with a go clean -cache trigger, DOGMud's own session scratchpads) and the scratch sweep of C:\tmp and C:\gotmp (merged worktrees, stale cargo targets and scratch dirs), and the session handoff memory.
+description: Use at the end of a working day or session, when the owner signs off, says EOD, or asks to wrap up. Covers the archive sweep of specs and plans (shipped to completed/, dropped to abandoned/, references repointed), the repo-root tidy, the daily disk check (60 GB warning, Go build cache, session scratchpads), the C:\tmp and C:\gotmp sweep, and the handoff memory with the index kept to area pointers.
 ---
 
 This skill is the owner's end-of-day SOP (ruled 2026-09-25). It keeps
@@ -198,9 +198,19 @@ The memory index is pointers only, so it stops overflowing:
   restating bugs. Exploit-class defects live on master stay out of public
   issues: tell the owner and use a private security advisory.
 - In `MEMORY.md`, update only the one "Start here" line so it links the new
-  handoff. Add a one-line pointer (about 200 characters) for each NEW memory
-  file; never paste status, tables or long trap text into the index. Long
-  trap text belongs in a topic file such as `reference-standing-traps.md`.
+  handoff. **The index holds area pointers only** (owner, 2026-11-06): a new
+  memory file does not get its own index line by default. Never paste
+  status, tables or long trap text into the index. Long trap text belongs in
+  a topic file such as `reference-standing-traps.md`. Where new files go
+  instead:
+  - A new owner ruling gets its own `feedback-*` file plus one line in the
+    matching rulings topic file in the memory folder:
+    `rulings-combat-mobs-lighting`, `rulings-quests-content-economy` or
+    `rulings-web-client-and-builder`. It gets an index line only when it is a
+    process tripwire that must be seen every session.
+  - A playtest's harness lessons go into the `dogmud-playtesting` skill (the
+    standing ones, verified against master) and one line in
+    `reference-playtest-harness-lessons`, never the index.
 - Check the index before finishing. These must print nothing, and the size
   must stay well under 17 KB:
 

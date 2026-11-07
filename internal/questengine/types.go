@@ -45,7 +45,6 @@ type EventDetails struct {
 	Command    string
 	Noun       string
 	RoomNoun   string
-	Verb       string
 	QuestToken string
 	TargetKind string // command events: what the command was aimed at, a quests.Target* kind (#375 3b)
 	Effect     string // spell_landed: the spell's effect_type (#375 3b)

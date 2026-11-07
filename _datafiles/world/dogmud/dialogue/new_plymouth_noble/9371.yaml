@@ -34,7 +34,7 @@ opener:
     text: You have come about the third panel? Then I need to see what you copied
       from the temple reliefs.
     hints: Keeper Lysha needs to see your rubbing of the processional reliefs. If you
-      lost it, take another in the Grand Temple Sanctuary. Type look reliefs there.
+      lost it, take another in the Grand Temple Sanctuary. Type search there.
   - questRequired:
     - 69-gallery
     questExcluded:

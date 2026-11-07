@@ -68,6 +68,7 @@
 250.quest_start
 250.quest_start_carrying
 250.road_talk
+250.torn_pages
 251.buy
 251.crossroads
 251.gossip
@@ -741,6 +742,8 @@
 9305.bloom_undercover
 9305.competition
 9305.fabric
+9305.q102_offer
+9305.q102_resume
 9306.found
 9306.rumors
 9306.trade
@@ -777,9 +780,7 @@
 9322.gossip
 9323.bloom
 9323.detox
-9323.escort_close
 9323.healing
-9323.q67_grant
 9323.teels_q66
 9323.temple
 9323.wrapperhandoff
@@ -788,6 +789,7 @@
 9324.quarter
 9325.collector
 9325.floors
+9325.q64_brisk
 9325.tenants
 9326.flowers
 9326.rise
@@ -797,10 +799,12 @@
 9332.edvar
 9332.old_questions
 9332.orinhandoff
+9332.orinhandoff_cold
 9332.q68_choice
 9332.q68_start
 9332.scholars
 9332.symbol
+9332.torn_pages
 9333.quarter
 9333.sister
 9333.work
@@ -823,6 +827,10 @@
 9338.q68_toby
 9344.bloodline
 9344.house
+9344.q64_offer
+9344.q64_report
+9344.q64_resume
+9344.q64_terms
 9344.q71_horst
 9344.visitors
 9344.work
@@ -929,6 +937,8 @@
 9391.temple
 9392.lost_wrapper
 9392.plea
+9392.purge_handoff
+9392.q67_grant
 9394.flock
 9394.valley
 9394.water
@@ -1069,6 +1079,7 @@
 9441.commission
 9441.life
 9441.margin
+9441.margin_elsewhere
 9441.report
 9441.undercroft_offer
 9442.archive
@@ -1080,6 +1091,7 @@
 9444.books
 9444.old_chart
 9444.quarter
+9444.torn_pages
 9445.fourth_water
 9445.quarter_life
 9445.temple
@@ -1440,6 +1452,12 @@
 9611.wares
 97.about_craft
 97.weapons
+9801.q64_found
+9801.q64_run
+9801.who
+9802.q102_in
+9802.what_it_does
+9802.where_from
 99.about_records
 99.already_filed
 99.bridge_report
@@ -1475,7 +1493,11 @@
 # trail runs east and the Threshold-Keeper takes the hand-in (#667).
 9516.disc_in
 9516.disc_quest
+# Quest 66 ends at Teels (#375 phase 7 tier 5): a save at 66-escort is renamed to
+# 66-dose, so Ysolde's hand-in for it can never be chosen.
+9323.escort_close
 # renamed
+9323.q67_grant -> 9392.q67_grant
 9465.q74_grant -> 9441.undercroft_offer
 9117.vein_offer -> 9116.vein_offer
 9112.wash_offer -> 9108.wash_offer

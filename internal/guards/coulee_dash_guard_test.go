@@ -15,11 +15,11 @@ import (
 // The Pothole Coulee dash guard (#375 phase 7, first zone pass). House style
 // (dogmud-player-copy) bars em dashes, en dashes and a spaced double hyphen
 // standing in for one. The global prose guard (prose_dash_guard_test.go)
-// still exempts quests, dialogue and conversations until phase 7 closes, so
-// this guard holds the files the Coulee pass cleared: the pass's quests,
-// every dialogue file of the Coulee and the Newcomer Antechamber, every
-// conversation pair with a Coulee NPC in it, and the two zones' mobs, rooms,
-// behaviour trees and schedules (couleeDashWorldDirs).
+// reads quests, dialogue and conversations line by line since the #375
+// closing step; this guard stays because it also reads the two zones'
+// behaviour trees and schedules, which the global guard does not, and it
+// reads parsed YAML, so a trailing comment is never mistaken for prose
+// (couleeDashWorldDirs).
 //
 // It reads the parsed YAML, not lines: every scalar value is checked and no
 // comment is, whole-line or trailing (a comment after a value on the same

@@ -1,6 +1,6 @@
 # DOGMud Patch Notes
 
-## 2026-11-06: A new look for the website and the web client
+## 2026-11-07: A new look for the website and the web client
 
 - The game has its own logo: three moons, the middle one crowned. You will see
   it on the home page, as D.O.G. in the top bar, and as the moons on your
@@ -31,6 +31,84 @@
   you pop the Game window out into its own box.
 - In the Quests tab, repeatable quests and the "Repeatable work" list are
   easy to read again. They had faded almost out of sight.
+
+## 2026-11-06: Word gets around
+
+- Gossips around the world have started talking about a crafter at the Confluence
+  who sells secrets nobody else will teach.
+- The message of the day is new. Read it for how to talk to people, follow a quest
+  and find what is hidden.
+- In a fight, your prompt shows who your foe is attacking when it is not you, how
+  hurt they are, and whether they are down.
+- `look in` a chest or box now shows what is inside, the same as looking at it.
+- The Vitalis Bandolier now works as it was always meant to. It takes only potions
+  that strengthen you, holds each one at its very best for as long as it stays
+  there, and its effects stay put instead of wearing down. The price: a potion
+  taken out sours at once, and you cannot drink or sell what it holds.
+- Coulee raider archers and the marsh hunter sometimes drop what they carry.
+- Gear you lend a companion may be lost if it falls. Lend what you can spare.
+- An effect in its final moments no longer claims to be sustained.
+- Trader Onna no longer claims to remember what a stranger bought last time, and
+  the Courier's Road-Token no longer promises a free bed.
+
+## 2026-11-04: Tidying up
+
+- Cleric Hadwen and Crier Toke still offer their two talks to every new arrival.
+  A character already part way through those lessons may miss them.
+
+## 2026-11-04: Hard to put down
+
+- The Bloom Wafer is now out there in the world, for those who go looking for it and
+  will pay what it costs. It is not like a potion. It changes you, it is hard to put
+  down, and when you stop, the need comes for you. The healer Ysolde in the Common
+  Quarter has a harsh cure. Whoever sells it will not sell much of it to any one person.
+- Looking, scanning or shooting through a way that would turn you back now stops there
+  too.
+
+## 2026-11-04: Older than the city
+
+- The Cooperage Circle, The Gallery Cipher, The Pre-Founding Web and The Tribute are
+  now followed by searching: where the trail leads you, type search. The Buried
+  Lintel is black dark, so bring a light.
+- Scholar Dross keeps your rubbing as well as Lysha's reading when you bring them
+  back.
+- Orin remembers how the cooperage ended, and says so when you bring him the lintel
+  rubbing.
+- The Tribute now earns standing with the common folk.
+- When you give something to a person waiting for it, a shared word like rubbing
+  now finds the one they want, wherever it lies in your pack. Edvar's survey now
+  answers to the word survey.
+
+## 2026-11-04: Down on the docks
+
+- Dock Rat and The Street Sweeper's Secret are now followed by searching: where the
+  trail leads you, type search.
+- The Addict's Plight is a longer walk. Ysolde sends you back to Teels with what they
+  need, and Teels points you at the next thread.
+- The Bloom Trail's case file is now the lamplighter's own record. The hints on that
+  trail tell you who to find and let you find your own way.
+- Foreman Hewd keeps his desk for a good reason now: the constable is waiting on a
+  warrant.
+- A potion carried in your bandolier now counts when an NPC asks you for it.
+
+## 2026-11-04: Website links
+
+- The website handles unusual links more carefully.
+- A single line of typing now stops at a generous length. No one should ever reach it.
+
+## 2026-11-04: Fresh from the wilds
+
+- Many of the largest creatures used to appear already hurt, and healed up slowly
+  over the next few minutes. They now arrive at full strength, so a fresh one is
+  a much harder fight than it was. Arena champions and the guardians of the
+  Highlands feel this most.
+- Caravan wagons are as sturdy as they were always meant to be.
+- NPC speech no longer breaks in the middle of a sentence.
+- Item names read properly in lines such as "You show the Folded Page".
+- Peddler Malk can now tell you who asks about the pages he sells.
+- The talkative folk of the Marches and Thornwall have more to say about strange
+  things in the east, if you stop and listen.
+- Searching a dead surveyor's camp twice no longer finds the same spare disc twice.
 
 ## 2026-11-03: The buried thing
 

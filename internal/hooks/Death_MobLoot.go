@@ -22,7 +22,8 @@ import (
 // function could read its data.
 //
 // Carried items always drop (100% base). Equipped items gate on
-// mob.ItemDropChance. Gold always drops. Corpse is added when
+// mob.EquippedDropChance (absent itemdropchance = 100, 0 = never). Gold
+// always drops. Corpse is added when
 // CorpsesEnabled config is set.
 func dropMobLootAndSetCorpse(m *mobs.Mob, room *rooms.Room) {
 	currentRound := util.GetRoundCount()
@@ -49,8 +50,10 @@ func dropMobLootAndSetCorpse(m *mobs.Mob, room *rooms.Room) {
 			loot.AddItem(item)
 		}
 
-		// Equipped items: gate on mob.ItemDropChance unless the item
-		// has its own per-instance DropChance.
+		// Equipped items: gate on the mob-wide chance unless the item has
+		// its own per-instance DropChance. EquippedDropChance is 100 when
+		// itemdropchance is absent and 0 (never) when it is authored as 0
+		// (#585).
 		for _, item := range m.Character.Equipment.GetAllItems() {
 			// NeverDrops (e.g. boss-only stat-boost gear like the Core
 			// Guardian's Hull Plating / Core Matrix) is skipped entirely —
@@ -60,7 +63,7 @@ func dropMobLootAndSetCorpse(m *mobs.Mob, room *rooms.Room) {
 			if item.GetSpec().NeverDrops {
 				continue
 			}
-			if !item.ShouldDrop(m.ItemDropChance) {
+			if !item.ShouldDrop(m.EquippedDropChance()) {
 				continue
 			}
 			item.Validate() // ensure a distinct UUID (round-robin keys loot by UUID)

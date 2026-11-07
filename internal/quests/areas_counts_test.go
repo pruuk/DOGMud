@@ -64,12 +64,12 @@ func countQuest(event string) *Quest {
 	}
 }
 
-// A partial count marks the event handled, and on these three events a
-// handled event means the quest took the command: the gate refuses the move
-// in silence, look and read print nothing, give keeps the item unconsumed.
-// So count is refused there.
+// A partial count marks the event handled, and on these events a handled
+// event means the quest took the command: the gate refuses the move in
+// silence, look and read print nothing, give keeps the item unconsumed
+// (search_at shares look_at's rule). So count is refused there.
 func TestValidateCountRefusedWhereAMatchSwallowsTheCommand(t *testing.T) {
-	for _, ev := range []string{"room_gate", "room_interact", "item_give"} {
+	for _, ev := range []string{"room_gate", "look_at", "search_at", "item_give"} {
 		q := countQuest(ev)
 		err := q.Validate()
 		if err == nil || !strings.Contains(err.Error(), "count on a "+ev+" trigger") {

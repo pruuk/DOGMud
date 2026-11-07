@@ -1,16 +1,16 @@
-# Quest 31 — Find Your Footing (Pothole Coulee hub, optional orientation)
+# Quest 31: Find Your Footing (Pothole Coulee hub, optional orientation)
 #
 # Token flow:
 #   31-start: granted by Crier Toke's footing_offer (requires 88-end, his own hand-in of Toke's Road)
-#   31-school  — room_enter trigger, Chrysalis School Hall (5213)
+#   31-school: room_enter trigger, Chrysalis School Hall (5213)
 #   31-list:     command trigger, `list` at Coulee Provisions (5207), teaches
 #                the `list` command (step inserted 2026-10-17: one command
 #                per step; it used to be a nudge that did not advance)
-#   31-shop    — item_gain trigger, buying a cotton shirt (20008) at Coulee
-#                Provisions (5207) — teaches the `buy` command
+#   31-shop: item_gain trigger, buying a cotton shirt (20008) at Coulee
+#                Provisions (5207); teaches the `buy` command
 #   Steps run in order; each trigger gates on the step before it.
-#   31-equip   — command trigger, `equip` — teaches wearing gear
-#   31-lantern — room_enter trigger, The Drowned Lantern (5205)
+#   31-equip: command trigger, `equip`; teaches wearing gear
+#   31-lantern: room_enter trigger, The Drowned Lantern (5205)
 #   31-end:      granted by Toke's dialogue turn-in (requires 31-lantern);
 #                after it, Toke offers the seven trail quests one at a time
 
@@ -25,7 +25,7 @@ steps:
     hint: "From Hub Square go north past the Awakening Pool, then keep north up the basalt stair to the Chrysalis School Hall. Walking in is enough."
   - id: school
     destination:
-      mob: 9104  # follow Trader Onna (schedule pothole_onna) — a fixed room is wrong for part of the day
+      mob: 9104  # follow Trader Onna (schedule pothole_onna); a fixed room is wrong for part of the day
       room: 5207  # fallback when Trader Onna is not spawned
     description: "You found the school hall. Next, kit yourself out at Coulee Provisions, Trader Onna's shop. First see what she sells."
     hint: "From the school hall go south four times to Hub Square, south again to Market Row, then east into Coulee Provisions. There, type list."
@@ -46,7 +46,7 @@ steps:
     hint: "The Drowned Lantern is the inn off Market Row. From Coulee Provisions go west twice. Walking in is enough."
   - id: lantern
     destination:
-      mob: 9106  # follow Crier Toke (schedule pothole_toke) — a fixed room is wrong for part of the day
+      mob: 9106  # follow Crier Toke (schedule pothole_toke); a fixed room is wrong for part of the day
       room: 5203  # fallback when Crier Toke is not spawned
     description: "You have seen the school, kitted out at the shop, and found the inn. Report back to Crier Toke in Hub Square."
     hint: "From the inn go east to Market Row, then north to Hub Square. Find Toke at the notice post, type talk toke, and choose Find Your Footing to finish."
@@ -91,7 +91,7 @@ triggers:
           chill off and the coulee's teeth out. You have coin enough." Type
           buy cotton shirt.
 
-  # ── PROVISIONS: buy a cotton shirt (room 5207) — teaches `buy` ──
+  # ── PROVISIONS: buy a cotton shirt (room 5207), teaches `buy` ──
   #    item_gain fires when the shirt lands in the pack; a route-2 player
   #    starts with no gear, so the first cotton shirt they gain is this purchase.
   - event: item_gain
@@ -107,7 +107,7 @@ triggers:
           blade, but it beats bare skin. Put it on. Gear does nothing folded
           in your pack." Type equip cotton shirt.
 
-  # ── EQUIP: wear the shirt — teaches `equip` ──
+  # ── EQUIP: wear the shirt, teaches `equip` ──
   #    item: the cotton shirt (20008) only; the equip event names its item.
   - event: command
     command: equip

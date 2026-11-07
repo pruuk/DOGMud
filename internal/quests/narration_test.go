@@ -60,25 +60,39 @@ func TestValidateRefusesTheRetiredDialogueEvent(t *testing.T) {
 	}
 }
 
-// #375 phase 3a (owner ruling 5): look and search are the only interaction
-// verbs, so a room_interact trigger's verb is empty (look), look or search.
-func TestValidateRoomInteractVerbs(t *testing.T) {
-	for _, verb := range []string{"", "look", "search"} {
-		q := validQuest(ActionDef{Grant: "9001-start"})
-		q.Triggers[0].Event, q.Triggers[0].Verb = "room_interact", verb
-		if err := q.Validate(); err != nil {
-			t.Fatalf("verb %q refused: %v", verb, err)
+// #375 closing step: the room feature event was split into look_at and
+// search_at, so the event names the verb family. The old event and any verb
+// key are refused with a message naming both new events; the new events
+// load with no verb and, like the old one, take no count.
+func TestValidateRetiredInteract(t *testing.T) {
+	namesBoth := func(err error) bool {
+		return err != nil && strings.Contains(err.Error(), EventLookAt) && strings.Contains(err.Error(), EventSearchAt)
+	}
+
+	q := validQuest(ActionDef{Grant: "9001-start"})
+	q.Triggers[0].Event = retiredInteractEvent
+	if err := q.Validate(); !namesBoth(err) || !strings.Contains(err.Error(), "retired") {
+		t.Fatalf("the retired event must be refused naming look_at and search_at, got %v", err)
+	}
+
+	for _, ev := range []string{EventLookAt, EventSearchAt, "command"} {
+		q = validQuest(ActionDef{Grant: "9001-start"})
+		q.Triggers[0].Event, q.Triggers[0].RetiredVerb = ev, "search"
+		if err := q.Validate(); !namesBoth(err) || !strings.Contains(err.Error(), `verb "search"`) {
+			t.Fatalf("a verb on a %s trigger must be refused naming look_at and search_at, got %v", ev, err)
 		}
 	}
-	q := validQuest(ActionDef{Grant: "9001-start"})
-	q.Triggers[0].Event, q.Triggers[0].Verb = "room_interact", "lift"
-	if err := q.Validate(); err == nil || !strings.Contains(err.Error(), `verb "lift"`) {
-		t.Fatalf("verb lift must be refused, got %v", err)
-	}
-	q = validQuest(ActionDef{Grant: "9001-start"})
-	q.Triggers[0].Verb = "look"
-	if err := q.Validate(); err == nil || !strings.Contains(err.Error(), "verb") {
-		t.Fatalf("a verb on a command trigger must be refused, got %v", err)
+
+	for _, ev := range []string{EventLookAt, EventSearchAt} {
+		q = validQuest(ActionDef{Grant: "9001-start"})
+		q.Triggers[0].Event = ev
+		if err := q.Validate(); err != nil {
+			t.Fatalf("%s with no verb refused: %v", ev, err)
+		}
+		q.Triggers[0].Count = 2
+		if err := q.Validate(); err == nil || !strings.Contains(err.Error(), "count on a "+ev+" trigger") {
+			t.Fatalf("count on %s must be refused, got %v", ev, err)
+		}
 	}
 }
 

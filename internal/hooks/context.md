@@ -1479,7 +1479,7 @@ Cross-machine cleanup that fires on two Life transitions:
 | `Death_PlayerAnnouncement.go` | Room broadcast, global broadcast, `events.PlayerDeath` queue, worldevents PvE emit, weakened/darkness text, instance ejection |
 | `Death_PlayerCorpse.go` | Player corpse creation in the death room |
 | `Death_InboundAggroCleanup.go` | Clears mobs and companions that were targeting the dying actor; fires for both player and mob deaths |
-| `Death_MobLoot.go` | Carried and equipped item drop, gold drop, dark-room sound cue, mob corpse creation |
+| `Death_MobLoot.go` | Carried and equipped item drop, gold drop, dark-room sound cue, mob corpse creation. Worn items roll against `mob.EquippedDropChance()`: absent `itemdropchance` drops all, an authored 0 drops none (#585), companions included (lent gear is lost by design); carried items always roll at 100; `never_drops` skips both |
 | `Death_AlivenessSubstrate.go` | Fires `events.MobDeath`; downstream subscribers handle faction rep, opinion update, crime recording, knowledge propagation, bounty resolution |
 | `Death_MobInstanceCleanup.go` | `creditMobKill`, then `DeleteMobInstance`, `DestroyInstance`, `CleanupMobSpawns`, `RemoveMob` |
 | `Death_MobBroadcast.go` | Room "X has died" broadcast, Guide tempdata, worldevents `MobKilledByPlayer` |
@@ -2741,6 +2741,36 @@ key `pinnacle_proc_cd_*` is inert in old saves.
 items, five events, hits, misses, cooldown windows and a probe draw each
 round); `TestItemProcParity` holds the tree path to it.
 
+**Vitalis Bandolier (`pinnacle_tick.go`, #794, owner ruling 2026-11-06).**
+The rules live in `internal/characters/bandolier.go` and
+`docs/schemas/pinnacle-items.md` section 3. Here:
+
+- `tickPreserveContents(user, now)` runs `Character.PreserveBandolier` every
+  round and once at login (`HandleJoin`, replacing the old
+  `reconcilePreservedPotionRounds`, which reset a held potion to fresh). It
+  tells the wearer about anything the belt lets go of, with its reason
+  (`characters.BandolierReleaseLine`, the same wording `sort` uses, and
+  "still sound": it never sat in the hold). Nothing touches
+  `CraftedRound`; the old 1:1 advance is gone.
+- `desiredAmbientConditions(c, now)` maps each held condition to the
+  magnitude it is held at: peak (`Character.PotionAging` potency through
+  `items.PotionDurationMult` and `items.PotionMagnitudeApplication`), so a
+  Pitsense Tincture gives its peak infravision reach. It skips any kind
+  `ItemSpec.AmbientBeneficial` rejects (a throwable, a detox), as a backstop
+  to the refusal at `StoreItem`.
+- `holdAmbient(c, id, magnitude)` keeps a permanent record at that
+  magnitude; the contents-change branch now holds kept conditions too, so a
+  timed record a drink of the same condition left does not show a
+  countdown for that round. `releaseAmbient` removes only the bandolier's
+  permanent record: a drink's own timed record runs its course.
+- `NewRound_AutoHeal` asks `Character.PotionAging`, so a preserving
+  bandolier never ejects its potions as spoiled.
+- `displacedGearText` reads `characters.DisplacedPotionSoured` (a species
+  that closed the belt slot spilled the bandolier) as the soured line.
+
+Tests: `pinnacle_ambient_harmful_test.go`, `pinnacle_ambient_peak_test.go`,
+and `TestPreservedPotionReadsPeakAfterAnOfflineGap`.
+
 ## Casters, start lines and DoT credit (messaging M6 slice 1)
 
 `ApplyConditions` stamps every landed record with the event's `Source` and
@@ -2794,7 +2824,14 @@ death and sets `DeathQueued`, so no tick reaches them.
 - `MobIdle_idle_roll.go`: `idleRollInput` (global scales, the room's zone
   multipliers, the mob's `wandermultiplier`) and `issueIdleChatter`.
   Gossip goes out as `ambient gossip say <line>`; `GossipIntervalRounds` 0
-  turns it off.
+  turns it off. A fact tagged `hint` (`facts.HintTag`) has its own timer,
+  `GossipHintIntervalRounds` (`dueGossipHint`): spoken only with a player in the
+  room, in place of that tick's gossip, and still through the ambient gate.
+  A fact tagged `common` (`facts.CommonTag`) is common talk: `gossipFactPick`
+  offers it to every gossiper's ordinary gossip as one slot among the mob's
+  own known facts (so a mob that knows k facts tells it 1/(k+1) of its fact
+  gossip), with no `knows_facts` entry, and never on the hint timer.
+  `gossip_common_test.go` pins it.
 - `NewRound_RoomIdle.go`: `roomIdleChancePer10k` (`RoomIdleChancePct`,
   room -1 four times, zone `ambientmultiplier`) and `sendRoomIdleLine`
   (budget, and a one-line room shows its line once per visit).

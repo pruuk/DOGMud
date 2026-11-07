@@ -22,9 +22,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/spells"
 )
 
-// The reserved template range (1000000-generic_quest.yaml) is hidden from
-// the editor list; templates still load, round-trip, and are guarded like
-// any other quest. The floor itself lives in the quests package, shared
+// The reserved range at and above quests.ReservedTemplateIdFloor is hidden
+// from the editor list. The floor itself lives in the quests package, shared
 // with id allocation.
 const genericQuestIdFloor = quests.ReservedTemplateIdFloor
 
@@ -40,10 +39,8 @@ type questDeps struct {
 
 	// loopWorld builds the loop rules' world over the loaded registries with
 	// the given reference checks (buildQuestUpdate passes validators, so they
-	// are built once per save), and backlog returns the shipped loop backlog
-	// (#375 phase 2 editor door). Either nil skips the loop rules.
+	// are built once per save) (#375 phase 2 editor door). Nil skips the loop rules.
 	loopWorld func(v quests.QuestValidators) questloop.World
-	backlog   func() (questloop.Backlog, error)
 }
 
 func realQuestDeps() questDeps {
@@ -59,16 +56,17 @@ func realQuestDeps() questDeps {
 		reindex:    questengine.LoadDataFiles,
 		validators: questworld.Validators(),
 		loopWorld:  questworld.RegistryWith,
-		backlog:    questworld.LoadBacklog,
 	}
 }
 
 // loopVerdict runs the loop rules over the world before and after the edit.
 // It refuses only what the edit adds: a finding in the proposed world that
-// the current world does not have and the backlog does not list. It warns
-// about this quest's other findings (listed, or already there). Findings on
-// other quests that the edit did not cause are not this save's business.
-func loopVerdict(world questloop.World, q quests.Quest, b questloop.Backlog) (refuse, warn []string) {
+// the current world does not have. It warns about this quest's findings
+// that were already there. Boot refuses every finding, so in play the
+// current world has none; the comparison keeps a save from being blamed for
+// another quest's problem. Findings on other quests that the edit did not
+// cause are not this save's business.
+func loopVerdict(world questloop.World, q quests.Quest) (refuse, warn []string) {
 	before := map[string]bool{}
 	for _, f := range questloop.Validate(world) {
 		before[f.Key()] = true
@@ -76,11 +74,9 @@ func loopVerdict(world questloop.World, q quests.Quest, b questloop.Backlog) (re
 	for _, f := range questloop.Validate(questworld.WithQuest(world, q)) {
 		k := f.Key()
 		switch {
-		case b[k] && f.QuestId == q.QuestId:
-			warn = append(warn, "known (loop backlog): "+f.String())
 		case before[k] && f.QuestId == q.QuestId:
-			warn = append(warn, "known (already in the world, not in the loop backlog): "+f.String())
-		case !b[k] && !before[k]:
+			warn = append(warn, "known (already in the world): "+f.String())
+		case !before[k]:
 			refuse = append(refuse, f.String())
 		}
 	}
@@ -148,8 +144,9 @@ type questDetail struct {
 // ---- vocabulary tables (source of truth for the client's pickers) ----
 
 // Every event also takes area or zone (the event's room lies in it), and
-// every event but room_gate, room_interact and item_give takes count (fire on
-// the Nth match) with a label for its progress line (quests.CountAllowed).
+// every event but room_gate, look_at, search_at and item_give takes count
+// (fire on the Nth match) with a label for its progress line
+// (quests.CountAllowed).
 // The editor's EVENT_FILTERS in quests.js offers the same fields
 // (TestQuestBuilderFiltersMatchTheVocab).
 var questEventVocab = []vocabEntry{
@@ -162,7 +159,8 @@ var questEventVocab = []vocabEntry{
 	{"command_issued", "player TYPED a command, success or not: fires from TryCommand for any command (filters: command, room, area, zone; count, label)"},
 	{"item_gain", "an item enters the player's inventory (filters: item, room, reason as how it arrived, such as get, loot, buy or steal; area, zone; count, label; held_line said when the item is already held)"},
 	{"quest_granted", "a quest token was just granted: the chaining event (filters: quest_token, area, zone; count, label)"},
-	{"room_interact", "player looked at or searched a room feature (filters: room, noun, verb: look or search; empty means look; area, zone; no count)"},
+	{"look_at", "player looked at a room feature: look, l, examine, exam or read naming it (filters: room, noun, area, zone; no count)"},
+	{"search_at", "player searched a room feature: search naming it, after the search runs and with no roll, or a plain search that uncovered it (filters: room, noun, area, zone; no count)"},
 	{"spell_landed", "a player's spell landed on a target, once per cast (filters: noun as the spell id, effect as its effect_type such as heal, target (self, mob, player, item or container), mob, item, room, area, zone; count, label)"},
 	{"topic_heard", "player played an NPC's talk topic, after its effects landed: a menu choice or an accepted offer (filters: mob as the NPC's template id, topic as the topic key, area, zone; count, label)"},
 }
@@ -246,12 +244,8 @@ func buildQuestUpdate(d questDeps, q quests.Quest) BuildResult {
 	if len(errs) > 0 {
 		return buildErr("quest %d refused:\n%s", q.QuestId, strings.Join(errs, "\n"))
 	}
-	if d.loopWorld != nil && d.backlog != nil {
-		b, err := d.backlog()
-		if err != nil {
-			return buildErr("quest %d refused: cannot read the loop backlog: %s", q.QuestId, err.Error())
-		}
-		refuse, known := loopVerdict(d.loopWorld(d.validators), q, b)
+	if d.loopWorld != nil {
+		refuse, known := loopVerdict(d.loopWorld(d.validators), q)
 		if len(refuse) > 0 {
 			return buildErr("quest %d refused:\n%s", q.QuestId, strings.Join(refuse, "\n"))
 		}

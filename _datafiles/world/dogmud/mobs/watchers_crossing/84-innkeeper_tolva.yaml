@@ -16,6 +16,7 @@ groups:
 knows_facts:
   - watchers-road-bandits
   - watchers-toll-grumbling
+  - disc-ring-mark
 relationships:
   - to: 85
     type: friend

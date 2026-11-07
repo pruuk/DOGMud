@@ -83,10 +83,16 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			if !listedStock && !listedShelf {
 				mob.Command(`say I have nothing to sell right now, but check again later.`)
 			}
+			if note := actions.BuyLimitNote(user.Character, stock, mob.Character.Name); note != `` {
+				user.SendText(messaging.CategorySystem, note)
+			}
 		} else {
 			mob.Character.Shop.Restock()
 			if !renderMobMerchantListing(user, mob.Character.Shop.GetInstock(), mob.Character.Name) {
 				mob.Command(`say I have nothing to sell right now, but check again later.`)
+			}
+			if note := actions.BuyLimitNote(user.Character, mob.Character.Shop.GetInstock(), mob.Character.Name); note != `` {
+				user.SendText(messaging.CategorySystem, note)
 			}
 		}
 	}

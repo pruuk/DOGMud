@@ -9,7 +9,7 @@ description: >
   tables hold bins of <ansi fg="itemname">remnant bolts</ansi>:
   ends and offcuts in practical weights, cheap because they are
   what is left when the useful part has been used, and still worth
-  buying if you know what you need. At the back wall, past the
+  buying if you know what you need. At the back wall, east past the
   shelving, a <ansi fg="itemname">cupboard door</ansi> stands
   half in shadow. The shelves around it carry the ordinary stock
   of a fabric shop; the door itself carries the evidence of hands
@@ -17,7 +17,8 @@ description: >
   shelves would require. To the north a low stone footbridge is
   visible over a canal cut, a span connecting this quarter's edge
   to the Crafting Quarter beyond. South returns to the
-  outer lane; a stair leads down behind the cupboard door.
+  outer lane; a stair goes down behind the last shelf to the stock
+  room.
 biome: interior
 coord:
   x: -18
@@ -30,6 +31,8 @@ exits:
     roomid: 5700
   down:
     roomid: 5524
+  east:
+    roomid: 5530
 nouns:
   remnant bolts: Bins of cut-end cloth in a range of weights and
     colors, none of them particularly fashionable and all priced
@@ -48,7 +51,8 @@ nouns:
     the door has been opened very many times, a shadow worn into
     the paint. Whatever is behind it has been accessed more
     often than shelf-storage requires, by more people than a
-    bolt-count would warrant.
+    bolt-count would warrant. It is barred from inside, and it
+    opens only to a knock that someone has to teach you.
 idlemessages:
 - The shop is quiet, as fabric shops usually are, but the quiet
   here has a quality of attention in it.

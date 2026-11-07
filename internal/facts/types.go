@@ -21,6 +21,15 @@ const (
 	SourceUnknown   Source = "unknown"
 )
 
+// HintTag marks a fact as a breadcrumb: a gossiper who knows it speaks it on
+// its own timer, Balance.GossipHintIntervalRounds.
+const HintTag = "hint"
+
+// CommonTag marks a fact as common talk: every gossiper may pass it on in its
+// ordinary gossip, with no `knows_facts` entry (#375, Veyra's rumors). It
+// never goes on the hint timer.
+const CommonTag = "common"
+
 type Fact struct {
 	Id                  string                   `yaml:"id"`
 	Description         string                   `yaml:"description"`

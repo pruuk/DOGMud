@@ -143,11 +143,12 @@ The adapter is the single blast-radius point when a subsystem API changes.
 
 | Helper | Purpose |
 |--------|---------|
-| `findShopInZoneSelling(mob, tag, itemId)` | First shop in mob's zone stocking the target item or component tag |
-| `findShopInZoneBuying(mob)` | First shop in mob's zone with gold reserves (can buy from mob) |
+| `walkableShopsIn(zone)` | Every shop in zone except those behind a `room_gate` (`roomBehindGate`, through `questengine.Engine.GuardsRoom`): a mob's `pathto` ignores gates, so no planner may send a mob through one |
+| `findShopInZoneSelling(mob, tag, itemId)` | First walkable shop in mob's zone stocking the target item or component tag |
+| `findShopInZoneBuying(mob)` | First walkable shop in mob's zone with gold reserves (can buy from mob) |
 | `findFactionMemberInZone(mob, factionId, mustBeInCombat)` | First faction member in zone; optional combat filter |
 | `findHostileInZone(mob)` | First auto-aggro mob in zone (excluding self) |
-| `findCraftingStationInZone(mob, stationName)` | First room in zone whose `Station` field matches |
+| `findCraftingStationInZone(mob, stationName)` | First room in zone, not behind a `room_gate`, whose `Station` field matches |
 | `zoneAdjacentTo(zone)` | Zones sharing a room-exit border; lazy-computed + cached at first call |
 | `pickGiftItemFromInventory(mob)` | Highest-value non-quest item from backpack for gifting |
 | `pickRandomExit(mob)` | Random exit direction name from mob's current room |

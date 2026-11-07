@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	_ "github.com/GoMudEngine/GoMud/internal/hooks" // wire init() Life observers
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -57,6 +58,40 @@ func TestDie_ZeroUserIdStaysDead(t *testing.T) {
 	}
 	if !c.IsDead() {
 		t.Errorf("a userId-0 character should remain Dead after Die(); got %v", c.Life.State())
+	}
+}
+
+// TestDie_RespawnGraceFollowsRespawnGraceRounds pins #589: the respawn grace
+// (condition 81, no-aggro-target) lasts GamePlay.Death.RespawnGraceRounds
+// rounds, and 0 skips it. The knob shipped unread while the grace length was
+// fixed by the condition's YAML.
+func TestDie_RespawnGraceFollowsRespawnGraceRounds(t *testing.T) {
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		81: {ConditionId: 81, Name: "Respawn Grace", Secret: true, TriggerRate: "1 round", TriggerCount: 3,
+			Flags: []conditions.Flag{conditions.NoAggroTarget}},
+	}))
+	before := configs.GetGamePlayConfig().Death.RespawnGraceRounds
+	t.Cleanup(func() {
+		_ = configs.AddOverlayOverrides(map[string]any{"GamePlay.Death.RespawnGraceRounds": int(before)})
+	})
+
+	for _, tc := range []struct{ rounds, want int }{{7, 7}, {3, 3}, {0, 0}} {
+		if err := configs.AddOverlayOverrides(map[string]any{"GamePlay.Death.RespawnGraceRounds": tc.rounds}); err != nil {
+			t.Fatalf("set RespawnGraceRounds: %v", err)
+		}
+		c := characters.New()
+		c.SetUserId(4244)
+		c.HealthMax.Value = 100
+		c.Health = 0
+		c.Die(state.ActorRef{}, life.TriggerHealthZero)
+
+		got := 0
+		if recs := c.Conditions.GetConditions(81); len(recs) > 0 {
+			got = recs[0].TriggersLeft
+		}
+		if got != tc.want {
+			t.Errorf("RespawnGraceRounds %d: grace has %d rounds left, want %d", tc.rounds, got, tc.want)
+		}
 	}
 }
 

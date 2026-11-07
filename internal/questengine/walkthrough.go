@@ -20,7 +20,7 @@ import (
 // dialogue topics, from its offer to its hand-in (spec 7), and reports what
 // cannot be completed: walk-dead-end, walk-no-source, walk-unspawned,
 // walk-no-spell (a spell_landed Way no state on the path holds a spell for).
-// Findings share questloop's shape and backlog. A quest with no offer is skipped: the
+// Findings share questloop's shape and keys. A quest with no offer is skipped: the
 // start rule reports it.
 func Walk(w questloop.World, src questloop.Sources) []questloop.Finding {
 	// Sorted by id, so the engine's trigger order (and so every firing) does
@@ -681,7 +681,7 @@ func ownFlag(key string, own int) bool {
 // flag is a prerequisite and is held, like its tokens. A flag of the walked
 // quest is never held: only a flag the walk really sets counts. The walk
 // sets it by firing, from p's state, a trigger or topic that sets it and
-// grants no token of the walked quest (quest 72's room_interact set_flag, a
+// grants no token of the walked quest (quest 72's look_at set_flag, a
 // bystander's topic): when that firing sets the flag without moving the
 // quest, p takes the flag. A setter that also grants a step is a Way, and
 // the walk fires it as one. With no setter that fires, the gate stays shut.
@@ -844,11 +844,6 @@ func fireTrigger(env *walkEnv, p *walkPlayer, t *quests.TriggerDef, own int, tra
 	}
 	d := EventDetails{RoomId: t.Room, MobId: t.Mob, ItemId: t.Item, Skill: t.Skill,
 		Command: t.Command, Noun: t.Noun, QuestToken: t.QuestToken, TargetKind: t.Target, Effect: t.Effect, Topic: t.Topic, Reason: t.Reason}
-	if t.Event == "room_interact" {
-		// The dispatcher always sends a verb family; an empty trigger verb
-		// means look (#375 phase 3a).
-		d.Verb = quests.InteractVerb(t.Verb)
-	}
 	if d.RoomId == 0 {
 		d.RoomId = c.InRoom
 	}

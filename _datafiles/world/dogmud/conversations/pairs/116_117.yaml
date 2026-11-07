@@ -9,7 +9,7 @@ exchanges:
         text: "You know me too well."
   - lines:
       - speaker: A
-        text: "Mind the spill on table three — I'll get to it."
+        text: "Mind the spill on table three. I'll get to it."
       - speaker: B
         text: "Take your time. We've got nowhere to be."
   - lines:

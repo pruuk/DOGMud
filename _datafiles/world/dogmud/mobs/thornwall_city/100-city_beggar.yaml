@@ -21,6 +21,7 @@ relationships:
 knows_facts:
   - thornwall-hard-times
   - thornwall-road-bandits
+  - disc-ashwick-man
 idlecommands:
   - 'emote holds out a chipped cup, rattling the few coins inside'
   - 'emote huddles against the wall, pulling a thin blanket tighter'

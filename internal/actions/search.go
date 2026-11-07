@@ -97,10 +97,10 @@ type SearchOptions struct {
 	Feature string
 
 	// QuestFeatures are the room's quest search spots a plain search may
-	// uncover: the features of `verb: search` room_interact triggers that
-	// would fire for this player now (the caller asks the quest engine). A
-	// plain search rolls each at SearchRoomHiddenDifficulty; a feature
-	// search ignores them (its trigger fires with no roll).
+	// uncover: the features of search_at triggers that would fire for this
+	// player now (the caller asks the quest engine). A plain search rolls
+	// each at SearchRoomHiddenDifficulty; a feature search ignores them (its
+	// trigger fires with no roll).
 	QuestFeatures []string
 
 	// QuestStep is set when a `command: search` quest trigger in this room
@@ -130,7 +130,7 @@ type SearchResult struct {
 	HiddenPlayersFound    []int    // Tier 2 — user ids
 	HiddenMobsFound       []int    // Tier 2 — mob instance ids
 	HiddenNounsFound      []string // Tier 3 — player flavor
-	QuestFeaturesFound    []string // Tier 3: quest search spots a plain search uncovered (the caller raises room_interact)
+	QuestFeaturesFound    []string // Tier 3: quest search spots a plain search uncovered (the caller raises search_at)
 	BaubleFound           bool     // Tier 4: a bauble is on its way to the player (see search_bauble.go)
 
 	// Feature is the room's name for what `search <feature>` searched;
@@ -329,7 +329,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 }
 
 // isQuestSpot reports whether a feature is one of the quest search spots
-// the caller passed (the features whose `verb: search` trigger would fire).
+// the caller passed (the features whose search_at trigger would fire).
 func isQuestSpot(feature string, spots []string) bool {
 	for _, spot := range spots {
 		if strings.EqualFold(strings.TrimSpace(spot), feature) {
@@ -595,8 +595,8 @@ func searchWholeRoom(actor Actor, room *rooms.Room, opts SearchOptions, searchSc
 	}
 
 	// ── Tier 3 (SearchRoomHiddenDifficulty): Quest search spots ─
-	// Players only: the caller passes the spots whose `verb: search` trigger
-	// would fire for this player now, and raises room_interact for each one
+	// Players only: the caller passes the spots whose search_at trigger
+	// would fire for this player now, and raises search_at for each one
 	// found. A spot stops being offered once its step is done, so it is no
 	// lasting progression candidate.
 	if actor.IsPlayer() {

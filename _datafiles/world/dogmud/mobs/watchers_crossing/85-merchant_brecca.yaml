@@ -18,6 +18,7 @@ groups:
 knows_facts:
   - watchers-road-bandits
   - watchers-toll-grumbling
+  - disc-bookseller-pages
 relationships:
   - to: 86
     type: rival

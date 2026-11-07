@@ -34,6 +34,23 @@ func TestApplyMobOverrides_StaminaMax(t *testing.T) {
 	}
 }
 
+// Validate re-derives the maximums from stats, so an override that only wrote
+// the current Value was erased by the next Validate: the caravan wagon authored
+// at 1500 health spawned at 652.
+func TestApplyMobOverrides_SurviveValidate(t *testing.T) {
+	c := New()
+	ApplyMobOverrides(c, 1500, 9999, 0)
+	if err := c.Validate(true); err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if c.HealthMax.Value != 1500 {
+		t.Errorf("HealthMax.Value = %d after Validate, want 1500", c.HealthMax.Value)
+	}
+	if c.StaminaMax.Value != 9999 {
+		t.Errorf("StaminaMax.Value = %d after Validate, want 9999", c.StaminaMax.Value)
+	}
+}
+
 func TestApplyMobOverrides_CarryCapacity(t *testing.T) {
 	c := &Character{}
 	c.Stats.Strength.ValueAdj = 10 // would yield ~6.5 from default calc

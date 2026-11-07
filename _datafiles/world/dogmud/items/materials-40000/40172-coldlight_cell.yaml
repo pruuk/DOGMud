@@ -15,7 +15,7 @@ type: object
 subtype: mundane
 component_tag: coldlight-cell
 weight: 0.4
-value: 1100
+value: 550
 rarity_tier: 82
 is_component: true
 material_tier: 4

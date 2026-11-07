@@ -117,10 +117,10 @@ type Character struct {
 	Health                  int              // The health of the character
 	Stamina                 int              // The stamina of the character (physical energy)
 	Conviction              int              // The conviction of the character (mental/spiritual energy)
-	Toxicity                float64          `yaml:"toxicity,omitempty"`        // Current toxicity from potions
-	BloomAddiction          int              `yaml:"bloom_addiction,omitempty"` // Bloom-drug addiction level (0 = clean)
-	BloomLastDoseRound      uint64           `yaml:"-"`                         // runtime: round of last Bloom dose (abstinence clock)
-	BloomHadCommunion       bool             `yaml:"-"`                         // runtime: true while condition 90 was active last tick (Crash transition gate)
+	Toxicity                float64          `yaml:"toxicity,omitempty"`               // Current toxicity from potions
+	BloomAddiction          int              `yaml:"bloom_addiction,omitempty"`        // Bloom-drug addiction level (0 = clean)
+	BloomAbstinentRounds    uint64           `yaml:"bloom_abstinent_rounds,omitempty"` // Rounds spent online since the last Bloom dose, less a period per point decayed. Only time online counts (owner 2026-11-04), so logging out waits off nothing; saved, so a relog stops nothing either
+	BloomHadCommunion       bool             `yaml:"bloom_had_communion,omitempty"`    // True while condition 90 was active last tick (Crash transition gate). Saved so a Communion ending on the first round back still crashes
 	ActionPoints            int              // The resevoir of action points the character has to spend on movement etc.
 	ActionPointsSettled     bool             `yaml:"-"` // runtime: SettleActionPoints has run at least once (mobs only; movement parity 4b)
 	ActionPointsSettledTurn uint64           `yaml:"-"` // runtime: the turn ActionPoints was last settled to
@@ -150,6 +150,10 @@ type Character struct {
 	StaminaMax      stats.StatInfo        `yaml:"-"`                        // The maximum stamina of the character. Don't write to yaml since is dynamically calculated.
 	ConvictionMax   stats.StatInfo        `yaml:"-"`                        // The maximum conviction of the character. Don't write to yaml since is dynamically calculated.
 	ActionPointsMax stats.StatInfo        `yaml:"-"`                        // The maximum actions of character. Don't write to yaml since is dynamically calculated.
+	// bandolierReleases (transient, not serialized) is what the last wear's
+	// PreserveBandolier let go of, held for the equip command to tell the
+	// player (TakeBandolierReleases, #794).
+	bandolierReleases []BandolierReleaseNote `yaml:"-"`
 	// Taunt-hold lock (transient, not serialized): a successful taunt pins
 	// this character's aggro onto the taunter until tauntHoldUntilRound, so
 	// reactive basic-attack re-aggro can't flip the target back. Set via
@@ -360,6 +364,11 @@ type Character struct {
 	// ApplyMobOverrides for special mobs (wagons). Zero falls through
 	// to the default Strength-derived calc.
 	carryCapacityOverride float64 `yaml:"-"`
+	// Authored health_max and stamina_max (Stage 3.4). Held here because every
+	// Validate re-derives the pool maximums from stats and would otherwise
+	// erase them. Zero means use the stat-derived maximum.
+	healthMaxOverride  int `yaml:"-"`
+	staminaMaxOverride int `yaml:"-"`
 }
 
 // DriftRollSnapshot captures the chunk-4b grapple-tick drift roll

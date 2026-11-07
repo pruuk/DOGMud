@@ -878,6 +878,9 @@ type Balance struct {
 	// ── GOSSIP SYSTEM ────────────────────────────────────────────────────────
 	GossipIntervalRounds ConfigInt `yaml:"GossipIntervalRounds"` // Rounds between gossip broadcasts for "gossiper" group mobs; 0 turns gossip off, 1 to 19 read as 75 (default 75)
 
+	// Rounds a "gossiper" waits between facts tagged hint, spoken only to a listener; 0 turns it off.
+	GossipHintIntervalRounds ConfigInt `yaml:"GossipHintIntervalRounds"`
+
 	// ── AMBIENT (#317) ───────────────────────────────────────────────────────
 	// One knob per unprompted-line source. 0 turns a source off; an absent
 	// key keeps today's behaviour through the -1 sentinel seeded in
@@ -913,6 +916,8 @@ type Balance struct {
 	BloomNewMutationChance     ConfigFloat `yaml:"BloomNewMutationChance"`     // chance/dose to instead grant a new mutation (default 0.10)
 	BloomCommunionRounds       ConfigInt   `yaml:"BloomCommunionRounds"`       // communion high duration in rounds (default 30)
 	BloomCrashRoundsMult       ConfigFloat `yaml:"BloomCrashRoundsMult"`       // crash duration = communion * this (default 2.5)
+	BloomDealerWafersPerDay    ConfigInt   `yaml:"BloomDealerWafersPerDay"`    // wafers one character may buy within the window (default 3)
+	BloomDealerWindowHours     ConfigInt   `yaml:"BloomDealerWindowHours"`     // the rolling window, in real hours (default 24)
 
 	// ── MANIFESTATION / COMPANION SCALING ───────────────────────────────────
 	ManifestStatScaleChaFactor   ConfigInt   `yaml:"ManifestStatScaleChaFactor"`   // Charisma divisor for companion stat scaling (default 150)
@@ -1017,7 +1022,7 @@ type Balance struct {
 	GoldPerAffixPoint ConfigFloat `yaml:"GoldPerAffixPoint"` // Gold value per affix cost-point on instance/affixed loot (default 3.0)
 
 	// ── INSTANCES ────────────────────────────────────────────────────────────
-	InstanceStatPoolCap ConfigInt `yaml:"InstanceStatPoolCap"` // Max stat pool per mob in instances (default 50000, 0=uncapped)
+	InstanceStatPoolCap ConfigInt `yaml:"InstanceStatPoolCap"` // Max stat pool per mob in instances (default 50000; values below 1 read as 50000, so it is always capped)
 	// Gold a paid-instance mob carries, per 100 gold of entry, by tier (the
 	// spawn's stat-pool multiplier: 1 or less regular, 2-3 tough, 4+ boss).
 	// The entry is clamped to what InstanceStatPoolCap lets the mob grow by.

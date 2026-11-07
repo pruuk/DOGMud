@@ -14,7 +14,7 @@ type: object
 subtype: mundane
 component_tag: void-quenched-obsidian
 weight: 0.6
-value: 1400
+value: 700
 rarity_tier: 82
 is_component: true
 restricted: true

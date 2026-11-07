@@ -207,64 +207,44 @@ quest|62|rewards|observer => Tamsin Reed presses coin and a small vial into the 
 quest|62|trigger0|action1|actor => The marsh adder coils, strikes once at nothing, and goes limp in the reeds. The south approach is quiet. Carry the word back to Tamsin at the ford landing.
 quest|63|rewards|actor => The matter settles the way the docks settle things: quietly, and for good. Hewd will answer for the difference between his two columns, and Teo goes back on the board in the morning. The dockfolk will hear who sorted it, and down here that is worth more than coin, though there is coin in it too.
 quest|63|rewards|observer => Word moves along the wharves in the way it does, and more than one dockhand gives the traveller a short, respectful nod.
-quest|63|trigger0|action2|actor => The proud board lifts with a little persuasion. In the gap beneath, wrapped in oilcloth, lies a small tally-book, and a glance inside is enough. Two columns of numbers for every shipment: the manifest count on the left, the real one on the right. Foreman Hewd has been skimming the difference for a long time, and the shortage he reported was Teo's only by his choosing.
-quest|63|trigger0|action3|observer => <ansi fg="username">Aliceia</ansi> works a loose floorboard free and pockets something wrapped in oilcloth.
-quest|63|trigger1|action0|actor => One floorboard sits a little proud of its neighbors. You could work it loose, but prying up another man's floor without a reason is a fast way to find trouble you came here to avoid.
-quest|63|trigger2|action2|actor => The proud board lifts with a little persuasion. In the gap beneath, wrapped in oilcloth, lies a small tally-book, and a glance inside is enough. Two columns of numbers for every shipment: the manifest count on the left, the real one on the right. Foreman Hewd has been skimming the difference for a long time, and the shortage he reported was Teo's only by his choosing.
-quest|63|trigger2|action3|observer => <ansi fg="username">Aliceia</ansi> works a loose floorboard free and pockets something wrapped in oilcloth.
-quest|63|trigger3|action0|actor => One floorboard sits a little proud of its neighbors. You could work it loose, but prying up another man's floor without a reason is a fast way to find trouble you came here to avoid.
-quest|63|trigger4|action1|actor => You lift the board again. Hewd kept a fair copy as well as his working book, and it is still there in the oilcloth. You take it.
-quest|63|trigger4|action2|observer => <ansi fg="username">Aliceia</ansi> lifts a loose floorboard and takes something wrapped in oilcloth.
-quest|63|trigger5|action1|actor => You lift the board again. Hewd kept a fair copy as well as his working book, and it is still there in the oilcloth. You take it.
-quest|63|trigger5|action2|observer => <ansi fg="username">Aliceia</ansi> lifts a loose floorboard and takes something wrapped in oilcloth.
+quest|63|trigger0|action1|actor => You lift the board again. Hewd kept a fair copy as well as his working book, and it is still there in the oilcloth. You take it.
+quest|63|trigger0|action2|observer => <ansi fg="username">Aliceia</ansi> lifts a loose floorboard and takes something wrapped in oilcloth.
+quest|63|trigger1|action2|actor => One floorboard sits proud of its neighbors, and it lifts with a little persuasion. In the gap beneath, wrapped in oilcloth, lies a small tally-book, and a glance inside is enough. Two columns of numbers for every shipment: the manifest count on the left, the real one on the right. Foreman Hewd has been skimming the difference for a long time, and the shortage he reported was Teo's only by his choosing.
+quest|63|trigger1|action3|observer => <ansi fg="username">Aliceia</ansi> works a loose floorboard free and pockets something wrapped in oilcloth.
+quest|64|trigger0|action0|actor => A woman on the first landing looks at you and does not move out of the way. The floors above are condemned, she says, and the chair across the stair stays where it is.
+quest|64|trigger1|action0|actor => A woman on the first landing looks at you and does not move out of the way. The floors above are condemned, she says, and the chair across the stair stays where it is.
 quest|65|rewards|actor => Coll turns the cold gray lump over in his sweeper's hands, and for once he has nothing to say for a long moment. "Older than the city. Under the city. And it washes up in my gutters when the rain's hard enough to loosen it." He pockets it carefully. "The bookseller wasn't wrong to go quiet. Keep this between us. The sort who'd want to know about a buried city aren't the sort I'd want knowing I found it. But you did right by an old sweeper, and the quarter remembers that."
 quest|65|rewards|observer => Coll the sweeper closes his hand around a cold gray lump and, for once, says nothing at all.
-quest|65|trigger0|action2|actor => You set a hand to the seam and the cold of it goes straight to the bone: not the cold of stone but something older and more patient. A lump comes loose in your fingers, fist-sized and far too heavy: the same gray material Coll finds in fragments, here in the mass, seamed through worked stone that was old before New Plymouth's first wall was laid. The rain loosens pieces of it and the gutters carry them up to the streets above. This is the source.
-quest|65|trigger0|action3|observer => <ansi fg="username">Aliceia</ansi> works a heavy gray lump loose from a seam in the old stonework.
-quest|65|trigger1|action0|actor => A seam of cold gray material runs through the old stone. Not quarried rock, something stranger and far older. You could work a piece loose, but without a reason it is just a curiosity in the dark.
-quest|65|trigger2|action2|actor => You set a hand to the seam and the cold of it goes straight to the bone: not the cold of stone but something older and more patient. A lump comes loose in your fingers, fist-sized and far too heavy: the same gray material Coll finds in fragments, here in the mass, seamed through worked stone that was old before New Plymouth's first wall was laid. The rain loosens pieces of it and the gutters carry them up to the streets above. This is the source.
-quest|65|trigger2|action3|observer => <ansi fg="username">Aliceia</ansi> works a heavy gray lump loose from a seam in the old stonework.
-quest|65|trigger3|action0|actor => A seam of cold gray material runs through the old stone. Not quarried rock, something stranger and far older. You could work a piece loose, but without a reason it is just a curiosity in the dark.
-quest|65|trigger4|action1|actor => You work another lump of the gray material loose from the seam. It is just as cold, and just as heavy.
-quest|65|trigger4|action2|observer => <ansi fg="username">Aliceia</ansi> works a heavy gray lump loose from a seam in the old stonework.
-quest|65|trigger5|action1|actor => You work another lump of the gray material loose from the seam. It is just as cold, and just as heavy.
-quest|65|trigger5|action2|observer => <ansi fg="username">Aliceia</ansi> works a heavy gray lump loose from a seam in the old stonework.
-quest|66|rewards|actor => Teels will be stable, for now. Ysolde was clear: the purge holds until the craving comes back, and the craving comes back while the source is still running. The wrapper is gone but the smell stays with you. The docks know where the Bloom comes from, or someone on them does.
+quest|65|trigger0|action1|actor => You work another lump of the gray material loose from the seam. It is just as cold, and just as heavy.
+quest|65|trigger0|action2|observer => <ansi fg="username">Aliceia</ansi> works a heavy gray lump loose from a seam in the old stonework.
+quest|65|trigger1|action2|actor => You set a hand to the seam and the cold of it goes straight to the bone: not the cold of stone but something older and more patient. A lump comes loose in your fingers, fist-sized and far too heavy: the same gray material Coll finds in fragments, here in the mass, seamed through worked stone that was old before New Plymouth's first wall was laid. Floodwater works pieces of it loose, backs up the old drains and leaves them in the gutters above. This is the source.
+quest|65|trigger1|action3|observer => <ansi fg="username">Aliceia</ansi> works a heavy gray lump loose from a seam in the old stonework.
+quest|66|rewards|actor => Teels gets the cup down, and the purge does what Ysolde said it would, and it is ugly to watch. When it is over they are shaking, and clear, and still here. Ysolde told you the rest: the purge holds until the craving comes back, and the craving comes back while the source is still running. The wrapper is gone but the smell stays with you. The docks know where the Bloom comes from, or someone on them does.
 quest|66|rewards|observer => The traveller looks up from a quiet exchange with the look of someone who has just learned something they cannot unlearn.
 quest|67|rewards|actor => The trade is broken, for now. The constable took the case file and his jaw was set when he read it. Deren stays untouched. The bloodline office is a wall you cannot move with evidence. But the supply stops, and that buys Teels a chance. One life you could reach.
 quest|67|rewards|observer => A wharfside quiet settles over the traveller, the look of someone who has done what could be done.
-quest|68|trigger2|action2|actor => A floorboard by the cot sits proud of its neighbors. Beneath it, wrapped in oilcloth against the damp, is a torn quarter of a survey in an old, exact hand: Edvar's work, the map Toby said was hidden here. You ease it free and pocket it.
-quest|68|trigger2|action3|observer => <ansi fg="username">Aliceia</ansi> works a loose floorboard free and lifts something wrapped in oilcloth.
-quest|68|trigger3|action0|actor => One floorboard near the cot sits a little proud of the rest. Prying up the floor of an occupied workshop without a reason is the kind of thing that ends a welcome before it starts. You leave it.
-quest|68|trigger4|action0|actor => The cooper's guild mark, a stave and hammer, is painted beside the door, the paint cracked and lifting. Re-cut, it would tell any clerk this is a working shop. Whether that happens is the circle's to decide, and Orin speaks for the circle.
-quest|68|trigger5|action0|actor => The cooper's guild mark, a stave and hammer, is painted beside the door in faded paint. Re-cutting it would be a real act with real consequences. You do not yet have a reason to.
-quest|68|trigger6|action2|actor => A floorboard by the cot sits proud of its neighbors. Beneath it, wrapped in oilcloth against the damp, is a torn quarter of a survey in an old, exact hand: Edvar's work, the map Toby said was hidden here. You ease it free and pocket it.
-quest|68|trigger6|action3|observer => <ansi fg="username">Aliceia</ansi> works a loose floorboard free and lifts something wrapped in oilcloth.
-quest|68|trigger7|action0|actor => One floorboard near the cot sits a little proud of the rest. Prying up the floor of an occupied workshop without a reason is the kind of thing that ends a welcome before it starts. You leave it.
-quest|68|trigger8|action1|actor => The board is loose and the space beneath it is empty. You already have Edvar's survey. Take it to Orin.
-quest|68|trigger9|action1|actor => The board is loose and the space beneath it is empty. You already have Edvar's survey. Take it to Orin.
-quest|68|trigger10|action0|actor => The cooper's guild mark, a stave and hammer, is painted beside the door, the paint cracked and lifting. Re-cut, it would tell any clerk this is a working shop. Whether that happens is the circle's to decide, and Orin speaks for the circle.
-quest|68|trigger11|action0|actor => The cooper's guild mark, a stave and hammer, is painted beside the door in faded paint. Re-cutting it would be a real act with real consequences. You do not yet have a reason to.
+quest|68|trigger2|action1|actor => You lift the loose floorboard by the cot, quietly. Edvar's survey is back in its oilcloth where someone returned it, or another quarter of it is. You ease it free.
+quest|68|trigger2|action2|observer => <ansi fg="username">Aliceia</ansi> works a loose floorboard free and lifts something wrapped in oilcloth.
+quest|68|trigger4|action1|actor => A floorboard by the cot sits proud of its neighbors, as Toby said. You keep your hands quiet. Beneath it, wrapped in oilcloth against the damp, is a torn quarter of a survey in an old, exact hand: Edvar's work. You ease it free.
+quest|68|trigger4|action2|observer => <ansi fg="username">Aliceia</ansi> works a loose floorboard free and lifts something wrapped in oilcloth.
 quest|69|rewards|actor => Dross lays the rubbing and the reading side by side and goes very quiet, which for him is remarkable. "It holds," he says. "Every line of it holds." He has a proof now that no honest examiner could dismiss, and he is, you both understand, a man no one with power has ever been obliged to honestly examine. Still. It is known now, and you are one of the few who know it.
 quest|69|rewards|observer => The traveller has the look of someone who has read something that cannot be un-read.
-quest|69|trigger0|action2|actor => You press paper to the processional relief and work charcoal across it. The figures come up under your hand, and the longer you look, the less devotional they seem. Each hand is positioned too precisely to be art. Read along the row, they are a sequence: a number, set into stone by someone who wanted it kept where it could not be edited out.
-quest|69|trigger0|action3|observer => <ansi fg="username">Aliceia</ansi> takes a careful charcoal rubbing of the old processional reliefs.
-quest|69|trigger1|action0|actor => The processional figures are very old, older somehow than the plaque that names them. Their hands are oddly placed. Without a reason to study them you move on.
-quest|69|trigger4|action1|actor => You press a fresh sheet to the processional relief and work the charcoal across it again. The hands come up in the same precise row, the same counted sequence.
-quest|69|trigger4|action2|observer => <ansi fg="username">Aliceia</ansi> takes a careful charcoal rubbing of the old processional reliefs.
-quest|70|rewards|actor => Orin turns the rubbing toward the lamp and is quiet for a long moment. "So it is really down there," he says. "The painting copied this, and the cipher counts toward it, and now there is a rubbing of the thing itself. Gritta found it, you stood under it, and I will see it reaches the people who can hold it." He files it away with a care that is its own kind of reverence. You are, without anything being said, part of the quiet now.
-quest|70|rewards|observer => The old bookseller gives the traveller a slow nod, the kind that settles something unspoken between them.
-quest|70|trigger0|action2|actor => You press paper to the underside of the lintel and bring the symbol up in charcoal: four concentric rings, eight points at equal intervals, cut by someone who drew it before they carved it. The colony arrived here, found this, and wrote itself into the founding record as first. The rubbing in your hands says otherwise, quietly, the way the stone does.
-quest|70|trigger0|action3|observer => <ansi fg="username">Aliceia</ansi> takes a careful rubbing of the symbol carved beneath the buried lintel.
-quest|70|trigger1|action0|actor => The symbol on the lintel's underside is clean and deliberate: rings and eight points, cut to be read by someone passing beneath. Without a reason to record it, you only look.
-quest|70|trigger2|action0|actor => The seam of gray material runs along the flood line, wider here than in the galleries, smooth where the black water works it, taking no mark, no wear. It does not belong to any stone the colony has a name for. It was here before the canal, before the quarter, before the founding the city teaches.
+quest|69|trigger0|action1|actor => You press a fresh sheet to the processional relief and work the charcoal across it again. The hands come up in the same precise row, the same counted sequence.
+quest|69|trigger0|action2|observer => <ansi fg="username">Aliceia</ansi> takes a careful charcoal rubbing of the old processional reliefs.
+quest|69|trigger1|action2|actor => You press paper to the processional relief and work charcoal across it. The figures come up under your hand, and the longer you look, the less devotional they seem. Each hand is positioned too precisely to be art. Read along the row, they are a sequence: a number, set into stone by someone who wanted it kept where it could not be edited out.
+quest|69|trigger1|action3|observer => <ansi fg="username">Aliceia</ansi> takes a careful charcoal rubbing of the old processional reliefs.
+quest|70|rewards|actor => The rubbing is out of your hands now. Whatever the city teaches about its founding, someone up here has seen what is carved beneath it, and the stone simply goes on being older.
+quest|70|rewards|observer => The old bookseller files a sheet of charcoal rubbing away and says nothing more about it.
+quest|70|trigger0|action1|actor => You press a fresh sheet to the underside of the lintel and bring the rings and the eight points up in charcoal again.
+quest|70|trigger0|action2|observer => <ansi fg="username">Aliceia</ansi> takes a careful rubbing of the symbol carved beneath the buried lintel.
+quest|70|trigger1|action2|actor => You press paper to the underside of the lintel and bring the symbol up in charcoal: four concentric rings, eight points at equal intervals, cut by someone who drew it before they carved it. The colony arrived here, found this, and wrote itself into the founding record as first. The rubbing in your hands says otherwise, quietly, the way the stone does.
+quest|70|trigger1|action3|observer => <ansi fg="username">Aliceia</ansi> takes a careful rubbing of the symbol carved beneath the buried lintel.
 quest|71|rewards|actor => Ostry reads the page once, folds it, and puts it somewhere you do not see. "I cannot fight them with this," she says, "and I am not fool enough to try. But I can let the right person know I have it, and tomorrow my deposit comes back and my permit clears, and nobody says why. That is how it works down here." She presses a blade into your hands before you can decline it. "You will get more use from it than from my thanks."
 quest|71|rewards|observer => Dame Ostry clasps the traveller's forearm once, hard and brief, the nearest thing she has to ceremony.
-quest|71|trigger2|action2|actor => The torn scrap on the floor reads "before the permit clears", and the page it tore from is still on the table among the cup rings, slid half under a ledger-board. You take it: a column of quarterly sums against vendor names, every figure routed up to one unnamed account. It does not prove a crime. It proves exactly where the money goes, and who waits on whom.
-quest|71|trigger2|action3|observer => <ansi fg="username">Aliceia</ansi> palms a page from the table among the cup rings.
-quest|71|trigger3|action0|actor => A torn scrap on the floor carries four words, "before the permit clears", in a careful hand. There is more to it somewhere, but lifting papers from this room uninvited, before you know whose they are, is the kind of mistake the Gilt Threshold is built to punish.
-quest|71|trigger5|action1|actor => The ledger-board is still on the table among the cup rings, and another page of the same column has worked loose beneath it. You take it: the same quarterly sums, routed up to the same unnamed account.
-quest|71|trigger5|action2|observer => <ansi fg="username">Aliceia</ansi> palms a page from the table among the cup rings.
+quest|71|trigger2|action1|actor => The ledger-board is still on the table among the cup rings, and another page of the same column has worked loose beneath it. You take it: the same quarterly sums, routed up to the same unnamed account.
+quest|71|trigger2|action2|observer => <ansi fg="username">Aliceia</ansi> palms a page from the table among the cup rings.
+quest|71|trigger3|action2|actor => The torn scrap on the floor reads "before the permit clears", and the page it tore from is still on the table among the cup rings, slid half under a ledger-board. You take it: a column of quarterly sums against vendor names, every figure routed up to one unnamed account. It does not prove a crime. It proves exactly where the money goes, and who waits on whom.
+quest|71|trigger3|action3|observer => <ansi fg="username">Aliceia</ansi> palms a page from the table among the cup rings.
 quest|72|rewards|actor => Word of the settling runs the valley before you have even left the lane. Whatever was decided, the shouting at the Golden Bough will quiet now, and that alone has earned you a place at its hearth.
 quest|72|rewards|observer => The traveller has the settled look of someone who has untangled a thing that stayed knotted for a long time.
 quest|72|trigger0|action1|actor => You climb the slide and look it over. A whole span of the old aqueduct lies buried under fallen rock and slumped earth. Above it the water stands brimming and blocked; below it the bed runs dry all the way down to the farms. Neither man cut this channel. The hill did. It is far too much stone for one back, but a valley turned out with ropes could clear it in a day, and then the water would run down to both farms at once. Hesper at the Golden Bough could call them out.
@@ -287,8 +267,8 @@ quest|74|trigger2|action1|actor => The mason's survey is the plainest of the thr
 quest|74|trigger2|action2|observer => <ansi fg="username">Aliceia</ansi> examines the old mason's survey framed in the corridor.
 quest|74|trigger4|action2|actor => You read the carving the way the mason's survey taught you to read stone. Four rings, cut with an instrument's care, where the temple's teaching keeps to three. The temple did not miscount. It chose a count, and built three hundred years on the choice, and set its floor over the wall that remembers otherwise. There was a fourth. The sky the Founders found was not the sky we are taught. You take a rubbing of it, proof in soft black line, and the dark keeps the rest of its counsel. Whatever unmade the fourth, the stone does not say. That answer is somewhere else.
 quest|74|trigger4|action3|observer => <ansi fg="username">Aliceia</ansi> takes a careful rubbing from the great carving on the chamber wall.
-quest|75|rewards|actor => You carry a retired surveyor's directions to a place he would not name. The road runs east into the highland country, older and stranger than the university's quiet maps. Whatever Reth saw out there and chose not to write down is still out there, waiting in the broken hills. That climb is for another day.
-quest|75|trigger0|action1|actor => You read the survey the way someone looking for what is not said would read it. The site is classified as a mineral deposit in three lines. A survey of that site -- elevations, material samples, seasonal access -- would ordinarily run to a page or more. This one does not. The entry is formal and correct and stops exactly where the detail should get louder. Reth saw something out there, and he filed a paper that buries it. Time to take this back to Brennan.
+quest|75|rewards|actor => You carry a retired surveyor's directions to a place he would not name. The road runs east into the highland country, older and stranger than the university's quiet maps. Whatever Reth saw out there and chose not to write down is still out there, waiting in the broken hills.
+quest|75|trigger0|action1|actor => You read the survey the way someone looking for what is not said would read it. The site is classified as a mineral deposit in three lines. A survey of that site, with elevations, material samples and seasonal access, would ordinarily run to a page or more. This one does not. The entry is formal and correct and stops exactly where the detail should get louder. Reth saw something out there, and he filed a paper that buries it. Time to take this back to Brennan.
 quest|75|trigger0|action2|observer => <ansi fg="username">Aliceia</ansi> reads the thin filed survey with sudden, careful attention.
 quest|75|trigger1|action0|actor => An old survey filed under the eastern country, dry and technical. Without a reason to read it closely, it is only a brief, dull entry.
 quest|75|trigger3|action3|actor => Reth takes a folded map from the table and holds it out without looking at it: his own hand, a route inked in red, a circled waymark, elevation ticks. No name for what is at the end of it.
@@ -327,6 +307,7 @@ quest|76|trigger11|action2|observer => <ansi fg="username">Aliceia</ansi> turns 
 quest|76|trigger12|action1|actor => Under the bleached poles someone has slept more recently than the surveyors. A flint tin, empty. A boot-print of old ash at the fire ring. On the pole nearest the fire the same mark is cut, and under it, smaller, a tally of days that stops at nine. Whoever he was, he left his bedding and took his tools, east, past where the green stops. There are tracks over his now, large ones, and they do not care who has walked here.
 quest|76|trigger12|action2|observer => <ansi fg="username">Aliceia</ansi> searches the ruins of the old camp.
 quest|76|trigger13|action1|actor => The alpha is down, and the ground it held lies open to the east, bare and wrong and very quiet.
+quest|76|trigger14|action0|actor => The lining of the satchel is empty now. You already hold his spare. Type cast glow to wake it.
 quest|76|trigger15|action1|actor => In the lining of the satchel your fingers find a second grey disc, cool and dead in the hand, the twin of the one you woke. He had brought a spare. Of course he had.
 quest|76|trigger17|action1|actor => Under the fallen lean-to, where a man would lie who meant to get up in
 the morning, there is a strap, a coat gone to threads and not many bones.
@@ -356,15 +337,15 @@ quest|76|trigger20|action4|observer => <ansi fg="username">Aliceia</ansi> holds 
 quest|76|trigger21|action1|actor => The Sentinel stops, all at once, the way a thing stops when it has only ever been waiting. The disc warms against your side. The door is close.
 quest|77|rewards|actor => You know now. It sits in you like a swallowed stone. The sky will never look the same, and neither will the blessed, and neither will you. Be careful who you tell.
 quest|77|trigger0|action2|actor => You stand among the stones and let the light find them, and one
-by one they wake — a slow inner glow, a drift of moving marks —
+by one they wake, a slow inner glow and a drift of moving marks,
 and though you cannot read the tongue, the stones do not need you
 to. They show. They lay it out plainly, the whole of it, in
 light and in shape, and you understand it the way you understand
 a face, all at once and without wanting to.
 
 They show a dark with no floor and no walls, and points of cold
-fire strewn across it past all counting, and — falling through
-that dark on a long spear of fire — this. This place, whole once,
+fire strewn across it past all counting, and, falling through
+that dark on a long spear of fire, this. This place, whole once,
 a vessel. Not built by any hand of the world. Built to cross the
 impossible black, and full of people. People who chose to come.
 Who left somewhere behind and set out across a distance the mind
@@ -374,7 +355,7 @@ purpose. From somewhere else.
 
 The stones show the landing, and the sickness after. A fine thing
 in the soil and the water and the air of this world, waiting,
-native to it — and the strangers had no armour against it. It
+native to it, and the strangers had no armour against it. It
 took them. It changed them, root and blood, into something the
 world would learn to call blessed. But there was nothing chosen
 in it, and nothing holy. The Chrysalis was here before them. The
@@ -384,7 +365,7 @@ they were only the first to burn with it.
 The stones show the few it could not touch. Not favoured. Not
 spared by any will above. Only made, by the blind luck of how
 they were built inside, so that the fever found no purchase in
-them — and their children after, and theirs, carrying that dumb
+them, and their children after, and theirs, carrying that dumb
 accident down the long years until it wore the shape of divine
 right. The bloodline. Their immunity was never grace. It was the
 cruelest kind of chance, and a whole world knelt to it.
@@ -404,7 +385,7 @@ who has been handed a weight and told it is theirs now, forever.
 
 quest|77|trigger0|action3|observer => <ansi fg="username">Aliceia</ansi> stands motionless before the wall of moving light, and for a long moment does not seem to breathe.
 quest|77|trigger1|action0|actor => The stones stir at your light and then settle. They wait to be asked, and you do not yet know what to ask. The one at the door might.
-quest|77|trigger2|action0|actor => They are only stones again now, dark until the light finds them — but you know what they hold, and you know it holds you. The crossing, the fever, the luck, the waiting lights. You have read it. You will always have read it.
+quest|77|trigger2|action0|actor => They are only stones again now, dark until the light finds them, but you know what they hold, and you know it holds you. The crossing, the fever, the luck, the waiting lights. You have read it. You will always have read it.
 quest|98|rewards|actor => Gethin nods slowly. "Now you know what your light is for, and what the hood is for. A light lets you see. A closed hood lets you stay unseen. Keep the lantern. It is yours."
 quest|98|trigger1|action1|actor => The lantern settles in your light slot and its glow trims itself to your eyes. Now go west from the Mine Head, into the drift.
 quest|98|trigger2|action1|actor => The drift has no light of its own, only what is carried into it. Type hood to close your lantern.
@@ -421,5 +402,6 @@ quest|100|trigger2|action1|actor => Your first blow comes out of the dark. It kn
 quest|100|trigger3|action1|actor => It falls. Climb back out of the mine and tell Dace on the Reed Jetty.
 quest|101|rewards|actor => Dace watches your hands, not the purses. "Quicker. Come back when your fingers start to forget."
 quest|101|trigger0|action1|actor => That is three. Go and tell Dace. Type talk dace.
-quest|1000000|rewards|actor => Congratulations, here's some stuff!
-quest|1000000|rewards|observer => A Generic Quest has been completed!
+quest|102|trigger0|action0|actor => The cupboard door is barred from the other side and does not give. It opens only to the right knock.
+quest|102|trigger1|action0|actor => Marn raps one clean knuckle on the shelf beside him, too low for the shop to hear: three short, then one. "Low on the frame," he says.
+quest|102|trigger2|action1|actor => The bar lifted at your knock, and the talk in here has not quite stopped. "...three months at minimum before the new one's producing at volume, if she survives the first month." A man you had not noticed by the shelves looks at you and goes out past you without a word. The one at the table squares his ledger and waits. You think about a condemned floor, and a woman with no change on her, and the gold you were paid.

@@ -141,27 +141,75 @@ command, and the player prompt.
 ```yaml
 is_bandolier: true
 bandolier_capacity: 6
-preserves_contents: true     # contents never age while stored
-ambient_potions: true        # slotted potions' conditions stay always-on
+preserves_contents: true     # contents held at peak; a potion taken out rots
+ambient_potions: true        # takes only helpful potions; their conditions stay always-on
 ```
 
-- **`preserves_contents`** freezes aging: each round,
-  `tickPreserveContents` advances every slotted potion's
-  `CraftedRound` by 1 in lockstep with the round counter, so the
-  aging-elapsed calculation (`now - CraftedRound`) never grows.
-- **`ambient_potions`** keeps every slotted potion's `ConditionIds`
-  continuously applied at **Peak potency (1.30x)**, `AddConditionScaled`,
-  while the bandolier is worn and **attuned**. Drink-blocking of
-  slotted potions is deferred to Stage 2 — Stage 1 does not stop you
-  from drinking a slotted potion directly.
+Owner ruling 2026-11-06 (#794) set the rules below; the code lives in
+`internal/characters/bandolier.go`.
+
+- **`preserves_contents`** holds every slotted potion at **peak**
+  (`items.PeakPotency`, 1.30x), whatever its age, and a shop-bought
+  potion that never ages counts as peak too. The hold is a mark, not a
+  clock: a slotted potion carries `Item.Preserved`, its wearer reads it
+  through `Character.PotionAging` (peak), and `Item.AgingAt` reads a
+  Preserved potion anywhere else as **spoiled**. So taking a potion out
+  rots it at once, by any path (get from the bandolier, give, sell,
+  salvage, a quest hand-in), with no hook on each path. Taking the belt
+  off, or swapping another belt on over it, spills its potions to the
+  backpack, rotted (`spillPreservedOnBeltSwap`, `RemoveFromBody`).
+  Drinking a slotted potion consumes it and is not removal. Get, remove
+  and equip tell the player which potions soured. `tickPreserveContents`
+  applies the mark every round and once at login; nothing touches
+  `CraftedRound`, so an offline gap changes nothing. A potion whose kind
+  has no aging thresholds rots the same way: the mark, not its age,
+  decides.
+- **`ambient_potions`** takes only potions whose held effect helps
+  (`ItemSpec.AmbientBeneficial`: a potion, not thrown, not a detox, with
+  a condition to hold), not spoiled, and one per held effect: a potion
+  that gives a condition a slotted potion already gives is refused (one
+  per condition id, not per item; the Elixir of Renewal and the Mire
+  Renewal Draught share one). `Character.AmbientBandolierRefusal` says
+  which. `StoreItem` routes a refused item to the backpack (only one belt
+  is worn, so there is no other bandolier); `sort` names it and why. A
+  spoiled potion is refused so a rotted one cannot be slotted back to
+  peak.
+- **Putting the belt on applies its rules at once.** The wear path runs
+  `Character.PreserveBandolier` right after a belt swap: the belt keeps
+  what it marked, takes the rest under the rules above and its capacity,
+  and lets go of the others to the backpack, unmarked and so still sound;
+  `equip` names each one and why. The tick and login run the same pass
+  (a save from before #794). A potion reads at peak, and rots on leaving,
+  only once it carries the mark.
+- **Selling and drinking.** A potion the bandolier holds is not for sale:
+  sell and offer say it is held and would sour, and nothing moves
+  (`QuoteSale`). A potion whose effect the bandolier already sustains is
+  not drunk (`DrinkRefuseSustained`), and is kept: the hold holds one
+  record per condition and would absorb the drink.
+- **Every exit tells the player.** Get, remove, equip, salvage, give
+  (any hand-in), a scripted quest take (`GameBridge.ConsumeItem`, which
+  now reaches the bandolier) and a species that closes the belt slot
+  (which spills the bandolier rather than orphaning its potions) print
+  "The X sours the moment it leaves your Y."
+- The ambient hold keeps every slotted potion's `ConditionIds` held as
+  **permanent** records while the bandolier is worn and **attuned**, so
+  the conditions panel and the `conditions` command read "sustained". A
+  condition that reads a magnitude (the Pitsense Tincture's infravision
+  reach) is held at the potion's peak magnitude
+  (`items.PotionMagnitudeApplication` at `items.PotionDurationMult`).
+  `desiredAmbientConditions` skips any kind `AmbientBeneficial` refuses,
+  as a backstop. When a potion leaves, only the bandolier's permanent
+  record goes (`releaseAmbient`): a timed record from drinking it runs
+  its course. Drink-blocking of slotted potions is deferred to Stage 2:
+  Stage 1 does not stop you from drinking a slotted potion directly.
 - **Attunement / content-fingerprint mechanism**: each tick builds a
   fingerprint of `beltItemId + sorted potion itemIds`
   (`bandolierFingerprint`). Any change — a slotted potion drunk,
   added, removed, or the belt itself swapped — flips the fingerprint,
-  which immediately revokes all ambient conditions and stamps a cooldown
-  running `Balance.BandolierAttuneRounds` (default 100) rounds into
-  the future. Ambience only resumes once the fingerprint has been
-  stable through that whole window. First-ever equip also counts as a
+  which releases the conditions of potions that left, keeps the rest
+  held, and (when a new effect appeared) stamps a cooldown running
+  `Balance.BandolierAttuneRounds` rounds into the future. The new effect
+  starts once the fingerprint has been stable through that window. First-ever equip also counts as a
   fingerprint change (fp goes `"" → something`), so a freshly-equipped
   bandolier always pays the attunement cooldown once.
 

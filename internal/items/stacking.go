@@ -29,6 +29,11 @@ func SameStack(a, b Item) bool {
 	if a.Uses != b.Uses {
 		return false
 	}
+	// A preserved potion out of its bandolier has rotted (Item.AgingAt), so
+	// it never stacks with one that has not.
+	if a.Preserved != b.Preserved {
+		return false
+	}
 	if a.EnchantType != b.EnchantType {
 		return false
 	}

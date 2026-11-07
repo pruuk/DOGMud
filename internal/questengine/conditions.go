@@ -33,6 +33,11 @@ func EvalConditions(c Conditions, p PlayerState) bool {
 	if c.MissingItem > 0 && p.HasItem(c.MissingItem) {
 		return false
 	}
+	for _, id := range c.MissingItems {
+		if p.HasItem(id) {
+			return false
+		}
+	}
 	for key, val := range c.HasFlag {
 		if p.GetQuestFlag(key) != val {
 			return false

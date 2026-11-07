@@ -1,0 +1,16 @@
+ephemeral:
+  profile: m2-actor
+  start_room: 5706
+  overlays:
+    set_quest_tokens: [68-start, 68-evidence, 68-survey, 68-choice]
+    grant_items: [40113, 20096]
+  budgets:
+    wall_clock: 45m
+goals:
+  - >-
+    Go to Clerk Vell, hear what filing the survey means, and hand it over. Quote it. Type `talk orin`
+    and `talk toby` and quote both. Quote game lines VERBATIM and in order.
+  - >-
+    Go to Gritta. Say whether she nods at what you did, as she should not. Take The Pre-Founding Web,
+    take the rubbing with a light, and bring it to Orin. Quote the hand-in and the reward. Say whether
+    anything treats you as a friend of the circle. Quote game lines VERBATIM and in order.

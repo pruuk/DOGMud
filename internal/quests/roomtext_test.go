@@ -44,7 +44,7 @@ func TestRoomTextProblems(t *testing.T) {
 // both.
 func roomTextQuest(top, nested string) *Quest {
 	q := &Quest{QuestId: 90001, Name: "Room Text Test", Steps: []QuestStep{{Id: "start"}},
-		Triggers: []TriggerDef{{Event: "room_interact"}}}
+		Triggers: []TriggerDef{{Event: "look_at"}}}
 	if top != "" {
 		q.Triggers[0].Actions = append(q.Triggers[0].Actions, ActionDef{RoomText: top})
 	}
@@ -79,7 +79,7 @@ func TestValidate_RefusesSubjectlessRoomTextThreeSequencesDeep(t *testing.T) {
 		deep = ActionDef{Sequence: &SequenceDef{OnComplete: []ActionDef{deep}}}
 	}
 	q := &Quest{QuestId: 90001, Name: "Room Text Test", Steps: []QuestStep{{Id: "start"}},
-		Triggers: []TriggerDef{{Event: "room_interact", Actions: []ActionDef{deep}}}}
+		Triggers: []TriggerDef{{Event: "look_at", Actions: []ActionDef{deep}}}}
 	require.Error(t, q.Validate())
 }
 
@@ -124,9 +124,13 @@ func TestShippedQuestRoomTextFollowsConvention(t *testing.T) {
 	// Batch 5 added 2: the lost-item triggers of quests 69 (the rubbing) and
 	// 71 (the ledger page).
 	// Phase 7 tier 1 took 1 away: quest 14's strongbox is a real container, so
-	// the room_interact trigger with its observer line is gone.
+	// the strongbox's look trigger with its observer line is gone.
 	// The disc line (#667) added 2: quest 76 lost the line for lifting the disc
 	// from the journal and gained the cairn, the old camp and the remains.
-	assert.Equal(t, 31, checked,
-		"31 quest observer lines ship; a different count means the inventory moved, so re-read this test")
+	// Phase 7 tier 5 took 2 away: quest 63's four typed-noun triggers (two
+	// observer lines for the evidence, two for the lost book) became two
+	// search triggers. Quest 65 took 2 more the same way (the seam and the
+	// lost lump). Quest 70 added 1: the lost rubbing's search trigger.
+	assert.Equal(t, 28, checked,
+		"28 quest observer lines ship; a different count means the inventory moved, so re-read this test")
 }

@@ -24,6 +24,26 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// trimLookFiller drops the filler words that lead what a look names: a
+// preposition ("at", "in", "inside") and then "the". "look in strongbox" must
+// name the strongbox, not the three words "in strongbox", which the noun
+// matcher would otherwise settle for one word of and so read the room noun
+// out from under a container of the same name (#761). The look_at quest
+// event is raised on the same trimmed words (TryCommand), so "look in x" and
+// "look x" fire the same triggers.
+func trimLookFiller(rest string) string {
+	for _, prep := range []string{`at `, `inside `, `in `} {
+		if strings.HasPrefix(strings.ToLower(rest), prep) && len(rest) > len(prep) {
+			rest = rest[len(prep):]
+			break
+		}
+	}
+	if strings.HasPrefix(strings.ToLower(rest), `the `) && len(rest) > len(`the `) {
+		rest = rest[len(`the `):]
+	}
+	return rest
+}
+
 func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	secretLook := flags.Has(events.CmdSecretly)
@@ -31,16 +51,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	isSneaking := user.Character.IsHidden()
 
 	// trim off some fluff
-	if len(rest) > 2 {
-		if rest[0:3] == `at ` {
-			rest = rest[3:]
-		}
-	}
-	if len(rest) > 3 {
-		if rest[0:4] == `the ` {
-			rest = rest[4:]
-		}
-	}
+	rest = trimLookFiller(rest)
 
 	lookAt := rest
 
@@ -190,6 +201,12 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 
 	case actions.LookExitLocked:
+		// A room_gate says why in its own words, the line the step would read.
+		if res.ExitGated {
+			if dest := rooms.LoadRoom(res.ExitRoomId); dest != nil && actions.QuestGateRefuses(user, room, dest) {
+				return true, nil
+			}
+		}
 		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("The %s exit is locked.", res.ExitName))
 		return true, nil
 
@@ -369,17 +386,17 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		// Show potion aging info based on alchemy skill
 		lookSpec := lookItem.GetSpec()
-		if lookSpec.Aging.HasAging() && lookItem.CraftedRound > 0 {
-			elapsed := util.GetRoundCount() - lookItem.CraftedRound
-			bottleMult := lookItem.BottleMultiplier
-			if bottleMult <= 0 {
-				bottleMult = lookSpec.BottleAgingMultiplier
-			}
-			effSpeed := items.CalcEffectiveAgingSpeed(bottleMult, lookItem.CraftSkill)
-			phase, _ := items.GetAgingPhase(elapsed, lookSpec.Aging, effSpeed)
+		// PotionAging: a preserving bandolier's potion reads at peak, one
+		// that has left it reads spoiled (#794).
+		if aging := user.Character.PotionAging(lookItem, util.GetRoundCount()); aging.Ages {
 			alchSkill := user.Character.GetSkillLevel(skills.Alchemy)
 			desc := items.GetPhaseDescription(
-				phase, alchSkill, elapsed, lookSpec.Aging, effSpeed)
+				aging.Phase, alchSkill, aging.Elapsed, lookSpec.Aging, aging.Speed)
+			if desc == `` && aging.Spoiled() && alchSkill >= 6 {
+				// A potion with no aging of its own that rotted on leaving a
+				// preserving bandolier has no phase text; say it plainly.
+				desc = `It has gone bad.`
+			}
 			if desc != "" {
 				user.SendText(messaging.CategoryRoomDescription,
 					fmt.Sprintf(` - <ansi fg="yellow-bold">%s</ansi>`, desc),

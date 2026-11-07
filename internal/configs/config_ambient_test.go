@@ -49,6 +49,16 @@ func TestAmbientKnobs_AbsentKeysKeepTodaysBehaviour(t *testing.T) {
 	if b.GossipIntervalRounds != 75 {
 		t.Errorf("GossipIntervalRounds absent must load 75, got %v", b.GossipIntervalRounds)
 	}
+	if b.GossipHintIntervalRounds != 150 {
+		t.Errorf("GossipHintIntervalRounds absent must load 150, got %v", b.GossipHintIntervalRounds)
+	}
+}
+
+func TestGossipHintIntervalRounds_ZeroIsOff(t *testing.T) {
+	b := loadAndValidate(t, "Balance:\n  GossipHintIntervalRounds: 0\n")
+	if b.GossipHintIntervalRounds != 0 {
+		t.Errorf("an explicit 0 is the off switch and must survive validation, got %v", b.GossipHintIntervalRounds)
+	}
 }
 
 func TestAmbientKnobs_ExplicitZeroIsOff(t *testing.T) {

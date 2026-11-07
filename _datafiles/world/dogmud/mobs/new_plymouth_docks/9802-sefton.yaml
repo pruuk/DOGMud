@@ -1,0 +1,39 @@
+mobid: 9802
+zone: New Plymouth Docks
+behavior_archetype: noncombat_shopkeeper
+non_combatant: true
+charm_immune: true
+hostile: false
+statpool: 38
+maxwander: 0
+craft_support: alchemy
+stock_multiplier: 0.25
+groups:
+  - humanoid
+  - bloom_trade
+idlecommands:
+  - 'emote turns a wax-wrapped square a quarter turn on the table, and leaves it there.'
+  - ''
+  - 'emote opens the small ledger, writes one figure, and closes it.'
+  - ''
+  - 'emote looks at the door, then at you, and does not ask you anything.'
+activitylevel: 10
+character:
+  name: Sefton
+  description: |
+    He is a tidy man at a tidy table. His sleeves are clean to the wrist and he
+    keeps his hands flat on the wood when they have nothing to do. He looks at
+    you the way a clerk looks at a figure he has already added up. He does not
+    offer you the other chair.
+  speciesid: 1
+  level: 1
+  gold: 500
+  stats:
+    charisma:
+      base: 108
+    perception:
+      base: 110
+    willpower:
+      base: 104
+  shop:
+    - itemid: 40108

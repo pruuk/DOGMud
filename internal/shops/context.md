@@ -43,7 +43,8 @@ change (forager deliveries, NPC sells, player purchases) lives in
   allocator; used by both the forager chest backfill and the enchanter
   reserve draw (chunk 5.4).
 - **effective_max_stock.go**: `EffectiveMaxStock` — caps MaxStock when the
-  shop is below the gold reserve threshold.
+  shop is below the gold reserve threshold. The Bloom Wafer's shelf cap at
+  Sefton is pinned by `guards/tier5_bloom_shop_test.go`.
 - **craftdecision.go**: `ShouldCraftNow` — evaluates whether the shopkeeper's
   crafter NPC should fire this tick.
 - **validation.go**: `ValidateShopMobTags` — startup panic if any shop-bearing
@@ -111,6 +112,9 @@ change (forager deliveries, NPC sells, player purchases) lives in
   player rounds UP to the next gold (owner ruling 2026-09-30): this, and in
   `internal/actions` the affixed, bauble and fence prices. The flat price
   truncated until then, so a 3-gold item at 0.5 paid 1 instead of 2.
+  A declining or spoiled potion is read by `items.Item.AgingAt`
+  (`isPotionDeclining`), so a potion sold out of a preserving bandolier,
+  which has rotted on leaving it, counts as spoiled (#794).
   A refusal carries `BuyOffer.Refused` (a `BuyRefusal`): `BuyRefusedNoTrade`
   (no spec, a quest item, or no `vendor_categories`, so no shop buys it),
   `BuyRefusedSpoiled`, `BuyRefusedWrongShop` (craft_support takes none of its

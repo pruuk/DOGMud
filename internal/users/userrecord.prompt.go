@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -60,6 +61,37 @@ func (u *UserRecord) promptTargetSight() messaging.SightDecision {
 		return messaging.SightFull
 	}
 	return promptSightFn(u.Character)
+}
+
+// promptTank returns who is tanking the player's current target: the
+// character that mob is attacking, when that is not the player, plus the
+// colour its name is drawn in. A player tank is drawn as a username, a mob
+// tank (a companion, say) as a mob name. Nil when the target is not a mob,
+// is fighting the player, or is fighting no one.
+//
+// Sourced from the mob's aggro since 84087767c (2026-02-28), which replaced
+// the party "front rank" lookup the tokens first shipped with (c7ec255ae).
+func (u *UserRecord) promptTank() (*characters.Character, string) {
+	tRef := u.Character.CurrentCombatTarget()
+	if tRef.MobInstanceId <= 0 {
+		return nil, ``
+	}
+	m := mobs.GetInstance(tRef.MobInstanceId)
+	if m == nil {
+		return nil, ``
+	}
+	mRef := m.Character.CurrentCombatTarget()
+	if mRef.UserId > 0 && mRef.UserId != u.UserId {
+		if tankUser := GetByUserId(mRef.UserId); tankUser != nil && tankUser.Character != nil {
+			return tankUser.Character, `username`
+		}
+	}
+	if mRef.MobInstanceId > 0 && mRef.MobInstanceId != tRef.MobInstanceId {
+		if tankMob := mobs.GetInstance(mRef.MobInstanceId); tankMob != nil {
+			return &tankMob.Character, `mobname`
+		}
+	}
+	return nil, ``
 }
 
 // RenderVitalBar is the exported version of renderVitalBar.
@@ -277,11 +309,24 @@ func (u *UserRecord) BuildFightPromptTemplate() string {
 		b.WriteString(`{8}]`)
 	}
 	if u.getPromptToggle(`tank`) {
-		b.WriteString(`{tank}`)
+		b.WriteString(`{tank}{tankpos}{tankbar}`)
 	}
 	b.WriteString(`{casting}`)
 	b.WriteString(`{239}{h}{8}:`)
 	return b.String()
+}
+
+// compiledFightTemplates memoizes util.ConvertColorShortTags over the toggle
+// built fight prompt templates. Six toggles give at most 64 templates.
+var compiledFightTemplates sync.Map // template string -> compiled string
+
+func compiledFightTemplate(tmpl string) string {
+	if v, ok := compiledFightTemplates.Load(tmpl); ok {
+		return v.(string)
+	}
+	compiled := util.ConvertColorShortTags(tmpl)
+	compiledFightTemplates.Store(tmpl, compiled)
+	return compiled
 }
 
 func (u *UserRecord) GetCommandPrompt() string {
@@ -327,7 +372,14 @@ func (u *UserRecord) GetCommandPrompt() string {
 					}
 					customPrompt = fightPromptDefaultCompiled
 				} else {
-					customPrompt = cached
+					// The saved copy only marks "this player has toggled
+					// something". Render from today's template, so a save
+					// compiled by an older build (one whose {tank} block
+					// lacked {tankpos}{tankbar}, #591) cannot pin the
+					// player to stale tokens. set.go rewrites the saved
+					// copy on the next toggle; the render path writes
+					// nothing, so it adds no map write to a shared read.
+					customPrompt = compiledFightTemplate(u.BuildFightPromptTemplate())
 				}
 			}
 		}
@@ -379,6 +431,22 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 		return targetSight
 	}
 	sees := func() bool { return sight() == messaging.SightFull }
+
+	// The tank, resolved at most once per render and only when a tank
+	// token is present. Nil when the player can't see the fight: who the
+	// target is hitting is information they don't have.
+	tankChecked := false
+	var tank *characters.Character
+	var tankColor string
+	tankOf := func() (*characters.Character, string) {
+		if !tankChecked {
+			tankChecked = true
+			if sees() {
+				tank, tankColor = u.promptTank()
+			}
+		}
+		return tank, tankColor
+	}
 
 	promptLen := len(promptStr)
 	tagStartPos := -1
@@ -595,27 +663,33 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 						positionPromptColor(tPos), positionPromptAbbrev(tPos)))
 				}
 
+			// The tank block: {tank}{tankpos}{tankbar} show who the
+			// player's target is attacking, when that is someone else.
+			// Each token carries its own label and leading space, because
+			// each renders nothing when nobody else is tanking (or the
+			// player can't see the fight), and a label written into the
+			// prompt string would then dangle.
 			case `{tank}`:
-				if !sees() {
-					break // can't see the target (or who it's fighting)
+				if tank, color := tankOf(); tank != nil {
+					promptOut.WriteString(fmt.Sprintf(
+						` <ansi fg="255">T:</ansi><ansi fg="%s">%s</ansi>`, color, tank.Name))
 				}
-				tRef := u.Character.CurrentCombatTarget()
-				if tRef.MobInstanceId > 0 {
-					if m := mobs.GetInstance(tRef.MobInstanceId); m != nil {
-						mRef := m.Character.CurrentCombatTarget()
-						if mRef.UserId > 0 && mRef.UserId != u.UserId {
-							if tankUser := GetByUserId(mRef.UserId); tankUser != nil {
-								tankBar := renderVitalBar(
-									tankUser.Character.Health,
-									tankUser.Character.HealthMax.Value,
-									tankUser.Character.GetPoolReservation("health",
-										tankUser.Character.HealthMax.Value))
-								promptOut.WriteString(fmt.Sprintf(
-									` <ansi fg="255">T:</ansi><ansi fg="username">%s</ansi> <ansi fg="255">Thp:</ansi>%s`,
-									tankUser.Character.Name, tankBar))
-							}
-						}
+
+			case `{tankpos}`:
+				// Same rule as {pos} and {targetpos}: FSM-driven, shown
+				// only when off Standing.
+				if tank, _ := tankOf(); tank != nil && tank.Position != nil {
+					if s := tank.Position.State(); s != position.Standing {
+						promptOut.WriteString(fmt.Sprintf(` <ansi fg="%s">%s</ansi>`,
+							positionPromptColor(s), positionPromptAbbrev(s)))
 					}
+				}
+
+			case `{tankbar}`:
+				if tank, _ := tankOf(); tank != nil {
+					promptOut.WriteString(` <ansi fg="255">Thp:</ansi>`)
+					promptOut.WriteString(renderVitalBar(tank.Health, tank.HealthMax.Value,
+						tank.GetPoolReservation("health", tank.HealthMax.Value)))
 				}
 
 			case `{ap}`:

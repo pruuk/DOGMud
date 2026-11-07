@@ -226,8 +226,7 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 
 	if len(args) >= 2 {
 		if name, roomId := room.FindExitByName(args[len(args)-1]); name != "" {
-			exitInfo, _ := room.GetExitInfo(name)
-			if exitInfo.Lock.IsLocked() {
+			if ShotExitClosed(actor, room, name, roomId) {
 				return FireResult{WeaponName: weapon.DisplayName(), ExitName: name, ExitLocked: true}
 			}
 			if adj := rooms.LoadRoom(roomId); adj != nil {

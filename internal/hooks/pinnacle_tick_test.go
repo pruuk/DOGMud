@@ -194,41 +194,29 @@ func TestPinnacleAgingFreeze(t *testing.T) {
 		999953: {ItemId: 999953, Name: "test potion", Type: items.Potion},
 	})()
 
-	// With preserves_contents: CraftedRound advances 1:1 (elapsed frozen).
-	c := characters.New()
+	// With preserves_contents the tick marks each slotted potion Preserved
+	// and leaves its crafted round alone (#794: the hold is a reading, not a
+	// clock; the old 1:1 CraftedRound advance is gone).
+	u := users.NewTestUser(709, "freeze", "Freeze", 7709)
+	c := u.Character
 	c.Equipment.Belt = items.New(999951)
 	p := items.New(999953)
 	p.CraftedRound = 1000
 	c.PotionItems = append(c.PotionItems, p)
-	tickPreserveContents(c)
-	if c.PotionItems[0].CraftedRound != 1001 {
-		t.Fatalf("preserves belt should advance CraftedRound to 1001, got %d", c.PotionItems[0].CraftedRound)
+	tickPreserveContents(u, 5000)
+	if !c.PotionItems[0].Preserved || c.PotionItems[0].CraftedRound != 1000 {
+		t.Fatalf("preserves belt should mark the potion and keep its round, got preserved=%v round=%d",
+			c.PotionItems[0].Preserved, c.PotionItems[0].CraftedRound)
 	}
 
-	// Without the flag: unchanged.
-	c2 := characters.New()
+	// Without the flag: unmarked.
+	u2 := users.NewTestUser(710, "plain", "Plain", 7710)
+	c2 := u2.Character
 	c2.Equipment.Belt = items.New(999952)
-	p2 := items.New(999953)
-	p2.CraftedRound = 1000
-	c2.PotionItems = append(c2.PotionItems, p2)
-	tickPreserveContents(c2)
-	if c2.PotionItems[0].CraftedRound != 1000 {
-		t.Fatalf("plain belt must not freeze aging, got %d", c2.PotionItems[0].CraftedRound)
-	}
-
-	// Regression (purchased/vendor potion bug): a CraftedRound == 0 potion —
-	// never crafted, so the aging system treats it as fresh forever — must NOT
-	// be incremented by a preserves belt. Incrementing it flips it into the
-	// aging range (elapsed = now-1 ≈ millions of rounds → instantly spoiled and
-	// ejected), which was the live "potions rot and fall out of the bandolier" bug.
-	c3 := characters.New()
-	c3.Equipment.Belt = items.New(999951)
-	p3 := items.New(999953)
-	p3.CraftedRound = 0
-	c3.PotionItems = append(c3.PotionItems, p3)
-	tickPreserveContents(c3)
-	if c3.PotionItems[0].CraftedRound != 0 {
-		t.Fatalf("purchased potion (CraftedRound 0) must stay 0 in a preserves belt, got %d", c3.PotionItems[0].CraftedRound)
+	c2.PotionItems = append(c2.PotionItems, items.New(999953))
+	tickPreserveContents(u2, 5000)
+	if c2.PotionItems[0].Preserved {
+		t.Fatal("a plain belt must not preserve its potions")
 	}
 }
 
@@ -367,38 +355,30 @@ func TestPinnacleUserTick_MasterGate(t *testing.T) {
 	}
 }
 
-// TestReconcilePreservedPotionRounds is the regression guard for the "potions
-// rot at login" bug: tickPreserveContents only freezes aging while online, so an
-// offline gap balloons a preserved potion's elapsed and it spoils at login.
-// HandleJoin calls this to re-baseline crafted potions to fresh.
-func TestReconcilePreservedPotionRounds(t *testing.T) {
-	const now = uint64(2_000_000)
-	mk := func() []items.Item {
-		return []items.Item{
-			{ItemId: 30001, CraftedRound: 1000}, // crafted, stale (offline gap) -> re-stamp
-			{ItemId: 30002, CraftedRound: 0},    // purchased/never-crafted -> leave alone
-			{ItemId: 0, CraftedRound: 500},      // empty slot -> leave alone
-		}
-	}
+// TestPreservedPotionReadsPeakAfterAnOfflineGap replaces the old login
+// re-baseline test. The old login path reset a preserved potion to fresh
+// (owner, 2026-11-06: "reset it to new"). A preserved potion now reads at
+// peak however many rounds pass, logged in or out (#794).
+func TestPreservedPotionReadsPeakAfterAnOfflineGap(t *testing.T) {
+	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
+		999951: {ItemId: 999951, Name: "vitalis bandolier", Type: items.Belt,
+			IsBandolier: true, BandolierCapacity: 4, PreservesContents: true},
+		999953: {ItemId: 999953, Name: "test potion", Type: items.Potion,
+			Aging: items.AgingThresholds{FermentRounds: 100, PeakRounds: 500, DecayRounds: 1500, SpoilRounds: 2500}},
+	})()
 
-	// No preserving belt: nothing changes.
-	p := mk()
-	reconcilePreservedPotionRounds(p, false, now)
-	if p[0].CraftedRound != 1000 {
-		t.Fatalf("without a preserving belt, CraftedRound must be untouched; got %d", p[0].CraftedRound)
-	}
+	u := users.NewTestUser(711, "gap", "Gap", 7711)
+	c := u.Character
+	c.Equipment.Belt = items.New(999951)
+	p := items.New(999953)
+	p.CraftedRound = 1000 // fresh at slotting
+	c.PotionItems = append(c.PotionItems, p)
+	tickPreserveContents(u, 1001)
 
-	// Preserving belt: crafted potion re-baselined to now (elapsed=0, cannot spoil);
-	// purchased and empty slots left alone.
-	p = mk()
-	reconcilePreservedPotionRounds(p, true, now)
-	if p[0].CraftedRound != now {
-		t.Errorf("crafted potion should re-stamp to now (%d); got %d", now, p[0].CraftedRound)
-	}
-	if p[1].CraftedRound != 0 {
-		t.Errorf("purchased potion (CraftedRound 0) must be left alone; got %d", p[1].CraftedRound)
-	}
-	if p[2].CraftedRound != 500 {
-		t.Errorf("empty slot must be left alone; got %d", p[2].CraftedRound)
+	const login = uint64(2_000_000) // far past the potion's spoil point
+	tickPreserveContents(u, login)
+	got := c.PotionAging(c.PotionItems[0], login)
+	if got.Phase != items.PhasePeak || got.Potency != items.PeakPotency {
+		t.Fatalf("a preserved potion must read at peak after an offline gap, got phase %v potency %v", got.Phase, got.Potency)
 	}
 }

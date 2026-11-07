@@ -7,7 +7,7 @@ import (
 )
 
 // ruleOneAction is spec 5.2's one-action rule (P4). One finding per broken
-// way and reason, so the backlog names each defect: the way's Where takes a
+// way and reason, so each defect has its own key: the way's Where takes a
 // suffix, :none (nothing moves a player onto the step), :reward (a
 // completion reward grants it), :prev (the previous step is not required),
 // :cond (an item, flag or gold condition), :seq (granted inside a sequence)
@@ -42,7 +42,7 @@ func ruleOneAction(q *quests.Quest, g grants) []Finding {
 				if !slices.Contains(c.Has, prev) {
 					add(w.where, "prev", "grants "+tok+" without requiring "+prev)
 				}
-				if c.HasItem > 0 || c.MissingItem > 0 || len(c.HasFlag) > 0 || len(c.MissingFlag) > 0 || c.HasGold > 0 {
+				if c.HasItem > 0 || c.MissingItem > 0 || len(c.MissingItems) > 0 || len(c.HasFlag) > 0 || len(c.MissingFlag) > 0 || c.HasGold > 0 {
 					add(w.where, "cond", "an item, flag or gold condition hides a second action; make it its own step")
 				}
 				if w.nested {

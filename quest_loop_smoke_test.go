@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"os"
 	"slices"
 	"strings"
@@ -14,12 +13,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/questworld"
 )
-
-// loopBacklogWriteEnv, when set to a path, makes the sweep write the
-// current findings there as backlog text instead of failing. It is how the
-// backlog is generated (into a scratch path, then copied into place by
-// hand); it never writes the shipped file.
-const loopBacklogWriteEnv = `DOGMUD_LOOP_BACKLOG_WRITE`
 
 // loadShippedQuestWorld loads the shipped data the quest loop sweeps read,
 // skipping unless DOGMUD_BOOT_SMOKE is set.
@@ -41,15 +34,10 @@ func loadShippedQuestWorld(t *testing.T) {
 	}
 }
 
-// TestSmoke_ShippedQuestsPassTheLoop runs the quest loop rules and the
-// completability walkthrough over shipped content: a finding not in
-// loop-backlog.txt fails, and so does a backlog line no finding matches (the
-// list only shrinks).
-//
-// The backlog holds both kinds of line. Boot (main_quests.go) runs Validate
-// only and ignores stale lines, so the walk lines in the backlog never
-// affect boot; this sweep ratchets against Validate plus Walk, so in CI a
-// walk line is never stale while its finding stands.
+// TestSmoke_ShippedQuestsPassTheLoop runs the quest loop rules, the
+// completability walkthrough and the destination rule over shipped content:
+// any finding fails. Boot runs Validate and Destinations; only this sweep
+// runs the walk.
 func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
 	loadShippedQuestWorld(t)
 
@@ -60,27 +48,10 @@ func TestSmoke_ShippedQuestsPassTheLoop(t *testing.T) {
 	for _, s := range inferred {
 		t.Logf("destination inferred: %s", s)
 	}
-
-	if path := os.Getenv(loopBacklogWriteEnv); path != `` {
-		if err := os.WriteFile(path, questloop.FormatBacklog(fs), 0o644); err != nil {
-			t.Fatal(err)
-		}
-		t.Logf("wrote %d findings to %s", len(fs), path)
-		return
+	for _, f := range fs {
+		t.Errorf("quest loop: %s", f.String())
 	}
-
-	b, err := questworld.LoadBacklog()
-	if err != nil {
-		t.Fatal(err)
-	}
-	fresh, known, stale := questloop.Ratchet(fs, b)
-	for _, f := range fresh {
-		t.Errorf("not in loop-backlog.txt: %s", f.String())
-	}
-	for _, k := range stale {
-		t.Errorf("loop-backlog.txt line %q matches no finding: delete it", k)
-	}
-	t.Logf("quest loop: %d known backlog findings, %d new, %d stale", len(known), len(fresh), len(stale))
+	t.Logf("quest loop: %d findings", len(fs))
 }
 
 // TestSmoke_WalkSourcesIndexShippedWorld checks the walkthrough's item and
@@ -175,57 +146,50 @@ func TestSmoke_WalkSourcesIndexShippedWorld(t *testing.T) {
 	}
 }
 
-// TestQuestDoor_RefusesAFreshFinding: a fresh finding panics at boot and is
-// an error on a reload; known findings alone pass; a backlog that cannot be
-// read refuses the same way.
-func TestQuestDoor_RefusesAFreshFinding(t *testing.T) {
+// TestQuestDoor_RefusesAnyFinding: a finding panics at boot and is an error
+// on a reload; no findings pass.
+func TestQuestDoor_RefusesAnyFinding(t *testing.T) {
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
-	hint := questloop.Finding{Rule: "hint", QuestId: 1, Where: "step start", Msg: "no hint"}
-	fresh := func() ([]questloop.Finding, []questloop.Finding, []string, error) {
-		return []questloop.Finding{hint}, nil, nil, nil
+	one := func() []questloop.Finding {
+		return []questloop.Finding{{Rule: "hint", QuestId: 1, Where: "step start", Msg: "no hint"}}
 	}
-	knownOnly := func() ([]questloop.Finding, []questloop.Finding, []string, error) {
-		return nil, []questloop.Finding{hint}, []string{"end 2 step end"}, nil
+	none := func() []questloop.Finding { return nil }
+	if err := questDoorFrom(true, one); err == nil {
+		t.Error("a reload must return an error")
 	}
-	unreadable := func() ([]questloop.Finding, []questloop.Finding, []string, error) {
-		return nil, nil, nil, errors.New("loop-backlog.txt line 3: repeated line")
-	}
-	for name, src := range map[string]func() ([]questloop.Finding, []questloop.Finding, []string, error){
-		"fresh": fresh, "unreadable": unreadable,
-	} {
-		if err := questDoorFrom(true, src); err == nil {
-			t.Errorf("%s: a reload must return an error", name)
-		}
-		func() {
-			defer func() {
-				if recover() == nil {
-					t.Errorf("%s: boot must panic", name)
-				}
-			}()
-			_ = questDoorFrom(false, src)
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("boot must panic")
+			}
 		}()
-	}
-	if err := questDoorFrom(false, knownOnly); err != nil {
-		t.Errorf("known findings and stale lines must not refuse boot: %v", err)
+		_ = questDoorFrom(false, one)
+	}()
+	if err := questDoorFrom(false, none); err != nil {
+		t.Errorf("no findings must not refuse boot: %v", err)
 	}
 }
 
-func TestDestinationDoor_WarnsAndNeverRefuses(t *testing.T) {
+// TestDestinationDoor_RefusesAnyFinding: the same refusal for a destination
+// finding; inferred destinations alone pass.
+func TestDestinationDoor_RefusesAnyFinding(t *testing.T) {
 	mudlog.SetupLogger(nil, `LOW`, ``, false)
-	n := destinationDoorFrom(func() ([]questloop.Finding, []string) {
+	one := func() ([]questloop.Finding, []string) {
 		return []questloop.Finding{{Rule: "walk-destination", QuestId: 1, Where: "step a", Msg: "m"}}, nil
-	})
-	if n != 1 {
-		t.Fatalf("logged %d findings, want 1", n)
 	}
-}
-
-// TestQuestLoop_GuardCanFail proves the ratchet refuses an unlisted finding
-// and flags a stale line, without the shipped world.
-func TestQuestLoop_GuardCanFail(t *testing.T) {
-	fs := []questloop.Finding{{Rule: "hint", QuestId: 1, Where: "step start"}}
-	fresh, _, stale := questloop.Ratchet(fs, questloop.Backlog{"end 2 step end": true})
-	if len(fresh) != 1 || len(stale) != 1 {
-		t.Fatalf("ratchet did not refuse: fresh %v stale %v", fresh, stale)
+	inferredOnly := func() ([]questloop.Finding, []string) { return nil, []string{"quest 1 step a"} }
+	if err := destinationDoorFrom(true, one); err == nil {
+		t.Error("a reload must return an error")
+	}
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("boot must panic")
+			}
+		}()
+		_ = destinationDoorFrom(false, one)
+	}()
+	if err := destinationDoorFrom(false, inferredOnly); err != nil {
+		t.Errorf("inferred destinations must not refuse boot: %v", err)
 	}
 }

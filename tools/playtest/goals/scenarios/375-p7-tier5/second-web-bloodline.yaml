@@ -1,0 +1,18 @@
+ephemeral:
+  profile: m2-actor
+  start_room: 6035
+  overlays:
+    set_quest_tokens: [68-start, 68-evidence, 68-survey, 68-choice, 68-end]
+    set_quest_flags: {68-allegiance: bloodline}
+    grant_items: [20096]
+  budgets:
+    wall_clock: 30m
+goals:
+  - >-
+    You stand in Gritta's Flooded Cellar. If she is not here, wait or look nearby. Type `talk gritta` and quote her
+    opener. Say whether she nods at what you did at the cooperage, as she should not know to thank you. Take The
+    Pre-Founding Web. Quote game lines VERBATIM and in order.
+  - >-
+    `equip torch`. Follow `hint` to the Buried Lintel and `search`. Quote it. Follow `hint` to Orin and hand in. Quote
+    the hand-in and the reward. Say whether anything treats you as a friend of the circle, and whether he still
+    deals with you. Quote game lines VERBATIM and in order.

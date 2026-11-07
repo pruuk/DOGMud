@@ -16,7 +16,7 @@ segments:
     idlecommands:
       - emote reaches a high shelf with the hooked pole and never once looks up at it.
       - emote catches a new arrival with a sharp eye and sizes up their pack without comment.
-      - say I remember what you bought last time. Come to restock?
+      - say Lanterns, rations, bandages, a good shirt. Whatever the coulee took from you, I likely have it.
   - start: 18
     end: 22
     target_room: 5207

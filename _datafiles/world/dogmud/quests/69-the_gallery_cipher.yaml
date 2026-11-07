@@ -15,53 +15,39 @@ steps:
       Dross needs a rubbing of the hand-position cipher worked into the
       processional relief figures in the Grand Temple nave.
     hint: >-
-      The processional reliefs run along the north wall of the Grand
-      Temple Sanctuary. From the Temple Courtyard, go south twice into the
-      Sanctuary. Type look reliefs.
+      The processional reliefs run along the north wall of the Grand Temple
+      Sanctuary, south twice from the Temple Courtyard. Type search there.
   - id: rubbing
     destination:
-      mob: 9360  # follow Scholar Dross (schedule np_temple_dross) — a fixed room is wrong for part of the day
+      mob: 9360  # follow Scholar Dross (schedule np_temple_dross), a fixed room is wrong for part of the day
       room: 5916  # fallback when Scholar Dross is not spawned
     description: >-
       You took the cipher rubbing from the reliefs. Dross can read part of
       it, but the key to the full sequence is in the Noble Quarter gallery.
     hint: >-
-      Take the rubbing to Scholar Dross. From the Sanctuary, go north twice
-      to the Temple Courtyard, where he argues with the wall by day. In the
-      early morning and the evening he reads in the Archive Reading Room,
-      east of the courtyard, and he sleeps at night. Type talk dross.
+      Take the rubbing to Scholar Dross at the Grand Temple. Type talk dross.
   - id: gallery
     destination:
-      mob: 9371  # follow Keeper Lysha (schedule np_noble_lysha) — a fixed room is wrong for part of the day
+      mob: 9371  # follow Keeper Lysha (schedule np_noble_lysha), a fixed room is wrong for part of the day
       room: 6007  # fallback when Keeper Lysha is not spawned
     description: >-
       Dross sent you to the gallery. The guide, Ferrol, steers visitors to
       the bloodline portraits and away from the older paintings, and away
       from the keeper.
     hint: >-
-      Keeper Lysha keeps the Art Gallery in the Noble Quarter. From the
-      Temple Courtyard, go south twice into the Sanctuary, then west six
-      times to the Gilded Walk. Go north into the Gilt Threshold, west twice
-      to the Processional, North End, then north four times to the Palace
-      Processional. Go west into the Administrative Office, then north into
-      the Art Gallery. Lysha keeps the hall in the morning and evening,
-      works upstairs in the afternoon, and sleeps upstairs at night. Type
-      talk lysha.
+      Keeper Lysha keeps the Art Gallery in the Noble Quarter, north of the
+      Administrative Office. Type talk lysha.
   - id: reading
     destination:
-      mob: 9360  # follow Scholar Dross (schedule np_temple_dross) — a fixed room is wrong for part of the day
+      mob: 9360  # follow Scholar Dross (schedule np_temple_dross), a fixed room is wrong for part of the day
       room: 5916  # fallback when Scholar Dross is not spawned
     description: >-
       Keeper Lysha read the third panel against your rubbing: the
       eight-pointed structure stands at a site inland of the present docks.
       She gave you her annotated reading.
     hint: >-
-      Bring Lysha's reading back to Scholar Dross. From the Art Gallery, go
-      south, east, then south four times to the Processional, North End. Go
-      east twice to the Gilt Threshold, south to the Gilded Walk, then east
-      six times to the Grand Temple Sanctuary. Go north twice to the Temple
-      Courtyard. In the early morning and the evening Dross reads in the
-      Archive Reading Room, east of the courtyard. Type talk dross.
+      Bring Lysha's reading and your rubbing back to Scholar Dross at the
+      Grand Temple. Type talk dross.
   - id: end
     description: >-
       Dross has his proof: the founding the city celebrates is not the
@@ -85,67 +71,11 @@ rewards:
     cannot be un-read.
 
 triggers:
-  # The noun is the room's own key (`processional reliefs`), so `look
-  # reliefs` and `look relief` reach it too. It was `processional-reliefs`,
-  # which only a player who typed the hyphen could reach.
-  - event: room_interact
+  # Lost rubbing: Dross and Lysha both need to see it, and Dross keeps it at the
+  # end. First, so one search gives one rubbing.
+  - event: command
+    command: search
     room: 5901
-    noun: processional reliefs
-    conditions:
-      has: ["69-start"]
-      missing: ["69-rubbing"]
-    actions:
-      - grant: "69-rubbing"
-      - give_item: 40115
-      - actor: >-
-          You press paper to the processional relief and work charcoal
-          across it. The figures come up under your hand, and the longer
-          you look, the less devotional they seem. Each hand is positioned
-          too precisely to be art. Read along the row, they are a sequence:
-          a number, set into stone by someone who wanted it kept where it
-          could not be edited out.
-      - observer: "{actor} takes a careful charcoal rubbing of the old processional reliefs."
-
-  - event: room_interact
-    room: 5901
-    noun: processional reliefs
-    conditions:
-      missing: ["69-start"]
-    actions:
-      - actor: >-
-          The processional figures are very old, older somehow than the
-          plaque that names them. Their hands are oddly placed. Without a
-          reason to study them you move on.
-
-  # gallery: hearing Scholar Dross's "q69_gallery" topic, shown the rubbing
-  # (moved from the topic's grantsQuest, #375 phase 3b).
-  - event: topic_heard
-    mob: 9360
-    topic: q69_gallery
-    conditions:
-      has: ["69-rubbing"]
-      missing: ["69-gallery"]
-    actions:
-      - grant: "69-gallery"
-
-  # reading: hearing Keeper Lysha's "q69_lysha" topic, which gives her
-  # written reading (moved from the topic's grantsQuest, #375 phase 3b).
-  - event: topic_heard
-    mob: 9371
-    topic: q69_lysha
-    conditions:
-      has: ["69-gallery"]
-      missing: ["69-reading"]
-    actions:
-      - grant: "69-reading"
-
-  # Lost rubbing (appended 2026-10-21, #375 batch 5): Dross and Lysha both
-  # need to see the rubbing (carriesItem), so a player who lost it takes
-  # another while the quest is open. Trigger 0 gives the first copy and so
-  # blocks this one in the same command (missing_item).
-  - event: room_interact
-    room: 5901
-    noun: processional reliefs
     conditions:
       has: ["69-rubbing"]
       missing: ["69-end"]
@@ -157,3 +87,51 @@ triggers:
           charcoal across it again. The hands come up in the same precise
           row, the same counted sequence.
       - observer: "{actor} takes a careful charcoal rubbing of the old processional reliefs."
+
+  # A search of the sanctuary finds the sequence in the reliefs.
+  - event: command
+    command: search
+    room: 5901
+    conditions:
+      has: ["69-start"]
+      missing: ["69-rubbing"]
+    actions:
+      - give_item: 40115
+      - grant: "69-rubbing"
+      - actor: >-
+          You press paper to the processional relief and work charcoal
+          across it. The figures come up under your hand, and the longer
+          you look, the less devotional they seem. Each hand is positioned
+          too precisely to be art. Read along the row, they are a sequence:
+          a number, set into stone by someone who wanted it kept where it
+          could not be edited out.
+      - observer: "{actor} takes a careful charcoal rubbing of the old processional reliefs."
+
+  # gallery: hearing Scholar Dross's "q69_gallery" topic, shown the rubbing.
+  - event: topic_heard
+    mob: 9360
+    topic: q69_gallery
+    conditions:
+      has: ["69-rubbing"]
+      missing: ["69-gallery"]
+    actions:
+      - grant: "69-gallery"
+
+  # reading: hearing Keeper Lysha's "q69_lysha" topic, which gives her reading.
+  - event: topic_heard
+    mob: 9371
+    topic: q69_lysha
+    conditions:
+      has: ["69-gallery"]
+      missing: ["69-reading"]
+    actions:
+      - grant: "69-reading"
+
+  # Dross keeps the rubbing with the reading, as the reward line says. A topic
+  # takes one item, so this takes the other.
+  - event: quest_granted
+    quest_token: "69-end"
+    conditions:
+      has_item: 40115
+    actions:
+      - consume_item: 40115

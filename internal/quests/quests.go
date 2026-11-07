@@ -91,9 +91,13 @@ func (r *Quest) Id() int {
 }
 
 // countSwallowsCommand are the events whose callers read a handled result as
-// "the quest took this command" (room_gate, room_interact, item_give), so
-// they take no count.
-var countSwallowsCommand = map[string]bool{"room_gate": true, "room_interact": true, "item_give": true}
+// "the quest took this command" (room_gate, look_at, search_at, item_give),
+// so they take no count.
+var countSwallowsCommand = map[string]bool{"room_gate": true, EventLookAt: true, EventSearchAt: true, "item_give": true}
+
+// retiredInteractEvent is the event look_at and search_at replaced at the
+// #375 closing step; the loader names them when it refuses it.
+const retiredInteractEvent = "room_interact"
 
 // CountAllowed reports whether a trigger on event may take count (and so a
 // label): every event but those in countSwallowsCommand. The quest builder's
@@ -103,6 +107,23 @@ func CountAllowed(event string) bool { return !countSwallowsCommand[event] }
 // MaxLabelLength caps a count or distinct label: "<label>: N of M" with the
 // quest log's indent stays inside 80 columns.
 const MaxLabelLength = 40
+
+// validateGateActions keeps a room_gate to text. A look through an exit fires
+// the gate that would refuse the step, so that its own line explains the door,
+// and a look must change nothing: a gate that granted or paid would do so for
+// looking at it.
+func validateGateActions(t TriggerDef) error {
+	if t.Event != "room_gate" {
+		return nil
+	}
+	for i, a := range t.Actions {
+		a.SendText, a.RoomText = "", ""
+		if a != (ActionDef{}) {
+			return fmt.Errorf("room_gate action %d does more than speak: a look through the exit runs a gate's actions too, so a gate takes only actor and observer text", i)
+		}
+	}
+	return nil
+}
 
 // validateAreaCount checks the #375 phase 3b slice 4 fields: area or zone
 // (any event, not both), count (2 or more), distinct (room_enter with an
@@ -121,7 +142,7 @@ func validateAreaCount(t TriggerDef) error {
 	// gate refuses the move, look and read print nothing, give skips
 	// consuming the item. A partial count there would swallow the command.
 	if t.Count != 0 && countSwallowsCommand[t.Event] {
-		return fmt.Errorf("count on a %s trigger: a match short of the count would swallow the player's command (count is refused on room_gate, room_interact and item_give)", t.Event)
+		return fmt.Errorf("count on a %s trigger: a match short of the count would swallow the player's command (count is refused on room_gate, look_at, search_at and item_give)", t.Event)
 	}
 	if len(t.Label) > MaxLabelLength {
 		return fmt.Errorf("label %q is %d characters; a label must be %d characters or fewer so its progress line fits the screen", t.Label, len(t.Label), MaxLabelLength)
@@ -199,7 +220,7 @@ func (r *Quest) Validate() error {
 	validEvents := map[string]bool{
 		"room_enter": true, "room_gate": true, "item_give": true, "skill_use": true,
 		"mob_death": true, "command": true, "item_gain": true,
-		"quest_granted": true, "room_interact": true,
+		"quest_granted": true, EventLookAt: true, EventSearchAt: true,
 		"command_issued": true, "spell_landed": true,
 		"topic_heard": true,
 	}
@@ -208,21 +229,18 @@ func (r *Quest) Validate() error {
 		if t.Event == "" {
 			return fmt.Errorf("quest %d (%s): trigger %d has no event", r.QuestId, r.Name, i)
 		}
+		if t.Event == retiredInteractEvent {
+			return fmt.Errorf("quest %d (%s): trigger %d uses event %s, which is retired: use %s (look, examine, read) or %s (search)", r.QuestId, r.Name, i, retiredInteractEvent, EventLookAt, EventSearchAt)
+		}
 		if !validEvents[t.Event] {
 			return fmt.Errorf("quest %d (%s): trigger %d has invalid event %q", r.QuestId, r.Name, i, t.Event)
 		}
 		if len(t.Actions) == 0 {
 			return fmt.Errorf("quest %d (%s): trigger %d has no actions", r.QuestId, r.Name, i)
 		}
-		// Look and search are the only interaction verbs (#375 phase 3a,
-		// owner ruling 5); only room_interact carries a verb at all.
-		if t.Verb != "" {
-			if t.Event != "room_interact" {
-				return fmt.Errorf("quest %d (%s): trigger %d sets verb %q on a %s trigger; only room_interact has a verb", r.QuestId, r.Name, i, t.Verb, t.Event)
-			}
-			if t.Verb != VerbLook && t.Verb != VerbSearch {
-				return fmt.Errorf("quest %d (%s): trigger %d has invalid verb %q (use %s or %s; empty means %s)", r.QuestId, r.Name, i, t.Verb, VerbLook, VerbSearch, VerbLook)
-			}
+		// The event names the verb family since the #375 closing step.
+		if t.RetiredVerb != "" {
+			return fmt.Errorf("quest %d (%s): trigger %d sets verb %q; verb is retired: use event %s for look and %s for search", r.QuestId, r.Name, i, t.RetiredVerb, EventLookAt, EventSearchAt)
 		}
 		// Only a command or a landed spell names a target (#375 phase 3b).
 		if t.Target != "" {
@@ -260,6 +278,9 @@ func (r *Quest) Validate() error {
 			return fmt.Errorf("quest %d (%s): trigger %d sets topic %q on a %s trigger; only topic_heard has a topic", r.QuestId, r.Name, i, t.Topic, t.Event)
 		}
 		if err := validateAreaCount(t); err != nil {
+			return fmt.Errorf("quest %d (%s): trigger %d: %w", r.QuestId, r.Name, i, err)
+		}
+		if err := validateGateActions(t); err != nil {
 			return fmt.Errorf("quest %d (%s): trigger %d: %w", r.QuestId, r.Name, i, err)
 		}
 		if err := r.validateCountStep(t); err != nil {

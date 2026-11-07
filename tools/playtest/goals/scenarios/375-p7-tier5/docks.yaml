@@ -1,0 +1,20 @@
+ephemeral:
+  profile: mid
+  start_room: 5503
+  budgets:
+    wall_clock: 50m
+goals:
+  - >-
+    Type `talk jesset` and take Dock Rat. Follow only `hint` and the `quests` line. In the
+    office, `look floorboard`, then `search`, and quote every line. Search again after the
+    cooldown and say what happens. Quote game lines VERBATIM and in order.
+  - >-
+    Type `drop tally-book` in another room and leave it. Go back, `search`, and quote what
+    you get. Finish with the constable. Then `talk hewd`, `talk constable`, `talk jesset`,
+    and say whether Hewd at his desk makes sense from what they tell you. Quote game lines
+    VERBATIM and in order.
+  - >-
+    Type `talk coll`, take The Street Sweeper's Secret, and follow the hint. Say whether you
+    could find the Old Foundation from it, and how many moves it cost. `search`, then finish
+    with Coll. Then find Gritta in the Old Quarter, ask who receives her finds, and say
+    whether her account fits what Coll told you. Quote game lines VERBATIM and in order.

@@ -162,3 +162,75 @@ facts:
         - roads
         - trade
       status: active
+    - id: disc-lights-east
+      description: on a clear night you can see a light on the eastern hills where no one lives, and it holds still.
+      significance: 1
+      declared_round: 0
+      tags:
+        - disc-line
+        - hint
+      status: active
+    - id: disc-surveyor-quit
+      description: a university surveyor came back from the east, filed three lines and never took another commission.
+      significance: 1
+      declared_round: 0
+      tags:
+        - disc-line
+        - hint
+      status: active
+    - id: disc-ashwick-man
+      description: a man from Ashwick walked east years back with a mattock on his back, and his cottage is still shut.
+      significance: 1
+      declared_round: 0
+      tags:
+        - disc-line
+        - hint
+      status: active
+    - id: disc-ring-mark
+      description: there is a mark that keeps turning up in old records, a ring struck through with a line, and scholars pay for it.
+      significance: 1
+      declared_round: 0
+      tags:
+        - disc-line
+        - hint
+      status: active
+    - id: disc-bookseller-pages
+      description: booksellers have been getting torn pages of some old account, and nobody can say who wrote it.
+      significance: 1
+      declared_round: 0
+      tags:
+        - disc-line
+        - hint
+      status: active
+    - id: disc-green-stops
+      description: up past the Cascade Pass the grass stops dead in a line, as if someone had drawn it.
+      significance: 1
+      declared_round: 0
+      tags:
+        - disc-line
+        - hint
+      status: active
+    - id: veyra-sells-secrets
+      description: a crafter at the Confluence named Veyra sells the secrets of things no smith in Thornwall can make.
+      significance: 1
+      declared_round: 0
+      tags:
+        - veyra-line
+        - common
+      status: active
+    - id: veyra-blackrazor
+      description: the Blackrazor can still be learned, from a sharp-tongued woman with a workshop down at the Confluence.
+      significance: 1
+      declared_round: 0
+      tags:
+        - veyra-line
+        - common
+      status: active
+    - id: veyra-skilled-only
+      description: Veyra at the Confluence will not teach a beginner, but she will sell to anyone who already knows their trade, and she is not cheap.
+      significance: 1
+      declared_round: 0
+      tags:
+        - veyra-line
+        - common
+      status: active
