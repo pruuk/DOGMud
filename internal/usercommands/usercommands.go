@@ -235,6 +235,7 @@ var (
 		`sit`:             {Sit, false, false, false},   // can't sit in combat (#637)
 		`rest`:            {Sit, false, false, false},   // the same command as sit, for players and mobs alike (owner 2026-11-07)
 		`sleep`:           {Sleep, false, false, false}, // Can't sleep in combat (actions.Sleep enforces)
+		`wake`:            {Wake, false, false, false},  // wake <name> (owner 2026-11-07)
 		`stand`:           {Stand, true, true, false},   // Can stand when downed
 		`suggest`:         {Suggest, true, true, false},
 		`storage`:         {Storage, false, false, false}, // Can't manipulate storage in combat

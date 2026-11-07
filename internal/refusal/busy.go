@@ -1,5 +1,7 @@
 package refusal
 
+import "strings"
+
 // WhileBusyText answers a command refused while the player is casting,
 // crafting or salvaging. cancel ends any of them, so the hint names it.
 func WhileBusyText(doing string) string {
@@ -21,5 +23,5 @@ func WhileUnderAttack(to Recipient, doing string) { send(to, WhileUnderAttackTex
 // sleeper; actions.RefuseIfAsleep hides the name at the player's sight
 // before sending, so this helper has no send of its own.
 func TargetAsleepText(name string) string {
-	return `<ansi fg="mobname">` + name + `</ansi> is fast asleep. You could make some noise.` + hint(`shout wake up`)
+	return `<ansi fg="mobname">` + name + `</ansi> is fast asleep.` + hint(`wake `+strings.ToLower(name))
 }

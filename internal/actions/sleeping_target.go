@@ -30,10 +30,10 @@ func TargetAsleep(c *characters.Character) bool {
 // state.
 //
 // Deliberately a refusal rather than a wake-up: sleeping is meant to mean
-// something, and a shop that trades at 3am with its keeper snoring in the
-// corner makes the schedule system decorative. The player is not dead-ended,
-// though — `shout` already wakes every sleeper in the room (see
-// usercommands/shout.go), so the message points at that. Damage, a failed
+// something. The player is not dead-ended, though: `wake <name>` wakes the
+// sleeper, so the message points at that (`shout` also wakes everyone in the
+// room). Shopkeepers asleep in their own shop wake for customers on their own
+// (usercommands/shop_wake.go), so they rarely reach this refusal. Damage, a failed
 // steal, a light source entering, and the end of the sleep schedule segment
 // also wake them.
 //

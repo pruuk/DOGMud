@@ -1,0 +1,10 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">wake</ansi>
+
+Wake someone who is asleep in the same room as you.
+
+<ansi fg="yellow">Usage: </ansi>
+
+  <ansi fg="command">wake marn</ansi>
+
+A sleeping shopkeeper wakes on their own when you walk in, so you only need
+this for other sleepers. <ansi fg="command">shout</ansi> wakes everyone in the room at once.

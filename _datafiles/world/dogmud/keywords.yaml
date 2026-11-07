@@ -37,6 +37,7 @@ help:
       - skills
       - sit
       - sleep
+      - wake
       - spells
       - status
       - suicide
@@ -353,7 +354,6 @@ command-aliases:
   trash:              ['junk']
   put:                ['place']
   history:            ['log']
-  noop:               ['wake']
   syslogs:            ['syslog']
   'party chat':       ['pchat', 'psay']
   'bank deposit':     ['deposit']

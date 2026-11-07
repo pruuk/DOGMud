@@ -142,6 +142,7 @@ var userOnlyCommands = map[string]string{
 	"offer":      "player-mechanic",
 	"payfine":    "player-mechanic: jailed-player justice interaction (5.1)",
 	"party":      "player-mechanic",
+	"wake":       "player-mechanic: waking a sleeper by name; NPCs wake others by shouting",
 	"picklock":   "player-mechanic: wontfix per chunk 2.10 deferred-gaps review — interactive minigame is intentional player-only design",
 	"reply":      "player-mechanic",
 	"sell":       "player-mechanic",
