@@ -32,10 +32,9 @@
   you pop the Game window out into its own box.
 - In the Quests tab, repeatable quests and the "Repeatable work" list are
   easy to read again. They had faded almost out of sight.
-- Full screen in the web client now really is full screen: it also hides
-  your browser's address bar. On a phone, tapping Enter Game does this for
-  you. (iPhones keep their address bar; adding the game to your home screen
-  is the way around it there.)
+- Full screen in the web client now really is full screen: tap Full screen
+  and your browser's address bar goes away too. (iPhones keep their address
+  bar; adding the game to your home screen is the way around it there.)
 - Add the game to your phone's home screen and it opens straight into the
   game, with no address bar.
 - On a phone held sideways, the tabs in Chat, Inventory and Automation are
