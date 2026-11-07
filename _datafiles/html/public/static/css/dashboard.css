@@ -862,6 +862,16 @@ html.keyboard-open #dash-drawer {
 @media (pointer: coarse) {
   .subtab { min-height: 44px; }
 }
+/* Chat channel hints (#808, Calabe 2026-11-07): shown until the channel's
+   first line. The quest hint colour: 4.95 on the dark panel, 4.97 in Light. */
+.chat-hint {
+  margin: 6px 8px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--quest-progress);
+}
+.chat-hint code { font-family: var(--font-mono); }
 /* Phones (Calabe and Malia 2026-11-07, on her phone): the 44px sub-tabs took
    two or three rows and, with the 50px title bar, most of an open Chat tab,
    upright and sideways. On a touch screen under 600px wide or under 500px

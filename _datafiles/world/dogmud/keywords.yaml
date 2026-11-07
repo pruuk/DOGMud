@@ -37,13 +37,13 @@ help:
       - skills
       - sit
       - sleep
+      - wake
       - spells
       - status
       - suicide
       - title
       - toxicity
     communication:
-      - broadcast
       - emote
       - chat
       - trade
@@ -203,6 +203,7 @@ help:
       - ai-flag
       - ai-list
       - badcommands
+      - broadcast
       - build
       - combatstats
       - command
@@ -321,7 +322,7 @@ help-aliases:
 # Key is the target command, value is the list of aliases
 command-aliases:
   say:                ['.']
-  broadcast:          ['`']
+  chat:               ['`']
   status:             ['sta', 'stat', 'stats', 'score', 'info']
   online:             ['who']
   inventory:          ['i', 'inv', 'eq', 'equipment']
@@ -353,7 +354,6 @@ command-aliases:
   trash:              ['junk']
   put:                ['place']
   history:            ['log']
-  noop:               ['wake']
   syslogs:            ['syslog']
   'party chat':       ['pchat', 'psay']
   'bank deposit':     ['deposit']

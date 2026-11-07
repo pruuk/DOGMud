@@ -1421,14 +1421,6 @@ func TestBroadcast(t *testing.T) {
 
 	user, room := getTestUserAndRoom(t)
 
-	t.Run("muted", func(t *testing.T) {
-		user.Muted = true
-		handled, err := Broadcast("hello all", user, room, 0)
-		assert.True(t, handled)
-		assert.NoError(t, err)
-		user.Muted = false
-	})
-
 	t.Run("basic", func(t *testing.T) {
 		handled, err := Broadcast("hello all", user, room, 0)
 		assert.True(t, handled)

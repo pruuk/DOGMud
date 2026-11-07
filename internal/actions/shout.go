@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -50,6 +51,17 @@ func Shout(actor Actor, text string) ShoutResult {
 	line := fmt.Sprintf(`<ansi fg="%s">%s</ansi> shouts, "<ansi fg="%s">%s</ansi>"`,
 		nameColor, actor.GetName(), textColor, text)
 	sendSpoken(actor, room, messaging.CategoryShout, util.SplitStringNL(line, 80), isSneaking)
+
+	// The web client's Chat window shows shouts too (owner 2026-11-07); gmcp
+	// builds each listener's line from this.
+	events.AddToQueue(events.Communication{
+		SourceUserId:        actor.GetUserId(),
+		SourceMobInstanceId: actor.GetMobInstanceId(),
+		CommType:            `shout`,
+		Name:                actor.GetName(),
+		Message:             text,
+		SpeakerHidden:       isSneaking,
+	})
 
 	// Next door hears the words and no name, from either speaker. A player's
 	// line stays player chatter (deafen-filtered, byte-identical to before);

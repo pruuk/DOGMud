@@ -81,7 +81,9 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `RecipientFull` / `RecipientFullLine` | They can't carry any more. |
 | `WhileBusy(u, "change equipment")` / `WhileBusyText` | You can't change equipment while you're busy. Try **cancel**. |
 | `WhileUnderAttack(u, "steal")` / `WhileUnderAttackText` | You can't steal while under attack. |
-| `TargetAsleepText("Mira")` (no send) | **Mira** is fast asleep. You could make some noise. Try **shout wake up**. |
+| `TargetAsleepText("Mira", "mira")` (no send; the caller picks the aim by sight) | **Mira** is fast asleep. Try **wake mira**. |
+| `TargetAsleepText("Mira", "2.figure")` (shapes) | **Mira** is fast asleep. Try **wake 2.figure**. |
+| `TargetAsleepText("Mira", "")` (no sight) | **Mira** is fast asleep. You could make some noise. Try **shout wake up**. |
 | `Cost(u, res)` / `CostText` (stamina refused) | You are too spent to manage that right now. |
 | `Cost(u, res)` / `CostText` (conviction refused) | You cannot muster the resolve for that right now. |
 | `NotWearing(u, "ring")` / `NotWearingText` | You aren't wearing 'ring'. Try **inventory**. |

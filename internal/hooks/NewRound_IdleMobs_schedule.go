@@ -7,6 +7,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -57,9 +59,32 @@ type schedulePlan struct {
 	ActivePatrolId string
 }
 
+// shopHasCustomer reports whether a shopkeeper has a player who is not
+// hidden in the room: a keeper does not doze off with a customer in the shop
+// (owner 2026-11-07). Once the room has no such player and the wake grace
+// has run, the schedule puts them back to sleep. Only in their own shop (the
+// home room it belongs to): a keeper bedding down elsewhere, Kerra in her
+// bedroom, sleeps on schedule whoever is there.
+func shopHasCustomer(mob *mobs.Mob) bool {
+	if !mob.HasShop() || mob.Character.RoomId != mob.HomeRoomId {
+		return false
+	}
+	room := rooms.LoadRoom(mob.Character.RoomId)
+	if room == nil {
+		return false
+	}
+	for _, uid := range room.GetPlayers() {
+		if u := users.GetByUserId(uid); u != nil && !u.Character.IsHidden() {
+			return true
+		}
+	}
+	return false
+}
+
 // scheduleTickPlan computes the desired tick action for a scheduled mob. Pure
-// over its inputs (mob.ScheduleId, mob.Character.RoomId, hour, MiscData) —
-// safe to call from tests with stubbed registry state.
+// over its inputs (mob.ScheduleId, mob.Character.RoomId, hour, MiscData, and
+// for a shopkeeper the players in its room) and safe to call from tests with
+// stubbed registry state.
 func scheduleTickPlan(mob *mobs.Mob, hour24 int) schedulePlan {
 	plan := schedulePlan{}
 	if mob == nil || mob.ScheduleId == "" {
@@ -103,8 +128,8 @@ func scheduleTickPlan(mob *mobs.Mob, hour24 int) schedulePlan {
 	}
 
 	// Chunk 3.3: detect sleep desire (current segment is activity: sleeping;
-	// at target; past grace cooldown).
-	if seg.Activity == "sleeping" && mob.Character.RoomId == seg.TargetRoom {
+	// at target; past grace cooldown; no customer in the shop).
+	if seg.Activity == "sleeping" && mob.Character.RoomId == seg.TargetRoom && !shopHasCustomer(mob) {
 		lastWoken := getMiscDataInt(&mob.Character, "schedule_wake_round")
 		grace := int(configs.GetBalanceConfig().ScheduleWakeGraceRounds)
 		if lastWoken == 0 || int(util.GetRoundCount())-lastWoken >= grace {
